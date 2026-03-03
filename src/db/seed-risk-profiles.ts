@@ -3,7 +3,7 @@
  * Run with: npx tsx src/db/seed-risk-profiles.ts
  *
  * Creates two built-in profiles from the risk management documentation:
- * 1. Standard Risk Management (R$500 base, anti-martingale recovery, 30% compounding)
+ * 1. Bravo Risk Management (1.25% per trade, anti-martingale recovery, 30% compounding)
  * 2. TSR Iniciante (R$80 base, 2 contracts max, single-target gain mode)
  */
 
@@ -26,27 +26,28 @@ const seedRiskProfiles = async () => {
 	const createdByUserId = adminUser.id
 
 	// ==========================================
-	// PROFILE 1: Standard Risk Management
+	// PROFILE 1: Bravo Risk Management
+	// Percentage-based risk: 1.25% per trade, 2.5% daily, 5% weekly, 3.75% target
 	// @see docs/riskManagement/risk-management-flowchart.md
 	// ==========================================
-	const standardTree: DecisionTreeConfig = {
+	const bravoTree: DecisionTreeConfig = {
 		baseTrade: {
-			riskCents: 50000, // R$500
+			riskCents: 50000, // R$500 fallback (1.25% of R$40k reference balance)
 			maxContracts: 20,
 			minStopPoints: 100,
 		},
 		lossRecovery: {
 			sequence: [
 				{
-					riskCalculation: { type: "percentOfBase", percent: 50 }, // R$250
+					riskCalculation: { type: "percentOfBase", percent: 50 },
 					maxContractsOverride: null,
 				},
 				{
-					riskCalculation: { type: "percentOfBase", percent: 25 }, // R$125
+					riskCalculation: { type: "percentOfBase", percent: 25 },
 					maxContractsOverride: null,
 				},
 				{
-					riskCalculation: { type: "percentOfBase", percent: 25 }, // R$125
+					riskCalculation: { type: "percentOfBase", percent: 25 },
 					maxContractsOverride: null,
 				},
 			],
@@ -57,10 +58,10 @@ const seedRiskProfiles = async () => {
 			type: "compounding",
 			reinvestmentPercent: 30,
 			stopOnFirstLoss: true,
-			dailyTargetCents: 150000, // R$1,500
+			dailyTargetCents: 150000, // R$1,500 fallback (3.75% of R$40k)
 		},
 		cascadingLimits: {
-			weeklyLossCents: 200000, // R$2,000
+			weeklyLossCents: 200000, // R$2,000 fallback (5% of R$40k)
 			weeklyAction: "stopTrading",
 			monthlyLossCents: 750000, // R$7,500
 			monthlyAction: "stopTrading",
@@ -71,6 +72,9 @@ const seedRiskProfiles = async () => {
 			operatingHoursStart: "09:01",
 			operatingHoursEnd: "17:00",
 		},
+		riskSizing: { type: "percentOfBalance", riskPercent: 1.25 },
+		limitMode: "percentOfInitial",
+		limitsPercent: { daily: 2.5, weekly: 5, monthly: 15 },
 	}
 
 	// ==========================================
@@ -122,15 +126,15 @@ const seedRiskProfiles = async () => {
 	// Insert profiles
 	const profiles = [
 		{
-			name: "Standard Risk Management",
-			description: "Anti-martingale loss recovery with 30% gain compounding. Base risk R$500, daily target R$1,500. Suitable for experienced traders with larger accounts.",
+			name: "Bravo Risk Management",
+			description: "Percentage-based risk: 1.25% per trade, 2.5% daily loss, 5% weekly loss, 3.75% daily target. Anti-martingale recovery with 30% gain compounding.",
 			createdByUserId,
 			baseRiskCents: 50000,
-			dailyLossCents: 100000, // R$1,000
-			weeklyLossCents: 200000, // R$2,000
+			dailyLossCents: 100000, // 2.5% of R$40k
+			weeklyLossCents: 200000, // 5% of R$40k
 			monthlyLossCents: 750000, // R$7,500
-			dailyProfitTargetCents: 150000, // R$1,500
-			decisionTree: JSON.stringify(standardTree),
+			dailyProfitTargetCents: 150000, // 3.75% of R$40k
+			decisionTree: JSON.stringify(bravoTree),
 		},
 		{
 			name: "TSR Iniciante",
@@ -145,8 +149,13 @@ const seedRiskProfiles = async () => {
 		},
 	]
 
+	// Rename map: migrate old profile names to new ones
+	const renameMap: Record<string, string> = {
+		"Bravo Risk Management": "Standard Risk Management",
+	}
+
 	for (const profile of profiles) {
-		// Check if profile already exists by name
+		// Check if profile already exists by current name
 		const existing = await db.query.riskManagementProfiles.findFirst({
 			where: eq(riskManagementProfiles.name, profile.name),
 		})
@@ -154,6 +163,32 @@ const seedRiskProfiles = async () => {
 		if (existing) {
 			console.log(`Profile "${profile.name}" already exists, skipping.`)
 			continue
+		}
+
+		// Check if an old-named version exists and should be migrated
+		const oldName = renameMap[profile.name]
+		if (oldName) {
+			const oldProfile = await db.query.riskManagementProfiles.findFirst({
+				where: eq(riskManagementProfiles.name, oldName),
+			})
+
+			if (oldProfile) {
+				await db
+					.update(riskManagementProfiles)
+					.set({
+						name: profile.name,
+						description: profile.description,
+						baseRiskCents: profile.baseRiskCents,
+						dailyLossCents: profile.dailyLossCents,
+						weeklyLossCents: profile.weeklyLossCents,
+						monthlyLossCents: profile.monthlyLossCents,
+						dailyProfitTargetCents: profile.dailyProfitTargetCents,
+						decisionTree: profile.decisionTree,
+					})
+					.where(eq(riskManagementProfiles.id, oldProfile.id))
+				console.log(`Migrated profile: "${oldName}" → "${profile.name}"`)
+				continue
+			}
 		}
 
 		await db.insert(riskManagementProfiles).values(profile)
