@@ -201,6 +201,7 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 			emailVerified: true,
 			image: true,
 			isAdmin: true,
+			role: true,
 			preferredLocale: true,
 			theme: true,
 			dateFormat: true,

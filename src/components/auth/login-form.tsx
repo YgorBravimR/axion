@@ -289,6 +289,15 @@ export const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					</div>
 				</div>
 
+				<div className="flex justify-end">
+						<Link
+							href="/forgot-password"
+							className="text-tiny font-medium text-brand-500 hover:text-brand-400"
+						>
+							{t("forgotPassword")}
+						</Link>
+					</div>
+
 				<Button id="login-submit" type="submit" className="w-full" disabled={isPending}>
 					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 					{t("submit")}

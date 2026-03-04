@@ -11,7 +11,7 @@ declare module "next-auth" {
 	interface User {
 		id: string
 		accountId?: string | null
-		isAdmin?: boolean
+		role?: "admin" | "trader" | "viewer"
 	}
 
 	interface Session {
@@ -21,14 +21,14 @@ declare module "next-auth" {
 			email: string
 			image?: string | null
 			accountId?: string | null
-			isAdmin?: boolean
+			role: "admin" | "trader" | "viewer"
 		}
 	}
 
 	interface JWT {
 		userId: string
 		accountId?: string | null
-		isAdmin?: boolean
+		role: "admin" | "trader" | "viewer"
 	}
 }
 
@@ -98,7 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					email: user.email,
 					image: user.image,
 					accountId: selectedAccountId,
-					isAdmin: user.isAdmin,
+					role: user.role,
 				}
 			},
 		}),

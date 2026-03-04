@@ -3,7 +3,7 @@ import type { NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 
 // Public paths that don't require authentication
-const publicPaths = ["/login", "/register", "/api/auth", "/monitor"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/monitor"]
 
 // Supported locales
 const locales = ["pt-BR", "en"]
@@ -66,7 +66,7 @@ export const authConfig: NextAuthConfig = {
 			if (user) {
 				token.userId = user.id
 				token.accountId = user.accountId
-				token.isAdmin = user.isAdmin
+				token.role = user.role ?? "trader"
 			}
 
 			// Handle account switching via update
@@ -83,7 +83,7 @@ export const authConfig: NextAuthConfig = {
 					...session.user,
 					id: token.userId as string,
 					accountId: token.accountId as string | null | undefined,
-					isAdmin: token.isAdmin as boolean | undefined,
+					role: token.role as "admin" | "trader" | "viewer",
 				},
 			}
 		},
