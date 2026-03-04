@@ -143,10 +143,8 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 				<h3 className="text-small text-txt-100 font-semibold">
 					{t("advancedMode")}
 				</h3>
-				<p className="text-tiny text-txt-300">
-					{t("advancedDescription")}
-				</p>
-				<div className="gap-m-300 grid grid-cols-2 sm:grid-cols-3">
+				<p className="text-tiny text-txt-300">{t("advancedDescription")}</p>
+				<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3">
 					<Field
 						label={t("accountBalance")}
 						value={fromCents(params.accountBalanceCents).toFixed(2)}
@@ -154,10 +152,12 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 							isLocked
 								? handleAdvancedBalanceChange
 								: (val) =>
-									onChange({
-										...params,
-										accountBalanceCents: Math.round(parseFloat(val || "0") * 100),
-									})
+										onChange({
+											...params,
+											accountBalanceCents: Math.round(
+												parseFloat(val || "0") * 100
+											),
+										})
 						}
 						suffix="R$"
 					/>
@@ -187,7 +187,9 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 					/>
 					<Field
 						label={t("baseRisk")}
-						value={fromCents(params.decisionTree.baseTrade.riskCents).toFixed(2)}
+						value={fromCents(params.decisionTree.baseTrade.riskCents).toFixed(
+							2
+						)}
 						onChange={() => {}}
 						disabled
 						suffix="R$"
@@ -208,7 +210,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 			<h3 className="text-small text-txt-100 font-semibold">
 				{t("simpleMode")}
 			</h3>
-			<div className="gap-m-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+			<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
 				<Field
 					label={t("accountBalance")}
 					value={fromCents(params.accountBalanceCents).toFixed(2)}
@@ -301,7 +303,9 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 				<CheckboxField
 					label={t("increaseRiskAfterWin")}
 					checked={params.increaseRiskAfterWin}
-					onChange={(checked) => updateSimple({ increaseRiskAfterWin: checked })}
+					onChange={(checked) =>
+						updateSimple({ increaseRiskAfterWin: checked })
+					}
 					locked={isLocked}
 				/>
 			</div>

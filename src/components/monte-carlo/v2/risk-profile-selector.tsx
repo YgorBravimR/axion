@@ -55,7 +55,7 @@ const RiskProfileSelector = ({
 	const t = useTranslations("monteCarlo.v2")
 
 	return (
-		<div className="space-y-m-300">
+		<div className="space-y-s-300">
 			<label className="text-small text-txt-200 block font-medium">
 				{t("profileSelector.title")}
 			</label>
@@ -67,8 +67,15 @@ const RiskProfileSelector = ({
 			>
 				<option value="">{t("profileSelector.selectProfile")}</option>
 				{(() => {
-					const builtInNames = ["Fixed Fractional", "Fixed Ratio", "Institutional", "R-Multiples", "Kelly Fractional"]
-					const isBuiltIn = (p: RiskManagementProfile) => builtInNames.some((n) => p.name.includes(n))
+					const builtInNames = [
+						"Fixed Fractional",
+						"Fixed Ratio",
+						"Institutional",
+						"R-Multiples",
+						"Kelly Fractional",
+					]
+					const isBuiltIn = (p: RiskManagementProfile) =>
+						builtInNames.some((n) => p.name.includes(n))
 					const builtIn = profiles.filter(isBuiltIn)
 					const custom = profiles.filter((p) => !isBuiltIn(p))
 					return (
@@ -98,41 +105,61 @@ const RiskProfileSelector = ({
 
 			{/* Profile Summary */}
 			{simProfile && (
-				<div className="rounded-lg border border-acc-100/20 bg-acc-100/5 p-m-300">
-					<div className="grid grid-cols-2 gap-s-200 text-tiny">
-						<span className="text-txt-300">{t("profileSummary.baseRisk")}:</span>
+				<div className="border-acc-100/20 bg-acc-100/5 p-s-300 rounded-lg border">
+					<div className="gap-s-200 text-tiny grid grid-cols-2">
+						<span className="text-txt-300">
+							{t("profileSummary.baseRisk")}:
+						</span>
 						<span className="text-txt-100 font-medium">
 							{getRiskSizingLabel(simProfile.riskSizingMode, simProfile, t)}
 						</span>
-						<span className="text-txt-300">{t("profileSummary.dailyLossLimit")}:</span>
+						<span className="text-txt-300">
+							{t("profileSummary.dailyLossLimit")}:
+						</span>
 						<span className="text-txt-100 font-medium">
 							{formatCompactCurrency(fromCents(simProfile.dailyLossLimitCents))}
 						</span>
 						{simProfile.weeklyLossLimitCents && (
 							<>
-								<span className="text-txt-300">{t("profileSummary.weeklyLossLimit")}:</span>
+								<span className="text-txt-300">
+									{t("profileSummary.weeklyLossLimit")}:
+								</span>
 								<span className="text-txt-100 font-medium">
-									{formatCompactCurrency(fromCents(simProfile.weeklyLossLimitCents))}
+									{formatCompactCurrency(
+										fromCents(simProfile.weeklyLossLimitCents)
+									)}
 								</span>
 							</>
 						)}
-						<span className="text-txt-300">{t("profileSummary.monthlyLossLimit")}:</span>
+						<span className="text-txt-300">
+							{t("profileSummary.monthlyLossLimit")}:
+						</span>
 						<span className="text-txt-100 font-medium">
-							{formatCompactCurrency(fromCents(simProfile.monthlyLossLimitCents))}
+							{formatCompactCurrency(
+								fromCents(simProfile.monthlyLossLimitCents)
+							)}
 						</span>
 						{simProfile.dailyTargetCents && (
 							<>
-								<span className="text-txt-300">{t("profileSummary.dailyTarget")}:</span>
+								<span className="text-txt-300">
+									{t("profileSummary.dailyTarget")}:
+								</span>
 								<span className="text-txt-100 font-medium">
-									{formatCompactCurrency(fromCents(simProfile.dailyTargetCents))}
+									{formatCompactCurrency(
+										fromCents(simProfile.dailyTargetCents)
+									)}
 								</span>
 							</>
 						)}
-						<span className="text-txt-300">{t("profileSummary.lossRecovery")}:</span>
+						<span className="text-txt-300">
+							{t("profileSummary.lossRecovery")}:
+						</span>
 						<span className="text-txt-100 font-medium">
 							{simProfile.lossRecoverySteps.length} {t("profileSummary.steps")}
 						</span>
-						<span className="text-txt-300">{t("profileSummary.gainMode")}:</span>
+						<span className="text-txt-300">
+							{t("profileSummary.gainMode")}:
+						</span>
 						<span className="text-txt-100 font-medium">
 							{simProfile.compoundingRiskPercent > 0
 								? `${t("profileSummary.compounding")} (${simProfile.compoundingRiskPercent}%)`
@@ -142,7 +169,9 @@ const RiskProfileSelector = ({
 						{/* Enhanced summary for dynamic risk profiles */}
 						{simProfile.riskSizingMode !== "fixed" && (
 							<>
-								<span className="text-txt-300">{t("profileSummary.limitMode")}:</span>
+								<span className="text-txt-300">
+									{t("profileSummary.limitMode")}:
+								</span>
 								<span className="text-txt-100 font-medium">
 									{getLimitModeLabel(simProfile.limitMode, t)}
 								</span>
@@ -150,7 +179,9 @@ const RiskProfileSelector = ({
 						)}
 						{simProfile.drawdownTiers.length > 0 && (
 							<>
-								<span className="text-txt-300">{t("profileSummary.drawdownControl")}:</span>
+								<span className="text-txt-300">
+									{t("profileSummary.drawdownControl")}:
+								</span>
 								<span className="text-txt-100 font-medium">
 									{simProfile.drawdownTiers.length} {t("profileSummary.tiers")}
 								</span>
@@ -158,9 +189,12 @@ const RiskProfileSelector = ({
 						)}
 						{simProfile.consecutiveLossRules.length > 0 && (
 							<>
-								<span className="text-txt-300">{t("profileSummary.lossRules")}:</span>
+								<span className="text-txt-300">
+									{t("profileSummary.lossRules")}:
+								</span>
 								<span className="text-txt-100 font-medium">
-									{simProfile.consecutiveLossRules.length} {t("profileSummary.rules")}
+									{simProfile.consecutiveLossRules.length}{" "}
+									{t("profileSummary.rules")}
 								</span>
 							</>
 						)}

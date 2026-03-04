@@ -409,8 +409,19 @@ describe("runAdvancedSimulation", () => {
 
 		it("should switch to gain mode after recovery win when executeAllRegardless=false", () => {
 			// T1(loss) → T2 recovery(win) → T3 should be gain mode
+			// stopAfterSequence must be false so the day continues after a recovery win
+			const params: AdvancedSimulationParams = {
+				...defaultAdvancedParams,
+				decisionTree: {
+					...defaultDecisionTree,
+					lossRecovery: {
+						...defaultDecisionTree.lossRecovery,
+						stopAfterSequence: false,
+					},
+				},
+			}
 			const trades = createDaySequence(["loss", "win", "win"])
-			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
+			const result = runAdvancedSimulation(trades, params)
 
 			const t3 = result.trades[2]
 			expect(t3.dayPhase).toBe("gain_mode")

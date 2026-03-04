@@ -2,15 +2,16 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/db/drizzle"
-import { riskManagementProfiles, users } from "@/db/schema"
+import { riskManagementProfiles } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { DecisionTreeConfig } from "@/types/risk-profile"
-import { eq, and } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { riskProfileSchema } from "@/lib/validations/risk-profile"
 import type { RiskProfileSchemaInput } from "@/lib/validations/risk-profile"
 import { requireAuth } from "@/app/actions/auth"
+import { requireRole } from "@/lib/auth-utils"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 
 // ==========================================
@@ -35,19 +36,6 @@ const parseProfileRow = (row: typeof riskManagementProfiles.$inferSelect): RiskM
 	createdAt: row.createdAt,
 	updatedAt: row.updatedAt,
 })
-
-/**
- * Checks if the current user is an admin. Throws if not.
- */
-const requireAdmin = async (userId: string): Promise<void> => {
-	const user = await db.query.users.findFirst({
-		where: eq(users.id, userId),
-		columns: { isAdmin: true },
-	})
-	if (!user?.isAdmin) {
-		throw new Error("ADMIN_REQUIRED")
-	}
-}
 
 // ==========================================
 // RISK PROFILE ACTIONS
@@ -120,7 +108,7 @@ const createRiskProfile = async (
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	try {
 		const { userId } = await requireAuth()
-		await requireAdmin(userId)
+		await requireRole("admin")
 
 		const validated = riskProfileSchema.parse(input)
 
@@ -157,7 +145,7 @@ const createRiskProfile = async (
 				})),
 			}
 		}
-		if (error instanceof Error && error.message === "ADMIN_REQUIRED") {
+		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
 				message: "Admin access required",
@@ -181,7 +169,7 @@ const updateRiskProfile = async (
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	try {
 		const { userId } = await requireAuth()
-		await requireAdmin(userId)
+		await requireRole("admin")
 
 		const validated = riskProfileSchema.parse(input)
 
@@ -227,7 +215,7 @@ const updateRiskProfile = async (
 				})),
 			}
 		}
-		if (error instanceof Error && error.message === "ADMIN_REQUIRED") {
+		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
 				message: "Admin access required",
@@ -248,7 +236,7 @@ const updateRiskProfile = async (
 const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> => {
 	try {
 		const { userId } = await requireAuth()
-		await requireAdmin(userId)
+		await requireRole("admin")
 
 		await db
 			.update(riskManagementProfiles)
@@ -262,7 +250,7 @@ const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> 
 			message: "Risk profile deactivated",
 		}
 	} catch (error) {
-		if (error instanceof Error && error.message === "ADMIN_REQUIRED") {
+		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
 				message: "Admin access required",

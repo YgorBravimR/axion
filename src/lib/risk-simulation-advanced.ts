@@ -75,9 +75,11 @@ const runAdvancedSimulation = (
 	let currentWeekKey = ""
 	let dailyPnlCents = 0
 	let dailyTradeCount = 0
+	let stepCount = 0
 	let dayGainsCents = 0
 	let dayPhase: DayPhase = "base"
 	let recoveryIndex = 0
+	let gainSequenceIndex = 0
 	let previousRiskCents = baseRiskCents
 	let dailyLimitHit = false
 	let dailyTargetHit = false
@@ -112,9 +114,11 @@ const runAdvancedSimulation = (
 			currentDayKey = dayKey
 			dailyPnlCents = 0
 			dailyTradeCount = 0
+			stepCount = 0
 			dayGainsCents = 0
 			dayPhase = "base"
 			recoveryIndex = 0
+			gainSequenceIndex = 0
 			previousRiskCents = baseRiskCents
 			dailyLimitHit = false
 			dailyTargetHit = false
@@ -171,7 +175,7 @@ const runAdvancedSimulation = (
 		let currentPhase: DayPhase = dayPhase
 		let currentRecoveryIndex: number | null = null
 
-		const isT1 = dailyTradeCount === 1
+		const isT1 = stepCount === 0
 
 		if (isT1) {
 			// T1: always use base risk
@@ -211,6 +215,27 @@ const runAdvancedSimulation = (
 				// Compounding gain mode — reinvest % of accumulated gains
 				riskCents = Math.max(1, Math.round(dayGainsCents * (gainMode.reinvestmentPercent / 100)))
 				riskReason = `Gain reinvest (${gainMode.reinvestmentPercent}% of day gains)`
+				currentPhase = "gain_mode"
+			}
+			if (gainMode.type === "gainSequence") {
+				const seqLen = gainMode.sequence.length
+				if (gainSequenceIndex < seqLen) {
+					const step = gainMode.sequence[gainSequenceIndex]
+					riskCents = resolveRiskCalculation(step.riskCalculation, baseRiskCents, previousRiskCents)
+					riskReason = `Gain #${gainSequenceIndex + 1} (${describeRiskCalc(step.riskCalculation)})`
+					maxContracts = step.maxContractsOverride ?? baseTrade.maxContracts
+				} else if (gainMode.repeatLastStep && seqLen > 0) {
+					const lastStep = gainMode.sequence[seqLen - 1]
+					riskCents = resolveRiskCalculation(lastStep.riskCalculation, baseRiskCents, previousRiskCents)
+					riskReason = `Gain repeat (${describeRiskCalc(lastStep.riskCalculation)})`
+					maxContracts = lastStep.maxContractsOverride ?? baseTrade.maxContracts
+				} else {
+					// Sequence exhausted, no repeat — skip
+					const drawdownPercent = calculateDrawdown(equity, peak)
+					simulatedTrades.push(buildSkippedTrade(trade, dayKey, dailyTradeCount, "skipped_gain_stop", dayPhase, equity, dailyPnlCents, consecutiveLosses, drawdownPercent))
+					equityCurve.push({ tradeIndex: i, dayKey, originalEquityCents: originalEquity, simulatedEquityCents: equity })
+					continue
+				}
 				currentPhase = "gain_mode"
 			}
 		} else {
@@ -277,6 +302,44 @@ const runAdvancedSimulation = (
 			consecutiveLosses = 0
 		}
 
+		// Breakeven trades: update equity/limits but skip phase transitions entirely
+		if (simulatedOutcome === "breakeven") {
+			if (dailyPnlCents <= -dailyLossCents) dailyLimitHit = true
+			if (dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents) dailyTargetHit = true
+
+			const drawdownPercent = calculateDrawdown(equity, peak)
+			simulatedTrades.push({
+				tradeId: trade.id,
+				dayKey,
+				dayTradeNumber: dailyTradeCount,
+				status: "executed",
+				asset: trade.asset,
+				direction: trade.direction,
+				entryPrice: trade.entryPrice,
+				exitPrice: trade.exitPrice,
+				stopLoss: trade.stopLoss,
+				originalPositionSize: trade.positionSize,
+				originalPnlCents: trade.pnlCents,
+				originalRMultiple: trade.rMultiple,
+				simulatedPositionSize: sizing.contracts,
+				simulatedPnlCents,
+				simulatedRMultiple,
+				riskAmountCents: sizing.actualRiskCents,
+				dayPhase: currentPhase,
+				riskReason,
+				recoveryStepIndex: currentRecoveryIndex,
+				equityAfterCents: equity,
+				dailyPnlCents,
+				consecutiveLosses,
+				drawdownPercent,
+			})
+			equityCurve.push({ tradeIndex: i, dayKey, originalEquityCents: originalEquity, simulatedEquityCents: equity })
+			continue
+		}
+
+		// Non-breakeven: advance the logical step counter
+		stepCount++
+
 		// ── T1 BRANCHING ──
 		if (isT1) {
 			if (simulatedOutcome === "loss") {
@@ -285,6 +348,7 @@ const runAdvancedSimulation = (
 			} else if (simulatedOutcome === "win") {
 				dayGainsCents += simulatedPnlCents
 				dayPhase = "gain_mode"
+				gainSequenceIndex = 0
 				// Check single target
 				if (gainMode.type === "singleTarget" && dayGainsCents >= gainMode.dailyTargetCents) {
 					dailyTargetHit = true
@@ -292,20 +356,39 @@ const runAdvancedSimulation = (
 				if (gainMode.type === "compounding" && gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
 					dailyTargetHit = true
 				}
+				if (gainMode.type === "gainSequence" && gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
+					dailyTargetHit = true
+				}
 			}
 		} else if (dayPhase === "loss_recovery") {
 			if (simulatedOutcome === "win" && !lossRecovery.executeAllRegardless) {
-				dayGainsCents += simulatedPnlCents
-				dayPhase = "gain_mode"
+				// Recovery win: if stopAfterSequence, the day is done (any gain after
+				// the loss path starts = exit). Otherwise transition to gain mode.
+				if (lossRecovery.stopAfterSequence) {
+					dailyTargetHit = true
+				} else {
+					dayGainsCents += simulatedPnlCents
+					dayPhase = "gain_mode"
+					gainSequenceIndex = 0
+				}
 			} else {
 				recoveryIndex++
 			}
 		} else if (dayPhase === "gain_mode" && gainMode.type === "compounding") {
 			if (simulatedOutcome === "loss" && gainMode.stopOnFirstLoss) {
-				// Stop day on first loss in gain mode — future trades will be skipped via daily target/limit
 				dailyTargetHit = true
 			} else if (simulatedOutcome === "win") {
 				dayGainsCents += simulatedPnlCents
+				if (gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
+					dailyTargetHit = true
+				}
+			}
+		} else if (dayPhase === "gain_mode" && gainMode.type === "gainSequence") {
+			if (simulatedOutcome === "loss" && gainMode.stopOnFirstLoss) {
+				dailyTargetHit = true
+			} else if (simulatedOutcome === "win") {
+				dayGainsCents += simulatedPnlCents
+				gainSequenceIndex++
 				if (gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
 					dailyTargetHit = true
 				}
@@ -445,4 +528,4 @@ const describeRiskCalc = (calc: RiskCalculation): string => {
 	}
 }
 
-export { runAdvancedSimulation }
+export { runAdvancedSimulation, resolveRiskCalculation, describeRiskCalc }

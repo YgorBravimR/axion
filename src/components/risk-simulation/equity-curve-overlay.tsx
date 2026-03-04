@@ -78,8 +78,8 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 	if (chartData.length === 0) return null
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-			<h3 className="text-small text-txt-100 mb-m-300 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 				{t("title")}
 			</h3>
 			<ChartContainer id="risk-sim-equity-chart" className="h-[350px] w-full">
@@ -87,10 +87,7 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 					data={chartData}
 					margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
 				>
-					<CartesianGrid
-						strokeDasharray="3 3"
-						stroke="var(--color-bg-300)"
-					/>
+					<CartesianGrid strokeDasharray="3 3" stroke="var(--color-bg-300)" />
 					<XAxis
 						dataKey="tradeIndex"
 						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}

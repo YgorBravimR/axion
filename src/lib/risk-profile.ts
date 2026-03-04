@@ -54,7 +54,7 @@ export const buildProfileForSim = (
 		? tree.gainMode.reinvestmentPercent
 		: 0
 
-	const stopOnFirstLoss = tree.gainMode.type === "compounding"
+	const stopOnFirstLoss = (tree.gainMode.type === "compounding" || tree.gainMode.type === "gainSequence")
 		? tree.gainMode.stopOnFirstLoss
 		: true
 

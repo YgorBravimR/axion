@@ -23,6 +23,7 @@ interface LossRecoveryStep {
  * Gain mode after a winning first trade.
  * - compounding: reinvest a % of accumulated gains into subsequent trades
  * - singleTarget: one winning trade hits the daily target, no further trades
+ * - gainSequence: step-by-step risk sizing (mirrors loss recovery pattern)
  */
 type GainMode =
 	| {
@@ -34,6 +35,13 @@ type GainMode =
 	| {
 			type: "singleTarget"
 			dailyTargetCents: number
+	  }
+	| {
+			type: "gainSequence"
+			sequence: LossRecoveryStep[] // reuses the same step shape
+			repeatLastStep: boolean // keep using last step's risk for subsequent trades
+			stopOnFirstLoss: boolean
+			dailyTargetCents: number | null
 	  }
 
 // ==========================================
