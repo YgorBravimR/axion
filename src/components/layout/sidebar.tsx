@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, Plus, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { navItems } from "@/lib/navigation"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
+import { getFilteredNavItems } from "@/lib/feature-access"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { AccountSwitcher } from "./account-switcher"
 import { UserMenu } from "./user-menu"
@@ -31,6 +33,8 @@ const Sidebar = ({
 	const tReplay = useTranslations("commandCenter.dateNavigator")
 	const tCommon = useTranslations("common")
 	const pathname = usePathname()
+	const { role } = useFeatureAccess()
+	const filteredNavItems = getFilteredNavItems(navItems, role)
 
 	const isSheet = variant === "sheet"
 	const isCompact = isCollapsed && !isSheet
@@ -119,7 +123,7 @@ const Sidebar = ({
 			{/* Navigation */}
 			<ScrollArea className="flex-1">
 			<nav className="space-y-1 p-2">
-				{navItems.map((item) => {
+				{filteredNavItems.map((item) => {
 					const isActive =
 						item.href === "/"
 							? pathname === "/"

@@ -44,18 +44,23 @@ const getStoredBrand = (fallback: Brand): Brand => {
  * @param props.defaultBrand - Default brand to use when no localStorage value exists
  */
 const BrandProvider = ({ children, defaultBrand = DEFAULT_BRAND }: BrandProviderProps) => {
-	const [brand, setBrandState] = useState<Brand>(() => getStoredBrand(defaultBrand))
+	// DISABLED: Brand switching is disabled. Only "default" layout is active.
+	// To re-enable, restore getStoredBrand initializer and setBrand logic below.
+	const [brand] = useState<Brand>(() => "default")
+	// const [brand, setBrandState] = useState<Brand>(() => getStoredBrand(defaultBrand))
 
-	const setBrand = useCallback((newBrand: Brand) => {
-		if (!isValidBrand(newBrand)) return
-		setBrandState(newBrand)
-		document.documentElement.setAttribute("data-brand", newBrand)
-		try {
-			localStorage.setItem("brand", newBrand)
-		} catch {
-			// localStorage unavailable (e.g. private browsing quota exceeded)
-		}
-	}, [])
+	// No-op while brand switching is disabled
+	const setBrand = useCallback((_newBrand: Brand) => {}, [])
+	// const setBrand = useCallback((newBrand: Brand) => {
+	// 	if (!isValidBrand(newBrand)) return
+	// 	setBrandState(newBrand)
+	// 	document.documentElement.setAttribute("data-brand", newBrand)
+	// 	try {
+	// 		localStorage.setItem("brand", newBrand)
+	// 	} catch {
+	// 		// localStorage unavailable (e.g. private browsing quota exceeded)
+	// 	}
+	// }, [])
 
 	const value: BrandContextType = {
 		brand,
@@ -63,11 +68,7 @@ const BrandProvider = ({ children, defaultBrand = DEFAULT_BRAND }: BrandProvider
 		brands: BRANDS,
 	}
 
-	return (
-		<BrandContext.Provider value={value}>
-			{children}
-		</BrandContext.Provider>
-	)
+	return <BrandContext.Provider value={value}>{children}</BrandContext.Provider>
 }
 
 /**

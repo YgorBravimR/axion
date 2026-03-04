@@ -49,17 +49,14 @@ const AppShell = ({
 	return (
 		<>
 			<ThemeSynchronizer />
-			<BrandSynchronizer serverBrand={serverBrand} />
+			{/* <BrandSynchronizer serverBrand={serverBrand} /> */}
 			<CommandMenu />
 
 			{isMobile ? (
 				<>
 					{/* Mobile top bar */}
 					<header className="border-bg-300 bg-bg-200 fixed top-0 right-0 left-0 z-40 flex h-14 items-center border-b px-4">
-						<Sheet
-							open={isMobileMenuOpen}
-							onOpenChange={setIsMobileMenuOpen}
-						>
+						<Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
 							<SheetTrigger asChild>
 								<button
 									type="button"
@@ -111,9 +108,7 @@ const AppShell = ({
 					{/* Desktop sidebar */}
 					<Sidebar
 						isCollapsed={isSidebarCollapsed}
-						onToggleCollapse={() =>
-							setIsSidebarCollapsed((prev) => !prev)
-						}
+						onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
 						isReplayAccount={isReplayAccount}
 						replayDate={replayDate}
 					/>

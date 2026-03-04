@@ -10,6 +10,9 @@ export const routing = defineRouting({
 
 	// The prefix for the default locale
 	localePrefix: "as-needed",
+
+	// Disable Accept-Language header detection — always use pt-BR as fallback
+	localeDetection: false,
 })
 
 // Lightweight wrappers around Next.js' navigation APIs

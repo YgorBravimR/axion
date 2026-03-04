@@ -53,19 +53,17 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 				enableSystem={false}
 				disableTransitionOnChange={false}
 			>
-				<BrandProvider>
-					<ToastProvider>
-						<LoadingOverlayProvider>
-							<AuthProvider>
-								<AccountTransitionOverlayProvider>
-									<div className="min-h-screen bg-bg-100">
-										{children}
-									</div>
-								</AccountTransitionOverlayProvider>
-							</AuthProvider>
-						</LoadingOverlayProvider>
-					</ToastProvider>
-				</BrandProvider>
+				{/* <BrandProvider> */}
+				<ToastProvider>
+					<LoadingOverlayProvider>
+						<AuthProvider>
+							<AccountTransitionOverlayProvider>
+								<div className="bg-bg-100 min-h-screen">{children}</div>
+							</AccountTransitionOverlayProvider>
+						</AuthProvider>
+					</LoadingOverlayProvider>
+				</ToastProvider>
+				{/* </BrandProvider> */}
 			</ThemeProvider>
 		</NextIntlClientProvider>
 	)

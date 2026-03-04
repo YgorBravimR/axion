@@ -31,9 +31,9 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
 	return (
 		<html suppressHydrationWarning data-brand="default">
-			<head>
+			{/* <head>
 				<BrandScript />
-			</head>
+			</head> */}
 			<body
 				className={`${plusJakartaSans.variable} ${geistMono.variable} font-sans antialiased`}
 			>
