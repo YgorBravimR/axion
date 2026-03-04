@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle"
 import { riskManagementProfiles } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { auth } from "@/auth"
+import { requireRole } from "@/lib/auth-utils"
 import { RISK_PROFILE_TEMPLATES } from "@/lib/risk-profile-templates"
 
 // ==========================================
@@ -47,8 +47,8 @@ const seedBuiltInRiskProfiles = async (): Promise<string[]> => {
 	const { userId } = await requireAuth()
 
 	// Only admins can seed system-level risk profiles — silently skip for non-admin users
-	const session = await auth()
-	if (!session?.user?.isAdmin) {
+	const adminId = await requireRole("admin").catch(() => null)
+	if (!adminId) {
 		return []
 	}
 
