@@ -5,11 +5,13 @@ import { Tabs, TabsList, TabsTrigger, AnimatedTabsContent } from "@/components/u
 import { Target, Activity, Calculator, CalendarDays } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Loader2 } from "lucide-react"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { CommandCenterContent, type CommandCenterContentProps } from "./command-center-content"
 import type { Asset, MonthlyPlan } from "@/db/schema"
 import type { StrategyWithStats } from "@/app/actions/strategies"
 import type { AssetSettingWithAsset } from "@/app/actions/command-center"
 import type { RiskManagementProfile } from "@/types/risk-profile"
+import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 
 const MarketMonitorContent = lazy(() =>
 	import("@/components/market/market-monitor-content").then((m) => ({
@@ -42,6 +44,7 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 	initialMonth: number
 	riskProfiles?: RiskManagementProfile[]
 	isReplayAccount?: boolean
+	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
 
 const TabLoadingFallback = () => (
@@ -60,10 +63,13 @@ export const CommandCenterTabs = ({
 	initialMonth,
 	riskProfiles = [],
 	isReplayAccount = false,
+	initialLiveTradingStatus = null,
 	...commandCenterProps
 }: CommandCenterTabsProps) => {
 	const t = useTranslations("commandCenter")
+	const { canAccess } = useFeatureAccess()
 	const [activeTab, setActiveTab] = useState("command-center")
+	const showMonitorTab = !isReplayAccount && canAccess("command-center:monitor-tab")
 
 	return (
 		<Tabs
@@ -88,7 +94,7 @@ export const CommandCenterTabs = ({
 					<Target className="h-4 w-4" />
 					<span>{t("tabs.commandCenter")}</span>
 				</TabsTrigger>
-				{!isReplayAccount && (
+				{showMonitorTab && (
 					<TabsTrigger
 						value="monitor"
 						className="text-txt-200 data-[state=active]:text-acc-100 gap-2"
@@ -127,10 +133,11 @@ export const CommandCenterTabs = ({
 					riskProfileName={initialPlan?.riskProfileId
 						? riskProfiles.find((p) => p.id === initialPlan.riskProfileId)?.name ?? null
 						: null}
+					initialLiveTradingStatus={initialLiveTradingStatus}
 				/>
 			</AnimatedTabsContent>
 
-			{!isReplayAccount && (
+			{showMonitorTab && (
 				<AnimatedTabsContent
 					value="monitor"
 					className="flex-1 overflow-auto p-m-600"

@@ -857,6 +857,9 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 			(a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
 		)
 
+		// Breakevens are invisible to trade counts, max trades, and consecutive losses
+		const nonBreakevenCount = sortedTrades.filter(t => t.outcome !== "breakeven").length
+
 		for (const trade of sortedTrades) {
 			dailyPnL += fromCents(trade.pnl)
 
@@ -868,9 +871,10 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 			}
 		}
 
-		// Current consecutive losses (from the most recent trades)
+		// Current consecutive losses (from the most recent non-breakeven trades)
 		let currentConsecutiveLosses = 0
 		for (let i = sortedTrades.length - 1; i >= 0; i--) {
+			if (sortedTrades[i].outcome === "breakeven") continue
 			if (sortedTrades[i].outcome === "loss") {
 				currentConsecutiveLosses++
 			} else {
@@ -888,8 +892,16 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 		// After decryption, these values are numbers; without DEK, parse from text
 		const dailyLossLimitCents = Number(monthlyPlan?.dailyLossCents) || 0
 		const profitTargetCents = Number(monthlyPlan?.dailyProfitTargetCents) || 0
-		const maxTradesValue = monthlyPlan?.maxDailyTrades ?? monthlyPlan?.derivedMaxDailyTrades ?? null
+		const rawMaxTrades = monthlyPlan?.maxDailyTrades ?? monthlyPlan?.derivedMaxDailyTrades ?? null
 		const maxConsecutiveLossesValue = monthlyPlan?.maxConsecutiveLosses ?? null
+
+		// When a recovery profile is linked, derivedMaxDailyTrades (floor(dailyLoss / baseRisk))
+		// underestimates because recovery steps use reduced risk. Ensure maxTrades is at least
+		// maxConsecutiveLosses so the circuit breaker doesn't show a contradictory cap.
+		const maxTradesValue =
+			rawMaxTrades !== null && maxConsecutiveLossesValue !== null && maxConsecutiveLossesValue > rawMaxTrades
+				? maxConsecutiveLossesValue
+				: rawMaxTrades
 
 		// Calculate remaining daily risk
 		const remainingDailyRiskCents = Math.max(
@@ -972,7 +984,7 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 		const isSecondOpBlocked =
 			allowSecondOp === false &&
 			currentConsecutiveLosses > 0 &&
-			todaysTrades.length > 0
+			nonBreakevenCount > 0
 
 		// Calculate circuit breaker triggers (using plan-first resolved values)
 		const profitTargetHit = profitTargetCents > 0
@@ -982,7 +994,7 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 			? dailyPnL <= -fromCents(dailyLossLimitCents)
 			: false
 		const maxTradesHit = maxTradesValue
-			? todaysTrades.length >= maxTradesValue
+			? nonBreakevenCount >= maxTradesValue
 			: false
 		const maxConsecutiveLossesHit = maxConsecutiveLossesValue
 			? currentConsecutiveLosses >= maxConsecutiveLossesValue
@@ -1010,7 +1022,7 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 			message: "Circuit breaker status retrieved",
 			data: {
 				dailyPnL,
-				tradesCount: todaysTrades.length,
+				tradesCount: nonBreakevenCount,
 				consecutiveLosses: currentConsecutiveLosses,
 				profitTargetHit,
 				lossLimitHit,
@@ -1105,7 +1117,7 @@ export const getDailySummary = async (date?: Date): Promise<ActionResponse<Daily
 			message: "Daily summary retrieved",
 			data: {
 				totalPnL,
-				tradesCount: todaysTrades.length,
+				tradesCount: sortedTrades.filter(t => t.outcome !== "breakeven").length,
 				winCount,
 				lossCount,
 				winRate,

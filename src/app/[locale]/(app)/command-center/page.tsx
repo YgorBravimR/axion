@@ -13,6 +13,7 @@ import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getActiveAssets } from "@/app/actions/assets"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { getStrategies } from "@/app/actions/strategies"
+import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
@@ -62,6 +63,7 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		strategiesResult,
 		monthlyPlanResult,
 		riskProfilesResult,
+		liveTradingStatusResult,
 	] = await Promise.all([
 		getChecklists(),
 		getTodayCompletions(dateArg),
@@ -73,6 +75,7 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		getStrategies(),
 		getActiveMonthlyPlan(),
 		listActiveRiskProfiles(),
+		getLiveTradingStatus(dateArg),
 	])
 
 	const initialChecklists =
@@ -102,6 +105,8 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		monthlyPlanResult.status === "success" ? (monthlyPlanResult.data ?? null) : null
 	const riskProfiles =
 		riskProfilesResult.status === "success" ? (riskProfilesResult.data ?? []) : []
+	const initialLiveTradingStatus =
+		liveTradingStatusResult.status === "success" ? (liveTradingStatusResult.data ?? null) : null
 
 	// Derive current year/month from effective date for the Plan tab
 	const planYear = effectiveDate.getFullYear()
@@ -137,6 +142,7 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 				isToday={isToday}
 				riskProfiles={riskProfiles}
 				isReplayAccount={account?.accountType === "replay"}
+				initialLiveTradingStatus={initialLiveTradingStatus}
 			/>
 		</div>
 	)
