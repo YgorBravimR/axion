@@ -5,3 +5,4 @@ export { FilterPill, type FilterPillProps, type FilterVariant } from "./filter-p
 export { LoadingSpinner, type LoadingSpinnerProps } from "./loading-spinner"
 export { StatCard, type StatCardProps, type TrendType } from "./stat-card"
 export { WinRateBadge, type WinRateBadgeProps } from "./win-rate-badge"
+export { ImageUpload, type ImageUploadProps } from "./image-upload"
