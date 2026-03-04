@@ -48,6 +48,23 @@ export const orderTypeEnum = pgEnum("order_type", [
 // Account Type Enum
 export const accountTypeEnum = pgEnum("account_type", ["personal", "prop", "replay"])
 
+// User Role Enum
+export const userRoleEnum = pgEnum("user_role", ["admin", "trader", "viewer"])
+
+// Condition Category Enum
+export const conditionCategoryEnum = pgEnum("condition_category", [
+	"indicator",
+	"price_action",
+	"market_context",
+	"custom",
+])
+
+// Condition Tier Enum (cumulative ranking: mandatory → tier_2 → tier_3)
+export const conditionTierEnum = pgEnum("condition_tier", ["mandatory", "tier_2", "tier_3"])
+
+// Setup Rank Enum (A = mandatory only, AA = + tier_2, AAA = all tiers met)
+export const setupRankEnum = pgEnum("setup_rank", ["A", "AA", "AAA"])
+
 // ==========================================
 // AUTH TABLES (Phase 10)
 // ==========================================
@@ -63,6 +80,7 @@ export const users = pgTable(
 		passwordHash: varchar("password_hash", { length: 255 }).notNull(),
 		image: varchar("image", { length: 255 }),
 		isAdmin: boolean("is_admin").default(false).notNull(),
+		role: userRoleEnum("role").default("trader").notNull(),
 
 		// Encrypted Data Encryption Key (envelope encryption)
 		encryptedDek: text("encrypted_dek"),
@@ -328,6 +346,7 @@ export const strategies = pgTable(
 		targetRMultiple: decimal("target_r_multiple", { precision: 8, scale: 2 }),
 		maxRiskPercent: decimal("max_risk_percent", { precision: 5, scale: 2 }),
 		screenshotUrl: varchar("screenshot_url", { length: 500 }),
+		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
 		notes: text("notes"),
 		isActive: boolean("is_active").default(true),
 		createdAt: timestamp("created_at", { withTimezone: true })
@@ -407,6 +426,12 @@ export const trades = pgTable(
 		strategyId: uuid("strategy_id").references(() => strategies.id, {
 			onDelete: "set null",
 		}),
+
+		// Setup Quality Ranking (A/AA/AAA based on conditions met)
+		setupRank: setupRankEnum("setup_rank"),
+		// Trade screenshot
+		screenshotUrl: varchar("screenshot_url", { length: 500 }),
+		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
 
 		// Compliance
 		followedPlan: boolean("followed_plan"),
@@ -837,6 +862,86 @@ export const monthlyPlans = pgTable(
 	]
 )
 
+// ==========================================
+// PLAYBOOK ENHANCEMENT TABLES (Phase 13)
+// ==========================================
+
+// Trading Conditions Table (reusable conditions, user-level — like tags)
+export const tradingConditions = pgTable(
+	"trading_conditions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		name: varchar("name", { length: 100 }).notNull(),
+		description: text("description"),
+		category: conditionCategoryEnum("category").notNull(),
+		isActive: boolean("is_active").default(true).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("trading_conditions_user_idx").on(table.userId),
+		uniqueIndex("trading_conditions_user_name_idx").on(table.userId, table.name),
+	]
+)
+
+// Strategy Conditions Junction Table (links conditions to playbooks with tier)
+export const strategyConditions = pgTable(
+	"strategy_conditions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		strategyId: uuid("strategy_id")
+			.notNull()
+			.references(() => strategies.id, { onDelete: "cascade" }),
+		conditionId: uuid("condition_id")
+			.notNull()
+			.references(() => tradingConditions.id, { onDelete: "cascade" }),
+		tier: conditionTierEnum("tier").notNull(),
+		sortOrder: integer("sort_order").default(0).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("strategy_conditions_strategy_idx").on(table.strategyId),
+		index("strategy_conditions_condition_idx").on(table.conditionId),
+		uniqueIndex("strategy_conditions_unique_idx").on(table.strategyId, table.conditionId),
+	]
+)
+
+// Strategy Scenarios Table (visual examples for a playbook)
+export const strategyScenarios = pgTable(
+	"strategy_scenarios",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		strategyId: uuid("strategy_id")
+			.notNull()
+			.references(() => strategies.id, { onDelete: "cascade" }),
+		name: varchar("name", { length: 200 }).notNull(),
+		description: text("description"),
+		sortOrder: integer("sort_order").default(0).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [index("strategy_scenarios_strategy_idx").on(table.strategyId)]
+)
+
+// Scenario Images Table (up to 3 images per scenario)
+export const scenarioImages = pgTable(
+	"scenario_images",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		scenarioId: uuid("scenario_id")
+			.notNull()
+			.references(() => strategyScenarios.id, { onDelete: "cascade" }),
+		url: varchar("url", { length: 500 }).notNull(),
+		s3Key: varchar("s3_key", { length: 500 }).notNull(),
+		sortOrder: integer("sort_order").default(0).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [index("scenario_images_scenario_idx").on(table.scenarioId)]
+)
+
 // Settings Table (key-value store for misc settings)
 export const settings = pgTable("settings", {
 	id: uuid("id").primaryKey().defaultRandom(),
@@ -929,6 +1034,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	strategies: many(strategies),
 	tags: many(tags),
 	riskManagementProfiles: many(riskManagementProfiles),
+	tradingConditions: many(tradingConditions),
 }))
 
 // Trading Account Relations
@@ -1035,6 +1141,8 @@ export const strategiesRelations = relations(strategies, ({ one, many }) => ({
 		references: [tradingAccounts.id],
 	}),
 	trades: many(trades),
+	strategyConditions: many(strategyConditions),
+	scenarios: many(strategyScenarios),
 }))
 
 export const tagsRelations = relations(tags, ({ one, many }) => ({
@@ -1155,6 +1263,41 @@ export const monthlyPlansRelations = relations(monthlyPlans, ({ one }) => ({
 	}),
 }))
 
+// Playbook Enhancement Relations
+export const tradingConditionsRelations = relations(tradingConditions, ({ one, many }) => ({
+	user: one(users, {
+		fields: [tradingConditions.userId],
+		references: [users.id],
+	}),
+	strategyConditions: many(strategyConditions),
+}))
+
+export const strategyConditionsRelations = relations(strategyConditions, ({ one }) => ({
+	strategy: one(strategies, {
+		fields: [strategyConditions.strategyId],
+		references: [strategies.id],
+	}),
+	condition: one(tradingConditions, {
+		fields: [strategyConditions.conditionId],
+		references: [tradingConditions.id],
+	}),
+}))
+
+export const strategyScenariosRelations = relations(strategyScenarios, ({ one, many }) => ({
+	strategy: one(strategies, {
+		fields: [strategyScenarios.strategyId],
+		references: [strategies.id],
+	}),
+	images: many(scenarioImages),
+}))
+
+export const scenarioImagesRelations = relations(scenarioImages, ({ one }) => ({
+	scenario: one(strategyScenarios, {
+		fields: [scenarioImages.scenarioId],
+		references: [strategyScenarios.id],
+	}),
+}))
+
 // ==========================================
 // TYPE EXPORTS
 // ==========================================
@@ -1244,3 +1387,16 @@ export type NewRiskManagementProfileRow = typeof riskManagementProfiles.$inferIn
 
 export type NotaImport = typeof notaImports.$inferSelect
 export type NewNotaImport = typeof notaImports.$inferInsert
+
+// Playbook Enhancement Types
+export type TradingCondition = typeof tradingConditions.$inferSelect
+export type NewTradingCondition = typeof tradingConditions.$inferInsert
+
+export type StrategyCondition = typeof strategyConditions.$inferSelect
+export type NewStrategyCondition = typeof strategyConditions.$inferInsert
+
+export type StrategyScenario = typeof strategyScenarios.$inferSelect
+export type NewStrategyScenario = typeof strategyScenarios.$inferInsert
+
+export type ScenarioImage = typeof scenarioImages.$inferSelect
+export type NewScenarioImage = typeof scenarioImages.$inferInsert

@@ -3,7 +3,7 @@
  * Run with: npx tsx src/db/seed-risk-profiles.ts
  *
  * Creates two built-in profiles from the risk management documentation:
- * 1. Bravo Risk Management (1.25% per trade, anti-martingale recovery, 30% compounding)
+ * 1. Bravo Risk Management (1.25% per trade, anti-martingale recovery, gain sequence)
  * 2. TSR Iniciante (R$80 base, 2 contracts max, single-target gain mode)
  */
 
@@ -55,8 +55,25 @@ const seedRiskProfiles = async () => {
 			stopAfterSequence: true,
 		},
 		gainMode: {
-			type: "compounding",
-			reinvestmentPercent: 30,
+			type: "gainSequence",
+			sequence: [
+				{
+					// T2 after win: 100% of base (1x risk)
+					riskCalculation: { type: "percentOfBase", percent: 100 },
+					maxContractsOverride: null,
+				},
+				{
+					// T3: 50% of base (0.5x risk)
+					riskCalculation: { type: "percentOfBase", percent: 50 },
+					maxContractsOverride: null,
+				},
+				{
+					// T4: 25% of base (0.25x risk)
+					riskCalculation: { type: "percentOfBase", percent: 25 },
+					maxContractsOverride: null,
+				},
+			],
+			repeatLastStep: true, // T5+ keep using 25% of base
 			stopOnFirstLoss: true,
 			dailyTargetCents: 150000, // R$1,500 fallback (3.75% of R$40k)
 		},
@@ -127,7 +144,7 @@ const seedRiskProfiles = async () => {
 	const profiles = [
 		{
 			name: "Bravo Risk Management",
-			description: "Percentage-based risk: 1.25% per trade, 2.5% daily loss, 5% weekly loss, 3.75% daily target. Anti-martingale recovery with 30% gain compounding.",
+			description: "Percentage-based risk: 1.25% per trade, 2.5% daily loss, 5% weekly loss, 3.75% daily target. Anti-martingale recovery with gain sequence (1x, 0.5x, 0.25x...).",
 			createdByUserId,
 			baseRiskCents: 50000,
 			dailyLossCents: 100000, // 2.5% of R$40k
