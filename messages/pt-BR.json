@@ -46,9 +46,18 @@
 		"collapseSidebar": "Recolher menu",
 		"openMenu": "Abrir menu",
 		"closeMenu": "Fechar menu",
+		"upload": "Clique para enviar",
+		"remove": "Remover",
 		"datePicker": {
 			"placeholder": "Selecione uma data",
 			"rangePlaceholder": "Selecione o período"
+		},
+		"imageUpload": {
+			"invalidFileType": "Tipo de arquivo inválido. Aceitos: JPEG, PNG, WebP",
+			"fileTooLarge": "Arquivo muito grande. Máx: {maxSize}MB",
+			"uploadImage": "Enviar imagem",
+			"dragAndDrop": "ou arraste e solte",
+			"acceptedFormats": "JPEG, PNG, WebP (máx {maxSize}MB)"
 		}
 	},
 	"nav": {
@@ -472,6 +481,69 @@
 			"approachingLossLimit": "Aproximando do limite de perda diário",
 			"targetReached": "ALVO ATINGIDO"
 		},
+		"liveStatus": {
+			"title": "Status ao Vivo",
+			"loading": "Carregando status...",
+			"noProfile": "Nenhum perfil de risco vinculado ao seu plano mensal. Vincule um na aba Plano para ver orientações em tempo real.",
+			"phase": {
+				"base": "Base",
+				"loss_recovery": "Recuperação",
+				"gain_mode": "Modo Ganho",
+				"normal": "Normal"
+			},
+			"metrics": {
+				"nextRisk": "Próximo Risco",
+				"baseRisk": "Base",
+				"nextTrade": "Próxima Op.",
+				"tradeNumber": "Op. #{number}",
+				"sizeDirection": "Direção do Lote",
+				"increase": "Aumentar",
+				"decrease": "Diminuir",
+				"unchanged": "Inalterado"
+			},
+			"recovery": {
+				"title": "Progresso da Recuperação",
+				"step": "Passo {current}/{total}",
+				"badge": "Recuperação {current}/{total}",
+				"exhausted": "Sequência de recuperação esgotada"
+			},
+			"stop": {
+				"shouldStop": "PARE DE OPERAR",
+				"dailyLossLimit": "Limite de perda diária atingido",
+				"dailyTargetReached": "Alvo diário atingido",
+				"recoverySequenceExhausted": "Sequência de recuperação esgotada — pare por hoje",
+				"singleTargetGainMode": "Modo alvo único — objetivo atingido",
+				"gainSequenceExhausted": "Sequência de ganho esgotada — sem mais trades",
+				"recoveryWinExit": "Ganho na recuperação — dia encerrado",
+				"maxTradesReached": "Máximo de trades atingido"
+			},
+			"gainMode": {
+				"compounding": "Compounding ({percent}% reinvestimento)",
+				"singleTarget": "Alvo único",
+				"gainSequence": "Etapa de ganho {current}/{total}"
+			},
+			"summary": {
+				"tradesCompleted": "Trades Hoje",
+				"dailyPnl": "P&L Diário",
+				"baseRisk": "Risco Base"
+			},
+			"tradeBoxes": {
+				"title": "Trades de Hoje",
+				"tradeLabel": "Trade T{number}",
+				"size": "{size} cts",
+				"risk": "Risco: {risk}"
+			},
+			"calculator": {
+				"title": "Calculadora Rápida",
+				"asset": "Ativo",
+				"selectAsset": "Selecione o ativo",
+				"stopPoints": "Stop (pts)",
+				"stopPlaceholder": "ex: 50",
+				"result": "{contracts} contratos",
+				"actualRisk": "Risco real",
+				"noStop": "Informe a distância do stop"
+			}
+		},
 		"checklist": {
 			"title": "Checklist Diário",
 			"addItem": "Adicionar item",
@@ -673,6 +745,7 @@
 				"gainMode": "Modo de Ganho",
 				"gainModeCompounding": "Composição ({percent}% reinvestimento)",
 				"gainModeSingleTarget": "Meta Única",
+				"gainModeGainSequence": "Sequência de ganho ({steps} etapas)",
 				"seeDecisionTree": "Ver árvore de decisão"
 			},
 			"decisionTree": {
@@ -697,6 +770,9 @@
 				"reinvest": "Reinvestir {percent}% dos ganhos",
 				"stopOnFirstLoss": "Parar no primeiro loss",
 				"singleTarget": "Meta Única",
+				"gainSequence": "Sequência de Ganho",
+				"gainSequenceStep": "Etapa {number}",
+				"gainSequenceRepeat": "Repetir última etapa indefinidamente",
 				"dailyTarget": "Meta Diária",
 				"tradesToTarget": "{count, plural, =1 {1 trade vencedor = meta diária} other {~# trades vencedores = meta diária}}",
 				"cascadingLimits": "Limites em Cascata",
@@ -709,75 +785,76 @@
 				"constraints": "Restrições de Execução",
 				"operatingHours": "Horário de Operação",
 				"noLimit": "Sem limite",
-			"tabs": {
-				"overview": "Visão Geral",
-				"paths": "Caminhos"
-			},
-			"paths": {
-				"ariaLabel": "Árvore de decisão completa mostrando todos os possíveis resultados",
-				"tradeRoot": "TRADE {number}",
-				"trade": "TRADE {number}",
-				"risk": "Risco: {amount}",
-				"loss": "LOSS {amount}",
-				"gain": "GAIN {amount}",
-				"noRecovery": "Nenhum passo de recuperação configurado para este perfil.",
-				"probability": "P = {value}",
-				"assumedWinRate": "Assumindo 50% de taxa de acerto",
-				"target": "META",
-				"exit": "SAÍDA",
-				"continues": "continua...",
+				"tabs": {
+					"overview": "Visão Geral",
+					"paths": "Caminhos"
+				},
+				"paths": {
+					"ariaLabel": "Árvore de decisão completa mostrando todos os possíveis resultados",
+					"tradeRoot": "TRADE {number}",
+					"trade": "TRADE {number}",
+					"risk": "Risco: {amount}",
+					"loss": "LOSS {amount}",
+					"gain": "GAIN {amount}",
+					"noRecovery": "Nenhum passo de recuperação configurado para este perfil.",
+					"probability": "P = {value}",
+					"assumedWinRate": "Assumindo 50% de taxa de acerto",
+					"target": "META",
+					"exit": "SAÍDA",
+					"continues": "continua...",
+					"stop": "STOP",
+					"accGains": "acc = {amount}"
+				},
+				"progression": {
+					"title": "Progressão do Dia (Pior Cenário)",
+					"totalExposure": "Exposição Total",
+					"thenStop": "Parar de operar"
+				},
+				"context": {
+					"title": "Contexto",
+					"dayStart": "Início do dia de operação. Sem trades anteriores.",
+					"afterLoss": "Trade {previousNumber} resultou em perda.",
+					"cumulativeLoss": "Perda acumulada até agora: {amount}"
+				},
+				"setup": {
+					"title": "Setup do Trade",
+					"calculatedAs": "Calculado como"
+				},
+				"outcome": {
+					"ifWin": "Se GAIN",
+					"ifLoss": "Se LOSS",
+					"next": "O que acontece a seguir:",
+					"enterGainMode": "Entrar no modo de ganho",
+					"compoundingDetail": "Reinvestir {percent}% dos ganhos no próximo trade",
+					"singleTargetHit": "Meta diária alcançada — parar de operar",
+					"gainSequenceDetail": "Sequência de ganho com {steps} etapas — risco diminui por etapa",
+					"stopOnFirstLossActive": "Parar composição no primeiro loss",
+					"enterRecovery": "Entrar na sequência de recuperação de perdas",
+					"proceedToNext": "Prosseguir para Trade {nextNumber}",
+					"recoveryComplete": "Sequência de recuperação completa",
+					"continueRecovery": "Continuar recuperação — executar Trade {nextNumber}",
+					"maxLossReached": "Perda diária máxima de {amount} alcançada — parar de operar",
+					"sequenceExhausted": "Sequência de recuperação esgotada — parar de operar",
+					"stopForDay": "Parar de operar hoje"
+				},
+				"cumulative": {
+					"worstCase": "Pior cenário até T{number}",
+					"bufferRemaining": "Buffer restante até limite diário: {amount}"
+				},
 				"stop": "STOP",
-				"accGains": "acc = {amount}"
-			},
-			"progression": {
-				"title": "Progressão do Dia (Pior Cenário)",
-				"totalExposure": "Exposição Total",
-				"thenStop": "Parar de operar"
-			},
-			"context": {
-				"title": "Contexto",
-				"dayStart": "Início do dia de operação. Sem trades anteriores.",
-				"afterLoss": "Trade {previousNumber} resultou em perda.",
-				"cumulativeLoss": "Perda acumulada até agora: {amount}"
-			},
-			"setup": {
-				"title": "Setup do Trade",
-				"calculatedAs": "Calculado como"
-			},
-			"outcome": {
-				"ifWin": "Se GAIN",
-				"ifLoss": "Se LOSS",
-				"next": "O que acontece a seguir:",
-				"enterGainMode": "Entrar no modo de ganho",
-				"compoundingDetail": "Reinvestir {percent}% dos ganhos no próximo trade",
-				"singleTargetHit": "Meta diária alcançada — parar de operar",
-				"stopOnFirstLossActive": "Parar composição no primeiro loss",
-				"enterRecovery": "Entrar na sequência de recuperação de perdas",
-				"proceedToNext": "Prosseguir para Trade {nextNumber}",
-				"recoveryComplete": "Sequência de recuperação completa",
-				"continueRecovery": "Continuar recuperação — executar Trade {nextNumber}",
-				"maxLossReached": "Perda diária máxima de {amount} alcançada — parar de operar",
-				"sequenceExhausted": "Sequência de recuperação esgotada — parar de operar",
-				"stopForDay": "Parar de operar hoje"
-			},
-			"cumulative": {
-				"worstCase": "Pior cenário até T{number}",
-				"bufferRemaining": "Buffer restante até limite diário: {amount}"
-			},
-			"stop": "STOP",
-			"winExample": "Gain (1:2): +{amount}",
-			"lossExample": "Loss: -{amount}",
-			"scenarios": {
-				"title": "Cenários (1:2 R:R)",
-				"colScenario": "Cenário",
-				"colGain": "Ganho",
-				"colNet": "Líquido",
-				"colAction": "Ação",
-				"winAt": "Gain no T{number}",
-				"allLosses": "Todas perdas",
-				"enterGainMode": "Modo ganho",
-				"stopDay": "Parar no dia"
-			}
+				"winExample": "Gain (1:2): +{amount}",
+				"lossExample": "Loss: -{amount}",
+				"scenarios": {
+					"title": "Cenários (1:2 R:R)",
+					"colScenario": "Cenário",
+					"colGain": "Ganho",
+					"colNet": "Líquido",
+					"colAction": "Ação",
+					"winAt": "Gain no T{number}",
+					"allLosses": "Todas perdas",
+					"enterGainMode": "Modo ganho",
+					"stopDay": "Parar no dia"
+				}
 			},
 			"preview": {
 				"title": "Prévia em Tempo Real",
@@ -916,6 +993,10 @@
 		"contractsExecutedPlaceholder": "{count} (padrão)",
 		"contractsAutoCalculated": "Auto-calculado",
 		"inlineCreateTag": "Criar nova tag",
+		"setupRank": "Ranking do Setup",
+		"setupRankHint": "Avalie a qualidade deste setup baseado em quantas condições da estratégia foram atendidas",
+		"tradeScreenshot": "Screenshot do Trade",
+		"tradeScreenshotHint": "Opcional: Envie uma captura de tela do gráfico desta execução",
 		"validation": {
 			"stopLossMustBeBelowEntry": "Stop loss deve estar abaixo do preço de entrada para trades de compra",
 			"stopLossMustBeAboveEntry": "Stop loss deve estar acima do preço de entrada para trades de venda",
@@ -1522,6 +1603,92 @@
 			"winRate": "Taxa de Acerto",
 			"avgR": "R Médio",
 			"profitFactor": "Fator de Lucro"
+		},
+		"conditions": {
+			"title": "Condições de Trading",
+			"mandatory": "Obrigatórias",
+			"tier2": "Nível 2",
+			"tier3": "Nível 3",
+			"tierMandatory": "Obrigatórias",
+			"tierTwo": "Nível 2",
+			"tierThree": "Nível 3",
+			"tierMandatoryHint": "Obrigatórias para qualquer setup válido (ranking A)",
+			"tierTwoHint": "Sinais de confirmação adicionais (ranking AA)",
+			"tierThreeHint": "Condições ideais para máxima qualidade (ranking AAA)",
+			"rankBreakdown": "Composição do ranking",
+			"rankPreview": "Prévia do ranking",
+			"rankA": "A — Condições obrigatórias atendidas",
+			"rankAA": "AA — Obrigatórias + Nível 2 atendidas",
+			"rankAAA": "AAA — Todas as condições atendidas",
+			"conditionCount": "{count} condição",
+			"conditionCountPlural": "{count} condições",
+			"createNew": "Criar Nova Condição",
+			"createFirst": "Criar Primeira Condição",
+			"noConditionsYet": "Nenhuma condição atribuída ainda",
+			"assignHint": "Atribua condições e defina níveis para ranking de setup (A/AA/AAA)",
+			"noConditions": "Nenhuma condição disponível. Crie algumas em Configurações primeiro."
+		},
+		"scenarios": {
+			"title": "Cenários",
+			"addScenario": "Adicionar Cenário",
+			"addScenarioDescription": "Adicione um exemplo visual de como este setup aparece na prática",
+			"editScenario": "Editar Cenário",
+			"editScenarioDescription": "Atualize este cenário",
+			"deleteScenario": "Excluir Cenário",
+			"createScenario": "Criar Cenário",
+			"name": "Nome",
+			"namePlaceholder": "ex: Engolfo de alta no suporte",
+			"description": "Descrição",
+			"description_field": "Descrição",
+			"descriptionPlaceholder": "Descreva o que torna este cenário válido...",
+			"images": "Imagens",
+			"imagesHint": "Até 3 imagens por cenário",
+			"noScenarios": "Nenhum cenário ainda",
+			"noScenariosHint": "Adicione exemplos visuais de como este setup aparece na prática",
+			"deleteTitle": "Excluir Cenário",
+			"deleteDescription": "Isto excluirá permanentemente \"{name}\" e todas as suas imagens. Esta ação não pode ser desfeita.",
+			"deleteConfirm": "Isto excluirá permanentemente este cenário e todas as suas imagens.",
+			"saveFirst": "Salve esta estratégia primeiro, depois adicione cenários visuais na página de edição."
+		},
+		"form": {
+			"basicInfo": "Informações Básicas",
+			"codeLabel": "Código *",
+			"codePlaceholder": "ex: PWBK",
+			"codeHint": "Identificador curto (3-10 caracteres)",
+			"strategyNameLabel": "Nome da Estratégia *",
+			"strategyNamePlaceholder": "ex: Rompimento 15m, Reversão Sessão de Londres",
+			"descriptionLabel": "Descrição",
+			"descriptionPlaceholder": "Breve descrição desta estratégia...",
+			"referenceImage": "Imagem de Referência",
+			"referenceImageHint": "Opcional: Envie um gráfico exemplo ou screenshot do setup",
+			"rulesCriteria": "Regras e Critérios",
+			"entryCriteriaLabel": "Critérios de Entrada",
+			"entryCriteriaPlaceholder": "Liste suas condições de entrada:\n- Condição 1\n- Condição 2\n- Condição 3",
+			"entryCriteriaHint": "Quais condições devem ser atendidas antes de entrar em uma operação?",
+			"exitCriteriaLabel": "Critérios de Saída",
+			"exitCriteriaPlaceholder": "Liste suas regras de saída:\n- Take profit em...\n- Stop loss em...\n- Trailing stop quando...",
+			"exitCriteriaHint": "Como você gerencia a operação e quando sai?",
+			"additionalNotes": "Notas Adicionais",
+			"notesPlaceholder": "Outras notas importantes sobre esta estratégia...",
+			"riskSettings": "Configurações de Risco",
+			"riskManagementRules": "Regras de Gerenciamento de Risco",
+			"riskRulesPlaceholder": "Suas regras de risco:\n- Tamanho máximo da posição...\n- Colocação do stop loss...\n- Quando evitar operar...",
+			"targetRMultiple": "R-Múltiplo Alvo",
+			"targetRPlaceholder": "ex: 2,0",
+			"targetRHint": "Sua razão alvo de retorno:risco",
+			"maxRiskPerTrade": "Risco Máx. por Operação (%)",
+			"maxRiskPlaceholder": "ex: 1,0",
+			"maxRiskHint": "Porcentagem máxima da conta a arriscar",
+			"tradingConditions": "Condições de Trading",
+			"tradingConditionsHint": "Atribua condições a esta estratégia e defina níveis para ranking de setup (A/AA/AAA)",
+			"tradingConditionsEditHint": "Atribua condições e defina níveis para ranking de setup (A/AA/AAA)",
+			"scenariosHint": "Adicione exemplos visuais de como este setup aparece na prática",
+			"scenariosSaveFirst": "Salve esta estratégia primeiro, depois adicione cenários visuais na página de edição.",
+			"creating": "Criando...",
+			"createStrategy": "Criar Estratégia",
+			"loadingStrategy": "Carregando estratégia...",
+			"strategyNotFound": "Estratégia não encontrada",
+			"backToPlaybook": "Voltar ao Playbook"
 		}
 	},
 	"reports": {
@@ -1592,7 +1759,9 @@
 			"assets": "Ativos",
 			"timeframes": "Timeframes",
 			"riskProfiles": "Perfis de Risco",
-			"general": "Geral"
+			"general": "Geral",
+			"users": "Usuários",
+			"conditions": "Condições"
 		},
 		"profile": {
 			"profileInfo": "Informações do Perfil",
@@ -1845,7 +2014,58 @@
 				}
 			}
 		},
-		"goToSettings": "Configurações → {section}"
+		"goToSettings": "Configurações → {section}",
+		"users": {
+			"title": "Gerenciamento de Usuários",
+			"searchUsers": "Buscar por nome ou email...",
+			"name": "Nome",
+			"email": "Email",
+			"accounts": "Contas",
+			"joined": "Cadastro",
+			"role": "Papel",
+			"changeRole": "Alterar papel",
+			"you": "Você",
+			"default": "Padrão",
+			"noUsers": "Nenhum usuário encontrado",
+			"noAccounts": "Sem contas de trading",
+			"expandAccounts": "Mostrar contas",
+			"collapseAccounts": "Ocultar contas",
+			"roleUpdated": "Papel atualizado com sucesso",
+			"roleUpdateError": "Falha ao atualizar papel",
+			"roles": {
+				"admin": "Admin",
+				"trader": "Trader",
+				"viewer": "Visualizador"
+			}
+		},
+		"conditions": {
+			"title": "Condições de Trading",
+			"description": "Condições reutilizáveis para ranking de setup das estratégias",
+			"addCondition": "Adicionar Condição",
+			"addConditionDescription": "Crie uma nova condição de trading reutilizável para suas estratégias",
+			"editCondition": "Editar Condição",
+			"editConditionDescription": "Atualize esta condição de trading",
+			"createCondition": "Criar Condição",
+			"name": "Nome",
+			"namePlaceholder": "ex: RSI > 40, Acima da MA21",
+			"category": "Categoria",
+			"description_field": "Descrição",
+			"descriptionPlaceholder": "Breve descrição de quando esta condição se aplica...",
+			"categoryAll": "Todas",
+			"categoryIndicator": "Indicador",
+			"categoryPriceAction": "Price Action",
+			"categoryMarketContext": "Contexto de Mercado",
+			"categoryCustom": "Personalizada",
+			"noConditions": "Nenhuma condição de trading ainda",
+			"noConditionsHint": "Crie condições para montar checklists estruturados para suas estratégias",
+			"noConditionsInFilter": "Nenhuma condição nesta categoria",
+			"deleteTitle": "Excluir Condição",
+			"deleteDescription": "Isto removerá a condição de todas as estratégias vinculadas. Esta ação não pode ser desfeita.",
+			"conditionCreated": "Condição criada com sucesso",
+			"conditionUpdated": "Condição atualizada com sucesso",
+			"conditionDeleted": "Condição excluída com sucesso",
+			"conditionError": "Falha ao salvar condição"
+		}
 	},
 	"monthly": {
 		"title": "Resultados Mensais",
@@ -2025,7 +2245,8 @@
 			"invalidCredentials": "Email ou senha inválidos",
 			"success": "Login realizado com sucesso",
 			"showPassword": "Mostrar senha",
-			"hidePassword": "Ocultar senha"
+			"hidePassword": "Ocultar senha",
+			"forgotPassword": "Esqueceu sua senha?"
 		},
 		"register": {
 			"title": "Criar Conta",
@@ -2220,5 +2441,42 @@
 		"editPlaybook": "Editar Playbook",
 		"playbookDetails": "Detalhes do Playbook",
 		"newPlaybook": "Novo Playbook"
+	},
+	"forgotPassword": {
+		"title": "Redefinir Senha",
+		"subtitle": "Informe seu email e enviaremos um código de recuperação",
+		"emailLabel": "Email",
+		"sendCode": "Enviar Código",
+		"codeTitle": "Digite o Código de Verificação",
+		"codeSentTo": "Enviamos um código de 6 dígitos para {email}",
+		"codeLabel": "Código de verificação",
+		"verify": "Verificar Código",
+		"resend": "Reenviar código",
+		"resendIn": "Reenviar em {seconds}s",
+		"backToEmail": "Alterar email",
+		"backToLogin": "Voltar ao login",
+		"newPasswordTitle": "Definir Nova Senha",
+		"newPasswordSubtitle": "Seu código foi verificado. Escolha uma nova senha.",
+		"newPassword": "Nova Senha",
+		"confirmPassword": "Confirmar Senha",
+		"resetButton": "Redefinir Senha",
+		"showPassword": "Mostrar senha",
+		"hidePassword": "Ocultar senha",
+		"success": "Senha redefinida com sucesso. Você já pode entrar.",
+		"invalidCode": "Código inválido ou expirado",
+		"expired": "Código expirado. Por favor, solicite um novo.",
+		"passwordMismatch": "As senhas não coincidem",
+		"resetFailed": "Falha ao redefinir senha. Tente novamente.",
+		"tooManyAttempts": "Muitas tentativas. Tente novamente mais tarde."
+	},
+	"roles": {
+		"admin": "Admin",
+		"trader": "Trader",
+		"viewer": "Visualizador"
+	},
+	"accessDenied": {
+		"title": "Acesso Negado",
+		"message": "Você não tem permissão para acessar este recurso.",
+		"redirecting": "Redirecionando para o dashboard..."
 	}
 }

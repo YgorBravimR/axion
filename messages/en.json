@@ -46,9 +46,18 @@
 		"collapseSidebar": "Collapse sidebar",
 		"openMenu": "Open menu",
 		"closeMenu": "Close menu",
+		"upload": "Click to upload",
+		"remove": "Remove",
 		"datePicker": {
 			"placeholder": "Select date",
 			"rangePlaceholder": "Select date range"
+		},
+		"imageUpload": {
+			"invalidFileType": "Invalid file type. Accepted: JPEG, PNG, WebP",
+			"fileTooLarge": "File too large. Max: {maxSize}MB",
+			"uploadImage": "Upload image",
+			"dragAndDrop": "or drag and drop",
+			"acceptedFormats": "JPEG, PNG, WebP (max {maxSize}MB)"
 		}
 	},
 	"nav": {
@@ -472,6 +481,69 @@
 			"approachingLossLimit": "Approaching daily loss limit",
 			"targetReached": "TARGET REACHED"
 		},
+		"liveStatus": {
+			"title": "Live Trading Status",
+			"loading": "Loading status...",
+			"noProfile": "No risk profile linked to your monthly plan. Link one in the Plan tab to see live trading guidance.",
+			"phase": {
+				"base": "Base",
+				"loss_recovery": "Recovery",
+				"gain_mode": "Gain Mode",
+				"normal": "Normal"
+			},
+			"metrics": {
+				"nextRisk": "Next Risk",
+				"baseRisk": "Base",
+				"nextTrade": "Next Trade",
+				"tradeNumber": "Trade #{number}",
+				"sizeDirection": "Size Direction",
+				"increase": "Increase",
+				"decrease": "Decrease",
+				"unchanged": "Unchanged"
+			},
+			"recovery": {
+				"title": "Recovery Progress",
+				"step": "Step {current}/{total}",
+				"badge": "Recovery Step {current}/{total}",
+				"exhausted": "Recovery sequence exhausted"
+			},
+			"stop": {
+				"shouldStop": "STOP TRADING",
+				"dailyLossLimit": "Daily loss limit reached",
+				"dailyTargetReached": "Daily target reached",
+				"recoverySequenceExhausted": "Recovery sequence exhausted — stop for the day",
+				"singleTargetGainMode": "Single target gain mode — goal reached",
+				"gainSequenceExhausted": "Gain sequence exhausted — no more trades",
+				"recoveryWinExit": "Recovery win — day complete",
+				"maxTradesReached": "Maximum trades reached"
+			},
+			"gainMode": {
+				"compounding": "Compounding ({percent}% reinvest)",
+				"singleTarget": "Single target",
+				"gainSequence": "Gain step {current}/{total}"
+			},
+			"summary": {
+				"tradesCompleted": "Trades Today",
+				"dailyPnl": "Daily P&L",
+				"baseRisk": "Base Risk"
+			},
+			"tradeBoxes": {
+				"title": "Today's Trades",
+				"tradeLabel": "Trade T{number}",
+				"size": "{size} cts",
+				"risk": "Risk: {risk}"
+			},
+			"calculator": {
+				"title": "Quick Calculator",
+				"asset": "Asset",
+				"selectAsset": "Select asset",
+				"stopPoints": "Stop (pts)",
+				"stopPlaceholder": "e.g. 50",
+				"result": "{contracts} contracts",
+				"actualRisk": "Actual risk",
+				"noStop": "Enter stop distance"
+			}
+		},
 		"checklist": {
 			"title": "Daily Checklist",
 			"addItem": "Add item",
@@ -673,6 +745,7 @@
 				"gainMode": "Gain Mode",
 				"gainModeCompounding": "Compounding ({percent}% reinvest)",
 				"gainModeSingleTarget": "Single Target",
+				"gainModeGainSequence": "Gain sequence ({steps} steps)",
 				"seeDecisionTree": "See decision tree"
 			},
 			"decisionTree": {
@@ -697,6 +770,9 @@
 				"reinvest": "Reinvest {percent}% of gains",
 				"stopOnFirstLoss": "Stop on first loss",
 				"singleTarget": "Single Target",
+				"gainSequence": "Gain Sequence",
+				"gainSequenceStep": "Step {number}",
+				"gainSequenceRepeat": "Repeat last step indefinitely",
 				"dailyTarget": "Daily Target",
 				"tradesToTarget": "{count, plural, =1 {1 winning trade = daily goal} other {~# winning trades = daily goal}}",
 				"cascadingLimits": "Cascading Limits",
@@ -709,75 +785,76 @@
 				"constraints": "Execution Constraints",
 				"operatingHours": "Operating Hours",
 				"noLimit": "No limit",
-			"tabs": {
-				"overview": "Overview",
-				"paths": "Paths"
-			},
-			"paths": {
-				"ariaLabel": "Complete decision tree showing all possible trade outcomes",
-				"tradeRoot": "TRADE {number}",
-				"trade": "TRADE {number}",
-				"risk": "Risk: {amount}",
-				"loss": "LOSS {amount}",
-				"gain": "GAIN {amount}",
-				"noRecovery": "No recovery steps configured for this profile.",
-				"probability": "P = {value}",
-				"assumedWinRate": "Assuming 50% win rate",
-				"target": "TARGET",
-				"exit": "EXIT",
-				"continues": "continues...",
+				"tabs": {
+					"overview": "Overview",
+					"paths": "Paths"
+				},
+				"paths": {
+					"ariaLabel": "Complete decision tree showing all possible trade outcomes",
+					"tradeRoot": "TRADE {number}",
+					"trade": "TRADE {number}",
+					"risk": "Risk: {amount}",
+					"loss": "LOSS {amount}",
+					"gain": "GAIN {amount}",
+					"noRecovery": "No recovery steps configured for this profile.",
+					"probability": "P = {value}",
+					"assumedWinRate": "Assuming 50% win rate",
+					"target": "TARGET",
+					"exit": "EXIT",
+					"continues": "continues...",
+					"stop": "STOP",
+					"accGains": "acc = {amount}"
+				},
+				"progression": {
+					"title": "Full Day Progression (Worst Case)",
+					"totalExposure": "Total Exposure",
+					"thenStop": "Stop trading"
+				},
+				"context": {
+					"title": "Context",
+					"dayStart": "Start of trading day. No previous trades.",
+					"afterLoss": "Trade {previousNumber} resulted in a loss.",
+					"cumulativeLoss": "Cumulative loss so far: {amount}"
+				},
+				"setup": {
+					"title": "Trade Setup",
+					"calculatedAs": "Calculated as"
+				},
+				"outcome": {
+					"ifWin": "If WIN",
+					"ifLoss": "If LOSS",
+					"next": "What happens next:",
+					"enterGainMode": "Enter gain mode",
+					"compoundingDetail": "Reinvest {percent}% of gains into next trade",
+					"singleTargetHit": "Daily goal achieved — stop trading",
+					"gainSequenceDetail": "Gain sequence with {steps} steps — risk decreases per step",
+					"stopOnFirstLossActive": "Stop compounding on first loss",
+					"enterRecovery": "Enter loss recovery sequence",
+					"proceedToNext": "Proceed to Trade {nextNumber}",
+					"recoveryComplete": "Recovery sequence complete",
+					"continueRecovery": "Continue recovery — execute Trade {nextNumber}",
+					"maxLossReached": "Max daily loss of {amount} reached — stop trading",
+					"sequenceExhausted": "Recovery sequence exhausted — stop trading",
+					"stopForDay": "Stop trading for the day"
+				},
+				"cumulative": {
+					"worstCase": "Worst case through T{number}",
+					"bufferRemaining": "Remaining buffer to daily limit: {amount}"
+				},
 				"stop": "STOP",
-				"accGains": "acc = {amount}"
-			},
-			"progression": {
-				"title": "Full Day Progression (Worst Case)",
-				"totalExposure": "Total Exposure",
-				"thenStop": "Stop trading"
-			},
-			"context": {
-				"title": "Context",
-				"dayStart": "Start of trading day. No previous trades.",
-				"afterLoss": "Trade {previousNumber} resulted in a loss.",
-				"cumulativeLoss": "Cumulative loss so far: {amount}"
-			},
-			"setup": {
-				"title": "Trade Setup",
-				"calculatedAs": "Calculated as"
-			},
-			"outcome": {
-				"ifWin": "If WIN",
-				"ifLoss": "If LOSS",
-				"next": "What happens next:",
-				"enterGainMode": "Enter gain mode",
-				"compoundingDetail": "Reinvest {percent}% of gains into next trade",
-				"singleTargetHit": "Daily goal achieved — stop trading",
-				"stopOnFirstLossActive": "Stop compounding on first loss",
-				"enterRecovery": "Enter loss recovery sequence",
-				"proceedToNext": "Proceed to Trade {nextNumber}",
-				"recoveryComplete": "Recovery sequence complete",
-				"continueRecovery": "Continue recovery — execute Trade {nextNumber}",
-				"maxLossReached": "Max daily loss of {amount} reached — stop trading",
-				"sequenceExhausted": "Recovery sequence exhausted — stop trading",
-				"stopForDay": "Stop trading for the day"
-			},
-			"cumulative": {
-				"worstCase": "Worst case through T{number}",
-				"bufferRemaining": "Remaining buffer to daily limit: {amount}"
-			},
-			"stop": "STOP",
-			"winExample": "Win (1:2): +{amount}",
-			"lossExample": "Loss: -{amount}",
-			"scenarios": {
-				"title": "Scenarios (1:2 R:R)",
-				"colScenario": "Scenario",
-				"colGain": "Gain",
-				"colNet": "Net",
-				"colAction": "Action",
-				"winAt": "Win at T{number}",
-				"allLosses": "All losses",
-				"enterGainMode": "Gain mode",
-				"stopDay": "Stop for the day"
-			}
+				"winExample": "Win (1:2): +{amount}",
+				"lossExample": "Loss: -{amount}",
+				"scenarios": {
+					"title": "Scenarios (1:2 R:R)",
+					"colScenario": "Scenario",
+					"colGain": "Gain",
+					"colNet": "Net",
+					"colAction": "Action",
+					"winAt": "Win at T{number}",
+					"allLosses": "All losses",
+					"enterGainMode": "Gain mode",
+					"stopDay": "Stop for the day"
+				}
 			},
 			"preview": {
 				"title": "Live Preview",
@@ -916,6 +993,10 @@
 		"contractsExecutedPlaceholder": "{count} (default)",
 		"contractsAutoCalculated": "Auto-calculated",
 		"inlineCreateTag": "Create new tag",
+		"setupRank": "Setup Rank",
+		"setupRankHint": "Rate this setup quality based on how many strategy conditions were met",
+		"tradeScreenshot": "Trade Screenshot",
+		"tradeScreenshotHint": "Optional: Upload a chart screenshot of this trade execution",
 		"validation": {
 			"stopLossMustBeBelowEntry": "Stop loss must be below entry price for long trades",
 			"stopLossMustBeAboveEntry": "Stop loss must be above entry price for short trades",
@@ -1522,6 +1603,92 @@
 			"winRate": "Win Rate",
 			"avgR": "Avg R",
 			"profitFactor": "Profit Factor"
+		},
+		"conditions": {
+			"title": "Trading Conditions",
+			"mandatory": "Mandatory",
+			"tier2": "Tier 2",
+			"tier3": "Tier 3",
+			"tierMandatory": "Mandatory",
+			"tierTwo": "Tier 2",
+			"tierThree": "Tier 3",
+			"tierMandatoryHint": "Required for any valid setup (A rank)",
+			"tierTwoHint": "Additional confirmation signals (AA rank)",
+			"tierThreeHint": "Ideal conditions for highest quality (AAA rank)",
+			"rankBreakdown": "Rank breakdown",
+			"rankPreview": "Rank preview",
+			"rankA": "A — Mandatory conditions met",
+			"rankAA": "AA — Mandatory + Tier 2 met",
+			"rankAAA": "AAA — All conditions met",
+			"conditionCount": "{count} condition",
+			"conditionCountPlural": "{count} conditions",
+			"createNew": "Create New Condition",
+			"createFirst": "Create First Condition",
+			"noConditionsYet": "No conditions assigned yet",
+			"assignHint": "Assign conditions and set tier levels for setup ranking (A/AA/AAA)",
+			"noConditions": "No conditions available. Create some in Settings first."
+		},
+		"scenarios": {
+			"title": "Scenarios",
+			"addScenario": "Add Scenario",
+			"addScenarioDescription": "Add a visual example of how this setup looks in practice",
+			"editScenario": "Edit Scenario",
+			"editScenarioDescription": "Update this scenario",
+			"deleteScenario": "Delete Scenario",
+			"createScenario": "Create Scenario",
+			"name": "Name",
+			"namePlaceholder": "e.g., Bullish engulfing at support",
+			"description": "Description",
+			"description_field": "Description",
+			"descriptionPlaceholder": "Describe what makes this scenario valid...",
+			"images": "Images",
+			"imagesHint": "Up to 3 images per scenario",
+			"noScenarios": "No scenarios yet",
+			"noScenariosHint": "Add visual examples of how this setup looks in practice",
+			"deleteTitle": "Delete Scenario",
+			"deleteDescription": "This will permanently delete \"{name}\" and all its images. This action cannot be undone.",
+			"deleteConfirm": "This will permanently delete this scenario and all its images.",
+			"saveFirst": "Save this strategy first, then add visual scenarios from the edit page."
+		},
+		"form": {
+			"basicInfo": "Basic Info",
+			"codeLabel": "Code *",
+			"codePlaceholder": "e.g., PWBK",
+			"codeHint": "Short identifier (3-10 characters)",
+			"strategyNameLabel": "Strategy Name *",
+			"strategyNamePlaceholder": "e.g., 15m Breakout, London Session Reversal",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "Brief description of this strategy...",
+			"referenceImage": "Reference Image",
+			"referenceImageHint": "Optional: Upload an example chart or setup screenshot",
+			"rulesCriteria": "Rules & Criteria",
+			"entryCriteriaLabel": "Entry Criteria",
+			"entryCriteriaPlaceholder": "List your entry conditions:\n- Condition 1\n- Condition 2\n- Condition 3",
+			"entryCriteriaHint": "What conditions must be met before entering a trade?",
+			"exitCriteriaLabel": "Exit Criteria",
+			"exitCriteriaPlaceholder": "List your exit rules:\n- Take profit at...\n- Stop loss at...\n- Trail stop when...",
+			"exitCriteriaHint": "How do you manage the trade and when do you exit?",
+			"additionalNotes": "Additional Notes",
+			"notesPlaceholder": "Any other important notes about this strategy...",
+			"riskSettings": "Risk Settings",
+			"riskManagementRules": "Risk Management Rules",
+			"riskRulesPlaceholder": "Your risk rules:\n- Max position size...\n- Stop loss placement...\n- When to avoid trading...",
+			"targetRMultiple": "Target R-Multiple",
+			"targetRPlaceholder": "e.g., 2.0",
+			"targetRHint": "Your target reward:risk ratio",
+			"maxRiskPerTrade": "Max Risk per Trade (%)",
+			"maxRiskPlaceholder": "e.g., 1.0",
+			"maxRiskHint": "Maximum % of account to risk",
+			"tradingConditions": "Trading Conditions",
+			"tradingConditionsHint": "Assign conditions to this strategy and set tier levels for setup ranking (A/AA/AAA)",
+			"tradingConditionsEditHint": "Assign conditions and set tier levels for setup ranking (A/AA/AAA)",
+			"scenariosHint": "Add visual examples of how this setup looks in practice",
+			"scenariosSaveFirst": "Save this strategy first, then add visual scenarios from the edit page.",
+			"creating": "Creating...",
+			"createStrategy": "Create Strategy",
+			"loadingStrategy": "Loading strategy...",
+			"strategyNotFound": "Strategy not found",
+			"backToPlaybook": "Back to Playbook"
 		}
 	},
 	"reports": {
@@ -1592,7 +1759,9 @@
 			"assets": "Assets",
 			"timeframes": "Timeframes",
 			"riskProfiles": "Risk Profiles",
-			"general": "General"
+			"general": "General",
+			"users": "Users",
+			"conditions": "Conditions"
 		},
 		"profile": {
 			"profileInfo": "Profile Information",
@@ -1845,7 +2014,58 @@
 				}
 			}
 		},
-		"goToSettings": "Settings → {section}"
+		"goToSettings": "Settings → {section}",
+		"users": {
+			"title": "User Management",
+			"searchUsers": "Search by name or email...",
+			"name": "Name",
+			"email": "Email",
+			"accounts": "Accounts",
+			"joined": "Joined",
+			"role": "Role",
+			"changeRole": "Change role",
+			"you": "You",
+			"default": "Default",
+			"noUsers": "No users found",
+			"noAccounts": "No trading accounts",
+			"expandAccounts": "Show accounts",
+			"collapseAccounts": "Hide accounts",
+			"roleUpdated": "Role updated successfully",
+			"roleUpdateError": "Failed to update role",
+			"roles": {
+				"admin": "Admin",
+				"trader": "Trader",
+				"viewer": "Viewer"
+			}
+		},
+		"conditions": {
+			"title": "Trading Conditions",
+			"description": "Reusable conditions for strategy setup ranking",
+			"addCondition": "Add Condition",
+			"addConditionDescription": "Create a new reusable trading condition for your strategies",
+			"editCondition": "Edit Condition",
+			"editConditionDescription": "Update this trading condition",
+			"createCondition": "Create Condition",
+			"name": "Name",
+			"namePlaceholder": "e.g., RSI > 40, Above MA21",
+			"category": "Category",
+			"description_field": "Description",
+			"descriptionPlaceholder": "Brief description of when this condition applies...",
+			"categoryAll": "All",
+			"categoryIndicator": "Indicator",
+			"categoryPriceAction": "Price Action",
+			"categoryMarketContext": "Market Context",
+			"categoryCustom": "Custom",
+			"noConditions": "No trading conditions yet",
+			"noConditionsHint": "Create conditions to build structured checklists for your strategies",
+			"noConditionsInFilter": "No conditions in this category",
+			"deleteTitle": "Delete Condition",
+			"deleteDescription": "This will remove the condition from all linked strategies. This action cannot be undone.",
+			"conditionCreated": "Condition created successfully",
+			"conditionUpdated": "Condition updated successfully",
+			"conditionDeleted": "Condition deleted successfully",
+			"conditionError": "Failed to save condition"
+		}
 	},
 	"monthly": {
 		"title": "Monthly Results",
@@ -2025,7 +2245,8 @@
 			"invalidCredentials": "Invalid email or password",
 			"success": "Signed in successfully",
 			"showPassword": "Show password",
-			"hidePassword": "Hide password"
+			"hidePassword": "Hide password",
+			"forgotPassword": "Forgot your password?"
 		},
 		"register": {
 			"title": "Create Account",
@@ -2220,5 +2441,42 @@
 		"editPlaybook": "Edit Playbook",
 		"playbookDetails": "Playbook Details",
 		"newPlaybook": "New Playbook"
+	},
+	"forgotPassword": {
+		"title": "Reset Password",
+		"subtitle": "Enter your email and we'll send you a reset code",
+		"emailLabel": "Email",
+		"sendCode": "Send Reset Code",
+		"codeTitle": "Enter Verification Code",
+		"codeSentTo": "We sent a 6-digit code to {email}",
+		"codeLabel": "Verification code",
+		"verify": "Verify Code",
+		"resend": "Resend code",
+		"resendIn": "Resend in {seconds}s",
+		"backToEmail": "Change email",
+		"backToLogin": "Back to login",
+		"newPasswordTitle": "Set New Password",
+		"newPasswordSubtitle": "Your code has been verified. Choose a new password.",
+		"newPassword": "New Password",
+		"confirmPassword": "Confirm Password",
+		"resetButton": "Reset Password",
+		"showPassword": "Show password",
+		"hidePassword": "Hide password",
+		"success": "Password reset successfully. You can now sign in.",
+		"invalidCode": "Invalid or expired code",
+		"expired": "Code has expired. Please request a new one.",
+		"passwordMismatch": "Passwords don't match",
+		"resetFailed": "Failed to reset password. Please try again.",
+		"tooManyAttempts": "Too many attempts. Please try again later."
+	},
+	"roles": {
+		"admin": "Admin",
+		"trader": "Trader",
+		"viewer": "Viewer"
+	},
+	"accessDenied": {
+		"title": "Access Denied",
+		"message": "You don't have permission to access this feature.",
+		"redirecting": "Redirecting to dashboard..."
 	}
 }
