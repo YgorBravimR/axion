@@ -35,15 +35,18 @@ export const SimulationParamsForm = ({
 	const isOverBudget = totalIterations > SIMULATION_BUDGET_CAP
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-			<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<h3 className="mb-m-400 text-small sm:text-body text-txt-100 font-semibold">
 				{t("title")}
 			</h3>
 
 			<div className="gap-m-400 grid md:grid-cols-3">
 				{/* Win Rate */}
 				<div>
-					<Label id="label-simulation-win-rate" className="mb-s-200 text-small text-txt-200 block">
+					<Label
+						id="label-simulation-win-rate"
+						className="mb-s-200 text-small text-txt-200 block"
+					>
 						{t("winRate")}
 					</Label>
 					<div className="relative">
@@ -68,7 +71,10 @@ export const SimulationParamsForm = ({
 
 				{/* Reward/Risk Ratio */}
 				<div>
-					<Label id="label-simulation-reward-risk-ratio" className="mb-s-200 text-small text-txt-200 block">
+					<Label
+						id="label-simulation-reward-risk-ratio"
+						className="mb-s-200 text-small text-txt-200 block"
+					>
 						{t("rewardRiskRatio")}
 					</Label>
 					<Input
@@ -87,7 +93,10 @@ export const SimulationParamsForm = ({
 
 				{/* Number of Trades */}
 				<div>
-					<Label id="label-simulation-number-of-trades" className="mb-s-200 text-small text-txt-200 block">
+					<Label
+						id="label-simulation-number-of-trades"
+						className="mb-s-200 text-small text-txt-200 block"
+					>
 						{t("numberOfTrades")}
 					</Label>
 					<Input
@@ -106,7 +115,10 @@ export const SimulationParamsForm = ({
 
 				{/* Commission Impact (% of R) */}
 				<div>
-					<Label id="label-simulation-commission-impact" className="mb-s-200 text-small text-txt-200 block">
+					<Label
+						id="label-simulation-commission-impact"
+						className="mb-s-200 text-small text-txt-200 block"
+					>
 						{t("commissionImpactR")}
 					</Label>
 					<div className="relative">
@@ -134,7 +146,10 @@ export const SimulationParamsForm = ({
 
 				{/* Simulation Count */}
 				<div>
-					<Label id="label-simulation-count" className="mb-s-200 text-small text-txt-200 block">
+					<Label
+						id="label-simulation-count"
+						className="mb-s-200 text-small text-txt-200 block"
+					>
 						{t("simulationCount")}
 					</Label>
 					<Input
@@ -153,9 +168,10 @@ export const SimulationParamsForm = ({
 			</div>
 
 			{/* Budget Indicator */}
-			<div className="mt-m-400 flex items-center justify-between text-small">
+			<div className="mt-m-400 text-small flex items-center justify-between">
 				<span className="text-txt-300">
-					{t("totalIterations")}: {totalIterations.toLocaleString()} / {SIMULATION_BUDGET_CAP.toLocaleString()}
+					{t("totalIterations")}: {totalIterations.toLocaleString()} /{" "}
+					{SIMULATION_BUDGET_CAP.toLocaleString()}
 				</span>
 				<span
 					className={cn(
@@ -173,8 +189,12 @@ export const SimulationParamsForm = ({
 			{isOverBudget && (
 				<p className="mt-s-200 text-caption text-fb-error">
 					{t("budgetExceeded", {
-						maxTrades: Math.floor(SIMULATION_BUDGET_CAP / params.simulationCount).toLocaleString(),
-						maxSimulations: Math.floor(SIMULATION_BUDGET_CAP / params.numberOfTrades).toLocaleString(),
+						maxTrades: Math.floor(
+							SIMULATION_BUDGET_CAP / params.simulationCount
+						).toLocaleString(),
+						maxSimulations: Math.floor(
+							SIMULATION_BUDGET_CAP / params.numberOfTrades
+						).toLocaleString(),
 					})}
 				</p>
 			)}

@@ -31,8 +31,8 @@ const MonthlyPage = async ({ params }: MonthlyPageProps) => {
 	const initialComparisonData = comparisonResult.status === "success" ? comparisonResult.data ?? null : null
 
 	return (
-		<div className="min-h-screen bg-bg-100">
-			<main className="mx-auto max-w-5xl px-m-500 py-m-600">
+		<div className="min-h-dvh bg-bg-100">
+			<main className="mx-auto max-w-5xl p-m-400 sm:p-m-500 lg:p-m-600">
 				<MonthlyContent
 					initialMonthlyData={initialMonthlyData}
 					initialProjectionData={initialProjectionData}

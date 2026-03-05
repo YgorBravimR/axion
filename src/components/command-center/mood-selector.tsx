@@ -22,7 +22,7 @@ export const MoodSelector = ({ value, onChange, disabled = false }: MoodSelector
 	const t = useTranslations("commandCenter.notes.moods")
 
 	return (
-		<div className="flex items-center gap-s-200">
+		<div className="flex flex-wrap items-center gap-s-200">
 			{moods.map((mood) => (
 				<button
 					key={mood.value}

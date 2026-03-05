@@ -206,11 +206,11 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	}
 
 	return (
-		<div className="mx-auto max-w-2xl space-y-m-600">
+		<div className="mx-auto max-w-2xl space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Account Information */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center justify-between">
-					<h2 className="text-body font-semibold text-txt-100">
+					<h2 className="text-small sm:text-body font-semibold text-txt-100">
 						{t("accountInfo")}
 					</h2>
 					{!isEditingAccount && (
@@ -392,9 +392,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Default Commission & Fees */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center justify-between">
-					<h2 className="text-body font-semibold text-txt-100">
+					<h2 className="text-small sm:text-body font-semibold text-txt-100">
 						{t("defaultFees")}
 					</h2>
 					{!isEditingAccount && (
@@ -501,7 +501,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Per-Asset Overrides */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h2 className="text-body font-semibold text-txt-100">
 					{t("assetOverrides")}
 				</h2>
@@ -631,7 +631,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Data Maintenance */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h2 className="text-body font-semibold text-txt-100">
 					{tGeneral("dataMaintenance")}
 				</h2>
@@ -655,8 +655,8 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 
 			{/* Data Import — admin only */}
 			{isAdmin && (
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-					<h2 className="text-body font-semibold text-txt-100">{tGeneral("dataImport")}</h2>
+				<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+					<h2 className="text-small sm:text-body font-semibold text-txt-100">{tGeneral("dataImport")}</h2>
 					<div className="mt-m-400">
 						<p className="text-small text-txt-200">{tGeneral("dataImportDesc")}</p>
 						<p className="mt-m-400 text-tiny text-txt-300">
@@ -672,8 +672,8 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 
 			{/* Data Export — admin only */}
 			{isAdmin && (
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-					<h2 className="text-body font-semibold text-txt-100">{tGeneral("dataExport")}</h2>
+				<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+					<h2 className="text-small sm:text-body font-semibold text-txt-100">{tGeneral("dataExport")}</h2>
 					<p className="mt-m-400 text-small text-txt-200">
 						{tGeneral("dataExportDesc")}
 					</p>

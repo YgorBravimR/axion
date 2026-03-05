@@ -19,6 +19,7 @@ interface SidebarProps {
 	replayDate?: string
 	variant?: "default" | "sheet"
 	onNavigate?: () => void
+	hideCollapseToggle?: boolean
 }
 
 const Sidebar = ({
@@ -28,6 +29,7 @@ const Sidebar = ({
 	replayDate,
 	variant = "default",
 	onNavigate,
+	hideCollapseToggle = false,
 }: SidebarProps) => {
 	const t = useTranslations("nav")
 	const tReplay = useTranslations("commandCenter.dateNavigator")
@@ -46,7 +48,7 @@ const Sidebar = ({
 				"border-bg-300 bg-bg-200 flex flex-col border-r",
 				isSheet
 					? "h-full w-full"
-					: "fixed top-0 left-0 z-40 h-screen transition-[width] duration-300",
+					: "fixed top-0 left-0 z-40 h-dvh transition-[width] duration-300",
 				!isSheet && (isCollapsed ? "w-16" : "w-64")
 			)}
 		>
@@ -71,7 +73,7 @@ const Sidebar = ({
 						priority
 					/>
 				)}
-				{!isSheet && (
+				{!isSheet && !hideCollapseToggle && (
 					<button
 						type="button"
 						onClick={onToggleCollapse}

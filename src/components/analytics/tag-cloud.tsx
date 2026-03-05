@@ -137,9 +137,9 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-				<h3 className="text-body font-semibold text-txt-100">{t("title")}</h3>
-				<div className="mt-m-400 flex h-32 items-center justify-center text-txt-300">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+				<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
+				<div className="mt-s-300 sm:mt-m-400 flex h-32 items-center justify-center text-txt-300">
 					{t("noTags")}
 				</div>
 			</div>
@@ -157,11 +157,11 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 	)
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-			<h3 className="text-body font-semibold text-txt-100">{t("title")}</h3>
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
 
 			{/* Summary Stats */}
-			<div className="mt-m-400 grid grid-cols-2 gap-m-400 md:grid-cols-3">
+			<div className="mt-s-300 sm:mt-m-400 grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-3">
 				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
 					<p className="text-tiny text-txt-300">{t("totalTags")}</p>
 					<p className="mt-s-100 text-h3 font-bold text-txt-100">{data.length}</p>
@@ -188,7 +188,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 			</div>
 
 			{/* Tag Sections */}
-			<div className="mt-m-500 space-y-m-500">
+			<div className="mt-m-400 sm:mt-m-500 space-y-m-400 sm:space-y-m-500">
 				{renderTagSection(setupTags, "setup")}
 				{renderTagSection(mistakeTags, "mistake")}
 				{renderTagSection(generalTags, "general")}
@@ -196,7 +196,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 			{/* Detailed Table */}
 			{data.filter((tag) => tag.tradeCount > 0).length > 0 && (
-				<div className="mt-m-500">
+				<div className="mt-m-400 sm:mt-m-500">
 					<h4 className="mb-s-300 text-small font-medium text-txt-200">
 						{t("detailedStats")}
 					</h4>

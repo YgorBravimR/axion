@@ -49,7 +49,8 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 	}
 
 	const strategy = result.data
-	const strategyConditions = conditionsResult.status === "success" ? conditionsResult.data ?? [] : []
+	const strategyConditions =
+		conditionsResult.status === "success" ? (conditionsResult.data ?? []) : []
 
 	const complianceColor =
 		strategy.compliance >= 80
@@ -62,41 +63,43 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-y-auto p-m-600">
-				<div className="mx-auto max-w-4xl space-y-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
+				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-4xl">
 					{/* Performance Stats */}
-					<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-						<div className="flex items-center gap-s-200">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+						<div className="gap-s-200 flex items-center">
 							<BarChart3 className="text-acc-100 h-5 w-5" />
-							<h2 className="text-body text-txt-100 font-semibold">Performance</h2>
+							<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+								Performance
+							</h2>
 						</div>
 
-						<div className="mt-m-400 grid grid-cols-2 gap-s-300 sm:grid-cols-4 lg:grid-cols-6">
-							<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+						<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6">
+							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">Trades</p>
 								<p className="text-body text-txt-100 mt-s-100 font-bold">
 									{strategy.tradeCount}
 								</p>
 							</div>
-							<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">P&L</p>
 								<p className={`text-body mt-s-100 font-bold ${pnlColor}`}>
 									{formatCurrency(strategy.totalPnl)}
 								</p>
 							</div>
-							<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">Win Rate</p>
 								<p className="text-body text-txt-100 mt-s-100 font-bold">
 									{strategy.winRate.toFixed(1)}%
 								</p>
 							</div>
-							<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">Profit Factor</p>
 								<p className="text-body text-txt-100 mt-s-100 font-bold">
 									{formatProfitFactor(strategy.profitFactor)}
 								</p>
 							</div>
-							<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">Avg R</p>
 								<p
 									className={`text-body mt-s-100 font-bold ${
@@ -107,26 +110,34 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 									{strategy.avgR.toFixed(2)}R
 								</p>
 							</div>
-							<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">Compliance</p>
-								<p className={`text-body mt-s-100 font-bold ${complianceColor}`}>
+								<p
+									className={`text-body mt-s-100 font-bold ${complianceColor}`}
+								>
 									{strategy.compliance.toFixed(0)}%
 								</p>
 							</div>
 						</div>
 
 						{/* Win/Loss breakdown */}
-						<div className="mt-m-400 flex items-center justify-center gap-m-600">
-							<div className="flex items-center gap-s-200">
+						<div className="mt-s-300 sm:mt-m-400 gap-m-400 sm:gap-m-500 lg:gap-m-600 flex items-center justify-center">
+							<div className="gap-s-200 flex items-center">
 								<CheckCircle className="text-trade-buy h-4 w-4" />
 								<span className="text-small text-txt-200">
-									<span className="text-trade-buy font-semibold">{strategy.winCount}</span> wins
+									<span className="text-trade-buy font-semibold">
+										{strategy.winCount}
+									</span>{" "}
+									wins
 								</span>
 							</div>
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<XCircle className="text-trade-sell h-4 w-4" />
 								<span className="text-small text-txt-200">
-									<span className="text-trade-sell font-semibold">{strategy.lossCount}</span> losses
+									<span className="text-trade-sell font-semibold">
+										{strategy.lossCount}
+									</span>{" "}
+									losses
 								</span>
 							</div>
 						</div>
@@ -134,18 +145,22 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 					{/* Risk Settings */}
 					{(strategy.targetRMultiple || strategy.maxRiskPercent) && (
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<div className="flex items-center gap-s-200">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<div className="gap-s-200 flex items-center">
 								<Target className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">Risk Settings</h2>
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+									Risk Settings
+								</h2>
 							</div>
 
-							<div className="mt-m-400 grid grid-cols-1 gap-m-400 sm:grid-cols-2">
+							<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								{strategy.targetRMultiple && (
-									<div className="bg-bg-100 flex items-center gap-s-300 rounded-lg p-m-400">
+									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingUp className="text-trade-buy h-6 w-6" />
 										<div>
-											<p className="text-tiny text-txt-300">Target R-Multiple</p>
+											<p className="text-tiny text-txt-300">
+												Target R-Multiple
+											</p>
 											<p className="text-body text-txt-100 font-bold">
 												{Number(strategy.targetRMultiple).toFixed(1)}R
 											</p>
@@ -153,10 +168,12 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 									</div>
 								)}
 								{strategy.maxRiskPercent && (
-									<div className="bg-bg-100 flex items-center gap-s-300 rounded-lg p-m-400">
+									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingDown className="text-trade-sell h-6 w-6" />
 										<div>
-											<p className="text-tiny text-txt-300">Max Risk per Trade</p>
+											<p className="text-tiny text-txt-300">
+												Max Risk per Trade
+											</p>
 											<p className="text-body text-txt-100 font-bold">
 												{Number(strategy.maxRiskPercent).toFixed(1)}%
 											</p>
@@ -168,17 +185,23 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					)}
 
 					{/* Rules & Criteria */}
-					{(strategy.entryCriteria || strategy.exitCriteria || strategy.riskRules) && (
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<div className="flex items-center gap-s-200">
+					{(strategy.entryCriteria ||
+						strategy.exitCriteria ||
+						strategy.riskRules) && (
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<div className="gap-s-200 flex items-center">
 								<FileText className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">Rules & Criteria</h2>
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+									Rules & Criteria
+								</h2>
 							</div>
 
 							<div className="mt-m-400 space-y-m-400">
 								{strategy.entryCriteria && (
 									<div>
-										<h3 className="text-small text-txt-100 font-semibold">Entry Criteria</h3>
+										<h3 className="text-small text-txt-100 font-semibold">
+											Entry Criteria
+										</h3>
 										<p className="text-small text-txt-200 mt-s-200 whitespace-pre-wrap">
 											{strategy.entryCriteria}
 										</p>
@@ -187,7 +210,9 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 								{strategy.exitCriteria && (
 									<div>
-										<h3 className="text-small text-txt-100 font-semibold">Exit Criteria</h3>
+										<h3 className="text-small text-txt-100 font-semibold">
+											Exit Criteria
+										</h3>
 										<p className="text-small text-txt-200 mt-s-200 whitespace-pre-wrap">
 											{strategy.exitCriteria}
 										</p>
@@ -196,7 +221,9 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 								{strategy.riskRules && (
 									<div>
-										<h3 className="text-small text-txt-100 font-semibold">Risk Management</h3>
+										<h3 className="text-small text-txt-100 font-semibold">
+											Risk Management
+										</h3>
 										<p className="text-small text-txt-200 mt-s-200 whitespace-pre-wrap">
 											{strategy.riskRules}
 										</p>
@@ -208,10 +235,12 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 					{/* Conditions */}
 					{strategyConditions.length > 0 && (
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<div className="flex items-center gap-s-200">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<div className="gap-s-200 flex items-center">
 								<Filter className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">Trading Conditions</h2>
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+									Trading Conditions
+								</h2>
 							</div>
 							<div className="mt-m-400">
 								<ConditionTierDisplay conditions={strategyConditions} />
@@ -221,10 +250,12 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 					{/* Scenarios */}
 					{strategy.scenarioCount > 0 && (
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<div className="flex items-center gap-s-200">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<div className="gap-s-200 flex items-center">
 								<ImageIcon className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">Scenarios</h2>
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+									Scenarios
+								</h2>
 							</div>
 							<div className="mt-m-400">
 								<ScenarioSection strategyId={strategy.id} readOnly />
@@ -234,8 +265,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 					{/* Notes */}
 					{strategy.notes && (
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<h2 className="text-body text-txt-100 font-semibold">Notes</h2>
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+								Notes
+							</h2>
 							<p className="text-small text-txt-200 mt-m-400 whitespace-pre-wrap">
 								{strategy.notes}
 							</p>
@@ -244,8 +277,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 					{/* Screenshot */}
 					{strategy.screenshotUrl && (
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<h2 className="text-body text-txt-100 font-semibold">Reference Chart</h2>
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+								Reference Chart
+							</h2>
 							<div className="mt-m-400">
 								<img
 									src={strategy.screenshotUrl}

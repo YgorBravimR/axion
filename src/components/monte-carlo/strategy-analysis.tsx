@@ -1,5 +1,6 @@
 "use client"
 
+import type { ElementType, ReactNode } from "react"
 import { useTranslations } from "next-intl"
 import {
 	BarChart3,
@@ -20,9 +21,9 @@ interface StrategyAnalysisProps {
 }
 
 interface SectionProps {
-	icon: React.ElementType
+	icon: ElementType
 	title: string
-	children: React.ReactNode
+	children: ReactNode
 }
 
 const Section = ({ icon: Icon, title, children }: SectionProps) => (
@@ -37,7 +38,7 @@ const Section = ({ icon: Icon, title, children }: SectionProps) => (
 
 interface InsightProps {
 	type: "positive" | "negative" | "neutral" | "tip"
-	children: React.ReactNode
+	children: ReactNode
 }
 
 const insightConfig = {
@@ -121,8 +122,8 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 	const riskKey = riskTranslationKeys[insights.riskAssessment as RiskKey]
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-			<h3 className="mb-m-500 text-body text-txt-100 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<h3 className="mb-m-400 sm:mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
 				{t("title")}
 			</h3>
 
@@ -138,8 +139,7 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 						<li>
 							• <strong>{t("averageReturn")}:</strong>{" "}
 							{formatR(stats.medianFinalR)} ({t("maxDD")}:{" "}
-							{formatR(-stats.medianMaxRDrawdown)}) -{" "}
-							{t("mostLikelyOutcome")}
+							{formatR(-stats.medianMaxRDrawdown)}) - {t("mostLikelyOutcome")}
 						</li>
 						<li>
 							• <strong>{t("bestCaseLabel")}:</strong>{" "}
@@ -148,13 +148,10 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 						<li>
 							• <strong>{t("worstCaseLabel")}:</strong>{" "}
 							{formatR(stats.worstCaseFinalR)} ({t("maxDD")}:{" "}
-							{formatR(-stats.worstMaxRDrawdown)}) -{" "}
-							{t("maximumDownsideRisk")}
+							{formatR(-stats.worstMaxRDrawdown)}) - {t("maximumDownsideRisk")}
 						</li>
 					</ul>
-					<Insight
-						type={stats.profitablePct >= 70 ? "positive" : "neutral"}
-					>
+					<Insight type={stats.profitablePct >= 70 ? "positive" : "neutral"}>
 						{t("simulationsProfitable", {
 							percent: stats.profitablePct.toFixed(0),
 							quality: t(profitQualityKey),
@@ -165,9 +162,7 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 
 				{/* Edge Performance */}
 				<Section icon={TrendingUp} title={t("edgePerformance")}>
-					<p className="text-small text-txt-300">
-						{t("edgeMetrics")}
-					</p>
+					<p className="text-small text-txt-300">{t("edgeMetrics")}</p>
 					<ul className="space-y-s-100 text-small text-txt-200">
 						<li>
 							• <strong>{t("expectedEdge")}:</strong>{" "}
@@ -190,9 +185,7 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 				</Section>
 
 				<Section icon={AlertTriangle} title={t("riskAnalysis")}>
-					<p className="text-small text-txt-300">
-						{t("riskMetricsIndicate")}
-					</p>
+					<p className="text-small text-txt-300">{t("riskMetricsIndicate")}</p>
 					<ul className="space-y-s-100 text-small text-txt-200">
 						<li>
 							• <strong>{t("maximumDrawdown")}:</strong>{" "}
@@ -212,9 +205,7 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 					</ul>
 					<Insight
 						type={
-							insights.riskAssessment === "excellent"
-								? "positive"
-								: "neutral"
+							insights.riskAssessment === "excellent" ? "positive" : "neutral"
 						}
 					>
 						{t("riskAdjustedPerformance", { quality: t(riskKey) })}
@@ -223,13 +214,11 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 
 				{/* Psychology */}
 				<Section icon={Brain} title={t("tradingPsychology")}>
-					<p className="text-small text-txt-300">
-						{t("psychologicalFactors")}
-					</p>
+					<p className="text-small text-txt-300">{t("psychologicalFactors")}</p>
 					<ul className="space-y-s-100 text-small text-txt-200">
 						<li>
-							• <strong>{t("winRateLabel")}:</strong> {params.winRate}%
-							- {t(getWinRateLabelKey(params.winRate))}
+							• <strong>{t("winRateLabel")}:</strong> {params.winRate}% -{" "}
+							{t(getWinRateLabelKey(params.winRate))}
 						</li>
 						<li>
 							• <strong>{t("longestWinStreak")}:</strong>{" "}

@@ -95,11 +95,11 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
-				<h3 className="mb-m-400 text-body font-semibold text-txt-100">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+				<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body font-semibold text-txt-100">
 					{t("time.hourlyTitle")}
 				</h3>
-				<div className="flex h-[250px] items-center justify-center text-txt-300">
+				<div className="flex h-[180px] sm:h-[250px] items-center justify-center text-txt-300">
 					{t("noData")}
 				</div>
 			</div>
@@ -107,11 +107,11 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
-			<h3 className="mb-m-400 text-body font-semibold text-txt-100">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+			<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body font-semibold text-txt-100">
 				{t("time.hourlyTitle")}
 			</h3>
-			<ChartContainer id="chart-analytics-hourly-performance" className="h-[250px] w-full">
+			<ChartContainer id="chart-analytics-hourly-performance" className="h-[200px] sm:h-[250px] w-full min-w-0">
 					<BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
 						<CartesianGrid
 							strokeDasharray="3 3"
@@ -149,7 +149,7 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 					</BarChart>
 			</ChartContainer>
 			{/* Summary */}
-			<div className="mt-m-400 grid grid-cols-2 gap-m-400 border-t border-bg-300 pt-m-400">
+			<div className="mt-s-300 sm:mt-m-400 grid grid-cols-1 sm:grid-cols-2 gap-s-300 sm:gap-m-400 border-t border-bg-300 pt-s-300 sm:pt-m-400">
 				<div>
 					<p className="text-caption text-txt-300">{t("time.bestHour")}</p>
 					<p className="text-small font-medium text-trade-buy">

@@ -87,7 +87,7 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 					onClick={() => onChange(option.value)}
 					disabled={disabled}
 					className={cn(
-						"rounded-md px-s-300 py-s-100 text-small font-medium transition-colors",
+						"rounded-md px-s-200 py-s-100 text-tiny font-medium transition-colors sm:px-s-300 sm:text-small",
 						period === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -200,9 +200,9 @@ export const DashboardContent = ({
 	}, [effectiveDate])
 
 	return (
-		<div className="grid grid-cols-1 gap-m-600 lg:grid-cols-3">
+		<div className="grid grid-cols-1 gap-m-400 sm:gap-m-500 md:grid-cols-2 lg:grid-cols-3 lg:gap-m-600">
 			{/* Period Toggle + Loading */}
-			<div className="lg:col-span-3 flex items-center gap-m-400">
+			<div className="md:col-span-2 lg:col-span-3 flex items-center gap-m-400">
 				<PeriodToggle
 					period={period}
 					onChange={handlePeriodChange}
@@ -212,12 +212,12 @@ export const DashboardContent = ({
 			</div>
 
 			{/* KPI Cards */}
-			<div className="lg:col-span-3">
+			<div className="md:col-span-2 lg:col-span-3">
 				<KpiCards stats={stats} discipline={discipline} />
 			</div>
 
 			{/* Calendar */}
-			<div className="lg:col-span-2">
+			<div className="md:col-span-2 lg:col-span-2">
 				<TradingCalendar
 					data={dailyPnL}
 					month={currentMonth}
@@ -227,22 +227,22 @@ export const DashboardContent = ({
 			</div>
 
 			{/* Quick Stats */}
-			<div>
+			<div className="md:col-span-2 lg:col-span-1">
 				<QuickStats streakData={streakData} stats={stats} />
 			</div>
 
 			{/* Daily P&L Bar Chart */}
-			<div className="lg:col-span-2">
+			<div className="md:col-span-2 lg:col-span-2">
 				<DailyPnLBarChart data={dailyPnL} onDayClick={handleDayClick} />
 			</div>
 
 			{/* Performance Radar */}
-			<div>
+			<div className="md:col-span-2 lg:col-span-1">
 				<PerformanceRadarChart data={radarData} />
 			</div>
 
 			{/* Equity Curve */}
-			<div className="lg:col-span-3">
+			<div className="md:col-span-2 lg:col-span-3">
 				<EquityCurve data={equityCurve} calendarMonth={currentMonth} />
 			</div>
 

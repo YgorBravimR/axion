@@ -49,7 +49,7 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 	]
 
 	return (
-		<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-4">
+		<div className="grid grid-cols-2 gap-s-300 md:grid-cols-4">
 			{stats.map((stat) => (
 				<div
 					key={stat.label}

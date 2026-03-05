@@ -141,11 +141,13 @@ export const MonteCarloContent = ({
 	const tV2 = useTranslations("monteCarlo.v2")
 
 	return (
-		<div className="space-y-m-500">
+		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-h3 text-txt-100 font-bold">{t("title")}</h1>
+					<h1 className="text-body sm:text-h3 text-txt-100 font-bold">
+						{t("title")}
+					</h1>
 					<p className="mt-s-100 text-small text-txt-300">{t("subtitle")}</p>
 				</div>
 				<Button
@@ -161,7 +163,7 @@ export const MonteCarloContent = ({
 
 			{/* Mode Tabs: Edge Expectancy | Capital Expectancy */}
 			<Tabs defaultValue="edgeExpectancy">
-				<TabsList variant="line" className="mb-m-500">
+				<TabsList variant="line" className="mb-m-400 sm:mb-m-500">
 					<TabsTrigger value="edgeExpectancy">
 						{tV2("tabEdgeExpectancy")}
 					</TabsTrigger>
@@ -248,7 +250,7 @@ const EdgeExpectancyContent = ({
 	const t = useTranslations("monteCarlo")
 
 	return (
-		<div className="space-y-m-500">
+		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Input Section */}
 			{!result && (
 				<div className="space-y-m-400">
@@ -311,9 +313,9 @@ const EdgeExpectancyContent = ({
 
 			{/* Results Section */}
 			{result && (
-				<div className="space-y-m-600">
+				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 					{/* Top Summary Banner */}
-					<div className="border-bg-300 bg-bg-200 p-m-500 gap-m-500 flex flex-wrap items-center justify-between rounded-lg border">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 gap-m-400 sm:gap-m-500 flex flex-wrap items-center justify-between rounded-lg border">
 						<div className="gap-m-400 flex items-center">
 							<span className="text-txt-300 text-small">
 								{t("results.simulations")}:
@@ -358,7 +360,7 @@ const EdgeExpectancyContent = ({
 					</div>
 
 					{/* Charts Row */}
-					<div className="gap-m-500 grid lg:grid-cols-2">
+					<div className="gap-m-400 sm:gap-m-500 grid lg:grid-cols-2">
 						<EquityCurveChart trades={result.sampleRun.trades} />
 						<DrawdownChart trades={result.sampleRun.trades} />
 					</div>
@@ -373,7 +375,7 @@ const EdgeExpectancyContent = ({
 					<MetricsCards statistics={result.statistics} />
 
 					{/* Kelly + Trade Sequence - Side by side on desktop */}
-					<div className="gap-m-500 grid xl:grid-cols-2">
+					<div className="gap-m-400 sm:gap-m-500 grid xl:grid-cols-2">
 						<KellyCriterionCard statistics={result.statistics} />
 						<TradeSequenceList trades={result.sampleRun.trades} />
 					</div>

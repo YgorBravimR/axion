@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo, useCallback } from "react"
+import { useState, useTransition, useMemo, useCallback, type ChangeEvent, type KeyboardEvent } from "react"
 import { useTranslations } from "next-intl"
 import { ChevronRight, Loader2, Search, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -82,14 +82,14 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 	)
 
 	const handleSearchChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			setSearch(e.target.value)
 		},
 		[]
 	)
 
 	const handleRowKeyDown = useCallback(
-		(e: React.KeyboardEvent, userId: string) => {
+		(e: KeyboardEvent, userId: string) => {
 			if (e.key === "Enter" || e.key === " ") {
 				e.preventDefault()
 				handleToggleExpand(userId)
@@ -177,7 +177,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 														<Badge
 															id={`you-badge-${user.id}`}
 															variant="secondary"
-															className="text-[10px]"
+															className="text-micro"
 														>
 															{t("you")}
 														</Badge>
@@ -285,7 +285,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																		<Badge
 																			id={`account-type-${account.id}`}
 																			variant="outline"
-																			className="text-[10px]"
+																			className="text-micro"
 																		>
 																			{
 																				account.accountType
@@ -295,7 +295,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																			<Badge
 																				id={`account-default-${account.id}`}
 																				variant="secondary"
-																				className="text-[10px]"
+																				className="text-micro"
 																			>
 																				{t(
 																					"default"
@@ -306,7 +306,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																			<Badge
 																				id={`account-inactive-${account.id}`}
 																				variant="destructive"
-																				className="text-[10px]"
+																				className="text-micro"
 																			>
 																				{tCommon(
 																					"inactive"

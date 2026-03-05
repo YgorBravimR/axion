@@ -258,9 +258,9 @@ export const EquityCurve = ({
 
 	if (data.length === 0 && !isPending) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-				<div className="flex items-center justify-between">
-					<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
+			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500">
+				<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
+					<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
 					<div className="gap-s-200 flex items-center">
 						<ViewModeToggle
 							mode={viewMode}
@@ -274,7 +274,7 @@ export const EquityCurve = ({
 						/>
 					</div>
 				</div>
-				<div className="mt-m-400 text-txt-300 flex h-64 items-center justify-center">
+				<div className="mt-s-300 text-txt-300 flex h-48 items-center justify-center sm:mt-m-400 sm:h-64">
 					{t("noData")}
 				</div>
 			</div>
@@ -292,9 +292,9 @@ export const EquityCurve = ({
 	})
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-			<div className="flex items-center justify-between">
-				<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
+		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500">
+			<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
+				<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
 				<div className="gap-s-200 flex items-center">
 					<ViewModeToggle
 						mode={viewMode}
@@ -312,7 +312,7 @@ export const EquityCurve = ({
 			</div>
 			<ChartContainer
 				id="chart-dashboard-equity-curve"
-				className={cn("mt-m-400 h-64", isPending && "opacity-50")}
+				className={cn("mt-s-300 h-48 sm:mt-m-400 sm:h-64", isPending && "opacity-50")}
 			>
 				<AreaChart
 					data={data}

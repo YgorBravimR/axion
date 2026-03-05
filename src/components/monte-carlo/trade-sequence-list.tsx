@@ -26,8 +26,8 @@ export const TradeSequenceList = ({
 	const hasMore = trades.length > maxVisible
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-			<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<h3 className="mb-m-400 text-small sm:text-body text-txt-100 font-semibold">
 				{t("title")}
 			</h3>
 
@@ -91,7 +91,9 @@ export const TradeSequenceList = ({
 								<td
 									className={cn(
 										"py-s-200 text-small text-right font-medium",
-										trade.cumulativeR >= 0 ? "text-trade-buy" : "text-trade-sell"
+										trade.cumulativeR >= 0
+											? "text-trade-buy"
+											: "text-trade-sell"
 									)}
 								>
 									{formatR(trade.cumulativeR)}

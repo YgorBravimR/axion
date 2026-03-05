@@ -78,7 +78,7 @@ export const GeneralSettings = () => {
 	return (
 		<div className="mx-auto max-w-2xl space-y-m-600">
 			{/* Appearance */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h2 className="text-body font-semibold text-txt-100">{t("title")}</h2>
 				<div className="mt-m-400 space-y-m-500">
 					{/* Theme */}
@@ -105,7 +105,7 @@ export const GeneralSettings = () => {
 			</div>
 
 			{/* Risk Settings */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center justify-between">
 					<h2 className="text-body font-semibold text-txt-100">{t("riskSettings")}</h2>
 					{!isEditing && (
@@ -195,7 +195,7 @@ export const GeneralSettings = () => {
 			<TradingAccountSettings />
 
 			{/* Data Maintenance */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h2 className="text-body font-semibold text-txt-100">
 					{t("dataMaintenance")}
 				</h2>
@@ -211,7 +211,7 @@ export const GeneralSettings = () => {
 			</div>
 
 			{/* Data Import */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h2 className="text-body font-semibold text-txt-100">{t("dataImport")}</h2>
 				<div className="mt-m-400">
 					<p className="text-small text-txt-200">
@@ -231,7 +231,7 @@ export const GeneralSettings = () => {
 			</div>
 
 			{/* Data Export */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h2 className="text-body font-semibold text-txt-100">{t("dataExport")}</h2>
 				<p className="mt-m-400 text-small text-txt-200">
 					{t("dataExportDesc")}

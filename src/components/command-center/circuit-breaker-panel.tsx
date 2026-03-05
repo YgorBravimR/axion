@@ -1,5 +1,6 @@
 "use client"
 
+import type { ElementType } from "react"
 import {
 	AlertTriangle,
 	CheckCircle,
@@ -24,7 +25,7 @@ interface CircuitBreakerStateConfig {
 	state: CircuitBreakerState
 	borderClass: string
 	bgClass: string
-	icon: React.ElementType
+	icon: ElementType
 	iconClass: string
 	badgeText?: string
 	badgeClass?: string
@@ -145,7 +146,7 @@ export const CircuitBreakerPanel = ({
 
 	if (!status) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="gap-s-200 flex items-center">
 					<AlertCircle className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
@@ -157,8 +158,12 @@ export const CircuitBreakerPanel = ({
 	const hasWarnings = status.alerts.length > 0
 
 	// Read limits directly from status (resolved from monthly plan)
-	const profitTarget = status.profitTargetCents > 0 ? fromCents(status.profitTargetCents) : null
-	const lossLimit = status.dailyLossLimitCents > 0 ? fromCents(status.dailyLossLimitCents) : null
+	const profitTarget =
+		status.profitTargetCents > 0 ? fromCents(status.profitTargetCents) : null
+	const lossLimit =
+		status.dailyLossLimitCents > 0
+			? fromCents(status.dailyLossLimitCents)
+			: null
 
 	const stateConfig = getCircuitBreakerState(status, profitTarget, lossLimit)
 	const StateIcon = stateConfig.icon
@@ -180,16 +185,20 @@ export const CircuitBreakerPanel = ({
 	return (
 		<div
 			className={cn(
-				"p-m-500 rounded-lg border transition-colors",
+				"p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border transition-colors",
 				stateConfig.borderClass,
 				stateConfig.bgClass
 			)}
 		>
 			{/* Header */}
-			<div className="mb-m-400 flex items-center justify-between">
+			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
-					<StateIcon className={cn("h-6 w-6", stateConfig.iconClass)} />
-					<h3 className="text-body text-txt-100 font-semibold">{t("title")}</h3>
+					<StateIcon
+						className={cn("h-5 w-5 sm:h-6 sm:w-6", stateConfig.iconClass)}
+					/>
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("title")}
+					</h3>
 				</div>
 
 				{stateConfig.badgeText && (
@@ -206,7 +215,7 @@ export const CircuitBreakerPanel = ({
 
 			{/* Attention states */}
 			{stateConfig.state === "lossAttention" && (
-				<div className="mb-m-400">
+				<div className="mb-s-300 sm:mb-m-400">
 					<div className="gap-s-200 text-small text-warning flex items-center">
 						<AlertTriangle className="h-4 w-4" />
 						<span>{t("approachingLossLimit")}</span>
@@ -214,7 +223,7 @@ export const CircuitBreakerPanel = ({
 				</div>
 			)}
 			{stateConfig.state === "profitAttention" && (
-				<div className="mb-m-400">
+				<div className="mb-s-300 sm:mb-m-400">
 					<div className="gap-s-200 text-small text-trade-buy/60 flex items-center">
 						<AlertCircle className="h-4 w-4" />
 						<span>{t("approachingProfitTarget")}</span>
@@ -224,7 +233,7 @@ export const CircuitBreakerPanel = ({
 
 			{/* Alerts */}
 			{hasWarnings && (
-				<div className="mb-m-400 space-y-s-200">
+				<div className="mb-s-300 sm:mb-m-400 space-y-s-200">
 					{status.profitTargetHit && (
 						<div className="gap-s-200 text-small text-trade-buy flex items-center">
 							<CheckCircle className="h-4 w-4" />
@@ -278,7 +287,7 @@ export const CircuitBreakerPanel = ({
 			)}
 
 			{/* Row 1: Daily metrics (3 columns) */}
-			<div className="gap-m-400 grid grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3">
 				<MetricCell
 					label={t("dailyPnL")}
 					value={formatCurrency(status.dailyPnL, currency)}
@@ -312,7 +321,7 @@ export const CircuitBreakerPanel = ({
 			</div>
 
 			{/* Row 2: Monthly + Risk metrics (2 columns) */}
-			<div className="mt-m-400 gap-m-400 grid grid-cols-2">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-2">
 				<MetricCell
 					label={t("monthlyPnL")}
 					value={formatCurrency(status.monthlyPnL, currency)}

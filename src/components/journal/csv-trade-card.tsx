@@ -126,7 +126,7 @@ export const CsvTradeCard = ({
 			{/* Collapsed Header */}
 			<div
 				className={cn(
-					"gap-m-400 px-m-400 py-s-300 flex items-center",
+					"gap-s-200 sm:gap-m-400 px-s-300 sm:px-m-400 py-s-300 flex flex-wrap items-center",
 					!isSkipped && "cursor-pointer"
 				)}
 				onClick={() => !isSkipped && onToggleExpand()}
@@ -252,12 +252,12 @@ export const CsvTradeCard = ({
 
 			{/* Expanded Content */}
 			{isExpanded && !isSkipped && (
-				<div className="border-bg-300 p-m-400 border-t">
+				<div className="border-bg-300 p-s-300 sm:p-m-400 border-t">
 					{/* P&L Breakdown */}
 					{trade.assetConfig && (
-						<div className="mb-m-400 border-bg-300 bg-bg-100 p-s-300 rounded-lg border">
-							<div className="flex items-center justify-between">
-								<div className="gap-m-400 text-small flex items-center">
+						<div className="mb-s-300 sm:mb-m-400 border-bg-300 bg-bg-100 p-s-200 sm:p-s-300 rounded-lg border">
+							<div className="flex flex-wrap items-center justify-between gap-s-200">
+								<div className="gap-s-200 sm:gap-m-400 text-small flex flex-wrap items-center">
 									<span className="text-txt-300">
 										Ticks: {trade.ticksGained?.toFixed(1) || "--"}
 									</span>
@@ -305,7 +305,7 @@ export const CsvTradeCard = ({
 
 					{/* Tabbed Editor */}
 					<Tabs value={activeTab} onValueChange={setActiveTab}>
-						<TabsList className="mb-m-400 w-full justify-start">
+						<TabsList className="mb-s-300 sm:mb-m-400 w-full justify-start">
 							<TabsTrigger value="basic">Basic Info</TabsTrigger>
 							<TabsTrigger value="risk">Risk</TabsTrigger>
 							<TabsTrigger value="journal">Journal</TabsTrigger>
@@ -313,8 +313,8 @@ export const CsvTradeCard = ({
 						</TabsList>
 
 						{/* Basic Info Tab */}
-						<TabsContent value="basic" className="space-y-m-400">
-							<div className="gap-m-400 grid grid-cols-2 md:grid-cols-4">
+						<TabsContent value="basic" className="space-y-s-300 sm:space-y-m-400">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
 								{/* Date */}
 								<div>
 									<Label id="label-csv-date" className="text-tiny text-txt-300">
@@ -407,7 +407,7 @@ export const CsvTradeCard = ({
 							</div>
 
 							{/* Prices (readonly) */}
-							<div className="gap-m-400 grid grid-cols-2 md:grid-cols-4">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
 								<div>
 									<Label
 										id="label-csv-entry-price"
@@ -455,8 +455,8 @@ export const CsvTradeCard = ({
 						</TabsContent>
 
 						{/* Risk Tab */}
-						<TabsContent value="risk" className="space-y-m-400">
-							<div className="gap-m-400 grid grid-cols-2 md:grid-cols-4">
+						<TabsContent value="risk" className="space-y-s-300 sm:space-y-m-400">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
 								<div>
 									<Label
 										id={`label-csv-sl-${trade.id}`}
@@ -527,7 +527,7 @@ export const CsvTradeCard = ({
 						</TabsContent>
 
 						{/* Journal Tab */}
-						<TabsContent value="journal" className="space-y-m-400">
+						<TabsContent value="journal" className="space-y-s-300 sm:space-y-m-400">
 							<div>
 								<Label
 									id={`label-csv-thoughts-${trade.id}`}
@@ -645,7 +645,7 @@ export const CsvTradeCard = ({
 						</TabsContent>
 
 						{/* Tags Tab */}
-						<TabsContent value="tags" className="space-y-m-400">
+						<TabsContent value="tags" className="space-y-s-300 sm:space-y-m-400">
 							{/* Setup Tags */}
 							{setupTags.length > 0 && (
 								<div>

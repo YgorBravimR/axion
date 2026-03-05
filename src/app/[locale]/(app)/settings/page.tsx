@@ -35,7 +35,7 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-600">
+			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
 				<SettingsContent
 					assets={assets}
 					assetTypes={assetTypes}

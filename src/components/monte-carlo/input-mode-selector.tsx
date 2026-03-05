@@ -15,7 +15,7 @@ export const InputModeSelector = ({
 	const t = useTranslations("monteCarlo.inputMode")
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 			<h3 className="mb-s-300 text-small text-txt-200 font-medium">
 				{t("title")}
 			</h3>

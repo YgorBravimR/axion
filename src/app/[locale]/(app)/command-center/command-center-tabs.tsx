@@ -77,44 +77,44 @@ export const CommandCenterTabs = ({
 			onValueChange={setActiveTab}
 			className="flex h-full flex-col"
 		>
-			<TabsList variant="line" className="border-bg-300 border-b px-2">
+			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-2 overflow-x-auto">
 				<TabsTrigger
 					value="plan"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-2"
+					className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
 					aria-label={t("tabs.plan")}
 				>
 					<CalendarDays className="h-4 w-4" />
-					<span>{t("tabs.plan")}</span>
+					<span className="hidden sm:inline">{t("tabs.plan")}</span>
 				</TabsTrigger>
 				<TabsTrigger
 					value="command-center"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-2"
+					className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
 					aria-label={t("tabs.commandCenter")}
 				>
 					<Target className="h-4 w-4" />
-					<span>{t("tabs.commandCenter")}</span>
+					<span className="hidden sm:inline">{t("tabs.commandCenter")}</span>
 				</TabsTrigger>
 				{showMonitorTab && (
 					<TabsTrigger
 						value="monitor"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-2"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
 						aria-label={t("tabs.monitor")}
 					>
 						<Activity className="h-4 w-4" />
-						<span>{t("tabs.monitor")}</span>
+						<span className="hidden sm:inline">{t("tabs.monitor")}</span>
 					</TabsTrigger>
 				)}
 				<TabsTrigger
 					value="calculator"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-2"
+					className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
 					aria-label={t("tabs.calculator")}
 				>
 					<Calculator className="h-4 w-4" />
-					<span>{t("tabs.calculator")}</span>
+					<span className="hidden sm:inline">{t("tabs.calculator")}</span>
 				</TabsTrigger>
 			</TabsList>
 
-			<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-600">
+			<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
 				<Suspense fallback={<TabLoadingFallback />}>
 					<MonthlyPlanTab
 						initialPlan={initialPlan}
@@ -125,7 +125,7 @@ export const CommandCenterTabs = ({
 				</Suspense>
 			</AnimatedTabsContent>
 
-			<AnimatedTabsContent value="command-center" className="flex-1 overflow-auto p-m-600">
+			<AnimatedTabsContent value="command-center" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
 				<CommandCenterContent
 					key={commandCenterProps.viewDate}
 					{...commandCenterProps}
@@ -140,7 +140,7 @@ export const CommandCenterTabs = ({
 			{showMonitorTab && (
 				<AnimatedTabsContent
 					value="monitor"
-					className="flex-1 overflow-auto p-m-600"
+					className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600"
 				>
 					<Suspense fallback={<TabLoadingFallback />}>
 						<MarketMonitorContent />
@@ -150,7 +150,7 @@ export const CommandCenterTabs = ({
 
 			<AnimatedTabsContent
 				value="calculator"
-				className="flex-1 overflow-auto p-m-600"
+				className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600"
 			>
 				<Suspense fallback={<TabLoadingFallback />}>
 					<PositionCalculator

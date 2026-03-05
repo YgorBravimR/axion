@@ -75,11 +75,11 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
-				<h3 className="mb-m-400 text-body font-semibold text-txt-100">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+				<h3 className="mb-s-300 text-small font-semibold text-txt-100 sm:mb-m-400 sm:text-body">
 					{t("radar.title")}
 				</h3>
-				<div className="flex h-[250px] items-center justify-center text-txt-300">
+				<div className="flex h-[200px] sm:h-[250px] items-center justify-center text-txt-300">
 					{t("noData")}
 				</div>
 			</div>
@@ -87,11 +87,11 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
-			<h3 className="mb-m-400 text-body font-semibold text-txt-100">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+			<h3 className="mb-s-300 text-small font-semibold text-txt-100 sm:mb-m-400 sm:text-body">
 				{t("radar.title")}
 			</h3>
-			<ChartContainer id="chart-dashboard-performance-radar" className="h-[250px] w-full">
+			<ChartContainer id="chart-dashboard-performance-radar" className="h-[200px] sm:h-[250px] w-full">
 					<RadarChart data={chartData} cx="50%" cy="50%" outerRadius="70%">
 						<PolarGrid stroke="var(--color-bg-300)" />
 						<PolarAngleAxis

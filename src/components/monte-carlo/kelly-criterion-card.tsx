@@ -19,9 +19,7 @@ const formatKellyPercent = (value: number): string => `${value.toFixed(2)}%`
 const formatKellyCurrency = (value: number, symbol = "$"): string =>
 	`${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 
-export const KellyCriterionCard = ({
-	statistics,
-}: KellyCriterionCardProps) => {
+export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 	const t = useTranslations("monteCarlo.metrics")
 	const tTooltips = useTranslations("monteCarlo.tooltips")
 
@@ -76,23 +74,27 @@ export const KellyCriterionCard = ({
 		recommendedKellyConfig[kellyLevel]
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="mb-m-400 flex items-start justify-between">
 				<div>
 					<div className="gap-s-200 flex items-center">
-						<h3 className="text-body text-txt-100 font-semibold">{t("kelly")}</h3>
+						<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+							{t("kelly")}
+						</h3>
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<span className="cursor-help">
-									<Info className="h-3.5 w-3.5 text-txt-300" />
+									<Info className="text-txt-300 h-3.5 w-3.5" />
 								</span>
 							</TooltipTrigger>
 							<TooltipContent
 								id="tooltip-kelly-criterion"
 								side="top"
-								className="border-bg-300 bg-bg-100 text-txt-200 max-w-xs border p-s-300 shadow-lg"
+								className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
 							>
-								<p className="text-tiny leading-relaxed">{tTooltips("kellyCriterion")}</p>
+								<p className="text-tiny leading-relaxed">
+									{tTooltips("kellyCriterion")}
+								</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>
@@ -103,7 +105,7 @@ export const KellyCriterionCard = ({
 			</div>
 
 			{/* Kelly Values */}
-			<div className="mb-m-400 gap-s-300 grid grid-cols-3">
+			<div className="mb-m-400 gap-s-300 grid grid-cols-1 sm:grid-cols-3">
 				<div
 					className={cn(
 						"p-s-300 rounded-lg border text-center",
@@ -114,7 +116,7 @@ export const KellyCriterionCard = ({
 				>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<p className="inline-flex cursor-help items-center justify-center gap-s-100 text-tiny text-txt-300">
+							<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center justify-center">
 								{t("quarterKelly")}
 								<Info className="h-3 w-3" />
 							</p>
@@ -122,9 +124,11 @@ export const KellyCriterionCard = ({
 						<TooltipContent
 							id="tooltip-kelly-quarter"
 							side="top"
-							className="border-bg-300 bg-bg-100 text-txt-200 max-w-xs border p-s-300 shadow-lg"
+							className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
 						>
-							<p className="text-tiny leading-relaxed">{tTooltips("kellyQuarter")}</p>
+							<p className="text-tiny leading-relaxed">
+								{tTooltips("kellyQuarter")}
+							</p>
 						</TooltipContent>
 					</Tooltip>
 					<p className="text-h4 text-txt-100 font-bold">
@@ -139,7 +143,7 @@ export const KellyCriterionCard = ({
 				>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<p className="inline-flex cursor-help items-center justify-center gap-s-100 text-tiny text-txt-300">
+							<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center justify-center">
 								{t("halfKelly")}
 								<Info className="h-3 w-3" />
 							</p>
@@ -147,9 +151,11 @@ export const KellyCriterionCard = ({
 						<TooltipContent
 							id="tooltip-kelly-half"
 							side="top"
-							className="border-bg-300 bg-bg-100 text-txt-200 max-w-xs border p-s-300 shadow-lg"
+							className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
 						>
-							<p className="text-tiny leading-relaxed">{tTooltips("kellyHalf")}</p>
+							<p className="text-tiny leading-relaxed">
+								{tTooltips("kellyHalf")}
+							</p>
 						</TooltipContent>
 					</Tooltip>
 					<p className="text-h4 text-txt-100 font-bold">
@@ -166,7 +172,7 @@ export const KellyCriterionCard = ({
 				>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<p className="inline-flex cursor-help items-center justify-center gap-s-100 text-tiny text-txt-300">
+							<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center justify-center">
 								{t("fullKelly")}
 								<Info className="h-3 w-3" />
 							</p>
@@ -174,9 +180,11 @@ export const KellyCriterionCard = ({
 						<TooltipContent
 							id="tooltip-kelly-full"
 							side="top"
-							className="border-bg-300 bg-bg-100 text-txt-200 max-w-xs border p-s-300 shadow-lg"
+							className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
 						>
-							<p className="text-tiny leading-relaxed">{tTooltips("kellyFull")}</p>
+							<p className="text-tiny leading-relaxed">
+								{tTooltips("kellyFull")}
+							</p>
 						</TooltipContent>
 					</Tooltip>
 					<p className="text-h4 text-txt-100 font-bold">
@@ -205,27 +213,21 @@ export const KellyCriterionCard = ({
 						•{" "}
 						{t("accountRisk", {
 							account: formatKellyCurrency(10000),
-							risk: formatKellyCurrency(
-								(recommendedKelly / 100) * 10000
-							),
+							risk: formatKellyCurrency((recommendedKelly / 100) * 10000),
 						})}
 					</p>
 					<p>
 						•{" "}
 						{t("accountRisk", {
 							account: formatKellyCurrency(25000),
-							risk: formatKellyCurrency(
-								(recommendedKelly / 100) * 25000
-							),
+							risk: formatKellyCurrency((recommendedKelly / 100) * 25000),
 						})}
 					</p>
 					<p>
 						•{" "}
 						{t("accountRisk", {
 							account: formatKellyCurrency(50000),
-							risk: formatKellyCurrency(
-								(recommendedKelly / 100) * 50000
-							),
+							risk: formatKellyCurrency((recommendedKelly / 100) * 50000),
 						})}
 					</p>
 				</div>

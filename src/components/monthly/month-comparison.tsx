@@ -65,8 +65,8 @@ export const MonthComparison = ({
 
 	if (!previous) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-				<h3 className="flex items-center gap-s-200 text-body font-semibold text-txt-100">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+				<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
 					<GitCompare className="h-5 w-5 text-acc-100" />
 					{t("title")}
 				</h3>
@@ -114,22 +114,22 @@ export const MonthComparison = ({
 	]
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-			<h3 className="flex items-center gap-s-200 text-body font-semibold text-txt-100">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
 				<GitCompare className="h-5 w-5 text-acc-100" />
 				{t("titleWithMonth", { month: previousMonthName })}
 			</h3>
 
-			<div className="mt-m-500 space-y-s-300">
+			<div className="mt-m-400 sm:mt-m-500 space-y-s-200 sm:space-y-s-300">
 				{comparisonRows.map((row) => (
 					<div
 						key={row.label}
 						className="flex items-center justify-between rounded bg-bg-100 px-m-400 py-s-300"
 					>
 						<span className="text-small text-txt-200">{row.label}</span>
-						<div className="flex items-center gap-m-400">
-							<span className="text-tiny text-txt-300">{row.previous}</span>
-							<span className="text-small text-txt-100">→</span>
+						<div className="flex items-center gap-s-200 sm:gap-m-400">
+							<span className="hidden sm:inline text-tiny text-txt-300">{row.previous}</span>
+							<span className="hidden sm:inline text-small text-txt-100">→</span>
 							<span className="text-small font-medium text-txt-100">
 								{row.current}
 							</span>

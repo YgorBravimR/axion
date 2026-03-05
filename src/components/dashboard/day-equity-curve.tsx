@@ -58,7 +58,7 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="flex h-[150px] items-center justify-center text-txt-300">
+			<div className="flex h-[120px] sm:h-[150px] items-center justify-center text-txt-300">
 				{t("noData")}
 			</div>
 		)
@@ -81,7 +81,7 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 	}
 
 	return (
-		<ChartContainer id="chart-dashboard-day-equity-curve" className="h-[150px] w-full">
+		<ChartContainer id="chart-dashboard-day-equity-curve" className="h-[120px] sm:h-[150px] w-full">
 				<LineChart
 					data={data}
 					margin={{ top: 5, right: 5, left: 0, bottom: 5 }}

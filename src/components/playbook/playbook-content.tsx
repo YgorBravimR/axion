@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button"
 import { StrategyCard, ComplianceDashboard } from "@/components/playbook"
 import { DeleteConfirmDialog } from "@/components/playbook/delete-confirm-dialog"
 import { deleteStrategy } from "@/app/actions/strategies"
-import type { StrategyWithStats, ComplianceOverview } from "@/app/actions/strategies"
+import type {
+	StrategyWithStats,
+	ComplianceOverview,
+} from "@/app/actions/strategies"
 
 interface PlaybookContentProps {
 	initialStrategies: StrategyWithStats[]
@@ -19,9 +22,14 @@ export const PlaybookContent = ({
 	initialCompliance,
 }: PlaybookContentProps) => {
 	const router = useRouter()
-	const [strategies, setStrategies] = useState<StrategyWithStats[]>(initialStrategies)
-	const [compliance, setCompliance] = useState<ComplianceOverview | null>(initialCompliance)
-	const [deleteTarget, setDeleteTarget] = useState<StrategyWithStats | null>(null)
+	const [strategies, setStrategies] =
+		useState<StrategyWithStats[]>(initialStrategies)
+	const [compliance, setCompliance] = useState<ComplianceOverview | null>(
+		initialCompliance
+	)
+	const [deleteTarget, setDeleteTarget] = useState<StrategyWithStats | null>(
+		null
+	)
 	const [isPending, startTransition] = useTransition()
 
 	// Reset state when initial props change (e.g., account switch)
@@ -54,14 +62,16 @@ export const PlaybookContent = ({
 	}
 
 	return (
-		<div className="space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Compliance Overview */}
 			<ComplianceDashboard data={compliance} />
 
 			{/* Strategy List */}
-			<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
-					<h2 className="text-body text-txt-100 font-semibold">Your Strategies</h2>
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+						Your Strategies
+					</h2>
 					<Link href="/playbook/new">
 						<Button id="playbook-new-strategy">
 							<Plus className="mr-2 h-4 w-4" />
@@ -71,20 +81,25 @@ export const PlaybookContent = ({
 				</div>
 
 				{strategies.length === 0 ? (
-					<div className="mt-m-500 flex flex-col items-center justify-center py-l-700 text-center">
+					<div className="mt-m-400 sm:mt-m-500 py-l-700 flex flex-col items-center justify-center text-center">
 						<p className="text-body text-txt-200">No strategies defined yet</p>
 						<p className="text-small text-txt-300 mt-s-200">
-							Create your first trading strategy to track performance and compliance
+							Create your first trading strategy to track performance and
+							compliance
 						</p>
 						<Link href="/playbook/new">
-							<Button id="playbook-add-strategy" variant="outline" className="mt-m-500">
+							<Button
+								id="playbook-add-strategy"
+								variant="outline"
+								className="mt-m-500"
+							>
 								<Plus className="mr-2 h-4 w-4" />
 								Add Strategy
 							</Button>
 						</Link>
 					</div>
 				) : (
-					<div className="mt-m-500 grid grid-cols-1 gap-m-400 lg:grid-cols-2">
+					<div className="mt-m-400 sm:mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 lg:grid-cols-2">
 						{strategies.map((strategy) => (
 							<StrategyCard
 								key={strategy.id}

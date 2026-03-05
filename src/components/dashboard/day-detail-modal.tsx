@@ -86,9 +86,9 @@ export const DayDetailModal = ({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
 				id="day-detail-dialog"
-				className="max-h-[90vh] max-w-3xl overflow-hidden"
+				className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-hidden sm:w-full"
 			>
-				<ScrollArea className="max-h-[calc(90vh-3rem)]">
+				<ScrollArea className="max-h-[calc(90dvh-3rem)]">
 				<DialogHeader>
 					<DialogTitle className="capitalize">{dayName}</DialogTitle>
 				</DialogHeader>
@@ -101,7 +101,7 @@ export const DayDetailModal = ({
 						<DaySummaryStats summary={summary} />
 
 						{/* Equity Curve */}
-						<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+						<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
 							<h4 className="mb-s-300 text-small text-txt-100 font-medium">
 								{t("dayDetail.equityCurve")}
 							</h4>
@@ -123,7 +123,7 @@ export const DayDetailModal = ({
 						</div>
 					</div>
 				) : (
-					<div className="text-txt-300 flex h-[200px] items-center justify-center">
+					<div className="text-txt-300 flex h-[150px] sm:h-[200px] items-center justify-center">
 						{t("dayDetail.noData")}
 					</div>
 				)}

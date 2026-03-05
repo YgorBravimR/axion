@@ -7,10 +7,11 @@ import { LoadingOverlayProvider } from "@/components/ui/loading-overlay"
 import { AccountTransitionOverlayProvider } from "@/components/ui/account-transition-overlay"
 import { AuthProvider } from "@/components/auth"
 import { BrandProvider } from "@/components/providers/brand-provider"
+import type { ReactNode } from "react"
 import { routing } from "@/i18n/routing"
 
 interface LocaleLayoutProps {
-	children: React.ReactNode
+	children: ReactNode
 	params: Promise<{ locale: string }>
 }
 
@@ -58,7 +59,7 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 					<LoadingOverlayProvider>
 						<AuthProvider>
 							<AccountTransitionOverlayProvider>
-								<div className="bg-bg-100 min-h-screen">{children}</div>
+								<div className="bg-bg-100 min-h-dvh">{children}</div>
 							</AccountTransitionOverlayProvider>
 						</AuthProvider>
 					</LoadingOverlayProvider>

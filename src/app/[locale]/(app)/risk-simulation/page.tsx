@@ -16,7 +16,7 @@ const RiskSimulationPage = async () => {
 		profilesResponse.status === "success" ? (profilesResponse.data ?? []) : []
 
 	return (
-		<div className="px-m-400 py-m-500 container mx-auto max-w-7xl">
+		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">
 			<RiskSimulationContent
 				monthlyPlan={monthlyPlan}
 				riskProfiles={riskProfiles}

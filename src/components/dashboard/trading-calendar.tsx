@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback, memo } from "react"
+import { useMemo, useCallback, memo, type KeyboardEvent } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -96,10 +96,10 @@ export const TradingCalendar = memo(
 		)
 
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center justify-between">
-					<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
-					<div className="gap-s-200 flex items-center">
+					<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
+					<div className="gap-s-100 flex items-center sm:gap-s-200">
 						<Button
 							id="calendar-previous-month"
 							variant="ghost"
@@ -109,7 +109,7 @@ export const TradingCalendar = memo(
 						>
 							<ChevronLeft className="h-4 w-4" />
 						</Button>
-						<span className="text-small text-txt-100 min-w-[140px] text-center font-medium">
+						<span className="text-tiny text-txt-100 min-w-[100px] text-center font-medium sm:text-small sm:min-w-[140px]">
 							{monthName}
 						</span>
 						<Button
@@ -124,13 +124,13 @@ export const TradingCalendar = memo(
 					</div>
 				</div>
 
-				<div className="mt-m-400">
+				<div className="mt-s-300 sm:mt-m-400">
 					{/* Days of week header */}
-					<div className="gap-s-100 grid grid-cols-7">
+					<div className="gap-px grid grid-cols-7 sm:gap-s-100">
 						{daysOfWeek.map((day, index) => (
 							<div
 								key={index}
-								className="py-s-200 text-tiny text-txt-300 text-center font-medium"
+								className="py-s-100 text-center font-medium text-txt-300 text-[0.625rem] sm:py-s-200 sm:text-tiny"
 							>
 								{day}
 							</div>
@@ -138,7 +138,7 @@ export const TradingCalendar = memo(
 					</div>
 
 					{/* Calendar grid */}
-					<div className="gap-s-100 grid grid-cols-7">
+					<div className="gap-px grid grid-cols-7 sm:gap-s-100">
 						{calendarDays.map((dayData, index) => {
 							if (!dayData) {
 								return <div key={`empty-${index}`} className="aspect-square" />
@@ -173,7 +173,7 @@ export const TradingCalendar = memo(
 								}
 							}
 
-							const handleKeyDown = (e: React.KeyboardEvent) => {
+							const handleKeyDown = (e: KeyboardEvent) => {
 								if (isClickable && (e.key === "Enter" || e.key === " ")) {
 									e.preventDefault()
 									onDayClick(dateKey)
@@ -183,7 +183,7 @@ export const TradingCalendar = memo(
 							return (
 								<div
 									key={dateKey}
-									className={`p-s-100 aspect-square rounded-md ${bgClass} ${isToday ? "ring-acc-100 ring-2" : ""} ${isClickable ? "cursor-pointer transition-opacity hover:opacity-80" : ""}`}
+									className={`p-px aspect-square rounded sm:rounded-md sm:p-s-100 ${bgClass} ${isToday ? "ring-acc-100 ring-1 sm:ring-2" : ""} ${isClickable ? "cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none" : ""}`}
 									onClick={handleClick}
 									onKeyDown={handleKeyDown}
 									tabIndex={isClickable ? 0 : -1}
@@ -195,11 +195,11 @@ export const TradingCalendar = memo(
 									}
 								>
 									<div className="flex h-full flex-col">
-										<span className="text-tiny text-txt-200">
+										<span className="text-[0.625rem] text-txt-200 leading-tight sm:text-tiny">
 											{dayData.date.getDate()}
 										</span>
 										{dailyData && (
-											<div className="mt-auto">
+											<div className="mt-auto hidden sm:block">
 												<span className={`text-tiny font-medium ${textClass}`}>
 													{formatCompactCurrencyWithSign(dailyData.pnl)}
 												</span>

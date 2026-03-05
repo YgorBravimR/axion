@@ -33,12 +33,12 @@ const DecisionTraceModal = ({
 				className="bg-bg-100 border-bg-300 w-full overflow-y-auto border-l sm:max-w-2xl"
 			>
 				<SheetHeader className="mb-m-400">
-					<SheetTitle className="text-h3 text-txt-100">
+					<SheetTitle className="text-body sm:text-h3 text-txt-100">
 						{t("title")}
 					</SheetTitle>
 				</SheetHeader>
 
-				<div className="space-y-m-500">
+				<div className="space-y-m-400 sm:space-y-m-500">
 					{weeks.map((week) => (
 						<div key={week.weekKey}>
 							{/* Week header */}

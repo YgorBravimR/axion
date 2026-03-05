@@ -90,12 +90,16 @@
   --spacing-l-800: 48px;
   --spacing-l-900: 64px;
 
-  --font-size-h1: 3rem; 
-  --font-size-h2: 2.25rem; 
-  --font-size-h3: 1.5rem; 
-  --font-size-body: 1rem; 
-  --font-size-small: 0.875rem; 
+  /* Fluid typography — scales smoothly between mobile and desktop.
+     Formula: clamp(mobile-min, base + vw-rate, desktop-max)
+     Headings scale dramatically; body/small/tiny stay fixed for readability. */
+  --font-size-h1: clamp(1.75rem, 1.25rem + 1.5vw, 3rem);
+  --font-size-h2: clamp(1.375rem, 1rem + 1.25vw, 2.25rem);
+  --font-size-h3: clamp(1.125rem, 0.875rem + 0.75vw, 1.5rem);
+  --font-size-body: 1rem;
+  --font-size-small: 0.875rem;
   --font-size-tiny: 0.75rem;
+  --font-size-micro: 0.625rem;
 
   --screen-xs: 480px;
   --screen-sm: 640px;
@@ -888,6 +892,30 @@ body {
   .animate-overlay-fade-out {
     animation: none !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR UTILITIES
+   Hide scrollbar while keeping scroll functionality — useful for
+   horizontally-scrollable tab lists and carousels on mobile.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE PAGE PADDING
+   Fluid padding that scales with viewport. Prevents content from being
+   jammed against edges on mobile while avoiding over-spacing on desktop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page-padding {
+  padding: clamp(var(--spacing-m-400), 3vw, var(--spacing-m-600));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

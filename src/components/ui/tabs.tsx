@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import type { ComponentProps } from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -10,7 +10,7 @@ const Tabs = ({
   className,
   orientation = "horizontal",
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) => (
+}: ComponentProps<typeof TabsPrimitive.Root>) => (
   <TabsPrimitive.Root
     data-slot="tabs"
     data-orientation={orientation}
@@ -24,7 +24,7 @@ const Tabs = ({
 )
 
 const tabsListVariants = cva(
-  "rounded-lg p-[3px] group-data-[orientation=horizontal]/tabs:h-9 data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "rounded-lg p-[3px] group-data-[orientation=horizontal]/tabs:h-9 data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex max-w-full items-center justify-start overflow-x-auto scrollbar-none sm:w-fit sm:justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col group-data-[orientation=vertical]/tabs:overflow-x-visible",
   {
     variants: {
       variant: {
@@ -42,7 +42,7 @@ const TabsList = ({
   className,
   variant = "default",
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
+}: ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) => (
   <TabsPrimitive.List
     data-slot="tabs-list"
@@ -55,7 +55,7 @@ const TabsList = ({
 const TabsTrigger = ({
   className,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) => (
+}: ComponentProps<typeof TabsPrimitive.Trigger>) => (
   <TabsPrimitive.Trigger
     data-slot="tabs-trigger"
     className={cn(
@@ -72,7 +72,7 @@ const TabsTrigger = ({
 const TabsContent = ({
   className,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) => (
+}: ComponentProps<typeof TabsPrimitive.Content>) => (
   <TabsPrimitive.Content
     data-slot="tabs-content"
     className={cn("flex-1 outline-none", className)}
@@ -83,7 +83,7 @@ const TabsContent = ({
 const AnimatedTabsContent = ({
   className,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) => (
+}: ComponentProps<typeof TabsPrimitive.Content>) => (
   <TabsPrimitive.Content
     data-slot="tabs-content"
     forceMount

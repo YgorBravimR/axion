@@ -21,8 +21,8 @@ const Error = (props: {
 	}, [error])
 
 	return (
-		<div className="bg-bg-100 p-m-600 flex min-h-screen items-center justify-center">
-			<Card id="error-boundary-card" className="bg-bg-200 p-l-700 max-w-lg shadow-xl">
+		<div className="bg-bg-100 p-m-400 flex min-h-dvh items-center justify-center sm:p-m-600">
+			<Card id="error-boundary-card" className="bg-bg-200 p-m-500 max-w-lg shadow-xl sm:p-l-700">
 				<div className="flex flex-col items-center text-center">
 					<div className="bg-fb-error/20 p-m-600 rounded-full">
 						<AlertTriangle className="text-fb-error h-12 w-12" />

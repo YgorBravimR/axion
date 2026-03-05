@@ -5,7 +5,10 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ConditionForm } from "./condition-form"
-import { getConditions, deleteCondition } from "@/app/actions/trading-conditions"
+import {
+	getConditions,
+	deleteCondition,
+} from "@/app/actions/trading-conditions"
 import type { TradingCondition } from "@/db/schema"
 import type { ConditionCategory } from "@/types/trading-condition"
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
@@ -31,7 +34,8 @@ export const ConditionList = () => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [filterCategory, setFilterCategory] = useState<FilterCategory>("all")
 	const [formOpen, setFormOpen] = useState(false)
-	const [editingCondition, setEditingCondition] = useState<TradingCondition | null>(null)
+	const [editingCondition, setEditingCondition] =
+		useState<TradingCondition | null>(null)
 	const [isPending, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -51,8 +55,10 @@ export const ConditionList = () => {
 	const categoryCounts = {
 		all: conditions.length,
 		indicator: conditions.filter((c) => c.category === "indicator").length,
-		price_action: conditions.filter((c) => c.category === "price_action").length,
-		market_context: conditions.filter((c) => c.category === "market_context").length,
+		price_action: conditions.filter((c) => c.category === "price_action")
+			.length,
+		market_context: conditions.filter((c) => c.category === "market_context")
+			.length,
 		custom: conditions.filter((c) => c.category === "custom").length,
 	}
 
@@ -151,7 +157,8 @@ export const ConditionList = () => {
 							aria-pressed={filterCategory === badge.key}
 							onClick={() => setFilterCategory(badge.key)}
 							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") setFilterCategory(badge.key)
+								if (e.key === "Enter" || e.key === " ")
+									setFilterCategory(badge.key)
 							}}
 						>
 							{badge.label} ({categoryCounts[badge.key]})
@@ -165,16 +172,18 @@ export const ConditionList = () => {
 			</div>
 
 			{/* Conditions Grid */}
-			<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+			<div className="gap-s-300 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 				{filteredConditions.length === 0 ? (
 					<div className="border-bg-300 bg-bg-200 p-l-700 text-txt-300 col-span-full rounded-lg border text-center">
-						{conditions.length === 0 ? t("noConditions") : t("noConditionsInFilter")}
+						{conditions.length === 0
+							? t("noConditions")
+							: t("noConditionsInFilter")}
 					</div>
 				) : (
 					filteredConditions.map((condition) => (
 						<div
 							key={condition.id}
-							className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border transition-colors"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border transition-colors"
 						>
 							<div className="flex items-start justify-between">
 								<div className="min-w-0 flex-1">
@@ -182,7 +191,10 @@ export const ConditionList = () => {
 										{condition.name}
 									</p>
 									<span
-										className={cn("text-caption", getCategoryColor(condition.category))}
+										className={cn(
+											"text-caption",
+											getCategoryColor(condition.category)
+										)}
 									>
 										{getCategoryLabel(condition.category)}
 									</span>
@@ -224,7 +236,9 @@ export const ConditionList = () => {
 														</AlertDialogDescription>
 													</AlertDialogHeader>
 													<AlertDialogFooter>
-														<AlertDialogCancel id={`condition-delete-cancel-${condition.id}`}>
+														<AlertDialogCancel
+															id={`condition-delete-cancel-${condition.id}`}
+														>
 															{tCommon("cancel")}
 														</AlertDialogCancel>
 														<AlertDialogAction

@@ -1,8 +1,8 @@
-import * as React from "react"
+import type { ComponentProps } from "react"
 
 import { cn } from "@/lib/utils"
 
-interface CardProps extends React.ComponentProps<"div"> {
+interface CardProps extends ComponentProps<"div"> {
 	id: string
 }
 
@@ -11,7 +11,7 @@ const Card = ({ className, ...props }: CardProps) => {
 		<div
 			data-slot="card"
 			className={cn(
-				"bg-bg-200 text-txt-100 gap-m-600 border-bg-300 py-m-600 shadow-medium flex flex-col rounded-md border",
+				"bg-bg-200 text-txt-100 gap-m-400 border-bg-300 py-m-400 shadow-medium flex flex-col rounded-md border sm:gap-m-500 sm:py-m-500 lg:gap-m-600 lg:py-m-600",
 				className
 			)}
 			{...props}
@@ -19,12 +19,12 @@ const Card = ({ className, ...props }: CardProps) => {
 	)
 }
 
-function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+const CardHeader = ({ className, ...props }: ComponentProps<"div">) => {
 	return (
 		<div
 			data-slot="card-header"
 			className={cn(
-				"gap-s-200 px-m-600 [.border-b]:pb-m-600 @container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto]",
+				"gap-s-200 px-m-400 [.border-b]:pb-m-400 @container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] sm:px-m-500 sm:[.border-b]:pb-m-500 lg:px-m-600 lg:[.border-b]:pb-m-600",
 				className
 			)}
 			{...props}
@@ -32,7 +32,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 	)
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+const CardTitle = ({ className, ...props }: ComponentProps<"div">) => {
 	return (
 		<div
 			data-slot="card-title"
@@ -42,7 +42,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
 	)
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+const CardDescription = ({ className, ...props }: ComponentProps<"div">) => {
 	return (
 		<div
 			data-slot="card-description"
@@ -52,7 +52,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
 	)
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+const CardAction = ({ className, ...props }: ComponentProps<"div">) => {
 	return (
 		<div
 			data-slot="card-action"
@@ -65,22 +65,22 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
 	)
 }
 
-function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+const CardContent = ({ className, ...props }: ComponentProps<"div">) => {
 	return (
 		<div
 			data-slot="card-content"
-			className={cn("px-m-600", className)}
+			className={cn("px-m-400 sm:px-m-500 lg:px-m-600", className)}
 			{...props}
 		/>
 	)
 }
 
-function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+const CardFooter = ({ className, ...props }: ComponentProps<"div">) => {
 	return (
 		<div
 			data-slot="card-footer"
 			className={cn(
-				"px-m-600 [.border-t]:pt-m-600 flex items-center",
+				"px-m-400 [.border-t]:pt-m-400 flex items-center sm:px-m-500 sm:[.border-t]:pt-m-500 lg:px-m-600 lg:[.border-t]:pt-m-600",
 				className
 			)}
 			{...props}

@@ -235,7 +235,7 @@ export const DetailedTradeImporter = ({
 				</div>
 
 				{/* Summary Stats */}
-				<div className="grid grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<div className="p-3 rounded bg-bg-200 border border-bg-300">
 						<p className="text-xs text-txt-300 mb-1">Successful Trades</p>
 						<p className="text-xl font-semibold text-txt-100">

@@ -83,14 +83,14 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center gap-s-200">
 					<BarChart3 className="h-5 w-5 text-txt-300" />
-					<h3 className="text-body font-semibold text-txt-100">
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">
 						{t("title")}
 					</h3>
 				</div>
-				<div className="mt-m-400 flex h-48 items-center justify-center text-txt-300">
+				<div className="mt-s-300 sm:mt-m-400 flex h-48 items-center justify-center text-txt-300">
 					{t("noData")}
 				</div>
 			</div>
@@ -109,17 +109,17 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 	const mode = data.reduce((max, b) => (b.count > max.count ? b : max), data[0])
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			<div className="flex items-center gap-s-200">
 				<BarChart3 className="h-5 w-5 text-txt-300" />
-				<h3 className="text-body font-semibold text-txt-100">
+				<h3 className="text-small sm:text-body font-semibold text-txt-100">
 					{t("title")}
 				</h3>
 			</div>
 
 			{/* Summary Stats */}
-			<div className="mt-m-400 grid grid-cols-2 gap-m-400 md:grid-cols-4">
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+			<div className="mt-s-300 sm:mt-m-400 grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-4">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("totalTrades")}
 						tooltip={t("totalTradesDesc")}
@@ -128,7 +128,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 						{totalTrades}
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("positiveR")}
 						tooltip={t("positiveRDesc")}
@@ -137,7 +137,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 						{positiveCount} ({((positiveCount / totalTrades) * 100).toFixed(0)}%)
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("negativeR")}
 						tooltip={t("negativeRDesc")}
@@ -146,7 +146,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 						{negativeCount} ({((negativeCount / totalTrades) * 100).toFixed(0)}%)
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("mostCommon")}
 						tooltip={t("mostCommonDesc")}
@@ -158,7 +158,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 			</div>
 
 			{/* Chart */}
-			<ChartContainer id="chart-analytics-r-distribution" className="mt-m-500 h-64">
+			<ChartContainer id="chart-analytics-r-distribution" className="mt-m-400 sm:mt-m-500 h-48 sm:h-64 min-w-0">
 					<BarChart
 						data={data}
 						margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
@@ -204,7 +204,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 			</ChartContainer>
 
 			{/* Insight */}
-			<div className="mt-m-400 rounded-lg bg-bg-100 p-m-400">
+			<div className="mt-s-300 sm:mt-m-400 rounded-lg bg-bg-100 p-s-300 sm:p-m-400">
 				<p className="text-small text-txt-200">
 					{positiveCount > negativeCount ? (
 						t("achievedPositiveR", {

@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Sidebar } from "./sidebar"
 import { cn } from "@/lib/utils"
 
 interface MainLayoutProps {
-	children: React.ReactNode
+	children: ReactNode
 }
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({ children }: MainLayoutProps) => {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
 	return (
@@ -19,7 +19,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 			/>
 			<main
 				className={cn(
-					"min-h-screen transition-[margin-left] duration-300",
+					"min-h-dvh transition-[margin-left] duration-300",
 					isSidebarCollapsed ? "ml-16" : "ml-64"
 				)}
 			>
@@ -28,3 +28,5 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 		</>
 	)
 }
+
+export { MainLayout }

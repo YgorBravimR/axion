@@ -41,7 +41,7 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 			<Card
 				id={`trade-card-${trade.id}`}
 				className={cn(
-					"p-m-500 hover:border-acc-100/50 hover:bg-bg-200/80 transition-colors",
+					"p-s-300 sm:p-m-400 lg:p-m-500 hover:border-acc-100/50 hover:bg-bg-200/80 transition-colors",
 					className
 				)}
 			>
@@ -147,7 +147,7 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 				)}
 
 				{/* Quick metrics */}
-				<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-3 border-t">
+				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 sm:grid-cols-3 border-t">
 					<div>
 						<span className="text-tiny text-txt-300">{t("entry")}</span>
 						<p className="text-small text-txt-100">

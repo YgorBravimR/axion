@@ -93,7 +93,7 @@ export const TradingAccountSettings = () => {
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="flex items-center justify-center rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<Loader2 className="h-6 w-6 animate-spin text-txt-300" />
 			</div>
 		)
@@ -104,12 +104,12 @@ export const TradingAccountSettings = () => {
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-s-200">
 					<Building2 className="h-5 w-5 text-acc-100" />
-					<h2 className="text-body font-semibold text-txt-100">{t("title")}</h2>
+					<h2 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h2>
 				</div>
 				{!isEditing && (
 					<Button id="trading-edit" variant="ghost" size="sm" onClick={handleEdit}>

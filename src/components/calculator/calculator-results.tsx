@@ -48,9 +48,9 @@ const CalculatorResults = ({
 	// Empty state: no asset selected
 	if (!hasAssetSelected) {
 		return (
-			<div className="flex h-full items-center justify-center rounded-lg border border-dashed border-bg-300 p-m-500">
+			<div className="border-bg-300 p-s-300 sm:p-m-400 lg:p-m-500 flex h-full items-center justify-center rounded-lg border border-dashed">
 				<div className="text-center">
-					<Calculator className="mx-auto mb-s-200 h-8 w-8 text-txt-300" />
+					<Calculator className="mb-s-200 text-txt-300 mx-auto h-8 w-8" />
 					<p className="text-small text-txt-300">{t("selectAssetToStart")}</p>
 				</div>
 			</div>
@@ -60,10 +60,12 @@ const CalculatorResults = ({
 	// Empty state: no prices yet
 	if (!hasPrices || !result) {
 		return (
-			<div className="flex h-full items-center justify-center rounded-lg border border-dashed border-bg-300 p-m-500">
+			<div className="border-bg-300 p-s-300 sm:p-m-400 lg:p-m-500 flex h-full items-center justify-center rounded-lg border border-dashed">
 				<div className="text-center">
-					<BarChart3 className="mx-auto mb-s-200 h-8 w-8 text-txt-300" />
-					<p className="text-small text-txt-300">{t("enterPricesToCalculate")}</p>
+					<BarChart3 className="mb-s-200 text-txt-300 mx-auto h-8 w-8" />
+					<p className="text-small text-txt-300">
+						{t("enterPricesToCalculate")}
+					</p>
 				</div>
 			</div>
 		)
@@ -72,7 +74,7 @@ const CalculatorResults = ({
 	// Validation errors
 	if (!result.isValid) {
 		return (
-			<div className="rounded-lg border border-trade-sell/30 bg-trade-sell/5 p-m-500">
+			<div className="border-trade-sell/30 bg-trade-sell/5 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="space-y-s-200">
 					{result.errors.map((error) => (
 						<p key={error} className="text-small text-trade-sell">
@@ -87,7 +89,7 @@ const CalculatorResults = ({
 	return (
 		<div className="space-y-m-400">
 			{/* Risk Section */}
-			<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 				<div className="mb-s-300 gap-s-200 flex items-center">
 					<Shield className="text-trade-sell h-4 w-4" />
 					<h4 className="text-small text-txt-100 font-semibold">
@@ -193,7 +195,7 @@ const CalculatorResults = ({
 			</div>
 
 			{/* Position Size Section */}
-			<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 				<div className="mb-s-300 gap-s-200 flex items-center">
 					<BarChart3 className="text-acc-100 h-4 w-4" />
 					<h4 className="text-small text-txt-100 font-semibold">
@@ -229,7 +231,7 @@ const CalculatorResults = ({
 
 			{/* Target / R:R Section */}
 			{result.targetPoints !== null && (
-				<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 					<div className="mb-s-300 gap-s-200 flex items-center">
 						<TrendingUp className="text-trade-buy h-4 w-4" />
 						<h4 className="text-small text-txt-100 font-semibold">

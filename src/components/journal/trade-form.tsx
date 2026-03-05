@@ -514,9 +514,12 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 		return (
 			<Form {...form}>
-				<form onSubmit={handleSubmit(onSubmit)} className="space-y-m-600">
+				<form
+					onSubmit={handleSubmit(onSubmit)}
+					className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+				>
 					<Tabs defaultValue="basic" className="w-full">
-						<TabsList className="grid w-full grid-cols-4">
+						<TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
 							<TabsTrigger
 								value="basic"
 								className={cn(
@@ -570,7 +573,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						{/* Basic Info Tab */}
 						<AnimatedTabsContent
 							value="basic"
-							className="space-y-m-500 pt-m-500"
+							className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
 						>
 							{/* Direction Toggle */}
 							<div className="space-y-s-200">
@@ -610,7 +613,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							</div>
 
 							{/* Asset and Timeframe */}
-							<div className="gap-m-400 grid grid-cols-2">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="asset"
@@ -735,7 +738,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							</div>
 
 							{/* Dates */}
-							<div className="gap-m-400 grid grid-cols-2">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="entryDate"
@@ -791,7 +794,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							</div>
 
 							{/* Prices */}
-							<div className="gap-m-400 grid grid-cols-2">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="entryPrice"
@@ -948,10 +951,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						{/* Risk Management Tab */}
 						<AnimatedTabsContent
 							value="risk"
-							className="space-y-m-500 pt-m-500"
+							className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
 						>
 							{/* Stop Loss and Take Profit */}
-							<div className="gap-m-400 grid grid-cols-2">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="stopLoss"
@@ -1081,7 +1084,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							</div>
 
 							{/* MFE/MAE */}
-							<div className="gap-m-400 grid grid-cols-2">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="mfe"
@@ -1189,7 +1192,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 							{/* P&L Preview */}
 							{calculatedPnLResult !== null && (
-								<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+								<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 									<p className="text-small text-txt-300">
 										{t("calculatedPnl")}
 									</p>
@@ -1232,7 +1235,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						{/* Journal Tab */}
 						<AnimatedTabsContent
 							value="journal"
-							className="space-y-m-500 pt-m-500"
+							className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
 						>
 							<FormField
 								control={form.control}
@@ -1388,7 +1391,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						{/* Tags Tab */}
 						<AnimatedTabsContent
 							value="tags"
-							className="space-y-m-500 pt-m-500"
+							className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
 						>
 							{/* Setup Tags */}
 							{setupTags.length > 0 && (
@@ -1457,7 +1460,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							</div>
 
 							{localTags.length === 0 && (
-								<div className="border-bg-300 bg-bg-200 p-m-600 rounded-lg border text-center">
+								<div className="border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600 rounded-lg border text-center">
 									<p className="text-txt-200">{t("noTagsYet")}</p>
 									<p className="mt-s-200 text-small text-txt-300">
 										{t("createTagsHint")}
@@ -1475,7 +1478,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 					</Tabs>
 
 					{/* Submit Button */}
-					<div className="gap-m-400 border-bg-300 pt-m-500 flex justify-end border-t">
+					<div className="gap-s-300 sm:gap-m-400 border-bg-300 pt-m-400 sm:pt-m-500 flex flex-col-reverse border-t sm:flex-row sm:justify-end">
 						<Button
 							id="trade-form-cancel"
 							type="button"

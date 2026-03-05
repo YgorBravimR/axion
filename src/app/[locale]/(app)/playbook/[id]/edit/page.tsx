@@ -35,8 +35,10 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 	const [strategy, setStrategy] = useState<StrategyWithStats | null>(null)
 	const [strategyId, setStrategyId] = useState<string | null>(null)
 	const [conditions, setConditions] = useState<StrategyConditionInput[]>([])
-	const [persistedScreenshot, setPersistedScreenshot] = useState<PersistedImage | null>(null)
-	const [pendingScreenshot, setPendingScreenshot] = useState<PendingImage | null>(null)
+	const [persistedScreenshot, setPersistedScreenshot] =
+		useState<PersistedImage | null>(null)
+	const [pendingScreenshot, setPendingScreenshot] =
+		useState<PendingImage | null>(null)
 
 	useEffect(() => {
 		const loadStrategy = async () => {
@@ -51,7 +53,10 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 			if (stratResult.status === "success" && stratResult.data) {
 				setStrategy(stratResult.data)
 				// Initialize persisted screenshot from existing data
-				if (stratResult.data.screenshotUrl && stratResult.data.screenshotS3Key) {
+				if (
+					stratResult.data.screenshotUrl &&
+					stratResult.data.screenshotS3Key
+				) {
 					setPersistedScreenshot({
 						url: stratResult.data.screenshotUrl,
 						s3Key: stratResult.data.screenshotS3Key,
@@ -151,7 +156,7 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 
 	if (!strategy) {
 		return (
-			<div className="flex h-full flex-col items-center justify-center gap-m-400">
+			<div className="gap-m-400 flex h-full flex-col items-center justify-center">
 				<p className="text-txt-300">{t("strategyNotFound")}</p>
 				<Link href="/playbook">
 					<Button id="playbook-edit-back-to-playbook" variant="outline">
@@ -165,25 +170,30 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-y-auto p-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
 				<div className="mx-auto max-w-3xl">
-					<form onSubmit={handleSubmit} className="space-y-m-600">
+					<form
+						onSubmit={handleSubmit}
+						className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+					>
 						{error && (
-							<div className="bg-fb-error/10 text-fb-error rounded-lg p-s-300 text-small">
+							<div className="bg-fb-error/10 text-fb-error p-s-300 text-small rounded-lg">
 								{error}
 							</div>
 						)}
 
 						{/* Basic Info Section */}
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<h2 className="text-body text-txt-100 mb-m-400 font-semibold">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("basicInfo")}
 							</h2>
 
 							<div className="space-y-m-400">
-								<div className="grid grid-cols-3 gap-m-400">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 									<div>
-										<Label id="label-code" htmlFor="code">{t("codeLabel")}</Label>
+										<Label id="label-code" htmlFor="code">
+											{t("codeLabel")}
+										</Label>
 										<Input
 											id="code"
 											name="code"
@@ -198,8 +208,10 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 											{t("codeHint")}
 										</p>
 									</div>
-									<div className="col-span-2">
-										<Label id="label-strategy-name" htmlFor="name">{t("strategyNameLabel")}</Label>
+									<div className="sm:col-span-2">
+										<Label id="label-strategy-name" htmlFor="name">
+											{t("strategyNameLabel")}
+										</Label>
 										<Input
 											id="name"
 											name="name"
@@ -212,7 +224,9 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 								</div>
 
 								<div>
-									<Label id="label-description" htmlFor="description">{t("descriptionLabel")}</Label>
+									<Label id="label-description" htmlFor="description">
+										{t("descriptionLabel")}
+									</Label>
 									<Textarea
 										id="description"
 										name="description"
@@ -229,7 +243,9 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 										{t("referenceImageHint")}
 									</p>
 									<ImageUpload
-										persistedImages={persistedScreenshot ? [persistedScreenshot] : []}
+										persistedImages={
+											persistedScreenshot ? [persistedScreenshot] : []
+										}
 										pendingImages={pendingScreenshot ? [pendingScreenshot] : []}
 										onFileAdd={(img) => setPendingScreenshot(img)}
 										onPendingRemove={() => setPendingScreenshot(null)}
@@ -241,14 +257,16 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 						</div>
 
 						{/* Rules & Criteria Section */}
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<h2 className="text-body text-txt-100 mb-m-400 font-semibold">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("rulesCriteria")}
 							</h2>
 
 							<div className="space-y-m-400">
 								<div>
-									<Label id="label-entry-criteria" htmlFor="entryCriteria">{t("entryCriteriaLabel")}</Label>
+									<Label id="label-entry-criteria" htmlFor="entryCriteria">
+										{t("entryCriteriaLabel")}
+									</Label>
 									<Textarea
 										id="entryCriteria"
 										name="entryCriteria"
@@ -263,7 +281,9 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 								</div>
 
 								<div>
-									<Label id="label-exit-criteria" htmlFor="exitCriteria">{t("exitCriteriaLabel")}</Label>
+									<Label id="label-exit-criteria" htmlFor="exitCriteria">
+										{t("exitCriteriaLabel")}
+									</Label>
 									<Textarea
 										id="exitCriteria"
 										name="exitCriteria"
@@ -278,7 +298,9 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 								</div>
 
 								<div>
-									<Label id="label-notes" htmlFor="notes">{t("additionalNotes")}</Label>
+									<Label id="label-notes" htmlFor="notes">
+										{t("additionalNotes")}
+									</Label>
 									<Textarea
 										id="notes"
 										name="notes"
@@ -292,14 +314,16 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 						</div>
 
 						{/* Risk Settings Section */}
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<h2 className="text-body text-txt-100 mb-m-400 font-semibold">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("riskSettings")}
 							</h2>
 
 							<div className="space-y-m-400">
 								<div>
-									<Label id="label-risk-rules" htmlFor="riskRules">{t("riskManagementRules")}</Label>
+									<Label id="label-risk-rules" htmlFor="riskRules">
+										{t("riskManagementRules")}
+									</Label>
 									<Textarea
 										id="riskRules"
 										name="riskRules"
@@ -310,9 +334,14 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 									/>
 								</div>
 
-								<div className="grid grid-cols-2 gap-m-400">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 									<div>
-										<Label id="label-target-r-multiple" htmlFor="targetRMultiple">{t("targetRMultiple")}</Label>
+										<Label
+											id="label-target-r-multiple"
+											htmlFor="targetRMultiple"
+										>
+											{t("targetRMultiple")}
+										</Label>
 										<Input
 											id="targetRMultiple"
 											name="targetRMultiple"
@@ -329,7 +358,9 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 									</div>
 
 									<div>
-										<Label id="label-max-risk-percent" htmlFor="maxRiskPercent">{t("maxRiskPerTrade")}</Label>
+										<Label id="label-max-risk-percent" htmlFor="maxRiskPercent">
+											{t("maxRiskPerTrade")}
+										</Label>
 										<Input
 											id="maxRiskPercent"
 											name="maxRiskPercent"
@@ -350,10 +381,10 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 						</div>
 
 						{/* Conditions Section */}
-						<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-							<div className="flex items-center gap-s-200">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<div className="gap-s-200 flex items-center">
 								<Filter className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("tradingConditions")}
 								</h2>
 							</div>
@@ -365,10 +396,10 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 
 						{/* Scenarios Section */}
 						{strategyId && (
-							<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-								<div className="flex items-center gap-s-200">
+							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+								<div className="gap-s-200 flex items-center">
 									<ImageIcon className="text-acc-100 h-5 w-5" />
-									<h2 className="text-body text-txt-100 font-semibold">
+									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 										{tScenarios("title")}
 									</h2>
 								</div>
@@ -380,13 +411,22 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 						)}
 
 						{/* Actions */}
-						<div className="flex justify-end gap-s-300">
+						<div className="gap-s-300 flex justify-end">
 							<Link href="/playbook">
-								<Button id="playbook-edit-cancel" type="button" variant="outline" disabled={isPending}>
+								<Button
+									id="playbook-edit-cancel"
+									type="button"
+									variant="outline"
+									disabled={isPending}
+								>
 									{tCommon("cancel")}
 								</Button>
 							</Link>
-							<Button id="playbook-edit-save" type="submit" disabled={isPending}>
+							<Button
+								id="playbook-edit-save"
+								type="submit"
+								disabled={isPending}
+							>
 								{isPending ? tCommon("saving") : tCommon("saveChanges")}
 							</Button>
 						</div>

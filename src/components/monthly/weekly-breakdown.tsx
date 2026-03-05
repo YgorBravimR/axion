@@ -41,13 +41,13 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-			<h3 className="flex items-center gap-s-200 text-body font-semibold text-txt-100">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
 				<Calendar className="h-5 w-5 text-acc-100" />
 				{t("title")}
 			</h3>
 
-			<div className="mt-m-500 space-y-s-300">
+			<div className="mt-m-400 sm:mt-m-500 space-y-s-200 sm:space-y-s-300">
 				{weeks.map((week, index) => {
 					const barWidth = maxAbsPnl > 0 ? (Math.abs(week.pnl) / maxAbsPnl) * 100 : 0
 					const isPositive = week.pnl > 0
@@ -65,11 +65,11 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 										({formatDateRange(week.weekStart, week.weekEnd)})
 									</span>
 								</div>
-								<div className="flex items-center gap-m-400">
-									<span className="text-tiny text-txt-300">
+								<div className="flex items-center gap-s-200 sm:gap-m-400">
+									<span className="hidden sm:inline text-tiny text-txt-300">
 										{week.tradeCount} trades
 									</span>
-									<span className="text-tiny text-txt-300">
+									<span className="hidden sm:inline text-tiny text-txt-300">
 										{week.winRate.toFixed(0)}% WR
 									</span>
 									<span
@@ -98,7 +98,7 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 								{pnlContribution !== 0 && (
 									<span
 										className={cn(
-											"absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium",
+											"absolute right-2 top-1/2 -translate-y-1/2 text-micro font-medium",
 											Math.abs(pnlContribution) > 20
 												? "text-bg-100"
 												: "text-txt-300"

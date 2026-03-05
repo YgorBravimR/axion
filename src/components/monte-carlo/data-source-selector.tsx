@@ -81,7 +81,7 @@ const DataSourceSelector = ({
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 			<h3 className="mb-s-300 text-small text-txt-200 font-medium">
 				{t("title")}
 			</h3>
@@ -94,7 +94,10 @@ const DataSourceSelector = ({
 				<SelectTrigger id="monte-carlo-data-source" className="w-full">
 					<SelectValue placeholder={t("selectSource")} />
 				</SelectTrigger>
-				<SelectContent position="popper" className="w-[var(--radix-select-trigger-width)]">
+				<SelectContent
+					position="popper"
+					className="w-[var(--radix-select-trigger-width)]"
+				>
 					{/* Individual Strategies */}
 					{strategyOptions.length > 0 && (
 						<>

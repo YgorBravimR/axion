@@ -37,9 +37,9 @@ export const PropProfitSummary = ({
 	const isNegative = data.grossProfit < 0
 
 	return (
-		<div className="space-y-m-400">
+		<div className="space-y-s-300 sm:space-y-m-400">
 			{/* Main Summary Cards */}
-			<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
+			<div className="grid grid-cols-1 gap-s-300 sm:gap-m-400 sm:grid-cols-3">
 				{/* Gross Profit */}
 				<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
 					<div className="flex items-center gap-s-200 text-txt-300">
@@ -111,7 +111,7 @@ export const PropProfitSummary = ({
 
 			{/* Breakdown Details */}
 			{showBreakdown && isPositive && isPropAccount && (
-				<div className="rounded-lg border border-bg-300 bg-bg-100 p-m-400">
+				<div className="rounded-lg border border-bg-300 bg-bg-100 p-s-300 sm:p-m-400">
 					<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
 						<Building2 className="h-4 w-4 text-acc-100" />
 						{t("breakdown")}

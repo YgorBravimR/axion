@@ -38,7 +38,7 @@ const FillRow = ({ fill, t }: { fill: NotaFill; t: ReturnType<typeof useTranslat
 		</td>
 		<td className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
 			{fill.isDayTrade && (
-				<span className="bg-acc-100/20 text-acc-100 px-s-100 rounded text-[10px] font-medium">{t("dayTrade")}</span>
+				<span className="bg-acc-100/20 text-acc-100 px-s-100 rounded text-micro font-medium">{t("dayTrade")}</span>
 			)}
 		</td>
 	</tr>
@@ -102,7 +102,7 @@ const NotaMatchCard = ({
 	return (
 		<div className={cn("rounded-lg border transition-colors", config.border, isSelected ? config.bg : "bg-bg-200")}>
 			{/* Header */}
-			<div className="p-m-400 flex items-center gap-m-400">
+			<div className="p-s-300 sm:p-m-400 flex items-center gap-m-400">
 				{/* Checkbox */}
 				{(isSelectable || isEnriched) && (
 					<input
@@ -173,7 +173,7 @@ const NotaMatchCard = ({
 
 			{/* Expanded fill details */}
 			{isExpanded && (
-				<div className="border-bg-300 px-m-400 pb-m-400 border-t pt-m-400">
+				<div className="border-bg-300 px-s-300 pb-s-300 sm:px-m-400 sm:pb-m-400 border-t pt-s-300 sm:pt-m-400">
 					<FillTable fills={match.entryFills} label={t("entryFills")} t={t} />
 					<FillTable fills={match.exitFills} label={t("exitFills")} t={t} />
 					{match.entryFills.length === 0 && match.exitFills.length === 0 && (

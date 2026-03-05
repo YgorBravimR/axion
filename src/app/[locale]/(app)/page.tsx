@@ -47,7 +47,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 p-m-600">
+			<div className="flex-1 p-m-400 sm:p-m-500 lg:p-m-600">
 				<DashboardContent
 					initialStats={stats}
 					initialDiscipline={discipline}

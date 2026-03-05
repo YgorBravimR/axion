@@ -18,7 +18,10 @@ interface SessionAssetTableProps {
  *
  * @param data - Array of asset performance data with session breakdowns
  */
-export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTableProps) => {
+export const SessionAssetTable = ({
+	data,
+	expectancyMode,
+}: SessionAssetTableProps) => {
 	const t = useTranslations("analytics")
 	const tLabels = useTranslations("analytics.session.labels")
 
@@ -31,9 +34,15 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 
 	// Build session lookup maps for O(1) access instead of O(n) find() calls
 	const sessionMaps = useMemo(() => {
-		const maps = new Map<string, Map<TradingSession, SessionAssetPerformance["sessions"][0]>>()
+		const maps = new Map<
+			string,
+			Map<TradingSession, SessionAssetPerformance["sessions"][0]>
+		>()
 		for (const asset of data) {
-			const sessionMap = new Map<TradingSession, SessionAssetPerformance["sessions"][0]>()
+			const sessionMap = new Map<
+				TradingSession,
+				SessionAssetPerformance["sessions"][0]
+			>()
 			for (const session of asset.sessions) {
 				sessionMap.set(session.session, session)
 			}
@@ -44,11 +53,11 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-				<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+				<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body text-txt-100 font-semibold">
 					{t("session.assetTitle")}
 				</h3>
-				<div className="text-txt-300 flex h-[150px] items-center justify-center">
+				<div className="text-txt-300 flex h-[120px] items-center justify-center sm:h-[150px]">
 					{t("noData")}
 				</div>
 			</div>
@@ -63,8 +72,8 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 	]
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-			<h3 className="mb-s-300 text-body text-txt-100 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<h3 className="mb-s-300 text-small sm:text-body text-txt-100 font-semibold">
 				{t("session.assetTitle")}
 			</h3>
 			<p className="mb-s-300 text-caption text-txt-300">
@@ -114,7 +123,9 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 									}
 
 									const isBest = asset.bestSession === session
-									const metricValue = isRMode ? sessionData.avgR : sessionData.pnl
+									const metricValue = isRMode
+										? sessionData.avgR
+										: sessionData.pnl
 									return (
 										<td key={session} className="py-s-200 text-center">
 											<div
@@ -129,9 +140,11 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 															: "text-trade-sell"
 													}`}
 												>
-													{isRMode ? formatR(metricValue) : formatBrlCompactWithSign(metricValue)}
+													{isRMode
+														? formatR(metricValue)
+														: formatBrlCompactWithSign(metricValue)}
 												</span>
-												<span className="text-txt-300 text-[10px]">
+												<span className="text-txt-300 text-micro">
 													{sessionData.winRate.toFixed(0)}% •{" "}
 													{sessionData.trades}
 												</span>
@@ -152,14 +165,23 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 								<td className="py-s-200 text-right">
 									{(() => {
 										if (isRMode) {
-											const totalTrades = asset.sessions.reduce((s, sess) => s + sess.trades, 0)
-											const weightedR = totalTrades > 0
-												? asset.sessions.reduce((s, sess) => s + sess.avgR * sess.trades, 0) / totalTrades
-												: 0
+											const totalTrades = asset.sessions.reduce(
+												(s, sess) => s + sess.trades,
+												0
+											)
+											const weightedR =
+												totalTrades > 0
+													? asset.sessions.reduce(
+															(s, sess) => s + sess.avgR * sess.trades,
+															0
+														) / totalTrades
+													: 0
 											return (
 												<span
 													className={`text-small font-semibold ${
-														weightedR >= 0 ? "text-trade-buy" : "text-trade-sell"
+														weightedR >= 0
+															? "text-trade-buy"
+															: "text-trade-sell"
 													}`}
 												>
 													{formatR(weightedR)}
@@ -169,7 +191,9 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 										return (
 											<span
 												className={`text-small font-semibold ${
-													asset.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
+													asset.totalPnl >= 0
+														? "text-trade-buy"
+														: "text-trade-sell"
 												}`}
 											>
 												{formatBrlCompactWithSign(asset.totalPnl)}
@@ -184,7 +208,7 @@ export const SessionAssetTable = ({ data, expectancyMode }: SessionAssetTablePro
 			</div>
 
 			{/* Legend */}
-			<div className="mt-s-300 gap-s-300 text-txt-300 flex items-center justify-end text-[10px]">
+			<div className="mt-s-300 gap-s-300 text-txt-300 text-micro flex items-center justify-end">
 				<span>{t("session.legendWinRate")}</span>
 				<span>•</span>
 				<span>{t("session.legendTrades")}</span>

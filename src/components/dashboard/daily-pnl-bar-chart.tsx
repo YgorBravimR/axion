@@ -88,11 +88,11 @@ export const DailyPnLBarChart = ({
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-				<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
+			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
+				<h3 className="mb-s-300 text-small text-txt-100 font-semibold sm:mb-m-400 sm:text-body">
 					{t("dailyPnL.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[200px] items-center justify-center">
+				<div className="text-txt-300 flex h-[160px] sm:h-[200px] items-center justify-center">
 					{t("noData")}
 				</div>
 			</div>
@@ -100,13 +100,13 @@ export const DailyPnLBarChart = ({
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-			<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
+			<h3 className="mb-s-300 text-small text-txt-100 font-semibold sm:mb-m-400 sm:text-body">
 				{t("dailyPnL.title")}
 			</h3>
 			<ChartContainer
 				id="chart-dashboard-daily-pnl"
-				className="h-[200px] w-full"
+				className="h-[160px] w-full sm:h-[200px]"
 			>
 				<BarChart
 					data={sortedData}

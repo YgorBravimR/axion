@@ -118,7 +118,7 @@ const ImageUpload = ({
 		<div className={cn("space-y-s-300", className)}>
 			{/* Image thumbnails (persisted + pending) */}
 			{thumbnails.length > 0 && (
-				<div className="gap-s-300 grid grid-cols-3">
+				<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3">
 					{thumbnails.map((thumb, index) => (
 						<div
 							key={thumb.key}
@@ -137,7 +137,7 @@ const ImageUpload = ({
 								type="button"
 								variant="ghost"
 								size="sm"
-								className="bg-bg-100/80 absolute top-1 right-1 h-7 w-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+								className="bg-bg-100/80 absolute top-1 right-1 h-9 w-9 p-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
 								onClick={thumb.onRemove}
 								aria-label={t("remove")}
 							>
@@ -154,7 +154,7 @@ const ImageUpload = ({
 					role="button"
 					tabIndex={0}
 					className={cn(
-						"border-bg-300 p-l-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+						"border-bg-300 p-l-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:outline-none",
 						isDragOver && "border-acc-100 bg-acc-100/5"
 					)}
 					onClick={() => fileInputRef.current?.click()}

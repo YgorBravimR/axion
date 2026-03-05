@@ -78,11 +78,14 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 	if (chartData.length === 0) return null
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 				{t("title")}
 			</h3>
-			<ChartContainer id="risk-sim-equity-chart" className="h-[350px] w-full">
+			<ChartContainer
+				id="risk-sim-equity-chart"
+				className="h-[250px] w-full sm:h-[300px] lg:h-[350px]"
+			>
 				<AreaChart
 					data={chartData}
 					margin={{ top: 10, right: 30, left: 10, bottom: 0 }}

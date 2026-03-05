@@ -17,9 +17,9 @@ export const ReportsContent = ({
 	mistakeCostAnalysis,
 }: ReportsContentProps) => {
 	return (
-		<div className="space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Weekly and Monthly side by side on larger screens */}
-			<div className="grid gap-m-600 lg:grid-cols-2">
+			<div className="grid gap-m-400 sm:gap-m-500 lg:gap-m-600 lg:grid-cols-2">
 				<WeeklyReportCard initialReport={weeklyReport} />
 				<MonthlyReportCard initialReport={monthlyReport} />
 			</div>

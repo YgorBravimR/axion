@@ -28,7 +28,7 @@ export const TradeModeSelector = ({
 					onClick={() => onChange("simple")}
 					disabled={disabled}
 					className={cn(
-						"gap-s-200 p-m-400 flex flex-col items-center rounded-lg border-2 transition-colors",
+						"gap-s-200 p-s-300 sm:p-m-400 flex flex-col items-center rounded-lg border-2 transition-colors",
 						value === "simple"
 							? "border-brand-500 bg-brand-500/10 text-brand-500"
 							: "border-bg-300 text-txt-200 hover:border-brand-500/50",
@@ -46,7 +46,7 @@ export const TradeModeSelector = ({
 					onClick={() => onChange("scaled")}
 					disabled={disabled}
 					className={cn(
-						"gap-s-200 p-m-400 flex flex-col items-center rounded-lg border-2 transition-colors",
+						"gap-s-200 p-s-300 sm:p-m-400 flex flex-col items-center rounded-lg border-2 transition-colors",
 						value === "scaled"
 							? "border-brand-500 bg-brand-500/10 text-brand-500"
 							: "border-bg-300 text-txt-200 hover:border-brand-500/50",

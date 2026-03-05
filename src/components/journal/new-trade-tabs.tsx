@@ -65,12 +65,12 @@ export const NewTradeTabs = ({
 	return (
 		<div>
 			{/* Tab Buttons */}
-			<div className="mb-m-600 gap-s-200 border-bg-300 flex border-b">
+			<div className="mb-m-400 sm:mb-m-500 lg:mb-m-600 gap-s-100 sm:gap-s-200 border-bg-300 flex overflow-x-auto border-b">
 				<button
 					type="button"
 					onClick={() => setActiveTab("single")}
 					className={cn(
-						"gap-s-200 px-m-400 py-s-300 text-small flex items-center border-b-2 font-medium transition-colors",
+						"gap-s-200 px-s-300 sm:px-m-400 py-s-300 text-small flex shrink-0 items-center border-b-2 font-medium transition-colors",
 						activeTab === "single"
 							? "border-acc-100 text-acc-100"
 							: "text-txt-300 hover:text-txt-100 border-transparent"
@@ -89,7 +89,7 @@ export const NewTradeTabs = ({
 					type="button"
 					onClick={() => setActiveTab("csv")}
 					className={cn(
-						"gap-s-200 px-m-400 py-s-300 text-small flex items-center border-b-2 font-medium transition-colors",
+						"gap-s-200 px-s-300 sm:px-m-400 py-s-300 text-small flex shrink-0 items-center border-b-2 font-medium transition-colors",
 						activeTab === "csv"
 							? "border-acc-100 text-acc-100"
 							: "text-txt-300 hover:text-txt-100 border-transparent"
@@ -105,7 +105,7 @@ export const NewTradeTabs = ({
 						type="button"
 						onClick={() => setActiveTab("nota")}
 						className={cn(
-							"gap-s-200 px-m-400 py-s-300 text-small flex items-center border-b-2 font-medium transition-colors",
+							"gap-s-200 px-s-300 sm:px-m-400 py-s-300 text-small flex shrink-0 items-center border-b-2 font-medium transition-colors",
 							activeTab === "nota"
 								? "border-acc-100 text-acc-100"
 								: "text-txt-300 hover:text-txt-100 border-transparent"
@@ -122,7 +122,7 @@ export const NewTradeTabs = ({
 						type="button"
 						onClick={() => setActiveTab("screenshot")}
 						className={cn(
-							"gap-s-200 px-m-400 py-s-300 text-small flex items-center border-b-2 font-medium transition-colors",
+							"gap-s-200 px-s-300 sm:px-m-400 py-s-300 text-small flex shrink-0 items-center border-b-2 font-medium transition-colors",
 							activeTab === "screenshot"
 								? "border-acc-100 text-acc-100"
 								: "text-txt-300 hover:text-txt-100 border-transparent"
@@ -140,7 +140,7 @@ export const NewTradeTabs = ({
 			<div role="tabpanel">
 				{/* Trade form stays mounted (hidden when other tabs active) to preserve state */}
 				<div className={activeTab !== "single" ? "hidden" : ""}>
-					<div className="space-y-m-600">
+					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 						{/* Trade Mode Selector */}
 						<TradeModeSelector value={tradeMode} onChange={handleModeChange} />
 

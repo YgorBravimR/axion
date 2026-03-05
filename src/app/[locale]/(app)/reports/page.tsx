@@ -37,7 +37,7 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-600">
+			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
 				<ReportsContent
 					weeklyReport={weeklyReport}
 					monthlyReport={monthlyReport}

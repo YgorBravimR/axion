@@ -50,13 +50,13 @@ export const CsvImportSummary = ({
 	return (
 		<div className="space-y-m-400">
 			{/* Stats Cards */}
-			<div className="grid grid-cols-2 gap-s-300 md:grid-cols-4">
+			<div className="grid grid-cols-2 gap-s-200 sm:gap-s-300 md:grid-cols-4">
 				{/* Valid */}
 				<button
 					type="button"
 					onClick={() => onFilterChange(filter === "valid" ? "all" : "valid")}
 					className={cn(
-						"rounded-lg border p-m-400 text-center transition-all",
+						"rounded-lg border p-s-300 sm:p-m-400 text-center transition-all",
 						filter === "valid"
 							? "border-trade-buy bg-trade-buy/10"
 							: "border-bg-300 bg-bg-200 hover:border-trade-buy/50"
@@ -74,7 +74,7 @@ export const CsvImportSummary = ({
 					type="button"
 					onClick={() => onFilterChange(filter === "skipped" ? "all" : "skipped")}
 					className={cn(
-						"rounded-lg border p-m-400 text-center transition-all",
+						"rounded-lg border p-s-300 sm:p-m-400 text-center transition-all",
 						filter === "skipped"
 							? "border-fb-error bg-fb-error/10"
 							: "border-bg-300 bg-bg-200 hover:border-fb-error/50"
@@ -92,7 +92,7 @@ export const CsvImportSummary = ({
 					type="button"
 					onClick={() => onFilterChange(filter === "warning" ? "all" : "warning")}
 					className={cn(
-						"rounded-lg border p-m-400 text-center transition-all",
+						"rounded-lg border p-s-300 sm:p-m-400 text-center transition-all",
 						filter === "warning"
 							? "border-warning bg-warning/10"
 							: "border-bg-300 bg-bg-200 hover:border-warning/50"
@@ -106,7 +106,7 @@ export const CsvImportSummary = ({
 				</button>
 
 				{/* Net P&L */}
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400 text-center">
+				<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 text-center">
 					<div className="flex items-center justify-center gap-s-200">
 						<TrendingUp
 							className={cn("h-5 w-5", netPnl >= 0 ? "text-trade-buy" : "text-trade-sell")}
@@ -127,11 +127,11 @@ export const CsvImportSummary = ({
 			</div>
 
 			{/* Filter Bar */}
-			<div className="flex items-center justify-between rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-s-300">
+			<div className="flex flex-wrap items-center justify-between gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-s-300 sm:px-m-400 py-s-300">
 				{/* Filter Buttons */}
-				<div className="flex items-center gap-s-200">
+				<div className="flex flex-wrap items-center gap-s-200">
 					<span className="text-tiny text-txt-300">Filter:</span>
-					<div className="flex gap-s-100">
+					<div className="flex flex-wrap gap-s-100">
 						{(["all", "valid", "warning", "skipped"] as const).map((status) => (
 							<button
 								key={status}

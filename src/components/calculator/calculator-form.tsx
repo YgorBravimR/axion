@@ -177,7 +177,7 @@ const CalculatorForm = ({
 			</div>
 
 			{/* Price Inputs */}
-			<div className="grid grid-cols-2 gap-m-400">
+			<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
 				{/* Entry Price */}
 				<div>
 					<label className="mb-s-200 block text-small text-txt-200">

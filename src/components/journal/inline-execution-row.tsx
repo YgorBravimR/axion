@@ -38,7 +38,7 @@ export const InlineExecutionRow = ({
 	const todayDateString = formatDateKey(effectiveDate)
 
 	return (
-		<div className="gap-s-200 grid grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr] items-center">
+		<div className="gap-s-200 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr] items-center">
 			<DatePicker
 				id={`execution-${data.id}-date`}
 				value={data.date ? new Date(data.date + "T12:00:00") : undefined}

@@ -17,8 +17,10 @@ interface ComplianceDashboardProps {
 export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 	if (!data) {
 		return (
-			<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-				<h2 className="text-body text-txt-100 font-semibold">Compliance Overview</h2>
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+					Compliance Overview
+				</h2>
 				<div className="text-txt-300 mt-m-400 flex h-24 items-center justify-center">
 					Unable to load compliance data
 				</div>
@@ -41,8 +43,10 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 				: "bg-trade-sell"
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-			<h2 className="text-body text-txt-100 font-semibold">Compliance Overview</h2>
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+				Compliance Overview
+			</h2>
 
 			{data.totalTrackedTrades === 0 ? (
 				<div className="text-txt-300 mt-m-400 flex h-24 items-center justify-center text-center">
@@ -56,7 +60,7 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 			) : (
 				<div className="mt-m-400">
 					{/* Main Compliance Score */}
-					<div className="flex items-center gap-m-500">
+					<div className="gap-m-400 sm:gap-m-500 flex flex-col items-center sm:flex-row">
 						<div className="relative h-24 w-24">
 							<svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
 								<circle
@@ -120,12 +124,12 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 										}}
 									/>
 								</div>
-								<div className="mt-s-200 flex justify-between text-tiny">
-									<span className="text-trade-buy flex items-center gap-s-100">
+								<div className="mt-s-200 text-tiny flex justify-between">
+									<span className="text-trade-buy gap-s-100 flex items-center">
 										<CheckCircle className="h-3 w-3" />
 										Followed: {data.followedPlanCount}
 									</span>
-									<span className="text-trade-sell flex items-center gap-s-100">
+									<span className="text-trade-sell gap-s-100 flex items-center">
 										<XCircle className="h-3 w-3" />
 										Deviated: {data.notFollowedCount}
 									</span>
@@ -136,9 +140,9 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 
 					{/* Strategy Highlights */}
 					{(data.topPerformingStrategy || data.needsAttentionStrategy) && (
-						<div className="mt-m-500 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
+						<div className="mt-m-500 gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 							{data.topPerformingStrategy && (
-								<div className="bg-trade-buy/10 border-trade-buy/30 flex items-center gap-s-300 rounded-lg border p-s-300">
+								<div className="bg-trade-buy/10 border-trade-buy/30 gap-s-300 p-s-300 flex items-center rounded-lg border">
 									<TrendingUp className="text-trade-buy h-5 w-5 shrink-0" />
 									<div>
 										<p className="text-tiny text-txt-300">Best Compliance</p>
@@ -146,14 +150,15 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 											{data.topPerformingStrategy.name}
 										</p>
 										<p className="text-tiny text-trade-buy">
-											{data.topPerformingStrategy.compliance.toFixed(0)}% compliance
+											{data.topPerformingStrategy.compliance.toFixed(0)}%
+											compliance
 										</p>
 									</div>
 								</div>
 							)}
 
 							{data.needsAttentionStrategy && (
-								<div className="bg-warning/10 border-warning/30 flex items-center gap-s-300 rounded-lg border p-s-300">
+								<div className="bg-warning/10 border-warning/30 gap-s-300 p-s-300 flex items-center rounded-lg border">
 									<AlertTriangle className="text-warning h-5 w-5 shrink-0" />
 									<div>
 										<p className="text-tiny text-txt-300">Needs Attention</p>
@@ -161,7 +166,8 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 											{data.needsAttentionStrategy.name}
 										</p>
 										<p className="text-tiny text-warning">
-											{data.needsAttentionStrategy.compliance.toFixed(0)}% compliance
+											{data.needsAttentionStrategy.compliance.toFixed(0)}%
+											compliance
 										</p>
 									</div>
 								</div>
@@ -170,8 +176,8 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					)}
 
 					{/* Quick Stats */}
-					<div className="border-bg-300 mt-m-500 flex items-center justify-center gap-m-600 border-t pt-m-400">
-						<div className="flex items-center gap-s-200">
+					<div className="border-bg-300 mt-m-400 sm:mt-m-500 gap-m-400 sm:gap-m-500 lg:gap-m-600 pt-s-300 sm:pt-m-400 flex items-center justify-center border-t">
+						<div className="gap-s-200 flex items-center">
 							<Target className="text-acc-100 h-4 w-4" />
 							<span className="text-small text-txt-200">
 								<span className="text-txt-100 font-semibold">

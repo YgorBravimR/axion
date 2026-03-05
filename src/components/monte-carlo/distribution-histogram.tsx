@@ -152,10 +152,7 @@ const CustomBarBackground = (props: CustomBarBackgroundProps) => {
 	)
 }
 
-const CustomTooltip = ({
-	active,
-	payload,
-}: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	if (!active || !payload || payload.length === 0) return null
 
 	const data = payload[0].payload
@@ -217,9 +214,9 @@ export const DistributionHistogram = ({
 	const profitablePct = ((profitableCount / totalCount) * 100).toFixed(0)
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="mb-m-400 flex items-center justify-between">
-				<h3 className="text-body text-txt-100 font-semibold">
+				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("distribution")}
 				</h3>
 				<div className="gap-m-400 flex items-center">
@@ -236,68 +233,69 @@ export const DistributionHistogram = ({
 				</div>
 			</div>
 
-			<ChartContainer id="chart-monte-carlo-distribution-histogram" className="h-72">
-					<BarChart
-						data={chartData}
-						margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+			<ChartContainer
+				id="chart-monte-carlo-distribution-histogram"
+				className="h-56 sm:h-64 lg:h-72"
+			>
+				<BarChart
+					data={chartData}
+					margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+				>
+					<CartesianGrid
+						strokeDasharray="3 3"
+						stroke="var(--color-bg-300)"
+						strokeOpacity={0.5}
+						vertical={false}
+					/>
+					<XAxis
+						dataKey="midPoint"
+						stroke="var(--color-txt-300)"
+						fontSize={10}
+						tickLine={false}
+						axisLine={false}
+						tickFormatter={(value) => formatR(value)}
+						interval="preserveStartEnd"
+					/>
+					<YAxis
+						stroke="var(--color-txt-300)"
+						fontSize={11}
+						tickLine={false}
+						axisLine={false}
+						domain={[0, maxCount * 1.1]}
+						width={40}
+					/>
+					<Tooltip content={<CustomTooltip />} />
+					<ReferenceLine
+						x={0}
+						stroke="var(--color-acc-100)"
+						strokeDasharray="4 4"
+						strokeWidth={1.5}
+						label={{
+							value: "0R",
+							position: "top",
+							fill: "var(--color-acc-100)",
+							fontSize: 10,
+							fontWeight: 500,
+						}}
+					/>
+					<Bar
+						dataKey="count"
+						radius={[3, 3, 0, 0]}
+						background={<CustomBarBackground />}
 					>
-						<CartesianGrid
-							strokeDasharray="3 3"
-							stroke="var(--color-bg-300)"
-							strokeOpacity={0.5}
-							vertical={false}
-						/>
-						<XAxis
-							dataKey="midPoint"
-							stroke="var(--color-txt-300)"
-							fontSize={10}
-							tickLine={false}
-							axisLine={false}
-							tickFormatter={(value) => formatR(value)}
-							interval="preserveStartEnd"
-						/>
-						<YAxis
-							stroke="var(--color-txt-300)"
-							fontSize={11}
-							tickLine={false}
-							axisLine={false}
-							domain={[0, maxCount * 1.1]}
-							width={40}
-						/>
-						<Tooltip
-							content={<CustomTooltip />}
-						/>
-						<ReferenceLine
-							x={0}
-							stroke="var(--color-acc-100)"
-							strokeDasharray="4 4"
-							strokeWidth={1.5}
-							label={{
-								value: "0R",
-								position: "top",
-								fill: "var(--color-acc-100)",
-								fontSize: 10,
-								fontWeight: 500,
-							}}
-						/>
-						<Bar
-							dataKey="count"
-							radius={[3, 3, 0, 0]}
-							background={<CustomBarBackground />}
-						>
-							{chartData.map((entry, index) => (
-								<Cell
-									key={`cell-${index}`}
-									fill={
-										entry.midPoint >= 0
-											? "var(--color-trade-buy)"
-											: "var(--color-trade-sell)"
-									}
-									fillOpacity={0.75}
-								/>
-							))}
-						</Bar>
-					</BarChart>
+						{chartData.map((entry, index) => (
+							<Cell
+								key={`cell-${index}`}
+								fill={
+									entry.midPoint >= 0
+										? "var(--color-trade-buy)"
+										: "var(--color-trade-sell)"
+								}
+								fillOpacity={0.75}
+							/>
+						))}
+					</Bar>
+				</BarChart>
 			</ChartContainer>
 
 			<p className="mt-s-300 text-tiny text-txt-300 text-center">

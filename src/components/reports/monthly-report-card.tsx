@@ -44,8 +44,8 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 
 	if (!report) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">{t("title")}</h2>
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+				<h2 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h2>
 				<p className="mt-m-400 text-txt-300">{tCommon("noData")}</p>
 			</div>
 		)
@@ -60,12 +60,12 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 			: t("monthsAgo", { n: monthOffset })
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-body font-semibold text-txt-100">{t("title")}</h2>
-					<p className="text-tiny text-txt-300">
+					<h2 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h2>
+					<p className="text-tiny text-txt-200">
 						{format(parseISO(report.monthStart), "MMMM yyyy", { locale: dateLocale })}
 					</p>
 				</div>
@@ -96,7 +96,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 				<>
 					<div className="mt-m-500 grid grid-cols-2 gap-m-400 sm:grid-cols-4">
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("netPnl")}</p>
+							<p className="text-tiny text-txt-200">{tStats("netPnl")}</p>
 							<p
 								className={cn(
 									"text-h3 font-bold",
@@ -107,7 +107,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 								{summary.netPnl.toFixed(2)}
 							</p>
 							{summary.totalFees > 0 && (
-								<p className="mt-s-100 text-tiny text-txt-300">
+								<p className="mt-s-100 text-tiny text-txt-200">
 									<span className="text-txt-200">{tStats("grossPnl")}:</span>{" "}
 									<span className={cn(
 										"font-mono",
@@ -123,19 +123,19 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 							)}
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("winRate")}</p>
+							<p className="text-tiny text-txt-200">{tStats("winRate")}</p>
 							<p className="text-h3 font-bold text-txt-100">
 								{summary.winRate.toFixed(0)}%
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("trades")}</p>
+							<p className="text-tiny text-txt-200">{tStats("trades")}</p>
 							<p className="text-h3 font-bold text-txt-100">
 								{summary.totalTrades}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{t("avgR")}</p>
+							<p className="text-tiny text-txt-200">{t("avgR")}</p>
 							<p
 								className={cn(
 									"text-h3 font-bold",
@@ -154,7 +154,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 							<div className="flex items-center gap-s-200 rounded bg-trade-buy-muted px-s-300 py-s-200">
 								<TrendingUp className="h-4 w-4 text-trade-buy" />
 								<div>
-									<p className="text-tiny text-txt-300">{t("bestDay")}</p>
+									<p className="text-tiny text-txt-200">{t("bestDay")}</p>
 									<p className="text-small">
 										<span className="text-txt-200">
 											{format(parseISO(summary.bestDay.date), "MMM d", { locale: dateLocale })}:
@@ -170,7 +170,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 							<div className="flex items-center gap-s-200 rounded bg-trade-sell-muted px-s-300 py-s-200">
 								<TrendingDown className="h-4 w-4 text-trade-sell" />
 								<div>
-									<p className="text-tiny text-txt-300">{t("worstDay")}</p>
+									<p className="text-tiny text-txt-200">{t("worstDay")}</p>
 									<p className="text-small">
 										<span className="text-txt-200">
 											{format(parseISO(summary.worstDay.date), "MMM d", { locale: dateLocale })}:
@@ -214,10 +214,10 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 													{format(parseISO(week.weekEnd), "MMM d", { locale: dateLocale })}
 												</span>
 												<div className="flex items-center gap-m-400">
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{week.tradeCount} {t("trades")}
 													</span>
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{week.winRate.toFixed(0)}% {t("wr")}
 													</span>
 													<span
@@ -254,12 +254,12 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 													<Badge id={`badge-monthly-asset-${asset.asset}`} variant="outline" className="text-tiny">
 														{asset.asset}
 													</Badge>
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{asset.tradeCount} {t("trades")}
 													</span>
 												</div>
 												<div className="flex items-center gap-m-400">
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{asset.winRate.toFixed(0)}% {t("wr")}
 													</span>
 													<span

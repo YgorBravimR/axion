@@ -1,6 +1,12 @@
 "use client"
 
-import { useState, useTransition, useEffect, useCallback } from "react"
+import {
+	useState,
+	useTransition,
+	useEffect,
+	useCallback,
+	type ChangeEvent,
+} from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
@@ -10,7 +16,12 @@ import { Switch } from "@/components/ui/switch"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LanguageSwitcher } from "./language-switcher"
 import { useToast } from "@/components/ui/toast"
-import { getCurrentUser, updateUserProfile, changePassword, type SafeUser } from "@/app/actions/auth"
+import {
+	getCurrentUser,
+	updateUserProfile,
+	changePassword,
+	type SafeUser,
+} from "@/app/actions/auth"
 import { getUserSettings, updateUserSettings } from "@/app/actions/settings"
 import { Loader2 } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -66,21 +77,24 @@ const UserProfileSettings = () => {
 		loadData()
 	}, [])
 
-	const handleToggleShowAllAccounts = useCallback((checked: boolean) => {
-		setShowAllAccounts(checked)
-		startTransition(async () => {
-			const result = await updateUserSettings({ showAllAccounts: checked })
-			if (result.status === "success") {
-				showToast("success", t("settingsUpdated"))
-				// Refresh the page to apply the new setting
-				router.refresh()
-				return
-			}
-			// Revert on error
-			setShowAllAccounts(!checked)
-			showToast("error", result.message || t("settingsUpdateError"))
-		})
-	}, [router, showToast, t])
+	const handleToggleShowAllAccounts = useCallback(
+		(checked: boolean) => {
+			setShowAllAccounts(checked)
+			startTransition(async () => {
+				const result = await updateUserSettings({ showAllAccounts: checked })
+				if (result.status === "success") {
+					showToast("success", t("settingsUpdated"))
+					// Refresh the page to apply the new setting
+					router.refresh()
+					return
+				}
+				// Revert on error
+				setShowAllAccounts(!checked)
+				showToast("error", result.message || t("settingsUpdateError"))
+			})
+		},
+		[router, showToast, t]
+	)
 
 	const handleSaveProfile = useCallback(() => {
 		startTransition(async () => {
@@ -121,21 +135,33 @@ const UserProfileSettings = () => {
 		})
 	}, [passwordForm, showToast, t, tAuth])
 
-	const handleProfileNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setProfileForm((prev) => ({ ...prev, name: e.target.value }))
-	}, [])
+	const handleProfileNameChange = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			setProfileForm((prev) => ({ ...prev, name: e.target.value }))
+		},
+		[]
+	)
 
-	const handleCurrentPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
-	}, [])
+	const handleCurrentPasswordChange = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
+		},
+		[]
+	)
 
-	const handleNewPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
-	}, [])
+	const handleNewPasswordChange = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
+		},
+		[]
+	)
 
-	const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
-	}, [])
+	const handleConfirmPasswordChange = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+		},
+		[]
+	)
 
 	const handleCancelEditProfile = useCallback(() => {
 		setIsEditingProfile(false)
@@ -162,15 +188,15 @@ const UserProfileSettings = () => {
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
-				<Loader2 className="h-8 w-8 animate-spin text-txt-300" />
+				<Loader2 className="text-txt-300 h-8 w-8 animate-spin" />
 			</div>
 		)
 	}
 
 	return (
-		<div className="space-y-m-600 mx-auto max-w-2xl">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
 			{/* Profile Information */}
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("profileInfo")}
@@ -237,7 +263,7 @@ const UserProfileSettings = () => {
 			</div>
 
 			{/* Change Password */}
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("changePassword")}
@@ -320,7 +346,7 @@ const UserProfileSettings = () => {
 
 			{/* Data Display — admin only */}
 			{isAdmin && (
-				<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("dataDisplay")}
 					</h2>
@@ -328,7 +354,9 @@ const UserProfileSettings = () => {
 						{/* Show All Accounts Toggle */}
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-small text-txt-100">{t("showAllAccounts")}</p>
+								<p className="text-small text-txt-100">
+									{t("showAllAccounts")}
+								</p>
 								<p className="text-tiny text-txt-300">
 									{t("showAllAccountsDescription")}
 								</p>
@@ -345,7 +373,7 @@ const UserProfileSettings = () => {
 			)}
 
 			{/* Appearance */}
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<h2 className="text-body text-txt-100 font-semibold">
 					{t("appearance")}
 				</h2>

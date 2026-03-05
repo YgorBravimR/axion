@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -127,7 +127,7 @@ export const ExecutionForm = ({
 		)
 	}, [execution, existingExecutions, effectiveDate])
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 
@@ -227,7 +227,7 @@ export const ExecutionForm = ({
 					</div>
 
 					{/* Date and Time */}
-					<div className="gap-m-400 grid grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
 							<Label id="label-execution-date" htmlFor="executionDate">
 								{t("date")}
@@ -255,7 +255,7 @@ export const ExecutionForm = ({
 					</div>
 
 					{/* Price and Quantity */}
-					<div className="gap-m-400 grid grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
 							<Label id="label-execution-price" htmlFor="price">
 								{t("price")}
@@ -308,7 +308,7 @@ export const ExecutionForm = ({
 					</div>
 
 					{/* Costs */}
-					<div className="gap-s-300 grid grid-cols-3">
+					<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-3">
 						<div className="space-y-s-200">
 							<Label
 								id="label-execution-commission"

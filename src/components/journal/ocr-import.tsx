@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback, useEffect, type DragEvent, type ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -195,7 +195,7 @@ export const OcrImport = () => {
 	}, [showToast, visionAvailable, showLoading, hideLoading, tOverlay])
 
 	const handleDrop = useCallback(
-		(e: React.DragEvent) => {
+		(e: DragEvent) => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
@@ -204,18 +204,18 @@ export const OcrImport = () => {
 		[handleFileSelect]
 	)
 
-	const handleDragOver = useCallback((e: React.DragEvent) => {
+	const handleDragOver = useCallback((e: DragEvent) => {
 		e.preventDefault()
 		setIsDragging(true)
 	}, [])
 
-	const handleDragLeave = useCallback((e: React.DragEvent) => {
+	const handleDragLeave = useCallback((e: DragEvent) => {
 		e.preventDefault()
 		setIsDragging(false)
 	}, [])
 
 	const handleInputChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
 			if (file) handleFileSelect(file)
 		},
@@ -378,7 +378,7 @@ export const OcrImport = () => {
 				</button>
 
 				{requirementsExpanded && (
-					<div className="border-t border-bg-300 p-m-400">
+					<div className="border-t border-bg-300 p-s-300 sm:p-m-400">
 						<p className="text-small text-txt-300">{t("requirements.description")}</p>
 
 						<div className="mt-m-400 grid gap-m-400 md:grid-cols-2">
@@ -505,7 +505,7 @@ export const OcrImport = () => {
 			{step === "review" && parseResult && (
 				<div className="space-y-m-500">
 					{/* Image Preview */}
-					<div className="flex items-center justify-between rounded-lg bg-bg-200 p-m-400">
+					<div className="flex items-center justify-between rounded-lg bg-bg-200 p-s-300 sm:p-m-400">
 						<div className="flex items-center gap-s-300">
 							<FileText className="h-5 w-5 text-txt-300" />
 							<span className="text-small font-medium text-txt-100">{fileName}</span>
@@ -516,7 +516,7 @@ export const OcrImport = () => {
 					</div>
 
 					{/* Column Detection Status */}
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
+					<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
 						<h3 className="text-small font-semibold text-txt-100">
 							{t("columnDetection.title")}
 						</h3>
@@ -549,7 +549,7 @@ export const OcrImport = () => {
 
 					{/* Errors */}
 					{parseResult.errors.length > 0 && (
-						<div className="rounded-lg border border-fb-error/30 bg-fb-error/10 p-m-400">
+						<div className="rounded-lg border border-fb-error/30 bg-fb-error/10 p-s-300 sm:p-m-400">
 							<div className="flex items-center gap-s-200 text-fb-error">
 								<AlertCircle className="h-4 w-4" />
 								<span className="text-small font-medium">
@@ -568,7 +568,7 @@ export const OcrImport = () => {
 
 					{/* Warnings */}
 					{parseResult.warnings.length > 0 && (
-						<div className="rounded-lg border border-warning/30 bg-warning/10 p-m-400">
+						<div className="rounded-lg border border-warning/30 bg-warning/10 p-s-300 sm:p-m-400">
 							<div className="flex items-center gap-s-200 text-warning">
 								<AlertTriangle className="h-4 w-4" />
 								<span className="text-small font-medium">
@@ -591,7 +591,7 @@ export const OcrImport = () => {
 					)}
 
 					{/* Date Picker (shared for all trades) */}
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
+					<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
 						<div className="flex items-center justify-between">
 							<div>
 								<h3 className="text-small font-semibold text-txt-100">
@@ -611,22 +611,22 @@ export const OcrImport = () => {
 					</div>
 
 					{/* Summary Stats */}
-					<div className="grid grid-cols-4 gap-m-400">
-						<div className="rounded-lg bg-bg-200 p-m-400 text-center">
+					<div className="grid grid-cols-2 gap-m-400 sm:grid-cols-4">
+						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-acc-100">{totalTrades}</p>
 							<p className="text-tiny text-txt-300">Trades Detected</p>
 						</div>
-						<div className="rounded-lg bg-bg-200 p-m-400 text-center">
+						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-trade-buy">{totalExecutions}</p>
 							<p className="text-tiny text-txt-300">Total Executions</p>
 						</div>
-						<div className="rounded-lg bg-bg-200 p-m-400 text-center">
+						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-txt-100">
 								{parseResult.confidence.toFixed(0)}%
 							</p>
 							<p className="text-tiny text-txt-300">Confidence</p>
 						</div>
-						<div className="rounded-lg bg-bg-200 p-m-400 text-center">
+						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<div className="flex items-center justify-center gap-s-100">
 								{ocrProvider && ocrProvider !== "tesseract" ? (
 									<Sparkles className="h-4 w-4 text-trade-buy" />
@@ -648,7 +648,7 @@ export const OcrImport = () => {
 							className="rounded-lg border border-bg-300 bg-bg-200 overflow-hidden"
 						>
 							{/* Trade Header */}
-							<div className="flex items-center justify-between border-b border-bg-300 p-m-400">
+							<div className="flex items-center justify-between border-b border-bg-300 p-s-300 sm:p-m-400">
 								<button
 									type="button"
 									className="flex items-center gap-s-300"
@@ -691,7 +691,7 @@ export const OcrImport = () => {
 							</div>
 
 							{trade.isExpanded && (
-								<div className="p-m-400">
+								<div className="p-s-300 sm:p-m-400">
 									{/* Trade Details */}
 									<div className="mb-m-400 grid gap-m-400 md:grid-cols-3">
 										<div>
@@ -868,7 +868,7 @@ export const OcrImport = () => {
 							)}
 						</button>
 						{rawTextExpanded && (
-							<pre className="max-h-48 overflow-auto border-t border-bg-300 p-m-400 text-tiny text-txt-400">
+							<pre className="max-h-48 overflow-auto border-t border-bg-300 p-s-300 sm:p-m-400 text-tiny text-txt-400">
 								{parseResult.rawText}
 							</pre>
 						)}
@@ -876,7 +876,7 @@ export const OcrImport = () => {
 
 					{/* Success Indicator */}
 					{totalTrades > 0 && (
-						<div className="flex items-center gap-s-200 rounded-lg border border-trade-buy/30 bg-trade-buy/10 p-m-400 text-trade-buy">
+						<div className="flex items-center gap-s-200 rounded-lg border border-trade-buy/30 bg-trade-buy/10 p-s-300 sm:p-m-400 text-trade-buy">
 							<CheckCircle2 className="h-4 w-4" />
 							<span className="text-small font-medium">
 								Ready to import {totalTrades} trade(s) with {totalExecutions} executions
@@ -886,7 +886,7 @@ export const OcrImport = () => {
 
 					{/* Low Confidence Warning */}
 					{parseResult.confidence < 70 && (
-						<div className="flex items-center gap-s-200 rounded-lg border border-warning/30 bg-warning/10 p-m-400 text-warning">
+						<div className="flex items-center gap-s-200 rounded-lg border border-warning/30 bg-warning/10 p-s-300 sm:p-m-400 text-warning">
 							<AlertTriangle className="h-4 w-4" />
 							<span className="text-small">{t("lowConfidence")}</span>
 						</div>

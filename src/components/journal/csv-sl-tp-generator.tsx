@@ -218,7 +218,7 @@ export const CsvSlTpGenerator = ({
 	}
 
 	return (
-		<div className="space-y-m-500">
+		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Checkbox */}
 			<div className="gap-s-300 flex items-center">
 				<Checkbox
@@ -237,7 +237,7 @@ export const CsvSlTpGenerator = ({
 
 			{/* Content */}
 			{isEnabled && (
-				<div className="border-bg-300 bg-bg-200 p-m-500 space-y-m-400 rounded-lg border">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 space-y-s-300 sm:space-y-m-400 rounded-lg border">
 					{/* Description */}
 					<div>
 						<p className="text-small text-txt-300">{t("description")}</p>
@@ -245,7 +245,7 @@ export const CsvSlTpGenerator = ({
 					</div>
 
 					{/* Asset Config Cards */}
-					<div className="gap-m-400 grid grid-cols-1 md:grid-cols-2">
+					<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2">
 						{uniqueAssets.map((asset) => {
 							const config = assetConfigs[asset]
 							if (!config) return null
@@ -253,7 +253,7 @@ export const CsvSlTpGenerator = ({
 							return (
 								<div
 									key={asset}
-									className="border-bg-300 bg-bg-100 p-m-400 rounded-lg border space-y-s-200"
+									className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border space-y-s-200"
 								>
 									{/* Asset Title */}
 									<h4 className="text-small text-txt-100 font-semibold">

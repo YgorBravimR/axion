@@ -14,7 +14,10 @@ import {
 import { getConditions } from "@/app/actions/trading-conditions"
 import { ConditionForm } from "@/components/settings/condition-form"
 import type { TradingCondition } from "@/db/schema"
-import type { ConditionTier, StrategyConditionInput } from "@/types/trading-condition"
+import type {
+	ConditionTier,
+	StrategyConditionInput,
+} from "@/types/trading-condition"
 import { Plus, Loader2, Shield, ShieldCheck, ShieldPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,7 +26,12 @@ interface ConditionPickerProps {
 	onChange: (conditions: StrategyConditionInput[]) => void
 }
 
-const CATEGORY_ORDER = ["indicator", "price_action", "market_context", "custom"] as const
+const CATEGORY_ORDER = [
+	"indicator",
+	"price_action",
+	"market_context",
+	"custom",
+] as const
 
 const getCategoryColor = (category: string): string => {
 	switch (category) {
@@ -40,7 +48,11 @@ const getCategoryColor = (category: string): string => {
 	}
 }
 
-const TIER_OPTIONS: { value: ConditionTier | "none"; label: string; icon: typeof Shield }[] = [
+const TIER_OPTIONS: {
+	value: ConditionTier | "none"
+	label: string
+	icon: typeof Shield
+}[] = [
 	{ value: "none", label: "Not included", icon: Shield },
 	{ value: "mandatory", label: "Mandatory (A)", icon: Shield },
 	{ value: "tier_2", label: "Tier 2 (AA)", icon: ShieldCheck },
@@ -117,7 +129,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center p-m-500">
+			<div className="p-s-300 sm:p-m-400 lg:p-m-500 flex items-center justify-center">
 				<Loader2 className="text-txt-300 h-5 w-5 animate-spin" />
 			</div>
 		)
@@ -130,17 +142,29 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 				<div className="gap-s-300 flex items-center">
 					<span className="text-small text-txt-200">{t("rankPreview")}:</span>
 					{mandatoryCount > 0 && (
-						<Badge id="rank-a-badge" variant="outline" className="text-trade-buy border-trade-buy/40">
+						<Badge
+							id="rank-a-badge"
+							variant="outline"
+							className="text-trade-buy border-trade-buy/40"
+						>
 							A ({mandatoryCount})
 						</Badge>
 					)}
 					{tier2Count > 0 && (
-						<Badge id="rank-aa-badge" variant="outline" className="text-acc-100 border-acc-100/40">
+						<Badge
+							id="rank-aa-badge"
+							variant="outline"
+							className="text-acc-100 border-acc-100/40"
+						>
 							AA ({tier2Count})
 						</Badge>
 					)}
 					{tier3Count > 0 && (
-						<Badge id="rank-aaa-badge" variant="outline" className="border-warning/40 text-warning">
+						<Badge
+							id="rank-aaa-badge"
+							variant="outline"
+							className="border-warning/40 text-warning"
+						>
 							AAA ({tier3Count})
 						</Badge>
 					)}
@@ -149,7 +173,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 
 			{/* Conditions by category */}
 			{conditions.length === 0 ? (
-				<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500 text-center">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border text-center">
 					<p className="text-small text-txt-300">{t("noConditionsYet")}</p>
 					<Button
 						id="condition-picker-create-first"
@@ -173,7 +197,9 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 									getCategoryColor(group.category)
 								)}
 							>
-								{tSettings(`category${group.category.charAt(0).toUpperCase()}${group.category.slice(1).replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())}`)}
+								{tSettings(
+									`category${group.category.charAt(0).toUpperCase()}${group.category.slice(1).replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())}`
+								)}
 							</h4>
 							<div className="space-y-s-200">
 								{group.items.map((condition) => {
@@ -182,8 +208,9 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 										<div
 											key={condition.id}
 											className={cn(
-												"border-bg-300 bg-bg-200 gap-m-400 flex items-center justify-between rounded-lg border p-s-300 transition-colors",
-												currentTier !== "none" && "border-acc-100/30 bg-acc-100/5"
+												"border-bg-300 bg-bg-200 gap-m-400 p-s-300 flex items-center justify-between rounded-lg border transition-colors",
+												currentTier !== "none" &&
+													"border-acc-100/30 bg-acc-100/5"
 											)}
 										>
 											<div className="min-w-0 flex-1">
@@ -200,7 +227,10 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 												value={currentTier}
 												onValueChange={(v) => handleTierChange(condition.id, v)}
 											>
-												<SelectTrigger id={`condition-tier-${condition.id}`} className="w-[160px]">
+												<SelectTrigger
+													id={`condition-tier-${condition.id}`}
+													className="w-[160px]"
+												>
 													<SelectValue />
 												</SelectTrigger>
 												<SelectContent>

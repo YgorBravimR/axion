@@ -27,13 +27,13 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 	)
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-			<h3 className="flex items-center gap-s-200 text-body font-semibold text-txt-100">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
 				<TrendingUp className="h-5 w-5 text-acc-100" />
 				{t("title")}
 			</h3>
 
-			<div className="mt-m-500 space-y-m-400">
+			<div className="mt-m-400 sm:mt-m-500 space-y-s-300 sm:space-y-m-400">
 				{/* Progress Bar */}
 				<div className="space-y-s-200">
 					<div className="flex items-center justify-between text-small">
@@ -59,7 +59,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 				</div>
 
 				{/* Stats Grid */}
-				<div className="grid grid-cols-2 gap-m-400">
+				<div className="grid grid-cols-2 gap-s-300 sm:gap-m-400">
 					{/* Daily Average */}
 					<div className="rounded bg-bg-100 p-s-300">
 						<p className="text-tiny text-txt-300">{t("dailyAverage")}</p>

@@ -1,6 +1,12 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import {
+	useState,
+	useRef,
+	useCallback,
+	type DragEvent,
+	type ChangeEvent,
+} from "react"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -21,7 +27,11 @@ import {
 	enrichTradesFromNota,
 } from "@/app/actions/nota-import"
 import { NotaMatchCard } from "./nota-match-card"
-import type { NotaParseResult, NotaEnrichmentPreview, ConfirmedEnrichment } from "@/lib/nota-parser/types"
+import type {
+	NotaParseResult,
+	NotaEnrichmentPreview,
+	ConfirmedEnrichment,
+} from "@/lib/nota-parser/types"
 
 type Step = "upload" | "review" | "enriching"
 
@@ -91,7 +101,7 @@ export const NotaImport = () => {
 				const matchResponse = await matchNotaFills(
 					parsed.fills,
 					parsed.notaDate.toString(),
-					parsed.brokerName,
+					parsed.brokerName
 				)
 
 				if (matchResponse.status === "error") {
@@ -126,7 +136,7 @@ export const NotaImport = () => {
 	)
 
 	const handleDrop = useCallback(
-		(e: React.DragEvent) => {
+		(e: DragEvent) => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
@@ -135,18 +145,18 @@ export const NotaImport = () => {
 		[handleFileSelect]
 	)
 
-	const handleDragOver = useCallback((e: React.DragEvent) => {
+	const handleDragOver = useCallback((e: DragEvent) => {
 		e.preventDefault()
 		setIsDragging(true)
 	}, [])
 
-	const handleDragLeave = useCallback((e: React.DragEvent) => {
+	const handleDragLeave = useCallback((e: DragEvent) => {
 		e.preventDefault()
 		setIsDragging(false)
 	}, [])
 
 	const handleInputChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
 			if (file) handleFileSelect(file)
 		},
@@ -220,14 +230,20 @@ export const NotaImport = () => {
 				parseResult.notaDate.toString(),
 				parseResult.brokerName,
 				fileName!,
-				parseResult.fileHash,
+				parseResult.fileHash
 			)
 
 			hideLoading()
 
 			if (result.status === "success") {
 				const data = result.data!
-				showToast("success", t("success", { count: data.tradesEnriched, executions: data.executionsInserted }))
+				showToast(
+					"success",
+					t("success", {
+						count: data.tradesEnriched,
+						executions: data.executionsInserted,
+					})
+				)
 				setTimeout(() => router.push("/journal"), 500)
 			} else {
 				showToast("error", result.message)
@@ -243,20 +259,21 @@ export const NotaImport = () => {
 	const selectedCount = selectedIds.size
 
 	// Count matches by status for the summary
-	const matchCounts = preview?.matches.reduce(
-		(acc, m) => {
-			acc[m.status] = (acc[m.status] || 0) + 1
-			return acc
-		},
-		{} as Record<string, number>
-	) ?? {}
+	const matchCounts =
+		preview?.matches.reduce(
+			(acc, m) => {
+				acc[m.status] = (acc[m.status] || 0) + 1
+				return acc
+			},
+			{} as Record<string, number>
+		) ?? {}
 
 	return (
-		<div className="space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Step 1: Upload Area */}
 			{step === "upload" && (
 				<div
-					className={`p-l-800 rounded-lg border-2 border-dashed text-center transition-colors ${
+					className={`p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors ${
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -309,9 +326,9 @@ export const NotaImport = () => {
 
 			{/* Step 2: Review Matches */}
 			{step === "review" && preview && parseResult && (
-				<div className="space-y-m-500">
+				<div className="space-y-m-400 sm:space-y-m-500">
 					{/* File + Nota Info Header */}
-					<div className="bg-bg-200 p-m-400 rounded-lg">
+					<div className="bg-bg-200 p-s-300 sm:p-m-400 rounded-lg">
 						<div className="flex items-center justify-between">
 							<div className="gap-s-300 flex items-center">
 								<FileText className="text-txt-300 h-5 w-5" />
@@ -331,27 +348,35 @@ export const NotaImport = () => {
 						</div>
 
 						{/* Nota metadata */}
-						<div className="mt-m-400 gap-m-500 grid grid-cols-2 md:grid-cols-4">
+						<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-500 grid grid-cols-2 md:grid-cols-4">
 							<div>
-								<span className="text-tiny text-txt-300 block">{t("notaDate")}</span>
+								<span className="text-tiny text-txt-300 block">
+									{t("notaDate")}
+								</span>
 								<span className="text-small text-txt-100 font-medium">
 									{new Date(parseResult.notaDate).toLocaleDateString("pt-BR")}
 								</span>
 							</div>
 							<div>
-								<span className="text-tiny text-txt-300 block">{t("broker")}</span>
+								<span className="text-tiny text-txt-300 block">
+									{t("broker")}
+								</span>
 								<span className="text-small text-txt-100 font-medium">
 									{parseResult.brokerName}
 								</span>
 							</div>
 							<div>
-								<span className="text-tiny text-txt-300 block">{t("notaNumber")}</span>
+								<span className="text-tiny text-txt-300 block">
+									{t("notaNumber")}
+								</span>
 								<span className="text-small text-txt-100 font-medium">
 									{parseResult.notaNumber}
 								</span>
 							</div>
 							<div>
-								<span className="text-tiny text-txt-300 block">{t("totalFills", { count: parseResult.fills.length })}</span>
+								<span className="text-tiny text-txt-300 block">
+									{t("totalFills", { count: parseResult.fills.length })}
+								</span>
 								<span className="text-small text-txt-100 font-medium">
 									{t("matchSummary", {
 										matched: preview.matches.length,
@@ -376,10 +401,14 @@ export const NotaImport = () => {
 								{matchCounts.already_enriched} {t("alreadyEnriched")}
 							</span>
 						)}
-						{((matchCounts.quantity_mismatch ?? 0) + (matchCounts.price_mismatch ?? 0)) > 0 && (
+						{(matchCounts.quantity_mismatch ?? 0) +
+							(matchCounts.price_mismatch ?? 0) >
+							0 && (
 							<span className="bg-warning/10 text-warning text-tiny gap-s-100 flex items-center rounded-full px-3 py-1 font-medium">
 								<AlertTriangle className="h-3 w-3" />
-								{(matchCounts.quantity_mismatch ?? 0) + (matchCounts.price_mismatch ?? 0)} {t("priceMismatch")}
+								{(matchCounts.quantity_mismatch ?? 0) +
+									(matchCounts.price_mismatch ?? 0)}{" "}
+								{t("priceMismatch")}
 							</span>
 						)}
 					</div>
@@ -400,22 +429,37 @@ export const NotaImport = () => {
 
 					{/* Unmatched fills warning */}
 					{preview.unmatchedFills.length > 0 && (
-						<div className="border-warning/30 bg-warning/10 p-m-400 rounded-lg border">
+						<div className="border-warning/30 bg-warning/10 p-s-300 sm:p-m-400 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<AlertTriangle className="text-warning h-4 w-4 shrink-0" />
 								<span className="text-small text-warning font-medium">
-									{t("unmatchedFillsWarning", { count: preview.unmatchedFills.length })}
+									{t("unmatchedFillsWarning", {
+										count: preview.unmatchedFills.length,
+									})}
 								</span>
 							</div>
 							<div className="mt-s-200 space-y-s-100">
 								{preview.unmatchedFills.map((fill, idx) => (
-									<div key={`unmatched-${idx}`} className="text-tiny text-txt-300 gap-s-200 flex items-center">
-										<span className={fill.side === "C" ? "text-action-buy" : "text-action-sell"}>
+									<div
+										key={`unmatched-${idx}`}
+										className="text-tiny text-txt-300 gap-s-200 flex items-center"
+									>
+										<span
+											className={
+												fill.side === "C"
+													? "text-action-buy"
+													: "text-action-sell"
+											}
+										>
 											{fill.side === "C" ? t("buy") : t("sell")}
 										</span>
 										<span className="text-txt-200">{fill.normalizedAsset}</span>
 										<span>{fill.quantity}x</span>
-										<span>{fill.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+										<span>
+											{fill.price.toLocaleString("pt-BR", {
+												minimumFractionDigits: 2,
+											})}
+										</span>
 									</div>
 								))}
 							</div>
@@ -424,11 +468,13 @@ export const NotaImport = () => {
 
 					{/* Unmatched trades info */}
 					{preview.unmatchedTrades.length > 0 && (
-						<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<Info className="text-txt-300 h-4 w-4 shrink-0" />
 								<span className="text-small text-txt-300">
-									{t("unmatchedTradesInfo", { count: preview.unmatchedTrades.length })}
+									{t("unmatchedTradesInfo", {
+										count: preview.unmatchedTrades.length,
+									})}
 								</span>
 							</div>
 						</div>
@@ -436,44 +482,80 @@ export const NotaImport = () => {
 
 					{/* Financial summary */}
 					{parseResult.netTotal > 0 && (
-						<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-							<h4 className="text-small text-txt-100 font-semibold">{t("financialSummary")}</h4>
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+							<h4 className="text-small text-txt-100 font-semibold">
+								{t("financialSummary")}
+							</h4>
 							<div className="mt-s-200 gap-x-m-500 gap-y-s-100 grid grid-cols-2 md:grid-cols-3">
 								{parseResult.totalBrokerage > 0 && (
 									<div className="flex justify-between">
-										<span className="text-tiny text-txt-300">{t("brokerage")}</span>
-										<span className="text-tiny text-txt-200">{parseResult.totalBrokerage.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+										<span className="text-tiny text-txt-300">
+											{t("brokerage")}
+										</span>
+										<span className="text-tiny text-txt-200">
+											{parseResult.totalBrokerage.toLocaleString("pt-BR", {
+												minimumFractionDigits: 2,
+											})}
+										</span>
 									</div>
 								)}
 								{parseResult.settlementFee > 0 && (
 									<div className="flex justify-between">
-										<span className="text-tiny text-txt-300">{t("settlementFee")}</span>
-										<span className="text-tiny text-txt-200">{parseResult.settlementFee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+										<span className="text-tiny text-txt-300">
+											{t("settlementFee")}
+										</span>
+										<span className="text-tiny text-txt-200">
+											{parseResult.settlementFee.toLocaleString("pt-BR", {
+												minimumFractionDigits: 2,
+											})}
+										</span>
 									</div>
 								)}
 								{parseResult.registrationFee > 0 && (
 									<div className="flex justify-between">
-										<span className="text-tiny text-txt-300">{t("registrationFee")}</span>
-										<span className="text-tiny text-txt-200">{parseResult.registrationFee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+										<span className="text-tiny text-txt-300">
+											{t("registrationFee")}
+										</span>
+										<span className="text-tiny text-txt-200">
+											{parseResult.registrationFee.toLocaleString("pt-BR", {
+												minimumFractionDigits: 2,
+											})}
+										</span>
 									</div>
 								)}
 								{parseResult.bmfFees > 0 && (
 									<div className="flex justify-between">
-										<span className="text-tiny text-txt-300">{t("bmfFees")}</span>
-										<span className="text-tiny text-txt-200">{parseResult.bmfFees.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+										<span className="text-tiny text-txt-300">
+											{t("bmfFees")}
+										</span>
+										<span className="text-tiny text-txt-200">
+											{parseResult.bmfFees.toLocaleString("pt-BR", {
+												minimumFractionDigits: 2,
+											})}
+										</span>
 									</div>
 								)}
 								{parseResult.irrf > 0 && (
 									<div className="flex justify-between">
 										<span className="text-tiny text-txt-300">{t("irrf")}</span>
-										<span className="text-tiny text-txt-200">{parseResult.irrf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+										<span className="text-tiny text-txt-200">
+											{parseResult.irrf.toLocaleString("pt-BR", {
+												minimumFractionDigits: 2,
+											})}
+										</span>
 									</div>
 								)}
-								<div className="col-span-full border-bg-300 border-t pt-s-100 flex justify-between">
-									<span className="text-tiny text-txt-100 font-medium">{t("netTotal")}</span>
-									<span className={`text-tiny font-medium ${parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell"}`}>
-										{parseResult.netTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-										{" "}{parseResult.netTotalDebitCredit === "C" ? "C" : "D"}
+								<div className="border-bg-300 pt-s-100 col-span-full flex justify-between border-t">
+									<span className="text-tiny text-txt-100 font-medium">
+										{t("netTotal")}
+									</span>
+									<span
+										className={`text-tiny font-medium ${parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell"}`}
+									>
+										{parseResult.netTotal.toLocaleString("pt-BR", {
+											minimumFractionDigits: 2,
+										})}{" "}
+										{parseResult.netTotalDebitCredit === "C" ? "C" : "D"}
 									</span>
 								</div>
 							</div>
@@ -481,7 +563,7 @@ export const NotaImport = () => {
 					)}
 
 					{/* Action buttons */}
-					<div className="border-bg-300 bg-bg-200 p-m-400 flex items-center justify-between rounded-lg border">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 gap-s-300 flex flex-wrap items-center justify-between rounded-lg border">
 						<Button
 							id="nota-import-cancel"
 							variant="outline"
@@ -521,16 +603,19 @@ export const NotaImport = () => {
 
 			{/* Help / Description */}
 			{step === "upload" && !isProcessing && (
-				<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-					<h3 className="text-small text-txt-100 font-semibold">{t("title")}</h3>
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+					<h3 className="text-small text-txt-100 font-semibold">
+						{t("title")}
+					</h3>
 					<p className="mt-s-300 text-small text-txt-300">{t("description")}</p>
 					<div className="mt-m-400 border-acc-100/30 bg-acc-100/10 p-s-300 rounded-md border">
 						<p className="text-small text-acc-100 font-medium">
 							SINACOR Standard (B3)
 						</p>
 						<p className="mt-s-100 text-tiny text-txt-300">
-							Works with all Brazilian brokers: Genial, Clear, XP, Rico, BTG, and others.
-							Upload the PDF exported from your broker portal after each trading session.
+							Works with all Brazilian brokers: Genial, Clear, XP, Rico, BTG,
+							and others. Upload the PDF exported from your broker portal after
+							each trading session.
 						</p>
 					</div>
 				</div>

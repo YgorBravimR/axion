@@ -29,9 +29,9 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-600">
+			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
 				<div className="mx-auto max-w-5xl">
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-600">
+					<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600">
 						<NewTradeTabs
 							strategies={strategies}
 							tags={tags}

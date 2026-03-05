@@ -202,8 +202,8 @@ export const SessionPerformanceChart = ({
 
 	if (sessionsWithTrades.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-				<h3 className="text-body font-semibold text-txt-100">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+				<h3 className="text-small sm:text-body font-semibold text-txt-100">
 					{t("session.title")}
 				</h3>
 				<div className="flex h-50 items-center justify-center text-txt-300">
@@ -216,11 +216,11 @@ export const SessionPerformanceChart = ({
 	const headerMetricValue = isRMode ? weightedAvgR : totalPnl
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
-			<div className="mb-m-400 flex items-start justify-between">
+			<div className="mb-s-300 sm:mb-m-400 flex items-start justify-between">
 				<div>
-					<h3 className="text-body font-semibold text-txt-100">
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">
 						{t("session.title")}
 					</h3>
 					<p className="text-caption text-txt-300 mt-s-100">
@@ -245,7 +245,7 @@ export const SessionPerformanceChart = ({
 			</div>
 
 			{/* Bar Chart */}
-			<ChartContainer id="chart-analytics-session-performance" className="h-60 w-full">
+			<ChartContainer id="chart-analytics-session-performance" className="h-48 sm:h-60 w-full min-w-0">
 					<BarChart
 						data={data}
 						margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -306,7 +306,7 @@ export const SessionPerformanceChart = ({
 			</ChartContainer>
 
 			{/* Session Stats Cards */}
-			<div className="mt-m-400 grid grid-cols-2 gap-s-300 sm:grid-cols-4">
+			<div className="mt-s-300 sm:mt-m-400 grid grid-cols-2 gap-s-200 sm:gap-s-300 sm:grid-cols-4">
 				{data.map((session) => {
 					const metricValue = session[metricKey]
 					const isPositive = metricValue >= 0
@@ -315,7 +315,7 @@ export const SessionPerformanceChart = ({
 						<div
 							key={session.session}
 							className={cn(
-								"rounded-lg border px-m-400 py-s-300",
+								"rounded-lg border px-s-300 sm:px-m-400 py-s-200 sm:py-s-300",
 								hasTrades
 									? isPositive
 										? "border-trade-buy/20 bg-trade-buy/5"
@@ -360,7 +360,7 @@ export const SessionPerformanceChart = ({
 				const showWorstAsReal = !isSameSession || worstSession[metricKey] < 0
 
 				return (
-					<div className="mt-m-400 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
+					<div className="mt-s-300 sm:mt-m-400 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
 						{showBestAsReal ? (
 							<InsightCard
 								type="best"

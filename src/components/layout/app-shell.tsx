@@ -8,7 +8,6 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { CommandMenu } from "@/components/layout/command-menu"
 import { PageBreadcrumb } from "@/components/layout/page-breadcrumb"
 import { ThemeSynchronizer } from "@/components/providers/theme-synchronizer"
-import { BrandSynchronizer } from "@/components/providers/brand-synchronizer"
 import {
 	Sheet,
 	SheetContent,
@@ -17,12 +16,13 @@ import {
 } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Kbd } from "@/components/ui/kbd"
-import { useIsMobile } from "@/hooks/use-is-mobile"
+import { useBreakpoint } from "@/hooks/use-is-mobile"
 import { cn } from "@/lib/utils"
+import type { ReactNode } from "react"
 import type { Brand } from "@/lib/brands"
 
 interface AppShellProps {
-	children: React.ReactNode
+	children: ReactNode
 	isReplayAccount?: boolean
 	replayDate?: string
 	serverBrand?: Brand
@@ -32,8 +32,10 @@ interface AppShellProps {
  * Client-side shell that manages sidebar state, theme, and brand synchronizers.
  * Extracted from the (app) layout so the layout itself can be a server component.
  *
- * On mobile (< md) the sidebar is hidden behind a Sheet (hamburger menu).
- * On desktop (>= md) the sidebar is the fixed aside as before.
+ * Three-tier responsive layout:
+ * - Mobile  (< 768px): sidebar behind a Sheet (hamburger menu)
+ * - Tablet  (768–1023px): auto-collapsed sidebar (icon-only, w-16)
+ * - Desktop (≥ 1024px): full sidebar with collapse toggle
  */
 const AppShell = ({
 	children,
@@ -43,8 +45,14 @@ const AppShell = ({
 }: AppShellProps) => {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-	const isMobile = useIsMobile()
+	const breakpoint = useBreakpoint()
 	const tCommon = useTranslations("common")
+
+	const isMobile = breakpoint === "mobile"
+	const isTablet = breakpoint === "tablet"
+
+	// Tablet always shows collapsed sidebar; desktop respects user toggle
+	const effectiveCollapsed = isTablet ? true : isSidebarCollapsed
 
 	return (
 		<>
@@ -101,33 +109,34 @@ const AppShell = ({
 					</header>
 
 					{/* Mobile main content */}
-					<main className="min-h-screen pt-14">{children}</main>
+					<main className="min-h-dvh pt-14">{children}</main>
 				</>
 			) : (
 				<>
-					{/* Desktop sidebar */}
+					{/* Tablet & Desktop sidebar */}
 					<Sidebar
-						isCollapsed={isSidebarCollapsed}
+						isCollapsed={effectiveCollapsed}
 						onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
 						isReplayAccount={isReplayAccount}
 						replayDate={replayDate}
+						hideCollapseToggle={isTablet}
 					/>
 
-					{/* Desktop main content */}
+					{/* Main content */}
 					<div
 						className={cn(
-							"flex min-h-screen flex-col transition-[margin-left] duration-300",
-							isSidebarCollapsed ? "ml-16" : "ml-64"
+							"flex min-h-dvh flex-col transition-[margin-left] duration-300",
+							effectiveCollapsed ? "ml-16" : "ml-64"
 						)}
 					>
 						{/* Breadcrumb bar */}
-						<div className="border-bg-300 bg-bg-200 flex h-12 shrink-0 items-center justify-between border-b px-6">
+						<div className="border-bg-300 bg-bg-200 flex h-12 shrink-0 items-center justify-between border-b px-4 lg:px-6">
 							<PageBreadcrumb />
 							<Kbd keys={["mod", "K"]} />
 						</div>
 
 						{/* Scrollable main area */}
-						<ScrollArea className="h-[calc(100vh-3rem)]">
+						<ScrollArea className="h-[calc(100dvh-3rem)]">
 							<main>{children}</main>
 						</ScrollArea>
 					</div>

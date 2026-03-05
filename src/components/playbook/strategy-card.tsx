@@ -24,7 +24,11 @@ interface StrategyCardProps {
 	onDelete: (strategyId: string) => void
 }
 
-export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) => {
+export const StrategyCard = ({
+	strategy,
+	onEdit,
+	onDelete,
+}: StrategyCardProps) => {
 	const [showMenu, setShowMenu] = useState(false)
 
 	const complianceColor =
@@ -35,19 +39,21 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 				: "text-trade-sell"
 
 	return (
-		<div className="border-bg-300 bg-bg-200 hover:border-bg-300/80 group relative rounded-lg border p-m-500 transition-shadow hover:shadow-md">
+		<div className="group border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 hover:border-bg-300/80 relative rounded-lg border transition-shadow hover:shadow-md">
 			{/* Header */}
 			<div className="flex items-start justify-between">
-				<div className="flex items-center gap-s-300">
+				<div className="gap-s-300 flex items-center">
 					<div className="bg-acc-100/20 text-acc-100 flex h-10 w-10 items-center justify-center rounded-lg">
 						<Target className="h-5 w-5" />
 					</div>
 					<div>
-						<div className="flex items-center gap-s-200">
-							<span className="bg-bg-300 text-txt-200 rounded px-s-200 py-s-100 font-mono text-tiny">
+						<div className="gap-s-200 flex items-center">
+							<span className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded font-mono">
 								{strategy.code}
 							</span>
-							<h3 className="text-body text-txt-100 font-semibold">{strategy.name}</h3>
+							<h3 className="text-body text-txt-100 font-semibold">
+								{strategy.name}
+							</h3>
 						</div>
 						{strategy.description && (
 							<p className="text-tiny text-txt-300 mt-s-100 line-clamp-1">
@@ -60,7 +66,7 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 				{/* Menu */}
 				<div className="relative">
 					<Button
-					id="playbook-strategy-menu"
+						id="playbook-strategy-menu"
 						variant="ghost"
 						size="sm"
 						className="h-8 w-8 p-0"
@@ -77,10 +83,10 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 								onClick={() => setShowMenu(false)}
 								aria-hidden="true"
 							/>
-							<div className="border-bg-300 bg-bg-100 absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border py-1 shadow-lg">
+							<div className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-1 w-40 rounded-lg border py-1 shadow-lg">
 								<Link
 									href={`/playbook/${strategy.id}`}
-									className="text-txt-200 hover:bg-bg-200 flex w-full items-center gap-s-200 px-s-300 py-s-200 text-left text-small"
+									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Eye className="h-4 w-4" />
 									View Details
@@ -91,7 +97,7 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 										setShowMenu(false)
 										onEdit(strategy)
 									}}
-									className="text-txt-200 hover:bg-bg-200 flex w-full items-center gap-s-200 px-s-300 py-s-200 text-left text-small"
+									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Edit className="h-4 w-4" />
 									Edit
@@ -102,7 +108,7 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 										setShowMenu(false)
 										onDelete(strategy.id)
 									}}
-									className="text-fb-error hover:bg-bg-200 flex w-full items-center gap-s-200 px-s-300 py-s-200 text-left text-small"
+									className="text-fb-error hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Trash2 className="h-4 w-4" />
 									Delete
@@ -114,14 +120,14 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 			</div>
 
 			{/* Stats Grid */}
-			<div className="mt-m-400 grid grid-cols-2 gap-s-300 sm:grid-cols-4">
-				<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4">
+				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">Trades</p>
 					<p className="text-body text-txt-100 mt-s-100 font-bold">
 						{strategy.tradeCount}
 					</p>
 				</div>
-				<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">P&L</p>
 					<ColoredValue
 						value={strategy.totalPnl}
@@ -130,13 +136,13 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 						className="mt-s-100 text-body font-bold"
 					/>
 				</div>
-				<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">Win Rate</p>
 					<p className="text-body text-txt-100 mt-s-100 font-bold">
 						{strategy.winRate.toFixed(1)}%
 					</p>
 				</div>
-				<div className="bg-bg-100 rounded-lg p-s-300 text-center">
+				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">Avg R</p>
 					<ColoredValue
 						value={strategy.avgR}
@@ -171,9 +177,9 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 
 			{/* Target R and Risk */}
 			{(strategy.targetRMultiple || strategy.maxRiskPercent) && (
-				<div className="mt-m-400 flex items-center gap-m-400">
+				<div className="mt-m-400 gap-m-400 flex items-center">
 					{strategy.targetRMultiple && (
-						<div className="flex items-center gap-s-100">
+						<div className="gap-s-100 flex items-center">
 							<TrendingUp className="text-trade-buy h-4 w-4" />
 							<span className="text-tiny text-txt-300">Target:</span>
 							<span className="text-small text-txt-100 font-medium">
@@ -182,7 +188,7 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 						</div>
 					)}
 					{strategy.maxRiskPercent && (
-						<div className="flex items-center gap-s-100">
+						<div className="gap-s-100 flex items-center">
 							<TrendingDown className="text-trade-sell h-4 w-4" />
 							<span className="text-tiny text-txt-300">Max Risk:</span>
 							<span className="text-small text-txt-100 font-medium">
@@ -195,20 +201,22 @@ export const StrategyCard = ({ strategy, onEdit, onDelete }: StrategyCardProps) 
 
 			{/* Conditions & Scenarios counts */}
 			{(strategy.conditionCount > 0 || strategy.scenarioCount > 0) && (
-				<div className="mt-s-300 flex items-center gap-m-400">
+				<div className="mt-s-300 gap-m-400 flex items-center">
 					{strategy.conditionCount > 0 && (
-						<div className="flex items-center gap-s-100">
+						<div className="gap-s-100 flex items-center">
 							<Filter className="text-txt-300 h-3 w-3" />
 							<span className="text-tiny text-txt-300">
-								{strategy.conditionCount} {strategy.conditionCount === 1 ? "condition" : "conditions"}
+								{strategy.conditionCount}{" "}
+								{strategy.conditionCount === 1 ? "condition" : "conditions"}
 							</span>
 						</div>
 					)}
 					{strategy.scenarioCount > 0 && (
-						<div className="flex items-center gap-s-100">
+						<div className="gap-s-100 flex items-center">
 							<ImageIcon className="text-txt-300 h-3 w-3" />
 							<span className="text-tiny text-txt-300">
-								{strategy.scenarioCount} {strategy.scenarioCount === 1 ? "scenario" : "scenarios"}
+								{strategy.scenarioCount}{" "}
+								{strategy.scenarioCount === 1 ? "scenario" : "scenarios"}
 							</span>
 						</div>
 					)}

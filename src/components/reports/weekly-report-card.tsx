@@ -3,7 +3,13 @@
 import { useState, useTransition, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react"
+import {
+	ChevronLeft,
+	ChevronRight,
+	TrendingUp,
+	TrendingDown,
+	Loader2,
+} from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { getWeeklyReport, type WeeklyReport } from "@/app/actions/reports"
@@ -46,8 +52,8 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 
 	if (!report) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">{t("title")}</h2>
+			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
 				<p className="mt-m-400 text-txt-300">{tCommon("noData")}</p>
 			</div>
 		)
@@ -58,16 +64,18 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 		weekOffset === 0
 			? t("thisWeek")
 			: weekOffset === 1
-			? t("lastWeek")
-			: t("weeksAgo", { n: weekOffset })
+				? t("lastWeek")
+				: t("weeksAgo", { n: weekOffset })
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
-					<p className="text-tiny text-txt-300">
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("title")}
+					</h2>
+					<p className="text-tiny text-txt-200">
 						{format(parseISO(report.weekStart), "MMM d", {
 							locale: dateLocale,
 						})}{" "}
@@ -78,7 +86,8 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					</p>
 				</div>
 				<div className="gap-s-200 flex items-center">
-					<Button id="weekly-report-previous-week"
+					<Button
+						id="weekly-report-previous-week"
 						variant="ghost"
 						size="sm"
 						onClick={() => handleWeekChange(weekOffset + 1)}
@@ -87,7 +96,8 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						<ChevronLeft className="h-4 w-4" />
 					</Button>
 					<span className="text-small text-txt-200">{weekLabel}</span>
-					<Button id="weekly-report-next-week"
+					<Button
+						id="weekly-report-next-week"
 						variant="ghost"
 						size="sm"
 						onClick={() => handleWeekChange(Math.max(0, weekOffset - 1))}
@@ -106,7 +116,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 				<>
 					<div className="mt-m-500 gap-m-400 grid grid-cols-2 sm:grid-cols-4">
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("netPnl")}</p>
+							<p className="text-tiny text-txt-200">{tStats("netPnl")}</p>
 							<p
 								className={cn(
 									"text-h3 font-bold",
@@ -117,7 +127,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 								{summary.netPnl.toFixed(2)}
 							</p>
 							{summary.totalFees > 0 && (
-								<p className="mt-s-100 text-tiny text-txt-300">
+								<p className="mt-s-100 text-tiny text-txt-200">
 									<span className="text-txt-200">{tStats("grossPnl")}:</span>{" "}
 									<span
 										className={cn(
@@ -136,19 +146,19 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 							)}
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("winRate")}</p>
+							<p className="text-tiny text-txt-200">{tStats("winRate")}</p>
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.winRate.toFixed(0)}%
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("trades")}</p>
+							<p className="text-tiny text-txt-200">{tStats("trades")}</p>
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.totalTrades}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("profitFactor")}</p>
+							<p className="text-tiny text-txt-200">{tStats("profitFactor")}</p>
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.profitFactor === Infinity
 									? "∞"
@@ -160,37 +170,37 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					{/* Secondary Stats */}
 					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-3 border-t sm:grid-cols-6">
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("wins")}</p>
+							<p className="text-tiny text-txt-200">{tStats("wins")}</p>
 							<p className="text-small text-trade-buy font-medium">
 								{summary.winCount}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("losses")}</p>
+							<p className="text-tiny text-txt-200">{tStats("losses")}</p>
 							<p className="text-small text-trade-sell font-medium">
 								{summary.lossCount}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("avgWin")}</p>
+							<p className="text-tiny text-txt-200">{tStats("avgWin")}</p>
 							<p className="text-small text-trade-buy">
 								+{summary.avgWin.toFixed(2)}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("avgLoss")}</p>
+							<p className="text-tiny text-txt-200">{tStats("avgLoss")}</p>
 							<p className="text-small text-trade-sell">
 								{summary.avgLoss.toFixed(2)}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("bestTrade")}</p>
+							<p className="text-tiny text-txt-200">{tStats("bestTrade")}</p>
 							<p className="text-small text-trade-buy">
 								+{summary.bestTrade.toFixed(2)}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny text-txt-300">{tStats("worstTrade")}</p>
+							<p className="text-tiny text-txt-200">{tStats("worstTrade")}</p>
 							<p className="text-small text-trade-sell">
 								{summary.worstTrade.toFixed(2)}
 							</p>
@@ -198,7 +208,8 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					</div>
 
 					{/* Expand/Collapse */}
-					<Button id="weekly-report-toggle-details"
+					<Button
+						id="weekly-report-toggle-details"
 						variant="ghost"
 						size="sm"
 						className="mt-m-400 w-full"
@@ -228,7 +239,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 													})}
 												</span>
 												<div className="gap-m-400 flex items-center">
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{day.tradeCount} trades
 													</span>
 													<span
@@ -263,10 +274,14 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded transition-colors"
 											>
 												<div className="gap-s-200 flex items-center">
-													<Badge id={`badge-weekly-win-${trade.id}`} variant="outline" className="text-tiny">
+													<Badge
+														id={`badge-weekly-win-${trade.id}`}
+														variant="outline"
+														className="text-tiny"
+													>
 														{trade.asset}
 													</Badge>
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{format(parseISO(trade.date), "MMM d", {
 															locale: dateLocale,
 														})}
@@ -301,10 +316,14 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded transition-colors"
 											>
 												<div className="gap-s-200 flex items-center">
-													<Badge id={`badge-weekly-loss-${trade.id}`} variant="outline" className="text-tiny">
+													<Badge
+														id={`badge-weekly-loss-${trade.id}`}
+														variant="outline"
+														className="text-tiny"
+													>
 														{trade.asset}
 													</Badge>
-													<span className="text-tiny text-txt-300">
+													<span className="text-tiny text-txt-200">
 														{format(parseISO(trade.date), "MMM d", {
 															locale: dateLocale,
 														})}

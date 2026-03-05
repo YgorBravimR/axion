@@ -41,7 +41,7 @@ export const SettingsContent = ({
 
 	return (
 		<Tabs defaultValue={defaultTab} className="h-full">
-			<TabsList variant="line" className="mb-m-500">
+			<TabsList variant="line" className="mb-m-400 sm:mb-m-500">
 				<TabsTrigger value="profile" className="gap-s-200">
 					<User className="h-4 w-4" />
 					{t("profile")}

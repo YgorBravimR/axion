@@ -70,11 +70,11 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-				<h2 className="text-body text-txt-100 font-semibold">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("cumulative")}
 				</h2>
-				<div className="mt-m-400 text-txt-300 flex h-64 items-center justify-center">
+				<div className="mt-s-300 sm:mt-m-400 text-txt-300 flex h-64 items-center justify-center">
 					{t("noData")}
 				</div>
 			</div>
@@ -93,13 +93,13 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 	const gradientColor = isPositive ? "0, 255, 150" : "128, 128, 255"
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-			<h2 className="text-body text-txt-100 font-semibold">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 				{t("cumulative")}
 			</h2>
 			<ChartContainer
 				id="chart-analytics-cumulative-pnl"
-				className="mt-m-400 h-64"
+				className="mt-s-300 sm:mt-m-400 h-48 min-w-0 sm:h-64"
 			>
 				<AreaChart
 					data={data}

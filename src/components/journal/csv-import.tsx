@@ -1,6 +1,13 @@
 "use client"
 
-import { useState, useRef, useCallback, useMemo } from "react"
+import {
+	useState,
+	useRef,
+	useCallback,
+	useMemo,
+	type DragEvent,
+	type ChangeEvent,
+} from "react"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -174,7 +181,7 @@ export const CsvImport = () => {
 	)
 
 	const handleDrop = useCallback(
-		(e: React.DragEvent) => {
+		(e: DragEvent) => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
@@ -183,18 +190,18 @@ export const CsvImport = () => {
 		[handleFileSelect]
 	)
 
-	const handleDragOver = useCallback((e: React.DragEvent) => {
+	const handleDragOver = useCallback((e: DragEvent) => {
 		e.preventDefault()
 		setIsDragging(true)
 	}, [])
 
-	const handleDragLeave = useCallback((e: React.DragEvent) => {
+	const handleDragLeave = useCallback((e: DragEvent) => {
 		e.preventDefault()
 		setIsDragging(false)
 	}, [])
 
 	const handleInputChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
 			if (file) handleFileSelect(file)
 		},
@@ -351,11 +358,11 @@ export const CsvImport = () => {
 	const selectedCount = selectedIds.size
 
 	return (
-		<div className="space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Upload Area */}
 			{!validationResult && (
 				<div
-					className={`p-l-800 rounded-lg border-2 border-dashed text-center transition-colors ${
+					className={`p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors ${
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -391,7 +398,7 @@ export const CsvImport = () => {
 							</h3>
 							<p className="mt-s-200 text-small text-txt-300">{t("orClick")}</p>
 
-							<div className="mt-m-500 gap-m-400 flex items-center justify-center">
+							<div className="mt-m-400 sm:mt-m-500 gap-s-300 sm:gap-m-400 flex flex-wrap items-center justify-center">
 								<Button
 									id="csv-import-select-file"
 									variant="default"
@@ -416,9 +423,9 @@ export const CsvImport = () => {
 
 			{/* Validation Results */}
 			{validationResult && (
-				<div className="space-y-m-500">
+				<div className="space-y-m-400 sm:space-y-m-500">
 					{/* File Info */}
-					<div className="bg-bg-200 p-m-400 flex items-center justify-between rounded-lg">
+					<div className="bg-bg-200 p-s-300 sm:p-m-400 flex items-center justify-between rounded-lg">
 						<div className="gap-s-300 flex items-center">
 							<FileText className="text-txt-300 h-5 w-5" />
 							<span className="text-small text-txt-100 font-medium">
@@ -475,7 +482,7 @@ export const CsvImport = () => {
 					</div>
 
 					{/* Actions */}
-					<div className="border-bg-300 bg-bg-200 p-m-400 flex items-center justify-between rounded-lg border">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 gap-s-300 flex flex-wrap items-center justify-between rounded-lg border">
 						<Button
 							id="csv-import-cancel"
 							variant="outline"
@@ -514,7 +521,7 @@ export const CsvImport = () => {
 			)}
 
 			{/* Help Section */}
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<h3 className="text-small text-txt-100 font-semibold">
 					{t("formatGuide")}
 				</h3>
@@ -534,7 +541,7 @@ export const CsvImport = () => {
 				<p className="mt-m-400 text-small text-txt-300">
 					{t("requiredColumns")}
 				</p>
-				<ul className="mt-s-300 gap-s-200 text-small text-txt-200 grid grid-cols-2 md:grid-cols-5">
+				<ul className="mt-s-300 gap-s-200 text-small text-txt-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
 					<li>
 						<code className="bg-bg-100 px-s-100 text-tiny rounded">asset</code>
 					</li>

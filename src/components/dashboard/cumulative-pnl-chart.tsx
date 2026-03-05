@@ -89,7 +89,7 @@ export const CumulativePnLChart = ({
 				<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
 					{t("cumulativePnL.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[200px] items-center justify-center">
+				<div className="text-txt-300 flex h-[150px] sm:h-[200px] items-center justify-center">
 					{t("noData")}
 				</div>
 			</div>
@@ -107,7 +107,7 @@ export const CumulativePnLChart = ({
 			</h3>
 			<ChartContainer
 				id="chart-dashboard-cumulative-pnl"
-				className="h-[200px] w-full"
+				className="h-[150px] sm:h-[200px] w-full"
 			>
 				<LineChart
 					data={data}

@@ -154,7 +154,7 @@ export const FilterPanel = ({
 		filters.timeframeIds.length > 0
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-s-300">
@@ -185,7 +185,7 @@ export const FilterPanel = ({
 			</div>
 
 			{/* Date Presets (always visible) */}
-			<div className="mt-m-400 flex flex-wrap gap-s-200">
+			<div className="mt-s-300 sm:mt-m-400 flex flex-wrap gap-s-200">
 				{datePresets.map((preset) => (
 					<FilterPill
 						key={preset.key}
@@ -198,7 +198,7 @@ export const FilterPanel = ({
 
 			{/* Expanded Filters */}
 			{isExpanded && (
-				<div className="mt-m-500 space-y-m-500">
+				<div className="mt-m-400 sm:mt-m-500 space-y-m-400 sm:space-y-m-500">
 					{/* Custom Date Range */}
 					<div>
 						<label className="mb-s-200 block text-tiny font-medium text-txt-300">

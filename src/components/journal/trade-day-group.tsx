@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, memo, useCallback } from "react"
+import { useState, memo, useCallback, type KeyboardEvent } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { TradesByDay } from "@/types"
@@ -51,7 +51,7 @@ export const TradeDayGroup = memo(({
 		setIsExpanded((prev) => !prev)
 	}, [])
 
-	const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+	const handleKeyDown = useCallback((e: KeyboardEvent) => {
 		if (e.key === "Enter" || e.key === " ") {
 			e.preventDefault()
 			setIsExpanded((prev) => !prev)
@@ -83,7 +83,7 @@ export const TradeDayGroup = memo(({
 				</span>
 
 				{/* Summary Stats */}
-				<div className="gap-m-400 flex items-center">
+				<div className="gap-s-200 sm:gap-m-400 flex items-center">
 					{/* P&L */}
 					<ColoredValue
 						value={summary.netPnl}

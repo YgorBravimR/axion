@@ -1061,7 +1061,7 @@ const DecisionTreeModal = ({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
 				id="decision-tree-modal"
-				className="max-h-[85vh] max-w-[92vw] overflow-y-auto"
+				className="max-h-[85dvh] max-w-[92dvw] overflow-y-auto"
 			>
 				<DialogHeader>
 					<DialogTitle>

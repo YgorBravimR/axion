@@ -61,9 +61,9 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 	}, [chartData])
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="mb-m-400 flex items-center justify-between">
-				<h3 className="text-body text-txt-100 font-semibold">
+				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("drawdownCurve")}
 				</h3>
 				<span className="text-small text-trade-sell font-medium">
@@ -71,62 +71,65 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 				</span>
 			</div>
 
-			<ChartContainer id="chart-monte-carlo-drawdown" className="h-72">
-					<AreaChart
-						data={chartData}
-						margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-					>
-						<defs>
-							<linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-								<stop
-									offset="5%"
-									stopColor="var(--color-trade-sell)"
-									stopOpacity={0.25}
-								/>
-								<stop
-									offset="95%"
-									stopColor="var(--color-trade-sell)"
-									stopOpacity={0.02}
-								/>
-							</linearGradient>
-						</defs>
-						<CartesianGrid
-							strokeDasharray="3 3"
-							stroke="var(--color-bg-300)"
-							strokeOpacity={0.5}
-						/>
-						<XAxis
-							dataKey="tradeNumber"
-							stroke="var(--color-txt-300)"
-							fontSize={11}
-							tickLine={false}
-							axisLine={false}
-						/>
-						<YAxis
-							stroke="var(--color-txt-300)"
-							fontSize={11}
-							tickLine={false}
-							axisLine={false}
-							tickFormatter={(value) => `-${value.toFixed(1)}R`}
-							domain={[0, maxDrawdown + padding]}
-							reversed
-							width={50}
-						/>
-						<Tooltip content={<CustomTooltip />} />
-						<ReferenceLine
-							y={0}
-							stroke="var(--color-txt-300)"
-							strokeDasharray="4 4"
-							strokeOpacity={0.5}
-						/>
-						<Area
-							type="monotone"
-							dataKey="rDrawdown"
-							stroke="var(--color-trade-sell)"
-							strokeWidth={2}
-							fill="url(#drawdownGradient)"
-						/>
-					</AreaChart>
+			<ChartContainer
+				id="chart-monte-carlo-drawdown"
+				className="h-56 sm:h-64 lg:h-72"
+			>
+				<AreaChart
+					data={chartData}
+					margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+				>
+					<defs>
+						<linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
+							<stop
+								offset="5%"
+								stopColor="var(--color-trade-sell)"
+								stopOpacity={0.25}
+							/>
+							<stop
+								offset="95%"
+								stopColor="var(--color-trade-sell)"
+								stopOpacity={0.02}
+							/>
+						</linearGradient>
+					</defs>
+					<CartesianGrid
+						strokeDasharray="3 3"
+						stroke="var(--color-bg-300)"
+						strokeOpacity={0.5}
+					/>
+					<XAxis
+						dataKey="tradeNumber"
+						stroke="var(--color-txt-300)"
+						fontSize={11}
+						tickLine={false}
+						axisLine={false}
+					/>
+					<YAxis
+						stroke="var(--color-txt-300)"
+						fontSize={11}
+						tickLine={false}
+						axisLine={false}
+						tickFormatter={(value) => `-${value.toFixed(1)}R`}
+						domain={[0, maxDrawdown + padding]}
+						reversed
+						width={50}
+					/>
+					<Tooltip content={<CustomTooltip />} />
+					<ReferenceLine
+						y={0}
+						stroke="var(--color-txt-300)"
+						strokeDasharray="4 4"
+						strokeOpacity={0.5}
+					/>
+					<Area
+						type="monotone"
+						dataKey="rDrawdown"
+						stroke="var(--color-trade-sell)"
+						strokeWidth={2}
+						fill="url(#drawdownGradient)"
+					/>
+				</AreaChart>
 			</ChartContainer>
 
 			<p className="mt-s-300 text-tiny text-txt-300 text-center">

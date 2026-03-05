@@ -99,7 +99,7 @@ export const ExecutionList = ({
 	}
 
 	return (
-		<div className={cn("space-y-m-400", className)}>
+		<div className={cn("space-y-s-300 sm:space-y-m-400", className)}>
 			<div className="flex items-center justify-between">
 				<h3 className="text-body text-txt-100 font-semibold">{t("title")}</h3>
 				<Button
@@ -115,7 +115,7 @@ export const ExecutionList = ({
 			</div>
 
 			{executions.length === 0 ? (
-				<div className="border-stroke-100 bg-bg-200 p-m-400 rounded-lg border text-center">
+				<div className="border-stroke-100 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border text-center">
 					<p className="text-small text-txt-300">{t("noExecutions")}</p>
 					<Button
 						id="execution-list-add-first"
@@ -159,34 +159,34 @@ export const ExecutionList = ({
 					</div>
 
 					{/* Summary */}
-					<div className="border-stroke-100 bg-bg-200 p-s-300 rounded-lg border">
-						<div className="gap-s-300 text-small grid grid-cols-2">
+					<div className="border-stroke-100 bg-bg-200 p-s-200 sm:p-s-300 rounded-lg border">
+						<div className="gap-s-200 sm:gap-s-300 text-small grid grid-cols-2">
 							<div>
-								<span className="text-txt-300">{t("totalIn")}:</span>
+								<span className="text-txt-200">{t("totalIn")}:</span>
 								<span className="ml-s-200 text-txt-100">
 									{formatQuantity(totalEntryQty)}
 								</span>
 							</div>
 							<div>
-								<span className="text-txt-300">{t("totalOut")}:</span>
+								<span className="text-txt-200">{t("totalOut")}:</span>
 								<span className="ml-s-200 text-txt-100">
 									{formatQuantity(totalExitQty)}
 								</span>
 							</div>
 							<div>
-								<span className="text-txt-300">{t("avgEntry")}:</span>
+								<span className="text-txt-200">{t("avgEntry")}:</span>
 								<span className="ml-s-200 text-txt-100">
 									{formatPrice(avgEntryPrice)}
 								</span>
 							</div>
 							<div>
-								<span className="text-txt-300">{t("avgExit")}:</span>
+								<span className="text-txt-200">{t("avgExit")}:</span>
 								<span className="ml-s-200 text-txt-100">
 									{totalExitQty > 0 ? formatPrice(avgExitPrice) : "-"}
 								</span>
 							</div>
 							<div className="col-span-2">
-								<span className="text-txt-300">{t("remaining")}:</span>
+								<span className="text-txt-200">{t("remaining")}:</span>
 								<span
 									className={cn(
 										"ml-s-200 font-semibold",
@@ -239,13 +239,13 @@ const ExecutionRow = ({
 	return (
 		<div
 			className={cn(
-				"px-s-300 py-s-200 flex items-center justify-between rounded-md border",
+				"px-s-200 sm:px-s-300 py-s-200 flex flex-wrap items-center justify-between gap-s-200 rounded-md border",
 				isBuy
 					? "border-action-buy/20 bg-action-buy/5"
 					: "border-action-sell/20 bg-action-sell/5"
 			)}
 		>
-			<div className="gap-m-400 flex items-center">
+			<div className="gap-s-200 sm:gap-m-400 flex items-center min-w-0">
 				{/* Side indicator -- buy (up arrow) or sell (down arrow) */}
 				{isBuy ? (
 					<ArrowUp
@@ -281,7 +281,7 @@ const ExecutionRow = ({
 					id={`execution-edit-${execution.id}`}
 					variant="ghost"
 					size="icon"
-					className="h-7 w-7"
+					className="h-9 w-9"
 					onClick={onEdit}
 					aria-label={t("edit")}
 				>
@@ -293,7 +293,7 @@ const ExecutionRow = ({
 							id={`execution-delete-${execution.id}`}
 							variant="ghost"
 							size="icon"
-							className="text-fb-error hover:text-fb-error h-7 w-7"
+							className="text-fb-error hover:text-fb-error h-9 w-9"
 							disabled={isDeleting}
 							aria-label={t("delete")}
 						>

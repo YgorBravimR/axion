@@ -133,7 +133,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 			</div>
 
 			{/* Timeframes Grid */}
-			<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2 lg:grid-cols-3">
+			<div className="grid grid-cols-1 gap-s-300 sm:gap-m-400 md:grid-cols-2 lg:grid-cols-3">
 				{filteredTimeframes.length === 0 ? (
 					<div className="col-span-full rounded-lg border border-bg-300 bg-bg-200 p-l-700 text-center text-txt-300">
 						{t("noTimeframes")}
@@ -143,7 +143,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						<div
 							key={timeframe.id}
 							className={cn(
-								"rounded-lg border border-bg-300 bg-bg-200 p-m-400 transition-colors",
+								"rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 transition-colors",
 								!timeframe.isActive && "opacity-50"
 							)}
 						>

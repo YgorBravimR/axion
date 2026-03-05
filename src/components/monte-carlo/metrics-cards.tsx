@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useTranslations } from "next-intl"
 import { Info } from "lucide-react"
 import {
@@ -17,11 +18,11 @@ interface MetricsCardsProps {
 
 interface MetricCardProps {
 	title: string
-	children: React.ReactNode
+	children: ReactNode
 }
 
 const MetricCard = ({ title, children }: MetricCardProps) => (
-	<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+	<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 		<h4 className="mb-s-300 text-small text-txt-100 font-semibold">{title}</h4>
 		<div className="space-y-s-200">{children}</div>
 	</div>
@@ -39,7 +40,7 @@ const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
 		{tooltip ? (
 			<Tooltip>
 				<TooltipTrigger asChild>
-					<span className="inline-flex cursor-help items-center gap-s-100 text-tiny text-txt-300">
+					<span className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center">
 						{label}
 						<Info className="h-3 w-3" />
 					</span>
@@ -47,7 +48,7 @@ const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
 				<TooltipContent
 					id={`tooltip-metric-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
 					side="top"
-					className="border-bg-300 bg-bg-100 text-txt-200 max-w-xs border p-s-300 shadow-lg"
+					className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
 				>
 					<p className="text-tiny leading-relaxed">{tooltip}</p>
 				</TooltipContent>
@@ -68,7 +69,7 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 	const tTooltips = useTranslations("monteCarlo.tooltips")
 
 	return (
-		<div className="gap-m-400 grid md:grid-cols-2 lg:grid-cols-3">
+		<div className="gap-s-300 sm:gap-m-400 grid sm:grid-cols-2 lg:grid-cols-3">
 			{/* Edge Summary */}
 			<MetricCard title={t("edgeSummary")}>
 				<MetricRow
@@ -85,18 +86,14 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 					label={t("medianFinalR")}
 					value={formatR(statistics.medianFinalR)}
 					valueClass={
-						statistics.medianFinalR >= 0
-							? "text-trade-buy"
-							: "text-trade-sell"
+						statistics.medianFinalR >= 0 ? "text-trade-buy" : "text-trade-sell"
 					}
 				/>
 				<MetricRow
 					label={t("meanFinalR")}
 					value={formatR(statistics.meanFinalR)}
 					valueClass={
-						statistics.meanFinalR >= 0
-							? "text-trade-buy"
-							: "text-trade-sell"
+						statistics.meanFinalR >= 0 ? "text-trade-buy" : "text-trade-sell"
 					}
 				/>
 				<MetricRow
@@ -107,9 +104,7 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 							: formatRatio(statistics.profitFactor)
 					}
 					valueClass={
-						statistics.profitFactor >= 1
-							? "text-trade-buy"
-							: "text-trade-sell"
+						statistics.profitFactor >= 1 ? "text-trade-buy" : "text-trade-sell"
 					}
 					tooltip={tTooltips("profitFactor")}
 				/>
@@ -187,9 +182,7 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 					label={t("medianLabel")}
 					value={formatR(statistics.medianFinalR)}
 					valueClass={
-						statistics.medianFinalR >= 0
-							? "text-trade-buy"
-							: "text-trade-sell"
+						statistics.medianFinalR >= 0 ? "text-trade-buy" : "text-trade-sell"
 					}
 				/>
 				<MetricRow
@@ -201,9 +194,7 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 					label={t("profitableSimulations")}
 					value={`${statistics.profitablePct.toFixed(0)}%`}
 					valueClass={
-						statistics.profitablePct >= 70
-							? "text-trade-buy"
-							: "text-txt-100"
+						statistics.profitablePct >= 70 ? "text-trade-buy" : "text-txt-100"
 					}
 					tooltip={tTooltips("profitableSimulations")}
 				/>

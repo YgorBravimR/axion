@@ -42,7 +42,7 @@ export const MonthNavigator = ({
 	const formattedMonth = format(currentDate, "MMMM yyyy", { locale: dateLocale })
 
 	return (
-		<div className="flex items-center justify-center gap-m-400">
+		<div className="flex items-center justify-center gap-s-300 sm:gap-m-400">
 			<Button id="month-nav-previous"
 				variant="ghost"
 				size="sm"
@@ -54,9 +54,9 @@ export const MonthNavigator = ({
 				<ChevronLeft className="h-5 w-5" />
 			</Button>
 
-			<div className="flex min-w-[200px] items-center justify-center gap-s-200">
+			<div className="flex min-w-[160px] sm:min-w-[200px] items-center justify-center gap-s-200">
 				<Calendar className="h-5 w-5 text-acc-100" />
-				<span className="text-h3 font-semibold capitalize text-txt-100">
+				<span className="text-body sm:text-h3 font-semibold capitalize text-txt-100">
 					{formattedMonth}
 				</span>
 			</div>

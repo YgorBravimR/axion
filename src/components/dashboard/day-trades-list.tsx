@@ -1,5 +1,6 @@
 "use client"
 
+import type { KeyboardEvent } from "react"
 import { useTranslations } from "next-intl"
 import { ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react"
 import type { DayTrade } from "@/types"
@@ -31,14 +32,14 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 
 	if (trades.length === 0) {
 		return (
-			<div className="text-txt-300 flex h-[100px] items-center justify-center">
+			<div className="text-txt-300 flex h-[80px] sm:h-[100px] items-center justify-center">
 				{t("dayDetail.noTrades")}
 			</div>
 		)
 	}
 
 	return (
-		<div className="border-bg-300 overflow-hidden rounded-lg border">
+		<div className="border-bg-300 overflow-x-auto rounded-lg border">
 			<Table>
 				<TableHeader>
 					<TableRow className="bg-bg-100 hover:bg-bg-100">
@@ -66,7 +67,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 				</TableHeader>
 				<TableBody>
 					{trades.map((trade) => {
-						const handleKeyDown = (e: React.KeyboardEvent) => {
+						const handleKeyDown = (e: KeyboardEvent) => {
 							if (e.key === "Enter" || e.key === " ") {
 								e.preventDefault()
 								onTradeClick?.(trade.id)

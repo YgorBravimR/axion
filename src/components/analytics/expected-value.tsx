@@ -47,7 +47,7 @@ const EdgeExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 	return (
 		<>
 			{/* Main R Display */}
-			<div className="mt-m-500 flex items-center justify-center">
+			<div className="mt-m-400 sm:mt-m-500 flex items-center justify-center">
 				<div className="text-center">
 					<p className="text-tiny text-txt-300">{t("perTradeR")}</p>
 					<div className="mt-s-200 flex items-center justify-center gap-s-200">
@@ -68,35 +68,35 @@ const EdgeExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 			</div>
 
 			{/* Breakdown */}
-			<div className="mt-m-600 grid grid-cols-2 gap-m-400 md:grid-cols-4">
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+			<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600 grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-4">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("winRateLabel")}
 						tooltip={t("winRateDesc")}
 					/>
-					<p className="mt-s-100 text-body font-bold text-txt-100">
+					<p className="mt-s-100 text-small sm:text-body font-bold text-txt-100">
 						{data.winRate.toFixed(1)}%
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("avgWinR")}
 						tooltip={t("avgWinRDesc")}
 					/>
-					<p className="mt-s-100 text-body font-bold text-trade-buy">
+					<p className="mt-s-100 text-small sm:text-body font-bold text-trade-buy">
 						{formatR(data.avgWinR)}
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("avgLossR")}
 						tooltip={t("avgLossRDesc")}
 					/>
-					<p className="mt-s-100 text-body font-bold text-trade-sell">
+					<p className="mt-s-100 text-small sm:text-body font-bold text-trade-sell">
 						{formatR(-data.avgLossR)}
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("projectedR100")}
 						tooltip={t("projectedR100Desc")}
@@ -112,7 +112,7 @@ const EdgeExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 			</div>
 
 			{/* Formula Explanation */}
-			<div className="mt-m-500 rounded-lg bg-bg-100 p-m-400">
+			<div className="mt-m-400 sm:mt-m-500 rounded-lg bg-bg-100 p-s-300 sm:p-m-400">
 				<div className="flex items-start gap-s-200">
 					<Info className="mt-s-100 h-4 w-4 shrink-0 text-txt-300" />
 					<div className="text-tiny text-txt-300">
@@ -176,7 +176,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 	return (
 		<>
 			{/* Main EV Display */}
-			<div className="mt-m-500 flex items-center justify-center">
+			<div className="mt-m-400 sm:mt-m-500 flex items-center justify-center">
 				<div className="text-center">
 					<p className="text-tiny text-txt-300">{t("perTrade")}</p>
 					<div className="mt-s-200 flex items-center justify-center gap-s-200">
@@ -197,35 +197,35 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 			</div>
 
 			{/* Breakdown */}
-			<div className="mt-m-600 grid grid-cols-2 gap-m-400 md:grid-cols-4">
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+			<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600 grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-4">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("winRateLabel")}
 						tooltip={t("winRateDesc")}
 					/>
-					<p className="mt-s-100 text-body font-bold text-txt-100">
+					<p className="mt-s-100 text-small sm:text-body font-bold text-txt-100">
 						{data.winRate.toFixed(1)}%
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("avgWinLabel")}
 						tooltip={t("avgWinDesc")}
 					/>
-					<p className="mt-s-100 text-body font-bold text-trade-buy">
+					<p className="mt-s-100 text-small sm:text-body font-bold text-trade-buy">
 						{formatCompactCurrencyWithSign(data.avgWin)}
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("avgLossLabel")}
 						tooltip={t("avgLossDesc")}
 					/>
-					<p className="mt-s-100 text-body font-bold text-trade-sell">
+					<p className="mt-s-100 text-small sm:text-body font-bold text-trade-sell">
 						{formatCompactCurrencyWithSign(-data.avgLoss)}
 					</p>
 				</div>
-				<div className="rounded-lg bg-bg-100 p-s-300 text-center">
+				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("projection100")}
 						tooltip={t("projectionDesc")}
@@ -241,7 +241,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 			</div>
 
 			{/* Formula Explanation */}
-			<div className="mt-m-500 rounded-lg bg-bg-100 p-m-400">
+			<div className="mt-m-400 sm:mt-m-500 rounded-lg bg-bg-100 p-s-300 sm:p-m-400">
 				<div className="flex items-start gap-s-200">
 					<Info className="mt-s-100 h-4 w-4 shrink-0 text-txt-300" />
 					<div className="text-tiny text-txt-300">
@@ -303,14 +303,14 @@ export const ExpectedValue = ({ data, mode }: ExpectedValueProps) => {
 
 	if (!data || data.sampleSize === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center gap-s-200">
 					<Calculator className="h-5 w-5 text-txt-300" />
-					<h3 className="text-body font-semibold text-txt-100">
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">
 						{t("title")}
 					</h3>
 				</div>
-				<div className="mt-m-400 flex h-32 items-center justify-center text-txt-300">
+				<div className="mt-s-300 sm:mt-m-400 flex h-32 items-center justify-center text-txt-300">
 					{t("noData")}
 				</div>
 			</div>
@@ -320,11 +320,11 @@ export const ExpectedValue = ({ data, mode }: ExpectedValueProps) => {
 	const hasRData = data.rSampleSize > 0
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-s-200">
 					<Calculator className="h-5 w-5 text-txt-300" />
-					<h3 className="text-body font-semibold text-txt-100">
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">
 						{mode === "edge" ? t("edgeTitle") : t("capitalTitle")}
 					</h3>
 				</div>

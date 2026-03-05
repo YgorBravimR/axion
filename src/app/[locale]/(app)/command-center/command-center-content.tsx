@@ -27,7 +27,13 @@ import type {
 } from "@/app/actions/command-center"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
-import type { DailyChecklist as DailyChecklistType, DailyAccountNote, Asset, TradingAccount, MonthlyPlan } from "@/db/schema"
+import type {
+	DailyChecklist as DailyChecklistType,
+	DailyAccountNote,
+	Asset,
+	TradingAccount,
+	MonthlyPlan,
+} from "@/db/schema"
 import { useTranslations } from "next-intl"
 import { useFormatting } from "@/hooks/use-formatting"
 import { fromCents } from "@/lib/money"
@@ -141,7 +147,7 @@ export const CommandCenterContent = ({
 	}
 
 	return (
-		<div className="space-y-m-600 mx-auto max-w-7xl">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-7xl">
 			{/* Date Navigator */}
 			<DateNavigator
 				currentDate={viewDate}
@@ -159,9 +165,9 @@ export const CommandCenterContent = ({
 			/>
 
 			{/* Main Grid */}
-			<div className="gap-m-600 grid lg:grid-cols-2">
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2">
 				{/* Left Column */}
-				<div className="space-y-m-600">
+				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
 					{/* Daily Checklist */}
 					<DailyChecklist
 						checklists={completions}
@@ -179,11 +185,11 @@ export const CommandCenterContent = ({
 				</div>
 
 				{/* Right Column */}
-				<div className="space-y-m-600">
+				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
 					{/* Plan summary or "create plan" prompt */}
 					{initialPlan ? (
-						<div className="border-bg-300 bg-bg-100 p-m-400 rounded-lg border">
-							<div className="mb-m-400 gap-s-200 flex items-center">
+						<div className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border">
+							<div className="mb-s-300 sm:mb-m-400 gap-s-200 flex items-center">
 								<CalendarDays className="text-acc-100 h-4 w-4" />
 								<h3 className="text-small text-txt-100 font-semibold">
 									{tPlan("title")}
@@ -229,7 +235,7 @@ export const CommandCenterContent = ({
 							</div>
 						</div>
 					) : (
-						<div className="border-bg-300 bg-bg-100 p-m-500 rounded-lg border border-dashed">
+						<div className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed">
 							<div className="gap-s-300 flex flex-col items-center text-center">
 								<CalendarDays className="text-txt-300 h-8 w-8" />
 								<p className="text-small text-txt-200">

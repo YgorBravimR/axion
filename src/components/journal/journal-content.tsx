@@ -218,9 +218,9 @@ export const JournalContent = ({
 			: 0
 
 	return (
-		<div className="gap-m-400 flex flex-col">
+		<div className="gap-s-300 sm:gap-m-400 flex flex-col">
 			{/* Period Filter */}
-			<div className="gap-m-400 flex flex-wrap items-start justify-between">
+			<div className="gap-s-300 sm:gap-m-400 flex flex-wrap items-start justify-between">
 				<PeriodFilter
 					value={period}
 					onChange={handlePeriodChange}
@@ -229,7 +229,7 @@ export const JournalContent = ({
 
 				{/* Period Summary */}
 				{!isLoading && totalTrades > 0 && (
-					<div className="gap-m-400 text-small flex items-center">
+					<div className="gap-s-300 sm:gap-m-400 text-small flex flex-wrap items-center">
 						<span className="text-txt-300">
 							{totalTrades} {t("tradesCount")}
 						</span>
@@ -255,7 +255,7 @@ export const JournalContent = ({
 
 			{/* Empty State */}
 			{!isLoading && tradesByDay.length === 0 && (
-				<div className="border-bg-300 bg-bg-200 p-l-700 rounded-lg border">
+				<div className="border-bg-300 bg-bg-200 p-m-500 sm:p-m-600 lg:p-l-700 rounded-lg border">
 					<EmptyState
 						icon={Search}
 						title={t("noTradesInPeriod")}
@@ -266,7 +266,7 @@ export const JournalContent = ({
 
 			{/* Trade Groups by Day */}
 			{!isLoading && tradesByDay.length > 0 && (
-				<div className="space-y-m-400">
+				<div className="space-y-s-300 sm:space-y-m-400">
 					{tradesByDay.map((dayData) => (
 						<TradeDayGroup
 							key={dayData.date}

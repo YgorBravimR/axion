@@ -54,12 +54,12 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
-			<div className="mb-m-400 flex items-center justify-between">
+			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="flex items-center gap-s-200">
 					<Moon className="h-5 w-5 text-accent-primary" />
-					<h3 className="text-body font-semibold text-txt-100">{t("postMarket")}</h3>
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("postMarket")}</h3>
 				</div>
 				{hasChanges && !isReadOnly && (
 					<Button id="post-market-save" size="sm" onClick={handleSave} disabled={saving}>

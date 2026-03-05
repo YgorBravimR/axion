@@ -41,7 +41,7 @@ export const StatsPreview = ({
 	}
 
 	return (
-		<div className="border-accent-primary/30 bg-accent-primary/5 p-m-400 rounded-lg border">
+		<div className="border-accent-primary/30 bg-accent-primary/5 p-s-300 sm:p-m-400 rounded-lg border">
 			{/* Header */}
 			<div className="mb-s-300">
 				<h4 className="text-small text-txt-100 font-medium">
@@ -64,7 +64,7 @@ export const StatsPreview = ({
 			</div>
 
 			{/* Stats Grid — Row 1: Core */}
-			<div className="mb-s-300 gap-s-300 grid grid-cols-3">
+			<div className="mb-s-300 gap-s-300 grid grid-cols-2 sm:grid-cols-3">
 				<div className="bg-bg-100 p-s-300 rounded-md text-center">
 					<p className="text-tiny text-txt-300">{t("winRate")}</p>
 					<p className="text-body text-txt-100 font-semibold">
@@ -88,7 +88,7 @@ export const StatsPreview = ({
 			</div>
 
 			{/* Stats Grid — Row 2: R-specific */}
-			<div className="mb-m-400 gap-s-300 grid grid-cols-3">
+			<div className="mb-m-400 gap-s-300 grid grid-cols-2 sm:grid-cols-3">
 				<div className="bg-bg-100 p-s-300 rounded-md text-center">
 					<p className="text-tiny text-txt-300">{t("avgWinR")}</p>
 					<p className="text-body text-trade-buy font-semibold">

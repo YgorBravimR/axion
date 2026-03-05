@@ -120,12 +120,12 @@ const RiskSimulationContent = ({
 	const isLocked = prefillSource !== null && prefillSource !== "manual"
 
 	return (
-		<div className="space-y-m-500">
+		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div>
 				<div className="flex items-center gap-3">
 					<FlaskConical className="text-acc-100 h-7 w-7" aria-hidden="true" />
-					<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
+					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">{t("title")}</h1>
 				</div>
 				<p className="text-small text-txt-300 mt-s-200">{t("subtitle")}</p>
 			</div>
@@ -168,13 +168,13 @@ const RiskSimulationContent = ({
 
 			{/* Results */}
 			{result && (
-				<div className="space-y-m-500">
+				<div className="space-y-m-400 sm:space-y-m-500">
 					<SummaryCards summary={result.summary} />
 
 					<EquityCurveOverlay equityCurve={result.equityCurve} />
 
 					<div className="flex items-center justify-between">
-						<h2 className="text-h3 text-txt-100 font-semibold">
+						<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">
 							{t("tradeBreakdown")}
 						</h2>
 						<Button

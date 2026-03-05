@@ -218,7 +218,7 @@ export const AnalyticsContent = ({
 	}, [filters, groupBy])
 
 	return (
-		<div className="space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Filter Panel + Expectancy Mode Toggle */}
 			<div className="flex flex-col gap-m-400 sm:flex-row sm:items-start sm:justify-between">
 				<div className="flex-1">
@@ -254,7 +254,7 @@ export const AnalyticsContent = ({
 			<CumulativePnlChart data={equityCurve} />
 
 			{/* Two Column Grid */}
-			<div className="gap-m-600 grid grid-cols-1 lg:grid-cols-2">
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 lg:grid-cols-2">
 				{/* Expected Value */}
 				<ExpectedValue
 					data={expectedValue}
@@ -269,24 +269,24 @@ export const AnalyticsContent = ({
 			<TagCloud data={tagStats} expectancyMode={expectancyMode} />
 
 			{/* Time-Based Analysis Section */}
-			<div className="mt-m-600">
-				<h2 className="mb-m-400 text-heading text-txt-100 font-semibold">
+			<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
+				<h2 className="mb-s-300 sm:mb-m-400 text-body sm:text-heading text-txt-100 font-semibold">
 					{t("time.title")}
 				</h2>
 
 				{/* Heatmap + Session: stacked on small/medium, side-by-side on xl+ */}
-				<div className="gap-m-600 grid grid-cols-1 xl:grid-cols-2">
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 xl:grid-cols-2">
 					<TimeHeatmap data={timeHeatmap} expectancyMode={expectancyMode} />
 					<SessionPerformanceChart data={sessionPerformance} expectancyMode={expectancyMode} />
 				</div>
 
 				{/* Session Asset Table - Full Width */}
-				<div className="mt-m-600">
+				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
 					<SessionAssetTable data={sessionAssetPerformance} expectancyMode={expectancyMode} />
 				</div>
 
 				{/* Two Column Grid for Charts */}
-				<div className="mt-m-600 gap-m-600 grid grid-cols-1 lg:grid-cols-2">
+				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600 gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 lg:grid-cols-2">
 					{/* Hourly Performance */}
 					<HourlyPerformanceChart data={hourlyPerformance} expectancyMode={expectancyMode} />
 

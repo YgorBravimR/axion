@@ -6,6 +6,7 @@ import {
 	useCallback,
 	forwardRef,
 	useImperativeHandle,
+	type FormEvent,
 } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -144,9 +145,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const [disciplineNotes, setDisciplineNotes] = useState(
 			initialSharedState?.disciplineNotes ?? ""
 		)
-		const [setupRank, setSetupRank] = useState<"A" | "AA" | "AAA" | null | undefined>(
-			initialSharedState?.setupRank
-		)
+		const [setupRank, setSetupRank] = useState<
+			"A" | "AA" | "AAA" | null | undefined
+		>(initialSharedState?.setupRank)
 
 		// Tags
 		const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
@@ -384,7 +385,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 			)
 		}
 
-		const handleSubmit = async (e: React.FormEvent) => {
+		const handleSubmit = async (e: FormEvent) => {
 			e.preventDefault()
 			setIsSubmitting(true)
 
@@ -472,9 +473,12 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const mistakeTags = tags.filter((t) => t.type === "mistake")
 
 		return (
-			<form onSubmit={handleSubmit} className="space-y-m-600">
+			<form
+				onSubmit={handleSubmit}
+				className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+			>
 				<Tabs defaultValue="executions" className="w-full">
-					<TabsList className="grid w-full grid-cols-4">
+					<TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
 						<TabsTrigger value="executions">{tExec("title")}</TabsTrigger>
 						<TabsTrigger value="basic">{tJournal("basicInfo")}</TabsTrigger>
 						<TabsTrigger value="journal">{tJournal("journal")}</TabsTrigger>
@@ -482,7 +486,10 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					</TabsList>
 
 					{/* Executions Tab */}
-					<TabsContent value="executions" className="space-y-m-500 pt-m-500">
+					<TabsContent
+						value="executions"
+						className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
+					>
 						{/* Direction Toggle */}
 						<div className="space-y-s-200">
 							<Label id="label-scaled-direction">{t("direction.label")}</Label>
@@ -593,9 +600,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 								</Button>
 							</div>
 
-							<div className="space-y-s-200">
+							<div className="space-y-s-200 overflow-x-auto">
 								{/* Header */}
-								<div className="gap-s-200 text-tiny text-txt-300 grid grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
+								<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
 									<span>{tExec("date")}</span>
 									<span>{tExec("time")}</span>
 									<span>{tExec("price")}</span>
@@ -648,9 +655,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 							</div>
 
 							{exits.length > 0 ? (
-								<div className="space-y-s-200">
+								<div className="space-y-s-200 overflow-x-auto">
 									{/* Header */}
-									<div className="gap-s-200 text-tiny text-txt-300 grid grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
+									<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
 										<span>{tExec("date")}</span>
 										<span>{tExec("time")}</span>
 										<span>{tExec("price")}</span>
@@ -692,11 +699,11 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 						{/* Position Summary */}
 						{positionSummary.validEntries > 0 && (
-							<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 								<p className="text-small text-txt-100 font-medium">
 									{tScaled("positionSummary")}
 								</p>
-								<div className="mt-s-300 gap-s-300 text-small grid grid-cols-4">
+								<div className="mt-s-300 gap-s-300 text-small grid grid-cols-2 sm:grid-cols-4">
 									<div>
 										<p className="text-tiny text-txt-300">
 											{tScaled("status")}
@@ -791,7 +798,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 							<Label id="label-scaled-risk-management">
 								{tScaled("riskManagement")}
 							</Label>
-							<div className="gap-m-400 grid grid-cols-3">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 								<div className="space-y-s-200">
 									<Label
 										id="label-scaled-stop-loss"
@@ -866,8 +873,11 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					</TabsContent>
 
 					{/* Basic Info Tab */}
-					<TabsContent value="basic" className="space-y-m-500 pt-m-500">
-						<div className="gap-m-400 grid grid-cols-2">
+					<TabsContent
+						value="basic"
+						className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
+					>
+						<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 							<div className="space-y-s-200">
 								<Label id="label-scaled-timeframe">{t("timeframe")}</Label>
 								<Select
@@ -932,7 +942,10 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					</TabsContent>
 
 					{/* Journal Tab */}
-					<TabsContent value="journal" className="space-y-m-500 pt-m-500">
+					<TabsContent
+						value="journal"
+						className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
+					>
 						<div className="space-y-s-200">
 							<Label
 								id="label-scaled-pre-trade-thoughts"
@@ -1035,7 +1048,10 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					</TabsContent>
 
 					{/* Tags Tab */}
-					<TabsContent value="tags" className="space-y-m-500 pt-m-500">
+					<TabsContent
+						value="tags"
+						className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
+					>
 						{setupTags.length > 0 && (
 							<div className="space-y-s-200">
 								<Label id="label-scaled-setup-type">{t("setupType")}</Label>
@@ -1087,7 +1103,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 						)}
 
 						{tags.length === 0 && (
-							<div className="border-bg-300 bg-bg-200 p-m-600 rounded-lg border text-center">
+							<div className="border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600 rounded-lg border text-center">
 								<p className="text-txt-200">{t("noTagsYet")}</p>
 								<p className="mt-s-200 text-small text-txt-300">
 									{t("createTagsHint")}
@@ -1098,7 +1114,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 				</Tabs>
 
 				{/* Submit Button */}
-				<div className="gap-m-400 border-bg-300 pt-m-500 flex justify-end border-t">
+				<div className="gap-s-300 sm:gap-m-400 border-bg-300 pt-m-400 sm:pt-m-500 flex flex-col-reverse border-t sm:flex-row sm:justify-end">
 					<Button
 						id="scaled-trade-cancel"
 						type="button"

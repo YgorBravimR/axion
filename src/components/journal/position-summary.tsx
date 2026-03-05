@@ -108,7 +108,7 @@ export const PositionSummary = ({
 	return (
 		<div
 			className={cn(
-				"border-stroke-100 bg-bg-100 p-m-400 rounded-lg border",
+				"border-stroke-100 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border",
 				className
 			)}
 		>
@@ -168,7 +168,7 @@ export const PositionSummary = ({
 
 			{/* Progress Bar */}
 			<div className="mb-m-400">
-				<div className="mb-s-100 text-caption text-txt-300 flex justify-between">
+				<div className="mb-s-100 text-caption text-txt-200 flex justify-between">
 					<span>{t("closed")}</span>
 					<span>{closedPercent.toFixed(0)}%</span>
 				</div>
@@ -188,21 +188,21 @@ export const PositionSummary = ({
 			</div>
 
 			{/* Summary Stats */}
-			<div className="gap-s-300 border-stroke-100 pt-s-300 grid grid-cols-3 border-t">
+			<div className="gap-s-200 sm:gap-s-300 border-stroke-100 pt-s-300 grid grid-cols-1 sm:grid-cols-3 border-t">
 				<div className="text-center">
-					<div className="text-caption text-txt-300">{t("totalIn")}</div>
+					<div className="text-caption text-txt-200">{t("totalIn")}</div>
 					<div className="text-body text-txt-100 font-semibold">
 						{formatQuantity(totalEntryQuantity)}
 					</div>
 				</div>
 				<div className="text-center">
-					<div className="text-caption text-txt-300">{t("totalOut")}</div>
+					<div className="text-caption text-txt-200">{t("totalOut")}</div>
 					<div className="text-body text-txt-100 font-semibold">
 						{formatQuantity(totalExitQuantity)}
 					</div>
 				</div>
 				<div className="text-center">
-					<div className="text-caption text-txt-300">{t("remaining")}</div>
+					<div className="text-caption text-txt-200">{t("remaining")}</div>
 					<div
 						className={cn(
 							"text-body font-semibold",
@@ -222,7 +222,7 @@ export const PositionSummary = ({
 						<PnLDisplay value={totalPnl} size="lg" />
 					</div>
 					{tickSize && tickValue && (
-						<div className="mt-s-100 text-caption text-txt-300">
+						<div className="mt-s-100 text-caption text-txt-200">
 							{pnlPerUnit >= 0 ? "+" : ""}
 							{formatPrice(pnlPerUnit)} / {t("contract")}
 						</div>

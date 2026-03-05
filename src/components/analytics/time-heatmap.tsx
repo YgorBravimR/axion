@@ -32,7 +32,13 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const isRMode = expectancyMode === "edge"
 
 	const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-	const dayLabels = [tDays("mon"), tDays("tue"), tDays("wed"), tDays("thu"), tDays("fri")]
+	const dayLabels = [
+		tDays("mon"),
+		tDays("tue"),
+		tDays("wed"),
+		tDays("thu"),
+		tDays("fri"),
+	]
 
 	// Get translated short day name from English day name
 	const getTranslatedDayShort = (dayName: string): string => {
@@ -83,7 +89,9 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const getMetricValue = (cell: TimeHeatmapCell): number =>
 		isRMode ? cell.avgR : cell.totalPnl
 
-	const sortedByMetric = cellsWithTrades.toSorted((a, b) => getMetricValue(b) - getMetricValue(a))
+	const sortedByMetric = cellsWithTrades.toSorted(
+		(a, b) => getMetricValue(b) - getMetricValue(a)
+	)
 	const bestSlot = sortedByMetric[0]
 	const worstSlot = sortedByMetric[sortedByMetric.length - 1]
 
@@ -96,10 +104,19 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
 		const decided = totalWins + totalLosses
 		const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
-		const weightedAvgR = totalTrades > 0
-			? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) / totalTrades
-			: 0
-		return { hour, label: `${hour}h`, totalTrades, totalPnl, winRate, avgR: weightedAvgR }
+		const weightedAvgR =
+			totalTrades > 0
+				? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
+					totalTrades
+				: 0
+		return {
+			hour,
+			label: `${hour}h`,
+			totalTrades,
+			totalPnl,
+			winRate,
+			avgR: weightedAvgR,
+		}
 	}).filter((h) => h.totalTrades > 0)
 
 	const sortedHours = hourAggregates.toSorted((a, b) =>
@@ -109,20 +126,31 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const worstHour = sortedHours[sortedHours.length - 1]
 
 	// Aggregate by day (across all hours) — uses raw wins/losses for accurate WR
-	const dayAggregates = days.map((day, index) => {
-		const dayOfWeek = index + 1
-		const cells = cellsWithTrades.filter((c) => c.dayOfWeek === dayOfWeek)
-		const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
-		const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
-		const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
-		const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
-		const decided = totalWins + totalLosses
-		const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
-		const weightedAvgR = totalTrades > 0
-			? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) / totalTrades
-			: 0
-		return { day, dayLabel: dayLabels[index], totalTrades, totalPnl, winRate, avgR: weightedAvgR }
-	}).filter((d) => d.totalTrades > 0)
+	const dayAggregates = days
+		.map((day, index) => {
+			const dayOfWeek = index + 1
+			const cells = cellsWithTrades.filter((c) => c.dayOfWeek === dayOfWeek)
+			const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
+			const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
+			const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
+			const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
+			const decided = totalWins + totalLosses
+			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
+			const weightedAvgR =
+				totalTrades > 0
+					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
+						totalTrades
+					: 0
+			return {
+				day,
+				dayLabel: dayLabels[index],
+				totalTrades,
+				totalPnl,
+				winRate,
+				avgR: weightedAvgR,
+			}
+		})
+		.filter((d) => d.totalTrades > 0)
 
 	const sortedDays = dayAggregates.toSorted((a, b) =>
 		isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
@@ -130,13 +158,16 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const bestDay = sortedDays[0]
 	const worstDay = sortedDays[sortedDays.length - 1]
 
-	const formatAggregateMetric = (agg: { totalPnl: number; avgR: number }): string =>
+	const formatAggregateMetric = (agg: {
+		totalPnl: number
+		avgR: number
+	}): string =>
 		isRMode ? formatR(agg.avgR) : formatBrlCompactWithSign(agg.totalPnl)
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
-				<h3 className="text-body text-txt-100 font-semibold">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("time.heatmapTitle")}
 				</h3>
 				<div className="text-txt-300 flex h-50 items-center justify-center">
@@ -147,10 +178,10 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-500">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			{/* Header */}
-			<div className="mb-m-400">
-				<h3 className="text-body text-txt-100 font-semibold">
+			<div className="mb-s-300 sm:mb-m-400">
+				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("time.heatmapTitle")}
 				</h3>
 				<p className="text-caption text-txt-300 mt-s-100">
@@ -179,7 +210,7 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 						const dayOfWeek = dayIndex + 1
 						return (
 							<div key={day} className="mb-s-100 flex items-center">
-								<div className="text-small text-txt-200 w-14 shrink-0 pr-s-200 text-right font-medium">
+								<div className="text-small text-txt-200 pr-s-200 w-14 shrink-0 text-right font-medium">
 									{dayLabels[dayIndex]}
 								</div>
 								{TRADING_HOURS.map((hour) => {
@@ -187,16 +218,14 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									const hasData = cell && cell.totalTrades > 0
 									const isHovered = hoveredCell === cell
 									return (
-										<div
-											key={`${day}-${hour}`}
-											className="flex-1 px-0.5"
-										>
+										<div key={`${day}-${hour}`} className="flex-1 px-0.5">
 											<div
 												className={cn(
 													"relative flex h-10 items-center justify-center rounded-md transition-all",
 													getCellStyle(cell),
-													hasData && "cursor-pointer hover:ring-2 hover:ring-acc-100 focus:ring-2 focus:ring-acc-100 focus:outline-none",
-													isHovered && "ring-2 ring-acc-100 scale-105"
+													hasData &&
+														"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
+													isHovered && "ring-acc-100 scale-105 ring-2"
 												)}
 												onMouseEnter={() => {
 													if (hasData) setHoveredCell(cell)
@@ -216,7 +245,7 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											>
 												{/* Trade count inside cell */}
 												{hasData && (
-													<span className="text-[11px] font-semibold text-white/90 drop-shadow-sm">
+													<span className="text-micro font-semibold text-white/90 drop-shadow-sm">
 														{cell.totalTrades}
 													</span>
 												)}
@@ -233,14 +262,14 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			{/* Hovered Cell Detail Bar */}
 			<div
 				className={cn(
-					"mt-m-400 rounded-lg border px-m-400 py-s-300 transition-all",
+					"mt-s-300 sm:mt-m-400 px-s-300 sm:px-m-400 py-s-200 sm:py-s-300 rounded-lg border transition-all",
 					hoveredCell
 						? "border-acc-100/30 bg-bg-100"
 						: "border-bg-300 bg-bg-100/50"
 				)}
 			>
 				{hoveredCell ? (
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="gap-m-400 flex items-center justify-between">
 						<div>
 							<p className="text-small text-txt-100 font-semibold">
 								{hoveredCell.dayName} {hoveredCell.hourLabel}
@@ -249,13 +278,15 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 								{t("time.totalTrades", { count: hoveredCell.totalTrades })}
 							</p>
 						</div>
-						<div className="flex items-center gap-m-500">
+						<div className="gap-m-500 flex items-center">
 							<div className="text-right">
 								<p className="text-caption text-txt-300">{t("time.winRate")}</p>
 								<p
 									className={cn(
 										"text-small font-semibold",
-										hoveredCell.winRate >= 50 ? "text-trade-buy" : "text-trade-sell"
+										hoveredCell.winRate >= 50
+											? "text-trade-buy"
+											: "text-trade-sell"
 									)}
 								>
 									{hoveredCell.winRate.toFixed(0)}%
@@ -264,11 +295,15 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 							{isRMode ? (
 								<>
 									<div className="text-right">
-										<p className="text-caption text-txt-300">{t("time.avgR")}</p>
+										<p className="text-caption text-txt-300">
+											{t("time.avgR")}
+										</p>
 										<p
 											className={cn(
 												"text-small font-semibold",
-												hoveredCell.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
+												hoveredCell.avgR >= 0
+													? "text-trade-buy"
+													: "text-trade-sell"
 											)}
 										>
 											{formatR(hoveredCell.avgR)}
@@ -279,7 +314,9 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 										<p
 											className={cn(
 												"text-small font-semibold",
-												hoveredCell.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
+												hoveredCell.totalPnl >= 0
+													? "text-trade-buy"
+													: "text-trade-sell"
 											)}
 										>
 											{formatBrlCompactWithSign(hoveredCell.totalPnl)}
@@ -293,7 +330,9 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 										<p
 											className={cn(
 												"text-small font-semibold",
-												hoveredCell.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
+												hoveredCell.totalPnl >= 0
+													? "text-trade-buy"
+													: "text-trade-sell"
 											)}
 										>
 											{formatBrlCompactWithSign(hoveredCell.totalPnl)}
@@ -301,11 +340,15 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									</div>
 									{hoveredCell.avgR !== 0 && (
 										<div className="text-right">
-											<p className="text-caption text-txt-300">{t("time.avgR")}</p>
+											<p className="text-caption text-txt-300">
+												{t("time.avgR")}
+											</p>
 											<p
 												className={cn(
 													"text-small font-semibold",
-													hoveredCell.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
+													hoveredCell.avgR >= 0
+														? "text-trade-buy"
+														: "text-trade-sell"
 												)}
 											>
 												{hoveredCell.avgR >= 0 ? "+" : ""}
@@ -325,120 +368,172 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			</div>
 
 			{/* Legend */}
-			<div className="mt-m-400 flex items-center justify-center gap-m-500 text-caption text-txt-300">
-				<div className="flex items-center gap-s-200">
-					<div className="h-3 w-3 rounded-sm bg-trade-buy/70" />
+			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-500 text-caption text-txt-300 flex flex-wrap items-center justify-center">
+				<div className="gap-s-200 flex items-center">
+					<div className="bg-trade-buy/70 h-3 w-3 rounded-sm" />
 					<span>{t("time.profitable")}</span>
 				</div>
-				<div className="flex items-center gap-s-200">
-					<div className="h-3 w-3 rounded-sm bg-trade-sell/70" />
+				<div className="gap-s-200 flex items-center">
+					<div className="bg-trade-sell/70 h-3 w-3 rounded-sm" />
 					<span>{t("time.losing")}</span>
 				</div>
-				<div className="flex items-center gap-s-200">
-					<div className="h-3 w-3 rounded-sm bg-bg-300/30" />
+				<div className="gap-s-200 flex items-center">
+					<div className="bg-bg-300/30 h-3 w-3 rounded-sm" />
 					<span>{t("time.noTrades")}</span>
 				</div>
 			</div>
 
 			{/* Actionable Insights — 2 merged cards: Best / Worst Trading Window */}
 			{cellsWithTrades.length > 0 && (
-				<div className="mt-m-400 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
+				<div className="mt-s-300 sm:mt-m-400 gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 					{/* Best Trading Window */}
 					{bestSlot && getMetricValue(bestSlot) >= 0 ? (
-						<div className="flex items-start gap-s-300 rounded-lg border border-trade-buy/20 bg-trade-buy/5 p-m-400">
-							<div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-trade-buy/15">
-								<TrendingUp className="h-4 w-4 text-trade-buy" />
+						<div className="gap-s-300 border-trade-buy/20 bg-trade-buy/5 p-s-300 sm:p-m-400 flex items-start rounded-lg border">
+							<div className="bg-trade-buy/15 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+								<TrendingUp className="text-trade-buy h-4 w-4" />
 							</div>
-							<div className="min-w-0 space-y-s-200">
-								<p className="text-caption text-txt-300">{t("time.bestWindow")}</p>
+							<div className="space-y-s-200 min-w-0">
+								<p className="text-caption text-txt-300">
+									{t("time.bestWindow")}
+								</p>
 								<div>
-									<span className="text-caption text-txt-300">{t("time.windowSlot")}: </span>
-									<span className="text-small font-semibold text-trade-buy">
-										{getTranslatedDayShort(bestSlot.dayName)} {bestSlot.hourLabel}
+									<span className="text-caption text-txt-300">
+										{t("time.windowSlot")}:{" "}
+									</span>
+									<span className="text-small text-trade-buy font-semibold">
+										{getTranslatedDayShort(bestSlot.dayName)}{" "}
+										{bestSlot.hourLabel}
 									</span>
 									<span className="text-caption text-trade-buy/80">
-										{" "}· {bestSlot.winRate.toFixed(0)}% WR · {formatMetric(getMetricValue(bestSlot))} · {t("time.totalTrades", { count: bestSlot.totalTrades })}
+										{" "}
+										· {bestSlot.winRate.toFixed(0)}% WR ·{" "}
+										{formatMetric(getMetricValue(bestSlot))} ·{" "}
+										{t("time.totalTrades", { count: bestSlot.totalTrades })}
 									</span>
 								</div>
 								{bestHour && (
 									<div>
-										<span className="text-caption text-txt-300">{t("time.windowHour")}: </span>
-										<span className="text-small font-semibold text-trade-buy">{bestHour.label}</span>
+										<span className="text-caption text-txt-300">
+											{t("time.windowHour")}:{" "}
+										</span>
+										<span className="text-small text-trade-buy font-semibold">
+											{bestHour.label}
+										</span>
 										<span className="text-caption text-trade-buy/80">
-											{" "}· {bestHour.winRate.toFixed(0)}% WR · {formatAggregateMetric(bestHour)} · {t("time.totalTrades", { count: bestHour.totalTrades })}
+											{" "}
+											· {bestHour.winRate.toFixed(0)}% WR ·{" "}
+											{formatAggregateMetric(bestHour)} ·{" "}
+											{t("time.totalTrades", { count: bestHour.totalTrades })}
 										</span>
 									</div>
 								)}
 								{bestDay && (
 									<div>
-										<span className="text-caption text-txt-300">{t("time.windowDay")}: </span>
-										<span className="text-small font-semibold text-trade-buy">{bestDay.dayLabel}</span>
+										<span className="text-caption text-txt-300">
+											{t("time.windowDay")}:{" "}
+										</span>
+										<span className="text-small text-trade-buy font-semibold">
+											{bestDay.dayLabel}
+										</span>
 										<span className="text-caption text-trade-buy/80">
-											{" "}· {bestDay.winRate.toFixed(0)}% WR · {formatAggregateMetric(bestDay)} · {t("time.totalTrades", { count: bestDay.totalTrades })}
+											{" "}
+											· {bestDay.winRate.toFixed(0)}% WR ·{" "}
+											{formatAggregateMetric(bestDay)} ·{" "}
+											{t("time.totalTrades", { count: bestDay.totalTrades })}
 										</span>
 									</div>
 								)}
 							</div>
 						</div>
 					) : (
-						<div className="flex items-start gap-s-300 rounded-lg border border-dashed border-bg-300 bg-bg-300/10 p-m-400">
-							<div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bg-300/20">
-								<TrendingUp className="h-4 w-4 text-txt-300" />
+						<div className="gap-s-300 border-bg-300 bg-bg-300/10 p-s-300 sm:p-m-400 flex items-start rounded-lg border border-dashed">
+							<div className="bg-bg-300/20 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+								<TrendingUp className="text-txt-300 h-4 w-4" />
 							</div>
 							<div className="min-w-0">
-								<p className="text-caption text-txt-300">{t("time.bestWindow")}</p>
+								<p className="text-caption text-txt-300">
+									{t("time.bestWindow")}
+								</p>
 								<p className="text-small text-txt-300 font-medium">—</p>
-								<p className="text-caption text-txt-300 mt-s-100">{t("time.bestWindowPlaceholder")}</p>
+								<p className="text-caption text-txt-300 mt-s-100">
+									{t("time.bestWindowPlaceholder")}
+								</p>
 							</div>
 						</div>
 					)}
 
 					{/* Worst Trading Window */}
 					{worstSlot && getMetricValue(worstSlot) < 0 ? (
-						<div className="flex items-start gap-s-300 rounded-lg border border-trade-sell/20 bg-trade-sell/5 p-m-400">
-							<div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-trade-sell/15">
-								<TrendingDown className="h-4 w-4 text-trade-sell" />
+						<div className="gap-s-300 border-trade-sell/20 bg-trade-sell/5 p-s-300 sm:p-m-400 flex items-start rounded-lg border">
+							<div className="bg-trade-sell/15 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+								<TrendingDown className="text-trade-sell h-4 w-4" />
 							</div>
-							<div className="min-w-0 space-y-s-200">
-								<p className="text-caption text-txt-300">{t("time.worstWindow")}</p>
+							<div className="space-y-s-200 min-w-0">
+								<p className="text-caption text-txt-300">
+									{t("time.worstWindow")}
+								</p>
 								<div>
-									<span className="text-caption text-txt-300">{t("time.windowSlot")}: </span>
-									<span className="text-small font-semibold text-trade-sell">
-										{getTranslatedDayShort(worstSlot.dayName)} {worstSlot.hourLabel}
+									<span className="text-caption text-txt-300">
+										{t("time.windowSlot")}:{" "}
+									</span>
+									<span className="text-small text-trade-sell font-semibold">
+										{getTranslatedDayShort(worstSlot.dayName)}{" "}
+										{worstSlot.hourLabel}
 									</span>
 									<span className="text-caption text-trade-sell/80">
-										{" "}· {worstSlot.winRate.toFixed(0)}% WR · {formatMetric(getMetricValue(worstSlot))} · {t("time.totalTrades", { count: worstSlot.totalTrades })}
+										{" "}
+										· {worstSlot.winRate.toFixed(0)}% WR ·{" "}
+										{formatMetric(getMetricValue(worstSlot))} ·{" "}
+										{t("time.totalTrades", { count: worstSlot.totalTrades })}
 									</span>
 								</div>
 								{worstHour && (
 									<div>
-										<span className="text-caption text-txt-300">{t("time.windowHour")}: </span>
-										<span className="text-small font-semibold text-trade-sell">{worstHour.label}</span>
+										<span className="text-caption text-txt-300">
+											{t("time.windowHour")}:{" "}
+										</span>
+										<span className="text-small text-trade-sell font-semibold">
+											{worstHour.label}
+										</span>
 										<span className="text-caption text-trade-sell/80">
-											{" "}· {worstHour.winRate.toFixed(0)}% WR · {formatAggregateMetric(worstHour)} · {t("time.totalTrades", { count: worstHour.totalTrades })}
+											{" "}
+											· {worstHour.winRate.toFixed(0)}% WR ·{" "}
+											{formatAggregateMetric(worstHour)} ·{" "}
+											{t("time.totalTrades", { count: worstHour.totalTrades })}
 										</span>
 									</div>
 								)}
 								{worstDay && (
 									<div>
-										<span className="text-caption text-txt-300">{t("time.windowDay")}: </span>
-										<span className="text-small font-semibold text-trade-sell">{worstDay.dayLabel}</span>
+										<span className="text-caption text-txt-300">
+											{t("time.windowDay")}:{" "}
+										</span>
+										<span className="text-small text-trade-sell font-semibold">
+											{worstDay.dayLabel}
+										</span>
 										<span className="text-caption text-trade-sell/80">
-											{" "}· {worstDay.winRate.toFixed(0)}% WR · {formatAggregateMetric(worstDay)} · {t("time.totalTrades", { count: worstDay.totalTrades })}
+											{" "}
+											· {worstDay.winRate.toFixed(0)}% WR ·{" "}
+											{formatAggregateMetric(worstDay)} ·{" "}
+											{t("time.totalTrades", { count: worstDay.totalTrades })}
 										</span>
 									</div>
 								)}
 							</div>
 						</div>
 					) : (
-						<div className="flex items-start gap-s-300 rounded-lg border border-dashed border-bg-300 bg-bg-300/10 p-m-400">
-							<div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bg-300/20">
-								<TrendingDown className="h-4 w-4 text-txt-300" />
+						<div className="gap-s-300 border-bg-300 bg-bg-300/10 p-s-300 sm:p-m-400 flex items-start rounded-lg border border-dashed">
+							<div className="bg-bg-300/20 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+								<TrendingDown className="text-txt-300 h-4 w-4" />
 							</div>
 							<div className="min-w-0">
-								<p className="text-caption text-txt-300">{t("time.worstWindow")}</p>
+								<p className="text-caption text-txt-300">
+									{t("time.worstWindow")}
+								</p>
 								<p className="text-small text-txt-300 font-medium">—</p>
-								<p className="text-caption text-txt-300 mt-s-100">{t("time.worstWindowPlaceholder")}</p>
+								<p className="text-caption text-txt-300 mt-s-100">
+									{t("time.worstWindowPlaceholder")}
+								</p>
 							</div>
 						</div>
 					)}

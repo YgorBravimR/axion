@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -82,7 +82,7 @@ export const AssetForm = ({
 		}
 	}, [asset])
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 
@@ -141,7 +141,7 @@ export const AssetForm = ({
 						</div>
 					)}
 
-					<div className="grid grid-cols-2 gap-m-400">
+					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
 						<div className="space-y-s-200">
 							<Label id="label-asset-symbol" htmlFor="symbol">{t("symbol")}</Label>
 							<Input
@@ -187,7 +187,7 @@ export const AssetForm = ({
 						/>
 					</div>
 
-					<div className="grid grid-cols-3 gap-m-400">
+					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
 						<div className="space-y-s-200">
 							<Label id="label-asset-tick-size" htmlFor="tickSize">{t("tickSize")}</Label>
 							<Input

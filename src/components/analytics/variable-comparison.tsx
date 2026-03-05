@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import {
 	BarChart,
 	Bar,
@@ -27,7 +27,7 @@ const HeaderWithTooltip = ({
 	tooltip,
 }: {
 	label: string
-	tooltip: React.ReactNode
+	tooltip: ReactNode
 }) => (
 	<Tooltip>
 		<TooltipTrigger asChild>
@@ -100,12 +100,16 @@ const CustomTooltip = ({ active, payload, metric }: CustomTooltipProps) => {
 					<p className={data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
 						{t("pnl")}: {formatCompactCurrency(data.pnl)}
 					</p>
-					<p className="text-txt-200">{t("winRate")}: {data.winRate.toFixed(1)}%</p>
+					<p className="text-txt-200">
+						{t("winRate")}: {data.winRate.toFixed(1)}%
+					</p>
 					<p className="text-txt-200">
 						{t("avgR")}: {data.avgR >= 0 ? "+" : ""}
 						{data.avgR.toFixed(2)}R
 					</p>
-					<p className="text-txt-200">{t("trades")}: {data.tradeCount}</p>
+					<p className="text-txt-200">
+						{t("trades")}: {data.tradeCount}
+					</p>
 					<p className="text-txt-200">
 						{t("pf")}: {formatProfitFactor(data.profitFactor)}
 					</p>
@@ -163,9 +167,9 @@ export const VariableComparison = ({
 	})
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="gap-m-400 flex flex-wrap items-center justify-between">
-				<h3 className="text-body text-txt-100 font-semibold">
+				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("title")}
 				</h3>
 				<div className="gap-s-300 flex flex-wrap">
@@ -198,54 +202,57 @@ export const VariableComparison = ({
 			</div>
 
 			{data.length === 0 ? (
-				<div className="mt-m-400 text-txt-300 flex h-64 items-center justify-center">
+				<div className="mt-s-300 sm:mt-m-400 text-txt-300 flex h-64 items-center justify-center">
 					{t("noData")}
 				</div>
 			) : (
-				<ChartContainer id="chart-analytics-variable-comparison" className="mt-m-400 h-80">
-						<BarChart
-							data={chartData}
-							margin={{ top: 10, right: 10, left: 10, bottom: 40 }}
-						>
-							<CartesianGrid
-								strokeDasharray="3 3"
-								stroke="var(--color-bg-300)"
-								vertical={false}
-							/>
-							<XAxis
-								dataKey="group"
-								stroke="var(--color-txt-300)"
-								tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
-								tickLine={false}
-								axisLine={false}
-								angle={-45}
-								textAnchor="end"
-								height={60}
-							/>
-							<YAxis
-								stroke="var(--color-txt-300)"
-								tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
-								tickLine={false}
-								axisLine={false}
-								tickFormatter={(value) => formatMetricValue(value, metric)}
-								width={70}
-							/>
-							<RechartsTooltip content={<CustomTooltip metric={metric} />} />
-							<Bar dataKey="value" radius={[4, 4, 0, 0]}>
-								{chartData.map((entry, index) => (
-									<Cell
-										key={`cell-${index}`}
-										fill={getBarColor(entry.value, metric)}
-									/>
-								))}
-							</Bar>
-						</BarChart>
+				<ChartContainer
+					id="chart-analytics-variable-comparison"
+					className="mt-s-300 sm:mt-m-400 h-64 min-w-0 sm:h-80"
+				>
+					<BarChart
+						data={chartData}
+						margin={{ top: 10, right: 10, left: 10, bottom: 40 }}
+					>
+						<CartesianGrid
+							strokeDasharray="3 3"
+							stroke="var(--color-bg-300)"
+							vertical={false}
+						/>
+						<XAxis
+							dataKey="group"
+							stroke="var(--color-txt-300)"
+							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tickLine={false}
+							axisLine={false}
+							angle={-45}
+							textAnchor="end"
+							height={60}
+						/>
+						<YAxis
+							stroke="var(--color-txt-300)"
+							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tickLine={false}
+							axisLine={false}
+							tickFormatter={(value) => formatMetricValue(value, metric)}
+							width={70}
+						/>
+						<RechartsTooltip content={<CustomTooltip metric={metric} />} />
+						<Bar dataKey="value" radius={[4, 4, 0, 0]}>
+							{chartData.map((entry, index) => (
+								<Cell
+									key={`cell-${index}`}
+									fill={getBarColor(entry.value, metric)}
+								/>
+							))}
+						</Bar>
+					</BarChart>
 				</ChartContainer>
 			)}
 
 			{/* Summary Table */}
 			{data.length > 0 && (
-				<div className="mt-m-500 overflow-x-auto">
+				<div className="mt-m-400 sm:mt-m-500 overflow-x-auto">
 					<table className="w-full">
 						<thead>
 							<tr className="border-bg-300 border-b">
@@ -286,24 +293,34 @@ export const VariableComparison = ({
 												</p>
 												<ul className="text-txt-200 space-y-1">
 													<li>
-														<span className="text-trade-buy">{tHeaders("pf")} &gt; 1</span> ={" "}
-														{tTooltips("pfProfitable")}
+														<span className="text-trade-buy">
+															{tHeaders("pf")} &gt; 1
+														</span>{" "}
+														= {tTooltips("pfProfitable")}
 													</li>
 													<li>
-														<span className="text-txt-300">{tHeaders("pf")} = 1</span> ={" "}
-														{tTooltips("pfBreakeven")}
+														<span className="text-txt-300">
+															{tHeaders("pf")} = 1
+														</span>{" "}
+														= {tTooltips("pfBreakeven")}
 													</li>
 													<li>
-														<span className="text-trade-sell">{tHeaders("pf")} &lt; 1</span> ={" "}
-														{tTooltips("pfLosing")}
+														<span className="text-trade-sell">
+															{tHeaders("pf")} &lt; 1
+														</span>{" "}
+														= {tTooltips("pfLosing")}
 													</li>
 													<li>
-														<span className="text-trade-buy">{tHeaders("pf")} = ∞</span> ={" "}
-														{tTooltips("pfNoLosses")}
+														<span className="text-trade-buy">
+															{tHeaders("pf")} = ∞
+														</span>{" "}
+														= {tTooltips("pfNoLosses")}
 													</li>
 													<li>
-														<span className="text-trade-sell">{tHeaders("pf")} = 0</span> ={" "}
-														{tTooltips("pfNoWins")}
+														<span className="text-trade-sell">
+															{tHeaders("pf")} = 0
+														</span>{" "}
+														= {tTooltips("pfNoWins")}
 													</li>
 												</ul>
 											</div>

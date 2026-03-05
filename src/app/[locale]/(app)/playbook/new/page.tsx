@@ -91,9 +91,12 @@ const NewStrategyPage = () => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="p-m-600 flex-1 overflow-y-auto">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
 				<div className="mx-auto max-w-3xl">
-					<form onSubmit={handleSubmit} className="space-y-m-600">
+					<form
+						onSubmit={handleSubmit}
+						className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+					>
 						{error && (
 							<div className="bg-fb-error/10 text-fb-error p-s-300 text-small rounded-lg">
 								{error}
@@ -101,13 +104,13 @@ const NewStrategyPage = () => {
 						)}
 
 						{/* Basic Info Section */}
-						<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-							<h2 className="text-body text-txt-100 mb-m-400 font-semibold">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("basicInfo")}
 							</h2>
 
 							<div className="space-y-m-400">
-								<div className="gap-m-400 grid grid-cols-3">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 									<div>
 										<Label id="label-code" htmlFor="code">
 											{t("codeLabel")}
@@ -125,7 +128,7 @@ const NewStrategyPage = () => {
 											{t("codeHint")}
 										</p>
 									</div>
-									<div className="col-span-2">
+									<div className="sm:col-span-2">
 										<Label id="label-strategy-name" htmlFor="name">
 											{t("strategyNameLabel")}
 										</Label>
@@ -168,8 +171,8 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Rules & Criteria Section */}
-						<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-							<h2 className="text-body text-txt-100 mb-m-400 font-semibold">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("rulesCriteria")}
 							</h2>
 
@@ -222,8 +225,8 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Risk Settings Section */}
-						<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
-							<h2 className="text-body text-txt-100 mb-m-400 font-semibold">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("riskSettings")}
 							</h2>
 
@@ -241,7 +244,7 @@ const NewStrategyPage = () => {
 									/>
 								</div>
 
-								<div className="gap-m-400 grid grid-cols-2">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 									<div>
 										<Label
 											id="label-target-r-multiple"
@@ -286,10 +289,10 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Conditions Section */}
-						<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<Filter className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("tradingConditions")}
 								</h2>
 							</div>
@@ -300,10 +303,10 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Scenarios hint */}
-						<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<ImageIcon className="text-acc-100 h-5 w-5" />
-								<h2 className="text-body text-txt-100 font-semibold">
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{tScenarios("title")}
 								</h2>
 							</div>

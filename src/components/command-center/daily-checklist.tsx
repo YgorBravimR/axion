@@ -44,9 +44,9 @@ export const DailyChecklist = ({
 
 	if (checklists.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
-				<div className="mb-m-400 flex items-center justify-between">
-					<h3 className="text-body font-semibold text-txt-100">{t("title")}</h3>
+			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
 					{!isReadOnly && (
 						<Button id="daily-checklist-manage" variant="ghost" size="sm" onClick={onManageClick}>
 							<Settings className="mr-s-100 h-4 w-4" />
@@ -60,7 +60,7 @@ export const DailyChecklist = ({
 	}
 
 	return (
-		<div className="space-y-m-400">
+		<div className="space-y-s-300 sm:space-y-m-400">
 			{checklists.map((checklist) => {
 				const completedCount = checklist.completedItemIds.length
 				const totalCount = checklist.parsedItems.length
@@ -71,14 +71,14 @@ export const DailyChecklist = ({
 					<div
 						key={checklist.id}
 						className={cn(
-							"rounded-lg border bg-bg-200 p-m-500 transition-colors",
+							"rounded-lg border bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 transition-colors",
 							isComplete ? "border-trade-buy/50" : "border-bg-300"
 						)}
 					>
 						{/* Header */}
-						<div className="mb-m-400 flex items-center justify-between">
+						<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 							<div className="flex items-center gap-s-200">
-								<h3 className="text-body font-semibold text-txt-100">
+								<h3 className="text-small sm:text-body font-semibold text-txt-100">
 									{checklist.name}
 								</h3>
 								{isComplete && (
@@ -96,7 +96,7 @@ export const DailyChecklist = ({
 						</div>
 
 						{/* Progress bar */}
-						<div className="mb-m-400">
+						<div className="mb-s-300 sm:mb-m-400">
 							<div className="mb-s-100 flex items-center justify-between">
 								<span className="text-tiny text-txt-300">
 									{completedCount} / {totalCount}
@@ -129,7 +129,7 @@ export const DailyChecklist = ({
 											key={item.id}
 											className={cn(
 												"flex items-center gap-s-300 rounded-md p-s-200 transition-colors",
-												isReadOnly ? "cursor-default" : "cursor-pointer hover:bg-bg-300",
+												isReadOnly ? "cursor-default" : "cursor-pointer hover:bg-bg-300 active:bg-bg-300/70",
 												isLoading && "opacity-50"
 											)}
 										>

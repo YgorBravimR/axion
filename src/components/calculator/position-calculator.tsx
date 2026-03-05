@@ -201,7 +201,7 @@ const PositionCalculator = ({
 	])
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-500">
+		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
 			<div className="mb-m-400 flex items-center gap-s-200">
 				<Calculator className="h-5 w-5 text-acc-100" />

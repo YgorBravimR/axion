@@ -82,7 +82,7 @@ const SimulationConfigPanel = ({
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-m-400">
+		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-s-300 sm:p-m-400">
 			{/* Date Range */}
 			<div>
 				<h3 className="text-small text-txt-100 mb-s-300 font-semibold">

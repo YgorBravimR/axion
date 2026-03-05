@@ -25,7 +25,7 @@ const PlaybookPage = async ({ params }: PlaybookPageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 p-m-600">
+			<div className="flex-1 p-m-400 sm:p-m-500 lg:p-m-600">
 				<PlaybookContent
 					initialStrategies={strategies}
 					initialCompliance={compliance}

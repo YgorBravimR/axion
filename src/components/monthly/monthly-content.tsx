@@ -122,7 +122,7 @@ export const MonthlyContent = ({
 	}
 
 	return (
-		<div className="space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Month Navigator */}
 			<MonthNavigator
 				currentDate={currentDate}

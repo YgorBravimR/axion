@@ -185,7 +185,7 @@ export const TagList = () => {
 			</div>
 
 			{/* Tags Grid */}
-			<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+			<div className="gap-s-300 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 				{filteredTags.length === 0 ? (
 					<div className="border-bg-300 bg-bg-200 p-l-700 text-txt-300 col-span-full rounded-lg border text-center">
 						{tags.length === 0 ? t("noTags") : t("noTagsInFilter")}
@@ -194,7 +194,7 @@ export const TagList = () => {
 					filteredTags.map((tag) => (
 						<div
 							key={tag.id}
-							className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border transition-colors"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border transition-colors"
 						>
 							<div className="flex items-start justify-between">
 								<div className="gap-s-300 flex items-center">
@@ -251,7 +251,9 @@ export const TagList = () => {
 														</AlertDialogDescription>
 													</AlertDialogHeader>
 													<AlertDialogFooter>
-														<AlertDialogCancel id={`tag-delete-cancel-${tag.id}`}>
+														<AlertDialogCancel
+															id={`tag-delete-cancel-${tag.id}`}
+														>
 															{tCommon("cancel")}
 														</AlertDialogCancel>
 														<AlertDialogAction

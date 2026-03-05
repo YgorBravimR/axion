@@ -169,11 +169,11 @@ export const MarketMonitorContent = () => {
 	}
 
 	return (
-		<div className="space-y-5">
+		<div className="space-y-4 sm:space-y-5">
 			{/* ── Header ──────────────────────────────────────────────────────── */}
 			<div>
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-					<h1 className="text-h3 text-txt-100 font-semibold">{t("title")}</h1>
+					<h1 className="text-body sm:text-h3 text-txt-100 font-semibold">{t("title")}</h1>
 					<div className="flex items-center gap-4">
 						{/* Inline market status dots */}
 						{marketStatuses.length > 0 ? (
@@ -250,7 +250,7 @@ export const MarketMonitorContent = () => {
 			) : null}
 
 			{/* ── Info panels — Calendar + Market Status, same height ──────────── */}
-			<div className="grid h-89 grid-cols-1 grid-rows-[1fr] items-stretch gap-4 lg:grid-cols-[1fr_340px]">
+			<div className="grid h-89 grid-cols-1 grid-rows-[1fr] items-stretch gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]">
 				<EconomicCalendar events={events} />
 				<MarketStatusPanel statuses={marketStatuses} />
 			</div>

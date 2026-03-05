@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, type ChangeEvent } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Zap,
@@ -15,7 +15,10 @@ import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import { calculateTickBasedPositionSize } from "@/lib/calculations"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { LiveTradingStatusResult, TradeSummary } from "@/types/live-trading-status"
+import type {
+	LiveTradingStatusResult,
+	TradeSummary,
+} from "@/types/live-trading-status"
 import type { Asset } from "@/db/schema"
 
 // ==========================================
@@ -141,18 +144,16 @@ const MiniCalculator = ({
 		})
 	}, [selectedAsset, stopPoints, riskBudgetCents, maxContracts])
 
-	const handleStopPointsChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handleStopPointsChange = (event: ChangeEvent<HTMLInputElement>) => {
 		setStopPoints(event.target.value)
 	}
 
-	const handleAssetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+	const handleAssetChange = (event: ChangeEvent<HTMLSelectElement>) => {
 		setSelectedAssetId(event.target.value)
 	}
 
 	return (
-		<div className="mt-m-400 border-bg-300 bg-bg-200 p-s-300 rounded-md border">
+		<div className="mt-s-300 sm:mt-m-400 border-bg-300 bg-bg-200 p-s-300 rounded-md border">
 			<div className="mb-s-300 gap-s-200 flex items-center">
 				<Calculator className="text-txt-300 h-3.5 w-3.5" />
 				<span className="text-tiny text-txt-200 font-medium">
@@ -247,14 +248,17 @@ const TradeBox = ({ summary, formatCurrency, t }: TradeBoxProps) => {
 				? "text-trade-sell"
 				: "text-txt-300"
 
-	const directionBadge = summary.direction === "long"
-		? { label: "L", className: "bg-action-buy-muted text-action-buy" }
-		: { label: "S", className: "bg-action-sell-muted text-action-sell" }
+	const directionBadge =
+		summary.direction === "long"
+			? { label: "L", className: "bg-action-buy-muted text-action-buy" }
+			: { label: "S", className: "bg-action-sell-muted text-action-sell" }
 
 	return (
 		<div
 			className="border-bg-300 bg-bg-200 p-s-200 min-w-[100px] shrink-0 rounded-md border"
-			aria-label={t("tradeBoxes.tradeLabel", { number: summary.tradeStepNumber })}
+			aria-label={t("tradeBoxes.tradeLabel", {
+				number: summary.tradeStepNumber,
+			})}
 		>
 			<div className="mb-s-100 flex items-center justify-between">
 				<span className="text-tiny text-txt-200 font-semibold">
@@ -280,7 +284,9 @@ const TradeBox = ({ summary, formatCurrency, t }: TradeBoxProps) => {
 				</span>
 				{summary.riskAmountCents !== null && (
 					<span className="block">
-						{t("tradeBoxes.risk", { risk: formatCurrency(fromCents(summary.riskAmountCents)) })}
+						{t("tradeBoxes.risk", {
+							risk: formatCurrency(fromCents(summary.riskAmountCents)),
+						})}
 					</span>
 				)}
 			</div>
@@ -298,18 +304,18 @@ const TradeBoxRow = ({ summaries, formatCurrency, t }: TradeBoxRowProps) => {
 	if (summaries.length === 0) return null
 
 	return (
-		<div className="mt-m-400">
+		<div className="mt-s-300 sm:mt-m-400">
 			<span className="text-tiny text-txt-300 mb-s-200 block">
 				{t("tradeBoxes.title")}
 			</span>
-			<div className="gap-s-200 flex overflow-x-auto" role="list" aria-label={t("tradeBoxes.title")}>
+			<div
+				className="gap-s-200 flex overflow-x-auto"
+				role="list"
+				aria-label={t("tradeBoxes.title")}
+			>
 				{summaries.map((summary, index) => (
 					<div key={index} role="listitem">
-						<TradeBox
-							summary={summary}
-							formatCurrency={formatCurrency}
-							t={t}
-						/>
+						<TradeBox summary={summary} formatCurrency={formatCurrency} t={t} />
 					</div>
 				))}
 			</div>
@@ -336,7 +342,10 @@ const LiveTradingStatusPanel = ({
 	// Loading state
 	if (!data) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border" data-testid="live-trading-status-panel">
+			<div
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+				data-testid="live-trading-status-panel"
+			>
 				<div className="gap-s-200 flex items-center">
 					<AlertCircle className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
@@ -348,7 +357,10 @@ const LiveTradingStatusPanel = ({
 	// No profile linked
 	if (!data.hasProfile) {
 		return (
-			<div className="border-bg-300 bg-bg-100 p-m-500 rounded-lg border border-dashed" data-testid="live-trading-status-panel">
+			<div
+				className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
+				data-testid="live-trading-status-panel"
+			>
 				<div className="gap-s-300 flex items-center">
 					<ShieldAlert className="text-txt-300 h-6 w-6 shrink-0" />
 					<p className="text-small text-txt-200">{t("noProfile")}</p>
@@ -362,11 +374,16 @@ const LiveTradingStatusPanel = ({
 	// When trading is done (target hit or loss limit), show summary with stop reason.
 	if (status.shouldStopTrading) {
 		return (
-			<div className="border-trade-sell/30 bg-trade-sell/5 p-m-500 rounded-lg border" data-testid="live-trading-status-panel">
-				<div className="mb-m-400 flex items-center justify-between">
+			<div
+				className="border-trade-sell/30 bg-trade-sell/5 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+				data-testid="live-trading-status-panel"
+			>
+				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 					<div className="gap-s-200 flex items-center">
 						<Zap className="text-txt-300 h-5 w-5" />
-						<h3 className="text-small text-txt-200 font-semibold">{t("title")}</h3>
+						<h3 className="text-small text-txt-200 font-semibold">
+							{t("title")}
+						</h3>
 					</div>
 					<span className="bg-trade-sell/20 text-trade-sell px-s-300 py-s-100 text-tiny rounded-full font-bold">
 						{t("stop.shouldStop")}
@@ -374,12 +391,12 @@ const LiveTradingStatusPanel = ({
 				</div>
 
 				{status.stopReason && (
-					<p className="text-small text-trade-sell mb-m-400">
+					<p className="text-small text-trade-sell mb-s-300 sm:mb-m-400">
 						{t(`stop.${status.stopReason}`)}
 					</p>
 				)}
 
-				<div className="gap-m-400 grid grid-cols-3">
+				<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3">
 					<MetricCell
 						label={t("summary.tradesCompleted")}
 						value={String(status.dayTradeNumber)}
@@ -519,17 +536,19 @@ const LiveTradingStatusPanel = ({
 	return (
 		<div
 			className={cn(
-				"p-m-500 rounded-lg border transition-colors",
+				"p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border transition-colors",
 				phaseStyles.borderClass,
 				phaseStyles.bgClass
 			)}
 			data-testid="live-trading-status-panel"
 		>
 			{/* Header */}
-			<div className="mb-m-400 flex items-center justify-between">
+			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
-					<Zap className="text-acc-100 h-6 w-6" />
-					<h3 className="text-body text-txt-100 font-semibold">{t("title")}</h3>
+					<Zap className="text-acc-100 h-5 w-5 sm:h-6 sm:w-6" />
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("title")}
+					</h3>
 				</div>
 
 				<span
@@ -543,7 +562,7 @@ const LiveTradingStatusPanel = ({
 			</div>
 
 			{/* Metrics row */}
-			<div className="gap-m-400 grid grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3">
 				<MetricCell
 					label={t("metrics.nextRisk")}
 					value={formatCurrency(fromCents(status.nextTradeRiskCents))}
@@ -585,7 +604,7 @@ const LiveTradingStatusPanel = ({
 
 			{/* Recovery step tracker */}
 			{status.dayPhase === "loss_recovery" && status.totalRecoverySteps > 0 && (
-				<div className="mt-m-400">
+				<div className="mt-s-300 sm:mt-m-400">
 					<RecoveryStepTracker
 						currentStep={status.recoveryStepIndex ?? 0}
 						totalSteps={status.totalRecoverySteps}
