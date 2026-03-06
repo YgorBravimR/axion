@@ -24,17 +24,17 @@ interface StatRowProps {
  * Displays a single stat row with icon, label, and value.
  */
 const StatRow = ({ icon, label, value, subValue, valueClass }: StatRowProps) => (
-	<div className="flex items-center justify-between border-b border-bg-300 pb-s-300">
-		<div className="flex items-center gap-s-200">
-			<span className="text-txt-300">{icon}</span>
-			<span className="text-small text-txt-200">{label}</span>
+	<div className="flex items-center justify-between border-b border-bg-300 pb-s-300 min-w-0">
+		<div className="flex items-center gap-s-200 min-w-0">
+			<span className="text-txt-300 shrink-0">{icon}</span>
+			<span className="text-small text-txt-200 truncate">{label}</span>
 		</div>
-		<div className="text-right">
-			<span className={`text-small font-medium ${valueClass || "text-txt-100"}`}>
+		<div className="text-right min-w-0 shrink-0">
+			<span className={`text-small font-medium truncate ${valueClass || "text-txt-100"}`}>
 				{value}
 			</span>
 			{subValue && (
-				<span className="ml-s-200 text-tiny text-txt-300">{subValue}</span>
+				<span className="ml-s-200 text-tiny text-txt-300 truncate">{subValue}</span>
 			)}
 		</div>
 	</div>
@@ -118,14 +118,14 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					value={stats?.totalTrades.toString() || "--"}
 				/>
 				<div className="mt-m-500 grid grid-cols-2 gap-s-300 pt-m-400">
-					<div className="rounded-md bg-bg-100 p-s-300 text-center">
-						<p className="text-tiny text-txt-300">{t("longestWin")}</p>
+					<div className="rounded-md bg-bg-100 p-s-300 text-center min-w-0">
+						<p className="text-tiny text-txt-300 truncate">{t("longestWin")}</p>
 						<p className="mt-s-100 text-body font-semibold text-trade-buy">
 							{streakData?.longestWinStreak || 0}
 						</p>
 					</div>
-					<div className="rounded-md bg-bg-100 p-s-300 text-center">
-						<p className="text-tiny text-txt-300">{t("longestLoss")}</p>
+					<div className="rounded-md bg-bg-100 p-s-300 text-center min-w-0">
+						<p className="text-tiny text-txt-300 truncate">{t("longestLoss")}</p>
 						<p className="mt-s-100 text-body font-semibold text-trade-sell">
 							{streakData?.longestLossStreak || 0}
 						</p>

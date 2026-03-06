@@ -32,7 +32,7 @@ const Section = ({ icon: Icon, title, children }: SectionProps) => (
 			<Icon className="text-accent-primary h-5 w-5" />
 			<h4 className="text-small text-txt-100 font-semibold">{title}</h4>
 		</div>
-		<div className="space-y-s-200 pl-7">{children}</div>
+		<div className="space-y-s-200 pl-4 sm:pl-7">{children}</div>
 	</div>
 )
 

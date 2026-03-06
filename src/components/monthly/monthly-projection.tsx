@@ -59,7 +59,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 				</div>
 
 				{/* Stats Grid */}
-				<div className="grid grid-cols-2 gap-s-300 sm:gap-m-400">
+				<div className="grid grid-cols-1 gap-s-300 sm:grid-cols-2 sm:gap-m-400">
 					{/* Daily Average */}
 					<div className="rounded bg-bg-100 p-s-300">
 						<p className="text-tiny text-txt-300">{t("dailyAverage")}</p>

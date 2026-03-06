@@ -83,7 +83,7 @@ export const StrategyCard = ({
 								onClick={() => setShowMenu(false)}
 								aria-hidden="true"
 							/>
-							<div className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-1 w-40 rounded-lg border py-1 shadow-lg">
+							<div className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-1 w-40 max-w-[calc(100vw-2rem)] rounded-lg border py-1 shadow-lg">
 								<Link
 									href={`/playbook/${strategy.id}`}
 									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"

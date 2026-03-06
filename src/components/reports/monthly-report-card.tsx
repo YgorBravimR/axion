@@ -149,7 +149,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 					</div>
 
 					{/* Best/Worst Day */}
-					<div className="mt-m-400 grid grid-cols-2 gap-m-400">
+					<div className="mt-m-400 grid grid-cols-1 gap-m-400 sm:grid-cols-2">
 						{summary.bestDay && (
 							<div className="flex items-center gap-s-200 rounded bg-trade-buy-muted px-s-300 py-s-200">
 								<TrendingUp className="h-4 w-4 text-trade-buy" />

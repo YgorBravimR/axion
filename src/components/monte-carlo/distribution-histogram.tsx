@@ -15,6 +15,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { formatR } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DistributionBucket } from "@/types/monte-carlo"
 
 interface DistributionHistogramProps {
@@ -176,6 +177,7 @@ export const DistributionHistogram = ({
 	buckets,
 	medianFinalR,
 }: DistributionHistogramProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
 
 	const chartData = useMemo(() => {
@@ -262,7 +264,7 @@ export const DistributionHistogram = ({
 						tickLine={false}
 						axisLine={false}
 						domain={[0, maxCount * 1.1]}
-						width={40}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<ReferenceLine

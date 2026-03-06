@@ -213,7 +213,7 @@ const UserProfileSettings = () => {
 					) : null}
 				</div>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="gap-m-400 flex items-center justify-between">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("name")}</p>
 						</div>
@@ -222,13 +222,13 @@ const UserProfileSettings = () => {
 								id="profile-name"
 								value={profileForm.name}
 								onChange={handleProfileNameChange}
-								className="w-64"
+								className="w-full sm:w-64"
 							/>
 						) : (
 							<span className="text-small text-txt-200">{user?.name}</span>
 						)}
 					</div>
-					<div className="gap-m-400 flex items-center justify-between">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("email")}</p>
 							<p className="text-tiny text-txt-300">{t("emailCannotChange")}</p>

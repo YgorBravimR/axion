@@ -13,6 +13,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DailyPnL } from "@/types"
 
 interface DailyPnLBarChartProps {
@@ -65,6 +66,7 @@ export const DailyPnLBarChart = ({
 	data,
 	onDayClick,
 }: DailyPnLBarChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
 
 	// Sort by date (using toSorted for immutability)
@@ -134,7 +136,7 @@ export const DailyPnLBarChart = ({
 						tickLine={false}
 						axisLine={false}
 						domain={[-domainMax, domainMax]}
-						width={70}
+						width={yAxisWidth}
 					/>
 					<Tooltip
 						content={<CustomTooltip />}

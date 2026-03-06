@@ -106,7 +106,7 @@ const RiskProfileSelector = ({
 			{/* Profile Summary */}
 			{simProfile && (
 				<div className="border-acc-100/20 bg-acc-100/5 p-s-300 rounded-lg border">
-					<div className="gap-s-200 text-tiny grid grid-cols-2">
+					<div className="gap-s-200 text-tiny grid grid-cols-1 sm:grid-cols-2">
 						<span className="text-txt-300">
 							{t("profileSummary.baseRisk")}:
 						</span>

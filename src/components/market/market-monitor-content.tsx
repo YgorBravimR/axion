@@ -172,7 +172,7 @@ export const MarketMonitorContent = () => {
 		<div className="space-y-4 sm:space-y-5">
 			{/* ── Header ──────────────────────────────────────────────────────── */}
 			<div>
-				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:gap-x-4">
 					<h1 className="text-body sm:text-h3 text-txt-100 font-semibold">{t("title")}</h1>
 					<div className="flex items-center gap-4">
 						{/* Inline market status dots */}

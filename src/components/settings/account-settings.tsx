@@ -225,7 +225,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					)}
 				</div>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("accountName")}</p>
 						</div>
@@ -236,13 +236,13 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 								onChange={(e) =>
 									setAccountForm((prev) => ({ ...prev, name: e.target.value }))
 								}
-								className="w-64"
+								className="w-full sm:w-64"
 							/>
 						) : (
 							<span className="text-small text-txt-200">{account?.name}</span>
 						)}
 					</div>
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("accountType")}</p>
 						</div>
@@ -257,7 +257,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									}))
 								}
 							>
-								<SelectTrigger id="account-type" className="w-48">
+								<SelectTrigger id="account-type" className="w-full sm:w-48">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
@@ -273,7 +273,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						)}
 					</div>
 					{(accountForm.accountType === "replay" || account?.accountType === "replay") && (
-						<div className="flex items-center justify-between gap-m-400">
+						<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 							<div className="flex-1">
 								<p className="text-small text-txt-100">{t("replayStartDate")}</p>
 								<p className="text-tiny text-txt-300">{t("replayStartDateHelp")}</p>
@@ -288,7 +288,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											replayStartDate: date ? formatDateKey(date) : "",
 										}))
 									}
-									className="w-48"
+									className="w-full sm:w-48"
 								/>
 							) : (
 								<span className="text-small text-txt-200">
@@ -301,7 +301,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					)}
 				{(accountForm.accountType === "prop" || account?.accountType === "prop") && (
 						<>
-							<div className="flex items-center justify-between gap-m-400">
+							<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 								<div className="flex-1">
 									<p className="text-small text-txt-100">{t("propFirmName")}</p>
 								</div>
@@ -315,7 +315,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 												propFirmName: e.target.value,
 											}))
 										}
-										className="w-64"
+										className="w-full sm:w-64"
 										placeholder={t("propFirmNamePlaceholder")}
 									/>
 								) : (
@@ -324,7 +324,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									</span>
 								)}
 							</div>
-							<div className="flex items-center justify-between gap-m-400">
+							<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 								<div className="flex-1">
 									<p className="text-small text-txt-100">{t("profitShare")}</p>
 								</div>
@@ -343,7 +343,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 													profitSharePercentage: e.target.value,
 												}))
 											}
-											className="w-24 text-right"
+											className="w-full sm:w-24 text-right"
 										/>
 										<span className="text-small text-txt-300">%</span>
 									</div>
@@ -410,7 +410,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</div>
 				<p className="mt-s-200 text-tiny text-txt-300">{t("defaultFeesDesc")}</p>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("commission")}</p>
 							<p className="text-tiny text-txt-300">{t("perContract")}</p>
@@ -430,7 +430,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											defaultCommission: e.target.value,
 										}))
 									}
-									className="w-24 text-right"
+									className="w-full sm:w-24 text-right"
 								/>
 							</div>
 						) : (
@@ -439,7 +439,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							</span>
 						)}
 					</div>
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("fees")}</p>
 							<p className="text-tiny text-txt-300">{t("perContract")}</p>
@@ -459,7 +459,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											defaultFees: e.target.value,
 										}))
 									}
-									className="w-24 text-right"
+									className="w-full sm:w-24 text-right"
 								/>
 							</div>
 						) : (
@@ -468,7 +468,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							</span>
 						)}
 					</div>
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("breakevenTicks")}</p>
 							<p className="text-tiny text-txt-300">{t("breakevenTicksDesc")}</p>
@@ -487,7 +487,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											defaultBreakevenTicks: e.target.value,
 										}))
 									}
-									className="w-24 text-right"
+									className="w-full sm:w-24 text-right"
 								/>
 								<span className="text-small text-txt-300">{t("ticks")}</span>
 							</div>

@@ -12,6 +12,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations, useLocale } from "next-intl"
 import { formatCompactCurrency } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import { APP_TIMEZONE } from "@/lib/dates"
 import type { EquityPoint } from "@/types"
 
@@ -65,6 +66,7 @@ const CustomTooltip = ({
 }
 
 export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard.equity")
 	const locale = useLocale()
 
@@ -139,7 +141,7 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 						tickLine={false}
 						axisLine={false}
 						domain={[minEquity - padding, maxEquity + padding]}
-						width={60}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip locale={locale} />} />
 					<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeWidth={2} />

@@ -287,7 +287,7 @@ export const CircuitBreakerPanel = ({
 			)}
 
 			{/* Row 1: Daily metrics (3 columns) */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 				<MetricCell
 					label={t("dailyPnL")}
 					value={formatCurrency(status.dailyPnL, currency)}

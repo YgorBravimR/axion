@@ -78,7 +78,7 @@ export const TradeRow = memo(({
 	return (
 		<div
 			className={cn(
-				"gap-s-200 px-s-300 py-s-200 flex items-center transition-colors border-l-2",
+				"gap-s-200 px-s-300 py-s-200 flex items-center transition-colors border-l-2 min-w-0",
 				trade.outcome === "win" && "border-l-trade-buy",
 				trade.outcome === "loss" && "border-l-trade-sell",
 				trade.outcome === "breakeven" && "border-l-txt-300",

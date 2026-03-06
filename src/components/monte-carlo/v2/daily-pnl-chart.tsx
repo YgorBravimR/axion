@@ -14,6 +14,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { formatCompactCurrency } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SimulatedDay } from "@/types/monte-carlo"
 
 interface DailyPnlChartProps {
@@ -66,6 +67,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 }
 
 const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.v2.charts")
 	const isMultiMonth = monthsToTrade > 1
 
@@ -121,7 +123,7 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						axisLine={false}
 						tickFormatter={(value) => formatCompactCurrency(value)}
 						domain={[minPnl - padding, maxPnl + padding]}
-						width={55}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<ReferenceLine

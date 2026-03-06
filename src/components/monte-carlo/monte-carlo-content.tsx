@@ -296,7 +296,7 @@ const EdgeExpectancyContent = ({
 							size="lg"
 							onClick={onRunSimulation}
 							disabled={isRunning}
-							className="min-w-[200px]"
+							className="w-full sm:min-w-[200px] sm:w-auto"
 						>
 							{isRunning ? (
 								<LoadingSpinner size="sm" label="Running Simulation..." />

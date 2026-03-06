@@ -92,7 +92,7 @@ const SimulationConfigPanel = ({
 					id="sim-date-range"
 					value={rangeValue}
 					onChange={handleRangeChange}
-					className="max-w-sm"
+					className="w-full sm:max-w-sm"
 				/>
 			</div>
 

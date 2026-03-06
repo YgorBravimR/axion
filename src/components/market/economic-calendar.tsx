@@ -70,22 +70,22 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 						<thead className="bg-bg-200 sticky top-0 z-10">
 							<tr className="text-tiny text-txt-300 border-bg-300/50 border-b">
 								<th className="px-4 py-2 text-left font-medium">{t("time")}</th>
-								<th className="px-3 py-2 text-left font-medium">
+								<th className="hidden px-3 py-2 text-left font-medium sm:table-cell">
 									{t("country")}
 								</th>
 								<th className="px-3 py-2 text-left font-medium">
 									{t("event")}
 								</th>
-								<th className="px-3 py-2 text-left font-medium">
+								<th className="hidden px-3 py-2 text-left font-medium sm:table-cell">
 									{t("impact")}
 								</th>
 								<th className="px-3 py-2 text-right font-medium">
 									{t("actual")}
 								</th>
-								<th className="px-3 py-2 text-right font-medium">
+								<th className="hidden px-3 py-2 text-right font-medium sm:table-cell">
 									{t("forecast")}
 								</th>
-								<th className="px-4 py-2 text-right font-medium">
+								<th className="hidden px-4 py-2 text-right font-medium sm:table-cell">
 									{t("previous")}
 								</th>
 							</tr>
@@ -99,7 +99,7 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 									<td className="text-small text-txt-100 px-4 py-2.5 whitespace-nowrap">
 										{formatEventTime(event.time)}
 									</td>
-									<td className="px-3 py-2.5">
+									<td className="hidden px-3 py-2.5 sm:table-cell">
 										<span className="text-body" aria-label={event.country}>
 											{COUNTRY_FLAGS[event.country] || event.country}
 										</span>
@@ -107,7 +107,7 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 									<td className="text-small text-txt-100 max-w-[200px] truncate px-3 py-2.5 sm:max-w-none">
 										{event.event}
 									</td>
-									<td className="px-3 py-2.5">
+									<td className="hidden px-3 py-2.5 sm:table-cell">
 										<ImpactDot impact={event.impact} />
 									</td>
 									<td
@@ -118,10 +118,10 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 									>
 										{event.actual || "—"}
 									</td>
-									<td className="text-small text-txt-200 px-3 py-2.5 text-right whitespace-nowrap">
+									<td className="text-small text-txt-200 hidden px-3 py-2.5 text-right whitespace-nowrap sm:table-cell">
 										{event.forecast || "—"}
 									</td>
-									<td className="text-small text-txt-300 px-4 py-2.5 text-right whitespace-nowrap">
+									<td className="text-small text-txt-300 hidden px-4 py-2.5 text-right whitespace-nowrap sm:table-cell">
 										{event.previous || "—"}
 									</td>
 								</tr>

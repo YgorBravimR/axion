@@ -229,7 +229,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 							placeholder={t("searchAssets")}
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							className="w-64 pl-9"
+							className="w-full sm:w-64 pl-9"
 						/>
 					</div>
 					<div className="flex gap-s-200">

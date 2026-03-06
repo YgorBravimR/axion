@@ -163,7 +163,7 @@ const MiniCalculator = ({
 
 			<div className="gap-s-300 flex flex-wrap items-end">
 				{/* Asset selector */}
-				<div className="min-w-[140px] flex-1">
+				<div className="w-full sm:min-w-[140px] sm:w-auto flex-1">
 					<label
 						htmlFor="calc-asset"
 						className="text-tiny text-txt-300 mb-s-100 block"
@@ -174,7 +174,7 @@ const MiniCalculator = ({
 						id="calc-asset"
 						value={selectedAssetId}
 						onChange={handleAssetChange}
-						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
+						className="text-base md:text-sm border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
 						aria-label={t("calculator.asset")}
 					>
 						<option value="">{t("calculator.selectAsset")}</option>
@@ -187,7 +187,7 @@ const MiniCalculator = ({
 				</div>
 
 				{/* Stop points input */}
-				<div className="min-w-[100px] flex-1">
+				<div className="w-full sm:min-w-[100px] sm:w-auto flex-1">
 					<label
 						htmlFor="calc-stop"
 						className="text-tiny text-txt-300 mb-s-100 block"
@@ -202,13 +202,13 @@ const MiniCalculator = ({
 						value={stopPoints}
 						onChange={handleStopPointsChange}
 						placeholder={t("calculator.stopPlaceholder")}
-						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
+						className="text-base md:text-sm border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
 						aria-label={t("calculator.stopPoints")}
 					/>
 				</div>
 
 				{/* Result */}
-				<div className="min-w-[120px] flex-1">
+				<div className="w-full sm:min-w-[120px] sm:w-auto flex-1">
 					{result && result.contracts > 0 ? (
 						<div className="space-y-s-100">
 							<span className="text-body text-acc-100 block font-semibold">

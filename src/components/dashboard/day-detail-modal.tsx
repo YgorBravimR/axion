@@ -88,7 +88,7 @@ export const DayDetailModal = ({
 				id="day-detail-dialog"
 				className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-hidden sm:w-full"
 			>
-				<ScrollArea className="max-h-[calc(90dvh-3rem)]">
+				<ScrollArea className="max-h-[calc(90dvh-3rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="capitalize">{dayName}</DialogTitle>
 				</DialogHeader>

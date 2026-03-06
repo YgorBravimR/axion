@@ -183,7 +183,7 @@ export const TradingCalendar = memo(
 							return (
 								<div
 									key={dateKey}
-									className={`p-px aspect-square rounded sm:rounded-md sm:p-s-100 ${bgClass} ${isToday ? "ring-acc-100 ring-1 sm:ring-2" : ""} ${isClickable ? "cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none" : ""}`}
+									className={`p-0.5 sm:p-s-100 aspect-square rounded sm:rounded-md ${bgClass} ${isToday ? "ring-acc-100 ring-1 sm:ring-2" : ""} ${isClickable ? "cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none" : ""}`}
 									onClick={handleClick}
 									onKeyDown={handleKeyDown}
 									tabIndex={isClickable ? 0 : -1}

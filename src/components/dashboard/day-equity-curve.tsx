@@ -12,6 +12,7 @@ import {
 } from "recharts"
 import { ChartContainer } from "@/components/ui/chart-container"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DayEquityPoint } from "@/types"
 
 interface DayEquityCurveProps {
@@ -54,6 +55,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 }
 
 export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
 
 	if (data.length === 0) {
@@ -111,7 +113,7 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 						tickLine={false}
 						axisLine={false}
 						domain={[minPnl - padding, maxPnl + padding]}
-						width={60}
+						width={yAxisWidth}
 					/>
 					<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeDasharray="3 3" />
 					<Tooltip content={<CustomTooltip />} />

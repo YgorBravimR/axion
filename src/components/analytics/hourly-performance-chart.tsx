@@ -12,6 +12,7 @@ import {
 } from "recharts"
 import { ChartContainer } from "@/components/ui/chart-container"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { HourlyPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 
@@ -71,6 +72,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 }
 
 export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerformanceChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
 
 	const isRMode = expectancyMode === "edge"
@@ -135,7 +137,7 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 							tickLine={false}
 							axisLine={false}
 							domain={[-domainMax, domainMax]}
-							width={65}
+							width={yAxisWidth}
 						/>
 						<Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-bg-300)", opacity: 0.3 }} />
 						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]}>

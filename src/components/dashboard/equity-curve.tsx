@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { formatCompactCurrency } from "@/lib/formatting"
 import { getEquityCurve, type EquityCurveMode } from "@/app/actions/analytics"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import { APP_TIMEZONE } from "@/lib/dates"
 import type { EquityPoint } from "@/types"
 
@@ -180,6 +181,7 @@ export const EquityCurve = ({
 	data: initialData,
 	calendarMonth,
 }: EquityCurveProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard.equity")
 	const locale = useLocale()
 	const effectiveDate = useEffectiveDate()
@@ -354,7 +356,7 @@ export const EquityCurve = ({
 						tickLine={false}
 						axisLine={false}
 						domain={[minEquity - padding, maxEquity + padding]}
-						width={60}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<Area

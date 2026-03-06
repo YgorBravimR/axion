@@ -81,7 +81,7 @@ const V2MetricsCards = ({
 	const medianPnlFromCents = statistics.medianMonthlyPnl / 100
 
 	return (
-		<div className="gap-m-400 grid md:grid-cols-2 lg:grid-cols-3">
+		<div className="gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 			{/* Monthly / Period P&L */}
 			<MetricCard title={isMultiMonth ? t("periodPnl", { months: monthsToTrade }) : t("monthlyPnl")}>
 				<MetricRow

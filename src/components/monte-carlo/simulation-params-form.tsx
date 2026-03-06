@@ -40,7 +40,7 @@ export const SimulationParamsForm = ({
 				{t("title")}
 			</h3>
 
-			<div className="gap-m-400 grid md:grid-cols-3">
+			<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 				{/* Win Rate */}
 				<div>
 					<Label

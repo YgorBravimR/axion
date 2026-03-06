@@ -168,7 +168,7 @@ export const TagForm = ({
 									key={color}
 									type="button"
 									onClick={() => handleChange("color", color)}
-									className="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110"
+									className="size-10 sm:size-8 rounded-full border-2 transition-transform hover:scale-110"
 									style={{
 										backgroundColor: color,
 										borderColor: formData.color === color ? "white" : "transparent",

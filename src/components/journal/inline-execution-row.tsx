@@ -45,14 +45,14 @@ export const InlineExecutionRow = ({
 				onChange={(date) => onChange(data.id, "date", date ? formatDateKey(date) : "")}
 				maxDate={new Date(todayDateString + "T23:59:59")}
 				formatStr="P"
-				className="text-small h-8"
+				className="h-8"
 			/>
 			<Input
 				id={`execution-${data.id}-time`}
 				type="time"
 				value={data.time}
 				onChange={(e) => onChange(data.id, "time", e.target.value)}
-				className="text-small h-8"
+				className="h-8"
 			/>
 			<Input
 				id={`execution-${data.id}-price`}
@@ -61,7 +61,7 @@ export const InlineExecutionRow = ({
 				placeholder={t("price")}
 				value={data.price}
 				onChange={(e) => onChange(data.id, "price", e.target.value)}
-				className="text-small h-8"
+				className="h-8"
 			/>
 			<Input
 				id={`execution-${data.id}-quantity`}
@@ -70,7 +70,7 @@ export const InlineExecutionRow = ({
 				placeholder={t("quantity")}
 				value={data.quantity}
 				onChange={(e) => onChange(data.id, "quantity", e.target.value)}
-				className="text-small h-8"
+				className="h-8"
 			/>
 			<div className="relative">
 				<span className="text-tiny text-txt-300 pointer-events-none absolute top-1/2 left-2 -translate-y-1/2">
@@ -83,7 +83,7 @@ export const InlineExecutionRow = ({
 					placeholder="0.00"
 					value={data.commission}
 					onChange={(e) => onChange(data.id, "commission", e.target.value)}
-					className="text-small h-8 pl-10"
+					className="h-8 pl-10"
 				/>
 			</div>
 			<Button

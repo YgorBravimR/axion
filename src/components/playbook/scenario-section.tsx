@@ -156,7 +156,7 @@ export const ScenarioSection = ({
 
 									{/* Image gallery */}
 									{scenario.images.length > 0 && (
-										<div className="gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-3">
+										<div className="gap-s-200 sm:gap-s-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 											{scenario.images.map((img) => (
 												<button
 													key={img.id}

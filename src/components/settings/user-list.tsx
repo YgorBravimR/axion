@@ -106,7 +106,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 				</div>
 			</div>
 
-			<div className="relative max-w-sm">
+			<div className="relative w-full sm:max-w-sm">
 				<Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
 				<Input
 					id="user-search"
@@ -124,7 +124,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 					<p className="text-sm">{t("noUsers")}</p>
 				</div>
 			) : (
-				<div className="rounded-md border">
+				<div className="overflow-x-auto rounded-md border">
 					<Table>
 						<TableHeader>
 							<TableRow>

@@ -19,6 +19,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { formatCompactCurrency } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { PerformanceByGroup } from "@/types"
 
 // Tooltip wrapper for column headers
@@ -125,6 +126,7 @@ export const VariableComparison = ({
 	groupBy,
 	onGroupByChange,
 }: VariableComparisonProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics.variableComparison")
 	const tHeaders = useTranslations("analytics.tableHeaders")
 	const tTooltips = useTranslations("analytics.tableTooltips")
@@ -235,7 +237,7 @@ export const VariableComparison = ({
 							tickLine={false}
 							axisLine={false}
 							tickFormatter={(value) => formatMetricValue(value, metric)}
-							width={70}
+							width={yAxisWidth}
 						/>
 						<RechartsTooltip content={<CustomTooltip metric={metric} />} />
 						<Bar dataKey="value" radius={[4, 4, 0, 0]}>

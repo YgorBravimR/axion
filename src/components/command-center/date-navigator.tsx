@@ -90,7 +90,7 @@ export const DateNavigator = ({
 				onClick={() => handleNavigate(-1)}
 				aria-label={t("previousDay")}
 				tabIndex={0}
-				className="h-9 w-9 p-0"
+				className="size-10 sm:size-9 p-0"
 			>
 				<ChevronLeft className="h-4 w-4" />
 			</Button>
@@ -119,7 +119,7 @@ export const DateNavigator = ({
 				disabled={isToday}
 				aria-label={t("nextDay")}
 				tabIndex={0}
-				className="h-9 w-9 p-0"
+				className="size-10 sm:size-9 p-0"
 			>
 				<ChevronRight className="h-4 w-4" />
 			</Button>

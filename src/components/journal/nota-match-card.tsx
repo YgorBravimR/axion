@@ -102,7 +102,7 @@ const NotaMatchCard = ({
 	return (
 		<div className={cn("rounded-lg border transition-colors", config.border, isSelected ? config.bg : "bg-bg-200")}>
 			{/* Header */}
-			<div className="p-s-300 sm:p-m-400 flex items-center gap-m-400">
+			<div className="p-s-300 sm:p-m-400 flex items-center gap-s-200 sm:gap-m-400">
 				{/* Checkbox */}
 				{(isSelectable || isEnriched) && (
 					<input
@@ -119,7 +119,7 @@ const NotaMatchCard = ({
 
 				{/* Trade info */}
 				<div className="flex-1 min-w-0">
-					<div className="flex items-center gap-s-200">
+					<div className="flex flex-wrap items-center gap-s-200">
 						<span className="text-small text-txt-100 font-semibold">{match.trade.asset}</span>
 						<span className={cn(
 							"text-tiny px-s-100 rounded font-medium",

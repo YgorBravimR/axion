@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
 import { ChartContainer } from "@/components/ui/chart-container"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { EquityPoint } from "@/types"
 
 interface CumulativePnLChartProps {
@@ -67,6 +68,7 @@ export const CumulativePnLChart = ({
 	data,
 	showDrawdown = false,
 }: CumulativePnLChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
 
 	const formatDate = (date: string) => {
@@ -135,7 +137,7 @@ export const CumulativePnLChart = ({
 						tickLine={false}
 						axisLine={false}
 						domain={[minEquity - padding, maxEquity + padding]}
-						width={70}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<Line

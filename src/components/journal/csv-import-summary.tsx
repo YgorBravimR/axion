@@ -127,7 +127,7 @@ export const CsvImportSummary = ({
 			</div>
 
 			{/* Filter Bar */}
-			<div className="flex flex-wrap items-center justify-between gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-s-300 sm:px-m-400 py-s-300">
+			<div className="flex flex-wrap items-center justify-between gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-s-300 sm:px-m-400 py-s-300 min-w-0">
 				{/* Filter Buttons */}
 				<div className="flex flex-wrap items-center gap-s-200">
 					<span className="text-tiny text-txt-300">Filter:</span>

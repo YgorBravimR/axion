@@ -70,7 +70,7 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 					return (
 						<div key={mistake.tagId} className="space-y-s-100">
 							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-s-200">
+								<div className="min-w-0 flex items-center gap-s-200">
 									<Badge
 										id={`badge-mistake-cost-${mistake.tagId}`}
 										variant="outline"
@@ -82,15 +82,15 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 									>
 										{mistake.tagName}
 									</Badge>
-									<span className="text-tiny text-txt-300">
+									<span className="min-w-0 truncate text-tiny text-txt-300">
 										{mistake.tradeCount} trades
 									</span>
 								</div>
-								<div className="flex items-center gap-m-400">
-									<span className="text-tiny text-txt-300">
+								<div className="flex shrink-0 items-center gap-m-400">
+									<span className="text-tiny text-txt-300 whitespace-nowrap">
 										{t("avg")}: -{mistake.avgLoss.toFixed(2)}
 									</span>
-									<span className="text-small font-medium text-trade-sell">
+									<span className="text-small font-medium text-trade-sell whitespace-nowrap">
 										-{mistake.totalLoss.toFixed(2)}
 									</span>
 								</div>

@@ -212,7 +212,7 @@ export const FilterPanel = ({
 									: undefined
 							}
 							onChange={handleDateRangeChange}
-							className="max-w-sm"
+							className="w-full sm:max-w-sm"
 						/>
 					</div>
 

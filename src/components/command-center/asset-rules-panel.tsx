@@ -166,7 +166,7 @@ export const AssetRulesPanel = ({
 			{addingAsset && (
 				<div className="mb-m-400 flex items-center gap-s-200 rounded-md border border-dashed border-bg-400 p-s-300">
 					<Select value={selectedAssetId} onValueChange={setSelectedAssetId}>
-						<SelectTrigger id="asset-rules-asset" className="w-48">
+						<SelectTrigger id="asset-rules-asset" className="w-full sm:w-48">
 							<SelectValue placeholder={t("selectAsset")} />
 						</SelectTrigger>
 						<SelectContent>
@@ -256,7 +256,7 @@ export const AssetRulesPanel = ({
 													onChange={(e) =>
 														setEditing({ ...editing, maxDailyTrades: e.target.value })
 													}
-													className="h-8 w-20"
+													className="h-8 w-full sm:w-20"
 												/>
 											) : (
 												<span className="text-small text-txt-200">
@@ -275,7 +275,7 @@ export const AssetRulesPanel = ({
 													onChange={(e) =>
 														setEditing({ ...editing, maxPositionSize: e.target.value })
 													}
-													className="h-8 w-20"
+													className="h-8 w-full sm:w-20"
 												/>
 											) : (
 												<span className="text-small text-txt-200">

@@ -273,7 +273,7 @@ const MonteCarloV2Content = ({
 					/>
 
 					{/* Parameters — Row 1: Core trade stats */}
-					<div className="gap-m-400 grid sm:grid-cols-2 lg:grid-cols-4">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 						<div>
 							<label className="mb-s-200 text-small text-txt-200 block">
 								{t("params.winRate")}
@@ -376,7 +376,7 @@ const MonteCarloV2Content = ({
 					</div>
 
 					{/* Parameters — Row 2: Simulation config */}
-					<div className="gap-m-400 grid sm:grid-cols-2 lg:grid-cols-4">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 						<div>
 							<label className="mb-s-200 text-small text-txt-200 block">
 								{t("params.simulationCount")}
@@ -541,7 +541,7 @@ const MonteCarloV2Content = ({
 							size="lg"
 							onClick={handleRunSimulation}
 							disabled={isRunning || !isValid}
-							className="min-w-[200px]"
+							className="w-full sm:min-w-[200px] sm:w-auto"
 						>
 							{isRunning ? (
 								<LoadingSpinner size="sm" label="Running Simulation..." />

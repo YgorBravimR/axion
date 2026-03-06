@@ -126,7 +126,7 @@ export const CsvTradeCard = ({
 			{/* Collapsed Header */}
 			<div
 				className={cn(
-					"gap-s-200 sm:gap-m-400 px-s-300 sm:px-m-400 py-s-300 flex flex-wrap items-center",
+					"gap-s-100 sm:gap-s-200 md:gap-m-400 px-s-300 sm:px-m-400 py-s-300 flex flex-wrap items-center",
 					!isSkipped && "cursor-pointer"
 				)}
 				onClick={() => !isSkipped && onToggleExpand()}

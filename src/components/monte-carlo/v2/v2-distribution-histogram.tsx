@@ -14,6 +14,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { formatCompactCurrency } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DistributionBucket } from "@/types/monte-carlo"
 
 interface V2DistributionHistogramProps {
@@ -59,6 +60,7 @@ export const V2DistributionHistogram = ({
 	initialBalance,
 	currency = "$",
 }: V2DistributionHistogramProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
 
 	const chartData = useMemo(
@@ -120,7 +122,7 @@ export const V2DistributionHistogram = ({
 						tickLine={false}
 						axisLine={false}
 						domain={[0, maxCount * 1.1]}
-						width={40}
+						width={yAxisWidth}
 					/>
 					<Tooltip
 						content={<CustomTooltip currency={currency} />}

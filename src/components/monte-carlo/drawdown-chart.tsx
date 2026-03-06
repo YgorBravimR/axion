@@ -13,6 +13,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { formatR } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SimulatedTrade } from "@/types/monte-carlo"
 
 interface DrawdownChartProps {
@@ -42,6 +43,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 }
 
 export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
 
 	const chartData = useMemo(
@@ -113,7 +115,7 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 						tickFormatter={(value) => `-${value.toFixed(1)}R`}
 						domain={[0, maxDrawdown + padding]}
 						reversed
-						width={50}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<ReferenceLine

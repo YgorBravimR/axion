@@ -62,7 +62,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 							{t("dayDetail.pnl")}
 						</TableHead>
 						<TableHead className="px-s-300 py-s-200 text-right">R</TableHead>
-						<TableHead className="px-s-200 py-s-200 w-8" />
+						<TableHead className="px-s-200 py-s-200 size-10" />
 					</TableRow>
 				</TableHeader>
 				<TableBody>

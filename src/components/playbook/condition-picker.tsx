@@ -208,7 +208,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 										<div
 											key={condition.id}
 											className={cn(
-												"border-bg-300 bg-bg-200 gap-m-400 p-s-300 flex items-center justify-between rounded-lg border transition-colors",
+												"border-bg-300 bg-bg-200 gap-m-400 p-s-300 flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border transition-colors",
 												currentTier !== "none" &&
 													"border-acc-100/30 bg-acc-100/5"
 											)}
@@ -229,7 +229,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 											>
 												<SelectTrigger
 													id={`condition-tier-${condition.id}`}
-													className="w-[160px]"
+													className="w-full sm:w-[160px]"
 												>
 													<SelectValue />
 												</SelectTrigger>

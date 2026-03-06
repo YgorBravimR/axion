@@ -431,7 +431,7 @@ const MonthlyPlanForm = ({
 			{/* Two-column layout: Form + Preview */}
 			<div className="gap-m-500 grid lg:grid-cols-2">
 				{/* Left: Form */}
-				<div className="space-y-m-400">
+				<div className="min-w-0 space-y-m-400">
 					{/* Plan Mode Toggle (only shown when profiles exist) */}
 					{riskProfiles.length > 0 && (
 						<div className="space-y-s-300">
@@ -752,7 +752,7 @@ const MonthlyPlanForm = ({
 
 					{/* Custom mode: percentage inputs */}
 					{!isProfileMode && (
-						<div className="gap-m-400 grid sm:grid-cols-2">
+						<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 							{/* Risk per Trade % */}
 							<div>
 								<label className="mb-s-200 text-small text-txt-200 block">
@@ -857,7 +857,7 @@ const MonthlyPlanForm = ({
 					{/* Custom mode: Advanced Fields (Collapsible) */}
 					{showAdvanced && !isProfileMode && (
 						<div className="space-y-m-400 border-bg-300 bg-bg-100 p-m-400 rounded-lg border">
-							<div className="gap-m-400 grid sm:grid-cols-2">
+							<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								{/* Daily Profit Target % */}
 								<div>
 									<label className="mb-s-200 text-small text-txt-200 block">
@@ -1096,7 +1096,7 @@ const MonthlyPlanForm = ({
 				</div>
 
 				{/* Right: Live Preview */}
-				<div className="border-bg-300 bg-bg-100 p-m-400 rounded-lg border">
+				<div className="min-w-0 border-bg-300 bg-bg-100 p-m-400 rounded-lg border">
 					<div className="mb-m-400 gap-s-200 flex items-center">
 						<Eye className="text-acc-100 h-4 w-4" />
 						<h4 className="text-small text-txt-100 font-semibold">

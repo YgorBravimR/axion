@@ -191,7 +191,7 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 			{/* Heatmap Grid */}
 			<div className="overflow-x-auto">
-				<div className="min-w-125">
+				<div>
 					{/* Hour header row */}
 					<div className="mb-s-200 flex items-end">
 						<div className="w-14 shrink-0" />

@@ -88,8 +88,8 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 				{t("modeDistribution")}
 			</h3>
 
-			<div className="flex items-center gap-m-500">
-				<ChartContainer id="chart-monte-carlo-v2-mode-distribution" className="h-52 w-52">
+			<div className="flex flex-col sm:flex-row items-center gap-m-500">
+				<ChartContainer id="chart-monte-carlo-v2-mode-distribution" className="h-40 w-40 sm:h-52 sm:w-52">
 					<PieChart>
 						<Pie
 							data={data}

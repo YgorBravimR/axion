@@ -428,7 +428,7 @@ export const OcrImport = () => {
 			{step === "upload" && (
 				<div
 					className={cn(
-						"rounded-lg border-2 border-dashed p-l-800 text-center transition-colors",
+						"rounded-lg border-2 border-dashed p-m-500 sm:p-l-700 lg:p-l-800 text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -611,7 +611,7 @@ export const OcrImport = () => {
 					</div>
 
 					{/* Summary Stats */}
-					<div className="grid grid-cols-2 gap-m-400 sm:grid-cols-4">
+					<div className="grid grid-cols-2 gap-s-200 sm:gap-m-400 sm:grid-cols-4">
 						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-acc-100">{totalTrades}</p>
 							<p className="text-tiny text-txt-300">Trades Detected</p>

@@ -35,7 +35,7 @@ export const KpiCards = ({ stats, discipline }: KpiCardsProps) => {
 	const t = useTranslations("dashboard.kpi")
 
 	return (
-		<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3 sm:gap-m-400 lg:grid-cols-6 lg:gap-m-500">
+		<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3 sm:gap-m-400 lg:grid-cols-6 lg:gap-m-500 [&>*]:min-w-0">
 			<StatCard
 				label={t("grossPnl")}
 				value={stats ? formatCompactCurrency(stats.grossPnl) : "--"}

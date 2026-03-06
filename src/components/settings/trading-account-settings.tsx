@@ -223,7 +223,7 @@ export const TradingAccountSettings = () => {
 					</h3>
 
 					{/* Day Trade Tax Rate */}
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("dayTradeTax")}</p>
 						</div>
@@ -239,7 +239,7 @@ export const TradingAccountSettings = () => {
 									onChange={(e) =>
 										handleFieldChange("dayTradeTaxRate", Number(e.target.value))
 									}
-									className="w-20 text-right"
+									className="w-full sm:w-20 text-right"
 								/>
 								<span className="text-small text-txt-300">%</span>
 							</div>
@@ -251,7 +251,7 @@ export const TradingAccountSettings = () => {
 					</div>
 
 					{/* Swing Trade Tax Rate */}
-					<div className="flex items-center justify-between gap-m-400">
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("swingTradeTax")}</p>
 						</div>
@@ -270,7 +270,7 @@ export const TradingAccountSettings = () => {
 											Number(e.target.value)
 										)
 									}
-									className="w-20 text-right"
+									className="w-full sm:w-20 text-right"
 								/>
 								<span className="text-small text-txt-300">%</span>
 							</div>

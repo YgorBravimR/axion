@@ -14,6 +14,7 @@ import { ChartContainer } from "@/components/ui/chart-container"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import { InsightCard, InsightCardPlaceholder } from "@/components/analytics/insight-card"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SessionPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 
@@ -154,6 +155,7 @@ export const SessionPerformanceChart = ({
 	data,
 	expectancyMode,
 }: SessionPerformanceChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
 	const tLabels = useTranslations("analytics.session.labels")
 
@@ -278,7 +280,7 @@ export const SessionPerformanceChart = ({
 							tickLine={false}
 							axisLine={false}
 							domain={[-domainMax, domainMax]}
-							width={65}
+							width={yAxisWidth}
 						/>
 						<Tooltip
 							content={<CustomTooltip />}

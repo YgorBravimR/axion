@@ -46,7 +46,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 			{hasNoTrades ? (
 				<p className="text-small text-txt-300">{t("noTrades")}</p>
 			) : (
-				<div className="grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-3 lg:grid-cols-6">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-3 lg:grid-cols-6">
 					{/* Total P&L */}
 					<div>
 						<p className="text-tiny text-txt-200">{t("totalPnL")}</p>

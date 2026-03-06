@@ -76,7 +76,7 @@ export const PeriodFilter = ({
 
 	return (
 		<div className="gap-s-200 flex flex-col">
-			<div className="gap-s-100 flex items-center">
+			<div className="gap-s-100 flex items-center overflow-x-auto scrollbar-none">
 				{periods.map((period) => (
 					<button
 						key={period.key}
@@ -100,7 +100,7 @@ export const PeriodFilter = ({
 			{/* Custom Date Range Picker */}
 			{showCustomPicker && (
 				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex flex-wrap items-end rounded-lg border">
-					<div className="min-w-[260px] flex-1">
+					<div className="w-full sm:min-w-[260px] sm:flex-1">
 						<DateRangePicker
 							id="period-filter-range"
 							value={tempRange}

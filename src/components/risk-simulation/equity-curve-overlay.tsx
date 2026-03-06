@@ -13,6 +13,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { fromCents } from "@/lib/money"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { EquityCurvePoint } from "@/types/risk-simulation"
 
 interface EquityCurveOverlayProps {
@@ -52,6 +53,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 }
 
 const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("riskSimulation.chart")
 
 	const chartData = useMemo(
@@ -100,7 +102,7 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 						domain={[minValue - padding, maxValue + padding]}
 						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
 						tickFormatter={(val: number) => `${(val / 1000).toFixed(1)}k`}
-						width={60}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<Legend

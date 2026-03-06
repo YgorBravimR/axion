@@ -144,7 +144,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 					{t("advancedMode")}
 				</h3>
 				<p className="text-tiny text-txt-300">{t("advancedDescription")}</p>
-				<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3">
+				<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 					<Field
 						label={t("accountBalance")}
 						value={fromCents(params.accountBalanceCents).toFixed(2)}
@@ -210,7 +210,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 			<h3 className="text-small text-txt-100 font-semibold">
 				{t("simpleMode")}
 			</h3>
-			<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+			<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 				<Field
 					label={t("accountBalance")}
 					value={fromCents(params.accountBalanceCents).toFixed(2)}

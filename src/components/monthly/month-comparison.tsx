@@ -120,14 +120,14 @@ export const MonthComparison = ({
 				{t("titleWithMonth", { month: previousMonthName })}
 			</h3>
 
-			<div className="mt-m-400 sm:mt-m-500 space-y-s-200 sm:space-y-s-300">
+			<div className="mt-s-300 sm:mt-m-500 space-y-s-200 sm:space-y-s-300">
 				{comparisonRows.map((row) => (
 					<div
 						key={row.label}
-						className="flex items-center justify-between rounded bg-bg-100 px-m-400 py-s-300"
+						className="flex items-center justify-between rounded bg-bg-100 px-s-300 py-s-200 sm:px-m-400 sm:py-s-300"
 					>
 						<span className="text-small text-txt-200">{row.label}</span>
-						<div className="flex items-center gap-s-200 sm:gap-m-400">
+						<div className="flex items-center gap-s-100 sm:gap-m-400">
 							<span className="hidden sm:inline text-tiny text-txt-300">{row.previous}</span>
 							<span className="hidden sm:inline text-small text-txt-100">→</span>
 							<span className="text-small font-medium text-txt-100">

@@ -13,6 +13,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { formatR } from "@/lib/formatting"
+import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SimulatedTrade } from "@/types/monte-carlo"
 
 interface EquityCurveChartProps {
@@ -46,6 +47,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 }
 
 export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
+	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
 
 	const chartData = useMemo(
@@ -151,7 +153,7 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 						axisLine={false}
 						tickFormatter={(value) => formatR(value)}
 						domain={[minValue - padding, maxValue + padding]}
-						width={65}
+						width={yAxisWidth}
 					/>
 					<Tooltip content={<CustomTooltip />} />
 					<ReferenceLine

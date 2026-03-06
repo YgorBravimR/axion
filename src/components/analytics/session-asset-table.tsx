@@ -81,7 +81,7 @@ export const SessionAssetTable = ({
 			</p>
 
 			<div className="overflow-x-auto">
-				<table className="w-full min-w-[500px]">
+				<table className="w-full">
 					<thead>
 						<tr className="border-bg-300 border-b">
 							<th className="pb-s-200 text-caption text-txt-300 text-left font-medium">
@@ -90,7 +90,7 @@ export const SessionAssetTable = ({
 							{sessions.map((session) => (
 								<th
 									key={session}
-									className="pb-s-200 text-caption text-txt-300 text-center font-medium"
+									className="pb-s-200 text-caption text-txt-300 hidden text-center font-medium sm:table-cell"
 								>
 									{getSessionLabel(session)}
 								</th>
@@ -116,7 +116,7 @@ export const SessionAssetTable = ({
 									const sessionData = sessionMaps.get(asset.asset)?.get(session)
 									if (!sessionData || sessionData.trades === 0) {
 										return (
-											<td key={session} className="py-s-200 text-center">
+											<td key={session} className="py-s-200 hidden text-center sm:table-cell">
 												<span className="text-caption text-txt-300">-</span>
 											</td>
 										)
@@ -127,7 +127,7 @@ export const SessionAssetTable = ({
 										? sessionData.avgR
 										: sessionData.pnl
 									return (
-										<td key={session} className="py-s-200 text-center">
+										<td key={session} className="py-s-200 hidden text-center sm:table-cell">
 											<div
 												className={`px-s-100 inline-flex flex-col items-center rounded py-px ${
 													isBest ? "bg-acc-100/10" : ""

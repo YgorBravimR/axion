@@ -199,12 +199,12 @@ export const QuoteCard = ({
 			</span>
 
 			{/* Col 3: Session High */}
-			<span className="text-tiny text-txt-300 text-right font-mono tabular-nums">
+			<span className="text-tiny text-txt-300 hidden text-right font-mono tabular-nums sm:block">
 				{!isClosed && hasRange ? `H ${formatPrice(quote.sessionHigh!)}` : ""}
 			</span>
 
 			{/* Col 4: Session Low */}
-			<span className="text-tiny text-txt-300 text-right font-mono tabular-nums">
+			<span className="text-tiny text-txt-300 hidden text-right font-mono tabular-nums sm:block">
 				{!isClosed && hasRange ? `L ${formatPrice(quote.sessionLow!)}` : ""}
 			</span>
 
