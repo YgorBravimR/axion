@@ -61,32 +61,28 @@ export const authConfig: NextAuthConfig = {
 		}),
 	],
 	callbacks: {
+		// Edge-compatible jwt/session callbacks (no DB access)
+		// auth.ts overrides jwt with a DB-backed version that refreshes stale roles
 		jwt: async ({ token, user, trigger, session }) => {
-			// Initial sign in
 			if (user) {
 				token.userId = user.id
 				token.accountId = user.accountId
 				token.role = user.role ?? "trader"
 			}
-
-			// Handle account switching via update
 			if (trigger === "update" && session?.accountId) {
 				token.accountId = session.accountId
 			}
-
 			return token
 		},
-		session: ({ session, token }) => {
-			return {
-				...session,
-				user: {
-					...session.user,
-					id: token.userId as string,
-					accountId: token.accountId as string | null | undefined,
-					role: token.role as "admin" | "trader" | "viewer",
-				},
-			}
-		},
+		session: ({ session, token }) => ({
+			...session,
+			user: {
+				...session.user,
+				id: token.userId as string,
+				accountId: token.accountId as string | null | undefined,
+				role: token.role as "admin" | "trader" | "viewer",
+			},
+		}),
 		authorized: ({ auth, request }) => {
 			const { pathname } = request.nextUrl
 

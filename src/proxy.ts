@@ -47,7 +47,7 @@ export const proxy = auth((req) => {
 
 	// Role-based route blocking — redirect to dashboard if user lacks access
 	if (req.auth && !isPublicPath(pathname)) {
-		const role = req.auth.user?.role ?? "viewer"
+		const role = req.auth.user?.role ?? "trader"
 		if (!canAccessFeature(role, pathWithoutLocale)) {
 			return NextResponse.redirect(new URL("/", req.url))
 		}

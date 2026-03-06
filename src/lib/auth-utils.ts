@@ -12,7 +12,7 @@ const requireRole = async (minimumRole: UserRole): Promise<string> => {
 	if (!session?.user?.id) {
 		throw new Error("Unauthorized")
 	}
-	if (!hasAccess(session.user.role ?? "viewer", minimumRole)) {
+	if (!hasAccess(session.user.role ?? "trader", minimumRole)) {
 		throw new Error("Forbidden")
 	}
 	return session.user.id

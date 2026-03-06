@@ -35,6 +35,42 @@ declare module "next-auth" {
 export const { handlers, auth, signIn, signOut } = NextAuth({
 	...authConfig,
 	adapter: DrizzleAdapter(db),
+	callbacks: {
+		...authConfig.callbacks,
+		jwt: async ({ token, user, trigger, session }) => {
+			// Initial sign in — populate token from the authorize return value
+			if (user) {
+				token.userId = user.id
+				token.accountId = user.accountId
+				token.role = user.role ?? "trader"
+			}
+
+			// Handle account switching via update
+			if (trigger === "update" && session?.accountId) {
+				token.accountId = session.accountId
+			}
+
+			// Refresh role from DB when missing (e.g. JWT minted before role system)
+			if (!token.role && token.userId) {
+				const dbUser = await db.query.users.findFirst({
+					where: eq(users.id, token.userId as string),
+					columns: { role: true },
+				})
+				token.role = dbUser?.role ?? "trader"
+			}
+
+			return token
+		},
+		session: ({ session, token }) => ({
+			...session,
+			user: {
+				...session.user,
+				id: token.userId as string,
+				accountId: token.accountId as string | null | undefined,
+				role: token.role as "admin" | "trader" | "viewer",
+			},
+		}),
+	},
 	providers: [
 		Credentials({
 			credentials: {
