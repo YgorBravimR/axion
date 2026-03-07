@@ -10,7 +10,6 @@
  * The text is tab-delimited (\t) with newline-separated rows (\n).
  */
 
-import { PDFParse } from "pdf-parse"
 import type { NotaFill, NotaParseResult } from "./types"
 
 // B3 futures contract prefixes → normalized "FUT" suffix
@@ -364,6 +363,11 @@ const parseFinancialSummary = (text: string): {
 const parseSinacorNota = async (pdfBuffer: Buffer | Uint8Array): Promise<NotaParseResult> => {
 	const errors: string[] = []
 	const warnings: string[] = []
+
+	// Dynamic import to avoid loading pdfjs-dist at module evaluation time.
+	// pdfjs-dist references DOMMatrix (browser API) which crashes Node.js SSR
+	// if loaded eagerly via a top-level import.
+	const { PDFParse } = await import("pdf-parse")
 
 	// Convert Buffer to Uint8Array if needed (pdf-parse v2 requirement)
 	const uint8Data = pdfBuffer instanceof Uint8Array ? pdfBuffer : new Uint8Array(pdfBuffer)
