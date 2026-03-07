@@ -1836,7 +1836,19 @@
 			"reduceRiskAfterLoss": "Reduzir Risco Após Loss",
 			"reduceRiskAfterLossHelp": "Reduzir automaticamente o tamanho da posição após losses consecutivos",
 			"riskReductionFactor": "Fator de Redução de Risco",
-			"riskReductionFactorHelp": "Multiplique o risco por este fator após cada loss consecutivo (ex: 0.50 = metade do risco)"
+			"riskReductionFactorHelp": "Multiplique o risco por este fator após cada loss consecutivo (ex: 0.50 = metade do risco)",
+			"dangerZone": "Zona de Perigo",
+			"dangerZoneDesc": "Exclua permanentemente esta conta e todos os seus dados.",
+			"deleteAccount": "Excluir Conta",
+			"deleteAccountTitle": "Excluir conta?",
+			"deleteAccountDescription": "Isso excluirá permanentemente \"{name}\" e todos os seus dados, incluindo operações, estratégias, tags e planos. Esta ação não pode ser desfeita.",
+			"deleteAccountConfirmLabel": "Digite \"{name}\" para confirmar",
+			"deleteAccountSuccess": "Conta excluída com sucesso",
+			"deleteAccountError": "Erro ao excluir conta",
+			"cannotDeleteOnlyAccount": "Não é possível excluir a única conta",
+			"cannotDeleteDefaultAccount": "Exclua as outras contas primeiro. A conta padrão só pode ser excluída por último.",
+			"deleteLastAccountDesc": "Esta é sua última conta. Excluí-la fará logout da sua sessão.",
+			"deleteLastAccountWarning": "Isso excluirá permanentemente \"{name}\" e todos os seus dados. Como esta é sua última conta, você será desconectado."
 		},
 		"assets": {
 			"title": "Gerenciar Ativos",
@@ -2027,6 +2039,12 @@
 			"collapseAccounts": "Ocultar contas",
 			"roleUpdated": "Papel atualizado com sucesso",
 			"roleUpdateError": "Falha ao atualizar papel",
+			"deleteAccountTitle": "Excluir conta?",
+			"deleteAccountDescription": "Isso excluirá permanentemente a conta \"{accountName}\" de {userName}. Todas as operações, estratégias e tags serão perdidas.",
+			"deleteAccountSuccess": "Conta excluída com sucesso",
+			"deleteAccountError": "Erro ao excluir conta",
+			"cannotDeleteOnlyAccount": "Esta é a única conta do usuário",
+			"cannotDeleteDefaultAccount": "Conta padrão — exclua as outras contas primeiro",
 			"roles": {
 				"admin": "Admin",
 				"trader": "Trader",

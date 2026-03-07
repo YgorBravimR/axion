@@ -1836,7 +1836,19 @@
 			"reduceRiskAfterLoss": "Reduce Risk After Loss",
 			"reduceRiskAfterLossHelp": "Automatically reduce position size after consecutive losses",
 			"riskReductionFactor": "Risk Reduction Factor",
-			"riskReductionFactorHelp": "Multiply risk by this factor after each consecutive loss (e.g., 0.50 = halve risk)"
+			"riskReductionFactorHelp": "Multiply risk by this factor after each consecutive loss (e.g., 0.50 = halve risk)",
+			"dangerZone": "Danger Zone",
+			"dangerZoneDesc": "Permanently delete this account and all its data.",
+			"deleteAccount": "Delete Account",
+			"deleteAccountTitle": "Delete account?",
+			"deleteAccountDescription": "This will permanently delete \"{name}\" and all its data including trades, strategies, tags, and plans. This action cannot be undone.",
+			"deleteAccountConfirmLabel": "Type \"{name}\" to confirm",
+			"deleteAccountSuccess": "Account deleted successfully",
+			"deleteAccountError": "Failed to delete account",
+			"cannotDeleteOnlyAccount": "Cannot delete the only account",
+			"cannotDeleteDefaultAccount": "Delete other accounts first. The default account can only be deleted as the last one.",
+			"deleteLastAccountDesc": "This is your last account. Deleting it will log you out.",
+			"deleteLastAccountWarning": "This will permanently delete \"{name}\" and all its data. Since this is your last account, you will be logged out."
 		},
 		"assets": {
 			"title": "Manage Assets",
@@ -2027,6 +2039,12 @@
 			"collapseAccounts": "Hide accounts",
 			"roleUpdated": "Role updated successfully",
 			"roleUpdateError": "Failed to update role",
+			"deleteAccountTitle": "Delete account?",
+			"deleteAccountDescription": "This will permanently delete the account \"{accountName}\" belonging to {userName}. All trades, strategies, and tags will be lost.",
+			"deleteAccountSuccess": "Account deleted successfully",
+			"deleteAccountError": "Failed to delete account",
+			"cannotDeleteOnlyAccount": "This is the user's only account",
+			"cannotDeleteDefaultAccount": "Default account — delete other accounts first",
 			"roles": {
 				"admin": "Admin",
 				"trader": "Trader",

@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -12,14 +14,25 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 import { RecalculateButton } from "./recalculate-button"
 import { RecalculatePnLButton } from "./recalculate-pnl-button"
 import { Link } from "@/i18n/routing"
-import { getCurrentAccount } from "@/app/actions/auth"
-import { updateAccount, getAccountAssets, updateAccountAsset } from "@/app/actions/accounts"
-import { Loader2 } from "lucide-react"
+import { getCurrentAccount, logoutUser, getUserAccounts, revalidateAfterAccountSwitch } from "@/app/actions/auth"
+import { updateAccount, getAccountAssets, updateAccountAsset, deleteAccount } from "@/app/actions/accounts"
+import { Loader2, Trash2 } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { fromCents, toCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
@@ -36,10 +49,15 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const { isAdmin } = useFeatureAccess()
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
+	const { update: updateSession } = useSession()
+	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
 	const [isLoading, setIsLoading] = useState(true)
 	const [account, setAccount] = useState<TradingAccount | null>(null)
 	const [accountAssets, setAccountAssets] = useState<AccountAsset[]>([])
+	const [userAccounts, setUserAccounts] = useState<TradingAccount[]>([])
+	const [deleteConfirmName, setDeleteConfirmName] = useState("")
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
 	// Account editing
 	const [isEditingAccount, setIsEditingAccount] = useState(false)
@@ -65,11 +83,13 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	useEffect(() => {
 		const loadData = async () => {
 			try {
-				const [accountData, assetsResult] = await Promise.all([
+				const [accountData, assetsResult, allAccounts] = await Promise.all([
 					getCurrentAccount(),
 					getAccountAssets(),
+					getUserAccounts(),
 				])
 				setAccount(accountData)
+				setUserAccounts(allAccounts)
 				if (assetsResult.status === "success" && assetsResult.data) {
 					// Extract the base AccountAsset data from AccountAssetWithDetails
 					setAccountAssets(assetsResult.data.map(({ asset, ...rest }) => rest))
@@ -196,6 +216,37 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			isOverride: false,
 		}
 	}
+
+	const handleDeleteAccount = () => {
+		if (!account) return
+
+		// Resolve the switch target before deletion
+		const switchTarget = userAccounts.find((a) => a.isDefault && a.id !== account.id)
+			?? userAccounts.find((a) => a.id !== account.id)
+
+		startTransition(async () => {
+			const result = await deleteAccount(account.id)
+			if (result.status === "success") {
+				setIsDeleteDialogOpen(false)
+				setDeleteConfirmName("")
+				if (result.shouldLogout) {
+					await logoutUser()
+					return
+				}
+				if (switchTarget) {
+					await updateSession({ accountId: switchTarget.id })
+					await revalidateAfterAccountSwitch()
+				}
+				showToast("success", t("deleteAccountSuccess"))
+			} else {
+				showToast("error", result.error || t("deleteAccountError"))
+			}
+		})
+	}
+
+	const isDefaultAccount = account?.isDefault ?? false
+	const isLastAccount = userAccounts.length <= 1
+	const canDeleteAccount = !isDefaultAccount || isLastAccount
 
 	if (isLoading) {
 		return (
@@ -682,6 +733,76 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					</p>
 				</div>
 			)}
+
+			{/* Danger Zone */}
+			<div className="rounded-lg border border-red-500/30 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+				<h2 className="text-small sm:text-body font-semibold text-red-500">
+					{t("dangerZone")}
+				</h2>
+				<p className="mt-s-200 text-tiny text-txt-300">
+					{isLastAccount ? t("deleteLastAccountDesc") : t("dangerZoneDesc")}
+				</p>
+				{!canDeleteAccount && (
+					<p className="mt-s-200 text-tiny text-red-400">
+						{t("cannotDeleteDefaultAccount")}
+					</p>
+				)}
+				<div className="mt-m-400 flex items-center justify-between">
+					<p className="text-small text-txt-200">{account?.name}</p>
+					<AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
+						setIsDeleteDialogOpen(open)
+						if (!open) setDeleteConfirmName("")
+					}}>
+						<AlertDialogTrigger asChild>
+							<Button
+								id="account-delete-trigger"
+								variant="destructive"
+								size="sm"
+								disabled={!canDeleteAccount}
+							>
+								<Trash2 className="mr-2 h-4 w-4" />
+								{t("deleteAccount")}
+							</Button>
+						</AlertDialogTrigger>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
+								<AlertDialogDescription>
+									{isLastAccount
+										? t("deleteLastAccountWarning", { name: account?.name ?? "" })
+										: t("deleteAccountDescription", { name: account?.name ?? "" })}
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<div className="space-y-s-200">
+								<Label id="delete-confirm-label" htmlFor="delete-confirm-input" className="text-small text-txt-200">
+									{t("deleteAccountConfirmLabel", { name: account?.name ?? "" })}
+								</Label>
+								<Input
+									id="delete-confirm-input"
+									value={deleteConfirmName}
+									onChange={(e) => setDeleteConfirmName(e.target.value)}
+									placeholder={account?.name ?? ""}
+									aria-label={t("deleteAccountConfirmLabel", { name: account?.name ?? "" })}
+								/>
+							</div>
+							<AlertDialogFooter>
+								<AlertDialogCancel id="account-delete-cancel">
+									{tCommon("cancel")}
+								</AlertDialogCancel>
+								<AlertDialogAction
+									id="account-delete-confirm"
+									variant="destructive"
+									disabled={deleteConfirmName !== account?.name || isPending}
+									onClick={handleDeleteAccount}
+								>
+									{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+									{tCommon("confirm")}
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				</div>
+			</div>
 		</div>
 	)
 }

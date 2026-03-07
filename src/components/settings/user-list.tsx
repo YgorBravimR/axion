@@ -2,8 +2,10 @@
 
 import { useState, useTransition, useMemo, useCallback, type ChangeEvent, type KeyboardEvent } from "react"
 import { useTranslations } from "next-intl"
-import { ChevronRight, Loader2, Search, Users } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ChevronRight, Loader2, Search, Trash2, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
 	Table,
@@ -20,8 +22,19 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/toast"
 import { updateUserRole } from "@/app/actions/user-management"
+import { deleteAccount } from "@/app/actions/accounts"
 import type { UserWithAccounts } from "@/app/actions/user-management"
 
 interface UserListProps {
@@ -31,14 +44,22 @@ interface UserListProps {
 
 const ROLES = ["admin", "trader", "viewer"] as const
 
+interface DeleteTarget {
+	accountId: string
+	accountName: string
+	userName: string
+}
+
 const UserList = ({ users, currentUserId }: UserListProps) => {
 	const t = useTranslations("settings.users")
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
+	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
 	const [search, setSearch] = useState("")
 	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 	const [pendingId, setPendingId] = useState<string | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
 	const filteredUsers = useMemo(() => {
 		if (!search.trim()) return users
@@ -97,6 +118,21 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 		},
 		[handleToggleExpand]
 	)
+
+	const handleDeleteAccount = useCallback(() => {
+		if (!deleteTarget) return
+
+		startTransition(async () => {
+			const result = await deleteAccount(deleteTarget.accountId)
+			if (result.status === "success") {
+				showToast("success", t("deleteAccountSuccess"))
+				setDeleteTarget(null)
+				router.refresh()
+			} else {
+				showToast("error", result.error || t("deleteAccountError"))
+			}
+		})
+	}, [deleteTarget, showToast, t, router])
 
 	return (
 		<div className="space-y-m-400">
@@ -313,6 +349,31 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																				)}
 																			</Badge>
 																		)}
+																		<Button
+																			id={`delete-account-${account.id}`}
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+																			disabled={user.tradingAccounts.length <= 1 || (account.isDefault && user.tradingAccounts.length > 1)}
+																			aria-label={t("deleteAccountTitle")}
+																			title={
+																				user.tradingAccounts.length <= 1
+																					? t("cannotDeleteOnlyAccount")
+																					: account.isDefault && user.tradingAccounts.length > 1
+																						? t("cannotDeleteDefaultAccount")
+																						: t("deleteAccountTitle")
+																			}
+																			onClick={(e) => {
+																				e.stopPropagation()
+																				setDeleteTarget({
+																					accountId: account.id,
+																					accountName: account.name,
+																					userName: user.name,
+																				})
+																			}}
+																		>
+																			<Trash2 className="h-3.5 w-3.5" />
+																		</Button>
 																	</div>
 																)
 															)}
@@ -328,6 +389,35 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 					</Table>
 				</div>
 			)}
+			<AlertDialog open={deleteTarget !== null} onOpenChange={(open) => {
+				if (!open) setDeleteTarget(null)
+			}}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
+						<AlertDialogDescription>
+							{deleteTarget && t("deleteAccountDescription", {
+								accountName: deleteTarget.accountName,
+								userName: deleteTarget.userName,
+							})}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel id="admin-delete-account-cancel">
+							{tCommon("cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="admin-delete-account-confirm"
+							variant="destructive"
+							disabled={isPending}
+							onClick={handleDeleteAccount}
+						>
+							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+							{tCommon("confirm")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

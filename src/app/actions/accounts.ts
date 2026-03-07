@@ -16,6 +16,7 @@ import {
 } from "@/db/schema"
 import { auth } from "@/auth"
 import { getUserDek, encryptAccountFields, decryptAccountFields } from "@/lib/user-crypto"
+import { hasAccess } from "@/lib/feature-access"
 
 // ==========================================
 // TYPES
@@ -252,40 +253,46 @@ export const updateAccount = async (
 
 export const deleteAccount = async (
 	accountId: string
-): Promise<{ status: "success" | "error"; error?: string }> => {
+): Promise<{ status: "success" | "error"; error?: string; shouldLogout?: boolean }> => {
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {
 			return { status: "error", error: "Not authenticated" }
 		}
 
-		// Verify ownership
 		const account = await db.query.tradingAccounts.findFirst({
-			where: and(
-				eq(tradingAccounts.id, accountId),
-				eq(tradingAccounts.userId, session.user.id)
-			),
+			where: eq(tradingAccounts.id, accountId),
 		})
 
 		if (!account) {
 			return { status: "error", error: "Account not found" }
 		}
 
-		// Check if this is the only account
-		const userAccounts = await db.query.tradingAccounts.findMany({
-			where: eq(tradingAccounts.userId, session.user.id),
+		const callerIsAdmin = hasAccess(session.user.role ?? "trader", "admin")
+
+		// Non-admins can only delete their own accounts
+		if (!callerIsAdmin && account.userId !== session.user.id) {
+			return { status: "error", error: "Account not found" }
+		}
+
+		const ownerAccounts = await db.query.tradingAccounts.findMany({
+			where: eq(tradingAccounts.userId, account.userId),
 		})
 
-		if (userAccounts.length === 1) {
-			return { status: "error", error: "Cannot delete your only account" }
+		const isLastAccount = ownerAccounts.length <= 1
+
+		// Default account can only be deleted when it's the last one
+		if (account.isDefault && !isLastAccount) {
+			return { status: "error", error: "Cannot delete the default account while other accounts exist" }
 		}
 
 		// Delete account (cascades to trades, strategies, tags)
 		await db.delete(tradingAccounts).where(eq(tradingAccounts.id, accountId))
 
 		revalidatePath("/settings")
+		revalidatePath("/command-center")
 
-		return { status: "success" }
+		return { status: "success", shouldLogout: isLastAccount }
 	} catch (error) {
 		console.error("Delete account error:", error)
 		return { status: "error", error: "An error occurred" }
