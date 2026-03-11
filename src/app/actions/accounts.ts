@@ -44,6 +44,7 @@ interface AccountInput {
 	showTaxEstimates?: boolean
 	showPropCalculations?: boolean
 	replayStartDate?: string
+	defaultAsset?: string | null
 }
 
 interface AccountAssetInput {
@@ -228,6 +229,7 @@ export const updateAccount = async (
 		if (input.replayStartDate !== undefined && input.accountType === "replay") {
 			updateData.replayCurrentDate = new Date(input.replayStartDate)
 		}
+		if (input.defaultAsset !== undefined) updateData.defaultAsset = input.defaultAsset
 
 		// Encrypt financial fields if DEK is available
 		const dek = await getUserDek(session.user.id)

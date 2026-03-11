@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/routing"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,7 @@ export const PlaybookContent = ({
 	initialStrategies,
 	initialCompliance,
 }: PlaybookContentProps) => {
+	const t = useTranslations("playbook")
 	const router = useRouter()
 	const [strategies, setStrategies] =
 		useState<StrategyWithStats[]>(initialStrategies)
@@ -70,22 +72,21 @@ export const PlaybookContent = ({
 			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-						Your Strategies
+						{t("yourStrategies")}
 					</h2>
 					<Link href="/playbook/new">
 						<Button id="playbook-new-strategy">
 							<Plus className="mr-2 h-4 w-4" />
-							New Strategy
+							{t("newStrategy")}
 						</Button>
 					</Link>
 				</div>
 
 				{strategies.length === 0 ? (
 					<div className="mt-m-400 sm:mt-m-500 py-l-700 flex flex-col items-center justify-center text-center">
-						<p className="text-body text-txt-200">No strategies defined yet</p>
+						<p className="text-body text-txt-200">{t("noStrategies")}</p>
 						<p className="text-small text-txt-300 mt-s-200">
-							Create your first trading strategy to track performance and
-							compliance
+							{t("noStrategiesHint")}
 						</p>
 						<Link href="/playbook/new">
 							<Button
@@ -94,7 +95,7 @@ export const PlaybookContent = ({
 								className="mt-m-500"
 							>
 								<Plus className="mr-2 h-4 w-4" />
-								Add Strategy
+								{t("addStrategy")}
 							</Button>
 						</Link>
 					</div>

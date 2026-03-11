@@ -84,6 +84,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
+	const tCommon = useTranslations("common")
 	const tDays = useTranslations("analytics.time.heatmapDays")
 	const tDayNames = useTranslations("analytics.time.dayNames")
 
@@ -189,13 +190,13 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 				<div>
 					<p className="text-caption text-txt-300">{t("time.bestDay")}</p>
 					<p className="text-small font-medium text-trade-buy">
-						{bestDay ? getTranslatedDayName(bestDay.dayName) : ""} ({bestDay?.winRate.toFixed(0)}% WR, {formatMetric(bestDay?.[metricKey] ?? 0)})
+						{bestDay ? getTranslatedDayName(bestDay.dayName) : ""} ({bestDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")}, {formatMetric(bestDay?.[metricKey] ?? 0)})
 					</p>
 				</div>
 				<div>
 					<p className="text-caption text-txt-300">{t("time.worstDay")}</p>
 					<p className="text-small font-medium text-trade-sell">
-						{worstDay ? getTranslatedDayName(worstDay.dayName) : ""} ({worstDay?.winRate.toFixed(0)}% WR, {formatMetric(worstDay?.[metricKey] ?? 0)})
+						{worstDay ? getTranslatedDayName(worstDay.dayName) : ""} ({worstDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")}, {formatMetric(worstDay?.[metricKey] ?? 0)})
 					</p>
 				</div>
 			</div>

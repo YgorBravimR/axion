@@ -48,19 +48,19 @@ const getCategoryColor = (category: string): string => {
 	}
 }
 
-const TIER_OPTIONS: {
-	value: ConditionTier | "none"
-	label: string
-	icon: typeof Shield
-}[] = [
-	{ value: "none", label: "Not included", icon: Shield },
-	{ value: "mandatory", label: "Mandatory (A)", icon: Shield },
-	{ value: "tier_2", label: "Tier 2 (AA)", icon: ShieldCheck },
-	{ value: "tier_3", label: "Tier 3 (AAA)", icon: ShieldPlus },
-]
-
 export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 	const t = useTranslations("playbook.conditions")
+
+	const TIER_OPTIONS: {
+		value: ConditionTier | "none"
+		label: string
+		icon: typeof Shield
+	}[] = [
+		{ value: "none", label: t("tierNone"), icon: Shield },
+		{ value: "mandatory", label: t("tierMandatory"), icon: Shield },
+		{ value: "tier_2", label: t("tierTier2"), icon: ShieldCheck },
+		{ value: "tier_3", label: t("tierTier3"), icon: ShieldPlus },
+	]
 	const tSettings = useTranslations("settings.conditions")
 	const [conditions, setConditions] = useState<TradingCondition[]>([])
 	const [isLoading, setIsLoading] = useState(true)

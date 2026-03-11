@@ -163,7 +163,7 @@ export const ScenarioSection = ({
 													type="button"
 													className="overflow-hidden rounded-lg transition-transform hover:scale-[1.02]"
 													onClick={() => setLightboxImage(img.url)}
-													aria-label="View image"
+													aria-label={tCommon("viewImage")}
 												>
 													<img
 														src={img.url}
@@ -268,7 +268,7 @@ export const ScenarioSection = ({
 					onClick={() => setLightboxImage(null)}
 					role="dialog"
 					aria-modal="true"
-					aria-label="Image preview"
+					aria-label={tCommon("imagePreview")}
 				>
 					<Button
 						id="lightbox-close"
@@ -276,7 +276,7 @@ export const ScenarioSection = ({
 						size="sm"
 						className="absolute top-4 right-4 text-white hover:text-white/80"
 						onClick={() => setLightboxImage(null)}
-						aria-label="Close preview"
+						aria-label={tCommon("closePreview")}
 					>
 						<X className="h-6 w-6" />
 					</Button>

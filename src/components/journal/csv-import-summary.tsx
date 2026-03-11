@@ -28,6 +28,7 @@ export const CsvImportSummary = ({
 	allSelected,
 }: CsvImportSummaryProps) => {
 	const t = useTranslations("journal.csv")
+	const tCommon = useTranslations("common")
 
 	// Calculate summary stats
 	const validCount = trades.filter((t) => t.status === "valid").length
@@ -84,7 +85,7 @@ export const CsvImportSummary = ({
 						<XCircle className="h-5 w-5 text-fb-error" />
 						<span className="text-h3 font-bold text-fb-error">{skippedCount}</span>
 					</div>
-					<p className="mt-s-100 text-tiny text-txt-300">Skipped</p>
+					<p className="mt-s-100 text-tiny text-txt-300">{tCommon("skipped")}</p>
 				</button>
 
 				{/* Warnings */}
@@ -121,7 +122,7 @@ export const CsvImportSummary = ({
 						</span>
 					</div>
 					<p className="mt-s-100 text-tiny text-txt-300">
-						Gross: {formatCurrency(grossPnl)} | Costs: {formatCurrency(-totalCosts)}
+						{tCommon("grossCostBreakdown", { gross: formatCurrency(grossPnl), costs: formatCurrency(-totalCosts) })}
 					</p>
 				</div>
 			</div>
@@ -130,7 +131,7 @@ export const CsvImportSummary = ({
 			<div className="flex flex-wrap items-center justify-between gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-s-300 sm:px-m-400 py-s-300 min-w-0">
 				{/* Filter Buttons */}
 				<div className="flex flex-wrap items-center gap-s-200">
-					<span className="text-tiny text-txt-300">Filter:</span>
+					<span className="text-tiny text-txt-300">{tCommon("filterLabel")}</span>
 					<div className="flex flex-wrap gap-s-100">
 						{(["all", "valid", "warning", "skipped"] as const).map((status) => (
 							<button
@@ -144,10 +145,10 @@ export const CsvImportSummary = ({
 										: "bg-bg-300 text-txt-200 hover:bg-bg-100"
 								)}
 							>
-								{status === "all" && "All"}
-								{status === "valid" && `Valid (${validCount})`}
-								{status === "warning" && `Warnings (${warningCount})`}
-								{status === "skipped" && `Skipped (${skippedCount})`}
+								{status === "all" && tCommon("filterAll")}
+								{status === "valid" && tCommon("filterValid", { count: validCount })}
+								{status === "warning" && tCommon("filterWarnings", { count: warningCount })}
+								{status === "skipped" && tCommon("filterSkipped", { count: skippedCount })}
 							</button>
 						))}
 					</div>
@@ -165,7 +166,7 @@ export const CsvImportSummary = ({
 						htmlFor="select-all"
 						className="cursor-pointer text-small text-txt-200"
 					>
-						Select All Valid ({selectedCount}/{selectableCount})
+						{tCommon("selectAllValid", { selected: selectedCount, total: selectableCount })}
 					</label>
 				</div>
 			</div>

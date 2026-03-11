@@ -111,7 +111,7 @@ export const OcrImport = () => {
 	const handleFileSelect = useCallback(async (file: File) => {
 		const validTypes = ["image/png", "image/jpeg", "image/webp", "image/jpg"]
 		if (!validTypes.includes(file.type)) {
-			showToast("error", "Please select a valid image file (PNG, JPG, or WEBP)")
+			showToast("error", t("invalidImageFile"))
 			return
 		}
 
@@ -131,7 +131,7 @@ export const OcrImport = () => {
 					setProgress({
 						status: "recognizing",
 						progress: 50,
-						message: "Analyzing with AI Vision...",
+						message: t("analyzingVision"),
 					})
 
 					// Extract base64 without the data URL prefix
@@ -150,7 +150,7 @@ export const OcrImport = () => {
 						setProgress({
 							status: "recognizing",
 							progress: 30,
-							message: "AI failed, trying Tesseract...",
+							message: t("visionFallback"),
 						})
 						const ocrResult = await recognizeImage(imageData, setProgress)
 						parsed = parseProfitChartOcr(ocrResult)
@@ -184,12 +184,12 @@ export const OcrImport = () => {
 				setStep("review")
 			} catch {
 				hideLoading()
-				showToast("error", "Failed to process image")
+				showToast("error", t("failedToProcess"))
 				setStep("upload")
 			}
 		}
 		reader.onerror = () => {
-			showToast("error", "Failed to read file")
+			showToast("error", t("failedToReadFile"))
 		}
 		reader.readAsDataURL(file)
 	}, [showToast, visionAvailable, showLoading, hideLoading, tOverlay])
@@ -284,7 +284,7 @@ export const OcrImport = () => {
 		const validTrades = editedTrades.filter((t) => t.executions.length > 0 && t.asset)
 
 		if (validTrades.length === 0) {
-			showToast("error", "No valid trades to import")
+			showToast("error", t("noValidTrades"))
 			return
 		}
 
@@ -336,7 +336,7 @@ export const OcrImport = () => {
 				setStep("review")
 			}
 		} catch (error) {
-			showToast("error", "An unexpected error occurred")
+			showToast("error", tCommon("unexpectedError"))
 			setStep("review")
 		} finally {
 			hideLoading()
@@ -455,16 +455,16 @@ export const OcrImport = () => {
 					{/* OCR Engine Indicator */}
 					<div className="mt-m-400 flex items-center justify-center gap-s-200">
 						{visionAvailable === null ? (
-							<span className="text-tiny text-txt-400">Checking OCR engine...</span>
+							<span className="text-tiny text-txt-400">{t("checkingEngine")}</span>
 						) : visionAvailable ? (
 							<span className="flex items-center gap-s-200 rounded-full bg-trade-buy/20 px-s-300 py-s-100 text-tiny font-medium text-trade-buy">
 								<Sparkles className="h-3 w-3" />
-								GPT-4 Vision (High Accuracy)
+								{t("visionEngine")}
 							</span>
 						) : (
 							<span className="flex items-center gap-s-200 rounded-full bg-warning/20 px-s-300 py-s-100 text-tiny font-medium text-warning">
 								<Cpu className="h-3 w-3" />
-								Tesseract (Basic) - Add OPENAI_API_KEY for better results
+								{t("tesseractEngine")}
 							</span>
 						)}
 					</div>
@@ -510,7 +510,7 @@ export const OcrImport = () => {
 							<FileText className="h-5 w-5 text-txt-300" />
 							<span className="text-small font-medium text-txt-100">{fileName}</span>
 						</div>
-						<Button id="ocr-import-clear" variant="ghost" size="icon" onClick={handleClear} aria-label="Clear">
+						<Button id="ocr-import-clear" variant="ghost" size="icon" onClick={handleClear} aria-label={tCommon("clear")}>
 							<X className="h-4 w-4" />
 						</Button>
 					</div>
@@ -553,13 +553,13 @@ export const OcrImport = () => {
 							<div className="flex items-center gap-s-200 text-fb-error">
 								<AlertCircle className="h-4 w-4" />
 								<span className="text-small font-medium">
-									Errors ({parseResult.errors.length})
+									{t("errorsCount", { count: parseResult.errors.length })}
 								</span>
 							</div>
 							<ul className="mt-s-300 space-y-s-200 text-small text-txt-200">
 								{parseResult.errors.map((error, i) => (
 									<li key={i}>
-										Line {error.line}: {error.message}
+										{t("errorLine", { line: error.line, message: error.message })}
 									</li>
 								))}
 							</ul>
@@ -572,18 +572,18 @@ export const OcrImport = () => {
 							<div className="flex items-center gap-s-200 text-warning">
 								<AlertTriangle className="h-4 w-4" />
 								<span className="text-small font-medium">
-									Warnings ({parseResult.warnings.length})
+									{t("warningsCount", { count: parseResult.warnings.length })}
 								</span>
 							</div>
 							<ul className="mt-s-300 space-y-s-200 text-small text-txt-200">
 								{parseResult.warnings.slice(0, 5).map((warning, i) => (
 									<li key={i}>
-										Line {warning.line}: {warning.message}
+										{t("warningLine", { line: warning.line, message: warning.message })}
 									</li>
 								))}
 								{parseResult.warnings.length > 5 && (
 									<li className="text-txt-300">
-										...and {parseResult.warnings.length - 5} more
+										{t("andMore", { count: parseResult.warnings.length - 5 })}
 									</li>
 								)}
 							</ul>
@@ -595,10 +595,10 @@ export const OcrImport = () => {
 						<div className="flex items-center justify-between">
 							<div>
 								<h3 className="text-small font-semibold text-txt-100">
-									Trade Date
+									{t("tradeDate")}
 								</h3>
 								<p className="text-tiny text-txt-300">
-									All trades will use this date combined with their execution times
+									{t("tradeDateDesc")}
 								</p>
 							</div>
 							<DatePicker
@@ -614,17 +614,17 @@ export const OcrImport = () => {
 					<div className="grid grid-cols-2 gap-s-200 sm:gap-m-400 sm:grid-cols-4">
 						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-acc-100">{totalTrades}</p>
-							<p className="text-tiny text-txt-300">Trades Detected</p>
+							<p className="text-tiny text-txt-300">{t("tradesDetected")}</p>
 						</div>
 						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-trade-buy">{totalExecutions}</p>
-							<p className="text-tiny text-txt-300">Total Executions</p>
+							<p className="text-tiny text-txt-300">{t("totalExecutions")}</p>
 						</div>
 						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<p className="text-h3 font-bold text-txt-100">
 								{parseResult.confidence.toFixed(0)}%
 							</p>
-							<p className="text-tiny text-txt-300">Confidence</p>
+							<p className="text-tiny text-txt-300">{t("confidence")}</p>
 						</div>
 						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
 							<div className="flex items-center justify-center gap-s-100">
@@ -634,10 +634,10 @@ export const OcrImport = () => {
 									<Cpu className="h-4 w-4 text-warning" />
 								)}
 								<p className="text-small font-bold text-txt-100 capitalize">
-									{ocrProvider ?? "Unknown"}
+									{ocrProvider ?? t("unknown")}
 								</p>
 							</div>
-							<p className="text-tiny text-txt-300">OCR Provider</p>
+							<p className="text-tiny text-txt-300">{t("ocrProvider")}</p>
 						</div>
 					</div>
 
@@ -660,7 +660,7 @@ export const OcrImport = () => {
 										<ChevronDown className="h-4 w-4 text-txt-300" />
 									)}
 									<span className="text-small font-semibold text-txt-100">
-										Trade #{tradeIndex + 1}
+										{t("tradeNumber", { number: tradeIndex + 1 })}
 									</span>
 									<span className="rounded bg-bg-100 px-s-200 py-s-100 text-tiny font-medium text-txt-200">
 										{trade.asset}
@@ -676,7 +676,7 @@ export const OcrImport = () => {
 										{trade.direction.toUpperCase()}
 									</span>
 									<span className="text-tiny text-txt-300">
-										({trade.executions.length} executions)
+										{t("executionsCount", { count: trade.executions.length })}
 									</span>
 								</button>
 								<Button
@@ -684,7 +684,7 @@ export const OcrImport = () => {
 									variant="ghost"
 									size="icon"
 									onClick={() => handleRemoveTrade(trade.id)}
-									aria-label="Remove trade"
+									aria-label={tCommon("removeTrade")}
 								>
 									<Trash2 className="h-4 w-4 text-fb-error" />
 								</Button>
@@ -708,7 +708,7 @@ export const OcrImport = () => {
 											/>
 											{trade.originalContractCode !== trade.asset && (
 												<p className="mt-s-100 text-tiny text-txt-400">
-													Original: {trade.originalContractCode}
+													{t("originalLabel", { code: trade.originalContractCode })}
 												</p>
 											)}
 										</div>
@@ -735,12 +735,10 @@ export const OcrImport = () => {
 										<div className="flex items-end">
 											<div className="text-tiny text-txt-300">
 												<p>
-													Entries: {trade.executions.filter((e) => e.type === "entry").length} (
-													{trade.executions.filter((e) => e.type === "entry").reduce((s, e) => s + e.quantity, 0)} qty)
+													{t("entriesCount", { count: trade.executions.filter((e) => e.type === "entry").length, qty: trade.executions.filter((e) => e.type === "entry").reduce((s, e) => s + e.quantity, 0) })}
 												</p>
 												<p>
-													Exits: {trade.executions.filter((e) => e.type === "exit").length} (
-													{trade.executions.filter((e) => e.type === "exit").reduce((s, e) => s + e.quantity, 0)} qty)
+													{t("exitsCount", { count: trade.executions.filter((e) => e.type === "exit").length, qty: trade.executions.filter((e) => e.type === "exit").reduce((s, e) => s + e.quantity, 0) })}
 												</p>
 											</div>
 										</div>
@@ -752,19 +750,19 @@ export const OcrImport = () => {
 											<thead>
 												<tr className="border-b border-bg-300 bg-bg-100">
 													<th className="px-m-400 py-s-300 text-left text-tiny font-medium text-txt-300">
-														Type
+														{tCommon("type")}
 													</th>
 													<th className="px-m-400 py-s-300 text-left text-tiny font-medium text-txt-300">
-														Time
+														{tCommon("time")}
 													</th>
 													<th className="px-m-400 py-s-300 text-right text-tiny font-medium text-txt-300">
-														Qty
+														{tCommon("qty")}
 													</th>
 													<th className="px-m-400 py-s-300 text-right text-tiny font-medium text-txt-300">
-														Price
+														{tCommon("price")}
 													</th>
 													<th className="px-m-400 py-s-300 text-center text-tiny font-medium text-txt-300">
-														Actions
+														{tCommon("actions")}
 													</th>
 												</tr>
 											</thead>
@@ -789,8 +787,8 @@ export const OcrImport = () => {
 																		: "bg-trade-sell/20 text-trade-sell"
 																)}
 															>
-																<option value="entry">Entry</option>
-																<option value="exit">Exit</option>
+																<option value="entry">{tCommon("entry")}</option>
+																<option value="exit">{tCommon("exit")}</option>
 															</select>
 														</td>
 														<td className="px-m-400 py-s-300 text-small text-txt-200">
@@ -829,7 +827,7 @@ export const OcrImport = () => {
 																variant="ghost"
 																size="icon"
 																onClick={() => handleRemoveExecution(trade.id, ex.id)}
-																aria-label="Remove execution"
+																aria-label={tCommon("removeExecution")}
 															>
 																<Trash2 className="h-4 w-4 text-fb-error" />
 															</Button>
@@ -879,7 +877,7 @@ export const OcrImport = () => {
 						<div className="flex items-center gap-s-200 rounded-lg border border-trade-buy/30 bg-trade-buy/10 p-s-300 sm:p-m-400 text-trade-buy">
 							<CheckCircle2 className="h-4 w-4" />
 							<span className="text-small font-medium">
-								Ready to import {totalTrades} trade(s) with {totalExecutions} executions
+								{t("readyToImport", { trades: totalTrades, executions: totalExecutions })}
 							</span>
 						</div>
 					)}
@@ -910,7 +908,7 @@ export const OcrImport = () => {
 							) : (
 								<>
 									<Upload className="mr-2 h-4 w-4" />
-									Import {totalTrades} Trade{totalTrades !== 1 ? "s" : ""}
+									{t("importTrades", { count: totalTrades, suffix: totalTrades !== 1 ? "s" : "" })}
 								</>
 							)}
 						</Button>
@@ -923,7 +921,7 @@ export const OcrImport = () => {
 				<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-800 text-center">
 					<Loader2 className="mx-auto h-12 w-12 animate-spin text-acc-100" />
 					<h3 className="mt-m-400 text-body font-semibold text-txt-100">
-						Importing {totalTrades} trade(s)...
+						{t("importingTrades", { count: totalTrades })}
 					</h3>
 				</div>
 			)}

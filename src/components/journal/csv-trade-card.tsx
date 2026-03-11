@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
 	ChevronDown,
 	ChevronUp,
@@ -54,6 +55,9 @@ export const CsvTradeCard = ({
 	timeframes,
 	tags,
 }: CsvTradeCardProps) => {
+	const t = useTranslations("journal.csvCard")
+	const tCommon = useTranslations("common")
+	const tForm = useTranslations("journal.form")
 	const [activeTab, setActiveTab] = useState("basic")
 
 	const formatCurrency = (value: number | null) => {
@@ -172,7 +176,7 @@ export const CsvTradeCard = ({
 								<Info className="text-txt-300 h-3 w-3" />
 							</TooltipTrigger>
 							<TooltipContent id={`tooltip-csv-asset-${trade.rowNumber}`}>
-								Original: {trade.originalData.originalAssetCode}
+								{t("original", { value: trade.originalData.originalAssetCode })}
 							</TooltipContent>
 						</Tooltip>
 					)}
@@ -199,7 +203,7 @@ export const CsvTradeCard = ({
 
 				{/* Position Size */}
 				<span className="text-small text-txt-300">
-					{trade.originalData.positionSize} contracts
+					{trade.originalData.positionSize} {t("contracts")}
 				</span>
 
 				{/* Spacer */}
@@ -238,7 +242,7 @@ export const CsvTradeCard = ({
 								onToggleExpand()
 							}}
 							className="p-s-100 text-txt-300 hover:bg-bg-100 hover:text-txt-100 rounded"
-							aria-label={isExpanded ? "Collapse" : "Expand"}
+							aria-label={isExpanded ? tCommon("collapse") : tCommon("expand")}
 						>
 							{isExpanded ? (
 								<ChevronUp className="h-4 w-4" />
@@ -259,13 +263,13 @@ export const CsvTradeCard = ({
 							<div className="flex flex-wrap items-center justify-between gap-s-200">
 								<div className="gap-s-200 sm:gap-m-400 text-small flex flex-wrap items-center">
 									<span className="text-txt-300">
-										Ticks: {trade.ticksGained?.toFixed(1) || "--"}
+										{t("ticks")} {trade.ticksGained?.toFixed(1) || "--"}
 									</span>
 									<span className="text-txt-300">
-										Gross: {formatCurrency(trade.grossPnl)}
+										{t("gross")} {formatCurrency(trade.grossPnl)}
 									</span>
 									<span className="text-txt-300">
-										Costs:{" "}
+										{t("costs")}{" "}
 										{formatCurrency(
 											trade.totalCosts ? -trade.totalCosts : null
 										)}
@@ -281,24 +285,17 @@ export const CsvTradeCard = ({
 											: "text-txt-300"
 									)}
 								>
-									Net: {formatCurrency(trade.netPnl)}
+									{t("net")} {formatCurrency(trade.netPnl)}
 								</span>
 							</div>
 							<div className="mt-s-200 text-tiny text-txt-300">
-								Commission: R$
-								{(
-									(trade.assetConfig.commission / 100) *
-									Number(trade.originalData.positionSize) *
-									2
-								).toFixed(2)}{" "}
-								| Fees: R$
-								{(
-									(trade.assetConfig.fees / 100) *
-									Number(trade.originalData.positionSize) *
-									2
-								).toFixed(2)}{" "}
-								| Tick Size: {trade.assetConfig.tickSize} | Tick Value: R$
-								{(trade.assetConfig.tickValue / 100).toFixed(2)}
+								{t("commission", { value: (trade.assetConfig.commission / 100 * Number(trade.originalData.positionSize) * 2).toFixed(2) })}
+								{" | "}
+								{t("fees", { value: (trade.assetConfig.fees / 100 * Number(trade.originalData.positionSize) * 2).toFixed(2) })}
+								{" | "}
+								{t("tickSize", { value: trade.assetConfig.tickSize })}
+								{" | "}
+								{t("tickValue", { value: (trade.assetConfig.tickValue / 100).toFixed(2) })}
 							</div>
 						</div>
 					)}
@@ -306,10 +303,10 @@ export const CsvTradeCard = ({
 					{/* Tabbed Editor */}
 					<Tabs value={activeTab} onValueChange={setActiveTab}>
 						<TabsList className="mb-s-300 sm:mb-m-400 w-full justify-start">
-							<TabsTrigger value="basic">Basic Info</TabsTrigger>
-							<TabsTrigger value="risk">Risk</TabsTrigger>
-							<TabsTrigger value="journal">Journal</TabsTrigger>
-							<TabsTrigger value="tags">Tags</TabsTrigger>
+							<TabsTrigger value="basic">{tForm("basicInfo")}</TabsTrigger>
+							<TabsTrigger value="risk">{tForm("risk")}</TabsTrigger>
+							<TabsTrigger value="journal">{tForm("journal")}</TabsTrigger>
+							<TabsTrigger value="tags">{tForm("tagsSection")}</TabsTrigger>
 						</TabsList>
 
 						{/* Basic Info Tab */}
@@ -318,7 +315,7 @@ export const CsvTradeCard = ({
 								{/* Date */}
 								<div>
 									<Label id="label-csv-date" className="text-tiny text-txt-300">
-										Date
+										{t("date")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{formatDate(trade.originalData.entryDate)}
@@ -331,7 +328,7 @@ export const CsvTradeCard = ({
 										id="label-csv-direction"
 										className="text-tiny text-txt-300"
 									>
-										Direction
+										{t("direction")}
 									</Label>
 									<div
 										className={cn(
@@ -351,7 +348,7 @@ export const CsvTradeCard = ({
 										id="label-csv-strategy"
 										className="text-tiny text-txt-300"
 									>
-										Strategy
+										{t("strategy")}
 									</Label>
 									<Select
 										value={trade.edits.strategyId || ""}
@@ -363,7 +360,7 @@ export const CsvTradeCard = ({
 											id="csv-trade-strategy"
 											className="mt-s-100 h-8"
 										>
-											<SelectValue placeholder="Select..." />
+											<SelectValue placeholder={t("selectPlaceholder")} />
 										</SelectTrigger>
 										<SelectContent>
 											{strategies.map((s) => (
@@ -381,7 +378,7 @@ export const CsvTradeCard = ({
 										id="label-csv-timeframe"
 										className="text-tiny text-txt-300"
 									>
-										Timeframe
+										{t("timeframe")}
 									</Label>
 									<Select
 										value={trade.edits.timeframeId || ""}
@@ -393,7 +390,7 @@ export const CsvTradeCard = ({
 											id="csv-trade-timeframe"
 											className="mt-s-100 h-8"
 										>
-											<SelectValue placeholder="Select..." />
+											<SelectValue placeholder={t("selectPlaceholder")} />
 										</SelectTrigger>
 										<SelectContent>
 											{timeframes.map((tf) => (
@@ -413,7 +410,7 @@ export const CsvTradeCard = ({
 										id="label-csv-entry-price"
 										className="text-tiny text-txt-300"
 									>
-										Entry Price
+										{t("entryPrice")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{formatPrice(trade.originalData.entryPrice)}
@@ -424,7 +421,7 @@ export const CsvTradeCard = ({
 										id="label-csv-exit-price"
 										className="text-tiny text-txt-300"
 									>
-										Exit Price
+										{t("exitPrice")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{formatPrice(trade.originalData.exitPrice)}
@@ -435,7 +432,7 @@ export const CsvTradeCard = ({
 										id="label-csv-position-size"
 										className="text-tiny text-txt-300"
 									>
-										Position Size
+										{t("positionSize")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{trade.originalData.positionSize}
@@ -443,7 +440,7 @@ export const CsvTradeCard = ({
 								</div>
 								<div>
 									<Label id="label-csv-pnl" className="text-tiny text-txt-300">
-										P&L from CSV
+										{t("pnlFromCsv")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{trade.originalData.pnl
@@ -463,7 +460,7 @@ export const CsvTradeCard = ({
 										htmlFor={`sl-${trade.id}`}
 										className="text-tiny text-txt-300"
 									>
-										Stop Loss
+										{t("stopLoss")}
 									</Label>
 									<Input
 										id={`sl-${trade.id}`}
@@ -477,7 +474,7 @@ export const CsvTradeCard = ({
 											)
 										}
 										className="mt-s-100 h-8"
-										placeholder="Optional"
+										placeholder={t("optionalPlaceholder")}
 									/>
 								</div>
 								<div>
@@ -486,7 +483,7 @@ export const CsvTradeCard = ({
 										htmlFor={`tp-${trade.id}`}
 										className="text-tiny text-txt-300"
 									>
-										Take Profit
+										{t("takeProfit")}
 									</Label>
 									<Input
 										id={`tp-${trade.id}`}
@@ -500,12 +497,12 @@ export const CsvTradeCard = ({
 											)
 										}
 										className="mt-s-100 h-8"
-										placeholder="Optional"
+										placeholder={t("optionalPlaceholder")}
 									/>
 								</div>
 								<div>
 									<Label id="label-csv-mfe" className="text-tiny text-txt-300">
-										MFE (from CSV)
+										{t("mfeFromCsv")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{trade.originalData.mfe
@@ -515,7 +512,7 @@ export const CsvTradeCard = ({
 								</div>
 								<div>
 									<Label id="label-csv-mae" className="text-tiny text-txt-300">
-										MAE (from CSV)
+										{t("maeFromCsv")}
 									</Label>
 									<div className="mt-s-100 text-small text-txt-100">
 										{trade.originalData.mae
@@ -534,7 +531,7 @@ export const CsvTradeCard = ({
 									htmlFor={`thoughts-${trade.id}`}
 									className="text-tiny text-txt-300"
 								>
-									Pre-Trade Thoughts
+									{t("preTradeThoughts")}
 								</Label>
 								<Textarea
 									id={`thoughts-${trade.id}`}
@@ -543,7 +540,7 @@ export const CsvTradeCard = ({
 										handleEditField("preTradeThoughts", e.target.value)
 									}
 									className="mt-s-100 min-h-[80px]"
-									placeholder="What was your plan for this trade?"
+									placeholder={t("planPlaceholder")}
 								/>
 							</div>
 
@@ -553,7 +550,7 @@ export const CsvTradeCard = ({
 									htmlFor={`reflection-${trade.id}`}
 									className="text-tiny text-txt-300"
 								>
-									Post-Trade Reflection
+									{t("postTradeReflection")}
 								</Label>
 								<Textarea
 									id={`reflection-${trade.id}`}
@@ -562,7 +559,7 @@ export const CsvTradeCard = ({
 										handleEditField("postTradeReflection", e.target.value)
 									}
 									className="mt-s-100 min-h-[80px]"
-									placeholder="How did the trade go? What happened?"
+									placeholder={t("reflectionPlaceholder")}
 								/>
 							</div>
 
@@ -572,7 +569,7 @@ export const CsvTradeCard = ({
 									htmlFor={`lesson-${trade.id}`}
 									className="text-tiny text-txt-300"
 								>
-									Lesson Learned
+									{t("lessonLearned")}
 								</Label>
 								<Textarea
 									id={`lesson-${trade.id}`}
@@ -581,7 +578,7 @@ export const CsvTradeCard = ({
 										handleEditField("lessonLearned", e.target.value)
 									}
 									className="mt-s-100 min-h-[60px]"
-									placeholder="What did you learn from this trade?"
+									placeholder={t("lessonPlaceholder")}
 								/>
 							</div>
 
@@ -591,7 +588,7 @@ export const CsvTradeCard = ({
 									id="label-csv-followed-plan"
 									className="text-tiny text-txt-300"
 								>
-									Did you follow your plan?
+									{t("followedPlan")}
 								</Label>
 								<div className="gap-s-200 flex">
 									<button
@@ -604,7 +601,7 @@ export const CsvTradeCard = ({
 												: "bg-bg-300 text-txt-200 hover:bg-bg-100"
 										)}
 									>
-										Yes
+										{tCommon("yes")}
 									</button>
 									<button
 										type="button"
@@ -616,7 +613,7 @@ export const CsvTradeCard = ({
 												: "bg-bg-300 text-txt-200 hover:bg-bg-100"
 										)}
 									>
-										No
+										{tCommon("no")}
 									</button>
 								</div>
 							</div>
@@ -629,7 +626,7 @@ export const CsvTradeCard = ({
 										htmlFor={`discipline-${trade.id}`}
 										className="text-tiny text-txt-300"
 									>
-										What went wrong?
+										{t("whatWentWrong")}
 									</Label>
 									<Textarea
 										id={`discipline-${trade.id}`}
@@ -638,7 +635,7 @@ export const CsvTradeCard = ({
 											handleEditField("disciplineNotes", e.target.value)
 										}
 										className="mt-s-100 min-h-[60px]"
-										placeholder="Describe what didn't go according to plan..."
+										placeholder={t("disciplinePlaceholder")}
 									/>
 								</div>
 							)}
@@ -653,7 +650,7 @@ export const CsvTradeCard = ({
 										id="label-csv-setup-type"
 										className="text-tiny text-txt-300"
 									>
-										Setup Type
+										{t("setupType")}
 									</Label>
 									<div className="mt-s-200 gap-s-200 flex flex-wrap">
 										{setupTags.map((tag) => (
@@ -687,7 +684,7 @@ export const CsvTradeCard = ({
 										id="label-csv-mistakes"
 										className="text-tiny text-txt-300"
 									>
-										Mistakes
+										{t("mistakes")}
 									</Label>
 									<div className="mt-s-200 gap-s-200 flex flex-wrap">
 										{mistakeTags.map((tag) => (
@@ -711,7 +708,7 @@ export const CsvTradeCard = ({
 
 							{setupTags.length === 0 && mistakeTags.length === 0 && (
 								<p className="text-small text-txt-300">
-									No tags configured. Add tags in Settings → Tags.
+									{t("noTagsConfigured")}
 								</p>
 							)}
 						</TabsContent>

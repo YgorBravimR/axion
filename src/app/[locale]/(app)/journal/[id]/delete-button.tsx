@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,8 @@ interface DeleteTradeButtonProps {
 export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const t = useTranslations("journal.delete")
+	const tCommon = useTranslations("common")
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [showConfirm, setShowConfirm] = useState(false)
 
@@ -23,13 +26,13 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 			const result = await deleteTrade(tradeId)
 
 			if (result.status === "success") {
-				showToast("success", "Trade deleted successfully")
+				showToast("success", t("success"))
 				router.push("/journal")
 			} else {
-				showToast("error", result.message || "Failed to delete trade")
+				showToast("error", result.message || t("failed"))
 			}
 		} catch {
-			showToast("error", "An unexpected error occurred")
+			showToast("error", t("unexpectedError"))
 		} finally {
 			setIsDeleting(false)
 			setShowConfirm(false)
@@ -39,7 +42,7 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 	if (showConfirm) {
 		return (
 			<div className="flex items-center gap-s-200">
-				<span className="text-small text-txt-200">Delete?</span>
+				<span className="text-small text-txt-200">{t("confirmPrompt")}</span>
 				<Button
 				id="delete-trade-confirm-yes"
 					variant="destructive"
@@ -50,7 +53,7 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 					{isDeleting ? (
 						<Loader2 className="h-4 w-4 animate-spin" />
 					) : (
-						"Yes"
+						tCommon("yes")
 					)}
 				</Button>
 				<Button
@@ -60,7 +63,7 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 					onClick={() => setShowConfirm(false)}
 					disabled={isDeleting}
 				>
-					No
+					{tCommon("no")}
 				</Button>
 			</div>
 		)
@@ -74,7 +77,7 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 			className="text-fb-error hover:bg-fb-error/10 hover:text-fb-error"
 		>
 			<Trash2 className="mr-2 h-4 w-4" />
-			Delete
+			{tCommon("delete")}
 		</Button>
 	)
 }

@@ -35,7 +35,9 @@ export const SettingsContent = ({
 	const t = useTranslations("settings.tabs")
 	const searchParams = useSearchParams()
 
-	const validTabs = ["profile", "account", "tags", "conditions", "assets", "timeframes", "users"]
+	const baseTabs = ["profile", "account", "tags"]
+	const adminTabs = ["conditions", "assets", "timeframes", "users"]
+	const validTabs = isAdmin ? [...baseTabs, ...adminTabs] : baseTabs
 	const tabFromUrl = searchParams.get("tab") ?? ""
 	const defaultTab = validTabs.includes(tabFromUrl) ? tabFromUrl : "profile"
 
@@ -54,10 +56,12 @@ export const SettingsContent = ({
 					<Tag className="h-4 w-4" />
 					{t("tags")}
 				</TabsTrigger>
-				<TabsTrigger value="conditions" className="gap-s-200">
-					<Filter className="h-4 w-4" />
-					{t("conditions")}
-				</TabsTrigger>
+				{isAdmin && (
+					<TabsTrigger value="conditions" className="gap-s-200">
+						<Filter className="h-4 w-4" />
+						{t("conditions")}
+					</TabsTrigger>
+				)}
 				{isAdmin && (
 					<>
 						<TabsTrigger value="assets" className="gap-s-200">
@@ -88,9 +92,11 @@ export const SettingsContent = ({
 				<TagList />
 			</AnimatedTabsContent>
 
-			<AnimatedTabsContent value="conditions">
-				<ConditionList />
-			</AnimatedTabsContent>
+			{isAdmin && (
+				<AnimatedTabsContent value="conditions">
+					<ConditionList />
+				</AnimatedTabsContent>
+			)}
 
 			{isAdmin && (
 				<>

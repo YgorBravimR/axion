@@ -10,6 +10,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -38,6 +39,8 @@ export const DetailedTradeImporter = ({
 }: DetailedTradeImporterProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const t = useTranslations("imports")
+	const tCommon = useTranslations("common")
 
 	const [step, setStep] = useState<Step>("select")
 	const [brokerName, setBrokerName] = useState<BrokerName | "">("")
@@ -52,7 +55,7 @@ export const DetailedTradeImporter = ({
 	 */
 	const handleSelectStep = async () => {
 		if (!brokerName || !csvFile) {
-			setError("Please select a broker and upload a CSV file")
+			setError(t("errors.selectBrokerAndFile"))
 			return
 		}
 
@@ -79,10 +82,10 @@ export const DetailedTradeImporter = ({
 			if (!response.ok) {
 				if (response.status === 429) {
 					setError(
-						`Import cooldown active. Next available: ${new Date(data.retryAfter * 1000).toLocaleString()}`
+						t("errors.cooldownActive", { time: new Date(data.retryAfter * 1000).toLocaleString() })
 					)
 				} else {
-					setError(data.error || "Failed to parse CSV")
+					setError(data.error || t("errors.failedToParse"))
 				}
 				setStep("error")
 				return
@@ -93,7 +96,7 @@ export const DetailedTradeImporter = ({
 			setImportId(data.preview.importId)
 			setStep("preview")
 		} catch (err) {
-			const message = err instanceof Error ? err.message : "Unknown error"
+			const message = err instanceof Error ? err.message : t("errors.unknownError")
 			setError(message)
 			setStep("error")
 		} finally {
@@ -106,7 +109,7 @@ export const DetailedTradeImporter = ({
 	 */
 	const handleConfirmImport = async () => {
 		if (!importId) {
-			setError("Missing import ID")
+			setError(t("errors.missingImportId"))
 			return
 		}
 
@@ -124,7 +127,7 @@ export const DetailedTradeImporter = ({
 			const data = await response.json()
 
 			if (!response.ok) {
-				setError(data.error || "Failed to import trades")
+				setError(data.error || t("errors.failedToImport"))
 				setStep("error")
 				return
 			}
@@ -132,7 +135,7 @@ export const DetailedTradeImporter = ({
 			setStep("success")
 			showToast(
 				"success",
-				`${data.importedTradesCount} trades imported from ${brokerName}`
+				t("tradesImported", { count: data.importedTradesCount, broker: brokerName })
 			)
 
 			// Redirect after 2 seconds
@@ -141,7 +144,7 @@ export const DetailedTradeImporter = ({
 				router.push(`/app/account/${accountId}`)
 			}, 2000)
 		} catch (err) {
-			const message = err instanceof Error ? err.message : "Unknown error"
+			const message = err instanceof Error ? err.message : t("errors.unknownError")
 			setError(message)
 			setStep("error")
 		} finally {
@@ -155,11 +158,10 @@ export const DetailedTradeImporter = ({
 			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
 				<div>
 					<h3 className="text-lg font-semibold text-txt-100">
-						Import Broker Statement
+						{t("title")}
 					</h3>
 					<p className="text-sm text-txt-300 mt-1">
-						Upload a trade statement from your broker to import with exact execution prices
-						and quantities
+						{t("description")}
 					</p>
 				</div>
 
@@ -167,11 +169,11 @@ export const DetailedTradeImporter = ({
 					{/* Broker Selection */}
 					<div className="space-y-2">
 						<Label id="broker" htmlFor="broker" className="text-txt-100">
-							Broker
+							{t("broker")}
 						</Label>
 						<Select value={brokerName} onValueChange={(v) => setBrokerName(v as BrokerName)}>
 							<SelectTrigger id="broker" className="w-full">
-								<SelectValue placeholder="Select your broker" />
+								<SelectValue placeholder={t("selectBroker")} />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="CLEAR">Clear</SelectItem>
@@ -184,7 +186,7 @@ export const DetailedTradeImporter = ({
 					{/* File Upload */}
 					<div className="space-y-2">
 						<Label id="csv-file" htmlFor="csv-file" className="text-txt-100">
-							CSV File
+							{t("csvFile")}
 						</Label>
 						<Input
 							id="csv-file"
@@ -195,7 +197,7 @@ export const DetailedTradeImporter = ({
 						/>
 						{csvFile && (
 							<p className="text-xs text-txt-200">
-								Selected: {csvFile.name} ({(csvFile.size / 1024).toFixed(2)} KB)
+								{t("selected", { name: csvFile.name, size: (csvFile.size / 1024).toFixed(2) })}
 							</p>
 						)}
 					</div>
@@ -216,7 +218,7 @@ export const DetailedTradeImporter = ({
 					className="w-full"
 				>
 					{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-					{loading ? "Parsing CSV..." : "Next"}
+					{loading ? t("parsingCsv") : tCommon("next")}
 				</Button>
 			</div>
 		)
@@ -227,23 +229,22 @@ export const DetailedTradeImporter = ({
 		return (
 			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
 				<div>
-					<h3 className="text-lg font-semibold text-txt-100">Review Detected Trades</h3>
+					<h3 className="text-lg font-semibold text-txt-100">{t("reviewTitle")}</h3>
 					<p className="text-sm text-txt-300 mt-1">
-						{preview.brokerName} • {preview.detectdExecutionCount} executions grouped into{" "}
-						{preview.detectedTradeCount} trades
+						{preview.brokerName} • {t("executionsSummary", { executions: preview.detectdExecutionCount, trades: preview.detectedTradeCount })}
 					</p>
 				</div>
 
 				{/* Summary Stats */}
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<div className="p-3 rounded bg-bg-200 border border-bg-300">
-						<p className="text-xs text-txt-300 mb-1">Successful Trades</p>
+						<p className="text-xs text-txt-300 mb-1">{t("successfulTrades")}</p>
 						<p className="text-xl font-semibold text-txt-100">
 							{preview.successfulTrades}
 						</p>
 					</div>
 					<div className="p-3 rounded bg-bg-200 border border-bg-300">
-						<p className="text-xs text-txt-300 mb-1">Total Gross P&L</p>
+						<p className="text-xs text-txt-300 mb-1">{t("totalGrossPnl")}</p>
 						<p
 							className={cn(
 								"text-xl font-semibold",
@@ -254,7 +255,7 @@ export const DetailedTradeImporter = ({
 						</p>
 					</div>
 					<div className="p-3 rounded bg-bg-200 border border-bg-300">
-						<p className="text-xs text-txt-300 mb-1">Net P&L</p>
+						<p className="text-xs text-txt-300 mb-1">{t("netPnl")}</p>
 						<p
 							className={cn(
 								"text-xl font-semibold",
@@ -270,14 +271,14 @@ export const DetailedTradeImporter = ({
 				{preview.warningTrades > 0 && (
 					<div className="p-3 rounded bg-yellow-100 border border-yellow-300">
 						<p className="text-sm font-medium text-yellow-900">
-							⚠️ {preview.warningTrades} trade(s) have warnings (partial exits, open positions)
+							{t("warningText", { count: preview.warningTrades })}
 						</p>
 					</div>
 				)}
 
 				{/* Trade List */}
 				<div className="space-y-3">
-					<h4 className="text-sm font-medium text-txt-100">Trades</h4>
+					<h4 className="text-sm font-medium text-txt-100">{t("trades")}</h4>
 					<ScrollArea className="max-h-96"><div className="space-y-2">
 						{preview.trades.map((trade, idx) => (
 							<div key={idx} className="p-3 rounded border border-bg-300 bg-bg-200">
@@ -287,8 +288,7 @@ export const DetailedTradeImporter = ({
 											{trade.asset} • {trade.direction.toUpperCase()}
 										</p>
 										<p className="text-xs text-txt-300">
-											Entry: {trade.entryPrice.toFixed(2)} • Exit:{" "}
-											{trade.exitPrice ? trade.exitPrice.toFixed(2) : "—"}
+											{t("entry", { price: trade.entryPrice.toFixed(2) })} • {t("exit", { price: trade.exitPrice ? trade.exitPrice.toFixed(2) : "—" })}
 										</p>
 									</div>
 									<p
@@ -327,7 +327,7 @@ export const DetailedTradeImporter = ({
 						onClick={() => setStep("select")}
 						className="flex-1"
 					>
-						Back
+						{tCommon("back")}
 					</Button>
 					<Button
 						id="preview-confirm-button"
@@ -336,7 +336,7 @@ export const DetailedTradeImporter = ({
 						className="flex-1"
 					>
 						{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-						{loading ? "Importing..." : "Confirm & Import"}
+						{loading ? t("importing") : t("confirmImport")}
 					</Button>
 				</div>
 			</div>
@@ -349,9 +349,9 @@ export const DetailedTradeImporter = ({
 			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100 text-center">
 				<Loader2 className="w-12 h-12 animate-spin text-acc-100 mx-auto" />
 				<div>
-					<h3 className="text-lg font-semibold text-txt-100">Importing Trades...</h3>
+					<h3 className="text-lg font-semibold text-txt-100">{t("importingTitle")}</h3>
 					<p className="text-sm text-txt-300 mt-1">
-						Encrypting and storing {preview?.detectedTradeCount} trades
+						{t("encryptingAndStoring", { count: preview?.detectedTradeCount ?? 0 })}
 					</p>
 				</div>
 			</div>
@@ -364,12 +364,12 @@ export const DetailedTradeImporter = ({
 			<div className="space-y-6 border border-green-300 rounded-lg p-6 bg-green-50 text-center">
 				<CheckCircle2 className="w-12 h-12 text-green-600 mx-auto" />
 				<div>
-					<h3 className="text-lg font-semibold text-green-900">Import Successful!</h3>
+					<h3 className="text-lg font-semibold text-green-900">{t("successTitle")}</h3>
 					<p className="text-sm text-green-700 mt-1">
-						{preview?.detectedTradeCount} trades imported from {brokerName}
+						{t("tradesImported", { count: preview?.detectedTradeCount ?? 0, broker: brokerName })}
 					</p>
 				</div>
-				<p className="text-xs text-green-600">Redirecting...</p>
+				<p className="text-xs text-green-600">{t("redirecting")}</p>
 			</div>
 		)
 	}
@@ -381,7 +381,7 @@ export const DetailedTradeImporter = ({
 				<div className="flex gap-3">
 					<AlertCircle className="w-12 h-12 text-red-600 flex-shrink-0" />
 					<div>
-						<h3 className="text-lg font-semibold text-red-900">Import Failed</h3>
+						<h3 className="text-lg font-semibold text-red-900">{t("failedTitle")}</h3>
 						<p className="text-sm text-red-700 mt-1">{error}</p>
 					</div>
 				</div>
@@ -394,7 +394,7 @@ export const DetailedTradeImporter = ({
 					}}
 					className="w-full"
 				>
-					Try Again
+					{t("tryAgain")}
 				</Button>
 			</div>
 		)

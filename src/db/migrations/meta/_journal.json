@@ -99,6 +99,13 @@
       "when": 1772638138890,
       "tag": "0013_warm_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1773255380206,
+      "tag": "0014_nice_sphinx",
+      "breakpoints": true
     }
   ]
 }

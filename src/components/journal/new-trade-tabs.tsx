@@ -41,7 +41,7 @@ export const NewTradeTabs = ({
 }: NewTradeTabsProps) => {
 	const t = useTranslations("journal")
 	const tTrade = useTranslations("trade")
-	const { canAccess } = useFeatureAccess()
+	const { canAccess, isAdmin } = useFeatureAccess()
 	const [activeTab, setActiveTab] = useState<TabValue>("single")
 	const [tradeMode, setTradeMode] = useState<TradeMode>("simple")
 	const [sharedState, setSharedState] = useState<
@@ -141,8 +141,10 @@ export const NewTradeTabs = ({
 				{/* Trade form stays mounted (hidden when other tabs active) to preserve state */}
 				<div className={activeTab !== "single" ? "hidden" : ""}>
 					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
-						{/* Trade Mode Selector */}
-						<TradeModeSelector value={tradeMode} onChange={handleModeChange} />
+						{/* Trade Mode Selector — admin only */}
+						{isAdmin && (
+							<TradeModeSelector value={tradeMode} onChange={handleModeChange} />
+						)}
 
 						{/* Form based on mode */}
 						{tradeMode === "simple" ? (

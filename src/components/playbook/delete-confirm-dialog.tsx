@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -18,6 +19,9 @@ export const DeleteConfirmDialog = ({
 	onCancel,
 	isPending,
 }: DeleteConfirmDialogProps) => {
+	const t = useTranslations("playbook.deactivate")
+	const tCommon = useTranslations("common")
+
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-m-400">
 			<div className="border-bg-300 bg-bg-200 w-full max-w-md rounded-lg border p-m-400 sm:p-m-500 lg:p-m-600 shadow-xl">
@@ -27,17 +31,13 @@ export const DeleteConfirmDialog = ({
 					</div>
 					<div>
 						<h3 className="text-body text-txt-100 font-semibold">
-							Deactivate Strategy
+							{t("title")}
 						</h3>
 						<p className="text-small text-txt-200 mt-s-200">
-							Are you sure you want to deactivate{" "}
-							<span className="bg-bg-300 rounded px-s-100 font-mono text-tiny">
-								{strategyCode}
-							</span>{" "}
-							<span className="font-medium">{strategyName}</span>?
+							{t("description", { code: strategyCode, name: strategyName })}
 						</p>
 						<p className="text-tiny text-txt-300 mt-s-200">
-							This will hide the strategy from your playbook. Existing trades linked to this strategy will not be affected.
+							{t("warning")}
 						</p>
 					</div>
 				</div>
@@ -50,7 +50,7 @@ export const DeleteConfirmDialog = ({
 						onClick={onCancel}
 						disabled={isPending}
 					>
-						Cancel
+						{tCommon("cancel")}
 					</Button>
 					<Button
 					id="playbook-delete-confirm"
@@ -59,7 +59,7 @@ export const DeleteConfirmDialog = ({
 						onClick={onConfirm}
 						disabled={isPending}
 					>
-						{isPending ? "Deactivating..." : "Deactivate"}
+						{isPending ? t("deactivating") : t("confirm")}
 					</Button>
 				</div>
 			</div>

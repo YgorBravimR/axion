@@ -19,6 +19,7 @@ import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
 import type { PersistedImage, PendingImage } from "@/lib/validations/upload"
 import type { StrategyConditionInput } from "@/types/trading-condition"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 
 interface EditStrategyPageProps {
 	params: Promise<{ id: string }>
@@ -28,6 +29,7 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 	const router = useRouter()
 	const t = useTranslations("playbook.form")
 	const tScenarios = useTranslations("playbook.scenarios")
+	const { isAdmin } = useFeatureAccess()
 	const tCommon = useTranslations("common")
 	const [isPending, startTransition] = useTransition()
 	const [isLoading, setIsLoading] = useState(true)
@@ -381,6 +383,7 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 						</div>
 
 						{/* Conditions Section */}
+						{isAdmin && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<Filter className="text-acc-100 h-5 w-5" />
@@ -393,6 +396,7 @@ const EditStrategyPage = ({ params }: EditStrategyPageProps) => {
 							</p>
 							<ConditionPicker value={conditions} onChange={setConditions} />
 						</div>
+						)}
 
 						{/* Scenarios Section */}
 						{strategyId && (

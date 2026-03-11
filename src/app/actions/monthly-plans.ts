@@ -13,6 +13,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, encryptMonthlyPlanFields, decryptMonthlyPlanFields } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
+import { isMonthBeyondAllowed } from "@/lib/monthly-plan-date-guard"
 
 // ==========================================
 // MONTHLY PLAN ACTIONS
@@ -109,6 +110,15 @@ export const upsertMonthlyPlan = async (
 	try {
 		const { userId, accountId } = await requireAuth()
 		const validated = monthlyPlanSchema.parse(input)
+
+		// Block plans for months too far in the future
+		if (isMonthBeyondAllowed(validated.year, validated.month)) {
+			return {
+				status: "error",
+				message: "Cannot create a plan for a month that far in the future",
+				errors: [{ code: "FUTURE_MONTH_BLOCKED", detail: "Plans can only be created for the current month, or next month within the last 5 days of the current month" }],
+			}
+		}
 
 		// Compute derived cent values from percentage inputs
 		const derived = deriveMonthlyPlanValues({

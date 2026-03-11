@@ -20,6 +20,7 @@ interface PositionCalculatorProps {
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
+	defaultAssetSymbol?: string
 }
 
 const PositionCalculator = ({
@@ -27,11 +28,18 @@ const PositionCalculator = ({
 	accountSettings,
 	strategies,
 	assetSettings,
+	defaultAssetSymbol,
 }: PositionCalculatorProps) => {
 	const t = useTranslations("commandCenter.calculator")
 
-	// Form state
-	const [selectedAssetId, setSelectedAssetId] = useState("")
+	// Form state — pre-select from account's default asset if available
+	const [selectedAssetId, setSelectedAssetId] = useState(() => {
+		if (defaultAssetSymbol) {
+			const match = assets.find((a) => a.symbol === defaultAssetSymbol)
+			if (match) return match.id
+		}
+		return ""
+	})
 	const [direction, setDirection] = useState<"long" | "short">("long")
 	const [entryPrice, setEntryPrice] = useState("")
 	const [stopPrice, setStopPrice] = useState("")

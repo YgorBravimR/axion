@@ -28,7 +28,7 @@ const ExpectancyModeToggle = ({
 				<button
 					type="button"
 					tabIndex={0}
-					aria-label="Edge Expectancy (R)"
+					aria-label={t("expectancyEdgeAriaLabel")}
 					className={cn(
 						"px-s-300 py-s-100 text-tiny rounded-l-md transition-colors",
 						mode === "edge"
@@ -46,7 +46,7 @@ const ExpectancyModeToggle = ({
 				<button
 					type="button"
 					tabIndex={0}
-					aria-label="Capital Expectancy ($)"
+					aria-label={t("expectancyCapitalAriaLabel")}
 					className={cn(
 						"px-s-300 py-s-100 text-tiny rounded-r-md transition-colors",
 						mode === "capital"

@@ -88,6 +88,7 @@ const NotaMatchCard = ({
 	onToggleReEnrich,
 }: NotaMatchCardProps) => {
 	const t = useTranslations("journal.nota")
+	const tCommon = useTranslations("common")
 	const [isExpanded, setIsExpanded] = useState(false)
 
 	const config = statusConfig[match.status]
@@ -125,7 +126,7 @@ const NotaMatchCard = ({
 							"text-tiny px-s-100 rounded font-medium",
 							match.trade.direction === "long" ? "bg-action-buy-muted text-action-buy" : "bg-action-sell-muted text-action-sell"
 						)}>
-							{match.trade.direction === "long" ? "Long" : "Short"}
+							{match.trade.direction === "long" ? tCommon("long") : tCommon("short")}
 						</span>
 						<span className={cn("text-tiny px-s-100 rounded font-medium", config.bg, config.color)}>
 							{t(match.status === "already_enriched" ? "alreadyEnriched" :
@@ -164,7 +165,7 @@ const NotaMatchCard = ({
 					type="button"
 					onClick={handleToggleExpand}
 					className="text-txt-300 hover:text-txt-100 shrink-0 p-s-100 transition-colors"
-					aria-label="Toggle fill details"
+					aria-label={tCommon("toggleDetails")}
 					aria-expanded={isExpanded}
 				>
 					{isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

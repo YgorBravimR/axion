@@ -35,6 +35,7 @@ import type {
 	MonthlyPlan,
 } from "@/db/schema"
 import { useTranslations } from "next-intl"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useFormatting } from "@/hooks/use-formatting"
 import { fromCents } from "@/lib/money"
 import { CalendarDays, Target, TrendingDown, ShieldCheck } from "lucide-react"
@@ -72,6 +73,7 @@ export const CommandCenterContent = ({
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
 	const tPlan = useTranslations("commandCenter.plan")
+	const { isAdmin } = useFeatureAccess()
 	const { formatCurrency } = useFormatting()
 
 	// State
@@ -168,20 +170,24 @@ export const CommandCenterContent = ({
 			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2">
 				{/* Left Column */}
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
-					{/* Daily Checklist */}
-					<DailyChecklist
-						checklists={completions}
-						onManageClick={handleManageChecklist}
-						onRefresh={refreshCompletions}
-						isReadOnly={isReadOnly}
-					/>
+					{/* Daily Checklist — admin only */}
+					{isAdmin && (
+						<DailyChecklist
+							checklists={completions}
+							onManageClick={handleManageChecklist}
+							onRefresh={refreshCompletions}
+							isReadOnly={isReadOnly}
+						/>
+					)}
 
-					{/* Pre-Market Notes */}
-					<PreMarketNotes
-						notes={notes}
-						onRefresh={refreshNotes}
-						isReadOnly={isReadOnly}
-					/>
+					{/* Pre-Market Notes — admin only */}
+					{isAdmin && (
+						<PreMarketNotes
+							notes={notes}
+							onRefresh={refreshNotes}
+							isReadOnly={isReadOnly}
+						/>
+					)}
 				</div>
 
 				{/* Right Column */}
@@ -245,27 +251,31 @@ export const CommandCenterContent = ({
 						</div>
 					)}
 
-					{/* Post-Market Notes */}
-					<PostMarketNotes
-						notes={notes}
-						onRefresh={refreshNotes}
-						isReadOnly={isReadOnly}
-					/>
+					{/* Post-Market Notes — admin only */}
+					{isAdmin && (
+						<PostMarketNotes
+							notes={notes}
+							onRefresh={refreshNotes}
+							isReadOnly={isReadOnly}
+						/>
+					)}
 				</div>
 			</div>
 
-			{/* Asset Rules - Full Width (not affected by read-only, account-level) */}
-			<AssetRulesPanel
-				settings={assetSettings}
-				availableAssets={availableAssets}
-				onRefresh={refreshAssetSettings}
-			/>
+			{/* Asset Rules — admin only */}
+			{isAdmin && (
+				<AssetRulesPanel
+					settings={assetSettings}
+					availableAssets={availableAssets}
+					onRefresh={refreshAssetSettings}
+				/>
+			)}
 
 			{/* Daily Summary - Full Width */}
 			<DailySummaryCard summary={summary} />
 
-			{/* Checklist Manager Dialog */}
-			{!isReadOnly && (
+			{/* Checklist Manager Dialog — admin only */}
+			{isAdmin && !isReadOnly && (
 				<ChecklistManager
 					open={checklistManagerOpen}
 					onClose={handleChecklistManagerClose}

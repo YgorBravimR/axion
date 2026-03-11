@@ -66,6 +66,7 @@ export const CommandCenterTabs = ({
 	initialLiveTradingStatus = null,
 	...commandCenterProps
 }: CommandCenterTabsProps) => {
+	const defaultAssetSymbol = commandCenterProps.account?.defaultAsset ?? undefined
 	const t = useTranslations("commandCenter")
 	const { canAccess } = useFeatureAccess()
 	const [activeTab, setActiveTab] = useState("command-center")
@@ -158,6 +159,7 @@ export const CommandCenterTabs = ({
 						accountSettings={accountSettings}
 						strategies={strategies}
 						assetSettings={assetSettings}
+						defaultAssetSymbol={defaultAssetSymbol}
 					/>
 				</Suspense>
 			</AnimatedTabsContent>

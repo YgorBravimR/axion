@@ -46,6 +46,7 @@ import { CsvSlTpGenerator } from "./csv-sl-tp-generator"
 
 export const CsvImport = () => {
 	const t = useTranslations("journal.csv")
+	const tCommon = useTranslations("common")
 	const tOverlay = useTranslations("overlay")
 	const router = useRouter()
 	const { showToast } = useToast()
@@ -99,7 +100,7 @@ export const CsvImport = () => {
 	const handleFileSelect = useCallback(
 		async (file: File) => {
 			if (!file.name.endsWith(".csv")) {
-				showToast("error", "Please select a CSV file")
+				showToast("error", t("invalidCsvFile"))
 				return
 			}
 
@@ -133,7 +134,7 @@ export const CsvImport = () => {
 				setParseResult(result)
 
 				if (result.trades.length === 0) {
-					showToast("error", "No trades found in CSV")
+					showToast("error", t("noTradesFound"))
 					return
 				}
 
@@ -174,7 +175,7 @@ export const CsvImport = () => {
 				hideLoading()
 			} catch {
 				hideLoading()
-				showToast("error", "Failed to read file")
+				showToast("error", t("failedToReadFile"))
 			}
 		},
 		[showToast, showLoading, hideLoading, tOverlay]
@@ -314,7 +315,7 @@ export const CsvImport = () => {
 		const selectedTrades = processedTrades.filter((t) => selectedIds.has(t.id))
 
 		if (selectedTrades.length === 0) {
-			showToast("error", "No trades selected")
+			showToast("error", t("noTradesSelected"))
 			return
 		}
 
@@ -348,7 +349,7 @@ export const CsvImport = () => {
 				showToast("error", result.message)
 			}
 		} catch {
-			showToast("error", "An unexpected error occurred")
+			showToast("error", tCommon("unexpectedError"))
 		} finally {
 			hideLoading()
 			setIsImporting(false)
@@ -384,10 +385,10 @@ export const CsvImport = () => {
 						<>
 							<Loader2 className="text-acc-100 mx-auto h-12 w-12 animate-spin" />
 							<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
-								Validating trades...
+								{t("validating")}
 							</h3>
 							<p className="mt-s-200 text-small text-txt-300">
-								Looking up assets and calculating P&L
+								{t("lookingUpAssets")}
 							</p>
 						</>
 					) : (
@@ -440,7 +441,7 @@ export const CsvImport = () => {
 							variant="ghost"
 							size="icon"
 							onClick={handleClear}
-							aria-label="Clear file"
+							aria-label={tCommon("clearFile")}
 						>
 							<X className="h-4 w-4" />
 						</Button>
@@ -488,13 +489,13 @@ export const CsvImport = () => {
 							variant="outline"
 							onClick={handleClear}
 						>
-							Cancel
+							{tCommon("cancel")}
 						</Button>
 
 						<div className="gap-m-400 flex items-center">
 							{selectedCount > 0 && (
 								<span className="text-small text-txt-300">
-									{selectedCount} trades selected
+									{tCommon("tradesSelected", { count: selectedCount })}
 								</span>
 							)}
 							<Button
@@ -506,12 +507,12 @@ export const CsvImport = () => {
 								{isImporting ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										Importing...
+										{tCommon("importing")}
 									</>
 								) : (
 									<>
 										<CheckCircle2 className="mr-2 h-4 w-4" />
-										Import {selectedCount} Trades
+										{tCommon("importCount", { count: selectedCount })}
 									</>
 								)}
 							</Button>
@@ -526,16 +527,48 @@ export const CsvImport = () => {
 					{t("formatGuide")}
 				</h3>
 
-				{/* ProfitChart Support */}
+				{/* ProfitChart Export Guide */}
 				<div className="mt-s-300 border-acc-100/30 bg-acc-100/10 p-s-300 rounded-md border">
 					<p className="text-small text-acc-100 font-medium">
-						✓ ProfitChart Export Supported
+						{t("profitChartGuide.supported")}
 					</p>
 					<p className="mt-s-100 text-tiny text-txt-300">
-						Exports from ProfitChart are automatically detected and imported.
-						Just export your trades and upload the file directly. Assets like
-						WING26 are automatically normalized to WIN.
+						{t("profitChartGuide.autoDetect")}
 					</p>
+					<div className="mt-s-300 space-y-s-100">
+						<p className="text-tiny text-txt-200 font-medium">
+							{t("profitChartGuide.title")}:
+						</p>
+						<ol className="text-tiny text-txt-300 list-inside list-decimal space-y-s-100">
+							<li>{t("profitChartGuide.step1")}</li>
+							<li>{t("profitChartGuide.step2")}</li>
+							<li>{t("profitChartGuide.step3")}</li>
+							<li>{t("profitChartGuide.step4")}</li>
+							<li>{t("profitChartGuide.step5")}</li>
+						</ol>
+						{/* ProfitChart Operations tab screenshot */}
+						<img
+							src="/operations_tab.png"
+							alt={t("profitChartGuide.title")}
+							className="mt-s-300 w-full rounded-md border border-bg-300"
+						/>
+						<p className="text-tiny text-txt-300 mt-s-200 italic">
+							{t("profitChartGuide.tip")}
+						</p>
+						<p className="text-tiny text-txt-300 mt-s-100">
+							{t("profitChartGuide.columnsNote")}
+						</p>
+						<a
+							href={t("profitChartGuide.docsUrl")}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-tiny text-acc-100 mt-s-200 inline-block hover:underline"
+							tabIndex={0}
+							aria-label={t("profitChartGuide.docsLink")}
+						>
+							{t("profitChartGuide.docsLink")} &#8599;
+						</a>
+					</div>
 				</div>
 
 				<p className="mt-m-400 text-small text-txt-300">
@@ -595,8 +628,8 @@ export const CsvImport = () => {
 											</span>
 											<span className="text-txt-300">
 												{trade.originalData.direction === "long"
-													? "Long"
-													: "Short"}
+													? tCommon("long")
+													: tCommon("short")}
 											</span>
 											<span className="text-txt-300">
 												{trade.originalData.entryDate

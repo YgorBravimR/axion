@@ -11,6 +11,7 @@ import { createRateLimiter } from "@/lib/rate-limiter"
 // Field-level encryption disabled — imports preserved for re-activation:
 // import { generateKey, encryptDek, encryptField } from "@/lib/crypto"
 import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
+import { seedUserData } from "@/db/seed-user-data"
 
 /** User type without passwordHash/encryptedDek — safe to send to the client */
 export type SafeUser = Omit<User, "passwordHash" | "encryptedDek">
@@ -77,13 +78,16 @@ export const registerUser = async (
 			})
 			.returning()
 
-		// Create default trading account
-		await db.insert(tradingAccounts).values({
-			userId: newUser.id,
-			name: "Personal",
-			isDefault: true,
-			accountType: "personal",
-		})
+		// Create default trading account and seed starter data in parallel
+		await Promise.all([
+			db.insert(tradingAccounts).values({
+				userId: newUser.id,
+				name: "Personal",
+				isDefault: true,
+				accountType: "personal",
+			}),
+			seedUserData(newUser.id),
+		])
 
 		return { status: "success" }
 	} catch (error) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import {
 	CalendarDays,
 	ChevronLeft,
@@ -21,6 +21,7 @@ import {
 	getMonthlyPlan,
 	rolloverMonthlyPlan,
 } from "@/app/actions/monthly-plans"
+import { getMaxAllowedPlanMonth } from "@/lib/monthly-plan-date-guard"
 import type { MonthlyPlan } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 
@@ -48,6 +49,13 @@ export const MonthlyPlanTab = ({
 	const [loading, setLoading] = useState(false)
 
 	const isCurrentMonth = year === initialYear && month === initialMonth
+
+	const isNextMonthDisabled = useMemo(() => {
+		const { maxYear, maxMonth } = getMaxAllowedPlanMonth()
+		if (year > maxYear) return true
+		if (year === maxYear && month >= maxMonth) return true
+		return false
+	}, [year, month])
 
 	const handleNavigateMonth = useCallback(async (direction: -1 | 1) => {
 		let newMonth = month + direction
@@ -124,8 +132,9 @@ export const MonthlyPlanTab = ({
 						variant="ghost"
 						size="icon"
 						onClick={() => handleNavigateMonth(1)}
-						disabled={loading}
+						disabled={loading || isNextMonthDisabled}
 						aria-label={t("nextMonth")}
+						title={isNextMonthDisabled ? t("futurePlanBlocked") : undefined}
 					>
 						<ChevronRight className="h-4 w-4" />
 					</Button>

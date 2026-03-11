@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { Link } from "@/i18n/routing"
 import {
 	Target,
@@ -29,7 +31,10 @@ export const StrategyCard = ({
 	onEdit,
 	onDelete,
 }: StrategyCardProps) => {
+	const t = useTranslations("playbook")
+	const tCommon = useTranslations("common")
 	const [showMenu, setShowMenu] = useState(false)
+	const { isAdmin } = useFeatureAccess()
 
 	const complianceColor =
 		strategy.compliance >= 80
@@ -71,7 +76,7 @@ export const StrategyCard = ({
 						size="sm"
 						className="h-8 w-8 p-0"
 						onClick={() => setShowMenu(!showMenu)}
-						aria-label="Strategy options menu"
+						aria-label={t("strategy.optionsMenu")}
 						aria-expanded={showMenu}
 					>
 						<MoreVertical className="h-4 w-4" aria-hidden="true" />
@@ -89,7 +94,7 @@ export const StrategyCard = ({
 									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Eye className="h-4 w-4" />
-									View Details
+									{t("strategy.viewDetails")}
 								</Link>
 								<button
 									type="button"
@@ -100,7 +105,7 @@ export const StrategyCard = ({
 									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Edit className="h-4 w-4" />
-									Edit
+									{tCommon("edit")}
 								</button>
 								<button
 									type="button"
@@ -111,7 +116,7 @@ export const StrategyCard = ({
 									className="text-fb-error hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Trash2 className="h-4 w-4" />
-									Delete
+									{tCommon("delete")}
 								</button>
 							</div>
 						</>
@@ -122,13 +127,13 @@ export const StrategyCard = ({
 			{/* Stats Grid */}
 			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4">
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-					<p className="text-tiny text-txt-300">Trades</p>
+					<p className="text-tiny text-txt-300">{t("strategy.trades")}</p>
 					<p className="text-body text-txt-100 mt-s-100 font-bold">
 						{strategy.tradeCount}
 					</p>
 				</div>
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-					<p className="text-tiny text-txt-300">P&L</p>
+					<p className="text-tiny text-txt-300">{t("strategy.pnl")}</p>
 					<ColoredValue
 						value={strategy.totalPnl}
 						showSign
@@ -137,13 +142,13 @@ export const StrategyCard = ({
 					/>
 				</div>
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-					<p className="text-tiny text-txt-300">Win Rate</p>
+					<p className="text-tiny text-txt-300">{t("strategy.winRate")}</p>
 					<p className="text-body text-txt-100 mt-s-100 font-bold">
 						{strategy.winRate.toFixed(1)}%
 					</p>
 				</div>
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-					<p className="text-tiny text-txt-300">Avg R</p>
+					<p className="text-tiny text-txt-300">{t("strategy.avgR")}</p>
 					<ColoredValue
 						value={strategy.avgR}
 						type="r-multiple"
@@ -156,7 +161,7 @@ export const StrategyCard = ({
 			{/* Compliance Bar */}
 			<div className="mt-m-400">
 				<div className="flex items-center justify-between">
-					<span className="text-tiny text-txt-300">Plan Compliance</span>
+					<span className="text-tiny text-txt-300">{t("compliance.planCompliance")}</span>
 					<span className={`text-small font-semibold ${complianceColor}`}>
 						{strategy.compliance.toFixed(0)}%
 					</span>
@@ -181,7 +186,7 @@ export const StrategyCard = ({
 					{strategy.targetRMultiple && (
 						<div className="gap-s-100 flex items-center">
 							<TrendingUp className="text-trade-buy h-4 w-4" />
-							<span className="text-tiny text-txt-300">Target:</span>
+							<span className="text-tiny text-txt-300">{t("strategy.target")}</span>
 							<span className="text-small text-txt-100 font-medium">
 								{Number(strategy.targetRMultiple).toFixed(1)}R
 							</span>
@@ -190,7 +195,7 @@ export const StrategyCard = ({
 					{strategy.maxRiskPercent && (
 						<div className="gap-s-100 flex items-center">
 							<TrendingDown className="text-trade-sell h-4 w-4" />
-							<span className="text-tiny text-txt-300">Max Risk:</span>
+							<span className="text-tiny text-txt-300">{t("strategy.maxRisk")}</span>
 							<span className="text-small text-txt-100 font-medium">
 								{Number(strategy.maxRiskPercent).toFixed(1)}%
 							</span>
@@ -200,14 +205,15 @@ export const StrategyCard = ({
 			)}
 
 			{/* Conditions & Scenarios counts */}
-			{(strategy.conditionCount > 0 || strategy.scenarioCount > 0) && (
+			{(strategy.scenarioCount > 0 || (isAdmin && strategy.conditionCount > 0)) && (
 				<div className="mt-s-300 gap-m-400 flex items-center">
-					{strategy.conditionCount > 0 && (
+					{isAdmin && strategy.conditionCount > 0 && (
 						<div className="gap-s-100 flex items-center">
 							<Filter className="text-txt-300 h-3 w-3" />
 							<span className="text-tiny text-txt-300">
-								{strategy.conditionCount}{" "}
-								{strategy.conditionCount === 1 ? "condition" : "conditions"}
+								{strategy.conditionCount === 1
+									? t("strategy.condition", { count: strategy.conditionCount })
+									: t("strategy.conditionPlural", { count: strategy.conditionCount })}
 							</span>
 						</div>
 					)}
@@ -215,8 +221,9 @@ export const StrategyCard = ({
 						<div className="gap-s-100 flex items-center">
 							<ImageIcon className="text-txt-300 h-3 w-3" />
 							<span className="text-tiny text-txt-300">
-								{strategy.scenarioCount}{" "}
-								{strategy.scenarioCount === 1 ? "scenario" : "scenarios"}
+								{strategy.scenarioCount === 1
+									? t("strategy.scenario", { count: strategy.scenarioCount })
+									: t("strategy.scenarioPlural", { count: strategy.scenarioCount })}
 							</span>
 						</div>
 					)}

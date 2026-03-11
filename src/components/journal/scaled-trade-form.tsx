@@ -108,8 +108,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const [asset, setAsset] = useState(() => {
 			if (initialSharedState?.asset) return initialSharedState.asset
 			if (defaultAssetId) {
-				const defaultAsset = assets.find((a) => a.id === defaultAssetId)
-				return defaultAsset?.symbol || ""
+				const match = assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId)
+				return match?.symbol || ""
 			}
 			return ""
 		})

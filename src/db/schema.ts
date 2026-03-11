@@ -143,6 +143,9 @@ export const tradingAccounts = pgTable(
 		// Breakeven classification: trades within ±N ticks of entry are classified as breakeven
 		defaultBreakevenTicks: integer("default_breakeven_ticks").default(2).notNull(),
 
+		// Default asset: pre-selects this asset in trade forms, calculators, etc.
+		defaultAsset: varchar("default_asset", { length: 20 }),
+
 		// Display preferences
 		showTaxEstimates: boolean("show_tax_estimates").default(true).notNull(),
 		showPropCalculations: boolean("show_prop_calculations").default(true).notNull(),

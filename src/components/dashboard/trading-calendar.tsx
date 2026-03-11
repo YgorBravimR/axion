@@ -190,7 +190,7 @@ export const TradingCalendar = memo(
 									role={isClickable ? "button" : undefined}
 									aria-label={
 										dailyData
-											? `${dateKey}: ${formatCompactCurrencyWithSign(dailyData.pnl)}, ${dailyData.tradeCount} trades`
+											? t("dayAriaLabel", { date: dateKey, pnl: formatCompactCurrencyWithSign(dailyData.pnl), count: dailyData.tradeCount })
 											: undefined
 									}
 								>

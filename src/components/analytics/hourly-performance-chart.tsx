@@ -74,6 +74,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerformanceChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
+	const tCommon = useTranslations("common")
 
 	const isRMode = expectancyMode === "edge"
 	const metricKey = isRMode ? "avgR" : "totalPnl"
@@ -155,13 +156,13 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 				<div>
 					<p className="text-caption text-txt-300">{t("time.bestHour")}</p>
 					<p className="text-small font-medium text-trade-buy">
-						{bestHour?.hourLabel} ({bestHour?.winRate.toFixed(0)}% WR, {formatMetric(bestHour?.[metricKey] ?? 0)}, {bestHour?.totalTrades} {t("time.trades").toLowerCase()})
+						{bestHour?.hourLabel} ({bestHour?.winRate.toFixed(0)}% {tCommon("winRateAbbr")}, {formatMetric(bestHour?.[metricKey] ?? 0)}, {bestHour?.totalTrades} {t("time.trades").toLowerCase()})
 					</p>
 				</div>
 				<div>
 					<p className="text-caption text-txt-300">{t("time.worstHour")}</p>
 					<p className="text-small font-medium text-trade-sell">
-						{worstHour?.hourLabel} ({worstHour?.winRate.toFixed(0)}% WR, {formatMetric(worstHour?.[metricKey] ?? 0)}, {worstHour?.totalTrades} {t("time.trades").toLowerCase()})
+						{worstHour?.hourLabel} ({worstHour?.winRate.toFixed(0)}% {tCommon("winRateAbbr")}, {formatMetric(worstHour?.[metricKey] ?? 0)}, {worstHour?.totalTrades} {t("time.trades").toLowerCase()})
 					</p>
 				</div>
 			</div>

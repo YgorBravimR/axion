@@ -68,7 +68,7 @@ export const TradeDayGroup = memo(({
 				tabIndex={0}
 				role="button"
 				aria-expanded={isExpanded}
-				aria-label={`${dateFormatted}, ${summary.totalTrades} trades, ${formatBrlWithSign(summary.netPnl)}`}
+				aria-label={t("tradeDayGroupAriaLabel", { date: dateFormatted, count: summary.totalTrades, pnl: formatBrlWithSign(summary.netPnl) })}
 			>
 				{/* Expand/Collapse Icon */}
 				{isExpanded ? (

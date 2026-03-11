@@ -91,18 +91,18 @@ export const TradeRow = memo(({
 			onKeyDown={handleKeyDown}
 			tabIndex={!isAnyDeleting && onTradeClick ? 0 : undefined}
 			role={!isAnyDeleting && onTradeClick ? "button" : undefined}
-			aria-label={`Trade ${trade.asset} ${trade.direction} at ${trade.time}`}
+			aria-label={t("tradeRowAriaLabel", { asset: trade.asset, direction: trade.direction, time: trade.time })}
 			aria-disabled={isDisabled}
 		>
 			{/* Outcome Icon */}
 			{trade.outcome === "win" && (
-				<Target className="h-3.5 w-3.5 shrink-0 text-trade-buy" aria-label="Take Profit" />
+				<Target className="h-3.5 w-3.5 shrink-0 text-trade-buy" aria-label={t("outcome.takeProfitAriaLabel")} />
 			)}
 			{trade.outcome === "loss" && (
-				<ShieldX className="h-3.5 w-3.5 shrink-0 text-trade-sell" aria-label="Stop Loss" />
+				<ShieldX className="h-3.5 w-3.5 shrink-0 text-trade-sell" aria-label={t("outcome.stopLossAriaLabel")} />
 			)}
 			{trade.outcome === "breakeven" && (
-				<Minus className="h-3.5 w-3.5 shrink-0 text-txt-300" aria-label="Breakeven" />
+				<Minus className="h-3.5 w-3.5 shrink-0 text-txt-300" aria-label={t("outcome.breakevenAriaLabel")} />
 			)}
 
 			{/* Direction Icon */}

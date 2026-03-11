@@ -33,6 +33,7 @@ export const ChecklistManager = ({
 	onSuccess,
 }: ChecklistManagerProps) => {
 	const t = useTranslations("commandCenter.checklistManager")
+	const tCommon = useTranslations("common")
 	const isEditing = !!checklist
 
 	const initialItems: ChecklistItem[] = checklist
@@ -153,7 +154,7 @@ export const ChecklistManager = ({
 											// Simple move up/down on click for now
 											// Full drag-and-drop could be added with a library
 										}}
-										aria-label="Drag to reorder"
+										aria-label={tCommon("dragToReorder")}
 									>
 										<GripVertical className="h-4 w-4" />
 									</button>

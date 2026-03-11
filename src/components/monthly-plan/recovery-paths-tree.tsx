@@ -276,6 +276,19 @@ const buildDecisionTree = (config: BuildConfig): TreeBuildResult | null => {
 			)
 		}
 
+		if (gainMode.type === "gainSequence") {
+			return buildGainSequenceChain(
+				treeDepth,
+				cumulativePnlCents,
+				pathParts,
+				wins,
+				losses,
+				0,
+				1,
+				baseRiskCents
+			)
+		}
+
 		// Compounding variant
 		return buildCompoundingChain(
 			treeDepth,
@@ -360,6 +373,107 @@ const buildDecisionTree = (config: BuildConfig): TreeBuildResult | null => {
 				gainPerTrade,
 				tradesToTarget,
 				newGains
+			)
+		}
+
+		return node
+	}
+
+	const computeGainStepRisk = (
+		step: { riskCalculation: { type: string; percent?: number; amountCents?: number } },
+		prevRiskCents: number
+	): number => {
+		if (step.riskCalculation.type === "percentOfBase") {
+			return Math.round((baseRiskCents * (step.riskCalculation.percent ?? 100)) / 100)
+		}
+		if (step.riskCalculation.type === "fixedCents") {
+			return step.riskCalculation.amountCents ?? 0
+		}
+		return prevRiskCents
+	}
+
+	const buildGainSequenceChain = (
+		treeDepth: number,
+		cumulativePnlCents: number,
+		pathParts: string[],
+		wins: number,
+		losses: number,
+		stepIndex: number,
+		chainDepth: number,
+		previousStepRiskCents: number
+	): TreeNode => {
+		if (gainMode.type !== "gainSequence") {
+			return makeLeaf(treeDepth, cumulativePnlCents, pathParts, wins, losses, "stop")
+		}
+
+		// Cap depth to prevent infinite recursion (repeatLastStep)
+		if (chainDepth > MAX_COMPOUNDING_DEPTH) {
+			return makeLeaf(treeDepth, cumulativePnlCents, pathParts, wins, losses, "continues")
+		}
+
+		// Check target already hit
+		if (gainMode.dailyTargetCents !== null && cumulativePnlCents >= gainMode.dailyTargetCents) {
+			return makeLeaf(treeDepth, cumulativePnlCents, pathParts, wins, losses, "target")
+		}
+
+		const seqLen = gainMode.sequence.length
+		let step: (typeof gainMode.sequence)[number]
+
+		if (stepIndex < seqLen) {
+			step = gainMode.sequence[stepIndex]
+		} else if (gainMode.repeatLastStep && seqLen > 0) {
+			step = gainMode.sequence[seqLen - 1]
+		} else {
+			// Sequence exhausted, no repeat
+			return makeLeaf(treeDepth, cumulativePnlCents, pathParts, wins, losses, "stop")
+		}
+
+		const stepRiskCents = computeGainStepRisk(step, previousStepRiskCents)
+
+		if (stepRiskCents <= 0) {
+			return makeLeaf(treeDepth, cumulativePnlCents, pathParts, wins, losses, "continues")
+		}
+
+		const gainCents = stepRiskCents * rewardRatio
+		const tradeNumber = chainDepth + 1
+
+		const node: DecisionNode = {
+			id: `dg-${tradeNumber}-${pathParts.join("")}`,
+			type: "decision",
+			depth: treeDepth,
+			tradeNumber,
+			riskCents: stepRiskCents,
+			children: {
+				loss: null as unknown as TreeNode,
+				gain: null as unknown as TreeNode,
+			},
+			x: 0,
+			y: 0,
+		}
+
+		// Loss branch
+		const lossPnl = cumulativePnlCents - stepRiskCents
+		const lossPath = [...pathParts, "L"]
+
+		if (gainMode.stopOnFirstLoss) {
+			node.children.loss = makeLeaf(treeDepth + 1, lossPnl, lossPath, wins, losses + 1, "stop")
+		} else {
+			node.children.loss = buildGainSequenceChain(
+				treeDepth + 1, lossPnl, lossPath, wins, losses + 1,
+				stepIndex + 1, chainDepth + 1, stepRiskCents
+			)
+		}
+
+		// Win branch — check target, then continue
+		const winPnl = cumulativePnlCents + gainCents
+		const winPath = [...pathParts, "G"]
+
+		if (gainMode.dailyTargetCents !== null && winPnl >= gainMode.dailyTargetCents) {
+			node.children.gain = makeLeaf(treeDepth + 1, winPnl, winPath, wins + 1, losses, "target")
+		} else {
+			node.children.gain = buildGainSequenceChain(
+				treeDepth + 1, winPnl, winPath, wins + 1, losses,
+				stepIndex + 1, chainDepth + 1, stepRiskCents
 			)
 		}
 

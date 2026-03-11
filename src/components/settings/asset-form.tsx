@@ -115,7 +115,7 @@ export const AssetForm = ({
 					multiplier: "1",
 				})
 			} else {
-				setError(result.error ?? "An error occurred")
+				setError(result.error ?? tCommon("genericError"))
 			}
 		})
 	}

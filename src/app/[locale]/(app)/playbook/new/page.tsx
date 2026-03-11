@@ -15,6 +15,7 @@ import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
 import type { PendingImage } from "@/lib/validations/upload"
 import type { StrategyConditionInput } from "@/types/trading-condition"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { Filter, ImageIcon } from "lucide-react"
 
 const NewStrategyPage = () => {
@@ -22,6 +23,7 @@ const NewStrategyPage = () => {
 	const t = useTranslations("playbook.form")
 	const tScenarios = useTranslations("playbook.scenarios")
 	const tCommon = useTranslations("common")
+	const { isAdmin } = useFeatureAccess()
 	const [isPending, startTransition] = useTransition()
 	const [error, setError] = useState<string | null>(null)
 	const [conditions, setConditions] = useState<StrategyConditionInput[]>([])
@@ -289,6 +291,7 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Conditions Section */}
+						{isAdmin && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<Filter className="text-acc-100 h-5 w-5" />
@@ -301,6 +304,7 @@ const NewStrategyPage = () => {
 							</p>
 							<ConditionPicker value={conditions} onChange={setConditions} />
 						</div>
+						)}
 
 						{/* Scenarios hint */}
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">

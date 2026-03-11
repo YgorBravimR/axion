@@ -40,6 +40,7 @@ const MonteCarloV2Content = ({
 	dataSourceOptions,
 }: MonteCarloV2ContentProps) => {
 	const t = useTranslations("monteCarlo.v2")
+	const tMC = useTranslations("monteCarlo")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
 
@@ -203,7 +204,7 @@ const MonteCarloV2Content = ({
 			}
 		} catch (error) {
 			console.error("V2 simulation error:", error)
-			setError("Failed to run V2 simulation")
+			setError(tMC("errors.failedToRunSimulation"))
 		} finally {
 			hideLoading()
 			setIsRunning(false)
@@ -544,7 +545,7 @@ const MonteCarloV2Content = ({
 							className="w-full sm:min-w-[200px] sm:w-auto"
 						>
 							{isRunning ? (
-								<LoadingSpinner size="sm" label="Running Simulation..." />
+								<LoadingSpinner size="sm" label={tMC("runningSimulation")} />
 							) : (
 								<>
 									<Dices className="mr-s-200 h-5 w-5" />

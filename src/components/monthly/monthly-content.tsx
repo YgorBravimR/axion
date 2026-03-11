@@ -35,6 +35,7 @@ export const MonthlyContent = ({
 	const [isPending, startTransition] = useTransition()
 	const [currentDate, setCurrentDate] = useState(() => startOfMonth(effectiveDate))
 	const [monthOffset, setMonthOffset] = useState(0)
+	const [hasNavigated, setHasNavigated] = useState(false)
 
 	const [monthlyData, setMonthlyData] = useState<MonthlyResultsWithProp | null>(
 		initialMonthlyData
@@ -51,6 +52,7 @@ export const MonthlyContent = ({
 		setProjectionData(initialProjectionData)
 		setComparisonData(initialComparisonData)
 		setMonthOffset(0)
+		setHasNavigated(false)
 		setCurrentDate(startOfMonth(effectiveDate))
 	}, [initialMonthlyData, initialProjectionData, initialComparisonData, effectiveDate])
 
@@ -88,13 +90,13 @@ export const MonthlyContent = ({
 
 	// Load data when month changes (but not on initial render since we have initial data)
 	useEffect(() => {
-		// Skip initial render - we already have initial data
-		if (monthOffset === 0) return
+		// Skip initial render - we already have server-provided data
+		if (!hasNavigated) return
 
 		startTransition(() => {
 			loadData(monthOffset)
 		})
-	}, [monthOffset])
+	}, [monthOffset, hasNavigated])
 
 	const handleMonthChange = (newDate: Date) => {
 		const currentMonthStart = startOfMonth(effectiveDate)
@@ -105,6 +107,7 @@ export const MonthlyContent = ({
 			(currentMonthStart.getFullYear() - newMonthStart.getFullYear()) * 12 +
 			(currentMonthStart.getMonth() - newMonthStart.getMonth())
 
+		setHasNavigated(true)
 		setMonthOffset(diffMonths)
 		setCurrentDate(newMonthStart)
 	}

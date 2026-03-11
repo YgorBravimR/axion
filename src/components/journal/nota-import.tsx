@@ -37,6 +37,7 @@ type Step = "upload" | "review" | "enriching"
 
 export const NotaImport = () => {
 	const t = useTranslations("journal.nota")
+	const tCommon = useTranslations("common")
 	const tOverlay = useTranslations("overlay")
 	const router = useRouter()
 	const { showToast } = useToast()
@@ -65,12 +66,12 @@ export const NotaImport = () => {
 	const handleFileSelect = useCallback(
 		async (file: File) => {
 			if (!file.name.toLowerCase().endsWith(".pdf")) {
-				showToast("error", "Please select a PDF file")
+				showToast("error", t("invalidPdfFile"))
 				return
 			}
 
 			if (file.size > 10 * 1024 * 1024) {
-				showToast("error", "File too large (max 10MB)")
+				showToast("error", t("fileTooLarge"))
 				return
 			}
 
@@ -127,7 +128,7 @@ export const NotaImport = () => {
 				setIsProcessing(false)
 				hideLoading()
 			} catch {
-				showToast("error", "Failed to process nota PDF")
+				showToast("error", t("failedToProcess"))
 				setIsProcessing(false)
 				hideLoading()
 			}
@@ -249,7 +250,7 @@ export const NotaImport = () => {
 				showToast("error", result.message)
 			}
 		} catch {
-			showToast("error", "An unexpected error occurred")
+			showToast("error", tCommon("unexpectedError"))
 		} finally {
 			hideLoading()
 			setIsEnriching(false)
@@ -341,7 +342,7 @@ export const NotaImport = () => {
 								variant="ghost"
 								size="icon"
 								onClick={handleClear}
-								aria-label="Clear file"
+								aria-label={tCommon("clearFile")}
 							>
 								<X className="h-4 w-4" />
 							</Button>
@@ -569,13 +570,13 @@ export const NotaImport = () => {
 							variant="outline"
 							onClick={handleClear}
 						>
-							Cancel
+							{tCommon("cancel")}
 						</Button>
 
 						<div className="gap-m-400 flex items-center">
 							{selectedCount > 0 && (
 								<span className="text-small text-txt-300">
-									{selectedCount} trades selected
+									{tCommon("tradesSelected", { count: selectedCount })}
 								</span>
 							)}
 							<Button
@@ -610,12 +611,10 @@ export const NotaImport = () => {
 					<p className="mt-s-300 text-small text-txt-300">{t("description")}</p>
 					<div className="mt-m-400 border-acc-100/30 bg-acc-100/10 p-s-300 rounded-md border">
 						<p className="text-small text-acc-100 font-medium">
-							SINACOR Standard (B3)
+							{t("sinacorTitle")}
 						</p>
 						<p className="mt-s-100 text-tiny text-txt-300">
-							Works with all Brazilian brokers: Genial, Clear, XP, Rico, BTG,
-							and others. Upload the PDF exported from your broker portal after
-							each trading session.
+							{t("sinacorDesc")}
 						</p>
 					</div>
 				</div>

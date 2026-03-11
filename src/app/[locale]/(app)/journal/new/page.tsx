@@ -4,6 +4,7 @@ import { getTags } from "@/app/actions/tags"
 import { getActiveAssets } from "@/app/actions/assets"
 import { getActiveTimeframes } from "@/app/actions/timeframes"
 import { getServerEffectiveNow } from "@/lib/effective-date"
+import { getCurrentAccount } from "@/app/actions/auth"
 
 interface NewTradePageProps {
 	searchParams: Promise<{ returnTo?: string; asset?: string }>
@@ -12,17 +13,21 @@ interface NewTradePageProps {
 const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	const { returnTo, asset } = await searchParams
 
-	const [strategiesResult, tagsResult, assets, timeframes, effectiveDate] = await Promise.all([
+	const [strategiesResult, tagsResult, assets, timeframes, effectiveDate, account] = await Promise.all([
 		getStrategies(),
 		getTags(),
 		getActiveAssets().catch(() => []),
 		getActiveTimeframes().catch(() => []),
 		getServerEffectiveNow(),
+		getCurrentAccount(),
 	])
 
 	const strategies =
 		strategiesResult.status === "success" ? strategiesResult.data || [] : []
 	const tags = tagsResult.status === "success" ? tagsResult.data || [] : []
+
+	// URL query param takes priority, then account's default asset
+	const resolvedDefaultAsset = asset || account?.defaultAsset || undefined
 
 	// Determine back link based on returnTo
 	const backLink = returnTo || "/journal"
@@ -38,7 +43,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 							assets={assets}
 							timeframes={timeframes}
 							redirectTo={returnTo}
-							defaultAssetId={asset}
+							defaultAssetId={resolvedDefaultAsset}
 							defaultDate={effectiveDate.toISOString()}
 						/>
 					</div>

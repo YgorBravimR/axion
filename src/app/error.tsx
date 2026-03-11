@@ -1,3 +1,4 @@
+// Root error boundary - hardcoded strings (no locale context available)
 "use client"
 
 import { useEffect } from "react"

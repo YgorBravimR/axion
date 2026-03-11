@@ -34,7 +34,7 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"settings:data-import": { requiredRole: "admin", description: "Data Import card on account tab" },
 	"settings:data-export": { requiredRole: "admin", description: "Data Export card on account tab" },
 	"settings:users-tab": { requiredRole: "admin", description: "User management tab" },
-	"settings:conditions-tab": { requiredRole: "trader", description: "Trading conditions tab" },
+	"settings:conditions-tab": { requiredRole: "admin", description: "Trading conditions tab" },
 }
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {

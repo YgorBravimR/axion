@@ -32,6 +32,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/toast"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { getUserAccounts, getCurrentAccount, revalidateAfterAccountSwitch } from "@/app/actions/auth"
 import { createAccount } from "@/app/actions/accounts"
 import { useAccountTransition } from "@/components/ui/account-transition-overlay"
@@ -44,6 +45,7 @@ interface AccountSwitcherProps {
 
 export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 	const t = useTranslations("auth.accountSwitcher")
+	const { isAdmin } = useFeatureAccess()
 	const { update } = useSession()
 	const { showToast } = useToast()
 	const { showAccountTransition } = useAccountTransition()
@@ -207,6 +209,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 					onSubmit={handleCreateAccount}
 					isPending={isPending}
 					t={t}
+					isAdmin={isAdmin}
 				/>
 			</>
 		)
@@ -280,6 +283,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 				onSubmit={handleCreateAccount}
 				isPending={isPending}
 				t={t}
+				isAdmin={isAdmin}
 			/>
 		</>
 	)
@@ -306,6 +310,7 @@ interface CreateAccountDialogProps {
 	onSubmit: () => void
 	isPending: boolean
 	t: (key: string) => string
+	isAdmin: boolean
 }
 
 const CreateAccountDialog = ({
@@ -316,6 +321,7 @@ const CreateAccountDialog = ({
 	onSubmit,
 	isPending,
 	t,
+	isAdmin,
 }: CreateAccountDialogProps) => {
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -366,12 +372,14 @@ const CreateAccountDialog = ({
 										{t("propFirm")}
 									</div>
 								</SelectItem>
-								<SelectItem value="replay">
-									<div className="flex items-center gap-2">
-										<RotateCcw className="h-4 w-4" />
-										{t("replay")}
-									</div>
-								</SelectItem>
+								{isAdmin && (
+									<SelectItem value="replay">
+										<div className="flex items-center gap-2">
+											<RotateCcw className="h-4 w-4" />
+											{t("replay")}
+										</div>
+									</SelectItem>
+								)}
 							</SelectContent>
 						</Select>
 					</div>

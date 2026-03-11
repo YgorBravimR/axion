@@ -103,7 +103,7 @@ export const TimeframeForm = ({
 				onOpenChange(false)
 				onSuccess?.()
 			} else {
-				setError(result.error ?? "An error occurred")
+				setError(result.error ?? tCommon("genericError"))
 			}
 		})
 	}

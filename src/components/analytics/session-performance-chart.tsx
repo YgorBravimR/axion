@@ -13,7 +13,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart-container"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
-import { InsightCard, InsightCardPlaceholder } from "@/components/analytics/insight-card"
+import { TrendingUp, TrendingDown } from "lucide-react"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SessionPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
@@ -157,6 +157,7 @@ export const SessionPerformanceChart = ({
 }: SessionPerformanceChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
+	const tCommon = useTranslations("common")
 	const tLabels = useTranslations("analytics.session.labels")
 
 	const isRMode = expectancyMode === "edge"
@@ -344,7 +345,7 @@ export const SessionPerformanceChart = ({
 							</p>
 							{hasTrades && (
 								<p className="text-caption text-txt-300 mt-s-100">
-									{session.winRate.toFixed(0)}% WR ·{" "}
+									{session.winRate.toFixed(0)}% {tCommon("winRateAbbr")} ·{" "}
 									{t("session.totalTrades", {
 										count: session.totalTrades,
 									})}
@@ -355,44 +356,76 @@ export const SessionPerformanceChart = ({
 				})}
 			</div>
 
-			{/* Actionable Insights */}
+			{/* Actionable Insights — Best vs Worst table */}
 			{bestSession && worstSession && (() => {
 				const isSameSession = bestSession === worstSession
-				const showBestAsReal = !isSameSession || bestSession[metricKey] >= 0
-				const showWorstAsReal = !isSameSession || worstSession[metricKey] < 0
+				const showBest = !isSameSession || bestSession[metricKey] >= 0
+				const showWorst = !isSameSession || worstSession[metricKey] < 0
 
 				return (
-					<div className="mt-s-300 sm:mt-m-400 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
-						{showBestAsReal ? (
-							<InsightCard
-								type="best"
-								label={t("session.bestSession")}
-								title={translateSessionLabel(bestSession.sessionLabel)}
-								detail={`${bestSession.winRate.toFixed(0)}% WR · ${formatMetric(bestSession[metricKey])} · ${t("session.totalTrades", { count: bestSession.totalTrades })}`}
-								action={t("session.bestSessionAction")}
-							/>
-						) : (
-							<InsightCardPlaceholder
-								type="best"
-								label={t("session.bestSession")}
-								placeholderText={t("session.bestSessionPlaceholder")}
-							/>
-						)}
-						{showWorstAsReal ? (
-							<InsightCard
-								type="worst"
-								label={t("session.worstSession")}
-								title={translateSessionLabel(worstSession.sessionLabel)}
-								detail={`${worstSession.winRate.toFixed(0)}% WR · ${formatMetric(worstSession[metricKey])} · ${t("session.totalTrades", { count: worstSession.totalTrades })}`}
-								action={t("session.worstSessionAction")}
-							/>
-						) : (
-							<InsightCardPlaceholder
-								type="worst"
-								label={t("session.worstSession")}
-								placeholderText={t("session.worstSessionPlaceholder")}
-							/>
-						)}
+					<div className="mt-s-300 sm:mt-m-400">
+						<div className="border-bg-300 rounded-lg border overflow-x-auto">
+							<table className="w-full text-caption">
+								<thead>
+									<tr className="border-bg-300 border-b">
+										<th className="px-s-300 py-s-200 text-center font-medium" colSpan={3}>
+											<div className="gap-s-100 flex items-center justify-center">
+												<TrendingUp className="text-trade-buy h-3.5 w-3.5" aria-hidden="true" />
+												<span className="text-trade-buy">{t("session.bestSession")}</span>
+											</div>
+										</th>
+										<th className="px-s-300 py-s-200 text-center font-medium" colSpan={3}>
+											<div className="gap-s-100 flex items-center justify-center">
+												<TrendingDown className="text-trade-sell h-3.5 w-3.5" aria-hidden="true" />
+												<span className="text-trade-sell">{t("session.worstSession")}</span>
+											</div>
+										</th>
+									</tr>
+									<tr className="border-bg-300 border-b">
+										<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("session.sessionCol")}</th>
+										<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{isRMode ? t("session.avgR") : t("session.pnl")}</th>
+										<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("session.winRate")}</th>
+										<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("session.sessionCol")}</th>
+										<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{isRMode ? t("session.avgR") : t("session.pnl")}</th>
+										<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("session.winRate")}</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										{showBest ? (
+											<>
+												<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+													{translateSessionLabel(bestSession.sessionLabel)}
+												</td>
+												<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+													{formatMetric(bestSession[metricKey])}
+												</td>
+												<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+													{bestSession.winRate.toFixed(0)}% · {bestSession.totalTrades}
+												</td>
+											</>
+										) : (
+											<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										)}
+										{showWorst ? (
+											<>
+												<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+													{translateSessionLabel(worstSession.sessionLabel)}
+												</td>
+												<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+													{formatMetric(worstSession[metricKey])}
+												</td>
+												<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+													{worstSession.winRate.toFixed(0)}% · {worstSession.totalTrades}
+												</td>
+											</>
+										) : (
+											<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										)}
+									</tr>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				)
 			})()}

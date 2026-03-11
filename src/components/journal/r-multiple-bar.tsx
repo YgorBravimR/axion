@@ -1,3 +1,6 @@
+"use client"
+
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatRMultiple } from "@/lib/calculations"
 
@@ -14,6 +17,8 @@ export const RMultipleBar = ({
 	maxR = 5,
 	className,
 }: RMultipleBarProps) => {
+	const t = useTranslations("journal.rMultiple")
+
 	// Normalize values to percentage of maxR
 	const normalizeToPercent = (value: number) => {
 		const clamped = Math.max(-maxR, Math.min(maxR, value))
@@ -31,7 +36,7 @@ export const RMultipleBar = ({
 		<div className={cn("space-y-s-200", className)}>
 			{/* Labels */}
 			<div className="text-tiny flex items-center justify-between">
-				<span className="text-txt-300">Realized R</span>
+				<span className="text-txt-300">{t("realizedR")}</span>
 				<span
 					className={cn(
 						"font-semibold",
@@ -88,7 +93,7 @@ export const RMultipleBar = ({
 			{planned !== undefined && (
 				<div className="text-tiny flex items-center justify-between">
 					<span className="text-txt-300">
-						Planned: <span>{formatRMultiple(planned)}</span>
+						{t("planned")} <span>{formatRMultiple(planned)}</span>
 					</span>
 					<span
 						className={cn(
@@ -96,7 +101,7 @@ export const RMultipleBar = ({
 							hitTarget ? "text-trade-buy" : "text-warning"
 						)}
 					>
-						{hitTarget ? "Target hit" : "Below target"}
+						{hitTarget ? t("targetHit") : t("belowTarget")}
 					</span>
 				</div>
 			)}

@@ -59,9 +59,9 @@ export const GeneralSettings = () => {
 			if (result.status === "success" && result.data) {
 				setSettings(result.data)
 				setIsEditing(false)
-				showToast("success", "Settings updated successfully")
+				showToast("success", t("settingsUpdated"))
 			} else {
-				showToast("error", result.message || "Failed to update settings")
+				showToast("error", result.message || t("settingsUpdateFailed"))
 			}
 		})
 	}
@@ -96,7 +96,7 @@ export const GeneralSettings = () => {
 						<div>
 							<p className="text-small text-txt-100">{t("language")}</p>
 							<p className="text-tiny text-txt-300">
-								Português (Brasil) / English
+								{t("languageDesc")}
 							</p>
 						</div>
 						<LanguageSwitcher />
@@ -223,7 +223,7 @@ export const GeneralSettings = () => {
 							href="/journal/new"
 							className="text-acc-100 hover:underline"
 						>
-							Journal → New Trade → CSV Import
+							{t("importNavLink")}
 						</Link>{" "}
 						{t("toImport")}
 					</p>

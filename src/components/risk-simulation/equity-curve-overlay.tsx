@@ -33,6 +33,7 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+	const t = useTranslations("riskSimulation.chart")
 	if (!active || !payload || payload.length === 0) return null
 
 	const data = payload[0].payload
@@ -40,13 +41,13 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
 			<p className="text-tiny text-txt-300">
-				Trade #{data.tradeIndex + 1} — {data.dayKey}
+				{t("tooltipTrade", { index: data.tradeIndex + 1, day: data.dayKey })}
 			</p>
 			<p className="text-small text-acc-200">
-				Original: R${data.original.toFixed(2)}
+				{t("tooltipOriginal", { value: data.original.toFixed(2) })}
 			</p>
 			<p className="text-small text-trade-buy">
-				Simulated: R${data.simulated.toFixed(2)}
+				{t("tooltipSimulated", { value: data.simulated.toFixed(2) })}
 			</p>
 		</div>
 	)

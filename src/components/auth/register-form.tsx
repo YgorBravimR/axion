@@ -49,12 +49,12 @@ export const RegisterForm = () => {
 		setError(null)
 
 		if (!allRequirementsMet) {
-			setError("Password does not meet requirements")
+			setError(t("passwordNotMeetRequirements"))
 			return
 		}
 
 		if (!passwordsMatch) {
-			setError("Passwords do not match")
+			setError(t("passwordsDoNotMatch"))
 			return
 		}
 
@@ -62,7 +62,7 @@ export const RegisterForm = () => {
 			const result = await registerUser(formData)
 
 			if (result.status === "error") {
-				setError(result.error ?? "An error occurred")
+				setError(result.error ?? t("genericError"))
 				return
 			}
 
@@ -116,7 +116,7 @@ export const RegisterForm = () => {
 					<Input
 						id="name"
 						type="text"
-						placeholder="John Doe"
+						placeholder={t("namePlaceholder")}
 						value={formData.name}
 						onChange={(e) => handleChange("name", e.target.value)}
 						required
@@ -216,7 +216,7 @@ export const RegisterForm = () => {
 						</button>
 					</div>
 					{formData.confirmPassword.length > 0 && !passwordsMatch && (
-						<p className="text-tiny text-fb-error">Passwords do not match</p>
+						<p className="text-tiny text-fb-error">{t("passwordsDoNotMatch")}</p>
 					)}
 				</div>
 

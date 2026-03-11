@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
 	CheckCircle,
 	XCircle,
@@ -15,14 +16,16 @@ interface ComplianceDashboardProps {
 }
 
 export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
+	const t = useTranslations("playbook.compliance")
+
 	if (!data) {
 		return (
 			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-					Compliance Overview
+					{t("overview")}
 				</h2>
 				<div className="text-txt-300 mt-m-400 flex h-24 items-center justify-center">
-					Unable to load compliance data
+					{t("unableToLoad")}
 				</div>
 			</div>
 		)
@@ -45,15 +48,15 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-				Compliance Overview
+				{t("overview")}
 			</h2>
 
 			{data.totalTrackedTrades === 0 ? (
 				<div className="text-txt-300 mt-m-400 flex h-24 items-center justify-center text-center">
 					<div>
-						<p>No compliance data yet</p>
+						<p>{t("noDataYet")}</p>
 						<p className="text-tiny mt-s-100">
-							Track your plan adherence when logging trades
+							{t("trackAdherence")}
 						</p>
 					</div>
 				</div>
@@ -97,15 +100,7 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 
 						<div className="flex-1">
 							<p className="text-small text-txt-200">
-								You followed your trading plan on{" "}
-								<span className="text-txt-100 font-semibold">
-									{data.followedPlanCount}
-								</span>{" "}
-								out of{" "}
-								<span className="text-txt-100 font-semibold">
-									{data.totalTrackedTrades}
-								</span>{" "}
-								tracked trades
+								{t("followedPlan", { followed: data.followedPlanCount, total: data.totalTrackedTrades })}
 							</p>
 
 							{/* Compliance Bar */}
@@ -127,11 +122,11 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 								<div className="mt-s-200 text-tiny flex justify-between">
 									<span className="text-trade-buy gap-s-100 flex items-center">
 										<CheckCircle className="h-3 w-3" />
-										Followed: {data.followedPlanCount}
+										{t("followedCount", { count: data.followedPlanCount })}
 									</span>
 									<span className="text-trade-sell gap-s-100 flex items-center">
 										<XCircle className="h-3 w-3" />
-										Deviated: {data.notFollowedCount}
+										{t("deviatedCount", { count: data.notFollowedCount })}
 									</span>
 								</div>
 							</div>
@@ -145,13 +140,12 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 								<div className="bg-trade-buy/10 border-trade-buy/30 gap-s-300 p-s-300 flex items-center rounded-lg border">
 									<TrendingUp className="text-trade-buy h-5 w-5 shrink-0" />
 									<div>
-										<p className="text-tiny text-txt-300">Best Compliance</p>
+										<p className="text-tiny text-txt-300">{t("bestCompliance")}</p>
 										<p className="text-small text-txt-100 font-semibold">
 											{data.topPerformingStrategy.name}
 										</p>
 										<p className="text-tiny text-trade-buy">
-											{data.topPerformingStrategy.compliance.toFixed(0)}%
-											compliance
+											{t("compliancePercent", { percent: data.topPerformingStrategy.compliance.toFixed(0) })}
 										</p>
 									</div>
 								</div>
@@ -161,13 +155,12 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 								<div className="bg-warning/10 border-warning/30 gap-s-300 p-s-300 flex items-center rounded-lg border">
 									<AlertTriangle className="text-warning h-5 w-5 shrink-0" />
 									<div>
-										<p className="text-tiny text-txt-300">Needs Attention</p>
+										<p className="text-tiny text-txt-300">{t("needsAttention")}</p>
 										<p className="text-small text-txt-100 font-semibold">
 											{data.needsAttentionStrategy.name}
 										</p>
 										<p className="text-tiny text-warning">
-											{data.needsAttentionStrategy.compliance.toFixed(0)}%
-											compliance
+											{t("compliancePercent", { percent: data.needsAttentionStrategy.compliance.toFixed(0) })}
 										</p>
 									</div>
 								</div>
@@ -180,10 +173,9 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 						<div className="gap-s-200 flex items-center">
 							<Target className="text-acc-100 h-4 w-4" />
 							<span className="text-small text-txt-200">
-								<span className="text-txt-100 font-semibold">
-									{data.strategiesCount}
-								</span>{" "}
-								{data.strategiesCount === 1 ? "Strategy" : "Strategies"}
+								{data.strategiesCount === 1
+									? t("strategiesCount", { count: data.strategiesCount })
+									: t("strategiesCountPlural", { count: data.strategiesCount })}
 							</span>
 						</div>
 					</div>

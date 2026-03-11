@@ -254,8 +254,8 @@ const AnalyticsContent = ({
 					{t("time.title")}
 				</h2>
 
-				{/* Heatmap + Session: stacked on small/medium, side-by-side on xl+ */}
-				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 xl:grid-cols-2">
+				{/* Heatmap + Session: stacked on small/medium, side-by-side on 2xl+ */}
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 2xl:grid-cols-2">
 					<TimeHeatmap data={timeHeatmap} expectancyMode={expectancyMode} />
 					<SessionPerformanceChart
 						data={sessionPerformance}

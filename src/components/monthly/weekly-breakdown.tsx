@@ -13,6 +13,7 @@ interface WeeklyBreakdownProps {
 
 export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 	const t = useTranslations("monthly.weeklyBreakdown")
+	const tCommon = useTranslations("common")
 	const locale = useLocale()
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
 
@@ -67,10 +68,10 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 								</div>
 								<div className="flex items-center gap-s-200 sm:gap-m-400">
 									<span className="hidden sm:inline text-tiny text-txt-300">
-										{week.tradeCount} trades
+										{t("tradesCount", { count: week.tradeCount })}
 									</span>
 									<span className="hidden sm:inline text-tiny text-txt-300">
-										{week.winRate.toFixed(0)}% WR
+										{t("winRateSummary", { rate: week.winRate.toFixed(0), abbr: tCommon("winRateAbbr") })}
 									</span>
 									<span
 										className={cn(

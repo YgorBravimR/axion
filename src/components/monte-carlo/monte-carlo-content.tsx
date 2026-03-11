@@ -81,7 +81,7 @@ export const MonteCarloContent = ({
 				setSourceStats(null)
 			}
 		} catch (err) {
-			setError("Failed to load stats")
+			setError(t("errors.failedToLoadStats"))
 			setSourceStats(null)
 		} finally {
 			setIsLoadingStats(false)
@@ -126,7 +126,7 @@ export const MonteCarloContent = ({
 				setError(errorDetails || response.message)
 			}
 		} catch (err) {
-			setError("Failed to run simulation")
+			setError(t("errors.failedToRunSimulation"))
 		} finally {
 			hideLoading()
 			setIsRunning(false)
@@ -299,7 +299,7 @@ const EdgeExpectancyContent = ({
 							className="w-full sm:min-w-[200px] sm:w-auto"
 						>
 							{isRunning ? (
-								<LoadingSpinner size="sm" label="Running Simulation..." />
+								<LoadingSpinner size="sm" label={t("runningSimulation")} />
 							) : (
 								<>
 									<Dices className="mr-s-200 h-5 w-5" />

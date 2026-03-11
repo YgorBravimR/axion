@@ -190,27 +190,33 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			</div>
 
 			{/* Heatmap Grid */}
-			<div className="overflow-x-auto">
-				<div>
+			<div className="overflow-x-auto flex justify-center">
+				<div
+					className="grid w-fit gap-1"
+					style={{
+						gridTemplateColumns: `auto repeat(${TRADING_HOURS.length}, 48px)`,
+					}}
+				>
 					{/* Hour header row */}
-					<div className="mb-s-200 flex items-end">
-						<div className="w-14 shrink-0" />
-						{TRADING_HOURS.map((hour) => (
-							<div
-								key={hour}
-								className="text-caption text-txt-300 flex-1 text-center font-medium"
-							>
-								{hour}h
-							</div>
-						))}
-					</div>
+					<div />
+					{TRADING_HOURS.map((hour) => (
+						<div
+							key={hour}
+							className="text-caption text-txt-300 pb-s-100 text-center font-medium"
+						>
+							{hour}h
+						</div>
+					))}
 
 					{/* Day rows */}
 					{days.map((day, dayIndex) => {
 						const dayOfWeek = dayIndex + 1
 						return (
-							<div key={day} className="mb-s-100 flex items-center">
-								<div className="text-small text-txt-200 pr-s-200 w-14 shrink-0 text-right font-medium">
+							<>
+								<div
+									key={`label-${day}`}
+									className="text-small text-txt-200 pr-s-200 flex items-center justify-end font-medium"
+								>
 									{dayLabels[dayIndex]}
 								</div>
 								{TRADING_HOURS.map((hour) => {
@@ -218,42 +224,41 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									const hasData = cell && cell.totalTrades > 0
 									const isHovered = hoveredCell === cell
 									return (
-										<div key={`${day}-${hour}`} className="flex-1 px-0.5">
-											<div
-												className={cn(
-													"relative flex h-10 items-center justify-center rounded-md transition-all",
-													getCellStyle(cell),
-													hasData &&
-														"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
-													isHovered && "ring-acc-100 scale-105 ring-2"
-												)}
-												onMouseEnter={() => {
-													if (hasData) setHoveredCell(cell)
-												}}
-												onMouseLeave={() => setHoveredCell(null)}
-												onFocus={() => {
-													if (hasData) setHoveredCell(cell)
-												}}
-												onBlur={() => setHoveredCell(null)}
-												tabIndex={hasData ? 0 : undefined}
-												role={hasData ? "button" : undefined}
-												aria-label={
-													hasData
-														? `${cell.dayName} ${cell.hourLabel}: ${cell.totalTrades} trades, ${cell.winRate.toFixed(0)}% win rate`
-														: undefined
-												}
-											>
-												{/* Trade count inside cell */}
-												{hasData && (
-													<span className="text-micro font-semibold text-white/90 drop-shadow-sm">
-														{cell.totalTrades}
-													</span>
-												)}
-											</div>
+										<div
+											key={`${day}-${hour}`}
+											className={cn(
+												"relative flex h-10 items-center justify-center rounded-md transition-all",
+												getCellStyle(cell),
+												hasData &&
+													"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
+												isHovered && "ring-acc-100 scale-105 ring-2"
+											)}
+											onMouseEnter={() => {
+												if (hasData) setHoveredCell(cell)
+											}}
+											onMouseLeave={() => setHoveredCell(null)}
+											onFocus={() => {
+												if (hasData) setHoveredCell(cell)
+											}}
+											onBlur={() => setHoveredCell(null)}
+											tabIndex={hasData ? 0 : undefined}
+											role={hasData ? "button" : undefined}
+											aria-label={
+												hasData
+													? t("time.heatmapCellAriaLabel", { day: cell.dayName, hour: cell.hourLabel, trades: cell.totalTrades, winRate: cell.winRate.toFixed(0) })
+													: undefined
+											}
+										>
+											{/* Trade count inside cell */}
+											{hasData && (
+												<span className="text-micro font-semibold text-white/90 drop-shadow-sm">
+													{cell.totalTrades}
+												</span>
+											)}
 										</div>
 									)
 								})}
-							</div>
+							</>
 						)
 					})}
 				</div>
@@ -383,160 +388,145 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				</div>
 			</div>
 
-			{/* Actionable Insights — 2 merged cards: Best / Worst Trading Window */}
+			{/* Actionable Insights — Best vs Worst table */}
 			{cellsWithTrades.length > 0 && (
-				<div className="mt-s-300 sm:mt-m-400 gap-s-300 grid grid-cols-1 sm:grid-cols-2">
-					{/* Best Trading Window */}
-					{bestSlot && getMetricValue(bestSlot) >= 0 ? (
-						<div className="gap-s-300 border-trade-buy/20 bg-trade-buy/5 p-s-300 sm:p-m-400 flex items-start rounded-lg border">
-							<div className="bg-trade-buy/15 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-								<TrendingUp className="text-trade-buy h-4 w-4" />
-							</div>
-							<div className="space-y-s-200 min-w-0">
-								<p className="text-caption text-txt-300">
-									{t("time.bestWindow")}
-								</p>
-								<div>
-									<span className="text-caption text-txt-300">
-										{t("time.windowSlot")}:{" "}
-									</span>
-									<span className="text-small text-trade-buy font-semibold">
-										{getTranslatedDayShort(bestSlot.dayName)}{" "}
-										{bestSlot.hourLabel}
-									</span>
-									<span className="text-caption text-trade-buy/80">
-										{" "}
-										· {bestSlot.winRate.toFixed(0)}% WR ·{" "}
-										{formatMetric(getMetricValue(bestSlot))} ·{" "}
-										{t("time.totalTrades", { count: bestSlot.totalTrades })}
-									</span>
-								</div>
-								{bestHour && (
-									<div>
-										<span className="text-caption text-txt-300">
-											{t("time.windowHour")}:{" "}
-										</span>
-										<span className="text-small text-trade-buy font-semibold">
-											{bestHour.label}
-										</span>
-										<span className="text-caption text-trade-buy/80">
-											{" "}
-											· {bestHour.winRate.toFixed(0)}% WR ·{" "}
-											{formatAggregateMetric(bestHour)} ·{" "}
-											{t("time.totalTrades", { count: bestHour.totalTrades })}
-										</span>
-									</div>
-								)}
-								{bestDay && (
-									<div>
-										<span className="text-caption text-txt-300">
-											{t("time.windowDay")}:{" "}
-										</span>
-										<span className="text-small text-trade-buy font-semibold">
-											{bestDay.dayLabel}
-										</span>
-										<span className="text-caption text-trade-buy/80">
-											{" "}
-											· {bestDay.winRate.toFixed(0)}% WR ·{" "}
-											{formatAggregateMetric(bestDay)} ·{" "}
-											{t("time.totalTrades", { count: bestDay.totalTrades })}
-										</span>
-									</div>
-								)}
-							</div>
-						</div>
-					) : (
-						<div className="gap-s-300 border-bg-300 bg-bg-300/10 p-s-300 sm:p-m-400 flex items-start rounded-lg border border-dashed">
-							<div className="bg-bg-300/20 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-								<TrendingUp className="text-txt-300 h-4 w-4" />
-							</div>
-							<div className="min-w-0">
-								<p className="text-caption text-txt-300">
-									{t("time.bestWindow")}
-								</p>
-								<p className="text-small text-txt-300 font-medium">—</p>
-								<p className="text-caption text-txt-300 mt-s-100">
-									{t("time.bestWindowPlaceholder")}
-								</p>
-							</div>
-						</div>
-					)}
+				<div className="mt-s-300 sm:mt-m-400">
+					<div className="border-bg-300 rounded-lg border overflow-x-auto">
+						<table className="w-full text-caption">
+							<thead>
+								<tr className="border-bg-300 border-b">
+									<th className="px-s-300 py-s-200 text-txt-300 text-left font-medium" />
+									<th className="px-s-300 py-s-200 text-center font-medium" colSpan={3}>
+										<div className="gap-s-100 flex items-center justify-center">
+											<TrendingUp className="text-trade-buy h-3.5 w-3.5" aria-hidden="true" />
+											<span className="text-trade-buy">{t("time.bestWindow")}</span>
+										</div>
+									</th>
+									<th className="px-s-300 py-s-200 text-center font-medium" colSpan={3}>
+										<div className="gap-s-100 flex items-center justify-center">
+											<TrendingDown className="text-trade-sell h-3.5 w-3.5" aria-hidden="true" />
+											<span className="text-trade-sell">{t("time.worstWindow")}</span>
+										</div>
+									</th>
+								</tr>
+								<tr className="border-bg-300 border-b">
+									<th className="px-s-300 py-s-100 text-txt-300 text-left font-medium" />
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.windowSlot")}</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{isRMode ? t("time.avgR") : t("time.pnl")}</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.winRate")}</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.windowSlot")}</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{isRMode ? t("time.avgR") : t("time.pnl")}</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.winRate")}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{/* Slot row (day × hour) */}
+								<tr className="border-bg-300 border-b">
+									<td className="px-s-300 py-s-200 text-txt-200 font-medium whitespace-nowrap">{t("time.windowSlot")}</td>
+									{bestSlot && getMetricValue(bestSlot) >= 0 ? (
+										<>
+											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+												{getTranslatedDayShort(bestSlot.dayName)} {bestSlot.hourLabel}
+											</td>
+											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+												{formatMetric(getMetricValue(bestSlot))}
+											</td>
+											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+												{bestSlot.winRate.toFixed(0)}% · {bestSlot.totalTrades}
+											</td>
+										</>
+									) : (
+										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+									)}
+									{worstSlot && getMetricValue(worstSlot) < 0 ? (
+										<>
+											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+												{getTranslatedDayShort(worstSlot.dayName)} {worstSlot.hourLabel}
+											</td>
+											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+												{formatMetric(getMetricValue(worstSlot))}
+											</td>
+											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+												{worstSlot.winRate.toFixed(0)}% · {worstSlot.totalTrades}
+											</td>
+										</>
+									) : (
+										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+									)}
+								</tr>
 
-					{/* Worst Trading Window */}
-					{worstSlot && getMetricValue(worstSlot) < 0 ? (
-						<div className="gap-s-300 border-trade-sell/20 bg-trade-sell/5 p-s-300 sm:p-m-400 flex items-start rounded-lg border">
-							<div className="bg-trade-sell/15 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-								<TrendingDown className="text-trade-sell h-4 w-4" />
-							</div>
-							<div className="space-y-s-200 min-w-0">
-								<p className="text-caption text-txt-300">
-									{t("time.worstWindow")}
-								</p>
-								<div>
-									<span className="text-caption text-txt-300">
-										{t("time.windowSlot")}:{" "}
-									</span>
-									<span className="text-small text-trade-sell font-semibold">
-										{getTranslatedDayShort(worstSlot.dayName)}{" "}
-										{worstSlot.hourLabel}
-									</span>
-									<span className="text-caption text-trade-sell/80">
-										{" "}
-										· {worstSlot.winRate.toFixed(0)}% WR ·{" "}
-										{formatMetric(getMetricValue(worstSlot))} ·{" "}
-										{t("time.totalTrades", { count: worstSlot.totalTrades })}
-									</span>
-								</div>
-								{worstHour && (
-									<div>
-										<span className="text-caption text-txt-300">
-											{t("time.windowHour")}:{" "}
-										</span>
-										<span className="text-small text-trade-sell font-semibold">
-											{worstHour.label}
-										</span>
-										<span className="text-caption text-trade-sell/80">
-											{" "}
-											· {worstHour.winRate.toFixed(0)}% WR ·{" "}
-											{formatAggregateMetric(worstHour)} ·{" "}
-											{t("time.totalTrades", { count: worstHour.totalTrades })}
-										</span>
-									</div>
-								)}
-								{worstDay && (
-									<div>
-										<span className="text-caption text-txt-300">
-											{t("time.windowDay")}:{" "}
-										</span>
-										<span className="text-small text-trade-sell font-semibold">
-											{worstDay.dayLabel}
-										</span>
-										<span className="text-caption text-trade-sell/80">
-											{" "}
-											· {worstDay.winRate.toFixed(0)}% WR ·{" "}
-											{formatAggregateMetric(worstDay)} ·{" "}
-											{t("time.totalTrades", { count: worstDay.totalTrades })}
-										</span>
-									</div>
-								)}
-							</div>
-						</div>
-					) : (
-						<div className="gap-s-300 border-bg-300 bg-bg-300/10 p-s-300 sm:p-m-400 flex items-start rounded-lg border border-dashed">
-							<div className="bg-bg-300/20 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-								<TrendingDown className="text-txt-300 h-4 w-4" />
-							</div>
-							<div className="min-w-0">
-								<p className="text-caption text-txt-300">
-									{t("time.worstWindow")}
-								</p>
-								<p className="text-small text-txt-300 font-medium">—</p>
-								<p className="text-caption text-txt-300 mt-s-100">
-									{t("time.worstWindowPlaceholder")}
-								</p>
-							</div>
-						</div>
-					)}
+								{/* Hour row */}
+								<tr className="border-bg-300 border-b">
+									<td className="px-s-300 py-s-200 text-txt-200 font-medium whitespace-nowrap">{t("time.windowHour")}</td>
+									{bestHour ? (
+										<>
+											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+												{bestHour.label}
+											</td>
+											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+												{formatAggregateMetric(bestHour)}
+											</td>
+											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+												{bestHour.winRate.toFixed(0)}% · {bestHour.totalTrades}
+											</td>
+										</>
+									) : (
+										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+									)}
+									{worstHour ? (
+										<>
+											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+												{worstHour.label}
+											</td>
+											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+												{formatAggregateMetric(worstHour)}
+											</td>
+											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+												{worstHour.winRate.toFixed(0)}% · {worstHour.totalTrades}
+											</td>
+										</>
+									) : (
+										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+									)}
+								</tr>
+
+								{/* Day row */}
+								<tr>
+									<td className="px-s-300 py-s-200 text-txt-200 font-medium whitespace-nowrap">{t("time.windowDay")}</td>
+									{bestDay ? (
+										<>
+											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+												{bestDay.dayLabel}
+											</td>
+											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+												{formatAggregateMetric(bestDay)}
+											</td>
+											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+												{bestDay.winRate.toFixed(0)}% · {bestDay.totalTrades}
+											</td>
+										</>
+									) : (
+										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+									)}
+									{worstDay ? (
+										<>
+											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+												{worstDay.dayLabel}
+											</td>
+											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+												{formatAggregateMetric(worstDay)}
+											</td>
+											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+												{worstDay.winRate.toFixed(0)}% · {worstDay.totalTrades}
+											</td>
+										</>
+									) : (
+										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+									)}
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			)}
 		</div>

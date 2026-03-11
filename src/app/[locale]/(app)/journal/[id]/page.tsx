@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import {
@@ -40,6 +41,7 @@ interface TradeDetailPageProps {
 
 const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 	const { id } = await params
+	const tTrade = await getTranslations("trade")
 	const result = await getTrade(id)
 
 	if (result.status === "error" || !result.data) {
@@ -99,7 +101,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 													: "border-trade-sell/30 text-trade-sell"
 											)}
 										>
-											{isLong ? "LONG" : "SHORT"}
+											{isLong ? tTrade("direction.long").toUpperCase() : tTrade("direction.short").toUpperCase()}
 										</Badge>
 										{trade.timeframe && (
 											<Badge id="trade-detail-timeframe" variant="secondary">
@@ -129,7 +131,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										variant="ghost"
 										size="icon"
 										className="h-9 w-9"
-										aria-label="Edit Trade"
+										aria-label={tTrade("editTrade")}
 									>
 										<Edit className="h-4 w-4" />
 									</Button>
@@ -159,7 +161,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									className="bg-trade-buy/20 text-trade-buy"
 								>
 									<CheckCircle className="mr-1 h-3 w-3" />
-									Winner
+									{tTrade("outcome.winner")}
 								</Badge>
 							)}
 							{isLoss && (
@@ -168,12 +170,12 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									className="bg-trade-sell/20 text-trade-sell"
 								>
 									<XCircle className="mr-1 h-3 w-3" />
-									Loser
+									{tTrade("outcome.loser")}
 								</Badge>
 							)}
 							{trade.outcome === "breakeven" && (
 								<Badge id="trade-detail-outcome-breakeven" variant="secondary">
-									Breakeven
+									{tTrade("outcome.breakeven")}
 								</Badge>
 							)}
 							{trade.followedPlan === true && (
@@ -182,7 +184,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									className="bg-trade-buy/20 text-trade-buy"
 								>
 									<CheckCircle className="mr-1 h-3 w-3" />
-									Followed Plan
+									{tTrade("followedPlan")}
 								</Badge>
 							)}
 							{trade.followedPlan === false && (
@@ -191,7 +193,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									className="bg-warning/20 text-warning"
 								>
 									<AlertTriangle className="mr-1 h-3 w-3" />
-									Discipline Breach
+									{tTrade("detail.disciplineBreach")}
 								</Badge>
 							)}
 						</div>
@@ -204,7 +206,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
 						>
 							<TradeMetric
-								label="Entry Price"
+								label={tTrade("entryPrice")}
 								value={`$${Number(trade.entryPrice).toFixed(2)}`}
 								size="lg"
 							/>
@@ -214,11 +216,11 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
 						>
 							<TradeMetric
-								label="Exit Price"
+								label={tTrade("exitPrice")}
 								value={
 									trade.exitPrice
 										? `$${Number(trade.exitPrice).toFixed(2)}`
-										: "Open"
+										: tTrade("outcome.open")
 								}
 								size="lg"
 							/>
@@ -228,7 +230,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
 						>
 							<TradeMetric
-								label="Position Size"
+								label={tTrade("positionSize")}
 								value={Number(trade.positionSize).toLocaleString()}
 								size="lg"
 							/>
@@ -238,7 +240,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
 						>
 							<TradeMetric
-								label="Risk Amount"
+								label={tTrade("riskAmount")}
 								value={
 									trade.plannedRiskAmount
 										? formatCurrency(fromCents(trade.plannedRiskAmount))
@@ -267,7 +269,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 						>
 							<h3 className="mb-s-300 sm:mb-m-500 gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
 								<Target className="text-acc-100 h-5 w-5" />
-								Risk/Reward Analysis
+								{tTrade("detail.riskRewardAnalysis")}
 							</h3>
 							<RMultipleBar
 								planned={plannedR || undefined}
@@ -283,13 +285,13 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							className="p-m-400 sm:p-m-500 lg:p-m-600"
 						>
 							<h3 className="mb-s-300 sm:mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
-								Trade Excursion
+								{tTrade("detail.tradeExcursion")}
 							</h3>
 							<div className="gap-s-300 sm:gap-m-500 grid grid-cols-1 sm:grid-cols-2">
 								{trade.mfe && (
 									<div className="bg-trade-buy/10 p-s-300 sm:p-m-400 rounded-lg">
 										<p className="text-tiny text-txt-300">
-											MFE (Max Favorable)
+											{tTrade("detail.mfe")}
 										</p>
 										<p className="mt-s-100 text-body text-trade-buy font-semibold">
 											${Number(trade.mfe).toFixed(2)}
@@ -298,7 +300,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								)}
 								{trade.mae && (
 									<div className="bg-trade-sell/10 p-s-300 sm:p-m-400 rounded-lg">
-										<p className="text-tiny text-txt-300">MAE (Max Adverse)</p>
+										<p className="text-tiny text-txt-300">{tTrade("detail.mae")}</p>
 										<p className="mt-s-100 text-body text-trade-sell font-semibold">
 											${Number(trade.mae).toFixed(2)}
 										</p>
@@ -316,12 +318,12 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 						>
 							<h3 className="mb-s-300 sm:mb-m-500 gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
 								<TrendingUp className="text-acc-100 h-5 w-5" />
-								Classification
+								{tTrade("detail.classification")}
 							</h3>
 
 							{trade.strategy && (
 								<div className="mb-m-400">
-									<p className="text-tiny text-txt-300">Strategy</p>
+									<p className="text-tiny text-txt-300">{tTrade("strategy")}</p>
 									<p className="mt-s-100 text-body text-txt-100">
 										{trade.strategy.name}
 									</p>
@@ -363,14 +365,14 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							className="p-m-400 sm:p-m-500 lg:p-m-600"
 						>
 							<h3 className="mb-s-300 sm:mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
-								Journal Notes
+								{tTrade("detail.journalNotes")}
 							</h3>
 
 							<div className="space-y-m-400 sm:space-y-m-500">
 								{trade.preTradeThoughts && (
 									<div>
 										<p className="text-tiny text-txt-300 font-medium">
-											Pre-Trade Thoughts
+											{tTrade("preTradeThoughts")}
 										</p>
 										<p className="mt-s-200 text-small text-txt-100">
 											{trade.preTradeThoughts}
@@ -385,7 +387,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										)}
 										<div>
 											<p className="text-tiny text-txt-300 font-medium">
-												Post-Trade Reflection
+												{tTrade("postTradeReflection")}
 											</p>
 											<p className="mt-s-200 text-small text-txt-100">
 												{trade.postTradeReflection}
@@ -399,7 +401,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										<Separator id="separator-lesson-learned" />
 										<div>
 											<p className="text-tiny text-txt-300 font-medium">
-												Lesson Learned
+												{tTrade("lessonLearned")}
 											</p>
 											<p className="mt-s-200 text-small text-txt-100">
 												{trade.lessonLearned}
@@ -413,7 +415,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										<Separator id="separator-discipline-notes" />
 										<div className="bg-warning/10 p-s-300 sm:p-m-400 rounded-lg">
 											<p className="text-tiny text-warning font-medium">
-												Discipline Notes
+												{tTrade("detail.disciplineNotes")}
 											</p>
 											<p className="mt-s-200 text-small text-txt-100">
 												{trade.disciplineNotes}

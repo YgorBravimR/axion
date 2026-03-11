@@ -195,9 +195,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						assets.find((a) => a.symbol === initialSharedState.asset) ?? null
 					)
 				}
-				// Pre-select asset if defaultAssetId is provided
+				// Pre-select asset if defaultAssetId is provided (supports both id and symbol)
 				if (defaultAssetId && assets.length > 0) {
-					return assets.find((a) => a.id === defaultAssetId) ?? null
+					return assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId) ?? null
 				}
 				return null
 			}
@@ -232,6 +232,16 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 		const effectiveNow = defaultDate ? new Date(defaultDate) : new Date()
 
+		// Resolve default asset symbol for new trades
+		const resolvedDefaultAssetSymbol = (() => {
+			if (initialSharedState?.asset) return initialSharedState.asset
+			if (defaultAssetId && assets.length > 0) {
+				const match = assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId)
+				return match?.symbol
+			}
+			return undefined
+		})()
+
 		const defaultValues: Partial<TradeFormInput> = trade
 			? buildTradeFormValues(trade)
 			: {
@@ -239,6 +249,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 					entryDate: formatDateTimeLocal(effectiveNow),
 					exitDate: formatDateTimeLocal(effectiveNow),
 					tagIds: initialSharedState?.tagIds ?? [],
+					...(resolvedDefaultAssetSymbol && { asset: resolvedDefaultAssetSymbol }),
 					...(initialSharedState && {
 						asset: initialSharedState.asset,
 						timeframeId: initialSharedState.timeframeId,

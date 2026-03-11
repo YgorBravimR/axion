@@ -1,5 +1,8 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface LoadingSpinnerProps {
 	size?: "sm" | "md" | "lg"
@@ -25,6 +28,7 @@ export const LoadingSpinner = ({
 	className,
 	label,
 }: LoadingSpinnerProps) => {
+	const tCommon = useTranslations("common")
 	const displayLabel = label && !label.endsWith("\u2026") ? `${label}\u2026` : label
 
 	return (
@@ -36,7 +40,7 @@ export const LoadingSpinner = ({
 			{displayLabel && (
 				<span className="ml-s-200 text-small text-txt-300">{displayLabel}</span>
 			)}
-			{!displayLabel && <span className="sr-only">Loading\u2026</span>}
+			{!displayLabel && <span className="sr-only">{tCommon("loading")}</span>}
 		</div>
 	)
 }

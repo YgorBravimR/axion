@@ -1,0 +1,1 @@
+ALTER TABLE "trading_accounts" ADD COLUMN "default_asset" varchar(20);

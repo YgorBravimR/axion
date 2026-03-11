@@ -70,6 +70,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		defaultFees: "0",
 		defaultBreakevenTicks: "2",
 		replayStartDate: "",
+		defaultAsset: "" as string,
 	})
 
 	// Asset fees editing
@@ -106,6 +107,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						replayStartDate: accountData.replayCurrentDate
 							? new Date(accountData.replayCurrentDate).toISOString().split("T")[0]
 							: "",
+						defaultAsset: accountData.defaultAsset || "",
 					})
 				}
 			} finally {
@@ -128,6 +130,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				defaultFees: toCents(parseFloat(accountForm.defaultFees) || 0),
 				defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
 				replayStartDate: accountForm.accountType === "replay" ? accountForm.replayStartDate : undefined,
+				defaultAsset: accountForm.defaultAsset || null,
 			})
 			if (result.status === "success" && result.data) {
 				setAccount(result.data)
@@ -188,6 +191,33 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				})
 				setEditingAssetId(null)
 				showToast("success", t("assetFeesUpdated"))
+			} else {
+				showToast("error", result.error || t("assetFeesUpdateError"))
+			}
+		})
+	}
+
+	const handleResetAssetFees = () => {
+		if (!editingAssetId) return
+
+		startTransition(async () => {
+			const result = await updateAccountAsset({
+				assetId: editingAssetId,
+				isEnabled: true,
+				commissionOverride: null,
+				feesOverride: null,
+				breakevenTicksOverride: null,
+			})
+			if (result.status === "success") {
+				setAccountAssets((prev) =>
+					prev.map((aa) =>
+						aa.assetId === editingAssetId
+							? { ...aa, commissionOverride: null, feesOverride: null, breakevenTicksOverride: null, updatedAt: new Date() }
+							: aa
+					)
+				)
+				setEditingAssetId(null)
+				showToast("success", t("assetFeesReset"))
 			} else {
 				showToast("error", result.error || t("assetFeesUpdateError"))
 			}
@@ -314,7 +344,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 								<SelectContent>
 									<SelectItem value="personal">{t("personal")}</SelectItem>
 									<SelectItem value="prop">{t("propFirm")}</SelectItem>
+									{isAdmin && (
 									<SelectItem value="replay">{t("replay")}</SelectItem>
+								)}
 								</SelectContent>
 							</Select>
 						) : (
@@ -406,6 +438,40 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							</div>
 						</>
 					)}
+					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+						<div className="flex-1">
+							<p className="text-small text-txt-100">{t("defaultAsset")}</p>
+							<p className="text-tiny text-txt-300">{t("defaultAssetHelp")}</p>
+						</div>
+						{isEditingAccount ? (
+							<Select
+								value={accountForm.defaultAsset || "none"}
+								onValueChange={(value) =>
+									setAccountForm((prev) => ({
+										...prev,
+										defaultAsset: value === "none" ? "" : value,
+									}))
+								}
+							>
+								<SelectTrigger id="account-default-asset" className="w-full sm:w-64">
+									<SelectValue placeholder={t("defaultAssetPlaceholder")} />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="none">{t("defaultAssetNone")}</SelectItem>
+									{assets.map((asset) => (
+										<SelectItem key={asset.id} value={asset.symbol}>
+											<span className="font-mono">{asset.symbol}</span>
+											<span className="ml-2 text-txt-300">{asset.name}</span>
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						) : (
+							<span className="text-small text-txt-200">
+								{account?.defaultAsset || t("defaultAssetNone")}
+							</span>
+						)}
+					</div>
 				</div>
 				{isEditingAccount && (
 					<div className="mt-m-500 flex justify-end gap-s-300">
@@ -427,6 +493,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										replayStartDate: account.replayCurrentDate
 											? new Date(account.replayCurrentDate).toISOString().split("T")[0]
 											: "",
+									defaultAsset: account.defaultAsset || "",
 									})
 								}
 							}}
@@ -566,113 +633,143 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						return (
 							<div
 								key={asset.id}
-								className="flex items-center justify-between rounded-md border border-bg-300 p-s-300"
+								className="rounded-md border border-bg-300 p-s-300"
 							>
-								<div className="flex-1">
-									<p className="text-small font-medium text-txt-100">
-										{asset.symbol}
-									</p>
-									<p className="text-tiny text-txt-300">{asset.name}</p>
-								</div>
 								{isEditing ? (
-									<div className="flex items-center gap-s-300">
-										<div className="flex items-center gap-s-200">
-											<Label id="label-asset-commission" className="text-tiny text-txt-300">
-												{t("commission")}
-											</Label>
-											<Input
-												id="account-asset-commission"
-												type="number"
-												step="0.01"
-												min="0"
-												value={assetFeesForm.commission}
-												onChange={(e) =>
-													setAssetFeesForm((prev) => ({
-														...prev,
-														commission: e.target.value,
-													}))
-												}
-												className="h-8 w-20 text-right text-sm"
-											/>
+									<div className="space-y-s-300">
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-small font-medium text-txt-100">
+													{asset.symbol}
+												</p>
+												<p className="text-tiny text-txt-300">{asset.name}</p>
+											</div>
 										</div>
-										<div className="flex items-center gap-s-200">
-											<Label id="label-asset-fees" className="text-tiny text-txt-300">
-												{t("fees")}
-											</Label>
-											<Input
-												id="account-asset-fees"
-												type="number"
-												step="0.01"
-												min="0"
-												value={assetFeesForm.fees}
-												onChange={(e) =>
-													setAssetFeesForm((prev) => ({
-														...prev,
-														fees: e.target.value,
-													}))
-												}
-												className="h-8 w-20 text-right text-sm"
-											/>
+										<div className="grid grid-cols-3 gap-s-300">
+											<div className="space-y-s-100">
+												<Label id="label-asset-commission" className="text-tiny text-txt-300">
+													{t("commission")}
+												</Label>
+												<Input
+													id="account-asset-commission"
+													type="number"
+													step="0.01"
+													min="0"
+													value={assetFeesForm.commission}
+													onChange={(e) =>
+														setAssetFeesForm((prev) => ({
+															...prev,
+															commission: e.target.value,
+														}))
+													}
+													className="h-8 text-right text-sm"
+												/>
+											</div>
+											<div className="space-y-s-100">
+												<Label id="label-asset-fees" className="text-tiny text-txt-300">
+													{t("fees")}
+												</Label>
+												<Input
+													id="account-asset-fees"
+													type="number"
+													step="0.01"
+													min="0"
+													value={assetFeesForm.fees}
+													onChange={(e) =>
+														setAssetFeesForm((prev) => ({
+															...prev,
+															fees: e.target.value,
+														}))
+													}
+													className="h-8 text-right text-sm"
+												/>
+											</div>
+											<div className="space-y-s-100">
+												<Label id="label-asset-breakeven-ticks" className="text-tiny text-txt-300">
+													{t("breakevenTicks")}
+												</Label>
+												<Input
+													id="account-asset-breakeven-ticks"
+													type="number"
+													step="1"
+													min="0"
+													value={assetFeesForm.breakevenTicks}
+													onChange={(e) =>
+														setAssetFeesForm((prev) => ({
+															...prev,
+															breakevenTicks: e.target.value,
+														}))
+													}
+													className="h-8 text-right text-sm"
+													placeholder={account?.defaultBreakevenTicks?.toString() ?? "2"}
+												/>
+											</div>
 										</div>
-										<div className="flex items-center gap-s-200">
-											<Label id="label-asset-breakeven-ticks" className="text-tiny text-txt-300">
-												{t("breakevenTicks")}
-											</Label>
-											<Input
-												id="account-asset-breakeven-ticks"
-												type="number"
-												step="1"
-												min="0"
-												value={assetFeesForm.breakevenTicks}
-												onChange={(e) =>
-													setAssetFeesForm((prev) => ({
-														...prev,
-														breakevenTicks: e.target.value,
-													}))
-												}
-												className="h-8 w-16 text-right text-sm"
-												placeholder={account?.defaultBreakevenTicks?.toString() ?? "2"}
-											/>
+										<div className="flex items-center justify-between">
+											<div>
+												{fees.isOverride && (
+													<Button
+														id={`account-reset-asset-${asset.id}`}
+														variant="ghost"
+														size="sm"
+														onClick={handleResetAssetFees}
+														disabled={isPending}
+														className="text-txt-300 hover:text-fb-error"
+													>
+														{t("resetToDefault")}
+													</Button>
+												)}
+											</div>
+											<div className="flex gap-s-200">
+												<Button
+													id={`account-cancel-asset-${asset.id}`}
+													variant="ghost"
+													size="sm"
+													onClick={() => setEditingAssetId(null)}
+													disabled={isPending}
+												>
+													{tCommon("cancel")}
+												</Button>
+												<Button
+													id={`account-save-asset-${asset.id}`}
+													size="sm"
+													onClick={handleSaveAssetFees}
+													disabled={isPending}
+												>
+													{isPending && (
+														<Loader2 className="mr-2 h-3 w-3 animate-spin" />
+													)}
+													{tCommon("save")}
+												</Button>
+											</div>
 										</div>
-										<Button
-											id={`account-cancel-asset-${asset.id}`}
-											variant="ghost"
-											size="sm"
-											onClick={() => setEditingAssetId(null)}
-											disabled={isPending}
-										>
-											{tCommon("cancel")}
-										</Button>
-										<Button
-											id={`account-save-asset-${asset.id}`}
-											size="sm"
-											onClick={handleSaveAssetFees}
-											disabled={isPending}
-										>
-											{isPending && (
-												<Loader2 className="mr-2 h-3 w-3 animate-spin" />
-											)}
-											{tCommon("save")}
-										</Button>
 									</div>
 								) : (
-									<div className="flex items-center gap-m-400">
-										<div className="text-right">
-											<p className="text-small text-txt-200">
-												${fees.commission.toFixed(2)} / ${fees.fees.toFixed(2)} / {fees.breakevenTicks ?? account?.defaultBreakevenTicks ?? 2} {t("ticks")}
+									<div className="flex items-center justify-between">
+										<div className="flex-1">
+											<p className="text-small font-medium text-txt-100">
+												{asset.symbol}
 											</p>
-											{fees.isOverride && (
-												<p className="text-tiny text-acc-100">{t("override")}</p>
-											)}
+											<p className="text-tiny text-txt-300">{asset.name}</p>
 										</div>
-										<Button
-											id={`account-edit-asset-${asset.id}`}
-											variant="ghost"
-											size="sm"
-											onClick={() => handleEditAssetFees(asset.id)}
-										>
-											{tCommon("edit")}
-										</Button>
+										<div className="flex items-center gap-m-400">
+											<div className="text-right">
+												<p className="text-small text-txt-200">
+													${fees.commission.toFixed(2)} / ${fees.fees.toFixed(2)} / {fees.breakevenTicks ?? account?.defaultBreakevenTicks ?? 2} {t("ticks")}
+												</p>
+												{fees.isOverride && (
+													<p className="text-tiny text-acc-100">{t("override")}</p>
+												)}
+											</div>
+											<Button
+												id={`account-edit-asset-${asset.id}`}
+												variant="ghost"
+												size="sm"
+												onClick={() => handleEditAssetFees(asset.id)}
+											>
+												{tCommon("edit")}
+											</Button>
+										</div>
 									</div>
 								)}
 							</div>
@@ -713,7 +810,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						<p className="mt-m-400 text-tiny text-txt-300">
 							{tGeneral("goTo")}{" "}
 							<Link href="/journal/new" className="text-acc-100 hover:underline">
-								Journal → New Trade → CSV Import
+								{tGeneral("importNavLink")}
 							</Link>{" "}
 							{tGeneral("toImport")}
 						</p>

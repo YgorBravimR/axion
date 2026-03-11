@@ -60,7 +60,40 @@
 			"uploadImage": "Enviar imagem",
 			"dragAndDrop": "ou arraste e solte",
 			"acceptedFormats": "JPEG, PNG, WebP (máx {maxSize}MB)"
-		}
+		},
+		"winRateAbbr": "TA",
+		"clearFile": "Limpar arquivo",
+		"dismiss": "Dispensar",
+		"sortBy": "Ordenar por {column}",
+		"breadcrumb": "Navegação",
+		"dragToReorder": "Arraste para reordenar",
+		"viewImage": "Ver imagem",
+		"imagePreview": "Prévia da imagem",
+		"closePreview": "Fechar prévia",
+		"removeTrade": "Remover trade",
+		"removeExecution": "Remover execução",
+		"toggleDetails": "Alternar detalhes da execução",
+		"tradesSelected": "{count} trades selecionados",
+		"importCount": "Importar {count} Trades",
+		"importing": "Importando...",
+		"unexpectedError": "Ocorreu um erro inesperado",
+		"long": "Long",
+		"short": "Short",
+		"type": "Tipo",
+		"time": "Hora",
+		"qty": "Qtd",
+		"price": "Preço",
+		"selectAllValid": "Selecionar Todos Válidos ({selected}/{total})",
+		"filterLabel": "Filtro:",
+		"filterAll": "Todos",
+		"filterValid": "Válidos ({count})",
+		"filterWarnings": "Alertas ({count})",
+		"filterSkipped": "Ignorados ({count})",
+		"skipped": "Ignorados",
+		"grossCostBreakdown": "Bruto: {gross} | Custos: {costs}",
+		"entry": "Entrada",
+		"exit": "Saída",
+		"genericError": "Ocorreu um erro"
 	},
 	"nav": {
 		"dashboard": "Painel",
@@ -436,7 +469,12 @@
 			"expectedDailyPnl": "Lucro/prejuizo diario medio em todas as simulacoes. Considera dimensionamento de posicao, custos de corretagem e o ciclo de compressao do seu perfil de risco.",
 			"riskOfRuin": "Porcentagem de simulacoes em que o saldo caiu ate ou abaixo do limiar de ruina. Quanto menor, melhor.",
 			"ruinThreshold": "Porcentagem de perda da conta que constitui 'ruina'. Ex: 50% significa ruina se o saldo cair para metade do capital inicial."
-		}
+		},
+		"errors": {
+			"failedToLoadStats": "Falha ao carregar estatísticas",
+			"failedToRunSimulation": "Falha ao executar simulação"
+		},
+		"runningSimulation": "Executando Simulação..."
 	},
 	"commandCenter": {
 		"title": "Central de Comando",
@@ -891,6 +929,7 @@
 			},
 			"previousMonth": "Mês anterior",
 			"nextMonth": "Próximo mês",
+			"futurePlanBlocked": "Você só pode planejar o próximo mês nos últimos 5 dias do mês atual",
 			"save": "Salvar Plano",
 			"saving": "Salvando..."
 		}
@@ -917,7 +956,12 @@
 			"win": "Gain",
 			"loss": "Loss",
 			"breakeven": "Empate",
-			"open": "Aberto"
+			"open": "Aberto",
+			"takeProfitAriaLabel": "Take Profit",
+			"stopLossAriaLabel": "Stop Loss",
+			"breakevenAriaLabel": "Breakeven",
+			"winner": "Vencedor",
+			"loser": "Perdedor"
 		},
 		"asset": "Ativo",
 		"assetRequired": "Ativo *",
@@ -1040,6 +1084,17 @@
 			"createError": "Falha ao criar trade",
 			"enterStopAndEntries": "Insira stop loss e entradas",
 			"contractsSummary": "Total: {count} contratos @ {price} médio"
+		},
+		"tradeRowAriaLabel": "Trade {asset} {direction} às {time}",
+		"detail": {
+			"disciplineBreach": "Quebra de Disciplina",
+			"riskRewardAnalysis": "Análise Risco/Retorno",
+			"tradeExcursion": "Excursão do Trade",
+			"mfe": "MFE (Máx. Favorável)",
+			"mae": "MAE (Máx. Adverso)",
+			"classification": "Classificação",
+			"journalNotes": "Notas do Diário",
+			"disciplineNotes": "Notas de Disciplina"
 		}
 	},
 	"dashboard": {
@@ -1081,7 +1136,8 @@
 				"thu": "Qui",
 				"fri": "Sex",
 				"sat": "Sáb"
-			}
+			},
+			"dayAriaLabel": "{date}: {pnl}, {count} trades"
 		},
 		"equity": {
 			"title": "Curva de Capital",
@@ -1211,6 +1267,20 @@
 			"readyToImport": "Pronto para importar {count} trades",
 			"importTrades": "Importar {count} Trades",
 			"formatGuide": "Guia do Formato CSV",
+			"profitChartGuide": {
+				"title": "Como exportar do ProfitChart",
+				"supported": "Exportação ProfitChart Suportada",
+				"autoDetect": "Exportações do ProfitChart são automaticamente detectadas e importadas. Ativos como WING26 são automaticamente normalizados para WIN.",
+				"step1": "Abra o Relatório de Performance: Menu > Negociação > Relatório de Performance",
+				"step2": "Use os filtros superiores para selecionar conta, ativo e período (use 'Personalizado' para datas específicas)",
+				"step3": "Vá para a aba 'Operações' (a aba 'Resumo' exporta como PDF, não CSV)",
+				"step4": "Clique no botão 'Exportar' (ícone de planilha) no canto superior direito",
+				"step5": "Salve o arquivo .csv e faça o upload aqui",
+				"tip": "Se o modo Day Trade estiver habilitado, apenas operações abertas e fechadas no mesmo dia serão incluídas.",
+				"columnsNote": "Colunas exportadas: Ativo, Abertura/Fechamento, Qtd, Preço compra/venda, MEP (MFE), MEN (MAE), Res Operação, e mais.",
+				"docsLink": "Documentação completa da Nelogica",
+				"docsUrl": "https://ajuda.nelogica.com.br/hc/pt-br/articles/360049221391"
+			},
 			"requiredColumns": "Seu CSV deve incluir estas colunas obrigatórias:",
 			"optionalColumns": "Colunas opcionais: exit_date, exit_price, stop_loss, take_profit, pnl, timeframe, notes, followed_plan",
 			"replayAlert": {
@@ -1233,7 +1303,13 @@
 				"applied": "SL/TP aplicado a {count} trades",
 				"lossNote": "Trades de loss: SL = preço de saída (1R)",
 				"generatingSlTp": "Gerando valores de SL/TP..."
-			}
+			},
+			"invalidCsvFile": "Selecione um arquivo CSV",
+			"noTradesFound": "Nenhum trade encontrado no CSV",
+			"failedToReadFile": "Falha ao ler arquivo",
+			"noTradesSelected": "Nenhum trade selecionado",
+			"validating": "Validando trades...",
+			"lookingUpAssets": "Buscando ativos e calculando P&L"
 		},
 		"nota": {
 			"title": "Nota de Corretagem",
@@ -1286,7 +1362,12 @@
 			"registrationFee": "Taxa de Registro",
 			"bmfFees": "Taxas BM&F",
 			"irrf": "IRRF",
-			"netTotal": "Total Líquido"
+			"netTotal": "Total Líquido",
+			"invalidPdfFile": "Selecione um arquivo PDF",
+			"fileTooLarge": "Arquivo muito grande (máx 10MB)",
+			"failedToProcess": "Falha ao processar nota de corretagem",
+			"sinacorTitle": "Padrão SINACOR (B3)",
+			"sinacorDesc": "Funciona com todas as corretoras brasileiras: Genial, Clear, XP, Rico, BTG e outras. Faça upload do PDF exportado do portal da sua corretora após cada pregão."
 		},
 		"ocr": {
 			"title": "Importar de Screenshot",
@@ -1301,7 +1382,7 @@
 			"detectedExecutions": "Execuções Detectadas",
 			"noExecutionsFound": "Nenhuma execução encontrada na imagem",
 			"importTrade": "Importar Trade",
-			"readyToImport": "Pronto para importar trade com {count} execuções",
+			"readyToImport": "Pronto para importar {trades} trade(s) com {executions} execuções",
 			"lowConfidence": "Detecção com baixa confiança. Por favor, revise cuidadosamente.",
 			"imageQualityTip": "Para melhores resultados, use screenshots em alta resolução com texto legível",
 			"requirements": {
@@ -1328,8 +1409,87 @@
 				"detected": "Detectado",
 				"notFound": "Não encontrado",
 				"missingRequired": "Colunas obrigatórias ausentes. Por favor, certifique-se de que estão visíveis no screenshot."
-			}
-		}
+			},
+			"invalidImageFile": "Selecione um arquivo de imagem válido (PNG, JPG ou WEBP)",
+			"analyzingVision": "Analisando com AI Vision...",
+			"visionFallback": "IA falhou, tentando Tesseract...",
+			"failedToProcess": "Falha ao processar imagem",
+			"failedToReadFile": "Falha ao ler arquivo",
+			"noValidTrades": "Nenhum trade válido para importar",
+			"checkingEngine": "Verificando motor OCR...",
+			"visionEngine": "GPT-4 Vision (Alta Precisão)",
+			"tesseractEngine": "Tesseract (Básico) - Adicione OPENAI_API_KEY para melhores resultados",
+			"errorsCount": "Erros ({count})",
+			"errorLine": "Linha {line}: {message}",
+			"warningsCount": "Avisos ({count})",
+			"warningLine": "Linha {line}: {message}",
+			"andMore": "...e mais {count}",
+			"tradeDate": "Data do Trade",
+			"tradeDateDesc": "Todos os trades usarão esta data combinada com os horários de execução",
+			"tradesDetected": "Trades Detectados",
+			"totalExecutions": "Total de Execuções",
+			"confidence": "Confiança",
+			"ocrProvider": "Provedor OCR",
+			"unknown": "Desconhecido",
+			"tradeNumber": "Trade #{number}",
+			"executionsCount": "({count} execuções)",
+			"originalLabel": "Original: {code}",
+			"entriesCount": "Entradas: {count} ({qty} qtd)",
+			"exitsCount": "Saídas: {count} ({qty} qtd)",
+			"importTrades": "Importar {count} Trade{suffix}",
+			"importingTrades": "Importando {count} trade(s)..."
+		},
+		"csvCard": {
+			"date": "Data",
+			"direction": "Direção",
+			"strategy": "Estratégia",
+			"timeframe": "Timeframe",
+			"entryPrice": "Preço de Entrada",
+			"exitPrice": "Preço de Saída",
+			"positionSize": "Tamanho da Posição",
+			"pnlFromCsv": "P&L do CSV",
+			"stopLoss": "Stop Loss",
+			"takeProfit": "Take Profit",
+			"mfeFromCsv": "MFE (do CSV)",
+			"maeFromCsv": "MAE (do CSV)",
+			"preTradeThoughts": "Pensamentos Pré-Trade",
+			"postTradeReflection": "Reflexão Pós-Trade",
+			"lessonLearned": "Lição Aprendida",
+			"followedPlan": "Você seguiu seu plano?",
+			"whatWentWrong": "O que deu errado?",
+			"planPlaceholder": "Qual era seu plano para este trade?",
+			"reflectionPlaceholder": "Como foi o trade? O que aconteceu?",
+			"lessonPlaceholder": "O que você aprendeu com este trade?",
+			"disciplinePlaceholder": "Descreva o que não saiu conforme o plano...",
+			"setupType": "Tipo de Setup",
+			"mistakes": "Erros",
+			"noTagsConfigured": "Nenhuma tag configurada. Adicione tags em Configurações → Tags.",
+			"contracts": "contratos",
+			"ticks": "Ticks:",
+			"gross": "Bruto:",
+			"costs": "Custos:",
+			"net": "Líquido:",
+			"commission": "Corretagem: R${value}",
+			"fees": "Taxas: R${value}",
+			"tickSize": "Tick Size: {value}",
+			"tickValue": "Tick Value: R${value}",
+			"selectPlaceholder": "Selecione...",
+			"optionalPlaceholder": "Opcional",
+			"original": "Original: {value}"
+		},
+		"rMultiple": {
+			"realizedR": "R Realizado",
+			"planned": "Planejado:",
+			"targetHit": "Alvo atingido",
+			"belowTarget": "Abaixo do alvo"
+		},
+		"delete": {
+			"confirmPrompt": "Excluir?",
+			"success": "Trade excluído com sucesso",
+			"failed": "Falha ao excluir trade",
+			"unexpectedError": "Ocorreu um erro inesperado"
+		},
+		"tradeDayGroupAriaLabel": "{date}, {count} trades, {pnl}"
 	},
 	"analytics": {
 		"title": "Análises",
@@ -1430,7 +1590,8 @@
 				"Friday": "Sexta",
 				"Saturday": "Sábado",
 				"Sunday": "Domingo"
-			}
+			},
+			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% taxa de acerto"
 		},
 		"session": {
 			"title": "Performance por Sessão",
@@ -1440,6 +1601,7 @@
 			"winRate": "Taxa de Acerto",
 			"avgR": "R Médio",
 			"profitFactor": "Fator de Lucro",
+			"sessionCol": "Sessão",
 			"bestSession": "Melhor Sessão",
 			"worstSession": "Pior Sessão",
 			"bestSessionAction": "Priorize seus melhores setups nessa janela",
@@ -1553,7 +1715,9 @@
 			"tooltipPnl": "P&L Total",
 			"achievedPositiveR": "{percent}% dos seus trades tiveram R positivo. Seu resultado mais comum é {range} com {count} trades.",
 			"achievedNegativeR": "{percent}% dos seus trades resultaram em R negativo. Foque em cortar perdas mais cedo ou melhorar o timing de entrada."
-		}
+		},
+		"expectancyEdgeAriaLabel": "Expectância de Edge (R)",
+		"expectancyCapitalAriaLabel": "Expectância de Capital ($)"
 	},
 	"playbook": {
 		"title": "Playbook de Estratégias",
@@ -1593,18 +1757,37 @@
 			"exitCriteria": "Critérios de Saída",
 			"riskRules": "Regras de Risco",
 			"targetR": "R Alvo",
-			"maxRisk": "Risco Máximo %",
+			"maxRisk": "Risco Máx.:",
 			"trades": "Trades",
 			"winRate": "Taxa de Acerto",
 			"avgR": "R Médio",
-			"profitFactor": "Fator de Lucro"
+			"profitFactor": "Fator de Lucro",
+			"pnl": "P&L",
+			"target": "Alvo:",
+			"condition": "{count} condição",
+			"conditionPlural": "{count} condições",
+			"scenario": "{count} cenário",
+			"scenarioPlural": "{count} cenários",
+			"optionsMenu": "Menu de opções da estratégia",
+			"viewDetails": "Ver Detalhes",
+			"performance": "Performance",
+			"wins": "{count} vitórias",
+			"losses": "{count} derrotas",
+			"riskSettings": "Configurações de Risco",
+			"targetRMultiple": "R-Múltiplo Alvo",
+			"maxRiskPerTrade": "Risco Máx. por Operação",
+			"rulesCriteria": "Regras e Critérios",
+			"riskManagement": "Gerenciamento de Risco",
+			"notes": "Notas",
+			"referenceChart": "Gráfico de Referência",
+			"compliance": "Aderência"
 		},
 		"conditions": {
 			"title": "Condições de Trading",
 			"mandatory": "Obrigatórias",
 			"tier2": "Nível 2",
 			"tier3": "Nível 3",
-			"tierMandatory": "Obrigatórias",
+			"tierMandatory": "Obrigatório (A)",
 			"tierTwo": "Nível 2",
 			"tierThree": "Nível 3",
 			"tierMandatoryHint": "Obrigatórias para qualquer setup válido (ranking A)",
@@ -1621,7 +1804,10 @@
 			"createFirst": "Criar Primeira Condição",
 			"noConditionsYet": "Nenhuma condição atribuída ainda",
 			"assignHint": "Atribua condições e defina níveis para ranking de setup (A/AA/AAA)",
-			"noConditions": "Nenhuma condição disponível. Crie algumas em Configurações primeiro."
+			"noConditions": "Nenhuma condição disponível. Crie algumas em Configurações primeiro.",
+			"tierNone": "Não incluído",
+			"tierTier2": "Nível 2 (AA)",
+			"tierTier3": "Nível 3 (AAA)"
 		},
 		"scenarios": {
 			"title": "Cenários",
@@ -1684,6 +1870,13 @@
 			"loadingStrategy": "Carregando estratégia...",
 			"strategyNotFound": "Estratégia não encontrada",
 			"backToPlaybook": "Voltar ao Playbook"
+		},
+		"deactivate": {
+			"title": "Desativar Estratégia",
+			"description": "Tem certeza que deseja desativar {code} {name}?",
+			"warning": "Isso ocultará a estratégia do seu playbook. Trades existentes vinculados a esta estratégia não serão afetados.",
+			"deactivating": "Desativando...",
+			"confirm": "Desativar"
 		}
 	},
 	"reports": {
@@ -1810,6 +2003,10 @@
 			"propFirmName": "Nome da Mesa Prop",
 			"propFirmNamePlaceholder": "ex: FTMO, MyForexFunds",
 			"profitShare": "Divisão de Lucro",
+			"defaultAsset": "Ativo Principal",
+			"defaultAssetHelp": "Pré-seleciona este ativo nos formulários de trade, calculadoras e outros seletores",
+			"defaultAssetPlaceholder": "Selecione um ativo...",
+			"defaultAssetNone": "Nenhum",
 			"accountUpdated": "Conta atualizada com sucesso",
 			"accountUpdateError": "Falha ao atualizar conta",
 			"defaultFees": "Comissão e Taxas Padrão",
@@ -1825,7 +2022,9 @@
 			"breakevenTicksDesc": "Trades que saem dentro desta quantidade de ticks da entrada são classificados como breakeven",
 			"ticks": "ticks",
 			"assetFeesUpdated": "Taxas do ativo atualizadas com sucesso",
+			"assetFeesReset": "Taxas do ativo restauradas para os valores padrão",
 			"assetFeesUpdateError": "Falha ao atualizar taxas do ativo",
+			"resetToDefault": "Restaurar Padrão",
 			"override": "Personalizado",
 			"riskManagement": "Gestão de Risco",
 			"riskManagementDesc": "Configure regras de risco e limites de perda",
@@ -1956,7 +2155,11 @@
 			"toImport": "para importar trades",
 			"dataExport": "Exportação de Dados",
 			"dataExportDesc": "Exporte seus dados de trades para backup ou análise",
-			"exportComingSoon": "Funcionalidade de exportação em breve"
+			"exportComingSoon": "Funcionalidade de exportação em breve",
+			"settingsUpdated": "Configurações atualizadas com sucesso",
+			"settingsUpdateFailed": "Falha ao atualizar configurações",
+			"languageDesc": "Português (Brasil) / English",
+			"importNavLink": "Diário → Novo Trade → Importar CSV"
 		},
 		"tradingAccount": {
 			"title": "Conta de Trading",
@@ -2078,6 +2281,11 @@
 			"conditionUpdated": "Condição atualizada com sucesso",
 			"conditionDeleted": "Condição excluída com sucesso",
 			"conditionError": "Falha ao salvar condição"
+		},
+		"language": {
+			"switchTo": "Mudar para {language}",
+			"pt": "PT",
+			"en": "EN"
 		}
 	},
 	"monthly": {
@@ -2114,7 +2322,9 @@
 		},
 		"weeklyBreakdown": {
 			"title": "Breakdown Semanal",
-			"week": "Semana {number}"
+			"week": "Semana {number}",
+			"tradesCount": "{count} trades",
+			"winRateSummary": "{rate}% {abbr}"
 		}
 	},
 	"assetTypes": {
@@ -2272,7 +2482,11 @@
 			"hasAccount": "Já tem uma conta?",
 			"login": "Entrar",
 			"emailExists": "Já existe uma conta com este email",
-			"success": "Conta criada com sucesso"
+			"success": "Conta criada com sucesso",
+			"namePlaceholder": "João Silva",
+			"passwordNotMeetRequirements": "A senha não atende aos requisitos",
+			"passwordsDoNotMatch": "As senhas não coincidem",
+			"genericError": "Ocorreu um erro"
 		},
 		"selectAccount": {
 			"title": "Selecionar Conta",
@@ -2389,7 +2603,10 @@
 		"chart": {
 			"title": "Curva de Capital: Original vs Simulado",
 			"original": "Original",
-			"simulated": "Simulado"
+			"simulated": "Simulado",
+			"tooltipTrade": "Trade #{index} — {day}",
+			"tooltipOriginal": "Original: R${value}",
+			"tooltipSimulated": "Simulado: R${value}"
 		},
 		"table": {
 			"title": "Comparação de Operações",
@@ -2491,5 +2708,54 @@
 		"title": "Acesso Negado",
 		"message": "Você não tem permissão para acessar este recurso.",
 		"redirecting": "Redirecionando para o dashboard..."
+	},
+	"imports": {
+		"title": "Importar Extrato da Corretora",
+		"description": "Envie um extrato de operações da sua corretora para importar com preços e quantidades exatas",
+		"broker": "Corretora",
+		"csvFile": "Arquivo CSV",
+		"selected": "Selecionado: {name} ({size} KB)",
+		"selectBroker": "Selecione sua corretora",
+		"parsingCsv": "Analisando CSV...",
+		"reviewTitle": "Revisar Trades Detectados",
+		"executionsSummary": "{executions} execuções agrupadas em {trades} trades",
+		"successfulTrades": "Trades Bem-Sucedidos",
+		"totalGrossPnl": "P&L Bruto Total",
+		"netPnl": "P&L Líquido",
+		"warningText": "{count} trade(s) possuem avisos (saídas parciais, posições abertas)",
+		"trades": "Trades",
+		"entry": "Entrada: {price}",
+		"exit": "Saída: {price}",
+		"confirmImport": "Confirmar e Importar",
+		"importing": "Importando...",
+		"importingTitle": "Importando Trades...",
+		"encryptingAndStoring": "Criptografando e armazenando {count} trades",
+		"successTitle": "Importação Concluída!",
+		"tradesImported": "{count} trades importados de {broker}",
+		"redirecting": "Redirecionando...",
+		"failedTitle": "Falha na Importação",
+		"tryAgain": "Tentar Novamente",
+		"errors": {
+			"selectBrokerAndFile": "Selecione uma corretora e envie um arquivo CSV",
+			"cooldownActive": "Importação em cooldown. Disponível em: {time}",
+			"failedToParse": "Falha ao analisar CSV",
+			"missingImportId": "ID de importação ausente",
+			"failedToImport": "Falha ao importar trades",
+			"unknownError": "Erro desconhecido"
+		}
+	},
+	"errors": {
+		"notFound": {
+			"code": "404",
+			"title": "Página não encontrada",
+			"goHome": "Voltar ao início"
+		},
+		"boundary": {
+			"title": "Algo deu errado!",
+			"description": "Ocorreu um erro ao carregar o painel. Isso pode ser um problema temporário.",
+			"reference": "Referência: {digest}",
+			"tryAgain": "Tentar Novamente",
+			"reloadPage": "Recarregar Página"
+		}
 	}
 }
