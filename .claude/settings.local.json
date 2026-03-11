@@ -110,7 +110,12 @@
       "Bash(CI=true pnpm install:*)",
       "Bash(pnpm vitest:*)",
       "Bash(/Users/ygorbravim/personal/projects/profitJournal/docs/postMorten/backend.md:*)",
-      "Bash(/Users/ygorbravim/personal/projects/profitJournal/docs/postMorten/frontend.md:*)"
+      "Bash(/Users/ygorbravim/personal/projects/profitJournal/docs/postMorten/frontend.md:*)",
+      "Bash(cat -en /Users/ygorbravim/personal/projects/profitJournal/src/app/[locale]/'\\(app\\)'/command-center/command-center-content.tsx | sed -n '252,270p')",
+      "Bash(head -100 \"/Users/ygorbravim/personal/projects/profitJournal/src/app/[locale]/\\(app\\)/playbook/new/page.tsx\")",
+      "Bash(wc -l /Users/ygorbravim/personal/projects/profitJournal/src/app/\\\\[locale\\\\]/\\\\\\(app\\\\\\)/playbook/\\\\[id\\\\]/edit/page.tsx)",
+      "Bash(head -300 /Users/ygorbravim/personal/projects/profitJournal/src/app/\\\\[locale\\\\]/\\\\\\(app\\\\\\)/playbook/\\\\[id\\\\]/edit/page.tsx | tail -100)",
+      "Bash(npx drizzle-kit:*)"
     ],
     "deny": [],
     "ask": []
