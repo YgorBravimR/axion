@@ -30,8 +30,18 @@ import { cn } from "@/lib/utils"
 import { RecalculateButton } from "./recalculate-button"
 import { RecalculatePnLButton } from "./recalculate-pnl-button"
 import { Link } from "@/i18n/routing"
-import { getCurrentAccount, logoutUser, getUserAccounts, revalidateAfterAccountSwitch } from "@/app/actions/auth"
-import { updateAccount, getAccountAssets, updateAccountAsset, deleteAccount } from "@/app/actions/accounts"
+import {
+	getCurrentAccount,
+	logoutUser,
+	getUserAccounts,
+	revalidateAfterAccountSwitch,
+} from "@/app/actions/auth"
+import {
+	updateAccount,
+	getAccountAssets,
+	updateAccountAsset,
+	deleteAccount,
+} from "@/app/actions/accounts"
 import { Loader2, Trash2 } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { fromCents, toCents } from "@/lib/money"
@@ -101,11 +111,15 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						accountType: accountData.accountType,
 						propFirmName: accountData.propFirmName || "",
 						profitSharePercentage: accountData.profitSharePercentage,
-						defaultCommission: fromCents(accountData.defaultCommission).toString(),
+						defaultCommission: fromCents(
+							accountData.defaultCommission
+						).toString(),
 						defaultFees: fromCents(accountData.defaultFees).toString(),
 						defaultBreakevenTicks: accountData.defaultBreakevenTicks.toString(),
 						replayStartDate: accountData.replayCurrentDate
-							? new Date(accountData.replayCurrentDate).toISOString().split("T")[0]
+							? new Date(accountData.replayCurrentDate)
+									.toISOString()
+									.split("T")[0]
 							: "",
 						defaultAsset: accountData.defaultAsset || "",
 					})
@@ -124,12 +138,21 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			const result = await updateAccount(account.id, {
 				name: accountForm.name,
 				accountType: accountForm.accountType,
-				propFirmName: accountForm.accountType === "prop" ? accountForm.propFirmName : undefined,
-				profitSharePercentage: parseFloat(accountForm.profitSharePercentage) || 100,
-				defaultCommission: toCents(parseFloat(accountForm.defaultCommission) || 0),
+				propFirmName:
+					accountForm.accountType === "prop"
+						? accountForm.propFirmName
+						: undefined,
+				profitSharePercentage:
+					parseFloat(accountForm.profitSharePercentage) || 100,
+				defaultCommission: toCents(
+					parseFloat(accountForm.defaultCommission) || 0
+				),
 				defaultFees: toCents(parseFloat(accountForm.defaultFees) || 0),
 				defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
-				replayStartDate: accountForm.accountType === "replay" ? accountForm.replayStartDate : undefined,
+				replayStartDate:
+					accountForm.accountType === "replay"
+						? accountForm.replayStartDate
+						: undefined,
 				defaultAsset: accountForm.defaultAsset || null,
 			})
 			if (result.status === "success" && result.data) {
@@ -145,9 +168,14 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const handleEditAssetFees = (assetId: string) => {
 		const existing = accountAssets.find((aa) => aa.assetId === assetId)
 		setAssetFeesForm({
-			commission: existing ? fromCents(existing.commissionOverride || 0).toString() : "0",
+			commission: existing
+				? fromCents(existing.commissionOverride || 0).toString()
+				: "0",
 			fees: existing ? fromCents(existing.feesOverride || 0).toString() : "0",
-			breakevenTicks: existing?.breakevenTicksOverride != null ? existing.breakevenTicksOverride.toString() : "",
+			breakevenTicks:
+				existing?.breakevenTicksOverride != null
+					? existing.breakevenTicksOverride.toString()
+					: "",
 		})
 		setEditingAssetId(assetId)
 	}
@@ -156,9 +184,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		if (!editingAssetId) return
 
 		startTransition(async () => {
-			const breakevenTicksValue = assetFeesForm.breakevenTicks.trim() === ""
-				? null
-				: parseInt(assetFeesForm.breakevenTicks) || null
+			const breakevenTicksValue =
+				assetFeesForm.breakevenTicks.trim() === ""
+					? null
+					: parseInt(assetFeesForm.breakevenTicks) || null
 			const result = await updateAccountAsset({
 				assetId: editingAssetId,
 				isEnabled: true,
@@ -175,7 +204,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						accountId: account?.id || "",
 						assetId: editingAssetId,
 						isEnabled: true,
-						commissionOverride: toCents(parseFloat(assetFeesForm.commission) || 0),
+						commissionOverride: toCents(
+							parseFloat(assetFeesForm.commission) || 0
+						),
 						feesOverride: toCents(parseFloat(assetFeesForm.fees) || 0),
 						breakevenTicksOverride: breakevenTicksValue,
 						notes: null,
@@ -212,7 +243,13 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				setAccountAssets((prev) =>
 					prev.map((aa) =>
 						aa.assetId === editingAssetId
-							? { ...aa, commissionOverride: null, feesOverride: null, breakevenTicksOverride: null, updatedAt: new Date() }
+							? {
+									...aa,
+									commissionOverride: null,
+									feesOverride: null,
+									breakevenTicksOverride: null,
+									updatedAt: new Date(),
+								}
 							: aa
 					)
 				)
@@ -226,11 +263,11 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 
 	const getAssetFees = (assetId: string) => {
 		const override = accountAssets.find((aa) => aa.assetId === assetId)
-		const hasOverride = override && (
-			override.commissionOverride !== null ||
-			override.feesOverride !== null ||
-			override.breakevenTicksOverride !== null
-		)
+		const hasOverride =
+			override &&
+			(override.commissionOverride !== null ||
+				override.feesOverride !== null ||
+				override.breakevenTicksOverride !== null)
 		if (hasOverride) {
 			return {
 				commission: fromCents(override.commissionOverride || 0),
@@ -251,8 +288,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		if (!account) return
 
 		// Resolve the switch target before deletion
-		const switchTarget = userAccounts.find((a) => a.isDefault && a.id !== account.id)
-			?? userAccounts.find((a) => a.id !== account.id)
+		const switchTarget =
+			userAccounts.find((a) => a.isDefault && a.id !== account.id) ??
+			userAccounts.find((a) => a.id !== account.id)
 
 		startTransition(async () => {
 			const result = await deleteAccount(account.id)
@@ -266,6 +304,8 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				if (switchTarget) {
 					await updateSession({ accountId: switchTarget.id })
 					await revalidateAfterAccountSwitch()
+					window.location.reload()
+					return
 				}
 				showToast("success", t("deleteAccountSuccess"))
 			} else {
@@ -281,17 +321,17 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
-				<Loader2 className="h-8 w-8 animate-spin text-txt-300" />
+				<Loader2 className="text-txt-300 h-8 w-8 animate-spin" />
 			</div>
 		)
 	}
 
 	return (
-		<div className="mx-auto max-w-2xl space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
 			{/* Account Information */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
-					<h2 className="text-small sm:text-body font-semibold text-txt-100">
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("accountInfo")}
 					</h2>
 					{!isEditingAccount && (
@@ -306,7 +346,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					)}
 				</div>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("accountName")}</p>
 						</div>
@@ -323,7 +363,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							<span className="text-small text-txt-200">{account?.name}</span>
 						)}
 					</div>
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("accountType")}</p>
 						</div>
@@ -334,7 +374,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									setAccountForm((prev) => ({
 										...prev,
 										accountType: value,
-										replayStartDate: value === "replay" && !prev.replayStartDate ? formatDateKey(new Date()) : prev.replayStartDate,
+										replayStartDate:
+											value === "replay" && !prev.replayStartDate
+												? formatDateKey(new Date())
+												: prev.replayStartDate,
 									}))
 								}
 							>
@@ -345,26 +388,39 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									<SelectItem value="personal">{t("personal")}</SelectItem>
 									<SelectItem value="prop">{t("propFirm")}</SelectItem>
 									{isAdmin && (
-									<SelectItem value="replay">{t("replay")}</SelectItem>
-								)}
+										<SelectItem value="replay">{t("replay")}</SelectItem>
+									)}
 								</SelectContent>
 							</Select>
 						) : (
 							<span className="text-small text-txt-200">
-								{account?.accountType === "replay" ? t("replay") : account?.accountType === "prop" ? t("propFirm") : t("personal")}
+								{account?.accountType === "replay"
+									? t("replay")
+									: account?.accountType === "prop"
+										? t("propFirm")
+										: t("personal")}
 							</span>
 						)}
 					</div>
-					{(accountForm.accountType === "replay" || account?.accountType === "replay") && (
-						<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					{(accountForm.accountType === "replay" ||
+						account?.accountType === "replay") && (
+						<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 							<div className="flex-1">
-								<p className="text-small text-txt-100">{t("replayStartDate")}</p>
-								<p className="text-tiny text-txt-300">{t("replayStartDateHelp")}</p>
+								<p className="text-small text-txt-100">
+									{t("replayStartDate")}
+								</p>
+								<p className="text-tiny text-txt-300">
+									{t("replayStartDateHelp")}
+								</p>
 							</div>
 							{isEditingAccount ? (
 								<DatePicker
 									id="account-replay-start-date"
-									value={accountForm.replayStartDate ? new Date(accountForm.replayStartDate + "T12:00:00") : undefined}
+									value={
+										accountForm.replayStartDate
+											? new Date(accountForm.replayStartDate + "T12:00:00")
+											: undefined
+									}
 									onChange={(date) =>
 										setAccountForm((prev) => ({
 											...prev,
@@ -382,9 +438,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							)}
 						</div>
 					)}
-				{(accountForm.accountType === "prop" || account?.accountType === "prop") && (
+					{(accountForm.accountType === "prop" ||
+						account?.accountType === "prop") && (
 						<>
-							<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+							<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 								<div className="flex-1">
 									<p className="text-small text-txt-100">{t("propFirmName")}</p>
 								</div>
@@ -407,12 +464,12 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									</span>
 								)}
 							</div>
-							<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+							<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 								<div className="flex-1">
 									<p className="text-small text-txt-100">{t("profitShare")}</p>
 								</div>
 								{isEditingAccount ? (
-									<div className="flex items-center gap-s-200">
+									<div className="gap-s-200 flex items-center">
 										<Input
 											id="account-profit-share-percentage"
 											type="number"
@@ -426,7 +483,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 													profitSharePercentage: e.target.value,
 												}))
 											}
-											className="w-full sm:w-24 text-right"
+											className="w-full text-right sm:w-24"
 										/>
 										<span className="text-small text-txt-300">%</span>
 									</div>
@@ -438,7 +495,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							</div>
 						</>
 					)}
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("defaultAsset")}</p>
 							<p className="text-tiny text-txt-300">{t("defaultAssetHelp")}</p>
@@ -453,7 +510,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									}))
 								}
 							>
-								<SelectTrigger id="account-default-asset" className="w-full sm:w-64">
+								<SelectTrigger
+									id="account-default-asset"
+									className="w-full sm:w-64"
+								>
 									<SelectValue placeholder={t("defaultAssetPlaceholder")} />
 								</SelectTrigger>
 								<SelectContent>
@@ -461,7 +521,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									{assets.map((asset) => (
 										<SelectItem key={asset.id} value={asset.symbol}>
 											<span className="font-mono">{asset.symbol}</span>
-											<span className="ml-2 text-txt-300">{asset.name}</span>
+											<span className="text-txt-300 ml-2">{asset.name}</span>
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -474,7 +534,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					</div>
 				</div>
 				{isEditingAccount && (
-					<div className="mt-m-500 flex justify-end gap-s-300">
+					<div className="mt-m-500 gap-s-300 flex justify-end">
 						<Button
 							id="account-cancel-info"
 							variant="ghost"
@@ -487,13 +547,18 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										accountType: account.accountType,
 										propFirmName: account.propFirmName || "",
 										profitSharePercentage: account.profitSharePercentage,
-										defaultCommission: fromCents(account.defaultCommission).toString(),
+										defaultCommission: fromCents(
+											account.defaultCommission
+										).toString(),
 										defaultFees: fromCents(account.defaultFees).toString(),
-										defaultBreakevenTicks: account.defaultBreakevenTicks.toString(),
+										defaultBreakevenTicks:
+											account.defaultBreakevenTicks.toString(),
 										replayStartDate: account.replayCurrentDate
-											? new Date(account.replayCurrentDate).toISOString().split("T")[0]
+											? new Date(account.replayCurrentDate)
+													.toISOString()
+													.split("T")[0]
 											: "",
-									defaultAsset: account.defaultAsset || "",
+										defaultAsset: account.defaultAsset || "",
 									})
 								}
 							}}
@@ -501,7 +566,12 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						>
 							{tCommon("cancel")}
 						</Button>
-						<Button id="account-save-info" size="sm" onClick={handleSaveAccount} disabled={isPending}>
+						<Button
+							id="account-save-info"
+							size="sm"
+							onClick={handleSaveAccount}
+							disabled={isPending}
+						>
 							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 							{tCommon("save")}
 						</Button>
@@ -510,9 +580,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Default Commission & Fees */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
-					<h2 className="text-small sm:text-body font-semibold text-txt-100">
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("defaultFees")}
 					</h2>
 					{!isEditingAccount && (
@@ -526,15 +596,17 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						</Button>
 					)}
 				</div>
-				<p className="mt-s-200 text-tiny text-txt-300">{t("defaultFeesDesc")}</p>
+				<p className="mt-s-200 text-tiny text-txt-300">
+					{t("defaultFeesDesc")}
+				</p>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("commission")}</p>
 							<p className="text-tiny text-txt-300">{t("perContract")}</p>
 						</div>
 						{isEditingAccount ? (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<span className="text-small text-txt-300">$</span>
 								<Input
 									id="account-default-commission"
@@ -548,7 +620,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											defaultCommission: e.target.value,
 										}))
 									}
-									className="w-full sm:w-24 text-right"
+									className="w-full text-right sm:w-24"
 								/>
 							</div>
 						) : (
@@ -557,13 +629,13 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							</span>
 						)}
 					</div>
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("fees")}</p>
 							<p className="text-tiny text-txt-300">{t("perContract")}</p>
 						</div>
 						{isEditingAccount ? (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<span className="text-small text-txt-300">$</span>
 								<Input
 									id="account-default-fees"
@@ -577,7 +649,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											defaultFees: e.target.value,
 										}))
 									}
-									className="w-full sm:w-24 text-right"
+									className="w-full text-right sm:w-24"
 								/>
 							</div>
 						) : (
@@ -586,13 +658,15 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							</span>
 						)}
 					</div>
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("breakevenTicks")}</p>
-							<p className="text-tiny text-txt-300">{t("breakevenTicksDesc")}</p>
+							<p className="text-tiny text-txt-300">
+								{t("breakevenTicksDesc")}
+							</p>
 						</div>
 						{isEditingAccount ? (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<Input
 									id="account-default-breakeven-ticks"
 									type="number"
@@ -605,7 +679,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 											defaultBreakevenTicks: e.target.value,
 										}))
 									}
-									className="w-full sm:w-24 text-right"
+									className="w-full text-right sm:w-24"
 								/>
 								<span className="text-small text-txt-300">{t("ticks")}</span>
 							</div>
@@ -619,8 +693,8 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Per-Asset Overrides */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">
 					{t("assetOverrides")}
 				</h2>
 				<p className="mt-s-200 text-tiny text-txt-300">
@@ -633,21 +707,24 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						return (
 							<div
 								key={asset.id}
-								className="rounded-md border border-bg-300 p-s-300"
+								className="border-bg-300 p-s-300 rounded-md border"
 							>
 								{isEditing ? (
 									<div className="space-y-s-300">
 										<div className="flex items-center justify-between">
 											<div>
-												<p className="text-small font-medium text-txt-100">
+												<p className="text-small text-txt-100 font-medium">
 													{asset.symbol}
 												</p>
 												<p className="text-tiny text-txt-300">{asset.name}</p>
 											</div>
 										</div>
-										<div className="grid grid-cols-3 gap-s-300">
+										<div className="gap-s-300 grid grid-cols-3">
 											<div className="space-y-s-100">
-												<Label id="label-asset-commission" className="text-tiny text-txt-300">
+												<Label
+													id="label-asset-commission"
+													className="text-tiny text-txt-300"
+												>
 													{t("commission")}
 												</Label>
 												<Input
@@ -666,7 +743,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 												/>
 											</div>
 											<div className="space-y-s-100">
-												<Label id="label-asset-fees" className="text-tiny text-txt-300">
+												<Label
+													id="label-asset-fees"
+													className="text-tiny text-txt-300"
+												>
 													{t("fees")}
 												</Label>
 												<Input
@@ -685,7 +765,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 												/>
 											</div>
 											<div className="space-y-s-100">
-												<Label id="label-asset-breakeven-ticks" className="text-tiny text-txt-300">
+												<Label
+													id="label-asset-breakeven-ticks"
+													className="text-tiny text-txt-300"
+												>
 													{t("breakevenTicks")}
 												</Label>
 												<Input
@@ -701,7 +784,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 														}))
 													}
 													className="h-8 text-right text-sm"
-													placeholder={account?.defaultBreakevenTicks?.toString() ?? "2"}
+													placeholder={
+														account?.defaultBreakevenTicks?.toString() ?? "2"
+													}
 												/>
 											</div>
 										</div>
@@ -720,7 +805,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 													</Button>
 												)}
 											</div>
-											<div className="flex gap-s-200">
+											<div className="gap-s-200 flex">
 												<Button
 													id={`account-cancel-asset-${asset.id}`}
 													variant="ghost"
@@ -747,18 +832,25 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 								) : (
 									<div className="flex items-center justify-between">
 										<div className="flex-1">
-											<p className="text-small font-medium text-txt-100">
+											<p className="text-small text-txt-100 font-medium">
 												{asset.symbol}
 											</p>
 											<p className="text-tiny text-txt-300">{asset.name}</p>
 										</div>
-										<div className="flex items-center gap-m-400">
+										<div className="gap-m-400 flex items-center">
 											<div className="text-right">
 												<p className="text-small text-txt-200">
-													${fees.commission.toFixed(2)} / ${fees.fees.toFixed(2)} / {fees.breakevenTicks ?? account?.defaultBreakevenTicks ?? 2} {t("ticks")}
+													${fees.commission.toFixed(2)} / $
+													{fees.fees.toFixed(2)} /{" "}
+													{fees.breakevenTicks ??
+														account?.defaultBreakevenTicks ??
+														2}{" "}
+													{t("ticks")}
 												</p>
 												{fees.isOverride && (
-													<p className="text-tiny text-acc-100">{t("override")}</p>
+													<p className="text-tiny text-acc-100">
+														{t("override")}
+													</p>
 												)}
 											</div>
 											<Button
@@ -779,20 +871,24 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Data Maintenance */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">
 					{tGeneral("dataMaintenance")}
 				</h2>
 				<div className="mt-m-400 space-y-m-400">
 					<div>
-						<p className="text-small text-txt-100">{tGeneral("recalculateR")}</p>
+						<p className="text-small text-txt-100">
+							{tGeneral("recalculateR")}
+						</p>
 						<p className="mb-m-400 text-tiny text-txt-300">
 							{tGeneral("recalculateRDescription")}
 						</p>
 						<RecalculateButton />
 					</div>
 					<div>
-						<p className="text-small text-txt-100">{tGeneral("recalculatePnL")}</p>
+						<p className="text-small text-txt-100">
+							{tGeneral("recalculatePnL")}
+						</p>
 						<p className="mb-m-400 text-tiny text-txt-300">
 							{tGeneral("recalculatePnLDescription")}
 						</p>
@@ -803,13 +899,20 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 
 			{/* Data Import — admin only */}
 			{isAdmin && (
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-					<h2 className="text-small sm:text-body font-semibold text-txt-100">{tGeneral("dataImport")}</h2>
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+						{tGeneral("dataImport")}
+					</h2>
 					<div className="mt-m-400">
-						<p className="text-small text-txt-200">{tGeneral("dataImportDesc")}</p>
+						<p className="text-small text-txt-200">
+							{tGeneral("dataImportDesc")}
+						</p>
 						<p className="mt-m-400 text-tiny text-txt-300">
 							{tGeneral("goTo")}{" "}
-							<Link href="/journal/new" className="text-acc-100 hover:underline">
+							<Link
+								href="/journal/new"
+								className="text-acc-100 hover:underline"
+							>
 								{tGeneral("importNavLink")}
 							</Link>{" "}
 							{tGeneral("toImport")}
@@ -820,8 +923,10 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 
 			{/* Data Export — admin only */}
 			{isAdmin && (
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-					<h2 className="text-small sm:text-body font-semibold text-txt-100">{tGeneral("dataExport")}</h2>
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+						{tGeneral("dataExport")}
+					</h2>
 					<p className="mt-m-400 text-small text-txt-200">
 						{tGeneral("dataExportDesc")}
 					</p>
@@ -832,7 +937,7 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			)}
 
 			{/* Danger Zone */}
-			<div className="rounded-lg border border-red-500/30 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-red-500/30">
 				<h2 className="text-small sm:text-body font-semibold text-red-500">
 					{t("dangerZone")}
 				</h2>
@@ -846,10 +951,13 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				)}
 				<div className="mt-m-400 flex items-center justify-between">
 					<p className="text-small text-txt-200">{account?.name}</p>
-					<AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
-						setIsDeleteDialogOpen(open)
-						if (!open) setDeleteConfirmName("")
-					}}>
+					<AlertDialog
+						open={isDeleteDialogOpen}
+						onOpenChange={(open) => {
+							setIsDeleteDialogOpen(open)
+							if (!open) setDeleteConfirmName("")
+						}}
+					>
 						<AlertDialogTrigger asChild>
 							<Button
 								id="account-delete-trigger"
@@ -866,20 +974,32 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 								<AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
 								<AlertDialogDescription>
 									{isLastAccount
-										? t("deleteLastAccountWarning", { name: account?.name ?? "" })
-										: t("deleteAccountDescription", { name: account?.name ?? "" })}
+										? t("deleteLastAccountWarning", {
+												name: account?.name ?? "",
+											})
+										: t("deleteAccountDescription", {
+												name: account?.name ?? "",
+											})}
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<div className="space-y-s-200">
-								<Label id="delete-confirm-label" htmlFor="delete-confirm-input" className="text-small text-txt-200">
-									{t("deleteAccountConfirmLabel", { name: account?.name ?? "" })}
+								<Label
+									id="delete-confirm-label"
+									htmlFor="delete-confirm-input"
+									className="text-small text-txt-200"
+								>
+									{t("deleteAccountConfirmLabel", {
+										name: account?.name ?? "",
+									})}
 								</Label>
 								<Input
 									id="delete-confirm-input"
 									value={deleteConfirmName}
 									onChange={(e) => setDeleteConfirmName(e.target.value)}
 									placeholder={account?.name ?? ""}
-									aria-label={t("deleteAccountConfirmLabel", { name: account?.name ?? "" })}
+									aria-label={t("deleteAccountConfirmLabel", {
+										name: account?.name ?? "",
+									})}
 								/>
 							</div>
 							<AlertDialogFooter>
@@ -892,7 +1012,9 @@ export const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									disabled={deleteConfirmName !== account?.name || isPending}
 									onClick={handleDeleteAccount}
 								>
-									{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+									{isPending && (
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									)}
 									{tCommon("confirm")}
 								</AlertDialogAction>
 							</AlertDialogFooter>
