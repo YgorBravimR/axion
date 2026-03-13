@@ -346,6 +346,211 @@ Manual verification checklist for features before launch. Each section includes 
 
 ---
 
+## PostHog Analytics Integration
+
+### Pre-requisites
+
+- [ ] Create a PostHog project at [us.posthog.com](https://us.posthog.com) (or EU instance if preferred)
+- [ ] Copy the Project API Key from PostHog > Settings > Project API Key
+- [ ] Add `NEXT_PUBLIC_POSTHOG_KEY=phc_...` to `.env.local` (local) and Vercel environment variables (production)
+- [ ] Add `NEXT_PUBLIC_POSTHOG_HOST=/ingest` to `.env.local` and Vercel environment variables
+- [ ] Enable **Session Replay** in PostHog > Project Settings > Session Replay (toggle on)
+- [ ] Start dev server: `pnpm dev`
+
+---
+
+### 1. Provider Initialization
+
+#### 1.1 PostHog loads in development (debug mode)
+
+- [ ] Open the app in the browser
+- [ ] Open DevTools > Console
+- [ ] **Expected:** PostHog debug logs appear (e.g., `[PostHog.js]` prefixed messages showing init, config)
+- [ ] **Expected:** No errors related to PostHog in the console
+
+#### 1.2 PostHog does NOT load without env var
+
+- [ ] Remove `NEXT_PUBLIC_POSTHOG_KEY` from `.env.local`
+- [ ] Restart the dev server
+- [ ] Open DevTools > Console and Network tab
+- [ ] **Expected:** No PostHog debug logs in console
+- [ ] **Expected:** No requests to `/ingest` in the Network tab
+- [ ] **Expected:** App functions normally (no errors from missing PostHog)
+- [ ] Restore the env var after testing
+
+---
+
+### 2. API Proxy (Ad-Blocker Bypass)
+
+#### 2.1 Rewrite routes work locally
+
+- [ ] Open DevTools > Network tab
+- [ ] Navigate around the app
+- [ ] **Expected:** PostHog requests go to `localhost:3003/ingest/...` (not directly to `us.i.posthog.com`)
+- [ ] **Expected:** Requests return `200` status (not 404 or 502)
+
+#### 2.2 Ad-blocker bypass (Vercel deploy only)
+
+- [ ] Deploy to Vercel with PostHog env vars set
+- [ ] Enable an ad-blocker (e.g., uBlock Origin)
+- [ ] Open DevTools > Network tab on the deployed app
+- [ ] Navigate around the app
+- [ ] **Expected:** Requests to `your-domain/ingest/...` succeed (not blocked by ad-blocker)
+- [ ] **Expected:** PostHog Events tab shows events from this session
+
+---
+
+### 3. Pageview Tracking (SPA Navigation)
+
+#### 3.1 Initial pageview captured
+
+- [ ] Open the app (e.g., navigate to `/journal`)
+- [ ] Go to PostHog > Activity (or Events tab)
+- [ ] **Expected:** A `$pageview` event appears with `$current_url` matching the page you opened
+
+#### 3.2 SPA navigation captures new pageviews
+
+- [ ] Navigate from `/journal` → `/monthly` → `/settings` → `/monte-carlo`
+- [ ] Check PostHog Events tab
+- [ ] **Expected:** 4 separate `$pageview` events, each with the correct URL
+- [ ] **Expected:** No duplicate pageviews for a single navigation
+
+#### 3.3 Page leave events
+
+- [ ] Navigate away from a page (or close the tab)
+- [ ] **Expected:** `$pageleave` event captured in PostHog
+
+---
+
+### 4. User Identification
+
+#### 4.1 Authenticated user is identified
+
+- [ ] Log in with a test account
+- [ ] Go to PostHog > Persons (or People tab)
+- [ ] **Expected:** A person record exists with the user's ID
+- [ ] **Expected:** Person properties include `email` and `name`
+
+#### 4.2 Anonymous activity linked to user
+
+- [ ] Open the app in an incognito window (generates anonymous events)
+- [ ] Navigate to a few pages (creates anonymous `$pageview` events)
+- [ ] Log in
+- [ ] **Expected:** The anonymous events from before login are now associated with the identified user in PostHog
+
+#### 4.3 Logout resets identity
+
+- [ ] While logged in, note the PostHog distinct ID (DevTools > Console > look for `[PostHog.js]` identify log)
+- [ ] Log out
+- [ ] **Expected:** Console shows PostHog reset (new anonymous distinct ID generated)
+- [ ] Navigate to a page
+- [ ] **Expected:** New `$pageview` event has a different (anonymous) distinct ID, not the previous user's
+
+---
+
+### 5. Session Replay
+
+#### 5.1 Replay is recorded
+
+- [ ] Log in and navigate through 3-4 pages (spend ~30 seconds)
+- [ ] Go to PostHog > Recordings
+- [ ] **Expected:** A session replay appears for your session
+- [ ] Play the replay
+
+#### 5.2 All inputs are masked
+
+- [ ] During the recorded session, interact with form inputs (e.g., trade form, settings, search)
+- [ ] In the replay, check form fields
+- [ ] **Expected:** All input values show as `***` or asterisks (masked by `maskAllInputs: true`)
+
+#### 5.3 Financial data masked via `data-ph-mask`
+
+> **Note:** This requires `data-ph-mask` attributes to be added to financial display elements (Step 6 of integration). Skip if not yet implemented.
+
+- [ ] Navigate to pages with financial data (trade table, account balance, monthly plan)
+- [ ] In the replay, check displayed financial values
+- [ ] **Expected:** Values in elements with `data-ph-mask` show as masked/hidden text
+
+#### 5.4 No PII or financial data leaks
+
+- [ ] Review 2-3 session replays thoroughly
+- [ ] **Expected:** No actual currency values, P&L numbers, account balances, or trade prices are visible in the replay
+- [ ] **Expected:** No email addresses or names visible in replay text (beyond what's in the UI navigation/header)
+
+---
+
+### 6. Custom Events (if implemented)
+
+> **Note:** Skip unchecked items if custom `posthog.capture()` calls from Step 7 of the integration plan have not been added yet.
+
+#### 6.1 Trade creation event
+
+- [ ] Create a new trade manually
+- [ ] **Expected:** `trade_created` event in PostHog with `{ method: "manual", asset_type: "..." }`
+
+#### 6.2 CSV import event
+
+- [ ] Import a CSV file successfully
+- [ ] **Expected:** `csv_imported` event in PostHog with `{ broker: "...", trade_count: N }`
+
+#### 6.3 Feature usage events
+
+- [ ] Switch accounts → **Expected:** `account_switched` event
+- [ ] Apply a filter in journal → **Expected:** `filter_applied` event with `{ filter_type: "..." }`
+- [ ] Save settings → **Expected:** `settings_changed` event with `{ section: "..." }`
+
+---
+
+### 7. Coexistence with Sentry
+
+#### 7.1 Both services capture independently
+
+- [ ] Navigate the app normally
+- [ ] **Expected:** PostHog receives `$pageview` events (check PostHog Events)
+- [ ] Trigger a client-side error (temporary `throw` in a component)
+- [ ] **Expected:** Sentry receives the error with stack trace (check Sentry Issues)
+- [ ] **Expected:** Sentry captures an error-only replay (check Sentry Replays)
+- [ ] **Expected:** PostHog captures a general session replay of the same session (check PostHog Recordings)
+- [ ] Remove the temporary `throw`
+
+#### 7.2 Proxy routes don't conflict
+
+- [ ] Verify both proxy routes work simultaneously:
+  - [ ] PostHog: `your-domain/ingest/...` → `us.i.posthog.com`
+  - [ ] Sentry: `your-domain/monitoring/...` → `ingest.us.sentry.io`
+- [ ] **Expected:** No 404s or routing conflicts between the two
+
+---
+
+### 8. Performance & Build
+
+#### 8.1 Build succeeds
+
+- [ ] Run `pnpm build`
+- [ ] **Expected:** Build completes with no errors
+
+#### 8.2 No hydration errors
+
+- [ ] Open the app and check DevTools > Console
+- [ ] **Expected:** No React hydration mismatch warnings related to PostHog
+
+#### 8.3 Bundle size impact
+
+- [ ] Check the build output for client bundle sizes
+- [ ] **Expected:** `posthog-js` adds ~45-60KB gzipped to the client bundle (acceptable for the analytics value it provides)
+
+---
+
+### 9. Cleanup After Testing
+
+- [ ] Verify `NEXT_PUBLIC_POSTHOG_KEY` is set in Vercel environment variables for production
+- [ ] Verify `NEXT_PUBLIC_POSTHOG_HOST=/ingest` is set in Vercel environment variables
+- [ ] (Optional) Remove test events from PostHog if using a production project during testing
+- [ ] Run `pnpm build` to confirm everything compiles
+- [ ] Run `pnpm vitest run` to confirm all tests still pass
+
+---
+
 ## Automated Test Commands
 
 ```bash
