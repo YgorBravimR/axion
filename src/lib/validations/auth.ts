@@ -4,61 +4,61 @@ export const registerSchema = z
 	.object({
 		name: z
 			.string()
-			.min(2, "Name must be at least 2 characters")
-			.max(255, "Name must be less than 255 characters"),
-		email: z.string().email("Invalid email address"),
+			.min(2, "validation.auth.nameMin")
+			.max(255, "validation.auth.nameMax"),
+		email: z.string().email("validation.auth.invalidEmail"),
 		password: z
 			.string()
-			.min(8, "Password must be at least 8 characters")
-			.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-			.regex(/[a-z]/, "Password must contain at least one lowercase letter")
-			.regex(/[0-9]/, "Password must contain at least one number"),
+			.min(8, "validation.auth.passwordMin")
+			.regex(/[A-Z]/, "validation.auth.passwordUppercase")
+			.regex(/[a-z]/, "validation.auth.passwordLowercase")
+			.regex(/[0-9]/, "validation.auth.passwordNumber"),
 		confirmPassword: z.string(),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords don't match",
+		message: "validation.auth.passwordsDoNotMatch",
 		path: ["confirmPassword"],
 	})
 
 export const loginSchema = z.object({
-	email: z.string().email("Invalid email address"),
-	password: z.string().min(1, "Password is required"),
+	email: z.string().email("validation.auth.invalidEmail"),
+	password: z.string().min(1, "validation.auth.passwordRequired"),
 	accountId: z.string().uuid().optional(),
 })
 
 export const changePasswordSchema = z
 	.object({
-		currentPassword: z.string().min(1, "Current password is required"),
+		currentPassword: z.string().min(1, "validation.auth.currentPasswordRequired"),
 		newPassword: z
 			.string()
-			.min(8, "Password must be at least 8 characters")
-			.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-			.regex(/[a-z]/, "Password must contain at least one lowercase letter")
-			.regex(/[0-9]/, "Password must contain at least one number"),
+			.min(8, "validation.auth.passwordMin")
+			.regex(/[A-Z]/, "validation.auth.passwordUppercase")
+			.regex(/[a-z]/, "validation.auth.passwordLowercase")
+			.regex(/[0-9]/, "validation.auth.passwordNumber"),
 		confirmPassword: z.string(),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {
-		message: "Passwords don't match",
+		message: "validation.auth.passwordsDoNotMatch",
 		path: ["confirmPassword"],
 	})
 
 export const updateProfileSchema = z.object({
 	name: z
 		.string()
-		.min(2, "Name must be at least 2 characters")
-		.max(255, "Name must be less than 255 characters"),
+		.min(2, "validation.auth.nameMin")
+		.max(255, "validation.auth.nameMax"),
 	preferredLocale: z.enum(["en", "pt-BR"]).optional(),
 	theme: z.enum(["dark", "light"]).optional(),
 	dateFormat: z.string().optional(),
 })
 
 export const verifyEmailSchema = z.object({
-	email: z.string().email("Invalid email address"),
-	code: z.string().length(6, "Code must be 6 digits").regex(/^\d+$/, "Code must be numeric"),
+	email: z.string().email("validation.auth.invalidEmail"),
+	code: z.string().length(6, "validation.auth.codeLength").regex(/^\d+$/, "validation.auth.codeNumeric"),
 })
 
 export const requestVerificationSchema = z.object({
-	email: z.string().email("Invalid email address"),
+	email: z.string().email("validation.auth.invalidEmail"),
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>

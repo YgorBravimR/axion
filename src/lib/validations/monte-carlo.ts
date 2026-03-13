@@ -1,36 +1,36 @@
 import { z } from "zod"
 import { drawdownTierSchema, consecutiveLossRuleSchema } from "@/lib/validations/risk-profile"
 
-/** Maximum allowed total iterations (trades × simulations) */
+/** Maximum allowed total iterations (trades x simulations) */
 export const SIMULATION_BUDGET_CAP = 3_000_000
 
 export const simulationParamsSchema = z
 	.object({
 		winRate: z
 			.number()
-			.min(1, "Win rate must be at least 1%")
-			.max(99, "Win rate cannot exceed 99%"),
+			.min(1, "validation.monteCarlo.winRateMin")
+			.max(99, "validation.monteCarlo.winRateMax"),
 		rewardRiskRatio: z
 			.number()
-			.min(0.1, "Reward/Risk ratio must be at least 0.1")
-			.max(20, "Reward/Risk ratio cannot exceed 20"),
+			.min(0.1, "validation.monteCarlo.rewardRiskMin")
+			.max(20, "validation.monteCarlo.rewardRiskMax"),
 		numberOfTrades: z
 			.number()
 			.int()
-			.min(10, "Minimum 10 trades per simulation")
-			.max(10000, "Maximum 10,000 trades per simulation"),
+			.min(10, "validation.monteCarlo.tradesMin")
+			.max(10000, "validation.monteCarlo.tradesMax"),
 		commissionImpactR: z
 			.number()
-			.min(0, "Commission cannot be negative")
-			.max(50, "Commission cannot exceed 50% of risk"),
+			.min(0, "validation.monteCarlo.commissionMin")
+			.max(50, "validation.monteCarlo.commissionMax"),
 		simulationCount: z
 			.number()
 			.int()
-			.min(100, "Minimum 100 simulations")
-			.max(50000, "Maximum 50,000 simulations"),
+			.min(100, "validation.monteCarlo.simulationsMin")
+			.max(50000, "validation.monteCarlo.simulationsMax"),
 	})
 	.superRefine((data, ctx) => {
-		// Budget cap: trades × simulations must not exceed 3,000,000 total iterations
+		// Budget cap: trades x simulations must not exceed 3,000,000 total iterations
 		const totalIterations = data.numberOfTrades * data.simulationCount
 		if (totalIterations > SIMULATION_BUDGET_CAP) {
 			const maxTrades = Math.floor(SIMULATION_BUDGET_CAP / data.simulationCount)
@@ -48,7 +48,7 @@ export type SimulationParamsInput = z.infer<typeof simulationParamsSchema>
 export const dataSourceSchema = z.discriminatedUnion("type", [
 	z.object({
 		type: z.literal("strategy"),
-		strategyId: z.string().uuid("Invalid strategy ID"),
+		strategyId: z.string().uuid("validation.monteCarlo.invalidStrategyId"),
 	}),
 	z.object({
 		type: z.literal("all_strategies"),
@@ -72,7 +72,7 @@ export const defaultSimulationParams: SimulationParamsInput = {
 // V2 — DAY-AWARE SIMULATION SCHEMAS
 // ==========================================
 
-/** Maximum allowed total iterations for V2: 50 trades/day × days × simulations */
+/** Maximum allowed total iterations for V2: 50 trades/day x days x simulations */
 export const V2_SIMULATION_BUDGET_CAP = 10_000_000
 
 const riskManagementProfileForSimSchema = z.object({
@@ -132,7 +132,7 @@ export const simulationParamsV2Schema = z
 		ruinThresholdPercent: z.number().min(1).max(99).default(50),
 	})
 	.superRefine((data, ctx) => {
-		// Budget cap: ~50 trades/day × days/month × months × simulations
+		// Budget cap: ~50 trades/day x days/month x months x simulations
 		const maxTradesPerDay = 50
 		const totalIterations =
 			maxTradesPerDay *

@@ -3,7 +3,7 @@ import { z } from "zod"
 // Checklist item schema
 export const checklistItemSchema = z.object({
 	id: z.string().min(1),
-	label: z.string().min(1, "Item label is required").max(200, "Item label must be 200 characters or less"),
+	label: z.string().min(1, "validation.commandCenter.itemLabelRequired").max(200, "validation.commandCenter.itemLabelMax"),
 	order: z.number().int().min(0),
 })
 
@@ -11,12 +11,12 @@ export const checklistItemSchema = z.object({
 export const createChecklistSchema = z.object({
 	name: z
 		.string()
-		.min(1, "Checklist name is required")
-		.max(100, "Name must be 100 characters or less"),
+		.min(1, "validation.commandCenter.checklistNameRequired")
+		.max(100, "validation.commandCenter.checklistNameMax"),
 	items: z
 		.array(checklistItemSchema)
-		.min(1, "At least one item is required")
-		.max(50, "Maximum 50 items allowed"),
+		.min(1, "validation.commandCenter.atLeastOneItem")
+		.max(50, "validation.commandCenter.maxItems"),
 	isActive: z.boolean().default(true),
 })
 
@@ -24,7 +24,7 @@ export const updateChecklistSchema = createChecklistSchema.partial()
 
 // Checklist completion schema
 export const updateCompletionSchema = z.object({
-	checklistId: z.string().uuid("Invalid checklist ID"),
+	checklistId: z.string().uuid("validation.commandCenter.invalidChecklistId"),
 	itemId: z.string().min(1),
 	completed: z.boolean(),
 })
@@ -42,12 +42,12 @@ export const dailyNotesSchema = z.object({
 	date: z.string().or(z.date()),
 	preMarketNotes: z
 		.string()
-		.max(10000, "Pre-market notes must be 10000 characters or less")
+		.max(10000, "validation.commandCenter.preMarketNotesMax")
 		.optional()
 		.nullable(),
 	postMarketNotes: z
 		.string()
-		.max(10000, "Post-market notes must be 10000 characters or less")
+		.max(10000, "validation.commandCenter.postMarketNotesMax")
 		.optional()
 		.nullable(),
 	mood: z.enum(moodOptions).optional().nullable(),
@@ -55,25 +55,25 @@ export const dailyNotesSchema = z.object({
 
 // Asset settings schema
 export const assetSettingsSchema = z.object({
-	assetId: z.string().uuid("Invalid asset ID"),
+	assetId: z.string().uuid("validation.commandCenter.invalidAssetId"),
 	bias: z.enum(biasOptions).optional().nullable(),
 	maxDailyTrades: z.coerce
 		.number()
-		.int("Max daily trades must be a whole number")
-		.positive("Max daily trades must be positive")
-		.max(1000, "Max daily trades must be 1000 or less")
+		.int("validation.commandCenter.maxDailyTradesInteger")
+		.positive("validation.commandCenter.maxDailyTradesPositive")
+		.max(1000, "validation.commandCenter.maxDailyTradesMax")
 		.optional()
 		.nullable(),
 	maxPositionSize: z.coerce
 		.number()
-		.int("Max position size must be a whole number")
-		.positive("Max position size must be positive")
-		.max(100000, "Max position size must be 100000 or less")
+		.int("validation.commandCenter.maxPositionSizeInteger")
+		.positive("validation.commandCenter.maxPositionSizePositive")
+		.max(100000, "validation.commandCenter.maxPositionSizeMax")
 		.optional()
 		.nullable(),
 	notes: z
 		.string()
-		.max(2000, "Notes must be 2000 characters or less")
+		.max(2000, "validation.commandCenter.notesMax")
 		.optional()
 		.nullable(),
 	isActive: z.boolean().default(true),

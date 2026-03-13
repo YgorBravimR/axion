@@ -42,7 +42,7 @@ const gainModeSchema = z.discriminatedUnion("type", [
 	}),
 	z.object({
 		type: z.literal("gainSequence"),
-		sequence: z.array(lossRecoveryStepSchema).max(10, "Maximum 10 gain steps"),
+		sequence: z.array(lossRecoveryStepSchema).max(10, "validation.riskProfile.maxGainSteps"),
 		repeatLastStep: z.boolean(),
 		stopOnFirstLoss: z.boolean(),
 		dailyTargetCents: z.number().int().positive().nullable(),
@@ -103,12 +103,12 @@ const limitsRSchema = z.object({
  */
 const decisionTreeConfigSchema = z.object({
 	baseTrade: z.object({
-		riskCents: z.number().int().positive("Base risk must be positive"),
+		riskCents: z.number().int().positive("validation.riskProfile.baseRiskPositive"),
 		maxContracts: z.number().int().positive().nullable(),
 		minStopPoints: z.number().int().positive().nullable(),
 	}),
 	lossRecovery: z.object({
-		sequence: z.array(lossRecoveryStepSchema).max(10, "Maximum 10 recovery steps"),
+		sequence: z.array(lossRecoveryStepSchema).max(10, "validation.riskProfile.maxRecoverySteps"),
 		executeAllRegardless: z.boolean(),
 		stopAfterSequence: z.boolean(),
 	}),
@@ -141,13 +141,13 @@ const decisionTreeConfigSchema = z.object({
  * Schema for creating or updating a risk management profile.
  */
 const riskProfileSchema = z.object({
-	name: z.string().min(1, "Name is required").max(100, "Name too long"),
-	description: z.string().max(2000, "Description too long").optional().nullable(),
-	baseRiskCents: z.number().int().positive("Base risk must be positive"),
-	dailyLossCents: z.number().int().positive("Daily loss limit must be positive"),
-	weeklyLossCents: z.number().int().positive("Weekly loss limit must be positive").optional().nullable(),
-	monthlyLossCents: z.number().int().positive("Monthly loss limit must be positive"),
-	dailyProfitTargetCents: z.number().int().positive("Daily profit target must be positive").optional().nullable(),
+	name: z.string().min(1, "validation.riskProfile.nameRequired").max(100, "validation.riskProfile.nameMax"),
+	description: z.string().max(2000, "validation.riskProfile.descriptionMax").optional().nullable(),
+	baseRiskCents: z.number().int().positive("validation.riskProfile.baseRiskPositive"),
+	dailyLossCents: z.number().int().positive("validation.riskProfile.dailyLossPositive"),
+	weeklyLossCents: z.number().int().positive("validation.riskProfile.weeklyLossPositive").optional().nullable(),
+	monthlyLossCents: z.number().int().positive("validation.riskProfile.monthlyLossPositive"),
+	dailyProfitTargetCents: z.number().int().positive("validation.riskProfile.dailyProfitTargetPositive").optional().nullable(),
 	decisionTree: decisionTreeConfigSchema,
 })
 

@@ -18,7 +18,7 @@ const coerceDateAsBrt = z.union([z.date(), z.string(), z.number()]).transform((v
 		const dateStr = hasTimezone ? val : `${val}${BRT_OFFSET}`
 		const date = new Date(dateStr)
 		if (isNaN(date.getTime())) {
-			ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid date" })
+			ctx.addIssue({ code: z.ZodIssueCode.custom, message: "validation.invalidDate" })
 			return z.NEVER
 		}
 		return date
@@ -26,7 +26,7 @@ const coerceDateAsBrt = z.union([z.date(), z.string(), z.number()]).transform((v
 
 	const date = new Date(val)
 	if (isNaN(date.getTime())) {
-		ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid date" })
+		ctx.addIssue({ code: z.ZodIssueCode.custom, message: "validation.invalidDate" })
 		return z.NEVER
 	}
 	return date
@@ -37,37 +37,37 @@ const tradeBaseFields = {
 	// Basic Info
 	asset: z
 		.string()
-		.min(1, "Asset is required")
-		.max(20, "Asset must be 20 characters or less")
+		.min(1, "validation.trade.assetRequired")
+		.max(20, "validation.trade.assetMaxLength")
 		.transform((val) => val.toUpperCase()),
 	direction: tradeDirectionSchema,
 	timeframeId: z.string().uuid().optional().nullable(),
 
 	// Timing
-	entryDate: coerceDateAsBrt.pipe(z.date({ message: "Entry date is required" })),
+	entryDate: coerceDateAsBrt.pipe(z.date({ message: "validation.trade.entryDateRequired" })),
 	exitDate: coerceDateAsBrt.optional(),
 
 	// Execution
 	entryPrice: z.coerce
-		.number({ message: "Entry price is required" })
-		.positive("Entry price must be positive"),
+		.number({ message: "validation.trade.entryPriceRequired" })
+		.positive("validation.trade.entryPricePositive"),
 	exitPrice: z.coerce
 		.number()
-		.positive("Exit price must be positive")
+		.positive("validation.trade.exitPricePositive")
 		.optional(),
 	positionSize: z.coerce
-		.number({ message: "Position size is required" })
-		.positive("Position size must be positive"),
+		.number({ message: "validation.trade.positionSizeRequired" })
+		.positive("validation.trade.positionSizePositive"),
 
 	// Risk Management
-	stopLoss: z.coerce.number().positive("Stop loss must be positive").optional(),
+	stopLoss: z.coerce.number().positive("validation.trade.stopLossPositive").optional(),
 	takeProfit: z.coerce
 		.number()
-		.positive("Take profit must be positive")
+		.positive("validation.trade.takeProfitPositive")
 		.optional(),
 	// Risk amount can be manually entered if stopLoss is not used
 	// If stopLoss is provided, riskAmount will be auto-calculated from it
-	riskAmount: z.coerce.number().positive("Risk amount must be positive").optional(),
+	riskAmount: z.coerce.number().positive("validation.trade.riskAmountPositive").optional(),
 	// Note: plannedRMultiple is always calculated from takeProfit/stopLoss ratio
 
 	// Results (can be auto-calculated or manual)

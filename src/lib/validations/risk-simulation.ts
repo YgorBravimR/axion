@@ -7,7 +7,7 @@ import { decisionTreeConfigSchema } from "./risk-profile"
 
 const simpleSimulationParamsSchema = z.object({
 	mode: z.literal("simple"),
-	accountBalanceCents: z.number().int().positive("Account balance must be positive"),
+	accountBalanceCents: z.number().int().positive("validation.riskSimulation.accountBalancePositive"),
 	riskPerTradePercent: z.number().min(0.01).max(100),
 	dailyLossPercent: z.number().min(0.01).max(100),
 	dailyProfitTargetPercent: z.number().min(0.01).max(100).nullable(),
@@ -24,7 +24,7 @@ const simpleSimulationParamsSchema = z.object({
 
 const advancedSimulationParamsSchema = z.object({
 	mode: z.literal("advanced"),
-	accountBalanceCents: z.number().int().positive("Account balance must be positive"),
+	accountBalanceCents: z.number().int().positive("validation.riskSimulation.accountBalancePositive"),
 	decisionTree: decisionTreeConfigSchema,
 	dailyLossCents: z.number().int().positive(),
 	dailyProfitTargetCents: z.number().int().positive().nullable(),
@@ -38,8 +38,8 @@ const riskSimulationParamsSchema = z.discriminatedUnion("mode", [
 ])
 
 const dateRangeSchema = z.object({
-	dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-	dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+	dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "validation.riskSimulation.dateFormat"),
+	dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "validation.riskSimulation.dateFormat"),
 })
 
 type SimpleSimulationParamsInput = z.infer<typeof simpleSimulationParamsSchema>

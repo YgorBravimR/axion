@@ -1,14 +1,14 @@
 import { z } from "zod"
 
 const createScenarioSchema = z.object({
-	strategyId: z.string().uuid("Invalid strategy ID"),
+	strategyId: z.string().uuid("validation.scenario.invalidStrategyId"),
 	name: z
 		.string()
-		.min(1, "Name is required")
-		.max(200, "Name must be 200 characters or less"),
+		.min(1, "validation.scenario.nameRequired")
+		.max(200, "validation.scenario.nameMax"),
 	description: z
 		.string()
-		.max(2000, "Description must be 2000 characters or less")
+		.max(2000, "validation.scenario.descriptionMax")
 		.optional()
 		.or(z.literal("")),
 	sortOrder: z.coerce.number().int().min(0).default(0),

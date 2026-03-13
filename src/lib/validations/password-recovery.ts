@@ -1,29 +1,29 @@
 import { z } from "zod"
 
 const requestResetSchema = z.object({
-	email: z.string().email("Invalid email address"),
+	email: z.string().email("validation.passwordRecovery.invalidEmail"),
 })
 
 const verifyCodeSchema = z.object({
-	email: z.string().email("Invalid email address"),
+	email: z.string().email("validation.passwordRecovery.invalidEmail"),
 	code: z
 		.string()
-		.length(6, "Code must be exactly 6 digits")
-		.regex(/^\d+$/, "Code must contain only digits"),
+		.length(6, "validation.passwordRecovery.codeLength")
+		.regex(/^\d+$/, "validation.passwordRecovery.codeDigitsOnly"),
 })
 
 const resetPasswordSchema = z.object({
-	email: z.string().email("Invalid email address"),
+	email: z.string().email("validation.passwordRecovery.invalidEmail"),
 	code: z
 		.string()
-		.length(6, "Code must be exactly 6 digits")
-		.regex(/^\d+$/, "Code must contain only digits"),
+		.length(6, "validation.passwordRecovery.codeLength")
+		.regex(/^\d+$/, "validation.passwordRecovery.codeDigitsOnly"),
 	newPassword: z
 		.string()
-		.min(8, "Password must be at least 8 characters")
-		.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-		.regex(/[a-z]/, "Password must contain at least one lowercase letter")
-		.regex(/[0-9]/, "Password must contain at least one number"),
+		.min(8, "validation.passwordRecovery.passwordMin")
+		.regex(/[A-Z]/, "validation.passwordRecovery.passwordUppercase")
+		.regex(/[a-z]/, "validation.passwordRecovery.passwordLowercase")
+		.regex(/[0-9]/, "validation.passwordRecovery.passwordNumber"),
 })
 
 type RequestResetInput = z.infer<typeof requestResetSchema>

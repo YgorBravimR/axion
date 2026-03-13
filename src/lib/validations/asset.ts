@@ -3,17 +3,17 @@ import { z } from "zod"
 export const assetTypeSchema = z.object({
 	code: z
 		.string()
-		.min(2, "Code must be at least 2 characters")
-		.max(50, "Code must be 50 characters or less")
+		.min(2, "validation.asset.codeMin")
+		.max(50, "validation.asset.codeMax")
 		.regex(
 			/^[A-Z_]+$/,
-			"Code must be uppercase letters and underscores only"
+			"validation.asset.codeFormat"
 		)
 		.transform((val) => val.toUpperCase()),
 	name: z
 		.string()
-		.min(2, "Name must be at least 2 characters")
-		.max(100, "Name must be 100 characters or less"),
+		.min(2, "validation.asset.nameMin")
+		.max(100, "validation.asset.nameMax"),
 	description: z.string().optional().nullable(),
 	isActive: z.boolean().default(true),
 })
@@ -25,36 +25,36 @@ export const updateAssetTypeSchema = assetTypeSchema.partial()
 export const assetSchema = z.object({
 	symbol: z
 		.string()
-		.min(1, "Symbol is required")
-		.max(20, "Symbol must be 20 characters or less")
+		.min(1, "validation.asset.symbolRequired")
+		.max(20, "validation.asset.symbolMax")
 		.regex(
 			/^[A-Z0-9]+$/,
-			"Symbol must be uppercase letters and numbers only"
+			"validation.asset.symbolFormat"
 		)
 		.transform((val) => val.toUpperCase()),
 	name: z
 		.string()
-		.min(2, "Name must be at least 2 characters")
-		.max(100, "Name must be 100 characters or less"),
-	assetTypeId: z.string().uuid("Invalid asset type ID"),
+		.min(2, "validation.asset.nameMin")
+		.max(100, "validation.asset.nameMax"),
+	assetTypeId: z.string().uuid("validation.asset.invalidAssetTypeId"),
 	tickSize: z
 		.number()
-		.positive("Tick size must be positive")
+		.positive("validation.asset.tickSizePositive")
 		.or(z.string().transform((val) => parseFloat(val)))
-		.refine((val) => val > 0, "Tick size must be positive"),
+		.refine((val) => val > 0, "validation.asset.tickSizePositive"),
 	tickValue: z
 		.number()
-		.positive("Tick value must be positive")
+		.positive("validation.asset.tickValuePositive")
 		.or(z.string().transform((val) => parseFloat(val)))
-		.refine((val) => val > 0, "Tick value must be positive"),
+		.refine((val) => val > 0, "validation.asset.tickValuePositive"),
 	currency: z
 		.string()
-		.min(3, "Currency must be 3 characters")
-		.max(10, "Currency must be 10 characters or less")
+		.min(3, "validation.asset.currencyMin")
+		.max(10, "validation.asset.currencyMax")
 		.default("BRL"),
 	multiplier: z
 		.number()
-		.positive("Multiplier must be positive")
+		.positive("validation.asset.multiplierPositive")
 		.or(z.string().transform((val) => parseFloat(val)))
 		.optional()
 		.default(1),
@@ -64,7 +64,7 @@ export const assetSchema = z.object({
 export const createAssetSchema = assetSchema
 
 export const updateAssetSchema = assetSchema.partial().extend({
-	id: z.string().uuid("Invalid asset ID"),
+	id: z.string().uuid("validation.asset.invalidAssetId"),
 })
 
 export type CreateAssetTypeInput = z.infer<typeof createAssetTypeSchema>

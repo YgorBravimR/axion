@@ -8,21 +8,21 @@ export const orderTypeSchema = z.enum(["market", "limit", "stop", "stop_limit"])
 
 // Create execution input schema
 export const createExecutionSchema = z.object({
-	tradeId: z.string().uuid("Trade ID must be a valid UUID"),
+	tradeId: z.string().uuid("validation.execution.invalidTradeId"),
 
 	// Execution details
 	executionType: executionTypeSchema,
-	executionDate: z.coerce.date({ message: "Execution date is required" }),
+	executionDate: z.coerce.date({ message: "validation.execution.executionDateRequired" }),
 	price: z.coerce
-		.number({ message: "Price is required" })
-		.positive("Price must be positive"),
+		.number({ message: "validation.execution.priceRequired" })
+		.positive("validation.execution.pricePositive"),
 	quantity: z.coerce
-		.number({ message: "Quantity is required" })
-		.positive("Quantity must be positive"),
+		.number({ message: "validation.execution.quantityRequired" })
+		.positive("validation.execution.quantityPositive"),
 
 	// Optional metadata
 	orderType: orderTypeSchema.optional().nullable(),
-	notes: z.string().max(1000, "Notes must be 1000 characters or less").optional(),
+	notes: z.string().max(1000, "validation.execution.notesMaxLength").optional(),
 
 	// Costs (in cents)
 	commission: z.coerce.number().min(0).default(0),

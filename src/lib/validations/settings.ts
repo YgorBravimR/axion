@@ -6,25 +6,25 @@ export const userSettingsSchema = z.object({
 	propFirmName: z.string().max(100).nullable().optional(),
 	profitSharePercentage: z
 		.number()
-		.min(0, "Profit share must be at least 0%")
-		.max(100, "Profit share cannot exceed 100%"),
+		.min(0, "validation.settings.profitShareMin")
+		.max(100, "validation.settings.profitShareMax"),
 
 	// Tax Settings
 	dayTradeTaxRate: z
 		.number()
-		.min(0, "Tax rate must be at least 0%")
-		.max(100, "Tax rate cannot exceed 100%"),
+		.min(0, "validation.settings.taxRateMin")
+		.max(100, "validation.settings.taxRateMax"),
 	swingTradeTaxRate: z
 		.number()
-		.min(0, "Tax rate must be at least 0%")
-		.max(100, "Tax rate cannot exceed 100%"),
+		.min(0, "validation.settings.taxRateMin")
+		.max(100, "validation.settings.taxRateMax"),
 	taxExemptThreshold: z
 		.number()
-		.min(0, "Threshold must be at least 0")
+		.min(0, "validation.settings.thresholdMin")
 		.optional(),
 
 	// Display Preferences
-	defaultCurrency: z.string().length(3, "Currency code must be 3 characters"),
+	defaultCurrency: z.string().length(3, "validation.settings.currencyLength"),
 	showTaxEstimates: z.boolean(),
 	showPropCalculations: z.boolean(),
 

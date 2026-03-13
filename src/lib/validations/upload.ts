@@ -27,14 +27,14 @@ const uploadSchema = z.object({
 
 /**
  * Validate file type and size on the server side.
- * Returns error message or null if valid.
+ * Returns error message key or null if valid.
  */
 const validateFile = (file: File): string | null => {
 	if (!ACCEPTED_IMAGE_TYPES.includes(file.type as ImageMimeType)) {
-		return `Invalid file type. Accepted: ${ACCEPTED_IMAGE_TYPES.join(", ")}`
+		return "validation.upload.invalidFileType"
 	}
 	if (file.size > MAX_FILE_SIZE) {
-		return `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`
+		return "validation.upload.fileTooLarge"
 	}
 	return null
 }

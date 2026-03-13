@@ -5,11 +5,11 @@ const conditionCategories = ["indicator", "price_action", "market_context", "cus
 const createConditionSchema = z.object({
 	name: z
 		.string()
-		.min(1, "Name is required")
-		.max(100, "Name must be 100 characters or less"),
+		.min(1, "validation.tradingCondition.nameRequired")
+		.max(100, "validation.tradingCondition.nameMax"),
 	description: z
 		.string()
-		.max(500, "Description must be 500 characters or less")
+		.max(500, "validation.tradingCondition.descriptionMax")
 		.optional()
 		.or(z.literal("")),
 	category: z.enum(conditionCategories),

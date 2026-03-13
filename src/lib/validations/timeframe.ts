@@ -16,27 +16,27 @@ export const timeframeUnitSchema = z.enum(timeframeUnitValues)
 export const timeframeSchema = z.object({
 	code: z
 		.string()
-		.min(1, "Code is required")
-		.max(20, "Code must be 20 characters or less")
+		.min(1, "validation.timeframe.codeRequired")
+		.max(20, "validation.timeframe.codeMax")
 		.regex(
 			/^[A-Z0-9_]+$/,
-			"Code must be uppercase letters, numbers and underscores only"
+			"validation.timeframe.codeFormat"
 		)
 		.transform((val) => val.toUpperCase()),
 	name: z
 		.string()
-		.min(2, "Name must be at least 2 characters")
-		.max(50, "Name must be 50 characters or less"),
+		.min(2, "validation.timeframe.nameMin")
+		.max(50, "validation.timeframe.nameMax"),
 	type: timeframeTypeSchema,
 	value: z.coerce
-		.number({ message: "Value is required" })
-		.int("Value must be an integer")
-		.positive("Value must be positive"),
+		.number({ message: "validation.timeframe.valueRequired" })
+		.int("validation.timeframe.valueInteger")
+		.positive("validation.timeframe.valuePositive"),
 	unit: timeframeUnitSchema,
 	sortOrder: z.coerce
 		.number()
-		.int("Sort order must be an integer")
-		.min(0, "Sort order cannot be negative")
+		.int("validation.timeframe.sortOrderInteger")
+		.min(0, "validation.timeframe.sortOrderMin")
 		.optional()
 		.default(0),
 	isActive: z.boolean().default(true),
@@ -45,7 +45,7 @@ export const timeframeSchema = z.object({
 export const createTimeframeSchema = timeframeSchema
 
 export const updateTimeframeSchema = timeframeSchema.partial().extend({
-	id: z.string().uuid("Invalid timeframe ID"),
+	id: z.string().uuid("validation.timeframe.invalidTimeframeId"),
 })
 
 export type TimeframeType = (typeof timeframeTypeValues)[number]

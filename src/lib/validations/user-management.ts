@@ -1,9 +1,9 @@
 import { z } from "zod"
 
 const updateUserRoleSchema = z.object({
-	userId: z.string().uuid("Invalid user ID"),
+	userId: z.string().uuid("validation.userManagement.invalidUserId"),
 	role: z.enum(["admin", "trader", "viewer"], {
-		message: "Role must be admin, trader, or viewer",
+		message: "validation.userManagement.roleRequired",
 	}),
 })
 
