@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useTransition, useRef } from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -107,6 +107,9 @@ const AnalyticsContent = ({
 		"asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 	>("asset")
 
+	// Skip the fetch effect on initial mount — data is already provided via server-side props
+	const hasUserInteracted = useRef(false)
+
 	const [expectancyMode, setExpectancyMode] = useState<ExpectancyMode>("edge")
 
 	const [performance, setPerformance] =
@@ -159,8 +162,13 @@ const AnalyticsContent = ({
 		initialSessionAssetPerformance,
 	])
 
-	// Refetch data when filters or groupBy change
+	// Refetch data when filters or groupBy change (skip initial mount — server already fetched)
 	useEffect(() => {
+		if (!hasUserInteracted.current) {
+			hasUserInteracted.current = true
+			return
+		}
+
 		startTransition(async () => {
 			const tradeFilters = toTradeFilters(filters)
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { useTranslations } from "next-intl"
 import type { TimeHeatmapCell } from "@/types"
 import { formatBrlCompactWithSign, formatR } from "@/lib/formatting"
@@ -24,7 +24,7 @@ const TRADING_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17]
  * @param data - Array of heatmap cells with performance data per time slot
  * @param expectancyMode - Whether to color/sort by R-multiples or $ P&L
  */
-export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
+const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const t = useTranslations("analytics")
 	const tDays = useTranslations("analytics.time.heatmapDays")
 	const [hoveredCell, setHoveredCell] = useState<TimeHeatmapCell | null>(null)
@@ -212,9 +212,8 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 					{days.map((day, dayIndex) => {
 						const dayOfWeek = dayIndex + 1
 						return (
-							<>
+							<Fragment key={day}>
 								<div
-									key={`label-${day}`}
 									className="text-small text-txt-200 pr-s-200 flex items-center justify-end font-medium"
 								>
 									{dayLabels[dayIndex]}
@@ -258,7 +257,7 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 										</div>
 									)
 								})}
-							</>
+							</Fragment>
 						)
 					})}
 				</div>
@@ -532,3 +531,5 @@ export const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		</div>
 	)
 }
+
+export { TimeHeatmap }
