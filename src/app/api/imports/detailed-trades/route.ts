@@ -15,11 +15,15 @@ import {
 	type BrokerName,
 } from "@/lib/csv-parsers"
 
-// TODO: Add importLogs table to schema and enable rate limiting persistence
-// For now, using in-memory rate limiting for MVP
+import { createDbRateLimiter } from "@/lib/db-rate-limiter"
 
-// In-memory rate limiting (stores last import time per account)
-const importRateLimitMap = new Map<string, Date>()
+// DB-backed rate limiting (survives serverless cold starts)
+// 10 imports per hour per account — covers multi-export workflows (e.g. ProfitChart per-trade exports)
+// while still blocking runaway scripts or accidental spam
+const importLimiter = createDbRateLimiter({
+	maxAttempts: 10,
+	windowMs: 60 * 60 * 1000, // 1 hour
+})
 
 // Cache for import previews (1 hour TTL)
 const previewCache = new Map<
@@ -35,24 +39,6 @@ const RATE_LIMIT_MINUTES = 30
  */
 const generateImportId = (): string => {
 	return `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-}
-
-/**
- * Check if user exceeded 30-minute cooldown (in-memory for MVP)
- * TODO: Use database table (importLogs) for persistent rate limiting
- */
-const checkImportCooldown = (accountId: string): Date | null => {
-	const lastImport = importRateLimitMap.get(accountId)
-	if (!lastImport) return null
-
-	const now = new Date()
-	const cooldownEndTime = new Date(lastImport.getTime() + RATE_LIMIT_MINUTES * 60 * 1000)
-
-	if (now < cooldownEndTime) {
-		return lastImport
-	}
-
-	return null
 }
 
 export const POST = async (req: NextRequest) => {
@@ -89,19 +75,15 @@ export const POST = async (req: NextRequest) => {
 			)
 		}
 
-		// Check rate limit (30-minute cooldown)
-		const lastImportDate = checkImportCooldown(accountId)
-		if (lastImportDate) {
-			const nextAvailableTime = new Date(
-				lastImportDate.getTime() + RATE_LIMIT_MINUTES * 60 * 1000
-			)
+		// Check rate limit (30-minute cooldown, DB-backed)
+		const rateLimitResult = await importLimiter.check(`csv-import:${accountId}`)
+		if (!rateLimitResult.allowed) {
+			const retryAfterSec = Math.ceil(rateLimitResult.retryAfterMs / 1000)
 			return NextResponse.json(
 				{
 					error: "RATE_LIMITED",
-					message: `Import in cooldown. Next available: ${nextAvailableTime.toISOString()}`,
-					retryAfter: Math.ceil(
-						(nextAvailableTime.getTime() - Date.now()) / 1000
-					),
+					message: `Import in cooldown. Try again in ${Math.ceil(retryAfterSec / 60)} minute(s).`,
+					retryAfter: retryAfterSec,
 				},
 				{ status: 429 }
 			)
@@ -128,9 +110,6 @@ export const POST = async (req: NextRequest) => {
 		// Create import preview
 		const importId = generateImportId()
 		const preview = createImportPreview(trades, brokerName, executions.length, importId)
-
-		// Record this import in rate limiter
-		importRateLimitMap.set(accountId, new Date())
 
 		// Cache preview for confirmation step (1 hour TTL)
 		previewCache.set(importId, {
