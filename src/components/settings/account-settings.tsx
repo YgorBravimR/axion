@@ -875,8 +875,8 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				<h2 className="text-body text-txt-100 font-semibold">
 					{tGeneral("dataMaintenance")}
 				</h2>
-				<div className="mt-m-400 space-y-m-400">
-					<div>
+				<div className="mt-m-400 space-y-s-300 sm:space-y-m-400">
+					<div className="pb-s-300 sm:pb-0">
 						<p className="text-small text-txt-100">
 							{tGeneral("recalculateR")}
 						</p>
@@ -885,7 +885,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						</p>
 						<RecalculateButton />
 					</div>
-					<div>
+					<div className="border-t border-bg-300 pt-s-300 sm:border-0 sm:pt-0">
 						<p className="text-small text-txt-100">
 							{tGeneral("recalculatePnL")}
 						</p>

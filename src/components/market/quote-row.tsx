@@ -136,7 +136,7 @@ export const QuoteCard = ({
 				)}
 
 				{/* Col 3: B3 Price */}
-				<span className="text-small text-txt-100 text-right font-mono tabular-nums">
+				<span className="text-tiny sm:text-small text-txt-100 whitespace-nowrap text-right font-mono tabular-nums">
 					{formatPrice(quote.price)}
 				</span>
 
@@ -148,7 +148,7 @@ export const QuoteCard = ({
 				{/* Col 5: ADR Price */}
 				<span
 					className={cn(
-						"text-small text-right font-mono tabular-nums",
+						"text-tiny sm:text-small whitespace-nowrap text-right font-mono tabular-nums",
 						adrQuote ? adrColorClass : "text-transparent"
 					)}
 				>
@@ -194,7 +194,7 @@ export const QuoteCard = ({
 			</div>
 
 			{/* Col 2: Price */}
-			<span className="text-small text-txt-100 text-right font-mono tabular-nums">
+			<span className="text-tiny sm:text-small text-txt-100 whitespace-nowrap text-right font-mono tabular-nums">
 				{formatPrice(quote.price)}
 			</span>
 

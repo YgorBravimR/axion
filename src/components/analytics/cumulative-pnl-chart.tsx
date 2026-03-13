@@ -57,7 +57,7 @@ const CustomTooltip = ({
 					className={`text-small font-semibold ${data.equity >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
 				>
 					{sign}
-					{formatCompactCurrency(data.equity)}
+					{formatCompactCurrency(data.equity, "R$")}
 				</p>
 			</div>
 		)
@@ -135,7 +135,7 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={(value: number) => formatCompactCurrency(value)}
+						tickFormatter={(value: number) => formatCompactCurrency(value, "R$")}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}

@@ -10,7 +10,7 @@ import {
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import {
 	ArrowUpRight,
 	ArrowDownRight,
@@ -183,6 +183,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const t = useTranslations("trade")
 		const tJournal = useTranslations("journal.form")
 		const tCommon = useTranslations("common")
+		const locale = useLocale()
 		const [isSubmitting, setIsSubmitting] = useState(false)
 		const [selectedAsset, setSelectedAsset] = useState<AssetWithType | null>(
 			() => {
@@ -1078,7 +1079,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									{calculatedRisk !== null ? (
 										<span className="text-small text-txt-100 font-medium">
 											{selectedAsset?.currency ?? "$"}{" "}
-											{calculatedRisk.toLocaleString("pt-BR", {
+											{calculatedRisk.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 												maximumFractionDigits: 2,
 											})}

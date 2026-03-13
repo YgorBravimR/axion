@@ -258,27 +258,30 @@ export const MarketMonitorContent = () => {
 			{/* ── Tabbed asset panel — full width ─────────────────────────────── */}
 			<div className="border-bg-300 bg-bg-200 overflow-hidden rounded-lg border">
 				{/* Tab bar */}
-				<div
-					className="border-bg-300 flex items-center gap-1 overflow-x-auto border-b px-3 py-2"
-					role="tablist"
-				>
-					{groups.map((group) => (
-						<button
-							key={group.id}
-							type="button"
-							onClick={() => handleTabChange(group.id)}
-							className={cn(
-								"text-tiny shrink-0 rounded-md px-3 py-1.5 font-medium transition-colors",
-								activeTab === group.id
-									? "bg-acc-100 text-bg-100"
-									: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
-							)}
-							aria-selected={activeTab === group.id}
-							role="tab"
-						>
-							{t(group.labelKey)}
-						</button>
-					))}
+				<div className="relative">
+					<div
+						className="border-bg-300 flex items-center gap-1 overflow-x-auto border-b px-3 py-2"
+						role="tablist"
+					>
+						{groups.map((group) => (
+							<button
+								key={group.id}
+								type="button"
+								onClick={() => handleTabChange(group.id)}
+								className={cn(
+									"text-tiny shrink-0 rounded-md px-3 py-1.5 font-medium transition-colors",
+									activeTab === group.id
+										? "bg-acc-100 text-bg-100"
+										: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
+								)}
+								aria-selected={activeTab === group.id}
+								role="tab"
+							>
+								{t(group.labelKey)}
+							</button>
+						))}
+					</div>
+					<div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-bg-200 to-transparent sm:hidden" />
 				</div>
 
 				{/* Tab content */}

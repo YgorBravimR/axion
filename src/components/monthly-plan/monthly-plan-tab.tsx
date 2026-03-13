@@ -158,18 +158,19 @@ export const MonthlyPlanTab = ({
 
 			{/* New Month Banner */}
 			{!plan && !loading && isCurrentMonth && (
-				<div className="flex items-center gap-m-400 rounded-lg border border-acc-100/30 bg-acc-100/5 p-m-400">
+				<div className="flex flex-wrap items-center gap-s-200 sm:gap-m-400 rounded-lg border border-acc-100/30 bg-acc-100/5 p-m-400">
 					<AlertCircle className="h-5 w-5 shrink-0 text-acc-100" />
-					<div className="flex-1">
+					<div className="flex-1 min-w-0">
 						<p className="text-small font-medium text-txt-100">
 							{t("newMonthBanner", { month: tMonths(String(month - 1)), year: String(year) })}
 						</p>
 						<p className="text-tiny text-txt-300">{t("noPlanPrompt")}</p>
 					</div>
-					<div className="flex gap-s-200">
+					<div className="flex w-full gap-s-200 sm:w-auto">
 						<Button id="plan-copy-from-last-month"
 							variant="outline"
 							size="sm"
+							className="flex-1 sm:flex-initial"
 							onClick={handleCopyFromLastMonth}
 							disabled={loading}
 							aria-label={t("copyFromLastMonth")}
@@ -179,6 +180,7 @@ export const MonthlyPlanTab = ({
 						</Button>
 						<Button id="plan-create"
 							size="sm"
+							className="flex-1 sm:flex-initial"
 							onClick={() => setIsEditing(true)}
 							aria-label={t("createPlan")}
 						>

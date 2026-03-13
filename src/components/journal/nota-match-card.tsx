@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, RefreshCw, HelpCircle } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import type { EnrichmentMatch, NotaFill } from "@/lib/nota-parser/types"
 
@@ -22,7 +22,7 @@ const statusConfig = {
 	price_mismatch: { color: "text-warning", bg: "bg-warning/10", border: "border-warning/30", icon: AlertTriangle },
 }
 
-const FillRow = ({ fill, t }: { fill: NotaFill; t: ReturnType<typeof useTranslations> }) => (
+const FillRow = ({ fill, t, locale }: { fill: NotaFill; t: ReturnType<typeof useTranslations>; locale: string }) => (
 	<tr className="border-bg-300 border-b last:border-b-0">
 		<td className="py-s-100 px-s-200 text-tiny">
 			<span className={fill.side === "C" ? "text-action-buy" : "text-action-sell"}>
@@ -31,10 +31,10 @@ const FillRow = ({ fill, t }: { fill: NotaFill; t: ReturnType<typeof useTranslat
 		</td>
 		<td className="py-s-100 px-s-200 text-tiny text-txt-200 text-right">{fill.quantity}</td>
 		<td className="py-s-100 px-s-200 text-tiny text-txt-200 text-right">
-			{fill.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+			{fill.price.toLocaleString(locale, { minimumFractionDigits: 2 })}
 		</td>
 		<td className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
-			{fill.operationalFee > 0 ? fill.operationalFee.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "-"}
+			{fill.operationalFee > 0 ? fill.operationalFee.toLocaleString(locale, { minimumFractionDigits: 2 }) : "-"}
 		</td>
 		<td className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
 			{fill.isDayTrade && (
@@ -44,7 +44,7 @@ const FillRow = ({ fill, t }: { fill: NotaFill; t: ReturnType<typeof useTranslat
 	</tr>
 )
 
-const FillTable = ({ fills, label, t }: { fills: NotaFill[]; label: string; t: ReturnType<typeof useTranslations> }) => {
+const FillTable = ({ fills, label, t, locale }: { fills: NotaFill[]; label: string; t: ReturnType<typeof useTranslations>; locale: string }) => {
 	if (fills.length === 0) return null
 
 	const totalQty = fills.reduce((s, f) => s + f.quantity, 0)
@@ -57,7 +57,7 @@ const FillTable = ({ fills, label, t }: { fills: NotaFill[]; label: string; t: R
 			<div className="mb-s-100 flex items-center justify-between">
 				<span className="text-tiny text-txt-300 font-medium uppercase tracking-wide">{label}</span>
 				<span className="text-tiny text-txt-200">
-					{t("avgPrice")}: {weightedAvg.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | {t("totalQty")}: {totalQty}
+					{t("avgPrice")}: {weightedAvg.toLocaleString(locale, { minimumFractionDigits: 2 })} | {t("totalQty")}: {totalQty}
 				</span>
 			</div>
 			<table className="w-full">
@@ -72,7 +72,7 @@ const FillTable = ({ fills, label, t }: { fills: NotaFill[]; label: string; t: R
 				</thead>
 				<tbody>
 					{fills.map((fill, idx) => (
-						<FillRow key={`${fill.sequenceNumber}-${idx}`} fill={fill} t={t} />
+						<FillRow key={`${fill.sequenceNumber}-${idx}`} fill={fill} t={t} locale={locale} />
 					))}
 				</tbody>
 			</table>
@@ -89,6 +89,7 @@ const NotaMatchCard = ({
 }: NotaMatchCardProps) => {
 	const t = useTranslations("journal.nota")
 	const tCommon = useTranslations("common")
+	const locale = useLocale()
 	const [isExpanded, setIsExpanded] = useState(false)
 
 	const config = statusConfig[match.status]
@@ -146,7 +147,7 @@ const NotaMatchCard = ({
 						{t("currentValue")}: {match.trade.entryPrice}
 					</div>
 					<div className="text-tiny text-txt-200">
-						{t("notaValue")}: {match.computedAvgEntry.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+						{t("notaValue")}: {match.computedAvgEntry.toLocaleString(locale, { minimumFractionDigits: 2 })}
 					</div>
 					{match.priceDeltaPercent > 0 && (
 						<div className="text-tiny text-warning">
@@ -175,8 +176,8 @@ const NotaMatchCard = ({
 			{/* Expanded fill details */}
 			{isExpanded && (
 				<div className="border-bg-300 px-s-300 pb-s-300 sm:px-m-400 sm:pb-m-400 border-t pt-s-300 sm:pt-m-400">
-					<FillTable fills={match.entryFills} label={t("entryFills")} t={t} />
-					<FillTable fills={match.exitFills} label={t("exitFills")} t={t} />
+					<FillTable fills={match.entryFills} label={t("entryFills")} t={t} locale={locale} />
+					<FillTable fills={match.exitFills} label={t("exitFills")} t={t} locale={locale} />
 					{match.entryFills.length === 0 && match.exitFills.length === 0 && (
 						<p className="text-tiny text-txt-300 text-center py-m-400">{t("noFillsFound")}</p>
 					)}

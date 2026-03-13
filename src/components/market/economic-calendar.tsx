@@ -104,7 +104,7 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 											{COUNTRY_FLAGS[event.country] || event.country}
 										</span>
 									</td>
-									<td className="text-small text-txt-100 max-w-[200px] truncate px-3 py-2.5 sm:max-w-none">
+									<td className="text-small text-txt-100 truncate max-w-[150px] sm:max-w-none px-3 py-2.5">
 										{event.event}
 									</td>
 									<td className="hidden px-3 py-2.5 sm:table-cell">

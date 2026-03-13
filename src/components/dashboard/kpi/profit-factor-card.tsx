@@ -29,11 +29,11 @@ const ProfitFactorCard = ({
 				hasData ? (
 					<div className="flex items-center gap-2">
 						<span className="text-trade-buy">
-							{t("avg")}: {formatCompactCurrency(avgWin ?? 0)}
+							{t("avg")}: {formatCompactCurrency(avgWin ?? 0, "R$")}
 						</span>
 						|
 						<span className="text-trade-sell">
-							{formatCompactCurrency(avgLoss ?? 0)}
+							{formatCompactCurrency(avgLoss ?? 0, "R$")}
 						</span>
 					</div>
 				) : undefined

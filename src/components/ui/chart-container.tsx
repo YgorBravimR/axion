@@ -31,7 +31,7 @@ const ChartContainer = ({ id, children, className }: ChartContainerProps) => {
 	}
 
 	return (
-		<div id={id} className={className}>
+		<div id={id} className={`overflow-hidden ${className ?? ""}`}>
 			<ResponsiveContainer
 				width="100%"
 				height="100%"

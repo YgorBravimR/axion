@@ -17,7 +17,7 @@ import {
 	Plus,
 	Info,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { createScaledTrade } from "@/app/actions/trades"
 import { fromCents } from "@/lib/money"
@@ -102,6 +102,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const tExec = useTranslations("execution")
 		const tJournal = useTranslations("journal.form")
 		const tCommon = useTranslations("common")
+		const locale = useLocale()
 		const [isSubmitting, setIsSubmitting] = useState(false)
 
 		// Basic info - restore from shared state, then fallback to defaults
@@ -600,6 +601,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 								</Button>
 							</div>
 
+							<div className="relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
 							<div className="space-y-s-200 overflow-x-auto">
 								{/* Header */}
 								<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
@@ -623,6 +625,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 										currency={selectedAsset?.currency ?? "$"}
 									/>
 								))}
+							</div>
 							</div>
 
 							{positionSummary.totalEntryQty > 0 && (
@@ -655,6 +658,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 							</div>
 
 							{exits.length > 0 ? (
+								<div className="relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
 								<div className="space-y-s-200 overflow-x-auto">
 									{/* Header */}
 									<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
@@ -678,6 +682,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 											currency={selectedAsset?.currency ?? "$"}
 										/>
 									))}
+								</div>
 								</div>
 							) : (
 								<div className="border-bg-300 p-m-400 rounded-lg border border-dashed text-center">
@@ -856,7 +861,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 										{calculatedRisk !== null ? (
 											<span className="text-small text-txt-100 font-medium">
 												{selectedAsset?.currency ?? "$"}{" "}
-												{calculatedRisk.toLocaleString("pt-BR", {
+												{calculatedRisk.toLocaleString(locale, {
 													minimumFractionDigits: 2,
 													maximumFractionDigits: 2,
 												})}

@@ -85,7 +85,7 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("bestDay")}
 					value={
 						streakData?.bestDay
-							? formatCompactCurrencyWithSign(streakData.bestDay.pnl)
+							? formatCompactCurrencyWithSign(streakData.bestDay.pnl, "R$")
 							: "--"
 					}
 					subValue={
@@ -98,7 +98,7 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("worstDay")}
 					value={
 						streakData?.worstDay
-							? formatCompactCurrencyWithSign(streakData.worstDay.pnl)
+							? formatCompactCurrencyWithSign(streakData.worstDay.pnl, "R$")
 							: "--"
 					}
 					subValue={

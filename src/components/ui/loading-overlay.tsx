@@ -133,7 +133,7 @@ const LoadingOverlayProvider = ({ children }: { children: React.ReactNode }) => 
 									>
 										{/* Shimmer effect */}
 										<div
-											className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-overlay-progress-shimmer"
+											className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent animate-overlay-progress-shimmer"
 											aria-hidden="true"
 										/>
 									</div>

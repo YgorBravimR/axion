@@ -44,31 +44,32 @@ interface CustomTooltipProps {
 	}>
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
-
-	const data = payload[0].payload
-	const isPositive = data.pnl >= 0
-
-	return (
-		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">Day #{data.dayNumber}</p>
-			<p
-				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
-			>
-				{formatCompactCurrency(data.pnl)}
-			</p>
-			<p className="text-tiny text-txt-300 capitalize">
-				{data.mode === "skipped" ? "Skipped" : data.mode.replace(/([A-Z])/g, " $1").trim()}
-				{data.targetHit ? " (Target)" : ""}
-			</p>
-		</div>
-	)
-}
-
 const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.v2.charts")
+	const tCharts = useTranslations("charts")
+
+	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+		if (!active || !payload || payload.length === 0) return null
+
+		const data = payload[0].payload
+		const isPositive = data.pnl >= 0
+
+		return (
+			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+				<p className="text-tiny text-txt-300">{tCharts("dayNumber", { number: data.dayNumber })}</p>
+				<p
+					className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
+				>
+					{formatCompactCurrency(data.pnl, "R$")}
+				</p>
+				<p className="text-tiny text-txt-300 capitalize">
+					{data.mode === "skipped" ? tCharts("skipped") : data.mode.replace(/([A-Z])/g, " $1").trim()}
+					{data.targetHit ? ` ${tCharts("target")}` : ""}
+				</p>
+			</div>
+		)
+	}
 	const isMultiMonth = monthsToTrade > 1
 
 	const chartData = useMemo<ChartDataPoint[]>(
@@ -121,7 +122,7 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => formatCompactCurrency(value)}
+						tickFormatter={(value) => formatCompactCurrency(value, "R$")}
 						domain={[minPnl - padding, maxPnl + padding]}
 						width={yAxisWidth}
 					/>

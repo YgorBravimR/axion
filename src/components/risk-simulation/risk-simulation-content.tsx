@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { FlaskConical } from "lucide-react"
@@ -81,6 +81,12 @@ const RiskSimulationContent = ({
 		},
 		[]
 	)
+
+	// Fetch preview for the initial date range on mount
+	useEffect(() => {
+		handleDateChange(dateFrom, dateTo)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	const handlePrefillSelect = useCallback(
 		(newParams: RiskSimulationParams, source: PrefillSource, profileId?: string) => {
@@ -181,6 +187,7 @@ const RiskSimulationContent = ({
 							id="btn-view-trace"
 							variant="outline"
 							onClick={() => setTraceModalOpen(true)}
+							className="min-h-[44px] min-w-[44px]"
 							aria-label={t("viewDecisionTrace")}
 						>
 							{t("viewDecisionTrace")}

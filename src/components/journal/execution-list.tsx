@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatBrtShortDateTime } from "@/lib/dates"
 import { Button } from "@/components/ui/button"
@@ -39,6 +39,7 @@ export const ExecutionList = ({
 }: ExecutionListProps) => {
 	const t = useTranslations("execution")
 	const tCommon = useTranslations("common")
+	const locale = useLocale()
 	const [isPending, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -84,7 +85,7 @@ export const ExecutionList = ({
 
 	const formatPrice = (price: string | number): string => {
 		const num = typeof price === "string" ? parseFloat(price) : price
-		return num.toLocaleString("pt-BR", {
+		return num.toLocaleString(locale, {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2,
 		})
@@ -92,7 +93,7 @@ export const ExecutionList = ({
 
 	const formatQuantity = (qty: string | number): string => {
 		const num = typeof qty === "string" ? parseFloat(qty) : qty
-		return num.toLocaleString("pt-BR", {
+		return num.toLocaleString(locale, {
 			minimumFractionDigits: 0,
 			maximumFractionDigits: 2,
 		})

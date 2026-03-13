@@ -28,23 +28,24 @@ interface CustomTooltipProps {
 	}>
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
-
-	const data = payload[0].payload
-	return (
-		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">Trade #{data.tradeNumber}</p>
-			<p className="text-small text-trade-sell font-semibold">
-				-{data.rDrawdown.toFixed(2)}R
-			</p>
-		</div>
-	)
-}
-
 export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
+	const tCharts = useTranslations("charts")
+
+	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+		if (!active || !payload || payload.length === 0) return null
+
+		const data = payload[0].payload
+		return (
+			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+				<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
+				<p className="text-small text-trade-sell font-semibold">
+					-{data.rDrawdown.toFixed(2)}R
+				</p>
+			</div>
+		)
+	}
 
 	const chartData = useMemo(
 		() => [
@@ -69,7 +70,7 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 					{t("drawdownCurve")}
 				</h3>
 				<span className="text-small text-trade-sell font-medium">
-					Max: -{maxDrawdown.toFixed(2)}R
+					{tCharts("maxDrawdown", { value: maxDrawdown.toFixed(2) })}
 				</span>
 			</div>
 

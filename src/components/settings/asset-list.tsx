@@ -83,7 +83,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 				accessorKey: "symbol",
 				header: t("symbol"),
 				cell: ({ row }) => (
-					<span className="font-mono font-medium text-acc-100">
+					<span className="whitespace-nowrap font-mono font-medium text-acc-100">
 						{row.original.symbol}
 					</span>
 				),
@@ -111,6 +111,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			},
 			{
 				accessorKey: "tickSize",
+				meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
 				header: () => <span className="flex justify-end">{t("tickSize")}</span>,
 				cell: ({ row }) => (
 					<span className="flex justify-end font-mono text-txt-200">
@@ -120,6 +121,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			},
 			{
 				accessorKey: "tickValue",
+				meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
 				header: () => <span className="flex justify-end">{t("tickValue")}</span>,
 				cell: ({ row }) => (
 					<span className="flex justify-end font-mono text-txt-200">
@@ -129,6 +131,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			},
 			{
 				accessorKey: "currency",
+				meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
 				header: () => <span className="flex justify-center">{t("currency")}</span>,
 				cell: ({ row }) => (
 					<span className="flex justify-center text-txt-200">

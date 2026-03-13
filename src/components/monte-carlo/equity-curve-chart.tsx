@@ -28,27 +28,28 @@ interface CustomTooltipProps {
 	}>
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
-
-	const data = payload[0].payload
-	const isPositive = data.cumulativeR >= 0
-
-	return (
-		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">Trade #{data.tradeNumber}</p>
-			<p
-				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
-			>
-				{formatR(data.cumulativeR)}
-			</p>
-		</div>
-	)
-}
-
 export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
+	const tCharts = useTranslations("charts")
+
+	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+		if (!active || !payload || payload.length === 0) return null
+
+		const data = payload[0].payload
+		const isPositive = data.cumulativeR >= 0
+
+		return (
+			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+				<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
+				<p
+					className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
+				>
+					{formatR(data.cumulativeR)}
+				</p>
+			</div>
+		)
+	}
 
 	const chartData = useMemo(
 		() => [

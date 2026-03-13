@@ -43,42 +43,45 @@ export const SettingsContent = ({
 
 	return (
 		<Tabs defaultValue={defaultTab} className="h-full">
-			<TabsList variant="line" className="mb-m-400 sm:mb-m-500">
-				<TabsTrigger value="profile" className="gap-s-200">
-					<User className="h-4 w-4" />
-					{t("profile")}
-				</TabsTrigger>
-				<TabsTrigger value="account" className="gap-s-200">
-					<Briefcase className="h-4 w-4" />
-					{t("account")}
-				</TabsTrigger>
-				<TabsTrigger value="tags" className="gap-s-200">
-					<Tag className="h-4 w-4" />
-					{t("tags")}
-				</TabsTrigger>
-				{isAdmin && (
-					<TabsTrigger value="conditions" className="gap-s-200">
-						<Filter className="h-4 w-4" />
-						{t("conditions")}
+			<div className="relative mb-m-400 sm:mb-m-500">
+				<TabsList variant="line" className="w-full overflow-x-auto scrollbar-none">
+					<TabsTrigger value="profile" className="shrink-0 gap-s-200">
+						<User className="h-4 w-4" />
+						{t("profile")}
 					</TabsTrigger>
-				)}
-				{isAdmin && (
-					<>
-						<TabsTrigger value="assets" className="gap-s-200">
-							<Coins className="h-4 w-4" />
-							{t("assets")}
+					<TabsTrigger value="account" className="shrink-0 gap-s-200">
+						<Briefcase className="h-4 w-4" />
+						{t("account")}
+					</TabsTrigger>
+					<TabsTrigger value="tags" className="shrink-0 gap-s-200">
+						<Tag className="h-4 w-4" />
+						{t("tags")}
+					</TabsTrigger>
+					{isAdmin && (
+						<TabsTrigger value="conditions" className="shrink-0 gap-s-200">
+							<Filter className="h-4 w-4" />
+							{t("conditions")}
 						</TabsTrigger>
-						<TabsTrigger value="timeframes" className="gap-s-200">
-							<Clock className="h-4 w-4" />
-							{t("timeframes")}
-						</TabsTrigger>
-						<TabsTrigger value="users" className="gap-s-200">
-							<Users className="h-4 w-4" />
-							{t("users")}
-						</TabsTrigger>
-					</>
-				)}
-			</TabsList>
+					)}
+					{isAdmin && (
+						<>
+							<TabsTrigger value="assets" className="shrink-0 gap-s-200">
+								<Coins className="h-4 w-4" />
+								{t("assets")}
+							</TabsTrigger>
+							<TabsTrigger value="timeframes" className="shrink-0 gap-s-200">
+								<Clock className="h-4 w-4" />
+								{t("timeframes")}
+							</TabsTrigger>
+							<TabsTrigger value="users" className="shrink-0 gap-s-200">
+								<Users className="h-4 w-4" />
+								{t("users")}
+							</TabsTrigger>
+						</>
+					)}
+				</TabsList>
+				<div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-linear-to-l from-bg-100 to-transparent md:hidden" aria-hidden="true" />
+			</div>
 
 			<AnimatedTabsContent value="profile">
 				<UserProfileSettings />

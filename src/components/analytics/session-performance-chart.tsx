@@ -15,6 +15,7 @@ import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { useIsMobile } from "@/hooks/use-is-mobile"
 import type { SessionPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 
@@ -41,6 +42,14 @@ const getSessionKey = (label: string): string => {
 		Close: "close",
 	}
 	return keyMap[label] || label.toLowerCase().replace("-", "")
+}
+
+/** Abbreviated session labels for mobile */
+const ABBREVIATED_SESSION: Record<string, string> = {
+	"Pre-Open": "Pre",
+	Morning: "AM",
+	Afternoon: "PM",
+	Close: "Close",
 }
 
 /** Format decimal hour to HH:MM string */
@@ -156,6 +165,7 @@ export const SessionPerformanceChart = ({
 	expectancyMode,
 }: SessionPerformanceChartProps) => {
 	const { yAxisWidth } = useChartConfig()
+	const isMobile = useIsMobile()
 	const t = useTranslations("analytics")
 	const tCommon = useTranslations("common")
 	const tLabels = useTranslations("analytics.session.labels")
@@ -171,6 +181,11 @@ export const SessionPerformanceChart = ({
 			| "close"
 		return tLabels(key)
 	}
+
+	const formatSessionTickLabel = (label: string): string =>
+		isMobile
+			? ABBREVIATED_SESSION[label] ?? label
+			: translateSessionLabel(label)
 
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
@@ -260,11 +275,11 @@ export const SessionPerformanceChart = ({
 						/>
 						<XAxis
 							dataKey="sessionLabel"
-							tickFormatter={translateSessionLabel}
+							tickFormatter={formatSessionTickLabel}
 							stroke="var(--color-txt-300)"
 							tick={{
 								fill: "var(--color-txt-300)",
-								fontSize: 11,
+								fontSize: isMobile ? 10 : 11,
 							}}
 							tickLine={false}
 							axisLine={{ stroke: "var(--color-bg-300)" }}
@@ -341,7 +356,7 @@ export const SessionPerformanceChart = ({
 							>
 								{hasTrades
 									? formatMetric(metricValue)
-									: "—"}
+									: "\u2014"}
 							</p>
 							{hasTrades && (
 								<p className="text-caption text-txt-300 mt-s-100">
@@ -405,7 +420,7 @@ export const SessionPerformanceChart = ({
 												</td>
 											</>
 										) : (
-											<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+											<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">\u2014</td>
 										)}
 										{showWorst ? (
 											<>
@@ -420,7 +435,7 @@ export const SessionPerformanceChart = ({
 												</td>
 											</>
 										) : (
-											<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+											<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">\u2014</td>
 										)}
 									</tr>
 								</tbody>

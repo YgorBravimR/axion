@@ -67,7 +67,7 @@ const formatProfitFactor = (value: number): string => {
 const formatMetricValue = (value: number, metric: MetricType): string => {
 	switch (metric) {
 		case "pnl":
-			return formatCompactCurrency(value)
+			return formatCompactCurrency(value, "R$")
 		case "winRate":
 			return `${value.toFixed(1)}%`
 		case "avgR":
@@ -99,7 +99,7 @@ const CustomTooltip = ({ active, payload, metric }: CustomTooltipProps) => {
 				<p className="text-small text-txt-100 font-semibold">{data.group}</p>
 				<div className="mt-s-200 space-y-s-100 text-tiny">
 					<p className={data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-						{t("pnl")}: {formatCompactCurrency(data.pnl)}
+						{t("pnl")}: {formatCompactCurrency(data.pnl, "R$")}
 					</p>
 					<p className="text-txt-200">
 						{t("winRate")}: {data.winRate.toFixed(1)}%
@@ -210,7 +210,7 @@ export const VariableComparison = ({
 			) : (
 				<ChartContainer
 					id="chart-analytics-variable-comparison"
-					className="mt-s-300 sm:mt-m-400 h-64 min-w-0 sm:h-80"
+					className="mt-s-300 sm:mt-m-400 h-64 min-w-0 overflow-hidden sm:h-80"
 				>
 					<BarChart
 						data={chartData}
@@ -345,7 +345,7 @@ export const VariableComparison = ({
 											row.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
-										{formatCompactCurrency(row.pnl)}
+										{formatCompactCurrency(row.pnl, "R$")}
 									</td>
 									<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.winRate.toFixed(1)}%

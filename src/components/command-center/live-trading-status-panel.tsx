@@ -153,7 +153,7 @@ const MiniCalculator = ({
 	}
 
 	return (
-		<div className="mt-s-300 sm:mt-m-400 border-bg-300 bg-bg-200 p-s-300 rounded-md border">
+		<div className="mt-s-300 sm:mt-m-400 border-bg-300 bg-bg-200 p-s-200 sm:p-s-300 rounded-md border">
 			<div className="mb-s-300 gap-s-200 flex items-center">
 				<Calculator className="text-txt-300 h-3.5 w-3.5" />
 				<span className="text-tiny text-txt-200 font-medium">
@@ -161,7 +161,7 @@ const MiniCalculator = ({
 				</span>
 			</div>
 
-			<div className="gap-s-300 flex flex-wrap items-end">
+			<div className="gap-s-100 sm:gap-s-300 flex flex-wrap items-end">
 				{/* Asset selector */}
 				<div className="w-full sm:min-w-[140px] sm:w-auto flex-1">
 					<label
@@ -238,9 +238,10 @@ interface TradeBoxProps {
 	summary: TradeSummary
 	formatCurrency: (value: number) => string
 	t: ReturnType<typeof useTranslations>
+	directionLabels: { long: string; short: string }
 }
 
-const TradeBox = ({ summary, formatCurrency, t }: TradeBoxProps) => {
+const TradeBox = ({ summary, formatCurrency, t, directionLabels }: TradeBoxProps) => {
 	const pnlColor =
 		summary.outcome === "win"
 			? "text-trade-buy"
@@ -250,8 +251,8 @@ const TradeBox = ({ summary, formatCurrency, t }: TradeBoxProps) => {
 
 	const directionBadge =
 		summary.direction === "long"
-			? { label: "L", className: "bg-action-buy-muted text-action-buy" }
-			: { label: "S", className: "bg-action-sell-muted text-action-sell" }
+			? { label: directionLabels.long, className: "bg-action-buy-muted text-action-buy" }
+			: { label: directionLabels.short, className: "bg-action-sell-muted text-action-sell" }
 
 	return (
 		<div
@@ -298,9 +299,10 @@ interface TradeBoxRowProps {
 	summaries: TradeSummary[]
 	formatCurrency: (value: number) => string
 	t: ReturnType<typeof useTranslations>
+	directionLabels: { long: string; short: string }
 }
 
-const TradeBoxRow = ({ summaries, formatCurrency, t }: TradeBoxRowProps) => {
+const TradeBoxRow = ({ summaries, formatCurrency, t, directionLabels }: TradeBoxRowProps) => {
 	if (summaries.length === 0) return null
 
 	return (
@@ -315,7 +317,7 @@ const TradeBoxRow = ({ summaries, formatCurrency, t }: TradeBoxRowProps) => {
 			>
 				{summaries.map((summary, index) => (
 					<div key={index} role="listitem">
-						<TradeBox summary={summary} formatCurrency={formatCurrency} t={t} />
+						<TradeBox summary={summary} formatCurrency={formatCurrency} t={t} directionLabels={directionLabels} />
 					</div>
 				))}
 			</div>
@@ -337,7 +339,9 @@ const LiveTradingStatusPanel = ({
 	availableAssets,
 }: LiveTradingStatusPanelProps) => {
 	const t = useTranslations("commandCenter.liveStatus")
+	const tDir = useTranslations("commandCenter.directionAbbr")
 	const { formatCurrency } = useFormatting()
+	const directionLabels = { long: tDir("long"), short: tDir("short") }
 
 	// Loading state
 	if (!data) {
@@ -419,6 +423,7 @@ const LiveTradingStatusPanel = ({
 					summaries={tradeSummaries}
 					formatCurrency={formatCurrency}
 					t={t}
+					directionLabels={directionLabels}
 				/>
 
 				<MiniCalculator
@@ -619,6 +624,7 @@ const LiveTradingStatusPanel = ({
 				summaries={tradeSummaries}
 				formatCurrency={formatCurrency}
 				t={t}
+				directionLabels={directionLabels}
 			/>
 
 			{/* Mini position calculator */}

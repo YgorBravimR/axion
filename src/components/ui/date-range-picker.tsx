@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -36,6 +36,7 @@ const DateRangePicker = ({
 	const tCommon = useTranslations("common")
 	const [open, setOpen] = useState(false)
 	const [dateFnsLocale, setDateFnsLocale] = useState<Locale | undefined>(undefined)
+	const isSelectingRef = useRef(false)
 
 	useEffect(() => {
 		getDateFnsLocale(locale).then(setDateFnsLocale)
@@ -43,10 +44,21 @@ const DateRangePicker = ({
 
 	const handleSelect = (range: DateRange | undefined) => {
 		onChange(range)
-		// Close the popover only when both from and to are selected
 		if (range?.from && range?.to) {
+			isSelectingRef.current = false
 			setOpen(false)
+		} else if (range?.from) {
+			isSelectingRef.current = true
+		} else {
+			isSelectingRef.current = false
 		}
+	}
+
+	const handleOpenChange = (isOpen: boolean) => {
+		// Prevent auto-close while user is mid-range-selection (picked "from" but not "to")
+		if (!isOpen && isSelectingRef.current) return
+		if (!isOpen) isSelectingRef.current = false
+		setOpen(isOpen)
 	}
 
 	const formatLabel = () => {
@@ -58,7 +70,7 @@ const DateRangePicker = ({
 	}
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
+		<Popover open={open} onOpenChange={handleOpenChange}>
 			<PopoverTrigger asChild>
 				<button
 					id={id}
@@ -77,7 +89,12 @@ const DateRangePicker = ({
 					<span className="truncate">{formatLabel()}</span>
 				</button>
 			</PopoverTrigger>
-			<PopoverContent className="w-auto p-0" align="start">
+			<PopoverContent
+				className="w-auto p-0"
+				align="start"
+				onEscapeKeyDown={() => { isSelectingRef.current = false }}
+				onInteractOutside={() => { isSelectingRef.current = false }}
+			>
 				<Calendar
 					mode="range"
 					selected={value}

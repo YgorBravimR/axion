@@ -10,6 +10,7 @@ import {
 	Tooltip,
 } from "recharts"
 import { ChartContainer } from "@/components/ui/chart-container"
+import { useIsMobile } from "@/hooks/use-is-mobile"
 import type { RadarChartData } from "@/types"
 
 interface PerformanceRadarChartProps {
@@ -66,6 +67,8 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 
 export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 	const t = useTranslations("dashboard")
+	const tCharts = useTranslations("charts")
+	const isMobile = useIsMobile()
 
 	// Transform data with translated labels
 	const chartData = data.map((item) => ({
@@ -92,11 +95,11 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 				{t("radar.title")}
 			</h3>
 			<ChartContainer id="chart-dashboard-performance-radar" className="h-[180px] sm:h-[200px] w-full">
-					<RadarChart data={chartData} cx="50%" cy="50%" outerRadius="70%">
+					<RadarChart data={chartData} cx="50%" cy="50%" outerRadius={isMobile ? "55%" : "70%"}>
 						<PolarGrid stroke="var(--color-bg-300)" />
 						<PolarAngleAxis
 							dataKey="metric"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={{ fill: "var(--color-txt-300)", fontSize: isMobile ? 9 : 11 }}
 						/>
 						<PolarRadiusAxis
 							angle={90}
@@ -106,7 +109,7 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 						/>
 						<Tooltip content={<CustomTooltip />} />
 						<Radar
-							name="Performance"
+							name={tCharts("performance")}
 							dataKey="normalized"
 							stroke="var(--color-acc-100)"
 							fill="var(--color-acc-100)"

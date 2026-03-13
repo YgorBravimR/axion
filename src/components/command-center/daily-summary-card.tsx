@@ -21,6 +21,7 @@ const formatPercent = (value: number): string => {
 
 export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardProps) => {
 	const t = useTranslations("commandCenter.summary")
+	const tCommon = useTranslations("common")
 
 	if (!summary) {
 		return (
@@ -76,7 +77,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 								{formatPercent(summary.winRate)}
 							</p>
 							<span className="text-tiny text-txt-200">
-								({summary.winCount}W / {summary.lossCount}L)
+								({summary.winCount}{tCommon("winAbbr")} / {summary.lossCount}{tCommon("lossAbbr")})
 							</span>
 						</div>
 					</div>

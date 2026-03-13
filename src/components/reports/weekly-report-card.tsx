@@ -114,12 +114,12 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 			{/* Summary Stats */}
 			{summary.totalTrades > 0 ? (
 				<>
-					<div className="mt-m-500 gap-m-400 grid grid-cols-2 sm:grid-cols-4">
+					<div className="mt-m-500 gap-m-400 grid grid-cols-2 sm:grid-cols-4 [&>div]:min-w-0">
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("netPnl")}</p>
 							<p
 								className={cn(
-									"text-h3 font-bold",
+									"text-h3 font-bold truncate whitespace-nowrap",
 									summary.netPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 								)}
 							>
@@ -168,7 +168,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					</div>
 
 					{/* Secondary Stats */}
-					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-6">
+					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-6 [&>div]:min-w-0">
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("wins")}</p>
 							<p className="text-small text-trade-buy font-medium">

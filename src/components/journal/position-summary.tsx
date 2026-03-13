@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { PnLDisplay } from "./pnl-display"
 import type { ExecutionSummary, PositionStatus } from "@/types"
@@ -22,6 +22,7 @@ export const PositionSummary = ({
 	className,
 }: PositionSummaryProps) => {
 	const t = useTranslations("execution")
+	const locale = useLocale()
 
 	const {
 		totalEntryQuantity,
@@ -62,14 +63,14 @@ export const PositionSummary = ({
 			: 0
 
 	const formatPrice = (price: number) => {
-		return price.toLocaleString("pt-BR", {
+		return price.toLocaleString(locale, {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2,
 		})
 	}
 
 	const formatQuantity = (qty: number) => {
-		return qty.toLocaleString("pt-BR", {
+		return qty.toLocaleString(locale, {
 			minimumFractionDigits: 0,
 			maximumFractionDigits: 2,
 		})

@@ -30,6 +30,7 @@ const formatDateKey = (date: Date): string => {
 export const TradingCalendar = memo(
 	({ data, month, onMonthChange, onDayClick }: TradingCalendarProps) => {
 		const t = useTranslations("dashboard.calendar")
+		const tCommon = useTranslations("common")
 		const tDays = useTranslations("dayOfWeek")
 		const locale = useLocale()
 		const effectiveDate = useEffectiveDate()
@@ -190,7 +191,7 @@ export const TradingCalendar = memo(
 									role={isClickable ? "button" : undefined}
 									aria-label={
 										dailyData
-											? t("dayAriaLabel", { date: dateKey, pnl: formatCompactCurrencyWithSign(dailyData.pnl), count: dailyData.tradeCount })
+											? t("dayAriaLabel", { date: dateKey, pnl: formatCompactCurrencyWithSign(dailyData.pnl, "R$"), count: dailyData.tradeCount })
 											: undefined
 									}
 								>
@@ -201,10 +202,10 @@ export const TradingCalendar = memo(
 										{dailyData && (
 											<div className="mt-auto hidden sm:block">
 												<span className={`text-tiny font-medium ${textClass}`}>
-													{formatCompactCurrencyWithSign(dailyData.pnl)}
+													{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
 												</span>
 												<span className="text-tiny text-txt-300 block">
-													{dailyData.tradeCount}t
+													{dailyData.tradeCount}{tCommon("tradeCountAbbr")}
 												</span>
 											</div>
 										)}

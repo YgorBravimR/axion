@@ -36,11 +36,11 @@ interface MetricRowProps {
 }
 
 const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
-	<div className="flex items-center justify-between">
+	<div className="flex min-w-0 items-center justify-between">
 		{tooltip ? (
 			<Tooltip>
 				<TooltipTrigger asChild>
-					<span className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center">
+					<span className="gap-s-100 text-tiny sm:text-small text-txt-300 inline-flex cursor-help items-center">
 						{label}
 						<Info className="h-3 w-3" />
 					</span>
@@ -54,10 +54,10 @@ const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
 				</TooltipContent>
 			</Tooltip>
 		) : (
-			<span className="text-tiny text-txt-300">{label}</span>
+			<span className="text-tiny sm:text-small text-txt-300">{label}</span>
 		)}
 		<span
-			className={cn("text-small font-medium", valueClass || "text-txt-100")}
+			className={cn("text-small sm:text-body font-medium", valueClass || "text-txt-100")}
 		>
 			{value}
 		</span>

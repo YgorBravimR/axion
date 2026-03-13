@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import { ArrowRight, StopCircle } from "lucide-react"
@@ -16,9 +16,9 @@ const formatCurrency = (cents: number): string => {
 	return `${sign}R$${Math.abs(value).toFixed(2)}`
 }
 
-const formatDate = (dayKey: string): string => {
+const formatDate = (dayKey: string, locale: string): string => {
 	const date = new Date(`${dayKey}T12:00:00-03:00`)
-	return new Intl.DateTimeFormat("en-US", {
+	return new Intl.DateTimeFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
 		weekday: "short",
 		month: "short",
 		day: "numeric",
@@ -46,14 +46,14 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 		const pnl = trade.simulatedPnlCents ?? 0
 		if (pnl > 0) {
 			return (
-				<span className="text-tiny bg-trade-buy/20 text-trade-buy rounded-full px-2 py-0.5 font-medium">
+				<span className="text-tiny bg-trade-buy/20 text-trade-buy whitespace-nowrap rounded-full px-2 py-0.5 font-medium">
 					WIN {formatCurrency(pnl)}
 				</span>
 			)
 		}
 		if (pnl < 0) {
 			return (
-				<span className="text-tiny bg-trade-sell/20 text-trade-sell rounded-full px-2 py-0.5 font-medium">
+				<span className="text-tiny bg-trade-sell/20 text-trade-sell whitespace-nowrap rounded-full px-2 py-0.5 font-medium">
 					LOSS {formatCurrency(pnl)}
 				</span>
 			)
@@ -117,7 +117,7 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 				<div className="flex items-center gap-2">
 					<span
 						className={cn(
-							"text-small font-semibold",
+							"text-tiny sm:text-small whitespace-nowrap font-semibold",
 							dayPnl > 0
 								? "text-trade-buy"
 								: dayPnl < 0

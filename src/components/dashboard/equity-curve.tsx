@@ -117,12 +117,14 @@ interface TooltipContextProps {
 	viewMode: ViewMode
 	locale: string
 	drawdownLabel: string
+	tradeNumberLabel: (number: number) => string
 }
 
 const createCustomTooltip = ({
 	viewMode,
 	locale,
 	drawdownLabel,
+	tradeNumberLabel,
 }: TooltipContextProps) => {
 	const formatDateLocale = (dateStr: string): string => {
 		const date = new Date(dateStr)
@@ -149,7 +151,7 @@ const createCustomTooltip = ({
 
 			const labelDisplay =
 				viewMode === "trades" && data.tradeNumber
-					? `Trade #${data.tradeNumber}`
+					? tradeNumberLabel(data.tradeNumber)
 					: formatDateLocale(label || "")
 
 			return (
@@ -161,11 +163,11 @@ const createCustomTooltip = ({
 						</p>
 					)}
 					<p className="text-small text-txt-100 font-semibold">
-						{formatCompactCurrency(data.accountEquity)}
+						{formatCompactCurrency(data.accountEquity, "R$")}
 					</p>
 					{data.drawdown > 0 && (
 						<p className="text-tiny text-trade-sell">
-							{drawdownLabel}: {formatCompactCurrency(drawdownValue)} (
+							{drawdownLabel}: {formatCompactCurrency(drawdownValue, "R$")} (
 							{data.drawdown.toFixed(1)}%)
 						</p>
 					)}
@@ -183,6 +185,7 @@ export const EquityCurve = ({
 }: EquityCurveProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard.equity")
+	const tCharts = useTranslations("charts")
 	const locale = useLocale()
 	const effectiveDate = useEffectiveDate()
 	const [period, setPeriod] = useState<Period>("all")
@@ -291,6 +294,7 @@ export const EquityCurve = ({
 		viewMode,
 		locale,
 		drawdownLabel: t("drawdown"),
+		tradeNumberLabel: (number: number) => tCharts("tradeNumber", { number }),
 	})
 
 	return (
@@ -350,7 +354,7 @@ export const EquityCurve = ({
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={(value: number) => formatCompactCurrency(value)}
+						tickFormatter={(value: number) => formatCompactCurrency(value, "R$")}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}

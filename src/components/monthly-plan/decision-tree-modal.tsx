@@ -642,19 +642,19 @@ const ScenarioExamples = ({
 				{t("scenarios.title")}
 			</p>
 			<div className="border-bg-300 bg-bg-200 rounded-lg border overflow-x-auto">
-				<table className="w-full text-tiny">
+				<table className="w-full text-tiny sm:text-small">
 					<thead>
 						<tr className="border-bg-300 border-b">
-							<th className="px-s-300 py-s-200 text-txt-300 text-left font-medium">
+							<th className="px-s-300 py-s-200 text-txt-300 min-w-[120px] whitespace-nowrap text-left font-medium">
 								{t("scenarios.colScenario")}
 							</th>
-							<th className="px-s-300 py-s-200 text-txt-300 text-right font-medium">
+							<th className="px-s-300 py-s-200 text-txt-300 min-w-[100px] whitespace-nowrap text-right font-medium">
 								{t("scenarios.colGain")}
 							</th>
-							<th className="px-s-300 py-s-200 text-txt-300 text-right font-medium">
+							<th className="px-s-300 py-s-200 text-txt-300 min-w-[100px] whitespace-nowrap text-right font-medium">
 								{t("scenarios.colNet")}
 							</th>
-							<th className="px-s-300 py-s-200 text-txt-300 text-right font-medium">
+							<th className="px-s-300 py-s-200 text-txt-300 min-w-[90px] whitespace-nowrap text-right font-medium">
 								{t("scenarios.colAction")}
 							</th>
 						</tr>
@@ -679,7 +679,7 @@ const ScenarioExamples = ({
 												className="text-trade-buy size-3.5 shrink-0"
 												aria-hidden="true"
 											/>
-											<span className="text-txt-200">
+											<span className="text-txt-200 whitespace-nowrap">
 												{t("scenarios.winAt", { number: situation.tradeNumber })}
 											</span>
 										</div>
@@ -690,7 +690,7 @@ const ScenarioExamples = ({
 									<td className={`px-s-300 py-s-200 text-right font-semibold whitespace-nowrap ${netCents >= 0 ? "text-trade-buy" : "text-trade-sell"}`}>
 										{formatCurrencyWithSign(fromCents(netCents))}
 									</td>
-									<td className="px-s-300 py-s-200 text-right">
+									<td className="px-s-300 py-s-200 text-right whitespace-nowrap">
 										<span
 											className={`px-s-200 py-px rounded-full text-tiny font-medium ${
 												isBaseTrade
@@ -713,7 +713,7 @@ const ScenarioExamples = ({
 										className="text-trade-sell size-3.5 shrink-0"
 										aria-hidden="true"
 									/>
-									<span className="text-txt-200 font-medium">
+									<span className="text-txt-200 font-medium whitespace-nowrap">
 										{t("scenarios.allLosses")}
 									</span>
 								</div>
@@ -722,7 +722,7 @@ const ScenarioExamples = ({
 							<td className="px-s-300 py-s-200 text-trade-sell text-right font-semibold whitespace-nowrap">
 								{formatCurrencyWithSign(fromCents(-totalLossCents))}
 							</td>
-							<td className="px-s-300 py-s-200 text-right">
+							<td className="px-s-300 py-s-200 text-right whitespace-nowrap">
 								<span className="bg-trade-sell/10 px-s-200 py-px text-tiny text-trade-sell rounded-full font-medium">
 									{t("scenarios.stopDay")}
 								</span>
@@ -1070,13 +1070,14 @@ const DecisionTreeModal = ({
 				</DialogHeader>
 
 				<Tabs defaultValue="overview">
-					<TabsList variant="line" className="w-full">
-						<TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
-						<TabsTrigger value="paths">{t("tabs.paths")}</TabsTrigger>
+					<TabsList variant="line" className="w-full overflow-x-auto scrollbar-none">
+						<TabsTrigger value="overview" className="shrink-0">{t("tabs.overview")}</TabsTrigger>
+						<TabsTrigger value="paths" className="shrink-0">{t("tabs.paths")}</TabsTrigger>
 						{situations.map((situation) => (
 							<TabsTrigger
 								key={situation.tradeNumber}
 								value={`trade-${situation.tradeNumber}`}
+								className="shrink-0"
 							>
 								T{situation.tradeNumber}
 							</TabsTrigger>
@@ -1085,7 +1086,8 @@ const DecisionTreeModal = ({
 
 					{/* Overview tab — flowchart + progression + scenarios */}
 					<AnimatedTabsContent value="overview">
-						<div className="pt-s-200 flex flex-col items-center gap-0">
+						<div className="pt-s-200 relative overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden after:pointer-events-none after:absolute after:top-0 after:right-0 after:bottom-0 after:z-10 after:w-6 after:bg-linear-to-l after:from-bg-100 after:to-transparent after:content-[''] sm:overflow-x-visible sm:after:hidden">
+							<div className="min-w-[600px] flex flex-col items-center gap-0">
 							{/* Base Trade */}
 							<div className="w-full max-w-sm">
 								<BaseTradeNode
@@ -1174,12 +1176,13 @@ const DecisionTreeModal = ({
 									t={t}
 								/>
 							</div>
+							</div>
 						</div>
 					</AnimatedTabsContent>
 
 					{/* Paths tab — SVG binary tree */}
 					<AnimatedTabsContent value="paths">
-						<div className="pt-s-200">
+						<div className="pt-s-200 relative overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden after:pointer-events-none after:absolute after:top-0 after:right-0 after:bottom-0 after:z-10 after:w-6 after:bg-linear-to-l after:from-bg-100 after:to-transparent after:content-[''] sm:overflow-x-visible sm:after:hidden">
 							<RecoveryPathsTree
 								situations={situations}
 								executeAllRegardless={decisionTree.lossRecovery.executeAllRegardless}

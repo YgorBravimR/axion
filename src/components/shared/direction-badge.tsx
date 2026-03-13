@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 
 type Direction = "long" | "short"
@@ -49,9 +50,10 @@ export const DirectionBadge = ({
 	size = "md",
 	className,
 }: DirectionBadgeProps) => {
+	const t = useTranslations("common")
 	const isLong = direction === "long"
 	const sizes = sizeClasses[size]
-	const displayLabel = label ?? direction.toUpperCase()
+	const displayLabel = label ?? (isLong ? t("long") : t("short"))
 
 	const Icon = isLong ? ArrowUpRight : ArrowDownRight
 	const colorClasses = isLong

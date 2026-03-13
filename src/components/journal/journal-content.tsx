@@ -96,6 +96,7 @@ export const JournalContent = ({
 	const router = useRouter()
 	const t = useTranslations("journal")
 	const tTrade = useTranslations("trade")
+	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
 	const effectiveDate = useEffectiveDate()
 	const [isPending, startTransition] = useTransition()
@@ -240,9 +241,9 @@ export const JournalContent = ({
 							className="font-medium"
 						/>
 						<span className="text-txt-300">
-							{periodSummary.wins}W {periodSummary.losses}L
+							{periodSummary.wins}{tCommon("winAbbr")} {periodSummary.losses}{tCommon("lossAbbr")}
 							{periodSummary.breakevens > 0
-								? ` ${periodSummary.breakevens}BE`
+								? ` ${periodSummary.breakevens}${tCommon("breakevenAbbr")}`
 								: ""}{" "}
 							({periodWinRate.toFixed(0)}%)
 						</span>

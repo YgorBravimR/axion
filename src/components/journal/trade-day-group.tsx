@@ -44,6 +44,7 @@ export const TradeDayGroup = memo(({
 }: TradeDayGroupProps) => {
 	const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 	const t = useTranslations("journal")
+	const tCommon = useTranslations("common")
 
 	const { summary, trades, dateFormatted } = dayData
 
@@ -95,7 +96,7 @@ export const TradeDayGroup = memo(({
 
 					{/* Win/Loss/Breakeven */}
 					<span className="text-caption text-txt-300 hidden sm:inline">
-						{summary.wins}W {summary.losses}L{summary.breakevens > 0 ? ` ${summary.breakevens}BE` : ""}
+						{summary.wins}{tCommon("winAbbr")} {summary.losses}{tCommon("lossAbbr")}{summary.breakevens > 0 ? ` ${summary.breakevens}${tCommon("breakevenAbbr")}` : ""}
 					</span>
 
 					{/* Win Rate */}

@@ -89,6 +89,7 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 			</h3>
 
 			<div className="flex flex-col sm:flex-row items-center gap-m-500">
+				<div className="mx-auto p-s-200 sm:p-0">
 				<ChartContainer id="chart-monte-carlo-v2-mode-distribution" className="h-40 w-40 sm:h-52 sm:w-52">
 					<PieChart>
 						<Pie
@@ -114,6 +115,7 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 						<Tooltip content={<CustomTooltip />} />
 					</PieChart>
 				</ChartContainer>
+				</div>
 
 				{/* Legend */}
 				<div className="flex-1 space-y-s-300">

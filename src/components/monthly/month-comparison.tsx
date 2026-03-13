@@ -127,15 +127,15 @@ export const MonthComparison = ({
 						className="flex items-center justify-between rounded bg-bg-100 px-s-300 py-s-200 sm:px-m-400 sm:py-s-300"
 					>
 						<span className="text-small text-txt-200">{row.label}</span>
-						<div className="flex items-center gap-s-100 sm:gap-m-400">
+						<div className="flex items-center gap-s-100 sm:gap-m-400 min-w-0">
 							<span className="hidden sm:inline text-tiny text-txt-300">{row.previous}</span>
 							<span className="hidden sm:inline text-small text-txt-100">→</span>
-							<span className="text-small font-medium text-txt-100">
+							<span className="text-tiny sm:text-small font-medium text-txt-100 whitespace-nowrap">
 								{row.current}
 							</span>
 							<div
 								className={cn(
-									"flex items-center gap-s-100 rounded px-s-200 py-s-100",
+									"flex items-center gap-s-100 rounded px-s-200 py-s-100 whitespace-nowrap",
 									row.change > 0 && "bg-trade-buy/10",
 									row.change < 0 && "bg-trade-sell/10",
 									row.change === 0 && "bg-bg-300"

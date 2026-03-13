@@ -11,6 +11,7 @@ import {
 	type SortingState,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { useTranslations } from "next-intl"
 import {
 	Table,
 	TableBody,
@@ -33,10 +34,11 @@ interface DataTableProps<TData, TValue> {
 const DataTable = <TData, TValue>({
 	columns,
 	data,
-	emptyMessage = "No results.",
+	emptyMessage,
 	pageSize = 10,
 	striped = true,
 }: DataTableProps<TData, TValue>) => {
+	const t = useTranslations("common")
 	const [sorting, setSorting] = useState<SortingState>([])
 
 	const table = useReactTable({
@@ -62,13 +64,13 @@ const DataTable = <TData, TValue>({
 									const sorted = header.column.getIsSorted()
 
 									return (
-										<TableHead key={header.id}>
+										<TableHead key={header.id} className={(header.column.columnDef.meta as Record<string, string> | undefined)?.headerClassName}>
 											{header.isPlaceholder ? null : isSortable ? (
 												<button
 													type="button"
 													className="flex items-center gap-1 hover:text-txt-100 transition-colors"
 													onClick={header.column.getToggleSortingHandler()}
-													aria-label={`Sort by ${header.column.id}`}
+													aria-label={t("sortBy", { column: header.column.id })}
 												>
 													{flexRender(
 														header.column.columnDef.header,
@@ -105,7 +107,7 @@ const DataTable = <TData, TValue>({
 									)}
 								>
 									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
+										<TableCell key={cell.id} className={(cell.column.columnDef.meta as Record<string, string> | undefined)?.cellClassName}>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext()
@@ -120,7 +122,7 @@ const DataTable = <TData, TValue>({
 									colSpan={columns.length}
 									className="h-24 text-center text-txt-300"
 								>
-									{emptyMessage}
+									{emptyMessage ?? t("noResultsSimple")}
 								</TableCell>
 							</TableRow>
 						)}
@@ -132,8 +134,10 @@ const DataTable = <TData, TValue>({
 			{table.getPageCount() > 1 && (
 				<div className="flex items-center justify-between px-2">
 					<p className="text-small text-txt-300">
-						Page {table.getState().pagination.pageIndex + 1} of{" "}
-						{table.getPageCount()}
+						{t("pagination.pageOf", {
+							current: table.getState().pagination.pageIndex + 1,
+							total: table.getPageCount(),
+						})}
 					</p>
 					<div className="flex items-center gap-2">
 						<Button
@@ -143,7 +147,7 @@ const DataTable = <TData, TValue>({
 							onClick={() => table.previousPage()}
 							disabled={!table.getCanPreviousPage()}
 						>
-							Previous
+							{t("previous")}
 						</Button>
 						<Button
 							id="data-table-next"
@@ -152,7 +156,7 @@ const DataTable = <TData, TValue>({
 							onClick={() => table.nextPage()}
 							disabled={!table.getCanNextPage()}
 						>
-							Next
+							{t("next")}
 						</Button>
 					</div>
 				</div>

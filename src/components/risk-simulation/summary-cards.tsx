@@ -27,14 +27,14 @@ const ComparisonRow = ({
 }: ComparisonRowProps) => (
 	<div className="flex items-center justify-between py-1">
 		<span className="text-tiny text-txt-300">{label}</span>
-		<div className="flex items-center gap-3">
-			<span className="text-tiny text-txt-300">{originalValue}</span>
+		<div className="flex items-center gap-2 sm:gap-3">
+			<span className="text-tiny text-txt-300 whitespace-nowrap">{originalValue}</span>
 			<span className="text-tiny text-txt-300">&rarr;</span>
-			<span className="text-small text-txt-100 font-medium">{simulatedValue}</span>
+			<span className="text-tiny sm:text-small text-txt-100 whitespace-nowrap font-medium">{simulatedValue}</span>
 			{delta && (
 				<span
 					className={cn(
-						"text-tiny font-medium",
+						"text-tiny whitespace-nowrap font-medium",
 						deltaPositive ? "text-trade-buy" : "text-trade-sell"
 					)}
 				>

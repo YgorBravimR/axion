@@ -17,7 +17,7 @@ import {
 	AlertTriangle,
 	Info,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
@@ -39,6 +39,7 @@ export const NotaImport = () => {
 	const t = useTranslations("journal.nota")
 	const tCommon = useTranslations("common")
 	const tOverlay = useTranslations("overlay")
+	const locale = useLocale()
 	const router = useRouter()
 	const { showToast } = useToast()
 	const { showLoading, updateLoading, hideLoading } = useLoadingOverlay()
@@ -355,7 +356,7 @@ export const NotaImport = () => {
 									{t("notaDate")}
 								</span>
 								<span className="text-small text-txt-100 font-medium">
-									{new Date(parseResult.notaDate).toLocaleDateString("pt-BR")}
+									{new Date(parseResult.notaDate).toLocaleDateString(locale)}
 								</span>
 							</div>
 							<div>
@@ -457,7 +458,7 @@ export const NotaImport = () => {
 										<span className="text-txt-200">{fill.normalizedAsset}</span>
 										<span>{fill.quantity}x</span>
 										<span>
-											{fill.price.toLocaleString("pt-BR", {
+											{fill.price.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 											})}
 										</span>
@@ -494,7 +495,7 @@ export const NotaImport = () => {
 											{t("brokerage")}
 										</span>
 										<span className="text-tiny text-txt-200">
-											{parseResult.totalBrokerage.toLocaleString("pt-BR", {
+											{parseResult.totalBrokerage.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 											})}
 										</span>
@@ -506,7 +507,7 @@ export const NotaImport = () => {
 											{t("settlementFee")}
 										</span>
 										<span className="text-tiny text-txt-200">
-											{parseResult.settlementFee.toLocaleString("pt-BR", {
+											{parseResult.settlementFee.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 											})}
 										</span>
@@ -518,7 +519,7 @@ export const NotaImport = () => {
 											{t("registrationFee")}
 										</span>
 										<span className="text-tiny text-txt-200">
-											{parseResult.registrationFee.toLocaleString("pt-BR", {
+											{parseResult.registrationFee.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 											})}
 										</span>
@@ -530,7 +531,7 @@ export const NotaImport = () => {
 											{t("bmfFees")}
 										</span>
 										<span className="text-tiny text-txt-200">
-											{parseResult.bmfFees.toLocaleString("pt-BR", {
+											{parseResult.bmfFees.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 											})}
 										</span>
@@ -540,7 +541,7 @@ export const NotaImport = () => {
 									<div className="flex justify-between">
 										<span className="text-tiny text-txt-300">{t("irrf")}</span>
 										<span className="text-tiny text-txt-200">
-											{parseResult.irrf.toLocaleString("pt-BR", {
+											{parseResult.irrf.toLocaleString(locale, {
 												minimumFractionDigits: 2,
 											})}
 										</span>
@@ -553,7 +554,7 @@ export const NotaImport = () => {
 									<span
 										className={`text-tiny font-medium ${parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell"}`}
 									>
-										{parseResult.netTotal.toLocaleString("pt-BR", {
+										{parseResult.netTotal.toLocaleString(locale, {
 											minimumFractionDigits: 2,
 										})}{" "}
 										{parseResult.netTotalDebitCredit === "C" ? "C" : "D"}

@@ -166,12 +166,12 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 							<TableRow>
 								<TableHead className="w-10" />
 								<TableHead>{t("name")}</TableHead>
-								<TableHead>{t("email")}</TableHead>
+								<TableHead className="hidden sm:table-cell">{t("email")}</TableHead>
 								<TableHead className="text-center">
 									{t("accounts")}
 								</TableHead>
 								<TableHead>{t("joined")}</TableHead>
-								<TableHead>{t("role")}</TableHead>
+								<TableHead className="whitespace-nowrap">{t("role")}</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -220,7 +220,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 													)}
 												</span>
 											</TableCell>
-											<TableCell className="text-muted-foreground">
+											<TableCell className="text-muted-foreground hidden sm:table-cell">
 												{user.email}
 											</TableCell>
 											<TableCell className="text-center">
@@ -232,6 +232,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 												).toLocaleDateString()}
 											</TableCell>
 											<TableCell
+												className="whitespace-nowrap"
 												onClick={(e) =>
 													e.stopPropagation()
 												}
@@ -258,7 +259,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 														<SelectTrigger
 															id={`role-select-${user.id}`}
 															size="sm"
-															className="w-28"
+															className="w-28 min-h-[40px]"
 															aria-label={t(
 																"changeRole"
 															)}
@@ -353,7 +354,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																			id={`delete-account-${account.id}`}
 																			variant="ghost"
 																			size="icon"
-																			className="h-6 w-6 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+																			className="size-10 text-red-500 hover:bg-red-500/10 hover:text-red-600"
 																			disabled={user.tradingAccounts.length <= 1 || (account.isDefault && user.tradingAccounts.length > 1)}
 																			aria-label={t("deleteAccountTitle")}
 																			title={

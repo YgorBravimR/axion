@@ -24,26 +24,26 @@ const V2ResultsSummary = ({ params, onRunAgain }: V2ResultsSummaryProps) => {
 			: null
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-m-500 gap-x-m-500 gap-y-s-300 flex flex-wrap items-center justify-between rounded-lg border">
-			<div className="gap-s-200 flex items-center">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-500 gap-x-s-300 sm:gap-x-m-500 gap-y-s-200 sm:gap-y-s-300 flex flex-wrap items-center justify-between rounded-lg border">
+			<div className="min-w-0 gap-s-200 flex items-center">
 				<span className="text-txt-300 text-small">{t("profileName")}:</span>
 				<span className="text-acc-100 font-medium">
 					{profile.name}
 				</span>
 			</div>
-			<div className="gap-s-200 flex items-center">
+			<div className="min-w-0 gap-s-200 flex items-center">
 				<span className="text-txt-300 text-small">{t("simulations")}:</span>
 				<span className="text-txt-100 font-medium">
 					{params.simulationCount.toLocaleString()}
 				</span>
 			</div>
-			<div className="gap-s-200 flex items-center">
+			<div className="min-w-0 gap-s-200 flex items-center">
 				<span className="text-txt-300 text-small">{t("winRate")}:</span>
 				<span className="text-txt-100 font-medium">
 					{profile.winRate}%
 				</span>
 			</div>
-			<div className="gap-s-200 flex items-center">
+			<div className="min-w-0 gap-s-200 flex items-center">
 				<span className="text-txt-300 text-small">{t("rewardRisk")}:</span>
 				<span className="text-txt-100 font-medium">
 					1:{profile.rewardRiskRatio.toFixed(2)}
@@ -61,7 +61,7 @@ const V2ResultsSummary = ({ params, onRunAgain }: V2ResultsSummaryProps) => {
 					<span className="text-txt-100 font-medium">{profile.breakevenRate}%</span>
 				</div>
 			)}
-			<div className="gap-s-200 flex items-center">
+			<div className="min-w-0 gap-s-200 flex items-center">
 				<span className="text-txt-300 text-small">{t("daysPerMonth")}:</span>
 				<span className="text-txt-100 font-medium">
 					{profile.tradingDaysPerMonth}

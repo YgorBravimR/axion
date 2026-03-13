@@ -22,19 +22,24 @@ import { useToast } from "@/components/ui/toast"
 import { Loader2, Building2, Percent, Calculator } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const PROP_FIRMS = [
+const PROP_FIRMS_BASE = [
 	{ value: "atom", label: "Atom" },
 	{ value: "raise", label: "Raise" },
 	{ value: "solotrader", label: "SoloTrader" },
 	{ value: "apex", label: "Apex Trader Funding" },
 	{ value: "topstep", label: "Topstep" },
 	{ value: "ftmo", label: "FTMO" },
-	{ value: "other", label: "Other" },
 ]
 
 export const TradingAccountSettings = () => {
 	const t = useTranslations("settings.tradingAccount")
+	const tTrading = useTranslations("settings.trading")
 	const tCommon = useTranslations("common")
+
+	const PROP_FIRMS = [
+		...PROP_FIRMS_BASE,
+		{ value: "other", label: tTrading("propFirms.other") },
+	]
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [isLoading, setIsLoading] = useState(true)

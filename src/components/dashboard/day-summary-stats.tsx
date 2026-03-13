@@ -17,6 +17,7 @@ interface DaySummaryStatsProps {
  */
 export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 	const t = useTranslations("dashboard")
+	const tCommon = useTranslations("common")
 
 	const stats = [
 		{
@@ -34,7 +35,7 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 		{
 			label: t("dayDetail.winRate"),
 			value: `${summary.winRate.toFixed(0)}%`,
-			subValue: `${summary.wins}W ${summary.losses}L`,
+			subValue: `${summary.wins}${tCommon("winAbbr")} ${summary.losses}${tCommon("lossAbbr")}`,
 			isPositive: summary.winRate >= 50,
 		},
 		{

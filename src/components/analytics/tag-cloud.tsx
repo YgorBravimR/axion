@@ -30,7 +30,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 	const isRMode = expectancyMode === "edge"
 	const formatMetric = (value: number): string =>
-		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value)
+		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
 	const getMetric = (tag: TagStats): number =>
 		isRMode ? tag.avgR : tag.totalPnl
 
@@ -110,13 +110,13 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 											)}
 											<p className="text-txt-200">{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%</p>
 											<p className={tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-												{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl)}
+												{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
 											</p>
 										</>
 									) : (
 										<>
 											<p className={tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-												{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl)}
+												{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
 											</p>
 											<p className="text-txt-200">{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%</p>
 											{tag.avgR !== 0 && (
@@ -254,7 +254,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 													tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 												}`}
 											>
-												{formatCompactCurrencyWithSign(tag.totalPnl)}
+												{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
 											</td>
 											<td className="px-s-300 py-s-200 text-right text-small text-txt-200">
 												{tag.winRate.toFixed(1)}%

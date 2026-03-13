@@ -30,13 +30,13 @@ const PnlCard = ({ grossPnl, netPnl }: PnlCardProps) => {
 						<div className="gap-s-200 flex flex-col items-center">
 							<p className="text-tiny text-txt-300 font-medium">{t("gross")}</p>
 							<p className={`text-body sm:text-h3 font-bold ${grossColor}`}>
-								{formatCompactCurrency(grossPnl)}
+								{formatCompactCurrency(grossPnl, "R$")}
 							</p>
 						</div>
 						<div className="gap-s-200 flex flex-col items-center">
 							<p className="text-tiny text-txt-300 font-medium">{t("net")}</p>
 							<p className={`text-body sm:text-h3 font-bold ${netColor}`}>
-								{formatCompactCurrency(netPnl)}
+								{formatCompactCurrency(netPnl, "R$")}
 							</p>
 						</div>
 					</div>

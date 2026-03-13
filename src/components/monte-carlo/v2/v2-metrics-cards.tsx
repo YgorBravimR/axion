@@ -27,7 +27,7 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ title, children }: MetricCardProps) => (
-	<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+	<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 		<h4 className="mb-s-300 text-small text-txt-100 font-semibold">{title}</h4>
 		<div className="space-y-s-200">{children}</div>
 	</div>
@@ -41,7 +41,7 @@ interface MetricRowProps {
 }
 
 const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
-	<div className="flex items-center justify-between">
+	<div className="flex min-w-0 items-center justify-between">
 		{tooltip ? (
 			<Tooltip>
 				<TooltipTrigger asChild>
@@ -86,7 +86,7 @@ const V2MetricsCards = ({
 			<MetricCard title={isMultiMonth ? t("periodPnl", { months: monthsToTrade }) : t("monthlyPnl")}>
 				<MetricRow
 					label={t("median")}
-					value={formatCompactCurrency(medianPnlFromCents)}
+					value={formatCompactCurrency(medianPnlFromCents, "R$")}
 					valueClass={
 						statistics.medianMonthlyPnl >= 0
 							? "text-trade-buy"
@@ -95,7 +95,7 @@ const V2MetricsCards = ({
 				/>
 				<MetricRow
 					label={t("mean")}
-					value={formatCompactCurrency(statistics.meanMonthlyPnl / 100)}
+					value={formatCompactCurrency(statistics.meanMonthlyPnl / 100, "R$")}
 					valueClass={
 						statistics.meanMonthlyPnl >= 0
 							? "text-trade-buy"
@@ -104,12 +104,12 @@ const V2MetricsCards = ({
 				/>
 				<MetricRow
 					label={t("bestCase")}
-					value={formatCompactCurrency(statistics.bestCaseMonthlyPnl / 100)}
+					value={formatCompactCurrency(statistics.bestCaseMonthlyPnl / 100, "R$")}
 					valueClass="text-trade-buy"
 				/>
 				<MetricRow
 					label={t("worstCase")}
-					value={formatCompactCurrency(statistics.worstCaseMonthlyPnl / 100)}
+					value={formatCompactCurrency(statistics.worstCaseMonthlyPnl / 100, "R$")}
 					valueClass="text-trade-sell"
 				/>
 			</MetricCard>
@@ -229,7 +229,7 @@ const V2MetricsCards = ({
 				/>
 				<MetricRow
 					label={t("expectedDailyPnl")}
-					value={formatCompactCurrency(statistics.expectedDailyPnl / 100)}
+					value={formatCompactCurrency(statistics.expectedDailyPnl / 100, "R$")}
 					valueClass={
 						statistics.expectedDailyPnl >= 0
 							? "text-trade-buy"

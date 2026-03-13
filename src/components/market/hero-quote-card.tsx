@@ -22,7 +22,7 @@ export const HeroQuoteCard = ({ quote }: HeroQuoteCardProps) => {
 	return (
 		<div
 			className={cn(
-				"border-bg-300 bg-bg-200 min-w-0 flex-1 rounded-lg border p-3",
+				"border-bg-300 bg-bg-200 min-w-[140px] shrink-0 flex-1 rounded-lg border p-3",
 				!isClosed && !isZero && isPositive && "border-l-2 border-l-trade-buy",
 				!isClosed && !isZero && !isPositive && "border-l-2 border-l-trade-sell"
 			)}

@@ -1,7 +1,7 @@
 "use client"
 
 import type { KeyboardEvent } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react"
 import type { DayTrade } from "@/types"
 import { formatBrlWithSign } from "@/lib/formatting"
@@ -21,14 +21,16 @@ interface DayTradesListProps {
 	onTradeClick?: (tradeId: string) => void
 }
 
-const formatPrice = (value: number): string =>
-	value.toLocaleString("pt-BR", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	})
-
 export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 	const t = useTranslations("dashboard")
+	const tCommon = useTranslations("common")
+	const locale = useLocale()
+
+	const formatPrice = (value: number): string =>
+		value.toLocaleString(locale, {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		})
 
 	if (trades.length === 0) {
 		return (
@@ -61,7 +63,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 						<TableHead className="px-s-300 py-s-200 text-right">
 							{t("dayDetail.pnl")}
 						</TableHead>
-						<TableHead className="px-s-300 py-s-200 text-right">R</TableHead>
+						<TableHead className="px-s-300 py-s-200 text-right">{tCommon("rMultipleAbbr")}</TableHead>
 						<TableHead className="px-s-200 py-s-200 size-10" />
 					</TableRow>
 				</TableHeader>

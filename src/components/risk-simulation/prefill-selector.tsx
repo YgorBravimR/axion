@@ -114,7 +114,7 @@ const PrefillSelector = ({
 			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 				{t("prefillFrom")}
 			</h3>
-			<div className="flex flex-wrap gap-2">
+			<div className="flex flex-wrap gap-s-100 sm:gap-s-200">
 				{monthlyPlan && (
 					<button
 						type="button"
