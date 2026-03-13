@@ -93,7 +93,22 @@
 		"grossCostBreakdown": "Gross: {gross} | Costs: {costs}",
 		"entry": "Entry",
 		"exit": "Exit",
-		"genericError": "An error occurred"
+		"genericError": "An error occurred",
+		"pagination": {
+			"pageOf": "Page {current} of {total}"
+		},
+		"noResultsSimple": "No results.",
+		"winAbbr": "W",
+		"lossAbbr": "L",
+		"breakevenAbbr": "BE",
+		"tradeCountAbbr": "t",
+		"rMultipleAbbr": "R",
+		"unknown": "Unknown",
+		"noStrategy": "No Strategy",
+		"validationError": "Validation error",
+		"errors": {
+			"adminRequired": "Admin access required"
+		}
 	},
 	"nav": {
 		"dashboard": "Dashboard",
@@ -182,6 +197,25 @@
 		"title": "Monte Carlo Strategy Simulator",
 		"subtitle": "Stress-test your trading strategy with statistical simulations",
 		"help": "Help",
+		"kelly": {
+			"negativeEdge": "Negative edge - do not trade this strategy",
+			"highPotential": "High potential but risky - Use Quarter Kelly",
+			"reasonable": "Reasonable Kelly - Consider Half Kelly for growth",
+			"conservative": "Conservative Kelly - Quarter Kelly recommended for stability"
+		},
+		"dataSources": {
+			"allStrategies": "All Strategies",
+			"allStrategiesDesc": "Combined metrics from all strategies",
+			"allAccountsStrategies": "All Accounts + All Strategies",
+			"allAccountsStrategiesDesc": "Universal metrics across all accounts",
+			"needMinTrades": "Need at least 10 trades"
+		},
+		"allocation": {
+			"excellent": "Excellent statistical robustness",
+			"good": "Good statistical performance",
+			"moderate": "Moderate reliability",
+			"pause": "Pause until improved"
+		},
 		"inputMode": {
 			"title": "Input Mode",
 			"auto": "Auto-populate from Data",
@@ -472,13 +506,23 @@
 		},
 		"errors": {
 			"failedToLoadStats": "Failed to load stats",
-			"failedToRunSimulation": "Failed to run simulation"
+			"failedToRunSimulation": "Failed to run simulation",
+			"universalRequiresAllAccounts": "Universal mode requires 'show all accounts' to be enabled",
+			"noTradesForSource": "No trades found for {source}"
 		},
 		"runningSimulation": "Running Simulation..."
 	},
 	"commandCenter": {
 		"title": "Command Center",
 		"description": "Prepare for your trading day",
+		"actionErrors": {
+			"noRiskProfile": "No risk profile linked",
+			"riskProfileNotFound": "Risk profile not found"
+		},
+		"directionAbbr": {
+			"long": "L",
+			"short": "S"
+		},
 		"tabs": {
 			"commandCenter": "Command Center",
 			"monitor": "Monitor",
@@ -729,6 +773,10 @@
 			"tab": "Plan",
 			"title": "Monthly Plan",
 			"description": "Configure your monthly risk parameters",
+			"actionErrors": {
+				"tooFarInFuture": "Cannot create a plan for a month that far in the future",
+				"noPreviousPlan": "No plan found for the previous month to roll over"
+			},
 			"noPlan": "No plan configured for this month",
 			"noPlanPrompt": "Create a monthly plan to set your risk parameters",
 			"createPlan": "Create Plan",
@@ -1210,6 +1258,13 @@
 	"journal": {
 		"title": "Trade Journal",
 		"description": "Record and track your trades",
+		"errors": {
+			"exitQuantityExceeds": "Exit quantity exceeds available position. Remaining: {qty}",
+			"alreadyScaledMode": "Trade is already in scaled mode",
+			"notScaledMode": "Trade is not in scaled mode",
+			"executionRequired": "At least one execution is required",
+			"entryExecutionRequired": "At least one entry execution is required"
+		},
 		"newEntry": "New Entry",
 		"csvImport": "Import CSV",
 		"singleEntry": "Single Entry",
@@ -1722,6 +1777,11 @@
 	"playbook": {
 		"title": "Strategy Playbook",
 		"description": "Manage your strategies and track compliance",
+		"actionErrors": {
+			"strategyNotFound": "Strategy not found",
+			"syncFailed": "Failed to sync strategy conditions",
+			"retrieveFailed": "Failed to retrieve strategy conditions"
+		},
 		"yourStrategies": "Your Strategies",
 		"newStrategy": "New Strategy",
 		"addStrategy": "Add Strategy",
@@ -2181,6 +2241,9 @@
 		"riskProfiles": {
 			"title": "Risk Profiles",
 			"description": "Manage risk management profiles for Monte Carlo simulations",
+			"errors": {
+				"notFound": "Profile not found"
+			},
 			"create": "Create Profile",
 			"edit": "Edit",
 			"deactivate": "Deactivate",
@@ -2286,6 +2349,24 @@
 			"switchTo": "Switch to {language}",
 			"pt": "PT",
 			"en": "EN"
+		},
+		"errors": {
+			"accountNameExists": "An account with this name already exists",
+			"accountNotFound": "Account not found",
+			"cannotDeleteDefault": "Cannot delete the default account while other accounts exist",
+			"onlyReplayAccounts": "Only replay accounts can advance date",
+			"replayNoStartDate": "Replay account has no start date",
+			"noAccountSelected": "No account selected",
+			"assetTypeNotFound": "Asset type not found",
+			"cannotDeleteAssetType": "Cannot delete asset type with existing assets",
+			"invalidTheme": "Invalid theme value",
+			"invalidBrand": "Invalid brand value",
+			"cannotChangeOwnRole": "Cannot change your own role"
+		},
+		"trading": {
+			"propFirms": {
+				"other": "Other"
+			}
 		}
 	},
 	"monthly": {
@@ -2381,7 +2462,217 @@
 		"maxLength": "Maximum {max} characters",
 		"positiveNumber": "Must be a positive number",
 		"invalidDate": "Invalid date",
-		"exitAfterEntry": "Exit date must be after entry"
+		"exitAfterEntry": "Exit date must be after entry",
+		"auth": {
+			"nameMin": "Name must be at least 2 characters",
+			"nameMax": "Name must be less than 255 characters",
+			"invalidEmail": "Invalid email address",
+			"passwordMin": "Password must be at least 8 characters",
+			"passwordUppercase": "Password must contain at least one uppercase letter",
+			"passwordLowercase": "Password must contain at least one lowercase letter",
+			"passwordNumber": "Password must contain at least one number",
+			"passwordsDoNotMatch": "Passwords don't match",
+			"passwordRequired": "Password is required",
+			"currentPasswordRequired": "Current password is required",
+			"codeLength": "Code must be 6 digits",
+			"codeNumeric": "Code must be numeric"
+		},
+		"trade": {
+			"assetRequired": "Asset is required",
+			"assetMaxLength": "Asset must be 20 characters or less",
+			"entryDateRequired": "Entry date is required",
+			"entryPriceRequired": "Entry price is required",
+			"entryPricePositive": "Entry price must be positive",
+			"exitPricePositive": "Exit price must be positive",
+			"positionSizeRequired": "Position size is required",
+			"positionSizePositive": "Position size must be positive",
+			"stopLossPositive": "Stop loss must be positive",
+			"takeProfitPositive": "Take profit must be positive",
+			"riskAmountPositive": "Risk amount must be positive"
+		},
+		"asset": {
+			"codeMin": "Code must be at least 2 characters",
+			"codeMax": "Code must be 50 characters or less",
+			"codeFormat": "Code must be uppercase letters and underscores only",
+			"nameMin": "Name must be at least 2 characters",
+			"nameMax": "Name must be 100 characters or less",
+			"symbolRequired": "Symbol is required",
+			"symbolMax": "Symbol must be 20 characters or less",
+			"symbolFormat": "Symbol must be uppercase letters and numbers only",
+			"invalidAssetTypeId": "Invalid asset type ID",
+			"tickSizePositive": "Tick size must be positive",
+			"tickValuePositive": "Tick value must be positive",
+			"currencyMin": "Currency must be 3 characters",
+			"currencyMax": "Currency must be 10 characters or less",
+			"multiplierPositive": "Multiplier must be positive",
+			"invalidAssetId": "Invalid asset ID"
+		},
+		"execution": {
+			"invalidTradeId": "Trade ID must be a valid UUID",
+			"executionDateRequired": "Execution date is required",
+			"priceRequired": "Price is required",
+			"pricePositive": "Price must be positive",
+			"quantityRequired": "Quantity is required",
+			"quantityPositive": "Quantity must be positive",
+			"notesMaxLength": "Notes must be 1000 characters or less"
+		},
+		"strategy": {
+			"codeMin": "Strategy code must be at least 3 characters",
+			"codeMax": "Strategy code must be 10 characters or less",
+			"codeFormat": "Code must be uppercase letters and numbers only",
+			"nameRequired": "Strategy name is required",
+			"nameMax": "Name must be 100 characters or less",
+			"descriptionMax": "Description must be 2000 characters or less",
+			"entryCriteriaMax": "Entry criteria must be 5000 characters or less",
+			"exitCriteriaMax": "Exit criteria must be 5000 characters or less",
+			"riskRulesMax": "Risk rules must be 5000 characters or less",
+			"targetRPositive": "Target R must be positive",
+			"targetRMax": "Target R must be 100 or less",
+			"maxRiskPositive": "Max risk % must be positive",
+			"maxRiskMax": "Max risk % must be 100 or less",
+			"invalidUrl": "Invalid URL",
+			"notesMax": "Notes must be 5000 characters or less"
+		},
+		"calculator": {
+			"assetRequired": "Asset is required",
+			"entryPricePositive": "Entry price must be positive",
+			"stopPricePositive": "Stop price must be positive",
+			"targetPricePositive": "Target price must be positive",
+			"contractsPositive": "Contracts must be positive"
+		},
+		"commandCenter": {
+			"itemLabelRequired": "Item label is required",
+			"itemLabelMax": "Item label must be 200 characters or less",
+			"checklistNameRequired": "Checklist name is required",
+			"checklistNameMax": "Name must be 100 characters or less",
+			"atLeastOneItem": "At least one item is required",
+			"maxItems": "Maximum 50 items allowed",
+			"invalidChecklistId": "Invalid checklist ID",
+			"preMarketNotesMax": "Pre-market notes must be 10000 characters or less",
+			"postMarketNotesMax": "Post-market notes must be 10000 characters or less",
+			"invalidAssetId": "Invalid asset ID",
+			"maxDailyTradesInteger": "Max daily trades must be a whole number",
+			"maxDailyTradesPositive": "Max daily trades must be positive",
+			"maxDailyTradesMax": "Max daily trades must be 1000 or less",
+			"maxPositionSizeInteger": "Max position size must be a whole number",
+			"maxPositionSizePositive": "Max position size must be positive",
+			"maxPositionSizeMax": "Max position size must be 100000 or less",
+			"notesMax": "Notes must be 2000 characters or less"
+		},
+		"monteCarlo": {
+			"winRateMin": "Win rate must be at least 1%",
+			"winRateMax": "Win rate cannot exceed 99%",
+			"rewardRiskMin": "Reward/Risk ratio must be at least 0.1",
+			"rewardRiskMax": "Reward/Risk ratio cannot exceed 20",
+			"tradesMin": "Minimum 10 trades per simulation",
+			"tradesMax": "Maximum 10,000 trades per simulation",
+			"commissionMin": "Commission cannot be negative",
+			"commissionMax": "Commission cannot exceed 50% of risk",
+			"simulationsMin": "Minimum 100 simulations",
+			"simulationsMax": "Maximum 50,000 simulations",
+			"invalidStrategyId": "Invalid strategy ID"
+		},
+		"monthlyPlan": {
+			"accountBalanceCents": "Account balance must be in cents",
+			"accountBalancePositive": "Account balance must be positive",
+			"accountBalanceMax": "Account balance too large",
+			"riskPerTradePositive": "Risk per trade must be positive",
+			"riskPerTradeMax": "Risk per trade cannot exceed 100%",
+			"dailyLossPositive": "Daily loss limit must be positive",
+			"dailyLossMax": "Daily loss limit cannot exceed 100%",
+			"monthlyLossPositive": "Monthly loss limit must be positive",
+			"monthlyLossMax": "Monthly loss limit cannot exceed 100%",
+			"profitTargetPositive": "Profit target must be positive",
+			"profitTargetMax": "Profit target too large",
+			"maxDailyTradesInteger": "Max daily trades must be a whole number",
+			"maxDailyTradesPositive": "Max daily trades must be positive",
+			"maxDailyTradesMax": "Max daily trades must be 1000 or less",
+			"maxConsecutiveLossesInteger": "Max consecutive losses must be a whole number",
+			"maxConsecutiveLossesPositive": "Max consecutive losses must be positive",
+			"maxConsecutiveLossesMax": "Max consecutive losses must be 100 or less",
+			"riskReductionPositive": "Risk reduction factor must be positive",
+			"riskReductionMax": "Risk reduction factor must be <= 1 (e.g. 0.50)",
+			"profitReinvestmentPositive": "Profit reinvestment must be positive",
+			"profitReinvestmentMax": "Profit reinvestment cannot exceed 100%",
+			"notesMax": "Notes must be 5000 characters or less",
+			"invalidRiskProfileId": "Invalid risk profile ID",
+			"weeklyLossPositive": "Weekly loss limit must be positive",
+			"weeklyLossMax": "Weekly loss limit cannot exceed 100%",
+			"mutuallyExclusive": "increaseRiskAfterWin and capRiskAfterWin are mutually exclusive",
+			"rolloverBalanceCents": "Balance must be in cents",
+			"rolloverBalancePositive": "Balance must be positive",
+			"rolloverBalanceMax": "Balance too large"
+		},
+		"passwordRecovery": {
+			"invalidEmail": "Invalid email address",
+			"codeLength": "Code must be exactly 6 digits",
+			"codeDigitsOnly": "Code must contain only digits",
+			"passwordMin": "Password must be at least 8 characters",
+			"passwordUppercase": "Password must contain at least one uppercase letter",
+			"passwordLowercase": "Password must contain at least one lowercase letter",
+			"passwordNumber": "Password must contain at least one number"
+		},
+		"riskProfile": {
+			"nameRequired": "Name is required",
+			"nameMax": "Name too long",
+			"descriptionMax": "Description too long",
+			"baseRiskPositive": "Base risk must be positive",
+			"dailyLossPositive": "Daily loss limit must be positive",
+			"weeklyLossPositive": "Weekly loss limit must be positive",
+			"monthlyLossPositive": "Monthly loss limit must be positive",
+			"dailyProfitTargetPositive": "Daily profit target must be positive",
+			"maxRecoverySteps": "Maximum 10 recovery steps",
+			"maxGainSteps": "Maximum 10 gain steps"
+		},
+		"riskSimulation": {
+			"accountBalancePositive": "Account balance must be positive",
+			"dateFormat": "Date must be YYYY-MM-DD"
+		},
+		"scenario": {
+			"invalidStrategyId": "Invalid strategy ID",
+			"nameRequired": "Name is required",
+			"nameMax": "Name must be 200 characters or less",
+			"descriptionMax": "Description must be 2000 characters or less"
+		},
+		"settings": {
+			"profitShareMin": "Profit share must be at least 0%",
+			"profitShareMax": "Profit share cannot exceed 100%",
+			"taxRateMin": "Tax rate must be at least 0%",
+			"taxRateMax": "Tax rate cannot exceed 100%",
+			"thresholdMin": "Threshold must be at least 0",
+			"currencyLength": "Currency code must be 3 characters"
+		},
+		"timeframe": {
+			"codeRequired": "Code is required",
+			"codeMax": "Code must be 20 characters or less",
+			"codeFormat": "Code must be uppercase letters, numbers and underscores only",
+			"nameMin": "Name must be at least 2 characters",
+			"nameMax": "Name must be 50 characters or less",
+			"valueRequired": "Value is required",
+			"valueInteger": "Value must be an integer",
+			"valuePositive": "Value must be positive",
+			"sortOrderInteger": "Sort order must be an integer",
+			"sortOrderMin": "Sort order cannot be negative",
+			"invalidTimeframeId": "Invalid timeframe ID"
+		},
+		"tradingCondition": {
+			"nameRequired": "Name is required",
+			"nameMax": "Name must be 100 characters or less",
+			"descriptionMax": "Description must be 500 characters or less"
+		},
+		"userManagement": {
+			"invalidUserId": "Invalid user ID",
+			"roleRequired": "Role must be admin, trader, or viewer"
+		},
+		"upload": {
+			"invalidFileType": "Invalid file type. Accepted: image/jpeg, image/png, image/webp",
+			"fileTooLarge": "File too large. Maximum size: 5MB"
+		},
+		"tags": {
+			"nameRequired": "Name is required",
+			"nameMaxLength": "Name must be 50 characters or less",
+			"invalidColor": "Color must be a valid hex color"
+		}
 	},
 	"tooltips": {
 		"winRate": "Percentage of winning trades out of total",
@@ -2498,8 +2789,23 @@
 			"subtitle": "Choose which trading account to work with",
 			"continue": "Continue",
 			"profitShare": "{percentage}% profit share",
-			"backToLogin": "Back to login"
+			"backToLogin": "Back to login",
+			"signInAgain": "To select your trading account, please sign in again.",
+			"backToLoginButton": "Back to Login"
 		},
+		"errors": {
+			"emailExists": "An account with this email already exists",
+			"registrationFailed": "An error occurred during registration",
+			"rateLimited": "Too many login attempts. Please try again in {minutes} minute(s).",
+			"accountLocked": "Account temporarily locked due to too many failed attempts. Try again in {minutes} minute(s).",
+			"invalidCredentials": "Invalid email or password",
+			"notAuthenticated": "Not authenticated",
+			"accountNotFound": "Account not found",
+			"userNotFound": "User not found",
+			"incorrectPassword": "Current password is incorrect",
+			"loginFailed": "An error occurred during login"
+		},
+		"defaultAccountName": "Personal",
 		"accountSwitcher": {
 			"accounts": "Your Accounts",
 			"currentAccount": "Current Account",
@@ -2553,13 +2859,36 @@
 			"expired": "Code expired. Please request a new one.",
 			"success": "Email Verified!",
 			"successMessage": "Your email has been verified. Redirecting to login...",
-			"backToLogin": "Back to login"
+			"backToLogin": "Back to login",
+			"errors": {
+				"rateLimited": "Too many requests. Try again in {minutes} minute(s).",
+				"invalidInput": "Invalid input"
+			}
 		}
 	},
 	"riskSimulation": {
 		"title": "Risk Simulation",
 		"subtitle": "Simulate applying risk management rules to your historical trades",
 		"runSimulation": "Run Simulation",
+		"errors": {
+			"noClosedTrades": "No closed trades found in the selected date range",
+			"noValidTrades": "No valid trades to simulate"
+		},
+		"reasons": {
+			"baseRisk": "Base risk",
+			"t1BaseRisk": "T1 base risk",
+			"recoveryExhausted": "Recovery sequence exhausted",
+			"postRecoveryBase": "Post-recovery base risk",
+			"singleTarget": "Single target reached",
+			"baseRiskNoGains": "Base risk (no gains to reinvest)",
+			"gainExhausted": "Gain sequence exhausted",
+			"reducedLoss": "Reduced (loss #{count}, x{factor})",
+			"winBonus": "Win bonus (+{percent}% of last gain)",
+			"gainReinvest": "Gain reinvest ({percent}% of day gains)",
+			"recoveryStep": "Recovery #{step}",
+			"gainStep": "Gain #{step}",
+			"gainRepeat": "Gain repeat"
+		},
 		"tradeBreakdown": "Trade Breakdown",
 		"viewDecisionTrace": "View Decision Trace",
 		"config": {
@@ -2697,6 +3026,11 @@
 		"emailLabel": "Email",
 		"sendCode": "Send Reset Code",
 		"codeTitle": "Enter Verification Code",
+		"errors": {
+			"invalidInput": "Invalid input",
+			"rateLimited": "Too many attempts. Try again in {minutes} minute(s).",
+			"invalidCode": "Invalid or expired code"
+		},
 		"codeSentTo": "We sent a 6-digit code to {email}",
 		"codeLabel": "Verification code",
 		"verify": "Verify Code",
@@ -2760,7 +3094,30 @@
 			"failedToParse": "Failed to parse CSV",
 			"missingImportId": "Missing import ID",
 			"failedToImport": "Failed to import trades",
-			"unknownError": "Unknown error"
+			"unknownError": "Unknown error",
+			"rateLimited": "Import in cooldown. Try again in {minutes} minute(s).",
+			"invalidFormat": "Invalid CSV format",
+			"parseFailed": "Failed to parse CSV",
+			"previewExpired": "Import preview not found or expired",
+			"accountMismatch": "Account mismatch"
+		},
+		"success": {
+			"imported": "Successfully imported {count} trades from {broker}"
+		}
+	},
+	"notaImport": {
+		"errors": {
+			"uploadPdf": "Please upload a PDF file",
+			"onlyPdf": "Only PDF files are accepted",
+			"fileTooLarge": "PDF must be under 10MB",
+			"noFills": "No trade fills were provided",
+			"noMatches": "No confirmed matches provided",
+			"duplicateImport": "This nota has already been imported"
+		}
+	},
+	"upload": {
+		"errors": {
+			"uploadFailed": "Failed to upload {filename}"
 		}
 	},
 	"errors": {
@@ -2775,6 +3132,65 @@
 			"reference": "Reference: {digest}",
 			"tryAgain": "Try Again",
 			"reloadPage": "Reload Page"
+		},
+		"globalBoundary": {
+			"title": "Something went wrong!",
+			"description": "A critical error occurred. Please try again or reload the page.",
+			"reference": "Reference: {digest}",
+			"tryAgain": "Try Again",
+			"tryAgainAria": "Try again"
 		}
+	},
+	"email": {
+		"brandName": "BRAVO JOURNAL",
+		"footer": "Bravo Journal — Your trading companion",
+		"passwordReset": {
+			"subject": "Password Reset Code",
+			"title": "Password Reset",
+			"heading": "Password Reset",
+			"body": "Use the code below to reset your password. This code expires in {minutes} minutes.",
+			"disclaimer": "If you didn't request this, you can safely ignore this email. Your password will remain unchanged."
+		},
+		"verification": {
+			"subject": "Verify Your Email - Bravo Journal",
+			"title": "Email Verification",
+			"heading": "Verify Your Email",
+			"body": "Use the code below to verify your email address. This code expires in {minutes} minutes.",
+			"disclaimer": "If you didn't create an account, you can safely ignore this email."
+		}
+	},
+	"days": {
+		"sunday": "Sunday",
+		"monday": "Monday",
+		"tuesday": "Tuesday",
+		"wednesday": "Wednesday",
+		"thursday": "Thursday",
+		"friday": "Friday",
+		"saturday": "Saturday"
+	},
+	"sessions": {
+		"preOpen": "Pre-Open",
+		"morning": "Morning",
+		"afternoon": "Afternoon",
+		"close": "Close"
+	},
+	"charts": {
+		"tradeNumber": "Trade #{number}",
+		"dayNumber": "Day #{number}",
+		"maxDrawdown": "Max: -{value}R",
+		"performance": "Performance",
+		"skipped": "Skipped",
+		"target": "(Target)"
+	},
+	"api": {
+		"errors": {
+			"unauthorized": "Unauthorized",
+			"tooManyRequests": "Too many requests",
+			"missingFields": "Missing required fields",
+			"invalidParams": "Invalid parameters"
+		}
+	},
+	"formatting": {
+		"justNow": "just now"
 	}
 }

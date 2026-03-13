@@ -93,7 +93,22 @@
 		"grossCostBreakdown": "Bruto: {gross} | Custos: {costs}",
 		"entry": "Entrada",
 		"exit": "Saída",
-		"genericError": "Ocorreu um erro"
+		"genericError": "Ocorreu um erro",
+		"pagination": {
+			"pageOf": "Página {current} de {total}"
+		},
+		"noResultsSimple": "Sem resultados.",
+		"winAbbr": "V",
+		"lossAbbr": "D",
+		"breakevenAbbr": "E",
+		"tradeCountAbbr": "t",
+		"rMultipleAbbr": "R",
+		"unknown": "Desconhecido",
+		"noStrategy": "Sem Estratégia",
+		"validationError": "Erro de validação",
+		"errors": {
+			"adminRequired": "Acesso de administrador necessário"
+		}
 	},
 	"nav": {
 		"dashboard": "Painel",
@@ -182,6 +197,25 @@
 		"title": "Simulador Monte Carlo",
 		"subtitle": "Teste sua estratégia de trading com simulações estatísticas",
 		"help": "Ajuda",
+		"kelly": {
+			"negativeEdge": "Edge negativo - não opere esta estratégia",
+			"highPotential": "Alto potencial mas arriscado - Use Quarter Kelly",
+			"reasonable": "Kelly razoável - Considere Half Kelly para crescimento",
+			"conservative": "Kelly conservador - Quarter Kelly recomendado para estabilidade"
+		},
+		"dataSources": {
+			"allStrategies": "Todas as Estratégias",
+			"allStrategiesDesc": "Métricas combinadas de todas as estratégias",
+			"allAccountsStrategies": "Todas as Contas + Todas as Estratégias",
+			"allAccountsStrategiesDesc": "Métricas universais em todas as contas",
+			"needMinTrades": "Necessário pelo menos 10 operações"
+		},
+		"allocation": {
+			"excellent": "Excelente robustez estatística",
+			"good": "Boa performance estatística",
+			"moderate": "Confiabilidade moderada",
+			"pause": "Pausar até melhorar"
+		},
 		"inputMode": {
 			"title": "Modo de Entrada",
 			"auto": "Auto-preencher dos Dados",
@@ -472,13 +506,23 @@
 		},
 		"errors": {
 			"failedToLoadStats": "Falha ao carregar estatísticas",
-			"failedToRunSimulation": "Falha ao executar simulação"
+			"failedToRunSimulation": "Falha ao executar simulação",
+			"universalRequiresAllAccounts": "Modo universal requer que 'mostrar todas as contas' esteja habilitado",
+			"noTradesForSource": "Nenhuma operação encontrada para {source}"
 		},
 		"runningSimulation": "Executando Simulação..."
 	},
 	"commandCenter": {
 		"title": "Central de Comando",
 		"description": "Prepare-se para o seu dia de operações",
+		"actionErrors": {
+			"noRiskProfile": "Nenhum perfil de risco vinculado",
+			"riskProfileNotFound": "Perfil de risco não encontrado"
+		},
+		"directionAbbr": {
+			"long": "C",
+			"short": "V"
+		},
 		"tabs": {
 			"commandCenter": "Centro de Comando",
 			"monitor": "Monitor",
@@ -729,6 +773,10 @@
 			"tab": "Plano",
 			"title": "Plano Mensal",
 			"description": "Configure seus parâmetros de risco mensais",
+			"actionErrors": {
+				"tooFarInFuture": "Não é possível criar um plano para um mês tão distante no futuro",
+				"noPreviousPlan": "Nenhum plano encontrado no mês anterior para transferir"
+			},
 			"noPlan": "Nenhum plano configurado para este mês",
 			"noPlanPrompt": "Crie um plano mensal para definir seus parâmetros de risco",
 			"createPlan": "Criar Plano",
@@ -1210,6 +1258,13 @@
 	"journal": {
 		"title": "Diário de Trades",
 		"description": "Registre e acompanhe seus trades",
+		"errors": {
+			"exitQuantityExceeds": "Quantidade de saída excede posição disponível. Restante: {qty}",
+			"alreadyScaledMode": "Operação já está em modo escalonado",
+			"notScaledMode": "Operação não está em modo escalonado",
+			"executionRequired": "Pelo menos uma execução é necessária",
+			"entryExecutionRequired": "Pelo menos uma execução de entrada é necessária"
+		},
 		"newEntry": "Nova Entrada",
 		"csvImport": "Importar CSV",
 		"singleEntry": "Entrada Individual",
@@ -1722,6 +1777,11 @@
 	"playbook": {
 		"title": "Playbook de Estratégias",
 		"description": "Gerencie suas estratégias e acompanhe a aderência",
+		"actionErrors": {
+			"strategyNotFound": "Estratégia não encontrada",
+			"syncFailed": "Falha ao sincronizar condições da estratégia",
+			"retrieveFailed": "Falha ao recuperar condições da estratégia"
+		},
 		"yourStrategies": "Suas Estratégias",
 		"newStrategy": "Nova Estratégia",
 		"addStrategy": "Adicionar Estratégia",
@@ -2181,6 +2241,9 @@
 		"riskProfiles": {
 			"title": "Perfis de Risco",
 			"description": "Gerencie perfis de gestao de risco para simulacoes Monte Carlo",
+			"errors": {
+				"notFound": "Perfil não encontrado"
+			},
 			"create": "Criar Perfil",
 			"edit": "Editar",
 			"deactivate": "Desativar",
@@ -2286,6 +2349,24 @@
 			"switchTo": "Mudar para {language}",
 			"pt": "PT",
 			"en": "EN"
+		},
+		"errors": {
+			"accountNameExists": "Uma conta com este nome já existe",
+			"accountNotFound": "Conta não encontrada",
+			"cannotDeleteDefault": "Não é possível excluir a conta padrão enquanto outras contas existirem",
+			"onlyReplayAccounts": "Apenas contas de replay podem avançar a data",
+			"replayNoStartDate": "Conta de replay não tem data de início",
+			"noAccountSelected": "Nenhuma conta selecionada",
+			"assetTypeNotFound": "Tipo de ativo não encontrado",
+			"cannotDeleteAssetType": "Não é possível excluir tipo de ativo com ativos existentes",
+			"invalidTheme": "Valor de tema inválido",
+			"invalidBrand": "Valor de marca inválido",
+			"cannotChangeOwnRole": "Não é possível alterar seu próprio papel"
+		},
+		"trading": {
+			"propFirms": {
+				"other": "Outro"
+			}
 		}
 	},
 	"monthly": {
@@ -2381,7 +2462,217 @@
 		"maxLength": "Máximo de {max} caracteres",
 		"positiveNumber": "Deve ser um número positivo",
 		"invalidDate": "Data inválida",
-		"exitAfterEntry": "Data de saída deve ser após a entrada"
+		"exitAfterEntry": "Data de saída deve ser após a entrada",
+		"auth": {
+			"nameMin": "Nome deve ter pelo menos 2 caracteres",
+			"nameMax": "Nome deve ter menos de 255 caracteres",
+			"invalidEmail": "Endereço de e-mail inválido",
+			"passwordMin": "Senha deve ter pelo menos 8 caracteres",
+			"passwordUppercase": "Senha deve conter pelo menos uma letra maiúscula",
+			"passwordLowercase": "Senha deve conter pelo menos uma letra minúscula",
+			"passwordNumber": "Senha deve conter pelo menos um número",
+			"passwordsDoNotMatch": "As senhas não coincidem",
+			"passwordRequired": "Senha é obrigatória",
+			"currentPasswordRequired": "Senha atual é obrigatória",
+			"codeLength": "Código deve ter 6 dígitos",
+			"codeNumeric": "Código deve ser numérico"
+		},
+		"trade": {
+			"assetRequired": "Ativo é obrigatório",
+			"assetMaxLength": "Ativo deve ter 20 caracteres ou menos",
+			"entryDateRequired": "Data de entrada é obrigatória",
+			"entryPriceRequired": "Preço de entrada é obrigatório",
+			"entryPricePositive": "Preço de entrada deve ser positivo",
+			"exitPricePositive": "Preço de saída deve ser positivo",
+			"positionSizeRequired": "Tamanho da posição é obrigatório",
+			"positionSizePositive": "Tamanho da posição deve ser positivo",
+			"stopLossPositive": "Stop loss deve ser positivo",
+			"takeProfitPositive": "Take profit deve ser positivo",
+			"riskAmountPositive": "Valor de risco deve ser positivo"
+		},
+		"asset": {
+			"codeMin": "Código deve ter pelo menos 2 caracteres",
+			"codeMax": "Código deve ter 50 caracteres ou menos",
+			"codeFormat": "Código deve conter apenas letras maiúsculas e underscores",
+			"nameMin": "Nome deve ter pelo menos 2 caracteres",
+			"nameMax": "Nome deve ter 100 caracteres ou menos",
+			"symbolRequired": "Símbolo é obrigatório",
+			"symbolMax": "Símbolo deve ter 20 caracteres ou menos",
+			"symbolFormat": "Símbolo deve conter apenas letras maiúsculas e números",
+			"invalidAssetTypeId": "ID do tipo de ativo inválido",
+			"tickSizePositive": "Tamanho do tick deve ser positivo",
+			"tickValuePositive": "Valor do tick deve ser positivo",
+			"currencyMin": "Moeda deve ter 3 caracteres",
+			"currencyMax": "Moeda deve ter 10 caracteres ou menos",
+			"multiplierPositive": "Multiplicador deve ser positivo",
+			"invalidAssetId": "ID do ativo inválido"
+		},
+		"execution": {
+			"invalidTradeId": "ID da operação deve ser um UUID válido",
+			"executionDateRequired": "Data da execução é obrigatória",
+			"priceRequired": "Preço é obrigatório",
+			"pricePositive": "Preço deve ser positivo",
+			"quantityRequired": "Quantidade é obrigatória",
+			"quantityPositive": "Quantidade deve ser positiva",
+			"notesMaxLength": "Notas devem ter 1000 caracteres ou menos"
+		},
+		"strategy": {
+			"codeMin": "Código da estratégia deve ter pelo menos 3 caracteres",
+			"codeMax": "Código da estratégia deve ter 10 caracteres ou menos",
+			"codeFormat": "Código deve conter apenas letras maiúsculas e números",
+			"nameRequired": "Nome da estratégia é obrigatório",
+			"nameMax": "Nome deve ter 100 caracteres ou menos",
+			"descriptionMax": "Descrição deve ter 2000 caracteres ou menos",
+			"entryCriteriaMax": "Critérios de entrada devem ter 5000 caracteres ou menos",
+			"exitCriteriaMax": "Critérios de saída devem ter 5000 caracteres ou menos",
+			"riskRulesMax": "Regras de risco devem ter 5000 caracteres ou menos",
+			"targetRPositive": "R alvo deve ser positivo",
+			"targetRMax": "R alvo deve ser 100 ou menos",
+			"maxRiskPositive": "Risco máximo % deve ser positivo",
+			"maxRiskMax": "Risco máximo % deve ser 100 ou menos",
+			"invalidUrl": "URL inválida",
+			"notesMax": "Notas devem ter 5000 caracteres ou menos"
+		},
+		"calculator": {
+			"assetRequired": "Ativo é obrigatório",
+			"entryPricePositive": "Preço de entrada deve ser positivo",
+			"stopPricePositive": "Preço do stop deve ser positivo",
+			"targetPricePositive": "Preço alvo deve ser positivo",
+			"contractsPositive": "Contratos deve ser positivo"
+		},
+		"commandCenter": {
+			"itemLabelRequired": "Descrição do item é obrigatória",
+			"itemLabelMax": "Descrição do item deve ter 200 caracteres ou menos",
+			"checklistNameRequired": "Nome do checklist é obrigatório",
+			"checklistNameMax": "Nome deve ter 100 caracteres ou menos",
+			"atLeastOneItem": "Pelo menos um item é necessário",
+			"maxItems": "Máximo de 50 itens permitidos",
+			"invalidChecklistId": "ID do checklist inválido",
+			"preMarketNotesMax": "Notas pré-mercado devem ter 10000 caracteres ou menos",
+			"postMarketNotesMax": "Notas pós-mercado devem ter 10000 caracteres ou menos",
+			"invalidAssetId": "ID do ativo inválido",
+			"maxDailyTradesInteger": "Máx. operações diárias deve ser número inteiro",
+			"maxDailyTradesPositive": "Máx. operações diárias deve ser positivo",
+			"maxDailyTradesMax": "Máx. operações diárias deve ser 1000 ou menos",
+			"maxPositionSizeInteger": "Tamanho máx. da posição deve ser número inteiro",
+			"maxPositionSizePositive": "Tamanho máx. da posição deve ser positivo",
+			"maxPositionSizeMax": "Tamanho máx. da posição deve ser 100000 ou menos",
+			"notesMax": "Notas devem ter 2000 caracteres ou menos"
+		},
+		"monteCarlo": {
+			"winRateMin": "Taxa de acerto deve ser pelo menos 1%",
+			"winRateMax": "Taxa de acerto não pode exceder 99%",
+			"rewardRiskMin": "Relação risco/retorno deve ser pelo menos 0.1",
+			"rewardRiskMax": "Relação risco/retorno não pode exceder 20",
+			"tradesMin": "Mínimo de 10 operações por simulação",
+			"tradesMax": "Máximo de 10.000 operações por simulação",
+			"commissionMin": "Comissão não pode ser negativa",
+			"commissionMax": "Comissão não pode exceder 50% do risco",
+			"simulationsMin": "Mínimo de 100 simulações",
+			"simulationsMax": "Máximo de 50.000 simulações",
+			"invalidStrategyId": "ID da estratégia inválido"
+		},
+		"monthlyPlan": {
+			"accountBalanceCents": "Saldo da conta deve estar em centavos",
+			"accountBalancePositive": "Saldo da conta deve ser positivo",
+			"accountBalanceMax": "Saldo da conta muito alto",
+			"riskPerTradePositive": "Risco por operação deve ser positivo",
+			"riskPerTradeMax": "Risco por operação não pode exceder 100%",
+			"dailyLossPositive": "Limite de perda diária deve ser positivo",
+			"dailyLossMax": "Limite de perda diária não pode exceder 100%",
+			"monthlyLossPositive": "Limite de perda mensal deve ser positivo",
+			"monthlyLossMax": "Limite de perda mensal não pode exceder 100%",
+			"profitTargetPositive": "Meta de lucro deve ser positiva",
+			"profitTargetMax": "Meta de lucro muito alta",
+			"maxDailyTradesInteger": "Máx. operações diárias deve ser número inteiro",
+			"maxDailyTradesPositive": "Máx. operações diárias deve ser positivo",
+			"maxDailyTradesMax": "Máx. operações diárias deve ser 1000 ou menos",
+			"maxConsecutiveLossesInteger": "Máx. perdas consecutivas deve ser número inteiro",
+			"maxConsecutiveLossesPositive": "Máx. perdas consecutivas deve ser positivo",
+			"maxConsecutiveLossesMax": "Máx. perdas consecutivas deve ser 100 ou menos",
+			"riskReductionPositive": "Fator de redução de risco deve ser positivo",
+			"riskReductionMax": "Fator de redução deve ser <= 1 (ex: 0.50)",
+			"profitReinvestmentPositive": "Reinvestimento de lucro deve ser positivo",
+			"profitReinvestmentMax": "Reinvestimento de lucro não pode exceder 100%",
+			"notesMax": "Notas devem ter 5000 caracteres ou menos",
+			"invalidRiskProfileId": "ID do perfil de risco inválido",
+			"weeklyLossPositive": "Limite de perda semanal deve ser positivo",
+			"weeklyLossMax": "Limite de perda semanal não pode exceder 100%",
+			"mutuallyExclusive": "increaseRiskAfterWin e capRiskAfterWin são mutuamente exclusivos",
+			"rolloverBalanceCents": "Saldo deve estar em centavos",
+			"rolloverBalancePositive": "Saldo deve ser positivo",
+			"rolloverBalanceMax": "Saldo muito alto"
+		},
+		"passwordRecovery": {
+			"invalidEmail": "Endereço de e-mail inválido",
+			"codeLength": "Código deve ter exatamente 6 dígitos",
+			"codeDigitsOnly": "Código deve conter apenas dígitos",
+			"passwordMin": "Senha deve ter pelo menos 8 caracteres",
+			"passwordUppercase": "Senha deve conter pelo menos uma letra maiúscula",
+			"passwordLowercase": "Senha deve conter pelo menos uma letra minúscula",
+			"passwordNumber": "Senha deve conter pelo menos um número"
+		},
+		"riskProfile": {
+			"nameRequired": "Nome é obrigatório",
+			"nameMax": "Nome muito longo",
+			"descriptionMax": "Descrição muito longa",
+			"baseRiskPositive": "Risco base deve ser positivo",
+			"dailyLossPositive": "Limite de perda diária deve ser positivo",
+			"weeklyLossPositive": "Limite de perda semanal deve ser positivo",
+			"monthlyLossPositive": "Limite de perda mensal deve ser positivo",
+			"dailyProfitTargetPositive": "Meta de lucro diário deve ser positiva",
+			"maxRecoverySteps": "Máximo de 10 passos de recuperação",
+			"maxGainSteps": "Máximo de 10 passos de ganho"
+		},
+		"riskSimulation": {
+			"accountBalancePositive": "Saldo da conta deve ser positivo",
+			"dateFormat": "Data deve ser YYYY-MM-DD"
+		},
+		"scenario": {
+			"invalidStrategyId": "ID da estratégia inválido",
+			"nameRequired": "Nome é obrigatório",
+			"nameMax": "Nome deve ter 200 caracteres ou menos",
+			"descriptionMax": "Descrição deve ter 2000 caracteres ou menos"
+		},
+		"settings": {
+			"profitShareMin": "Participação nos lucros deve ser pelo menos 0%",
+			"profitShareMax": "Participação nos lucros não pode exceder 100%",
+			"taxRateMin": "Taxa de imposto deve ser pelo menos 0%",
+			"taxRateMax": "Taxa de imposto não pode exceder 100%",
+			"thresholdMin": "Limite deve ser pelo menos 0",
+			"currencyLength": "Código da moeda deve ter 3 caracteres"
+		},
+		"timeframe": {
+			"codeRequired": "Código é obrigatório",
+			"codeMax": "Código deve ter 20 caracteres ou menos",
+			"codeFormat": "Código deve conter apenas letras maiúsculas, números e underscores",
+			"nameMin": "Nome deve ter pelo menos 2 caracteres",
+			"nameMax": "Nome deve ter 50 caracteres ou menos",
+			"valueRequired": "Valor é obrigatório",
+			"valueInteger": "Valor deve ser um número inteiro",
+			"valuePositive": "Valor deve ser positivo",
+			"sortOrderInteger": "Ordem deve ser um número inteiro",
+			"sortOrderMin": "Ordem não pode ser negativa",
+			"invalidTimeframeId": "ID do timeframe inválido"
+		},
+		"tradingCondition": {
+			"nameRequired": "Nome é obrigatório",
+			"nameMax": "Nome deve ter 100 caracteres ou menos",
+			"descriptionMax": "Descrição deve ter 500 caracteres ou menos"
+		},
+		"userManagement": {
+			"invalidUserId": "ID do usuário inválido",
+			"roleRequired": "Papel deve ser admin, trader ou viewer"
+		},
+		"upload": {
+			"invalidFileType": "Tipo de arquivo inválido. Aceitos: image/jpeg, image/png, image/webp",
+			"fileTooLarge": "Arquivo muito grande. Tamanho máximo: 5MB"
+		},
+		"tags": {
+			"nameRequired": "Nome é obrigatório",
+			"nameMaxLength": "Nome deve ter 50 caracteres ou menos",
+			"invalidColor": "Cor deve ser um hexadecimal válido"
+		}
 	},
 	"tooltips": {
 		"winRate": "Porcentagem de trades vencedores em relação ao total",
@@ -2498,8 +2789,23 @@
 			"subtitle": "Escolha qual conta de trading usar",
 			"continue": "Continuar",
 			"profitShare": "{percentage}% de participação",
-			"backToLogin": "Voltar ao login"
+			"backToLogin": "Voltar ao login",
+			"signInAgain": "Para selecionar sua conta de trading, faça login novamente.",
+			"backToLoginButton": "Voltar para Login"
 		},
+		"errors": {
+			"emailExists": "Uma conta com este e-mail já existe",
+			"registrationFailed": "Ocorreu um erro durante o registro",
+			"rateLimited": "Muitas tentativas de login. Tente novamente em {minutes} minuto(s).",
+			"accountLocked": "Conta temporariamente bloqueada devido a muitas tentativas. Tente novamente em {minutes} minuto(s).",
+			"invalidCredentials": "E-mail ou senha inválidos",
+			"notAuthenticated": "Não autenticado",
+			"accountNotFound": "Conta não encontrada",
+			"userNotFound": "Usuário não encontrado",
+			"incorrectPassword": "Senha atual incorreta",
+			"loginFailed": "Ocorreu um erro durante o login"
+		},
+		"defaultAccountName": "Pessoal",
 		"accountSwitcher": {
 			"accounts": "Suas Contas",
 			"currentAccount": "Conta Atual",
@@ -2553,13 +2859,36 @@
 			"expired": "Código expirado. Solicite um novo.",
 			"success": "Email Verificado!",
 			"successMessage": "Seu email foi verificado. Redirecionando para o login...",
-			"backToLogin": "Voltar ao login"
+			"backToLogin": "Voltar ao login",
+			"errors": {
+				"rateLimited": "Muitas requisições. Tente novamente em {minutes} minuto(s).",
+				"invalidInput": "Entrada inválida"
+			}
 		}
 	},
 	"riskSimulation": {
 		"title": "Simulador de Risco",
 		"subtitle": "Simule a aplicação de regras de gerenciamento de risco nas suas operações históricas",
 		"runSimulation": "Executar Simulação",
+		"errors": {
+			"noClosedTrades": "Nenhuma operação fechada encontrada no intervalo selecionado",
+			"noValidTrades": "Nenhuma operação válida para simular"
+		},
+		"reasons": {
+			"baseRisk": "Risco base",
+			"t1BaseRisk": "Risco base T1",
+			"recoveryExhausted": "Sequência de recuperação esgotada",
+			"postRecoveryBase": "Risco base pós-recuperação",
+			"singleTarget": "Alvo único atingido",
+			"baseRiskNoGains": "Risco base (sem ganhos para reinvestir)",
+			"gainExhausted": "Sequência de ganho esgotada",
+			"reducedLoss": "Reduzido (perda #{count}, x{factor})",
+			"winBonus": "Bônus de ganho (+{percent}% do último ganho)",
+			"gainReinvest": "Reinvestimento de ganho ({percent}% dos ganhos do dia)",
+			"recoveryStep": "Recuperação #{step}",
+			"gainStep": "Ganho #{step}",
+			"gainRepeat": "Repetição de ganho"
+		},
 		"tradeBreakdown": "Detalhamento das Operações",
 		"viewDecisionTrace": "Ver Rastreio de Decisões",
 		"config": {
@@ -2696,6 +3025,11 @@
 		"subtitle": "Informe seu email e enviaremos um código de recuperação",
 		"emailLabel": "Email",
 		"sendCode": "Enviar Código",
+		"errors": {
+			"invalidInput": "Entrada inválida",
+			"rateLimited": "Muitas tentativas. Tente novamente em {minutes} minuto(s).",
+			"invalidCode": "Código inválido ou expirado"
+		},
 		"codeTitle": "Digite o Código de Verificação",
 		"codeSentTo": "Enviamos um código de 6 dígitos para {email}",
 		"codeLabel": "Código de verificação",
@@ -2760,7 +3094,30 @@
 			"failedToParse": "Falha ao analisar CSV",
 			"missingImportId": "ID de importação ausente",
 			"failedToImport": "Falha ao importar trades",
-			"unknownError": "Erro desconhecido"
+			"unknownError": "Erro desconhecido",
+			"rateLimited": "Importação em cooldown. Tente novamente em {minutes} minuto(s).",
+			"invalidFormat": "Formato CSV inválido",
+			"parseFailed": "Falha ao analisar CSV",
+			"previewExpired": "Pré-visualização de importação não encontrada ou expirada",
+			"accountMismatch": "Conta não corresponde"
+		},
+		"success": {
+			"imported": "{count} operações importadas com sucesso de {broker}"
+		}
+	},
+	"notaImport": {
+		"errors": {
+			"uploadPdf": "Por favor, envie um arquivo PDF",
+			"onlyPdf": "Apenas arquivos PDF são aceitos",
+			"fileTooLarge": "PDF deve ter menos de 10MB",
+			"noFills": "Nenhum preenchimento de operação foi fornecido",
+			"noMatches": "Nenhuma correspondência confirmada fornecida",
+			"duplicateImport": "Esta nota já foi importada"
+		}
+	},
+	"upload": {
+		"errors": {
+			"uploadFailed": "Falha ao enviar {filename}"
 		}
 	},
 	"errors": {
@@ -2775,6 +3132,65 @@
 			"reference": "Referência: {digest}",
 			"tryAgain": "Tentar Novamente",
 			"reloadPage": "Recarregar Página"
+		},
+		"globalBoundary": {
+			"title": "Algo deu errado!",
+			"description": "Ocorreu um erro crítico. Por favor, tente novamente ou recarregue a página.",
+			"reference": "Referência: {digest}",
+			"tryAgain": "Tentar Novamente",
+			"tryAgainAria": "Tentar novamente"
 		}
+	},
+	"email": {
+		"brandName": "BRAVO JOURNAL",
+		"footer": "Bravo Journal — Seu companheiro de trading",
+		"passwordReset": {
+			"subject": "Código de Redefinição de Senha",
+			"title": "Redefinição de Senha",
+			"heading": "Redefinição de Senha",
+			"body": "Use o código abaixo para redefinir sua senha. Este código expira em {minutes} minutos.",
+			"disclaimer": "Se você não solicitou isso, pode ignorar este e-mail com segurança. Sua senha permanecerá inalterada."
+		},
+		"verification": {
+			"subject": "Verifique Seu E-mail - Bravo Journal",
+			"title": "Verificação de E-mail",
+			"heading": "Verifique Seu E-mail",
+			"body": "Use o código abaixo para verificar seu endereço de e-mail. Este código expira em {minutes} minutos.",
+			"disclaimer": "Se você não criou uma conta, pode ignorar este e-mail com segurança."
+		}
+	},
+	"days": {
+		"sunday": "Domingo",
+		"monday": "Segunda",
+		"tuesday": "Terça",
+		"wednesday": "Quarta",
+		"thursday": "Quinta",
+		"friday": "Sexta",
+		"saturday": "Sábado"
+	},
+	"sessions": {
+		"preOpen": "Pré-Abertura",
+		"morning": "Manhã",
+		"afternoon": "Tarde",
+		"close": "Fechamento"
+	},
+	"charts": {
+		"tradeNumber": "Operação #{number}",
+		"dayNumber": "Dia #{number}",
+		"maxDrawdown": "Máx: -{value}R",
+		"performance": "Desempenho",
+		"skipped": "Pulado",
+		"target": "(Alvo)"
+	},
+	"api": {
+		"errors": {
+			"unauthorized": "Não autorizado",
+			"tooManyRequests": "Muitas requisições",
+			"missingFields": "Campos obrigatórios ausentes",
+			"invalidParams": "Parâmetros inválidos"
+		}
+	},
+	"formatting": {
+		"justNow": "agora mesmo"
 	}
 }
