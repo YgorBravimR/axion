@@ -69,7 +69,7 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 	const tTooltips = useTranslations("monteCarlo.tooltips")
 
 	return (
-		<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+		<div id="monte-carlo-metrics" className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 			{/* Edge Summary */}
 			<MetricCard title={t("edgeSummary")}>
 				<MetricRow

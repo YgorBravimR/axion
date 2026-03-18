@@ -74,7 +74,7 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 		recommendedKellyConfig[kellyLevel]
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div id="monte-carlo-kelly" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="mb-m-400 flex items-start justify-between">
 				<div>
 					<div className="gap-s-200 flex items-center">

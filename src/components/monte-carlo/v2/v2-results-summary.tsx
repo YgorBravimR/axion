@@ -24,7 +24,7 @@ const V2ResultsSummary = ({ params, onRunAgain }: V2ResultsSummaryProps) => {
 			: null
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-500 gap-x-s-300 sm:gap-x-m-500 gap-y-s-200 sm:gap-y-s-300 flex flex-wrap items-center justify-between rounded-lg border">
+		<div id="monte-carlo-v2-summary" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-500 gap-x-s-300 sm:gap-x-m-500 gap-y-s-200 sm:gap-y-s-300 flex flex-wrap items-center justify-between rounded-lg border">
 			<div className="min-w-0 gap-s-200 flex items-center">
 				<span className="text-txt-300 text-small">{t("profileName")}:</span>
 				<span className="text-acc-100 font-medium">

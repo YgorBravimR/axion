@@ -122,7 +122,7 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 	const riskKey = riskTranslationKeys[insights.riskAssessment as RiskKey]
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div id="monte-carlo-strategy" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<h3 className="mb-m-400 sm:mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
 				{t("title")}
 			</h3>

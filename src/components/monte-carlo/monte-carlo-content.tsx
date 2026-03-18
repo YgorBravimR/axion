@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
-import { Dices, HelpCircle } from "lucide-react"
+import { Dices } from "lucide-react"
 import { LoadingSpinner } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +12,8 @@ import {
 	TabsTrigger,
 	AnimatedTabsContent,
 } from "@/components/ui/tabs"
+import { useRegisterPageGuide } from "@/components/ui/page-guide"
+import { monteCarloGuide } from "@/components/ui/page-guide/guide-configs/monte-carlo"
 import { InputModeSelector } from "./input-mode-selector"
 import { DataSourceSelector } from "./data-source-selector"
 import { StatsPreview } from "./stats-preview"
@@ -140,30 +142,21 @@ export const MonteCarloContent = ({
 
 	const tV2 = useTranslations("monteCarlo.v2")
 
+	useRegisterPageGuide(monteCarloGuide)
+
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-body sm:text-h3 text-txt-100 font-bold">
-						{t("title")}
-					</h1>
-					<p className="mt-s-100 text-small text-txt-300">{t("subtitle")}</p>
-				</div>
-				<Button
-					id="monte-carlo-help"
-					variant="ghost"
-					size="sm"
-					className="text-txt-300"
-				>
-					<HelpCircle className="mr-s-100 h-4 w-4" />
-					{t("help")}
-				</Button>
+			<div>
+				<h1 className="text-body sm:text-h3 text-txt-100 font-bold">
+					{t("title")}
+				</h1>
+				<p className="mt-s-100 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
 			{/* Mode Tabs: Edge Expectancy | Capital Expectancy */}
 			<Tabs defaultValue="edgeExpectancy">
-				<TabsList variant="line" className="mb-m-400 sm:mb-m-500">
+				<TabsList id="monte-carlo-tabs" variant="line" className="mb-m-400 sm:mb-m-500">
 					<TabsTrigger value="edgeExpectancy">
 						{tV2("tabEdgeExpectancy")}
 					</TabsTrigger>
