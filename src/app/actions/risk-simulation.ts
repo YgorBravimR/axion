@@ -9,7 +9,7 @@ import type {
 	SimulationPreview,
 	TradeForSimulation,
 } from "@/types/risk-simulation"
-import { eq, and, gte, lte, asc, isNotNull } from "drizzle-orm"
+import { eq, and, gte, lte, asc, isNotNull, sql } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getAssetBySymbol } from "@/app/actions/assets"
@@ -279,4 +279,43 @@ const runRiskSimulationFromDb = async (
 	}
 }
 
-export { getSimulationPreview, runRiskSimulationFromDb }
+// ==========================================
+// TRADE YEARS (for quick date filters)
+// ==========================================
+
+/**
+ * Returns sorted list of distinct years that have closed trades.
+ */
+const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
+	try {
+		const { accountId } = await requireAuth()
+
+		const rows = await db
+			.selectDistinct({
+				year: sql<number>`extract(year from ${trades.entryDate})::int`,
+			})
+			.from(trades)
+			.where(
+				and(
+					eq(trades.accountId, accountId),
+					eq(trades.isArchived, false),
+					isNotNull(trades.exitPrice)
+				)
+			)
+			.orderBy(sql`1 desc`)
+
+		return {
+			status: "success",
+			message: "Trade years retrieved",
+			data: rows.map((r) => r.year),
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: "Failed to get trade years",
+			errors: [{ code: "YEARS_FAILED", detail: toSafeErrorMessage(error, "getTradeYears") }],
+		}
+	}
+}
+
+export { getSimulationPreview, runRiskSimulationFromDb, getTradeYears }

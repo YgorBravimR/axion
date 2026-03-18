@@ -231,7 +231,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 
 	if (params.mode === "advanced") {
 		return (
-			<div className="space-y-s-300">
+			<div id="sim-risk-params" className="space-y-s-300">
 				<h3 className="text-small text-txt-100 font-semibold">
 					{t("advancedMode")}
 				</h3>
@@ -296,7 +296,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 	}
 
 	return (
-		<div className="space-y-s-300">
+		<div id="sim-risk-params" className="space-y-s-300">
 			<h3 className="text-small text-txt-100 font-semibold">
 				{t("simpleMode")}
 			</h3>
@@ -400,27 +400,32 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 				/>
 			</div>
 			{params.reduceRiskAfterLoss && (
-				<Field
-					label={t("riskReductionFactor")}
-					value={params.riskReductionFactor}
-					onChange={(val) =>
-						updateSimple({ riskReductionFactor: parseFloat(val || "0.5") })
-					}
-					locked={isLocked}
-				/>
+				<div id="sim-reduction-factor">
+					<Field
+						label={t("riskReductionFactor")}
+						value={params.riskReductionFactor}
+						onChange={(val) =>
+							updateSimple({ riskReductionFactor: parseFloat(val || "50") })
+						}
+						suffix="%"
+						locked={isLocked}
+					/>
+				</div>
 			)}
 			{params.increaseRiskAfterWin && (
-				<Field
-					label={t("profitReinvestmentPercent")}
-					value={params.profitReinvestmentPercent ?? ""}
-					onChange={(val) =>
-						updateSimple({
-							profitReinvestmentPercent: val ? parseFloat(val) : null,
-						})
-					}
-					suffix="%"
-					locked={isLocked}
-				/>
+				<div id="sim-reinvestment-percent">
+					<Field
+						label={t("profitReinvestmentPercent")}
+						value={params.profitReinvestmentPercent ?? ""}
+						onChange={(val) =>
+							updateSimple({
+								profitReinvestmentPercent: val ? parseFloat(val) : null,
+							})
+						}
+						suffix="%"
+						locked={isLocked}
+					/>
+				</div>
 			)}
 		</div>
 	)

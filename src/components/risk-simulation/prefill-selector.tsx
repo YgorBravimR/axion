@@ -37,8 +37,8 @@ const PrefillSelector = ({
 			? parseFloat(monthlyPlan.weeklyLossPercent)
 			: null
 		const reductionFactor = monthlyPlan.riskReductionFactor
-			? parseFloat(monthlyPlan.riskReductionFactor)
-			: 0.5
+			? parseFloat(monthlyPlan.riskReductionFactor) * 100
+			: 50
 		const reinvestPercent = monthlyPlan.profitReinvestmentPercent
 			? parseFloat(monthlyPlan.profitReinvestmentPercent)
 			: null
@@ -92,7 +92,7 @@ const PrefillSelector = ({
 				maxConsecutiveLosses: null,
 				consecutiveLossScope: "daily",
 				reduceRiskAfterLoss: false,
-				riskReductionFactor: 0.5,
+				riskReductionFactor: 50,
 				increaseRiskAfterWin: false,
 				profitReinvestmentPercent: null,
 				monthlyLossPercent: 10,
@@ -110,7 +110,7 @@ const PrefillSelector = ({
 		"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
 
 	return (
-		<div>
+		<div id="sim-prefill-selector">
 			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 				{t("prefillFrom")}
 			</h3>

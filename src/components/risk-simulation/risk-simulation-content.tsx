@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { FlaskConical } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRegisterPageGuide } from "@/components/ui/page-guide"
+import { riskSimulationGuide } from "@/components/ui/page-guide/guide-configs/risk-simulation"
 import { SimulationConfigPanel } from "./simulation-config-panel"
 import { SummaryCards } from "./summary-cards"
 import { EquityCurveOverlay } from "./equity-curve-overlay"
@@ -28,15 +30,21 @@ import type {
 interface RiskSimulationContentProps {
 	monthlyPlan: MonthlyPlan | null
 	riskProfiles: RiskManagementProfile[]
+	tradeYears: number[]
 }
 
 const RiskSimulationContent = ({
 	monthlyPlan,
 	riskProfiles,
+	tradeYears,
 }: RiskSimulationContentProps) => {
 	const t = useTranslations("riskSimulation")
+	const tCommon = useTranslations("common")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
+
+	// Register page guide so the header trigger appears
+	useRegisterPageGuide(riskSimulationGuide)
 
 	// Config state — default to last 30 days
 	const [dateFrom, setDateFrom] = useState(() => {
@@ -141,6 +149,7 @@ const RiskSimulationContent = ({
 				dateFrom={dateFrom}
 				dateTo={dateTo}
 				onDateChange={handleDateChange}
+				tradeYears={tradeYears}
 				params={params}
 				onParamsChange={setParams}
 				preview={preview}
@@ -168,7 +177,9 @@ const RiskSimulationContent = ({
 					{t("runSimulation")}
 				</Button>
 				{error && (
-					<p className="text-small text-fb-error">{error}</p>
+					<p className="text-small text-fb-error">
+						{error === "common.unexpectedError" ? tCommon("unexpectedError") : error}
+					</p>
 				)}
 			</div>
 

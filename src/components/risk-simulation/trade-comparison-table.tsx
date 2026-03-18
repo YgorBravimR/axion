@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { translateRiskReason } from "@/lib/risk-reason-i18n"
 import type { SimulatedTrade, SimulatedTradeStatus } from "@/types/risk-simulation"
 
 interface TradeComparisonTableProps {
@@ -28,6 +29,7 @@ const statusDotColors: Record<SimulatedTradeStatus, string> = {
 
 const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 	const t = useTranslations("riskSimulation.table")
+	const tReasons = useTranslations("riskSimulation")
 	const [page, setPage] = useState(0)
 
 	const totalPages = Math.ceil(trades.length / PAGE_SIZE)
@@ -162,8 +164,8 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 									<td className="text-tiny text-txt-200 hidden whitespace-nowrap px-3 py-2 text-right lg:table-cell">
 										{formatR(trade.simulatedRMultiple)}
 									</td>
-									<td className="text-tiny text-txt-300 hidden max-w-[200px] truncate px-3 py-2 lg:table-cell">
-										{trade.riskReason}
+									<td className="text-tiny text-txt-300 hidden max-w-50 truncate px-3 py-2 lg:table-cell">
+										{translateRiskReason(tReasons, trade.riskReason)}
 									</td>
 								</tr>
 							)

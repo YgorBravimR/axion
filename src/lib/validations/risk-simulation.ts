@@ -15,7 +15,7 @@ const simpleSimulationParamsSchema = z.object({
 	maxConsecutiveLosses: z.number().int().min(1).max(50).nullable(),
 	consecutiveLossScope: z.enum(["global", "daily"]),
 	reduceRiskAfterLoss: z.boolean(),
-	riskReductionFactor: z.number().min(0.01).max(1).default(0.5),
+	riskReductionFactor: z.number().min(1).max(100).default(50).transform((v) => v / 100),
 	increaseRiskAfterWin: z.boolean(),
 	profitReinvestmentPercent: z.number().min(0).max(100).nullable(),
 	monthlyLossPercent: z.number().min(0.01).max(100).nullable(),

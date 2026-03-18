@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import { ArrowRight, StopCircle } from "lucide-react"
+import { translateRiskReason } from "@/lib/risk-reason-i18n"
 import type { DayTrace, SimulatedTrade } from "@/types/risk-simulation"
 
 interface DayTraceCardProps {
@@ -32,6 +33,7 @@ interface TradeFlowItemProps {
 
 const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 	const t = useTranslations("riskSimulation.trace")
+	const tReasons = useTranslations("riskSimulation")
 	const isSkipped = trade.status !== "executed"
 
 	const outcomeBadge = () => {
@@ -96,7 +98,7 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 					{outcomeBadge()}
 				</div>
 				<p className="text-tiny text-txt-300 mt-0.5">
-					{trade.riskReason}
+					{translateRiskReason(tReasons, trade.riskReason)}
 				</p>
 			</div>
 		</div>
