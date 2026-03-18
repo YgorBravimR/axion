@@ -35,6 +35,7 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 	const tags = trade.tradeTags?.map((tt) => tt.tag) || []
 	const setupTags = tags.filter((tag) => tag.type === "setup")
 	const mistakeTags = tags.filter((tag) => tag.type === "mistake")
+	const generalTags = tags.filter((tag) => tag.type === "general")
 
 	return (
 		<Link href={`/journal/${trade.id}`}>
@@ -113,7 +114,7 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 				</div>
 
 				{/* Tags */}
-				{(setupTags.length > 0 || mistakeTags.length > 0) && (
+				{(setupTags.length > 0 || mistakeTags.length > 0 || generalTags.length > 0) && (
 					<div className="mt-m-400 gap-s-200 flex flex-wrap">
 						{setupTags.map((tag) => (
 							<Badge
@@ -131,6 +132,16 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 								key={tag.id}
 								variant="secondary"
 								className="bg-warning/10 text-tiny text-warning"
+							>
+								{tag.name}
+							</Badge>
+						))}
+						{generalTags.map((tag) => (
+							<Badge
+								id={`badge-general-${tag.id}`}
+								key={tag.id}
+								variant="secondary"
+								className="bg-acc-100/10 text-tiny text-acc-100"
 							>
 								{tag.name}
 							</Badge>

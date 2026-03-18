@@ -103,6 +103,7 @@ export const CsvTradeCard = ({
 
 	const setupTags = tags.filter((t) => t.type === "setup")
 	const mistakeTags = tags.filter((t) => t.type === "mistake")
+	const generalTags = tags.filter((t) => t.type === "general")
 
 	const handleTagToggle = (tagId: string) => {
 		const currentTags = trade.edits.tagIds || []
@@ -706,7 +707,41 @@ export const CsvTradeCard = ({
 								</div>
 							)}
 
-							{setupTags.length === 0 && mistakeTags.length === 0 && (
+							{/* General Tags */}
+						{generalTags.length > 0 && (
+							<div>
+								<Label
+									id="label-csv-general-tags"
+									className="text-tiny text-txt-300"
+								>
+									{t("generalTags")}
+								</Label>
+								<div className="mt-s-200 gap-s-200 flex flex-wrap">
+									{generalTags.map((tag) => (
+										<button
+											key={tag.id}
+											type="button"
+											onClick={() => handleTagToggle(tag.id)}
+											className={cn(
+												"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
+												trade.edits.tagIds?.includes(tag.id)
+													? "bg-acc-100 text-bg-100"
+													: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+											)}
+											style={
+												trade.edits.tagIds?.includes(tag.id) && tag.color
+													? { backgroundColor: tag.color }
+													: undefined
+											}
+										>
+											{tag.name}
+										</button>
+									))}
+								</div>
+							</div>
+						)}
+
+						{setupTags.length === 0 && mistakeTags.length === 0 && generalTags.length === 0 && (
 								<p className="text-small text-txt-300">
 									{t("noTagsConfigured")}
 								</p>

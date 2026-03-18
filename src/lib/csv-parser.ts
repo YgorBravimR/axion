@@ -773,12 +773,12 @@ const parseStandardContent = (
 			}
 		}
 
-		// Extract tag names if column exists (comma-separated)
+		// Extract tag names if column exists (comma or pipe-separated)
 		if (tagColumnIndex !== null) {
 			const tagValue = values[tagColumnIndex]?.trim()
 			if (tagValue) {
 				trade.tagNames = tagValue
-					.split(",")
+					.split(/[,|]/)
 					.map((t) => t.trim())
 					.filter(Boolean)
 			}
