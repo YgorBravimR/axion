@@ -23,3 +23,9 @@
 > **[FIX-2026-03-07]** `Severity: Medium` — **Affected:** `src/components/risk-simulation/risk-params-form.tsx`
 > **Report:** "When typing any number in the 'Saldo da Conta' input field, the cursor drags to the end of ',00', blocking the user from typing"
 > **Fix:** Replaced all currency `Field` usages with a new `CurrencyField` component that maintains local string state while focused and only formats on blur. See `~/.claude/post-mortems/react.md` for the general pattern (controlled input cursor jump on reformat).
+
+---
+
+> **[FIX-2026-03-18]** `Severity: Medium` — **Affected:** `src/components/reports/weekly-report-card.tsx`, `src/components/reports/monthly-report-card.tsx`, `src/components/reports/mistake-cost-card.tsx`
+> **Report:** "Reports page components display monetary values without currency formatting — raw numbers like +428.34 instead of R$ 428,34 or $428.34"
+> **Fix:** Replaced all `.toFixed(2)` calls on monetary values (netPnl, grossPnl, totalFees, avgWin, avgLoss, bestTrade, worstTrade, daily/weekly/asset pnl, trade pnl, mistake costs) with `formatCurrencyWithSign()` for P&L values and `formatCurrency()` for absolute values, using the `useFormatting` hook. Removed manual `+`/`-` prefixes since `formatCurrencyWithSign` handles sign display. Left non-monetary `.toFixed()` calls (win rate, profit factor, R-multiples) unchanged.

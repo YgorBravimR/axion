@@ -127,7 +127,9 @@
       "Bash(sed -i '' 's/<Building2 className=\"h-5 w-5\" \\\\/>/<Building2 className=\"h-5 w-5\" aria-hidden=\"true\" \\\\/>/g' src/components/auth/login-form.tsx && sed -i '' 's/<User className=\"h-5 w-5\" \\\\/>/<User className=\"h-5 w-5\" aria-hidden=\"true\" \\\\/>/g' src/components/auth/login-form.tsx)",
       "Bash(rg -n --glob '*.tsx' --glob '*.ts' --glob '!src/__tests__/**' --glob '!node_modules/**' --glob '!messages/**' --glob '!*.test.*' --glob '!*.spec.*' --glob '!*.d.ts' '>\\\\s*[A-Z][a-zA-Z ]{2,}[^<{]*</' src/ 2>/dev/null | head -100)",
       "Bash(rg -n --glob '*.tsx' --glob '*.ts' --glob '!src/__tests__/**' --glob '!node_modules/**' --glob '!*.test.*' 'throw new Error' src/ 2>/dev/null | head -50)",
-      "Bash(rg -n --glob '*.tsx' --glob '!src/__tests__/**' --glob '!node_modules/**' 'placeholder=\"[A-Za-z]' src/ 2>/dev/null | head -50)"
+      "Bash(rg -n --glob '*.tsx' --glob '!src/__tests__/**' --glob '!node_modules/**' 'placeholder=\"[A-Za-z]' src/ 2>/dev/null | head -50)",
+      "Bash(cat /Users/ygorbravim/personal/projects/profitJournal/src/app/\\\\[locale\\\\]/\\\\\\(app\\\\\\)/layout.tsx)",
+      "Bash(ls \"src/app/[locale]/\\(app\\)/analytics/account-comparison/\")"
     ],
     "deny": [],
     "ask": []
