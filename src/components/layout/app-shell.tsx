@@ -9,6 +9,7 @@ import { CommandMenu } from "@/components/layout/command-menu"
 import { PageBreadcrumb } from "@/components/layout/page-breadcrumb"
 import { UserMenu } from "@/components/layout/user-menu"
 import { ThemeSynchronizer } from "@/components/providers/theme-synchronizer"
+import { PageGuideProvider, PageGuideTrigger } from "@/components/ui/page-guide"
 import {
 	Sheet,
 	SheetContent,
@@ -69,7 +70,7 @@ const AppShell = ({
 	}, [])
 
 	return (
-		<>
+		<PageGuideProvider>
 			<ThemeSynchronizer />
 			<CommandMenu />
 
@@ -153,6 +154,10 @@ const AppShell = ({
 						<div className="border-bg-300 bg-bg-200 gap-m-400 flex h-12 shrink-0 items-center border-b px-4 lg:px-6">
 							<PageBreadcrumb />
 							<div className="flex-1" />
+							{/* Fixed-width slot so search bar position is stable */}
+							<div className="flex w-8 shrink-0 items-center justify-center">
+								<PageGuideTrigger />
+							</div>
 							{/* Search trigger — opens CommandMenu via Cmd+K */}
 							<button
 								type="button"
@@ -180,7 +185,7 @@ const AppShell = ({
 					</div>
 				</>
 			)}
-		</>
+		</PageGuideProvider>
 	)
 }
 

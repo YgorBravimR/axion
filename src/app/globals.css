@@ -32,6 +32,9 @@
   --color-action-buy-muted: rgb(100 180 255 / 0.2);
   --color-action-sell-muted: rgb(255 140 100 / 0.2);
 
+  /* Page Guide — distinctive violet that pops across all themes */
+  --color-guide: rgb(168 130 255);
+
   /* Brand Colors */
   --color-brand-400: rgb(224 182 92);
   --color-brand-500: rgb(204 162 72);
@@ -129,6 +132,7 @@
 
 /* Light Theme Overrides */
 [data-theme="light"] {
+  --color-guide: rgb(120 80 220);
   --color-bg-100: rgb(250 250 249);
   --color-bg-200: rgb(245 245 244);
   --color-bg-300: rgb(231 229 228);
@@ -156,7 +160,7 @@
   /* Brand Colors - Light mode */
   --color-brand-400: rgb(255 214 122);
   --color-brand-500: rgb(245 194 9);
-  --color-brand-600: rgb(220 174 0);
+  --color-brand-600: rgb(168 130 255);
 
   --color-background: var(--color-bg-100);
   --color-foreground: var(--color-txt-100);
@@ -434,6 +438,7 @@
    Monochromatic base with metallic accent highlights
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-brand="luxury"] {
+  --color-guide: rgb(180 140 255);
   /* Faded Black Backgrounds (cool gray undertone) */
   --color-bg-100: #0A0A0B;
   --color-bg-200: #141416;
@@ -472,6 +477,7 @@
 
 /* Luxury theme + Light mode */
 [data-brand="luxury"][data-theme="light"] {
+  --color-guide: rgb(100 60 180);
   /* Faded White Backgrounds (cool undertone) */
   --color-bg-100: #FAFAFA;
   --color-bg-200: #F0F0F0;
@@ -513,6 +519,7 @@
    Based on TSR Investments branding: deep navy, electric blue, metallic silver
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-brand="tsr"] {
+  --color-guide: rgb(168 130 255);
   /* Deep Navy/Charcoal Backgrounds */
   --color-bg-100: #0D1117;
   --color-bg-200: #161B22;
@@ -551,6 +558,7 @@
 
 /* TSR theme + Light mode */
 [data-brand="tsr"][data-theme="light"] {
+  --color-guide: rgb(120 80 220);
   /* Light Gray-Blue Backgrounds */
   --color-bg-100: #FFFFFF;
   --color-bg-200: #F6F8FA;
@@ -592,6 +600,7 @@
    High-energy, vibrant neon colors with dark cyber backgrounds
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-brand="neon"] {
+  --color-guide: rgb(255 200 60);
   /* Deep Cyber Dark Backgrounds (purple/blue undertone) */
   --color-bg-100: #0A0A12;
   --color-bg-200: #12121C;
@@ -630,6 +639,7 @@
 
 /* Neon theme + Light mode (Vapor Wave aesthetic) */
 [data-brand="neon"][data-theme="light"] {
+  --color-guide: rgb(180 140 20);
   /* Soft Pastel Backgrounds */
   --color-bg-100: #FFF0F5;
   --color-bg-200: #FFE4EC;
@@ -672,6 +682,7 @@
    "A Lannister always pays his debts."
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-brand="lannister"] {
+  --color-guide: rgb(100 200 200);
   /* Deep dark crimson — the blood-red field of House Lannister */
   --color-bg-100: #1E0508;
   --color-bg-200: #2D0A10;
@@ -710,6 +721,7 @@
 
 /* Lannister theme + Light mode (Crimson rose — Casterly Rock at dawn, warm rose-tinted marble) */
 [data-brand="lannister"][data-theme="light"] {
+  --color-guide: rgb(60 140 140);
   /* Warm blush ivory backgrounds — rose-tinted marble halls in morning light */
   --color-bg-100: #FEF5F5;
   --color-bg-200: #F8E8E9;
