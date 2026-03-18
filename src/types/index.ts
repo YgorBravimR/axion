@@ -336,3 +336,25 @@ export interface DayTradeCompact {
 }
 
 export type JournalPeriod = "day" | "week" | "month" | "all" | "custom"
+
+// Account Comparison Types
+export interface AccountComparisonMetrics {
+	accountId: string
+	accountName: string
+	accountType: "personal" | "prop" | "replay"
+	config: {
+		defaultCommission: number
+		defaultFees: number
+		defaultRiskPerTrade: number | null
+	}
+	stats: OverallStats
+	expectedValue: ExpectedValueData
+	equityCurve: EquityPoint[]
+	maxDrawdown: number
+	maxDrawdownPercent: number
+	avgRiskPerTrade: number
+}
+
+export interface AccountComparisonData {
+	accounts: AccountComparisonMetrics[]
+}
