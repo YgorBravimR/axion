@@ -14,6 +14,7 @@ import {
 import { getTagStats } from "@/app/actions/tags"
 import { getUniqueAssets } from "@/app/actions/trades"
 import { getTimeframes } from "@/app/actions/timeframes"
+import { getUserAccounts } from "@/app/actions/auth"
 
 // Force dynamic rendering to ensure account-specific data
 export const dynamic = "force-dynamic"
@@ -106,6 +107,10 @@ const AnalyticsPage = async ({ params }: AnalyticsPageProps) => {
 		name: tf.name,
 	}))
 
+	// Get account count for comparison link visibility
+	const userAccounts = await getUserAccounts()
+	const accountCount = userAccounts.length
+
 	return (
 		<div className="flex h-full flex-col">
 			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
@@ -122,6 +127,7 @@ const AnalyticsPage = async ({ params }: AnalyticsPageProps) => {
 					initialSessionAssetPerformance={initialSessionAssetPerformance}
 					availableAssets={availableAssets}
 					availableTimeframes={availableTimeframes}
+					accountCount={accountCount}
 				/>
 			</div>
 		</div>

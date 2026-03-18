@@ -189,7 +189,7 @@ const FilterPanel = ({
 		filters.dateFrom || filters.dateTo || advancedFilterCount > 0
 
 	return (
-		<div className="space-y-s-200">
+		<div id="analytics-filters" className="space-y-s-200">
 			{/* Slim filter bar */}
 			<div className="gap-s-200 sm:gap-s-300 flex flex-wrap items-center">
 				{/* Period presets */}

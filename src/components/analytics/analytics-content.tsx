@@ -18,6 +18,11 @@ import {
 } from "@/components/analytics"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 import { LoadingSpinner } from "@/components/shared"
+import { Link } from "@/i18n/routing"
+import { GitCompareArrows } from "lucide-react"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
+import { useRegisterPageGuide } from "@/components/ui/page-guide"
+import { analyticsGuide } from "@/components/ui/page-guide/guide-configs/analytics"
 import {
 	getPerformanceByVariable,
 	getExpectedValue,
@@ -61,6 +66,7 @@ interface AnalyticsContentProps {
 	initialSessionAssetPerformance: SessionAssetPerformance[]
 	availableAssets: string[]
 	availableTimeframes: TimeframeOption[]
+	accountCount?: number
 }
 
 /** Converts FilterState to the TradeFilters format expected by server actions */
@@ -90,9 +96,15 @@ const AnalyticsContent = ({
 	initialSessionAssetPerformance,
 	availableAssets,
 	availableTimeframes,
+	accountCount,
 }: AnalyticsContentProps) => {
 	const t = useTranslations("analytics")
+	const tComparison = useTranslations("accountComparison")
 	const [isPending, startTransition] = useTransition()
+	const { isAdmin } = useFeatureAccess()
+	const showComparisonLink = isAdmin && (accountCount ?? 0) >= 2
+
+	useRegisterPageGuide(analyticsGuide)
 
 	const [filters, setFilters] = useState<FilterState>({
 		dateFrom: null,
@@ -219,6 +231,20 @@ const AnalyticsContent = ({
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+			{/* Compare Accounts Link (admin + 2+ accounts) */}
+			{showComparisonLink && (
+				<div className="flex justify-end">
+					<Link
+						href="/analytics/account-comparison"
+						className="text-acc-100 hover:text-acc-100/80 flex items-center gap-s-200 text-small transition-colors"
+						aria-label={tComparison("title")}
+					>
+						<GitCompareArrows className="h-4 w-4" />
+						{tComparison("title")}
+					</Link>
+				</div>
+			)}
+
 			{/* Filter Panel (includes ExpectancyModeToggle) */}
 			<FilterPanel
 				filters={filters}
@@ -257,7 +283,7 @@ const AnalyticsContent = ({
 			<TagCloud data={tagStats} expectancyMode={expectancyMode} />
 
 			{/* Time-Based Analysis Section */}
-			<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
+			<div id="analytics-time-section" className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
 				<h2 className="mb-s-300 sm:mb-m-400 text-body sm:text-heading text-txt-100 font-semibold">
 					{t("time.title")}
 				</h2>

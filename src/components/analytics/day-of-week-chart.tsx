@@ -113,7 +113,7 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 
 	if (tradingDays.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+			<div id="analytics-day-of-week" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
 				<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body font-semibold text-txt-100">
 					{t("time.dayOfWeekTitle")}
 				</h3>
@@ -144,7 +144,7 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+		<div id="analytics-day-of-week" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
 			<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body font-semibold text-txt-100">
 				{t("time.dayOfWeekTitle")}
 			</h3>
@@ -175,7 +175,7 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 							width={yAxisWidth}
 						/>
 						<Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-bg-300)", opacity: 0.3 }} />
-						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]}>
+						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]} maxBarSize={80}>
 							{tradingDays.map((entry, index) => (
 								<Cell
 									key={`cell-${index}`}

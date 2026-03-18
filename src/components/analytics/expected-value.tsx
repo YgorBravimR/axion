@@ -303,7 +303,7 @@ export const ExpectedValue = ({ data, mode }: ExpectedValueProps) => {
 
 	if (!data || data.sampleSize === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div id="analytics-expected-value" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center gap-s-200">
 					<Calculator className="h-5 w-5 text-txt-300" />
 					<h3 className="text-small sm:text-body font-semibold text-txt-100">
@@ -320,7 +320,7 @@ export const ExpectedValue = ({ data, mode }: ExpectedValueProps) => {
 	const hasRData = data.rSampleSize > 0
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div id="analytics-expected-value" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-s-200">
 					<Calculator className="h-5 w-5 text-txt-300" />

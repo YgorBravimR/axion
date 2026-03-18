@@ -27,6 +27,7 @@ const TRADING_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17]
 const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const t = useTranslations("analytics")
 	const tDays = useTranslations("analytics.time.heatmapDays")
+	const tDayNames = useTranslations("analytics.time.dayNames")
 	const [hoveredCell, setHoveredCell] = useState<TimeHeatmapCell | null>(null)
 
 	const isRMode = expectancyMode === "edge"
@@ -166,7 +167,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div id="analytics-heatmap" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("time.heatmapTitle")}
 				</h3>
@@ -178,7 +179,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div id="analytics-heatmap" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400">
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -244,7 +245,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											role={hasData ? "button" : undefined}
 											aria-label={
 												hasData
-													? t("time.heatmapCellAriaLabel", { day: cell.dayName, hour: cell.hourLabel, trades: cell.totalTrades, winRate: cell.winRate.toFixed(0) })
+													? t("time.heatmapCellAriaLabel", { day: tDayNames(cell.dayName as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"), hour: cell.hourLabel, trades: cell.totalTrades, winRate: cell.winRate.toFixed(0) })
 													: undefined
 											}
 										>
@@ -276,7 +277,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 					<div className="gap-m-400 flex items-center justify-between">
 						<div>
 							<p className="text-small text-txt-100 font-semibold">
-								{hoveredCell.dayName} {hoveredCell.hourLabel}
+								{tDayNames(hoveredCell.dayName as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday")} {hoveredCell.hourLabel}
 							</p>
 							<p className="text-caption text-txt-300">
 								{t("time.totalTrades", { count: hoveredCell.totalTrades })}

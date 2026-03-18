@@ -83,7 +83,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div id="analytics-r-distribution" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<div className="flex items-center gap-s-200">
 					<BarChart3 className="h-5 w-5 text-txt-300" />
 					<h3 className="text-small sm:text-body font-semibold text-txt-100">
@@ -109,7 +109,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 	const mode = data.reduce((max, b) => (b.count > max.count ? b : max), data[0])
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div id="analytics-r-distribution" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			<div className="flex items-center gap-s-200">
 				<BarChart3 className="h-5 w-5 text-txt-300" />
 				<h3 className="text-small sm:text-body font-semibold text-txt-100">
@@ -187,7 +187,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 						/>
 						<RechartsTooltip content={<CustomTooltip />} />
 						<ReferenceLine x="0R to 0.5R" stroke="var(--color-txt-300)" strokeDasharray="3 3" />
-						<Bar dataKey="count" radius={[4, 4, 0, 0]}>
+						<Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={80}>
 							{data.map((entry, index) => (
 								<Cell
 									key={`cell-${index}`}

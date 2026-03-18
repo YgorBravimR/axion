@@ -169,7 +169,7 @@ export const VariableComparison = ({
 	})
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div id="analytics-variable-comparison" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="gap-m-400 flex flex-wrap items-center justify-between">
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("title")}
@@ -240,7 +240,7 @@ export const VariableComparison = ({
 							width={yAxisWidth}
 						/>
 						<RechartsTooltip content={<CustomTooltip metric={metric} />} />
-						<Bar dataKey="value" radius={[4, 4, 0, 0]}>
+						<Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={80}>
 							{chartData.map((entry, index) => (
 								<Cell
 									key={`cell-${index}`}

@@ -137,7 +137,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div id="analytics-tag-cloud" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
 				<div className="mt-s-300 sm:mt-m-400 flex h-32 items-center justify-center text-txt-300">
 					{t("noTags")}
@@ -157,7 +157,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 	)
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div id="analytics-tag-cloud" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
 
 			{/* Summary Stats */}

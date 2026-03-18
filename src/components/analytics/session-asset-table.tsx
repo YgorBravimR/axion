@@ -53,7 +53,7 @@ export const SessionAssetTable = ({
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<div id="analytics-session-asset" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 				<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body text-txt-100 font-semibold">
 					{t("session.assetTitle")}
 				</h3>
@@ -72,7 +72,7 @@ export const SessionAssetTable = ({
 	]
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+		<div id="analytics-session-asset" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 			<h3 className="mb-s-300 text-small sm:text-body text-txt-100 font-semibold">
 				{t("session.assetTitle")}
 			</h3>

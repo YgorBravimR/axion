@@ -72,7 +72,7 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div id="analytics-equity-curve" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("cumulative")}
 				</h2>
@@ -95,7 +95,7 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 	const gradientColor = isPositive ? "0, 255, 150" : "128, 128, 255"
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div id="analytics-equity-curve" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 				{t("cumulative")}
 			</h2>

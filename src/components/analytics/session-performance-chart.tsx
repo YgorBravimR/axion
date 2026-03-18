@@ -33,23 +33,12 @@ interface CustomTooltipProps {
 	}>
 }
 
-/** Map English session labels to translation keys */
-const getSessionKey = (label: string): string => {
-	const keyMap: Record<string, string> = {
-		"Pre-Open": "preOpen",
-		Morning: "morning",
-		Afternoon: "afternoon",
-		Close: "close",
-	}
-	return keyMap[label] || label.toLowerCase().replace("-", "")
-}
-
-/** Abbreviated session labels for mobile */
+/** Abbreviated session labels for mobile (keyed by TradingSession) */
 const ABBREVIATED_SESSION: Record<string, string> = {
-	"Pre-Open": "Pre",
-	Morning: "AM",
-	Afternoon: "PM",
-	Close: "Close",
+	preOpen: "Pre",
+	morning: "AM",
+	afternoon: "PM",
+	close: "Close",
 }
 
 /** Format decimal hour to HH:MM string */
@@ -74,13 +63,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const data = payload[0].payload
 	const isProfit = data.totalPnl >= 0
 	const timeRange = `${formatTime(data.startHour)} - ${formatTime(data.endHour)}`
-	const translatedLabel = tLabels(
-		getSessionKey(data.sessionLabel) as
-			| "preOpen"
-			| "morning"
-			| "afternoon"
-			| "close"
-	)
+	const translatedLabel = tLabels(data.session)
 
 	return (
 		<div className="rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-s-300 shadow-lg">
@@ -173,19 +156,10 @@ export const SessionPerformanceChart = ({
 	const isRMode = expectancyMode === "edge"
 	const metricKey = isRMode ? "avgR" : "totalPnl"
 
-	const translateSessionLabel = (label: string): string => {
-		const key = getSessionKey(label) as
-			| "preOpen"
-			| "morning"
-			| "afternoon"
-			| "close"
-		return tLabels(key)
-	}
-
-	const formatSessionTickLabel = (label: string): string =>
+	const formatSessionTickLabel = (sessionKey: string): string =>
 		isMobile
-			? ABBREVIATED_SESSION[label] ?? label
-			: translateSessionLabel(label)
+			? ABBREVIATED_SESSION[sessionKey] ?? sessionKey
+			: tLabels(sessionKey)
 
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
@@ -220,7 +194,7 @@ export const SessionPerformanceChart = ({
 
 	if (sessionsWithTrades.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div id="analytics-session-chart" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 				<h3 className="text-small sm:text-body font-semibold text-txt-100">
 					{t("session.title")}
 				</h3>
@@ -234,7 +208,7 @@ export const SessionPerformanceChart = ({
 	const headerMetricValue = isRMode ? weightedAvgR : totalPnl
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div id="analytics-session-chart" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-start justify-between">
 				<div>
@@ -274,7 +248,7 @@ export const SessionPerformanceChart = ({
 							vertical={false}
 						/>
 						<XAxis
-							dataKey="sessionLabel"
+							dataKey="session"
 							tickFormatter={formatSessionTickLabel}
 							stroke="var(--color-txt-300)"
 							tick={{
@@ -305,7 +279,7 @@ export const SessionPerformanceChart = ({
 								opacity: 0.3,
 							}}
 						/>
-						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]}>
+						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]} maxBarSize={80}>
 							{data.map((entry, index) => (
 								<Cell
 									key={`cell-${index}`}
@@ -342,7 +316,7 @@ export const SessionPerformanceChart = ({
 							)}
 						>
 							<p className="text-caption text-txt-300">
-								{translateSessionLabel(session.sessionLabel)}
+								{tLabels(session.session)}
 							</p>
 							<p
 								className={cn(
@@ -410,7 +384,7 @@ export const SessionPerformanceChart = ({
 										{showBest ? (
 											<>
 												<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
-													{translateSessionLabel(bestSession.sessionLabel)}
+													{tLabels(bestSession.session)}
 												</td>
 												<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
 													{formatMetric(bestSession[metricKey])}
@@ -425,7 +399,7 @@ export const SessionPerformanceChart = ({
 										{showWorst ? (
 											<>
 												<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
-													{translateSessionLabel(worstSession.sessionLabel)}
+													{tLabels(worstSession.session)}
 												</td>
 												<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
 													{formatMetric(worstSession[metricKey])}

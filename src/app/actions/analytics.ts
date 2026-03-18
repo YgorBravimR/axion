@@ -1149,17 +1149,16 @@ export const getDayOfWeekPerformance = async (
 			}
 		}
 
-		const tDays = await getTranslations("days")
-		const dayKeys = [
-			"sunday",
-			"monday",
-			"tuesday",
-			"wednesday",
-			"thursday",
-			"friday",
-			"saturday",
+		// English day names used as i18n keys on the client
+		const dayNameKeys = [
+			"Sunday",
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
 		] as const
-		const dayNames = dayKeys.map((key) => tDays(key))
 
 		// Group by day of week
 		const dayMap = new Map<
@@ -1237,7 +1236,7 @@ export const getDayOfWeekPerformance = async (
 
 				return {
 					dayOfWeek,
-					dayName: dayNames[dayOfWeek],
+					dayName: dayNameKeys[dayOfWeek],
 					totalTrades: data.trades.length,
 					wins: data.wins,
 					losses: data.losses,
@@ -1301,17 +1300,16 @@ export const getTimeHeatmap = async (
 			}
 		}
 
-		const tDays = await getTranslations("days")
-		const dayKeys = [
-			"sunday",
-			"monday",
-			"tuesday",
-			"wednesday",
-			"thursday",
-			"friday",
-			"saturday",
+		// English day names used as i18n keys on the client
+		const dayNameKeys = [
+			"Sunday",
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
 		] as const
-		const dayNames = dayKeys.map((key) => tDays(key))
 
 		// Group by day × hour
 		const cellMap = new Map<
@@ -1361,7 +1359,7 @@ export const getTimeHeatmap = async (
 				const [dayOfWeek, hour] = key.split("-").map(Number)
 				return {
 					dayOfWeek,
-					dayName: dayNames[dayOfWeek],
+					dayName: dayNameKeys[dayOfWeek],
 					hour,
 					hourLabel: `${hour.toString().padStart(2, "0")}:00`,
 					totalTrades: data.totalTrades,
