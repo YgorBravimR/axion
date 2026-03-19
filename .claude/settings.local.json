@@ -129,7 +129,14 @@
       "Bash(rg -n --glob '*.tsx' --glob '*.ts' --glob '!src/__tests__/**' --glob '!node_modules/**' --glob '!*.test.*' 'throw new Error' src/ 2>/dev/null | head -50)",
       "Bash(rg -n --glob '*.tsx' --glob '!src/__tests__/**' --glob '!node_modules/**' 'placeholder=\"[A-Za-z]' src/ 2>/dev/null | head -50)",
       "Bash(cat /Users/ygorbravim/personal/projects/profitJournal/src/app/\\\\[locale\\\\]/\\\\\\(app\\\\\\)/layout.tsx)",
-      "Bash(ls \"src/app/[locale]/\\(app\\)/analytics/account-comparison/\")"
+      "Bash(ls \"src/app/[locale]/\\(app\\)/analytics/account-comparison/\")",
+      "Read(//Users/ygorbravim/personal/projects/profitJournal/**)",
+      "Bash(node:*)",
+      "Bash(ffprobe -v quiet -print_format json -show_format -show_streams /Users/ygorbravim/personal/projects/profitJournal/demo-videos/b6e3d6a4eed0ed58be467e8fa6f9c86c.webm)",
+      "Bash(ffmpeg -version)",
+      "Bash(brew install:*)",
+      "Bash(npx remotion:*)",
+      "Bash(ffprobe:*)"
     ],
     "deny": [],
     "ask": []
