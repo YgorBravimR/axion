@@ -1047,6 +1047,31 @@ export const bulkCreateTrades = async (
 						tagNames: inputTagNames,
 						...tradeInput
 					} = input
+					// Sanitize SL/TP before validation: strip values that would fail
+					// (negative/zero or on wrong side of entry) so the trade can still be imported
+					const entryPriceNum = Number(tradeInput.entryPrice)
+					const dir = tradeInput.direction
+					if (tradeInput.takeProfit != null) {
+						const tp = Number(tradeInput.takeProfit)
+						if (
+							!tp || tp <= 0 ||
+							(dir === "long" && tp <= entryPriceNum) ||
+							(dir === "short" && tp >= entryPriceNum)
+						) {
+							delete tradeInput.takeProfit
+						}
+					}
+					if (tradeInput.stopLoss != null) {
+						const sl = Number(tradeInput.stopLoss)
+						if (
+							!sl || sl <= 0 ||
+							(dir === "long" && sl >= entryPriceNum) ||
+							(dir === "short" && sl <= entryPriceNum)
+						) {
+							delete tradeInput.stopLoss
+						}
+					}
+
 					const validated = createTradeSchema.parse(tradeInput)
 					const { tagIds, ...tradeData } = validated
 
