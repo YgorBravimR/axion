@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tabs"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { monteCarloGuide } from "@/components/ui/page-guide/guide-configs/monte-carlo"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { InputModeSelector } from "./input-mode-selector"
 import { DataSourceSelector } from "./data-source-selector"
 import { StatsPreview } from "./stats-preview"
@@ -143,6 +144,7 @@ export const MonteCarloContent = ({
 	const tV2 = useTranslations("monteCarlo.v2")
 
 	useRegisterPageGuide(monteCarloGuide)
+	const { limits } = useFeatureAccess()
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500">
@@ -183,6 +185,7 @@ export const MonteCarloContent = ({
 						onCustomize={handleCustomize}
 						onRunSimulation={handleRunSimulation}
 						onRunAgain={handleRunAgain}
+						budgetCap={limits.monteCarloV1BudgetCap}
 					/>
 				</AnimatedTabsContent>
 
@@ -190,6 +193,7 @@ export const MonteCarloContent = ({
 					<MonteCarloV2Content
 						profiles={riskProfiles}
 						dataSourceOptions={initialOptions}
+						budgetCap={limits.monteCarloV2BudgetCap}
 					/>
 				</AnimatedTabsContent>
 			</Tabs>
@@ -220,6 +224,7 @@ interface EdgeExpectancyContentProps {
 	onCustomize: () => void
 	onRunSimulation: () => void
 	onRunAgain: () => void
+	budgetCap: number
 }
 
 const EdgeExpectancyContent = ({
@@ -239,6 +244,7 @@ const EdgeExpectancyContent = ({
 	onCustomize,
 	onRunSimulation,
 	onRunAgain,
+	budgetCap,
 }: EdgeExpectancyContentProps) => {
 	const t = useTranslations("monteCarlo")
 
@@ -273,6 +279,7 @@ const EdgeExpectancyContent = ({
 						params={params}
 						onChange={setParams}
 						disabled={isRunning}
+						budgetCap={budgetCap}
 					/>
 
 					{/* Error Message */}

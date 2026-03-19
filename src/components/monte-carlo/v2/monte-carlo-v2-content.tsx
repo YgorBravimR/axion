@@ -19,7 +19,6 @@ import { V2DistributionHistogram } from "./v2-distribution-histogram"
 import { getSimulationStats, runSimulationV2 } from "@/app/actions/monte-carlo"
 import { buildProfileForSim } from "@/lib/risk-profile"
 import { toCents } from "@/lib/money"
-import { V2_SIMULATION_BUDGET_CAP } from "@/lib/validations/monte-carlo"
 import { cn } from "@/lib/utils"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type {
@@ -33,11 +32,13 @@ import type {
 interface MonteCarloV2ContentProps {
 	profiles: RiskManagementProfile[]
 	dataSourceOptions: DataSourceOption[]
+	budgetCap: number
 }
 
 const MonteCarloV2Content = ({
 	profiles,
 	dataSourceOptions,
+	budgetCap,
 }: MonteCarloV2ContentProps) => {
 	const t = useTranslations("monteCarlo.v2")
 	const tMC = useTranslations("monteCarlo")
@@ -137,10 +138,10 @@ const MonteCarloV2Content = ({
 		const months = parseInt(monthsToTrade, 10) || 1
 		const sims = parseInt(simulationCount, 10) || 0
 		const totalIterations = maxTradesPerDay * days * months * sims
-		const budgetUsage = totalIterations / V2_SIMULATION_BUDGET_CAP
-		const isOverBudget = totalIterations > V2_SIMULATION_BUDGET_CAP
+		const budgetUsage = totalIterations / budgetCap
+		const isOverBudget = totalIterations > budgetCap
 		return { totalIterations, budgetUsage, isOverBudget }
-	}, [tradingDaysPerMonth, monthsToTrade, simulationCount])
+	}, [tradingDaysPerMonth, monthsToTrade, simulationCount, budgetCap])
 
 	// Results state
 	const [result, setResult] = useState<MonteCarloResultV2 | null>(null)
@@ -218,6 +219,7 @@ const MonteCarloV2Content = ({
 		showLoading,
 		hideLoading,
 		tOverlay,
+		tMC,
 	])
 
 	const handleRunAgain = () => {
@@ -506,9 +508,11 @@ const MonteCarloV2Content = ({
 					</div>
 
 					{/* Budget Indicator */}
-					<div className="mt-m-400 flex items-center justify-between text-small">
+					<div className="mt-m-400 text-small flex items-center justify-between">
 						<span className="text-txt-300">
-							{t("params.totalIterations")}: {budgetInfo.totalIterations.toLocaleString()} / {V2_SIMULATION_BUDGET_CAP.toLocaleString()}
+							{t("params.totalIterations")}:{" "}
+							{budgetInfo.totalIterations.toLocaleString()} /{" "}
+							{budgetCap.toLocaleString()}
 						</span>
 						<span
 							className={cn(
@@ -542,7 +546,7 @@ const MonteCarloV2Content = ({
 							size="lg"
 							onClick={handleRunSimulation}
 							disabled={isRunning || !isValid}
-							className="w-full sm:min-w-[200px] sm:w-auto"
+							className="w-full sm:w-auto sm:min-w-[200px]"
 						>
 							{isRunning ? (
 								<LoadingSpinner size="sm" label={tMC("runningSimulation")} />
@@ -568,7 +572,10 @@ const MonteCarloV2Content = ({
 
 					{/* Charts Row */}
 					<div className="gap-m-500 grid lg:grid-cols-2">
-						<DailyPnlChart days={result.sampleRun.days} monthsToTrade={result.params.monthsToTrade} />
+						<DailyPnlChart
+							days={result.sampleRun.days}
+							monthsToTrade={result.params.monthsToTrade}
+						/>
 						<ModeDistributionChart statistics={result.statistics} />
 					</div>
 
@@ -576,7 +583,8 @@ const MonteCarloV2Content = ({
 					<V2DistributionHistogram
 						buckets={result.distributionBuckets.map((b) => ({
 							...b,
-							rangeStart: result.params.initialBalance / 100 + b.rangeStart / 100,
+							rangeStart:
+								result.params.initialBalance / 100 + b.rangeStart / 100,
 							rangeEnd: result.params.initialBalance / 100 + b.rangeEnd / 100,
 						}))}
 						medianBalance={

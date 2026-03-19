@@ -4,19 +4,20 @@ import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { SimulationParams } from "@/types/monte-carlo"
-import { SIMULATION_BUDGET_CAP } from "@/lib/validations/monte-carlo"
 import { cn } from "@/lib/utils"
 
 interface SimulationParamsFormProps {
 	params: SimulationParams
 	onChange: (params: SimulationParams) => void
 	disabled?: boolean
+	budgetCap: number
 }
 
 export const SimulationParamsForm = ({
 	params,
 	onChange,
 	disabled = false,
+	budgetCap,
 }: SimulationParamsFormProps) => {
 	const t = useTranslations("monteCarlo.params")
 
@@ -31,8 +32,8 @@ export const SimulationParamsForm = ({
 	}
 
 	const totalIterations = params.numberOfTrades * params.simulationCount
-	const budgetUsage = totalIterations / SIMULATION_BUDGET_CAP
-	const isOverBudget = totalIterations > SIMULATION_BUDGET_CAP
+	const budgetUsage = totalIterations / budgetCap
+	const isOverBudget = totalIterations > budgetCap
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
@@ -171,11 +172,10 @@ export const SimulationParamsForm = ({
 			<div className="mt-m-400 text-small flex items-center justify-between">
 				<span className="text-txt-300">
 					{t("totalIterations")}: {totalIterations.toLocaleString()} /{" "}
-					{SIMULATION_BUDGET_CAP.toLocaleString()}
+					{budgetCap.toLocaleString()}
 				</span>
 				<span
 					className={cn(
-						"",
 						isOverBudget
 							? "text-fb-error font-semibold"
 							: budgetUsage > 0.8
@@ -190,10 +190,10 @@ export const SimulationParamsForm = ({
 				<p className="mt-s-200 text-caption text-fb-error">
 					{t("budgetExceeded", {
 						maxTrades: Math.floor(
-							SIMULATION_BUDGET_CAP / params.simulationCount
+							budgetCap / params.simulationCount
 						).toLocaleString(),
 						maxSimulations: Math.floor(
-							SIMULATION_BUDGET_CAP / params.numberOfTrades
+							budgetCap / params.numberOfTrades
 						).toLocaleString(),
 					})}
 				</p>

@@ -11,15 +11,38 @@ interface FeatureConfig {
 	description: string
 }
 
+/** Role-based limits for features that have tiered access */
+interface FeatureLimits {
+	monteCarloV1BudgetCap: number
+	monteCarloV2BudgetCap: number
+}
+
+const ROLE_LIMITS: Record<UserRole, FeatureLimits> = {
+	viewer: {
+		monteCarloV1BudgetCap: 0,
+		monteCarloV2BudgetCap: 0,
+	},
+	trader: {
+		monteCarloV1BudgetCap: 1_500_000, // 50% of admin
+		monteCarloV2BudgetCap: 5_000_000, // 50% of admin
+	},
+	admin: {
+		monteCarloV1BudgetCap: 3_000_000,
+		monteCarloV2BudgetCap: 10_000_000,
+	},
+}
+
+const getFeatureLimits = (role: UserRole): FeatureLimits => ROLE_LIMITS[role]
+
 const FEATURE_MAP: Record<string, FeatureConfig> = {
 	// Navigation / page-level features
 	"/": { requiredRole: "viewer", description: "Dashboard" },
 	"/command-center": { requiredRole: "trader", description: "Command Center" },
 	"/journal": { requiredRole: "trader", description: "Journal" },
 	"/analytics": { requiredRole: "viewer", description: "Analytics" },
-	"/monte-carlo": { requiredRole: "admin", description: "Monte Carlo" },
-	"/risk-simulation": { requiredRole: "admin", description: "Risk Simulation" },
-	"/analytics/account-comparison": { requiredRole: "admin", description: "Account Comparison" },
+	"/monte-carlo": { requiredRole: "trader", description: "Monte Carlo" },
+	"/risk-simulation": { requiredRole: "trader", description: "Risk Simulation" },
+	"/analytics/account-comparison": { requiredRole: "trader", description: "Account Comparison" },
 	"/playbook": { requiredRole: "trader", description: "Playbook" },
 	"/reports": { requiredRole: "viewer", description: "Reports" },
 	"/monthly": { requiredRole: "trader", description: "Monthly Plan" },
@@ -60,8 +83,10 @@ export {
 	hasAccess,
 	canAccessFeature,
 	getFilteredNavItems,
+	getFeatureLimits,
 	ROLE_HIERARCHY,
 	FEATURE_MAP,
 	type UserRole,
 	type FeatureConfig,
+	type FeatureLimits,
 }
