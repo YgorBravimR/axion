@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import { calculateTickBasedPositionSize } from "@/lib/calculations"
+import { translateRiskReason } from "@/lib/risk-reason-i18n"
 import { useFormatting } from "@/hooks/use-formatting"
 import type {
 	LiveTradingStatusResult,
@@ -340,6 +341,7 @@ const LiveTradingStatusPanel = ({
 }: LiveTradingStatusPanelProps) => {
 	const t = useTranslations("commandCenter.liveStatus")
 	const tDir = useTranslations("commandCenter.directionAbbr")
+	const tRisk = useTranslations("riskSimulation")
 	const { formatCurrency } = useFormatting()
 	const directionLabels = { long: tDir("long"), short: tDir("short") }
 
@@ -415,7 +417,7 @@ const LiveTradingStatusPanel = ({
 					<MetricCell
 						label={t("metrics.nextRisk")}
 						value={formatCurrency(fromCents(status.nextTradeRiskCents))}
-						subLabel={status.riskReason}
+						subLabel={translateRiskReason(tRisk, status.riskReason)}
 					/>
 				</div>
 
@@ -583,7 +585,7 @@ const LiveTradingStatusPanel = ({
 					subLabel={
 						status.dayPhase === "gain_mode"
 							? getGainModeLabel()
-							: status.riskReason
+							: translateRiskReason(tRisk, status.riskReason)
 					}
 				/>
 				<div className="space-y-s-100">

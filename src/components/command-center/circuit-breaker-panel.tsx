@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import { fromCents } from "@/lib/money"
+import { useFormatting } from "@/hooks/use-formatting"
 
 type CircuitBreakerState =
 	| "clear"
@@ -106,12 +107,6 @@ const getCircuitBreakerState = (
 
 interface CircuitBreakerPanelProps {
 	status: CircuitBreakerStatus | null
-	currency?: string
-}
-
-const formatCurrency = (value: number, currency = "$"): string => {
-	const absValue = Math.abs(value)
-	return `${value >= 0 ? "" : "-"}${currency}${absValue.toFixed(2)}`
 }
 
 interface MetricCellProps {
@@ -140,9 +135,9 @@ const MetricCell = ({
 
 export const CircuitBreakerPanel = ({
 	status,
-	currency = "$",
 }: CircuitBreakerPanelProps) => {
 	const t = useTranslations("commandCenter.circuitBreaker")
+	const { formatCurrency } = useFormatting()
 
 	if (!status) {
 		return (
@@ -177,9 +172,9 @@ export const CircuitBreakerPanel = ({
 	// Daily P&L sub-label
 	const dailyPnLSubLabel =
 		profitTarget && status.dailyPnL >= 0
-			? `${t("target")}: ${formatCurrency(profitTarget, currency)}`
+			? `${t("target")}: ${formatCurrency(profitTarget)}`
 			: lossLimit
-				? `${t("limit")}: ${formatCurrency(lossLimit, currency)}`
+				? `${t("limit")}: ${formatCurrency(lossLimit)}`
 				: undefined
 
 	return (
@@ -291,7 +286,7 @@ export const CircuitBreakerPanel = ({
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 				<MetricCell
 					label={t("dailyPnL")}
-					value={formatCurrency(status.dailyPnL, currency)}
+					value={formatCurrency(status.dailyPnL)}
 					valueClassName={
 						status.dailyPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
 					}
@@ -325,23 +320,20 @@ export const CircuitBreakerPanel = ({
 			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-2">
 				<MetricCell
 					label={t("monthlyPnL")}
-					value={formatCurrency(status.monthlyPnL, currency)}
+					value={formatCurrency(status.monthlyPnL)}
 					valueClassName={
 						status.monthlyPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
 					}
 					subLabel={
 						monthlyLossLimit
-							? `${t("monthlyLimit")}: ${formatCurrency(monthlyLossLimit, currency)}`
+							? `${t("monthlyLimit")}: ${formatCurrency(monthlyLossLimit)}`
 							: undefined
 					}
 				/>
 				{status.remainingDailyRiskCents > 0 && (
 					<MetricCell
 						label={t("remainingDailyRisk")}
-						value={formatCurrency(
-							fromCents(status.remainingDailyRiskCents),
-							currency
-						)}
+						value={formatCurrency(fromCents(status.remainingDailyRiskCents))}
 						valueClassName="text-acc-100"
 					/>
 				)}
