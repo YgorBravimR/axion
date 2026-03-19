@@ -44,6 +44,8 @@ playwright-report
 test-results
 demo-videos
 video-trades.csv
+video/out/
+video/public/*.webm
 
 # claude code
 .claude/settings.local.json

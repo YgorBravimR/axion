@@ -22,7 +22,7 @@ const CONFIG = {
 	},
 	accountName: "T100",
 	csvFile: path.resolve("video-trades.csv"),
-	viewport: { width: 1440, height: 900 },
+	viewport: { width: 1749, height: 980 },
 	videoDir: path.resolve("demo-videos"),
 
 	timing: {
@@ -34,6 +34,23 @@ const CONFIG = {
 		shortPause: 600,
 		tabSwitch: 1200,
 	},
+}
+
+// ── Screenshot Capture ──────────────────────────────────────────────────────
+
+const CAPTURE_SCREENSHOTS = true
+const SCREENSHOT_DIR = path.resolve("demo-videos/frames")
+let frameCounter = 0
+let currentScene = ""
+
+const capture = async (page: Page, label: string) => {
+	if (!CAPTURE_SCREENSHOTS) return
+	fs.mkdirSync(SCREENSHOT_DIR, { recursive: true })
+	frameCounter++
+	const paddedNum = String(frameCounter).padStart(3, "0")
+	const safeLabel = label.replace(/[^a-zA-Z0-9_-]/g, "_")
+	const filename = `${paddedNum}_${currentScene}_${safeLabel}.png`
+	await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: false })
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -133,7 +150,7 @@ const navigateViaSidebar = async (page: Page, sidebarText: RegExp, fallbackPath:
 	} else {
 		await page.goto(`${CONFIG.baseUrl}/${CONFIG.locale}${fallbackPath}`)
 	}
-	await page.waitForLoadState("networkidle")
+	await page.waitForLoadState("domcontentloaded")
 	await pause(CONFIG.timing.pageLoad)
 }
 
@@ -235,9 +252,10 @@ const injectClickIndicator = async (page: Page) => {
 const sceneLogin = async (page: Page) => {
 	log("📱 Logging in...")
 	const loc = CONFIG.locale
-	await page.goto(`${CONFIG.baseUrl}/${loc}/login`)
-	await page.waitForLoadState("networkidle")
+	await page.goto(`${CONFIG.baseUrl}/${loc}/login`, { timeout: 30000 })
+	await page.waitForLoadState("domcontentloaded")
 	await pause(CONFIG.timing.sectionView)
+	await capture(page, "login-page")
 
 	await smoothFill(page, "[name='email'], #email, input[type='email']", CONFIG.credentials.email)
 	await smoothFill(page, "#password", CONFIG.credentials.password)
@@ -251,12 +269,13 @@ const sceneLogin = async (page: Page) => {
 
 	if (loginResult === "select-account") {
 		await pause(CONFIG.timing.sectionView)
+		await capture(page, "account-selection")
 		await smoothClickText(page, CONFIG.accountName)
 		await smoothClickRole(page, "button", /continue|continuar/i)
 		await page.waitForURL("**/", { timeout: 15000 })
 	}
 
-	await page.waitForLoadState("networkidle")
+	await page.waitForLoadState("domcontentloaded")
 	await pause(CONFIG.timing.pageLoad)
 }
 
@@ -269,6 +288,7 @@ const sceneCsvImport = async (page: Page) => {
 	log("📄 Switching to CSV Import...")
 	await smoothClickText(page, /Importar CSV|CSV Import/i)
 	await pause(timing.tabSwitch)
+	await capture(page, "csv-upload-zone")
 
 	log("📤 Waiting for CSV file drop...")
 	log("   👉 DROP the video-trades.csv file onto the upload area now")
@@ -286,6 +306,7 @@ const sceneCsvImport = async (page: Page) => {
 
 	log("👀 Viewing imported trades...")
 	await pause(timing.sectionView)
+	await capture(page, "csv-validated-trades")
 	await scrollTo(page, 500)
 	await pause(timing.scrollPause)
 
@@ -297,7 +318,7 @@ const sceneCsvImport = async (page: Page) => {
 
 	log("   Waiting for import processing...")
 	await page.waitForURL("**/journal**", { timeout: 60000 })
-	await page.waitForLoadState("networkidle")
+	await page.waitForLoadState("domcontentloaded")
 	await pause(timing.pageLoad)
 }
 
@@ -318,10 +339,11 @@ const sceneJournal = async (page: Page) => {
 	const allFilter = page.locator("button").filter({ hasText: /^(all|todos|tudo)$/i }).first()
 	if (await allFilter.isVisible().catch(() => false)) {
 		await smoothClickText(page, /^(all|todos|tudo)$/i)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await pause(timing.pageLoad)
 	}
 
+	await capture(page, "journal-all-trades")
 	await scrollTo(page, 400)
 	await pause(timing.scrollPause)
 	await scrollTo(page, 800)
@@ -337,6 +359,7 @@ const sceneDashboard = async (page: Page) => {
 
 	// KPI cards
 	await pause(timing.sectionView)
+	await capture(page, "dashboard-kpis")
 
 	// Calendar + quick stats
 	await scrollTo(page, 400)
@@ -349,6 +372,7 @@ const sceneDashboard = async (page: Page) => {
 	// Equity curve
 	await scrollTo(page, 1200)
 	await pause(timing.sectionView)
+	await capture(page, "dashboard-equity-curve")
 
 	// Back to top
 	await scrollTo(page, 0)
@@ -435,7 +459,7 @@ const sceneTradeDetail = async (page: Page) => {
 			await allBtn.click()
 			await pause(timing.afterClick)
 		}
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await pause(timing.pageLoad)
 	}
 
@@ -457,27 +481,33 @@ const sceneTradeDetail = async (page: Page) => {
 
 		// Wait for navigation to trade detail page
 		await page.waitForURL("**/journal/**", { timeout: 10000 }).catch(() => {})
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await pause(timing.pageLoad)
 
 		// Only proceed if we actually navigated to a trade detail
 		if (page.url().includes("/journal/") && !page.url().endsWith("/journal") && !page.url().includes("/new")) {
-			// Header with asset, direction, P&L
+			// Start at top — header with asset, direction, P&L
+			await scrollTo(page, 0)
 			await pause(timing.sectionView)
+			await capture(page, "trade-header")
 
-			// Scroll to metrics grid
-			await scrollToElement(page, "#trade-detail-metrics")
+			// Scroll down to show metrics + executions section
+			await scrollTo(page, 400)
 			await pause(timing.sectionView)
+			await capture(page, "trade-metrics")
 
-			await scrollToElement(page, "#trade-detail-risk-analysis")
+			// Scroll to risk/reward analysis bar
+			await scrollTo(page, 800)
 			await pause(timing.sectionView)
+			await capture(page, "trade-risk-analysis")
 
-			await scrollToElement(page, "#trade-detail-excursion")
+			// Scroll to bottom — excursion + classification + notes
+			await scrollTo(page, 1200)
 			await pause(timing.sectionView)
+			await capture(page, "trade-bottom")
 
-			await scrollToElement(page, "#trade-detail-classification")
-			await pause(timing.sectionView)
-
+			// Scroll to very bottom in case there's more
+			await scrollTo(page, 2000)
 			await pause(timing.sectionView)
 		} else {
 			log("   ⚠️ Did not navigate to a trade detail page")
@@ -485,6 +515,176 @@ const sceneTradeDetail = async (page: Page) => {
 	} else {
 		log("   ⚠️ No trade rows found — account may be empty")
 	}
+}
+
+const sceneCommandCenter = async (page: Page) => {
+	const { timing } = CONFIG
+
+	log("🎯 Command Center...")
+	await navigateViaSidebar(
+		page,
+		/central de comando|command center/i,
+		"/command-center"
+	)
+
+	await pause(timing.sectionView)
+
+	// Step 1: We're on the "Plano" tab — show monthly plan
+	await capture(page, "cc-plan-overview")
+	await pause(timing.sectionView)
+
+	// Step 2: Click "Editar Plano"
+	const editPlanBtn = page
+		.locator("button")
+		.filter({ hasText: /editar plano|edit plan/i })
+		.first()
+	if (await editPlanBtn.isVisible().catch(() => false)) {
+		await scrollLocatorIntoView(page, editPlanBtn)
+		await pause(timing.shortPause)
+		const box = await editPlanBtn.boundingBox()
+		if (box) {
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
+			await pause(timing.beforeClick)
+			await editPlanBtn.click()
+			await pause(timing.afterClick)
+		}
+		await page.waitForLoadState("domcontentloaded")
+		await pause(timing.sectionView)
+		await capture(page, "cc-plan-edit")
+
+		// Scroll down to show the risk profile values
+		await scrollTo(page, 400)
+		await pause(timing.sectionView)
+
+		// Step 3: Click "Salvar Plano"
+		const savePlanBtn = page
+			.locator("button")
+			.filter({ hasText: /salvar plano|save plan/i })
+			.first()
+		if (await savePlanBtn.isVisible().catch(() => false)) {
+			await scrollLocatorIntoView(page, savePlanBtn)
+			await pause(timing.shortPause)
+			const box = await savePlanBtn.boundingBox()
+			if (box) {
+				await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+					steps: 15,
+				})
+				await pause(timing.beforeClick)
+				await savePlanBtn.click()
+				await pause(timing.afterClick)
+			}
+			await page.waitForLoadState("domcontentloaded")
+			await pause(timing.sectionView)
+		}
+	}
+
+	// Step 4: Click "Centro de Comando" tab
+	const ccTab = page
+		.locator("button[role='tab']")
+		.filter({ hasText: /centro de comando|command center/i })
+		.first()
+	if (await ccTab.isVisible().catch(() => false)) {
+		const box = await ccTab.boundingBox()
+		if (box) {
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
+			await pause(timing.beforeClick)
+			await ccTab.click()
+			await pause(timing.tabSwitch)
+		}
+		await page.waitForLoadState("domcontentloaded")
+		await pause(timing.sectionView)
+		await capture(page, "cc-main-today")
+	}
+
+	// Step 5: Select WINFUT asset in the calculator
+	const calcAsset = page.locator("#calc-asset")
+	if (await calcAsset.isVisible().catch(() => false)) {
+		await scrollLocatorIntoView(page, calcAsset)
+		await pause(timing.shortPause)
+		const box = await calcAsset.boundingBox()
+		if (box) {
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await pause(timing.beforeClick)
+		}
+		// Select WINFUT from the native dropdown
+		await page.selectOption("#calc-asset", { label: "WINFUT" })
+		await pause(timing.afterClick)
+	}
+
+	// Fill stop distance = 200
+	const stopField = page.locator("#calc-stop")
+	if (await stopField.isVisible().catch(() => false)) {
+		const box = await stopField.boundingBox()
+		if (box) {
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await pause(timing.beforeClick)
+		}
+		await stopField.click()
+		await pause(200)
+		await stopField.fill("200")
+		await pause(timing.sectionView)
+		await capture(page, "cc-calculator-filled")
+	}
+
+	// Step 6: Navigate back 2 days to show historical data with trades
+	const prevDayBtn = page
+		.locator("button[aria-label*='anterior'], button[aria-label*='previous']")
+		.first()
+	if (!(await prevDayBtn.isVisible().catch(() => false))) {
+		// Try the left arrow button near the date
+		const leftArrow = page.locator("#cc-date-navigator button").first()
+		if (await leftArrow.isVisible().catch(() => false)) {
+			// Click back twice
+			const box = await leftArrow.boundingBox()
+			if (box) {
+				await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+					steps: 15,
+				})
+				await pause(timing.beforeClick)
+				await leftArrow.click()
+				await pause(timing.afterClick)
+				await page.waitForLoadState("domcontentloaded")
+				await pause(timing.sectionView)
+
+				await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+					steps: 10,
+				})
+				await pause(timing.beforeClick)
+				await leftArrow.click()
+				await pause(timing.afterClick)
+				await page.waitForLoadState("domcontentloaded")
+				await pause(timing.sectionView)
+			}
+		}
+	} else {
+		// Click back twice
+		for (let i = 0; i < 2; i++) {
+			const box = await prevDayBtn.boundingBox()
+			if (box) {
+				await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+					steps: 15,
+				})
+				await pause(timing.beforeClick)
+				await prevDayBtn.click()
+				await pause(timing.afterClick)
+			}
+			await page.waitForLoadState("domcontentloaded")
+			await pause(timing.sectionView)
+		}
+	}
+
+	// Step 7: Focus on "Status ao Vivo" section
+	await capture(page, "cc-historical-circuit-breaker")
+
+	await scrollToElement(page, "#cc-live-trading")
+	await pause(timing.sectionView)
+	await capture(page, "cc-historical-live-status")
+
+	await pause(timing.sectionView)
 }
 
 const sceneAnalytics = async (page: Page) => {
@@ -495,18 +695,23 @@ const sceneAnalytics = async (page: Page) => {
 	await navigateViaSidebar(page, /análises|analytics/i, "/analytics")
 
 	await pause(timing.sectionView)
+	await capture(page, "analytics-filters")
 
 	await scrollToElement(page, "#analytics-equity-curve")
 	await pause(timing.sectionView)
+	await capture(page, "analytics-equity-curve")
 
 	await scrollToElement(page, "#analytics-expected-value")
 	await pause(timing.sectionView)
+	await capture(page, "analytics-expected-value")
 
 	await scrollToElement(page, "#analytics-heatmap")
 	await pause(timing.sectionView)
+	await capture(page, "analytics-heatmap")
 
 	await scrollToElement(page, "#analytics-hourly")
 	await pause(timing.sectionView)
+	await capture(page, "analytics-hourly")
 }
 
 const sceneMonteCarlo = async (page: Page) => {
@@ -537,7 +742,7 @@ const sceneMonteCarlo = async (page: Page) => {
 			await pause(timing.shortPause)
 			await allStrategiesOption.click()
 			await pause(timing.afterClick)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("domcontentloaded")
 			await pause(timing.sectionView)
 		}
 	}
@@ -574,7 +779,7 @@ const sceneMonteCarlo = async (page: Page) => {
 			await pause(timing.afterClick)
 		}
 		await pause(timing.pageLoad + 4000)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 	}
 
 	// Scroll to key result sections
@@ -582,14 +787,17 @@ const sceneMonteCarlo = async (page: Page) => {
 	// Distribution histogram
 	await scrollToElement(page, "#chart-monte-carlo-distribution-histogram")
 	await pause(timing.sectionView)
+	await capture(page, "mc-distribution")
 
 	// Sequence stats / metrics
 	await scrollToElement(page, "#monte-carlo-metrics")
 	await pause(timing.sectionView)
+	await capture(page, "mc-metrics")
 
 	// Kelly Criterion
 	await scrollToElement(page, "#monte-carlo-kelly")
 	await pause(timing.sectionView)
+	await capture(page, "mc-kelly")
 }
 
 const sceneRiskSimulation = async (page: Page) => {
@@ -611,7 +819,7 @@ const sceneRiskSimulation = async (page: Page) => {
 			await todosBtn.click()
 			await pause(timing.afterClick)
 		}
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await pause(timing.sectionView)
 	}
 
@@ -627,7 +835,7 @@ const sceneRiskSimulation = async (page: Page) => {
 			await bravoBtn.click()
 			await pause(timing.afterClick)
 		}
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await pause(timing.sectionView)
 	}
 
@@ -664,7 +872,7 @@ const sceneRiskSimulation = async (page: Page) => {
 			await pause(timing.afterClick)
 		}
 		await pause(timing.pageLoad + 4000)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 	}
 
 	// Scroll to key result sections
@@ -672,10 +880,12 @@ const sceneRiskSimulation = async (page: Page) => {
 	// Equity curve: Original vs Simulated
 	await scrollToElement(page, "#risk-sim-equity-chart")
 	await pause(timing.sectionView)
+	await capture(page, "risksim-equity-curve")
 
 	// Scroll further to see trade comparison / day trace cards
 	await scrollTo(page, 1200)
 	await pause(timing.sectionView)
+	await capture(page, "risksim-day-trace")
 
 	await scrollTo(page, 1600)
 	await pause(timing.sectionView)
@@ -727,6 +937,7 @@ const sceneReports = async (page: Page) => {
 	// Scroll to Mistake Cost Analysis
 	await scrollToElement(page, "#reports-mistake-cost")
 	await pause(timing.sectionView)
+	await capture(page, "reports-mistake-cost")
 
 	await scrollTo(page, 1400)
 	await pause(timing.sectionView)
@@ -740,10 +951,12 @@ const sceneMonthly = async (page: Page) => {
 	await navigateViaSidebar(page, /mensal|monthly/i, "/monthly")
 
 	await pause(timing.sectionView)
+	await capture(page, "monthly-overview")
 
 	if (await page.locator("#monthly-profit-summary").isVisible().catch(() => false)) {
 		await scrollToElement(page, "#monthly-profit-summary")
 		await pause(timing.sectionView)
+		await capture(page, "monthly-profit-summary")
 	}
 
 	if (await page.locator("#monthly-projection").isVisible().catch(() => false)) {
@@ -770,6 +983,7 @@ const scenePlaybook = async (page: Page) => {
 	await navigateViaSidebar(page, /playbook/i, "/playbook")
 
 	await pause(timing.sectionView)
+	await capture(page, "playbook-overview")
 
 	// Get scroll height and scroll smoothly to bottom
 	const pbScrollHeight = await page.evaluate(() => {
@@ -801,6 +1015,7 @@ const sceneSettings = async (page: Page) => {
 	await navigateViaSidebar(page, /configurações|settings/i, "/settings")
 
 	await pause(timing.sectionView)
+	await capture(page, "settings-profile")
 
 	// Switch to Account tab
 	const accountTab = page.locator("button[role='tab']").filter({ hasText: /conta|account/i }).first()
@@ -817,6 +1032,7 @@ const sceneSettings = async (page: Page) => {
 	// Show fees
 	await scrollTo(page, 400)
 	await pause(timing.scrollPause)
+	await capture(page, "settings-account-fees")
 
 	await scrollTo(page, 0)
 	await pause(timing.shortPause)
@@ -867,7 +1083,7 @@ const sceneCleanup = async () => {
 
 	try {
 		await page.goto(`${CONFIG.baseUrl}/${loc}/login`)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await page.getByLabel("Email").fill(CONFIG.credentials.email)
 		await page.locator("#password").fill(CONFIG.credentials.password)
 		await page.getByRole("button", { name: /sign in|entrar/i }).click()
@@ -884,9 +1100,9 @@ const sceneCleanup = async () => {
 			await page.waitForURL("**/", { timeout: 15000 })
 		}
 
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await page.goto(`${CONFIG.baseUrl}/${loc}/settings?tab=account`)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		await pause(2000)
 
 		await page.evaluate(() => {
@@ -937,21 +1153,26 @@ const saveVideo = (videoDir: string) => {
 // SCENE PLAYLIST — Toggle scenes on/off here
 // ═══════════════════════════════════════════════════════════════════════════
 
-const SCENES: Array<{ name: string; enabled: boolean; run: (page: Page) => Promise<void> }> = [
-	{ name: "Login",            enabled: true,  run: sceneLogin },
-	{ name: "CSV Import",       enabled: true,  run: sceneCsvImport },
-	{ name: "Journal",          enabled: true,  run: sceneJournal },
-	{ name: "Trade Detail",     enabled: true,  run: sceneTradeDetail },
-	{ name: "Dashboard",        enabled: true,  run: sceneDashboard },
-	{ name: "Page Guide",       enabled: true,  run: scenePageGuide },
-	{ name: "Analytics",        enabled: true,  run: sceneAnalytics },
-	{ name: "Monte Carlo",      enabled: true,  run: sceneMonteCarlo },
-	{ name: "Risk Simulation",  enabled: true,  run: sceneRiskSimulation },
-	{ name: "Reports",          enabled: true,  run: sceneReports },
-	{ name: "Monthly",          enabled: true,  run: sceneMonthly },
-	{ name: "Playbook",         enabled: true,  run: scenePlaybook },
-	{ name: "Settings",         enabled: true,  run: sceneSettings },
-	{ name: "End",              enabled: true,  run: sceneEnd },
+const SCENES: Array<{
+	name: string
+	enabled: boolean
+	run: (page: Page) => Promise<void>
+}> = [
+	{ name: "Login", enabled: true, run: sceneLogin },
+	{ name: "CSV Import", enabled: true, run: sceneCsvImport },
+	{ name: "Journal", enabled: true, run: sceneJournal },
+	{ name: "Trade Detail", enabled: true, run: sceneTradeDetail },
+	{ name: "Dashboard", enabled: true, run: sceneDashboard },
+	{ name: "Page Guide", enabled: true, run: scenePageGuide },
+	{ name: "Command Center", enabled: true, run: sceneCommandCenter },
+	{ name: "Analytics", enabled: true, run: sceneAnalytics },
+	{ name: "Monte Carlo", enabled: true, run: sceneMonteCarlo },
+	{ name: "Risk Simulation", enabled: true, run: sceneRiskSimulation },
+	{ name: "Reports", enabled: true, run: sceneReports },
+	{ name: "Monthly", enabled: true, run: sceneMonthly },
+	{ name: "Playbook", enabled: true, run: scenePlaybook },
+	{ name: "Settings", enabled: true, run: sceneSettings },
+	{ name: "End", enabled: true, run: sceneEnd },
 ]
 
 const CLEANUP_AFTER = true
@@ -974,6 +1195,7 @@ const run = async () => {
 
 	try {
 		for (const scene of enabledScenes) {
+			currentScene = scene.name.replace(/\s+/g, "-").toLowerCase()
 			await scene.run(page)
 		}
 		log("🎬 Recording complete!")
