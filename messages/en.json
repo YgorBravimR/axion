@@ -161,7 +161,8 @@
 			"change": "Change",
 			"loading": "Loading market data...",
 			"error": "Failed to load market data",
-			"emptyGroup": "No quotes available"
+			"emptyGroup": "No quotes available",
+			"adrAriaLabel": "ADR: {price}"
 		},
 		"status": {
 			"title": "Market Status",
@@ -431,7 +432,8 @@
 				"drawdownControl": "Drawdown Control",
 				"tiers": "tiers",
 				"lossRules": "Loss Rules",
-				"rules": "rules"
+				"rules": "rules",
+				"kellyLabel": "Kelly ÷{divisor}"
 			}
 		},
 		"analysis": {
@@ -1014,22 +1016,22 @@
 			"loser": "Loser"
 		},
 		"asset": "Asset",
-		"assetRequired": "Asset *",
+		"assetRequired": "Asset",
 		"selectAsset": "Select asset",
 		"noAssets": "No assets configured",
 		"timeframe": "Timeframe",
 		"selectTimeframe": "Select timeframe",
 		"noTimeframes": "No timeframes configured",
 		"entryDate": "Entry Date",
-		"entryDateRequired": "Entry Date *",
+		"entryDateRequired": "Entry Date",
 		"exitDate": "Exit Date",
 		"entryPrice": "Entry Price",
-		"entryPriceRequired": "Entry Price *",
+		"entryPriceRequired": "Entry Price",
 		"exitPrice": "Exit Price",
 		"entry": "Entry",
 		"exit": "Exit",
 		"positionSize": "Position Size",
-		"positionSizeRequired": "Position Size *",
+		"positionSizeRequired": "Position Size",
 		"positionSizeHint": "Number of shares/contracts",
 		"size": "Size",
 		"stopLoss": "Stop Loss",
@@ -1425,7 +1427,8 @@
 			"fileTooLarge": "File too large (max 10MB)",
 			"failedToProcess": "Failed to process nota PDF",
 			"sinacorTitle": "SINACOR Standard (B3)",
-			"sinacorDesc": "Works with all Brazilian brokers: Genial, Clear, XP, Rico, BTG, and others. Upload the PDF exported from your broker portal after each trading session."
+			"sinacorDesc": "Works with all Brazilian brokers: Genial, Clear, XP, Rico, BTG, and others. Upload the PDF exported from your broker portal after each trading session.",
+			"selectTrade": "Select trade {asset}"
 		},
 		"ocr": {
 			"title": "Import from Screenshot",
@@ -1534,13 +1537,15 @@
 			"tickValue": "Tick Value: R${value}",
 			"selectPlaceholder": "Select...",
 			"optionalPlaceholder": "Optional",
-			"original": "Original: {value}"
+			"original": "Original: {value}",
+			"selectTrade": "Select trade {identifier}"
 		},
 		"rMultiple": {
 			"realizedR": "Realized R",
 			"planned": "Planned:",
 			"targetHit": "Target hit",
-			"belowTarget": "Below target"
+			"belowTarget": "Below target",
+			"plannedTooltip": "Planned: {value}"
 		},
 		"delete": {
 			"confirmPrompt": "Delete?",
@@ -1678,6 +1683,12 @@
 				"preOpen": "Pre-Open",
 				"morning": "Morning",
 				"afternoon": "Afternoon",
+				"close": "Close"
+			},
+			"abbreviatedLabels": {
+				"preOpen": "Pre",
+				"morning": "AM",
+				"afternoon": "PM",
 				"close": "Close"
 			}
 		},
@@ -1897,10 +1908,10 @@
 		},
 		"form": {
 			"basicInfo": "Basic Info",
-			"codeLabel": "Code *",
+			"codeLabel": "Code",
 			"codePlaceholder": "e.g., PWBK",
 			"codeHint": "Short identifier (3-10 characters)",
-			"strategyNameLabel": "Strategy Name *",
+			"strategyNameLabel": "Strategy Name",
 			"strategyNamePlaceholder": "e.g., 15m Breakout, London Session Reversal",
 			"descriptionLabel": "Description",
 			"descriptionPlaceholder": "Brief description of this strategy...",
@@ -2149,7 +2160,8 @@
 			"inactive": "Inactive",
 			"noAssets": "No assets found",
 			"activate": "Activate asset",
-			"deactivate": "Deactivate asset"
+			"deactivate": "Deactivate asset",
+			"confirmDelete": "Delete {symbol}?"
 		},
 		"timeframes": {
 			"title": "Manage Timeframes",
@@ -2174,7 +2186,8 @@
 			"active": "Active",
 			"inactive": "Inactive",
 			"recalculating": "Recalculating...",
-			"recalculateRValues": "Recalculate R Values"
+			"recalculateRValues": "Recalculate R Values",
+			"confirmDelete": "Delete {name}?"
 		},
 		"tags": {
 			"addTag": "Add Tag",
@@ -2195,7 +2208,8 @@
 			"noTagsInFilter": "No tags match the selected filter",
 			"deleteTitle": "Delete Tag",
 			"deleteDescription": "Are you sure you want to delete \"{name}\"? This will remove the tag from all trades.",
-			"inlineCreate": "Create new tag"
+			"inlineCreate": "Create new tag",
+			"selectColor": "Select color {color}"
 		},
 		"general": {
 			"title": "General Settings",
@@ -2900,7 +2914,8 @@
 			"gainReinvest": "Gain reinvest ({percent}% of day gains)",
 			"recoveryStep": "Recovery #{step}",
 			"gainStep": "Gain #{step}",
-			"gainRepeat": "Gain repeat"
+			"gainRepeat": "Gain repeat",
+			"ddTierSuffix": " (DD tier: -{percent}%)"
 		},
 		"tradeBreakdown": "Trade Breakdown",
 		"viewDecisionTrace": "View Decision Trace",

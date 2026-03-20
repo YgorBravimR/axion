@@ -161,7 +161,8 @@
 			"change": "Variação",
 			"loading": "Carregando dados do mercado...",
 			"error": "Erro ao carregar dados do mercado",
-			"emptyGroup": "Nenhuma cotação disponível"
+			"emptyGroup": "Nenhuma cotação disponível",
+			"adrAriaLabel": "ADR: {price}"
 		},
 		"status": {
 			"title": "Status dos Mercados",
@@ -431,7 +432,8 @@
 				"drawdownControl": "Controle de Drawdown",
 				"tiers": "niveis",
 				"lossRules": "Regras de Perda",
-				"rules": "regras"
+				"rules": "regras",
+				"kellyLabel": "Kelly ÷{divisor}"
 			}
 		},
 		"analysis": {
@@ -1014,22 +1016,22 @@
 			"loser": "Perdedor"
 		},
 		"asset": "Ativo",
-		"assetRequired": "Ativo *",
+		"assetRequired": "Ativo",
 		"selectAsset": "Selecione o ativo",
 		"noAssets": "Nenhum ativo configurado",
 		"timeframe": "Timeframe",
 		"selectTimeframe": "Selecione o timeframe",
 		"noTimeframes": "Nenhum timeframe configurado",
 		"entryDate": "Data de Entrada",
-		"entryDateRequired": "Data de Entrada *",
+		"entryDateRequired": "Data de Entrada",
 		"exitDate": "Data de Saída",
 		"entryPrice": "Preço de Entrada",
-		"entryPriceRequired": "Preço de Entrada *",
+		"entryPriceRequired": "Preço de Entrada",
 		"exitPrice": "Preço de Saída",
 		"entry": "Entrada",
 		"exit": "Saída",
 		"positionSize": "Tamanho da Posição",
-		"positionSizeRequired": "Tamanho da Posição *",
+		"positionSizeRequired": "Tamanho da Posição",
 		"positionSizeHint": "Número de contratos/ações",
 		"size": "Qtd",
 		"stopLoss": "Stop Loss",
@@ -1425,7 +1427,8 @@
 			"fileTooLarge": "Arquivo muito grande (máx 10MB)",
 			"failedToProcess": "Falha ao processar nota de corretagem",
 			"sinacorTitle": "Padrão SINACOR (B3)",
-			"sinacorDesc": "Funciona com todas as corretoras brasileiras: Genial, Clear, XP, Rico, BTG e outras. Faça upload do PDF exportado do portal da sua corretora após cada pregão."
+			"sinacorDesc": "Funciona com todas as corretoras brasileiras: Genial, Clear, XP, Rico, BTG e outras. Faça upload do PDF exportado do portal da sua corretora após cada pregão.",
+			"selectTrade": "Selecionar trade {asset}"
 		},
 		"ocr": {
 			"title": "Importar de Screenshot",
@@ -1534,13 +1537,15 @@
 			"tickValue": "Tick Value: R${value}",
 			"selectPlaceholder": "Selecione...",
 			"optionalPlaceholder": "Opcional",
-			"original": "Original: {value}"
+			"original": "Original: {value}",
+			"selectTrade": "Selecionar trade {identifier}"
 		},
 		"rMultiple": {
 			"realizedR": "R Realizado",
 			"planned": "Planejado:",
 			"targetHit": "Alvo atingido",
-			"belowTarget": "Abaixo do alvo"
+			"belowTarget": "Abaixo do alvo",
+			"plannedTooltip": "Planejado: {value}"
 		},
 		"delete": {
 			"confirmPrompt": "Excluir?",
@@ -1679,6 +1684,12 @@
 				"morning": "Manhã",
 				"afternoon": "Tarde",
 				"close": "Fechamento"
+			},
+			"abbreviatedLabels": {
+				"preOpen": "Pré",
+				"morning": "Manhã",
+				"afternoon": "Tarde",
+				"close": "Fech."
 			}
 		},
 		"variableComparison": {
@@ -1897,10 +1908,10 @@
 		},
 		"form": {
 			"basicInfo": "Informações Básicas",
-			"codeLabel": "Código *",
+			"codeLabel": "Código",
 			"codePlaceholder": "ex: PWBK",
 			"codeHint": "Identificador curto (3-10 caracteres)",
-			"strategyNameLabel": "Nome da Estratégia *",
+			"strategyNameLabel": "Nome da Estratégia",
 			"strategyNamePlaceholder": "ex: Rompimento 15m, Reversão Sessão de Londres",
 			"descriptionLabel": "Descrição",
 			"descriptionPlaceholder": "Breve descrição desta estratégia...",
@@ -2149,7 +2160,8 @@
 			"inactive": "Inativo",
 			"noAssets": "Nenhum ativo encontrado",
 			"activate": "Ativar ativo",
-			"deactivate": "Desativar ativo"
+			"deactivate": "Desativar ativo",
+			"confirmDelete": "Excluir {symbol}?"
 		},
 		"timeframes": {
 			"title": "Gerenciar Timeframes",
@@ -2174,7 +2186,8 @@
 			"active": "Ativo",
 			"inactive": "Inativo",
 			"recalculating": "Recalculando...",
-			"recalculateRValues": "Recalcular Valores de R"
+			"recalculateRValues": "Recalcular Valores de R",
+			"confirmDelete": "Excluir {name}?"
 		},
 		"tags": {
 			"addTag": "Adicionar Tag",
@@ -2195,7 +2208,8 @@
 			"noTagsInFilter": "Nenhuma tag corresponde ao filtro selecionado",
 			"deleteTitle": "Excluir Tag",
 			"deleteDescription": "Tem certeza que deseja excluir \"{name}\"? Isso removerá a tag de todos os trades.",
-			"inlineCreate": "Criar nova tag"
+			"inlineCreate": "Criar nova tag",
+			"selectColor": "Selecionar cor {color}"
 		},
 		"general": {
 			"title": "Configurações Gerais",
@@ -2900,7 +2914,8 @@
 			"gainReinvest": "Reinvestimento de ganho ({percent}% dos ganhos do dia)",
 			"recoveryStep": "Recuperação #{step}",
 			"gainStep": "Ganho #{step}",
-			"gainRepeat": "Repetição de ganho"
+			"gainRepeat": "Repetição de ganho",
+			"ddTierSuffix": " (Tier DD: -{percent}%)"
 		},
 		"tradeBreakdown": "Detalhamento das Operações",
 		"viewDecisionTrace": "Ver Rastreio de Decisões",
