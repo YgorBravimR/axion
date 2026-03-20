@@ -951,3 +951,27 @@ body {
 		animation: none !important;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   react-colorful overrides — match app theme
+   ═══════════════════════════════════════════════════════════════════════════ */
+.react-colorful {
+	gap: 8px;
+}
+
+.react-colorful__saturation {
+	border-radius: 6px;
+}
+
+.react-colorful__hue,
+.react-colorful__alpha {
+	height: 10px;
+	border-radius: 5px;
+}
+
+.react-colorful__pointer {
+	width: 18px;
+	height: 18px;
+	border: 2px solid white;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}

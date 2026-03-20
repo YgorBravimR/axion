@@ -10,11 +10,20 @@ const PopoverTrigger = PopoverPrimitive.Trigger
 
 const PopoverAnchor = PopoverPrimitive.Anchor
 
+interface PopoverContentProps extends ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> {
+	/**
+	 * DOM element to portal into. Defaults to document.body (standard Radix behavior).
+	 * Pass a parent container ref to keep the popover inside a context provider tree
+	 * (e.g. NextIntlClientProvider within a Dialog).
+	 */
+	container?: HTMLElement | null
+}
+
 const PopoverContent = forwardRef<
 	ElementRef<typeof PopoverPrimitive.Content>,
-	ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-	<PopoverPrimitive.Portal>
+	PopoverContentProps
+>(({ className, align = "center", sideOffset = 4, container, ...props }, ref) => (
+	<PopoverPrimitive.Portal container={container ?? undefined}>
 		<PopoverPrimitive.Content
 			ref={ref}
 			align={align}
