@@ -69,6 +69,7 @@ const Sidebar = ({
 						width={140}
 						height={40}
 						className="h-10 w-auto object-contain"
+						style={{ width: "auto", height: "auto" }}
 						priority
 					/>
 				)}

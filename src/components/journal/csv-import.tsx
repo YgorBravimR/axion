@@ -140,7 +140,12 @@ export const CsvImport = () => {
 
 				// Validate trades on server
 				setIsValidating(true)
-				showLoading({ message: tOverlay("validatingTrades") })
+				await new Promise<void>((resolve) =>
+					queueMicrotask(() => {
+						showLoading({ message: tOverlay("validatingTrades") })
+						resolve()
+					})
+				)
 				const validation = await validateCsvTrades(result.trades)
 
 				if (validation.status === "error") {

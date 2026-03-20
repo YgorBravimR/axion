@@ -114,6 +114,7 @@ const AppShell = ({
 							width={100}
 							height={28}
 							className="ml-2 h-7 w-auto object-contain"
+							style={{ width: "auto", height: "auto" }}
 							priority
 						/>
 

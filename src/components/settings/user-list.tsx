@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo, useCallback, type ChangeEvent, type KeyboardEvent } from "react"
+import { Fragment, useState, useTransition, useMemo, useCallback, type ChangeEvent, type KeyboardEvent } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { ChevronRight, Loader2, Search, Trash2, Users } from "lucide-react"
@@ -182,9 +182,8 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 									isPending && pendingId === user.id
 
 								return (
-									<>
+									<Fragment key={user.id}>
 										<TableRow
-											key={user.id}
 											className="cursor-pointer"
 											tabIndex={0}
 											role="button"
@@ -383,7 +382,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 												</TableCell>
 											</TableRow>
 										)}
-									</>
+									</Fragment>
 								)
 							})}
 						</TableBody>
