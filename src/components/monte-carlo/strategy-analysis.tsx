@@ -7,7 +7,7 @@ import {
 	TrendingUp,
 	AlertTriangle,
 	Brain,
-	Lightbulb,
+	Zap,
 	CheckCircle,
 	XCircle,
 } from "lucide-react"
@@ -44,8 +44,8 @@ interface InsightProps {
 const insightConfig = {
 	positive: { Icon: CheckCircle, color: "text-trade-buy" },
 	negative: { Icon: XCircle, color: "text-trade-sell" },
-	tip: { Icon: Lightbulb, color: "text-fb-warning" },
-	neutral: { Icon: Lightbulb, color: "text-txt-200" },
+	tip: { Icon: Zap, color: "text-fb-warning" },
+	neutral: { Icon: Zap, color: "text-txt-200" },
 }
 
 const Insight = ({ type, children }: InsightProps) => {
@@ -53,11 +53,7 @@ const Insight = ({ type, children }: InsightProps) => {
 
 	return (
 		<div className="gap-s-200 flex items-start">
-			{type === "tip" ? (
-				<span className="text-tiny">bulb</span>
-			) : (
-				<Icon className={cn("mt-0.5 h-4 w-4 flex-shrink-0", color)} />
-			)}
+			<Icon className={cn("mt-0.5 h-4 w-4 flex-shrink-0", color)} />
 			<p className="text-small text-txt-200">{children}</p>
 		</div>
 	)
@@ -236,7 +232,7 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 
 				{/* Improvement Suggestions */}
 				{insights.improvementSuggestions.length > 0 && (
-					<Section icon={Lightbulb} title={t("strategyImprovements")}>
+					<Section icon={Zap} title={t("strategyImprovements")}>
 						<p className="text-small text-txt-300">
 							{t("keyAreasOptimization")}
 						</p>
