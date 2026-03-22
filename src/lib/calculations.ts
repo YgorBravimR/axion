@@ -1,3 +1,6 @@
+import type { TradeExecution } from "@/db/schema"
+import type { ExecutionSummary, PositionStatus } from "@/types"
+
 /**
  * Calculate win rate percentage
  */
@@ -444,3 +447,82 @@ export const calculateTickBasedPositionSize = (
 
 	return { contracts, ticksAtRisk, riskPerContractCents, actualRiskCents }
 }
+
+/**
+ * Get position status based on entry/exit quantities
+ */
+const getPositionStatus = (
+	totalEntryQty: number,
+	totalExitQty: number
+): PositionStatus => {
+	if (totalExitQty === 0) return "open"
+	if (totalExitQty < totalEntryQty) return "partial"
+	if (totalExitQty === totalEntryQty) return "closed"
+	return "over_exit"
+}
+
+/**
+ * Calculate weighted average price for entry or exit executions
+ */
+const calculateAvgPrice = (
+	executions: TradeExecution[],
+	type: "entry" | "exit"
+): number => {
+	const filtered = executions.filter((e) => e.executionType === type)
+	if (filtered.length === 0) return 0
+
+	let totalValue = 0
+	let totalQty = 0
+	for (const ex of filtered) {
+		const price = Number(ex.price)
+		const qty = Number(ex.quantity)
+		totalValue += price * qty
+		totalQty += qty
+	}
+
+	return totalQty > 0 ? totalValue / totalQty : 0
+}
+
+/**
+ * Calculate execution summary from a list of executions.
+ * Pure utility — no server/DB dependency.
+ */
+const calculateExecutionSummary = (
+	executions: TradeExecution[]
+): ExecutionSummary => {
+	const entries = executions.filter((e) => e.executionType === "entry")
+	const exits = executions.filter((e) => e.executionType === "exit")
+
+	const totalEntryQuantity = entries.reduce(
+		(sum, e) => sum + Number(e.quantity),
+		0
+	)
+	const totalExitQuantity = exits.reduce(
+		(sum, e) => sum + Number(e.quantity),
+		0
+	)
+
+	const avgEntryPrice = calculateAvgPrice(executions, "entry")
+	const avgExitPrice = calculateAvgPrice(executions, "exit")
+
+	const totalCommission = executions.reduce(
+		(sum, e) => sum + (Number(e.commission) || 0),
+		0
+	)
+	const totalFees = executions.reduce((sum, e) => sum + (Number(e.fees) || 0), 0)
+
+	return {
+		totalEntryQuantity,
+		totalExitQuantity,
+		avgEntryPrice,
+		avgExitPrice,
+		remainingQuantity: totalEntryQuantity - totalExitQuantity,
+		positionStatus: getPositionStatus(totalEntryQuantity, totalExitQuantity),
+		entryCount: entries.length,
+		exitCount: exits.length,
+		totalCommission,
+		totalFees,
+	}
+}
+
+export { calculateExecutionSummary }

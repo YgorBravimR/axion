@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/db/drizzle"
 import { tradeExecutions, trades } from "@/db/schema"
 import type { TradeExecution } from "@/db/schema"
-import type { ActionResponse, ExecutionSummary, PositionStatus } from "@/types"
+import type { ActionResponse, ExecutionSummary } from "@/types"
 import {
 	createExecutionSchema,
 	updateExecutionSchema,
@@ -17,7 +17,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, encryptExecutionFields, decryptExecutionFields } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
-import { calculateAssetPnL, determineOutcome } from "@/lib/calculations"
+import { calculateAssetPnL, determineOutcome, calculateExecutionSummary } from "@/lib/calculations"
 import { assets } from "@/db/schema"
 import { getBreakevenTicks } from "@/app/actions/accounts"
 
@@ -29,86 +29,10 @@ const calculateExecutionValue = (price: number, quantity: number): number => {
 }
 
 /**
- * Get position status based on executions
- */
-const getPositionStatus = (
-	totalEntryQty: number,
-	totalExitQty: number
-): PositionStatus => {
-	if (totalExitQty === 0) return "open"
-	if (totalExitQty < totalEntryQty) return "partial"
-	if (totalExitQty === totalEntryQty) return "closed"
-	return "over_exit"
-}
-
-/**
- * Calculate weighted average price
- */
-const calculateAvgPrice = (
-	executions: TradeExecution[],
-	type: "entry" | "exit"
-): number => {
-	const filtered = executions.filter((e) => e.executionType === type)
-	if (filtered.length === 0) return 0
-
-	let totalValue = 0
-	let totalQty = 0
-	for (const ex of filtered) {
-		const price = Number(ex.price)
-		const qty = Number(ex.quantity)
-		totalValue += price * qty
-		totalQty += qty
-	}
-
-	return totalQty > 0 ? totalValue / totalQty : 0
-}
-
-/**
- * Calculate execution summary from executions
- */
-const calculateExecutionSummary = (
-	executions: TradeExecution[]
-): ExecutionSummary => {
-	const entries = executions.filter((e) => e.executionType === "entry")
-	const exits = executions.filter((e) => e.executionType === "exit")
-
-	const totalEntryQuantity = entries.reduce(
-		(sum, e) => sum + Number(e.quantity),
-		0
-	)
-	const totalExitQuantity = exits.reduce(
-		(sum, e) => sum + Number(e.quantity),
-		0
-	)
-
-	const avgEntryPrice = calculateAvgPrice(executions, "entry")
-	const avgExitPrice = calculateAvgPrice(executions, "exit")
-
-	const totalCommission = executions.reduce(
-		(sum, e) => sum + (Number(e.commission) || 0),
-		0
-	)
-	const totalFees = executions.reduce((sum, e) => sum + (Number(e.fees) || 0), 0)
-
-	return {
-		totalEntryQuantity,
-		totalExitQuantity,
-		avgEntryPrice,
-		avgExitPrice,
-		remainingQuantity: totalEntryQuantity - totalExitQuantity,
-		positionStatus: getPositionStatus(totalEntryQuantity, totalExitQuantity),
-		entryCount: entries.length,
-		exitCount: exits.length,
-		totalCommission,
-		totalFees,
-	}
-}
-
-/**
  * Update trade aggregates from executions, including P&L recalculation.
  * Called after every create/update/delete on executions to keep trade in sync.
  */
-const updateTradeAggregates = async (tradeId: string, dek: string | null): Promise<void> => {
+export const updateTradeAggregates = async (tradeId: string, dek: string | null): Promise<void> => {
 	const rawExecutions = await db.query.tradeExecutions.findMany({
 		where: eq(tradeExecutions.tradeId, tradeId),
 		orderBy: [asc(tradeExecutions.executionDate)],
@@ -163,13 +87,8 @@ const updateTradeAggregates = async (tradeId: string, dek: string | null): Promi
 		).executionDate
 		: null
 
-	// Aggregate commission and fees from all executions
-	const totalCommission = executions.reduce(
-		(sum, e) => sum + (Number(e.commission) || 0), 0
-	)
-	const totalFees = executions.reduce(
-		(sum, e) => sum + (Number(e.fees) || 0), 0
-	)
+	// Use pre-computed values from summary
+	const { totalCommission, totalFees } = summary
 
 	// Calculate P&L when we have exits
 	let pnl: number | null = null
