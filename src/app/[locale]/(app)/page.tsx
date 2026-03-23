@@ -1,49 +1,36 @@
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import { DashboardContent } from "@/components/dashboard"
-import {
-	getOverallStats,
-	getDisciplineScore,
-	getEquityCurve,
-	getStreakData,
-	getDailyPnL,
-	getRadarChartData,
-} from "@/app/actions/analytics"
+import { getDashboardBatch } from "@/app/actions/analytics"
 import { getServerEffectiveNow } from "@/lib/effective-date"
-
-// Force dynamic rendering to ensure account-specific data
-export const dynamic = "force-dynamic"
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
 }
 
 const DashboardPage = async ({ params }: DashboardPageProps) => {
+	const pageStart = performance.now()
+
 	const { locale } = await params
 	setRequestLocale(locale)
 
 	const t = await getTranslations("dashboard")
 	const now = await getServerEffectiveNow()
 
-	const [statsResult, disciplineResult, equityCurveResult, streakResult, dailyPnLResult, radarResult] =
-		await Promise.all([
-			getOverallStats(),
-			getDisciplineScore(),
-			getEquityCurve(), // Fetch all time data by default
-			getStreakData(),
-			getDailyPnL(now.getFullYear(), now.getMonth()),
-			getRadarChartData(),
-		])
-
-	const stats = statsResult.status === "success" ? statsResult.data ?? null : null
-	const discipline = disciplineResult.status === "success" ? disciplineResult.data ?? null : null
-	const equityCurve = equityCurveResult.status === "success" ? equityCurveResult.data ?? [] : []
-	const streakData = streakResult.status === "success" ? streakResult.data ?? null : null
-	const dailyPnL = dailyPnLResult.status === "success" ? dailyPnLResult.data ?? [] : []
-	const radarData = radarResult.status === "success" ? radarResult.data ?? [] : []
-
-	// Pass month as year/month numbers to avoid Date serialization issues
 	const initialYear = now.getFullYear()
 	const initialMonthIndex = now.getMonth()
+
+	// Single batch query replaces 6 independent DB queries
+	const batchResult = await getDashboardBatch(initialYear, initialMonthIndex)
+
+	const stats = batchResult.status === "success" ? batchResult.data?.stats ?? null : null
+	const discipline = batchResult.status === "success" ? batchResult.data?.discipline ?? null : null
+	const equityCurve = batchResult.status === "success" ? batchResult.data?.equityCurve ?? [] : []
+	const streakData = batchResult.status === "success" ? batchResult.data?.streakData ?? null : null
+	const dailyPnL = batchResult.status === "success" ? batchResult.data?.dailyPnL ?? [] : []
+	const radarData = batchResult.status === "success" ? batchResult.data?.radarData ?? [] : []
+
+	const pageMs = (performance.now() - pageStart).toFixed(1)
+	console.log(`[YGORDEV:dashboard] SSR: ${pageMs}ms | queries: 1 (batched from 6)`)
 
 	return (
 		<div className="flex h-full flex-col">

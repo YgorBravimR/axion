@@ -33,8 +33,6 @@ import { getAssetBySymbol } from "@/app/actions/assets"
 import { DeleteTradeButton } from "./delete-button"
 import { TradeDetailGuide } from "@/components/journal/trade-detail-guide"
 
-// Force dynamic rendering to ensure account-specific data
-export const dynamic = "force-dynamic"
 
 interface TradeDetailPageProps {
 	params: Promise<{ id: string }>

@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { riskManagementProfiles } from "@/db/schema"
 import type { ActionResponse } from "@/types"
@@ -129,7 +129,7 @@ const createRiskProfile = async (
 			})
 			.returning()
 
-		revalidatePath("/settings")
+		invalidateSettingsData()
 
 		return {
 			status: "success",
@@ -200,7 +200,7 @@ const updateRiskProfile = async (
 			}
 		}
 
-		revalidatePath("/settings")
+		invalidateSettingsData()
 
 		return {
 			status: "success",
@@ -246,7 +246,7 @@ const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> 
 			.set({ isActive: false, updatedAt: new Date() })
 			.where(eq(riskManagementProfiles.id, id))
 
-		revalidatePath("/settings")
+		invalidateSettingsData()
 
 		return {
 			status: "success",

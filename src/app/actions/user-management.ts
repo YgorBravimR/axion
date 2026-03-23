@@ -1,7 +1,7 @@
 "use server"
 
 import { eq } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { users } from "@/db/schema"
 import { requireRole } from "@/lib/auth-utils"
@@ -78,7 +78,7 @@ const updateUserRole = async (
 		.set({ role, updatedAt: new Date() })
 		.where(eq(users.id, userId))
 
-	revalidatePath("/settings")
+	invalidateSettingsData()
 
 	return { success: true }
 }

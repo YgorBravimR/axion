@@ -30,6 +30,8 @@ const nextConfig: NextConfig = {
 	// bcryptjs and @neondatabase/serverless depend on Node.js built-ins
 	// that must be resolved at runtime, not compile time.
 	serverExternalPackages: ["bcryptjs"],
+	// Enable "use cache" directive + cacheTag/cacheLife for server-side caching
+	cacheComponents: true,
 	experimental: {
 		// Optimize package imports for better tree-shaking and faster dev boot
 		// recharts: ~300KB, lucide-react: ~2.8s dev cost without optimization

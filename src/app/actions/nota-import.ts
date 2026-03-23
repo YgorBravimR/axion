@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { trades, tradeExecutions, notaImports } from "@/db/schema"
 import type { ActionResponse } from "@/types"
@@ -337,8 +337,7 @@ export const enrichTradesFromNota = async (
 			status: errors.length > 0 ? "partial" : "completed",
 		})
 
-		revalidatePath("/journal")
-		revalidatePath("/")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: errors.length === confirmedMatches.length ? "error" : "success",

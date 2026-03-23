@@ -12,7 +12,7 @@ import {
 	index,
 	uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { relations } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm"
 
 // Enums
 export const tradeDirectionEnum = pgEnum("trade_direction", ["long", "short"])
@@ -484,6 +484,22 @@ export const trades = pgTable(
 		index("trades_strategy_idx").on(table.strategyId),
 		index("trades_timeframe_idx").on(table.timeframeId),
 		index("trades_dedup_hash_idx").on(table.deduplicationHash),
+
+		// Composite indexes for analytics queries
+		index("idx_trades_account_archived_date").on(
+			table.accountId,
+			table.isArchived,
+			table.entryDate
+		),
+		index("idx_trades_account_archived_outcome").on(
+			table.accountId,
+			table.isArchived,
+			table.outcome
+		),
+		// Partial index: smaller and faster for the common case (non-archived trades)
+		index("idx_trades_active_date")
+			.on(table.accountId, table.entryDate)
+			.where(sql`is_archived = false`),
 	]
 )
 

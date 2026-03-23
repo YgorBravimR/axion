@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { trades, tradeExecutions, assets } from "@/db/schema"
 import type { Trade, TradeExecution } from "@/db/schema"
@@ -115,7 +115,7 @@ export const createTradeFromOcr = async (
 	input: OcrImportInput
 ): Promise<ActionResponse<OcrImportResult>> => {
 	try {
-		const { accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 		const validated = ocrImportSchema.parse(input)
 
 		// Look up asset configuration
@@ -248,7 +248,7 @@ export const createTradeFromOcr = async (
 			.returning()
 
 		// Revalidate pages
-		revalidatePath("/journal")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -310,7 +310,7 @@ export const bulkCreateTradesFromOcr = async (
 	inputs: OcrImportInput[]
 ): Promise<ActionResponse<BulkOcrImportResult>> => {
 	try {
-		const { accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 
 		const result: BulkOcrImportResult = {
 			successCount: 0,
@@ -485,7 +485,7 @@ export const bulkCreateTradesFromOcr = async (
 		}
 
 		// Revalidate pages
-		revalidatePath("/journal")
+		invalidateTradeData(undefined, userId, accountId)
 
 		const message =
 			result.failedCount === 0

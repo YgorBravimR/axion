@@ -14,6 +14,9 @@ import { shouldIgnore } from "@/lib/sentry"
 const MAX_EVENTS_PER_ERROR = 3
 const errorEventCounts = new Map<string, number>()
 
+// Required by Next.js 16 — instruments client-side navigations for Sentry tracing
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
+
 Sentry.init({
 	dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 

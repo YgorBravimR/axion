@@ -3,7 +3,7 @@
 import { db } from "@/db/drizzle"
 import { settings, userSettings, tradingAccounts, users, type UserSettings } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import type { ActionResponse } from "@/types"
 import {
 	userSettingsSchema,
@@ -168,8 +168,7 @@ export const updateUserSettings = async (
 				})
 				.returning()
 
-			revalidatePath("/settings")
-			revalidatePath("/monthly")
+			invalidateSettingsData()
 
 			return {
 				status: "success",
@@ -218,8 +217,7 @@ export const updateUserSettings = async (
 			.where(eq(userSettings.userId, userId))
 			.returning()
 
-		revalidatePath("/settings")
-		revalidatePath("/monthly")
+		invalidateSettingsData()
 
 		return {
 			status: "success",
@@ -458,7 +456,7 @@ export const updateAccountBrand = async (
 			.set({ brand, updatedAt: new Date() })
 			.where(eq(tradingAccounts.id, accountId))
 
-		revalidatePath("/settings")
+		invalidateSettingsData()
 
 		return {
 			status: "success",

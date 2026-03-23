@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { getLocale } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import {
@@ -256,7 +256,7 @@ export const createTrade = async (
 		}
 
 		// Revalidate journal pages
-		revalidatePath("/journal")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -558,8 +558,7 @@ export const updateTrade = async (
 		}
 
 		// Revalidate journal pages
-		revalidatePath("/journal")
-		revalidatePath(`/journal/${id}`)
+		invalidateTradeData(id, userId, accountId)
 
 		return {
 			status: "success",
@@ -587,7 +586,7 @@ export const deleteTrade = async (
 	id: string
 ): Promise<ActionResponse<void>> => {
 	try {
-		const { accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 		const existing = await db.query.trades.findFirst({
 			where: and(eq(trades.id, id), eq(trades.accountId, accountId)),
 		})
@@ -606,7 +605,7 @@ export const deleteTrade = async (
 			.where(and(eq(trades.id, id), eq(trades.accountId, accountId)))
 
 		// Revalidate journal pages
-		revalidatePath("/journal")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -1286,8 +1285,7 @@ export const bulkCreateTrades = async (
 		}
 
 		// Revalidate journal pages
-		revalidatePath("/journal")
-		revalidatePath("/")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: result.failedCount === inputs.length ? "error" : "success",
@@ -1594,7 +1592,7 @@ export const createScaledTrade = async (
 		}
 
 		// Revalidate journal pages
-		revalidatePath("/journal")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -1917,9 +1915,7 @@ export const recalculateRValues = async (): Promise<
 			updatedCount++
 		}
 
-		revalidatePath("/")
-		revalidatePath("/journal")
-		revalidatePath("/analytics")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -2106,9 +2102,7 @@ export const recalculateAllTradesPnL = async (): Promise<
 			updatedCount++
 		}
 
-		revalidatePath("/")
-		revalidatePath("/journal")
-		revalidatePath("/analytics")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",

@@ -3,7 +3,7 @@
 import { db } from "@/db/drizzle"
 import { assetTypes, assets, type Asset, type AssetType } from "@/db/schema"
 import { eq, inArray, asc, desc } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import {
 	createAssetTypeSchema,
 	updateAssetTypeSchema,
@@ -82,7 +82,7 @@ export const createAssetType = async (
 		})
 		.returning()
 
-	revalidatePath("/settings")
+	invalidateSettingsData()
 
 	return { success: true, data: assetType }
 }
@@ -112,7 +112,7 @@ export const updateAssetType = async (
 		return { success: false, error: t("errors.assetTypeNotFound") }
 	}
 
-	revalidatePath("/settings")
+	invalidateSettingsData()
 
 	return { success: true, data: assetType }
 }
@@ -135,7 +135,7 @@ export const deleteAssetType = async (
 
 	await db.delete(assetTypes).where(eq(assetTypes.id, id))
 
-	revalidatePath("/settings")
+	invalidateSettingsData()
 
 	return { success: true }
 }
@@ -250,8 +250,7 @@ export const createAsset = async (
 		})
 		.returning()
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true, data: asset }
 }
@@ -301,8 +300,7 @@ export const updateAsset = async (
 		return { success: false, error: "Asset not found" }
 	}
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true, data: asset }
 }
@@ -313,8 +311,7 @@ export const deleteAsset = async (
 	await requireRole("admin")
 	await db.delete(assets).where(eq(assets.id, id))
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true }
 }
@@ -329,8 +326,7 @@ export const toggleAssetActive = async (
 		.set({ isActive, updatedAt: new Date() })
 		.where(eq(assets.id, id))
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true }
 }

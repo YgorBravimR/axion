@@ -120,6 +120,13 @@
       "when": 1774011024790,
       "tag": "0016_broad_thundra",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1774250358936,
+      "tag": "0017_blue_exodus",
+      "breakpoints": true
     }
   ]
 }

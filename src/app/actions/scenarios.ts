@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidatePlaybookData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { strategyScenarios, scenarioImages, strategies } from "@/db/schema"
 import type { StrategyScenario, ScenarioImage } from "@/db/schema"
@@ -54,7 +54,7 @@ const createScenario = async (
 			})
 			.returning()
 
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
@@ -121,7 +121,7 @@ const updateScenario = async (
 			.where(eq(strategyScenarios.id, id))
 			.returning()
 
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
@@ -172,7 +172,7 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 
 		await db.delete(strategyScenarios).where(eq(strategyScenarios.id, id))
 
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
@@ -279,7 +279,7 @@ const addScenarioImage = async (
 			.values({ scenarioId, url, s3Key, sortOrder })
 			.returning()
 
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
@@ -325,7 +325,7 @@ const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void
 
 		await db.delete(scenarioImages).where(eq(scenarioImages.id, imageId))
 
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",

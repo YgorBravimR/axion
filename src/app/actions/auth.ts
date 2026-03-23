@@ -1,7 +1,7 @@
 "use server"
 
 import { cache } from "react"
-import { revalidatePath } from "next/cache"
+import { invalidateAllData, invalidateSettingsData } from "@/lib/cache/invalidate"
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { getTranslations } from "next-intl/server"
@@ -464,7 +464,7 @@ export const switchAccount = async (
 
 		// Note: The actual session update happens via the update trigger in the JWT callback
 		// This requires the client to call update() on the session
-		revalidatePath("/")
+		invalidateAllData(session.user.id)
 
 		return { status: "success" }
 	} catch (error) {
@@ -478,13 +478,8 @@ export const switchAccount = async (
  * This ensures all cached data is refreshed with the new account's data
  */
 export const revalidateAfterAccountSwitch = async (): Promise<void> => {
-	revalidatePath("/")
-	revalidatePath("/journal")
-	revalidatePath("/reports")
-	revalidatePath("/analytics")
-	revalidatePath("/monthly")
-	revalidatePath("/playbook")
-	revalidatePath("/settings")
+	const session = await auth()
+	invalidateAllData(session?.user?.id)
 }
 
 // ==========================================
@@ -522,7 +517,7 @@ export const updateUserProfile = async (
 			})
 			.where(eq(users.id, session.user.id))
 
-		revalidatePath("/settings")
+		invalidateSettingsData(session.user.id)
 
 		return { status: "success" }
 	} catch (error) {

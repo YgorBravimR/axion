@@ -8,14 +8,14 @@ import { getCurrentUser } from "@/app/actions/auth"
 import { getAllUsersWithAccounts } from "@/app/actions/user-management"
 import { seedBuiltInRiskProfiles } from "@/app/actions/seed-risk-profiles"
 
-// Force dynamic rendering to ensure account-specific data
-export const dynamic = "force-dynamic"
 
 interface SettingsPageProps {
 	params: Promise<{ locale: string }>
 }
 
 const SettingsPage = async ({ params }: SettingsPageProps) => {
+	const pageStart = performance.now()
+
 	const { locale } = await params
 	setRequestLocale(locale)
 
@@ -34,6 +34,9 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 	}
 
 	const usersWithAccounts = isAdmin ? await getAllUsersWithAccounts() : []
+
+	const pageMs = (performance.now() - pageStart).toFixed(1)
+	console.log(`[YGORDEV:settings] SSR: ${pageMs}ms | queries: 4`)
 
 	return (
 		<div className="flex h-full flex-col">

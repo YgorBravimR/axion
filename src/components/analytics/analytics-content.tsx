@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useTransition, useRef } from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -23,18 +23,14 @@ import { GitCompareArrows } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { analyticsGuide } from "@/components/ui/page-guide/guide-configs/analytics"
-import {
-	getPerformanceByVariable,
-	getExpectedValue,
-	getRDistribution,
-	getEquityCurve,
-	getHourlyPerformance,
-	getDayOfWeekPerformance,
-	getTimeHeatmap,
-	getSessionPerformance,
-	getSessionAssetPerformance,
-} from "@/app/actions/analytics"
+import { getAnalyticsDashboard } from "@/app/actions/analytics"
 import { getTagStats } from "@/app/actions/tags"
+import {
+	getAnalyticsCacheEntry,
+	setAnalyticsCacheEntry,
+	clearAnalyticsCache,
+	getAnalyticsCacheSize,
+} from "@/lib/cache/analytics-cache"
 import type {
 	PerformanceByGroup,
 	TagStats,
@@ -46,6 +42,7 @@ import type {
 	TimeHeatmapCell,
 	SessionPerformance,
 	SessionAssetPerformance,
+	AnalyticsDashboardData,
 } from "@/types"
 
 interface TimeframeOption {
@@ -54,36 +51,35 @@ interface TimeframeOption {
 }
 
 interface AnalyticsContentProps {
-	initialPerformance: PerformanceByGroup[]
+	initialDashboard: AnalyticsDashboardData | null
 	initialTagStats: TagStats[]
-	initialExpectedValue: ExpectedValueData | null
-	initialRDistribution: RDistributionBucket[]
-	initialEquityCurve: EquityPoint[]
-	initialHourlyPerformance: HourlyPerformance[]
-	initialDayOfWeekPerformance: DayOfWeekPerformance[]
-	initialTimeHeatmap: TimeHeatmapCell[]
-	initialSessionPerformance: SessionPerformance[]
-	initialSessionAssetPerformance: SessionAssetPerformance[]
 	availableAssets: string[]
 	availableTimeframes: TimeframeOption[]
 	accountCount?: number
 }
 
 /** Converts FilterState to the TradeFilters format expected by server actions */
-const toTradeFilters = (f: FilterState) => ({
+const toTradeFilters = (f: FilterState, groupBy: string) => ({
 	dateFrom: f.dateFrom || undefined,
 	dateTo: f.dateTo || undefined,
 	assets: f.assets.length > 0 ? f.assets : undefined,
 	directions: f.directions.length > 0 ? f.directions : undefined,
 	outcomes: f.outcomes.length > 0 ? f.outcomes : undefined,
 	timeframeIds: f.timeframeIds.length > 0 ? f.timeframeIds : undefined,
+	groupBy: groupBy as "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy",
 })
 
-/** Creates a stable string key from filters + groupBy for change detection */
+/**
+ * Creates a stable string key from filters + groupBy for change detection.
+ * Dates are rounded to the nearest minute so that "Este Mês" clicked 30s apart
+ * produces the same key — enabling client cache hits.
+ */
+const roundToMinute = (ms: number) => Math.floor(ms / 60_000) * 60_000
+
 const toFilterKey = (f: FilterState, groupBy: string): string =>
 	JSON.stringify({
-		dateFrom: f.dateFrom?.getTime() ?? null,
-		dateTo: f.dateTo?.getTime() ?? null,
+		dateFrom: f.dateFrom ? roundToMinute(f.dateFrom.getTime()) : null,
+		dateTo: f.dateTo ? roundToMinute(f.dateTo.getTime()) : null,
 		assets: f.assets,
 		directions: f.directions,
 		outcomes: f.outcomes,
@@ -91,22 +87,38 @@ const toFilterKey = (f: FilterState, groupBy: string): string =>
 		groupBy,
 	})
 
+const EMPTY_DASHBOARD: AnalyticsDashboardData = {
+	performance: [],
+	expectedValue: {
+		winRate: 0,
+		avgWin: 0,
+		avgLoss: 0,
+		expectedValue: 0,
+		projectedPnl100: 0,
+		sampleSize: 0,
+		avgWinR: 0,
+		avgLossR: 0,
+		expectedR: 0,
+		projectedR100: 0,
+		rSampleSize: 0,
+	},
+	rDistribution: [],
+	equityCurve: [],
+	hourlyPerformance: [],
+	dayOfWeekPerformance: [],
+	timeHeatmap: [],
+	sessionPerformance: [],
+	sessionAssetPerformance: [],
+}
+
 /**
  * Main analytics dashboard component.
  * Filters, groupBy, and expectancyMode are driven by URL params.
- * Uses parallel data fetching for optimal performance when filters change.
+ * Uses a single batch endpoint for optimal performance when filters change.
  */
 const AnalyticsContent = ({
-	initialPerformance,
+	initialDashboard,
 	initialTagStats,
-	initialExpectedValue,
-	initialRDistribution,
-	initialEquityCurve,
-	initialHourlyPerformance,
-	initialDayOfWeekPerformance,
-	initialTimeHeatmap,
-	initialSessionPerformance,
-	initialSessionAssetPerformance,
 	availableAssets,
 	availableTimeframes,
 	accountCount,
@@ -122,55 +134,63 @@ const AnalyticsContent = ({
 	// Read all filter state from URL params
 	const { filters, groupBy, expectancyMode, setGroupBy } = useAnalyticsFilters()
 
-	const [performance, setPerformance] =
-		useState<PerformanceByGroup[]>(initialPerformance)
+	const dashboard = initialDashboard ?? EMPTY_DASHBOARD
+
+	const [performanceData, setPerformanceData] =
+		useState<PerformanceByGroup[]>(dashboard.performance)
 	const [tagStats, setTagStats] = useState<TagStats[]>(initialTagStats)
 	const [expectedValue, setExpectedValue] = useState<ExpectedValueData | null>(
-		initialExpectedValue
+		dashboard.expectedValue
 	)
 	const [rDistribution, setRDistribution] =
-		useState<RDistributionBucket[]>(initialRDistribution)
+		useState<RDistributionBucket[]>(dashboard.rDistribution)
 	const [equityCurve, setEquityCurve] =
-		useState<EquityPoint[]>(initialEquityCurve)
+		useState<EquityPoint[]>(dashboard.equityCurve)
 	const [hourlyPerformance, setHourlyPerformance] = useState<
 		HourlyPerformance[]
-	>(initialHourlyPerformance)
+	>(dashboard.hourlyPerformance)
 	const [dayOfWeekPerformance, setDayOfWeekPerformance] = useState<
 		DayOfWeekPerformance[]
-	>(initialDayOfWeekPerformance)
+	>(dashboard.dayOfWeekPerformance)
 	const [timeHeatmap, setTimeHeatmap] =
-		useState<TimeHeatmapCell[]>(initialTimeHeatmap)
+		useState<TimeHeatmapCell[]>(dashboard.timeHeatmap)
 	const [sessionPerformance, setSessionPerformance] = useState<
 		SessionPerformance[]
-	>(initialSessionPerformance)
+	>(dashboard.sessionPerformance)
 	const [sessionAssetPerformance, setSessionAssetPerformance] = useState<
 		SessionAssetPerformance[]
-	>(initialSessionAssetPerformance)
+	>(dashboard.sessionAssetPerformance)
 
-	// Reset all analytics state when initial props change (e.g., account switch)
+	// Track account identity — clear cache only on account switch, not on every SSR re-render
+	const accountKey = availableAssets.join(",")
+	const lastAccountKey = useRef(accountKey)
+
+	// Reset analytics state when initial props change (SSR re-render)
 	useEffect(() => {
-		setPerformance(initialPerformance)
-		setTagStats(initialTagStats)
-		setExpectedValue(initialExpectedValue)
-		setRDistribution(initialRDistribution)
-		setEquityCurve(initialEquityCurve)
-		setHourlyPerformance(initialHourlyPerformance)
-		setDayOfWeekPerformance(initialDayOfWeekPerformance)
-		setTimeHeatmap(initialTimeHeatmap)
-		setSessionPerformance(initialSessionPerformance)
-		setSessionAssetPerformance(initialSessionAssetPerformance)
-	}, [
-		initialPerformance,
-		initialTagStats,
-		initialExpectedValue,
-		initialRDistribution,
-		initialEquityCurve,
-		initialHourlyPerformance,
-		initialDayOfWeekPerformance,
-		initialTimeHeatmap,
-		initialSessionPerformance,
-		initialSessionAssetPerformance,
-	])
+		const d = initialDashboard ?? EMPTY_DASHBOARD
+		applyDashboard(d, initialTagStats)
+
+		// Only clear module cache on account switch (not filter/URL changes which also trigger SSR)
+		if (lastAccountKey.current !== accountKey) {
+			lastAccountKey.current = accountKey
+			clearAnalyticsCache()
+			console.log(`[YGORDEV] 🔄 Account changed — cache cleared`)
+		}
+	}, [initialDashboard, initialTagStats, accountKey])
+
+	// Applies dashboard + tag data to all state variables
+	const applyDashboard = (d: AnalyticsDashboardData, tags: TagStats[]) => {
+		setPerformanceData(d.performance)
+		setExpectedValue(d.expectedValue)
+		setRDistribution(d.rDistribution)
+		setEquityCurve(d.equityCurve)
+		setHourlyPerformance(d.hourlyPerformance)
+		setDayOfWeekPerformance(d.dayOfWeekPerformance)
+		setTimeHeatmap(d.timeHeatmap)
+		setSessionPerformance(d.sessionPerformance)
+		setSessionAssetPerformance(d.sessionAssetPerformance)
+		setTagStats(tags)
+	}
 
 	// Stable key for current filters — drives refetch when URL params change
 	const filterKey = toFilterKey(filters, groupBy)
@@ -180,53 +200,52 @@ const AnalyticsContent = ({
 	const [lastFetchedKey, setLastFetchedKey] = useState(filterKey)
 
 	useEffect(() => {
-		if (filterKey === lastFetchedKey) return
+		if (filterKey === lastFetchedKey) {
+			console.log(`[YGORDEV] ⏭️ SKIP — filterKey unchanged`)
+			return
+		}
 
+		console.log(
+			`[YGORDEV] 🔄 filterKey changed: ${lastFetchedKey.slice(0, 40)}... → ${filterKey.slice(0, 40)}...`
+		)
 		setLastFetchedKey(filterKey)
-		startTransition(async () => {
-			const tradeFilters = toTradeFilters(filters)
 
-			const [
-				perfResult,
-				tagResult,
-				evResult,
-				rDistResult,
-				equityResult,
-				hourlyResult,
-				dayOfWeekResult,
-				heatmapResult,
-				sessionResult,
-				sessionAssetResult,
-			] = await Promise.all([
-				getPerformanceByVariable(groupBy, tradeFilters),
+		// Check module-level cache first — persists across navigations
+		const cached = getAnalyticsCacheEntry(filterKey)
+		if (cached) {
+			console.log(`[YGORDEV] cache HIT — filterKey: ${filterKey}`)
+			applyDashboard(cached.dashboard, cached.tags)
+			return
+		}
+
+		console.log(`[YGORDEV] FETCHING from server — filterKey: ${filterKey}`)
+		startTransition(async () => {
+			const fetchStart = globalThis.performance.now()
+			const tradeFilters = toTradeFilters(filters, groupBy)
+
+			const [dashResult, tagResult] = await Promise.all([
+				getAnalyticsDashboard(tradeFilters),
 				getTagStats(tradeFilters),
-				getExpectedValue(tradeFilters),
-				getRDistribution(tradeFilters),
-				getEquityCurve(tradeFilters.dateFrom, tradeFilters.dateTo),
-				getHourlyPerformance(tradeFilters),
-				getDayOfWeekPerformance(tradeFilters),
-				getTimeHeatmap(tradeFilters),
-				getSessionPerformance(tradeFilters),
-				getSessionAssetPerformance(tradeFilters),
 			])
 
-			if (perfResult.status === "success") setPerformance(perfResult.data ?? [])
-			if (tagResult.status === "success") setTagStats(tagResult.data ?? [])
-			if (evResult.status === "success") setExpectedValue(evResult.data ?? null)
-			if (rDistResult.status === "success")
-				setRDistribution(rDistResult.data ?? [])
-			if (equityResult.status === "success")
-				setEquityCurve(equityResult.data ?? [])
-			if (hourlyResult.status === "success")
-				setHourlyPerformance(hourlyResult.data ?? [])
-			if (dayOfWeekResult.status === "success")
-				setDayOfWeekPerformance(dayOfWeekResult.data ?? [])
-			if (heatmapResult.status === "success")
-				setTimeHeatmap(heatmapResult.data ?? [])
-			if (sessionResult.status === "success")
-				setSessionPerformance(sessionResult.data ?? [])
-			if (sessionAssetResult.status === "success")
-				setSessionAssetPerformance(sessionAssetResult.data ?? [])
+			const fetchMs = (globalThis.performance.now() - fetchStart).toFixed(1)
+			console.log(`[YGORDEV] Server responded in ${fetchMs}ms`)
+
+			const dashData =
+				dashResult.status === "success" && dashResult.data
+					? dashResult.data
+					: null
+			const tagData =
+				tagResult.status === "success" ? (tagResult.data ?? []) : tagStats
+
+			if (dashData) {
+				// Store in module cache — persists across navigations
+				setAnalyticsCacheEntry(filterKey, dashData, tagData)
+				console.log(
+					`[YGORDEV] Cached result — cache size: ${getAnalyticsCacheSize()}`
+				)
+				applyDashboard(dashData, tagData)
+			}
 		})
 	}, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -259,7 +278,7 @@ const AnalyticsContent = ({
 
 			{/* Variable Comparison - Full Width */}
 			<VariableComparison
-				data={performance}
+				data={performanceData}
 				groupBy={groupBy}
 				onGroupByChange={setGroupBy}
 			/>

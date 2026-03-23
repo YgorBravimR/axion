@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateTagData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { tags, tradeTags, trades } from "@/db/schema"
 import type { Tag } from "@/db/schema"
@@ -35,7 +35,7 @@ export const createTag = async (
 	input: CreateTagInput
 ): Promise<ActionResponse<Tag>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 		const validated = createTagSchema.parse(input)
 
 		const [tag] = await db
@@ -49,9 +49,7 @@ export const createTag = async (
 			})
 			.returning()
 
-		revalidatePath("/analytics")
-		revalidatePath("/journal")
-		revalidatePath("/settings")
+		invalidateTagData(userId, accountId)
 
 		return {
 			status: "success",
@@ -97,7 +95,7 @@ export const updateTag = async (
 	input: Partial<CreateTagInput>
 ): Promise<ActionResponse<Tag>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 
 		const existing = await db.query.tags.findFirst({
 			where: and(eq(tags.id, id), eq(tags.userId, userId)),
@@ -124,9 +122,7 @@ export const updateTag = async (
 			.where(and(eq(tags.id, id), eq(tags.userId, userId)))
 			.returning()
 
-		revalidatePath("/analytics")
-		revalidatePath("/journal")
-		revalidatePath("/settings")
+		invalidateTagData(userId, accountId)
 
 		return {
 			status: "success",
@@ -332,7 +328,7 @@ export const getTagStats = async (
  */
 export const deleteTag = async (id: string): Promise<ActionResponse<void>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 
 		const existing = await db.query.tags.findFirst({
 			where: and(eq(tags.id, id), eq(tags.userId, userId)),
@@ -349,9 +345,7 @@ export const deleteTag = async (id: string): Promise<ActionResponse<void>> => {
 		// Delete will cascade to trade_tags due to onDelete: "cascade"
 		await db.delete(tags).where(and(eq(tags.id, id), eq(tags.userId, userId)))
 
-		revalidatePath("/analytics")
-		revalidatePath("/journal")
-		revalidatePath("/settings")
+		invalidateTagData(userId, accountId)
 
 		return {
 			status: "success",

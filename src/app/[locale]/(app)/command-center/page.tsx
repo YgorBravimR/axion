@@ -18,8 +18,6 @@ import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
 
-// Force dynamic rendering to ensure account-specific data
-export const dynamic = "force-dynamic"
 
 interface CommandCenterPageProps {
 	params: Promise<{ locale: string }>
@@ -32,6 +30,8 @@ const isSameDay = (a: Date, b: Date): boolean =>
 	a.getDate() === b.getDate()
 
 const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProps) => {
+	const pageStart = performance.now()
+
 	const { locale } = await params
 	const { date: dateParam } = await searchParams
 	setRequestLocale(locale)
@@ -119,6 +119,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 			: null,
 		maxDailyLoss: initialPlan?.dailyLossCents ? Number(initialPlan.dailyLossCents) : null,
 	}
+
+	const pageMs = (performance.now() - pageStart).toFixed(1)
+	console.log(`[YGORDEV:command-center] SSR: ${pageMs}ms | queries: 11`)
 
 	return (
 		<div className="flex h-full flex-col">

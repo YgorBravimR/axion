@@ -3,16 +3,19 @@ import { setRequestLocale } from "next-intl/server"
 import { JournalContent } from "@/components/journal"
 import { LoadingSpinner } from "@/components/shared"
 
-// Force dynamic rendering to ensure account-specific data
-export const dynamic = "force-dynamic"
 
 interface JournalPageProps {
 	params: Promise<{ locale: string }>
 }
 
 const JournalPage = async ({ params }: JournalPageProps) => {
+	const pageStart = performance.now()
+
 	const { locale } = await params
 	setRequestLocale(locale)
+
+	const pageMs = (performance.now() - pageStart).toFixed(1)
+	console.log(`[YGORDEV:journal] SSR: ${pageMs}ms | queries: 0`)
 
 	return (
 		<div className="flex h-full flex-col">

@@ -24,6 +24,7 @@ import type {
 	TradingSession,
 	SessionPerformance,
 	SessionAssetPerformance,
+	AnalyticsDashboardData,
 } from "@/types"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import {
@@ -40,6 +41,8 @@ import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getTranslations } from "next-intl/server"
+import { getCachedAnalyticsDashboard, getCachedDashboardData } from "@/lib/cache/cached-queries"
+import type { DashboardBatchData } from "@/types"
 
 interface AccountFilter {
 	accountId: string
@@ -94,15 +97,9 @@ export const getOverallStats = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, { dateFrom, dateTo })
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -220,16 +217,10 @@ export const getDisciplineScore = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, { dateFrom, dateTo })
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 			orderBy: [desc(trades.entryDate)],
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		const tradesWithPlanData = result.filter((t) => t.followedPlan !== null)
 		const followedCount = tradesWithPlanData.filter(
@@ -328,16 +319,10 @@ export const getEquityCurve = async (
 			conditions.push(lte(trades.entryDate, dateTo))
 		}
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 			orderBy: [asc(trades.entryDate)],
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -447,7 +432,7 @@ export const getDailyPnL = async (
 		const startOfMonth = getStartOfMonth(refDate)
 		const endOfMonth = getEndOfMonth(refDate)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(
 				accountCondition,
 				eq(trades.isArchived, false),
@@ -456,12 +441,6 @@ export const getDailyPnL = async (
 			),
 			orderBy: [asc(trades.entryDate)],
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		// Group by date using local timezone
 		const dailyMap = new Map<string, { pnl: number; count: number }>()
@@ -524,16 +503,10 @@ export const getStreakData = async (
 			conditions.push(lte(trades.entryDate, dateTo))
 		}
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 			orderBy: [desc(trades.entryDate)],
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -651,19 +624,13 @@ export const getPerformanceByVariable = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 			with: {
 				strategy: true,
 				timeframe: true,
 			},
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -802,15 +769,9 @@ export const getExpectedValue = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		const tradesWithOutcome = result.filter(
 			(t) => t.outcome === "win" || t.outcome === "loss"
@@ -932,15 +893,9 @@ export const getRDistribution = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		// Filter trades with R-multiple data
 		const tradesWithR = result.filter((t) => t.realizedRMultiple !== null)
@@ -1016,15 +971,9 @@ export const getHourlyPerformance = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -1131,15 +1080,9 @@ export const getDayOfWeekPerformance = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -1282,15 +1225,9 @@ export const getTimeHeatmap = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -1410,7 +1347,7 @@ export const getDaySummary = async (
 		const endOfDay = new Date(date)
 		endOfDay.setHours(23, 59, 59, 999)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(
 				accountCondition,
 				eq(trades.isArchived, false),
@@ -1418,12 +1355,6 @@ export const getDaySummary = async (
 				lte(trades.entryDate, endOfDay)
 			),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		const dateKey = formatDateKey(date)
 
@@ -1670,15 +1601,9 @@ export const getRadarChartData = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -1846,15 +1771,9 @@ export const getSessionPerformance = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -1975,15 +1894,9 @@ export const getSessionAssetPerformance = async (
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
 
-		const rawResult = await db.query.trades.findMany({
+		const result = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -2111,6 +2024,71 @@ export const getSessionAssetPerformance = async (
 				{
 					code: "FETCH_FAILED",
 					detail: toSafeErrorMessage(error, "getSessionAssetPerformance"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Batch analytics endpoint — fetches trades ONCE and computes all metrics.
+ * Replaces 10+ individual server actions with a single DB query.
+ */
+export const getAnalyticsDashboard = async (
+	filters?: TradeFilters
+): Promise<ActionResponse<AnalyticsDashboardData>> => {
+	try {
+		const authContext = await requireAuth()
+		const data = await getCachedAnalyticsDashboard(authContext, filters)
+
+		return {
+			status: "success",
+			message: "Analytics dashboard retrieved",
+			data,
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: "Failed to retrieve analytics dashboard",
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getAnalyticsDashboard"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Batched dashboard endpoint — fetches trades ONCE and computes all 6 dashboard
+ * metrics (stats, discipline, equity curve, streaks, daily P&L, radar).
+ * Replaces 6 independent server actions with 1 DB query (+ 1 for settings).
+ *
+ * @param year - Year for daily P&L calendar (e.g. 2026)
+ * @param monthIndex - Month index for daily P&L (0-based, 0 = January)
+ */
+export const getDashboardBatch = async (
+	year: number,
+	monthIndex: number
+): Promise<ActionResponse<DashboardBatchData>> => {
+	try {
+		const authContext = await requireAuth()
+		const data = await getCachedDashboardData(authContext, year, monthIndex)
+
+		return {
+			status: "success",
+			message: "Dashboard data retrieved",
+			data,
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: "Failed to retrieve dashboard data",
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getDashboardBatch"),
 				},
 			],
 		}

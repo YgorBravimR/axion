@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { tradeExecutions, trades } from "@/db/schema"
 import type { TradeExecution } from "@/db/schema"
@@ -283,8 +283,7 @@ export const createExecution = async (
 		await updateTradeAggregates(validated.tradeId, dek)
 
 		// Revalidate pages
-		revalidatePath("/journal")
-		revalidatePath(`/journal/${validated.tradeId}`)
+		invalidateTradeData(validated.tradeId, userId, accountId)
 
 		// Decrypt before returning
 		const decryptedExecution = dek
@@ -433,8 +432,7 @@ export const updateExecution = async (
 		await updateTradeAggregates(existing.tradeId, dek)
 
 		// Revalidate pages
-		revalidatePath("/journal")
-		revalidatePath(`/journal/${existing.tradeId}`)
+		invalidateTradeData(existing.tradeId, userId, accountId)
 
 		// Decrypt before returning
 		const decryptedExecution = dek
@@ -501,8 +499,7 @@ export const deleteExecution = async (
 		}
 
 		// Revalidate pages
-		revalidatePath("/journal")
-		revalidatePath(`/journal/${tradeId}`)
+		invalidateTradeData(tradeId, userId, accountId)
 
 		return {
 			status: "success",
@@ -736,8 +733,7 @@ export const convertToScaledMode = async (
 		await updateTradeAggregates(tradeId, dek)
 
 		// Revalidate pages
-		revalidatePath("/journal")
-		revalidatePath(`/journal/${tradeId}`)
+		invalidateTradeData(tradeId, userId, accountId)
 
 		return {
 			status: "success",
@@ -804,9 +800,7 @@ export const recalculateTradeFromExecutions = async (
 		const summary = calculateExecutionSummary(executions)
 
 		// Revalidate pages
-		revalidatePath("/journal")
-		revalidatePath(`/journal/${tradeId}`)
-
+		invalidateTradeData(tradeId, userId, accountId)
 		return {
 			status: "success",
 			message: "Trade recalculated from executions successfully",

@@ -3,7 +3,7 @@
 import { db } from "@/db/drizzle"
 import { timeframes, type Timeframe } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import {
 	createTimeframeSchema,
 	updateTimeframeSchema,
@@ -93,8 +93,7 @@ export const createTimeframe = async (
 		})
 		.returning()
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true, data: timeframe }
 }
@@ -136,8 +135,7 @@ export const updateTimeframe = async (
 		return { success: false, error: "Timeframe not found" }
 	}
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true, data: timeframe }
 }
@@ -148,8 +146,7 @@ export const deleteTimeframe = async (
 	await requireRole("admin")
 	await db.delete(timeframes).where(eq(timeframes.id, id))
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true }
 }
@@ -164,8 +161,7 @@ export const toggleTimeframeActive = async (
 		.set({ isActive })
 		.where(eq(timeframes.id, id))
 
-	revalidatePath("/settings")
-	revalidatePath("/journal")
+	invalidateSettingsData()
 
 	return { success: true }
 }
@@ -181,7 +177,7 @@ export const reorderTimeframes = async (
 			.where(eq(timeframes.id, orderedIds[i]))
 	}
 
-	revalidatePath("/settings")
+	invalidateSettingsData()
 
 	return { success: true }
 }

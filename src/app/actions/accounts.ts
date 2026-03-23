@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateAccountData } from "@/lib/cache/invalidate"
 import { eq, and } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import {
@@ -157,7 +157,7 @@ export const createAccount = async (
 			})
 			.returning()
 
-		revalidatePath("/settings")
+		invalidateAccountData()
 
 		// Decrypt fields before returning
 		const decryptedAccount = dek ? decryptAccountFields(newAccount as unknown as Record<string, unknown>, dek) as unknown as TradingAccount : newAccount
@@ -254,7 +254,7 @@ export const updateAccount = async (
 			.where(eq(tradingAccounts.id, accountId))
 			.returning()
 
-		revalidatePath("/settings")
+		invalidateAccountData()
 
 		// Decrypt fields before returning
 		const decryptedAccount = dek ? decryptAccountFields(updated as unknown as Record<string, unknown>, dek) as unknown as TradingAccount : updated
@@ -306,8 +306,7 @@ export const deleteAccount = async (
 		// Delete account (cascades to trades, strategies, tags)
 		await db.delete(tradingAccounts).where(eq(tradingAccounts.id, accountId))
 
-		revalidatePath("/settings")
-		revalidatePath("/command-center")
+		invalidateAccountData()
 
 		return { status: "success", shouldLogout: isLastAccount }
 	} catch (error) {
@@ -343,7 +342,7 @@ export const deleteAllTradingData = async (): Promise<{
 		await db.delete(dailyAssetSettings).where(eq(dailyAssetSettings.accountId, accountId))
 		await db.delete(notaImports).where(eq(notaImports.accountId, accountId))
 
-		revalidatePath("/")
+		invalidateAccountData()
 
 		return { status: "success" }
 	} catch (error) {
@@ -387,7 +386,7 @@ export const setDefaultAccount = async (
 			.set({ isDefault: true })
 			.where(eq(tradingAccounts.id, accountId))
 
-		revalidatePath("/settings")
+		invalidateAccountData()
 
 		return { status: "success" }
 	} catch (error) {
@@ -445,7 +444,7 @@ export const advanceReplayDate = async (): Promise<{
 			.where(eq(tradingAccounts.id, account.id))
 			.returning()
 
-		revalidatePath("/command-center")
+		invalidateAccountData()
 
 		// Decrypt fields before returning
 		const dek = await getUserDek(session.user.id)
@@ -591,7 +590,7 @@ export const updateAccountAsset = async (
 			})
 		}
 
-		revalidatePath("/settings")
+		invalidateAccountData()
 
 		return { status: "success" }
 	} catch (error) {
@@ -718,7 +717,7 @@ export const updateAccountTimeframe = async (
 			})
 		}
 
-		revalidatePath("/settings")
+		invalidateAccountData()
 
 		return { status: "success" }
 	} catch (error) {

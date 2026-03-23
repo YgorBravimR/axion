@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateMonthlyPlanData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { monthlyPlans, trades } from "@/db/schema"
 import type { MonthlyPlan } from "@/db/schema"
@@ -194,7 +194,7 @@ export const upsertMonthlyPlan = async (
 				.where(eq(monthlyPlans.id, existing.id))
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateMonthlyPlanData()
 
 			// Decrypt before returning
 			const decryptedPlan = dek
@@ -220,7 +220,7 @@ export const upsertMonthlyPlan = async (
 			})
 			.returning()
 
-		revalidatePath("/command-center")
+		invalidateMonthlyPlanData()
 
 		// Decrypt before returning
 		const decryptedNewPlan = dek
@@ -404,7 +404,7 @@ export const rolloverMonthlyPlan = async (
 				.where(eq(monthlyPlans.id, existingCurrentPlan.id))
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateMonthlyPlanData()
 
 			const decryptedUpdatedPlan = dek
 				? decryptMonthlyPlanFields(updatedPlan as unknown as Record<string, unknown>, dek) as unknown as MonthlyPlan
@@ -428,7 +428,7 @@ export const rolloverMonthlyPlan = async (
 			})
 			.returning()
 
-		revalidatePath("/command-center")
+		invalidateMonthlyPlanData()
 
 		const decryptedNewPlan = dek
 			? decryptMonthlyPlanFields(newPlan as unknown as Record<string, unknown>, dek) as unknown as MonthlyPlan

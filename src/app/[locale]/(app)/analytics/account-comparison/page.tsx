@@ -4,7 +4,6 @@ import { requireRole } from "@/lib/auth-utils"
 import { getUserAccounts } from "@/app/actions/auth"
 import { AccountComparisonContent } from "@/components/account-comparison"
 
-export const dynamic = "force-dynamic"
 
 interface AccountComparisonPageProps {
 	params: Promise<{ locale: string }>

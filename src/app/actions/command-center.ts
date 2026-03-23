@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import {
 	dailyChecklists,
@@ -97,7 +97,7 @@ export const createChecklist = async (
 			})
 			.returning()
 
-		revalidatePath("/command-center")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -163,7 +163,7 @@ export const updateChecklist = async (
 			.where(eq(dailyChecklists.id, id))
 			.returning()
 
-		revalidatePath("/command-center")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -218,7 +218,7 @@ export const deleteChecklist = async (id: string): Promise<ActionResponse<void>>
 			.set({ isActive: false, updatedAt: new Date() })
 			.where(eq(dailyChecklists.id, id))
 
-		revalidatePath("/command-center")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
@@ -315,7 +315,7 @@ export const toggleChecklistItem = async (
 	completed: boolean
 ): Promise<ActionResponse<ChecklistCompletion>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 
 		// Validate input
 		const validated = updateCompletionSchema.parse({ checklistId, itemId, completed })
@@ -367,7 +367,7 @@ export const toggleChecklistItem = async (
 				.where(eq(checklistCompletions.id, existing.id))
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateTradeData(undefined, userId, accountId)
 
 			return {
 				status: "success",
@@ -389,7 +389,7 @@ export const toggleChecklistItem = async (
 				})
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateTradeData(undefined, userId, accountId)
 
 			return {
 				status: "success",
@@ -511,7 +511,7 @@ export const upsertDailyNotes = async (
 				.where(eq(dailyAccountNotes.id, existing.id))
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateTradeData(undefined, userId, accountId)
 
 			// Decrypt before returning
 			const decryptedNotes = dek
@@ -538,7 +538,7 @@ export const upsertDailyNotes = async (
 				})
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateTradeData(undefined, userId, accountId)
 
 			// Decrypt before returning
 			const decryptedNotes = dek
@@ -696,7 +696,7 @@ export const upsertAssetSettings = async (
 				.where(eq(accountAssetSettings.id, existing.id))
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateTradeData(undefined, userId, accountId)
 
 			return {
 				status: "success",
@@ -718,7 +718,7 @@ export const upsertAssetSettings = async (
 				})
 				.returning()
 
-			revalidatePath("/command-center")
+			invalidateTradeData(undefined, userId, accountId)
 
 			return {
 				status: "success",
@@ -774,7 +774,7 @@ export const deleteAssetSettings = async (assetId: string): Promise<ActionRespon
 			.set({ isActive: false, updatedAt: new Date() })
 			.where(eq(accountAssetSettings.id, existing.id))
 
-		revalidatePath("/command-center")
+		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",

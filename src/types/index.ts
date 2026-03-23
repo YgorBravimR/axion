@@ -37,6 +37,7 @@ export interface TradeFilters {
 	strategyIds?: string[]
 	tagIds?: string[]
 	timeframeIds?: string[]
+	groupBy?: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 }
 
 export interface PaginationParams {
@@ -275,6 +276,16 @@ export interface RadarChartData {
 	benchmark?: number
 }
 
+/** Batched dashboard data — single DB query instead of 6 */
+export interface DashboardBatchData {
+	stats: OverallStats
+	discipline: DisciplineData
+	equityCurve: EquityPoint[]
+	streakData: StreakData
+	dailyPnL: DailyPnL[]
+	radarData: RadarChartData[]
+}
+
 // B3 Trading Session Types
 export type TradingSession = "preOpen" | "morning" | "afternoon" | "close"
 
@@ -357,4 +368,17 @@ export interface AccountComparisonMetrics {
 
 export interface AccountComparisonData {
 	accounts: AccountComparisonMetrics[]
+}
+
+// Batch analytics dashboard response
+export interface AnalyticsDashboardData {
+	performance: PerformanceByGroup[]
+	expectedValue: ExpectedValueData
+	rDistribution: RDistributionBucket[]
+	equityCurve: EquityPoint[]
+	hourlyPerformance: HourlyPerformance[]
+	dayOfWeekPerformance: DayOfWeekPerformance[]
+	timeHeatmap: TimeHeatmapCell[]
+	sessionPerformance: SessionPerformance[]
+	sessionAssetPerformance: SessionAssetPerformance[]
 }

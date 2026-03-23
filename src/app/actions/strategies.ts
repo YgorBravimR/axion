@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidateStrategyData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import {
 	strategies,
@@ -75,7 +75,7 @@ export const createStrategy = async (
 	input: CreateStrategyInput
 ): Promise<ActionResponse<Strategy>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 		const validated = createStrategySchema.parse(input)
 
 		const [strategy] = await db
@@ -109,8 +109,7 @@ export const createStrategy = async (
 			)
 		}
 
-		revalidatePath("/playbook")
-		revalidatePath("/journal")
+		invalidateStrategyData(userId, accountId)
 
 		return {
 			status: "success",
@@ -164,7 +163,7 @@ export const updateStrategy = async (
 	input: UpdateStrategyInput
 ): Promise<ActionResponse<Strategy>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 
 		const existing = await db.query.strategies.findFirst({
 			where: and(eq(strategies.id, id), eq(strategies.userId, userId)),
@@ -238,8 +237,7 @@ export const updateStrategy = async (
 			}
 		}
 
-		revalidatePath("/playbook")
-		revalidatePath("/journal")
+		invalidateStrategyData(userId, accountId)
 
 		return {
 			status: "success",
@@ -293,7 +291,7 @@ export const deleteStrategy = async (
 	hardDelete = false
 ): Promise<ActionResponse<void>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 
 		const existing = await db.query.strategies.findFirst({
 			where: and(eq(strategies.id, id), eq(strategies.userId, userId)),
@@ -320,8 +318,7 @@ export const deleteStrategy = async (
 				.where(and(eq(strategies.id, id), eq(strategies.userId, userId)))
 		}
 
-		revalidatePath("/playbook")
-		revalidatePath("/journal")
+		invalidateStrategyData(userId, accountId)
 
 		return {
 			status: "success",

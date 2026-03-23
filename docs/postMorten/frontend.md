@@ -41,3 +41,38 @@
 > **[FIX-2026-03-19]** `Severity: Low` — **Affected:** `src/components/command-center/circuit-breaker-panel.tsx`
 > **Report:** "Circuit Breaker card shows `$` prefix instead of `R$` for all monetary values (P&L Diario, P&L Mensal, Meta, Limite Mensal, Risco Diario Restante)"
 > **Fix:** Removed the local `formatCurrency(value, currency = "$")` function and `currency` prop. Replaced with `useFormatting` hook's locale-aware `formatCurrency` which correctly resolves to `R$` for pt-BR locale. Removed all `currency` parameter references from `formatCurrency` calls throughout the component.
+
+---
+
+## [BUG-2026-03-23] Analytics page crashes when clicking date filter ("This Month")
+
+**Date:** 2026-03-23
+**Severity:** High
+**Affected Area:** `src/components/analytics/analytics-content.tsx`
+
+### Cause
+The React state variable `const [performance, setPerformance] = useState(...)` shadowed the global `window.performance` Web API. Inside the filter-change `useEffect`, the code called `performance.now()` to measure fetch timing. JavaScript resolved `performance` to the React state array (`PerformanceByGroup[]`) instead of the global Performance API, causing `TypeError: performance.now is not a function`.
+
+The error propagated up to `src/app/error.tsx`, which itself called `useTranslations()` from next-intl. Because the error boundary rendered outside the `NextIntlClientProvider` context during the error recovery path, the error boundary also crashed with "Failed to call `useTranslations` because the context from `NextIntlClientProvider` was not found."
+
+### Effect
+Clicking any date filter preset (e.g., "This Month", "This Week") crashed the entire analytics page with no recovery possible. The error boundary's own crash masked the real root cause, making it appear to be an i18n provider issue.
+
+### Solution
+1. Renamed the state variable from `performance` to `performanceData` to eliminate the shadowing.
+2. Changed `performance.now()` calls to `globalThis.performance.now()` for explicit reference to the Web Performance API, preventing any future shadowing.
+
+### Prevention
+- Avoid naming state variables after global browser APIs (`performance`, `location`, `history`, `navigator`, `screen`).
+- Use `globalThis.performance` instead of bare `performance` when accessing the Web Performance API in components that may have variable name collisions.
+- See `~/.claude/post-mortems/javascript.md` for the general variable shadowing rule.
+
+### Related Files
+- `src/components/analytics/analytics-content.tsx`
+- `src/app/error.tsx`
+
+---
+
+> **[FIX-2026-03-23]** `Severity: Medium` -- **Affected:** `src/components/analytics/analytics-content.tsx`, `src/lib/cache/analytics-cache.ts`
+> **Report:** "Analytics client cache resets on every page navigation -- switching from /analytics to /journal and back always re-fetches from DB"
+> **Fix:** Replaced `useRef(new Map())` in-component cache with a module-level singleton cache (`src/lib/cache/analytics-cache.ts`) that survives component unmount/mount cycles. The module cache has 5-minute TTL auto-expiry. Cache is cleared when SSR delivers fresh `initialDashboard` props (triggered by `revalidatePath` after trade/tag/strategy mutations). Server-side invalidation flow: mutation -> `invalidateTradeData()` -> `revalidatePath("/analytics")` -> next SSR is fresh -> reset effect fires -> `clearAnalyticsCache()`.

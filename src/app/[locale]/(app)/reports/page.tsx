@@ -6,14 +6,14 @@ import {
 	getMistakeCostAnalysis,
 } from "@/app/actions/reports"
 
-// Force dynamic rendering to ensure account-specific data
-export const dynamic = "force-dynamic"
 
 interface ReportsPageProps {
 	params: Promise<{ locale: string }>
 }
 
 const ReportsPage = async ({ params }: ReportsPageProps) => {
+	const pageStart = performance.now()
+
 	const { locale } = await params
 	setRequestLocale(locale)
 
@@ -34,6 +34,9 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 		monthlyResult.status === "success" ? monthlyResult.data ?? null : null
 	const mistakeCostAnalysis =
 		mistakeResult.status === "success" ? mistakeResult.data ?? null : null
+
+	const pageMs = (performance.now() - pageStart).toFixed(1)
+	console.log(`[YGORDEV:reports] SSR: ${pageMs}ms | queries: 3`)
 
 	return (
 		<div className="flex h-full flex-col">

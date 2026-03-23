@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidatePlaybookData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { strategyConditions, strategies, tradingConditions } from "@/db/schema"
 import type { StrategyCondition, TradingCondition } from "@/db/schema"
@@ -47,7 +47,7 @@ const syncStrategyConditions = async (
 
 		// Bulk insert new conditions
 		if (conditions.length === 0) {
-			revalidatePath("/playbook")
+			invalidatePlaybookData()
 			return {
 				status: "success",
 				message: "Strategy conditions cleared",
@@ -67,7 +67,7 @@ const syncStrategyConditions = async (
 			)
 			.returning()
 
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",

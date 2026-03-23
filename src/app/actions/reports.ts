@@ -18,7 +18,7 @@ import { formatDateKey } from "@/lib/dates"
 import { getUserSettings, type UserSettingsData } from "./settings"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
-import { getUserDek, decryptTradeFields, decryptAccountFields } from "@/lib/user-crypto"
+import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 import { getTranslations } from "next-intl/server"
 
 // ============================================================================
@@ -227,7 +227,7 @@ export const getWeeklyReport = async (
 		const weekStart = startOfWeek(referenceDate, { weekStartsOn: 1 })
 		const weekEnd = endOfWeek(referenceDate, { weekStartsOn: 1 })
 
-		const rawWeekTrades = await db.query.trades.findMany({
+		const weekTrades = await db.query.trades.findMany({
 			where: and(
 				accountCondition,
 				eq(trades.isArchived, false),
@@ -236,12 +236,6 @@ export const getWeeklyReport = async (
 			),
 			orderBy: [desc(trades.entryDate)],
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const weekTrades = dek
-			? rawWeekTrades.map((t) => decryptTradeFields(t, dek))
-			: rawWeekTrades
 
 		if (weekTrades.length === 0) {
 			return {
@@ -372,7 +366,7 @@ export const getMonthlyReport = async (
 		const monthStart = startOfMonth(referenceDate)
 		const monthEnd = endOfMonth(referenceDate)
 
-		const rawMonthTrades = await db.query.trades.findMany({
+		const monthTrades = await db.query.trades.findMany({
 			where: and(
 				accountCondition,
 				eq(trades.isArchived, false),
@@ -381,12 +375,6 @@ export const getMonthlyReport = async (
 			),
 			orderBy: [desc(trades.entryDate)],
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const monthTrades = dek
-			? rawMonthTrades.map((t) => decryptTradeFields(t, dek))
-			: rawMonthTrades
 
 		if (monthTrades.length === 0) {
 			return {
@@ -551,22 +539,13 @@ export const getMistakeCostAnalysis = async (): Promise<{
 
 		// Get all trade-tag associations for mistake tags (filtered by account through trade)
 		const tagIdsList = mistakeTags.map((t) => t.id)
-		const rawTradeTagAssociations = await db.query.tradeTags.findMany({
+		const tradeTagAssociations = await db.query.tradeTags.findMany({
 			where: inArray(tradeTags.tagId, tagIdsList),
 			with: {
 				trade: true,
 				tag: true,
 			},
 		})
-
-		// Decrypt trade fields within associations
-		const dek = await getUserDek(authContext.userId)
-		const tradeTagAssociations = dek
-			? rawTradeTagAssociations.map((assoc) => ({
-					...assoc,
-					trade: decryptTradeFields(assoc.trade, dek),
-				}))
-			: rawTradeTagAssociations
 
 		// Filter by account (through trade relation) - support all accounts mode
 		const filteredAssociations = tradeTagAssociations.filter((assoc) => {
@@ -854,7 +833,7 @@ export const getMonthlyProjection = async (): Promise<{
 		const monthEnd = endOfMonth(now)
 
 		// Get account, user settings, and current month trades in parallel
-		const [account, settingsResult, rawMonthTrades] = await Promise.all([
+		const [account, settingsResult, monthTrades] = await Promise.all([
 			db.query.tradingAccounts.findFirst({
 				where: eq(tradingAccounts.id, authContext.accountId),
 			}),
@@ -877,11 +856,8 @@ export const getMonthlyProjection = async (): Promise<{
 			return { status: "error", message: "Failed to get user settings" }
 		}
 
-		// Decrypt trade and account fields
+		// Decrypt account fields (personal account info may be encrypted)
 		const dek = await getUserDek(authContext.userId)
-		const monthTrades = dek
-			? rawMonthTrades.map((t) => decryptTradeFields(t, dek))
-			: rawMonthTrades
 		const decryptedAccount = dek
 			? decryptAccountFields(account as unknown as Record<string, unknown>, dek) as unknown as typeof account
 			: account
@@ -1024,7 +1000,7 @@ export const getYearlyOverview = async (
 		const yearEnd = new Date(targetYear, 11, 31, 23, 59, 59)
 
 		// Get all trades for the year
-		const rawYearTrades = await db.query.trades.findMany({
+		const yearTrades = await db.query.trades.findMany({
 			where: and(
 				accountCondition,
 				eq(trades.isArchived, false),
@@ -1032,12 +1008,6 @@ export const getYearlyOverview = async (
 				lte(trades.entryDate, yearEnd)
 			),
 		})
-
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const yearTrades = dek
-			? rawYearTrades.map((t) => decryptTradeFields(t, dek))
-			: rawYearTrades
 
 		// Group by month
 		const monthlyData = new Map<

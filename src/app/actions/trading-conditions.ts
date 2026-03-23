@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { invalidatePlaybookData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { tradingConditions } from "@/db/schema"
 import type { TradingCondition } from "@/db/schema"
@@ -35,8 +35,7 @@ const createCondition = async (
 			})
 			.returning()
 
-		revalidatePath("/settings")
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
@@ -108,8 +107,7 @@ const updateCondition = async (
 			.where(and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId)))
 			.returning()
 
-		revalidatePath("/settings")
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
@@ -203,8 +201,7 @@ const deleteCondition = async (id: string): Promise<ActionResponse<void>> => {
 			.delete(tradingConditions)
 			.where(and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId)))
 
-		revalidatePath("/settings")
-		revalidatePath("/playbook")
+		invalidatePlaybookData()
 
 		return {
 			status: "success",
