@@ -339,7 +339,7 @@ export const getWeeklyReport = async (
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching weekly report:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching weekly report:", error)
 		return { status: "error", message: "Failed to fetch weekly report" }
 	}
 }
@@ -504,7 +504,7 @@ export const getMonthlyReport = async (
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching monthly report:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching monthly report:", error)
 		return { status: "error", message: "Failed to fetch monthly report" }
 	}
 }
@@ -608,7 +608,7 @@ export const getMistakeCostAnalysis = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching mistake cost analysis:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching mistake cost analysis:", error)
 		return { status: "error", message: "Failed to fetch mistake cost analysis" }
 	}
 }
@@ -808,7 +808,7 @@ export const getMonthlyResultsWithProp = async (
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching monthly results with prop:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching monthly results with prop:", error)
 		return { status: "error", message: "Failed to fetch monthly results" }
 	}
 }
@@ -908,7 +908,7 @@ export const getMonthlyProjection = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching monthly projection:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching monthly projection:", error)
 		return { status: "error", message: "Failed to fetch monthly projection" }
 	}
 }
@@ -972,7 +972,7 @@ export const getMonthComparison = async (
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching month comparison:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching month comparison:", error)
 		return { status: "error", message: "Failed to fetch month comparison" }
 	}
 }
@@ -1047,7 +1047,7 @@ export const getYearlyOverview = async (
 			},
 		}
 	} catch (error) {
-		console.error("Error fetching yearly overview:", error)
+		if (!(error instanceof Error && "digest" in error)) console.error("Error fetching yearly overview:", error)
 		return { status: "error", message: "Failed to fetch yearly overview" }
 	}
 }

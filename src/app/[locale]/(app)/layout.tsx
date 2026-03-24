@@ -1,3 +1,4 @@
+import { connection } from "next/server"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { getEffectiveDate } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
@@ -10,6 +11,7 @@ interface AppLayoutProps {
 }
 
 const AppLayout = async ({ children }: AppLayoutProps) => {
+	await connection() // Opt into dynamic rendering — prevents prerender errors from auth()
 	const account = await getCurrentAccount()
 	const effectiveDate = getEffectiveDate(account)
 	const isReplayAccount = account?.accountType === "replay"
