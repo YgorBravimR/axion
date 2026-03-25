@@ -13,4 +13,4 @@ const ForgotPasswordPage = async () => {
 	return <ForgotPasswordForm />
 }
 
-export default ForgotPasswordPage
+export { ForgotPasswordPage as default }

@@ -37,4 +37,4 @@ const SelectAccountPage = async () => {
 	)
 }
 
-export default SelectAccountPage
+export { SelectAccountPage as default }

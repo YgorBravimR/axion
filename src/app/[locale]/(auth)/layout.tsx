@@ -27,4 +27,4 @@ const AuthLayout = async ({ children }: AuthLayoutProps) => {
 	)
 }
 
-export default AuthLayout
+export { AuthLayout as default }

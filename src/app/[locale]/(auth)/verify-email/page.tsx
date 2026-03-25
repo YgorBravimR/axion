@@ -13,4 +13,4 @@ const VerifyEmailPage = async () => {
 	return <VerifyEmailForm />
 }
 
-export default VerifyEmailPage
+export { VerifyEmailPage as default }

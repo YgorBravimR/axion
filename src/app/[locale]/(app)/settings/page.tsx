@@ -14,8 +14,6 @@ interface SettingsPageProps {
 }
 
 const SettingsPage = async ({ params }: SettingsPageProps) => {
-	const pageStart = performance.now()
-
 	const { locale } = await params
 	setRequestLocale(locale)
 
@@ -35,9 +33,6 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 
 	const usersWithAccounts = isAdmin ? await getAllUsersWithAccounts() : []
 
-	const pageMs = (performance.now() - pageStart).toFixed(1)
-	console.log(`[YGORDEV:settings] SSR: ${pageMs}ms | queries: 4`)
-
 	return (
 		<div className="flex h-full flex-col">
 			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
@@ -56,4 +51,4 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 	)
 }
 
-export default SettingsPage
+export { SettingsPage as default }

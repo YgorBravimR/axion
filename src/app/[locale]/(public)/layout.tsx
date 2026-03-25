@@ -13,4 +13,4 @@ const PublicLayout = ({ children }: PublicLayoutProps) => (
 	<div className="bg-bg-100 min-h-dvh">{children}</div>
 )
 
-export default PublicLayout
+export { PublicLayout as default }

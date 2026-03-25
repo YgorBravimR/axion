@@ -6,4 +6,4 @@ const PainelPage = () => (
 	</div>
 )
 
-export default PainelPage
+export { PainelPage as default }

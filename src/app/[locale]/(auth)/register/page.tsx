@@ -13,4 +13,4 @@ const RegisterPage = async () => {
 	return <RegisterForm />
 }
 
-export default RegisterPage
+export { RegisterPage as default }

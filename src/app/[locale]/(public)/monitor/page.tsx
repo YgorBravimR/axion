@@ -6,4 +6,4 @@ const MonitorPage = () => (
 	</div>
 )
 
-export default MonitorPage
+export { MonitorPage as default }

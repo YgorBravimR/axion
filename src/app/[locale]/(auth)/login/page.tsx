@@ -18,4 +18,4 @@ const LoginPage = async ({ searchParams }: LoginPageProps) => {
 	return <LoginForm callbackUrl={params.callbackUrl} />
 }
 
-export default LoginPage
+export { LoginPage as default }
