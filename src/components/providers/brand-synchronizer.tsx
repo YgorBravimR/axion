@@ -35,17 +35,23 @@ const BrandSynchronizer = ({ serverBrand }: BrandSynchronizerProps) => {
 		}
 
 		const syncBrand = async () => {
-			const account = await getCurrentAccount()
-			if (account) {
-				const accountBrand = getAccountTypeBrand(account.accountType)
-				if (accountBrand !== brand) {
-					setBrand(accountBrand)
+			try {
+				const account = await getCurrentAccount()
+				if (account) {
+					const accountBrand = getAccountTypeBrand(account.accountType)
+					if (accountBrand !== brand) {
+						setBrand(accountBrand)
+					}
 				}
+			} catch {
+				// Brand sync failed — user keeps the default brand
 			}
 		}
 
 		syncBrand()
-	}, [serverBrand, brand, setBrand])
+		// Only run on mount — hasSynced ref prevents re-execution
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	return null
 }

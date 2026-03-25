@@ -19,7 +19,7 @@ const BrandScript = () => {
 		if (stored && brands.indexOf(stored) !== -1) {
 			document.documentElement.setAttribute("data-brand", stored);
 		}
-	} catch(e) {}
+	} catch(e) { if(typeof console!=='undefined') console.warn('[brand]',e) }
 })();
 `
 

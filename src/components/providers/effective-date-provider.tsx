@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useMemo } from "react"
+import { createContext, useContext, useMemo, type ReactNode } from "react"
 
 interface EffectiveDateContextValue {
 	effectiveDate: Date
@@ -10,7 +10,7 @@ const EffectiveDateContext = createContext<EffectiveDateContextValue | null>(nul
 
 interface EffectiveDateProviderProps {
 	date: string
-	children: React.ReactNode
+	children: ReactNode
 }
 
 /**

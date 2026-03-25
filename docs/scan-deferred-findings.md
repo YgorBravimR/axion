@@ -24,6 +24,18 @@ Both components have substantial duplicated JSX blocks between their collapsed (
 
 **Complexity**: Medium — requires careful refactoring to ensure the DropdownMenu portal behavior and sizing still work correctly in both modes.
 
+## Providers — PostHog Lazy Loading (deferred 2026-03-25)
+
+### Eager module-level PostHog initialization
+
+**File**: `posthog-provider.tsx`
+
+`posthog.init()` runs at module evaluation time (top-level `if` block, lines 11-26). This means the full PostHog SDK is eagerly loaded into the initial client bundle. Per the `bundle-defer-third-party` best practice, analytics libraries should be loaded after hydration.
+
+**Recommended fix**: Wrap `PostHogProvider` in `next/dynamic` with `{ ssr: false }`, or move `posthog.init()` inside a `useEffect` to defer initialization until after hydration. This is the pattern recommended by the `bundle-defer-third-party` rule.
+
+**Complexity**: Medium — requires verifying that PostHog's `identify`, `capture`, and pageview tracking still work correctly with deferred initialization.
+
 ---
 
 *Add new deferred findings below as more scans are completed.*

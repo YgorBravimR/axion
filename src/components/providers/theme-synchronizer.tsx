@@ -17,9 +17,13 @@ export const ThemeSynchronizer = () => {
 		hasSynced.current = true
 
 		const syncTheme = async () => {
-			const result = await getUserTheme()
-			if (result.status === "success" && result.data) {
-				setTheme(result.data)
+			try {
+				const result = await getUserTheme()
+				if (result.status === "success" && result.data) {
+					setTheme(result.data)
+				}
+			} catch {
+				// Theme sync failed — user keeps the default theme
 			}
 		}
 
