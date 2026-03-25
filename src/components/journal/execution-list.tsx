@@ -116,7 +116,7 @@ export const ExecutionList = ({
 			</div>
 
 			{executions.length === 0 ? (
-				<div className="border-stroke-100 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border text-center">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border text-center">
 					<p className="text-small text-txt-300">{t("noExecutions")}</p>
 					<Button
 						id="execution-list-add-first"
@@ -160,7 +160,7 @@ export const ExecutionList = ({
 					</div>
 
 					{/* Summary */}
-					<div className="border-stroke-100 bg-bg-200 p-s-200 sm:p-s-300 rounded-lg border">
+					<div className="border-bg-300 bg-bg-200 p-s-200 sm:p-s-300 rounded-lg border">
 						<div className="gap-s-200 sm:gap-s-300 text-small grid grid-cols-2">
 							<div>
 								<span className="text-txt-200">{t("totalIn")}:</span>
@@ -192,7 +192,7 @@ export const ExecutionList = ({
 									className={cn(
 										"ml-s-200 font-semibold",
 										totalEntryQty - totalExitQty > 0
-											? "text-fb-warning"
+											? "text-warning"
 											: "text-trade-buy"
 									)}
 								>
@@ -272,7 +272,7 @@ const ExecutionRow = ({
 					<span className="text-txt-100">{formatPrice(execution.price)}</span>
 				</div>
 				{execution.orderType && (
-					<span className="bg-bg-300 px-s-200 py-s-100 text-caption text-txt-300 rounded">
+					<span className="bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-300 rounded">
 						{execution.orderType}
 					</span>
 				)}

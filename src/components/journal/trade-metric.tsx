@@ -1,10 +1,11 @@
+import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 interface TradeMetricProps {
 	label: string
 	value: string | number
 	subValue?: string
-	icon?: React.ReactNode
+	icon?: ReactNode
 	variant?: "default" | "positive" | "negative" | "neutral"
 	size?: "sm" | "md" | "lg"
 	className?: string

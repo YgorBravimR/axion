@@ -53,4 +53,4 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	)
 }
 
-export default NewTradePage
+export { NewTradePage as default }

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { cn } from "@/lib/utils"
 import type { DateRange } from "react-day-picker"
 import type { JournalPeriod } from "@/types"
 import { Button } from "@/components/ui/button"
@@ -82,11 +83,12 @@ export const PeriodFilter = ({
 						key={period.key}
 						type="button"
 						onClick={() => handlePeriodClick(period.key)}
-						className={`px-s-300 py-s-100 text-small rounded-md font-medium transition-colors ${
+						className={cn(
+							"px-s-300 py-s-100 text-small rounded-md font-medium transition-colors",
 							value === period.key
 								? "bg-acc-100 text-bg-100"
-								: "bg-bg-300 text-txt-200 hover:bg-bg-400"
-						}`}
+								: "bg-bg-300 text-txt-200 hover:bg-bg-200"
+						)}
 						aria-pressed={value === period.key}
 					>
 						{period.key === "custom" && (
@@ -133,7 +135,7 @@ export const PeriodFilter = ({
 				<button
 					type="button"
 					onClick={() => setShowCustomPicker(true)}
-					className="gap-s-100 text-caption text-txt-300 hover:text-txt-200 flex items-center"
+					className="gap-s-100 text-tiny text-txt-300 hover:text-txt-200 flex items-center"
 					aria-label={t("period.editCustomRange")}
 				>
 					<Calendar className="h-3 w-3" />

@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useCallback } from "react"
+import { memo, useCallback, type KeyboardEvent, type MouseEvent } from "react"
 import { ChevronRight, Trash2, Loader2, Target, ShieldX, Minus } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { DayTradeCompact } from "@/types"
@@ -52,7 +52,7 @@ export const TradeRow = memo(({
 		onTradeClick?.(trade.id)
 	}, [onTradeClick, trade.id, isAnyDeleting])
 
-	const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+	const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
 		if (isAnyDeleting) return
 		if (e.key === "Enter" || e.key === " ") {
 			e.preventDefault()
@@ -60,17 +60,17 @@ export const TradeRow = memo(({
 		}
 	}, [onTradeClick, trade.id, isAnyDeleting])
 
-	const handleDeleteClick = useCallback((e: React.MouseEvent) => {
+	const handleDeleteClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation()
 		onDeleteRequest(trade.id)
 	}, [onDeleteRequest, trade.id])
 
-	const handleConfirmClick = useCallback((e: React.MouseEvent) => {
+	const handleConfirmClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation()
 		onDeleteConfirm(trade.id)
 	}, [onDeleteConfirm, trade.id])
 
-	const handleCancelClick = useCallback((e: React.MouseEvent) => {
+	const handleCancelClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation()
 		onDeleteCancel()
 	}, [onDeleteCancel])
@@ -130,7 +130,7 @@ export const TradeRow = memo(({
 
 			{/* Timeframe */}
 			{trade.timeframeName && (
-				<span className="bg-bg-300 px-s-100 text-caption text-txt-300 hidden shrink-0 rounded py-px md:inline">
+				<span className="bg-bg-300 px-s-100 text-tiny text-txt-300 hidden shrink-0 rounded py-px md:inline">
 					{trade.timeframeName}
 				</span>
 			)}
@@ -160,7 +160,7 @@ export const TradeRow = memo(({
 						size="sm"
 						onClick={handleConfirmClick}
 						disabled={isDeleting}
-						className="h-7 px-s-300 text-caption"
+						className="h-7 px-s-300 text-tiny"
 					>
 						{isDeleting ? (
 							<Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -174,7 +174,7 @@ export const TradeRow = memo(({
 						size="sm"
 						onClick={handleCancelClick}
 						disabled={isDeleting}
-						className="h-7 px-s-300 text-caption"
+						className="h-7 px-s-300 text-tiny"
 					>
 						{tCommon("no")}
 					</Button>

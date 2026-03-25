@@ -442,4 +442,4 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 	)
 }
 
-export default TradeDetailPage
+export { TradeDetailPage as default }

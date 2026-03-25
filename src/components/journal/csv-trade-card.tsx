@@ -610,7 +610,7 @@ export const CsvTradeCard = ({
 										className={cn(
 											"px-m-400 py-s-200 text-small rounded-md font-medium transition-colors",
 											trade.edits.followedPlan === false
-												? "bg-fb-error text-white"
+												? "bg-fb-error text-bg-100"
 												: "bg-bg-300 text-txt-200 hover:bg-bg-100"
 										)}
 									>

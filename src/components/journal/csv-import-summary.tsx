@@ -114,7 +114,7 @@ export const CsvImportSummary = ({
 						/>
 						<span
 							className={cn(
-								"text-h4 font-bold",
+								"text-h3 font-bold",
 								netPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 							)}
 						>

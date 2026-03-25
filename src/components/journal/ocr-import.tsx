@@ -417,7 +417,7 @@ export const OcrImport = () => {
 							</div>
 						</div>
 
-						<p className="mt-m-400 text-tiny text-txt-400">
+						<p className="mt-m-400 text-tiny text-txt-300">
 							💡 {t("requirements.tip")}
 						</p>
 					</div>
@@ -455,7 +455,7 @@ export const OcrImport = () => {
 					{/* OCR Engine Indicator */}
 					<div className="mt-m-400 flex items-center justify-center gap-s-200">
 						{visionAvailable === null ? (
-							<span className="text-tiny text-txt-400">{t("checkingEngine")}</span>
+							<span className="text-tiny text-txt-300">{t("checkingEngine")}</span>
 						) : visionAvailable ? (
 							<span className="flex items-center gap-s-200 rounded-full bg-trade-buy/20 px-s-300 py-s-100 text-tiny font-medium text-trade-buy">
 								<Sparkles className="h-3 w-3" />
@@ -497,7 +497,7 @@ export const OcrImport = () => {
 							style={{ width: `${progress.progress}%` }}
 						/>
 					</div>
-					<p className="mt-s-200 text-tiny text-txt-400">{progress.progress}%</p>
+					<p className="mt-s-200 text-tiny text-txt-300">{progress.progress}%</p>
 				</div>
 			)}
 
@@ -707,7 +707,7 @@ export const OcrImport = () => {
 												className="mt-s-100"
 											/>
 											{trade.originalContractCode !== trade.asset && (
-												<p className="mt-s-100 text-tiny text-txt-400">
+												<p className="mt-s-100 text-tiny text-txt-300">
 													{t("originalLabel", { code: trade.originalContractCode })}
 												</p>
 											)}
@@ -866,7 +866,7 @@ export const OcrImport = () => {
 							)}
 						</button>
 						{rawTextExpanded && (
-							<pre className="max-h-48 overflow-auto border-t border-bg-300 p-s-300 sm:p-m-400 text-tiny text-txt-400">
+							<pre className="max-h-48 overflow-auto border-t border-bg-300 p-s-300 sm:p-m-400 text-tiny text-txt-300">
 								{parseResult.rawText}
 							</pre>
 						)}
@@ -927,7 +927,7 @@ export const OcrImport = () => {
 			)}
 
 			{/* Help Tip */}
-			<p className="text-center text-tiny text-txt-400">
+			<p className="text-center text-tiny text-txt-300">
 				{t("imageQualityTip")}
 			</p>
 		</div>

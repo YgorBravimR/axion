@@ -95,7 +95,7 @@ export const TradeDayGroup = memo(({
 					/>
 
 					{/* Win/Loss/Breakeven */}
-					<span className="text-caption text-txt-300 hidden sm:inline">
+					<span className="text-tiny text-txt-300 hidden sm:inline">
 						{summary.wins}{tCommon("winAbbr")} {summary.losses}{tCommon("lossAbbr")}{summary.breakevens > 0 ? ` ${summary.breakevens}${tCommon("breakevenAbbr")}` : ""}
 					</span>
 

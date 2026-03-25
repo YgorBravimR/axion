@@ -42,7 +42,7 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 			<Card
 				id={`trade-card-${trade.id}`}
 				className={cn(
-					"p-s-300 sm:p-m-400 lg:p-m-500 hover:border-acc-100/50 hover:bg-bg-200/80 transition-colors",
+					"p-s-300 sm:p-m-400 lg:p-m-500 hover:border-acc-100/50 hover:bg-bg-200/80 transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none",
 					className
 				)}
 			>

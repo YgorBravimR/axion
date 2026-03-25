@@ -50,4 +50,4 @@ const EditTradePage = async ({ params }: EditTradePageProps) => {
 	)
 }
 
-export default EditTradePage
+export { EditTradePage as default }

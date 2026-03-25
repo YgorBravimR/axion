@@ -18,6 +18,7 @@ import {
 	Info,
 } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
@@ -275,11 +276,12 @@ export const NotaImport = () => {
 			{/* Step 1: Upload Area */}
 			{step === "upload" && (
 				<div
-					className={`p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors ${
+					className={cn(
+						"p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
-					}`}
+					)}
 					onDrop={handleDrop}
 					onDragOver={handleDragOver}
 					onDragLeave={handleDragLeave}
@@ -552,7 +554,7 @@ export const NotaImport = () => {
 										{t("netTotal")}
 									</span>
 									<span
-										className={`text-tiny font-medium ${parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell"}`}
+										className={cn("text-tiny font-medium", parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell")}
 									>
 										{parseResult.netTotal.toLocaleString(locale, {
 											minimumFractionDigits: 2,

@@ -9,13 +9,8 @@ interface JournalPageProps {
 }
 
 const JournalPage = async ({ params }: JournalPageProps) => {
-	const pageStart = performance.now()
-
 	const { locale } = await params
 	setRequestLocale(locale)
-
-	const pageMs = (performance.now() - pageStart).toFixed(1)
-	console.log(`[YGORDEV:journal] SSR: ${pageMs}ms | queries: 0`)
 
 	return (
 		<div className="flex h-full flex-col">
@@ -28,4 +23,4 @@ const JournalPage = async ({ params }: JournalPageProps) => {
 	)
 }
 
-export default JournalPage
+export { JournalPage as default }

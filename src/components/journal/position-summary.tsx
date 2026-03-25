@@ -81,9 +81,9 @@ export const PositionSummary = ({
 			case "closed":
 				return <CheckCircle className="h-4 w-4 text-trade-buy" />
 			case "partial":
-				return <Clock className="h-4 w-4 text-fb-warning" />
+				return <Clock className="h-4 w-4 text-warning" />
 			case "open":
-				return <AlertCircle className="h-4 w-4 text-fb-info" />
+				return <AlertCircle className="h-4 w-4 text-acc-200" />
 			case "over_exit":
 				return <AlertCircle className="h-4 w-4 text-fb-error" />
 		}
@@ -98,9 +98,9 @@ export const PositionSummary = ({
 			case "closed":
 				return "text-trade-buy"
 			case "partial":
-				return "text-fb-warning"
+				return "text-warning"
 			case "open":
-				return "text-fb-info"
+				return "text-acc-200"
 			case "over_exit":
 				return "text-fb-error"
 		}
@@ -110,7 +110,7 @@ export const PositionSummary = ({
 		<div
 			id="trade-detail-position-summary"
 			className={cn(
-				"border-stroke-100 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border",
+				"border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border",
 				className
 			)}
 		>
@@ -170,7 +170,7 @@ export const PositionSummary = ({
 
 			{/* Progress Bar */}
 			<div className="mb-m-400">
-				<div className="mb-s-100 text-caption text-txt-200 flex justify-between">
+				<div className="mb-s-100 text-tiny text-txt-200 flex justify-between">
 					<span>{t("closed")}</span>
 					<span>{closedPercent.toFixed(0)}%</span>
 				</div>
@@ -182,7 +182,7 @@ export const PositionSummary = ({
 								? "bg-trade-buy"
 								: positionStatus === "partial"
 									? "bg-fb-warning"
-									: "bg-fb-info"
+									: "bg-acc-200"
 						)}
 						style={{ width: `${Math.min(closedPercent, 100)}%` }}
 					/>
@@ -190,25 +190,25 @@ export const PositionSummary = ({
 			</div>
 
 			{/* Summary Stats */}
-			<div className="gap-s-200 sm:gap-s-300 border-stroke-100 pt-s-300 grid grid-cols-1 sm:grid-cols-3 border-t">
+			<div className="gap-s-200 sm:gap-s-300 border-bg-300 pt-s-300 grid grid-cols-1 sm:grid-cols-3 border-t">
 				<div className="text-center">
-					<div className="text-caption text-txt-200">{t("totalIn")}</div>
+					<div className="text-tiny text-txt-200">{t("totalIn")}</div>
 					<div className="text-body text-txt-100 font-semibold">
 						{formatQuantity(totalEntryQuantity)}
 					</div>
 				</div>
 				<div className="text-center">
-					<div className="text-caption text-txt-200">{t("totalOut")}</div>
+					<div className="text-tiny text-txt-200">{t("totalOut")}</div>
 					<div className="text-body text-txt-100 font-semibold">
 						{formatQuantity(totalExitQuantity)}
 					</div>
 				</div>
 				<div className="text-center">
-					<div className="text-caption text-txt-200">{t("remaining")}</div>
+					<div className="text-tiny text-txt-200">{t("remaining")}</div>
 					<div
 						className={cn(
 							"text-body font-semibold",
-							remainingQuantity > 0 ? "text-fb-warning" : "text-trade-buy"
+							remainingQuantity > 0 ? "text-warning" : "text-trade-buy"
 						)}
 					>
 						{formatQuantity(remainingQuantity)}
@@ -218,13 +218,13 @@ export const PositionSummary = ({
 
 			{/* P&L Summary (if closed or partially closed) */}
 			{hasExits && (
-				<div className="mt-s-300 border-stroke-100 pt-s-300 border-t">
+				<div className="mt-s-300 border-bg-300 pt-s-300 border-t">
 					<div className="flex items-center justify-between">
 						<span className="text-small text-txt-300">{t("realizedPnL")}</span>
 						<PnLDisplay value={totalPnl} size="lg" />
 					</div>
 					{tickSize && tickValue && (
-						<div className="mt-s-100 text-caption text-txt-200">
+						<div className="mt-s-100 text-tiny text-txt-200">
 							{pnlPerUnit >= 0 ? "+" : ""}
 							{formatPrice(pnlPerUnit)} / {t("contract")}
 						</div>

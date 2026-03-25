@@ -18,6 +18,7 @@ import {
 	CheckCircle2,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
 	AlertDialog,
@@ -369,11 +370,12 @@ export const CsvImport = () => {
 			{!validationResult && (
 				<div
 					id="csv-upload-zone"
-					className={`p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors ${
+					className={cn(
+						"p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
-					}`}
+					)}
 					onDrop={handleDrop}
 					onDragOver={handleDragOver}
 					onDragLeave={handleDragLeave}
