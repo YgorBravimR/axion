@@ -12,8 +12,6 @@ interface ReportsPageProps {
 }
 
 const ReportsPage = async ({ params }: ReportsPageProps) => {
-	const pageStart = performance.now()
-
 	const { locale } = await params
 	setRequestLocale(locale)
 
@@ -33,9 +31,6 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 	const mistakeCostAnalysis =
 		mistakeResult.status === "success" ? mistakeResult.data ?? null : null
 
-	const pageMs = (performance.now() - pageStart).toFixed(1)
-	console.log(`[YGORDEV:reports] SSR: ${pageMs}ms | queries: 3`)
-
 	return (
 		<div className="flex h-full flex-col">
 			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
@@ -49,4 +44,4 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 	)
 }
 
-export default ReportsPage
+export { ReportsPage as default }

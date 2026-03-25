@@ -12,8 +12,6 @@ interface MonthlyPageProps {
 }
 
 const MonthlyPage = async ({ params }: MonthlyPageProps) => {
-	const pageStart = performance.now()
-
 	const { locale } = await params
 	setRequestLocale(locale)
 
@@ -28,9 +26,6 @@ const MonthlyPage = async ({ params }: MonthlyPageProps) => {
 	const initialProjectionData = projectionResult.status === "success" ? projectionResult.data ?? null : null
 	const initialComparisonData = comparisonResult.status === "success" ? comparisonResult.data ?? null : null
 
-	const pageMs = (performance.now() - pageStart).toFixed(1)
-	console.log(`[YGORDEV:monthly] SSR: ${pageMs}ms | queries: 3`)
-
 	return (
 		<div className="min-h-dvh bg-bg-100">
 			<main className="mx-auto max-w-5xl p-m-400 sm:p-m-500 lg:p-m-600">
@@ -44,4 +39,4 @@ const MonthlyPage = async ({ params }: MonthlyPageProps) => {
 	)
 }
 
-export default MonthlyPage
+export { MonthlyPage as default }
