@@ -30,6 +30,8 @@ export const WinRateBadge = ({
 }: WinRateBadgeProps) => {
 	const isAboveThreshold = winRate >= threshold
 
+	const displayValue = `${winRate.toFixed(0)}%`
+
 	return (
 		<span
 			className={cn(
@@ -38,8 +40,9 @@ export const WinRateBadge = ({
 				isAboveThreshold ? "text-trade-buy" : "text-trade-sell",
 				className
 			)}
+			aria-label={`${displayValue} (${isAboveThreshold ? "above" : "below"} ${threshold}% threshold)`}
 		>
-			{winRate.toFixed(0)}%
+			{displayValue}
 		</span>
 	)
 }

@@ -1,3 +1,5 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
@@ -60,6 +62,10 @@ export const DirectionBadge = ({
 		? "text-action-buy bg-action-buy/10"
 		: "text-action-sell bg-action-sell/10"
 
+	if (!showIcon && !showLabel) {
+		return null
+	}
+
 	return (
 		<span
 			className={cn(
@@ -69,8 +75,9 @@ export const DirectionBadge = ({
 				colorClasses,
 				className
 			)}
+			aria-label={displayLabel}
 		>
-			{showIcon && <Icon className={sizes.icon} />}
+			{showIcon && <Icon className={sizes.icon} aria-hidden="true" />}
 			{showLabel && <span>{displayLabel}</span>}
 		</span>
 	)

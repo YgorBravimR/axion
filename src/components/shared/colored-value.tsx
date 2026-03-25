@@ -73,6 +73,9 @@ export const ColoredValue = ({
 		}
 	}
 
+	const formattedValue = formatValue()
+	const semanticLabel = isPositive ? "positive" : isNegative ? "negative" : "neutral"
+
 	return (
 		<span
 			className={cn(
@@ -83,8 +86,9 @@ export const ColoredValue = ({
 				isNeutral && "text-txt-100",
 				className
 			)}
+			aria-label={`${formattedValue} (${semanticLabel})`}
 		>
-			{formatValue()}
+			{formattedValue}
 		</span>
 	)
 }

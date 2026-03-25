@@ -81,7 +81,7 @@ const ImageUpload = ({
 			const previewUrl = URL.createObjectURL(file)
 			onFileAdd({ file, previewUrl })
 		},
-		[canUpload, onFileAdd]
+		[canUpload, onFileAdd, t]
 	)
 
 	const handleInputChange = useCallback(
@@ -129,7 +129,7 @@ const ImageUpload = ({
 						>
 							<img
 								src={thumb.src}
-								alt=""
+								alt={t("imageUpload.thumbnail", { index: index + 1 })}
 								className="aspect-video w-full object-cover"
 							/>
 							<Button
@@ -137,7 +137,7 @@ const ImageUpload = ({
 								type="button"
 								variant="ghost"
 								size="sm"
-								className="bg-bg-100/80 absolute top-1 right-1 h-9 w-9 p-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+								className="bg-bg-100/80 absolute top-s-100 right-s-100 size-9 p-0 opacity-100 sm:opacity-0 transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
 								onClick={thumb.onRemove}
 								aria-label={t("remove")}
 							>
@@ -172,7 +172,7 @@ const ImageUpload = ({
 						<span className="text-acc-100 font-medium">{t("upload")}</span>{" "}
 						{t("imageUpload.dragAndDrop")}
 					</p>
-					<p className="text-caption text-txt-300 mt-s-100">
+					<p className="text-tiny text-txt-300 mt-s-100">
 						{t("imageUpload.acceptedFormats", {
 							maxSize: MAX_FILE_SIZE / 1024 / 1024,
 						})}

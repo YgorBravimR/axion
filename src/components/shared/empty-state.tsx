@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
 
@@ -5,7 +6,7 @@ interface EmptyStateProps {
 	icon?: LucideIcon
 	title: string
 	description?: string
-	action?: React.ReactNode
+	action?: ReactNode
 	className?: string
 }
 
@@ -32,10 +33,11 @@ export const EmptyState = ({
 				"flex flex-col items-center justify-center text-center",
 				className
 			)}
+			role="status"
 		>
 			{Icon && (
-				<div className="mb-m-400 flex h-16 w-16 items-center justify-center rounded-full bg-bg-300">
-					<Icon className="h-8 w-8 text-txt-300" />
+				<div className="mb-m-400">
+					<Icon className="size-8 text-txt-300" />
 				</div>
 			)}
 			<p className="text-body text-txt-200">{title}</p>

@@ -61,7 +61,8 @@
 			"fileTooLarge": "File too large. Max: {maxSize}MB",
 			"uploadImage": "Upload image",
 			"dragAndDrop": "or drag and drop",
-			"acceptedFormats": "JPEG, PNG, WebP (max {maxSize}MB)"
+			"acceptedFormats": "JPEG, PNG, WebP (max {maxSize}MB)",
+			"thumbnail": "Uploaded image {index}"
 		},
 		"winRateAbbr": "WR",
 		"clearFile": "Clear file",

@@ -61,7 +61,8 @@
 			"fileTooLarge": "Arquivo muito grande. Máx: {maxSize}MB",
 			"uploadImage": "Enviar imagem",
 			"dragAndDrop": "ou arraste e solte",
-			"acceptedFormats": "JPEG, PNG, WebP (máx {maxSize}MB)"
+			"acceptedFormats": "JPEG, PNG, WebP (máx {maxSize}MB)",
+			"thumbnail": "Imagem enviada {index}"
 		},
 		"winRateAbbr": "TA",
 		"clearFile": "Limpar arquivo",

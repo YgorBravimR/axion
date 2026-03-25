@@ -34,7 +34,7 @@ export const LoadingSpinner = ({
 	return (
 		<div className={cn("flex items-center justify-center", className)} role="status" aria-live="polite">
 			<Loader2
-				className={cn("animate-spin text-txt-300", sizeClasses[size])}
+				className={cn("animate-spin motion-reduce:animate-none text-txt-300", sizeClasses[size])}
 				aria-hidden="true"
 			/>
 			{displayLabel && (

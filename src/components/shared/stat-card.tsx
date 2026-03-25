@@ -37,7 +37,11 @@ const sizeClasses = {
 	},
 }
 
-const TrendIcon = ({ trend }: { trend: TrendType }) => {
+interface TrendIconProps {
+	trend: TrendType
+}
+
+const TrendIcon = ({ trend }: TrendIconProps) => {
 	switch (trend) {
 		case "up":
 			return <TrendingUp className="h-4 w-4 text-trade-buy" />
@@ -84,7 +88,7 @@ const StatCard = ({
 			</span>
 			<div className="mt-s-100 flex items-baseline gap-s-200">
 				{typeof value === "string" ? (
-					<p className={cn("font-bold", sizes.value, valueColorClass || "text-txt-100")}>
+					<p className={cn("font-semibold", sizes.value, valueColorClass || "text-txt-100")}>
 						{value}
 					</p>
 				) : (
@@ -104,6 +108,7 @@ const StatCard = ({
 				sizes.container,
 				className
 			)}
+			aria-label={label}
 		>
 			{indicator ? (
 				<div className="flex justify-between items-start gap-s-200">
