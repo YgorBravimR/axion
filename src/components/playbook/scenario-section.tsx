@@ -274,7 +274,7 @@ export const ScenarioSection = ({
 						id="lightbox-close"
 						variant="ghost"
 						size="sm"
-						className="absolute top-4 right-4 text-white hover:text-white/80"
+						className="absolute top-4 right-4 text-txt-100 hover:text-txt-100/80"
 						onClick={() => setLightboxImage(null)}
 						aria-label={tCommon("closePreview")}
 					>

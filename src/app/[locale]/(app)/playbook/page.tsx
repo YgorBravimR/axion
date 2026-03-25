@@ -8,8 +8,6 @@ interface PlaybookPageProps {
 }
 
 const PlaybookPage = async ({ params }: PlaybookPageProps) => {
-	const pageStart = performance.now()
-
 	const { locale } = await params
 	setRequestLocale(locale)
 
@@ -20,9 +18,6 @@ const PlaybookPage = async ({ params }: PlaybookPageProps) => {
 
 	const strategies = strategiesResult.status === "success" ? strategiesResult.data || [] : []
 	const compliance = complianceResult.status === "success" ? complianceResult.data || null : null
-
-	const pageMs = (performance.now() - pageStart).toFixed(1)
-	console.log(`[YGORDEV:playbook] SSR: ${pageMs}ms | queries: 2`)
 
 	return (
 		<div className="flex h-full flex-col">
@@ -36,4 +31,4 @@ const PlaybookPage = async ({ params }: PlaybookPageProps) => {
 	)
 }
 
-export default PlaybookPage
+export { PlaybookPage as default }

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
+import { cn } from "@/lib/utils"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { Link } from "@/i18n/routing"
 import {
@@ -162,19 +163,20 @@ export const StrategyCard = ({
 			<div className="mt-m-400">
 				<div className="flex items-center justify-between">
 					<span className="text-tiny text-txt-300">{t("compliance.planCompliance")}</span>
-					<span className={`text-small font-semibold ${complianceColor}`}>
+					<span className={cn("text-small font-semibold", complianceColor)}>
 						{strategy.compliance.toFixed(0)}%
 					</span>
 				</div>
 				<div className="bg-bg-300 mt-s-200 h-2 w-full overflow-hidden rounded-full">
 					<div
-						className={`h-full rounded-full transition-[width] ${
+						className={cn(
+							"h-full rounded-full transition-[width]",
 							strategy.compliance >= 80
 								? "bg-trade-buy"
 								: strategy.compliance >= 50
 									? "bg-warning"
 									: "bg-trade-sell"
-						}`}
+						)}
 						style={{ width: `${Math.min(strategy.compliance, 100)}%` }}
 					/>
 				</div>

@@ -13,6 +13,7 @@ import {
 	Filter,
 	ImageIcon,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { getStrategy } from "@/app/actions/strategies"
 import { getStrategyConditions } from "@/app/actions/strategy-conditions"
@@ -91,7 +92,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							</div>
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">{t("strategy.pnl")}</p>
-								<p className={`text-body mt-s-100 font-bold ${pnlColor}`}>
+								<p className={cn("text-body mt-s-100 font-bold", pnlColor)}>
 									{formatCurrency(strategy.totalPnl)}
 								</p>
 							</div>
@@ -110,9 +111,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">{t("strategy.avgR")}</p>
 								<p
-									className={`text-body mt-s-100 font-bold ${
+									className={cn(
+										"text-body mt-s-100 font-bold",
 										strategy.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
-									}`}
+									)}
 								>
 									{strategy.avgR >= 0 ? "+" : ""}
 									{strategy.avgR.toFixed(2)}R
@@ -121,7 +123,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">{t("strategy.compliance")}</p>
 								<p
-									className={`text-body mt-s-100 font-bold ${complianceColor}`}
+									className={cn("text-body mt-s-100 font-bold", complianceColor)}
 								>
 									{strategy.compliance.toFixed(0)}%
 								</p>
