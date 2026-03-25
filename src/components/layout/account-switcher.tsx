@@ -51,6 +51,14 @@ import { useAccountTransition } from "@/components/ui/account-transition-overlay
 import { cn } from "@/lib/utils"
 import type { TradingAccount } from "@/db/schema"
 
+interface CreateAccountForm {
+	name: string
+	accountType: "personal" | "prop" | "replay"
+	propFirmName: string
+	profitSharePercentage: string
+	replayStartDate: string
+}
+
 interface AccountSwitcherProps {
 	isCollapsed: boolean
 }
@@ -71,9 +79,9 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 	)
 
 	// Create account form
-	const [createForm, setCreateForm] = useState({
+	const [createForm, setCreateForm] = useState<CreateAccountForm>({
 		name: "",
-		accountType: "personal" as "personal" | "prop" | "replay",
+		accountType: "personal",
 		propFirmName: "",
 		profitSharePercentage: "100",
 		replayStartDate: "",
@@ -251,6 +259,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 						type="button"
 						className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
 						disabled={isPending}
+						aria-label={t("switchAccount")}
 					>
 						<AccountIcon className="h-4 w-4 flex-shrink-0" />
 						<span className="flex-1 truncate">
@@ -326,22 +335,8 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 interface CreateAccountDialogProps {
 	isOpen: boolean
 	onOpenChange: (open: boolean) => void
-	form: {
-		name: string
-		accountType: "personal" | "prop" | "replay"
-		propFirmName: string
-		profitSharePercentage: string
-		replayStartDate: string
-	}
-	setForm: React.Dispatch<
-		React.SetStateAction<{
-			name: string
-			accountType: "personal" | "prop" | "replay"
-			propFirmName: string
-			profitSharePercentage: string
-			replayStartDate: string
-		}>
-	>
+	form: CreateAccountForm
+	setForm: (value: CreateAccountForm | ((prev: CreateAccountForm) => CreateAccountForm)) => void
 	onSubmit: () => void
 	isPending: boolean
 	t: (key: string) => string

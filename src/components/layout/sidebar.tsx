@@ -47,9 +47,10 @@ const Sidebar = ({
 				"border-bg-300 bg-bg-200 flex flex-col border-r",
 				isSheet
 					? "h-full w-full"
-					: "fixed top-0 left-0 z-40 h-dvh transition-[width] duration-500",
+					: "fixed top-0 left-0 z-40 h-dvh transition-[width] duration-500 motion-reduce:transition-none",
 				!isSheet && (isCollapsed ? "w-20" : "w-64")
 			)}
+			aria-label={tCommon("mainNavigation")}
 		>
 			{/* Logo */}
 			<div className="border-bg-300 flex h-16 items-center justify-center border-b">
@@ -59,7 +60,7 @@ const Sidebar = ({
 					width={32}
 					height={32}
 					className={cn(
-						"absolute h-8 w-auto object-contain transition-opacity duration-1000",
+						"absolute h-8 w-auto object-contain transition-opacity duration-1000 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
 					priority
@@ -70,7 +71,7 @@ const Sidebar = ({
 					width={120}
 					height={32}
 					className={cn(
-						"absolute h-8 w-auto object-contain transition-opacity duration-1000",
+						"absolute h-8 w-auto object-contain transition-opacity duration-1000 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
 					priority
@@ -96,7 +97,7 @@ const Sidebar = ({
 			)}
 
 			{/* New Trade Button */}
-			<div className="px-2 pt-2">
+			<div className="px-s-200 pt-s-200">
 				{pathname === "/journal/new" ? (
 					<span
 						className={cn(
@@ -112,7 +113,7 @@ const Sidebar = ({
 					<Link
 						href="/journal/new"
 						className={cn(
-							"bg-acc-100 hover:bg-acc-100/90 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium text-white transition-colors",
+							"bg-acc-100 hover:bg-acc-100/90 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium text-bg-100 transition-colors",
 							isCompact && "justify-center"
 						)}
 						aria-label={t("newTrade")}
@@ -126,7 +127,7 @@ const Sidebar = ({
 
 			{/* Navigation */}
 			<ScrollArea className="flex-1">
-				<nav className="space-y-1 p-2">
+				<nav className="space-y-s-100 p-s-200">
 					{filteredNavItems.map((item) => {
 						const isActive =
 							item.href === "/"
@@ -145,15 +146,8 @@ const Sidebar = ({
 									isCompact && "justify-center"
 								)}
 								aria-current={isActive ? "page" : undefined}
-								tabIndex={isActive ? -1 : 0}
+								tabIndex={0}
 								onClick={onNavigate}
-								ref={
-									isActive
-										? (el) => {
-												if (el && el === document.activeElement) el.blur()
-											}
-										: undefined
-								}
 							>
 								<item.icon className="h-5 w-5 shrink-0" />
 								{showLabels && (

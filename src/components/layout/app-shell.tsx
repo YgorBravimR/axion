@@ -57,7 +57,7 @@ const AppShell = ({
 
 	/** Dispatches Cmd+K (or Ctrl+K) to open the existing CommandMenu */
 	const handleSearchClick = useCallback(() => {
-		const isMac = navigator.platform.toUpperCase().includes("MAC")
+		const isMac = /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent)
 		document.dispatchEvent(
 			new KeyboardEvent("keydown", {
 				key: "k",
@@ -71,13 +71,19 @@ const AppShell = ({
 
 	return (
 		<PageGuideProvider>
+			<a
+				href="#main-content"
+				className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-acc-100 focus:px-m-400 focus:py-s-200 focus:text-bg-100 focus:outline-none"
+			>
+				{tCommon("skipToContent")}
+			</a>
 			<ThemeSynchronizer />
 			<CommandMenu />
 
 			{isMobile ? (
 				<>
 					{/* Mobile top bar */}
-					<header className="border-bg-300 bg-bg-200 fixed top-0 right-0 left-0 z-40 flex h-14 items-center border-b px-4">
+					<header className="border-bg-300 bg-bg-200 fixed top-0 right-0 left-0 z-40 flex h-14 items-center border-b px-m-400" aria-label={tCommon("appHeader")}>
 						<Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
 							<SheetTrigger asChild>
 								<button
@@ -130,7 +136,7 @@ const AppShell = ({
 					</header>
 
 					{/* Mobile main content */}
-					<main className="min-h-dvh pt-14">{children}</main>
+					<main id="main-content" className="min-h-dvh pt-14">{children}</main>
 				</>
 			) : (
 				<>
@@ -146,12 +152,12 @@ const AppShell = ({
 					{/* Main content */}
 					<div
 						className={cn(
-							"flex min-h-dvh flex-col transition-[margin-left] duration-300",
+							"flex min-h-dvh flex-col transition-[margin-left] duration-300 motion-reduce:transition-none",
 							effectiveCollapsed ? "ml-20" : "ml-64"
 						)}
 					>
 						{/* Top bar: breadcrumbs | search | notifications + user */}
-						<div className="border-bg-300 bg-bg-200 gap-m-400 flex h-12 shrink-0 items-center border-b px-6 lg:px-8 lg:pl-12">
+						<div className="border-bg-300 bg-bg-200 gap-m-400 flex h-12 shrink-0 items-center border-b px-m-600 lg:px-l-700 lg:pl-l-800">
 							<PageBreadcrumb />
 							<div className="flex-1" />
 							{/* Fixed-width slot so search bar position is stable */}
@@ -180,7 +186,7 @@ const AppShell = ({
 
 						{/* Scrollable main area */}
 						<ScrollArea className="h-[calc(100dvh-3rem)]">
-							<main>{children}</main>
+							<main id="main-content">{children}</main>
 						</ScrollArea>
 					</div>
 				</>

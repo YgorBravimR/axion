@@ -76,7 +76,7 @@ const PageBreadcrumb = () => {
 				{crumbs.map((crumb, index) => {
 					const isLast = index === crumbs.length - 1
 					return (
-						<Fragment key={index}>
+						<Fragment key={crumb.href ?? crumb.label}>
 							{index > 0 && <BreadcrumbSeparator />}
 							<BreadcrumbItem>
 								{isLast || !crumb.href ? (

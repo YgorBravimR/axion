@@ -48,6 +48,9 @@
 		"collapseSidebar": "Collapse sidebar",
 		"openMenu": "Open menu",
 		"closeMenu": "Close menu",
+		"skipToContent": "Skip to content",
+		"appHeader": "App header",
+		"mainNavigation": "Main navigation",
 		"upload": "Click to upload",
 		"remove": "Remove",
 		"datePicker": {

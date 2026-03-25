@@ -98,7 +98,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						onClick={handleLogout}
-						className="cursor-pointer text-red-400 focus:text-red-400"
+						className="cursor-pointer text-destructive focus:text-destructive"
 					>
 						<LogOut className="h-4 w-4" />
 						<span>{t("logout")}</span>
@@ -153,7 +153,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
 					onClick={handleLogout}
-					className="cursor-pointer text-red-400 focus:text-red-400"
+					className="cursor-pointer text-destructive focus:text-destructive"
 				>
 					<LogOut className="h-4 w-4" />
 					<span>{t("logout")}</span>
