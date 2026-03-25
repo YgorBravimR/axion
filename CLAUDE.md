@@ -213,3 +213,57 @@ Use only custom colors, if not finding any specific needed, create in 'src\app\g
 
 lucide react icons
 Consistent with custom designed colors.
+
+## Design Context
+
+### Users
+
+Axion serves primarily **solo day traders** (~60%) who journal trades, review performance metrics, and build discipline independently. A significant secondary audience (~40%) consists of **trading mentorship students** (e.g., TAT mentorship program) who use Axion to track progress against specific strategies and frameworks taught in their program.
+
+Both users share a common job-to-be-done: **transform raw trade data into actionable self-awareness** — understanding not just what happened, but why, and what to do differently tomorrow.
+
+Their context: they open Axion before market open to prepare (reviewing playbooks, checking the command center), during trading to log executions, and after market close to journal and analyze. The tool must serve all three modes without friction.
+
+### Brand Personality
+
+**Precise. Confident. Elite.**
+
+- **Precise**: Every pixel, every data point, every interaction is intentional. No waste. No decoration for decoration's sake.
+- **Confident**: The interface speaks with authority — clear hierarchy, decisive typography, no hedging with unnecessary tooltips or hand-holding.
+- **Elite**: A professional-grade cockpit feel. Gold accents signal premium craftsmanship, not flashiness. The tool should feel like it was built for the top 1% of disciplined traders.
+
+**Emotional target**: When a trader opens Axion before market open, they should feel a blend of **readiness/control** ("I have everything I need, I'm prepared") and **competitive edge** ("I'm sharper than yesterday, let's go"). A cockpit before takeoff — not a meditation app, not a video game.
+
+### Aesthetic Direction
+
+**Visual tone**: Minimal, fast, keyboard-driven elegance with polished data visualization. Dark-first design with metallic gold as the signature accent.
+
+**References**:
+- **Linear / Raycast**: Elegance through restraint. Keyboard-first, fast transitions, clean surfaces, no visual noise. The gold-on-dark palette already aligns with this premium-minimal direction.
+- **Stripe Dashboard**: Best-in-class data visualization hierarchy. Clean charts that communicate instantly. Warm polish that never feels sterile.
+
+**Anti-references** (what Axion must NOT be):
+- **Robinhood / gamified apps**: No confetti, no achievement badges, no dopamine-loop design patterns. Trading is serious work. Celebrate consistency, not individual wins.
+- **Generic SaaS dashboards**: No cookie-cutter admin panels with corporate blue/gray blandness. Axion has a distinct identity — the navy + gold palette exists for a reason.
+
+**Theme**: Dark mode is default and primary. Light mode is supported but secondary. Both use the established color system with gold (`acc-100`), blue (`acc-200`), and semantic trading colors (green profit / violet-blue loss for results; sky blue / orange for directional actions).
+
+**Typography**: Public Sans for body (clean, professional, excellent number legibility), Geist Mono for numerical data and code. Fluid clamp-based sizing ensures the interface scales gracefully from mobile to desktop.
+
+### Design Principles
+
+1. **Signal over noise** — Every element must earn its place. If it doesn't help the trader make better decisions, remove it. Prefer whitespace and hierarchy over borders and dividers. Data density is welcome; visual clutter is not.
+
+2. **Confidence through clarity** — Use decisive typography, strong contrast, and clear visual hierarchy so the trader never has to hunt for information. Bold is reserved for major emphasis only. Let the data speak.
+
+3. **Gold is earned, not spent** — The metallic gold accent (`acc-100`) is the brand signature. Use it sparingly for primary actions, key metrics, and moments of significance. Overuse dilutes its power. When everything is gold, nothing is.
+
+4. **Motion serves function** — Animations exist to orient the user (page transitions, state changes), not to entertain. Respect `prefers-reduced-motion`. Every animation should have a purpose: confirm an action, reveal hierarchy, or smooth a transition. No gratuitous movement.
+
+5. **Professional-grade resilience** — The interface must work under pressure: during live market hours, on varying screen sizes, with large datasets. Graceful loading states, robust error handling, and accessible defaults (WCAG AA) are non-negotiable.
+
+### Accessibility Requirements
+
+- **WCAG AA compliance** as baseline for all contrast ratios, keyboard navigation, and screen reader support
+- **Reduced motion support**: All animations must respect `prefers-reduced-motion` — critical for focus-heavy trading work where unnecessary motion is a distraction, not a delight
+- Semantic HTML, proper ARIA labels, and focus management across all interactive components
