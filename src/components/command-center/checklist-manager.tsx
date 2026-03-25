@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Trash2, GripVertical, X } from "lucide-react"
+import { Plus, Trash2, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -146,18 +146,6 @@ export const ChecklistManager = ({
 						<div className="space-y-s-200">
 							{items.map((item, index) => (
 								<div key={item.id} className="flex items-center gap-s-200">
-									<button
-										type="button"
-										className="cursor-grab text-txt-300 hover:text-txt-200 active:cursor-grabbing"
-										onMouseDown={(e) => e.preventDefault()}
-										onClick={() => {
-											// Simple move up/down on click for now
-											// Full drag-and-drop could be added with a library
-										}}
-										aria-label={tCommon("dragToReorder")}
-									>
-										<GripVertical className="h-4 w-4" />
-									</button>
 									<div className="flex gap-s-100">
 										<Button
 											id={`checklist-item-move-up-${item.id}`}
@@ -167,6 +155,7 @@ export const ChecklistManager = ({
 											onClick={() => handleMoveItem(index, index - 1)}
 											disabled={index === 0}
 											className="h-8 w-8 p-0 text-txt-300"
+											aria-label={tCommon("moveUp")}
 										>
 											&uarr;
 										</Button>
@@ -178,6 +167,7 @@ export const ChecklistManager = ({
 											onClick={() => handleMoveItem(index, index + 1)}
 											disabled={index === items.length - 1}
 											className="h-8 w-8 p-0 text-txt-300"
+											aria-label={tCommon("moveDown")}
 										>
 											&darr;
 										</Button>
@@ -199,7 +189,7 @@ export const ChecklistManager = ({
 										className={cn(
 											"h-8 w-8 p-0",
 											items.length <= 1
-												? "text-txt-400"
+												? "text-txt-placeholder"
 												: "text-txt-300 hover:text-fb-error"
 										)}
 									>
@@ -213,7 +203,7 @@ export const ChecklistManager = ({
 							variant="ghost"
 							size="sm"
 							onClick={handleAddItem}
-							className="mt-s-200 text-accent-primary"
+							className="mt-s-200 text-acc-100"
 						>
 							<Plus className="mr-s-100 h-4 w-4" />
 							{t("addItem")}

@@ -50,7 +50,7 @@ const getCircuitBreakerState = (
 			icon: XCircle,
 			iconClass: "text-fb-error",
 			badgeText: "stopTrading",
-			badgeClass: "bg-fb-error text-white",
+			badgeClass: "bg-fb-error text-bg-100",
 		}
 	}
 

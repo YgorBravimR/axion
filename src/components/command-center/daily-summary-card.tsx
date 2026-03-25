@@ -40,7 +40,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 		<div id="cc-daily-summary" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-center gap-s-200">
-				<BarChart3 className="h-5 w-5 text-accent-primary" />
+				<BarChart3 className="h-5 w-5 text-acc-100" />
 				<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
 			</div>
 
@@ -53,7 +53,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 						<p className="text-tiny text-txt-200">{t("totalPnL")}</p>
 						<p
 							className={cn(
-								"mt-s-100 text-h4 font-bold",
+								"mt-s-100 text-h3 font-bold",
 								summary.totalPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
 							)}
 						>
@@ -64,7 +64,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 					{/* Trades */}
 					<div>
 						<p className="text-tiny text-txt-200">{t("trades")}</p>
-						<p className="mt-s-100 text-h4 font-bold text-txt-100">
+						<p className="mt-s-100 text-h3 font-bold text-txt-100">
 							{summary.tradesCount}
 						</p>
 					</div>
@@ -73,7 +73,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 					<div>
 						<p className="text-tiny text-txt-200">{t("winRate")}</p>
 						<div className="mt-s-100 flex items-center gap-s-100">
-							<p className="text-h4 font-bold text-txt-100">
+							<p className="text-h3 font-bold text-txt-100">
 								{formatPercent(summary.winRate)}
 							</p>
 							<span className="text-tiny text-txt-200">

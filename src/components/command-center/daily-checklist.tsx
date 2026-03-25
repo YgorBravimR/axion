@@ -89,7 +89,7 @@ export const DailyChecklist = ({
 								)}
 							</div>
 							{!isReadOnly && (
-								<Button id="daily-checklist-settings-${checklist.id}" variant="ghost" size="sm" onClick={onManageClick}>
+								<Button id={`daily-checklist-settings-${checklist.id}`} variant="ghost" size="sm" onClick={onManageClick}>
 									<Settings className="h-4 w-4" />
 								</Button>
 							)}
@@ -105,11 +105,11 @@ export const DailyChecklist = ({
 									{Math.round(progress)}%
 								</span>
 							</div>
-							<div className="h-1.5 overflow-hidden rounded-full bg-bg-400">
+							<div className="h-1.5 overflow-hidden rounded-full bg-bg-300">
 								<div
 									className={cn(
 										"h-full transition-[width] duration-300",
-										isComplete ? "bg-trade-buy" : "bg-accent-primary"
+										isComplete ? "bg-trade-buy" : "bg-acc-100"
 									)}
 									style={{ width: `${progress}%` }}
 								/>

@@ -36,6 +36,28 @@ Both components have substantial duplicated JSX blocks between their collapsed (
 
 **Complexity**: Medium — requires verifying that PostHog's `identify`, `capture`, and pageview tracking still work correctly with deferred initialization.
 
+## Command Center — Architectural Refactors (deferred 2026-03-25)
+
+### Native inputs → UI components in MiniCalculator
+
+**File**: `live-trading-status-panel.tsx`
+
+The MiniCalculator section uses raw HTML `<select>` and `<input>` elements with hand-rolled Tailwind classes instead of the project's `Select`/`Input` UI components. This creates inconsistent styling (especially Safari mobile select rendering) and missing focus rings (WCAG 2.4.7).
+
+**Recommended fix**: Replace native elements with `<Select>` and `<Input>` from `@/components/ui`. Also add proper focus ring styles.
+
+**Complexity**: Low-Medium — straightforward component swap but needs testing with the calculator logic.
+
+### useEffect state sync → Derived state
+
+**Files**: `pre-market-notes.tsx`, `post-market-notes.tsx`
+
+Both components use two `useEffect` hooks to sync form state from props and track `hasChanges`. The `hasChanges` value can be computed inline during render instead of synced via effect.
+
+**Recommended fix**: Remove the tracking `useEffect` and derive `hasChanges` inline: `const hasChanges = postMarketNotes !== (notes?.postMarketNotes || "")`.
+
+**Complexity**: Low — simple refactor, but should test that save/refresh cycle still works correctly.
+
 ---
 
 *Add new deferred findings below as more scans are completed.*

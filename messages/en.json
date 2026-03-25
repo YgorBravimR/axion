@@ -73,6 +73,8 @@
 		"sortBy": "Sort by {column}",
 		"breadcrumb": "Breadcrumb",
 		"dragToReorder": "Drag to reorder",
+		"moveUp": "Move up",
+		"moveDown": "Move down",
 		"viewImage": "View image",
 		"imagePreview": "Image preview",
 		"closePreview": "Close preview",

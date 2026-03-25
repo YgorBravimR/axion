@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { upsertDailyNotes } from "@/app/actions/command-center"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import type { DailyAccountNote } from "@/db/schema"
+import type { MoodType } from "@/lib/validations/command-center"
 
 interface PostMarketNotesProps {
 	notes: DailyAccountNote | null
@@ -43,7 +44,7 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 				date: effectiveDate.toISOString(),
 				preMarketNotes: notes?.preMarketNotes || null,
 				postMarketNotes: postMarketNotes || null,
-				mood: (notes?.mood as "great" | "good" | "neutral" | "bad" | "terrible" | null) || null,
+				mood: (notes?.mood as MoodType | null) || null,
 			})
 			onRefresh()
 		} catch (error) {
@@ -58,7 +59,7 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="flex items-center gap-s-200">
-					<Moon className="h-5 w-5 text-accent-primary" />
+					<Moon className="h-5 w-5 text-acc-100" />
 					<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("postMarket")}</h3>
 				</div>
 				{hasChanges && !isReadOnly && (

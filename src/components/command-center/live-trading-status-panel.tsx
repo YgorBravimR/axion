@@ -316,8 +316,8 @@ const TradeBoxRow = ({ summaries, formatCurrency, t, directionLabels }: TradeBox
 				role="list"
 				aria-label={t("tradeBoxes.title")}
 			>
-				{summaries.map((summary, index) => (
-					<div key={index} role="listitem">
+				{summaries.map((summary) => (
+					<div key={summary.tradeStepNumber} role="listitem">
 						<TradeBox summary={summary} formatCurrency={formatCurrency} t={t} directionLabels={directionLabels} />
 					</div>
 				))}

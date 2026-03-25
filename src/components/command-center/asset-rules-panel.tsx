@@ -164,7 +164,7 @@ export const AssetRulesPanel = ({
 
 			{/* Add Asset Row */}
 			{addingAsset && (
-				<div className="mb-m-400 flex items-center gap-s-200 rounded-md border border-dashed border-bg-400 p-s-300">
+				<div className="mb-m-400 flex items-center gap-s-200 rounded-md border border-dashed border-bg-300 p-s-300">
 					<Select value={selectedAssetId} onValueChange={setSelectedAssetId}>
 						<SelectTrigger id="asset-rules-asset" className="w-full sm:w-48">
 							<SelectValue placeholder={t("selectAsset")} />
@@ -361,7 +361,7 @@ export const AssetRulesPanel = ({
 															className={cn(
 																"h-8 w-8 p-0",
 																isDeleting
-																	? "text-txt-400"
+																	? "text-txt-placeholder"
 																	: "text-txt-300 hover:text-fb-error"
 															)}
 															aria-label={t("delete")}

@@ -8,7 +8,7 @@ import {
 	CalendarDays,
 	SkipForward,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { APP_TIMEZONE, formatDateKey } from "@/lib/dates"
@@ -78,8 +78,7 @@ export const DateNavigator = ({
 		}
 	}
 
-	// Derive locale from pathname
-	const locale = pathname.startsWith("/pt-BR") ? "pt-BR" : "en"
+	const locale = useLocale()
 
 	return (
 		<div id="cc-date-navigator" className="gap-s-200 flex flex-wrap items-center">
@@ -153,7 +152,7 @@ export const DateNavigator = ({
 			)}
 
 			{!isToday && (
-				<span className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm">
+				<span className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm" role="status">
 					{t("readOnlyNotice")}
 				</span>
 			)}
