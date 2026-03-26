@@ -21,6 +21,13 @@ import {
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import {
@@ -359,8 +366,10 @@ export const OcrImport = () => {
 		<div className="space-y-m-600">
 			{/* Requirements Section */}
 			<div className="rounded-lg border border-bg-300 bg-bg-200">
-				<button
+				<Button
+					id="ocr-requirements-toggle"
 					type="button"
+					variant="ghost"
 					className="flex w-full items-center justify-between p-m-400 text-left"
 					onClick={() => setRequirementsExpanded(!requirementsExpanded)}
 				>
@@ -375,7 +384,7 @@ export const OcrImport = () => {
 					) : (
 						<ChevronDown className="h-4 w-4 text-txt-300" />
 					)}
-				</button>
+				</Button>
 
 				{requirementsExpanded && (
 					<div className="border-t border-bg-300 p-s-300 sm:p-m-400">
@@ -649,8 +658,10 @@ export const OcrImport = () => {
 						>
 							{/* Trade Header */}
 							<div className="flex items-center justify-between border-b border-bg-300 p-s-300 sm:p-m-400">
-								<button
+								<Button
+									id={`ocr-trade-toggle-${trade.id}`}
 									type="button"
+									variant="ghost"
 									className="flex items-center gap-s-300"
 									onClick={() => handleToggleTradeExpand(trade.id)}
 								>
@@ -678,7 +689,7 @@ export const OcrImport = () => {
 									<span className="text-tiny text-txt-300">
 										{t("executionsCount", { count: trade.executions.length })}
 									</span>
-								</button>
+								</Button>
 								<Button
 									id={`ocr-remove-trade-${trade.id}`}
 									variant="ghost"
@@ -773,23 +784,30 @@ export const OcrImport = () => {
 														className="border-b border-bg-300 last:border-0"
 													>
 														<td className="px-m-400 py-s-300">
-															<select
+															<Select
 																value={ex.type}
-																onChange={(e) =>
+																onValueChange={(value) =>
 																	handleUpdateExecution(trade.id, ex.id, {
-																		type: e.target.value as "entry" | "exit",
+																		type: value as "entry" | "exit",
 																	})
 																}
-																className={cn(
-																	"rounded px-s-200 py-s-100 text-tiny font-medium",
-																	ex.type === "entry"
-																		? "bg-trade-buy/20 text-trade-buy"
-																		: "bg-trade-sell/20 text-trade-sell"
-																)}
 															>
-																<option value="entry">{tCommon("entry")}</option>
-																<option value="exit">{tCommon("exit")}</option>
-															</select>
+																<SelectTrigger
+																	id={`ocr-execution-type-${ex.id}`}
+																	className={cn(
+																		"rounded px-s-200 py-s-100 text-tiny font-medium",
+																		ex.type === "entry"
+																			? "bg-trade-buy/20 text-trade-buy"
+																			: "bg-trade-sell/20 text-trade-sell"
+																	)}
+																>
+																	<SelectValue />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectItem value="entry">{tCommon("entry")}</SelectItem>
+																	<SelectItem value="exit">{tCommon("exit")}</SelectItem>
+																</SelectContent>
+															</Select>
 														</td>
 														<td className="px-m-400 py-s-300 text-small text-txt-200">
 															{ex.time}
@@ -851,8 +869,10 @@ export const OcrImport = () => {
 
 					{/* Raw Text Preview (Collapsed) */}
 					<div className="rounded-lg border border-bg-300 bg-bg-200">
-						<button
+						<Button
+							id="ocr-raw-text-toggle"
 							type="button"
+							variant="ghost"
 							className="flex w-full items-center justify-between p-m-400 text-left"
 							onClick={() => setRawTextExpanded(!rawTextExpanded)}
 						>
@@ -864,7 +884,7 @@ export const OcrImport = () => {
 							) : (
 								<ChevronDown className="h-4 w-4 text-txt-300" />
 							)}
-						</button>
+						</Button>
 						{rawTextExpanded && (
 							<pre className="max-h-48 overflow-auto border-t border-bg-300 p-s-300 sm:p-m-400 text-tiny text-txt-300">
 								{parseResult.rawText}

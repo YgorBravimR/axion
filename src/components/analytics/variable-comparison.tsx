@@ -2,6 +2,13 @@
 
 import { useState, type ReactNode } from "react"
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
+import {
 	BarChart,
 	Bar,
 	XAxis,
@@ -210,30 +217,32 @@ export const VariableComparison = ({
 				</h3>
 				<div className="gap-s-300 flex flex-wrap">
 					{/* Group By Selector */}
-					<select
-						value={groupBy}
-						onChange={(e) => onGroupByChange(e.target.value as typeof groupBy)}
-						className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100 rounded-md border"
-					>
-						{groupOptions.map((opt) => (
-							<option key={opt.value} value={opt.value}>
-								{opt.label}
-							</option>
-						))}
-					</select>
+					<Select value={groupBy} onValueChange={(value) => onGroupByChange(value as typeof groupBy)}>
+						<SelectTrigger id="variable-comparison-group-by" className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{groupOptions.map((opt) => (
+								<SelectItem key={opt.value} value={opt.value}>
+									{opt.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 
 					{/* Metric Selector */}
-					<select
-						value={metric}
-						onChange={(e) => setMetric(e.target.value as MetricType)}
-						className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100 rounded-md border"
-					>
-						{metricOptions.map((opt) => (
-							<option key={opt.value} value={opt.value}>
-								{opt.label}
-							</option>
-						))}
-					</select>
+					<Select value={metric} onValueChange={(value) => setMetric(value as MetricType)}>
+						<SelectTrigger id="variable-comparison-metric" className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{metricOptions.map((opt) => (
+								<SelectItem key={opt.value} value={opt.value}>
+									{opt.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 			</div>
 

@@ -2030,7 +2030,8 @@
 			"riskProfiles": "Perfis de Risco",
 			"general": "Geral",
 			"users": "Usuários",
-			"conditions": "Condições"
+			"conditions": "Condições",
+			"bugs": "Relatórios de Bugs"
 		},
 		"profile": {
 			"profileInfo": "Informações do Perfil",
@@ -2848,6 +2849,7 @@
 			"noAccount": "Sem Conta",
 			"settings": "Configurações",
 			"userMenu": "Menu do Usuário",
+			"reportBug": "Reportar um Bug",
 			"logout": "Sair",
 			"createAccount": "Criar Conta",
 			"createAccountDesc": "Adicione uma nova conta de trading ao seu perfil",
@@ -3524,6 +3526,81 @@
 			"avgWin": "Ganho Médio",
 			"avgLoss": "Perda Média",
 			"projectedPnl": "P&L Projetado (100 trades)"
+		}
+	},
+	"bugReport": {
+		"panel": {
+			"title": "Reportar um Bug",
+			"subjectLabel": "Assunto",
+			"subjectPlaceholder": "Descrição breve do problema",
+			"descriptionLabel": "Descrição",
+			"descriptionPlaceholder": "O que aconteceu? O que você esperava que acontecesse?",
+			"takeScreenshot": "Capturar Tela",
+			"capturingScreenshot": "Capturando...",
+			"imagesLabel": "Anexos",
+			"submit": "Enviar Relatório",
+			"submitting": "Enviando...",
+			"success": "Relatório de bug enviado. Obrigado!",
+			"error": "Falha ao enviar relatório. Tente novamente.",
+			"screenshotFailed": "Falha na captura — tente anexar uma imagem manualmente"
+		},
+		"admin": {
+			"title": "Relatórios de Bugs",
+			"noReports": "Nenhum relatório de bug ainda",
+			"status": {
+				"open": "Aberto",
+				"accepted": "Aceito",
+				"rejected": "Rejeitado",
+				"closed": "Fechado"
+			},
+			"columns": {
+				"subject": "Assunto",
+				"reporter": "Reportado por",
+				"reportedAt": "Data",
+				"status": "Status",
+				"handledBy": "Tratado por"
+			},
+			"detail": {
+				"description": "Descrição",
+				"consoleLogs": "Logs do Console",
+				"networkErrors": "Erros de Rede",
+				"url": "URL da Página",
+				"userAgent": "User Agent",
+				"images": "Anexos",
+				"screenshot": "Captura de Tela",
+				"reportedBy": "Reportado por",
+				"handledBy": "Tratado por",
+				"reportedAt": "Reportado em",
+				"acceptedAt": "Aceito em",
+				"rejectedAt": "Rejeitado em",
+				"closedAt": "Fechado em"
+			},
+			"actions": {
+				"accept": "Aceitar",
+				"reject": "Rejeitar",
+				"close": "Fechar",
+				"rejectReason": "Motivo da rejeição",
+				"rejectReasonPlaceholder": "Explique por que este relatório foi rejeitado...",
+				"adminNotes": "Notas do Admin",
+				"adminNotesPlaceholder": "Notas internas sobre este bug...",
+				"confirmReject": "Confirmar Rejeição",
+				"cancel": "Cancelar",
+				"acceptSuccess": "Relatório de bug aceito",
+				"rejectSuccess": "Relatório de bug rejeitado",
+				"closeSuccess": "Relatório de bug fechado",
+				"actionError": "Falha ao atualizar relatório de bug"
+			},
+			"fetchError": "Falha ao carregar relatórios de bugs",
+			"fetchDetailError": "Falha ao carregar detalhes do relatório de bug",
+			"imageCountSingle": "1 imagem",
+			"imageCountPlural": "{count} imagens",
+			"filters": {
+				"all": "Todos",
+				"open": "Abertos",
+				"accepted": "Aceitos",
+				"rejected": "Rejeitados",
+				"closed": "Fechados"
+			}
 		}
 	}
 }

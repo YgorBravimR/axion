@@ -5,7 +5,17 @@ import { Save, Loader2, ChevronDown, ChevronUp, Eye, Lock } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { useFormatting } from "@/hooks/use-formatting"
 import { deriveMonthlyPlanValues } from "@/lib/monthly-plan"
 import { fromCents, toCents } from "@/lib/money"
@@ -480,51 +490,50 @@ const MonthlyPlanForm = ({
 										<label className="mb-s-200 text-small text-txt-200 block">
 											{t("form.riskProfileSelect")}
 										</label>
-										<select
-											value={selectedProfileId}
-											onChange={(e) => setSelectedProfileId(e.target.value)}
-											className="border-bg-300 bg-bg-100 text-small text-txt-100 focus:ring-acc-100 w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
-											aria-label={t("form.riskProfileSelect")}
-										>
-											<option value="">
-												{t("form.riskProfileSelectPlaceholder")}
-											</option>
-											{(() => {
-												const builtInNames = [
-													"Fixed Fractional",
-													"Fixed Ratio",
-													"Institutional",
-													"R-Multiples",
-													"Kelly Fractional",
-												]
-												const isBuiltIn = (p: RiskManagementProfile) =>
-													builtInNames.some((n) => p.name.includes(n))
-												const builtIn = riskProfiles.filter(isBuiltIn)
-												const custom = riskProfiles.filter((p) => !isBuiltIn(p))
-												return (
-													<>
-														{builtIn.length > 0 && (
-															<optgroup label={t("form.builtInGroup")}>
-																{builtIn.map((profile) => (
-																	<option key={profile.id} value={profile.id}>
-																		{profile.name}
-																	</option>
-																))}
-															</optgroup>
-														)}
-														{custom.length > 0 && (
-															<optgroup label={t("form.customGroup")}>
-																{custom.map((profile) => (
-																	<option key={profile.id} value={profile.id}>
-																		{profile.name}
-																	</option>
-																))}
-															</optgroup>
-														)}
-													</>
-												)
-											})()}
-										</select>
+										<Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+											<SelectTrigger id="monthly-plan-risk-profile" className="border-bg-300 bg-bg-100 text-small text-txt-100 w-full" aria-label={t("form.riskProfileSelect")}>
+												<SelectValue placeholder={t("form.riskProfileSelectPlaceholder")} />
+											</SelectTrigger>
+											<SelectContent>
+												{(() => {
+													const builtInNames = [
+														"Fixed Fractional",
+														"Fixed Ratio",
+														"Institutional",
+														"R-Multiples",
+														"Kelly Fractional",
+													]
+													const isBuiltIn = (p: RiskManagementProfile) =>
+														builtInNames.some((n) => p.name.includes(n))
+													const builtIn = riskProfiles.filter(isBuiltIn)
+													const custom = riskProfiles.filter((p) => !isBuiltIn(p))
+													return (
+														<>
+															{builtIn.length > 0 && (
+																<SelectGroup>
+																	<SelectLabel>{t("form.builtInGroup")}</SelectLabel>
+																	{builtIn.map((profile) => (
+																		<SelectItem key={profile.id} value={profile.id}>
+																			{profile.name}
+																		</SelectItem>
+																	))}
+																</SelectGroup>
+															)}
+															{custom.length > 0 && (
+																<SelectGroup>
+																	<SelectLabel>{t("form.customGroup")}</SelectLabel>
+																	{custom.map((profile) => (
+																		<SelectItem key={profile.id} value={profile.id}>
+																			{profile.name}
+																		</SelectItem>
+																	))}
+																</SelectGroup>
+															)}
+														</>
+													)
+												})()}
+											</SelectContent>
+										</Select>
 									</div>
 
 									{/* Profile Description */}
@@ -720,16 +729,19 @@ const MonthlyPlanForm = ({
 									</span>
 								</div>
 
-								<button
+								<Button
+									id="see-decision-tree"
 									type="button"
+									variant="outline"
+									size="sm"
 									onClick={() => setShowDecisionTree(true)}
-									className="mt-s-300 gap-s-200 border-acc-100/30 bg-acc-100/10 px-s-300 py-s-200 text-tiny text-acc-100 hover:bg-acc-100/20 flex w-full items-center justify-center rounded-md border font-medium transition-colors"
+									className="mt-s-300 gap-s-200 border-acc-100/30 bg-acc-100/10 px-s-300 py-s-200 text-tiny text-acc-100 flex w-full items-center justify-center font-medium"
 									aria-label={t("form.seeDecisionTree")}
 									tabIndex={0}
 								>
 									<Eye className="h-3.5 w-3.5" />
 									{t("form.seeDecisionTree")}
-								</button>
+								</Button>
 							</div>
 						</div>
 					)}
@@ -740,7 +752,8 @@ const MonthlyPlanForm = ({
 							<label className="mb-s-200 text-small text-txt-200 block">
 								{t("form.notes")}
 							</label>
-							<textarea
+							<Textarea
+								id="monthly-plan-notes-profile"
 								value={notes}
 								onChange={(e) => setNotes(e.target.value)}
 								placeholder={t("form.notesPlaceholder")}
@@ -838,20 +851,22 @@ const MonthlyPlanForm = ({
 
 					{/* Custom mode: Advanced Settings Toggle */}
 					{!isProfileMode && (
-						<button
-							type="button"
-							onClick={() => setShowAdvanced((prev) => !prev)}
-							className="gap-s-200 border-bg-300 bg-bg-100 px-m-400 py-s-300 text-small text-txt-200 hover:bg-bg-200 flex w-full items-center rounded-lg border transition-colors"
-							aria-expanded={showAdvanced}
-							aria-label={t("form.advanced")}
-						>
-							{showAdvanced ? (
-								<ChevronUp className="h-4 w-4" />
-							) : (
-								<ChevronDown className="h-4 w-4" />
-							)}
-							{t("form.advanced")}
-						</button>
+					<Button
+						id="advanced-settings-toggle"
+						type="button"
+						variant="ghost"
+						onClick={() => setShowAdvanced((prev) => !prev)}
+						className="gap-s-200 border-bg-300 bg-bg-100 px-m-400 py-s-300 text-small text-txt-200 flex w-full items-center border"
+						aria-expanded={showAdvanced}
+						aria-label={t("form.advanced")}
+					>
+						{showAdvanced ? (
+							<ChevronUp className="h-4 w-4" />
+						) : (
+							<ChevronDown className="h-4 w-4" />
+						)}
+						{t("form.advanced")}
+					</Button>
 					)}
 
 					{/* Custom mode: Advanced Fields (Collapsible) */}
@@ -1083,7 +1098,8 @@ const MonthlyPlanForm = ({
 								<label className="mb-s-200 text-small text-txt-200 block">
 									{t("form.notes")}
 								</label>
-								<textarea
+								<Textarea
+									id="monthly-plan-notes-custom"
 									value={notes}
 									onChange={(e) => setNotes(e.target.value)}
 									placeholder={t("form.notesPlaceholder")}

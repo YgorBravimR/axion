@@ -127,6 +127,13 @@
       "when": 1774250358936,
       "tag": "0017_blue_exodus",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1774465212120,
+      "tag": "0018_windy_firebrand",
+      "breakpoints": true
     }
   ]
 }

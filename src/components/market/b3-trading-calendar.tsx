@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
 	isB3Holiday,
@@ -110,25 +111,31 @@ export const B3TradingCalendar = () => {
 		<div className="flex flex-col gap-2 px-3 py-2">
 			{/* Month navigation */}
 			<div className="flex items-center justify-between">
-				<button
-					type="button"
-					onClick={handlePrevMonth}
-					className="text-txt-300 hover:text-txt-100 rounded p-0.5 transition-colors"
-					aria-label={t("prevMonth")}
-				>
-					<ChevronLeft className="h-4 w-4" />
-				</button>
+			<Button
+				id="calendar-prev-month"
+				type="button"
+				variant="ghost"
+				size="icon"
+				onClick={handlePrevMonth}
+				className="text-txt-300"
+				aria-label={t("prevMonth")}
+			>
+				<ChevronLeft className="h-4 w-4" />
+			</Button>
 				<span className="text-small text-txt-100 font-medium capitalize">
 					{monthName} {year}
 				</span>
-				<button
-					type="button"
-					onClick={handleNextMonth}
-					className="text-txt-300 hover:text-txt-100 rounded p-0.5 transition-colors"
-					aria-label={t("nextMonth")}
-				>
-					<ChevronRight className="h-4 w-4" />
-				</button>
+			<Button
+				id="calendar-next-month"
+				type="button"
+				variant="ghost"
+				size="icon"
+				onClick={handleNextMonth}
+				className="text-txt-300"
+				aria-label={t("nextMonth")}
+			>
+				<ChevronRight className="h-4 w-4" />
+			</Button>
 			</div>
 
 			{/* Day-of-week headers */}

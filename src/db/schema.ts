@@ -65,6 +65,14 @@ export const conditionTierEnum = pgEnum("condition_tier", ["mandatory", "tier_2"
 // Setup Rank Enum (A = mandatory only, AA = + tier_2, AAA = all tiers met)
 export const setupRankEnum = pgEnum("setup_rank", ["A", "AA", "AAA"])
 
+// Bug Report Status Enum
+export const bugReportStatusEnum = pgEnum("bug_report_status", [
+	"open",
+	"accepted",
+	"rejected",
+	"closed",
+])
+
 // ==========================================
 // AUTH TABLES (Phase 10)
 // ==========================================
@@ -1056,6 +1064,64 @@ export const userSettings = pgTable("user_settings", {
 })
 
 // ==========================================
+// BUG REPORTS
+// ==========================================
+
+export const bugReports = pgTable(
+	"bug_reports",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+
+		// Reporter
+		reportedBy: uuid("reported_by")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+
+		// Content
+		subject: varchar("subject", { length: 200 }).notNull(),
+		description: text("description").notNull(),
+
+		// Auto-captured context
+		currentUrl: varchar("current_url", { length: 500 }),
+		userAgent: varchar("user_agent", { length: 500 }),
+		consoleLogs: text("console_logs"),
+		networkErrors: text("network_errors"),
+
+		// Status & lifecycle
+		status: bugReportStatusEnum("status").default("open").notNull(),
+
+		// Lifecycle timestamps
+		reportedAt: timestamp("reported_at", { withTimezone: true }).defaultNow().notNull(),
+		acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+		rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+		closedAt: timestamp("closed_at", { withTimezone: true }),
+
+		// Admin handling
+		handledBy: uuid("handled_by").references(() => users.id, { onDelete: "set null" }),
+		rejectReason: text("reject_reason"),
+		adminNotes: text("admin_notes"),
+	},
+	(table) => [
+		index("bug_reports_reported_by_idx").on(table.reportedBy),
+		index("bug_reports_status_idx").on(table.status),
+	]
+)
+
+export const bugReportImages = pgTable(
+	"bug_report_images",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		bugReportId: uuid("bug_report_id")
+			.notNull()
+			.references(() => bugReports.id, { onDelete: "cascade" }),
+		imageUrl: varchar("image_url", { length: 500 }).notNull(),
+		s3Key: varchar("s3_key", { length: 500 }).notNull(),
+		isScreenshot: boolean("is_screenshot").default(false).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	}
+)
+
+// ==========================================
 // RELATIONS
 // ==========================================
 
@@ -1068,6 +1134,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	tags: many(tags),
 	riskManagementProfiles: many(riskManagementProfiles),
 	tradingConditions: many(tradingConditions),
+	bugReports: many(bugReports),
 }))
 
 // Trading Account Relations
@@ -1331,6 +1398,26 @@ export const scenarioImagesRelations = relations(scenarioImages, ({ one }) => ({
 	}),
 }))
 
+// Bug Report Relations
+export const bugReportsRelations = relations(bugReports, ({ one, many }) => ({
+	reporter: one(users, {
+		fields: [bugReports.reportedBy],
+		references: [users.id],
+	}),
+	handler: one(users, {
+		fields: [bugReports.handledBy],
+		references: [users.id],
+	}),
+	images: many(bugReportImages),
+}))
+
+export const bugReportImagesRelations = relations(bugReportImages, ({ one }) => ({
+	bugReport: one(bugReports, {
+		fields: [bugReportImages.bugReportId],
+		references: [bugReports.id],
+	}),
+}))
+
 // ==========================================
 // TYPE EXPORTS
 // ==========================================
@@ -1433,3 +1520,10 @@ export type NewStrategyScenario = typeof strategyScenarios.$inferInsert
 
 export type ScenarioImage = typeof scenarioImages.$inferSelect
 export type NewScenarioImage = typeof scenarioImages.$inferInsert
+
+// Bug Report Types
+export type BugReport = typeof bugReports.$inferSelect
+export type NewBugReport = typeof bugReports.$inferInsert
+
+export type BugReportImage = typeof bugReportImages.$inferSelect
+export type NewBugReportImage = typeof bugReportImages.$inferInsert

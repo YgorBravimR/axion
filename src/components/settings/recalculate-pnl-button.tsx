@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { recalculateAllTradesPnL } from "@/app/actions/trades"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 export const RecalculatePnLButton = () => {
 	const t = useTranslations("settings.general")
@@ -31,15 +32,16 @@ export const RecalculatePnLButton = () => {
 
 	return (
 		<div className="space-y-m-400">
-			<button
+			<Button
+				id="recalculate-pnl"
 				type="button"
 				onClick={handleRecalculate}
 				disabled={isPending}
 				aria-label={t("recalculatePnLButton")}
-				className="rounded-md bg-acc-100 px-m-400 py-s-200 text-small font-medium text-bg-100 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+				className="bg-acc-100 px-m-400 py-s-200 text-small font-medium text-bg-100"
 			>
 				{isPending ? t("recalculatingPnL") : t("recalculatePnLButton")}
-			</button>
+			</Button>
 			{result && (
 				<p
 					className={cn(

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { recalculateRValues } from "@/app/actions/trades"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 export const RecalculateButton = () => {
 	const t = useTranslations("settings.timeframes")
@@ -31,14 +32,15 @@ export const RecalculateButton = () => {
 
 	return (
 		<div className="space-y-m-400">
-			<button
+			<Button
+				id="recalculate-r-values"
 				type="button"
 				onClick={handleRecalculate}
 				disabled={isPending}
-				className="rounded-md bg-acc-100 px-m-400 py-s-200 text-small font-medium text-bg-100 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+				className="bg-acc-100 px-m-400 py-s-200 text-small font-medium text-bg-100"
 			>
 				{isPending ? t("recalculating") : t("recalculateRValues")}
-			</button>
+			</Button>
 			{result && (
 				<p
 					className={cn(

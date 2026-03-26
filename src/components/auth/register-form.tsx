@@ -143,10 +143,13 @@ const RegisterForm = () => {
 							disabled={isPending}
 							className="pr-10"
 						/>
-						<button
+						<Button
+							id="register-password-toggle"
+							variant="ghost"
+							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 rounded"
+							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -154,7 +157,7 @@ const RegisterForm = () => {
 							) : (
 								<Eye className="h-4 w-4" aria-hidden="true" />
 							)}
-						</button>
+						</Button>
 					</div>
 
 					{/* Password requirements */}
@@ -193,10 +196,13 @@ const RegisterForm = () => {
 							disabled={isPending}
 							className="pr-10"
 						/>
-						<button
+						<Button
+							id="register-confirm-password-toggle"
+							variant="ghost"
+							size="icon"
 							type="button"
 							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 rounded"
+							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
 							aria-label={showConfirmPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showConfirmPassword ? (
@@ -204,7 +210,7 @@ const RegisterForm = () => {
 							) : (
 								<Eye className="h-4 w-4" aria-hidden="true" />
 							)}
-						</button>
+						</Button>
 					</div>
 					{formData.confirmPassword.length > 0 && !passwordsMatch && (
 						<p className="text-tiny text-fb-error">{t("passwordsDoNotMatch")}</p>

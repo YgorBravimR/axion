@@ -241,20 +241,24 @@ export const ForgotPasswordForm = () => {
 				)}
 
 				<div className="text-center">
-					<button
+					<Button
+						id="resend-code"
+						variant="link"
 						type="button"
 						onClick={handleResend}
 						disabled={resendCooldown > 0 || isPending}
-						className="text-small text-brand-500 hover:text-brand-400 disabled:text-txt-400 disabled:cursor-not-allowed"
+						className="text-small text-brand-500 hover:text-brand-400"
 					>
 						{resendCooldown > 0
 							? t("resendIn", { seconds: resendCooldown })
 							: t("resend")}
-					</button>
+					</Button>
 				</div>
 
 				<p className="text-center text-small text-txt-300">
-					<button
+					<Button
+						id="back-to-email"
+						variant="link"
 						type="button"
 						onClick={() => {
 							setStep("email")
@@ -265,7 +269,7 @@ export const ForgotPasswordForm = () => {
 					>
 						<ArrowLeft className="h-3.5 w-3.5" />
 						{t("backToEmail")}
-					</button>
+					</Button>
 				</p>
 			</div>
 		)
@@ -314,10 +318,13 @@ export const ForgotPasswordForm = () => {
 							disabled={isPending}
 							className="pr-10"
 						/>
-						<button
+						<Button
+							id="forgot-password-toggle"
+							variant="ghost"
+							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 rounded"
+							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -325,7 +332,7 @@ export const ForgotPasswordForm = () => {
 							) : (
 								<Eye className="h-4 w-4" aria-hidden="true" />
 							)}
-						</button>
+						</Button>
 					</div>
 				</div>
 

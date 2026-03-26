@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 import type { AccountComparisonMetrics } from "@/types"
 import { COMPARISON_COLORS } from "./comparison-colors"
 import { formatBrlWithSign, formatRatio } from "@/lib/formatting"
@@ -143,7 +144,7 @@ const ComparisonNormalizedTable = ({
 					</label>
 					<div className="flex items-center gap-s-100">
 						<span className="text-tiny text-txt-300">R$</span>
-						<input
+						<Input
 							id="reference-risk"
 							type="number"
 							min="1"

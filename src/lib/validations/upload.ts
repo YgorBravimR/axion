@@ -17,7 +17,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 type ImageMimeType = (typeof ACCEPTED_IMAGE_TYPES)[number]
 
-const UPLOAD_PATHS = ["playbooks", "scenarios", "trades"] as const
+const UPLOAD_PATHS = ["playbooks", "scenarios", "trades", "bug-reports"] as const
 type UploadPath = (typeof UPLOAD_PATHS)[number]
 
 const uploadSchema = z.object({

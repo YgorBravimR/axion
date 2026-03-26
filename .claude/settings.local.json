@@ -148,7 +148,9 @@
       "Bash(grep -n \"setError\\\\|error &&\\\\|error =\" src/app/[locale]/\\\\\\(app\\\\\\)/playbook/[id]/edit/page.tsx)",
       "Bash(cat \"/Users/ygorbravim/personal/projects/profitJournal/src/app/[locale]/\\(app\\)/journal/page.tsx\")",
       "Bash(cat \"/Users/ygorbravim/personal/projects/profitJournal/src/app/[locale]/\\(app\\)/analytics/account-comparison/page.tsx\")",
-      "Bash(cd /Users/ygorbravim/personal/projects/profitJournal grep -rn \"from.*_lib/filters\\\\|from.*_lib/decrypt\" src/app/api/arch/ --include=\"*.ts\")"
+      "Bash(cd /Users/ygorbravim/personal/projects/profitJournal grep -rn \"from.*_lib/filters\\\\|from.*_lib/decrypt\" src/app/api/arch/ --include=\"*.ts\")",
+      "Skill(scan)",
+      "Skill(review-team)"
     ],
     "deny": [],
     "ask": []

@@ -2030,7 +2030,8 @@
 			"riskProfiles": "Risk Profiles",
 			"general": "General",
 			"users": "Users",
-			"conditions": "Conditions"
+			"conditions": "Conditions",
+			"bugs": "Bug Reports"
 		},
 		"profile": {
 			"profileInfo": "Profile Information",
@@ -2848,6 +2849,7 @@
 			"noAccount": "No Account",
 			"settings": "Settings",
 			"userMenu": "User Menu",
+			"reportBug": "Report a Bug",
 			"logout": "Sign Out",
 			"createAccount": "Create Account",
 			"createAccountDesc": "Add a new trading account to your profile",
@@ -3524,6 +3526,81 @@
 			"avgWin": "Avg Win",
 			"avgLoss": "Avg Loss",
 			"projectedPnl": "Projected P&L (100 trades)"
+		}
+	},
+	"bugReport": {
+		"panel": {
+			"title": "Report a Bug",
+			"subjectLabel": "Subject",
+			"subjectPlaceholder": "Brief description of the issue",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "What happened? What did you expect to happen?",
+			"takeScreenshot": "Take Screenshot",
+			"capturingScreenshot": "Capturing...",
+			"imagesLabel": "Attachments",
+			"submit": "Submit Report",
+			"submitting": "Submitting...",
+			"success": "Bug report submitted. Thank you!",
+			"error": "Failed to submit report. Please try again.",
+			"screenshotFailed": "Screenshot failed — try attaching an image manually"
+		},
+		"admin": {
+			"title": "Bug Reports",
+			"noReports": "No bug reports yet",
+			"status": {
+				"open": "Open",
+				"accepted": "Accepted",
+				"rejected": "Rejected",
+				"closed": "Closed"
+			},
+			"columns": {
+				"subject": "Subject",
+				"reporter": "Reporter",
+				"reportedAt": "Reported",
+				"status": "Status",
+				"handledBy": "Handled By"
+			},
+			"detail": {
+				"description": "Description",
+				"consoleLogs": "Console Logs",
+				"networkErrors": "Network Errors",
+				"url": "Page URL",
+				"userAgent": "User Agent",
+				"images": "Attachments",
+				"screenshot": "Screenshot",
+				"reportedBy": "Reported by",
+				"handledBy": "Handled by",
+				"reportedAt": "Reported at",
+				"acceptedAt": "Accepted at",
+				"rejectedAt": "Rejected at",
+				"closedAt": "Closed at"
+			},
+			"actions": {
+				"accept": "Accept",
+				"reject": "Reject",
+				"close": "Close",
+				"rejectReason": "Reason for rejection",
+				"rejectReasonPlaceholder": "Explain why this report was rejected...",
+				"adminNotes": "Admin Notes",
+				"adminNotesPlaceholder": "Internal notes about this bug...",
+				"confirmReject": "Confirm Reject",
+				"cancel": "Cancel",
+				"acceptSuccess": "Bug report accepted",
+				"rejectSuccess": "Bug report rejected",
+				"closeSuccess": "Bug report closed",
+				"actionError": "Failed to update bug report"
+			},
+			"fetchError": "Failed to load bug reports",
+			"fetchDetailError": "Failed to load bug report details",
+			"imageCountSingle": "1 image",
+			"imageCountPlural": "{count} images",
+			"filters": {
+				"all": "All",
+				"open": "Open",
+				"accepted": "Accepted",
+				"rejected": "Rejected",
+				"closed": "Closed"
+			}
 		}
 	}
 }

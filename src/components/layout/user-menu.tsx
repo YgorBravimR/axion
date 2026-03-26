@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { LogOut, Settings, Loader2 } from "lucide-react"
+import { LogOut, Settings, Loader2, Bug } from "lucide-react"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Link } from "@/i18n/routing"
 import { logoutUser, getCurrentUser, type SafeUser } from "@/app/actions/auth"
+import { useBugReport } from "@/components/bug-report/bug-report-provider"
 import { cn } from "@/lib/utils"
 
 interface UserMenuProps {
@@ -25,6 +26,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 	const [isPending, startTransition] = useTransition()
 	const [isLoading, setIsLoading] = useState(true)
 	const [user, setUser] = useState<SafeUser | null>(null)
+	const { openBugReport } = useBugReport()
 
 	useEffect(() => {
 		const fetchUser = async () => {
@@ -95,6 +97,16 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 							<span>{t("settings")}</span>
 						</Link>
 					</DropdownMenuItem>
+					<DropdownMenuItem
+						onClick={() => {
+							openBugReport()
+							setIsOpen(false)
+						}}
+						className="cursor-pointer"
+					>
+						<Bug className="h-4 w-4" />
+						<span>{t("reportBug")}</span>
+					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						onClick={handleLogout}
@@ -149,6 +161,16 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 						<Settings className="h-4 w-4" />
 						<span>{t("settings")}</span>
 					</Link>
+				</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={() => {
+						openBugReport()
+						setIsOpen(false)
+					}}
+					className="cursor-pointer"
+				>
+					<Bug className="h-4 w-4" />
+					<span>{t("reportBug")}</span>
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem

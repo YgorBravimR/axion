@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { ImageLightbox } from "@/components/shared/image-lightbox"
 import { ScenarioForm } from "./scenario-form"
 import {
 	getScenariosByStrategy,
@@ -17,7 +18,6 @@ import {
 	Trash2,
 	ImageIcon,
 	Loader2,
-	X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -49,7 +49,9 @@ export const ScenarioSection = ({
 	const [formOpen, setFormOpen] = useState(false)
 	const [editingScenario, setEditingScenario] =
 		useState<ScenarioWithImages | null>(null)
-	const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+	const [lightboxOpen, setLightboxOpen] = useState(false)
+	const [lightboxIndex, setLightboxIndex] = useState(0)
+	const [lightboxImages, setLightboxImages] = useState<{ src: string; alt?: string }[]>([])
 
 	const loadScenarios = async () => {
 		setIsLoading(true)
@@ -162,7 +164,12 @@ export const ScenarioSection = ({
 													key={img.id}
 													type="button"
 													className="overflow-hidden rounded-lg transition-transform hover:scale-[1.02]"
-													onClick={() => setLightboxImage(img.url)}
+													onClick={() => {
+													const imgs = scenario.images.map((i) => ({ src: i.url }))
+													setLightboxImages(imgs)
+													setLightboxIndex(scenario.images.indexOf(img))
+													setLightboxOpen(true)
+												}}
 													aria-label={tCommon("viewImage")}
 												>
 													<img
@@ -261,33 +268,13 @@ export const ScenarioSection = ({
 				onSuccess={handleFormSuccess}
 			/>
 
-			{/* Lightbox overlay */}
-			{lightboxImage && (
-				<div
-					className="p-m-400 sm:p-m-500 lg:p-m-600 fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-					onClick={() => setLightboxImage(null)}
-					role="dialog"
-					aria-modal="true"
-					aria-label={tCommon("imagePreview")}
-				>
-					<Button
-						id="lightbox-close"
-						variant="ghost"
-						size="sm"
-						className="absolute top-4 right-4 text-txt-100 hover:text-txt-100/80"
-						onClick={() => setLightboxImage(null)}
-						aria-label={tCommon("closePreview")}
-					>
-						<X className="h-6 w-6" />
-					</Button>
-					<img
-						src={lightboxImage}
-						alt=""
-						className="max-h-[85dvh] max-w-[90dvw] rounded-lg object-contain"
-						onClick={(e) => e.stopPropagation()}
-					/>
-				</div>
-			)}
+			{/* Lightbox */}
+			<ImageLightbox
+				images={lightboxImages}
+				initialIndex={lightboxIndex}
+				open={lightboxOpen}
+				onOpenChange={setLightboxOpen}
+			/>
 		</div>
 	)
 }

@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect, type ChangeEvent } from "react"
+import { useState, useEffect, useId, type ChangeEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Lock } from "lucide-react"
 import { fromCents } from "@/lib/money"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import type {
 	AdvancedSimulationParams,
 	RiskSimulationParams,
@@ -28,27 +30,31 @@ interface FieldProps {
 	locked?: boolean
 }
 
-const Field = ({ label, value, onChange, type = "number", suffix, disabled, locked }: FieldProps) => (
-	<div className="flex flex-col gap-1">
-		<label className="text-tiny text-txt-300 flex items-center gap-1">
-			{label}
-			{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
-		</label>
-		<div className="flex items-center gap-1">
-			<input
-				type={type}
-				value={value}
-				onChange={(event) => onChange(event.target.value)}
-				disabled={disabled || locked}
-				className={cn(
-					"border-bg-300 text-txt-100 text-small w-full rounded-md border px-3 py-1.5",
-					disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed opacity-70" : "bg-bg-100"
-				)}
-			/>
-			{suffix && <span className="text-tiny text-txt-300 shrink-0">{suffix}</span>}
+const Field = ({ label, value, onChange, type = "number", suffix, disabled, locked }: FieldProps) => {
+	const generatedId = useId()
+	return (
+		<div className="flex flex-col gap-1">
+			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-1">
+				{label}
+				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
+			</label>
+			<div className="flex items-center gap-1">
+				<Input
+					id={generatedId}
+					type={type}
+					value={value}
+					onChange={(event) => onChange(event.target.value)}
+					disabled={disabled || locked}
+					className={cn(
+						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-3 py-1.5",
+						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed opacity-70" : "bg-bg-100"
+					)}
+				/>
+				{suffix && <span className="text-tiny text-txt-300 shrink-0">{suffix}</span>}
+			</div>
 		</div>
-	</div>
-)
+	)
+}
 
 /**
  * Currency field that maintains a local string state while the user is typing,
@@ -66,6 +72,7 @@ interface CurrencyFieldProps {
 }
 
 const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }: CurrencyFieldProps) => {
+	const generatedId = useId()
 	const [localValue, setLocalValue] = useState(() => fromCents(valueCents).toFixed(2))
 	const [isFocused, setIsFocused] = useState(false)
 
@@ -96,12 +103,13 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 
 	return (
 		<div className="flex flex-col gap-1">
-			<label className="text-tiny text-txt-300 flex items-center gap-1">
+			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-1">
 				{label}
 				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
 			</label>
 			<div className="flex items-center gap-1">
-				<input
+				<Input
+					id={generatedId}
 					type="number"
 					value={localValue}
 					onChange={handleChange}
@@ -130,21 +138,23 @@ const CheckboxField = ({
 	checked: boolean
 	onChange: (checked: boolean) => void
 	locked?: boolean
-}) => (
-	<label className={cn("flex items-center gap-2", locked ? "cursor-not-allowed opacity-70" : "cursor-pointer")}>
-		<input
-			type="checkbox"
-			checked={checked}
-			onChange={(event) => onChange(event.target.checked)}
-			disabled={locked}
-			className="accent-acc-100 h-4 w-4 rounded"
-		/>
-		<span className="text-small text-txt-200 flex items-center gap-1">
-			{label}
-			{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
-		</span>
-	</label>
-)
+}) => {
+	const generatedId = useId()
+	return (
+		<div className={cn("flex items-center gap-2", locked ? "cursor-not-allowed opacity-70" : "cursor-pointer")}>
+			<Checkbox
+				id={generatedId}
+				checked={checked}
+				onCheckedChange={(value) => onChange(value === true)}
+				disabled={locked}
+			/>
+			<label htmlFor={generatedId} className="text-small text-txt-200 flex items-center gap-1">
+				{label}
+				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
+			</label>
+		</div>
+	)
+}
 
 /**
  * Scales all cents-based values in a DecisionTreeConfig proportionally.

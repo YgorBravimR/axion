@@ -223,7 +223,9 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						{tSelect("continue")}
 					</Button>
 
-					<button
+					<Button
+						id="back-to-login"
+						variant="link"
 						type="button"
 						onClick={handleBackToCredentials}
 						disabled={isPending}
@@ -232,7 +234,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					>
 						<ArrowLeft className="h-4 w-4" />
 						{tSelect("backToLogin")}
-					</button>
+					</Button>
 				</div>
 			</div>
 		)
@@ -318,10 +320,13 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							disabled={isPending}
 							className="pr-10"
 						/>
-						<button
+						<Button
+							id="login-password-toggle"
+							variant="ghost"
+							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 rounded"
+							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -329,7 +334,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							) : (
 								<Eye className="h-4 w-4" aria-hidden="true" />
 							)}
-						</button>
+						</Button>
 					</div>
 				</div>
 

@@ -181,14 +181,17 @@ const VerifyEmailForm = () => {
 							{t("resendIn", { seconds: resendCooldown })}
 						</p>
 					) : (
-						<button
+						<Button
+							id="resend-verification"
+							variant="link"
+							size="sm"
 							type="button"
 							onClick={handleResend}
 							disabled={isPending}
 							className="text-tiny font-medium text-brand-500 hover:text-brand-400"
 						>
 							{t("resend")}
-						</button>
+						</Button>
 					)}
 				</div>
 

@@ -4,6 +4,8 @@ import { useState } from "react"
 import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, RefreshCw, HelpCircle } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { EnrichmentMatch, NotaFill } from "@/lib/nota-parser/types"
 
 interface NotaMatchCardProps {
@@ -107,11 +109,10 @@ const NotaMatchCard = ({
 			<div className="p-s-300 sm:p-m-400 flex items-center gap-s-200 sm:gap-m-400">
 				{/* Checkbox */}
 				{(isSelectable || isEnriched) && (
-					<input
-						type="checkbox"
+					<Checkbox
+						id={`nota-match-checkbox-${match.trade.id}`}
 						checked={isEnriched ? reEnrich : isSelected}
-						onChange={isEnriched ? onToggleReEnrich : onToggleSelect}
-						className="accent-acc-100 h-4 w-4 shrink-0 rounded"
+						onCheckedChange={() => isEnriched ? onToggleReEnrich() : onToggleSelect()}
 						aria-label={t("selectTrade", { asset: match.trade.asset })}
 					/>
 				)}
@@ -162,15 +163,17 @@ const NotaMatchCard = ({
 				)}
 
 				{/* Expand button */}
-				<button
+				<Button
+					id={`nota-match-expand-${match.trade.id}`}
 					type="button"
+					variant="ghost"
+					size="icon"
 					onClick={handleToggleExpand}
-					className="text-txt-300 hover:text-txt-100 shrink-0 p-s-100 transition-colors"
 					aria-label={tCommon("toggleDetails")}
 					aria-expanded={isExpanded}
 				>
 					{isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-				</button>
+				</Button>
 			</div>
 
 			{/* Expanded fill details */}

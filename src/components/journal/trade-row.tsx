@@ -213,15 +213,18 @@ export const TradeRow = memo(({
 			{!isThisDeleting && (
 				<>
 					{!isAnyDeleting && (
-						<button
+						<Button
+							id={`delete-trade-${trade.id}`}
 							type="button"
+							variant="ghost"
+							size="icon"
 							onClick={handleDeleteClick}
-							className="text-txt-300 hover:text-fb-error hover:bg-fb-error/10 shrink-0 rounded-md p-1 opacity-0 transition-all group-hover/row:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fb-error"
+							className="text-txt-300 hover:text-fb-error hover:bg-fb-error/10 shrink-0 opacity-0 transition-all group-hover/row:opacity-100 focus-visible:opacity-100"
 							aria-label={t("deleteTrade")}
 							tabIndex={0}
 						>
 							<Trash2 className="h-4 w-4" />
-						</button>
+						</Button>
 					)}
 					{onTradeClick && !isAnyDeleting && (
 						<ChevronRight className="text-txt-300 h-4 w-4 shrink-0" />

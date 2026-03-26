@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { translateRiskReason } from "@/lib/risk-reason-i18n"
 import { useUrlParams } from "@/hooks/use-url-params"
 import type {
@@ -198,24 +199,30 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 						{t("page", { current: page + 1, total: totalPages })}
 					</span>
 					<div className="flex gap-1">
-						<button
+						<Button
+							id="comparison-prev-page"
 							type="button"
+							variant="ghost"
+							size="icon"
 							onClick={() => setPage(Math.max(0, page - 1))}
 							disabled={page === 0}
-							className="text-txt-200 hover:bg-bg-300 disabled:text-txt-placeholder rounded p-1 disabled:cursor-not-allowed"
+							className="text-txt-200"
 							aria-label={t("prevPage")}
 						>
 							<ChevronLeft className="h-4 w-4" />
-						</button>
-						<button
+						</Button>
+						<Button
+							id="comparison-next-page"
 							type="button"
+							variant="ghost"
+							size="icon"
 							onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
 							disabled={page >= totalPages - 1}
-							className="text-txt-200 hover:bg-bg-300 disabled:text-txt-placeholder rounded p-1 disabled:cursor-not-allowed"
+							className="text-txt-200"
 							aria-label={t("nextPage")}
 						>
 							<ChevronRight className="h-4 w-4" />
-						</button>
+						</Button>
 					</div>
 				</div>
 			)}

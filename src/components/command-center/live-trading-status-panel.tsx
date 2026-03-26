@@ -12,6 +12,14 @@ import {
 	ShieldAlert,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { fromCents } from "@/lib/money"
 import { calculateTickBasedPositionSize } from "@/lib/calculations"
 import { translateRiskReason } from "@/lib/risk-reason-i18n"
@@ -149,8 +157,8 @@ const MiniCalculator = ({
 		setStopPoints(event.target.value)
 	}
 
-	const handleAssetChange = (event: ChangeEvent<HTMLSelectElement>) => {
-		setSelectedAssetId(event.target.value)
+	const handleAssetChange = (value: string) => {
+		setSelectedAssetId(value)
 	}
 
 	return (
@@ -171,20 +179,18 @@ const MiniCalculator = ({
 					>
 						{t("calculator.asset")}
 					</label>
-					<select
-						id="calc-asset"
-						value={selectedAssetId}
-						onChange={handleAssetChange}
-						className="text-base md:text-sm border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
-						aria-label={t("calculator.asset")}
-					>
-						<option value="">{t("calculator.selectAsset")}</option>
-						{availableAssets.map((asset) => (
-							<option key={asset.id} value={asset.id}>
-								{asset.symbol}
-							</option>
-						))}
-					</select>
+					<Select value={selectedAssetId} onValueChange={handleAssetChange}>
+						<SelectTrigger id="calc-asset" className="border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 w-full" aria-label={t("calculator.asset")}>
+							<SelectValue placeholder={t("calculator.selectAsset")} />
+						</SelectTrigger>
+						<SelectContent>
+							{availableAssets.map((asset) => (
+								<SelectItem key={asset.id} value={asset.id}>
+									{asset.symbol}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 
 				{/* Stop points input */}
@@ -195,7 +201,7 @@ const MiniCalculator = ({
 					>
 						{t("calculator.stopPoints")}
 					</label>
-					<input
+					<Input
 						id="calc-stop"
 						type="number"
 						min="0"

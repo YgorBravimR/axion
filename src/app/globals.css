@@ -18,6 +18,7 @@
   --color-acc-100: rgb(204 162 72);
   --color-acc-200: rgb(80 110 200);
   --color-fb-error: rgb(204 85 85);
+  --color-fb-success: rgb(52 211 153);
 
   /* Trading Colors (for profit/loss visualization) */
   --color-trade-buy: rgb(0 255 150);
@@ -143,6 +144,7 @@
   --color-acc-100: rgb(245 194 9);
   --color-acc-200: rgb(59 130 246);
   --color-fb-error: rgb(220 38 38);
+  --color-fb-success: rgb(5 150 105);
 
   /* Trading Colors - adjusted for light mode */
   --color-trade-buy: rgb(0 180 100);
@@ -217,6 +219,7 @@
   --color-acc-100: #D4AF37;
   --color-acc-200: #3B82F6;
   --color-fb-error: #EF4444;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Emerald + Coral */
   --color-trade-buy: #10B981;
@@ -255,6 +258,7 @@
   --color-acc-100: #B8941F;
   --color-acc-200: #2563EB;
   --color-fb-error: #DC2626;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - darker for light mode */
   --color-trade-buy: #059669;
@@ -296,6 +300,7 @@
   --color-acc-100: #D4AF37;
   --color-acc-200: #4A90D9;
   --color-fb-error: #E74C3C;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Emerald + Coral */
   --color-trade-buy: #10B981;
@@ -334,6 +339,7 @@
   --color-acc-100: #B8941F;
   --color-acc-200: #2563EB;
   --color-fb-error: #DC2626;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - darker for light mode */
   --color-trade-buy: #059669;
@@ -375,6 +381,7 @@
   --color-acc-100: #C9A227;
   --color-acc-200: #9CA3A8;
   --color-fb-error: #A85454;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Muted Metallic */
   --color-trade-buy: #6B9E78;
@@ -413,6 +420,7 @@
   --color-acc-100: #A6851E;
   --color-acc-200: #6B7278;
   --color-fb-error: #8B4545;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Refined for light */
   --color-trade-buy: #4A7A55;
@@ -455,6 +463,7 @@
   --color-acc-100: #C0C0C0;
   --color-acc-200: #CFB53B;
   --color-fb-error: #8B3A3A;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Luminous Metallic */
   --color-trade-buy: #70C090;
@@ -494,6 +503,7 @@
   --color-acc-100: #808080;
   --color-acc-200: #9A7B4F;
   --color-fb-error: #7A3030;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Clear for light */
   --color-trade-buy: #2A8A4A;
@@ -536,6 +546,7 @@
   --color-acc-100: #2563EB;
   --color-acc-200: #A8B2C1;
   --color-fb-error: #F85149;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Blue-based scheme */
   --color-trade-buy: #3FB950;
@@ -575,6 +586,7 @@
   --color-acc-100: #1D4ED8;
   --color-acc-200: #64748B;
   --color-fb-error: #CF222E;
+  --color-fb-success: #34D399;
 
   /* Trading Colors */
   --color-trade-buy: #1A7F37;
@@ -617,6 +629,7 @@
   --color-acc-100: #00FFFF;
   --color-acc-200: #FF00FF;
   --color-fb-error: #FF3366;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Electric Neon */
   --color-trade-buy: #00FF88;
@@ -656,6 +669,7 @@
   --color-acc-100: #CC00CC;
   --color-acc-200: #00AAAA;
   --color-fb-error: #CC2255;
+  --color-fb-success: #34D399;
 
   /* Trading Colors - Bright for light */
   --color-trade-buy: #00AA66;
@@ -699,6 +713,7 @@
   --color-acc-100: #D4A843;
   --color-acc-200: #B8903A;
   --color-fb-error: #FF6B35;
+  --color-fb-success: #34D399;
 
   /* Trading Colors — emerald profit on crimson bg; bright coral for loss (avoids crimson clash) */
   --color-trade-buy: #4DC87A;
@@ -738,6 +753,7 @@
   --color-acc-100: #9A7020;
   --color-acc-200: #8C1C28;
   --color-fb-error: #C0390D;
+  --color-fb-success: #34D399;
 
   /* Trading Colors — forest green profit, rich crimson-red loss (dark enough on pale bg) */
   --color-trade-buy: #1E7A48;
@@ -783,6 +799,7 @@
   --color-acc-100: #8B5CF6;
   --color-acc-200: #D4AF37;
   --color-fb-error: #EF4444;
+  --color-fb-success: #34D399;
 
   /* Trading Colors — clean, high-contrast on near-black */
   --color-trade-buy: #34D399;
@@ -864,6 +881,7 @@
   --color-acc-100: #7C3AED;
   --color-acc-200: #B8941F;
   --color-fb-error: #DC2626;
+  --color-fb-success: #34D399;
 
   /* Trading Colors — darker for light mode readability */
   --color-trade-buy: #059669;

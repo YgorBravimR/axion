@@ -11,6 +11,7 @@ import {
 	Info,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -236,13 +237,15 @@ export const CsvTradeCard = ({
 						</span>
 
 						{/* Expand Button */}
-						<button
+						<Button
+							id={`csv-trade-expand-${trade.rowNumber}`}
 							type="button"
+							variant="ghost"
+							size="icon"
 							onClick={(e) => {
 								e.stopPropagation()
 								onToggleExpand()
 							}}
-							className="p-s-100 text-txt-300 hover:bg-bg-100 hover:text-txt-100 rounded"
 							aria-label={isExpanded ? tCommon("collapse") : tCommon("expand")}
 						>
 							{isExpanded ? (
@@ -250,7 +253,7 @@ export const CsvTradeCard = ({
 							) : (
 								<ChevronDown className="h-4 w-4" />
 							)}
-						</button>
+						</Button>
 					</div>
 				)}
 			</div>

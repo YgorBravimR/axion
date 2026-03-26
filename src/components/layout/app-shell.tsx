@@ -9,7 +9,11 @@ import { CommandMenu } from "@/components/layout/command-menu"
 import { PageBreadcrumb } from "@/components/layout/page-breadcrumb"
 import { UserMenu } from "@/components/layout/user-menu"
 import { ThemeSynchronizer } from "@/components/providers/theme-synchronizer"
+import { Button } from "@/components/ui/button"
 import { PageGuideProvider, PageGuideTrigger } from "@/components/ui/page-guide"
+import { BugReportProvider } from "@/components/bug-report/bug-report-provider"
+import { BugReportPanel } from "@/components/bug-report/bug-report-panel"
+import { BugReportCaptureProvider } from "@/components/bug-report/bug-report-capture-provider"
 import {
 	Sheet,
 	SheetContent,
@@ -70,7 +74,9 @@ const AppShell = ({
 	}, [])
 
 	return (
-		<PageGuideProvider>
+		<BugReportProvider>
+			<BugReportCaptureProvider>
+				<PageGuideProvider>
 			<a
 				href="#main-content"
 				className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-acc-100 focus:px-m-400 focus:py-s-200 focus:text-bg-100 focus:outline-none"
@@ -124,13 +130,15 @@ const AppShell = ({
 						/>
 
 						<div className="gap-s-200 ml-auto flex items-center">
-							<button
+							<Button
+								id="mobile-notifications"
 								type="button"
-								className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 focus-visible:ring-acc-100 rounded-md p-2 focus-visible:ring-2 focus-visible:outline-none"
+								variant="ghost"
+								size="icon"
 								aria-label={tCommon("notifications")}
 							>
 								<Bell className="h-5 w-5" />
-							</button>
+							</Button>
 							<UserMenu isCollapsed />
 						</div>
 					</header>
@@ -165,22 +173,27 @@ const AppShell = ({
 								<PageGuideTrigger />
 							</div>
 							{/* Search trigger — opens CommandMenu via Cmd+K */}
-							<button
+							<Button
+								id="desktop-search-trigger"
 								type="button"
+								variant="outline"
+								size="sm"
 								onClick={handleSearchClick}
-								className="gap-s-200 border-bg-300 bg-bg-100 px-s-300 py-s-100 text-tiny text-txt-placeholder hover:border-txt-300 hidden w-56 cursor-pointer items-center rounded-md border transition-colors md:flex lg:w-72"
+								className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-placeholder hidden w-56 cursor-pointer items-center md:flex lg:w-72"
 								aria-label={tCommon("searchPlaceholder")}
 							>
 								<Search className="h-3.5 w-3.5 shrink-0" />
 								<span className="truncate">{tCommon("searchPlaceholder")}</span>
-							</button>
-							<button
+							</Button>
+							<Button
+								id="desktop-notifications"
 								type="button"
-								className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 focus-visible:ring-acc-100 rounded-md p-2 focus-visible:ring-2 focus-visible:outline-none"
+								variant="ghost"
+								size="icon"
 								aria-label={tCommon("notifications")}
 							>
 								<Bell className="h-4.5 w-4.5" />
-							</button>
+							</Button>
 							<UserMenu isCollapsed />
 						</div>
 
@@ -191,7 +204,10 @@ const AppShell = ({
 					</div>
 				</>
 			)}
-		</PageGuideProvider>
+				</PageGuideProvider>
+				<BugReportPanel />
+			</BugReportCaptureProvider>
+		</BugReportProvider>
 	)
 }
 

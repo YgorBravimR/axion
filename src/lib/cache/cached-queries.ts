@@ -143,10 +143,6 @@ const getCachedAnalyticsDashboard = async (
 	}
 	const computeMs = (performance.now() - computeStart).toFixed(1)
 
-	console.log(
-		`[YGORDEV:cache-miss] analytics-dashboard | DB: ${dbMs}ms | compute: ${computeMs}ms | trades: ${result.length} | groupBy: ${groupBy}`
-	)
-
 	return data
 }
 
@@ -492,9 +488,6 @@ const getCachedDashboardData = async (
 	const radarData = computeRadar(sortedAsc)
 
 	const computeMs = (performance.now() - computeStart).toFixed(1)
-	console.log(
-		`[YGORDEV:cache-miss] dashboard-batch | DB: ${dbMs}ms | compute: ${computeMs}ms | trades: ${allTrades.length}`
-	)
 
 	return { stats, discipline, equityCurve, streakData, dailyPnL, radarData }
 }

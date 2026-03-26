@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 import { Link, usePathname } from "@/i18n/routing"
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw } from "lucide-react"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { navItems } from "@/lib/navigation"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -80,10 +81,13 @@ const Sidebar = ({
 
 			{/* Sidebar toggle — floats outside the sidebar edge */}
 			{!isSheet && !hideCollapseToggle && (
-				<button
+				<Button
+					id="sidebar-collapse"
 					type="button"
+					variant="ghost"
+					size="icon"
 					onClick={onToggleCollapse}
-					className="bg-bg-200 border-bg-300 text-txt-300 hover:text-txt-100 focus-visible:ring-acc-100 absolute top-3.5 -right-5 z-50 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm focus-visible:ring-2 focus-visible:outline-none"
+					className="bg-bg-200 border-bg-300 text-txt-300 hover:text-txt-100 absolute top-3.5 -right-5 z-50 h-6 w-6 rounded-full border shadow-sm"
 					aria-label={
 						isCollapsed ? tCommon("expandSidebar") : tCommon("collapseSidebar")
 					}
@@ -93,7 +97,7 @@ const Sidebar = ({
 					) : (
 						<PanelLeftClose className="h-6 w-6" />
 					)}
-				</button>
+				</Button>
 			)}
 
 			{/* New Trade Button */}

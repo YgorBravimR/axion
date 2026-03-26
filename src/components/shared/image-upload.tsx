@@ -4,6 +4,7 @@ import { useRef, useCallback, useState } from "react"
 import type { ChangeEvent, DragEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { ImageLightbox } from "@/components/shared/image-lightbox"
 import { X, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from "@/lib/validations/upload"
@@ -31,6 +32,8 @@ const ImageUpload = ({
 	const t = useTranslations("common")
 	const [error, setError] = useState<string | null>(null)
 	const [isDragOver, setIsDragOver] = useState(false)
+	const [lightboxOpen, setLightboxOpen] = useState(false)
+	const [lightboxIndex, setLightboxIndex] = useState(0)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 
 	const totalImages = persistedImages.length + pendingImages.length
@@ -127,11 +130,20 @@ const ImageUpload = ({
 								thumb.borderClass
 							)}
 						>
-							<img
-								src={thumb.src}
-								alt={t("imageUpload.thumbnail", { index: index + 1 })}
-								className="aspect-video w-full object-cover"
-							/>
+							<button
+								type="button"
+								className="w-full cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
+								onClick={() => {
+									setLightboxIndex(index)
+									setLightboxOpen(true)
+								}}
+							>
+								<img
+									src={thumb.src}
+									alt={t("imageUpload.thumbnail", { index: index + 1 })}
+									className="aspect-video w-full object-cover"
+								/>
+							</button>
 							<Button
 								id={`image-remove-${index}`}
 								type="button"
@@ -154,7 +166,7 @@ const ImageUpload = ({
 					role="button"
 					tabIndex={0}
 					className={cn(
-						"border-bg-300 p-l-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:outline-none",
+						"border-bg-300 p-l-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-100 focus-visible:outline-none",
 						isDragOver && "border-acc-100 bg-acc-100/5"
 					)}
 					onClick={() => fileInputRef.current?.click()}
@@ -190,6 +202,17 @@ const ImageUpload = ({
 
 			{/* Error */}
 			{error && <p className="text-small text-fb-error">{error}</p>}
+
+			{/* Lightbox */}
+			<ImageLightbox
+				images={thumbnails.map((thumb, i) => ({
+					src: thumb.src,
+					alt: t("imageUpload.thumbnail", { index: i + 1 }),
+				}))}
+				initialIndex={lightboxIndex}
+				open={lightboxOpen}
+				onOpenChange={setLightboxOpen}
+			/>
 		</div>
 	)
 }

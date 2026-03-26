@@ -132,8 +132,11 @@ export const PeriodFilter = ({
 
 			{/* Show current custom range if selected */}
 			{value === "custom" && customDateRange && !showCustomPicker ? (
-				<button
+				<Button
+					id="edit-custom-range"
 					type="button"
+					variant="link"
+					size="sm"
 					onClick={() => setShowCustomPicker(true)}
 					className="gap-s-100 text-tiny text-txt-300 hover:text-txt-200 flex items-center"
 					aria-label={t("period.editCustomRange")}
@@ -146,7 +149,7 @@ export const PeriodFilter = ({
 					{customDateRange.to.toLocaleDateString(undefined, {
 						timeZone: APP_TIMEZONE,
 					})}
-				</button>
+				</Button>
 			) : null}
 		</div>
 	)

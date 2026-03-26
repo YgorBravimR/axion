@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Activity, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type {
 	QuoteGroup,
@@ -155,15 +156,18 @@ export const MarketMonitorContent = () => {
 		return (
 			<div className="flex flex-col items-center justify-center py-20">
 				<p className="text-small text-fb-error mb-2">{error}</p>
-				<button
+				<Button
+					id="market-refresh-error"
 					type="button"
+					variant="ghost"
+					size="sm"
 					onClick={handleRefresh}
-					className="text-small text-acc-100 hover:text-acc-100/80 inline-flex items-center gap-1.5 transition-colors"
+					className="text-acc-100 inline-flex items-center gap-1.5"
 					aria-label={t("refreshNow")}
 				>
 					<RefreshCw className="h-3.5 w-3.5" />
 					{t("refreshNow")}
-				</button>
+				</Button>
 			</div>
 		)
 	}
@@ -221,14 +225,17 @@ export const MarketMonitorContent = () => {
 								<span className="text-tiny text-txt-300">
 									{t("lastUpdated")}: {formatTime(lastUpdated)}
 								</span>
-								<button
+								<Button
+									id="market-refresh"
 									type="button"
+									variant="ghost"
+									size="icon"
 									onClick={handleRefresh}
-									className="text-txt-300 hover:text-acc-100 transition-colors"
+									className="text-txt-300"
 									aria-label={t("refreshNow")}
 								>
 									<RefreshCw className="h-3.5 w-3.5" />
-								</button>
+								</Button>
 							</div>
 						) : null}
 					</div>
@@ -313,15 +320,18 @@ export const MarketMonitorContent = () => {
 						<div className="flex flex-col items-center justify-center py-10">
 							<Activity className="text-txt-300 mb-3 h-5 w-5" />
 							<p className="text-small text-txt-300">{t("quote.emptyGroup")}</p>
-							<button
+							<Button
+								id="market-refresh-empty"
 								type="button"
+								variant="ghost"
+								size="sm"
 								onClick={handleRefresh}
-								className="text-tiny text-acc-100 hover:text-acc-100/80 mt-2 inline-flex items-center gap-1 transition-colors"
+								className="text-tiny text-acc-100 mt-2 inline-flex items-center gap-1"
 								aria-label={t("refreshNow")}
 							>
 								<RefreshCw className="h-3 w-3" />
 								{t("refreshNow")}
-							</button>
+							</Button>
 						</div>
 					)}
 				</div>

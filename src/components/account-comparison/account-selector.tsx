@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 interface AccountOption {
 	id: string
@@ -97,21 +98,18 @@ const AccountSelector = ({
 			</div>
 
 			<div className="mt-s-300 flex items-center gap-s-300">
-				<button
+				<Button
+					id="compare-accounts"
 					type="button"
+					variant="default"
 					tabIndex={0}
 					aria-label={t("compare")}
 					disabled={!canCompare || isPending}
-					className={cn(
-						"rounded-md px-m-400 py-s-200 text-small font-medium transition-colors",
-						canCompare && !isPending
-							? "bg-acc-100 text-bg-100 hover:bg-acc-100/90"
-							: "bg-bg-300 text-txt-300 cursor-not-allowed"
-					)}
+					className="px-m-400 py-s-200 text-small font-medium"
 					onClick={onCompare}
 				>
 					{isPending ? t("comparing") : t("compare")}
-				</button>
+				</Button>
 
 				{!canCompare && (
 					<p className="text-tiny text-txt-300">{t("minAccounts")}</p>

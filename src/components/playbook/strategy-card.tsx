@@ -97,28 +97,32 @@ export const StrategyCard = ({
 									<Eye className="h-4 w-4" />
 									{t("strategy.viewDetails")}
 								</Link>
-								<button
+								<Button
+									id={`strategy-edit-${strategy.id}`}
 									type="button"
+									variant="ghost"
 									onClick={() => {
 										setShowMenu(false)
 										onEdit(strategy)
 									}}
-									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
+									className="gap-s-200 px-s-300 py-s-200 text-small text-txt-200 flex w-full items-center justify-start text-left"
 								>
 									<Edit className="h-4 w-4" />
 									{tCommon("edit")}
-								</button>
-								<button
+								</Button>
+								<Button
+									id={`strategy-delete-${strategy.id}`}
 									type="button"
+									variant="ghost"
+									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center justify-start text-left"
 									onClick={() => {
 										setShowMenu(false)
 										onDelete(strategy.id)
 									}}
-									className="text-fb-error hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Trash2 className="h-4 w-4" />
 									{tCommon("delete")}
-								</button>
+								</Button>
 							</div>
 						</>
 					)}

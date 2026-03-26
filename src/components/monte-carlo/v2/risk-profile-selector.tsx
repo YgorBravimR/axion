@@ -1,6 +1,15 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { fromCents } from "@/lib/money"
 import { formatCompactCurrency } from "@/lib/formatting"
 import type { RiskManagementProfile } from "@/types/risk-profile"
@@ -59,49 +68,50 @@ const RiskProfileSelector = ({
 			<label className="text-small text-txt-200 block font-medium">
 				{t("profileSelector.title")}
 			</label>
-			<select
-				value={selectedProfileId}
-				onChange={(e) => onProfileChange(e.target.value)}
-				className="border-bg-300 bg-bg-100 text-small text-txt-100 focus:ring-acc-100 w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
-				aria-label={t("profileSelector.title")}
-			>
-				<option value="">{t("profileSelector.selectProfile")}</option>
-				{(() => {
-					const builtInNames = [
-						"Fixed Fractional",
-						"Fixed Ratio",
-						"Institutional",
-						"R-Multiples",
-						"Kelly Fractional",
-					]
-					const isBuiltIn = (p: RiskManagementProfile) =>
-						builtInNames.some((n) => p.name.includes(n))
-					const builtIn = profiles.filter(isBuiltIn)
-					const custom = profiles.filter((p) => !isBuiltIn(p))
-					return (
-						<>
-							{builtIn.length > 0 && (
-								<optgroup label={t("profileSelector.builtInGroup")}>
-									{builtIn.map((profile) => (
-										<option key={profile.id} value={profile.id}>
-											{profile.name}
-										</option>
-									))}
-								</optgroup>
-							)}
-							{custom.length > 0 && (
-								<optgroup label={t("profileSelector.customGroup")}>
-									{custom.map((profile) => (
-										<option key={profile.id} value={profile.id}>
-											{profile.name}
-										</option>
-									))}
-								</optgroup>
-							)}
-						</>
-					)
-				})()}
-			</select>
+			<Select value={selectedProfileId} onValueChange={onProfileChange}>
+				<SelectTrigger id="risk-profile-selector" className="border-bg-300 bg-bg-100 text-small text-txt-100 w-full" aria-label={t("profileSelector.title")}>
+					<SelectValue placeholder={t("profileSelector.selectProfile")} />
+				</SelectTrigger>
+				<SelectContent>
+					{(() => {
+						const builtInNames = [
+							"Fixed Fractional",
+							"Fixed Ratio",
+							"Institutional",
+							"R-Multiples",
+							"Kelly Fractional",
+						]
+						const isBuiltIn = (p: RiskManagementProfile) =>
+							builtInNames.some((n) => p.name.includes(n))
+						const builtIn = profiles.filter(isBuiltIn)
+						const custom = profiles.filter((p) => !isBuiltIn(p))
+						return (
+							<>
+								{builtIn.length > 0 && (
+									<SelectGroup>
+										<SelectLabel>{t("profileSelector.builtInGroup")}</SelectLabel>
+										{builtIn.map((profile) => (
+											<SelectItem key={profile.id} value={profile.id}>
+												{profile.name}
+											</SelectItem>
+										))}
+									</SelectGroup>
+								)}
+								{custom.length > 0 && (
+									<SelectGroup>
+										<SelectLabel>{t("profileSelector.customGroup")}</SelectLabel>
+										{custom.map((profile) => (
+											<SelectItem key={profile.id} value={profile.id}>
+												{profile.name}
+											</SelectItem>
+										))}
+									</SelectGroup>
+								)}
+							</>
+						)
+					})()}
+				</SelectContent>
+			</Select>
 
 			{/* Profile Summary */}
 			{simProfile && (

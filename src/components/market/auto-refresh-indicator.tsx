@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface AutoRefreshIndicatorProps {
 	intervalSeconds: number
@@ -73,16 +74,19 @@ export const AutoRefreshIndicator = ({
 			</span>
 
 			{/* Manual refresh button */}
-			<button
+			<Button
+				id="auto-refresh-now"
 				type="button"
+				variant="ghost"
+				size="sm"
 				onClick={handleRefresh}
 				disabled={isLoading}
-				className="text-txt-200 hover:text-acc-100 focus-visible:ring-acc-100 inline-flex items-center gap-1 rounded px-2 py-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
+				className="text-txt-200 inline-flex items-center gap-1 px-2 py-1"
 				aria-label={t("refreshNow")}
 			>
 				<RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
 				<span>{t("refreshNow")}</span>
-			</button>
+			</Button>
 		</div>
 	)
 }
