@@ -197,6 +197,20 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									{tTrade("detail.disciplineBreach")}
 								</Badge>
 							)}
+							{trade.rating && (
+								<Badge
+									id="trade-detail-rating"
+									className={cn(
+										trade.rating === "A" && "bg-trade-buy/20 text-trade-buy",
+										trade.rating === "B" && "bg-trade-buy/10 text-trade-buy/70",
+										trade.rating === "C" && "bg-warning/20 text-warning",
+										trade.rating === "D" && "bg-trade-sell/10 text-trade-sell/70",
+										trade.rating === "F" && "bg-trade-sell/20 text-trade-sell",
+									)}
+								>
+									{tTrade("rating")}: {trade.rating}
+								</Badge>
+							)}
 						</div>
 					</Card>
 

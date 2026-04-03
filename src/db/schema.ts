@@ -65,6 +65,9 @@ export const conditionTierEnum = pgEnum("condition_tier", ["mandatory", "tier_2"
 // Setup Rank Enum (A = mandatory only, AA = + tier_2, AAA = all tiers met)
 export const setupRankEnum = pgEnum("setup_rank", ["A", "AA", "AAA"])
 
+// Trade Execution Rating Enum (A-F, measures execution quality)
+export const tradeRatingEnum = pgEnum("trade_rating", ["A", "B", "C", "D", "F"])
+
 // Bug Report Status Enum
 export const bugReportStatusEnum = pgEnum("bug_report_status", [
 	"open",
@@ -458,6 +461,9 @@ export const trades = pgTable(
 		// Compliance
 		followedPlan: boolean("followed_plan"),
 		disciplineNotes: text("discipline_notes"),
+
+		// Execution Quality Rating (A-F, distinct from setupRank which measures setup quality)
+		rating: tradeRatingEnum("rating"),
 
 		// Execution Mode (for position scaling support)
 		executionMode: executionModeEnum("execution_mode").default("simple").notNull(),

@@ -134,6 +134,13 @@
       "when": 1774465212120,
       "tag": "0018_windy_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775245779723,
+      "tag": "0019_striped_nico_minoru",
+      "breakpoints": true
     }
   ]
 }

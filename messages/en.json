@@ -1100,6 +1100,22 @@
 		"inlineCreateTag": "Create new tag",
 		"setupRank": "Setup Rank",
 		"setupRankHint": "Rate this setup quality based on how many strategy conditions were met",
+		"rating": "Execution Rating",
+		"ratingHint": "Rate how well you executed this trade (A = excellent, F = poor)",
+		"ratingGrades": {
+			"A": "A",
+			"B": "B",
+			"C": "C",
+			"D": "D",
+			"F": "F"
+		},
+		"ratingLabels": {
+			"A": "Excellent",
+			"B": "Good",
+			"C": "Average",
+			"D": "Poor",
+			"F": "Failed"
+		},
 		"tradeScreenshot": "Trade Screenshot",
 		"tradeScreenshotHint": "Optional: Upload a chart screenshot of this trade execution",
 		"validation": {

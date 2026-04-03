@@ -206,6 +206,7 @@ export const createTrade = async (
 			lessonLearned: tradeData.lessonLearned,
 			disciplineNotes: tradeData.disciplineNotes,
 			setupRank: tradeData.setupRank || null,
+			rating: tradeData.rating || null,
 			screenshotUrl: tradeData.screenshotUrl || null,
 			screenshotS3Key: tradeData.screenshotS3Key || null,
 		}
@@ -469,6 +470,8 @@ export const updateTrade = async (
 			updateData.disciplineNotes = tradeData.disciplineNotes
 		if (tradeData.setupRank !== undefined)
 			updateData.setupRank = tradeData.setupRank || null
+		if (tradeData.rating !== undefined)
+			updateData.rating = tradeData.rating || null
 		if (tradeData.screenshotUrl !== undefined)
 			updateData.screenshotUrl = tradeData.screenshotUrl || null
 		if (tradeData.screenshotS3Key !== undefined)
@@ -1326,6 +1329,7 @@ export interface CreateScaledTradeInput {
 	followedPlan?: boolean
 	disciplineNotes?: string
 	setupRank?: "A" | "AA" | "AAA" | null
+	rating?: "A" | "B" | "C" | "D" | "F" | null
 	screenshotUrl?: string
 	screenshotS3Key?: string
 	tagIds?: string[]
@@ -1524,6 +1528,7 @@ export const createScaledTrade = async (
 			lessonLearned: tradeData.lessonLearned,
 			disciplineNotes: tradeData.disciplineNotes,
 			setupRank: tradeData.setupRank || null,
+			rating: tradeData.rating || null,
 			screenshotUrl: tradeData.screenshotUrl || null,
 			screenshotS3Key: tradeData.screenshotS3Key || null,
 		}

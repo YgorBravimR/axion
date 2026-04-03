@@ -100,6 +100,9 @@ const tradeBaseFields = {
 	// Setup Rank (A/AA/AAA based on conditions met)
 	setupRank: z.enum(["A", "AA", "AAA"]).optional().nullable(),
 
+	// Execution Quality Rating (A-F)
+	rating: z.enum(["A", "B", "C", "D", "F"]).optional().nullable(),
+
 	// Trade Screenshot
 	screenshotUrl: z.string().url().max(500).optional().or(z.literal("")),
 	screenshotS3Key: z.string().max(500).optional().or(z.literal("")),
@@ -178,6 +181,7 @@ export interface CreateTradeInput {
 	disciplineNotes?: string
 	tagIds?: string[]
 	setupRank?: "A" | "AA" | "AAA" | null
+	rating?: "A" | "B" | "C" | "D" | "F" | null
 	screenshotUrl?: string
 	screenshotS3Key?: string
 }
@@ -200,6 +204,7 @@ export interface SharedTradeFormState {
 	disciplineNotes?: string
 	tagIds?: string[]
 	setupRank?: "A" | "AA" | "AAA" | null
+	rating?: "A" | "B" | "C" | "D" | "F" | null
 }
 
 export interface TradeFormRef {

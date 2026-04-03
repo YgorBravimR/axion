@@ -157,6 +157,7 @@ const buildTradeFormValues = (
 	followedPlan: trade.followedPlan ?? undefined,
 	disciplineNotes: trade.disciplineNotes ?? undefined,
 	setupRank: trade.setupRank ?? undefined,
+	rating: trade.rating ?? undefined,
 	screenshotUrl: trade.screenshotUrl ?? undefined,
 	screenshotS3Key: trade.screenshotS3Key ?? undefined,
 	tagIds: trade.tradeTags?.map((tt) => tt.tag.id) ?? [],
@@ -267,6 +268,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						followedPlan: initialSharedState.followedPlan,
 						disciplineNotes: initialSharedState.disciplineNotes,
 						setupRank: initialSharedState.setupRank,
+						rating: initialSharedState.rating,
 					}),
 				}
 
@@ -310,6 +312,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 					followedPlan: values.followedPlan,
 					disciplineNotes: values.disciplineNotes,
 					setupRank: values.setupRank,
+					rating: values.rating,
 					tagIds: values.tagIds,
 				}
 			},
@@ -1400,6 +1403,54 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									)}
 								/>
 							)}
+
+							{/* Execution Rating */}
+							<div className="space-y-s-200">
+								<Label id="label-trade-rating">
+									{t("rating")}
+								</Label>
+								<p className="text-tiny text-txt-300">
+									{t("ratingHint")}
+								</p>
+								<div
+									className="flex gap-s-200"
+									role="radiogroup"
+									aria-label={t("rating")}
+								>
+									{(["A", "B", "C", "D", "F"] as const).map((grade) => {
+										const isSelected = watch("rating") === grade
+										const gradeColors: Record<string, string> = {
+											A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
+											B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
+											C: "border-warning bg-warning/10 text-warning",
+											D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
+											F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
+										}
+
+										return (
+											<button
+												key={grade}
+												type="button"
+												role="radio"
+												aria-checked={isSelected}
+												aria-label={`${t("rating")}: ${grade} — ${t(`ratingLabels.${grade}`)}`}
+												tabIndex={0}
+												onClick={() => {
+													setValue("rating", isSelected ? undefined : grade)
+												}}
+												className={cn(
+													"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors",
+													isSelected
+														? gradeColors[grade]
+														: "border-bg-300 text-txt-300 hover:border-txt-300/50"
+												)}
+											>
+												{grade}
+											</button>
+										)
+									})}
+								</div>
+							</div>
 
 							{/* Trade Screenshot */}
 							<div className="space-y-s-200">
