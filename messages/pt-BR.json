@@ -1663,6 +1663,20 @@
 			},
 			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% taxa de acerto"
 		},
+		"holdingPeriod": {
+			"title": "Análise por Tempo de Permanência",
+			"noData": "Nenhum trade fechado disponível para análise de permanência.",
+			"duration": "Duração Média",
+			"trades": "Trades",
+			"winRate": "Taxa de Acerto",
+			"avgPnl": "P&L Médio",
+			"avgR": "R Médio",
+			"profitFactor": "Fator de Lucro",
+			"bestBucket": "Melhor Duração",
+			"worstBucket": "Pior Duração",
+			"minutes": "{value}min",
+			"hours": "{value}h"
+		},
 		"session": {
 			"title": "Performance por Sessão",
 			"description": "P&L por sessão de trading B3 (09:00-17:55)",

@@ -15,6 +15,7 @@ import {
 	TimeHeatmap,
 	SessionPerformanceChart,
 	SessionAssetTable,
+	HoldingPeriodChart,
 	type FilterState,
 } from "@/components/analytics"
 import { LoadingSpinner } from "@/components/shared"
@@ -42,6 +43,7 @@ import type {
 	TimeHeatmapCell,
 	SessionPerformance,
 	SessionAssetPerformance,
+	HoldingPeriodBucket,
 	AnalyticsDashboardData,
 } from "@/types"
 
@@ -109,6 +111,7 @@ const EMPTY_DASHBOARD: AnalyticsDashboardData = {
 	timeHeatmap: [],
 	sessionPerformance: [],
 	sessionAssetPerformance: [],
+	holdingPeriodAnalysis: [],
 }
 
 /**
@@ -160,6 +163,9 @@ const AnalyticsContent = ({
 	const [sessionAssetPerformance, setSessionAssetPerformance] = useState<
 		SessionAssetPerformance[]
 	>(dashboard.sessionAssetPerformance)
+	const [holdingPeriodAnalysis, setHoldingPeriodAnalysis] = useState<
+		HoldingPeriodBucket[]
+	>(dashboard.holdingPeriodAnalysis)
 
 	// Track account identity — clear cache only on account switch, not on every SSR re-render
 	const accountKey = availableAssets.join(",")
@@ -188,6 +194,7 @@ const AnalyticsContent = ({
 		setTimeHeatmap(d.timeHeatmap)
 		setSessionPerformance(d.sessionPerformance)
 		setSessionAssetPerformance(d.sessionAssetPerformance)
+		setHoldingPeriodAnalysis(d.holdingPeriodAnalysis)
 		setTagStats(tags)
 	}
 
@@ -316,6 +323,14 @@ const AnalyticsContent = ({
 					{/* Day of Week Performance */}
 					<DayOfWeekChart
 						data={dayOfWeekPerformance}
+						expectancyMode={expectancyMode}
+					/>
+				</div>
+
+				{/* Holding Period Analysis - Full Width */}
+				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
+					<HoldingPeriodChart
+						data={holdingPeriodAnalysis}
 						expectancyMode={expectancyMode}
 					/>
 				</div>

@@ -370,6 +370,21 @@ export interface AccountComparisonData {
 	accounts: AccountComparisonMetrics[]
 }
 
+export interface HoldingPeriodBucket {
+	bucket: string
+	bucketOrder: number
+	totalTrades: number
+	wins: number
+	losses: number
+	breakevens: number
+	winRate: number
+	totalPnl: number
+	avgPnl: number
+	avgR: number
+	avgDurationMinutes: number
+	profitFactor: number
+}
+
 // Batch analytics dashboard response
 export interface AnalyticsDashboardData {
 	performance: PerformanceByGroup[]
@@ -381,4 +396,5 @@ export interface AnalyticsDashboardData {
 	timeHeatmap: TimeHeatmapCell[]
 	sessionPerformance: SessionPerformance[]
 	sessionAssetPerformance: SessionAssetPerformance[]
+	holdingPeriodAnalysis: HoldingPeriodBucket[]
 }

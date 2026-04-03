@@ -21,6 +21,7 @@ import type {
 	TradingSession,
 	SessionPerformance,
 	SessionAssetPerformance,
+	HoldingPeriodBucket,
 } from "@/types"
 
 /**
@@ -982,6 +983,142 @@ const computePerformanceByVariable = (
 		.toSorted((a, b) => b.pnl - a.pnl)
 }
 
+// --- Holding Period Analysis ---
+
+interface TradeForHoldingPeriod {
+	entryDate: Date
+	exitDate: Date | null
+	pnl: number | string | null
+	outcome: "win" | "loss" | "breakeven" | null
+	realizedRMultiple: string | null
+}
+
+interface BucketConfig {
+	label: string
+	order: number
+	minMinutes: number
+	maxMinutes: number
+}
+
+const HOLDING_PERIOD_BUCKETS: BucketConfig[] = [
+	{ label: "< 1min", order: 0, minMinutes: 0, maxMinutes: 1 },
+	{ label: "1-5min", order: 1, minMinutes: 1, maxMinutes: 5 },
+	{ label: "5-15min", order: 2, minMinutes: 5, maxMinutes: 15 },
+	{ label: "15-30min", order: 3, minMinutes: 15, maxMinutes: 30 },
+	{ label: "30-60min", order: 4, minMinutes: 30, maxMinutes: 60 },
+	{ label: "1-4h", order: 5, minMinutes: 60, maxMinutes: 240 },
+	{ label: "> 4h", order: 6, minMinutes: 240, maxMinutes: Infinity },
+]
+
+const getBucketForDuration = (minutes: number): BucketConfig => {
+	for (const bucket of HOLDING_PERIOD_BUCKETS) {
+		if (minutes < bucket.maxMinutes) return bucket
+	}
+	return HOLDING_PERIOD_BUCKETS[HOLDING_PERIOD_BUCKETS.length - 1]
+}
+
+/**
+ * Compute holding period analysis from decrypted trades.
+ * Groups closed trades by duration buckets and computes performance metrics per bucket.
+ */
+const computeHoldingPeriodAnalysis = (
+	trades: TradeForHoldingPeriod[]
+): HoldingPeriodBucket[] => {
+	// Filter to closed trades only
+	const closedTrades = trades.filter(
+		(t): t is TradeForHoldingPeriod & { exitDate: Date } => t.exitDate !== null
+	)
+
+	if (closedTrades.length === 0) return []
+
+	const bucketMap = new Map<
+		string,
+		{
+			order: number
+			tradeCount: number
+			wins: number
+			losses: number
+			breakevens: number
+			totalPnl: number
+			totalR: number
+			rCount: number
+			grossProfit: number
+			grossLoss: number
+			totalDurationMinutes: number
+		}
+	>()
+
+	for (const trade of closedTrades) {
+		const durationMinutes = Math.max(
+			0,
+			(trade.exitDate.getTime() - trade.entryDate.getTime()) / 60_000
+		)
+		const bucket = getBucketForDuration(durationMinutes)
+		const pnl = fromCents(trade.pnl)
+
+		const existing = bucketMap.get(bucket.label) || {
+			order: bucket.order,
+			tradeCount: 0,
+			wins: 0,
+			losses: 0,
+			breakevens: 0,
+			totalPnl: 0,
+			totalR: 0,
+			rCount: 0,
+			grossProfit: 0,
+			grossLoss: 0,
+			totalDurationMinutes: 0,
+		}
+
+		existing.tradeCount++
+		existing.totalPnl += pnl
+		existing.totalDurationMinutes += durationMinutes
+
+		if (trade.outcome === "win") {
+			existing.wins++
+			existing.grossProfit += pnl
+		} else if (trade.outcome === "loss") {
+			existing.losses++
+			existing.grossLoss += Math.abs(pnl)
+		} else {
+			existing.breakevens++
+		}
+
+		if (trade.realizedRMultiple) {
+			existing.totalR += Number(trade.realizedRMultiple)
+			existing.rCount++
+		}
+
+		bucketMap.set(bucket.label, existing)
+	}
+
+	return Array.from(bucketMap.entries())
+		.map(([bucket, data]) => {
+			const decided = data.wins + data.losses
+			return {
+				bucket,
+				bucketOrder: data.order,
+				totalTrades: data.tradeCount,
+				wins: data.wins,
+				losses: data.losses,
+				breakevens: data.breakevens,
+				winRate: calculateWinRate(data.wins, decided),
+				totalPnl: data.totalPnl,
+				avgPnl: data.tradeCount > 0 ? data.totalPnl / data.tradeCount : 0,
+				avgR: data.rCount > 0 ? data.totalR / data.rCount : 0,
+				avgDurationMinutes:
+					data.tradeCount > 0
+						? data.totalDurationMinutes / data.tradeCount
+						: 0,
+				profitFactor: calculateProfitFactor(
+					data.grossProfit,
+					data.grossLoss
+				),
+			}
+		})
+		.toSorted((a, b) => a.bucketOrder - b.bucketOrder)
+}
+
 export {
 	computeOverallStats,
 	computeExpectedValue,
@@ -995,6 +1132,7 @@ export {
 	computeSessionPerformance,
 	computeSessionAssetPerformance,
 	computePerformanceByVariable,
+	computeHoldingPeriodAnalysis,
 	type TradeForStats,
 	type TradeForEquity,
 	type TradeForRisk,
@@ -1002,4 +1140,5 @@ export {
 	type TradeForHourly,
 	type TradeForSessionAsset,
 	type TradeForVariable,
+	type TradeForHoldingPeriod,
 }

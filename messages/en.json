@@ -1663,6 +1663,20 @@
 			},
 			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% win rate"
 		},
+		"holdingPeriod": {
+			"title": "Holding Period Analysis",
+			"noData": "No closed trades available for holding period analysis.",
+			"duration": "Avg Duration",
+			"trades": "Trades",
+			"winRate": "Win Rate",
+			"avgPnl": "Avg P&L",
+			"avgR": "Avg R",
+			"profitFactor": "Profit Factor",
+			"bestBucket": "Best Duration",
+			"worstBucket": "Worst Duration",
+			"minutes": "{value}min",
+			"hours": "{value}h"
+		},
 		"session": {
 			"title": "Trading Session Performance",
 			"description": "P&L by B3 trading session (09:00-17:55)",

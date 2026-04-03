@@ -38,6 +38,7 @@ import {
 	computeSessionPerformance,
 	computeSessionAssetPerformance,
 	computePerformanceByVariable,
+	computeHoldingPeriodAnalysis,
 } from "@/lib/analytics-helpers"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
@@ -140,6 +141,8 @@ const getCachedAnalyticsDashboard = async (
 		sessionPerformance: computeSessionPerformance(tradesForComputation),
 		sessionAssetPerformance:
 			computeSessionAssetPerformance(tradesForComputation),
+		holdingPeriodAnalysis:
+			computeHoldingPeriodAnalysis(tradesForComputation),
 	}
 	const computeMs = (performance.now() - computeStart).toFixed(1)
 
