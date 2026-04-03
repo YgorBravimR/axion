@@ -2033,7 +2033,10 @@
 			"insightModerate": "Fees consumed {percent}% of your gross profits — worth monitoring as you scale.",
 			"insightHigh": "Fees are significantly eating into profits at {percent}% of gross. Consider negotiating lower rates.",
 			"insightNegativeGross": "You paid {amount} in fees during a period with negative gross P&L.",
-			"insightNoGross": "You paid {amount} in fees. No gross profit to compare against yet."
+			"insightNoGross": "You paid {amount} in fees. No gross profit to compare against yet.",
+			"trendUp": "Increasing",
+			"trendDown": "Decreasing",
+			"trendFlat": "Flat"
 		},
 		"stats": {
 			"grossPnl": "Gross P&L",

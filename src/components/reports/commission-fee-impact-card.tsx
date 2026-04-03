@@ -84,7 +84,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 			</div>
 
 			{/* Summary */}
-			<div className="mt-m-500 grid grid-cols-3 gap-s-300 sm:gap-m-400">
+			<div className="mt-m-500 grid grid-cols-1 sm:grid-cols-3 gap-s-300 sm:gap-m-400">
 				<div className="rounded bg-trade-sell-muted px-s-300 py-s-200">
 					<p className="text-tiny text-txt-300">{t("totalFees")}</p>
 					<p className="text-body sm:text-h3 font-bold text-trade-sell">
@@ -109,17 +109,17 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Asset Breakdown */}
 			{assetBreakdown.length > 0 && (
-				<div className="mt-m-500 space-y-s-300">
+				<div className="mt-m-500 space-y-s-300" role="list" aria-label={t("assetBreakdown")}>
 					<h3 className="text-small font-medium text-txt-100">
 						{t("assetBreakdown")}
 					</h3>
 					{assetBreakdown.map((asset) => {
-						const barWidth = maxAssetFee > 0
-							? (asset.totalFees / maxAssetFee) * 100
+						const barScale = maxAssetFee > 0
+							? asset.totalFees / maxAssetFee
 							: 0
 
 						return (
-							<div key={asset.asset} className="space-y-s-100">
+							<div key={asset.asset} className="space-y-s-100" role="listitem">
 								<div className="flex items-center justify-between">
 									<div className="min-w-0 flex items-center gap-s-200">
 										<span className="text-small font-medium text-txt-100">
@@ -138,10 +138,17 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 										</span>
 									</div>
 								</div>
-								<div className="h-2 w-full rounded-full bg-bg-100">
+								<div
+									className="h-2 w-full rounded-full bg-bg-100"
+									role="meter"
+									aria-valuenow={asset.totalFees}
+									aria-valuemin={0}
+									aria-valuemax={maxAssetFee}
+									aria-label={`${asset.asset}: ${formatCurrencyWithSign(-asset.totalFees)}`}
+								>
 									<div
-										className="h-full rounded-full bg-txt-300/40 transition-[width]"
-										style={{ width: `${barWidth}%` }}
+										className="h-full origin-left rounded-full bg-txt-300/40 transition-transform duration-300"
+										style={{ transform: `scaleX(${barScale})` }}
 									/>
 								</div>
 							</div>
@@ -152,13 +159,13 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Monthly Trend */}
 			{monthlyTrend.length > 0 && (
-				<div className="mt-m-500 space-y-s-300">
+				<div className="mt-m-500 space-y-s-300" role="list" aria-label={t("monthlyTrend")}>
 					<h3 className="text-small font-medium text-txt-100">
 						{t("monthlyTrend")}
 					</h3>
 					{monthlyTrend.map((month, index) => {
-						const barWidth = maxMonthFee > 0
-							? (month.totalFees / maxMonthFee) * 100
+						const barScale = maxMonthFee > 0
+							? month.totalFees / maxMonthFee
 							: 0
 
 						const prevMonth = index > 0 ? monthlyTrend[index - 1] : null
@@ -171,7 +178,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 							: null
 
 						return (
-							<div key={month.month} className="space-y-s-100">
+							<div key={month.month} className="space-y-s-100" role="listitem">
 								<div className="flex items-center justify-between">
 									<div className="min-w-0 flex items-center gap-s-200">
 										<span className="text-small text-txt-200 tabular-nums">
@@ -180,13 +187,13 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 										{trendDirection && (
 											<span className="shrink-0">
 												{trendDirection === "up" && (
-													<TrendingUp className="h-3 w-3 text-trade-sell" aria-label="Increasing" />
+													<TrendingUp className="h-3 w-3 text-trade-sell" aria-label={t("trendUp")} />
 												)}
 												{trendDirection === "down" && (
-													<TrendingDown className="h-3 w-3 text-trade-buy" aria-label="Decreasing" />
+													<TrendingDown className="h-3 w-3 text-trade-buy" aria-label={t("trendDown")} />
 												)}
 												{trendDirection === "flat" && (
-													<Minus className="h-3 w-3 text-txt-300" aria-label="Flat" />
+													<Minus className="h-3 w-3 text-txt-300" aria-label={t("trendFlat")} />
 												)}
 											</span>
 										)}
@@ -212,10 +219,17 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 										</span>
 									</div>
 								</div>
-								<div className="h-2 w-full rounded-full bg-bg-100">
+								<div
+									className="h-2 w-full rounded-full bg-bg-100"
+									role="meter"
+									aria-valuenow={month.totalFees}
+									aria-valuemin={0}
+									aria-valuemax={maxMonthFee}
+									aria-label={`${month.month}: ${formatCurrencyWithSign(-month.totalFees)}`}
+								>
 									<div
-										className="h-full rounded-full bg-txt-300/40 transition-[width]"
-										style={{ width: `${barWidth}%` }}
+										className="h-full origin-left rounded-full bg-txt-300/40 transition-transform duration-300"
+										style={{ transform: `scaleX(${barScale})` }}
 									/>
 								</div>
 							</div>

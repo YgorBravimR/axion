@@ -2033,7 +2033,10 @@
 			"insightModerate": "Taxas consumiram {percent}% do seu lucro bruto — vale monitorar conforme você escala.",
 			"insightHigh": "Taxas estão impactando significativamente seus lucros a {percent}% do bruto. Considere negociar taxas menores.",
 			"insightNegativeGross": "Você pagou {amount} em taxas durante um período com P&L bruto negativo.",
-			"insightNoGross": "Você pagou {amount} em taxas. Sem lucro bruto para comparação ainda."
+			"insightNoGross": "Você pagou {amount} em taxas. Sem lucro bruto para comparação ainda.",
+			"trendUp": "Aumentando",
+			"trendDown": "Diminuindo",
+			"trendFlat": "Estável"
 		},
 		"stats": {
 			"grossPnl": "P&L Bruto",
