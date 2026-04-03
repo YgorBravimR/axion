@@ -107,6 +107,32 @@ export interface MonthlyReport {
 	}>
 }
 
+export interface CommissionFeeImpact {
+	summary: {
+		totalFees: number
+		totalCommission: number
+		totalExchangeFees: number
+		grossPnl: number
+		feesAsPercentOfGross: number
+		avgFeePerTrade: number
+		totalTrades: number
+	}
+	assetBreakdown: Array<{
+		asset: string
+		totalFees: number
+		tradeCount: number
+		avgFeePerTrade: number
+	}>
+	monthlyTrend: Array<{
+		month: string
+		totalFees: number
+		grossPnl: number
+		feesAsPercentOfGross: number
+		tradeCount: number
+	}>
+	hasData: boolean
+}
+
 export interface MistakeCostAnalysis {
 	mistakes: Array<{
 		tagId: string
@@ -1063,5 +1089,162 @@ export const getYearlyOverview = async (
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching yearly overview:", error)
 		return { status: "error", message: "Failed to fetch yearly overview" }
+	}
+}
+
+// ============================================================================
+// COMMISSION & FEE IMPACT
+// ============================================================================
+
+export const getCommissionFeeImpact = async (): Promise<{
+	status: "success" | "error"
+	data?: CommissionFeeImpact
+	message?: string
+}> => {
+	try {
+		const authContext = await requireAuth()
+		const accountCondition = authContext.showAllAccounts
+			? inArray(trades.accountId, authContext.allAccountIds)
+			: eq(trades.accountId, authContext.accountId)
+
+		const effectiveNow = await getServerEffectiveNow()
+
+		const allTrades = await db.query.trades.findMany({
+			where: and(accountCondition, eq(trades.isArchived, false)),
+			orderBy: [desc(trades.entryDate)],
+		})
+
+		if (allTrades.length === 0) {
+			return {
+				status: "success",
+				data: {
+					summary: {
+						totalFees: 0,
+						totalCommission: 0,
+						totalExchangeFees: 0,
+						grossPnl: 0,
+						feesAsPercentOfGross: 0,
+						avgFeePerTrade: 0,
+						totalTrades: 0,
+					},
+					assetBreakdown: [],
+					monthlyTrend: [],
+					hasData: false,
+				},
+			}
+		}
+
+		// Aggregate totals
+		let totalCommission = 0
+		let totalExchangeFees = 0
+		let totalNetPnl = 0
+		let hasData = false
+
+		// Group by asset
+		const assetMap = new Map<
+			string,
+			{ totalFees: number; tradeCount: number }
+		>()
+
+		// Group by month (last 6 months)
+		const sixMonthsAgo = subMonths(startOfMonth(effectiveNow), 5)
+		const monthMap = new Map<
+			string,
+			{ totalFees: number; grossPnl: number; tradeCount: number }
+		>()
+
+		for (const trade of allTrades) {
+			const commission = fromCents(trade.commission)
+			const fees = fromCents(trade.fees)
+			const tradeFee = commission + fees
+			const netPnl = fromCents(trade.pnl)
+
+			totalCommission += commission
+			totalExchangeFees += fees
+			totalNetPnl += netPnl
+
+			if (tradeFee > 0) hasData = true
+
+			// Asset breakdown
+			const assetEntry = assetMap.get(trade.asset) || {
+				totalFees: 0,
+				tradeCount: 0,
+			}
+			assetMap.set(trade.asset, {
+				totalFees: assetEntry.totalFees + tradeFee,
+				tradeCount: assetEntry.tradeCount + 1,
+			})
+
+			// Monthly trend (only last 6 months)
+			const entryDate = new Date(trade.entryDate)
+			if (entryDate >= sixMonthsAgo) {
+				const monthKey = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, "0")}`
+				const monthEntry = monthMap.get(monthKey) || {
+					totalFees: 0,
+					grossPnl: 0,
+					tradeCount: 0,
+				}
+				monthMap.set(monthKey, {
+					totalFees: monthEntry.totalFees + tradeFee,
+					grossPnl: monthEntry.grossPnl + netPnl + tradeFee,
+					tradeCount: monthEntry.tradeCount + 1,
+				})
+			}
+		}
+
+		const totalFees = totalCommission + totalExchangeFees
+		const grossPnl = totalNetPnl + totalFees
+
+		const summary = {
+			totalFees,
+			totalCommission,
+			totalExchangeFees,
+			grossPnl,
+			feesAsPercentOfGross:
+				grossPnl > 0 ? (totalFees / grossPnl) * 100 : 0,
+			avgFeePerTrade:
+				allTrades.length > 0 ? totalFees / allTrades.length : 0,
+			totalTrades: allTrades.length,
+		}
+
+		const assetBreakdown = Array.from(assetMap.entries())
+			.map(([asset, data]) => ({
+				asset,
+				totalFees: data.totalFees,
+				tradeCount: data.tradeCount,
+				avgFeePerTrade:
+					data.tradeCount > 0 ? data.totalFees / data.tradeCount : 0,
+			}))
+			.toSorted((a, b) => b.totalFees - a.totalFees)
+
+		const monthlyTrend = Array.from(monthMap.entries())
+			.map(([month, data]) => ({
+				month,
+				totalFees: data.totalFees,
+				grossPnl: data.grossPnl,
+				feesAsPercentOfGross:
+					data.grossPnl > 0
+						? (data.totalFees / data.grossPnl) * 100
+						: 0,
+				tradeCount: data.tradeCount,
+			}))
+			.toSorted((a, b) => a.month.localeCompare(b.month))
+
+		return {
+			status: "success",
+			data: {
+				summary,
+				assetBreakdown,
+				monthlyTrend,
+				hasData,
+			},
+		}
+	} catch (error) {
+		if (!isFrameworkSignal(error))
+			console.error("Error fetching commission fee impact:", error)
+		return {
+			status: "error",
+			message: "Failed to fetch commission fee impact",
+		}
 	}
 }

@@ -3,7 +3,13 @@
 import { WeeklyReportCard } from "./weekly-report-card"
 import { MonthlyReportCard } from "./monthly-report-card"
 import { MistakeCostCard } from "./mistake-cost-card"
-import type { WeeklyReport, MonthlyReport, MistakeCostAnalysis } from "@/app/actions/reports"
+import { CommissionFeeImpactCard } from "./commission-fee-impact-card"
+import type {
+	WeeklyReport,
+	MonthlyReport,
+	MistakeCostAnalysis,
+	CommissionFeeImpact,
+} from "@/app/actions/reports"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { reportsGuide } from "@/components/ui/page-guide/guide-configs/reports"
 
@@ -11,12 +17,14 @@ interface ReportsContentProps {
 	weeklyReport: WeeklyReport | null
 	monthlyReport: MonthlyReport | null
 	mistakeCostAnalysis: MistakeCostAnalysis | null
+	commissionFeeImpact: CommissionFeeImpact | null
 }
 
 export const ReportsContent = ({
 	weeklyReport,
 	monthlyReport,
 	mistakeCostAnalysis,
+	commissionFeeImpact,
 }: ReportsContentProps) => {
 	useRegisterPageGuide(reportsGuide)
 
@@ -30,6 +38,9 @@ export const ReportsContent = ({
 
 			{/* Mistake Cost Analysis */}
 			<MistakeCostCard data={mistakeCostAnalysis} />
+
+			{/* Commission & Fee Impact */}
+			<CommissionFeeImpactCard data={commissionFeeImpact} />
 		</div>
 	)
 }

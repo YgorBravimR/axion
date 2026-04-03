@@ -2003,6 +2003,24 @@
 			"insight": "Insight",
 			"insightText": "Eliminando seu principal erro ({mistake}), você poderia ter economizado {amount} neste período."
 		},
+		"commissionFees": {
+			"title": "Impacto de Corretagem e Taxas",
+			"noData": "Nenhum dado de taxas disponível. Trades com dados de corretagem ou taxas aparecerão aqui.",
+			"totalFees": "Total de Taxas Pagas",
+			"commission": "Corretagem",
+			"exchangeFees": "Emolumentos",
+			"feesPercentOfGross": "Taxas % do Bruto",
+			"avgFeePerTrade": "Taxa Média / Trade",
+			"assetBreakdown": "Taxas por Ativo",
+			"monthlyTrend": "Tendência Mensal de Taxas",
+			"trades": "{count} trades",
+			"insight": "Insight",
+			"insightLow": "Taxas representam um impacto menor, a {percent}% do lucro bruto.",
+			"insightModerate": "Taxas consumiram {percent}% do seu lucro bruto — vale monitorar conforme você escala.",
+			"insightHigh": "Taxas estão impactando significativamente seus lucros a {percent}% do bruto. Considere negociar taxas menores.",
+			"insightNegativeGross": "Você pagou {amount} em taxas durante um período com P&L bruto negativo.",
+			"insightNoGross": "Você pagou {amount} em taxas. Sem lucro bruto para comparação ainda."
+		},
 		"stats": {
 			"grossPnl": "P&L Bruto",
 			"netPnl": "P&L Líquido",
@@ -3405,7 +3423,9 @@
 			"monthly": "Relatório Mensal",
 			"monthlyDesc": "Relatório de performance mensal com métricas resumidas, melhores/piores dias de trading e detalhamento por ativo. Expanda para ver P&L semanal dentro do mês e ativos com melhor performance. Navegue entre meses para acompanhar tendências de longo prazo.",
 			"mistakeCost": "Análise de Custo de Erros",
-			"mistakeCostDesc": "Calcula o impacto financeiro real de cada tag de erro nos seus trades. Mostra custo total, tipo de erro mais custoso e ranking detalhado com barras percentuais. Exemplo: se a tag 'Trade de Vingança' aparece em trades totalizando -R$3.000, você sabe exatamente quanto esse comportamento custa."
+			"mistakeCostDesc": "Calcula o impacto financeiro real de cada tag de erro nos seus trades. Mostra custo total, tipo de erro mais custoso e ranking detalhado com barras percentuais. Exemplo: se a tag 'Trade de Vingança' aparece em trades totalizando -R$3.000, você sabe exatamente quanto esse comportamento custa.",
+			"commissionFees": "Impacto de Corretagem e Taxas",
+			"commissionFeesDesc": "Análise completa de quanto as corretagens e emolumentos custam para você. Mostra total de taxas, taxas como percentual do lucro bruto, detalhamento por ativo e tendência dos últimos 6 meses. Ajuda a identificar se certos ativos custam desproporcionalmente mais em taxas."
 		},
 		"tradeDetail": {
 			"metrics": "Métricas do Trade",

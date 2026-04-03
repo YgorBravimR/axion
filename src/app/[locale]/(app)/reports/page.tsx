@@ -4,8 +4,8 @@ import {
 	getWeeklyReport,
 	getMonthlyReport,
 	getMistakeCostAnalysis,
+	getCommissionFeeImpact,
 } from "@/app/actions/reports"
-
 
 interface ReportsPageProps {
 	params: Promise<{ locale: string }>
@@ -15,14 +15,25 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
 
-	const [weeklyResult, monthlyResult, mistakeResult] = await Promise.all([
-		getWeeklyReport(0).catch(() => ({ status: "error" as const, data: null })),
-		getMonthlyReport(0).catch(() => ({ status: "error" as const, data: null })),
-		getMistakeCostAnalysis().catch(() => ({
-			status: "error" as const,
-			data: null,
-		})),
-	])
+	const [weeklyResult, monthlyResult, mistakeResult, feeResult] =
+		await Promise.all([
+			getWeeklyReport(0).catch(() => ({
+				status: "error" as const,
+				data: null,
+			})),
+			getMonthlyReport(0).catch(() => ({
+				status: "error" as const,
+				data: null,
+			})),
+			getMistakeCostAnalysis().catch(() => ({
+				status: "error" as const,
+				data: null,
+			})),
+			getCommissionFeeImpact().catch(() => ({
+				status: "error" as const,
+				data: null,
+			})),
+		])
 
 	const weeklyReport =
 		weeklyResult.status === "success" ? weeklyResult.data ?? null : null
@@ -30,6 +41,8 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 		monthlyResult.status === "success" ? monthlyResult.data ?? null : null
 	const mistakeCostAnalysis =
 		mistakeResult.status === "success" ? mistakeResult.data ?? null : null
+	const commissionFeeImpact =
+		feeResult.status === "success" ? feeResult.data ?? null : null
 
 	return (
 		<div className="flex h-full flex-col">
@@ -38,6 +51,7 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 					weeklyReport={weeklyReport}
 					monthlyReport={monthlyReport}
 					mistakeCostAnalysis={mistakeCostAnalysis}
+					commissionFeeImpact={commissionFeeImpact}
 				/>
 			</div>
 		</div>

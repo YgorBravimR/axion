@@ -21,6 +21,12 @@ const reportsGuide: PageGuideConfig = {
 			descriptionKey: "mistakeCostDesc",
 			placement: "top",
 		},
+		{
+			targetId: "reports-commission-fees",
+			titleKey: "commissionFees",
+			descriptionKey: "commissionFeesDesc",
+			placement: "top",
+		},
 	],
 }
 

@@ -2003,6 +2003,24 @@
 			"insight": "Insight",
 			"insightText": "By eliminating your top mistake ({mistake}), you could have saved {amount} during this period."
 		},
+		"commissionFees": {
+			"title": "Commission & Fee Impact",
+			"noData": "No fee data available. Trades with commission or fee data will appear here.",
+			"totalFees": "Total Fees Paid",
+			"commission": "Commission",
+			"exchangeFees": "Exchange Fees",
+			"feesPercentOfGross": "Fees % of Gross",
+			"avgFeePerTrade": "Avg Fee / Trade",
+			"assetBreakdown": "Fee Breakdown by Asset",
+			"monthlyTrend": "Monthly Fee Trend",
+			"trades": "{count} trades",
+			"insight": "Insight",
+			"insightLow": "Fees represent a minor drag at {percent}% of gross profits.",
+			"insightModerate": "Fees consumed {percent}% of your gross profits — worth monitoring as you scale.",
+			"insightHigh": "Fees are significantly eating into profits at {percent}% of gross. Consider negotiating lower rates.",
+			"insightNegativeGross": "You paid {amount} in fees during a period with negative gross P&L.",
+			"insightNoGross": "You paid {amount} in fees. No gross profit to compare against yet."
+		},
 		"stats": {
 			"grossPnl": "Gross P&L",
 			"netPnl": "Net P&L",
@@ -3405,7 +3423,9 @@
 			"monthly": "Monthly Report",
 			"monthlyDesc": "Monthly performance report with summary metrics, best/worst trading days, and asset breakdown. Expand to see weekly P&L within the month and top-performing assets. Navigate between months to track long-term trends.",
 			"mistakeCost": "Mistake Cost Analysis",
-			"mistakeCostDesc": "Calculates the actual financial impact of each mistake tag in your trades. Shows total cost, most costly mistake type, and a ranked breakdown with percentage bars. Example: if 'Revenge Trade' tag appears on trades totaling -R$3,000, you know exactly how much that behavior costs you."
+			"mistakeCostDesc": "Calculates the actual financial impact of each mistake tag in your trades. Shows total cost, most costly mistake type, and a ranked breakdown with percentage bars. Example: if 'Revenge Trade' tag appears on trades totaling -R$3,000, you know exactly how much that behavior costs you.",
+			"commissionFees": "Commission & Fee Impact",
+			"commissionFeesDesc": "All-time analysis of how much commissions and exchange fees cost you. Shows total fees, fees as a percentage of gross profit, breakdown by asset, and a 6-month trend. Helps identify if certain assets cost disproportionately more in fees."
 		},
 		"tradeDetail": {
 			"metrics": "Trade Metrics",
