@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { KpiCards } from "./kpi-cards"
+import { CoachingInsightsCard } from "./coaching-insights-card"
 import { TradingCalendar } from "./trading-calendar"
 import { EquityCurve } from "./equity-curve"
 import { QuickStats } from "./quick-stats"
@@ -217,6 +218,11 @@ export const DashboardContent = ({
 			{/* KPI Cards */}
 			<div id="dashboard-kpi-cards" className="md:col-span-2 lg:col-span-3">
 				<KpiCards stats={stats} discipline={discipline} />
+			</div>
+
+			{/* Coaching Insights */}
+			<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
+				<CoachingInsightsCard />
 			</div>
 
 			{/* Calendar */}

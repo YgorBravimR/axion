@@ -1172,6 +1172,69 @@
 			"disciplineNotes": "Notas de Disciplina"
 		}
 	},
+	"coaching": {
+		"title": "Insights de Trading",
+		"subtitle": "Padrões baseados em dados dos seus trades recentes",
+		"noInsights": "Dados insuficientes para gerar insights ainda. Continue operando e registrando para desbloquear o coaching.",
+		"noTrades": "Nenhum trade encontrado para o período de análise.",
+		"period": "Últimos {days} dias",
+		"tradeCount": "{count} trades analisados",
+		"aiComingSoon": "Coaching com IA em breve",
+		"severity": {
+			"warning": "Alerta",
+			"attention": "Atenção",
+			"info": "Insight"
+		},
+		"category": {
+			"time": "Tempo",
+			"strategy": "Estratégia",
+			"risk": "Risco",
+			"psychology": "Psicologia",
+			"fees": "Taxas"
+		},
+		"insights": {
+			"bestHour": {
+				"title": "Melhor Horário",
+				"description": "Sua taxa de acerto às {hour} é {winRate}% vs {overallWinRate}% geral ({trades} trades)"
+			},
+			"worstHour": {
+				"title": "Pior Horário",
+				"description": "Sua taxa de acerto às {hour} cai para {winRate}% vs {overallWinRate}% geral ({trades} trades)"
+			},
+			"worstDay": {
+				"title": "Dia Mais Fraco",
+				"description": "{day} é seu pior dia com P&L médio de {avgPnl} ({trades} trades)"
+			},
+			"strategyGap": {
+				"title": "Gap entre Estratégias",
+				"description": "{bestStrategy} tem {bestWinRate}% WR vs {worstStrategy} com {worstWinRate}% — gap de {gap}pp"
+			},
+			"holdingPeriod": {
+				"title": "Vantagem por Tempo de Permanência",
+				"description": "Trades rápidos (< 5min) avg {shortAvgR}R vs trades médios (15-60min) a {mediumAvgR}R"
+			},
+			"overtrading": {
+				"title": "Sinal de Overtrading",
+				"description": "Dias com 1-3 trades: {lowVolumeWinRate}% WR vs 5+ trades: {highVolumeWinRate}% WR"
+			},
+			"feeDrag": {
+				"title": "Impacto das Taxas",
+				"description": "Taxas consomem {feePercent}% do seu lucro bruto (total: {totalFees})"
+			},
+			"streakTilt": {
+				"title": "Tilt Após Perdas",
+				"description": "Após 2+ perdas consecutivas, sua taxa de acerto cai para {afterStreakWinRate}% vs {overallWinRate}% geral"
+			},
+			"ratingCorrelation": {
+				"title": "Qualidade de Execução Importa",
+				"description": "Trades nota A/B: {highWinRate}% WR vs nota D/F: {lowWinRate}% WR"
+			},
+			"disciplineImpact": {
+				"title": "Disciplina Compensa",
+				"description": "Seguindo o plano: avg {followedAvgR}R vs {notFollowedAvgR}R quando não segue"
+			}
+		}
+	},
 	"dashboard": {
 		"title": "Painel de Controle",
 		"description": "Visão geral do seu desempenho de trading",

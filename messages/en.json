@@ -1172,6 +1172,69 @@
 			"disciplineNotes": "Discipline Notes"
 		}
 	},
+	"coaching": {
+		"title": "Trading Insights",
+		"subtitle": "Data-driven patterns from your recent trades",
+		"noInsights": "Not enough data to generate insights yet. Keep trading and journaling to unlock coaching.",
+		"noTrades": "No trades found for the analysis period.",
+		"period": "Last {days} days",
+		"tradeCount": "{count} trades analyzed",
+		"aiComingSoon": "AI-powered coaching coming soon",
+		"severity": {
+			"warning": "Warning",
+			"attention": "Attention",
+			"info": "Insight"
+		},
+		"category": {
+			"time": "Time",
+			"strategy": "Strategy",
+			"risk": "Risk",
+			"psychology": "Psychology",
+			"fees": "Fees"
+		},
+		"insights": {
+			"bestHour": {
+				"title": "Best Trading Hour",
+				"description": "Your win rate at {hour} is {winRate}% vs {overallWinRate}% overall ({trades} trades)"
+			},
+			"worstHour": {
+				"title": "Worst Trading Hour",
+				"description": "Your win rate at {hour} drops to {winRate}% vs {overallWinRate}% overall ({trades} trades)"
+			},
+			"worstDay": {
+				"title": "Weakest Day of Week",
+				"description": "{day} is your worst day with an avg P&L of {avgPnl} ({trades} trades)"
+			},
+			"strategyGap": {
+				"title": "Strategy Performance Gap",
+				"description": "{bestStrategy} has {bestWinRate}% WR vs {worstStrategy} at {worstWinRate}% — a {gap}pp gap"
+			},
+			"holdingPeriod": {
+				"title": "Holding Period Edge",
+				"description": "Quick trades (< 5min) avg {shortAvgR}R vs medium holds (15-60min) at {mediumAvgR}R"
+			},
+			"overtrading": {
+				"title": "Overtrading Signal",
+				"description": "Days with 1-3 trades: {lowVolumeWinRate}% WR vs 5+ trades: {highVolumeWinRate}% WR"
+			},
+			"feeDrag": {
+				"title": "Fee Drag",
+				"description": "Fees consume {feePercent}% of your gross profits (total: {totalFees})"
+			},
+			"streakTilt": {
+				"title": "Tilt After Losses",
+				"description": "After 2+ consecutive losses, your win rate drops to {afterStreakWinRate}% vs {overallWinRate}% overall"
+			},
+			"ratingCorrelation": {
+				"title": "Execution Quality Matters",
+				"description": "A/B-rated trades: {highWinRate}% WR vs D/F-rated: {lowWinRate}% WR"
+			},
+			"disciplineImpact": {
+				"title": "Discipline Pays Off",
+				"description": "Plan-following trades avg {followedAvgR}R vs {notFollowedAvgR}R when not following"
+			}
+		}
+	},
 	"dashboard": {
 		"title": "Dashboard",
 		"description": "Overview of your trading performance",
