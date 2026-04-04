@@ -141,6 +141,13 @@
       "when": 1775245779723,
       "tag": "0019_striped_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1775296259987,
+      "tag": "0020_crazy_synch",
+      "breakpoints": true
     }
   ]
 }

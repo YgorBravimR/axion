@@ -1625,6 +1625,25 @@
 				"thisMonth": "Este Mês",
 				"thisYear": "Este Ano",
 				"custom": "Personalizado"
+			},
+			"presets": {
+				"label": "Presets",
+				"save": "Salvar Preset",
+				"saveAs": "Salvar como Preset",
+				"namePlaceholder": "Nome do preset...",
+				"nameRequired": "Nome é obrigatório",
+				"default": "Padrão",
+				"setDefault": "Definir como Padrão",
+				"delete": "Excluir",
+				"deleteConfirm": "Excluir este preset?",
+				"noPresets": "Nenhum preset salvo ainda",
+				"saved": "Preset salvo",
+				"deleted": "Preset excluído",
+				"updated": "Preset atualizado",
+				"loadError": "Falha ao carregar presets",
+				"saveError": "Falha ao salvar preset",
+				"overwrite": "Atualizar Filtros",
+				"rename": "Renomear"
 			}
 		},
 		"time": {

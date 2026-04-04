@@ -17,6 +17,8 @@ import {
 	ExpectancyModeToggle,
 	type ExpectancyMode,
 } from "./expectancy-mode-toggle"
+import { PresetSelector } from "./preset-selector"
+import type { SavedFilterState } from "@/app/actions/filter-presets"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { useUrlParams } from "@/hooks/use-url-params"
 import { parseDateParam, serializeDateParam } from "@/lib/url-params"
@@ -195,6 +197,34 @@ const useAnalyticsFilters = () => {
 		})
 	}
 
+	/** Apply a saved preset's filters to URL params */
+	const applyPreset = (saved: SavedFilterState) => {
+		urlParams.set({
+			datePreset: saved.datePreset ?? null,
+			from: saved.dateFrom ?? null,
+			to: saved.dateTo ?? null,
+			assets: saved.assets ?? [],
+			directions: saved.directions ?? [],
+			outcomes: saved.outcomes ?? [],
+			timeframeIds: saved.timeframeIds ?? [],
+			groupBy: saved.groupBy ?? null,
+			expectancy: saved.expectancyMode ?? null,
+		})
+	}
+
+	/** Serialize current filter state for saving as a preset */
+	const serializeFilters = (): SavedFilterState => ({
+		datePreset: activePresetKey === "custom" ? null : activePresetKey,
+		dateFrom: filters.dateFrom?.toISOString() ?? null,
+		dateTo: filters.dateTo?.toISOString() ?? null,
+		assets: filters.assets.length > 0 ? filters.assets : undefined,
+		directions: filters.directions.length > 0 ? filters.directions : undefined,
+		outcomes: filters.outcomes.length > 0 ? filters.outcomes : undefined,
+		timeframeIds: filters.timeframeIds.length > 0 ? filters.timeframeIds : undefined,
+		groupBy,
+		expectancyMode,
+	})
+
 	return {
 		filters,
 		groupBy,
@@ -206,6 +236,8 @@ const useAnalyticsFilters = () => {
 		setGroupBy,
 		setExpectancyMode,
 		clearFilters,
+		applyPreset,
+		serializeFilters,
 	}
 }
 
@@ -224,6 +256,8 @@ const FilterPanel = ({
 		toggleArrayFilter,
 		setExpectancyMode,
 		clearFilters,
+		applyPreset,
+		serializeFilters,
 	} = useAnalyticsFilters()
 	const [isSheetOpen, setIsSheetOpen] = useState(false)
 	const [isCustomDateOpen, setIsCustomDateOpen] = useState(false)
@@ -291,6 +325,11 @@ const FilterPanel = ({
 
 				{/* Right side: spacer + controls */}
 				<div className="gap-s-200 ml-auto flex items-center">
+					<PresetSelector
+						currentFilters={serializeFilters()}
+						onApplyPreset={applyPreset}
+					/>
+
 					{hasActiveFilters && (
 						<Button
 							id="analytics-filter-clear"

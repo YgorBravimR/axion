@@ -1625,6 +1625,25 @@
 				"thisMonth": "This Month",
 				"thisYear": "This Year",
 				"custom": "Custom"
+			},
+			"presets": {
+				"label": "Presets",
+				"save": "Save Preset",
+				"saveAs": "Save as Preset",
+				"namePlaceholder": "Preset name...",
+				"nameRequired": "Name is required",
+				"default": "Default",
+				"setDefault": "Set as Default",
+				"delete": "Delete",
+				"deleteConfirm": "Delete this preset?",
+				"noPresets": "No saved presets yet",
+				"saved": "Preset saved",
+				"deleted": "Preset deleted",
+				"updated": "Preset updated",
+				"loadError": "Failed to load presets",
+				"saveError": "Failed to save preset",
+				"overwrite": "Update Filters",
+				"rename": "Rename"
 			}
 		},
 		"time": {

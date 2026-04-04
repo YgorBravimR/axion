@@ -1128,6 +1128,36 @@ export const bugReportImages = pgTable(
 )
 
 // ==========================================
+// ANALYTICS FILTER PRESETS (Phase 19)
+// ==========================================
+
+export const filterPresets = pgTable(
+	"filter_presets",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		accountId: uuid("account_id").references(() => tradingAccounts.id, {
+			onDelete: "cascade",
+		}),
+		name: varchar("name", { length: 100 }).notNull(),
+		filters: text("filters").notNull(), // JSON: serialized filter state
+		isDefault: boolean("is_default").default(false).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("filter_presets_user_idx").on(table.userId),
+		index("filter_presets_account_idx").on(table.accountId),
+	]
+)
+
+// ==========================================
 // RELATIONS
 // ==========================================
 
@@ -1140,6 +1170,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	tags: many(tags),
 	riskManagementProfiles: many(riskManagementProfiles),
 	tradingConditions: many(tradingConditions),
+	filterPresets: many(filterPresets),
 	bugReports: many(bugReports),
 }))
 
@@ -1424,6 +1455,18 @@ export const bugReportImagesRelations = relations(bugReportImages, ({ one }) => 
 	}),
 }))
 
+// Filter Preset Relations
+export const filterPresetsRelations = relations(filterPresets, ({ one }) => ({
+	user: one(users, {
+		fields: [filterPresets.userId],
+		references: [users.id],
+	}),
+	account: one(tradingAccounts, {
+		fields: [filterPresets.accountId],
+		references: [tradingAccounts.id],
+	}),
+}))
+
 // ==========================================
 // TYPE EXPORTS
 // ==========================================
@@ -1533,3 +1576,7 @@ export type NewBugReport = typeof bugReports.$inferInsert
 
 export type BugReportImage = typeof bugReportImages.$inferSelect
 export type NewBugReportImage = typeof bugReportImages.$inferInsert
+
+// Filter Preset Types
+export type FilterPreset = typeof filterPresets.$inferSelect
+export type NewFilterPreset = typeof filterPresets.$inferInsert
