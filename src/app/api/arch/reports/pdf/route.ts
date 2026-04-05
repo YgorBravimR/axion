@@ -9,6 +9,12 @@ import {
 	generateWeeklyReportPdf,
 	generateMonthlyReportPdf,
 } from "@/lib/pdf/generate-report-pdf"
+import {
+	isValidReportType,
+	parseOffsetParam,
+	buildWeeklyPdfFilename,
+	buildMonthlyPdfFilename,
+} from "@/lib/pdf/report-pdf-helpers"
 
 const pdfResponse = (data: Uint8Array, filename: string): NextResponse => {
 	return new NextResponse(data as unknown as BodyInit, {
@@ -26,9 +32,9 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 
 		const { searchParams } = request.nextUrl
 		const type = searchParams.get("type")
-		const offset = parseInt(searchParams.get("offset") ?? "0", 10)
+		const offset = parseOffsetParam(searchParams.get("offset"))
 
-		if (type !== "weekly" && type !== "monthly") {
+		if (!isValidReportType(type)) {
 			return NextResponse.json(
 				{ error: "Invalid report type. Use 'weekly' or 'monthly'." },
 				{ status: 400 }
@@ -54,7 +60,7 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 				feeData,
 			})
 
-			return pdfResponse(pdfBuffer, `axion-weekly-${result.data.weekStart}.pdf`)
+			return pdfResponse(pdfBuffer, buildWeeklyPdfFilename(result.data.weekStart))
 		}
 
 		// Monthly
@@ -72,7 +78,7 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 			feeData,
 		})
 
-		return pdfResponse(pdfBuffer, `axion-monthly-${result.data.monthStart}.pdf`)
+		return pdfResponse(pdfBuffer, buildMonthlyPdfFilename(result.data.monthStart))
 	} catch {
 		return NextResponse.json(
 			{ error: "Failed to generate PDF report" },

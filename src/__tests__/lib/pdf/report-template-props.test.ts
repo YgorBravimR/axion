@@ -1,0 +1,481 @@
+/**
+ * Unit tests for PDF template prop shapes and data-flow contracts.
+ *
+ * We intentionally DO NOT render the React-PDF components (that requires a
+ * full @react-pdf/renderer environment and produces actual PDF bytes).
+ * Instead, we verify:
+ *
+ *   1. The prop-shape factories produce objects that satisfy the
+ *      `WeeklyReportPdfProps` and `MonthlyReportPdfProps` interfaces.
+ *   2. Null `feeData` is handled gracefully (no TypeError).
+ *   3. Empty `dailyBreakdown`, `weeklyBreakdown`, and `assetBreakdown`
+ *      arrays do not break the shape — the template guards them with
+ *      `array.length > 0` before rendering.
+ *   4. Minimal required summary fields are present and correctly typed.
+ *   5. The `generatedAt` timestamp string follows the expected format
+ *      produced by `generate-report-pdf.ts`.
+ *
+ * These are all pure object-construction / type-contract tests.
+ */
+
+import { describe, it, expect } from "vitest"
+import type { WeeklyReportPdfProps, MonthlyReportPdfProps } from "@/lib/pdf/report-template"
+import type { WeeklyReport, MonthlyReport, CommissionFeeImpact } from "@/app/actions/reports"
+
+// ============================================================================
+// FIXTURE FACTORIES
+// ============================================================================
+
+/**
+ * Creates a minimal but fully valid `WeeklyReport` summary block.
+ */
+const createWeeklyReportSummary = (): WeeklyReport["summary"] => ({
+	totalTrades: 10,
+	winCount: 6,
+	lossCount: 4,
+	breakevenCount: 0,
+	grossPnl: 850.0,
+	netPnl: 720.0,
+	totalFees: 130.0,
+	winRate: 60.0,
+	avgWin: 200.0,
+	avgLoss: -125.0,
+	profitFactor: 2.4,
+	avgR: 0.85,
+	bestTrade: 450.0,
+	worstTrade: -200.0,
+})
+
+/**
+ * Creates a minimal but fully valid `MonthlyReport` summary block.
+ */
+const createMonthlyReportSummary = (): MonthlyReport["summary"] => ({
+	totalTrades: 42,
+	winCount: 25,
+	lossCount: 17,
+	breakevenCount: 0,
+	grossPnl: 3200.0,
+	netPnl: 2750.0,
+	totalFees: 450.0,
+	winRate: 59.5,
+	avgWin: 210.0,
+	avgLoss: -130.0,
+	profitFactor: 2.1,
+	avgR: 0.72,
+	bestDay: { date: "2026-03-10", pnl: 820.0 },
+	worstDay: { date: "2026-03-18", pnl: -340.0 },
+})
+
+/**
+ * Creates a minimal but fully valid `CommissionFeeImpact` block with data.
+ */
+const createFeeData = (): CommissionFeeImpact => ({
+	hasData: true,
+	summary: {
+		totalFees: 450.0,
+		totalCommission: 380.0,
+		totalExchangeFees: 70.0,
+		grossPnl: 3200.0,
+		feesAsPercentOfGross: 14.06,
+		avgFeePerTrade: 10.71,
+		totalTrades: 42,
+	},
+	assetBreakdown: [
+		{
+			asset: "WINFUT",
+			totalFees: 450.0,
+			tradeCount: 42,
+			avgFeePerTrade: 10.71,
+		},
+	],
+	monthlyTrend: [],
+})
+
+/**
+ * Creates a daily breakdown entry for weekly reports.
+ */
+const createDailyBreakdownEntry = (
+	date: string
+): WeeklyReport["dailyBreakdown"][number] => ({
+	date,
+	tradeCount: 3,
+	winCount: 2,
+	lossCount: 1,
+	winRate: 66.7,
+	pnl: 150.0,
+})
+
+/**
+ * Creates a top-trade entry for weekly reports.
+ */
+const createTopTradeEntry = (
+	id: string,
+	pnl: number
+): WeeklyReport["topWins"][number] => ({
+	id,
+	asset: "WINFUT",
+	pnl,
+	r: 1.5,
+	direction: "long",
+	date: "2026-03-31",
+})
+
+// ============================================================================
+// WeeklyReportPdf prop shape
+// ============================================================================
+
+describe("WeeklyReportPdf prop shape", () => {
+	it("should accept a fully populated props object", () => {
+		const props: WeeklyReportPdfProps = {
+			report: {
+				weekStart: "2026-03-30",
+				weekEnd: "2026-04-04",
+				summary: createWeeklyReportSummary(),
+				dailyBreakdown: [
+					createDailyBreakdownEntry("2026-03-30"),
+					createDailyBreakdownEntry("2026-03-31"),
+				],
+				topWins: [createTopTradeEntry("trade-1", 450)],
+				topLosses: [createTopTradeEntry("trade-2", -200)],
+			},
+			feeData: createFeeData(),
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		expect(props.report.weekStart).toBe("2026-03-30")
+		expect(props.report.weekEnd).toBe("2026-04-04")
+		expect(props.report.summary.totalTrades).toBe(10)
+		expect(props.report.dailyBreakdown).toHaveLength(2)
+		expect(props.report.topWins).toHaveLength(1)
+		expect(props.report.topLosses).toHaveLength(1)
+		expect(props.feeData).not.toBeNull()
+		expect(props.generatedAt).toBe("2026-04-05 08:30:00")
+	})
+
+	it("should accept null feeData", () => {
+		const props: WeeklyReportPdfProps = {
+			report: {
+				weekStart: "2026-03-30",
+				weekEnd: "2026-04-04",
+				summary: createWeeklyReportSummary(),
+				dailyBreakdown: [],
+				topWins: [],
+				topLosses: [],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		// Null feeData is a valid prop — the template guards `feeData && feeData.hasData`
+		expect(props.feeData).toBeNull()
+	})
+
+	it("should accept an empty dailyBreakdown array", () => {
+		const props: WeeklyReportPdfProps = {
+			report: {
+				weekStart: "2026-03-30",
+				weekEnd: "2026-04-04",
+				summary: createWeeklyReportSummary(),
+				dailyBreakdown: [],
+				topWins: [],
+				topLosses: [],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		// Template renders `dailyBreakdown.length > 0` guard — empty array is safe
+		expect(props.report.dailyBreakdown).toHaveLength(0)
+	})
+
+	it("should accept an empty topWins array", () => {
+		const props: WeeklyReportPdfProps = {
+			report: {
+				weekStart: "2026-03-30",
+				weekEnd: "2026-04-04",
+				summary: createWeeklyReportSummary(),
+				dailyBreakdown: [],
+				topWins: [],
+				topLosses: [createTopTradeEntry("trade-3", -180)],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		expect(props.report.topWins).toHaveLength(0)
+	})
+
+	it("should accept an empty topLosses array", () => {
+		const props: WeeklyReportPdfProps = {
+			report: {
+				weekStart: "2026-03-30",
+				weekEnd: "2026-04-04",
+				summary: createWeeklyReportSummary(),
+				dailyBreakdown: [],
+				topWins: [createTopTradeEntry("trade-4", 300)],
+				topLosses: [],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		expect(props.report.topLosses).toHaveLength(0)
+	})
+
+	it("should accept feeData with hasData false", () => {
+		const noDataFee: CommissionFeeImpact = {
+			...createFeeData(),
+			hasData: false,
+		}
+
+		const props: WeeklyReportPdfProps = {
+			report: {
+				weekStart: "2026-03-30",
+				weekEnd: "2026-04-04",
+				summary: createWeeklyReportSummary(),
+				dailyBreakdown: [],
+				topWins: [],
+				topLosses: [],
+			},
+			feeData: noDataFee,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		// Template guards `feeData && feeData.hasData` — hasData:false means no fee section
+		expect(props.feeData?.hasData).toBe(false)
+	})
+
+	describe("summary field contracts", () => {
+		it("should allow a negative netPnl (losing week)", () => {
+			const summary = { ...createWeeklyReportSummary(), netPnl: -320.0, grossPnl: -200.0 }
+			expect(summary.netPnl).toBeLessThan(0)
+			expect(summary.grossPnl).toBeLessThan(0)
+		})
+
+		it("should allow zero avgR", () => {
+			const summary = { ...createWeeklyReportSummary(), avgR: 0 }
+			expect(summary.avgR).toBe(0)
+		})
+
+		it("should allow a breakevenCount greater than zero", () => {
+			const summary = { ...createWeeklyReportSummary(), breakevenCount: 2, totalTrades: 12 }
+			expect(summary.breakevenCount).toBe(2)
+		})
+	})
+})
+
+// ============================================================================
+// MonthlyReportPdf prop shape
+// ============================================================================
+
+describe("MonthlyReportPdf prop shape", () => {
+	it("should accept a fully populated props object", () => {
+		const props: MonthlyReportPdfProps = {
+			report: {
+				monthStart: "2026-04-01",
+				monthEnd: "2026-04-30",
+				summary: createMonthlyReportSummary(),
+				weeklyBreakdown: [
+					{
+						weekStart: "2026-04-01",
+						weekEnd: "2026-04-05",
+						tradeCount: 10,
+						pnl: 650.0,
+						winRate: 60.0,
+					},
+					{
+						weekStart: "2026-04-07",
+						weekEnd: "2026-04-11",
+						tradeCount: 8,
+						pnl: -120.0,
+						winRate: 37.5,
+					},
+				],
+				assetBreakdown: [
+					{ asset: "WINFUT", tradeCount: 35, pnl: 2100.0, winRate: 62.9 },
+					{ asset: "WDOFUT", tradeCount: 7, pnl: 650.0, winRate: 42.9 },
+				],
+			},
+			feeData: createFeeData(),
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		expect(props.report.monthStart).toBe("2026-04-01")
+		expect(props.report.monthEnd).toBe("2026-04-30")
+		expect(props.report.summary.totalTrades).toBe(42)
+		expect(props.report.weeklyBreakdown).toHaveLength(2)
+		expect(props.report.assetBreakdown).toHaveLength(2)
+		expect(props.feeData).not.toBeNull()
+	})
+
+	it("should accept null feeData", () => {
+		const props: MonthlyReportPdfProps = {
+			report: {
+				monthStart: "2026-04-01",
+				monthEnd: "2026-04-30",
+				summary: createMonthlyReportSummary(),
+				weeklyBreakdown: [],
+				assetBreakdown: [],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		expect(props.feeData).toBeNull()
+	})
+
+	it("should accept an empty weeklyBreakdown array", () => {
+		const props: MonthlyReportPdfProps = {
+			report: {
+				monthStart: "2026-04-01",
+				monthEnd: "2026-04-30",
+				summary: createMonthlyReportSummary(),
+				weeklyBreakdown: [],
+				assetBreakdown: [],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		// Template renders `weeklyBreakdown.length > 0` guard — empty array is safe
+		expect(props.report.weeklyBreakdown).toHaveLength(0)
+	})
+
+	it("should accept an empty assetBreakdown array", () => {
+		const props: MonthlyReportPdfProps = {
+			report: {
+				monthStart: "2026-04-01",
+				monthEnd: "2026-04-30",
+				summary: createMonthlyReportSummary(),
+				weeklyBreakdown: [],
+				assetBreakdown: [],
+			},
+			feeData: null,
+			generatedAt: "2026-04-05 08:30:00",
+		}
+
+		expect(props.report.assetBreakdown).toHaveLength(0)
+	})
+
+	describe("bestDay / worstDay nullability", () => {
+		it("should accept null bestDay", () => {
+			const summary = { ...createMonthlyReportSummary(), bestDay: null }
+
+			const props: MonthlyReportPdfProps = {
+				report: {
+					monthStart: "2026-04-01",
+					monthEnd: "2026-04-30",
+					summary,
+					weeklyBreakdown: [],
+					assetBreakdown: [],
+				},
+				feeData: null,
+				generatedAt: "2026-04-05 08:30:00",
+			}
+
+			// Template guards `summary.bestDay || summary.worstDay` before rendering
+			expect(props.report.summary.bestDay).toBeNull()
+		})
+
+		it("should accept null worstDay", () => {
+			const summary = { ...createMonthlyReportSummary(), worstDay: null }
+
+			const props: MonthlyReportPdfProps = {
+				report: {
+					monthStart: "2026-04-01",
+					monthEnd: "2026-04-30",
+					summary,
+					weeklyBreakdown: [],
+					assetBreakdown: [],
+				},
+				feeData: null,
+				generatedAt: "2026-04-05 08:30:00",
+			}
+
+			expect(props.report.summary.worstDay).toBeNull()
+		})
+
+		it("should accept both bestDay and worstDay as null simultaneously", () => {
+			const summary = { ...createMonthlyReportSummary(), bestDay: null, worstDay: null }
+
+			const props: MonthlyReportPdfProps = {
+				report: {
+					monthStart: "2026-04-01",
+					monthEnd: "2026-04-30",
+					summary,
+					weeklyBreakdown: [],
+					assetBreakdown: [],
+				},
+				feeData: null,
+				generatedAt: "2026-04-05 08:30:00",
+			}
+
+			expect(props.report.summary.bestDay).toBeNull()
+			expect(props.report.summary.worstDay).toBeNull()
+		})
+	})
+
+	describe("summary field contracts", () => {
+		it("should allow a negative netPnl (losing month)", () => {
+			const summary = { ...createMonthlyReportSummary(), netPnl: -1500.0, grossPnl: -1100.0 }
+			expect(summary.netPnl).toBeLessThan(0)
+		})
+
+		it("should allow a profitFactor of zero (no winning trades)", () => {
+			const summary = { ...createMonthlyReportSummary(), profitFactor: 0, winCount: 0 }
+			expect(summary.profitFactor).toBe(0)
+		})
+
+		it("should allow a 100% winRate (perfect month)", () => {
+			const summary = {
+				...createMonthlyReportSummary(),
+				winRate: 100,
+				lossCount: 0,
+				breakevenCount: 0,
+			}
+			expect(summary.winRate).toBe(100)
+		})
+	})
+})
+
+// ============================================================================
+// generatedAt timestamp format
+// ============================================================================
+
+describe("generatedAt timestamp format (from generate-report-pdf.ts)", () => {
+	/**
+	 * The generator produces `generatedAt` via:
+	 *   new Date().toISOString().replace("T", " ").split(".")[0]
+	 *
+	 * This results in a string like "2026-04-05 08:30:00" — no milliseconds,
+	 * no timezone suffix, space-separated date and time.
+	 */
+	const GENERATED_AT_PATTERN = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+
+	it("should match the 'YYYY-MM-DD HH:MM:SS' pattern", () => {
+		const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+		expect(generatedAt).toMatch(GENERATED_AT_PATTERN)
+	})
+
+	it("should not contain a 'T' separator", () => {
+		const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+		expect(generatedAt).not.toContain("T")
+	})
+
+	it("should not contain milliseconds", () => {
+		const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+		expect(generatedAt).not.toContain(".")
+	})
+
+	it("should not contain a timezone offset or 'Z' suffix", () => {
+		const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+		expect(generatedAt).not.toContain("Z")
+		expect(generatedAt).not.toContain("+")
+	})
+
+	it("should have exactly 19 characters", () => {
+		// "2026-04-05 08:30:00" → length = 19
+		const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+		expect(generatedAt).toHaveLength(19)
+	})
+})

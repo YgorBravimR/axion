@@ -5,6 +5,7 @@
 
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
 import type { WeeklyReport, MonthlyReport, CommissionFeeImpact } from "@/app/actions/reports"
+import { formatCurrency, formatPercent, formatR } from "./report-pdf-helpers"
 
 // ============================================================================
 // STYLES
@@ -143,15 +144,6 @@ const styles = StyleSheet.create({
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-const formatCurrency = (value: number): string => {
-	const prefix = value >= 0 ? "+" : ""
-	return `${prefix}R$ ${Math.abs(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-const formatPercent = (value: number): string => `${value.toFixed(1)}%`
-
-const formatR = (value: number): string => `${value >= 0 ? "+" : ""}${value.toFixed(2)}R`
 
 const PnlText = ({ value }: { value: number }) => (
 	<Text style={[styles.metricValue, value >= 0 ? styles.positive : styles.negative]}>
