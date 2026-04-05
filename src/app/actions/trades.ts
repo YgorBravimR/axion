@@ -1622,9 +1622,19 @@ export const createScaledTrade = async (
  * Get trades grouped by day with summaries
  * Returns trades within date range, grouped by date with per-day statistics
  */
+interface ExtendedTradeFilters {
+	rating?: Array<"A" | "B" | "C" | "D" | "F">
+	followedPlan?: boolean
+	hourFrom?: number
+	hourTo?: number
+	pnlMin?: number
+	pnlMax?: number
+}
+
 export const getTradesGroupedByDay = async (
 	dateFrom?: Date,
-	dateTo?: Date
+	dateTo?: Date,
+	extendedFilters?: ExtendedTradeFilters
 ): Promise<ActionResponse<TradesByDay[]>> => {
 	try {
 		const { accountId, userId, showAllAccounts, allAccountIds } =
@@ -1645,6 +1655,14 @@ export const getTradesGroupedByDay = async (
 			conditions.push(lte(trades.entryDate, dateTo))
 		}
 
+		// SQL-filterable extended conditions
+		if (extendedFilters?.rating && extendedFilters.rating.length > 0) {
+			conditions.push(inArray(trades.rating, extendedFilters.rating))
+		}
+		if (extendedFilters?.followedPlan !== undefined) {
+			conditions.push(eq(trades.followedPlan, extendedFilters.followedPlan))
+		}
+
 		const rawResult = await db.query.trades.findMany({
 			where: and(...conditions),
 			with: {
@@ -1656,9 +1674,33 @@ export const getTradesGroupedByDay = async (
 
 		// Decrypt trade fields
 		const dek = await getUserDek(userId)
-		const result = dek
+		const decryptedResult = dek
 			? rawResult.map((t) => decryptTradeFields(t, dek))
 			: rawResult
+
+		// Post-query extended filters (require decrypted data or timezone extraction)
+		const result = extendedFilters
+			? decryptedResult.filter((t) => {
+					// Hour filter (BRT timezone)
+					if (extendedFilters.hourFrom !== undefined || extendedFilters.hourTo !== undefined) {
+						const brtHour = new Date(t.entryDate).toLocaleString("en-US", {
+							timeZone: "America/Sao_Paulo",
+							hour: "numeric",
+							hour12: false,
+						})
+						const hour = parseInt(brtHour, 10)
+						if (extendedFilters.hourFrom !== undefined && hour < extendedFilters.hourFrom) return false
+						if (extendedFilters.hourTo !== undefined && hour > extendedFilters.hourTo) return false
+					}
+					// P&L filter (requires decrypted pnl)
+					if (extendedFilters.pnlMin !== undefined || extendedFilters.pnlMax !== undefined) {
+						const pnl = fromCents(t.pnl)
+						if (extendedFilters.pnlMin !== undefined && pnl < extendedFilters.pnlMin) return false
+						if (extendedFilters.pnlMax !== undefined && pnl > extendedFilters.pnlMax) return false
+					}
+					return true
+				})
+			: decryptedResult
 
 		if (result.length === 0) {
 			return {

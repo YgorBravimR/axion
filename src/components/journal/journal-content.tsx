@@ -20,6 +20,7 @@ import { formatBrlWithSign } from "@/lib/formatting"
 import { LoadingSpinner, EmptyState, ColoredValue } from "@/components/shared"
 import { useToast } from "@/components/ui/toast"
 import { PeriodFilter } from "./period-filter"
+import { SmartSearch } from "./smart-search"
 import { TradeDayGroup } from "./trade-day-group"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { journalGuide } from "@/components/ui/page-guide/guide-configs/journal"
@@ -122,6 +123,10 @@ export const JournalContent = () => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [totalTrades, setTotalTrades] = useState(0)
 
+	// Extended filters (smart search)
+	const [extendedFilters, setExtendedFilters] = useState<Record<string, string | string[]>>({})
+	const extendedFilterCount = Object.keys(extendedFilters).length
+
 	// Delete state — lifted here so it applies across all day groups
 	const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null)
 	const [isDeleting, setIsDeleting] = useState(false)
@@ -132,7 +137,31 @@ export const JournalContent = () => {
 			setIsLoading(true)
 			const { from, to } = getDateRange(period, effectiveDate, customDateRange)
 
-			const result = await getTradesGroupedByDay(from, to)
+			// Build extended filter params for the server action
+			const ext = Object.keys(extendedFilters).length > 0
+				? {
+						rating: extendedFilters.rating as Array<"A" | "B" | "C" | "D" | "F"> | undefined,
+						followedPlan: extendedFilters.followedPlan === "true"
+							? true
+							: extendedFilters.followedPlan === "false"
+								? false
+								: undefined,
+						hourFrom: extendedFilters.hourFrom
+							? parseInt(extendedFilters.hourFrom as string, 10)
+							: undefined,
+						hourTo: extendedFilters.hourTo
+							? parseInt(extendedFilters.hourTo as string, 10)
+							: undefined,
+						pnlMin: extendedFilters.pnlMin
+							? parseFloat(extendedFilters.pnlMin as string)
+							: undefined,
+						pnlMax: extendedFilters.pnlMax
+							? parseFloat(extendedFilters.pnlMax as string)
+							: undefined,
+					}
+				: undefined
+
+			const result = await getTradesGroupedByDay(from, to, ext)
 
 			if (result.status === "success" && result.data) {
 				setTradesByDay(result.data)
@@ -157,6 +186,7 @@ export const JournalContent = () => {
 		customDateRange?.from?.getTime(),
 		customDateRange?.to?.getTime(),
 		effectiveDate,
+		extendedFilters,
 	]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Memoized handlers to prevent unnecessary re-renders in child components
@@ -284,6 +314,14 @@ export const JournalContent = () => {
 					</div>
 				)}
 			</div>
+
+			{/* Smart Search */}
+			<SmartSearch
+				availableAssets={[...new Set(tradesByDay.flatMap((d) => d.trades.map((t) => t.asset)))]}
+				onFiltersChange={setExtendedFilters}
+				onClear={() => setExtendedFilters({})}
+				activeFilterCount={extendedFilterCount}
+			/>
 
 			{/* Loading State */}
 			{isLoading && <LoadingSpinner size="md" className="h-50" />}

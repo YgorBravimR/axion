@@ -218,6 +218,8 @@ export const updateTradeSchema = tradeBaseSchema.partial()
 export type UpdateTradeInput = Partial<CreateTradeInput>
 
 // Filter schema for trade queries
+export const tradeRatingSchema = z.enum(["A", "B", "C", "D", "F"])
+
 export const tradeFiltersSchema = z.object({
 	dateFrom: z.coerce.date().optional(),
 	dateTo: z.coerce.date().optional(),
@@ -227,6 +229,13 @@ export const tradeFiltersSchema = z.object({
 	strategyIds: z.array(z.string().uuid()).optional(),
 	tagIds: z.array(z.string().uuid()).optional(),
 	timeframeIds: z.array(z.string().uuid()).optional(),
+	// Extended filters (smart search)
+	rating: z.array(tradeRatingSchema).optional(),
+	followedPlan: z.boolean().optional(),
+	hourFrom: z.number().min(0).max(23).optional(),
+	hourTo: z.number().min(0).max(23).optional(),
+	pnlMin: z.number().optional(),
+	pnlMax: z.number().optional(),
 })
 
 export type TradeFilters = z.infer<typeof tradeFiltersSchema>

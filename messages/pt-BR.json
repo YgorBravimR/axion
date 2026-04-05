@@ -1348,6 +1348,45 @@
 	"journal": {
 		"title": "Diário de Trades",
 		"description": "Registre e acompanhe seus trades",
+		"smartSearch": {
+			"title": "Busca Inteligente",
+			"toggle": "Buscar e Filtrar",
+			"quickFilters": "Filtros Rápidos",
+			"builder": "Construtor de Filtros",
+			"addCondition": "Adicionar condição",
+			"clearAll": "Limpar tudo",
+			"activeFilters": "{count} ativos",
+			"field": "Campo",
+			"operator": "Operador",
+			"value": "Valor",
+			"apply": "Aplicar",
+			"fields": {
+				"asset": "Ativo",
+				"direction": "Direção",
+				"outcome": "Resultado",
+				"rating": "Nota",
+				"strategy": "Estratégia",
+				"followedPlan": "Seguiu Plano",
+				"timeOfDay": "Horário",
+				"pnl": "P&L"
+			},
+			"operators": {
+				"is": "é",
+				"isNot": "não é",
+				"isAtLeast": "é pelo menos",
+				"greaterThan": "maior que",
+				"lessThan": "menor que",
+				"between": "entre"
+			},
+			"presets": {
+				"morningTrades": "Trades da manhã",
+				"losingTrades": "Trades perdedores",
+				"winningTrades": "Trades ganhadores",
+				"unfollowedPlan": "Sem seguir plano",
+				"aRatedOnly": "Apenas nota A",
+				"highPnl": "Trades de alto P&L"
+			}
+		},
 		"errors": {
 			"exitQuantityExceeds": "Quantidade de saída excede posição disponível. Restante: {qty}",
 			"alreadyScaledMode": "Operação já está em modo escalonado",

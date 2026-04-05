@@ -28,6 +28,8 @@ export type TradeOutcome = "win" | "loss" | "breakeven"
 export type TagType = "setup" | "mistake" | "general"
 
 // Filter Types
+export type TradeRating = "A" | "B" | "C" | "D" | "F"
+
 export interface TradeFilters {
 	dateFrom?: Date
 	dateTo?: Date
@@ -38,6 +40,13 @@ export interface TradeFilters {
 	tagIds?: string[]
 	timeframeIds?: string[]
 	groupBy?: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
+	// Extended filters (smart search)
+	rating?: TradeRating[]
+	followedPlan?: boolean
+	hourFrom?: number
+	hourTo?: number
+	pnlMin?: number
+	pnlMax?: number
 }
 
 export interface PaginationParams {

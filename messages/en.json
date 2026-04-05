@@ -1348,6 +1348,45 @@
 	"journal": {
 		"title": "Trade Journal",
 		"description": "Record and track your trades",
+		"smartSearch": {
+			"title": "Smart Search",
+			"toggle": "Search & Filter",
+			"quickFilters": "Quick Filters",
+			"builder": "Filter Builder",
+			"addCondition": "Add condition",
+			"clearAll": "Clear all",
+			"activeFilters": "{count} active",
+			"field": "Field",
+			"operator": "Operator",
+			"value": "Value",
+			"apply": "Apply",
+			"fields": {
+				"asset": "Asset",
+				"direction": "Direction",
+				"outcome": "Outcome",
+				"rating": "Rating",
+				"strategy": "Strategy",
+				"followedPlan": "Followed Plan",
+				"timeOfDay": "Time of Day",
+				"pnl": "P&L"
+			},
+			"operators": {
+				"is": "is",
+				"isNot": "is not",
+				"isAtLeast": "is at least",
+				"greaterThan": "greater than",
+				"lessThan": "less than",
+				"between": "between"
+			},
+			"presets": {
+				"morningTrades": "Morning trades",
+				"losingTrades": "Losing trades",
+				"winningTrades": "Winning trades",
+				"unfollowedPlan": "Unfollowed plan",
+				"aRatedOnly": "A-rated only",
+				"highPnl": "High P&L trades"
+			}
+		},
 		"errors": {
 			"exitQuantityExceeds": "Exit quantity exceeds available position. Remaining: {qty}",
 			"alreadyScaledMode": "Trade is already in scaled mode",
