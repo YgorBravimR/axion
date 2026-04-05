@@ -9,6 +9,7 @@ import {
 	TrendingUp,
 	TrendingDown,
 	Loader2,
+	Download,
 } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -110,6 +111,17 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					{isPending && (
 						<Loader2 className="text-txt-300 h-4 w-4 animate-spin" />
 					)}
+					<Button
+						id="weekly-report-download-pdf"
+						variant="ghost"
+						size="sm"
+						onClick={() => {
+							window.open(`/api/arch/reports/pdf?type=weekly&offset=${weekOffset}`, "_blank")
+						}}
+						aria-label={t("downloadPdf")}
+					>
+						<Download className="h-4 w-4" />
+					</Button>
 				</div>
 			</div>
 

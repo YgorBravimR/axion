@@ -2085,7 +2085,8 @@
 			"dailyBreakdown": "Detalhamento Diário",
 			"topWins": "Maiores Gains",
 			"topLosses": "Maiores Losses",
-			"noTrades": "Nenhum trade registrado nesta semana"
+			"noTrades": "Nenhum trade registrado nesta semana",
+			"downloadPdf": "Baixar PDF"
 		},
 		"monthly": {
 			"title": "Relatório Mensal",
@@ -2101,7 +2102,8 @@
 			"worstDay": "Pior Dia",
 			"noTrades": "Nenhum trade registrado neste mês",
 			"trades": "trades",
-			"wr": "TA"
+			"wr": "TA",
+			"downloadPdf": "Baixar PDF"
 		},
 		"mistakeCost": {
 			"title": "Análise de Custo dos Erros",

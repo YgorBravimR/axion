@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Loader2, Calendar, TrendingUp, TrendingDown } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Calendar, TrendingUp, TrendingDown, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
 import { getMonthlyReport, type MonthlyReport } from "@/app/actions/reports"
@@ -90,6 +90,17 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 						<ChevronRight className="h-4 w-4" />
 					</Button>
 					{isPending && <Loader2 className="h-4 w-4 animate-spin text-txt-300" />}
+					<Button
+						id="monthly-report-download-pdf"
+						variant="ghost"
+						size="sm"
+						onClick={() => {
+							window.open(`/api/arch/reports/pdf?type=monthly&offset=${monthOffset}`, "_blank")
+						}}
+						aria-label={t("downloadPdf")}
+					>
+						<Download className="h-4 w-4" />
+					</Button>
 				</div>
 			</div>
 

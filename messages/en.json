@@ -2085,7 +2085,8 @@
 			"dailyBreakdown": "Daily Breakdown",
 			"topWins": "Top Wins",
 			"topLosses": "Top Losses",
-			"noTrades": "No trades recorded for this week"
+			"noTrades": "No trades recorded for this week",
+			"downloadPdf": "Download PDF"
 		},
 		"monthly": {
 			"title": "Monthly Report",
@@ -2101,7 +2102,8 @@
 			"worstDay": "Worst Day",
 			"noTrades": "No trades recorded for this month",
 			"trades": "trades",
-			"wr": "WR"
+			"wr": "WR",
+			"downloadPdf": "Download PDF"
 		},
 		"mistakeCost": {
 			"title": "Mistake Cost Analysis",
