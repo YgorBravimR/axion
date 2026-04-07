@@ -176,7 +176,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 					return (
 						<div className="flex items-center justify-end gap-s-200">
 							{isPending && pendingId === asset.id ? (
-								<Loader2 className="h-4 w-4 animate-spin text-txt-300" />
+								<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
 							) : (
 								<>
 									<Button

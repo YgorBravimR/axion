@@ -128,7 +128,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 												"h-2 w-2 rounded-full",
 												market.state === "open" && "bg-trade-buy",
 												market.state === "opening" &&
-													"bg-warning animate-pulse",
+													"bg-warning animate-pulse motion-reduce:animate-none",
 												market.state === "closed" && "bg-txt-300/40"
 											)}
 											aria-hidden="true"

@@ -209,7 +209,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 								</div>
 								<div className="flex items-center gap-s-200">
 									{isPending && pendingId === timeframe.id ? (
-										<Loader2 className="h-4 w-4 animate-spin text-txt-300" />
+										<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
 									) : (
 										<>
 											<Button

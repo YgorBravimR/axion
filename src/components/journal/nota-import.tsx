@@ -297,7 +297,7 @@ export const NotaImport = () => {
 
 					{isProcessing ? (
 						<>
-							<Loader2 className="text-acc-100 mx-auto h-12 w-12 animate-spin" />
+							<Loader2 className="text-acc-100 mx-auto h-12 w-12 animate-spin motion-reduce:animate-none" />
 							<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
 								{t("parsing")}
 							</h3>
@@ -590,7 +590,7 @@ export const NotaImport = () => {
 							>
 								{isEnriching ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										{t("enriching")}
 									</>
 								) : (

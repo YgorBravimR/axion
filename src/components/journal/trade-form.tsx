@@ -1609,7 +1609,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						>
 							{isSubmitting ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									{tCommon("saving")}
 								</>
 							) : (

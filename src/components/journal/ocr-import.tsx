@@ -494,7 +494,7 @@ export const OcrImport = () => {
 			{/* Processing */}
 			{step === "processing" && progress && (
 				<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-800 text-center">
-					<Loader2 className="mx-auto h-12 w-12 animate-spin text-acc-100" />
+					<Loader2 className="mx-auto h-12 w-12 animate-spin motion-reduce:animate-none text-acc-100" />
 					<h3 className="mt-m-400 text-body font-semibold text-txt-100">
 						{t("processing")}
 					</h3>
@@ -922,7 +922,7 @@ export const OcrImport = () => {
 						>
 							{isImporting ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									{tCommon("loading")}
 								</>
 							) : (
@@ -939,7 +939,7 @@ export const OcrImport = () => {
 			{/* Importing */}
 			{step === "importing" && (
 				<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-800 text-center">
-					<Loader2 className="mx-auto h-12 w-12 animate-spin text-acc-100" />
+					<Loader2 className="mx-auto h-12 w-12 animate-spin motion-reduce:animate-none text-acc-100" />
 					<h3 className="mt-m-400 text-body font-semibold text-txt-100">
 						{t("importingTrades", { count: totalTrades })}
 					</h3>

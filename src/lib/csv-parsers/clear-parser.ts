@@ -266,9 +266,8 @@ export const parseClearCSV = (
 				rawDate: row.data,
 				rawTime: row.hora,
 			})
-		} catch (error) {
+		} catch {
 			// Skip malformed rows
-			console.warn(`Skipping malformed row ${i}: ${error}`)
 			continue
 		}
 	}

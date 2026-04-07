@@ -346,7 +346,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
-				<Loader2 className="text-txt-300 h-8 w-8 animate-spin" />
+				<Loader2 className="text-txt-300 h-8 w-8 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
@@ -597,7 +597,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							onClick={handleSaveAccount}
 							disabled={isPending}
 						>
-							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 							{tCommon("save")}
 						</Button>
 					</div>
@@ -847,7 +847,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 													disabled={isPending}
 												>
 													{isPending && (
-														<Loader2 className="mr-2 h-3 w-3 animate-spin" />
+														<Loader2 className="mr-2 h-3 w-3 animate-spin motion-reduce:animate-none" />
 													)}
 													{tCommon("save")}
 												</Button>
@@ -1031,7 +1031,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										onClick={handleDeleteAllData}
 									>
 										{isPending && (
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										)}
 										{tCommon("confirm")}
 									</AlertDialogAction>
@@ -1115,7 +1115,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										onClick={handleDeleteAccount}
 									>
 										{isPending && (
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										)}
 										{tCommon("confirm")}
 									</AlertDialogAction>

@@ -5,6 +5,7 @@ import {
 	type ElementRef,
 	type ComponentPropsWithoutRef,
 	type HTMLAttributes,
+	type ReactNode,
 } from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
@@ -31,7 +32,7 @@ const Command = forwardRef<
 Command.displayName = CommandPrimitive.displayName
 
 interface CommandDialogProps {
-	children: React.ReactNode
+	children: ReactNode
 	open?: boolean
 	onOpenChange?: (open: boolean) => void
 	title?: string

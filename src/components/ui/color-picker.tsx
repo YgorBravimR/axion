@@ -1,5 +1,7 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 /**
  * Color Picker component built on react-colorful + Radix Popover.
  * Adapted from https://github.com/Fnz11/shadcn-color-picker (MIT).
@@ -100,6 +102,7 @@ const ColorPicker = ({
 	className,
 	container,
 }: ColorPickerProps) => {
+	const t = useTranslations("common.colorPicker")
 	const [inputMode, setInputMode] = useState<"hex" | "rgb">("hex")
 
 	// Local state drives the picker — never reads from parent `value` during interaction.
@@ -217,7 +220,7 @@ const ColorPicker = ({
 			type="button"
 			className="flex h-9 w-9 items-center justify-center rounded-full border border-bg-300 transition-transform hover:scale-110"
 			style={{ backgroundColor: value }}
-			aria-label="Pick a color"
+			aria-label={t("pickColor")}
 		>
 			<Pipette className="h-4 w-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
 		</button>
@@ -247,7 +250,7 @@ const ColorPicker = ({
 						type="button"
 						onClick={() => setInputMode(inputMode === "hex" ? "rgb" : "hex")}
 						className="shrink-0 rounded border border-bg-300 px-s-200 py-s-100 text-tiny font-mono text-txt-200 transition-colors hover:bg-bg-300"
-						aria-label="Toggle between HEX and RGB input"
+						aria-label={t("toggleFormat")}
 					>
 						{inputMode === "hex" ? "HEX" : "RGB"}
 					</button>
@@ -258,7 +261,7 @@ const ColorPicker = ({
 							onChange={handleHexInputChange}
 							className="h-8 font-mono text-small tracking-wider"
 							placeholder="#FF5733"
-							aria-label="Hex color value"
+							aria-label={t("hexValue")}
 						/>
 					) : (
 						<Input
@@ -267,7 +270,7 @@ const ColorPicker = ({
 							onChange={handleRgbInputChange}
 							className="h-8 font-mono text-small tracking-wider"
 							placeholder="255, 87, 51"
-							aria-label="RGB color value"
+							aria-label={t("rgbValue")}
 						/>
 					)}
 				</div>

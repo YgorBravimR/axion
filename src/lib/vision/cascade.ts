@@ -152,21 +152,15 @@ export const extractWithCascade = async (
 ): Promise<CascadeResult> => {
 	const triedProviders: VisionProviderType[] = []
 
-	console.log("[VISION:Cascade] Starting cascade extraction...")
-	console.log("[VISION:Cascade] Available providers:", PROVIDERS.filter((p) => p.isAvailable()).map((p) => p.name).join(", "))
-
 	for (const provider of PROVIDERS) {
 		if (!provider.isAvailable()) {
-			console.log(`[VISION:Cascade] Skipping ${provider.name} (not configured)`)
 			continue
 		}
 
 		triedProviders.push(provider.type)
-		console.log(`[VISION:Cascade] Trying ${provider.name}...`)
 
 		try {
 			const response = await provider.extract(request)
-			console.log(`[VISION:Cascade] ✅ ${provider.name} succeeded!`)
 
 			return {
 				success: true,
@@ -181,7 +175,6 @@ export const extractWithCascade = async (
 	}
 
 	// All providers failed
-	console.log("[VISION:Cascade] ❌ All AI providers failed, falling back to Tesseract")
 	return {
 		success: false,
 		provider: "tesseract",
@@ -261,7 +254,6 @@ export const extractTradesWithCascade = async (
 
 	// Google Vision returns raw text (not JSON) - needs special handling
 	if (result.provider === "google") {
-		console.log("[VISION:Cascade] Google returned raw text, will use parser")
 		// Return raw text - the server action will parse it with the OCR parser
 		return {
 			provider: "google",

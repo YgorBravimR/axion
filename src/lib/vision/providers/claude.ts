@@ -17,8 +17,6 @@ export const extractWithClaude = async (
 		throw new Error("ANTHROPIC_API_KEY not configured")
 	}
 
-	console.log("[VISION:Claude] Calling Claude 3.5 Sonnet...")
-
 	const client = new Anthropic({ apiKey })
 
 	// Map mime type to Anthropic's expected format
@@ -49,7 +47,6 @@ export const extractWithClaude = async (
 	})
 
 	const content = response.content[0]?.type === "text" ? response.content[0].text : ""
-	console.log("[VISION:Claude] ✅ Response received")
 
 	return {
 		provider: "claude",

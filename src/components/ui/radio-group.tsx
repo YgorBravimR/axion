@@ -1,12 +1,12 @@
 "use client"
 
-import * as React from "react"
+import type { ComponentProps } from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-interface RadioGroupProps extends React.ComponentProps<typeof RadioGroupPrimitive.Root> {
+interface RadioGroupProps extends ComponentProps<typeof RadioGroupPrimitive.Root> {
   id: string
 }
 
@@ -23,7 +23,7 @@ const RadioGroup = ({
   )
 }
 
-interface RadioGroupItemProps extends React.ComponentProps<typeof RadioGroupPrimitive.Item> {
+interface RadioGroupItemProps extends ComponentProps<typeof RadioGroupPrimitive.Item> {
   id: string
 }
 

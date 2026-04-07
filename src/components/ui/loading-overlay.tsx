@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
 
 // ==========================================
@@ -37,7 +38,7 @@ const useLoadingOverlay = () => {
 // Provider
 // ==========================================
 
-const LoadingOverlayProvider = ({ children }: { children: React.ReactNode }) => {
+const LoadingOverlayProvider = ({ children }: { children: ReactNode }) => {
 	const [options, setOptions] = useState<LoadingOverlayOptions | null>(null)
 	const overlayRef = useRef<HTMLDivElement>(null)
 	const previousFocusRef = useRef<HTMLElement | null>(null)

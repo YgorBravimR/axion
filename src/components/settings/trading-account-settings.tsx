@@ -99,7 +99,7 @@ export const TradingAccountSettings = () => {
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<Loader2 className="h-6 w-6 animate-spin text-txt-300" />
+				<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-txt-300" />
 			</div>
 		)
 	}

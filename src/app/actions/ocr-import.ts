@@ -82,22 +82,193 @@ const calculateAvgPrice = (
 }
 
 /**
- * Find asset by symbol (normalized or original)
+ * Find asset by symbol using centralized resolution, with fallback to original code.
  */
-const findAsset = async (symbol: string, originalCode?: string) => {
-	// Try exact match first
-	let asset = await db.query.assets.findFirst({
-		where: eq(assets.symbol, symbol.toUpperCase()),
-	})
+const findAsset = async (
+	symbol: string,
+	originalCode?: string,
+	registeredSymbols?: Set<string>
+) => {
+	const symbols = registeredSymbols ?? (await getRegisteredAssetSymbols())
+	const resolved = resolveTradeAsset(symbol, symbols)
 
-	// If not found and we have original code, try that
-	if (!asset && originalCode && originalCode !== symbol) {
-		asset = await db.query.assets.findFirst({
-			where: eq(assets.symbol, originalCode.toUpperCase()),
-		})
+	const asset = await db.query.assets.findFirst({
+		where: eq(assets.symbol, resolved.symbol),
+	})
+	if (asset) return asset
+
+	// Fallback: try original code if different from resolved symbol
+	if (originalCode && originalCode.toUpperCase() !== resolved.symbol) {
+		return (
+			(await db.query.assets.findFirst({
+				where: eq(assets.symbol, originalCode.toUpperCase()),
+			})) ?? null
+		)
 	}
 
-	return asset
+	return null
+}
+
+// ==========================================
+// Shared Trade Processing
+// ==========================================
+
+interface ProcessedOcrTrade {
+	trade: Trade
+	executions: TradeExecution[]
+	assetFound: boolean
+}
+
+/**
+ * Processes a single validated OCR trade: resolves asset, calculates P&L, inserts into DB.
+ * Shared between single and bulk import to eliminate duplication.
+ */
+const processOcrTrade = async (
+	validated: z.output<typeof ocrImportSchema>,
+	accountId: string,
+	registeredSymbols: Set<string>
+): Promise<ProcessedOcrTrade> => {
+	// Resolve asset symbol to canonical form (e.g., WING26 -> WIN)
+	const resolved = resolveTradeAsset(validated.asset, registeredSymbols)
+	const assetSymbol = resolved.symbol
+
+	// Look up asset configuration
+	const assetConfig = await findAsset(
+		assetSymbol,
+		validated.originalContractCode,
+		registeredSymbols
+	)
+
+	// Calculate aggregates from executions
+	const entries = validated.executions.filter(
+		(e) => e.executionType === "entry"
+	)
+	const exits = validated.executions.filter((e) => e.executionType === "exit")
+
+	const totalEntryQuantity = entries.reduce((sum, e) => sum + e.quantity, 0)
+	const totalExitQuantity = exits.reduce((sum, e) => sum + e.quantity, 0)
+
+	const avgEntryPrice = calculateAvgPrice("entry", validated.executions)
+	const avgExitPrice =
+		exits.length > 0 ? calculateAvgPrice("exit", validated.executions) : null
+
+	// Sort executions by date to get first entry and last exit dates
+	const sortedExecutions = [...validated.executions].sort(
+		(a, b) =>
+			new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime()
+	)
+
+	const firstEntry = sortedExecutions.find((e) => e.executionType === "entry")
+	const lastExit = [...sortedExecutions]
+		.reverse()
+		.find((e) => e.executionType === "exit")
+
+	const entryDate = firstEntry
+		? new Date(firstEntry.executionDate)
+		: validated.entryDate
+	const exitDate = lastExit
+		? new Date(lastExit.executionDate)
+		: validated.exitDate
+
+	// Calculate PnL if we have exits
+	let pnl: number | undefined
+	let outcome: "win" | "loss" | "breakeven" | undefined
+
+	if (avgExitPrice && totalExitQuantity > 0) {
+		let ticksGained: number | null = null
+		if (assetConfig) {
+			const tickSize = parseFloat(assetConfig.tickSize)
+			const tickValue = fromCents(assetConfig.tickValue)
+
+			const result = calculateAssetPnL({
+				entryPrice: avgEntryPrice,
+				exitPrice: avgExitPrice,
+				positionSize: Math.min(totalEntryQuantity, totalExitQuantity),
+				direction: validated.direction,
+				tickSize,
+				tickValue,
+				contractsExecuted: totalEntryQuantity + totalExitQuantity,
+			})
+			pnl = result.netPnl
+			ticksGained = result.ticksGained
+		} else {
+			const priceDiff =
+				validated.direction === "long"
+					? avgExitPrice - avgEntryPrice
+					: avgEntryPrice - avgExitPrice
+			pnl = priceDiff * Math.min(totalEntryQuantity, totalExitQuantity)
+		}
+
+		const breakevenTicks = await getBreakevenTicks(assetSymbol)
+		outcome = determineOutcome({ pnl, ticksGained, breakevenTicks })
+	}
+
+	// Build pre-trade thoughts with import note
+	const importNote = validated.originalContractCode
+		? `[Imported from ProfitChart screenshot. Original contract: ${validated.originalContractCode}]`
+		: "[Imported from ProfitChart screenshot]"
+
+	const preTradeThoughts = validated.preTradeThoughts
+		? `${importNote}\n\n${validated.preTradeThoughts}`
+		: importNote
+
+	// Create trade with scaled execution mode
+	const [trade] = await db
+		.insert(trades)
+		.values({
+			accountId,
+			asset: assetSymbol.toUpperCase(),
+			direction: validated.direction,
+			timeframeId: validated.timeframeId ?? null,
+			strategyId: validated.strategyId ?? null,
+			entryDate,
+			exitDate,
+			entryPrice: toNumericString(avgEntryPrice)!,
+			exitPrice: toNumericString(avgExitPrice),
+			positionSize: toNumericString(totalEntryQuantity)!,
+			pnl: pnl !== undefined ? toNumericString(toCents(pnl)) : null,
+			outcome,
+			preTradeThoughts,
+			executionMode: "scaled",
+			totalEntryQuantity: toNumericString(totalEntryQuantity)!,
+			totalExitQuantity: toNumericString(totalExitQuantity)!,
+			avgEntryPrice: toNumericString(avgEntryPrice)!,
+			avgExitPrice: toNumericString(avgExitPrice),
+			remainingQuantity: toNumericString(
+				totalEntryQuantity - totalExitQuantity
+			)!,
+			contractsExecuted: toNumericString(
+				totalEntryQuantity + totalExitQuantity
+			)!,
+		})
+		.returning()
+
+	// Insert all executions
+	const executionValues = validated.executions.map((ex) => ({
+		tradeId: trade.id,
+		executionType: ex.executionType as "entry" | "exit",
+		executionDate: new Date(ex.executionDate),
+		price: toNumericString(ex.price)!,
+		quantity: toNumericString(ex.quantity)!,
+		orderType: "market" as const,
+		commission: "0",
+		fees: "0",
+		slippage: "0",
+		executionValue: toNumericString(
+			calculateExecutionValue(ex.price, ex.quantity)
+		)!,
+	}))
+
+	const createdExecutions = await db
+		.insert(tradeExecutions)
+		.values(executionValues)
+		.returning()
+
+	return {
+		trade,
+		executions: createdExecutions,
+		assetFound: !!assetConfig,
+	}
 }
 
 // ==========================================
@@ -120,151 +291,20 @@ export const createTradeFromOcr = async (
 		const { accountId, userId } = await requireAuth()
 		const validated = ocrImportSchema.parse(input)
 
-		// Resolve asset symbol to canonical form (e.g., WING26 → WIN)
 		const registeredSymbols = await getRegisteredAssetSymbols()
-		const resolved = resolveTradeAsset(validated.asset, registeredSymbols)
-		validated.asset = resolved.symbol
-
-		// Look up asset configuration
-		const assetConfig = await findAsset(
-			validated.asset,
-			validated.originalContractCode
+		const result = await processOcrTrade(
+			validated,
+			accountId,
+			registeredSymbols
 		)
-
-		// Calculate aggregates from executions
-		const entries = validated.executions.filter(
-			(e) => e.executionType === "entry"
-		)
-		const exits = validated.executions.filter((e) => e.executionType === "exit")
-
-		const totalEntryQuantity = entries.reduce((sum, e) => sum + e.quantity, 0)
-		const totalExitQuantity = exits.reduce((sum, e) => sum + e.quantity, 0)
-
-		const avgEntryPrice = calculateAvgPrice("entry", validated.executions)
-		const avgExitPrice =
-			exits.length > 0 ? calculateAvgPrice("exit", validated.executions) : null
-
-		// Sort executions by date to get first entry and last exit dates
-		const sortedExecutions = [...validated.executions].sort(
-			(a, b) =>
-				new Date(a.executionDate).getTime() -
-				new Date(b.executionDate).getTime()
-		)
-
-		const firstEntry = sortedExecutions.find((e) => e.executionType === "entry")
-		const lastExit = [...sortedExecutions]
-			.reverse()
-			.find((e) => e.executionType === "exit")
-
-		const entryDate = firstEntry
-			? new Date(firstEntry.executionDate)
-			: validated.entryDate
-		const exitDate = lastExit
-			? new Date(lastExit.executionDate)
-			: validated.exitDate
-
-		// Calculate PnL if we have exits
-		let pnl: number | undefined
-		let outcome: "win" | "loss" | "breakeven" | undefined
-
-		if (avgExitPrice && totalExitQuantity > 0) {
-			let ticksGained: number | null = null
-			if (assetConfig) {
-				// Use asset-based calculation
-				const tickSize = parseFloat(assetConfig.tickSize)
-				const tickValue = fromCents(assetConfig.tickValue)
-
-				const result = calculateAssetPnL({
-					entryPrice: avgEntryPrice,
-					exitPrice: avgExitPrice,
-					positionSize: Math.min(totalEntryQuantity, totalExitQuantity),
-					direction: validated.direction,
-					tickSize,
-					tickValue,
-					contractsExecuted: totalEntryQuantity + totalExitQuantity,
-				})
-				pnl = result.netPnl
-				ticksGained = result.ticksGained
-			} else {
-				// Simple calculation
-				const priceDiff =
-					validated.direction === "long"
-						? avgExitPrice - avgEntryPrice
-						: avgEntryPrice - avgExitPrice
-				pnl = priceDiff * Math.min(totalEntryQuantity, totalExitQuantity)
-			}
-
-			const breakevenTicks = await getBreakevenTicks(validated.asset)
-			outcome = determineOutcome({ pnl, ticksGained, breakevenTicks })
-		}
-
-		// Build pre-trade thoughts with import note
-		const importNote = validated.originalContractCode
-			? `[Imported from ProfitChart screenshot. Original contract: ${validated.originalContractCode}]`
-			: "[Imported from ProfitChart screenshot]"
-
-		const preTradeThoughts = validated.preTradeThoughts
-			? `${importNote}\n\n${validated.preTradeThoughts}`
-			: importNote
-
-		// Create trade with scaled execution mode
-		const [trade] = await db
-			.insert(trades)
-			.values({
-				accountId,
-				asset: validated.asset.toUpperCase(),
-				direction: validated.direction,
-				timeframeId: validated.timeframeId ?? null,
-				strategyId: validated.strategyId ?? null,
-				entryDate,
-				exitDate,
-				entryPrice: toNumericString(avgEntryPrice)!,
-				exitPrice: toNumericString(avgExitPrice),
-				positionSize: toNumericString(totalEntryQuantity)!,
-				pnl: pnl !== undefined ? toNumericString(toCents(pnl)) : null,
-				outcome,
-				preTradeThoughts,
-				// Scaled trade fields
-				executionMode: "scaled",
-				totalEntryQuantity: toNumericString(totalEntryQuantity)!,
-				totalExitQuantity: toNumericString(totalExitQuantity)!,
-				avgEntryPrice: toNumericString(avgEntryPrice)!,
-				avgExitPrice: toNumericString(avgExitPrice),
-				remainingQuantity: toNumericString(totalEntryQuantity - totalExitQuantity)!,
-				contractsExecuted: toNumericString(totalEntryQuantity + totalExitQuantity)!,
-			})
-			.returning()
-
-		// Insert all executions
-		const executionValues = validated.executions.map((ex) => ({
-			tradeId: trade.id,
-			executionType: ex.executionType as "entry" | "exit",
-			executionDate: new Date(ex.executionDate),
-			price: toNumericString(ex.price)!,
-			quantity: toNumericString(ex.quantity)!,
-			orderType: "market" as const,
-			commission: "0",
-			fees: "0",
-			slippage: "0",
-			executionValue: toNumericString(calculateExecutionValue(ex.price, ex.quantity))!,
-		}))
-
-		const createdExecutions = await db
-			.insert(tradeExecutions)
-			.values(executionValues)
-			.returning()
 
 		// Revalidate pages
 		invalidateTradeData(undefined, userId, accountId)
 
 		return {
 			status: "success",
-			message: `Trade imported successfully with ${createdExecutions.length} executions`,
-			data: {
-				trade,
-				executions: createdExecutions,
-				assetFound: !!assetConfig,
-			},
+			message: `Trade imported successfully with ${result.executions.length} executions`,
+			data: result,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -329,170 +369,22 @@ export const bulkCreateTradesFromOcr = async (
 		// Load registered symbols once for all trades
 		const registeredSymbols = await getRegisteredAssetSymbols()
 
-		// Process each trade
 		for (let i = 0; i < inputs.length; i++) {
-			const input = inputs[i]
-
 			try {
-				const validated = ocrImportSchema.parse(input)
-
-				// Resolve asset symbol to canonical form
-				const resolved = resolveTradeAsset(validated.asset, registeredSymbols)
-				validated.asset = resolved.symbol
-
-				// Look up asset configuration
-				const assetConfig = await findAsset(
-					validated.asset,
-					validated.originalContractCode
+				const validated = ocrImportSchema.parse(inputs[i])
+				const processed = await processOcrTrade(
+					validated,
+					accountId,
+					registeredSymbols
 				)
 
-				// Calculate aggregates from executions
-				const entries = validated.executions.filter(
-					(e) => e.executionType === "entry"
-				)
-				const exits = validated.executions.filter(
-					(e) => e.executionType === "exit"
-				)
-
-				const totalEntryQuantity = entries.reduce(
-					(sum, e) => sum + e.quantity,
-					0
-				)
-				const totalExitQuantity = exits.reduce((sum, e) => sum + e.quantity, 0)
-
-				const avgEntryPrice = calculateAvgPrice("entry", validated.executions)
-				const avgExitPrice =
-					exits.length > 0
-						? calculateAvgPrice("exit", validated.executions)
-						: null
-
-				// Sort executions by date
-				const sortedExecutions = [...validated.executions].sort(
-					(a, b) =>
-						new Date(a.executionDate).getTime() -
-						new Date(b.executionDate).getTime()
-				)
-
-				const firstEntry = sortedExecutions.find(
-					(e) => e.executionType === "entry"
-				)
-				const lastExit = [...sortedExecutions]
-					.reverse()
-					.find((e) => e.executionType === "exit")
-
-				const entryDate = firstEntry
-					? new Date(firstEntry.executionDate)
-					: validated.entryDate
-				const exitDate = lastExit
-					? new Date(lastExit.executionDate)
-					: validated.exitDate
-
-				// Calculate PnL if we have exits
-				let pnl: number | undefined
-				let outcome: "win" | "loss" | "breakeven" | undefined
-
-				if (avgExitPrice && totalExitQuantity > 0) {
-					let ticksGained: number | null = null
-					if (assetConfig) {
-						const tickSize = parseFloat(assetConfig.tickSize)
-						const tickValue = fromCents(assetConfig.tickValue)
-
-						const calcResult = calculateAssetPnL({
-							entryPrice: avgEntryPrice,
-							exitPrice: avgExitPrice,
-							positionSize: Math.min(totalEntryQuantity, totalExitQuantity),
-							direction: validated.direction,
-							tickSize,
-							tickValue,
-							contractsExecuted: totalEntryQuantity + totalExitQuantity,
-						})
-						pnl = calcResult.netPnl
-						ticksGained = calcResult.ticksGained
-					} else {
-						const priceDiff =
-							validated.direction === "long"
-								? avgExitPrice - avgEntryPrice
-								: avgEntryPrice - avgExitPrice
-						pnl = priceDiff * Math.min(totalEntryQuantity, totalExitQuantity)
-					}
-
-					const breakevenTicks = await getBreakevenTicks(validated.asset)
-					outcome = determineOutcome({ pnl, ticksGained, breakevenTicks })
-				}
-
-				// Build pre-trade thoughts with import note
-				const importNote = validated.originalContractCode
-					? `[Imported from ProfitChart screenshot. Original contract: ${validated.originalContractCode}]`
-					: "[Imported from ProfitChart screenshot]"
-
-				const preTradeThoughts = validated.preTradeThoughts
-					? `${importNote}\n\n${validated.preTradeThoughts}`
-					: importNote
-
-				// Create trade
-				const [trade] = await db
-					.insert(trades)
-					.values({
-						accountId,
-						asset: validated.asset.toUpperCase(),
-						direction: validated.direction,
-						timeframeId: validated.timeframeId ?? null,
-						strategyId: validated.strategyId ?? null,
-						entryDate,
-						exitDate,
-						entryPrice: toNumericString(avgEntryPrice)!,
-						exitPrice: toNumericString(avgExitPrice),
-						positionSize: toNumericString(totalEntryQuantity)!,
-						pnl: pnl !== undefined ? toNumericString(toCents(pnl)) : null,
-						outcome,
-						preTradeThoughts,
-						executionMode: "scaled",
-						totalEntryQuantity: toNumericString(totalEntryQuantity)!,
-						totalExitQuantity: toNumericString(totalExitQuantity)!,
-						avgEntryPrice: toNumericString(avgEntryPrice)!,
-						avgExitPrice: toNumericString(avgExitPrice),
-						remainingQuantity: toNumericString(
-							totalEntryQuantity - totalExitQuantity
-						)!,
-						contractsExecuted: toNumericString(
-							totalEntryQuantity + totalExitQuantity
-						)!,
-					})
-					.returning()
-
-				// Insert executions
-				const executionValues = validated.executions.map((ex) => ({
-					tradeId: trade.id,
-					executionType: ex.executionType as "entry" | "exit",
-					executionDate: new Date(ex.executionDate),
-					price: toNumericString(ex.price)!,
-					quantity: toNumericString(ex.quantity)!,
-					orderType: "market" as const,
-					commission: "0",
-					fees: "0",
-					slippage: "0",
-					executionValue: toNumericString(calculateExecutionValue(
-						ex.price,
-						ex.quantity
-					))!,
-				}))
-
-				const createdExecutions = await db
-					.insert(tradeExecutions)
-					.values(executionValues)
-					.returning()
-
-				result.trades.push({
-					trade,
-					executions: createdExecutions,
-					assetFound: !!assetConfig,
-				})
+				result.trades.push(processed)
 				result.successCount++
 			} catch (error) {
 				result.failedCount++
 				result.errors.push({
 					index: i,
-					asset: input.asset,
+					asset: inputs[i].asset,
 					message: toSafeErrorMessage(error, "bulkCreateTradesFromOcr"),
 				})
 			}

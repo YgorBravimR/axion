@@ -109,7 +109,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						<ChevronRight className="h-4 w-4" />
 					</Button>
 					{isPending && (
-						<Loader2 className="text-txt-300 h-4 w-4 animate-spin" />
+						<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 					)}
 					<Button
 						id="weekly-report-download-pdf"

@@ -25,8 +25,6 @@ export const extractWithGroq = async (
 		throw new Error("GROQ_API_KEY not configured")
 	}
 
-	console.log(`[VISION:Groq] Calling ${GROQ_VISION_MODEL} (FREE)...`)
-
 	const client = new Groq({ apiKey })
 
 	const response = await client.chat.completions.create({
@@ -52,7 +50,6 @@ export const extractWithGroq = async (
 	})
 
 	const content = response.choices[0]?.message?.content ?? ""
-	console.log("[VISION:Groq] ✅ Response received")
 
 	return {
 		provider: "groq",

@@ -300,7 +300,7 @@ const ExecutionRow = ({
 						>
 							{isDeleting ? (
 								<Loader2
-									className="h-3.5 w-3.5 animate-spin"
+									className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
 									aria-hidden="true"
 								/>
 							) : (

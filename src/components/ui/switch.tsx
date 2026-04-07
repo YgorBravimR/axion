@@ -1,12 +1,13 @@
 "use client"
 
-import * as React from "react"
+import { forwardRef } from "react"
+import type { ElementRef, ComponentPropsWithoutRef } from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
 import { cn } from "@/lib/utils"
 
-const Switch = React.forwardRef<
-	React.ElementRef<typeof SwitchPrimitives.Root>,
-	Omit<React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>, "id"> & {
+const Switch = forwardRef<
+	ElementRef<typeof SwitchPrimitives.Root>,
+	Omit<ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>, "id"> & {
 		id: string
 	}
 >(({ className, id, ...props }, ref) => (

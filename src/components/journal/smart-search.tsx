@@ -404,7 +404,7 @@ const SmartSearch = ({
 										<div className="flex items-center gap-s-100">
 											<Input
 												id="smart-search-hour-from"
-												aria-label="Hour from"
+												aria-label={t("hourFrom")}
 												type="number"
 												min={0}
 												max={23}
@@ -419,7 +419,7 @@ const SmartSearch = ({
 											<span className="text-tiny text-txt-300">—</span>
 											<Input
 												id="smart-search-hour-to"
-												aria-label="Hour to"
+												aria-label={t("hourTo")}
 												type="number"
 												min={0}
 												max={23}

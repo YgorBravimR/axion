@@ -162,14 +162,14 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 					<div>
 						<span className="text-tiny text-txt-300">{t("entry")}</span>
 						<p className="text-small text-txt-100">
-							${Number(trade.entryPrice).toFixed(2)}
+							{Number(trade.entryPrice).toFixed(2)}
 						</p>
 					</div>
 					<div>
 						<span className="text-tiny text-txt-300">{t("exit")}</span>
 						<p className="text-small text-txt-100">
 							{trade.exitPrice
-								? `$${Number(trade.exitPrice).toFixed(2)}`
+								? Number(trade.exitPrice).toFixed(2)
 								: t("openPosition")}
 						</p>
 					</div>

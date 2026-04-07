@@ -10,12 +10,13 @@ import {
 	ShieldCheck,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import type { ElementType } from "react"
 import { useFormatting } from "@/hooks/use-formatting"
 import { fromCents } from "@/lib/money"
 import type { MonthlyPlan } from "@/db/schema"
 
 interface SummaryCardProps {
-	icon: React.ElementType
+	icon: ElementType
 	label: string
 	value: string
 	subValue?: string

@@ -104,7 +104,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2">
 				{/* Performance */}
 				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
-					<h4 className="text-small text-txt-100 font-semibold">{t("performance")}</h4>
+					<h3 className="text-small text-txt-100 font-semibold">{t("performance")}</h3>
 					<ComparisonRow
 						label={t("winRate")}
 						originalValue={formatPercent(summary.originalWinRate)}
@@ -129,7 +129,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 
 				{/* Trade counts */}
 				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
-					<h4 className="text-small text-txt-100 font-semibold">{t("tradeCounts")}</h4>
+					<h3 className="text-small text-txt-100 font-semibold">{t("tradeCounts")}</h3>
 					<div className="flex items-center justify-between py-1">
 						<span className="text-tiny text-txt-300">{t("totalTrades")}</span>
 						<span className="text-small text-txt-100 font-medium">{summary.totalTrades}</span>

@@ -1,5 +1,6 @@
 "use client"
 
+import type { FormEvent } from "react"
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/routing"
@@ -48,7 +49,7 @@ export const ForgotPasswordForm = () => {
 	}, [resendCooldown])
 
 	// Step 1: Request OTP code
-	const handleEmailSubmit = (e: React.FormEvent) => {
+	const handleEmailSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 
@@ -101,7 +102,7 @@ export const ForgotPasswordForm = () => {
 	}
 
 	// Step 3: Set new password
-	const handlePasswordSubmit = (e: React.FormEvent) => {
+	const handlePasswordSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 
@@ -165,7 +166,7 @@ export const ForgotPasswordForm = () => {
 					</div>
 
 					<Button id="forgot-send-code" type="submit" className="w-full" disabled={isPending}>
-						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 						{t("sendCode")}
 					</Button>
 				</form>
@@ -236,7 +237,7 @@ export const ForgotPasswordForm = () => {
 
 				{isPending && (
 					<div className="flex justify-center">
-						<Loader2 className="h-5 w-5 animate-spin text-txt-300" />
+						<Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none text-txt-300" />
 					</div>
 				)}
 
@@ -353,7 +354,7 @@ export const ForgotPasswordForm = () => {
 				</div>
 
 				<Button id="forgot-reset-password" type="submit" className="w-full" disabled={isPending}>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 					{t("resetButton")}
 				</Button>
 			</form>

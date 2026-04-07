@@ -20,11 +20,6 @@ export const isGoogleVisionAvailable = (): boolean => {
 	const hasValidCredentials = credentials && (credentials.endsWith('.json') || credentials.startsWith('/'))
 	const hasApiKey = !!apiKey
 
-	console.log("[VISION:Google] Checking availability:")
-	console.log("[VISION:Google]   GOOGLE_APPLICATION_CREDENTIALS:", credentials ? `"${credentials.substring(0, 20)}..."` : "not set")
-	console.log("[VISION:Google]   GOOGLE_CLOUD_VISION_API_KEY:", hasApiKey ? "set" : "not set")
-	console.log("[VISION:Google]   Valid credentials file:", hasValidCredentials)
-
 	return hasValidCredentials || hasApiKey
 }
 
@@ -37,8 +32,6 @@ const callGoogleVisionREST = async (imageBase64: string): Promise<string> => {
 	if (!apiKey) {
 		throw new Error("GOOGLE_CLOUD_VISION_API_KEY not configured")
 	}
-
-	console.log("[VISION:Google] Using REST API with API Key (DOCUMENT_TEXT_DETECTION)...")
 
 	const response = await fetch(
 		`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
@@ -69,7 +62,6 @@ const callGoogleVisionREST = async (imageBase64: string): Promise<string> => {
 	// Try to get structured text from fullTextAnnotation (preserves layout)
 	const fullTextAnnotation = data.responses?.[0]?.fullTextAnnotation
 	if (fullTextAnnotation?.text) {
-		console.log("[VISION:Google] Using fullTextAnnotation (layout preserved)")
 		return fullTextAnnotation.text
 	}
 
@@ -82,8 +74,6 @@ const callGoogleVisionREST = async (imageBase64: string): Promise<string> => {
  * Call Google Vision API using SDK (works with Service Account)
  */
 const callGoogleVisionSDK = async (imageBase64: string): Promise<string> => {
-	console.log("[VISION:Google] Using SDK with Service Account...")
-
 	// Dynamic import to avoid issues when credentials aren't set
 	const vision = await import("@google-cloud/vision")
 	const client = new vision.ImageAnnotatorClient()
@@ -101,8 +91,6 @@ const callGoogleVisionSDK = async (imageBase64: string): Promise<string> => {
 export const extractWithGoogle = async (
 	request: VisionExtractionRequest
 ): Promise<VisionExtractionResponse> => {
-	console.log("[VISION:Google] Calling Google Cloud Vision...")
-
 	let fullText: string
 
 	// Prefer API Key (simpler), fall back to Service Account
@@ -113,9 +101,6 @@ export const extractWithGoogle = async (
 	} else {
 		throw new Error("No Google Vision credentials configured")
 	}
-
-	console.log("[VISION:Google] ✅ Text extracted, length:", fullText.length)
-	console.log("[VISION:Google] First 200 chars:", fullText.substring(0, 200))
 
 	// Google Vision returns raw text, not structured JSON
 	// The cascade handler will need to parse this with Tesseract parser

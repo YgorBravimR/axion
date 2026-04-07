@@ -39,7 +39,6 @@ interface VisionExtractionResult {
 
 const getOpenAIClient = (): OpenAI | null => {
 	const apiKey = process.env.OPENAI_API_KEY
-	console.log("[VISION LIB] getOpenAIClient - API key exists:", !!apiKey)
 	if (!apiKey) {
 		return null
 	}
@@ -51,7 +50,6 @@ const getOpenAIClient = (): OpenAI | null => {
  */
 export const isOpenAIVisionAvailable = (): boolean => {
 	const hasKey = !!process.env.OPENAI_API_KEY
-	console.log("[VISION LIB] isOpenAIVisionAvailable:", hasKey)
 	return hasKey
 }
 
@@ -106,16 +104,11 @@ export const extractWithVision = async (
 	imageBase64: string,
 	mimeType: string = "image/png"
 ): Promise<VisionExtractionResult> => {
-	console.log("[VISION LIB] extractWithVision called")
 	const client = getOpenAIClient()
 
 	if (!client) {
-		console.log("[VISION LIB] ❌ No OpenAI client - API key missing")
 		throw new Error("OpenAI API key not configured. Add OPENAI_API_KEY to your .env file.")
 	}
-
-	console.log("[VISION LIB] ✨ Calling GPT-4o API...")
-	console.log("[VISION LIB] Image size:", imageBase64.length, "chars")
 
 	const response = await client.chat.completions.create({
 		model: "gpt-4o",
@@ -140,26 +133,18 @@ export const extractWithVision = async (
 		],
 	})
 
-	console.log("[VISION LIB] ✅ GPT-4o response received")
-	console.log("[VISION LIB] Usage:", response.usage)
-
 	const content = response.choices[0]?.message?.content
 	if (!content) {
-		console.log("[VISION LIB] ❌ No content in response")
 		throw new Error("No response from OpenAI Vision")
 	}
-
-	console.log("[VISION LIB] Raw response (first 500 chars):", content.substring(0, 500))
 
 	// Parse JSON response
 	const jsonMatch = content.match(/\{[\s\S]*\}/)
 	if (!jsonMatch) {
-		console.log("[VISION LIB] ❌ Could not find JSON in response")
 		throw new Error("Could not parse JSON from Vision response")
 	}
 
 	const parsed = JSON.parse(jsonMatch[0]) as VisionExtractionResult
-	console.log("[VISION LIB] ✅ Parsed result - trades:", parsed.trades.length)
 	return parsed
 }
 

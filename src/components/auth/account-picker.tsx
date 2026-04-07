@@ -100,7 +100,7 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 						>
 							{selectedId === account.id && (
 								<div className="flex h-full w-full items-center justify-center">
-									<div className="h-2 w-2 rounded-full bg-white" />
+									<div className="h-2 w-2 rounded-full bg-bg-100" />
 								</div>
 							)}
 						</div>
@@ -114,7 +114,7 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 				className="w-full"
 				disabled={!selectedId || isPending}
 			>
-				{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+				{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 				{t("continue")}
 			</Button>
 		</div>

@@ -16,7 +16,7 @@ const PreviewBanner = ({ preview, isLoading, allTradesLackSl }: PreviewBannerPro
 	if (isLoading) {
 		return (
 			<div className="bg-bg-100 border-bg-300 rounded-md border p-3">
-				<p className="text-small text-txt-300 animate-pulse">{t("loading")}</p>
+				<p className="text-small text-txt-300 animate-pulse motion-reduce:animate-none">{t("loading")}</p>
 			</div>
 		)
 	}

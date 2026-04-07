@@ -67,6 +67,12 @@
 			"acceptedFormats": "JPEG, PNG, WebP (máx {maxSize}MB)",
 			"thumbnail": "Imagem enviada {index}"
 		},
+		"colorPicker": {
+			"pickColor": "Escolher uma cor",
+			"toggleFormat": "Alternar entre entrada HEX e RGB",
+			"hexValue": "Valor da cor em Hex",
+			"rgbValue": "Valor da cor em RGB"
+		},
 		"winRateAbbr": "TA",
 		"clearFile": "Limpar arquivo",
 		"dismiss": "Dispensar",
@@ -1386,7 +1392,9 @@
 				"unfollowedPlan": "Sem seguir plano",
 				"aRatedOnly": "Apenas nota A",
 				"highPnl": "Trades de alto P&L"
-			}
+			},
+			"hourFrom": "Hora inicial",
+			"hourTo": "Hora final"
 		},
 		"errors": {
 			"exitQuantityExceeds": "Quantidade de saída excede posição disponível. Restante: {qty}",

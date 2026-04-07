@@ -152,7 +152,9 @@ const JournalContent = () => {
 	}
 
 	const extendedFilters = readExtendedFilters()
-	const extendedFilterCount = Object.keys(extendedFilters).filter((k) => k !== "_qf").length
+	const extendedFilterCount = Object.keys(extendedFilters).filter(
+		(k) => k !== "_qf"
+	).length
 
 	const handleFiltersChange = (filters: Record<string, string | string[]>) => {
 		// Write to URL params
@@ -196,31 +198,39 @@ const JournalContent = () => {
 			const { from, to } = getDateRange(period, effectiveDate, customDateRange)
 
 			// Build extended filter params for the server action
-			const ext = Object.keys(extendedFilters).length > 0
-				? {
-						rating: extendedFilters.rating as Array<"A" | "B" | "C" | "D" | "F"> | undefined,
-						outcomes: extendedFilters.outcomes as Array<"win" | "loss" | "breakeven"> | undefined,
-						directions: extendedFilters.directions as Array<"long" | "short"> | undefined,
-						assets: extendedFilters.assets as string[] | undefined,
-						followedPlan: extendedFilters.followedPlan === "true"
-							? true
-							: extendedFilters.followedPlan === "false"
-								? false
+			const ext =
+				Object.keys(extendedFilters).length > 0
+					? {
+							rating: extendedFilters.rating as
+								| Array<"A" | "B" | "C" | "D" | "F">
+								| undefined,
+							outcomes: extendedFilters.outcomes as
+								| Array<"win" | "loss" | "breakeven">
+								| undefined,
+							directions: extendedFilters.directions as
+								| Array<"long" | "short">
+								| undefined,
+							assets: extendedFilters.assets as string[] | undefined,
+							followedPlan:
+								extendedFilters.followedPlan === "true"
+									? true
+									: extendedFilters.followedPlan === "false"
+										? false
+										: undefined,
+							hourFrom: extendedFilters.hourFrom
+								? parseInt(extendedFilters.hourFrom as string, 10)
 								: undefined,
-						hourFrom: extendedFilters.hourFrom
-							? parseInt(extendedFilters.hourFrom as string, 10)
-							: undefined,
-						hourTo: extendedFilters.hourTo
-							? parseInt(extendedFilters.hourTo as string, 10)
-							: undefined,
-						pnlMin: extendedFilters.pnlMin
-							? parseFloat(extendedFilters.pnlMin as string)
-							: undefined,
-						pnlMax: extendedFilters.pnlMax
-							? parseFloat(extendedFilters.pnlMax as string)
-							: undefined,
-					}
-				: undefined
+							hourTo: extendedFilters.hourTo
+								? parseInt(extendedFilters.hourTo as string, 10)
+								: undefined,
+							pnlMin: extendedFilters.pnlMin
+								? parseFloat(extendedFilters.pnlMin as string)
+								: undefined,
+							pnlMax: extendedFilters.pnlMax
+								? parseFloat(extendedFilters.pnlMax as string)
+								: undefined,
+						}
+					: undefined
 
 			const result = await getTradesGroupedByDay(from, to, ext)
 
@@ -378,10 +388,10 @@ const JournalContent = () => {
 
 			{/* Smart Search */}
 			<SmartSearch
-				availableAssets={[...new Set(tradesByDay.flatMap((d) => d.trades.map((t) => t.asset)))]}
-				onFiltersChange={(filters) => {
-					handleFiltersChange(filters)
-				}}
+				availableAssets={[
+					...new Set(tradesByDay.flatMap((d) => d.trades.map((t) => t.asset))),
+				]}
+				onFiltersChange={handleFiltersChange}
 				onClear={handleFiltersClear}
 				activeFilterCount={extendedFilterCount}
 				activeQuickFilterKey={extendedFilters._qf as string | undefined}

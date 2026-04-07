@@ -89,7 +89,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 					>
 						<ChevronRight className="h-4 w-4" />
 					</Button>
-					{isPending && <Loader2 className="h-4 w-4 animate-spin text-txt-300" />}
+					{isPending && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />}
 					<Button
 						id="monthly-report-download-pdf"
 						variant="ghost"

@@ -1,5 +1,6 @@
 "use client"
 
+import type { FormEvent } from "react"
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { signIn } from "next-auth/react"
@@ -59,7 +60,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 		router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
 	}
 
-	const handleCredentialsSubmit = (e: React.FormEvent) => {
+	const handleCredentialsSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 		setEmailNotVerified(false)
@@ -204,7 +205,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							>
 								{selectedAccountId === account.id && (
 									<div className="flex h-full w-full items-center justify-center">
-										<div className="h-2 w-2 rounded-full bg-white" />
+										<div className="h-2 w-2 rounded-full bg-bg-100" />
 									</div>
 								)}
 							</div>
@@ -219,7 +220,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						className="w-full"
 						disabled={!selectedAccountId || isPending}
 					>
-						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 						{tSelect("continue")}
 					</Button>
 
@@ -287,7 +288,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							disabled={resendingVerification}
 							className="w-full"
 						>
-							{resendingVerification && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+							{resendingVerification && <Loader2 className="mr-2 h-3 w-3 animate-spin motion-reduce:animate-none" />}
 							{t("resendVerification")}
 						</Button>
 					</div>
@@ -348,7 +349,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					</div>
 
 				<Button id="login-submit" type="submit" className="w-full" disabled={isPending}>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 					{t("submit")}
 				</Button>
 			</form>

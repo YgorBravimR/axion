@@ -222,7 +222,7 @@ const PresetSelector = ({
 				<div className="max-h-60 overflow-y-auto">
 					{isLoading && presets.length === 0 ? (
 						<div className="flex items-center justify-center py-m-400">
-							<Loader2 className="h-4 w-4 animate-spin text-txt-300" />
+							<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
 						</div>
 					) : presets.length === 0 ? (
 						<p className="py-m-400 text-center text-tiny text-txt-300">

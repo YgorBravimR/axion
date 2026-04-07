@@ -279,7 +279,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 														</SelectContent>
 													</Select>
 													{isRowPending && (
-														<Loader2 className="h-4 w-4 animate-spin" />
+														<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
 													)}
 												</div>
 											</TableCell>
@@ -406,7 +406,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 							disabled={isPending}
 							onClick={handleDeleteAccount}
 						>
-							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 							{tCommon("confirm")}
 						</AlertDialogAction>
 					</AlertDialogFooter>

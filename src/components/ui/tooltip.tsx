@@ -1,14 +1,14 @@
 "use client"
 
-import * as React from "react"
+import type { ComponentProps } from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
 
-function TooltipProvider({
+const TooltipProvider = ({
 	delayDuration = 0,
 	...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+}: ComponentProps<typeof TooltipPrimitive.Provider>) => {
 	return (
 		<TooltipPrimitive.Provider
 			data-slot="tooltip-provider"
@@ -18,9 +18,9 @@ function TooltipProvider({
 	)
 }
 
-function Tooltip({
+const Tooltip = ({
 	...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+}: ComponentProps<typeof TooltipPrimitive.Root>) => {
 	return (
 		<TooltipProvider>
 			<TooltipPrimitive.Root data-slot="tooltip" {...props} />
@@ -28,13 +28,13 @@ function Tooltip({
 	)
 }
 
-function TooltipTrigger({
+const TooltipTrigger = ({
 	...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+}: ComponentProps<typeof TooltipPrimitive.Trigger>) => {
 	return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
-interface TooltipContentProps extends React.ComponentProps<typeof TooltipPrimitive.Content> {
+interface TooltipContentProps extends ComponentProps<typeof TooltipPrimitive.Content> {
 	id: string
 }
 

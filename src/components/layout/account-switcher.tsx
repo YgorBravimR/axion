@@ -181,7 +181,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 					isCollapsed ? "h-10 w-10" : "h-10 w-full px-3"
 				)}
 			>
-				<Loader2 className="text-txt-300 h-4 w-4 animate-spin" />
+				<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
@@ -511,7 +511,7 @@ const CreateAccountDialog = ({
 						onClick={onSubmit}
 						disabled={!form.name.trim() || isPending}
 					>
-						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 						{t("createAccount")}
 					</Button>
 				</div>

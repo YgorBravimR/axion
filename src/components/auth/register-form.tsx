@@ -1,5 +1,6 @@
 "use client"
 
+import type { FormEvent } from "react"
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/routing"
@@ -43,7 +44,7 @@ const RegisterForm = () => {
 	const allRequirementsMet = passwordRequirements.every((req) => req.test)
 	const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 
@@ -223,7 +224,7 @@ const RegisterForm = () => {
 					className="w-full"
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 					{t("submit")}
 				</Button>
 			</form>

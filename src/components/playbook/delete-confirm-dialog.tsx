@@ -2,7 +2,17 @@
 
 import { useTranslations } from "next-intl"
 import { AlertTriangle } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogMedia,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface DeleteConfirmDialogProps {
 	strategyName: string
@@ -23,46 +33,41 @@ export const DeleteConfirmDialog = ({
 	const tCommon = useTranslations("common")
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-m-400">
-			<div className="border-bg-300 bg-bg-200 w-full max-w-md rounded-lg border p-m-400 sm:p-m-500 lg:p-m-600 shadow-xl">
-				<div className="flex items-start gap-m-400">
-					<div className="bg-fb-error/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+		<AlertDialog open onOpenChange={(open) => { if (!open && !isPending) onCancel() }}>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogMedia className="bg-fb-error/20">
 						<AlertTriangle className="text-fb-error h-5 w-5" />
-					</div>
-					<div>
-						<h3 className="text-body text-txt-100 font-semibold">
-							{t("title")}
-						</h3>
-						<p className="text-small text-txt-200 mt-s-200">
-							{t("description", { code: strategyCode, name: strategyName })}
-						</p>
-						<p className="text-tiny text-txt-300 mt-s-200">
-							{t("warning")}
-						</p>
-					</div>
-				</div>
+					</AlertDialogMedia>
+					<AlertDialogTitle>{t("title")}</AlertDialogTitle>
+					<AlertDialogDescription>
+						{t("description", { code: strategyCode, name: strategyName })}
+					</AlertDialogDescription>
+					<p className="text-tiny text-txt-300 mt-s-200">
+						{t("warning")}
+					</p>
+				</AlertDialogHeader>
 
-				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600 flex justify-end gap-s-300">
-					<Button
-					id="playbook-delete-cancel"
-						type="button"
-						variant="outline"
-						onClick={onCancel}
+				<AlertDialogFooter>
+					<AlertDialogCancel
+						id="playbook-delete-cancel"
 						disabled={isPending}
 					>
 						{tCommon("cancel")}
-					</Button>
-					<Button
-					id="playbook-delete-confirm"
-						type="button"
+					</AlertDialogCancel>
+					<AlertDialogAction
+						id="playbook-delete-confirm"
 						variant="destructive"
-						onClick={onConfirm}
+						onClick={(event) => {
+							event.preventDefault()
+							onConfirm()
+						}}
 						disabled={isPending}
 					>
 						{isPending ? t("deactivating") : t("confirm")}
-					</Button>
-				</div>
-			</div>
-		</div>
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
 	)
 }

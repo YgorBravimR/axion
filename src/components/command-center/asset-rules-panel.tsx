@@ -184,7 +184,7 @@ export const AssetRulesPanel = ({
 						disabled={!selectedAssetId || saving === selectedAssetId}
 					>
 						{saving === selectedAssetId ? (
-							<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+							<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
 						) : (
 							t("add")
 						)}
@@ -314,7 +314,7 @@ export const AssetRulesPanel = ({
 															aria-label={t("save")}
 														>
 															{isSaving ? (
-																<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+																<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
 															) : (
 																<Save className="h-4 w-4 text-trade-buy" aria-hidden="true" />
 															)}
@@ -367,7 +367,7 @@ export const AssetRulesPanel = ({
 															aria-label={t("delete")}
 														>
 															{isDeleting ? (
-																<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+																<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
 															) : (
 																<Trash2 className="h-4 w-4" aria-hidden="true" />
 															)}

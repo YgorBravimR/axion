@@ -1,5 +1,6 @@
 "use client"
 
+import type { RefObject, ReactNode } from "react"
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { User, Building2, RotateCcw, type LucideIcon } from "lucide-react"
@@ -111,7 +112,7 @@ const ResumedOverlay = () => {
 interface TransitionOverlayProps {
 	options: AccountTransitionOptions
 	phase: TransitionPhase
-	overlayRef: React.RefObject<HTMLDivElement | null>
+	overlayRef: RefObject<HTMLDivElement | null>
 	getAccountTypeLabel: (accountType: string) => string
 	transitionLabel: string
 	switchingToLabel: string
@@ -196,7 +197,7 @@ const TransitionOverlay = ({
 // Provider
 // ==========================================
 
-const AccountTransitionOverlayProvider = ({ children }: { children: React.ReactNode }) => {
+const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode }) => {
 	const t = useTranslations("auth.accountSwitcher")
 	const [phase, setPhase] = useState<TransitionPhase>("idle")
 	const [options, setOptions] = useState<AccountTransitionOptions | null>(null)

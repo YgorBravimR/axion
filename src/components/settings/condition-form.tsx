@@ -1,5 +1,6 @@
 "use client"
 
+import type { FormEvent } from "react"
 import { useState, useTransition, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -68,7 +69,7 @@ export const ConditionForm = ({
 		}
 	}, [condition])
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		setError(null)
 
@@ -176,7 +177,7 @@ export const ConditionForm = ({
 							{tCommon("cancel")}
 						</Button>
 						<Button id="condition-form-submit" type="submit" disabled={isPending}>
-							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 							{isEdit ? tCommon("saveChanges") : t("createCondition")}
 						</Button>
 					</DialogFooter>

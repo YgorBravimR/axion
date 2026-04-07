@@ -163,7 +163,7 @@ export const TradeRow = memo(({
 						className="h-7 px-s-300 text-tiny"
 					>
 						{isDeleting ? (
-							<Loader2 className="h-3.5 w-3.5 animate-spin" />
+							<Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
 						) : (
 							tCommon("yes")
 						)}

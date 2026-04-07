@@ -73,7 +73,7 @@ const BrandSwitcher = () => {
 	// Avoid hydration mismatch
 	if (!mounted) {
 		return (
-			<div className="h-9 w-36 animate-pulse rounded-md bg-bg-300" />
+			<div className="h-9 w-36 animate-pulse motion-reduce:animate-none rounded-md bg-bg-300" />
 		)
 	}
 

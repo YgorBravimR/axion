@@ -117,7 +117,7 @@ export const TagList = () => {
 	if (isLoading) {
 		return (
 			<div className="p-l-700 flex items-center justify-center">
-				<Loader2 className="text-txt-300 h-6 w-6 animate-spin" />
+				<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
@@ -222,7 +222,7 @@ export const TagList = () => {
 								</div>
 								<div className="gap-s-100 flex items-center">
 									{isPending && deletingId === tag.id ? (
-										<Loader2 className="text-txt-300 h-4 w-4 animate-spin" />
+										<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									) : (
 										<>
 											<Button

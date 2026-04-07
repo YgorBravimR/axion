@@ -170,7 +170,7 @@ const VerifyEmailForm = () => {
 					className="w-full"
 					disabled={isPending || code.length !== 6}
 				>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 					{t("verify")}
 				</Button>
 

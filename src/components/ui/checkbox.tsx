@@ -1,16 +1,17 @@
 "use client"
 
-import * as React from "react"
+import { forwardRef } from "react"
+import type { ElementRef, ComponentPropsWithoutRef } from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface CheckboxProps extends React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> {
+interface CheckboxProps extends ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> {
 	id: string
 }
 
-const Checkbox = React.forwardRef<
-	React.ElementRef<typeof CheckboxPrimitive.Root>,
+const Checkbox = forwardRef<
+	ElementRef<typeof CheckboxPrimitive.Root>,
 	CheckboxProps
 >(({ className, ...props }, ref) => (
 	<CheckboxPrimitive.Root

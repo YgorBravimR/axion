@@ -31,7 +31,7 @@ export const MoodSelector = ({ value, onChange, disabled = false }: MoodSelector
 					disabled={disabled}
 					className={cn(
 						"flex flex-col items-center gap-s-100 rounded-lg p-s-200 transition-colors",
-						"hover:bg-bg-300 focus:outline-none focus:ring-2 focus:ring-acc-100",
+						"hover:bg-bg-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100",
 						value === mood.value && "bg-bg-300 ring-2 ring-acc-100",
 						disabled && "cursor-not-allowed opacity-50"
 					)}

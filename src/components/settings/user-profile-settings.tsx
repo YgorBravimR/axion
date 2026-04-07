@@ -188,7 +188,7 @@ const UserProfileSettings = () => {
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
-				<Loader2 className="text-txt-300 h-8 w-8 animate-spin" />
+				<Loader2 className="text-txt-300 h-8 w-8 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
@@ -254,7 +254,7 @@ const UserProfileSettings = () => {
 							disabled={isPending}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							) : null}
 							{tCommon("save")}
 						</Button>
@@ -331,7 +331,7 @@ const UserProfileSettings = () => {
 								disabled={isPending}
 							>
 								{isPending ? (
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 								) : null}
 								{t("updatePassword")}
 							</Button>

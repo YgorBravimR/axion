@@ -59,7 +59,7 @@ export const AutoRefreshIndicator = ({
 			<div className="flex items-center gap-1.5">
 				<span
 					className={`inline-block h-2 w-2 rounded-full ${
-						isLoading ? "animate-pulse bg-warning" : "bg-trade-buy"
+						isLoading ? "animate-pulse motion-reduce:animate-none bg-warning" : "bg-trade-buy"
 					}`}
 					aria-hidden="true"
 				/>
@@ -84,7 +84,7 @@ export const AutoRefreshIndicator = ({
 				className="text-txt-200 inline-flex items-center gap-1 px-2 py-1"
 				aria-label={t("refreshNow")}
 			>
-				<RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+				<RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin motion-reduce:animate-none" : ""}`} />
 				<span>{t("refreshNow")}</span>
 			</Button>
 		</div>

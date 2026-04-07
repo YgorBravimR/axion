@@ -1,8 +1,8 @@
-import * as React from "react"
+import type { ComponentProps } from "react"
 
 import { cn } from "@/lib/utils"
 
-interface TextareaProps extends React.ComponentProps<"textarea"> {
+interface TextareaProps extends ComponentProps<"textarea"> {
   id: string
 }
 

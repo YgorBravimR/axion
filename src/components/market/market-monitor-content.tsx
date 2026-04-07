@@ -145,7 +145,7 @@ export const MarketMonitorContent = () => {
 	if (isLoading && groups.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-20">
-				<Activity className="text-acc-100 mb-4 h-8 w-8 animate-pulse" />
+				<Activity className="text-acc-100 mb-4 h-8 w-8 animate-pulse motion-reduce:animate-none" />
 				<p className="text-small text-txt-200">{t("quote.loading")}</p>
 			</div>
 		)
@@ -195,7 +195,7 @@ export const MarketMonitorContent = () => {
 													"h-1.5 w-1.5 rounded-full",
 													status.state === "open" && "bg-trade-buy",
 													status.state === "opening" &&
-														"bg-warning animate-pulse",
+														"bg-warning animate-pulse motion-reduce:animate-none",
 													status.state === "closed" && "bg-txt-300/40"
 												)}
 												aria-hidden="true"

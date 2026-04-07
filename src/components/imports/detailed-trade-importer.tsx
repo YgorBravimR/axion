@@ -217,7 +217,7 @@ export const DetailedTradeImporter = ({
 					disabled={!brokerName || !csvFile || loading}
 					className="w-full"
 				>
-					{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+					{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin motion-reduce:animate-none" />}
 					{loading ? t("parsingCsv") : tCommon("next")}
 				</Button>
 			</div>
@@ -335,7 +335,7 @@ export const DetailedTradeImporter = ({
 						disabled={loading}
 						className="flex-1"
 					>
-						{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+						{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin motion-reduce:animate-none" />}
 						{loading ? t("importing") : t("confirmImport")}
 					</Button>
 				</div>
@@ -347,7 +347,7 @@ export const DetailedTradeImporter = ({
 	if (step === "importing") {
 		return (
 			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100 text-center">
-				<Loader2 className="w-12 h-12 animate-spin text-acc-100 mx-auto" />
+				<Loader2 className="w-12 h-12 animate-spin motion-reduce:animate-none text-acc-100 mx-auto" />
 				<div>
 					<h3 className="text-lg font-semibold text-txt-100">{t("importingTitle")}</h3>
 					<p className="text-sm text-txt-300 mt-1">

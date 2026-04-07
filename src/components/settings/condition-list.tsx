@@ -134,7 +134,7 @@ export const ConditionList = () => {
 	if (isLoading) {
 		return (
 			<div className="p-l-700 flex items-center justify-center">
-				<Loader2 className="text-txt-300 h-6 w-6 animate-spin" />
+				<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
@@ -207,7 +207,7 @@ export const ConditionList = () => {
 								</div>
 								<div className="gap-s-100 ml-s-200 flex shrink-0 items-center">
 									{isPending && deletingId === condition.id ? (
-										<Loader2 className="text-txt-300 h-4 w-4 animate-spin" />
+										<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									) : (
 										<>
 											<Button

@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { createContext, useContext, useState, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react"
@@ -29,7 +30,7 @@ export const useToast = () => {
 /**
  * ToastProvider - Context provider for toast notifications
  */
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
+export const ToastProvider = ({ children }: { children: ReactNode }) => {
 	const t = useTranslations("common")
 	const [toasts, setToasts] = useState<Toast[]>([])
 
@@ -82,7 +83,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 				{toasts.map((toast) => (
 					<div
 						key={toast.id}
-						className={`pointer-events-auto flex items-center gap-m-400 rounded-lg px-m-600 py-m-500 shadow-xl ${getStyles(toast.type)} animate-in slide-in-from-bottom-5`}
+						className={`pointer-events-auto flex items-center gap-m-400 rounded-lg px-m-600 py-m-500 shadow-xl ${getStyles(toast.type)} animate-in slide-in-from-bottom-5 motion-reduce:animate-none`}
 					>
 						{getIcon(toast.type)}
 						<span className="text-body font-medium">{toast.message}</span>

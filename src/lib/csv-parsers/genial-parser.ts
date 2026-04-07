@@ -260,8 +260,8 @@ export const parseGenialCSV = (
 				rawDate: row.data,
 				rawTime: row.horario,
 			})
-		} catch (error) {
-			console.warn(`Skipping malformed row ${i}: ${error}`)
+		} catch {
+			// Skip malformed rows
 			continue
 		}
 	}

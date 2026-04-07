@@ -17,8 +17,6 @@ export const extractWithOpenAI = async (
 		throw new Error("OPENAI_API_KEY not configured")
 	}
 
-	console.log("[VISION:OpenAI] Calling GPT-4o...")
-
 	const client = new OpenAI({ apiKey })
 	const response = await client.chat.completions.create({
 		model: "gpt-4o",
@@ -41,7 +39,6 @@ export const extractWithOpenAI = async (
 	})
 
 	const content = response.choices[0]?.message?.content ?? ""
-	console.log("[VISION:OpenAI] ✅ Response received")
 
 	return {
 		provider: "openai",

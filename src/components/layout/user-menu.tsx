@@ -59,7 +59,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 				"flex items-center justify-center",
 				isCollapsed ? "h-10 w-10" : "h-10 w-full px-3"
 			)}>
-				<Loader2 className="h-4 w-4 animate-spin text-txt-300" />
+				<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
 			</div>
 		)
 	}

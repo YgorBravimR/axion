@@ -49,7 +49,7 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 
 const TabLoadingFallback = () => (
 	<div className="flex items-center justify-center py-12">
-		<Loader2 className="text-txt-300 h-6 w-6 animate-spin" />
+		<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 	</div>
 )
 

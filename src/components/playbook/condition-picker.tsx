@@ -130,7 +130,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 	if (isLoading) {
 		return (
 			<div className="p-s-300 sm:p-m-400 lg:p-m-500 flex items-center justify-center">
-				<Loader2 className="text-txt-300 h-5 w-5 animate-spin" />
+				<Loader2 className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
