@@ -1353,6 +1353,7 @@
 			"toggle": "Buscar e Filtrar",
 			"quickFilters": "Filtros Rápidos",
 			"builder": "Construtor de Filtros",
+			"builderHint": "Selecione um campo, escolha um operador e defina o valor. Cada condição refina seus resultados.",
 			"addCondition": "Adicionar condição",
 			"clearAll": "Limpar tudo",
 			"activeFilters": "{count} ativos",

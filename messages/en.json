@@ -1353,6 +1353,7 @@
 			"toggle": "Search & Filter",
 			"quickFilters": "Quick Filters",
 			"builder": "Filter Builder",
+			"builderHint": "Select a field, choose an operator, then pick a value. Each condition narrows your results.",
 			"addCondition": "Add condition",
 			"clearAll": "Clear all",
 			"activeFilters": "{count} active",

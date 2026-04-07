@@ -1006,8 +1006,9 @@ const HOLDING_PERIOD_BUCKETS: BucketConfig[] = [
 	{ label: "5-15min", order: 2, minMinutes: 5, maxMinutes: 15 },
 	{ label: "15-30min", order: 3, minMinutes: 15, maxMinutes: 30 },
 	{ label: "30-60min", order: 4, minMinutes: 30, maxMinutes: 60 },
-	{ label: "1-4h", order: 5, minMinutes: 60, maxMinutes: 240 },
-	{ label: "> 4h", order: 6, minMinutes: 240, maxMinutes: Infinity },
+	{ label: "1-2h", order: 5, minMinutes: 60, maxMinutes: 120 },
+	{ label: "2-4h", order: 6, minMinutes: 120, maxMinutes: 240 },
+	{ label: "> 4h", order: 7, minMinutes: 240, maxMinutes: Infinity },
 ]
 
 const getBucketForDuration = (minutes: number): BucketConfig => {

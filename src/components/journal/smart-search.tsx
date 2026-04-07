@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Search, X, Plus } from "lucide-react"
+import { Search, X, Plus, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +34,8 @@ interface SmartSearchProps {
 	onFiltersChange: (filters: Record<string, string | string[]>) => void
 	onClear: () => void
 	activeFilterCount: number
+	activeQuickFilterKey?: string
+	onQuickFilterChange?: (key: string | null) => void
 }
 
 // ============================================================================
@@ -160,6 +162,8 @@ const SmartSearch = ({
 	onFiltersChange,
 	onClear,
 	activeFilterCount,
+	activeQuickFilterKey,
+	onQuickFilterChange,
 }: SmartSearchProps) => {
 	const t = useTranslations("journal.smartSearch")
 	const tTrade = useTranslations("trade")
@@ -175,23 +179,20 @@ const SmartSearch = ({
 
 	const [isOpen, setIsOpen] = useState(false)
 	const [conditions, setConditions] = useState<FilterCondition[]>([])
-	const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
 
 	// New condition form state
 	const [newField, setNewField] = useState<FilterField | "">("")
 	const [newOperator, setNewOperator] = useState<FilterOperator | "">("")
 	const [newValue, setNewValue] = useState("")
 
-	const handleQuickFilterApply = (params: Record<string, string | string[]>) => {
+	const handleQuickFilterApply = (params: Record<string, string | string[]>, key: string) => {
 		setConditions([])
-		setActiveQuickFilter(
-			Object.keys(params).join("-")
-		)
 		onFiltersChange(params)
+		onQuickFilterChange?.(key)
 	}
 
 	const handleQuickFilterClear = () => {
-		setActiveQuickFilter(null)
+		onQuickFilterChange?.(null)
 		onClear()
 	}
 
@@ -207,7 +208,7 @@ const SmartSearch = ({
 
 		const updated = [...conditions, condition]
 		setConditions(updated)
-		setActiveQuickFilter(null)
+		onQuickFilterChange?.(null)
 
 		// Apply all conditions
 		onFiltersChange(conditionsToParams(updated))
@@ -231,7 +232,7 @@ const SmartSearch = ({
 
 	const handleClearAll = () => {
 		setConditions([])
-		setActiveQuickFilter(null)
+		onQuickFilterChange?.(null)
 		onClear()
 	}
 
@@ -271,7 +272,7 @@ const SmartSearch = ({
 							{t("quickFilters")}
 						</p>
 						<QuickFilters
-							activeFilterKey={activeQuickFilter}
+							activeFilterKey={activeQuickFilterKey ?? null}
 							onApply={handleQuickFilterApply}
 							onClear={handleQuickFilterClear}
 						/>
@@ -310,9 +311,20 @@ const SmartSearch = ({
 
 					{/* Filter Builder */}
 					<div>
-						<p className="mb-s-200 text-tiny font-medium text-txt-300">
-							{t("builder")}
-						</p>
+						<div className="mb-s-200 flex items-center gap-s-200">
+							<p className="text-tiny font-medium text-txt-300">
+								{t("builder")}
+							</p>
+							<div className="group relative">
+								<Info
+									className="h-3.5 w-3.5 cursor-help text-txt-300 hover:text-txt-200"
+									aria-label={t("builderHint")}
+								/>
+								<div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-lg border border-bg-300 bg-bg-100 p-s-300 text-tiny text-txt-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+									{t("builderHint")}
+								</div>
+							</div>
+						</div>
 						<div className="flex flex-col gap-s-200 sm:flex-row sm:flex-wrap sm:items-end">
 							{/* Field selector */}
 							<Select

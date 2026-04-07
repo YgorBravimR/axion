@@ -44,7 +44,7 @@ const QUICK_FILTERS: QuickFilter[] = [
 
 interface QuickFiltersProps {
 	activeFilterKey: string | null
-	onApply: (params: Record<string, string | string[]>) => void
+	onApply: (params: Record<string, string | string[]>, key: string) => void
 	onClear: () => void
 }
 
@@ -56,7 +56,7 @@ const QuickFilters = ({ activeFilterKey, onApply, onClear }: QuickFiltersProps) 
 			onClear()
 			return
 		}
-		onApply(filter.params)
+		onApply(filter.params, filter.key)
 	}
 
 	return (

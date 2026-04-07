@@ -121,26 +121,24 @@ describe("calcConfidence (tested through insight.confidence)", () => {
 			})
 		)
 
-	it("should not surface an insight when sample size is below 10 (confidence=0)", () => {
-		// 9 trades → calcConfidence(9) = 0 → filtered by MIN_CONFIDENCE=0.7
+	it("should not surface an insight when sample size is below 10 (MIN_SAMPLE_SIZE gate)", () => {
+		// 9 trades → trades.length < MIN_SAMPLE_SIZE (10) → detectFeeDrag returns early
 		const insights = detectFeeDrag(buildFeeHeavyTrades(9))
 		expect(insights).toHaveLength(0)
 	})
 
-	it("should return empty array when sample is 10-19 because detectFeeDrag gates on MIN_SAMPLE_SIZE=20", () => {
-		// detectFeeDrag (and all detectors) check trades.length < MIN_SAMPLE_SIZE (20) first.
-		// At 15 trades the function returns early before even calculating confidence.
-		// The calcConfidence(10-19) = 0.5 branch is therefore only observable at the
-		// per-group level inside detectors that use sub-group sizing (e.g. per-hour count
-		// in detectTimeOfDayEdge). It is exercised in the detectTimeOfDayEdge tests below.
+	it("should surface an insight when sample is 10-19 (calcConfidence=0.6 ≥ MIN_CONFIDENCE=0.4)", () => {
+		// 15 trades → passes MIN_SAMPLE_SIZE (10) gate.
+		// calcConfidence(15) = 0.6 ≥ MIN_CONFIDENCE (0.4) → insight IS returned.
 		const insights = detectFeeDrag(buildFeeHeavyTrades(15))
-		expect(insights).toHaveLength(0)
+		expect(insights).toHaveLength(1)
+		expect(insights[0].confidence).toBe(0.6)
 	})
 
-	it("should return confidence=0.7 for sample size 20-49", () => {
+	it("should return confidence=0.75 for sample size 20-49", () => {
 		const insights = detectFeeDrag(buildFeeHeavyTrades(20))
 		expect(insights).toHaveLength(1)
-		expect(insights[0].confidence).toBe(0.7)
+		expect(insights[0].confidence).toBe(0.75)
 	})
 
 	it("should return confidence=0.85 for sample size 50-99", () => {
@@ -162,9 +160,9 @@ describe("calcConfidence (tested through insight.confidence)", () => {
 
 describe("detectTimeOfDayEdge", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 decided trades exist", () => {
+		it("should return empty array when fewer than 10 decided trades exist", () => {
 			const trades = createTradeSequence(
-				Array.from({ length: 19 }, (_, i) => (i % 2 === 0 ? "win" : "loss"))
+				Array.from({ length: 9 }, (_, i) => (i % 2 === 0 ? "win" : "loss"))
 			)
 			expect(detectTimeOfDayEdge(trades)).toHaveLength(0)
 		})
@@ -176,29 +174,22 @@ describe("detectTimeOfDayEdge", () => {
 	})
 
 	describe("no significant pattern", () => {
-		it("should return empty array when no single hour has ≥10 trades", () => {
-			// 20 trades spread across 20 different hours (09:00 - 09:19, incrementing by minute)
-			// so each hour bucket has only 1 trade — no bucket reaches the 10-trade minimum
+		it("should return empty array when no single hour has ≥5 trades (MIN_GROUP_SIZE)", () => {
+			// 20 trades spread across 5 distinct hours (9–13), cycling so no bucket reaches 5.
+			// Use 20 trades / 5 hours = 4 trades per hour → no bucket ≥ MIN_GROUP_SIZE (5) → no insight
 			const trades = Array.from({ length: 20 }, (_, index) =>
 				createWinTrade({
-					// All in hour 09, separated by 1 minute each (09:00 through 09:19)
-					// → all land in the same hour-09 bucket (20 trades) → all same WR → diff = 0
-					// Actually to scatter across hours we need different hour digits.
-					// Use hours 9-13 (all valid 24h), cycling through 5 distinct hours so no bucket hits 10.
+					// Use hours 9-13 (all valid 24h), cycling through 5 distinct hours so no bucket hits 5.
 					entryDate: new Date(`2026-01-05T${String(9 + (index % 5)).padStart(2, "0")}:${String(index * 3 % 60).padStart(2, "0")}:00-03:00`),
 				})
 			)
-			// 20 trades / 5 hours = 4 trades per hour → no bucket ≥ 10 → no insight
+			// 20 trades / 5 hours = 4 trades per hour → no bucket ≥ MIN_GROUP_SIZE (5) → no insight
 			expect(detectTimeOfDayEdge(trades)).toHaveLength(0)
 		})
 
-		it("should return empty array when best hour win rate does not exceed overall by 10pp", () => {
-			// Overall WR = 50%. Best hour (10:00) has 6 wins / 10 total = 60% — only +10pp,
-			// need strictly ≥10 to trigger. Actually ≥10 IS the threshold.
-			// Build: 10 trades at 10:00 with 6 wins (60% WR), 10 trades at 11:00 with 4 wins (40% WR)
-			// Overall = 10/20 = 50%. Best hour = 60%, diff = 10 → exactly meets threshold → WILL fire.
-			// To avoid firing: use 9 win / 10 total = 90% at best hour when overall = 50% → diff = 40pp (fires)
-			// Instead: all 20 trades at same hour, same win rate → diff = 0
+		it("should return empty array when best hour win rate does not exceed overall by 8pp (MIN_WIN_RATE_DIFF)", () => {
+			// Overall WR = 50%. Best hour = 50%, diff = 0pp < 8pp → no insight.
+			// Build: all 20 trades at same hour with same WR → diff = 0
 			const trades = [
 				...createWinsAtHour(10, "10"),
 				...createLossesAtHour(10, "10"),
@@ -242,14 +233,14 @@ describe("detectTimeOfDayEdge", () => {
 		})
 
 		it("should assign confidence based on the sample size of the best hour bucket", () => {
-			// 10 trades in best hour bucket → calcConfidence(10) = 0.5
+			// 10 trades in best hour bucket → calcConfidence(10) = 0.6 (10 >= MIN_GROUP_SIZE=5 and < 20)
 			const trades = [
 				...createWinsAtHour(10, "10"),
 				...createLossesAtHour(10, "11"),
 			]
 			const insights = detectTimeOfDayEdge(trades)
 			const bestHour = insights.find((i) => i.id === "time-best-hour")
-			expect(bestHour?.confidence).toBe(0.5)
+			expect(bestHour?.confidence).toBe(0.6)
 		})
 	})
 
@@ -274,8 +265,8 @@ describe("detectTimeOfDayEdge", () => {
 
 describe("detectDayOfWeekEdge", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 decided trades", () => {
-			const trades = createTradeSequence(Array(19).fill("win"))
+		it("should return empty array when fewer than 10 decided trades", () => {
+			const trades = createTradeSequence(Array(9).fill("win"))
 			expect(detectDayOfWeekEdge(trades)).toHaveLength(0)
 		})
 	})
@@ -318,13 +309,14 @@ describe("detectDayOfWeekEdge", () => {
 			expect(insights[0].params.avgPnl).toBeLessThan(0)
 		})
 
-		it("should assign confidence=0.5 when worst day has 10-19 trades", () => {
+		it("should assign confidence=0.6 when worst day has 10-19 trades", () => {
 			const trades = [
 				...createTradesOnDay(10, "Friday", "loss"),
 				...createTradesOnDay(10, "Monday", "win"),
 			]
 			const insights = detectDayOfWeekEdge(trades)
-			expect(insights[0].confidence).toBe(0.5)
+			// calcConfidence(10) = 0.6 (10 ≥ MIN_GROUP_SIZE=5 and < 20)
+			expect(insights[0].confidence).toBe(0.6)
 		})
 	})
 
@@ -343,8 +335,8 @@ describe("detectDayOfWeekEdge", () => {
 
 describe("detectStrategyGap", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 decided trades with strategy names", () => {
-			const trades = Array.from({ length: 19 }, (_, i) =>
+		it("should return empty array when fewer than 10 decided trades with strategy names", () => {
+			const trades = Array.from({ length: 9 }, (_, i) =>
 				createWinTrade({ strategyName: i % 2 === 0 ? "VWAP" : "ORB" })
 			)
 			expect(detectStrategyGap(trades)).toHaveLength(0)
@@ -426,13 +418,13 @@ describe("detectStrategyGap", () => {
 		})
 
 		it("should use the smaller of best/worst count for confidence", () => {
-			// Both have 10 trades → calcConfidence(10) = 0.5
+			// Both have 10 trades → calcConfidence(10) = 0.6 (10 >= MIN_GROUP_SIZE=5 and < 20)
 			const trades = [
 				...Array.from({ length: 10 }, () => createWinTrade({ strategyName: "Alpha" })),
 				...Array.from({ length: 10 }, () => createLossTrade({ strategyName: "Beta" })),
 			]
 			const insights = detectStrategyGap(trades)
-			expect(insights[0].confidence).toBe(0.5)
+			expect(insights[0].confidence).toBe(0.6)
 		})
 	})
 
@@ -481,9 +473,9 @@ describe("detectHoldingPeriodEdge", () => {
 	}
 
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 closed decided trades", () => {
-			const trades = Array.from({ length: 19 }, (_, i) =>
-				createTradeWithDuration(i < 10 ? 2 : 30, "win", "1")
+		it("should return empty array when fewer than 10 closed decided trades", () => {
+			const trades = Array.from({ length: 9 }, (_, i) =>
+				createTradeWithDuration(i < 5 ? 2 : 30, "win", "1")
 			)
 			expect(detectHoldingPeriodEdge(trades)).toHaveLength(0)
 		})
@@ -495,12 +487,13 @@ describe("detectHoldingPeriodEdge", () => {
 			expect(detectHoldingPeriodEdge(trades)).toHaveLength(0)
 		})
 
-		it("should return empty array when fewer than 10 short holds (<5 min)", () => {
-			// 20 medium holds, 5 short holds → short bucket <10 → no insight
+		it("should return empty array when short holds is exactly MIN_GROUP_SIZE (5) and medium is also 5 — but avg R diff ≤ 0.3", () => {
+			// 20 medium holds, 4 short holds → short bucket < MIN_GROUP_SIZE (5) → no insight
 			const trades = [
 				...Array.from({ length: 20 }, () => createTradeWithDuration(30, "win", "1")),
-				...Array.from({ length: 5 }, () => createTradeWithDuration(2, "loss", "-1")),
+				...Array.from({ length: 4 }, () => createTradeWithDuration(2, "loss", "-1")),
 			]
+			// 4 short holds < MIN_GROUP_SIZE (5) → no insight
 			expect(detectHoldingPeriodEdge(trades)).toHaveLength(0)
 		})
 	})
@@ -599,18 +592,17 @@ describe("detectOvertrading", () => {
 			expect(detectOvertrading(trades)).toHaveLength(0)
 		})
 
-		it("should return empty array when low-volume total is below 15", () => {
-			// 3 low-volume days × 2 trades/day = 6 trades (< 15 threshold)
+		it("should return empty array when low-volume total is below MIN_GROUP_SIZE (5)", () => {
+			// 2 low-volume days × 2 trades/day = 4 trades < MIN_GROUP_SIZE (5)
 			// 3 high-volume days × 5 trades/day = 15 trades
 			const trades = [
 				...createTradesOnDistinctDay(2, 0, 1),
 				...createTradesOnDistinctDay(2, 1, 1),
-				...createTradesOnDistinctDay(2, 2, 1),
 				...createTradesOnDistinctDay(5, 3, 2),
 				...createTradesOnDistinctDay(5, 4, 2),
 				...createTradesOnDistinctDay(5, 5, 2),
 			]
-			// Low volume total = 6 < 15 → no insight
+			// Low volume total = 4 < MIN_GROUP_SIZE (5) → no insight
 			expect(detectOvertrading(trades)).toHaveLength(0)
 		})
 	})
@@ -672,8 +664,8 @@ describe("detectOvertrading", () => {
 
 describe("detectFeeDrag", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 trades", () => {
-			const trades = Array.from({ length: 19 }, () =>
+		it("should return empty array when fewer than 10 trades", () => {
+			const trades = Array.from({ length: 9 }, () =>
 				createCoachingTrade({ pnl: 100, commission: 100, fees: 100 })
 			)
 			expect(detectFeeDrag(trades)).toHaveLength(0)
@@ -689,10 +681,10 @@ describe("detectFeeDrag", () => {
 			expect(detectFeeDrag(trades)).toHaveLength(0)
 		})
 
-		it("should return empty array when fees are ≤10% of gross P&L", () => {
+		it("should return empty array when fees are ≤5% of gross P&L", () => {
 			// Net PnL = 9000 cents, fees = 60 cents per trade (commission 50 + fees 10)
 			// 20 trades: totalFees = 1200 cents, totalNetPnl = 180000 cents
-			// grossPnl = 180000 + 1200 = 181200 cents → feePercent = 1200/181200 ≈ 0.66% < 10%
+			// grossPnl = 180000 + 1200 = 181200 cents → feePercent = 1200/181200 ≈ 0.66% < 5%
 			const trades = Array.from({ length: 20 }, () =>
 				createCoachingTrade({ pnl: 9000, commission: 50, fees: 10, outcome: "win" })
 			)
@@ -701,10 +693,10 @@ describe("detectFeeDrag", () => {
 	})
 
 	describe("detects fee drag", () => {
-		it("should return 'fee-drag' insight when fees exceed 10% of gross P&L", () => {
+		it("should return 'fee-drag' insight when fees exceed 5% of gross P&L", () => {
 			// Net pnl = 100 cents per trade, fees = 200 cents per trade
 			// grossPnl = 100 + 200 = 300 cents per trade
-			// feePercent = 200/300 ≈ 66.7% > 10% → fires
+			// feePercent = 200/300 ≈ 66.7% > 5% → fires
 			const trades = Array.from({ length: 20 }, () =>
 				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
 			)
@@ -762,25 +754,26 @@ describe("detectFeeDrag", () => {
 
 describe("detectStreakPatterns", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 decided trades", () => {
+		it("should return empty array when fewer than 10 decided trades", () => {
 			const trades = createTradeSequence(
-				Array.from({ length: 19 }, () => "win")
+				Array.from({ length: 9 }, () => "win")
 			)
 			expect(detectStreakPatterns(trades)).toHaveLength(0)
 		})
 	})
 
 	describe("no significant pattern", () => {
-		it("should return empty array when fewer than 10 trades occur after a 2-loss streak", () => {
-			// 2 losses then 5 wins repeatedly — not enough post-streak trades
+		it("should return empty array when post-streak win rate is not significantly below overall", () => {
+			// 2 losses then 3 wins repeated, plus 10 more wins.
+			// After first streak: 3 wins tracked. After second streak: 3 more → afterStreakTotal = 6 ≥ MIN_GROUP_SIZE (5).
+			// afterStreakWR = 100% (all wins), overallWR = 16/20 = 80%.
+			// overallWR - afterStreakWR = 80 - 100 = -20 → not ≥ MIN_WIN_RATE_DIFF (8) → no insight.
 			const trades = createTradeSequence(
 				["loss", "loss", "win", "win", "win",
 				 "loss", "loss", "win", "win", "win",
 				 "win", "win", "win", "win", "win",
 				 "win", "win", "win", "win", "win"]
 			)
-			// After first streak (2 losses): 3 wins tracked
-			// After second streak: 3 more wins tracked → total afterStreakTotal = 6 < 10 → no insight
 			expect(detectStreakPatterns(trades)).toHaveLength(0)
 		})
 
@@ -874,8 +867,8 @@ describe("detectStreakPatterns", () => {
 
 describe("detectRatingCorrelation", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 decided rated trades", () => {
-			const trades = Array.from({ length: 19 }, (_, i) =>
+		it("should return empty array when fewer than 10 decided rated trades", () => {
+			const trades = Array.from({ length: 9 }, (_, i) =>
 				createWinTrade({ rating: i % 2 === 0 ? "A" : "F" })
 			)
 			expect(detectRatingCorrelation(trades)).toHaveLength(0)
@@ -887,12 +880,12 @@ describe("detectRatingCorrelation", () => {
 			expect(detectRatingCorrelation(trades)).toHaveLength(0)
 		})
 
-		it("should return empty array when high-rated bucket has fewer than 10 trades", () => {
+		it("should return empty array when high-rated bucket has fewer than 5 trades (MIN_GROUP_SIZE)", () => {
 			const trades = [
-				...Array.from({ length: 5 }, () => createWinTrade({ rating: "A" })),
+				...Array.from({ length: 4 }, () => createWinTrade({ rating: "A" })),
 				...Array.from({ length: 15 }, () => createLossTrade({ rating: "F" })),
 			]
-			// A-rated: 5 < 10 → no insight
+			// A-rated: 4 < MIN_GROUP_SIZE (5) → no insight
 			expect(detectRatingCorrelation(trades)).toHaveLength(0)
 		})
 	})
@@ -975,8 +968,8 @@ describe("detectRatingCorrelation", () => {
 
 describe("detectDisciplineImpact", () => {
 	describe("insufficient sample size", () => {
-		it("should return empty array when fewer than 20 trades with followedPlan and realizedRMultiple", () => {
-			const trades = Array.from({ length: 19 }, (_, i) =>
+		it("should return empty array when fewer than 10 trades with followedPlan and realizedRMultiple", () => {
+			const trades = Array.from({ length: 9 }, (_, i) =>
 				createCoachingTrade({
 					followedPlan: i % 2 === 0,
 					realizedRMultiple: "1",
@@ -1000,13 +993,13 @@ describe("detectDisciplineImpact", () => {
 			expect(detectDisciplineImpact(trades)).toHaveLength(0)
 		})
 
-		it("should return empty array when fewer than 10 trades in not-followed bucket", () => {
-			// 15 followed, 5 not-followed → not-followed < 10 → no insight
+		it("should return empty array when fewer than 5 trades in not-followed bucket (MIN_GROUP_SIZE)", () => {
+			// 15 followed, 4 not-followed → not-followed < MIN_GROUP_SIZE (5) → no insight
 			const trades = [
 				...Array.from({ length: 15 }, () =>
 					createCoachingTrade({ followedPlan: true, realizedRMultiple: "2", outcome: "win" })
 				),
-				...Array.from({ length: 5 }, () =>
+				...Array.from({ length: 4 }, () =>
 					createCoachingTrade({ followedPlan: false, realizedRMultiple: "-1", outcome: "loss" })
 				),
 			]
@@ -1085,34 +1078,33 @@ describe("detectAllPatterns", () => {
 			expect(detectAllPatterns([])).toHaveLength(0)
 		})
 
-		it("should return empty array when fewer than 20 trades are provided", () => {
-			const trades = createTradeSequence(Array(19).fill("win"))
+		it("should return empty array when fewer than 10 trades are provided", () => {
+			const trades = createTradeSequence(Array(9).fill("win"))
 			expect(detectAllPatterns(trades)).toHaveLength(0)
 		})
 	})
 
 	describe("confidence filtering", () => {
-		it("should filter out insights with confidence below 0.7 (sample size 10-19)", () => {
-			// 15 trades: calcConfidence(15) = 0.5 < 0.7 → filtered out
-			// Use fee-drag scenario where only 15 trades exist
+		it("should only surface insights with confidence >= 0.4 (MIN_CONFIDENCE)", () => {
+			// 15 trades: calcConfidence(15) = 0.6 ≥ MIN_CONFIDENCE (0.4) → included
+			// Use fee-drag scenario where 15 fee-heavy trades exist
 			const trades = Array.from({ length: 15 }, () =>
 				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
 			)
-			// detectFeeDrag would return an insight with confidence=0.5,
-			// but detectAllPatterns should filter it
 			const insights = detectAllPatterns(trades)
-			expect(insights.every((i) => i.confidence >= 0.7)).toBe(true)
+			// All surfaced insights must meet the MIN_CONFIDENCE threshold of 0.4
+			expect(insights.every((i) => i.confidence >= 0.4)).toBe(true)
 		})
 
-		it("should include insights with confidence exactly 0.7 (sample size 20-49)", () => {
-			// 20 fee-heavy trades → confidence = 0.7 → exactly at threshold → included
+		it("should include insights with confidence 0.75 (sample size 20-49)", () => {
+			// 20 fee-heavy trades → confidence = 0.75 ≥ MIN_CONFIDENCE (0.4) → included
 			const trades = Array.from({ length: 20 }, () =>
 				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
 			)
 			const insights = detectAllPatterns(trades)
 			const feeDragInsight = insights.find((i) => i.id === "fee-drag")
 			expect(feeDragInsight).toBeDefined()
-			expect(feeDragInsight?.confidence).toBe(0.7)
+			expect(feeDragInsight?.confidence).toBe(0.75)
 		})
 	})
 

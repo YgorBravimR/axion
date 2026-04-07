@@ -39,17 +39,21 @@ interface TradeForCoaching {
 	fees: number | string | null
 }
 
-/** Minimum trades in a group to generate an insight */
-const MIN_SAMPLE_SIZE = 20
+/** Minimum decided trades overall to run a detector */
+const MIN_SAMPLE_SIZE = 10
+
+/** Minimum trades in a sub-group (per hour, per day, per strategy) */
+const MIN_GROUP_SIZE = 5
 
 /** Minimum absolute difference in win rate to be "significant" */
-const MIN_WIN_RATE_DIFF = 10
+const MIN_WIN_RATE_DIFF = 8
 
 /** Calculate confidence based on sample size (0-1) */
 const calcConfidence = (sampleSize: number): number => {
-	if (sampleSize < 10) return 0
-	if (sampleSize < MIN_SAMPLE_SIZE) return 0.5
-	if (sampleSize < 50) return 0.7
+	if (sampleSize < MIN_GROUP_SIZE) return 0
+	if (sampleSize < 10) return 0.4
+	if (sampleSize < 20) return 0.6
+	if (sampleSize < 50) return 0.75
 	if (sampleSize < 100) return 0.85
 	return 0.95
 }
@@ -83,7 +87,7 @@ const detectTimeOfDayEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	let worstHour: { hour: number; winRate: number; count: number } | null = null
 
 	for (const [hour, data] of hourMap) {
-		if (data.total < 10) continue
+		if (data.total < MIN_GROUP_SIZE) continue
 		const wr = calculateWinRate(data.wins, data.total)
 
 		if (!bestHour || wr > bestHour.winRate) {
@@ -259,7 +263,7 @@ const detectHoldingPeriodEdge = (trades: TradeForCoaching[]): CoachingInsight[] 
 		return dur >= 15 && dur <= 60
 	})
 
-	if (shortHolds.length >= 10 && mediumHolds.length >= 10) {
+	if (shortHolds.length >= MIN_GROUP_SIZE && mediumHolds.length >= MIN_GROUP_SIZE) {
 		const shortRCount = shortHolds.filter((t) => t.realizedRMultiple).length
 		const shortRSum = shortHolds.reduce((sum, t) =>
 			sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0), 0
@@ -328,7 +332,7 @@ const detectOvertrading = (trades: TradeForCoaching[]): CoachingInsight[] => {
 		}
 	}
 
-	if (lowVolumeTotal >= 15 && highVolumeTotal >= 15) {
+	if (lowVolumeTotal >= MIN_GROUP_SIZE && highVolumeTotal >= MIN_GROUP_SIZE) {
 		const lowWR = calculateWinRate(lowVolumeWins, lowVolumeTotal)
 		const highWR = calculateWinRate(highVolumeWins, highVolumeTotal)
 
@@ -374,7 +378,7 @@ const detectFeeDrag = (trades: TradeForCoaching[]): CoachingInsight[] => {
 
 	const feePercent = (totalFees / grossPnl) * 100
 
-	if (feePercent > 10) {
+	if (feePercent > 5) {
 		insights.push({
 			id: "fee-drag",
 			category: "fees",
@@ -422,7 +426,7 @@ const detectStreakPatterns = (trades: TradeForCoaching[]): CoachingInsight[] => 
 		}
 	}
 
-	if (afterStreakTotal >= 10) {
+	if (afterStreakTotal >= MIN_GROUP_SIZE) {
 		const overallWinRate = calculateWinRate(
 			decidedTrades.filter((t) => t.outcome === "win").length,
 			decidedTrades.length
@@ -463,7 +467,7 @@ const detectRatingCorrelation = (trades: TradeForCoaching[]): CoachingInsight[] 
 	const highRated = ratedTrades.filter((t) => t.rating === "A" || t.rating === "B")
 	const lowRated = ratedTrades.filter((t) => t.rating === "D" || t.rating === "F")
 
-	if (highRated.length >= 10 && lowRated.length >= 10) {
+	if (highRated.length >= MIN_GROUP_SIZE && lowRated.length >= MIN_GROUP_SIZE) {
 		const highWR = calculateWinRate(
 			highRated.filter((t) => t.outcome === "win").length,
 			highRated.length
@@ -508,7 +512,7 @@ const detectDisciplineImpact = (trades: TradeForCoaching[]): CoachingInsight[] =
 	const followed = trackedTrades.filter((t) => t.followedPlan === true)
 	const notFollowed = trackedTrades.filter((t) => t.followedPlan === false)
 
-	if (followed.length >= 10 && notFollowed.length >= 10) {
+	if (followed.length >= MIN_GROUP_SIZE && notFollowed.length >= MIN_GROUP_SIZE) {
 		const followedAvgR = followed.reduce(
 			(sum, t) => sum + Number(t.realizedRMultiple), 0
 		) / followed.length
@@ -543,7 +547,7 @@ const detectDisciplineImpact = (trades: TradeForCoaching[]): CoachingInsight[] =
 // ============================================================================
 
 /** Minimum confidence to surface an insight */
-const MIN_CONFIDENCE = 0.7
+const MIN_CONFIDENCE = 0.4
 
 /**
  * Run all pattern detectors and return insights sorted by severity.

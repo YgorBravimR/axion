@@ -123,9 +123,67 @@ export const JournalContent = () => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [totalTrades, setTotalTrades] = useState(0)
 
-	// Extended filters (smart search)
-	const [extendedFilters, setExtendedFilters] = useState<Record<string, string | string[]>>({})
-	const extendedFilterCount = Object.keys(extendedFilters).length
+	// Extended filters (smart search) — read from URL params for persistence
+	const readExtendedFilters = (): Record<string, string | string[]> => {
+		const filters: Record<string, string | string[]> = {}
+		const outcomes = urlParams.getArray("outcomes")
+		const directions = urlParams.getArray("directions")
+		const assets = urlParams.getArray("assets")
+		const rating = urlParams.getArray("rating")
+		const followedPlan = urlParams.get("followedPlan")
+		const hourFrom = urlParams.get("hourFrom")
+		const hourTo = urlParams.get("hourTo")
+		const pnlMin = urlParams.get("pnlMin")
+		const pnlMax = urlParams.get("pnlMax")
+		const quickFilter = urlParams.get("qf")
+
+		if (outcomes.length > 0) filters.outcomes = outcomes
+		if (directions.length > 0) filters.directions = directions
+		if (assets.length > 0) filters.assets = assets
+		if (rating.length > 0) filters.rating = rating
+		if (followedPlan) filters.followedPlan = followedPlan
+		if (hourFrom) filters.hourFrom = hourFrom
+		if (hourTo) filters.hourTo = hourTo
+		if (pnlMin) filters.pnlMin = pnlMin
+		if (pnlMax) filters.pnlMax = pnlMax
+		if (quickFilter) filters._qf = quickFilter
+
+		return filters
+	}
+
+	const extendedFilters = readExtendedFilters()
+	const extendedFilterCount = Object.keys(extendedFilters).filter((k) => k !== "_qf").length
+
+	const handleFiltersChange = (filters: Record<string, string | string[]>) => {
+		// Write to URL params
+		const updates: Record<string, string | string[] | null> = {
+			outcomes: (filters.outcomes as string[]) ?? null,
+			directions: (filters.directions as string[]) ?? null,
+			assets: (filters.assets as string[]) ?? null,
+			rating: (filters.rating as string[]) ?? null,
+			followedPlan: (filters.followedPlan as string) ?? null,
+			hourFrom: (filters.hourFrom as string) ?? null,
+			hourTo: (filters.hourTo as string) ?? null,
+			pnlMin: (filters.pnlMin as string) ?? null,
+			pnlMax: (filters.pnlMax as string) ?? null,
+		}
+		urlParams.set(updates)
+	}
+
+	const handleFiltersClear = () => {
+		urlParams.set({
+			outcomes: null,
+			directions: null,
+			assets: null,
+			rating: null,
+			followedPlan: null,
+			hourFrom: null,
+			hourTo: null,
+			pnlMin: null,
+			pnlMax: null,
+			qf: null,
+		})
+	}
 
 	// Delete state — lifted here so it applies across all day groups
 	const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null)
@@ -189,7 +247,7 @@ export const JournalContent = () => {
 		customDateRange?.from?.getTime(),
 		customDateRange?.to?.getTime(),
 		effectiveDate,
-		extendedFilters,
+		JSON.stringify(extendedFilters),
 	]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Memoized handlers to prevent unnecessary re-renders in child components
@@ -321,9 +379,15 @@ export const JournalContent = () => {
 			{/* Smart Search */}
 			<SmartSearch
 				availableAssets={[...new Set(tradesByDay.flatMap((d) => d.trades.map((t) => t.asset)))]}
-				onFiltersChange={setExtendedFilters}
-				onClear={() => setExtendedFilters({})}
+				onFiltersChange={(filters) => {
+					handleFiltersChange(filters)
+				}}
+				onClear={handleFiltersClear}
 				activeFilterCount={extendedFilterCount}
+				activeQuickFilterKey={extendedFilters._qf as string | undefined}
+				onQuickFilterChange={(key) => {
+					urlParams.set({ qf: key ?? null })
+				}}
 			/>
 
 			{/* Loading State */}
