@@ -47,6 +47,7 @@ const listFilterPresets = async (): Promise<ActionResponse<FilterPreset[]>> => {
 		const presets = await db.query.filterPresets.findMany({
 			where: and(
 				eq(filterPresets.userId, userId),
+				eq(filterPresets.accountId, accountId),
 				eq(filterPresets.accountId, accountId)
 			),
 			orderBy: [desc(filterPresets.updatedAt)],
@@ -87,6 +88,7 @@ const createFilterPreset = async (
 				.where(
 					and(
 						eq(filterPresets.userId, userId),
+				eq(filterPresets.accountId, accountId),
 						eq(filterPresets.accountId, accountId),
 						eq(filterPresets.isDefault, true)
 					)
@@ -127,7 +129,8 @@ const updateFilterPreset = async (
 		const existing = await db.query.filterPresets.findFirst({
 			where: and(
 				eq(filterPresets.id, id),
-				eq(filterPresets.userId, userId)
+				eq(filterPresets.userId, userId),
+				eq(filterPresets.accountId, accountId)
 			),
 		})
 
@@ -147,6 +150,7 @@ const updateFilterPreset = async (
 				.where(
 					and(
 						eq(filterPresets.userId, userId),
+				eq(filterPresets.accountId, accountId),
 						eq(filterPresets.accountId, accountId),
 						eq(filterPresets.isDefault, true)
 					)
@@ -198,13 +202,14 @@ const deleteFilterPreset = async (
 	id: string
 ): Promise<ActionResponse<null>> => {
 	try {
-		const { userId } = await requireAuth()
+		const { userId, accountId } = await requireAuth()
 
 		// Verify ownership
 		const existing = await db.query.filterPresets.findFirst({
 			where: and(
 				eq(filterPresets.id, id),
-				eq(filterPresets.userId, userId)
+				eq(filterPresets.userId, userId),
+				eq(filterPresets.accountId, accountId)
 			),
 		})
 

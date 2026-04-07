@@ -141,6 +141,9 @@ export const JournalContent = () => {
 			const ext = Object.keys(extendedFilters).length > 0
 				? {
 						rating: extendedFilters.rating as Array<"A" | "B" | "C" | "D" | "F"> | undefined,
+						outcomes: extendedFilters.outcomes as Array<"win" | "loss" | "breakeven"> | undefined,
+						directions: extendedFilters.directions as Array<"long" | "short"> | undefined,
+						assets: extendedFilters.assets as string[] | undefined,
 						followedPlan: extendedFilters.followedPlan === "true"
 							? true
 							: extendedFilters.followedPlan === "false"

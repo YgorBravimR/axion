@@ -6,7 +6,7 @@
 
 import { fromCents } from "@/lib/money"
 import { calculateWinRate } from "@/lib/calculations"
-import { getBrtTimeParts } from "@/lib/dates"
+import { getBrtTimeParts, formatDateKey } from "@/lib/dates"
 
 // ============================================================================
 // TYPES
@@ -140,6 +140,7 @@ const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	const decidedTrades = trades.filter((t) => t.outcome === "win" || t.outcome === "loss")
 	if (decidedTrades.length < MIN_SAMPLE_SIZE) return insights
 
+	// English keys — client translates via analytics.time.dayNames.{key}
 	const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 	const dayMap = new Map<number, { totalPnl: number; count: number }>()
@@ -259,13 +260,17 @@ const detectHoldingPeriodEdge = (trades: TradeForCoaching[]): CoachingInsight[] 
 	})
 
 	if (shortHolds.length >= 10 && mediumHolds.length >= 10) {
-		const shortAvgR = shortHolds.reduce((sum, t) =>
+		const shortRCount = shortHolds.filter((t) => t.realizedRMultiple).length
+		const shortRSum = shortHolds.reduce((sum, t) =>
 			sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0), 0
-		) / shortHolds.filter((t) => t.realizedRMultiple).length || 0
+		)
+		const shortAvgR = shortRCount > 0 ? shortRSum / shortRCount : 0
 
-		const mediumAvgR = mediumHolds.reduce((sum, t) =>
+		const mediumRCount = mediumHolds.filter((t) => t.realizedRMultiple).length
+		const mediumRSum = mediumHolds.reduce((sum, t) =>
 			sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0), 0
-		) / mediumHolds.filter((t) => t.realizedRMultiple).length || 0
+		)
+		const mediumAvgR = mediumRCount > 0 ? mediumRSum / mediumRCount : 0
 
 		if (Math.abs(mediumAvgR - shortAvgR) > 0.3) {
 			insights.push({
@@ -300,7 +305,7 @@ const detectOvertrading = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	// Group trades by day
 	const dayMap = new Map<string, { wins: number; total: number }>()
 	for (const trade of decidedTrades) {
-		const dateKey = trade.entryDate.toISOString().split("T")[0]
+		const dateKey = formatDateKey(trade.entryDate)
 		const entry = dayMap.get(dateKey) || { wins: 0, total: 0 }
 		entry.total++
 		if (trade.outcome === "win") entry.wins++

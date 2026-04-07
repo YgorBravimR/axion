@@ -93,7 +93,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 				</div>
 				<div className="rounded bg-bg-100 px-s-300 py-s-200">
 					<p className="text-tiny text-txt-300">{t("feesPercentOfGross")}</p>
-					<p className="text-body sm:text-h3 font-bold text-txt-100">
+					<p className="text-body sm:text-h3 font-semibold text-txt-100">
 						{summary.grossPnl > 0
 							? `${summary.feesAsPercentOfGross.toFixed(1)}%`
 							: "—"}
@@ -101,7 +101,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 				</div>
 				<div className="rounded bg-bg-100 px-s-300 py-s-200">
 					<p className="text-tiny text-txt-300">{t("avgFeePerTrade")}</p>
-					<p className="text-body sm:text-h3 font-bold text-txt-100">
+					<p className="text-body sm:text-h3 font-semibold text-txt-100">
 						{formatCurrencyWithSign(-summary.avgFeePerTrade)}
 					</p>
 				</div>
@@ -130,7 +130,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 										</span>
 									</div>
 									<div className="flex shrink-0 items-center gap-m-400">
-										<span className="text-tiny text-txt-300 whitespace-nowrap">
+										<span className="text-tiny text-txt-300 whitespace-nowrap hidden sm:inline">
 											{t("avgFeePerTrade")}: {formatCurrencyWithSign(-asset.avgFeePerTrade)}
 										</span>
 										<span className="text-small font-medium text-trade-sell whitespace-nowrap">
@@ -147,7 +147,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 									aria-label={`${asset.asset}: ${formatCurrencyWithSign(-asset.totalFees)}`}
 								>
 									<div
-										className="h-full origin-left rounded-full bg-txt-300/40 transition-transform duration-300"
+										className="h-full origin-left rounded-full bg-txt-300/40 transition-transform duration-300 motion-reduce:transition-none"
 										style={{ transform: `scaleX(${barScale})` }}
 									/>
 								</div>
@@ -228,7 +228,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 									aria-label={`${month.month}: ${formatCurrencyWithSign(-month.totalFees)}`}
 								>
 									<div
-										className="h-full origin-left rounded-full bg-txt-300/40 transition-transform duration-300"
+										className="h-full origin-left rounded-full bg-txt-300/40 transition-transform duration-300 motion-reduce:transition-none"
 										style={{ transform: `scaleX(${barScale})` }}
 									/>
 								</div>

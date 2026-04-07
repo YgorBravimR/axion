@@ -61,7 +61,9 @@ const CustomTooltip = ({ active, payload, labels }: CustomTooltipProps) => {
 				<p className="text-tiny">
 					<span className="text-txt-300">{labels.duration}:</span>{" "}
 					<span className="font-medium text-txt-100">
-						{formatCompactCurrencyWithSign(data.avgDurationMinutes, "").replace(/[+\-]/, "").trim() || String(Math.round(data.avgDurationMinutes))}
+						{data.avgDurationMinutes < 60
+							? `${Math.round(data.avgDurationMinutes)}min`
+							: `${(data.avgDurationMinutes / 60).toFixed(1)}h`}
 					</span>
 				</p>
 				<p className="text-tiny">
@@ -141,10 +143,10 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 		? Math.ceil(maxAbsMetric * 1.2 * 100) / 100
 		: Math.ceil(maxAbsMetric * 1.1)
 
-	// Best and worst buckets
+	// Best and worst buckets (only show worst if different from best)
 	const sorted = activeBuckets.toSorted((a, b) => b[metricKey] - a[metricKey])
 	const bestBucket = sorted[0]
-	const worstBucket = sorted[sorted.length - 1]
+	const worstBucket = sorted.length > 1 ? sorted[sorted.length - 1] : null
 
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, currencySymbol)
@@ -171,6 +173,7 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}
+						interval={0}
 						axisLine={{ stroke: "var(--color-bg-300)" }}
 					/>
 					<YAxis
@@ -180,6 +183,7 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}
+						interval={0}
 						axisLine={false}
 						domain={[-domainMax, domainMax]}
 						width={yAxisWidth}
@@ -210,12 +214,14 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 						{bestBucket.bucket} ({bestBucket.winRate.toFixed(0)}% WR, {formatMetric(bestBucket[metricKey])})
 					</p>
 				</div>
-				<div>
-					<p className="text-tiny text-txt-300">{t("worstBucket")}</p>
-					<p className="text-small font-medium text-trade-sell">
-						{worstBucket.bucket} ({worstBucket.winRate.toFixed(0)}% WR, {formatMetric(worstBucket[metricKey])})
-					</p>
-				</div>
+				{worstBucket && (
+					<div>
+						<p className="text-tiny text-txt-300">{t("worstBucket")}</p>
+						<p className="text-small font-medium text-trade-sell">
+							{worstBucket.bucket} ({worstBucket.winRate.toFixed(0)}% WR, {formatMetric(worstBucket[metricKey])})
+						</p>
+					</div>
+				)}
 			</div>
 		</div>
 	)

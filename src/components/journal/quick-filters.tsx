@@ -68,7 +68,7 @@ const QuickFilters = ({ activeFilterKey, onApply, onClear }: QuickFiltersProps) 
 					tabIndex={0}
 					onClick={() => handleClick(filter)}
 					className={cn(
-						"rounded-full border px-s-300 py-s-100 text-tiny font-medium transition-colors",
+						"rounded-full border px-s-300 py-s-200 text-tiny font-medium transition-colors",
 						activeFilterKey === filter.key
 							? "border-acc-100 bg-acc-100/10 text-acc-100"
 							: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"

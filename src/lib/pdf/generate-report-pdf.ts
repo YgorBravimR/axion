@@ -3,7 +3,6 @@
  * Renders React-PDF templates to Buffer for streaming as HTTP response.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderToBuffer } from "@react-pdf/renderer"
 import { createElement } from "react"
 import { WeeklyReportPdf, MonthlyReportPdf } from "./report-template"
@@ -32,6 +31,7 @@ const generateWeeklyReportPdf = async (
 
 	// renderToBuffer expects ReactElement<DocumentProps> but our wrapper component
 	// returns <Document> internally — the cast is safe
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- renderToBuffer expects ReactElement<DocumentProps> but our wrapper returns <Document> internally
 	const buffer = await renderToBuffer(element as any)
 	return new Uint8Array(buffer)
 }
@@ -47,6 +47,7 @@ const generateMonthlyReportPdf = async (
 		generatedAt,
 	})
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- renderToBuffer expects ReactElement<DocumentProps> but our wrapper returns <Document> internally
 	const buffer = await renderToBuffer(element as any)
 	return new Uint8Array(buffer)
 }

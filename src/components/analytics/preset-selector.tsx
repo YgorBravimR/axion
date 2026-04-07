@@ -73,9 +73,13 @@ const PresetSelector = ({
 	}
 
 	const handleApply = (preset: FilterPreset) => {
-		const filters = JSON.parse(preset.filters) as SavedFilterState
-		onApplyPreset(filters)
-		setIsOpen(false)
+		try {
+			const filters = JSON.parse(preset.filters) as SavedFilterState
+			onApplyPreset(filters)
+			setIsOpen(false)
+		} catch {
+			showToast("error", t("loadError"))
+		}
 	}
 
 	const handleSetDefault = async (preset: FilterPreset) => {
@@ -200,7 +204,7 @@ const PresetSelector = ({
 							disabled={!newPresetName.trim() || isLoading}
 						>
 							{isLoading ? (
-								<Loader2 className="h-3 w-3 animate-spin" />
+								<Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" />
 							) : (
 								<Check className="h-3 w-3" />
 							)}
@@ -228,9 +232,9 @@ const PresetSelector = ({
 								<button
 									type="button"
 									tabIndex={0}
-									className="min-w-0 flex-1 text-left"
+									className="min-w-0 flex-1 text-left rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 									onClick={() => handleApply(preset)}
-									aria-label={preset.name}
+									aria-label={preset.name} title={preset.name}
 								>
 									<span className="text-small text-txt-100 truncate block">
 										{preset.name}
@@ -238,7 +242,7 @@ const PresetSelector = ({
 								</button>
 
 								{/* Actions (visible on hover) */}
-								<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+								<div className="flex shrink-0 items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
 									{/* Set as default */}
 									<button
 										type="button"
@@ -263,7 +267,7 @@ const PresetSelector = ({
 										type="button"
 										tabIndex={0}
 										onClick={() => handleUpdateFilters(preset)}
-										className="rounded p-1 text-txt-300 transition-colors hover:text-txt-100"
+										className="rounded p-2 text-txt-300 transition-colors hover:text-txt-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 										aria-label={t("overwrite")}
 									>
 										<Check className="h-3 w-3" />
@@ -275,7 +279,7 @@ const PresetSelector = ({
 											type="button"
 											tabIndex={0}
 											onClick={() => handleDelete(preset.id)}
-											className="rounded p-1 text-trade-sell transition-colors hover:text-trade-sell/80"
+											className="rounded p-2 text-trade-sell transition-colors hover:text-trade-sell/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 											aria-label={t("deleteConfirm")}
 										>
 											<Trash2 className="h-3 w-3" />
@@ -285,7 +289,7 @@ const PresetSelector = ({
 											type="button"
 											tabIndex={0}
 											onClick={() => setConfirmDeleteId(preset.id)}
-											className="rounded p-1 text-txt-300 transition-colors hover:text-trade-sell"
+											className="rounded p-2 text-txt-300 transition-colors hover:text-trade-sell focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 											aria-label={t("delete")}
 										>
 											<Trash2 className="h-3 w-3" />

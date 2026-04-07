@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Calendar, SlidersHorizontal, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { DateRange } from "react-day-picker"
@@ -249,6 +249,7 @@ const FilterPanel = ({
 	const tTrade = useTranslations("trade")
 	const {
 		filters,
+		groupBy,
 		expectancyMode,
 		activePresetKey,
 		setDatePreset,
@@ -272,6 +273,9 @@ const FilterPanel = ({
 		{ value: "loss" as const, label: tTrade("outcome.loss") },
 		{ value: "breakeven" as const, label: tTrade("outcome.breakeven") },
 	]
+
+	// Memoize serialized filters to avoid creating new object on every render
+	const currentFiltersMemo = useMemo(() => serializeFilters(), [filters, groupBy, expectancyMode, activePresetKey])
 
 	// Count active advanced filters (excludes date since that's in the main bar)
 	const advancedFilterCount =
@@ -326,7 +330,7 @@ const FilterPanel = ({
 				{/* Right side: spacer + controls */}
 				<div className="gap-s-200 ml-auto flex items-center">
 					<PresetSelector
-						currentFilters={serializeFilters()}
+						currentFilters={currentFiltersMemo}
 						onApplyPreset={applyPreset}
 					/>
 

@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { trades, strategies } from "@/db/schema"
+import { trades, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, desc, inArray } from "drizzle-orm"
 import { subDays } from "date-fns"
 import { fromCents } from "@/lib/money"
@@ -48,13 +48,16 @@ const getCoachingContext = async (
 	days = 90
 ): Promise<ActionResponse<CoachingContext>> => {
 	try {
+		// Validate days parameter
+		const safeDays = Math.max(1, Math.min(365, Math.floor(days)))
+
 		const authContext = await requireAuth()
 		const accountCondition = authContext.showAllAccounts
 			? inArray(trades.accountId, authContext.allAccountIds)
 			: eq(trades.accountId, authContext.accountId)
 
 		const effectiveNow = await getServerEffectiveNow()
-		const dateFrom = subDays(effectiveNow, days)
+		const dateFrom = subDays(effectiveNow, safeDays)
 
 		// Fetch trades with strategy names
 		const allTrades = await db.query.trades.findMany({
@@ -79,13 +82,13 @@ const getCoachingContext = async (
 						stats: null,
 						insights: [],
 						tradeCount: 0,
-						periodDays: days,
+						periodDays: safeDays,
 						accountType: "personal",
 						topAssets: [],
 					}),
 					stats: null,
 					tradeCount: 0,
-					periodDays: days,
+					periodDays: safeDays,
 				},
 			}
 		}
@@ -144,10 +147,7 @@ const getCoachingContext = async (
 		const account = authContext.showAllAccounts
 			? null
 			: await db.query.tradingAccounts.findFirst({
-					where: eq(
-						(await import("@/db/schema")).tradingAccounts.id,
-						authContext.accountId
-					),
+					where: eq(tradingAccounts.id, authContext.accountId),
 				})
 		const accountType = account?.accountType ?? "personal"
 
@@ -156,7 +156,7 @@ const getCoachingContext = async (
 			stats,
 			insights,
 			tradeCount: allTrades.length,
-			periodDays: days,
+			periodDays: safeDays,
 			accountType,
 			topAssets,
 		})
@@ -169,7 +169,7 @@ const getCoachingContext = async (
 				prompt,
 				stats,
 				tradeCount: allTrades.length,
-				periodDays: days,
+				periodDays: safeDays,
 			},
 		}
 	} catch (error) {

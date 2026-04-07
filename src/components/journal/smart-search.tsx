@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Search, X, Plus, Filter } from "lucide-react"
+import { Search, X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -164,6 +164,15 @@ const SmartSearch = ({
 	const t = useTranslations("journal.smartSearch")
 	const tTrade = useTranslations("trade")
 	const tCommon = useTranslations("common")
+
+	/** Translate select option labels based on field type */
+	const translateLabel = (field: FilterField, labelKey: string): string => {
+		if (field === "outcome") return tTrade(`outcome.${labelKey}`)
+		if (field === "direction") return tTrade(`direction.${labelKey}`)
+		if (field === "followedPlan") return labelKey === "yes" ? tCommon("yes") : tCommon("no")
+		return labelKey
+	}
+
 	const [isOpen, setIsOpen] = useState(false)
 	const [conditions, setConditions] = useState<FilterCondition[]>([])
 	const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
@@ -282,7 +291,7 @@ const SmartSearch = ({
 										tabIndex={0}
 										onClick={() => handleRemoveCondition(condition.id)}
 										className="rounded-full p-0.5 hover:bg-acc-100/20"
-										aria-label={`Remove ${condition.field} filter`}
+										aria-label={`${t("clearAll")} ${t(`fields.${condition.field}`)}`}
 									>
 										<X className="h-2.5 w-2.5" />
 									</button>
@@ -292,7 +301,7 @@ const SmartSearch = ({
 								type="button"
 								tabIndex={0}
 								onClick={handleClearAll}
-								className="text-tiny text-txt-300 hover:text-txt-100"
+								className="text-tiny text-txt-300 hover:text-txt-100 rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 							>
 								{t("clearAll")}
 							</button>
@@ -304,7 +313,7 @@ const SmartSearch = ({
 						<p className="mb-s-200 text-tiny font-medium text-txt-300">
 							{t("builder")}
 						</p>
-						<div className="flex flex-wrap items-end gap-s-200">
+						<div className="flex flex-col gap-s-200 sm:flex-row sm:flex-wrap sm:items-end">
 							{/* Field selector */}
 							<Select
 								value={newField}
@@ -361,7 +370,7 @@ const SmartSearch = ({
 											<SelectContent>
 												{selectedFieldConfig.values.map((v) => (
 													<SelectItem key={v.value} value={v.value}>
-														{v.labelKey}
+														{newField ? translateLabel(newField, v.labelKey) : v.labelKey}
 													</SelectItem>
 												))}
 											</SelectContent>
@@ -383,6 +392,7 @@ const SmartSearch = ({
 										<div className="flex items-center gap-s-100">
 											<Input
 												id="smart-search-hour-from"
+												aria-label="Hour from"
 												type="number"
 												min={0}
 												max={23}
@@ -397,6 +407,7 @@ const SmartSearch = ({
 											<span className="text-tiny text-txt-300">—</span>
 											<Input
 												id="smart-search-hour-to"
+												aria-label="Hour to"
 												type="number"
 												min={0}
 												max={23}

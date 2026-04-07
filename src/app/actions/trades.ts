@@ -1623,8 +1623,13 @@ export const createScaledTrade = async (
  * Returns trades within date range, grouped by date with per-day statistics
  */
 interface ExtendedTradeFilters {
+	// SQL-filterable
 	rating?: Array<"A" | "B" | "C" | "D" | "F">
 	followedPlan?: boolean
+	outcomes?: Array<"win" | "loss" | "breakeven">
+	directions?: Array<"long" | "short">
+	assets?: string[]
+	// Post-query (require decrypted data or timezone)
 	hourFrom?: number
 	hourTo?: number
 	pnlMin?: number
@@ -1661,6 +1666,15 @@ export const getTradesGroupedByDay = async (
 		}
 		if (extendedFilters?.followedPlan !== undefined) {
 			conditions.push(eq(trades.followedPlan, extendedFilters.followedPlan))
+		}
+		if (extendedFilters?.outcomes && extendedFilters.outcomes.length > 0) {
+			conditions.push(inArray(trades.outcome, extendedFilters.outcomes))
+		}
+		if (extendedFilters?.directions && extendedFilters.directions.length > 0) {
+			conditions.push(inArray(trades.direction, extendedFilters.directions))
+		}
+		if (extendedFilters?.assets && extendedFilters.assets.length > 0) {
+			conditions.push(inArray(trades.asset, extendedFilters.assets))
 		}
 
 		const rawResult = await db.query.trades.findMany({

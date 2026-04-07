@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { requireAuth } from "@/app/actions/auth"
+import { isFrameworkSignal } from "@/lib/error-utils"
 import {
 	getWeeklyReport,
 	getMonthlyReport,
@@ -37,6 +38,13 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 		if (!isValidReportType(type)) {
 			return NextResponse.json(
 				{ error: "Invalid report type. Use 'weekly' or 'monthly'." },
+				{ status: 400 }
+			)
+		}
+
+		if (isNaN(offset) || offset < 0) {
+			return NextResponse.json(
+				{ error: "Invalid offset. Must be a non-negative integer." },
 				{ status: 400 }
 			)
 		}
@@ -79,7 +87,9 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 		})
 
 		return pdfResponse(pdfBuffer, buildMonthlyPdfFilename(result.data.monthStart))
-	} catch {
+	} catch (error) {
+		if (isFrameworkSignal(error)) throw error
+		console.error("Error generating PDF report:", error)
 		return NextResponse.json(
 			{ error: "Failed to generate PDF report" },
 			{ status: 500 }

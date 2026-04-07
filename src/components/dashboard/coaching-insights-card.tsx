@@ -71,7 +71,7 @@ const InsightRow = ({ insight }: { insight: CoachingInsight }) => {
 				tabIndex={0}
 				className="flex w-full items-center gap-s-200 text-left"
 				onClick={() => setIsExpanded(!isExpanded)}
-				aria-expanded={isExpanded}
+				aria-expanded={isExpanded} aria-controls={`insight-${insight.id}-content`}
 				aria-label={title}
 			>
 				<Icon className="h-4 w-4 shrink-0 text-txt-300" />
@@ -93,7 +93,7 @@ const InsightRow = ({ insight }: { insight: CoachingInsight }) => {
 			</button>
 
 			{isExpanded && (
-				<div className="mt-s-200 pl-[24px]">
+				<div id={`insight-${insight.id}-content`} className="mt-s-200 pl-m-400">
 					<p className="text-tiny text-txt-200">{description}</p>
 					<div className="mt-s-200 flex items-center gap-s-200">
 						<span className="text-micro text-txt-300">
@@ -120,8 +120,9 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 		if (hasLoaded) return
 		setHasLoaded(true)
 
+		const COACHING_ANALYSIS_DAYS = 90
 		startTransition(async () => {
-			const result = await getCoachingContext(90)
+			const result = await getCoachingContext(COACHING_ANALYSIS_DAYS)
 			if (result.status === "success" && result.data) {
 				setContext(result.data)
 			}
@@ -157,7 +158,7 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 			<div className="mt-s-300 sm:mt-m-400">
 				{isPending ? (
 					<div className="flex items-center justify-center py-m-500">
-						<Loader2 className="h-5 w-5 animate-spin text-txt-300" />
+						<Loader2 className="h-5 w-5 animate-spin text-txt-300 motion-reduce:animate-none" />
 					</div>
 				) : displayInsights.length === 0 ? (
 					<p className="py-m-400 text-center text-tiny text-txt-300">
