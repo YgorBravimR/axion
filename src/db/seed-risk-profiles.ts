@@ -95,49 +95,66 @@ const seedRiskProfiles = async () => {
 	}
 
 	// ==========================================
-	// PROFILE 2: TSR Iniciante
-	// @see docs/riskManagement/tsr-iniciante-flowchart.md
+	// PROFILE 2: TSR Iniciante (Arrojado)
+	// Teste mesa proprietária TSR Trading — WIN only, 2 contracts
+	// Meta: R$1.500 em 30 dias | Perda diária: R$375 | Perda total: R$1.500
+	// Stop: 175-225pts (média 200) | R:R 1.5-2.5 | Parcial 70pts (1ct) + zero
+	// ~40-50% breakeven rate | Max 3 stops cheios/dia (R$247 < R$375)
+	// Após gain: 2ª entrada com risco = 50% do lucro (compounding)
+	// Max 5 trades/dia | Semáforo de saldo acumulado governa agressividade
 	// ==========================================
 	const tsrInicianteTree: DecisionTreeConfig = {
 		baseTrade: {
 			riskCents: 8000, // R$80 (2 contracts × 200pts × R$0.20)
 			maxContracts: 2,
-			minStopPoints: 100,
+			minStopPoints: 175, // Stop mínimo do operacional
 		},
 		lossRecovery: {
+			// Arrojado: mantém 2 contratos nas recovery trades (não reduz)
+			// Max 3 stops cheios/dia = R$240 (dentro do limite R$375)
 			sequence: [
 				{
-					riskCalculation: { type: "fixedCents", amountCents: 4000 }, // 1 contract × 200pts
-					maxContractsOverride: 1,
+					// T2 após loss: full risk, 2 contratos
+					riskCalculation: { type: "percentOfBase", percent: 100 },
+					maxContractsOverride: null,
 				},
 				{
-					riskCalculation: { type: "fixedCents", amountCents: 4000 },
-					maxContractsOverride: 1,
-				},
-				{
-					riskCalculation: { type: "fixedCents", amountCents: 4000 },
-					maxContractsOverride: 1,
+					// T3 após 2 losses: full risk, 2 contratos — último trade do dia
+					riskCalculation: { type: "percentOfBase", percent: 100 },
+					maxContractsOverride: null,
 				},
 			],
 			executeAllRegardless: false,
-			stopAfterSequence: true,
+			stopAfterSequence: true, // 3 stops = parou o dia
 		},
 		gainMode: {
-			type: "singleTarget",
-			dailyTargetCents: 22000, // R$220
+			// Após gain: pode continuar com risco = 50% do lucro acumulado
+			// Permite capturar mais trades/dia (alvo 4-5 trades) sem arriscar o lucro
+			type: "compounding",
+			reinvestmentPercent: 50, // 2ª op arrisca no máx 50% do gain
+			stopOnFirstLoss: true, // Após win + loss na 2ª: parou a sequência de gain
+			dailyTargetCents: 7500, // R$75 referência diária (sugestão, não hard stop)
 		},
 		cascadingLimits: {
-			weeklyLossCents: null,
-			weeklyAction: "stopTrading",
-			monthlyLossCents: 150000, // R$1,500
+			weeklyLossCents: 50000, // R$500 — semáforo laranja: reduz para 2 trades, só setup A+
+			weeklyAction: "reduceRisk",
+			monthlyLossCents: 150000, // R$1.500 — perda total = ELIMINAÇÃO
 			monthlyAction: "stopTrading",
 		},
 		executionConstraints: {
-			minStopPoints: 100,
-			maxContracts: 2,
+			minStopPoints: 175, // Stop mínimo 175pts
+			maxContracts: 2, // Limite TSR Iniciante
 			operatingHoursStart: "09:01",
 			operatingHoursEnd: "17:00",
 		},
+		consecutiveLossRules: [
+			{
+				// 3 dias consecutivos negativos: reduz risco em 50% (1 contrato)
+				consecutiveDays: 3,
+				action: "reduceRisk",
+				reducePercent: 50,
+			},
+		],
 	}
 
 	// Insert profiles
@@ -155,13 +172,13 @@ const seedRiskProfiles = async () => {
 		},
 		{
 			name: "TSR Iniciante",
-			description: "Conservative plan for beginners. Max 2 contracts, R$80 base risk, single-target gain mode (1 winning T1 = daily goal). Recovery trades use 1 contract.",
+			description: "Plano arrojado para teste mesa TSR. WIN 2cts, stop 175-225pts, R:R 1.5-2.5. Parcial 70pts (1ct) + zero (~40-50% BE). Recovery: 2cts cheio (max 3 stops/dia = R$240). Gain: compounding 50% do lucro. Meta R$1.500/30d.",
 			createdByUserId,
-			baseRiskCents: 8000,
-			dailyLossCents: 20000, // R$200
-			weeklyLossCents: null,
-			monthlyLossCents: 150000, // R$1,500
-			dailyProfitTargetCents: 22000, // R$220
+			baseRiskCents: 8000, // R$80 (2 cts × 200pts × R$0.20)
+			dailyLossCents: 37500, // R$375 (limite TSR)
+			weeklyLossCents: 50000, // R$500 (semáforo laranja)
+			monthlyLossCents: 150000, // R$1.500 (eliminação TSR)
+			dailyProfitTargetCents: 7500, // R$75 (referência diária)
 			decisionTree: JSON.stringify(tsrInicianteTree),
 		},
 	]
@@ -178,7 +195,19 @@ const seedRiskProfiles = async () => {
 		})
 
 		if (existing) {
-			console.log(`Profile "${profile.name}" already exists, skipping.`)
+			await db
+				.update(riskManagementProfiles)
+				.set({
+					description: profile.description,
+					baseRiskCents: profile.baseRiskCents,
+					dailyLossCents: profile.dailyLossCents,
+					weeklyLossCents: profile.weeklyLossCents,
+					monthlyLossCents: profile.monthlyLossCents,
+					dailyProfitTargetCents: profile.dailyProfitTargetCents,
+					decisionTree: profile.decisionTree,
+				})
+				.where(eq(riskManagementProfiles.id, existing.id))
+			console.log(`Updated profile: "${profile.name}"`)
 			continue
 		}
 

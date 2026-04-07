@@ -1,40 +1,48 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/db/drizzle"
 import { filterPresets } from "@/db/schema"
-import type { FilterPreset } from "@/db/schema"
+import type { FilterPreset, NewFilterPreset } from "@/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
 
 // ============================================================================
-// TYPES
+// VALIDATION SCHEMAS
 // ============================================================================
 
-interface SavedFilterState {
-	datePreset?: string | null
-	dateFrom?: string | null
-	dateTo?: string | null
-	assets?: string[]
-	directions?: string[]
-	outcomes?: string[]
-	timeframeIds?: string[]
-	groupBy?: string
-	expectancyMode?: string
-}
+const uuidSchema = z.string().uuid()
 
-interface CreatePresetInput {
-	name: string
-	filters: SavedFilterState
-	isDefault?: boolean
-}
+const savedFilterStateSchema = z.object({
+	datePreset: z.string().max(20).nullable().optional(),
+	dateFrom: z.string().max(50).nullable().optional(),
+	dateTo: z.string().max(50).nullable().optional(),
+	assets: z.array(z.string().max(20)).max(50).optional(),
+	directions: z.array(z.enum(["long", "short"])).optional(),
+	outcomes: z.array(z.enum(["win", "loss", "breakeven"])).optional(),
+	timeframeIds: z.array(z.string().uuid()).max(50).optional(),
+	groupBy: z.string().max(20).optional(),
+	expectancyMode: z.string().max(20).optional(),
+})
 
-interface UpdatePresetInput {
-	name?: string
-	filters?: SavedFilterState
-	isDefault?: boolean
-}
+type SavedFilterState = z.infer<typeof savedFilterStateSchema>
+
+const createPresetInputSchema = z.object({
+	name: z.string().min(1).max(100).transform((val) => val.trim()),
+	filters: savedFilterStateSchema,
+	isDefault: z.boolean().optional(),
+})
+
+const updatePresetInputSchema = z.object({
+	name: z.string().min(1).max(100).transform((val) => val.trim()).optional(),
+	filters: savedFilterStateSchema.optional(),
+	isDefault: z.boolean().optional(),
+})
+
+type CreatePresetInput = z.infer<typeof createPresetInputSchema>
+type UpdatePresetInput = z.infer<typeof updatePresetInputSchema>
 
 // ============================================================================
 // LIST PRESETS
@@ -47,7 +55,6 @@ const listFilterPresets = async (): Promise<ActionResponse<FilterPreset[]>> => {
 		const presets = await db.query.filterPresets.findMany({
 			where: and(
 				eq(filterPresets.userId, userId),
-				eq(filterPresets.accountId, accountId),
 				eq(filterPresets.accountId, accountId)
 			),
 			orderBy: [desc(filterPresets.updatedAt)],
@@ -66,29 +73,30 @@ const listFilterPresets = async (): Promise<ActionResponse<FilterPreset[]>> => {
 // ============================================================================
 
 const createFilterPreset = async (
-	input: CreatePresetInput
+	input: unknown
 ): Promise<ActionResponse<FilterPreset>> => {
 	try {
 		const { userId, accountId } = await requireAuth()
 
-		const name = input.name.trim()
-		if (!name || name.length > 100) {
+		const parsed = createPresetInputSchema.safeParse(input)
+		if (!parsed.success) {
 			return {
 				status: "error",
-				message: "Preset name is required (max 100 characters)",
-				errors: [{ code: "INVALID_NAME", detail: "Name is required" }],
+				message: "Invalid preset data",
+				errors: [{ code: "VALIDATION_ERROR", detail: parsed.error.message }],
 			}
 		}
 
+		const { name, filters, isDefault } = parsed.data
+
 		// If setting as default, unset any existing default
-		if (input.isDefault) {
+		if (isDefault) {
 			await db
 				.update(filterPresets)
 				.set({ isDefault: false })
 				.where(
 					and(
 						eq(filterPresets.userId, userId),
-				eq(filterPresets.accountId, accountId),
 						eq(filterPresets.accountId, accountId),
 						eq(filterPresets.isDefault, true)
 					)
@@ -101,8 +109,8 @@ const createFilterPreset = async (
 				userId,
 				accountId,
 				name,
-				filters: JSON.stringify(input.filters),
-				isDefault: input.isDefault ?? false,
+				filters: JSON.stringify(filters),
+				isDefault: isDefault ?? false,
 			})
 			.returning()
 
@@ -120,12 +128,32 @@ const createFilterPreset = async (
 
 const updateFilterPreset = async (
 	id: string,
-	input: UpdatePresetInput
+	input: unknown
 ): Promise<ActionResponse<FilterPreset>> => {
 	try {
 		const { userId, accountId } = await requireAuth()
 
-		// Verify ownership
+		// Validate UUID
+		const idResult = uuidSchema.safeParse(id)
+		if (!idResult.success) {
+			return {
+				status: "error",
+				message: "Invalid preset ID",
+				errors: [{ code: "INVALID_ID", detail: "ID must be a valid UUID" }],
+			}
+		}
+
+		// Validate input
+		const parsed = updatePresetInputSchema.safeParse(input)
+		if (!parsed.success) {
+			return {
+				status: "error",
+				message: "Invalid preset data",
+				errors: [{ code: "VALIDATION_ERROR", detail: parsed.error.message }],
+			}
+		}
+
+		// Verify ownership (userId + accountId scoping)
 		const existing = await db.query.filterPresets.findFirst({
 			where: and(
 				eq(filterPresets.id, id),
@@ -142,43 +170,30 @@ const updateFilterPreset = async (
 			}
 		}
 
+		const { name, filters, isDefault } = parsed.data
+
 		// If setting as default, unset any existing default
-		if (input.isDefault) {
+		if (isDefault) {
 			await db
 				.update(filterPresets)
 				.set({ isDefault: false })
 				.where(
 					and(
 						eq(filterPresets.userId, userId),
-				eq(filterPresets.accountId, accountId),
 						eq(filterPresets.accountId, accountId),
 						eq(filterPresets.isDefault, true)
 					)
 				)
 		}
 
-		const updateData: Record<string, unknown> = {
+		// Build typed update — only include fields that were provided
+		const updateData: Partial<NewFilterPreset> = {
 			updatedAt: new Date(),
 		}
 
-		if (input.name !== undefined) {
-			const name = input.name.trim()
-			if (!name || name.length > 100) {
-				return {
-					status: "error",
-					message: "Preset name is required (max 100 characters)",
-				}
-			}
-			updateData.name = name
-		}
-
-		if (input.filters !== undefined) {
-			updateData.filters = JSON.stringify(input.filters)
-		}
-
-		if (input.isDefault !== undefined) {
-			updateData.isDefault = input.isDefault
-		}
+		if (name !== undefined) updateData.name = name
+		if (filters !== undefined) updateData.filters = JSON.stringify(filters)
+		if (isDefault !== undefined) updateData.isDefault = isDefault
 
 		const [updated] = await db
 			.update(filterPresets)
@@ -204,7 +219,17 @@ const deleteFilterPreset = async (
 	try {
 		const { userId, accountId } = await requireAuth()
 
-		// Verify ownership
+		// Validate UUID
+		const idResult = uuidSchema.safeParse(id)
+		if (!idResult.success) {
+			return {
+				status: "error",
+				message: "Invalid preset ID",
+				errors: [{ code: "INVALID_ID", detail: "ID must be a valid UUID" }],
+			}
+		}
+
+		// Verify ownership (userId + accountId scoping)
 		const existing = await db.query.filterPresets.findFirst({
 			where: and(
 				eq(filterPresets.id, id),
@@ -236,6 +261,7 @@ export {
 	createFilterPreset,
 	updateFilterPreset,
 	deleteFilterPreset,
+	savedFilterStateSchema,
 	type SavedFilterState,
 	type CreatePresetInput,
 	type UpdatePresetInput,

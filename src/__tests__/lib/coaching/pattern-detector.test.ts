@@ -1157,7 +1157,7 @@ describe("detectAllPatterns", () => {
 					createCoachingTrade({ pnl: 100, commission: 200, fees: 200, rating: "A", outcome: "win" })
 				),
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ pnl: 100, commission: 200, fees: 200, rating: "F", outcome: "loss", pnl: -10000 })
+					createCoachingTrade({ pnl: -10000, commission: 200, fees: 200, rating: "F", outcome: "loss" })
 				),
 			]
 			const insights = detectAllPatterns(trades)

@@ -48,8 +48,8 @@ const buildUrlParamsFromPreset = (
 
 interface FilterStateInput {
 	assets: string[]
-	directions: string[]
-	outcomes: string[]
+	directions: Array<"long" | "short">
+	outcomes: Array<"win" | "loss" | "breakeven">
 	timeframeIds: string[]
 	dateFrom: Date | null
 	dateTo: Date | null

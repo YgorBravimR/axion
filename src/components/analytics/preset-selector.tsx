@@ -17,6 +17,7 @@ import {
 	createFilterPreset,
 	updateFilterPreset,
 	deleteFilterPreset,
+	savedFilterStateSchema,
 	type SavedFilterState,
 } from "@/app/actions/filter-presets"
 import type { FilterPreset } from "@/db/schema"
@@ -74,8 +75,13 @@ const PresetSelector = ({
 
 	const handleApply = (preset: FilterPreset) => {
 		try {
-			const filters = JSON.parse(preset.filters) as SavedFilterState
-			onApplyPreset(filters)
+			const raw = JSON.parse(preset.filters)
+			const parsed = savedFilterStateSchema.safeParse(raw)
+			if (!parsed.success) {
+				showToast("error", t("loadError"))
+				return
+			}
+			onApplyPreset(parsed.data)
 			setIsOpen(false)
 		} catch {
 			showToast("error", t("loadError"))
