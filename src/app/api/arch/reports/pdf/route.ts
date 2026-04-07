@@ -18,6 +18,7 @@ import {
 } from "@/lib/pdf/report-pdf-helpers"
 
 const pdfResponse = (data: Uint8Array, filename: string): NextResponse => {
+	// Uint8Array is valid BodyInit at runtime but TS strict mode requires the cast
 	return new NextResponse(data as unknown as BodyInit, {
 		headers: {
 			"Content-Type": "application/pdf",

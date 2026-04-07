@@ -92,7 +92,7 @@ const VALID_PERIODS: JournalPeriod[] = ["day", "week", "month", "all", "custom"]
  * Manages inline trade deletion with two-step confirmation.
  * Period and custom date range are persisted in URL params.
  */
-export const JournalContent = () => {
+const JournalContent = () => {
 	const router = useRouter()
 	useRegisterPageGuide(journalGuide)
 	const t = useTranslations("journal")
@@ -427,3 +427,5 @@ export const JournalContent = () => {
 		</div>
 	)
 }
+
+export { JournalContent }

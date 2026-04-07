@@ -63,7 +63,7 @@ const buildCoachingPrompt = (input: BuildPromptInput): CoachingPrompt => {
 	const { stats, insights, tradeCount, periodDays, accountType, topAssets } = input
 
 	// Build the data summary section
-	const dataSummary = buildDataSummary(stats, tradeCount, periodDays, accountType, topAssets)
+	const dataSummary = buildDataSummary({ stats, tradeCount, periodDays, accountType, topAssets })
 
 	// Build the insights section
 	const insightsSummary = buildInsightsSummary(insights)
@@ -96,13 +96,13 @@ Based on this data, what are the top 3 things I should focus on to improve my tr
 // HELPERS
 // ============================================================================
 
-const buildDataSummary = (
-	stats: OverallStats | null,
-	tradeCount: number,
-	periodDays: number,
-	accountType: string,
-	topAssets: Array<{ asset: string; tradeCount: number; winRate: number }>
-): string => {
+const buildDataSummary = ({
+	stats,
+	tradeCount,
+	periodDays,
+	accountType,
+	topAssets,
+}: Omit<BuildPromptInput, "insights">): string => {
 	if (!stats) return "No statistics available yet."
 
 	const lines = [
