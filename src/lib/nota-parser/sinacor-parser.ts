@@ -11,9 +11,7 @@
  */
 
 import type { NotaFill, NotaParseResult } from "./types"
-
-// B3 futures contract prefixes → normalized "FUT" suffix
-const B3_FUT_PREFIXES = ["WIN", "WDO", "DOL", "IND", "BGI", "CCM", "ICF", "SFI", "DI1"]
+import { B3_FUT_PREFIXES } from "@/lib/asset-resolution"
 
 // B3 month codes: F=Jan, G=Feb, H=Mar, J=Apr, K=May, M=Jun, N=Jul, Q=Aug, U=Sep, V=Oct, X=Nov, Z=Dec
 const B3_MONTH_CODES = "FGHJKMN QUVXZ" // space at index 7 is intentional (no August letter at that position)
@@ -52,9 +50,9 @@ const parseBrazilianNumber = (value: string): number => {
 /**
  * Normalize a SINACOR asset name to match the DB asset symbol.
  * Examples:
- *   "WIN G26"  → "WINFUT"  (futures contract with expiry code)
+ *   "WIN G26"  → "WIN"  (futures contract with expiry code)
  *   "PETR4"    → "PETR4"   (stock, no change)
- *   "WDO H26"  → "WDOFUT"
+ *   "WDO H26"  → "WDO"
  */
 const normalizeAssetName = (rawAsset: string): string => {
 	const parts = rawAsset.trim().split(/\s+/)
@@ -72,7 +70,7 @@ const normalizeAssetName = (rawAsset: string): string => {
 	const isExpiryCode = /^[A-Z]\d{2}$/.test(expiryCode)
 
 	if (isExpiryCode && B3_FUT_PREFIXES.includes(base)) {
-		return `${base}FUT`
+		return base
 	}
 
 	// Unknown format, join as-is

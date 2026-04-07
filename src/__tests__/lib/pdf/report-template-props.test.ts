@@ -82,7 +82,7 @@ const createFeeData = (): CommissionFeeImpact => ({
 	},
 	assetBreakdown: [
 		{
-			asset: "WINFUT",
+			asset: "WIN",
 			totalFees: 450.0,
 			tradeCount: 42,
 			avgFeePerTrade: 10.71,
@@ -113,7 +113,7 @@ const createTopTradeEntry = (
 	pnl: number
 ): WeeklyReport["topWins"][number] => ({
 	id,
-	asset: "WINFUT",
+	asset: "WIN",
 	pnl,
 	r: 1.5,
 	direction: "long",
@@ -292,8 +292,8 @@ describe("MonthlyReportPdf prop shape", () => {
 					},
 				],
 				assetBreakdown: [
-					{ asset: "WINFUT", tradeCount: 35, pnl: 2100.0, winRate: 62.9 },
-					{ asset: "WDOFUT", tradeCount: 7, pnl: 650.0, winRate: 42.9 },
+					{ asset: "WIN", tradeCount: 35, pnl: 2100.0, winRate: 62.9 },
+					{ asset: "WDO", tradeCount: 7, pnl: 650.0, winRate: 42.9 },
 				],
 			},
 			feeData: createFeeData(),

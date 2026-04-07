@@ -489,7 +489,7 @@ const sceneTradeDetail = async (page: Page) => {
 	}
 
 	// Find a clickable trade row
-	const tradeRows = page.locator("[class*='cursor-pointer']").filter({ hasText: /WIN|WDO|PETR|VALE|WINFUT|WDOFUT/i })
+	const tradeRows = page.locator("[class*='cursor-pointer']").filter({ hasText: /WIN|WDO|PETR|VALE/i })
 	const rowCount = await tradeRows.count()
 
 	if (rowCount > 1) {
@@ -625,7 +625,7 @@ const sceneCommandCenter = async (page: Page) => {
 		await capture(page, "cc-main-today")
 	}
 
-	// Step 5: Select WINFUT asset in the calculator (Radix Select combobox)
+	// Step 5: Select WIN asset in the calculator (Radix Select combobox)
 	const calcAsset = page.locator("#calc-asset")
 	if (await calcAsset.isVisible().catch(() => false)) {
 		await scrollLocatorIntoView(page, calcAsset)
@@ -637,8 +637,8 @@ const sceneCommandCenter = async (page: Page) => {
 			await calcAsset.click()
 			await pause(timing.afterClick)
 		}
-		// Click the WINFUT option from the Radix dropdown (portal — needs force click)
-		const winfutOption = page.locator("[role='option']").filter({ hasText: "WINFUT" }).first()
+		// Click the WIN option from the Radix dropdown (portal — needs force click)
+		const winfutOption = page.locator("[role='option']").filter({ hasText: "WIN" }).first()
 		if (await winfutOption.isVisible({ timeout: 3000 }).catch(() => false)) {
 			await pause(timing.shortPause)
 			await winfutOption.click({ force: true })

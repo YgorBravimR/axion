@@ -330,19 +330,19 @@ describe("buildCoachingPrompt — topAssets", () => {
 	it("should include asset names when topAssets is non-empty", () => {
 		const input = createBuildPromptInput({
 			topAssets: [
-				{ asset: "WINFUT", tradeCount: 50, winRate: 60 },
+				{ asset: "WIN", tradeCount: 50, winRate: 60 },
 				{ asset: "DOLFUT", tradeCount: 30, winRate: 45 },
 			],
 		})
 		const result = buildCoachingPrompt(input)
 
-		expect(result.userPrompt).toContain("WINFUT")
+		expect(result.userPrompt).toContain("WIN")
 		expect(result.userPrompt).toContain("DOLFUT")
 	})
 
 	it("should include trade counts and win rates for each asset", () => {
 		const input = createBuildPromptInput({
-			topAssets: [{ asset: "WINFUT", tradeCount: 50, winRate: 63 }],
+			topAssets: [{ asset: "WIN", tradeCount: 50, winRate: 63 }],
 		})
 		const result = buildCoachingPrompt(input)
 
@@ -366,7 +366,7 @@ describe("buildCoachingPrompt — dataContext field preservation", () => {
 	it("should preserve all input fields verbatim in dataContext", () => {
 		const stats = createOverallStats({ winRate: 55 })
 		const insights = [createMockInsight()]
-		const topAssets = [{ asset: "WINFUT", tradeCount: 80, winRate: 58 }]
+		const topAssets = [{ asset: "WIN", tradeCount: 80, winRate: 58 }]
 
 		const input: BuildPromptInput = {
 			stats,

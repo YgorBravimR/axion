@@ -28,7 +28,7 @@ import { createTradeSchema, updateTradeSchema } from "@/lib/validations/trade"
  * Only `rating` is varied across rating-specific tests.
  */
 const buildMinimalTradePayload = (overrides: Record<string, unknown> = {}) => ({
-	asset: "WINFUT",
+	asset: "WIN",
 	direction: "long" as const,
 	entryDate: "2026-01-06T09:00",
 	entryPrice: 128000,

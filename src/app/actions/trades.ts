@@ -37,7 +37,8 @@ import {
 	calculateRMultiple,
 	determineOutcome,
 } from "@/lib/calculations"
-import { getAssetBySymbol } from "./assets"
+import { getAssetBySymbol, getRegisteredAssetSymbols } from "./assets"
+import { resolveTradeAsset } from "@/lib/asset-resolution"
 import { getAssetFees, getBreakevenTicks } from "./accounts"
 import { fromCents, toCents, toNumericString } from "@/lib/money"
 import {
@@ -75,6 +76,11 @@ export const createTrade = async (
 		const { accountId, userId } = await requireAuth()
 		const validated = createTradeSchema.parse(input)
 		const { tagIds, ...tradeData } = validated
+
+		// Resolve asset symbol to canonical form (e.g., WING26 → WIN)
+		const registeredSymbols = await getRegisteredAssetSymbols()
+		const resolved = resolveTradeAsset(tradeData.asset, registeredSymbols)
+		tradeData.asset = resolved.symbol
 
 		// Calculate derived fields if we have exit data
 		let pnl = tradeData.pnl
@@ -335,6 +341,13 @@ export const updateTrade = async (
 			(existing.plannedRiskAmount
 				? Number(existing.plannedRiskAmount) / 100
 				: undefined)
+
+		// Resolve asset symbol if being changed
+		if (tradeData.asset) {
+			const registeredSymbols = await getRegisteredAssetSymbols()
+			const resolved = resolveTradeAsset(tradeData.asset, registeredSymbols)
+			tradeData.asset = resolved.symbol
+		}
 
 		// Calculate plannedRiskAmount: use manual riskAmount if provided, otherwise calculate from stopLoss
 		let plannedRiskAmount: number | undefined
@@ -991,8 +1004,16 @@ export const bulkCreateTrades = async (
 			}
 		}
 
-		// Collect unique asset symbols and look them up (including fees and breakeven ticks)
+		// Resolve asset symbols to canonical form and look them up (including fees and breakeven ticks)
+		const registeredSymbols = await getRegisteredAssetSymbols()
 		const assetSymbols = [...new Set(inputs.map((i) => i.asset.toUpperCase()))]
+		// Maps raw input symbol → canonical symbol
+		const symbolResolutionMap = new Map<string, string>()
+		for (const symbol of assetSymbols) {
+			const resolved = resolveTradeAsset(symbol, registeredSymbols)
+			symbolResolutionMap.set(symbol, resolved.symbol)
+		}
+
 		const assetMap = new Map<
 			string,
 			{
@@ -1003,10 +1024,11 @@ export const bulkCreateTrades = async (
 				breakevenTicks: number
 			}
 		>()
-		for (const symbol of assetSymbols) {
+		// Look up asset configs using canonical symbols
+		const canonicalSymbols = [...new Set(symbolResolutionMap.values())]
+		for (const symbol of canonicalSymbols) {
 			const assetConfig = await getAssetBySymbol(symbol)
 			if (assetConfig) {
-				// Use the resolved symbol (e.g., "WINFUT") for fee lookup, not the input symbol ("WIN")
 				const assetFees = await getAssetFees(assetConfig.symbol, accountId)
 				const breakevenTicks = await getBreakevenTicks(
 					assetConfig.symbol,
@@ -1076,6 +1098,10 @@ export const bulkCreateTrades = async (
 
 					const validated = createTradeSchema.parse(tradeInput)
 					const { tagIds, ...tradeData } = validated
+
+					// Resolve asset symbol to canonical form
+					const canonicalSymbol = symbolResolutionMap.get(tradeData.asset.toUpperCase()) ?? tradeData.asset.toUpperCase()
+					tradeData.asset = canonicalSymbol
 
 					// Look up strategy ID from code or name
 					const strategyId = strategyCode

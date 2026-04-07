@@ -21,6 +21,8 @@ import { getUserDek, encryptTradeFields } from "@/lib/user-crypto"
 import { computeTradeHash } from "@/lib/deduplication"
 import { createTradeSchema } from "@/lib/validations/trade"
 import type { CreateTradeInput } from "@/lib/validations/trade"
+import { resolveTradeAsset } from "@/lib/asset-resolution"
+import { getRegisteredAssetSymbols } from "@/app/actions/assets"
 
 interface ArchCreateTradeBody {
 	asset: string
@@ -120,6 +122,11 @@ const POST = async (request: NextRequest) => {
 		// Validate with Zod schema
 		const validated = createTradeSchema.parse(createInput)
 		const { tagIds: validatedTagIds, ...tradeData } = validated
+
+		// Resolve asset symbol to canonical form (e.g., WING26 → WIN)
+		const registeredSymbols = await getRegisteredAssetSymbols()
+		const resolved = resolveTradeAsset(tradeData.asset, registeredSymbols)
+		tradeData.asset = resolved.symbol
 
 		// Calculate plannedRiskAmount from riskAmount or stopLoss
 		let plannedRiskAmount: number | undefined

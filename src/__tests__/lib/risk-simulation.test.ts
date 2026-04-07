@@ -1,7 +1,7 @@
 /**
  * Unit tests for `runSimpleSimulation` (simple mode) and `runAdvancedSimulation` (advanced mode).
  *
- * Uses the trade factory from `./fixtures/trade-factory.ts` to create realistic WINFUT trades.
+ * Uses the trade factory from `./fixtures/trade-factory.ts` to create realistic WIN trades.
  * Both engines are pure functions — no DB or auth required.
  */
 

@@ -376,7 +376,7 @@ const insertTestTrades = async (
     exitDate.setMinutes(entryDate.getMinutes() + 1)
 
     const direction = trade.direction ?? (index % 2 === 0 ? "long" : "short")
-    const asset = trade.asset ?? "WINFUT"
+    const asset = trade.asset ?? "WIN"
     const positionSize = "5"    // 5 contracts — realistic but arbitrary
     const entryPrice = "130000" // arbitrary index value
     const exitPrice = trade.pnlCents >= 0 ? "130200" : "129800"
@@ -547,11 +547,11 @@ const cleanupTodayTrades = async (baseDate: Date = new Date()): Promise<void> =>
   dayEnd.setHours(23, 59, 59, 999)
 
   // Only delete trades that match the seeder's recognizable fingerprint
-  // (asset = WINFUT, entry_price = 130000) to avoid touching real data.
+  // (asset = WIN, entry_price = 130000) to avoid touching real data.
   await db.execute(sql`
     DELETE FROM trades
     WHERE account_id  = ${accountId}
-      AND asset       = 'WINFUT'
+      AND asset       = 'WIN'
       AND entry_price = '130000'
       AND entry_date >= ${dayStart.toISOString()}
       AND entry_date <= ${dayEnd.toISOString()}

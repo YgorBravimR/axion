@@ -15,6 +15,8 @@ import { fromCents, toCents, toNumericString } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getBreakevenTicks } from "@/app/actions/accounts"
+import { getRegisteredAssetSymbols } from "@/app/actions/assets"
+import { resolveTradeAsset } from "@/lib/asset-resolution"
 import { z } from "zod"
 
 // ==========================================
@@ -117,6 +119,11 @@ export const createTradeFromOcr = async (
 	try {
 		const { accountId, userId } = await requireAuth()
 		const validated = ocrImportSchema.parse(input)
+
+		// Resolve asset symbol to canonical form (e.g., WING26 → WIN)
+		const registeredSymbols = await getRegisteredAssetSymbols()
+		const resolved = resolveTradeAsset(validated.asset, registeredSymbols)
+		validated.asset = resolved.symbol
 
 		// Look up asset configuration
 		const assetConfig = await findAsset(
@@ -319,12 +326,19 @@ export const bulkCreateTradesFromOcr = async (
 			errors: [],
 		}
 
+		// Load registered symbols once for all trades
+		const registeredSymbols = await getRegisteredAssetSymbols()
+
 		// Process each trade
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i]
 
 			try {
 				const validated = ocrImportSchema.parse(input)
+
+				// Resolve asset symbol to canonical form
+				const resolved = resolveTradeAsset(validated.asset, registeredSymbols)
+				validated.asset = resolved.symbol
 
 				// Look up asset configuration
 				const assetConfig = await findAsset(

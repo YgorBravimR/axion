@@ -538,7 +538,7 @@ describe("addBreadcrumb", () => {
 	})
 
 	it("should pass through complex data objects verbatim", () => {
-		const data = { tradeCount: 42, broker: "Clear", symbols: ["WINFUT", "DOLFUT"] }
+		const data = { tradeCount: 42, broker: "Clear", symbols: ["WIN", "DOLFUT"] }
 
 		addBreadcrumb("Import preview generated", data, "import")
 

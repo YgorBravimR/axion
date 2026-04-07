@@ -60,7 +60,7 @@ const createCoachingTrade = (overrides: CoachingTradeOverrides = {}): TradeForCo
 	pnl: overrides.pnl !== undefined ? overrides.pnl : 10000, // 10000 cents = R$100 win
 	outcome: overrides.outcome !== undefined ? overrides.outcome : "win",
 	realizedRMultiple: overrides.realizedRMultiple !== undefined ? overrides.realizedRMultiple : "1",
-	asset: overrides.asset ?? "WINFUT",
+	asset: overrides.asset ?? "WIN",
 	direction: overrides.direction ?? "long",
 	strategyName: overrides.strategyName !== undefined ? overrides.strategyName : null,
 	setupRank: overrides.setupRank !== undefined ? overrides.setupRank : null,

@@ -11,6 +11,8 @@ import {
 	resolveTimeframeName,
 } from "../../_lib/resolve-names"
 import { getAssetBySymbol, getBreakevenTicks } from "../../_lib/asset-lookup"
+import { resolveTradeAsset } from "@/lib/asset-resolution"
+import { getRegisteredAssetSymbols } from "@/app/actions/assets"
 import {
 	calculatePnL,
 	calculateAssetPnL,
@@ -147,9 +149,17 @@ const POST = async (request: NextRequest) => {
 					? Number(existing.plannedRiskAmount) / 100
 					: undefined
 
+		// Resolve asset symbol if being changed
+		let resolvedAsset = body.asset
+		if (resolvedAsset) {
+			const registeredSymbols = await getRegisteredAssetSymbols()
+			const resolved = resolveTradeAsset(resolvedAsset, registeredSymbols)
+			resolvedAsset = resolved.symbol
+		}
+
 		// Calculate plannedRiskAmount
 		let plannedRiskAmount: number | undefined
-		const assetSymbol = body.asset ?? existing.asset
+		const assetSymbol = resolvedAsset ?? existing.asset
 		const assetConfigForRisk = await getAssetBySymbol(assetSymbol)
 
 		if (riskAmount) {
@@ -234,7 +244,7 @@ const POST = async (request: NextRequest) => {
 			updatedAt: new Date(),
 		}
 
-		if (body.asset !== undefined) updateData.asset = body.asset.toUpperCase()
+		if (body.asset !== undefined) updateData.asset = resolvedAsset ?? body.asset.toUpperCase()
 		if (body.direction !== undefined) updateData.direction = body.direction
 		if (strategyId !== undefined) updateData.strategyId = strategyId || null
 		if (timeframeId !== undefined) updateData.timeframeId = timeframeId || null

@@ -14,7 +14,7 @@ interface NotaFill {
 	side: "C" | "V" // C = Compra (Buy), V = Venda (Sell)
 	marketType: string // "VISTA", "FUTURO", "DAY TRADE"
 	rawAsset: string // Original from PDF e.g. "WIN G26"
-	normalizedAsset: string // Normalized e.g. "WINFUT"
+	normalizedAsset: string // Normalized e.g. "WIN"
 	expiryDate: string | null // e.g. "18/02/2026"
 	quantity: number
 	price: number
@@ -47,7 +47,7 @@ interface NotaParseResult {
 
 /** Fills grouped by asset and date for matching against existing trades */
 interface AssetFillGroup {
-	asset: string // Normalized asset (e.g. "WINFUT")
+	asset: string // Normalized asset (e.g. "WIN")
 	date: Date
 	buyFills: NotaFill[]
 	sellFills: NotaFill[]

@@ -133,7 +133,7 @@ interface MockTradeOptions {
  */
 const createMockTrade = (options: MockTradeOptions = {}) => ({
 	id: options.id ?? `trade-${Math.random().toString(36).slice(2, 8)}`,
-	asset: options.asset ?? "WINFUT",
+	asset: options.asset ?? "WIN",
 	entryDate: options.entryDate ?? "2026-01-15T12:00:00.000Z",
 	// Use explicit `in` check so that a passed `null` is preserved as `null`
 	pnl: "pnl" in options ? options.pnl : "5000",             // R$50.00 net P&L default
@@ -466,18 +466,18 @@ describe("getCommissionFeeImpact()", () => {
 
 	describe("assetBreakdown", () => {
 		it("should group trades by asset and aggregate totalFees and tradeCount", async () => {
-			// WINFUT: 2 trades, each with R$2.00 in fees → totalFees=R$4.00
+			// WIN: 2 trades, each with R$2.00 in fees → totalFees=R$4.00
 			// WINGUT: 1 trade with R$3.00 in fees → totalFees=R$3.00
 			const mockTrades = [
-				createMockTrade({ asset: "WINFUT", commission: "150", fees: "50", pnl: "5000" }),
-				createMockTrade({ asset: "WINFUT", commission: "150", fees: "50", pnl: "3000" }),
+				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "5000" }),
+				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "3000" }),
 				createMockTrade({ asset: "WINGUT", commission: "250", fees: "50", pnl: "2000" }),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WINFUT")
+			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WIN")
 			const wingut = result.data!.assetBreakdown.find((a) => a.asset === "WINGUT")
 
 			expect(winfut).toBeDefined()
@@ -491,43 +491,43 @@ describe("getCommissionFeeImpact()", () => {
 
 		it("should sort assetBreakdown descending by totalFees", async () => {
 			// MINI: totalFees=R$1.00 (lower)
-			// WINFUT: totalFees=R$4.00 (higher) — should appear first
+			// WIN: totalFees=R$4.00 (higher) — should appear first
 			const mockTrades = [
 				createMockTrade({ asset: "MINI", commission: "100", fees: "0", pnl: "1000" }),
-				createMockTrade({ asset: "WINFUT", commission: "200", fees: "200", pnl: "5000" }),
+				createMockTrade({ asset: "WIN", commission: "200", fees: "200", pnl: "5000" }),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			expect(result.data!.assetBreakdown[0].asset).toBe("WINFUT")
+			expect(result.data!.assetBreakdown[0].asset).toBe("WIN")
 			expect(result.data!.assetBreakdown[1].asset).toBe("MINI")
 		})
 
 		it("should compute avgFeePerTrade within each asset group", async () => {
-			// WINFUT: 2 trades, totalFees=R$4.00 → avg=R$2.00
+			// WIN: 2 trades, totalFees=R$4.00 → avg=R$2.00
 			const mockTrades = [
-				createMockTrade({ asset: "WINFUT", commission: "150", fees: "50", pnl: "5000" }),
-				createMockTrade({ asset: "WINFUT", commission: "150", fees: "50", pnl: "3000" }),
+				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "5000" }),
+				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "3000" }),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WINFUT")
+			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WIN")
 			expect(winfut!.avgFeePerTrade).toBeCloseTo(2.0)
 		})
 
 		it("should include an asset entry even when its fees are zero", async () => {
 			// A trade with zero fees still appears in the asset breakdown with tradeCount=1
 			const mockTrades = [
-				createMockTrade({ asset: "WINFUT", commission: "0", fees: "0", pnl: "5000" }),
+				createMockTrade({ asset: "WIN", commission: "0", fees: "0", pnl: "5000" }),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WINFUT")
+			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WIN")
 			expect(winfut).toBeDefined()
 			expect(winfut!.totalFees).toBe(0)
 			expect(winfut!.tradeCount).toBe(1)
@@ -535,15 +535,15 @@ describe("getCommissionFeeImpact()", () => {
 
 		it("should handle a single asset with multiple trades across different months", async () => {
 			const mockTrades = [
-				createMockTrade({ asset: "WINFUT", commission: "100", fees: "0", entryDate: "2026-01-10T12:00:00.000Z", pnl: "5000" }),
-				createMockTrade({ asset: "WINFUT", commission: "100", fees: "0", entryDate: "2026-02-10T12:00:00.000Z", pnl: "3000" }),
-				createMockTrade({ asset: "WINFUT", commission: "100", fees: "0", entryDate: "2026-03-10T12:00:00.000Z", pnl: "2000" }),
+				createMockTrade({ asset: "WIN", commission: "100", fees: "0", entryDate: "2026-01-10T12:00:00.000Z", pnl: "5000" }),
+				createMockTrade({ asset: "WIN", commission: "100", fees: "0", entryDate: "2026-02-10T12:00:00.000Z", pnl: "3000" }),
+				createMockTrade({ asset: "WIN", commission: "100", fees: "0", entryDate: "2026-03-10T12:00:00.000Z", pnl: "2000" }),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WINFUT")
+			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WIN")
 			expect(winfut!.tradeCount).toBe(3)
 			expect(winfut!.totalFees).toBeCloseTo(3.0) // 3 × R$1.00
 		})

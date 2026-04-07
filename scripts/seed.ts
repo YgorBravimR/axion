@@ -15,8 +15,8 @@ import bcrypt from "bcryptjs"
  *
  * B3 Trading Hours: 09:00-17:55 (São Paulo, UTC-3)
  * Asset P&L Calculations (per point per contract):
- * - WINFUT: R$0.20/pt (tick_size=5, tick_value=R$1.00/tick = 100 cents)
- * - WDOFUT: R$10.00/pt (tick_size=0.5, tick_value=R$5.00/tick = 500 cents)
+ * - WIN: R$0.20/pt (tick_size=5, tick_value=R$1.00/tick = 100 cents)
+ * - WDO: R$10.00/pt (tick_size=0.5, tick_value=R$5.00/tick = 500 cents)
  *
  * Date Range: November 1, 2025 to January 31, 2026
  */
@@ -26,8 +26,8 @@ const ADMIN_PASSWORD = "Admin123!"
 const SALT_ROUNDS = 12
 
 // Asset P&L multipliers (per point per contract)
-const WINFUT_PER_POINT = 0.20 // R$0.20 per point per contract
-const WDOFUT_PER_POINT = 10.0 // R$10.00 per point per contract
+const WIN_PER_POINT = 0.20 // R$0.20 per point per contract
+const WDO_PER_POINT = 10.0 // R$10.00 per point per contract
 
 // Helper to calculate P&L based on asset
 const calculatePnl = (
@@ -37,7 +37,7 @@ const calculatePnl = (
 	exitPrice: number,
 	size: number
 ): number => {
-	const pointsPerContract = asset === "WINFUT" ? WINFUT_PER_POINT : WDOFUT_PER_POINT
+	const pointsPerContract = asset === "WIN" ? WIN_PER_POINT : WDO_PER_POINT
 	const priceDiff = direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
 	return Math.round(priceDiff * size * pointsPerContract * 100) / 100
 }
@@ -223,12 +223,12 @@ const runSeed = async () => {
 	const typeMap = new Map(assetTypes.map((t) => [t.code, t.id]))
 
 	// tick_value is stored in cents per tick (1 tick = tickSize points)
-	// WINFUT: R$0.20/pt × 5 pts/tick = R$1.00/tick = 100 cents
-	// WDOFUT: R$10.00/pt × 0.5 pts/tick = R$5.00/tick = 500 cents
+	// WIN: R$0.20/pt × 5 pts/tick = R$1.00/tick = 100 cents
+	// WDO: R$10.00/pt × 0.5 pts/tick = R$5.00/tick = 500 cents
 	await sql`
 		INSERT INTO assets (id, symbol, name, asset_type_id, tick_size, tick_value, currency, multiplier, is_active) VALUES
-			(gen_random_uuid(), 'WINFUT', 'Mini Índice Bovespa', ${typeMap.get("FUTURE_INDEX")}, 5, 100, 'BRL', 1, true),
-			(gen_random_uuid(), 'WDOFUT', 'Mini Dólar', ${typeMap.get("FUTURE_FX")}, 0.5, 500, 'BRL', 1, true)
+			(gen_random_uuid(), 'WIN', 'Mini Índice Bovespa', ${typeMap.get("FUTURE_INDEX")}, 5, 100, 'BRL', 1, true),
+			(gen_random_uuid(), 'WDO', 'Mini Dólar', ${typeMap.get("FUTURE_FX")}, 0.5, 500, 'BRL', 1, true)
 		ON CONFLICT (symbol) DO UPDATE SET name = EXCLUDED.name, tick_size = EXCLUDED.tick_size, tick_value = EXCLUDED.tick_value
 	`
 	console.log("✅ Assets seeded")
@@ -245,22 +245,22 @@ const runSeed = async () => {
 	// Personal account - enable both assets with standard fees
 	await sql`
 		INSERT INTO account_assets (id, account_id, asset_id, is_enabled, commission_override, fees_override) VALUES
-			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WINFUT")}, true, 30, 5),
-			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WDOFUT")}, true, 30, 5)
+			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WIN")}, true, 30, 5),
+			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WDO")}, true, 30, 5)
 	`
 
 	// Prop account - enable both assets with slightly lower fees
 	await sql`
 		INSERT INTO account_assets (id, account_id, asset_id, is_enabled, commission_override, fees_override) VALUES
-			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WINFUT")}, true, 25, 4),
-			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WDOFUT")}, true, 25, 4)
+			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WIN")}, true, 25, 4),
+			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WDO")}, true, 25, 4)
 	`
 
 	// Demo account - enable both assets with zero fees
 	await sql`
 		INSERT INTO account_assets (id, account_id, asset_id, is_enabled, commission_override, fees_override) VALUES
-			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WINFUT")}, true, 0, 0),
-			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WDOFUT")}, true, 0, 0)
+			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WIN")}, true, 0, 0),
+			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WDO")}, true, 0, 0)
 	`
 	console.log("✅ Account assets seeded")
 
@@ -377,258 +377,258 @@ const runSeed = async () => {
 	const timeframeMap = new Map(timeframes.map((t) => [t.code, t.id]))
 
 	// Comprehensive trades from Nov 2025 to Jan 2026
-	// P&L calculated using: WINFUT = R$0.20/pt/contract, WDOFUT = R$10/pt/contract
+	// P&L calculated using: WIN = R$0.20/pt/contract, WDO = R$10/pt/contract
 	// const personalTrades = [
 	// 	// ========== NOVEMBER 2025 ==========
 	// 	// Nov 3 (Mon) - First day of month, cautious start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-03 12:15:00+00", exit: "2025-11-03 13:45:00+00", entryP: 125000, exitP: 125350, size: 4, sl: 124800, tp: 125600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Opening breakout, conservative size" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "15m", entry: "2025-11-03 14:00:00+00", exit: "2025-11-03 16:30:00+00", entryP: 5120, exitP: 5095, size: 2, sl: 5135, tp: 5080, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness on risk-on day" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-03 12:15:00+00", exit: "2025-11-03 13:45:00+00", entryP: 125000, exitP: 125350, size: 4, sl: 124800, tp: 125600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Opening breakout, conservative size" },
+	// 	{ asset: "WDO", dir: "short", tf: "15m", entry: "2025-11-03 14:00:00+00", exit: "2025-11-03 16:30:00+00", entryP: 5120, exitP: 5095, size: 2, sl: 5135, tp: 5080, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness on risk-on day" },
 
 	// 	// Nov 4 (Tue) - Good momentum day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-04 12:10:00+00", exit: "2025-11-04 14:30:00+00", entryP: 125500, exitP: 126200, size: 6, sl: 125200, tp: 126500, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend continuation" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-04 15:00:00+00", exit: "2025-11-04 17:30:00+00", entryP: 126100, exitP: 126800, size: 5, sl: 125800, tp: 127000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon momentum" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-04 12:10:00+00", exit: "2025-11-04 14:30:00+00", entryP: 125500, exitP: 126200, size: 6, sl: 125200, tp: 126500, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend continuation" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-04 15:00:00+00", exit: "2025-11-04 17:30:00+00", entryP: 126100, exitP: 126800, size: 5, sl: 125800, tp: 127000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon momentum" },
 
 	// 	// Nov 5 (Wed) - Choppy day, small loss
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-05 12:30:00+00", exit: "2025-11-05 13:15:00+00", entryP: 126500, exitP: 126700, size: 4, sl: 126750, tp: 126100, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed reversal attempt" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-05 14:00:00+00", exit: "2025-11-05 15:30:00+00", entryP: 5085, exitP: 5100, size: 3, sl: 5070, tp: 5115, outcome: "win", plan: true, strat: "SR", thoughts: "Bounce from support" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-05 12:30:00+00", exit: "2025-11-05 13:15:00+00", entryP: 126500, exitP: 126700, size: 4, sl: 126750, tp: 126100, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed reversal attempt" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-05 14:00:00+00", exit: "2025-11-05 15:30:00+00", entryP: 5085, exitP: 5100, size: 3, sl: 5070, tp: 5115, outcome: "win", plan: true, strat: "SR", thoughts: "Bounce from support" },
 
 	// 	// Nov 6 (Thu) - Big winning day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-06 12:15:00+00", exit: "2025-11-06 15:00:00+00", entryP: 126800, exitP: 128000, size: 8, sl: 126500, tp: 128200, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong gap up continuation" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-06 13:00:00+00", exit: "2025-11-06 15:30:00+00", entryP: 5095, exitP: 5050, size: 4, sl: 5110, tp: 5040, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse with index rally" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-06 16:00:00+00", exit: "2025-11-06 18:30:00+00", entryP: 127900, exitP: 128500, size: 5, sl: 127600, tp: 128700, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon continuation" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-06 12:15:00+00", exit: "2025-11-06 15:00:00+00", entryP: 126800, exitP: 128000, size: 8, sl: 126500, tp: 128200, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong gap up continuation" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-06 13:00:00+00", exit: "2025-11-06 15:30:00+00", entryP: 5095, exitP: 5050, size: 4, sl: 5110, tp: 5040, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse with index rally" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-06 16:00:00+00", exit: "2025-11-06 18:30:00+00", entryP: 127900, exitP: 128500, size: 5, sl: 127600, tp: 128700, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon continuation" },
 
 	// 	// Nov 7 (Fri) - Profit taking day
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-07 12:30:00+00", exit: "2025-11-07 14:00:00+00", entryP: 128200, exitP: 127600, size: 5, sl: 128450, tp: 127400, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of week profit taking" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-07 14:30:00+00", exit: "2025-11-07 16:00:00+00", entryP: 5055, exitP: 5080, size: 3, sl: 5040, tp: 5095, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Dollar bounce" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-07 12:30:00+00", exit: "2025-11-07 14:00:00+00", entryP: 128200, exitP: 127600, size: 5, sl: 128450, tp: 127400, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of week profit taking" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-07 14:30:00+00", exit: "2025-11-07 16:00:00+00", entryP: 5055, exitP: 5080, size: 3, sl: 5040, tp: 5095, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Dollar bounce" },
 
 	// 	// Nov 10 (Mon) - DRAWDOWN DAY (overconfidence after good week)
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-10 12:10:00+00", exit: "2025-11-10 12:40:00+00", entryP: 127800, exitP: 127200, size: 10, sl: 127500, tp: 128500, outcome: "loss", plan: false, strat: null, thoughts: "Too aggressive on open" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-10 13:00:00+00", exit: "2025-11-10 13:30:00+00", entryP: 127300, exitP: 126800, size: 8, sl: 127000, tp: 127800, outcome: "loss", plan: false, strat: null, thoughts: "Revenge trade - doubled down" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-10 14:00:00+00", exit: "2025-11-10 14:45:00+00", entryP: 5100, exitP: 5130, size: 5, sl: 5120, tp: 5070, outcome: "loss", plan: false, strat: null, thoughts: "Wrong direction on dollar" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-10 12:10:00+00", exit: "2025-11-10 12:40:00+00", entryP: 127800, exitP: 127200, size: 10, sl: 127500, tp: 128500, outcome: "loss", plan: false, strat: null, thoughts: "Too aggressive on open" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-10 13:00:00+00", exit: "2025-11-10 13:30:00+00", entryP: 127300, exitP: 126800, size: 8, sl: 127000, tp: 127800, outcome: "loss", plan: false, strat: null, thoughts: "Revenge trade - doubled down" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-10 14:00:00+00", exit: "2025-11-10 14:45:00+00", entryP: 5100, exitP: 5130, size: 5, sl: 5120, tp: 5070, outcome: "loss", plan: false, strat: null, thoughts: "Wrong direction on dollar" },
 
 	// 	// Nov 11 (Tue) - Recovery attempt
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-11 13:00:00+00", exit: "2025-11-11 16:00:00+00", entryP: 126500, exitP: 127500, size: 5, sl: 126100, tp: 127800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Patient entry, waited for confirmation" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-11 14:30:00+00", exit: "2025-11-11 16:30:00+00", entryP: 5140, exitP: 5110, size: 3, sl: 5155, tp: 5100, outcome: "win", plan: true, strat: "TREND", thoughts: "Following dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-11 13:00:00+00", exit: "2025-11-11 16:00:00+00", entryP: 126500, exitP: 127500, size: 5, sl: 126100, tp: 127800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Patient entry, waited for confirmation" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-11 14:30:00+00", exit: "2025-11-11 16:30:00+00", entryP: 5140, exitP: 5110, size: 3, sl: 5155, tp: 5100, outcome: "win", plan: true, strat: "TREND", thoughts: "Following dollar weakness" },
 
 	// 	// Nov 12 (Wed) - Solid day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-12 12:20:00+00", exit: "2025-11-12 14:00:00+00", entryP: 127600, exitP: 128100, size: 5, sl: 127350, tp: 128300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Morning momentum" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-12 15:30:00+00", exit: "2025-11-12 17:00:00+00", entryP: 128300, exitP: 127800, size: 4, sl: 128550, tp: 127600, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day mean reversion" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-12 12:20:00+00", exit: "2025-11-12 14:00:00+00", entryP: 127600, exitP: 128100, size: 5, sl: 127350, tp: 128300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Morning momentum" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-12 15:30:00+00", exit: "2025-11-12 17:00:00+00", entryP: 128300, exitP: 127800, size: 4, sl: 128550, tp: 127600, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day mean reversion" },
 
 	// 	// Nov 13 (Thu) - Volatile day
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-13 12:15:00+00", exit: "2025-11-13 13:30:00+00", entryP: 5100, exitP: 5070, size: 4, sl: 5085, tp: 5130, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "False breakout on dollar" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-13 14:00:00+00", exit: "2025-11-13 17:00:00+00", entryP: 127500, exitP: 128200, size: 6, sl: 127200, tp: 128400, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-13 12:15:00+00", exit: "2025-11-13 13:30:00+00", entryP: 5100, exitP: 5070, size: 4, sl: 5085, tp: 5130, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "False breakout on dollar" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-13 14:00:00+00", exit: "2025-11-13 17:00:00+00", entryP: 127500, exitP: 128200, size: 6, sl: 127200, tp: 128400, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Nov 14 (Fri) - Good close to week
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-14 12:10:00+00", exit: "2025-11-14 14:30:00+00", entryP: 128000, exitP: 128600, size: 5, sl: 127750, tp: 128800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-14 13:00:00+00", exit: "2025-11-14 15:00:00+00", entryP: 5080, exitP: 5050, size: 3, sl: 5095, tp: 5040, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-14 12:10:00+00", exit: "2025-11-14 14:30:00+00", entryP: 128000, exitP: 128600, size: 5, sl: 127750, tp: 128800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-14 13:00:00+00", exit: "2025-11-14 15:00:00+00", entryP: 5080, exitP: 5050, size: 3, sl: 5095, tp: 5040, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Nov 17 (Mon) - Start of new week
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-17 12:30:00+00", exit: "2025-11-17 14:00:00+00", entryP: 128500, exitP: 128100, size: 5, sl: 128700, tp: 127900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Gap fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-17 15:00:00+00", exit: "2025-11-17 18:00:00+00", entryP: 128000, exitP: 128700, size: 6, sl: 127700, tp: 129000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon rally" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-17 12:30:00+00", exit: "2025-11-17 14:00:00+00", entryP: 128500, exitP: 128100, size: 5, sl: 128700, tp: 127900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Gap fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-17 15:00:00+00", exit: "2025-11-17 18:00:00+00", entryP: 128000, exitP: 128700, size: 6, sl: 127700, tp: 129000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon rally" },
 
 	// 	// Nov 18 (Tue) - Small day
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-18 12:15:00+00", exit: "2025-11-18 14:00:00+00", entryP: 5040, exitP: 5065, size: 3, sl: 5025, tp: 5075, outcome: "win", plan: true, strat: "SR", thoughts: "Support bounce on dollar" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-18 12:15:00+00", exit: "2025-11-18 14:00:00+00", entryP: 5040, exitP: 5065, size: 3, sl: 5025, tp: 5075, outcome: "win", plan: true, strat: "SR", thoughts: "Support bounce on dollar" },
 
 	// 	// Nov 19 (Wed) - Choppy day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-19 12:20:00+00", exit: "2025-11-19 13:00:00+00", entryP: 128600, exitP: 128400, size: 4, sl: 128400, tp: 128900, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-19 14:30:00+00", exit: "2025-11-19 16:00:00+00", entryP: 128300, exitP: 127900, size: 4, sl: 128500, tp: 127700, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Mean reversion worked" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-19 12:20:00+00", exit: "2025-11-19 13:00:00+00", entryP: 128600, exitP: 128400, size: 4, sl: 128400, tp: 128900, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-19 14:30:00+00", exit: "2025-11-19 16:00:00+00", entryP: 128300, exitP: 127900, size: 4, sl: 128500, tp: 127700, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Mean reversion worked" },
 
 	// 	// Nov 20 (Thu) - Consciência Negra (B3 open, state holiday)
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-20 12:30:00+00", exit: "2025-11-20 16:00:00+00", entryP: 127800, exitP: 128500, size: 5, sl: 127500, tp: 128700, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume trend day" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-20 12:30:00+00", exit: "2025-11-20 16:00:00+00", entryP: 127800, exitP: 128500, size: 5, sl: 127500, tp: 128700, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume trend day" },
 
 	// 	// Nov 21 (Fri) - End of week
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-21 12:15:00+00", exit: "2025-11-21 14:30:00+00", entryP: 128400, exitP: 129000, size: 5, sl: 128150, tp: 129200, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-21 13:00:00+00", exit: "2025-11-21 15:30:00+00", entryP: 5070, exitP: 5040, size: 3, sl: 5085, tp: 5030, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-21 12:15:00+00", exit: "2025-11-21 14:30:00+00", entryP: 128400, exitP: 129000, size: 5, sl: 128150, tp: 129200, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-21 13:00:00+00", exit: "2025-11-21 15:30:00+00", entryP: 5070, exitP: 5040, size: 3, sl: 5085, tp: 5030, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Nov 24 (Mon) - Week start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-24 12:10:00+00", exit: "2025-11-24 13:30:00+00", entryP: 129000, exitP: 129400, size: 5, sl: 128800, tp: 129600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Gap up continuation" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-24 15:00:00+00", exit: "2025-11-24 16:30:00+00", entryP: 129500, exitP: 129100, size: 4, sl: 129700, tp: 128900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Afternoon pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-24 12:10:00+00", exit: "2025-11-24 13:30:00+00", entryP: 129000, exitP: 129400, size: 5, sl: 128800, tp: 129600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Gap up continuation" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-24 15:00:00+00", exit: "2025-11-24 16:30:00+00", entryP: 129500, exitP: 129100, size: 4, sl: 129700, tp: 128900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Afternoon pullback" },
 
 	// 	// Nov 25 (Tue) - Mixed day
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-25 12:30:00+00", exit: "2025-11-25 13:45:00+00", entryP: 5030, exitP: 5010, size: 3, sl: 5015, tp: 5055, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed dollar breakout" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-25 14:30:00+00", exit: "2025-11-25 17:30:00+00", entryP: 129000, exitP: 129700, size: 6, sl: 128700, tp: 129900, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-25 12:30:00+00", exit: "2025-11-25 13:45:00+00", entryP: 5030, exitP: 5010, size: 3, sl: 5015, tp: 5055, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed dollar breakout" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-25 14:30:00+00", exit: "2025-11-25 17:30:00+00", entryP: 129000, exitP: 129700, size: 6, sl: 128700, tp: 129900, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Nov 26 (Wed) - Solid day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-26 12:15:00+00", exit: "2025-11-26 14:00:00+00", entryP: 129600, exitP: 130100, size: 5, sl: 129400, tp: 130300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-26 13:30:00+00", exit: "2025-11-26 15:30:00+00", entryP: 5015, exitP: 4985, size: 3, sl: 5030, tp: 4975, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-26 12:15:00+00", exit: "2025-11-26 14:00:00+00", entryP: 129600, exitP: 130100, size: 5, sl: 129400, tp: 130300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-26 13:30:00+00", exit: "2025-11-26 15:30:00+00", entryP: 5015, exitP: 4985, size: 3, sl: 5030, tp: 4975, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Nov 27 (Thu) - THANKSGIVING (US closed, B3 open but low volume)
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-27 13:00:00+00", exit: "2025-11-27 17:00:00+00", entryP: 130000, exitP: 130400, size: 4, sl: 129750, tp: 130600, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume day, small size" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-27 13:00:00+00", exit: "2025-11-27 17:00:00+00", entryP: 130000, exitP: 130400, size: 4, sl: 129750, tp: 130600, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume day, small size" },
 
 	// 	// Nov 28 (Fri) - End of November
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-28 12:30:00+00", exit: "2025-11-28 14:00:00+00", entryP: 130500, exitP: 130000, size: 5, sl: 130700, tp: 129800, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Month-end profit taking" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-28 14:30:00+00", exit: "2025-11-28 16:30:00+00", entryP: 4970, exitP: 5000, size: 3, sl: 4955, tp: 5015, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Dollar bounce" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-28 12:30:00+00", exit: "2025-11-28 14:00:00+00", entryP: 130500, exitP: 130000, size: 5, sl: 130700, tp: 129800, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Month-end profit taking" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-28 14:30:00+00", exit: "2025-11-28 16:30:00+00", entryP: 4970, exitP: 5000, size: 3, sl: 4955, tp: 5015, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Dollar bounce" },
 
 	// 	// ========== DECEMBER 2025 ==========
 	// 	// Dec 1 (Mon) - New month start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-01 12:10:00+00", exit: "2025-12-01 14:30:00+00", entryP: 129800, exitP: 130500, size: 6, sl: 129550, tp: 130700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "December rally start" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-01 13:00:00+00", exit: "2025-12-01 15:00:00+00", entryP: 5010, exitP: 4980, size: 3, sl: 5025, tp: 4970, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-01 12:10:00+00", exit: "2025-12-01 14:30:00+00", entryP: 129800, exitP: 130500, size: 6, sl: 129550, tp: 130700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "December rally start" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-01 13:00:00+00", exit: "2025-12-01 15:00:00+00", entryP: 5010, exitP: 4980, size: 3, sl: 5025, tp: 4970, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 2 (Tue) - Continuation
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-02 12:30:00+00", exit: "2025-12-02 16:00:00+00", entryP: 130400, exitP: 131200, size: 6, sl: 130100, tp: 131400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong uptrend" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-02 17:00:00+00", exit: "2025-12-02 18:30:00+00", entryP: 131300, exitP: 130900, size: 4, sl: 131500, tp: 130700, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-02 12:30:00+00", exit: "2025-12-02 16:00:00+00", entryP: 130400, exitP: 131200, size: 6, sl: 130100, tp: 131400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong uptrend" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-02 17:00:00+00", exit: "2025-12-02 18:30:00+00", entryP: 131300, exitP: 130900, size: 4, sl: 131500, tp: 130700, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day pullback" },
 
 	// 	// Dec 3 (Wed) - Choppy
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-12-03 12:15:00+00", exit: "2025-12-03 13:30:00+00", entryP: 4975, exitP: 4950, size: 3, sl: 4960, tp: 5000, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "False breakout" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-03 14:30:00+00", exit: "2025-12-03 16:00:00+00", entryP: 130800, exitP: 131200, size: 5, sl: 130550, tp: 131400, outcome: "win", plan: true, strat: "SR", thoughts: "Support bounce" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-12-03 12:15:00+00", exit: "2025-12-03 13:30:00+00", entryP: 4975, exitP: 4950, size: 3, sl: 4960, tp: 5000, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "False breakout" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-03 14:30:00+00", exit: "2025-12-03 16:00:00+00", entryP: 130800, exitP: 131200, size: 5, sl: 130550, tp: 131400, outcome: "win", plan: true, strat: "SR", thoughts: "Support bounce" },
 
 	// 	// Dec 4 (Thu) - BIG WINNING DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-04 12:10:00+00", exit: "2025-12-04 15:00:00+00", entryP: 131000, exitP: 132500, size: 10, sl: 130700, tp: 132700, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong bullish day" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-04 12:30:00+00", exit: "2025-12-04 15:30:00+00", entryP: 4990, exitP: 4920, size: 5, sl: 5010, tp: 4910, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-04 16:00:00+00", exit: "2025-12-04 19:00:00+00", entryP: 132400, exitP: 133000, size: 6, sl: 132100, tp: 133200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon continuation" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-04 12:10:00+00", exit: "2025-12-04 15:00:00+00", entryP: 131000, exitP: 132500, size: 10, sl: 130700, tp: 132700, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong bullish day" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-04 12:30:00+00", exit: "2025-12-04 15:30:00+00", entryP: 4990, exitP: 4920, size: 5, sl: 5010, tp: 4910, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-04 16:00:00+00", exit: "2025-12-04 19:00:00+00", entryP: 132400, exitP: 133000, size: 6, sl: 132100, tp: 133200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon continuation" },
 
 	// 	// Dec 5 (Fri) - Consolidation
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-05 12:30:00+00", exit: "2025-12-05 14:00:00+00", entryP: 133000, exitP: 132500, size: 5, sl: 133200, tp: 132300, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Profit taking" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-05 15:00:00+00", exit: "2025-12-05 16:30:00+00", entryP: 132400, exitP: 132200, size: 4, sl: 132200, tp: 132700, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-05 12:30:00+00", exit: "2025-12-05 14:00:00+00", entryP: 133000, exitP: 132500, size: 5, sl: 133200, tp: 132300, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Profit taking" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-05 15:00:00+00", exit: "2025-12-05 16:30:00+00", entryP: 132400, exitP: 132200, size: 4, sl: 132200, tp: 132700, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
 
 	// 	// Dec 8 (Mon) - Recovery
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-08 12:15:00+00", exit: "2025-12-08 14:30:00+00", entryP: 132000, exitP: 132700, size: 6, sl: 131750, tp: 132900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-08 13:00:00+00", exit: "2025-12-08 15:30:00+00", entryP: 4960, exitP: 4925, size: 3, sl: 4975, tp: 4915, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-08 12:15:00+00", exit: "2025-12-08 14:30:00+00", entryP: 132000, exitP: 132700, size: 6, sl: 131750, tp: 132900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-08 13:00:00+00", exit: "2025-12-08 15:30:00+00", entryP: 4960, exitP: 4925, size: 3, sl: 4975, tp: 4915, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 9 (Tue) - BAD DAY (FOMO)
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-09 12:10:00+00", exit: "2025-12-09 12:45:00+00", entryP: 133000, exitP: 132300, size: 12, sl: 132700, tp: 133500, outcome: "loss", plan: false, strat: null, thoughts: "FOMO on gap up" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-09 13:00:00+00", exit: "2025-12-09 13:30:00+00", entryP: 132200, exitP: 132600, size: 8, sl: 132500, tp: 131800, outcome: "loss", plan: false, strat: null, thoughts: "Revenge trade" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-09 12:10:00+00", exit: "2025-12-09 12:45:00+00", entryP: 133000, exitP: 132300, size: 12, sl: 132700, tp: 133500, outcome: "loss", plan: false, strat: null, thoughts: "FOMO on gap up" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-09 13:00:00+00", exit: "2025-12-09 13:30:00+00", entryP: 132200, exitP: 132600, size: 8, sl: 132500, tp: 131800, outcome: "loss", plan: false, strat: null, thoughts: "Revenge trade" },
 
 	// 	// Dec 10 (Wed) - Recovery
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-10 13:00:00+00", exit: "2025-12-10 17:00:00+00", entryP: 131800, exitP: 132800, size: 5, sl: 131500, tp: 133000, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-10 14:30:00+00", exit: "2025-12-10 16:30:00+00", entryP: 4950, exitP: 4920, size: 3, sl: 4965, tp: 4910, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-10 13:00:00+00", exit: "2025-12-10 17:00:00+00", entryP: 131800, exitP: 132800, size: 5, sl: 131500, tp: 133000, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-10 14:30:00+00", exit: "2025-12-10 16:30:00+00", entryP: 4950, exitP: 4920, size: 3, sl: 4965, tp: 4910, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Dec 11 (Thu) - Solid day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-11 12:20:00+00", exit: "2025-12-11 14:30:00+00", entryP: 132700, exitP: 133300, size: 5, sl: 132450, tp: 133500, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-11 15:30:00+00", exit: "2025-12-11 18:30:00+00", entryP: 133200, exitP: 133800, size: 4, sl: 132950, tp: 134000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-11 12:20:00+00", exit: "2025-12-11 14:30:00+00", entryP: 132700, exitP: 133300, size: 5, sl: 132450, tp: 133500, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-11 15:30:00+00", exit: "2025-12-11 18:30:00+00", entryP: 133200, exitP: 133800, size: 4, sl: 132950, tp: 134000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Dec 12 (Fri) - Good close to week
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-12 12:15:00+00", exit: "2025-12-12 14:00:00+00", entryP: 4915, exitP: 4885, size: 4, sl: 4930, tp: 4875, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-12 14:30:00+00", exit: "2025-12-12 16:30:00+00", entryP: 133600, exitP: 134100, size: 5, sl: 133350, tp: 134300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Afternoon breakout" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-12 12:15:00+00", exit: "2025-12-12 14:00:00+00", entryP: 4915, exitP: 4885, size: 4, sl: 4930, tp: 4875, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-12 14:30:00+00", exit: "2025-12-12 16:30:00+00", entryP: 133600, exitP: 134100, size: 5, sl: 133350, tp: 134300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Afternoon breakout" },
 
 	// 	// Dec 15 (Mon) - Start of holiday week
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-15 12:15:00+00", exit: "2025-12-15 14:00:00+00", entryP: 133800, exitP: 134300, size: 5, sl: 133550, tp: 134500, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong open" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-15 13:30:00+00", exit: "2025-12-15 15:30:00+00", entryP: 4880, exitP: 4855, size: 3, sl: 4895, tp: 4845, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-15 12:15:00+00", exit: "2025-12-15 14:00:00+00", entryP: 133800, exitP: 134300, size: 5, sl: 133550, tp: 134500, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong open" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-15 13:30:00+00", exit: "2025-12-15 15:30:00+00", entryP: 4880, exitP: 4855, size: 3, sl: 4895, tp: 4845, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Dec 16 (Tue) - Volatility
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-16 12:30:00+00", exit: "2025-12-16 13:30:00+00", entryP: 134200, exitP: 134500, size: 5, sl: 134450, tp: 133800, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed reversal" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-16 14:30:00+00", exit: "2025-12-16 17:30:00+00", entryP: 134400, exitP: 135200, size: 6, sl: 134100, tp: 135400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-16 12:30:00+00", exit: "2025-12-16 13:30:00+00", entryP: 134200, exitP: 134500, size: 5, sl: 134450, tp: 133800, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed reversal" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-16 14:30:00+00", exit: "2025-12-16 17:30:00+00", entryP: 134400, exitP: 135200, size: 6, sl: 134100, tp: 135400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
 
 	// 	// Dec 17 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-17 12:10:00+00", exit: "2025-12-17 14:30:00+00", entryP: 135000, exitP: 135600, size: 5, sl: 134750, tp: 135800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-17 13:00:00+00", exit: "2025-12-17 15:00:00+00", entryP: 4850, exitP: 4820, size: 3, sl: 4865, tp: 4810, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-17 12:10:00+00", exit: "2025-12-17 14:30:00+00", entryP: 135000, exitP: 135600, size: 5, sl: 134750, tp: 135800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-17 13:00:00+00", exit: "2025-12-17 15:00:00+00", entryP: 4850, exitP: 4820, size: 3, sl: 4865, tp: 4810, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 18 (Thu) - Small day
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-18 12:30:00+00", exit: "2025-12-18 14:00:00+00", entryP: 135500, exitP: 135100, size: 4, sl: 135700, tp: 134900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Pullback" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-18 12:30:00+00", exit: "2025-12-18 14:00:00+00", entryP: 135500, exitP: 135100, size: 4, sl: 135700, tp: 134900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Pullback" },
 
 	// 	// Dec 19 (Fri) - Pre-holiday
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-19 12:15:00+00", exit: "2025-12-19 14:30:00+00", entryP: 135000, exitP: 135400, size: 4, sl: 134800, tp: 135600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Pre-holiday buying" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-19 13:00:00+00", exit: "2025-12-19 15:00:00+00", entryP: 4830, exitP: 4805, size: 3, sl: 4845, tp: 4795, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weak" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-19 12:15:00+00", exit: "2025-12-19 14:30:00+00", entryP: 135000, exitP: 135400, size: 4, sl: 134800, tp: 135600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Pre-holiday buying" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-19 13:00:00+00", exit: "2025-12-19 15:00:00+00", entryP: 4830, exitP: 4805, size: 3, sl: 4845, tp: 4795, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weak" },
 
 	// 	// Dec 22 (Mon) - Pre-Christmas
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-22 12:30:00+00", exit: "2025-12-22 16:00:00+00", entryP: 135200, exitP: 135800, size: 4, sl: 135000, tp: 136000, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume day" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-22 12:30:00+00", exit: "2025-12-22 16:00:00+00", entryP: 135200, exitP: 135800, size: 4, sl: 135000, tp: 136000, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume day" },
 
 	// 	// Dec 23 (Tue) - Christmas Eve Eve
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-23 12:30:00+00", exit: "2025-12-23 14:00:00+00", entryP: 135700, exitP: 135300, size: 4, sl: 135900, tp: 135100, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Profit taking" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-12-23 13:30:00+00", exit: "2025-12-23 15:00:00+00", entryP: 4800, exitP: 4825, size: 3, sl: 4785, tp: 4840, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Dollar bounce" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-23 12:30:00+00", exit: "2025-12-23 14:00:00+00", entryP: 135700, exitP: 135300, size: 4, sl: 135900, tp: 135100, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Profit taking" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-12-23 13:30:00+00", exit: "2025-12-23 15:00:00+00", entryP: 4800, exitP: 4825, size: 3, sl: 4785, tp: 4840, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Dollar bounce" },
 
 	// 	// Dec 24, 25, 31 - HOLIDAYS (no trades)
 
 	// 	// Dec 26 (Fri) - Post-Christmas
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-26 12:15:00+00", exit: "2025-12-26 14:30:00+00", entryP: 135000, exitP: 135500, size: 4, sl: 134800, tp: 135700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Post-holiday buying" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-26 12:15:00+00", exit: "2025-12-26 14:30:00+00", entryP: 135000, exitP: 135500, size: 4, sl: 134800, tp: 135700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Post-holiday buying" },
 
 	// 	// Dec 29 (Mon) - Year-end
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-29 12:30:00+00", exit: "2025-12-29 16:30:00+00", entryP: 135400, exitP: 136200, size: 5, sl: 135150, tp: 136400, outcome: "win", plan: true, strat: "TREND", thoughts: "Year-end rally" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-29 13:00:00+00", exit: "2025-12-29 15:30:00+00", entryP: 4840, exitP: 4810, size: 3, sl: 4855, tp: 4800, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-29 12:30:00+00", exit: "2025-12-29 16:30:00+00", entryP: 135400, exitP: 136200, size: 5, sl: 135150, tp: 136400, outcome: "win", plan: true, strat: "TREND", thoughts: "Year-end rally" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-29 13:00:00+00", exit: "2025-12-29 15:30:00+00", entryP: 4840, exitP: 4810, size: 3, sl: 4855, tp: 4800, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 30 (Tue) - Last trading day of year
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-30 12:30:00+00", exit: "2025-12-30 14:00:00+00", entryP: 136000, exitP: 135500, size: 4, sl: 136200, tp: 135300, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Year-end profit taking" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-30 15:00:00+00", exit: "2025-12-30 17:00:00+00", entryP: 135400, exitP: 135800, size: 4, sl: 135200, tp: 136000, outcome: "win", plan: true, strat: "SR", thoughts: "Support bounce" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-30 12:30:00+00", exit: "2025-12-30 14:00:00+00", entryP: 136000, exitP: 135500, size: 4, sl: 136200, tp: 135300, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Year-end profit taking" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-30 15:00:00+00", exit: "2025-12-30 17:00:00+00", entryP: 135400, exitP: 135800, size: 4, sl: 135200, tp: 136000, outcome: "win", plan: true, strat: "SR", thoughts: "Support bounce" },
 
 	// 	// ========== JANUARY 2026 ==========
 	// 	// Jan 1 - HOLIDAY (no trades)
 
 	// 	// Jan 2 (Fri) - New Year start, BIG DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-02 12:15:00+00", exit: "2026-01-02 14:45:00+00", entryP: 135500, exitP: 136300, size: 6, sl: 135250, tp: 136500, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "New year momentum" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-02 15:30:00+00", exit: "2026-01-02 18:00:00+00", entryP: 136200, exitP: 137100, size: 8, sl: 135900, tp: 137300, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend day" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-02 13:00:00+00", exit: "2026-01-02 15:30:00+00", entryP: 4820, exitP: 4780, size: 4, sl: 4835, tp: 4770, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness on risk-on" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-02 12:15:00+00", exit: "2026-01-02 14:45:00+00", entryP: 135500, exitP: 136300, size: 6, sl: 135250, tp: 136500, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "New year momentum" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-02 15:30:00+00", exit: "2026-01-02 18:00:00+00", entryP: 136200, exitP: 137100, size: 8, sl: 135900, tp: 137300, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend day" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-02 13:00:00+00", exit: "2026-01-02 15:30:00+00", entryP: 4820, exitP: 4780, size: 4, sl: 4835, tp: 4770, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness on risk-on" },
 
 	// 	// Jan 5 (Mon) - Consolidation
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-05 12:30:00+00", exit: "2026-01-05 13:45:00+00", entryP: 137000, exitP: 137350, size: 5, sl: 137300, tp: 136600, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed fade" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "15m", entry: "2026-01-05 14:00:00+00", exit: "2026-01-05 17:30:00+00", entryP: 4775, exitP: 4810, size: 3, sl: 4760, tp: 4825, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar recovery" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-05 12:30:00+00", exit: "2026-01-05 13:45:00+00", entryP: 137000, exitP: 137350, size: 5, sl: 137300, tp: 136600, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed fade" },
+	// 	{ asset: "WDO", dir: "long", tf: "15m", entry: "2026-01-05 14:00:00+00", exit: "2026-01-05 17:30:00+00", entryP: 4775, exitP: 4810, size: 3, sl: 4760, tp: 4825, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar recovery" },
 
 	// 	// Jan 6 (Tue) - DRAWDOWN DAY (revenge trading)
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-06 12:10:00+00", exit: "2026-01-06 12:35:00+00", entryP: 136800, exitP: 136000, size: 12, sl: 136400, tp: 137400, outcome: "loss", plan: false, strat: null, thoughts: "FOMO on gap down" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-06 12:45:00+00", exit: "2026-01-06 13:10:00+00", entryP: 135900, exitP: 135100, size: 15, sl: 135500, tp: 136500, outcome: "loss", plan: false, strat: null, thoughts: "Revenge trade, doubled down" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-06 13:30:00+00", exit: "2026-01-06 14:00:00+00", entryP: 135200, exitP: 135700, size: 10, sl: 135600, tp: 134600, outcome: "loss", plan: false, strat: null, thoughts: "Another revenge trade" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-06 12:10:00+00", exit: "2026-01-06 12:35:00+00", entryP: 136800, exitP: 136000, size: 12, sl: 136400, tp: 137400, outcome: "loss", plan: false, strat: null, thoughts: "FOMO on gap down" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-06 12:45:00+00", exit: "2026-01-06 13:10:00+00", entryP: 135900, exitP: 135100, size: 15, sl: 135500, tp: 136500, outcome: "loss", plan: false, strat: null, thoughts: "Revenge trade, doubled down" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-06 13:30:00+00", exit: "2026-01-06 14:00:00+00", entryP: 135200, exitP: 135700, size: 10, sl: 135600, tp: 134600, outcome: "loss", plan: false, strat: null, thoughts: "Another revenge trade" },
 
 	// 	// Jan 7 (Wed) - Recovery
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-07 13:00:00+00", exit: "2026-01-07 17:00:00+00", entryP: 134800, exitP: 136200, size: 6, sl: 134400, tp: 136500, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry, waited for confirmation" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-07 14:00:00+00", exit: "2026-01-07 16:30:00+00", entryP: 4850, exitP: 4810, size: 4, sl: 4865, tp: 4800, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-07 13:00:00+00", exit: "2026-01-07 17:00:00+00", entryP: 134800, exitP: 136200, size: 6, sl: 134400, tp: 136500, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry, waited for confirmation" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-07 14:00:00+00", exit: "2026-01-07 16:30:00+00", entryP: 4850, exitP: 4810, size: 4, sl: 4865, tp: 4800, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Jan 8 (Thu) - Consistent
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-08 12:20:00+00", exit: "2026-01-08 14:45:00+00", entryP: 136100, exitP: 136800, size: 5, sl: 135850, tp: 137000, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "15m", entry: "2026-01-08 16:00:00+00", exit: "2026-01-08 18:30:00+00", entryP: 137000, exitP: 136400, size: 5, sl: 137250, tp: 136200, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-08 12:20:00+00", exit: "2026-01-08 14:45:00+00", entryP: 136100, exitP: 136800, size: 5, sl: 135850, tp: 137000, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "15m", entry: "2026-01-08 16:00:00+00", exit: "2026-01-08 18:30:00+00", entryP: 137000, exitP: 136400, size: 5, sl: 137250, tp: 136200, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day pullback" },
 
 	// 	// Jan 9 (Fri) - Mixed
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2026-01-09 12:30:00+00", exit: "2026-01-09 13:15:00+00", entryP: 4800, exitP: 4770, size: 5, sl: 4785, tp: 4830, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Wrong read on dollar" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-09 14:30:00+00", exit: "2026-01-09 16:00:00+00", entryP: 136200, exitP: 136000, size: 6, sl: 136000, tp: 136600, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Stopped on spike" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2026-01-09 12:30:00+00", exit: "2026-01-09 13:15:00+00", entryP: 4800, exitP: 4770, size: 5, sl: 4785, tp: 4830, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Wrong read on dollar" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-09 14:30:00+00", exit: "2026-01-09 16:00:00+00", entryP: 136200, exitP: 136000, size: 6, sl: 136000, tp: 136600, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Stopped on spike" },
 
 	// 	// Jan 12 (Mon) - Good start to week
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-12 12:15:00+00", exit: "2026-01-12 14:30:00+00", entryP: 135800, exitP: 136500, size: 6, sl: 135550, tp: 136700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Morning momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-12 13:00:00+00", exit: "2026-01-12 15:30:00+00", entryP: 4820, exitP: 4780, size: 4, sl: 4835, tp: 4770, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-12 15:30:00+00", exit: "2026-01-12 18:30:00+00", entryP: 136400, exitP: 137200, size: 5, sl: 136150, tp: 137400, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-12 12:15:00+00", exit: "2026-01-12 14:30:00+00", entryP: 135800, exitP: 136500, size: 6, sl: 135550, tp: 136700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Morning momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-12 13:00:00+00", exit: "2026-01-12 15:30:00+00", entryP: 4820, exitP: 4780, size: 4, sl: 4835, tp: 4770, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-12 15:30:00+00", exit: "2026-01-12 18:30:00+00", entryP: 136400, exitP: 137200, size: 5, sl: 136150, tp: 137400, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Jan 13 (Tue) - Mixed
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-13 12:30:00+00", exit: "2026-01-13 13:45:00+00", entryP: 137300, exitP: 136800, size: 5, sl: 137500, tp: 136600, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Quick scalp" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-13 14:30:00+00", exit: "2026-01-13 15:15:00+00", entryP: 136700, exitP: 136400, size: 5, sl: 136450, tp: 137100, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-13 12:30:00+00", exit: "2026-01-13 13:45:00+00", entryP: 137300, exitP: 136800, size: 5, sl: 137500, tp: 136600, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Quick scalp" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-13 14:30:00+00", exit: "2026-01-13 15:15:00+00", entryP: 136700, exitP: 136400, size: 5, sl: 136450, tp: 137100, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
 
 	// 	// Jan 14 (Wed) - BIG WINNING DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-14 12:10:00+00", exit: "2026-01-14 15:00:00+00", entryP: 136500, exitP: 138500, size: 10, sl: 136200, tp: 138700, outcome: "win", plan: true, strat: "TREND", thoughts: "Gap up continuation, A+ setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-14 12:30:00+00", exit: "2026-01-14 15:30:00+00", entryP: 4800, exitP: 4720, size: 6, sl: 4815, tp: 4710, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-14 12:10:00+00", exit: "2026-01-14 15:00:00+00", entryP: 136500, exitP: 138500, size: 10, sl: 136200, tp: 138700, outcome: "win", plan: true, strat: "TREND", thoughts: "Gap up continuation, A+ setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-14 12:30:00+00", exit: "2026-01-14 15:30:00+00", entryP: 4800, exitP: 4720, size: 6, sl: 4815, tp: 4710, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
 
 	// 	// Jan 15 (Thu) - Consolidation
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-15 12:30:00+00", exit: "2026-01-15 13:30:00+00", entryP: 138400, exitP: 138700, size: 4, sl: 138650, tp: 138000, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Counter-trend failed" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-15 14:30:00+00", exit: "2026-01-15 17:00:00+00", entryP: 138600, exitP: 138400, size: 4, sl: 138350, tp: 139000, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Chopped out" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-15 12:30:00+00", exit: "2026-01-15 13:30:00+00", entryP: 138400, exitP: 138700, size: 4, sl: 138650, tp: 138000, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Counter-trend failed" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-15 14:30:00+00", exit: "2026-01-15 17:00:00+00", entryP: 138600, exitP: 138400, size: 4, sl: 138350, tp: 139000, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Chopped out" },
 
 	// 	// Jan 16 (Fri) - Good close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-16 12:20:00+00", exit: "2026-01-16 14:30:00+00", entryP: 138200, exitP: 139000, size: 6, sl: 137950, tp: 139200, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-16 13:00:00+00", exit: "2026-01-16 15:30:00+00", entryP: 4740, exitP: 4700, size: 4, sl: 4755, tp: 4690, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-16 12:20:00+00", exit: "2026-01-16 14:30:00+00", entryP: 138200, exitP: 139000, size: 6, sl: 137950, tp: 139200, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-16 13:00:00+00", exit: "2026-01-16 15:30:00+00", entryP: 4740, exitP: 4700, size: 4, sl: 4755, tp: 4690, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Jan 19 (Mon) - Week start
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-19 13:00:00+00", exit: "2026-01-19 17:00:00+00", entryP: 138800, exitP: 139600, size: 5, sl: 138550, tp: 139800, outcome: "win", plan: true, strat: "TREND", thoughts: "Waited for confirmation" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-19 13:00:00+00", exit: "2026-01-19 17:00:00+00", entryP: 138800, exitP: 139600, size: 5, sl: 138550, tp: 139800, outcome: "win", plan: true, strat: "TREND", thoughts: "Waited for confirmation" },
 
 	// 	// Jan 20 (Tue) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-20 12:30:00+00", exit: "2026-01-20 16:30:00+00", entryP: 139200, exitP: 140200, size: 6, sl: 138900, tp: 140400, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-20 13:30:00+00", exit: "2026-01-20 15:30:00+00", entryP: 4720, exitP: 4685, size: 4, sl: 4735, tp: 4675, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-20 12:30:00+00", exit: "2026-01-20 16:30:00+00", entryP: 139200, exitP: 140200, size: 6, sl: 138900, tp: 140400, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-20 13:30:00+00", exit: "2026-01-20 15:30:00+00", entryP: 4720, exitP: 4685, size: 4, sl: 4735, tp: 4675, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Jan 21 (Wed) - Solid
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-21 12:20:00+00", exit: "2026-01-21 14:00:00+00", entryP: 140000, exitP: 140600, size: 5, sl: 139750, tp: 140800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-21 16:00:00+00", exit: "2026-01-21 17:30:00+00", entryP: 140800, exitP: 140400, size: 4, sl: 141000, tp: 140200, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-21 12:20:00+00", exit: "2026-01-21 14:00:00+00", entryP: 140000, exitP: 140600, size: 5, sl: 139750, tp: 140800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-21 16:00:00+00", exit: "2026-01-21 17:30:00+00", entryP: 140800, exitP: 140400, size: 4, sl: 141000, tp: 140200, outcome: "win", plan: true, strat: "REVERSION", thoughts: "End of day fade" },
 
 	// 	// Jan 22 (Thu) - Mixed
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2026-01-22 12:30:00+00", exit: "2026-01-22 13:15:00+00", entryP: 4680, exitP: 4655, size: 3, sl: 4665, tp: 4705, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Wrong direction" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-22 14:00:00+00", exit: "2026-01-22 17:30:00+00", entryP: 140200, exitP: 140900, size: 5, sl: 139950, tp: 141100, outcome: "win", plan: true, strat: "TREND", thoughts: "Recovered with clean setup" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2026-01-22 12:30:00+00", exit: "2026-01-22 13:15:00+00", entryP: 4680, exitP: 4655, size: 3, sl: 4665, tp: 4705, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Wrong direction" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-22 14:00:00+00", exit: "2026-01-22 17:30:00+00", entryP: 140200, exitP: 140900, size: 5, sl: 139950, tp: 141100, outcome: "win", plan: true, strat: "TREND", thoughts: "Recovered with clean setup" },
 
 	// 	// Jan 23 (Fri) - Strong close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-23 12:15:00+00", exit: "2026-01-23 15:00:00+00", entryP: 140800, exitP: 142000, size: 8, sl: 140550, tp: 142200, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend day" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-23 13:00:00+00", exit: "2026-01-23 15:30:00+00", entryP: 4670, exitP: 4620, size: 5, sl: 4685, tp: 4610, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-23 12:15:00+00", exit: "2026-01-23 15:00:00+00", entryP: 140800, exitP: 142000, size: 8, sl: 140550, tp: 142200, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend day" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-23 13:00:00+00", exit: "2026-01-23 15:30:00+00", entryP: 4670, exitP: 4620, size: 5, sl: 4685, tp: 4610, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Jan 26 (Mon) - New week
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-26 12:15:00+00", exit: "2026-01-26 14:30:00+00", entryP: 141800, exitP: 142400, size: 5, sl: 141550, tp: 142600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-26 15:30:00+00", exit: "2026-01-26 17:00:00+00", entryP: 142500, exitP: 142100, size: 4, sl: 142700, tp: 141900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Afternoon pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-26 12:15:00+00", exit: "2026-01-26 14:30:00+00", entryP: 141800, exitP: 142400, size: 5, sl: 141550, tp: 142600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-26 15:30:00+00", exit: "2026-01-26 17:00:00+00", entryP: 142500, exitP: 142100, size: 4, sl: 142700, tp: 141900, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Afternoon pullback" },
 
 	// 	// Jan 27 (Tue) - Choppy
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2026-01-27 12:30:00+00", exit: "2026-01-27 13:30:00+00", entryP: 4610, exitP: 4580, size: 3, sl: 4595, tp: 4635, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "False breakout" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-27 14:30:00+00", exit: "2026-01-27 17:30:00+00", entryP: 142000, exitP: 142700, size: 5, sl: 141750, tp: 142900, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2026-01-27 12:30:00+00", exit: "2026-01-27 13:30:00+00", entryP: 4610, exitP: 4580, size: 3, sl: 4595, tp: 4635, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "False breakout" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-27 14:30:00+00", exit: "2026-01-27 17:30:00+00", entryP: 142000, exitP: 142700, size: 5, sl: 141750, tp: 142900, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Jan 28 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-28 12:20:00+00", exit: "2026-01-28 14:30:00+00", entryP: 142500, exitP: 143200, size: 6, sl: 142250, tp: 143400, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-28 13:00:00+00", exit: "2026-01-28 15:30:00+00", entryP: 4600, exitP: 4565, size: 4, sl: 4615, tp: 4555, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-28 12:20:00+00", exit: "2026-01-28 14:30:00+00", entryP: 142500, exitP: 143200, size: 6, sl: 142250, tp: 143400, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-28 13:00:00+00", exit: "2026-01-28 15:30:00+00", entryP: 4600, exitP: 4565, size: 4, sl: 4615, tp: 4555, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Jan 29 (Thu) - Mixed
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-29 12:30:00+00", exit: "2026-01-29 13:30:00+00", entryP: 143100, exitP: 143400, size: 5, sl: 143350, tp: 142700, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-29 14:30:00+00", exit: "2026-01-29 18:00:00+00", entryP: 143300, exitP: 144000, size: 5, sl: 143050, tp: 144200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon rally" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-29 12:30:00+00", exit: "2026-01-29 13:30:00+00", entryP: 143100, exitP: 143400, size: 5, sl: 143350, tp: 142700, outcome: "loss", plan: true, strat: "REVERSION", thoughts: "Failed fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-29 14:30:00+00", exit: "2026-01-29 18:00:00+00", entryP: 143300, exitP: 144000, size: 5, sl: 143050, tp: 144200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon rally" },
 
 	// 	// Jan 30 (Fri) - Month end
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-30 12:15:00+00", exit: "2026-01-30 14:30:00+00", entryP: 143800, exitP: 144500, size: 6, sl: 143550, tp: 144700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Month-end rally" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-30 13:00:00+00", exit: "2026-01-30 15:30:00+00", entryP: 4570, exitP: 4530, size: 4, sl: 4585, tp: 4520, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-30 16:30:00+00", exit: "2026-01-30 18:00:00+00", entryP: 144600, exitP: 144200, size: 4, sl: 144800, tp: 144000, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Month-end profit taking" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-30 12:15:00+00", exit: "2026-01-30 14:30:00+00", entryP: 143800, exitP: 144500, size: 6, sl: 143550, tp: 144700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Month-end rally" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-30 13:00:00+00", exit: "2026-01-30 15:30:00+00", entryP: 4570, exitP: 4530, size: 4, sl: 4585, tp: 4520, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-30 16:30:00+00", exit: "2026-01-30 18:00:00+00", entryP: 144600, exitP: 144200, size: 4, sl: 144800, tp: 144000, outcome: "win", plan: true, strat: "REVERSION", thoughts: "Month-end profit taking" },
 	// ]
 
 	// for (const t of personalTrades) {
@@ -668,232 +668,232 @@ const runSeed = async () => {
 	// const propTrades = [
 	// 	// ========== NOVEMBER 2025 ==========
 	// 	// Nov 3 (Mon) - Careful start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-03 12:20:00+00", exit: "2025-11-03 14:30:00+00", entryP: 125000, exitP: 125600, size: 6, sl: 124750, tp: 125800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout with volume" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-03 13:30:00+00", exit: "2025-11-03 15:30:00+00", entryP: 5115, exitP: 5085, size: 4, sl: 5130, tp: 5075, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-03 12:20:00+00", exit: "2025-11-03 14:30:00+00", entryP: 125000, exitP: 125600, size: 6, sl: 124750, tp: 125800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout with volume" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-03 13:30:00+00", exit: "2025-11-03 15:30:00+00", entryP: 5115, exitP: 5085, size: 4, sl: 5130, tp: 5075, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Nov 4 (Tue) - Strong day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-04 12:15:00+00", exit: "2025-11-04 15:00:00+00", entryP: 125500, exitP: 126400, size: 8, sl: 125250, tp: 126600, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong uptrend" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-04 16:00:00+00", exit: "2025-11-04 19:00:00+00", entryP: 126300, exitP: 127000, size: 6, sl: 126050, tp: 127200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon momentum" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-04 12:15:00+00", exit: "2025-11-04 15:00:00+00", entryP: 125500, exitP: 126400, size: 8, sl: 125250, tp: 126600, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong uptrend" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-04 16:00:00+00", exit: "2025-11-04 19:00:00+00", entryP: 126300, exitP: 127000, size: 6, sl: 126050, tp: 127200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon momentum" },
 
 	// 	// Nov 5 (Wed) - Choppy
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-05 12:30:00+00", exit: "2025-11-05 13:30:00+00", entryP: 126800, exitP: 127000, size: 4, sl: 127050, tp: 126400, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-05 14:30:00+00", exit: "2025-11-05 16:00:00+00", entryP: 5080, exitP: 5105, size: 3, sl: 5065, tp: 5115, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar bounce" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-05 12:30:00+00", exit: "2025-11-05 13:30:00+00", entryP: 126800, exitP: 127000, size: 4, sl: 127050, tp: 126400, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-05 14:30:00+00", exit: "2025-11-05 16:00:00+00", entryP: 5080, exitP: 5105, size: 3, sl: 5065, tp: 5115, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar bounce" },
 
 	// 	// Nov 6 (Thu) - BIG DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-06 12:10:00+00", exit: "2025-11-06 15:30:00+00", entryP: 126700, exitP: 128200, size: 10, sl: 126450, tp: 128400, outcome: "win", plan: true, strat: "TREND", thoughts: "Gap and go - perfect setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-06 12:30:00+00", exit: "2025-11-06 15:00:00+00", entryP: 5100, exitP: 5040, size: 5, sl: 5115, tp: 5030, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-06 12:10:00+00", exit: "2025-11-06 15:30:00+00", entryP: 126700, exitP: 128200, size: 10, sl: 126450, tp: 128400, outcome: "win", plan: true, strat: "TREND", thoughts: "Gap and go - perfect setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-06 12:30:00+00", exit: "2025-11-06 15:00:00+00", entryP: 5100, exitP: 5040, size: 5, sl: 5115, tp: 5030, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
 
 	// 	// Nov 7 (Fri) - Profit taking
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-07 12:30:00+00", exit: "2025-11-07 14:00:00+00", entryP: 128000, exitP: 127400, size: 6, sl: 128200, tp: 127200, outcome: "win", plan: true, strat: "SCALP", thoughts: "Quick scalp on profit taking" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-07 12:30:00+00", exit: "2025-11-07 14:00:00+00", entryP: 128000, exitP: 127400, size: 6, sl: 128200, tp: 127200, outcome: "win", plan: true, strat: "SCALP", thoughts: "Quick scalp on profit taking" },
 
 	// 	// Nov 10 (Mon) - Controlled (no revenge like personal)
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-10 13:00:00+00", exit: "2025-11-10 17:00:00+00", entryP: 127200, exitP: 127900, size: 5, sl: 126950, tp: 128100, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry after morning chop" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-10 13:00:00+00", exit: "2025-11-10 17:00:00+00", entryP: 127200, exitP: 127900, size: 5, sl: 126950, tp: 128100, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient entry after morning chop" },
 
 	// 	// Nov 11 (Tue) - Solid
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-11 12:20:00+00", exit: "2025-11-11 14:30:00+00", entryP: 127800, exitP: 128500, size: 6, sl: 127550, tp: 128700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-11 13:30:00+00", exit: "2025-11-11 15:30:00+00", entryP: 5070, exitP: 5040, size: 4, sl: 5085, tp: 5030, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-11 12:20:00+00", exit: "2025-11-11 14:30:00+00", entryP: 127800, exitP: 128500, size: 6, sl: 127550, tp: 128700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-11 13:30:00+00", exit: "2025-11-11 15:30:00+00", entryP: 5070, exitP: 5040, size: 4, sl: 5085, tp: 5030, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Nov 12 (Wed) - Mixed
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-12 12:15:00+00", exit: "2025-11-12 13:15:00+00", entryP: 128400, exitP: 128200, size: 5, sl: 128200, tp: 128700, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-12 14:30:00+00", exit: "2025-11-12 17:30:00+00", entryP: 128100, exitP: 128800, size: 6, sl: 127850, tp: 129000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-12 12:15:00+00", exit: "2025-11-12 13:15:00+00", entryP: 128400, exitP: 128200, size: 5, sl: 128200, tp: 128700, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-12 14:30:00+00", exit: "2025-11-12 17:30:00+00", entryP: 128100, exitP: 128800, size: 6, sl: 127850, tp: 129000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Nov 13 (Thu) - Consistent
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-13 12:30:00+00", exit: "2025-11-13 14:30:00+00", entryP: 5050, exitP: 5020, size: 4, sl: 5065, tp: 5010, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-13 15:00:00+00", exit: "2025-11-13 17:00:00+00", entryP: 128600, exitP: 129100, size: 5, sl: 128350, tp: 129300, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-13 12:30:00+00", exit: "2025-11-13 14:30:00+00", entryP: 5050, exitP: 5020, size: 4, sl: 5065, tp: 5010, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-13 15:00:00+00", exit: "2025-11-13 17:00:00+00", entryP: 128600, exitP: 129100, size: 5, sl: 128350, tp: 129300, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon momentum" },
 
 	// 	// Nov 14 (Fri) - Good week close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-14 12:15:00+00", exit: "2025-11-14 14:30:00+00", entryP: 128900, exitP: 129600, size: 6, sl: 128650, tp: 129800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-14 13:00:00+00", exit: "2025-11-14 15:00:00+00", entryP: 5025, exitP: 4995, size: 4, sl: 5040, tp: 4985, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-14 12:15:00+00", exit: "2025-11-14 14:30:00+00", entryP: 128900, exitP: 129600, size: 6, sl: 128650, tp: 129800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-14 13:00:00+00", exit: "2025-11-14 15:00:00+00", entryP: 5025, exitP: 4995, size: 4, sl: 5040, tp: 4985, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Nov 17 (Mon) - New week
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-17 12:30:00+00", exit: "2025-11-17 16:30:00+00", entryP: 129400, exitP: 130200, size: 6, sl: 129150, tp: 130400, outcome: "win", plan: true, strat: "TREND", thoughts: "Monday trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-17 12:30:00+00", exit: "2025-11-17 16:30:00+00", entryP: 129400, exitP: 130200, size: 6, sl: 129150, tp: 130400, outcome: "win", plan: true, strat: "TREND", thoughts: "Monday trend" },
 
 	// 	// Nov 18 (Tue) - Small day
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-18 12:30:00+00", exit: "2025-11-18 14:00:00+00", entryP: 130100, exitP: 129700, size: 4, sl: 130300, tp: 129500, outcome: "win", plan: true, strat: "SCALP", thoughts: "Quick scalp" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-18 12:30:00+00", exit: "2025-11-18 14:00:00+00", entryP: 130100, exitP: 129700, size: 4, sl: 130300, tp: 129500, outcome: "win", plan: true, strat: "SCALP", thoughts: "Quick scalp" },
 
 	// 	// Nov 19 (Wed) - Choppy
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-19 12:20:00+00", exit: "2025-11-19 13:15:00+00", entryP: 5000, exitP: 4975, size: 3, sl: 4985, tp: 5025, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-19 14:30:00+00", exit: "2025-11-19 16:30:00+00", entryP: 129600, exitP: 130100, size: 5, sl: 129350, tp: 130300, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-19 12:20:00+00", exit: "2025-11-19 13:15:00+00", entryP: 5000, exitP: 4975, size: 3, sl: 4985, tp: 5025, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-19 14:30:00+00", exit: "2025-11-19 16:30:00+00", entryP: 129600, exitP: 130100, size: 5, sl: 129350, tp: 130300, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
 
 	// 	// Nov 20 (Thu) - Solid
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-20 12:15:00+00", exit: "2025-11-20 14:30:00+00", entryP: 130000, exitP: 130600, size: 5, sl: 129750, tp: 130800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-20 13:00:00+00", exit: "2025-11-20 15:30:00+00", entryP: 4990, exitP: 4960, size: 4, sl: 5005, tp: 4950, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-20 12:15:00+00", exit: "2025-11-20 14:30:00+00", entryP: 130000, exitP: 130600, size: 5, sl: 129750, tp: 130800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-20 13:00:00+00", exit: "2025-11-20 15:30:00+00", entryP: 4990, exitP: 4960, size: 4, sl: 5005, tp: 4950, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Nov 21 (Fri) - Good close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-21 12:20:00+00", exit: "2025-11-21 15:00:00+00", entryP: 130400, exitP: 131200, size: 6, sl: 130150, tp: 131400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-21 12:20:00+00", exit: "2025-11-21 15:00:00+00", entryP: 130400, exitP: 131200, size: 6, sl: 130150, tp: 131400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
 
 	// 	// Nov 24 (Mon) - Week start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-24 12:15:00+00", exit: "2025-11-24 14:30:00+00", entryP: 131000, exitP: 131600, size: 5, sl: 130750, tp: 131800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Gap continuation" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-24 16:00:00+00", exit: "2025-11-24 17:30:00+00", entryP: 131700, exitP: 131300, size: 4, sl: 131900, tp: 131100, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-24 12:15:00+00", exit: "2025-11-24 14:30:00+00", entryP: 131000, exitP: 131600, size: 5, sl: 130750, tp: 131800, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Gap continuation" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-24 16:00:00+00", exit: "2025-11-24 17:30:00+00", entryP: 131700, exitP: 131300, size: 4, sl: 131900, tp: 131100, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day pullback" },
 
 	// 	// Nov 25 (Tue) - Mixed
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-11-25 12:30:00+00", exit: "2025-11-25 14:30:00+00", entryP: 4960, exitP: 4930, size: 4, sl: 4975, tp: 4920, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-11-25 12:30:00+00", exit: "2025-11-25 14:30:00+00", entryP: 4960, exitP: 4930, size: 4, sl: 4975, tp: 4920, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Nov 26 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-11-26 12:30:00+00", exit: "2025-11-26 17:00:00+00", entryP: 131200, exitP: 132200, size: 6, sl: 130950, tp: 132400, outcome: "win", plan: true, strat: "TREND", thoughts: "All day trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-11-26 12:30:00+00", exit: "2025-11-26 17:00:00+00", entryP: 131200, exitP: 132200, size: 6, sl: 130950, tp: 132400, outcome: "win", plan: true, strat: "TREND", thoughts: "All day trend" },
 
 	// 	// Nov 27 (Thu) - Low volume
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-11-27 13:00:00+00", exit: "2025-11-27 15:30:00+00", entryP: 132000, exitP: 132400, size: 4, sl: 131800, tp: 132600, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume, small size" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-11-27 13:00:00+00", exit: "2025-11-27 15:30:00+00", entryP: 132000, exitP: 132400, size: 4, sl: 131800, tp: 132600, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume, small size" },
 
 	// 	// Nov 28 (Fri) - Month end
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-11-28 12:30:00+00", exit: "2025-11-28 14:30:00+00", entryP: 132300, exitP: 131800, size: 5, sl: 132500, tp: 131600, outcome: "win", plan: true, strat: "SCALP", thoughts: "Month-end profit taking" },
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2025-11-28 14:00:00+00", exit: "2025-11-28 16:00:00+00", entryP: 4925, exitP: 4955, size: 3, sl: 4910, tp: 4970, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar bounce" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-11-28 12:30:00+00", exit: "2025-11-28 14:30:00+00", entryP: 132300, exitP: 131800, size: 5, sl: 132500, tp: 131600, outcome: "win", plan: true, strat: "SCALP", thoughts: "Month-end profit taking" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2025-11-28 14:00:00+00", exit: "2025-11-28 16:00:00+00", entryP: 4925, exitP: 4955, size: 3, sl: 4910, tp: 4970, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar bounce" },
 
 	// 	// ========== DECEMBER 2025 ==========
 	// 	// Dec 1 (Mon) - Strong start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-01 12:15:00+00", exit: "2025-12-01 15:00:00+00", entryP: 131800, exitP: 132800, size: 8, sl: 131550, tp: 133000, outcome: "win", plan: true, strat: "TREND", thoughts: "December rally" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-01 12:30:00+00", exit: "2025-12-01 15:30:00+00", entryP: 4970, exitP: 4920, size: 5, sl: 4985, tp: 4910, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-01 12:15:00+00", exit: "2025-12-01 15:00:00+00", entryP: 131800, exitP: 132800, size: 8, sl: 131550, tp: 133000, outcome: "win", plan: true, strat: "TREND", thoughts: "December rally" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-01 12:30:00+00", exit: "2025-12-01 15:30:00+00", entryP: 4970, exitP: 4920, size: 5, sl: 4985, tp: 4910, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Dec 2 (Tue) - Continuation
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-02 12:30:00+00", exit: "2025-12-02 17:00:00+00", entryP: 132600, exitP: 133600, size: 6, sl: 132350, tp: 133800, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong uptrend" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-02 12:30:00+00", exit: "2025-12-02 17:00:00+00", entryP: 132600, exitP: 133600, size: 6, sl: 132350, tp: 133800, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong uptrend" },
 
 	// 	// Dec 3 (Wed) - Mixed
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-03 12:30:00+00", exit: "2025-12-03 13:30:00+00", entryP: 133500, exitP: 133700, size: 4, sl: 133750, tp: 133100, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-03 14:30:00+00", exit: "2025-12-03 16:30:00+00", entryP: 133600, exitP: 134100, size: 5, sl: 133350, tp: 134300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Afternoon breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-03 12:30:00+00", exit: "2025-12-03 13:30:00+00", entryP: 133500, exitP: 133700, size: 4, sl: 133750, tp: 133100, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-03 14:30:00+00", exit: "2025-12-03 16:30:00+00", entryP: 133600, exitP: 134100, size: 5, sl: 133350, tp: 134300, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Afternoon breakout" },
 
 	// 	// Dec 4 (Thu) - BIG DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-04 12:10:00+00", exit: "2025-12-04 16:00:00+00", entryP: 133800, exitP: 135500, size: 12, sl: 133550, tp: 135700, outcome: "win", plan: true, strat: "TREND", thoughts: "Perfect trend day - A+ setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-04 12:30:00+00", exit: "2025-12-04 15:30:00+00", entryP: 4920, exitP: 4850, size: 6, sl: 4935, tp: 4840, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-04 12:10:00+00", exit: "2025-12-04 16:00:00+00", entryP: 133800, exitP: 135500, size: 12, sl: 133550, tp: 135700, outcome: "win", plan: true, strat: "TREND", thoughts: "Perfect trend day - A+ setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-04 12:30:00+00", exit: "2025-12-04 15:30:00+00", entryP: 4920, exitP: 4850, size: 6, sl: 4935, tp: 4840, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
 
 	// 	// Dec 5 (Fri) - Consolidation
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-05 12:30:00+00", exit: "2025-12-05 14:30:00+00", entryP: 135400, exitP: 134800, size: 5, sl: 135600, tp: 134600, outcome: "win", plan: true, strat: "SCALP", thoughts: "Profit taking scalp" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-05 12:30:00+00", exit: "2025-12-05 14:30:00+00", entryP: 135400, exitP: 134800, size: 5, sl: 135600, tp: 134600, outcome: "win", plan: true, strat: "SCALP", thoughts: "Profit taking scalp" },
 
 	// 	// Dec 8 (Mon) - Week start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-08 12:20:00+00", exit: "2025-12-08 15:00:00+00", entryP: 134600, exitP: 135400, size: 6, sl: 134350, tp: 135600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-08 13:00:00+00", exit: "2025-12-08 15:30:00+00", entryP: 4870, exitP: 4835, size: 4, sl: 4885, tp: 4825, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-08 12:20:00+00", exit: "2025-12-08 15:00:00+00", entryP: 134600, exitP: 135400, size: 6, sl: 134350, tp: 135600, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-08 13:00:00+00", exit: "2025-12-08 15:30:00+00", entryP: 4870, exitP: 4835, size: 4, sl: 4885, tp: 4825, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 9 (Tue) - Small loss (controlled, unlike personal)
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-09 12:15:00+00", exit: "2025-12-09 13:00:00+00", entryP: 135300, exitP: 135000, size: 5, sl: 135050, tp: 135600, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout - quick exit" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-09 14:30:00+00", exit: "2025-12-09 17:30:00+00", entryP: 134800, exitP: 135500, size: 5, sl: 134550, tp: 135700, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-09 12:15:00+00", exit: "2025-12-09 13:00:00+00", entryP: 135300, exitP: 135000, size: 5, sl: 135050, tp: 135600, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout - quick exit" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-09 14:30:00+00", exit: "2025-12-09 17:30:00+00", entryP: 134800, exitP: 135500, size: 5, sl: 134550, tp: 135700, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
 
 	// 	// Dec 10 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-10 12:20:00+00", exit: "2025-12-10 15:00:00+00", entryP: 135400, exitP: 136200, size: 6, sl: 135150, tp: 136400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-10 13:00:00+00", exit: "2025-12-10 15:30:00+00", entryP: 4850, exitP: 4815, size: 4, sl: 4865, tp: 4805, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-10 12:20:00+00", exit: "2025-12-10 15:00:00+00", entryP: 135400, exitP: 136200, size: 6, sl: 135150, tp: 136400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-10 13:00:00+00", exit: "2025-12-10 15:30:00+00", entryP: 4850, exitP: 4815, size: 4, sl: 4865, tp: 4805, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Dec 11 (Thu) - Consistent
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-11 12:15:00+00", exit: "2025-12-11 14:30:00+00", entryP: 136000, exitP: 136700, size: 6, sl: 135750, tp: 136900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-11 15:30:00+00", exit: "2025-12-11 18:30:00+00", entryP: 136600, exitP: 137200, size: 5, sl: 136350, tp: 137400, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-11 12:15:00+00", exit: "2025-12-11 14:30:00+00", entryP: 136000, exitP: 136700, size: 6, sl: 135750, tp: 136900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean setup" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-11 15:30:00+00", exit: "2025-12-11 18:30:00+00", entryP: 136600, exitP: 137200, size: 5, sl: 136350, tp: 137400, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Dec 12 (Fri) - Good close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-12 12:20:00+00", exit: "2025-12-12 15:00:00+00", entryP: 137000, exitP: 137800, size: 6, sl: 136750, tp: 138000, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-12 12:30:00+00", exit: "2025-12-12 15:30:00+00", entryP: 4820, exitP: 4780, size: 4, sl: 4835, tp: 4770, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-12 12:20:00+00", exit: "2025-12-12 15:00:00+00", entryP: 137000, exitP: 137800, size: 6, sl: 136750, tp: 138000, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-12 12:30:00+00", exit: "2025-12-12 15:30:00+00", entryP: 4820, exitP: 4780, size: 4, sl: 4835, tp: 4770, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 15 (Mon) - Holiday week start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-15 12:15:00+00", exit: "2025-12-15 14:30:00+00", entryP: 137600, exitP: 138200, size: 5, sl: 137350, tp: 138400, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong open" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-15 12:15:00+00", exit: "2025-12-15 14:30:00+00", entryP: 137600, exitP: 138200, size: 5, sl: 137350, tp: 138400, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Strong open" },
 
 	// 	// Dec 16 (Tue) - Mixed
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-16 12:30:00+00", exit: "2025-12-16 13:30:00+00", entryP: 138100, exitP: 138350, size: 4, sl: 138400, tp: 137700, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-16 14:30:00+00", exit: "2025-12-16 17:30:00+00", entryP: 138300, exitP: 139000, size: 5, sl: 138050, tp: 139200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-16 12:30:00+00", exit: "2025-12-16 13:30:00+00", entryP: 138100, exitP: 138350, size: 4, sl: 138400, tp: 137700, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-16 14:30:00+00", exit: "2025-12-16 17:30:00+00", entryP: 138300, exitP: 139000, size: 5, sl: 138050, tp: 139200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Dec 17 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-17 12:15:00+00", exit: "2025-12-17 15:00:00+00", entryP: 138800, exitP: 139600, size: 6, sl: 138550, tp: 139800, outcome: "win", plan: true, strat: "TREND", thoughts: "Continuation" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-17 12:30:00+00", exit: "2025-12-17 15:30:00+00", entryP: 4790, exitP: 4750, size: 4, sl: 4805, tp: 4740, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-17 12:15:00+00", exit: "2025-12-17 15:00:00+00", entryP: 138800, exitP: 139600, size: 6, sl: 138550, tp: 139800, outcome: "win", plan: true, strat: "TREND", thoughts: "Continuation" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-17 12:30:00+00", exit: "2025-12-17 15:30:00+00", entryP: 4790, exitP: 4750, size: 4, sl: 4805, tp: 4740, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Dec 18 (Thu) - Small day
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-18 12:30:00+00", exit: "2025-12-18 14:30:00+00", entryP: 139500, exitP: 139000, size: 4, sl: 139700, tp: 138800, outcome: "win", plan: true, strat: "SCALP", thoughts: "Pullback scalp" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-18 12:30:00+00", exit: "2025-12-18 14:30:00+00", entryP: 139500, exitP: 139000, size: 4, sl: 139700, tp: 138800, outcome: "win", plan: true, strat: "SCALP", thoughts: "Pullback scalp" },
 
 	// 	// Dec 19 (Fri) - Pre-holiday
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-19 12:20:00+00", exit: "2025-12-19 14:30:00+00", entryP: 139000, exitP: 139500, size: 4, sl: 138800, tp: 139700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Pre-holiday buying" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-19 12:20:00+00", exit: "2025-12-19 14:30:00+00", entryP: 139000, exitP: 139500, size: 4, sl: 138800, tp: 139700, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Pre-holiday buying" },
 
 	// 	// Dec 22 (Mon) - Pre-Christmas
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-22 12:30:00+00", exit: "2025-12-22 17:00:00+00", entryP: 139300, exitP: 140000, size: 4, sl: 139100, tp: 140200, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume trend" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-22 12:30:00+00", exit: "2025-12-22 17:00:00+00", entryP: 139300, exitP: 140000, size: 4, sl: 139100, tp: 140200, outcome: "win", plan: true, strat: "TREND", thoughts: "Low volume trend" },
 
 	// 	// Dec 23 (Tue) - Eve Eve
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-23 12:30:00+00", exit: "2025-12-23 14:30:00+00", entryP: 139900, exitP: 139400, size: 4, sl: 140100, tp: 139200, outcome: "win", plan: true, strat: "SCALP", thoughts: "Profit taking" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-23 12:30:00+00", exit: "2025-12-23 14:30:00+00", entryP: 139900, exitP: 139400, size: 4, sl: 140100, tp: 139200, outcome: "win", plan: true, strat: "SCALP", thoughts: "Profit taking" },
 
 	// 	// Dec 26 (Fri) - Post-Christmas
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2025-12-26 12:20:00+00", exit: "2025-12-26 14:30:00+00", entryP: 139200, exitP: 139700, size: 4, sl: 139000, tp: 139900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Post-holiday buying" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2025-12-26 12:20:00+00", exit: "2025-12-26 14:30:00+00", entryP: 139200, exitP: 139700, size: 4, sl: 139000, tp: 139900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Post-holiday buying" },
 
 	// 	// Dec 29 (Mon) - Year end
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2025-12-29 12:30:00+00", exit: "2025-12-29 17:00:00+00", entryP: 139600, exitP: 140600, size: 5, sl: 139350, tp: 140800, outcome: "win", plan: true, strat: "TREND", thoughts: "Year-end rally" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2025-12-29 13:00:00+00", exit: "2025-12-29 15:30:00+00", entryP: 4750, exitP: 4715, size: 4, sl: 4765, tp: 4705, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2025-12-29 12:30:00+00", exit: "2025-12-29 17:00:00+00", entryP: 139600, exitP: 140600, size: 5, sl: 139350, tp: 140800, outcome: "win", plan: true, strat: "TREND", thoughts: "Year-end rally" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2025-12-29 13:00:00+00", exit: "2025-12-29 15:30:00+00", entryP: 4750, exitP: 4715, size: 4, sl: 4765, tp: 4705, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Dec 30 (Tue) - Last day
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2025-12-30 12:30:00+00", exit: "2025-12-30 14:30:00+00", entryP: 140500, exitP: 140000, size: 4, sl: 140700, tp: 139800, outcome: "win", plan: true, strat: "SCALP", thoughts: "Year-end profit taking" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2025-12-30 12:30:00+00", exit: "2025-12-30 14:30:00+00", entryP: 140500, exitP: 140000, size: 4, sl: 140700, tp: 139800, outcome: "win", plan: true, strat: "SCALP", thoughts: "Year-end profit taking" },
 
 	// 	// ========== JANUARY 2026 ==========
 	// 	// Jan 2 (Fri) - New Year start
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-02 12:15:00+00", exit: "2026-01-02 15:00:00+00", entryP: 140200, exitP: 141200, size: 8, sl: 139950, tp: 141400, outcome: "win", plan: true, strat: "TREND", thoughts: "New year rally" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-02 12:30:00+00", exit: "2026-01-02 15:30:00+00", entryP: 4720, exitP: 4670, size: 5, sl: 4735, tp: 4660, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-02 16:00:00+00", exit: "2026-01-02 19:00:00+00", entryP: 141100, exitP: 141800, size: 6, sl: 140850, tp: 142000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon continuation" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-02 12:15:00+00", exit: "2026-01-02 15:00:00+00", entryP: 140200, exitP: 141200, size: 8, sl: 139950, tp: 141400, outcome: "win", plan: true, strat: "TREND", thoughts: "New year rally" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-02 12:30:00+00", exit: "2026-01-02 15:30:00+00", entryP: 4720, exitP: 4670, size: 5, sl: 4735, tp: 4660, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-02 16:00:00+00", exit: "2026-01-02 19:00:00+00", entryP: 141100, exitP: 141800, size: 6, sl: 140850, tp: 142000, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon continuation" },
 
 	// 	// Jan 5 (Mon) - Consolidation
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-05 12:30:00+00", exit: "2026-01-05 13:45:00+00", entryP: 141700, exitP: 142000, size: 4, sl: 141950, tp: 141300, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-05 14:30:00+00", exit: "2026-01-05 17:30:00+00", entryP: 141900, exitP: 142500, size: 5, sl: 141650, tp: 142700, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-05 12:30:00+00", exit: "2026-01-05 13:45:00+00", entryP: 141700, exitP: 142000, size: 4, sl: 141950, tp: 141300, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-05 14:30:00+00", exit: "2026-01-05 17:30:00+00", entryP: 141900, exitP: 142500, size: 5, sl: 141650, tp: 142700, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
 
 	// 	// Jan 6 (Tue) - Controlled (no revenge like personal)
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-06 12:30:00+00", exit: "2026-01-06 13:15:00+00", entryP: 142200, exitP: 141800, size: 5, sl: 141950, tp: 142600, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout - stopped out" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-06 14:30:00+00", exit: "2026-01-06 18:00:00+00", entryP: 141600, exitP: 142400, size: 5, sl: 141350, tp: 142600, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient recovery" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-06 12:30:00+00", exit: "2026-01-06 13:15:00+00", entryP: 142200, exitP: 141800, size: 5, sl: 141950, tp: 142600, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout - stopped out" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-06 14:30:00+00", exit: "2026-01-06 18:00:00+00", entryP: 141600, exitP: 142400, size: 5, sl: 141350, tp: 142600, outcome: "win", plan: true, strat: "TREND", thoughts: "Patient recovery" },
 
 	// 	// Jan 7 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-07 12:20:00+00", exit: "2026-01-07 15:00:00+00", entryP: 142300, exitP: 143200, size: 6, sl: 142050, tp: 143400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-07 12:30:00+00", exit: "2026-01-07 15:30:00+00", entryP: 4680, exitP: 4640, size: 4, sl: 4695, tp: 4630, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-07 12:20:00+00", exit: "2026-01-07 15:00:00+00", entryP: 142300, exitP: 143200, size: 6, sl: 142050, tp: 143400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-07 12:30:00+00", exit: "2026-01-07 15:30:00+00", entryP: 4680, exitP: 4640, size: 4, sl: 4695, tp: 4630, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Jan 8 (Thu) - Consistent
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-08 12:15:00+00", exit: "2026-01-08 14:30:00+00", entryP: 143000, exitP: 143700, size: 6, sl: 142750, tp: 143900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-08 16:00:00+00", exit: "2026-01-08 17:30:00+00", entryP: 143800, exitP: 143400, size: 4, sl: 144000, tp: 143200, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-08 12:15:00+00", exit: "2026-01-08 14:30:00+00", entryP: 143000, exitP: 143700, size: 6, sl: 142750, tp: 143900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Clean breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-08 16:00:00+00", exit: "2026-01-08 17:30:00+00", entryP: 143800, exitP: 143400, size: 4, sl: 144000, tp: 143200, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day pullback" },
 
 	// 	// Jan 9 (Fri) - Mixed
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2026-01-09 12:30:00+00", exit: "2026-01-09 13:30:00+00", entryP: 4635, exitP: 4610, size: 3, sl: 4620, tp: 4660, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Wrong direction" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-09 14:30:00+00", exit: "2026-01-09 16:30:00+00", entryP: 143200, exitP: 143700, size: 5, sl: 142950, tp: 143900, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2026-01-09 12:30:00+00", exit: "2026-01-09 13:30:00+00", entryP: 4635, exitP: 4610, size: 3, sl: 4620, tp: 4660, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Wrong direction" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-09 14:30:00+00", exit: "2026-01-09 16:30:00+00", entryP: 143200, exitP: 143700, size: 5, sl: 142950, tp: 143900, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
 
 	// 	// Jan 12 (Mon) - BIG DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-12 12:15:00+00", exit: "2026-01-12 15:30:00+00", entryP: 143500, exitP: 145000, size: 10, sl: 143250, tp: 145200, outcome: "win", plan: true, strat: "TREND", thoughts: "Perfect trend day" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-12 12:30:00+00", exit: "2026-01-12 15:30:00+00", entryP: 4630, exitP: 4560, size: 6, sl: 4645, tp: 4550, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-12 12:15:00+00", exit: "2026-01-12 15:30:00+00", entryP: 143500, exitP: 145000, size: 10, sl: 143250, tp: 145200, outcome: "win", plan: true, strat: "TREND", thoughts: "Perfect trend day" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-12 12:30:00+00", exit: "2026-01-12 15:30:00+00", entryP: 4630, exitP: 4560, size: 6, sl: 4645, tp: 4550, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
 
 	// 	// Jan 13 (Tue) - Mixed
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-13 12:30:00+00", exit: "2026-01-13 14:00:00+00", entryP: 145000, exitP: 144400, size: 5, sl: 145200, tp: 144200, outcome: "win", plan: true, strat: "SCALP", thoughts: "Quick scalp" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-13 15:00:00+00", exit: "2026-01-13 15:45:00+00", entryP: 144300, exitP: 144000, size: 4, sl: 144050, tp: 144700, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-13 12:30:00+00", exit: "2026-01-13 14:00:00+00", entryP: 145000, exitP: 144400, size: 5, sl: 145200, tp: 144200, outcome: "win", plan: true, strat: "SCALP", thoughts: "Quick scalp" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-13 15:00:00+00", exit: "2026-01-13 15:45:00+00", entryP: 144300, exitP: 144000, size: 4, sl: 144050, tp: 144700, outcome: "loss", plan: true, strat: "BREAKOUT", thoughts: "Failed breakout" },
 
 	// 	// Jan 14 (Wed) - HUGE DAY
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-14 12:10:00+00", exit: "2026-01-14 16:00:00+00", entryP: 144200, exitP: 146500, size: 12, sl: 143950, tp: 146700, outcome: "win", plan: true, strat: "TREND", thoughts: "Gap up continuation - A+ setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-14 12:30:00+00", exit: "2026-01-14 16:00:00+00", entryP: 4580, exitP: 4490, size: 8, sl: 4595, tp: 4480, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-14 12:10:00+00", exit: "2026-01-14 16:00:00+00", entryP: 144200, exitP: 146500, size: 12, sl: 143950, tp: 146700, outcome: "win", plan: true, strat: "TREND", thoughts: "Gap up continuation - A+ setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-14 12:30:00+00", exit: "2026-01-14 16:00:00+00", entryP: 4580, exitP: 4490, size: 8, sl: 4595, tp: 4480, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
 
 	// 	// Jan 15 (Thu) - Small loss
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-15 12:30:00+00", exit: "2026-01-15 13:30:00+00", entryP: 146400, exitP: 146700, size: 4, sl: 146650, tp: 146000, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-15 14:30:00+00", exit: "2026-01-15 17:30:00+00", entryP: 146600, exitP: 147000, size: 4, sl: 146350, tp: 147200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-15 12:30:00+00", exit: "2026-01-15 13:30:00+00", entryP: 146400, exitP: 146700, size: 4, sl: 146650, tp: 146000, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-15 14:30:00+00", exit: "2026-01-15 17:30:00+00", entryP: 146600, exitP: 147000, size: 4, sl: 146350, tp: 147200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon recovery" },
 
 	// 	// Jan 16 (Fri) - Good close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-16 12:20:00+00", exit: "2026-01-16 15:00:00+00", entryP: 146800, exitP: 147800, size: 6, sl: 146550, tp: 148000, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong momentum" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-16 12:30:00+00", exit: "2026-01-16 15:30:00+00", entryP: 4510, exitP: 4465, size: 4, sl: 4525, tp: 4455, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-16 12:20:00+00", exit: "2026-01-16 15:00:00+00", entryP: 146800, exitP: 147800, size: 6, sl: 146550, tp: 148000, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong momentum" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-16 12:30:00+00", exit: "2026-01-16 15:30:00+00", entryP: 4510, exitP: 4465, size: 4, sl: 4525, tp: 4455, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 
 	// 	// Jan 19 (Mon) - Week start
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-19 12:30:00+00", exit: "2026-01-19 17:00:00+00", entryP: 147500, exitP: 148500, size: 5, sl: 147250, tp: 148700, outcome: "win", plan: true, strat: "TREND", thoughts: "Waited for confirmation" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-19 12:30:00+00", exit: "2026-01-19 17:00:00+00", entryP: 147500, exitP: 148500, size: 5, sl: 147250, tp: 148700, outcome: "win", plan: true, strat: "TREND", thoughts: "Waited for confirmation" },
 
 	// 	// Jan 20 (Tue) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-20 12:20:00+00", exit: "2026-01-20 15:00:00+00", entryP: 148300, exitP: 149200, size: 6, sl: 148050, tp: 149400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-20 12:30:00+00", exit: "2026-01-20 15:30:00+00", entryP: 4480, exitP: 4435, size: 4, sl: 4495, tp: 4425, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-20 12:20:00+00", exit: "2026-01-20 15:00:00+00", entryP: 148300, exitP: 149200, size: 6, sl: 148050, tp: 149400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-20 12:30:00+00", exit: "2026-01-20 15:30:00+00", entryP: 4480, exitP: 4435, size: 4, sl: 4495, tp: 4425, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Jan 21 (Wed) - Solid
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-21 12:15:00+00", exit: "2026-01-21 14:30:00+00", entryP: 149000, exitP: 149700, size: 5, sl: 148750, tp: 149900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-21 16:00:00+00", exit: "2026-01-21 17:30:00+00", entryP: 149800, exitP: 149400, size: 4, sl: 150000, tp: 149200, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-21 12:15:00+00", exit: "2026-01-21 14:30:00+00", entryP: 149000, exitP: 149700, size: 5, sl: 148750, tp: 149900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-21 16:00:00+00", exit: "2026-01-21 17:30:00+00", entryP: 149800, exitP: 149400, size: 4, sl: 150000, tp: 149200, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day fade" },
 
 	// 	// Jan 22 (Thu) - Mixed
-	// 	{ asset: "WDOFUT", dir: "long", tf: "5m", entry: "2026-01-22 12:30:00+00", exit: "2026-01-22 13:15:00+00", entryP: 4430, exitP: 4455, size: 3, sl: 4415, tp: 4455, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Dollar bounce" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-22 14:30:00+00", exit: "2026-01-22 18:00:00+00", entryP: 149200, exitP: 150000, size: 5, sl: 148950, tp: 150200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon rally" },
+	// 	{ asset: "WDO", dir: "long", tf: "5m", entry: "2026-01-22 12:30:00+00", exit: "2026-01-22 13:15:00+00", entryP: 4430, exitP: 4455, size: 3, sl: 4415, tp: 4455, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Dollar bounce" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-22 14:30:00+00", exit: "2026-01-22 18:00:00+00", entryP: 149200, exitP: 150000, size: 5, sl: 148950, tp: 150200, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon rally" },
 
 	// 	// Jan 23 (Fri) - Strong close
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-23 12:15:00+00", exit: "2026-01-23 15:30:00+00", entryP: 149800, exitP: 151200, size: 8, sl: 149550, tp: 151400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend day" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-23 12:30:00+00", exit: "2026-01-23 15:30:00+00", entryP: 4450, exitP: 4390, size: 5, sl: 4465, tp: 4380, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-23 12:15:00+00", exit: "2026-01-23 15:30:00+00", entryP: 149800, exitP: 151200, size: 8, sl: 149550, tp: 151400, outcome: "win", plan: true, strat: "TREND", thoughts: "Strong trend day" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-23 12:30:00+00", exit: "2026-01-23 15:30:00+00", entryP: 4450, exitP: 4390, size: 5, sl: 4465, tp: 4380, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar collapse" },
 
 	// 	// Jan 26 (Mon) - New week
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-26 12:15:00+00", exit: "2026-01-26 14:30:00+00", entryP: 151000, exitP: 151700, size: 5, sl: 150750, tp: 151900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-26 12:15:00+00", exit: "2026-01-26 14:30:00+00", entryP: 151000, exitP: 151700, size: 5, sl: 150750, tp: 151900, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Monday momentum" },
 
 	// 	// Jan 27 (Tue) - Mixed
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-27 12:30:00+00", exit: "2026-01-27 13:30:00+00", entryP: 151600, exitP: 151900, size: 4, sl: 151850, tp: 151200, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
-	// 	{ asset: "WINFUT", dir: "long", tf: "15m", entry: "2026-01-27 14:30:00+00", exit: "2026-01-27 18:00:00+00", entryP: 151800, exitP: 152600, size: 5, sl: 151550, tp: 152800, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-27 12:30:00+00", exit: "2026-01-27 13:30:00+00", entryP: 151600, exitP: 151900, size: 4, sl: 151850, tp: 151200, outcome: "loss", plan: true, strat: "SCALP", thoughts: "Failed fade" },
+	// 	{ asset: "WIN", dir: "long", tf: "15m", entry: "2026-01-27 14:30:00+00", exit: "2026-01-27 18:00:00+00", entryP: 151800, exitP: 152600, size: 5, sl: 151550, tp: 152800, outcome: "win", plan: true, strat: "TREND", thoughts: "Afternoon trend" },
 
 	// 	// Jan 28 (Wed) - Good day
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-28 12:20:00+00", exit: "2026-01-28 15:00:00+00", entryP: 152400, exitP: 153300, size: 6, sl: 152150, tp: 153500, outcome: "win", plan: true, strat: "TREND", thoughts: "Clean setup" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-28 12:30:00+00", exit: "2026-01-28 15:30:00+00", entryP: 4400, exitP: 4355, size: 4, sl: 4415, tp: 4345, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-28 12:20:00+00", exit: "2026-01-28 15:00:00+00", entryP: 152400, exitP: 153300, size: 6, sl: 152150, tp: 153500, outcome: "win", plan: true, strat: "TREND", thoughts: "Clean setup" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-28 12:30:00+00", exit: "2026-01-28 15:30:00+00", entryP: 4400, exitP: 4355, size: 4, sl: 4415, tp: 4345, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar selloff" },
 
 	// 	// Jan 29 (Thu) - Solid
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-29 12:15:00+00", exit: "2026-01-29 14:30:00+00", entryP: 153100, exitP: 153800, size: 5, sl: 152850, tp: 154000, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
-	// 	{ asset: "WINFUT", dir: "short", tf: "5m", entry: "2026-01-29 16:00:00+00", exit: "2026-01-29 17:30:00+00", entryP: 153900, exitP: 153500, size: 4, sl: 154100, tp: 153300, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day pullback" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-29 12:15:00+00", exit: "2026-01-29 14:30:00+00", entryP: 153100, exitP: 153800, size: 5, sl: 152850, tp: 154000, outcome: "win", plan: true, strat: "BREAKOUT", thoughts: "Continuation" },
+	// 	{ asset: "WIN", dir: "short", tf: "5m", entry: "2026-01-29 16:00:00+00", exit: "2026-01-29 17:30:00+00", entryP: 153900, exitP: 153500, size: 4, sl: 154100, tp: 153300, outcome: "win", plan: true, strat: "SCALP", thoughts: "End of day pullback" },
 
 	// 	// Jan 30 (Fri) - Month end
-	// 	{ asset: "WINFUT", dir: "long", tf: "5m", entry: "2026-01-30 12:15:00+00", exit: "2026-01-30 15:00:00+00", entryP: 153600, exitP: 154500, size: 6, sl: 153350, tp: 154700, outcome: "win", plan: true, strat: "TREND", thoughts: "Month-end rally" },
-	// 	{ asset: "WDOFUT", dir: "short", tf: "5m", entry: "2026-01-30 12:30:00+00", exit: "2026-01-30 15:30:00+00", entryP: 4365, exitP: 4320, size: 4, sl: 4380, tp: 4310, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
+	// 	{ asset: "WIN", dir: "long", tf: "5m", entry: "2026-01-30 12:15:00+00", exit: "2026-01-30 15:00:00+00", entryP: 153600, exitP: 154500, size: 6, sl: 153350, tp: 154700, outcome: "win", plan: true, strat: "TREND", thoughts: "Month-end rally" },
+	// 	{ asset: "WDO", dir: "short", tf: "5m", entry: "2026-01-30 12:30:00+00", exit: "2026-01-30 15:30:00+00", entryP: 4365, exitP: 4320, size: 4, sl: 4380, tp: 4310, outcome: "win", plan: true, strat: "TREND", thoughts: "Dollar weakness" },
 	// ]
 
 	// for (const t of propTrades) {

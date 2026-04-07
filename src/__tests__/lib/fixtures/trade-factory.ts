@@ -1,7 +1,7 @@
 /**
  * Test fixture factory for `TradeForSimulation`.
  *
- * Creates realistic WINFUT (B3 mini-index futures) trades:
+ * Creates realistic WIN (B3 mini-index futures) trades:
  *   - tickSize  = 5  (5 points per tick)
  *   - tickValue = 100 (100 cents = R$1.00 per tick per contract)
  *   - Entry prices in the 125000–135000 range
@@ -15,7 +15,7 @@
 
 import type { TradeForSimulation } from "@/types/risk-simulation"
 
-/** WINFUT-specific asset constants used across all fixtures */
+/** WIN-specific asset constants used across all fixtures */
 const WINFUT_TICK_SIZE = 5
 const WINFUT_TICK_VALUE = 100 // cents per tick per contract (R$1.00)
 const WINFUT_COMMISSION = 50 // cents per execution (R$0.50)
@@ -52,7 +52,7 @@ const resetTradeIdCounter = () => {
 }
 
 /**
- * Creates a WINFUT long win trade.
+ * Creates a WIN long win trade.
  *
  * Default: entry=128000, exit=128100 (+100 points = +20 ticks), SL=127900 (20 ticks)
  * 1 contract × 20 ticks × R$1 = R$20 gross profit (2000 cents)
@@ -70,7 +70,7 @@ const createWinTrade = (overrides: TradeOverrides = {}): TradeForSimulation => {
 		id,
 		entryDate,
 		exitDate: overrides.exitDate ?? new Date("2026-01-06T09:30:00-03:00"),
-		asset: overrides.asset ?? "WINFUT",
+		asset: overrides.asset ?? "WIN",
 		direction,
 		entryPrice,
 		exitPrice,
@@ -88,7 +88,7 @@ const createWinTrade = (overrides: TradeOverrides = {}): TradeForSimulation => {
 }
 
 /**
- * Creates a WINFUT long loss trade.
+ * Creates a WIN long loss trade.
  *
  * Default: entry=128000, exit=127900 (-100 points = -20 ticks), SL=127900 (20 ticks)
  * 1 contract × (-20 ticks) × R$1 = -R$20 gross P&L (-2000 cents net)
@@ -106,7 +106,7 @@ const createLossTrade = (overrides: TradeOverrides = {}): TradeForSimulation => 
 		id,
 		entryDate,
 		exitDate: overrides.exitDate ?? new Date("2026-01-06T09:30:00-03:00"),
-		asset: overrides.asset ?? "WINFUT",
+		asset: overrides.asset ?? "WIN",
 		direction,
 		entryPrice,
 		exitPrice,
@@ -124,7 +124,7 @@ const createLossTrade = (overrides: TradeOverrides = {}): TradeForSimulation => 
 }
 
 /**
- * Creates a WINFUT trade with no stop loss.
+ * Creates a WIN trade with no stop loss.
  *
  * Used to verify "skipped_no_sl" behaviour.
  */

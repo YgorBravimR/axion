@@ -2,7 +2,8 @@
 
 import { db } from "@/db/drizzle"
 import { assetTypes, assets, type Asset, type AssetType } from "@/db/schema"
-import { eq, inArray, asc, desc } from "drizzle-orm"
+import { eq, asc } from "drizzle-orm"
+import { resolveTradeAsset } from "@/lib/asset-resolution"
 import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import {
 	createAssetTypeSchema,
@@ -182,45 +183,36 @@ export const getAsset = async (id: string): Promise<AssetWithType | null> => {
 	return result ?? null
 }
 
-// B3 futures prefixes that map to canonical FUT-suffixed symbols
-// e.g., WIN → WINFUT, WINM25 → WINFUT, WDOG26 → WDOFUT
-const B3_FUT_PREFIXES = ["WIN", "WDO", "DOL", "IND", "BGI", "CCM", "ICF", "SFI", "DI1"]
-
 /**
- * Find the B3 futures prefix that a symbol starts with.
- * e.g., "WINM25" → "WIN", "WDOG26" → "WDO", "AAPL" → null
+ * Look up an asset by symbol with B3 futures prefix resolution.
+ * Uses the centralized resolution pipeline to find the canonical symbol.
+ *
+ * @example getAssetBySymbol("WING26") → finds asset with symbol "WIN"
+ * @example getAssetBySymbol("WIN") → finds asset with symbol "WIN"
  */
-const extractB3Prefix = (symbol: string): string | null => {
-	const upper = symbol.toUpperCase()
-	return B3_FUT_PREFIXES.find((prefix) => upper.startsWith(prefix)) ?? null
-}
-
 export const getAssetBySymbol = async (
 	symbol: string
 ): Promise<AssetWithType | null> => {
 	await requireSession()
-	const upper = symbol.toUpperCase()
-	const prefix = extractB3Prefix(upper)
-
-	if (prefix) {
-		// Build candidate symbols: exact input, base prefix, prefix+FUT
-		const candidates = [...new Set([upper, prefix, `${prefix}FUT`])]
-		const results = await db.query.assets.findMany({
-			where: inArray(assets.symbol, candidates),
-			with: { assetType: true },
-		})
-		// Priority: exact match > base prefix > FUT variant
-		return results.find((a) => a.symbol === upper)
-			?? results.find((a) => a.symbol === prefix)
-			?? results.find((a) => a.symbol === `${prefix}FUT`)
-			?? null
-	}
+	const registeredSymbols = await getRegisteredAssetSymbols()
+	const resolved = resolveTradeAsset(symbol, registeredSymbols)
 
 	const result = await db.query.assets.findFirst({
-		where: eq(assets.symbol, upper),
+		where: eq(assets.symbol, resolved.symbol),
 		with: { assetType: true },
 	})
 	return result ?? null
+}
+
+/**
+ * Returns a Set of all registered asset symbols (uppercased).
+ * Used by the asset resolution pipeline to validate trade symbols.
+ */
+export const getRegisteredAssetSymbols = async (): Promise<Set<string>> => {
+	const result = await db.query.assets.findMany({
+		columns: { symbol: true },
+	})
+	return new Set(result.map((a) => a.symbol.toUpperCase()))
 }
 
 export const createAsset = async (

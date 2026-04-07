@@ -187,7 +187,7 @@ export interface AssetPnLResult {
  * Calculate P&L for a trade using asset configuration (tick size, tick value)
  * tickValue = value per tick (one minimum price fluctuation), NOT per point
  *
- * Example: WINFUT with tickSize=5, tickValue=1.00 (R$0.20/pt × 5 pts/tick)
+ * Example: WIN with tickSize=5, tickValue=1.00 (R$0.20/pt × 5 pts/tick)
  * Entry: 128000, Exit: 128050, Size: 2 contracts
  * Ticks gained: (128050 - 128000) / 5 = 10 ticks
  * Gross P&L: 10 * 1.00 * 2 = R$20.00
@@ -413,7 +413,7 @@ export interface TickBasedPositionSizeResult {
  * Enforces minimum 1 contract, optional maxContracts cap.
  *
  * @example
- * // WINFUT: tickSize=5, tickValue=100 (cents per tick)
+ * // WIN: tickSize=5, tickValue=100 (cents per tick)
  * // Entry: 128000, SL: 127950 → 10 ticks at risk
  * // Risk budget: 5000 cents (R$50) → floor(5000 / (10 × 100)) = 5 contracts
  */

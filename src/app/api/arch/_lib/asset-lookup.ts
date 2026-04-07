@@ -1,23 +1,8 @@
 import { db } from "@/db/drizzle"
 import { assets, tradingAccounts, accountAssets } from "@/db/schema"
-import { eq, and, inArray } from "drizzle-orm"
-
-const B3_FUT_PREFIXES = [
-	"WIN",
-	"WDO",
-	"DOL",
-	"IND",
-	"BGI",
-	"CCM",
-	"ICF",
-	"SFI",
-	"DI1",
-]
-
-const extractB3Prefix = (symbol: string): string | null => {
-	const upper = symbol.toUpperCase()
-	return B3_FUT_PREFIXES.find((prefix) => upper.startsWith(prefix)) ?? null
-}
+import { eq, and } from "drizzle-orm"
+import { resolveTradeAsset } from "@/lib/asset-resolution"
+import { getRegisteredAssetSymbols } from "@/app/actions/assets"
 
 interface AssetConfig {
 	id: string
@@ -27,8 +12,8 @@ interface AssetConfig {
 }
 
 /**
- * Looks up an asset by symbol with B3 futures prefix fallback.
- * Tries exact match first, then prefix, then prefixFUT.
+ * Looks up an asset by symbol using the centralized resolution pipeline.
+ * Resolves B3 futures variants (WING26, WINFUT) to the canonical symbol (WIN).
  *
  * @param symbol - The asset symbol to look up
  * @returns The asset config or null
@@ -36,24 +21,11 @@ interface AssetConfig {
 const getAssetBySymbol = async (
 	symbol: string
 ): Promise<AssetConfig | null> => {
-	const upper = symbol.toUpperCase()
-	const prefix = extractB3Prefix(upper)
-
-	if (prefix) {
-		const candidates = [...new Set([upper, prefix, `${prefix}FUT`])]
-		const results = await db.query.assets.findMany({
-			where: inArray(assets.symbol, candidates),
-		})
-		return (
-			results.find((asset) => asset.symbol === upper) ??
-			results.find((asset) => asset.symbol === prefix) ??
-			results.find((asset) => asset.symbol === `${prefix}FUT`) ??
-			null
-		)
-	}
+	const registeredSymbols = await getRegisteredAssetSymbols()
+	const resolved = resolveTradeAsset(symbol, registeredSymbols)
 
 	const result = await db.query.assets.findFirst({
-		where: eq(assets.symbol, upper),
+		where: eq(assets.symbol, resolved.symbol),
 	})
 	return result ?? null
 }

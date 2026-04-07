@@ -51,7 +51,6 @@ const ASSET_CONFIG: Record<
 	}
 > = {
 	WIN: { slTicks: 37, slVariance: 5, tpTicks: 140, tpVariance: 5 },
-	WINFUT: { slTicks: 37, slVariance: 5, tpTicks: 140, tpVariance: 5 },
 	WDO: { slTicks: 50, slVariance: 10, tpTicks: 100, tpVariance: 20 },
 	DOL: { slTicks: 30, slVariance: 8, tpTicks: 60, tpVariance: 15 },
 	IND: { slTicks: 25, slVariance: 6, tpTicks: 50, tpVariance: 12 },

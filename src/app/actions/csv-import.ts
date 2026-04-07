@@ -13,6 +13,7 @@ import { requireAuth, getCurrentAccount } from "./auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { fromCents } from "@/lib/money"
 import { computeTradeHash } from "@/lib/deduplication"
+import { resolveTradeAsset, B3_FUT_PREFIXES } from "@/lib/asset-resolution"
 
 // ==========================================
 // Types for CSV Import Processing
@@ -93,46 +94,23 @@ export interface CsvImportResult {
 // Validate CSV Trades
 // ==========================================
 
-// B3 futures prefixes that should be mapped to FUT suffix
-const B3_FUT_PREFIXES = [
-	"WIN",
-	"WDO",
-	"DOL",
-	"IND",
-	"BGI",
-	"CCM",
-	"ICF",
-	"SFI",
-	"DI1",
-]
-
 /**
- * Find asset by symbol, trying multiple variations:
- * 1. Exact match (WIN)
- * 2. With FUT suffix (WINFUT)
- * 3. Original code (WING26)
+ * Find asset by symbol using the centralized resolution pipeline.
+ * Resolves the symbol to its canonical form, then looks up in the asset map.
  */
 const findAssetBySymbol = (
 	normalizedSymbol: string,
 	originalCode: string,
 	assetMap: Map<string, typeof assets.$inferSelect>
 ): typeof assets.$inferSelect | null => {
-	const symbol = normalizedSymbol.toUpperCase()
+	const registeredSymbols = new Set(assetMap.keys())
+	const resolved = resolveTradeAsset(normalizedSymbol, registeredSymbols)
 
-	// 1. Try exact match
-	if (assetMap.has(symbol)) {
-		return assetMap.get(symbol)!
+	if (resolved.found) {
+		return assetMap.get(resolved.symbol) ?? null
 	}
 
-	// 2. Try with FUT suffix for B3 futures
-	if (B3_FUT_PREFIXES.includes(symbol)) {
-		const futSymbol = `${symbol}FUT`
-		if (assetMap.has(futSymbol)) {
-			return assetMap.get(futSymbol)!
-		}
-	}
-
-	// 3. Try original code
+	// Fallback: try original code
 	const original = originalCode.toUpperCase()
 	if (assetMap.has(original)) {
 		return assetMap.get(original)!

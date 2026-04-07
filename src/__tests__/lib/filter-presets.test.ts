@@ -151,7 +151,7 @@ describe("SavedFilterState — JSON roundtrip", () => {
 			datePreset: "week",
 			dateFrom: "2026-01-01T00:00:00.000Z",
 			dateTo: "2026-01-07T23:59:59.000Z",
-			assets: ["WINFUT", "PETR4"],
+			assets: ["WIN", "PETR4"],
 			directions: ["long", "short"],
 			outcomes: ["win", "loss", "breakeven"],
 			timeframeIds: ["tf-1", "tf-2"],
@@ -215,7 +215,7 @@ describe("SavedFilterState — JSON roundtrip", () => {
 
 	it("should preserve single-element arrays through the roundtrip", () => {
 		const state = createSavedFilterState({
-			assets: ["WINFUT"],
+			assets: ["WIN"],
 			directions: ["long"],
 			outcomes: ["win"],
 			timeframeIds: ["tf-abc-123"],
@@ -223,7 +223,7 @@ describe("SavedFilterState — JSON roundtrip", () => {
 
 		const deserialized = JSON.parse(JSON.stringify(state)) as SavedFilterState
 
-		expect(deserialized.assets).toEqual(["WINFUT"])
+		expect(deserialized.assets).toEqual(["WIN"])
 		expect(deserialized.directions).toEqual(["long"])
 		expect(deserialized.outcomes).toEqual(["win"])
 		expect(deserialized.timeframeIds).toEqual(["tf-abc-123"])
@@ -257,7 +257,7 @@ describe("buildUrlParamsFromPreset", () => {
 			datePreset: "month",
 			dateFrom: "2026-01-01",
 			dateTo: "2026-01-31",
-			assets: ["WINFUT"],
+			assets: ["WIN"],
 			directions: ["long"],
 			outcomes: ["win"],
 			timeframeIds: ["tf-1"],
@@ -270,7 +270,7 @@ describe("buildUrlParamsFromPreset", () => {
 		expect(params.datePreset).toBe("month")
 		expect(params.from).toBe("2026-01-01")
 		expect(params.to).toBe("2026-01-31")
-		expect(params.assets).toEqual(["WINFUT"])
+		expect(params.assets).toEqual(["WIN"])
 		expect(params.directions).toEqual(["long"])
 		expect(params.outcomes).toEqual(["win"])
 		expect(params.timeframeIds).toEqual(["tf-1"])
@@ -323,14 +323,14 @@ describe("buildUrlParamsFromPreset", () => {
 
 	it("should correctly pass through a multi-asset, multi-direction preset", () => {
 		const preset = createSavedFilterState({
-			assets: ["WINFUT", "PETR4", "VALE3"],
+			assets: ["WIN", "PETR4", "VALE3"],
 			directions: ["long", "short"],
 			outcomes: ["win", "loss"],
 		})
 
 		const params = buildUrlParamsFromPreset(preset)
 
-		expect(params.assets).toEqual(["WINFUT", "PETR4", "VALE3"])
+		expect(params.assets).toEqual(["WIN", "PETR4", "VALE3"])
 		expect(params.directions).toEqual(["long", "short"])
 		expect(params.outcomes).toEqual(["win", "loss"])
 	})
@@ -353,7 +353,7 @@ describe("serializeFilters", () => {
 		const dateFrom = new Date("2026-01-01T00:00:00.000Z")
 		const dateTo = new Date("2026-01-31T00:00:00.000Z")
 		const filters = createFilterStateInput({
-			assets: ["WINFUT"],
+			assets: ["WIN"],
 			directions: ["long"],
 			outcomes: ["win"],
 			timeframeIds: ["tf-1"],
@@ -366,7 +366,7 @@ describe("serializeFilters", () => {
 		expect(result.datePreset).toBeNull() // "custom" becomes null
 		expect(result.dateFrom).toBe(dateFrom.toISOString())
 		expect(result.dateTo).toBe(dateTo.toISOString())
-		expect(result.assets).toEqual(["WINFUT"])
+		expect(result.assets).toEqual(["WIN"])
 		expect(result.directions).toEqual(["long"])
 		expect(result.outcomes).toEqual(["win"])
 		expect(result.timeframeIds).toEqual(["tf-1"])
@@ -430,10 +430,10 @@ describe("serializeFilters", () => {
 	})
 
 	it("should include assets when the array is non-empty", () => {
-		const filters = createFilterStateInput({ assets: ["WINFUT", "PETR4"] })
+		const filters = createFilterStateInput({ assets: ["WIN", "PETR4"] })
 		const result = serializeFilters(filters, null, "asset", "edge")
 
-		expect(result.assets).toEqual(["WINFUT", "PETR4"])
+		expect(result.assets).toEqual(["WIN", "PETR4"])
 	})
 
 	it("should set dateFrom and dateTo to null when filter has no dates", () => {
@@ -491,7 +491,7 @@ describe("serializeFilters", () => {
 
 	it("should produce a state that survives a JSON roundtrip unchanged", () => {
 		const filters = createFilterStateInput({
-			assets: ["WINFUT"],
+			assets: ["WIN"],
 			directions: ["long"],
 			outcomes: ["win"],
 			dateFrom: new Date("2026-01-01T00:00:00.000Z"),
@@ -611,7 +611,7 @@ describe("applyDefaultToggle", () => {
 
 		const presets: ExtendedPreset[] = [
 			{ id: "preset-a", isDefault: false, name: "Morning Setup", filters: "{}" },
-			{ id: "preset-b", isDefault: false, name: "Scalp Filter", filters: '{"assets":["WINFUT"]}' },
+			{ id: "preset-b", isDefault: false, name: "Scalp Filter", filters: '{"assets":["WIN"]}' },
 		]
 
 		const updated = applyDefaultToggle(presets, "preset-a", true) as ExtendedPreset[]
@@ -685,7 +685,7 @@ describe("validatePresetName", () => {
 
 	it("should accept names with special characters and emoji", () => {
 		// No restriction on character type — only length matters
-		expect(validatePresetName("WINFUT — Long Only (Week)")).toBeNull()
+		expect(validatePresetName("WIN — Long Only (Week)")).toBeNull()
 		expect(validatePresetName("Setup #1 / Breakout")).toBeNull()
 	})
 })
@@ -736,11 +736,11 @@ describe("SavedFilterState — edge cases", () => {
 
 	it("should preserve asset order through apply", () => {
 		const preset = createSavedFilterState({
-			assets: ["PETR4", "WINFUT", "VALE3"],
+			assets: ["PETR4", "WIN", "VALE3"],
 		})
 		const params = buildUrlParamsFromPreset(preset)
 
-		expect(params.assets).toEqual(["PETR4", "WINFUT", "VALE3"])
+		expect(params.assets).toEqual(["PETR4", "WIN", "VALE3"])
 	})
 
 	it("should preserve timeframeId UUIDs exactly through serialize and apply", () => {
@@ -777,7 +777,7 @@ describe("SavedFilterState — edge cases", () => {
 
 	it("should produce a stable JSON string for the same input (deterministic)", () => {
 		const state = createSavedFilterState({
-			assets: ["WINFUT"],
+			assets: ["WIN"],
 			groupBy: "asset",
 		})
 

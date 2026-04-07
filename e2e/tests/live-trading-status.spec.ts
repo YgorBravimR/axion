@@ -1133,7 +1133,7 @@ test.describe("Live Trading Status — Off-plan scenario: single trade with slip
 	/**
 	 * Validates a realistic slippage scenario on the first trade of the day.
 	 *
-	 * A WINFUT gap open caused a -R$700 loss against a planned R$500 risk.
+	 * A WIN gap open caused a -R$700 loss against a planned R$500 risk.
 	 * The outcome is still "loss" so loss_recovery is entered.
 	 * The next recovery risk is still based on the PROFILE base risk (R$500).
 	 *
@@ -1153,7 +1153,7 @@ test.describe("Live Trading Status — Off-plan scenario: single trade with slip
 				outcome: "loss",
 				pnlCents: -70_000,
 				plannedRiskAmountCents: 50_000,
-				asset: "WINFUT",
+				asset: "WIN",
 			},
 		])
 	})

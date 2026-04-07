@@ -2,11 +2,11 @@
  * Unit tests for `calculateTickBasedPositionSize` and `calculateAssetPnL`
  * in src/lib/calculations.ts.
  *
- * All scenarios use realistic WINFUT parameters:
+ * All scenarios use realistic WIN parameters:
  *   tickSize  = 5 (points per tick)
  *   tickValue = 100 (cents per tick per contract, i.e. R$1.00)
  *
- * For WINFUT:
+ * For WIN:
  *   - 1 point   = R$0.20
  *   - 1 tick    = 5 points = R$1.00
  *   - 10 ticks  = 50 points = R$10.00 per contract
@@ -28,7 +28,7 @@ import {
 // ==========================================
 
 describe("calculateTickBasedPositionSize", () => {
-	// WINFUT baseline constants
+	// WIN baseline constants
 	const WINFUT_TICK_SIZE = 5
 	const WINFUT_TICK_VALUE = 100 // R$1.00 per tick in cents
 
@@ -106,8 +106,8 @@ describe("calculateTickBasedPositionSize", () => {
 		})
 	})
 
-	describe("WINFUT realistic example from docstring", () => {
-		it("should return 22 contracts for a typical WINFUT trade", () => {
+	describe("WIN realistic example from docstring", () => {
+		it("should return 22 contracts for a typical WIN trade", () => {
 			// riskBudget=49500 cents, SL=110 ticks → floor(49500 / (22*100)) ≠ 22
 			// Correct: 49500 / (110 × 100) = 4.5 → floor = 4
 			// The docstring example in the prompt says: riskBudget=49500, SL=22 ticks → floor(49500/(22×100)) = 22

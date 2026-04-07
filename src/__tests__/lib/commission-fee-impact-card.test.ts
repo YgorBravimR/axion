@@ -416,7 +416,7 @@ describe("CommissionFeeImpactCard — asset breakdown rendering conditions", () 
 		// Component: `{assetBreakdown.length > 0 && (...)}`
 		const data = createData({
 			assetBreakdown: [
-				{ asset: "WINFUT", totalFees: 10.0, tradeCount: 5, avgFeePerTrade: 2.0 },
+				{ asset: "WIN", totalFees: 10.0, tradeCount: 5, avgFeePerTrade: 2.0 },
 			],
 		})
 		expect(data.assetBreakdown.length > 0).toBe(true)
