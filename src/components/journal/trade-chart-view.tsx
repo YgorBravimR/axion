@@ -11,6 +11,7 @@ import type { UTCTimestamp } from "lightweight-charts"
 import type { CandleRow, IndicatorGroupWithKeys, TradeChartData } from "@/types/candle"
 import { useCandleChart } from "@/lib/chart/use-candle-chart"
 import { REFERENCE_GROUPS } from "@/lib/chart/constants"
+import { useTranslations } from "next-intl"
 import { LayoutList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TradeInfoPanel } from "@/components/journal/trade-info-panel"
@@ -50,6 +51,10 @@ const TradeChartView = ({
 		candlesRef,
 		getIndicatorColor,
 	} = useCandleChart({ containerRef: chartContainerRef })
+
+	const tTrade = useTranslations("trade")
+	const tChart = useTranslations("trade.chart")
+	const tCommon = useTranslations("common")
 
 	const [activeGroups, setActiveGroups] = useState<Set<string>>(new Set())
 	const [showExecutions, setShowExecutions] = useState(true)
@@ -235,14 +240,14 @@ const TradeChartView = ({
 			slTpPairs.push({
 				price: trade.stopLoss,
 				color: theme?.tradeSell ?? "rgb(128, 128, 255)",
-				label: "Stop Loss",
+				label: tTrade("stopLoss"),
 			})
 		}
 		if (trade.takeProfit !== null) {
 			slTpPairs.push({
 				price: trade.takeProfit,
 				color: theme?.tradeBuy ?? "rgb(0, 255, 150)",
-				label: "Take Profit",
+				label: tTrade("takeProfit"),
 			})
 		}
 
@@ -266,7 +271,7 @@ const TradeChartView = ({
 			}
 		}
 		chart.timeScale().fitContent()
-	}, [candles, trade, executions, isLong, showExecutions, findCandleIndex, chartRef, candleSeriesRef, candlesRef, themeRef])
+	}, [candles, trade, executions, isLong, showExecutions, findCandleIndex, chartRef, candleSeriesRef, candlesRef, themeRef, tTrade])
 
 	// Update indicator lines when active groups or candles change
 	useEffect(() => {
@@ -342,7 +347,7 @@ const TradeChartView = ({
 					ref={chartContainerRef}
 					className="min-h-0 flex-1"
 					role="img"
-					aria-label={`Candlestick chart for ${trade.asset} trade`}
+					aria-label={tChart("chartAriaLabel", { asset: trade.asset })}
 				/>
 
 				{/* Toolbar: toggles + view switch */}
@@ -358,9 +363,9 @@ const TradeChartView = ({
 						}
 						onClick={handleToggleExecutions}
 						aria-pressed={showExecutions}
-						aria-label="Toggle execution markers visibility"
+						aria-label={tChart("toggleExecutions")}
 					>
-						Executions
+						{tChart("executions")}
 					</Button>
 
 					{indicatorGroups.map((group) => {
@@ -378,7 +383,7 @@ const TradeChartView = ({
 								}
 								onClick={() => handleToggleGroup(group.key)}
 								aria-pressed={isActive}
-								aria-label={`Toggle ${group.displayName} indicator group`}
+								aria-label={tChart("toggleIndicatorGroup", { name: group.displayName })}
 							>
 								{group.displayName} ({group.indicatorKeys.length})
 							</Button>
@@ -396,10 +401,10 @@ const TradeChartView = ({
 							variant="outline"
 							onClick={onToggleView}
 							className="border-acc-100/40 text-acc-100 hover:bg-acc-100/10 gap-s-200"
-							aria-label="Switch to detail view"
+							aria-label={tChart("switchToDetailView")}
 						>
 							<LayoutList className="h-4 w-4" />
-							Details
+							{tCommon("details")}
 						</Button>
 					)}
 				</div>

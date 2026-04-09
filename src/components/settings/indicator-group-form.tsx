@@ -35,6 +35,7 @@ const IndicatorGroupForm = ({
 	onSubmit,
 }: IndicatorGroupFormProps) => {
 	const tCommon = useTranslations("common")
+	const tInd = useTranslations("settings.indicators")
 	const [isPending, startTransition] = useTransition()
 	const [error, setError] = useState<string | null>(null)
 
@@ -96,12 +97,12 @@ const IndicatorGroupForm = ({
 			<DialogContent id="indicator-group-form-dialog" className="max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEdit ? "Edit Indicator Group" : "Add Indicator Group"}
+						{isEdit ? tInd("groupForm.editTitle") : tInd("groupForm.addTitle")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEdit
-							? "Update the indicator group details."
-							: "Create a new indicator group to organize definitions."}
+							? tInd("groupForm.editDescription")
+							: tInd("groupForm.addDescription")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -119,18 +120,18 @@ const IndicatorGroupForm = ({
 							required
 							filled={!!formData.key.trim()}
 						>
-							Key
+							{tInd("key")}
 						</Label>
 						<Input
 							id="indicatorGroupKey"
-							placeholder="e.g. vwap, trava, percent"
+							placeholder={tInd("groupForm.keyPlaceholder")}
 							value={formData.key}
 							onChange={(e) => handleKeyChange(e.target.value)}
 							maxLength={50}
 							required
 						/>
 						<p className="text-tiny text-txt-300">
-							Lowercase letters, numbers, and underscores only.
+							{tInd("groupForm.keyHelper")}
 						</p>
 					</div>
 
@@ -141,11 +142,11 @@ const IndicatorGroupForm = ({
 							required
 							filled={!!formData.displayName.trim()}
 						>
-							Display Name
+							{tInd("displayName")}
 						</Label>
 						<Input
 							id="indicatorGroupDisplayName"
-							placeholder="e.g. VWAPs, Travas"
+							placeholder={tInd("groupForm.displayNamePlaceholder")}
 							value={formData.displayName}
 							onChange={(e) => handleChange("displayName", e.target.value)}
 							maxLength={100}
@@ -158,11 +159,11 @@ const IndicatorGroupForm = ({
 							id="label-indicator-group-description"
 							htmlFor="indicatorGroupDescription"
 						>
-							Description
+							{tInd("description")}
 						</Label>
 						<Textarea
 							id="indicatorGroupDescription"
-							placeholder="Optional description of this indicator group"
+							placeholder={tInd("groupForm.descriptionPlaceholder")}
 							value={formData.description}
 							onChange={(e) => handleChange("description", e.target.value)}
 							maxLength={500}
@@ -187,7 +188,7 @@ const IndicatorGroupForm = ({
 							{isPending && (
 								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							)}
-							{isEdit ? tCommon("saveChanges") : "Add Group"}
+							{isEdit ? tCommon("saveChanges") : tInd("addGroup")}
 						</Button>
 					</DialogFooter>
 				</form>

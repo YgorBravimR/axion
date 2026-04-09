@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -34,6 +35,8 @@ interface TradeDetailLayoutProps {
 
 const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 	const router = useRouter()
+	const tChart = useTranslations("trade.chart")
+	const tDialog = useTranslations("trade.unsavedDialog")
 	const [view, setView] = useState<"chart" | "details">(chartData ? "chart" : "details")
 	const [chartKey, setChartKey] = useState(0)
 	const isDirtyRef = useRef(false)
@@ -117,10 +120,10 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 								variant="outline"
 								onClick={() => { setChartKey((k) => k + 1); setView("chart") }}
 								className="border-acc-100/40 text-acc-100 hover:bg-acc-100/10 gap-s-200"
-								aria-label="Switch to chart view"
+								aria-label={tChart("switchToChartView")}
 							>
 								<BarChart3 className="h-4 w-4" />
-								Chart
+								{tChart("chartButton")}
 							</Button>
 						</div>
 						{children}
@@ -132,21 +135,21 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 			<AlertDialog open={!!pendingNavUrl} onOpenChange={(open) => { if (!open) handleCancelNav() }}>
 				<AlertDialogContent id="unsaved-changes-dialog">
 					<AlertDialogHeader>
-						<AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+						<AlertDialogTitle>{tDialog("title")}</AlertDialogTitle>
 						<AlertDialogDescription>
-							You have unsaved notes. If you leave now, your changes will be lost.
+							{tDialog("description")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel id="unsaved-changes-stay" onClick={handleCancelNav}>
-							Stay
+							{tDialog("stay")}
 						</AlertDialogCancel>
 						<AlertDialogAction
 							id="unsaved-changes-leave"
 							variant="destructive"
 							onClick={handleConfirmNav}
 						>
-							Leave
+							{tDialog("leave")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

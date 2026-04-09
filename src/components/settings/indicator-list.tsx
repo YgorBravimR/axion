@@ -5,10 +5,12 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { DataTable } from "@/components/ui/data-table"
 import { useToast } from "@/components/ui/toast"
 import { IndicatorGroupForm } from "./indicator-group-form"
 import { IndicatorDefinitionForm } from "./indicator-definition-form"
+import { IndicatorGroupCards } from "./indicator-group-cards"
+import { IndicatorDefinitionTable } from "./indicator-definition-table"
+import type { DefinitionRow } from "./indicator-definition-table"
 import {
 	createIndicatorGroup,
 	updateIndicatorGroup,
@@ -22,7 +24,6 @@ import {
 import { useDebouncedSearch } from "@/hooks/use-debounced-search"
 import type { IndicatorGroupWithDefinitions } from "@/types/indicator"
 import type { IndicatorDefinition } from "@/db/schema"
-import type { ColumnDef } from "@tanstack/react-table"
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -36,12 +37,7 @@ import {
 import {
 	Plus,
 	Search,
-	Pencil,
-	Trash2,
-	ToggleLeft,
-	ToggleRight,
 	Loader2,
-	Layers,
 } from "lucide-react"
 
 interface IndicatorListProps {
@@ -50,6 +46,7 @@ interface IndicatorListProps {
 
 const IndicatorList = ({ groups }: IndicatorListProps) => {
 	const tCommon = useTranslations("common")
+	const tInd = useTranslations("settings.indicators")
 	const { showToast } = useToast()
 	const { value: search, setValue: setSearch } = useDebouncedSearch("indQ")
 
@@ -69,8 +66,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 
 	/* ────── All definitions flat list ────── */
 	const allDefinitions = useMemo(() => {
-		const definitions: (IndicatorDefinition & { groupDisplayName: string })[] =
-			[]
+		const definitions: DefinitionRow[] = []
 		for (const group of groups) {
 			for (const indicator of group.indicators) {
 				definitions.push({
@@ -128,13 +124,13 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		if (editingGroup) {
 			const result = await updateIndicatorGroup(editingGroup.id, data)
 			if (result.success) {
-				showToast("success", "Indicator group updated successfully.")
+				showToast("success", tInd("toast.groupUpdated"))
 			}
 			return result
 		}
 		const result = await createIndicatorGroup(data)
 		if (result.success) {
-			showToast("success", "Indicator group created successfully.")
+			showToast("success", tInd("toast.groupCreated"))
 		}
 		return result
 	}
@@ -149,10 +145,13 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			if (result.success) {
 				showToast(
 					"success",
-					`Group "${group.displayName}" ${group.isActive ? "deactivated" : "activated"}.`
+					tInd("toast.groupToggled", {
+						name: group.displayName,
+						status: group.isActive ? tInd("toast.deactivated") : tInd("toast.activated"),
+					})
 				)
 			} else {
-				showToast("error", result.error ?? "Failed to toggle group status.")
+				showToast("error", result.error ?? tInd("toast.groupToggleError"))
 			}
 			setPendingId(null)
 		})
@@ -169,12 +168,12 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		startTransition(async () => {
 			const result = await deleteIndicatorGroup(group.id)
 			if (result.success) {
-				showToast("success", `Group "${group.displayName}" deleted.`)
+				showToast("success", tInd("toast.groupDeleted", { name: group.displayName }))
 				if (selectedGroupId === group.id) {
 					setSelectedGroupId(null)
 				}
 			} else {
-				showToast("error", result.error ?? "Failed to delete group.")
+				showToast("error", result.error ?? tInd("toast.groupDeleteError"))
 			}
 			setPendingId(null)
 			setDeleteGroupTarget(null)
@@ -211,19 +210,19 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		if (editingDefinition) {
 			const result = await updateIndicatorDefinition(editingDefinition.id, data)
 			if (result.success) {
-				showToast("success", "Indicator definition updated successfully.")
+				showToast("success", tInd("toast.definitionUpdated"))
 			}
 			return result
 		}
 		const result = await createIndicatorDefinition(data)
 		if (result.success) {
-			showToast("success", "Indicator definition created successfully.")
+			showToast("success", tInd("toast.definitionCreated"))
 		}
 		return result
 	}
 
 	const handleToggleDefinitionActive = useCallback((
-		definition: IndicatorDefinition & { groupDisplayName: string }
+		definition: DefinitionRow
 	) => {
 		setPendingId(definition.id)
 		startTransition(async () => {
@@ -234,12 +233,15 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			if (result.success) {
 				showToast(
 					"success",
-					`"${definition.displayName}" ${definition.isActive ? "deactivated" : "activated"}.`
+					tInd("toast.definitionToggled", {
+						name: definition.displayName,
+						status: definition.isActive ? tInd("toast.deactivated") : tInd("toast.activated"),
+					})
 				)
 			} else {
 				showToast(
 					"error",
-					result.error ?? "Failed to toggle indicator status."
+					result.error ?? tInd("toast.definitionToggleError")
 				)
 			}
 			setPendingId(null)
@@ -247,7 +249,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 	}, [showToast, startTransition])
 
 	const handleDeleteDefinition = useCallback((
-		definition: IndicatorDefinition & { groupDisplayName: string }
+		definition: DefinitionRow
 	) => {
 		setDeleteDefinitionTarget(definition)
 	}, [])
@@ -259,149 +261,14 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		startTransition(async () => {
 			const result = await deleteIndicatorDefinition(definition.id)
 			if (result.success) {
-				showToast("success", `"${definition.displayName}" deleted.`)
+				showToast("success", tInd("toast.definitionDeleted", { name: definition.displayName }))
 			} else {
-				showToast("error", result.error ?? "Failed to delete indicator.")
+				showToast("error", result.error ?? tInd("toast.definitionDeleteError"))
 			}
 			setPendingId(null)
 			setDeleteDefinitionTarget(null)
 		})
 	}
-
-	/* ────── Table columns ────── */
-	type DefinitionRow = IndicatorDefinition & { groupDisplayName: string }
-
-	const columns: ColumnDef<DefinitionRow>[] = useMemo(
-		() => [
-			{
-				accessorKey: "key",
-				header: "Key",
-				cell: ({ row }) => (
-					<span className="whitespace-nowrap font-mono font-medium text-acc-100">
-						{row.original.key}
-					</span>
-				),
-			},
-			{
-				accessorKey: "displayName",
-				header: "Display Name",
-				cell: ({ row }) => (
-					<span className="text-txt-100">{row.original.displayName}</span>
-				),
-			},
-			{
-				accessorKey: "groupDisplayName",
-				header: "Group",
-				cell: ({ row }) => (
-					<Badge
-						id={`badge-indicator-group-${row.original.id}`}
-						variant="outline"
-						className="text-tiny"
-					>
-						{row.original.groupDisplayName}
-					</Badge>
-				),
-				enableSorting: false,
-			},
-			{
-				accessorKey: "csvHeader",
-				header: "CSV Header",
-				meta: {
-					headerClassName: "hidden md:table-cell",
-					cellClassName: "hidden md:table-cell",
-				},
-				cell: ({ row }) => (
-					<span className="font-mono text-tiny text-txt-300">
-						{row.original.csvHeader ?? "-"}
-					</span>
-				),
-				enableSorting: false,
-			},
-			{
-				id: "status",
-				header: () => (
-					<span className="flex justify-center">{tCommon("status")}</span>
-				),
-				cell: ({ row }) => (
-					<span className="flex justify-center">
-						<Badge
-							id={`badge-indicator-status-${row.original.id}`}
-							variant={row.original.isActive ? "default" : "secondary"}
-							className="text-tiny"
-						>
-							{row.original.isActive ? "Active" : "Inactive"}
-						</Badge>
-					</span>
-				),
-				enableSorting: false,
-			},
-			{
-				id: "actions",
-				header: () => (
-					<span className="flex justify-end">{tCommon("actions")}</span>
-				),
-				cell: ({ row }) => {
-					const definition = row.original
-					return (
-						<div className="flex items-center justify-end gap-s-200">
-							{isPending && pendingId === definition.id ? (
-								<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
-							) : (
-								<>
-									<Button
-										id={`indicator-edit-${definition.id}`}
-										variant="ghost"
-										size="sm"
-										onClick={() => handleEditDefinition(definition)}
-										className="h-9 w-9 p-0"
-										aria-label={`${tCommon("edit")} ${definition.displayName}`}
-									>
-										<Pencil className="h-4 w-4" aria-hidden="true" />
-									</Button>
-									<Button
-										id={`indicator-toggle-active-${definition.id}`}
-										variant="ghost"
-										size="sm"
-										onClick={() => handleToggleDefinitionActive(definition)}
-										className="h-9 w-9 p-0"
-										aria-label={
-											definition.isActive
-												? `Deactivate ${definition.displayName}`
-												: `Activate ${definition.displayName}`
-										}
-									>
-										{definition.isActive ? (
-											<ToggleRight
-												className="h-4 w-4 text-trade-buy"
-												aria-hidden="true"
-											/>
-										) : (
-											<ToggleLeft
-												className="h-4 w-4 text-txt-300"
-												aria-hidden="true"
-											/>
-										)}
-									</Button>
-									<Button
-										id={`indicator-delete-${definition.id}`}
-										variant="ghost"
-										size="sm"
-										onClick={() => handleDeleteDefinition(definition)}
-										className="h-9 w-9 p-0 text-fb-error hover:text-fb-error"
-										aria-label={`${tCommon("delete")} ${definition.displayName}`}
-									>
-										<Trash2 className="h-4 w-4" aria-hidden="true" />
-									</Button>
-								</>
-							)}
-						</div>
-					)
-				},
-				enableSorting: false,
-			},
-		],
-		[tCommon, isPending, pendingId, handleEditDefinition, handleToggleDefinitionActive, handleDeleteDefinition]
-	)
 
 	return (
 		<div id="settings-indicators" className="space-y-m-500">
@@ -409,147 +276,24 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			<section className="space-y-m-400">
 				<div className="flex flex-wrap items-center justify-between gap-m-400">
 					<h3 className="text-heading-3 font-semibold text-txt-100">
-						Indicator Groups
+						{tInd("groups")}
 					</h3>
 					<Button id="indicator-group-add-new" onClick={handleAddGroup}>
 						<Plus className="mr-2 h-4 w-4" />
-						Add Group
+						{tInd("addGroup")}
 					</Button>
 				</div>
 
-				{groups.length === 0 ? (
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-700 text-center text-txt-300">
-						No indicator groups configured yet.
-					</div>
-				) : (
-					<div className="grid grid-cols-1 gap-s-300 md:grid-cols-2 lg:grid-cols-3">
-						{groups.map((group) => {
-							const isSelected = selectedGroupId === group.id
-							const indicatorCount = group.indicators.length
-							return (
-								<div
-									key={group.id}
-									role="button"
-									tabIndex={0}
-									aria-pressed={isSelected}
-									aria-label={`Select group ${group.displayName}`}
-									onClick={() => handleSelectGroup(group.id)}
-									onKeyDown={(e) => {
-										if (e.key === "Enter" || e.key === " ") {
-											e.preventDefault()
-											handleSelectGroup(group.id)
-										}
-									}}
-									className={`cursor-pointer rounded-lg border p-s-300 sm:p-m-400 transition-colors ${
-										isSelected
-											? "border-acc-100/50 bg-acc-100/5"
-											: "border-bg-300 bg-bg-200 hover:border-txt-300/30"
-									}`}
-								>
-									<div className="flex items-start justify-between">
-										<div className="min-w-0 flex-1">
-											<div className="flex items-center gap-s-200">
-												<Layers
-													className="h-4 w-4 shrink-0 text-acc-100"
-													aria-hidden="true"
-												/>
-												<p className="text-body font-medium text-txt-100 truncate">
-													{group.displayName}
-												</p>
-											</div>
-											<div className="mt-s-100 flex flex-wrap items-center gap-s-200">
-												<Badge
-													id={`badge-group-key-${group.id}`}
-													variant="outline"
-													className="font-mono text-tiny"
-												>
-													{group.key}
-												</Badge>
-												<Badge
-													id={`badge-group-status-${group.id}`}
-													variant={group.isActive ? "default" : "secondary"}
-													className="text-tiny"
-												>
-													{group.isActive ? "Active" : "Inactive"}
-												</Badge>
-												<span className="text-tiny text-txt-300">
-													{indicatorCount}{" "}
-													{indicatorCount === 1 ? "indicator" : "indicators"}
-												</span>
-											</div>
-											{group.description && (
-												<p className="mt-s-200 text-small text-txt-300 line-clamp-2">
-													{group.description}
-												</p>
-											)}
-										</div>
-										<div className="ml-s-200 flex shrink-0 items-center gap-s-100">
-											{isPending && pendingId === group.id ? (
-												<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
-											) : (
-												<>
-													<Button
-														id={`group-edit-${group.id}`}
-														variant="ghost"
-														size="sm"
-														onClick={(e) => {
-															e.stopPropagation()
-															handleEditGroup(group)
-														}}
-														className="h-9 w-9 p-0"
-														aria-label={`${tCommon("edit")} ${group.displayName}`}
-													>
-														<Pencil className="h-4 w-4" aria-hidden="true" />
-													</Button>
-													<Button
-														id={`group-toggle-active-${group.id}`}
-														variant="ghost"
-														size="sm"
-														onClick={(e) => {
-															e.stopPropagation()
-															handleToggleGroupActive(group)
-														}}
-														className="h-9 w-9 p-0"
-														aria-label={
-															group.isActive
-																? `Deactivate ${group.displayName}`
-																: `Activate ${group.displayName}`
-														}
-													>
-														{group.isActive ? (
-															<ToggleRight
-																className="h-4 w-4 text-trade-buy"
-																aria-hidden="true"
-															/>
-														) : (
-															<ToggleLeft
-																className="h-4 w-4 text-txt-300"
-																aria-hidden="true"
-															/>
-														)}
-													</Button>
-													<Button
-														id={`group-delete-${group.id}`}
-														variant="ghost"
-														size="sm"
-														onClick={(e) => {
-															e.stopPropagation()
-															handleDeleteGroup(group)
-														}}
-														className="h-9 w-9 p-0 text-fb-error hover:text-fb-error"
-														aria-label={`${tCommon("delete")} ${group.displayName}`}
-													>
-														<Trash2 className="h-4 w-4" aria-hidden="true" />
-													</Button>
-												</>
-											)}
-										</div>
-									</div>
-								</div>
-							)
-						})}
-					</div>
-				)}
+				<IndicatorGroupCards
+					groups={groups}
+					selectedGroupId={selectedGroupId}
+					isPending={isPending}
+					pendingId={pendingId}
+					onSelect={handleSelectGroup}
+					onEdit={handleEditGroup}
+					onToggleActive={handleToggleGroupActive}
+					onDelete={handleDeleteGroup}
+				/>
 			</section>
 
 			{/* ════════ Indicator Definitions Section ════════ */}
@@ -557,7 +301,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 				<div className="flex flex-wrap items-center justify-between gap-m-400">
 					<div className="flex items-center gap-s-300">
 						<h3 className="text-heading-3 font-semibold text-txt-100">
-							Indicator Definitions
+							{tInd("definitions")}
 						</h3>
 						{selectedGroupId && (
 							<Badge
@@ -566,7 +310,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 								className="cursor-pointer"
 								tabIndex={0}
 								role="button"
-								aria-label="Clear group filter"
+								aria-label={tInd("clearGroupFilter")}
 								onClick={() => setSelectedGroupId(null)}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ")
@@ -582,7 +326,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 							<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-txt-300" />
 							<Input
 								id="indicator-search"
-								placeholder="Search indicators..."
+								placeholder={tInd("searchPlaceholder")}
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								className="w-full pl-9 sm:w-64"
@@ -593,15 +337,19 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 							onClick={handleAddDefinition}
 						>
 							<Plus className="mr-2 h-4 w-4" />
-							Add Indicator
+							{tInd("addIndicator")}
 						</Button>
 					</div>
 				</div>
 
-				<DataTable
-					columns={columns}
-					data={filteredDefinitions}
-					emptyMessage="No indicator definitions found."
+				<IndicatorDefinitionTable
+					definitions={filteredDefinitions}
+					isPending={isPending}
+					pendingId={pendingId}
+					emptyMessage={tInd("noDefinitions")}
+					onEdit={handleEditDefinition}
+					onToggleActive={handleToggleDefinitionActive}
+					onDelete={handleDeleteDefinition}
 				/>
 			</section>
 
@@ -631,11 +379,10 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 				<AlertDialogContent id="delete-indicator-group-confirm">
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Delete &ldquo;{deleteGroupTarget?.displayName}&rdquo;?
+							{tInd("deleteGroup.title", { name: deleteGroupTarget?.displayName ?? "" })}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							This will unlink all its indicator definitions. This action cannot
-							be undone.
+							{tInd("deleteGroup.description")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -673,10 +420,10 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 				<AlertDialogContent id="delete-indicator-definition-confirm">
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Delete &ldquo;{deleteDefinitionTarget?.displayName}&rdquo;?
+							{tInd("deleteDefinition.title", { name: deleteDefinitionTarget?.displayName ?? "" })}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							This action cannot be undone.
+							{tInd("deleteDefinition.description")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

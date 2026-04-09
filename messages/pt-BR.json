@@ -1179,6 +1179,27 @@
 			"classification": "Classificação",
 			"journalNotes": "Notas do Diário",
 			"disciplineNotes": "Notas de Disciplina"
+		},
+		"chart": {
+			"executions": "Execuções",
+			"chartAriaLabel": "Gráfico de candlestick para o trade de {asset}",
+			"toggleExecutions": "Alternar visibilidade dos marcadores de execução",
+			"toggleIndicatorGroup": "Alternar grupo de indicadores {name}",
+			"switchToDetailView": "Alternar para visão detalhada",
+			"switchToChartView": "Alternar para visão do gráfico",
+			"chartButton": "Gráfico"
+		},
+		"panel": {
+			"stats": "Estatísticas",
+			"notes": "Notas",
+			"executions": "Execuções",
+			"unsavedChanges": "Alterações não salvas"
+		},
+		"unsavedDialog": {
+			"title": "Alterações Não Salvas",
+			"description": "Você tem notas não salvas. Se sair agora, suas alterações serão perdidas.",
+			"stay": "Ficar",
+			"leave": "Sair"
 		}
 	},
 	"coaching": {
@@ -2584,6 +2605,72 @@
 		"trading": {
 			"propFirms": {
 				"other": "Outro"
+			}
+		},
+		"indicators": {
+			"title": "Indicadores",
+			"groups": "Grupos de Indicadores",
+			"addGroup": "Adicionar Grupo",
+			"definitions": "Definições de Indicadores",
+			"addIndicator": "Adicionar Indicador",
+			"searchPlaceholder": "Buscar indicadores...",
+			"noGroups": "Nenhum grupo de indicadores configurado.",
+			"noDefinitions": "Nenhuma definição de indicador encontrada.",
+			"key": "Chave",
+			"displayName": "Nome de Exibição",
+			"group": "Grupo",
+			"csvHeader": "Cabeçalho CSV",
+			"sortOrder": "Ordem",
+			"description": "Descrição",
+			"selectGroup": "Selecione um grupo",
+			"indicatorCount": "{count, plural, one {# indicador} other {# indicadores}}",
+			"activateAriaLabel": "Ativar {name}",
+			"deactivateAriaLabel": "Desativar {name}",
+			"selectGroupAriaLabel": "Selecionar grupo {name}",
+			"clearGroupFilter": "Limpar filtro de grupo",
+			"groupForm": {
+				"editTitle": "Editar Grupo de Indicadores",
+				"addTitle": "Adicionar Grupo de Indicadores",
+				"editDescription": "Atualize os detalhes do grupo de indicadores.",
+				"addDescription": "Crie um novo grupo de indicadores para organizar definições.",
+				"keyPlaceholder": "ex: vwap, trava, percent",
+				"keyHelper": "Apenas letras minúsculas, números e underscores.",
+				"displayNamePlaceholder": "ex: VWAPs, Travas",
+				"descriptionPlaceholder": "Descrição opcional para este grupo de indicadores"
+			},
+			"definitionForm": {
+				"editTitle": "Editar Definição de Indicador",
+				"addTitle": "Adicionar Definição de Indicador",
+				"editDescription": "Atualize os detalhes da definição de indicador.",
+				"addDescription": "Crie uma nova definição de indicador dentro de um grupo.",
+				"keyPlaceholder": "ex: vwap_d, trava_0",
+				"displayNamePlaceholder": "ex: VWAP Diário, EMA 200",
+				"csvHeaderPlaceholder": "ex: VWAP D, Media Movel E [200]",
+				"csvHeaderHelper": "O nome da coluna original nos arquivos CSV importados."
+			},
+			"toast": {
+				"groupCreated": "Grupo de indicadores criado com sucesso.",
+				"groupUpdated": "Grupo de indicadores atualizado com sucesso.",
+				"groupDeleted": "Grupo \"{name}\" excluído.",
+				"groupToggled": "Grupo \"{name}\" {status}.",
+				"groupToggleError": "Falha ao alternar status do grupo.",
+				"groupDeleteError": "Falha ao excluir grupo.",
+				"definitionCreated": "Definição de indicador criada com sucesso.",
+				"definitionUpdated": "Definição de indicador atualizada com sucesso.",
+				"definitionDeleted": "\"{name}\" excluído.",
+				"definitionToggled": "\"{name}\" {status}.",
+				"definitionToggleError": "Falha ao alternar status do indicador.",
+				"definitionDeleteError": "Falha ao excluir indicador.",
+				"activated": "ativado",
+				"deactivated": "desativado"
+			},
+			"deleteGroup": {
+				"title": "Excluir \"{name}\"?",
+				"description": "Isso desvinculará todas as suas definições de indicadores. Esta ação não pode ser desfeita."
+			},
+			"deleteDefinition": {
+				"title": "Excluir \"{name}\"?",
+				"description": "Esta ação não pode ser desfeita."
 			}
 		}
 	},

@@ -1179,6 +1179,27 @@
 			"classification": "Classification",
 			"journalNotes": "Journal Notes",
 			"disciplineNotes": "Discipline Notes"
+		},
+		"chart": {
+			"executions": "Executions",
+			"chartAriaLabel": "Candlestick chart for {asset} trade",
+			"toggleExecutions": "Toggle execution markers visibility",
+			"toggleIndicatorGroup": "Toggle {name} indicator group",
+			"switchToDetailView": "Switch to detail view",
+			"switchToChartView": "Switch to chart view",
+			"chartButton": "Chart"
+		},
+		"panel": {
+			"stats": "Stats",
+			"notes": "Notes",
+			"executions": "Executions",
+			"unsavedChanges": "Unsaved changes"
+		},
+		"unsavedDialog": {
+			"title": "Unsaved Changes",
+			"description": "You have unsaved notes. If you leave now, your changes will be lost.",
+			"stay": "Stay",
+			"leave": "Leave"
 		}
 	},
 	"coaching": {
@@ -2584,6 +2605,72 @@
 		"trading": {
 			"propFirms": {
 				"other": "Other"
+			}
+		},
+		"indicators": {
+			"title": "Indicators",
+			"groups": "Indicator Groups",
+			"addGroup": "Add Group",
+			"definitions": "Indicator Definitions",
+			"addIndicator": "Add Indicator",
+			"searchPlaceholder": "Search indicators...",
+			"noGroups": "No indicator groups configured yet.",
+			"noDefinitions": "No indicator definitions found.",
+			"key": "Key",
+			"displayName": "Display Name",
+			"group": "Group",
+			"csvHeader": "CSV Header",
+			"sortOrder": "Sort Order",
+			"description": "Description",
+			"selectGroup": "Select a group",
+			"indicatorCount": "{count, plural, one {# indicator} other {# indicators}}",
+			"activateAriaLabel": "Activate {name}",
+			"deactivateAriaLabel": "Deactivate {name}",
+			"selectGroupAriaLabel": "Select group {name}",
+			"clearGroupFilter": "Clear group filter",
+			"groupForm": {
+				"editTitle": "Edit Indicator Group",
+				"addTitle": "Add Indicator Group",
+				"editDescription": "Update the indicator group details.",
+				"addDescription": "Create a new indicator group to organize definitions.",
+				"keyPlaceholder": "e.g. vwap, trava, percent",
+				"keyHelper": "Lowercase letters, numbers, and underscores only.",
+				"displayNamePlaceholder": "e.g. VWAPs, Travas",
+				"descriptionPlaceholder": "Optional description of this indicator group"
+			},
+			"definitionForm": {
+				"editTitle": "Edit Indicator Definition",
+				"addTitle": "Add Indicator Definition",
+				"editDescription": "Update the indicator definition details.",
+				"addDescription": "Create a new indicator definition within a group.",
+				"keyPlaceholder": "e.g. vwap_d, trava_0",
+				"displayNamePlaceholder": "e.g. VWAP Diario, EMA 200",
+				"csvHeaderPlaceholder": "e.g. VWAP D, Media Movel E [200]",
+				"csvHeaderHelper": "The original column name in imported CSV files."
+			},
+			"toast": {
+				"groupCreated": "Indicator group created successfully.",
+				"groupUpdated": "Indicator group updated successfully.",
+				"groupDeleted": "Group \"{name}\" deleted.",
+				"groupToggled": "Group \"{name}\" {status}.",
+				"groupToggleError": "Failed to toggle group status.",
+				"groupDeleteError": "Failed to delete group.",
+				"definitionCreated": "Indicator definition created successfully.",
+				"definitionUpdated": "Indicator definition updated successfully.",
+				"definitionDeleted": "\"{name}\" deleted.",
+				"definitionToggled": "\"{name}\" {status}.",
+				"definitionToggleError": "Failed to toggle indicator status.",
+				"definitionDeleteError": "Failed to delete indicator.",
+				"activated": "activated",
+				"deactivated": "deactivated"
+			},
+			"deleteGroup": {
+				"title": "Delete \"{name}\"?",
+				"description": "This will unlink all its indicator definitions. This action cannot be undone."
+			},
+			"deleteDefinition": {
+				"title": "Delete \"{name}\"?",
+				"description": "This action cannot be undone."
 			}
 		}
 	},

@@ -46,6 +46,7 @@ const IndicatorDefinitionForm = ({
 	onSubmit,
 }: IndicatorDefinitionFormProps) => {
 	const tCommon = useTranslations("common")
+	const tInd = useTranslations("settings.indicators")
 	const [isPending, startTransition] = useTransition()
 	const [error, setError] = useState<string | null>(null)
 
@@ -125,12 +126,12 @@ const IndicatorDefinitionForm = ({
 			<DialogContent id="indicator-definition-form-dialog" className="max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEdit ? "Edit Indicator Definition" : "Add Indicator Definition"}
+						{isEdit ? tInd("definitionForm.editTitle") : tInd("definitionForm.addTitle")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEdit
-							? "Update the indicator definition details."
-							: "Create a new indicator definition within a group."}
+							? tInd("definitionForm.editDescription")
+							: tInd("definitionForm.addDescription")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -149,11 +150,11 @@ const IndicatorDefinitionForm = ({
 								required
 								filled={!!formData.key.trim()}
 							>
-								Key
+								{tInd("key")}
 							</Label>
 							<Input
 								id="indicatorDefKey"
-								placeholder="e.g. vwap_d, trava_0"
+								placeholder={tInd("definitionForm.keyPlaceholder")}
 								value={formData.key}
 								onChange={(e) => handleKeyChange(e.target.value)}
 								maxLength={50}
@@ -166,7 +167,7 @@ const IndicatorDefinitionForm = ({
 								id="label-indicator-def-sort-order"
 								htmlFor="indicatorDefSortOrder"
 							>
-								Sort Order
+								{tInd("sortOrder")}
 							</Label>
 							<Input
 								id="indicatorDefSortOrder"
@@ -185,11 +186,11 @@ const IndicatorDefinitionForm = ({
 							required
 							filled={!!formData.displayName.trim()}
 						>
-							Display Name
+							{tInd("displayName")}
 						</Label>
 						<Input
 							id="indicatorDefDisplayName"
-							placeholder="e.g. VWAP Diario, EMA 200"
+							placeholder={tInd("definitionForm.displayNamePlaceholder")}
 							value={formData.displayName}
 							onChange={(e) => handleChange("displayName", e.target.value)}
 							maxLength={100}
@@ -204,7 +205,7 @@ const IndicatorDefinitionForm = ({
 							required
 							filled={!!formData.groupId}
 						>
-							Group
+							{tInd("group")}
 						</Label>
 						<Select
 							value={formData.groupId}
@@ -212,7 +213,7 @@ const IndicatorDefinitionForm = ({
 							required
 						>
 							<SelectTrigger id="indicatorDefGroupId">
-								<SelectValue placeholder="Select a group" />
+								<SelectValue placeholder={tInd("selectGroup")} />
 							</SelectTrigger>
 							<SelectContent>
 								{activeGroups.map((group) => (
@@ -229,17 +230,17 @@ const IndicatorDefinitionForm = ({
 							id="label-indicator-def-csv-header"
 							htmlFor="indicatorDefCsvHeader"
 						>
-							CSV Header
+							{tInd("csvHeader")}
 						</Label>
 						<Input
 							id="indicatorDefCsvHeader"
-							placeholder="e.g. VWAP D, Media Movel E [200]"
+							placeholder={tInd("definitionForm.csvHeaderPlaceholder")}
 							value={formData.csvHeader}
 							onChange={(e) => handleChange("csvHeader", e.target.value)}
 							maxLength={100}
 						/>
 						<p className="text-tiny text-txt-300">
-							The original column name in imported CSV files.
+							{tInd("definitionForm.csvHeaderHelper")}
 						</p>
 					</div>
 
@@ -260,7 +261,7 @@ const IndicatorDefinitionForm = ({
 							{isPending && (
 								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							)}
-							{isEdit ? tCommon("saveChanges") : "Add Indicator"}
+							{isEdit ? tCommon("saveChanges") : tInd("addIndicator")}
 						</Button>
 					</DialogFooter>
 				</form>
