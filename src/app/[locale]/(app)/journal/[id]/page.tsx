@@ -27,9 +27,11 @@ import {
 	TradeMetric,
 	RMultipleBar,
 	TradeExecutionsSection,
+	TradeDetailLayout,
 } from "@/components/journal"
 import { getTrade } from "@/app/actions/trades"
 import { getAssetBySymbol } from "@/app/actions/assets"
+import { getCandleDataForAsset, getCandlesForTrade } from "@/app/actions/candle-query"
 import { DeleteTradeButton } from "./delete-button"
 import { TradeDetailGuide } from "@/components/journal/trade-detail-guide"
 
@@ -49,8 +51,24 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 
 	const trade = result.data
 
-	// Fetch asset data for tick size/value (for execution calculations)
-	const asset = await getAssetBySymbol(trade.asset)
+	// Fetch asset data + check candle availability in parallel
+	const [asset, candleSource] = await Promise.all([
+		getAssetBySymbol(trade.asset),
+		getCandleDataForAsset(trade.asset),
+	])
+
+	// If candle data exists, fetch candles for the trade's time range
+	const candleResult = candleSource
+		? await getCandlesForTrade({
+				assetId: candleSource.assetId,
+				timeframeId: candleSource.timeframeId,
+				entryDate: trade.entryDate.toISOString(),
+				exitDate: trade.exitDate?.toISOString() ?? null,
+			})
+		: null
+
+	const hasChart = candleResult?.status === "success" && candleResult.data && candleResult.data.candles.length > 0
+
 	// pnl is stored in cents, convert to dollars for display
 	const pnl = fromCents(trade.pnl)
 	const realizedR = Number(trade.realizedRMultiple) || 0
@@ -64,7 +82,53 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 	const mistakeTags = tags.filter((t) => t.type === "mistake")
 	const generalTags = tags.filter((t) => t.type === "general")
 
+	// Build chart data if candle data is available
+	const chartData = hasChart && candleResult?.data ? {
+		trade: {
+			id: trade.id,
+			direction: trade.direction,
+			entryDate: trade.entryDate.toISOString(),
+			exitDate: trade.exitDate?.toISOString() ?? null,
+			entryPrice: Number(trade.entryPrice),
+			exitPrice: trade.exitPrice ? Number(trade.exitPrice) : null,
+			stopLoss: trade.stopLoss ? Number(trade.stopLoss) : null,
+			takeProfit: trade.takeProfit ? Number(trade.takeProfit) : null,
+			pnl: trade.pnl ? Number(trade.pnl) : null,
+			outcome: trade.outcome,
+			asset: trade.asset,
+			positionSize: Number(trade.positionSize),
+		},
+		executions: (trade.executions ?? []).map((e) => ({
+			type: e.executionType as "entry" | "exit",
+			price: Number(e.price),
+			quantity: Number(e.quantity),
+			timestamp: e.executionDate.toISOString(),
+		})),
+		candles: candleResult.data.candles,
+		indicatorGroups: candleResult.data.indicatorGroups,
+		fullTrade: {
+			preTradeThoughts: trade.preTradeThoughts,
+			postTradeReflection: trade.postTradeReflection,
+			lessonLearned: trade.lessonLearned,
+			disciplineNotes: trade.disciplineNotes,
+			strategy: trade.strategy,
+			rating: trade.rating,
+			followedPlan: trade.followedPlan,
+			mfe: trade.mfe,
+			mae: trade.mae,
+			plannedRMultiple: trade.plannedRMultiple,
+			realizedRMultiple: trade.realizedRMultiple,
+			plannedRiskAmount: trade.plannedRiskAmount ? Number(trade.plannedRiskAmount) : null,
+			executionMode: trade.executionMode,
+			tradeTags: trade.tradeTags,
+			timeframe: trade.timeframe,
+		},
+		tickSize: asset ? Number(asset.tickSize) : undefined,
+		tickValue: asset ? Number(asset.tickValue) / 100 : undefined,
+	} : null
+
 	return (
+		<TradeDetailLayout chartData={chartData}>
 		<div className="flex h-full flex-col">
 			<TradeDetailGuide />
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
@@ -453,6 +517,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 				</div>
 			</div>
 		</div>
+		</TradeDetailLayout>
 	)
 }
 

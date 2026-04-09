@@ -2,12 +2,11 @@
 
 import type { ChangeEvent } from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import type { IChartApi, ISeriesApi } from "lightweight-charts"
-import { createChart, ColorType, CandlestickSeries, LineSeries, LineStyle } from "lightweight-charts"
+import { LineSeries, LineStyle } from "lightweight-charts"
 import type { CandleRow, IndicatorGroupWithKeys, DataSourceInfo } from "@/types/candle"
-import { getChartThemeColors } from "@/lib/chart/theme-colors"
-import type { ChartThemeColors } from "@/lib/chart/theme-colors"
 import { getCandlesForRange } from "@/app/actions/candle-query"
+import { useCandleChart } from "@/lib/chart/use-candle-chart"
+import { REFERENCE_GROUPS } from "@/lib/chart/constants"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,49 +17,20 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 
-/**
- * ProfitChart indicator colors — fixed across all themes (from the trading platform).
- * Positive offsets: warm tones (peach → orange → brown).
- * Negative offsets: cool tones (lilac → purple → indigo).
- * @see /Users/ygorbravim/personal/projects/nelogica/working/BRAVO_I_All_tat.pas
- */
-const PROFITCHART_COLORS: Record<string, string> = {
-	trava_1: "rgb(255, 218, 185)", trava_2: "rgb(255, 140, 0)", trava_3: "rgb(194, 117, 23)",
-	trava_4: "rgb(139, 69, 19)", trava_5: "rgb(107, 52, 16)",
-	trava_neg1: "rgb(170, 170, 230)", trava_neg2: "rgb(160, 32, 240)", trava_neg3: "rgb(120, 30, 176)",
-	trava_neg4: "rgb(75, 0, 130)", trava_neg5: "rgb(53, 0, 96)",
-	percent_1: "rgb(255, 218, 185)", percent_2: "rgb(255, 140, 0)", percent_3: "rgb(194, 117, 23)",
-	percent_neg1: "rgb(170, 170, 230)", percent_neg2: "rgb(160, 32, 240)", percent_neg3: "rgb(120, 30, 176)",
-	ajuste: "rgb(180, 255, 255)", prev_day_close: "rgb(120, 20, 60)",
-	prev_day_high: "rgb(255, 20, 147)", prev_day_low: "rgb(255, 20, 147)",
-	vwap_m: "rgb(13, 71, 161)",
-}
-
-/** Build the full indicator color map using live theme colors + fixed ProfitChart colors */
-const buildIndicatorColorMap = (theme: ChartThemeColors): Record<string, string> => ({
-	...PROFITCHART_COLORS,
-	trava_0: theme.txt300,
-	vwap_d: theme.actionBuy,
-	vwap_s: theme.acc200,
-	ema_200: theme.acc100,
-	entrada: theme.actionBuy,
-	stop: theme.actionSell,
-	alvo_final: theme.acc100,
-	breakeven_trailing: theme.txt300,
-	breakeven_trigger: theme.txt200,
-	trailing_trigger: theme.txtPlaceholder,
-})
-
 interface CandleTestContentProps {
 	dataSources: DataSourceInfo[]
 }
 
 const CandleTestContent = ({ dataSources }: CandleTestContentProps) => {
 	const chartContainerRef = useRef<HTMLDivElement>(null)
-	const chartRef = useRef<IChartApi | null>(null)
-	const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
-	const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
-	const candlesRef = useRef<CandleRow[]>([])
+
+	const {
+		chartRef,
+		candleSeriesRef,
+		indicatorSeriesRef,
+		candlesRef,
+		getIndicatorColor,
+	} = useCandleChart({ containerRef: chartContainerRef })
 
 	const [selectedSource, setSelectedSource] = useState<string>(
 		dataSources.length > 0
@@ -133,74 +103,6 @@ const CandleTestContent = ({ dataSources }: CandleTestContentProps) => {
 		fetchData()
 	}, [fetchData])
 
-	// Resolve indicator key → color from live theme + ProfitChart scheme
-	const themeRef = useRef<ChartThemeColors | null>(null)
-	const indicatorColorMapRef = useRef<Record<string, string>>({})
-
-	const getIndicatorColor = useCallback((key: string): string =>
-		indicatorColorMapRef.current[key] ?? (themeRef.current?.txtPlaceholder ?? "rgb(80, 86, 95)")
-	, [])
-
-	// Create chart on mount
-	useEffect(() => {
-		if (!chartContainerRef.current) return
-
-		// Read live theme colors from CSS variables
-		const theme = getChartThemeColors()
-		themeRef.current = theme
-		indicatorColorMapRef.current = buildIndicatorColorMap(theme)
-
-		// Resolve sequential candle index → BRT time label
-		const indexToBrtTime = (time: number): string => {
-			const idx = Math.round(time)
-			if (idx < 0 || idx >= candlesRef.current.length) return ""
-			const ts = new Date(candlesRef.current[idx].timestamp)
-			const brtHours = (ts.getUTCHours() - 3 + 24) % 24
-			const brtMinutes = ts.getUTCMinutes()
-			return `${brtHours.toString().padStart(2, "0")}:${brtMinutes.toString().padStart(2, "0")}`
-		}
-
-		const chart = createChart(chartContainerRef.current, {
-			autoSize: true,
-			layout: {
-				background: { type: ColorType.Solid, color: theme.bg100 },
-				textColor: theme.txt300,
-			},
-			grid: {
-				vertLines: { color: theme.bg300 },
-				horzLines: { color: theme.bg300 },
-			},
-			localization: {
-				timeFormatter: (time: number) => indexToBrtTime(time),
-			},
-			timeScale: {
-				tickMarkFormatter: (time: number) => indexToBrtTime(time),
-			},
-		})
-
-		// Candles use trade-buy / trade-sell from active theme
-		const candleSeries = chart.addSeries(CandlestickSeries, {
-			upColor: theme.tradeBuy,
-			downColor: theme.tradeSell,
-			borderUpColor: theme.tradeBuy,
-			borderDownColor: theme.tradeSell,
-			wickUpColor: theme.tradeBuy,
-			wickDownColor: theme.tradeSell,
-			// Current price line always txt-100 (white/dark) to avoid confusion
-			priceLineColor: theme.txt100,
-		})
-
-		chartRef.current = chart
-		candleSeriesRef.current = candleSeries
-
-		return () => {
-			chart.remove()
-			chartRef.current = null
-			candleSeriesRef.current = null
-			indicatorSeriesRef.current.clear()
-		}
-	}, [])
-
 	// Update candle data when candles change
 	useEffect(() => {
 		candlesRef.current = candles
@@ -219,7 +121,7 @@ const CandleTestContent = ({ dataSources }: CandleTestContentProps) => {
 
 		candleSeriesRef.current.setData(candleData)
 		chartRef.current?.timeScale().fitContent()
-	}, [candles])
+	}, [candles, candlesRef, candleSeriesRef, chartRef])
 
 	// Update indicator lines when active groups or candles change
 	useEffect(() => {
@@ -235,13 +137,10 @@ const CandleTestContent = ({ dataSources }: CandleTestContentProps) => {
 		if (candles.length === 0) return
 
 		// Add series for each active group's indicators
-		// Groups with horizontal/static reference lines — show price line + last value
-		const referenceGroups = new Set(["trava", "percent", "daily_reference", "strategy_level"])
-
 		for (const group of indicatorGroups) {
 			if (!activeGroups.has(group.key)) continue
 
-			const isReference = referenceGroups.has(group.key)
+			const isReference = REFERENCE_GROUPS.has(group.key)
 
 			for (const indicator of group.indicatorKeys) {
 				const color = getIndicatorColor(indicator.key)
@@ -276,7 +175,7 @@ const CandleTestContent = ({ dataSources }: CandleTestContentProps) => {
 				indicatorSeriesRef.current.set(indicator.key, lineSeries)
 			}
 		}
-	}, [candles, activeGroups, indicatorGroups, getIndicatorColor])
+	}, [candles, activeGroups, indicatorGroups, getIndicatorColor, chartRef, indicatorSeriesRef])
 
 	const handleToggleGroup = (groupKey: string) => {
 		setActiveGroups((prev) => {

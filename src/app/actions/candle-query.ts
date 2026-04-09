@@ -256,4 +256,108 @@ const getTradeWithCandles = async (
 	}
 }
 
-export { getCandlesForRange, getAssetsWithPriceData, getTradeWithCandles }
+/**
+ * Check if candle data exists for a given asset symbol.
+ * Lightweight query — just checks priceDataVersions.
+ */
+const getCandleDataForAsset = async (
+	assetSymbol: string
+): Promise<{ assetId: string; timeframeId: string } | null> => {
+	try {
+		const asset = await db.query.assets.findFirst({
+			where: eq(assets.symbol, assetSymbol.toUpperCase()),
+			columns: { id: true },
+		})
+		if (!asset) return null
+
+		const version = await db.query.priceDataVersions.findFirst({
+			where: eq(priceDataVersions.assetId, asset.id),
+			columns: { assetId: true, timeframeId: true },
+		})
+
+		return version ? { assetId: version.assetId, timeframeId: version.timeframeId } : null
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Fetch candles surrounding a trade's time range.
+ * Used by the trade detail page when candle data is available.
+ * Accepts trade timestamps directly to avoid re-fetching the trade.
+ */
+const getCandlesForTrade = async (params: {
+	assetId: string
+	timeframeId: string
+	entryDate: string
+	exitDate?: string | null
+}): Promise<{
+	status: "success" | "error"
+	data?: {
+		candles: CandleRow[]
+		indicatorGroups: IndicatorGroupWithKeys[]
+	}
+}> => {
+	try {
+		const entryTime = new Date(params.entryDate)
+
+		// Full trading day (09:00-18:00 BRT) of the entry date
+		const entryDateStr = entryTime.toISOString().slice(0, 10) // YYYY-MM-DD
+		const from = new Date(`${entryDateStr}T09:00:00-03:00`)
+		const to = new Date(`${entryDateStr}T18:00:00-03:00`)
+
+		const rows = await db
+			.select({
+				timestamp: priceCandles.timestamp,
+				open: priceCandles.open,
+				high: priceCandles.high,
+				low: priceCandles.low,
+				close: priceCandles.close,
+				candleIndex: priceCandles.candleIndex,
+				indicators: priceCandles.indicators,
+			})
+			.from(priceCandles)
+			.where(
+				and(
+					eq(priceCandles.assetId, params.assetId),
+					eq(priceCandles.timeframeId, params.timeframeId),
+					gte(priceCandles.timestamp, from),
+					lte(priceCandles.timestamp, to)
+				)
+			)
+			.orderBy(asc(priceCandles.timestamp))
+
+		const groups = await db.query.indicatorGroups.findMany({
+			where: eq(indicatorGroups.isActive, true),
+			with: {
+				indicators: {
+					where: eq(indicatorDefinitions.isActive, true),
+					columns: { key: true, displayName: true },
+				},
+			},
+			orderBy: asc(indicatorGroups.sortOrder),
+		})
+
+		const candles: CandleRow[] = rows.map((r) => ({
+			timestamp: r.timestamp.toISOString(),
+			open: Number(r.open),
+			high: Number(r.high),
+			low: Number(r.low),
+			close: Number(r.close),
+			candleIndex: r.candleIndex,
+			indicators: (r.indicators ?? {}) as Record<string, number>,
+		}))
+
+		const indicatorGroupsData: IndicatorGroupWithKeys[] = groups.map((g) => ({
+			key: g.key,
+			displayName: g.displayName,
+			indicatorKeys: g.indicators.map((i) => ({ key: i.key, displayName: i.displayName })),
+		}))
+
+		return { status: "success", data: { candles, indicatorGroups: indicatorGroupsData } }
+	} catch {
+		return { status: "error" }
+	}
+}
+
+export { getCandlesForRange, getAssetsWithPriceData, getTradeWithCandles, getCandleDataForAsset, getCandlesForTrade }
