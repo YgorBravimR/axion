@@ -293,6 +293,7 @@ const getCandlesForTrade = async (params: {
 	exitDate?: string | null
 }): Promise<{
 	status: "success" | "error"
+	message: string
 	data?: {
 		candles: CandleRow[]
 		indicatorGroups: IndicatorGroupWithKeys[]
@@ -306,57 +307,14 @@ const getCandlesForTrade = async (params: {
 		const from = new Date(`${entryDateStr}T09:00:00-03:00`)
 		const to = new Date(`${entryDateStr}T18:00:00-03:00`)
 
-		const rows = await db
-			.select({
-				timestamp: priceCandles.timestamp,
-				open: priceCandles.open,
-				high: priceCandles.high,
-				low: priceCandles.low,
-				close: priceCandles.close,
-				candleIndex: priceCandles.candleIndex,
-				indicators: priceCandles.indicators,
-			})
-			.from(priceCandles)
-			.where(
-				and(
-					eq(priceCandles.assetId, params.assetId),
-					eq(priceCandles.timeframeId, params.timeframeId),
-					gte(priceCandles.timestamp, from),
-					lte(priceCandles.timestamp, to)
-				)
-			)
-			.orderBy(asc(priceCandles.timestamp))
-
-		const groups = await db.query.indicatorGroups.findMany({
-			where: eq(indicatorGroups.isActive, true),
-			with: {
-				indicators: {
-					where: eq(indicatorDefinitions.isActive, true),
-					columns: { key: true, displayName: true },
-				},
-			},
-			orderBy: asc(indicatorGroups.sortOrder),
+		return getCandlesForRange({
+			assetId: params.assetId,
+			timeframeId: params.timeframeId,
+			from,
+			to,
 		})
-
-		const candles: CandleRow[] = rows.map((r) => ({
-			timestamp: r.timestamp.toISOString(),
-			open: Number(r.open),
-			high: Number(r.high),
-			low: Number(r.low),
-			close: Number(r.close),
-			candleIndex: r.candleIndex,
-			indicators: (r.indicators ?? {}) as Record<string, number>,
-		}))
-
-		const indicatorGroupsData: IndicatorGroupWithKeys[] = groups.map((g) => ({
-			key: g.key,
-			displayName: g.displayName,
-			indicatorKeys: g.indicators.map((i) => ({ key: i.key, displayName: i.displayName })),
-		}))
-
-		return { status: "success", data: { candles, indicatorGroups: indicatorGroupsData } }
 	} catch {
-		return { status: "error" }
+		return { status: "error", message: "Failed to fetch candles for trade" }
 	}
 }
 

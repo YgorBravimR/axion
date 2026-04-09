@@ -116,7 +116,9 @@ const IndicatorDefinitionForm = ({
 		handleChange("key", sanitized)
 	}
 
-	const activeGroups = groups.filter((group) => group.isActive)
+	const activeGroups = groups.filter(
+		(group) => group.isActive || (isEdit && group.id === definition?.groupId)
+	)
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>

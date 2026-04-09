@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo } from "react"
+import { useState, useTransition, useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -186,10 +186,10 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 	}
 
 	/* ────── Definition handlers ────── */
-	const handleEditDefinition = (definition: IndicatorDefinition) => {
+	const handleEditDefinition = useCallback((definition: IndicatorDefinition) => {
 		setEditingDefinition(definition)
 		setDefinitionFormOpen(true)
-	}
+	}, [])
 
 	const handleAddDefinition = () => {
 		setEditingDefinition(null)
@@ -222,7 +222,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		return result
 	}
 
-	const handleToggleDefinitionActive = (
+	const handleToggleDefinitionActive = useCallback((
 		definition: IndicatorDefinition & { groupDisplayName: string }
 	) => {
 		setPendingId(definition.id)
@@ -244,13 +244,13 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			}
 			setPendingId(null)
 		})
-	}
+	}, [showToast, startTransition])
 
-	const handleDeleteDefinition = (
+	const handleDeleteDefinition = useCallback((
 		definition: IndicatorDefinition & { groupDisplayName: string }
 	) => {
 		setDeleteDefinitionTarget(definition)
-	}
+	}, [])
 
 	const handleConfirmDeleteDefinition = () => {
 		if (!deleteDefinitionTarget) return
@@ -353,7 +353,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleEditDefinition(definition)}
-										className="h-8 w-8 p-0"
+										className="h-9 w-9 p-0"
 										aria-label={`${tCommon("edit")} ${definition.displayName}`}
 									>
 										<Pencil className="h-4 w-4" aria-hidden="true" />
@@ -363,7 +363,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleToggleDefinitionActive(definition)}
-										className="h-8 w-8 p-0"
+										className="h-9 w-9 p-0"
 										aria-label={
 											definition.isActive
 												? `Deactivate ${definition.displayName}`
@@ -387,7 +387,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleDeleteDefinition(definition)}
-										className="h-8 w-8 p-0 text-fb-error hover:text-fb-error"
+										className="h-9 w-9 p-0 text-fb-error hover:text-fb-error"
 										aria-label={`${tCommon("delete")} ${definition.displayName}`}
 									>
 										<Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -400,7 +400,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 				enableSorting: false,
 			},
 		],
-		[tCommon, isPending, pendingId]
+		[tCommon, isPending, pendingId, handleEditDefinition, handleToggleDefinitionActive, handleDeleteDefinition]
 	)
 
 	return (
@@ -443,7 +443,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 									className={`cursor-pointer rounded-lg border p-s-300 sm:p-m-400 transition-colors ${
 										isSelected
 											? "border-acc-100/50 bg-acc-100/5"
-											: "border-bg-300 bg-bg-200 hover:border-bg-400"
+											: "border-bg-300 bg-bg-200 hover:border-txt-300/30"
 									}`}
 								>
 									<div className="flex items-start justify-between">
@@ -496,7 +496,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 															e.stopPropagation()
 															handleEditGroup(group)
 														}}
-														className="h-8 w-8 p-0"
+														className="h-9 w-9 p-0"
 														aria-label={`${tCommon("edit")} ${group.displayName}`}
 													>
 														<Pencil className="h-4 w-4" aria-hidden="true" />
@@ -509,7 +509,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 															e.stopPropagation()
 															handleToggleGroupActive(group)
 														}}
-														className="h-8 w-8 p-0"
+														className="h-9 w-9 p-0"
 														aria-label={
 															group.isActive
 																? `Deactivate ${group.displayName}`
@@ -536,7 +536,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 															e.stopPropagation()
 															handleDeleteGroup(group)
 														}}
-														className="h-8 w-8 p-0 text-fb-error hover:text-fb-error"
+														className="h-9 w-9 p-0 text-fb-error hover:text-fb-error"
 														aria-label={`${tCommon("delete")} ${group.displayName}`}
 													>
 														<Trash2 className="h-4 w-4" aria-hidden="true" />

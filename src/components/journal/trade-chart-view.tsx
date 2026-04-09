@@ -25,6 +25,7 @@ interface TradeChartViewProps {
 	tickSize?: number
 	tickValue?: number
 	onToggleView?: () => void
+	onDirtyChange?: (dirty: boolean) => void
 }
 
 const TradeChartView = ({
@@ -36,6 +37,7 @@ const TradeChartView = ({
 	tickSize,
 	tickValue,
 	onToggleView,
+	onDirtyChange,
 }: TradeChartViewProps) => {
 	const chartContainerRef = useRef<HTMLDivElement>(null)
 	const markersPluginRef = useRef<ISeriesMarkersPluginApi<UTCTimestamp> | null>(null)
@@ -391,9 +393,9 @@ const TradeChartView = ({
 						<Button
 							id="toggle-detail-view"
 							size="sm"
-							variant="ghost"
+							variant="outline"
 							onClick={onToggleView}
-							className="text-txt-300 hover:text-txt-100 gap-s-200"
+							className="border-acc-100/40 text-acc-100 hover:bg-acc-100/10 gap-s-200"
 							aria-label="Switch to detail view"
 						>
 							<LayoutList className="h-4 w-4" />
@@ -411,6 +413,7 @@ const TradeChartView = ({
 					fullTrade={fullTrade}
 					tickSize={tickSize}
 					tickValue={tickValue}
+					onDirtyChange={onDirtyChange}
 				/>
 			</div>
 		</div>

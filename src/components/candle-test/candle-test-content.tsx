@@ -335,13 +335,15 @@ const CandleTestContent = ({ dataSources }: CandleTestContentProps) => {
 
 			{/* Loading state */}
 			{loading && (
-				<p className="text-small text-txt-300">Loading candles...</p>
+				<p className="text-small text-txt-300" role="status" aria-live="polite">Loading candles...</p>
 			)}
 
 			{/* Chart area */}
 			<div
 				ref={chartContainerRef}
-				className="h-[500px] w-full rounded-md border border-bg-300 bg-bg-200"
+				role="img"
+				aria-label="Candlestick chart"
+				className="h-[300px] sm:h-[400px] lg:h-[500px] w-full rounded-md border border-bg-300 bg-bg-200"
 			/>
 
 			{/* Status */}

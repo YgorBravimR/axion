@@ -42,7 +42,7 @@ const requireSession = async (): Promise<string> => {
 /**
  * Fetch all indicator groups with their indicator definitions, ordered by sortOrder.
  */
-export const getIndicatorGroups = async (): Promise<IndicatorGroupWithDefinitions[]> => {
+const getIndicatorGroups = async (): Promise<IndicatorGroupWithDefinitions[]> => {
 	await requireSession()
 	const result = await db.query.indicatorGroups.findMany({
 		with: { indicators: true },
@@ -54,7 +54,7 @@ export const getIndicatorGroups = async (): Promise<IndicatorGroupWithDefinition
 /**
  * Fetch all indicator definitions, ordered by sortOrder.
  */
-export const getIndicatorDefinitions = async (): Promise<IndicatorDefinition[]> => {
+const getIndicatorDefinitions = async (): Promise<IndicatorDefinition[]> => {
 	await requireSession()
 	const result = await db.query.indicatorDefinitions.findMany({
 		orderBy: [asc(indicatorDefinitions.sortOrder)],
@@ -66,7 +66,7 @@ export const getIndicatorDefinitions = async (): Promise<IndicatorDefinition[]> 
 // INDICATOR GROUP CRUD
 // ============================================================================
 
-export const createIndicatorGroup = async (
+const createIndicatorGroup = async (
 	data: CreateIndicatorGroupInput
 ): Promise<{ success: boolean; data?: IndicatorGroup; error?: string }> => {
 	await requireRole("admin")
@@ -93,7 +93,7 @@ export const createIndicatorGroup = async (
 	return { success: true, data: group }
 }
 
-export const updateIndicatorGroup = async (
+const updateIndicatorGroup = async (
 	id: string,
 	data: UpdateIndicatorGroupInput
 ): Promise<{ success: boolean; data?: IndicatorGroup; error?: string }> => {
@@ -123,7 +123,7 @@ export const updateIndicatorGroup = async (
 	return { success: true, data: group }
 }
 
-export const deleteIndicatorGroup = async (
+const deleteIndicatorGroup = async (
 	id: string
 ): Promise<{ success: boolean; error?: string }> => {
 	await requireRole("admin")
@@ -147,7 +147,7 @@ export const deleteIndicatorGroup = async (
 	return { success: true }
 }
 
-export const toggleIndicatorGroupActive = async (
+const toggleIndicatorGroupActive = async (
 	id: string,
 	isActive: boolean
 ): Promise<{ success: boolean; error?: string }> => {
@@ -166,7 +166,7 @@ export const toggleIndicatorGroupActive = async (
 // INDICATOR DEFINITION CRUD
 // ============================================================================
 
-export const createIndicatorDefinition = async (
+const createIndicatorDefinition = async (
 	data: CreateIndicatorDefinitionInput
 ): Promise<{ success: boolean; data?: IndicatorDefinition; error?: string }> => {
 	await requireRole("admin")
@@ -195,7 +195,7 @@ export const createIndicatorDefinition = async (
 	return { success: true, data: definition }
 }
 
-export const updateIndicatorDefinition = async (
+const updateIndicatorDefinition = async (
 	id: string,
 	data: UpdateIndicatorDefinitionInput
 ): Promise<{ success: boolean; data?: IndicatorDefinition; error?: string }> => {
@@ -233,7 +233,7 @@ export const updateIndicatorDefinition = async (
 	return { success: true, data: definition }
 }
 
-export const deleteIndicatorDefinition = async (
+const deleteIndicatorDefinition = async (
 	id: string
 ): Promise<{ success: boolean; error?: string }> => {
 	await requireRole("admin")
@@ -244,7 +244,7 @@ export const deleteIndicatorDefinition = async (
 	return { success: true }
 }
 
-export const toggleIndicatorDefinitionActive = async (
+const toggleIndicatorDefinitionActive = async (
 	id: string,
 	isActive: boolean
 ): Promise<{ success: boolean; error?: string }> => {
@@ -257,4 +257,17 @@ export const toggleIndicatorDefinitionActive = async (
 	invalidateSettingsData()
 
 	return { success: true }
+}
+
+export {
+	getIndicatorGroups,
+	getIndicatorDefinitions,
+	createIndicatorGroup,
+	updateIndicatorGroup,
+	deleteIndicatorGroup,
+	toggleIndicatorGroupActive,
+	createIndicatorDefinition,
+	updateIndicatorDefinition,
+	deleteIndicatorDefinition,
+	toggleIndicatorDefinitionActive,
 }
