@@ -7,6 +7,7 @@ import { getTimeframes } from "@/app/actions/timeframes"
 import { getCurrentUser } from "@/app/actions/auth"
 import { getAllUsersWithAccounts } from "@/app/actions/user-management"
 import { seedBuiltInRiskProfiles } from "@/app/actions/seed-risk-profiles"
+import { getIndicatorGroups } from "@/app/actions/indicators"
 
 
 interface SettingsPageProps {
@@ -17,11 +18,12 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
 
-	const [assets, assetTypes, timeframes, user] = await Promise.all([
+	const [assets, assetTypes, timeframes, user, indicatorGroups] = await Promise.all([
 		getAssets(),
 		getAssetTypes(),
 		getTimeframes(),
 		getCurrentUser(),
+		getIndicatorGroups(),
 	])
 
 	const isAdmin = user?.role === "admin"
@@ -44,6 +46,7 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 						isAdmin={isAdmin}
 						usersWithAccounts={usersWithAccounts}
 						currentUserId={user?.id ?? ""}
+						indicatorGroups={indicatorGroups}
 					/>
 				</Suspense>
 			</div>

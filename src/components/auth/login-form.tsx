@@ -134,7 +134,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 	// Account selection step
 	if (step === "account-selection") {
 		return (
-			<div className="w-full max-w-sm space-y-m-600">
+			<div className="space-y-m-600 w-full max-w-sm lg:max-w-md">
 				{/* Logo */}
 				<div className="flex justify-center">
 					<Image
@@ -148,12 +148,14 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				</div>
 
 				<div className="text-center">
-					<h1 className="text-h2 font-bold text-txt-100">{tSelect("title")}</h1>
-					<p className="mt-s-200 text-small text-txt-300">{tSelect("subtitle")}</p>
+					<h1 className="text-h2 text-txt-100 font-bold">{tSelect("title")}</h1>
+					<p className="mt-s-200 text-small text-txt-300">
+						{tSelect("subtitle")}
+					</p>
 				</div>
 
 				{error && (
-					<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 						{error}
 					</div>
 				)}
@@ -166,11 +168,11 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							onClick={() => setSelectedAccountId(account.id)}
 							disabled={isPending}
 							className={cn(
-								"flex w-full items-center gap-m-400 rounded-lg border p-m-400 text-left transition-colors",
+								"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
 								selectedAccountId === account.id
 									? "border-brand-500 bg-brand-500/10"
 									: "border-bg-300 bg-bg-200 hover:border-bg-400",
-								isPending && "opacity-50 cursor-not-allowed"
+								isPending && "cursor-not-allowed opacity-50"
 							)}
 						>
 							<div
@@ -189,8 +191,8 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							</div>
 
 							<div className="flex-1">
-								<p className="font-medium text-txt-100">{account.name}</p>
-								<p className="text-tiny capitalize text-txt-300">
+								<p className="text-txt-100 font-medium">{account.name}</p>
+								<p className="text-tiny text-txt-300 capitalize">
 									{account.accountType}
 								</p>
 							</div>
@@ -205,7 +207,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							>
 								{selectedAccountId === account.id && (
 									<div className="flex h-full w-full items-center justify-center">
-										<div className="h-2 w-2 rounded-full bg-bg-100" />
+										<div className="bg-bg-100 h-2 w-2 rounded-full" />
 									</div>
 								)}
 							</div>
@@ -215,12 +217,14 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 
 				<div className="space-y-s-300">
 					<Button
-				id="login-account-select-continue"
+						id="login-account-select-continue"
 						onClick={handleAccountSelect}
 						className="w-full"
 						disabled={!selectedAccountId || isPending}
 					>
-						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+						{isPending && (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						)}
 						{tSelect("continue")}
 					</Button>
 
@@ -231,7 +235,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						onClick={handleBackToCredentials}
 						disabled={isPending}
 						aria-label={tSelect("backToLogin")}
-						className="flex w-full items-center justify-center gap-2 text-small text-txt-300 hover:text-txt-200"
+						className="text-small text-txt-300 hover:text-txt-200 flex w-full items-center justify-center gap-2"
 					>
 						<ArrowLeft className="h-4 w-4" />
 						{tSelect("backToLogin")}
@@ -243,7 +247,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 
 	// Credentials step
 	return (
-		<div className="w-full max-w-sm space-y-m-600">
+		<div className="space-y-m-600 w-full max-w-sm lg:max-w-md">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -257,28 +261,26 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 			</div>
 
 			<div className="text-center">
-				<h1 className="text-h2 font-bold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 text-txt-100 font-bold">{t("title")}</h1>
 				<p className="mt-s-200 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
 			<form onSubmit={handleCredentialsSubmit} className="space-y-m-400">
 				{error && (
-					<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 						{error}
 					</div>
 				)}
 
 				{emailNotVerified && (
-					<div className="rounded-md border border-brand-500/30 bg-brand-500/10 p-m-400 space-y-s-300">
-						<div className="flex items-center gap-s-200">
-							<Mail className="h-4 w-4 text-brand-500" />
-							<p className="text-small font-medium text-txt-100">
+					<div className="border-brand-500/30 bg-brand-500/10 p-m-400 space-y-s-300 rounded-md border">
+						<div className="gap-s-200 flex items-center">
+							<Mail className="text-brand-500 h-4 w-4" />
+							<p className="text-small text-txt-100 font-medium">
 								{t("notVerifiedError")}
 							</p>
 						</div>
-						<p className="text-tiny text-txt-300">
-							{t("notVerifiedMessage")}
-						</p>
+						<p className="text-tiny text-txt-300">{t("notVerifiedMessage")}</p>
 						<Button
 							id="login-resend-verification"
 							type="button"
@@ -288,14 +290,23 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							disabled={resendingVerification}
 							className="w-full"
 						>
-							{resendingVerification && <Loader2 className="mr-2 h-3 w-3 animate-spin motion-reduce:animate-none" />}
+							{resendingVerification && (
+								<Loader2 className="mr-2 h-3 w-3 animate-spin motion-reduce:animate-none" />
+							)}
 							{t("resendVerification")}
 						</Button>
 					</div>
 				)}
 
 				<div className="space-y-s-200">
-					<Label id="label-email" htmlFor="email" required filled={!!formData.email.trim()}>{t("email")}</Label>
+					<Label
+						id="label-email"
+						htmlFor="email"
+						required
+						filled={!!formData.email.trim()}
+					>
+						{t("email")}
+					</Label>
 					<Input
 						id="email"
 						type="email"
@@ -309,7 +320,14 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				</div>
 
 				<div className="space-y-s-200">
-					<Label id="label-password" htmlFor="password" required filled={!!formData.password}>{t("password")}</Label>
+					<Label
+						id="label-password"
+						htmlFor="password"
+						required
+						filled={!!formData.password}
+					>
+						{t("password")}
+					</Label>
 					<div className="relative">
 						<Input
 							id="password"
@@ -327,7 +345,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -340,25 +358,32 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				</div>
 
 				<div className="flex justify-end">
-						<Link
-							href="/forgot-password"
-							className="text-tiny font-medium text-brand-500 hover:text-brand-400"
-						>
-							{t("forgotPassword")}
-						</Link>
-					</div>
+					<Link
+						href="/forgot-password"
+						className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
+					>
+						{t("forgotPassword")}
+					</Link>
+				</div>
 
-				<Button id="login-submit" type="submit" className="w-full" disabled={isPending}>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+				<Button
+					id="login-submit"
+					type="submit"
+					className="w-full"
+					disabled={isPending}
+				>
+					{isPending && (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					)}
 					{t("submit")}
 				</Button>
 			</form>
 
-			<p className="text-center text-small text-txt-300">
+			<p className="text-small text-txt-300 text-center">
 				{t("noAccount")}{" "}
 				<Link
 					href="/register"
-					className="font-medium text-brand-500 hover:text-brand-400"
+					className="text-brand-500 hover:text-brand-400 font-medium"
 				>
 					{t("register")}
 				</Link>

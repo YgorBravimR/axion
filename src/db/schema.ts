@@ -8,6 +8,7 @@ import {
 	bigint,
 	timestamp,
 	boolean,
+	jsonb,
 	pgEnum,
 	index,
 	uniqueIndex,
@@ -1158,6 +1159,146 @@ export const filterPresets = pgTable(
 )
 
 // ==========================================
+// HISTORICAL PRICE DATA
+// ==========================================
+
+export const priceCandles = pgTable(
+	"price_candles",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		timeframeId: uuid("timeframe_id")
+			.notNull()
+			.references(() => timeframes.id, { onDelete: "cascade" }),
+
+		// OHLC core data
+		timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
+		open: decimal("open", { precision: 18, scale: 8 }).notNull(),
+		high: decimal("high", { precision: 18, scale: 8 }).notNull(),
+		low: decimal("low", { precision: 18, scale: 8 }).notNull(),
+		close: decimal("close", { precision: 18, scale: 8 }).notNull(),
+
+		// Candle metadata ("Contador de Candles" from ProfitChart CSV)
+		candleIndex: integer("candle_index"),
+
+		// Flexible indicator storage — keys are normalized slugs (e.g., "vwap_d", "trava_0")
+		// Missing/null indicators are simply absent from the object
+		indicators: jsonb("indicators").$type<Record<string, number>>().default({}),
+
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		// Renko candles: candleIndex resets daily, so we need both timestamp + index.
+		// Multiple boxes can share the same millisecond, but (timestamp + candleIndex) is unique.
+		uniqueIndex("price_candles_unique_idx").on(
+			table.assetId,
+			table.timeframeId,
+			table.timestamp,
+			table.candleIndex
+		),
+		// Note: GIN index on indicators added manually in migration SQL:
+		// CREATE INDEX price_candles_indicators_gin_idx ON price_candles USING gin (indicators);
+	]
+)
+
+export const indicatorGroups = pgTable(
+	"indicator_groups",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+
+		// Unique group key (e.g., "trava", "vwap", "percent")
+		key: varchar("key", { length: 50 }).notNull().unique(),
+
+		// Human-readable name (e.g., "Travas", "VWAPs")
+		displayName: varchar("display_name", { length: 100 }).notNull(),
+
+		// Optional description of the indicator group
+		description: text("description"),
+
+		sortOrder: integer("sort_order").notNull().default(0),
+		isActive: boolean("is_active").default(true).notNull(),
+
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	}
+)
+
+export const indicatorDefinitions = pgTable(
+	"indicator_definitions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+
+		// The key used inside the JSONB column (e.g., "vwap_d", "trava_0", "ema_200")
+		key: varchar("key", { length: 50 }).notNull().unique(),
+
+		// Parent group (e.g., trava_0..trava_5 all belong to "trava" group)
+		groupId: uuid("group_id")
+			.notNull()
+			.references(() => indicatorGroups.id, {
+				onDelete: "cascade",
+			}),
+
+		// Human-readable display name (e.g., "VWAP Diario", "EMA 200")
+		displayName: varchar("display_name", { length: 100 }).notNull(),
+
+		// Original CSV header this maps from (e.g., "VWAP D", "Média Móvel E [200]")
+		csvHeader: varchar("csv_header", { length: 100 }),
+
+		// Display order within group
+		sortOrder: integer("sort_order").notNull().default(0),
+
+		isActive: boolean("is_active").default(true).notNull(),
+
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("indicator_definitions_group_idx").on(table.groupId),
+	]
+)
+
+export const priceDataVersions = pgTable(
+	"price_data_versions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		timeframeId: uuid("timeframe_id")
+			.notNull()
+			.references(() => timeframes.id, { onDelete: "cascade" }),
+
+		// Incremented on every import — used as cache key
+		version: integer("version").notNull().default(1),
+
+		lastImportedAt: timestamp("last_imported_at", { withTimezone: true }),
+		rowCount: integer("row_count"),
+
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("price_data_versions_unique_idx").on(
+			table.assetId,
+			table.timeframeId
+		),
+	]
+)
+
+// ==========================================
 // RELATIONS
 // ==========================================
 
@@ -1266,6 +1407,8 @@ export const tradeExecutionsRelations = relations(tradeExecutions, ({ one }) => 
 export const timeframesRelations = relations(timeframes, ({ many }) => ({
 	trades: many(trades),
 	accountTimeframes: many(accountTimeframes),
+	priceCandles: many(priceCandles),
+	priceDataVersions: many(priceDataVersions),
 }))
 
 export const strategiesRelations = relations(strategies, ({ one, many }) => ({
@@ -1317,6 +1460,8 @@ export const assetsRelations = relations(assets, ({ one, many }) => ({
 	accountAssets: many(accountAssets),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
+	priceCandles: many(priceCandles),
+	priceDataVersions: many(priceDataVersions),
 }))
 
 // Command Center Relations
@@ -1467,6 +1612,41 @@ export const filterPresetsRelations = relations(filterPresets, ({ one }) => ({
 	}),
 }))
 
+// Price Candle Relations
+export const priceCandlesRelations = relations(priceCandles, ({ one }) => ({
+	asset: one(assets, {
+		fields: [priceCandles.assetId],
+		references: [assets.id],
+	}),
+	timeframe: one(timeframes, {
+		fields: [priceCandles.timeframeId],
+		references: [timeframes.id],
+	}),
+}))
+
+export const priceDataVersionsRelations = relations(priceDataVersions, ({ one }) => ({
+	asset: one(assets, {
+		fields: [priceDataVersions.assetId],
+		references: [assets.id],
+	}),
+	timeframe: one(timeframes, {
+		fields: [priceDataVersions.timeframeId],
+		references: [timeframes.id],
+	}),
+}))
+
+// Indicator Group Relations
+export const indicatorGroupsRelations = relations(indicatorGroups, ({ many }) => ({
+	indicators: many(indicatorDefinitions),
+}))
+
+export const indicatorDefinitionsRelations = relations(indicatorDefinitions, ({ one }) => ({
+	group: one(indicatorGroups, {
+		fields: [indicatorDefinitions.groupId],
+		references: [indicatorGroups.id],
+	}),
+}))
+
 // ==========================================
 // TYPE EXPORTS
 // ==========================================
@@ -1580,3 +1760,16 @@ export type NewBugReportImage = typeof bugReportImages.$inferInsert
 // Filter Preset Types
 export type FilterPreset = typeof filterPresets.$inferSelect
 export type NewFilterPreset = typeof filterPresets.$inferInsert
+
+// Historical Price Data Types
+export type PriceCandle = typeof priceCandles.$inferSelect
+export type NewPriceCandle = typeof priceCandles.$inferInsert
+
+export type IndicatorGroup = typeof indicatorGroups.$inferSelect
+export type NewIndicatorGroup = typeof indicatorGroups.$inferInsert
+
+export type IndicatorDefinition = typeof indicatorDefinitions.$inferSelect
+export type NewIndicatorDefinition = typeof indicatorDefinitions.$inferInsert
+
+export type PriceDataVersion = typeof priceDataVersions.$inferSelect
+export type NewPriceDataVersion = typeof priceDataVersions.$inferInsert

@@ -42,9 +42,9 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 	}
 
 	return (
-		<div className="w-full max-w-sm space-y-m-600">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
 			<div className="text-center">
-				<h1 className="text-h2 font-bold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 text-txt-100 font-bold">{t("title")}</h1>
 				<p className="mt-s-200 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
@@ -55,7 +55,7 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 						type="button"
 						onClick={() => setSelectedId(account.id)}
 						className={cn(
-							"flex w-full items-center gap-m-400 rounded-lg border p-m-400 text-left transition-colors",
+							"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
 							selectedId === account.id
 								? "border-brand-500 bg-brand-500/10"
 								: "border-bg-300 bg-bg-200 hover:border-bg-400"
@@ -77,11 +77,9 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 						</div>
 
 						<div className="flex-1">
-							<p className="font-medium text-txt-100">{account.name}</p>
+							<p className="text-txt-100 font-medium">{account.name}</p>
 							{account.accountType === "prop" && account.propFirmName && (
-								<p className="text-tiny text-txt-300">
-									{account.propFirmName}
-								</p>
+								<p className="text-tiny text-txt-300">{account.propFirmName}</p>
 							)}
 							<p className="text-tiny text-txt-300">
 								{t("profitShare", {
@@ -100,7 +98,7 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 						>
 							{selectedId === account.id && (
 								<div className="flex h-full w-full items-center justify-center">
-									<div className="h-2 w-2 rounded-full bg-bg-100" />
+									<div className="bg-bg-100 h-2 w-2 rounded-full" />
 								</div>
 							)}
 						</div>
@@ -109,12 +107,14 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 			</div>
 
 			<Button
-			id="auth-account-picker-continue"
+				id="auth-account-picker-continue"
 				onClick={handleContinue}
 				className="w-full"
 				disabled={!selectedId || isPending}
 			>
-				{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+				{isPending && (
+					<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+				)}
 				{t("continue")}
 			</Button>
 		</div>

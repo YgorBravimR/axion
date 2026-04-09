@@ -78,7 +78,7 @@ const RegisterForm = () => {
 	}
 
 	return (
-		<div className="w-full max-w-sm space-y-m-600">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -92,19 +92,26 @@ const RegisterForm = () => {
 			</div>
 
 			<div className="text-center">
-				<h1 className="text-h2 font-bold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 text-txt-100 font-bold">{t("title")}</h1>
 				<p className="mt-s-200 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
 			<form onSubmit={handleSubmit} className="space-y-m-400">
 				{error && (
-					<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 						{error}
 					</div>
 				)}
 
 				<div className="space-y-s-200">
-					<Label id="label-name" htmlFor="name" required filled={!!formData.name.trim()}>{t("name")}</Label>
+					<Label
+						id="label-name"
+						htmlFor="name"
+						required
+						filled={!!formData.name.trim()}
+					>
+						{t("name")}
+					</Label>
 					<Input
 						id="name"
 						type="text"
@@ -118,7 +125,14 @@ const RegisterForm = () => {
 				</div>
 
 				<div className="space-y-s-200">
-					<Label id="label-email" htmlFor="email" required filled={!!formData.email.trim()}>{t("email")}</Label>
+					<Label
+						id="label-email"
+						htmlFor="email"
+						required
+						filled={!!formData.email.trim()}
+					>
+						{t("email")}
+					</Label>
 					<Input
 						id="email"
 						type="email"
@@ -132,7 +146,14 @@ const RegisterForm = () => {
 				</div>
 
 				<div className="space-y-s-200">
-					<Label id="label-password" htmlFor="password" required filled={!!formData.password}>{t("password")}</Label>
+					<Label
+						id="label-password"
+						htmlFor="password"
+						required
+						filled={!!formData.password}
+					>
+						{t("password")}
+					</Label>
 					<div className="relative">
 						<Input
 							id="password"
@@ -150,7 +171,7 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -168,7 +189,7 @@ const RegisterForm = () => {
 								<div
 									key={req.key}
 									className={cn(
-										"flex items-center gap-s-200 text-tiny",
+										"gap-s-200 text-tiny flex items-center",
 										req.test ? "text-fb-success" : "text-txt-300"
 									)}
 								>
@@ -185,7 +206,14 @@ const RegisterForm = () => {
 				</div>
 
 				<div className="space-y-s-200">
-					<Label id="label-confirm-password" htmlFor="confirmPassword" required filled={!!formData.confirmPassword}>{t("confirmPassword")}</Label>
+					<Label
+						id="label-confirm-password"
+						htmlFor="confirmPassword"
+						required
+						filled={!!formData.confirmPassword}
+					>
+						{t("confirmPassword")}
+					</Label>
 					<div className="relative">
 						<Input
 							id="confirmPassword"
@@ -203,8 +231,10 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-300 hover:text-txt-200"
-							aria-label={showConfirmPassword ? t("hidePassword") : t("showPassword")}
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
+							aria-label={
+								showConfirmPassword ? t("hidePassword") : t("showPassword")
+							}
 						>
 							{showConfirmPassword ? (
 								<EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -214,26 +244,30 @@ const RegisterForm = () => {
 						</Button>
 					</div>
 					{formData.confirmPassword.length > 0 && !passwordsMatch && (
-						<p className="text-tiny text-fb-error">{t("passwordsDoNotMatch")}</p>
+						<p className="text-tiny text-fb-error">
+							{t("passwordsDoNotMatch")}
+						</p>
 					)}
 				</div>
 
 				<Button
-				id="register-submit"
+					id="register-submit"
 					type="submit"
 					className="w-full"
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+					{isPending && (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					)}
 					{t("submit")}
 				</Button>
 			</form>
 
-			<p className="text-center text-small text-txt-300">
+			<p className="text-small text-txt-300 text-center">
 				{t("hasAccount")}{" "}
 				<Link
 					href="/login"
-					className="font-medium text-brand-500 hover:text-brand-400"
+					className="text-brand-500 hover:text-brand-400 font-medium"
 				>
 					{t("login")}
 				</Link>

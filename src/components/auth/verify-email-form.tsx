@@ -87,7 +87,7 @@ const VerifyEmailForm = () => {
 	// Success state
 	if (verified) {
 		return (
-			<div className="w-full max-w-sm space-y-m-600">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
 				<div className="flex justify-center">
 					<Image
 						src="/axion-wordmark-white.png"
@@ -99,9 +99,9 @@ const VerifyEmailForm = () => {
 					/>
 				</div>
 
-				<div className="flex flex-col items-center space-y-m-400 text-center">
-					<CheckCircle2 className="h-12 w-12 text-fb-success" />
-					<h1 className="text-h2 font-bold text-txt-100">{t("success")}</h1>
+				<div className="space-y-m-400 flex flex-col items-center text-center">
+					<CheckCircle2 className="text-fb-success h-12 w-12" />
+					<h1 className="text-h2 text-txt-100 font-bold">{t("success")}</h1>
 					<p className="text-small text-txt-300">{t("successMessage")}</p>
 				</div>
 			</div>
@@ -109,7 +109,7 @@ const VerifyEmailForm = () => {
 	}
 
 	return (
-		<div className="w-full max-w-sm space-y-m-600">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -123,18 +123,19 @@ const VerifyEmailForm = () => {
 			</div>
 
 			<div className="text-center">
-				<h1 className="text-h2 font-bold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 text-txt-100 font-bold">{t("title")}</h1>
 				<p className="mt-s-200 text-small text-txt-300">{t("subtitle")}</p>
 				{email && (
 					<p className="mt-s-200 text-small text-txt-200">
-						{t("codeSentTo")} <span className="font-medium text-brand-500">{email}</span>
+						{t("codeSentTo")}{" "}
+						<span className="text-brand-500 font-medium">{email}</span>
 					</p>
 				)}
 			</div>
 
 			<div className="space-y-m-400">
 				{error && (
-					<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 						{error}
 					</div>
 				)}
@@ -170,7 +171,9 @@ const VerifyEmailForm = () => {
 					className="w-full"
 					disabled={isPending || code.length !== 6}
 				>
-					{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+					{isPending && (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					)}
 					{t("verify")}
 				</Button>
 
@@ -188,7 +191,7 @@ const VerifyEmailForm = () => {
 							type="button"
 							onClick={handleResend}
 							disabled={isPending}
-							className="text-tiny font-medium text-brand-500 hover:text-brand-400"
+							className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
 						>
 							{t("resend")}
 						</Button>
@@ -197,7 +200,7 @@ const VerifyEmailForm = () => {
 
 				<Link
 					href="/login"
-					className="flex items-center justify-center gap-2 text-small text-txt-300 hover:text-txt-200"
+					className="text-small text-txt-300 hover:text-txt-200 flex items-center justify-center gap-2"
 				>
 					<ArrowLeft className="h-4 w-4" />
 					{t("backToLogin")}

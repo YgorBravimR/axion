@@ -2,20 +2,24 @@
 
 import { useEffect } from "react"
 import * as Sentry from "@sentry/nextjs"
+import { useTranslations } from "next-intl"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 
 /**
- * Root-level error boundary — lives OUTSIDE the [locale] layout,
- * so NextIntlClientProvider is NOT available here.
- * Uses hardcoded strings as a safe fallback.
+ * Error boundary for main dashboard.
+ * Shows a generic error message to prevent leaking internal error details to users.
+ * The error digest (a safe hash) is shown for support reference.
+ *
+ * This component lives inside the [locale] layout, so next-intl providers are available.
  */
 const Error = (props: {
 	error: Error & { digest?: string }
 	reset: () => void
 }) => {
 	const { error, reset } = props
+	const t = useTranslations("errors.boundary")
 
 	useEffect(() => {
 		Sentry.captureException(error)
@@ -30,31 +34,32 @@ const Error = (props: {
 					</div>
 
 					<h1 className="mt-m-600 text-h2 text-txt-100 font-bold">
-						Something went wrong
+						{t("title")}
 					</h1>
 
 					<p className="mt-m-400 text-body text-txt-200">
-						An unexpected error occurred. Please try again.
+						{t("description")}
 					</p>
 
 					{error.digest && (
 						<div className="mt-m-500 bg-bg-300 p-m-400 w-full rounded-lg">
 							<p className="text-small text-txt-300">
-								Reference: {error.digest}
+								{t("reference", { digest: error.digest })}
 							</p>
 						</div>
 					)}
 
 					<div className="mt-l-700 gap-m-400 flex">
 						<Button
-							id="error-try-again"
+						id="error-try-again"
 							onClick={reset}
+							className="bg-acc-100 text-bg-100 hover:bg-acc-100/90"
 							type="button"
 						>
-							Try Again
+							{t("tryAgain")}
 						</Button>
 						<Button id="error-reload-page" variant="ghost" onClick={() => window.location.reload()}>
-							Reload Page
+							{t("reloadPage")}
 						</Button>
 					</div>
 				</div>

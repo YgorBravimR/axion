@@ -21,14 +21,12 @@ const SelectAccountPage = async () => {
 	// If user reaches here directly without going through the login flow,
 	// redirect them to login since we need credentials to complete sign-in
 	return (
-		<div className="w-full max-w-sm space-y-m-600 text-center">
-			<h1 className="text-h2 font-bold text-txt-100">{t("title")}</h1>
-			<p className="text-small text-txt-300">
-				{t("signInAgain")}
-			</p>
+		<div className="space-y-m-600 w-full max-w-sm text-center md:max-w-md lg:max-w-lg">
+			<h1 className="text-h2 text-txt-100 font-bold">{t("title")}</h1>
+			<p className="text-small text-txt-300">{t("signInAgain")}</p>
 			<Link
 				href="/login"
-				className="inline-flex items-center gap-2 text-brand-500 hover:text-brand-400"
+				className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-2"
 			>
 				<ArrowLeft className="h-4 w-4" />
 				{t("backToLoginButton")}

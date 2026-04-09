@@ -155,6 +155,20 @@
       "when": 1775700000000,
       "tag": "0021_normalize_asset_symbols",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1775720896125,
+      "tag": "0022_shallow_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1775722810029,
+      "tag": "0023_bouncy_mysterio",
+      "breakpoints": true
     }
   ]
 }

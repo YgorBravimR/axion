@@ -11,6 +11,16 @@ import {
 } from "@/app/actions/timeframes"
 import type { Timeframe } from "@/db/schema"
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
 	Plus,
 	Pencil,
 	Trash2,
@@ -49,6 +59,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 	)
 	const [isPending, startTransition] = useTransition()
 	const [pendingId, setPendingId] = useState<string | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<Timeframe | null>(null)
 
 	const filteredTimeframes = timeframes.filter((tf) => {
 		const matchesType = filterType === "all" || tf.type === filterType
@@ -70,11 +81,17 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 	}
 
 	const handleDelete = (timeframe: Timeframe) => {
-		if (!confirm(t("confirmDelete", { name: timeframe.name }))) return
+		setDeleteTarget(timeframe)
+	}
+
+	const handleConfirmDelete = () => {
+		if (!deleteTarget) return
+		const timeframe = deleteTarget
 		setPendingId(timeframe.id)
 		startTransition(async () => {
 			await deleteTimeframe(timeframe.id)
 			setPendingId(null)
+			setDeleteTarget(null)
 		})
 	}
 
@@ -258,6 +275,47 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 				open={formOpen}
 				onOpenChange={handleFormClose}
 			/>
+
+			{/* Delete Confirm Dialog */}
+			<AlertDialog
+				open={!!deleteTarget}
+				onOpenChange={(open) => {
+					if (!open && !isPending) setDeleteTarget(null)
+				}}
+			>
+				<AlertDialogContent id="delete-timeframe-confirm">
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{t("confirmDelete", { name: deleteTarget?.name ?? "" })}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							This action cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel
+							id="delete-timeframe-cancel"
+							disabled={isPending}
+						>
+							{tCommon("cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="delete-timeframe-confirm-btn"
+							variant="destructive"
+							disabled={isPending}
+							onClick={(e) => {
+								e.preventDefault()
+								handleConfirmDelete()
+							}}
+						>
+							{isPending ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							) : null}
+							{tCommon("delete")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

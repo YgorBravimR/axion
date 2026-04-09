@@ -17,6 +17,16 @@ import { useDebouncedSearch } from "@/hooks/use-debounced-search"
 import type { AssetType } from "@/db/schema"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
 	Plus,
 	Search,
 	Pencil,
@@ -52,6 +62,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 	const [editingAsset, setEditingAsset] = useState<AssetWithType | null>(null)
 	const [isPending, startTransition] = useTransition()
 	const [pendingId, setPendingId] = useState<string | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<AssetWithType | null>(null)
 
 	const filteredAssets = assets.filter((asset) => {
 		const matchesSearch =
@@ -76,11 +87,17 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 	}
 
 	const handleDelete = (asset: AssetWithType) => {
-		if (!confirm(t("confirmDelete", { symbol: asset.symbol }))) return
+		setDeleteTarget(asset)
+	}
+
+	const handleConfirmDelete = () => {
+		if (!deleteTarget) return
+		const asset = deleteTarget
 		setPendingId(asset.id)
 		startTransition(async () => {
 			await deleteAsset(asset.id)
 			setPendingId(null)
+			setDeleteTarget(null)
 		})
 	}
 
@@ -320,6 +337,44 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 				open={formOpen}
 				onOpenChange={handleFormClose}
 			/>
+
+			{/* Delete Confirm Dialog */}
+			<AlertDialog
+				open={!!deleteTarget}
+				onOpenChange={(open) => {
+					if (!open && !isPending) setDeleteTarget(null)
+				}}
+			>
+				<AlertDialogContent id="delete-asset-confirm">
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{t("confirmDelete", { symbol: deleteTarget?.symbol ?? "" })}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							This action cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel id="delete-asset-cancel" disabled={isPending}>
+							{tCommon("cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="delete-asset-confirm-btn"
+							variant="destructive"
+							disabled={isPending}
+							onClick={(e) => {
+								e.preventDefault()
+								handleConfirmDelete()
+							}}
+						>
+							{isPending ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							) : null}
+							{tCommon("delete")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

@@ -16,11 +16,13 @@ import { UserProfileSettings } from "./user-profile-settings"
 import { AccountSettings } from "./account-settings"
 import { UserList } from "./user-list"
 import { ConditionList } from "./condition-list"
+import { IndicatorList } from "./indicator-list"
 import { BugReportsList } from "./bug-reports-list"
 import type { AssetWithType } from "@/app/actions/assets"
 import type { AssetType, Timeframe } from "@/db/schema"
 import type { UserWithAccounts } from "@/app/actions/user-management"
-import { User, Briefcase, Coins, Clock, Tag, Users, Filter, Bug } from "lucide-react"
+import type { IndicatorGroupWithDefinitions } from "@/types/indicator"
+import { User, Briefcase, Coins, Clock, Tag, Users, Filter, Bug, BarChart3 } from "lucide-react"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { settingsGuide } from "@/components/ui/page-guide/guide-configs/settings"
 
@@ -33,6 +35,7 @@ const TAB_SPECIFIC_PARAMS = [
 	"assetQ",
 	"assetType",
 	"userQ",
+	"indQ",
 ] as const
 
 interface SettingsContentProps {
@@ -42,6 +45,7 @@ interface SettingsContentProps {
 	isAdmin?: boolean
 	usersWithAccounts?: UserWithAccounts[]
 	currentUserId?: string
+	indicatorGroups?: IndicatorGroupWithDefinitions[]
 }
 
 export const SettingsContent = ({
@@ -51,13 +55,14 @@ export const SettingsContent = ({
 	isAdmin = false,
 	usersWithAccounts = [],
 	currentUserId = "",
+	indicatorGroups = [],
 }: SettingsContentProps) => {
 	const t = useTranslations("settings.tabs")
 	const urlParams = useUrlParams()
 	useRegisterPageGuide(settingsGuide)
 
 	const baseTabs = ["profile", "account", "tags"]
-	const adminTabs = ["conditions", "assets", "timeframes", "users", "bugs"]
+	const adminTabs = ["conditions", "indicators", "assets", "timeframes", "users", "bugs"]
 	const validTabs = isAdmin ? [...baseTabs, ...adminTabs] : baseTabs
 	const tabFromUrl = urlParams.get("tab") ?? ""
 	const activeTab = validTabs.includes(tabFromUrl) ? tabFromUrl : "profile"
@@ -95,6 +100,12 @@ export const SettingsContent = ({
 						<TabsTrigger value="conditions" className="gap-s-200 shrink-0">
 							<Filter className="h-4 w-4" />
 							{t("conditions")}
+						</TabsTrigger>
+					)}
+					{isAdmin && (
+						<TabsTrigger value="indicators" className="gap-s-200 shrink-0">
+							<BarChart3 className="h-4 w-4" />
+							Indicators
 						</TabsTrigger>
 					)}
 					{isAdmin && (
@@ -139,6 +150,12 @@ export const SettingsContent = ({
 			{isAdmin && (
 				<AnimatedTabsContent value="conditions">
 					<ConditionList />
+				</AnimatedTabsContent>
+			)}
+
+			{isAdmin && (
+				<AnimatedTabsContent value="indicators">
+					<IndicatorList groups={indicatorGroups} />
 				</AnimatedTabsContent>
 			)}
 
