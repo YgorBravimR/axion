@@ -246,7 +246,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			}
 			setPendingId(null)
 		})
-	}, [showToast, startTransition])
+	}, [showToast, startTransition, tInd])
 
 	const handleDeleteDefinition = useCallback((
 		definition: DefinitionRow

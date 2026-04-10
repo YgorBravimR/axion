@@ -76,6 +76,7 @@
 		"winRateAbbr": "WR",
 		"clearFile": "Clear file",
 		"dismiss": "Dismiss",
+		"actionCannotBeUndone": "This action cannot be undone.",
 		"sortBy": "Sort by {column}",
 		"breadcrumb": "Breadcrumb",
 		"dragToReorder": "Drag to reorder",
@@ -2401,7 +2402,10 @@
 			"inactive": "Inactive",
 			"recalculating": "Recalculating...",
 			"recalculateRValues": "Recalculate R Values",
-			"confirmDelete": "Delete {name}?"
+			"confirmDelete": "Delete {name}?",
+			"deleteTimeframe": "Delete {name}",
+			"activate": "Activate {name}",
+			"deactivate": "Deactivate {name}"
 		},
 		"tags": {
 			"addTag": "Add Tag",

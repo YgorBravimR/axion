@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,18 +32,25 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUrlParams } from "@/hooks/use-url-params"
-import { useState } from "react"
+
+const formatUnit = (unit: string, value: number): string => {
+	const singular = unit.replace(/s$/, "")
+	return value === 1 ? singular : unit
+}
 
 interface TimeframeListProps {
 	timeframes: Timeframe[]
 }
 
-export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
+const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 	const t = useTranslations("settings.timeframes")
 	const tCommon = useTranslations("common")
 	const urlParams = useUrlParams()
 
-	const filterType = (urlParams.get("tfType") ?? "all") as "all" | "time_based" | "renko"
+	const filterType = (urlParams.get("tfType") ?? "all") as
+		| "all"
+		| "time_based"
+		| "renko"
 	const setFilterType = (value: "all" | "time_based" | "renko") => {
 		urlParams.set({ tfType: value === "all" ? null : value })
 	}
@@ -61,11 +68,11 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 	const [pendingId, setPendingId] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<Timeframe | null>(null)
 
-	const filteredTimeframes = timeframes.filter((tf) => {
+	const filteredTimeframes = useMemo(() => timeframes.filter((tf) => {
 		const matchesType = filterType === "all" || tf.type === filterType
 		const matchesActive = showInactive || tf.isActive
 		return matchesType && matchesActive
-	})
+	}), [timeframes, filterType, showInactive])
 
 	const handleEdit = (timeframe: Timeframe) => {
 		setEditingTimeframe(timeframe)
@@ -100,16 +107,11 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 		setEditingTimeframe(null)
 	}
 
-	const formatUnit = (unit: string, value: number): string => {
-		const singular = unit.replace(/s$/, "")
-		return value === 1 ? singular : unit
-	}
-
 	return (
 		<div id="settings-timeframes" className="space-y-m-400">
 			{/* Header */}
-			<div className="flex flex-wrap items-center justify-between gap-m-400">
-				<div className="flex items-center gap-s-300">
+			<div className="gap-m-400 flex flex-wrap items-center justify-between">
+				<div className="gap-s-300 flex items-center">
 					<Badge
 						id="badge-timeframe-filter-all"
 						variant={filterType === "all" ? "default" : "outline"}
@@ -133,7 +135,8 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						aria-pressed={filterType === "time_based"}
 						onClick={() => setFilterType("time_based")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("time_based")
+							if (e.key === "Enter" || e.key === " ")
+								setFilterType("time_based")
 						}}
 					>
 						<Clock className="mr-1 h-3 w-3" />
@@ -155,7 +158,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						{t("renko")}
 					</Badge>
 				</div>
-				<div className="flex items-center gap-s-300">
+				<div className="gap-s-300 flex items-center">
 					<Button
 						id="timeframe-toggle-inactive"
 						variant="ghost"
@@ -178,9 +181,9 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 			</div>
 
 			{/* Timeframes Grid */}
-			<div className="grid grid-cols-1 gap-s-300 sm:gap-m-400 md:grid-cols-2 lg:grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 				{filteredTimeframes.length === 0 ? (
-					<div className="col-span-full rounded-lg border border-bg-300 bg-bg-200 p-l-700 text-center text-txt-300">
+					<div className="border-bg-300 bg-bg-200 p-l-700 text-txt-300 col-span-full rounded-lg border text-center">
 						{t("noTimeframes")}
 					</div>
 				) : (
@@ -188,20 +191,20 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						<div
 							key={timeframe.id}
 							className={cn(
-								"rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 transition-colors",
+								"border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border transition-colors",
 								!timeframe.isActive && "opacity-50"
 							)}
 						>
 							<div className="flex items-start justify-between">
-								<div className="flex items-center gap-s-200">
+								<div className="gap-s-200 flex items-center">
 									{timeframe.type === "time_based" ? (
-										<Clock className="h-5 w-5 text-acc-100" />
+										<Clock className="text-acc-100 h-5 w-5" />
 									) : (
-										<BarChart3 className="h-5 w-5 text-acc-200" />
+										<BarChart3 className="text-acc-200 h-5 w-5" />
 									)}
 									<div>
-										<div className="flex items-center gap-s-200">
-											<span className="font-mono text-small font-medium text-acc-100">
+										<div className="gap-s-200 flex items-center">
+											<span className="text-small text-acc-100 font-mono font-medium">
 												{timeframe.code}
 											</span>
 											<Badge
@@ -212,7 +215,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 												{timeframe.isActive ? t("active") : t("inactive")}
 											</Badge>
 										</div>
-										<p className="text-body font-medium text-txt-100">
+										<p className="text-body text-txt-100 font-medium">
 											{timeframe.name}
 										</p>
 									</div>
@@ -224,9 +227,9 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 									{timeframe.value}{" "}
 									{formatUnit(timeframe.unit, timeframe.value)}
 								</div>
-								<div className="flex items-center gap-s-200">
+								<div className="gap-s-200 flex items-center">
 									{isPending && pendingId === timeframe.id ? (
-										<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
+										<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									) : (
 										<>
 											<Button
@@ -234,7 +237,10 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 												variant="ghost"
 												size="sm"
 												onClick={() => handleEdit(timeframe)}
-												className="h-8 w-8 p-0"
+												className="h-9 w-9 p-0"
+												aria-label={t("editTimeframe", {
+													name: timeframe.name,
+												})}
 											>
 												<Pencil className="h-4 w-4" />
 											</Button>
@@ -243,12 +249,17 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 												variant="ghost"
 												size="sm"
 												onClick={() => handleToggleActive(timeframe)}
-												className="h-8 w-8 p-0"
+												className="h-9 w-9 p-0"
+												aria-label={
+													timeframe.isActive
+														? t("deactivate", { name: timeframe.name })
+														: t("activate", { name: timeframe.name })
+												}
 											>
 												{timeframe.isActive ? (
-													<ToggleRight className="h-4 w-4 text-trade-buy" />
+													<ToggleRight className="text-trade-buy h-4 w-4" />
 												) : (
-													<ToggleLeft className="h-4 w-4 text-txt-300" />
+													<ToggleLeft className="text-txt-300 h-4 w-4" />
 												)}
 											</Button>
 											<Button
@@ -256,7 +267,10 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 												variant="ghost"
 												size="sm"
 												onClick={() => handleDelete(timeframe)}
-												className="h-8 w-8 p-0 text-fb-error hover:text-fb-error"
+												className="text-fb-error hover:text-fb-error h-9 w-9 p-0"
+												aria-label={t("deleteTimeframe", {
+													name: timeframe.name,
+												})}
 											>
 												<Trash2 className="h-4 w-4" />
 											</Button>
@@ -289,7 +303,7 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 							{t("confirmDelete", { name: deleteTarget?.name ?? "" })}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							This action cannot be undone.
+							{tCommon("actionCannotBeUndone")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -319,3 +333,5 @@ export const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 		</div>
 	)
 }
+
+export { TimeframeList }

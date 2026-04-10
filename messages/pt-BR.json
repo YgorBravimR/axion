@@ -76,6 +76,7 @@
 		"winRateAbbr": "TA",
 		"clearFile": "Limpar arquivo",
 		"dismiss": "Dispensar",
+		"actionCannotBeUndone": "Esta ação não pode ser desfeita.",
 		"sortBy": "Ordenar por {column}",
 		"breadcrumb": "Navegação",
 		"dragToReorder": "Arraste para reordenar",
@@ -2401,7 +2402,10 @@
 			"inactive": "Inativo",
 			"recalculating": "Recalculando...",
 			"recalculateRValues": "Recalcular Valores de R",
-			"confirmDelete": "Excluir {name}?"
+			"confirmDelete": "Excluir {name}?",
+			"deleteTimeframe": "Excluir {name}",
+			"activate": "Ativar {name}",
+			"deactivate": "Desativar {name}"
 		},
 		"tags": {
 			"addTag": "Adicionar Tag",

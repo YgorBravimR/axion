@@ -64,14 +64,14 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 	const [pendingId, setPendingId] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<AssetWithType | null>(null)
 
-	const filteredAssets = assets.filter((asset) => {
+	const filteredAssets = useMemo(() => assets.filter((asset) => {
 		const matchesSearch =
 			asset.symbol.toLowerCase().includes(search.toLowerCase()) ||
 			asset.name.toLowerCase().includes(search.toLowerCase())
 		const matchesType = !filterType || asset.assetTypeId === filterType
 		const matchesActive = showInactive || asset.isActive
 		return matchesSearch && matchesType && matchesActive
-	})
+	}), [assets, search, filterType, showInactive])
 
 	const handleEdit = (asset: AssetWithType) => {
 		setEditingAsset(asset)
@@ -201,7 +201,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleEdit(asset)}
-										className="h-8 w-8 p-0"
+										className="h-9 w-9 p-0"
 										aria-label={`${tCommon("edit")} ${asset.symbol}`}
 									>
 										<Pencil className="h-4 w-4" aria-hidden="true" />
@@ -211,7 +211,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleToggleActive(asset)}
-										className="h-8 w-8 p-0"
+										className="h-9 w-9 p-0"
 										aria-label={
 											asset.isActive ? t("deactivate") : t("activate")
 										}
@@ -233,7 +233,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleDelete(asset)}
-										className="h-8 w-8 p-0 text-fb-error hover:text-fb-error"
+										className="h-9 w-9 p-0 text-fb-error hover:text-fb-error"
 										aria-label={`${tCommon("delete")} ${asset.symbol}`}
 									>
 										<Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -351,7 +351,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 							{t("confirmDelete", { symbol: deleteTarget?.symbol ?? "" })}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							This action cannot be undone.
+							{tCommon("actionCannotBeUndone")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
