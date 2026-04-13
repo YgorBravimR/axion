@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# superset local overrides
+.superset/config.local.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

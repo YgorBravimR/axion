@@ -25,6 +25,9 @@ interface DataSourceInfo {
 	assetId: string
 	assetSymbol: string
 	assetName: string
+	assetTickSize: number
+	assetTickValueCents: number
+	assetCurrency: string
 	timeframeId: string
 	timeframeCode: string
 	timeframeName: string

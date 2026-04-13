@@ -1,0 +1,183 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { PluginPicker } from "./plugin-picker"
+import { Plus, Trash2 } from "lucide-react"
+import { hhmmToTimeString, timeStringToHhmm } from "@/lib/backtest/time-utils"
+import type { StrategyRecipe, TargetLevel, TargetMode } from "@/types/backtest"
+
+interface TargetsExitSectionProps {
+	recipe: StrategyRecipe
+	onRecipeChange: (recipe: StrategyRecipe) => void
+}
+
+/** Inline unit suffix for each target mode — removes ambiguity */
+const getModeSuffix = (mode: TargetMode): string => {
+	switch (mode) {
+		case "r_multiple": return "R"
+		case "pct_range": return "% range"
+		case "pct_stop": return "% stop"
+		case "fixed_points": return "pts"
+	}
+}
+
+const TARGET_MODE_OPTIONS: { value: TargetMode; labelKey: string }[] = [
+	{ value: "r_multiple", labelKey: "modeRMultiple" },
+	{ value: "pct_range", labelKey: "modePctRange" },
+	{ value: "pct_stop", labelKey: "modePctStop" },
+	{ value: "fixed_points", labelKey: "modeFixedPoints" },
+]
+
+const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps) => {
+	const t = useTranslations("backtest.builder")
+
+	if (recipe.target.type !== "fixed_levels") return null
+	const targetConfig = recipe.target
+
+	// ── Exit level management ────────────────────────────────
+
+	const handleAddLevel = () => {
+		const newLevel: TargetLevel = {
+			value: 1,
+			mode: targetConfig.levels[0]?.mode ?? "r_multiple",
+			exitPct: 100,
+			label: `target${targetConfig.levels.length + 1}`,
+		}
+		onRecipeChange({
+			...recipe,
+			target: { ...targetConfig, levels: [...targetConfig.levels, newLevel] },
+		})
+	}
+
+	const handleRemoveLevel = (index: number) => {
+		const levels = targetConfig.levels.filter((_, i) => i !== index)
+		onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
+	}
+
+	const handleLevelChange = (index: number, field: keyof TargetLevel, value: string | number) => {
+		const levels = [...targetConfig.levels]
+		levels[index] = { ...levels[index], [field]: value }
+		onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
+	}
+
+	const handleEodChange = (time: string) => {
+		onRecipeChange({ ...recipe, target: { ...targetConfig, eodTime: timeStringToHhmm(time) } })
+	}
+
+	// ── Shared target mode ───────────────────────────────────
+
+	const targetModeOptions = TARGET_MODE_OPTIONS.map((opt) => ({
+		value: opt.value,
+		label: t(opt.labelKey),
+		description: t(`${opt.labelKey}Desc`),
+	}))
+
+	const currentMode = targetConfig.levels[0]?.mode ?? "r_multiple"
+
+	const handleModeChange = (mode: string) => {
+		const levels = targetConfig.levels.map((level) => ({ ...level, mode: mode as TargetMode }))
+		onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
+	}
+
+	return (
+		<div className="border-bg-300 bg-bg-200 space-y-m-500 rounded-lg border p-m-400">
+			<h2 className="text-heading-3 font-semibold text-txt-100">{t("targetsExit")}</h2>
+
+			{/* Target pricing mode */}
+			<div className="space-y-s-300">
+				<p className="text-small font-medium text-txt-200">{t("targetMode")}</p>
+				<PluginPicker
+					options={targetModeOptions}
+					selected={currentMode}
+					onSelect={handleModeChange}
+				/>
+			</div>
+
+			{/* Exit levels */}
+			<div className="space-y-s-300">
+				<div className="flex items-center justify-between">
+					<p className="text-small font-medium text-txt-200">{t("exitLevels")}</p>
+					<Button
+						id="add-exit-level"
+						variant="outline"
+						size="sm"
+						onClick={handleAddLevel}
+						className="gap-s-200"
+					>
+						<Plus className="h-3.5 w-3.5" />
+						{t("addLevel")}
+					</Button>
+				</div>
+
+				<div className="space-y-s-200">
+					{targetConfig.levels.map((level, index) => (
+						<div
+							key={index}
+							className="border-bg-300 bg-bg-100/50 gap-m-400 flex items-end rounded-lg border p-s-300"
+						>
+							<div className="space-y-s-100 flex-1">
+								<Label id={`label-level-value-${index}`}>{t("targetValue")}</Label>
+								<div className="flex items-center gap-s-100">
+									<Input
+										id={`level-value-${index}`}
+										type="number"
+										step="any"
+										value={level.value}
+										onChange={(e) => handleLevelChange(index, "value", parseFloat(e.target.value) || 1)}
+									/>
+									<span className="text-small text-txt-300 shrink-0">{getModeSuffix(currentMode)}</span>
+								</div>
+							</div>
+
+							<div className="space-y-s-100 w-28">
+								<Label id={`label-level-exit-${index}`}>{t("exitPct")}</Label>
+								<div className="flex items-center gap-s-100">
+									<Input
+										id={`level-exit-${index}`}
+										type="number"
+										min={1}
+										max={100}
+										value={level.exitPct}
+										onChange={(e) => handleLevelChange(index, "exitPct", parseInt(e.target.value) || 50)}
+									/>
+									<span className="text-small text-txt-300 shrink-0">%</span>
+								</div>
+							</div>
+
+							{targetConfig.levels.length > 1 && (
+								<Button
+									id={`remove-level-${index}`}
+									variant="ghost"
+									size="sm"
+									onClick={() => handleRemoveLevel(index)}
+									className="text-txt-300 hover:text-fb-error shrink-0"
+									aria-label={`Remove exit level ${index + 1}`}
+								>
+									<Trash2 className="h-4 w-4" />
+								</Button>
+							)}
+						</div>
+					))}
+				</div>
+			</div>
+
+			{/* EOD Exit */}
+			<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-4">
+				<div className="space-y-s-200">
+					<Label id="label-eod">{t("eodTime")}</Label>
+					<Input
+						id="eod-time"
+						type="time"
+						value={hhmmToTimeString(targetConfig.eodTime)}
+						onChange={(e) => handleEodChange(e.target.value)}
+					/>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+export { TargetsExitSection }

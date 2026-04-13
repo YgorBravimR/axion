@@ -92,7 +92,7 @@ const getAssetsWithPriceData = async () => {
 	try {
 		const versions = await db.query.priceDataVersions.findMany({
 			with: {
-				asset: { columns: { id: true, symbol: true, name: true } },
+				asset: { columns: { id: true, symbol: true, name: true, tickSize: true, tickValue: true, currency: true } },
 				timeframe: { columns: { id: true, code: true, name: true } },
 			},
 		})
@@ -103,6 +103,9 @@ const getAssetsWithPriceData = async () => {
 				assetId: v.asset.id,
 				assetSymbol: v.asset.symbol,
 				assetName: v.asset.name,
+				assetTickSize: Number(v.asset.tickSize),
+				assetTickValueCents: v.asset.tickValue,
+				assetCurrency: v.asset.currency,
 				timeframeId: v.timeframe.id,
 				timeframeCode: v.timeframe.code,
 				timeframeName: v.timeframe.name,

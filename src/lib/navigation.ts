@@ -9,6 +9,7 @@ import {
 	Target,
 	Dices,
 	FlaskConical,
+	FlaskRound,
 	type LucideIcon,
 } from "lucide-react"
 
@@ -23,6 +24,7 @@ interface NavItem {
 		| "commandCenter"
 		| "monteCarlo"
 		| "riskSimulation"
+		| "backtest"
 		| "settings"
 	href:
 		| "/"
@@ -34,6 +36,7 @@ interface NavItem {
 		| "/command-center"
 		| "/monte-carlo"
 		| "/risk-simulation"
+		| "/backtest"
 		| "/settings"
 	icon: LucideIcon
 }
@@ -49,6 +52,7 @@ const navItems: NavItem[] = [
 		href: "/risk-simulation",
 		icon: FlaskConical,
 	},
+	{ labelKey: "backtest", href: "/backtest", icon: FlaskRound },
 	{ labelKey: "playbook", href: "/playbook", icon: FileText },
 	{ labelKey: "reports", href: "/reports", icon: FileBarChart },
 	{ labelKey: "monthly", href: "/monthly", icon: CalendarDays },
