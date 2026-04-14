@@ -54,6 +54,7 @@ const buildOriginalCurve = (
 			pnl,
 			originalEquity: cumulativePnl,
 			accountEquity,
+			peakEquity: peak,
 			drawdownFromPeak,
 			mode: "live",
 			smaValue: null,
@@ -123,6 +124,7 @@ const applyMethod1 = (
 				pnl,
 				originalEquity: originalCumulativePnl,
 				accountEquity: managedEquity,
+				peakEquity: managedPeak,
 				drawdownFromPeak: managedPeak - managedEquity,
 				mode: "live",
 				smaValue: null,
@@ -152,6 +154,7 @@ const applyMethod1 = (
 				pnl,
 				originalEquity: originalCumulativePnl,
 				accountEquity: managedEquity, // flatline
+				peakEquity: managedPeak,
 				drawdownFromPeak: managedPeak - managedEquity,
 				mode: "sim",
 				smaValue: null,
@@ -244,6 +247,7 @@ const applyMethod2 = (
 			pnl,
 			originalEquity: originalCumulativePnl,
 			accountEquity: managedEquity,
+			peakEquity: managedPeak,
 			drawdownFromPeak: managedPeak - managedEquity,
 			mode,
 			smaValue: sma !== null ? sma : null,
@@ -284,6 +288,7 @@ const buildLiveOnlyCurve = (
 			liveTradeNumber: i + 1,
 			originalEquity: point.originalEquity,
 			accountEquity,
+			peakEquity: peak,
 			drawdownFromPeak: peak - accountEquity,
 		})
 	}
