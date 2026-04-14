@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
+import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Shield } from "lucide-react"
@@ -58,6 +59,10 @@ const EquityShieldContent = ({
 	const [method1LiveOnly, setMethod1LiveOnly] = useState(false)
 	const [method2LiveOnly, setMethod2LiveOnly] = useState(false)
 
+	// Trade range for chart zoom
+	const [tradeFrom, setTradeFrom] = useState(1)
+	const [tradeTo, setTradeTo] = useState(0) // 0 = all
+
 	const handleRun = useCallback(async () => {
 		setIsLoading(true)
 		setError(null)
@@ -68,9 +73,11 @@ const EquityShieldContent = ({
 
 			if (response.status === "success" && response.data) {
 				setResult(response.data)
-				// Reset toggles on new run
+				// Reset toggles and range on new run
 				setMethod1LiveOnly(false)
 				setMethod2LiveOnly(false)
+				setTradeFrom(1)
+				setTradeTo(response.data.stats.totalTrades)
 			} else {
 				setError(response.message)
 			}
@@ -84,6 +91,33 @@ const EquityShieldContent = ({
 
 	const initialBalance = fromCents(params.initialBalanceCents)
 	const drawdownLimit = fromCents(params.drawdownLimitCents)
+
+	// Filter chart data to selected trade range (stats use full data)
+	const filtered = useMemo(() => {
+		if (!result) return null
+		const to = tradeTo || result.stats.totalTrades
+		const inRange = <T extends { tradeNumber: number }>(points: T[]): T[] =>
+			points.filter((p) => p.tradeNumber >= tradeFrom && p.tradeNumber <= to)
+
+		return {
+			original: inRange(result.original),
+			method1: inRange(result.method1),
+			method2: inRange(result.method2),
+			method1LiveOnly: inRange(result.method1LiveOnly),
+			method2LiveOnly: inRange(result.method2LiveOnly),
+		}
+	}, [result, tradeFrom, tradeTo])
+
+	const handleRangeChange = (field: "from" | "to", raw: string) => {
+		const value = parseInt(raw, 10)
+		if (Number.isNaN(value) || value < 1) return
+		const max = result?.stats.totalTrades ?? 999
+		if (field === "from") {
+			setTradeFrom(Math.min(value, tradeTo || max))
+		} else {
+			setTradeTo(Math.min(value, max))
+		}
+	}
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500">
@@ -117,7 +151,7 @@ const EquityShieldContent = ({
 			)}
 
 			{/* Results */}
-			{result && (
+			{result && filtered && (
 				<>
 					{/* Summary Stats */}
 					<EquityShieldStats
@@ -125,10 +159,53 @@ const EquityShieldContent = ({
 						initialBalance={initialBalance}
 					/>
 
+					{/* Trade Range Selector */}
+					<div className="border-bg-300 bg-bg-200 flex flex-wrap items-center gap-s-300 rounded-lg border p-s-300">
+						<span className="text-tiny text-txt-300">
+							{t("charts.rangeLabel")}
+						</span>
+						<Input
+							id="range-from"
+							type="number"
+							min={1}
+							max={tradeTo || result.stats.totalTrades}
+							value={tradeFrom}
+							onChange={(e) => handleRangeChange("from", e.target.value)}
+							className="w-20"
+							aria-label={t("charts.rangeLabel")}
+						/>
+						<span className="text-tiny text-txt-300">
+							{t("charts.rangeTo")}
+						</span>
+						<Input
+							id="range-to"
+							type="number"
+							min={tradeFrom}
+							max={result.stats.totalTrades}
+							value={tradeTo || result.stats.totalTrades}
+							onChange={(e) => handleRangeChange("to", e.target.value)}
+							className="w-20"
+							aria-label={t("charts.rangeTo")}
+						/>
+						<span className="text-tiny text-txt-300">
+							/ {result.stats.totalTrades}
+						</span>
+						<button
+							type="button"
+							onClick={() => {
+								setTradeFrom(1)
+								setTradeTo(result.stats.totalTrades)
+							}}
+							className="text-tiny text-acc-200 hover:underline"
+						>
+							{t("charts.rangeShowAll")}
+						</button>
+					</div>
+
 					{/* Chart 1: Original Equity Curve */}
 					<EquityShieldChart
-						data={result.original}
-						liveOnlyData={result.original}
+						data={filtered.original}
+						liveOnlyData={filtered.original}
 						showLiveOnly={false}
 						title={t("charts.original")}
 						drawdownLimitDollars={drawdownLimit}
@@ -159,8 +236,8 @@ const EquityShieldContent = ({
 							</div>
 						</div>
 						<EquityShieldChart
-							data={result.method1}
-							liveOnlyData={result.method1LiveOnly}
+							data={filtered.method1}
+							liveOnlyData={filtered.method1LiveOnly}
 							showLiveOnly={method1LiveOnly}
 							title={t("charts.method1Description")}
 							drawdownLimitDollars={drawdownLimit}
@@ -192,8 +269,8 @@ const EquityShieldContent = ({
 							</div>
 						</div>
 						<EquityShieldChart
-							data={result.method2}
-							liveOnlyData={result.method2LiveOnly}
+							data={filtered.method2}
+							liveOnlyData={filtered.method2LiveOnly}
 							showLiveOnly={method2LiveOnly}
 							title={t("charts.method2Description")}
 							drawdownLimitDollars={drawdownLimit}

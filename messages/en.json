@@ -3365,7 +3365,10 @@
 			"method2": "Method 2: Equity Curve Moving Average",
 			"method2Description": "Above SMA = live, below SMA = sim",
 			"liveOnly": "Live Only",
-			"liveOnlyToggle": "Show only live trades"
+			"liveOnlyToggle": "Show only live trades",
+			"rangeLabel": "Show trades",
+			"rangeTo": "to",
+			"rangeShowAll": "Show All"
 		},
 		"chart": {
 			"noData": "No data available",
