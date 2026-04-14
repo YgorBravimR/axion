@@ -26,6 +26,7 @@ const DEFAULT_PARAMS: EquityShieldParams = {
 	smaPeriod: 10,
 	initialBalanceCents: toCents(50000),
 	drawdownLimitCents: toCents(2000),
+	cutAtDdLimit: false,
 }
 
 const EquityShieldContent = ({

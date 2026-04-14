@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Play, Info } from "lucide-react"
 import type { EquityShieldParams } from "@/types/equity-shield"
@@ -151,6 +152,28 @@ const EquityShieldParamsForm = ({
 						aria-label={t("smaPeriod")}
 					/>
 				</div>
+			</div>
+
+			{/* Cut at DD Limit toggle */}
+			<div className="flex items-center gap-s-300">
+				<Switch
+					id="cut-at-dd-limit"
+					checked={params.cutAtDdLimit}
+					onCheckedChange={(checked) =>
+						onParamsChange({ ...params, cutAtDdLimit: checked })
+					}
+					aria-label={t("cutAtDdLimit")}
+				/>
+				<Label
+					id="label-cut-at-dd"
+					htmlFor="cut-at-dd-limit"
+					className="text-tiny text-txt-300 cursor-pointer"
+				>
+					{t("cutAtDdLimit")}
+				</Label>
+				<span className="text-tiny text-txt-300 opacity-60">
+					{t("cutAtDdLimitHint")}
+				</span>
 			</div>
 
 			{/* Run button */}

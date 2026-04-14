@@ -3338,7 +3338,9 @@
 			"recoveryPercent": "% Recuperação",
 			"smaPeriod": "Período SMA",
 			"runAnalysis": "Executar Análise",
-			"running": "Analisando..."
+			"running": "Analisando...",
+			"cutAtDdLimit": "Cortar trades no Limite DD",
+			"cutAtDdLimitHint": "Limita perdas para que o patrimônio nunca ultrapasse o limite da prop firm"
 		},
 		"stats": {
 			"title": "Resultados da Análise",

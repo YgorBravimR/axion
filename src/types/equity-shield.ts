@@ -25,6 +25,8 @@ interface EquityShieldParams {
 	initialBalanceCents: number
 	/** Prop firm drawdown limit in cents (shown as red line) */
 	drawdownLimitCents: number
+	/** Cap live trade losses at the DD limit (simulate hard stop at DD floor) */
+	cutAtDdLimit: boolean
 }
 
 // ==========================================
