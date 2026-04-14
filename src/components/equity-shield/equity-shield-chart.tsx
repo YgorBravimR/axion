@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import {
 	AreaChart,
 	Area,
+	Line,
 	XAxis,
 	YAxis,
 	CartesianGrid,
@@ -171,8 +172,12 @@ const EquityShieldChart = ({
 				mode: point.mode,
 				smaValue: point.smaValue,
 				drawdownFromPeak: point.drawdownFromPeak,
+				/** Trailing DD limit: peak - drawdownLimit (moves up with equity peak) */
+				ddLimitLine: drawdownLimitDollars > 0
+					? point.peakEquity - drawdownLimitDollars
+					: null,
 			})),
-		[activeData, showLiveOnly]
+		[activeData, showLiveOnly, drawdownLimitDollars]
 	)
 
 	const zoneBands = useMemo(
@@ -185,17 +190,18 @@ const EquityShieldChart = ({
 		const smaValues = showSMA
 			? chartData.filter((d) => d.smaValue !== null).map((d) => d.smaValue as number)
 			: []
-		const allValues = [...equityValues, ...smaValues]
-		const ddLimitLine = initialBalance - drawdownLimitDollars
+		const ddLimitValues = chartData
+			.filter((d) => d.ddLimitLine !== null)
+			.map((d) => d.ddLimitLine as number)
+		const allValues = [...equityValues, ...smaValues, ...ddLimitValues]
 
 		return {
-			minValue: Math.min(...allValues, ddLimitLine),
+			minValue: Math.min(...allValues),
 			maxValue: Math.max(...allValues),
 		}
-	}, [chartData, showSMA, initialBalance, drawdownLimitDollars])
+	}, [chartData, showSMA])
 
 	const padding = (maxValue - minValue) * 0.08 || 100
-	const ddLimitLine = initialBalance - drawdownLimitDollars
 
 	const strokeColor =
 		variant === "original"
@@ -281,19 +287,18 @@ const EquityShieldChart = ({
 						content={<CustomTooltip variant={variant} />}
 					/>
 
-					{/* DD Limit line */}
+					{/* Trailing DD Limit line (peak - drawdownLimit) */}
 					{drawdownLimitDollars > 0 && (
-						<ReferenceLine
-							y={ddLimitLine}
+						<Line
+							type="monotone"
+							dataKey="ddLimitLine"
 							stroke="var(--color-trade-sell)"
-							strokeDasharray="6 4"
 							strokeWidth={1.5}
-							label={{
-								value: t("ddLimit"),
-								position: "insideTopRight",
-								fill: "var(--color-trade-sell)",
-								fontSize: 10,
-							}}
+							strokeDasharray="6 4"
+							dot={false}
+							activeDot={false}
+							connectNulls
+							isAnimationActive={false}
 						/>
 					)}
 
@@ -349,6 +354,12 @@ const EquityShieldChart = ({
 						<div className="bg-trade-sell h-2.5 w-2.5 rounded-full opacity-40" />
 						<span className="text-tiny text-txt-300">{t("legendSim")}</span>
 					</div>
+					{drawdownLimitDollars > 0 && (
+						<div className="flex items-center gap-s-200">
+							<div className="border-trade-sell h-0 w-4 border-t border-dashed" />
+							<span className="text-tiny text-txt-300">{t("ddLimit")}</span>
+						</div>
+					)}
 					{showSMA && (
 						<div className="flex items-center gap-s-200">
 							<div className="border-txt-300 h-0 w-4 border-t border-dashed" />

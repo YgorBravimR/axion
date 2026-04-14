@@ -57,6 +57,8 @@ interface EquityShieldPoint {
 	originalEquity: number
 	/** Account equity: initialBalance + cumulative live P&L */
 	accountEquity: number
+	/** Running peak equity (high-water mark) for the managed curve */
+	peakEquity: number
 	/** Drawdown from peak as dollar amount (for the managed curve) */
 	drawdownFromPeak: number
 	/** Whether this trade was live or sim */
