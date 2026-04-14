@@ -9,6 +9,7 @@ import {
 	Target,
 	Dices,
 	FlaskConical,
+	Shield,
 	type LucideIcon,
 } from "lucide-react"
 
@@ -23,6 +24,7 @@ interface NavItem {
 		| "commandCenter"
 		| "monteCarlo"
 		| "riskSimulation"
+		| "equityShield"
 		| "settings"
 	href:
 		| "/"
@@ -34,6 +36,7 @@ interface NavItem {
 		| "/command-center"
 		| "/monte-carlo"
 		| "/risk-simulation"
+		| "/equity-shield"
 		| "/settings"
 	icon: LucideIcon
 }
@@ -48,6 +51,11 @@ const navItems: NavItem[] = [
 		labelKey: "riskSimulation",
 		href: "/risk-simulation",
 		icon: FlaskConical,
+	},
+	{
+		labelKey: "equityShield",
+		href: "/equity-shield",
+		icon: Shield,
 	},
 	{ labelKey: "playbook", href: "/playbook", icon: FileText },
 	{ labelKey: "reports", href: "/reports", icon: FileBarChart },

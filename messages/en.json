@@ -137,6 +137,7 @@
 		"settings": "Settings",
 		"monitor": "Monitor",
 		"riskSimulation": "Risk Simulation",
+		"equityShield": "Equity Shield",
 		"newTrade": "New Trade"
 	},
 	"market": {
@@ -3055,7 +3056,8 @@
 		"processingImage": "Analyzing screenshot...",
 		"importingOcr": "Importing {count} trades from image...",
 		"runningRiskSimulation": "Running risk simulation...",
-		"deletingTradingData": "Deleting all trading data..."
+		"deletingTradingData": "Deleting all trading data...",
+		"analyzing": "Analyzing equity curve..."
 	},
 	"auth": {
 		"login": {
@@ -3318,6 +3320,66 @@
 			"skipped": "SKIPPED",
 			"dailyLimitHit": "Day stopped: daily loss limit hit",
 			"dailyTargetHit": "Day stopped: daily profit target hit"
+		}
+	},
+	"equityShield": {
+		"title": "Equity Shield",
+		"subtitle": "Leverage drawdowns to protect your combine. Apply discipline-based equity curve management to your trade history.",
+		"errors": {
+			"unexpected": "An unexpected error occurred. Please try again."
+		},
+		"params": {
+			"title": "Parameters",
+			"tradeCount": "{count} closed trades",
+			"sampleSizeTip": "For best accuracy, the mentor recommends 400-500 backtest samples. At minimum, 100 trades are needed for reliable results.",
+			"initialBalance": "Account Balance",
+			"drawdownLimit": "DD Limit (Prop Firm)",
+			"mddMultiplier": "MDD Multiplier",
+			"recoveryPercent": "Recovery %",
+			"smaPeriod": "SMA Period",
+			"runAnalysis": "Run Analysis",
+			"running": "Analyzing..."
+		},
+		"stats": {
+			"title": "Analysis Results",
+			"totalTrades": "Total Trades",
+			"observedMDD": "Observed Max DD",
+			"m1Threshold": "M1 Sim Threshold",
+			"m1ThresholdSub": "MDD x multiplier",
+			"wouldPass": "Combine Status",
+			"pass": "Would Pass",
+			"fail": "Would Fail",
+			"original": "Original",
+			"method1": "Method 1: MDD Exercise",
+			"method2": "Method 2: SMA Crossover",
+			"finalPnl": "Final P&L",
+			"maxDD": "Max Drawdown",
+			"liveTrades": "Live Trades",
+			"simTrades": "Sim Trades",
+			"transitions": "Mode Switches"
+		},
+		"charts": {
+			"original": "Original Equity Curve",
+			"method1": "Method 1: Max Drawdown Exercise",
+			"method1Description": "Go to sim at MDD x 1.3 from peak, return to live at 30% retracement",
+			"method2": "Method 2: Equity Curve Moving Average",
+			"method2Description": "Above SMA = live, below SMA = sim",
+			"liveOnly": "Live Only",
+			"liveOnlyToggle": "Show only live trades"
+		},
+		"chart": {
+			"noData": "No data available",
+			"tooltipTrade": "Trade #{number} — {date}",
+			"tooltipEquity": "Equity: {value}",
+			"tooltipPnl": "P&L: {value}",
+			"tooltipDrawdown": "DD from peak: {value}",
+			"tooltipSMA": "SMA: {value}",
+			"modeLive": "LIVE",
+			"modeSim": "SIMULATION",
+			"ddLimit": "DD Limit",
+			"legendLive": "Live trading",
+			"legendSim": "Simulation",
+			"legendSMA": "SMA"
 		}
 	},
 	"commandMenu": {
