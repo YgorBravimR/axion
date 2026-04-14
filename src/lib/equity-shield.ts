@@ -166,6 +166,9 @@ const applyMethod1 = (
 
 				if (retracementPercent >= recoveryPercent) {
 					mode = "live"
+					// Reset managed peak so drawdown is measured fresh from
+					// the recovery point — prevents immediate re-triggering
+					managedPeak = managedEquity
 				}
 			}
 

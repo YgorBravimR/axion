@@ -3366,7 +3366,10 @@
 			"method2": "Método 2: Média Móvel da Curva de Equity",
 			"method2Description": "Acima da SMA = ao vivo, abaixo da SMA = simulação",
 			"liveOnly": "Apenas Ao Vivo",
-			"liveOnlyToggle": "Mostrar apenas trades ao vivo"
+			"liveOnlyToggle": "Mostrar apenas trades ao vivo",
+			"rangeLabel": "Mostrar trades",
+			"rangeTo": "até",
+			"rangeShowAll": "Mostrar Tudo"
 		},
 		"chart": {
 			"noData": "Nenhum dado disponível",
