@@ -13,10 +13,15 @@ import type { EquityShieldParams, EquityShieldResult, TradeForShield } from "@/t
 
 /**
  * Fetch all closed trades for the current account and run the Equity Shield analysis.
- * Uses all trades (no date filtering) to maximize sample size for MDD accuracy.
+ * Optionally slices the trade array to a user-selected range before computing.
+ *
+ * @param fromTrade - 1-based start index (default: 1)
+ * @param toTrade - 1-based end index inclusive (default: 0 = all trades)
  */
 const runEquityShieldFromDb = async (
-	params: EquityShieldParams
+	params: EquityShieldParams,
+	fromTrade: number = 1,
+	toTrade: number = 0
 ): Promise<ActionResponse<EquityShieldResult>> => {
 	try {
 		const { accountId, userId } = await requireAuth()
@@ -53,7 +58,22 @@ const runEquityShieldFromDb = async (
 			asset: trade.asset,
 		}))
 
-		const result = runEquityShield(tradesForShield, params)
+		// Slice to user-selected range (1-based, inclusive)
+		const rangeEnd = toTrade > 0 ? toTrade : tradesForShield.length
+		const selectedTrades = tradesForShield.slice(
+			Math.max(0, fromTrade - 1),
+			rangeEnd
+		)
+
+		if (selectedTrades.length === 0) {
+			return {
+				status: "error",
+				message: "No trades in the selected range",
+				errors: [{ code: "EMPTY_RANGE", detail: "Selected range contains no trades" }],
+			}
+		}
+
+		const result = runEquityShield(selectedTrades, params)
 
 		return {
 			status: "success",
