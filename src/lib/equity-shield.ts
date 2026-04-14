@@ -84,7 +84,9 @@ const applyMethod1 = (
 	trades: TradeForShield[],
 	initialBalance: number,
 	mddMultiplier: number,
-	recoveryPercent: number
+	recoveryPercent: number,
+	drawdownLimit: number,
+	cutAtDdLimit: boolean
 ): EquityShieldPoint[] => {
 	const points: EquityShieldPoint[] = []
 
@@ -125,6 +127,14 @@ const applyMethod1 = (
 
 		if (mode === "live") {
 			managedEquity += pnl
+
+			// Cap loss at DD limit floor (simulate hard stop at prop firm limit)
+			if (cutAtDdLimit && drawdownLimit > 0) {
+				const floor = managedPeak - drawdownLimit
+				if (managedEquity < floor) {
+					managedEquity = floor
+				}
+			}
 
 			if (managedEquity > managedPeak) {
 				managedPeak = managedEquity
@@ -228,7 +238,9 @@ const computeSMA = (values: number[], period: number): (number | null)[] => {
 const applyMethod2 = (
 	trades: TradeForShield[],
 	initialBalance: number,
-	smaPeriod: number
+	smaPeriod: number,
+	drawdownLimit: number,
+	cutAtDdLimit: boolean
 ): EquityShieldPoint[] => {
 	// First, build the raw account equity series for SMA computation
 	const rawEquityValues: number[] = []
@@ -259,6 +271,15 @@ const applyMethod2 = (
 
 		if (mode === "live") {
 			managedEquity += pnl
+
+			// Cap loss at DD limit floor
+			if (cutAtDdLimit && drawdownLimit > 0) {
+				const floor = managedPeak - drawdownLimit
+				if (managedEquity < floor) {
+					managedEquity = floor
+				}
+			}
+
 			if (managedEquity > managedPeak) {
 				managedPeak = managedEquity
 			}
@@ -406,11 +427,19 @@ const runEquityShield = (
 		trades,
 		initialBalance,
 		params.mddMultiplier,
-		params.recoveryPercent
+		params.recoveryPercent,
+		drawdownLimit,
+		params.cutAtDdLimit
 	)
 
 	// 3. Apply Method 2
-	const method2 = applyMethod2(trades, initialBalance, params.smaPeriod)
+	const method2 = applyMethod2(
+		trades,
+		initialBalance,
+		params.smaPeriod,
+		drawdownLimit,
+		params.cutAtDdLimit
+	)
 
 	// 4. Build live-only curves
 	const method1LiveOnly = buildLiveOnlyCurve(method1, initialBalance)

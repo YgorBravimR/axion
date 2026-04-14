@@ -3339,7 +3339,9 @@
 			"recoveryPercent": "Recovery %",
 			"smaPeriod": "SMA Period",
 			"runAnalysis": "Run Analysis",
-			"running": "Analyzing..."
+			"running": "Analyzing...",
+			"cutAtDdLimit": "Cut trades at DD Limit",
+			"cutAtDdLimitHint": "Cap losses so equity never breaches the prop firm limit"
 		},
 		"stats": {
 			"title": "Analysis Results",
