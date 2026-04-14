@@ -50,7 +50,7 @@ interface TooltipPayload {
 	tradeNumber: number
 	date: string
 	accountEquity: number
-	originalEquity: number
+	originalAccountEquity: number
 	pnl: number
 	mode: "live" | "sim"
 	smaValue: number | null
@@ -61,19 +61,21 @@ interface CustomTooltipProps {
 	active?: boolean
 	payload?: Array<{ value: number; payload: TooltipPayload }>
 	variant: "original" | "method1" | "method2"
+	showOriginalEquity?: boolean
 }
 
 // ==========================================
 // TOOLTIP
 // ==========================================
 
-const CustomTooltip = ({ active, payload, variant }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload, variant, showOriginalEquity }: CustomTooltipProps) => {
 	const t = useTranslations("equityShield.chart")
 
 	if (!active || !payload || payload.length === 0) return null
 
 	const data = payload[0].payload
 	const pnlSign = data.pnl >= 0 ? "+" : ""
+	const displayEquity = showOriginalEquity ? data.originalAccountEquity : data.accountEquity
 
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
@@ -81,7 +83,7 @@ const CustomTooltip = ({ active, payload, variant }: CustomTooltipProps) => {
 				{t("tooltipTrade", { number: data.tradeNumber, date: data.date })}
 			</p>
 			<p className="text-small text-txt-100 font-medium">
-				{t("tooltipEquity", { value: formatCompactCurrency(data.accountEquity, "R$") })}
+				{t("tooltipEquity", { value: formatCompactCurrency(displayEquity, "R$") })}
 			</p>
 			<p
 				className={`text-tiny ${data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
@@ -167,7 +169,7 @@ const EquityShieldChart = ({
 				tradeNumber: showLiveOnly ? point.liveTradeNumber : point.tradeNumber,
 				date: point.date,
 				accountEquity: point.accountEquity,
-				originalEquity: point.originalEquity,
+				originalAccountEquity: initialBalance + point.originalEquity,
 				pnl: point.pnl,
 				mode: point.mode,
 				smaValue: point.smaValue,
@@ -177,7 +179,7 @@ const EquityShieldChart = ({
 					? point.peakEquity - drawdownLimitDollars
 					: null,
 			})),
-		[activeData, showLiveOnly, drawdownLimitDollars]
+		[activeData, showLiveOnly, drawdownLimitDollars, initialBalance]
 	)
 
 	const zoneBands = useMemo(
@@ -185,8 +187,15 @@ const EquityShieldChart = ({
 		[data, showLiveOnly]
 	)
 
+	// Method 2 full view: show original equity so SMA crossovers are visible
+	// Everything else: show managed account equity
+	const showOriginalEquity = variant === "method2" && !showLiveOnly
+	const mainEquityKey = showOriginalEquity ? "originalAccountEquity" : "accountEquity"
+
 	const { minValue, maxValue } = useMemo(() => {
-		const equityValues = chartData.map((d) => d.accountEquity)
+		const equityValues = chartData.map((d) =>
+			showOriginalEquity ? d.originalAccountEquity : d.accountEquity
+		)
 		const smaValues = showSMA
 			? chartData.filter((d) => d.smaValue !== null).map((d) => d.smaValue as number)
 			: []
@@ -199,7 +208,7 @@ const EquityShieldChart = ({
 			minValue: Math.min(...allValues),
 			maxValue: Math.max(...allValues),
 		}
-	}, [chartData, showSMA])
+	}, [chartData, showSMA, showOriginalEquity])
 
 	const padding = (maxValue - minValue) * 0.08 || 100
 
@@ -284,7 +293,7 @@ const EquityShieldChart = ({
 
 					<ChartTooltip
 						variant="line"
-						content={<CustomTooltip variant={variant} />}
+						content={<CustomTooltip variant={variant} showOriginalEquity={showOriginalEquity} />}
 					/>
 
 					{/* Trailing DD Limit line (peak - drawdownLimit) */}
@@ -328,7 +337,7 @@ const EquityShieldChart = ({
 					{/* Main equity line */}
 					<Area
 						type="monotone"
-						dataKey="accountEquity"
+						dataKey={mainEquityKey}
 						stroke={strokeColor}
 						strokeWidth={2}
 						fill={`url(#${gradientId})`}
