@@ -3340,7 +3340,10 @@
 			"runAnalysis": "Executar Análise",
 			"running": "Analisando...",
 			"cutAtDdLimit": "Cortar trades no Limite DD",
-			"cutAtDdLimitHint": "Limita perdas para que o patrimônio nunca ultrapasse o limite da prop firm"
+			"cutAtDdLimitHint": "Limita perdas para que o patrimônio nunca ultrapasse o limite da prop firm",
+			"rangeFrom": "Do Trade",
+			"rangeTo": "Até Trade",
+			"rangeAll": "Todos"
 		},
 		"stats": {
 			"title": "Resultados da Análise",
@@ -3367,10 +3370,7 @@
 			"method2": "Método 2: Média Móvel da Curva de Equity",
 			"method2Description": "Acima da SMA = ao vivo, abaixo da SMA = simulação",
 			"liveOnly": "Apenas Ao Vivo",
-			"liveOnlyToggle": "Mostrar apenas trades ao vivo",
-			"rangeLabel": "Mostrar trades",
-			"rangeTo": "até",
-			"rangeShowAll": "Mostrar Tudo"
+			"liveOnlyToggle": "Mostrar apenas trades ao vivo"
 		},
 		"chart": {
 			"noData": "Nenhum dado disponível",

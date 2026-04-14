@@ -3340,7 +3340,10 @@
 			"runAnalysis": "Run Analysis",
 			"running": "Analyzing...",
 			"cutAtDdLimit": "Cut trades at DD Limit",
-			"cutAtDdLimitHint": "Cap losses so equity never breaches the prop firm limit"
+			"cutAtDdLimitHint": "Cap losses so equity never breaches the prop firm limit",
+			"rangeFrom": "From Trade",
+			"rangeTo": "To Trade",
+			"rangeAll": "All"
 		},
 		"stats": {
 			"title": "Analysis Results",
@@ -3367,10 +3370,7 @@
 			"method2": "Method 2: Equity Curve Moving Average",
 			"method2Description": "Above SMA = live, below SMA = sim",
 			"liveOnly": "Live Only",
-			"liveOnlyToggle": "Show only live trades",
-			"rangeLabel": "Show trades",
-			"rangeTo": "to",
-			"rangeShowAll": "Show All"
+			"liveOnlyToggle": "Show only live trades"
 		},
 		"chart": {
 			"noData": "No data available",

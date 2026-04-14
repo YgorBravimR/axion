@@ -12,6 +12,10 @@ import { toCents } from "@/lib/money"
 interface EquityShieldParamsProps {
 	params: EquityShieldParams
 	onParamsChange: (params: EquityShieldParams) => void
+	tradeFrom: number
+	tradeTo: number
+	onTradeFromChange: (value: number) => void
+	onTradeToChange: (value: number) => void
 	onRun: () => void
 	isLoading: boolean
 	tradeCount: number | null
@@ -20,6 +24,10 @@ interface EquityShieldParamsProps {
 const EquityShieldParamsForm = ({
 	params,
 	onParamsChange,
+	tradeFrom,
+	tradeTo,
+	onTradeFromChange,
+	onTradeToChange,
 	onRun,
 	isLoading,
 	tradeCount,
@@ -150,6 +158,61 @@ const EquityShieldParamsForm = ({
 						value={params.smaPeriod}
 						onChange={(e) => handleFieldChange("smaPeriod", e.target.value)}
 						aria-label={t("smaPeriod")}
+					/>
+				</div>
+
+				{/* Trade Range: From */}
+				<div className="space-y-s-200">
+					<Label id="label-range-from" htmlFor="range-from" className="text-tiny text-txt-300">
+						{t("rangeFrom")}
+					</Label>
+					<Input
+						id="range-from"
+						type="number"
+						min={1}
+						max={tradeCount ?? 9999}
+						step={1}
+						value={tradeFrom}
+						onChange={(e) => {
+							const v = parseInt(e.target.value, 10)
+							if (!Number.isNaN(v) && v >= 1) onTradeFromChange(v)
+						}}
+						aria-label={t("rangeFrom")}
+					/>
+				</div>
+
+				{/* Trade Range: To */}
+				<div className="space-y-s-200">
+					<div className="flex items-center justify-between">
+						<Label id="label-range-to" htmlFor="range-to" className="text-tiny text-txt-300">
+							{t("rangeTo")}
+						</Label>
+						{tradeCount !== null && (
+							<button
+								type="button"
+								onClick={() => {
+									onTradeFromChange(1)
+									onTradeToChange(0)
+								}}
+								className="text-tiny text-acc-200 hover:underline"
+								tabIndex={0}
+							>
+								{t("rangeAll")}
+							</button>
+						)}
+					</div>
+					<Input
+						id="range-to"
+						type="number"
+						min={tradeFrom}
+						max={tradeCount ?? 9999}
+						step={1}
+						value={tradeTo || tradeCount || ""}
+						onChange={(e) => {
+							const v = parseInt(e.target.value, 10)
+							if (!Number.isNaN(v) && v >= tradeFrom) onTradeToChange(v)
+						}}
+						aria-label={t("rangeTo")}
 					/>
 				</div>
 			</div>
