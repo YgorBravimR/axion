@@ -3378,8 +3378,9 @@
 			"modeLive": "AO VIVO",
 			"modeSim": "SIMULAÇÃO",
 			"ddLimit": "Limite DD",
+			"legendEquity": "Patrimônio",
 			"legendLive": "Trading ao vivo",
-			"legendSim": "Simulação",
+			"legendSim": "Zona Sim",
 			"legendSMA": "SMA"
 		}
 	},

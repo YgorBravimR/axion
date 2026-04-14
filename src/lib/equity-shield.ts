@@ -70,8 +70,12 @@ const buildOriginalCurve = (
 
 /**
  * Applies Method 1 (MDD Exercise) to the trade sequence:
- * - Go to SIM when the managed curve drops by (MDD * multiplier) from its peak
- * - Return to LIVE when the original curve retraces (recoveryPercent) from valley
+ * - Uses a rolling "completed MDD" from the original curve (drawdowns that
+ *   fully recovered by making a new high). This way the threshold adapts as
+ *   trading history grows, and can actually trigger on the same dataset.
+ * - Go to SIM when the managed curve drops by (completedMDD * multiplier) from its peak
+ * - Return to LIVE when the original curve retraces (recoveryPercent) of the
+ *   peak-to-valley range, measured from the valley back toward the peak.
  *
  * The "managed curve" only moves during live trades.
  * The "original curve" keeps tracking to determine when conditions recover.
@@ -79,11 +83,9 @@ const buildOriginalCurve = (
 const applyMethod1 = (
 	trades: TradeForShield[],
 	initialBalance: number,
-	observedMDD: number,
 	mddMultiplier: number,
 	recoveryPercent: number
 ): EquityShieldPoint[] => {
-	const simStartThreshold = observedMDD * mddMultiplier
 	const points: EquityShieldPoint[] = []
 
 	let mode: TradingMode = "live"
@@ -91,8 +93,15 @@ const applyMethod1 = (
 	let managedPeak = initialBalance
 	let originalCumulativePnl = 0
 
-	// Tracking for sim-mode recovery
-	let simEntryOriginalEquity = 0
+	// Rolling MDD: tracks completed drawdowns on the original curve.
+	// A drawdown "completes" when the original equity makes a new high.
+	let originalPeak = initialBalance
+	let originalValley = initialBalance
+	let completedMDD = 0
+
+	// Recovery tracking — uses the original curve's peak (high-water mark)
+	// before the drawdown, not the equity at sim entry
+	let originalPeakAtSimEntry = 0
 	let originalValleyInSim = 0
 
 	for (let i = 0; i < trades.length; i++) {
@@ -100,6 +109,19 @@ const applyMethod1 = (
 		const pnl = fromCents(trade.pnlCents)
 		originalCumulativePnl += pnl
 		const originalAccountEquity = initialBalance + originalCumulativePnl
+
+		// Track original curve: update peak/valley and completed drawdowns
+		if (originalAccountEquity > originalPeak) {
+			// New high → previous drawdown is "completed"
+			const completedDD = originalPeak - originalValley
+			if (completedDD > completedMDD) {
+				completedMDD = completedDD
+			}
+			originalPeak = originalAccountEquity
+			originalValley = originalAccountEquity
+		} else if (originalAccountEquity < originalValley) {
+			originalValley = originalAccountEquity
+		}
 
 		if (mode === "live") {
 			managedEquity += pnl
@@ -109,17 +131,18 @@ const applyMethod1 = (
 			}
 
 			const managedDrawdown = managedPeak - managedEquity
+			const simThreshold = completedMDD * mddMultiplier
 
-			// Check if we should switch to sim (between trades = after this trade settles)
-			if (managedDrawdown >= simStartThreshold) {
+			// Switch to sim when threshold is established and exceeded
+			if (completedMDD > 0 && managedDrawdown >= simThreshold) {
 				mode = "sim"
-				simEntryOriginalEquity = originalAccountEquity
+				originalPeakAtSimEntry = originalPeak
 				originalValleyInSim = originalAccountEquity
 			}
 
 			points.push({
 				tradeNumber: i + 1,
-				liveTradeNumber: null, // assigned later
+				liveTradeNumber: null,
 				date: formatDateKey(trade.exitDate ?? trade.entryDate),
 				pnl,
 				originalEquity: originalCumulativePnl,
@@ -135,14 +158,13 @@ const applyMethod1 = (
 				originalValleyInSim = originalAccountEquity
 			}
 
-			// Check recovery: has original curve retraced recoveryPercent from peak-to-valley?
-			const peakToValley = simEntryOriginalEquity - originalValleyInSim
+			// Recovery: 30% from valley toward the original peak (high-water mark)
+			const peakToValley = originalPeakAtSimEntry - originalValleyInSim
 			if (peakToValley > 0) {
 				const retracement = originalAccountEquity - originalValleyInSim
 				const retracementPercent = retracement / peakToValley
 
 				if (retracementPercent >= recoveryPercent) {
-					// Switch back to live before next trade
 					mode = "live"
 				}
 			}
@@ -153,7 +175,7 @@ const applyMethod1 = (
 				date: formatDateKey(trade.exitDate ?? trade.entryDate),
 				pnl,
 				originalEquity: originalCumulativePnl,
-				accountEquity: managedEquity, // flatline
+				accountEquity: managedEquity,
 				peakEquity: managedPeak,
 				drawdownFromPeak: managedPeak - managedEquity,
 				mode: "sim",
@@ -376,11 +398,10 @@ const runEquityShield = (
 		initialBalance
 	)
 
-	// 2. Apply Method 1
+	// 2. Apply Method 1 (uses rolling completed MDD internally)
 	const method1 = applyMethod1(
 		trades,
 		initialBalance,
-		observedMDD,
 		params.mddMultiplier,
 		params.recoveryPercent
 	)

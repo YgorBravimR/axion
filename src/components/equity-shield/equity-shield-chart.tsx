@@ -296,8 +296,8 @@ const EquityShieldChart = ({
 						content={<CustomTooltip variant={variant} showOriginalEquity={showOriginalEquity} />}
 					/>
 
-					{/* Trailing DD Limit line (peak - drawdownLimit) */}
-					{drawdownLimitDollars > 0 && (
+					{/* Trailing DD Limit line (peak - drawdownLimit) — not shown for Method 2 (SMA-based) */}
+					{drawdownLimitDollars > 0 && variant !== "method2" && (
 						<Line
 							type="monotone"
 							dataKey="ddLimitLine"
@@ -352,23 +352,30 @@ const EquityShieldChart = ({
 				</AreaChart>
 			</ChartContainer>
 
-			{/* Zone legend */}
+			{/* Chart legend */}
 			{!showLiveOnly && variant !== "original" && (
-				<div className="mt-s-200 flex items-center gap-m-400">
+				<div className="mt-s-200 flex flex-wrap items-center gap-m-400">
+					{/* Equity line — matches actual stroke color */}
 					<div className="flex items-center gap-s-200">
-						<div className="h-2.5 w-2.5 rounded-full bg-trade-buy" />
-						<span className="text-tiny text-txt-300">{t("legendLive")}</span>
+						<div
+							className="h-0 w-4 border-t-2"
+							style={{ borderColor: strokeColor }}
+						/>
+						<span className="text-tiny text-txt-300">{t("legendEquity")}</span>
 					</div>
+					{/* Sim zone — matches the faint red ReferenceArea shading */}
 					<div className="flex items-center gap-s-200">
-						<div className="bg-trade-sell h-2.5 w-2.5 rounded-full opacity-40" />
+						<div className="bg-trade-sell h-2.5 w-4 rounded-sm opacity-20" />
 						<span className="text-tiny text-txt-300">{t("legendSim")}</span>
 					</div>
-					{drawdownLimitDollars > 0 && (
+					{/* DD Limit — only for methods that use it (not Method 2/SMA) */}
+					{drawdownLimitDollars > 0 && variant !== "method2" && (
 						<div className="flex items-center gap-s-200">
 							<div className="border-trade-sell h-0 w-4 border-t border-dashed" />
 							<span className="text-tiny text-txt-300">{t("ddLimit")}</span>
 						</div>
 					)}
+					{/* SMA line */}
 					{showSMA && (
 						<div className="flex items-center gap-s-200">
 							<div className="border-txt-300 h-0 w-4 border-t border-dashed" />

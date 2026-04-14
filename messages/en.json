@@ -3378,8 +3378,9 @@
 			"modeLive": "LIVE",
 			"modeSim": "SIMULATION",
 			"ddLimit": "DD Limit",
+			"legendEquity": "Equity",
 			"legendLive": "Live trading",
-			"legendSim": "Simulation",
+			"legendSim": "Sim Zone",
 			"legendSMA": "SMA"
 		}
 	},
