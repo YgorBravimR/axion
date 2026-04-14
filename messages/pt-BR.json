@@ -138,6 +138,7 @@
 		"monitor": "Monitor",
 		"riskSimulation": "Simulador de Risco",
 		"backtest": "Backtest",
+		"equityShield": "Equity Shield",
 		"newTrade": "Novo Trade"
 	},
 	"market": {
@@ -3056,7 +3057,8 @@
 		"processingImage": "Analisando captura de tela...",
 		"importingOcr": "Importando {count} operações da imagem...",
 		"runningRiskSimulation": "Executando simulação de risco...",
-		"deletingTradingData": "Excluindo todos os dados de trading..."
+		"deletingTradingData": "Excluindo todos os dados de trading...",
+		"analyzing": "Analisando curva de equity..."
 	},
 	"auth": {
 		"login": {
@@ -3319,6 +3321,66 @@
 			"skipped": "IGNORADO",
 			"dailyLimitHit": "Dia parado: limite de perda diária atingido",
 			"dailyTargetHit": "Dia parado: meta de ganho diário atingida"
+		}
+	},
+	"equityShield": {
+		"title": "Equity Shield",
+		"subtitle": "Aproveite os drawdowns para proteger seu combine. Aplique gestão de curva de equity baseada em disciplina ao seu histórico de trades.",
+		"errors": {
+			"unexpected": "Ocorreu um erro inesperado. Tente novamente."
+		},
+		"params": {
+			"title": "Parâmetros",
+			"tradeCount": "{count} trades fechados",
+			"sampleSizeTip": "Para melhor precisão, o mentor recomenda 400-500 amostras de backtest. No mínimo, 100 trades são necessários para resultados confiáveis.",
+			"initialBalance": "Saldo da Conta",
+			"drawdownLimit": "Limite de DD (Prop Firm)",
+			"mddMultiplier": "Multiplicador MDD",
+			"recoveryPercent": "% Recuperação",
+			"smaPeriod": "Período SMA",
+			"runAnalysis": "Executar Análise",
+			"running": "Analisando..."
+		},
+		"stats": {
+			"title": "Resultados da Análise",
+			"totalTrades": "Total de Trades",
+			"observedMDD": "DD Máximo Observado",
+			"m1Threshold": "Limiar Sim M1",
+			"m1ThresholdSub": "MDD x multiplicador",
+			"wouldPass": "Status do Combine",
+			"pass": "Passaria",
+			"fail": "Reprovaria",
+			"original": "Original",
+			"method1": "Método 1: Exercício MDD",
+			"method2": "Método 2: Média Móvel da Curva",
+			"finalPnl": "P&L Final",
+			"maxDD": "Drawdown Máximo",
+			"liveTrades": "Trades Ao Vivo",
+			"simTrades": "Trades Simulados",
+			"transitions": "Trocas de Modo"
+		},
+		"charts": {
+			"original": "Curva de Equity Original",
+			"method1": "Método 1: Exercício de Drawdown Máximo",
+			"method1Description": "Vai para sim no MDD x 1.3 do pico, retorna ao vivo com 30% de retração",
+			"method2": "Método 2: Média Móvel da Curva de Equity",
+			"method2Description": "Acima da SMA = ao vivo, abaixo da SMA = simulação",
+			"liveOnly": "Apenas Ao Vivo",
+			"liveOnlyToggle": "Mostrar apenas trades ao vivo"
+		},
+		"chart": {
+			"noData": "Nenhum dado disponível",
+			"tooltipTrade": "Trade #{number} — {date}",
+			"tooltipEquity": "Equity: {value}",
+			"tooltipPnl": "P&L: {value}",
+			"tooltipDrawdown": "DD do pico: {value}",
+			"tooltipSMA": "SMA: {value}",
+			"modeLive": "AO VIVO",
+			"modeSim": "SIMULAÇÃO",
+			"ddLimit": "Limite DD",
+			"legendLive": "Trading ao vivo",
+			"legendSim": "Simulação",
+			"legendSMA": "SMA"
 		}
 	},
 	"commandMenu": {

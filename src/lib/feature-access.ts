@@ -42,6 +42,7 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"/analytics": { requiredRole: "viewer", description: "Analytics" },
 	"/monte-carlo": { requiredRole: "trader", description: "Monte Carlo" },
 	"/risk-simulation": { requiredRole: "trader", description: "Risk Simulation" },
+	"/equity-shield": { requiredRole: "trader", description: "Equity Shield" },
 	"/analytics/account-comparison": { requiredRole: "trader", description: "Account Comparison" },
 	"/playbook": { requiredRole: "trader", description: "Playbook" },
 	"/reports": { requiredRole: "viewer", description: "Reports" },
