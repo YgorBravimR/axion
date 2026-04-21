@@ -81,22 +81,31 @@ const StatCard = ({
 }: StatCardProps) => {
 	const sizes = sizeClasses[size]
 
+	const labelId = `stat-label-${label.toLowerCase().replace(/\s+/g, "-")}`
+	const valueId = `stat-value-${label.toLowerCase().replace(/\s+/g, "-")}`
+
 	const labelAndValue = (
-		<div className="min-w-0">
-			<span className={cn("font-medium uppercase tracking-wider text-txt-300", sizes.label)}>
+		<dl className="min-w-0">
+			<dt
+				id={labelId}
+				className={cn("font-medium uppercase tracking-wide text-txt-300", sizes.label)}
+			>
 				{label}
-			</span>
+			</dt>
 			<div className="mt-s-100 flex items-baseline gap-s-200">
 				{typeof value === "string" ? (
-					<p className={cn("font-semibold", sizes.value, valueColorClass || "text-txt-100")}>
+					<dd
+						id={valueId}
+						className={cn("font-semibold", sizes.value, valueColorClass || "text-txt-100")}
+					>
 						{value}
-					</p>
+					</dd>
 				) : (
-					value
+					<dd id={valueId}>{value}</dd>
 				)}
 				{trend && <TrendIcon trend={trend} />}
 			</div>
-		</div>
+		</dl>
 	)
 
 	return (
@@ -108,7 +117,8 @@ const StatCard = ({
 				sizes.container,
 				className
 			)}
-			aria-label={label}
+			role="region"
+			aria-labelledby={`${labelId} ${valueId}`}
 		>
 			{indicator ? (
 				<div className="flex justify-between items-start gap-s-200">

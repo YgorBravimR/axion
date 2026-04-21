@@ -5,19 +5,28 @@ import { trades, monthlyPlans } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { getRiskProfile } from "@/app/actions/risk-profiles"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
+import {
+	getUserDek,
+	decryptTradeFields,
+	decryptMonthlyPlanFields,
+} from "@/lib/user-crypto"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
 import type { ActionResponse } from "@/types"
-import type { LiveTradingStatusResult, TradeSummary } from "@/types/live-trading-status"
+import type {
+	LiveTradingStatusResult,
+	TradeSummary,
+} from "@/types/live-trading-status"
 
 /**
  * Fetches today's trades and resolves the live trading status
  * using the active monthly plan's linked risk profile.
  */
-const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTradingStatusResult>> => {
+const getLiveTradingStatus = async (
+	date?: Date
+): Promise<ActionResponse<LiveTradingStatusResult>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -42,10 +51,13 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 
 		// Decrypt monthly plan fields if DEK is available
 		const dek = await getUserDek(userId)
-		const { decryptMonthlyPlanFields } = await import("@/lib/user-crypto")
-		const monthlyPlan = rawMonthlyPlan && dek
-			? decryptMonthlyPlanFields(rawMonthlyPlan as unknown as Record<string, unknown>, dek) as unknown as typeof rawMonthlyPlan
-			: rawMonthlyPlan
+		const monthlyPlan =
+			rawMonthlyPlan && dek
+				? (decryptMonthlyPlanFields(
+						rawMonthlyPlan as unknown as Record<string, unknown>,
+						dek
+					) as unknown as typeof rawMonthlyPlan)
+				: rawMonthlyPlan
 
 		if (!monthlyPlan?.riskProfileId) {
 			return {
@@ -82,9 +94,14 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 		// When using percentage-based sizing, the plan derives actual amounts from
 		// the account balance (e.g., 1.25% of R$20k = R$250), while the profile
 		// stores static fallback amounts for a reference balance.
-		const planRiskPerTradeCents = Number(monthlyPlan.riskPerTradeCents) || profile.decisionTree.baseTrade.riskCents
-		const planDailyLossCents = Number(monthlyPlan.dailyLossCents) || profile.dailyLossCents
-		const planDailyProfitTargetCents = Number(monthlyPlan.dailyProfitTargetCents) || profile.dailyProfitTargetCents
+		const planRiskPerTradeCents =
+			Number(monthlyPlan.riskPerTradeCents) ||
+			profile.decisionTree.baseTrade.riskCents
+		const planDailyLossCents =
+			Number(monthlyPlan.dailyLossCents) || profile.dailyLossCents
+		const planDailyProfitTargetCents =
+			Number(monthlyPlan.dailyProfitTargetCents) ||
+			profile.dailyProfitTargetCents
 
 		// Override the decision tree's static base risk with the plan-derived value
 		const decisionTree = {
@@ -108,7 +125,13 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 
 		// Decrypt trade fields for accurate P&L and position data
 		const todaysTrades = dek
-			? rawTodaysTrades.map((t) => decryptTradeFields(t as unknown as Record<string, unknown>, dek) as unknown as typeof t)
+			? rawTodaysTrades.map(
+					(t) =>
+						decryptTradeFields(
+							t as unknown as Record<string, unknown>,
+							dek
+						) as unknown as typeof t
+				)
 			: rawTodaysTrades
 
 		// Map trades to the lightweight input shape
@@ -118,7 +141,8 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 		}))
 
 		// Resolve max trades from explicit plan value or derived fallback
-		const maxTrades = monthlyPlan.maxDailyTrades ?? monthlyPlan.derivedMaxDailyTrades ?? null
+		const maxTrades =
+			monthlyPlan.maxDailyTrades ?? monthlyPlan.derivedMaxDailyTrades ?? null
 
 		const status = resolveLiveStatus({
 			trades: tradeInputs,
@@ -137,7 +161,9 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 			direction: trade.direction,
 			asset: trade.asset,
 			positionSize: Number(trade.positionSize) || 0,
-			riskAmountCents: trade.plannedRiskAmount ? Number(trade.plannedRiskAmount) : null,
+			riskAmountCents: trade.plannedRiskAmount
+				? Number(trade.plannedRiskAmount)
+				: null,
 		}))
 
 		return {
@@ -149,7 +175,12 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 		return {
 			status: "error",
 			message: t("actionErrors.fetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getLiveTradingStatus") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getLiveTradingStatus"),
+				},
+			],
 		}
 	}
 }

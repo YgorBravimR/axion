@@ -125,7 +125,7 @@ export const MonthlyPlanTab = ({
 					>
 						<ChevronLeft className="h-4 w-4" />
 					</Button>
-					<span className="min-w-[140px] text-center text-small font-medium text-txt-100">
+					<span className="min-w-[10ch] text-center text-small font-medium text-txt-100">
 						{monthLabel}
 					</span>
 					<Button id="plan-next-month"
@@ -158,8 +158,8 @@ export const MonthlyPlanTab = ({
 
 			{/* New Month Banner */}
 			{!plan && !loading && isCurrentMonth && (
-				<div className="flex flex-wrap items-center gap-s-200 sm:gap-m-400 rounded-lg border border-acc-100/30 bg-acc-100/5 p-m-400">
-					<AlertCircle className="h-5 w-5 shrink-0 text-acc-100" />
+				<div className="flex flex-wrap items-center gap-s-200 sm:gap-m-400 rounded-lg border border-warning/30 bg-warning/5 p-m-400">
+					<AlertCircle className="h-5 w-5 shrink-0 text-warning" />
 					<div className="flex-1 min-w-0">
 						<p className="text-small font-medium text-txt-100">
 							{t("newMonthBanner", { month: tMonths(String(month - 1)), year: String(year) })}
@@ -202,7 +202,7 @@ export const MonthlyPlanTab = ({
 			{loading && (
 				<div className="flex items-center justify-center py-8" role="status">
 					<div className="h-6 w-6 animate-spin motion-reduce:animate-none rounded-full border-2 border-acc-100 border-t-transparent" />
-					<span className="sr-only">Loading...</span>
+					<span className="sr-only">{t("loadingPlan")}</span>
 				</div>
 			)}
 

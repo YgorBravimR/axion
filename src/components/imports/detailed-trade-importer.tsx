@@ -8,7 +8,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -23,8 +23,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/toast"
-import type { BrokerName } from "@/lib/csv-parsers"
-import type { ImportPreview } from "@/lib/csv-parsers"
+import type { BrokerName, ImportPreview } from "@/lib/csv-parsers"
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -49,6 +48,14 @@ export const DetailedTradeImporter = ({
 	const [importId, setImportId] = useState<string>("")
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string>("")
+	const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+	// Clear any pending redirect timer on unmount
+	useEffect(() => {
+		return () => {
+			if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current)
+		}
+	}, [])
 
 	/**
 	 * Handle broker selection and CSV upload
@@ -139,7 +146,7 @@ export const DetailedTradeImporter = ({
 			)
 
 			// Redirect after 2 seconds
-			setTimeout(() => {
+			redirectTimerRef.current = setTimeout(() => {
 				router.refresh()
 				router.push(`/app/account/${accountId}`)
 			}, 2000)
@@ -155,7 +162,7 @@ export const DetailedTradeImporter = ({
 	// Step 1: Select Broker & Upload
 	if (step === "select") {
 		return (
-			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
+			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
 				<div>
 					<h3 className="text-lg font-semibold text-txt-100">
 						{t("title")}
@@ -204,9 +211,13 @@ export const DetailedTradeImporter = ({
 
 					{/* Error Display */}
 					{error && (
-						<div className="flex gap-2 p-3 rounded bg-red-100 border border-red-300">
-							<AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-							<p className="text-sm text-red-700">{error}</p>
+						<div
+							role="alert"
+							aria-live="assertive"
+							className="flex gap-2 p-3 rounded bg-fb-error/10 border border-fb-error/30"
+						>
+							<AlertCircle className="w-5 h-5 text-fb-error flex-shrink-0" />
+							<p className="text-sm text-fb-error">{error}</p>
 						</div>
 					)}
 				</div>
@@ -227,7 +238,7 @@ export const DetailedTradeImporter = ({
 	// Step 2: Preview Trades
 	if (step === "preview" && preview) {
 		return (
-			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
+			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
 				<div>
 					<h3 className="text-lg font-semibold text-txt-100">{t("reviewTitle")}</h3>
 					<p className="text-sm text-txt-300 mt-1">
@@ -248,7 +259,7 @@ export const DetailedTradeImporter = ({
 						<p
 							className={cn(
 								"text-xl font-semibold",
-								preview.totalGrossPnl >= 0 ? "text-green-600" : "text-red-600"
+								preview.totalGrossPnl >= 0 ? "text-fb-success" : "text-fb-error"
 							)}
 						>
 							{preview.totalGrossPnl.toFixed(2)}
@@ -259,7 +270,7 @@ export const DetailedTradeImporter = ({
 						<p
 							className={cn(
 								"text-xl font-semibold",
-								preview.totalNetPnl >= 0 ? "text-green-600" : "text-red-600"
+								preview.totalNetPnl >= 0 ? "text-fb-success" : "text-fb-error"
 							)}
 						>
 							{preview.totalNetPnl.toFixed(2)}
@@ -269,8 +280,8 @@ export const DetailedTradeImporter = ({
 
 				{/* Warnings */}
 				{preview.warningTrades > 0 && (
-					<div className="p-3 rounded bg-yellow-100 border border-yellow-300">
-						<p className="text-sm font-medium text-yellow-900">
+					<div className="p-3 rounded bg-warning/10 border border-warning/30">
+						<p className="text-sm font-medium text-warning">
 							{t("warningText", { count: preview.warningTrades })}
 						</p>
 					</div>
@@ -281,7 +292,10 @@ export const DetailedTradeImporter = ({
 					<h4 className="text-sm font-medium text-txt-100">{t("trades")}</h4>
 					<ScrollArea className="max-h-96"><div className="space-y-2">
 						{preview.trades.map((trade, idx) => (
-							<div key={idx} className="p-3 rounded border border-bg-300 bg-bg-200">
+							<div
+								key={`${trade.asset}-${trade.direction}-${trade.entryPrice}-${idx}`}
+								className="p-3 rounded border border-bg-300 bg-bg-200"
+							>
 								<div className="flex justify-between items-start mb-2">
 									<div>
 										<p className="font-semibold text-txt-100">
@@ -295,15 +309,15 @@ export const DetailedTradeImporter = ({
 										className={cn(
 											"font-semibold",
 											trade.netPnl && trade.netPnl >= 0
-												? "text-green-600"
-												: "text-red-600"
+												? "text-fb-success"
+												: "text-fb-error"
 										)}
 									>
 										{trade.netPnl ? trade.netPnl.toFixed(2) : "—"}
 									</p>
 								</div>
 								{trade.warnings.length > 0 && (
-									<p className="text-xs text-yellow-700 mt-1">
+									<p className="text-xs text-warning mt-1">
 										{trade.warnings.join("; ")}
 									</p>
 								)}
@@ -314,9 +328,13 @@ export const DetailedTradeImporter = ({
 
 				{/* Error Display */}
 				{error && (
-					<div className="flex gap-2 p-3 rounded bg-red-100 border border-red-300">
-						<AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-						<p className="text-sm text-red-700">{error}</p>
+					<div
+						role="alert"
+						aria-live="assertive"
+						className="flex gap-2 p-3 rounded bg-fb-error/10 border border-fb-error/30"
+					>
+						<AlertCircle className="w-5 h-5 text-fb-error flex-shrink-0" />
+						<p className="text-sm text-fb-error">{error}</p>
 					</div>
 				)}
 
@@ -346,7 +364,7 @@ export const DetailedTradeImporter = ({
 	// Step 3: Importing
 	if (step === "importing") {
 		return (
-			<div className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100 text-center">
+			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100 text-center">
 				<Loader2 className="w-12 h-12 animate-spin motion-reduce:animate-none text-acc-100 mx-auto" />
 				<div>
 					<h3 className="text-lg font-semibold text-txt-100">{t("importingTitle")}</h3>
@@ -361,15 +379,15 @@ export const DetailedTradeImporter = ({
 	// Step 4: Success
 	if (step === "success") {
 		return (
-			<div className="space-y-6 border border-green-300 rounded-lg p-6 bg-green-50 text-center">
-				<CheckCircle2 className="w-12 h-12 text-green-600 mx-auto" />
+			<div className="space-y-6 border border-fb-success/30 rounded-lg p-6 bg-fb-success/10 text-center">
+				<CheckCircle2 className="w-12 h-12 text-fb-success mx-auto" />
 				<div>
-					<h3 className="text-lg font-semibold text-green-900">{t("successTitle")}</h3>
-					<p className="text-sm text-green-700 mt-1">
+					<h3 className="text-lg font-semibold text-txt-100">{t("successTitle")}</h3>
+					<p className="text-sm text-txt-200 mt-1">
 						{t("tradesImported", { count: preview?.detectedTradeCount ?? 0, broker: brokerName })}
 					</p>
 				</div>
-				<p className="text-xs text-green-600">{t("redirecting")}</p>
+				<p className="text-xs text-fb-success">{t("redirecting")}</p>
 			</div>
 		)
 	}
@@ -377,12 +395,16 @@ export const DetailedTradeImporter = ({
 	// Step 5: Error
 	if (step === "error") {
 		return (
-			<div className="space-y-6 border border-red-300 rounded-lg p-6 bg-red-50">
+			<div
+				role="alert"
+				aria-live="assertive"
+				className="space-y-6 border border-fb-error/30 rounded-lg p-6 bg-fb-error/10"
+			>
 				<div className="flex gap-3">
-					<AlertCircle className="w-12 h-12 text-red-600 flex-shrink-0" />
+					<AlertCircle className="w-12 h-12 text-fb-error flex-shrink-0" />
 					<div>
-						<h3 className="text-lg font-semibold text-red-900">{t("failedTitle")}</h3>
-						<p className="text-sm text-red-700 mt-1">{error}</p>
+						<h3 className="text-lg font-semibold text-txt-100">{t("failedTitle")}</h3>
+						<p className="text-sm text-fb-error mt-1">{error}</p>
 					</div>
 				</div>
 				<Button

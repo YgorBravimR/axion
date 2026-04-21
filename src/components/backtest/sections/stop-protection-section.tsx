@@ -105,7 +105,7 @@ const StopProtectionSection = ({ recipe, onRecipeChange }: StopProtectionSection
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-500 rounded-lg border p-m-400">
-			<h2 className="text-heading-3 font-semibold text-txt-100">{t("stopProtection")}</h2>
+			<h2 className="text-h3 font-semibold text-txt-100">{t("stopProtection")}</h2>
 
 			{/* Initial Stop — pick one */}
 			<div className="space-y-s-300">

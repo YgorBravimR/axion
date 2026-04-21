@@ -33,7 +33,8 @@ export const EmptyState = ({
 				"flex flex-col items-center justify-center text-center",
 				className
 			)}
-			role="status"
+			role="region"
+			aria-label={title}
 		>
 			{Icon && (
 				<div className="mb-m-400">

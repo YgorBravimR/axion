@@ -158,7 +158,7 @@ const SweepConfigPanel = ({ recipe, activeRanges, onRangesChange }: SweepConfigP
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
-			<h3 className="text-heading-3 font-semibold text-txt-100">{t("sweepParameters")}</h3>
+			<h3 className="text-h3 font-semibold text-txt-100">{t("sweepParameters")}</h3>
 			<p className="text-tiny text-txt-300">{t("sweepParametersHint")}</p>
 
 			{/* Enum parameter rows */}

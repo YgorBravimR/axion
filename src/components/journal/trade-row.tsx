@@ -160,6 +160,8 @@ export const TradeRow = memo(({
 						size="sm"
 						onClick={handleConfirmClick}
 						disabled={isDeleting}
+						// eslint-disable-next-line jsx-a11y/no-autofocus
+						autoFocus
 						className="h-7 px-s-300 text-tiny"
 					>
 						{isDeleting ? (

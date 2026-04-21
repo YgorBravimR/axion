@@ -59,6 +59,7 @@
 		},
 		"searchPlaceholder": "Search metric or asset...",
 		"notifications": "Notifications",
+		"comingSoon": "Coming soon",
 		"imageUpload": {
 			"invalidFileType": "Invalid file type. Accepted: JPEG, PNG, WebP",
 			"fileTooLarge": "File too large. Max: {maxSize}MB",
@@ -389,7 +390,8 @@
 				"breakevenRate": "BE Rate",
 				"profileName": "Profile",
 				"runAgain": "Run Again",
-				"months": "Months"
+				"months": "Months",
+				"summaryRegion": "Simulation results summary"
 			},
 			"metrics": {
 				"monthlyPnl": "Monthly P&L",
@@ -687,7 +689,9 @@
 			"delete": "Delete",
 			"cancel": "Cancel",
 			"saving": "Saving...",
-			"deleting": "Deleting..."
+			"deleting": "Deleting...",
+			"saveError": "Failed to save checklist",
+			"deleteError": "Failed to delete checklist"
 		},
 		"targets": {
 			"title": "Daily Targets",
@@ -720,7 +724,8 @@
 				"neutral": "Neutral",
 				"bad": "Bad",
 				"terrible": "Terrible"
-			}
+			},
+			"saveError": "Failed to save notes"
 		},
 		"assetRules": {
 			"title": "Per-Asset Rules",
@@ -742,7 +747,11 @@
 			"addTrade": "Add trade",
 			"save": "Save",
 			"edit": "Edit",
-			"delete": "Delete"
+			"delete": "Delete",
+			"addError": "Failed to add asset",
+			"saveError": "Failed to save settings",
+			"biasError": "Failed to update bias",
+			"deleteError": "Failed to delete settings"
 		},
 		"summary": {
 			"title": "Today's Summary",
@@ -1033,7 +1042,8 @@
 				"planRolledOverUpdated": "Monthly plan rolled over successfully (existing plan updated)",
 				"planRolloverFailed": "Failed to roll over monthly plan",
 				"validationError": "Validation failed"
-			}
+			},
+			"loadingPlan": "Loading plan"
 		},
 		"actions": {
 			"checklistsRetrieved": "Checklists retrieved successfully",
@@ -1378,7 +1388,8 @@
 				"fri": "Fri",
 				"sat": "Sat"
 			},
-			"dayAriaLabel": "{date}: {pnl}, {count} trades"
+			"dayAriaLabel": "{date}: {pnl}, {count} trades",
+			"todayAriaLabel": "Today, {date}"
 		},
 		"equity": {
 			"title": "Equity Curve",
@@ -2358,6 +2369,9 @@
 	"reports": {
 		"title": "Performance Reports",
 		"description": "Weekly and monthly summaries with mistake analysis",
+		"emptyState": "No trade data yet. Start logging trades to see your reports.",
+		"emptyStateHint": "Your reports will populate as you log trades in the journal.",
+		"goToJournal": "Log your first trade",
 		"weekly": {
 			"title": "Weekly Report",
 			"week": "Week",
@@ -2462,6 +2476,7 @@
 			"general": "General",
 			"users": "Users",
 			"conditions": "Conditions",
+			"indicators": "Indicators",
 			"bugs": "Bug Reports"
 		},
 		"profile": {
@@ -2564,7 +2579,7 @@
 			"deleteAllData": "Delete All Trading Data",
 			"deleteAllDataDesc": "Remove all trades, monthly plans, daily notes, checklists, targets, and imports from this account. The account and its configuration will be preserved.",
 			"deleteAllDataTitle": "Delete all trading data?",
-			"deleteAllDataDescription": "This will permanently delete all trades, monthly plans, daily notes, checklists, targets, and imports from \"{name}\". Your account settings, asset configurations, and strategies will be kept. This action cannot be undone.",
+			"deleteAllDataDescription": "This will permanently delete all trades, monthly plans, daily notes, checklists, targets, and imports from \"{name}\". Your account settings, asset configurations, and strategies will be kept. This action cannot be undone and the data cannot be recovered.",
 			"deleteAllDataConfirmLabel": "Type \"{name}\" to confirm",
 			"deleteAllDataSuccess": "All trading data deleted successfully",
 			"deleteAllDataError": "Failed to delete trading data"
@@ -2968,7 +2983,8 @@
 			"week": "Week {number}",
 			"tradesCount": "{count} trades",
 			"winRateSummary": "{rate}% {abbr}"
-		}
+		},
+		"noDataGuidance": "Start recording trades to see your monthly performance"
 	},
 	"assetTypes": {
 		"FUTURE_INDEX": "Future Index",
@@ -3436,6 +3452,7 @@
 		"title": "Risk Simulation",
 		"subtitle": "Simulate applying risk management rules to your historical trades",
 		"runSimulation": "Run Simulation",
+		"disabledHint": "Select a date range, configure parameters, and ensure trades have a stop loss to run the simulation.",
 		"errors": {
 			"noClosedTrades": "No closed trades found in the selected date range",
 			"noValidTrades": "No valid trades to simulate"

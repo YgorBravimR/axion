@@ -156,7 +156,13 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 
 			{/* Content */}
 			<div className="mt-s-300 sm:mt-m-400">
-				{isPending ? (
+				{isPending && !context ? (
+					<div className="space-y-s-200 animate-pulse">
+						<div className="h-10 rounded-lg bg-bg-300" />
+						<div className="h-10 rounded-lg bg-bg-300" />
+						<div className="h-10 rounded-lg bg-bg-300" />
+					</div>
+				) : isPending ? (
 					<div className="flex items-center justify-center py-m-500">
 						<Loader2 className="h-5 w-5 animate-spin text-txt-300 motion-reduce:animate-none" />
 					</div>

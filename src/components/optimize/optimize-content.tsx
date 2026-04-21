@@ -361,7 +361,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		<div className="space-y-m-500">
 			{/* Header */}
 			<div>
-				<h1 className="text-heading-2 font-semibold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 font-semibold text-txt-100">{t("title")}</h1>
 				<p className="text-body text-txt-200">{t("description")}</p>
 			</div>
 
@@ -381,7 +381,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
 						{/* Strategy */}
 						<div className="space-y-s-200">
-							<label className="text-small font-medium text-txt-200">{tBacktest("builder.strategy")}</label>
+							<label htmlFor="optimize-strategy" className="text-small font-medium text-txt-200">{tBacktest("builder.strategy")}</label>
 							<Select value={recipe.entry.type} onValueChange={handleStrategyChange}>
 								<SelectTrigger id="optimize-strategy">
 									<SelectValue />
@@ -395,7 +395,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 						{/* Preset */}
 						<div className="space-y-s-200">
-							<label className="text-small font-medium text-txt-200">{tBacktest("builder.loadPreset")}</label>
+							<label htmlFor="optimize-preset" className="text-small font-medium text-txt-200">{tBacktest("builder.loadPreset")}</label>
 							<Select onValueChange={handlePresetChange}>
 								<SelectTrigger id="optimize-preset">
 									<SelectValue placeholder={tBacktest("config.selectPreset")} />
@@ -412,7 +412,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 						{/* Asset + Timeframe */}
 						<div className="space-y-s-200">
-							<label className="text-small font-medium text-txt-200">
+							<label htmlFor="optimize-source" className="text-small font-medium text-txt-200">
 								{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
 							</label>
 							<Select value={String(selectedSourceIndex)} onValueChange={handleSourceChange}>
@@ -432,7 +432,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 						{/* Date Range */}
 						<div className="space-y-s-200">
-							<label className="text-small font-medium text-txt-200">{tBacktest("config.dateRange")}</label>
+							<label htmlFor="optimize-quick-range" className="text-small font-medium text-txt-200">{tBacktest("config.dateRange")}</label>
 							<Select value={quickRangeKey} onValueChange={handleQuickRange}>
 								<SelectTrigger id="optimize-quick-range">
 									<SelectValue placeholder={tBacktest("builder.quickRange")} />
@@ -523,13 +523,15 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						</div>
 
 						{/* Sweep progress bar */}
-						{isSweeping && (
-							<SweepProgressBar
-								current={sweepProgress.current}
-								total={sweepProgress.total}
-								onCancel={handleCancelSweep}
-							/>
-						)}
+						<div aria-live="polite" aria-atomic="false">
+							{isSweeping && (
+								<SweepProgressBar
+									current={sweepProgress.current}
+									total={sweepProgress.total}
+									onCancel={handleCancelSweep}
+								/>
+							)}
+						</div>
 
 						{/* Run Sweep button */}
 						{!isSweeping && (
@@ -620,7 +622,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								<TabsContent value="chart" className="space-y-m-400 mt-m-400">
 									{pinnedRuns.length > 0 && (
 										<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-											<h3 className="text-heading-3 mb-m-300 font-semibold text-txt-100">
+											<h3 className="text-h3 mb-m-300 font-semibold text-txt-100">
 												{t("equityOverlay")}
 											</h3>
 											<EquityOverlayChart runs={pinnedRuns} />
@@ -636,7 +638,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								<TabsContent value="table" className="mt-m-400">
 									<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
 										<div className="flex items-center gap-s-200">
-											<h3 className="text-heading-3 font-semibold text-txt-100">
+											<h3 className="text-h3 font-semibold text-txt-100">
 												{t("comparisonTable")}
 											</h3>
 											<Badge id="optimize-runs-count" variant="secondary">
@@ -665,7 +667,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						</>
 					) : (
 						<div className="border-bg-300 bg-bg-200 flex flex-col items-center justify-center rounded-lg border p-l-700 text-center">
-							<p className="text-heading-3 font-medium text-txt-200">{t("noRuns")}</p>
+							<p className="text-h3 font-medium text-txt-200">{t("noRuns")}</p>
 						</div>
 					)}
 				</div>

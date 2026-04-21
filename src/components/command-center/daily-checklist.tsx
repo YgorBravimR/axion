@@ -140,7 +140,6 @@ export const DailyChecklist = ({
 													handleToggle(checklist.id, item.id, !!checked)
 												}
 												disabled={isReadOnly || isLoading}
-												aria-label={item.label}
 											/>
 											<span
 												className={cn(

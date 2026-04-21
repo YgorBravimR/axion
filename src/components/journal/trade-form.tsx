@@ -4,6 +4,7 @@ import {
 	useState,
 	useMemo,
 	useEffect,
+	useCallback,
 	forwardRef,
 	useImperativeHandle,
 } from "react"
@@ -452,13 +453,13 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 				? calculateRMultiple(calculatedPnL, calculatedRisk)
 				: null
 
-		const handleTagToggle = (tagId: string) => {
+		const handleTagToggle = useCallback((tagId: string) => {
 			const current = selectedTagIds || []
 			const updated = current.includes(tagId)
 				? current.filter((id) => id !== tagId)
 				: [...current, tagId]
 			setValue("tagIds", updated)
-		}
+		}, [selectedTagIds, setValue])
 
 		const onSubmit = async (data: TradeFormInput) => {
 			setIsSubmitting(true)
@@ -518,9 +519,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			}
 		}
 
-		const setupTags = localTags.filter((t) => t.type === "setup")
-		const mistakeTags = localTags.filter((t) => t.type === "mistake")
-		const generalTags = localTags.filter((t) => t.type === "general")
+		const setupTags = useMemo(() => localTags.filter((t) => t.type === "setup"), [localTags])
+		const mistakeTags = useMemo(() => localTags.filter((t) => t.type === "mistake"), [localTags])
+		const generalTags = useMemo(() => localTags.filter((t) => t.type === "general"), [localTags])
 
 		// Map fields to tabs for error highlighting
 		const basicFields = [
@@ -615,7 +616,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Direction Toggle */}
 							<div className="space-y-s-200">
 								<Label id="label-trade-direction">{t("direction.label")}</Label>
-								<div className="gap-m-400 flex">
+								<div className="gap-m-400 flex" role="group" aria-labelledby="label-trade-direction">
 									<button
 										type="button"
 										onClick={() => setValue("direction", "long")}
@@ -957,11 +958,12 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								<div id="new-trade-setup-rank" className="space-y-s-200">
 									<Label id="label-trade-setup-rank">{t("setupRank")}</Label>
 									<p className="text-tiny text-txt-300">{t("setupRankHint")}</p>
-									<div className="gap-s-200 flex">
+									<div className="gap-s-200 flex" role="radiogroup" aria-labelledby="label-trade-setup-rank">
 										{(["A", "AA", "AAA"] as const).map((rank) => (
 											<button
 												key={rank}
 												type="button"
+												role="radio"
 												onClick={() =>
 													setValue(
 														"setupRank",
@@ -969,7 +971,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 													)
 												}
 												aria-label={`${t("setupRank")}: ${rank}`}
-												aria-pressed={watch("setupRank") === rank}
+												aria-checked={watch("setupRank") === rank}
 												className={cn(
 													"py-s-300 flex-1 rounded-lg border-2 text-center font-semibold transition-colors",
 													watch("setupRank") === rank
@@ -1348,7 +1350,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								<Label id="label-trade-followed-plan">
 									{t("didYouFollowPlan")}
 								</Label>
-								<div className="gap-m-400 flex">
+								<div className="gap-m-400 flex" role="group" aria-labelledby="label-trade-followed-plan">
 									<button
 										type="button"
 										onClick={() => setValue("followedPlan", true)}

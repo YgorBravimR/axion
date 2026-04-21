@@ -143,7 +143,11 @@ export const ForgotPasswordForm = () => {
 
 				<form onSubmit={handleEmailSubmit} className="space-y-m-400">
 					{error && (
-						<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
+						<div
+							role="alert"
+							aria-live="assertive"
+							className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md"
+						>
 							{error}
 						</div>
 					)}
@@ -221,7 +225,11 @@ export const ForgotPasswordForm = () => {
 				</div>
 
 				{error && (
-					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
+					<div
+						role="alert"
+						aria-live="assertive"
+						className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md"
+					>
 						{error}
 					</div>
 				)}
@@ -316,7 +324,11 @@ export const ForgotPasswordForm = () => {
 
 			<form onSubmit={handlePasswordSubmit} className="space-y-m-400">
 				{error && (
-					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
+					<div
+						role="alert"
+						aria-live="assertive"
+						className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md"
+					>
 						{error}
 					</div>
 				)}

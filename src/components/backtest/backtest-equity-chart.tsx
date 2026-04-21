@@ -65,7 +65,7 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 
 	return (
 		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-			<h3 className="text-heading-3 font-semibold text-txt-100 mb-m-400">{t("equityCurve")}</h3>
+			<h3 className="text-h3 font-semibold text-txt-100 mb-m-400">{t("equityCurve")}</h3>
 			<ChartContainer id="backtest-equity" className="h-72">
 				<AreaChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
 					<defs>

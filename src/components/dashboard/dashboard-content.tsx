@@ -83,7 +83,7 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	]
 
 	return (
-		<div className="flex rounded-lg border border-bg-300 bg-bg-100 p-s-100">
+		<div className="flex rounded-lg border border-bg-300 bg-bg-100 p-s-100" role="group" aria-label="Period filter">
 			{options.map((option) => (
 				<button
 					key={option.value}

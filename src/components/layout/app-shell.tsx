@@ -136,6 +136,9 @@ const AppShell = ({
 								variant="ghost"
 								size="icon"
 								aria-label={tCommon("notifications")}
+								aria-disabled="true"
+								title={tCommon("comingSoon")}
+								className="cursor-not-allowed opacity-50"
 							>
 								<Bell className="h-5 w-5" />
 							</Button>
@@ -191,6 +194,9 @@ const AppShell = ({
 								variant="ghost"
 								size="icon"
 								aria-label={tCommon("notifications")}
+								aria-disabled="true"
+								title={tCommon("comingSoon")}
+								className="cursor-not-allowed opacity-50"
 							>
 								<Bell className="h-4.5 w-4.5" />
 							</Button>

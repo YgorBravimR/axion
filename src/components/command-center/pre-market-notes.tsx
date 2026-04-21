@@ -5,6 +5,7 @@ import { Sun, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/toast"
 import { MoodSelector } from "./mood-selector"
 import { upsertDailyNotes } from "@/app/actions/command-center"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
@@ -20,6 +21,7 @@ interface PreMarketNotesProps {
 export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
 	const effectiveDate = useEffectiveDate()
+	const { showToast } = useToast()
 
 	const [preMarketNotes, setPreMarketNotes] = useState("")
 	const [mood, setMood] = useState<MoodType | null>(null)
@@ -55,6 +57,7 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 			onRefresh()
 		} catch (error) {
 			console.error("Failed to save notes:", error)
+			showToast("error", t("saveError"))
 		} finally {
 			setSaving(false)
 		}

@@ -82,13 +82,7 @@ const EquityShieldContent = ({
 	const [preview, setPreview] = useState<EquityShieldPreview | null>(null)
 	const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
-	const handleDateChange = useCallback(async (from: string, to: string) => {
-		setDateFrom(from)
-		setDateTo(to)
-		setResult(null)
-		setPreview(null)
-		setError(null)
-
+	const fetchPreview = useCallback(async (from: string, to: string) => {
 		if (!from || !to) return
 
 		setIsLoadingPreview(true)
@@ -96,16 +90,31 @@ const EquityShieldContent = ({
 			const response = await getEquityShieldPreview(from, to)
 			if (response.status === "success" && response.data) {
 				setPreview(response.data)
+			} else {
+				setError(response.message)
 			}
+		} catch {
+			setError(t("errors.unexpected"))
 		} finally {
 			setIsLoadingPreview(false)
 		}
-	}, [])
+	}, [t])
+
+	const handleDateChange = useCallback(async (from: string, to: string) => {
+		setDateFrom(from)
+		setDateTo(to)
+		setResult(null)
+		setPreview(null)
+		setError(null)
+
+		await fetchPreview(from, to)
+	}, [fetchPreview])
 
 	// Fetch initial preview on mount
 	useEffect(() => {
-		handleDateChange(dateFrom, dateTo)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		fetchPreview(dateFrom, dateTo)
+	// dateFrom/dateTo are stable initial values — this only runs on mount
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	const handleRun = useCallback(async () => {
@@ -179,14 +188,18 @@ const EquityShieldContent = ({
 
 			{/* Error */}
 			{error && (
-				<div className="border-trade-sell/30 bg-trade-sell/10 text-trade-sell rounded-lg border p-s-300">
+				<div
+					role="alert"
+					aria-live="assertive"
+					className="border-fb-error/30 bg-fb-error/10 text-fb-error rounded-lg border p-s-300"
+				>
 					<p className="text-small">{error}</p>
 				</div>
 			)}
 
 			{/* Results */}
 			{result && (
-				<>
+				<div className="border-t border-bg-300 mt-m-400 pt-m-400 space-y-m-400 sm:space-y-m-500">
 					{/* Summary Stats */}
 					<EquityShieldStats
 						stats={result.stats}
@@ -268,7 +281,7 @@ const EquityShieldContent = ({
 							showSMA
 						/>
 					</div>
-				</>
+				</div>
 			)}
 		</div>
 	)

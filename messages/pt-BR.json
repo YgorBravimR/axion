@@ -59,6 +59,7 @@
 		},
 		"searchPlaceholder": "Buscar métrica ou ativo...",
 		"notifications": "Notificações",
+		"comingSoon": "Em breve",
 		"imageUpload": {
 			"invalidFileType": "Tipo de arquivo inválido. Aceitos: JPEG, PNG, WebP",
 			"fileTooLarge": "Arquivo muito grande. Máx: {maxSize}MB",
@@ -389,7 +390,8 @@
 				"breakevenRate": "Taxa BE",
 				"profileName": "Perfil",
 				"runAgain": "Simular Novamente",
-				"months": "Meses"
+				"months": "Meses",
+				"summaryRegion": "Resumo dos resultados da simulacao"
 			},
 			"metrics": {
 				"monthlyPnl": "P&L Mensal",
@@ -687,7 +689,9 @@
 			"delete": "Excluir",
 			"cancel": "Cancelar",
 			"saving": "Salvando...",
-			"deleting": "Excluindo..."
+			"deleting": "Excluindo...",
+			"saveError": "Falha ao salvar checklist",
+			"deleteError": "Falha ao excluir checklist"
 		},
 		"targets": {
 			"title": "Metas Diárias",
@@ -720,7 +724,8 @@
 				"neutral": "Neutro",
 				"bad": "Ruim",
 				"terrible": "Péssimo"
-			}
+			},
+			"saveError": "Falha ao salvar notas"
 		},
 		"assetRules": {
 			"title": "Regras por Ativo",
@@ -742,7 +747,11 @@
 			"addTrade": "Adicionar operação",
 			"save": "Salvar",
 			"edit": "Editar",
-			"delete": "Excluir"
+			"delete": "Excluir",
+			"addError": "Falha ao adicionar ativo",
+			"saveError": "Falha ao salvar configurações",
+			"biasError": "Falha ao atualizar viés",
+			"deleteError": "Falha ao excluir configurações"
 		},
 		"summary": {
 			"title": "Resumo do Dia",
@@ -1033,7 +1042,8 @@
 				"planRolledOverUpdated": "Plano mensal transferido com sucesso (plano existente atualizado)",
 				"planRolloverFailed": "Falha ao transferir o plano mensal",
 				"validationError": "Falha na validação"
-			}
+			},
+			"loadingPlan": "Carregando plano"
 		},
 		"actions": {
 			"checklistsRetrieved": "Listas recuperadas com sucesso",
@@ -1378,7 +1388,8 @@
 				"fri": "Sex",
 				"sat": "Sáb"
 			},
-			"dayAriaLabel": "{date}: {pnl}, {count} trades"
+			"dayAriaLabel": "{date}: {pnl}, {count} trades",
+			"todayAriaLabel": "Hoje, {date}"
 		},
 		"equity": {
 			"title": "Curva de Capital",
@@ -2358,6 +2369,9 @@
 	"reports": {
 		"title": "Relatórios de Performance",
 		"description": "Resumos semanais e mensais com análise de erros",
+		"emptyState": "Nenhum dado de trade ainda. Comece a registrar trades para ver seus relatórios.",
+		"emptyStateHint": "Seus relatórios serão preenchidos conforme você registra trades no diário.",
+		"goToJournal": "Registre seu primeiro trade",
 		"weekly": {
 			"title": "Relatório Semanal",
 			"week": "Semana",
@@ -2462,6 +2476,7 @@
 			"general": "Geral",
 			"users": "Usuários",
 			"conditions": "Condições",
+			"indicators": "Indicadores",
 			"bugs": "Relatórios de Bugs"
 		},
 		"profile": {
@@ -2968,7 +2983,8 @@
 			"week": "Semana {number}",
 			"tradesCount": "{count} trades",
 			"winRateSummary": "{rate}% {abbr}"
-		}
+		},
+		"noDataGuidance": "Comece a registrar trades para ver sua performance mensal"
 	},
 	"assetTypes": {
 		"FUTURE_INDEX": "Futuro de Índice",
@@ -3436,6 +3452,7 @@
 		"title": "Simulador de Risco",
 		"subtitle": "Simule a aplicação de regras de gerenciamento de risco nas suas operações históricas",
 		"runSimulation": "Executar Simulação",
+		"disabledHint": "Selecione um intervalo de datas, configure os parâmetros e certifique-se de que as operações possuem stop loss para executar a simulação.",
 		"errors": {
 			"noClosedTrades": "Nenhuma operação fechada encontrada no intervalo selecionado",
 			"noValidTrades": "Nenhuma operação válida para simular"

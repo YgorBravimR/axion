@@ -128,9 +128,9 @@ const ImageLightbox = ({
 				{/* Dot indicators */}
 				{hasMultiple && (
 					<div className="bottom-m-400 gap-s-100 absolute left-1/2 flex -translate-x-1/2 items-center">
-						{images.map((_, index) => (
+						{images.map((image, index) => (
 							<button
-								key={index}
+								key={image.src}
 								type="button"
 								onClick={() => setCurrentIndex(index)}
 								className="p-s-200 flex items-center justify-center focus-visible:outline-none"

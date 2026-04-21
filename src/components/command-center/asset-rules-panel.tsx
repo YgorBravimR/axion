@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useToast } from "@/components/ui/toast"
 import {
 	Select,
 	SelectContent,
@@ -41,6 +42,7 @@ export const AssetRulesPanel = ({
 }: AssetRulesPanelProps) => {
 	const t = useTranslations("commandCenter.assetRules")
 	const router = useRouter()
+	const { showToast } = useToast()
 
 	const [addingAsset, setAddingAsset] = useState(false)
 	const [selectedAssetId, setSelectedAssetId] = useState<string>("")
@@ -71,6 +73,7 @@ export const AssetRulesPanel = ({
 			onRefresh()
 		} catch (error) {
 			console.error("Failed to add asset:", error)
+			showToast("error", t("addError"))
 		} finally {
 			setSaving(null)
 		}
@@ -103,6 +106,7 @@ export const AssetRulesPanel = ({
 			onRefresh()
 		} catch (error) {
 			console.error("Failed to save settings:", error)
+			showToast("error", t("saveError"))
 		} finally {
 			setSaving(null)
 		}
@@ -125,6 +129,7 @@ export const AssetRulesPanel = ({
 			}
 		} catch (error) {
 			console.error("Failed to update bias:", error)
+			showToast("error", t("biasError"))
 		} finally {
 			setSaving(null)
 		}
@@ -137,6 +142,7 @@ export const AssetRulesPanel = ({
 			onRefresh()
 		} catch (error) {
 			console.error("Failed to delete settings:", error)
+			showToast("error", t("deleteError"))
 		} finally {
 			setDeleting(null)
 		}

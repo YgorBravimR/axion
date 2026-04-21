@@ -28,7 +28,7 @@ const OrbEntrySection = ({ recipe, onRecipeChange }: OrbEntrySectionProps) => {
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-m-400">
-			<h2 className="text-heading-3 font-semibold text-txt-100">{t("name")}</h2>
+			<h2 className="text-h3 font-semibold text-txt-100">{t("name")}</h2>
 			<p className="text-small text-txt-300">{tBuilder("entryDescription")}</p>
 
 			<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-3">

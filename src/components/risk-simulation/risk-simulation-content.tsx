@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
-import { FlaskConical } from "lucide-react"
+import { AlertCircle, FlaskConical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { riskSimulationGuide } from "@/components/ui/page-guide/guide-configs/risk-simulation"
@@ -67,6 +67,20 @@ const RiskSimulationContent = ({
 	const [traceModalOpen, setTraceModalOpen] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
+	const fetchPreview = useCallback(async (from: string, to: string) => {
+		if (!from || !to) return
+
+		setIsLoadingPreview(true)
+		const response = await getSimulationPreview(from, to)
+		setIsLoadingPreview(false)
+
+		if (response.status === "success" && response.data) {
+			setPreview(response.data)
+		} else {
+			setError(response.message)
+		}
+	}, [])
+
 	const handleDateChange = useCallback(
 		async (from: string, to: string) => {
 			setDateFrom(from)
@@ -75,25 +89,16 @@ const RiskSimulationContent = ({
 			setPreview(null)
 			setError(null)
 
-			if (!from || !to) return
-
-			setIsLoadingPreview(true)
-			const response = await getSimulationPreview(from, to)
-			setIsLoadingPreview(false)
-
-			if (response.status === "success" && response.data) {
-				setPreview(response.data)
-			} else {
-				setError(response.message)
-			}
+			await fetchPreview(from, to)
 		},
-		[]
+		[fetchPreview]
 	)
 
 	// Fetch preview for the initial date range on mount
 	useEffect(() => {
-		handleDateChange(dateFrom, dateTo)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		fetchPreview(dateFrom, dateTo)
+	// dateFrom/dateTo are stable initial values — this only runs on mount
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	const handlePrefillSelect = useCallback(
@@ -165,7 +170,7 @@ const RiskSimulationContent = ({
 			/>
 
 			{/* Run Button */}
-			<div className="flex items-center gap-4">
+			<div className="space-y-s-300">
 				<Button
 					id="btn-run-simulation"
 					onClick={handleRunSimulation}
@@ -176,12 +181,24 @@ const RiskSimulationContent = ({
 					<FlaskConical className="mr-2 h-4 w-4" />
 					{t("runSimulation")}
 				</Button>
-				{error && (
-					<p className="text-small text-fb-error">
-						{error === "common.unexpectedError" ? tCommon("unexpectedError") : error}
-					</p>
+				{!canRun && !error && (
+					<p className="text-tiny text-txt-300">{t("disabledHint")}</p>
 				)}
 			</div>
+
+			{/* Error Card */}
+			{error && (
+				<div
+					role="alert"
+					aria-live="assertive"
+					className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border flex items-start gap-s-300"
+				>
+					<AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+					<span>
+						{error === "common.unexpectedError" ? tCommon("unexpectedError") : error}
+					</span>
+				</div>
+			)}
 
 			{/* Results */}
 			{result && (

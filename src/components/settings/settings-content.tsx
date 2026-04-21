@@ -82,7 +82,7 @@ export const SettingsContent = ({
 			<div id="settings-tabs" className="mb-m-400 sm:mb-m-500 relative">
 				<TabsList
 					variant="line"
-					className="scrollbar-none w-full overflow-x-auto"
+					className="scrollbar-none w-full overflow-x-auto scroll-smooth"
 				>
 					<TabsTrigger value="profile" className="gap-s-200 shrink-0">
 						<User className="h-4 w-4" />
@@ -104,7 +104,7 @@ export const SettingsContent = ({
 							</TabsTrigger>
 							<TabsTrigger value="indicators" className="gap-s-200 shrink-0">
 								<BarChart3 className="h-4 w-4" />
-								Indicators
+								{t("indicators")}
 							</TabsTrigger>
 							<TabsTrigger value="assets" className="gap-s-200 shrink-0">
 								<Coins className="h-4 w-4" />

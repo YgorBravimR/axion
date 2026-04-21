@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useRef } from "react"
+import { useState, useEffect, useTransition, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -171,20 +171,8 @@ const AnalyticsContent = ({
 	const accountKey = availableAssets.join(",")
 	const lastAccountKey = useRef(accountKey)
 
-	// Reset analytics state when initial props change (SSR re-render)
-	useEffect(() => {
-		const d = initialDashboard ?? EMPTY_DASHBOARD
-		applyDashboard(d, initialTagStats)
-
-		// Only clear module cache on account switch (not filter/URL changes which also trigger SSR)
-		if (lastAccountKey.current !== accountKey) {
-			lastAccountKey.current = accountKey
-			clearAnalyticsCache()
-		}
-	}, [initialDashboard, initialTagStats, accountKey])
-
-	// Applies dashboard + tag data to all state variables
-	const applyDashboard = (d: AnalyticsDashboardData, tags: TagStats[]) => {
+	// Applies dashboard + tag data to all state variables — stable via useCallback so it's safe in deps arrays
+	const applyDashboard = useCallback((d: AnalyticsDashboardData, tags: TagStats[]) => {
 		setPerformanceData(d.performance)
 		setExpectedValue(d.expectedValue)
 		setRDistribution(d.rDistribution)
@@ -196,7 +184,19 @@ const AnalyticsContent = ({
 		setSessionAssetPerformance(d.sessionAssetPerformance)
 		setHoldingPeriodAnalysis(d.holdingPeriodAnalysis)
 		setTagStats(tags)
-	}
+	}, [])
+
+	// Reset analytics state when initial props change (SSR re-render)
+	useEffect(() => {
+		const d = initialDashboard ?? EMPTY_DASHBOARD
+		applyDashboard(d, initialTagStats)
+
+		// Only clear module cache on account switch (not filter/URL changes which also trigger SSR)
+		if (lastAccountKey.current !== accountKey) {
+			lastAccountKey.current = accountKey
+			clearAnalyticsCache()
+		}
+	}, [initialDashboard, initialTagStats, accountKey, applyDashboard])
 
 	// Stable key for current filters — drives refetch when URL params change
 	const filterKey = toFilterKey(filters, groupBy)
@@ -238,7 +238,13 @@ const AnalyticsContent = ({
 				applyDashboard(dashData, tagData)
 			}
 		})
-	}, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
+		// filterKey is the stable serialized representation of all filter state.
+		// When it changes, filters/groupBy have changed — re-fetch is correct.
+		// applyDashboard is stable (useCallback with no deps).
+		// tagStats is intentionally excluded: we only want stale fallback in the rare cache-miss path,
+		// not re-fetch every time tagStats changes as a side-effect of a fetch.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filterKey, applyDashboard])
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
@@ -247,7 +253,7 @@ const AnalyticsContent = ({
 				<div className="flex justify-end">
 					<Link
 						href="/analytics/account-comparison"
-						className="text-acc-100 hover:text-acc-100/80 flex items-center gap-s-200 text-small transition-colors"
+						className="text-acc-100 hover:text-acc-100/80 flex items-center gap-s-200 text-small transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:outline-none rounded-sm"
 						aria-label={tComparison("title")}
 					>
 						<GitCompareArrows className="h-4 w-4" />
@@ -290,7 +296,8 @@ const AnalyticsContent = ({
 			<TagCloud data={tagStats} expectancyMode={expectancyMode} />
 
 			{/* Time-Based Analysis Section */}
-			<div id="analytics-time-section" className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
+			<div className="border-t border-bg-300" />
+			<div id="analytics-time-section">
 				<h2 className="mb-s-300 sm:mb-m-400 text-body sm:text-h3 text-txt-100 font-semibold">
 					{t("time.title")}
 				</h2>

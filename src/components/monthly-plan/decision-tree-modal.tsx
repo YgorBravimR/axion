@@ -405,7 +405,7 @@ const GainModeCard = ({ gainMode, baseRiskCents, formatCurrency, t }: GainModeCa
 								previousRiskCents = riskCents
 								return (
 									<div
-										key={index}
+										key={`gain-step-${index}`}
 										className="border-trade-buy/10 pb-s-100 border-b last:border-0 last:pb-0"
 									>
 										<div className="flex items-center justify-between">

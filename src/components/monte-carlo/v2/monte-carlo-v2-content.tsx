@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
-import { Dices } from "lucide-react"
+import { Dices, X } from "lucide-react"
 import { LoadingSpinner } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,7 @@ const MonteCarloV2Content = ({
 	const t = useTranslations("monteCarlo.v2")
 	const tMC = useTranslations("monteCarlo")
 	const tOverlay = useTranslations("overlay")
+	const tCommon = useTranslations("common")
 	const { showLoading, hideLoading } = useLoadingOverlay()
 	const { setSnapshot } = useMCCalibration()
 
@@ -90,7 +91,7 @@ const MonteCarloV2Content = ({
 		}
 	}, [selectedSource, inputMode, loadSourceStats])
 
-	const handleUseStats = () => {
+	const handleUseStats = useCallback(() => {
 		if (!sourceStats) return
 
 		setWinRate(sourceStats.winRate.toFixed(1))
@@ -103,11 +104,11 @@ const MonteCarloV2Content = ({
 			sourceStats.avgCommissionPerTradeCents?.toString() ?? "0"
 		)
 		setBreakevenRate(sourceStats.breakevenRate?.toFixed(1) ?? "0")
-	}
+	}, [sourceStats])
 
-	const handleCustomize = () => {
+	const handleCustomize = useCallback(() => {
 		setInputMode("manual")
-	}
+	}, [])
 
 	// When Profit Factor is set, auto-derive R:R = PF × (1 - WR) / WR
 	const derivedRR = useMemo(() => {
@@ -226,9 +227,9 @@ const MonteCarloV2Content = ({
 		tMC,
 	])
 
-	const handleRunAgain = () => {
+	const handleRunAgain = useCallback(() => {
 		setResult(null)
-	}
+	}, [])
 
 	const isValid =
 		!!simProfile &&
@@ -538,8 +539,20 @@ const MonteCarloV2Content = ({
 
 					{/* Error Message */}
 					{error && (
-						<div className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border">
-							{error}
+						<div
+							role="alert"
+							aria-live="assertive"
+							className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border flex items-start justify-between gap-s-300"
+						>
+							<span>{error}</span>
+							<button
+								type="button"
+								onClick={() => setError(null)}
+								aria-label={tCommon("close")}
+								className="text-fb-error/70 hover:text-fb-error shrink-0 transition-colors"
+							>
+								<X className="h-4 w-4" />
+							</button>
 						</div>
 					)}
 

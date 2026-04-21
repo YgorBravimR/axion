@@ -22,7 +22,9 @@ import { getTranslations } from "next-intl/server"
 /**
  * Parses a DB row's JSON decision tree string into a typed DecisionTreeConfig.
  */
-const parseProfileRow = (row: typeof riskManagementProfiles.$inferSelect): RiskManagementProfile => ({
+const parseProfileRow = (
+	row: typeof riskManagementProfiles.$inferSelect
+): RiskManagementProfile => ({
 	id: row.id,
 	name: row.name,
 	description: row.description,
@@ -45,7 +47,9 @@ const parseProfileRow = (row: typeof riskManagementProfiles.$inferSelect): RiskM
 /**
  * Returns all active risk profiles. Any authenticated user can read profiles.
  */
-const listActiveRiskProfiles = async (): Promise<ActionResponse<RiskManagementProfile[]>> => {
+const listActiveRiskProfiles = async (): Promise<
+	ActionResponse<RiskManagementProfile[]>
+> => {
 	const t = await getTranslations("settings.riskProfiles")
 	try {
 		await requireAuth()
@@ -64,7 +68,12 @@ const listActiveRiskProfiles = async (): Promise<ActionResponse<RiskManagementPr
 		return {
 			status: "error",
 			message: t("actions.fetchFailed"),
-			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "listActiveRiskProfiles") }],
+			errors: [
+				{
+					code: "FETCH_ERROR",
+					detail: toSafeErrorMessage(error, "listActiveRiskProfiles"),
+				},
+			],
 		}
 	}
 }
@@ -72,7 +81,9 @@ const listActiveRiskProfiles = async (): Promise<ActionResponse<RiskManagementPr
 /**
  * Get a single risk profile by ID.
  */
-const getRiskProfile = async (id: string): Promise<ActionResponse<RiskManagementProfile>> => {
+const getRiskProfile = async (
+	id: string
+): Promise<ActionResponse<RiskManagementProfile>> => {
 	const t = await getTranslations("settings.riskProfiles")
 	try {
 		await requireAuth()
@@ -98,7 +109,12 @@ const getRiskProfile = async (id: string): Promise<ActionResponse<RiskManagement
 		return {
 			status: "error",
 			message: t("actions.fetchFailed"),
-			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "getRiskProfile") }],
+			errors: [
+				{
+					code: "FETCH_ERROR",
+					detail: toSafeErrorMessage(error, "getRiskProfile"),
+				},
+			],
 		}
 	}
 }
@@ -153,13 +169,20 @@ const createRiskProfile = async (
 			return {
 				status: "error",
 				message: t("actions.adminRequired"),
-				errors: [{ code: "FORBIDDEN", detail: "Only admins can create risk profiles" }],
+				errors: [
+					{ code: "FORBIDDEN", detail: "Only admins can create risk profiles" },
+				],
 			}
 		}
 		return {
 			status: "error",
 			message: t("actions.createFailed"),
-			errors: [{ code: "CREATE_ERROR", detail: toSafeErrorMessage(error, "createRiskProfile") }],
+			errors: [
+				{
+					code: "CREATE_ERROR",
+					detail: toSafeErrorMessage(error, "createRiskProfile"),
+				},
+			],
 		}
 	}
 }
@@ -173,7 +196,7 @@ const updateRiskProfile = async (
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	const t = await getTranslations("settings.riskProfiles")
 	try {
-		const { userId } = await requireAuth()
+		await requireAuth()
 		await requireRole("admin")
 
 		const validated = riskProfileSchema.parse(input)
@@ -224,13 +247,20 @@ const updateRiskProfile = async (
 			return {
 				status: "error",
 				message: t("actions.adminRequired"),
-				errors: [{ code: "FORBIDDEN", detail: "Only admins can update risk profiles" }],
+				errors: [
+					{ code: "FORBIDDEN", detail: "Only admins can update risk profiles" },
+				],
 			}
 		}
 		return {
 			status: "error",
 			message: t("actions.updateFailed"),
-			errors: [{ code: "UPDATE_ERROR", detail: toSafeErrorMessage(error, "updateRiskProfile") }],
+			errors: [
+				{
+					code: "UPDATE_ERROR",
+					detail: toSafeErrorMessage(error, "updateRiskProfile"),
+				},
+			],
 		}
 	}
 }
@@ -238,10 +268,12 @@ const updateRiskProfile = async (
 /**
  * Soft-delete a risk profile by marking it inactive. Admin only.
  */
-const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> => {
+const deactivateRiskProfile = async (
+	id: string
+): Promise<ActionResponse<null>> => {
 	const t = await getTranslations("settings.riskProfiles")
 	try {
-		const { userId } = await requireAuth()
+		await requireAuth()
 		await requireRole("admin")
 
 		await db
@@ -260,13 +292,23 @@ const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> 
 			return {
 				status: "error",
 				message: t("actions.adminRequired"),
-				errors: [{ code: "FORBIDDEN", detail: "Only admins can deactivate risk profiles" }],
+				errors: [
+					{
+						code: "FORBIDDEN",
+						detail: "Only admins can deactivate risk profiles",
+					},
+				],
 			}
 		}
 		return {
 			status: "error",
 			message: t("actions.deactivateFailed"),
-			errors: [{ code: "DEACTIVATE_ERROR", detail: toSafeErrorMessage(error, "deactivateRiskProfile") }],
+			errors: [
+				{
+					code: "DEACTIVATE_ERROR",
+					detail: toSafeErrorMessage(error, "deactivateRiskProfile"),
+				},
+			],
 		}
 	}
 }

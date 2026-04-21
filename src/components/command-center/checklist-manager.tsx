@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useToast } from "@/components/ui/toast"
 import {
 	Dialog,
 	DialogContent,
@@ -34,6 +35,7 @@ export const ChecklistManager = ({
 }: ChecklistManagerProps) => {
 	const t = useTranslations("commandCenter.checklistManager")
 	const tCommon = useTranslations("common")
+	const { showToast } = useToast()
 	const isEditing = !!checklist
 
 	const initialItems: ChecklistItem[] = checklist
@@ -92,6 +94,7 @@ export const ChecklistManager = ({
 			onClose()
 		} catch (error) {
 			console.error("Failed to save checklist:", error)
+			showToast("error", t("saveError"))
 		} finally {
 			setSaving(false)
 		}
@@ -107,6 +110,7 @@ export const ChecklistManager = ({
 			onClose()
 		} catch (error) {
 			console.error("Failed to delete checklist:", error)
+			showToast("error", t("deleteError"))
 		} finally {
 			setDeleting(false)
 		}

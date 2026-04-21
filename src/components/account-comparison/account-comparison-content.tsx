@@ -84,7 +84,7 @@ const AccountComparisonContent = ({
 
 			{/* Results — only shown after comparison */}
 			{comparisonData && (
-				<div className="space-y-m-400 sm:space-y-m-500">
+				<div className="space-y-m-400 sm:space-y-m-500" aria-live="polite">
 					{/* Stats Table */}
 					<ComparisonStatsTable
 						accounts={comparisonData.accounts}

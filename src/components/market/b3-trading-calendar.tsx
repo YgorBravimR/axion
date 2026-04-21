@@ -118,31 +118,31 @@ export const B3TradingCalendar = () => {
 		<div className="flex flex-col gap-2 px-3 py-2">
 			{/* Month navigation */}
 			<div className="flex items-center justify-between">
-			<Button
-				id="calendar-prev-month"
-				type="button"
-				variant="ghost"
-				size="icon"
-				onClick={handlePrevMonth}
-				className="text-txt-300"
-				aria-label={t("prevMonth")}
-			>
-				<ChevronLeft className="h-4 w-4" />
-			</Button>
+				<Button
+					id="calendar-prev-month"
+					type="button"
+					variant="ghost"
+					size="icon"
+					onClick={handlePrevMonth}
+					className="text-txt-300"
+					aria-label={t("prevMonth")}
+				>
+					<ChevronLeft className="h-4 w-4" />
+				</Button>
 				<span className="text-small text-txt-100 font-medium capitalize">
 					{monthName} {year}
 				</span>
-			<Button
-				id="calendar-next-month"
-				type="button"
-				variant="ghost"
-				size="icon"
-				onClick={handleNextMonth}
-				className="text-txt-300"
-				aria-label={t("nextMonth")}
-			>
-				<ChevronRight className="h-4 w-4" />
-			</Button>
+				<Button
+					id="calendar-next-month"
+					type="button"
+					variant="ghost"
+					size="icon"
+					onClick={handleNextMonth}
+					className="text-txt-300"
+					aria-label={t("nextMonth")}
+				>
+					<ChevronRight className="h-4 w-4" />
+				</Button>
 			</div>
 
 			{/* Day-of-week headers */}
@@ -206,7 +206,9 @@ export const B3TradingCalendar = () => {
 								// NYSE only closed — warning filled
 								nyseOnlyClosedNotWeekend && "bg-warning/25",
 								// Both closed — diagonal gradient via globals.css utility class
-								bothClosedNotWeekend && !day.isToday && "bg-both-closed text-txt-100",
+								bothClosedNotWeekend &&
+									!day.isToday &&
+									"bg-both-closed text-txt-100",
 								bothClosedNotWeekend && day.isToday && "text-txt-100",
 								// Today — highlighted with font-color opacity bg
 								day.isToday

@@ -123,15 +123,17 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 
 	return (
 		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-			<h3 className="text-heading-3 font-semibold text-txt-100 mb-m-400">
+			<h3 className="text-h3 font-semibold text-txt-100 mb-m-400">
 				{tResults("tradeList")}
 			</h3>
-			<DataTable
-				columns={columns}
-				data={trades}
-				emptyMessage={t("noTrades")}
-				pageSize={20}
-			/>
+			<div className="overflow-x-auto">
+				<DataTable
+					columns={columns}
+					data={trades}
+					emptyMessage={t("noTrades")}
+					pageSize={20}
+				/>
+			</div>
 		</div>
 	)
 }

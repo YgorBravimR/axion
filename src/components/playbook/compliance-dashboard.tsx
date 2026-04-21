@@ -105,7 +105,14 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 
 							{/* Compliance Bar */}
 							<div className="mt-s-300">
-								<div className="bg-bg-300 flex h-4 w-full overflow-hidden rounded-full">
+								<div
+									className="bg-bg-300 flex h-4 w-full overflow-hidden rounded-full"
+									role="progressbar"
+									aria-valuenow={data.overallCompliance}
+									aria-valuemin={0}
+									aria-valuemax={100}
+									aria-label={t("overview")}
+								>
 									<div
 										className="bg-trade-buy flex items-center justify-center transition-[width]"
 										style={{

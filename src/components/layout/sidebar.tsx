@@ -62,7 +62,7 @@ const Sidebar = ({
 					width={32}
 					height={32}
 					className={cn(
-						"absolute h-8 w-auto object-contain transition-opacity duration-1000 motion-reduce:transition-none",
+						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
 					priority
@@ -73,7 +73,7 @@ const Sidebar = ({
 					width={120}
 					height={32}
 					className={cn(
-						"absolute h-8 w-auto object-contain transition-opacity duration-1000 motion-reduce:transition-none",
+						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
 					priority
@@ -159,7 +159,6 @@ const Sidebar = ({
 									isCompact && "justify-center"
 								)}
 								aria-current={isActive ? "page" : undefined}
-								tabIndex={0}
 								onClick={onNavigate}
 							>
 								<item.icon className="h-5 w-5 shrink-0" />
@@ -218,8 +217,8 @@ const Sidebar = ({
 			{/* by Bravo badge */}
 			{!isCompact && (
 				<div className="flex items-center justify-center gap-1.5 pb-3">
-					<span className="text-micro text-txt-placeholder tracking-wide">by</span>
-					<span className="text-micro text-acc-200 tracking-[0.15em] font-medium">
+					<span className="text-tiny text-txt-placeholder tracking-wide">by</span>
+					<span className="text-tiny text-acc-200 tracking-[0.15em] font-medium">
 						BRAVO
 					</span>
 				</div>

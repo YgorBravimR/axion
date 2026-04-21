@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useTransition, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { startOfMonth, subMonths } from "date-fns"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
@@ -62,7 +62,7 @@ export const MonthlyContent = ({
 	// Determine if we're viewing the current month
 	const isCurrentMonth = monthOffset === 0
 
-	const loadData = async (offset: number) => {
+	const loadData = useCallback(async (offset: number) => {
 		setError(null)
 
 		const [monthlyResult, comparisonResult] = await Promise.all([
@@ -89,7 +89,7 @@ export const MonthlyContent = ({
 		} else {
 			setProjectionData(null)
 		}
-	}
+	}, [t])
 
 	// Load data when month changes (but not on initial render since we have initial data)
 	useEffect(() => {
@@ -99,9 +99,9 @@ export const MonthlyContent = ({
 		startTransition(() => {
 			loadData(monthOffset)
 		})
-	}, [monthOffset, hasNavigated])
+	}, [monthOffset, hasNavigated, loadData])
 
-	const handleMonthChange = (newDate: Date) => {
+	const handleMonthChange = useCallback((newDate: Date) => {
 		const currentMonthStart = startOfMonth(effectiveDate)
 		const newMonthStart = startOfMonth(newDate)
 
@@ -113,7 +113,7 @@ export const MonthlyContent = ({
 		setHasNavigated(true)
 		setMonthOffset(diffMonths)
 		setCurrentDate(newMonthStart)
-	}
+	}, [effectiveDate])
 
 	if (isPending && !monthlyData) {
 		return <LoadingSpinner size="md" className="h-96" />
@@ -121,7 +121,10 @@ export const MonthlyContent = ({
 
 	if (error && !monthlyData) {
 		return (
-			<div className="rounded-lg border border-fb-error/20 bg-fb-error/10 p-m-500 text-center">
+			<div
+				role="alert"
+				className="rounded-lg border border-fb-error/20 bg-fb-error/10 p-m-500 text-center"
+			>
 				<p className="text-small text-fb-error">{error}</p>
 			</div>
 		)
@@ -172,7 +175,8 @@ export const MonthlyContent = ({
 						</>
 					) : (
 						<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-700 text-center">
-							<p className="text-txt-300">{t("noData")}</p>
+							<p className="text-txt-200 font-medium">{t("noData")}</p>
+							<p className="mt-s-200 text-small text-txt-300">{t("noDataGuidance")}</p>
 						</div>
 					)}
 				</>

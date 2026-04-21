@@ -39,7 +39,12 @@ import {
 } from "@/lib/validations/command-center"
 import { fromCents, toCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, encryptDailyNotesFields, decryptDailyNotesFields } from "@/lib/user-crypto"
+import {
+	getUserDek,
+	encryptDailyNotesFields,
+	decryptDailyNotesFields,
+	decryptMonthlyPlanFields,
+} from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 
@@ -50,7 +55,9 @@ import { getServerEffectiveNow } from "@/lib/effective-date"
 /**
  * Get all checklists for the current account
  */
-export const getChecklists = async (): Promise<ActionResponse<DailyChecklist[]>> => {
+export const getChecklists = async (): Promise<
+	ActionResponse<DailyChecklist[]>
+> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -73,7 +80,12 @@ export const getChecklists = async (): Promise<ActionResponse<DailyChecklist[]>>
 		return {
 			status: "error",
 			message: t("actions.checklistsFetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getChecklists") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getChecklists"),
+				},
+			],
 		}
 	}
 }
@@ -122,7 +134,12 @@ export const createChecklist = async (
 		return {
 			status: "error",
 			message: t("actions.checklistCreateFailed"),
-			errors: [{ code: "CREATE_FAILED", detail: toSafeErrorMessage(error, "createChecklist") }],
+			errors: [
+				{
+					code: "CREATE_FAILED",
+					detail: toSafeErrorMessage(error, "createChecklist"),
+				},
+			],
 		}
 	}
 }
@@ -160,8 +177,12 @@ export const updateChecklist = async (
 			.update(dailyChecklists)
 			.set({
 				...(validated.name !== undefined && { name: validated.name }),
-				...(validated.items !== undefined && { items: JSON.stringify(validated.items) }),
-				...(validated.isActive !== undefined && { isActive: validated.isActive }),
+				...(validated.items !== undefined && {
+					items: JSON.stringify(validated.items),
+				}),
+				...(validated.isActive !== undefined && {
+					isActive: validated.isActive,
+				}),
 				updatedAt: new Date(),
 			})
 			.where(eq(dailyChecklists.id, id))
@@ -189,7 +210,12 @@ export const updateChecklist = async (
 		return {
 			status: "error",
 			message: t("actions.checklistUpdateFailed"),
-			errors: [{ code: "UPDATE_FAILED", detail: toSafeErrorMessage(error, "updateChecklist") }],
+			errors: [
+				{
+					code: "UPDATE_FAILED",
+					detail: toSafeErrorMessage(error, "updateChecklist"),
+				},
+			],
 		}
 	}
 }
@@ -197,7 +223,9 @@ export const updateChecklist = async (
 /**
  * Delete a checklist (soft delete)
  */
-export const deleteChecklist = async (id: string): Promise<ActionResponse<void>> => {
+export const deleteChecklist = async (
+	id: string
+): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -233,7 +261,12 @@ export const deleteChecklist = async (id: string): Promise<ActionResponse<void>>
 		return {
 			status: "error",
 			message: t("actions.checklistDeleteFailed"),
-			errors: [{ code: "DELETE_FAILED", detail: toSafeErrorMessage(error, "deleteChecklist") }],
+			errors: [
+				{
+					code: "DELETE_FAILED",
+					detail: toSafeErrorMessage(error, "deleteChecklist"),
+				},
+			],
 		}
 	}
 }
@@ -251,7 +284,9 @@ export interface ChecklistWithCompletion extends DailyChecklist {
 /**
  * Get checklist completions for a given date (defaults to today)
  */
-export const getTodayCompletions = async (date?: Date): Promise<ActionResponse<ChecklistWithCompletion[]>> => {
+export const getTodayCompletions = async (
+	date?: Date
+): Promise<ActionResponse<ChecklistWithCompletion[]>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -273,30 +308,34 @@ export const getTodayCompletions = async (date?: Date): Promise<ActionResponse<C
 
 		// Get today's completions for these checklists
 		const checklistIds = checklists.map((c) => c.id)
-		const completions = checklistIds.length > 0
-			? await db.query.checklistCompletions.findMany({
-					where: and(
-						inArray(checklistCompletions.checklistId, checklistIds),
-						gte(checklistCompletions.date, today),
-						lte(checklistCompletions.date, tomorrow)
-					),
-				})
-			: []
-
-		// Map completions to checklists
-		const checklistsWithCompletions: ChecklistWithCompletion[] = checklists.map((checklist) => {
-			const completion = completions.find((c) => c.checklistId === checklist.id) || null
-			const completedItemIds: string[] = completion
-				? JSON.parse(completion.completedItems)
+		const completions =
+			checklistIds.length > 0
+				? await db.query.checklistCompletions.findMany({
+						where: and(
+							inArray(checklistCompletions.checklistId, checklistIds),
+							gte(checklistCompletions.date, today),
+							lte(checklistCompletions.date, tomorrow)
+						),
+					})
 				: []
 
-			return {
-				...checklist,
-				parsedItems: JSON.parse(checklist.items) as ChecklistItem[],
-				completion,
-				completedItemIds,
+		// Map completions to checklists
+		const checklistsWithCompletions: ChecklistWithCompletion[] = checklists.map(
+			(checklist) => {
+				const completion =
+					completions.find((c) => c.checklistId === checklist.id) || null
+				const completedItemIds: string[] = completion
+					? JSON.parse(completion.completedItems)
+					: []
+
+				return {
+					...checklist,
+					parsedItems: JSON.parse(checklist.items) as ChecklistItem[],
+					completion,
+					completedItemIds,
+				}
 			}
-		})
+		)
 
 		return {
 			status: "success",
@@ -307,7 +346,12 @@ export const getTodayCompletions = async (date?: Date): Promise<ActionResponse<C
 		return {
 			status: "error",
 			message: t("actions.completionsFetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTodayCompletions") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getTodayCompletions"),
+				},
+			],
 		}
 	}
 }
@@ -325,7 +369,11 @@ export const toggleChecklistItem = async (
 		const { userId, accountId } = await requireAuth()
 
 		// Validate input
-		const validated = updateCompletionSchema.parse({ checklistId, itemId, completed })
+		const validated = updateCompletionSchema.parse({
+			checklistId,
+			itemId,
+			completed,
+		})
 
 		// Get start and end of today (effective date for replay accounts)
 		const today = await getServerEffectiveNow()
@@ -361,7 +409,9 @@ export const toggleChecklistItem = async (
 			const checklist = await db.query.dailyChecklists.findFirst({
 				where: eq(dailyChecklists.id, validated.checklistId),
 			})
-			const allItems: ChecklistItem[] = checklist ? JSON.parse(checklist.items) : []
+			const allItems: ChecklistItem[] = checklist
+				? JSON.parse(checklist.items)
+				: []
 			const allCompleted = allItems.every((item) => newItems.includes(item.id))
 
 			const [completion] = await db
@@ -419,7 +469,12 @@ export const toggleChecklistItem = async (
 		return {
 			status: "error",
 			message: t("actions.completionToggleFailed"),
-			errors: [{ code: "UPDATE_FAILED", detail: toSafeErrorMessage(error, "toggleChecklistItem") }],
+			errors: [
+				{
+					code: "UPDATE_FAILED",
+					detail: toSafeErrorMessage(error, "toggleChecklistItem"),
+				},
+			],
 		}
 	}
 }
@@ -431,7 +486,9 @@ export const toggleChecklistItem = async (
 /**
  * Get notes for a given date (defaults to today)
  */
-export const getTodayNotes = async (date?: Date): Promise<ActionResponse<DailyAccountNote | null>> => {
+export const getTodayNotes = async (
+	date?: Date
+): Promise<ActionResponse<DailyAccountNote | null>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -452,9 +509,13 @@ export const getTodayNotes = async (date?: Date): Promise<ActionResponse<DailyAc
 
 		// Decrypt notes fields if DEK is available
 		const dek = await getUserDek(userId)
-		const notes = rawNotes && dek
-			? decryptDailyNotesFields(rawNotes as unknown as Record<string, unknown>, dek) as unknown as DailyAccountNote
-			: rawNotes
+		const notes =
+			rawNotes && dek
+				? (decryptDailyNotesFields(
+						rawNotes as unknown as Record<string, unknown>,
+						dek
+					) as unknown as DailyAccountNote)
+				: rawNotes
 
 		return {
 			status: "success",
@@ -465,7 +526,12 @@ export const getTodayNotes = async (date?: Date): Promise<ActionResponse<DailyAc
 		return {
 			status: "error",
 			message: t("actions.notesFetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTodayNotes") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getTodayNotes"),
+				},
+			],
 		}
 	}
 }
@@ -500,10 +566,13 @@ export const upsertDailyNotes = async (
 		// Encrypt notes fields if DEK is available
 		const dek = await getUserDek(userId)
 		const encryptedFields = dek
-			? encryptDailyNotesFields({
-				preMarketNotes: validated.preMarketNotes || null,
-				postMarketNotes: validated.postMarketNotes || null,
-			}, dek)
+			? encryptDailyNotesFields(
+					{
+						preMarketNotes: validated.preMarketNotes || null,
+						postMarketNotes: validated.postMarketNotes || null,
+					},
+					dek
+				)
 			: {}
 
 		if (existing) {
@@ -524,7 +593,10 @@ export const upsertDailyNotes = async (
 
 			// Decrypt before returning
 			const decryptedNotes = dek
-				? decryptDailyNotesFields(notes as unknown as Record<string, unknown>, dek) as unknown as DailyAccountNote
+				? (decryptDailyNotesFields(
+						notes as unknown as Record<string, unknown>,
+						dek
+					) as unknown as DailyAccountNote)
 				: notes
 
 			return {
@@ -551,7 +623,10 @@ export const upsertDailyNotes = async (
 
 			// Decrypt before returning
 			const decryptedNotes = dek
-				? decryptDailyNotesFields(notes as unknown as Record<string, unknown>, dek) as unknown as DailyAccountNote
+				? (decryptDailyNotesFields(
+						notes as unknown as Record<string, unknown>,
+						dek
+					) as unknown as DailyAccountNote)
 				: notes
 
 			return {
@@ -575,7 +650,12 @@ export const upsertDailyNotes = async (
 		return {
 			status: "error",
 			message: t("actions.notesSaveFailed"),
-			errors: [{ code: "SAVE_FAILED", detail: toSafeErrorMessage(error, "upsertDailyNotes") }],
+			errors: [
+				{
+					code: "SAVE_FAILED",
+					detail: toSafeErrorMessage(error, "upsertDailyNotes"),
+				},
+			],
 		}
 	}
 }
@@ -592,7 +672,9 @@ export interface AssetSettingWithAsset extends AccountAssetSetting {
  * Get account-level asset settings.
  * Auto-populates blank rows for enabled assets that don't have settings yet.
  */
-export const getAccountAssetSettings = async (): Promise<ActionResponse<AssetSettingWithAsset[]>> => {
+export const getAccountAssetSettings = async (): Promise<
+	ActionResponse<AssetSettingWithAsset[]>
+> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -662,7 +744,12 @@ export const getAccountAssetSettings = async (): Promise<ActionResponse<AssetSet
 		return {
 			status: "error",
 			message: t("actions.assetSettingsFetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getAccountAssetSettings") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getAccountAssetSettings"),
+				},
+			],
 		}
 	}
 }
@@ -752,7 +839,12 @@ export const upsertAssetSettings = async (
 		return {
 			status: "error",
 			message: t("actions.assetSettingsSaveFailed"),
-			errors: [{ code: "SAVE_FAILED", detail: toSafeErrorMessage(error, "upsertAssetSettings") }],
+			errors: [
+				{
+					code: "SAVE_FAILED",
+					detail: toSafeErrorMessage(error, "upsertAssetSettings"),
+				},
+			],
 		}
 	}
 }
@@ -760,7 +852,9 @@ export const upsertAssetSettings = async (
 /**
  * Delete account-level asset settings (soft delete)
  */
-export const deleteAssetSettings = async (assetId: string): Promise<ActionResponse<void>> => {
+export const deleteAssetSettings = async (
+	assetId: string
+): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -796,7 +890,12 @@ export const deleteAssetSettings = async (assetId: string): Promise<ActionRespon
 		return {
 			status: "error",
 			message: t("actions.assetSettingsDeleteFailed"),
-			errors: [{ code: "DELETE_FAILED", detail: toSafeErrorMessage(error, "deleteAssetSettings") }],
+			errors: [
+				{
+					code: "DELETE_FAILED",
+					detail: toSafeErrorMessage(error, "deleteAssetSettings"),
+				},
+			],
 		}
 	}
 }
@@ -819,7 +918,9 @@ export interface DailySummary {
 /**
  * Get circuit breaker status for a given date (defaults to today)
  */
-export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionResponse<CircuitBreakerStatus>> => {
+export const getCircuitBreakerStatus = async (
+	date?: Date
+): Promise<ActionResponse<CircuitBreakerStatus>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
@@ -855,10 +956,13 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 
 		// Decrypt monthly plan fields if DEK is available
 		const dek = await getUserDek(userId)
-		const { decryptMonthlyPlanFields } = await import("@/lib/user-crypto")
-		const monthlyPlan = rawMonthlyPlan && dek
-			? decryptMonthlyPlanFields(rawMonthlyPlan as unknown as Record<string, unknown>, dek) as unknown as typeof rawMonthlyPlan
-			: rawMonthlyPlan
+		const monthlyPlan =
+			rawMonthlyPlan && dek
+				? (decryptMonthlyPlanFields(
+						rawMonthlyPlan as unknown as Record<string, unknown>,
+						dek
+					) as unknown as typeof rawMonthlyPlan)
+				: rawMonthlyPlan
 
 		// Calculate metrics
 		let dailyPnL = 0
@@ -867,11 +971,14 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 
 		// Sort trades by entry date to calculate consecutive losses properly (using toSorted for immutability)
 		const sortedTrades = todaysTrades.toSorted(
-			(a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+			(a, b) =>
+				new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
 		)
 
 		// Breakevens are invisible to trade counts, max trades, and consecutive losses
-		const nonBreakevenCount = sortedTrades.filter(t => t.outcome !== "breakeven").length
+		const nonBreakevenCount = sortedTrades.filter(
+			(t) => t.outcome !== "breakeven"
+		).length
 
 		for (const trade of sortedTrades) {
 			dailyPnL += fromCents(trade.pnl)
@@ -905,14 +1012,17 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 		// After decryption, these values are numbers; without DEK, parse from text
 		const dailyLossLimitCents = Number(monthlyPlan?.dailyLossCents) || 0
 		const profitTargetCents = Number(monthlyPlan?.dailyProfitTargetCents) || 0
-		const rawMaxTrades = monthlyPlan?.maxDailyTrades ?? monthlyPlan?.derivedMaxDailyTrades ?? null
+		const rawMaxTrades =
+			monthlyPlan?.maxDailyTrades ?? monthlyPlan?.derivedMaxDailyTrades ?? null
 		const maxConsecutiveLossesValue = monthlyPlan?.maxConsecutiveLosses ?? null
 
 		// When a recovery profile is linked, derivedMaxDailyTrades (floor(dailyLoss / baseRisk))
 		// underestimates because recovery steps use reduced risk. Ensure maxTrades is at least
 		// maxConsecutiveLosses so the circuit breaker doesn't show a contradictory cap.
 		const maxTradesValue =
-			rawMaxTrades !== null && maxConsecutiveLossesValue !== null && maxConsecutiveLossesValue > rawMaxTrades
+			rawMaxTrades !== null &&
+			maxConsecutiveLossesValue !== null &&
+			maxConsecutiveLossesValue > rawMaxTrades
 				? maxConsecutiveLossesValue
 				: rawMaxTrades
 
@@ -942,10 +1052,14 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 		const monthlyLossLimitCents = Number(monthlyPlan?.monthlyLossCents) || 0
 		const remainingMonthlyCents =
 			monthlyLossLimitCents > 0
-				? Math.max(0, monthlyLossLimitCents - Math.abs(Math.min(0, toCents(monthlyPnL))))
+				? Math.max(
+						0,
+						monthlyLossLimitCents - Math.abs(Math.min(0, toCents(monthlyPnL)))
+					)
 				: Infinity
 		const isMonthlyLimitHit =
-			monthlyLossLimitCents > 0 && monthlyPnL <= -fromCents(monthlyLossLimitCents)
+			monthlyLossLimitCents > 0 &&
+			monthlyPnL <= -fromCents(monthlyLossLimitCents)
 
 		// Calculate recommended risk (plan-only)
 		let recommendedRiskCents = Number(monthlyPlan?.riskPerTradeCents) || 0
@@ -958,28 +1072,33 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 
 		if (shouldReduceRisk && currentConsecutiveLosses > 0 && reductionFactor) {
 			recommendedRiskCents = Math.round(
-				recommendedRiskCents * Math.pow(reductionFactor, currentConsecutiveLosses)
+				recommendedRiskCents *
+					Math.pow(reductionFactor, currentConsecutiveLosses)
 			)
 		}
 
 		// Win risk adjustment (increase or cap — mutually exclusive)
 		if (monthlyPlan?.profitReinvestmentPercent) {
-			const reinvestmentPercent = parseFloat(monthlyPlan.profitReinvestmentPercent)
+			const reinvestmentPercent = parseFloat(
+				monthlyPlan.profitReinvestmentPercent
+			)
 
 			if (monthlyPlan.increaseRiskAfterWin) {
 				// INCREASE: add % of last win's profit to base risk
 				const lastTrade = sortedTrades.at(-1)
 				const lastPnl = Number(lastTrade?.pnl) || 0
 				if (lastTrade?.outcome === "win" && lastPnl > 0) {
-					const bonusCents = Math.round(lastPnl * reinvestmentPercent / 100)
+					const bonusCents = Math.round((lastPnl * reinvestmentPercent) / 100)
 					recommendedRiskCents = recommendedRiskCents + bonusCents
 				}
 			} else if (monthlyPlan.capRiskAfterWin) {
 				// CAP: find first winning trade of the day, cap risk to min(base, profit * %)
-				const firstWin = sortedTrades.find(t => t.outcome === "win" && t.pnl && Number(t.pnl) > 0)
+				const firstWin = sortedTrades.find(
+					(t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0
+				)
 				const firstWinPnl = Number(firstWin?.pnl) || 0
 				if (firstWinPnl > 0 && sortedTrades.length > 1) {
-					const capCents = Math.round(firstWinPnl * reinvestmentPercent / 100)
+					const capCents = Math.round((firstWinPnl * reinvestmentPercent) / 100)
 					recommendedRiskCents = Math.min(recommendedRiskCents, capCents)
 				}
 			}
@@ -988,8 +1107,12 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 		// Cap at remaining budgets
 		recommendedRiskCents = Math.min(
 			recommendedRiskCents,
-			remainingDailyRiskCents > 0 ? remainingDailyRiskCents : recommendedRiskCents,
-			remainingMonthlyCents !== Infinity ? remainingMonthlyCents : recommendedRiskCents
+			remainingDailyRiskCents > 0
+				? remainingDailyRiskCents
+				: recommendedRiskCents,
+			remainingMonthlyCents !== Infinity
+				? remainingMonthlyCents
+				: recommendedRiskCents
 		)
 
 		// Check second op block (plan-only)
@@ -1000,12 +1123,12 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 			nonBreakevenCount > 0
 
 		// Calculate circuit breaker triggers (using plan-first resolved values)
-		const profitTargetHit = profitTargetCents > 0
-			? dailyPnL >= fromCents(profitTargetCents)
-			: false
-		const lossLimitHit = dailyLossLimitCents > 0
-			? dailyPnL <= -fromCents(dailyLossLimitCents)
-			: false
+		const profitTargetHit =
+			profitTargetCents > 0 ? dailyPnL >= fromCents(profitTargetCents) : false
+		const lossLimitHit =
+			dailyLossLimitCents > 0
+				? dailyPnL <= -fromCents(dailyLossLimitCents)
+				: false
 		const maxTradesHit = maxTradesValue
 			? nonBreakevenCount >= maxTradesValue
 			: false
@@ -1054,7 +1177,8 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 				recommendedRiskCents,
 				monthlyPnL,
 				monthlyLossLimitCents,
-				remainingMonthlyCents: remainingMonthlyCents === Infinity ? 0 : remainingMonthlyCents,
+				remainingMonthlyCents:
+					remainingMonthlyCents === Infinity ? 0 : remainingMonthlyCents,
 				isMonthlyLimitHit,
 				isSecondOpBlocked,
 			},
@@ -1063,7 +1187,12 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 		return {
 			status: "error",
 			message: t("actions.circuitBreakerFetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getCircuitBreakerStatus") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getCircuitBreakerStatus"),
+				},
+			],
 		}
 	}
 }
@@ -1071,7 +1200,9 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 /**
  * Get daily summary for a given date (defaults to today)
  */
-export const getDailySummary = async (date?: Date): Promise<ActionResponse<DailySummary>> => {
+export const getDailySummary = async (
+	date?: Date
+): Promise<ActionResponse<DailySummary>> => {
 	const t = await getTranslations("commandCenter")
 	try {
 		const { accountId } = await requireAuth()
@@ -1102,7 +1233,8 @@ export const getDailySummary = async (date?: Date): Promise<ActionResponse<Daily
 		let maxConsecutiveLosses = 0
 
 		const sortedTrades = todaysTrades.toSorted(
-			(a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+			(a, b) =>
+				new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
 		)
 
 		for (const trade of sortedTrades) {
@@ -1122,16 +1254,16 @@ export const getDailySummary = async (date?: Date): Promise<ActionResponse<Daily
 			}
 		}
 
-		const winRate = winCount + lossCount > 0
-			? (winCount / (winCount + lossCount)) * 100
-			: 0
+		const winRate =
+			winCount + lossCount > 0 ? (winCount / (winCount + lossCount)) * 100 : 0
 
 		return {
 			status: "success",
 			message: t("actions.dailySummaryRetrieved"),
 			data: {
 				totalPnL,
-				tradesCount: sortedTrades.filter(t => t.outcome !== "breakeven").length,
+				tradesCount: sortedTrades.filter((t) => t.outcome !== "breakeven")
+					.length,
 				winCount,
 				lossCount,
 				winRate,
@@ -1144,7 +1276,12 @@ export const getDailySummary = async (date?: Date): Promise<ActionResponse<Daily
 		return {
 			status: "error",
 			message: t("actions.dailySummaryFetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getDailySummary") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getDailySummary"),
+				},
+			],
 		}
 	}
 }

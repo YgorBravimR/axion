@@ -74,7 +74,7 @@ const BacktestSummaryCards = ({ summary }: BacktestSummaryCardsProps) => {
 						className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400"
 					>
 						<p className="text-small text-txt-300">{metric.label}</p>
-						<p className={`text-heading-3 font-semibold font-mono ${
+						<p className={`text-h3 font-semibold font-mono ${
 							metric.negative ? "text-fb-error" : metric.accent ? "text-acc-100" : "text-txt-100"
 						}`}>
 							{metric.value}

@@ -129,9 +129,9 @@ export const TradingCalendar = memo(
 				<div className="mt-s-300 sm:mt-m-400">
 					{/* Days of week header */}
 					<div className="gap-px grid grid-cols-7 sm:gap-s-100">
-						{daysOfWeek.map((day, index) => (
+						{daysOfWeek.map((day) => (
 							<div
-								key={index}
+								key={day}
 								className="py-s-100 text-center font-medium text-txt-300 text-micro sm:py-s-200 sm:text-tiny"
 							>
 								{day}
@@ -198,7 +198,9 @@ export const TradingCalendar = memo(
 									aria-label={
 										dailyData
 											? t("dayAriaLabel", { date: dateKey, pnl: formatCompactCurrencyWithSign(dailyData.pnl, "R$"), count: dailyData.tradeCount })
-											: undefined
+											: isToday
+												? t("todayAriaLabel", { date: dateKey })
+												: undefined
 									}
 								>
 									<div className="flex h-full flex-col">

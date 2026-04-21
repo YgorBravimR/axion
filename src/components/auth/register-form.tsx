@@ -98,7 +98,11 @@ const RegisterForm = () => {
 
 			<form onSubmit={handleSubmit} className="space-y-m-400">
 				{error && (
-					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
+					<div
+						role="alert"
+						aria-live="assertive"
+						className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md"
+					>
 						{error}
 					</div>
 				)}

@@ -5,6 +5,7 @@ import { Moon, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/toast"
 import { upsertDailyNotes } from "@/app/actions/command-center"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import type { DailyAccountNote } from "@/db/schema"
@@ -19,6 +20,7 @@ interface PostMarketNotesProps {
 export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
 	const effectiveDate = useEffectiveDate()
+	const { showToast } = useToast()
 
 	const [postMarketNotes, setPostMarketNotes] = useState("")
 	const [saving, setSaving] = useState(false)
@@ -49,6 +51,7 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 			onRefresh()
 		} catch (error) {
 			console.error("Failed to save notes:", error)
+			showToast("error", t("saveError"))
 		} finally {
 			setSaving(false)
 		}

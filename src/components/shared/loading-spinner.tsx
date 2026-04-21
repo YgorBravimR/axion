@@ -31,8 +31,15 @@ export const LoadingSpinner = ({
 	const tCommon = useTranslations("common")
 	const displayLabel = label && !label.endsWith("\u2026") ? `${label}\u2026` : label
 
+	const accessibleLabel = displayLabel ?? tCommon("loading")
+
 	return (
-		<div className={cn("flex items-center justify-center", className)} role="status" aria-live="polite">
+		<div
+			className={cn("flex items-center justify-center", className)}
+			role="status"
+			aria-live="polite"
+			aria-label={!displayLabel ? accessibleLabel : undefined}
+		>
 			<Loader2
 				className={cn("animate-spin motion-reduce:animate-none text-txt-300", sizeClasses[size])}
 				aria-hidden="true"
@@ -40,7 +47,7 @@ export const LoadingSpinner = ({
 			{displayLabel && (
 				<span className="ml-s-200 text-small text-txt-300">{displayLabel}</span>
 			)}
-			{!displayLabel && <span className="sr-only">{tCommon("loading")}</span>}
+			{!displayLabel && <span className="sr-only">{accessibleLabel}</span>}
 		</div>
 	)
 }

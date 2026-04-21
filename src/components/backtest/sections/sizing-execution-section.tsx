@@ -62,7 +62,7 @@ const SizingExecutionSection = ({ recipe, onRecipeChange }: SizingExecutionSecti
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-500 rounded-lg border p-m-400">
-			<h2 className="text-heading-3 font-semibold text-txt-100">{t("sizingExecution")}</h2>
+			<h2 className="text-h3 font-semibold text-txt-100">{t("sizingExecution")}</h2>
 
 			{/* Sizing mode */}
 			<div className="space-y-s-300">

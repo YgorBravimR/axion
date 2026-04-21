@@ -47,15 +47,15 @@ const MetricCell = ({
 	subLabel,
 	valueClassName = "text-txt-100",
 }: MetricCellProps) => (
-	<div className="space-y-s-100">
-		<span className="text-tiny text-txt-300 block">{label}</span>
-		<span className={cn("text-body block font-semibold", valueClassName)}>
+	<dl className="space-y-s-100">
+		<dt className="text-tiny text-txt-300">{label}</dt>
+		<dd className={cn("text-body font-semibold", valueClassName)}>
 			{value}
-		</span>
+		</dd>
 		{subLabel && (
-			<span className="text-tiny text-txt-300 block">{subLabel}</span>
+			<dd className="text-tiny text-txt-300">{subLabel}</dd>
 		)}
-	</div>
+	</dl>
 )
 
 interface RecoveryStepTrackerProps {
@@ -80,7 +80,7 @@ const RecoveryStepTracker = ({
 
 				return (
 					<div
-						key={index}
+						key={`step-${index}`}
 						className={cn(
 							"flex h-2 flex-1 rounded-full transition-colors",
 							isCurrent && "bg-trade-sell",

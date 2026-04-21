@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useCallback } from "react"
+import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Search } from "lucide-react"
@@ -151,7 +151,22 @@ const JournalContent = () => {
 		return filters
 	}
 
-	const extendedFilters = readExtendedFilters()
+	const extendedFilters = useMemo(
+		() => readExtendedFilters(),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[
+			urlParams.get("outcomes"),
+			urlParams.get("directions"),
+			urlParams.get("assets"),
+			urlParams.get("rating"),
+			urlParams.get("followedPlan"),
+			urlParams.get("hourFrom"),
+			urlParams.get("hourTo"),
+			urlParams.get("pnlMin"),
+			urlParams.get("pnlMax"),
+			urlParams.get("qf"),
+		]
+	)
 	const extendedFilterCount = Object.keys(extendedFilters).filter(
 		(k) => k !== "_qf"
 	).length
@@ -257,7 +272,7 @@ const JournalContent = () => {
 		customDateRange?.from?.getTime(),
 		customDateRange?.to?.getTime(),
 		effectiveDate,
-		JSON.stringify(extendedFilters),
+		extendedFilters,
 	]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Memoized handlers to prevent unnecessary re-renders in child components
@@ -362,7 +377,7 @@ const JournalContent = () => {
 				{!isLoading && totalTrades > 0 && (
 					<div
 						id="journal-period-summary"
-						className="gap-s-300 sm:gap-m-400 text-small flex flex-wrap items-center"
+						className="gap-s-300 sm:gap-m-400 text-small flex flex-wrap items-center border-t border-bg-300 pt-s-200 sm:border-t-0 sm:pt-0"
 					>
 						<span className="text-txt-300">
 							{totalTrades} {t("tradesCount")}

@@ -173,7 +173,7 @@ export const MarketMonitorContent = () => {
 	}
 
 	return (
-		<div className="space-y-4 sm:space-y-5">
+		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* ── Header ──────────────────────────────────────────────────────── */}
 			<div>
 				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:gap-x-4">
@@ -245,14 +245,21 @@ export const MarketMonitorContent = () => {
 
 			{/* ── Hero quote cards ────────────────────────────────────────────── */}
 			{heroQuotes.length > 0 ? (
-				<div
-					className="flex gap-3 overflow-x-auto pb-1"
-					role="list"
-					aria-label={t("assets")}
-				>
-					{heroQuotes.map((quote) => (
-						<HeroQuoteCard key={quote.symbol} quote={quote} />
-					))}
+				<div className="relative">
+					<div
+						className="flex gap-3 overflow-x-auto pb-1"
+						role="list"
+						aria-label={t("assets")}
+					>
+						{heroQuotes.map((quote) => (
+							<HeroQuoteCard key={quote.symbol} quote={quote} />
+						))}
+					</div>
+					{/* Right-side fade gradient — indicates more content on scroll */}
+					<div
+						className="pointer-events-none absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-bg-100 to-transparent"
+						aria-hidden="true"
+					/>
 				</div>
 			) : null}
 
@@ -273,6 +280,7 @@ export const MarketMonitorContent = () => {
 						{groups.map((group) => (
 							<button
 								key={group.id}
+								id={`market-tab-${group.id}`}
 								type="button"
 								onClick={() => handleTabChange(group.id)}
 								className={cn(
@@ -282,6 +290,7 @@ export const MarketMonitorContent = () => {
 										: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
 								)}
 								aria-selected={activeTab === group.id}
+								aria-controls={`market-tabpanel-${group.id}`}
 								role="tab"
 							>
 								{t(group.labelKey)}
@@ -292,7 +301,12 @@ export const MarketMonitorContent = () => {
 				</div>
 
 				{/* Tab content */}
-				<div className="p-2" role="tabpanel">
+				<div
+					id={`market-tabpanel-${activeTab}`}
+					className="p-2"
+					role="tabpanel"
+					aria-labelledby={`market-tab-${activeTab}`}
+				>
 					{activeGroup && activeGroup.quotes.length > 0 ? (
 						<div
 							className="flex flex-col gap-1"

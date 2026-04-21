@@ -3,7 +3,13 @@
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import type { DateRange } from "react-day-picker"
 import { useToast } from "@/components/ui/toast"
@@ -38,17 +44,22 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0)
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState<string>("")
-	const dateFrom = dateRange?.from ? dateRange.from.toISOString().slice(0, 10) : ""
+	const dateFrom = dateRange?.from
+		? dateRange.from.toISOString().slice(0, 10)
+		: ""
 	const dateTo = dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : ""
 
 	// Results state
 	const [result, setResult] = useState<BacktestResult | null>(null)
+	const [hasRun, setHasRun] = useState(false)
 
 	const selectedSource = dataSources[selectedSourceIndex]
 
 	// Compute valuePerPoint from selected asset: tickValue / tickSize
 	const assetValuePerPointCents = selectedSource
-		? Math.round(selectedSource.assetTickValueCents / selectedSource.assetTickSize)
+		? Math.round(
+				selectedSource.assetTickValueCents / selectedSource.assetTickSize
+			)
 		: 20
 
 	const allPresets = [...orbPresets, ...dezkPresets]
@@ -58,7 +69,10 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		const preset = { ...allPresets[index] }
 		// Auto-fill valuePerPoint from asset
 		if (preset.sizing.type === "monetary_risk") {
-			preset.sizing = { ...preset.sizing, valuePerPointCents: assetValuePerPointCents }
+			preset.sizing = {
+				...preset.sizing,
+				valuePerPointCents: assetValuePerPointCents,
+			}
 		}
 		setRecipe(preset)
 	}
@@ -80,9 +94,10 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			const vpp = Math.round(source.assetTickValueCents / source.assetTickSize)
 			setRecipe((prev) => ({
 				...prev,
-				sizing: prev.sizing.type === "monetary_risk"
-					? { ...prev.sizing, valuePerPointCents: vpp }
-					: prev.sizing,
+				sizing:
+					prev.sizing.type === "monetary_risk"
+						? { ...prev.sizing, valuePerPointCents: vpp }
+						: prev.sizing,
 			}))
 		}
 	}
@@ -124,6 +139,11 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		setQuickRangeKey("custom")
 	}
 
+	const handleReset = () => {
+		setResult(null)
+		setHasRun(false)
+	}
+
 	const handleRun = () => {
 		if (!selectedSource || !dateFrom || !dateTo) {
 			showToast("error", t("errors.missingSelection"))
@@ -144,10 +164,16 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			})
 
 			hideLoading()
+			setHasRun(true)
 
 			if (response.success && response.data) {
 				setResult(response.data)
-				showToast("success", t("results.completedTrades", { count: response.data.summary.totalTrades }))
+				showToast(
+					"success",
+					t("results.completedTrades", {
+						count: response.data.summary.totalTrades,
+					})
+				)
 			} else {
 				showToast("error", response.error ?? t("errors.engineError"))
 			}
@@ -158,43 +184,66 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		<div className="space-y-m-500">
 			{/* Header */}
 			<div>
-				<h1 className="text-heading-2 font-semibold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
 				<p className="text-body text-txt-200">{t("description")}</p>
 			</div>
 
 			{/* Section 1: Strategy & Data */}
-			<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-m-400">
-				<h2 className="text-heading-3 font-semibold text-txt-100">{t("builder.strategyAndData")}</h2>
+			<div className="border-bg-300 bg-bg-200 space-y-m-400 p-m-400 rounded-lg border">
+				<h2 className="text-h3 text-txt-100 font-semibold">
+					{t("builder.strategyAndData")}
+				</h2>
 				{/* Row 1: Strategy, Asset, Preset */}
 				<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 					{/* Strategy */}
 					<div className="space-y-s-200">
-						<label className="text-small font-medium text-txt-200">{t("builder.strategy")}</label>
-						<Select value={recipe.entry.type} onValueChange={handleStrategyChange}>
+						<label
+							htmlFor="backtest-strategy"
+							className="text-small text-txt-200 font-medium"
+						>
+							{t("builder.strategy")}
+						</label>
+						<Select
+							value={recipe.entry.type}
+							onValueChange={handleStrategyChange}
+						>
 							<SelectTrigger id="backtest-strategy">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
-								<SelectItem value="macd_wma_alignment">{t("dezk.name")}</SelectItem>
+								<SelectItem value="macd_wma_alignment">
+									{t("dezk.name")}
+								</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
 
 					{/* Asset + Timeframe */}
 					<div className="space-y-s-200">
-						<label className="text-small font-medium text-txt-200">
+						<label
+							htmlFor="backtest-source"
+							className="text-small text-txt-200 font-medium"
+						>
 							{t("config.asset")} / {t("config.timeframe")}
 						</label>
-						<Select value={String(selectedSourceIndex)} onValueChange={handleSourceChange}>
+						<Select
+							value={String(selectedSourceIndex)}
+							onValueChange={handleSourceChange}
+						>
 							<SelectTrigger id="backtest-source">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
 								{dataSources.map((source, i) => (
-									<SelectItem key={`${source.assetId}-${source.timeframeId}`} value={String(i)}>
+									<SelectItem
+										key={`${source.assetId}-${source.timeframeId}`}
+										value={String(i)}
+									>
 										{source.assetSymbol} — {source.timeframeCode}
-										{source.rowCount ? ` (${source.rowCount.toLocaleString()})` : ""}
+										{source.rowCount
+											? ` (${source.rowCount.toLocaleString()})`
+											: ""}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -203,14 +252,22 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 
 					{/* Load Preset */}
 					<div className="space-y-s-200">
-						<label className="text-small font-medium text-txt-200">{t("builder.loadPreset")}</label>
+						<label
+							htmlFor="backtest-preset"
+							className="text-small text-txt-200 font-medium"
+						>
+							{t("builder.loadPreset")}
+						</label>
 						<Select onValueChange={handlePresetChange}>
 							<SelectTrigger id="backtest-preset">
 								<SelectValue placeholder={t("config.selectPreset")} />
 							</SelectTrigger>
 							<SelectContent>
 								{allPresets.map((preset, i) => (
-									<SelectItem key={`${preset.entry.type}-${i}`} value={String(i)}>
+									<SelectItem
+										key={`${preset.entry.type}-${i}`}
+										value={String(i)}
+									>
 										{preset.displayName}
 									</SelectItem>
 								))}
@@ -221,23 +278,41 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 
 				{/* Row 2: Date Range (quick select + picker) */}
 				<div className="space-y-s-200">
-					<label className="text-small font-medium text-txt-200">{t("config.dateRange")}</label>
+					<label
+						htmlFor="backtest-quick-range"
+						className="text-small text-txt-200 font-medium"
+					>
+						{t("config.dateRange")}
+					</label>
 					<div className="gap-s-200 flex items-center">
 						<Select value={quickRangeKey} onValueChange={handleQuickRange}>
-							<SelectTrigger id="backtest-quick-range" className="w-32 shrink-0">
+							<SelectTrigger
+								id="backtest-quick-range"
+								className="w-32 shrink-0"
+							>
 								<SelectValue placeholder={t("builder.quickRange")} />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">{t("builder.rangeAll")}</SelectItem>
-								<SelectItem value="this_month">{t("builder.rangeThisMonth")}</SelectItem>
-								<SelectItem value="this_year">{t("builder.rangeThisYear")}</SelectItem>
+								<SelectItem value="this_month">
+									{t("builder.rangeThisMonth")}
+								</SelectItem>
+								<SelectItem value="this_year">
+									{t("builder.rangeThisYear")}
+								</SelectItem>
 								<SelectItem value="3m">{t("builder.range3m")}</SelectItem>
 								<SelectItem value="6m">{t("builder.range6m")}</SelectItem>
 								<SelectItem value="1y">{t("builder.range1y")}</SelectItem>
-								<SelectItem value="custom">{t("builder.rangeCustom")}</SelectItem>
+								<SelectItem value="custom">
+									{t("builder.rangeCustom")}
+								</SelectItem>
 							</SelectContent>
 						</Select>
-						<DateRangePicker id="backtest-date-range" value={dateRange} onChange={handleDateRangeManual} />
+						<DateRangePicker
+							id="backtest-date-range"
+							value={dateRange}
+							onChange={handleDateRangeManual}
+						/>
 					</div>
 				</div>
 			</div>
@@ -284,7 +359,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						<Button
 							id="backtest-new"
 							variant="outline"
-							onClick={() => setResult(null)}
+							onClick={handleReset}
 							className="gap-s-200"
 						>
 							<RotateCcw className="h-4 w-4" />
@@ -297,11 +372,13 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 				</div>
 			)}
 
-			{/* Empty state */}
-			{!result && !isPending && (
-				<div className="border-bg-300 bg-bg-200 flex flex-col items-center justify-center rounded-lg border p-l-700 text-center">
-					<p className="text-heading-3 font-medium text-txt-200">{t("empty.title")}</p>
-					<p className="text-body text-txt-300 mt-s-200">{t("empty.description")}</p>
+			{/* Empty state — only after a run completes with no results */}
+			{!result && !isPending && hasRun && (
+				<div className="border-bg-300 bg-bg-200 p-l-700 flex flex-col items-center justify-center rounded-lg border text-center">
+					<p className="text-h3 text-txt-200 font-medium">{t("empty.title")}</p>
+					<p className="text-body text-txt-300 mt-s-200">
+						{t("empty.description")}
+					</p>
 				</div>
 			)}
 		</div>

@@ -90,7 +90,7 @@ const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps)
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-500 rounded-lg border p-m-400">
-			<h2 className="text-heading-3 font-semibold text-txt-100">{t("targetsExit")}</h2>
+			<h2 className="text-h3 font-semibold text-txt-100">{t("targetsExit")}</h2>
 
 			{/* Target pricing mode */}
 			<div className="space-y-s-300">

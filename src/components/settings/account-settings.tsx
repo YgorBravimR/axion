@@ -962,8 +962,8 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			)}
 
 			{/* Danger Zone */}
-			<div id="settings-danger-zone" className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-red-500/30">
-				<h2 className="text-small sm:text-body font-semibold text-red-500">
+			<div id="settings-danger-zone" className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-fb-error/30">
+				<h2 className="text-small sm:text-body font-semibold text-fb-error">
 					{t("dangerZone")}
 				</h2>
 

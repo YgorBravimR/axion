@@ -111,9 +111,9 @@ const getPercentileZone = (
 }
 
 const ZONE_COLORS: Record<PercentileZone, string> = {
-	core: "rgba(255, 50, 0, 0.2)",
-	center: "rgba(255, 153, 0, 0.2)",
-	middle: "rgba(255, 238, 0, 0.2)",
+	core: "color-mix(in srgb, var(--color-trade-sell) 20%, transparent)",
+	center: "color-mix(in srgb, var(--color-warning) 20%, transparent)",
+	middle: "color-mix(in srgb, var(--color-acc-100) 15%, transparent)",
 	outer: "transparent",
 }
 
