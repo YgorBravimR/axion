@@ -29,8 +29,10 @@ const computeTargetPrice = (
 	switch (level.mode) {
 		case "r_multiple":
 			return entryPrice + stopDistance * level.value * mult
-		case "pct_range":
-			return (direction === "long" ? signal.rangeHigh : signal.rangeLow) + signal.rangeWidth * (level.value / 100) * mult
+		case "pct_range": {
+			const rangeBase = direction === "long" ? (signal.rangeHigh ?? entryPrice) : (signal.rangeLow ?? entryPrice)
+			return rangeBase + (signal.rangeWidth ?? 0) * (level.value / 100) * mult
+		}
 		case "pct_stop":
 			return entryPrice + stopDistance * (level.value / 100) * mult
 		case "fixed_points":

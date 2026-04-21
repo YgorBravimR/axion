@@ -1,22 +1,29 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Shield } from "lucide-react"
 import { toCents, fromCents } from "@/lib/money"
-import { runEquityShieldFromDb } from "@/app/actions/equity-shield"
+import { runEquityShieldFromDb, getEquityShieldPreview } from "@/app/actions/equity-shield"
+import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
 import { EquityShieldParamsForm } from "./equity-shield-params"
 import { EquityShieldStats } from "./equity-shield-stats"
 import { EquityShieldChart } from "./equity-shield-chart"
+import { MCCalibrationBanner } from "./mc-calibration-banner"
 import type { EquityShieldParams, EquityShieldResult } from "@/types/equity-shield"
 import type { MonthlyPlan } from "@/db/schema"
 
+interface EquityShieldPreview {
+	totalTrades: number
+	hasEnoughTrades: boolean
+}
+
 interface EquityShieldContentProps {
 	monthlyPlan: MonthlyPlan | null
-	initialTradeCount: number
+	tradeYears: number[]
 }
 
 const DEFAULT_PARAMS: EquityShieldParams = {
@@ -30,11 +37,12 @@ const DEFAULT_PARAMS: EquityShieldParams = {
 
 const EquityShieldContent = ({
 	monthlyPlan,
-	initialTradeCount,
+	tradeYears,
 }: EquityShieldContentProps) => {
 	const t = useTranslations("equityShield")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
+	const { snapshot: mcSnapshot, setSnapshot: setMCSnapshot } = useMCCalibration()
 
 	// Derive initial params from monthly plan if available
 	const [params, setParams] = useState<EquityShieldParams>(() => {
@@ -59,9 +67,46 @@ const EquityShieldContent = ({
 	const [method1LiveOnly, setMethod1LiveOnly] = useState(false)
 	const [method2LiveOnly, setMethod2LiveOnly] = useState(false)
 
-	// Trade range — pre-computation filter (1-based, 0 = all)
-	const [tradeFrom, setTradeFrom] = useState(1)
-	const [tradeTo, setTradeTo] = useState(0)
+	// Date range — defaults to "All Time"
+	const [dateFrom, setDateFrom] = useState<string>(() => {
+		if (tradeYears.length > 0) {
+			return `${tradeYears[tradeYears.length - 1]}-01-01`
+		}
+		const d = new Date()
+		d.setFullYear(d.getFullYear() - 10)
+		return d.toISOString().split("T")[0]
+	})
+	const [dateTo, setDateTo] = useState<string>(
+		() => new Date().toISOString().split("T")[0]
+	)
+	const [preview, setPreview] = useState<EquityShieldPreview | null>(null)
+	const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+
+	const handleDateChange = useCallback(async (from: string, to: string) => {
+		setDateFrom(from)
+		setDateTo(to)
+		setResult(null)
+		setPreview(null)
+		setError(null)
+
+		if (!from || !to) return
+
+		setIsLoadingPreview(true)
+		try {
+			const response = await getEquityShieldPreview(from, to)
+			if (response.status === "success" && response.data) {
+				setPreview(response.data)
+			}
+		} finally {
+			setIsLoadingPreview(false)
+		}
+	}, [])
+
+	// Fetch initial preview on mount
+	useEffect(() => {
+		handleDateChange(dateFrom, dateTo)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	const handleRun = useCallback(async () => {
 		setIsLoading(true)
@@ -71,8 +116,8 @@ const EquityShieldContent = ({
 		try {
 			const response = await runEquityShieldFromDb(
 				params,
-				tradeFrom,
-				tradeTo
+				dateFrom,
+				dateTo
 			)
 
 			if (response.status === "success" && response.data) {
@@ -88,7 +133,7 @@ const EquityShieldContent = ({
 			setIsLoading(false)
 			hideLoading()
 		}
-	}, [params, tradeFrom, tradeTo, showLoading, hideLoading, tOverlay, t])
+	}, [params, dateFrom, dateTo, showLoading, hideLoading, tOverlay, t])
 
 	const initialBalance = fromCents(params.initialBalanceCents)
 	const drawdownLimit = fromCents(params.drawdownLimitCents)
@@ -108,17 +153,28 @@ const EquityShieldContent = ({
 				</p>
 			</div>
 
+			{/* Monte Carlo Calibration Banner */}
+			{mcSnapshot && (
+				<MCCalibrationBanner
+					snapshot={mcSnapshot}
+					params={params}
+					onParamsChange={setParams}
+					onDismiss={() => setMCSnapshot(null)}
+				/>
+			)}
+
 			{/* Parameters */}
 			<EquityShieldParamsForm
 				params={params}
 				onParamsChange={setParams}
-				tradeFrom={tradeFrom}
-				tradeTo={tradeTo}
-				onTradeFromChange={setTradeFrom}
-				onTradeToChange={setTradeTo}
+				dateFrom={dateFrom}
+				dateTo={dateTo}
+				onDateChange={handleDateChange}
+				tradeYears={tradeYears}
+				preview={preview}
+				isLoadingPreview={isLoadingPreview}
 				onRun={handleRun}
 				isLoading={isLoading}
-				tradeCount={initialTradeCount}
 			/>
 
 			{/* Error */}
@@ -135,12 +191,12 @@ const EquityShieldContent = ({
 					<EquityShieldStats
 						stats={result.stats}
 						initialBalance={initialBalance}
+						drawdownLimit={drawdownLimit}
 					/>
 
 					{/* Chart 1: Original Equity Curve */}
 					<EquityShieldChart
 						data={result.original}
-						liveOnlyData={result.original}
 						showLiveOnly={false}
 						title={t("charts.original")}
 						drawdownLimitDollars={drawdownLimit}
@@ -172,7 +228,6 @@ const EquityShieldContent = ({
 						</div>
 						<EquityShieldChart
 							data={result.method1}
-							liveOnlyData={result.method1LiveOnly}
 							showLiveOnly={method1LiveOnly}
 							title={t("charts.method1Description")}
 							drawdownLimitDollars={drawdownLimit}
@@ -205,7 +260,6 @@ const EquityShieldContent = ({
 						</div>
 						<EquityShieldChart
 							data={result.method2}
-							liveOnlyData={result.method2LiveOnly}
 							showLiveOnly={method2LiveOnly}
 							title={t("charts.method2Description")}
 							drawdownLimitDollars={drawdownLimit}

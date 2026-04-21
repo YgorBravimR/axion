@@ -139,6 +139,7 @@
 		"riskSimulation": "Simulador de Risco",
 		"backtest": "Backtest",
 		"equityShield": "Equity Shield",
+		"backtestOptimize": "Otimizar",
 		"newTrade": "Novo Trade"
 	},
 	"market": {
@@ -3331,7 +3332,15 @@
 		},
 		"params": {
 			"title": "Parâmetros",
-			"tradeCount": "{count} trades fechados",
+			"dateRange": "Período",
+			"yearFilter": "Ano",
+			"allTime": "Todos",
+			"preview": {
+				"loading": "Carregando preview das operações...",
+				"totalTrades": "{count} operações fechadas no período",
+				"notEnoughTrades": "Para resultados confiáveis, recomenda-se 100+ operações.",
+				"noTrades": "Nenhuma operação fechada encontrada neste período."
+			},
 			"sampleSizeTip": "Para melhor precisão, o mentor recomenda 400-500 amostras de backtest. No mínimo, 100 trades são necessários para resultados confiáveis.",
 			"initialBalance": "Saldo da Conta",
 			"drawdownLimit": "Limite de DD (Prop Firm)",
@@ -3341,10 +3350,7 @@
 			"runAnalysis": "Executar Análise",
 			"running": "Analisando...",
 			"cutAtDdLimit": "Cortar trades no Limite DD",
-			"cutAtDdLimitHint": "Limita perdas para que o patrimônio nunca ultrapasse o limite da prop firm",
-			"rangeFrom": "Do Trade",
-			"rangeTo": "Até Trade",
-			"rangeAll": "Todos"
+			"cutAtDdLimitHint": "Limita perdas para que o patrimônio nunca ultrapasse o limite da prop firm"
 		},
 		"stats": {
 			"title": "Resultados da Análise",
@@ -3362,7 +3368,9 @@
 			"maxDD": "Drawdown Máximo",
 			"liveTrades": "Trades Ao Vivo",
 			"simTrades": "Trades Simulados",
-			"transitions": "Trocas de Modo"
+			"transitions": "Trocas de Modo",
+			"passReason": "DD Máx {maxDD} dentro do limite {limit}",
+			"failReason": "DD Máx {maxDD} excede o limite {limit}"
 		},
 		"charts": {
 			"original": "Curva de Equity Original",
@@ -3386,7 +3394,31 @@
 			"legendEquity": "Patrimônio",
 			"legendLive": "Trading ao vivo",
 			"legendSim": "Zona Sim",
-			"legendSMA": "SMA"
+			"legendSMA": "SMA",
+			"legendOriginal": "Original",
+			"legendManaged": "Gerenciado (Apenas Ao Vivo)",
+			"tooltipOriginal": "Original: {value}",
+			"tooltipManaged": "Gerenciado: {value}"
+		},
+		"calibration": {
+			"title": "Calibração Monte Carlo",
+			"titleV1": "Expectativa de Edge",
+			"titleV2": "Expectativa de Capital",
+			"subtitle": "Parâmetros sugeridos derivados da sua simulação Monte Carlo",
+			"applyAll": "Aplicar Todas as Sugestões",
+			"apply": "Aplicar",
+			"clear": "Dispensar",
+			"confidence": "Confiança na Estratégia",
+			"profitablePct": "{value}% das simulações lucrativas",
+			"riskOfRuin": "{value}% de risco de ruína",
+			"smaPeriod": "Período SMA",
+			"smaPeriodHint": "Baseado na sequência máxima esperada de perdas ({streak} trades)",
+			"mddMultiplier": "Multiplicador MDD",
+			"mddMultiplierHint": "Drawdown R pior caso / drawdown R mediano",
+			"drawdownLimit": "Limite DD",
+			"drawdownLimitHint": "Drawdown pior caso ({pct}%) aplicado ao seu saldo",
+			"age": "há {minutes} min",
+			"ageNow": "agora mesmo"
 		}
 	},
 	"commandMenu": {
@@ -4112,6 +4144,139 @@
 		"empty": {
 			"title": "Sem resultados",
 			"description": "Selecione um preset e execute um backtest para ver resultados"
+		}
+	},
+	"optimize": {
+		"title": "Otimizar",
+		"description": "Compare configurações de estratégia e encontre parâmetros ideais",
+		"loadData": "Carregar Dados",
+		"loadingData": "Carregando dados de candles…",
+		"dataRequired": "Carregue os dados de candle primeiro",
+		"candlesLoaded": "{count} candles carregados",
+		"noParamsSelected": "Selecione ao menos um parâmetro para varrer",
+		"runSweep": "Executar Varredura",
+		"clearAll": "Limpar Tudo",
+		"noRuns": "Nenhuma execução ainda",
+		"sweepOverLimit": "Combinações demais (máx {max})",
+		"sweepComplete": "{total} execuções concluídas em {seconds}s",
+		"sweepError": "Erro na varredura: {message}",
+		"sweepCancelled": "Varredura cancelada após {count} execuções",
+		"baseConfig": "Configuração Base",
+		"baseConfigHint": "Ajuste configurações não varridas como tamanho, breakeven e padrões de entrada. Parâmetros varridos sobrescrevem estes valores.",
+		"sweepParameters": "Parâmetros de Varredura",
+		"sweepParametersHint": "Selecione parâmetros e defina faixas para varrer",
+		"sweepValues": "Valores",
+		"sweepMin": "Mín",
+		"sweepMax": "Máx",
+		"sweepStep": "Passo",
+		"sweepCombinations": "Combinações",
+		"sweepWarning": "Varreduras grandes podem demorar",
+		"sweepProgress": "{current} / {total}",
+		"sweepCancel": "Cancelar",
+		"sweepElapsed": "{seconds}s decorridos",
+		"sweepRemaining": "Estimando…",
+		"resultsTab": {
+			"chart": "Gráfico",
+			"table": "Tabela"
+		},
+		"equityOverlay": "Sobreposição de Equity",
+		"comparisonTable": "Tabela Comparativa",
+		"runsCount": "{count} execuções",
+		"wizard": {
+			"setup": "Configuração",
+			"parameters": "Parâmetros",
+			"results": "Resultados",
+			"setupDesc": "Escolha a estratégia, ativo e período para otimizar",
+			"parametersDesc": "Defina faixas de parâmetros para varrer todas as combinações",
+			"back": "Voltar",
+			"next": "Próximo",
+			"newOptimization": "Nova Otimização"
+		},
+		"summary": {
+			"strategy": "Estratégia",
+			"asset": "Ativo",
+			"period": "Período",
+			"paramsSelected": "{count} parâmetros selecionados",
+			"combinations": "{count} combinações",
+			"totalVariations": "Total de Variações",
+			"profitable": "Lucrativas",
+			"losing": "Perdedoras",
+			"bestPF": "Melhor PF",
+			"bestSharpe": "Melhor Sharpe"
+		},
+		"pinToChart": "Fixar no gráfico",
+		"unpinFromChart": "Remover do gráfico",
+		"labelColumn": "Rótulo",
+		"bestRun": "Melhor",
+		"lowTradeWarning": "Poucos trades",
+		"trades": "Trades",
+		"winRate": "Taxa de Acerto",
+		"profitFactor": "Fator de Lucro",
+		"totalPnl": "P&L Total",
+		"maxDD": "DD Máx",
+		"sharpe": "Sharpe",
+		"avgR": "R Médio",
+		"expandRun": "Expandir execução",
+		"deleteRun": "Excluir execução",
+		"configStop": "Stop",
+		"configTarget": "Alvo",
+		"configSizing": "Tamanho",
+		"configSlippage": "Slippage",
+		"recomputingTrades": "Recalculando trades…",
+		"heatmap": {
+			"title": "Heatmap de Parâmetros",
+			"subtitle": "Passe o mouse para inspecionar, clique para expandir",
+			"xAxis": "Eixo X",
+			"yAxis": "Eixo Y",
+			"metric": "Métrica",
+			"fixedAt": "Fixo em",
+			"mixedStrategies": "Heatmap requer execuções da mesma estratégia",
+			"multipleRuns": "{count} execuções neste ponto",
+			"profitable": "Lucrativo",
+			"losing": "Perdedor",
+			"neutral": "Neutro",
+			"metrics": {
+				"profitFactor": "Fator de Lucro",
+				"sharpeRatio": "Índice Sharpe",
+				"winRate": "Taxa de Acerto",
+				"totalPnlCents": "P&L Total",
+				"maxDrawdownCents": "Drawdown Máx",
+				"avgRMultiple": "R Médio"
+			}
+		},
+		"sweepParam": {
+			"stopInitialType": "Tipo de Stop",
+			"targetModeLabel": "Modo do Alvo",
+			"trailingTypeLabel": "Tipo de Trailing",
+			"orbEndTime": "Hora Fim ORB",
+			"orbTicksBuffer": "Buffer Ticks ORB",
+			"stopPctRange": "Stop % Range",
+			"stopTicksBuffer": "Buffer Ticks Stop",
+			"stopFixedPointsValue": "Stop Pontos Fixos",
+			"target1Value": "Alvo 1",
+			"target2Value": "Alvo 2",
+			"slippage": "Slippage",
+			"dezkStopBuffer": "Buffer do Stop",
+			"dezkCandlesAfter": "Candles Após",
+			"dezkMacdSignal": "Sinal MACD",
+			"dezkWmaFast": "WMA Rápida",
+			"dezkTrailingWma": "WMA Trailing",
+			"trailingDistance": "Distância Trailing",
+			"stopType": {
+				"pctRange": "% Range",
+				"fullRange": "Range Completo",
+				"fixedPoints": "Pontos Fixos"
+			},
+			"targetMode": {
+				"rMultiple": "Múltiplo R",
+				"pctRange": "% Range",
+				"pctStop": "% Stop",
+				"fixedPoints": "Pontos Fixos"
+			},
+			"trailingType": {
+				"indicator": "Indicador WMA",
+				"priceDistance": "Distância de Preço"
+			}
 		}
 	}
 }

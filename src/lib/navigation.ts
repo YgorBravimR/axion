@@ -11,6 +11,7 @@ import {
 	FlaskConical,
 	FlaskRound,
 	Shield,
+	GitCompareArrows,
 	type LucideIcon,
 } from "lucide-react"
 
@@ -27,6 +28,7 @@ interface NavItem {
 		| "riskSimulation"
 		| "backtest"
 		| "equityShield"
+		| "backtestOptimize"
 		| "settings"
 	href:
 		| "/"
@@ -40,6 +42,7 @@ interface NavItem {
 		| "/risk-simulation"
 		| "/backtest"
 		| "/equity-shield"
+		| "/backtest/optimize"
 		| "/settings"
 	icon: LucideIcon
 }
@@ -56,6 +59,7 @@ const navItems: NavItem[] = [
 		icon: FlaskConical,
 	},
 	{ labelKey: "backtest", href: "/backtest", icon: FlaskRound },
+	{ labelKey: "backtestOptimize", href: "/backtest/optimize", icon: GitCompareArrows },
 	{
 		labelKey: "equityShield",
 		href: "/equity-shield",

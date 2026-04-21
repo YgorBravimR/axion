@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { hhmmToTimeString, timeStringToHhmm } from "@/lib/backtest/time-utils"
-import type { StrategyRecipe } from "@/types/backtest"
+import type { StrategyRecipe, OrbEntryConfig } from "@/types/backtest"
 
 interface OrbEntrySectionProps {
 	recipe: StrategyRecipe
@@ -16,12 +16,13 @@ const OrbEntrySection = ({ recipe, onRecipeChange }: OrbEntrySectionProps) => {
 	const t = useTranslations("backtest.orb")
 	const tBuilder = useTranslations("backtest.builder")
 
-	const config = recipe.entry.config
+	if (recipe.entry.type !== "orb_breakout") return null
+	const config = recipe.entry.config as OrbEntryConfig
 
 	const update = (field: string, value: number | boolean) => {
 		onRecipeChange({
 			...recipe,
-			entry: { ...recipe.entry, config: { ...config, [field]: value } },
+			entry: { type: "orb_breakout", config: { ...config, [field]: value } },
 		})
 	}
 

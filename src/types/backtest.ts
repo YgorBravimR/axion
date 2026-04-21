@@ -36,21 +36,19 @@ interface DayContext {
 
 interface EntrySignal {
 	direction: Direction
-	price: number           // breakout price (before slippage)
-	rangeHigh: number       // range high for level calculations
-	rangeLow: number        // range low for level calculations
-	rangeWidth: number      // rangeHigh - rangeLow
-	label: string           // human-readable description
+	price: number              // entry price (before slippage)
+	stopReference?: number     // pre-computed stop price (entry module can suggest)
+	rangeHigh?: number         // optional — only for range-based strategies
+	rangeLow?: number          // optional
+	rangeWidth?: number        // optional
+	label: string
 }
 
 interface EntryState {
 	[key: string]: unknown
 }
 
-interface EntryModuleConfig {
-	type: "orb_breakout"
-	config: OrbEntryConfig
-}
+// --- Entry module configs (union for all strategy types) ---
 
 interface OrbEntryConfig {
 	startTime: number       // HHMM, e.g., 900
@@ -58,6 +56,23 @@ interface OrbEntryConfig {
 	ticksBuffer: number     // ticks added to range for breakout trigger
 	ignorarGaps: boolean    // use body (open/close) instead of high/low for range
 }
+
+interface MACDWMAConfig {
+	macdFast: number         // 12
+	macdSlow: number         // 26
+	macdSignal: number       // 15
+	wmaFast: number          // 9
+	wmaSlow: number          // 21
+	candlesAfterAlignment: number  // 2 (v4) or 0 (v3 = same bar)
+	stopBufferPoints: number       // 30 (v4) or 10 (v3)
+	requireZeroCross: boolean      // false (v4) or true (v3)
+	startTime: number        // 903
+	endTime: number          // 1630
+}
+
+type EntryModuleConfig =
+	| { type: "orb_breakout"; config: OrbEntryConfig }
+	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
 
 interface EntryModule {
 	init: (config: OrbEntryConfig) => EntryState
@@ -114,14 +129,13 @@ interface PriceDistanceTrailingConfig {
 	activationPct?: number // optional: start trailing after X% of risk recovered
 }
 
-// Future: indicator-based trailing (see docs/BACKTEST_ROADMAP.md v2)
-// interface IndicatorTrailingConfig {
-//   type: "indicator"
-//   indicatorKey: string
-//   offset: number
-// }
+interface IndicatorTrailingConfig {
+	type: "indicator"
+	wmaPeriod: number        // WMA period for trailing (e.g., 9)
+	offset: number           // lookback offset (e.g., 1 = previous bar's WMA)
+}
 
-type TrailingConfig = PriceDistanceTrailingConfig
+type TrailingConfig = PriceDistanceTrailingConfig | IndicatorTrailingConfig
 
 // --- Combined stop config ---
 
@@ -386,6 +400,22 @@ interface BacktestResult {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Optimization — compare multiple runs
+// ═══════════════════════════════════════════════════════════════════
+
+interface OptimizationRun {
+	id: string
+	label: string
+	recipe: StrategyRecipe
+	summary: BacktestSummary
+	equityCurve: EquityCurvePoint[]
+	trades: BacktestTrade[]
+	dayBreakdown: DayBreakdown[]
+	pinned: boolean
+	createdAt: string
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Exports
 // ═══════════════════════════════════════════════════════════════════
 
@@ -400,6 +430,7 @@ export type {
 	EntryState,
 	EntryModuleConfig,
 	OrbEntryConfig,
+	MACDWMAConfig,
 	EntryModule,
 	// Stop
 	StopPhase,
@@ -412,6 +443,7 @@ export type {
 	OnPctRiskBreakevenConfig,
 	TrailingConfig,
 	PriceDistanceTrailingConfig,
+	IndicatorTrailingConfig,
 	StopConfig,
 	StopState,
 	StopResult,
@@ -449,4 +481,6 @@ export type {
 	BacktestSummary,
 	DayBreakdown,
 	BacktestResult,
+	// Optimization
+	OptimizationRun,
 }

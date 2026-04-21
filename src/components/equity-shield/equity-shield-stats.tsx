@@ -9,6 +9,7 @@ import type { EquityShieldResult } from "@/types/equity-shield"
 interface EquityShieldStatsProps {
 	stats: EquityShieldResult["stats"]
 	initialBalance: number
+	drawdownLimit: number
 }
 
 interface StatCardProps {
@@ -18,7 +19,12 @@ interface StatCardProps {
 	variant?: "default" | "positive" | "negative" | "pass" | "fail"
 }
 
-const StatCard = ({ label, value, subValue, variant = "default" }: StatCardProps) => {
+const StatCard = ({
+	label,
+	value,
+	subValue,
+	variant = "default",
+}: StatCardProps) => {
 	const valueClass = cn(
 		"text-body sm:text-h3 font-semibold",
 		variant === "positive" && "text-trade-buy",
@@ -29,28 +35,39 @@ const StatCard = ({ label, value, subValue, variant = "default" }: StatCardProps
 	)
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 			<p className="text-tiny text-txt-300 mb-1">{label}</p>
 			<p className={valueClass}>{value}</p>
-			{subValue && (
-				<p className="text-tiny text-txt-300 mt-0.5">{subValue}</p>
-			)}
+			{subValue && <p className="text-tiny text-txt-300 mt-0.5">{subValue}</p>}
 		</div>
 	)
 }
 
-const PassFailBadge = ({ wouldPass }: { wouldPass: boolean }) => {
+const formatCurrency = (value: number): string =>
+	formatCompactCurrency(value, "R$")
+
+interface PassFailBadgeProps {
+	wouldPass: boolean
+	maxDrawdown: number
+	drawdownLimit: number
+}
+
+const PassFailBadge = ({
+	wouldPass,
+	maxDrawdown,
+	drawdownLimit,
+}: PassFailBadgeProps) => {
 	const t = useTranslations("equityShield.stats")
 
 	return (
 		<div
 			className={cn(
-				"border-bg-300 bg-bg-200 flex items-center gap-s-200 rounded-lg border p-s-300 sm:p-m-400",
+				"border-bg-300 bg-bg-200 gap-s-200 p-s-300 sm:p-m-400 flex items-center rounded-lg border"
 			)}
 		>
 			<div className="flex flex-col">
 				<p className="text-tiny text-txt-300 mb-1">{t("wouldPass")}</p>
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					{wouldPass ? (
 						<ShieldCheck className="text-trade-buy h-5 w-5" />
 					) : (
@@ -65,18 +82,30 @@ const PassFailBadge = ({ wouldPass }: { wouldPass: boolean }) => {
 						{wouldPass ? t("pass") : t("fail")}
 					</span>
 				</div>
+				<p className="text-tiny text-txt-300 mt-0.5">
+					{wouldPass
+						? t("passReason", {
+								maxDD: formatCurrency(maxDrawdown),
+								limit: formatCurrency(drawdownLimit),
+							})
+						: t("failReason", {
+								maxDD: formatCurrency(maxDrawdown),
+								limit: formatCurrency(drawdownLimit),
+							})}
+				</p>
 			</div>
 		</div>
 	)
 }
 
-const EquityShieldStats = ({ stats, initialBalance }: EquityShieldStatsProps) => {
+const formatPercent = (value: number): string => `${value.toFixed(1)}%`
+
+const EquityShieldStats = ({
+	stats,
+	initialBalance,
+	drawdownLimit,
+}: EquityShieldStatsProps) => {
 	const t = useTranslations("equityShield.stats")
-
-	const formatCurrency = (value: number): string =>
-		formatCompactCurrency(value, "R$")
-
-	const formatPercent = (value: number): string => `${value.toFixed(1)}%`
 
 	const originalPnl = stats.originalFinalEquity - initialBalance
 	const method1Pnl = stats.method1.livePnl
@@ -90,10 +119,7 @@ const EquityShieldStats = ({ stats, initialBalance }: EquityShieldStatsProps) =>
 
 			{/* Top row: Key comparisons */}
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-				<StatCard
-					label={t("totalTrades")}
-					value={String(stats.totalTrades)}
-				/>
+				<StatCard label={t("totalTrades")} value={String(stats.totalTrades)} />
 				<StatCard
 					label={t("observedMDD")}
 					value={formatCurrency(stats.observedMDD)}
@@ -105,13 +131,17 @@ const EquityShieldStats = ({ stats, initialBalance }: EquityShieldStatsProps) =>
 					value={formatCurrency(stats.method1Threshold)}
 					subValue={t("m1ThresholdSub")}
 				/>
-				<PassFailBadge wouldPass={stats.originalWouldPass} />
+				<PassFailBadge
+					wouldPass={stats.originalWouldPass}
+					maxDrawdown={stats.observedMDD}
+					drawdownLimit={drawdownLimit}
+				/>
 			</div>
 
 			{/* Method comparison row */}
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-3">
 				{/* Original */}
-				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
+				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
 					<h3 className="text-small text-acc-100 font-semibold">
 						{t("original")}
 					</h3>
@@ -142,12 +172,16 @@ const EquityShieldStats = ({ stats, initialBalance }: EquityShieldStatsProps) =>
 				</div>
 
 				{/* Method 1 */}
-				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
+				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
 					<div className="flex items-center justify-between">
 						<h3 className="text-small text-trade-buy font-semibold">
 							{t("method1")}
 						</h3>
-						<PassFailBadge wouldPass={stats.method1.wouldPass} />
+						<PassFailBadge
+							wouldPass={stats.method1.wouldPass}
+							maxDrawdown={stats.method1.maxDrawdown}
+							drawdownLimit={drawdownLimit}
+						/>
 					</div>
 					<div className="flex items-center justify-between py-1">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
@@ -188,12 +222,16 @@ const EquityShieldStats = ({ stats, initialBalance }: EquityShieldStatsProps) =>
 				</div>
 
 				{/* Method 2 */}
-				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
+				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
 					<div className="flex items-center justify-between">
 						<h3 className="text-small text-acc-200 font-semibold">
 							{t("method2")}
 						</h3>
-						<PassFailBadge wouldPass={stats.method2.wouldPass} />
+						<PassFailBadge
+							wouldPass={stats.method2.wouldPass}
+							maxDrawdown={stats.method2.maxDrawdown}
+							drawdownLimit={drawdownLimit}
+						/>
 					</div>
 					<div className="flex items-center justify-between py-1">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
@@ -210,7 +248,7 @@ const EquityShieldStats = ({ stats, initialBalance }: EquityShieldStatsProps) =>
 					<div className="flex items-center justify-between py-1">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
-							{formatCompactCurrency(stats.method2.maxDrawdown, "R$")}
+							{formatCurrency(stats.method2.maxDrawdown)}
 						</span>
 					</div>
 					<div className="flex items-center justify-between py-1">

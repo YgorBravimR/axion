@@ -11,7 +11,9 @@ import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { Play, RotateCcw } from "lucide-react"
 import { runBacktestAction } from "@/app/actions/backtest"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
+import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
 import { OrbEntrySection } from "./sections/orb-entry-section"
+import { DezkEntrySection } from "./sections/dezk-entry-section"
 import { StopProtectionSection } from "./sections/stop-protection-section"
 import { TargetsExitSection } from "./sections/targets-exit-section"
 import { SizingExecutionSection } from "./sections/sizing-execution-section"
@@ -49,14 +51,24 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		? Math.round(selectedSource.assetTickValueCents / selectedSource.assetTickSize)
 		: 20
 
+	const allPresets = [...orbPresets, ...dezkPresets]
+
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const preset = { ...orbPresets[index] }
+		const preset = { ...allPresets[index] }
 		// Auto-fill valuePerPoint from asset
 		if (preset.sizing.type === "monetary_risk") {
 			preset.sizing = { ...preset.sizing, valuePerPointCents: assetValuePerPointCents }
 		}
 		setRecipe(preset)
+	}
+
+	const handleStrategyChange = (type: string) => {
+		if (type === "orb_breakout") {
+			setRecipe(orbPresets[0])
+		} else if (type === "macd_wma_alignment") {
+			setRecipe(dezkPresets[0])
+		}
 	}
 
 	const handleSourceChange = (value: string) => {
@@ -158,12 +170,13 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 					{/* Strategy */}
 					<div className="space-y-s-200">
 						<label className="text-small font-medium text-txt-200">{t("builder.strategy")}</label>
-						<Select value="orb_breakout" disabled>
+						<Select value={recipe.entry.type} onValueChange={handleStrategyChange}>
 							<SelectTrigger id="backtest-strategy">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
+								<SelectItem value="macd_wma_alignment">{t("dezk.name")}</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
@@ -196,8 +209,8 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 								<SelectValue placeholder={t("config.selectPreset")} />
 							</SelectTrigger>
 							<SelectContent>
-								{orbPresets.map((preset, i) => (
-									<SelectItem key={preset.presetId} value={String(i)}>
+								{allPresets.map((preset, i) => (
+									<SelectItem key={`${preset.entry.type}-${i}`} value={String(i)}>
 										{preset.displayName}
 									</SelectItem>
 								))}
@@ -232,9 +245,12 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			{/* Config sections — hidden when results are showing */}
 			{!result && (
 				<>
-					{/* Section 2: Entry Rules */}
+					{/* Section 2: Entry Rules (dynamic per strategy) */}
 					{recipe.entry.type === "orb_breakout" && (
 						<OrbEntrySection recipe={recipe} onRecipeChange={setRecipe} />
+					)}
+					{recipe.entry.type === "macd_wma_alignment" && (
+						<DezkEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}
 
 					{/* Section 3: Stop & Protection */}

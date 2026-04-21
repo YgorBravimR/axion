@@ -11,23 +11,28 @@ const computeInitialStop = (
 	config: InitialStopConfig,
 	tickSize: number
 ): number => {
+	// If the entry module pre-computed a stop reference and config is fixed_points with 0,
+	// use the reference directly (e.g., 10K strategy computes stop behind pivot)
+	if (signal.stopReference !== undefined && config.type === "fixed_points" && config.points === 0) {
+		return signal.stopReference
+	}
+
 	const mult = direction === "long" ? -1 : 1
 
 	switch (config.type) {
 		case "pct_range": {
-			const distance = signal.rangeWidth * (config.pct / 100)
+			const distance = (signal.rangeWidth ?? 0) * (config.pct / 100)
 			return entryPrice + distance * mult
 		}
 		case "fixed_points": {
 			return entryPrice + config.points * mult
 		}
 		case "full_range": {
-			// Stop at opposite end of range + buffer
 			const buffer = config.ticksBuffer * tickSize
 			if (direction === "long") {
-				return signal.rangeLow - buffer
+				return (signal.rangeLow ?? entryPrice) - buffer
 			}
-			return signal.rangeHigh + buffer
+			return (signal.rangeHigh ?? entryPrice) + buffer
 		}
 	}
 }

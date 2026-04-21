@@ -2,35 +2,42 @@
 
 import { db } from "@/db/drizzle"
 import { trades } from "@/db/schema"
-import { eq, and, asc, isNotNull } from "drizzle-orm"
+import { eq, and, asc, gte, lte, isNotNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
-import { fromCents } from "@/lib/money"
+import { BRT_OFFSET } from "@/lib/dates"
 import { runEquityShield } from "@/lib/equity-shield"
+import { dateRangeSchema } from "@/lib/validations/risk-simulation"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
 import type { EquityShieldParams, EquityShieldResult, TradeForShield } from "@/types/equity-shield"
 
 /**
- * Fetch all closed trades for the current account and run the Equity Shield analysis.
- * Optionally slices the trade array to a user-selected range before computing.
+ * Fetch closed trades within a date range and run the Equity Shield analysis.
  *
- * @param fromTrade - 1-based start index (default: 1)
- * @param toTrade - 1-based end index inclusive (default: 0 = all trades)
+ * @param params - Equity Shield computation parameters
+ * @param dateFrom - Start date in YYYY-MM-DD format
+ * @param dateTo - End date in YYYY-MM-DD format
  */
 const runEquityShieldFromDb = async (
 	params: EquityShieldParams,
-	fromTrade: number = 1,
-	toTrade: number = 0
+	dateFrom: string,
+	dateTo: string
 ): Promise<ActionResponse<EquityShieldResult>> => {
 	try {
 		const { accountId, userId } = await requireAuth()
+		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
+
+		const startDate = new Date(`${validated.dateFrom}T00:00:00${BRT_OFFSET}`)
+		const endDate = new Date(`${validated.dateTo}T23:59:59.999${BRT_OFFSET}`)
 
 		const rawTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
 				eq(trades.isArchived, false),
-				isNotNull(trades.exitPrice)
+				isNotNull(trades.exitPrice),
+				gte(trades.entryDate, startDate),
+				lte(trades.entryDate, endDate)
 			),
 			orderBy: [asc(trades.entryDate)],
 		})
@@ -43,12 +50,11 @@ const runEquityShieldFromDb = async (
 		if (decryptedTrades.length === 0) {
 			return {
 				status: "error",
-				message: "No closed trades found for this account",
+				message: "No closed trades found in this date range",
 				errors: [{ code: "NO_TRADES", detail: "No closed trades found" }],
 			}
 		}
 
-		// Map to TradeForShield — lightweight, only needs P&L
 		const tradesForShield: TradeForShield[] = decryptedTrades.map((trade) => ({
 			id: trade.id,
 			entryDate: trade.entryDate,
@@ -58,22 +64,7 @@ const runEquityShieldFromDb = async (
 			asset: trade.asset,
 		}))
 
-		// Slice to user-selected range (1-based, inclusive)
-		const rangeEnd = toTrade > 0 ? toTrade : tradesForShield.length
-		const selectedTrades = tradesForShield.slice(
-			Math.max(0, fromTrade - 1),
-			rangeEnd
-		)
-
-		if (selectedTrades.length === 0) {
-			return {
-				status: "error",
-				message: "No trades in the selected range",
-				errors: [{ code: "EMPTY_RANGE", detail: "Selected range contains no trades" }],
-			}
-		}
-
-		const result = runEquityShield(selectedTrades, params)
+		const result = runEquityShield(tradesForShield, params)
 
 		return {
 			status: "success",
@@ -90,26 +81,34 @@ const runEquityShieldFromDb = async (
 }
 
 /**
- * Get a quick count of closed trades for the current account.
- * Used to show the user how many trades will be analyzed.
+ * Get a quick count of closed trades within a date range.
+ * Used to show the user how many trades will be analyzed before running.
  */
-const getEquityShieldPreview = async (): Promise<
+const getEquityShieldPreview = async (
+	dateFrom: string,
+	dateTo: string
+): Promise<
 	ActionResponse<{ totalTrades: number; hasEnoughTrades: boolean }>
 > => {
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
+		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
+
+		const startDate = new Date(`${validated.dateFrom}T00:00:00${BRT_OFFSET}`)
+		const endDate = new Date(`${validated.dateTo}T23:59:59.999${BRT_OFFSET}`)
 
 		const rawTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
 				eq(trades.isArchived, false),
-				isNotNull(trades.exitPrice)
+				isNotNull(trades.exitPrice),
+				gte(trades.entryDate, startDate),
+				lte(trades.entryDate, endDate)
 			),
-			columns: { id: true, pnl: true },
+			columns: { id: true },
 		})
 
 		const totalTrades = rawTrades.length
-		// Mentor recommends 400-500 backtest samples, but 100 is minimum
 		const hasEnoughTrades = totalTrades >= 20
 
 		return {

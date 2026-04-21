@@ -139,6 +139,7 @@
 		"riskSimulation": "Risk Simulation",
 		"backtest": "Backtest",
 		"equityShield": "Equity Shield",
+		"backtestOptimize": "Optimize",
 		"newTrade": "New Trade"
 	},
 	"market": {
@@ -3331,7 +3332,15 @@
 		},
 		"params": {
 			"title": "Parameters",
-			"tradeCount": "{count} closed trades",
+			"dateRange": "Date Range",
+			"yearFilter": "Year",
+			"allTime": "All",
+			"preview": {
+				"loading": "Loading trade preview...",
+				"totalTrades": "{count} closed trades in range",
+				"notEnoughTrades": "For reliable results, 100+ trades are recommended.",
+				"noTrades": "No closed trades found in this date range."
+			},
 			"sampleSizeTip": "For best accuracy, the mentor recommends 400-500 backtest samples. At minimum, 100 trades are needed for reliable results.",
 			"initialBalance": "Account Balance",
 			"drawdownLimit": "DD Limit (Prop Firm)",
@@ -3341,10 +3350,7 @@
 			"runAnalysis": "Run Analysis",
 			"running": "Analyzing...",
 			"cutAtDdLimit": "Cut trades at DD Limit",
-			"cutAtDdLimitHint": "Cap losses so equity never breaches the prop firm limit",
-			"rangeFrom": "From Trade",
-			"rangeTo": "To Trade",
-			"rangeAll": "All"
+			"cutAtDdLimitHint": "Cap losses so equity never breaches the prop firm limit"
 		},
 		"stats": {
 			"title": "Analysis Results",
@@ -3362,7 +3368,9 @@
 			"maxDD": "Max Drawdown",
 			"liveTrades": "Live Trades",
 			"simTrades": "Sim Trades",
-			"transitions": "Mode Switches"
+			"transitions": "Mode Switches",
+			"passReason": "Max DD {maxDD} within {limit} limit",
+			"failReason": "Max DD {maxDD} exceeds {limit} limit"
 		},
 		"charts": {
 			"original": "Original Equity Curve",
@@ -3386,7 +3394,31 @@
 			"legendEquity": "Equity",
 			"legendLive": "Live trading",
 			"legendSim": "Sim Zone",
-			"legendSMA": "SMA"
+			"legendSMA": "SMA",
+			"legendOriginal": "Original",
+			"legendManaged": "Managed (Live Only)",
+			"tooltipOriginal": "Original: {value}",
+			"tooltipManaged": "Managed: {value}"
+		},
+		"calibration": {
+			"title": "Monte Carlo Calibration",
+			"titleV1": "Edge Expectancy",
+			"titleV2": "Capital Expectancy",
+			"subtitle": "Suggested parameters derived from your Monte Carlo simulation",
+			"applyAll": "Apply All Suggestions",
+			"apply": "Apply",
+			"clear": "Dismiss",
+			"confidence": "Strategy Confidence",
+			"profitablePct": "{value}% of simulations profitable",
+			"riskOfRuin": "{value}% risk of ruin",
+			"smaPeriod": "SMA Period",
+			"smaPeriodHint": "Based on expected max loss streak ({streak} trades)",
+			"mddMultiplier": "MDD Multiplier",
+			"mddMultiplierHint": "Worst-case R drawdown / median R drawdown",
+			"drawdownLimit": "DD Limit",
+			"drawdownLimitHint": "Worst-case drawdown ({pct}%) applied to your balance",
+			"age": "{minutes} min ago",
+			"ageNow": "just now"
 		}
 	},
 	"commandMenu": {
@@ -4112,6 +4144,139 @@
 		"empty": {
 			"title": "No results yet",
 			"description": "Select a preset and run a backtest to see results"
+		}
+	},
+	"optimize": {
+		"title": "Optimize",
+		"description": "Compare strategy configurations and find optimal parameters",
+		"loadData": "Load Data",
+		"loadingData": "Loading candle data…",
+		"dataRequired": "Load candle data first",
+		"candlesLoaded": "{count} candles loaded",
+		"noParamsSelected": "Select at least one parameter to sweep",
+		"runSweep": "Run Sweep",
+		"clearAll": "Clear All",
+		"noRuns": "No runs yet",
+		"sweepOverLimit": "Too many combinations (max {max})",
+		"sweepComplete": "{total} runs completed in {seconds}s",
+		"sweepError": "Sweep error: {message}",
+		"sweepCancelled": "Sweep cancelled after {count} runs",
+		"baseConfig": "Base Configuration",
+		"baseConfigHint": "Adjust non-sweepable settings like sizing, breakeven, and entry defaults. Swept parameters will override these values.",
+		"sweepParameters": "Sweep Parameters",
+		"sweepParametersHint": "Select parameters and define ranges to sweep",
+		"sweepValues": "Values",
+		"sweepMin": "Min",
+		"sweepMax": "Max",
+		"sweepStep": "Step",
+		"sweepCombinations": "Combinations",
+		"sweepWarning": "Large sweeps may take a while",
+		"sweepProgress": "{current} / {total}",
+		"sweepCancel": "Cancel",
+		"sweepElapsed": "{seconds}s elapsed",
+		"sweepRemaining": "Estimating…",
+		"resultsTab": {
+			"chart": "Chart",
+			"table": "Table"
+		},
+		"equityOverlay": "Equity Overlay",
+		"comparisonTable": "Comparison Table",
+		"runsCount": "{count} runs",
+		"wizard": {
+			"setup": "Setup",
+			"parameters": "Parameters",
+			"results": "Results",
+			"setupDesc": "Choose the strategy, asset, and date range to optimize",
+			"parametersDesc": "Define parameter ranges to sweep across all combinations",
+			"back": "Back",
+			"next": "Next",
+			"newOptimization": "New Optimization"
+		},
+		"summary": {
+			"strategy": "Strategy",
+			"asset": "Asset",
+			"period": "Period",
+			"paramsSelected": "{count} parameters selected",
+			"combinations": "{count} combinations",
+			"totalVariations": "Total Variations",
+			"profitable": "Profitable",
+			"losing": "Losing",
+			"bestPF": "Best PF",
+			"bestSharpe": "Best Sharpe"
+		},
+		"pinToChart": "Pin to chart",
+		"unpinFromChart": "Unpin from chart",
+		"labelColumn": "Label",
+		"bestRun": "Best",
+		"lowTradeWarning": "Low trade count",
+		"trades": "Trades",
+		"winRate": "Win Rate",
+		"profitFactor": "Profit Factor",
+		"totalPnl": "Total P&L",
+		"maxDD": "Max DD",
+		"sharpe": "Sharpe",
+		"avgR": "Avg R",
+		"expandRun": "Expand run",
+		"deleteRun": "Delete run",
+		"configStop": "Stop",
+		"configTarget": "Target",
+		"configSizing": "Sizing",
+		"configSlippage": "Slippage",
+		"recomputingTrades": "Recomputing trades…",
+		"heatmap": {
+			"title": "Parameter Heatmap",
+			"subtitle": "Hover to inspect, click to expand a run",
+			"xAxis": "X Axis",
+			"yAxis": "Y Axis",
+			"metric": "Metric",
+			"fixedAt": "Fixed at",
+			"mixedStrategies": "Heatmap requires runs from the same strategy",
+			"multipleRuns": "{count} runs at this point",
+			"profitable": "Profitable",
+			"losing": "Losing",
+			"neutral": "Neutral",
+			"metrics": {
+				"profitFactor": "Profit Factor",
+				"sharpeRatio": "Sharpe Ratio",
+				"winRate": "Win Rate",
+				"totalPnlCents": "Total P&L",
+				"maxDrawdownCents": "Max Drawdown",
+				"avgRMultiple": "Avg R"
+			}
+		},
+		"sweepParam": {
+			"stopInitialType": "Stop Type",
+			"targetModeLabel": "Target Mode",
+			"trailingTypeLabel": "Trailing Type",
+			"orbEndTime": "ORB End Time",
+			"orbTicksBuffer": "ORB Ticks Buffer",
+			"stopPctRange": "Stop % Range",
+			"stopTicksBuffer": "Stop Ticks Buffer",
+			"stopFixedPointsValue": "Stop Fixed Points",
+			"target1Value": "Target 1",
+			"target2Value": "Target 2",
+			"slippage": "Slippage",
+			"dezkStopBuffer": "Stop Buffer",
+			"dezkCandlesAfter": "Candles After",
+			"dezkMacdSignal": "MACD Signal",
+			"dezkWmaFast": "WMA Fast",
+			"dezkTrailingWma": "Trailing WMA",
+			"trailingDistance": "Trailing Distance",
+			"stopType": {
+				"pctRange": "% Range",
+				"fullRange": "Full Range",
+				"fixedPoints": "Fixed Points"
+			},
+			"targetMode": {
+				"rMultiple": "R Multiple",
+				"pctRange": "% Range",
+				"pctStop": "% Stop",
+				"fixedPoints": "Fixed Points"
+			},
+			"trailingType": {
+				"indicator": "WMA Indicator",
+				"priceDistance": "Price Distance"
+			}
 		}
 	}
 }

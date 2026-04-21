@@ -12,6 +12,23 @@ const orbEntryConfigSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════════════════════
+// 10K (MACD+WMA) Entry Config
+// ═══════════════════════════════════════════════════════════════════
+
+const macdWmaConfigSchema = z.object({
+	macdFast: z.number().int().min(2).max(100),
+	macdSlow: z.number().int().min(2).max(200),
+	macdSignal: z.number().int().min(2).max(100),
+	wmaFast: z.number().int().min(2).max(100),
+	wmaSlow: z.number().int().min(2).max(200),
+	candlesAfterAlignment: z.number().int().min(0).max(10),
+	stopBufferPoints: z.number().min(0).max(500),
+	requireZeroCross: z.boolean(),
+	startTime: z.number().int().min(800).max(1200),
+	endTime: z.number().int().min(800).max(1800),
+})
+
+// ═══════════════════════════════════════════════════════════════════
 // Stop Config
 // ═══════════════════════════════════════════════════════════════════
 
@@ -31,6 +48,11 @@ const trailingConfigSchema = z.discriminatedUnion("type", [
 		type: z.literal("price_distance"),
 		distance: z.number().min(1).max(10000),
 		activationPct: z.number().min(1).max(100).optional(),
+	}),
+	z.object({
+		type: z.literal("indicator"),
+		wmaPeriod: z.number().int().min(2).max(200),
+		offset: z.number().int().min(0).max(10),
 	}),
 ])
 
@@ -96,10 +118,10 @@ const reversalConfigSchema = z.discriminatedUnion("type", [
 const strategyRecipeSchema = z.object({
 	presetId: z.enum(["orb_test_1", "orb_test_2", "orb_test_3", "orb_test_4", "custom"]),
 	displayName: z.string().min(1),
-	entry: z.object({
-		type: z.literal("orb_breakout"),
-		config: orbEntryConfigSchema,
-	}),
+	entry: z.discriminatedUnion("type", [
+		z.object({ type: z.literal("orb_breakout"), config: orbEntryConfigSchema }),
+		z.object({ type: z.literal("macd_wma_alignment"), config: macdWmaConfigSchema }),
+	]),
 	stop: stopConfigSchema,
 	target: targetConfigSchema,
 	sizing: sizingConfigSchema,

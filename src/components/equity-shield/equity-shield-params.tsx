@@ -1,36 +1,78 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import type { DateRange } from "react-day-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { Play, Info } from "lucide-react"
 import type { EquityShieldParams } from "@/types/equity-shield"
 import { toCents } from "@/lib/money"
 
+// ==========================================
+// TYPES
+// ==========================================
+
+interface EquityShieldPreview {
+	totalTrades: number
+	hasEnoughTrades: boolean
+}
+
 interface EquityShieldParamsProps {
 	params: EquityShieldParams
 	onParamsChange: (params: EquityShieldParams) => void
-	tradeFrom: number
-	tradeTo: number
-	onTradeFromChange: (value: number) => void
-	onTradeToChange: (value: number) => void
+	dateFrom: string
+	dateTo: string
+	onDateChange: (from: string, to: string) => void
+	tradeYears: number[]
+	preview: EquityShieldPreview | null
+	isLoadingPreview: boolean
 	onRun: () => void
 	isLoading: boolean
-	tradeCount: number | null
 }
+
+// ==========================================
+// DATE HELPERS
+// ==========================================
+
+/** Convert YYYY-MM-DD string to Date at noon (avoids timezone shift) */
+const parseToDate = (dateStr: string): Date | undefined => {
+	if (!dateStr) return undefined
+	return new Date(dateStr + "T12:00:00")
+}
+
+/** Convert Date to YYYY-MM-DD string (manual extraction avoids UTC offset bugs) */
+const formatToDateStr = (date: Date): string => {
+	const year = date.getFullYear()
+	const month = String(date.getMonth() + 1).padStart(2, "0")
+	const day = String(date.getDate()).padStart(2, "0")
+	return `${year}-${month}-${day}`
+}
+
+// ==========================================
+// COMPONENT
+// ==========================================
 
 const EquityShieldParamsForm = ({
 	params,
 	onParamsChange,
-	tradeFrom,
-	tradeTo,
-	onTradeFromChange,
-	onTradeToChange,
+	dateFrom,
+	dateTo,
+	onDateChange,
+	tradeYears,
+	preview,
+	isLoadingPreview,
 	onRun,
 	isLoading,
-	tradeCount,
 }: EquityShieldParamsProps) => {
 	const t = useTranslations("equityShield.params")
 
@@ -45,18 +87,126 @@ const EquityShieldParamsForm = ({
 		}
 	}
 
+	// Date range picker bridge
+	const rangeValue: DateRange | undefined =
+		dateFrom || dateTo
+			? { from: parseToDate(dateFrom), to: parseToDate(dateTo) }
+			: undefined
+
+	const handleRangeChange = (range: DateRange | undefined) => {
+		const from = range?.from ? formatToDateStr(range.from) : ""
+		const to = range?.to ? formatToDateStr(range.to) : ""
+		onDateChange(from, to)
+	}
+
+	const handleYearSelect = (year: string) => {
+		onDateChange(`${year}-01-01`, `${year}-12-31`)
+	}
+
+	const handleAllTime = () => {
+		if (tradeYears.length === 0) return
+		const oldest = tradeYears[tradeYears.length - 1]
+		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
+	}
+
+	const activeQuickFilter = (() => {
+		if (!dateFrom || !dateTo) return null
+		for (const year of tradeYears) {
+			if (dateFrom === `${year}-01-01` && dateTo === `${year}-12-31`) {
+				return `year-${year}`
+			}
+		}
+		if (tradeYears.length > 0) {
+			const oldest = tradeYears[tradeYears.length - 1]
+			const today = new Date().toISOString().split("T")[0]
+			if (dateFrom === `${oldest}-01-01` && dateTo === today) return "all"
+		}
+		return null
+	})()
+
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-s-300 sm:p-m-400">
-			<div className="flex items-center justify-between">
-				<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">
-					{t("title")}
-				</h2>
-				{tradeCount !== null && (
-					<span className="text-tiny text-txt-300">
-						{t("tradeCount", { count: tradeCount })}
-					</span>
-				)}
+			<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">
+				{t("title")}
+			</h2>
+
+			{/* Date Range Section */}
+			<div className="space-y-s-300">
+				<Label id="label-date-range" className="text-tiny text-txt-300">
+					{t("dateRange")}
+				</Label>
+				<div className="flex flex-wrap items-end gap-s-300">
+					<DateRangePicker
+						id="shield-date-range"
+						value={rangeValue}
+						onChange={handleRangeChange}
+						className="w-full sm:max-w-sm"
+					/>
+					{tradeYears.length > 0 && (
+						<div className="flex items-center gap-s-200">
+							<Select
+								value={
+									activeQuickFilter?.startsWith("year-")
+										? activeQuickFilter.replace("year-", "")
+										: ""
+								}
+								onValueChange={handleYearSelect}
+							>
+								<SelectTrigger
+									id="shield-year-filter"
+									size="sm"
+									className="w-[100px]"
+									aria-label={t("yearFilter")}
+								>
+									<SelectValue placeholder={t("yearFilter")} />
+								</SelectTrigger>
+								<SelectContent>
+									{tradeYears.map((year) => (
+										<SelectItem key={year} value={String(year)}>
+											{year}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Button
+								id="btn-shield-all-time"
+								variant={activeQuickFilter === "all" ? "default" : "outline"}
+								size="sm"
+								onClick={handleAllTime}
+								aria-label={t("allTime")}
+							>
+								{t("allTime")}
+							</Button>
+						</div>
+					)}
+				</div>
 			</div>
+
+			{/* Preview Banner */}
+			{isLoadingPreview && (
+				<div className="bg-bg-100 border-bg-300 rounded-md border p-s-300">
+					<p className="text-small text-txt-300 animate-pulse motion-reduce:animate-none">
+						{t("preview.loading")}
+					</p>
+				</div>
+			)}
+			{!isLoadingPreview && preview && (
+				<div className="bg-bg-100 border-bg-300 rounded-md border p-s-300">
+					<p className="text-small text-txt-100">
+						{t("preview.totalTrades", { count: preview.totalTrades })}
+					</p>
+					{!preview.hasEnoughTrades && preview.totalTrades > 0 && (
+						<p className="text-tiny text-trade-sell mt-s-100">
+							{t("preview.notEnoughTrades")}
+						</p>
+					)}
+					{preview.totalTrades === 0 && (
+						<p className="text-tiny text-txt-300 mt-s-100">
+							{t("preview.noTrades")}
+						</p>
+					)}
+				</div>
+			)}
 
 			{/* Tip about sample size */}
 			<div className="bg-bg-100 border-bg-300 flex items-start gap-s-200 rounded-md border p-s-300">
@@ -66,6 +216,7 @@ const EquityShieldParamsForm = ({
 				</p>
 			</div>
 
+			{/* Computation Parameters Grid */}
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 				{/* Account Balance */}
 				<div className="space-y-s-200">
@@ -158,61 +309,6 @@ const EquityShieldParamsForm = ({
 						value={params.smaPeriod}
 						onChange={(e) => handleFieldChange("smaPeriod", e.target.value)}
 						aria-label={t("smaPeriod")}
-					/>
-				</div>
-
-				{/* Trade Range: From */}
-				<div className="space-y-s-200">
-					<Label id="label-range-from" htmlFor="range-from" className="text-tiny text-txt-300">
-						{t("rangeFrom")}
-					</Label>
-					<Input
-						id="range-from"
-						type="number"
-						min={1}
-						max={tradeCount ?? 9999}
-						step={1}
-						value={tradeFrom}
-						onChange={(e) => {
-							const v = parseInt(e.target.value, 10)
-							if (!Number.isNaN(v) && v >= 1) onTradeFromChange(v)
-						}}
-						aria-label={t("rangeFrom")}
-					/>
-				</div>
-
-				{/* Trade Range: To */}
-				<div className="space-y-s-200">
-					<div className="flex items-center justify-between">
-						<Label id="label-range-to" htmlFor="range-to" className="text-tiny text-txt-300">
-							{t("rangeTo")}
-						</Label>
-						{tradeCount !== null && (
-							<button
-								type="button"
-								onClick={() => {
-									onTradeFromChange(1)
-									onTradeToChange(0)
-								}}
-								className="text-tiny text-acc-200 hover:underline"
-								tabIndex={0}
-							>
-								{t("rangeAll")}
-							</button>
-						)}
-					</div>
-					<Input
-						id="range-to"
-						type="number"
-						min={tradeFrom}
-						max={tradeCount ?? 9999}
-						step={1}
-						value={tradeTo || tradeCount || ""}
-						onChange={(e) => {
-							const v = parseInt(e.target.value, 10)
-							if (!Number.isNaN(v) && v >= tradeFrom) onTradeToChange(v)
-						}}
-						aria-label={t("rangeTo")}
 					/>
 				</div>
 			</div>

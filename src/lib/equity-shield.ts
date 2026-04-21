@@ -20,7 +20,11 @@ import { formatDateKey } from "@/lib/dates"
 const buildOriginalCurve = (
 	trades: TradeForShield[],
 	initialBalance: number
-): { points: EquityShieldPoint[]; observedMDD: number; observedMDDPercent: number } => {
+): {
+	points: EquityShieldPoint[]
+	observedMDD: number
+	observedMDDPercent: number
+} => {
 	const points: EquityShieldPoint[] = []
 	let cumulativePnl = 0
 	let peak = initialBalance
@@ -93,6 +97,7 @@ const applyMethod1 = (
 	let mode: TradingMode = "live"
 	let managedEquity = initialBalance
 	let managedPeak = initialBalance
+	let allTimeHigh = initialBalance
 	let originalCumulativePnl = 0
 
 	// Rolling MDD: tracks completed drawdowns on the original curve.
@@ -128,9 +133,9 @@ const applyMethod1 = (
 		if (mode === "live") {
 			managedEquity += pnl
 
-			// Cap loss at DD limit floor (simulate hard stop at prop firm limit)
+			// Cap loss at DD limit floor using all-time high (prop firm trailing DD)
 			if (cutAtDdLimit && drawdownLimit > 0) {
-				const floor = managedPeak - drawdownLimit
+				const floor = allTimeHigh - drawdownLimit
 				if (managedEquity < floor) {
 					managedEquity = floor
 				}
@@ -138,6 +143,9 @@ const applyMethod1 = (
 
 			if (managedEquity > managedPeak) {
 				managedPeak = managedEquity
+			}
+			if (managedEquity > allTimeHigh) {
+				allTimeHigh = managedEquity
 			}
 
 			const managedDrawdown = managedPeak - managedEquity
@@ -157,8 +165,8 @@ const applyMethod1 = (
 				pnl,
 				originalEquity: originalCumulativePnl,
 				accountEquity: managedEquity,
-				peakEquity: managedPeak,
-				drawdownFromPeak: managedPeak - managedEquity,
+				peakEquity: allTimeHigh,
+				drawdownFromPeak: allTimeHigh - managedEquity,
 				mode: "live",
 				smaValue: null,
 			})
@@ -189,8 +197,8 @@ const applyMethod1 = (
 				pnl,
 				originalEquity: originalCumulativePnl,
 				accountEquity: managedEquity,
-				peakEquity: managedPeak,
-				drawdownFromPeak: managedPeak - managedEquity,
+				peakEquity: allTimeHigh,
+				drawdownFromPeak: allTimeHigh - managedEquity,
 				mode: "sim",
 				smaValue: null,
 			})
@@ -256,6 +264,7 @@ const applyMethod2 = (
 	const points: EquityShieldPoint[] = []
 	let managedEquity = initialBalance
 	let managedPeak = initialBalance
+	let allTimeHigh = initialBalance
 	let originalCumulativePnl = 0
 
 	for (let i = 0; i < trades.length; i++) {
@@ -265,16 +274,19 @@ const applyMethod2 = (
 		const originalAccountEquity = initialBalance + originalCumulativePnl
 		const sma = smaValues[i]
 
-		// Before SMA has enough data, default to live
-		const isAboveSMA = sma === null || originalAccountEquity > sma
+		// Mode decision: based on state BEFORE this trade (pre-entry).
+		// You decide live/sim before entering, not after seeing the result.
+		const preTradeEquity = i > 0 ? rawEquityValues[i - 1] : initialBalance
+		const preTradeSma = i > 0 ? smaValues[i - 1] : null
+		const isAboveSMA = preTradeSma === null || preTradeEquity > preTradeSma
 		const mode: TradingMode = isAboveSMA ? "live" : "sim"
 
 		if (mode === "live") {
 			managedEquity += pnl
 
-			// Cap loss at DD limit floor
+			// Cap loss at DD limit floor using all-time high (prop firm trailing DD)
 			if (cutAtDdLimit && drawdownLimit > 0) {
-				const floor = managedPeak - drawdownLimit
+				const floor = allTimeHigh - drawdownLimit
 				if (managedEquity < floor) {
 					managedEquity = floor
 				}
@@ -283,9 +295,11 @@ const applyMethod2 = (
 			if (managedEquity > managedPeak) {
 				managedPeak = managedEquity
 			}
+			if (managedEquity > allTimeHigh) {
+				allTimeHigh = managedEquity
+			}
 		}
 		// sim: managedEquity stays flat
-
 		points.push({
 			tradeNumber: i + 1,
 			liveTradeNumber: null,
@@ -293,10 +307,10 @@ const applyMethod2 = (
 			pnl,
 			originalEquity: originalCumulativePnl,
 			accountEquity: managedEquity,
-			peakEquity: managedPeak,
-			drawdownFromPeak: managedPeak - managedEquity,
+			peakEquity: allTimeHigh,
+			drawdownFromPeak: allTimeHigh - managedEquity,
 			mode,
-			smaValue: sma !== null ? sma : null,
+			smaValue: sma,
 		})
 	}
 
@@ -417,10 +431,11 @@ const runEquityShield = (
 	const drawdownLimit = fromCents(params.drawdownLimitCents)
 
 	// 1. Build original curve to get observed MDD
-	const { points: original, observedMDD, observedMDDPercent } = buildOriginalCurve(
-		trades,
-		initialBalance
-	)
+	const {
+		points: original,
+		observedMDD,
+		observedMDDPercent,
+	} = buildOriginalCurve(trades, initialBalance)
 
 	// 2. Apply Method 1 (uses rolling completed MDD internally)
 	const method1 = applyMethod1(
@@ -450,10 +465,19 @@ const runEquityShield = (
 	assignLiveTradeNumbers(method2)
 
 	// 6. Compute stats
-	const method1Stats = computeMethodStats(method1, method1LiveOnly, drawdownLimit)
-	const method2Stats = computeMethodStats(method2, method2LiveOnly, drawdownLimit)
+	const method1Stats = computeMethodStats(
+		method1,
+		method1LiveOnly,
+		drawdownLimit
+	)
+	const method2Stats = computeMethodStats(
+		method2,
+		method2LiveOnly,
+		drawdownLimit
+	)
 
-	const originalFinalEquity = original[original.length - 1]?.accountEquity ?? initialBalance
+	const originalFinalEquity =
+		original[original.length - 1]?.accountEquity ?? initialBalance
 	let originalMaxDD = 0
 	for (const p of original) {
 		if (p.drawdownFromPeak > originalMaxDD) {

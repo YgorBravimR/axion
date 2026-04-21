@@ -37,6 +37,12 @@ const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps)
 	if (recipe.target.type !== "fixed_levels") return null
 	const targetConfig = recipe.target
 
+	const totalAllocation = targetConfig.levels.reduce((sum, level) => sum + level.exitPct, 0)
+	const remaining = 100 - totalAllocation
+	const isExact = totalAllocation === 100
+	const isOver = totalAllocation > 100
+	const isUnder = totalAllocation < 100
+
 	// ── Exit level management ────────────────────────────────
 
 	const handleAddLevel = () => {
@@ -161,6 +167,32 @@ const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps)
 							)}
 						</div>
 					))}
+				</div>
+
+				{/* Allocation tracker */}
+				<div className="space-y-s-100">
+					<div className="flex items-center justify-between">
+						<span className="text-small text-txt-300">
+							{t("allocationUsed", { total: totalAllocation })}
+						</span>
+						<span
+							className={`text-small font-medium ${
+								isExact ? "text-fb-success" : isOver ? "text-fb-error" : "text-txt-300"
+							}`}
+						>
+							{isExact && t("allocationExact")}
+							{isOver && t("allocationOver", { over: totalAllocation - 100 })}
+							{isUnder && t("allocationRemaining", { remaining })}
+						</span>
+					</div>
+					<div className="bg-bg-300 h-1.5 overflow-hidden rounded-full">
+						<div
+							className={`h-full rounded-full transition-all duration-200 ${
+								isExact ? "bg-fb-success" : isOver ? "bg-fb-error" : "bg-txt-300"
+							}`}
+							style={{ width: `${Math.min(totalAllocation, 100)}%` }}
+						/>
+					</div>
 				</div>
 			</div>
 

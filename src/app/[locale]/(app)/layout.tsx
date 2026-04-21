@@ -5,6 +5,7 @@ import { getEffectiveDate } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { getAccountTypeBrand } from "@/lib/account-brand"
 import { EffectiveDateProvider } from "@/components/providers/effective-date-provider"
+import { MCCalibrationProvider } from "@/components/providers/mc-calibration-provider"
 import { AppShell } from "@/components/layout/app-shell"
 
 interface AppLayoutProps {
@@ -24,13 +25,15 @@ const AppLayout = async ({ children }: AppLayoutProps) => {
 
 	return (
 		<EffectiveDateProvider date={effectiveDate.toISOString()}>
-			<AppShell
-				isReplayAccount={isReplayAccount}
-				replayDate={replayDate}
-				serverBrand={serverBrand}
-			>
-				{children}
-			</AppShell>
+			<MCCalibrationProvider>
+				<AppShell
+					isReplayAccount={isReplayAccount}
+					replayDate={replayDate}
+					serverBrand={serverBrand}
+				>
+					{children}
+				</AppShell>
+			</MCCalibrationProvider>
 		</EffectiveDateProvider>
 	)
 }

@@ -18,6 +18,8 @@ import { ModeDistributionChart } from "./mode-distribution-chart"
 import { V2DistributionHistogram } from "./v2-distribution-histogram"
 import { getSimulationStats, runSimulationV2 } from "@/app/actions/monte-carlo"
 import { buildProfileForSim } from "@/lib/risk-profile"
+import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
+import { buildCalibrationSnapshotV2 } from "@/lib/mc-calibration"
 import { toCents } from "@/lib/money"
 import { cn } from "@/lib/utils"
 import type { RiskManagementProfile } from "@/types/risk-profile"
@@ -44,6 +46,7 @@ const MonteCarloV2Content = ({
 	const tMC = useTranslations("monteCarlo")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
+	const { setSnapshot } = useMCCalibration()
 
 	// Profile selection state
 	const [selectedProfileId, setSelectedProfileId] = useState("")
@@ -199,6 +202,7 @@ const MonteCarloV2Content = ({
 
 			if (response.status === "success" && response.data) {
 				setResult(response.data)
+				setSnapshot(buildCalibrationSnapshotV2(response.data, balance))
 			} else {
 				const errorDetails = response.errors?.map((e) => e.detail).join(", ")
 				setError(errorDetails || response.message)

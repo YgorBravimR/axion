@@ -11,7 +11,7 @@ import type {
 import type { CandleRow } from "@/types/candle"
 import { groupCandlesByDay, buildDayContext } from "./day-grouper"
 import { checkHits, applySlippage, calculatePnlCents, getNextTargetPrice } from "./candle-utils"
-import { processOrbCandle, createInitialOrbState, type OrbState } from "./modules/entry"
+import { processOrbCandle, createInitialOrbState, type OrbState, processDezkCandle, createInitialDezkState, resetDezkForNewDay, type DezkState } from "./modules/entry"
 import { createStopModule } from "./modules/stop"
 import { createTargetModule } from "./modules/target"
 import { createSizingModule } from "./modules/sizing"
@@ -52,11 +52,19 @@ const runBacktest = (
 		? recipe.sizing.valuePerPointCents
 		: assetConfig.tickValueCents / assetConfig.tickSize
 
+	// For indicator-based strategies (10K), state carries across days for warmup.
+	// ORB resets fresh each day (only cares about current day's opening range).
+	let persistentEntryState: DezkState | null = recipe.entry.type === "macd_wma_alignment"
+		? createInitialDezkState(recipe.entry.config)
+		: null
+
 	for (const dayKey of sortedDayKeys) {
 		const dayCandlesArr = days.get(dayKey)!
 		let position: Position | null = null
 		let reversalState = reversalModule.init()
-		let entryState: OrbState = createInitialOrbState()
+		let entryState: OrbState | DezkState = recipe.entry.type === "orb_breakout"
+			? createInitialOrbState()
+			: resetDezkForNewDay(persistentEntryState!)
 		let dayRangeHigh: number | null = null
 		let dayRangeLow: number | null = null
 		const dayTrades: BacktestTrade[] = []
@@ -117,19 +125,26 @@ const runBacktest = (
 			}
 
 			// ═══ No position: check for entry signal ═══
+			let entrySignal: EntrySignal | null = null
+
 			if (recipe.entry.type === "orb_breakout") {
-				const result = processOrbCandle(candle, entryState, ctx, assetConfig.tickSize, recipe.entry.config)
+				const result = processOrbCandle(candle, entryState as OrbState, ctx, assetConfig.tickSize, recipe.entry.config)
 				entryState = result.state
+				entrySignal = result.signal
 
 				// Track range for day breakdown
-				if (result.state.rangeHigh !== -Infinity) {
-					dayRangeHigh = result.state.rangeHigh
-					dayRangeLow = result.state.rangeLow
+				if ((result.state as OrbState).rangeHigh !== -Infinity) {
+					dayRangeHigh = (result.state as OrbState).rangeHigh
+					dayRangeLow = (result.state as OrbState).rangeLow
 				}
+			} else if (recipe.entry.type === "macd_wma_alignment") {
+				const result = processDezkCandle(candle, entryState as DezkState, ctx, assetConfig.tickSize, recipe.entry.config)
+				entryState = result.state
+				entrySignal = result.signal
+			}
 
-				if (result.signal) {
-					position = openPosition(result.signal, recipe, assetConfig, valuePerPointCents, candle, dayKey, stopModule, targetModule, sizingModule)
-				}
+			if (entrySignal) {
+				position = openPosition(entrySignal, recipe, assetConfig, valuePerPointCents, candle, dayKey, stopModule, targetModule, sizingModule)
 			}
 		}
 
@@ -140,6 +155,11 @@ const runBacktest = (
 			const trade = closeTrade(position, exitPrice, lastCandle.timestamp, "eod", valuePerPointCents, recipe.slippageTicks, assetConfig.tickSize)
 			trade.id = ++tradeCounter
 			dayTrades.push(trade)
+		}
+
+		// Carry indicator state to next day for MACD/WMA strategies
+		if (recipe.entry.type === "macd_wma_alignment") {
+			persistentEntryState = entryState as DezkState
 		}
 
 		trades.push(...dayTrades)

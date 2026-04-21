@@ -33,6 +33,8 @@ import {
 	runSimulation,
 } from "@/app/actions/monte-carlo"
 import { defaultSimulationParams } from "@/lib/validations/monte-carlo"
+import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
+import { buildCalibrationSnapshot } from "@/lib/mc-calibration"
 import type {
 	DataSource,
 	SourceStats,
@@ -54,6 +56,7 @@ export const MonteCarloContent = ({
 	const t = useTranslations("monteCarlo")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
+	const { setSnapshot } = useMCCalibration()
 
 	// Mode state
 	const [inputMode, setInputMode] = useState<"auto" | "manual">("auto")
@@ -83,7 +86,7 @@ export const MonteCarloContent = ({
 				setError(response.message)
 				setSourceStats(null)
 			}
-		} catch (err) {
+		} catch {
 			setError(t("errors.failedToLoadStats"))
 			setSourceStats(null)
 		} finally {
@@ -124,11 +127,12 @@ export const MonteCarloContent = ({
 			const response = await runSimulation(params)
 			if (response.status === "success" && response.data) {
 				setResult(response.data)
+				setSnapshot(buildCalibrationSnapshot(response.data))
 			} else {
 				const errorDetails = response.errors?.map((e) => e.detail).join(", ")
 				setError(errorDetails || response.message)
 			}
-		} catch (err) {
+		} catch {
 			setError(t("errors.failedToRunSimulation"))
 		} finally {
 			hideLoading()
@@ -158,7 +162,11 @@ export const MonteCarloContent = ({
 
 			{/* Mode Tabs: Edge Expectancy | Capital Expectancy */}
 			<Tabs defaultValue="edgeExpectancy">
-				<TabsList id="monte-carlo-tabs" variant="line" className="mb-m-400 sm:mb-m-500">
+				<TabsList
+					id="monte-carlo-tabs"
+					variant="line"
+					className="mb-m-400 sm:mb-m-500"
+				>
 					<TabsTrigger value="edgeExpectancy">
 						{tV2("tabEdgeExpectancy")}
 					</TabsTrigger>
@@ -296,7 +304,7 @@ const EdgeExpectancyContent = ({
 							size="lg"
 							onClick={onRunSimulation}
 							disabled={isRunning}
-							className="w-full sm:min-w-[200px] sm:w-auto"
+							className="w-full sm:w-auto sm:min-w-[200px]"
 						>
 							{isRunning ? (
 								<LoadingSpinner size="sm" label={t("runningSimulation")} />
