@@ -39,7 +39,7 @@ const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: Wizar
 							}`}
 							aria-current={isActive ? "step" : undefined}
 							aria-label={`${t(step.labelKey)} — ${
-								isActive ? "current step" : isCompleted ? "completed" : "upcoming"
+								isActive ? t("wizard.stepStatusCurrent") : isCompleted ? t("wizard.stepStatusCompleted") : t("wizard.stepStatusUpcoming")
 							}`}
 							tabIndex={isClickable ? 0 : -1}
 						>

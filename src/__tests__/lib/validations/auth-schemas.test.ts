@@ -54,7 +54,7 @@ describe("verifyEmailSchema", () => {
 		expect(result.success).toBe(false)
 		if (!result.success) {
 			const messages = result.error.issues.map((i) => i.message)
-			expect(messages.some((m) => /6/i.test(m))).toBe(true)
+			expect(messages.some((m) => /codelength/i.test(m))).toBe(true)
 		}
 	})
 

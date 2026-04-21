@@ -25,6 +25,7 @@ import { getTranslations } from "next-intl/server"
  * Handles replay accounts via getServerEffectiveNow().
  */
 export const getActiveMonthlyPlan = async (): Promise<ActionResponse<MonthlyPlan | null>> => {
+	const t = await getTranslations("commandCenter.plan")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -48,13 +49,13 @@ export const getActiveMonthlyPlan = async (): Promise<ActionResponse<MonthlyPlan
 
 		return {
 			status: "success",
-			message: plan ? "Active monthly plan retrieved successfully" : "No active monthly plan found",
+			message: plan ? t("actions.activePlanRetrieved") : t("actions.noActivePlan"),
 			data: decryptedPlan ?? null,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve active monthly plan",
+			message: t("actions.activePlanFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getActiveMonthlyPlan") }],
 		}
 	}
@@ -70,6 +71,7 @@ export const getMonthlyPlan = async ({
 	year: number
 	month: number
 }): Promise<ActionResponse<MonthlyPlan | null>> => {
+	const t = await getTranslations("commandCenter.plan")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -89,13 +91,13 @@ export const getMonthlyPlan = async ({
 
 		return {
 			status: "success",
-			message: plan ? "Monthly plan retrieved successfully" : "No monthly plan found",
+			message: plan ? t("actions.planRetrieved") : t("actions.noPlan"),
 			data: decryptedPlan ?? null,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve monthly plan",
+			message: t("actions.planFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getMonthlyPlan") }],
 		}
 	}
@@ -203,7 +205,7 @@ export const upsertMonthlyPlan = async (
 
 			return {
 				status: "success",
-				message: "Monthly plan updated successfully",
+				message: t("actions.planUpdated"),
 				data: decryptedPlan,
 			}
 		}
@@ -229,14 +231,14 @@ export const upsertMonthlyPlan = async (
 
 		return {
 			status: "success",
-			message: "Monthly plan created successfully",
+			message: t("actions.planCreated"),
 			data: decryptedNewPlan,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((issue) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${issue.path.join(".")}: ${issue.message}`,
@@ -246,7 +248,7 @@ export const upsertMonthlyPlan = async (
 
 		return {
 			status: "error",
-			message: "Failed to save monthly plan",
+			message: t("actions.planSaveFailed"),
 			errors: [{ code: "SAVE_FAILED", detail: toSafeErrorMessage(error, "upsertMonthlyPlan") }],
 		}
 	}
@@ -412,7 +414,7 @@ export const rolloverMonthlyPlan = async (
 
 			return {
 				status: "success",
-				message: "Monthly plan rolled over successfully (existing plan updated)",
+				message: t("actions.planRolledOverUpdated"),
 				data: decryptedUpdatedPlan,
 			}
 		}
@@ -436,13 +438,13 @@ export const rolloverMonthlyPlan = async (
 
 		return {
 			status: "success",
-			message: "Monthly plan rolled over successfully",
+			message: t("actions.planRolledOver"),
 			data: decryptedNewPlan,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to roll over monthly plan",
+			message: t("actions.planRolloverFailed"),
 			errors: [{ code: "ROLLOVER_FAILED", detail: toSafeErrorMessage(error, "rolloverMonthlyPlan") }],
 		}
 	}

@@ -96,6 +96,7 @@ export const getOverallStats = async (
 	dateFrom?: Date,
 	dateTo?: Date
 ): Promise<ActionResponse<OverallStats>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, { dateFrom, dateTo })
@@ -107,7 +108,7 @@ export const getOverallStats = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: {
 					grossPnl: 0,
 					netPnl: 0,
@@ -179,7 +180,7 @@ export const getOverallStats = async (
 
 		return {
 			status: "success",
-			message: "Stats retrieved",
+			message: t("actions.statsRetrieved"),
 			data: {
 				grossPnl: totalGrossPnl,
 				netPnl: totalNetPnl,
@@ -198,7 +199,7 @@ export const getOverallStats = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve stats",
+			message: t("actions.failedToRetrieveStats"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -216,6 +217,7 @@ export const getDisciplineScore = async (
 	dateFrom?: Date,
 	dateTo?: Date
 ): Promise<ActionResponse<DisciplineData>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, { dateFrom, dateTo })
@@ -259,7 +261,7 @@ export const getDisciplineScore = async (
 
 		return {
 			status: "success",
-			message: "Discipline score retrieved",
+			message: t("actions.disciplineScoreRetrieved"),
 			data: {
 				score,
 				totalTrades,
@@ -271,7 +273,7 @@ export const getDisciplineScore = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve discipline score",
+			message: t("actions.failedToRetrieveDisciplineScore"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -294,6 +296,7 @@ export const getEquityCurve = async (
 	dateTo?: Date,
 	mode: EquityCurveMode = "daily"
 ): Promise<ActionResponse<EquityPoint[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
@@ -330,7 +333,7 @@ export const getEquityCurve = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -399,13 +402,13 @@ export const getEquityCurve = async (
 
 		return {
 			status: "success",
-			message: "Equity curve retrieved",
+			message: t("actions.equityCurveRetrieved"),
 			data: equityPoints,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve equity curve",
+			message: t("actions.failedToRetrieveEquityCurve"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -423,6 +426,7 @@ export const getDailyPnL = async (
 	year: number,
 	monthIndex: number
 ): Promise<ActionResponse<DailyPnL[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
@@ -466,13 +470,13 @@ export const getDailyPnL = async (
 
 		return {
 			status: "success",
-			message: "Daily P&L retrieved",
+			message: t("actions.dailyPnlRetrieved"),
 			data: dailyPnL,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve daily P&L",
+			message: t("actions.failedToRetrieveDailyPnl"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -490,6 +494,7 @@ export const getStreakData = async (
 	dateFrom?: Date,
 	dateTo?: Date
 ): Promise<ActionResponse<StreakData>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
@@ -514,7 +519,7 @@ export const getStreakData = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: {
 					currentStreak: 0,
 					currentStreakType: "none",
@@ -592,7 +597,7 @@ export const getStreakData = async (
 
 		return {
 			status: "success",
-			message: "Streak data retrieved",
+			message: t("actions.streakDataRetrieved"),
 			data: {
 				currentStreak,
 				currentStreakType,
@@ -605,7 +610,7 @@ export const getStreakData = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve streak data",
+			message: t("actions.failedToRetrieveStreakData"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -623,6 +628,7 @@ export const getPerformanceByVariable = async (
 	groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy",
 	filters?: TradeFilters
 ): Promise<ActionResponse<PerformanceByGroup[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -638,7 +644,7 @@ export const getPerformanceByVariable = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -745,13 +751,13 @@ export const getPerformanceByVariable = async (
 
 		return {
 			status: "success",
-			message: "Performance data retrieved",
+			message: t("actions.performanceDataRetrieved"),
 			data: performanceData,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve performance data",
+			message: t("actions.failedToRetrievePerformanceData"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -768,6 +774,7 @@ export const getPerformanceByVariable = async (
 export const getExpectedValue = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<ExpectedValueData>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -783,7 +790,7 @@ export const getExpectedValue = async (
 		if (tradesWithOutcome.length === 0) {
 			return {
 				status: "success",
-				message: "No completed trades found",
+				message: t("actions.noCompletedTradesFound"),
 				data: {
 					winRate: 0,
 					avgWin: 0,
@@ -857,7 +864,7 @@ export const getExpectedValue = async (
 
 		return {
 			status: "success",
-			message: "Expected value calculated",
+			message: t("actions.expectedValueCalculated"),
 			data: {
 				winRate: winRate * 100,
 				avgWin,
@@ -875,7 +882,7 @@ export const getExpectedValue = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to calculate expected value",
+			message: t("actions.failedToCalculateExpectedValue"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -892,6 +899,7 @@ export const getExpectedValue = async (
 export const getRDistribution = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<RDistributionBucket[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -906,7 +914,7 @@ export const getRDistribution = async (
 		if (tradesWithR.length === 0) {
 			return {
 				status: "success",
-				message: "No trades with R-multiple data",
+				message: t("actions.noTradesWithRMultiple"),
 				data: [],
 			}
 		}
@@ -944,7 +952,7 @@ export const getRDistribution = async (
 
 		return {
 			status: "success",
-			message: "R-distribution calculated",
+			message: t("actions.rDistributionCalculated"),
 			data:
 				nonEmptyBuckets.length > 0
 					? nonEmptyBuckets
@@ -953,7 +961,7 @@ export const getRDistribution = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to calculate R-distribution",
+			message: t("actions.failedToCalculateRDistribution"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -970,6 +978,7 @@ export const getRDistribution = async (
 export const getHourlyPerformance = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<HourlyPerformance[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -981,7 +990,7 @@ export const getHourlyPerformance = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -1056,13 +1065,13 @@ export const getHourlyPerformance = async (
 
 		return {
 			status: "success",
-			message: "Hourly performance retrieved",
+			message: t("actions.hourlyPerformanceRetrieved"),
 			data: hourlyData,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve hourly performance",
+			message: t("actions.failedToRetrieveHourlyPerformance"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1079,6 +1088,7 @@ export const getHourlyPerformance = async (
 export const getDayOfWeekPerformance = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<DayOfWeekPerformance[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -1090,7 +1100,7 @@ export const getDayOfWeekPerformance = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -1201,13 +1211,13 @@ export const getDayOfWeekPerformance = async (
 
 		return {
 			status: "success",
-			message: "Day of week performance retrieved",
+			message: t("actions.dayOfWeekPerformanceRetrieved"),
 			data: dayData,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve day of week performance",
+			message: t("actions.failedToRetrieveDayOfWeekPerformance"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1224,6 +1234,7 @@ export const getDayOfWeekPerformance = async (
 export const getTimeHeatmap = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<TimeHeatmapCell[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -1235,7 +1246,7 @@ export const getTimeHeatmap = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -1314,13 +1325,13 @@ export const getTimeHeatmap = async (
 
 		return {
 			status: "success",
-			message: "Time heatmap retrieved",
+			message: t("actions.timeHeatmapRetrieved"),
 			data: heatmapData,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve time heatmap",
+			message: t("actions.failedToRetrieveTimeHeatmap"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1337,6 +1348,7 @@ export const getTimeHeatmap = async (
 export const getDaySummary = async (
 	date: Date
 ): Promise<ActionResponse<DaySummary>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
@@ -1364,7 +1376,7 @@ export const getDaySummary = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found for this day",
+				message: t("actions.noTradesFoundForDay"),
 				data: {
 					date: dateKey,
 					netPnl: 0,
@@ -1419,7 +1431,7 @@ export const getDaySummary = async (
 
 		return {
 			status: "success",
-			message: "Day summary retrieved",
+			message: t("actions.daySummaryRetrieved"),
 			data: {
 				date: dateKey,
 				netPnl,
@@ -1437,7 +1449,7 @@ export const getDaySummary = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve day summary",
+			message: t("actions.failedToRetrieveDaySummary"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1454,6 +1466,7 @@ export const getDaySummary = async (
 export const getDayTrades = async (
 	date: Date
 ): Promise<ActionResponse<DayTrade[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
@@ -1502,13 +1515,13 @@ export const getDayTrades = async (
 
 		return {
 			status: "success",
-			message: "Day trades retrieved",
+			message: t("actions.dayTradesRetrieved"),
 			data: dayTrades,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve day trades",
+			message: t("actions.failedToRetrieveDayTrades"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1525,6 +1538,7 @@ export const getDayTrades = async (
 export const getDayEquityCurve = async (
 	date: Date
 ): Promise<ActionResponse<DayEquityPoint[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
@@ -1555,7 +1569,7 @@ export const getDayEquityCurve = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found for this day",
+				message: t("actions.noTradesFoundForDay"),
 				data: [],
 			}
 		}
@@ -1577,13 +1591,13 @@ export const getDayEquityCurve = async (
 
 		return {
 			status: "success",
-			message: "Day equity curve retrieved",
+			message: t("actions.dayEquityCurveRetrieved"),
 			data: equityPoints,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve day equity curve",
+			message: t("actions.failedToRetrieveDayEquityCurve"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1600,6 +1614,7 @@ export const getDayEquityCurve = async (
 export const getRadarChartData = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<RadarChartData[]>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -1611,7 +1626,7 @@ export const getRadarChartData = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -1714,13 +1729,13 @@ export const getRadarChartData = async (
 
 		return {
 			status: "success",
-			message: "Radar chart data retrieved",
+			message: t("actions.radarChartDataRetrieved"),
 			data: radarData,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve radar chart data",
+			message: t("actions.failedToRetrieveRadarChartData"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1769,7 +1784,10 @@ const getSessionForTime = (date: Date): TradingSession | null => {
 export const getSessionPerformance = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<SessionPerformance[]>> => {
-	const tSessions = await getTranslations("sessions")
+	const [t, tSessions] = await Promise.all([
+		getTranslations("analytics"),
+		getTranslations("sessions"),
+	])
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -1781,7 +1799,7 @@ export const getSessionPerformance = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -1869,13 +1887,13 @@ export const getSessionPerformance = async (
 
 		return {
 			status: "success",
-			message: "Session performance retrieved",
+			message: t("actions.sessionPerformanceRetrieved"),
 			data: sessionData,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve session performance",
+			message: t("actions.failedToRetrieveSessionPerformance"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1892,7 +1910,10 @@ export const getSessionPerformance = async (
 export const getSessionAssetPerformance = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<SessionAssetPerformance[]>> => {
-	const tSessions = await getTranslations("sessions")
+	const [t, tSessions] = await Promise.all([
+		getTranslations("analytics"),
+		getTranslations("sessions"),
+	])
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
@@ -1904,7 +1925,7 @@ export const getSessionAssetPerformance = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -2016,13 +2037,13 @@ export const getSessionAssetPerformance = async (
 
 		return {
 			status: "success",
-			message: "Session asset performance retrieved",
+			message: t("actions.sessionAssetPerformanceRetrieved"),
 			data: assetPerformance,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve session asset performance",
+			message: t("actions.failedToRetrieveSessionAssetPerformance"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -2040,19 +2061,20 @@ export const getSessionAssetPerformance = async (
 export const getAnalyticsDashboard = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<AnalyticsDashboardData>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const data = await getCachedAnalyticsDashboard(authContext, filters)
 
 		return {
 			status: "success",
-			message: "Analytics dashboard retrieved",
+			message: t("actions.analyticsDashboardRetrieved"),
 			data,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve analytics dashboard",
+			message: t("actions.failedToRetrieveAnalyticsDashboard"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -2075,19 +2097,20 @@ export const getDashboardBatch = async (
 	year: number,
 	monthIndex: number
 ): Promise<ActionResponse<DashboardBatchData>> => {
+	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 		const data = await getCachedDashboardData(authContext, year, monthIndex)
 
 		return {
 			status: "success",
-			message: "Dashboard data retrieved",
+			message: t("actions.dashboardDataRetrieved"),
 			data,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve dashboard data",
+			message: t("actions.failedToRetrieveDashboardData"),
 			errors: [
 				{
 					code: "FETCH_FAILED",

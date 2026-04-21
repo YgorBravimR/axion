@@ -12,9 +12,6 @@ import {
 	getNyseHolidayName,
 } from "@/lib/market/holidays"
 
-const WEEKDAYS_EN = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-const WEEKDAYS_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-
 /** Format as YYYY-MM-DD for holiday lookups */
 const toDateStr = (year: number, month: number, day: number): string =>
 	`${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
@@ -38,6 +35,7 @@ interface DayInfo {
 
 export const B3TradingCalendar = () => {
 	const t = useTranslations("market.tradingCalendar")
+	const tDow = useTranslations("dayOfWeek")
 	const locale = useLocale()
 
 	const [monthOffset, setMonthOffset] = useState(0)
@@ -95,7 +93,16 @@ export const B3TradingCalendar = () => {
 		[monthOffset, todayStr, locale]
 	)
 
-	const weekdays = locale === "pt-BR" ? WEEKDAYS_PT : WEEKDAYS_EN
+	// Monday-first order: Mon Tue Wed Thu Fri Sat Sun
+	const weekdays = [
+		tDow("monShort"),
+		tDow("tueShort"),
+		tDow("wedShort"),
+		tDow("thuShort"),
+		tDow("friShort"),
+		tDow("satShort"),
+		tDow("sunShort"),
+	]
 
 	const monthName = new Intl.DateTimeFormat(
 		locale === "pt-BR" ? "pt-BR" : "en-US",

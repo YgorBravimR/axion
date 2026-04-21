@@ -1,7 +1,7 @@
 "use server"
 
 import { invalidateTradeData } from "@/lib/cache/invalidate"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import {
 	trades,
@@ -72,6 +72,7 @@ export interface TradeWithRelations extends Trade {
 export const createTrade = async (
 	input: CreateTradeInput
 ): Promise<ActionResponse<Trade>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const validated = createTradeSchema.parse(input)
@@ -267,21 +268,21 @@ export const createTrade = async (
 
 		return {
 			status: "success",
-			message: "Trade created successfully",
+			message: t("actions.tradeCreated"),
 			data: trade,
 		}
 	} catch (error) {
 		if (error instanceof Error && error.name === "ZodError") {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: [{ code: "VALIDATION_ERROR", detail: error.message }],
 			}
 		}
 
 		return {
 			status: "error",
-			message: "Failed to create trade",
+			message: t("actions.tradeCreateFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -299,6 +300,7 @@ export const updateTrade = async (
 	id: string,
 	input: UpdateTradeInput
 ): Promise<ActionResponse<Trade>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const validated = updateTradeSchema.parse(input)
@@ -312,7 +314,7 @@ export const updateTrade = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -547,7 +549,7 @@ export const updateTrade = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [
 					{
 						code: "NOT_FOUND",
@@ -578,13 +580,13 @@ export const updateTrade = async (
 
 		return {
 			status: "success",
-			message: "Trade updated successfully",
+			message: t("actions.tradeUpdated"),
 			data: trade,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to update trade",
+			message: t("actions.tradeUpdateFailed"),
 			errors: [
 				{
 					code: "UPDATE_FAILED",
@@ -601,6 +603,7 @@ export const updateTrade = async (
 export const deleteTrade = async (
 	id: string
 ): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const existing = await db.query.trades.findFirst({
@@ -610,7 +613,7 @@ export const deleteTrade = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -625,12 +628,12 @@ export const deleteTrade = async (
 
 		return {
 			status: "success",
-			message: "Trade archived successfully",
+			message: t("actions.tradeDeleted"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to archive trade",
+			message: t("actions.tradeDeleteFailed"),
 			errors: [
 				{
 					code: "DELETE_FAILED",
@@ -647,6 +650,7 @@ export const deleteTrade = async (
 export const getTrade = async (
 	id: string
 ): Promise<ActionResponse<TradeWithRelations>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		let trade = await db.query.trades.findFirst({
@@ -670,7 +674,7 @@ export const getTrade = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -683,13 +687,13 @@ export const getTrade = async (
 
 		return {
 			status: "success",
-			message: "Trade retrieved successfully",
+			message: t("actions.tradeRetrieved"),
 			data: trade,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve trade",
+			message: t("actions.tradeFetchFailed"),
 			errors: [
 				{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTrade") },
 			],
@@ -704,6 +708,7 @@ export const getTrades = async (
 	filters?: TradeFilters,
 	pagination?: PaginationParams
 ): Promise<ActionResponse<PaginatedResponse<TradeWithRelations>>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId, showAllAccounts, allAccountIds } =
 			await requireAuth()
@@ -790,7 +795,7 @@ export const getTrades = async (
 
 		return {
 			status: "success",
-			message: "Trades retrieved successfully",
+			message: t("actions.tradesRetrieved"),
 			data: {
 				items: decryptedResult,
 				pagination: {
@@ -804,7 +809,7 @@ export const getTrades = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve trades",
+			message: t("actions.tradesFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -821,6 +826,7 @@ export const getTrades = async (
 export const getTradesForDate = async (
 	date: Date
 ): Promise<ActionResponse<Trade[]>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const startOfDay = getStartOfDay(date)
@@ -844,13 +850,13 @@ export const getTradesForDate = async (
 
 		return {
 			status: "success",
-			message: "Trades retrieved successfully",
+			message: t("actions.tradesRetrieved"),
 			data: decryptedResult,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve trades",
+			message: t("actions.tradesFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -865,6 +871,7 @@ export const getTradesForDate = async (
  * Get unique assets from all trades (for filter dropdowns)
  */
 export const getUniqueAssets = async (): Promise<ActionResponse<string[]>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId } = await requireAuth()
 		const result = await db
@@ -875,13 +882,13 @@ export const getUniqueAssets = async (): Promise<ActionResponse<string[]>> => {
 
 		return {
 			status: "success",
-			message: "Assets retrieved successfully",
+			message: t("actions.assetsRetrieved"),
 			data: result.map((r) => r.asset),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve assets",
+			message: t("actions.assetsFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -907,6 +914,7 @@ export interface BulkCreateResult {
 export const bulkCreateTrades = async (
 	inputs: CsvTradeInput[]
 ): Promise<ActionResponse<BulkCreateResult>> => {
+	const t = await getTranslations("journal")
 	const result: BulkCreateResult = {
 		successCount: 0,
 		failedCount: 0,
@@ -1320,14 +1328,17 @@ export const bulkCreateTrades = async (
 			status: result.failedCount === inputs.length ? "error" : "success",
 			message:
 				result.failedCount === 0
-					? `Successfully imported ${result.successCount} trades`
-					: `Imported ${result.successCount} trades, ${result.failedCount} failed`,
+					? t("actions.tradesImported", { count: result.successCount })
+					: t("actions.tradesImportedWithErrors", {
+							count: result.successCount,
+							failed: result.failedCount,
+						}),
 			data: result,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to import trades",
+			message: t("actions.tradesImportFailed"),
 			errors: [
 				{
 					code: "BULK_CREATE_FAILED",
@@ -1376,6 +1387,7 @@ export interface CreateScaledTradeInput {
 export const createScaledTrade = async (
 	input: CreateScaledTradeInput
 ): Promise<ActionResponse<Trade>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const { executions, tagIds, ...tradeData } = input
@@ -1383,7 +1395,7 @@ export const createScaledTrade = async (
 		if (!executions || executions.length === 0) {
 			return {
 				status: "error",
-				message: "At least one execution is required",
+				message: t("errors.executionRequired"),
 				errors: [
 					{ code: "VALIDATION_ERROR", detail: "No executions provided" },
 				],
@@ -1397,7 +1409,7 @@ export const createScaledTrade = async (
 		if (entries.length === 0) {
 			return {
 				status: "error",
-				message: "At least one entry execution is required",
+				message: t("errors.entryExecutionRequired"),
 				errors: [
 					{ code: "VALIDATION_ERROR", detail: "No entry executions provided" },
 				],
@@ -1627,13 +1639,13 @@ export const createScaledTrade = async (
 
 		return {
 			status: "success",
-			message: "Scaled trade created successfully",
+			message: t("actions.scaledTradeCreated"),
 			data: trade,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to create scaled trade",
+			message: t("actions.scaledTradeCreateFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -1667,6 +1679,7 @@ export const getTradesGroupedByDay = async (
 	dateTo?: Date,
 	extendedFilters?: ExtendedTradeFilters
 ): Promise<ActionResponse<TradesByDay[]>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId, showAllAccounts, allAccountIds } =
 			await requireAuth()
@@ -1745,7 +1758,7 @@ export const getTradesGroupedByDay = async (
 		if (result.length === 0) {
 			return {
 				status: "success",
-				message: "No trades found",
+				message: t("actions.noTradesFound"),
 				data: [],
 			}
 		}
@@ -1884,13 +1897,13 @@ export const getTradesGroupedByDay = async (
 
 		return {
 			status: "success",
-			message: "Trades grouped by day retrieved",
+			message: t("actions.tradesGroupedRetrieved"),
 			data: tradesByDay,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve trades grouped by day",
+			message: t("actions.tradesGroupedFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -1908,6 +1921,7 @@ export const getTradesGroupedByDay = async (
 export const recalculateRValues = async (): Promise<
 	ActionResponse<{ updatedCount: number }>
 > => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const rawTrades = await db.query.trades.findMany({
@@ -2006,13 +2020,13 @@ export const recalculateRValues = async (): Promise<
 
 		return {
 			status: "success",
-			message: `Recalculated R values for ${updatedCount} trades`,
+			message: t("actions.recalculatedRValues", { count: updatedCount }),
 			data: { updatedCount },
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to recalculate R values",
+			message: t("actions.recalculateRValuesFailed"),
 			errors: [
 				{
 					code: "RECALCULATE_FAILED",
@@ -2031,6 +2045,7 @@ export const recalculateRValues = async (): Promise<
 export const recalculateAllTradesPnL = async (): Promise<
 	ActionResponse<{ updatedCount: number }>
 > => {
+	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
 
@@ -2193,13 +2208,13 @@ export const recalculateAllTradesPnL = async (): Promise<
 
 		return {
 			status: "success",
-			message: `Recalculated P&L for ${updatedCount} trades`,
+			message: t("actions.recalculatedPnL", { count: updatedCount }),
 			data: { updatedCount },
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to recalculate P&L",
+			message: t("actions.recalculatePnLFailed"),
 			errors: [
 				{
 					code: "RECALCULATE_PNL_FAILED",

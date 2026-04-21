@@ -1,6 +1,7 @@
 "use server"
 
 import { invalidateStrategyData } from "@/lib/cache/invalidate"
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import {
 	strategies,
@@ -74,6 +75,7 @@ export interface ComplianceOverview {
 export const createStrategy = async (
 	input: CreateStrategyInput
 ): Promise<ActionResponse<Strategy>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId, accountId } = await requireAuth()
 		const validated = createStrategySchema.parse(input)
@@ -113,14 +115,14 @@ export const createStrategy = async (
 
 		return {
 			status: "success",
-			message: "Strategy created successfully",
+			message: t("actions.strategyCreated"),
 			data: strategy,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -132,7 +134,7 @@ export const createStrategy = async (
 		if (isUniqueViolation(error)) {
 			return {
 				status: "error",
-				message: "A strategy with this code already exists",
+				message: t("actions.strategyDuplicate"),
 				errors: [
 					{
 						code: "DUPLICATE_STRATEGY",
@@ -144,7 +146,7 @@ export const createStrategy = async (
 
 		return {
 			status: "error",
-			message: "Failed to create strategy",
+			message: t("actions.strategyCreateFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -162,6 +164,7 @@ export const updateStrategy = async (
 	id: string,
 	input: UpdateStrategyInput
 ): Promise<ActionResponse<Strategy>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -172,7 +175,7 @@ export const updateStrategy = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Strategy not found",
+				message: t("actions.strategyNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
 			}
 		}
@@ -241,14 +244,14 @@ export const updateStrategy = async (
 
 		return {
 			status: "success",
-			message: "Strategy updated successfully",
+			message: t("actions.strategyUpdated"),
 			data: strategy,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -260,7 +263,7 @@ export const updateStrategy = async (
 		if (isUniqueViolation(error)) {
 			return {
 				status: "error",
-				message: "A strategy with this code already exists",
+				message: t("actions.strategyDuplicate"),
 				errors: [
 					{
 						code: "DUPLICATE_STRATEGY",
@@ -272,7 +275,7 @@ export const updateStrategy = async (
 
 		return {
 			status: "error",
-			message: "Failed to update strategy",
+			message: t("actions.strategyUpdateFailed"),
 			errors: [
 				{
 					code: "UPDATE_FAILED",
@@ -290,6 +293,7 @@ export const deleteStrategy = async (
 	id: string,
 	hardDelete = false
 ): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -300,7 +304,7 @@ export const deleteStrategy = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Strategy not found",
+				message: t("actions.strategyNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
 			}
 		}
@@ -323,13 +327,13 @@ export const deleteStrategy = async (
 		return {
 			status: "success",
 			message: hardDelete
-				? "Strategy deleted permanently"
-				: "Strategy deactivated",
+				? t("actions.strategyDeletedPermanently")
+				: t("actions.strategyDeactivated"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete strategy",
+			message: t("actions.strategyDeleteFailed"),
 			errors: [
 				{
 					code: "DELETE_FAILED",
@@ -419,6 +423,7 @@ const calculateStrategyStats = (
 export const getStrategies = async (
 	includeInactive = false
 ): Promise<ActionResponse<StrategyWithStats[]>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const authContext = await requireAuth()
 		// Strategies are user-level, queried by userId
@@ -440,7 +445,7 @@ export const getStrategies = async (
 		if (allStrategies.length === 0) {
 			return {
 				status: "success",
-				message: "No strategies found",
+				message: t("actions.noStrategiesFound"),
 				data: [],
 			}
 		}
@@ -478,13 +483,13 @@ export const getStrategies = async (
 
 		return {
 			status: "success",
-			message: "Strategies retrieved successfully",
+			message: t("actions.strategiesRetrieved"),
 			data: strategiesWithStats,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve strategies",
+			message: t("actions.strategiesFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -501,6 +506,7 @@ export const getStrategies = async (
 export const getStrategy = async (
 	id: string
 ): Promise<ActionResponse<StrategyWithStats>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const authContext = await requireAuth()
 		// Strategies are user-level
@@ -518,7 +524,7 @@ export const getStrategy = async (
 		if (!strategy) {
 			return {
 				status: "error",
-				message: "Strategy not found",
+				message: t("actions.strategyNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
 			}
 		}
@@ -545,7 +551,7 @@ export const getStrategy = async (
 
 		return {
 			status: "success",
-			message: "Strategy retrieved successfully",
+			message: t("actions.strategyRetrieved"),
 			data: {
 				...strategy,
 				...calculateStrategyStats(strategyTrades),
@@ -556,7 +562,7 @@ export const getStrategy = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve strategy",
+			message: t("actions.strategyFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -573,6 +579,7 @@ export const getStrategy = async (
 export const getComplianceOverview = async (): Promise<
 	ActionResponse<ComplianceOverview>
 > => {
+	const t = await getTranslations("playbook")
 	try {
 		const authContext = await requireAuth()
 		// Strategies are user-level
@@ -661,7 +668,7 @@ export const getComplianceOverview = async (): Promise<
 
 		return {
 			status: "success",
-			message: "Compliance overview retrieved",
+			message: t("actions.complianceRetrieved"),
 			data: {
 				overallCompliance,
 				totalTrackedTrades: trackedTrades.length,
@@ -679,7 +686,7 @@ export const getComplianceOverview = async (): Promise<
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve compliance overview",
+			message: t("actions.complianceFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",

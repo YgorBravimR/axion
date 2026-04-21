@@ -426,11 +426,11 @@ const HoveredCellDetail = ({ cell, metric, t }: HoveredCellDetailProps) => {
 				)}
 			</div>
 			<div className="gap-m-500 flex items-center">
-				<MetricStat label="PF" value={summary.profitFactor.toFixed(2)} positive={summary.profitFactor >= 1} highlight={metric === "profitFactor"} />
-				<MetricStat label="Win" value={`${summary.winRate.toFixed(0)}%`} positive={summary.winRate >= 50} highlight={metric === "winRate"} />
-				<MetricStat label="Sharpe" value={summary.sharpeRatio.toFixed(2)} positive={summary.sharpeRatio >= 0} highlight={metric === "sharpeRatio"} />
-				<MetricStat label="P&L" value={formatCentsAsCurrency(summary.totalPnlCents, "BRL")} positive={summary.totalPnlCents >= 0} highlight={metric === "totalPnlCents"} />
-				<MetricStat label="Trades" value={String(summary.totalTrades)} positive={true} highlight={false} />
+				<MetricStat label={t("heatmap.statPF")} value={summary.profitFactor.toFixed(2)} positive={summary.profitFactor >= 1} highlight={metric === "profitFactor"} />
+				<MetricStat label={t("heatmap.statWin")} value={`${summary.winRate.toFixed(0)}%`} positive={summary.winRate >= 50} highlight={metric === "winRate"} />
+				<MetricStat label={t("heatmap.statSharpe")} value={summary.sharpeRatio.toFixed(2)} positive={summary.sharpeRatio >= 0} highlight={metric === "sharpeRatio"} />
+				<MetricStat label={t("heatmap.statPnl")} value={formatCentsAsCurrency(summary.totalPnlCents, "BRL")} positive={summary.totalPnlCents >= 0} highlight={metric === "totalPnlCents"} />
+				<MetricStat label={t("heatmap.statTrades")} value={String(summary.totalTrades)} positive={true} highlight={false} />
 			</div>
 		</div>
 	)

@@ -196,7 +196,7 @@ export const createExecution = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -292,21 +292,21 @@ export const createExecution = async (
 
 		return {
 			status: "success",
-			message: "Execution created successfully",
+			message: t("actions.executionCreated"),
 			data: decryptedExecution,
 		}
 	} catch (error) {
 		if (error instanceof Error && error.name === "ZodError") {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: [{ code: "VALIDATION_ERROR", detail: error.message }],
 			}
 		}
 
 		return {
 			status: "error",
-			message: "Failed to create execution",
+			message: t("actions.createFailed"),
 			errors: [{ code: "CREATE_FAILED", detail: toSafeErrorMessage(error, "createExecution") }],
 		}
 	}
@@ -336,7 +336,7 @@ export const updateExecution = async (
 		if (!rawExisting || rawExisting.trade?.accountId !== accountId) {
 			return {
 				status: "error",
-				message: "Execution not found",
+				message: t("actions.executionNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Execution does not exist" }],
 			}
 		}
@@ -441,13 +441,13 @@ export const updateExecution = async (
 
 		return {
 			status: "success",
-			message: "Execution updated successfully",
+			message: t("actions.executionUpdated"),
 			data: decryptedExecution,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to update execution",
+			message: t("actions.updateFailed"),
 			errors: [{ code: "UPDATE_FAILED", detail: toSafeErrorMessage(error, "updateExecution") }],
 		}
 	}
@@ -459,6 +459,7 @@ export const updateExecution = async (
 export const deleteExecution = async (
 	id: string
 ): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -471,7 +472,7 @@ export const deleteExecution = async (
 		if (!existing || existing.trade?.accountId !== accountId) {
 			return {
 				status: "error",
-				message: "Execution not found",
+				message: t("actions.executionNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Execution does not exist" }],
 			}
 		}
@@ -503,12 +504,12 @@ export const deleteExecution = async (
 
 		return {
 			status: "success",
-			message: "Execution deleted successfully",
+			message: t("actions.executionDeleted"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete execution",
+			message: t("actions.deleteFailed"),
 			errors: [{ code: "DELETE_FAILED", detail: toSafeErrorMessage(error, "deleteExecution") }],
 		}
 	}
@@ -520,6 +521,7 @@ export const deleteExecution = async (
 export const getExecutions = async (
 	tradeId: string
 ): Promise<ActionResponse<TradeExecution[]>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -531,7 +533,7 @@ export const getExecutions = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -549,13 +551,13 @@ export const getExecutions = async (
 
 		return {
 			status: "success",
-			message: "Executions retrieved successfully",
+			message: t("actions.executionsRetrieved"),
 			data: executions,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve executions",
+			message: t("actions.fetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getExecutions") }],
 		}
 	}
@@ -567,6 +569,7 @@ export const getExecutions = async (
 export const getExecutionSummary = async (
 	tradeId: string
 ): Promise<ActionResponse<ExecutionSummary>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -578,7 +581,7 @@ export const getExecutionSummary = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -598,13 +601,13 @@ export const getExecutionSummary = async (
 
 		return {
 			status: "success",
-			message: "Execution summary calculated successfully",
+			message: t("actions.summaryCalculated"),
 			data: summary,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to calculate execution summary",
+			message: t("actions.calculationFailed"),
 			errors: [{ code: "CALCULATION_FAILED", detail: toSafeErrorMessage(error, "getExecutionSummary") }],
 		}
 	}
@@ -627,7 +630,7 @@ export const convertToScaledMode = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -737,13 +740,13 @@ export const convertToScaledMode = async (
 
 		return {
 			status: "success",
-			message: "Trade converted to scaled mode successfully",
+			message: t("actions.convertedToScaled"),
 			data: createdExecutions,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to convert trade to scaled mode",
+			message: t("actions.convertFailed"),
 			errors: [{ code: "CONVERT_FAILED", detail: toSafeErrorMessage(error, "convertToScaledMode") }],
 		}
 	}
@@ -767,7 +770,7 @@ export const recalculateTradeFromExecutions = async (
 		if (!trade) {
 			return {
 				status: "error",
-				message: "Trade not found",
+				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
 		}
@@ -803,13 +806,13 @@ export const recalculateTradeFromExecutions = async (
 		invalidateTradeData(tradeId, userId, accountId)
 		return {
 			status: "success",
-			message: "Trade recalculated from executions successfully",
+			message: t("actions.recalculated"),
 			data: summary,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to recalculate trade from executions",
+			message: t("actions.recalculateFailed"),
 			errors: [{ code: "RECALCULATE_FAILED", detail: toSafeErrorMessage(error, "recalculateTradeFromExecutions") }],
 		}
 	}

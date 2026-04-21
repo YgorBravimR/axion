@@ -17,6 +17,7 @@ import {
 	KNOWN_INDICATOR_GROUPS,
 } from "@/lib/csv-parsers/candle-header-mappings"
 import { toSafeErrorMessage } from "@/lib/error-utils"
+import { getTranslations } from "next-intl/server"
 import type { RawCandleRow, DetectedIndicator } from "@/lib/csv-parsers/candle-parser"
 import type { ActionResponse } from "@/types"
 
@@ -68,6 +69,7 @@ const validateCandleImport = async (
 	assetSymbol: string,
 	timeframeCode: string
 ): Promise<ActionResponse<CandleValidationResult>> => {
+	const t = await getTranslations("candleImport")
 	try {
 		// Step 1: Parse the CSV
 		const parseResult = parseCandleCSV(fileContent)
@@ -75,7 +77,7 @@ const validateCandleImport = async (
 		if (!parseResult.success) {
 			return {
 				status: "error",
-				message: "CSV parsing failed",
+				message: t("errors.csvParseFailed"),
 				errors: parseResult.errors.map((error) => ({
 					code: "PARSE_ERROR",
 					detail: `Row ${error.row}: [${error.field}] ${error.message}`,
@@ -92,7 +94,7 @@ const validateCandleImport = async (
 		if (!matchedAsset) {
 			return {
 				status: "error",
-				message: `Asset "${assetSymbol}" not found. Add it in Settings → Assets before importing candle data.`,
+				message: t("errors.assetNotFound", { symbol: assetSymbol }),
 			}
 		}
 
@@ -108,7 +110,10 @@ const validateCandleImport = async (
 		if (!matchedTimeframe) {
 			return {
 				status: "error",
-				message: `Timeframe "${timeframeCode}" not found. Available timeframes: ${allTimeframes.map((tf) => tf.code).join(", ")}`,
+				message: t("errors.timeframeNotFound", {
+					code: timeframeCode,
+					available: allTimeframes.map((tf) => tf.code).join(", "),
+				}),
 			}
 		}
 
@@ -129,7 +134,11 @@ const validateCandleImport = async (
 		// Step 5: Return validation result
 		return {
 			status: "success",
-			message: `Validated ${parseResult.candles.length} candles for ${matchedAsset.symbol} (${matchedTimeframe.name})`,
+			message: t("actions.validated", {
+				count: parseResult.candles.length,
+				symbol: matchedAsset.symbol,
+				timeframe: matchedTimeframe.name,
+			}),
 			data: {
 				assetId: matchedAsset.id,
 				assetName: matchedAsset.name,
@@ -172,20 +181,21 @@ const commitCandleImport = async (
 	timeframeId: string,
 	candles: RawCandleRow[]
 ): Promise<ActionResponse<CandleImportResult>> => {
+	const t = await getTranslations("candleImport")
 	try {
 		// Step 1: Validate UUIDs
 		const assetIdResult = uuidSchema.safeParse(assetId)
 		if (!assetIdResult.success) {
-			return { status: "error", message: "Invalid asset ID format" }
+			return { status: "error", message: t("errors.invalidAssetId") }
 		}
 
 		const timeframeIdResult = uuidSchema.safeParse(timeframeId)
 		if (!timeframeIdResult.success) {
-			return { status: "error", message: "Invalid timeframe ID format" }
+			return { status: "error", message: t("errors.invalidTimeframeId") }
 		}
 
 		if (candles.length === 0) {
-			return { status: "error", message: "No candles to import" }
+			return { status: "error", message: t("errors.noCandlesToImport") }
 		}
 
 		// Step 2: Fetch registered indicator keys (allowlist)
@@ -341,7 +351,11 @@ const commitCandleImport = async (
 
 		return {
 			status: "success",
-			message: `Successfully imported ${candles.length} candles${newIndicators.length > 0 ? ` and registered ${newIndicators.length} new indicator(s)` : ""}${skippedKeys.size > 0 ? `. Skipped ${skippedKeys.size} unregistered indicator(s)` : ""}`,
+			message: t("actions.importSuccess", {
+				count: candles.length,
+				newIndicators: newIndicators.length,
+				skipped: skippedKeys.size,
+			}),
 			data: {
 				totalRows: candles.length,
 				newIndicators,
@@ -369,6 +383,7 @@ const commitCandleImport = async (
 const seedIndicatorDefinitions = async (): Promise<
 	ActionResponse<{ seeded: number }>
 > => {
+	const t = await getTranslations("candleImport")
 	try {
 		// Step 1: Upsert all indicator groups
 		if (KNOWN_INDICATOR_GROUPS.length > 0) {
@@ -416,7 +431,10 @@ const seedIndicatorDefinitions = async (): Promise<
 
 		return {
 			status: "success",
-			message: `Seeded indicator definitions (${values.length} known mappings across ${groups.length} groups)`,
+			message: t("actions.seededIndicators", {
+				mappings: values.length,
+				groups: groups.length,
+			}),
 			data: {
 				seeded: result.rowCount ?? 0,
 			},

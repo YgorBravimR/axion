@@ -302,21 +302,30 @@ describe("loginUser()", () => {
 	})
 
 	describe("email verification gate (Fix 3)", () => {
-		it("should return EMAIL_NOT_VERIFIED when user.emailVerified is null", async () => {
+		// Email verification is currently disabled — users are auto-verified on
+		// registration (see auth.ts: emailVerified check is commented out).
+		// This test documents the current behavior: unverified users can still
+		// log in (verification gate is bypassed).
+		it("should allow login even when user.emailVerified is null (verification disabled)", async () => {
 			allowRateLimit()
 			allowLockout()
 
 			const unverifiedUser = createMockUser({ emailVerified: null })
+			const account = createMockAccount()
+
 			dbQueryMock.users.findFirst.mockResolvedValue(unverifiedUser)
 			bcryptCompareMock.mockResolvedValue(true) // correct password
+			dbQueryMock.tradingAccounts.findMany.mockResolvedValue([account])
+			signInMock.mockResolvedValue(undefined)
 
 			const result = await loginUser({
 				email: unverifiedUser.email,
 				password: "Password1",
 			})
 
-			expect(result.status).toBe("error")
-			expect(result.error).toBe("EMAIL_NOT_VERIFIED")
+			// Verification gate is disabled — login should succeed
+			expect(result.status).toBe("success")
+			expect(result.error).not.toBe("EMAIL_NOT_VERIFIED")
 		})
 
 		it("should not return EMAIL_NOT_VERIFIED when user has a verified email", async () => {
@@ -545,50 +554,48 @@ describe("registerUser()", () => {
 	})
 
 	describe("successful registration (Fix 3)", () => {
-		it("should return status=success and needsVerification=true on first-time registration", async () => {
-			dbQueryMock.users.findFirst.mockResolvedValue(null)
-
+		// Registration no longer uses a DB transaction — it performs direct inserts.
+		// Email verification is currently disabled: users are auto-verified on
+		// registration, so needsVerification is always false.
+		const setupSuccessfulRegistration = (userId = "new-user-id") => {
 			const newUser = createMockUser({
-				id: "new-user-id",
+				id: userId,
 				email: validRegistration.email.toLowerCase(),
 			})
 
-			dbMock.transaction.mockImplementation(
-				async (callback: (tx: unknown) => Promise<unknown>) => {
-					const tx = {
-						insert: vi.fn().mockReturnValue({
-							values: vi.fn().mockReturnValue({
-								returning: vi.fn().mockResolvedValue([newUser]),
-							}),
-						}),
-					}
-					return callback(tx)
-				}
-			)
+			// auth.ts calls db.insert(users).values(...).returning() for the user row,
+			// then db.insert(tradingAccounts).values(...) for the default account,
+			// then db.update(users).set(...).where(...) to auto-verify the email.
+			dbMock.insert
+				.mockReturnValueOnce({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([newUser]),
+					}),
+				})
+				.mockReturnValueOnce({
+					values: vi.fn().mockResolvedValue(undefined),
+				})
+			dbMock.update.mockReturnValue({
+				set: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue(undefined),
+				}),
+			})
+
+			return newUser
+		}
+
+		it("should return status=success on first-time registration", async () => {
+			dbQueryMock.users.findFirst.mockResolvedValue(null)
+			setupSuccessfulRegistration()
 
 			const result = await registerUser(validRegistration)
 
 			expect(result.status).toBe("success")
-			expect(result.needsVerification).toBe(true)
 		})
 
-		it("should not auto-sign-in the user after registration (verification required)", async () => {
+		it("should not auto-sign-in the user after registration", async () => {
 			dbQueryMock.users.findFirst.mockResolvedValue(null)
-
-			const newUser = createMockUser({ id: "new-user-id" })
-
-			dbMock.transaction.mockImplementation(
-				async (callback: (tx: unknown) => Promise<unknown>) => {
-					const tx = {
-						insert: vi.fn().mockReturnValue({
-							values: vi.fn().mockReturnValue({
-								returning: vi.fn().mockResolvedValue([newUser]),
-							}),
-						}),
-					}
-					return callback(tx)
-				}
-			)
+			setupSuccessfulRegistration()
 
 			await registerUser(validRegistration)
 
@@ -597,9 +604,14 @@ describe("registerUser()", () => {
 	})
 
 	describe("unexpected errors", () => {
-		it("should return a generic error when the DB transaction throws", async () => {
+		it("should return a generic error when the DB insert throws", async () => {
 			dbQueryMock.users.findFirst.mockResolvedValue(null)
-			dbMock.transaction.mockRejectedValue(new Error("TX failure"))
+			// Source uses direct db.insert() calls (no transaction) — simulate DB failure
+			dbMock.insert.mockReturnValueOnce({
+				values: vi.fn().mockReturnValue({
+					returning: vi.fn().mockRejectedValue(new Error("DB insert failure")),
+				}),
+			})
 
 			const result = await registerUser(validRegistration)
 

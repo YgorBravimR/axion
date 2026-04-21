@@ -1,6 +1,7 @@
 "use server"
 
 import { invalidateTagData } from "@/lib/cache/invalidate"
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { tags, tradeTags, trades } from "@/db/schema"
 import type { Tag } from "@/db/schema"
@@ -34,6 +35,7 @@ type CreateTagInput = z.infer<typeof createTagSchema>
 export const createTag = async (
 	input: CreateTagInput
 ): Promise<ActionResponse<Tag>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId, accountId } = await requireAuth()
 		const validated = createTagSchema.parse(input)
@@ -53,14 +55,14 @@ export const createTag = async (
 
 		return {
 			status: "success",
-			message: "Tag created successfully",
+			message: t("actions.tagCreated"),
 			data: tag,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: [{ code: "VALIDATION_ERROR", detail: error.message }],
 			}
 		}
@@ -69,14 +71,14 @@ export const createTag = async (
 		if (error instanceof Error && error.message.includes("unique")) {
 			return {
 				status: "error",
-				message: "A tag with this name already exists",
+				message: t("actions.tagDuplicate"),
 				errors: [{ code: "DUPLICATE_TAG", detail: "Tag name must be unique" }],
 			}
 		}
 
 		return {
 			status: "error",
-			message: "Failed to create tag",
+			message: t("actions.tagCreateFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -94,6 +96,7 @@ export const updateTag = async (
 	id: string,
 	input: Partial<CreateTagInput>
 ): Promise<ActionResponse<Tag>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -104,7 +107,7 @@ export const updateTag = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Tag not found",
+				message: t("actions.tagNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Tag does not exist" }],
 			}
 		}
@@ -126,13 +129,13 @@ export const updateTag = async (
 
 		return {
 			status: "success",
-			message: "Tag updated successfully",
+			message: t("actions.tagUpdated"),
 			data: tag,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to update tag",
+			message: t("actions.tagUpdateFailed"),
 			errors: [
 				{
 					code: "UPDATE_FAILED",
@@ -150,6 +153,7 @@ export const updateTag = async (
 export const getTags = async (
 	type?: TagType
 ): Promise<ActionResponse<Tag[]>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId } = await requireAuth()
 
@@ -164,13 +168,13 @@ export const getTags = async (
 
 		return {
 			status: "success",
-			message: "Tags retrieved successfully",
+			message: t("actions.tagsRetrieved"),
 			data: result,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve tags",
+			message: t("actions.tagsFetchFailed"),
 			errors: [
 				{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTags") },
 			],
@@ -185,6 +189,7 @@ export const getTags = async (
 export const getTagStats = async (
 	filters?: TradeFilters
 ): Promise<ActionResponse<TagStats[]>> => {
+	const t = await getTranslations("journal")
 	try {
 		const authContext = await requireAuth()
 
@@ -197,7 +202,7 @@ export const getTagStats = async (
 		if (allTags.length === 0) {
 			return {
 				status: "success",
-				message: "No tags found",
+				message: t("actions.noTagsFound"),
 				data: [],
 			}
 		}
@@ -306,13 +311,13 @@ export const getTagStats = async (
 
 		return {
 			status: "success",
-			message: "Tag stats retrieved successfully",
+			message: t("actions.tagStatsRetrieved"),
 			data: sortedTagStats,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve tag stats",
+			message: t("actions.tagStatsFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -327,6 +332,7 @@ export const getTagStats = async (
  * Delete a tag
  */
 export const deleteTag = async (id: string): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("journal")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -337,7 +343,7 @@ export const deleteTag = async (id: string): Promise<ActionResponse<void>> => {
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Tag not found",
+				message: t("actions.tagNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Tag does not exist" }],
 			}
 		}
@@ -349,12 +355,12 @@ export const deleteTag = async (id: string): Promise<ActionResponse<void>> => {
 
 		return {
 			status: "success",
-			message: "Tag deleted successfully",
+			message: t("actions.tagDeleted"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete tag",
+			message: t("actions.tagDeleteFailed"),
 			errors: [
 				{
 					code: "DELETE_FAILED",

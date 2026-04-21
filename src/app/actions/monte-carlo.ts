@@ -111,13 +111,13 @@ export const getDataSourceOptions = async (): Promise<
 
 		return {
 			status: "success",
-			message: "Data sources retrieved",
+			message: t("actions.dataSourcesRetrieved"),
 			data: options,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get data sources",
+			message: t("actions.failedToGetDataSources"),
 			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "getDataSourceOptions") }],
 		}
 	}
@@ -364,7 +364,7 @@ export const getSimulationStats = async (
 
 		return {
 			status: "success",
-			message: "Stats retrieved",
+			message: t("actions.statsRetrieved"),
 			data: {
 				sourceType: validated.type,
 				sourceName,
@@ -391,7 +391,7 @@ export const getSimulationStats = async (
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -401,7 +401,7 @@ export const getSimulationStats = async (
 
 		return {
 			status: "error",
-			message: "Failed to get simulation stats",
+			message: t("actions.failedToGetSimulationStats"),
 			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "getSimulationStats") }],
 		}
 	}
@@ -410,6 +410,7 @@ export const getSimulationStats = async (
 export const runSimulation = async (
 	params: SimulationParams
 ): Promise<ActionResponse<MonteCarloResult>> => {
+	const t = await getTranslations("monteCarlo")
 	try {
 		await requireAuth()
 		const validated = simulationParamsSchema.parse(params)
@@ -417,14 +418,14 @@ export const runSimulation = async (
 
 		return {
 			status: "success",
-			message: "Simulation completed",
+			message: t("actions.simulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -434,7 +435,7 @@ export const runSimulation = async (
 
 		return {
 			status: "error",
-			message: "Failed to run simulation",
+			message: t("actions.failedToRunSimulation"),
 			errors: [{ code: "SIMULATION_ERROR", detail: toSafeErrorMessage(error, "runSimulation") }],
 		}
 	}
@@ -537,7 +538,7 @@ export const runComparisonSimulation = async (
 
 		return {
 			status: "success",
-			message: "Comparison completed",
+			message: t("actions.comparisonCompleted"),
 			data: {
 				results: sortedResults,
 				recommendations: {
@@ -550,7 +551,7 @@ export const runComparisonSimulation = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to run comparison",
+			message: t("actions.failedToRunComparison"),
 			errors: [{ code: "COMPARISON_ERROR", detail: toSafeErrorMessage(error, "runComparisonSimulation") }],
 		}
 	}
@@ -566,6 +567,7 @@ export const runComparisonSimulation = async (
 export const runSimulationV2 = async (
 	params: SimulationParamsV2
 ): Promise<ActionResponse<MonteCarloResultV2>> => {
+	const t = await getTranslations("monteCarlo")
 	try {
 		await requireAuth()
 		const validated = simulationParamsV2Schema.parse(params)
@@ -573,14 +575,14 @@ export const runSimulationV2 = async (
 
 		return {
 			status: "success",
-			message: "V2 simulation completed",
+			message: t("actions.v2SimulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -590,7 +592,7 @@ export const runSimulationV2 = async (
 
 		return {
 			status: "error",
-			message: "Failed to run V2 simulation",
+			message: t("actions.failedToRunV2Simulation"),
 			errors: [{ code: "SIMULATION_V2_ERROR", detail: toSafeErrorMessage(error, "runSimulationV2") }],
 		}
 	}

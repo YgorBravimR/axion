@@ -126,7 +126,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 
 	const handleRun = () => {
 		if (!selectedSource || !dateFrom || !dateTo) {
-			showToast("error", "Select asset, timeframe, and date range")
+			showToast("error", t("errors.missingSelection"))
 			return
 		}
 
@@ -147,7 +147,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 
 			if (response.success && response.data) {
 				setResult(response.data)
-				showToast("success", `${response.data.summary.totalTrades} trades`)
+				showToast("success", t("results.completedTrades", { count: response.data.summary.totalTrades }))
 			} else {
 				showToast("error", response.error ?? t("errors.engineError"))
 			}

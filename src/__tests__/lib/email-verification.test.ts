@@ -101,9 +101,13 @@ vi.mock("drizzle-orm", async (importOriginal) => {
 
 // The module creates two limiters in module scope. We distinguish them by
 // config: requestLimiter uses maxAttempts=3, verifyLimiter uses maxAttempts=5.
+// The source creates two limiters in module scope:
+//   requestLimiter → maxAttempts: 2, windowMs: 30 * 60 * 1000
+//   verifyLimiter  → maxAttempts: 5, windowMs: 15 * 60 * 1000
+// We distinguish them by maxAttempts value so each mock fn is wired correctly.
 vi.mock("@/lib/db-rate-limiter", () => ({
 	createDbRateLimiter: vi.fn((config: { maxAttempts: number; windowMs: number }) => {
-		if (config.maxAttempts === 3) {
+		if (config.maxAttempts === 2) {
 			return {
 				check: requestLimiterCheckMock,
 				reset: vi.fn().mockResolvedValue(undefined),
@@ -411,7 +415,7 @@ describe("verifyEmail()", () => {
 			const result = await verifyEmail({ email: "trader@example.com", code: "123456" })
 
 			expect(result.success).toBe(false)
-			expect(result.error).toMatch(/too many attempts/i)
+			expect(result.error).toMatch(/too many requests/i)
 			expect(result.error).toMatch(/10 minute/i)
 		})
 

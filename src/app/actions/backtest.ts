@@ -13,6 +13,7 @@ import { db } from "@/db/drizzle"
 import { assets, priceCandles } from "@/db/schema"
 import { and, eq, gte, lte, asc } from "drizzle-orm"
 import { BRT_OFFSET } from "@/lib/dates"
+import { getTranslations } from "next-intl/server"
 
 const MAX_CANDLES = 500_000
 
@@ -33,12 +34,15 @@ const fetchAssetConfig = async (
 	}
 }
 
-const fetchCandles = async (params: {
-	assetId: string
-	timeframeId: string
-	dateRange: { from: string; to: string }
-	requiredIndicators: string[]
-}): Promise<{ candles: CandleRow[] } | { error: string }> => {
+const fetchCandles = async (
+	params: {
+		assetId: string
+		timeframeId: string
+		dateRange: { from: string; to: string }
+		requiredIndicators: string[]
+	},
+	t: Awaited<ReturnType<typeof getTranslations<"backtest">>>
+): Promise<{ candles: CandleRow[] } | { error: string }> => {
 	const { assetId, timeframeId, dateRange, requiredIndicators } = params
 	const from = new Date(`${dateRange.from}T09:00:00${BRT_OFFSET}`)
 	const to = new Date(`${dateRange.to}T18:00:00${BRT_OFFSET}`)
@@ -90,12 +94,15 @@ const fetchCandles = async (params: {
 	})
 
 	if (candles.length === 0) {
-		return { error: "No candle data found for the selected date range" }
+		return { error: t("errors.noCandles") }
 	}
 
 	if (candles.length > MAX_CANDLES) {
 		return {
-			error: `Dataset too large (${candles.length.toLocaleString()} candles). Maximum: ${MAX_CANDLES.toLocaleString()}`,
+			error: t("errors.datasetTooLarge", {
+				count: candles.length.toLocaleString(),
+				max: MAX_CANDLES.toLocaleString(),
+			}),
 		}
 	}
 
@@ -114,12 +121,13 @@ const fetchCandles = async (params: {
 const runBacktestAction = async (
 	input: BacktestInput
 ): Promise<{ success: boolean; data?: BacktestResult; error?: string }> => {
+	const t = await getTranslations("backtest")
 	try {
 		const validated = backtestInputSchema.safeParse(input)
 		if (!validated.success) {
 			return {
 				success: false,
-				error: validated.error.issues[0]?.message ?? "Invalid parameters",
+				error: validated.error.issues[0]?.message ?? t("errors.invalidParams"),
 			}
 		}
 
@@ -127,7 +135,7 @@ const runBacktestAction = async (
 
 		const assetConfig = await fetchAssetConfig(assetId)
 		if (!assetConfig) {
-			return { success: false, error: "Asset not found" }
+			return { success: false, error: t("errors.assetNotFound") }
 		}
 
 		const candleResult = await fetchCandles({
@@ -135,7 +143,7 @@ const runBacktestAction = async (
 			timeframeId,
 			dateRange,
 			requiredIndicators: recipe.requiredIndicators,
-		})
+		}, t)
 
 		if ("error" in candleResult) {
 			return { success: false, error: candleResult.error }
@@ -147,7 +155,7 @@ const runBacktestAction = async (
 	} catch (error) {
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : "Backtest engine error",
+			error: error instanceof Error ? error.message : t("errors.engineError"),
 		}
 	}
 }
@@ -161,14 +169,15 @@ const getBacktestDataSources = async (): Promise<{
 	data?: DataSourceInfo[]
 	error?: string
 }> => {
+	const t = await getTranslations("backtest")
 	try {
 		const result = await getAssetsWithPriceData()
 		if (result.status === "error") {
-			return { success: false, error: "Failed to load data sources" }
+			return { success: false, error: t("errors.failedToLoadDataSources") }
 		}
 		return { success: true, data: result.data }
 	} catch {
-		return { success: false, error: "Failed to load data sources" }
+		return { success: false, error: t("errors.failedToLoadDataSources") }
 	}
 }
 
@@ -186,13 +195,14 @@ const fetchBacktestData = async (params: {
 	data?: { candles: CandleRow[]; assetConfig: AssetConfig }
 	error?: string
 }> => {
+	const t = await getTranslations("backtest")
 	try {
 		const assetConfig = await fetchAssetConfig(params.assetId)
 		if (!assetConfig) {
-			return { success: false, error: "Asset not found" }
+			return { success: false, error: t("errors.assetNotFound") }
 		}
 
-		const candleResult = await fetchCandles(params)
+		const candleResult = await fetchCandles(params, t)
 		if ("error" in candleResult) {
 			return { success: false, error: candleResult.error }
 		}
@@ -207,7 +217,7 @@ const fetchBacktestData = async (params: {
 			error:
 				error instanceof Error
 					? error.message
-					: "Failed to fetch backtest data",
+					: t("errors.failedToFetchBacktestData"),
 		}
 	}
 }

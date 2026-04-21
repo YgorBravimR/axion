@@ -119,3 +119,10 @@ Also fixed `scaleDecisionTree` in `src/components/risk-simulation/risk-params-fo
 - `src/lib/validations/risk-profile.ts` (Zod schema — was missing gainSequence)
 - `src/app/actions/risk-simulation.ts` (validation call at line 110)
 - `src/components/risk-simulation/risk-params-form.tsx` (scaleDecisionTree missing gainSequence branch)
+
+---
+
+> **[FIX-2026-04-21]** `Severity: Medium` — **Affected:** `src/__tests__/setup.ts`, `src/__tests__/lib/email-verification.test.ts`, `src/__tests__/lib/auth-actions.test.ts`, `src/__tests__/lib/auth-config.test.ts`
+> **Report:** 44 unit test failures (20 + 15 + 9) across three auth test files — all caused by `getTranslations is not supported in Client Components` from `next-intl/server` running in Vitest's node environment. Compounded by stale test mocks after `auth.ts` was refactored (email verification gate commented out, transaction replaced with direct inserts, `requestLimiter` `maxAttempts` changed from 3 to 2).
+> **Fix:** (1) Added global `vi.mock("next-intl/server", ...)` to `src/__tests__/setup.ts` with a `TRANSLATION_MAP` that serves human-readable strings aligned with `messages/en.json`; (2) Fixed `email-verification.test.ts` limiter discriminator `maxAttempts === 3` → `maxAttempts === 2`; (3) Updated `auth-actions.test.ts` to reflect current source behavior: `loginUser` no longer gates on `emailVerified`, `registerUser` uses direct `db.insert()` (not a transaction), and `needsVerification` is now always `false`.
+> **General knowledge:** See `~/.claude/post-mortems/nextjs.md` for the general rule on mocking `next-intl/server` in Vitest.

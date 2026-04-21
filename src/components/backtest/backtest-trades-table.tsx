@@ -129,7 +129,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 			<DataTable
 				columns={columns}
 				data={trades}
-				emptyMessage="No trades"
+				emptyMessage={t("noTrades")}
 				pageSize={20}
 			/>
 		</div>

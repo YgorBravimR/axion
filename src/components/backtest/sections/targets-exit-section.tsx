@@ -15,12 +15,12 @@ interface TargetsExitSectionProps {
 }
 
 /** Inline unit suffix for each target mode — removes ambiguity */
-const getModeSuffix = (mode: TargetMode): string => {
+const getModeSuffix = (mode: TargetMode, t: ReturnType<typeof useTranslations>): string => {
 	switch (mode) {
-		case "r_multiple": return "R"
-		case "pct_range": return "% range"
-		case "pct_stop": return "% stop"
-		case "fixed_points": return "pts"
+		case "r_multiple": return t("modeSuffixR")
+		case "pct_range": return t("modeSuffixPctRange")
+		case "pct_stop": return t("modeSuffixPctStop")
+		case "fixed_points": return t("modeSuffixPts")
 	}
 }
 
@@ -134,7 +134,7 @@ const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps)
 										value={level.value}
 										onChange={(e) => handleLevelChange(index, "value", parseFloat(e.target.value) || 1)}
 									/>
-									<span className="text-small text-txt-300 shrink-0">{getModeSuffix(currentMode)}</span>
+									<span className="text-small text-txt-300 shrink-0">{getModeSuffix(currentMode, t)}</span>
 								</div>
 							</div>
 

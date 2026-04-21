@@ -142,13 +142,13 @@ const getLiveTradingStatus = async (date?: Date): Promise<ActionResponse<LiveTra
 
 		return {
 			status: "success",
-			message: "Live trading status resolved",
+			message: t("actionErrors.statusResolved"),
 			data: { hasProfile: true, status, tradeSummaries },
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get live trading status",
+			message: t("actionErrors.fetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getLiveTradingStatus") }],
 		}
 	}

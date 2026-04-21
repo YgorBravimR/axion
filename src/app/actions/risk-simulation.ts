@@ -42,6 +42,7 @@ const getSimulationPreview = async (
 	dateFrom: string,
 	dateTo: string
 ): Promise<ActionResponse<SimulationPreview>> => {
+	const t = await getTranslations("riskSimulation")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
@@ -75,7 +76,7 @@ const getSimulationPreview = async (
 
 		return {
 			status: "success",
-			message: "Preview generated",
+			message: t("actions.previewGenerated"),
 			data: {
 				totalTrades: decryptedTrades.length,
 				tradesWithSl: tradesWithSl.length,
@@ -87,7 +88,7 @@ const getSimulationPreview = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to generate preview",
+			message: t("actions.failedToGeneratePreview"),
 			errors: [{ code: "PREVIEW_FAILED", detail: toSafeErrorMessage(error, "getSimulationPreview") }],
 		}
 	}
@@ -267,13 +268,13 @@ const runRiskSimulationFromDb = async (
 
 		return {
 			status: "success",
-			message: "Simulation completed",
+			message: t("actions.simulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to run simulation",
+			message: t("actions.failedToRunSimulation"),
 			errors: [{ code: "SIMULATION_FAILED", detail: toSafeErrorMessage(error, "runRiskSimulationFromDb") }],
 		}
 	}
@@ -287,6 +288,7 @@ const runRiskSimulationFromDb = async (
  * Returns sorted list of distinct years that have closed trades.
  */
 const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
+	const t = await getTranslations("riskSimulation")
 	try {
 		const { accountId } = await requireAuth()
 
@@ -306,13 +308,13 @@ const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
 
 		return {
 			status: "success",
-			message: "Trade years retrieved",
+			message: t("actions.tradeYearsRetrieved"),
 			data: rows.map((r) => r.year),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get trade years",
+			message: t("actions.failedToGetTradeYears"),
 			errors: [{ code: "YEARS_FAILED", detail: toSafeErrorMessage(error, "getTradeYears") }],
 		}
 	}

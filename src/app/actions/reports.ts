@@ -243,6 +243,7 @@ export const getWeeklyReport = async (
 	data?: WeeklyReport
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 		const accountCondition = authContext.showAllAccounts
@@ -368,7 +369,7 @@ export const getWeeklyReport = async (
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching weekly report:", error)
-		return { status: "error", message: "Failed to fetch weekly report" }
+		return { status: "error", message: t("actions.weeklyFetchFailed") }
 	}
 }
 
@@ -383,6 +384,7 @@ export const getMonthlyReport = async (
 	data?: MonthlyReport
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 		const accountCondition = authContext.showAllAccounts
@@ -534,7 +536,7 @@ export const getMonthlyReport = async (
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching monthly report:", error)
-		return { status: "error", message: "Failed to fetch monthly report" }
+		return { status: "error", message: t("actions.monthlyFetchFailed") }
 	}
 }
 
@@ -547,6 +549,7 @@ export const getMistakeCostAnalysis = async (): Promise<{
 	data?: MistakeCostAnalysis
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 
@@ -639,7 +642,7 @@ export const getMistakeCostAnalysis = async (): Promise<{
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching mistake cost analysis:", error)
-		return { status: "error", message: "Failed to fetch mistake cost analysis" }
+		return { status: "error", message: t("actions.mistakeFetchFailed") }
 	}
 }
 
@@ -769,6 +772,7 @@ export const getMonthlyResultsWithProp = async (
 	data?: MonthlyResultsWithProp
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 
@@ -782,15 +786,15 @@ export const getMonthlyResultsWithProp = async (
 		])
 
 		if (!account) {
-			return { status: "error", message: "Trading account not found" }
+			return { status: "error", message: t("actions.accountNotFound") }
 		}
 
 		if (settingsResult.status !== "success" || !settingsResult.data) {
-			return { status: "error", message: "Failed to get user settings" }
+			return { status: "error", message: t("actions.settingsFetchFailed") }
 		}
 
 		if (reportResult.status !== "success" || !reportResult.data) {
-			return { status: "error", message: "Failed to get monthly report" }
+			return { status: "error", message: t("actions.monthlyFetchFailed") }
 		}
 
 		const userSettings = settingsResult.data
@@ -843,7 +847,7 @@ export const getMonthlyResultsWithProp = async (
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching monthly results with prop:", error)
-		return { status: "error", message: "Failed to fetch monthly results" }
+		return { status: "error", message: t("actions.monthlyResultsFetchFailed") }
 	}
 }
 
@@ -856,6 +860,7 @@ export const getMonthlyProjection = async (): Promise<{
 	data?: MonthlyProjection
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 		const accountCondition = authContext.showAllAccounts
@@ -883,11 +888,11 @@ export const getMonthlyProjection = async (): Promise<{
 		])
 
 		if (!account) {
-			return { status: "error", message: "Trading account not found" }
+			return { status: "error", message: t("actions.accountNotFound") }
 		}
 
 		if (settingsResult.status !== "success" || !settingsResult.data) {
-			return { status: "error", message: "Failed to get user settings" }
+			return { status: "error", message: t("actions.settingsFetchFailed") }
 		}
 
 		// Decrypt account fields (personal account info may be encrypted)
@@ -947,7 +952,7 @@ export const getMonthlyProjection = async (): Promise<{
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching monthly projection:", error)
-		return { status: "error", message: "Failed to fetch monthly projection" }
+		return { status: "error", message: t("actions.projectionFetchFailed") }
 	}
 }
 
@@ -962,6 +967,7 @@ export const getMonthComparison = async (
 	data?: MonthComparison
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		// Get current and previous month results
 		const [currentResult, previousResult] = await Promise.all([
@@ -970,7 +976,7 @@ export const getMonthComparison = async (
 		])
 
 		if (currentResult.status !== "success" || !currentResult.data) {
-			return { status: "error", message: "Failed to get current month data" }
+			return { status: "error", message: t("actions.currentMonthFetchFailed") }
 		}
 
 		const current = currentResult.data
@@ -1012,7 +1018,7 @@ export const getMonthComparison = async (
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching month comparison:", error)
-		return { status: "error", message: "Failed to fetch month comparison" }
+		return { status: "error", message: t("actions.comparisonFetchFailed") }
 	}
 }
 
@@ -1027,6 +1033,7 @@ export const getYearlyOverview = async (
 	data?: YearlyOverview
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 		const accountCondition = authContext.showAllAccounts
@@ -1088,7 +1095,7 @@ export const getYearlyOverview = async (
 	} catch (error) {
 		if (!isFrameworkSignal(error))
 			console.error("Error fetching yearly overview:", error)
-		return { status: "error", message: "Failed to fetch yearly overview" }
+		return { status: "error", message: t("actions.yearlyFetchFailed") }
 	}
 }
 
@@ -1101,6 +1108,7 @@ export const getCommissionFeeImpact = async (): Promise<{
 	data?: CommissionFeeImpact
 	message?: string
 }> => {
+	const t = await getTranslations("reports")
 	try {
 		const authContext = await requireAuth()
 		const accountCondition = authContext.showAllAccounts
@@ -1244,7 +1252,7 @@ export const getCommissionFeeImpact = async (): Promise<{
 			console.error("Error fetching commission fee impact:", error)
 		return {
 			status: "error",
-			message: "Failed to fetch commission fee impact",
+			message: t("actions.commissionFetchFailed"),
 		}
 	}
 }

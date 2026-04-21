@@ -123,6 +123,10 @@
 		"validationError": "Erro de validação",
 		"errors": {
 			"adminRequired": "Acesso de administrador necessário"
+		},
+		"winRate": {
+			"aboveThreshold": "acima do limite de {threshold}%",
+			"belowThreshold": "abaixo do limite de {threshold}%"
 		}
 	},
 	"nav": {
@@ -530,14 +534,29 @@
 			"universalRequiresAllAccounts": "Modo universal requer que 'mostrar todas as contas' esteja habilitado",
 			"noTradesForSource": "Nenhuma operação encontrada para {source}"
 		},
-		"runningSimulation": "Executando Simulação..."
+		"runningSimulation": "Executando Simulação...",
+		"actions": {
+			"dataSourcesRetrieved": "Fontes de dados recuperadas",
+			"failedToGetDataSources": "Falha ao obter fontes de dados",
+			"statsRetrieved": "Estatísticas recuperadas",
+			"validationFailed": "Falha na validação",
+			"failedToGetSimulationStats": "Falha ao obter estatísticas da simulação",
+			"simulationCompleted": "Simulação concluída",
+			"failedToRunSimulation": "Falha ao executar simulação",
+			"comparisonCompleted": "Comparação concluída",
+			"failedToRunComparison": "Falha ao executar comparação",
+			"v2SimulationCompleted": "Simulação V2 concluída",
+			"failedToRunV2Simulation": "Falha ao executar simulação V2"
+		}
 	},
 	"commandCenter": {
 		"title": "Central de Comando",
 		"description": "Prepare-se para o seu dia de operações",
 		"actionErrors": {
 			"noRiskProfile": "Nenhum perfil de risco vinculado",
-			"riskProfileNotFound": "Perfil de risco não encontrado"
+			"riskProfileNotFound": "Perfil de risco não encontrado",
+			"statusResolved": "Status de trading ao vivo resolvido",
+			"fetchFailed": "Falha ao obter status de trading ao vivo"
 		},
 		"directionAbbr": {
 			"long": "C",
@@ -999,7 +1018,57 @@
 			"nextMonth": "Próximo mês",
 			"futurePlanBlocked": "Você só pode planejar o próximo mês nos últimos 5 dias do mês atual",
 			"save": "Salvar Plano",
-			"saving": "Salvando..."
+			"saving": "Salvando...",
+			"actions": {
+				"activePlanRetrieved": "Plano mensal ativo recuperado com sucesso",
+				"noActivePlan": "Nenhum plano mensal ativo encontrado",
+				"activePlanFetchFailed": "Falha ao recuperar o plano mensal ativo",
+				"planRetrieved": "Plano mensal recuperado com sucesso",
+				"noPlan": "Nenhum plano mensal encontrado",
+				"planFetchFailed": "Falha ao recuperar o plano mensal",
+				"planUpdated": "Plano mensal atualizado com sucesso",
+				"planCreated": "Plano mensal criado com sucesso",
+				"planSaveFailed": "Falha ao salvar o plano mensal",
+				"planRolledOver": "Plano mensal transferido com sucesso",
+				"planRolledOverUpdated": "Plano mensal transferido com sucesso (plano existente atualizado)",
+				"planRolloverFailed": "Falha ao transferir o plano mensal",
+				"validationError": "Falha na validação"
+			}
+		},
+		"actions": {
+			"checklistsRetrieved": "Listas recuperadas com sucesso",
+			"checklistsFetchFailed": "Falha ao recuperar as listas",
+			"checklistCreated": "Lista criada com sucesso",
+			"checklistCreateFailed": "Falha ao criar a lista",
+			"checklistNotFound": "Lista não encontrada",
+			"checklistUpdated": "Lista atualizada com sucesso",
+			"checklistUpdateFailed": "Falha ao atualizar a lista",
+			"checklistDeleted": "Lista excluída com sucesso",
+			"checklistDeleteFailed": "Falha ao excluir a lista",
+			"completionsRetrieved": "Conclusões recuperadas com sucesso",
+			"completionsFetchFailed": "Falha ao recuperar as conclusões",
+			"completionItemUpdated": "Item atualizado com sucesso",
+			"completionCreated": "Conclusão criada com sucesso",
+			"completionToggleFailed": "Falha ao alternar o item",
+			"notesRetrieved": "Notas recuperadas com sucesso",
+			"notesNotFound": "Nenhuma nota encontrada",
+			"notesFetchFailed": "Falha ao recuperar as notas",
+			"notesUpdated": "Notas atualizadas com sucesso",
+			"notesCreated": "Notas criadas com sucesso",
+			"notesSaveFailed": "Falha ao salvar as notas",
+			"assetSettingsRetrieved": "Configurações do ativo recuperadas com sucesso",
+			"assetSettingsFetchFailed": "Falha ao recuperar as configurações do ativo",
+			"assetSettingsUpdated": "Configurações do ativo atualizadas com sucesso",
+			"assetSettingsCreated": "Configurações do ativo criadas com sucesso",
+			"assetSettingsSaveFailed": "Falha ao salvar as configurações do ativo",
+			"assetSettingsNotFound": "Configurações do ativo não encontradas",
+			"assetSettingsDeleted": "Configurações do ativo excluídas com sucesso",
+			"assetSettingsDeleteFailed": "Falha ao excluir as configurações do ativo",
+			"circuitBreakerRetrieved": "Status do circuit breaker recuperado",
+			"circuitBreakerFetchFailed": "Falha ao obter o status do circuit breaker",
+			"dailySummaryRetrieved": "Resumo diário recuperado",
+			"dailySummaryFetchFailed": "Falha ao obter o resumo diário",
+			"validationError": "Falha na validação"
 		}
 	},
 	"trade": {
@@ -1714,7 +1783,64 @@
 			"failed": "Falha ao excluir trade",
 			"unexpectedError": "Ocorreu um erro inesperado"
 		},
-		"tradeDayGroupAriaLabel": "{date}, {count} trades, {pnl}"
+		"tradeDayGroupAriaLabel": "{date}, {count} trades, {pnl}",
+		"actions": {
+			"tradeNotFound": "Operação não encontrada",
+			"executionNotFound": "Execução não encontrada",
+			"executionCreated": "Execução criada com sucesso",
+			"executionUpdated": "Execução atualizada com sucesso",
+			"executionDeleted": "Execução excluída com sucesso",
+			"executionsRetrieved": "Execuções recuperadas com sucesso",
+			"summaryCalculated": "Resumo das execuções calculado com sucesso",
+			"convertedToScaled": "Operação convertida para modo escalonado com sucesso",
+			"recalculated": "Operação recalculada a partir das execuções com sucesso",
+			"validationError": "Falha na validação",
+			"createFailed": "Falha ao criar execução",
+			"updateFailed": "Falha ao atualizar execução",
+			"deleteFailed": "Falha ao excluir execução",
+			"fetchFailed": "Falha ao recuperar execuções",
+			"calculationFailed": "Falha ao calcular resumo das execuções",
+			"convertFailed": "Falha ao converter operação para modo escalonado",
+			"recalculateFailed": "Falha ao recalcular operação a partir das execuções",
+			"tradeCreated": "Operação criada com sucesso",
+			"tradeUpdated": "Operação atualizada com sucesso",
+			"tradeDeleted": "Operação arquivada com sucesso",
+			"tradeRetrieved": "Operação obtida com sucesso",
+			"tradeFetchFailed": "Falha ao obter operação",
+			"tradeCreateFailed": "Falha ao criar operação",
+			"tradeUpdateFailed": "Falha ao atualizar operação",
+			"tradeDeleteFailed": "Falha ao arquivar operação",
+			"tradesRetrieved": "Operações obtidas com sucesso",
+			"tradesFetchFailed": "Falha ao obter operações",
+			"assetsRetrieved": "Ativos obtidos com sucesso",
+			"assetsFetchFailed": "Falha ao obter ativos",
+			"tradesImported": "{count} operações importadas com sucesso",
+			"tradesImportedWithErrors": "{count} operações importadas, {failed} com falha",
+			"tradesImportFailed": "Falha ao importar operações",
+			"scaledTradeCreated": "Operação escalonada criada com sucesso",
+			"scaledTradeCreateFailed": "Falha ao criar operação escalonada",
+			"noTradesFound": "Nenhuma operação encontrada",
+			"tradesGroupedRetrieved": "Operações agrupadas por dia obtidas",
+			"tradesGroupedFetchFailed": "Falha ao obter operações agrupadas por dia",
+			"recalculatedRValues": "Valores R recalculados para {count} operações",
+			"recalculateRValuesFailed": "Falha ao recalcular valores R",
+			"recalculatedPnL": "P&L recalculado para {count} operações",
+			"recalculatePnLFailed": "Falha ao recalcular P&L",
+			"validationFailed": "Falha na validação",
+			"tagCreated": "Tag criada com sucesso",
+			"tagUpdated": "Tag atualizada com sucesso",
+			"tagDeleted": "Tag excluída com sucesso",
+			"tagNotFound": "Tag não encontrada",
+			"tagDuplicate": "Já existe uma tag com esse nome",
+			"tagCreateFailed": "Falha ao criar tag",
+			"tagUpdateFailed": "Falha ao atualizar tag",
+			"tagDeleteFailed": "Falha ao excluir tag",
+			"tagsRetrieved": "Tags obtidas com sucesso",
+			"tagsFetchFailed": "Falha ao obter tags",
+			"noTagsFound": "Nenhuma tag encontrada",
+			"tagStatsRetrieved": "Estatísticas de tags obtidas com sucesso",
+			"tagStatsFetchFailed": "Falha ao obter estatísticas de tags"
+		}
 	},
 	"analytics": {
 		"title": "Análises",
@@ -1981,7 +2107,51 @@
 			"achievedNegativeR": "{percent}% dos seus trades resultaram em R negativo. Foque em cortar perdas mais cedo ou melhorar o timing de entrada."
 		},
 		"expectancyEdgeAriaLabel": "Expectância de Edge (R)",
-		"expectancyCapitalAriaLabel": "Expectância de Capital ($)"
+		"expectancyCapitalAriaLabel": "Expectância de Capital ($)",
+		"actions": {
+			"noTradesFound": "Nenhum trade encontrado",
+			"statsRetrieved": "Estatísticas recuperadas",
+			"failedToRetrieveStats": "Falha ao recuperar estatísticas",
+			"disciplineScoreRetrieved": "Pontuação de disciplina recuperada",
+			"failedToRetrieveDisciplineScore": "Falha ao recuperar pontuação de disciplina",
+			"equityCurveRetrieved": "Curva de capital recuperada",
+			"failedToRetrieveEquityCurve": "Falha ao recuperar curva de capital",
+			"dailyPnlRetrieved": "P&L diário recuperado",
+			"failedToRetrieveDailyPnl": "Falha ao recuperar P&L diário",
+			"streakDataRetrieved": "Dados de sequência recuperados",
+			"failedToRetrieveStreakData": "Falha ao recuperar dados de sequência",
+			"performanceDataRetrieved": "Dados de desempenho recuperados",
+			"failedToRetrievePerformanceData": "Falha ao recuperar dados de desempenho",
+			"noCompletedTradesFound": "Nenhum trade finalizado encontrado",
+			"expectedValueCalculated": "Valor esperado calculado",
+			"failedToCalculateExpectedValue": "Falha ao calcular valor esperado",
+			"noTradesWithRMultiple": "Nenhum trade com dados de múltiplo R",
+			"rDistributionCalculated": "Distribuição de R calculada",
+			"failedToCalculateRDistribution": "Falha ao calcular distribuição de R",
+			"hourlyPerformanceRetrieved": "Desempenho por hora recuperado",
+			"failedToRetrieveHourlyPerformance": "Falha ao recuperar desempenho por hora",
+			"dayOfWeekPerformanceRetrieved": "Desempenho por dia da semana recuperado",
+			"failedToRetrieveDayOfWeekPerformance": "Falha ao recuperar desempenho por dia da semana",
+			"timeHeatmapRetrieved": "Mapa de calor de horários recuperado",
+			"failedToRetrieveTimeHeatmap": "Falha ao recuperar mapa de calor de horários",
+			"noTradesFoundForDay": "Nenhum trade encontrado para este dia",
+			"daySummaryRetrieved": "Resumo do dia recuperado",
+			"failedToRetrieveDaySummary": "Falha ao recuperar resumo do dia",
+			"dayTradesRetrieved": "Trades do dia recuperados",
+			"failedToRetrieveDayTrades": "Falha ao recuperar trades do dia",
+			"dayEquityCurveRetrieved": "Curva de capital do dia recuperada",
+			"failedToRetrieveDayEquityCurve": "Falha ao recuperar curva de capital do dia",
+			"radarChartDataRetrieved": "Dados do gráfico radar recuperados",
+			"failedToRetrieveRadarChartData": "Falha ao recuperar dados do gráfico radar",
+			"sessionPerformanceRetrieved": "Desempenho por sessão recuperado",
+			"failedToRetrieveSessionPerformance": "Falha ao recuperar desempenho por sessão",
+			"sessionAssetPerformanceRetrieved": "Desempenho de ativo por sessão recuperado",
+			"failedToRetrieveSessionAssetPerformance": "Falha ao recuperar desempenho de ativo por sessão",
+			"analyticsDashboardRetrieved": "Painel de analytics recuperado",
+			"failedToRetrieveAnalyticsDashboard": "Falha ao recuperar painel de analytics",
+			"dashboardDataRetrieved": "Dados do painel recuperados",
+			"failedToRetrieveDashboardData": "Falha ao recuperar dados do painel"
+		}
 	},
 	"playbook": {
 		"title": "Playbook de Estratégias",
@@ -1989,7 +2159,10 @@
 		"actionErrors": {
 			"strategyNotFound": "Estratégia não encontrada",
 			"syncFailed": "Falha ao sincronizar condições da estratégia",
-			"retrieveFailed": "Falha ao recuperar condições da estratégia"
+			"retrieveFailed": "Falha ao recuperar condições da estratégia",
+			"conditionsCleared": "Condições da estratégia removidas",
+			"conditionsSynced": "Condições da estratégia sincronizadas com sucesso",
+			"conditionsRetrieved": "Condições da estratégia recuperadas com sucesso"
 		},
 		"yourStrategies": "Suas Estratégias",
 		"newStrategy": "Nova Estratégia",
@@ -2146,6 +2319,40 @@
 			"warning": "Isso ocultará a estratégia do seu playbook. Trades existentes vinculados a esta estratégia não serão afetados.",
 			"deactivating": "Desativando...",
 			"confirm": "Desativar"
+		},
+		"actions": {
+			"validationFailed": "Falha na validação",
+			"strategyCreated": "Estratégia criada com sucesso",
+			"strategyUpdated": "Estratégia atualizada com sucesso",
+			"strategyDeletedPermanently": "Estratégia excluída permanentemente",
+			"strategyDeactivated": "Estratégia desativada",
+			"strategyNotFound": "Estratégia não encontrada",
+			"strategyDuplicate": "Já existe uma estratégia com esse código",
+			"strategyCreateFailed": "Falha ao criar estratégia",
+			"strategyUpdateFailed": "Falha ao atualizar estratégia",
+			"strategyDeleteFailed": "Falha ao excluir estratégia",
+			"strategiesRetrieved": "Estratégias obtidas com sucesso",
+			"strategiesFetchFailed": "Falha ao obter estratégias",
+			"noStrategiesFound": "Nenhuma estratégia encontrada",
+			"strategyRetrieved": "Estratégia obtida com sucesso",
+			"strategyFetchFailed": "Falha ao obter estratégia",
+			"complianceRetrieved": "Visão geral de conformidade obtida",
+			"complianceFetchFailed": "Falha ao obter visão geral de conformidade",
+			"scenarioCreated": "Cenário criado com sucesso",
+			"scenarioUpdated": "Cenário atualizado com sucesso",
+			"scenarioDeleted": "Cenário excluído com sucesso",
+			"scenarioNotFound": "Cenário não encontrado",
+			"scenarioCreateFailed": "Falha ao criar cenário",
+			"scenarioUpdateFailed": "Falha ao atualizar cenário",
+			"scenarioDeleteFailed": "Falha ao excluir cenário",
+			"scenariosRetrieved": "Cenários obtidos com sucesso",
+			"scenariosFetchFailed": "Falha ao obter cenários",
+			"scenarioImageAdded": "Imagem adicionada com sucesso",
+			"scenarioImageRemoved": "Imagem removida com sucesso",
+			"scenarioImageNotFound": "Imagem não encontrada",
+			"scenarioImageLimitExceeded": "Máximo de 3 imagens por cenário",
+			"scenarioImageAddFailed": "Falha ao adicionar imagem",
+			"scenarioImageRemoveFailed": "Falha ao remover imagem"
 		}
 	},
 	"reports": {
@@ -2227,6 +2434,19 @@
 			"avgLoss": "Loss Médio",
 			"bestTrade": "Melhor Trade",
 			"worstTrade": "Pior Trade"
+		},
+		"actions": {
+			"weeklyFetchFailed": "Falha ao carregar relatório semanal",
+			"monthlyFetchFailed": "Falha ao carregar relatório mensal",
+			"mistakeFetchFailed": "Falha ao carregar análise de custo de erros",
+			"accountNotFound": "Conta de trading não encontrada",
+			"settingsFetchFailed": "Falha ao carregar configurações do usuário",
+			"monthlyResultsFetchFailed": "Falha ao carregar resultados mensais",
+			"projectionFetchFailed": "Falha ao carregar projeção mensal",
+			"currentMonthFetchFailed": "Falha ao carregar dados do mês atual",
+			"comparisonFetchFailed": "Falha ao carregar comparação mensal",
+			"yearlyFetchFailed": "Falha ao carregar visão geral anual",
+			"commissionFetchFailed": "Falha ao carregar impacto de comissões e taxas"
 		}
 	},
 	"settings": {
@@ -2531,6 +2751,19 @@
 					"name": "Kelly Fracionario",
 					"description": "Dimensionamento matematicamente otimo dividido por fator de seguranca. Crescimento teorico maximo."
 				}
+			},
+			"actions": {
+				"retrieved": "Perfis de risco recuperados",
+				"retrievedOne": "Perfil de risco recuperado",
+				"created": "Perfil de risco criado",
+				"updated": "Perfil de risco atualizado",
+				"deactivated": "Perfil de risco desativado",
+				"fetchFailed": "Falha ao carregar perfis de risco",
+				"createFailed": "Falha ao criar perfil de risco",
+				"updateFailed": "Falha ao atualizar perfil de risco",
+				"deactivateFailed": "Falha ao desativar perfil de risco",
+				"validationError": "Falha na validação",
+				"adminRequired": "Acesso de administrador necessário"
 			}
 		},
 		"goToSettings": "Configurações → {section}",
@@ -2607,7 +2840,8 @@
 			"cannotDeleteAssetType": "Não é possível excluir tipo de ativo com ativos existentes",
 			"invalidTheme": "Valor de tema inválido",
 			"invalidBrand": "Valor de marca inválido",
-			"cannotChangeOwnRole": "Não é possível alterar seu próprio papel"
+			"cannotChangeOwnRole": "Não é possível alterar seu próprio papel",
+			"assetNotFound": "Ativo não encontrado"
 		},
 		"trading": {
 			"propFirms": {
@@ -2679,6 +2913,22 @@
 				"title": "Excluir \"{name}\"?",
 				"description": "Esta ação não pode ser desfeita."
 			}
+		},
+		"actions": {
+			"settingsRetrieved": "Configurações recuperadas com sucesso",
+			"settingsCreated": "Configurações criadas com sucesso",
+			"settingsFetchFailed": "Falha ao recuperar as configurações",
+			"settingsUpdated": "Configurações atualizadas com sucesso",
+			"settingsUpdateFailed": "Falha ao atualizar as configurações",
+			"themeRetrieved": "Tema recuperado",
+			"themeFetchFailed": "Falha ao recuperar o tema",
+			"themeUpdated": "Tema atualizado",
+			"themeUpdateFailed": "Falha ao atualizar o tema",
+			"brandRetrieved": "Identidade visual recuperada",
+			"brandFetchFailed": "Falha ao recuperar a identidade visual",
+			"brandUpdated": "Identidade visual atualizada",
+			"brandUpdateFailed": "Falha ao atualizar a identidade visual",
+			"validationError": "Erro de validação"
 		}
 	},
 	"monthly": {
@@ -3322,6 +3572,14 @@
 			"skipped": "IGNORADO",
 			"dailyLimitHit": "Dia parado: limite de perda diária atingido",
 			"dailyTargetHit": "Dia parado: meta de ganho diário atingida"
+		},
+		"actions": {
+			"previewGenerated": "Prévia gerada",
+			"failedToGeneratePreview": "Falha ao gerar prévia",
+			"simulationCompleted": "Simulação concluída",
+			"failedToRunSimulation": "Falha ao executar simulação",
+			"tradeYearsRetrieved": "Anos de trades recuperados",
+			"failedToGetTradeYears": "Falha ao obter anos de trades"
 		}
 	},
 	"equityShield": {
@@ -3528,7 +3786,22 @@
 			"fileTooLarge": "PDF deve ter menos de 10MB",
 			"noFills": "Nenhum preenchimento de operação foi fornecido",
 			"noMatches": "Nenhuma correspondência confirmada fornecida",
-			"duplicateImport": "Esta nota já foi importada"
+			"duplicateImport": "Esta nota já foi importada",
+			"noPdfProvided": "Nenhum arquivo PDF fornecido",
+			"fileMustBePdf": "O arquivo deve ser um PDF",
+			"fileTooLargeMessage": "Arquivo muito grande (máximo 10MB)",
+			"duplicateImportDetail": "Este PDF foi importado em {date}"
+		},
+		"actions": {
+			"parsedFills": "Extraídos {count} negócios da nota",
+			"failedToParsePdf": "Falha ao processar o PDF da nota",
+			"noFillsToMatch": "Nenhum negócio para correspondência",
+			"foundMatches": "Encontradas {count} correspondências",
+			"failedToMatchFills": "Falha ao corresponder negócios",
+			"noMatchesToEnrich": "Nenhuma correspondência para enriquecer",
+			"enrichedWithErrors": "Enriquecidos {trades} trades com {errors} erro(s)",
+			"enrichedSuccess": "Enriquecidos com sucesso {trades} trades com {executions} execuções",
+			"failedToEnrichTrades": "Falha ao enriquecer trades"
 		}
 	},
 	"upload": {
@@ -4073,7 +4346,11 @@
 			"rangeThisYear": "Este Ano",
 			"range3m": "3 Meses",
 			"range6m": "6 Meses",
-			"range1y": "1 Ano"
+			"range1y": "1 Ano",
+			"modeSuffixR": "R",
+			"modeSuffixPctRange": "% do range",
+			"modeSuffixPctStop": "% do stop",
+			"modeSuffixPts": "pts"
 		},
 		"orb": {
 			"name": "Rompimento do Range de Abertura",
@@ -4115,7 +4392,8 @@
 			"avgLoss": "Perda Média",
 			"equityCurve": "Curva de Equity",
 			"tradeList": "Lista de Trades",
-			"dayBreakdown": "Detalhamento Diário"
+			"dayBreakdown": "Detalhamento Diário",
+			"completedTrades": "{count} trades concluídos"
 		},
 		"table": {
 			"trade": "#",
@@ -4126,7 +4404,8 @@
 			"reason": "Motivo",
 			"contracts": "Contratos",
 			"pnl": "P&L",
-			"rMultiple": "R"
+			"rMultiple": "R",
+			"noTrades": "Nenhum trade"
 		},
 		"exitReasons": {
 			"target1": "Alvo 1",
@@ -4139,7 +4418,12 @@
 		"errors": {
 			"noCandles": "Nenhum dado de candle encontrado para o período selecionado",
 			"invalidParams": "Parâmetros inválidos",
-			"engineError": "Erro no motor de backtest"
+			"engineError": "Erro no motor de backtest",
+			"missingSelection": "Selecione ativo, timeframe e período",
+			"assetNotFound": "Ativo não encontrado",
+			"datasetTooLarge": "Conjunto de dados muito grande ({count} candles). Máximo: {max}",
+			"failedToLoadDataSources": "Falha ao carregar fontes de dados",
+			"failedToFetchBacktestData": "Falha ao buscar dados de backtest"
 		},
 		"empty": {
 			"title": "Sem resultados",
@@ -4190,7 +4474,10 @@
 			"parametersDesc": "Defina faixas de parâmetros para varrer todas as combinações",
 			"back": "Voltar",
 			"next": "Próximo",
-			"newOptimization": "Nova Otimização"
+			"newOptimization": "Nova Otimização",
+			"stepStatusCurrent": "etapa atual",
+			"stepStatusCompleted": "concluída",
+			"stepStatusUpcoming": "próxima"
 		},
 		"summary": {
 			"strategy": "Estratégia",
@@ -4242,7 +4529,12 @@
 				"totalPnlCents": "P&L Total",
 				"maxDrawdownCents": "Drawdown Máx",
 				"avgRMultiple": "R Médio"
-			}
+			},
+			"statPF": "PF",
+			"statWin": "Win",
+			"statSharpe": "Sharpe",
+			"statPnl": "P&L",
+			"statTrades": "Trades"
 		},
 		"sweepParam": {
 			"stopInitialType": "Tipo de Stop",
@@ -4277,6 +4569,31 @@
 				"indicator": "Indicador WMA",
 				"priceDistance": "Distância de Preço"
 			}
+		},
+		"runDetail": {
+			"stopPctRange": "{pct}% do range",
+			"stopPivotRef": "Ref. pivot",
+			"stopFixedPts": "{points} pts",
+			"stopFullRange": "Range completo +{buffer}t",
+			"unitR": "R",
+			"unitPts": "pts",
+			"sizingLots": "{lots} lotes",
+			"sizingRisk": "R${amount} de risco"
+		}
+	},
+	"candleImport": {
+		"errors": {
+			"csvParseFailed": "Falha ao processar o CSV",
+			"assetNotFound": "Ativo \"{symbol}\" não encontrado. Adicione-o em Configurações → Ativos antes de importar dados de candles.",
+			"timeframeNotFound": "Timeframe \"{code}\" não encontrado. Timeframes disponíveis: {available}",
+			"invalidAssetId": "Formato de ID de ativo inválido",
+			"invalidTimeframeId": "Formato de ID de timeframe inválido",
+			"noCandlesToImport": "Nenhum candle para importar"
+		},
+		"actions": {
+			"validated": "Validados {count} candles para {symbol} ({timeframe})",
+			"importSuccess": "Importados com sucesso {count} candles",
+			"seededIndicators": "Definições de indicadores carregadas ({mappings} mapeamentos em {groups} grupos)"
 		}
 	}
 }

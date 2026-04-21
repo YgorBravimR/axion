@@ -46,6 +46,7 @@ const parseProfileRow = (row: typeof riskManagementProfiles.$inferSelect): RiskM
  * Returns all active risk profiles. Any authenticated user can read profiles.
  */
 const listActiveRiskProfiles = async (): Promise<ActionResponse<RiskManagementProfile[]>> => {
+	const t = await getTranslations("settings.riskProfiles")
 	try {
 		await requireAuth()
 
@@ -56,13 +57,13 @@ const listActiveRiskProfiles = async (): Promise<ActionResponse<RiskManagementPr
 
 		return {
 			status: "success",
-			message: "Risk profiles retrieved",
+			message: t("actions.retrieved"),
 			data: rows.map(parseProfileRow),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get risk profiles",
+			message: t("actions.fetchFailed"),
 			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "listActiveRiskProfiles") }],
 		}
 	}
@@ -90,13 +91,13 @@ const getRiskProfile = async (id: string): Promise<ActionResponse<RiskManagement
 
 		return {
 			status: "success",
-			message: "Risk profile retrieved",
+			message: t("actions.retrievedOne"),
 			data: parseProfileRow(row),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get risk profile",
+			message: t("actions.fetchFailed"),
 			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "getRiskProfile") }],
 		}
 	}
@@ -108,6 +109,7 @@ const getRiskProfile = async (id: string): Promise<ActionResponse<RiskManagement
 const createRiskProfile = async (
 	input: RiskProfileSchemaInput
 ): Promise<ActionResponse<RiskManagementProfile>> => {
+	const t = await getTranslations("settings.riskProfiles")
 	try {
 		const { userId } = await requireAuth()
 		await requireRole("admin")
@@ -133,14 +135,14 @@ const createRiskProfile = async (
 
 		return {
 			status: "success",
-			message: "Risk profile created",
+			message: t("actions.created"),
 			data: parseProfileRow(row),
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -150,13 +152,13 @@ const createRiskProfile = async (
 		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
-				message: "Admin access required",
+				message: t("actions.adminRequired"),
 				errors: [{ code: "FORBIDDEN", detail: "Only admins can create risk profiles" }],
 			}
 		}
 		return {
 			status: "error",
-			message: "Failed to create risk profile",
+			message: t("actions.createFailed"),
 			errors: [{ code: "CREATE_ERROR", detail: toSafeErrorMessage(error, "createRiskProfile") }],
 		}
 	}
@@ -204,14 +206,14 @@ const updateRiskProfile = async (
 
 		return {
 			status: "success",
-			message: "Risk profile updated",
+			message: t("actions.updated"),
 			data: parseProfileRow(row),
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -221,13 +223,13 @@ const updateRiskProfile = async (
 		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
-				message: "Admin access required",
+				message: t("actions.adminRequired"),
 				errors: [{ code: "FORBIDDEN", detail: "Only admins can update risk profiles" }],
 			}
 		}
 		return {
 			status: "error",
-			message: "Failed to update risk profile",
+			message: t("actions.updateFailed"),
 			errors: [{ code: "UPDATE_ERROR", detail: toSafeErrorMessage(error, "updateRiskProfile") }],
 		}
 	}
@@ -237,6 +239,7 @@ const updateRiskProfile = async (
  * Soft-delete a risk profile by marking it inactive. Admin only.
  */
 const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> => {
+	const t = await getTranslations("settings.riskProfiles")
 	try {
 		const { userId } = await requireAuth()
 		await requireRole("admin")
@@ -250,19 +253,19 @@ const deactivateRiskProfile = async (id: string): Promise<ActionResponse<null>> 
 
 		return {
 			status: "success",
-			message: "Risk profile deactivated",
+			message: t("actions.deactivated"),
 		}
 	} catch (error) {
 		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
-				message: "Admin access required",
+				message: t("actions.adminRequired"),
 				errors: [{ code: "FORBIDDEN", detail: "Only admins can deactivate risk profiles" }],
 			}
 		}
 		return {
 			status: "error",
-			message: "Failed to deactivate risk profile",
+			message: t("actions.deactivateFailed"),
 			errors: [{ code: "DEACTIVATE_ERROR", detail: toSafeErrorMessage(error, "deactivateRiskProfile") }],
 		}
 	}

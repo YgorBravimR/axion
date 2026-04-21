@@ -2,6 +2,7 @@
 
 import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
+import { getTranslations } from "next-intl/server"
 import {
 	dailyChecklists,
 	checklistCompletions,
@@ -50,6 +51,7 @@ import { getServerEffectiveNow } from "@/lib/effective-date"
  * Get all checklists for the current account
  */
 export const getChecklists = async (): Promise<ActionResponse<DailyChecklist[]>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -64,13 +66,13 @@ export const getChecklists = async (): Promise<ActionResponse<DailyChecklist[]>>
 
 		return {
 			status: "success",
-			message: "Checklists retrieved successfully",
+			message: t("actions.checklistsRetrieved"),
 			data: checklists,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve checklists",
+			message: t("actions.checklistsFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getChecklists") }],
 		}
 	}
@@ -82,6 +84,7 @@ export const getChecklists = async (): Promise<ActionResponse<DailyChecklist[]>>
 export const createChecklist = async (
 	input: CreateChecklistInput
 ): Promise<ActionResponse<DailyChecklist>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 		const validated = createChecklistSchema.parse(input)
@@ -101,14 +104,14 @@ export const createChecklist = async (
 
 		return {
 			status: "success",
-			message: "Checklist created successfully",
+			message: t("actions.checklistCreated"),
 			data: checklist,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -118,7 +121,7 @@ export const createChecklist = async (
 
 		return {
 			status: "error",
-			message: "Failed to create checklist",
+			message: t("actions.checklistCreateFailed"),
 			errors: [{ code: "CREATE_FAILED", detail: toSafeErrorMessage(error, "createChecklist") }],
 		}
 	}
@@ -131,6 +134,7 @@ export const updateChecklist = async (
 	id: string,
 	input: UpdateChecklistInput
 ): Promise<ActionResponse<DailyChecklist>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -145,7 +149,7 @@ export const updateChecklist = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Checklist not found",
+				message: t("actions.checklistNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Checklist does not exist" }],
 			}
 		}
@@ -167,14 +171,14 @@ export const updateChecklist = async (
 
 		return {
 			status: "success",
-			message: "Checklist updated successfully",
+			message: t("actions.checklistUpdated"),
 			data: checklist,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -184,7 +188,7 @@ export const updateChecklist = async (
 
 		return {
 			status: "error",
-			message: "Failed to update checklist",
+			message: t("actions.checklistUpdateFailed"),
 			errors: [{ code: "UPDATE_FAILED", detail: toSafeErrorMessage(error, "updateChecklist") }],
 		}
 	}
@@ -194,6 +198,7 @@ export const updateChecklist = async (
  * Delete a checklist (soft delete)
  */
 export const deleteChecklist = async (id: string): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -208,7 +213,7 @@ export const deleteChecklist = async (id: string): Promise<ActionResponse<void>>
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Checklist not found",
+				message: t("actions.checklistNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Checklist does not exist" }],
 			}
 		}
@@ -222,12 +227,12 @@ export const deleteChecklist = async (id: string): Promise<ActionResponse<void>>
 
 		return {
 			status: "success",
-			message: "Checklist deleted successfully",
+			message: t("actions.checklistDeleted"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete checklist",
+			message: t("actions.checklistDeleteFailed"),
 			errors: [{ code: "DELETE_FAILED", detail: toSafeErrorMessage(error, "deleteChecklist") }],
 		}
 	}
@@ -247,6 +252,7 @@ export interface ChecklistWithCompletion extends DailyChecklist {
  * Get checklist completions for a given date (defaults to today)
  */
 export const getTodayCompletions = async (date?: Date): Promise<ActionResponse<ChecklistWithCompletion[]>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -294,13 +300,13 @@ export const getTodayCompletions = async (date?: Date): Promise<ActionResponse<C
 
 		return {
 			status: "success",
-			message: "Completions retrieved successfully",
+			message: t("actions.completionsRetrieved"),
 			data: checklistsWithCompletions,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve completions",
+			message: t("actions.completionsFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTodayCompletions") }],
 		}
 	}
@@ -314,6 +320,7 @@ export const toggleChecklistItem = async (
 	itemId: string,
 	completed: boolean
 ): Promise<ActionResponse<ChecklistCompletion>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -371,7 +378,7 @@ export const toggleChecklistItem = async (
 
 			return {
 				status: "success",
-				message: "Item updated successfully",
+				message: t("actions.completionItemUpdated"),
 				data: completion,
 			}
 		} else {
@@ -393,7 +400,7 @@ export const toggleChecklistItem = async (
 
 			return {
 				status: "success",
-				message: "Completion created successfully",
+				message: t("actions.completionCreated"),
 				data: completion,
 			}
 		}
@@ -401,7 +408,7 @@ export const toggleChecklistItem = async (
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -411,7 +418,7 @@ export const toggleChecklistItem = async (
 
 		return {
 			status: "error",
-			message: "Failed to toggle item",
+			message: t("actions.completionToggleFailed"),
 			errors: [{ code: "UPDATE_FAILED", detail: toSafeErrorMessage(error, "toggleChecklistItem") }],
 		}
 	}
@@ -425,6 +432,7 @@ export const toggleChecklistItem = async (
  * Get notes for a given date (defaults to today)
  */
 export const getTodayNotes = async (date?: Date): Promise<ActionResponse<DailyAccountNote | null>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -450,13 +458,13 @@ export const getTodayNotes = async (date?: Date): Promise<ActionResponse<DailyAc
 
 		return {
 			status: "success",
-			message: notes ? "Notes retrieved successfully" : "No notes found",
+			message: notes ? t("actions.notesRetrieved") : t("actions.notesNotFound"),
 			data: notes || null,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve notes",
+			message: t("actions.notesFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTodayNotes") }],
 		}
 	}
@@ -468,6 +476,7 @@ export const getTodayNotes = async (date?: Date): Promise<ActionResponse<DailyAc
 export const upsertDailyNotes = async (
 	input: DailyNotesInput
 ): Promise<ActionResponse<DailyAccountNote>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 		const validated = dailyNotesSchema.parse(input)
@@ -520,7 +529,7 @@ export const upsertDailyNotes = async (
 
 			return {
 				status: "success",
-				message: "Notes updated successfully",
+				message: t("actions.notesUpdated"),
 				data: decryptedNotes,
 			}
 		} else {
@@ -547,7 +556,7 @@ export const upsertDailyNotes = async (
 
 			return {
 				status: "success",
-				message: "Notes created successfully",
+				message: t("actions.notesCreated"),
 				data: decryptedNotes,
 			}
 		}
@@ -555,7 +564,7 @@ export const upsertDailyNotes = async (
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -565,7 +574,7 @@ export const upsertDailyNotes = async (
 
 		return {
 			status: "error",
-			message: "Failed to save notes",
+			message: t("actions.notesSaveFailed"),
 			errors: [{ code: "SAVE_FAILED", detail: toSafeErrorMessage(error, "upsertDailyNotes") }],
 		}
 	}
@@ -584,6 +593,7 @@ export interface AssetSettingWithAsset extends AccountAssetSetting {
  * Auto-populates blank rows for enabled assets that don't have settings yet.
  */
 export const getAccountAssetSettings = async (): Promise<ActionResponse<AssetSettingWithAsset[]>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -638,20 +648,20 @@ export const getAccountAssetSettings = async (): Promise<ActionResponse<AssetSet
 
 			return {
 				status: "success",
-				message: "Asset settings retrieved successfully",
+				message: t("actions.assetSettingsRetrieved"),
 				data: allSettings as AssetSettingWithAsset[],
 			}
 		}
 
 		return {
 			status: "success",
-			message: "Asset settings retrieved successfully",
+			message: t("actions.assetSettingsRetrieved"),
 			data: existingSettings as AssetSettingWithAsset[],
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve asset settings",
+			message: t("actions.assetSettingsFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getAccountAssetSettings") }],
 		}
 	}
@@ -669,6 +679,7 @@ export const getAssetSettings = getAccountAssetSettings
 export const upsertAssetSettings = async (
 	input: AssetSettingsInput
 ): Promise<ActionResponse<AccountAssetSetting>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 		const validated = assetSettingsSchema.parse(input)
@@ -700,7 +711,7 @@ export const upsertAssetSettings = async (
 
 			return {
 				status: "success",
-				message: "Asset settings updated successfully",
+				message: t("actions.assetSettingsUpdated"),
 				data: settings,
 			}
 		} else {
@@ -722,7 +733,7 @@ export const upsertAssetSettings = async (
 
 			return {
 				status: "success",
-				message: "Asset settings created successfully",
+				message: t("actions.assetSettingsCreated"),
 				data: settings,
 			}
 		}
@@ -730,7 +741,7 @@ export const upsertAssetSettings = async (
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationError"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -740,7 +751,7 @@ export const upsertAssetSettings = async (
 
 		return {
 			status: "error",
-			message: "Failed to save asset settings",
+			message: t("actions.assetSettingsSaveFailed"),
 			errors: [{ code: "SAVE_FAILED", detail: toSafeErrorMessage(error, "upsertAssetSettings") }],
 		}
 	}
@@ -750,6 +761,7 @@ export const upsertAssetSettings = async (
  * Delete account-level asset settings (soft delete)
  */
 export const deleteAssetSettings = async (assetId: string): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -764,7 +776,7 @@ export const deleteAssetSettings = async (assetId: string): Promise<ActionRespon
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Asset settings not found",
+				message: t("actions.assetSettingsNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Asset settings do not exist" }],
 			}
 		}
@@ -778,12 +790,12 @@ export const deleteAssetSettings = async (assetId: string): Promise<ActionRespon
 
 		return {
 			status: "success",
-			message: "Asset settings deleted successfully",
+			message: t("actions.assetSettingsDeleted"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete asset settings",
+			message: t("actions.assetSettingsDeleteFailed"),
 			errors: [{ code: "DELETE_FAILED", detail: toSafeErrorMessage(error, "deleteAssetSettings") }],
 		}
 	}
@@ -808,6 +820,7 @@ export interface DailySummary {
  * Get circuit breaker status for a given date (defaults to today)
  */
 export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionResponse<CircuitBreakerStatus>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -1019,7 +1032,7 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 
 		return {
 			status: "success",
-			message: "Circuit breaker status retrieved",
+			message: t("actions.circuitBreakerRetrieved"),
 			data: {
 				dailyPnL,
 				tradesCount: nonBreakevenCount,
@@ -1049,7 +1062,7 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get circuit breaker status",
+			message: t("actions.circuitBreakerFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getCircuitBreakerStatus") }],
 		}
 	}
@@ -1059,6 +1072,7 @@ export const getCircuitBreakerStatus = async (date?: Date): Promise<ActionRespon
  * Get daily summary for a given date (defaults to today)
  */
 export const getDailySummary = async (date?: Date): Promise<ActionResponse<DailySummary>> => {
+	const t = await getTranslations("commandCenter")
 	try {
 		const { accountId } = await requireAuth()
 
@@ -1114,7 +1128,7 @@ export const getDailySummary = async (date?: Date): Promise<ActionResponse<Daily
 
 		return {
 			status: "success",
-			message: "Daily summary retrieved",
+			message: t("actions.dailySummaryRetrieved"),
 			data: {
 				totalPnL,
 				tradesCount: sortedTrades.filter(t => t.outcome !== "breakeven").length,
@@ -1129,7 +1143,7 @@ export const getDailySummary = async (date?: Date): Promise<ActionResponse<Daily
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get daily summary",
+			message: t("actions.dailySummaryFetchFailed"),
 			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getDailySummary") }],
 		}
 	}

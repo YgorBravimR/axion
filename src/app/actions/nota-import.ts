@@ -44,6 +44,7 @@ interface NotaImportResult {
 export const parseNotaPdf = async (
 	formData: FormData
 ): Promise<ActionResponse<NotaParseResult>> => {
+	const t = await getTranslations("notaImport")
 	try {
 		await requireAuth()
 
@@ -51,16 +52,16 @@ export const parseNotaPdf = async (
 		if (!file || file.size === 0) {
 			return {
 				status: "error",
-				message: "No PDF file provided",
-				errors: [{ code: "NO_FILE", detail: "Please upload a PDF file" }],
+				message: t("errors.noPdfProvided"),
+				errors: [{ code: "NO_FILE", detail: t("errors.uploadPdf") }],
 			}
 		}
 
 		if (!file.name.toLowerCase().endsWith(".pdf")) {
 			return {
 				status: "error",
-				message: "File must be a PDF",
-				errors: [{ code: "INVALID_FORMAT", detail: "Only PDF files are accepted" }],
+				message: t("errors.fileMustBePdf"),
+				errors: [{ code: "INVALID_FORMAT", detail: t("errors.onlyPdf") }],
 			}
 		}
 
@@ -68,8 +69,8 @@ export const parseNotaPdf = async (
 		if (file.size > 10 * 1024 * 1024) {
 			return {
 				status: "error",
-				message: "File too large (max 10MB)",
-				errors: [{ code: "FILE_TOO_LARGE", detail: "PDF must be under 10MB" }],
+				message: t("errors.fileTooLargeMessage"),
+				errors: [{ code: "FILE_TOO_LARGE", detail: t("errors.fileTooLarge") }],
 			}
 		}
 
@@ -92,13 +93,13 @@ export const parseNotaPdf = async (
 
 		return {
 			status: "success",
-			message: `Parsed ${result.fills.length} fills from nota`,
+			message: t("actions.parsedFills", { count: result.fills.length }),
 			data: result,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to parse nota PDF",
+			message: t("actions.failedToParsePdf"),
 			errors: [{ code: "PARSE_FAILED", detail: toSafeErrorMessage(error, "parseNotaPdf") }],
 		}
 	}
@@ -117,14 +118,15 @@ export const matchNotaFills = async (
 	notaDate: string,
 	brokerName: string,
 ): Promise<ActionResponse<NotaEnrichmentPreview>> => {
+	const t = await getTranslations("notaImport")
 	try {
 		const { accountId, userId } = await requireAuth()
 
 		if (!fills || fills.length === 0) {
 			return {
 				status: "error",
-				message: "No fills to match",
-				errors: [{ code: "NO_FILLS", detail: "No trade fills were provided" }],
+				message: t("actions.noFillsToMatch"),
+				errors: [{ code: "NO_FILLS", detail: t("errors.noFills") }],
 			}
 		}
 
@@ -142,13 +144,13 @@ export const matchNotaFills = async (
 
 		return {
 			status: "success",
-			message: `Found ${preview.matches.length} matches`,
+			message: t("actions.foundMatches", { count: preview.matches.length }),
 			data: preview,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to match fills",
+			message: t("actions.failedToMatchFills"),
 			errors: [{ code: "MATCH_FAILED", detail: toSafeErrorMessage(error, "matchNotaFills") }],
 		}
 	}
@@ -169,14 +171,15 @@ export const enrichTradesFromNota = async (
 	fileName: string,
 	fileHashHex: string,
 ): Promise<ActionResponse<NotaImportResult>> => {
+	const t = await getTranslations("notaImport")
 	try {
 		const { accountId, userId } = await requireAuth()
 
 		if (!confirmedMatches || confirmedMatches.length === 0) {
 			return {
 				status: "error",
-				message: "No matches to enrich",
-				errors: [{ code: "NO_MATCHES", detail: "No confirmed matches provided" }],
+				message: t("actions.noMatchesToEnrich"),
+				errors: [{ code: "NO_MATCHES", detail: t("errors.noMatches") }],
 			}
 		}
 
@@ -191,8 +194,8 @@ export const enrichTradesFromNota = async (
 		if (existingImport) {
 			return {
 				status: "error",
-				message: "This nota has already been imported",
-				errors: [{ code: "DUPLICATE_NOTA", detail: `This PDF was imported on ${existingImport.createdAt.toISOString().split("T")[0]}` }],
+				message: t("errors.duplicateImport"),
+				errors: [{ code: "DUPLICATE_NOTA", detail: t("errors.duplicateImportDetail", { date: existingImport.createdAt.toISOString().split("T")[0] }) }],
 			}
 		}
 
@@ -342,8 +345,8 @@ export const enrichTradesFromNota = async (
 		return {
 			status: errors.length === confirmedMatches.length ? "error" : "success",
 			message: errors.length > 0
-				? `Enriched ${tradesEnriched} trades with ${errors.length} errors`
-				: `Successfully enriched ${tradesEnriched} trades with ${executionsInserted} executions`,
+				? t("actions.enrichedWithErrors", { trades: tradesEnriched, errors: errors.length })
+				: t("actions.enrichedSuccess", { trades: tradesEnriched, executions: executionsInserted }),
 			data: {
 				tradesEnriched,
 				executionsInserted,
@@ -353,7 +356,7 @@ export const enrichTradesFromNota = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to enrich trades",
+			message: t("actions.failedToEnrichTrades"),
 			errors: [{ code: "ENRICH_FAILED", detail: toSafeErrorMessage(error, "enrichTradesFromNota") }],
 		}
 	}

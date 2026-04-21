@@ -123,6 +123,10 @@
 		"validationError": "Validation error",
 		"errors": {
 			"adminRequired": "Admin access required"
+		},
+		"winRate": {
+			"aboveThreshold": "above {threshold}% threshold",
+			"belowThreshold": "below {threshold}% threshold"
 		}
 	},
 	"nav": {
@@ -530,14 +534,29 @@
 			"universalRequiresAllAccounts": "Universal mode requires 'show all accounts' to be enabled",
 			"noTradesForSource": "No trades found for {source}"
 		},
-		"runningSimulation": "Running Simulation..."
+		"runningSimulation": "Running Simulation...",
+		"actions": {
+			"dataSourcesRetrieved": "Data sources retrieved",
+			"failedToGetDataSources": "Failed to get data sources",
+			"statsRetrieved": "Stats retrieved",
+			"validationFailed": "Validation failed",
+			"failedToGetSimulationStats": "Failed to get simulation stats",
+			"simulationCompleted": "Simulation completed",
+			"failedToRunSimulation": "Failed to run simulation",
+			"comparisonCompleted": "Comparison completed",
+			"failedToRunComparison": "Failed to run comparison",
+			"v2SimulationCompleted": "V2 simulation completed",
+			"failedToRunV2Simulation": "Failed to run V2 simulation"
+		}
 	},
 	"commandCenter": {
 		"title": "Command Center",
 		"description": "Prepare for your trading day",
 		"actionErrors": {
 			"noRiskProfile": "No risk profile linked",
-			"riskProfileNotFound": "Risk profile not found"
+			"riskProfileNotFound": "Risk profile not found",
+			"statusResolved": "Live trading status resolved",
+			"fetchFailed": "Failed to get live trading status"
 		},
 		"directionAbbr": {
 			"long": "L",
@@ -999,7 +1018,57 @@
 			"nextMonth": "Next month",
 			"futurePlanBlocked": "You can only plan for next month within the last 5 days of the current month",
 			"save": "Save Plan",
-			"saving": "Saving..."
+			"saving": "Saving...",
+			"actions": {
+				"activePlanRetrieved": "Active monthly plan retrieved successfully",
+				"noActivePlan": "No active monthly plan found",
+				"activePlanFetchFailed": "Failed to retrieve active monthly plan",
+				"planRetrieved": "Monthly plan retrieved successfully",
+				"noPlan": "No monthly plan found",
+				"planFetchFailed": "Failed to retrieve monthly plan",
+				"planUpdated": "Monthly plan updated successfully",
+				"planCreated": "Monthly plan created successfully",
+				"planSaveFailed": "Failed to save monthly plan",
+				"planRolledOver": "Monthly plan rolled over successfully",
+				"planRolledOverUpdated": "Monthly plan rolled over successfully (existing plan updated)",
+				"planRolloverFailed": "Failed to roll over monthly plan",
+				"validationError": "Validation failed"
+			}
+		},
+		"actions": {
+			"checklistsRetrieved": "Checklists retrieved successfully",
+			"checklistsFetchFailed": "Failed to retrieve checklists",
+			"checklistCreated": "Checklist created successfully",
+			"checklistCreateFailed": "Failed to create checklist",
+			"checklistNotFound": "Checklist not found",
+			"checklistUpdated": "Checklist updated successfully",
+			"checklistUpdateFailed": "Failed to update checklist",
+			"checklistDeleted": "Checklist deleted successfully",
+			"checklistDeleteFailed": "Failed to delete checklist",
+			"completionsRetrieved": "Completions retrieved successfully",
+			"completionsFetchFailed": "Failed to retrieve completions",
+			"completionItemUpdated": "Item updated successfully",
+			"completionCreated": "Completion created successfully",
+			"completionToggleFailed": "Failed to toggle item",
+			"notesRetrieved": "Notes retrieved successfully",
+			"notesNotFound": "No notes found",
+			"notesFetchFailed": "Failed to retrieve notes",
+			"notesUpdated": "Notes updated successfully",
+			"notesCreated": "Notes created successfully",
+			"notesSaveFailed": "Failed to save notes",
+			"assetSettingsRetrieved": "Asset settings retrieved successfully",
+			"assetSettingsFetchFailed": "Failed to retrieve asset settings",
+			"assetSettingsUpdated": "Asset settings updated successfully",
+			"assetSettingsCreated": "Asset settings created successfully",
+			"assetSettingsSaveFailed": "Failed to save asset settings",
+			"assetSettingsNotFound": "Asset settings not found",
+			"assetSettingsDeleted": "Asset settings deleted successfully",
+			"assetSettingsDeleteFailed": "Failed to delete asset settings",
+			"circuitBreakerRetrieved": "Circuit breaker status retrieved",
+			"circuitBreakerFetchFailed": "Failed to get circuit breaker status",
+			"dailySummaryRetrieved": "Daily summary retrieved",
+			"dailySummaryFetchFailed": "Failed to get daily summary",
+			"validationError": "Validation failed"
 		}
 	},
 	"trade": {
@@ -1714,7 +1783,64 @@
 			"failed": "Failed to delete trade",
 			"unexpectedError": "An unexpected error occurred"
 		},
-		"tradeDayGroupAriaLabel": "{date}, {count} trades, {pnl}"
+		"tradeDayGroupAriaLabel": "{date}, {count} trades, {pnl}",
+		"actions": {
+			"tradeNotFound": "Trade not found",
+			"executionNotFound": "Execution not found",
+			"executionCreated": "Execution created successfully",
+			"executionUpdated": "Execution updated successfully",
+			"executionDeleted": "Execution deleted successfully",
+			"executionsRetrieved": "Executions retrieved successfully",
+			"summaryCalculated": "Execution summary calculated successfully",
+			"convertedToScaled": "Trade converted to scaled mode successfully",
+			"recalculated": "Trade recalculated from executions successfully",
+			"validationError": "Validation failed",
+			"createFailed": "Failed to create execution",
+			"updateFailed": "Failed to update execution",
+			"deleteFailed": "Failed to delete execution",
+			"fetchFailed": "Failed to retrieve executions",
+			"calculationFailed": "Failed to calculate execution summary",
+			"convertFailed": "Failed to convert trade to scaled mode",
+			"recalculateFailed": "Failed to recalculate trade from executions",
+			"tradeCreated": "Trade created successfully",
+			"tradeUpdated": "Trade updated successfully",
+			"tradeDeleted": "Trade archived successfully",
+			"tradeRetrieved": "Trade retrieved successfully",
+			"tradeFetchFailed": "Failed to retrieve trade",
+			"tradeCreateFailed": "Failed to create trade",
+			"tradeUpdateFailed": "Failed to update trade",
+			"tradeDeleteFailed": "Failed to archive trade",
+			"tradesRetrieved": "Trades retrieved successfully",
+			"tradesFetchFailed": "Failed to retrieve trades",
+			"assetsRetrieved": "Assets retrieved successfully",
+			"assetsFetchFailed": "Failed to retrieve assets",
+			"tradesImported": "Successfully imported {count} trades",
+			"tradesImportedWithErrors": "Imported {count} trades, {failed} failed",
+			"tradesImportFailed": "Failed to import trades",
+			"scaledTradeCreated": "Scaled trade created successfully",
+			"scaledTradeCreateFailed": "Failed to create scaled trade",
+			"noTradesFound": "No trades found",
+			"tradesGroupedRetrieved": "Trades grouped by day retrieved",
+			"tradesGroupedFetchFailed": "Failed to retrieve trades grouped by day",
+			"recalculatedRValues": "Recalculated R values for {count} trades",
+			"recalculateRValuesFailed": "Failed to recalculate R values",
+			"recalculatedPnL": "Recalculated P&L for {count} trades",
+			"recalculatePnLFailed": "Failed to recalculate P&L",
+			"validationFailed": "Validation failed",
+			"tagCreated": "Tag created successfully",
+			"tagUpdated": "Tag updated successfully",
+			"tagDeleted": "Tag deleted successfully",
+			"tagNotFound": "Tag not found",
+			"tagDuplicate": "A tag with this name already exists",
+			"tagCreateFailed": "Failed to create tag",
+			"tagUpdateFailed": "Failed to update tag",
+			"tagDeleteFailed": "Failed to delete tag",
+			"tagsRetrieved": "Tags retrieved successfully",
+			"tagsFetchFailed": "Failed to retrieve tags",
+			"noTagsFound": "No tags found",
+			"tagStatsRetrieved": "Tag stats retrieved successfully",
+			"tagStatsFetchFailed": "Failed to retrieve tag stats"
+		}
 	},
 	"analytics": {
 		"title": "Analytics",
@@ -1981,7 +2107,51 @@
 			"achievedNegativeR": "{percent}% of your trades resulted in negative R. Focus on cutting losers earlier or improving entry timing."
 		},
 		"expectancyEdgeAriaLabel": "Edge Expectancy (R)",
-		"expectancyCapitalAriaLabel": "Capital Expectancy ($)"
+		"expectancyCapitalAriaLabel": "Capital Expectancy ($)",
+		"actions": {
+			"noTradesFound": "No trades found",
+			"statsRetrieved": "Stats retrieved",
+			"failedToRetrieveStats": "Failed to retrieve stats",
+			"disciplineScoreRetrieved": "Discipline score retrieved",
+			"failedToRetrieveDisciplineScore": "Failed to retrieve discipline score",
+			"equityCurveRetrieved": "Equity curve retrieved",
+			"failedToRetrieveEquityCurve": "Failed to retrieve equity curve",
+			"dailyPnlRetrieved": "Daily P&L retrieved",
+			"failedToRetrieveDailyPnl": "Failed to retrieve daily P&L",
+			"streakDataRetrieved": "Streak data retrieved",
+			"failedToRetrieveStreakData": "Failed to retrieve streak data",
+			"performanceDataRetrieved": "Performance data retrieved",
+			"failedToRetrievePerformanceData": "Failed to retrieve performance data",
+			"noCompletedTradesFound": "No completed trades found",
+			"expectedValueCalculated": "Expected value calculated",
+			"failedToCalculateExpectedValue": "Failed to calculate expected value",
+			"noTradesWithRMultiple": "No trades with R-multiple data",
+			"rDistributionCalculated": "R-distribution calculated",
+			"failedToCalculateRDistribution": "Failed to calculate R-distribution",
+			"hourlyPerformanceRetrieved": "Hourly performance retrieved",
+			"failedToRetrieveHourlyPerformance": "Failed to retrieve hourly performance",
+			"dayOfWeekPerformanceRetrieved": "Day of week performance retrieved",
+			"failedToRetrieveDayOfWeekPerformance": "Failed to retrieve day of week performance",
+			"timeHeatmapRetrieved": "Time heatmap retrieved",
+			"failedToRetrieveTimeHeatmap": "Failed to retrieve time heatmap",
+			"noTradesFoundForDay": "No trades found for this day",
+			"daySummaryRetrieved": "Day summary retrieved",
+			"failedToRetrieveDaySummary": "Failed to retrieve day summary",
+			"dayTradesRetrieved": "Day trades retrieved",
+			"failedToRetrieveDayTrades": "Failed to retrieve day trades",
+			"dayEquityCurveRetrieved": "Day equity curve retrieved",
+			"failedToRetrieveDayEquityCurve": "Failed to retrieve day equity curve",
+			"radarChartDataRetrieved": "Radar chart data retrieved",
+			"failedToRetrieveRadarChartData": "Failed to retrieve radar chart data",
+			"sessionPerformanceRetrieved": "Session performance retrieved",
+			"failedToRetrieveSessionPerformance": "Failed to retrieve session performance",
+			"sessionAssetPerformanceRetrieved": "Session asset performance retrieved",
+			"failedToRetrieveSessionAssetPerformance": "Failed to retrieve session asset performance",
+			"analyticsDashboardRetrieved": "Analytics dashboard retrieved",
+			"failedToRetrieveAnalyticsDashboard": "Failed to retrieve analytics dashboard",
+			"dashboardDataRetrieved": "Dashboard data retrieved",
+			"failedToRetrieveDashboardData": "Failed to retrieve dashboard data"
+		}
 	},
 	"playbook": {
 		"title": "Strategy Playbook",
@@ -1989,7 +2159,10 @@
 		"actionErrors": {
 			"strategyNotFound": "Strategy not found",
 			"syncFailed": "Failed to sync strategy conditions",
-			"retrieveFailed": "Failed to retrieve strategy conditions"
+			"retrieveFailed": "Failed to retrieve strategy conditions",
+			"conditionsCleared": "Strategy conditions cleared",
+			"conditionsSynced": "Strategy conditions synced successfully",
+			"conditionsRetrieved": "Strategy conditions retrieved successfully"
 		},
 		"yourStrategies": "Your Strategies",
 		"newStrategy": "New Strategy",
@@ -2146,6 +2319,40 @@
 			"warning": "This will hide the strategy from your playbook. Existing trades linked to this strategy will not be affected.",
 			"deactivating": "Deactivating...",
 			"confirm": "Deactivate"
+		},
+		"actions": {
+			"validationFailed": "Validation failed",
+			"strategyCreated": "Strategy created successfully",
+			"strategyUpdated": "Strategy updated successfully",
+			"strategyDeletedPermanently": "Strategy deleted permanently",
+			"strategyDeactivated": "Strategy deactivated",
+			"strategyNotFound": "Strategy not found",
+			"strategyDuplicate": "A strategy with this code already exists",
+			"strategyCreateFailed": "Failed to create strategy",
+			"strategyUpdateFailed": "Failed to update strategy",
+			"strategyDeleteFailed": "Failed to delete strategy",
+			"strategiesRetrieved": "Strategies retrieved successfully",
+			"strategiesFetchFailed": "Failed to retrieve strategies",
+			"noStrategiesFound": "No strategies found",
+			"strategyRetrieved": "Strategy retrieved successfully",
+			"strategyFetchFailed": "Failed to retrieve strategy",
+			"complianceRetrieved": "Compliance overview retrieved",
+			"complianceFetchFailed": "Failed to retrieve compliance overview",
+			"scenarioCreated": "Scenario created successfully",
+			"scenarioUpdated": "Scenario updated successfully",
+			"scenarioDeleted": "Scenario deleted successfully",
+			"scenarioNotFound": "Scenario not found",
+			"scenarioCreateFailed": "Failed to create scenario",
+			"scenarioUpdateFailed": "Failed to update scenario",
+			"scenarioDeleteFailed": "Failed to delete scenario",
+			"scenariosRetrieved": "Scenarios retrieved successfully",
+			"scenariosFetchFailed": "Failed to retrieve scenarios",
+			"scenarioImageAdded": "Image added successfully",
+			"scenarioImageRemoved": "Image removed successfully",
+			"scenarioImageNotFound": "Image not found",
+			"scenarioImageLimitExceeded": "Maximum 3 images per scenario",
+			"scenarioImageAddFailed": "Failed to add image",
+			"scenarioImageRemoveFailed": "Failed to remove image"
 		}
 	},
 	"reports": {
@@ -2227,6 +2434,19 @@
 			"avgLoss": "Avg Loss",
 			"bestTrade": "Best Trade",
 			"worstTrade": "Worst Trade"
+		},
+		"actions": {
+			"weeklyFetchFailed": "Failed to fetch weekly report",
+			"monthlyFetchFailed": "Failed to fetch monthly report",
+			"mistakeFetchFailed": "Failed to fetch mistake cost analysis",
+			"accountNotFound": "Trading account not found",
+			"settingsFetchFailed": "Failed to get user settings",
+			"monthlyResultsFetchFailed": "Failed to fetch monthly results",
+			"projectionFetchFailed": "Failed to fetch monthly projection",
+			"currentMonthFetchFailed": "Failed to get current month data",
+			"comparisonFetchFailed": "Failed to fetch month comparison",
+			"yearlyFetchFailed": "Failed to fetch yearly overview",
+			"commissionFetchFailed": "Failed to fetch commission fee impact"
 		}
 	},
 	"settings": {
@@ -2531,6 +2751,19 @@
 					"name": "Kelly Fractional",
 					"description": "Mathematically optimal sizing divided by safety factor. Maximum theoretical growth."
 				}
+			},
+			"actions": {
+				"retrieved": "Risk profiles retrieved",
+				"retrievedOne": "Risk profile retrieved",
+				"created": "Risk profile created",
+				"updated": "Risk profile updated",
+				"deactivated": "Risk profile deactivated",
+				"fetchFailed": "Failed to get risk profiles",
+				"createFailed": "Failed to create risk profile",
+				"updateFailed": "Failed to update risk profile",
+				"deactivateFailed": "Failed to deactivate risk profile",
+				"validationError": "Validation failed",
+				"adminRequired": "Admin access required"
 			}
 		},
 		"goToSettings": "Settings → {section}",
@@ -2607,7 +2840,8 @@
 			"cannotDeleteAssetType": "Cannot delete asset type with existing assets",
 			"invalidTheme": "Invalid theme value",
 			"invalidBrand": "Invalid brand value",
-			"cannotChangeOwnRole": "Cannot change your own role"
+			"cannotChangeOwnRole": "Cannot change your own role",
+			"assetNotFound": "Asset not found"
 		},
 		"trading": {
 			"propFirms": {
@@ -2679,6 +2913,22 @@
 				"title": "Delete \"{name}\"?",
 				"description": "This action cannot be undone."
 			}
+		},
+		"actions": {
+			"settingsRetrieved": "Settings retrieved successfully",
+			"settingsCreated": "Settings created successfully",
+			"settingsFetchFailed": "Failed to retrieve settings",
+			"settingsUpdated": "Settings updated successfully",
+			"settingsUpdateFailed": "Failed to update settings",
+			"themeRetrieved": "Theme retrieved",
+			"themeFetchFailed": "Failed to retrieve theme",
+			"themeUpdated": "Theme updated",
+			"themeUpdateFailed": "Failed to update theme",
+			"brandRetrieved": "Brand retrieved",
+			"brandFetchFailed": "Failed to retrieve brand",
+			"brandUpdated": "Brand updated",
+			"brandUpdateFailed": "Failed to update brand",
+			"validationError": "Validation error"
 		}
 	},
 	"monthly": {
@@ -3322,6 +3572,14 @@
 			"skipped": "SKIPPED",
 			"dailyLimitHit": "Day stopped: daily loss limit hit",
 			"dailyTargetHit": "Day stopped: daily profit target hit"
+		},
+		"actions": {
+			"previewGenerated": "Preview generated",
+			"failedToGeneratePreview": "Failed to generate preview",
+			"simulationCompleted": "Simulation completed",
+			"failedToRunSimulation": "Failed to run simulation",
+			"tradeYearsRetrieved": "Trade years retrieved",
+			"failedToGetTradeYears": "Failed to get trade years"
 		}
 	},
 	"equityShield": {
@@ -3528,7 +3786,22 @@
 			"fileTooLarge": "PDF must be under 10MB",
 			"noFills": "No trade fills were provided",
 			"noMatches": "No confirmed matches provided",
-			"duplicateImport": "This nota has already been imported"
+			"duplicateImport": "This nota has already been imported",
+			"noPdfProvided": "No PDF file provided",
+			"fileMustBePdf": "File must be a PDF",
+			"fileTooLargeMessage": "File too large (max 10MB)",
+			"duplicateImportDetail": "This PDF was imported on {date}"
+		},
+		"actions": {
+			"parsedFills": "Parsed {count} fills from nota",
+			"failedToParsePdf": "Failed to parse nota PDF",
+			"noFillsToMatch": "No fills to match",
+			"foundMatches": "Found {count} matches",
+			"failedToMatchFills": "Failed to match fills",
+			"noMatchesToEnrich": "No matches to enrich",
+			"enrichedWithErrors": "Enriched {trades} trades with {errors} errors",
+			"enrichedSuccess": "Successfully enriched {trades} trades with {executions} executions",
+			"failedToEnrichTrades": "Failed to enrich trades"
 		}
 	},
 	"upload": {
@@ -4073,7 +4346,11 @@
 			"rangeThisYear": "This Year",
 			"range3m": "3 Months",
 			"range6m": "6 Months",
-			"range1y": "1 Year"
+			"range1y": "1 Year",
+			"modeSuffixR": "R",
+			"modeSuffixPctRange": "% range",
+			"modeSuffixPctStop": "% stop",
+			"modeSuffixPts": "pts"
 		},
 		"orb": {
 			"name": "Opening Range Breakout",
@@ -4115,7 +4392,8 @@
 			"avgLoss": "Avg Loss",
 			"equityCurve": "Equity Curve",
 			"tradeList": "Trade List",
-			"dayBreakdown": "Day Breakdown"
+			"dayBreakdown": "Day Breakdown",
+			"completedTrades": "{count} trades completed"
 		},
 		"table": {
 			"trade": "#",
@@ -4126,7 +4404,8 @@
 			"reason": "Reason",
 			"contracts": "Contracts",
 			"pnl": "P&L",
-			"rMultiple": "R"
+			"rMultiple": "R",
+			"noTrades": "No trades"
 		},
 		"exitReasons": {
 			"target1": "Target 1",
@@ -4139,7 +4418,12 @@
 		"errors": {
 			"noCandles": "No candle data found for the selected range",
 			"invalidParams": "Invalid parameters",
-			"engineError": "Backtest engine error"
+			"engineError": "Backtest engine error",
+			"missingSelection": "Select asset, timeframe, and date range",
+			"assetNotFound": "Asset not found",
+			"datasetTooLarge": "Dataset too large ({count} candles). Maximum: {max}",
+			"failedToLoadDataSources": "Failed to load data sources",
+			"failedToFetchBacktestData": "Failed to fetch backtest data"
 		},
 		"empty": {
 			"title": "No results yet",
@@ -4190,7 +4474,10 @@
 			"parametersDesc": "Define parameter ranges to sweep across all combinations",
 			"back": "Back",
 			"next": "Next",
-			"newOptimization": "New Optimization"
+			"newOptimization": "New Optimization",
+			"stepStatusCurrent": "current step",
+			"stepStatusCompleted": "completed",
+			"stepStatusUpcoming": "upcoming"
 		},
 		"summary": {
 			"strategy": "Strategy",
@@ -4242,7 +4529,12 @@
 				"totalPnlCents": "Total P&L",
 				"maxDrawdownCents": "Max Drawdown",
 				"avgRMultiple": "Avg R"
-			}
+			},
+			"statPF": "PF",
+			"statWin": "Win",
+			"statSharpe": "Sharpe",
+			"statPnl": "P&L",
+			"statTrades": "Trades"
 		},
 		"sweepParam": {
 			"stopInitialType": "Stop Type",
@@ -4277,6 +4569,31 @@
 				"indicator": "WMA Indicator",
 				"priceDistance": "Price Distance"
 			}
+		},
+		"runDetail": {
+			"stopPctRange": "{pct}% range",
+			"stopPivotRef": "Pivot ref",
+			"stopFixedPts": "{points} pts",
+			"stopFullRange": "Full range +{buffer}t",
+			"unitR": "R",
+			"unitPts": "pts",
+			"sizingLots": "{lots} lots",
+			"sizingRisk": "R${amount} risk"
+		}
+	},
+	"candleImport": {
+		"errors": {
+			"csvParseFailed": "CSV parsing failed",
+			"assetNotFound": "Asset \"{symbol}\" not found. Add it in Settings → Assets before importing candle data.",
+			"timeframeNotFound": "Timeframe \"{code}\" not found. Available timeframes: {available}",
+			"invalidAssetId": "Invalid asset ID format",
+			"invalidTimeframeId": "Invalid timeframe ID format",
+			"noCandlesToImport": "No candles to import"
+		},
+		"actions": {
+			"validated": "Validated {count} candles for {symbol} ({timeframe})",
+			"importSuccess": "Successfully imported {count} candles",
+			"seededIndicators": "Seeded indicator definitions ({mappings} known mappings across {groups} groups)"
 		}
 	}
 }

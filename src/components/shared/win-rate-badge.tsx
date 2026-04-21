@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface WinRateBadgeProps {
@@ -28,6 +29,7 @@ export const WinRateBadge = ({
 	size = "md",
 	className,
 }: WinRateBadgeProps) => {
+	const t = useTranslations("common")
 	const isAboveThreshold = winRate >= threshold
 
 	const displayValue = `${winRate.toFixed(0)}%`
@@ -40,7 +42,7 @@ export const WinRateBadge = ({
 				isAboveThreshold ? "text-trade-buy" : "text-trade-sell",
 				className
 			)}
-			aria-label={`${displayValue} (${isAboveThreshold ? "above" : "below"} ${threshold}% threshold)`}
+			aria-label={`${displayValue} (${isAboveThreshold ? t("winRate.aboveThreshold", { threshold }) : t("winRate.belowThreshold", { threshold })})`}
 		>
 			{displayValue}
 		</span>

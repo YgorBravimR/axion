@@ -2,6 +2,12 @@
 
 ---
 
+> **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/error-utils.test.ts`
+> **Report:** 9 unit tests in `error-utils.test.ts` failing — `getUserMessage()` / `toSafeErrorMessage()` tests expected `"An unexpected error occurred"` but the function returns the i18n key `"common.unexpectedError"`.
+> **Fix:** Updated all 9 `expect(result).toBe(...)` assertions in the test file to match the actual return value `"common.unexpectedError"`. Source code (`src/lib/error-utils.ts`) was not changed — `GENERIC_MESSAGE` was intentionally set to the i18n key, not the English string.
+
+---
+
 > **[FIX-2026-02-13]** `Severity: Medium` — **Affected:** `src/components/journal/trade-form.tsx`, `src/components/journal/scaled-trade-form.tsx`, `src/app/[locale]/(app)/journal/new/page.tsx`
 > **Report:** "The replay date is from January and on create a new trade it is from today, February 13th"
 > **Fix:** The trade form used `new Date()` for default entry/exit dates instead of the account's effective date. Added `getCurrentAccount()` fetch to the new trade page, computed effective date via `getEffectiveDate(account)`, and threaded it as `defaultDate` prop through `NewTradeTabs` → `TradeForm` / `ScaledTradeForm`. Also updated the `max` attribute on date inputs to use the effective date instead of real today.
@@ -76,3 +82,15 @@ Clicking any date filter preset (e.g., "This Month", "This Week") crashed the en
 > **[FIX-2026-03-23]** `Severity: Medium` -- **Affected:** `src/components/analytics/analytics-content.tsx`, `src/lib/cache/analytics-cache.ts`
 > **Report:** "Analytics client cache resets on every page navigation -- switching from /analytics to /journal and back always re-fetches from DB"
 > **Fix:** Replaced `useRef(new Map())` in-component cache with a module-level singleton cache (`src/lib/cache/analytics-cache.ts`) that survives component unmount/mount cycles. The module cache has 5-minute TTL auto-expiry. Cache is cleared when SSR delivers fresh `initialDashboard` props (triggered by `revalidatePath` after trade/tag/strategy mutations). Server-side invalidation flow: mutation -> `invalidateTradeData()` -> `revalidatePath("/analytics")` -> next SSR is fresh -> reset effect fires -> `clearAnalyticsCache()`.
+
+---
+
+> **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/validations/auth-schemas.test.ts`
+> **Report:** Unit test "should reject a code shorter than 6 digits" was failing because the assertion regex `/6/i` expected the digit `6` in the Zod error message.
+> **Fix:** The schema uses an i18n key `"validation.auth.codeLength"` as the error message (not a human-readable string like "must be 6 characters"). Updated the regex to `/codelength/i` so it matches the actual i18n key produced by `z.string().length(6, "validation.auth.codeLength")`.
+
+---
+
+> **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/risk-simulation.test.ts`
+> **Report:** 6 unit tests failing — `riskReason` assertions used human-readable strings (`"Base risk"`, `"Reduced"`, `"Win bonus"`, `"T1 base risk"`, `"Recovery #1"`, `"Gain reinvest"`) but the simulation engine was updated to emit i18n keys (`"riskSimulation.reasons.baseRisk"`, `"riskSimulation.reasons.reducedLoss|..."`, etc.).
+> **Fix:** Updated all 6 `toContain(...)` assertions in the test file to match the actual i18n key prefixes the engine produces. Source code (`risk-simulation.ts`, `risk-simulation-advanced.ts`) unchanged.

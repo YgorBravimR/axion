@@ -40,9 +40,9 @@ const RunDetailPanel = ({ run, onRecomputeTrades }: RunDetailPanelProps) => {
 
 			{/* Recipe snapshot — key config values */}
 			<div className="bg-bg-100/50 gap-m-300 grid grid-cols-2 rounded-lg p-s-300 sm:grid-cols-4">
-				<ConfigItem label={t("configStop")} value={formatStopConfig(run)} />
-				<ConfigItem label={t("configTarget")} value={formatTargetConfig(run)} />
-				<ConfigItem label={t("configSizing")} value={formatSizingConfig(run)} />
+				<ConfigItem label={t("configStop")} value={formatStopConfig(run, t)} />
+				<ConfigItem label={t("configTarget")} value={formatTargetConfig(run, t)} />
+				<ConfigItem label={t("configSizing")} value={formatSizingConfig(run, t)} />
 				<ConfigItem label={t("configSlippage")} value={`${run.recipe.slippageTicks} ticks`} />
 			</div>
 
@@ -73,25 +73,27 @@ const ConfigItem = ({ label, value }: ConfigItemProps) => (
 	</div>
 )
 
-const formatStopConfig = (run: OptimizationRun): string => {
+type TranslateFn = ReturnType<typeof useTranslations<"optimize">>
+
+const formatStopConfig = (run: OptimizationRun, t: TranslateFn): string => {
 	const stop = run.recipe.stop.initial
 	switch (stop.type) {
-		case "pct_range": return `${stop.pct}% range`
-		case "fixed_points": return stop.points === 0 ? "Pivot ref" : `${stop.points} pts`
-		case "full_range": return `Full range +${stop.ticksBuffer}t`
+		case "pct_range": return t("runDetail.stopPctRange", { pct: stop.pct })
+		case "fixed_points": return stop.points === 0 ? t("runDetail.stopPivotRef") : t("runDetail.stopFixedPts", { points: stop.points })
+		case "full_range": return t("runDetail.stopFullRange", { buffer: stop.ticksBuffer })
 	}
 }
 
-const formatTargetConfig = (run: OptimizationRun): string => {
+const formatTargetConfig = (run: OptimizationRun, t: TranslateFn): string => {
 	if (run.recipe.target.type !== "fixed_levels") return "—"
 	const levels = run.recipe.target.levels
-	return levels.map((l) => `${l.value}${l.mode === "r_multiple" ? "R" : "pts"}`).join(" / ")
+	return levels.map((l) => `${l.value}${l.mode === "r_multiple" ? t("runDetail.unitR") : t("runDetail.unitPts")}`).join(" / ")
 }
 
-const formatSizingConfig = (run: OptimizationRun): string => {
+const formatSizingConfig = (run: OptimizationRun, t: TranslateFn): string => {
 	const sizing = run.recipe.sizing
-	if (sizing.type === "fixed_lots") return `${sizing.lots} lots`
-	return `R$${(sizing.riskAmountCents / 100).toFixed(0)} risk`
+	if (sizing.type === "fixed_lots") return t("runDetail.sizingLots", { lots: sizing.lots })
+	return t("runDetail.sizingRisk", { amount: (sizing.riskAmountCents / 100).toFixed(0) })
 }
 
 export { RunDetailPanel }

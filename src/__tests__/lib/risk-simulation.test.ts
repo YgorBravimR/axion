@@ -266,8 +266,8 @@ describe("runSimpleSimulation", () => {
 			const t2 = result.trades[1]
 
 			if (t1.status === "executed" && t2.status === "executed") {
-				expect(t1.riskReason).toContain("Base risk")
-				expect(t2.riskReason).toContain("Reduced")
+				expect(t1.riskReason).toContain("riskSimulation.reasons.baseRisk")
+				expect(t2.riskReason).toContain("riskSimulation.reasons.reducedLoss")
 			}
 		})
 	})
@@ -285,7 +285,7 @@ describe("runSimpleSimulation", () => {
 
 			const t2 = result.trades[1]
 			if (t2.status === "executed") {
-				expect(t2.riskReason).toContain("Win bonus")
+				expect(t2.riskReason).toContain("riskSimulation.reasons.winBonus")
 			}
 		})
 	})
@@ -339,7 +339,7 @@ describe("runAdvancedSimulation", () => {
 
 			const t1 = result.trades[0]
 			expect(t1.status).toBe("executed")
-			expect(t1.riskReason).toContain("T1 base risk")
+			expect(t1.riskReason).toContain("riskSimulation.reasons.t1BaseRisk")
 			expect(t1.dayPhase).toBe("base")
 			expect(t1.dayTradeNumber).toBe(1)
 		})
@@ -371,7 +371,7 @@ describe("runAdvancedSimulation", () => {
 			const t2 = result.trades[1]
 			expect(t2.dayPhase).toBe("loss_recovery")
 			expect(t2.recoveryStepIndex).toBe(0)
-			expect(t2.riskReason).toContain("Recovery #1")
+			expect(t2.riskReason).toContain("riskSimulation.reasons.recoveryStep")
 		})
 
 		it("should use percentOfBase risk calculation for recovery", () => {
@@ -425,7 +425,7 @@ describe("runAdvancedSimulation", () => {
 
 			const t3 = result.trades[2]
 			expect(t3.dayPhase).toBe("gain_mode")
-			expect(t3.riskReason).toContain("Gain reinvest")
+			expect(t3.riskReason).toContain("riskSimulation.reasons.gainReinvest")
 		})
 
 		it("should use fixedCents risk when specified in recovery step", () => {
@@ -484,7 +484,7 @@ describe("runAdvancedSimulation", () => {
 
 			const t2 = result.trades[1]
 			expect(t2.dayPhase).toBe("gain_mode")
-			expect(t2.riskReason).toContain("Gain reinvest")
+			expect(t2.riskReason).toContain("riskSimulation.reasons.gainReinvest")
 		})
 
 		it("should reinvest percentage of day gains", () => {

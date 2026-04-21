@@ -63,6 +63,7 @@ const toUserSettingsData = (row: UserSettings): UserSettingsData => ({
 export const getUserSettings = async (): Promise<
 	ActionResponse<UserSettingsData>
 > => {
+	const t = await getTranslations("settings")
 	try {
 		const { userId } = await requireAuth()
 
@@ -73,7 +74,7 @@ export const getUserSettings = async (): Promise<
 		if (existingSettings) {
 			return {
 				status: "success",
-				message: "Settings retrieved successfully",
+				message: t("actions.settingsRetrieved"),
 				data: toUserSettingsData(existingSettings),
 			}
 		}
@@ -100,14 +101,14 @@ export const getUserSettings = async (): Promise<
 
 		return {
 			status: "success",
-			message: "Default settings created",
+			message: t("actions.settingsCreated"),
 			data: toUserSettingsData(newSettings),
 		}
 	} catch (error) {
 		console.error("Failed to get user settings:", error)
 		return {
 			status: "error",
-			message: "Failed to retrieve settings",
+			message: t("actions.settingsFetchFailed"),
 		}
 	}
 }
@@ -116,6 +117,7 @@ export const getUserSettings = async (): Promise<
 export const updateUserSettings = async (
 	data: UpdateUserSettingsInput
 ): Promise<ActionResponse<UserSettingsData>> => {
+	const t = await getTranslations("settings")
 	try {
 		const { userId } = await requireAuth()
 
@@ -124,7 +126,7 @@ export const updateUserSettings = async (
 		if (!validationResult.success) {
 			return {
 				status: "error",
-				message: validationResult.error.issues[0]?.message || "Validation error",
+				message: validationResult.error.issues[0]?.message || t("actions.validationError"),
 			}
 		}
 
@@ -172,7 +174,7 @@ export const updateUserSettings = async (
 
 			return {
 				status: "success",
-				message: "Settings created successfully",
+				message: t("actions.settingsCreated"),
 				data: toUserSettingsData(newSettings),
 			}
 		}
@@ -221,19 +223,20 @@ export const updateUserSettings = async (
 
 		return {
 			status: "success",
-			message: "Settings updated successfully",
+			message: t("actions.settingsUpdated"),
 			data: toUserSettingsData(updated),
 		}
 	} catch (error) {
 		console.error("Failed to update user settings:", error)
 		return {
 			status: "error",
-			message: "Failed to update settings",
+			message: t("actions.settingsUpdateFailed"),
 		}
 	}
 }
 
 export const getRiskSettings = async (): Promise<ActionResponse<RiskSettings>> => {
+	const t = await getTranslations("settings")
 	try {
 		const { accountId } = await requireAuth()
 
@@ -254,7 +257,7 @@ export const getRiskSettings = async (): Promise<ActionResponse<RiskSettings>> =
 
 		return {
 			status: "success",
-			message: "Settings retrieved successfully",
+			message: t("actions.settingsRetrieved"),
 			data: {
 				defaultRiskPercent: account?.defaultRiskPerTrade
 					? Number(account.defaultRiskPerTrade)
@@ -268,7 +271,7 @@ export const getRiskSettings = async (): Promise<ActionResponse<RiskSettings>> =
 		console.error("Failed to get risk settings:", error)
 		return {
 			status: "error",
-			message: "Failed to retrieve settings",
+			message: t("actions.settingsFetchFailed"),
 		}
 	}
 }
@@ -276,6 +279,7 @@ export const getRiskSettings = async (): Promise<ActionResponse<RiskSettings>> =
 export const updateRiskSettings = async (
 	data: RiskSettings
 ): Promise<ActionResponse<RiskSettings>> => {
+	const t = await getTranslations("settings")
 	try {
 		const { accountId } = await requireAuth()
 		const now = new Date()
@@ -329,14 +333,14 @@ export const updateRiskSettings = async (
 
 		return {
 			status: "success",
-			message: "Settings updated successfully",
+			message: t("actions.settingsUpdated"),
 			data,
 		}
 	} catch (error) {
 		console.error("Failed to update risk settings:", error)
 		return {
 			status: "error",
-			message: "Failed to update settings",
+			message: t("actions.settingsUpdateFailed"),
 		}
 	}
 }
@@ -345,6 +349,7 @@ export const updateRiskSettings = async (
  * Get the user's persisted theme preference from the database.
  */
 export const getUserTheme = async (): Promise<ActionResponse<string>> => {
+	const t = await getTranslations("settings")
 	try {
 		const { userId } = await requireAuth()
 
@@ -355,14 +360,14 @@ export const getUserTheme = async (): Promise<ActionResponse<string>> => {
 
 		return {
 			status: "success",
-			message: "Theme retrieved",
+			message: t("actions.themeRetrieved"),
 			data: user?.theme ?? "dark",
 		}
 	} catch (error) {
 		console.error("Failed to get user theme:", error)
 		return {
 			status: "error",
-			message: "Failed to retrieve theme",
+			message: t("actions.themeFetchFailed"),
 		}
 	}
 }
@@ -393,14 +398,14 @@ export const updateTheme = async (
 
 		return {
 			status: "success",
-			message: "Theme updated",
+			message: t("actions.themeUpdated"),
 			data: theme,
 		}
 	} catch (error) {
 		console.error("Failed to update theme:", error)
 		return {
 			status: "error",
-			message: "Failed to update theme",
+			message: t("actions.themeUpdateFailed"),
 		}
 	}
 }
@@ -411,6 +416,7 @@ import { BRANDS as VALID_BRANDS, type Brand as BrandValue } from "@/lib/brands"
  * Get the current account's brand (color scheme) from the database.
  */
 export const getAccountBrand = async (): Promise<ActionResponse<string>> => {
+	const t = await getTranslations("settings")
 	try {
 		const { accountId } = await requireAuth()
 
@@ -421,14 +427,14 @@ export const getAccountBrand = async (): Promise<ActionResponse<string>> => {
 
 		return {
 			status: "success",
-			message: "Brand retrieved",
+			message: t("actions.brandRetrieved"),
 			data: account?.brand ?? "bravo",
 		}
 	} catch (error) {
 		console.error("Failed to get account brand:", error)
 		return {
 			status: "error",
-			message: "Failed to retrieve brand",
+			message: t("actions.brandFetchFailed"),
 		}
 	}
 }
@@ -460,14 +466,14 @@ export const updateAccountBrand = async (
 
 		return {
 			status: "success",
-			message: "Brand updated",
+			message: t("actions.brandUpdated"),
 			data: brand,
 		}
 	} catch (error) {
 		console.error("Failed to update account brand:", error)
 		return {
 			status: "error",
-			message: "Failed to update brand",
+			message: t("actions.brandUpdateFailed"),
 		}
 	}
 }

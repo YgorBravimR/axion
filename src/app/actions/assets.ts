@@ -289,7 +289,8 @@ export const updateAsset = async (
 		.returning()
 
 	if (!asset) {
-		return { success: false, error: "Asset not found" }
+		const t = await getTranslations("settings")
+		return { success: false, error: t("errors.assetNotFound") }
 	}
 
 	invalidateSettingsData()

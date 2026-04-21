@@ -62,31 +62,31 @@ describe("toSafeErrorMessage — return value", () => {
 	it("should always return the generic message for an Error object", () => {
 		const result = toSafeErrorMessage(new Error("DB connection failed"))
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 	})
 
 	it("should always return the generic message for a plain string error", () => {
 		const result = toSafeErrorMessage("something went wrong")
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 	})
 
 	it("should always return the generic message for null", () => {
 		const result = toSafeErrorMessage(null)
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 	})
 
 	it("should always return the generic message for undefined", () => {
 		const result = toSafeErrorMessage(undefined)
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 	})
 
 	it("should always return the generic message regardless of context", () => {
 		const result = toSafeErrorMessage(new Error("any error"), "trades.create")
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 	})
 
 	it("should always return the generic message regardless of category", () => {
@@ -96,7 +96,7 @@ describe("toSafeErrorMessage — return value", () => {
 			"database",
 		)
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 	})
 })
 
@@ -236,14 +236,14 @@ describe("toSafeErrorMessage — backward compatibility", () => {
 	it("should work correctly when called with only an error (1-arg form)", () => {
 		const result = toSafeErrorMessage(new Error("standalone error"))
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 		expect(mockReportError).toHaveBeenCalledOnce()
 	})
 
 	it("should work correctly when called with error and context (2-arg form)", () => {
 		const result = toSafeErrorMessage(new Error("contextual error"), "module.action")
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 		expect(mockReportError).toHaveBeenCalledOnce()
 
 		const [, options] = mockReportError.mock.calls[0] as [
@@ -257,7 +257,7 @@ describe("toSafeErrorMessage — backward compatibility", () => {
 	it("should work correctly when called with all three args (3-arg form)", () => {
 		const result = toSafeErrorMessage(new Error("full error"), "module.action", "api")
 
-		expect(result).toBe("An unexpected error occurred")
+		expect(result).toBe("common.unexpectedError")
 		expect(mockReportError).toHaveBeenCalledOnce()
 	})
 })

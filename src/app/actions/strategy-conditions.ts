@@ -50,7 +50,7 @@ const syncStrategyConditions = async (
 			invalidatePlaybookData()
 			return {
 				status: "success",
-				message: "Strategy conditions cleared",
+				message: t("actionErrors.conditionsCleared"),
 				data: [],
 			}
 		}
@@ -71,7 +71,7 @@ const syncStrategyConditions = async (
 
 		return {
 			status: "success",
-			message: "Strategy conditions synced successfully",
+			message: t("actionErrors.conditionsSynced"),
 			data: inserted,
 		}
 	} catch (error) {
@@ -119,7 +119,7 @@ const getStrategyConditions = async (
 
 		return {
 			status: "success",
-			message: "Strategy conditions retrieved successfully",
+			message: t("actionErrors.conditionsRetrieved"),
 			data: result,
 		}
 	} catch (error) {

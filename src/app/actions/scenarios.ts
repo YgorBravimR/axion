@@ -1,6 +1,7 @@
 "use server"
 
 import { invalidatePlaybookData } from "@/lib/cache/invalidate"
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { strategyScenarios, scenarioImages, strategies } from "@/db/schema"
 import type { StrategyScenario, ScenarioImage } from "@/db/schema"
@@ -27,6 +28,7 @@ interface ScenarioWithImages extends StrategyScenario {
 const createScenario = async (
 	input: CreateScenarioInput
 ): Promise<ActionResponse<StrategyScenario>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
 		const validated = createScenarioSchema.parse(input)
@@ -39,7 +41,7 @@ const createScenario = async (
 		if (!strategy) {
 			return {
 				status: "error",
-				message: "Strategy not found",
+				message: t("actions.strategyNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
 			}
 		}
@@ -58,21 +60,21 @@ const createScenario = async (
 
 		return {
 			status: "success",
-			message: "Scenario created successfully",
+			message: t("actions.scenarioCreated"),
 			data: scenario,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("actions.validationFailed"),
 				errors: [{ code: "VALIDATION_ERROR", detail: error.message }],
 			}
 		}
 
 		return {
 			status: "error",
-			message: "Failed to create scenario",
+			message: t("actions.scenarioCreateFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -90,6 +92,7 @@ const updateScenario = async (
 	id: string,
 	input: UpdateScenarioInput
 ): Promise<ActionResponse<StrategyScenario>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
 		const validated = updateScenarioSchema.parse(input)
@@ -103,7 +106,7 @@ const updateScenario = async (
 		if (!existing || existing.strategy.userId !== userId) {
 			return {
 				status: "error",
-				message: "Scenario not found",
+				message: t("actions.scenarioNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Scenario does not exist" }],
 			}
 		}
@@ -125,13 +128,13 @@ const updateScenario = async (
 
 		return {
 			status: "success",
-			message: "Scenario updated successfully",
+			message: t("actions.scenarioUpdated"),
 			data: scenario,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to update scenario",
+			message: t("actions.scenarioUpdateFailed"),
 			errors: [
 				{
 					code: "UPDATE_FAILED",
@@ -146,6 +149,7 @@ const updateScenario = async (
  * Delete a scenario and clean up its S3 images
  */
 const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
 
@@ -158,7 +162,7 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 		if (!existing || existing.strategy.userId !== userId) {
 			return {
 				status: "error",
-				message: "Scenario not found",
+				message: t("actions.scenarioNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Scenario does not exist" }],
 			}
 		}
@@ -176,12 +180,12 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 
 		return {
 			status: "success",
-			message: "Scenario deleted successfully",
+			message: t("actions.scenarioDeleted"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete scenario",
+			message: t("actions.scenarioDeleteFailed"),
 			errors: [
 				{
 					code: "DELETE_FAILED",
@@ -198,6 +202,7 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 const getScenariosByStrategy = async (
 	strategyId: string
 ): Promise<ActionResponse<ScenarioWithImages[]>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
 
@@ -209,7 +214,7 @@ const getScenariosByStrategy = async (
 		if (!strategy) {
 			return {
 				status: "error",
-				message: "Strategy not found",
+				message: t("actions.strategyNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
 			}
 		}
@@ -222,13 +227,13 @@ const getScenariosByStrategy = async (
 
 		return {
 			status: "success",
-			message: "Scenarios retrieved successfully",
+			message: t("actions.scenariosRetrieved"),
 			data: scenarios,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve scenarios",
+			message: t("actions.scenariosFetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -248,6 +253,7 @@ const addScenarioImage = async (
 	s3Key: string,
 	sortOrder = 0
 ): Promise<ActionResponse<ScenarioImage>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
 
@@ -260,7 +266,7 @@ const addScenarioImage = async (
 		if (!scenario || scenario.strategy.userId !== userId) {
 			return {
 				status: "error",
-				message: "Scenario not found",
+				message: t("actions.scenarioNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Scenario does not exist" }],
 			}
 		}
@@ -269,7 +275,7 @@ const addScenarioImage = async (
 		if (scenario.images.length >= 3) {
 			return {
 				status: "error",
-				message: "Maximum 3 images per scenario",
+				message: t("actions.scenarioImageLimitExceeded"),
 				errors: [{ code: "LIMIT_EXCEEDED", detail: "Cannot add more than 3 images" }],
 			}
 		}
@@ -283,13 +289,13 @@ const addScenarioImage = async (
 
 		return {
 			status: "success",
-			message: "Image added successfully",
+			message: t("actions.scenarioImageAdded"),
 			data: image,
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to add image",
+			message: t("actions.scenarioImageAddFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -304,6 +310,7 @@ const addScenarioImage = async (
  * Remove an image from a scenario
  */
 const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
 
@@ -315,7 +322,7 @@ const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void
 		if (!image || image.scenario.strategy.userId !== userId) {
 			return {
 				status: "error",
-				message: "Image not found",
+				message: t("actions.scenarioImageNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Image does not exist" }],
 			}
 		}
@@ -329,12 +336,12 @@ const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void
 
 		return {
 			status: "success",
-			message: "Image removed successfully",
+			message: t("actions.scenarioImageRemoved"),
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to remove image",
+			message: t("actions.scenarioImageRemoveFailed"),
 			errors: [
 				{
 					code: "DELETE_FAILED",
