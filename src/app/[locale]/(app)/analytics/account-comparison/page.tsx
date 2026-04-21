@@ -1,6 +1,5 @@
 import { setRequestLocale } from "next-intl/server"
 import { requireAuth } from "@/app/actions/auth"
-import { requireRole } from "@/lib/auth-utils"
 import { getUserAccounts } from "@/app/actions/auth"
 import { AccountComparisonContent } from "@/components/account-comparison"
 
@@ -15,9 +14,7 @@ const AccountComparisonPage = async ({
 	const { locale } = await params
 	setRequestLocale(locale)
 
-	// Auth + admin guard
 	await requireAuth()
-	await requireRole("admin")
 
 	const accounts = await getUserAccounts()
 

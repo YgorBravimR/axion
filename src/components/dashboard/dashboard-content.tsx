@@ -21,6 +21,7 @@ import {
 	getRadarChartData,
 } from "@/app/actions/analytics"
 import { cn } from "@/lib/utils"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { dashboardGuide } from "@/components/ui/page-guide/guide-configs/dashboard"
 import type {
@@ -116,6 +117,7 @@ export const DashboardContent = ({
 	initialMonthIndex,
 }: DashboardContentProps) => {
 	const effectiveDate = useEffectiveDate()
+	const { canAccess } = useFeatureAccess()
 	useRegisterPageGuide(dashboardGuide)
 	// Calendar month state (independent of the period filter)
 	const [currentMonth, setCurrentMonth] = useState(() => new Date(initialYear, initialMonthIndex, 1))
@@ -220,10 +222,12 @@ export const DashboardContent = ({
 				<KpiCards stats={stats} discipline={discipline} />
 			</div>
 
-			{/* Coaching Insights */}
-			<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
-				<CoachingInsightsCard />
-			</div>
+			{/* Coaching Insights — trader+ only */}
+			{canAccess("dashboard:coaching-insights") && (
+				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
+					<CoachingInsightsCard />
+				</div>
+			)}
 
 			{/* Calendar */}
 			<div id="dashboard-calendar" className="md:col-span-2 lg:col-span-2">

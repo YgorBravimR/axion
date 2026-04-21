@@ -88,21 +88,23 @@ export const NewTradeTabs = ({
 					)}
 					{tradeMode === "simple" ? t("singleEntry") : tTrade("mode.scaled")}
 				</button>
-				<button
-					type="button"
-					onClick={() => setActiveTab("csv")}
-					className={cn(
-						"gap-s-200 px-s-300 sm:px-m-400 py-s-300 text-small flex shrink-0 items-center border-b-2 font-medium transition-colors",
-						activeTab === "csv"
-							? "border-acc-100 text-acc-100"
-							: "text-txt-300 hover:text-txt-100 border-transparent"
-					)}
-					aria-selected={activeTab === "csv"}
-					role="tab"
-				>
-					<Upload className="h-4 w-4" />
-					{t("csvImport")}
-				</button>
+				{canAccess("journal:csv-tab") && (
+					<button
+						type="button"
+						onClick={() => setActiveTab("csv")}
+						className={cn(
+							"gap-s-200 px-s-300 sm:px-m-400 py-s-300 text-small flex shrink-0 items-center border-b-2 font-medium transition-colors",
+							activeTab === "csv"
+								? "border-acc-100 text-acc-100"
+								: "text-txt-300 hover:text-txt-100 border-transparent"
+						)}
+						aria-selected={activeTab === "csv"}
+						role="tab"
+					>
+						<Upload className="h-4 w-4" />
+						{t("csvImport")}
+					</button>
+				)}
 				{canAccess("journal:nota-tab") && (
 					<button
 						type="button"
@@ -178,7 +180,7 @@ export const NewTradeTabs = ({
 						)}
 					</div>
 				</div>
-				{activeTab === "csv" && <CsvImport />}
+				{activeTab === "csv" && canAccess("journal:csv-tab") && <CsvImport />}
 				{activeTab === "nota" && canAccess("journal:nota-tab") && <NotaImport />}
 				{activeTab === "screenshot" && canAccess("journal:ocr-tab") && <OcrImport />}
 			</div>

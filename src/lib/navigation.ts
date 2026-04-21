@@ -47,6 +47,9 @@ interface NavItem {
 	icon: LucideIcon
 }
 
+/** Sentinel to block new-trade creation for roles below trader */
+const NEW_TRADE_FEATURE_KEY = "journal:new-trade"
+
 const navItems: NavItem[] = [
 	{ labelKey: "dashboard", href: "/", icon: LayoutDashboard },
 	{ labelKey: "commandCenter", href: "/command-center", icon: Target },
@@ -71,4 +74,4 @@ const navItems: NavItem[] = [
 	{ labelKey: "settings", href: "/settings", icon: Settings },
 ]
 
-export { navItems, type NavItem }
+export { navItems, NEW_TRADE_FEATURE_KEY, type NavItem }

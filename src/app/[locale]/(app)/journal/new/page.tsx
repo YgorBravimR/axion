@@ -5,12 +5,14 @@ import { getActiveAssets } from "@/app/actions/assets"
 import { getActiveTimeframes } from "@/app/actions/timeframes"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { getCurrentAccount } from "@/app/actions/auth"
+import { requireRole } from "@/lib/auth-utils"
 
 interface NewTradePageProps {
 	searchParams: Promise<{ returnTo?: string; asset?: string }>
 }
 
 const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
+	await requireRole("trader")
 	const { returnTo, asset } = await searchParams
 
 	const [strategiesResult, tagsResult, assets, timeframes, effectiveDate, account] = await Promise.all([

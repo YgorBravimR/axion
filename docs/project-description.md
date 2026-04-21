@@ -473,75 +473,74 @@ src/
 
 ## Quick Reference
 
-| Feature | Description |
-|---------|-------------|
-| **Command Center** | Pre-market prep, live session control, and post-market reflection cockpit |
-| ↳ Plan | Monthly trading plan creation with goals, risk limits, and recovery paths |
-| ↳ Centro de Comando | Circuit breaker, live status, checklist, pre/post notes, asset rules, daily summary |
-| ↳ Monitor | Real-time quotes, B3 calendar, economic calendar, market status |
-| ↳ Calculadora | Position size calculator with risk-based lot sizing |
-| **Journal** | Trade logging via manual entry, CSV import, brokerage nota, or OCR screenshots |
-| ↳ Trade List | Filterable trade list grouped by day with smart search and period filters |
-| ↳ New Trade | Manual trade form with executions, tags, playbook link, and screenshots |
-| ↳ Trade Detail | Full trade autopsy: planned vs realized R, MFE/MAE, narrative log, chart view |
-| ↳ CSV Import | Parse trades from broker CSVs (Clear, XP, Genial) |
-| ↳ Nota Import | Parse Brazilian brokerage notas (Sinacor format) |
-| ↳ OCR Import | Screenshot-to-trade extraction via Tesseract + OpenAI Vision |
-| **Dashboard** | Performance overview with KPIs, trading calendar, equity curve, and coaching insights |
-| ↳ KPI Cards | Net P&L, Win Rate, Profit Factor, Avg R-Multiple, Discipline Score |
-| ↳ Trading Calendar | Monthly grid color-coded by day performance with detail modal |
-| ↳ Equity Curve | Account growth line chart with drawdown overlay |
-| ↳ Coaching Insights | AI-powered pattern detection and behavioral suggestions |
-| **Analytics** | Deep performance slicing by variable, tag, time, and asset with statistical charts |
-| ↳ Variable Comparison | Group by asset, timeframe, hour, day of week, or strategy |
-| ↳ Tag Cloud | Setup tags vs mistake tags performance breakdown |
-| ↳ Expected Value | Projected outcome over N trades (edge vs R-based modes) |
-| ↳ Time Analysis | Heatmap, hourly chart, session chart, day-of-week, holding period |
-| **Account Comparison** | Side-by-side performance comparison across trading accounts |
-| **Playbook** | Strategy library with entry/exit rules, conditions, and compliance tracking |
-| ↳ Compliance Dashboard | Percentage-based tracking of rule adherence per strategy |
-| ↳ Strategy Cards | Visual strategy overview with conditions, scenarios, and screenshots |
-| **Reports** | Automated weekly/monthly summaries with mistake cost analysis and PDF export |
-| ↳ Weekly Report | 7-day performance summary card |
-| ↳ Monthly Report | 30-day performance summary with trends |
-| ↳ Mistake Cost | Dollar cost breakdown by mistake tag |
-| ↳ Commission Impact | Brokerage fee analysis |
-| **Monthly Review** | Month-over-month tracking, weekly breakdowns, and performance projections |
-| ↳ Month Comparison | Side-by-side metrics across months |
-| ↳ Weekly Breakdown | Performance segmented by week within month |
-| ↳ Projection | Extrapolated performance at current pace (current month only) |
-| **Monte Carlo** | Statistical simulation of trade outcomes for drawdown and risk analysis |
-| ↳ Edge Expectancy | Classic MC simulation with manual or trade-based inputs, Kelly criterion |
-| ↳ Capital Expectancy | Risk-profile-aware simulation with mode distribution and daily PnL |
-| **Equity Shield** | Dynamic position sizing that scales down in drawdowns and up in winning streaks |
-| ↳ MDD Exercise | Method 1 — max drawdown exercise-based shield zones |
-| ↳ SMA Crossover | Method 2 — SMA crossover-based shield zones |
-| ↳ MC Calibration | Auto-calibrate shield params from Monte Carlo results |
-| **Risk Simulation** | What-if replay of historical trades with modified risk parameters |
-| ↳ Config Panel | Prefill from manual, monthly plan, or risk profile |
-| ↳ Decision Trace | Step-by-step decision replay per trade |
-| ↳ Equity Overlay | Original vs simulated equity curves side-by-side |
-| **Backtest** | Strategy backtesting on candle data with modular entry/stop/target plugins |
-| ↳ ORB Breakout | Opening Range Breakout entry strategy module |
-| ↳ MACD/WMA Alignment | DezK entry strategy module |
-| ↳ Stop & Trailing | Initial stop and trailing stop configuration |
-| ↳ Targets & Sizing | Fixed target levels, partial exits, position sizing rules |
-| **Backtest Optimizer** | Parameter sweep across backtest configs with heatmap visualization |
-| ↳ Wizard | 3-step flow: setup → parameters → results |
-| ↳ Heatmap | Parameter combination performance heatmap |
-| ↳ Runs Table | Sortable comparison table of all sweep runs |
-| **MACD Test** | Experimental MACD indicator visualization and signal testing |
-| **Settings** | Account, asset, tag, timeframe, condition, and indicator management |
-| ↳ Profile | User profile settings |
-| ↳ Accounts | Trading account management (prop firms, personal) |
-| ↳ Tags | Setup and mistake tag definitions |
-| ↳ Conditions | Reusable trading condition blocks |
-| ↳ Indicators | Custom indicator group and definition management |
-| ↳ Assets | Tradeable asset definitions (tickers, lot sizes) |
-| ↳ Timeframes | Chart timeframe definitions |
-| ↳ Users | User list (admin) |
-| ↳ Bugs | Submitted bug reports (admin) |
-| **Market Monitor** | Real-time quotes, B3 calendar, and economic calendar (cross-cutting) |
-| **Position Calculator** | Quick position size calculation from any page via dialog |
-| **Bug Report Capture** | In-app screenshot capture and bug submission |
-| **Page Guide** | Interactive onboarding overlays per feature |
+| Feature | Description | Access |
+|---------|-------------|--------|
+| **Command Center** | Pre-market prep, live session control, and post-market reflection cockpit | All |
+| ↳ Plan | Monthly trading plan creation with goals, risk limits, and recovery paths | Trader |
+| ↳ Centro de Comando | Circuit breaker, live status, checklist, pre/post notes, asset rules, daily summary | Trader |
+| ↳ Monitor | Real-time quotes, B3 calendar, economic calendar, market status | Admin |
+| ↳ Calculadora | Position size calculator with risk-based lot sizing | All |
+| **Journal** | Trade logging via manual entry, CSV import, brokerage nota, or OCR screenshots | All |
+| ↳ Trade List | Filterable trade list grouped by day with smart search and period filters | All |
+| ↳ New Trade | Manual trade form with executions, tags, playbook link, and screenshots | Trader |
+| ↳ Trade Detail | Full trade autopsy: planned vs realized R, MFE/MAE, narrative log, chart view | All |
+| ↳ CSV Import | Parse trades from broker CSVs (Clear, XP, Genial) | Trader |
+| ↳ Nota Import | Parse Brazilian brokerage notas (Sinacor format) | Admin |
+| ↳ OCR Import | Screenshot-to-trade extraction via Tesseract + OpenAI Vision | Admin |
+| **Dashboard** | Performance overview with KPIs, trading calendar, equity curve, and coaching insights | All |
+| ↳ KPI Cards | Net P&L, Win Rate, Profit Factor, Avg R-Multiple, Discipline Score | All |
+| ↳ Trading Calendar | Monthly grid color-coded by day performance with detail modal | All |
+| ↳ Equity Curve | Account growth line chart with drawdown overlay | All |
+| ↳ Coaching Insights | AI-powered pattern detection and behavioral suggestions | Trader |
+| **Analytics** | Deep performance slicing by variable, tag, time, and asset with statistical charts | All |
+| ↳ Variable Comparison | Group by asset, timeframe, hour, day of week, or strategy | All |
+| ↳ Tag Cloud | Setup tags vs mistake tags performance breakdown | All |
+| ↳ Expected Value | Projected outcome over N trades (edge vs R-based modes) | All |
+| ↳ Time Analysis | Heatmap, hourly chart, session chart, day-of-week, holding period | All |
+| **Account Comparison** | Side-by-side performance comparison across trading accounts | All |
+| **Playbook** | Strategy library with entry/exit rules, conditions, and compliance tracking | All |
+| ↳ Compliance Dashboard | Percentage-based tracking of rule adherence per strategy | All |
+| ↳ Strategy Cards | Visual strategy overview with conditions, scenarios, and screenshots | All |
+| **Reports** | Automated weekly/monthly summaries with mistake cost analysis and PDF export | All |
+| ↳ Weekly Report | 7-day performance summary card | All |
+| ↳ Monthly Report | 30-day performance summary with trends | All |
+| ↳ Mistake Cost | Dollar cost breakdown by mistake tag | All |
+| ↳ Commission Impact | Brokerage fee analysis | All |
+| **Monthly Review** | Month-over-month tracking, weekly breakdowns, and performance projections | Trader |
+| ↳ Month Comparison | Side-by-side metrics across months | Trader |
+| ↳ Weekly Breakdown | Performance segmented by week within month | Trader |
+| ↳ Projection | Extrapolated performance at current pace (current month only) | Trader |
+| **Monte Carlo** | Statistical simulation of trade outcomes for drawdown and risk analysis | All |
+| ↳ Edge Expectancy | Classic MC simulation with manual or trade-based inputs, Kelly criterion | All |
+| ↳ Capital Expectancy | Risk-profile-aware simulation with mode distribution and daily PnL | All |
+| **Equity Shield** | Dynamic position sizing that scales down in drawdowns and up in winning streaks | Admin |
+| ↳ MDD Exercise | Method 1 — max drawdown exercise-based shield zones | Admin |
+| ↳ SMA Crossover | Method 2 — SMA crossover-based shield zones | Admin |
+| ↳ MC Calibration | Auto-calibrate shield params from Monte Carlo results | Admin |
+| **Risk Simulation** | What-if replay of historical trades with modified risk parameters | All |
+| ↳ Config Panel | Prefill from manual, monthly plan, or risk profile | All |
+| ↳ Decision Trace | Step-by-step decision replay per trade | All |
+| ↳ Equity Overlay | Original vs simulated equity curves side-by-side | All |
+| **Backtest** | Strategy backtesting on candle data with modular entry/stop/target plugins | Admin |
+| ↳ ORB Breakout | Opening Range Breakout entry strategy module | Admin |
+| ↳ MACD/WMA Alignment | DezK entry strategy module | Admin |
+| ↳ Stop & Trailing | Initial stop and trailing stop configuration | Admin |
+| ↳ Targets & Sizing | Fixed target levels, partial exits, position sizing rules | Admin |
+| **Backtest Optimizer** | Parameter sweep across backtest configs with heatmap visualization | Admin |
+| ↳ Wizard | 3-step flow: setup → parameters → results | Admin |
+| ↳ Heatmap | Parameter combination performance heatmap | Admin |
+| ↳ Runs Table | Sortable comparison table of all sweep runs | Admin |
+| **Settings** | Account, asset, tag, timeframe, condition, and indicator management | Trader |
+| ↳ Profile | User profile settings | Trader |
+| ↳ Accounts | Trading account management (prop firms, personal) | Admin |
+| ↳ Tags | Setup and mistake tag definitions | Admin |
+| ↳ Conditions | Reusable trading condition blocks | Admin |
+| ↳ Indicators | Custom indicator group and definition management | Admin |
+| ↳ Assets | Tradeable asset definitions (tickers, lot sizes) | Admin |
+| ↳ Timeframes | Chart timeframe definitions | Admin |
+| ↳ Users | User list (admin) | Admin |
+| ↳ Bugs | Submitted bug reports (admin) | Admin |
+| **Market Monitor** | Real-time quotes, B3 calendar, and economic calendar (cross-cutting) | Admin |
+| **Position Calculator** | Quick position size calculation from any page via dialog | All |
+| **Bug Report Capture** | In-app screenshot capture and bug submission | All |
+| **Page Guide** | Interactive onboarding overlays per feature | All |

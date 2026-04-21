@@ -69,8 +69,11 @@ export const CommandCenterTabs = ({
 	const defaultAssetSymbol = commandCenterProps.account?.defaultAsset ?? undefined
 	const t = useTranslations("commandCenter")
 	const { canAccess } = useFeatureAccess()
-	const [activeTab, setActiveTab] = useState("command-center")
+	const showPlanTab = canAccess("command-center:plan-tab")
+	const showCommandTab = canAccess("command-center:command-tab")
 	const showMonitorTab = !isReplayAccount && canAccess("command-center:monitor-tab")
+	const defaultTab = showCommandTab ? "command-center" : "calculator"
+	const [activeTab, setActiveTab] = useState(defaultTab)
 
 	return (
 		<Tabs
@@ -79,22 +82,26 @@ export const CommandCenterTabs = ({
 			className="flex h-full flex-col"
 		>
 			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-2 overflow-x-auto">
-				<TabsTrigger
-					value="plan"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
-					aria-label={t("tabs.plan")}
-				>
-					<CalendarDays className="h-4 w-4" />
-					<span className="hidden sm:inline">{t("tabs.plan")}</span>
-				</TabsTrigger>
-				<TabsTrigger
-					value="command-center"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
-					aria-label={t("tabs.commandCenter")}
-				>
-					<Target className="h-4 w-4" />
-					<span className="hidden sm:inline">{t("tabs.commandCenter")}</span>
-				</TabsTrigger>
+				{showPlanTab && (
+					<TabsTrigger
+						value="plan"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
+						aria-label={t("tabs.plan")}
+					>
+						<CalendarDays className="h-4 w-4" />
+						<span className="hidden sm:inline">{t("tabs.plan")}</span>
+					</TabsTrigger>
+				)}
+				{showCommandTab && (
+					<TabsTrigger
+						value="command-center"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
+						aria-label={t("tabs.commandCenter")}
+					>
+						<Target className="h-4 w-4" />
+						<span className="hidden sm:inline">{t("tabs.commandCenter")}</span>
+					</TabsTrigger>
+				)}
 				{showMonitorTab && (
 					<TabsTrigger
 						value="monitor"
@@ -115,28 +122,32 @@ export const CommandCenterTabs = ({
 				</TabsTrigger>
 			</TabsList>
 
-			<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
-				<Suspense fallback={<TabLoadingFallback />}>
-					<MonthlyPlanTab
-						initialPlan={initialPlan}
-						initialYear={initialYear}
-						initialMonth={initialMonth}
-						riskProfiles={riskProfiles}
-					/>
-				</Suspense>
-			</AnimatedTabsContent>
+			{showPlanTab && (
+				<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+					<Suspense fallback={<TabLoadingFallback />}>
+						<MonthlyPlanTab
+							initialPlan={initialPlan}
+							initialYear={initialYear}
+							initialMonth={initialMonth}
+							riskProfiles={riskProfiles}
+						/>
+					</Suspense>
+				</AnimatedTabsContent>
+			)}
 
-			<AnimatedTabsContent value="command-center" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
-				<CommandCenterContent
-					key={commandCenterProps.viewDate}
-					{...commandCenterProps}
-					initialPlan={initialPlan}
-					riskProfileName={initialPlan?.riskProfileId
-						? riskProfiles.find((p) => p.id === initialPlan.riskProfileId)?.name ?? null
-						: null}
-					initialLiveTradingStatus={initialLiveTradingStatus}
-				/>
-			</AnimatedTabsContent>
+			{showCommandTab && (
+				<AnimatedTabsContent value="command-center" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+					<CommandCenterContent
+						key={commandCenterProps.viewDate}
+						{...commandCenterProps}
+						initialPlan={initialPlan}
+						riskProfileName={initialPlan?.riskProfileId
+							? riskProfiles.find((p) => p.id === initialPlan.riskProfileId)?.name ?? null
+							: null}
+						initialLiveTradingStatus={initialLiveTradingStatus}
+					/>
+				</AnimatedTabsContent>
+			)}
 
 			{showMonitorTab && (
 				<AnimatedTabsContent

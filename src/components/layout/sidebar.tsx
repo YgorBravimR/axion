@@ -6,7 +6,7 @@ import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { navItems } from "@/lib/navigation"
+import { navItems, NEW_TRADE_FEATURE_KEY } from "@/lib/navigation"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { getFilteredNavItems } from "@/lib/feature-access"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -35,8 +35,9 @@ const Sidebar = ({
 	const tReplay = useTranslations("commandCenter.dateNavigator")
 	const tCommon = useTranslations("common")
 	const pathname = usePathname()
-	const { role } = useFeatureAccess()
+	const { role, canAccess } = useFeatureAccess()
 	const filteredNavItems = getFilteredNavItems(navItems, role)
+	const canCreateTrade = canAccess(NEW_TRADE_FEATURE_KEY)
 
 	const isSheet = variant === "sheet"
 	const isCompact = isCollapsed && !isSheet
@@ -100,34 +101,36 @@ const Sidebar = ({
 				</Button>
 			)}
 
-			{/* New Trade Button */}
-			<div className="px-s-200 pt-s-200">
-				{pathname === "/journal/new" ? (
-					<span
-						className={cn(
-							"bg-acc-100/10 text-acc-100 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium",
-							isCompact && "justify-center"
-						)}
-						aria-current="page"
-					>
-						<Plus className="h-5 w-5 shrink-0" />
-						{showLabels && <span>{t("newTrade")}</span>}
-					</span>
-				) : (
-					<Link
-						href="/journal/new"
-						className={cn(
-							"bg-acc-100 hover:bg-acc-100/90 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium text-bg-100 transition-colors",
-							isCompact && "justify-center"
-						)}
-						aria-label={t("newTrade")}
-						onClick={onNavigate}
-					>
-						<Plus className="h-5 w-5 shrink-0" />
-						{showLabels && <span>{t("newTrade")}</span>}
-					</Link>
-				)}
-			</div>
+			{/* New Trade Button — trader+ only */}
+			{canCreateTrade && (
+				<div className="px-s-200 pt-s-200">
+					{pathname === "/journal/new" ? (
+						<span
+							className={cn(
+								"bg-acc-100/10 text-acc-100 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium",
+								isCompact && "justify-center"
+							)}
+							aria-current="page"
+						>
+							<Plus className="h-5 w-5 shrink-0" />
+							{showLabels && <span>{t("newTrade")}</span>}
+						</span>
+					) : (
+						<Link
+							href="/journal/new"
+							className={cn(
+								"bg-acc-100 hover:bg-acc-100/90 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium text-bg-100 transition-colors",
+								isCompact && "justify-center"
+							)}
+							aria-label={t("newTrade")}
+							onClick={onNavigate}
+						>
+							<Plus className="h-5 w-5 shrink-0" />
+							{showLabels && <span>{t("newTrade")}</span>}
+						</Link>
+					)}
+				</div>
+			)}
 
 			{/* Navigation */}
 			<ScrollArea className="flex-1">

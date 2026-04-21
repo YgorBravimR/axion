@@ -2,8 +2,10 @@ import { Suspense } from "react"
 import { getBacktestDataSources } from "@/app/actions/backtest"
 import { OptimizeContent } from "@/components/optimize/optimize-content"
 import { LoadingSpinner } from "@/components/shared"
+import { requireRole } from "@/lib/auth-utils"
 
 const OptimizePage = async () => {
+	await requireRole("admin")
 	const sourcesResponse = await getBacktestDataSources()
 	const dataSources = sourcesResponse.success ? (sourcesResponse.data ?? []) : []
 

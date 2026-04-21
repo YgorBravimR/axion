@@ -61,8 +61,8 @@ export const SettingsContent = ({
 	const urlParams = useUrlParams()
 	useRegisterPageGuide(settingsGuide)
 
-	const baseTabs = ["profile", "account", "tags"]
-	const adminTabs = ["conditions", "indicators", "assets", "timeframes", "users", "bugs"]
+	const baseTabs = ["profile"]
+	const adminTabs = ["account", "tags", "conditions", "indicators", "assets", "timeframes", "users", "bugs"]
 	const validTabs = isAdmin ? [...baseTabs, ...adminTabs] : baseTabs
 	const tabFromUrl = urlParams.get("tab") ?? ""
 	const activeTab = validTabs.includes(tabFromUrl) ? tabFromUrl : "profile"
@@ -88,28 +88,24 @@ export const SettingsContent = ({
 						<User className="h-4 w-4" />
 						{t("profile")}
 					</TabsTrigger>
-					<TabsTrigger value="account" className="gap-s-200 shrink-0">
-						<Briefcase className="h-4 w-4" />
-						{t("account")}
-					</TabsTrigger>
-					<TabsTrigger value="tags" className="gap-s-200 shrink-0">
-						<Tag className="h-4 w-4" />
-						{t("tags")}
-					</TabsTrigger>
-					{isAdmin && (
-						<TabsTrigger value="conditions" className="gap-s-200 shrink-0">
-							<Filter className="h-4 w-4" />
-							{t("conditions")}
-						</TabsTrigger>
-					)}
-					{isAdmin && (
-						<TabsTrigger value="indicators" className="gap-s-200 shrink-0">
-							<BarChart3 className="h-4 w-4" />
-							Indicators
-						</TabsTrigger>
-					)}
 					{isAdmin && (
 						<>
+							<TabsTrigger value="account" className="gap-s-200 shrink-0">
+								<Briefcase className="h-4 w-4" />
+								{t("account")}
+							</TabsTrigger>
+							<TabsTrigger value="tags" className="gap-s-200 shrink-0">
+								<Tag className="h-4 w-4" />
+								{t("tags")}
+							</TabsTrigger>
+							<TabsTrigger value="conditions" className="gap-s-200 shrink-0">
+								<Filter className="h-4 w-4" />
+								{t("conditions")}
+							</TabsTrigger>
+							<TabsTrigger value="indicators" className="gap-s-200 shrink-0">
+								<BarChart3 className="h-4 w-4" />
+								Indicators
+							</TabsTrigger>
 							<TabsTrigger value="assets" className="gap-s-200 shrink-0">
 								<Coins className="h-4 w-4" />
 								{t("assets")}
@@ -139,28 +135,24 @@ export const SettingsContent = ({
 				<UserProfileSettings />
 			</AnimatedTabsContent>
 
-			<AnimatedTabsContent value="account">
-				<AccountSettings assets={assets} />
-			</AnimatedTabsContent>
-
-			<AnimatedTabsContent value="tags">
-				<TagList />
-			</AnimatedTabsContent>
-
-			{isAdmin && (
-				<AnimatedTabsContent value="conditions">
-					<ConditionList />
-				</AnimatedTabsContent>
-			)}
-
-			{isAdmin && (
-				<AnimatedTabsContent value="indicators">
-					<IndicatorList groups={indicatorGroups} />
-				</AnimatedTabsContent>
-			)}
-
 			{isAdmin && (
 				<>
+					<AnimatedTabsContent value="account">
+						<AccountSettings assets={assets} />
+					</AnimatedTabsContent>
+
+					<AnimatedTabsContent value="tags">
+						<TagList />
+					</AnimatedTabsContent>
+
+					<AnimatedTabsContent value="conditions">
+						<ConditionList />
+					</AnimatedTabsContent>
+
+					<AnimatedTabsContent value="indicators">
+						<IndicatorList groups={indicatorGroups} />
+					</AnimatedTabsContent>
+
 					<AnimatedTabsContent value="assets">
 						<AssetList assets={assets} assetTypes={assetTypes} />
 					</AnimatedTabsContent>

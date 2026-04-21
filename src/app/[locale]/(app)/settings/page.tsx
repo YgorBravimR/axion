@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/app/actions/auth"
 import { getAllUsersWithAccounts } from "@/app/actions/user-management"
 import { seedBuiltInRiskProfiles } from "@/app/actions/seed-risk-profiles"
 import { getIndicatorGroups } from "@/app/actions/indicators"
+import { requireRole } from "@/lib/auth-utils"
 
 
 interface SettingsPageProps {
@@ -17,6 +18,7 @@ interface SettingsPageProps {
 const SettingsPage = async ({ params }: SettingsPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
+	await requireRole("trader")
 
 	const [assets, assetTypes, timeframes, user, indicatorGroups] = await Promise.all([
 		getAssets(),
