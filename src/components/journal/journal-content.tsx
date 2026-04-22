@@ -124,49 +124,43 @@ const JournalContent = () => {
 	const [totalTrades, setTotalTrades] = useState(0)
 
 	// Extended filters (smart search) — read from URL params for persistence
-	const readExtendedFilters = (): Record<string, string | string[]> => {
+	const outcomesParam = urlParams.getArray("outcomes")
+	const directionsParam = urlParams.getArray("directions")
+	const assetsParam = urlParams.getArray("assets")
+	const ratingParam = urlParams.getArray("rating")
+	const followedPlanParam = urlParams.get("followedPlan")
+	const hourFromParam = urlParams.get("hourFrom")
+	const hourToParam = urlParams.get("hourTo")
+	const pnlMinParam = urlParams.get("pnlMin")
+	const pnlMaxParam = urlParams.get("pnlMax")
+	const quickFilterParam = urlParams.get("qf")
+
+	const extendedFilters = useMemo(() => {
 		const filters: Record<string, string | string[]> = {}
-		const outcomes = urlParams.getArray("outcomes")
-		const directions = urlParams.getArray("directions")
-		const assets = urlParams.getArray("assets")
-		const rating = urlParams.getArray("rating")
-		const followedPlan = urlParams.get("followedPlan")
-		const hourFrom = urlParams.get("hourFrom")
-		const hourTo = urlParams.get("hourTo")
-		const pnlMin = urlParams.get("pnlMin")
-		const pnlMax = urlParams.get("pnlMax")
-		const quickFilter = urlParams.get("qf")
-
-		if (outcomes.length > 0) filters.outcomes = outcomes
-		if (directions.length > 0) filters.directions = directions
-		if (assets.length > 0) filters.assets = assets
-		if (rating.length > 0) filters.rating = rating
-		if (followedPlan) filters.followedPlan = followedPlan
-		if (hourFrom) filters.hourFrom = hourFrom
-		if (hourTo) filters.hourTo = hourTo
-		if (pnlMin) filters.pnlMin = pnlMin
-		if (pnlMax) filters.pnlMax = pnlMax
-		if (quickFilter) filters._qf = quickFilter
-
+		if (outcomesParam.length > 0) filters.outcomes = outcomesParam
+		if (directionsParam.length > 0) filters.directions = directionsParam
+		if (assetsParam.length > 0) filters.assets = assetsParam
+		if (ratingParam.length > 0) filters.rating = ratingParam
+		if (followedPlanParam) filters.followedPlan = followedPlanParam
+		if (hourFromParam) filters.hourFrom = hourFromParam
+		if (hourToParam) filters.hourTo = hourToParam
+		if (pnlMinParam) filters.pnlMin = pnlMinParam
+		if (pnlMaxParam) filters.pnlMax = pnlMaxParam
+		if (quickFilterParam) filters._qf = quickFilterParam
 		return filters
-	}
-
-	const extendedFilters = useMemo(
-		() => readExtendedFilters(),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[
-			urlParams.get("outcomes"),
-			urlParams.get("directions"),
-			urlParams.get("assets"),
-			urlParams.get("rating"),
-			urlParams.get("followedPlan"),
-			urlParams.get("hourFrom"),
-			urlParams.get("hourTo"),
-			urlParams.get("pnlMin"),
-			urlParams.get("pnlMax"),
-			urlParams.get("qf"),
-		]
-	)
+	}, [
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- array params need stable refs
+		outcomesParam.join(","),
+		directionsParam.join(","),
+		assetsParam.join(","),
+		ratingParam.join(","),
+		followedPlanParam,
+		hourFromParam,
+		hourToParam,
+		pnlMinParam,
+		pnlMaxParam,
+		quickFilterParam,
+	])
 	const extendedFilterCount = Object.keys(extendedFilters).filter(
 		(k) => k !== "_qf"
 	).length
@@ -273,7 +267,7 @@ const JournalContent = () => {
 		customDateRange?.to?.getTime(),
 		effectiveDate,
 		extendedFilters,
-	]) // eslint-disable-line react-hooks/exhaustive-deps
+	])
 
 	// Memoized handlers to prevent unnecessary re-renders in child components
 	const handlePeriodChange = useCallback(
@@ -360,6 +354,11 @@ const JournalContent = () => {
 			? (periodSummary.wins / (periodSummary.wins + periodSummary.losses)) * 100
 			: 0
 
+	const availableAssets = useMemo(
+		() => [...new Set(tradesByDay.flatMap((d) => d.trades.map((trade) => trade.asset)))],
+		[tradesByDay]
+	)
+
 	return (
 		<div className="gap-s-300 sm:gap-m-400 flex flex-col">
 			{/* Period Filter */}
@@ -403,9 +402,7 @@ const JournalContent = () => {
 
 			{/* Smart Search */}
 			<SmartSearch
-				availableAssets={[
-					...new Set(tradesByDay.flatMap((d) => d.trades.map((t) => t.asset))),
-				]}
+				availableAssets={availableAssets}
 				onFiltersChange={handleFiltersChange}
 				onClear={handleFiltersClear}
 				activeFilterCount={extendedFilterCount}

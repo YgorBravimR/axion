@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import type { TradeChartData } from "@/types/candle"
+import { APP_TIMEZONE } from "@/lib/dates"
 
 interface TradeInfoExecutionsTabProps {
 	trade: TradeChartData["trade"]
@@ -33,14 +34,16 @@ const TradeInfoExecutionsTab = ({ trade, executions }: TradeInfoExecutionsTabPro
 					const isBuy = isLong
 						? exec.type === "entry"
 						: exec.type === "exit"
-					const timestamp = new Date(exec.timestamp)
-					const brtHours = (timestamp.getUTCHours() - 3 + 24) % 24
-					const brtMinutes = timestamp.getUTCMinutes()
-					const timeStr = `${brtHours.toString().padStart(2, "0")}:${brtMinutes.toString().padStart(2, "0")}`
+					const timeStr = new Intl.DateTimeFormat("en-GB", {
+						timeZone: APP_TIMEZONE,
+						hour: "2-digit",
+						minute: "2-digit",
+						hour12: false,
+					}).format(new Date(exec.timestamp))
 
 					return (
 						<div
-							key={`exec-${index}`}
+							key={`exec-${exec.type}-${exec.price}-${exec.quantity}-${index}`}
 							className="text-small grid grid-cols-4 gap-s-200 py-s-100"
 						>
 							<Badge

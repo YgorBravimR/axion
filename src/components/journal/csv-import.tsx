@@ -332,9 +332,10 @@ export const CsvImport = () => {
 			progress: 0,
 		})
 
+		let progressInterval: ReturnType<typeof setInterval> | null = null
 		try {
 			// Simulate progress for UX
-			const progressInterval = setInterval(() => {
+			progressInterval = setInterval(() => {
 				setImportProgress((prev) => {
 					const next = Math.min(prev + 10, 90)
 					updateLoading({ progress: next })
@@ -345,6 +346,7 @@ export const CsvImport = () => {
 			const result = await importCsvTrades(selectedTrades)
 
 			clearInterval(progressInterval)
+			progressInterval = null
 			setImportProgress(100)
 			updateLoading({ progress: 100 })
 
@@ -355,6 +357,9 @@ export const CsvImport = () => {
 				showToast("error", result.message)
 			}
 		} catch {
+			if (progressInterval !== null) {
+				clearInterval(progressInterval)
+			}
 			showToast("error", tCommon("unexpectedError"))
 		} finally {
 			hideLoading()

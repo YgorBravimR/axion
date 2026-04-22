@@ -5,6 +5,7 @@ import { Sun, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
 import { MoodSelector } from "./mood-selector"
 import { upsertDailyNotes } from "@/app/actions/command-center"
@@ -48,15 +49,18 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 	const handleSave = async () => {
 		setSaving(true)
 		try {
-			await upsertDailyNotes({
+			const result = await upsertDailyNotes({
 				date: effectiveDate.toISOString(),
 				preMarketNotes: preMarketNotes || null,
 				postMarketNotes: notes?.postMarketNotes || null,
 				mood: mood || null,
 			})
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			onRefresh()
-		} catch (error) {
-			console.error("Failed to save notes:", error)
+		} catch {
 			showToast("error", t("saveError"))
 		} finally {
 			setSaving(false)
@@ -85,13 +89,13 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 
 			{/* Mood Selector */}
 			<div className="mb-s-300 sm:mb-m-400">
-				<label className="mb-s-200 block text-small text-txt-200">{t("mood")}</label>
+				<Label id="pre-market-mood-label" htmlFor="pre-market-mood" className="mb-s-200 block text-small text-txt-200">{t("mood")}</Label>
 				<MoodSelector value={mood} onChange={setMood} disabled={isReadOnly} />
 			</div>
 
 			{/* Notes */}
 			<div>
-				<label className="mb-s-200 block text-small text-txt-200">{t("preMarketLabel")}</label>
+				<Label id="pre-market-notes-label" htmlFor="pre-market-notes-textarea" className="mb-s-200 block text-small text-txt-200">{t("preMarketLabel")}</Label>
 				<Textarea
 					id="pre-market-notes-textarea"
 					value={preMarketNotes}

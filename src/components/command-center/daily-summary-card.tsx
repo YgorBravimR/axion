@@ -1,27 +1,19 @@
 "use client"
 
-import { TrendingUp, TrendingDown, BarChart3, Award, AlertTriangle } from "lucide-react"
+import { BarChart3, Award, AlertTriangle } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { DailySummary } from "@/app/actions/command-center"
 
 interface DailySummaryCardProps {
 	summary: DailySummary | null
-	currency?: string
 }
 
-const formatCurrency = (value: number, currency = "$"): string => {
-	const absValue = Math.abs(value)
-	return `${value >= 0 ? "+" : "-"}${currency}${absValue.toFixed(2)}`
-}
-
-const formatPercent = (value: number): string => {
-	return `${value.toFixed(1)}%`
-}
-
-export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardProps) => {
+export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 	const t = useTranslations("commandCenter.summary")
 	const tCommon = useTranslations("common")
+	const { formatCurrencyWithSign, formatPercent } = useFormatting()
 
 	if (!summary) {
 		return (
@@ -53,18 +45,18 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 						<p className="text-tiny text-txt-200">{t("totalPnL")}</p>
 						<p
 							className={cn(
-								"mt-s-100 text-h3 font-bold",
+								"mt-s-100 text-h2 font-bold",
 								summary.totalPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
 							)}
 						>
-							{formatCurrency(summary.totalPnL, currency)}
+							{formatCurrencyWithSign(summary.totalPnL)}
 						</p>
 					</div>
 
 					{/* Trades */}
 					<div>
 						<p className="text-tiny text-txt-200">{t("trades")}</p>
-						<p className="mt-s-100 text-h3 font-bold text-txt-100">
+						<p className="mt-s-100 text-body font-semibold text-txt-100">
 							{summary.tradesCount}
 						</p>
 					</div>
@@ -73,7 +65,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 					<div>
 						<p className="text-tiny text-txt-200">{t("winRate")}</p>
 						<div className="mt-s-100 flex items-center gap-s-100">
-							<p className="text-h3 font-bold text-txt-100">
+							<p className="text-body font-semibold text-txt-100">
 								{formatPercent(summary.winRate)}
 							</p>
 							<span className="text-tiny text-txt-200">
@@ -95,7 +87,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 							)}
 						>
 							{summary.bestTrade > 0
-								? formatCurrency(summary.bestTrade, currency)
+								? formatCurrencyWithSign(summary.bestTrade)
 								: "--"}
 						</p>
 					</div>
@@ -113,7 +105,7 @@ export const DailySummaryCard = ({ summary, currency = "$" }: DailySummaryCardPr
 							)}
 						>
 							{summary.worstTrade < 0
-								? formatCurrency(summary.worstTrade, currency)
+								? formatCurrencyWithSign(summary.worstTrade)
 								: "--"}
 						</p>
 					</div>

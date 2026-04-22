@@ -94,20 +94,20 @@ export const CommandCenterContent = ({
 	const [editingChecklist, setEditingChecklist] =
 		useState<DailyChecklistType | null>(null)
 
-	// Refresh functions
+	// Refresh functions — all pass the current viewDate to fetch correct day's data
 	const refreshCompletions = useCallback(async () => {
-		const result = await getTodayCompletions()
+		const result = await getTodayCompletions(new Date(viewDate))
 		if (result.status === "success" && result.data) {
 			setCompletions(result.data)
 		}
-	}, [])
+	}, [viewDate])
 
 	const refreshNotes = useCallback(async () => {
-		const result = await getTodayNotes()
+		const result = await getTodayNotes(new Date(viewDate))
 		if (result.status === "success") {
 			setNotes(result.data ?? null)
 		}
-	}, [])
+	}, [viewDate])
 
 	const refreshAssetSettings = useCallback(async () => {
 		const result = await getAssetSettings()
@@ -117,28 +117,29 @@ export const CommandCenterContent = ({
 	}, [])
 
 	const refreshCircuitBreaker = useCallback(async () => {
-		const result = await getCircuitBreakerStatus()
+		const result = await getCircuitBreakerStatus(new Date(viewDate))
 		if (result.status === "success" && result.data) {
 			setCircuitBreaker(result.data)
 		}
-	}, [])
+	}, [viewDate])
 
 	const refreshSummary = useCallback(async () => {
-		const result = await getDailySummary()
+		const result = await getDailySummary(new Date(viewDate))
 		if (result.status === "success" && result.data) {
 			setSummary(result.data)
 		}
-	}, [])
+	}, [viewDate])
 
 	const refreshLiveTradingStatus = useCallback(async () => {
-		const result = await getLiveTradingStatus()
+		const result = await getLiveTradingStatus(new Date(viewDate))
 		if (result.status === "success" && result.data) {
 			setLiveTradingStatus(result.data)
 		}
-	}, [])
+	}, [viewDate])
 
-	const handleManageChecklist = () => {
-		setEditingChecklist(completions.length > 0 ? completions[0] : null)
+	const handleManageChecklist = (checklistId: string) => {
+		const checklist = completions.find((c) => c.id === checklistId) ?? null
+		setEditingChecklist(checklist)
 		setChecklistManagerOpen(true)
 	}
 

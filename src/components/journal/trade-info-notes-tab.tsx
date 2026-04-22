@@ -214,9 +214,22 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 						className="flex gap-s-200"
 						role="radiogroup"
 						aria-labelledby="label-panel-rating"
+						onKeyDown={(e) => {
+							const currentIndex = formData.rating ? RATING_GRADES.indexOf(formData.rating as typeof RATING_GRADES[number]) : -1
+							if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+								e.preventDefault()
+								const nextIndex = currentIndex < RATING_GRADES.length - 1 ? currentIndex + 1 : 0
+								handleFieldChange("rating", RATING_GRADES[nextIndex])
+							} else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+								e.preventDefault()
+								const prevIndex = currentIndex > 0 ? currentIndex - 1 : RATING_GRADES.length - 1
+								handleFieldChange("rating", RATING_GRADES[prevIndex])
+							}
+						}}
 					>
-						{RATING_GRADES.map((grade) => {
+						{RATING_GRADES.map((grade, gradeIndex) => {
 							const isSelected = formData.rating === grade
+							const focusedIndex = formData.rating ? RATING_GRADES.indexOf(formData.rating as typeof RATING_GRADES[number]) : 0
 
 							return (
 								<button
@@ -226,7 +239,7 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 									role="radio"
 									aria-checked={isSelected}
 									aria-label={`${tTrade("rating")}: ${grade}`}
-									tabIndex={0}
+									tabIndex={gradeIndex === focusedIndex ? 0 : -1}
 									onClick={() => handleFieldChange("rating", isSelected ? null : grade)}
 									className={cn(
 										"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

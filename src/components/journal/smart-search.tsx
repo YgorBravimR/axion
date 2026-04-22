@@ -13,6 +13,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { QuickFilters } from "./quick-filters"
 
 // ============================================================================
@@ -263,6 +268,37 @@ const SmartSearch = ({
 				)}
 			</button>
 
+			{/* Active conditions summary — visible when panel is closed and conditions are set */}
+			{!isOpen && conditions.length > 0 && (
+				<div className="flex flex-wrap items-center gap-s-200">
+					{conditions.map((condition) => (
+						<span
+							key={condition.id}
+							className="flex items-center gap-s-100 rounded-full border border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100"
+						>
+							{t(`fields.${condition.field}`)} {t(`operators.${condition.operator}`)} {condition.value}
+							<button
+								type="button"
+								tabIndex={0}
+								onClick={() => handleRemoveCondition(condition.id)}
+								className="rounded-full p-0.5 hover:bg-acc-100/20"
+								aria-label={`${t("clearAll")} ${t(`fields.${condition.field}`)}`}
+							>
+								<X className="h-2.5 w-2.5" />
+							</button>
+						</span>
+					))}
+					<button
+						type="button"
+						tabIndex={0}
+						onClick={handleClearAll}
+						className="text-tiny text-txt-300 hover:text-txt-100 rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+					>
+						{t("clearAll")}
+					</button>
+				</div>
+			)}
+
 			{/* Expanded panel */}
 			{isOpen && (
 				<div className="space-y-s-300 rounded-lg border border-bg-300 bg-bg-200 p-s-300">
@@ -315,15 +351,17 @@ const SmartSearch = ({
 							<p className="text-tiny font-medium text-txt-300">
 								{t("builder")}
 							</p>
-							<div className="group relative">
-								<Info
-									className="h-3.5 w-3.5 cursor-help text-txt-300 hover:text-txt-200"
-									aria-label={t("builderHint")}
-								/>
-								<div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-lg border border-bg-300 bg-bg-100 p-s-300 text-tiny text-txt-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Info
+										className="h-3.5 w-3.5 cursor-help text-txt-300 hover:text-txt-200"
+										aria-label={t("builderHint")}
+									/>
+								</TooltipTrigger>
+								<TooltipContent id="smart-search-builder-hint" className="max-w-[256px] text-tiny">
 									{t("builderHint")}
-								</div>
-							</div>
+								</TooltipContent>
+							</Tooltip>
 						</div>
 						<div className="flex flex-col gap-s-200 sm:flex-row sm:flex-wrap sm:items-end">
 							{/* Field selector */}

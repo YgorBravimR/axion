@@ -59,11 +59,11 @@ export const PeriodFilter = ({
 
 	const handleCustomApply = () => {
 		if (tempRange?.from && tempRange?.to) {
-			const from = new Date(tempRange.from)
-			from.setHours(0, 0, 0, 0)
-			const to = new Date(tempRange.to)
-			to.setHours(23, 59, 59, 999)
-			onChange("custom", { from, to })
+			const fromDate = new Date(tempRange.from)
+			fromDate.setHours(0, 0, 0, 0)
+			const toDate = new Date(tempRange.to)
+			toDate.setHours(23, 59, 59, 999)
+			onChange("custom", { from: fromDate, to: toDate })
 			setShowCustomPicker(false)
 		}
 	}
@@ -77,7 +77,11 @@ export const PeriodFilter = ({
 
 	return (
 		<div className="gap-s-200 flex flex-col">
-			<div className="gap-s-100 flex items-center overflow-x-auto scrollbar-none">
+			<div
+				role="group"
+				aria-label={t("period.filterGroupLabel")}
+				className="gap-s-100 flex items-center overflow-x-auto scrollbar-none"
+			>
 				{periods.map((period) => (
 					<button
 						key={period.key}

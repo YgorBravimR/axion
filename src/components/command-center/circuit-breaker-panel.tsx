@@ -109,28 +109,28 @@ interface CircuitBreakerPanelProps {
 	status: CircuitBreakerStatus | null
 }
 
-interface MetricCellProps {
+export interface MetricCellProps {
 	label: string
 	value: string
 	subLabel?: string
 	valueClassName?: string
 }
 
-const MetricCell = ({
+export const MetricCell = ({
 	label,
 	value,
 	subLabel,
 	valueClassName = "text-txt-100",
 }: MetricCellProps) => (
-	<div className="space-y-s-100">
-		<span className="text-tiny text-txt-300 block">{label}</span>
-		<span className={cn("text-body block font-semibold", valueClassName)}>
+	<dl className="space-y-s-100">
+		<dt className="text-tiny text-txt-300">{label}</dt>
+		<dd className={cn("text-body block font-semibold", valueClassName)}>
 			{value}
-		</span>
+		</dd>
 		{subLabel && (
-			<span className="text-tiny text-txt-300 block">{subLabel}</span>
+			<dd className="text-tiny text-txt-300">{subLabel}</dd>
 		)}
-	</div>
+	</dl>
 )
 
 export const CircuitBreakerPanel = ({
@@ -197,16 +197,18 @@ export const CircuitBreakerPanel = ({
 					</h3>
 				</div>
 
-				{stateConfig.badgeText && (
-					<span
-						className={cn(
-							"px-m-400 py-s-100 text-small rounded-full font-bold",
-							stateConfig.badgeClass
-						)}
-					>
-						{t(stateConfig.badgeText)}
-					</span>
-				)}
+				<div role="status" aria-live="polite">
+					{stateConfig.badgeText && (
+						<span
+							className={cn(
+								"px-m-400 py-s-100 text-small rounded-full font-bold",
+								stateConfig.badgeClass
+							)}
+						>
+							{t(stateConfig.badgeText)}
+						</span>
+					)}
+				</div>
 			</div>
 
 			{/* Attention states */}

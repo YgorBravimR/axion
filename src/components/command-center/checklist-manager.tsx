@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
 import {
 	Dialog,
@@ -38,12 +39,12 @@ export const ChecklistManager = ({
 	const { showToast } = useToast()
 	const isEditing = !!checklist
 
-	const initialItems: ChecklistItem[] = checklist
-		? JSON.parse(checklist.items)
-		: [{ id: generateId(), label: "", order: 0 }]
-
 	const [name, setName] = useState(checklist?.name || "")
-	const [items, setItems] = useState<ChecklistItem[]>(initialItems)
+	const [items, setItems] = useState<ChecklistItem[]>(() =>
+		checklist
+			? (JSON.parse(checklist.items) as ChecklistItem[])
+			: [{ id: generateId(), label: "", order: 0 }]
+	)
 	const [saving, setSaving] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 
@@ -79,21 +80,28 @@ export const ChecklistManager = ({
 		setSaving(true)
 		try {
 			if (isEditing && checklist) {
-				await updateChecklist(checklist.id, {
+				const result = await updateChecklist(checklist.id, {
 					name: name.trim(),
 					items: validItems,
 				})
+				if (result.status === "error") {
+					showToast("error", result.message)
+					return
+				}
 			} else {
-				await createChecklist({
+				const result = await createChecklist({
 					name: name.trim(),
 					items: validItems,
 					isActive: true,
 				})
+				if (result.status === "error") {
+					showToast("error", result.message)
+					return
+				}
 			}
 			onSuccess()
 			onClose()
-		} catch (error) {
-			console.error("Failed to save checklist:", error)
+		} catch {
 			showToast("error", t("saveError"))
 		} finally {
 			setSaving(false)
@@ -105,11 +113,14 @@ export const ChecklistManager = ({
 
 		setDeleting(true)
 		try {
-			await deleteChecklist(checklist.id)
+			const result = await deleteChecklist(checklist.id)
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			onSuccess()
 			onClose()
-		} catch (error) {
-			console.error("Failed to delete checklist:", error)
+		} catch {
 			showToast("error", t("deleteError"))
 		} finally {
 			setDeleting(false)
@@ -130,9 +141,9 @@ export const ChecklistManager = ({
 				<div className="space-y-m-500 py-m-400">
 					{/* Checklist Name */}
 					<div>
-						<label className="mb-s-200 block text-small text-txt-200">
+						<Label id="checklist-name-label" htmlFor="checklist-name" className="mb-s-200 block text-small text-txt-200">
 							{t("nameLabel")}
-						</label>
+						</Label>
 						<Input
 							id="checklist-name"
 							value={name}
@@ -144,9 +155,9 @@ export const ChecklistManager = ({
 
 					{/* Checklist Items */}
 					<div>
-						<label className="mb-s-200 block text-small text-txt-200">
+						<Label id="checklist-items-label" className="mb-s-200 block text-small text-txt-200">
 							{t("itemsLabel")}
-						</label>
+						</Label>
 						<div className="space-y-s-200">
 							{items.map((item, index) => (
 								<div key={item.id} className="flex items-center gap-s-200">

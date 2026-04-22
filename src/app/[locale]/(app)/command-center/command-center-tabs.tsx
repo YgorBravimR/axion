@@ -81,7 +81,7 @@ export const CommandCenterTabs = ({
 			onValueChange={setActiveTab}
 			className="flex h-full flex-col"
 		>
-			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-2 overflow-x-auto">
+			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-2 overflow-x-auto" aria-label={t("tabs.navigation")}>
 				{showPlanTab && (
 					<TabsTrigger
 						value="plan"

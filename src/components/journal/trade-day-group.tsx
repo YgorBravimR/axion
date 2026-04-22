@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, memo, useCallback, type KeyboardEvent } from "react"
+import { useState, memo, useCallback } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { TradesByDay } from "@/types"
@@ -52,22 +52,13 @@ export const TradeDayGroup = memo(({
 		setIsExpanded((prev) => !prev)
 	}, [])
 
-	const handleKeyDown = useCallback((e: KeyboardEvent) => {
-		if (e.key === "Enter" || e.key === " ") {
-			e.preventDefault()
-			setIsExpanded((prev) => !prev)
-		}
-	}, [])
-
 	return (
 		<div className="border-bg-300 bg-bg-200 overflow-hidden rounded-lg border">
 			{/* Header - Collapsible */}
-			<div
-				className="gap-s-300 border-bg-300 bg-bg-100 px-s-300 py-s-200 hover:bg-bg-200 flex cursor-pointer items-center border-b transition-colors"
+			<button
+				type="button"
+				className="gap-s-300 border-bg-300 bg-bg-100 px-s-300 py-s-200 hover:bg-bg-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 flex w-full cursor-pointer items-center border-b text-left transition-colors"
 				onClick={handleToggle}
-				onKeyDown={handleKeyDown}
-				tabIndex={0}
-				role="button"
 				aria-expanded={isExpanded}
 				aria-label={t("tradeDayGroupAriaLabel", { date: dateFormatted, count: summary.totalTrades, pnl: formatBrlWithSign(summary.netPnl) })}
 			>
@@ -102,7 +93,7 @@ export const TradeDayGroup = memo(({
 					{/* Win Rate */}
 					<WinRateBadge winRate={summary.winRate} size="sm" />
 				</div>
-			</div>
+			</button>
 
 			{/* Trade Rows */}
 			{isExpanded && (

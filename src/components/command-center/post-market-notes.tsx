@@ -5,6 +5,7 @@ import { Moon, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
 import { upsertDailyNotes } from "@/app/actions/command-center"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
@@ -42,15 +43,18 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 	const handleSave = async () => {
 		setSaving(true)
 		try {
-			await upsertDailyNotes({
+			const result = await upsertDailyNotes({
 				date: effectiveDate.toISOString(),
 				preMarketNotes: notes?.preMarketNotes || null,
 				postMarketNotes: postMarketNotes || null,
 				mood: (notes?.mood as MoodType | null) || null,
 			})
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			onRefresh()
-		} catch (error) {
-			console.error("Failed to save notes:", error)
+		} catch {
 			showToast("error", t("saveError"))
 		} finally {
 			setSaving(false)
@@ -79,7 +83,7 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 
 			{/* Notes */}
 			<div>
-				<label className="mb-s-200 block text-small text-txt-200">{t("postMarketLabel")}</label>
+				<Label id="post-market-notes-label" htmlFor="post-market-notes-textarea" className="mb-s-200 block text-small text-txt-200">{t("postMarketLabel")}</Label>
 				<Textarea
 					id="post-market-notes-textarea"
 					value={postMarketNotes}

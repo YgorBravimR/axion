@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Settings2, Save, Loader2, Plus, Trash2, PlusCircle } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -50,17 +50,15 @@ export const AssetRulesPanel = ({
 	const [saving, setSaving] = useState<string | null>(null)
 	const [deleting, setDeleting] = useState<string | null>(null)
 
-	// Assets that don't have settings yet
-	const availableToAdd = availableAssets.filter(
-		(asset) => !settings.some((s) => s.assetId === asset.id)
-	)
+	const settingsAssetSet = useMemo(() => new Set(settings.map((s) => s.assetId)), [settings])
+	const availableToAdd = useMemo(() => availableAssets.filter((a) => !settingsAssetSet.has(a.id)), [availableAssets, settingsAssetSet])
 
 	const handleAddAsset = async () => {
 		if (!selectedAssetId) return
 
 		setSaving(selectedAssetId)
 		try {
-			await upsertAssetSettings({
+			const result = await upsertAssetSettings({
 				assetId: selectedAssetId,
 				bias: null,
 				maxDailyTrades: null,
@@ -68,11 +66,14 @@ export const AssetRulesPanel = ({
 				notes: null,
 				isActive: true,
 			})
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			setAddingAsset(false)
 			setSelectedAssetId("")
 			onRefresh()
-		} catch (error) {
-			console.error("Failed to add asset:", error)
+		} catch {
 			showToast("error", t("addError"))
 		} finally {
 			setSaving(null)
@@ -94,7 +95,7 @@ export const AssetRulesPanel = ({
 
 		setSaving(editing.assetId)
 		try {
-			await upsertAssetSettings({
+			const result = await upsertAssetSettings({
 				assetId: editing.assetId,
 				bias: editing.bias,
 				maxDailyTrades: editing.maxDailyTrades ? parseInt(editing.maxDailyTrades) : null,
@@ -102,10 +103,13 @@ export const AssetRulesPanel = ({
 				notes: editing.notes || null,
 				isActive: true,
 			})
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			setEditing(null)
 			onRefresh()
-		} catch (error) {
-			console.error("Failed to save settings:", error)
+		} catch {
 			showToast("error", t("saveError"))
 		} finally {
 			setSaving(null)
@@ -117,7 +121,7 @@ export const AssetRulesPanel = ({
 		try {
 			const setting = settings.find((s) => s.assetId === assetId)
 			if (setting) {
-				await upsertAssetSettings({
+				const result = await upsertAssetSettings({
 					assetId,
 					bias,
 					maxDailyTrades: setting.maxDailyTrades,
@@ -125,10 +129,13 @@ export const AssetRulesPanel = ({
 					notes: setting.notes,
 					isActive: true,
 				})
+				if (result.status === "error") {
+					showToast("error", result.message)
+					return
+				}
 				onRefresh()
 			}
-		} catch (error) {
-			console.error("Failed to update bias:", error)
+		} catch {
 			showToast("error", t("biasError"))
 		} finally {
 			setSaving(null)
@@ -138,10 +145,13 @@ export const AssetRulesPanel = ({
 	const handleDelete = async (assetId: string) => {
 		setDeleting(assetId)
 		try {
-			await deleteAssetSettings(assetId)
+			const result = await deleteAssetSettings(assetId)
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			onRefresh()
-		} catch (error) {
-			console.error("Failed to delete settings:", error)
+		} catch {
 			showToast("error", t("deleteError"))
 		} finally {
 			setDeleting(null)
@@ -254,7 +264,7 @@ export const AssetRulesPanel = ({
 										<td className="py-s-300 pr-m-400">
 											{isEditing ? (
 												<Input
-													id="asset-rules-max-daily-trades"
+													id={`asset-rules-max-daily-trades-${setting.assetId}`}
 													type="number"
 													step="1"
 													min="0"
@@ -273,7 +283,7 @@ export const AssetRulesPanel = ({
 										<td className="py-s-300 pr-m-400">
 											{isEditing ? (
 												<Input
-													id="asset-rules-max-position-size"
+													id={`asset-rules-max-position-size-${setting.assetId}`}
 													type="number"
 													step="1"
 													min="0"
@@ -292,7 +302,7 @@ export const AssetRulesPanel = ({
 										<td className="py-s-300 pr-m-400">
 											{isEditing ? (
 												<Input
-													id="asset-rules-notes"
+													id={`asset-rules-notes-${setting.assetId}`}
 													value={editing.notes}
 													onChange={(e) =>
 														setEditing({ ...editing, notes: e.target.value })

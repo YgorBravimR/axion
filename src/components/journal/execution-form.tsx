@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, type FormEvent } from "react"
+import { useState, useTransition, useEffect, useId, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -109,6 +109,7 @@ export const ExecutionForm = ({
 	const effectiveDate = useEffectiveDate()
 	const [isPending, startTransition] = useTransition()
 	const [error, setError] = useState<string | null>(null)
+	const uid = useId()
 
 	const isEdit = !!execution
 
@@ -204,20 +205,20 @@ export const ExecutionForm = ({
 							className="gap-m-400 flex"
 						>
 							<div className="flex items-center space-x-2">
-								<RadioGroupItem value="entry" id="entry" />
+								<RadioGroupItem value="entry" id={`${uid}-entry`} />
 								<Label
-									id="label-execution-entry"
-									htmlFor="entry"
+									id={`label-${uid}-execution-entry`}
+									htmlFor={`${uid}-entry`}
 									className="text-trade-buy cursor-pointer font-normal"
 								>
 									{t("entry")}
 								</Label>
 							</div>
 							<div className="flex items-center space-x-2">
-								<RadioGroupItem value="exit" id="exit" />
+								<RadioGroupItem value="exit" id={`${uid}-exit`} />
 								<Label
-									id="label-execution-exit"
-									htmlFor="exit"
+									id={`label-${uid}-execution-exit`}
+									htmlFor={`${uid}-exit`}
 									className="text-trade-sell cursor-pointer font-normal"
 								>
 									{t("exit")}

@@ -6,12 +6,13 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/toast"
 import { toggleChecklistItem } from "@/app/actions/command-center"
 import type { ChecklistWithCompletion } from "@/app/actions/command-center"
 
 interface DailyChecklistProps {
 	checklists: ChecklistWithCompletion[]
-	onManageClick: () => void
+	onManageClick: (checklistId: string) => void
 	onRefresh: () => void
 	isReadOnly?: boolean
 }
@@ -23,20 +24,21 @@ export const DailyChecklist = ({
 	isReadOnly = false,
 }: DailyChecklistProps) => {
 	const t = useTranslations("commandCenter.checklist")
+	const { showToast } = useToast()
 	const [loading, setLoading] = useState<string | null>(null)
 
-	/**
-	 * Handles toggling a checklist item's completion status.
-	 * Uses optimistic UI by calling onRefresh after successful toggle.
-	 */
 	const handleToggle = async (checklistId: string, itemId: string, completed: boolean) => {
 		if (isReadOnly) return
 		setLoading(`${checklistId}-${itemId}`)
 		try {
-			await toggleChecklistItem(checklistId, itemId, completed)
+			const result = await toggleChecklistItem(checklistId, itemId, completed)
+			if (result.status === "error") {
+				showToast("error", result.message)
+				return
+			}
 			onRefresh()
 		} catch {
-			// Error is silently handled - user will see item didn't toggle
+			showToast("error", t("toggleError"))
 		} finally {
 			setLoading(null)
 		}
@@ -48,7 +50,7 @@ export const DailyChecklist = ({
 				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 					<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
 					{!isReadOnly && (
-						<Button id="daily-checklist-manage" variant="ghost" size="sm" onClick={onManageClick}>
+						<Button id="daily-checklist-manage" variant="ghost" size="sm" onClick={() => onManageClick("")}>
 							<Settings className="mr-s-100 h-4 w-4" />
 							{t("editChecklist")}
 						</Button>
@@ -89,7 +91,7 @@ export const DailyChecklist = ({
 								)}
 							</div>
 							{!isReadOnly && (
-								<Button id={`daily-checklist-settings-${checklist.id}`} variant="ghost" size="sm" onClick={onManageClick}>
+								<Button id={`daily-checklist-settings-${checklist.id}`} variant="ghost" size="sm" onClick={() => onManageClick(checklist.id)}>
 									<Settings className="h-4 w-4" />
 								</Button>
 							)}
@@ -105,7 +107,14 @@ export const DailyChecklist = ({
 									{Math.round(progress)}%
 								</span>
 							</div>
-							<div className="h-1.5 overflow-hidden rounded-full bg-bg-300">
+							<div
+								className="h-1.5 overflow-hidden rounded-full bg-bg-300"
+								role="progressbar"
+								aria-valuenow={completedCount}
+								aria-valuemin={0}
+								aria-valuemax={totalCount}
+								aria-label={t("progress")}
+							>
 								<div
 									className={cn(
 										"h-full transition-[width] duration-300",

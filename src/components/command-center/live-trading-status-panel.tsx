@@ -24,6 +24,7 @@ import { fromCents } from "@/lib/money"
 import { calculateTickBasedPositionSize } from "@/lib/calculations"
 import { translateRiskReason } from "@/lib/risk-reason-i18n"
 import { useFormatting } from "@/hooks/use-formatting"
+import { MetricCell } from "./circuit-breaker-panel"
 import type {
 	LiveTradingStatusResult,
 	TradeSummary,
@@ -34,92 +35,67 @@ import type { Asset } from "@/db/schema"
 // SUB-COMPONENTS
 // ==========================================
 
-interface MetricCellProps {
-	label: string
-	value: string
-	subLabel?: string
-	valueClassName?: string
-}
-
-const MetricCell = ({
-	label,
-	value,
-	subLabel,
-	valueClassName = "text-txt-100",
-}: MetricCellProps) => (
-	<dl className="space-y-s-100">
-		<dt className="text-tiny text-txt-300">{label}</dt>
-		<dd className={cn("text-body font-semibold", valueClassName)}>
-			{value}
-		</dd>
-		{subLabel && (
-			<dd className="text-tiny text-txt-300">{subLabel}</dd>
-		)}
-	</dl>
-)
-
 interface RecoveryStepTrackerProps {
 	currentStep: number
 	totalSteps: number
 	exhausted: boolean
-	t: ReturnType<typeof useTranslations>
 }
 
 const RecoveryStepTracker = ({
 	currentStep,
 	totalSteps,
 	exhausted,
-	t,
-}: RecoveryStepTrackerProps) => (
-	<div className="space-y-s-200">
-		<span className="text-tiny text-txt-300 block">{t("recovery.title")}</span>
-		<div className="gap-s-200 flex items-center">
-			{Array.from({ length: totalSteps }, (_, index) => {
-				const isCurrent = index === currentStep
-				const isPast = index < currentStep
+}: RecoveryStepTrackerProps) => {
+	const t = useTranslations("commandCenter.liveStatus")
 
-				return (
-					<div
-						key={`step-${index}`}
-						className={cn(
-							"flex h-2 flex-1 rounded-full transition-colors",
-							isCurrent && "bg-trade-sell",
-							isPast && "bg-trade-sell/30",
-							!isCurrent && !isPast && "bg-bg-300"
-						)}
-						role="progressbar"
-						aria-valuenow={currentStep + 1}
-						aria-valuemin={1}
-						aria-valuemax={totalSteps}
-						aria-label={t("recovery.step", {
-							current: index + 1,
-							total: totalSteps,
-						})}
-					/>
-				)
-			})}
+	return (
+		<div className="space-y-s-200">
+			<span className="text-tiny text-txt-300 block">{t("recovery.title")}</span>
+			<div
+				className="gap-s-200 flex items-center"
+				role="progressbar"
+				aria-valuenow={currentStep + 1}
+				aria-valuemin={1}
+				aria-valuemax={totalSteps}
+				aria-label={t("recovery.title")}
+			>
+				{Array.from({ length: totalSteps }, (_, index) => {
+					const isCurrent = index === currentStep
+					const isPast = index < currentStep
+
+					return (
+						<div
+							key={`step-${index}`}
+							className={cn(
+								"flex h-2 flex-1 rounded-full transition-colors",
+								isCurrent && "bg-trade-sell",
+								isPast && "bg-trade-sell/30",
+								!isCurrent && !isPast && "bg-bg-300"
+							)}
+						/>
+					)
+				})}
+			</div>
+			{exhausted && (
+				<span className="text-tiny text-fb-error">{t("recovery.exhausted")}</span>
+			)}
 		</div>
-		{exhausted && (
-			<span className="text-tiny text-fb-error">{t("recovery.exhausted")}</span>
-		)}
-	</div>
-)
+	)
+}
 
 interface MiniCalculatorProps {
 	riskBudgetCents: number
 	maxContracts: number | null
 	availableAssets: Asset[]
-	t: ReturnType<typeof useTranslations>
-	formatCurrency: (value: number) => string
 }
 
 const MiniCalculator = ({
 	riskBudgetCents,
 	maxContracts,
 	availableAssets,
-	t,
-	formatCurrency,
 }: MiniCalculatorProps) => {
+	const t = useTranslations("commandCenter.liveStatus")
+	const { formatCurrency } = useFormatting()
 	const [selectedAssetId, setSelectedAssetId] = useState("")
 	const [stopPoints, setStopPoints] = useState("")
 
@@ -209,7 +185,7 @@ const MiniCalculator = ({
 						value={stopPoints}
 						onChange={handleStopPointsChange}
 						placeholder={t("calculator.stopPlaceholder")}
-						className="text-base md:text-sm border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
+						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
 						aria-label={t("calculator.stopPoints")}
 					/>
 				</div>
@@ -243,12 +219,12 @@ const MiniCalculator = ({
 
 interface TradeBoxProps {
 	summary: TradeSummary
-	formatCurrency: (value: number) => string
-	t: ReturnType<typeof useTranslations>
 	directionLabels: { long: string; short: string }
 }
 
-const TradeBox = ({ summary, formatCurrency, t, directionLabels }: TradeBoxProps) => {
+const TradeBox = ({ summary, directionLabels }: TradeBoxProps) => {
+	const t = useTranslations("commandCenter.liveStatus")
+	const { formatCurrency } = useFormatting()
 	const pnlColor =
 		summary.outcome === "win"
 			? "text-trade-buy"
@@ -304,12 +280,12 @@ const TradeBox = ({ summary, formatCurrency, t, directionLabels }: TradeBoxProps
 
 interface TradeBoxRowProps {
 	summaries: TradeSummary[]
-	formatCurrency: (value: number) => string
-	t: ReturnType<typeof useTranslations>
 	directionLabels: { long: string; short: string }
 }
 
-const TradeBoxRow = ({ summaries, formatCurrency, t, directionLabels }: TradeBoxRowProps) => {
+const TradeBoxRow = ({ summaries, directionLabels }: TradeBoxRowProps) => {
+	const t = useTranslations("commandCenter.liveStatus")
+
 	if (summaries.length === 0) return null
 
 	return (
@@ -324,7 +300,7 @@ const TradeBoxRow = ({ summaries, formatCurrency, t, directionLabels }: TradeBox
 			>
 				{summaries.map((summary) => (
 					<div key={summary.tradeStepNumber} role="listitem">
-						<TradeBox summary={summary} formatCurrency={formatCurrency} t={t} directionLabels={directionLabels} />
+						<TradeBox summary={summary} directionLabels={directionLabels} />
 					</div>
 				))}
 			</div>
@@ -397,9 +373,11 @@ const LiveTradingStatusPanel = ({
 							{t("title")}
 						</h3>
 					</div>
-					<span className="bg-trade-sell/20 text-trade-sell px-s-300 py-s-100 text-tiny rounded-full font-bold">
-						{t("stop.shouldStop")}
-					</span>
+					<div role="status" aria-live="polite">
+						<span className="bg-trade-sell/20 text-trade-sell px-s-300 py-s-100 text-tiny rounded-full font-bold">
+							{t("stop.shouldStop")}
+						</span>
+					</div>
 				</div>
 
 				{status.stopReason && (
@@ -429,8 +407,6 @@ const LiveTradingStatusPanel = ({
 
 				<TradeBoxRow
 					summaries={tradeSummaries}
-					formatCurrency={formatCurrency}
-					t={t}
 					directionLabels={directionLabels}
 				/>
 
@@ -438,8 +414,6 @@ const LiveTradingStatusPanel = ({
 					riskBudgetCents={status.nextTradeRiskCents}
 					maxContracts={status.nextTradeMaxContracts}
 					availableAssets={availableAssets}
-					t={t}
-					formatCurrency={formatCurrency}
 				/>
 			</div>
 		)
@@ -565,14 +539,16 @@ const LiveTradingStatusPanel = ({
 					</h3>
 				</div>
 
-				<span
-					className={cn(
-						"px-s-300 py-s-100 text-tiny rounded-full font-bold",
-						badge.className
-					)}
-				>
-					{badge.text}
-				</span>
+				<div role="status" aria-live="polite">
+					<span
+						className={cn(
+							"px-s-300 py-s-100 text-tiny rounded-full font-bold",
+							badge.className
+						)}
+					>
+						{badge.text}
+					</span>
+				</div>
 			</div>
 
 			{/* Metrics row */}
@@ -623,7 +599,6 @@ const LiveTradingStatusPanel = ({
 						currentStep={status.recoveryStepIndex ?? 0}
 						totalSteps={status.totalRecoverySteps}
 						exhausted={status.recoverySequenceExhausted}
-						t={t}
 					/>
 				</div>
 			)}
@@ -631,8 +606,6 @@ const LiveTradingStatusPanel = ({
 			{/* Trade summary boxes */}
 			<TradeBoxRow
 				summaries={tradeSummaries}
-				formatCurrency={formatCurrency}
-				t={t}
 				directionLabels={directionLabels}
 			/>
 
@@ -641,8 +614,6 @@ const LiveTradingStatusPanel = ({
 				riskBudgetCents={status.nextTradeRiskCents}
 				maxContracts={status.nextTradeMaxContracts}
 				availableAssets={availableAssets}
-				t={t}
-				formatCurrency={formatCurrency}
 			/>
 		</div>
 	)

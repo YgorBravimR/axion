@@ -225,13 +225,12 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const [pendingScreenshot, setPendingScreenshot] =
 			useState<PendingImage | null>(null)
 
-		const handleTagCreated = async () => {
-			// Refresh tags from server after inline creation
+		const handleTagCreated = useCallback(async () => {
 			const result = await getTags()
 			if (result.status === "success" && result.data) {
 				setLocalTags(result.data)
 			}
-		}
+		}, [])
 
 		const effectiveNow = defaultDate ? new Date(defaultDate) : new Date()
 
@@ -274,6 +273,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 				}
 
 		const form = useForm<TradeFormInput>({
+			// Zod v4 + @hookform/resolvers typing mismatch: zodResolver infers Schema type
+			// parameter that doesn't satisfy UseFormProps resolver constraint when the
+			// schema uses discriminated unions or transform — cast required until
+			// @hookform/resolvers ships updated types for zod v4.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			resolver: zodResolver(createTradeSchema) as any,
 			defaultValues,
@@ -696,8 +699,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												value={field.value || ""}
 												onValueChange={(value) => {
 													field.onChange(value)
-													const asset = assets.find((a) => a.symbol === value)
-													setSelectedAsset(asset ?? null)
+													const foundAsset = assets.find((a) => a.symbol === value)
+													setSelectedAsset(foundAsset ?? null)
 												}}
 												disabled={!hasConfiguredAssets}
 											>
@@ -1414,44 +1417,61 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								<p className="text-tiny text-txt-300">
 									{t("ratingHint")}
 								</p>
-								<div
-									className="flex gap-s-200"
-									role="radiogroup"
-									aria-label={t("rating")}
-								>
-									{(["A", "B", "C", "D", "F"] as const).map((grade) => {
-										const isSelected = watch("rating") === grade
-										const gradeColors: Record<string, string> = {
-											A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
-											B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
-											C: "border-warning bg-warning/10 text-warning",
-											D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
-											F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
-										}
-
-										return (
-											<button
-												key={grade}
-												type="button"
-												role="radio"
-												aria-checked={isSelected}
-												aria-label={`${t("rating")}: ${grade} — ${t(`ratingLabels.${grade}`)}`}
-												tabIndex={0}
-												onClick={() => {
-													setValue("rating", isSelected ? undefined : grade)
-												}}
-												className={cn(
-													"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors",
-													isSelected
-														? gradeColors[grade]
-														: "border-bg-300 text-txt-300 hover:border-txt-300/50"
-												)}
-											>
-												{grade}
-											</button>
-										)
-									})}
-								</div>
+								{(() => {
+									const GRADES = ["A", "B", "C", "D", "F"] as const
+									const gradeColors: Record<string, string> = {
+										A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
+										B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
+										C: "border-warning bg-warning/10 text-warning",
+										D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
+										F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
+									}
+									const currentRating = watch("rating")
+									const focusedIndex = currentRating ? GRADES.indexOf(currentRating as typeof GRADES[number]) : 0
+									return (
+										<div
+											className="flex gap-s-200"
+											role="radiogroup"
+											aria-label={t("rating")}
+											onKeyDown={(e) => {
+												if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+													e.preventDefault()
+													const nextIndex = focusedIndex < GRADES.length - 1 ? focusedIndex + 1 : 0
+													setValue("rating", GRADES[nextIndex])
+												} else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+													e.preventDefault()
+													const prevIndex = focusedIndex > 0 ? focusedIndex - 1 : GRADES.length - 1
+													setValue("rating", GRADES[prevIndex])
+												}
+											}}
+										>
+											{GRADES.map((grade, gradeIndex) => {
+												const isSelected = currentRating === grade
+												return (
+													<button
+														key={grade}
+														type="button"
+														role="radio"
+														aria-checked={isSelected}
+														aria-label={`${t("rating")}: ${grade} — ${t(`ratingLabels.${grade}`)}`}
+														tabIndex={gradeIndex === focusedIndex ? 0 : -1}
+														onClick={() => {
+															setValue("rating", isSelected ? undefined : grade)
+														}}
+														className={cn(
+															"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors",
+															isSelected
+																? gradeColors[grade]
+																: "border-bg-300 text-txt-300 hover:border-txt-300/50"
+														)}
+													>
+														{grade}
+													</button>
+												)
+											})}
+										</div>
+									)
+								})()}
 							</div>
 
 							{/* Trade Screenshot */}

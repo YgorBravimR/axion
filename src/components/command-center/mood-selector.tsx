@@ -38,7 +38,7 @@ export const MoodSelector = ({ value, onChange, disabled = false }: MoodSelector
 					aria-label={t(mood.labelKey)}
 					aria-pressed={value === mood.value}
 				>
-					<span className="text-2xl">{mood.emoji}</span>
+					<span className="text-2xl" aria-hidden="true">{mood.emoji}</span>
 					<span className="text-tiny text-txt-300">{t(mood.labelKey)}</span>
 				</button>
 			))}
