@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,7 @@ interface DezkEntrySectionProps {
 	onRecipeChange: (recipe: StrategyRecipe) => void
 }
 
-const DezkEntrySection = ({ recipe, onRecipeChange }: DezkEntrySectionProps) => {
+const DezkEntrySection = memo(({ recipe, onRecipeChange }: DezkEntrySectionProps) => {
 	const t = useTranslations("backtest.dezk")
 	const tBuilder = useTranslations("backtest.builder")
 
@@ -103,6 +104,7 @@ const DezkEntrySection = ({ recipe, onRecipeChange }: DezkEntrySectionProps) => 
 			</div>
 		</div>
 	)
-}
+})
+DezkEntrySection.displayName = "DezkEntrySection"
 
 export { DezkEntrySection }

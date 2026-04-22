@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { Fragment, useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import type { TimeHeatmapCell } from "@/types"
 import { formatBrlCompactWithSign, formatR } from "@/lib/formatting"
@@ -58,18 +58,91 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatBrlCompactWithSign(value)
 
-	// Create lookup map
-	const cellMap = new Map<string, TimeHeatmapCell>()
-	for (const cell of data) {
-		cellMap.set(`${cell.dayOfWeek}-${cell.hour}`, cell)
-	}
+	const {
+		cellMap,
+		cellsWithTrades,
+		maxAbsValue,
+		bestSlot,
+		worstSlot,
+		bestHour,
+		worstHour,
+		bestDay,
+		worstDay,
+	} = useMemo(() => {
+		const map = new Map<string, TimeHeatmapCell>()
+		for (const cell of data) {
+			map.set(`${cell.dayOfWeek}-${cell.hour}`, cell)
+		}
 
-	// Calculate max absolute value for relative intensity scaling
-	const cellsWithTrades = data.filter((c) => c.totalTrades > 0)
-	const maxAbsValue = cellsWithTrades.reduce((max, cell) => {
-		const value = isRMode ? Math.abs(cell.avgR) : Math.abs(cell.totalPnl)
-		return Math.max(max, value)
-	}, 0)
+		const withTrades = data.filter((c) => c.totalTrades > 0)
+		const maxAbs = withTrades.reduce((max, cell) => {
+			const value = isRMode ? Math.abs(cell.avgR) : Math.abs(cell.totalPnl)
+			return Math.max(max, value)
+		}, 0)
+
+		const getMetric = (cell: TimeHeatmapCell): number =>
+			isRMode ? cell.avgR : cell.totalPnl
+
+		const sortedByMetric = withTrades.toSorted(
+			(a, b) => getMetric(b) - getMetric(a)
+		)
+
+		const hourAggregates = TRADING_HOURS.map((hour) => {
+			const cells = withTrades.filter((c) => c.hour === hour)
+			const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
+			const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
+			const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
+			const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
+			const decided = totalWins + totalLosses
+			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
+			const weightedAvgR =
+				totalTrades > 0
+					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) / totalTrades
+					: 0
+			return { hour, label: `${hour}h`, totalTrades, totalPnl, winRate, avgR: weightedAvgR }
+		}).filter((h) => h.totalTrades > 0)
+
+		const sortedHours = hourAggregates.toSorted((a, b) =>
+			isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
+		)
+
+		const dayAggregates = days
+			.map((day, index) => {
+				const dayOfWeek = index + 1
+				const cells = withTrades.filter((c) => c.dayOfWeek === dayOfWeek)
+				const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
+				const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
+				const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
+				const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
+				const decided = totalWins + totalLosses
+				const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
+				const weightedAvgR =
+					totalTrades > 0
+						? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) / totalTrades
+						: 0
+				return { day, dayLabel: dayLabels[index], totalTrades, totalPnl, winRate, avgR: weightedAvgR }
+			})
+			.filter((d) => d.totalTrades > 0)
+
+		const sortedDays = dayAggregates.toSorted((a, b) =>
+			isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
+		)
+
+		return {
+			cellMap: map,
+			cellsWithTrades: withTrades,
+			maxAbsValue: maxAbs,
+			bestSlot: sortedByMetric[0],
+			worstSlot: sortedByMetric[sortedByMetric.length - 1],
+			bestHour: sortedHours[0],
+			worstHour: sortedHours[sortedHours.length - 1],
+			bestDay: sortedDays[0],
+			worstDay: sortedDays[sortedDays.length - 1],
+		}
+	}, [data, isRMode])
+
+	const getMetricValue = (cell: TimeHeatmapCell): number =>
+		isRMode ? cell.avgR : cell.totalPnl
 
 	// Get cell color with intensity scaled relative to max value
 	const getCellStyle = (cell: TimeHeatmapCell | undefined): string => {
@@ -85,79 +158,6 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		if (intensity > 0.15) return `${base}/50`
 		return `${base}/30`
 	}
-
-	// Find best and worst slots (exact day × hour) — sorted by selected metric
-	const getMetricValue = (cell: TimeHeatmapCell): number =>
-		isRMode ? cell.avgR : cell.totalPnl
-
-	const sortedByMetric = cellsWithTrades.toSorted(
-		(a, b) => getMetricValue(b) - getMetricValue(a)
-	)
-	const bestSlot = sortedByMetric[0]
-	const worstSlot = sortedByMetric[sortedByMetric.length - 1]
-
-	// Aggregate by hour (across all days) — uses raw wins/losses for accurate WR
-	const hourAggregates = TRADING_HOURS.map((hour) => {
-		const cells = cellsWithTrades.filter((c) => c.hour === hour)
-		const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
-		const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
-		const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
-		const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
-		const decided = totalWins + totalLosses
-		const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
-		const weightedAvgR =
-			totalTrades > 0
-				? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
-					totalTrades
-				: 0
-		return {
-			hour,
-			label: `${hour}h`,
-			totalTrades,
-			totalPnl,
-			winRate,
-			avgR: weightedAvgR,
-		}
-	}).filter((h) => h.totalTrades > 0)
-
-	const sortedHours = hourAggregates.toSorted((a, b) =>
-		isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
-	)
-	const bestHour = sortedHours[0]
-	const worstHour = sortedHours[sortedHours.length - 1]
-
-	// Aggregate by day (across all hours) — uses raw wins/losses for accurate WR
-	const dayAggregates = days
-		.map((day, index) => {
-			const dayOfWeek = index + 1
-			const cells = cellsWithTrades.filter((c) => c.dayOfWeek === dayOfWeek)
-			const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
-			const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
-			const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
-			const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
-			const decided = totalWins + totalLosses
-			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
-			const weightedAvgR =
-				totalTrades > 0
-					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
-						totalTrades
-					: 0
-			return {
-				day,
-				dayLabel: dayLabels[index],
-				totalTrades,
-				totalPnl,
-				winRate,
-				avgR: weightedAvgR,
-			}
-		})
-		.filter((d) => d.totalTrades > 0)
-
-	const sortedDays = dayAggregates.toSorted((a, b) =>
-		isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
-	)
-	const bestDay = sortedDays[0]
-	const worstDay = sortedDays[sortedDays.length - 1]
 
 	const formatAggregateMetric = (agg: {
 		totalPnl: number

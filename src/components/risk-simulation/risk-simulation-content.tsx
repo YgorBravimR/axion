@@ -94,12 +94,14 @@ const RiskSimulationContent = ({
 		[fetchPreview]
 	)
 
+	const hasInitialFetchRef = useRef(false)
+
 	// Fetch preview for the initial date range on mount
 	useEffect(() => {
+		if (hasInitialFetchRef.current) return
+		hasInitialFetchRef.current = true
 		fetchPreview(dateFrom, dateTo)
-	// dateFrom/dateTo are stable initial values — this only runs on mount
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	}, [fetchPreview, dateFrom, dateTo])
 
 	const handlePrefillSelect = useCallback(
 		(newParams: RiskSimulationParams, source: PrefillSource, profileId?: string) => {

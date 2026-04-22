@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState, useMemo, useCallback, type ReactNode } from "react"
 import {
 	Select,
 	SelectContent,
@@ -139,6 +139,8 @@ const CustomTooltip = ({ active, payload, metric }: CustomTooltipProps) => {
 	return null
 }
 
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+
 /** Map day name keys from analytics-helpers to translation keys */
 const DAY_KEY_MAP: Record<string, string> = {
 	Sunday: "sunday",
@@ -163,41 +165,42 @@ export const VariableComparison = ({
 	const tCommon = useTranslations("common")
 
 	/** Translate group labels that come as English keys from pure computation functions */
-	const translateGroup = (group: string): string => {
+	const translateGroup = useCallback((group: string): string => {
 		if (groupBy === "dayOfWeek" && DAY_KEY_MAP[group]) {
 			return tDays(DAY_KEY_MAP[group] as "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday")
 		}
 		if (group === "No Strategy") return tCommon("noStrategy")
 		if (group === "Unknown") return tCommon("unknown")
 		return group
-	}
+	}, [groupBy, tDays, tCommon])
+
 	const [metric, setMetric] = useState<MetricType>("pnl")
 
-	const groupOptions: { value: GroupByType; label: string }[] = [
+	const groupOptions = useMemo<{ value: GroupByType; label: string }[]>(() => [
 		{ value: "asset", label: t("asset") },
 		{ value: "timeframe", label: t("timeframe") },
 		{ value: "hour", label: t("hour") },
 		{ value: "dayOfWeek", label: t("dayOfWeek") },
 		{ value: "strategy", label: t("strategy") },
-	]
+	], [t])
 
-	const metricOptions: { value: MetricType; label: string }[] = [
+	const metricOptions = useMemo<{ value: MetricType; label: string }[]>(() => [
 		{ value: "pnl", label: t("metrics.pnl") },
 		{ value: "winRate", label: t("metrics.winRate") },
 		{ value: "avgR", label: t("metrics.avgR") },
 		{ value: "tradeCount", label: t("metrics.tradeCount") },
 		{ value: "profitFactor", label: t("metrics.profitFactor") },
-	]
+	], [t])
 
-	const getBarColor = (value: number, metric: MetricType): string => {
-		if (metric === "tradeCount") return "var(--color-acc-100)"
-		if (metric === "profitFactor") {
+	const getBarColor = useCallback((value: number, metricArg: MetricType): string => {
+		if (metricArg === "tradeCount") return "var(--color-acc-100)"
+		if (metricArg === "profitFactor") {
 			return value >= 1 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
 		}
 		return value >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
-	}
+	}, [])
 
-	const chartData = data.map((item) => {
+	const chartData = useMemo(() => data.map((item) => {
 		let value = item[metric]
 		// Cap Infinity profit factor at a visible value for chart display
 		if (metric === "profitFactor" && !Number.isFinite(value)) {
@@ -207,7 +210,7 @@ export const VariableComparison = ({
 			...item,
 			value,
 		}
-	})
+	}), [data, metric])
 
 	return (
 		<div id="analytics-variable-comparison" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
@@ -267,7 +270,7 @@ export const VariableComparison = ({
 						<XAxis
 							dataKey="group"
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
 							angle={-45}
@@ -277,7 +280,7 @@ export const VariableComparison = ({
 						/>
 						<YAxis
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
 							tickFormatter={(value) => formatMetricValue(value, metric)}

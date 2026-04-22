@@ -118,7 +118,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				},
 			},
 		],
-		[t, tReasons]
+		[t, tReasons, tResults]
 	)
 
 	return (

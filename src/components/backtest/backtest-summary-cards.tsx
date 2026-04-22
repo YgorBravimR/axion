@@ -1,18 +1,19 @@
 "use client"
 
+import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
-import { fromCents, formatCentsAsCurrency } from "@/lib/money"
+import { formatCentsAsCurrency } from "@/lib/money"
 import type { BacktestSummary } from "@/types/backtest"
 
 interface BacktestSummaryCardsProps {
 	summary: BacktestSummary
 }
 
-const BacktestSummaryCards = ({ summary }: BacktestSummaryCardsProps) => {
+const BacktestSummaryCards = memo(({ summary }: BacktestSummaryCardsProps) => {
 	const t = useTranslations("backtest.results")
 
-	const metrics = [
+	const metrics = useMemo(() => [
 		{ label: t("totalTrades"), value: String(summary.totalTrades), accent: false },
 		{
 			label: t("winRate"),
@@ -53,16 +54,16 @@ const BacktestSummaryCards = ({ summary }: BacktestSummaryCardsProps) => {
 			value: `${summary.tradingDays} / ${summary.totalDays}`,
 			accent: false,
 		},
-	]
+	], [summary, t])
 
-	const secondaryMetrics = [
+	const secondaryMetrics = useMemo(() => [
 		{ label: t("wins"), value: String(summary.wins) },
 		{ label: t("losses"), value: String(summary.losses) },
 		{ label: t("avgWin"), value: formatCentsAsCurrency(summary.avgWinCents, "BRL") },
 		{ label: t("avgLoss"), value: formatCentsAsCurrency(summary.avgLossCents, "BRL") },
 		{ label: t("maxConsecWin"), value: String(summary.maxConsecutiveWins) },
 		{ label: t("maxConsecLoss"), value: String(summary.maxConsecutiveLosses) },
-	]
+	], [summary, t])
 
 	return (
 		<div className="space-y-m-400">
@@ -99,6 +100,7 @@ const BacktestSummaryCards = ({ summary }: BacktestSummaryCardsProps) => {
 			</div>
 		</div>
 	)
-}
+})
+BacktestSummaryCards.displayName = "BacktestSummaryCards"
 
 export { BacktestSummaryCards }

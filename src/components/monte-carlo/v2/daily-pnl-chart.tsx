@@ -42,6 +42,32 @@ interface CustomTooltipProps {
 		value: number
 		payload: ChartDataPoint
 	}>
+	tCharts: ReturnType<typeof useTranslations>
+}
+
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
+
+const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
+	if (!active || !payload || payload.length === 0) return null
+
+	const data = payload[0].payload
+	const isPositive = data.pnl >= 0
+
+	return (
+		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+			<p className="text-tiny text-txt-300">{tCharts("dayNumber", { number: data.dayNumber })}</p>
+			<p
+				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
+			>
+				{formatCompactCurrency(data.pnl, "R$")}
+			</p>
+			<p className="text-tiny text-txt-300 capitalize">
+				{data.mode === "skipped" ? tCharts("skipped") : data.mode.replace(/([A-Z])/g, " $1").trim()}
+				{data.targetHit ? ` ${tCharts("target")}` : ""}
+			</p>
+		</div>
+	)
 }
 
 const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
@@ -49,27 +75,6 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 	const t = useTranslations("monteCarlo.v2.charts")
 	const tCharts = useTranslations("charts")
 
-	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-		if (!active || !payload || payload.length === 0) return null
-
-		const data = payload[0].payload
-		const isPositive = data.pnl >= 0
-
-		return (
-			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-				<p className="text-tiny text-txt-300">{tCharts("dayNumber", { number: data.dayNumber })}</p>
-				<p
-					className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
-				>
-					{formatCompactCurrency(data.pnl, "R$")}
-				</p>
-				<p className="text-tiny text-txt-300 capitalize">
-					{data.mode === "skipped" ? tCharts("skipped") : data.mode.replace(/([A-Z])/g, " $1").trim()}
-					{data.targetHit ? ` ${tCharts("target")}` : ""}
-				</p>
-			</div>
-		)
-	}
 	const isMultiMonth = monthsToTrade > 1
 
 	const chartData = useMemo<ChartDataPoint[]>(
@@ -102,7 +107,7 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 			<ChartContainer id="chart-monte-carlo-v2-daily-pnl" className="h-72">
 				<BarChart
 					data={chartData}
-					margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+					margin={CHART_MARGIN}
 				>
 					<CartesianGrid
 						strokeDasharray="3 3"
@@ -116,6 +121,7 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
+						tick={AXIS_TICK}
 					/>
 					<YAxis
 						stroke="var(--color-txt-300)"
@@ -125,8 +131,9 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						tickFormatter={(value) => formatCompactCurrency(value, "R$")}
 						domain={[minPnl - padding, maxPnl + padding]}
 						width={yAxisWidth}
+						tick={AXIS_TICK}
 					/>
-					<ChartTooltip content={<CustomTooltip />} />
+					<ChartTooltip content={<CustomTooltip tCharts={tCharts} />} />
 					<ReferenceLine
 						y={0}
 						stroke="var(--color-txt-300)"
@@ -134,9 +141,9 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						strokeOpacity={0.5}
 					/>
 					<Bar dataKey="pnl" radius={[3, 3, 0, 0]}>
-						{chartData.map((entry, index) => (
+						{chartData.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={`cell-${entry.dayNumber}`}
 								fill={MODE_COLORS[entry.mode] ?? "var(--color-acc-100)"}
 								fillOpacity={entry.mode === "skipped" ? 0.3 : 0.75}
 							/>

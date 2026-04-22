@@ -263,16 +263,16 @@ const FilterPanel = ({
 	const [isSheetOpen, setIsSheetOpen] = useState(false)
 	const [isCustomDateOpen, setIsCustomDateOpen] = useState(false)
 
-	const directions = [
+	const directions = useMemo(() => [
 		{ value: "long" as const, label: tTrade("direction.long") },
 		{ value: "short" as const, label: tTrade("direction.short") },
-	]
+	], [tTrade])
 
-	const outcomes = [
+	const outcomes = useMemo(() => [
 		{ value: "win" as const, label: tTrade("outcome.win") },
 		{ value: "loss" as const, label: tTrade("outcome.loss") },
 		{ value: "breakeven" as const, label: tTrade("outcome.breakeven") },
-	]
+	], [tTrade])
 
 	// Memoize serialized filters to avoid creating new object on every render
 	const currentFiltersMemo = useMemo(() => serializeFilters(), [filters, groupBy, expectancyMode, activePresetKey])

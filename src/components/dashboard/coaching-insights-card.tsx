@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { memo, useState, useEffect, useTransition, useRef } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Brain,
@@ -47,7 +47,7 @@ const SEVERITY_STYLES: Record<string, { border: string; bg: string; badge: strin
 	},
 }
 
-const InsightRow = ({ insight }: { insight: CoachingInsight }) => {
+const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 	const t = useTranslations("coaching")
 	const [isExpanded, setIsExpanded] = useState(false)
 
@@ -107,18 +107,20 @@ const InsightRow = ({ insight }: { insight: CoachingInsight }) => {
 			)}
 		</div>
 	)
-}
+})
+
+InsightRow.displayName = "InsightRow"
 
 const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => {
 	const t = useTranslations("coaching")
 	const [context, setContext] = useState<CoachingContext | null>(initialContext ?? null)
 	const [isPending, startTransition] = useTransition()
-	const [hasLoaded, setHasLoaded] = useState(!!initialContext)
+	const hasLoadedRef = useRef(!!initialContext)
 
 	// Load coaching context on mount if not provided
 	useEffect(() => {
-		if (hasLoaded) return
-		setHasLoaded(true)
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
 
 		const COACHING_ANALYSIS_DAYS = 90
 		startTransition(async () => {
@@ -127,7 +129,7 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 				setContext(result.data)
 			}
 		})
-	}, [hasLoaded])
+	}, [])
 
 	const insights = context?.insights ?? []
 	const displayInsights = insights.slice(0, 5)

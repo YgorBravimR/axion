@@ -19,6 +19,18 @@ interface TradeComparisonTableProps {
 
 const PAGE_SIZE = 25
 
+const formatCurrency = (cents: number | null): string => {
+	if (cents === null) return "—"
+	const value = fromCents(cents)
+	const sign = value >= 0 ? "+" : ""
+	return `${sign}R$${Math.abs(value).toFixed(2)}`
+}
+
+const formatR = (r: number | null): string => {
+	if (r === null) return "—"
+	return `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`
+}
+
 const statusDotColors: Record<SimulatedTradeStatus, string> = {
 	executed: "bg-trade-buy",
 	skipped_no_sl: "bg-txt-300",
@@ -53,18 +65,6 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 		() => [...new Set(trades.map((trade) => trade.status))],
 		[trades]
 	)
-
-	const formatCurrency = (cents: number | null): string => {
-		if (cents === null) return "—"
-		const value = fromCents(cents)
-		const sign = value >= 0 ? "+" : ""
-		return `${sign}R$${Math.abs(value).toFixed(2)}`
-	}
-
-	const formatR = (r: number | null): string => {
-		if (r === null) return "—"
-		return `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`
-	}
 
 	return (
 		<div className="border-bg-300 overflow-hidden rounded-lg border">

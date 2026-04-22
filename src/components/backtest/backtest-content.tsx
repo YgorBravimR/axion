@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +29,8 @@ import { BacktestTradesTable } from "./backtest-trades-table"
 import type { DataSourceInfo } from "@/types/candle"
 import type { BacktestResult, StrategyRecipe } from "@/types/backtest"
 
+const ALL_PRESETS = [...orbPresets, ...dezkPresets]
+
 interface BacktestContentProps {
 	dataSources: DataSourceInfo[]
 }
@@ -44,10 +46,10 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0)
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState<string>("")
-	const dateFrom = dateRange?.from
-		? dateRange.from.toISOString().slice(0, 10)
-		: ""
-	const dateTo = dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : ""
+	const { dateFrom, dateTo } = useMemo(() => ({
+		dateFrom: dateRange?.from ? dateRange.from.toISOString().slice(0, 10) : "",
+		dateTo: dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : "",
+	}), [dateRange])
 
 	// Results state
 	const [result, setResult] = useState<BacktestResult | null>(null)
@@ -62,11 +64,9 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			)
 		: 20
 
-	const allPresets = [...orbPresets, ...dezkPresets]
-
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const preset = { ...allPresets[index] }
+		const preset = { ...ALL_PRESETS[index] }
 		// Auto-fill valuePerPoint from asset
 		if (preset.sizing.type === "monetary_risk") {
 			preset.sizing = {
@@ -263,7 +263,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 								<SelectValue placeholder={t("config.selectPreset")} />
 							</SelectTrigger>
 							<SelectContent>
-								{allPresets.map((preset, i) => (
+								{ALL_PRESETS.map((preset, i) => (
 									<SelectItem
 										key={`${preset.entry.type}-${i}`}
 										value={String(i)}

@@ -32,6 +32,9 @@ interface CustomTooltipProps {
 	payload?: Array<{ value: number; payload: TooltipPayload }>
 }
 
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+const CHART_MARGIN = { top: 10, right: 30, left: 10, bottom: 0 } as const
+
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("riskSimulation.chart")
 	if (!active || !payload || payload.length === 0) return null
@@ -69,11 +72,15 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 	)
 
 	const { minValue, maxValue } = useMemo(() => {
-		const allValues = chartData.flatMap((d) => [d.original, d.simulated])
-		return {
-			minValue: Math.min(...allValues),
-			maxValue: Math.max(...allValues),
+		let min = Infinity
+		let max = -Infinity
+		for (const d of chartData) {
+			if (d.original < min) min = d.original
+			if (d.original > max) max = d.original
+			if (d.simulated < min) min = d.simulated
+			if (d.simulated > max) max = d.simulated
 		}
+		return { minValue: min, maxValue: max }
 	}, [chartData])
 
 	const padding = (maxValue - minValue) * 0.05 || 100
@@ -91,17 +98,17 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 			>
 				<AreaChart
 					data={chartData}
-					margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+					margin={CHART_MARGIN}
 				>
 					<CartesianGrid strokeDasharray="3 3" stroke="var(--color-bg-300)" />
 					<XAxis
 						dataKey="tradeIndex"
-						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
+						tick={AXIS_TICK}
 						tickFormatter={(val: number) => `#${val + 1}`}
 					/>
 					<YAxis
 						domain={[minValue - padding, maxValue + padding]}
-						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
+						tick={AXIS_TICK}
 						tickFormatter={(val: number) => `${(val / 1000).toFixed(1)}k`}
 						width={yAxisWidth}
 					/>

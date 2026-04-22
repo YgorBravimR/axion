@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, memo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import {
 	BarChart,
@@ -17,6 +17,8 @@ import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DailyPnL } from "@/types"
+
+const formatDay = (date: string): string => new Date(date).getDate().toString()
 
 interface DailyPnLBarChartProps {
 	data: DailyPnL[]
@@ -79,11 +81,6 @@ export const DailyPnLBarChart = ({
 			),
 		[data]
 	)
-
-	const formatDay = (date: string) => {
-		const d = new Date(date)
-		return d.getDate().toString()
-	}
 
 	const domainMax = useMemo(() => {
 		const maxAbsPnl = Math.max(...data.map((d) => Math.abs(d.pnl)), 100)

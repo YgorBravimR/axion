@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
@@ -11,7 +11,7 @@ interface SweepProgressBarProps {
 	onCancel: () => void
 }
 
-const SweepProgressBar = ({ current, total, onCancel }: SweepProgressBarProps) => {
+const SweepProgressBar = memo(({ current, total, onCancel }: SweepProgressBarProps) => {
 	const t = useTranslations("optimize")
 	const startTimeRef = useRef(Date.now())
 	const [elapsed, setElapsed] = useState(0)
@@ -80,6 +80,7 @@ const SweepProgressBar = ({ current, total, onCancel }: SweepProgressBarProps) =
 			</div>
 		</div>
 	)
-}
+})
+SweepProgressBar.displayName = "SweepProgressBar"
 
 export { SweepProgressBar }

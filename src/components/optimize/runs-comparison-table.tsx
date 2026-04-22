@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,9 @@ const RunsComparisonTable = ({
 	onUpdateLabel,
 }: RunsComparisonTableProps) => {
 	const t = useTranslations("optimize")
+
+	const expandedRunIdRef = useRef(expandedRunId)
+	expandedRunIdRef.current = expandedRunId
 
 	// Find best run by profit factor (among runs with enough trades)
 	const bestRunId = useMemo(() => {
@@ -166,7 +169,7 @@ const RunsComparisonTable = ({
 			header: "",
 			cell: ({ row }) => {
 				const run = row.original
-				const isExpanded = run.id === expandedRunId
+				const isExpanded = run.id === expandedRunIdRef.current
 				return (
 					<div className="flex items-center gap-s-100">
 						<Button
@@ -195,7 +198,7 @@ const RunsComparisonTable = ({
 			enableSorting: false,
 			meta: { headerClassName: "w-20", cellClassName: "w-20" },
 		},
-	], [bestRunId, expandedRunId, onTogglePin, onToggleExpand, onDelete, t])
+	], [bestRunId, onTogglePin, onToggleExpand, onDelete, t])
 
 	return (
 		<DataTable

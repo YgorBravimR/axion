@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import {
 	BarChart,
@@ -99,7 +100,9 @@ const CustomTooltip = ({ active, payload, labels }: CustomTooltipProps) => {
 	)
 }
 
-const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) => {
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+
+const HoldingPeriodChart = memo(({ data, expectancyMode }: HoldingPeriodChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics.holdingPeriod")
 	const locale = useLocale()
@@ -110,8 +113,7 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 
 	const activeBuckets = data.filter((d) => d.totalTrades > 0)
 
-	// Pre-resolve tooltip labels to avoid calling useTranslations inside Recharts' render tree
-	const tooltipLabels: TooltipLabels = {
+	const tooltipLabels = useMemo<TooltipLabels>(() => ({
 		duration: t("duration"),
 		trades: t("trades"),
 		winRate: t("winRate"),
@@ -119,7 +121,7 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 		avgR: t("avgR"),
 		profitFactor: t("profitFactor"),
 		currencySymbol,
-	}
+	}), [t, currencySymbol])
 
 	if (activeBuckets.length === 0) {
 		return (
@@ -171,7 +173,7 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 					<XAxis
 						dataKey="bucket"
 						stroke="var(--color-txt-300)"
-						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+						tick={AXIS_TICK}
 						tickLine={false}
 						interval={0}
 						axisLine={{ stroke: "var(--color-bg-300)" }}
@@ -181,7 +183,7 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 							isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, currencySymbol)
 						}
 						stroke="var(--color-txt-300)"
-						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+						tick={AXIS_TICK}
 						tickLine={false}
 						interval={0}
 						axisLine={false}
@@ -225,6 +227,8 @@ const HoldingPeriodChart = ({ data, expectancyMode }: HoldingPeriodChartProps) =
 			</div>
 		</div>
 	)
-}
+})
+
+HoldingPeriodChart.displayName = "HoldingPeriodChart"
 
 export { HoldingPeriodChart }

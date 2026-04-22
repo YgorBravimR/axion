@@ -1,6 +1,6 @@
 "use client"
 
-import type { ElementType, ReactNode } from "react"
+import { memo, useMemo, type ElementType, type ReactNode } from "react"
 import { useTranslations } from "next-intl"
 import {
 	BarChart3,
@@ -104,10 +104,10 @@ const getWinRateLabelKey = (winRate: number): string => {
 	return "winRateRequiresDiscipline"
 }
 
-export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
+export const StrategyAnalysis = memo(({ result }: StrategyAnalysisProps) => {
 	const t = useTranslations("monteCarlo.analysis")
 	const { statistics: stats, params } = result
-	const insights = generateAnalysisInsights(result)
+	const insights = useMemo(() => generateAnalysisInsights(result), [result])
 
 	const profitQualityKey =
 		profitQualityTranslationKeys[
@@ -247,4 +247,4 @@ export const StrategyAnalysis = ({ result }: StrategyAnalysisProps) => {
 			</div>
 		</div>
 	)
-}
+})

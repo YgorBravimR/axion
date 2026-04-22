@@ -8,6 +8,8 @@ import { useChartConfig } from "@/hooks/use-chart-config"
 import { formatCompactCurrency } from "@/lib/formatting"
 import type { EquityCurvePoint } from "@/types/backtest"
 
+const CHART_MARGIN = { top: 5, right: 5, left: 0, bottom: 0 }
+
 interface BacktestEquityChartProps {
 	equityCurve: EquityCurvePoint[]
 }
@@ -67,7 +69,7 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
 			<h3 className="text-h3 font-semibold text-txt-100 mb-m-400">{t("equityCurve")}</h3>
 			<ChartContainer id="backtest-equity" className="h-72">
-				<AreaChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<defs>
 						<linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
 							<stop offset="5%" stopColor="var(--color-acc-100)" stopOpacity={0.3} />

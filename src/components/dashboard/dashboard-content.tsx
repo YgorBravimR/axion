@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useCallback } from "react"
+import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { KpiCards } from "./kpi-cards"
@@ -76,11 +76,11 @@ interface PeriodToggleProps {
 const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	const t = useTranslations("dashboard.period")
 
-	const options: { value: DashboardPeriod; label: string }[] = [
+	const options = useMemo<{ value: DashboardPeriod; label: string }[]>(() => [
 		{ value: "month", label: t("month") },
 		{ value: "year", label: t("year") },
 		{ value: "allTime", label: t("allTime") },
-	]
+	], [t])
 
 	return (
 		<div className="flex rounded-lg border border-bg-300 bg-bg-100 p-s-100" role="group" aria-label="Period filter">

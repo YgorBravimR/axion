@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,7 @@ interface OrbEntrySectionProps {
 	onRecipeChange: (recipe: StrategyRecipe) => void
 }
 
-const OrbEntrySection = ({ recipe, onRecipeChange }: OrbEntrySectionProps) => {
+const OrbEntrySection = memo(({ recipe, onRecipeChange }: OrbEntrySectionProps) => {
 	const t = useTranslations("backtest.orb")
 	const tBuilder = useTranslations("backtest.builder")
 
@@ -63,6 +64,7 @@ const OrbEntrySection = ({ recipe, onRecipeChange }: OrbEntrySectionProps) => {
 			</div>
 		</div>
 	)
-}
+})
+OrbEntrySection.displayName = "OrbEntrySection"
 
 export { OrbEntrySection }

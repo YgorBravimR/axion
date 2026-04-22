@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	BarChart,
@@ -81,7 +82,9 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	)
 }
 
-export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) => {
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+
+export const DayOfWeekChart = memo(({ data, expectancyMode }: DayOfWeekChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
 	const tCommon = useTranslations("common")
@@ -91,22 +94,23 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 	const isRMode = expectancyMode === "edge"
 	const metricKey = isRMode ? "avgR" : "totalPnl"
 
-	// Filter only trading days (Monday-Friday usually)
-	const tradingDays = data.filter((d) => d.totalTrades > 0)
-
-	// Calculate domain with padding
-	const maxAbsMetric = Math.max(
-		...tradingDays.map((d) => Math.abs(d[metricKey])),
-		isRMode ? 0.5 : 100
-	)
-	const domainMax = isRMode
-		? Math.ceil(maxAbsMetric * 1.2 * 100) / 100
-		: Math.ceil(maxAbsMetric * 1.1)
-
-	// Find best and worst days
-	const sortedByMetric = tradingDays.toSorted((a, b) => b[metricKey] - a[metricKey])
-	const bestDay = sortedByMetric[0]
-	const worstDay = sortedByMetric[sortedByMetric.length - 1]
+	const { tradingDays, domainMax, bestDay, worstDay } = useMemo(() => {
+		const days = data.filter((d) => d.totalTrades > 0)
+		const maxAbs = Math.max(
+			...days.map((d) => Math.abs(d[metricKey])),
+			isRMode ? 0.5 : 100
+		)
+		const dMax = isRMode
+			? Math.ceil(maxAbs * 1.2 * 100) / 100
+			: Math.ceil(maxAbs * 1.1)
+		const sorted = days.toSorted((a, b) => b[metricKey] - a[metricKey])
+		return {
+			tradingDays: days,
+			domainMax: dMax,
+			bestDay: sorted[0],
+			worstDay: sorted[sorted.length - 1],
+		}
+	}, [data, metricKey, isRMode])
 
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
@@ -159,7 +163,7 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 							dataKey="dayName"
 							tickFormatter={getDayShort}
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 12 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={{ stroke: "var(--color-bg-300)" }}
 						/>
@@ -168,7 +172,7 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 								isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
 							}
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
 							domain={[-domainMax, domainMax]}
@@ -202,4 +206,6 @@ export const DayOfWeekChart = ({ data, expectancyMode }: DayOfWeekChartProps) =>
 			</div>
 		</div>
 	)
-}
+})
+
+DayOfWeekChart.displayName = "DayOfWeekChart"

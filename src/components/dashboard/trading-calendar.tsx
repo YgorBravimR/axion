@@ -39,7 +39,7 @@ export const TradingCalendar = memo(
 		const year = month.getFullYear()
 		const monthIndex = month.getMonth()
 
-		const daysOfWeek = [
+		const daysOfWeek = useMemo(() => [
 			tDays("sunShort"),
 			tDays("monShort"),
 			tDays("tueShort"),
@@ -47,7 +47,7 @@ export const TradingCalendar = memo(
 			tDays("thuShort"),
 			tDays("friShort"),
 			tDays("satShort"),
-		]
+		], [tDays])
 
 		const dailyPnLMap = useMemo(() => {
 			const map = new Map<string, DailyPnL>()
@@ -89,6 +89,19 @@ export const TradingCalendar = memo(
 		const handleNextMonth = useCallback(() => {
 			onMonthChange(new Date(year, monthIndex + 1, 1))
 		}, [onMonthChange, year, monthIndex])
+
+		const handleCellClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+			const key = e.currentTarget.dataset.dateKey
+			if (key && onDayClick) onDayClick(key)
+		}, [onDayClick])
+
+		const handleCellKeyDown = useCallback((e: KeyboardEvent) => {
+			if (e.key === "Enter" || e.key === " ") {
+				e.preventDefault()
+				const key = (e.currentTarget as HTMLElement).dataset.dateKey
+				if (key && onDayClick) onDayClick(key)
+			}
+		}, [onDayClick])
 
 		// Use day 15 to avoid timezone edge at month boundaries
 		// (midnight UTC on day 1 can shift to previous month in BRT during SSR)
@@ -169,30 +182,18 @@ export const TradingCalendar = memo(
 
 							const isClickable = dailyData && onDayClick
 
-							const handleClick = () => {
-								if (isClickable) {
-									onDayClick(dateKey)
-								}
-							}
-
-							const handleKeyDown = (e: KeyboardEvent) => {
-								if (isClickable && (e.key === "Enter" || e.key === " ")) {
-									e.preventDefault()
-									onDayClick(dateKey)
-								}
-							}
-
 							return (
 								<div
 									key={dateKey}
+									data-dateKey={isClickable ? dateKey : undefined}
 									className={cn(
 										"p-s-100 aspect-square rounded sm:rounded-md",
 										bgClass,
 										isToday && "ring-acc-100 ring-1 sm:ring-2",
 										isClickable && "cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
 									)}
-									onClick={handleClick}
-									onKeyDown={handleKeyDown}
+									onClick={isClickable ? handleCellClick : undefined}
+									onKeyDown={isClickable ? handleCellKeyDown : undefined}
 									tabIndex={isClickable ? 0 : -1}
 									role={isClickable ? "button" : undefined}
 									aria-label={

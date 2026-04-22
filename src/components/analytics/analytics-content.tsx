@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useRef, useCallback } from "react"
+import { useState, useEffect, useTransition, useRef, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -168,7 +168,7 @@ const AnalyticsContent = ({
 	>(dashboard.holdingPeriodAnalysis)
 
 	// Track account identity — clear cache only on account switch, not on every SSR re-render
-	const accountKey = availableAssets.join(",")
+	const accountKey = useMemo(() => availableAssets.join(","), [availableAssets])
 	const lastAccountKey = useRef(accountKey)
 
 	// Applies dashboard + tag data to all state variables — stable via useCallback so it's safe in deps arrays

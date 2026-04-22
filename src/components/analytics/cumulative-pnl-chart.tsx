@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import {
 	AreaChart,
 	Area,
@@ -19,6 +20,8 @@ import type { EquityPoint } from "@/types"
 interface CumulativePnlChartProps {
 	data: EquityPoint[]
 }
+
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
 
 const formatDate = (dateStr: string, locale: string): string => {
 	const date = new Date(dateStr)
@@ -65,7 +68,7 @@ const CustomTooltip = ({
 	return null
 }
 
-export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
+export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard.equity")
 	const locale = useLocale()
@@ -83,9 +86,11 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 		)
 	}
 
-	const minEquity = Math.min(...data.map((d) => d.equity))
-	const maxEquity = Math.max(...data.map((d) => d.equity))
-	const padding = (maxEquity - minEquity) * 0.1 || 100
+	const { minEquity, maxEquity, padding } = useMemo(() => {
+		const min = Math.min(...data.map((d) => d.equity))
+		const max = Math.max(...data.map((d) => d.equity))
+		return { minEquity: min, maxEquity: max, padding: (max - min) * 0.1 || 100 }
+	}, [data])
 
 	const lastEquity = data[data.length - 1]?.equity ?? 0
 	const isPositive = lastEquity >= 0
@@ -130,14 +135,14 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 						dataKey="date"
 						tickFormatter={(dateStr) => formatDate(dateStr, locale)}
 						stroke="var(--color-txt-300)"
-						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+						tick={AXIS_TICK}
 						tickLine={false}
 						axisLine={false}
 					/>
 					<YAxis
 						tickFormatter={(value: number) => formatCompactCurrency(value, "R$")}
 						stroke="var(--color-txt-300)"
-						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+						tick={AXIS_TICK}
 						tickLine={false}
 						axisLine={false}
 						domain={[minEquity - padding, maxEquity + padding]}
@@ -163,4 +168,6 @@ export const CumulativePnlChart = ({ data }: CumulativePnlChartProps) => {
 			</ChartContainer>
 		</div>
 	)
-}
+})
+
+CumulativePnlChart.displayName = "CumulativePnlChart"

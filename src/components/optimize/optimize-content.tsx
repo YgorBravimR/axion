@@ -42,6 +42,8 @@ import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
 
+const ALL_PRESETS = [...orbPresets, ...dezkPresets]
+
 interface OptimizeContentProps {
 	dataSources: DataSourceInfo[]
 }
@@ -77,11 +79,14 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const [isSweeping, setIsSweeping] = useState(false)
 	const [sweepProgress, setSweepProgress] = useState({ current: 0, total: 0 })
 	const sweepHandleRef = useRef<SweepHandle | null>(null)
+	const sweepProgressRef = useRef(sweepProgress)
+	sweepProgressRef.current = sweepProgress
 
 	// ── Runs state ────────────────────────────────────────────────
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
 	const runCounterRef = useRef(0)
+	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
 	// Hydrate from localStorage on mount
 	useEffect(() => {
@@ -92,19 +97,19 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		}
 	}, [])
 
-	// Persist to localStorage on change
+	// Persist to localStorage on change — debounced 1s
 	useEffect(() => {
 		if (runs.length > 0) {
-			saveRuns(runs)
+			clearTimeout(saveTimeoutRef.current)
+			saveTimeoutRef.current = setTimeout(() => saveRuns(runs), 1000)
 		}
+		return () => clearTimeout(saveTimeoutRef.current)
 	}, [runs])
 
 	const selectedSource = dataSources[selectedSourceIndex]
 	const dateFrom = dateRange?.from ? dateRange.from.toISOString().slice(0, 10) : ""
 	const dateTo = dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : ""
 	const hasData = candleCount > 0
-
-	const allPresets = [...orbPresets, ...dezkPresets]
 
 	const assetValuePerPointCents = selectedSource
 		? Math.round(selectedSource.assetTickValueCents / selectedSource.assetTickSize)
@@ -148,7 +153,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const preset = { ...allPresets[index] }
+		const preset = { ...ALL_PRESETS[index] }
 		if (preset.sizing.type === "monetary_risk") {
 			preset.sizing = { ...preset.sizing, valuePerPointCents: assetValuePerPointCents }
 		}
@@ -298,8 +303,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		sweepHandleRef.current?.cancel()
 		sweepHandleRef.current = null
 		setIsSweeping(false)
-		showToast("info", t("sweepCancelled", { count: sweepProgress.current }))
-	}, [sweepProgress.current, showToast, t])
+		showToast("info", t("sweepCancelled", { count: sweepProgressRef.current.current }))
+	}, [showToast, t])
 
 	// ── Shared run actions ────────────────────────────────────────
 
@@ -401,7 +406,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<SelectValue placeholder={tBacktest("config.selectPreset")} />
 								</SelectTrigger>
 								<SelectContent>
-									{allPresets.map((preset, i) => (
+									{ALL_PRESETS.map((preset, i) => (
 										<SelectItem key={`${preset.entry.type}-${i}`} value={String(i)}>
 											{preset.displayName}
 										</SelectItem>

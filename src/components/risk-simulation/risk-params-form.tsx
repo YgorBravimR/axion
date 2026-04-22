@@ -81,7 +81,7 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 		if (!isFocused) {
 			setLocalValue(fromCents(valueCents).toFixed(2))
 		}
-	}, [valueCents, isFocused])
+	}, [valueCents])
 
 	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const raw = event.target.value

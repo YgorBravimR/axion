@@ -18,12 +18,13 @@ const AnalyticsPage = async ({ params }: AnalyticsPageProps) => {
 	setRequestLocale(locale)
 
 	// Fetch all initial data server-side in parallel
-	const [dashboardResult, tagStatsResult, assetsResult, timeframesResult] =
+	const [dashboardResult, tagStatsResult, assetsResult, timeframesResult, userAccounts] =
 		await Promise.all([
 			getAnalyticsDashboard(),
 			getTagStats(),
 			getUniqueAssets(),
 			getTimeframes(),
+			getUserAccounts(),
 		])
 
 	const initialDashboard =
@@ -43,8 +44,6 @@ const AnalyticsPage = async ({ params }: AnalyticsPageProps) => {
 		name: tf.name,
 	}))
 
-	// Get account count for comparison link visibility
-	const userAccounts = await getUserAccounts()
 	const accountCount = userAccounts.length
 
 	return (

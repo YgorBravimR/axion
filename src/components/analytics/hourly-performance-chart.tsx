@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	BarChart,
@@ -71,7 +72,9 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	)
 }
 
-export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerformanceChartProps) => {
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+
+export const HourlyPerformanceChart = memo(({ data, expectancyMode }: HourlyPerformanceChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("analytics")
 	const tCommon = useTranslations("common")
@@ -79,19 +82,21 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 	const isRMode = expectancyMode === "edge"
 	const metricKey = isRMode ? "avgR" : "totalPnl"
 
-	// Calculate domain with padding
-	const maxAbsMetric = Math.max(
-		...data.map((d) => Math.abs(d[metricKey])),
-		isRMode ? 0.5 : 100
-	)
-	const domainMax = isRMode
-		? Math.ceil(maxAbsMetric * 1.2 * 100) / 100
-		: Math.ceil(maxAbsMetric * 1.1)
-
-	// Find best and worst hours
-	const sortedByMetric = data.toSorted((a, b) => b[metricKey] - a[metricKey])
-	const bestHour = sortedByMetric[0]
-	const worstHour = sortedByMetric[sortedByMetric.length - 1]
+	const { domainMax, bestHour, worstHour } = useMemo(() => {
+		const maxAbs = Math.max(
+			...data.map((d) => Math.abs(d[metricKey])),
+			isRMode ? 0.5 : 100
+		)
+		const dMax = isRMode
+			? Math.ceil(maxAbs * 1.2 * 100) / 100
+			: Math.ceil(maxAbs * 1.1)
+		const sorted = data.toSorted((a, b) => b[metricKey] - a[metricKey])
+		return {
+			domainMax: dMax,
+			bestHour: sorted[0],
+			worstHour: sorted[sorted.length - 1],
+		}
+	}, [data, metricKey, isRMode])
 
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
@@ -124,7 +129,7 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 						<XAxis
 							dataKey="hourLabel"
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={{ stroke: "var(--color-bg-300)" }}
 							interval={1}
@@ -134,7 +139,7 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 								isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
 							}
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
 							domain={[-domainMax, domainMax]}
@@ -168,4 +173,6 @@ export const HourlyPerformanceChart = ({ data, expectancyMode }: HourlyPerforman
 			</div>
 		</div>
 	)
-}
+})
+
+HourlyPerformanceChart.displayName = "HourlyPerformanceChart"

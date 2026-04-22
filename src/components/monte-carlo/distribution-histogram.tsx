@@ -195,23 +195,17 @@ export const DistributionHistogram = ({
 		}))
 	}, [buckets])
 
-	const maxCount = useMemo(
-		() => Math.max(...chartData.map((d) => d.count)),
-		[chartData]
-	)
-
-	const profitableCount = useMemo(
-		() =>
-			chartData
-				.filter((d) => d.midPoint >= 0)
-				.reduce((sum, d) => sum + d.count, 0),
-		[chartData]
-	)
-
-	const totalCount = useMemo(
-		() => chartData.reduce((sum, d) => sum + d.count, 0),
-		[chartData]
-	)
+	const { maxCount, profitableCount, totalCount } = useMemo(() => {
+		let max = 0
+		let profitable = 0
+		let total = 0
+		for (const d of chartData) {
+			if (d.count > max) max = d.count
+			total += d.count
+			if (d.midPoint >= 0) profitable += d.count
+		}
+		return { maxCount: max, profitableCount: profitable, totalCount: total }
+	}, [chartData])
 
 	const profitablePct = ((profitableCount / totalCount) * 100).toFixed(0)
 
@@ -285,9 +279,9 @@ export const DistributionHistogram = ({
 						radius={[3, 3, 0, 0]}
 						background={<CustomBarBackground />}
 					>
-						{chartData.map((entry, index) => (
+						{chartData.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={`cell-${entry.midPoint}`}
 								fill={
 									entry.midPoint >= 0
 										? "var(--color-trade-buy)"

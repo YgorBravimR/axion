@@ -39,37 +39,39 @@ const DecisionTraceModal = ({
 					</SheetTitle>
 				</SheetHeader>
 
-				<div className="space-y-m-400 sm:space-y-m-500">
-					{weeks.map((week) => (
-						<div key={week.weekKey}>
-							{/* Week header */}
-							<div className="mb-s-300 flex items-center justify-between">
-								<h3 className="text-small text-txt-100 font-semibold">
-									{t("weekOf", { label: week.weekLabel })}
-								</h3>
-								<ColoredValue
-									value={fromCents(week.weekPnlCents)}
-									type="currency"
-									showSign
-									size="sm"
-								/>
-							</div>
+				{open && (
+					<div className="space-y-m-400 sm:space-y-m-500">
+						{weeks.map((week) => (
+							<div key={week.weekKey}>
+								{/* Week header */}
+								<div className="mb-s-300 flex items-center justify-between">
+									<h3 className="text-small text-txt-100 font-semibold">
+										{t("weekOf", { label: week.weekLabel })}
+									</h3>
+									<ColoredValue
+										value={fromCents(week.weekPnlCents)}
+										type="currency"
+										showSign
+										size="sm"
+									/>
+								</div>
 
-							{/* Day cards */}
-							<div className="space-y-s-300">
-								{week.days.map((day) => (
-									<DayTraceCard key={day.dayKey} day={day} />
-								))}
+								{/* Day cards */}
+								<div className="space-y-s-300">
+									{week.days.map((day) => (
+										<DayTraceCard key={day.dayKey} day={day} />
+									))}
+								</div>
 							</div>
-						</div>
-					))}
+						))}
 
-					{weeks.length === 0 && (
-						<p className="text-small text-txt-300 py-8 text-center">
-							{t("noData")}
-						</p>
-					)}
-				</div>
+						{weeks.length === 0 && (
+							<p className="text-small text-txt-300 py-8 text-center">
+								{t("noData")}
+							</p>
+						)}
+					</div>
+				)}
 			</SheetContent>
 		</Sheet>
 	)

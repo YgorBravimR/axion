@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { memo, useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { Dices } from "lucide-react"
@@ -92,7 +92,7 @@ export const MonteCarloContent = ({
 		} finally {
 			setIsLoadingStats(false)
 		}
-	}, [])
+	}, [t])
 
 	// When source changes, load stats
 	useEffect(() => {
@@ -235,7 +235,7 @@ interface EdgeExpectancyContentProps {
 	budgetCap: number
 }
 
-const EdgeExpectancyContent = ({
+const EdgeExpectancyContent = memo(({
 	initialOptions,
 	inputMode,
 	setInputMode,
@@ -394,4 +394,4 @@ const EdgeExpectancyContent = ({
 			)}
 		</div>
 	)
-}
+})

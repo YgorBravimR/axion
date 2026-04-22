@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Check } from "lucide-react"
 
@@ -18,7 +19,10 @@ interface WizardStepperProps {
 const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: WizardStepperProps) => {
 	const t = useTranslations("optimize")
 
-	const activeIndex = steps.findIndex((s) => s.key === activeStep)
+	const activeIndex = useMemo(
+		() => steps.findIndex((s) => s.key === activeStep),
+		[steps, activeStep]
+	)
 
 	return (
 		<nav aria-label="Optimization wizard" className="flex items-center justify-center">

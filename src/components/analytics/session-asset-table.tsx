@@ -32,6 +32,19 @@ export const SessionAssetTable = ({
 		return tLabels(session)
 	}
 
+	// Pre-compute weighted R per asset for R mode total column
+	const weightedRByAsset = useMemo(() => {
+		const map = new Map<string, number>()
+		for (const asset of data) {
+			const totalTrades = asset.sessions.reduce((s, sess) => s + sess.trades, 0)
+			const weightedR = totalTrades > 0
+				? asset.sessions.reduce((s, sess) => s + sess.avgR * sess.trades, 0) / totalTrades
+				: 0
+			map.set(asset.asset, weightedR)
+		}
+		return map
+	}, [data])
+
 	// Build session lookup maps for O(1) access instead of O(n) find() calls
 	const sessionMaps = useMemo(() => {
 		const maps = new Map<
@@ -163,43 +176,27 @@ export const SessionAssetTable = ({
 									)}
 								</td>
 								<td className="py-s-200 text-right">
-									{(() => {
-										if (isRMode) {
-											const totalTrades = asset.sessions.reduce(
-												(s, sess) => s + sess.trades,
-												0
-											)
-											const weightedR =
-												totalTrades > 0
-													? asset.sessions.reduce(
-															(s, sess) => s + sess.avgR * sess.trades,
-															0
-														) / totalTrades
-													: 0
-											return (
-												<span
-													className={`text-small font-semibold ${
-														weightedR >= 0
-															? "text-trade-buy"
-															: "text-trade-sell"
-													}`}
-												>
-													{formatR(weightedR)}
-												</span>
-											)
-										}
-										return (
-											<span
-												className={`text-small font-semibold ${
-													asset.totalPnl >= 0
-														? "text-trade-buy"
-														: "text-trade-sell"
-												}`}
-											>
-												{formatBrlCompactWithSign(asset.totalPnl)}
-											</span>
-										)
-									})()}
+									{isRMode ? (
+										<span
+											className={`text-small font-semibold ${
+												(weightedRByAsset.get(asset.asset) ?? 0) >= 0
+													? "text-trade-buy"
+													: "text-trade-sell"
+											}`}
+										>
+											{formatR(weightedRByAsset.get(asset.asset) ?? 0)}
+										</span>
+									) : (
+										<span
+											className={`text-small font-semibold ${
+												asset.totalPnl >= 0
+													? "text-trade-buy"
+													: "text-trade-sell"
+											}`}
+										>
+											{formatBrlCompactWithSign(asset.totalPnl)}
+										</span>
+									)}
 								</td>
 							</tr>
 						))}

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,7 +32,7 @@ const TARGET_MODE_OPTIONS: { value: TargetMode; labelKey: string }[] = [
 	{ value: "fixed_points", labelKey: "modeFixedPoints" },
 ]
 
-const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps) => {
+const TargetsExitSection = memo(({ recipe, onRecipeChange }: TargetsExitSectionProps) => {
 	const t = useTranslations("backtest.builder")
 
 	if (recipe.target.type !== "fixed_levels") return null
@@ -75,11 +76,11 @@ const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps)
 
 	// ── Shared target mode ───────────────────────────────────
 
-	const targetModeOptions = TARGET_MODE_OPTIONS.map((opt) => ({
+	const targetModeOptions = useMemo(() => TARGET_MODE_OPTIONS.map((opt) => ({
 		value: opt.value,
 		label: t(opt.labelKey),
 		description: t(`${opt.labelKey}Desc`),
-	}))
+	})), [t])
 
 	const currentMode = targetConfig.levels[0]?.mode ?? "r_multiple"
 
@@ -210,6 +211,7 @@ const TargetsExitSection = ({ recipe, onRecipeChange }: TargetsExitSectionProps)
 			</div>
 		</div>
 	)
-}
+})
+TargetsExitSection.displayName = "TargetsExitSection"
 
 export { TargetsExitSection }

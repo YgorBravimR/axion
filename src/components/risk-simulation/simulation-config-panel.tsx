@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import type { DateRange } from "react-day-picker"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
@@ -101,18 +102,15 @@ const SimulationConfigPanel = ({
 		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
 	}
 
-	/** Derive which quick filter is currently active based on dateFrom/dateTo */
-	const activeQuickFilter = (() => {
+	const activeQuickFilter = useMemo(() => {
 		if (!dateFrom || !dateTo) return null
 
-		// Check if a year filter matches
 		for (const year of tradeYears) {
 			if (dateFrom === `${year}-01-01` && dateTo === `${year}-12-31`) {
 				return `year-${year}`
 			}
 		}
 
-		// Check if "all" matches
 		if (tradeYears.length > 0) {
 			const oldest = tradeYears[tradeYears.length - 1]
 			const today = new Date().toISOString().split("T")[0]
@@ -122,7 +120,7 @@ const SimulationConfigPanel = ({
 		}
 
 		return null
-	})()
+	}, [dateFrom, dateTo, tradeYears])
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-s-300 sm:p-m-400">

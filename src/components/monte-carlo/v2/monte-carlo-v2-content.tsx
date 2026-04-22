@@ -37,6 +37,19 @@ interface MonteCarloV2ContentProps {
 	budgetCap: number
 }
 
+interface FormState {
+	winRate: string
+	profitFactor: string
+	rewardRiskRatio: string
+	breakevenRate: string
+	simulationCount: string
+	initialBalance: string
+	monthsToTrade: string
+	tradingDaysPerMonth: string
+	tradingDaysPerWeek: string
+	commissionPerTrade: string
+}
+
 const MonteCarloV2Content = ({
 	profiles,
 	dataSourceOptions,
@@ -51,17 +64,25 @@ const MonteCarloV2Content = ({
 
 	// Profile selection state
 	const [selectedProfileId, setSelectedProfileId] = useState("")
-	const [winRate, setWinRate] = useState("40.7")
-	const [profitFactor, setProfitFactor] = useState("")
-	const [rewardRiskRatio, setRewardRiskRatio] = useState("1.38")
-	const [breakevenRate, setBreakevenRate] = useState("0")
-	const [simulationCount, setSimulationCount] = useState("5000")
-	const [initialBalance, setInitialBalance] = useState("50000")
-	const [monthsToTrade, setMonthsToTrade] = useState("1")
-	const [tradingDaysPerMonth, setTradingDaysPerMonth] = useState("22")
-	const [tradingDaysPerWeek, setTradingDaysPerWeek] = useState("5")
-	const [commissionPerTrade, setCommissionPerTrade] = useState("0")
 	const [ruinThreshold, setRuinThreshold] = useState("50")
+
+	// Form state — consolidated from 10 individual useState calls
+	const [form, setForm] = useState<FormState>({
+		winRate: "40.7",
+		profitFactor: "",
+		rewardRiskRatio: "1.38",
+		breakevenRate: "0",
+		simulationCount: "5000",
+		initialBalance: "50000",
+		monthsToTrade: "1",
+		tradingDaysPerMonth: "22",
+		tradingDaysPerWeek: "5",
+		commissionPerTrade: "0",
+	})
+
+	const updateField = useCallback(<K extends keyof FormState>(field: K, value: string) => {
+		setForm((prev) => ({ ...prev, [field]: value }))
+	}, [])
 
 	// Data source state (auto-populate from strategy)
 	const [inputMode, setInputMode] = useState<"auto" | "manual">("auto")
@@ -94,16 +115,15 @@ const MonteCarloV2Content = ({
 	const handleUseStats = useCallback(() => {
 		if (!sourceStats) return
 
-		setWinRate(sourceStats.winRate.toFixed(1))
-		setProfitFactor(
-			sourceStats.profitFactor === Infinity
+		setForm((prev) => ({
+			...prev,
+			winRate: sourceStats.winRate.toFixed(1),
+			profitFactor: sourceStats.profitFactor === Infinity
 				? ""
-				: sourceStats.profitFactor.toFixed(2)
-		)
-		setCommissionPerTrade(
-			sourceStats.avgCommissionPerTradeCents?.toString() ?? "0"
-		)
-		setBreakevenRate(sourceStats.breakevenRate?.toFixed(1) ?? "0")
+				: sourceStats.profitFactor.toFixed(2),
+			commissionPerTrade: sourceStats.avgCommissionPerTradeCents?.toString() ?? "0",
+			breakevenRate: sourceStats.breakevenRate?.toFixed(1) ?? "0",
+		}))
 	}, [sourceStats])
 
 	const handleCustomize = useCallback(() => {
@@ -112,18 +132,18 @@ const MonteCarloV2Content = ({
 
 	// When Profit Factor is set, auto-derive R:R = PF × (1 - WR) / WR
 	const derivedRR = useMemo(() => {
-		const pf = parseFloat(profitFactor)
-		const wr = parseFloat(winRate) / 100
+		const pf = parseFloat(form.profitFactor)
+		const wr = parseFloat(form.winRate) / 100
 		if (isNaN(pf) || pf <= 0 || isNaN(wr) || wr <= 0 || wr >= 1) return null
 		return (pf * (1 - wr)) / wr
-	}, [profitFactor, winRate])
+	}, [form.profitFactor, form.winRate])
 
 	// The effective R:R: derived from PF when set, otherwise manual input
-	const effectiveRR = derivedRR ?? parseFloat(rewardRiskRatio)
+	const effectiveRR = derivedRR ?? parseFloat(form.rewardRiskRatio)
 
 	// Implied PF from current WR + effective R:R (for display)
 	const impliedPF = useMemo(() => {
-		const wr = parseFloat(winRate) / 100
+		const wr = parseFloat(form.winRate) / 100
 		if (
 			isNaN(wr) ||
 			wr <= 0 ||
@@ -133,52 +153,47 @@ const MonteCarloV2Content = ({
 		)
 			return null
 		return (wr * effectiveRR) / (1 - wr)
-	}, [winRate, effectiveRR])
+	}, [form.winRate, effectiveRR])
 
 	// Budget cap computation
 	const budgetInfo = useMemo(() => {
 		const maxTradesPerDay = 50
-		const days = parseInt(tradingDaysPerMonth, 10) || 22
-		const months = parseInt(monthsToTrade, 10) || 1
-		const sims = parseInt(simulationCount, 10) || 0
+		const days = parseInt(form.tradingDaysPerMonth, 10) || 22
+		const months = parseInt(form.monthsToTrade, 10) || 1
+		const sims = parseInt(form.simulationCount, 10) || 0
 		const totalIterations = maxTradesPerDay * days * months * sims
 		const budgetUsage = totalIterations / budgetCap
 		const isOverBudget = totalIterations > budgetCap
 		return { totalIterations, budgetUsage, isOverBudget }
-	}, [tradingDaysPerMonth, monthsToTrade, simulationCount, budgetCap])
+	}, [form.tradingDaysPerMonth, form.monthsToTrade, form.simulationCount, budgetCap])
 
 	// Results state
 	const [result, setResult] = useState<MonteCarloResultV2 | null>(null)
 	const [isRunning, setIsRunning] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
-	const selectedProfile = profiles.find((p) => p.id === selectedProfileId)
+	const selectedProfile = useMemo(
+		() => profiles.find((p) => p.id === selectedProfileId),
+		[profiles, selectedProfileId]
+	)
 
 	// Build simulation profile from the selected risk management profile
 	const simProfile = useMemo<RiskManagementProfileForSim | null>(() => {
 		if (!selectedProfile) return null
 
-		const wr = parseFloat(winRate)
+		const wr = parseFloat(form.winRate)
 		if (isNaN(wr) || wr <= 0 || isNaN(effectiveRR) || effectiveRR <= 0)
 			return null
 
 		return buildProfileForSim(selectedProfile, {
 			winRate: wr,
 			rewardRiskRatio: effectiveRR,
-			breakevenRate: parseFloat(breakevenRate) || 0,
-			commissionPerTradeCents: toCents(commissionPerTrade),
-			tradingDaysPerMonth: parseInt(tradingDaysPerMonth, 10) || 22,
-			tradingDaysPerWeek: parseInt(tradingDaysPerWeek, 10) || 5,
+			breakevenRate: parseFloat(form.breakevenRate) || 0,
+			commissionPerTradeCents: toCents(form.commissionPerTrade),
+			tradingDaysPerMonth: parseInt(form.tradingDaysPerMonth, 10) || 22,
+			tradingDaysPerWeek: parseInt(form.tradingDaysPerWeek, 10) || 5,
 		})
-	}, [
-		selectedProfile,
-		winRate,
-		effectiveRR,
-		breakevenRate,
-		commissionPerTrade,
-		tradingDaysPerMonth,
-		tradingDaysPerWeek,
-	])
+	}, [form, selectedProfile])
 
 	const handleRunSimulation = useCallback(async () => {
 		if (!simProfile) return
@@ -189,9 +204,9 @@ const MonteCarloV2Content = ({
 		showLoading({ message: tOverlay("runningSimulation") })
 
 		try {
-			const balance = Math.round(parseFloat(initialBalance) * 100) // to cents
-			const simCount = parseInt(simulationCount, 10) || 5000
-			const months = parseInt(monthsToTrade, 10) || 1
+			const balance = Math.round(parseFloat(form.initialBalance) * 100) // to cents
+			const simCount = parseInt(form.simulationCount, 10) || 5000
+			const months = parseInt(form.monthsToTrade, 10) || 1
 
 			const response = await runSimulationV2({
 				profile: simProfile,
@@ -217,9 +232,9 @@ const MonteCarloV2Content = ({
 		}
 	}, [
 		simProfile,
-		initialBalance,
-		simulationCount,
-		monthsToTrade,
+		form.initialBalance,
+		form.simulationCount,
+		form.monthsToTrade,
 		ruinThreshold,
 		showLoading,
 		hideLoading,
@@ -231,10 +246,22 @@ const MonteCarloV2Content = ({
 		setResult(null)
 	}, [])
 
+	const transformedBuckets = useMemo(
+		() =>
+			result
+				? result.distributionBuckets.map((b) => ({
+						...b,
+						rangeStart: result.params.initialBalance / 100 + b.rangeStart / 100,
+						rangeEnd: result.params.initialBalance / 100 + b.rangeEnd / 100,
+					}))
+				: [],
+		[result]
+	)
+
 	const isValid =
 		!!simProfile &&
-		parseFloat(initialBalance) > 0 &&
-		parseInt(simulationCount, 10) > 0 &&
+		parseFloat(form.initialBalance) > 0 &&
+		parseInt(form.simulationCount, 10) > 0 &&
 		!budgetInfo.isOverBudget
 
 	return (
@@ -293,8 +320,8 @@ const MonteCarloV2Content = ({
 									step="0.1"
 									min="0"
 									max="100"
-									value={winRate}
-									onChange={(e) => setWinRate(e.target.value)}
+									value={form.winRate}
+									onChange={(e) => updateField("winRate", e.target.value)}
 									placeholder="40.7"
 									className="pr-8"
 									aria-label={t("params.winRate")}
@@ -314,8 +341,8 @@ const MonteCarloV2Content = ({
 								type="number"
 								step="0.01"
 								min="0"
-								value={profitFactor}
-								onChange={(e) => setProfitFactor(e.target.value)}
+								value={form.profitFactor}
+								onChange={(e) => updateField("profitFactor", e.target.value)}
 								placeholder={t("params.profitFactorPlaceholder")}
 								aria-label={t("params.profitFactor")}
 							/>
@@ -346,8 +373,8 @@ const MonteCarloV2Content = ({
 									type="number"
 									step="0.01"
 									min="0"
-									value={rewardRiskRatio}
-									onChange={(e) => setRewardRiskRatio(e.target.value)}
+									value={form.rewardRiskRatio}
+									onChange={(e) => updateField("rewardRiskRatio", e.target.value)}
 									placeholder="1.38"
 									aria-label={t("params.rewardRiskRatio")}
 								/>
@@ -370,8 +397,8 @@ const MonteCarloV2Content = ({
 									step="0.1"
 									min="0"
 									max="80"
-									value={breakevenRate}
-									onChange={(e) => setBreakevenRate(e.target.value)}
+									value={form.breakevenRate}
+									onChange={(e) => updateField("breakevenRate", e.target.value)}
 									placeholder="0"
 									className="pr-8"
 									aria-label={t("params.breakevenRate")}
@@ -395,8 +422,8 @@ const MonteCarloV2Content = ({
 								step="100"
 								min="100"
 								max="50000"
-								value={simulationCount}
-								onChange={(e) => setSimulationCount(e.target.value)}
+								value={form.simulationCount}
+								onChange={(e) => updateField("simulationCount", e.target.value)}
 								placeholder="5000"
 								aria-label={t("params.simulationCount")}
 							/>
@@ -415,8 +442,8 @@ const MonteCarloV2Content = ({
 									type="number"
 									step="100"
 									min="0"
-									value={initialBalance}
-									onChange={(e) => setInitialBalance(e.target.value)}
+									value={form.initialBalance}
+									onChange={(e) => updateField("initialBalance", e.target.value)}
 									placeholder="50000"
 									className="pl-8"
 									aria-label={t("params.initialBalance")}
@@ -434,8 +461,8 @@ const MonteCarloV2Content = ({
 								step="1"
 								min="1"
 								max="30"
-								value={tradingDaysPerMonth}
-								onChange={(e) => setTradingDaysPerMonth(e.target.value)}
+								value={form.tradingDaysPerMonth}
+								onChange={(e) => updateField("tradingDaysPerMonth", e.target.value)}
 								placeholder="22"
 								aria-label={t("params.tradingDaysPerMonth")}
 							/>
@@ -451,8 +478,8 @@ const MonteCarloV2Content = ({
 								step="1"
 								min="1"
 								max="7"
-								value={tradingDaysPerWeek}
-								onChange={(e) => setTradingDaysPerWeek(e.target.value)}
+								value={form.tradingDaysPerWeek}
+								onChange={(e) => updateField("tradingDaysPerWeek", e.target.value)}
 								placeholder="5"
 								aria-label={t("params.tradingDaysPerWeek")}
 							/>
@@ -466,8 +493,8 @@ const MonteCarloV2Content = ({
 								type="number"
 								step="0.01"
 								min="0"
-								value={commissionPerTrade}
-								onChange={(e) => setCommissionPerTrade(e.target.value)}
+								value={form.commissionPerTrade}
+								onChange={(e) => updateField("commissionPerTrade", e.target.value)}
 								placeholder="0"
 								aria-label={t("params.commissionPerTrade")}
 							/>
@@ -482,8 +509,8 @@ const MonteCarloV2Content = ({
 								step="1"
 								min="1"
 								max="48"
-								value={monthsToTrade}
-								onChange={(e) => setMonthsToTrade(e.target.value)}
+								value={form.monthsToTrade}
+								onChange={(e) => updateField("monthsToTrade", e.target.value)}
 								placeholder="1"
 								aria-label={t("params.monthsToTrade")}
 							/>
@@ -598,12 +625,7 @@ const MonteCarloV2Content = ({
 
 					{/* Distribution - Full width (convert buckets from cents-P&L to currency-finalBalance) */}
 					<V2DistributionHistogram
-						buckets={result.distributionBuckets.map((b) => ({
-							...b,
-							rangeStart:
-								result.params.initialBalance / 100 + b.rangeStart / 100,
-							rangeEnd: result.params.initialBalance / 100 + b.rangeEnd / 100,
-						}))}
+						buckets={transformedBuckets}
 						medianBalance={
 							result.params.initialBalance / 100 +
 							result.statistics.medianMonthlyPnl / 100

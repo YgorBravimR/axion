@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,17 +12,17 @@ interface SizingExecutionSectionProps {
 	onRecipeChange: (recipe: StrategyRecipe) => void
 }
 
-const SizingExecutionSection = ({ recipe, onRecipeChange }: SizingExecutionSectionProps) => {
+const SizingExecutionSection = memo(({ recipe, onRecipeChange }: SizingExecutionSectionProps) => {
 	const t = useTranslations("backtest.builder")
 
 	const sizingType = recipe.sizing.type
 	const hasReversal = recipe.reversal.type === "reverse_on_stop"
 	const maxReversals = recipe.reversal.type === "reverse_on_stop" ? recipe.reversal.maxReversals : 0
 
-	const sizingOptions = [
+	const sizingOptions = useMemo(() => [
 		{ value: "monetary_risk", label: t("sizingMonetary"), description: t("sizingMonetaryDesc") },
 		{ value: "fixed_lots", label: t("sizingFixed"), description: t("sizingFixedDesc") },
-	]
+	], [t])
 
 	const handleSizingChange = (type: string) => {
 		let sizing: SizingConfig
@@ -34,7 +35,7 @@ const SizingExecutionSection = ({ recipe, onRecipeChange }: SizingExecutionSecti
 	}
 
 	// Risk distribution options (only shown when reversal is active + monetary risk)
-	const riskDistOptions = [
+	const riskDistOptions = useMemo(() => [
 		{
 			value: "per_trade",
 			label: t("riskPerTrade"),
@@ -45,7 +46,7 @@ const SizingExecutionSection = ({ recipe, onRecipeChange }: SizingExecutionSecti
 			label: t("riskPerDay"),
 			description: t("riskPerDayDesc", { trades: maxReversals + 1 }),
 		},
-	]
+	], [t, maxReversals])
 
 	const handleRiskDistChange = (value: string) => {
 		if (recipe.sizing.type !== "monetary_risk") return
@@ -146,6 +147,7 @@ const SizingExecutionSection = ({ recipe, onRecipeChange }: SizingExecutionSecti
 			)}
 		</div>
 	)
-}
+})
+SizingExecutionSection.displayName = "SizingExecutionSection"
 
 export { SizingExecutionSection }

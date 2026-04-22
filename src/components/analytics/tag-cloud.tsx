@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { Tag } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { TagStats, TagType } from "@/types"
@@ -24,6 +25,83 @@ const getTagTypeColor = (type: TagType): string => {
 	}
 }
 
+interface TagSectionProps {
+	tags: TagStats[]
+	type: TagType
+	title: string
+	isRMode: boolean
+	maxCount: number
+	tHeaders: ReturnType<typeof useTranslations>
+}
+
+const TagSection = memo(({ tags, type, title, isRMode, maxCount, tHeaders }: TagSectionProps) => {
+	if (tags.length === 0) return null
+
+	const getTagSize = (count: number): string => {
+		const ratio = count / maxCount
+		if (ratio > 0.7) return "text-body"
+		if (ratio > 0.4) return "text-small"
+		return "text-tiny"
+	}
+
+	return (
+		<div className="space-y-s-300">
+			<h4 className="text-tiny font-medium text-txt-300">{title}</h4>
+			<div className="flex flex-wrap gap-s-200">
+				{tags.map((tag) => (
+					<div
+						key={tag.tagId}
+						className={`group relative rounded-lg border p-s-300 transition-transform hover:scale-105 ${getTagTypeColor(type)}`}
+					>
+						<div className="flex items-center gap-s-200">
+							<Tag className="h-3 w-3 text-txt-300" />
+							<span className={`font-medium text-txt-100 ${getTagSize(tag.tradeCount)}`}>
+								{tag.tagName}
+							</span>
+							<span className="rounded-full bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-200">
+								{tag.tradeCount}
+							</span>
+						</div>
+
+						{/* Tooltip on hover */}
+						<div className="absolute bottom-full left-1/2 z-10 mb-s-200 hidden -translate-x-1/2 rounded-lg border border-bg-300 bg-bg-200 p-s-300 shadow-lg group-hover:block">
+							<div className="whitespace-nowrap text-tiny">
+								{isRMode ? (
+									<>
+										{tag.avgR !== 0 && (
+											<p className={tag.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"}>
+												{tHeaders("avgR")}: {formatR(tag.avgR)}
+											</p>
+										)}
+										<p className="text-txt-200">{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%</p>
+										<p className={tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
+											{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+										</p>
+									</>
+								) : (
+									<>
+										<p className={tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
+											{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+										</p>
+										<p className="text-txt-200">{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%</p>
+										{tag.avgR !== 0 && (
+											<p className={tag.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"}>
+												{tHeaders("avgR")}: {formatR(tag.avgR)}
+											</p>
+										)}
+									</>
+								)}
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	)
+})
+
+TagSection.displayName = "TagSection"
+
 export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 	const t = useTranslations("analytics.tagCloud")
 	const tHeaders = useTranslations("analytics.tableHeaders")
@@ -46,94 +124,13 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 				return type
 		}
 	}
-	// Separate tags by type
-	const setupTags = data.filter((t) => t.tagType === "setup")
-	const mistakeTags = data.filter((t) => t.tagType === "mistake")
-	const generalTags = data.filter((t) => t.tagType === "general")
 
-	// Calculate max trade count for sizing
-	const maxCount = Math.max(...data.map((t) => t.tradeCount), 1)
-
-	const getTagSize = (count: number): string => {
-		const ratio = count / maxCount
-		if (ratio > 0.7) return "text-body"
-		if (ratio > 0.4) return "text-small"
-		return "text-tiny"
-	}
-
-	const getTagSectionTitle = (type: TagType): string => {
-		switch (type) {
-			case "setup":
-				return t("setupTags")
-			case "mistake":
-				return t("mistakeTags")
-			case "general":
-				return t("generalTags")
-			default:
-				return `${getTagTypeLabel(type)} Tags`
-		}
-	}
-
-	const renderTagSection = (tags: TagStats[], type: TagType) => {
-		if (tags.length === 0) return null
-
-		return (
-			<div className="space-y-s-300">
-				<h4 className="text-tiny font-medium text-txt-300">
-					{getTagSectionTitle(type)}
-				</h4>
-				<div className="flex flex-wrap gap-s-200">
-					{tags.map((tag) => (
-						<div
-							key={tag.tagId}
-							className={`group relative rounded-lg border p-s-300 transition-transform hover:scale-105 ${getTagTypeColor(type)}`}
-						>
-							<div className="flex items-center gap-s-200">
-								<Tag className="h-3 w-3 text-txt-300" />
-								<span className={`font-medium text-txt-100 ${getTagSize(tag.tradeCount)}`}>
-									{tag.tagName}
-								</span>
-								<span className="rounded-full bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-200">
-									{tag.tradeCount}
-								</span>
-							</div>
-
-							{/* Tooltip on hover */}
-							<div className="absolute bottom-full left-1/2 z-10 mb-s-200 hidden -translate-x-1/2 rounded-lg border border-bg-300 bg-bg-200 p-s-300 shadow-lg group-hover:block">
-								<div className="whitespace-nowrap text-tiny">
-									{isRMode ? (
-										<>
-											{tag.avgR !== 0 && (
-												<p className={tag.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-													{tHeaders("avgR")}: {formatR(tag.avgR)}
-												</p>
-											)}
-											<p className="text-txt-200">{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%</p>
-											<p className={tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-												{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
-											</p>
-										</>
-									) : (
-										<>
-											<p className={tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-												{tHeaders("pnl")}: {formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
-											</p>
-											<p className="text-txt-200">{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%</p>
-											{tag.avgR !== 0 && (
-												<p className={tag.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-													{tHeaders("avgR")}: {formatR(tag.avgR)}
-												</p>
-											)}
-										</>
-									)}
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
-			</div>
-		)
-	}
+	const { setupTags, mistakeTags, generalTags, maxCount } = useMemo(() => ({
+		setupTags: data.filter((tag) => tag.tagType === "setup"),
+		mistakeTags: data.filter((tag) => tag.tagType === "mistake"),
+		generalTags: data.filter((tag) => tag.tagType === "general"),
+		maxCount: Math.max(...data.map((tag) => tag.tradeCount), 1),
+	}), [data])
 
 	if (data.length === 0) {
 		return (
@@ -146,15 +143,19 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 		)
 	}
 
-	// Calculate mistake cost and best setup based on current mode
-	const totalMistakeCost = mistakeTags.reduce(
-		(sum, tag) => sum + Math.abs(Math.min(0, getMetric(tag))),
-		0
-	)
-	const bestSetup = setupTags.reduce(
-		(best, tag) => (!best || getMetric(tag) > getMetric(best)) ? tag : best,
-		null as TagStats | null
-	)
+	const { totalMistakeCost, bestSetup } = useMemo(() => {
+		const metric = (tag: TagStats): number => isRMode ? tag.avgR : tag.totalPnl
+		return {
+			totalMistakeCost: mistakeTags.reduce(
+				(sum, tag) => sum + Math.abs(Math.min(0, metric(tag))),
+				0
+			),
+			bestSetup: setupTags.reduce(
+				(best, tag) => (!best || metric(tag) > metric(best)) ? tag : best,
+				null as TagStats | null
+			),
+		}
+	}, [mistakeTags, setupTags, isRMode])
 
 	return (
 		<div id="analytics-tag-cloud" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
@@ -189,9 +190,9 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 			{/* Tag Sections */}
 			<div className="mt-m-400 sm:mt-m-500 space-y-m-400 sm:space-y-m-500">
-				{renderTagSection(setupTags, "setup")}
-				{renderTagSection(mistakeTags, "mistake")}
-				{renderTagSection(generalTags, "general")}
+				<TagSection tags={setupTags} type="setup" title={t("setupTags")} isRMode={isRMode} maxCount={maxCount} tHeaders={tHeaders} />
+				<TagSection tags={mistakeTags} type="mistake" title={t("mistakeTags")} isRMode={isRMode} maxCount={maxCount} tHeaders={tHeaders} />
+				<TagSection tags={generalTags} type="general" title={t("generalTags")} isRMode={isRMode} maxCount={maxCount} tHeaders={tHeaders} />
 			</div>
 
 			{/* Detailed Table */}

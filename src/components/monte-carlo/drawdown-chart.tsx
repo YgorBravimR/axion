@@ -26,26 +26,30 @@ interface CustomTooltipProps {
 		value: number
 		payload: { tradeNumber: number; rDrawdown: number }
 	}>
+	tCharts: ReturnType<typeof useTranslations>
+}
+
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
+
+const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
+	if (!active || !payload || payload.length === 0) return null
+
+	const data = payload[0].payload
+	return (
+		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+			<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
+			<p className="text-small text-trade-sell font-semibold">
+				-{data.rDrawdown.toFixed(2)}R
+			</p>
+		</div>
+	)
 }
 
 export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
 	const tCharts = useTranslations("charts")
-
-	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-		if (!active || !payload || payload.length === 0) return null
-
-		const data = payload[0].payload
-		return (
-			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-				<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
-				<p className="text-small text-trade-sell font-semibold">
-					-{data.rDrawdown.toFixed(2)}R
-				</p>
-			</div>
-		)
-	}
 
 	const chartData = useMemo(
 		() => [
@@ -80,7 +84,7 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 			>
 				<AreaChart
 					data={chartData}
-					margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+					margin={CHART_MARGIN}
 				>
 					<defs>
 						<linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
@@ -107,6 +111,7 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
+						tick={AXIS_TICK}
 					/>
 					<YAxis
 						stroke="var(--color-txt-300)"
@@ -117,8 +122,9 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 						domain={[0, maxDrawdown + padding]}
 						reversed
 						width={yAxisWidth}
+						tick={AXIS_TICK}
 					/>
-					<ChartTooltip variant="line" content={<CustomTooltip />} />
+					<ChartTooltip variant="line" content={<CustomTooltip tCharts={tCharts} />} />
 					<ReferenceLine
 						y={0}
 						stroke="var(--color-txt-300)"

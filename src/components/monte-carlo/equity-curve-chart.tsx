@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useId, useMemo } from "react"
 import {
 	AreaChart,
 	Area,
@@ -26,30 +26,37 @@ interface CustomTooltipProps {
 		value: number
 		payload: { tradeNumber: number; cumulativeR: number }
 	}>
+	tCharts: ReturnType<typeof useTranslations>
+}
+
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
+
+const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
+	if (!active || !payload || payload.length === 0) return null
+
+	const data = payload[0].payload
+	const isPositive = data.cumulativeR >= 0
+
+	return (
+		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+			<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
+			<p
+				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
+			>
+				{formatR(data.cumulativeR)}
+			</p>
+		</div>
+	)
 }
 
 export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")
 	const tCharts = useTranslations("charts")
-
-	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-		if (!active || !payload || payload.length === 0) return null
-
-		const data = payload[0].payload
-		const isPositive = data.cumulativeR >= 0
-
-		return (
-			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-				<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
-				<p
-					className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
-				>
-					{formatR(data.cumulativeR)}
-				</p>
-			</div>
-		)
-	}
+	const uid = useId()
+	const gradientPositiveId = `equity-gradient-positive-${uid}`
+	const gradientNegativeId = `equity-gradient-negative-${uid}`
 
 	const chartData = useMemo(
 		() => [
@@ -95,11 +102,11 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 			>
 				<AreaChart
 					data={chartData}
-					margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+					margin={CHART_MARGIN}
 				>
 					<defs>
 						<linearGradient
-							id="equityGradientPositive"
+							id={gradientPositiveId}
 							x1="0"
 							y1="0"
 							x2="0"
@@ -117,7 +124,7 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 							/>
 						</linearGradient>
 						<linearGradient
-							id="equityGradientNegative"
+							id={gradientNegativeId}
 							x1="0"
 							y1="0"
 							x2="0"
@@ -146,6 +153,7 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
+						tick={AXIS_TICK}
 					/>
 					<YAxis
 						stroke="var(--color-txt-300)"
@@ -155,8 +163,9 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 						tickFormatter={(value) => formatR(value)}
 						domain={[minValue - padding, maxValue + padding]}
 						width={yAxisWidth}
+						tick={AXIS_TICK}
 					/>
-					<ChartTooltip variant="line" content={<CustomTooltip />} />
+					<ChartTooltip variant="line" content={<CustomTooltip tCharts={tCharts} />} />
 					<ReferenceLine
 						y={0}
 						stroke="var(--color-txt-300)"
@@ -170,8 +179,8 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 						strokeWidth={2}
 						fill={
 							isPositive
-								? "url(#equityGradientPositive)"
-								: "url(#equityGradientNegative)"
+								? `url(#${gradientPositiveId})`
+								: `url(#${gradientNegativeId})`
 						}
 					/>
 				</AreaChart>

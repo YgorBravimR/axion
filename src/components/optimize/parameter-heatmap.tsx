@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState, useMemo, useEffect } from "react"
+import { Fragment, useState, useMemo, useEffect, useCallback, memo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Select,
@@ -60,6 +60,53 @@ const formatMetric = (
 			return `${value.toFixed(2)}R`
 	}
 }
+
+// ── HeatmapCell item component ───────────────────────────────────
+
+interface HeatmapCellItemProps {
+	cell: HeatmapCell
+	isHovered: boolean
+	colorClass: string
+	metric: HeatmapMetric
+	ariaLabel: string
+	onHover: (cell: HeatmapCell | null) => void
+	onSelect: (runId: string) => void
+}
+
+const HeatmapCellItem = memo(({ cell, isHovered, colorClass, metric, ariaLabel, onHover, onSelect }: HeatmapCellItemProps) => (
+	<div
+		className={cn(
+			"relative flex h-10 items-center justify-center rounded-md transition-all",
+			"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
+			colorClass,
+			isHovered && "ring-acc-100 scale-105 ring-2"
+		)}
+		onMouseEnter={() => onHover(cell)}
+		onMouseLeave={() => onHover(null)}
+		onFocus={() => onHover(cell)}
+		onBlur={() => onHover(null)}
+		onClick={() => onSelect(cell.run.id)}
+		onKeyDown={(e) => {
+			if (e.key === "Enter" || e.key === " ") {
+				e.preventDefault()
+				onSelect(cell.run.id)
+			}
+		}}
+		tabIndex={0}
+		role="button"
+		aria-label={ariaLabel}
+	>
+		<span className="text-micro text-txt-100 font-semibold tabular-nums drop-shadow-sm">
+			{formatMetric(cell.metricValue, metric, true)}
+		</span>
+		{cell.count > 1 && (
+			<span className="text-txt-300 absolute top-0 right-0.5 text-[8px]">
+				{cell.count}×
+			</span>
+		)}
+	</div>
+))
+HeatmapCellItem.displayName = "HeatmapCellItem"
 
 // ── Component ────────────────────────────────────────────────────
 
@@ -131,19 +178,27 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 		}
 	}, [varyingParams, numericVaryingParams, bestRun])
 
-	// Build heatmap data
+	// Build heatmap data with pre-computed color classes
 	const heatmapData = useMemo(() => {
 		if (!xParamPath || !yParamPath || xParamPath === yParamPath) return null
-		return buildHeatmapData(runs, xParamPath, yParamPath, metric, slices)
+		const data = buildHeatmapData(runs, xParamPath, yParamPath, metric, slices)
+		const colorMap = new Map<string, string>()
+		for (const [key, cell] of data.cells) {
+			colorMap.set(key, getCellIntensityClass(cell.metricValue, data.minMetric, data.maxMetric, metric))
+		}
+		return { ...data, colorMap }
 	}, [runs, xParamPath, yParamPath, metric, slices])
+
+	// Params not on axes: all enum params (always sliced) + numeric params not assigned to X/Y
+	const sliceParams = useMemo(
+		() => varyingParams.filter(
+			(p) => p.kind === "enum" || (p.path !== xParamPath && p.path !== yParamPath)
+		),
+		[varyingParams, xParamPath, yParamPath]
+	)
 
 	// Need at least 2 numeric varying params for a 2D grid
 	if (numericVaryingParams.length < 2) return null
-
-	// Params not on axes: all enum params (always sliced) + numeric params not assigned to X/Y
-	const sliceParams = varyingParams.filter(
-		(p) => p.kind === "enum" || (p.path !== xParamPath && p.path !== yParamPath)
-	)
 
 	const handleXChange = (path: string) => {
 		setXParamPath(path)
@@ -188,8 +243,22 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 		setSlices((prev) => ({ ...prev, [path]: parsed }))
 	}
 
-	const xParam = numericVaryingParams.find((p) => p.path === xParamPath)
-	const yParam = numericVaryingParams.find((p) => p.path === yParamPath)
+	const handleCellHover = useCallback((cell: HeatmapCell | null) => {
+		setHoveredCell(cell)
+	}, [])
+
+	const handleCellSelect = useCallback((runId: string) => {
+		onSelectRun(runId)
+	}, [onSelectRun])
+
+	const xParam = useMemo(
+		() => numericVaryingParams.find((p) => p.path === xParamPath),
+		[numericVaryingParams, xParamPath]
+	)
+	const yParam = useMemo(
+		() => numericVaryingParams.find((p) => p.path === yParamPath),
+		[numericVaryingParams, yParamPath]
+	)
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-300 p-m-400 rounded-lg border">
@@ -344,7 +413,8 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 								{/* Data cells */}
 								{heatmapData.xValues.map((xVal) => {
-									const cell = heatmapData.cells.get(cellKey(xVal, yVal))
+									const key = cellKey(xVal, yVal)
+									const cell = heatmapData.cells.get(key)
 									const isHovered =
 										hoveredCell?.xVal === xVal && hoveredCell?.yVal === yVal
 
@@ -357,46 +427,17 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 										)
 									}
 
-									const colorClass = getCellIntensityClass(
-										cell.metricValue,
-										heatmapData.minMetric,
-										heatmapData.maxMetric,
-										metric
-									)
-
 									return (
-										<div
+										<HeatmapCellItem
 											key={`${xVal}-${yVal}`}
-											className={cn(
-												"relative flex h-10 items-center justify-center rounded-md transition-all",
-												"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
-												colorClass,
-												isHovered && "ring-acc-100 scale-105 ring-2"
-											)}
-											onMouseEnter={() => setHoveredCell(cell)}
-											onMouseLeave={() => setHoveredCell(null)}
-											onFocus={() => setHoveredCell(cell)}
-											onBlur={() => setHoveredCell(null)}
-											onClick={() => onSelectRun(cell.run.id)}
-											onKeyDown={(e) => {
-												if (e.key === "Enter" || e.key === " ") {
-													e.preventDefault()
-													onSelectRun(cell.run.id)
-												}
-											}}
-											tabIndex={0}
-											role="button"
-											aria-label={`${t(`sweepParam.${xParam.labelKey}`)} ${xVal} × ${t(`sweepParam.${yParam.labelKey}`)} ${yVal} — ${t(`heatmap.metrics.${metric}`)}: ${formatMetric(cell.metricValue, metric)}`}
-										>
-											<span className="text-micro text-txt-100 font-semibold tabular-nums drop-shadow-sm">
-												{formatMetric(cell.metricValue, metric, true)}
-											</span>
-											{cell.count > 1 && (
-												<span className="text-txt-300 absolute top-0 right-0.5 text-[8px]">
-													{cell.count}×
-												</span>
-											)}
-										</div>
+											cell={cell}
+											isHovered={isHovered}
+											colorClass={heatmapData.colorMap.get(key) ?? ""}
+											metric={metric}
+											ariaLabel={`${t(`sweepParam.${xParam.labelKey}`)} ${xVal} × ${t(`sweepParam.${yParam.labelKey}`)} ${yVal} — ${t(`heatmap.metrics.${metric}`)}: ${formatMetric(cell.metricValue, metric)}`}
+											onHover={handleCellHover}
+											onSelect={handleCellSelect}
+										/>
 									)
 								})}
 							</Fragment>

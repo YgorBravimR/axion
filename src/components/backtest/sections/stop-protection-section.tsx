@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,7 +12,7 @@ interface StopProtectionSectionProps {
 	onRecipeChange: (recipe: StrategyRecipe) => void
 }
 
-const StopProtectionSection = ({ recipe, onRecipeChange }: StopProtectionSectionProps) => {
+const StopProtectionSection = memo(({ recipe, onRecipeChange }: StopProtectionSectionProps) => {
 	const t = useTranslations("backtest.builder")
 
 	const stopConfig = recipe.stop
@@ -19,11 +20,11 @@ const StopProtectionSection = ({ recipe, onRecipeChange }: StopProtectionSection
 
 	// ── Initial Stop ────────────────────────────────────────
 
-	const initialStopOptions = [
+	const initialStopOptions = useMemo(() => [
 		{ value: "pct_range", label: t("stopPctRange"), description: t("stopPctRangeDesc") },
 		{ value: "fixed_points", label: t("stopFixedPoints"), description: t("stopFixedPointsDesc") },
 		{ value: "full_range", label: t("stopFullRange"), description: t("stopFullRangeDesc") },
-	]
+	], [t])
 
 	const handleInitialStopChange = (type: string) => {
 		let initial: InitialStopConfig
@@ -67,10 +68,10 @@ const StopProtectionSection = ({ recipe, onRecipeChange }: StopProtectionSection
 		onRecipeChange({ ...recipe, stop: { ...stopConfig, breakeven: be } })
 	}
 
-	const breakevenOptions = [
+	const breakevenOptions = useMemo(() => [
 		{ value: "on_partial", label: t("beOnPartial"), description: t("beOnPartialDesc") },
 		{ value: "on_pct_risk", label: t("beOnPctRisk"), description: t("beOnPctRiskDesc") },
-	]
+	], [t])
 
 	const handleBreakevenTypeChange = (type: string) => {
 		if (type === "on_partial") {
@@ -244,6 +245,7 @@ const StopProtectionSection = ({ recipe, onRecipeChange }: StopProtectionSection
 			</div>
 		</div>
 	)
-}
+})
+StopProtectionSection.displayName = "StopProtectionSection"
 
 export { StopProtectionSection }

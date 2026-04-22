@@ -1,13 +1,12 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { AlertTriangle } from "lucide-react"
 import {
 	getSweepableParams,
-	generateValues,
 	countCombinations,
 	MAX_COMBINATIONS,
 	WARN_COMBINATIONS,
@@ -32,6 +31,8 @@ const SweepConfigPanel = ({ recipe, activeRanges, onRangesChange }: SweepConfigP
 	const t = useTranslations("optimize")
 
 	// Derive active enum selections for union filtering of numeric params
+	// Stable ref prevents new object identity when content hasn't changed
+	const activeEnumValuesRef = useRef<Record<string, string[]> | undefined>(undefined)
 	const activeEnumValues = useMemo(() => {
 		const values: Record<string, string[]> = {}
 		for (const range of activeRanges) {
@@ -39,7 +40,12 @@ const SweepConfigPanel = ({ recipe, activeRanges, onRangesChange }: SweepConfigP
 				values[range.path] = range.selectedValues
 			}
 		}
-		return Object.keys(values).length > 0 ? values : undefined
+		const next = Object.keys(values).length > 0 ? values : undefined
+		if (JSON.stringify(next) === JSON.stringify(activeEnumValuesRef.current)) {
+			return activeEnumValuesRef.current
+		}
+		activeEnumValuesRef.current = next
+		return next
 	}, [activeRanges])
 
 	const availableParams = useMemo(
@@ -95,7 +101,7 @@ const SweepConfigPanel = ({ recipe, activeRanges, onRangesChange }: SweepConfigP
 		activeRanges.find((r): r is NumericParameterRange => r.kind === "numeric" && r.path === path)
 
 	const getValueCount = (range: NumericParameterRange): number =>
-		generateValues(range.min, range.max, range.step).length
+		Math.max(0, Math.floor((range.max - range.min) / range.step) + 1)
 
 	// ── Enum param helpers ────────────────────────────────────────
 

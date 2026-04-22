@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import {
 	BarChart,
 	Bar,
@@ -78,7 +79,10 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	return null
 }
 
-export const RDistribution = ({ data }: RDistributionProps) => {
+const AXIS_TICK_10 = { fill: "var(--color-txt-300)", fontSize: 10 } as const
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+
+export const RDistribution = memo(({ data }: RDistributionProps) => {
 	const t = useTranslations("analytics.rDistribution")
 
 	if (data.length === 0) {
@@ -97,16 +101,19 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 		)
 	}
 
-	// Calculate stats
-	const totalTrades = data.reduce((sum, b) => sum + b.count, 0)
-	const totalPnl = data.reduce((sum, b) => sum + b.pnl, 0)
-	const positiveBuckets = data.filter((b) => b.rangeMin >= 0)
-	const negativeBuckets = data.filter((b) => b.rangeMax <= 0)
-	const positiveCount = positiveBuckets.reduce((sum, b) => sum + b.count, 0)
-	const negativeCount = negativeBuckets.reduce((sum, b) => sum + b.count, 0)
-
-	// Find mode (most common R range)
-	const mode = data.reduce((max, b) => (b.count > max.count ? b : max), data[0])
+	const { totalTrades, totalPnl, positiveCount, negativeCount, mode } = useMemo(() => {
+		const trades = data.reduce((sum, b) => sum + b.count, 0)
+		const pnl = data.reduce((sum, b) => sum + b.pnl, 0)
+		const posBuckets = data.filter((b) => b.rangeMin >= 0)
+		const negBuckets = data.filter((b) => b.rangeMax <= 0)
+		return {
+			totalTrades: trades,
+			totalPnl: pnl,
+			positiveCount: posBuckets.reduce((sum, b) => sum + b.count, 0),
+			negativeCount: negBuckets.reduce((sum, b) => sum + b.count, 0),
+			mode: data.reduce((max, b) => (b.count > max.count ? b : max), data[0]),
+		}
+	}, [data])
 
 	return (
 		<div id="analytics-r-distribution" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
@@ -171,7 +178,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 						<XAxis
 							dataKey="range"
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 10 }}
+							tick={AXIS_TICK_10}
 							tickLine={false}
 							axisLine={false}
 							angle={-45}
@@ -180,7 +187,7 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 						/>
 						<YAxis
 							stroke="var(--color-txt-300)"
-							tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
 							allowDecimals={false}
@@ -221,4 +228,6 @@ export const RDistribution = ({ data }: RDistributionProps) => {
 			</div>
 		</div>
 	)
-}
+})
+
+RDistribution.displayName = "RDistribution"

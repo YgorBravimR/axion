@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	BarChart,
@@ -137,7 +138,10 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
  * @param data - Array of session performance data
  * @param expectancyMode - Whether to display R-multiples or $ P&L
  */
-export const SessionPerformanceChart = ({
+const AXIS_TICK_SESSION_MOBILE = { fill: "var(--color-txt-300)", fontSize: 10 } as const
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
+
+export const SessionPerformanceChart = memo(({
 	data,
 	expectancyMode,
 }: SessionPerformanceChartProps) => {
@@ -159,33 +163,31 @@ export const SessionPerformanceChart = ({
 	const formatMetric = (value: number): string =>
 		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
 
-	// Filter out sessions with no trades
-	const sessionsWithTrades = data.filter((s) => s.totalTrades > 0)
-
-	// Calculate domain with padding
-	const maxAbsMetric = Math.max(
-		...data.map((d) => Math.abs(d[metricKey])),
-		isRMode ? 0.5 : 100
-	)
-	const domainMax = isRMode
-		? Math.ceil(maxAbsMetric * 1.2 * 100) / 100
-		: Math.ceil(maxAbsMetric * 1.1)
-
-	// Find best and worst sessions
-	const sortedByMetric = sessionsWithTrades.toSorted(
-		(a, b) => b[metricKey] - a[metricKey]
-	)
-	const bestSession = sortedByMetric[0]
-	const worstSession = sortedByMetric[sortedByMetric.length - 1]
-
-	// Totals
-	const totalPnl = data.reduce((sum, s) => sum + s.totalPnl, 0)
-	const totalTrades = data.reduce((sum, s) => sum + s.totalTrades, 0)
-
-	// Weighted average R for header display
-	const weightedAvgR = totalTrades > 0
-		? data.reduce((sum, s) => sum + s.avgR * s.totalTrades, 0) / totalTrades
-		: 0
+	const { sessionsWithTrades, domainMax, bestSession, worstSession, totalPnl, totalTrades, weightedAvgR } = useMemo(() => {
+		const withTrades = data.filter((s) => s.totalTrades > 0)
+		const maxAbs = Math.max(
+			...data.map((d) => Math.abs(d[metricKey])),
+			isRMode ? 0.5 : 100
+		)
+		const dMax = isRMode
+			? Math.ceil(maxAbs * 1.2 * 100) / 100
+			: Math.ceil(maxAbs * 1.1)
+		const sorted = withTrades.toSorted((a, b) => b[metricKey] - a[metricKey])
+		const pnl = data.reduce((sum, s) => sum + s.totalPnl, 0)
+		const trades = data.reduce((sum, s) => sum + s.totalTrades, 0)
+		const avgR = trades > 0
+			? data.reduce((sum, s) => sum + s.avgR * s.totalTrades, 0) / trades
+			: 0
+		return {
+			sessionsWithTrades: withTrades,
+			domainMax: dMax,
+			bestSession: sorted[0],
+			worstSession: sorted[sorted.length - 1],
+			totalPnl: pnl,
+			totalTrades: trades,
+			weightedAvgR: avgR,
+		}
+	}, [data, metricKey, isRMode])
 
 	if (sessionsWithTrades.length === 0) {
 		return (
@@ -246,10 +248,7 @@ export const SessionPerformanceChart = ({
 							dataKey="session"
 							tickFormatter={formatSessionTickLabel}
 							stroke="var(--color-txt-300)"
-							tick={{
-								fill: "var(--color-txt-300)",
-								fontSize: isMobile ? 10 : 11,
-							}}
+							tick={isMobile ? AXIS_TICK_SESSION_MOBILE : AXIS_TICK}
 							tickLine={false}
 							axisLine={{ stroke: "var(--color-bg-300)" }}
 						/>
@@ -258,10 +257,7 @@ export const SessionPerformanceChart = ({
 								isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
 							}
 							stroke="var(--color-txt-300)"
-							tick={{
-								fill: "var(--color-txt-300)",
-								fontSize: 11,
-							}}
+							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
 							domain={[-domainMax, domainMax]}
@@ -409,4 +405,6 @@ export const SessionPerformanceChart = ({
 			})()}
 		</div>
 	)
-}
+})
+
+SessionPerformanceChart.displayName = "SessionPerformanceChart"

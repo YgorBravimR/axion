@@ -224,7 +224,7 @@ export const EquityCurve = ({
 				}
 			})
 		},
-		[calendarMonth, effectiveDate, startTransition]
+		[calendarMonth, effectiveDate]
 	)
 
 	// Refetch when calendar month changes and period is "month"
@@ -234,16 +234,16 @@ export const EquityCurve = ({
 		}
 	}, [calendarMonth, fetchData, period, viewMode])
 
-	const periodLabels = {
+	const periodLabels = useMemo(() => ({
 		month: t("period.month"),
 		year: t("period.year"),
 		all: t("period.all"),
-	}
+	}), [t])
 
-	const viewModeLabels = {
+	const viewModeLabels = useMemo(() => ({
 		days: t("viewMode.days"),
 		trades: t("viewMode.trades"),
-	}
+	}), [t])
 
 	const formatDateLocale = (dateStr: string): string => {
 		const date = new Date(dateStr)
@@ -254,15 +254,15 @@ export const EquityCurve = ({
 		})
 	}
 
-	const handlePeriodChange = (newPeriod: Period) => {
+	const handlePeriodChange = useCallback((newPeriod: Period) => {
 		setPeriod(newPeriod)
 		fetchData(newPeriod, viewMode)
-	}
+	}, [fetchData, viewMode])
 
-	const handleViewModeChange = (newMode: ViewMode) => {
+	const handleViewModeChange = useCallback((newMode: ViewMode) => {
 		setViewMode(newMode)
 		fetchData(period, newMode)
-	}
+	}, [fetchData, period])
 
 	if (data.length === 0 && !isPending) {
 		return (

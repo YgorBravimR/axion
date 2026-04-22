@@ -139,9 +139,9 @@ export const V2DistributionHistogram = ({
 						}}
 					/>
 					<Bar dataKey="count" radius={[3, 3, 0, 0]}>
-						{chartData.map((entry, index) => (
+						{chartData.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={`cell-${entry.midPoint}`}
 								fill={
 									entry.midPoint >= initialBalance
 										? "var(--color-trade-buy)"
