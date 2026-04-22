@@ -622,7 +622,7 @@ export const getAccountAssetSettings = async (): Promise<ActionResponse<AssetSet
 					assetId: aa.assetId,
 					isActive: true,
 				}))
-			)
+			).onConflictDoNothing()
 
 			// Re-fetch with asset relation
 			const allSettings = await db.query.accountAssetSettings.findMany({
@@ -652,7 +652,7 @@ export const getAccountAssetSettings = async (): Promise<ActionResponse<AssetSet
 		return {
 			status: "error",
 			message: "Failed to retrieve asset settings",
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getAccountAssetSettings") }],
+			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getAccountAssetSettings", "database") }],
 		}
 	}
 }
