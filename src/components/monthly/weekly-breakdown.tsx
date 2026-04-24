@@ -1,10 +1,12 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { MonthlyReport } from "@/app/actions/reports"
 
 interface WeeklyBreakdownProps {
@@ -16,22 +18,16 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 	const tCommon = useTranslations("common")
 	const locale = useLocale()
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
+	const { formatCurrency } = useFormatting()
 
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			style: "currency",
-			currency: locale === "pt-BR" ? "BRL" : "USD",
-			minimumFractionDigits: 2,
-		}).format(value)
-	}
+	const { maxAbsPnl, totalPnl } = useMemo(() => ({
+		maxAbsPnl: Math.max(...weeks.map((w) => Math.abs(w.pnl))),
+		totalPnl: weeks.reduce((sum, w) => sum + w.pnl, 0),
+	}), [weeks])
 
 	if (weeks.length === 0) {
 		return null
 	}
-
-	// Calculate max P&L for bar scaling
-	const maxAbsPnl = Math.max(...weeks.map((w) => Math.abs(w.pnl)))
-	const totalPnl = weeks.reduce((sum, w) => sum + w.pnl, 0)
 
 	const formatDateRange = (start: string, end: string) => {
 		const startDate = parseISO(start)

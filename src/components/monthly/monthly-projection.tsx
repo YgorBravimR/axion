@@ -1,8 +1,9 @@
 "use client"
 
-import { useTranslations, useLocale } from "next-intl"
+import { useTranslations } from "next-intl"
 import { TrendingUp, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { MonthlyProjection as MonthlyProjectionData } from "@/app/actions/reports"
 
 interface MonthlyProjectionProps {
@@ -11,15 +12,7 @@ interface MonthlyProjectionProps {
 
 export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 	const t = useTranslations("monthly.projection")
-	const locale = useLocale()
-
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			style: "currency",
-			currency: locale === "pt-BR" ? "BRL" : "USD",
-			minimumFractionDigits: 2,
-		}).format(value)
-	}
+	const { formatCurrency } = useFormatting()
 
 	const progressPercent = Math.min(
 		100,

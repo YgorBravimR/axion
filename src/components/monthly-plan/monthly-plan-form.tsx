@@ -67,6 +67,23 @@ interface MonthlyPlanFormData {
 
 type PlanMode = "custom" | "profile"
 
+interface MonthlyPlanFormState {
+	accountBalance: string
+	riskPerTradePercent: string | number
+	dailyLossPercent: string | number
+	monthlyLossPercent: string | number
+	dailyProfitTargetPercent: string | number
+	maxDailyTrades: string
+	maxConsecutiveLosses: string
+	allowSecondOpAfterLoss: boolean
+	reduceRiskAfterLoss: boolean
+	riskReductionFactor: string | number
+	winRiskMode: WinRiskMode
+	profitReinvestmentPercent: string | number
+	notes: string
+	weeklyLossPercent: string | number
+}
+
 const MonthlyPlanForm = ({
 	plan,
 	onSave,
@@ -77,50 +94,43 @@ const MonthlyPlanForm = ({
 	const t = useTranslations("commandCenter.plan")
 	const { formatCurrency } = useFormatting()
 
-	// Required fields
-	const [accountBalance, setAccountBalance] = useState(
-		plan ? fromCents(plan.accountBalance).toString() : ""
-	)
-	const [riskPerTradePercent, setRiskPerTradePercent] = useState(
-		plan?.riskPerTradePercent ?? ""
-	)
-	const [dailyLossPercent, setDailyLossPercent] = useState(
-		plan?.dailyLossPercent ?? ""
-	)
-	const [monthlyLossPercent, setMonthlyLossPercent] = useState(
-		plan?.monthlyLossPercent ?? ""
-	)
+	const [form, setForm] = useState<MonthlyPlanFormState>({
+		accountBalance: plan ? fromCents(plan.accountBalance).toString() : "",
+		riskPerTradePercent: plan?.riskPerTradePercent ?? "",
+		dailyLossPercent: plan?.dailyLossPercent ?? "",
+		monthlyLossPercent: plan?.monthlyLossPercent ?? "",
+		dailyProfitTargetPercent: plan?.dailyProfitTargetPercent ?? "",
+		maxDailyTrades: plan?.maxDailyTrades?.toString() ?? "",
+		maxConsecutiveLosses: plan?.maxConsecutiveLosses?.toString() ?? "",
+		allowSecondOpAfterLoss: plan?.allowSecondOpAfterLoss ?? true,
+		reduceRiskAfterLoss: plan?.reduceRiskAfterLoss ?? false,
+		riskReductionFactor: plan?.riskReductionFactor ?? "",
+		winRiskMode: plan?.capRiskAfterWin ? "cap" : plan?.increaseRiskAfterWin ? "increase" : "off",
+		profitReinvestmentPercent: plan?.profitReinvestmentPercent ?? "",
+		notes: plan?.notes ?? "",
+		weeklyLossPercent: plan?.weeklyLossPercent ?? "",
+	})
 
-	// Optional fields
-	const [dailyProfitTargetPercent, setDailyProfitTargetPercent] = useState(
-		plan?.dailyProfitTargetPercent ?? ""
-	)
-	const [maxDailyTrades, setMaxDailyTrades] = useState(
-		plan?.maxDailyTrades?.toString() ?? ""
-	)
-	const [maxConsecutiveLosses, setMaxConsecutiveLosses] = useState(
-		plan?.maxConsecutiveLosses?.toString() ?? ""
-	)
-	const [allowSecondOpAfterLoss, setAllowSecondOpAfterLoss] = useState(
-		plan?.allowSecondOpAfterLoss ?? true
-	)
-	const [reduceRiskAfterLoss, setReduceRiskAfterLoss] = useState(
-		plan?.reduceRiskAfterLoss ?? false
-	)
-	const [riskReductionFactor, setRiskReductionFactor] = useState(
-		plan?.riskReductionFactor ?? ""
-	)
-	const [winRiskMode, setWinRiskMode] = useState<WinRiskMode>(
-		plan?.capRiskAfterWin
-			? "cap"
-			: plan?.increaseRiskAfterWin
-				? "increase"
-				: "off"
-	)
-	const [profitReinvestmentPercent, setProfitReinvestmentPercent] = useState(
-		plan?.profitReinvestmentPercent ?? ""
-	)
-	const [notes, setNotes] = useState(plan?.notes ?? "")
+	const updateField = useCallback(<K extends keyof MonthlyPlanFormState>(field: K, value: MonthlyPlanFormState[K]) => {
+		setForm(prev => ({ ...prev, [field]: value }))
+	}, [])
+
+	const {
+		accountBalance,
+		riskPerTradePercent,
+		dailyLossPercent,
+		monthlyLossPercent,
+		dailyProfitTargetPercent,
+		maxDailyTrades,
+		maxConsecutiveLosses,
+		allowSecondOpAfterLoss,
+		reduceRiskAfterLoss,
+		riskReductionFactor,
+		winRiskMode,
+		profitReinvestmentPercent,
+		notes,
+		weeklyLossPercent,
+	} = form
 
 	// Risk profile state
 	const [planMode, setPlanMode] = useState<PlanMode>(
@@ -129,12 +139,26 @@ const MonthlyPlanForm = ({
 	const [selectedProfileId, setSelectedProfileId] = useState<string>(
 		plan?.riskProfileId ?? ""
 	)
-	const [weeklyLossPercent, setWeeklyLossPercent] = useState(
-		plan?.weeklyLossPercent ?? ""
-	)
 
 	const selectedProfile = riskProfiles.find((p) => p.id === selectedProfileId)
 	const isProfileMode = planMode === "profile" && !!selectedProfile
+
+	// Pre-compute profile groups for the Select dropdown
+	const { builtInProfiles, customProfiles } = useMemo(() => {
+		const builtInNames = [
+			"Fixed Fractional",
+			"Fixed Ratio",
+			"Institutional",
+			"R-Multiples",
+			"Kelly Fractional",
+		]
+		const isBuiltIn = (p: RiskManagementProfile) =>
+			builtInNames.some((n) => p.name.includes(n))
+		return {
+			builtInProfiles: riskProfiles.filter(isBuiltIn),
+			customProfiles: riskProfiles.filter((p) => !isBuiltIn(p)),
+		}
+	}, [riskProfiles])
 
 	// Resolve effective risk + limits from decision tree when profile uses dynamic sizing
 	const effectiveProfile = useMemo(() => {
@@ -189,11 +213,11 @@ const MonthlyPlanForm = ({
 			monthlyLossCents,
 			dailyProfitTargetCents,
 		}
-	}, [selectedProfile, accountBalance])
+	}, [selectedProfile, form.accountBalance])
 
 	const profileDerivedPercents = useMemo(() => {
 		if (!effectiveProfile) return null
-		const balanceCents = toCents(accountBalance)
+		const balanceCents = toCents(form.accountBalance)
 		if (balanceCents <= 0) return null
 		return {
 			riskPerTrade: (effectiveProfile.riskCents / balanceCents * 100).toFixed(2),
@@ -206,7 +230,7 @@ const MonthlyPlanForm = ({
 				? (effectiveProfile.dailyProfitTargetCents / balanceCents * 100).toFixed(2)
 				: null,
 		}
-	}, [effectiveProfile, accountBalance])
+	}, [effectiveProfile, form.accountBalance])
 
 	// UI state
 	const [showAdvanced, setShowAdvanced] = useState(false)
@@ -230,7 +254,7 @@ const MonthlyPlanForm = ({
 			}
 
 			const nextMode = WIN_RISK_MODES[nextIndex]
-			setWinRiskMode(nextMode)
+			updateField("winRiskMode", nextMode)
 
 			// Focus the newly selected radio button
 			const radioGroup = event.currentTarget.parentElement
@@ -240,7 +264,7 @@ const MonthlyPlanForm = ({
 				]
 			nextButton?.focus()
 		},
-		[winRiskMode]
+		[winRiskMode, updateField]
 	)
 
 	// Live preview computation (custom mode)
@@ -281,20 +305,12 @@ const MonthlyPlanForm = ({
 			maxDailyTrades: maxTradesOverride,
 			weeklyLossPercent: weeklyLossPct,
 		})
-	}, [
-		accountBalance,
-		riskPerTradePercent,
-		dailyLossPercent,
-		monthlyLossPercent,
-		dailyProfitTargetPercent,
-		maxDailyTrades,
-		weeklyLossPercent,
-	])
+	}, [form])
 
 	// Live preview computation (profile mode — resolved from decision tree)
 	const profilePreview = useMemo(() => {
 		if (planMode !== "profile" || !effectiveProfile) return null
-		const balanceCents = toCents(accountBalance)
+		const balanceCents = toCents(form.accountBalance)
 		if (balanceCents <= 0) return null
 		return {
 			riskPerTradeCents: effectiveProfile.riskCents,
@@ -306,7 +322,7 @@ const MonthlyPlanForm = ({
 				? Math.floor(effectiveProfile.dailyLossCents / effectiveProfile.riskCents)
 				: null,
 		}
-	}, [planMode, effectiveProfile, accountBalance])
+	}, [planMode, effectiveProfile, form.accountBalance])
 
 	const activePreview = isProfileMode ? profilePreview : preview
 
@@ -408,24 +424,11 @@ const MonthlyPlanForm = ({
 	}, [
 		year,
 		month,
-		accountBalance,
+		form,
 		isProfileMode,
 		selectedProfile,
 		effectiveProfile,
 		selectedProfileId,
-		notes,
-		riskPerTradePercent,
-		dailyLossPercent,
-		monthlyLossPercent,
-		dailyProfitTargetPercent,
-		maxDailyTrades,
-		maxConsecutiveLosses,
-		allowSecondOpAfterLoss,
-		reduceRiskAfterLoss,
-		riskReductionFactor,
-		winRiskMode,
-		profitReinvestmentPercent,
-		weeklyLossPercent,
 		onSave,
 	])
 
@@ -495,43 +498,28 @@ const MonthlyPlanForm = ({
 												<SelectValue placeholder={t("form.riskProfileSelectPlaceholder")} />
 											</SelectTrigger>
 											<SelectContent>
-												{(() => {
-													const builtInNames = [
-														"Fixed Fractional",
-														"Fixed Ratio",
-														"Institutional",
-														"R-Multiples",
-														"Kelly Fractional",
-													]
-													const isBuiltIn = (p: RiskManagementProfile) =>
-														builtInNames.some((n) => p.name.includes(n))
-													const builtIn = riskProfiles.filter(isBuiltIn)
-													const custom = riskProfiles.filter((p) => !isBuiltIn(p))
-													return (
-														<>
-															{builtIn.length > 0 && (
-																<SelectGroup>
-																	<SelectLabel>{t("form.builtInGroup")}</SelectLabel>
-																	{builtIn.map((profile) => (
-																		<SelectItem key={profile.id} value={profile.id}>
-																			{profile.name}
-																		</SelectItem>
-																	))}
-																</SelectGroup>
-															)}
-															{custom.length > 0 && (
-																<SelectGroup>
-																	<SelectLabel>{t("form.customGroup")}</SelectLabel>
-																	{custom.map((profile) => (
-																		<SelectItem key={profile.id} value={profile.id}>
-																			{profile.name}
-																		</SelectItem>
-																	))}
-																</SelectGroup>
-															)}
-														</>
-													)
-												})()}
+												<>
+													{builtInProfiles.length > 0 && (
+														<SelectGroup>
+															<SelectLabel>{t("form.builtInGroup")}</SelectLabel>
+															{builtInProfiles.map((profile) => (
+																<SelectItem key={profile.id} value={profile.id}>
+																	{profile.name}
+																</SelectItem>
+															))}
+														</SelectGroup>
+													)}
+													{customProfiles.length > 0 && (
+														<SelectGroup>
+															<SelectLabel>{t("form.customGroup")}</SelectLabel>
+															{customProfiles.map((profile) => (
+																<SelectItem key={profile.id} value={profile.id}>
+																	{profile.name}
+																</SelectItem>
+															))}
+														</SelectGroup>
+													)}
+												</>
 											</SelectContent>
 										</Select>
 									</div>
@@ -562,7 +550,7 @@ const MonthlyPlanForm = ({
 								step="0.01"
 								min="0"
 								value={accountBalance}
-								onChange={(e) => setAccountBalance(e.target.value)}
+								onChange={(e) => updateField("accountBalance", e.target.value)}
 								placeholder="0.00"
 								className="pl-8"
 								aria-label={t("form.accountBalance")}
@@ -755,7 +743,7 @@ const MonthlyPlanForm = ({
 							<Textarea
 								id="monthly-plan-notes-profile"
 								value={notes}
-								onChange={(e) => setNotes(e.target.value)}
+								onChange={(e) => updateField("notes", e.target.value)}
 								placeholder={t("form.notesPlaceholder")}
 								className="border-bg-300 bg-bg-100 text-small text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 min-h-[80px] w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
 								aria-label={t("form.notes")}
@@ -779,7 +767,7 @@ const MonthlyPlanForm = ({
 										min="0"
 										max="100"
 										value={riskPerTradePercent}
-										onChange={(e) => setRiskPerTradePercent(e.target.value)}
+										onChange={(e) => updateField("riskPerTradePercent", e.target.value)}
 										placeholder="1.00"
 										className="pr-8"
 										aria-label={t("form.riskPerTrade")}
@@ -806,7 +794,7 @@ const MonthlyPlanForm = ({
 										min="0"
 										max="100"
 										value={dailyLossPercent}
-										onChange={(e) => setDailyLossPercent(e.target.value)}
+										onChange={(e) => updateField("dailyLossPercent", e.target.value)}
 										placeholder="3.00"
 										className="pr-8"
 										aria-label={t("form.dailyLoss")}
@@ -833,7 +821,7 @@ const MonthlyPlanForm = ({
 										min="0"
 										max="100"
 										value={monthlyLossPercent}
-										onChange={(e) => setMonthlyLossPercent(e.target.value)}
+										onChange={(e) => updateField("monthlyLossPercent", e.target.value)}
 										placeholder="10.00"
 										className="pr-8"
 										aria-label={t("form.monthlyLoss")}
@@ -886,7 +874,7 @@ const MonthlyPlanForm = ({
 											min="0"
 											value={dailyProfitTargetPercent}
 											onChange={(e) =>
-												setDailyProfitTargetPercent(e.target.value)
+												updateField("dailyProfitTargetPercent", e.target.value)
 											}
 											placeholder="5.00"
 											className="pr-8"
@@ -912,7 +900,7 @@ const MonthlyPlanForm = ({
 										step="1"
 										min="1"
 										value={maxDailyTrades}
-										onChange={(e) => setMaxDailyTrades(e.target.value)}
+										onChange={(e) => updateField("maxDailyTrades", e.target.value)}
 										placeholder="auto"
 										aria-label={t("form.maxDailyTrades")}
 									/>
@@ -932,7 +920,7 @@ const MonthlyPlanForm = ({
 										step="1"
 										min="1"
 										value={maxConsecutiveLosses}
-										onChange={(e) => setMaxConsecutiveLosses(e.target.value)}
+										onChange={(e) => updateField("maxConsecutiveLosses", e.target.value)}
 										placeholder="3"
 										aria-label={t("form.maxConsecutiveLosses")}
 									/>
@@ -954,7 +942,7 @@ const MonthlyPlanForm = ({
 											min="0"
 											max="100"
 											value={weeklyLossPercent}
-											onChange={(e) => setWeeklyLossPercent(e.target.value)}
+											onChange={(e) => updateField("weeklyLossPercent", e.target.value)}
 											placeholder="4.00"
 											className="pr-8"
 											aria-label={t("form.weeklyLoss")}
@@ -979,7 +967,7 @@ const MonthlyPlanForm = ({
 									<Switch
 										id="allow-second-op-after-loss"
 										checked={allowSecondOpAfterLoss}
-										onCheckedChange={setAllowSecondOpAfterLoss}
+										onCheckedChange={(checked) => updateField("allowSecondOpAfterLoss", checked)}
 										aria-label={t("form.allowSecondOp")}
 									/>
 								</div>
@@ -992,7 +980,7 @@ const MonthlyPlanForm = ({
 									<Switch
 										id="reduce-risk-after-loss"
 										checked={reduceRiskAfterLoss}
-										onCheckedChange={setReduceRiskAfterLoss}
+										onCheckedChange={(checked) => updateField("reduceRiskAfterLoss", checked)}
 										aria-label={t("form.reduceRisk")}
 									/>
 								</div>
@@ -1010,7 +998,7 @@ const MonthlyPlanForm = ({
 											min="0.01"
 											max="1"
 											value={riskReductionFactor}
-											onChange={(e) => setRiskReductionFactor(e.target.value)}
+											onChange={(e) => updateField("riskReductionFactor", e.target.value)}
 											placeholder="0.50"
 											aria-label={t("form.riskReductionFactor")}
 										/>
@@ -1036,7 +1024,7 @@ const MonthlyPlanForm = ({
 												type="button"
 												role="radio"
 												aria-checked={winRiskMode === mode}
-												onClick={() => setWinRiskMode(mode)}
+												onClick={() => updateField("winRiskMode", mode)}
 												onKeyDown={handleWinRiskKeyDown}
 												className={`px-s-300 py-s-200 text-small flex-1 rounded-md font-medium transition-all ${
 													winRiskMode === mode
@@ -1074,7 +1062,7 @@ const MonthlyPlanForm = ({
 												max="100"
 												value={profitReinvestmentPercent}
 												onChange={(e) =>
-													setProfitReinvestmentPercent(e.target.value)
+													updateField("profitReinvestmentPercent", e.target.value)
 												}
 												placeholder="50"
 												className="pr-8"
@@ -1101,7 +1089,7 @@ const MonthlyPlanForm = ({
 								<Textarea
 									id="monthly-plan-notes-custom"
 									value={notes}
-									onChange={(e) => setNotes(e.target.value)}
+									onChange={(e) => updateField("notes", e.target.value)}
 									placeholder={t("form.notesPlaceholder")}
 									className="border-bg-300 bg-bg-100 text-small text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 min-h-[80px] w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
 									aria-label={t("form.notes")}
@@ -1249,8 +1237,8 @@ const MonthlyPlanForm = ({
 				</Button>
 			</div>
 
-			{/* Decision Tree Modal */}
-			{selectedProfile && (
+			{/* Decision Tree Modal — only mount when open to avoid running computeTradeSituations on every keystroke */}
+			{selectedProfile && showDecisionTree && (
 				<DecisionTreeModal
 					open={showDecisionTree}
 					onOpenChange={setShowDecisionTree}

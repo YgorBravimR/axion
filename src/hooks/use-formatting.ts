@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useLocale } from "next-intl"
 import type { Locale } from "@/i18n/config"
 import {
@@ -25,7 +26,7 @@ import {
 export const useFormatting = () => {
 	const locale = useLocale() as Locale
 
-	return {
+	return useMemo(() => ({
 		locale,
 
 		// Currency formatting
@@ -61,5 +62,5 @@ export const useFormatting = () => {
 		formatTime: (date: Date) => formatTime(date, locale),
 
 		formatHourOfDay: (hour: number) => formatHourOfDay(hour, locale),
-	}
+	}), [locale])
 }

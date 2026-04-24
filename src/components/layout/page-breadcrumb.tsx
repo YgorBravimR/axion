@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { usePathname } from "@/i18n/routing"
 import { Link } from "@/i18n/routing"
@@ -19,13 +19,44 @@ const PageBreadcrumb = () => {
 	const tNav = useTranslations("nav")
 	const tBreadcrumb = useTranslations("breadcrumb")
 
-	const segments = pathname.split("/").filter(Boolean)
+	const segments = useMemo(() => pathname.split("/").filter(Boolean), [pathname])
 
-	// Find the matching nav item for the first segment
-	const matchedNavItem = navItems.find((item) => {
+	const matchedNavItem = useMemo(() => navItems.find((item) => {
 		if (item.href === "/") return false
 		return pathname.startsWith(item.href)
-	})
+	}), [pathname])
+
+	const crumbs = useMemo((): Array<{ label: string; href?: string }> => {
+		if (segments.length === 0) return []
+
+		const result: Array<{ label: string; href?: string }> = [
+			{ label: tBreadcrumb("home"), href: "/" },
+		]
+
+		if (matchedNavItem) {
+			const isExactMatch = pathname === matchedNavItem.href
+			result.push({
+				label: tNav(matchedNavItem.labelKey),
+				href: isExactMatch ? undefined : matchedNavItem.href,
+			})
+
+			const remainingPath = pathname.slice(matchedNavItem.href.length)
+			const nestedSegments = remainingPath.split("/").filter(Boolean)
+
+			if (nestedSegments.length > 0) {
+				const lastSegment = nestedSegments[nestedSegments.length - 1]
+				const nestedLabel = getNestedLabel(lastSegment, matchedNavItem.labelKey, tBreadcrumb)
+				result.push({ label: nestedLabel })
+			}
+		} else {
+			const label = segments[0]
+				.replace(/-/g, " ")
+				.replace(/\b\w/g, (char) => char.toUpperCase())
+			result.push({ label })
+		}
+
+		return result
+	}, [pathname, segments, matchedNavItem, tNav, tBreadcrumb])
 
 	// Dashboard (root) — just show "Home"
 	if (segments.length === 0) {
@@ -38,36 +69,6 @@ const PageBreadcrumb = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 		)
-	}
-
-	// Build crumbs
-	const crumbs: Array<{ label: string; href?: string }> = [
-		{ label: tBreadcrumb("home"), href: "/" },
-	]
-
-	// Add the main section if we found a matching nav item
-	if (matchedNavItem) {
-		const isExactMatch = pathname === matchedNavItem.href
-		crumbs.push({
-			label: tNav(matchedNavItem.labelKey),
-			href: isExactMatch ? undefined : matchedNavItem.href,
-		})
-
-		// Handle nested routes
-		const remainingPath = pathname.slice(matchedNavItem.href.length)
-		const nestedSegments = remainingPath.split("/").filter(Boolean)
-
-		if (nestedSegments.length > 0) {
-			const lastSegment = nestedSegments[nestedSegments.length - 1]
-			const nestedLabel = getNestedLabel(lastSegment, matchedNavItem.labelKey, tBreadcrumb)
-			crumbs.push({ label: nestedLabel })
-		}
-	} else {
-		// Fallback: use segment name
-		const label = segments[0]
-			.replace(/-/g, " ")
-			.replace(/\b\w/g, (char) => char.toUpperCase())
-		crumbs.push({ label })
 	}
 
 	return (

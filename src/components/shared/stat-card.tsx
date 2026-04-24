@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
@@ -68,7 +69,7 @@ const TrendIcon = ({ trend }: TrendIconProps) => {
  * @param size - Size variant (sm, md, lg)
  * @param className - Additional CSS classes
  */
-const StatCard = ({
+const StatCard = memo(({
 	label,
 	value,
 	subValue,
@@ -81,8 +82,13 @@ const StatCard = ({
 }: StatCardProps) => {
 	const sizes = sizeClasses[size]
 
-	const labelId = `stat-label-${label.toLowerCase().replace(/\s+/g, "-")}`
-	const valueId = `stat-value-${label.toLowerCase().replace(/\s+/g, "-")}`
+	const { labelId, valueId } = useMemo(() => {
+		const slug = label.toLowerCase().replace(/\s+/g, "-")
+		return {
+			labelId: `stat-label-${slug}`,
+			valueId: `stat-value-${slug}`,
+		}
+	}, [label])
 
 	const labelAndValue = (
 		<dl className="min-w-0">
@@ -137,6 +143,8 @@ const StatCard = ({
 			)}
 		</div>
 	)
-}
+})
+
+StatCard.displayName = "StatCard"
 
 export { StatCard, TrendIcon, type StatCardProps, type TrendType }

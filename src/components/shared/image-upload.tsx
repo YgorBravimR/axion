@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback, useState } from "react"
+import { useRef, useCallback, useState, useMemo } from "react"
 import type { ChangeEvent, DragEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -40,7 +40,7 @@ const ImageUpload = ({
 	const canUpload = totalImages < maxImages
 
 	// Unified thumbnail list: persisted images (S3) first, then pending (local blobs)
-	const thumbnails = [
+	const thumbnails = useMemo(() => [
 		...persistedImages.map((img) => ({
 			key: img.s3Key,
 			src: img.url,
@@ -56,7 +56,7 @@ const ImageUpload = ({
 				onPendingRemove(img.previewUrl)
 			},
 		})),
-	]
+	], [persistedImages, pendingImages, onPersistedRemove, onPendingRemove])
 
 	const handleFileSelect = useCallback(
 		(file: File) => {

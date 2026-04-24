@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { cn } from "@/lib/utils"
 
 type ValueType = "currency" | "percent" | "r-multiple" | "number"
@@ -32,7 +33,7 @@ const sizeClasses = {
  * @param formatFn - Custom formatting function (overrides type-based formatting)
  * @param neutralThreshold - Values within this threshold show neutral color (default: 0)
  */
-export const ColoredValue = ({
+const ColoredValueInner = ({
 	value,
 	type = "number",
 	showSign = false,
@@ -92,5 +93,8 @@ export const ColoredValue = ({
 		</span>
 	)
 }
+
+export const ColoredValue = memo(ColoredValueInner)
+ColoredValue.displayName = "ColoredValue"
 
 export { type ColoredValueProps, type ValueType }

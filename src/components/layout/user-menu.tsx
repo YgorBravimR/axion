@@ -29,15 +29,18 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 	const { openBugReport } = useBugReport()
 
 	useEffect(() => {
+		let mounted = true
 		const fetchUser = async () => {
 			try {
 				const userData = await getCurrentUser()
+				if (!mounted) return
 				setUser(userData)
 			} finally {
-				setIsLoading(false)
+				if (mounted) setIsLoading(false)
 			}
 		}
 		fetchUser()
+		return () => { mounted = false }
 	}, [])
 
 	const handleLogout = () => {

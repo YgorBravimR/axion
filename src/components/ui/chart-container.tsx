@@ -31,7 +31,10 @@ const ChartContainer = ({ id, children, className }: ChartContainerProps) => {
 		const measure = () => {
 			const { clientWidth, clientHeight } = el
 			if (clientWidth > 0 && clientHeight > 0) {
-				setDimensions({ width: clientWidth, height: clientHeight })
+				setDimensions((prev) => {
+					if (prev?.width === clientWidth && prev?.height === clientHeight) return prev
+					return { width: clientWidth, height: clientHeight }
+				})
 				return true
 			}
 			return false

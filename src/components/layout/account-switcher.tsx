@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
 import { formatDateKey } from "@/lib/dates"
+import { getAccountIcon } from "@/lib/account-brand"
 import {
 	Select,
 	SelectContent,
@@ -88,19 +89,22 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 	})
 
 	useEffect(() => {
+		let mounted = true
 		const fetchData = async () => {
 			try {
 				const [accountsData, currentAccountData] = await Promise.all([
 					getUserAccounts(),
 					getCurrentAccount(),
 				])
+				if (!mounted) return
 				setAccounts(accountsData)
 				setCurrentAccount(currentAccountData)
 			} finally {
-				setIsLoading(false)
+				if (mounted) setIsLoading(false)
 			}
 		}
 		fetchData()
+		return () => { mounted = false }
 	}, [])
 
 	const handleSwitchAccount = (accountId: string) => {
@@ -156,17 +160,6 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 				showToast("error", result.error || t("createError"))
 			}
 		})
-	}
-
-	const getAccountIcon = (accountType: TradingAccount["accountType"]) => {
-		switch (accountType) {
-			case "prop":
-				return Building2
-			case "replay":
-				return RotateCcw
-			default:
-				return User
-		}
 	}
 
 	const AccountIcon = currentAccount

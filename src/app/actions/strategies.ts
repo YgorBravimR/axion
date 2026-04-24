@@ -450,34 +450,65 @@ export const getStrategies = async (
 			}
 		}
 
-		// Calculate stats for each strategy
-		const strategiesWithStats: StrategyWithStats[] = await Promise.all(
-			allStrategies.map(async (strategy) => {
-				const [strategyTrades, conditionCountResult, scenarioCountResult] =
-					await Promise.all([
-						db.query.trades.findMany({
-							where: and(
-								eq(trades.strategyId, strategy.id),
-								tradesAccountCondition,
-								eq(trades.isArchived, false)
-							),
-						}),
-						db
-							.select({ count: sql<number>`count(*)::int` })
-							.from(strategyConditions)
-							.where(eq(strategyConditions.strategyId, strategy.id)),
-						db
-							.select({ count: sql<number>`count(*)::int` })
-							.from(strategyScenarios)
-							.where(eq(strategyScenarios.strategyId, strategy.id)),
-					])
+		const strategyIds = allStrategies.map((s) => s.id)
 
-				return {
-					...strategy,
-					...calculateStrategyStats(strategyTrades),
-					conditionCount: conditionCountResult[0]?.count ?? 0,
-					scenarioCount: scenarioCountResult[0]?.count ?? 0,
-				}
+		// Batch all data in 3 parallel queries instead of O(n) per-strategy queries
+		const [allStrategyTrades, conditionCounts, scenarioCounts] =
+			await Promise.all([
+				db.query.trades.findMany({
+					where: and(
+						inArray(trades.strategyId, strategyIds),
+						tradesAccountCondition,
+						eq(trades.isArchived, false)
+					),
+				}),
+				db
+					.select({
+						strategyId: strategyConditions.strategyId,
+						count: sql<number>`count(*)::int`,
+					})
+					.from(strategyConditions)
+					.where(inArray(strategyConditions.strategyId, strategyIds))
+					.groupBy(strategyConditions.strategyId),
+				db
+					.select({
+						strategyId: strategyScenarios.strategyId,
+						count: sql<number>`count(*)::int`,
+					})
+					.from(strategyScenarios)
+					.where(inArray(strategyScenarios.strategyId, strategyIds))
+					.groupBy(strategyScenarios.strategyId),
+			])
+
+		// Build lookup maps for O(1) access
+		const tradesByStrategyId = new Map<string, typeof allStrategyTrades>()
+		for (const trade of allStrategyTrades) {
+			if (!trade.strategyId) continue
+			const existing = tradesByStrategyId.get(trade.strategyId)
+			if (existing) {
+				existing.push(trade)
+			} else {
+				tradesByStrategyId.set(trade.strategyId, [trade])
+			}
+		}
+
+		const conditionCountByStrategyId = new Map<string, number>()
+		for (const row of conditionCounts) {
+			conditionCountByStrategyId.set(row.strategyId, row.count)
+		}
+
+		const scenarioCountByStrategyId = new Map<string, number>()
+		for (const row of scenarioCounts) {
+			scenarioCountByStrategyId.set(row.strategyId, row.count)
+		}
+
+		// Join in JS — O(1) per strategy
+		const strategiesWithStats: StrategyWithStats[] = allStrategies.map(
+			(strategy) => ({
+				...strategy,
+				...calculateStrategyStats(tradesByStrategyId.get(strategy.id) ?? []),
+				conditionCount: conditionCountByStrategyId.get(strategy.id) ?? 0,
+				scenarioCount: scenarioCountByStrategyId.get(strategy.id) ?? 0,
 			})
 		)
 
@@ -595,49 +626,62 @@ export const getComplianceOverview = async (): Promise<
 			),
 		})
 
-		// Get all non-archived trades for this account
-		const allTrades = await db.query.trades.findMany({
-			where: and(tradesAccountCondition, eq(trades.isArchived, false)),
-		})
+		// Aggregate overall compliance and per-strategy compliance at the DB level
+		const [overallRows, perStrategyRows] = await Promise.all([
+			db
+				.select({
+					trackedCount: sql<number>`count(*) filter (where ${trades.followedPlan} is not null)::int`,
+					followedCount: sql<number>`count(*) filter (where ${trades.followedPlan} = true)::int`,
+					notFollowedCount: sql<number>`count(*) filter (where ${trades.followedPlan} = false)::int`,
+				})
+				.from(trades)
+				.where(and(tradesAccountCondition, eq(trades.isArchived, false))),
+			db
+				.select({
+					strategyId: trades.strategyId,
+					trackedCount: sql<number>`count(*) filter (where ${trades.followedPlan} is not null)::int`,
+					followedCount: sql<number>`count(*) filter (where ${trades.followedPlan} = true)::int`,
+				})
+				.from(trades)
+				.where(
+					and(
+						tradesAccountCondition,
+						eq(trades.isArchived, false),
+						inArray(
+							trades.strategyId,
+							allStrategies.map((s) => s.id)
+						)
+					)
+				)
+				.groupBy(trades.strategyId),
+		])
 
-		// Calculate overall compliance
-		const trackedTrades = allTrades.filter((t) => t.followedPlan !== null)
-		const followedPlanCount = trackedTrades.filter(
-			(t) => t.followedPlan === true
-		).length
-		const notFollowedCount = trackedTrades.filter(
-			(t) => t.followedPlan === false
-		).length
+		const overallRow = overallRows[0]
+		const trackedCount = overallRow?.trackedCount ?? 0
+		const followedPlanCount = overallRow?.followedCount ?? 0
+		const notFollowedCount = overallRow?.notFollowedCount ?? 0
 		const overallCompliance =
-			trackedTrades.length > 0
-				? (followedPlanCount / trackedTrades.length) * 100
-				: 0
+			trackedCount > 0 ? (followedPlanCount / trackedCount) * 100 : 0
 
-		// Calculate per-strategy compliance for finding top/needs attention
+		// Build a name lookup for strategies
+		const strategyNameById = new Map(allStrategies.map((s) => [s.id, s.name]))
+
+		// Compute per-strategy compliance from aggregated rows
 		const strategyCompliances: Array<{
 			name: string
 			compliance: number
 			tradeCount: number
 		}> = []
 
-		for (const strategy of allStrategies) {
-			const strategyTrades = allTrades.filter(
-				(t) => t.strategyId === strategy.id
-			)
-			const strategyTracked = strategyTrades.filter(
-				(t) => t.followedPlan !== null
-			)
-			const strategyFollowed = strategyTracked.filter(
-				(t) => t.followedPlan === true
-			).length
-
-			if (strategyTracked.length > 0) {
-				strategyCompliances.push({
-					name: strategy.name,
-					compliance: (strategyFollowed / strategyTracked.length) * 100,
-					tradeCount: strategyTracked.length,
-				})
-			}
+		for (const row of perStrategyRows) {
+			if (!row.strategyId || row.trackedCount === 0) continue
+			const name = strategyNameById.get(row.strategyId)
+			if (!name) continue
+			strategyCompliances.push({
+				name,
+				compliance: (row.followedCount / row.trackedCount) * 100,
+				tradeCount: row.trackedCount,
+			})
 		}
 
 		// Find top performing (highest compliance with at least 3 trades) - using toSorted for immutability
@@ -671,7 +715,7 @@ export const getComplianceOverview = async (): Promise<
 			message: t("actions.complianceRetrieved"),
 			data: {
 				overallCompliance,
-				totalTrackedTrades: trackedTrades.length,
+				totalTrackedTrades: trackedCount,
 				followedPlanCount,
 				notFollowedCount,
 				strategiesCount: allStrategies.length,

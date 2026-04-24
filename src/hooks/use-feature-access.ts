@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { canAccessFeature, hasAccess, getFeatureLimits, type UserRole } from "@/lib/feature-access"
 
@@ -8,14 +9,17 @@ const useFeatureAccess = () => {
 	const isLoading = session.status === "loading"
 	const role: UserRole = session.data?.user?.role ?? "trader"
 
-	return {
+	const canAccess = useCallback((featureKey: string) => canAccessFeature(role, featureKey), [role])
+	const limits = useMemo(() => getFeatureLimits(role), [role])
+
+	return useMemo(() => ({
 		role,
 		isLoading,
-		canAccess: (featureKey: string) => canAccessFeature(role, featureKey),
+		canAccess,
 		isAdmin: role === "admin",
 		isTrader: hasAccess(role, "trader"),
-		limits: getFeatureLimits(role),
-	}
+		limits,
+	}), [role, isLoading, canAccess, limits])
 }
 
 export { useFeatureAccess }

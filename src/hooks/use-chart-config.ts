@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 
 interface ChartConfig {
@@ -14,10 +15,10 @@ interface ChartConfig {
 const useChartConfig = (): ChartConfig => {
 	const isMobile = useIsMobile()
 
-	return {
+	return useMemo(() => ({
 		yAxisWidth: isMobile ? 35 : 65,
 		tickFontSize: isMobile ? 10 : 12,
-	}
+	}), [isMobile])
 }
 
 export { useChartConfig }

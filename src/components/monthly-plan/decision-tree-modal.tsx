@@ -262,20 +262,17 @@ const RecoverySequence = ({
 	formatCurrency,
 	t,
 }: RecoverySequenceProps) => {
-	let cumulativeRiskCents = baseRiskCents
-	let previousRiskCents = baseRiskCents
-
-	const computedSteps = steps.map((step, index) => {
-		const riskCents = computeStepRisk(step, baseRiskCents, previousRiskCents)
-		cumulativeRiskCents += riskCents
-		previousRiskCents = riskCents
-		return {
-			...step,
-			tradeNumber: index + 2,
-			riskCents,
-			cumulativeRiskCents,
-		}
-	})
+	const computedSteps = useMemo(() => {
+		let cumulative = baseRiskCents
+		let prev = baseRiskCents
+		return steps.map((step, index) => {
+			const riskCents = computeStepRisk(step, baseRiskCents, prev)
+			cumulative += riskCents
+			const result = { ...step, tradeNumber: index + 2, riskCents, cumulativeRiskCents: cumulative }
+			prev = riskCents
+			return result
+		})
+	}, [steps, baseRiskCents])
 
 	return (
 		<div className="space-y-s-200">
@@ -358,7 +355,16 @@ interface GainModeCardProps {
 }
 
 const GainModeCard = ({ gainMode, baseRiskCents, formatCurrency, t }: GainModeCardProps) => {
-	let previousRiskCents = baseRiskCents
+	const computedGainSteps = useMemo(() => {
+		if (gainMode.type !== "gainSequence") return []
+		let prev = baseRiskCents
+		return gainMode.sequence.map((step, index) => {
+			const riskCents = computeStepRisk(step, baseRiskCents, prev)
+			const result = { ...step, computedRisk: riskCents, index }
+			prev = riskCents
+			return result
+		})
+	}, [gainMode, baseRiskCents])
 
 	return (
 		<div className="space-y-s-200">
@@ -400,30 +406,26 @@ const GainModeCard = ({ gainMode, baseRiskCents, formatCurrency, t }: GainModeCa
 							{t("gainSequence")}
 						</p>
 						<div className="space-y-s-200">
-							{gainMode.sequence.map((step, index) => {
-								const riskCents = computeStepRisk(step, baseRiskCents, previousRiskCents)
-								previousRiskCents = riskCents
-								return (
-									<div
-										key={`gain-step-${index}`}
-										className="border-trade-buy/10 pb-s-100 border-b last:border-0 last:pb-0"
-									>
-										<div className="flex items-center justify-between">
-											<div>
-												<span className="text-tiny text-txt-200 font-medium">
-													{t("gainSequenceStep", { number: index + 1 })}
-												</span>
-												<span className="ml-s-200 text-tiny text-txt-300">
-													({getRiskLabel(step, t)})
-												</span>
-											</div>
-											<span className="text-tiny text-txt-100 font-medium">
-												{formatCurrency(fromCents(riskCents))}
+							{computedGainSteps.map((step) => (
+								<div
+									key={`gain-step-${step.index}`}
+									className="border-trade-buy/10 pb-s-100 border-b last:border-0 last:pb-0"
+								>
+									<div className="flex items-center justify-between">
+										<div>
+											<span className="text-tiny text-txt-200 font-medium">
+												{t("gainSequenceStep", { number: step.index + 1 })}
+											</span>
+											<span className="ml-s-200 text-tiny text-txt-300">
+												({getRiskLabel(step, t)})
 											</span>
 										</div>
+										<span className="text-tiny text-txt-100 font-medium">
+											{formatCurrency(fromCents(step.computedRisk))}
+										</span>
 									</div>
-								)
-							})}
+								</div>
+							))}
 						</div>
 						<div className="space-y-s-100">
 							{gainMode.repeatLastStep && (

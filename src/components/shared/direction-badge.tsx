@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
@@ -44,7 +45,7 @@ const sizeClasses = {
  * @param size - Size variant
  * @param className - Additional CSS classes
  */
-export const DirectionBadge = ({
+const DirectionBadgeInner = ({
 	direction,
 	showIcon = true,
 	showLabel = true,
@@ -82,5 +83,8 @@ export const DirectionBadge = ({
 		</span>
 	)
 }
+
+export const DirectionBadge = memo(DirectionBadgeInner)
+DirectionBadge.displayName = "DirectionBadge"
 
 export { type DirectionBadgeProps, type Direction }

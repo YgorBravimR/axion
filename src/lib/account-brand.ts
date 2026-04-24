@@ -1,3 +1,4 @@
+import { User, Building2, RotateCcw, type LucideIcon } from "lucide-react"
 import type { Brand } from "@/lib/brands"
 
 /**
@@ -16,4 +17,18 @@ const getAccountTypeBrand = (accountType: string): Brand => {
 	}
 }
 
-export { getAccountTypeBrand }
+/**
+ * Maps account type to its representative Lucide icon component.
+ */
+const getAccountIcon = (accountType: string): LucideIcon => {
+	switch (accountType) {
+		case "prop":
+			return Building2
+		case "replay":
+			return RotateCcw
+		default:
+			return User
+	}
+}
+
+export { getAccountTypeBrand, getAccountIcon }

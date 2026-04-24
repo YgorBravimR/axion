@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Shield, ShieldCheck, ShieldPlus } from "lucide-react"
@@ -28,9 +29,17 @@ const getCategoryColor = (category: string): string => {
 export const ConditionTierDisplay = ({ conditions }: ConditionTierDisplayProps) => {
 	const t = useTranslations("playbook.conditions")
 
-	const mandatory = conditions.filter((c) => c.tier === "mandatory")
-	const tier2 = conditions.filter((c) => c.tier === "tier_2")
-	const tier3 = conditions.filter((c) => c.tier === "tier_3")
+	const { mandatory, tier2, tier3 } = useMemo(() => {
+		const m: StrategyConditionWithDetail[] = []
+		const t2: StrategyConditionWithDetail[] = []
+		const t3: StrategyConditionWithDetail[] = []
+		for (const c of conditions) {
+			if (c.tier === "mandatory") m.push(c)
+			else if (c.tier === "tier_2") t2.push(c)
+			else if (c.tier === "tier_3") t3.push(c)
+		}
+		return { mandatory: m, tier2: t2, tier3: t3 }
+	}, [conditions])
 
 	if (conditions.length === 0) return null
 

@@ -71,7 +71,7 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 									cy="50"
 									r="40"
 									fill="none"
-									stroke="rgb(43 47 54)"
+									stroke="var(--color-bg-300)"
 									strokeWidth="8"
 								/>
 								<circle
@@ -81,10 +81,10 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 									fill="none"
 									stroke={
 										data.overallCompliance >= 80
-											? "rgb(0 255 150)"
+											? "var(--color-trade-buy)"
 											: data.overallCompliance >= 50
-												? "rgb(252 213 53)"
-												: "rgb(128 128 255)"
+												? "var(--color-warning)"
+												: "var(--color-trade-sell)"
 									}
 									strokeWidth="8"
 									strokeLinecap="round"

@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from "react"
 
 // ==========================================
 // Types
@@ -89,8 +89,10 @@ const LoadingOverlayProvider = ({ children }: { children: ReactNode }) => {
 		return () => document.removeEventListener("keydown", handleKeyDown, true)
 	}, [isLoading])
 
+	const contextValue = useMemo(() => ({ showLoading, updateLoading, hideLoading, isLoading }), [showLoading, updateLoading, hideLoading, isLoading])
+
 	return (
-		<LoadingOverlayContext.Provider value={{ showLoading, updateLoading, hideLoading, isLoading }}>
+		<LoadingOverlayContext.Provider value={contextValue}>
 			{children}
 
 			{/* Overlay */}

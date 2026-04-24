@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -66,18 +66,18 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [showCreateForm, setShowCreateForm] = useState(false)
 
-	const loadConditions = async () => {
+	const loadConditions = useCallback(async () => {
 		setIsLoading(true)
 		const result = await getConditions()
 		if (result.status === "success" && result.data) {
 			setConditions(result.data)
 		}
 		setIsLoading(false)
-	}
+	}, [])
 
 	useEffect(() => {
 		loadConditions()
-	}, [])
+	}, [loadConditions])
 
 	const getConditionTier = (conditionId: string): ConditionTier | "none" => {
 		const found = value.find((c) => c.conditionId === conditionId)
@@ -116,16 +116,27 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 		loadConditions()
 	}
 
-	// Group conditions by category
-	const grouped = CATEGORY_ORDER.map((category) => ({
-		category,
-		items: conditions.filter((c) => c.category === category),
-	})).filter((group) => group.items.length > 0)
-
-	// Rank preview counts
-	const mandatoryCount = value.filter((c) => c.tier === "mandatory").length
-	const tier2Count = value.filter((c) => c.tier === "tier_2").length
-	const tier3Count = value.filter((c) => c.tier === "tier_3").length
+	// Group conditions by category and compute tier counts in one memoized pass
+	const { grouped, mandatoryCount, tier2Count, tier3Count } = useMemo(() => {
+		let mandatory = 0
+		let t2 = 0
+		let t3 = 0
+		for (const c of value) {
+			if (c.tier === "mandatory") mandatory++
+			else if (c.tier === "tier_2") t2++
+			else if (c.tier === "tier_3") t3++
+		}
+		const groups = CATEGORY_ORDER.map((cat) => ({
+			category: cat,
+			items: conditions.filter((c) => c.category === cat),
+		})).filter((g) => g.items.length > 0)
+		return {
+			grouped: groups,
+			mandatoryCount: mandatory,
+			tier2Count: t2,
+			tier3Count: t3,
+		}
+	}, [conditions, value])
 
 	if (isLoading) {
 		return (

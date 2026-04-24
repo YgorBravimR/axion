@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -27,7 +27,7 @@ interface StrategyCardProps {
 	onDelete: (strategyId: string) => void
 }
 
-export const StrategyCard = ({
+const StrategyCardBase = ({
 	strategy,
 	onEdit,
 	onDelete,
@@ -238,3 +238,5 @@ export const StrategyCard = ({
 		</div>
 	)
 }
+
+export const StrategyCard = memo(StrategyCardBase)

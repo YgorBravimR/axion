@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ImageLightbox } from "@/components/shared/image-lightbox"
@@ -53,18 +53,18 @@ export const ScenarioSection = ({
 	const [lightboxIndex, setLightboxIndex] = useState(0)
 	const [lightboxImages, setLightboxImages] = useState<{ src: string; alt?: string }[]>([])
 
-	const loadScenarios = async () => {
+	const loadScenarios = useCallback(async () => {
 		setIsLoading(true)
 		const result = await getScenariosByStrategy(strategyId)
 		if (result.status === "success" && result.data) {
 			setScenarios(result.data)
 		}
 		setIsLoading(false)
-	}
+	}, [strategyId])
 
 	useEffect(() => {
 		loadScenarios()
-	}, [strategyId])
+	}, [loadScenarios])
 
 	const handleToggleExpand = (id: string) => {
 		setExpandedIds((prev) => {

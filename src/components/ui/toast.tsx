@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { createContext, useContext, useState, useCallback } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react"
 
@@ -27,52 +27,69 @@ export const useToast = () => {
 	return context
 }
 
+const getIcon = (type: ToastType): ReactNode => {
+	switch (type) {
+		case "success":
+			return <CheckCircle className="h-5 w-5" />
+		case "error":
+			return <XCircle className="h-5 w-5" />
+		case "info":
+			return <Info className="h-5 w-5" />
+		case "warning":
+			return <AlertTriangle className="h-5 w-5" />
+	}
+}
+
+const getStyles = (type: ToastType): string => {
+	switch (type) {
+		case "success":
+			return "bg-acc-100 text-bg-100"
+		case "error":
+			return "bg-fb-error text-bg-100"
+		case "info":
+			return "bg-acc-200 text-bg-100"
+		case "warning":
+			return "bg-acc-100/80 text-bg-100"
+	}
+}
+
 /**
  * ToastProvider - Context provider for toast notifications
  */
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
 	const t = useTranslations("common")
 	const [toasts, setToasts] = useState<Toast[]>([])
+	const timerRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+	useEffect(() => {
+		const timers = timerRefs.current
+		return () => {
+			for (const timer of timers.values()) {
+				clearTimeout(timer)
+			}
+			timers.clear()
+		}
+	}, [])
+
+	const dismissToast = useCallback((id: string) => {
+		const timer = timerRefs.current.get(id)
+		if (timer !== undefined) {
+			clearTimeout(timer)
+			timerRefs.current.delete(id)
+		}
+		setToasts((prev) => prev.filter((toast) => toast.id !== id))
+	}, [])
 
 	const showToast = useCallback((type: ToastType, message: string) => {
 		const id = Date.now().toString()
 		setToasts((prev) => [...prev, { id, type, message }])
 
-		// Auto-dismiss after 5 seconds
-		setTimeout(() => {
+		const timer = setTimeout(() => {
+			timerRefs.current.delete(id)
 			setToasts((prev) => prev.filter((toast) => toast.id !== id))
 		}, 5000)
+		timerRefs.current.set(id, timer)
 	}, [])
-
-	const dismissToast = (id: string) => {
-		setToasts((prev) => prev.filter((toast) => toast.id !== id))
-	}
-
-	const getIcon = (type: ToastType) => {
-		switch (type) {
-			case "success":
-				return <CheckCircle className="h-5 w-5" />
-			case "error":
-				return <XCircle className="h-5 w-5" />
-			case "info":
-				return <Info className="h-5 w-5" />
-			case "warning":
-				return <AlertTriangle className="h-5 w-5" />
-		}
-	}
-
-	const getStyles = (type: ToastType) => {
-		switch (type) {
-			case "success":
-				return "bg-acc-100 text-bg-100"
-			case "error":
-				return "bg-fb-error text-bg-100"
-			case "info":
-				return "bg-acc-200 text-bg-100"
-			case "warning":
-				return "bg-acc-100/80 text-bg-100"
-		}
-	}
 
 	return (
 		<ToastContext.Provider value={{ showToast }}>

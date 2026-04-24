@@ -1,10 +1,9 @@
 "use client"
 
 import type { RefObject, ReactNode } from "react"
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { useTranslations } from "next-intl"
-import { User, Building2, RotateCcw, type LucideIcon } from "lucide-react"
-import { getAccountTypeBrand } from "@/lib/account-brand"
+import { getAccountTypeBrand, getAccountIcon } from "@/lib/account-brand"
 
 // ==========================================
 // Types
@@ -47,17 +46,6 @@ const useAccountTransition = (): AccountTransitionContextType => {
 // ==========================================
 // Helpers
 // ==========================================
-
-const getAccountIcon = (accountType: string): LucideIcon => {
-	switch (accountType) {
-		case "prop":
-			return Building2
-		case "replay":
-			return RotateCcw
-		default:
-			return User
-	}
-}
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -277,7 +265,7 @@ const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode })
 		return () => document.removeEventListener("keydown", handleKeyDown, true)
 	}, [isTransitioning])
 
-	const getAccountTypeLabel = (accountType: string): string => {
+	const getAccountTypeLabel = useCallback((accountType: string): string => {
 		switch (accountType) {
 			case "prop":
 				return t("propFirm")
@@ -286,10 +274,12 @@ const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode })
 			default:
 				return t("personal")
 		}
-	}
+	}, [t])
+
+	const contextValue = useMemo(() => ({ showAccountTransition, isTransitioning }), [showAccountTransition, isTransitioning])
 
 	return (
-		<AccountTransitionContext.Provider value={{ showAccountTransition, isTransitioning }}>
+		<AccountTransitionContext.Provider value={contextValue}>
 			{children}
 
 			{/* Resumed overlay: solid bg that fades out after reload */}

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Link, usePathname } from "@/i18n/routing"
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw } from "lucide-react"
@@ -36,8 +37,8 @@ const Sidebar = ({
 	const tCommon = useTranslations("common")
 	const pathname = usePathname()
 	const { role, canAccess } = useFeatureAccess()
-	const filteredNavItems = getFilteredNavItems(navItems, role)
-	const canCreateTrade = canAccess(NEW_TRADE_FEATURE_KEY)
+	const filteredNavItems = useMemo(() => getFilteredNavItems(navItems, role), [role])
+	const canCreateTrade = useMemo(() => canAccess(NEW_TRADE_FEATURE_KEY), [canAccess])
 
 	const isSheet = variant === "sheet"
 	const isCompact = isCollapsed && !isSheet

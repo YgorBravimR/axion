@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
@@ -27,17 +28,17 @@ export const MonthNavigator = ({
 	const canGoPrevious = !minDate || subMonths(currentDate, 1) >= minDate
 	const canGoNext = !maxDate || addMonths(currentDate, 1) <= maxDate
 
-	const handlePrevious = () => {
+	const handlePrevious = useCallback(() => {
 		if (canGoPrevious) {
 			onMonthChange(subMonths(currentDate, 1))
 		}
-	}
+	}, [canGoPrevious, currentDate, onMonthChange])
 
-	const handleNext = () => {
+	const handleNext = useCallback(() => {
 		if (canGoNext) {
 			onMonthChange(addMonths(currentDate, 1))
 		}
-	}
+	}, [canGoNext, currentDate, onMonthChange])
 
 	const formattedMonth = format(currentDate, "MMMM yyyy", { locale: dateLocale })
 

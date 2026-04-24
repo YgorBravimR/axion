@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -61,6 +61,12 @@ const DateRangePicker = ({
 		setOpen(isOpen)
 	}
 
+	const isDateDisabled = useCallback((date: Date) => {
+		if (maxDate && date > maxDate) return true
+		if (minDate && date < minDate) return true
+		return false
+	}, [maxDate, minDate])
+
 	const formatLabel = () => {
 		if (!value?.from || !dateFnsLocale) return tCommon("datePicker.rangePlaceholder")
 		const fromStr = format(value.from, "MMM d", { locale: dateFnsLocale })
@@ -100,11 +106,7 @@ const DateRangePicker = ({
 					selected={value}
 					onSelect={handleSelect}
 					numberOfMonths={numberOfMonths}
-					disabled={(date) => {
-						if (maxDate && date > maxDate) return true
-						if (minDate && date < minDate) return true
-						return false
-					}}
+					disabled={isDateDisabled}
 					defaultMonth={value?.from}
 					locale={dateFnsLocale}
 				/>

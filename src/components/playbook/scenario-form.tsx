@@ -111,13 +111,14 @@ const ScenarioForm = ({
 					return
 				}
 
-				// Remove persisted images that were deleted
-				for (const s3Key of removedPersistedKeys) {
-					const dbImage = scenario.images?.find((img) => img.s3Key === s3Key)
-					if (dbImage) {
-						await removeScenarioImage(dbImage.id)
-					}
-				}
+				// Batch-remove persisted images that were deleted
+				const imagesToRemove = removedPersistedKeys
+					.map((s3Key) => scenario.images?.find((img) => img.s3Key === s3Key))
+					.filter((img): img is NonNullable<typeof img> => img !== undefined)
+
+				await Promise.all(
+					imagesToRemove.map((img) => removeScenarioImage(img.id))
+				)
 
 				// Upload new pending images
 				if (pendingImages.length > 0) {
@@ -132,16 +133,18 @@ const ScenarioForm = ({
 						return
 					}
 
-					// Link uploaded images to scenario
+					// Link uploaded images to scenario in parallel
 					const existingCount = persistedImages.length
-					for (const [index, img] of uploaded.entries()) {
-						await addScenarioImage(
-							scenario.id,
-							img.url,
-							img.s3Key,
-							existingCount + index
+					await Promise.all(
+						uploaded.map((img, index) =>
+							addScenarioImage(
+								scenario.id,
+								img.url,
+								img.s3Key,
+								existingCount + index
+							)
 						)
-					}
+					)
 				}
 			} else {
 				// Create new scenario
@@ -157,12 +160,14 @@ const ScenarioForm = ({
 					return
 				}
 
+				const newScenarioId = result.data.id
+
 				// Upload pending images for the new scenario
 				if (pendingImages.length > 0) {
 					const { uploaded, errors } = await uploadFiles({
 						pendingImages,
 						path: "scenarios",
-						entityId: result.data.id,
+						entityId: newScenarioId,
 					})
 
 					if (errors.length > 0) {
@@ -170,10 +175,12 @@ const ScenarioForm = ({
 						return
 					}
 
-					// Link uploaded images to the new scenario
-					for (const [index, img] of uploaded.entries()) {
-						await addScenarioImage(result.data.id, img.url, img.s3Key, index)
-					}
+					// Link uploaded images to the new scenario in parallel
+					await Promise.all(
+						uploaded.map((img, index) =>
+							addScenarioImage(newScenarioId, img.url, img.s3Key, index)
+						)
+					)
 				}
 			}
 

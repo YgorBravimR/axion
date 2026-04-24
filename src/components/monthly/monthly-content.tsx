@@ -65,9 +65,10 @@ export const MonthlyContent = ({
 	const loadData = useCallback(async (offset: number) => {
 		setError(null)
 
-		const [monthlyResult, comparisonResult] = await Promise.all([
+		const [monthlyResult, comparisonResult, projectionResult] = await Promise.all([
 			getMonthlyResultsWithProp(offset),
 			getMonthComparison(offset),
+			offset === 0 ? getMonthlyProjection() : Promise.resolve(null),
 		])
 
 		if (monthlyResult.status === "success" && monthlyResult.data) {
@@ -82,8 +83,7 @@ export const MonthlyContent = ({
 
 		// Only load projection for current month
 		if (offset === 0) {
-			const projectionResult = await getMonthlyProjection()
-			if (projectionResult.status === "success" && projectionResult.data) {
+			if (projectionResult && projectionResult.status === "success" && projectionResult.data) {
 				setProjectionData(projectionResult.data)
 			}
 		} else {

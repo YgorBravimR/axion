@@ -72,6 +72,8 @@ export const PlaybookContent = ({
 		router.push(`/playbook/${strategy.id}/edit`)
 	}, [router])
 
+	const handleCancelDelete = useCallback(() => setDeleteTarget(null), [])
+
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Compliance Overview */}
@@ -128,7 +130,7 @@ export const PlaybookContent = ({
 					strategyName={deleteTarget.name}
 					strategyCode={deleteTarget.code}
 					onConfirm={handleConfirmDelete}
-					onCancel={() => setDeleteTarget(null)}
+					onCancel={handleCancelDelete}
 					isPending={isPending}
 				/>
 			)}

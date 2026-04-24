@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
@@ -23,7 +24,7 @@ const sizeClasses = {
  * @param size - Text size variant
  * @param className - Additional CSS classes
  */
-export const WinRateBadge = ({
+const WinRateBadgeInner = ({
 	winRate,
 	threshold = 50,
 	size = "md",
@@ -48,5 +49,8 @@ export const WinRateBadge = ({
 		</span>
 	)
 }
+
+export const WinRateBadge = memo(WinRateBadgeInner)
+WinRateBadge.displayName = "WinRateBadge"
 
 export { type WinRateBadgeProps }

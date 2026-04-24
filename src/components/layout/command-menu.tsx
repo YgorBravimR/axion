@@ -33,10 +33,10 @@ const CommandMenu = () => {
 		return () => document.removeEventListener("keydown", handleKeyDown)
 	}, [handleKeyDown])
 
-	const handleSelect = (href: string) => {
+	const handleSelect = useCallback((href: string) => {
 		setOpen(false)
 		router.push(href)
-	}
+	}, [router])
 
 	return (
 		<CommandDialog

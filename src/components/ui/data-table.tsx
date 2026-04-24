@@ -23,6 +23,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
+const coreRowModel = getCoreRowModel()
+const sortedRowModel = getSortedRowModel()
+const paginationRowModel = getPaginationRowModel()
+
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[]
 	data: TData[]
@@ -44,9 +48,9 @@ const DataTable = <TData, TValue>({
 	const table = useReactTable({
 		data,
 		columns,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
+		getCoreRowModel: coreRowModel,
+		getSortedRowModel: sortedRowModel,
+		getPaginationRowModel: paginationRowModel,
 		onSortingChange: setSorting,
 		state: { sorting },
 		initialState: { pagination: { pageSize } },

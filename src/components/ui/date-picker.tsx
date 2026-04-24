@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -45,6 +45,12 @@ const DatePicker = ({
 		setOpen(false)
 	}
 
+	const isDateDisabled = useCallback((date: Date) => {
+		if (maxDate && date > maxDate) return true
+		if (minDate && date < minDate) return true
+		return false
+	}, [maxDate, minDate])
+
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
@@ -74,11 +80,7 @@ const DatePicker = ({
 					mode="single"
 					selected={value}
 					onSelect={handleSelect}
-					disabled={(date) => {
-						if (maxDate && date > maxDate) return true
-						if (minDate && date < minDate) return true
-						return false
-					}}
+					disabled={isDateDisabled}
 					defaultMonth={value}
 					locale={dateFnsLocale}
 				/>

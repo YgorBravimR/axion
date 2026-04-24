@@ -1,8 +1,9 @@
 "use client"
 
-import { useTranslations, useLocale } from "next-intl"
+import { useTranslations } from "next-intl"
 import { TrendingUp, TrendingDown, Building2, Landmark, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { PropProfitCalculation } from "@/app/actions/reports"
 
 interface PropProfitSummaryProps {
@@ -23,15 +24,7 @@ export const PropProfitSummary = ({
 	showBreakdown = true,
 }: PropProfitSummaryProps) => {
 	const t = useTranslations("monthly")
-	const locale = useLocale()
-
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			style: "currency",
-			currency: locale === "pt-BR" ? "BRL" : "USD",
-			minimumFractionDigits: 2,
-		}).format(value)
-	}
+	const { formatCurrency } = useFormatting()
 
 	const isPositive = data.grossProfit > 0
 	const isNegative = data.grossProfit < 0

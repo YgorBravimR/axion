@@ -7,6 +7,20 @@ import { cn } from "@/lib/utils"
 
 type CalendarProps = ComponentProps<typeof DayPicker>
 
+const CalendarChevron = ({ orientation }: {
+	className?: string
+	size?: number
+	disabled?: boolean
+	orientation?: "up" | "down" | "left" | "right"
+}) =>
+	orientation === "left" ? (
+		<ChevronLeft className="h-4 w-4" />
+	) : (
+		<ChevronRight className="h-4 w-4" />
+	)
+
+const CALENDAR_COMPONENTS = { Chevron: CalendarChevron }
+
 const Calendar = ({ className, classNames, ...props }: CalendarProps) => (
 	<DayPicker
 		className={cn("p-s-300", className)}
@@ -39,14 +53,7 @@ const Calendar = ({ className, classNames, ...props }: CalendarProps) => (
 			hidden: "invisible",
 			...classNames,
 		}}
-		components={{
-			Chevron: ({ orientation }) =>
-				orientation === "left" ? (
-					<ChevronLeft className="h-4 w-4" />
-				) : (
-					<ChevronRight className="h-4 w-4" />
-				),
-		}}
+		components={CALENDAR_COMPONENTS}
 		{...props}
 	/>
 )

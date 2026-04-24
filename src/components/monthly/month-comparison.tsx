@@ -1,10 +1,12 @@
 "use client"
 
+import { useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { ArrowUp, ArrowDown, Minus, GitCompare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { MonthlyResultsWithProp } from "@/app/actions/reports"
 
 interface MonthComparisonProps {
@@ -27,16 +29,9 @@ export const MonthComparison = ({
 	const t = useTranslations("monthly.comparison")
 	const locale = useLocale()
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
+	const { formatCurrency } = useFormatting()
 
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			style: "currency",
-			currency: locale === "pt-BR" ? "BRL" : "USD",
-			minimumFractionDigits: 2,
-		}).format(value)
-	}
-
-	const formatChange = (
+	const formatChange = useCallback((
 		value: number,
 		type: "currency" | "percent" | "number" | "r"
 	) => {
@@ -51,7 +46,7 @@ export const MonthComparison = ({
 			default:
 				return prefix + value.toString()
 		}
-	}
+	}, [formatCurrency])
 
 	const ChangeIndicator = ({ value }: { value: number }) => {
 		if (value > 0) {
@@ -62,6 +57,45 @@ export const MonthComparison = ({
 		}
 		return <Minus className="h-4 w-4 text-txt-300" />
 	}
+
+	const previousMonthName = previous
+		? format(new Date(previous.monthStart), "MMMM", { locale: dateLocale })
+		: ""
+
+	const comparisonRows = useMemo(() => {
+		if (!previous) return []
+		return [
+			{
+				label: t("profit"),
+				current: formatCurrency(current.report.netPnl),
+				previous: formatCurrency(previous.report.netPnl),
+				change: changes.profitChange,
+				changeFormatted: formatChange(changes.profitChange, "currency"),
+				percentChange: changes.profitChangePercent,
+			},
+			{
+				label: t("winRate"),
+				current: current.report.winRate.toFixed(1) + "%",
+				previous: previous.report.winRate.toFixed(1) + "%",
+				change: changes.winRateChange,
+				changeFormatted: formatChange(changes.winRateChange, "percent"),
+			},
+			{
+				label: t("avgR"),
+				current: current.report.avgR.toFixed(2) + "R",
+				previous: previous.report.avgR.toFixed(2) + "R",
+				change: changes.avgRChange,
+				changeFormatted: formatChange(changes.avgRChange, "r"),
+			},
+			{
+				label: t("trades"),
+				current: current.report.totalTrades.toString(),
+				previous: previous.report.totalTrades.toString(),
+				change: changes.tradeCountChange,
+				changeFormatted: formatChange(changes.tradeCountChange, "number"),
+			},
+		]
+	}, [previous, current, changes, formatCurrency, formatChange, t])
 
 	if (!previous) {
 		return (
@@ -76,42 +110,6 @@ export const MonthComparison = ({
 			</div>
 		)
 	}
-
-	const previousMonthName = format(new Date(previous.monthStart), "MMMM", {
-		locale: dateLocale,
-	})
-
-	const comparisonRows = [
-		{
-			label: t("profit"),
-			current: formatCurrency(current.report.netPnl),
-			previous: formatCurrency(previous.report.netPnl),
-			change: changes.profitChange,
-			changeFormatted: formatChange(changes.profitChange, "currency"),
-			percentChange: changes.profitChangePercent,
-		},
-		{
-			label: t("winRate"),
-			current: current.report.winRate.toFixed(1) + "%",
-			previous: previous.report.winRate.toFixed(1) + "%",
-			change: changes.winRateChange,
-			changeFormatted: formatChange(changes.winRateChange, "percent"),
-		},
-		{
-			label: t("avgR"),
-			current: current.report.avgR.toFixed(2) + "R",
-			previous: previous.report.avgR.toFixed(2) + "R",
-			change: changes.avgRChange,
-			changeFormatted: formatChange(changes.avgRChange, "r"),
-		},
-		{
-			label: t("trades"),
-			current: current.report.totalTrades.toString(),
-			previous: previous.report.totalTrades.toString(),
-			change: changes.tradeCountChange,
-			changeFormatted: formatChange(changes.tradeCountChange, "number"),
-		},
-	]
 
 	return (
 		<div id="monthly-comparison" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">

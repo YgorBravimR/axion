@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
 	parseArrayParam,
@@ -105,7 +105,7 @@ const useUrlParams = (): UseUrlParamsReturn => {
 		[searchParams, router, pathname]
 	)
 
-	return { get, getArray, getNumber, getBoolean, set }
+	return useMemo(() => ({ get, getArray, getNumber, getBoolean, set }), [get, getArray, getNumber, getBoolean, set])
 }
 
 export { useUrlParams }
