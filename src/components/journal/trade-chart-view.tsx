@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import type { ISeriesMarkersPluginApi, SeriesMarker } from "lightweight-charts"
 import {
 	createSeriesMarkers,
@@ -62,37 +62,55 @@ const TradeChartView = ({
 	/** Execution line series refs for toggling visibility */
 	const executionLinesRef = useRef<Array<import("lightweight-charts").ISeriesApi<"Line">>>([])
 
+	// C2: Track previously active groups to compute add/remove delta — avoids full teardown
+	const prevActiveGroupsRef = useRef<Set<string>>(new Set())
+
 	const isLong = trade.direction === "long"
+
+	// C1: Pre-sort candle timestamps into a parallel numeric array so binary search is O(log n)
+	const candleTimestamps = useMemo(
+		() => candles.map((c) => new Date(c.timestamp).getTime()),
+		[candles]
+	)
 
 	/**
 	 * Find the sequential candle index closest to a given ISO timestamp.
+	 * Uses binary search on the pre-sorted candleTimestamps array — O(log n).
 	 * Returns -1 if no candles are loaded.
 	 */
 	const findCandleIndex = useCallback(
 		(isoTimestamp: string): number => {
-			if (candles.length === 0) return -1
+			if (candleTimestamps.length === 0) return -1
 			const target = new Date(isoTimestamp).getTime()
-			let bestIndex = 0
-			let bestDiff = Infinity
-			for (let idx = 0; idx < candles.length; idx++) {
-				const diff = Math.abs(new Date(candles[idx].timestamp).getTime() - target)
-				if (diff < bestDiff) {
-					bestDiff = diff
-					bestIndex = idx
+
+			let lo = 0
+			let hi = candleTimestamps.length - 1
+
+			while (lo < hi) {
+				const mid = (lo + hi) >>> 1
+				if (candleTimestamps[mid] < target) {
+					lo = mid + 1
+				} else {
+					hi = mid
 				}
 			}
-			return bestIndex
+
+			// lo is now the insertion point — check lo and lo-1 for closest
+			if (lo > 0 && Math.abs(candleTimestamps[lo - 1] - target) <= Math.abs(candleTimestamps[lo] - target)) {
+				return lo - 1
+			}
+			return lo
 		},
-		[candles]
+		[candleTimestamps]
 	)
 
-	// Set candle data + draw executions + SL/TP (single effect for correct ordering)
+	// C1 (split 1/2): Only set OHLC candle data and initialize the markers plugin.
+	// Keyed to candles alone so it doesn't re-run when overlay deps change.
 	useEffect(() => {
 		candlesRef.current = candles
 		const chart = chartRef.current
 		if (!chart || !candleSeriesRef.current || candles.length === 0) return
 
-		// Set candle OHLC data
 		const candleData = candles.map((c, i) => ({
 			time: i as unknown as UTCTimestamp,
 			open: c.open,
@@ -102,11 +120,17 @@ const TradeChartView = ({
 		}))
 		candleSeriesRef.current.setData(candleData)
 
-		// Create markers plugin if not yet created
 		if (!markersPluginRef.current) {
 			const markersPlugin = createSeriesMarkers(candleSeriesRef.current)
 			markersPluginRef.current = markersPlugin as ISeriesMarkersPluginApi<UTCTimestamp>
 		}
+	}, [candles, chartRef, candleSeriesRef, candlesRef])
+
+	// C1 (split 2/2): Draw execution lines, markers, and SL/TP overlays.
+	// Runs when overlay-relevant deps change, independently of pure candle data.
+	useEffect(() => {
+		const chart = chartRef.current
+		if (!chart || !candleSeriesRef.current || candles.length === 0) return
 
 		// Clean up previous execution lines
 		for (const series of executionLinesRef.current) {
@@ -271,22 +295,41 @@ const TradeChartView = ({
 			}
 		}
 		chart.timeScale().fitContent()
-	}, [candles, trade, executions, isLong, showExecutions, findCandleIndex, chartRef, candleSeriesRef, candlesRef, themeRef, tTrade])
+	}, [candles, trade, executions, isLong, showExecutions, findCandleIndex, chartRef, candleSeriesRef, themeRef, tTrade])
 
-	// Update indicator lines when active groups or candles change
+	// C2: Delta-only indicator update — only remove groups that were deactivated and only add
+	// groups that were newly activated. Avoids tearing down all series on every toggle.
 	useEffect(() => {
 		const chart = chartRef.current
-		if (!chart) return
+		if (!chart || candles.length === 0) return
 
-		for (const [, series] of indicatorSeriesRef.current) {
-			try { chart.removeSeries(series) } catch { /* stale ref */ }
+		const prev = prevActiveGroupsRef.current
+
+		// Determine which groups to remove (were active, now inactive)
+		const toRemove = [...prev].filter((key) => !activeGroups.has(key))
+		// Determine which groups to add (now active, weren't before)
+		const toAdd = [...activeGroups].filter((key) => !prev.has(key))
+
+		// Build a lookup map for indicator groups by key for O(1) access
+		const groupByKey = new Map(indicatorGroups.map((g) => [g.key, g]))
+
+		// Remove deactivated groups
+		for (const groupKey of toRemove) {
+			const group = groupByKey.get(groupKey)
+			if (!group) continue
+			for (const indicator of group.indicatorKeys) {
+				const series = indicatorSeriesRef.current.get(indicator.key)
+				if (series) {
+					try { chart.removeSeries(series) } catch { /* stale ref */ }
+					indicatorSeriesRef.current.delete(indicator.key)
+				}
+			}
 		}
-		indicatorSeriesRef.current.clear()
 
-		if (candles.length === 0) return
-
-		for (const group of indicatorGroups) {
-			if (!activeGroups.has(group.key)) continue
+		// Add newly activated groups
+		for (const groupKey of toAdd) {
+			const group = groupByKey.get(groupKey)
+			if (!group) continue
 
 			const isReference = REFERENCE_GROUPS.has(group.key)
 
@@ -320,6 +363,31 @@ const TradeChartView = ({
 				indicatorSeriesRef.current.set(indicator.key, lineSeries)
 			}
 		}
+
+		// When candles change (new dataset), refresh all currently active groups
+		// This is detected by toAdd/toRemove both being empty but candles having changed.
+		// We handle this by checking if all existing indicator series need re-seeding.
+		if (toAdd.length === 0 && toRemove.length === 0 && activeGroups.size > 0) {
+			for (const groupKey of activeGroups) {
+				const group = groupByKey.get(groupKey)
+				if (!group) continue
+				for (const indicator of group.indicatorKeys) {
+					const series = indicatorSeriesRef.current.get(indicator.key)
+					if (!series) continue
+					const lineData: Array<{ time: UTCTimestamp; value: number }> = []
+					for (let idx = 0; idx < candles.length; idx++) {
+						const val = candles[idx].indicators[indicator.key]
+						if (val === undefined || val === null || val === 0) continue
+						lineData.push({ time: idx as unknown as UTCTimestamp, value: val })
+					}
+					if (lineData.length > 0) {
+						series.setData(lineData)
+					}
+				}
+			}
+		}
+
+		prevActiveGroupsRef.current = new Set(activeGroups)
 	}, [candles, activeGroups, indicatorGroups, getIndicatorColor, chartRef, indicatorSeriesRef])
 
 	const handleToggleGroup = (groupKey: string) => {

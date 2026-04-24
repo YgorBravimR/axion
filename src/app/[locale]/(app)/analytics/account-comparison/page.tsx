@@ -14,9 +14,9 @@ const AccountComparisonPage = async ({
 	const { locale } = await params
 	setRequestLocale(locale)
 
-	await requireAuth()
-
-	const accounts = await getUserAccounts()
+	// Run auth check and account fetch in parallel — requireAuth uses React.cache()
+	// so the auth() call inside getUserAccounts is deduplicated within this request.
+	const [, accounts] = await Promise.all([requireAuth(), getUserAccounts()])
 
 	const accountOptions = accounts.map((a) => ({
 		id: a.id,

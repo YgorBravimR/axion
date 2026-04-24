@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Tabs,
@@ -38,6 +38,14 @@ const TAB_SPECIFIC_PARAMS = [
 	"indQ",
 ] as const
 
+/** Pre-built clear-params object — same shape every render, no allocation on tab change */
+const CLEAR_TAB_PARAMS = Object.fromEntries(
+	TAB_SPECIFIC_PARAMS.map((param) => [param, null])
+) as Record<string, null>
+
+const BASE_TABS = ["profile"] as const
+const ADMIN_TABS = ["account", "tags", "conditions", "indicators", "assets", "timeframes", "users", "bugs"] as const
+
 interface SettingsContentProps {
 	assets: AssetWithType[]
 	assetTypes: AssetType[]
@@ -61,18 +69,16 @@ export const SettingsContent = ({
 	const urlParams = useUrlParams()
 	useRegisterPageGuide(settingsGuide)
 
-	const baseTabs = ["profile"]
-	const adminTabs = ["account", "tags", "conditions", "indicators", "assets", "timeframes", "users", "bugs"]
-	const validTabs = isAdmin ? [...baseTabs, ...adminTabs] : baseTabs
+	const validTabs = useMemo(
+		() => (isAdmin ? [...BASE_TABS, ...ADMIN_TABS] : [...BASE_TABS]),
+		[isAdmin]
+	)
 	const tabFromUrl = urlParams.get("tab") ?? ""
-	const activeTab = validTabs.includes(tabFromUrl) ? tabFromUrl : "profile"
+	const activeTab = validTabs.includes(tabFromUrl as (typeof validTabs)[number]) ? tabFromUrl : "profile"
 
 	const handleTabChange = useCallback(
 		(value: string) => {
-			const clearParams = Object.fromEntries(
-				TAB_SPECIFIC_PARAMS.map((param) => [param, null])
-			)
-			urlParams.set({ ...clearParams, tab: value })
+			urlParams.set({ ...CLEAR_TAB_PARAMS, tab: value })
 		},
 		[urlParams]
 	)
@@ -132,41 +138,41 @@ export const SettingsContent = ({
 			</div>
 
 			<AnimatedTabsContent value="profile">
-				<UserProfileSettings />
+				{activeTab === "profile" && <UserProfileSettings />}
 			</AnimatedTabsContent>
 
 			{isAdmin && (
 				<>
 					<AnimatedTabsContent value="account">
-						<AccountSettings assets={assets} />
+						{activeTab === "account" && <AccountSettings assets={assets} />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="tags">
-						<TagList />
+						{activeTab === "tags" && <TagList />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="conditions">
-						<ConditionList />
+						{activeTab === "conditions" && <ConditionList />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="indicators">
-						<IndicatorList groups={indicatorGroups} />
+						{activeTab === "indicators" && <IndicatorList groups={indicatorGroups} />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="assets">
-						<AssetList assets={assets} assetTypes={assetTypes} />
+						{activeTab === "assets" && <AssetList assets={assets} assetTypes={assetTypes} />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="timeframes">
-						<TimeframeList timeframes={timeframes} />
+						{activeTab === "timeframes" && <TimeframeList timeframes={timeframes} />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="users">
-						<UserList users={usersWithAccounts} currentUserId={currentUserId} />
+						{activeTab === "users" && <UserList users={usersWithAccounts} currentUserId={currentUserId} />}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="bugs">
-						<BugReportsList />
+						{activeTab === "bugs" && <BugReportsList />}
 					</AnimatedTabsContent>
 				</>
 			)}

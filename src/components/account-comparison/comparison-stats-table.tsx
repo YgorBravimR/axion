@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import type { AccountComparisonMetrics } from "@/types"
@@ -29,7 +30,7 @@ const ComparisonStatsTable = ({
 }: ComparisonStatsTableProps) => {
 	const t = useTranslations("accountComparison.table")
 
-	const metrics: MetricRow[] = [
+	const metrics = useMemo<MetricRow[]>(() => [
 		{
 			key: "netPnl",
 			label: t("netPnl"),
@@ -142,61 +143,64 @@ const ComparisonStatsTable = ({
 			direction: "lower-better",
 			mode: "always",
 		},
-	]
+	], [t, expectancyMode])
 
-	const visibleMetrics = metrics.filter(
-		(m) =>
-			m.mode === "always" ||
-			(m.mode === "capital" && expectancyMode === "capital") ||
-			(m.mode === "edge" && expectancyMode === "edge")
+	const visibleMetrics = useMemo(
+		() =>
+			metrics.filter(
+				(m) =>
+					m.mode === "always" ||
+					(m.mode === "capital" && expectancyMode === "capital") ||
+					(m.mode === "edge" && expectancyMode === "edge")
+			),
+		[metrics, expectancyMode]
 	)
 
 	/**
-	 * Returns sets of indices tied for best and worst.
+	 * Pre-compute best/worst index sets for ALL visible metrics in a single pass.
+	 * Map key: metric.key → { bestSet, worstSet }
 	 * Uses a tolerance of 1% of the value range so near-equal values share rank.
 	 */
-	const findBestAndWorst = (
-		metric: MetricRow
-	): { bestSet: Set<number>; worstSet: Set<number> } => {
+	const bestWorstMap = useMemo(() => {
+		const map = new Map<string, { bestSet: Set<number>; worstSet: Set<number> }>()
 		const empty = { bestSet: new Set<number>(), worstSet: new Set<number>() }
-		if (metric.direction === "neutral") return empty
 
-		const values = accounts.map((a) => metric.getValue(a))
-
-		const min = Math.min(...values)
-		const max = Math.max(...values)
-		const range = max - min
-
-		// All values effectively identical — no highlighting
-		if (range < 0.01) return empty
-
-		// Tolerance: 1% of range, minimum 0.01 absolute
-		const tolerance = Math.max(range * 0.01, 0.01)
-
-		let bestVal: number
-		let worstVal: number
-
-		if (metric.direction === "higher-better") {
-			bestVal = max
-			worstVal = min
-		} else {
-			bestVal = min
-			worstVal = max
-		}
-
-		const bestSet = new Set<number>()
-		const worstSet = new Set<number>()
-
-		for (let i = 0; i < values.length; i++) {
-			if (Math.abs(values[i] - bestVal) <= tolerance) {
-				bestSet.add(i)
-			} else if (Math.abs(values[i] - worstVal) <= tolerance) {
-				worstSet.add(i)
+		for (const metric of visibleMetrics) {
+			if (metric.direction === "neutral") {
+				map.set(metric.key, empty)
+				continue
 			}
+
+			const values = accounts.map((a) => metric.getValue(a))
+			const min = Math.min(...values)
+			const max = Math.max(...values)
+			const range = max - min
+
+			if (range < 0.01) {
+				map.set(metric.key, empty)
+				continue
+			}
+
+			const tolerance = Math.max(range * 0.01, 0.01)
+			const bestVal = metric.direction === "higher-better" ? max : min
+			const worstVal = metric.direction === "higher-better" ? min : max
+
+			const bestSet = new Set<number>()
+			const worstSet = new Set<number>()
+
+			for (let i = 0; i < values.length; i++) {
+				if (Math.abs(values[i] - bestVal) <= tolerance) {
+					bestSet.add(i)
+				} else if (Math.abs(values[i] - worstVal) <= tolerance) {
+					worstSet.add(i)
+				}
+			}
+
+			map.set(metric.key, { bestSet, worstSet })
 		}
 
-		return { bestSet, worstSet }
-	}
+		return map
+	}, [visibleMetrics, accounts])
 
 	return (
 		<div id="comparison-stats-table" className="border-bg-300 bg-bg-200 overflow-x-auto rounded-lg border p-s-300 sm:p-m-400">
@@ -229,7 +233,7 @@ const ComparisonStatsTable = ({
 				</thead>
 				<tbody>
 					{visibleMetrics.map((metric) => {
-						const { bestSet, worstSet } = findBestAndWorst(metric)
+						const { bestSet, worstSet } = bestWorstMap.get(metric.key) ?? { bestSet: new Set<number>(), worstSet: new Set<number>() }
 						return (
 							<tr
 								key={metric.key}

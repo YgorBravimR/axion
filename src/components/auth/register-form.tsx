@@ -1,7 +1,7 @@
 "use client"
 
 import type { FormEvent } from "react"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
@@ -33,15 +33,18 @@ const RegisterForm = () => {
 		setError(null)
 	}
 
-	// Password requirements
-	const passwordRequirements = [
+	// Password requirements — memoized so regex tests don't run on every keystroke
+	const passwordRequirements = useMemo(() => [
 		{ key: "length", test: formData.password.length >= 8, label: tReq("length") },
 		{ key: "uppercase", test: /[A-Z]/.test(formData.password), label: tReq("uppercase") },
 		{ key: "lowercase", test: /[a-z]/.test(formData.password), label: tReq("lowercase") },
 		{ key: "number", test: /[0-9]/.test(formData.password), label: tReq("number") },
-	]
+	], [formData.password, tReq])
 
-	const allRequirementsMet = passwordRequirements.every((req) => req.test)
+	const allRequirementsMet = useMemo(
+		() => passwordRequirements.every((req) => req.test),
+		[passwordRequirements]
+	)
 	const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
 	const handleSubmit = (e: FormEvent) => {

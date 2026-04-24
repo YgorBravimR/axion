@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -45,32 +45,45 @@ export const ConditionList = () => {
 	const [isPending, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
-	const loadConditions = async () => {
+	const loadConditions = useCallback(async () => {
 		setIsLoading(true)
 		const result = await getConditions()
 		if (result.status === "success" && result.data) {
 			setConditions(result.data)
 		}
 		setIsLoading(false)
-	}
-
-	useEffect(() => {
-		loadConditions()
 	}, [])
 
-	const categoryCounts = {
-		all: conditions.length,
-		indicator: conditions.filter((c) => c.category === "indicator").length,
-		price_action: conditions.filter((c) => c.category === "price_action")
-			.length,
-		market_context: conditions.filter((c) => c.category === "market_context")
-			.length,
-		custom: conditions.filter((c) => c.category === "custom").length,
-	}
+	useEffect(() => {
+		let mounted = true
+		loadConditions()
+		return () => { mounted = false }
+	}, [loadConditions])
 
-	const filteredConditions = conditions.filter(
-		(c) => filterCategory === "all" || c.category === filterCategory
-	)
+	const { categoryCounts, filteredConditions } = useMemo(() => {
+		const counts = {
+			all: 0,
+			indicator: 0,
+			price_action: 0,
+			market_context: 0,
+			custom: 0,
+		}
+		const filtered: TradingCondition[] = []
+
+		for (const condition of conditions) {
+			counts.all++
+			if (condition.category === "indicator") counts.indicator++
+			else if (condition.category === "price_action") counts.price_action++
+			else if (condition.category === "market_context") counts.market_context++
+			else if (condition.category === "custom") counts.custom++
+
+			if (filterCategory === "all" || condition.category === filterCategory) {
+				filtered.push(condition)
+			}
+		}
+
+		return { categoryCounts: counts, filteredConditions: filtered }
+	}, [conditions, filterCategory])
 
 	const handleEdit = (condition: TradingCondition) => {
 		setEditingCondition(condition)

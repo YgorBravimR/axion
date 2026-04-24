@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
@@ -38,10 +38,14 @@ const ComparisonNormalizedTable = ({
 	const t = useTranslations("accountComparison.normalized")
 
 	// Default reference risk: median avgRiskPerTrade across accounts that have it
-	const risksWithData = accounts
-		.map((a) => a.avgRiskPerTrade)
-		.filter((r) => r > 0)
-		.toSorted((a, b) => a - b)
+	const risksWithData = useMemo(
+		() =>
+			accounts
+				.map((a) => a.avgRiskPerTrade)
+				.filter((r) => r > 0)
+				.toSorted((a, b) => a - b),
+		[accounts]
+	)
 
 	const defaultRisk =
 		risksWithData.length > 0
@@ -59,7 +63,7 @@ const ComparisonNormalizedTable = ({
 		}
 	}
 
-	const metrics: NormalizedMetric[] = [
+	const metrics = useMemo<NormalizedMetric[]>(() => [
 		{
 			key: "normalizedEV",
 			label: t("expectedValue"),
@@ -84,47 +88,51 @@ const ComparisonNormalizedTable = ({
 			getRValue: (a) => a.expectedValue.projectedR100,
 			direction: "higher-better",
 		},
-	]
+	], [t])
 
 	const getNormalizedValue = (rValue: number): number =>
 		rValue * referenceRisk
 
-	const findBestAndWorst = (
-		metric: NormalizedMetric
-	): { bestSet: Set<number>; worstSet: Set<number> } => {
-		const values = accounts.map((a) =>
-			getNormalizedValue(metric.getRValue(a))
-		)
+	/**
+	 * Pre-compute best/worst index sets for ALL metrics in a single pass.
+	 * Map key: metric.key → { bestSet, worstSet }
+	 */
+	const bestWorstMap = useMemo(() => {
+		const map = new Map<string, { bestSet: Set<number>; worstSet: Set<number> }>()
+		const empty = { bestSet: new Set<number>(), worstSet: new Set<number>() }
 
-		const min = Math.min(...values)
-		const max = Math.max(...values)
-		const range = max - min
-		if (range < 0.01)
-			return {
-				bestSet: new Set<number>(),
-				worstSet: new Set<number>(),
+		for (const metric of metrics) {
+			const values = accounts.map((a) => getNormalizedValue(metric.getRValue(a)))
+			const min = Math.min(...values)
+			const max = Math.max(...values)
+			const range = max - min
+
+			if (range < 0.01) {
+				map.set(metric.key, empty)
+				continue
 			}
 
-		const tolerance = Math.max(range * 0.01, 0.01)
+			const tolerance = Math.max(range * 0.01, 0.01)
+			const bestVal = metric.direction === "higher-better" ? max : min
+			const worstVal = metric.direction === "higher-better" ? min : max
 
-		const bestVal =
-			metric.direction === "higher-better" ? max : min
-		const worstVal =
-			metric.direction === "higher-better" ? min : max
+			const bestSet = new Set<number>()
+			const worstSet = new Set<number>()
 
-		const bestSet = new Set<number>()
-		const worstSet = new Set<number>()
-
-		for (let i = 0; i < values.length; i++) {
-			if (Math.abs(values[i] - bestVal) <= tolerance) {
-				bestSet.add(i)
-			} else if (Math.abs(values[i] - worstVal) <= tolerance) {
-				worstSet.add(i)
+			for (let i = 0; i < values.length; i++) {
+				if (Math.abs(values[i] - bestVal) <= tolerance) {
+					bestSet.add(i)
+				} else if (Math.abs(values[i] - worstVal) <= tolerance) {
+					worstSet.add(i)
+				}
 			}
+
+			map.set(metric.key, { bestSet, worstSet })
 		}
 
-		return { bestSet, worstSet }
-	}
+		return map
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [metrics, accounts, referenceRisk])
 
 	// Show each account's actual avg risk for reference
 	const hasRiskData = accounts.some((a) => a.avgRiskPerTrade > 0)
@@ -209,7 +217,7 @@ const ComparisonNormalizedTable = ({
 					)}
 
 					{metrics.map((metric) => {
-						const { bestSet, worstSet } = findBestAndWorst(metric)
+						const { bestSet, worstSet } = bestWorstMap.get(metric.key) ?? { bestSet: new Set<number>(), worstSet: new Set<number>() }
 						return (
 							<tr
 								key={metric.key}

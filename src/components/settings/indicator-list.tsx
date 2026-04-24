@@ -116,7 +116,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		setEditingGroup(null)
 	}
 
-	const handleGroupSubmit = async (data: {
+	const handleGroupSubmit = useCallback(async (data: {
 		key: string
 		displayName: string
 		description?: string
@@ -133,7 +133,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			showToast("success", tInd("toast.groupCreated"))
 		}
 		return result
-	}
+	}, [editingGroup, showToast, tInd])
 
 	const handleToggleGroupActive = (group: IndicatorGroupWithDefinitions) => {
 		setPendingId(group.id)
@@ -200,7 +200,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 		setEditingDefinition(null)
 	}
 
-	const handleDefinitionSubmit = async (data: {
+	const handleDefinitionSubmit = useCallback(async (data: {
 		key: string
 		displayName: string
 		groupId: string
@@ -219,7 +219,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			showToast("success", tInd("toast.definitionCreated"))
 		}
 		return result
-	}
+	}, [editingDefinition, showToast, tInd])
 
 	const handleToggleDefinitionActive = useCallback((
 		definition: DefinitionRow

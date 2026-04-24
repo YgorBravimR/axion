@@ -1,6 +1,7 @@
 "use client"
 
 import { Fragment, useState, useTransition, useMemo, useCallback, type KeyboardEvent } from "react"
+import { useFormatting } from "@/hooks/use-formatting"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useDebouncedSearch } from "@/hooks/use-debounced-search"
@@ -61,6 +62,13 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 	const [pendingId, setPendingId] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
+
+	const { formatDate } = useFormatting()
+
+	const formattedJoinDates = useMemo(
+		() => new Map(users.map((user) => [user.id, formatDate(new Date(user.createdAt))])),
+		[users, formatDate]
+	)
 
 	const filteredUsers = useMemo(() => {
 		if (!search.trim()) return users
@@ -220,9 +228,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 												{user.tradingAccounts.length}
 											</TableCell>
 											<TableCell className="text-muted-foreground">
-												{new Date(
-													user.createdAt
-												).toLocaleDateString()}
+												{formattedJoinDates.get(user.id)}
 											</TableCell>
 											<TableCell
 												className="whitespace-nowrap"

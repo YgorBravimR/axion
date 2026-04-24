@@ -43,12 +43,14 @@ const formatJson = (raw: string): string => {
 	}
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+	dateStyle: "medium",
+	timeStyle: "short",
+})
+
 const formatDate = (date: Date | null): string => {
 	if (!date) return "—"
-	return new Intl.DateTimeFormat(undefined, {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(new Date(date))
+	return dateTimeFormatter.format(new Date(date))
 }
 
 const BugReportsList = () => {
@@ -67,21 +69,31 @@ const BugReportsList = () => {
 	const [lightboxOpen, setLightboxOpen] = useState(false)
 	const [lightboxIndex, setLightboxIndex] = useState(0)
 	const detailPanelRef = useRef<HTMLDivElement>(null)
+	/** Cached focusable elements — only re-queried when the panel mounts/updates */
+	const focusableRef = useRef<HTMLElement[]>([])
 
-	// Escape key + focus trap for detail slide-over
+	// Cache focusable elements when the panel becomes visible
 	useEffect(() => {
-		if (!selectedReport) return
+		if (!selectedReport || !detailPanelRef.current) {
+			focusableRef.current = []
+			return
+		}
+		focusableRef.current = Array.from(
+			detailPanelRef.current.querySelectorAll<HTMLElement>(
+				'button, [href], input, textarea, select, details > summary, [tabindex]:not([tabindex="-1"])'
+			)
+		)
+	}, [selectedReport])
 
-		const handleKeyDown = (e: KeyboardEvent) => {
+	const handlePanelKeyDown = useCallback(
+		(e: KeyboardEvent) => {
 			if (e.key === "Escape" && !isActionPending) {
 				setSelectedReport(null)
 				return
 			}
 
-			if (e.key === "Tab" && detailPanelRef.current) {
-				const focusable = detailPanelRef.current.querySelectorAll<HTMLElement>(
-					'button, [href], input, textarea, select, details > summary, [tabindex]:not([tabindex="-1"])'
-				)
+			if (e.key === "Tab") {
+				const focusable = focusableRef.current
 				if (focusable.length === 0) return
 
 				const first = focusable[0]
@@ -95,10 +107,16 @@ const BugReportsList = () => {
 					first.focus()
 				}
 			}
-		}
-		document.addEventListener("keydown", handleKeyDown)
-		return () => document.removeEventListener("keydown", handleKeyDown)
-	}, [selectedReport, isActionPending])
+		},
+		[isActionPending]
+	)
+
+	// Escape key + focus trap for detail slide-over
+	useEffect(() => {
+		if (!selectedReport) return
+		document.addEventListener("keydown", handlePanelKeyDown)
+		return () => document.removeEventListener("keydown", handlePanelKeyDown)
+	}, [selectedReport, handlePanelKeyDown])
 
 	const fetchReports = useCallback(async () => {
 		setIsLoading(true)
@@ -257,13 +275,13 @@ const BugReportsList = () => {
 				>
 					{/* Backdrop — decorative, click-to-dismiss only */}
 					<div
-						className="absolute inset-0 bg-bg-100/60 backdrop-blur-sm"
+						className="absolute inset-0 bg-bg-100/80"
 						onClick={() => !isActionPending && setSelectedReport(null)}
 						aria-hidden="true"
 					/>
 
 					{/* Panel */}
-					<div ref={detailPanelRef} className="relative z-10 h-full w-full max-w-lg overflow-y-auto border-l border-bg-300 bg-bg-200 p-m-500 shadow-xl animate-in slide-in-from-right duration-200 motion-reduce:animate-none">
+					<div ref={detailPanelRef} className="relative z-10 h-full w-full max-w-lg overflow-y-auto border-l border-bg-300 bg-bg-200 p-m-500 shadow-xl animate-in slide-in-from-right duration-200 motion-reduce:animate-none motion-reduce:transition-none">
 						{isDetailLoading ? (
 							<div className="flex h-full items-center justify-center">
 								<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-txt-300" />

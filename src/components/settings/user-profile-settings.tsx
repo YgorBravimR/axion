@@ -57,12 +57,16 @@ const UserProfileSettings = () => {
 	})
 
 	useEffect(() => {
+		let mounted = true
+		const controller = new AbortController()
+
 		const loadData = async () => {
 			try {
 				const [userData, settingsResult] = await Promise.all([
 					getCurrentUser(),
 					getUserSettings(),
 				])
+				if (!mounted) return
 				setUser(userData)
 				if (userData) {
 					setProfileForm({ name: userData.name })
@@ -71,10 +75,14 @@ const UserProfileSettings = () => {
 					setShowAllAccounts(settingsResult.data.showAllAccounts)
 				}
 			} finally {
-				setIsLoading(false)
+				if (mounted) setIsLoading(false)
 			}
 		}
 		loadData()
+		return () => {
+			mounted = false
+			controller.abort()
+		}
 	}, [])
 
 	const handleToggleShowAllAccounts = useCallback(

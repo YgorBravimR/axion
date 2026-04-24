@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { TradeInfoStatsTab } from "./trade-info-stats-tab"
@@ -42,10 +42,11 @@ const TradeInfoPanel = ({
 	const tPanel = useTranslations("trade.panel")
 	const [isDirty, setIsDirty] = useState(false)
 
-	const handleDirtyChange = (dirty: boolean) => {
+	// M3: useCallback prevents TradeInfoNotesTab from re-rendering due to new function reference
+	const handleDirtyChange = useCallback((dirty: boolean) => {
 		setIsDirty(dirty)
 		onDirtyChange?.(dirty)
-	}
+	}, [onDirtyChange])
 
 	return (
 		<div

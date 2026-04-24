@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +25,7 @@ interface IndicatorGroupCardsProps {
 	onDelete: (group: IndicatorGroupWithDefinitions) => void
 }
 
-const IndicatorGroupCards = ({
+const IndicatorGroupCards = memo(({
 	groups,
 	selectedGroupId,
 	isPending,
@@ -173,7 +174,7 @@ const IndicatorGroupCards = ({
 			})}
 		</div>
 	)
-}
+})
 
 export type { IndicatorGroupCardsProps }
 export { IndicatorGroupCards }

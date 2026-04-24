@@ -31,11 +31,11 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 	const isAdmin = user?.role === "admin"
 
 	// Idempotent: seeds the 5 professional risk models if they don't exist yet (admin-only)
-	if (isAdmin) {
-		await seedBuiltInRiskProfiles()
-	}
-
-	const usersWithAccounts = isAdmin ? await getAllUsersWithAccounts() : []
+	// Run seed + user fetch in parallel to avoid serial waterfall
+	const [, usersWithAccounts] = await Promise.all([
+		isAdmin ? seedBuiltInRiskProfiles() : Promise.resolve(undefined),
+		isAdmin ? getAllUsersWithAccounts() : Promise.resolve([] as Awaited<ReturnType<typeof getAllUsersWithAccounts>>),
+	])
 
 	return (
 		<div className="flex h-full flex-col">

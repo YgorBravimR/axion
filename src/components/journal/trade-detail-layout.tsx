@@ -41,39 +41,40 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 	const [chartKey, setChartKey] = useState(0)
 	const isDirtyRef = useRef(false)
 	const [pendingNavUrl, setPendingNavUrl] = useState<string | null>(null)
+	// H11: Scoped to the layout container — avoids running closest("a") on every click in the document
+	const layoutContainerRef = useRef<HTMLDivElement>(null)
 
 	const handleDirtyChange = useCallback((dirty: boolean) => {
 		isDirtyRef.current = dirty
 	}, [])
 
-	// Intercept in-app link clicks when dirty
-	useEffect(() => {
-		const handleClick = (e: MouseEvent) => {
-			if (!isDirtyRef.current) return
+	// H11: Scoped to layoutContainerRef — avoids running closest("a") + new URL() on every
+	// document-level click. Handler is stable via useCallback.
+	const handleClick = useCallback((e: MouseEvent) => {
+		if (!isDirtyRef.current) return
 
-			// Find the closest anchor tag
-			const anchor = (e.target as HTMLElement).closest("a")
-			if (!anchor) return
+		const anchor = (e.target as HTMLElement).closest("a")
+		if (!anchor) return
 
-			const href = anchor.getAttribute("href")
-			if (!href || href.startsWith("#") || href.startsWith("javascript")) return
+		const href = anchor.getAttribute("href")
+		if (!href || href.startsWith("#") || href.startsWith("javascript")) return
 
-			// Only intercept internal navigation (same origin)
-			const url = new URL(href, window.location.origin)
-			if (url.origin !== window.location.origin) return
+		const url = new URL(href, window.location.origin)
+		if (url.origin !== window.location.origin) return
 
-			// Don't intercept if it's the current page
-			if (url.pathname === window.location.pathname) return
+		if (url.pathname === window.location.pathname) return
 
-			// Prevent navigation and show confirmation
-			e.preventDefault()
-			e.stopPropagation()
-			setPendingNavUrl(href)
-		}
-
-		document.addEventListener("click", handleClick, true)
-		return () => document.removeEventListener("click", handleClick, true)
+		e.preventDefault()
+		e.stopPropagation()
+		setPendingNavUrl(href)
 	}, [])
+
+	useEffect(() => {
+		const container = layoutContainerRef.current
+		if (!container) return
+		container.addEventListener("click", handleClick, true)
+		return () => container.removeEventListener("click", handleClick, true)
+	}, [handleClick])
 
 	const handleConfirmNav = () => {
 		isDirtyRef.current = false
@@ -95,7 +96,7 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 
 	return (
 		<>
-			<div className="flex h-[calc(100dvh-3rem)] flex-col">
+			<div ref={layoutContainerRef} className="flex h-[calc(100dvh-3rem)] flex-col">
 				{view === "chart" ? (
 					<div className="h-full overflow-hidden">
 						<TradeChartView

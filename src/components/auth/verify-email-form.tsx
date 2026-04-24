@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
 import { Link, useRouter } from "@/i18n/routing"
@@ -29,18 +29,39 @@ const VerifyEmailForm = () => {
 	const [error, setError] = useState<string | null>(null)
 	const [code, setCode] = useState("")
 	const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN_SECONDS)
+	// Incremented each time a new cooldown period starts; used as the effect trigger.
+	const [cooldownEpoch, setCooldownEpoch] = useState(0)
 	const [verified, setVerified] = useState(false)
 
 	const email = searchParams.get("email") ?? ""
+	const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-	// Countdown timer for resend cooldown
+	// Countdown timer for resend cooldown — the interval is created once per cooldown
+	// period (keyed on cooldownEpoch) and uses a functional state update so it doesn't
+	// restart every second as resendCooldown decrements.
 	useEffect(() => {
 		if (resendCooldown <= 0) return
 		const timer = setInterval(() => {
-			setResendCooldown((prev) => prev - 1)
+			setResendCooldown((prev) => {
+				if (prev <= 1) {
+					clearInterval(timer)
+					return 0
+				}
+				return prev - 1
+			})
 		}, 1000)
 		return () => clearInterval(timer)
-	}, [resendCooldown])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [cooldownEpoch])
+
+	// Cleanup redirect timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (redirectTimeoutRef.current !== null) {
+				clearTimeout(redirectTimeoutRef.current)
+			}
+		}
+	}, [])
 
 	const handleVerify = (otpValue: string) => {
 		if (otpValue.length !== 6 || !email) return
@@ -60,8 +81,8 @@ const VerifyEmailForm = () => {
 			}
 
 			setVerified(true)
-			// Redirect to login after 2 seconds
-			setTimeout(() => {
+			// Redirect to login after 2 seconds — stored in ref so it can be cleared on unmount
+			redirectTimeoutRef.current = setTimeout(() => {
 				router.push("/login?verified=true")
 			}, 2000)
 		})
@@ -79,6 +100,7 @@ const VerifyEmailForm = () => {
 			}
 
 			setResendCooldown(RESEND_COOLDOWN_SECONDS)
+			setCooldownEpoch((prev) => prev + 1)
 			setCode("")
 			setError(null)
 		})

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	ArrowUpRight,
@@ -53,10 +54,21 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 	const realizedR = Number(fullTrade.realizedRMultiple) || 0
 	const plannedR = Number(fullTrade.plannedRMultiple) || 0
 
-	const tags = fullTrade.tradeTags?.map((tt) => tt.tag) ?? []
-	const setupTags = tags.filter((t) => t.type === "setup")
-	const mistakeTags = tags.filter((t) => t.type === "mistake")
-	const generalTags = tags.filter((t) => t.type === "general")
+	// L3: Single-pass categorization instead of 3 separate filter() calls
+	const { tags, setupTags, mistakeTags, generalTags } = useMemo(() => {
+		const allTags = fullTrade.tradeTags?.map((tt) => tt.tag) ?? []
+		const setup: typeof allTags = []
+		const mistake: typeof allTags = []
+		const general: typeof allTags = []
+
+		for (const tag of allTags) {
+			if (tag.type === "setup") setup.push(tag)
+			else if (tag.type === "mistake") mistake.push(tag)
+			else general.push(tag)
+		}
+
+		return { tags: allTags, setupTags: setup, mistakeTags: mistake, generalTags: general }
+	}, [fullTrade.tradeTags])
 
 	return (
 		<div className="space-y-s-200">

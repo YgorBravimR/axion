@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,6 @@ import {
 } from "@/app/actions/settings"
 import { useToast } from "@/components/ui/toast"
 import { Loader2, Building2, Percent, Calculator } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 const PROP_FIRMS_BASE = [
 	{ value: "atom", label: "Atom" },
@@ -36,10 +35,10 @@ export const TradingAccountSettings = () => {
 	const tTrading = useTranslations("settings.trading")
 	const tCommon = useTranslations("common")
 
-	const PROP_FIRMS = [
-		...PROP_FIRMS_BASE,
-		{ value: "other", label: tTrading("propFirms.other") },
-	]
+	const PROP_FIRMS = useMemo(
+		() => [...PROP_FIRMS_BASE, { value: "other", label: tTrading("propFirms.other") }],
+		[tTrading]
+	)
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [isLoading, setIsLoading] = useState(true)
@@ -49,8 +48,10 @@ export const TradingAccountSettings = () => {
 	const [editValues, setEditValues] = useState<UserSettingsData | null>(null)
 
 	useEffect(() => {
+		let mounted = true
 		const loadSettings = async () => {
 			const result = await getUserSettings()
+			if (!mounted) return
 			if (result.status === "success" && result.data) {
 				setSettings(result.data)
 				setEditValues(result.data)
@@ -58,6 +59,7 @@ export const TradingAccountSettings = () => {
 			setIsLoading(false)
 		}
 		loadSettings()
+		return () => { mounted = false }
 	}, [])
 
 	const handleEdit = () => {
@@ -145,10 +147,7 @@ export const TradingAccountSettings = () => {
 				{/* Prop Trading Settings - only show when isPropAccount is true */}
 				{editValues.isPropAccount && (
 					<div
-						className={cn(
-							"space-y-m-400 rounded-md border border-acc-100/20 bg-acc-100/5 p-m-400",
-							"transition-opacity duration-200"
-						)}
+						className="space-y-m-400 rounded-md border border-acc-100/20 bg-acc-100/5 p-m-400"
 					>
 						<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
 							<Percent className="h-4 w-4 text-acc-100" />

@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -34,13 +35,13 @@ const AccountSelector = ({
 	const t = useTranslations("accountComparison.selector")
 	const tCommon = useTranslations("common")
 
-	const handleToggle = (accountId: string) => {
+	const handleToggle = useCallback((accountId: string) => {
 		if (selectedIds.includes(accountId)) {
 			onSelectionChange(selectedIds.filter((id) => id !== accountId))
 		} else {
 			onSelectionChange([...selectedIds, accountId])
 		}
-	}
+	}, [selectedIds, onSelectionChange])
 
 	const canCompare = selectedIds.length >= 2
 

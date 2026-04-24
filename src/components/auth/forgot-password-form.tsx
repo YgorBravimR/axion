@@ -38,15 +38,26 @@ export const ForgotPasswordForm = () => {
 	const [confirmPassword, setConfirmPassword] = useState("")
 	const [showPassword, setShowPassword] = useState(false)
 	const [resendCooldown, setResendCooldown] = useState(0)
+	// Incremented each time a new cooldown period starts; used as the effect trigger.
+	const [cooldownEpoch, setCooldownEpoch] = useState(0)
 
-	// Countdown timer for resend cooldown
+	// Countdown timer for resend cooldown — the interval is created once per cooldown
+	// period (keyed on cooldownEpoch) and uses a functional state update so it doesn't
+	// restart every second as resendCooldown decrements.
 	useEffect(() => {
 		if (resendCooldown <= 0) return
 		const timer = setInterval(() => {
-			setResendCooldown((prev) => prev - 1)
+			setResendCooldown((prev) => {
+				if (prev <= 1) {
+					clearInterval(timer)
+					return 0
+				}
+				return prev - 1
+			})
 		}, 1000)
 		return () => clearInterval(timer)
-	}, [resendCooldown])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [cooldownEpoch])
 
 	// Step 1: Request OTP code
 	const handleEmailSubmit = (e: FormEvent) => {
@@ -58,6 +69,7 @@ export const ForgotPasswordForm = () => {
 			if (result.success) {
 				setStep("code")
 				setResendCooldown(RESEND_COOLDOWN_SECONDS)
+				setCooldownEpoch((prev) => prev + 1)
 			}
 		})
 	}
@@ -97,6 +109,7 @@ export const ForgotPasswordForm = () => {
 		startTransition(async () => {
 			await requestPasswordReset({ email })
 			setResendCooldown(RESEND_COOLDOWN_SECONDS)
+			setCooldownEpoch((prev) => prev + 1)
 			setCode("")
 		})
 	}

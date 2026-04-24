@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -98,6 +98,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	})
 
 	useEffect(() => {
+		let mounted = true
 		const loadData = async () => {
 			try {
 				const [accountData, assetsResult, allAccounts] = await Promise.all([
@@ -105,6 +106,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					getAccountAssets(),
 					getUserAccounts(),
 				])
+				if (!mounted) return
 				setAccount(accountData)
 				setUserAccounts(allAccounts)
 				if (assetsResult.status === "success" && assetsResult.data) {
@@ -131,10 +133,11 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					})
 				}
 			} finally {
-				setIsLoading(false)
+				if (mounted) setIsLoading(false)
 			}
 		}
 		loadData()
+		return () => { mounted = false }
 	}, [])
 
 	const handleSaveAccount = () => {
@@ -267,8 +270,14 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		})
 	}
 
+	/** O(1) lookup map — rebuilt only when accountAssets changes */
+	const accountAssetsMap = useMemo(
+		() => new Map(accountAssets.map((aa) => [aa.assetId, aa])),
+		[accountAssets]
+	)
+
 	const getAssetFees = (assetId: string) => {
-		const override = accountAssets.find((aa) => aa.assetId === assetId)
+		const override = accountAssetsMap.get(assetId)
 		const hasOverride =
 			override &&
 			(override.commissionOverride !== null ||

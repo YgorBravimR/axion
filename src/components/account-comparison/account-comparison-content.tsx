@@ -84,7 +84,12 @@ const AccountComparisonContent = ({
 
 			{/* Results — only shown after comparison */}
 			{comparisonData && (
-				<div className="space-y-m-400 sm:space-y-m-500" aria-live="polite">
+				<div className="space-y-m-400 sm:space-y-m-500">
+					{/* Screen-reader announcement — narrow aria-live region so the entire panel doesn't re-announce on every update */}
+					<p className="sr-only" aria-live="polite" aria-atomic="true">
+						{t("comparisonComplete", { count: comparisonData.accounts.length })}
+					</p>
+
 					{/* Stats Table */}
 					<ComparisonStatsTable
 						accounts={comparisonData.accounts}

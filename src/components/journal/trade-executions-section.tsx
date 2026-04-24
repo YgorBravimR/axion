@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Card } from "@/components/ui/card"
@@ -48,8 +48,8 @@ export const TradeExecutionsSection = ({
 	const [isFormOpen, setIsFormOpen] = useState(false)
 	const [editingExecution, setEditingExecution] = useState<TradeExecution | null>(null)
 
-	// Calculate summary from executions
-	const calculateSummary = (): ExecutionSummary => {
+	// H6: Memoized — avoids repeated filter()/reduce() passes on every render
+	const summary = useMemo((): ExecutionSummary => {
 		const entries = executions.filter((e) => e.executionType === "entry")
 		const exits = executions.filter((e) => e.executionType === "exit")
 
@@ -102,7 +102,7 @@ export const TradeExecutionsSection = ({
 			totalCommission,
 			totalFees,
 		}
-	}
+	}, [executions])
 
 	const handleConvertToScaled = () => {
 		startTransition(async () => {
@@ -169,8 +169,6 @@ export const TradeExecutionsSection = ({
 	}
 
 	// Scaled mode - show executions
-	const summary = calculateSummary()
-
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Position Summary */}

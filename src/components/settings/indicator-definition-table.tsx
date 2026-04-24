@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,7 +27,7 @@ interface IndicatorDefinitionTableProps {
 	onDelete: (definition: DefinitionRow) => void
 }
 
-const IndicatorDefinitionTable = ({
+const IndicatorDefinitionTable = memo(({
 	definitions,
 	isPending,
 	pendingId,
@@ -178,7 +178,7 @@ const IndicatorDefinitionTable = ({
 			emptyMessage={emptyMessage}
 		/>
 	)
-}
+})
 
 export type { IndicatorDefinitionTableProps, DefinitionRow }
 export { IndicatorDefinitionTable }

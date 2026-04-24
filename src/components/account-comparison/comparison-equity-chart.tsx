@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
 	LineChart,
 	Line,
@@ -115,7 +116,24 @@ const ComparisonEquityChart = ({
 
 	const hasData = accounts.some((a) => a.equityCurve.length > 0)
 
-	if (!hasData) {
+	const chartData = useMemo(() => {
+		if (!hasData) return null
+
+		const mergedData = mergeEquityCurves(accounts)
+		const accountMap = new Map(
+			accounts.map((a) => [a.accountId, a.accountName])
+		)
+
+		// Compute Y axis domain from all equity values
+		const allValues = accounts.flatMap((a) => a.equityCurve.map((p) => p.equity))
+		const minVal = Math.min(0, ...allValues)
+		const maxVal = Math.max(0, ...allValues)
+		const padding = (maxVal - minVal) * 0.1 || 100
+
+		return { mergedData, accountMap, minVal, maxVal, padding }
+	}, [accounts, hasData])
+
+	if (!hasData || !chartData) {
 		return (
 			<div id="comparison-equity-chart" className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -128,16 +146,7 @@ const ComparisonEquityChart = ({
 		)
 	}
 
-	const mergedData = mergeEquityCurves(accounts)
-	const accountMap = new Map(
-		accounts.map((a) => [a.accountId, a.accountName])
-	)
-
-	// Compute Y axis domain from all equity values
-	const allValues = accounts.flatMap((a) => a.equityCurve.map((p) => p.equity))
-	const minVal = Math.min(0, ...allValues)
-	const maxVal = Math.max(0, ...allValues)
-	const padding = (maxVal - minVal) * 0.1 || 100
+	const { mergedData, accountMap, minVal, maxVal, padding } = chartData
 
 	return (
 		<div id="comparison-equity-chart" className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">

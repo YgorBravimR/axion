@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -39,29 +39,38 @@ export const TagList = () => {
 	const [isPending, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
-	const loadTags = async () => {
+	const loadTags = useCallback(async () => {
 		setIsLoading(true)
 		const result = await getTags()
 		if (result.status === "success" && result.data) {
 			setTags(result.data)
 		}
 		setIsLoading(false)
-	}
-
-	useEffect(() => {
-		loadTags()
 	}, [])
 
-	const tagCounts = {
-		all: tags.length,
-		setup: tags.filter((tag) => tag.type === "setup").length,
-		mistake: tags.filter((tag) => tag.type === "mistake").length,
-		general: tags.filter((tag) => tag.type === "general").length,
-	}
+	useEffect(() => {
+		let mounted = true
+		loadTags()
+		return () => { mounted = false }
+	}, [loadTags])
 
-	const filteredTags = tags.filter(
-		(tag) => filterType === "all" || tag.type === filterType
-	)
+	const { tagCounts, filteredTags } = useMemo(() => {
+		const counts = { all: 0, setup: 0, mistake: 0, general: 0 }
+		const filtered: Tag[] = []
+
+		for (const tag of tags) {
+			counts.all++
+			if (tag.type === "setup") counts.setup++
+			else if (tag.type === "mistake") counts.mistake++
+			else counts.general++
+
+			if (filterType === "all" || tag.type === filterType) {
+				filtered.push(tag)
+			}
+		}
+
+		return { tagCounts: counts, filteredTags: filtered }
+	}, [tags, filterType])
 
 	const handleEdit = (tag: Tag) => {
 		setEditingTag(tag)

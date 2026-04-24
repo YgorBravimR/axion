@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -51,9 +51,12 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 	})
 	const [isSaving, setIsSaving] = useState(false)
 	const [isDirty, setIsDirty] = useState(false)
+	// L1: Ref mirrors isDirty so beforeunload handler reads current value without being a dep
+	const isDirtyRef = useRef(false)
 
 	const handleFieldChange = (field: keyof NotesFormData, value: string | boolean | null) => {
 		setFormData((prev) => ({ ...prev, [field]: value }))
+		isDirtyRef.current = true
 		setIsDirty(true)
 		onDirtyChange(true)
 	}
@@ -71,6 +74,7 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 			})
 
 			if (result.status === "success") {
+				isDirtyRef.current = false
 				setIsDirty(false)
 				onDirtyChange(false)
 				showToast("success", tTrade("notesSavedSuccess"))
@@ -84,17 +88,17 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 		}
 	}
 
-	// Warn on browser navigation with unsaved changes
+	// L1: Effect runs only on mount/unmount — handler reads isDirtyRef to avoid stale closure
+	// without re-subscribing on every keystroke.
 	useEffect(() => {
-		if (!isDirty) return
-
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			if (!isDirtyRef.current) return
 			event.preventDefault()
 		}
 
 		window.addEventListener("beforeunload", handleBeforeUnload)
 		return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-	}, [isDirty])
+	}, [])
 
 	return (
 		<>

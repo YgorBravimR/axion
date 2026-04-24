@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, type FormEvent } from "react"
+import { useState, useTransition, useEffect, useMemo, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -117,8 +117,11 @@ const IndicatorDefinitionForm = ({
 		handleChange("key", sanitized)
 	}
 
-	const activeGroups = groups.filter(
-		(group) => group.isActive || (isEdit && group.id === definition?.groupId)
+	const activeGroups = useMemo(
+		() => groups.filter(
+			(group) => group.isActive || (isEdit && group.id === definition?.groupId)
+		),
+		[groups, isEdit, definition?.groupId]
 	)
 
 	return (

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/routing"
 import { getRiskSettings, updateRiskSettings } from "@/app/actions/settings"
 import { useToast } from "@/components/ui/toast"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface RiskSettingsState {
 	defaultRiskPercent: number
@@ -21,6 +22,7 @@ export const GeneralSettings = () => {
 	const t = useTranslations("settings.general")
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
+	const { formatCurrency } = useFormatting()
 	const [isPending, startTransition] = useTransition()
 	const [isEditing, setIsEditing] = useState(false)
 	const [settings, setSettings] = useState<RiskSettingsState>({
@@ -33,14 +35,17 @@ export const GeneralSettings = () => {
 	})
 
 	useEffect(() => {
+		let mounted = true
 		const loadSettings = async () => {
 			const result = await getRiskSettings()
+			if (!mounted) return
 			if (result.status === "success" && result.data) {
 				setSettings(result.data)
 				setEditValues(result.data)
 			}
 		}
 		loadSettings()
+		return () => { mounted = false }
 	}, [])
 
 	const handleEdit = () => {
@@ -64,15 +69,6 @@ export const GeneralSettings = () => {
 				showToast("error", result.message || t("settingsUpdateFailed"))
 			}
 		})
-	}
-
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat("en-US", {
-			style: "currency",
-			currency: "USD",
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 0,
-		}).format(value)
 	}
 
 	return (
