@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -40,13 +40,16 @@ export const PeriodFilter = ({
 			: undefined
 	)
 
-	const periods: { key: JournalPeriod; label: string }[] = [
-		{ key: "day", label: t("period.day") },
-		{ key: "week", label: t("period.week") },
-		{ key: "month", label: t("period.month") },
-		{ key: "all", label: t("period.all") },
-		{ key: "custom", label: t("period.custom") },
-	]
+	const periods = useMemo<{ key: JournalPeriod; label: string }[]>(
+		() => [
+			{ key: "day", label: t("period.day") },
+			{ key: "week", label: t("period.week") },
+			{ key: "month", label: t("period.month") },
+			{ key: "all", label: t("period.all") },
+			{ key: "custom", label: t("period.custom") },
+		],
+		[t]
+	)
 
 	const handlePeriodClick = (period: JournalPeriod) => {
 		if (period === "custom") {

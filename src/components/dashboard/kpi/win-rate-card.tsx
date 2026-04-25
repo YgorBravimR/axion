@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { formatChartPercent } from "@/lib/formatting"
 import { StatCard } from "@/components/shared"
@@ -61,6 +62,33 @@ const WinRateCard = ({
 	const colorClass = getThresholdColorClass(winRate, 50)
 	const hasData = winRate !== null
 
+	const subValue = useMemo(
+		() =>
+			hasData ? (
+				<p className="flex gap-s-200">
+					<span className="text-trade-buy">
+						{winCount}
+						{t("w")}
+					</span>
+					{"/"}
+					<span className="text-trade-sell">
+						{lossCount}
+						{t("l")}
+					</span>
+					{(breakevenCount ?? 0) > 0 && (
+						<>
+							{"/"}
+							<span>
+								{breakevenCount}
+								{t("be")}
+							</span>
+						</>
+					)}
+				</p>
+			) : undefined,
+		[hasData, winCount, lossCount, breakevenCount, t]
+	)
+
 	return (
 		<StatCard
 			label={t("winRate")}
@@ -71,30 +99,7 @@ const WinRateCard = ({
 					<WinRateRing rate={winRate} colorClass={colorClass} />
 				) : undefined
 			}
-			subValue={
-				hasData ? (
-					<p className="flex gap-s-200">
-						<span className="text-trade-buy">
-							{winCount}
-							{t("w")}
-						</span>
-						{"/"}
-						<span className="text-trade-sell">
-							{lossCount}
-							{t("l")}
-						</span>
-						{(breakevenCount ?? 0) > 0 && (
-							<>
-								{"/"}
-								<span>
-									{breakevenCount}
-									{t("be")}
-								</span>
-							</>
-						)}
-					</p>
-				) : undefined
-			}
+			subValue={subValue}
 		/>
 	)
 }

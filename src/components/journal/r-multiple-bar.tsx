@@ -11,6 +11,12 @@ interface RMultipleBarProps {
 	className?: string
 }
 
+// Pure math function — hoisted to module scope to avoid re-creation on every render
+const normalizeToPercent = (value: number, maxR: number): number => {
+	const clamped = Math.max(-maxR, Math.min(maxR, value))
+	return ((clamped + maxR) / (2 * maxR)) * 100
+}
+
 export const RMultipleBar = ({
 	planned,
 	actual,
@@ -19,14 +25,8 @@ export const RMultipleBar = ({
 }: RMultipleBarProps) => {
 	const t = useTranslations("journal.rMultiple")
 
-	// Normalize values to percentage of maxR
-	const normalizeToPercent = (value: number) => {
-		const clamped = Math.max(-maxR, Math.min(maxR, value))
-		return ((clamped + maxR) / (2 * maxR)) * 100
-	}
-
-	const actualPercent = normalizeToPercent(actual)
-	const plannedPercent = planned ? normalizeToPercent(planned) : null
+	const actualPercent = normalizeToPercent(actual, maxR)
+	const plannedPercent = planned ? normalizeToPercent(planned, maxR) : null
 	const zeroPercent = 50 // Zero is at the center
 
 	const isPositive = actual > 0
@@ -59,7 +59,7 @@ export const RMultipleBar = ({
 				{actual !== 0 && (
 					<div
 						className={cn(
-							"absolute top-0 h-full rounded-full transition-[width,left]",
+							"absolute top-0 h-full rounded-full transition-[width,left] motion-reduce:transition-none",
 							isPositive ? "bg-trade-buy" : "bg-trade-sell"
 						)}
 						style={{

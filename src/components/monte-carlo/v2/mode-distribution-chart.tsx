@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { memo, useMemo } from "react"
 import { PieChart, Pie, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
@@ -24,7 +24,7 @@ interface CustomTooltipProps {
 	}>
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	if (!active || !payload || payload.length === 0) return null
 
 	const data = payload[0].payload
@@ -37,7 +37,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 			</p>
 		</div>
 	)
-}
+})
 
 const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 	const t = useTranslations("monteCarlo.v2.charts")
@@ -82,6 +82,8 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 		[data]
 	)
 
+	const tooltipContent = useMemo(() => <CustomTooltip />, [])
+
 	return (
 		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
 			<h3 className="mb-m-400 text-body text-txt-100 font-semibold">
@@ -112,7 +114,7 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 								/>
 							))}
 						</Pie>
-						<ChartTooltip content={<CustomTooltip />} />
+						<ChartTooltip content={tooltipContent} />
 					</PieChart>
 				</ChartContainer>
 				</div>

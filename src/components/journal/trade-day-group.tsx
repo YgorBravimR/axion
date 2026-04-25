@@ -52,6 +52,8 @@ export const TradeDayGroup = memo(({
 		setIsExpanded((prev) => !prev)
 	}, [])
 
+	const formatBrl = useCallback((v: number) => formatBrlWithSign(v), [])
+
 	return (
 		<div className="border-bg-300 bg-bg-200 overflow-hidden rounded-lg border">
 			{/* Header - Collapsible */}
@@ -81,7 +83,7 @@ export const TradeDayGroup = memo(({
 						value={summary.netPnl}
 						showSign
 						size="sm"
-						formatFn={(v) => formatBrlWithSign(v)}
+						formatFn={formatBrl}
 						className="font-semibold"
 					/>
 

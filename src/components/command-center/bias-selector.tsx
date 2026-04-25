@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import {
 	Select,
 	SelectContent,
@@ -60,7 +59,10 @@ export const BiasSelector = ({
 			onValueChange={handleValueChange}
 			disabled={disabled}
 		>
-			<SelectTrigger id="bias-selector" className={cn("w-full", compact && "h-8 w-28")}>
+			<SelectTrigger
+				id="bias-selector"
+				className={cn("w-full", compact && "h-8 w-28")}
+			>
 				<SelectValue placeholder={t("selectBias")}>
 					{value ? (
 						<BiasDisplay bias={value} compact={compact} />
@@ -97,15 +99,6 @@ export const BiasDisplay = ({ bias, compact = false }: BiasDisplayProps) => {
 	const config = biasConfig[bias]
 	const Icon = config.icon
 
-	const labels = useMemo<Record<BiasType, string>>(
-		() => ({
-			long: t("biasLong"),
-			short: t("biasShort"),
-			neutral: t("biasNeutral"),
-		}),
-		[t],
-	)
-
 	if (compact) {
 		return (
 			<div className={cn("gap-s-100 flex items-center", config.color)}>
@@ -117,7 +110,15 @@ export const BiasDisplay = ({ bias, compact = false }: BiasDisplayProps) => {
 	return (
 		<div className={cn("gap-s-100 flex items-center", config.color)}>
 			<Icon className={cn("h-4 w-4", config.color)} />
-			<span>{labels[bias]}</span>
+			<span>
+				{t(
+					bias === "long"
+						? "biasLong"
+						: bias === "short"
+							? "biasShort"
+							: "biasNeutral"
+				)}
+			</span>
 		</div>
 	)
 }

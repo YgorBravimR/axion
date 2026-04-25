@@ -165,7 +165,7 @@ const JournalContent = () => {
 		(k) => k !== "_qf"
 	).length
 
-	const handleFiltersChange = (filters: Record<string, string | string[]>) => {
+	const handleFiltersChange = useCallback((filters: Record<string, string | string[]>) => {
 		// Write to URL params
 		const updates: Record<string, string | string[] | null> = {
 			outcomes: (filters.outcomes as string[]) ?? null,
@@ -179,9 +179,9 @@ const JournalContent = () => {
 			pnlMax: (filters.pnlMax as string) ?? null,
 		}
 		urlParams.set(updates)
-	}
+	}, [urlParams])
 
-	const handleFiltersClear = () => {
+	const handleFiltersClear = useCallback(() => {
 		urlParams.set({
 			outcomes: null,
 			directions: null,
@@ -194,7 +194,7 @@ const JournalContent = () => {
 			pnlMax: null,
 			qf: null,
 		})
-	}
+	}, [urlParams])
 
 	// Delete state — lifted here so it applies across all day groups
 	const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null)
@@ -339,24 +339,40 @@ const JournalContent = () => {
 	)
 
 	// Calculate period summary
-	const periodSummary = tradesByDay.reduce(
-		(acc, day) => {
-			acc.netPnl += day.summary.netPnl
-			acc.wins += day.summary.wins
-			acc.losses += day.summary.losses
-			acc.breakevens += day.summary.breakevens
-			return acc
-		},
-		{ netPnl: 0, wins: 0, losses: 0, breakevens: 0 }
+	const periodSummary = useMemo(
+		() =>
+			tradesByDay.reduce(
+				(acc, day) => {
+					acc.netPnl += day.summary.netPnl
+					acc.wins += day.summary.wins
+					acc.losses += day.summary.losses
+					acc.breakevens += day.summary.breakevens
+					return acc
+				},
+				{ netPnl: 0, wins: 0, losses: 0, breakevens: 0 }
+			),
+		[tradesByDay]
 	)
-	const periodWinRate =
-		periodSummary.wins + periodSummary.losses > 0
-			? (periodSummary.wins / (periodSummary.wins + periodSummary.losses)) * 100
-			: 0
+	const periodWinRate = useMemo(
+		() =>
+			periodSummary.wins + periodSummary.losses > 0
+				? (periodSummary.wins / (periodSummary.wins + periodSummary.losses)) * 100
+				: 0,
+		[periodSummary]
+	)
 
 	const availableAssets = useMemo(
 		() => [...new Set(tradesByDay.flatMap((d) => d.trades.map((trade) => trade.asset)))],
 		[tradesByDay]
+	)
+
+	const formatBrl = useCallback((v: number) => formatBrlWithSign(v), [])
+
+	const handleQuickFilterChange = useCallback(
+		(key: string | null) => {
+			urlParams.set({ qf: key ?? null })
+		},
+		[urlParams]
 	)
 
 	return (
@@ -384,7 +400,7 @@ const JournalContent = () => {
 						<ColoredValue
 							value={periodSummary.netPnl}
 							showSign
-							formatFn={(v) => formatBrlWithSign(v)}
+							formatFn={formatBrl}
 							className="font-medium"
 						/>
 						<span className="text-txt-300">
@@ -407,9 +423,7 @@ const JournalContent = () => {
 				onClear={handleFiltersClear}
 				activeFilterCount={extendedFilterCount}
 				activeQuickFilterKey={extendedFilters._qf as string | undefined}
-				onQuickFilterChange={(key) => {
-					urlParams.set({ qf: key ?? null })
-				}}
+				onQuickFilterChange={handleQuickFilterChange}
 			/>
 
 			{/* Loading State */}

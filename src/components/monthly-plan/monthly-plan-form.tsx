@@ -305,7 +305,7 @@ const MonthlyPlanForm = ({
 			maxDailyTrades: maxTradesOverride,
 			weeklyLossPercent: weeklyLossPct,
 		})
-	}, [form])
+	}, [accountBalance, riskPerTradePercent, dailyLossPercent, monthlyLossPercent, dailyProfitTargetPercent, maxDailyTrades, weeklyLossPercent])
 
 	// Live preview computation (profile mode — resolved from decision tree)
 	const profilePreview = useMemo(() => {

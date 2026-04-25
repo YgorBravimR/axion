@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, type ReactNode } from "react"
+import { useMemo, useCallback, type ReactNode } from "react"
 import { Flame, Trophy, AlertTriangle, Activity } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import type { StreakData, OverallStats } from "@/types"
@@ -51,10 +51,13 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 	const t = useTranslations("dashboard.quickStats")
 	const locale = useLocale() as Locale
 
-	const formatDate = (dateStr: string): string => {
-		const date = new Date(dateStr)
-		return formatDateLocale(date, locale, { month: "short", day: "numeric" })
-	}
+	const formatDate = useCallback(
+		(dateStr: string): string => {
+			const date = new Date(dateStr)
+			return formatDateLocale(date, locale, { month: "short", day: "numeric" })
+		},
+		[locale]
+	)
 
 	const streak = useMemo(() => {
 		if (!streakData || streakData.currentStreakType === "none") {

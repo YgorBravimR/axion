@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import type { MarketQuote } from "@/types/market"
 import { cn } from "@/lib/utils"
@@ -13,7 +14,7 @@ interface HeroQuoteCardProps {
 	quote: MarketQuote
 }
 
-export const HeroQuoteCard = ({ quote }: HeroQuoteCardProps) => {
+export const HeroQuoteCard = memo(({ quote }: HeroQuoteCardProps) => {
 	const t = useTranslations("market.status")
 	const isPositive = quote.change >= 0
 	const isZero = quote.change === 0
@@ -58,4 +59,5 @@ export const HeroQuoteCard = ({ quote }: HeroQuoteCardProps) => {
 			</span>
 		</div>
 	)
-}
+})
+HeroQuoteCard.displayName = "HeroQuoteCard"

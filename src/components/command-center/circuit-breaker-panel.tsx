@@ -1,6 +1,6 @@
 "use client"
 
-import type { ElementType } from "react"
+import { useMemo, memo, type ElementType } from "react"
 import {
 	AlertTriangle,
 	CheckCircle,
@@ -116,7 +116,7 @@ export interface MetricCellProps {
 	valueClassName?: string
 }
 
-export const MetricCell = ({
+export const MetricCell = memo(({
 	label,
 	value,
 	subLabel,
@@ -131,7 +131,8 @@ export const MetricCell = ({
 			<dd className="text-tiny text-txt-300">{subLabel}</dd>
 		)}
 	</dl>
-)
+))
+MetricCell.displayName = "CircuitBreakerMetricCell"
 
 export const CircuitBreakerPanel = ({
 	status,
@@ -169,13 +170,16 @@ export const CircuitBreakerPanel = ({
 			? fromCents(status.monthlyLossLimitCents)
 			: null
 
-	// Daily P&L sub-label
-	const dailyPnLSubLabel =
-		profitTarget && status.dailyPnL >= 0
-			? `${t("target")}: ${formatCurrency(profitTarget)}`
-			: lossLimit
-				? `${t("limit")}: ${formatCurrency(lossLimit)}`
-				: undefined
+	// Daily P&L sub-label — memoized to avoid string construction each render
+	const dailyPnLSubLabel = useMemo(
+		() =>
+			profitTarget && status.dailyPnL >= 0
+				? `${t("target")}: ${formatCurrency(profitTarget)}`
+				: lossLimit
+					? `${t("limit")}: ${formatCurrency(lossLimit)}`
+					: undefined,
+		[profitTarget, lossLimit, status.dailyPnL, t, formatCurrency]
+	)
 
 	return (
 		<div

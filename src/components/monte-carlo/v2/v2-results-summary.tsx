@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Dices } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,14 +15,17 @@ const V2ResultsSummary = ({ params, onRunAgain }: V2ResultsSummaryProps) => {
 	const t = useTranslations("monteCarlo.v2.results")
 
 	const { profile } = params
-	const impliedPF =
-		profile.winRate > 0 && profile.winRate < 100
-			? (
-					(profile.winRate / 100) *
-					profile.rewardRiskRatio /
-					(1 - profile.winRate / 100)
-				).toFixed(2)
-			: null
+	const impliedPF = useMemo(
+		() =>
+			profile.winRate > 0 && profile.winRate < 100
+				? (
+						(profile.winRate / 100) *
+						profile.rewardRiskRatio /
+						(1 - profile.winRate / 100)
+					).toFixed(2)
+				: null,
+		[profile.winRate, profile.rewardRiskRatio]
+	)
 
 	return (
 		<div

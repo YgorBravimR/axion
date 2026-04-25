@@ -57,6 +57,14 @@ export const MonthlyPlanTab = ({
 		return false
 	}, [year, month])
 
+	const selectedProfileName = useMemo(
+		() =>
+			plan?.riskProfileId
+				? riskProfiles.find((p) => p.id === plan.riskProfileId)?.name ?? null
+				: null,
+		[plan?.riskProfileId, riskProfiles]
+	)
+
 	const handleNavigateMonth = useCallback(async (direction: -1 | 1) => {
 		let newMonth = month + direction
 		let newYear = year
@@ -220,9 +228,7 @@ export const MonthlyPlanTab = ({
 			{!loading && plan && !isEditing && (
 				<MonthlyPlanSummary
 					plan={plan}
-					profileName={plan.riskProfileId
-						? riskProfiles.find((p) => p.id === plan.riskProfileId)?.name ?? null
-						: null}
+					profileName={selectedProfileName}
 				/>
 			)}
 		</div>

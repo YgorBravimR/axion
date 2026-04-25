@@ -8,7 +8,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -60,7 +60,7 @@ export const DetailedTradeImporter = ({
 	/**
 	 * Handle broker selection and CSV upload
 	 */
-	const handleSelectStep = async () => {
+	const handleSelectStep = useCallback(async () => {
 		if (!brokerName || !csvFile) {
 			setError(t("errors.selectBrokerAndFile"))
 			return
@@ -109,12 +109,12 @@ export const DetailedTradeImporter = ({
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [accountId, brokerName, csvFile, t])
 
 	/**
 	 * Confirm import and commit trades
 	 */
-	const handleConfirmImport = async () => {
+	const handleConfirmImport = useCallback(async () => {
 		if (!importId) {
 			setError(t("errors.missingImportId"))
 			return
@@ -157,7 +157,7 @@ export const DetailedTradeImporter = ({
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [accountId, importId, brokerName, preview, router, showToast, t])
 
 	// Step 1: Select Broker & Upload
 	if (step === "select") {

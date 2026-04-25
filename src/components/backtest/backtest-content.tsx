@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo } from "react"
+import { useState, useTransition, useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
@@ -58,13 +58,15 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const selectedSource = dataSources[selectedSourceIndex]
 
 	// Compute valuePerPoint from selected asset: tickValue / tickSize
-	const assetValuePerPointCents = selectedSource
-		? Math.round(
-				selectedSource.assetTickValueCents / selectedSource.assetTickSize
-			)
-		: 20
+	const assetValuePerPointCents = useMemo(
+		() =>
+			selectedSource
+				? Math.round(selectedSource.assetTickValueCents / selectedSource.assetTickSize)
+				: 20,
+		[selectedSource]
+	)
 
-	const handlePresetChange = (value: string) => {
+	const handlePresetChange = useCallback((value: string) => {
 		const index = parseInt(value, 10)
 		const preset = { ...ALL_PRESETS[index] }
 		// Auto-fill valuePerPoint from asset
@@ -75,17 +77,17 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			}
 		}
 		setRecipe(preset)
-	}
+	}, [assetValuePerPointCents])
 
-	const handleStrategyChange = (type: string) => {
+	const handleStrategyChange = useCallback((type: string) => {
 		if (type === "orb_breakout") {
 			setRecipe(orbPresets[0])
 		} else if (type === "macd_wma_alignment") {
 			setRecipe(dezkPresets[0])
 		}
-	}
+	}, [])
 
-	const handleSourceChange = (value: string) => {
+	const handleSourceChange = useCallback((value: string) => {
 		const index = parseInt(value, 10)
 		setSelectedSourceIndex(index)
 		// Auto-update valuePerPoint in recipe when asset changes
@@ -100,9 +102,9 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						: prev.sizing,
 			}))
 		}
-	}
+	}, [dataSources, recipe.sizing.type])
 
-	const handleQuickRange = (value: string) => {
+	const handleQuickRange = useCallback((value: string) => {
 		setQuickRangeKey(value)
 		const now = new Date()
 		let from: Date
@@ -132,19 +134,19 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		}
 
 		setDateRange({ from, to })
-	}
+	}, [])
 
-	const handleDateRangeManual = (range: DateRange | undefined) => {
+	const handleDateRangeManual = useCallback((range: DateRange | undefined) => {
 		setDateRange(range)
 		setQuickRangeKey("custom")
-	}
+	}, [])
 
-	const handleReset = () => {
+	const handleReset = useCallback(() => {
 		setResult(null)
 		setHasRun(false)
-	}
+	}, [])
 
-	const handleRun = () => {
+	const handleRun = useCallback(() => {
 		if (!selectedSource || !dateFrom || !dateTo) {
 			showToast("error", t("errors.missingSelection"))
 			return
@@ -178,7 +180,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 				showToast("error", response.error ?? t("errors.engineError"))
 			}
 		})
-	}
+	}, [selectedSource, dateFrom, dateTo, showToast, t, showLoading, startTransition, recipe, hideLoading])
 
 	return (
 		<div className="space-y-m-500">

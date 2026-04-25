@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Search, X, Plus, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -175,12 +175,12 @@ const SmartSearch = ({
 	const tCommon = useTranslations("common")
 
 	/** Translate select option labels based on field type */
-	const translateLabel = (field: FilterField, labelKey: string): string => {
+	const translateLabel = useCallback((field: FilterField, labelKey: string): string => {
 		if (field === "outcome") return tTrade(`outcome.${labelKey}`)
 		if (field === "direction") return tTrade(`direction.${labelKey}`)
 		if (field === "followedPlan") return labelKey === "yes" ? tCommon("yes") : tCommon("no")
 		return labelKey
-	}
+	}, [tTrade, tCommon])
 
 	const [isOpen, setIsOpen] = useState(false)
 	const [conditions, setConditions] = useState<FilterCondition[]>([])
@@ -241,7 +241,10 @@ const SmartSearch = ({
 		onClear()
 	}
 
-	const selectedFieldConfig = FIELD_CONFIGS.find((f) => f.key === newField)
+	const selectedFieldConfig = useMemo(
+		() => FIELD_CONFIGS.find((f) => f.key === newField),
+		[newField]
+	)
 
 	return (
 		<div className="space-y-s-200">

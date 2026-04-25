@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Globe, Database, LineChart, Lock } from "lucide-react"
 import {
@@ -12,6 +13,17 @@ import {
 import type { DataSourceOption, DataSource } from "@/types/monte-carlo"
 
 const MIN_TRADES = 10
+
+const getIcon = (type: DataSource["type"]) => {
+	switch (type) {
+		case "strategy":
+			return <LineChart className="h-4 w-4" />
+		case "all_strategies":
+			return <Database className="h-4 w-4" />
+		case "universal":
+			return <Globe className="h-4 w-4" />
+	}
+}
 
 interface DataSourceSelectorProps {
 	options: DataSourceOption[]
@@ -28,7 +40,7 @@ const DataSourceSelector = ({
 }: DataSourceSelectorProps) => {
 	const t = useTranslations("monteCarlo.dataSource")
 
-	const handleValueChange = (value: string) => {
+	const handleValueChange = useCallback((value: string) => {
 		if (value === "all_strategies") {
 			onSourceChange({ type: "all_strategies" })
 		} else if (value === "universal") {
@@ -36,32 +48,21 @@ const DataSourceSelector = ({
 		} else {
 			onSourceChange({ type: "strategy", strategyId: value })
 		}
-	}
+	}, [onSourceChange])
 
-	const getCurrentValue = (): string => {
+	const getCurrentValue = useCallback((): string => {
 		if (!selectedSource) return ""
 		if (selectedSource.type === "strategy") return selectedSource.strategyId
 		return selectedSource.type
-	}
+	}, [selectedSource])
 
-	const getIcon = (type: DataSource["type"]) => {
-		switch (type) {
-			case "strategy":
-				return <LineChart className="h-4 w-4" />
-			case "all_strategies":
-				return <Database className="h-4 w-4" />
-			case "universal":
-				return <Globe className="h-4 w-4" />
-		}
-	}
+	const { hasAnyDisabled, strategyOptions, aggregateOptions } = useMemo(() => ({
+		hasAnyDisabled: options.some((o) => o.disabled),
+		strategyOptions: options.filter((o) => o.type === "strategy"),
+		aggregateOptions: options.filter((o) => o.type !== "strategy"),
+	}), [options])
 
-	const hasAnyDisabled = options.some((o) => o.disabled)
-
-	// Group options by type
-	const strategyOptions = options.filter((o) => o.type === "strategy")
-	const aggregateOptions = options.filter((o) => o.type !== "strategy")
-
-	const renderTradeCount = (option: DataSourceOption) => {
+	const renderTradeCount = useCallback((option: DataSourceOption) => {
 		if (option.disabled) {
 			return (
 				<span className="text-tiny text-txt-300 ml-auto flex items-center gap-1">
@@ -78,7 +79,7 @@ const DataSourceSelector = ({
 				({option.tradesCount} {t("trades")})
 			</span>
 		)
-	}
+	}, [t])
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">

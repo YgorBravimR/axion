@@ -64,14 +64,18 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 	const [pendingId, setPendingId] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<AssetWithType | null>(null)
 
-	const filteredAssets = useMemo(() => assets.filter((asset) => {
-		const matchesSearch =
-			asset.symbol.toLowerCase().includes(search.toLowerCase()) ||
-			asset.name.toLowerCase().includes(search.toLowerCase())
-		const matchesType = !filterType || asset.assetTypeId === filterType
-		const matchesActive = showInactive || asset.isActive
-		return matchesSearch && matchesType && matchesActive
-	}), [assets, search, filterType, showInactive])
+	const filteredAssets = useMemo(
+		() =>
+			assets.filter((asset) => {
+				const matchesSearch =
+					asset.symbol.toLowerCase().includes(search.toLowerCase()) ||
+					asset.name.toLowerCase().includes(search.toLowerCase())
+				const matchesType = !filterType || asset.assetTypeId === filterType
+				const matchesActive = showInactive || asset.isActive
+				return matchesSearch && matchesType && matchesActive
+			}),
+		[assets, search, filterType, showInactive]
+	)
 
 	const handleEdit = useCallback((asset: AssetWithType) => {
 		setEditingAsset(asset)
@@ -84,7 +88,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			await toggleAssetActive(asset.id, !asset.isActive)
 			setPendingId(null)
 		})
-	}, [startTransition])
+	}, [])
 
 	const handleDelete = useCallback((asset: AssetWithType) => {
 		setDeleteTarget(asset)
@@ -99,7 +103,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			setPendingId(null)
 			setDeleteTarget(null)
 		})
-	}, [deleteTarget, startTransition])
+	}, [deleteTarget])
 
 	const handleFormClose = () => {
 		setFormOpen(false)
@@ -112,7 +116,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 				accessorKey: "symbol",
 				header: t("symbol"),
 				cell: ({ row }) => (
-					<span className="whitespace-nowrap font-mono font-medium text-acc-100">
+					<span className="text-acc-100 font-mono font-medium whitespace-nowrap">
 						{row.original.symbol}
 					</span>
 				),
@@ -140,30 +144,43 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			},
 			{
 				accessorKey: "tickSize",
-				meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
+				meta: {
+					headerClassName: "hidden sm:table-cell",
+					cellClassName: "hidden sm:table-cell",
+				},
 				header: () => <span className="flex justify-end">{t("tickSize")}</span>,
 				cell: ({ row }) => (
-					<span className="flex justify-end font-mono text-txt-200">
+					<span className="text-txt-200 flex justify-end font-mono">
 						{parseFloat(row.original.tickSize)}
 					</span>
 				),
 			},
 			{
 				accessorKey: "tickValue",
-				meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
-				header: () => <span className="flex justify-end">{t("tickValue")}</span>,
+				meta: {
+					headerClassName: "hidden sm:table-cell",
+					cellClassName: "hidden sm:table-cell",
+				},
+				header: () => (
+					<span className="flex justify-end">{t("tickValue")}</span>
+				),
 				cell: ({ row }) => (
-					<span className="flex justify-end font-mono text-txt-200">
+					<span className="text-txt-200 flex justify-end font-mono">
 						{fromCents(row.original.tickValue)}
 					</span>
 				),
 			},
 			{
 				accessorKey: "currency",
-				meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
-				header: () => <span className="flex justify-center">{t("currency")}</span>,
+				meta: {
+					headerClassName: "hidden sm:table-cell",
+					cellClassName: "hidden sm:table-cell",
+				},
+				header: () => (
+					<span className="flex justify-center">{t("currency")}</span>
+				),
 				cell: ({ row }) => (
-					<span className="flex justify-center text-txt-200">
+					<span className="text-txt-200 flex justify-center">
 						{row.original.currency}
 					</span>
 				),
@@ -171,7 +188,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			},
 			{
 				id: "status",
-				header: () => <span className="flex justify-center">{tCommon("status")}</span>,
+				header: () => (
+					<span className="flex justify-center">{tCommon("status")}</span>
+				),
 				cell: ({ row }) => (
 					<span className="flex justify-center">
 						<Badge
@@ -187,13 +206,15 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			},
 			{
 				id: "actions",
-				header: () => <span className="flex justify-end">{tCommon("actions")}</span>,
+				header: () => (
+					<span className="flex justify-end">{tCommon("actions")}</span>
+				),
 				cell: ({ row }) => {
 					const asset = row.original
 					return (
-						<div className="flex items-center justify-end gap-s-200">
+						<div className="gap-s-200 flex items-center justify-end">
 							{isPending && pendingId === asset.id ? (
-								<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
+								<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							) : (
 								<>
 									<Button
@@ -218,12 +239,12 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 									>
 										{asset.isActive ? (
 											<ToggleRight
-												className="h-4 w-4 text-trade-buy"
+												className="text-trade-buy h-4 w-4"
 												aria-hidden="true"
 											/>
 										) : (
 											<ToggleLeft
-												className="h-4 w-4 text-txt-300"
+												className="text-txt-300 h-4 w-4"
 												aria-hidden="true"
 											/>
 										)}
@@ -233,7 +254,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 										variant="ghost"
 										size="sm"
 										onClick={() => handleDelete(asset)}
-										className="h-9 w-9 p-0 text-fb-error hover:text-fb-error"
+										className="text-fb-error hover:text-fb-error h-9 w-9 p-0"
 										aria-label={`${tCommon("delete")} ${asset.symbol}`}
 									>
 										<Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -246,25 +267,34 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 				enableSorting: false,
 			},
 		],
-		[t, tCommon, isPending, pendingId, handleEdit, handleToggleActive, handleDelete, handleConfirmDelete]
+		[
+			t,
+			tCommon,
+			isPending,
+			pendingId,
+			handleEdit,
+			handleToggleActive,
+			handleDelete,
+			handleConfirmDelete,
+		]
 	)
 
 	return (
 		<div id="settings-assets" className="space-y-m-400">
 			{/* Header */}
-			<div className="flex flex-wrap items-center justify-between gap-m-400">
-				<div className="flex items-center gap-s-300">
+			<div className="gap-m-400 flex flex-wrap items-center justify-between">
+				<div className="gap-s-300 flex items-center">
 					<div className="relative">
-						<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-txt-300" />
+						<Search className="text-txt-300 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
 						<Input
 							id="asset-search"
 							placeholder={t("searchAssets")}
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							className="w-full sm:w-64 pl-9"
+							className="w-full pl-9 sm:w-64"
 						/>
 					</div>
-					<div className="flex gap-s-200">
+					<div className="gap-s-200 flex">
 						<Badge
 							id="badge-asset-filter-all"
 							variant={filterType === null ? "default" : "outline"}
@@ -301,7 +331,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 						))}
 					</div>
 				</div>
-				<div className="flex items-center gap-s-300">
+				<div className="gap-s-300 flex items-center">
 					<Button
 						id="asset-toggle-inactive"
 						variant="ghost"

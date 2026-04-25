@@ -16,18 +16,23 @@ const COUNTRY_FLAGS: Record<string, string> = {
 }
 
 /**
+ * Stable Intl.DateTimeFormat instance — created once at module scope.
+ * Always formats in Brazil time (America/Sao_Paulo) regardless of browser timezone.
+ */
+const EVENT_TIME_FORMATTER = new Intl.DateTimeFormat([], {
+	hour: "2-digit",
+	minute: "2-digit",
+	timeZone: "America/Sao_Paulo",
+})
+
+/**
  * Formats an ISO date string to Brazil time (HH:MM).
  * Always uses America/Sao_Paulo regardless of the user's browser timezone.
  */
 const formatEventTime = (isoDate: string): string => {
 	const date = new Date(isoDate)
 	if (Number.isNaN(date.getTime())) return isoDate
-
-	return date.toLocaleTimeString([], {
-		hour: "2-digit",
-		minute: "2-digit",
-		timeZone: "America/Sao_Paulo",
-	})
+	return EVENT_TIME_FORMATTER.format(date)
 }
 
 const ImpactDot = ({ impact }: { impact: EventImpact }) => {

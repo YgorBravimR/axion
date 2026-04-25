@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import {
 	ChevronLeft,
@@ -39,36 +39,40 @@ export const DateNavigator = ({
 	const t = useTranslations("commandCenter.dateNavigator")
 	const router = useRouter()
 	const pathname = usePathname()
+	const locale = useLocale()
 	const [isAdvancing, setIsAdvancing] = useState(false)
 
-	const handleNavigate = (offset: number) => {
-		const date = new Date(currentDate + "T12:00:00")
-		date.setDate(date.getDate() + offset)
-		const newDateStr = formatDateKey(date)
+	const handleNavigate = useCallback(
+		(offset: number) => {
+			const date = new Date(currentDate + "T12:00:00")
+			date.setDate(date.getDate() + offset)
+			const newDateStr = formatDateKey(date)
 
-		// For replay accounts, "today" is the replay date — just remove the param
-		if (isReplayAccount) {
-			// Can't navigate forward past replay date
-			router.push(`${pathname}?date=${newDateStr}`)
-			return
-		}
+			// For replay accounts, "today" is the replay date — just remove the param
+			if (isReplayAccount) {
+				// Can't navigate forward past replay date
+				router.push(`${pathname}?date=${newDateStr}`)
+				return
+			}
 
-		// For normal accounts, check if navigating to actual today
-		const today = new Date()
-		const todayStr = formatDateKey(today)
+			// For normal accounts, check if navigating to actual today
+			const today = new Date()
+			const todayStr = formatDateKey(today)
 
-		if (newDateStr === todayStr) {
-			router.push(pathname)
-		} else {
-			router.push(`${pathname}?date=${newDateStr}`)
-		}
-	}
+			if (newDateStr === todayStr) {
+				router.push(pathname)
+			} else {
+				router.push(`${pathname}?date=${newDateStr}`)
+			}
+		},
+		[currentDate, isReplayAccount, router, pathname]
+	)
 
-	const handleGoToToday = () => {
+	const handleGoToToday = useCallback(() => {
 		router.push(pathname)
-	}
+	}, [router, pathname])
 
-	const handleAdvanceReplayDate = async () => {
+	const handleAdvanceReplayDate = useCallback(async () => {
 		setIsAdvancing(true)
 		const result = await advanceReplayDate()
 		setIsAdvancing(false)
@@ -76,9 +80,10 @@ export const DateNavigator = ({
 		if (result.status === "success") {
 			router.refresh()
 		}
-	}
+	}, [router])
 
-	const locale = useLocale()
+	const handleNavigatePrev = useCallback(() => handleNavigate(-1), [handleNavigate])
+	const handleNavigateNext = useCallback(() => handleNavigate(1), [handleNavigate])
 
 	return (
 		<div id="cc-date-navigator" className="gap-s-200 flex flex-wrap items-center">
@@ -86,7 +91,7 @@ export const DateNavigator = ({
 				id="date-nav-previous"
 				variant="ghost"
 				size="sm"
-				onClick={() => handleNavigate(-1)}
+				onClick={handleNavigatePrev}
 				aria-label={t("previousDay")}
 				tabIndex={0}
 				className="size-10 sm:size-9 p-0"
@@ -114,7 +119,7 @@ export const DateNavigator = ({
 				id="date-nav-next"
 				variant="ghost"
 				size="sm"
-				onClick={() => handleNavigate(1)}
+				onClick={handleNavigateNext}
 				disabled={isToday}
 				aria-label={t("nextDay")}
 				tabIndex={0}

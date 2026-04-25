@@ -129,6 +129,16 @@ const getEndOfDayLocal = (referenceDate?: Date): string => {
 
 type TradeWithTags = Trade & { tradeTags?: Array<{ tag: Tag }> }
 
+// Static grade constants — hoisted to avoid re-creation on every render
+const GRADES = ["A", "B", "C", "D", "F"] as const
+const GRADE_COLORS: Record<string, string> = {
+	A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
+	B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
+	C: "border-warning bg-warning/10 text-warning",
+	D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
+	F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
+}
+
 /** Build form values from an existing trade (used for both initial state and reset) */
 const buildTradeFormValues = (
 	trade: TradeWithTags
@@ -232,17 +242,23 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			}
 		}, [])
 
-		const effectiveNow = defaultDate ? new Date(defaultDate) : new Date()
+		const effectiveNow = useMemo(
+			() => (defaultDate ? new Date(defaultDate) : new Date()),
+			// eslint-disable-next-line react-hooks/exhaustive-deps -- date string is stable for component lifetime
+			[]
+		)
+		const endOfDay = useMemo(() => getEndOfDayLocal(effectiveNow), [effectiveNow])
 
 		// Resolve default asset symbol for new trades
-		const resolvedDefaultAssetSymbol = (() => {
+		const resolvedDefaultAssetSymbol = useMemo(() => {
 			if (initialSharedState?.asset) return initialSharedState.asset
 			if (defaultAssetId && assets.length > 0) {
 				const match = assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId)
 				return match?.symbol
 			}
 			return undefined
-		})()
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- deps are stable on mount
+		}, [initialSharedState?.asset, defaultAssetId, assets])
 
 		const defaultValues: Partial<TradeFormInput> = trade
 			? buildTradeFormValues(trade)
@@ -331,6 +347,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const stopLoss = watch("stopLoss")
 		const takeProfit = watch("takeProfit")
 		const selectedTagIds = watch("tagIds") || []
+		const setupRank = watch("setupRank")
+		const followedPlan = watch("followedPlan")
+		const currentRating = watch("rating")
+		const strategyId = watch("strategyId")
 		const tValidation = useTranslations("trade.validation")
 
 		// Real-time SL/TP cross-field validation indicators
@@ -525,6 +545,22 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const setupTags = useMemo(() => localTags.filter((t) => t.type === "setup"), [localTags])
 		const mistakeTags = useMemo(() => localTags.filter((t) => t.type === "mistake"), [localTags])
 		const generalTags = useMemo(() => localTags.filter((t) => t.type === "general"), [localTags])
+
+		// Stable arrays/callbacks for ImageUpload to prevent unnecessary re-renders
+		const persistedImages = useMemo(
+			() => (persistedScreenshot ? [persistedScreenshot] : []),
+			[persistedScreenshot]
+		)
+		const pendingImages = useMemo(
+			() => (pendingScreenshot ? [pendingScreenshot] : []),
+			[pendingScreenshot]
+		)
+		const handleFileAdd = useCallback(
+			(img: import("@/lib/validations/upload").PendingImage) => setPendingScreenshot(img),
+			[]
+		)
+		const handlePendingRemove = useCallback(() => setPendingScreenshot(null), [])
+		const handlePersistedRemove = useCallback(() => setPersistedScreenshot(null), [])
 
 		// Map fields to tabs for error highlighting
 		const basicFields = [
@@ -792,7 +828,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												<Input
 													id="trade-entry-date"
 													type="datetime-local"
-													max={getEndOfDayLocal(effectiveNow)}
+													max={endOfDay}
 													value={
 														typeof field.value === "string" ? field.value : ""
 													}
@@ -818,7 +854,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												<Input
 													id="trade-exit-date"
 													type="datetime-local"
-													max={getEndOfDayLocal(effectiveNow)}
+													max={endOfDay}
 													value={
 														typeof field.value === "string" ? field.value : ""
 													}
@@ -957,7 +993,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							)}
 
 							{/* Setup Rank — visible when a strategy is selected */}
-							{watch("strategyId") && (
+							{strategyId && (
 								<div id="new-trade-setup-rank" className="space-y-s-200">
 									<Label id="label-trade-setup-rank">{t("setupRank")}</Label>
 									<p className="text-tiny text-txt-300">{t("setupRankHint")}</p>
@@ -970,14 +1006,14 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												onClick={() =>
 													setValue(
 														"setupRank",
-														watch("setupRank") === rank ? null : rank
+														setupRank === rank ? null : rank
 													)
 												}
 												aria-label={`${t("setupRank")}: ${rank}`}
-												aria-checked={watch("setupRank") === rank}
+												aria-checked={setupRank === rank}
 												className={cn(
 													"py-s-300 flex-1 rounded-lg border-2 text-center font-semibold transition-colors",
-													watch("setupRank") === rank
+													setupRank === rank
 														? "border-acc-100 bg-acc-100/10 text-acc-100"
 														: "border-bg-300 text-txt-200 hover:border-acc-100/50"
 												)}
@@ -1358,10 +1394,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										type="button"
 										onClick={() => setValue("followedPlan", true)}
 										aria-label={`${t("followedPlan")}: ${tCommon("yes")}`}
-										aria-pressed={watch("followedPlan") === true}
+										aria-pressed={followedPlan === true}
 										className={cn(
 											"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
-											watch("followedPlan") === true
+											followedPlan === true
 												? "border-trade-buy bg-trade-buy/10 text-trade-buy"
 												: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
 										)}
@@ -1372,10 +1408,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										type="button"
 										onClick={() => setValue("followedPlan", false)}
 										aria-label={`${t("followedPlan")}: ${tCommon("no")}`}
-										aria-pressed={watch("followedPlan") === false}
+										aria-pressed={followedPlan === false}
 										className={cn(
 											"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
-											watch("followedPlan") === false
+											followedPlan === false
 												? "border-trade-sell bg-trade-sell/10 text-trade-sell"
 												: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
 										)}
@@ -1385,7 +1421,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								</div>
 							</div>
 
-							{watch("followedPlan") === false && (
+							{followedPlan === false && (
 								<FormField
 									control={form.control}
 									name="disciplineNotes"
@@ -1418,15 +1454,6 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									{t("ratingHint")}
 								</p>
 								{(() => {
-									const GRADES = ["A", "B", "C", "D", "F"] as const
-									const gradeColors: Record<string, string> = {
-										A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
-										B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
-										C: "border-warning bg-warning/10 text-warning",
-										D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
-										F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
-									}
-									const currentRating = watch("rating")
 									const focusedIndex = currentRating ? GRADES.indexOf(currentRating as typeof GRADES[number]) : 0
 									return (
 										<div
@@ -1461,7 +1488,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 														className={cn(
 															"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors",
 															isSelected
-																? gradeColors[grade]
+																? GRADE_COLORS[grade]
 																: "border-bg-300 text-txt-300 hover:border-txt-300/50"
 														)}
 													>
@@ -1486,13 +1513,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									{t("tradeScreenshotHint")}
 								</p>
 								<ImageUpload
-									persistedImages={
-										persistedScreenshot ? [persistedScreenshot] : []
-									}
-									pendingImages={pendingScreenshot ? [pendingScreenshot] : []}
-									onFileAdd={(img) => setPendingScreenshot(img)}
-									onPendingRemove={() => setPendingScreenshot(null)}
-									onPersistedRemove={() => setPersistedScreenshot(null)}
+									persistedImages={persistedImages}
+									pendingImages={pendingImages}
+									onFileAdd={handleFileAdd}
+									onPendingRemove={handlePendingRemove}
+									onPersistedRemove={handlePersistedRemove}
 									maxImages={1}
 								/>
 							</div>

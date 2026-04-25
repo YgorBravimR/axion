@@ -2,6 +2,11 @@
 
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
+
+const formatDate = (date: Date | string) => {
+	const d = typeof date === "string" ? new Date(date) : date
+	return format(d, "MMM yyyy")
+}
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/shared"
 import { formatR } from "@/lib/formatting"
@@ -33,11 +38,6 @@ export const StatsPreview = ({
 
 	if (!stats) {
 		return null
-	}
-
-	const formatDate = (date: Date | string) => {
-		const d = typeof date === "string" ? new Date(date) : date
-		return format(d, "MMM yyyy")
 	}
 
 	return (

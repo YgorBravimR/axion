@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import {
 	DollarSign,
 	TrendingDown,
@@ -23,7 +24,7 @@ interface SummaryCardProps {
 	iconClass?: string
 }
 
-const SummaryCard = ({
+const SummaryCard = memo(({
 	icon: Icon,
 	label,
 	value,
@@ -40,7 +41,7 @@ const SummaryCard = ({
 			<p className="mt-s-100 text-tiny text-txt-300">{subValue}</p>
 		)}
 	</div>
-)
+))
 
 interface MonthlyPlanSummaryProps {
 	plan: MonthlyPlan

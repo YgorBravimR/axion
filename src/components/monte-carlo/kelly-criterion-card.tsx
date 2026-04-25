@@ -14,10 +14,33 @@ interface KellyCriterionCardProps {
 	statistics: SimulationStatistics
 }
 
+const kellyIntlFormatter = new Intl.NumberFormat(undefined, {
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 0,
+})
+
 const formatKellyPercent = (value: number): string => `${value.toFixed(2)}%`
 
 const formatKellyCurrency = (value: number, symbol = "$"): string =>
-	`${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+	`${symbol}${kellyIntlFormatter.format(value)}`
+
+const levelConfig = {
+	aggressive: {
+		Icon: AlertTriangle,
+		color: "text-warning",
+		bgColor: "bg-warning/10 border-warning/30",
+	},
+	balanced: {
+		Icon: Info,
+		color: "text-acc-100",
+		bgColor: "bg-acc-100/10 border-acc-100/30",
+	},
+	conservative: {
+		Icon: CheckCircle,
+		color: "text-trade-buy",
+		bgColor: "bg-trade-buy/10 border-trade-buy/30",
+	},
+}
 
 export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 	const t = useTranslations("monteCarlo.metrics")
@@ -31,24 +54,6 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 		kellyRecommendation,
 		kellyLevel,
 	} = statistics
-
-	const levelConfig = {
-		aggressive: {
-			Icon: AlertTriangle,
-			color: "text-warning",
-			bgColor: "bg-warning/10 border-warning/30",
-		},
-		balanced: {
-			Icon: Info,
-			color: "text-acc-100",
-			bgColor: "bg-acc-100/10 border-acc-100/30",
-		},
-		conservative: {
-			Icon: CheckCircle,
-			color: "text-trade-buy",
-			bgColor: "bg-trade-buy/10 border-trade-buy/30",
-		},
-	}
 
 	const {
 		Icon: LevelIcon,

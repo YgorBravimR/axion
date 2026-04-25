@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import type { ReactNode } from "react"
 import { useTranslations } from "next-intl"
 import { Info } from "lucide-react"
@@ -27,12 +28,12 @@ interface MetricCardProps {
 	children: ReactNode
 }
 
-const MetricCard = ({ title, children }: MetricCardProps) => (
+const MetricCard = memo(({ title, children }: MetricCardProps) => (
 	<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 		<h4 className="mb-s-300 text-small text-txt-100 font-semibold">{title}</h4>
 		<div className="space-y-s-200">{children}</div>
 	</div>
-)
+))
 
 interface MetricRowProps {
 	label: string
@@ -41,7 +42,7 @@ interface MetricRowProps {
 	tooltip?: string
 }
 
-const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
+const MetricRow = memo(({ label, value, valueClass, tooltip }: MetricRowProps) => (
 	<div className="flex min-w-0 items-center justify-between">
 		{tooltip ? (
 			<Tooltip>
@@ -68,7 +69,7 @@ const MetricRow = ({ label, value, valueClass, tooltip }: MetricRowProps) => (
 			{value}
 		</span>
 	</div>
-)
+))
 
 const V2MetricsCards = ({
 	statistics,
@@ -79,7 +80,10 @@ const V2MetricsCards = ({
 	const tTooltips = useTranslations("monteCarlo.tooltips")
 
 	const isMultiMonth = monthsToTrade > 1
-	const medianPnlFromCents = statistics.medianMonthlyPnl / 100
+	const medianPnlFromCents = useMemo(
+		() => statistics.medianMonthlyPnl / 100,
+		[statistics.medianMonthlyPnl]
+	)
 
 	return (
 		<div className="gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

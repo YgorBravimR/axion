@@ -36,6 +36,20 @@ All identified issues were fixed. No items skipped.
 | L11 | `auto-refresh-indicator.tsx` | Countdown timer drives 60 React state updates/min for cosmetic display. Could use rAF + ref for direct DOM update | Functional but wasteful — consider if market page feels sluggish |
 | L12 | `post-market-notes.tsx` / `pre-market-notes.tsx` | May render disabled `<textarea>` instead of read-only text on historical dates | Verify `isReadOnly` renders display-only elements |
 
+## Round 5 — Final Mop-Up: Journal, Dashboard, MC, Equity Shield, CC, Market, etc.
+
+| # | File | Issue | Why Skipped |
+|---|------|-------|-------------|
+| L1 | `new-trade-tabs.tsx` | Both `TradeForm` (1654 lines) and `ScaledTradeForm` (1183 lines) always mounted simultaneously — inactive tab hidden via `className="hidden"` | Intentional state-preservation trade-off — unmounting would lose form state |
+| L2 | `brand-script.tsx:11` | `brandList` and script string rebuilt on every render | Server component — no client re-renders |
+| L3 | `runs-comparison-table.tsx:46` | `columns` useMemo deps include callback props from parent — could recompute if parent doesn't stabilize | Deps are correct; parent stabilization is outside this component's scope |
+| L4 | `backtest-content.tsx:158` | `showLoading` before `startTransition` + `hideLoading` inside — potential flicker | Acceptable UX pattern — loading overlay provides feedback |
+| L5 | `risk-simulator-content.tsx:104` | useEffect deps broader than necessary (guarded by hasInitialFetchRef) | Ref guard prevents re-execution; fragile but functional |
+| L6 | Various Recharts components | Inline `margin`, `tick` objects on chart components that have dynamic deps | Recharts doesn't deeply compare props internally — memoizing these has minimal impact |
+| L7 | `monthly-plan-tab.tsx:86` | `handleSave` type-cast `Parameters<typeof upsertMonthlyPlan>[0] extends infer T ? T : never` | Type inference is compile-time only, zero runtime cost |
+| L8 | `kpi/avg-r-card.tsx:52` | `subValue` JSX element (`<RMultipleBar>`) constructed inline | Single instance, not list-rendered |
+| L9 | `kpi/discipline-card.tsx:25` | `indicator` JSX (`<TrendIcon>`) constructed inline | Single instance, not list-rendered |
+
 ---
 
-*Generated 2026-04-24 across 4 performance scan rounds covering ~160+ files.*
+*Generated 2026-04-25 across 5 performance scan rounds covering ~230+ files.*

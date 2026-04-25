@@ -4,6 +4,7 @@ import {
 	useState,
 	useRef,
 	useCallback,
+	useMemo,
 	type DragEvent,
 	type ChangeEvent,
 } from "react"
@@ -179,7 +180,7 @@ export const NotaImport = () => {
 		}
 	}
 
-	const handleToggleSelect = (tradeId: string) => {
+	const handleToggleSelect = useCallback((tradeId: string) => {
 		setSelectedIds((prev) => {
 			const next = new Set(prev)
 			if (next.has(tradeId)) {
@@ -189,9 +190,9 @@ export const NotaImport = () => {
 			}
 			return next
 		})
-	}
+	}, [])
 
-	const handleToggleReEnrich = (tradeId: string) => {
+	const handleToggleReEnrich = useCallback((tradeId: string) => {
 		setReEnrichIds((prev) => {
 			const next = new Set(prev)
 			if (next.has(tradeId)) {
@@ -209,7 +210,7 @@ export const NotaImport = () => {
 			}
 			return next
 		})
-	}
+	}, [])
 
 	const handleEnrich = async () => {
 		if (!preview || !parseResult || selectedIds.size === 0) return
@@ -262,14 +263,17 @@ export const NotaImport = () => {
 	const selectedCount = selectedIds.size
 
 	// Count matches by status for the summary
-	const matchCounts =
-		preview?.matches.reduce(
-			(acc, m) => {
-				acc[m.status] = (acc[m.status] || 0) + 1
-				return acc
-			},
-			{} as Record<string, number>
-		) ?? {}
+	const matchCounts = useMemo(
+		() =>
+			preview?.matches.reduce(
+				(acc, m) => {
+					acc[m.status] = (acc[m.status] || 0) + 1
+					return acc
+				},
+				{} as Record<string, number>
+			) ?? {},
+		[preview?.matches]
+	)
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">

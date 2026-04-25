@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatCompactCurrency } from "@/lib/formatting"
@@ -19,7 +20,7 @@ interface StatCardProps {
 	variant?: "default" | "positive" | "negative" | "pass" | "fail"
 }
 
-const StatCard = ({
+const StatCard = memo(({
 	label,
 	value,
 	subValue,
@@ -41,7 +42,8 @@ const StatCard = ({
 			{subValue && <p className="text-tiny text-txt-300 mt-0.5">{subValue}</p>}
 		</div>
 	)
-}
+})
+StatCard.displayName = "EquityShieldStatCard"
 
 const formatCurrency = (value: number): string =>
 	formatCompactCurrency(value, "R$")
@@ -52,7 +54,7 @@ interface PassFailBadgeProps {
 	drawdownLimit: number
 }
 
-const PassFailBadge = ({
+const PassFailBadge = memo(({
 	wouldPass,
 	maxDrawdown,
 	drawdownLimit,
@@ -96,7 +98,8 @@ const PassFailBadge = ({
 			</div>
 		</div>
 	)
-}
+})
+PassFailBadge.displayName = "EquityShieldPassFailBadge"
 
 const formatPercent = (value: number): string => `${value.toFixed(1)}%`
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,9 +32,14 @@ export const SimulationParamsForm = ({
 		})
 	}
 
-	const totalIterations = params.numberOfTrades * params.simulationCount
-	const budgetUsage = totalIterations / budgetCap
-	const isOverBudget = totalIterations > budgetCap
+	const { totalIterations, budgetUsage, isOverBudget } = useMemo(() => {
+		const total = params.numberOfTrades * params.simulationCount
+		return {
+			totalIterations: total,
+			budgetUsage: total / budgetCap,
+			isOverBudget: total > budgetCap,
+		}
+	}, [params.numberOfTrades, params.simulationCount, budgetCap])
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">

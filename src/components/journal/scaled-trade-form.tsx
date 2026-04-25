@@ -378,13 +378,13 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 			[]
 		)
 
-		const handleTagToggle = (tagId: string) => {
+		const handleTagToggle = useCallback((tagId: string) => {
 			setSelectedTagIds((prev) =>
 				prev.includes(tagId)
 					? prev.filter((id) => id !== tagId)
 					: [...prev, tagId]
 			)
-		}
+		}, [])
 
 		const handleSubmit = async (e: FormEvent) => {
 			e.preventDefault()
@@ -470,9 +470,25 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 			}
 		}
 
-		const setupTags = tags.filter((t) => t.type === "setup")
-		const mistakeTags = tags.filter((t) => t.type === "mistake")
-		const generalTags = tags.filter((t) => t.type === "general")
+		const setupTags = useMemo(() => tags.filter((tag) => tag.type === "setup"), [tags])
+		const mistakeTags = useMemo(() => tags.filter((tag) => tag.type === "mistake"), [tags])
+		const generalTags = useMemo(() => tags.filter((tag) => tag.type === "general"), [tags])
+
+		const handleEntryChange = useCallback((id: string, field: string, value: string) => {
+			handleExecutionChange("entry", id, field as keyof ExecutionRowData, value)
+		}, [handleExecutionChange])
+
+		const handleEntryRemove = useCallback((id: string) => {
+			handleRemoveExecution("entry", id)
+		}, [handleRemoveExecution])
+
+		const handleExitChange = useCallback((id: string, field: string, value: string) => {
+			handleExecutionChange("exit", id, field as keyof ExecutionRowData, value)
+		}, [handleExecutionChange])
+
+		const handleExitRemove = useCallback((id: string) => {
+			handleRemoveExecution("exit", id)
+		}, [handleRemoveExecution])
 
 		return (
 			<form
@@ -618,10 +634,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									<InlineExecutionRow
 										key={entry.id}
 										data={entry}
-										onChange={(id, field, value) =>
-											handleExecutionChange("entry", id, field, value)
-										}
-										onRemove={(id) => handleRemoveExecution("entry", id)}
+										onChange={handleEntryChange}
+										onRemove={handleEntryRemove}
 										canRemove={entries.length > 1}
 										currency={selectedAsset?.currency ?? "$"}
 									/>
@@ -675,10 +689,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 										<InlineExecutionRow
 											key={exit.id}
 											data={exit}
-											onChange={(id, field, value) =>
-												handleExecutionChange("exit", id, field, value)
-											}
-											onRemove={(id) => handleRemoveExecution("exit", id)}
+											onChange={handleExitChange}
+											onRemove={handleExitRemove}
 											canRemove={true}
 											currency={selectedAsset?.currency ?? "$"}
 										/>

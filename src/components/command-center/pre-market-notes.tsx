@@ -27,7 +27,11 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 	const [preMarketNotes, setPreMarketNotes] = useState("")
 	const [mood, setMood] = useState<MoodType | null>(null)
 	const [saving, setSaving] = useState(false)
-	const [hasChanges, setHasChanges] = useState(false)
+
+	// Derive hasChanges inline — no state or effect needed
+	const hasChanges =
+		preMarketNotes !== (notes?.preMarketNotes ?? "") ||
+		mood !== ((notes?.mood as MoodType | null) ?? null)
 
 	// Initialize form values
 	useEffect(() => {
@@ -36,15 +40,6 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 			setMood((notes.mood as MoodType) || null)
 		}
 	}, [notes])
-
-	// Track changes
-	useEffect(() => {
-		const currentNotes = notes?.preMarketNotes || ""
-		const currentMood = notes?.mood || null
-
-		const changed = preMarketNotes !== currentNotes || mood !== currentMood
-		setHasChanges(changed)
-	}, [preMarketNotes, mood, notes])
 
 	const handleSave = async () => {
 		setSaving(true)

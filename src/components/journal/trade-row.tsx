@@ -75,6 +75,8 @@ export const TradeRow = memo(({
 		onDeleteCancel()
 	}, [onDeleteCancel])
 
+	const formatBrl = useCallback((v: number) => formatBrlWithSign(v), [])
+
 	return (
 		<div
 			className={cn(
@@ -189,7 +191,7 @@ export const TradeRow = memo(({
 					value={trade.pnl}
 					showSign
 					size="sm"
-					formatFn={(v) => formatBrlWithSign(v)}
+					formatFn={formatBrl}
 					className="min-w-[90px] shrink-0 text-right"
 				/>
 			)}

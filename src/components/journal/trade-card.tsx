@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useMemo, useCallback } from "react"
+import { memo, useMemo } from "react"
 import { Link } from "@/i18n/routing"
 import {
 	ArrowUpRight,
@@ -43,15 +43,12 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 		}
 	}, [trade.tradeTags])
 
-	// C5: Stable formatFn reference — prevents ColoredValue memo from busting
-	const formatFn = useCallback((v: number) => formatCurrency(v), [])
-
 	return (
 		<Link href={`/journal/${trade.id}`}>
 			<Card
 				id={`trade-card-${trade.id}`}
 				className={cn(
-					"p-s-300 sm:p-m-400 lg:p-m-500 hover:border-acc-100/50 hover:bg-bg-200/80 transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none",
+					"p-s-300 sm:p-m-400 lg:p-m-500 hover:border-acc-100/50 hover:bg-bg-200/80 focus-visible:ring-acc-100 transition-colors focus-visible:ring-2 focus-visible:outline-none",
 					className
 				)}
 			>
@@ -90,7 +87,11 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 										: t("direction.short").toUpperCase()}
 								</Badge>
 								{trade.timeframe && (
-									<Badge id={`trade-card-timeframe-${trade.id}`} variant="secondary" className="text-tiny">
+									<Badge
+										id={`trade-card-timeframe-${trade.id}`}
+										variant="secondary"
+										className="text-tiny"
+									>
 										{trade.timeframe.name}
 									</Badge>
 								)}
@@ -107,7 +108,7 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 						<ColoredValue
 							value={pnl}
 							showSign
-							formatFn={formatFn}
+							formatFn={formatCurrency}
 							className="text-body font-semibold"
 						/>
 						{realizedR !== 0 && (
@@ -123,7 +124,9 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 				</div>
 
 				{/* Tags */}
-				{(setupTags.length > 0 || mistakeTags.length > 0 || generalTags.length > 0) && (
+				{(setupTags.length > 0 ||
+					mistakeTags.length > 0 ||
+					generalTags.length > 0) && (
 					<div className="mt-m-400 gap-s-200 flex flex-wrap">
 						{setupTags.map((tag) => (
 							<Badge
@@ -167,7 +170,7 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 				)}
 
 				{/* Quick metrics */}
-				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 sm:grid-cols-3 border-t">
+				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-3">
 					<div>
 						<span className="text-tiny text-txt-300">{t("entry")}</span>
 						<p className="text-small text-txt-100">

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useCallback, memo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import {
@@ -16,6 +17,10 @@ import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DayEquityPoint } from "@/types"
 
+// Static Recharts config objects — hoisted to avoid new object identity each render
+const CHART_MARGIN = { top: 5, right: 5, left: 0, bottom: 5 }
+const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 10 }
+
 interface DayEquityCurveProps {
 	data: DayEquityPoint[]
 	onPointClick?: (tradeId: string) => void
@@ -30,7 +35,7 @@ interface CustomTooltipProps {
 	}>
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 
 	if (!active || !payload || payload.length === 0) {
@@ -53,7 +58,10 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 			)}
 		</div>
 	)
-}
+})
+CustomTooltip.displayName = "DayEquityCurveTooltip"
+
+const tickFormatter = (value: number) => formatCompactCurrencyWithSign(value, "R$")
 
 export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 	const { yAxisWidth } = useChartConfig()
@@ -67,34 +75,63 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 		)
 	}
 
-	// Calculate domain with padding
-	const pnlValues = data.map((d) => d.cumulativePnl)
-	const minPnl = Math.min(...pnlValues, 0)
-	const maxPnl = Math.max(...pnlValues, 0)
-	const padding = Math.max(Math.abs(maxPnl - minPnl) * 0.15, 50)
-
-	// Determine line color based on final P&L
-	const finalPnl = data[data.length - 1]?.cumulativePnl ?? 0
-	const lineColor = finalPnl >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
-
-	const handleClick = (point: DayEquityPoint) => {
-		if (onPointClick && point.tradeId) {
-			onPointClick(point.tradeId)
+	// Derived chart values — recomputed only when data changes
+	const { minPnl, maxPnl, padding, finalPnl, lineColor } = useMemo(() => {
+		const pnlValues = data.map((d) => d.cumulativePnl)
+		const min = Math.min(...pnlValues, 0)
+		const max = Math.max(...pnlValues, 0)
+		const pad = Math.max(Math.abs(max - min) * 0.15, 50)
+		const last = data[data.length - 1]?.cumulativePnl ?? 0
+		return {
+			minPnl: min,
+			maxPnl: max,
+			padding: pad,
+			finalPnl: last,
+			lineColor: last >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)",
 		}
-	}
+	}, [data])
+
+	// dot/activeDot depend on lineColor
+	const { dot, activeDot } = useMemo(
+		() => ({
+			dot: {
+				r: 4,
+				fill: lineColor,
+				stroke: "var(--color-bg-100)",
+				strokeWidth: 2,
+				cursor: onPointClick ? "pointer" : "default",
+			},
+			activeDot: {
+				r: 6,
+				fill: lineColor,
+				stroke: "var(--color-bg-100)",
+				strokeWidth: 2,
+				cursor: onPointClick ? "pointer" : "default",
+			},
+		}),
+		[lineColor, onPointClick]
+	)
+
+	const handleClick = useCallback(
+		(e: unknown) => {
+			const payload = (e as { activePayload?: Array<{ payload: DayEquityPoint }> })?.activePayload?.[0]?.payload
+			if (payload && onPointClick && payload.tradeId) {
+				onPointClick(payload.tradeId)
+			}
+		},
+		[onPointClick]
+	)
+
+	// Silence unused-variable warning — finalPnl is consumed inside useMemo above
+	void finalPnl
 
 	return (
 		<ChartContainer id="chart-dashboard-day-equity-curve" className="h-[120px] sm:h-[150px] w-full">
 				<LineChart
 					data={data}
-					margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+					margin={CHART_MARGIN}
 					// @see Recharts lacks typed onClick payloads — cast is required
-					onClick={(e) => {
-						const payload = (e as unknown as { activePayload?: Array<{ payload: DayEquityPoint }> })?.activePayload?.[0]?.payload
-						if (payload) {
-							handleClick(payload)
-						}
-					}}
+					onClick={handleClick}
 				>
 					<CartesianGrid
 						strokeDasharray="3 3"
@@ -104,14 +141,14 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 					<XAxis
 						dataKey="time"
 						stroke="var(--color-txt-300)"
-						tick={{ fill: "var(--color-txt-300)", fontSize: 10 }}
+						tick={AXIS_TICK}
 						tickLine={false}
 						axisLine={{ stroke: "var(--color-bg-300)" }}
 					/>
 					<YAxis
-						tickFormatter={(value: number) => formatCompactCurrencyWithSign(value, "R$")}
+						tickFormatter={tickFormatter}
 						stroke="var(--color-txt-300)"
-						tick={{ fill: "var(--color-txt-300)", fontSize: 10 }}
+						tick={AXIS_TICK}
 						tickLine={false}
 						axisLine={false}
 						domain={[minPnl - padding, maxPnl + padding]}
@@ -124,20 +161,8 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 						dataKey="cumulativePnl"
 						stroke={lineColor}
 						strokeWidth={2}
-						dot={{
-							r: 4,
-							fill: lineColor,
-							stroke: "var(--color-bg-100)",
-							strokeWidth: 2,
-							cursor: onPointClick ? "pointer" : "default",
-						}}
-						activeDot={{
-							r: 6,
-							fill: lineColor,
-							stroke: "var(--color-bg-100)",
-							strokeWidth: 2,
-							cursor: onPointClick ? "pointer" : "default",
-						}}
+						dot={dot}
+						activeDot={activeDot}
 					/>
 				</LineChart>
 		</ChartContainer>

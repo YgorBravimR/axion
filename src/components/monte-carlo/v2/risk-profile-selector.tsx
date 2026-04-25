@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Select,
@@ -14,6 +15,14 @@ import { fromCents } from "@/lib/money"
 import { formatCompactCurrency } from "@/lib/formatting"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { RiskManagementProfileForSim } from "@/types/monte-carlo"
+
+const BUILT_IN_PROFILE_NAMES = [
+	"Fixed Fractional",
+	"Fixed Ratio",
+	"Institutional",
+	"R-Multiples",
+	"Kelly Fractional",
+]
 
 interface RiskProfileSelectorProps {
 	profiles: RiskManagementProfile[]
@@ -63,6 +72,15 @@ const RiskProfileSelector = ({
 }: RiskProfileSelectorProps) => {
 	const t = useTranslations("monteCarlo.v2")
 
+	const { builtIn, custom } = useMemo(() => {
+		const isBuiltIn = (p: RiskManagementProfile) =>
+			BUILT_IN_PROFILE_NAMES.some((n) => p.name.includes(n))
+		return {
+			builtIn: profiles.filter(isBuiltIn),
+			custom: profiles.filter((p) => !isBuiltIn(p)),
+		}
+	}, [profiles])
+
 	return (
 		<div className="space-y-s-300">
 			<label className="text-small text-txt-200 block font-medium">
@@ -73,43 +91,28 @@ const RiskProfileSelector = ({
 					<SelectValue placeholder={t("profileSelector.selectProfile")} />
 				</SelectTrigger>
 				<SelectContent>
-					{(() => {
-						const builtInNames = [
-							"Fixed Fractional",
-							"Fixed Ratio",
-							"Institutional",
-							"R-Multiples",
-							"Kelly Fractional",
-						]
-						const isBuiltIn = (p: RiskManagementProfile) =>
-							builtInNames.some((n) => p.name.includes(n))
-						const builtIn = profiles.filter(isBuiltIn)
-						const custom = profiles.filter((p) => !isBuiltIn(p))
-						return (
-							<>
-								{builtIn.length > 0 && (
-									<SelectGroup>
-										<SelectLabel>{t("profileSelector.builtInGroup")}</SelectLabel>
-										{builtIn.map((profile) => (
-											<SelectItem key={profile.id} value={profile.id}>
-												{profile.name}
-											</SelectItem>
-										))}
-									</SelectGroup>
-								)}
-								{custom.length > 0 && (
-									<SelectGroup>
-										<SelectLabel>{t("profileSelector.customGroup")}</SelectLabel>
-										{custom.map((profile) => (
-											<SelectItem key={profile.id} value={profile.id}>
-												{profile.name}
-											</SelectItem>
-										))}
-									</SelectGroup>
-								)}
-							</>
-						)
-					})()}
+					<>
+						{builtIn.length > 0 && (
+							<SelectGroup>
+								<SelectLabel>{t("profileSelector.builtInGroup")}</SelectLabel>
+								{builtIn.map((profile) => (
+									<SelectItem key={profile.id} value={profile.id}>
+										{profile.name}
+									</SelectItem>
+								))}
+							</SelectGroup>
+						)}
+						{custom.length > 0 && (
+							<SelectGroup>
+								<SelectLabel>{t("profileSelector.customGroup")}</SelectLabel>
+								{custom.map((profile) => (
+									<SelectItem key={profile.id} value={profile.id}>
+										{profile.name}
+									</SelectItem>
+								))}
+							</SelectGroup>
+						)}
+					</>
 				</SelectContent>
 			</Select>
 

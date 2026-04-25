@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,9 @@ const getRandomInt = (min: number, max: number): number => {
 	return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+const delay = (ms: number): Promise<void> =>
+	new Promise((resolve) => setTimeout(resolve, ms))
+
 export const CsvSlTpGenerator = ({
 	processedTrades,
 	onApply,
@@ -35,6 +38,7 @@ export const CsvSlTpGenerator = ({
 	const { showLoading, updateLoading, hideLoading } = useLoadingOverlay()
 	const [isEnabled, setIsEnabled] = useState(false)
 	const [isGenerating, setIsGenerating] = useState(false)
+	const cancelledRef = useRef(false)
 
 	// Extract unique assets from valid/warning trades with assetConfig
 	const uniqueAssets = useMemo(() => {
@@ -54,7 +58,7 @@ export const CsvSlTpGenerator = ({
 	const [assetConfigs, setAssetConfigs] = useState<Record<string, AssetSlTpConfig>>({})
 
 	// Initialize configs when assets change
-	const initializeConfigs = () => {
+	const initializeConfigs = useCallback(() => {
 		const newConfigs: Record<string, AssetSlTpConfig> = {}
 		for (const asset of uniqueAssets) {
 			if (!assetConfigs[asset]) {
@@ -70,7 +74,7 @@ export const CsvSlTpGenerator = ({
 			}
 		}
 		setAssetConfigs(newConfigs)
-	}
+	}, [uniqueAssets, assetConfigs])
 
 	const handleEnableToggle = (checked: boolean) => {
 		setIsEnabled(checked)
@@ -101,9 +105,6 @@ export const CsvSlTpGenerator = ({
 		const max = base + variance
 		return t("range", { min, max })
 	}
-
-	const delay = (ms: number): Promise<void> =>
-		new Promise((resolve) => setTimeout(resolve, ms))
 
 	const generateSlTpForTrade = useCallback(
 		(trade: ProcessedCsvTrade): ProcessedCsvTrade => {
@@ -184,6 +185,7 @@ export const CsvSlTpGenerator = ({
 
 		if (eligibleIndices.length === 0) return
 
+		cancelledRef.current = false
 		setIsGenerating(true)
 		showLoading({ message: t("generatingSlTp"), progress: 0 })
 
@@ -206,6 +208,12 @@ export const CsvSlTpGenerator = ({
 			const progress = Math.round(((i + 1) / CHUNKS) * 100)
 			updateLoading({ progress })
 			await delay(chunkDelay)
+
+			if (cancelledRef.current) {
+				hideLoading()
+				setIsGenerating(false)
+				return
+			}
 		}
 
 		onApply(updatedTrades)

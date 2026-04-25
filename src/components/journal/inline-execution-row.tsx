@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,7 @@ interface InlineExecutionRowProps {
 	currency?: string
 }
 
-export const InlineExecutionRow = ({
+export const InlineExecutionRow = memo(({
 	data,
 	onChange,
 	onRemove,
@@ -35,7 +36,8 @@ export const InlineExecutionRow = ({
 }: InlineExecutionRowProps) => {
 	const t = useTranslations("execution")
 	const effectiveDate = useEffectiveDate()
-	const todayDateString = formatDateKey(effectiveDate)
+	const todayDateString = useMemo(() => formatDateKey(effectiveDate), [effectiveDate])
+	const maxDate = useMemo(() => new Date(todayDateString + "T23:59:59"), [todayDateString])
 
 	return (
 		<div className="gap-s-200 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr] items-center">
@@ -43,7 +45,7 @@ export const InlineExecutionRow = ({
 				id={`execution-${data.id}-date`}
 				value={data.date ? new Date(data.date + "T12:00:00") : undefined}
 				onChange={(date) => onChange(data.id, "date", date ? formatDateKey(date) : "")}
-				maxDate={new Date(todayDateString + "T23:59:59")}
+				maxDate={maxDate}
 				formatStr="P"
 				className="h-8"
 			/>
@@ -100,4 +102,6 @@ export const InlineExecutionRow = ({
 			</Button>
 		</div>
 	)
-}
+})
+
+InlineExecutionRow.displayName = "InlineExecutionRow"

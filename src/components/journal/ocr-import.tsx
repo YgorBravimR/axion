@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useEffect, type DragEvent, type ChangeEvent } from "react"
+import { useState, useRef, useCallback, useEffect, useMemo, type DragEvent, type ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -103,12 +103,17 @@ export const OcrImport = () => {
 
 	// Check Vision availability on mount
 	useEffect(() => {
+		let isMounted = true
 		const checkVision = async () => {
 			const result = await checkVisionAvailability()
+			if (!isMounted) return
 			const isAvailable = result.data?.available ?? false
 			setVisionAvailable(isAvailable)
 		}
 		checkVision()
+		return () => {
+			isMounted = false
+		}
 	}, [])
 
 	// ==========================================
@@ -229,7 +234,7 @@ export const OcrImport = () => {
 		[handleFileSelect]
 	)
 
-	const handleClear = () => {
+	const handleClear = useCallback(() => {
 		setStep("upload")
 		setImage(null)
 		setFileName(null)
@@ -240,25 +245,25 @@ export const OcrImport = () => {
 		if (fileInputRef.current) {
 			fileInputRef.current.value = ""
 		}
-	}
+	}, [])
 
-	const handleRemoveTrade = (tradeId: string) => {
+	const handleRemoveTrade = useCallback((tradeId: string) => {
 		setEditedTrades((prev) => prev.filter((t) => t.id !== tradeId))
-	}
+	}, [])
 
-	const handleToggleTradeExpand = (tradeId: string) => {
+	const handleToggleTradeExpand = useCallback((tradeId: string) => {
 		setEditedTrades((prev) =>
 			prev.map((t) => (t.id === tradeId ? { ...t, isExpanded: !t.isExpanded } : t))
 		)
-	}
+	}, [])
 
-	const handleUpdateTrade = (tradeId: string, updates: Partial<EditableTrade>) => {
+	const handleUpdateTrade = useCallback((tradeId: string, updates: Partial<EditableTrade>) => {
 		setEditedTrades((prev) =>
 			prev.map((t) => (t.id === tradeId ? { ...t, ...updates } : t))
 		)
-	}
+	}, [])
 
-	const handleRemoveExecution = (tradeId: string, executionId: string) => {
+	const handleRemoveExecution = useCallback((tradeId: string, executionId: string) => {
 		setEditedTrades((prev) =>
 			prev.map((t) =>
 				t.id === tradeId
@@ -266,9 +271,9 @@ export const OcrImport = () => {
 					: t
 			)
 		)
-	}
+	}, [])
 
-	const handleUpdateExecution = (
+	const handleUpdateExecution = useCallback((
 		tradeId: string,
 		executionId: string,
 		updates: Partial<EditableExecution>
@@ -285,9 +290,9 @@ export const OcrImport = () => {
 					: t
 			)
 		)
-	}
+	}, [])
 
-	const handleImport = async () => {
+	const handleImport = useCallback(async () => {
 		const validTrades = editedTrades.filter((t) => t.executions.length > 0 && t.asset)
 
 		if (validTrades.length === 0) {
@@ -349,14 +354,20 @@ export const OcrImport = () => {
 			hideLoading()
 			setIsImporting(false)
 		}
-	}
+	}, [editedTrades, editedDate, showToast, showLoading, hideLoading, router, t, tCommon, tOverlay])
 
 	// ==========================================
 	// Computed Values
 	// ==========================================
 
-	const totalTrades = editedTrades.filter((t) => t.executions.length > 0).length
-	const totalExecutions = editedTrades.reduce((sum, t) => sum + t.executions.length, 0)
+	const totalTrades = useMemo(
+		() => editedTrades.filter((t) => t.executions.length > 0).length,
+		[editedTrades]
+	)
+	const totalExecutions = useMemo(
+		() => editedTrades.reduce((sum, t) => sum + t.executions.length, 0),
+		[editedTrades]
+	)
 
 	// ==========================================
 	// Render

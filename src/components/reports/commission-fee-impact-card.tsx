@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Receipt, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -9,6 +10,45 @@ import type { CommissionFeeImpact } from "@/app/actions/reports"
 interface CommissionFeeImpactCardProps {
 	data: CommissionFeeImpact | null
 }
+
+// ==========================================
+// PURE HELPERS — module scope
+// ==========================================
+
+const getInsightMessage = (
+	summary: CommissionFeeImpact["summary"],
+	formatCurrency: (v: number) => string,
+	t: (key: string, params?: Record<string, string>) => string
+): string => {
+	if (summary.grossPnl <= 0 && summary.totalFees > 0) {
+		return summary.grossPnl < 0
+			? t("insightNegativeGross", { amount: formatCurrency(summary.totalFees) })
+			: t("insightNoGross", { amount: formatCurrency(summary.totalFees) })
+	}
+
+	const percent = summary.feesAsPercentOfGross.toFixed(1)
+
+	if (summary.feesAsPercentOfGross > 15) return t("insightHigh", { percent })
+	if (summary.feesAsPercentOfGross > 5) return t("insightModerate", { percent })
+	return t("insightLow", { percent })
+}
+
+const getFeeSeverityClasses = (
+	percent: number
+): { border: string; label: string } => {
+	if (percent > 15)
+		return {
+			border: "border-trade-sell/20 bg-trade-sell/5",
+			label: "text-trade-sell",
+		}
+	if (percent > 5)
+		return { border: "border-warning/20 bg-warning/5", label: "text-warning" }
+	return { border: "border-bg-300 bg-bg-100", label: "text-txt-300" }
+}
+
+// ==========================================
+// COMPONENT
+// ==========================================
 
 const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 	const t = useTranslations("reports.commissionFees")
@@ -31,55 +71,27 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 	const { summary, assetBreakdown, monthlyTrend } = data
 
-	// Bar scaling for asset breakdown
-	const maxAssetFee =
-		assetBreakdown.length > 0
-			? Math.max(...assetBreakdown.map((a) => a.totalFees))
-			: 0
+	// Bar scaling — memoized
+	const maxAssetFee = useMemo(
+		() => (assetBreakdown.length > 0 ? Math.max(...assetBreakdown.map((a) => a.totalFees)) : 0),
+		[assetBreakdown]
+	)
 
-	// Bar scaling for monthly trend
-	const maxMonthFee =
-		monthlyTrend.length > 0
-			? Math.max(...monthlyTrend.map((m) => m.totalFees))
-			: 0
+	const maxMonthFee = useMemo(
+		() => (monthlyTrend.length > 0 ? Math.max(...monthlyTrend.map((m) => m.totalFees)) : 0),
+		[monthlyTrend]
+	)
 
-	// Insight severity
-	const getInsightMessage = (): string => {
-		if (summary.grossPnl <= 0 && summary.totalFees > 0) {
-			return summary.grossPnl < 0
-				? t("insightNegativeGross", {
-						amount: formatCurrency(summary.totalFees),
-					})
-				: t("insightNoGross", { amount: formatCurrency(summary.totalFees) })
-		}
+	// Insight message and severity — memoized
+	const insightMessage = useMemo(
+		() => getInsightMessage(summary, formatCurrency, t as (key: string, params?: Record<string, string>) => string),
+		[summary, formatCurrency, t]
+	)
 
-		const percent = summary.feesAsPercentOfGross.toFixed(1)
-
-		if (summary.feesAsPercentOfGross > 15) {
-			return t("insightHigh", { percent })
-		}
-
-		if (summary.feesAsPercentOfGross > 5) {
-			return t("insightModerate", { percent })
-		}
-
-		return t("insightLow", { percent })
-	}
-
-	const getFeeSeverityClasses = (
-		percent: number
-	): { border: string; label: string } => {
-		if (percent > 15)
-			return {
-				border: "border-trade-sell/20 bg-trade-sell/5",
-				label: "text-trade-sell",
-			}
-		if (percent > 5)
-			return { border: "border-warning/20 bg-warning/5", label: "text-warning" }
-		return { border: "border-bg-300 bg-bg-100", label: "text-txt-300" }
-	}
-
-	const feeSeverity = getFeeSeverityClasses(summary.feesAsPercentOfGross)
+	const feeSeverity = useMemo(
+		() => getFeeSeverityClasses(summary.feesAsPercentOfGross),
+		[summary.feesAsPercentOfGross]
+	)
 
 	return (
 		<div
@@ -270,7 +282,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 					<span className={cn("font-medium", feeSeverity.label)}>
 						{t("insight")}:
 					</span>{" "}
-					{getInsightMessage()}
+					{insightMessage}
 				</p>
 			</div>
 		</div>

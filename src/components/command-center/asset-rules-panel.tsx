@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Settings2, Save, Loader2, Plus, Trash2, PlusCircle } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -53,7 +53,7 @@ export const AssetRulesPanel = ({
 	const settingsAssetSet = useMemo(() => new Set(settings.map((s) => s.assetId)), [settings])
 	const availableToAdd = useMemo(() => availableAssets.filter((a) => !settingsAssetSet.has(a.id)), [availableAssets, settingsAssetSet])
 
-	const handleAddAsset = async () => {
+	const handleAddAsset = useCallback(async () => {
 		if (!selectedAssetId) return
 
 		setSaving(selectedAssetId)
@@ -78,9 +78,9 @@ export const AssetRulesPanel = ({
 		} finally {
 			setSaving(null)
 		}
-	}
+	}, [selectedAssetId, showToast, onRefresh, t])
 
-	const handleStartEdit = (setting: AssetSettingWithAsset) => {
+	const handleStartEdit = useCallback((setting: AssetSettingWithAsset) => {
 		setEditing({
 			assetId: setting.assetId,
 			bias: (setting.bias as BiasType) || null,
@@ -88,9 +88,9 @@ export const AssetRulesPanel = ({
 			maxPositionSize: setting.maxPositionSize?.toString() || "",
 			notes: setting.notes || "",
 		})
-	}
+	}, [])
 
-	const handleSaveEdit = async () => {
+	const handleSaveEdit = useCallback(async () => {
 		if (!editing) return
 
 		setSaving(editing.assetId)
@@ -114,9 +114,9 @@ export const AssetRulesPanel = ({
 		} finally {
 			setSaving(null)
 		}
-	}
+	}, [editing, showToast, onRefresh, t])
 
-	const handleBiasChange = async (assetId: string, bias: BiasType | null) => {
+	const handleBiasChange = useCallback(async (assetId: string, bias: BiasType | null) => {
 		setSaving(assetId)
 		try {
 			const setting = settings.find((s) => s.assetId === assetId)
@@ -140,9 +140,9 @@ export const AssetRulesPanel = ({
 		} finally {
 			setSaving(null)
 		}
-	}
+	}, [settings, showToast, onRefresh, t])
 
-	const handleDelete = async (assetId: string) => {
+	const handleDelete = useCallback(async (assetId: string) => {
 		setDeleting(assetId)
 		try {
 			const result = await deleteAssetSettings(assetId)
@@ -156,11 +156,11 @@ export const AssetRulesPanel = ({
 		} finally {
 			setDeleting(null)
 		}
-	}
+	}, [showToast, onRefresh, t])
 
-	const handleAddTrade = (assetId: string) => {
+	const handleAddTrade = useCallback((assetId: string) => {
 		router.push(`/journal/new?returnTo=/command-center&asset=${assetId}`)
-	}
+	}, [router])
 
 	return (
 		<div id="cc-asset-rules" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">

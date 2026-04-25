@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	RadarChart,
@@ -27,7 +27,10 @@ interface CustomTooltipProps {
 	}>
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+// Static tick config — hoisted to avoid new object identity each render
+const RADIUS_AXIS_TICK = false as const
+
+const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 
 	if (!active || !payload || payload.length === 0) {
@@ -64,12 +67,19 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 			</p>
 		</div>
 	)
-}
+})
+CustomTooltip.displayName = "PerformanceRadarTooltip"
 
 export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 	const t = useTranslations("dashboard")
 	const tCharts = useTranslations("charts")
 	const isMobile = useIsMobile()
+
+	// Angle axis tick depends on isMobile — wrapped in useMemo
+	const angleAxisTick = useMemo(
+		() => ({ fill: "var(--color-txt-300)", fontSize: isMobile ? 9 : 11 }),
+		[isMobile]
+	)
 
 	const chartData = useMemo(
 		() =>
@@ -79,6 +89,9 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 			})),
 		[data, t]
 	)
+
+	// Stable tooltip element — avoids new JSX element identity each render
+	const tooltipContent = useMemo(() => <CustomTooltip />, [])
 
 	if (data.length === 0) {
 		return (
@@ -103,15 +116,15 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 						<PolarGrid stroke="var(--color-bg-300)" />
 						<PolarAngleAxis
 							dataKey="metric"
-							tick={{ fill: "var(--color-txt-300)", fontSize: isMobile ? 9 : 11 }}
+							tick={angleAxisTick}
 						/>
 						<PolarRadiusAxis
 							angle={90}
 							domain={[0, 100]}
-							tick={false}
+							tick={RADIUS_AXIS_TICK}
 							axisLine={false}
 						/>
-						<ChartTooltip content={<CustomTooltip />} />
+						<ChartTooltip content={tooltipContent} />
 						<Radar
 							name={tCharts("performance")}
 							dataKey="normalized"

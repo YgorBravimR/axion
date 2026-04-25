@@ -1,7 +1,13 @@
 "use client"
 
+import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+
+const buttonBase = "text-small rounded-md border px-3 py-2 transition-colors"
+const activeStyle = "border-acc-100 bg-acc-100/10 text-acc-100 font-medium"
+const inactiveStyle =
+	"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
 import type { MonthlyPlan } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { PrefillSource, RiskSimulationParams } from "@/types/risk-simulation"
@@ -23,7 +29,7 @@ const PrefillSelector = ({
 }: PrefillSelectorProps) => {
 	const t = useTranslations("riskSimulation.config")
 
-	const handleSelectMonthlyPlan = () => {
+	const handleSelectMonthlyPlan = useCallback(() => {
 		if (!monthlyPlan) return
 
 		const balance = Number(monthlyPlan.accountBalance)
@@ -62,9 +68,9 @@ const PrefillSelector = ({
 			},
 			"monthlyPlan"
 		)
-	}
+	}, [monthlyPlan, onSelect])
 
-	const handleSelectProfile = (profile: RiskManagementProfile) => {
+	const handleSelectProfile = useCallback((profile: RiskManagementProfile) => {
 		onSelect(
 			{
 				mode: "advanced",
@@ -78,9 +84,9 @@ const PrefillSelector = ({
 			"riskProfile",
 			profile.id
 		)
-	}
+	}, [onSelect])
 
-	const handleSelectManual = () => {
+	const handleSelectManual = useCallback(() => {
 		onSelect(
 			{
 				mode: "simple",
@@ -100,14 +106,7 @@ const PrefillSelector = ({
 			},
 			"manual"
 		)
-	}
-
-	const buttonBase =
-		"text-small rounded-md border px-3 py-2 transition-colors"
-	const activeStyle =
-		"border-acc-100 bg-acc-100/10 text-acc-100 font-medium"
-	const inactiveStyle =
-		"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
+	}, [onSelect])
 
 	return (
 		<div id="sim-prefill-selector">

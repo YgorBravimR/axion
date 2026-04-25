@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { ArrowUpCircle, ArrowDownCircle, Sparkles } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -39,14 +40,14 @@ interface CalculatorFormProps {
 	prefilledFields: Set<string>
 }
 
-const PrefilledBadge = ({ label }: { label: string }) => (
+const PrefilledBadge = memo(({ label }: { label: string }) => (
 	<span className="ml-s-200 inline-flex items-center gap-s-100 rounded-sm bg-acc-100/15 px-s-200 py-px text-micro text-acc-100">
 		<Sparkles className="h-2.5 w-2.5" />
 		{label}
 	</span>
-)
+))
 
-const CalculatorForm = ({
+const CalculatorForm = memo(({
 	assets,
 	selectedAssetId,
 	direction,
@@ -284,6 +285,6 @@ const CalculatorForm = ({
 			</div>
 		</div>
 	)
-}
+})
 
 export { CalculatorForm }

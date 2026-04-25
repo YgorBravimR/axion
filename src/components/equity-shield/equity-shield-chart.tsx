@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, memo } from "react"
 import {
 	AreaChart,
 	Area,
@@ -62,11 +62,14 @@ interface CustomTooltipProps {
 	showComparison?: boolean
 }
 
+// Static chart margin — hoisted to avoid new object identity each render
+const CHART_MARGIN = { top: 10, right: 16, left: 10, bottom: 0 }
+
 // ==========================================
 // TOOLTIP
 // ==========================================
 
-const CustomTooltip = ({ active, payload, variant, showComparison }: CustomTooltipProps) => {
+const CustomTooltip = memo(({ active, payload, variant, showComparison }: CustomTooltipProps) => {
 	const t = useTranslations("equityShield.chart")
 
 	if (!active || !payload || payload.length === 0) return null
@@ -120,7 +123,8 @@ const CustomTooltip = ({ active, payload, variant, showComparison }: CustomToolt
 			)}
 		</div>
 	)
-}
+})
+CustomTooltip.displayName = "EquityShieldTooltip"
 
 // ==========================================
 // ZONE COMPUTATION
@@ -231,15 +235,37 @@ const EquityShieldChart = ({
 
 	const padding = (maxValue - minValue) * 0.08 || 100
 
-	const strokeColor =
-		variant === "original"
-			? "var(--color-acc-100)"
-			: variant === "method1"
-				? "var(--color-trade-buy)"
-				: "var(--color-acc-200)"
+	// strokeColor, gradientId, originalGradientId — computed from variant prop
+	const { strokeColor, gradientId, originalGradientId } = useMemo(
+		() => ({
+			strokeColor:
+				variant === "original"
+					? "var(--color-acc-100)"
+					: variant === "method1"
+						? "var(--color-trade-buy)"
+						: "var(--color-acc-200)",
+			gradientId: `shield-gradient-${variant}`,
+			originalGradientId: `shield-gradient-original-${variant}`,
+		}),
+		[variant]
+	)
 
-	const gradientId = `shield-gradient-${variant}`
-	const originalGradientId = `shield-gradient-original-${variant}`
+	// activeDot depends on strokeColor
+	const activeDot = useMemo(
+		() => ({
+			r: 4,
+			fill: strokeColor,
+			stroke: "var(--color-bg-200)",
+			strokeWidth: 2,
+		}),
+		[strokeColor]
+	)
+
+	// Stable tooltip element — avoids new JSX element identity each render
+	const tooltipContent = useMemo(
+		() => <CustomTooltip variant={variant} showComparison={isComparisonMode} />,
+		[variant, isComparisonMode]
+	)
 
 	if (chartData.length === 0) {
 		return (
@@ -262,7 +288,7 @@ const EquityShieldChart = ({
 			>
 				<AreaChart
 					data={chartData}
-					margin={{ top: 10, right: 16, left: 10, bottom: 0 }}
+					margin={CHART_MARGIN}
 				>
 					<defs>
 						<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -319,7 +345,7 @@ const EquityShieldChart = ({
 
 					<ChartTooltip
 						variant="line"
-						content={<CustomTooltip variant={variant} showComparison={isComparisonMode} />}
+						content={tooltipContent}
 					/>
 
 					{/* Trailing DD Limit line — full view, not Method 2 */}
@@ -382,12 +408,7 @@ const EquityShieldChart = ({
 						strokeWidth={2}
 						fill={`url(#${gradientId})`}
 						dot={false}
-						activeDot={{
-							r: 4,
-							fill: strokeColor,
-							stroke: "var(--color-bg-200)",
-							strokeWidth: 2,
-						}}
+						activeDot={activeDot}
 					/>
 				</AreaChart>
 			</ChartContainer>

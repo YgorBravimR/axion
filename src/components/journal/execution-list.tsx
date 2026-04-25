@@ -20,28 +20,36 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-// Hoisted module-level formatter factories — keyed by locale to avoid recreation
+// Hoisted module-level formatters — keyed by locale, created once per locale value
 const priceFormatterCache = new Map<string, Intl.NumberFormat>()
 const quantityFormatterCache = new Map<string, Intl.NumberFormat>()
 
-const getPriceFormatter = (locale: string): Intl.NumberFormat => {
+const formatPrice = (value: string | number, locale: string): string => {
 	if (!priceFormatterCache.has(locale)) {
 		priceFormatterCache.set(
 			locale,
-			new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			new Intl.NumberFormat(locale, {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		)
 	}
-	return priceFormatterCache.get(locale)!
+	const num = typeof value === "string" ? parseFloat(value) : value
+	return priceFormatterCache.get(locale)!.format(num)
 }
 
-const getQuantityFormatter = (locale: string): Intl.NumberFormat => {
+const formatQuantity = (value: string | number, locale: string): string => {
 	if (!quantityFormatterCache.has(locale)) {
 		quantityFormatterCache.set(
 			locale,
-			new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+			new Intl.NumberFormat(locale, {
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 2,
+			})
 		)
 	}
-	return quantityFormatterCache.get(locale)!
+	const num = typeof value === "string" ? parseFloat(value) : value
+	return quantityFormatterCache.get(locale)!.format(num)
 }
 
 interface ExecutionListProps {
@@ -79,7 +87,8 @@ export const ExecutionList = ({
 	} = useMemo(() => {
 		const sorted = executions.toSorted(
 			(a, b) =>
-				new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime()
+				new Date(a.executionDate).getTime() -
+				new Date(b.executionDate).getTime()
 		)
 		const entryList = executions.filter((e) => e.executionType === "entry")
 		const exitList = executions.filter((e) => e.executionType === "exit")
@@ -89,12 +98,18 @@ export const ExecutionList = ({
 
 		const avgEntry =
 			entryQty > 0
-				? entryList.reduce((sum, e) => sum + Number(e.price) * Number(e.quantity), 0) / entryQty
+				? entryList.reduce(
+						(sum, e) => sum + Number(e.price) * Number(e.quantity),
+						0
+					) / entryQty
 				: 0
 
 		const avgExit =
 			exitQty > 0
-				? exitList.reduce((sum, e) => sum + Number(e.price) * Number(e.quantity), 0) / exitQty
+				? exitList.reduce(
+						(sum, e) => sum + Number(e.price) * Number(e.quantity),
+						0
+					) / exitQty
 				: 0
 
 		return {
@@ -108,15 +123,15 @@ export const ExecutionList = ({
 		}
 	}, [executions])
 
-	const formatPrice = (price: string | number): string => {
-		const num = typeof price === "string" ? parseFloat(price) : price
-		return getPriceFormatter(locale).format(num)
-	}
-
-	const formatQuantity = (qty: string | number): string => {
-		const num = typeof qty === "string" ? parseFloat(qty) : qty
-		return getQuantityFormatter(locale).format(num)
-	}
+	// Bind locale into stable format helpers — module-level cache avoids Intl.NumberFormat recreation
+	const boundFormatPrice = useMemo(
+		() => (v: string | number) => formatPrice(v, locale),
+		[locale]
+	)
+	const boundFormatQuantity = useMemo(
+		() => (v: string | number) => formatQuantity(v, locale),
+		[locale]
+	)
 
 	const handleDelete = (id: string) => {
 		setDeletingId(id)
@@ -181,8 +196,8 @@ export const ExecutionList = ({
 								onEdit={() => onEditExecution(execution)}
 								onDelete={() => handleDelete(execution.id)}
 								isDeleting={deletingId === execution.id}
-								formatPrice={formatPrice}
-								formatQuantity={formatQuantity}
+								formatPrice={boundFormatPrice}
+								formatQuantity={boundFormatQuantity}
 								t={t}
 								tCommon={tCommon}
 							/>
@@ -195,25 +210,25 @@ export const ExecutionList = ({
 							<div>
 								<span className="text-txt-200">{t("totalIn")}:</span>
 								<span className="ml-s-200 text-txt-100">
-									{formatQuantity(totalEntryQty)}
+									{boundFormatQuantity(totalEntryQty)}
 								</span>
 							</div>
 							<div>
 								<span className="text-txt-200">{t("totalOut")}:</span>
 								<span className="ml-s-200 text-txt-100">
-									{formatQuantity(totalExitQty)}
+									{boundFormatQuantity(totalExitQty)}
 								</span>
 							</div>
 							<div>
 								<span className="text-txt-200">{t("avgEntry")}:</span>
 								<span className="ml-s-200 text-txt-100">
-									{formatPrice(avgEntryPrice)}
+									{boundFormatPrice(avgEntryPrice)}
 								</span>
 							</div>
 							<div>
 								<span className="text-txt-200">{t("avgExit")}:</span>
 								<span className="ml-s-200 text-txt-100">
-									{totalExitQty > 0 ? formatPrice(avgExitPrice) : "-"}
+									{totalExitQty > 0 ? boundFormatPrice(avgExitPrice) : "-"}
 								</span>
 							</div>
 							<div className="col-span-2">
@@ -226,7 +241,7 @@ export const ExecutionList = ({
 											: "text-trade-buy"
 									)}
 								>
-									{formatQuantity(totalEntryQty - totalExitQty)}
+									{boundFormatQuantity(totalEntryQty - totalExitQty)}
 								</span>
 							</div>
 						</div>
@@ -270,13 +285,13 @@ const ExecutionRow = ({
 	return (
 		<div
 			className={cn(
-				"px-s-200 sm:px-s-300 py-s-200 flex flex-wrap items-center justify-between gap-s-200 rounded-md border",
+				"px-s-200 sm:px-s-300 py-s-200 gap-s-200 flex flex-wrap items-center justify-between rounded-md border",
 				isBuy
 					? "border-action-buy/20 bg-action-buy/5"
 					: "border-action-sell/20 bg-action-sell/5"
 			)}
 		>
-			<div className="gap-s-200 sm:gap-m-400 flex items-center min-w-0">
+			<div className="gap-s-200 sm:gap-m-400 flex min-w-0 items-center">
 				{/* Side indicator -- buy (up arrow) or sell (down arrow) */}
 				{isBuy ? (
 					<ArrowUp

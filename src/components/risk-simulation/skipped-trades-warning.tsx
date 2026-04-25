@@ -37,6 +37,7 @@ const SkippedTradesWarning = ({ summary }: SkippedTradesWarningProps) => {
 		]
 	)
 
+	// Early return after hook calls — hooks cannot be called conditionally
 	if (totalSkipped === 0) return null
 
 	return (
@@ -49,7 +50,10 @@ const SkippedTradesWarning = ({ summary }: SkippedTradesWarningProps) => {
 				aria-label={t("toggle")}
 			>
 				<div className="flex items-center gap-2">
-					<AlertTriangle className="text-warning h-4 w-4 shrink-0" aria-hidden="true" />
+					<AlertTriangle
+						className="text-warning h-4 w-4 shrink-0"
+						aria-hidden="true"
+					/>
 					<span className="text-small text-txt-200">
 						{t("title", { count: totalSkipped })}
 					</span>

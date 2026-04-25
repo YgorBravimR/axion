@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,12 +40,14 @@ export const B3TradingCalendar = () => {
 
 	const [monthOffset, setMonthOffset] = useState(0)
 
-	const today = new Date()
-	const todayStr = toDateStr(
-		today.getFullYear(),
-		today.getMonth(),
-		today.getDate()
-	)
+	// today and todayStr are stable across month navigation — memoized once
+	const { today, todayStr } = useMemo(() => {
+		const now = new Date()
+		return {
+			today: now,
+			todayStr: toDateStr(now.getFullYear(), now.getMonth(), now.getDate()),
+		}
+	}, [])
 
 	const { year, month, firstDayOffset, days, trailingEmpty } = useMemo(
 		// prettier-ignore
@@ -90,7 +92,7 @@ export const B3TradingCalendar = () => {
 				trailingEmpty,
 			}
 		},
-		[monthOffset, todayStr, locale]
+		[monthOffset, todayStr, locale, today]
 	)
 
 	// Monday-first order: Mon Tue Wed Thu Fri Sat Sun
@@ -104,15 +106,17 @@ export const B3TradingCalendar = () => {
 		tDow("sunShort"),
 	]
 
-	const monthName = new Intl.DateTimeFormat(
-		locale === "pt-BR" ? "pt-BR" : "en-US",
-		{
-			month: "long",
-		}
-	).format(new Date(year, month, 1))
+	// Month name formatter — memoized based on locale + year + month
+	const monthName = useMemo(
+		() =>
+			new Intl.DateTimeFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
+				month: "long",
+			}).format(new Date(year, month, 1)),
+		[locale, year, month]
+	)
 
-	const handlePrevMonth = () => setMonthOffset((prev) => prev - 1)
-	const handleNextMonth = () => setMonthOffset((prev) => prev + 1)
+	const handlePrevMonth = useCallback(() => setMonthOffset((prev) => prev - 1), [])
+	const handleNextMonth = useCallback(() => setMonthOffset((prev) => prev + 1), [])
 
 	return (
 		<div className="flex flex-col gap-2 px-3 py-2">

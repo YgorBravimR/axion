@@ -25,7 +25,9 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 
 	const [postMarketNotes, setPostMarketNotes] = useState("")
 	const [saving, setSaving] = useState(false)
-	const [hasChanges, setHasChanges] = useState(false)
+
+	// Derive hasChanges inline — no state or effect needed
+	const hasChanges = postMarketNotes !== (notes?.postMarketNotes ?? "")
 
 	// Initialize form values
 	useEffect(() => {
@@ -33,12 +35,6 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 			setPostMarketNotes(notes.postMarketNotes || "")
 		}
 	}, [notes])
-
-	// Track changes
-	useEffect(() => {
-		const currentNotes = notes?.postMarketNotes || ""
-		setHasChanges(postMarketNotes !== currentNotes)
-	}, [postMarketNotes, notes])
 
 	const handleSave = async () => {
 		setSaving(true)

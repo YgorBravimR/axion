@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -22,7 +22,10 @@ export const TradeSequenceList = ({
 	const t = useTranslations("monteCarlo.trades")
 	const [showAll, setShowAll] = useState(!initiallyCollapsed)
 
-	const displayedTrades = showAll ? trades : trades.slice(0, maxVisible)
+	const displayedTrades = useMemo(
+		() => (showAll ? trades : trades.slice(0, maxVisible)),
+		[trades, showAll, maxVisible]
+	)
 	const hasMore = trades.length > maxVisible
 
 	return (
