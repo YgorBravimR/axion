@@ -207,7 +207,7 @@ const BugReportPanel = () => {
 				"fixed right-6 bottom-6 z-50 flex w-96 max-w-[calc(100vw-1rem)] flex-col",
 				"border-txt-100 bg-bg-100 rounded-lg border shadow-2xl",
 				"animate-in slide-in-from-bottom-5 fade-in max-h-[80vh] duration-200",
-				"motion-reduce:animate-none"
+				"motion-reduce:animate-none motion-reduce:transition-none"
 			)}
 		>
 			{/* Header */}

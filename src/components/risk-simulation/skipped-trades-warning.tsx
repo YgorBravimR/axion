@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { ChevronDown, ChevronUp, AlertTriangle } from "lucide-react"
 import type { SimulationSummary } from "@/types/risk-simulation"
@@ -14,17 +14,30 @@ const SkippedTradesWarning = ({ summary }: SkippedTradesWarningProps) => {
 	const [isExpanded, setIsExpanded] = useState(false)
 
 	const totalSkipped = summary.totalTrades - summary.executedTrades
-	if (totalSkipped === 0) return null
 
-	const skipReasons = [
-		{ key: "noSl", count: summary.skippedNoSl },
-		{ key: "dailyLimit", count: summary.skippedDailyLimit },
-		{ key: "dailyTarget", count: summary.skippedDailyTarget },
-		{ key: "maxTrades", count: summary.skippedMaxTrades },
-		{ key: "consecutiveLoss", count: summary.skippedConsecutiveLoss },
-		{ key: "monthlyLimit", count: summary.skippedMonthlyLimit },
-		{ key: "weeklyLimit", count: summary.skippedWeeklyLimit },
-	].filter((r) => r.count > 0)
+	const skipReasons = useMemo(
+		() =>
+			[
+				{ key: "noSl", count: summary.skippedNoSl },
+				{ key: "dailyLimit", count: summary.skippedDailyLimit },
+				{ key: "dailyTarget", count: summary.skippedDailyTarget },
+				{ key: "maxTrades", count: summary.skippedMaxTrades },
+				{ key: "consecutiveLoss", count: summary.skippedConsecutiveLoss },
+				{ key: "monthlyLimit", count: summary.skippedMonthlyLimit },
+				{ key: "weeklyLimit", count: summary.skippedWeeklyLimit },
+			].filter((r) => r.count > 0),
+		[
+			summary.skippedNoSl,
+			summary.skippedDailyLimit,
+			summary.skippedDailyTarget,
+			summary.skippedMaxTrades,
+			summary.skippedConsecutiveLoss,
+			summary.skippedMonthlyLimit,
+			summary.skippedWeeklyLimit,
+		]
+	)
+
+	if (totalSkipped === 0) return null
 
 	return (
 		<div className="border-bg-300 bg-bg-200 rounded-lg border">

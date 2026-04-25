@@ -55,6 +55,13 @@ export const MarketMonitorContent = () => {
 	const companionSymbols = useMemo(() => getCompanionSymbols(), [])
 
 	// ── Derived data ─────────────────────────────────────────────────────────
+
+	// H19: O(1) lookup map for market statuses keyed by id
+	const marketStatusMap = useMemo(
+		() => new Map(marketStatuses.map((s) => [s.id, s])),
+		[marketStatuses]
+	)
+
 	const heroQuotes = useMemo(() => {
 		const allQuotes = groups.flatMap((g) => g.quotes)
 		return HERO_SYMBOLS.map((symbol) =>
@@ -117,26 +124,58 @@ export const MarketMonitorContent = () => {
 		}
 	}, [t])
 
+	// Refs to hold interval IDs so the visibility handler can clear/restart them
+	const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+	const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+	const startIntervals = useCallback(() => {
+		if (!pollIntervalRef.current) {
+			pollIntervalRef.current = setInterval(fetchData, REFRESH_INTERVAL_MS)
+		}
+		if (!statusIntervalRef.current) {
+			statusIntervalRef.current = setInterval(() => {
+				setMarketStatuses(computeMarketStatuses())
+			}, 60_000)
+		}
+	}, [fetchData])
+
+	const stopIntervals = useCallback(() => {
+		if (pollIntervalRef.current) {
+			clearInterval(pollIntervalRef.current)
+			pollIntervalRef.current = null
+		}
+		if (statusIntervalRef.current) {
+			clearInterval(statusIntervalRef.current)
+			statusIntervalRef.current = null
+		}
+	}, [])
+
 	// Initial fetch
 	useEffect(() => {
 		fetchData()
 	}, [fetchData])
 
-	// Background polling
-	useEffect(() => {
-		const interval = setInterval(fetchData, REFRESH_INTERVAL_MS)
-		return () => clearInterval(interval)
-	}, [fetchData])
-
-	// Market status — recompute every minute
+	// Start intervals and pause/resume based on tab visibility
 	useEffect(() => {
 		setMarketStatuses(computeMarketStatuses())
-		const interval = setInterval(
-			() => setMarketStatuses(computeMarketStatuses()),
-			60_000
-		)
-		return () => clearInterval(interval)
-	}, [])
+		startIntervals()
+
+		const handleVisibilityChange = () => {
+			if (document.hidden) {
+				stopIntervals()
+			} else {
+				setMarketStatuses(computeMarketStatuses())
+				startIntervals()
+			}
+		}
+
+		document.addEventListener("visibilitychange", handleVisibilityChange)
+
+		return () => {
+			stopIntervals()
+			document.removeEventListener("visibilitychange", handleVisibilityChange)
+		}
+	}, [startIntervals, stopIntervals])
 
 	const handleRefresh = fetchData
 	const handleTabChange = (tabId: string) => setActiveTab(tabId)
@@ -183,7 +222,7 @@ export const MarketMonitorContent = () => {
 						{marketStatuses.length > 0 ? (
 							<div className="flex items-center gap-3">
 								{HEADER_MARKET_IDS.map((id) => {
-									const status = marketStatuses.find((s) => s.id === id)
+									const status = marketStatusMap.get(id)
 									if (!status) return null
 									return (
 										<span

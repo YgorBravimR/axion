@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
 	Select,
 	SelectContent,
@@ -96,11 +97,14 @@ export const BiasDisplay = ({ bias, compact = false }: BiasDisplayProps) => {
 	const config = biasConfig[bias]
 	const Icon = config.icon
 
-	const labels: Record<BiasType, string> = {
-		long: t("biasLong"),
-		short: t("biasShort"),
-		neutral: t("biasNeutral"),
-	}
+	const labels = useMemo<Record<BiasType, string>>(
+		() => ({
+			long: t("biasLong"),
+			short: t("biasShort"),
+			neutral: t("biasNeutral"),
+		}),
+		[t],
+	)
 
 	if (compact) {
 		return (

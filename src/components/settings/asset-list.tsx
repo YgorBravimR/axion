@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo } from "react"
+import { useState, useTransition, useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -73,24 +73,24 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 		return matchesSearch && matchesType && matchesActive
 	}), [assets, search, filterType, showInactive])
 
-	const handleEdit = (asset: AssetWithType) => {
+	const handleEdit = useCallback((asset: AssetWithType) => {
 		setEditingAsset(asset)
 		setFormOpen(true)
-	}
+	}, [])
 
-	const handleToggleActive = (asset: AssetWithType) => {
+	const handleToggleActive = useCallback((asset: AssetWithType) => {
 		setPendingId(asset.id)
 		startTransition(async () => {
 			await toggleAssetActive(asset.id, !asset.isActive)
 			setPendingId(null)
 		})
-	}
+	}, [startTransition])
 
-	const handleDelete = (asset: AssetWithType) => {
+	const handleDelete = useCallback((asset: AssetWithType) => {
 		setDeleteTarget(asset)
-	}
+	}, [])
 
-	const handleConfirmDelete = () => {
+	const handleConfirmDelete = useCallback(() => {
 		if (!deleteTarget) return
 		const asset = deleteTarget
 		setPendingId(asset.id)
@@ -99,7 +99,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			setPendingId(null)
 			setDeleteTarget(null)
 		})
-	}
+	}, [deleteTarget, startTransition])
 
 	const handleFormClose = () => {
 		setFormOpen(false)
@@ -246,7 +246,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 				enableSorting: false,
 			},
 		],
-		[t, tCommon, isPending, pendingId]
+		[t, tCommon, isPending, pendingId, handleEdit, handleToggleActive, handleDelete, handleConfirmDelete]
 	)
 
 	return (

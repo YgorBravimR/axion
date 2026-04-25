@@ -1,10 +1,37 @@
 "use client"
 
-import { useTranslations, useLocale } from "next-intl"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { PnLDisplay } from "./pnl-display"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { ExecutionSummary, PositionStatus } from "@/types"
 import { ArrowRight, CheckCircle, AlertCircle, Clock } from "lucide-react"
+
+const getStatusIcon = (status: PositionStatus) => {
+	switch (status) {
+		case "closed":
+			return <CheckCircle className="h-4 w-4 text-trade-buy" />
+		case "partial":
+			return <Clock className="h-4 w-4 text-warning" />
+		case "open":
+			return <AlertCircle className="h-4 w-4 text-acc-200" />
+		case "over_exit":
+			return <AlertCircle className="h-4 w-4 text-fb-error" />
+	}
+}
+
+const getStatusColor = (status: PositionStatus): string => {
+	switch (status) {
+		case "closed":
+			return "text-trade-buy"
+		case "partial":
+			return "text-warning"
+		case "open":
+			return "text-acc-200"
+		case "over_exit":
+			return "text-fb-error"
+	}
+}
 
 interface PositionSummaryProps {
 	summary: ExecutionSummary
@@ -22,7 +49,7 @@ export const PositionSummary = ({
 	className,
 }: PositionSummaryProps) => {
 	const t = useTranslations("execution")
-	const locale = useLocale()
+	const { formatNumber } = useFormatting()
 
 	const {
 		totalEntryQuantity,
@@ -62,49 +89,11 @@ export const PositionSummary = ({
 			? (totalExitQuantity / totalEntryQuantity) * 100
 			: 0
 
-	const formatPrice = (price: number) => {
-		return price.toLocaleString(locale, {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		})
-	}
+	const formatPrice = (price: number) =>
+		formatNumber(price, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-	const formatQuantity = (qty: number) => {
-		return qty.toLocaleString(locale, {
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 2,
-		})
-	}
-
-	const getStatusIcon = (status: PositionStatus) => {
-		switch (status) {
-			case "closed":
-				return <CheckCircle className="h-4 w-4 text-trade-buy" />
-			case "partial":
-				return <Clock className="h-4 w-4 text-warning" />
-			case "open":
-				return <AlertCircle className="h-4 w-4 text-acc-200" />
-			case "over_exit":
-				return <AlertCircle className="h-4 w-4 text-fb-error" />
-		}
-	}
-
-	const getStatusText = (status: PositionStatus) => {
-		return t(`positionStatus.${status}`)
-	}
-
-	const getStatusColor = (status: PositionStatus) => {
-		switch (status) {
-			case "closed":
-				return "text-trade-buy"
-			case "partial":
-				return "text-warning"
-			case "open":
-				return "text-acc-200"
-			case "over_exit":
-				return "text-fb-error"
-		}
-	}
+	const formatQuantity = (qty: number) =>
+		formatNumber(qty, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
 	return (
 		<div
@@ -126,7 +115,7 @@ export const PositionSummary = ({
 				>
 					{getStatusIcon(positionStatus)}
 					<span className="text-small font-medium">
-						{getStatusText(positionStatus)}
+						{t(`positionStatus.${positionStatus}`)}
 					</span>
 				</div>
 			</div>

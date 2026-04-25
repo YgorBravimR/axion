@@ -6,6 +6,7 @@ import {
 	useState,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	type ReactNode,
 } from "react"
@@ -213,21 +214,24 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	const currentStepNumber = positionInVisible >= 0 ? positionInVisible + 1 : 1
 	const totalSteps = visibleIndices.length
 
+	const contextValue = useMemo(
+		() => ({
+			startGuide,
+			registerGuide,
+			unregisterGuide,
+			registeredConfig,
+			isActive,
+			currentStep: currentStepNumber,
+			totalSteps,
+			next,
+			prev,
+			close,
+		}),
+		[startGuide, registerGuide, unregisterGuide, registeredConfig, isActive, currentStepNumber, totalSteps, next, prev, close]
+	)
+
 	return (
-		<PageGuideContext.Provider
-			value={{
-				startGuide,
-				registerGuide,
-				unregisterGuide,
-				registeredConfig,
-				isActive,
-				currentStep: currentStepNumber,
-				totalSteps,
-				next,
-				prev,
-				close,
-			}}
-		>
+		<PageGuideContext.Provider value={contextValue}>
 			{children}
 			{isActive && activeConfig && (
 				<PageGuideOverlay

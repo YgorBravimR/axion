@@ -129,6 +129,8 @@ export const ChecklistManager = ({
 
 	const canSave = name.trim() && items.some((item) => item.label.trim())
 
+	if (!open) return null
+
 	return (
 		<Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
 			<DialogContent id="checklist-manager-dialog" className="max-w-lg" aria-describedby={undefined}>

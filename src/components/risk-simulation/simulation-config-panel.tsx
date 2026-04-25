@@ -81,10 +81,13 @@ const SimulationConfigPanel = ({
 }: SimulationConfigPanelProps) => {
 	const t = useTranslations("riskSimulation.config")
 
-	const rangeValue: DateRange | undefined =
-		dateFrom || dateTo
-			? { from: parseToDate(dateFrom), to: parseToDate(dateTo) }
-			: undefined
+	const rangeValue = useMemo<DateRange | undefined>(
+		() =>
+			dateFrom || dateTo
+				? { from: parseToDate(dateFrom), to: parseToDate(dateTo) }
+				: undefined,
+		[dateFrom, dateTo]
+	)
 
 	const handleRangeChange = (range: DateRange | undefined) => {
 		const from = range?.from ? formatToDateStr(range.from) : ""

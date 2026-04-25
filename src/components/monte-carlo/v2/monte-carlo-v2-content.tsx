@@ -18,7 +18,7 @@ import { ModeDistributionChart } from "./mode-distribution-chart"
 import { V2DistributionHistogram } from "./v2-distribution-histogram"
 import { getSimulationStats, runSimulationV2 } from "@/app/actions/monte-carlo"
 import { buildProfileForSim } from "@/lib/risk-profile"
-import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
+import { useMCCalibrationDispatch } from "@/components/providers/mc-calibration-provider"
 import { buildCalibrationSnapshotV2 } from "@/lib/mc-calibration"
 import { toCents } from "@/lib/money"
 import { cn } from "@/lib/utils"
@@ -60,7 +60,7 @@ const MonteCarloV2Content = ({
 	const tOverlay = useTranslations("overlay")
 	const tCommon = useTranslations("common")
 	const { showLoading, hideLoading } = useLoadingOverlay()
-	const { setSnapshot } = useMCCalibration()
+	const setSnapshot = useMCCalibrationDispatch()
 
 	// Profile selection state
 	const [selectedProfileId, setSelectedProfileId] = useState("")

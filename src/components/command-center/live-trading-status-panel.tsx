@@ -325,7 +325,10 @@ const LiveTradingStatusPanel = ({
 	const tDir = useTranslations("commandCenter.directionAbbr")
 	const tRisk = useTranslations("riskSimulation")
 	const { formatCurrency } = useFormatting()
-	const directionLabels = { long: tDir("long"), short: tDir("short") }
+	const directionLabels = useMemo(
+		() => ({ long: tDir("long"), short: tDir("short") }),
+		[tDir]
+	)
 
 	// Loading state
 	if (!data) {
@@ -420,7 +423,7 @@ const LiveTradingStatusPanel = ({
 	}
 
 	// Active trading — full interactive panel
-	const getPhaseStyles = () => {
+	const phaseStyles = useMemo(() => {
 		switch (status.dayPhase) {
 			case "loss_recovery":
 				return {
@@ -440,12 +443,10 @@ const LiveTradingStatusPanel = ({
 					bgClass: "bg-acc-100/5",
 				}
 		}
-	}
-
-	const phaseStyles = getPhaseStyles()
+	}, [status.dayPhase])
 
 	// Phase badge
-	const getPhaseBadge = () => {
+	const badge = useMemo(() => {
 		if (
 			status.dayPhase === "loss_recovery" &&
 			status.recoveryStepIndex !== null
@@ -470,12 +471,10 @@ const LiveTradingStatusPanel = ({
 			text: t(`phase.${status.dayPhase}`),
 			className: "bg-acc-100/20 text-acc-100",
 		}
-	}
-
-	const badge = getPhaseBadge()
+	}, [status.dayPhase, status.recoveryStepIndex, status.totalRecoverySteps, t])
 
 	// Size direction
-	const getSizeDirectionDisplay = () => {
+	const sizeDirection = useMemo(() => {
 		if (status.shouldIncreaseSize) {
 			return {
 				label: t("metrics.increase"),
@@ -495,12 +494,10 @@ const LiveTradingStatusPanel = ({
 			Icon: Minus,
 			className: "text-txt-300",
 		}
-	}
-
-	const sizeDirection = getSizeDirectionDisplay()
+	}, [status.shouldIncreaseSize, status.shouldDecreaseSize, t])
 
 	// Gain mode sub-label
-	const getGainModeLabel = () => {
+	const gainModeLabel = useMemo(() => {
 		if (status.dayPhase !== "gain_mode") return undefined
 
 		if (
@@ -518,7 +515,7 @@ const LiveTradingStatusPanel = ({
 			})
 		}
 		return t("gainMode.singleTarget")
-	}
+	}, [status.dayPhase, status.gainModeType, status.gainModeReinvestPercent, status.gainSequenceStepIndex, status.totalGainSequenceSteps, t])
 
 	return (
 		<div
@@ -566,7 +563,7 @@ const LiveTradingStatusPanel = ({
 					})}
 					subLabel={
 						status.dayPhase === "gain_mode"
-							? getGainModeLabel()
+							? gainModeLabel
 							: translateRiskReason(tRisk, status.riskReason)
 					}
 				/>

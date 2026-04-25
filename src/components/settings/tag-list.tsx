@@ -23,6 +23,17 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+const getTypeColor = (type: string): string => {
+	switch (type) {
+		case "setup":
+			return "text-action-buy"
+		case "mistake":
+			return "text-fb-error"
+		default:
+			return "text-txt-200"
+	}
+}
+
 export const TagList = () => {
 	const t = useTranslations("settings.tags")
 	const tCommon = useTranslations("common")
@@ -99,17 +110,6 @@ export const TagList = () => {
 	const handleAddNew = () => {
 		setEditingTag(null)
 		setFormOpen(true)
-	}
-
-	const getTypeColor = (type: string): string => {
-		switch (type) {
-			case "setup":
-				return "text-action-buy"
-			case "mistake":
-				return "text-fb-error"
-			default:
-				return "text-txt-200"
-		}
 	}
 
 	const getTypeLabel = (type: string): string => {

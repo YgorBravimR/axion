@@ -33,7 +33,7 @@ import {
 	runSimulation,
 } from "@/app/actions/monte-carlo"
 import { defaultSimulationParams } from "@/lib/validations/monte-carlo"
-import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
+import { useMCCalibrationDispatch } from "@/components/providers/mc-calibration-provider"
 import { buildCalibrationSnapshot } from "@/lib/mc-calibration"
 import type {
 	DataSource,
@@ -56,7 +56,7 @@ export const MonteCarloContent = ({
 	const t = useTranslations("monteCarlo")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
-	const { setSnapshot } = useMCCalibration()
+	const setSnapshot = useMCCalibrationDispatch()
 
 	// Mode state
 	const [inputMode, setInputMode] = useState<"auto" | "manual">("auto")

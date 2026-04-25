@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import type { MarketQuote } from "@/types/market"
 import { cn } from "@/lib/utils"
@@ -76,7 +77,7 @@ const ChangeBadge = ({
  * Default layout (5 cols): [flag+name] [price] [high] [low] [change badge]
  * B3 ADR layout (6 cols):  [🇧🇷 name] [🇺🇸 ADR name] [B3 price] [B3 change] [ADR price] [ADR change]
  */
-export const QuoteCard = ({
+const QuoteCardBase = ({
 	quote,
 	showAdr = false,
 	adrQuote,
@@ -87,10 +88,12 @@ export const QuoteCard = ({
 	const isAdrClosed = adrQuote ? isQuoteStale(adrQuote.updatedAt) : true
 
 	// Resolve ADR color class once — reused across name and price columns
-	const adrColorClass = (() => {
-		if (!adrQuote || isAdrClosed || adrQuote.change === 0) return "text-txt-300"
-		return adrQuote.change > 0 ? "text-action-buy" : "text-action-sell"
-	})()
+	const adrColorClass =
+		!adrQuote || isAdrClosed || adrQuote.change === 0
+			? "text-txt-300"
+			: adrQuote.change > 0
+				? "text-action-buy"
+				: "text-action-sell"
 
 	// ── B3 tab: 6-column tabular layout with ADR companion ──────────────────
 	if (showAdr) {
@@ -214,3 +217,5 @@ export const QuoteCard = ({
 		</div>
 	)
 }
+
+export const QuoteCard = memo(QuoteCardBase)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -25,16 +25,19 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 		totalPnl: weeks.reduce((sum, w) => sum + w.pnl, 0),
 	}), [weeks])
 
+	const formatDateRange = useCallback(
+		(start: string, end: string) => {
+			const startDate = parseISO(start)
+			const endDate = parseISO(end)
+			const startDay = format(startDate, "dd", { locale: dateLocale })
+			const endDay = format(endDate, "dd", { locale: dateLocale })
+			return `${startDay}-${endDay}`
+		},
+		[dateLocale]
+	)
+
 	if (weeks.length === 0) {
 		return null
-	}
-
-	const formatDateRange = (start: string, end: string) => {
-		const startDate = parseISO(start)
-		const endDate = parseISO(end)
-		const startDay = format(startDate, "dd", { locale: dateLocale })
-		const endDay = format(endDate, "dd", { locale: dateLocale })
-		return `${startDay}-${endDay}`
 	}
 
 	return (

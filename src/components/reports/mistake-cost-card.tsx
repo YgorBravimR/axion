@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle } from "lucide-react"
@@ -32,7 +33,10 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 	const { mistakes, totalMistakeCost, mostCostlyMistake } = data
 
 	// Calculate max loss for bar width scaling
-	const maxLoss = Math.max(...mistakes.map((m) => m.totalLoss))
+	const maxLoss = useMemo(
+		() => Math.max(...mistakes.map((m) => m.totalLoss)),
+		[mistakes]
+	)
 
 	return (
 		<div id="reports-mistake-cost" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">

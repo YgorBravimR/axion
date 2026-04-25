@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import type { DaySummary } from "@/types"
@@ -19,35 +20,49 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 	const t = useTranslations("dashboard")
 	const tCommon = useTranslations("common")
 
-	const stats = [
-		{
-			label: t("dayDetail.netPnl"),
-			value: formatBrlWithSign(summary.netPnl),
-			isPositive: summary.netPnl >= 0,
-			showIcon: true,
-		},
-		{
-			label: t("dayDetail.grossPnl"),
-			value: formatBrlWithSign(summary.grossPnl),
-			subValue: `${t("dayDetail.fees")}: R$ ${summary.totalFees.toFixed(2)}`,
-			isPositive: summary.grossPnl >= 0,
-		},
-		{
-			label: t("dayDetail.winRate"),
-			value: `${summary.winRate.toFixed(0)}%`,
-			subValue: `${summary.wins}${tCommon("winAbbr")} ${summary.losses}${tCommon("lossAbbr")}`,
-			isPositive: summary.winRate >= 50,
-		},
-		{
-			label: t("dayDetail.trades"),
-			value: summary.totalTrades.toString(),
-			subValue:
-				summary.avgR !== 0
-					? `${t("dayDetail.avgR")}: ${summary.avgR >= 0 ? "+" : ""}${summary.avgR.toFixed(1)}R`
-					: undefined,
-			isPositive: null,
-		},
-	]
+	const stats = useMemo(
+		() => [
+			{
+				label: t("dayDetail.netPnl"),
+				value: formatBrlWithSign(summary.netPnl),
+				isPositive: summary.netPnl >= 0,
+				showIcon: true,
+			},
+			{
+				label: t("dayDetail.grossPnl"),
+				value: formatBrlWithSign(summary.grossPnl),
+				subValue: `${t("dayDetail.fees")}: R$ ${summary.totalFees.toFixed(2)}`,
+				isPositive: summary.grossPnl >= 0,
+			},
+			{
+				label: t("dayDetail.winRate"),
+				value: `${summary.winRate.toFixed(0)}%`,
+				subValue: `${summary.wins}${tCommon("winAbbr")} ${summary.losses}${tCommon("lossAbbr")}`,
+				isPositive: summary.winRate >= 50,
+			},
+			{
+				label: t("dayDetail.trades"),
+				value: summary.totalTrades.toString(),
+				subValue:
+					summary.avgR !== 0
+						? `${t("dayDetail.avgR")}: ${summary.avgR >= 0 ? "+" : ""}${summary.avgR.toFixed(1)}R`
+						: undefined,
+				isPositive: null,
+			},
+		],
+		[
+			t,
+			tCommon,
+			summary.netPnl,
+			summary.grossPnl,
+			summary.totalFees,
+			summary.winRate,
+			summary.wins,
+			summary.losses,
+			summary.totalTrades,
+			summary.avgR,
+		],
+	)
 
 	return (
 		<div className="grid grid-cols-2 gap-s-300 md:grid-cols-4">

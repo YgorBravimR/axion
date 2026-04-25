@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useState } from "react"
 import { useTranslations } from "next-intl"
 import {
 	ChevronDown,
@@ -33,19 +33,58 @@ import type { ProcessedCsvTrade } from "@/app/actions/csv-import"
 import { APP_TIMEZONE } from "@/lib/dates"
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
 
+// Hoisted module-level formatters — created once, never recreated per render
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+	style: "currency",
+	currency: "BRL",
+	minimumFractionDigits: 2,
+})
+
+const priceFormatter = new Intl.NumberFormat("pt-BR", {
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+})
+
+const formatCurrency = (value: number | null): string => {
+	if (value === null) return "--"
+	const formatted = currencyFormatter.format(value)
+	return value >= 0 ? `+${formatted}` : formatted
+}
+
+const formatPrice = (value: number | string | undefined): string => {
+	if (!value) return "--"
+	return priceFormatter.format(Number(value))
+}
+
+const formatTime = (date: Date | string | number | undefined): string => {
+	if (!date) return "--"
+	const d = date instanceof Date ? date : new Date(date)
+	return d.toLocaleTimeString("pt-BR", {
+		hour: "2-digit",
+		minute: "2-digit",
+		timeZone: APP_TIMEZONE,
+	})
+}
+
+const formatDate = (date: Date | string | number | undefined): string => {
+	if (!date) return "--"
+	const d = date instanceof Date ? date : new Date(date)
+	return d.toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })
+}
+
 interface CsvTradeCardProps {
 	trade: ProcessedCsvTrade
 	isExpanded: boolean
 	isSelected: boolean
-	onToggleExpand: () => void
-	onToggleSelect: () => void
-	onEdit: (edits: ProcessedCsvTrade["edits"]) => void
+	onToggleExpand: (id: string) => void
+	onToggleSelect: (id: string) => void
+	onEdit: (id: string, edits: ProcessedCsvTrade["edits"]) => void
 	strategies: Strategy[]
 	timeframes: Timeframe[]
 	tags: Tag[]
 }
 
-export const CsvTradeCard = ({
+const CsvTradeCard = memo(({
 	trade,
 	isExpanded,
 	isSelected,
@@ -61,50 +100,16 @@ export const CsvTradeCard = ({
 	const tForm = useTranslations("journal.form")
 	const [activeTab, setActiveTab] = useState("basic")
 
-	const formatCurrency = (value: number | null) => {
-		if (value === null) return "--"
-		const formatted = new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-			minimumFractionDigits: 2,
-		}).format(value)
-		return value >= 0 ? `+${formatted}` : formatted
-	}
-
-	const formatPrice = (value: number | string | undefined) => {
-		if (!value) return "--"
-		return new Intl.NumberFormat("pt-BR", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		}).format(Number(value))
-	}
-
-	const formatTime = (date: Date | string | number | undefined) => {
-		if (!date) return "--"
-		const d = date instanceof Date ? date : new Date(date)
-		return d.toLocaleTimeString("pt-BR", {
-			hour: "2-digit",
-			minute: "2-digit",
-			timeZone: APP_TIMEZONE,
-		})
-	}
-
-	const formatDate = (date: Date | string | number | undefined) => {
-		if (!date) return "--"
-		const d = date instanceof Date ? date : new Date(date)
-		return d.toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })
-	}
-
 	const handleEditField = <K extends keyof ProcessedCsvTrade["edits"]>(
 		field: K,
 		value: ProcessedCsvTrade["edits"][K]
 	) => {
-		onEdit({ ...trade.edits, [field]: value })
+		onEdit(trade.id, { ...trade.edits, [field]: value })
 	}
 
-	const setupTags = tags.filter((t) => t.type === "setup")
-	const mistakeTags = tags.filter((t) => t.type === "mistake")
-	const generalTags = tags.filter((t) => t.type === "general")
+	const setupTags = tags.filter((tag) => tag.type === "setup")
+	const mistakeTags = tags.filter((tag) => tag.type === "mistake")
+	const generalTags = tags.filter((tag) => tag.type === "general")
 
 	const handleTagToggle = (tagId: string) => {
 		const currentTags = trade.edits.tagIds || []
@@ -135,8 +140,8 @@ export const CsvTradeCard = ({
 					"gap-s-100 sm:gap-s-200 md:gap-m-400 px-s-300 sm:px-m-400 py-s-300 flex flex-wrap items-center",
 					!isSkipped && "cursor-pointer"
 				)}
-				onClick={() => !isSkipped && onToggleExpand()}
-				onKeyDown={(e) => e.key === "Enter" && !isSkipped && onToggleExpand()}
+				onClick={() => !isSkipped && onToggleExpand(trade.id)}
+				onKeyDown={(e) => e.key === "Enter" && !isSkipped && onToggleExpand(trade.id)}
 				tabIndex={isSkipped ? -1 : 0}
 				role="button"
 				aria-expanded={isExpanded}
@@ -146,7 +151,7 @@ export const CsvTradeCard = ({
 					<Checkbox
 						id={`csv-trade-select-${trade.rowNumber}`}
 						checked={isSelected}
-						onCheckedChange={() => onToggleSelect()}
+						onCheckedChange={() => onToggleSelect(trade.id)}
 						disabled={isSkipped}
 						aria-label={t("selectTrade", { identifier: trade.rowNumber })}
 					/>
@@ -244,7 +249,7 @@ export const CsvTradeCard = ({
 							size="icon"
 							onClick={(e) => {
 								e.stopPropagation()
-								onToggleExpand()
+								onToggleExpand(trade.id)
 							}}
 							aria-label={isExpanded ? tCommon("collapse") : tCommon("expand")}
 						>
@@ -711,40 +716,40 @@ export const CsvTradeCard = ({
 							)}
 
 							{/* General Tags */}
-						{generalTags.length > 0 && (
-							<div>
-								<Label
-									id="label-csv-general-tags"
-									className="text-tiny text-txt-300"
-								>
-									{t("generalTags")}
-								</Label>
-								<div className="mt-s-200 gap-s-200 flex flex-wrap">
-									{generalTags.map((tag) => (
-										<button
-											key={tag.id}
-											type="button"
-											onClick={() => handleTagToggle(tag.id)}
-											className={cn(
-												"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
-												trade.edits.tagIds?.includes(tag.id)
-													? "bg-acc-100 text-bg-100"
-													: "bg-bg-300 text-txt-200 hover:bg-bg-100"
-											)}
-											style={
-												trade.edits.tagIds?.includes(tag.id) && tag.color
-													? { backgroundColor: tag.color }
-													: undefined
-											}
-										>
-											{tag.name}
-										</button>
-									))}
+							{generalTags.length > 0 && (
+								<div>
+									<Label
+										id="label-csv-general-tags"
+										className="text-tiny text-txt-300"
+									>
+										{t("generalTags")}
+									</Label>
+									<div className="mt-s-200 gap-s-200 flex flex-wrap">
+										{generalTags.map((tag) => (
+											<button
+												key={tag.id}
+												type="button"
+												onClick={() => handleTagToggle(tag.id)}
+												className={cn(
+													"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
+													trade.edits.tagIds?.includes(tag.id)
+														? "bg-acc-100 text-bg-100"
+														: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+												)}
+												style={
+													trade.edits.tagIds?.includes(tag.id) && tag.color
+														? { backgroundColor: tag.color }
+														: undefined
+												}
+											>
+												{tag.name}
+											</button>
+										))}
+									</div>
 								</div>
-							</div>
-						)}
+							)}
 
-						{setupTags.length === 0 && mistakeTags.length === 0 && generalTags.length === 0 && (
+							{setupTags.length === 0 && mistakeTags.length === 0 && generalTags.length === 0 && (
 								<p className="text-small text-txt-300">
 									{t("noTagsConfigured")}
 								</p>
@@ -755,4 +760,9 @@ export const CsvTradeCard = ({
 			)}
 		</div>
 	)
-}
+})
+
+CsvTradeCard.displayName = "CsvTradeCard"
+
+export { CsvTradeCard }
+export type { CsvTradeCardProps }

@@ -6,6 +6,20 @@ import { ColoredValue } from "@/components/shared/colored-value"
 import { fromCents } from "@/lib/money"
 import type { SimulationSummary } from "@/types/risk-simulation"
 
+const formatCurrency = (cents: number): string => {
+	const value = fromCents(cents)
+	const sign = value >= 0 ? "+" : ""
+	return `${sign}R$${Math.abs(value).toFixed(2)}`
+}
+
+const formatPercent = (value: number): string => `${value.toFixed(1)}%`
+
+const formatPf = (value: number): string =>
+	value >= 999 ? "∞" : value.toFixed(2)
+
+const formatR = (value: number): string =>
+	`${value >= 0 ? "+" : ""}${value.toFixed(2)}R`
+
 interface SummaryCardsProps {
 	summary: SimulationSummary
 }
@@ -47,18 +61,6 @@ const ComparisonRow = ({
 
 const SummaryCards = ({ summary }: SummaryCardsProps) => {
 	const t = useTranslations("riskSimulation.summary")
-
-	const formatCurrency = (cents: number): string => {
-		const value = fromCents(cents)
-		const sign = value >= 0 ? "+" : ""
-		return `${sign}R$${Math.abs(value).toFixed(2)}`
-	}
-
-	const formatPercent = (value: number): string => `${value.toFixed(1)}%`
-	const formatPf = (value: number): string =>
-		value >= 999 ? "∞" : value.toFixed(2)
-	const formatR = (value: number): string =>
-		`${value >= 0 ? "+" : ""}${value.toFixed(2)}R`
 
 	return (
 		<div className="space-y-s-300 sm:space-y-m-400">

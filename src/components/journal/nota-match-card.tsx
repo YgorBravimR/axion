@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, RefreshCw, HelpCircle } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -49,10 +49,19 @@ const FillRow = ({ fill, t, locale }: { fill: NotaFill; t: ReturnType<typeof use
 const FillTable = ({ fills, label, t, locale }: { fills: NotaFill[]; label: string; t: ReturnType<typeof useTranslations>; locale: string }) => {
 	if (fills.length === 0) return null
 
-	const totalQty = fills.reduce((s, f) => s + f.quantity, 0)
-	const weightedAvg = totalQty > 0
-		? fills.reduce((s, f) => s + f.price * f.quantity, 0) / totalQty
-		: 0
+	// H10: Memoize derived aggregates — avoids recomputing on every parent render
+	const { totalQty, weightedAvg } = useMemo(() => {
+		let qty = 0
+		let priceWeightSum = 0
+		for (const fill of fills) {
+			qty += fill.quantity
+			priceWeightSum += fill.price * fill.quantity
+		}
+		return {
+			totalQty: qty,
+			weightedAvg: qty > 0 ? priceWeightSum / qty : 0,
+		}
+	}, [fills])
 
 	return (
 		<div className="mt-s-200">
@@ -82,7 +91,7 @@ const FillTable = ({ fills, label, t, locale }: { fills: NotaFill[]; label: stri
 	)
 }
 
-const NotaMatchCard = ({
+const NotaMatchCard = memo(({
 	match,
 	isSelected,
 	reEnrich,
@@ -188,6 +197,8 @@ const NotaMatchCard = ({
 			)}
 		</div>
 	)
-}
+})
+
+NotaMatchCard.displayName = "NotaMatchCard"
 
 export { NotaMatchCard }

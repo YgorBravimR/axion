@@ -17,13 +17,21 @@ const formatCurrency = (cents: number): string => {
 	return `${sign}R$${Math.abs(value).toFixed(2)}`
 }
 
+const dateFormatterPtBR = new Intl.DateTimeFormat("pt-BR", {
+	weekday: "short",
+	month: "short",
+	day: "numeric",
+})
+
+const dateFormatterEnUS = new Intl.DateTimeFormat("en-US", {
+	weekday: "short",
+	month: "short",
+	day: "numeric",
+})
+
 const formatDate = (dayKey: string, locale: string): string => {
 	const date = new Date(`${dayKey}T12:00:00-03:00`)
-	return new Intl.DateTimeFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
-		weekday: "short",
-		month: "short",
-		day: "numeric",
-	}).format(date)
+	return (locale === "pt-BR" ? dateFormatterPtBR : dateFormatterEnUS).format(date)
 }
 
 interface TradeFlowItemProps {

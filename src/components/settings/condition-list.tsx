@@ -28,6 +28,21 @@ import {
 
 type FilterCategory = "all" | ConditionCategory
 
+const getCategoryColor = (category: string): string => {
+	switch (category) {
+		case "indicator":
+			return "text-acc-100"
+		case "price_action":
+			return "text-action-buy"
+		case "market_context":
+			return "text-warning"
+		case "custom":
+			return "text-txt-200"
+		default:
+			return "text-txt-300"
+	}
+}
+
 export const ConditionList = () => {
 	const t = useTranslations("settings.conditions")
 	const tCommon = useTranslations("common")
@@ -112,21 +127,6 @@ export const ConditionList = () => {
 	const handleAddNew = () => {
 		setEditingCondition(null)
 		setFormOpen(true)
-	}
-
-	const getCategoryColor = (category: string): string => {
-		switch (category) {
-			case "indicator":
-				return "text-acc-100"
-			case "price_action":
-				return "text-action-buy"
-			case "market_context":
-				return "text-warning"
-			case "custom":
-				return "text-txt-200"
-			default:
-				return "text-txt-300"
-		}
 	}
 
 	const getCategoryLabel = (category: string): string => {

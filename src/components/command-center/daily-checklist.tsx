@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Check, Settings } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,32 @@ export const DailyChecklist = ({
 	const t = useTranslations("commandCenter.checklist")
 	const { showToast } = useToast()
 	const [loading, setLoading] = useState<string | null>(null)
+
+	// Pre-compute stats and sorted items for all checklists once per checklists change
+	const checklistStats = useMemo(() => {
+		const statsMap = new Map<
+			string,
+			{
+				completedCount: number
+				totalCount: number
+				progress: number
+				isComplete: boolean
+				sortedItems: typeof checklists[number]["parsedItems"]
+			}
+		>()
+
+		for (const checklist of checklists) {
+			const completedCount = checklist.completedItemIds.length
+			const totalCount = checklist.parsedItems.length
+			const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+			const isComplete = completedCount === totalCount && totalCount > 0
+			const sortedItems = checklist.parsedItems.toSorted((a, b) => a.order - b.order)
+
+			statsMap.set(checklist.id, { completedCount, totalCount, progress, isComplete, sortedItems })
+		}
+
+		return statsMap
+	}, [checklists])
 
 	const handleToggle = async (checklistId: string, itemId: string, completed: boolean) => {
 		if (isReadOnly) return
@@ -64,10 +90,8 @@ export const DailyChecklist = ({
 	return (
 		<div id="cc-daily-checklist" className="space-y-s-300 sm:space-y-m-400">
 			{checklists.map((checklist) => {
-				const completedCount = checklist.completedItemIds.length
-				const totalCount = checklist.parsedItems.length
-				const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
-				const isComplete = completedCount === totalCount && totalCount > 0
+				const stats = checklistStats.get(checklist.id)!
+				const { completedCount, totalCount, progress, isComplete, sortedItems } = stats
 
 				return (
 					<div
@@ -117,7 +141,7 @@ export const DailyChecklist = ({
 							>
 								<div
 									className={cn(
-										"h-full transition-[width] duration-300",
+										"h-full transition-[width] duration-300 motion-reduce:transition-none",
 										isComplete ? "bg-trade-buy" : "bg-acc-100"
 									)}
 									style={{ width: `${progress}%` }}
@@ -127,9 +151,7 @@ export const DailyChecklist = ({
 
 						{/* Items */}
 						<div className="space-y-s-200">
-							{checklist.parsedItems
-								.toSorted((a, b) => a.order - b.order)
-								.map((item) => {
+							{sortedItems.map((item) => {
 									const isChecked = checklist.completedItemIds.includes(item.id)
 									const isLoading = loading === `${checklist.id}-${item.id}`
 

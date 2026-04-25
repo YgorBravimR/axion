@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -54,6 +54,17 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 	}
 
 	const { summary, weeklyBreakdown, assetBreakdown } = report
+
+	const formattedWeeklyBreakdown = useMemo(
+		() =>
+			weeklyBreakdown.map((week) => ({
+				...week,
+				weekStartLabel: format(parseISO(week.weekStart), "MMM d", { locale: dateLocale }),
+				weekEndLabel: format(parseISO(week.weekEnd), "MMM d", { locale: dateLocale }),
+			})),
+		[weeklyBreakdown, dateLocale]
+	)
+
 	const monthLabel =
 		monthOffset === 0
 			? t("thisMonth")
@@ -209,21 +220,21 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 					{isExpanded && (
 						<div className="mt-m-400 space-y-m-500">
 							{/* Weekly Breakdown */}
-							{weeklyBreakdown.length > 0 && (
+							{formattedWeeklyBreakdown.length > 0 && (
 								<div>
 									<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
 										<Calendar className="h-4 w-4" />
 										{t("weeklyBreakdown")}
 									</h3>
 									<div className="mt-s-300 space-y-s-200">
-										{weeklyBreakdown.map((week) => (
+										{formattedWeeklyBreakdown.map((week) => (
 											<div
 												key={week.weekStart}
 												className="flex items-center justify-between rounded bg-bg-100 px-s-300 py-s-200"
 											>
 												<span className="text-small text-txt-200">
-													{format(parseISO(week.weekStart), "MMM d", { locale: dateLocale })} -{" "}
-													{format(parseISO(week.weekEnd), "MMM d", { locale: dateLocale })}
+													{week.weekStartLabel} -{" "}
+													{week.weekEndLabel}
 												</span>
 												<div className="flex items-center gap-m-400">
 													<span className="text-tiny text-txt-200">

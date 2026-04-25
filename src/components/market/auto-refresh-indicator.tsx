@@ -25,18 +25,39 @@ export const AutoRefreshIndicator = ({
 		setSecondsLeft(intervalSeconds)
 	}, [intervalSeconds])
 
-	// Countdown timer
+	// Countdown timer — pauses when the tab is hidden
 	useEffect(() => {
-		const timer = setInterval(() => {
-			setSecondsLeft((prev) => {
-				if (prev <= 1) {
-					return intervalSeconds
-				}
-				return prev - 1
-			})
-		}, 1000)
+		const timerRef = { current: null as ReturnType<typeof setInterval> | null }
 
-		return () => clearInterval(timer)
+		const startCountdown = () => {
+			if (timerRef.current) return
+			timerRef.current = setInterval(() => {
+				setSecondsLeft((prev) => (prev <= 1 ? intervalSeconds : prev - 1))
+			}, 1000)
+		}
+
+		const stopCountdown = () => {
+			if (timerRef.current) {
+				clearInterval(timerRef.current)
+				timerRef.current = null
+			}
+		}
+
+		const handleVisibilityChange = () => {
+			if (document.hidden) {
+				stopCountdown()
+			} else {
+				startCountdown()
+			}
+		}
+
+		startCountdown()
+		document.addEventListener("visibilitychange", handleVisibilityChange)
+
+		return () => {
+			stopCountdown()
+			document.removeEventListener("visibilitychange", handleVisibilityChange)
+		}
 	}, [intervalSeconds])
 
 	// Reset countdown when lastUpdated changes (data was refreshed)

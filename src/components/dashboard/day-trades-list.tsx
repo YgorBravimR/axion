@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import type { KeyboardEvent } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react"
@@ -16,6 +17,20 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
+// H9: Formatter cache keyed by locale — avoids recreation per render
+const priceFormatterCache = new Map<string, Intl.NumberFormat>()
+
+const getFormatPrice = (locale: string) => {
+	if (!priceFormatterCache.has(locale)) {
+		priceFormatterCache.set(
+			locale,
+			new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+		)
+	}
+	const formatter = priceFormatterCache.get(locale)!
+	return (value: number): string => formatter.format(value)
+}
+
 interface DayTradesListProps {
 	trades: DayTrade[]
 	onTradeClick?: (tradeId: string) => void
@@ -26,11 +41,20 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 	const tCommon = useTranslations("common")
 	const locale = useLocale()
 
-	const formatPrice = (value: number): string =>
-		value.toLocaleString(locale, {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		})
+	// H9: Stable formatter reference derived from locale, not recreated on every render
+	const formatPrice = getFormatPrice(locale)
+
+	// H9: Single stable handleKeyDown reading trade ID from data attribute — no closure per row
+	const handleKeyDown = useCallback(
+		(e: KeyboardEvent<HTMLTableRowElement>) => {
+			if ((e.key === "Enter" || e.key === " ") && onTradeClick) {
+				e.preventDefault()
+				const tradeId = e.currentTarget.dataset.tradeId
+				if (tradeId) onTradeClick(tradeId)
+			}
+		},
+		[onTradeClick]
+	)
 
 	if (trades.length === 0) {
 		return (
@@ -68,17 +92,10 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{trades.map((trade) => {
-						const handleKeyDown = (e: KeyboardEvent) => {
-							if (e.key === "Enter" || e.key === " ") {
-								e.preventDefault()
-								onTradeClick?.(trade.id)
-							}
-						}
-
-						return (
+					{trades.map((trade) => (
 						<TableRow
 							key={trade.id}
+							data-trade-id={trade.id}
 							className={cn(onTradeClick && "cursor-pointer")}
 							onClick={() => onTradeClick?.(trade.id)}
 							onKeyDown={onTradeClick ? handleKeyDown : undefined}
@@ -138,8 +155,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 								)}
 							</TableCell>
 						</TableRow>
-						)
-					})}
+					))}
 				</TableBody>
 			</Table>
 		</div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo, useCallback } from "react"
 import { Link } from "@/i18n/routing"
 import {
 	ArrowUpRight,
@@ -22,7 +23,7 @@ interface TradeCardProps {
 	className?: string
 }
 
-export const TradeCard = ({ trade, className }: TradeCardProps) => {
+export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 	const t = useTranslations("trade")
 
 	// pnl is stored in cents, convert to dollars for display
@@ -32,10 +33,18 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 	const isLoss = trade.outcome === "loss"
 	const isLong = trade.direction === "long"
 
-	const tags = trade.tradeTags?.map((tt) => tt.tag) || []
-	const setupTags = tags.filter((tag) => tag.type === "setup")
-	const mistakeTags = tags.filter((tag) => tag.type === "mistake")
-	const generalTags = tags.filter((tag) => tag.type === "general")
+	// C5: Memoize tag categorization — avoids 3× inline .filter() per render
+	const { setupTags, mistakeTags, generalTags } = useMemo(() => {
+		const allTags = trade.tradeTags?.map((tt) => tt.tag) ?? []
+		return {
+			setupTags: allTags.filter((tag) => tag.type === "setup"),
+			mistakeTags: allTags.filter((tag) => tag.type === "mistake"),
+			generalTags: allTags.filter((tag) => tag.type === "general"),
+		}
+	}, [trade.tradeTags])
+
+	// C5: Stable formatFn reference — prevents ColoredValue memo from busting
+	const formatFn = useCallback((v: number) => formatCurrency(v), [])
 
 	return (
 		<Link href={`/journal/${trade.id}`}>
@@ -98,7 +107,7 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 						<ColoredValue
 							value={pnl}
 							showSign
-							formatFn={(v) => formatCurrency(v)}
+							formatFn={formatFn}
 							className="text-body font-semibold"
 						/>
 						{realizedR !== 0 && (
@@ -183,4 +192,6 @@ export const TradeCard = ({ trade, className }: TradeCardProps) => {
 			</Card>
 		</Link>
 	)
-}
+})
+
+TradeCard.displayName = "TradeCard"

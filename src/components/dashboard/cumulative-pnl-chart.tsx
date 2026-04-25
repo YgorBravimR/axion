@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
@@ -72,19 +73,28 @@ export const CumulativePnLChart = ({
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
 
-	const formatDate = (date: string) => {
-		const d = new Date(date)
-		return d.toLocaleDateString(locale, {
-			day: "numeric",
-			month: "short",
-			timeZone: APP_TIMEZONE,
-		})
-	}
+	const formatDate = useMemo(
+		() => (date: string) => {
+			const d = new Date(date)
+			return d.toLocaleDateString(locale, {
+				day: "numeric",
+				month: "short",
+				timeZone: APP_TIMEZONE,
+			})
+		},
+		[locale],
+	)
 
-	const equityValues = data.map((d) => d.equity)
-	const minEquity = Math.min(...equityValues, 0)
-	const maxEquity = Math.max(...equityValues, 0)
-	const padding = Math.max(Math.abs(maxEquity - minEquity) * 0.1, 100)
+	const { minEquity, maxEquity, padding } = useMemo(() => {
+		const equityValues = data.map((d) => d.equity)
+		const min = Math.min(...equityValues, 0)
+		const max = Math.max(...equityValues, 0)
+		return {
+			minEquity: min,
+			maxEquity: max,
+			padding: Math.max(Math.abs(max - min) * 0.1, 100),
+		}
+	}, [data])
 
 	if (data.length === 0) {
 		return (

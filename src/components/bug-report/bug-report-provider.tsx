@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback } from "react"
+import { createContext, useContext, useState, useCallback, useMemo } from "react"
 import type { ReactNode } from "react"
 
 interface BugReportContextType {
@@ -29,8 +29,13 @@ const BugReportProvider = ({ children }: BugReportProviderProps) => {
 	const openBugReport = useCallback(() => setIsOpen(true), [])
 	const closeBugReport = useCallback(() => setIsOpen(false), [])
 
+	const contextValue = useMemo(
+		() => ({ isOpen, openBugReport, closeBugReport }),
+		[isOpen, openBugReport, closeBugReport]
+	)
+
 	return (
-		<BugReportContext.Provider value={{ isOpen, openBugReport, closeBugReport }}>
+		<BugReportContext.Provider value={contextValue}>
 			{children}
 		</BugReportContext.Provider>
 	)

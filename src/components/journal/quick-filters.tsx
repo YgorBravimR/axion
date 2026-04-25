@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
@@ -48,7 +49,7 @@ interface QuickFiltersProps {
 	onClear: () => void
 }
 
-const QuickFilters = ({ activeFilterKey, onApply, onClear }: QuickFiltersProps) => {
+const QuickFilters = memo(({ activeFilterKey, onApply, onClear }: QuickFiltersProps) => {
 	const t = useTranslations("journal.smartSearch")
 
 	const handleClick = (filter: QuickFilter) => {
@@ -80,6 +81,8 @@ const QuickFilters = ({ activeFilterKey, onApply, onClear }: QuickFiltersProps) 
 			))}
 		</div>
 	)
-}
+})
+
+QuickFilters.displayName = "QuickFilters"
 
 export { QuickFilters, QUICK_FILTERS, type QuickFilter }

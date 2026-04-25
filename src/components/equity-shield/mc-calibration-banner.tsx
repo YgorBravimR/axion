@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Dices, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -83,63 +83,67 @@ const MCCalibrationBanner = ({
 	const [appliedFields, setAppliedFields] = useState<Set<string>>(new Set())
 
 	// Build suggestion rows based on snapshot version
-	const suggestions: SuggestionRow[] = []
+	const suggestions = useMemo<SuggestionRow[]>(() => {
+		const rows: SuggestionRow[] = []
 
-	if (snapshot.version === "v1") {
-		if (snapshot.expectedMaxLossStreak !== undefined) {
-			const suggested = suggestSmaPeriod(snapshot.expectedMaxLossStreak)
-			suggestions.push({
-				key: "smaPeriod",
-				label: t("smaPeriod"),
-				hint: t("smaPeriodHint", {
-					streak: snapshot.expectedMaxLossStreak.toFixed(1),
-				}),
-				suggestedValue: suggested,
-				displayValue: String(suggested),
-				paramField: "smaPeriod",
-			})
+		if (snapshot.version === "v1") {
+			if (snapshot.expectedMaxLossStreak !== undefined) {
+				const suggested = suggestSmaPeriod(snapshot.expectedMaxLossStreak)
+				rows.push({
+					key: "smaPeriod",
+					label: t("smaPeriod"),
+					hint: t("smaPeriodHint", {
+						streak: snapshot.expectedMaxLossStreak.toFixed(1),
+					}),
+					suggestedValue: suggested,
+					displayValue: String(suggested),
+					paramField: "smaPeriod",
+				})
+			}
+
+			if (
+				snapshot.worstMaxRDrawdown !== undefined &&
+				snapshot.medianMaxRDrawdown !== undefined
+			) {
+				const suggested = suggestMddMultiplier(
+					snapshot.worstMaxRDrawdown,
+					snapshot.medianMaxRDrawdown
+				)
+				rows.push({
+					key: "mddMultiplier",
+					label: t("mddMultiplier"),
+					hint: t("mddMultiplierHint"),
+					suggestedValue: suggested,
+					displayValue: `${suggested}x`,
+					paramField: "mddMultiplier",
+				})
+			}
 		}
 
-		if (
-			snapshot.worstMaxRDrawdown !== undefined &&
-			snapshot.medianMaxRDrawdown !== undefined
-		) {
-			const suggested = suggestMddMultiplier(
-				snapshot.worstMaxRDrawdown,
-				snapshot.medianMaxRDrawdown
-			)
-			suggestions.push({
-				key: "mddMultiplier",
-				label: t("mddMultiplier"),
-				hint: t("mddMultiplierHint"),
-				suggestedValue: suggested,
-				displayValue: `${suggested}x`,
-				paramField: "mddMultiplier",
-			})
+		if (snapshot.version === "v2") {
+			if (
+				snapshot.worstMaxDrawdownPercent !== undefined &&
+				snapshot.initialBalanceCents !== undefined
+			) {
+				const suggested = suggestDrawdownLimitCents(
+					snapshot.worstMaxDrawdownPercent,
+					params.initialBalanceCents
+				)
+				rows.push({
+					key: "drawdownLimitCents",
+					label: t("drawdownLimit"),
+					hint: t("drawdownLimitHint", {
+						pct: snapshot.worstMaxDrawdownPercent.toFixed(1),
+					}),
+					suggestedValue: suggested,
+					displayValue: formatCompactCurrency(fromCents(suggested), "R$"),
+					paramField: "drawdownLimitCents",
+				})
+			}
 		}
-	}
 
-	if (snapshot.version === "v2") {
-		if (
-			snapshot.worstMaxDrawdownPercent !== undefined &&
-			snapshot.initialBalanceCents !== undefined
-		) {
-			const suggested = suggestDrawdownLimitCents(
-				snapshot.worstMaxDrawdownPercent,
-				params.initialBalanceCents
-			)
-			suggestions.push({
-				key: "drawdownLimitCents",
-				label: t("drawdownLimit"),
-				hint: t("drawdownLimitHint", {
-					pct: snapshot.worstMaxDrawdownPercent.toFixed(1),
-				}),
-				suggestedValue: suggested,
-				displayValue: formatCompactCurrency(fromCents(suggested), "R$"),
-				paramField: "drawdownLimitCents",
-			})
-		}
-	}
+		return rows
+	}, [snapshot, params.initialBalanceCents, t])
 
 	const handleApply = (row: SuggestionRow) => {
 		onParamsChange({ ...params, [row.paramField]: row.suggestedValue })

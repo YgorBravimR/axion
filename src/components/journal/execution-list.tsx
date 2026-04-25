@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useMemo, useTransition } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatBrtShortDateTime } from "@/lib/dates"
@@ -19,6 +19,30 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+
+// Hoisted module-level formatter factories — keyed by locale to avoid recreation
+const priceFormatterCache = new Map<string, Intl.NumberFormat>()
+const quantityFormatterCache = new Map<string, Intl.NumberFormat>()
+
+const getPriceFormatter = (locale: string): Intl.NumberFormat => {
+	if (!priceFormatterCache.has(locale)) {
+		priceFormatterCache.set(
+			locale,
+			new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+		)
+	}
+	return priceFormatterCache.get(locale)!
+}
+
+const getQuantityFormatter = (locale: string): Intl.NumberFormat => {
+	if (!quantityFormatterCache.has(locale)) {
+		quantityFormatterCache.set(
+			locale,
+			new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+		)
+	}
+	return quantityFormatterCache.get(locale)!
+}
 
 interface ExecutionListProps {
 	executions: TradeExecution[]
@@ -43,34 +67,56 @@ export const ExecutionList = ({
 	const [isPending, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
-	// Sort all executions chronologically (no entry/exit grouping)
-	const sortedExecutions = executions.toSorted(
-		(a, b) =>
-			new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime()
-	)
+	// C4: All derived data in one memoised block keyed on executions reference
+	const {
+		sortedExecutions,
+		entries,
+		exits,
+		totalEntryQty,
+		totalExitQty,
+		avgEntryPrice,
+		avgExitPrice,
+	} = useMemo(() => {
+		const sorted = executions.toSorted(
+			(a, b) =>
+				new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime()
+		)
+		const entryList = executions.filter((e) => e.executionType === "entry")
+		const exitList = executions.filter((e) => e.executionType === "exit")
 
-	// Calculate totals
-	const entries = executions.filter((e) => e.executionType === "entry")
-	const exits = executions.filter((e) => e.executionType === "exit")
-	const totalEntryQty = entries.reduce((sum, e) => sum + Number(e.quantity), 0)
-	const totalExitQty = exits.reduce((sum, e) => sum + Number(e.quantity), 0)
+		const entryQty = entryList.reduce((sum, e) => sum + Number(e.quantity), 0)
+		const exitQty = exitList.reduce((sum, e) => sum + Number(e.quantity), 0)
 
-	// Calculate average prices
-	const avgEntryPrice =
-		totalEntryQty > 0
-			? entries.reduce(
-					(sum, e) => sum + Number(e.price) * Number(e.quantity),
-					0
-				) / totalEntryQty
-			: 0
+		const avgEntry =
+			entryQty > 0
+				? entryList.reduce((sum, e) => sum + Number(e.price) * Number(e.quantity), 0) / entryQty
+				: 0
 
-	const avgExitPrice =
-		totalExitQty > 0
-			? exits.reduce(
-					(sum, e) => sum + Number(e.price) * Number(e.quantity),
-					0
-				) / totalExitQty
-			: 0
+		const avgExit =
+			exitQty > 0
+				? exitList.reduce((sum, e) => sum + Number(e.price) * Number(e.quantity), 0) / exitQty
+				: 0
+
+		return {
+			sortedExecutions: sorted,
+			entries: entryList,
+			exits: exitList,
+			totalEntryQty: entryQty,
+			totalExitQty: exitQty,
+			avgEntryPrice: avgEntry,
+			avgExitPrice: avgExit,
+		}
+	}, [executions])
+
+	const formatPrice = (price: string | number): string => {
+		const num = typeof price === "string" ? parseFloat(price) : price
+		return getPriceFormatter(locale).format(num)
+	}
+
+	const formatQuantity = (qty: string | number): string => {
+		const num = typeof qty === "string" ? parseFloat(qty) : qty
+		return getQuantityFormatter(locale).format(num)
+	}
 
 	const handleDelete = (id: string) => {
 		setDeletingId(id)
@@ -80,22 +126,6 @@ export const ExecutionList = ({
 				onExecutionDeleted?.()
 			}
 			setDeletingId(null)
-		})
-	}
-
-	const formatPrice = (price: string | number): string => {
-		const num = typeof price === "string" ? parseFloat(price) : price
-		return num.toLocaleString(locale, {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		})
-	}
-
-	const formatQuantity = (qty: string | number): string => {
-		const num = typeof qty === "string" ? parseFloat(qty) : qty
-		return num.toLocaleString(locale, {
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 2,
 		})
 	}
 

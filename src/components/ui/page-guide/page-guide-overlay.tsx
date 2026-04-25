@@ -145,9 +145,16 @@ const PageGuideOverlay = ({
 		const element = document.getElementById(step.targetId)
 		if (!element) return
 
+		const rafPending = { current: false }
+
 		const update = () => {
 			if (!isVisible) return
-			setRenderedRect(getElementRect(step.targetId))
+			if (rafPending.current) return
+			rafPending.current = true
+			requestAnimationFrame(() => {
+				rafPending.current = false
+				setRenderedRect(getElementRect(step.targetId))
+			})
 		}
 
 		const resizeObserver = new ResizeObserver(update)

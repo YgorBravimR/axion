@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { CheckCircle2, XCircle, AlertTriangle, TrendingUp } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -30,14 +31,24 @@ export const CsvImportSummary = ({
 	const t = useTranslations("journal.csv")
 	const tCommon = useTranslations("common")
 
-	// Calculate summary stats
-	const validCount = trades.filter((t) => t.status === "valid").length
-	const warningCount = trades.filter((t) => t.status === "warning").length
-	const skippedCount = trades.filter((t) => t.status === "skipped").length
-
-	const grossPnl = trades.reduce((sum, t) => sum + (t.grossPnl || 0), 0)
-	const netPnl = trades.reduce((sum, t) => sum + (t.netPnl || 0), 0)
-	const totalCosts = trades.reduce((sum, t) => sum + (t.totalCosts || 0), 0)
+	// C3: Single pass computes all 6 values instead of 3× .filter() + 3× .reduce()
+	const { validCount, warningCount, skippedCount, grossPnl, netPnl, totalCosts } = useMemo(() => {
+		let valid = 0
+		let warning = 0
+		let skipped = 0
+		let gross = 0
+		let net = 0
+		let costs = 0
+		for (const trade of trades) {
+			if (trade.status === "valid") valid++
+			else if (trade.status === "warning") warning++
+			else if (trade.status === "skipped") skipped++
+			gross += trade.grossPnl || 0
+			net += trade.netPnl || 0
+			costs += trade.totalCosts || 0
+		}
+		return { validCount: valid, warningCount: warning, skippedCount: skipped, grossPnl: gross, netPnl: net, totalCosts: costs }
+	}, [trades])
 
 	const formatCurrency = (value: number) => {
 		const formatted = new Intl.NumberFormat("pt-BR", {

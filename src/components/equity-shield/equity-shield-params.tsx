@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import type { DateRange } from "react-day-picker"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
@@ -88,10 +89,13 @@ const EquityShieldParamsForm = ({
 	}
 
 	// Date range picker bridge
-	const rangeValue: DateRange | undefined =
-		dateFrom || dateTo
-			? { from: parseToDate(dateFrom), to: parseToDate(dateTo) }
-			: undefined
+	const rangeValue = useMemo<DateRange | undefined>(
+		() =>
+			dateFrom || dateTo
+				? { from: parseToDate(dateFrom), to: parseToDate(dateTo) }
+				: undefined,
+		[dateFrom, dateTo]
+	)
 
 	const handleRangeChange = (range: DateRange | undefined) => {
 		const from = range?.from ? formatToDateStr(range.from) : ""
@@ -109,7 +113,7 @@ const EquityShieldParamsForm = ({
 		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
 	}
 
-	const activeQuickFilter = (() => {
+	const activeQuickFilter = useMemo(() => {
 		if (!dateFrom || !dateTo) return null
 		for (const year of tradeYears) {
 			if (dateFrom === `${year}-01-01` && dateTo === `${year}-12-31`) {
@@ -122,7 +126,7 @@ const EquityShieldParamsForm = ({
 			if (dateFrom === `${oldest}-01-01` && dateTo === today) return "all"
 		}
 		return null
-	})()
+	}, [dateFrom, dateTo, tradeYears])
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-s-300 sm:p-m-400">

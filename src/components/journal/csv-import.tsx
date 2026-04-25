@@ -80,21 +80,24 @@ export const CsvImport = () => {
 	const [isImporting, setIsImporting] = useState(false)
 	const [importProgress, setImportProgress] = useState(0)
 
+	// M8: Accumulate per-trade edits without re-mapping the full array on every keystroke
+	const editsMapRef = useRef<Map<string, ProcessedCsvTrade["edits"]>>(new Map())
+
 	// Filtered trades based on filter selection
 	const filteredTrades = useMemo(() => {
 		if (filter === "all") return processedTrades
-		return processedTrades.filter((t) => t.status === filter)
+		return processedTrades.filter((trade) => trade.status === filter)
 	}, [processedTrades, filter])
 
 	// Selectable trades (not skipped)
 	const selectableTrades = useMemo(
-		() => processedTrades.filter((t) => t.status !== "skipped"),
+		() => processedTrades.filter((trade) => trade.status !== "skipped"),
 		[processedTrades]
 	)
 
 	const allSelected = useMemo(() => {
 		if (selectableTrades.length === 0) return false
-		return selectableTrades.every((t) => selectedIds.has(t.id))
+		return selectableTrades.every((trade) => selectedIds.has(trade.id))
 	}, [selectableTrades, selectedIds])
 
 	// File handling
@@ -110,6 +113,7 @@ export const CsvImport = () => {
 			setProcessedTrades([])
 			setExpandedIds(new Set())
 			setSelectedIds(new Set())
+			editsMapRef.current.clear()
 
 			// Try reading with different encodings
 			const tryParseWithEncoding = async (encoding: string) => {
@@ -159,7 +163,7 @@ export const CsvImport = () => {
 				setValidationResult(validation.data!)
 
 				// Check for replay trades on non-replay accounts
-				const replayCount = result.trades.filter((t) => t.isReplayTrade).length
+				const replayCount = result.trades.filter((trade) => trade.isReplayTrade).length
 				if (validation.data!.accountType !== "replay" && replayCount > 0) {
 					setReplayTradeCount(replayCount)
 					setShowReplayAlert(true)
@@ -172,8 +176,8 @@ export const CsvImport = () => {
 				setProcessedTrades(validation.data!.trades)
 				const validIds = new Set(
 					validation
-						.data!.trades.filter((t) => t.status !== "skipped")
-						.map((t) => t.id)
+						.data!.trades.filter((trade) => trade.status !== "skipped")
+						.map((trade) => trade.id)
 				)
 				setSelectedIds(validIds)
 
@@ -235,6 +239,7 @@ export const CsvImport = () => {
 		setFileName(null)
 		setExpandedIds(new Set())
 		setSelectedIds(new Set())
+		editsMapRef.current.clear()
 		if (fileInputRef.current) {
 			fileInputRef.current.value = ""
 		}
@@ -246,8 +251,8 @@ export const CsvImport = () => {
 		setProcessedTrades(validationResult.trades)
 		const validIds = new Set(
 			validationResult.trades
-				.filter((t) => t.status !== "skipped")
-				.map((t) => t.id)
+				.filter((trade) => trade.status !== "skipped")
+				.map((trade) => trade.id)
 		)
 		setSelectedIds(validIds)
 		setShowReplayAlert(false)
@@ -256,7 +261,7 @@ export const CsvImport = () => {
 	const handleRejectReplayTrades = () => {
 		if (!validationResult) return
 		const nonReplayTrades = validationResult.trades.filter(
-			(t) => !t.originalData.isReplayTrade
+			(trade) => !trade.originalData.isReplayTrade
 		)
 		if (nonReplayTrades.length === 0) {
 			showToast("error", t("replayAlert.allReplay"))
@@ -266,14 +271,14 @@ export const CsvImport = () => {
 		}
 		setProcessedTrades(nonReplayTrades)
 		const validIds = new Set(
-			nonReplayTrades.filter((t) => t.status !== "skipped").map((t) => t.id)
+			nonReplayTrades.filter((trade) => trade.status !== "skipped").map((trade) => trade.id)
 		)
 		setSelectedIds(validIds)
 		setShowReplayAlert(false)
 	}
 
-	// Trade selection
-	const handleToggleSelect = (tradeId: string) => {
+	// Trade selection — C2: stable handler accepting id
+	const handleToggleSelect = useCallback((tradeId: string) => {
 		setSelectedIds((prev) => {
 			const newSet = new Set(prev)
 			if (newSet.has(tradeId)) {
@@ -283,18 +288,18 @@ export const CsvImport = () => {
 			}
 			return newSet
 		})
-	}
+	}, [])
 
 	const handleSelectAll = (selected: boolean) => {
 		if (selected) {
-			setSelectedIds(new Set(selectableTrades.map((t) => t.id)))
+			setSelectedIds(new Set(selectableTrades.map((trade) => trade.id)))
 		} else {
 			setSelectedIds(new Set())
 		}
 	}
 
-	// Trade expansion
-	const handleToggleExpand = (tradeId: string) => {
+	// Trade expansion — C2: stable handler accepting id
+	const handleToggleExpand = useCallback((tradeId: string) => {
 		setExpandedIds((prev) => {
 			const newSet = new Set(prev)
 			if (newSet.has(tradeId)) {
@@ -304,21 +309,30 @@ export const CsvImport = () => {
 			}
 			return newSet
 		})
-	}
+	}, [])
 
-	// Trade editing
-	const handleEditTrade = (
+	// M8: Write edits into the ref map only — no full array re-map per keystroke.
+	// The card reads from `trade.edits` which is merged at submission time.
+	const handleEditTrade = useCallback((
 		tradeId: string,
 		edits: ProcessedCsvTrade["edits"]
 	) => {
+		editsMapRef.current.set(tradeId, edits)
+		// Update state so the card re-renders with the latest edits value
 		setProcessedTrades((prev) =>
-			prev.map((t) => (t.id === tradeId ? { ...t, edits } : t))
+			prev.map((trade) => (trade.id === tradeId ? { ...trade, edits } : trade))
 		)
-	}
+	}, [])
 
-	// Import
+	// Import — merges any pending edits from the map before submitting
 	const handleImport = async () => {
-		const selectedTrades = processedTrades.filter((t) => selectedIds.has(t.id))
+		// Merge accumulated edits into selected trades before sending
+		const selectedTrades = processedTrades
+			.filter((trade) => selectedIds.has(trade.id))
+			.map((trade) => {
+				const pendingEdits = editsMapRef.current.get(trade.id)
+				return pendingEdits ? { ...trade, edits: pendingEdits } : trade
+			})
 
 		if (selectedTrades.length === 0) {
 			showToast("error", t("noTradesSelected"))
@@ -485,9 +499,9 @@ export const CsvImport = () => {
 								trade={trade}
 								isExpanded={expandedIds.has(trade.id)}
 								isSelected={selectedIds.has(trade.id)}
-								onToggleExpand={() => handleToggleExpand(trade.id)}
-								onToggleSelect={() => handleToggleSelect(trade.id)}
-								onEdit={(edits) => handleEditTrade(trade.id, edits)}
+								onToggleExpand={handleToggleExpand}
+								onToggleSelect={handleToggleSelect}
+								onEdit={handleEditTrade}
 								strategies={validationResult.strategies}
 								timeframes={validationResult.timeframes}
 								tags={validationResult.tags}
@@ -559,10 +573,13 @@ export const CsvImport = () => {
 							<li>{t("profitChartGuide.step4")}</li>
 							<li>{t("profitChartGuide.step5")}</li>
 						</ol>
-						{/* ProfitChart Operations tab screenshot */}
+						{/* H6: lazy-loaded image with explicit dimensions to prevent layout shift */}
 						<img
 							src="/operations_tab.png"
 							alt={t("profitChartGuide.title")}
+							loading="lazy"
+							width={800}
+							height={450}
 							className="mt-s-300 w-full rounded-md border border-bg-300"
 						/>
 						<p className="text-tiny text-txt-300 mt-s-200 italic">
@@ -630,7 +647,7 @@ export const CsvImport = () => {
 						<div className="border-bg-300 bg-bg-100 p-s-300 max-h-48 overflow-y-auto rounded-md border">
 							<ul className="space-y-s-100 text-small text-txt-200">
 								{validationResult.trades
-									.filter((t) => t.originalData.isReplayTrade)
+									.filter((trade) => trade.originalData.isReplayTrade)
 									.map((trade) => (
 										<li key={trade.id} className="gap-s-200 flex items-center">
 											<span className="bg-warn-100/20 px-s-100 text-tiny text-warn-100 rounded font-medium">

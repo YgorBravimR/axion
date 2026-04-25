@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -63,6 +63,12 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 	}
 
 	const { summary, dailyBreakdown, topWins, topLosses } = report
+
+	const activeDailyBreakdown = useMemo(
+		() => dailyBreakdown.filter((d) => d.tradeCount > 0),
+		[dailyBreakdown]
+	)
+
 	const weekLabel =
 		weekOffset === 0
 			? t("thisWeek")
@@ -238,9 +244,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 									{t("dailyBreakdown")}
 								</h3>
 								<div className="mt-s-300 space-y-s-200">
-									{dailyBreakdown
-										.filter((d) => d.tradeCount > 0)
-										.map((day) => (
+									{activeDailyBreakdown.map((day) => (
 											<div
 												key={day.date}
 												className="bg-bg-100 px-s-300 py-s-200 flex items-center justify-between rounded"

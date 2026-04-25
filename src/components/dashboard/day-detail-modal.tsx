@@ -83,6 +83,8 @@ export const DayDetailModal = ({
 
 	const dayName = date ? formatDate(date) : ""
 
+	if (!open) return null
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
