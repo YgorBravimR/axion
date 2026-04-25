@@ -162,14 +162,18 @@ test.describe("Dashboard", () => {
 		})
 
 		test("should open day detail modal when clicking a day with trades", async ({ page }) => {
-			const dayWithTrades = page.locator('[data-has-trades="true"], .day-cell:has-text("R$")').first()
+			// Calendar days with trade data use data-date-key attribute and role="button"
+			const dayWithTrades = page.locator('[data-date-key][role="button"]').first()
 
 			if (await dayWithTrades.isVisible()) {
 				await dayWithTrades.click()
 
-				// Modal should open
-				const modal = page.locator('[role="dialog"], .modal, [data-state="open"]')
+				// Day detail modal should open with trade stats
+				const modal = page.locator('[role="dialog"]')
 				await expect(modal.first()).toBeVisible({ timeout: 3000 })
+
+				// Modal should contain trade data (Net P&L or trade count)
+				await expect(modal.getByText(/net p&l|p&l líquido|trades/i).first()).toBeVisible()
 			}
 		})
 	})

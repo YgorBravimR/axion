@@ -185,7 +185,7 @@ export const TradingCalendar = memo(
 							return (
 								<div
 									key={dateKey}
-									data-dateKey={isClickable ? dateKey : undefined}
+									data-date-key={isClickable ? dateKey : undefined}
 									className={cn(
 										"p-s-100 aspect-square rounded sm:rounded-md",
 										bgClass,
