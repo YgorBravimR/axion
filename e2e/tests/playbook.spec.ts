@@ -177,6 +177,24 @@ test.describe("Playbook", () => {
 			await expect(page).toHaveURL(/playbook(?!\/new)/, { timeout: 20000 })
 		})
 
+		test("should reject code with special characters and highlight code field", async ({ page }) => {
+			// Regression: bug 543aac13 — Ç and accented chars bypassed validation
+			const codeField = page.getByLabel("Code *").or(page.locator('[name="code"]'))
+			const nameField = page.getByLabel("Strategy Name *").or(page.locator('[name="name"]'))
+
+			await codeField.fill("RTÇF")
+			await nameField.fill("Test Invalid Code")
+
+			const submitButton = page.getByRole("button", { name: "Create Strategy" })
+			await submitButton.click()
+
+			// Should stay on form (not navigate away)
+			await expect(page).toHaveURL(/playbook\/new/)
+
+			// Code field should get aria-invalid and focus
+			await expect(codeField).toBeFocused({ timeout: 3000 })
+		})
+
 		test("should navigate back when clicking cancel button", async ({ page }) => {
 			// Page uses a Cancel button (wrapped in a link to /playbook) instead of a back link
 			const cancelButton = page.getByRole("button", { name: /cancel/i })

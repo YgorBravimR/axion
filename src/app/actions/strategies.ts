@@ -80,6 +80,17 @@ export const createStrategy = async (
 		const { userId, accountId } = await requireAuth()
 		const validated = createStrategySchema.parse(input)
 
+		// Remove soft-deleted strategy with same code so the unique index doesn't block reuse
+		await db
+			.delete(strategies)
+			.where(
+				and(
+					eq(strategies.userId, userId),
+					eq(strategies.code, validated.code),
+					eq(strategies.isActive, false)
+				)
+			)
+
 		const [strategy] = await db
 			.insert(strategies)
 			.values({

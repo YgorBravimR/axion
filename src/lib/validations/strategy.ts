@@ -13,8 +13,8 @@ export const createStrategySchema = z.object({
 		.string()
 		.min(3, "validation.strategy.codeMin")
 		.max(10, "validation.strategy.codeMax")
-		.regex(/^[A-Z0-9]+$/, "validation.strategy.codeFormat")
-		.transform((val) => val.toUpperCase()),
+		.transform((val) => val.toUpperCase())
+		.refine((val) => /^[A-Z0-9]+$/.test(val), "validation.strategy.codeFormat"),
 	name: z
 		.string()
 		.min(1, "validation.strategy.nameRequired")

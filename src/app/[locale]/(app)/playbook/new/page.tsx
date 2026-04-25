@@ -92,15 +92,27 @@ const NewStrategyPage = () => {
 			const result = await createStrategy(data)
 
 			if (result.status === "success") {
+				setCode("")
+				setName("")
+				setConditions([])
+				setPendingScreenshot(null)
 				router.push("/playbook")
 			} else {
 				showToast("error", result.message)
 
-				// Highlight the code field for duplicate strategy errors
-				const isDuplicate = result.errors?.some((err) => err.code === "DUPLICATE_STRATEGY")
-				if (isDuplicate) {
-					setFieldErrors({ code: true })
-					codeInputRef.current?.focus()
+				// Highlight affected fields from error response
+				const errors: Record<string, boolean> = {}
+				for (const err of result.errors ?? []) {
+					if (err.code === "DUPLICATE_STRATEGY") {
+						errors.code = true
+					}
+					if (err.code === "VALIDATION_ERROR" && err.detail.startsWith("code:")) {
+						errors.code = true
+					}
+				}
+				if (Object.keys(errors).length > 0) {
+					setFieldErrors(errors)
+					if (errors.code) codeInputRef.current?.focus()
 				}
 			}
 		})
