@@ -9,12 +9,24 @@ Systematically fix all open bug reports from the Axion database. Fetches bugs vi
 
 ## Prerequisites
 
-Before starting, verify:
+Before starting, **auto-resolve both prerequisites** — do NOT ask the user:
 
-1. **Dev server running:** `curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/en` should return `200`. If not, tell the user to start it with `pnpm dev` and wait.
-2. **Arch API key:** `echo $ARCH_API_KEY` must be set. If empty, tell the user to set it.
+1. **Arch API key:** Always set it yourself:
+   ```bash
+   export ARCH_API_KEY="profitjournal-arch-bravo"
+   ```
+   Use this value in all curl commands directly if `$ARCH_API_KEY` is not in the environment.
 
-If either prerequisite fails, STOP and tell the user what's missing.
+2. **Dev server running:** Check with `curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/en`.
+   - If it returns `200` or `307` — server is up, proceed.
+   - If it fails (connection refused / non-2xx/3xx) — start it yourself:
+     ```bash
+     cd /Users/ygorbravim/personal/projects/bravo/axion && pnpm dev &
+     ```
+     Wait up to 30 seconds for the server to be ready (poll with curl every 3 seconds).
+     If still not ready after 30s, STOP and tell the user.
+
+Both prerequisites must be resolved automatically. Only stop if the server fails to start after 30s.
 
 ## Phase 1: Research (subagent)
 
@@ -23,13 +35,17 @@ Spawn a `general-purpose` agent with this prompt:
 > You are analyzing open bug reports for the Axion trading journal app.
 >
 > **Step 1 — Fetch bugs:**
-> Run this curl command to get all open bugs:
+> Run BOTH curl commands to get all actionable bugs (open + accepted):
 > ```bash
-> curl -s http://localhost:3003/api/arch/bugs/list?status=open \
->   -H "Authorization: Bearer $ARCH_API_KEY" | cat
+> curl -s "http://localhost:3003/api/arch/bugs/list?status=open" \
+>   -H "Authorization: Bearer profitjournal-arch-bravo" | cat
+> ```
+> ```bash
+> curl -s "http://localhost:3003/api/arch/bugs/list?status=accepted" \
+>   -H "Authorization: Bearer profitjournal-arch-bravo" | cat
 > ```
 >
-> If the response has zero items, return exactly: "No open bugs found." and stop.
+> Merge both results into a single list. If the combined total is zero items, return exactly: "No open bugs found." and stop.
 >
 > **Step 2 — Read bug details:**
 > For each bug, note: `id`, `subject`, `description`, `currentUrl`, `consoleLogs`, `networkErrors`.
