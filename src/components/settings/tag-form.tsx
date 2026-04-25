@@ -87,6 +87,7 @@ export const TagForm = ({
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
+		e.stopPropagation()
 		setError(null)
 
 		startTransition(async () => {

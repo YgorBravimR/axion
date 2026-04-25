@@ -639,6 +639,31 @@ test.describe("Journal", () => {
 	})
 
 	test.describe("Trade with Tags", () => {
+		test("creating a tag from trade form should not auto-submit the trade", async ({ page }) => {
+			await page.goto(ROUTES.journalNew)
+			await page.waitForLoadState("networkidle")
+
+			// Switch to Tags tab
+			await page.getByRole("tab", { name: /tags/i }).click()
+			await page.waitForTimeout(300)
+
+			// Open tag creation dialog
+			await page.getByRole("button", { name: /create new tag/i }).click()
+			await page.waitForTimeout(300)
+
+			// Fill tag name and submit the tag form
+			const dialog = page.getByRole("dialog")
+			await expect(dialog).toBeVisible()
+			await dialog.getByRole("textbox", { name: /name/i }).fill("E2E Regression Tag")
+			await dialog.getByRole("button", { name: /create tag/i }).click()
+
+			// Dialog should close
+			await expect(dialog).toBeHidden({ timeout: 5000 })
+
+			// CRITICAL: should still be on journal/new — trade form must NOT have submitted
+			await expect(page).toHaveURL(/journal\/new/)
+		})
+
 		test("should display tags selector in trade form", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
 			await page.waitForLoadState("networkidle")
