@@ -228,7 +228,7 @@ const EquityShieldContent = ({
 									id="m1-live-only"
 									checked={method1LiveOnly}
 									onCheckedChange={setMethod1LiveOnly}
-									aria-label={t("charts.liveOnlyToggle")}
+									aria-label={`${t("charts.method1")} ${t("charts.liveOnlyToggle")}`}
 								/>
 								<Label
 									id="m1-live-only-label"
@@ -260,7 +260,7 @@ const EquityShieldContent = ({
 									id="m2-live-only"
 									checked={method2LiveOnly}
 									onCheckedChange={setMethod2LiveOnly}
-									aria-label={t("charts.liveOnlyToggle")}
+									aria-label={`${t("charts.method2")} ${t("charts.liveOnlyToggle")}`}
 								/>
 								<Label
 									id="m2-live-only-label"

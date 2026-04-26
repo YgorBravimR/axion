@@ -6,9 +6,9 @@ import { requireRole } from "@/lib/auth-utils"
 
 
 const BacktestPage = async () => {
-	await requireRole("admin")
+	await requireRole("premium")
 	const sourcesResponse = await getBacktestDataSources()
-	const dataSources = sourcesResponse.success ? (sourcesResponse.data ?? []) : []
+	const dataSources = sourcesResponse.status === "success" ? (sourcesResponse.data ?? []) : []
 
 	return (
 		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">

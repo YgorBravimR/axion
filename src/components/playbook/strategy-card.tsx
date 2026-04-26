@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState } from "react"
+import { memo, useState, useCallback, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -35,7 +35,33 @@ const StrategyCardBase = ({
 	const t = useTranslations("playbook")
 	const tCommon = useTranslations("common")
 	const [showMenu, setShowMenu] = useState(false)
-	const { isAdmin } = useFeatureAccess()
+	const { isPremium } = useFeatureAccess()
+	const menuRef = useRef<HTMLDivElement>(null)
+	const menuButtonRef = useRef<HTMLButtonElement>(null)
+
+	const handleMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
+		if (e.key === "Escape") {
+			setShowMenu(false)
+			menuButtonRef.current?.focus()
+		}
+		if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+			e.preventDefault()
+			const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+			if (!items?.length) return
+			const currentIndex = Array.from(items).findIndex((el) => el === document.activeElement)
+			const nextIndex = e.key === "ArrowDown"
+				? (currentIndex + 1) % items.length
+				: (currentIndex - 1 + items.length) % items.length
+			items[nextIndex].focus()
+		}
+	}, [])
+
+	useEffect(() => {
+		if (showMenu) {
+			const firstItem = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')
+			firstItem?.focus()
+		}
+	}, [showMenu])
 
 	const complianceColor =
 		strategy.compliance >= 80
@@ -57,9 +83,9 @@ const StrategyCardBase = ({
 							<span className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded font-mono">
 								{strategy.code}
 							</span>
-							<h3 className="text-body text-txt-100 font-semibold">
+							<Link href={`/playbook/${strategy.id}`} className="text-body text-txt-100 font-semibold hover:underline">
 								{strategy.name}
-							</h3>
+							</Link>
 						</div>
 						{strategy.description && (
 							<p className="text-tiny text-txt-300 mt-s-100 line-clamp-1">
@@ -72,6 +98,7 @@ const StrategyCardBase = ({
 				{/* Menu */}
 				<div className="relative">
 					<Button
+						ref={menuButtonRef}
 						id="playbook-strategy-menu"
 						variant="ghost"
 						size="sm"
@@ -79,6 +106,7 @@ const StrategyCardBase = ({
 						onClick={() => setShowMenu(!showMenu)}
 						aria-label={t("strategy.optionsMenu")}
 						aria-expanded={showMenu}
+						aria-haspopup="menu"
 					>
 						<MoreVertical className="h-4 w-4" aria-hidden="true" />
 					</Button>
@@ -89,9 +117,18 @@ const StrategyCardBase = ({
 								onClick={() => setShowMenu(false)}
 								aria-hidden="true"
 							/>
-							<div className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-1 w-40 max-w-[calc(100vw-2rem)] rounded-lg border py-1 shadow-lg">
+							{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+							<div
+								ref={menuRef}
+								role="menu"
+								aria-label={t("strategy.optionsMenu")}
+								className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-1 w-40 max-w-[calc(100vw-2rem)] rounded-lg border py-1 shadow-lg"
+								onKeyDown={handleMenuKeyDown}
+							>
 								<Link
 									href={`/playbook/${strategy.id}`}
+									role="menuitem"
+									tabIndex={-1}
 									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
 								>
 									<Eye className="h-4 w-4" />
@@ -101,6 +138,8 @@ const StrategyCardBase = ({
 									id={`strategy-edit-${strategy.id}`}
 									type="button"
 									variant="ghost"
+									role="menuitem"
+									tabIndex={-1}
 									onClick={() => {
 										setShowMenu(false)
 										onEdit(strategy)
@@ -114,6 +153,8 @@ const StrategyCardBase = ({
 									id={`strategy-delete-${strategy.id}`}
 									type="button"
 									variant="ghost"
+									role="menuitem"
+									tabIndex={-1}
 									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center justify-start text-left"
 									onClick={() => {
 										setShowMenu(false)
@@ -171,7 +212,14 @@ const StrategyCardBase = ({
 						{strategy.compliance.toFixed(0)}%
 					</span>
 				</div>
-				<div className="bg-bg-300 mt-s-200 h-2 w-full overflow-hidden rounded-full">
+				<div
+					className="bg-bg-300 mt-s-200 h-2 w-full overflow-hidden rounded-full"
+					role="progressbar"
+					aria-valuenow={Math.round(strategy.compliance)}
+					aria-valuemin={0}
+					aria-valuemax={100}
+					aria-label={t("compliance.planCompliance")}
+				>
 					<div
 						className={cn(
 							"h-full rounded-full transition-[width]",
@@ -211,9 +259,9 @@ const StrategyCardBase = ({
 			)}
 
 			{/* Conditions & Scenarios counts */}
-			{(strategy.scenarioCount > 0 || (isAdmin && strategy.conditionCount > 0)) && (
+			{(strategy.scenarioCount > 0 || (isPremium && strategy.conditionCount > 0)) && (
 				<div className="mt-s-300 gap-m-400 flex items-center">
-					{isAdmin && strategy.conditionCount > 0 && (
+					{isPremium && strategy.conditionCount > 0 && (
 						<div className="gap-s-100 flex items-center">
 							<Filter className="text-txt-300 h-3 w-3" />
 							<span className="text-tiny text-txt-300">
@@ -239,4 +287,6 @@ const StrategyCardBase = ({
 	)
 }
 
-export const StrategyCard = memo(StrategyCardBase)
+const StrategyCard = memo(StrategyCardBase)
+
+export { StrategyCard }

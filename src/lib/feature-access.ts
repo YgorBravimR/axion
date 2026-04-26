@@ -4,7 +4,7 @@
  */
 import type { NavItem } from "@/lib/navigation"
 
-type UserRole = "admin" | "trader" | "viewer"
+type UserRole = "admin" | "premium" | "trader" | "viewer"
 
 interface FeatureConfig {
 	requiredRole: UserRole
@@ -26,6 +26,10 @@ const ROLE_LIMITS: Record<UserRole, FeatureLimits> = {
 		monteCarloV1BudgetCap: 1_500_000, // 50% of admin
 		monteCarloV2BudgetCap: 5_000_000, // 50% of admin
 	},
+	premium: {
+		monteCarloV1BudgetCap: 3_000_000,
+		monteCarloV2BudgetCap: 10_000_000,
+	},
 	admin: {
 		monteCarloV1BudgetCap: 3_000_000,
 		monteCarloV2BudgetCap: 10_000_000,
@@ -43,9 +47,9 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"/analytics/account-comparison": { requiredRole: "viewer", description: "Account Comparison" },
 	"/monte-carlo": { requiredRole: "viewer", description: "Monte Carlo" },
 	"/risk-simulation": { requiredRole: "viewer", description: "Risk Simulation" },
-	"/equity-shield": { requiredRole: "admin", description: "Equity Shield" },
-	"/backtest": { requiredRole: "admin", description: "Backtest" },
-	"/backtest/optimize": { requiredRole: "admin", description: "Backtest Optimizer" },
+	"/equity-shield": { requiredRole: "premium", description: "Equity Shield" },
+	"/backtest": { requiredRole: "premium", description: "Backtest" },
+	"/backtest/optimize": { requiredRole: "premium", description: "Backtest Optimizer" },
 	"/playbook": { requiredRole: "viewer", description: "Playbook" },
 	"/reports": { requiredRole: "viewer", description: "Reports" },
 	"/monthly": { requiredRole: "trader", description: "Monthly Plan" },
@@ -54,13 +58,13 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	// Command Center tabs
 	"command-center:plan-tab": { requiredRole: "trader", description: "Monthly Plan tab" },
 	"command-center:command-tab": { requiredRole: "trader", description: "Command Center tab" },
-	"command-center:monitor-tab": { requiredRole: "admin", description: "Market Monitor tab" },
+	"command-center:monitor-tab": { requiredRole: "premium", description: "Market Monitor tab" },
 
 	// Journal granular
 	"journal:new-trade": { requiredRole: "trader", description: "New trade creation" },
 	"journal:csv-tab": { requiredRole: "trader", description: "CSV Import tab" },
-	"journal:nota-tab": { requiredRole: "admin", description: "Nota de Corretagem tab" },
-	"journal:ocr-tab": { requiredRole: "admin", description: "OCR Import tab" },
+	"journal:nota-tab": { requiredRole: "premium", description: "Nota de Corretagem tab" },
+	"journal:ocr-tab": { requiredRole: "premium", description: "OCR Import tab" },
 
 	// Dashboard granular
 	"dashboard:coaching-insights": { requiredRole: "trader", description: "AI coaching insights card" },
@@ -84,7 +88,8 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 const ROLE_HIERARCHY: Record<UserRole, number> = {
 	viewer: 0,
 	trader: 1,
-	admin: 2,
+	premium: 2,
+	admin: 3,
 }
 
 const hasAccess = (userRole: UserRole, requiredRole: UserRole): boolean =>

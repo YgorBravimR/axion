@@ -44,7 +44,7 @@ interface UserListProps {
 	currentUserId: string
 }
 
-const ROLES = ["admin", "trader", "viewer"] as const
+const ROLES = ["admin", "premium", "trader", "viewer"] as const
 
 interface DeleteTarget {
 	accountId: string
@@ -98,7 +98,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 			startTransition(async () => {
 				const result = await updateUserRole({
 					userId,
-					role: role as "admin" | "trader" | "viewer",
+					role: role as "admin" | "premium" | "trader" | "viewer",
 				})
 				setPendingId(null)
 				if (result.success) {

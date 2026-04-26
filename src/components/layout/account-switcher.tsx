@@ -66,7 +66,7 @@ interface AccountSwitcherProps {
 
 export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 	const t = useTranslations("auth.accountSwitcher")
-	const { isAdmin } = useFeatureAccess()
+	const { isPremium } = useFeatureAccess()
 	const { update } = useSession()
 	const { showToast } = useToast()
 	const { showAccountTransition } = useAccountTransition()
@@ -238,7 +238,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 					onSubmit={handleCreateAccount}
 					isPending={isPending}
 					t={t}
-					isAdmin={isAdmin}
+					isPremium={isPremium}
 				/>
 			</>
 		)
@@ -318,7 +318,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 				onSubmit={handleCreateAccount}
 				isPending={isPending}
 				t={t}
-				isAdmin={isAdmin}
+				isPremium={isPremium}
 			/>
 		</>
 	)
@@ -333,7 +333,7 @@ interface CreateAccountDialogProps {
 	onSubmit: () => void
 	isPending: boolean
 	t: (key: string) => string
-	isAdmin: boolean
+	isPremium: boolean
 }
 
 const CreateAccountDialog = ({
@@ -344,7 +344,7 @@ const CreateAccountDialog = ({
 	onSubmit,
 	isPending,
 	t,
-	isAdmin,
+	isPremium,
 }: CreateAccountDialogProps) => {
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -404,7 +404,7 @@ const CreateAccountDialog = ({
 										{t("propFirm")}
 									</div>
 								</SelectItem>
-								{isAdmin && (
+								{isPremium && (
 									<SelectItem value="replay">
 										<div className="flex items-center gap-2">
 											<RotateCcw className="h-4 w-4" />

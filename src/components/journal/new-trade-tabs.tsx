@@ -43,7 +43,7 @@ export const NewTradeTabs = ({
 }: NewTradeTabsProps) => {
 	const t = useTranslations("journal")
 	const tTrade = useTranslations("trade")
-	const { canAccess, isAdmin } = useFeatureAccess()
+	const { canAccess, isPremium } = useFeatureAccess()
 	useRegisterPageGuide(newTradeGuide)
 	const [activeTab, setActiveTab] = useState<TabValue>("single")
 	const [tradeMode, setTradeMode] = useState<TradeMode>("simple")
@@ -146,8 +146,8 @@ export const NewTradeTabs = ({
 				{/* Trade form stays mounted (hidden when other tabs active) to preserve state */}
 				<div className={activeTab !== "single" ? "hidden" : ""}>
 					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
-						{/* Trade Mode Selector — admin only */}
-						{isAdmin && (
+						{/* Trade Mode Selector — premium+ only */}
+						{isPremium && (
 							<TradeModeSelector value={tradeMode} onChange={handleModeChange} />
 						)}
 

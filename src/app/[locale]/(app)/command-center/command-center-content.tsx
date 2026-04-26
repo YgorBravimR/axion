@@ -42,8 +42,7 @@ import { useFormatting } from "@/hooks/use-formatting"
 import { fromCents } from "@/lib/money"
 import { CalendarDays, Target, TrendingDown, ShieldCheck } from "lucide-react"
 
-export interface CommandCenterContentProps {
-	initialChecklists: DailyChecklistType[]
+interface CommandCenterContentProps {
 	initialCompletions: ChecklistWithCompletion[]
 	initialNotes: DailyAccountNote | null
 	initialAssetSettings: AssetSettingWithAsset[]
@@ -58,8 +57,7 @@ export interface CommandCenterContentProps {
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
 
-export const CommandCenterContent = ({
-	initialChecklists,
+const CommandCenterContent = ({
 	initialCompletions,
 	initialNotes,
 	initialAssetSettings,
@@ -75,7 +73,7 @@ export const CommandCenterContent = ({
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
 	const tPlan = useTranslations("commandCenter.plan")
-	const { isAdmin } = useFeatureAccess()
+	const { isPremium } = useFeatureAccess()
 	useRegisterPageGuide(commandCenterGuide)
 	const { formatCurrency } = useFormatting()
 
@@ -137,20 +135,20 @@ export const CommandCenterContent = ({
 		}
 	}, [viewDate])
 
-	const handleManageChecklist = (checklistId: string) => {
+	const handleManageChecklist = useCallback((checklistId: string) => {
 		const checklist = completions.find((c) => c.id === checklistId) ?? null
 		setEditingChecklist(checklist)
 		setChecklistManagerOpen(true)
-	}
+	}, [completions])
 
-	const handleChecklistManagerClose = () => {
+	const handleChecklistManagerClose = useCallback(() => {
 		setChecklistManagerOpen(false)
 		setEditingChecklist(null)
-	}
+	}, [])
 
-	const handleChecklistManagerSuccess = () => {
+	const handleChecklistManagerSuccess = useCallback(() => {
 		refreshCompletions()
-	}
+	}, [refreshCompletions])
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-7xl">
@@ -174,8 +172,8 @@ export const CommandCenterContent = ({
 			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2">
 				{/* Left Column */}
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
-					{/* Daily Checklist — admin only */}
-					{isAdmin && (
+					{/* Daily Checklist — premium+ only */}
+					{isPremium && (
 						<DailyChecklist
 							checklists={completions}
 							onManageClick={handleManageChecklist}
@@ -184,8 +182,8 @@ export const CommandCenterContent = ({
 						/>
 					)}
 
-					{/* Pre-Market Notes — admin only */}
-					{isAdmin && (
+					{/* Pre-Market Notes — premium+ only */}
+					{isPremium && (
 						<PreMarketNotes
 							notes={notes}
 							onRefresh={refreshNotes}
@@ -200,7 +198,7 @@ export const CommandCenterContent = ({
 					{initialPlan ? (
 						<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border">
 							<div className="mb-s-300 sm:mb-m-400 gap-s-200 flex items-center">
-								<CalendarDays className="text-acc-100 h-4 w-4" />
+								<CalendarDays className="text-txt-200 h-4 w-4" />
 								<h3 className="text-small text-txt-100 font-semibold">
 									{tPlan("title")}
 								</h3>
@@ -216,7 +214,7 @@ export const CommandCenterContent = ({
 							<div className="gap-s-300 grid grid-cols-2">
 								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border">
 									<div className="gap-s-100 flex items-center">
-										<Target className="text-acc-100 h-3 w-3" />
+										<Target className="text-txt-300 h-3.5 w-3.5" />
 										<span className="text-tiny text-txt-300">
 											{tPlan("summary.riskPerTrade")}
 										</span>
@@ -230,7 +228,7 @@ export const CommandCenterContent = ({
 								</div>
 								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border">
 									<div className="gap-s-100 flex items-center">
-										<TrendingDown className="text-trade-sell h-3 w-3" />
+										<TrendingDown className="text-trade-sell h-3.5 w-3.5" />
 										<span className="text-tiny text-txt-300">
 											{tPlan("summary.dailyLossLimit")}
 										</span>
@@ -245,18 +243,21 @@ export const CommandCenterContent = ({
 							</div>
 						</div>
 					) : (
-						<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed">
+						<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed" aria-label={tPlan("title")}>
 							<div className="gap-s-300 flex flex-col items-center text-center">
 								<CalendarDays className="text-txt-300 h-8 w-8" />
-								<p className="text-small text-txt-200">
+								<h3 className="text-small text-txt-100 font-semibold">
+									{tPlan("title")}
+								</h3>
+								<p className="text-tiny text-txt-300">
 									{tPlan("noPlanPrompt")}
 								</p>
 							</div>
 						</div>
 					)}
 
-					{/* Post-Market Notes — admin only */}
-					{isAdmin && (
+					{/* Post-Market Notes — premium+ only */}
+					{isPremium && (
 						<PostMarketNotes
 							notes={notes}
 							onRefresh={refreshNotes}
@@ -266,8 +267,8 @@ export const CommandCenterContent = ({
 				</div>
 			</div>
 
-			{/* Asset Rules — admin only */}
-			{isAdmin && (
+			{/* Asset Rules — premium+ only */}
+			{isPremium && (
 				<AssetRulesPanel
 					settings={assetSettings}
 					availableAssets={availableAssets}
@@ -278,8 +279,8 @@ export const CommandCenterContent = ({
 			{/* Daily Summary - Full Width */}
 			<DailySummaryCard summary={summary} />
 
-			{/* Checklist Manager Dialog — admin only */}
-			{isAdmin && !isReadOnly && (
+			{/* Checklist Manager Dialog — premium+ only */}
+			{isPremium && !isReadOnly && (
 				<ChecklistManager
 					open={checklistManagerOpen}
 					onClose={handleChecklistManagerClose}
@@ -290,3 +291,6 @@ export const CommandCenterContent = ({
 		</div>
 	)
 }
+
+export { CommandCenterContent }
+export type { CommandCenterContentProps }

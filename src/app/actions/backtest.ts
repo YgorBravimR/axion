@@ -165,19 +165,19 @@ const runBacktestAction = async (
  * Wraps the existing getAssetsWithPriceData() function.
  */
 const getBacktestDataSources = async (): Promise<{
-	success: boolean
+	status: "success" | "error"
 	data?: DataSourceInfo[]
-	error?: string
+	message?: string
 }> => {
 	const t = await getTranslations("backtest")
 	try {
 		const result = await getAssetsWithPriceData()
 		if (result.status === "error") {
-			return { success: false, error: t("errors.failedToLoadDataSources") }
+			return { status: "error", message: t("errors.failedToLoadDataSources") }
 		}
-		return { success: true, data: result.data }
+		return { status: "success", data: result.data }
 	} catch {
-		return { success: false, error: t("errors.failedToLoadDataSources") }
+		return { status: "error", message: t("errors.failedToLoadDataSources") }
 	}
 }
 

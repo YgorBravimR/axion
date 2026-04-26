@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef, type ReactElement, type ComponentProps } from "react"
+import { useState, useEffect, useRef, type ReactElement, type ComponentProps, type AriaRole } from "react"
 import { ResponsiveContainer, Tooltip } from "recharts"
 
 interface ChartContainerProps {
 	id: string
 	children: ReactElement
 	className?: string
+	role?: AriaRole
+	"aria-label"?: string
 }
 
 /**
@@ -20,7 +22,7 @@ interface ChartContainerProps {
  *   2. Passing those dimensions as `initialDimension` so RC never
  *      sees -1 values, even on its first render cycle.
  */
-const ChartContainer = ({ id, children, className }: ChartContainerProps) => {
+const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel }: ChartContainerProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
 
@@ -56,7 +58,7 @@ const ChartContainer = ({ id, children, className }: ChartContainerProps) => {
 	}, [])
 
 	return (
-		<div id={id} ref={containerRef} className={`overflow-hidden ${className ?? ""}`}>
+		<div id={id} ref={containerRef} className={`overflow-hidden ${className ?? ""}`} role={role} aria-label={ariaLabel}>
 			{dimensions && (
 				<ResponsiveContainer
 					width="100%"

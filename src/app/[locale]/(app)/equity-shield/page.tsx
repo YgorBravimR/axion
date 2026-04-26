@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/auth-utils"
 
 
 const EquityShieldPage = async () => {
-	await requireRole("admin")
+	await requireRole("premium")
 	const [planResponse, yearsResponse] = await Promise.all([
 		getActiveMonthlyPlan(),
 		getTradeYears(),

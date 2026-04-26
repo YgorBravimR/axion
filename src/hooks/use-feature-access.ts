@@ -17,6 +17,7 @@ const useFeatureAccess = () => {
 		isLoading,
 		canAccess,
 		isAdmin: role === "admin",
+		isPremium: hasAccess(role, "premium"),
 		isTrader: hasAccess(role, "trader"),
 		limits,
 	}), [role, isLoading, canAccess, limits])

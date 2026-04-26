@@ -26,7 +26,7 @@ const NewStrategyPage = () => {
 	const t = useTranslations("playbook.form")
 	const tScenarios = useTranslations("playbook.scenarios")
 	const tCommon = useTranslations("common")
-	const { isAdmin } = useFeatureAccess()
+	const { isPremium } = useFeatureAccess()
 	useRegisterPageGuide(newStrategyGuide)
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
@@ -147,7 +147,7 @@ const NewStrategyPage = () => {
 											maxLength={10}
 											minLength={3}
 											className="mt-s-200 uppercase"
-											aria-invalid={fieldErrors.code}
+											aria-invalid={fieldErrors.code ? "true" : undefined}
 											value={code}
 											onChange={(e) => {
 												setCode(e.target.value)
@@ -187,14 +187,14 @@ const NewStrategyPage = () => {
 									/>
 								</div>
 
-								<div>
+								<div role="group" aria-labelledby="label-screenshot">
 									<Label id="label-screenshot">{t("referenceImage")}</Label>
 									<p className="text-tiny text-txt-300 mt-s-100 mb-s-200">
 										{t("referenceImageHint")}
 									</p>
 									<ImageUpload
 										pendingImages={pendingScreenshot ? [pendingScreenshot] : []}
-										onFileAdd={(img) => setPendingScreenshot(img)}
+										onFileAdd={setPendingScreenshot}
 										onPendingRemove={() => setPendingScreenshot(null)}
 										maxImages={1}
 									/>
@@ -321,10 +321,10 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Conditions Section */}
-						{isAdmin && (
+						{isPremium && (
 						<div id="strategy-conditions" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<Filter className="text-acc-100 h-5 w-5" />
+								<Filter className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("tradingConditions")}
 								</h2>
@@ -339,7 +339,7 @@ const NewStrategyPage = () => {
 						{/* Scenarios hint */}
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<ImageIcon className="text-acc-100 h-5 w-5" />
+								<ImageIcon className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{tScenarios("title")}
 								</h2>

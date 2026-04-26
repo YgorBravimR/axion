@@ -20,6 +20,7 @@ import type {
 	AccountComparisonMetrics,
 	TradeFilters,
 } from "@/types"
+import { getTranslations } from "next-intl/server"
 
 /**
  * Fetch comparison data for multiple accounts in a single query.
@@ -34,15 +35,16 @@ const getAccountComparisonData = async (
 	accountIds: string[],
 	filters?: TradeFilters
 ): Promise<ActionResponse<AccountComparisonData>> => {
+	const t = await getTranslations("accountComparison.actions")
 	try {
-		// Auth + admin check
+		// Auth + premium check
 		const authContext = await requireAuth()
-		await requireRole("admin")
+		await requireRole("premium")
 
 		if (accountIds.length < 2) {
 			return {
 				status: "error",
-				message: "At least 2 accounts required for comparison",
+				message: t("minAccountsRequired"),
 				errors: [{ code: "INVALID_INPUT", detail: "Select at least 2 accounts" }],
 			}
 		}
@@ -58,7 +60,7 @@ const getAccountComparisonData = async (
 		if (userAccounts.length !== accountIds.length) {
 			return {
 				status: "error",
-				message: "One or more accounts not found",
+				message: t("accountNotFound"),
 				errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Invalid account IDs" }],
 			}
 		}
@@ -144,16 +146,19 @@ const getAccountComparisonData = async (
 
 		return {
 			status: "success",
-			message: "Comparison data retrieved",
+			message: t("retrieved"),
 			data: { accounts },
 		}
 	} catch (error) {
-		const message =
-			error instanceof Error ? error.message : "Failed to retrieve comparison data"
 		return {
 			status: "error",
-			message,
-			errors: [{ code: "FETCH_FAILED", detail: message }],
+			message: t("fetchFailed"),
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: error instanceof Error ? error.message : "Failed to retrieve comparison data",
+				},
+			],
 		}
 	}
 }

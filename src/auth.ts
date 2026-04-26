@@ -6,12 +6,13 @@ import { eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { users, tradingAccounts } from "@/db/schema"
 import { authConfig } from "./auth.config"
+import type { UserRole } from "@/lib/feature-access"
 
 declare module "next-auth" {
 	interface User {
 		id: string
 		accountId?: string | null
-		role?: "admin" | "trader" | "viewer"
+		role?: UserRole
 	}
 
 	interface Session {
@@ -21,14 +22,14 @@ declare module "next-auth" {
 			email: string
 			image?: string | null
 			accountId?: string | null
-			role: "admin" | "trader" | "viewer"
+			role: UserRole
 		}
 	}
 
 	interface JWT {
 		userId: string
 		accountId?: string | null
-		role: "admin" | "trader" | "viewer"
+		role: UserRole
 	}
 }
 
@@ -67,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				...session.user,
 				id: token.userId as string,
 				accountId: token.accountId as string | null | undefined,
-				role: token.role as "admin" | "trader" | "viewer",
+				role: token.role as UserRole,
 			},
 		}),
 	},

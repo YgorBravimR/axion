@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, lazy, Suspense } from "react"
+import { useState, lazy, Suspense, useMemo } from "react"
 import { Tabs, TabsList, TabsTrigger, AnimatedTabsContent } from "@/components/ui/tabs"
-import { Target, Activity, Calculator, CalendarDays } from "lucide-react"
+import { Target, Activity, Calculator, CalendarDays, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { Loader2 } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { CommandCenterContent, type CommandCenterContentProps } from "./command-center-content"
 import type { Asset, MonthlyPlan } from "@/db/schema"
@@ -47,13 +46,13 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
 
-const TabLoadingFallback = () => (
+const tabLoadingFallback = (
 	<div className="flex items-center justify-center py-12">
 		<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 	</div>
 )
 
-export const CommandCenterTabs = ({
+const CommandCenterTabs = ({
 	calculatorAssets,
 	accountSettings,
 	strategies,
@@ -75,17 +74,22 @@ export const CommandCenterTabs = ({
 	const defaultTab = showCommandTab ? "command-center" : "calculator"
 	const [activeTab, setActiveTab] = useState(defaultTab)
 
+	const riskProfileName = useMemo(() => {
+		if (!initialPlan?.riskProfileId) return null
+		return riskProfiles.find((p) => p.id === initialPlan.riskProfileId)?.name ?? null
+	}, [initialPlan?.riskProfileId, riskProfiles])
+
 	return (
 		<Tabs
 			value={activeTab}
 			onValueChange={setActiveTab}
 			className="flex h-full flex-col"
 		>
-			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-2 overflow-x-auto" aria-label={t("tabs.navigation")}>
+			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-s-200 overflow-x-auto" aria-label={t("tabs.navigation")}>
 				{showPlanTab && (
 					<TabsTrigger
 						value="plan"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
 						aria-label={t("tabs.plan")}
 					>
 						<CalendarDays className="h-4 w-4" />
@@ -95,7 +99,7 @@ export const CommandCenterTabs = ({
 				{showCommandTab && (
 					<TabsTrigger
 						value="command-center"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
 						aria-label={t("tabs.commandCenter")}
 					>
 						<Target className="h-4 w-4" />
@@ -105,7 +109,7 @@ export const CommandCenterTabs = ({
 				{showMonitorTab && (
 					<TabsTrigger
 						value="monitor"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
 						aria-label={t("tabs.monitor")}
 					>
 						<Activity className="h-4 w-4" />
@@ -114,7 +118,7 @@ export const CommandCenterTabs = ({
 				)}
 				<TabsTrigger
 					value="calculator"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-1 sm:gap-2"
+					className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
 					aria-label={t("tabs.calculator")}
 				>
 					<Calculator className="h-4 w-4" />
@@ -124,7 +128,7 @@ export const CommandCenterTabs = ({
 
 			{showPlanTab && (
 				<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
-					<Suspense fallback={<TabLoadingFallback />}>
+					<Suspense fallback={tabLoadingFallback}>
 						<MonthlyPlanTab
 							initialPlan={initialPlan}
 							initialYear={initialYear}
@@ -141,9 +145,7 @@ export const CommandCenterTabs = ({
 						key={commandCenterProps.viewDate}
 						{...commandCenterProps}
 						initialPlan={initialPlan}
-						riskProfileName={initialPlan?.riskProfileId
-							? riskProfiles.find((p) => p.id === initialPlan.riskProfileId)?.name ?? null
-							: null}
+						riskProfileName={riskProfileName}
 						initialLiveTradingStatus={initialLiveTradingStatus}
 					/>
 				</AnimatedTabsContent>
@@ -154,7 +156,7 @@ export const CommandCenterTabs = ({
 					value="monitor"
 					className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600"
 				>
-					<Suspense fallback={<TabLoadingFallback />}>
+					<Suspense fallback={tabLoadingFallback}>
 						<MarketMonitorContent />
 					</Suspense>
 				</AnimatedTabsContent>
@@ -164,7 +166,7 @@ export const CommandCenterTabs = ({
 				value="calculator"
 				className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600"
 			>
-				<Suspense fallback={<TabLoadingFallback />}>
+				<Suspense fallback={tabLoadingFallback}>
 					<PositionCalculator
 						assets={calculatorAssets}
 						accountSettings={accountSettings}
@@ -177,3 +179,5 @@ export const CommandCenterTabs = ({
 		</Tabs>
 	)
 }
+
+export { CommandCenterTabs }

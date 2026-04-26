@@ -169,6 +169,13 @@
       "when": 1775722810029,
       "tag": "0023_bouncy_mysterio",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1777195561515,
+      "tag": "0024_noisy_gargoyle",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import Link from "next/link"
 import {
-	ArrowLeft,
 	Target,
 	TrendingUp,
 	TrendingDown,
@@ -14,13 +12,12 @@ import {
 	ImageIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { getStrategy } from "@/app/actions/strategies"
 import { getStrategyConditions } from "@/app/actions/strategy-conditions"
-import { getScenariosByStrategy } from "@/app/actions/scenarios"
 import { ConditionTierDisplay } from "@/components/playbook/condition-tier-display"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { getCurrentUser } from "@/app/actions/auth"
+import { hasAccess } from "@/lib/feature-access"
 import { StrategyDetailGuide } from "@/components/playbook/strategy-detail-guide"
 
 interface StrategyDetailPageProps {
@@ -48,7 +45,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 		getStrategyConditions(id),
 		getCurrentUser(),
 	])
-	const isAdmin = user?.role === "admin"
+	const isPremium = hasAccess(user?.role ?? "viewer", "premium")
 
 	if (result.status !== "success" || !result.data) {
 		notFound()
@@ -148,17 +145,17 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					</div>
 
 					{/* Risk Settings */}
-					{(strategy.targetRMultiple || strategy.maxRiskPercent) && (
+					{(strategy.targetRMultiple != null || strategy.maxRiskPercent != null) && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<Target className="text-acc-100 h-5 w-5" />
+								<Target className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("strategy.riskSettings")}
 								</h2>
 							</div>
 
 							<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
-								{strategy.targetRMultiple && (
+								{strategy.targetRMultiple != null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingUp className="text-trade-buy h-6 w-6" />
 										<div>
@@ -171,7 +168,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 										</div>
 									</div>
 								)}
-								{strategy.maxRiskPercent && (
+								{strategy.maxRiskPercent != null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingDown className="text-trade-sell h-6 w-6" />
 										<div>
@@ -194,7 +191,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 						strategy.riskRules) && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<FileText className="text-acc-100 h-5 w-5" />
+								<FileText className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("strategy.rulesCriteria")}
 								</h2>
@@ -238,10 +235,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					)}
 
 					{/* Conditions */}
-					{isAdmin && strategyConditions.length > 0 && (
+					{isPremium && strategyConditions.length > 0 && (
 						<div id="strategy-detail-conditions" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<Filter className="text-acc-100 h-5 w-5" />
+								<Filter className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("conditions.title")}
 								</h2>
@@ -256,7 +253,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					{strategy.scenarioCount > 0 && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<ImageIcon className="text-acc-100 h-5 w-5" />
+								<ImageIcon className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("scenarios.title")}
 								</h2>

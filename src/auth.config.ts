@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import type { UserRole } from "@/lib/feature-access"
 
 // Public paths that don't require authentication
 const publicPaths = ["/login", "/register", "/forgot-password", "/verify-email", "/api/auth", "/api/arch", "/monitor"]
@@ -80,7 +81,7 @@ export const authConfig: NextAuthConfig = {
 				...session.user,
 				id: token.userId as string,
 				accountId: token.accountId as string | null | undefined,
-				role: token.role as "admin" | "trader" | "viewer",
+				role: token.role as UserRole,
 			},
 		}),
 		authorized: ({ auth, request }) => {

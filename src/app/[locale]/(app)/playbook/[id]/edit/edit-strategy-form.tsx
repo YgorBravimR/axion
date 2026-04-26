@@ -5,7 +5,7 @@ import type { FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { ArrowLeft, Filter, ImageIcon } from "lucide-react"
+import { Filter, ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,14 +27,14 @@ interface EditStrategyFormProps {
 	initialConditions: StrategyConditionWithDetail[]
 }
 
-export const EditStrategyForm = ({
+const EditStrategyForm = ({
 	strategy,
 	initialConditions,
 }: EditStrategyFormProps) => {
 	const router = useRouter()
 	const t = useTranslations("playbook.form")
 	const tScenarios = useTranslations("playbook.scenarios")
-	const { isAdmin } = useFeatureAccess()
+	const { isPremium } = useFeatureAccess()
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
@@ -167,7 +167,7 @@ export const EditStrategyForm = ({
 											maxLength={10}
 											minLength={3}
 											className="mt-s-200 uppercase"
-											aria-invalid={fieldErrors.code}
+											aria-invalid={fieldErrors.code ? "true" : undefined}
 											value={code}
 											onChange={(e) => {
 												setCode(e.target.value)
@@ -213,7 +213,7 @@ export const EditStrategyForm = ({
 									/>
 								</div>
 
-								<div>
+								<div role="group" aria-labelledby="label-screenshot">
 									<Label id="label-screenshot">{t("referenceImage")}</Label>
 									<p className="text-tiny text-txt-300 mt-s-100 mb-s-200">
 										{t("referenceImageHint")}
@@ -223,7 +223,7 @@ export const EditStrategyForm = ({
 											persistedScreenshot ? [persistedScreenshot] : []
 										}
 										pendingImages={pendingScreenshot ? [pendingScreenshot] : []}
-										onFileAdd={(img) => setPendingScreenshot(img)}
+										onFileAdd={setPendingScreenshot}
 										onPendingRemove={() => setPendingScreenshot(null)}
 										onPersistedRemove={() => setPersistedScreenshot(null)}
 										maxImages={1}
@@ -360,10 +360,10 @@ export const EditStrategyForm = ({
 						</div>
 
 						{/* Conditions Section */}
-						{isAdmin && (
+						{isPremium && (
 							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 								<div className="gap-s-200 flex items-center">
-									<Filter className="text-acc-100 h-5 w-5" />
+									<Filter className="text-txt-200 h-5 w-5" />
 									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 										{t("tradingConditions")}
 									</h2>
@@ -378,7 +378,7 @@ export const EditStrategyForm = ({
 						{/* Scenarios Section */}
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<ImageIcon className="text-acc-100 h-5 w-5" />
+								<ImageIcon className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{tScenarios("title")}
 								</h2>
@@ -416,18 +416,4 @@ export const EditStrategyForm = ({
 	)
 }
 
-// Shown when strategy is not found
-export const StrategyNotFound = () => {
-	const t = useTranslations("playbook.form")
-	return (
-		<div className="gap-m-400 flex h-full flex-col items-center justify-center">
-			<p className="text-txt-300">{t("strategyNotFound")}</p>
-			<Link href="/playbook">
-				<Button id="playbook-edit-back-to-playbook" variant="outline">
-					<ArrowLeft className="mr-2 h-4 w-4" />
-					{t("backToPlaybook")}
-				</Button>
-			</Link>
-		</div>
-	)
-}
+export { EditStrategyForm }

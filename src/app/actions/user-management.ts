@@ -9,6 +9,7 @@ import {
 	updateUserRoleSchema,
 	type UpdateUserRoleInput,
 } from "@/lib/validations/user-management"
+import { getTranslations } from "next-intl/server"
 
 interface UserAccount {
 	id: string
@@ -22,7 +23,7 @@ interface UserWithAccounts {
 	id: string
 	name: string
 	email: string
-	role: "admin" | "trader" | "viewer"
+	role: "admin" | "premium" | "trader" | "viewer"
 	image: string | null
 	createdAt: Date
 	tradingAccounts: UserAccount[]
@@ -60,6 +61,7 @@ const getAllUsersWithAccounts = async (): Promise<UserWithAccounts[]> => {
 const updateUserRole = async (
 	data: UpdateUserRoleInput
 ): Promise<{ success: boolean; error?: string }> => {
+	const t = await getTranslations("settings.users")
 	const adminId = await requireRole("admin")
 
 	const validated = updateUserRoleSchema.safeParse(data)
@@ -70,7 +72,7 @@ const updateUserRole = async (
 	const { userId, role } = validated.data
 
 	if (userId === adminId) {
-		return { success: false, error: "Cannot change your own role" }
+		return { success: false, error: t("cannotChangeOwnRole") }
 	}
 
 	await db

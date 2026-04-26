@@ -37,9 +37,9 @@ const StatCard = memo(({
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
-			<p className="text-tiny text-txt-300 mb-1">{label}</p>
+			<p className="text-tiny text-txt-300 mb-s-100">{label}</p>
 			<p className={valueClass}>{value}</p>
-			{subValue && <p className="text-tiny text-txt-300 mt-0.5">{subValue}</p>}
+			{subValue && <p className="text-tiny text-txt-300 mt-s-100">{subValue}</p>}
 		</div>
 	)
 })
@@ -68,7 +68,7 @@ const PassFailBadge = memo(({
 			)}
 		>
 			<div className="flex flex-col">
-				<p className="text-tiny text-txt-300 mb-1">{t("wouldPass")}</p>
+				<p className="text-tiny text-txt-300 mb-s-100">{t("wouldPass")}</p>
 				<div className="gap-s-200 flex items-center">
 					{wouldPass ? (
 						<ShieldCheck className="text-trade-buy h-5 w-5" />
@@ -84,7 +84,7 @@ const PassFailBadge = memo(({
 						{wouldPass ? t("pass") : t("fail")}
 					</span>
 				</div>
-				<p className="text-tiny text-txt-300 mt-0.5">
+				<p className="text-tiny text-txt-300 mt-s-100">
 					{wouldPass
 						? t("passReason", {
 								maxDD: formatCurrency(maxDrawdown),
@@ -148,7 +148,7 @@ const EquityShieldStats = ({
 					<h3 className="text-small text-acc-100 font-semibold">
 						{t("original")}
 					</h3>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
 						<span
 							className={cn(
@@ -160,13 +160,13 @@ const EquityShieldStats = ({
 							{formatCurrency(originalPnl)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
 							{formatCurrency(stats.observedMDD)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("liveTrades")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{stats.totalTrades}
@@ -186,7 +186,7 @@ const EquityShieldStats = ({
 							drawdownLimit={drawdownLimit}
 						/>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
 						<span
 							className={cn(
@@ -198,25 +198,25 @@ const EquityShieldStats = ({
 							{formatCurrency(method1Pnl)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
 							{formatCurrency(stats.method1.maxDrawdown)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("liveTrades")}</span>
 						<span className="text-small text-trade-buy font-medium">
 							{stats.method1.liveTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("simTrades")}</span>
 						<span className="text-small text-txt-300 font-medium">
 							{stats.method1.simTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("transitions")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{stats.method1.modeTransitions}
@@ -236,7 +236,7 @@ const EquityShieldStats = ({
 							drawdownLimit={drawdownLimit}
 						/>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
 						<span
 							className={cn(
@@ -248,25 +248,25 @@ const EquityShieldStats = ({
 							{formatCurrency(method2Pnl)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
 							{formatCurrency(stats.method2.maxDrawdown)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("liveTrades")}</span>
 						<span className="text-small text-trade-buy font-medium">
 							{stats.method2.liveTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("simTrades")}</span>
 						<span className="text-small text-txt-300 font-medium">
 							{stats.method2.simTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-1">
+					<div className="flex items-center justify-between py-s-100">
 						<span className="text-tiny text-txt-300">{t("transitions")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{stats.method2.modeTransitions}

@@ -15,7 +15,7 @@ interface ComplianceDashboardProps {
 	data: ComplianceOverview | null
 }
 
-export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
+const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 	const t = useTranslations("playbook.compliance")
 
 	if (!data) {
@@ -65,7 +65,7 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					{/* Main Compliance Score */}
 					<div className="gap-m-400 sm:gap-m-500 flex flex-col items-center sm:flex-row">
 						<div className="relative h-24 w-24">
-							<svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
+							<svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100" role="img" aria-label={t("compliancePercent", { percent: data.overallCompliance.toFixed(0) })}>
 								<circle
 									cx="50"
 									cy="50"
@@ -111,7 +111,7 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 									aria-valuenow={data.overallCompliance}
 									aria-valuemin={0}
 									aria-valuemax={100}
-									aria-label={t("overview")}
+									aria-label={t("followedPlan", { followed: data.followedPlanCount, total: data.totalTrackedTrades })}
 								>
 									<div
 										className="bg-trade-buy flex items-center justify-center transition-[width]"
@@ -178,7 +178,7 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					{/* Quick Stats */}
 					<div className="border-bg-300 mt-m-400 sm:mt-m-500 gap-m-400 sm:gap-m-500 lg:gap-m-600 pt-s-300 sm:pt-m-400 flex items-center justify-center border-t">
 						<div className="gap-s-200 flex items-center">
-							<Target className="text-acc-100 h-4 w-4" />
+							<Target className="text-txt-200 h-4 w-4" />
 							<span className="text-small text-txt-200">
 								{data.strategiesCount === 1
 									? t("strategiesCount", { count: data.strategiesCount })
@@ -191,3 +191,5 @@ export const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 		</div>
 	)
 }
+
+export { ComplianceDashboard }

@@ -128,7 +128,7 @@ const createRiskProfile = async (
 	const t = await getTranslations("settings.riskProfiles")
 	try {
 		const { userId } = await requireAuth()
-		await requireRole("admin")
+		await requireRole("premium")
 
 		const validated = riskProfileSchema.parse(input)
 
@@ -168,9 +168,9 @@ const createRiskProfile = async (
 		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
-				message: t("actions.adminRequired"),
+				message: t("actions.premiumRequired"),
 				errors: [
-					{ code: "FORBIDDEN", detail: "Only admins can create risk profiles" },
+					{ code: "FORBIDDEN", detail: "Premium role required to create risk profiles" },
 				],
 			}
 		}
@@ -197,7 +197,7 @@ const updateRiskProfile = async (
 	const t = await getTranslations("settings.riskProfiles")
 	try {
 		await requireAuth()
-		await requireRole("admin")
+		await requireRole("premium")
 
 		const validated = riskProfileSchema.parse(input)
 
@@ -246,9 +246,9 @@ const updateRiskProfile = async (
 		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
-				message: t("actions.adminRequired"),
+				message: t("actions.premiumRequired"),
 				errors: [
-					{ code: "FORBIDDEN", detail: "Only admins can update risk profiles" },
+					{ code: "FORBIDDEN", detail: "Premium role required to update risk profiles" },
 				],
 			}
 		}
@@ -274,7 +274,7 @@ const deactivateRiskProfile = async (
 	const t = await getTranslations("settings.riskProfiles")
 	try {
 		await requireAuth()
-		await requireRole("admin")
+		await requireRole("premium")
 
 		await db
 			.update(riskManagementProfiles)
@@ -291,11 +291,11 @@ const deactivateRiskProfile = async (
 		if (error instanceof Error && error.message === "Forbidden") {
 			return {
 				status: "error",
-				message: t("actions.adminRequired"),
+				message: t("actions.premiumRequired"),
 				errors: [
 					{
 						code: "FORBIDDEN",
-						detail: "Only admins can deactivate risk profiles",
+						detail: "Premium role required to deactivate risk profiles",
 					},
 				],
 			}

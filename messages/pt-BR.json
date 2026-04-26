@@ -2782,7 +2782,8 @@
         "updateFailed": "Falha ao atualizar perfil de risco",
         "deactivateFailed": "Falha ao desativar perfil de risco",
         "validationError": "Falha na validação",
-        "adminRequired": "Acesso de administrador necessário"
+        "adminRequired": "Acesso de administrador necessário",
+        "premiumRequired": "Acesso premium necessário"
       }
     },
     "goToSettings": "Configurações → {section}",
@@ -2812,8 +2813,10 @@
       "roles": {
         "admin": "Admin",
         "trader": "Trader",
-        "viewer": "Visualizador"
-      }
+        "viewer": "Visualizador",
+        "premium": "Premium"
+      },
+      "cannotChangeOwnRole": "Não é possível alterar o seu próprio papel"
     },
     "conditions": {
       "title": "Condições de Trading",
@@ -3750,7 +3753,8 @@
   "roles": {
     "admin": "Admin",
     "trader": "Trader",
-    "viewer": "Visualizador"
+    "viewer": "Visualizador",
+    "premium": "Premium"
   },
   "accessDenied": {
     "title": "Acesso Negado",
@@ -4201,6 +4205,12 @@
       "avgWin": "Ganho Médio",
       "avgLoss": "Perda Média",
       "projectedPnl": "P&L Projetado (100 trades)"
+    },
+    "actions": {
+      "retrieved": "Dados de comparação recuperados",
+      "fetchFailed": "Falha ao recuperar dados de comparação",
+      "minAccountsRequired": "Pelo menos 2 contas são necessárias para comparação",
+      "accountNotFound": "Uma ou mais contas não foram encontradas"
     }
   },
   "bugReport": {

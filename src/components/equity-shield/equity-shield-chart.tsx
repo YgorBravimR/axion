@@ -112,7 +112,7 @@ const CustomTooltip = memo(({ active, payload, variant, showComparison }: Custom
 				</p>
 			)}
 			{!showComparison && variant !== "original" && (
-				<p className={`text-tiny mt-1 ${data.mode === "live" ? "text-trade-buy" : "text-txt-300"}`}>
+				<p className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-trade-buy" : "text-txt-300"}`}>
 					{data.mode === "live" ? t("modeLive") : t("modeSim")}
 				</p>
 			)}
@@ -285,6 +285,8 @@ const EquityShieldChart = ({
 			<ChartContainer
 				id={`equity-shield-${variant}${isComparisonMode ? "-cmp" : ""}`}
 				className="h-[250px] w-full sm:h-[300px] lg:h-[350px]"
+				role="img"
+				aria-label={title}
 			>
 				<AreaChart
 					data={chartData}
@@ -383,6 +385,7 @@ const EquityShieldChart = ({
 							dot={false}
 							activeDot={false}
 							connectNulls
+							isAnimationActive={false}
 						/>
 					)}
 
@@ -397,6 +400,7 @@ const EquityShieldChart = ({
 							fill={`url(#${originalGradientId})`}
 							dot={false}
 							activeDot={false}
+							isAnimationActive={false}
 						/>
 					)}
 
@@ -409,6 +413,7 @@ const EquityShieldChart = ({
 						fill={`url(#${gradientId})`}
 						dot={false}
 						activeDot={activeDot}
+						isAnimationActive={false}
 					/>
 				</AreaChart>
 			</ChartContainer>

@@ -129,8 +129,8 @@ const AnalyticsContent = ({
 	const t = useTranslations("analytics")
 	const tComparison = useTranslations("accountComparison")
 	const [isPending, startTransition] = useTransition()
-	const { isAdmin } = useFeatureAccess()
-	const showComparisonLink = isAdmin && (accountCount ?? 0) >= 2
+	const { isPremium } = useFeatureAccess()
+	const showComparisonLink = isPremium && (accountCount ?? 0) >= 2
 
 	useRegisterPageGuide(analyticsGuide)
 

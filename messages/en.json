@@ -2782,7 +2782,8 @@
         "updateFailed": "Failed to update risk profile",
         "deactivateFailed": "Failed to deactivate risk profile",
         "validationError": "Validation failed",
-        "adminRequired": "Admin access required"
+        "adminRequired": "Admin access required",
+        "premiumRequired": "Premium access required"
       }
     },
     "goToSettings": "Settings → {section}",
@@ -2812,8 +2813,10 @@
       "roles": {
         "admin": "Admin",
         "trader": "Trader",
-        "viewer": "Viewer"
-      }
+        "viewer": "Viewer",
+        "premium": "Premium"
+      },
+      "cannotChangeOwnRole": "Cannot change your own role"
     },
     "conditions": {
       "title": "Trading Conditions",
@@ -3750,7 +3753,8 @@
   "roles": {
     "admin": "Admin",
     "trader": "Trader",
-    "viewer": "Viewer"
+    "viewer": "Viewer",
+    "premium": "Premium"
   },
   "accessDenied": {
     "title": "Access Denied",
@@ -4201,6 +4205,12 @@
       "avgWin": "Avg Win",
       "avgLoss": "Avg Loss",
       "projectedPnl": "Projected P&L (100 trades)"
+    },
+    "actions": {
+      "retrieved": "Comparison data retrieved",
+      "fetchFailed": "Failed to retrieve comparison data",
+      "minAccountsRequired": "At least 2 accounts required for comparison",
+      "accountNotFound": "One or more accounts not found"
     }
   },
   "bugReport": {

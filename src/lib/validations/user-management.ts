@@ -2,7 +2,7 @@ import { z } from "zod"
 
 const updateUserRoleSchema = z.object({
 	userId: z.string().uuid("validation.userManagement.invalidUserId"),
-	role: z.enum(["admin", "trader", "viewer"], {
+	role: z.enum(["admin", "premium", "trader", "viewer"], {
 		message: "validation.userManagement.roleRequired",
 	}),
 })

@@ -1,7 +1,6 @@
 import { setRequestLocale } from "next-intl/server"
 import { CommandCenterTabs } from "./command-center-tabs"
 import {
-	getChecklists,
 	getTodayCompletions,
 	getTodayNotes,
 	getAccountAssetSettings,
@@ -49,7 +48,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 
 	// Fetch all initial data server-side in parallel
 	const [
-		checklistsResult,
 		completionsResult,
 		notesResult,
 		assetSettingsResult,
@@ -61,7 +59,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		riskProfilesResult,
 		liveTradingStatusResult,
 	] = await Promise.all([
-		getChecklists(),
 		getTodayCompletions(dateArg),
 		getTodayNotes(dateArg),
 		getAccountAssetSettings(),
@@ -74,10 +71,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		getLiveTradingStatus(dateArg),
 	])
 
-	const initialChecklists =
-		checklistsResult.status === "success" && checklistsResult.data
-			? checklistsResult.data
-			: []
 	const initialCompletions =
 		completionsResult.status === "success" && completionsResult.data
 			? completionsResult.data
@@ -119,7 +112,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 	return (
 		<div className="flex h-full flex-col">
 			<CommandCenterTabs
-				initialChecklists={initialChecklists}
 				initialCompletions={initialCompletions}
 				initialNotes={initialNotes}
 				initialAssetSettings={initialAssetSettings}

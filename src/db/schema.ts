@@ -50,7 +50,7 @@ export const orderTypeEnum = pgEnum("order_type", [
 export const accountTypeEnum = pgEnum("account_type", ["personal", "prop", "replay"])
 
 // User Role Enum
-export const userRoleEnum = pgEnum("user_role", ["admin", "trader", "viewer"])
+export const userRoleEnum = pgEnum("user_role", ["admin", "premium", "trader", "viewer"])
 
 // Condition Category Enum
 export const conditionCategoryEnum = pgEnum("condition_category", [
