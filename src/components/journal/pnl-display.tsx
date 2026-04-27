@@ -45,7 +45,7 @@ export const PnLDisplay = ({
 		>
 			{displayValue}
 			{showPercent && percentValue !== undefined && (
-				<span className="ml-1 text-txt-300">
+				<span className="ml-s-100 text-txt-300">
 					({formatPercent(percentValue)})
 				</span>
 			)}

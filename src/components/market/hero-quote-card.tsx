@@ -23,14 +23,14 @@ export const HeroQuoteCard = memo(({ quote }: HeroQuoteCardProps) => {
 	return (
 		<div
 			className={cn(
-				"border-bg-300 bg-bg-200 min-w-[140px] shrink-0 flex-1 rounded-lg border p-3",
+				"border-bg-300 bg-bg-200 min-w-[140px] shrink-0 flex-1 rounded-lg border p-s-300",
 				!isClosed && !isZero && isPositive && "border-l-2 border-l-trade-buy",
 				!isClosed && !isZero && !isPositive && "border-l-2 border-l-trade-sell"
 			)}
 			role="listitem"
 			aria-label={`${quote.name}: ${formatPrice(quote.price)}${isClosed ? "" : `, ${formatChangePercent(quote.changePercent)}`}`}
 		>
-			<div className="flex items-center justify-between gap-2">
+			<div className="flex items-center justify-between gap-s-200">
 				<span className="text-tiny text-txt-200 flex items-center gap-1.5 truncate font-medium">
 					{quote.flag ? (
 						<span className="shrink-0" aria-hidden="true">
@@ -54,7 +54,7 @@ export const HeroQuoteCard = memo(({ quote }: HeroQuoteCardProps) => {
 					</span>
 				)}
 			</div>
-			<span className="text-txt-100 mt-1 block text-lg font-semibold">
+			<span className="text-txt-100 mt-s-100 block text-h3 font-semibold">
 				{formatPrice(quote.price)}
 			</span>
 		</div>

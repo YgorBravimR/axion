@@ -87,7 +87,7 @@ export const PlaybookContent = ({
 					</h2>
 					<Link href="/playbook/new">
 						<Button id="playbook-new-strategy">
-							<Plus className="mr-2 h-4 w-4" />
+							<Plus className="mr-s-200 h-4 w-4" />
 							{t("newStrategy")}
 						</Button>
 					</Link>
@@ -105,7 +105,7 @@ export const PlaybookContent = ({
 								id="playbook-add-strategy"
 								className="mt-m-500"
 							>
-								<Plus className="mr-2 h-4 w-4" />
+								<Plus className="mr-s-200 h-4 w-4" />
 								{t("addStrategy")}
 							</Button>
 						</Link>

@@ -192,7 +192,7 @@ export const ScenarioSection = ({
 												size="sm"
 												onClick={() => handleEdit(scenario)}
 											>
-												<Pencil className="mr-2 h-3 w-3" />
+												<Pencil className="mr-s-200 h-3 w-3" />
 												{tCommon("edit")}
 											</Button>
 											<AlertDialog>
@@ -204,7 +204,7 @@ export const ScenarioSection = ({
 														size="sm"
 														className="text-fb-error hover:text-fb-error"
 													>
-														<Trash2 className="mr-2 h-3 w-3" />
+														<Trash2 className="mr-s-200 h-3 w-3" />
 														{tCommon("delete")}
 													</Button>
 												</AlertDialogTrigger>
@@ -251,7 +251,7 @@ export const ScenarioSection = ({
 					size="sm"
 					onClick={handleAddNew}
 				>
-					<Plus className="mr-2 h-4 w-4" />
+					<Plus className="mr-s-200 h-4 w-4" />
 					{t("addScenario")}
 				</Button>
 			)}

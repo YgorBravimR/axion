@@ -194,7 +194,7 @@ export const TagList = () => {
 					</Badge>
 				</div>
 				<Button id="tag-add-new" onClick={handleAddNew}>
-					<Plus className="mr-2 h-4 w-4" />
+					<Plus className="mr-s-200 h-4 w-4" />
 					{t("addTag")}
 				</Button>
 			</div>

@@ -72,7 +72,7 @@ const DataTable = <TData, TValue>({
 											{header.isPlaceholder ? null : isSortable ? (
 												<button
 													type="button"
-													className="flex items-center gap-1 hover:text-txt-100 transition-colors"
+													className="flex items-center gap-s-100 hover:text-txt-100 transition-colors"
 													onClick={header.column.getToggleSortingHandler()}
 													aria-label={t("sortBy", { column: header.column.id })}
 												>
@@ -136,14 +136,14 @@ const DataTable = <TData, TValue>({
 
 			{/* Pagination */}
 			{table.getPageCount() > 1 && (
-				<div className="flex items-center justify-between px-2">
+				<div className="flex items-center justify-between px-s-200">
 					<p className="text-small text-txt-300">
 						{t("pagination.pageOf", {
 							current: table.getState().pagination.pageIndex + 1,
 							total: table.getPageCount(),
 						})}
 					</p>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-s-200">
 						<Button
 							id="data-table-prev"
 							variant="outline"

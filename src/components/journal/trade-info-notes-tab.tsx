@@ -162,7 +162,7 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 							aria-label={`${tTrade("followedPlan")}: ${tCommon("yes")}`}
 							aria-pressed={formData.followedPlan === true}
 							className={cn(
-								"p-s-300 flex-1 rounded-lg border-2 text-center text-small transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+								"p-s-300 flex-1 rounded-lg border-2 text-center text-small transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100/30",
 								formData.followedPlan === true
 									? "border-trade-buy bg-trade-buy/10 text-trade-buy"
 									: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
@@ -178,7 +178,7 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 							aria-label={`${tTrade("followedPlan")}: ${tCommon("no")}`}
 							aria-pressed={formData.followedPlan === false}
 							className={cn(
-								"p-s-300 flex-1 rounded-lg border-2 text-center text-small transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+								"p-s-300 flex-1 rounded-lg border-2 text-center text-small transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100/30",
 								formData.followedPlan === false
 									? "border-trade-sell bg-trade-sell/10 text-trade-sell"
 									: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
@@ -246,7 +246,7 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 									tabIndex={gradeIndex === focusedIndex ? 0 : -1}
 									onClick={() => handleFieldChange("rating", isSelected ? null : grade)}
 									className={cn(
-										"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+										"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100/30",
 										isSelected
 											? GRADE_COLORS[grade]
 											: "border-bg-300 text-txt-300 hover:border-txt-300/50"
@@ -268,7 +268,7 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 					disabled={!isDirty || isSaving}
 					className="w-full"
 				>
-					{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+					{isSaving && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 					{tTrade("saveNotes")}
 				</Button>
 			</div>

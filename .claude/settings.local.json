@@ -150,7 +150,9 @@
       "Bash(cat \"/Users/ygorbravim/personal/projects/profitJournal/src/app/[locale]/\\(app\\)/analytics/account-comparison/page.tsx\")",
       "Bash(cd /Users/ygorbravim/personal/projects/profitJournal grep -rn \"from.*_lib/filters\\\\|from.*_lib/decrypt\" src/app/api/arch/ --include=\"*.ts\")",
       "Skill(scan)",
-      "Skill(review-team)"
+      "Skill(review-team)",
+      "Bash(bunx drizzle-kit *)",
+      "WebFetch(domain:getdesign.md)"
     ],
     "deny": [],
     "ask": []

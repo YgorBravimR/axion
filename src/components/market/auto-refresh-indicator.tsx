@@ -75,7 +75,7 @@ export const AutoRefreshIndicator = ({
 		: "--:--:--"
 
 	return (
-		<div className="flex items-center gap-3 text-tiny">
+		<div className="flex items-center gap-s-300 text-tiny">
 			{/* Pulsing dot */}
 			<div className="flex items-center gap-1.5">
 				<span
@@ -102,7 +102,7 @@ export const AutoRefreshIndicator = ({
 				size="sm"
 				onClick={handleRefresh}
 				disabled={isLoading}
-				className="text-txt-200 inline-flex items-center gap-1 px-2 py-1"
+				className="text-txt-200 inline-flex items-center gap-s-100 px-s-200 py-s-100"
 				aria-label={t("refreshNow")}
 			>
 				<RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin motion-reduce:animate-none" : ""}`} />

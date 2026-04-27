@@ -227,7 +227,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						disabled={!selectedAccountId || isPending}
 					>
 						{isPending && (
-							<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 						)}
 						{tSelect("continue")}
 					</Button>
@@ -239,7 +239,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						onClick={handleBackToCredentials}
 						disabled={isPending}
 						aria-label={tSelect("backToLogin")}
-						className="text-small text-txt-300 hover:text-txt-200 flex w-full items-center justify-center gap-2"
+						className="text-small text-txt-300 hover:text-txt-200 flex w-full items-center justify-center gap-s-200"
 					>
 						<ArrowLeft className="h-4 w-4" />
 						{tSelect("backToLogin")}
@@ -299,7 +299,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							className="w-full"
 						>
 							{resendingVerification && (
-								<Loader2 className="mr-2 h-3 w-3 animate-spin motion-reduce:animate-none" />
+								<Loader2 className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none" />
 							)}
 							{t("resendVerification")}
 						</Button>
@@ -381,7 +381,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					disabled={isPending}
 				>
 					{isPending && (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 					)}
 					{t("submit")}
 				</Button>

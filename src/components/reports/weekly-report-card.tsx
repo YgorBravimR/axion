@@ -305,7 +305,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 												<span className="text-small text-trade-buy">
 													{formatCurrencyWithSign(trade.pnl)}
 													{trade.r && (
-														<span className="text-txt-300 ml-1">
+														<span className="text-txt-300 ml-s-100">
 															({trade.r.toFixed(1)}R)
 														</span>
 													)}
@@ -347,7 +347,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 												<span className="text-small text-trade-sell">
 													{formatCurrencyWithSign(trade.pnl)}
 													{trade.r && (
-														<span className="text-txt-300 ml-1">
+														<span className="text-txt-300 ml-s-100">
 															({trade.r.toFixed(1)}R)
 														</span>
 													)}

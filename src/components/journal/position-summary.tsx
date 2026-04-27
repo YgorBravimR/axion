@@ -14,7 +14,7 @@ const getStatusIcon = (status: PositionStatus) => {
 		case "partial":
 			return <Clock className="h-4 w-4 text-warning" />
 		case "open":
-			return <AlertCircle className="h-4 w-4 text-acc-200" />
+			return <AlertCircle className="h-4 w-4 text-action-buy" />
 		case "over_exit":
 			return <AlertCircle className="h-4 w-4 text-fb-error" />
 	}
@@ -27,7 +27,7 @@ const getStatusColor = (status: PositionStatus): string => {
 		case "partial":
 			return "text-warning"
 		case "open":
-			return "text-acc-200"
+			return "text-action-buy"
 		case "over_exit":
 			return "text-fb-error"
 	}
@@ -171,7 +171,7 @@ export const PositionSummary = ({
 								? "bg-trade-buy"
 								: positionStatus === "partial"
 									? "bg-fb-warning"
-									: "bg-acc-200"
+									: "bg-action-buy"
 						)}
 						style={{ width: `${Math.min(closedPercent, 100)}%` }}
 					/>

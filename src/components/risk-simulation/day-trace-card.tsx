@@ -47,7 +47,7 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 	const outcomeBadge = () => {
 		if (isSkipped) {
 			return (
-				<span className="text-tiny bg-bg-300 text-txt-300 rounded-full px-2 py-0.5 font-medium">
+				<span className="text-tiny bg-bg-300 text-txt-300 rounded-full px-s-200 py-0.5 font-medium">
 					{t("skipped")}
 				</span>
 			)
@@ -56,32 +56,32 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 		const pnl = trade.simulatedPnlCents ?? 0
 		if (pnl > 0) {
 			return (
-				<span className="text-tiny bg-trade-buy/20 text-trade-buy whitespace-nowrap rounded-full px-2 py-0.5 font-medium">
+				<span className="text-tiny bg-trade-buy/20 text-trade-buy whitespace-nowrap rounded-full px-s-200 py-0.5 font-medium">
 					WIN {formatCurrency(pnl)}
 				</span>
 			)
 		}
 		if (pnl < 0) {
 			return (
-				<span className="text-tiny bg-trade-sell/20 text-trade-sell whitespace-nowrap rounded-full px-2 py-0.5 font-medium">
+				<span className="text-tiny bg-trade-sell/20 text-trade-sell whitespace-nowrap rounded-full px-s-200 py-0.5 font-medium">
 					LOSS {formatCurrency(pnl)}
 				</span>
 			)
 		}
 		return (
-			<span className="text-tiny bg-bg-300 text-txt-300 rounded-full px-2 py-0.5 font-medium">
+			<span className="text-tiny bg-bg-300 text-txt-300 rounded-full px-s-200 py-0.5 font-medium">
 				BE {formatCurrency(pnl)}
 			</span>
 		)
 	}
 
 	return (
-		<div className="flex items-start gap-3">
+		<div className="flex items-start gap-s-300">
 			{/* Trade number */}
 			<div className="flex flex-col items-center">
 				<div
 					className={cn(
-						"flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+						"flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-tiny font-semibold",
 						isSkipped
 							? "bg-bg-300 text-txt-300"
 							: "bg-acc-100/20 text-acc-100"
@@ -90,13 +90,13 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 					T{trade.dayTradeNumber}
 				</div>
 				{!isLast && (
-					<div className="bg-bg-300 my-1 h-4 w-px" />
+					<div className="bg-bg-300 my-s-100 h-4 w-px" />
 				)}
 			</div>
 
 			{/* Trade details */}
-			<div className="flex-1 pb-2">
-				<div className="flex flex-wrap items-center gap-2">
+			<div className="flex-1 pb-s-200">
+				<div className="flex flex-wrap items-center gap-s-200">
 					{!isSkipped && (
 						<span className="text-tiny text-txt-200">
 							Risk {formatCurrency(trade.riskAmountCents ?? 0)}
@@ -119,13 +119,13 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 	const dayPnl = day.dayResult.totalPnlCents
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-3">
+		<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300">
 			{/* Day header */}
 			<div className="mb-s-300 flex items-center justify-between">
 				<span className="text-small text-txt-100 font-medium">
 					{formatDate(day.dayKey, locale)}
 				</span>
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-s-200">
 					<span
 						className={cn(
 							"text-tiny sm:text-small whitespace-nowrap font-semibold",
@@ -154,7 +154,7 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 
 			{/* Stop reasons */}
 			{day.dayResult.hitDailyLimit && (
-				<div className="border-bg-300 mt-s-200 flex items-center gap-2 border-t pt-2">
+				<div className="border-bg-300 mt-s-200 flex items-center gap-s-200 border-t pt-s-200">
 					<StopCircle className="text-trade-sell h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 					<span className="text-tiny text-trade-sell font-medium">
 						{t("dailyLimitHit")}
@@ -162,7 +162,7 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 				</div>
 			)}
 			{day.dayResult.hitDailyTarget && !day.dayResult.hitDailyLimit && (
-				<div className="border-bg-300 mt-s-200 flex items-center gap-2 border-t pt-2">
+				<div className="border-bg-300 mt-s-200 flex items-center gap-s-200 border-t pt-s-200">
 					<StopCircle className="text-acc-100 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 					<span className="text-tiny text-acc-100 font-medium">
 						{t("dailyTargetHit")}

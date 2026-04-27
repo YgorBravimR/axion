@@ -33,12 +33,12 @@ interface FieldProps {
 const Field = ({ label, value, onChange, type = "number", suffix, disabled, locked }: FieldProps) => {
 	const generatedId = useId()
 	return (
-		<div className="flex flex-col gap-1">
-			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-1">
+		<div className="flex flex-col gap-s-100">
+			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-s-100">
 				{label}
 				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
 			</label>
-			<div className="flex items-center gap-1">
+			<div className="flex items-center gap-s-100">
 				<Input
 					id={generatedId}
 					type={type}
@@ -46,7 +46,7 @@ const Field = ({ label, value, onChange, type = "number", suffix, disabled, lock
 					onChange={(event) => onChange(event.target.value)}
 					disabled={disabled || locked}
 					className={cn(
-						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-3 py-1.5",
+						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-s-300 py-1.5",
 						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed opacity-70" : "bg-bg-100"
 					)}
 				/>
@@ -102,12 +102,12 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 	}
 
 	return (
-		<div className="flex flex-col gap-1">
-			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-1">
+		<div className="flex flex-col gap-s-100">
+			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-s-100">
 				{label}
 				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
 			</label>
-			<div className="flex items-center gap-1">
+			<div className="flex items-center gap-s-100">
 				<Input
 					id={generatedId}
 					type="number"
@@ -118,7 +118,7 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 					disabled={disabled || locked}
 					step="0.01"
 					className={cn(
-						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-3 py-1.5",
+						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-s-300 py-1.5",
 						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed opacity-70" : "bg-bg-100"
 					)}
 				/>
@@ -141,14 +141,14 @@ const CheckboxField = ({
 }) => {
 	const generatedId = useId()
 	return (
-		<div className={cn("flex items-center gap-2", locked ? "cursor-not-allowed opacity-70" : "cursor-pointer")}>
+		<div className={cn("flex items-center gap-s-200", locked ? "cursor-not-allowed opacity-70" : "cursor-pointer")}>
 			<Checkbox
 				id={generatedId}
 				checked={checked}
 				onCheckedChange={(value) => onChange(value === true)}
 				disabled={locked}
 			/>
-			<label htmlFor={generatedId} className="text-small text-txt-200 flex items-center gap-1">
+			<label htmlFor={generatedId} className="text-small text-txt-200 flex items-center gap-s-100">
 				{label}
 				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
 			</label>
@@ -393,7 +393,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 					locked={isLocked}
 				/>
 			</div>
-			<div className="flex flex-wrap gap-4">
+			<div className="flex flex-wrap gap-m-400">
 				<CheckboxField
 					label={t("reduceRiskAfterLoss")}
 					checked={params.reduceRiskAfterLoss}

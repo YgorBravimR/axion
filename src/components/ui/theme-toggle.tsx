@@ -41,12 +41,12 @@ export const ThemeToggle = () => {
 		>
 			{theme === "dark" ? (
 				<>
-					<Sun className="mr-2 h-4 w-4" aria-hidden="true" />
+					<Sun className="mr-s-200 h-4 w-4" aria-hidden="true" />
 					{t("lightMode")}
 				</>
 			) : (
 				<>
-					<Moon className="mr-2 h-4 w-4" aria-hidden="true" />
+					<Moon className="mr-s-200 h-4 w-4" aria-hidden="true" />
 					{t("darkMode")}
 				</>
 			)}

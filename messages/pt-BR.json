@@ -722,6 +722,7 @@
       "save": "Salvar",
       "saving": "Salvando...",
       "moods": {
+        "ariaLabel": "Mentalidade de trading do dia",
         "great": "Ótimo",
         "good": "Bom",
         "neutral": "Neutro",
@@ -1295,7 +1296,6 @@
     "noTrades": "Nenhum trade encontrado para o período de análise.",
     "period": "Últimos {days} dias",
     "tradeCount": "{count} trades analisados",
-    "aiComingSoon": "Coaching com IA em breve",
     "severity": {
       "warning": "Alerta",
       "attention": "Atenção",

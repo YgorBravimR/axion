@@ -323,7 +323,7 @@ const MonteCarloV2Content = ({
 									value={form.winRate}
 									onChange={(e) => updateField("winRate", e.target.value)}
 									placeholder="40.7"
-									className="pr-8"
+									className="pr-l-700"
 									aria-label={t("params.winRate")}
 								/>
 								<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -400,7 +400,7 @@ const MonteCarloV2Content = ({
 									value={form.breakevenRate}
 									onChange={(e) => updateField("breakevenRate", e.target.value)}
 									placeholder="0"
-									className="pr-8"
+									className="pr-l-700"
 									aria-label={t("params.breakevenRate")}
 								/>
 								<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -445,7 +445,7 @@ const MonteCarloV2Content = ({
 									value={form.initialBalance}
 									onChange={(e) => updateField("initialBalance", e.target.value)}
 									placeholder="50000"
-									className="pl-8"
+									className="pl-l-700"
 									aria-label={t("params.initialBalance")}
 								/>
 							</div>
@@ -529,7 +529,7 @@ const MonteCarloV2Content = ({
 									value={ruinThreshold}
 									onChange={(e) => setRuinThreshold(e.target.value)}
 									placeholder="50"
-									className="pr-8"
+									className="pr-l-700"
 									aria-label={t("params.ruinThreshold")}
 								/>
 								<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">

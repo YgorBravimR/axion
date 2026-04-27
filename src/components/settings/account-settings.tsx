@@ -555,7 +555,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									{assets.map((asset) => (
 										<SelectItem key={asset.id} value={asset.symbol}>
 											<span className="font-mono">{asset.symbol}</span>
-											<span className="text-txt-300 ml-2">{asset.name}</span>
+											<span className="text-txt-300 ml-s-200">{asset.name}</span>
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -606,7 +606,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							onClick={handleSaveAccount}
 							disabled={isPending}
 						>
-							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 							{tCommon("save")}
 						</Button>
 					</div>
@@ -773,7 +773,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 															commission: e.target.value,
 														}))
 													}
-													className="h-8 text-right text-sm"
+													className="h-8 text-right text-small"
 												/>
 											</div>
 											<div className="space-y-s-100">
@@ -795,7 +795,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 															fees: e.target.value,
 														}))
 													}
-													className="h-8 text-right text-sm"
+													className="h-8 text-right text-small"
 												/>
 											</div>
 											<div className="space-y-s-100">
@@ -817,7 +817,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 															breakevenTicks: e.target.value,
 														}))
 													}
-													className="h-8 text-right text-sm"
+													className="h-8 text-right text-small"
 													placeholder={
 														account?.defaultBreakevenTicks?.toString() ?? "2"
 													}
@@ -856,7 +856,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 													disabled={isPending}
 												>
 													{isPending && (
-														<Loader2 className="mr-2 h-3 w-3 animate-spin motion-reduce:animate-none" />
+														<Loader2 className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none" />
 													)}
 													{tCommon("save")}
 												</Button>
@@ -996,7 +996,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									variant="destructive"
 									size="sm"
 								>
-									<DatabaseZap className="mr-2 h-4 w-4" />
+									<DatabaseZap className="mr-s-200 h-4 w-4" />
 									{t("deleteAllData")}
 								</Button>
 							</AlertDialogTrigger>
@@ -1040,7 +1040,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										onClick={handleDeleteAllData}
 									>
 										{isPending && (
-											<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+											<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										)}
 										{tCommon("confirm")}
 									</AlertDialogAction>
@@ -1076,7 +1076,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									size="sm"
 									disabled={!canDeleteAccount}
 								>
-									<Trash2 className="mr-2 h-4 w-4" />
+									<Trash2 className="mr-s-200 h-4 w-4" />
 									{t("deleteAccount")}
 								</Button>
 							</AlertDialogTrigger>
@@ -1124,7 +1124,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										onClick={handleDeleteAccount}
 									>
 										{isPending && (
-											<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+											<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										)}
 										{tCommon("confirm")}
 									</AlertDialogAction>

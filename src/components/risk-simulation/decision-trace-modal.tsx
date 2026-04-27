@@ -66,7 +66,7 @@ const DecisionTraceModal = ({
 						))}
 
 						{weeks.length === 0 && (
-							<p className="text-small text-txt-300 py-8 text-center">
+							<p className="text-small text-txt-300 py-l-700 text-center">
 								{t("noData")}
 							</p>
 						)}

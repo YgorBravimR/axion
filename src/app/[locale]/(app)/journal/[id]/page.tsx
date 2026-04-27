@@ -225,7 +225,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									id="trade-detail-outcome-win"
 									className="bg-trade-buy/20 text-trade-buy"
 								>
-									<CheckCircle className="mr-1 h-3 w-3" />
+									<CheckCircle className="mr-s-100 h-3 w-3" />
 									{tTrade("outcome.winner")}
 								</Badge>
 							)}
@@ -234,7 +234,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									id="trade-detail-outcome-loss"
 									className="bg-trade-sell/20 text-trade-sell"
 								>
-									<XCircle className="mr-1 h-3 w-3" />
+									<XCircle className="mr-s-100 h-3 w-3" />
 									{tTrade("outcome.loser")}
 								</Badge>
 							)}
@@ -248,7 +248,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									id="trade-detail-followed-plan"
 									className="bg-trade-buy/20 text-trade-buy"
 								>
-									<CheckCircle className="mr-1 h-3 w-3" />
+									<CheckCircle className="mr-s-100 h-3 w-3" />
 									{tTrade("followedPlan")}
 								</Badge>
 							)}
@@ -257,7 +257,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									id="trade-detail-discipline-breach"
 									className="bg-warning/20 text-warning"
 								>
-									<AlertTriangle className="mr-1 h-3 w-3" />
+									<AlertTriangle className="mr-s-100 h-3 w-3" />
 									{tTrade("detail.disciplineBreach")}
 								</Badge>
 							)}

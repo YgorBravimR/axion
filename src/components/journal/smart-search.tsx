@@ -265,7 +265,7 @@ const SmartSearch = ({
 				<Search className="h-3.5 w-3.5" />
 				{t("toggle")}
 				{activeFilterCount > 0 && (
-					<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-bold">
+					<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-s-100 font-bold">
 						{activeFilterCount}
 					</span>
 				)}
@@ -498,7 +498,7 @@ const SmartSearch = ({
 									className="h-8 px-s-200"
 									onClick={handleAddCondition}
 								>
-									<Plus className="mr-1 h-3 w-3" />
+									<Plus className="mr-s-100 h-3 w-3" />
 									{t("addCondition")}
 								</Button>
 							)}

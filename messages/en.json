@@ -722,6 +722,7 @@
       "save": "Save",
       "saving": "Saving...",
       "moods": {
+        "ariaLabel": "Trading mindset for the day",
         "great": "Great",
         "good": "Good",
         "neutral": "Neutral",
@@ -1295,7 +1296,6 @@
     "noTrades": "No trades found for the analysis period.",
     "period": "Last {days} days",
     "tradeCount": "{count} trades analyzed",
-    "aiComingSoon": "AI-powered coaching coming soon",
     "severity": {
       "warning": "Warning",
       "attention": "Attention",

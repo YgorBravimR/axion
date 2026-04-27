@@ -279,7 +279,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 						{tInd("groups")}
 					</h3>
 					<Button id="indicator-group-add-new" onClick={handleAddGroup}>
-						<Plus className="mr-2 h-4 w-4" />
+						<Plus className="mr-s-200 h-4 w-4" />
 						{tInd("addGroup")}
 					</Button>
 				</div>
@@ -336,7 +336,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 							id="indicator-definition-add-new"
 							onClick={handleAddDefinition}
 						>
-							<Plus className="mr-2 h-4 w-4" />
+							<Plus className="mr-s-200 h-4 w-4" />
 							{tInd("addIndicator")}
 						</Button>
 					</div>
@@ -402,7 +402,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 							}}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							) : null}
 							{tCommon("delete")}
 						</AlertDialogAction>
@@ -443,7 +443,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 							}}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							) : null}
 							{tCommon("delete")}
 						</AlertDialogAction>

@@ -19,7 +19,7 @@ interface RequiredIndicatorProps {
 const RequiredIndicator = ({ filled, className }: RequiredIndicatorProps) => (
 	<span
 		className={cn(
-			"ml-0.5 text-sm font-bold transition-colors duration-200",
+			"ml-0.5 text-small font-bold transition-colors duration-200",
 			filled ? "text-trade-buy" : "text-fb-error",
 			className,
 		)}

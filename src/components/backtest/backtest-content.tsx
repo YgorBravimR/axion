@@ -347,7 +347,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							disabled={isPending || !selectedSource || !dateFrom || !dateTo}
 							size="lg"
 						>
-							<Play className="mr-2 h-4 w-4" />
+							<Play className="mr-s-200 h-4 w-4" />
 							{t("config.runBacktest")}
 						</Button>
 					</div>

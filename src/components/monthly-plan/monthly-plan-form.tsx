@@ -552,7 +552,7 @@ const MonthlyPlanForm = ({
 								value={accountBalance}
 								onChange={(e) => updateField("accountBalance", e.target.value)}
 								placeholder="0.00"
-								className="pl-8"
+								className="pl-l-700"
 								aria-label={t("form.accountBalance")}
 							/>
 						</div>
@@ -745,7 +745,7 @@ const MonthlyPlanForm = ({
 								value={notes}
 								onChange={(e) => updateField("notes", e.target.value)}
 								placeholder={t("form.notesPlaceholder")}
-								className="border-bg-300 bg-bg-100 text-small text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 min-h-[80px] w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
+								className="border-bg-300 bg-bg-100 text-small text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 min-h-[80px] w-full rounded-md border px-s-300 py-s-200 focus:ring-2 focus:outline-none"
 								aria-label={t("form.notes")}
 							/>
 						</div>
@@ -769,7 +769,7 @@ const MonthlyPlanForm = ({
 										value={riskPerTradePercent}
 										onChange={(e) => updateField("riskPerTradePercent", e.target.value)}
 										placeholder="1.00"
-										className="pr-8"
+										className="pr-l-700"
 										aria-label={t("form.riskPerTrade")}
 									/>
 									<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -796,7 +796,7 @@ const MonthlyPlanForm = ({
 										value={dailyLossPercent}
 										onChange={(e) => updateField("dailyLossPercent", e.target.value)}
 										placeholder="3.00"
-										className="pr-8"
+										className="pr-l-700"
 										aria-label={t("form.dailyLoss")}
 									/>
 									<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -823,7 +823,7 @@ const MonthlyPlanForm = ({
 										value={monthlyLossPercent}
 										onChange={(e) => updateField("monthlyLossPercent", e.target.value)}
 										placeholder="10.00"
-										className="pr-8"
+										className="pr-l-700"
 										aria-label={t("form.monthlyLoss")}
 									/>
 									<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -877,7 +877,7 @@ const MonthlyPlanForm = ({
 												updateField("dailyProfitTargetPercent", e.target.value)
 											}
 											placeholder="5.00"
-											className="pr-8"
+											className="pr-l-700"
 											aria-label={t("form.dailyProfitTarget")}
 										/>
 										<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -944,7 +944,7 @@ const MonthlyPlanForm = ({
 											value={weeklyLossPercent}
 											onChange={(e) => updateField("weeklyLossPercent", e.target.value)}
 											placeholder="4.00"
-											className="pr-8"
+											className="pr-l-700"
 											aria-label={t("form.weeklyLoss")}
 										/>
 										<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -1065,7 +1065,7 @@ const MonthlyPlanForm = ({
 													updateField("profitReinvestmentPercent", e.target.value)
 												}
 												placeholder="50"
-												className="pr-8"
+												className="pr-l-700"
 												aria-label={t("form.profitReinvestment")}
 											/>
 											<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -1091,7 +1091,7 @@ const MonthlyPlanForm = ({
 									value={notes}
 									onChange={(e) => updateField("notes", e.target.value)}
 									placeholder={t("form.notesPlaceholder")}
-									className="border-bg-300 bg-bg-100 text-small text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 min-h-[80px] w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
+									className="border-bg-300 bg-bg-100 text-small text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 min-h-[80px] w-full rounded-md border px-s-300 py-s-200 focus:ring-2 focus:outline-none"
 									aria-label={t("form.notes")}
 								/>
 							</div>

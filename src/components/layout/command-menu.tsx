@@ -55,7 +55,7 @@ const CommandMenu = () => {
 							value={tNav(item.labelKey)}
 							onSelect={() => handleSelect(item.href)}
 						>
-							<item.icon className="mr-2 h-4 w-4" aria-hidden="true" />
+							<item.icon className="mr-s-200 h-4 w-4" aria-hidden="true" />
 							<span>{tNav(item.labelKey)}</span>
 							{item.labelKey === "dashboard" && (
 								<CommandShortcut>
@@ -71,7 +71,7 @@ const CommandMenu = () => {
 						value={tNav("newTrade")}
 						onSelect={() => handleSelect("/journal/new")}
 					>
-						<Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+						<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 						<span>{tNav("newTrade")}</span>
 					</CommandItem>
 				</CommandGroup>

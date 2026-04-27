@@ -262,7 +262,7 @@ const UserProfileSettings = () => {
 							disabled={isPending}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							) : null}
 							{tCommon("save")}
 						</Button>
@@ -339,7 +339,7 @@ const UserProfileSettings = () => {
 								disabled={isPending}
 							>
 								{isPending ? (
-									<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+									<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 								) : null}
 								{t("updatePassword")}
 							</Button>

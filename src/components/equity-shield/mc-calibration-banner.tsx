@@ -210,7 +210,7 @@ const MCCalibrationBanner = ({
 				<button
 					type="button"
 					onClick={onDismiss}
-					className="text-txt-300 hover:text-txt-100 p-1 transition-colors"
+					className="text-txt-300 hover:text-txt-100 p-s-100 transition-colors"
 					aria-label={t("clear")}
 					tabIndex={0}
 				>

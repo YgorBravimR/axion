@@ -82,7 +82,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 		<div className="border-bg-300 bg-bg-200 flex h-full flex-col rounded-lg border">
 			{/* Tab bar */}
 			<div
-				className="border-bg-300 flex shrink-0 items-center gap-1 border-b px-3 py-2"
+				className="border-bg-300 flex shrink-0 items-center gap-s-100 border-b px-s-300 py-s-200"
 				role="tablist"
 			>
 				{PANEL_TABS.map((tab) => (
@@ -91,7 +91,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 						type="button"
 						onClick={() => handleTabChange(tab.id)}
 						className={cn(
-							"text-tiny shrink-0 rounded-md px-3 py-1.5 font-medium transition-colors",
+							"text-tiny shrink-0 rounded-md px-s-300 py-1.5 font-medium transition-colors",
 							activeTab === tab.id
 								? "bg-acc-100 text-bg-100"
 								: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
@@ -107,7 +107,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 			{/* Tab content */}
 			<div className="min-h-0 flex-1 overflow-y-auto" role="tabpanel">
 				{activeTab === "status" ? (
-					<div className="space-y-2.5 p-4">
+					<div className="space-y-2.5 p-m-400">
 						{statuses.map((market) => {
 							const label = t(`status.${market.id}`)
 							const countdown =
@@ -122,7 +122,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 									role="status"
 									aria-label={`${label}: ${market.state}`}
 								>
-									<div className="flex items-center gap-2">
+									<div className="flex items-center gap-s-200">
 										<span
 											className={cn(
 												"h-2 w-2 rounded-full",
@@ -135,7 +135,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 										/>
 										<span className="text-small text-txt-100">{label}</span>
 									</div>
-									<div className="flex items-center gap-2">
+									<div className="flex items-center gap-s-200">
 										{countdown ? (
 											<span className="text-tiny text-txt-300">
 												{countdown}
@@ -161,17 +161,17 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 				{activeTab === "calendar" ? <B3TradingCalendar /> : null}
 
 				{activeTab === "links" ? (
-					<div className="flex flex-col gap-1 p-3">
+					<div className="flex flex-col gap-s-100 p-s-300">
 						{QUICK_LINKS.map((link) => (
 							<a
 								key={link.url}
 								href={link.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-txt-200 hover:bg-bg-300/50 hover:text-txt-100 flex items-center gap-2.5 rounded-md px-2 py-2 transition-colors"
+								className="text-txt-200 hover:bg-bg-300/50 hover:text-txt-100 flex items-center gap-2.5 rounded-md px-s-200 py-s-200 transition-colors"
 								aria-label={t(`links.${link.labelKey}`)}
 							>
-								<span className="shrink-0 text-base" aria-hidden="true">
+								<span className="shrink-0 text-body" aria-hidden="true">
 									{link.emoji}
 								</span>
 								<span className="text-small flex-1">

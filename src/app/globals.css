@@ -865,11 +865,11 @@
 [data-brand="axion"][data-theme="light"] {
   --color-guide: rgb(217 119 6);
 
-  /* Warm Stone-White Backgrounds — less clinical, more depth */
+  /* Warm Stone-White Backgrounds — wider tonal gap for sidebar/card separation */
   --color-bg-100: #F5F4F2;
-  --color-bg-200: #ECEAE7;
-  --color-bg-300: #DDDAD5;
-  --color-bg-stripe: #F0EEEC;
+  --color-bg-200: #E6E3DD;
+  --color-bg-300: #CFCBC4;
+  --color-bg-stripe: #EDEBE7;
 
   /* Warm Dark Text */
   --color-txt-100: #1A1818;
@@ -956,6 +956,16 @@
 
 body {
   font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEME-RESPONSIVE LOGO ASSETS
+   White-on-dark logos invert to black for light theme legibility.
+   Applied via [data-axion-logo] attribute on <Image>.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] [data-axion-logo="invertable"] {
+  filter: invert(1);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

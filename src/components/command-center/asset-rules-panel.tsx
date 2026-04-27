@@ -353,7 +353,7 @@ export const AssetRulesPanel = ({
 															variant="ghost"
 															size="sm"
 															onClick={() => handleAddTrade(setting.assetId)}
-															className="h-8 w-8 p-0 text-acc-100 hover:text-acc-200"
+															className="h-8 w-8 p-0 text-acc-100 hover:text-acc-100/80"
 															aria-label={t("addTrade")}
 														>
 															<PlusCircle className="h-4 w-4" aria-hidden="true" />

@@ -196,7 +196,7 @@ export const ForgotPasswordForm = () => {
 						disabled={isPending}
 					>
 						{isPending && (
-							<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 						)}
 						{t("sendCode")}
 					</Button>
@@ -205,7 +205,7 @@ export const ForgotPasswordForm = () => {
 				<p className="text-small text-txt-300 text-center">
 					<Link
 						href="/login"
-						className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-1 font-medium"
+						className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-s-100 font-medium"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" />
 						{t("backToLogin")}
@@ -301,7 +301,7 @@ export const ForgotPasswordForm = () => {
 							setCode("")
 							setError(null)
 						}}
-						className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-1 font-medium"
+						className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-s-100 font-medium"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" />
 						{t("backToEmail")}
@@ -417,7 +417,7 @@ export const ForgotPasswordForm = () => {
 					disabled={isPending}
 				>
 					{isPending && (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 					)}
 					{t("resetButton")}
 				</Button>

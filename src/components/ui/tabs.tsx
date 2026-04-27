@@ -16,7 +16,7 @@ const Tabs = ({
     data-orientation={orientation}
     orientation={orientation}
     className={cn(
-      "group/tabs flex gap-2 data-[orientation=horizontal]:flex-col",
+      "group/tabs flex gap-s-200 data-[orientation=horizontal]:flex-col",
       className
     )}
     {...props}
@@ -29,7 +29,7 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         default: "bg-bg-300",
-        line: "gap-1 bg-transparent",
+        line: "gap-s-100 bg-transparent",
       },
     },
     defaultVariants: {
@@ -59,7 +59,7 @@ const TabsTrigger = ({
   <TabsPrimitive.Trigger
     data-slot="tabs-trigger"
     className={cn(
-      "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-txt-300 hover:text-txt-100 relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+      "focus-visible:border-acc-100 focus-visible:ring-acc-100/30 focus-visible:outline-acc-100 text-txt-300 hover:text-txt-100 relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-s-200 rounded-md border border-transparent px-s-200 py-s-100 text-small font-medium whitespace-nowrap transition-colors group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
       "data-[state=active]:bg-bg-100 data-[state=active]:text-txt-100",
       "after:bg-acc-100 after:absolute after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",

@@ -65,7 +65,7 @@ const DataSourceSelector = ({
 	const renderTradeCount = useCallback((option: DataSourceOption) => {
 		if (option.disabled) {
 			return (
-				<span className="text-tiny text-txt-300 ml-auto flex items-center gap-1">
+				<span className="text-tiny text-txt-300 ml-auto flex items-center gap-s-100">
 					<Lock className="h-3 w-3" aria-hidden="true" />
 					<span>
 						{option.tradesCount}/{MIN_TRADES}
@@ -102,7 +102,7 @@ const DataSourceSelector = ({
 					{/* Individual Strategies */}
 					{strategyOptions.length > 0 && (
 						<>
-							<div className="text-tiny text-txt-300 px-2 py-1.5 font-medium">
+							<div className="text-tiny text-txt-300 px-s-200 py-1.5 font-medium">
 								{t("individual")}
 							</div>
 							{strategyOptions.map((option) => (
@@ -118,7 +118,7 @@ const DataSourceSelector = ({
 									</div>
 								</SelectItem>
 							))}
-							<div className="border-bg-300 my-1 border-t" />
+							<div className="border-bg-300 my-s-100 border-t" />
 						</>
 					)}
 
@@ -161,7 +161,7 @@ const DataSourceSelector = ({
 
 					{/* Helper hint when some options are disabled */}
 					{hasAnyDisabled && (
-						<div className="text-tiny text-txt-300 border-bg-300 mt-1 border-t px-2 py-2">
+						<div className="text-tiny text-txt-300 border-bg-300 mt-s-100 border-t px-s-200 py-s-200">
 							{t("minTradesHint", { min: MIN_TRADES })}
 						</div>
 					)}

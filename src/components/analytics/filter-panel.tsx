@@ -292,7 +292,7 @@ const FilterPanel = ({
 			{/* Slim filter bar */}
 			<div className="gap-s-200 sm:gap-s-300 flex flex-wrap items-center">
 				{/* Period presets */}
-				<div className="scrollbar-none flex items-center gap-1 overflow-x-auto">
+				<div className="scrollbar-none flex items-center gap-s-100 overflow-x-auto">
 					{DATE_PRESET_CONFIGS.map((preset) => (
 						<button
 							key={preset.key}
@@ -316,7 +316,7 @@ const FilterPanel = ({
 						tabIndex={0}
 						onClick={() => setIsCustomDateOpen((prev) => !prev)}
 						className={cn(
-							"px-s-300 py-s-100 text-tiny flex items-center gap-1 rounded-md font-medium whitespace-nowrap transition-colors",
+							"px-s-300 py-s-100 text-tiny flex items-center gap-s-100 rounded-md font-medium whitespace-nowrap transition-colors",
 							activePresetKey === "custom"
 								? "bg-acc-100 text-bg-100"
 								: "text-txt-300 hover:bg-bg-300 hover:text-txt-100"
@@ -342,7 +342,7 @@ const FilterPanel = ({
 							onClick={clearFilters}
 							className="px-s-200 text-tiny h-7"
 						>
-							<X className="mr-1 h-3 w-3" />
+							<X className="mr-s-100 h-3 w-3" />
 							{t("clear")}
 						</Button>
 					)}
@@ -364,7 +364,7 @@ const FilterPanel = ({
 								<SlidersHorizontal className="h-3.5 w-3.5" />
 								<span className="hidden sm:inline">{t("advancedFilters")}</span>
 								{advancedFilterCount > 0 && (
-									<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-bold">
+									<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-s-100 font-bold">
 										{advancedFilterCount}
 									</span>
 								)}

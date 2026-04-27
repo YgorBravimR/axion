@@ -193,7 +193,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			{/* Heatmap Grid */}
 			<div className="overflow-x-auto flex justify-center">
 				<div
-					className="grid w-fit gap-1"
+					className="grid w-fit gap-s-100"
 					style={{
 						gridTemplateColumns: `auto repeat(${TRADING_HOURS.length}, 48px)`,
 					}}

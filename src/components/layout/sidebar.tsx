@@ -62,6 +62,7 @@ const Sidebar = ({
 					alt="Axion"
 					width={32}
 					height={32}
+					data-axion-logo="invertable"
 					className={cn(
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
@@ -73,6 +74,7 @@ const Sidebar = ({
 					alt="Axion"
 					width={120}
 					height={32}
+					data-axion-logo="invertable"
 					className={cn(
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
@@ -108,7 +110,7 @@ const Sidebar = ({
 					{pathname === "/journal/new" ? (
 						<span
 							className={cn(
-								"bg-acc-100/10 text-acc-100 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium",
+								"bg-acc-100/10 text-acc-100 text-small flex h-10 items-center gap-s-300 truncate rounded-md px-s-300 py-s-200 font-medium",
 								isCompact && "justify-center"
 							)}
 							aria-current="page"
@@ -120,7 +122,7 @@ const Sidebar = ({
 						<Link
 							href="/journal/new"
 							className={cn(
-								"bg-acc-100 hover:bg-acc-100/90 text-small flex h-10 items-center gap-3 truncate rounded-md px-3 py-2 font-medium text-bg-100 transition-colors",
+								"bg-acc-100 hover:bg-acc-100/90 text-small flex h-10 items-center gap-s-300 truncate rounded-md px-s-300 py-s-200 font-medium text-bg-100 transition-colors",
 								isCompact && "justify-center"
 							)}
 							aria-label={t("newTrade")}
@@ -153,7 +155,7 @@ const Sidebar = ({
 								key={item.href}
 								href={item.href}
 								className={cn(
-									"text-small flex h-10 items-center gap-3 rounded-md px-3 py-2 transition-colors",
+									"text-small flex h-10 items-center gap-s-300 rounded-md px-s-300 py-s-200 transition-colors",
 									isActive
 										? "bg-acc-100/10 text-acc-100"
 										: "text-txt-200 hover:bg-bg-300 hover:text-txt-100",
@@ -176,7 +178,7 @@ const Sidebar = ({
 			{isReplayAccount && replayDate && (
 				<div
 					className={cn(
-						"border-bg-300 border-t px-3 py-2",
+						"border-bg-300 border-t px-s-300 py-s-200",
 						isCompact && "flex justify-center px-0"
 					)}
 				>
@@ -190,7 +192,7 @@ const Sidebar = ({
 						</div>
 					) : (
 						<div className="gap-s-200 bg-acc-100/10 px-s-300 py-s-200 flex flex-col rounded-md">
-							<div className="flex items-center gap-2">
+							<div className="flex items-center gap-s-200">
 								<RotateCcw
 									className="text-acc-100 h-3.5 w-3.5 shrink-0"
 									aria-hidden="true"
@@ -209,7 +211,7 @@ const Sidebar = ({
 			<div
 				className={cn(
 					"border-bg-300 border-t",
-					isCompact ? "flex flex-col items-center py-4" : "p-4"
+					isCompact ? "flex flex-col items-center py-m-400" : "p-m-400"
 				)}
 			>
 				<AccountSwitcher isCollapsed={isCompact} />
@@ -217,7 +219,7 @@ const Sidebar = ({
 
 			{/* by Bravo badge */}
 			{!isCompact && (
-				<div className="flex items-center justify-center gap-1.5 pb-3">
+				<div className="flex items-center justify-center gap-1.5 pb-s-300">
 					<span className="text-tiny text-txt-placeholder tracking-wide">by</span>
 					<span className="text-tiny text-acc-200 tracking-[0.15em] font-medium">
 						BRAVO

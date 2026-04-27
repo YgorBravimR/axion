@@ -140,12 +140,12 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 		<div id="settings-users" className="space-y-m-400">
 			<div className="flex items-center justify-between">
 				<div>
-					<h3 className="text-lg font-semibold">{t("title")}</h3>
+					<h3 className="text-h3 font-semibold">{t("title")}</h3>
 				</div>
 			</div>
 
 			<div className="relative w-full sm:max-w-sm">
-				<Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+				<Search className="text-txt-300 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
 				<Input
 					id="user-search"
 					placeholder={t("searchUsers")}
@@ -157,9 +157,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 			</div>
 
 			{filteredUsers.length === 0 ? (
-				<div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-12">
+				<div className="text-txt-300 flex flex-col items-center justify-center gap-s-200 py-12">
 					<Users className="h-8 w-8 opacity-50" />
-					<p className="text-sm">{t("noUsers")}</p>
+					<p className="text-small">{t("noUsers")}</p>
 				</div>
 			) : (
 				<div className="overflow-x-auto rounded-md border">
@@ -202,13 +202,13 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 												handleRowKeyDown(e, user.id)
 											}
 										>
-											<TableCell className="w-10 px-2">
+											<TableCell className="w-10 px-s-200">
 												<ChevronRight
 													className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
 												/>
 											</TableCell>
 											<TableCell className="font-medium">
-												<span className="flex items-center gap-2">
+												<span className="flex items-center gap-s-200">
 													{user.name}
 													{isCurrentUser && (
 														<Badge
@@ -221,13 +221,13 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 													)}
 												</span>
 											</TableCell>
-											<TableCell className="text-muted-foreground hidden sm:table-cell">
+											<TableCell className="text-txt-300 hidden sm:table-cell">
 												{user.email}
 											</TableCell>
 											<TableCell className="text-center">
 												{user.tradingAccounts.length}
 											</TableCell>
-											<TableCell className="text-muted-foreground">
+											<TableCell className="text-txt-300">
 												{formattedJoinDates.get(user.id)}
 											</TableCell>
 											<TableCell
@@ -239,7 +239,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 													e.stopPropagation()
 												}
 											>
-												<div className="flex items-center gap-2">
+												<div className="flex items-center gap-s-200">
 													<Select
 														value={user.role}
 														onValueChange={(
@@ -300,18 +300,18 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 												<TableCell colSpan={5}>
 													{user.tradingAccounts
 														.length === 0 ? (
-														<p className="text-muted-foreground py-2 text-sm">
+														<p className="text-txt-300 py-s-200 text-small">
 															{t("noAccounts")}
 														</p>
 													) : (
-														<div className="flex flex-wrap gap-2 py-2">
+														<div className="flex flex-wrap gap-s-200 py-s-200">
 															{user.tradingAccounts.map(
 																(account) => (
 																	<div
 																		key={
 																			account.id
 																		}
-																		className="bg-muted flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm"
+																		className="bg-bg-300 flex items-center gap-s-200 rounded-md px-s-300 py-s-200 text-small"
 																	>
 																		<span className="font-medium">
 																			{
@@ -412,7 +412,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 							disabled={isPending}
 							onClick={handleDeleteAccount}
 						>
-							{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 							{tCommon("confirm")}
 						</AlertDialogAction>
 					</AlertDialogFooter>

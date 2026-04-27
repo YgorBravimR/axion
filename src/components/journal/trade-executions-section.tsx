@@ -144,7 +144,7 @@ export const TradeExecutionsSection = ({
 					<AlertDialog>
 						<AlertDialogTrigger asChild>
 							<Button id="trade-executions-convert-to-scaled" variant="outline" disabled={isPending}>
-								{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+								{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 								{t("convertToScaled")}
 							</Button>
 						</AlertDialogTrigger>

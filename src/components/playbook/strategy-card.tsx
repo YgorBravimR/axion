@@ -122,7 +122,7 @@ const StrategyCardBase = ({
 								ref={menuRef}
 								role="menu"
 								aria-label={t("strategy.optionsMenu")}
-								className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-1 w-40 max-w-[calc(100vw-2rem)] rounded-lg border py-1 shadow-lg"
+								className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-s-100 w-40 max-w-[calc(100vw-2rem)] rounded-lg border py-s-100 shadow-lg"
 								onKeyDown={handleMenuKeyDown}
 							>
 								<Link

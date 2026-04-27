@@ -7,7 +7,6 @@ import {
 	Clock,
 	Target,
 	ShieldAlert,
-	Sparkles,
 	Receipt,
 	ChevronDown,
 	ChevronUp,
@@ -181,11 +180,6 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 				)}
 			</div>
 
-			{/* Phase 2 placeholder */}
-			<div className="mt-s-300 sm:mt-m-400 flex items-center gap-s-200 rounded border border-bg-300 bg-bg-100 px-s-300 py-s-200">
-				<Sparkles className="h-3.5 w-3.5 text-acc-100" />
-				<span className="text-micro text-txt-300">{t("aiComingSoon")}</span>
-			</div>
 		</div>
 	)
 }

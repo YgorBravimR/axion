@@ -119,7 +119,7 @@ export const B3TradingCalendar = () => {
 	const handleNextMonth = useCallback(() => setMonthOffset((prev) => prev + 1), [])
 
 	return (
-		<div className="flex flex-col gap-2 px-3 py-2">
+		<div className="flex flex-col gap-s-200 px-s-300 py-s-200">
 			{/* Month navigation */}
 			<div className="flex items-center justify-between">
 				<Button
@@ -150,7 +150,7 @@ export const B3TradingCalendar = () => {
 			</div>
 
 			{/* Day-of-week headers */}
-			<div className="grid grid-cols-7 gap-0.5 text-center text-sm">
+			<div className="grid grid-cols-7 gap-0.5 text-center text-small">
 				{weekdays.map((wd) => (
 					<span key={wd} className="text-tiny text-txt-300 pt-0.5 font-medium">
 						{wd}
@@ -168,7 +168,7 @@ export const B3TradingCalendar = () => {
 				{Array.from({ length: firstDayOffset }).map((_, i) => (
 					<div
 						key={`empty-${i}`}
-						className="flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-sm text-transparent transition-colors"
+						className="flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-small text-transparent transition-colors"
 					>
 						-
 					</div>
@@ -197,7 +197,7 @@ export const B3TradingCalendar = () => {
 						<div
 							key={day.day}
 							className={cn(
-								"flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-sm transition-colors",
+								"flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-small transition-colors",
 								// Default: weekend
 								day.isWeekend && "text-txt-300/30",
 								// Default: regular trading day
@@ -233,7 +233,7 @@ export const B3TradingCalendar = () => {
 				{Array.from({ length: trailingEmpty }).map((_, i) => (
 					<div
 						key={`trail-${i}`}
-						className="flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-sm text-transparent transition-colors"
+						className="flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-small text-transparent transition-colors"
 					>
 						-
 					</div>
@@ -241,7 +241,7 @@ export const B3TradingCalendar = () => {
 			</div>
 
 			{/* Legend */}
-			<div className="flex flex-wrap justify-between gap-x-3 gap-y-1 pt-1 align-middle">
+			<div className="flex flex-wrap justify-between gap-x-3 gap-y-1 pt-s-100 align-middle">
 				<span className="text-tiny flex items-center gap-1.5">
 					<span
 						className="bg-txt-100/25 border-txt-100/80 h-3 w-3 rounded-sm border"

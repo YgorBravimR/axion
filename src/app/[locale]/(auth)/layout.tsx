@@ -11,7 +11,7 @@ const AuthLayout = async ({ children }: AuthLayoutProps) => {
 	return (
 		<div className="p-m-400 flex min-h-dvh flex-col items-center justify-center pb-16">
 			<main id="main-content" className="w-full max-w-sm lg:max-w-md">{children}</main>
-			<footer className="fixed right-0 bottom-0 left-0 flex items-center justify-center gap-1.5 py-3">
+			<footer className="fixed right-0 bottom-0 left-0 flex items-center justify-center gap-1.5 py-s-300">
 				<span className="text-micro text-txt-placeholder tracking-wide">
 					© {new Date().getFullYear()} Axion
 				</span>

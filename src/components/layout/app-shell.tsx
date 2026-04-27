@@ -94,7 +94,7 @@ const AppShell = ({
 							<SheetTrigger asChild>
 								<button
 									type="button"
-									className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 focus-visible:ring-acc-100 -ml-2 rounded-md p-2 focus-visible:ring-2 focus-visible:outline-none"
+									className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 focus-visible:ring-acc-100 -ml-s-200 rounded-md p-s-200 focus-visible:ring-2 focus-visible:outline-none"
 									aria-label={tCommon("openMenu")}
 								>
 									<Menu className="h-5 w-5" />
@@ -125,7 +125,7 @@ const AppShell = ({
 							alt="Axion"
 							width={100}
 							height={28}
-							className="ml-2 h-7 w-auto object-contain"
+							className="ml-s-200 h-7 w-auto object-contain"
 							priority
 						/>
 

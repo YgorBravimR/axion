@@ -194,7 +194,7 @@ const VerifyEmailForm = () => {
 					disabled={isPending || code.length !== 6}
 				>
 					{isPending && (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 					)}
 					{t("verify")}
 				</Button>
@@ -222,7 +222,7 @@ const VerifyEmailForm = () => {
 
 				<Link
 					href="/login"
-					className="text-small text-txt-300 hover:text-txt-200 flex items-center justify-center gap-2"
+					className="text-small text-txt-300 hover:text-txt-200 flex items-center justify-center gap-s-200"
 				>
 					<ArrowLeft className="h-4 w-4" />
 					{t("backToLogin")}

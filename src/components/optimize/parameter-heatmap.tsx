@@ -387,7 +387,7 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 			{heatmapData && xParam && yParam && (
 				<div className="flex justify-center overflow-x-auto">
 					<div
-						className="grid w-fit gap-1"
+						className="grid w-fit gap-s-100"
 						style={{
 							gridTemplateColumns: `auto repeat(${heatmapData.xValues.length}, minmax(36px, 56px))`,
 						}}

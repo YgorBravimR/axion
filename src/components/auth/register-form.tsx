@@ -264,7 +264,7 @@ const RegisterForm = () => {
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
 					{isPending && (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 					)}
 					{t("submit")}
 				</Button>

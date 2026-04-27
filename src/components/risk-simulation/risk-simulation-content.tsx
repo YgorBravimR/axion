@@ -144,7 +144,7 @@ const RiskSimulationContent = ({
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div>
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-s-300">
 					<FlaskConical className="text-acc-100 h-7 w-7" aria-hidden="true" />
 					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">{t("title")}</h1>
 				</div>
@@ -180,7 +180,7 @@ const RiskSimulationContent = ({
 					className="bg-acc-100 hover:bg-acc-100/90 text-bg-100"
 					aria-label={t("runSimulation")}
 				>
-					<FlaskConical className="mr-2 h-4 w-4" />
+					<FlaskConical className="mr-s-200 h-4 w-4" />
 					{t("runSimulation")}
 				</Button>
 				{!canRun && !error && (

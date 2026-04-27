@@ -185,7 +185,7 @@ export const ConditionList = () => {
 					))}
 				</div>
 				<Button id="condition-add-new" onClick={handleAddNew}>
-					<Plus className="mr-2 h-4 w-4" />
+					<Plus className="mr-s-200 h-4 w-4" />
 					{t("addCondition")}
 				</Button>
 			</div>

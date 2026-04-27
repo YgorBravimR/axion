@@ -15,7 +15,7 @@ const PreviewBanner = ({ preview, isLoading, allTradesLackSl }: PreviewBannerPro
 
 	if (isLoading) {
 		return (
-			<div className="bg-bg-100 border-bg-300 rounded-md border p-3">
+			<div className="bg-bg-100 border-bg-300 rounded-md border p-s-300">
 				<p className="text-small text-txt-300 animate-pulse motion-reduce:animate-none">{t("loading")}</p>
 			</div>
 		)
@@ -25,7 +25,7 @@ const PreviewBanner = ({ preview, isLoading, allTradesLackSl }: PreviewBannerPro
 
 	if (preview.totalTrades === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-100 rounded-md border p-3">
+			<div className="border-bg-300 bg-bg-100 rounded-md border p-s-300">
 				<p className="text-small text-txt-300">{t("noTrades")}</p>
 			</div>
 		)
@@ -34,9 +34,9 @@ const PreviewBanner = ({ preview, isLoading, allTradesLackSl }: PreviewBannerPro
 	const slCoverage = Math.round((preview.tradesWithSl / preview.totalTrades) * 100)
 
 	return (
-		<div className="border-bg-300 bg-bg-100 rounded-md border p-3">
-			<div className="flex flex-wrap items-center gap-4">
-				<div className="flex items-center gap-2">
+		<div className="border-bg-300 bg-bg-100 rounded-md border p-s-300">
+			<div className="flex flex-wrap items-center gap-m-400">
+				<div className="flex items-center gap-s-200">
 					{allTradesLackSl ? (
 						<AlertTriangle className="text-fb-error h-4 w-4 shrink-0" aria-hidden="true" />
 					) : (
@@ -63,12 +63,12 @@ const PreviewBanner = ({ preview, isLoading, allTradesLackSl }: PreviewBannerPro
 				</span>
 			</div>
 			{allTradesLackSl && (
-				<p className="text-small text-fb-error mt-2">
+				<p className="text-small text-fb-error mt-s-200">
 					{t("allTradesLackSl")}
 				</p>
 			)}
 			{preview.tradesWithoutSl > 0 && !allTradesLackSl && (
-				<p className="text-tiny text-warning mt-2">
+				<p className="text-tiny text-warning mt-s-200">
 					{t("someTradesLackSl", { count: preview.tradesWithoutSl })}
 				</p>
 			)}

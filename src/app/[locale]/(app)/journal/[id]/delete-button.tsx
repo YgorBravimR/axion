@@ -76,7 +76,7 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 			onClick={() => setShowConfirm(true)}
 			className="text-fb-error hover:bg-fb-error/10 hover:text-fb-error"
 		>
-			<Trash2 className="mr-2 h-4 w-4" />
+			<Trash2 className="mr-s-200 h-4 w-4" />
 			{tCommon("delete")}
 		</Button>
 	)

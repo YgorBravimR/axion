@@ -60,13 +60,13 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 	return (
 		<div className="border-bg-300 bg-bg-200 flex h-full flex-col overflow-hidden rounded-lg border">
 			{/* Fixed header */}
-			<div className="border-bg-300 flex shrink-0 justify-between border-b px-4 py-3">
+			<div className="border-bg-300 flex shrink-0 justify-between border-b px-m-400 py-s-300">
 				<h3 className="text-small text-txt-100 font-semibold">{t("title")}</h3>
-				<span className="text-txt-300 text-sm">{t("timezone")}</span>
+				<span className="text-txt-300 text-small">{t("timezone")}</span>
 			</div>
 
 			{events.length === 0 ? (
-				<div className="text-small text-txt-300 flex flex-1 items-center justify-center px-4 py-8 text-center">
+				<div className="text-small text-txt-300 flex flex-1 items-center justify-center px-m-400 py-l-700 text-center">
 					{t("noEvents")}
 				</div>
 			) : (
@@ -74,23 +74,23 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 					<table className="w-full" role="table" aria-label={t("title")}>
 						<thead className="bg-bg-200 sticky top-0 z-10">
 							<tr className="text-tiny text-txt-300 border-bg-300/50 border-b">
-								<th className="px-4 py-2 text-left font-medium">{t("time")}</th>
-								<th className="hidden px-3 py-2 text-left font-medium sm:table-cell">
+								<th className="px-m-400 py-s-200 text-left font-medium">{t("time")}</th>
+								<th className="hidden px-s-300 py-s-200 text-left font-medium sm:table-cell">
 									{t("country")}
 								</th>
-								<th className="px-3 py-2 text-left font-medium">
+								<th className="px-s-300 py-s-200 text-left font-medium">
 									{t("event")}
 								</th>
-								<th className="hidden px-3 py-2 text-left font-medium sm:table-cell">
+								<th className="hidden px-s-300 py-s-200 text-left font-medium sm:table-cell">
 									{t("impact")}
 								</th>
-								<th className="px-3 py-2 text-right font-medium">
+								<th className="px-s-300 py-s-200 text-right font-medium">
 									{t("actual")}
 								</th>
-								<th className="hidden px-3 py-2 text-right font-medium sm:table-cell">
+								<th className="hidden px-s-300 py-s-200 text-right font-medium sm:table-cell">
 									{t("forecast")}
 								</th>
-								<th className="hidden px-4 py-2 text-right font-medium sm:table-cell">
+								<th className="hidden px-m-400 py-s-200 text-right font-medium sm:table-cell">
 									{t("previous")}
 								</th>
 							</tr>
@@ -101,32 +101,32 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 									key={event.id}
 									className="border-bg-300/50 hover:bg-bg-300/30 border-b transition-colors last:border-b-0"
 								>
-									<td className="text-small text-txt-100 px-4 py-2.5 whitespace-nowrap">
+									<td className="text-small text-txt-100 px-m-400 py-2.5 whitespace-nowrap">
 										{formatEventTime(event.time)}
 									</td>
-									<td className="hidden px-3 py-2.5 sm:table-cell">
+									<td className="hidden px-s-300 py-2.5 sm:table-cell">
 										<span className="text-body" aria-label={event.country}>
 											{COUNTRY_FLAGS[event.country] || event.country}
 										</span>
 									</td>
-									<td className="text-small text-txt-100 truncate max-w-[150px] sm:max-w-none px-3 py-2.5">
+									<td className="text-small text-txt-100 truncate max-w-[150px] sm:max-w-none px-s-300 py-2.5">
 										{event.event}
 									</td>
-									<td className="hidden px-3 py-2.5 sm:table-cell">
+									<td className="hidden px-s-300 py-2.5 sm:table-cell">
 										<ImpactDot impact={event.impact} />
 									</td>
 									<td
 										className={cn(
-											"text-small px-3 py-2.5 text-right whitespace-nowrap",
+											"text-small px-s-300 py-2.5 text-right whitespace-nowrap",
 											event.actual ? "text-txt-100" : "text-txt-300"
 										)}
 									>
 										{event.actual || "—"}
 									</td>
-									<td className="text-small text-txt-200 hidden px-3 py-2.5 text-right whitespace-nowrap sm:table-cell">
+									<td className="text-small text-txt-200 hidden px-s-300 py-2.5 text-right whitespace-nowrap sm:table-cell">
 										{event.forecast || "—"}
 									</td>
-									<td className="text-small text-txt-300 hidden px-4 py-2.5 text-right whitespace-nowrap sm:table-cell">
+									<td className="text-small text-txt-300 hidden px-m-400 py-2.5 text-right whitespace-nowrap sm:table-cell">
 										{event.previous || "—"}
 									</td>
 								</tr>

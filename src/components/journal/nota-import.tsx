@@ -323,7 +323,7 @@ export const NotaImport = () => {
 									variant="default"
 									onClick={() => fileInputRef.current?.click()}
 								>
-									<FileText className="mr-2 h-4 w-4" />
+									<FileText className="mr-s-200 h-4 w-4" />
 									{t("selectFile")}
 								</Button>
 							</div>
@@ -398,13 +398,13 @@ export const NotaImport = () => {
 					{/* Match summary badges */}
 					<div className="gap-s-200 flex flex-wrap">
 						{(matchCounts.matched ?? 0) > 0 && (
-							<span className="bg-trade-buy/10 text-trade-buy text-tiny gap-s-100 flex items-center rounded-full px-3 py-1 font-medium">
+							<span className="bg-trade-buy/10 text-trade-buy text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
 								<CheckCircle2 className="h-3 w-3" />
 								{matchCounts.matched} {t("matched")}
 							</span>
 						)}
 						{(matchCounts.already_enriched ?? 0) > 0 && (
-							<span className="bg-bg-300/30 text-txt-300 text-tiny gap-s-100 flex items-center rounded-full px-3 py-1 font-medium">
+							<span className="bg-bg-300/30 text-txt-300 text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
 								<Info className="h-3 w-3" />
 								{matchCounts.already_enriched} {t("alreadyEnriched")}
 							</span>
@@ -412,7 +412,7 @@ export const NotaImport = () => {
 						{(matchCounts.quantity_mismatch ?? 0) +
 							(matchCounts.price_mismatch ?? 0) >
 							0 && (
-							<span className="bg-warning/10 text-warning text-tiny gap-s-100 flex items-center rounded-full px-3 py-1 font-medium">
+							<span className="bg-warning/10 text-warning text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
 								<AlertTriangle className="h-3 w-3" />
 								{(matchCounts.quantity_mismatch ?? 0) +
 									(matchCounts.price_mismatch ?? 0)}{" "}
@@ -594,12 +594,12 @@ export const NotaImport = () => {
 							>
 								{isEnriching ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+										<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										{t("enriching")}
 									</>
 								) : (
 									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CheckCircle2 className="mr-s-200 h-4 w-4" />
 										{t("enrichButton", { count: selectedCount })}
 									</>
 								)}

@@ -194,7 +194,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 						className="mt-s-300"
 						onClick={() => setShowCreateForm(true)}
 					>
-						<Plus className="mr-2 h-4 w-4" />
+						<Plus className="mr-s-200 h-4 w-4" />
 						{t("createFirst")}
 					</Button>
 				</div>
@@ -266,7 +266,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 						size="sm"
 						onClick={() => setShowCreateForm(true)}
 					>
-						<Plus className="mr-2 h-4 w-4" />
+						<Plus className="mr-s-200 h-4 w-4" />
 						{t("createNew")}
 					</Button>
 				</>

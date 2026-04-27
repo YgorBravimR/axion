@@ -155,7 +155,7 @@ export const ExecutionList = ({
 					onClick={onAddExecution}
 					aria-label={t("add")}
 				>
-					<Plus className="mr-1 h-4 w-4" aria-hidden="true" />
+					<Plus className="mr-s-100 h-4 w-4" aria-hidden="true" />
 					{t("add")}
 				</Button>
 			</div>
@@ -171,7 +171,7 @@ export const ExecutionList = ({
 						onClick={onAddExecution}
 						aria-label={t("addFirst")}
 					>
-						<Plus className="mr-1 h-4 w-4" aria-hidden="true" />
+						<Plus className="mr-s-100 h-4 w-4" aria-hidden="true" />
 						{t("addFirst")}
 					</Button>
 				</div>

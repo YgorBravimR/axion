@@ -162,12 +162,12 @@ export const DetailedTradeImporter = ({
 	// Step 1: Select Broker & Upload
 	if (step === "select") {
 		return (
-			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
+			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-m-600 bg-bg-100">
 				<div>
-					<h3 className="text-lg font-semibold text-txt-100">
+					<h3 className="text-h3 font-semibold text-txt-100">
 						{t("title")}
 					</h3>
-					<p className="text-sm text-txt-300 mt-1">
+					<p className="text-small text-txt-300 mt-s-100">
 						{t("description")}
 					</p>
 				</div>
@@ -203,7 +203,7 @@ export const DetailedTradeImporter = ({
 							className="cursor-pointer"
 						/>
 						{csvFile && (
-							<p className="text-xs text-txt-200">
+							<p className="text-tiny text-txt-200">
 								{t("selected", { name: csvFile.name, size: (csvFile.size / 1024).toFixed(2) })}
 							</p>
 						)}
@@ -214,10 +214,10 @@ export const DetailedTradeImporter = ({
 						<div
 							role="alert"
 							aria-live="assertive"
-							className="flex gap-2 p-3 rounded bg-fb-error/10 border border-fb-error/30"
+							className="flex gap-s-200 p-s-300 rounded bg-fb-error/10 border border-fb-error/30"
 						>
 							<AlertCircle className="w-5 h-5 text-fb-error flex-shrink-0" />
-							<p className="text-sm text-fb-error">{error}</p>
+							<p className="text-small text-fb-error">{error}</p>
 						</div>
 					)}
 				</div>
@@ -228,7 +228,7 @@ export const DetailedTradeImporter = ({
 					disabled={!brokerName || !csvFile || loading}
 					className="w-full"
 				>
-					{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin motion-reduce:animate-none" />}
+					{loading && <Loader2 className="w-4 h-4 mr-s-200 animate-spin motion-reduce:animate-none" />}
 					{loading ? t("parsingCsv") : tCommon("next")}
 				</Button>
 			</div>
@@ -238,38 +238,38 @@ export const DetailedTradeImporter = ({
 	// Step 2: Preview Trades
 	if (step === "preview" && preview) {
 		return (
-			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100">
+			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-m-600 bg-bg-100">
 				<div>
-					<h3 className="text-lg font-semibold text-txt-100">{t("reviewTitle")}</h3>
-					<p className="text-sm text-txt-300 mt-1">
+					<h3 className="text-h3 font-semibold text-txt-100">{t("reviewTitle")}</h3>
+					<p className="text-small text-txt-300 mt-s-100">
 						{preview.brokerName} • {t("executionsSummary", { executions: preview.detectdExecutionCount, trades: preview.detectedTradeCount })}
 					</p>
 				</div>
 
 				{/* Summary Stats */}
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-					<div className="p-3 rounded bg-bg-200 border border-bg-300">
-						<p className="text-xs text-txt-300 mb-1">{t("successfulTrades")}</p>
-						<p className="text-xl font-semibold text-txt-100">
+				<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
+					<div className="p-s-300 rounded bg-bg-200 border border-bg-300">
+						<p className="text-tiny text-txt-300 mb-s-100">{t("successfulTrades")}</p>
+						<p className="text-h2 font-semibold text-txt-100">
 							{preview.successfulTrades}
 						</p>
 					</div>
-					<div className="p-3 rounded bg-bg-200 border border-bg-300">
-						<p className="text-xs text-txt-300 mb-1">{t("totalGrossPnl")}</p>
+					<div className="p-s-300 rounded bg-bg-200 border border-bg-300">
+						<p className="text-tiny text-txt-300 mb-s-100">{t("totalGrossPnl")}</p>
 						<p
 							className={cn(
-								"text-xl font-semibold",
+								"text-h2 font-semibold",
 								preview.totalGrossPnl >= 0 ? "text-fb-success" : "text-fb-error"
 							)}
 						>
 							{preview.totalGrossPnl.toFixed(2)}
 						</p>
 					</div>
-					<div className="p-3 rounded bg-bg-200 border border-bg-300">
-						<p className="text-xs text-txt-300 mb-1">{t("netPnl")}</p>
+					<div className="p-s-300 rounded bg-bg-200 border border-bg-300">
+						<p className="text-tiny text-txt-300 mb-s-100">{t("netPnl")}</p>
 						<p
 							className={cn(
-								"text-xl font-semibold",
+								"text-h2 font-semibold",
 								preview.totalNetPnl >= 0 ? "text-fb-success" : "text-fb-error"
 							)}
 						>
@@ -280,8 +280,8 @@ export const DetailedTradeImporter = ({
 
 				{/* Warnings */}
 				{preview.warningTrades > 0 && (
-					<div className="p-3 rounded bg-warning/10 border border-warning/30">
-						<p className="text-sm font-medium text-warning">
+					<div className="p-s-300 rounded bg-warning/10 border border-warning/30">
+						<p className="text-small font-medium text-warning">
 							{t("warningText", { count: preview.warningTrades })}
 						</p>
 					</div>
@@ -289,19 +289,19 @@ export const DetailedTradeImporter = ({
 
 				{/* Trade List */}
 				<div className="space-y-3">
-					<h4 className="text-sm font-medium text-txt-100">{t("trades")}</h4>
+					<h4 className="text-small font-medium text-txt-100">{t("trades")}</h4>
 					<ScrollArea className="max-h-96"><div className="space-y-2">
 						{preview.trades.map((trade, idx) => (
 							<div
 								key={`${trade.asset}-${trade.direction}-${trade.entryPrice}-${idx}`}
-								className="p-3 rounded border border-bg-300 bg-bg-200"
+								className="p-s-300 rounded border border-bg-300 bg-bg-200"
 							>
-								<div className="flex justify-between items-start mb-2">
+								<div className="flex justify-between items-start mb-s-200">
 									<div>
 										<p className="font-semibold text-txt-100">
 											{trade.asset} • {trade.direction.toUpperCase()}
 										</p>
-										<p className="text-xs text-txt-300">
+										<p className="text-tiny text-txt-300">
 											{t("entry", { price: trade.entryPrice.toFixed(2) })} • {t("exit", { price: trade.exitPrice ? trade.exitPrice.toFixed(2) : "—" })}
 										</p>
 									</div>
@@ -317,7 +317,7 @@ export const DetailedTradeImporter = ({
 									</p>
 								</div>
 								{trade.warnings.length > 0 && (
-									<p className="text-xs text-warning mt-1">
+									<p className="text-tiny text-warning mt-s-100">
 										{trade.warnings.join("; ")}
 									</p>
 								)}
@@ -331,14 +331,14 @@ export const DetailedTradeImporter = ({
 					<div
 						role="alert"
 						aria-live="assertive"
-						className="flex gap-2 p-3 rounded bg-fb-error/10 border border-fb-error/30"
+						className="flex gap-s-200 p-s-300 rounded bg-fb-error/10 border border-fb-error/30"
 					>
 						<AlertCircle className="w-5 h-5 text-fb-error flex-shrink-0" />
-						<p className="text-sm text-fb-error">{error}</p>
+						<p className="text-small text-fb-error">{error}</p>
 					</div>
 				)}
 
-				<div className="flex gap-2">
+				<div className="flex gap-s-200">
 					<Button
 						id="preview-back-button"
 						variant="outline"
@@ -353,7 +353,7 @@ export const DetailedTradeImporter = ({
 						disabled={loading}
 						className="flex-1"
 					>
-						{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin motion-reduce:animate-none" />}
+						{loading && <Loader2 className="w-4 h-4 mr-s-200 animate-spin motion-reduce:animate-none" />}
 						{loading ? t("importing") : t("confirmImport")}
 					</Button>
 				</div>
@@ -364,11 +364,11 @@ export const DetailedTradeImporter = ({
 	// Step 3: Importing
 	if (step === "importing") {
 		return (
-			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-6 bg-bg-100 text-center">
+			<div aria-live="polite" className="space-y-6 border border-bg-300 rounded-lg p-m-600 bg-bg-100 text-center">
 				<Loader2 className="w-12 h-12 animate-spin motion-reduce:animate-none text-acc-100 mx-auto" />
 				<div>
-					<h3 className="text-lg font-semibold text-txt-100">{t("importingTitle")}</h3>
-					<p className="text-sm text-txt-300 mt-1">
+					<h3 className="text-h3 font-semibold text-txt-100">{t("importingTitle")}</h3>
+					<p className="text-small text-txt-300 mt-s-100">
 						{t("encryptingAndStoring", { count: preview?.detectedTradeCount ?? 0 })}
 					</p>
 				</div>
@@ -379,15 +379,15 @@ export const DetailedTradeImporter = ({
 	// Step 4: Success
 	if (step === "success") {
 		return (
-			<div className="space-y-6 border border-fb-success/30 rounded-lg p-6 bg-fb-success/10 text-center">
+			<div className="space-y-6 border border-fb-success/30 rounded-lg p-m-600 bg-fb-success/10 text-center">
 				<CheckCircle2 className="w-12 h-12 text-fb-success mx-auto" />
 				<div>
-					<h3 className="text-lg font-semibold text-txt-100">{t("successTitle")}</h3>
-					<p className="text-sm text-txt-200 mt-1">
+					<h3 className="text-h3 font-semibold text-txt-100">{t("successTitle")}</h3>
+					<p className="text-small text-txt-200 mt-s-100">
 						{t("tradesImported", { count: preview?.detectedTradeCount ?? 0, broker: brokerName })}
 					</p>
 				</div>
-				<p className="text-xs text-fb-success">{t("redirecting")}</p>
+				<p className="text-tiny text-fb-success">{t("redirecting")}</p>
 			</div>
 		)
 	}
@@ -398,13 +398,13 @@ export const DetailedTradeImporter = ({
 			<div
 				role="alert"
 				aria-live="assertive"
-				className="space-y-6 border border-fb-error/30 rounded-lg p-6 bg-fb-error/10"
+				className="space-y-6 border border-fb-error/30 rounded-lg p-m-600 bg-fb-error/10"
 			>
-				<div className="flex gap-3">
+				<div className="flex gap-s-300">
 					<AlertCircle className="w-12 h-12 text-fb-error flex-shrink-0" />
 					<div>
-						<h3 className="text-lg font-semibold text-txt-100">{t("failedTitle")}</h3>
-						<p className="text-sm text-fb-error mt-1">{error}</p>
+						<h3 className="text-h3 font-semibold text-txt-100">{t("failedTitle")}</h3>
+						<p className="text-small text-fb-error mt-s-100">{error}</p>
 					</div>
 				</div>
 				<Button

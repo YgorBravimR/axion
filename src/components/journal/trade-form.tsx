@@ -606,7 +606,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							>
 								{tJournal("basic")}
 								{hasBasicErrors && (
-									<span className="bg-fb-error ml-1 h-2 w-2 rounded-full" />
+									<span className="bg-fb-error ml-s-100 h-2 w-2 rounded-full" />
 								)}
 							</TabsTrigger>
 							<TabsTrigger
@@ -618,7 +618,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							>
 								{tJournal("risk")}
 								{hasRiskErrors && (
-									<span className="bg-fb-error ml-1 h-2 w-2 rounded-full" />
+									<span className="bg-fb-error ml-s-100 h-2 w-2 rounded-full" />
 								)}
 							</TabsTrigger>
 							<TabsTrigger
@@ -630,7 +630,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							>
 								{tJournal("journal")}
 								{hasJournalErrors && (
-									<span className="bg-fb-error ml-1 h-2 w-2 rounded-full" />
+									<span className="bg-fb-error ml-s-100 h-2 w-2 rounded-full" />
 								)}
 							</TabsTrigger>
 							<TabsTrigger
@@ -642,7 +642,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							>
 								{tJournal("tagsSection")}
 								{hasTagErrors && (
-									<span className="bg-fb-error ml-1 h-2 w-2 rounded-full" />
+									<span className="bg-fb-error ml-s-100 h-2 w-2 rounded-full" />
 								)}
 							</TabsTrigger>
 						</TabsList>
@@ -755,7 +755,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 													{assets.map((asset) => (
 														<SelectItem key={asset.id} value={asset.symbol}>
 															<span className="font-mono">{asset.symbol}</span>
-															<span className="text-txt-300 ml-2">
+															<span className="text-txt-300 ml-s-200">
 																{asset.name}
 															</span>
 														</SelectItem>
@@ -1289,7 +1289,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										{selectedAsset?.currency ?? "$"}
 										{calculatedPnLResult.netPnl.toFixed(2)}
 										{calculatedR !== null && (
-											<span className="text-body ml-2">
+											<span className="text-body ml-s-200">
 												({calculatedR >= 0 ? "+" : ""}
 												{calculatedR.toFixed(2)}R)
 											</span>
@@ -1615,7 +1615,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									size="sm"
 									onClick={() => setIsTagFormOpen(true)}
 								>
-									<Plus className="mr-1 h-4 w-4" />
+									<Plus className="mr-s-100 h-4 w-4" />
 									{t("inlineCreateTag")}
 								</Button>
 							</div>
@@ -1656,12 +1656,12 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						>
 							{isSubmitting ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+									<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									{tCommon("saving")}
 								</>
 							) : (
 								<>
-									<Save className="mr-2 h-4 w-4" />
+									<Save className="mr-s-200 h-4 w-4" />
 									{isEditing ? t("updateTrade") : t("saveTrade")}
 								</>
 							)}

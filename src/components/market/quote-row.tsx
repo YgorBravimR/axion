@@ -39,7 +39,7 @@ const ChangeBadge = ({
 
 	if (isClosed) {
 		return (
-			<span className="text-tiny text-txt-300/50 px-2 py-0.5 text-right">
+			<span className="text-tiny text-txt-300/50 px-s-200 py-0.5 text-right">
 				{t("closed")}
 			</span>
 		)
@@ -58,7 +58,7 @@ const ChangeBadge = ({
 	return (
 		<span
 			className={cn(
-				"text-tiny inline-flex items-center justify-end gap-1 rounded-md px-2 py-0.5 font-mono whitespace-nowrap",
+				"text-tiny inline-flex items-center justify-end gap-s-100 rounded-md px-s-200 py-0.5 font-mono whitespace-nowrap",
 				isZero && "bg-bg-300/50 text-txt-300",
 				!isZero && isPositive && positiveClasses,
 				!isZero && !isPositive && negativeClasses
@@ -99,14 +99,14 @@ const QuoteCardBase = ({
 	if (showAdr) {
 		return (
 			<div
-				className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[2.5fr_2.5fr_1.2fr_1.8fr_1.2fr_1.8fr] items-center gap-x-2 rounded-lg border px-3 py-2 transition-colors"
+				className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[2.5fr_2.5fr_1.2fr_1.8fr_1.2fr_1.8fr] items-center gap-x-2 rounded-lg border px-s-300 py-s-200 transition-colors"
 				role="listitem"
 				aria-label={`${quote.name}: ${formatPrice(quote.price)}${adrQuote ? `, ${tQuote("adrAriaLabel", { price: formatPrice(adrQuote.price) })}` : ""}`}
 			>
 				{/* Col 1: B3 Name + Symbol */}
-				<div className="flex min-w-0 items-center gap-2">
+				<div className="flex min-w-0 items-center gap-s-200">
 					{quote.flag ? (
-						<span className="shrink-0 text-base" aria-hidden="true">
+						<span className="shrink-0 text-body" aria-hidden="true">
 							{quote.flag}
 						</span>
 					) : null}
@@ -120,8 +120,8 @@ const QuoteCardBase = ({
 
 				{/* Col 2: ADR Name + Symbol or placeholder */}
 				{adrQuote ? (
-					<div className="flex min-w-0 items-center gap-2">
-						<span className="shrink-0 text-base" aria-hidden="true">
+					<div className="flex min-w-0 items-center gap-s-200">
+						<span className="shrink-0 text-body" aria-hidden="true">
 							🇺🇸
 						</span>
 						<div className="min-w-0">
@@ -136,7 +136,7 @@ const QuoteCardBase = ({
 						</div>
 					</div>
 				) : (
-					<span className="text-small text-txt-300/30 pl-1">—</span>
+					<span className="text-small text-txt-300/30 pl-s-100">—</span>
 				)}
 
 				{/* Col 3: B3 Price */}
@@ -178,14 +178,14 @@ const QuoteCardBase = ({
 	// ── Default layout (all other tabs): 5 columns ──────────────────────────
 	return (
 		<div
-			className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[minmax(120px,1.5fr)_auto_auto_auto_auto] items-center gap-x-3 rounded-lg border px-3 py-2 transition-colors"
+			className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[minmax(120px,1.5fr)_auto_auto_auto_auto] items-center gap-x-3 rounded-lg border px-s-300 py-s-200 transition-colors"
 			role="listitem"
 			aria-label={`${quote.name}: ${formatPrice(quote.price)}${isClosed ? "" : `, ${formatChangePercent(quote.changePercent)}`}`}
 		>
 			{/* Col 1: Flag + Name + Symbol */}
-			<div className="flex min-w-0 items-center gap-2">
+			<div className="flex min-w-0 items-center gap-s-200">
 				{quote.flag ? (
-					<span className="shrink-0 text-base" aria-hidden="true">
+					<span className="shrink-0 text-body" aria-hidden="true">
 						{quote.flag}
 					</span>
 				) : null}

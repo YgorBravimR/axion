@@ -214,7 +214,7 @@ const EquityShieldParamsForm = ({
 
 			{/* Tip about sample size */}
 			<div className="bg-bg-100 border-bg-300 flex items-start gap-s-200 rounded-md border p-s-300">
-				<Info className="text-acc-200 mt-0.5 h-4 w-4 shrink-0" />
+				<Info className="text-txt-300 mt-0.5 h-4 w-4 shrink-0" />
 				<p className="text-tiny text-txt-300">
 					{t("sampleSizeTip")}
 				</p>

@@ -495,7 +495,7 @@ export const OcrImport = () => {
 							variant="default"
 							onClick={() => fileInputRef.current?.click()}
 						>
-							<Upload className="mr-2 h-4 w-4" />
+							<Upload className="mr-s-200 h-4 w-4" />
 							{t("selectImage")}
 						</Button>
 					</div>
@@ -933,12 +933,12 @@ export const OcrImport = () => {
 						>
 							{isImporting ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+									<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 									{tCommon("loading")}
 								</>
 							) : (
 								<>
-									<Upload className="mr-2 h-4 w-4" />
+									<Upload className="mr-s-200 h-4 w-4" />
 									{t("importTrades", { count: totalTrades, suffix: totalTrades !== 1 ? "s" : "" })}
 								</>
 							)}

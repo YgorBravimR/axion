@@ -139,7 +139,7 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 								setFilterType("time_based")
 						}}
 					>
-						<Clock className="mr-1 h-3 w-3" />
+						<Clock className="mr-s-100 h-3 w-3" />
 						{t("timeBased")}
 					</Badge>
 					<Badge
@@ -154,7 +154,7 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 							if (e.key === "Enter" || e.key === " ") setFilterType("renko")
 						}}
 					>
-						<BarChart3 className="mr-1 h-3 w-3" />
+						<BarChart3 className="mr-s-100 h-3 w-3" />
 						{t("renko")}
 					</Badge>
 				</div>
@@ -167,14 +167,14 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						className="text-txt-200"
 					>
 						{showInactive ? (
-							<ToggleRight className="mr-2 h-4 w-4" />
+							<ToggleRight className="mr-s-200 h-4 w-4" />
 						) : (
-							<ToggleLeft className="mr-2 h-4 w-4" />
+							<ToggleLeft className="mr-s-200 h-4 w-4" />
 						)}
 						{showInactive ? t("showingInactive") : t("hidingInactive")}
 					</Button>
 					<Button id="timeframe-add-new" onClick={() => setFormOpen(true)}>
-						<Plus className="mr-2 h-4 w-4" />
+						<Plus className="mr-s-200 h-4 w-4" />
 						{t("addTimeframe")}
 					</Button>
 				</div>
@@ -323,7 +323,7 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 							}}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 							) : null}
 							{tCommon("delete")}
 						</AlertDialogAction>

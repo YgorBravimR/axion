@@ -5,19 +5,19 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-full border border-transparent px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  "inline-flex items-center justify-center rounded-full border border-transparent px-s-200 py-[2px] text-micro font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-s-100 [&>svg]:pointer-events-none focus-visible:border-acc-100 focus-visible:ring-acc-100/30 focus-visible:ring-[3px] aria-invalid:ring-fb-error/20 aria-invalid:border-fb-error transition-[color,box-shadow] overflow-hidden",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+        default: "bg-acc-100 text-bg-100 [a&]:hover:bg-acc-100/90",
         secondary:
-          "bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+          "bg-bg-300 text-txt-100 [a&]:hover:bg-bg-300/80",
         destructive:
-          "bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20",
+          "bg-fb-error text-bg-100 [a&]:hover:bg-fb-error/90 focus-visible:ring-fb-error/20",
         outline:
-          "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 [a&]:hover:underline",
+          "border-bg-300 text-txt-200 [a&]:hover:bg-bg-300 [a&]:hover:text-txt-100",
+        ghost: "[a&]:hover:bg-bg-300 [a&]:hover:text-txt-100",
+        link: "text-acc-100 underline-offset-4 [a&]:hover:underline",
       },
     },
     defaultVariants: {

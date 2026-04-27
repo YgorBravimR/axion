@@ -84,9 +84,9 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 					)}
 				>
 					{isLong ? (
-						<ArrowUpRight className="mr-1 h-3 w-3" />
+						<ArrowUpRight className="mr-s-100 h-3 w-3" />
 					) : (
-						<ArrowDownRight className="mr-1 h-3 w-3" />
+						<ArrowDownRight className="mr-s-100 h-3 w-3" />
 					)}
 					{isLong
 						? tTrade("direction.long").toUpperCase()
@@ -98,7 +98,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						id="panel-outcome-badge"
 						className="bg-trade-buy/20 text-trade-buy"
 					>
-						<CheckCircle className="mr-1 h-3 w-3" />
+						<CheckCircle className="mr-s-100 h-3 w-3" />
 						{tTrade("outcome.winner")}
 					</Badge>
 				)}
@@ -107,7 +107,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						id="panel-outcome-badge"
 						className="bg-trade-sell/20 text-trade-sell"
 					>
-						<XCircle className="mr-1 h-3 w-3" />
+						<XCircle className="mr-s-100 h-3 w-3" />
 						{tTrade("outcome.loser")}
 					</Badge>
 				)}
@@ -250,7 +250,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 								id="panel-followed-plan-badge"
 								className="bg-trade-buy/20 text-trade-buy text-tiny"
 							>
-								<CheckCircle className="mr-1 h-3 w-3" />
+								<CheckCircle className="mr-s-100 h-3 w-3" />
 								{tCommon("yes")}
 							</Badge>
 						</div>
@@ -262,7 +262,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 								id="panel-discipline-breach-badge"
 								className="bg-warning/20 text-warning text-tiny"
 							>
-								<AlertTriangle className="mr-1 h-3 w-3" />
+								<AlertTriangle className="mr-s-100 h-3 w-3" />
 								{tCommon("no")}
 							</Badge>
 						</div>

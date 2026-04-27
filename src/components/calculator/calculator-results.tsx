@@ -121,7 +121,7 @@ const CalculatorResults = ({
 							{isMaxRiskFromSettings ? (
 								<Link
 									href="/settings?tab=account"
-									className="ml-s-100 text-acc-100 hover:text-acc-200 underline transition-colors"
+									className="ml-s-100 text-acc-100 hover:text-acc-100/80 underline transition-colors"
 									aria-label={t("fromSettings")}
 								>
 									({t("fromSettings")})

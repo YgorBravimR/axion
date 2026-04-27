@@ -261,14 +261,14 @@ const PageGuideOverlay = ({
 				<button
 					type="button"
 					onClick={onClose}
-					className="absolute right-2 top-2 rounded-sm p-1 text-txt-300 transition-colors hover:text-txt-100"
+					className="absolute right-2 top-2 rounded-sm p-s-100 text-txt-300 transition-colors hover:text-txt-100"
 					aria-label={t("close")}
 				>
 					<X className="h-4 w-4" />
 				</button>
 
 				{/* Content */}
-				<h3 className="pr-6 text-small font-semibold text-acc-100">
+				<h3 className="pr-m-600 text-small font-semibold text-acc-100">
 					{t(`${pageKey}.${step.titleKey}`)}
 				</h3>
 				<p className="mt-s-200 text-small text-txt-200">
@@ -292,9 +292,9 @@ const PageGuideOverlay = ({
 							size="sm"
 							onClick={onPrev}
 							aria-label={t("back")}
-							className="h-8 px-2 text-txt-200 hover:text-txt-100"
+							className="h-8 px-s-200 text-txt-200 hover:text-txt-100"
 						>
-							<ChevronLeft className="mr-1 h-4 w-4" />
+							<ChevronLeft className="mr-s-100 h-4 w-4" />
 							{t("back")}
 						</Button>
 					)}
@@ -304,10 +304,10 @@ const PageGuideOverlay = ({
 						size="sm"
 						onClick={isLast ? onClose : onNext}
 						aria-label={isLast ? t("close") : t("next")}
-						className="h-8 px-2 text-acc-100 hover:text-acc-100/80"
+						className="h-8 px-s-200 text-acc-100 hover:text-acc-100/80"
 					>
 						{isLast ? t("close") : t("next")}
-						{!isLast && <ChevronRight className="ml-1 h-4 w-4" />}
+						{!isLast && <ChevronRight className="ml-s-100 h-4 w-4" />}
 					</Button>
 				</div>
 			</div>

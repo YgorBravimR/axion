@@ -171,7 +171,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 			<div
 				className={cn(
 					"flex items-center justify-center",
-					isCollapsed ? "h-10 w-10" : "h-10 w-full px-3"
+					isCollapsed ? "h-10 w-10" : "h-10 w-full px-s-300"
 				)}
 			>
 				<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
@@ -250,7 +250,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 				<DropdownMenuTrigger asChild>
 					<button
 						type="button"
-						className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
+						className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 flex w-full items-center gap-s-200 rounded-md px-s-300 py-s-200 text-left text-small"
 						disabled={isPending}
 						aria-label={t("switchAccount")}
 					>
@@ -287,7 +287,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 								<div className="flex-1 truncate">
 									<p className="truncate">{account.name}</p>
 									{account.accountType === "prop" && account.propFirmName && (
-										<p className="text-txt-300 truncate text-xs">
+										<p className="text-txt-300 truncate text-tiny">
 											{account.propFirmName}
 										</p>
 									)}
@@ -393,20 +393,20 @@ const CreateAccountDialog = ({
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="personal">
-									<div className="flex items-center gap-2">
+									<div className="flex items-center gap-s-200">
 										<User className="h-4 w-4" />
 										{t("personal")}
 									</div>
 								</SelectItem>
 								<SelectItem value="prop">
-									<div className="flex items-center gap-2">
+									<div className="flex items-center gap-s-200">
 										<Building2 className="h-4 w-4" />
 										{t("propFirm")}
 									</div>
 								</SelectItem>
 								{isPremium && (
 									<SelectItem value="replay">
-										<div className="flex items-center gap-2">
+										<div className="flex items-center gap-s-200">
 											<RotateCcw className="h-4 w-4" />
 											{t("replay")}
 										</div>
@@ -483,7 +483,7 @@ const CreateAccountDialog = ({
 										className="w-24"
 										disabled={isPending}
 									/>
-									<span className="text-txt-300 text-sm">%</span>
+									<span className="text-txt-300 text-small">%</span>
 								</div>
 							</div>
 						</>
@@ -504,7 +504,7 @@ const CreateAccountDialog = ({
 						onClick={onSubmit}
 						disabled={!form.name.trim() || isPending}
 					>
-						{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+						{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
 						{t("createAccount")}
 					</Button>
 				</div>

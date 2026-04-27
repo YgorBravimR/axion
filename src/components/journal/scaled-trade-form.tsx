@@ -592,7 +592,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									{assets.map((a) => (
 										<SelectItem key={a.id} value={a.symbol}>
 											<span className="font-mono">{a.symbol}</span>
-											<span className="text-txt-300 ml-2">{a.name}</span>
+											<span className="text-txt-300 ml-s-200">{a.name}</span>
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -613,7 +613,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									onClick={() => handleAddExecution("entry")}
 									className="text-tiny h-7"
 								>
-									<Plus className="mr-1 h-3 w-3" />
+									<Plus className="mr-s-100 h-3 w-3" />
 									{tScaled("addEntry")}
 								</Button>
 							</div>
@@ -667,7 +667,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									onClick={() => handleAddExecution("exit")}
 									className="text-tiny h-7"
 								>
-									<Plus className="mr-1 h-3 w-3" />
+									<Plus className="mr-s-100 h-3 w-3" />
 									{tScaled("addExit")}
 								</Button>
 							</div>
@@ -789,7 +789,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 													{selectedAsset?.currency ?? "$"}
 													{positionSummary.netPnl.toFixed(2)}
 													{calculatedR !== null && (
-														<span className="text-body ml-2">
+														<span className="text-body ml-s-200">
 															({calculatedR >= 0 ? "+" : ""}
 															{calculatedR.toFixed(2)}R)
 														</span>
@@ -1175,12 +1175,12 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					>
 						{isSubmitting ? (
 							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
 								{tScaled("creating")}
 							</>
 						) : (
 							<>
-								<Save className="mr-2 h-4 w-4" />
+								<Save className="mr-s-200 h-4 w-4" />
 								{tScaled("createScaledTrade")}
 							</>
 						)}

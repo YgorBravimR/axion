@@ -208,7 +208,7 @@ export const MonthlyPlanTab = ({
 
 			{/* Loading */}
 			{loading && (
-				<div className="flex items-center justify-center py-8" role="status">
+				<div className="flex items-center justify-center py-l-700" role="status">
 					<div className="h-6 w-6 animate-spin motion-reduce:animate-none rounded-full border-2 border-acc-100 border-t-transparent" />
 					<span className="sr-only">{t("loadingPlan")}</span>
 				</div>

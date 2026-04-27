@@ -60,7 +60,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 		return (
 			<div className={cn(
 				"flex items-center justify-center",
-				isCollapsed ? "h-10 w-10" : "h-10 w-full px-3"
+				isCollapsed ? "h-10 w-10" : "h-10 w-full px-s-300"
 			)}>
 				<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
 			</div>
@@ -77,7 +77,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 						aria-label={t("userMenu")}
 						disabled={isPending}
 					>
-						<span className="text-sm font-medium">
+						<span className="text-small font-medium">
 							{getInitials(user?.name ?? null)}
 						</span>
 					</button>
@@ -85,7 +85,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 				<DropdownMenuContent id="dropdown-user-menu-collapsed" side="right" align="end" className="w-56">
 					<DropdownMenuLabel>
 						<p className="truncate">{user?.name}</p>
-						<p className="text-xs font-normal text-txt-300 truncate">
+						<p className="text-tiny font-normal text-txt-300 truncate">
 							{user?.email}
 						</p>
 					</DropdownMenuLabel>
@@ -129,28 +129,28 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 				<button
 					type="button"
 					className={cn(
-						"flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-bg-300",
+						"flex w-full items-center gap-s-300 rounded-md px-s-300 py-s-200 text-left hover:bg-bg-300",
 						isPending && "opacity-50"
 					)}
 					disabled={isPending}
 				>
 					<div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-acc-100/20 text-acc-100">
-						<span className="text-sm font-medium">
+						<span className="text-small font-medium">
 							{getInitials(user?.name ?? null)}
 						</span>
 					</div>
 					<div className="flex-1 truncate">
-						<p className="text-sm font-medium text-txt-100 truncate">
+						<p className="text-small font-medium text-txt-100 truncate">
 							{user?.name}
 						</p>
-						<p className="text-xs text-txt-300 truncate">{user?.email}</p>
+						<p className="text-tiny text-txt-300 truncate">{user?.email}</p>
 					</div>
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent id="dropdown-user-menu-expanded" side="right" align="end" className="w-56">
 				<DropdownMenuLabel>
 					<p className="truncate">{user?.name}</p>
-					<p className="text-xs font-normal text-txt-300 truncate">
+					<p className="text-tiny font-normal text-txt-300 truncate">
 						{user?.email}
 					</p>
 				</DropdownMenuLabel>

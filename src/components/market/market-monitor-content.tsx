@@ -184,7 +184,7 @@ export const MarketMonitorContent = () => {
 	if (isLoading && groups.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-20">
-				<Activity className="text-acc-100 mb-4 h-8 w-8 animate-pulse motion-reduce:animate-none" />
+				<Activity className="text-acc-100 mb-m-400 h-8 w-8 animate-pulse motion-reduce:animate-none" />
 				<p className="text-small text-txt-200">{t("quote.loading")}</p>
 			</div>
 		)
@@ -194,7 +194,7 @@ export const MarketMonitorContent = () => {
 	if (error && groups.length === 0 && events.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-20">
-				<p className="text-small text-fb-error mb-2">{error}</p>
+				<p className="text-small text-fb-error mb-s-200">{error}</p>
 				<Button
 					id="market-refresh-error"
 					type="button"
@@ -217,10 +217,10 @@ export const MarketMonitorContent = () => {
 			<div>
 				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:gap-x-4">
 					<h1 className="text-body sm:text-h3 text-txt-100 font-semibold">{t("title")}</h1>
-					<div className="flex items-center gap-4">
+					<div className="flex items-center gap-m-400">
 						{/* Inline market status dots */}
 						{marketStatuses.length > 0 ? (
-							<div className="flex items-center gap-3">
+							<div className="flex items-center gap-s-300">
 								{HEADER_MARKET_IDS.map((id) => {
 									const status = marketStatusMap.get(id)
 									if (!status) return null
@@ -260,7 +260,7 @@ export const MarketMonitorContent = () => {
 
 						{/* Last updated */}
 						{lastUpdated ? (
-							<div className="flex items-center gap-2">
+							<div className="flex items-center gap-s-200">
 								<span className="text-tiny text-txt-300">
 									{t("lastUpdated")}: {formatTime(lastUpdated)}
 								</span>
@@ -279,14 +279,14 @@ export const MarketMonitorContent = () => {
 						) : null}
 					</div>
 				</div>
-				<p className="text-small text-txt-200 mt-1">{t("subtitle")}</p>
+				<p className="text-small text-txt-200 mt-s-100">{t("subtitle")}</p>
 			</div>
 
 			{/* ── Hero quote cards ────────────────────────────────────────────── */}
 			{heroQuotes.length > 0 ? (
 				<div className="relative">
 					<div
-						className="flex gap-3 overflow-x-auto pb-1"
+						className="flex gap-s-300 overflow-x-auto pb-s-100"
 						role="list"
 						aria-label={t("assets")}
 					>
@@ -303,7 +303,7 @@ export const MarketMonitorContent = () => {
 			) : null}
 
 			{/* ── Info panels — Calendar + Market Status, same height ──────────── */}
-			<div className="grid h-89 grid-cols-1 grid-rows-[1fr] items-stretch gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]">
+			<div className="grid h-89 grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 lg:grid-cols-[1fr_340px]">
 				<EconomicCalendar events={events} />
 				<MarketStatusPanel statuses={marketStatuses} />
 			</div>
@@ -313,7 +313,7 @@ export const MarketMonitorContent = () => {
 				{/* Tab bar */}
 				<div className="relative">
 					<div
-						className="border-bg-300 flex items-center gap-1 overflow-x-auto border-b px-3 py-2"
+						className="border-bg-300 flex items-center gap-s-100 overflow-x-auto border-b px-s-300 py-s-200"
 						role="tablist"
 					>
 						{groups.map((group) => (
@@ -323,7 +323,7 @@ export const MarketMonitorContent = () => {
 								type="button"
 								onClick={() => handleTabChange(group.id)}
 								className={cn(
-									"text-tiny shrink-0 rounded-md px-3 py-1.5 font-medium transition-colors",
+									"text-tiny shrink-0 rounded-md px-s-300 py-1.5 font-medium transition-colors",
 									activeTab === group.id
 										? "bg-acc-100 text-bg-100"
 										: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
@@ -342,13 +342,13 @@ export const MarketMonitorContent = () => {
 				{/* Tab content */}
 				<div
 					id={`market-tabpanel-${activeTab}`}
-					className="p-2"
+					className="p-s-200"
 					role="tabpanel"
 					aria-labelledby={`market-tab-${activeTab}`}
 				>
 					{activeGroup && activeGroup.quotes.length > 0 ? (
 						<div
-							className="flex flex-col gap-1"
+							className="flex flex-col gap-s-100"
 							role="list"
 							aria-label={t(activeGroup.labelKey)}
 						>
@@ -371,7 +371,7 @@ export const MarketMonitorContent = () => {
 						</div>
 					) : (
 						<div className="flex flex-col items-center justify-center py-10">
-							<Activity className="text-txt-300 mb-3 h-5 w-5" />
+							<Activity className="text-txt-300 mb-s-300 h-5 w-5" />
 							<p className="text-small text-txt-300">{t("quote.emptyGroup")}</p>
 							<Button
 								id="market-refresh-empty"
@@ -379,7 +379,7 @@ export const MarketMonitorContent = () => {
 								variant="ghost"
 								size="sm"
 								onClick={handleRefresh}
-								className="text-tiny text-acc-100 mt-2 inline-flex items-center gap-1"
+								className="text-tiny text-acc-100 mt-s-200 inline-flex items-center gap-s-100"
 								aria-label={t("refreshNow")}
 							>
 								<RefreshCw className="h-3 w-3" />
