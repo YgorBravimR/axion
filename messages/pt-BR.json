@@ -3594,6 +3594,10 @@
       "weekOf": "Semana de {label}",
       "noData": "Nenhum dado de rastreio disponível.",
       "skipped": "IGNORADO",
+      "win": "GANHO",
+      "loss": "PERDA",
+      "breakeven": "ZERO",
+      "risk": "Risco",
       "dailyLimitHit": "Dia parado: limite de perda diária atingido",
       "dailyTargetHit": "Dia parado: meta de ganho diário atingida"
     },

@@ -3594,6 +3594,10 @@
       "weekOf": "Week of {label}",
       "noData": "No trace data available.",
       "skipped": "SKIPPED",
+      "win": "WIN",
+      "loss": "LOSS",
+      "breakeven": "BE",
+      "risk": "Risk",
       "dailyLimitHit": "Day stopped: daily loss limit hit",
       "dailyTargetHit": "Day stopped: daily profit target hit"
     },

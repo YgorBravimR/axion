@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface AutoRefreshIndicatorProps {
 	intervalSeconds: number
@@ -79,9 +80,12 @@ export const AutoRefreshIndicator = ({
 			{/* Pulsing dot */}
 			<div className="flex items-center gap-1.5">
 				<span
-					className={`inline-block h-2 w-2 rounded-full ${
-						isLoading ? "animate-pulse motion-reduce:animate-none bg-warning" : "bg-trade-buy"
-					}`}
+					className={cn(
+						"inline-block h-2 w-2 rounded-full",
+						isLoading
+							? "animate-pulse motion-reduce:animate-none bg-warning"
+							: "bg-trade-buy"
+					)}
 					aria-hidden="true"
 				/>
 				<span className="text-txt-200">
@@ -105,7 +109,12 @@ export const AutoRefreshIndicator = ({
 				className="text-txt-200 inline-flex items-center gap-s-100 px-s-200 py-s-100"
 				aria-label={t("refreshNow")}
 			>
-				<RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin motion-reduce:animate-none" : ""}`} />
+				<RefreshCw
+					className={cn(
+						"h-3.5 w-3.5",
+						isLoading && "animate-spin motion-reduce:animate-none"
+					)}
+				/>
 				<span>{t("refreshNow")}</span>
 			</Button>
 		</div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useId, type ChangeEvent } from "react"
+import { useState, useEffect, useId, useCallback, type ChangeEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Lock } from "lucide-react"
 import { fromCents } from "@/lib/money"
@@ -25,12 +25,13 @@ interface FieldProps {
 	value: string | number
 	onChange: (value: string) => void
 	type?: "number" | "text"
+	prefix?: string
 	suffix?: string
 	disabled?: boolean
 	locked?: boolean
 }
 
-const Field = ({ label, value, onChange, type = "number", suffix, disabled, locked }: FieldProps) => {
+const Field = ({ label, value, onChange, type = "number", prefix, suffix, disabled, locked }: FieldProps) => {
 	const generatedId = useId()
 	return (
 		<div className="flex flex-col gap-s-100">
@@ -39,6 +40,7 @@ const Field = ({ label, value, onChange, type = "number", suffix, disabled, lock
 				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
 			</label>
 			<div className="flex items-center gap-s-100">
+				{prefix && <span className="text-tiny text-txt-300 shrink-0">{prefix}</span>}
 				<Input
 					id={generatedId}
 					type={type}
@@ -47,7 +49,7 @@ const Field = ({ label, value, onChange, type = "number", suffix, disabled, lock
 					disabled={disabled || locked}
 					className={cn(
 						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-s-300 py-1.5",
-						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed opacity-70" : "bg-bg-100"
+						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed" : "bg-bg-100"
 					)}
 				/>
 				{suffix && <span className="text-tiny text-txt-300 shrink-0">{suffix}</span>}
@@ -66,12 +68,13 @@ interface CurrencyFieldProps {
 	label: string
 	valueCents: number
 	onChange: (rawValue: string) => void
+	prefix?: string
 	suffix?: string
 	disabled?: boolean
 	locked?: boolean
 }
 
-const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }: CurrencyFieldProps) => {
+const CurrencyField = ({ label, valueCents, onChange, prefix, suffix, disabled, locked }: CurrencyFieldProps) => {
 	const generatedId = useId()
 	const [localValue, setLocalValue] = useState(() => fromCents(valueCents).toFixed(2))
 	const [isFocused, setIsFocused] = useState(false)
@@ -81,7 +84,7 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 		if (!isFocused) {
 			setLocalValue(fromCents(valueCents).toFixed(2))
 		}
-	}, [valueCents])
+	}, [valueCents, isFocused])
 
 	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const raw = event.target.value
@@ -108,6 +111,7 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
 			</label>
 			<div className="flex items-center gap-s-100">
+				{prefix && <span className="text-tiny text-txt-300 shrink-0">{prefix}</span>}
 				<Input
 					id={generatedId}
 					type="number"
@@ -119,7 +123,7 @@ const CurrencyField = ({ label, valueCents, onChange, suffix, disabled, locked }
 					step="0.01"
 					className={cn(
 						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-s-300 py-1.5",
-						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed opacity-70" : "bg-bg-100"
+						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed" : "bg-bg-100"
 					)}
 				/>
 				{suffix && <span className="text-tiny text-txt-300 shrink-0">{suffix}</span>}
@@ -216,28 +220,31 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 	const t = useTranslations("riskSimulation.params")
 
 	/** Handle balance change for advanced mode — scales all cents proportionally from original snapshot */
-	const handleAdvancedBalanceChange = (rawValue: string) => {
-		if (params.mode !== "advanced" || !originalAdvancedParams) return
+	const handleAdvancedBalanceChange = useCallback(
+		(rawValue: string) => {
+			if (params.mode !== "advanced" || !originalAdvancedParams) return
 
-		const newBalanceCents = Math.round(parseFloat(rawValue || "0") * 100)
-		if (originalAdvancedParams.accountBalanceCents === 0) return
+			const newBalanceCents = Math.round(parseFloat(rawValue || "0") * 100)
+			if (originalAdvancedParams.accountBalanceCents === 0) return
 
-		const scale = newBalanceCents / originalAdvancedParams.accountBalanceCents
+			const scale = newBalanceCents / originalAdvancedParams.accountBalanceCents
 
-		onChange({
-			...params,
-			accountBalanceCents: newBalanceCents,
-			dailyLossCents: Math.round(originalAdvancedParams.dailyLossCents * scale),
-			dailyProfitTargetCents: originalAdvancedParams.dailyProfitTargetCents
-				? Math.round(originalAdvancedParams.dailyProfitTargetCents * scale)
-				: null,
-			weeklyLossCents: originalAdvancedParams.weeklyLossCents
-				? Math.round(originalAdvancedParams.weeklyLossCents * scale)
-				: null,
-			monthlyLossCents: Math.round(originalAdvancedParams.monthlyLossCents * scale),
-			decisionTree: scaleDecisionTree(originalAdvancedParams.decisionTree, scale),
-		})
-	}
+			onChange({
+				...params,
+				accountBalanceCents: newBalanceCents,
+				dailyLossCents: Math.round(originalAdvancedParams.dailyLossCents * scale),
+				dailyProfitTargetCents: originalAdvancedParams.dailyProfitTargetCents
+					? Math.round(originalAdvancedParams.dailyProfitTargetCents * scale)
+					: null,
+				weeklyLossCents: originalAdvancedParams.weeklyLossCents
+					? Math.round(originalAdvancedParams.weeklyLossCents * scale)
+					: null,
+				monthlyLossCents: Math.round(originalAdvancedParams.monthlyLossCents * scale),
+				decisionTree: scaleDecisionTree(originalAdvancedParams.decisionTree, scale),
+			})
+		},
+		[params, originalAdvancedParams, onChange]
+	)
 
 	if (params.mode === "advanced") {
 		return (
@@ -261,7 +268,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 											),
 										})
 						}
-						suffix="R$"
+						prefix="R$"
 					/>
 					<CurrencyField
 						label={t("dailyLoss")}
@@ -272,7 +279,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 								dailyLossCents: Math.round(parseFloat(val || "0") * 100),
 							})
 						}
-						suffix="R$"
+						prefix="R$"
 						locked={isLocked}
 					/>
 					<CurrencyField
@@ -284,7 +291,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 								monthlyLossCents: Math.round(parseFloat(val || "0") * 100),
 							})
 						}
-						suffix="R$"
+						prefix="R$"
 						locked={isLocked}
 					/>
 					<CurrencyField
@@ -292,7 +299,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 						valueCents={params.decisionTree.baseTrade.riskCents}
 						onChange={() => {}}
 						disabled
-						suffix="R$"
+						prefix="R$"
 						locked={isLocked}
 					/>
 				</div>
@@ -301,9 +308,12 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 	}
 
 	// Simple mode
-	const updateSimple = (partial: Partial<typeof params>) => {
-		onChange({ ...params, ...partial })
-	}
+	const updateSimple = useCallback(
+		(partial: Partial<typeof params>) => {
+			onChange({ ...params, ...partial })
+		},
+		[params, onChange]
+	)
 
 	return (
 		<div id="sim-risk-params" className="space-y-s-300">
@@ -319,7 +329,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 							accountBalanceCents: Math.round(parseFloat(val || "0") * 100),
 						})
 					}
-					suffix="R$"
+					prefix="R$"
 				/>
 				<Field
 					label={t("riskPerTrade")}

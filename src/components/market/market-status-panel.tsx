@@ -88,6 +88,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 				{PANEL_TABS.map((tab) => (
 					<button
 						key={tab.id}
+						id={`market-tab-${tab.id}`}
 						type="button"
 						onClick={() => handleTabChange(tab.id)}
 						className={cn(
@@ -97,6 +98,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 								: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
 						)}
 						aria-selected={activeTab === tab.id}
+						aria-controls={`market-tabpanel-${tab.id}`}
 						role="tab"
 					>
 						{t(tab.labelKey)}
@@ -105,7 +107,12 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 			</div>
 
 			{/* Tab content */}
-			<div className="min-h-0 flex-1 overflow-y-auto" role="tabpanel">
+			<div
+				id={`market-tabpanel-${activeTab}`}
+				className="min-h-0 flex-1 overflow-y-auto"
+				role="tabpanel"
+				aria-labelledby={`market-tab-${activeTab}`}
+			>
 				{activeTab === "status" ? (
 					<div className="space-y-2.5 p-m-400">
 						{statuses.map((market) => {
@@ -120,7 +127,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 									key={market.id}
 									className="flex items-center justify-between"
 									role="status"
-									aria-label={`${label}: ${market.state}`}
+									aria-label={`${label}: ${t(market.state)}`}
 								>
 									<div className="flex items-center gap-s-200">
 										<span

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, memo } from "react"
+import { useMemo, useCallback, memo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import {
 	BarChart,
@@ -60,7 +60,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 			>
 				{formatCompactCurrencyWithSign(data.pnl, "R$")}
 			</p>
-			<p className="text-caption text-txt-300">
+			<p className="text-tiny text-txt-300">
 				{data.tradeCount} {data.tradeCount === 1 ? t("trade") : t("trades")}
 			</p>
 		</div>
@@ -87,11 +87,14 @@ export const DailyPnLBarChart = ({
 		return Math.ceil(maxAbsPnl * 1.1)
 	}, [data])
 
-	const handleBarClick = (entry: DailyPnL) => {
-		if (onDayClick) {
-			onDayClick(entry.date)
-		}
-	}
+	const handleBarClick = useCallback(
+		(entry: DailyPnL) => {
+			if (onDayClick) {
+				onDayClick(entry.date)
+			}
+		},
+		[onDayClick]
+	)
 
 	if (data.length === 0) {
 		return (
@@ -148,7 +151,7 @@ export const DailyPnLBarChart = ({
 						dataKey="pnl"
 						radius={[4, 4, 0, 0]}
 						cursor={onDayClick ? "pointer" : "default"}
-						// @see Recharts Bar onClick provides untyped payload — cast is required
+						// @see Recharts Bar onClick types `data` as `any`; narrow to DailyPnL
 						onClick={(data) => handleBarClick(data as unknown as DailyPnL)}
 					>
 						{sortedData.map((entry, index) => (

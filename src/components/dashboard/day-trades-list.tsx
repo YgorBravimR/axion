@@ -101,7 +101,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 							onKeyDown={onTradeClick ? handleKeyDown : undefined}
 							tabIndex={onTradeClick ? 0 : undefined}
 							role={onTradeClick ? "button" : undefined}
-							aria-label={onTradeClick ? `${trade.asset} ${trade.direction} ${trade.time}` : undefined}
+							aria-label={onTradeClick ? `${trade.asset} ${tCommon(trade.direction)} ${trade.time}` : undefined}
 						>
 							<TableCell className="px-s-300 py-s-200 text-small text-txt-100">
 								{trade.time}

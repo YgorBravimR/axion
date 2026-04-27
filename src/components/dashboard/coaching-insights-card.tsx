@@ -40,9 +40,9 @@ const SEVERITY_STYLES: Record<string, { border: string; bg: string; badge: strin
 		badge: "bg-warning/20 text-warning",
 	},
 	info: {
-		border: "border-acc-100/20",
-		bg: "bg-acc-100/5",
-		badge: "bg-acc-100/20 text-acc-100",
+		border: "border-bg-300",
+		bg: "bg-bg-300/30",
+		badge: "bg-bg-300/60 text-txt-200",
 	},
 }
 
@@ -110,7 +110,7 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 
 InsightRow.displayName = "InsightRow"
 
-const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => {
+const CoachingInsightsCardBase = ({ initialContext }: CoachingInsightsCardProps) => {
 	const t = useTranslations("coaching")
 	const [context, setContext] = useState<CoachingContext | null>(initialContext ?? null)
 	const [isPending, startTransition] = useTransition()
@@ -158,7 +158,7 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 			{/* Content */}
 			<div className="mt-s-300 sm:mt-m-400">
 				{isPending && !context ? (
-					<div className="space-y-s-200 animate-pulse">
+					<div className="space-y-s-200 animate-pulse motion-reduce:animate-none">
 						<div className="h-10 rounded-lg bg-bg-300" />
 						<div className="h-10 rounded-lg bg-bg-300" />
 						<div className="h-10 rounded-lg bg-bg-300" />
@@ -183,5 +183,8 @@ const CoachingInsightsCard = ({ initialContext }: CoachingInsightsCardProps) => 
 		</div>
 	)
 }
+
+const CoachingInsightsCard = memo(CoachingInsightsCardBase)
+CoachingInsightsCard.displayName = "CoachingInsightsCard"
 
 export { CoachingInsightsCard }

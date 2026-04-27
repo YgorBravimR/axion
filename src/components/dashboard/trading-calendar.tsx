@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback, memo, type KeyboardEvent } from "react"
+import { useMemo, useCallback, memo, type KeyboardEvent, type MouseEvent } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -90,7 +90,7 @@ export const TradingCalendar = memo(
 			onMonthChange(new Date(year, monthIndex + 1, 1))
 		}, [onMonthChange, year, monthIndex])
 
-		const handleCellClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+		const handleCellClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
 			const key = e.currentTarget.dataset.dateKey
 			if (key && onDayClick) onDayClick(key)
 		}, [onDayClick])
@@ -122,7 +122,7 @@ export const TradingCalendar = memo(
 							onClick={handlePreviousMonth}
 							aria-label={t("previousMonth")}
 						>
-							<ChevronLeft className="h-4 w-4" />
+							<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 						</Button>
 						<span className="text-tiny text-txt-100 min-w-[100px] text-center font-medium sm:text-small sm:min-w-[140px]">
 							{monthName}
@@ -134,7 +134,7 @@ export const TradingCalendar = memo(
 							onClick={handleNextMonth}
 							aria-label={t("nextMonth")}
 						>
-							<ChevronRight className="h-4 w-4" />
+							<ChevronRight className="h-4 w-4" aria-hidden="true" />
 						</Button>
 					</div>
 				</div>

@@ -180,7 +180,6 @@ const RiskSimulationContent = ({
 					className="bg-acc-100 hover:bg-acc-100/90 text-bg-100"
 					aria-label={t("runSimulation")}
 				>
-					<FlaskConical className="mr-s-200 h-4 w-4" />
 					{t("runSimulation")}
 				</Button>
 				{!canRun && !error && (

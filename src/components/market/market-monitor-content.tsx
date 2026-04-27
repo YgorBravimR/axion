@@ -69,7 +69,10 @@ export const MarketMonitorContent = () => {
 		).filter((q): q is MarketQuote => q !== undefined)
 	}, [groups])
 
-	const activeGroup = groups.find((g) => g.id === activeTab)
+	const activeGroup = useMemo(
+		() => groups.find((g) => g.id === activeTab),
+		[groups, activeTab]
+	)
 
 	// ── Data fetching ────────────────────────────────────────────────────────
 	const fetchData = useCallback(async () => {
@@ -112,7 +115,8 @@ export const MarketMonitorContent = () => {
 			if (quotesSucceeded || calendarSucceeded) {
 				setError(null)
 			}
-		} catch {
+		} catch (err) {
+			console.error("[MarketMonitor] poll failed", err)
 			if (isFirstLoad.current) {
 				setError(t("quote.error"))
 			}
@@ -178,7 +182,7 @@ export const MarketMonitorContent = () => {
 	}, [startIntervals, stopIntervals])
 
 	const handleRefresh = fetchData
-	const handleTabChange = (tabId: string) => setActiveTab(tabId)
+	const handleTabChange = useCallback((tabId: string) => setActiveTab(tabId), [])
 
 	// ── Loading state ────────────────────────────────────────────────────────
 	if (isLoading && groups.length === 0) {
@@ -216,7 +220,7 @@ export const MarketMonitorContent = () => {
 			{/* ── Header ──────────────────────────────────────────────────────── */}
 			<div>
 				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:gap-x-4">
-					<h1 className="text-body sm:text-h3 text-txt-100 font-semibold">{t("title")}</h1>
+					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">{t("title")}</h1>
 					<div className="flex items-center gap-m-400">
 						{/* Inline market status dots */}
 						{marketStatuses.length > 0 ? (
@@ -286,7 +290,7 @@ export const MarketMonitorContent = () => {
 			{heroQuotes.length > 0 ? (
 				<div className="relative">
 					<div
-						className="flex gap-s-300 overflow-x-auto pb-s-100"
+						className="scrollbar-none flex gap-s-300 overflow-x-auto pb-s-100"
 						role="list"
 						aria-label={t("assets")}
 					>
@@ -303,7 +307,7 @@ export const MarketMonitorContent = () => {
 			) : null}
 
 			{/* ── Info panels — Calendar + Market Status, same height ──────────── */}
-			<div className="grid h-89 grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 lg:grid-cols-[1fr_340px]">
+			<div className="grid grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 lg:h-[22rem] lg:grid-cols-[1fr_340px]">
 				<EconomicCalendar events={events} />
 				<MarketStatusPanel statuses={marketStatuses} />
 			</div>

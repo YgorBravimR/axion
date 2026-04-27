@@ -223,7 +223,7 @@ export const TagList = () => {
 											{tag.name}
 										</p>
 										<span
-											className={cn("text-caption", getTypeColor(tag.type))}
+											className={cn("text-tiny", getTypeColor(tag.type))}
 										>
 											{getTypeLabel(tag.type)}
 										</span>

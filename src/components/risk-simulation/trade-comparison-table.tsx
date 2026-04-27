@@ -35,13 +35,13 @@ const statusDotColors: Record<SimulatedTradeStatus, string> = {
 	executed: "bg-trade-buy",
 	skipped_no_sl: "bg-txt-300",
 	skipped_daily_limit: "bg-trade-sell",
-	skipped_daily_target: "bg-acc-100",
+	skipped_daily_target: "bg-action-buy",
 	skipped_max_trades: "bg-txt-300",
 	skipped_consecutive_loss: "bg-trade-sell",
 	skipped_monthly_limit: "bg-trade-sell",
 	skipped_weekly_limit: "bg-trade-sell",
-	skipped_recovery_complete: "bg-acc-200",
-	skipped_gain_stop: "bg-acc-100",
+	skipped_recovery_complete: "bg-trade-buy",
+	skipped_gain_stop: "bg-action-buy",
 }
 
 const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
@@ -141,6 +141,7 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 									</td>
 									<td className="px-s-300 py-s-200">
 										<span
+											role="img"
 											className={cn(
 												"block h-2.5 w-2.5 rounded-full",
 												statusDotColors[trade.status]
@@ -209,7 +210,7 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 							className="text-txt-200"
 							aria-label={t("prevPage")}
 						>
-							<ChevronLeft className="h-4 w-4" />
+							<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 						</Button>
 						<Button
 							id="comparison-next-page"
@@ -221,7 +222,7 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 							className="text-txt-200"
 							aria-label={t("nextPage")}
 						>
-							<ChevronRight className="h-4 w-4" />
+							<ChevronRight className="h-4 w-4" aria-hidden="true" />
 						</Button>
 					</div>
 				</div>

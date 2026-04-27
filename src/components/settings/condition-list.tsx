@@ -211,7 +211,7 @@ export const ConditionList = () => {
 									</p>
 									<span
 										className={cn(
-											"text-caption",
+											"text-tiny",
 											getCategoryColor(condition.category)
 										)}
 									>

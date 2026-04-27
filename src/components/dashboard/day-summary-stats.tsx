@@ -71,7 +71,7 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 					key={stat.label}
 					className="rounded-lg border border-bg-300 bg-bg-100 p-s-300"
 				>
-					<p className="text-caption text-txt-300">{stat.label}</p>
+					<p className="text-tiny text-txt-300">{stat.label}</p>
 					<div className="mt-s-100 flex items-center gap-s-100">
 						{stat.showIcon &&
 							(stat.isPositive ? (
@@ -92,7 +92,7 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 						</p>
 					</div>
 					{stat.subValue && (
-						<p className="mt-s-100 text-caption text-txt-300">{stat.subValue}</p>
+						<p className="mt-s-100 text-tiny text-txt-300">{stat.subValue}</p>
 					)}
 				</div>
 			))}

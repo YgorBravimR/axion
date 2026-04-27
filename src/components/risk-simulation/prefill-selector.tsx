@@ -3,14 +3,15 @@
 import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
-
-const buttonBase = "text-small rounded-md border px-s-300 py-s-200 transition-colors"
-const activeStyle = "border-acc-100 bg-acc-100/10 text-acc-100 font-medium"
-const inactiveStyle =
-	"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
 import type { MonthlyPlan } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { PrefillSource, RiskSimulationParams } from "@/types/risk-simulation"
+
+const buttonBase =
+	"text-small min-h-9 rounded-md border px-s-300 py-s-200 transition-colors"
+const activeStyle = "border-acc-100 bg-acc-100/10 text-acc-100 font-medium"
+const inactiveStyle =
+	"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
 
 interface PrefillSelectorProps {
 	monthlyPlan: MonthlyPlan | null

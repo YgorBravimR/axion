@@ -43,37 +43,23 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 	const t = useTranslations("riskSimulation.trace")
 	const tReasons = useTranslations("riskSimulation")
 	const isSkipped = trade.status !== "executed"
+	const pnl = trade.simulatedPnlCents ?? 0
 
-	const outcomeBadge = () => {
-		if (isSkipped) {
-			return (
-				<span className="text-tiny bg-bg-300 text-txt-300 rounded-full px-s-200 py-0.5 font-medium">
-					{t("skipped")}
-				</span>
-			)
-		}
+	const badgeLabel = isSkipped
+		? t("skipped")
+		: pnl > 0
+			? t("win")
+			: pnl < 0
+				? t("loss")
+				: t("breakeven")
 
-		const pnl = trade.simulatedPnlCents ?? 0
-		if (pnl > 0) {
-			return (
-				<span className="text-tiny bg-trade-buy/20 text-trade-buy whitespace-nowrap rounded-full px-s-200 py-0.5 font-medium">
-					WIN {formatCurrency(pnl)}
-				</span>
-			)
-		}
-		if (pnl < 0) {
-			return (
-				<span className="text-tiny bg-trade-sell/20 text-trade-sell whitespace-nowrap rounded-full px-s-200 py-0.5 font-medium">
-					LOSS {formatCurrency(pnl)}
-				</span>
-			)
-		}
-		return (
-			<span className="text-tiny bg-bg-300 text-txt-300 rounded-full px-s-200 py-0.5 font-medium">
-				BE {formatCurrency(pnl)}
-			</span>
-		)
-	}
+	const badgeClass = isSkipped
+		? "bg-bg-300 text-txt-300"
+		: pnl > 0
+			? "bg-trade-buy/20 text-trade-buy"
+			: pnl < 0
+				? "bg-trade-sell/20 text-trade-sell"
+				: "bg-bg-300 text-txt-300"
 
 	return (
 		<div className="flex items-start gap-s-300">
@@ -99,11 +85,19 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 				<div className="flex flex-wrap items-center gap-s-200">
 					{!isSkipped && (
 						<span className="text-tiny text-txt-200">
-							Risk {formatCurrency(trade.riskAmountCents ?? 0)}
+							{t("risk")} {formatCurrency(trade.riskAmountCents ?? 0)}
 						</span>
 					)}
 					<ArrowRight className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />
-					{outcomeBadge()}
+					<span
+						className={cn(
+							"text-tiny whitespace-nowrap rounded-full px-s-200 py-0.5 font-medium",
+							badgeClass
+						)}
+					>
+						{badgeLabel}
+						{!isSkipped ? ` ${formatCurrency(pnl)}` : ""}
+					</span>
 				</div>
 				<p className="text-tiny text-txt-300 mt-0.5">
 					{translateRiskReason(tReasons, trade.riskReason)}

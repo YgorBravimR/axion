@@ -59,7 +59,7 @@ const PeriodToggle = ({
 					disabled={disabled}
 					aria-pressed={period === option.value}
 					className={cn(
-						"px-s-300 py-s-100 text-tiny rounded-md font-medium transition-colors",
+						"px-s-300 py-s-200 text-tiny min-h-9 rounded-md font-medium transition-colors",
 						period === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -101,7 +101,7 @@ const ViewModeToggle = ({
 					disabled={disabled}
 					aria-pressed={mode === option.value}
 					className={cn(
-						"px-s-300 py-s-100 text-tiny rounded-md font-medium transition-colors",
+						"px-s-300 py-s-200 text-tiny min-h-9 rounded-md font-medium transition-colors",
 						mode === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -245,14 +245,17 @@ export const EquityCurve = ({
 		trades: t("viewMode.trades"),
 	}), [t])
 
-	const formatDateLocale = (dateStr: string): string => {
-		const date = new Date(dateStr)
-		return date.toLocaleDateString(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			month: "short",
-			day: "numeric",
-			timeZone: APP_TIMEZONE,
-		})
-	}
+	const formatDateLocale = useCallback(
+		(dateStr: string): string => {
+			const date = new Date(dateStr)
+			return date.toLocaleDateString(locale === "pt-BR" ? "pt-BR" : "en-US", {
+				month: "short",
+				day: "numeric",
+				timeZone: APP_TIMEZONE,
+			})
+		},
+		[locale]
+	)
 
 	const handlePeriodChange = useCallback((newPeriod: Period) => {
 		setPeriod(newPeriod)
@@ -263,6 +266,21 @@ export const EquityCurve = ({
 		setViewMode(newMode)
 		fetchData(period, newMode)
 	}, [fetchData, period])
+
+	const { minEquity, maxEquity, padding } = useMemo(() => {
+		if (data.length === 0) {
+			return { minEquity: 0, maxEquity: 0, padding: 100 }
+		}
+		const min = Math.min(...data.map((d) => d.accountEquity))
+		const max = Math.max(...data.map((d) => d.accountEquity))
+		return { minEquity: min, maxEquity: max, padding: (max - min) * 0.1 || 100 }
+	}, [data])
+
+	const drawdownLabel = t("drawdown")
+	const handleTradeNumberLabel = useCallback(
+		(number: number) => tCharts("tradeNumber", { number }),
+		[tCharts]
+	)
 
 	if (data.length === 0 && !isPending) {
 		return (
@@ -288,18 +306,6 @@ export const EquityCurve = ({
 			</div>
 		)
 	}
-
-	const { minEquity, maxEquity, padding } = useMemo(() => {
-		const min = Math.min(...data.map((d) => d.accountEquity))
-		const max = Math.max(...data.map((d) => d.accountEquity))
-		return { minEquity: min, maxEquity: max, padding: (max - min) * 0.1 || 100 }
-	}, [data])
-
-	const drawdownLabel = t("drawdown")
-	const handleTradeNumberLabel = useCallback(
-		(number: number) => tCharts("tradeNumber", { number }),
-		[tCharts]
-	)
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500" role="region" aria-label={t("title")}>

@@ -46,7 +46,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 			<p className="text-tiny text-txt-300">
 				{t("tooltipTrade", { index: data.tradeIndex + 1, day: data.dayKey })}
 			</p>
-			<p className="text-small text-acc-200">
+			<p className="text-small text-txt-200">
 				{t("tooltipOriginal", { value: data.original.toFixed(2) })}
 			</p>
 			<p className="text-small text-trade-buy">

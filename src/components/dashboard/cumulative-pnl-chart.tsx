@@ -45,7 +45,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				})}
 			</p>
 			<div className="mt-s-100 space-y-s-100">
-				<p className="text-caption text-txt-300">
+				<p className="text-tiny text-txt-300">
 					{t("cumulativePnL.cumulative")}:{" "}
 					<span
 						className={cn("font-semibold", isProfit ? "text-trade-buy" : "text-trade-sell")}
@@ -54,7 +54,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 					</span>
 				</p>
 				{data.drawdown !== undefined && data.drawdown > 0 && (
-					<p className="text-caption text-txt-300">
+					<p className="text-tiny text-txt-300">
 						{t("cumulativePnL.drawdown")}:{" "}
 						<span className="text-trade-sell font-semibold">
 							-{data.drawdown.toFixed(1)}%

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useCallback, type ReactNode } from "react"
-import { Flame, Trophy, AlertTriangle, Activity } from "lucide-react"
+import { Flame, TrendingUp, AlertTriangle, Activity } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import type { StreakData, OverallStats } from "@/types"
 import { cn } from "@/lib/utils"
@@ -83,7 +83,7 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					valueClass={streak.colorClass}
 				/>
 				<StatRow
-					icon={<Trophy className="h-4 w-4" />}
+					icon={<TrendingUp className="h-4 w-4" />}
 					label={t("bestDay")}
 					value={
 						streakData?.bestDay

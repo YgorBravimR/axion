@@ -74,7 +74,7 @@ const TableHead = forwardRef<
 	<th
 		ref={ref}
 		className={cn(
-			"h-10 px-s-300 text-left align-middle text-caption font-medium text-txt-300 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+			"h-10 px-s-300 text-left align-middle text-tiny font-medium text-txt-300 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
 			className
 		)}
 		{...props}

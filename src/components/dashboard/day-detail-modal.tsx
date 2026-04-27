@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
 import {
@@ -42,7 +42,8 @@ export const DayDetailModal = ({
 	const [equityCurve, setEquityCurve] = useState<DayEquityPoint[]>([])
 
 	useEffect(() => {
-		if (date && open) {
+		if (!open) return
+		if (date) {
 			startTransition(async () => {
 				const dateObj = new Date(date)
 
@@ -65,13 +66,17 @@ export const DayDetailModal = ({
 		}
 	}, [date, open])
 
-	const handleTradeClick = (tradeId: string) => {
-		onOpenChange(false)
-		router.push(`/journal/${tradeId}`)
-	}
+	const handleTradeClick = useCallback(
+		(tradeId: string) => {
+			onOpenChange(false)
+			router.push(`/journal/${tradeId}`)
+		},
+		[onOpenChange, router]
+	)
 
-	const formatDate = (dateStr: string) => {
-		const d = new Date(dateStr)
+	const dayName = useMemo(() => {
+		if (!date) return ""
+		const d = new Date(date)
 		return d.toLocaleDateString(locale, {
 			weekday: "long",
 			day: "numeric",
@@ -79,9 +84,7 @@ export const DayDetailModal = ({
 			year: "numeric",
 			timeZone: APP_TIMEZONE,
 		})
-	}
-
-	const dayName = date ? formatDate(date) : ""
+	}, [date, locale])
 
 	if (!open) return null
 
@@ -121,7 +124,7 @@ export const DayDetailModal = ({
 								{t("dayDetail.tradesTitle")}
 							</h4>
 							<DayTradesList trades={trades} onTradeClick={handleTradeClick} />
-							<p className="mt-s-200 text-caption text-txt-300">
+							<p className="mt-s-200 text-tiny text-txt-300">
 								{t("dayDetail.clickHint")}
 							</p>
 						</div>

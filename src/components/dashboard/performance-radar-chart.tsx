@@ -62,7 +62,7 @@ const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 			<p className="text-body font-semibold text-acc-100">
 				{formatValue(data.metricKey, data.value)}
 			</p>
-			<p className="text-caption text-txt-300">
+			<p className="text-tiny text-txt-300">
 				{t("radar.normalized")}: {data.normalized.toFixed(0)}%
 			</p>
 		</div>
