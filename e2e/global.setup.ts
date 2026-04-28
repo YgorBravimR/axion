@@ -21,9 +21,9 @@ setup("authenticate", async ({ page }) => {
 	// 2. Account selection UI appears (multi-account) - this stays on /login page
 	// 3. Error message
 	const result = await Promise.race([
-		page.waitForURL(/\/(en|pt-BR)\/?$/, { timeout: 10000 }).then(() => "dashboard"),
-		page.getByText("Select Account").waitFor({ timeout: 10000 }).then(() => "select-account"),
-		page.locator("text=/Invalid|Error/i").waitFor({ timeout: 10000 }).then(() => "error"),
+		page.waitForURL(/\/(en|pt-BR)\/?$/, { timeout: 30000 }).then(() => "dashboard"),
+		page.getByText("Select Account").waitFor({ timeout: 30000 }).then(() => "select-account"),
+		page.locator("text=/Invalid|Error/i").waitFor({ timeout: 30000 }).then(() => "error"),
 	]).catch(() => "timeout")
 
 	if (result === "error") {
@@ -43,11 +43,11 @@ setup("authenticate", async ({ page }) => {
 		await page.getByRole("button", { name: "Continue" }).click()
 
 		// Wait for redirect to dashboard
-		await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/, { timeout: 10000 })
+		await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/, { timeout: 30000 })
 	}
 
 	// Verify we're on the dashboard (no heading — verify via sidebar active link or metric cards)
-	await expect(page.getByText(/Gross P&L|Net P&L|Trading Calendar/i).first()).toBeVisible({ timeout: 10000 })
+	await expect(page.getByText(/Gross P&L|Net P&L|Trading Calendar/i).first()).toBeVisible({ timeout: 30000 })
 
 	// Save authentication state
 	await page.context().storageState({ path: "e2e/.auth/user.json" })

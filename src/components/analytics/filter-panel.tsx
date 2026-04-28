@@ -18,7 +18,7 @@ import {
 	type ExpectancyMode,
 } from "./expectancy-mode-toggle"
 import { PresetSelector } from "./preset-selector"
-import type { SavedFilterState } from "@/app/actions/filter-presets"
+import type { SavedFilterState } from "@/lib/filter-preset-schema"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { useUrlParams } from "@/hooks/use-url-params"
 import { parseDateParam, serializeDateParam } from "@/lib/url-params"

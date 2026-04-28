@@ -64,8 +64,9 @@ test.describe("Authentication", () => {
 
 			await page.getByRole("button", { name: "Create Account" }).click()
 
-			// Should redirect to dashboard or account selection
-			await expect(page).toHaveURL(/\/(en|pt-BR)(\/|\/select-account)?$/, { timeout: 15000 })
+			// Email verification is currently disabled in registerUser (auto-verifies new users),
+			// so the form falls back to the post-register login redirect with `registered=true`.
+			await expect(page).toHaveURL(/\/(en|pt-BR)\/login\?registered=true$/, { timeout: 15000 })
 		})
 
 		test("should show error for duplicate email", async ({ page }) => {

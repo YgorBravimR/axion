@@ -126,7 +126,7 @@ const expectNextRisk = async (
 	const nextRiskLabel = panel.getByText(/next risk/i)
 	await expect(nextRiskLabel).toBeVisible()
 	const metricCell = nextRiskLabel.locator("..")
-	await expect(metricCell.locator("span.font-semibold")).toContainText(
+	await expect(metricCell.locator("dd.font-semibold")).toContainText(
 		expectedAmount
 	)
 }
@@ -156,7 +156,7 @@ const expectTradesCompleted = async (
 ): Promise<void> => {
 	const label = panel.getByText(/trades today/i)
 	const metricCell = label.locator("..")
-	await expect(metricCell.locator("span.font-semibold")).toHaveText(
+	await expect(metricCell.locator("dd.font-semibold")).toHaveText(
 		String(count)
 	)
 }
@@ -168,7 +168,7 @@ const expectDailyPnl = async (
 ): Promise<void> => {
 	const label = panel.getByText(/daily p&l/i)
 	const metricCell = label.locator("..")
-	await expect(metricCell.locator("span.font-semibold")).toContainText(
+	await expect(metricCell.locator("dd.font-semibold")).toContainText(
 		formattedAmount
 	)
 }

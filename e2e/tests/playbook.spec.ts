@@ -8,7 +8,8 @@ test.describe("Playbook", () => {
 			await page.waitForLoadState("networkidle")
 		})
 
-		test("should display page header", async ({ page }) => {
+		test("should display page header", async ({ page, isMobile }) => {
+			test.skip(isMobile, "Desktop sidebar only — mobile uses Sheet")
 			// Page has no h1 heading; verify by checking the active sidebar link
 			const activeNav = page.locator('a[aria-current="page"]:has-text("Playbook")')
 			await expect(activeNav).toBeVisible()
@@ -35,8 +36,10 @@ test.describe("Playbook", () => {
 
 		test("should navigate to new strategy page", async ({ page }) => {
 			const newButton = page.getByRole("link", { name: /new strategy/i }).first()
-			await newButton.click()
-			await expect(page).toHaveURL(/playbook\/new/)
+			await Promise.all([
+				page.waitForURL(/playbook\/new/, { timeout: 15_000 }),
+				newButton.click(),
+			])
 		})
 
 		test("should display strategy list or empty state", async ({ page }) => {
@@ -151,7 +154,7 @@ test.describe("Playbook", () => {
 
 			// Too short
 			await codeField.fill("AB")
-			const submitButton = page.getByRole("button", { name: /save|salvar|create|criar/i })
+			const submitButton = page.locator("#playbook-new-create")
 			await submitButton.click()
 
 			// Should show validation error

@@ -127,7 +127,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 									key={market.id}
 									className="flex items-center justify-between"
 									role="status"
-									aria-label={`${label}: ${t(market.state)}`}
+									aria-label={`${label}: ${t(`status.${market.state}`)}`}
 								>
 									<div className="flex items-center gap-s-200">
 										<span

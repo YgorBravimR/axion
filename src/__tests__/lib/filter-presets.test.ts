@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect } from "vitest"
-import type { SavedFilterState } from "@/app/actions/filter-presets"
+import type { SavedFilterState } from "@/lib/filter-preset-schema"
 
 // ============================================================================
 // HELPERS — extracted from filter-panel.tsx so they can be tested in isolation

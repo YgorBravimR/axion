@@ -117,12 +117,12 @@ test.describe("Settings", () => {
 		})
 
 		test("should enable editing when clicking Edit", async ({ page }) => {
-			const editButton = page.getByRole("button", { name: /edit|editar/i }).first()
+			const editButton = page.locator("#account-edit-info")
+			await expect(editButton).toBeVisible({ timeout: 15_000 })
 			await editButton.click()
 
-			// Save button should appear
-			const saveButton = page.getByRole("button", { name: /save|salvar/i }).first()
-			await expect(saveButton).toBeVisible()
+			const saveButton = page.locator("#account-save-info")
+			await expect(saveButton).toBeVisible({ timeout: 15_000 })
 		})
 
 		test("should display asset fees section", async ({ page }) => {
@@ -134,10 +134,12 @@ test.describe("Settings", () => {
 		})
 
 		test("should display recalculate button", async ({ page }) => {
+			// Wait for async account data to load (3 parallel API calls)
+			await page.waitForSelector("#settings-account-info", { timeout: 10000 })
 			// Recalculate button may not exist — test is conditional
 			const recalculateButton = page.getByRole("button", { name: /recalculate|recalcular/i })
 			const hasButton = await recalculateButton.isVisible().catch(() => false)
-			// Account tab may just show info cards (Account Name, Type, Commission & Fees)
+			// Account tab shows info cards (Account Name, Type, Commission & Fees)
 			const hasAccountInfo = await page.getByText(/account name|commission|fees/i).first().isVisible().catch(() => false)
 			expect(hasButton || hasAccountInfo).toBeTruthy()
 		})
@@ -184,11 +186,13 @@ test.describe("Settings", () => {
 			const dialog = page.getByRole("dialog")
 			await expect(dialog).toBeVisible()
 
-			// Symbol field should be in the dialog
+			// Symbol field should be in the dialog — scope to dialog to avoid strict-mode
+			// violation with the "Sort by symbol" header button in the DataTable
 			await expect(dialog.getByLabel(/symbol/i)).toBeVisible()
 
-			// Name field
-			await expect(dialog.getByLabel(/^name$/i)).toBeVisible()
+			// Name field — use partial match since exact match can be unreliable
+			// across browsers when label text includes accessibility markers
+			await expect(dialog.getByLabel(/name/i)).toBeVisible()
 		})
 
 		test("should auto-uppercase asset code", async ({ page }) => {
@@ -196,7 +200,11 @@ test.describe("Settings", () => {
 			await addButton.click()
 			await page.waitForTimeout(300)
 
-			const symbolField = page.getByLabel(/symbol/i)
+			// Scope to dialog to avoid strict-mode violation with "Sort by symbol"
+			// header button rendered by DataTable in the assets list behind the dialog
+			const dialog = page.getByRole("dialog")
+			await expect(dialog).toBeVisible()
+			const symbolField = dialog.getByLabel(/symbol/i)
 			await symbolField.fill("test")
 
 			const value = await symbolField.inputValue()
@@ -228,31 +236,38 @@ test.describe("Settings", () => {
 			await addButton.click()
 			await page.waitForTimeout(300)
 
+			// Scope all field lookups to the dialog to avoid strict-mode violations
+			// with "Sort by symbol" DataTable header button that also matches /symbol/i
+			const dialog = page.getByRole("dialog")
+			await expect(dialog).toBeVisible()
+
 			// Fill symbol
-			await page.getByLabel(/symbol/i).fill(TEST_ASSET.code)
+			await dialog.getByLabel(/symbol/i).fill(TEST_ASSET.code)
 
 			// Fill name
-			await page.getByLabel(/^name$/i).fill(TEST_ASSET.name)
+			await dialog.getByLabel(/name/i).fill(TEST_ASSET.name)
 
 			// Select type
-			await page.getByRole("combobox", { name: /type/i }).click()
+			await dialog.getByRole("combobox", { name: /type/i }).click()
 			await page.getByRole("option").first().click()
 
 			// Submit with "Add Asset" button
-			const submitButton = page.getByRole("button", { name: /^add asset$/i })
+			const submitButton = dialog.getByRole("button", { name: /^add asset$/i })
 			await submitButton.click()
 
 			await page.waitForTimeout(1000)
 		})
 
 		test("should edit existing asset", async ({ page }) => {
-			const editButton = page.locator('[data-testid="edit-asset"], button:has-text("Edit"), button:has([class*="pencil"])').first()
+			// Edit buttons have aria-label="Edit {SYMBOL}" (e.g. "Edit WIN")
+			// Use aria-label prefix match to avoid clicking unrelated Edit buttons
+			const editButton = page.getByRole("button", { name: /^edit\s+\w/i }).first()
 
 			if (await editButton.isVisible()) {
 				await editButton.click()
 
-				const form = page.locator('[data-testid="asset-form"], [role="dialog"], form')
-				await expect(form.first()).toBeVisible({ timeout: 2000 })
+				const dialog = page.getByRole("dialog")
+				await expect(dialog).toBeVisible({ timeout: 2000 })
 			}
 		})
 
@@ -355,17 +370,21 @@ test.describe("Settings", () => {
 			await addButton.click()
 			await page.waitForTimeout(300)
 
+			// Scope all field lookups to the dialog to avoid ambiguous page-level matches
+			const dialog = page.getByRole("dialog")
+			await expect(dialog).toBeVisible({ timeout: 5000 })
+
 			// Fill code
-			const codeField = page.getByLabel(/code/i)
+			const codeField = dialog.getByLabel(/code/i)
 			await codeField.fill(TEST_TIMEFRAME.code)
 
 			// Fill name
-			const nameField = page.getByLabel(/^name$/i)
+			const nameField = dialog.getByLabel(/name/i)
 			await nameField.fill(TEST_TIMEFRAME.name)
 
-			// Submit - button text might be "Add Timeframe" or similar
-			const submitButton = page.getByRole("button", { name: /^add timeframe$/i }).or(
-				page.getByRole("button", { name: /save|create/i })
+			// Submit - button text is "Add Timeframe"
+			const submitButton = dialog.getByRole("button", { name: /^add timeframe$/i }).or(
+				dialog.getByRole("button", { name: /save|create/i })
 			).first()
 			await submitButton.click()
 
@@ -373,13 +392,14 @@ test.describe("Settings", () => {
 		})
 
 		test("should edit existing timeframe", async ({ page }) => {
-			const editButton = page.locator('[data-testid="edit-timeframe"], button:has-text("Edit"), button:has([class*="pencil"])').first()
+			// Timeframe edit buttons have aria-label="Edit Timeframe"
+			const editButton = page.getByRole("button", { name: /edit timeframe/i }).first()
 
 			if (await editButton.isVisible()) {
 				await editButton.click()
 
-				const form = page.locator('[data-testid="timeframe-form"], [role="dialog"], form')
-				await expect(form.first()).toBeVisible({ timeout: 2000 })
+				const dialog = page.getByRole("dialog")
+				await expect(dialog).toBeVisible({ timeout: 2000 })
 			}
 		})
 
@@ -627,12 +647,15 @@ test.describe("Settings", () => {
 			await addButton.click()
 			await page.waitForTimeout(500)
 
-			// Clear any pre-filled fields
-			const symbolField = page.getByLabel(/symbol/i)
+			// Scope to dialog to avoid strict-mode violation with "Sort by symbol"
+			// DataTable header button that also matches /symbol/i
+			const dialog = page.getByRole("dialog")
+			await expect(dialog).toBeVisible()
+			const symbolField = dialog.getByLabel(/symbol/i)
 			await symbolField.clear()
 
 			// Submit button in the dialog is "Add Asset"
-			const submitButton = page.getByRole("dialog").getByRole("button", { name: /add asset/i })
+			const submitButton = dialog.getByRole("button", { name: /add asset/i })
 			await submitButton.click()
 			await page.waitForTimeout(300)
 

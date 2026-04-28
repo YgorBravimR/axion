@@ -2,8 +2,59 @@ import { test, expect } from "@playwright/test"
 import { ROUTES } from "../fixtures/test-data"
 import { waitForSuspenseLoad } from "../utils/helpers"
 
+// Next.js dev server compiles routes on first request (Turbopack cold-start),
+// which can exceed Playwright's 30s default per-test timeout when chained with
+// click → navigate → compile → render. Allow extra headroom for these tests.
+test.describe.configure({ timeout: 90_000 })
+
 test.describe("Navigation", () => {
+	// Pre-warm every sidebar destination once per project so subsequent click
+	// navigations don't pay the cold-compile cost.
+	//
+	// IMPORTANT: use "load" (not "domcontentloaded") so we wait until the page JS
+	// runs and Turbopack has compiled the route. With "domcontentloaded" only the
+	// HTML shell arrives — the JS bundle and RSC payload may still be compiling.
+	// A subsequent Link click then hits an uncompiled RSC fetch; Next.js App Router
+	// can roll back the navigation (revert the pushState URL) on fetch failure,
+	// making toHaveURL time out even though the click fired correctly.
+	// A 1 s pause between routes lets Turbopack settle before the next compilation.
+	test.beforeAll(async ({ browser }) => {
+		// Give the pre-warm enough headroom to compile all routes from cold.
+		// test.describe.configure({ timeout }) only applies to test bodies, not hooks.
+		test.setTimeout(120_000)
+
+		const ctx = await browser.newContext({ storageState: "e2e/.auth/user.json" })
+		const page = await ctx.newPage()
+		const routes = [
+			"/en",
+			"/en/journal",
+			"/en/journal/new",
+			"/en/analytics",
+			"/en/playbook",
+			"/en/reports",
+			"/en/monthly",
+			"/en/settings",
+			"/en/command-center",
+		]
+		for (const route of routes) {
+			// waitUntil: "load" (not "domcontentloaded") so the page JS runs and
+			// the RSC payload is served before we move on. A short pause between
+			// visits prevents flooding Turbopack with concurrent compilations.
+			// Individual errors are swallowed so one slow route doesn't abort the rest.
+			await page.goto(route, { waitUntil: "load", timeout: 60_000 }).catch(() => {})
+			// Wait for any background compilation triggered by this page to settle
+			// before moving to the next route.
+			await page.waitForTimeout(1000)
+		}
+		await ctx.close()
+	})
+
 	test.describe("Sidebar Navigation", () => {
+		// On mobile the sidebar is hidden behind a hamburger Sheet. These tests
+		// target the always-visible desktop sidebar; mobile navigation is covered
+		// by the "Responsive Navigation" describe block below.
+		test.skip(({ isMobile }) => isMobile, "Desktop sidebar only — mobile uses Sheet")
+
 		test("should display all navigation items", async ({ page }) => {
 			await page.goto(ROUTES.home)
 
@@ -19,50 +70,65 @@ test.describe("Navigation", () => {
 
 		test("should navigate to Dashboard", async ({ page }) => {
 			await page.goto(ROUTES.journal)
+			// Wait for React hydration to complete before clicking. Without this,
+			// App Router may not be ready to handle navigation and the URL will
+			// not update even when the RSC response succeeds. networkidle ensures
+			// React has finished its post-load XHR calls (useSession, etc.).
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /dashboard/i }).click()
-			await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/)
+			await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Journal", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /journal/i }).click()
-			await expect(page).toHaveURL(/journal/)
+			await expect(page).toHaveURL(/journal/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Analytics", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /analytics/i }).click()
-			await expect(page).toHaveURL(/analytics/)
+			await expect(page).toHaveURL(/analytics/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Playbook", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /playbook/i }).click()
-			await expect(page).toHaveURL(/playbook/)
+			await expect(page).toHaveURL(/playbook/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Reports", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /reports/i }).click()
-			await expect(page).toHaveURL(/reports/)
+			await expect(page).toHaveURL(/reports/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Monthly", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /monthly/i }).click()
-			await expect(page).toHaveURL(/monthly/)
+			await expect(page).toHaveURL(/monthly/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Settings", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 			await page.getByRole("link", { name: /settings/i }).click()
-			await expect(page).toHaveURL(/settings/)
+			await expect(page).toHaveURL(/settings/, { timeout: 30_000 })
 		})
 
 		test("should highlight active route", async ({ page }) => {
 			await page.goto(ROUTES.journal)
 
-			const journalLink = page.getByRole("link", { name: /journal/i })
+			// Scope to the sidebar — breadcrumb also exposes a "Journal" link with role="link",
+			// so an unscoped locator triggers a strict-mode violation.
+			const journalLink = page
+				.getByLabel("Main navigation")
+				.getByRole("link", { name: /journal/i })
 			const className = await journalLink.getAttribute("class")
 
 			// Active link should have different styling (check for active class or aria-current)

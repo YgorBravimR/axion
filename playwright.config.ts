@@ -70,12 +70,20 @@ const buildDeviceProjects = (device: string, deviceUse: DeviceConfig) => {
 		dependencies: [lastOrdered],
 	}))
 
-	// Self-seeding tests: seed their own DB data, only need auth (setup)
+	// Self-seeding tests: seed their own DB data. They share the admin account
+	// with the sequential phases (notably journal, which inserts many trades),
+	// so they must wait for the entire ordered chain on this device to finish
+	// before seeding. Non-chromium devices additionally wait for chromium's
+	// self-seeding run to avoid cross-device races on the same admin account.
+	const lastOrderedForSelfSeed = prefix(orderedPhases[orderedPhases.length - 1].name)
 	const selfSeeding = selfSeedingPhases.map((phase) => ({
 		name: prefix(phase.name),
 		testMatch: phase.testMatch,
 		use,
-		dependencies: ["setup"],
+		dependencies:
+			device === "chromium"
+				? ["setup", lastOrderedForSelfSeed]
+				: ["setup", lastOrderedForSelfSeed, `chromium-${phase.name}`],
 	}))
 
 	return [...sequential, ...parallel, ...selfSeeding]

@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
 		// Optimize package imports for better tree-shaking and faster dev boot
 		// recharts: ~300KB, lucide-react: ~2.8s dev cost without optimization
 		optimizePackageImports: ["recharts", "lucide-react"],
+		// Use worker threads instead of forked child processes for static path
+		// generation. Child process fork() fails with EBADF when the parent
+		// process has closed file descriptors (e.g. in CI or shell-less runners).
+		// Worker threads share the parent's open FDs and avoid the spawn error.
+		workerThreads: true,
 	},
 	async headers() {
 		return [

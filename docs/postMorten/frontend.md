@@ -94,3 +94,58 @@ Clicking any date filter preset (e.g., "This Month", "This Week") crashed the en
 > **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/risk-simulation.test.ts`
 > **Report:** 6 unit tests failing — `riskReason` assertions used human-readable strings (`"Base risk"`, `"Reduced"`, `"Win bonus"`, `"T1 base risk"`, `"Recovery #1"`, `"Gain reinvest"`) but the simulation engine was updated to emit i18n keys (`"riskSimulation.reasons.baseRisk"`, `"riskSimulation.reasons.reducedLoss|..."`, etc.).
 > **Fix:** Updated all 6 `toContain(...)` assertions in the test file to match the actual i18n key prefixes the engine produces. Source code (`risk-simulation.ts`, `risk-simulation-advanced.ts`) unchanged.
+
+---
+
+## [BUG-2026-04-27] Playwright sidebar navigation tests fail — link clicks don't update URL
+
+**Date:** 2026-04-27
+**Severity:** High
+**Affected Area:** `e2e/tests/navigation.spec.ts` — sidebar navigation tests (Journal, Playbook, Reports, Monthly, Settings)
+
+### Cause
+Three compounding issues:
+
+**1. `"use server"` violation in `filter-presets.ts`:**
+`src/app/actions/filter-presets.ts` (a `"use server"` file) exported a Zod schema object (`savedFilterStateSchema`) alongside async server action functions. Next.js disallows non-async-function exports from `"use server"` files. Any route importing this file triggered a server error during RSC render.
+
+**2. React hydration timing in Playwright tests:**
+`page.goto(url, { waitUntil: "load" })` fires when the browser `load` event fires, but React hydration (attaching event handlers, mounting client components) completes AFTER the `load` event in dev mode. Next.js App Router's Link component requires React to be hydrated before its `onClick` intercepts the click and calls `router.push()`. Clicking before hydration causes the click to either fall through to native `<a>` behavior or be ignored, leaving the URL unchanged. `POST /route` from the RSC fetch may return HTTP 200 but the URL never updates because the router's `history.pushState` was never called.
+
+**3. `spawn EBADF` in dev server static path workers:**
+In environments where the parent shell has closed file descriptors (e.g., automation shells), `DevServer.getStaticPathsWorker` fails with `spawn EBADF` when forking child processes. This causes all RSC navigation requests to return HTTP 500, breaking navigation for all routes.
+
+### Effect
+- 5-8 sidebar navigation tests fail consistently: Journal, Playbook, Reports, Monthly, Settings
+- `toHaveURL(/journal/)` times out — URL stays at source page
+- Server logs show `spawn EBADF` errors OR `POST /en/journal 200` (success) but URL never updates
+- Dashboard and Analytics tests pass intermittently because they ran before the EBADF cascade or before hydration window
+
+### Solution
+**Fix 1** — Move Zod schema out of `"use server"` file:
+- Created `src/lib/filter-preset-schema.ts` (plain module, no directive) with the Zod schema and derived types
+- Removed schema from `src/app/actions/filter-presets.ts` — now imports from the shared module
+- Updated `src/components/analytics/preset-selector.tsx` and `src/components/analytics/filter-panel.tsx` to import from the new shared module
+
+**Fix 2** — Wait for React hydration before clicking:
+- Added `await page.waitForLoadState("networkidle")` after each `page.goto()` in the 7 sidebar navigation tests
+- `networkidle` waits until no network requests are active for 500ms, which reliably indicates React hydration is complete
+
+**Fix 3** — Use worker threads instead of fork():
+- Added `experimental.workerThreads: true` to `next.config.ts`
+- Worker threads share the parent's file descriptors and bypass `spawn()`, avoiding EBADF
+
+### Prevention
+- Never export non-async values from `"use server"` files. Shared schemas go in plain modules.
+- In Playwright tests for Next.js App Router: always `waitForLoadState("networkidle")` before clicking `<Link>` elements.
+- Set `experimental.workerThreads: true` in projects that run in automated/shell-less environments.
+- See general lessons in `~/.claude/post-mortems/nextjs.md`.
+
+### Related Files
+- `src/app/actions/filter-presets.ts`
+- `src/lib/filter-preset-schema.ts` (created)
+- `src/components/analytics/preset-selector.tsx`
+- `src/components/analytics/filter-panel.tsx`
+- `src/__tests__/lib/filter-presets.test.ts`
+- `e2e/tests/navigation.spec.ts`
+- `next.config.ts`

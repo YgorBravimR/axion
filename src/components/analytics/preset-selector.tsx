@@ -17,9 +17,11 @@ import {
 	createFilterPreset,
 	updateFilterPreset,
 	deleteFilterPreset,
+} from "@/app/actions/filter-presets"
+import {
 	savedFilterStateSchema,
 	type SavedFilterState,
-} from "@/app/actions/filter-presets"
+} from "@/lib/filter-preset-schema"
 import type { FilterPreset } from "@/db/schema"
 
 interface PresetSelectorProps {

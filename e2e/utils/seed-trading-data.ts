@@ -508,6 +508,10 @@ const seedScenario = async (
   const year = baseDate.getFullYear()
   const month = baseDate.getMonth() + 1
 
+  // Defensive cleanup: prior run may have crashed before its afterAll fired,
+  // leaving recognizable seed trades in the DB. Wipe them before inserting new ones.
+  await cleanupTodayTrades(baseDate)
+
   const { profileId, created: createdProfile } = await ensureBravoRiskProfile(userId)
   const { planId, created: createdPlan } = await ensureBravoMonthlyPlan(accountId, profileId, year, month)
   const tradeIds = await insertTestTrades(accountId, trades, baseDate)
@@ -546,13 +550,14 @@ const cleanupTodayTrades = async (baseDate: Date = new Date()): Promise<void> =>
   const dayEnd = new Date(baseDate)
   dayEnd.setHours(23, 59, 59, 999)
 
-  // Only delete trades that match the seeder's recognizable fingerprint
-  // (asset = WIN, entry_price = 130000) to avoid touching real data.
+  // Wipe ALL trades for today on the admin account. The admin account is
+  // dedicated to e2e tests (see e2e/global.setup.ts), so there is no real
+  // data to preserve. A narrower fingerprint filter would leak journal-phase
+  // trades into live-trading-status scenarios (different asset/price than
+  // the seeder uses), corrupting trade-count and P&L assertions.
   await db.execute(sql`
     DELETE FROM trades
     WHERE account_id  = ${accountId}
-      AND asset       = 'WIN'
-      AND entry_price = '130000'
       AND entry_date >= ${dayStart.toISOString()}
       AND entry_date <= ${dayEnd.toISOString()}
   `)

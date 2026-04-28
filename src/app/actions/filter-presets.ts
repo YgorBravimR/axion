@@ -8,41 +8,20 @@ import { eq, and, desc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
+import {
+	savedFilterStateSchema,
+	createPresetInputSchema,
+	updatePresetInputSchema,
+	type SavedFilterState,
+	type CreatePresetInput,
+	type UpdatePresetInput,
+} from "@/lib/filter-preset-schema"
 
 // ============================================================================
 // VALIDATION SCHEMAS
 // ============================================================================
 
 const uuidSchema = z.string().uuid()
-
-const savedFilterStateSchema = z.object({
-	datePreset: z.string().max(20).nullable().optional(),
-	dateFrom: z.string().max(50).nullable().optional(),
-	dateTo: z.string().max(50).nullable().optional(),
-	assets: z.array(z.string().max(20)).max(50).optional(),
-	directions: z.array(z.enum(["long", "short"])).optional(),
-	outcomes: z.array(z.enum(["win", "loss", "breakeven"])).optional(),
-	timeframeIds: z.array(z.string().uuid()).max(50).optional(),
-	groupBy: z.string().max(20).optional(),
-	expectancyMode: z.string().max(20).optional(),
-})
-
-type SavedFilterState = z.infer<typeof savedFilterStateSchema>
-
-const createPresetInputSchema = z.object({
-	name: z.string().min(1).max(100).transform((val) => val.trim()),
-	filters: savedFilterStateSchema,
-	isDefault: z.boolean().optional(),
-})
-
-const updatePresetInputSchema = z.object({
-	name: z.string().min(1).max(100).transform((val) => val.trim()).optional(),
-	filters: savedFilterStateSchema.optional(),
-	isDefault: z.boolean().optional(),
-})
-
-type CreatePresetInput = z.infer<typeof createPresetInputSchema>
-type UpdatePresetInput = z.infer<typeof updatePresetInputSchema>
 
 // ============================================================================
 // LIST PRESETS
@@ -261,8 +240,4 @@ export {
 	createFilterPreset,
 	updateFilterPreset,
 	deleteFilterPreset,
-	savedFilterStateSchema,
-	type SavedFilterState,
-	type CreatePresetInput,
-	type UpdatePresetInput,
 }
