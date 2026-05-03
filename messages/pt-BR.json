@@ -2473,6 +2473,7 @@
     "description": "Gerencie ativos, timeframes e preferências",
     "tabs": {
       "profile": "Perfil",
+      "mode": "Modo",
       "account": "Conta",
       "tags": "Tags",
       "assets": "Ativos",
@@ -2483,6 +2484,19 @@
       "conditions": "Condições",
       "indicators": "Indicadores",
       "bugs": "Relatórios de Bugs"
+    },
+    "mode": {
+      "hawks": {
+        "title": "Modo Hawk's",
+        "description": "Modo operacional específico da metodologia Hawks de Pedro Palmezani — sistema Renko com triple-screen para mini-índice e mini-dólar (B3).",
+        "body": "Quando ativado, dashboard, journal, analytics e risco passam a operar nos defaults Hawks. Fase esqueleto: apenas o toggle e o badge estão ligados — playbook travado, picker dos 24 cenários, ritual de viés e campos do journal entram na Fase 2.",
+        "scopeNote": "Por conta de trading. Ativar/desativar não destrói dados — sua configuração anterior é arquivada e restaurada na desativação.",
+        "activeBanner": "Modo Hawk's ativo nesta conta.",
+        "toggleAria": "Alternar Modo Hawk's",
+        "previewTitle": "Próximos passos",
+        "previewDescription": "A Fase 2 trava a estratégia ativa em Hawks — Triple Screen Renko, semeia o picker de 24 cenários, o ritual de viés diário e os campos Hawks no journal.",
+        "previewButton": "Preview Fase 2"
+      }
     },
     "profile": {
       "profileInfo": "Informações do Perfil",
@@ -4632,6 +4646,23 @@
       "validated": "Validados {count} candles para {symbol} ({timeframe})",
       "importSuccess": "Importados com sucesso {count} candles",
       "seededIndicators": "Definições de indicadores carregadas ({mappings} mapeamentos em {groups} grupos)"
+    }
+  },
+  "hawksMode": {
+    "badge": {
+      "label": "Modo Hawk's",
+      "aria": "Modo Hawk's está ativo nesta conta"
+    },
+    "actions": {
+      "statusRetrieved": "Status do Modo Hawk's carregado.",
+      "activated": "Modo Hawk's ativado.",
+      "deactivated": "Modo Hawk's desativado."
+    },
+    "errors": {
+      "noAccount": "Nenhuma conta de trading ativa.",
+      "statusFetchFailed": "Não foi possível carregar o status do Modo Hawk's.",
+      "activationFailed": "Não foi possível ativar o Modo Hawk's.",
+      "deactivationFailed": "Não foi possível desativar o Modo Hawk's."
     }
   }
 }

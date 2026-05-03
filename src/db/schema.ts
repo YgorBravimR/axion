@@ -1299,6 +1299,155 @@ export const priceDataVersions = pgTable(
 )
 
 // ==========================================
+// HAWKS MODE TABLES
+// ==========================================
+
+// Per-account methodology mode. "hawks" = Pedro Palmezani's method (Renko triple-screen).
+export const accountModeEnum = pgEnum("account_mode", ["default", "hawks"])
+
+// Per-account mode toggle + archive of pre-mode state for revert.
+export const accountModes = pgTable(
+	"account_modes",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		mode: accountModeEnum("mode").notNull().default("default"),
+		// Snapshot of replaced state when mode activated, used to restore on deactivate.
+		archivedState: jsonb("archived_state").$type<Record<string, unknown>>(),
+		activatedAt: timestamp("activated_at", { withTimezone: true }),
+		deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [uniqueIndex("account_modes_account_idx").on(table.accountId)]
+)
+
+// Weekly Renko box-size calibration log (per account, per asset, per timeframe).
+export const hawksRenkoCalibrations = pgTable(
+	"hawks_renko_calibrations",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		weekStart: timestamp("week_start", { withTimezone: true }).notNull(),
+		assetSymbol: varchar("asset_symbol", { length: 20 }).notNull(),
+		timeframeMinutes: integer("timeframe_minutes").notNull(),
+		rValue: integer("r_value").notNull(),
+		source: varchar("source", { length: 20 }).notNull().default("user_calc"),
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("hawks_calib_account_idx").on(table.accountId),
+		uniqueIndex("hawks_calib_unique_idx").on(
+			table.accountId,
+			table.weekStart,
+			table.assetSymbol,
+			table.timeframeMinutes
+		),
+	]
+)
+
+// Daily 60-min bias declaration (Pedro's 5-question viés ritual).
+export const hawksDailyBias = pgTable(
+	"hawks_daily_bias",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		date: timestamp("date", { withTimezone: true }).notNull(),
+		assetSymbol: varchar("asset_symbol", { length: 20 }).notNull(),
+		bias: varchar("bias", { length: 16 }).notNull(),
+		checklist: jsonb("checklist").$type<Record<string, boolean>>().default({}),
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("hawks_bias_account_idx").on(table.accountId),
+		uniqueIndex("hawks_bias_unique_idx").on(table.accountId, table.date, table.assetSymbol),
+	]
+)
+
+// Stop-modification audit. "Stop never moves against position" is constitutional.
+export const hawksStopAudit = pgTable(
+	"hawks_stop_audit",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		tradeId: uuid("trade_id")
+			.notNull()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		changedAt: timestamp("changed_at", { withTimezone: true }).defaultNow().notNull(),
+		oldStop: text("old_stop"),
+		newStop: text("new_stop").notNull(),
+		direction: varchar("direction", { length: 16 }).notNull(),
+		violation: boolean("violation").default(false).notNull(),
+	},
+	(table) => [index("hawks_stop_audit_trade_idx").on(table.tradeId)]
+)
+
+// Per-trade Hawks scenario tagging (1-24) + Elliott wave + pullback level + MMA + confluência.
+export const hawksScenarioOnTrade = pgTable(
+	"hawks_scenario_on_trade",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		tradeId: uuid("trade_id")
+			.notNull()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		scenarioCode: integer("scenario_code"),
+		elliottWave: varchar("elliott_wave", { length: 4 }),
+		pullbackLevel: varchar("pullback_level", { length: 8 }),
+		confluencia: jsonb("confluencia").$type<string[]>().default([]),
+		mmaAligned: varchar("mma_aligned", { length: 8 }),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [uniqueIndex("hawks_scenario_trade_idx").on(table.tradeId)]
+)
+
+// Mentor insights from Pedro's daily morning calls (ETL'd from vault into DB).
+export const hawksMentorInsights = pgTable(
+	"hawks_mentor_insights",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		date: timestamp("date", { withTimezone: true }).notNull(),
+		assetSymbol: varchar("asset_symbol", { length: 20 }),
+		biasCalled: varchar("bias_called", { length: 16 }),
+		setupCalled: text("setup_called"),
+		outcome: varchar("outcome", { length: 16 }),
+		bodyMarkdown: text("body_markdown").notNull(),
+		sourcePath: varchar("source_path", { length: 500 }),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("hawks_insights_date_idx").on(table.date),
+		uniqueIndex("hawks_insights_source_idx").on(table.sourcePath),
+	]
+)
+
+// Per-user progress tracking on Hawks learning content (4-week cronograma + concepts + videos).
+export const hawksLearningProgress = pgTable(
+	"hawks_learning_progress",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		sectionKey: varchar("section_key", { length: 100 }).notNull(),
+		completedAt: timestamp("completed_at", { withTimezone: true }),
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		uniqueIndex("hawks_learning_unique_idx").on(table.userId, table.sectionKey),
+	]
+)
+
+// ==========================================
 // RELATIONS
 // ==========================================
 
@@ -1333,6 +1482,54 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	accountAssetSettings: many(accountAssetSettings),
 	monthlyPlans: many(monthlyPlans),
 	notaImports: many(notaImports),
+	accountMode: one(accountModes, {
+		fields: [tradingAccounts.id],
+		references: [accountModes.accountId],
+	}),
+	hawksRenkoCalibrations: many(hawksRenkoCalibrations),
+	hawksDailyBias: many(hawksDailyBias),
+}))
+
+export const accountModesRelations = relations(accountModes, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [accountModes.accountId],
+		references: [tradingAccounts.id],
+	}),
+}))
+
+export const hawksRenkoCalibrationsRelations = relations(hawksRenkoCalibrations, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [hawksRenkoCalibrations.accountId],
+		references: [tradingAccounts.id],
+	}),
+}))
+
+export const hawksDailyBiasRelations = relations(hawksDailyBias, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [hawksDailyBias.accountId],
+		references: [tradingAccounts.id],
+	}),
+}))
+
+export const hawksStopAuditRelations = relations(hawksStopAudit, ({ one }) => ({
+	trade: one(trades, {
+		fields: [hawksStopAudit.tradeId],
+		references: [trades.id],
+	}),
+}))
+
+export const hawksScenarioOnTradeRelations = relations(hawksScenarioOnTrade, ({ one }) => ({
+	trade: one(trades, {
+		fields: [hawksScenarioOnTrade.tradeId],
+		references: [trades.id],
+	}),
+}))
+
+export const hawksLearningProgressRelations = relations(hawksLearningProgress, ({ one }) => ({
+	user: one(users, {
+		fields: [hawksLearningProgress.userId],
+		references: [users.id],
+	}),
 }))
 
 // Session Relations

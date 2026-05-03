@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { CommandMenu } from "@/components/layout/command-menu"
 import { PageBreadcrumb } from "@/components/layout/page-breadcrumb"
 import { UserMenu } from "@/components/layout/user-menu"
+import { HawksModeBadge } from "@/components/layout/hawks-mode-badge"
 import { ThemeSynchronizer } from "@/components/providers/theme-synchronizer"
 import { Button } from "@/components/ui/button"
 import { PageGuideProvider, PageGuideTrigger } from "@/components/ui/page-guide"
@@ -31,6 +32,7 @@ interface AppShellProps {
 	isReplayAccount?: boolean
 	replayDate?: string
 	serverBrand?: Brand
+	accountMode?: "default" | "hawks"
 }
 
 /**
@@ -47,6 +49,7 @@ const AppShell = ({
 	isReplayAccount = false,
 	replayDate,
 	serverBrand,
+	accountMode = "default",
 }: AppShellProps) => {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -130,6 +133,7 @@ const AppShell = ({
 						/>
 
 						<div className="gap-s-200 ml-auto flex items-center">
+							<HawksModeBadge mode={accountMode} variant="compact" />
 							<Button
 								id="mobile-notifications"
 								type="button"
@@ -171,6 +175,7 @@ const AppShell = ({
 						{/* Top bar: breadcrumbs | search | notifications + user */}
 						<div className="border-bg-300 bg-bg-200 gap-m-400 flex h-12 shrink-0 items-center border-b px-m-600 lg:px-l-700 lg:pl-l-800">
 							<PageBreadcrumb />
+							<HawksModeBadge mode={accountMode} />
 							<div className="flex-1" />
 							{/* Search trigger — opens CommandMenu via Cmd+K */}
 							<Button

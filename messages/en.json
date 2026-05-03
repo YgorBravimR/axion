@@ -2473,6 +2473,7 @@
     "description": "Manage assets, timeframes, and preferences",
     "tabs": {
       "profile": "Profile",
+      "mode": "Mode",
       "account": "Account",
       "tags": "Tags",
       "assets": "Assets",
@@ -2483,6 +2484,19 @@
       "conditions": "Conditions",
       "indicators": "Indicators",
       "bugs": "Bug Reports"
+    },
+    "mode": {
+      "hawks": {
+        "title": "Hawk's Mode",
+        "description": "Methodology-specific operating mode for Pedro Palmezani's Hawks Renko triple-screen system on B3 mini-índice / mini-dólar futures.",
+        "body": "When activated, the dashboard, journal, analytics, and risk surfaces tilt toward Hawks defaults. Skeleton phase: only the toggle and badge are wired — locked playbook, scenario picker, viés ritual, and journal-form locks ship in Phase 2.",
+        "scopeNote": "Per trading account. Toggling does not destroy data — your previous setup is archived and restored on deactivation.",
+        "activeBanner": "Hawk's Mode is active for this account.",
+        "toggleAria": "Toggle Hawk's Mode",
+        "previewTitle": "Coming next",
+        "previewDescription": "Phase 2 will lock the active strategy to Hawks — Triple Screen Renko, seed the 24-scenario picker, the daily viés ritual, and the Hawks-specific journal fields.",
+        "previewButton": "Phase 2 preview"
+      }
     },
     "profile": {
       "profileInfo": "Profile Information",
@@ -4632,6 +4646,23 @@
       "validated": "Validated {count} candles for {symbol} ({timeframe})",
       "importSuccess": "Successfully imported {count} candles",
       "seededIndicators": "Seeded indicator definitions ({mappings} known mappings across {groups} groups)"
+    }
+  },
+  "hawksMode": {
+    "badge": {
+      "label": "Hawk's Mode",
+      "aria": "Hawk's Mode is active for this account"
+    },
+    "actions": {
+      "statusRetrieved": "Hawk's Mode status loaded.",
+      "activated": "Hawk's Mode activated.",
+      "deactivated": "Hawk's Mode deactivated."
+    },
+    "errors": {
+      "noAccount": "No active trading account.",
+      "statusFetchFailed": "Could not load Hawk's Mode status.",
+      "activationFailed": "Could not activate Hawk's Mode.",
+      "deactivationFailed": "Could not deactivate Hawk's Mode."
     }
   }
 }

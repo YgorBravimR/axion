@@ -18,11 +18,12 @@ import { UserList } from "./user-list"
 import { ConditionList } from "./condition-list"
 import { IndicatorList } from "./indicator-list"
 import { BugReportsList } from "./bug-reports-list"
+import { HawksModeSettings } from "./hawks-mode-settings"
 import type { AssetWithType } from "@/app/actions/assets"
 import type { AssetType, Timeframe } from "@/db/schema"
 import type { UserWithAccounts } from "@/app/actions/user-management"
 import type { IndicatorGroupWithDefinitions } from "@/types/indicator"
-import { User, Briefcase, Coins, Clock, Tag, Users, Filter, Bug, BarChart3 } from "lucide-react"
+import { User, Briefcase, Coins, Clock, Tag, Users, Filter, Bug, BarChart3, Crosshair } from "lucide-react"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { settingsGuide } from "@/components/ui/page-guide/guide-configs/settings"
 
@@ -43,7 +44,7 @@ const CLEAR_TAB_PARAMS = Object.fromEntries(
 	TAB_SPECIFIC_PARAMS.map((param) => [param, null])
 ) as Record<string, null>
 
-const BASE_TABS = ["profile"] as const
+const BASE_TABS = ["profile", "mode"] as const
 const ADMIN_TABS = ["account", "tags", "conditions", "indicators", "assets", "timeframes", "users", "bugs"] as const
 
 interface SettingsContentProps {
@@ -94,6 +95,10 @@ export const SettingsContent = ({
 						<User className="h-4 w-4" />
 						{t("profile")}
 					</TabsTrigger>
+					<TabsTrigger value="mode" className="gap-s-200 shrink-0">
+						<Crosshair className="h-4 w-4" />
+						{t("mode")}
+					</TabsTrigger>
 					{isAdmin && (
 						<>
 							<TabsTrigger value="account" className="gap-s-200 shrink-0">
@@ -139,6 +144,10 @@ export const SettingsContent = ({
 
 			<AnimatedTabsContent value="profile">
 				{activeTab === "profile" && <UserProfileSettings />}
+			</AnimatedTabsContent>
+
+			<AnimatedTabsContent value="mode">
+				{activeTab === "mode" && <HawksModeSettings />}
 			</AnimatedTabsContent>
 
 			{isAdmin && (
