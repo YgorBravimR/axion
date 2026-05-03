@@ -2495,7 +2495,8 @@
         "toggleAria": "Alternar Modo Hawk's",
         "previewTitle": "Próximos passos",
         "previewDescription": "A Fase 2 trava a estratégia ativa em Hawks — Triple Screen Renko, semeia o picker de 24 cenários, o ritual de viés diário e os campos Hawks no journal.",
-        "previewButton": "Preview Fase 2"
+        "previewButton": "Preview Fase 2",
+        "openBias": "Abrir ritual de viés diário"
       }
     },
     "profile": {
@@ -4664,5 +4665,104 @@
       "activationFailed": "Não foi possível ativar o Modo Hawk's.",
       "deactivationFailed": "Não foi possível desativar o Modo Hawk's."
     }
+  },
+  "hawksBias": {
+    "page": {
+      "title": "Ritual de Viés Diário (60 min)",
+      "subtitle": "Cinco perguntas antes de qualquer trade. O Renko de 60 min sozinho decide o viés da sessão."
+    },
+    "ritual": {
+      "title": "Viés pré-mercado",
+      "description": "Trave o viés da sessão. Refaça o ritual se o 60 min virar durante o pregão.",
+      "biasLabel": "Viés do 60 min",
+      "checklistLabel": "Checklist de 5 perguntas",
+      "notesLabel": "Notas",
+      "notesPlaceholder": "Algo que Pedro sinalizou no call da manhã, contexto de mercado, risco de notícia…",
+      "save": "Salvar viés",
+      "bias": {
+        "comprador": "Comprador",
+        "vendedor": "Vendedor",
+        "lateral": "Lateral"
+      },
+      "checklist": {
+        "renko60min": "Renko de 60 min fechou na direção do viés",
+        "macd60min": "Histograma MACD 27/117/55 alinhado",
+        "emaStack": "Pilha das EMAs 27/55 confirma a direção",
+        "vwapPosition": "Preço respeita VWAP diária/mensal",
+        "ajusteRespect": "Ajuste do dia anterior respeitado"
+      }
+    },
+    "actions": {
+      "retrieved": "Viés carregado.",
+      "saved": "Viés salvo.",
+      "empty": "Nenhum viés registrado ainda."
+    },
+    "errors": {
+      "noAccount": "Nenhuma conta de trading ativa.",
+      "fetchFailed": "Não foi possível carregar o viés.",
+      "saveFailed": "Não foi possível salvar o viés."
+    }
+  },
+  "hawksScenario": {
+    "picker": {
+      "title": "Tagueamento de cenário Hawks",
+      "description": "Marque o trade com a taxonomia dos 24 cenários do Pedro + onda, pullback, alinhamento de MMAs e confluência.",
+      "scenarioLabel": "Cenário (1-24)",
+      "scenarioPlaceholder": "Selecione o cenário",
+      "waveLabel": "Onda de Elliott",
+      "wavePlaceholder": "Onda",
+      "pullbackLabel": "Nível do pullback",
+      "pullbackPlaceholder": "% Fib",
+      "mmaLabel": "MMAs alinhadas",
+      "mmaPlaceholder": "Sim/não/parcial",
+      "confluenciaLabel": "Confluência",
+      "confluenciaPlaceholder": "VWAP, ajuste, topo anterior",
+      "confluenciaHint": "Lista separada por vírgulas.",
+      "save": "Salvar cenário",
+      "mma": {
+        "yes": "Sim",
+        "no": "Não",
+        "partial": "Parcial"
+      }
+    },
+    "actions": {
+      "retrieved": "Cenário carregado.",
+      "saved": "Cenário salvo.",
+      "empty": "Nenhum cenário ainda."
+    },
+    "errors": {
+      "unauthorized": "Trade não encontrado nesta conta.",
+      "fetchFailed": "Não foi possível carregar o cenário.",
+      "saveFailed": "Não foi possível salvar o cenário."
+    }
+  },
+  "hawksStopAudit": {
+    "list": {
+      "title": "Auditoria de disciplina de stop",
+      "description": "Toda alteração de stop é registrada. Regra Hawks: stop nunca anda contra a posição.",
+      "loading": "Carregando…",
+      "empty": "Nenhuma alteração de stop registrada.",
+      "disciplineClean": "Todas as movimentações foram em direção ao break-even.",
+      "disciplineViolations": "{count} movimentação(ões) violaram a regra do nunca-contra.",
+      "change": "Stop {old} → {new}",
+      "direction": "Direção: {direction}",
+      "violation": "Violação"
+    },
+    "actions": {
+      "retrieved": "Auditoria carregada.",
+      "saved": "Alteração de stop registrada.",
+      "savedViolation": "Alteração registrada — sinalizada como violação."
+    },
+    "errors": {
+      "unauthorized": "Trade não encontrado nesta conta.",
+      "fetchFailed": "Não foi possível carregar a auditoria.",
+      "saveFailed": "Não foi possível registrar a alteração."
+    }
+  },
+  "hawksCircuitBreaker": {
+    "activeTitle": "Trade {count} de {limit} hoje",
+    "activeBody": "O Modo Hawk's permite até 3 entradas por dia. Depois disso você devolve, no quinto vira operacional.",
+    "exceededTitle": "Limite diário de trades atingido",
+    "exceededBody": "Você já fez 3 trades hoje. Pare a sessão. Só abra nova entrada quando outro pregão começar."
   }
 }

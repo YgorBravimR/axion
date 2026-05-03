@@ -2495,7 +2495,8 @@
         "toggleAria": "Toggle Hawk's Mode",
         "previewTitle": "Coming next",
         "previewDescription": "Phase 2 will lock the active strategy to Hawks — Triple Screen Renko, seed the 24-scenario picker, the daily viés ritual, and the Hawks-specific journal fields.",
-        "previewButton": "Phase 2 preview"
+        "previewButton": "Phase 2 preview",
+        "openBias": "Open daily viés ritual"
       }
     },
     "profile": {
@@ -4664,5 +4665,104 @@
       "activationFailed": "Could not activate Hawk's Mode.",
       "deactivationFailed": "Could not deactivate Hawk's Mode."
     }
+  },
+  "hawksBias": {
+    "page": {
+      "title": "Daily 60-min Bias Ritual",
+      "subtitle": "Five questions before any trade. The 60-min Renko alone decides the session bias."
+    },
+    "ritual": {
+      "title": "Pre-market viés",
+      "description": "Lock the bias for the session. Re-do the ritual if 60-min flips intra-day.",
+      "biasLabel": "60-min bias",
+      "checklistLabel": "5-question checklist",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Anything Pedro flagged on the morning call, market context, news risk…",
+      "save": "Save bias",
+      "bias": {
+        "comprador": "Comprador",
+        "vendedor": "Vendedor",
+        "lateral": "Lateral"
+      },
+      "checklist": {
+        "renko60min": "60-min Renko closed in trend direction",
+        "macd60min": "MACD 27/117/55 histogram aligned",
+        "emaStack": "EMA 27/55 stack confirms direction",
+        "vwapPosition": "Price respects VWAP daily/monthly",
+        "ajusteRespect": "Previous-day settlement (ajuste) respected"
+      }
+    },
+    "actions": {
+      "retrieved": "Bias loaded.",
+      "saved": "Bias saved.",
+      "empty": "No bias recorded yet."
+    },
+    "errors": {
+      "noAccount": "No active trading account.",
+      "fetchFailed": "Could not load bias.",
+      "saveFailed": "Could not save bias."
+    }
+  },
+  "hawksScenario": {
+    "picker": {
+      "title": "Hawks scenario tagging",
+      "description": "Tag the trade with Pedro's 24-scenario taxonomy plus wave, pullback, MMA alignment, confluência.",
+      "scenarioLabel": "Scenario (1-24)",
+      "scenarioPlaceholder": "Select scenario",
+      "waveLabel": "Elliott wave",
+      "wavePlaceholder": "Wave",
+      "pullbackLabel": "Pullback level",
+      "pullbackPlaceholder": "Fib %",
+      "mmaLabel": "MMA aligned",
+      "mmaPlaceholder": "Yes/no/partial",
+      "confluenciaLabel": "Confluência",
+      "confluenciaPlaceholder": "VWAP, ajuste, topo anterior",
+      "confluenciaHint": "Comma-separated list.",
+      "save": "Save scenario",
+      "mma": {
+        "yes": "Yes",
+        "no": "No",
+        "partial": "Partial"
+      }
+    },
+    "actions": {
+      "retrieved": "Scenario loaded.",
+      "saved": "Scenario saved.",
+      "empty": "No scenario tagged yet."
+    },
+    "errors": {
+      "unauthorized": "Trade not found in this account.",
+      "fetchFailed": "Could not load scenario.",
+      "saveFailed": "Could not save scenario."
+    }
+  },
+  "hawksStopAudit": {
+    "list": {
+      "title": "Stop discipline audit",
+      "description": "Every stop modification is logged. Hawks rule: stop never moves against position.",
+      "loading": "Loading…",
+      "empty": "No stop changes recorded yet.",
+      "disciplineClean": "All stop moves were toward break-even.",
+      "disciplineViolations": "{count} stop move(s) violated the never-against-position rule.",
+      "change": "Stop {old} → {new}",
+      "direction": "Direction: {direction}",
+      "violation": "Violation"
+    },
+    "actions": {
+      "retrieved": "Stop audit loaded.",
+      "saved": "Stop change logged.",
+      "savedViolation": "Stop change logged — flagged as violation."
+    },
+    "errors": {
+      "unauthorized": "Trade not found in this account.",
+      "fetchFailed": "Could not load stop audit.",
+      "saveFailed": "Could not log stop change."
+    }
+  },
+  "hawksCircuitBreaker": {
+    "activeTitle": "Trade {count} of {limit} today",
+    "activeBody": "Hawk's Mode allows up to 3 entries per day. After that you give back, on the fifth you become the operacional.",
+    "exceededTitle": "Daily trade cap reached",
+    "exceededBody": "You've taken 3 trades today. Stop the day. Open a new entry only after a new session opens."
   }
 }

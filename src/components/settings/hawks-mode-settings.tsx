@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Crosshair, Loader2 } from "lucide-react"
+import { Link } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -95,8 +96,12 @@ const HawksModeSettings = () => {
 					<CardDescription>{t("hawks.previewDescription")}</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Button id="hawks-mode-preview-button" variant="outline" disabled>
-						{t("hawks.previewButton")}
+					<Button id="hawks-mode-preview-button" variant="outline" asChild={isHawks} disabled={!isHawks}>
+						{isHawks ? (
+							<Link href="/hawks/bias">{t("hawks.openBias")}</Link>
+						) : (
+							<span>{t("hawks.previewButton")}</span>
+						)}
 					</Button>
 				</CardContent>
 			</Card>
