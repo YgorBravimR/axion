@@ -1,0 +1,301 @@
+// src/lib/queries/period-queries.ts
+
+import { db } from "@/db/drizzle"
+import { trades, tradingAccounts, accountMonthlyAggregate, accountWeeklyAggregate } from "@/db/schema"
+import { eq, and, gte, lte } from "drizzle-orm"
+import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
+import { rollupTrades } from "@/lib/aggregation/period-rollup"
+import type { TradeFact } from "@/lib/aggregation/period-rollup"
+import { weekStart, weekEnd } from "@/lib/calendar/iso-week"
+import { centsToPoints } from "@/lib/contracts/point-values"
+import type { PeriodResult } from "@/types/integration"
+import { startOfMonth, endOfMonth, setISOWeek, setISOWeekYear } from "date-fns"
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Looks up the userId that owns a given trading account.
+ * Required because getUserDek() takes a userId, not an accountId.
+ */
+const getAccountUserId = async (accountId: string): Promise<string | null> => {
+	const row = await db.query.tradingAccounts.findFirst({
+		where: eq(tradingAccounts.id, accountId),
+		columns: { userId: true },
+	})
+	return row?.userId ?? null
+}
+
+/**
+ * Loads raw trades for a date range and decrypts the monetary fields.
+ * Returns TradeFact objects ready for rollupTrades.
+ *
+ * Encryption is currently disabled (getUserDek always returns null), so dek
+ * will be null and pnl/commission/fees/positionSize are already plaintext
+ * string-encoded integers. The fallback path parses them directly.
+ */
+const loadTradesForRange = async (
+	accountId: string,
+	rangeStart: Date,
+	rangeEnd: Date,
+): Promise<TradeFact[]> => {
+	const rawRows = await db
+		.select()
+		.from(trades)
+		.where(
+			and(
+				eq(trades.accountId, accountId),
+				gte(trades.entryDate, rangeStart),
+				lte(trades.entryDate, rangeEnd),
+				eq(trades.isArchived, false),
+			),
+		)
+		.limit(10000)
+
+	const userId = await getAccountUserId(accountId)
+	const dek = userId ? await getUserDek(userId) : null
+
+	// Match the analytics.ts pattern: batch-decrypt once, then map
+	const decryptedRows = dek ? rawRows.map((t) => decryptTradeFields(t, dek)) : rawRows
+
+	return decryptedRows.map((t) => {
+		// When dek is non-null, decryptTradeFields returns numbers via decryptNumericField.
+		// When dek is null (current state), fields are plaintext strings — parse to numbers.
+		const pnlCents = Number(t.pnl ?? 0)
+		const commissionCents = Number(t.commission ?? 0)
+		const feesCents = Number(t.fees ?? 0)
+
+		// positionSize is encrypted text; when dek is null it is the raw plaintext string.
+		const contracts = Number(t.positionSize ?? 1) || 1
+
+		// Use centsToPoints for correct per-instrument contract math.
+		// pnlCents is net (commissions already subtracted by broker data layer).
+		const points = centsToPoints(pnlCents, t.asset, contracts)
+
+		return {
+			id: t.id,
+			asset: t.asset,
+			pnlCents,
+			commissionCents,
+			feesCents,
+			points,
+			entryDate: t.entryDate,
+		} satisfies TradeFact
+	})
+}
+
+/**
+ * Converts a stored aggregate row into a PeriodResult (points is a numeric string).
+ */
+const rowToPeriodResult = (row: {
+	grossCents: number
+	netCents: number
+	points: unknown
+	tradingDays: number
+	gainDays: number
+	lossDays: number
+}): PeriodResult => ({
+	grossCents: row.grossCents,
+	netCents: row.netCents,
+	points: parseFloat(String(row.points)),
+	tradingDays: row.tradingDays,
+	gainDays: row.gainDays,
+	lossDays: row.lossDays,
+})
+
+/**
+ * Upserts a fresh PeriodResult into the monthly aggregate table and marks it clean.
+ */
+const upsertMonthAggregate = async (
+	accountId: string,
+	year: number,
+	month: number,
+	result: PeriodResult,
+): Promise<void> => {
+	await db
+		.insert(accountMonthlyAggregate)
+		.values({
+			accountId,
+			year,
+			month,
+			grossCents: result.grossCents,
+			netCents: result.netCents,
+			points: result.points.toString(),
+			tradingDays: result.tradingDays,
+			gainDays: result.gainDays,
+			lossDays: result.lossDays,
+			isDirty: false,
+			computedAt: new Date(),
+		})
+		.onConflictDoUpdate({
+			target: [accountMonthlyAggregate.accountId, accountMonthlyAggregate.year, accountMonthlyAggregate.month],
+			set: {
+				grossCents: result.grossCents,
+				netCents: result.netCents,
+				points: result.points.toString(),
+				tradingDays: result.tradingDays,
+				gainDays: result.gainDays,
+				lossDays: result.lossDays,
+				isDirty: false,
+				computedAt: new Date(),
+			},
+		})
+}
+
+/**
+ * Upserts a fresh PeriodResult into the weekly aggregate table and marks it clean.
+ */
+const upsertWeekAggregate = async (
+	accountId: string,
+	isoYear: number,
+	isoWeek: number,
+	result: PeriodResult,
+): Promise<void> => {
+	await db
+		.insert(accountWeeklyAggregate)
+		.values({
+			accountId,
+			isoYear,
+			isoWeek,
+			grossCents: result.grossCents,
+			netCents: result.netCents,
+			points: result.points.toString(),
+			tradingDays: result.tradingDays,
+			gainDays: result.gainDays,
+			lossDays: result.lossDays,
+			isDirty: false,
+			computedAt: new Date(),
+		})
+		.onConflictDoUpdate({
+			target: [accountWeeklyAggregate.accountId, accountWeeklyAggregate.isoYear, accountWeeklyAggregate.isoWeek],
+			set: {
+				grossCents: result.grossCents,
+				netCents: result.netCents,
+				points: result.points.toString(),
+				tradingDays: result.tradingDays,
+				gainDays: result.gainDays,
+				lossDays: result.lossDays,
+				isDirty: false,
+				computedAt: new Date(),
+			},
+		})
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the rolled-up PeriodResult for a calendar month.
+ *
+ * Reads from the materialized aggregate row when it exists and is clean.
+ * Falls back to recomputing from raw trades (then persists the result)
+ * when the row is missing or marked dirty.
+ */
+const getMonthAggregate = async (
+	accountId: string,
+	year: number,
+	month: number,
+): Promise<PeriodResult> => {
+	const rows = await db
+		.select()
+		.from(accountMonthlyAggregate)
+		.where(
+			and(
+				eq(accountMonthlyAggregate.accountId, accountId),
+				eq(accountMonthlyAggregate.year, year),
+				eq(accountMonthlyAggregate.month, month),
+			),
+		)
+		.limit(1)
+
+	const row = rows[0]
+	if (row && !row.isDirty) {
+		return rowToPeriodResult(row)
+	}
+
+	// Row is missing or dirty — recompute from raw trades
+	const monthStart = startOfMonth(new Date(year, month - 1, 1))
+	const monthEnd = endOfMonth(monthStart)
+
+	const facts = await loadTradesForRange(accountId, monthStart, monthEnd)
+	const result = rollupTrades(facts, { year, month })
+
+	await upsertMonthAggregate(accountId, year, month, result)
+
+	return result
+}
+
+/**
+ * Returns the rolled-up PeriodResult for an ISO 8601 week.
+ *
+ * Uses setISOWeek/setISOWeekYear from date-fns to build a Monday anchor for
+ * the requested ISO year+week, then derives the full Mon–Sun range via the
+ * iso-week helpers. This correctly handles boundary weeks (e.g. week 1/2026
+ * starts Mon 2025-12-29, which lives in calendar year 2025).
+ */
+const getWeekAggregate = async (
+	accountId: string,
+	isoYear: number,
+	isoWeek: number,
+): Promise<PeriodResult> => {
+	const rows = await db
+		.select()
+		.from(accountWeeklyAggregate)
+		.where(
+			and(
+				eq(accountWeeklyAggregate.accountId, accountId),
+				eq(accountWeeklyAggregate.isoYear, isoYear),
+				eq(accountWeeklyAggregate.isoWeek, isoWeek),
+			),
+		)
+		.limit(1)
+
+	const row = rows[0]
+	if (row && !row.isDirty) {
+		return rowToPeriodResult(row)
+	}
+
+	// Build the Monday of the target ISO week using date-fns helpers.
+	// setISOWeekYear sets the ISO week-year, then setISOWeek positions the date
+	// to the correct Monday. Using new Date() as an arbitrary starting point.
+	const isoMonday = setISOWeek(setISOWeekYear(new Date(), isoYear), isoWeek)
+	const wStart = weekStart(isoMonday)
+	const wEnd = weekEnd(isoMonday)
+
+	const facts = await loadTradesForRange(accountId, wStart, wEnd)
+	const result = rollupTrades(facts, { year: isoYear, isoWeek })
+
+	await upsertWeekAggregate(accountId, isoYear, isoWeek, result)
+
+	return result
+}
+
+/**
+ * Returns the rolled-up PeriodResult for a full calendar year.
+ *
+ * Sums all 12 monthly aggregates, recomputing any dirty or missing months.
+ * Months run concurrently — this is safe because each month's upsert is
+ * independent, and the yearly total is never persisted (always derived live).
+ */
+const getYearAggregate = async (accountId: string, year: number): Promise<PeriodResult> => {
+	const monthNumbers = Array.from({ length: 12 }, (_, i) => i + 1)
+	const monthResults = await Promise.all(
+		monthNumbers.map((month) => getMonthAggregate(accountId, year, month)),
+	)
+
+	return monthResults.reduce<PeriodResult>(
+		(acc, m) => ({
+			grossCents: acc.grossCents + m.grossCents,
+			netCents: acc.netCents + m.netCents,
+			points: acc.points + m.points,
+			tradingDays: acc.tradingDays + m.tradingDays,
+			gainDays: acc.gainDays + m.gainDays,
+			lossDays: acc.lossDays + m.lossDays,
+		}),
+		{ grossCents: 0, netCents: 0, points: 0, tradingDays: 0, gainDays: 0, lossDays: 0 },
+	)
+}
+
+export { getMonthAggregate, getWeekAggregate, getYearAggregate }
