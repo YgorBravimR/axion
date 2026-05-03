@@ -1,10 +1,11 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { accountCapitalEvents } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import { accountCapitalEvents, tradingAccounts } from "@/db/schema"
+import { eq, and, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
+import type { CapitalEvent } from "@/types/integration"
 
 interface RecordCapitalEventParams {
 	eventType: "deposit" | "withdrawal"
@@ -74,4 +75,45 @@ const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
 	return { status: "success" }
 }
 
-export { recordCapitalEvent, deleteCapitalEvent }
+const getCapitalSnapshot = async (): Promise<
+	ActionResult<{ balanceCents: number; events: CapitalEvent[] }>
+> => {
+	const { accountId } = await requireAuth()
+
+	const accountRows = await db
+		.select({ startingBalanceCents: tradingAccounts.startingBalanceCents })
+		.from(tradingAccounts)
+		.where(eq(tradingAccounts.id, accountId))
+		.limit(1)
+
+	const starting = accountRows[0]?.startingBalanceCents ?? 0
+
+	const events = await db
+		.select()
+		.from(accountCapitalEvents)
+		.where(eq(accountCapitalEvents.accountId, accountId))
+		.orderBy(asc(accountCapitalEvents.eventDate))
+
+	let balanceCents = starting
+	const mappedEvents: CapitalEvent[] = events.map((e) => {
+		if (e.eventType === "deposit") {
+			balanceCents += e.amountCents
+		} else {
+			balanceCents -= e.amountCents
+		}
+		return {
+			id: e.id,
+			eventType: e.eventType,
+			amountCents: e.amountCents,
+			eventDate: e.eventDate,
+			notes: e.notes ?? undefined,
+		}
+	})
+
+	return {
+		status: "success",
+		data: { balanceCents, events: mappedEvents },
+	}
+}
+
+export { recordCapitalEvent, deleteCapitalEvent, getCapitalSnapshot }
