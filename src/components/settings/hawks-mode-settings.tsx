@@ -95,14 +95,27 @@ const HawksModeSettings = () => {
 					<CardTitle>{t("hawks.previewTitle")}</CardTitle>
 					<CardDescription>{t("hawks.previewDescription")}</CardDescription>
 				</CardHeader>
-				<CardContent>
-					<Button id="hawks-mode-preview-button" variant="outline" asChild={isHawks} disabled={!isHawks}>
-						{isHawks ? (
-							<Link href="/hawks/bias">{t("hawks.openBias")}</Link>
-						) : (
-							<span>{t("hawks.previewButton")}</span>
-						)}
-					</Button>
+				<CardContent className="flex flex-wrap gap-s-200">
+					{isHawks ? (
+						<>
+							<Button id="hawks-mode-preview-bias" variant="outline" asChild>
+								<Link href="/hawks/bias">{t("hawks.openBias")}</Link>
+							</Button>
+							<Button id="hawks-mode-preview-calibration" variant="outline" asChild>
+								<Link href="/hawks/calibration">{t("hawks.openCalibration")}</Link>
+							</Button>
+							<Button id="hawks-mode-preview-calendar" variant="outline" asChild>
+								<Link href="/hawks/calendar">{t("hawks.openCalendar")}</Link>
+							</Button>
+							<Button id="hawks-mode-preview-analytics" variant="outline" asChild>
+								<Link href="/hawks/analytics">{t("hawks.openAnalytics")}</Link>
+							</Button>
+						</>
+					) : (
+						<Button id="hawks-mode-preview-button" variant="outline" disabled>
+							{t("hawks.previewButton")}
+						</Button>
+					)}
 				</CardContent>
 			</Card>
 		</div>

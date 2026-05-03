@@ -2496,7 +2496,10 @@
         "previewTitle": "Coming next",
         "previewDescription": "Phase 2 will lock the active strategy to Hawks — Triple Screen Renko, seed the 24-scenario picker, the daily viés ritual, and the Hawks-specific journal fields.",
         "previewButton": "Phase 2 preview",
-        "openBias": "Open daily viés ritual"
+        "openBias": "Open daily viés ritual",
+        "openCalibration": "Renko calibration",
+        "openCalendar": "Macro calendar",
+        "openAnalytics": "Hawks analytics"
       }
     },
     "profile": {
@@ -4816,5 +4819,65 @@
     "nextMonth": "Next month",
     "upcomingTitle": "Upcoming events",
     "upcomingEmpty": "No upcoming events seeded."
+  },
+  "hawksAnalytics": {
+    "page": {
+      "title": "Hawks analytics",
+      "subtitle": "Performance vs. Pedro's 2024 reference and rule-by-rule discipline."
+    },
+    "loading": "Loading analytics…",
+    "actions": {
+      "loaded": "Analytics loaded."
+    },
+    "errors": {
+      "noAccount": "No account in session.",
+      "fetchFailed": "Could not load Hawks analytics."
+    },
+    "kpi": {
+      "profitFactor": "Profit factor",
+      "winRate": "Win rate",
+      "expectancy": "Expectancy / trade",
+      "expectancyBenchmark": "Positive R per trade.",
+      "mfeCapture": "MFE capture",
+      "mfeBenchmark": "Target ≥ 50%.",
+      "benchmark": "Benchmark: {value}",
+      "tradesCount": "{count} trades in window."
+    },
+    "discipline": {
+      "title": "Discipline",
+      "description": "Hard rules: stop never moves against you, max 3 trades per session.",
+      "stopDiscipline": "Stop discipline",
+      "stopBenchmark": "{changes} changes · {violations} violations",
+      "tradeCap": "3-trade cap",
+      "tradeCapValue": "{over}/{total} days over",
+      "tradeCapBenchmark": "Zero days over the cap.",
+      "avgMfeCapture": "Avg. MFE capture"
+    },
+    "scenario": {
+      "title": "Per-scenario performance",
+      "description": "How each of Pedro's 24 scenarios is paying off for you.",
+      "code": "Scenario",
+      "trades": "Trades",
+      "winRate": "Win %",
+      "expectancy": "Expectancy",
+      "totalR": "Total R",
+      "empty": "Tag your trades with scenarios to see this breakdown."
+    },
+    "coach": {
+      "title": "Coaching detectors",
+      "description": "Recent rule deviations the coach has flagged.",
+      "empty": "No deviations detected. Discipline holding.",
+      "kinds": {
+        "bias_mismatch": "Trade direction did not match the day's 60-min bias.",
+        "lateral_traded": "Bias was 'lateral' — sat-out rule triggered.",
+        "over_cap": "More than 3 trades on this session.",
+        "stop_against": "Stop moved against your position.",
+        "low_mfe_capture": "Captured less than 50% of the MFE on this trade.",
+        "missing_scenario": "No Hawks scenario tagged on this trade.",
+        "missing_pullback": "No pullback Fib level tagged on this trade.",
+        "mma_misaligned": "MMA was not aligned at entry.",
+        "checklist_skipped": "Daily bias checklist had < 3 items confirmed."
+      }
+    }
   }
 }

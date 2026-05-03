@@ -2496,7 +2496,10 @@
         "previewTitle": "Próximos passos",
         "previewDescription": "A Fase 2 trava a estratégia ativa em Hawks — Triple Screen Renko, semeia o picker de 24 cenários, o ritual de viés diário e os campos Hawks no journal.",
         "previewButton": "Preview Fase 2",
-        "openBias": "Abrir ritual de viés diário"
+        "openBias": "Abrir ritual de viés diário",
+        "openCalibration": "Calibração Renko",
+        "openCalendar": "Calendário macro",
+        "openAnalytics": "Análises Hawk's"
       }
     },
     "profile": {
@@ -4816,5 +4819,65 @@
     "nextMonth": "Próximo mês",
     "upcomingTitle": "Próximos eventos",
     "upcomingEmpty": "Nenhum evento futuro carregado."
+  },
+  "hawksAnalytics": {
+    "page": {
+      "title": "Análises Hawk's",
+      "subtitle": "Performance contra a referência do Pedro 2024 e disciplina regra a regra."
+    },
+    "loading": "Carregando análises…",
+    "actions": {
+      "loaded": "Análises carregadas."
+    },
+    "errors": {
+      "noAccount": "Sem conta na sessão.",
+      "fetchFailed": "Não foi possível carregar as análises Hawk's."
+    },
+    "kpi": {
+      "profitFactor": "Profit factor",
+      "winRate": "Taxa de acerto",
+      "expectancy": "Expectativa / trade",
+      "expectancyBenchmark": "R positivo por trade.",
+      "mfeCapture": "Captura de MFE",
+      "mfeBenchmark": "Meta ≥ 50%.",
+      "benchmark": "Referência: {value}",
+      "tradesCount": "{count} trades na janela."
+    },
+    "discipline": {
+      "title": "Disciplina",
+      "description": "Regras duras: stop nunca anda contra, no máximo 3 trades por pregão.",
+      "stopDiscipline": "Disciplina de stop",
+      "stopBenchmark": "{changes} alterações · {violations} violações",
+      "tradeCap": "Limite de 3 trades",
+      "tradeCapValue": "{over}/{total} dias acima",
+      "tradeCapBenchmark": "Zero dias acima do limite.",
+      "avgMfeCapture": "Captura média de MFE"
+    },
+    "scenario": {
+      "title": "Performance por cenário",
+      "description": "Como cada um dos 24 cenários do Pedro tem pagado para você.",
+      "code": "Cenário",
+      "trades": "Trades",
+      "winRate": "Acerto %",
+      "expectancy": "Expectativa",
+      "totalR": "R total",
+      "empty": "Tague seus trades com cenários para ver esta análise."
+    },
+    "coach": {
+      "title": "Detectores de coaching",
+      "description": "Desvios de regra que o coach detectou recentemente.",
+      "empty": "Sem desvios detectados. Disciplina mantida.",
+      "kinds": {
+        "bias_mismatch": "Direção do trade não bateu com o viés de 60 min do dia.",
+        "lateral_traded": "Viés era 'lateral' — regra de ficar fora foi quebrada.",
+        "over_cap": "Mais de 3 trades neste pregão.",
+        "stop_against": "Stop andou contra a posição.",
+        "low_mfe_capture": "Capturou menos de 50% do MFE neste trade.",
+        "missing_scenario": "Nenhum cenário Hawk's tagueado neste trade.",
+        "missing_pullback": "Nenhum nível Fib de pullback tagueado neste trade.",
+        "mma_misaligned": "MMA não estava alinhada na entrada.",
+        "checklist_skipped": "Checklist diário do viés com < 3 itens confirmados."
+      }
+    }
   }
 }
