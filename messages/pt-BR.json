@@ -2501,7 +2501,8 @@
         "openCalendar": "Calendário macro",
         "openAnalytics": "Análises Hawk's",
         "openPresets": "Presets Hawk's",
-        "openLearning": "Aprendizado Hawk's"
+        "openLearning": "Aprendizado Hawk's",
+        "openMentor": "Mentor Hawk's"
       }
     },
     "profile": {
@@ -4957,6 +4958,51 @@
       "noUser": "Sem usuário na sessão.",
       "fetchFailed": "Não foi possível carregar o conteúdo.",
       "saveFailed": "Não foi possível salvar o progresso."
+    }
+  },
+  "hawksMentor": {
+    "page": {
+      "title": "Mesa do mentor Hawk's",
+      "subtitle": "Estatísticas anonimizadas de todas as contas Hawk's e o compositor admin para os insights diários da live de manhã.",
+      "nonAdminNotice": "O compositor é exclusivo de admins. As estatísticas do grupo continuam visíveis para você comparar sua disciplina com o restante do cohort Hawk's."
+    },
+    "composer": {
+      "title": "Novo insight do mentor",
+      "description": "Publique uma nota da live de manhã. Visível para todos os traders em modo Hawk's no hub de aprendizado.",
+      "dateLabel": "Data da sessão",
+      "assetLabel": "Ativo (opcional)",
+      "assetPlaceholder": "Escolha um ativo",
+      "biasLabel": "Viés chamado",
+      "biasPlaceholder": "Escolha um viés",
+      "outcomeLabel": "Resultado",
+      "outcomePlaceholder": "Escolha um resultado",
+      "setupLabel": "Setup chamado",
+      "setupPlaceholder": "ex.: Onda 2 comprador VWAP",
+      "bodyLabel": "Corpo (markdown)",
+      "bodyPlaceholder": "Escreva o resumo da live de manhã. Markdown permitido.",
+      "save": "Publicar insight",
+      "errors": {
+        "emptyBody": "O corpo não pode ficar vazio."
+      }
+    },
+    "cohort": {
+      "title": "Comparação do cohort",
+      "description": "Resumo anonimizado de todas as contas em modo Hawk's nos últimos 90 dias.",
+      "loading": "Carregando estatísticas do cohort…",
+      "empty": "Nenhuma conta em modo Hawk's registrou trades nos últimos 90 dias.",
+      "accounts": "Contas Hawk's",
+      "trades": "Trades (90d)",
+      "winRate": "Win rate médio",
+      "profitFactor": "Profit factor médio"
+    },
+    "actions": {
+      "saved": "Insight publicado.",
+      "cohortLoaded": "Cohort carregado."
+    },
+    "errors": {
+      "adminOnly": "Apenas admins.",
+      "saveFailed": "Não foi possível salvar o insight.",
+      "cohortFailed": "Não foi possível carregar o cohort."
     }
   }
 }

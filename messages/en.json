@@ -2501,7 +2501,8 @@
         "openCalendar": "Macro calendar",
         "openAnalytics": "Hawks analytics",
         "openPresets": "Hawks presets",
-        "openLearning": "Hawks learning"
+        "openLearning": "Hawks learning",
+        "openMentor": "Hawks mentor"
       }
     },
     "profile": {
@@ -4957,6 +4958,51 @@
       "noUser": "No user in session.",
       "fetchFailed": "Could not load learning content.",
       "saveFailed": "Could not save progress."
+    }
+  },
+  "hawksMentor": {
+    "page": {
+      "title": "Hawks mentor desk",
+      "subtitle": "Anonymized cohort stats for every Hawks account, plus the admin composer for daily morning-call insights.",
+      "nonAdminNotice": "Mentor composer is admin-only. Cohort stats above stay visible so you can compare your discipline against the wider Hawks group."
+    },
+    "composer": {
+      "title": "New mentor insight",
+      "description": "Publish a daily morning-call note. Visible to every Hawks-mode trader on their learning hub.",
+      "dateLabel": "Session date",
+      "assetLabel": "Asset (optional)",
+      "assetPlaceholder": "Pick an asset",
+      "biasLabel": "Bias called",
+      "biasPlaceholder": "Pick a bias",
+      "outcomeLabel": "Outcome",
+      "outcomePlaceholder": "Pick an outcome",
+      "setupLabel": "Setup called",
+      "setupPlaceholder": "e.g. Onda 2 comprador VWAP",
+      "bodyLabel": "Body (markdown)",
+      "bodyPlaceholder": "Write the morning-call digest. Markdown allowed.",
+      "save": "Publish insight",
+      "errors": {
+        "emptyBody": "Body cannot be empty."
+      }
+    },
+    "cohort": {
+      "title": "Cohort comparison",
+      "description": "Anonymized rollup of every Hawks-mode account over the last 90 days.",
+      "loading": "Loading cohort stats…",
+      "empty": "No Hawks-mode accounts have logged trades in the last 90 days yet.",
+      "accounts": "Hawks accounts",
+      "trades": "Trades (90d)",
+      "winRate": "Avg win rate",
+      "profitFactor": "Avg profit factor"
+    },
+    "actions": {
+      "saved": "Mentor insight published.",
+      "cohortLoaded": "Cohort stats loaded."
+    },
+    "errors": {
+      "adminOnly": "Admins only.",
+      "saveFailed": "Could not save mentor insight.",
+      "cohortFailed": "Could not load cohort stats."
     }
   }
 }
