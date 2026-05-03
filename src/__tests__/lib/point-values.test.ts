@@ -29,4 +29,14 @@ describe("point-values", () => {
   it("centsToPoints: 100000 cents WDO 2 contracts = 50 points", () => {
     expect(centsToPoints(100000, "WDO", 2)).toBe(50)
   })
+
+  it("centsToPoints: 300 cents WIN 3 contracts = 5 points (float drift guard)", () => {
+    expect(centsToPoints(300, "WIN", 3)).toBe(5)
+  })
+
+  it("round-trip: pointsToCents → centsToPoints returns input", () => {
+    // For each (points, instrument, contracts) combo, round-trip must return points
+    expect(centsToPoints(pointsToCents(5, "WIN", 3), "WIN", 3)).toBe(5)
+    expect(centsToPoints(pointsToCents(7, "WDO", 4), "WDO", 4)).toBe(7)
+  })
 })

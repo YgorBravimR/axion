@@ -4,10 +4,19 @@
  * WDO: R$10.00 per point (Mini Dólar Futuro — WDOFUT).
  * These are fixed by B3 regulation — not configurable.
  */
-const POINT_VALUES: Record<string, number> = {
+
+type Instrument = "WIN" | "WDO"
+
+const POINT_VALUES: Record<Instrument, number> = {
   WIN: 0.20,
   WDO: 10.00,
 }
+
+/** Fallback cents-per-point ratio (R$1.00/pt) for instruments not in B3 mini-contracts. */
+const UNKNOWN_INSTRUMENT_POINT_VALUE = 1
+
+const resolvePointValue = (instrument: string): number =>
+  POINT_VALUES[instrument as Instrument] ?? UNKNOWN_INSTRUMENT_POINT_VALUE
 
 /**
  * Converts raw points to BRL cents for a given instrument and contract count.
@@ -18,7 +27,7 @@ const POINT_VALUES: Record<string, number> = {
  * @returns Amount in integer BRL cents
  */
 const pointsToCents = (points: number, instrument: string, contracts = 1): number =>
-  Math.round(points * (POINT_VALUES[instrument] ?? 1) * contracts * 100)
+  Math.round(points * resolvePointValue(instrument) * contracts * 100)
 
 /**
  * Converts BRL cents to points for a given instrument and contract count.
@@ -26,9 +35,10 @@ const pointsToCents = (points: number, instrument: string, contracts = 1): numbe
  * @param cents - Amount in BRL cents
  * @param instrument - Instrument code
  * @param contracts - Number of contracts (default 1)
- * @returns Equivalent point count
+ * @returns Integer point count (rounded — WIN/WDO trade in whole points)
  */
 const centsToPoints = (cents: number, instrument: string, contracts = 1): number =>
-  cents / ((POINT_VALUES[instrument] ?? 1) * contracts * 100)
+  Math.round(cents / (resolvePointValue(instrument) * contracts * 100))
 
+export type { Instrument }
 export { POINT_VALUES, pointsToCents, centsToPoints }
