@@ -3,7 +3,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // ---------------------------------------------------------------------------
-// Hoist mock references so vi.mock factory closures can access them
+// Hoist mock references so vi.mock factory closures can access them.
+//
+// Drizzle's query builder is PromiseLike at every chain step. We model that:
+//   - .select().from().where()           → awaited directly (returns rows)
+//   - .select().from().where().limit(N)  → also awaited (returns rows)
+// `mockWhereResolve` drives the direct-await path; `mockLimit` drives the
+// terminal .limit(N) path. Aggregate-row reads use .limit(1); trades-range
+// reads await `.where()` directly (no row cap by design — silent truncation
+// would corrupt aggregates).
 // ---------------------------------------------------------------------------
 
 const {
@@ -13,6 +21,7 @@ const {
 	mockFrom,
 	mockWhere,
 	mockLimit,
+	mockWhereResolve,
 	mockValues,
 	mockOnConflictDoUpdate,
 	mockDbQuery,
@@ -20,6 +29,7 @@ const {
 	mockRollupTrades,
 } = vi.hoisted(() => {
 	const mockLimit = vi.fn()
+	const mockWhereResolve = vi.fn()
 	const mockWhere = vi.fn()
 	const mockFrom = vi.fn()
 	const mockSelect = vi.fn()
@@ -32,13 +42,20 @@ const {
 	const mockGetUserDek = vi.fn()
 	const mockRollupTrades = vi.fn()
 
-	// Chain: db.select().from().where().limit() → mockLimit resolves the value
 	mockLimit.mockResolvedValue([])
-	mockWhere.mockReturnValue({ limit: mockLimit })
+	mockWhereResolve.mockResolvedValue([])
+
+	const whereResult = {
+		limit: mockLimit,
+		then: (
+			onFulfilled?: ((value: unknown) => unknown) | null,
+			onRejected?: ((reason: unknown) => unknown) | null,
+		) => mockWhereResolve().then(onFulfilled, onRejected),
+	}
+	mockWhere.mockReturnValue(whereResult)
 	mockFrom.mockReturnValue({ where: mockWhere })
 	mockSelect.mockReturnValue({ from: mockFrom })
 
-	// Chain: db.insert().values().onConflictDoUpdate() → resolves
 	mockOnConflictDoUpdate.mockResolvedValue([])
 	mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate })
 	mockInsert.mockReturnValue({ values: mockValues })
@@ -50,6 +67,7 @@ const {
 		mockFrom,
 		mockWhere,
 		mockLimit,
+		mockWhereResolve,
 		mockValues,
 		mockOnConflictDoUpdate,
 		mockDbQuery,
@@ -87,8 +105,31 @@ vi.mock("@/lib/aggregation/period-rollup", () => ({
 	rollupTrades: mockRollupTrades,
 }))
 
-// Import after mocks are registered
 import { getMonthAggregate, getWeekAggregate, getYearAggregate } from "@/lib/queries/period-queries"
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const restoreChainDefaults = () => {
+	mockLimit.mockResolvedValue([])
+	mockWhereResolve.mockResolvedValue([])
+
+	const whereResult = {
+		limit: mockLimit,
+		then: (
+			onFulfilled?: ((value: unknown) => unknown) | null,
+			onRejected?: ((reason: unknown) => unknown) | null,
+		) => mockWhereResolve().then(onFulfilled, onRejected),
+	}
+	mockWhere.mockReturnValue(whereResult)
+	mockFrom.mockReturnValue({ where: mockWhere })
+	mockSelect.mockReturnValue({ from: mockFrom })
+
+	mockOnConflictDoUpdate.mockResolvedValue([])
+	mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate })
+	mockInsert.mockReturnValue({ values: mockValues })
+}
 
 // ---------------------------------------------------------------------------
 // Smoke tests: verify exports
@@ -118,29 +159,19 @@ describe("getMonthAggregate", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		restoreChainDefaults()
 
-		// Restore chain defaults after clearAllMocks
-		mockLimit.mockResolvedValue([])
-		mockWhere.mockReturnValue({ limit: mockLimit })
-		mockFrom.mockReturnValue({ where: mockWhere })
-		mockSelect.mockReturnValue({ from: mockFrom })
-		mockOnConflictDoUpdate.mockResolvedValue([])
-		mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate })
-		mockInsert.mockReturnValue({ values: mockValues })
-
-		// userId lookup for recompute path
 		mockDbQuery.tradingAccounts.findFirst.mockResolvedValue({ userId: USER_ID })
 		mockGetUserDek.mockResolvedValue(null)
 
-		const defaultResult = {
+		mockRollupTrades.mockReturnValue({
 			grossCents: 0,
 			netCents: 0,
 			points: 0,
 			tradingDays: 0,
 			gainDays: 0,
 			lossDays: 0,
-		}
-		mockRollupTrades.mockReturnValue(defaultResult)
+		})
 	})
 
 	it("returns cached row directly when isDirty is false", async () => {
@@ -153,7 +184,6 @@ describe("getMonthAggregate", () => {
 			lossDays: 3,
 			isDirty: false,
 		}
-		// First select (aggregate row) returns the clean cached row
 		mockLimit.mockResolvedValueOnce([cachedRow])
 
 		const result = await getMonthAggregate(ACCOUNT_ID, 2026, 1)
@@ -165,9 +195,7 @@ describe("getMonthAggregate", () => {
 		expect(result.gainDays).toBe(7)
 		expect(result.lossDays).toBe(3)
 
-		// rollupTrades must NOT have been called — we served from cache
 		expect(mockRollupTrades).not.toHaveBeenCalled()
-		// No insert/upsert happened
 		expect(mockInsert).not.toHaveBeenCalled()
 	})
 
@@ -190,8 +218,6 @@ describe("getMonthAggregate", () => {
 			lossDays: 1,
 		}
 
-		// select #1 → dirty aggregate row
-		// select #2 → raw trades query (returns 1 trade)
 		const mockTrade = {
 			id: "trade-1",
 			asset: "WIN",
@@ -202,43 +228,45 @@ describe("getMonthAggregate", () => {
 			entryDate: new Date(2026, 0, 5),
 			isArchived: false,
 		}
-		mockLimit
-			.mockResolvedValueOnce([dirtyRow])   // aggregate row → dirty
-			.mockResolvedValueOnce([mockTrade])   // raw trades
+		// aggregate row read uses .limit(1) → mockLimit
+		mockLimit.mockResolvedValueOnce([dirtyRow])
+		// trades range read awaits .where() directly → mockWhereResolve
+		mockWhereResolve.mockResolvedValueOnce([mockTrade])
 
 		mockRollupTrades.mockReturnValue(recomputedResult)
 
 		const result = await getMonthAggregate(ACCOUNT_ID, 2026, 1)
 
-		// Result should be from rollupTrades
 		expect(result.netCents).toBe(28000)
 		expect(result.grossCents).toBe(30000)
 		expect(result.points).toBe(100)
 
-		// rollupTrades called once
 		expect(mockRollupTrades).toHaveBeenCalledOnce()
 
-		// Upsert should have been called with isDirty: false
 		expect(mockInsert).toHaveBeenCalledOnce()
 		expect(mockValues).toHaveBeenCalledWith(
-			expect.objectContaining({ isDirty: false, accountId: ACCOUNT_ID, year: 2026, month: 1 })
+			expect.objectContaining({ isDirty: false, accountId: ACCOUNT_ID, year: 2026, month: 1 }),
 		)
 	})
 
 	it("recomputes when no aggregate row exists (missing row)", async () => {
-		// First select returns empty array (no row)
-		mockLimit.mockResolvedValueOnce([])  // no aggregate row
-		mockLimit.mockResolvedValueOnce([])  // no trades either
+		mockLimit.mockResolvedValueOnce([])           // no aggregate row
+		mockWhereResolve.mockResolvedValueOnce([])    // no trades either
 
-		mockRollupTrades.mockReturnValue({ grossCents: 0, netCents: 0, points: 0, tradingDays: 0, gainDays: 0, lossDays: 0 })
+		mockRollupTrades.mockReturnValue({
+			grossCents: 0,
+			netCents: 0,
+			points: 0,
+			tradingDays: 0,
+			gainDays: 0,
+			lossDays: 0,
+		})
 
 		const result = await getMonthAggregate(ACCOUNT_ID, 2026, 3)
 
-		// Empty period → zeros
 		expect(result.netCents).toBe(0)
 		expect(result.tradingDays).toBe(0)
 
-		// Should still upsert with isDirty: false
 		expect(mockInsert).toHaveBeenCalledOnce()
 	})
 })
@@ -252,18 +280,18 @@ describe("getWeekAggregate", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
-
-		mockLimit.mockResolvedValue([])
-		mockWhere.mockReturnValue({ limit: mockLimit })
-		mockFrom.mockReturnValue({ where: mockWhere })
-		mockSelect.mockReturnValue({ from: mockFrom })
-		mockOnConflictDoUpdate.mockResolvedValue([])
-		mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate })
-		mockInsert.mockReturnValue({ values: mockValues })
+		restoreChainDefaults()
 
 		mockDbQuery.tradingAccounts.findFirst.mockResolvedValue({ userId: "user-789" })
 		mockGetUserDek.mockResolvedValue(null)
-		mockRollupTrades.mockReturnValue({ grossCents: 0, netCents: 0, points: 0, tradingDays: 0, gainDays: 0, lossDays: 0 })
+		mockRollupTrades.mockReturnValue({
+			grossCents: 0,
+			netCents: 0,
+			points: 0,
+			tradingDays: 0,
+			gainDays: 0,
+			lossDays: 0,
+		})
 	})
 
 	it("returns cached row when isDirty is false", async () => {
@@ -286,20 +314,14 @@ describe("getWeekAggregate", () => {
 		expect(mockInsert).not.toHaveBeenCalled()
 	})
 
-	it("week 1 of 2026 maps to Mon 2025-12-29 → Sun 2026-01-04 (TZ-safe range check)", async () => {
-		// No cached row → triggers recompute path
-		mockLimit.mockResolvedValueOnce([])  // no aggregate row
-		mockLimit.mockResolvedValueOnce([])  // no trades
-
-		mockRollupTrades.mockReturnValue({ grossCents: 0, netCents: 0, points: 0, tradingDays: 0, gainDays: 0, lossDays: 0 })
+	it("week 1 of 2026 triggers a trades range query when aggregate is missing", async () => {
+		mockLimit.mockResolvedValueOnce([])           // no aggregate row
+		mockWhereResolve.mockResolvedValueOnce([])    // no trades
 
 		await getWeekAggregate(ACCOUNT_ID, 2026, 1)
 
-		// Verify the trades query was called with the right date range for ISO week 1/2026
-		// The second .where() call is for trades; inspect what was passed
-		const whereCallArgs = mockWhere.mock.calls
-
-		// We expect at least 2 where calls (aggregate select + trades select)
-		expect(whereCallArgs.length).toBeGreaterThanOrEqual(2)
+		// Aggregate select + trades select = 2 where calls minimum
+		expect(mockWhere.mock.calls.length).toBeGreaterThanOrEqual(2)
+		expect(mockInsert).toHaveBeenCalledOnce()
 	})
 })

@@ -40,6 +40,9 @@ const loadTradesForRange = async (
 	rangeStart: Date,
 	rangeEnd: Date,
 ): Promise<TradeFact[]> => {
+	// No row limit: a single account/period is bounded by trading frequency
+	// (heavy day-trader ≈ 1k/day → ≤30k/month). Silent truncation would corrupt
+	// aggregates; if memory becomes an issue, switch to cursored streaming here.
 	const rawRows = await db
 		.select()
 		.from(trades)
@@ -51,7 +54,6 @@ const loadTradesForRange = async (
 				eq(trades.isArchived, false),
 			),
 		)
-		.limit(10000)
 
 	const userId = await getAccountUserId(accountId)
 	const dek = userId ? await getUserDek(userId) : null
