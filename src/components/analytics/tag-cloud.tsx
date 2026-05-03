@@ -63,8 +63,8 @@ const TagSection = memo(({ tags, type, title, isRMode, maxCount, tHeaders }: Tag
 							</span>
 						</div>
 
-						{/* Tooltip on hover */}
-						<div className="absolute bottom-full left-1/2 z-10 mb-s-200 hidden -translate-x-1/2 rounded-lg border border-bg-300 bg-bg-200 p-s-300 shadow-lg group-hover:block">
+						{/* Tooltip on hover/focus */}
+						<div className="absolute bottom-full left-1/2 z-10 mb-s-200 hidden -translate-x-1/2 rounded-lg border border-bg-300 bg-bg-200 p-s-300 shadow-lg group-hover:block group-focus-within:block">
 							<div className="whitespace-nowrap text-tiny">
 								{isRMode ? (
 									<>

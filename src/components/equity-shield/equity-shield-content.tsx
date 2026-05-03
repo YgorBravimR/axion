@@ -219,7 +219,7 @@ const EquityShieldContent = ({
 
 					{/* Chart 2: Method 1 - MDD Exercise */}
 					<div className="space-y-s-200">
-						<div className="flex items-center justify-between">
+						<div className="flex flex-wrap items-center justify-between gap-s-200">
 							<h3 className="text-body text-txt-100 font-semibold">
 								{t("charts.method1")}
 							</h3>
@@ -233,7 +233,7 @@ const EquityShieldContent = ({
 								<Label
 									id="m1-live-only-label"
 									htmlFor="m1-live-only"
-									className="text-tiny text-txt-300 cursor-pointer"
+									className="text-tiny text-txt-200 cursor-pointer"
 								>
 									{t("charts.liveOnly")}
 								</Label>
@@ -251,7 +251,7 @@ const EquityShieldContent = ({
 
 					{/* Chart 3: Method 2 - SMA Crossover */}
 					<div className="space-y-s-200">
-						<div className="flex items-center justify-between">
+						<div className="flex flex-wrap items-center justify-between gap-s-200">
 							<h3 className="text-body text-txt-100 font-semibold">
 								{t("charts.method2")}
 							</h3>
@@ -265,7 +265,7 @@ const EquityShieldContent = ({
 								<Label
 									id="m2-live-only-label"
 									htmlFor="m2-live-only"
-									className="text-tiny text-txt-300 cursor-pointer"
+									className="text-tiny text-txt-200 cursor-pointer"
 								>
 									{t("charts.liveOnly")}
 								</Label>

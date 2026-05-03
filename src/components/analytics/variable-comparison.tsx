@@ -215,13 +215,13 @@ export const VariableComparison = ({
 	return (
 		<div id="analytics-variable-comparison" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			<div className="gap-m-400 flex flex-wrap items-center justify-between">
-				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+				<h3 className="text-body font-semibold sm:text-h3 text-txt-100">
 					{t("title")}
 				</h3>
 				<div className="gap-s-300 flex flex-wrap">
 					{/* Group By Selector */}
 					<Select value={groupBy} onValueChange={(value) => onGroupByChange(value as typeof groupBy)}>
-						<SelectTrigger id="variable-comparison-group-by" className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
+						<SelectTrigger id="variable-comparison-group-by" className="w-full sm:w-auto border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -235,7 +235,7 @@ export const VariableComparison = ({
 
 					{/* Metric Selector */}
 					<Select value={metric} onValueChange={(value) => setMetric(value as MetricType)}>
-						<SelectTrigger id="variable-comparison-metric" className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
+						<SelectTrigger id="variable-comparison-metric" className="w-full sm:w-auto border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -256,7 +256,7 @@ export const VariableComparison = ({
 			) : (
 				<ChartContainer
 					id="chart-analytics-variable-comparison"
-					className="mt-s-300 sm:mt-m-400 h-64 min-w-0 overflow-hidden sm:h-80"
+					className="mt-s-300 sm:mt-m-400 h-64 min-w-0 overflow-hidden pb-s-200 sm:h-80"
 				>
 					<BarChart
 						data={chartData}

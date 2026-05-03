@@ -265,7 +265,7 @@ const MonteCarloV2Content = ({
 		!budgetInfo.isOverBudget
 
 	return (
-		<div className="space-y-m-500">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 px-s-300 sm:px-m-400">
 			{/* Header */}
 			<div>
 				<h2 className="text-h3 text-txt-100 font-bold">{t("title")}</h2>
@@ -283,7 +283,7 @@ const MonteCarloV2Content = ({
 					{/* Input Mode + Data Source (auto mode) */}
 					<InputModeSelector mode={inputMode} onModeChange={setInputMode} />
 					{inputMode === "auto" && (
-						<div className="gap-m-400 grid lg:grid-cols-2">
+						<div className="gap-m-400 grid md:grid-cols-2 lg:grid-cols-2">
 							<DataSourceSelector
 								options={dataSourceOptions}
 								selectedSource={selectedSource}
@@ -308,7 +308,7 @@ const MonteCarloV2Content = ({
 					/>
 
 					{/* Parameters — Row 1: Core trade stats */}
-					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 						<div>
 							<label className="mb-s-200 text-small text-txt-200 block">
 								{t("params.winRate")}
@@ -411,7 +411,7 @@ const MonteCarloV2Content = ({
 					</div>
 
 					{/* Parameters — Row 2: Simulation config */}
-					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 						<div>
 							<label className="mb-s-200 text-small text-txt-200 block">
 								{t("params.simulationCount")}
@@ -607,7 +607,7 @@ const MonteCarloV2Content = ({
 
 			{/* Results Section */}
 			{result && (
-				<div className="space-y-m-600">
+				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 					{/* Top Summary Banner */}
 					<V2ResultsSummary
 						params={result.params}
@@ -615,7 +615,7 @@ const MonteCarloV2Content = ({
 					/>
 
 					{/* Charts Row */}
-					<div className="gap-m-500 grid lg:grid-cols-2">
+					<div className="gap-m-500 grid md:grid-cols-2 lg:grid-cols-2">
 						<DailyPnlChart
 							days={result.sampleRun.days}
 							monthsToTrade={result.params.monthsToTrade}

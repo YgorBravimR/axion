@@ -118,7 +118,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 			{/* Summary Stats */}
 			{summary.totalTrades > 0 ? (
 				<>
-					<div className="mt-m-500 grid grid-cols-2 gap-m-400 sm:grid-cols-4">
+					<div className="mt-m-500 grid grid-cols-2 gap-m-400 sm:grid-cols-4 [&>div]:min-w-0 [&_p]:truncate">
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("netPnl")}</p>
 							<p
@@ -236,7 +236,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 													{week.weekStartLabel} -{" "}
 													{week.weekEndLabel}
 												</span>
-												<div className="flex items-center gap-m-400">
+												<div className="flex flex-wrap items-center gap-s-200">
 													<span className="text-tiny text-txt-200">
 														{week.tradeCount} {t("trades")}
 													</span>

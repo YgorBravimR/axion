@@ -135,6 +135,10 @@ export const SettingsContent = ({
 					className="from-bg-100 pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-linear-to-l to-transparent md:hidden"
 					aria-hidden="true"
 				/>
+				<div
+					className="from-bg-100 pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-12 bg-linear-to-r to-transparent md:hidden"
+					aria-hidden="true"
+				/>
 			</div>
 
 			<AnimatedTabsContent value="profile">

@@ -294,11 +294,11 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 							className="w-full pl-9 sm:w-64"
 						/>
 					</div>
-					<div className="gap-s-200 flex">
+					<div className="gap-s-200 scrollbar-none flex overflow-x-auto">
 						<Badge
 							id="badge-asset-filter-all"
 							variant={filterType === null ? "default" : "outline"}
-							className="cursor-pointer"
+							className="cursor-pointer whitespace-nowrap"
 							tabIndex={0}
 							role="button"
 							aria-pressed={filterType === null}
@@ -314,7 +314,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 								id={`badge-asset-filter-${type.id}`}
 								key={type.id}
 								variant={filterType === type.id ? "default" : "outline"}
-								className="cursor-pointer"
+								className="cursor-pointer whitespace-nowrap"
 								tabIndex={0}
 								role="button"
 								aria-pressed={filterType === type.id}

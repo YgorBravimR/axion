@@ -442,7 +442,7 @@ const MonthlyPlanForm = ({
 	return (
 		<div className="space-y-m-500">
 			{/* Two-column layout: Form + Preview */}
-			<div className="gap-m-500 grid lg:grid-cols-2">
+			<div className="gap-m-500 grid md:grid-cols-2">
 				{/* Left: Form */}
 				<div className="min-w-0 space-y-m-400">
 					{/* Plan Mode Toggle (only shown when profiles exist) */}
@@ -572,11 +572,11 @@ const MonthlyPlanForm = ({
 							</div>
 
 							{/* Effective values with derived percentages */}
-							<div className="gap-x-s-300 gap-y-s-200 text-tiny grid grid-cols-[1fr_auto]">
+							<div className="flex flex-wrap items-center justify-between gap-s-200 text-tiny">
 								<span className="text-txt-300">
 									{t("preview.riskPerTrade")}:
 								</span>
-								<div className="text-right">
+								<div className="text-right text-small">
 									<span className="text-txt-100 font-medium">
 										{formatCurrency(
 											fromCents(
@@ -586,7 +586,7 @@ const MonthlyPlanForm = ({
 										)}
 									</span>
 									{profileDerivedPercents && (
-										<span className="text-txt-300 ml-s-200">
+										<span className="text-txt-300 ml-s-200 text-tiny">
 											({profileDerivedPercents.riskPerTrade}%)
 										</span>
 									)}
@@ -595,7 +595,7 @@ const MonthlyPlanForm = ({
 								<span className="text-txt-300">
 									{t("preview.dailyLossLimit")}:
 								</span>
-								<div className="text-right">
+								<div className="text-right text-small">
 									<span className="text-txt-100 font-medium">
 										{formatCurrency(
 											fromCents(
@@ -605,7 +605,7 @@ const MonthlyPlanForm = ({
 										)}
 									</span>
 									{profileDerivedPercents && (
-										<span className="text-txt-300 ml-s-200">
+										<span className="text-txt-300 ml-s-200 text-tiny">
 											({profileDerivedPercents.dailyLoss}%)
 										</span>
 									)}
@@ -617,7 +617,7 @@ const MonthlyPlanForm = ({
 										<span className="text-txt-300">
 											{t("form.weeklyLoss")}:
 										</span>
-										<div className="text-right">
+										<div className="text-right text-small">
 											<span className="text-txt-100 font-medium">
 												{formatCurrency(
 													fromCents(
@@ -628,7 +628,7 @@ const MonthlyPlanForm = ({
 												)}
 											</span>
 											{profileDerivedPercents?.weeklyLoss && (
-												<span className="text-txt-300 ml-s-200">
+												<span className="text-txt-300 ml-s-200 text-tiny">
 													({profileDerivedPercents.weeklyLoss}%)
 												</span>
 											)}
@@ -639,7 +639,7 @@ const MonthlyPlanForm = ({
 								<span className="text-txt-300">
 									{t("preview.monthlyLossLimit")}:
 								</span>
-								<div className="text-right">
+								<div className="text-right text-small">
 									<span className="text-txt-100 font-medium">
 										{formatCurrency(
 											fromCents(
@@ -649,7 +649,7 @@ const MonthlyPlanForm = ({
 										)}
 									</span>
 									{profileDerivedPercents && (
-										<span className="text-txt-300 ml-s-200">
+										<span className="text-txt-300 ml-s-200 text-tiny">
 											({profileDerivedPercents.monthlyLoss}%)
 										</span>
 									)}
@@ -661,7 +661,7 @@ const MonthlyPlanForm = ({
 										<span className="text-txt-300">
 											{t("form.dailyTarget")}:
 										</span>
-										<div className="text-right">
+										<div className="text-right text-small">
 											<span className="text-txt-100 font-medium">
 												{formatCurrency(
 													fromCents(
@@ -672,7 +672,7 @@ const MonthlyPlanForm = ({
 												)}
 											</span>
 											{profileDerivedPercents?.dailyTarget && (
-												<span className="text-txt-300 ml-s-200">
+												<span className="text-txt-300 ml-s-200 text-tiny">
 													({profileDerivedPercents.dailyTarget}%)
 												</span>
 											)}
@@ -683,7 +683,7 @@ const MonthlyPlanForm = ({
 
 							{/* Decision tree summary */}
 							<div className="border-acc-100/20 pt-s-300 border-t">
-								<div className="gap-x-s-300 gap-y-s-200 text-tiny grid grid-cols-[1fr_auto]">
+								<div className="flex flex-wrap items-center justify-between gap-s-200 text-tiny">
 									<span className="text-txt-300">
 										{t("form.maxConsecutiveLosses")}:
 									</span>
@@ -844,7 +844,7 @@ const MonthlyPlanForm = ({
 						type="button"
 						variant="ghost"
 						onClick={() => setShowAdvanced((prev) => !prev)}
-						className="gap-s-200 border-bg-300 bg-bg-100 px-m-400 py-s-300 text-small text-txt-200 flex w-full items-center border"
+						className="gap-s-200 border-bg-300 bg-bg-100 px-m-400 py-s-300 text-small text-txt-200 flex w-full items-center border min-h-11"
 						aria-expanded={showAdvanced}
 						aria-label={t("form.advanced")}
 					>
@@ -1100,7 +1100,7 @@ const MonthlyPlanForm = ({
 				</div>
 
 				{/* Right: Live Preview */}
-				<div className="min-w-0 border-bg-300 bg-bg-100 p-m-400 rounded-lg border">
+				<div className="min-w-0 border-bg-300 bg-bg-100 p-m-400 rounded-lg border lg:sticky lg:top-m-400 lg:self-start">
 					<div className="mb-m-400 gap-s-200 flex items-center">
 						<Eye className="text-acc-100 h-4 w-4" />
 						<h4 className="text-small text-txt-100 font-semibold">

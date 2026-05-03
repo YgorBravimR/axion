@@ -121,7 +121,7 @@ const IndicatorDefinitionTable = memo(({
 										variant="ghost"
 										size="sm"
 										onClick={() => onEdit(definition)}
-										className="h-9 w-9 p-0"
+										className="h-11 w-11 p-0"
 										aria-label={`${tCommon("edit")} ${definition.displayName}`}
 									>
 										<Pencil className="h-4 w-4" aria-hidden="true" />
@@ -131,7 +131,7 @@ const IndicatorDefinitionTable = memo(({
 										variant="ghost"
 										size="sm"
 										onClick={() => onToggleActive(definition)}
-										className="h-9 w-9 p-0"
+										className="h-11 w-11 p-0"
 										aria-label={
 											definition.isActive
 												? tInd("deactivateAriaLabel", { name: definition.displayName })

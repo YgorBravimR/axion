@@ -292,7 +292,8 @@ const FilterPanel = ({
 			{/* Slim filter bar */}
 			<div className="gap-s-200 sm:gap-s-300 flex flex-wrap items-center">
 				{/* Period presets */}
-				<div className="scrollbar-none flex items-center gap-s-100 overflow-x-auto">
+				<div className="scrollbar-none relative flex items-center gap-s-100 overflow-x-auto">
+					<div className="from-bg-100 pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-linear-to-l sm:hidden" />
 					{DATE_PRESET_CONFIGS.map((preset) => (
 						<button
 							key={preset.key}
@@ -328,7 +329,7 @@ const FilterPanel = ({
 				</div>
 
 				{/* Right side: spacer + controls */}
-				<div className="gap-s-200 ml-auto flex items-center">
+				<div className="gap-s-200 ml-auto flex items-center min-w-[200px]">
 					<PresetSelector
 						currentFilters={currentFiltersMemo}
 						onApplyPreset={applyPreset}

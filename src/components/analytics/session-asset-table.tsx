@@ -93,6 +93,9 @@ export const SessionAssetTable = ({
 				{t("session.assetDescription")}
 			</p>
 
+			<p className="sm:hidden mb-s-200 text-tiny text-txt-300">
+				Showing best session only — view on larger screen for full breakdown
+			</p>
 			<div className="overflow-x-auto">
 				<table className="w-full">
 					<thead>

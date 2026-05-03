@@ -102,7 +102,7 @@ const StrategyCardBase = ({
 						id="playbook-strategy-menu"
 						variant="ghost"
 						size="sm"
-						className="h-8 w-8 p-0"
+						className="h-11 w-11 p-0"
 						onClick={() => setShowMenu(!showMenu)}
 						aria-label={t("strategy.optionsMenu")}
 						aria-expanded={showMenu}
@@ -129,7 +129,7 @@ const StrategyCardBase = ({
 									href={`/playbook/${strategy.id}`}
 									role="menuitem"
 									tabIndex={-1}
-									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
+									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center text-left"
 								>
 									<Eye className="h-4 w-4" />
 									{t("strategy.viewDetails")}
@@ -144,7 +144,7 @@ const StrategyCardBase = ({
 										setShowMenu(false)
 										onEdit(strategy)
 									}}
-									className="gap-s-200 px-s-300 py-s-200 text-small text-txt-200 flex w-full items-center justify-start text-left"
+									className="gap-s-200 px-s-300 py-s-300 text-small text-txt-200 flex w-full items-center justify-start text-left"
 								>
 									<Edit className="h-4 w-4" />
 									{tCommon("edit")}
@@ -155,7 +155,7 @@ const StrategyCardBase = ({
 									variant="ghost"
 									role="menuitem"
 									tabIndex={-1}
-									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center justify-start text-left"
+									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center justify-start text-left"
 									onClick={() => {
 										setShowMenu(false)
 										onDelete(strategy.id)
@@ -171,10 +171,10 @@ const StrategyCardBase = ({
 			</div>
 
 			{/* Stats Grid */}
-			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4 [&>div]:min-w-0 [&_p]:truncate">
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">{t("strategy.trades")}</p>
-					<p className="text-body text-txt-100 mt-s-100 font-bold">
+					<p className="text-body text-txt-100 mt-s-100 font-bold tabular-nums">
 						{strategy.tradeCount}
 					</p>
 				</div>
@@ -184,12 +184,12 @@ const StrategyCardBase = ({
 						value={strategy.totalPnl}
 						showSign
 						formatFn={(v) => formatCompactCurrencyWithSign(v, "R$")}
-						className="mt-s-100 text-body font-bold"
+						className="mt-s-100 text-body font-bold tabular-nums"
 					/>
 				</div>
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">{t("strategy.winRate")}</p>
-					<p className="text-body text-txt-100 mt-s-100 font-bold">
+					<p className="text-body text-txt-100 mt-s-100 font-bold tabular-nums">
 						{strategy.winRate.toFixed(1)}%
 					</p>
 				</div>
@@ -199,7 +199,7 @@ const StrategyCardBase = ({
 						value={strategy.avgR}
 						type="r-multiple"
 						showSign
-						className="mt-s-100 text-body font-bold"
+						className="mt-s-100 text-body font-bold tabular-nums"
 					/>
 				</div>
 			</div>

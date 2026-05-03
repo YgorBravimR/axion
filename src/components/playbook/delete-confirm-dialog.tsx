@@ -34,13 +34,13 @@ export const DeleteConfirmDialog = ({
 
 	return (
 		<AlertDialog open onOpenChange={(open) => { if (!open && !isPending) onCancel() }}>
-			<AlertDialogContent>
+			<AlertDialogContent className="min-w-0">
 				<AlertDialogHeader>
 					<AlertDialogMedia className="bg-fb-error/20">
 						<AlertTriangle className="text-fb-error h-5 w-5" />
 					</AlertDialogMedia>
 					<AlertDialogTitle>{t("title")}</AlertDialogTitle>
-					<AlertDialogDescription>
+					<AlertDialogDescription className="break-words min-w-0">
 						{t("description", { code: strategyCode, name: strategyName })}
 					</AlertDialogDescription>
 					<p className="text-tiny text-txt-300 mt-s-200">

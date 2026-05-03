@@ -81,7 +81,7 @@ export const PlaybookContent = ({
 
 			{/* Strategy List */}
 			<div id="playbook-strategies" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
-				<div className="flex items-center justify-between">
+				<div className="flex flex-wrap items-center justify-between gap-s-300">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("yourStrategies")}
 					</h2>
@@ -111,7 +111,7 @@ export const PlaybookContent = ({
 						</Link>
 					</div>
 				) : (
-					<div className="mt-m-400 sm:mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 lg:grid-cols-2">
+					<div className="mt-m-400 sm:mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
 						{strategies.map((strategy) => (
 							<StrategyCard
 								key={strategy.id}

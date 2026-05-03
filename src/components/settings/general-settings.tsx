@@ -105,7 +105,7 @@ export const GeneralSettings = () => {
 				<div className="flex items-center justify-between">
 					<h2 className="text-body font-semibold text-txt-100">{t("riskSettings")}</h2>
 					{!isEditing && (
-						<Button id="general-edit-risk" variant="ghost" size="sm" onClick={handleEdit}>
+						<Button id="general-edit-risk" variant="ghost" size="default" className="min-h-11" onClick={handleEdit}>
 							{tCommon("edit")}
 						</Button>
 					)}
@@ -133,7 +133,7 @@ export const GeneralSettings = () => {
 											defaultRiskPercent: Number(e.target.value),
 										}))
 									}
-									className="w-24 text-right"
+									className="max-w-[96px] min-w-[64px] flex-shrink text-right"
 								/>
 								<span className="text-small text-txt-300">%</span>
 							</div>
@@ -165,7 +165,7 @@ export const GeneralSettings = () => {
 											accountBalance: Number(e.target.value),
 										}))
 									}
-									className="w-32 text-right"
+									className="max-w-[128px] min-w-[80px] flex-shrink text-right"
 								/>
 							</div>
 						) : (
@@ -177,10 +177,10 @@ export const GeneralSettings = () => {
 				</div>
 				{isEditing && (
 					<div className="mt-m-500 flex justify-end gap-s-300">
-						<Button id="general-cancel-risk" variant="ghost" size="sm" onClick={handleCancel} disabled={isPending}>
+						<Button id="general-cancel-risk" variant="ghost" size="default" className="min-h-11" onClick={handleCancel} disabled={isPending}>
 							{tCommon("cancel")}
 						</Button>
-						<Button id="general-save-risk" size="sm" onClick={handleSave} disabled={isPending}>
+						<Button id="general-save-risk" size="default" className="min-h-11" onClick={handleSave} disabled={isPending}>
 							{isPending ? tCommon("saving") : tCommon("save")}
 						</Button>
 					</div>

@@ -26,6 +26,10 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				cell: ({ row }) => (
 					<span className="font-mono text-txt-200">{row.original.id}</span>
 				),
+				meta: {
+					headerClassName: "hidden sm:table-cell",
+					cellClassName: "hidden sm:table-cell",
+				},
 			},
 			{
 				accessorKey: "dayKey",
@@ -80,6 +84,10 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 					</Badge>
 				),
 				enableSorting: false,
+				meta: {
+					headerClassName: "hidden md:table-cell",
+					cellClassName: "hidden md:table-cell",
+				},
 			},
 			{
 				accessorKey: "contracts",
@@ -89,6 +97,10 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 						{row.original.contracts}
 					</span>
 				),
+				meta: {
+					headerClassName: "hidden lg:table-cell",
+					cellClassName: "hidden lg:table-cell",
+				},
 			},
 			{
 				accessorKey: "netPnlCents",

@@ -44,7 +44,7 @@ const DecisionTraceModal = ({
 						{weeks.map((week) => (
 							<div key={week.weekKey}>
 								{/* Week header */}
-								<div className="mb-s-300 flex items-center justify-between">
+								<div className="bg-bg-200 sticky top-0 z-10 mb-s-300 flex items-center justify-between">
 									<h3 className="text-small text-txt-100 font-semibold">
 										{t("weekOf", { label: week.weekLabel })}
 									</h3>

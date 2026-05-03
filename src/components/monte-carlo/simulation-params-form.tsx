@@ -47,7 +47,7 @@ export const SimulationParamsForm = ({
 				{t("title")}
 			</h3>
 
-			<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+			<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 [&>div]:min-w-0">
 				{/* Win Rate */}
 				<div>
 					<Label
@@ -69,7 +69,7 @@ export const SimulationParamsForm = ({
 							onChange={(e) =>
 								handleChange("winRate", parseFloat(e.target.value) || 0)
 							}
-							className="pr-7"
+							className="min-w-0 w-full pr-7"
 							disabled={disabled}
 						/>
 						<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -98,6 +98,7 @@ export const SimulationParamsForm = ({
 						onChange={(e) =>
 							handleChange("rewardRiskRatio", parseFloat(e.target.value) || 0)
 						}
+						className="min-w-0 w-full"
 						disabled={disabled}
 					/>
 				</div>
@@ -122,6 +123,7 @@ export const SimulationParamsForm = ({
 						onChange={(e) =>
 							handleChange("numberOfTrades", parseInt(e.target.value) || 0)
 						}
+						className="min-w-0 w-full"
 						disabled={disabled}
 					/>
 				</div>
@@ -150,7 +152,7 @@ export const SimulationParamsForm = ({
 									parseFloat(e.target.value) || 0
 								)
 							}
-							className="pr-7"
+							className="min-w-0 w-full pr-7"
 							disabled={disabled}
 						/>
 						<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -179,6 +181,7 @@ export const SimulationParamsForm = ({
 						onChange={(e) =>
 							handleChange("simulationCount", parseInt(e.target.value) || 0)
 						}
+						className="min-w-0 w-full"
 						disabled={disabled}
 					/>
 				</div>

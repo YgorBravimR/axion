@@ -154,7 +154,7 @@ export const MonteCarloContent = ({
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div>
-				<h1 className="text-body sm:text-h3 text-txt-100 font-bold">
+				<h1 className="text-h3 text-txt-100 font-bold">
 					{t("title")}
 				</h1>
 				<p className="mt-s-100 text-small text-txt-300">{t("subtitle")}</p>
@@ -165,7 +165,7 @@ export const MonteCarloContent = ({
 				<TabsList
 					id="monte-carlo-tabs"
 					variant="line"
-					className="mb-m-400 sm:mb-m-500"
+					className="mb-m-400 sm:mb-m-500 overflow-x-auto whitespace-nowrap snap-x snap-mandatory"
 				>
 					<TabsTrigger value="edgeExpectancy">
 						{tV2("tabEdgeExpectancy")}
@@ -266,7 +266,7 @@ const EdgeExpectancyContent = memo(({
 
 					{/* Data Source (Auto mode only) */}
 					{inputMode === "auto" && (
-						<div className="gap-m-400 grid lg:grid-cols-2">
+						<div className="gap-m-400 grid md:grid-cols-2 lg:grid-cols-2">
 							<DataSourceSelector
 								options={initialOptions}
 								selectedSource={selectedSource}
@@ -323,7 +323,7 @@ const EdgeExpectancyContent = memo(({
 			{result && (
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 					{/* Top Summary Banner */}
-					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 gap-m-400 sm:gap-m-500 flex flex-wrap items-center justify-between rounded-lg border">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 gap-m-400 sm:gap-m-500 grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between rounded-lg border">
 						<div className="gap-m-400 flex items-center">
 							<span className="text-txt-300 text-small">
 								{t("results.simulations")}:
@@ -368,7 +368,7 @@ const EdgeExpectancyContent = memo(({
 					</div>
 
 					{/* Charts Row */}
-					<div className="gap-m-400 sm:gap-m-500 grid lg:grid-cols-2">
+					<div className="gap-m-400 sm:gap-m-500 grid md:grid-cols-2 lg:grid-cols-2">
 						<EquityCurveChart trades={result.sampleRun.trades} />
 						<DrawdownChart trades={result.sampleRun.trades} />
 					</div>
@@ -383,7 +383,7 @@ const EdgeExpectancyContent = memo(({
 					<MetricsCards statistics={result.statistics} />
 
 					{/* Kelly + Trade Sequence - Side by side on desktop */}
-					<div className="gap-m-400 sm:gap-m-500 grid xl:grid-cols-2">
+					<div className="gap-m-400 sm:gap-m-500 grid lg:grid-cols-2 xl:grid-cols-2">
 						<KellyCriterionCard statistics={result.statistics} />
 						<TradeSequenceList trades={result.sampleRun.trades} />
 					</div>

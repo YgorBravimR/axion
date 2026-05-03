@@ -67,7 +67,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 			<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">{t("title")}</h2>
 
 			{/* Top-level P&L comparison */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 [&>div]:min-w-0 [&_p]:truncate">
 				{/* Original P&L */}
 				<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
 					<p className="text-tiny text-txt-300 mb-s-100">{t("originalPnl")}</p>

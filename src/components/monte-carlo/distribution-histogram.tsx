@@ -254,7 +254,7 @@ export const DistributionHistogram = ({
 					/>
 					<YAxis
 						stroke="var(--color-txt-300)"
-						fontSize={11}
+						fontSize={12}
 						tickLine={false}
 						axisLine={false}
 						domain={[0, maxCount * 1.1]}

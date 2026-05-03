@@ -578,29 +578,32 @@ const FullDayProgression = ({
 			{t("progression.title")}
 		</p>
 		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border">
-			<div className="gap-s-200 pb-s-100 flex items-center overflow-x-auto">
-				{situations.map((situation, index) => (
-					<div
-						key={situation.tradeNumber}
-						className="gap-s-200 flex shrink-0 items-center"
-					>
-						<div className="bg-trade-sell/10 border-trade-sell/20 px-s-300 py-s-100 rounded-md border">
-							<p className="text-tiny text-txt-100 font-medium whitespace-nowrap">
-								T{situation.tradeNumber}:{" "}
-								{formatCurrency(fromCents(situation.riskCents))}
-							</p>
+			<div className="relative">
+				<div className="gap-s-200 pb-s-100 flex items-center overflow-x-auto [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch]">
+					{situations.map((situation, index) => (
+						<div
+							key={situation.tradeNumber}
+							className="gap-s-200 flex shrink-0 items-center"
+						>
+							<div className="bg-trade-sell/10 border-trade-sell/20 px-s-300 py-s-100 rounded-md border">
+								<p className="text-tiny text-txt-100 font-medium whitespace-nowrap">
+									T{situation.tradeNumber}:{" "}
+									{formatCurrency(fromCents(situation.riskCents))}
+								</p>
+							</div>
+							{index < situations.length - 1 && (
+								<span className="text-txt-300 text-tiny shrink-0">&rarr;</span>
+							)}
 						</div>
-						{index < situations.length - 1 && (
-							<span className="text-txt-300 text-tiny shrink-0">&rarr;</span>
-						)}
-					</div>
-				))}
+					))}
 
-				{/* Terminal STOP pill */}
-				<span className="text-txt-300 text-tiny shrink-0">&rarr;</span>
-				<span className="bg-trade-sell/20 border-trade-sell/40 px-s-300 py-s-100 text-tiny text-trade-sell shrink-0 rounded-md border font-bold tracking-wider uppercase">
-					{t("stop")}
-				</span>
+					{/* Terminal STOP pill */}
+					<span className="text-txt-300 text-tiny shrink-0">&rarr;</span>
+					<span className="bg-trade-sell/20 border-trade-sell/40 px-s-300 py-s-100 text-tiny text-trade-sell shrink-0 rounded-md border font-bold tracking-wider uppercase">
+						{t("stop")}
+					</span>
+				</div>
+				<div className="from-bg-200 pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-linear-to-l sm:hidden" />
 			</div>
 			<div className="border-bg-300 pt-s-200 mt-s-100 border-t">
 				<div className="flex items-center justify-between">
@@ -1073,24 +1076,27 @@ const DecisionTreeModal = ({
 				</DialogHeader>
 
 				<Tabs defaultValue="overview">
-					<TabsList variant="line" className="w-full overflow-x-auto scrollbar-none">
-						<TabsTrigger value="overview" className="shrink-0">{t("tabs.overview")}</TabsTrigger>
-						<TabsTrigger value="paths" className="shrink-0">{t("tabs.paths")}</TabsTrigger>
-						{situations.map((situation) => (
-							<TabsTrigger
-								key={situation.tradeNumber}
-								value={`trade-${situation.tradeNumber}`}
-								className="shrink-0"
-							>
-								T{situation.tradeNumber}
-							</TabsTrigger>
-						))}
-					</TabsList>
+					<div className="relative">
+						<TabsList variant="line" className="w-full overflow-x-auto scrollbar-none">
+							<TabsTrigger value="overview" className="shrink-0">{t("tabs.overview")}</TabsTrigger>
+							<TabsTrigger value="paths" className="shrink-0">{t("tabs.paths")}</TabsTrigger>
+							{situations.map((situation) => (
+								<TabsTrigger
+									key={situation.tradeNumber}
+									value={`trade-${situation.tradeNumber}`}
+									className="shrink-0"
+								>
+									T{situation.tradeNumber}
+								</TabsTrigger>
+							))}
+						</TabsList>
+						<div className="from-bg-200 pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-linear-to-l sm:hidden" />
+					</div>
 
 					{/* Overview tab — flowchart + progression + scenarios */}
 					<AnimatedTabsContent value="overview">
 						<div className="pt-s-200 relative overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden after:pointer-events-none after:absolute after:top-0 after:right-0 after:bottom-0 after:z-10 after:w-6 after:bg-linear-to-l after:from-bg-100 after:to-transparent after:content-[''] sm:overflow-x-visible sm:after:hidden">
-							<div className="min-w-[600px] flex flex-col items-center gap-0">
+							<div className="min-w-[320px] sm:min-w-[600px] flex flex-col items-center gap-0">
 							{/* Base Trade */}
 							<div className="w-full max-w-sm">
 								<BaseTradeNode

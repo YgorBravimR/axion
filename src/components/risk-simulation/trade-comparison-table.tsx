@@ -94,7 +94,7 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 							<th className="text-tiny text-txt-300 px-s-300 py-s-200 text-left font-medium whitespace-nowrap">
 								{t("trade")}
 							</th>
-							<th className="text-tiny text-txt-300 px-s-300 py-s-200 text-left font-medium whitespace-nowrap">
+							<th className="text-tiny text-txt-300 hidden px-s-300 py-s-200 text-left font-medium whitespace-nowrap xs:table-cell">
 								{t("asset")}
 							</th>
 							<th className="text-tiny text-txt-300 px-s-300 py-s-200 text-left font-medium whitespace-nowrap">
@@ -136,18 +136,23 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 									<td className="text-small text-txt-100 px-s-300 py-s-200 font-medium">
 										T{trade.dayTradeNumber}
 									</td>
-									<td className="text-tiny text-txt-200 px-s-300 py-s-200">
+									<td className="text-tiny text-txt-200 hidden px-s-300 py-s-200 xs:table-cell">
 										{trade.asset}
 									</td>
 									<td className="px-s-300 py-s-200">
-										<span
-											role="img"
-											className={cn(
-												"block h-2.5 w-2.5 rounded-full",
-												statusDotColors[trade.status]
-											)}
-											aria-label={t(`statuses.${trade.status}`)}
-										/>
+										<span className="flex items-center gap-s-100">
+											<span
+												role="img"
+												className={cn(
+													"block h-3 w-3 shrink-0 rounded-full",
+													statusDotColors[trade.status]
+												)}
+												aria-label={t(`statuses.${trade.status}`)}
+											/>
+											<span className="text-tiny text-txt-300 sm:hidden">
+												{t(`statuses.${trade.status}`)}
+											</span>
+										</span>
 									</td>
 									<td className="text-tiny text-txt-200 hidden px-s-300 py-s-200 text-right whitespace-nowrap md:table-cell">
 										{formatCurrency(trade.riskAmountCents)}
@@ -183,7 +188,7 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 									<td className="text-tiny text-txt-200 hidden px-s-300 py-s-200 text-right whitespace-nowrap lg:table-cell">
 										{formatR(trade.simulatedRMultiple)}
 									</td>
-									<td className="text-tiny text-txt-300 hidden max-w-50 truncate px-s-300 py-s-200 lg:table-cell">
+									<td className="text-tiny text-txt-300 hidden max-w-[200px] truncate px-s-300 py-s-200 lg:table-cell">
 										{translateRiskReason(tReasons, trade.riskReason)}
 									</td>
 								</tr>

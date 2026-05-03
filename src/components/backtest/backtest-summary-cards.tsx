@@ -68,7 +68,7 @@ const BacktestSummaryCards = memo(({ summary }: BacktestSummaryCardsProps) => {
 	return (
 		<div className="space-y-m-400">
 			{/* Primary metrics */}
-			<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-4">
+			<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 [&>div]:min-w-0 [&_p]:truncate">
 				{metrics.map((metric) => (
 					<div
 						key={metric.label}

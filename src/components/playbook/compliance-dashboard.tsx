@@ -126,7 +126,7 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 										}}
 									/>
 								</div>
-								<div className="mt-s-200 text-tiny flex justify-between">
+								<div className="mt-s-200 text-tiny sm:text-small flex justify-between">
 									<span className="text-trade-buy gap-s-100 flex items-center">
 										<CheckCircle className="h-3 w-3" />
 										{t("followedCount", { count: data.followedPlanCount })}
@@ -144,7 +144,7 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					{(data.topPerformingStrategy || data.needsAttentionStrategy) && (
 						<div className="mt-m-500 gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 							{data.topPerformingStrategy && (
-								<div className="bg-trade-buy/10 border-trade-buy/30 gap-s-300 p-s-300 flex items-center rounded-lg border">
+								<div className="bg-trade-buy/10 border-trade-buy/30 gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border">
 									<TrendingUp className="text-trade-buy h-5 w-5 shrink-0" />
 									<div>
 										<p className="text-tiny text-txt-300">{t("bestCompliance")}</p>
@@ -159,7 +159,7 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 							)}
 
 							{data.needsAttentionStrategy && (
-								<div className="bg-warning/10 border-warning/30 gap-s-300 p-s-300 flex items-center rounded-lg border">
+								<div className="bg-warning/10 border-warning/30 gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border">
 									<AlertTriangle className="text-warning h-5 w-5 shrink-0" />
 									<div>
 										<p className="text-tiny text-txt-300">{t("needsAttention")}</p>

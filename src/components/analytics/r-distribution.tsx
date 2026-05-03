@@ -125,7 +125,7 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 			</div>
 
 			{/* Summary Stats */}
-			<div className="mt-s-300 sm:mt-m-400 grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-4">
+			<div className="mt-s-300 sm:mt-m-400 grid grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-4 [&>div]:min-w-0 [&_p]:truncate">
 				<div className="rounded-lg bg-bg-100 p-s-200 sm:p-s-300 text-center">
 					<StatLabel
 						label={t("totalTrades")}

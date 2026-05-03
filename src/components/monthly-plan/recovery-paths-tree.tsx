@@ -1081,10 +1081,11 @@ const RecoveryPathsTree = ({
 
 	return (
 		<div className="space-y-s-300">
-			<div className="overflow-x-auto rounded-lg flex justify-center">
+			<div className="w-full overflow-x-auto rounded-lg flex justify-center max-w-full">
 				<svg
-					width={treeData.width}
-					height={treeData.height}
+					width="100%"
+					height="auto"
+					style={{ maxWidth: `${treeData.width}px`, height: "auto" }}
 					viewBox={`0 0 ${treeData.width} ${treeData.height}`}
 					aria-label={t("paths.ariaLabel")}
 					role="img"

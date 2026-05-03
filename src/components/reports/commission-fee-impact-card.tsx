@@ -108,7 +108,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Summary */}
 			<div className="mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
-				<div className="bg-trade-sell-muted px-s-300 py-s-200 rounded">
+				<div className="bg-trade-sell-muted border border-trade-sell/40 px-s-300 py-s-200 rounded">
 					<p className="text-tiny text-txt-300">{t("totalFees")}</p>
 					<p className="text-body sm:text-h3 text-trade-sell font-bold">
 						{formatCurrencyWithSign(-summary.totalFees)}
@@ -154,7 +154,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 											{t("trades", { count: asset.tradeCount })}
 										</span>
 									</div>
-									<div className="gap-m-400 flex shrink-0 items-center">
+									<div className="gap-m-400 flex flex-wrap shrink-0 items-center">
 										<span className="text-tiny text-txt-300 hidden whitespace-nowrap sm:inline">
 											{t("avgFeePerTrade")}:{" "}
 											{formatCurrencyWithSign(-asset.avgFeePerTrade)}
@@ -238,7 +238,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 											{t("trades", { count: month.tradeCount })}
 										</span>
 									</div>
-									<div className="gap-m-400 flex shrink-0 items-center">
+									<div className="gap-m-400 flex flex-wrap shrink-0 items-center">
 										{month.grossPnl > 0 && (
 											<span
 												className={cn(

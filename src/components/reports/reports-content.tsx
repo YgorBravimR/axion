@@ -40,7 +40,7 @@ export const ReportsContent = ({
 
 	if (allNull) {
 		return (
-			<div className="flex flex-col items-center justify-center py-l-800 text-center">
+			<div className="flex flex-col items-center justify-center py-l-700 sm:py-l-800 text-center">
 				<BarChart2 className="text-txt-300 mb-m-400 h-12 w-12" aria-hidden="true" />
 				<p className="text-body text-txt-200 font-medium">{t("emptyState")}</p>
 				<p className="text-small text-txt-300 mt-s-200 max-w-sm">
@@ -59,7 +59,7 @@ export const ReportsContent = ({
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Weekly and Monthly side by side on larger screens */}
-			<div className="grid gap-m-400 sm:gap-m-500 lg:gap-m-600 lg:grid-cols-2">
+			<div className="grid gap-m-400 sm:gap-m-500 lg:gap-m-600 md:grid-cols-2 lg:grid-cols-2">
 				<WeeklyReportCard initialReport={weeklyReport} />
 				<MonthlyReportCard initialReport={monthlyReport} />
 			</div>

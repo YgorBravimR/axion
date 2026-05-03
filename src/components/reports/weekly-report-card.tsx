@@ -79,7 +79,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 	return (
 		<div id="reports-weekly" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-wrap items-center justify-between gap-s-200">
 				<div>
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
@@ -94,7 +94,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						})}
 					</p>
 				</div>
-				<div className="gap-s-200 flex items-center">
+				<div className="gap-s-200 flex flex-wrap items-center">
 					<Button
 						id="weekly-report-previous-week"
 						variant="ghost"
@@ -186,7 +186,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					</div>
 
 					{/* Secondary Stats */}
-					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-6 [&>div]:min-w-0">
+					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-6 [&>div]:min-w-0 [&_p]:truncate">
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("wins")}</p>
 							<p className="text-small text-trade-buy font-medium">

@@ -191,11 +191,11 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			</div>
 
 			{/* Heatmap Grid */}
-			<div className="overflow-x-auto flex justify-center">
+			<div className="overflow-x-auto">
 				<div
 					className="grid w-fit gap-s-100"
 					style={{
-						gridTemplateColumns: `auto repeat(${TRADING_HOURS.length}, 48px)`,
+						gridTemplateColumns: `minmax(60px, auto) repeat(${TRADING_HOURS.length}, minmax(36px, 1fr))`,
 					}}
 				>
 					{/* Hour header row */}
@@ -227,7 +227,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 										<div
 											key={`${day}-${hour}`}
 											className={cn(
-												"relative flex h-10 items-center justify-center rounded-md transition-all",
+												"relative flex h-11 items-center justify-center rounded-md transition-all",
 												getCellStyle(cell),
 												hasData &&
 													"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
@@ -422,106 +422,106 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 							<tbody>
 								{/* Slot row (day × hour) */}
 								<tr className="border-bg-300 border-b">
-									<td className="px-s-300 py-s-200 text-txt-200 font-medium whitespace-nowrap">{t("time.windowSlot")}</td>
+									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 font-medium whitespace-nowrap min-w-0">{t("time.windowSlot")}</td>
 									{bestSlot && getMetricValue(bestSlot) >= 0 ? (
 										<>
-											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{getTranslatedDayShort(bestSlot.dayName)} {bestSlot.hourLabel}
 											</td>
-											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{formatMetric(getMetricValue(bestSlot))}
 											</td>
-											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
 												{bestSlot.winRate.toFixed(0)}% · {bestSlot.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
 									)}
 									{worstSlot && getMetricValue(worstSlot) < 0 ? (
 										<>
-											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{getTranslatedDayShort(worstSlot.dayName)} {worstSlot.hourLabel}
 											</td>
-											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{formatMetric(getMetricValue(worstSlot))}
 											</td>
-											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
 												{worstSlot.winRate.toFixed(0)}% · {worstSlot.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
 									)}
 								</tr>
 
 								{/* Hour row */}
 								<tr className="border-bg-300 border-b">
-									<td className="px-s-300 py-s-200 text-txt-200 font-medium whitespace-nowrap">{t("time.windowHour")}</td>
+									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 font-medium whitespace-nowrap min-w-0">{t("time.windowHour")}</td>
 									{bestHour ? (
 										<>
-											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{bestHour.label}
 											</td>
-											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{formatAggregateMetric(bestHour)}
 											</td>
-											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
 												{bestHour.winRate.toFixed(0)}% · {bestHour.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
 									)}
 									{worstHour ? (
 										<>
-											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{worstHour.label}
 											</td>
-											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{formatAggregateMetric(worstHour)}
 											</td>
-											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
 												{worstHour.winRate.toFixed(0)}% · {worstHour.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
 									)}
 								</tr>
 
 								{/* Day row */}
 								<tr>
-									<td className="px-s-300 py-s-200 text-txt-200 font-medium whitespace-nowrap">{t("time.windowDay")}</td>
+									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 font-medium whitespace-nowrap min-w-0">{t("time.windowDay")}</td>
 									{bestDay ? (
 										<>
-											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{bestDay.dayLabel}
 											</td>
-											<td className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{formatAggregateMetric(bestDay)}
 											</td>
-											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
 												{bestDay.winRate.toFixed(0)}% · {bestDay.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
 									)}
 									{worstDay ? (
 										<>
-											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{worstDay.dayLabel}
 											</td>
-											<td className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{formatAggregateMetric(worstDay)}
 											</td>
-											<td className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
+											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
 												{worstDay.winRate.toFixed(0)}% · {worstDay.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-txt-300 text-center">—</td>
+										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
 									)}
 								</tr>
 							</tbody>

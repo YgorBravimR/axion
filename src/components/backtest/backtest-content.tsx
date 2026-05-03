@@ -183,7 +183,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	}, [selectedSource, dateFrom, dateTo, showToast, t, showLoading, startTransition, recipe, hideLoading])
 
 	return (
-		<div className="space-y-m-500">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Header */}
 			<div>
 				<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
@@ -191,12 +191,12 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			</div>
 
 			{/* Section 1: Strategy & Data */}
-			<div className="border-bg-300 bg-bg-200 space-y-m-400 p-m-400 rounded-lg border">
+			<div className="border-bg-300 bg-bg-200 space-y-m-400 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<h2 className="text-h3 text-txt-100 font-semibold">
 					{t("builder.strategyAndData")}
 				</h2>
 				{/* Row 1: Strategy, Asset, Preset */}
-				<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-3">
+				<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 					{/* Strategy */}
 					<div className="space-y-s-200">
 						<label
@@ -286,11 +286,11 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 					>
 						{t("config.dateRange")}
 					</label>
-					<div className="gap-s-200 flex items-center">
+					<div className="gap-s-200 flex flex-wrap items-center">
 						<Select value={quickRangeKey} onValueChange={handleQuickRange}>
 							<SelectTrigger
 								id="backtest-quick-range"
-								className="w-32 shrink-0"
+								className="min-w-[80px] max-w-[128px]"
 							>
 								<SelectValue placeholder={t("builder.quickRange")} />
 							</SelectTrigger>
@@ -356,7 +356,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 
 			{/* Results — shown after backtest completes */}
 			{result && (
-				<div className="space-y-m-500">
+				<div className="space-y-m-500 [&>div]:min-w-0">
 					<div className="flex justify-end">
 						<Button
 							id="backtest-new"
