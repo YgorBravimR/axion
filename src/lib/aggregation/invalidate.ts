@@ -50,41 +50,33 @@ const invalidateAggregates = async (accountId: string, date: Date): Promise<void
 	const isoWeek = getWeekNumber(localShim)
 	const isoYear = getWeekYear(localShim)
 
-	// Upsert monthly dirty placeholder
-	await db
-		.insert(accountMonthlyAggregate)
-		.values({
-			accountId,
-			year,
-			month,
-			isDirty: true,
-		})
-		.onConflictDoUpdate({
-			target: [
-				accountMonthlyAggregate.accountId,
-				accountMonthlyAggregate.year,
-				accountMonthlyAggregate.month,
-			],
-			set: { isDirty: true },
-		})
-
-	// Upsert weekly dirty placeholder
-	await db
-		.insert(accountWeeklyAggregate)
-		.values({
-			accountId,
-			isoYear,
-			isoWeek,
-			isDirty: true,
-		})
-		.onConflictDoUpdate({
-			target: [
-				accountWeeklyAggregate.accountId,
-				accountWeeklyAggregate.isoYear,
-				accountWeeklyAggregate.isoWeek,
-			],
-			set: { isDirty: true },
-		})
+	// Parallel upserts — independent rows on independent tables. Sequential
+	// awaits would double the latency of every trade mutation (this runs in
+	// the request path of createTrade / updateTrade / deleteTrade).
+	await Promise.all([
+		db
+			.insert(accountMonthlyAggregate)
+			.values({ accountId, year, month, isDirty: true })
+			.onConflictDoUpdate({
+				target: [
+					accountMonthlyAggregate.accountId,
+					accountMonthlyAggregate.year,
+					accountMonthlyAggregate.month,
+				],
+				set: { isDirty: true },
+			}),
+		db
+			.insert(accountWeeklyAggregate)
+			.values({ accountId, isoYear, isoWeek, isDirty: true })
+			.onConflictDoUpdate({
+				target: [
+					accountWeeklyAggregate.accountId,
+					accountWeeklyAggregate.isoYear,
+					accountWeeklyAggregate.isoWeek,
+				],
+				set: { isDirty: true },
+			}),
+	])
 }
 
 export { invalidateAggregates }
