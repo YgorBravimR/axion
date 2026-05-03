@@ -31,7 +31,7 @@ describe("rollupTrades", () => {
     ]
     const result = rollupTrades(trades, { year: 2026, month: 1 })
     expect(result.netCents).toBe(5000)
-    expect(result.grossCents).toBe(11400)
+    expect(result.grossCents).toBe(6400)        // (10000+500+200) + (-5000+500+200) = 10700 + (-4300)
     expect(result.points).toBe(250)
   })
 

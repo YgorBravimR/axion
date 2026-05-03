@@ -38,10 +38,10 @@ const localDayKey = (d: Date): string => {
  * ### Monetary totals
  * - `netCents` — sum of `pnlCents` across all trades (commissions/fees
  *   already deducted by the data layer before this function is called)
- * - `grossCents` — sum of all **profitable** `pnlCents` plus all costs
- *   (commissions + fees) across every trade. Represents total gross receipts
- *   from winning trades against the total friction paid across all trades.
- *   Formula per trade: `max(0, pnlCents) + commissionCents + feesCents`
+ * - `grossCents` — net P&L with costs recovered: `pnlCents + commissionCents
+ *   + feesCents` per trade. Losing trades still produce a negative gross
+ *   (sign preserved — costs don't flip a loss positive). BR convention:
+ *   `Total Bruto = Total Líquido + Corretagem + Emolumentos + ISS`.
  *
  * ### Day counting
  * Trades are bucketed by local calendar date (see `localDayKey`). A day is
@@ -69,7 +69,10 @@ const rollupTrades = (trades: TradeFact[], _opts: RollupOptions): PeriodResult =
   const dayNetCents = new Map<string, number>()
 
   for (const trade of trades) {
-    grossCents += Math.max(0, trade.pnlCents) + (trade.commissionCents ?? 0) + (trade.feesCents ?? 0)
+    // gross recovers costs from net pnl: gross = pnl + commission + fees.
+    // Losing trades have negative gross (still net + costs, sign preserved).
+    // BR convention: Total Bruto = Total Líquido + Corretagem + Emolumentos + ISS.
+    grossCents += trade.pnlCents + (trade.commissionCents ?? 0) + (trade.feesCents ?? 0)
     netCents += trade.pnlCents
     totalPoints += trade.points ?? 0
 
