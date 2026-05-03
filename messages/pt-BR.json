@@ -4764,5 +4764,57 @@
     "activeBody": "O Modo Hawk's permite até 3 entradas por dia. Depois disso você devolve, no quinto vira operacional.",
     "exceededTitle": "Limite diário de trades atingido",
     "exceededBody": "Você já fez 3 trades hoje. Pare a sessão. Só abra nova entrada quando outro pregão começar."
+  },
+  "hawksCalibration": {
+    "page": {
+      "title": "Calibração Renko",
+      "subtitle": "Recalibre o tamanho da caixa Renko semanalmente. Sugestão por ATR e encaixe na escada Hawk's."
+    },
+    "card": {
+      "title": "Calibração semanal",
+      "description": "Escolha ativo e timeframe, cole uma leitura ATR(14) ou defina a caixa manualmente. Salva na semana ISO atual.",
+      "assetLabel": "Ativo",
+      "timeframeLabel": "Timeframe",
+      "timeframeOption": "{minutes}m",
+      "atrLabel": "ATR (opcional)",
+      "atrPlaceholder": "ex. 120",
+      "atrHint": "Wilder ATR(14) no fechamento. A sugestão divide por ~3 para tijolos menores que o swing do pregão.",
+      "rValueLabel": "Tamanho da caixa (R)",
+      "rValuePlaceholder": "ex. 11",
+      "ladderHint": "Escada Hawk's: {rungs}",
+      "suggestionTitle": "Sugestão: {rung}R",
+      "suggestionBody": "Degrau mais próximo de ATR ÷ 3 na escada Hawk's. Ajuste a gosto.",
+      "apply": "Aplicar",
+      "notesLabel": "Notas",
+      "notesPlaceholder": "Por que esse degrau? Algo fora do comum nesta semana.",
+      "save": "Salvar calibração",
+      "historyTitle": "Calibrações recentes",
+      "historyLoading": "Carregando…",
+      "historyEmpty": "Nenhuma calibração salva ainda.",
+      "errors": {
+        "invalidRValue": "Informe um tamanho de caixa positivo (R)."
+      }
+    },
+    "actions": {
+      "saved": "Calibração salva.",
+      "listed": "Calibrações carregadas."
+    },
+    "errors": {
+      "noAccount": "Sem conta na sessão.",
+      "saveFailed": "Não foi possível salvar a calibração.",
+      "fetchFailed": "Não foi possível carregar as calibrações."
+    }
+  },
+  "hawksCalendar": {
+    "page": {
+      "title": "Calendário macro",
+      "subtitle": "Janelas duras de no-trade ao redor de Copom, FOMC, CPI e PEU."
+    },
+    "title": "Calendário no-trade",
+    "description": "As tags coloridas marcam cada tipo de evento. Toque num evento para ver a janela.",
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês",
+    "upcomingTitle": "Próximos eventos",
+    "upcomingEmpty": "Nenhum evento futuro carregado."
   }
 }

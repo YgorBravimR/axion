@@ -4764,5 +4764,57 @@
     "activeBody": "Hawk's Mode allows up to 3 entries per day. After that you give back, on the fifth you become the operacional.",
     "exceededTitle": "Daily trade cap reached",
     "exceededBody": "You've taken 3 trades today. Stop the day. Open a new entry only after a new session opens."
+  },
+  "hawksCalibration": {
+    "page": {
+      "title": "Renko calibration",
+      "subtitle": "Recalibrate your Renko box size weekly. ATR-driven suggestion, snap to the Hawks ladder."
+    },
+    "card": {
+      "title": "Weekly calibration",
+      "description": "Pick the asset and timeframe, paste an ATR(14) reading or set the box manually. Saves under the current ISO week.",
+      "assetLabel": "Asset",
+      "timeframeLabel": "Timeframe",
+      "timeframeOption": "{minutes}m",
+      "atrLabel": "ATR (optional)",
+      "atrPlaceholder": "e.g. 120",
+      "atrHint": "Wilder ATR(14) on close. Suggestion divides by ~3 to keep bricks smaller than session swings.",
+      "rValueLabel": "Box size (R)",
+      "rValuePlaceholder": "e.g. 11",
+      "ladderHint": "Hawks ladder: {rungs}",
+      "suggestionTitle": "Suggested rung: {rung}R",
+      "suggestionBody": "Closest Hawks ladder rung to ATR ÷ 3. Adjust to taste.",
+      "apply": "Apply",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Why this rung? Anything unusual this week.",
+      "save": "Save calibration",
+      "historyTitle": "Recent calibrations",
+      "historyLoading": "Loading…",
+      "historyEmpty": "No calibrations saved yet.",
+      "errors": {
+        "invalidRValue": "Enter a positive box size (R)."
+      }
+    },
+    "actions": {
+      "saved": "Calibration saved.",
+      "listed": "Calibrations loaded."
+    },
+    "errors": {
+      "noAccount": "No account in session.",
+      "saveFailed": "Could not save calibration.",
+      "fetchFailed": "Could not load calibrations."
+    }
+  },
+  "hawksCalendar": {
+    "page": {
+      "title": "Macro calendar",
+      "subtitle": "Hard no-trade windows around Copom, FOMC, US CPI, and Petrobras earnings."
+    },
+    "title": "No-trade calendar",
+    "description": "Color tags mark each event kind. Tap an event for the no-trade window.",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "upcomingTitle": "Upcoming events",
+    "upcomingEmpty": "No upcoming events seeded."
   }
 }
