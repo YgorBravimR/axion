@@ -2500,7 +2500,8 @@
         "openCalibration": "Calibração Renko",
         "openCalendar": "Calendário macro",
         "openAnalytics": "Análises Hawk's",
-        "openPresets": "Presets Hawk's"
+        "openPresets": "Presets Hawk's",
+        "openLearning": "Aprendizado Hawk's"
       }
     },
     "profile": {
@@ -4922,6 +4923,40 @@
       "cascade10": "Cascata stop-day — 10",
       "cascade10Value": "{stops} dias vermelhos → zerado pelo mês",
       "cta": "Abrir Equity Shield"
+    }
+  },
+  "hawksLearning": {
+    "page": {
+      "title": "Hub de aprendizado Hawk's",
+      "subtitle": "Cronograma de 4 semanas, conceitos-chave, glossário e os insights diários do Pedro — tudo dentro do Axion."
+    },
+    "hub": {
+      "summaryTitle": "Seu progresso",
+      "summaryDescription": "Marque cada semana e conceito conforme avança. As marcações são pessoais e não ficam visíveis para outros traders.",
+      "progressLabel": "Concluído",
+      "cronogramaTitle": "Cronograma de 4 semanas",
+      "cronogramaDescription": "Rampa estruturada do Pedro: da observação ao simulador como real.",
+      "conceptsTitle": "Páginas de conceitos",
+      "conceptsDescription": "Os oito conceitos não-negociáveis do método Hawk's.",
+      "glossaryTitle": "Glossário",
+      "glossaryDescription": "Vocabulário que você vai escutar em toda live de manhã do Pedro.",
+      "mentorTitle": "Insights diários do Pedro",
+      "mentorDescription": "Lives de manhã mais recentes (últimos 14 dias) já trazidas pelo ETL.",
+      "mentorLoading": "Carregando insights…",
+      "mentorEmpty": "Nenhum insight do mentor sincronizado ainda. O pipeline ETL vai preencher esta seção conforme as lives forem gravadas.",
+      "focus": "Foco",
+      "assignments": "Atividades"
+    },
+    "actions": {
+      "progressLoaded": "Progresso carregado.",
+      "insightsLoaded": "Insights carregados.",
+      "markedComplete": "Marcado como concluído.",
+      "markedIncomplete": "Marcado como pendente."
+    },
+    "errors": {
+      "noUser": "Sem usuário na sessão.",
+      "fetchFailed": "Não foi possível carregar o conteúdo.",
+      "saveFailed": "Não foi possível salvar o progresso."
     }
   }
 }

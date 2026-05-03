@@ -113,6 +113,9 @@ const HawksModeSettings = () => {
 							<Button id="hawks-mode-preview-presets" variant="outline" asChild>
 								<Link href="/hawks/presets">{t("hawks.openPresets")}</Link>
 							</Button>
+							<Button id="hawks-mode-preview-learning" variant="outline" asChild>
+								<Link href="/hawks/learning">{t("hawks.openLearning")}</Link>
+							</Button>
 						</>
 					) : (
 						<Button id="hawks-mode-preview-button" variant="outline" disabled>

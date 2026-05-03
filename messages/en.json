@@ -2500,7 +2500,8 @@
         "openCalibration": "Renko calibration",
         "openCalendar": "Macro calendar",
         "openAnalytics": "Hawks analytics",
-        "openPresets": "Hawks presets"
+        "openPresets": "Hawks presets",
+        "openLearning": "Hawks learning"
       }
     },
     "profile": {
@@ -4922,6 +4923,40 @@
       "cascade10": "Stop-day cascade — 10",
       "cascade10Value": "{stops} red days → flat for the month",
       "cta": "Open Equity Shield"
+    }
+  },
+  "hawksLearning": {
+    "page": {
+      "title": "Hawks learning hub",
+      "subtitle": "4-week cronograma, key concepts, glossary, and Pedro's daily insights — all from inside Axion."
+    },
+    "hub": {
+      "summaryTitle": "Your progress",
+      "summaryDescription": "Tick each week and concept as you finish. Marks are personal, not visible to other traders.",
+      "progressLabel": "Completed",
+      "cronogramaTitle": "4-week cronograma",
+      "cronogramaDescription": "Pedro's structured ramp from observation to live-as-real simulator.",
+      "conceptsTitle": "Concept pages",
+      "conceptsDescription": "The eight non-negotiable concepts of the Hawks method.",
+      "glossaryTitle": "Glossary",
+      "glossaryDescription": "Vocabulary you'll hear on every Pedro morning call.",
+      "mentorTitle": "Pedro's daily insights",
+      "mentorDescription": "Most recent ETL'd morning calls (last 14 days).",
+      "mentorLoading": "Loading insights…",
+      "mentorEmpty": "No mentor insights synced yet. The ETL pipeline will populate this as morning calls are recorded.",
+      "focus": "Focus",
+      "assignments": "Assignments"
+    },
+    "actions": {
+      "progressLoaded": "Progress loaded.",
+      "insightsLoaded": "Insights loaded.",
+      "markedComplete": "Marked complete.",
+      "markedIncomplete": "Marked incomplete."
+    },
+    "errors": {
+      "noUser": "No user in session.",
+      "fetchFailed": "Could not load learning content.",
+      "saveFailed": "Could not save progress."
     }
   }
 }
