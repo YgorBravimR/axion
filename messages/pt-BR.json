@@ -2499,7 +2499,8 @@
         "openBias": "Abrir ritual de viés diário",
         "openCalibration": "Calibração Renko",
         "openCalendar": "Calendário macro",
-        "openAnalytics": "Análises Hawk's"
+        "openAnalytics": "Análises Hawk's",
+        "openPresets": "Presets Hawk's"
       }
     },
     "profile": {
@@ -4878,6 +4879,49 @@
         "mma_misaligned": "MMA não estava alinhada na entrada.",
         "checklist_skipped": "Checklist diário do viés com < 3 itens confirmados."
       }
+    }
+  },
+  "hawksPresets": {
+    "page": {
+      "title": "Presets Hawk's",
+      "subtitle": "Defaults afinados para backtest, Monte Carlo e Equity Shield. Aplique-os nas ferramentas existentes."
+    },
+    "backtest": {
+      "title": "Preset de backtest",
+      "description": "Aproximação da entrada Hawk's tripla-tela em Renko sobre o motor MACD/EMA atual. Stop Method 3 fiel e alvos Fib precisam de um passo de engine futuro.",
+      "entry": "Motor de entrada",
+      "macd": "MACD",
+      "emas": "EMAs",
+      "targets": "Alvos",
+      "stop": "Stop",
+      "method3": "fixed_points + on_partial → indicator(EMA27)",
+      "session": "Janela do pregão",
+      "cta": "Abrir backtest"
+    },
+    "mc": {
+      "title": "Preset Monte Carlo",
+      "description": "Envelope de risco do protocolo do Pedro — 5 % dia, 10 % semana, 20 % mês. Use no perfil do simulador V2.",
+      "maxTrades": "Máx trades / dia",
+      "dailyStop": "Stop diário",
+      "weeklyStop": "Stop semanal",
+      "monthlyStop": "Stop mensal",
+      "stopOnLosses": "Stop após perdas seguidas",
+      "pfTarget": "Profit factor alvo",
+      "wrTarget": "Taxa de acerto alvo",
+      "expectancy": "Expectativa / trade",
+      "cta": "Abrir Monte Carlo"
+    },
+    "shield": {
+      "title": "Preset Equity Shield",
+      "description": "Cascata disciplinar para contas combine Hawk's.",
+      "mddMultiplier": "Multiplicador MDD",
+      "recoveryPct": "Recuperação %",
+      "smaPeriod": "Período SMA",
+      "cascade5": "Cascata stop-day — 5",
+      "cascade5Value": "{stops} dias vermelhos → 50 % de tamanho",
+      "cascade10": "Cascata stop-day — 10",
+      "cascade10Value": "{stops} dias vermelhos → zerado pelo mês",
+      "cta": "Abrir Equity Shield"
     }
   }
 }
