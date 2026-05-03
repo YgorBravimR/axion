@@ -6,12 +6,15 @@ import {
 	decimal,
 	integer,
 	bigint,
+	smallint,
+	numeric,
 	timestamp,
 	boolean,
 	jsonb,
 	pgEnum,
 	index,
 	uniqueIndex,
+	primaryKey,
 } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
@@ -1295,6 +1298,54 @@ export const priceDataVersions = pgTable(
 			table.assetId,
 			table.timeframeId
 		),
+	]
+)
+
+// ==========================================
+// MATERIALIZED AGGREGATE TABLES (Annual Reporting Phase 0)
+// ==========================================
+
+export const accountMonthlyAggregate = pgTable(
+	"account_monthly_aggregate",
+	{
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		year: smallint("year").notNull(),
+		month: smallint("month").notNull(),
+		grossCents: bigint("gross_cents", { mode: "number" }).notNull().default(0),
+		netCents: bigint("net_cents", { mode: "number" }).notNull().default(0),
+		points: numeric("points", { precision: 12, scale: 2 }).notNull().default("0"),
+		tradingDays: smallint("trading_days").notNull().default(0),
+		gainDays: smallint("gain_days").notNull().default(0),
+		lossDays: smallint("loss_days").notNull().default(0),
+		isDirty: boolean("is_dirty").notNull().default(true),
+		computedAt: timestamp("computed_at", { withTimezone: true }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.year, table.month] }),
+	]
+)
+
+export const accountWeeklyAggregate = pgTable(
+	"account_weekly_aggregate",
+	{
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		isoYear: smallint("iso_year").notNull(),
+		isoWeek: smallint("iso_week").notNull(),
+		grossCents: bigint("gross_cents", { mode: "number" }).notNull().default(0),
+		netCents: bigint("net_cents", { mode: "number" }).notNull().default(0),
+		points: numeric("points", { precision: 12, scale: 2 }).notNull().default("0"),
+		tradingDays: smallint("trading_days").notNull().default(0),
+		gainDays: smallint("gain_days").notNull().default(0),
+		lossDays: smallint("loss_days").notNull().default(0),
+		isDirty: boolean("is_dirty").notNull().default(true),
+		computedAt: timestamp("computed_at", { withTimezone: true }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.isoYear, table.isoWeek] }),
 	]
 )
 
