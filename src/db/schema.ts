@@ -15,6 +15,7 @@ import {
 	index,
 	uniqueIndex,
 	primaryKey,
+	date,
 } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
@@ -79,6 +80,9 @@ export const bugReportStatusEnum = pgEnum("bug_report_status", [
 	"rejected",
 	"closed",
 ])
+
+// Capital Event Type Enum (Annual Reporting Phase 1)
+export const capitalEventTypeEnum = pgEnum("capital_event_type", ["deposit", "withdrawal"])
 
 // ==========================================
 // AUTH TABLES (Phase 10)
@@ -1346,6 +1350,31 @@ export const accountWeeklyAggregate = pgTable(
 	},
 	(table) => [
 		primaryKey({ columns: [table.accountId, table.isoYear, table.isoWeek] }),
+	]
+)
+
+// ==========================================
+// CAPITAL EVENTS TABLE (Annual Reporting Phase 1)
+// ==========================================
+
+export const accountCapitalEvents = pgTable(
+	"account_capital_events",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		eventType: capitalEventTypeEnum("event_type").notNull(),
+		// Always positive; direction implied by eventType.
+		// Plain BIGINT (no encryption) — consistent with aggregate tables.
+		amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
+		eventDate: date("event_date").notNull(),  // actual transfer date, not log date
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("ace_account_date_idx").on(table.accountId, table.eventDate),
 	]
 )
 

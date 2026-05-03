@@ -183,6 +183,13 @@
       "when": 1777841913161,
       "tag": "0025_worthless_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1777843480481,
+      "tag": "0026_harsh_redwing",
+      "breakpoints": true
     }
   ]
 }
