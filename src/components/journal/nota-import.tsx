@@ -590,7 +590,7 @@ export const NotaImport = () => {
 								id="nota-import-enrich"
 								onClick={handleEnrich}
 								disabled={isEnriching || selectedCount === 0}
-								className="min-w-[180px]"
+								className="w-full sm:min-w-[180px]"
 							>
 								{isEnriching ? (
 									<>

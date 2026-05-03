@@ -1,9 +1,16 @@
-import type { BacktestTrade, BacktestSummary, EquityCurvePoint } from "@/types/backtest"
+import type {
+	BacktestTrade,
+	BacktestSummary,
+	EquityCurvePoint,
+} from "@/types/backtest"
 
 /**
  * Compute summary metrics from a list of completed trades.
  */
-const computeMetrics = (trades: BacktestTrade[], totalDays: number): BacktestSummary => {
+const computeMetrics = (
+	trades: BacktestTrade[],
+	totalDays: number
+): BacktestSummary => {
 	if (trades.length === 0) {
 		return {
 			totalTrades: 0,
@@ -35,6 +42,8 @@ const computeMetrics = (trades: BacktestTrade[], totalDays: number): BacktestSum
 	let grossWins = 0
 	let grossLosses = 0
 	let rSum = 0
+	let winRSum = 0
+	let lossRSum = 0
 	let peakEquity = 0
 	let maxDrawdownCents = 0
 	let runningEquity = 0
@@ -53,12 +62,14 @@ const computeMetrics = (trades: BacktestTrade[], totalDays: number): BacktestSum
 		if (pnl > 0) {
 			winsCount++
 			grossWins += pnl
+			winRSum += trade.rMultiple
 			currentWinStreak++
 			currentLossStreak = 0
 			maxConsecutiveWins = Math.max(maxConsecutiveWins, currentWinStreak)
 		} else if (pnl < 0) {
 			lossesCount++
 			grossLosses += -pnl
+			lossRSum += trade.rMultiple
 			currentLossStreak++
 			currentWinStreak = 0
 			maxConsecutiveLosses = Math.max(maxConsecutiveLosses, currentLossStreak)
@@ -73,11 +84,14 @@ const computeMetrics = (trades: BacktestTrade[], totalDays: number): BacktestSum
 		maxDrawdownCents = Math.max(maxDrawdownCents, peakEquity - runningEquity)
 	}
 
-	const winRate = (winsCount / trades.length) * 100
-	const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0
+	const decisiveCount = winsCount + lossesCount
+	const winRate = decisiveCount > 0 ? (winsCount / decisiveCount) * 100 : 0
+	const profitFactor =
+		grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0
 	const avgPnlCents = Math.round(totalPnlCents / trades.length)
 	const avgWinCents = winsCount > 0 ? Math.round(grossWins / winsCount) : 0
-	const avgLossCents = lossesCount > 0 ? Math.round(-grossLosses / lossesCount) : 0
+	const avgLossCents =
+		lossesCount > 0 ? Math.round(-grossLosses / lossesCount) : 0
 	const avgRMultiple = rSum / trades.length
 
 	// Sharpe ratio — second pass needed for std dev (variance requires mean first)
@@ -87,6 +101,14 @@ const computeMetrics = (trades: BacktestTrade[], totalDays: number): BacktestSum
 	}
 	const stdR = Math.sqrt(varianceSum / trades.length)
 	const sharpeRatio = stdR > 0 ? avgRMultiple / stdR : 0
+
+	// True R-expectancy = winRate * avgWinR - lossRate * |avgLossR|
+	// avgLossRMultiple is already negative, so summation gives correct result
+	const rWinRate = decisiveCount > 0 ? winsCount / decisiveCount : 0
+	const avgWinRMultiple = winsCount > 0 ? winRSum / winsCount : 0
+	const avgLossRMultiple = lossesCount > 0 ? lossRSum / lossesCount : 0
+	const expectancy =
+		rWinRate * avgWinRMultiple + (1 - rWinRate) * avgLossRMultiple
 
 	return {
 		totalTrades: trades.length,
@@ -104,7 +126,7 @@ const computeMetrics = (trades: BacktestTrade[], totalDays: number): BacktestSum
 		maxConsecutiveLosses,
 		maxConsecutiveWins,
 		sharpeRatio: Math.round(sharpeRatio * 100) / 100,
-		expectancy: Math.round(avgRMultiple * 100) / 100,
+		expectancy: Math.round(expectancy * 100) / 100,
 		totalDays,
 		tradingDays: uniqueDays.size,
 	}

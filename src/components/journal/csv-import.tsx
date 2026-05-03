@@ -529,7 +529,7 @@ export const CsvImport = () => {
 								id="csv-import-submit"
 								onClick={handleImport}
 								disabled={isImporting || selectedCount === 0}
-								className="min-w-[160px]"
+								className="w-full sm:min-w-[160px]"
 							>
 								{isImporting ? (
 									<>

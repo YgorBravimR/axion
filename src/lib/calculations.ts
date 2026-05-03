@@ -139,7 +139,10 @@ export const formatCurrency = (value: number, currency = "USD"): string => {
 /**
  * Format cents as currency string
  */
-export const formatCurrencyFromCents = (cents: number, currency = "USD"): string => {
+export const formatCurrencyFromCents = (
+	cents: number,
+	currency = "USD"
+): string => {
 	return formatCurrency(cents / 100, currency)
 }
 
@@ -272,11 +275,19 @@ export const calculateFifoPnL = (
 	// Sort entries by date (FIFO) - using toSorted for immutability
 	const entries = executions
 		.filter((e) => e.executionType === "entry")
-		.toSorted((a, b) => new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime())
+		.toSorted(
+			(a, b) =>
+				new Date(a.executionDate).getTime() -
+				new Date(b.executionDate).getTime()
+		)
 
 	const exits = executions
 		.filter((e) => e.executionType === "exit")
-		.toSorted((a, b) => new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime())
+		.toSorted(
+			(a, b) =>
+				new Date(a.executionDate).getTime() -
+				new Date(b.executionDate).getTime()
+		)
 
 	if (entries.length === 0) {
 		return {
@@ -293,10 +304,14 @@ export const calculateFifoPnL = (
 	let entryIndex = 0
 	let remainingEntryQty = entries[0]?.quantity || 0
 	let matchedQuantity = 0
+	// Track fees attributable to matched (realized) quantity only.
+	// Fees on unmatched entries (still open) are NOT yet incurred.
+	let realizedCommission = 0
+	let realizedFees = 0
+
+	// Sum totals for return value (full executed cost).
 	let totalCommission = 0
 	let totalFees = 0
-
-	// Accumulate all commissions and fees
 	for (const ex of executions) {
 		totalCommission += ex.commission ?? 0
 		totalFees += ex.fees ?? 0
@@ -305,29 +320,35 @@ export const calculateFifoPnL = (
 	// Match exits against entries (FIFO)
 	for (const exit of exits) {
 		let exitQtyRemaining = exit.quantity
+		const exitFeePerUnit =
+			exit.quantity > 0 ? (exit.fees ?? 0) / exit.quantity : 0
+		const exitCommPerUnit =
+			exit.quantity > 0 ? (exit.commission ?? 0) / exit.quantity : 0
 
 		while (exitQtyRemaining > 0 && entryIndex < entries.length) {
+			const entry = entries[entryIndex]
 			const matchQty = Math.min(exitQtyRemaining, remainingEntryQty)
-			const entryPrice = entries[entryIndex].price
+			const entryPrice = entry.price
 			const exitPrice = exit.price
 
 			// Calculate P&L for this matched quantity
-			let pnlForMatch: number
-			if (asset) {
-				// Tick-based calculation
-				const priceDiff =
-					direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
-				const ticksGained = priceDiff / asset.tickSize
-				pnlForMatch = ticksGained * asset.tickValue * matchQty
-			} else {
-				// Simple price-based calculation
-				const priceDiff =
-					direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
-				pnlForMatch = priceDiff * matchQty
-			}
+			const priceDiff =
+				direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
+			const pnlForMatch = asset
+				? (priceDiff / asset.tickSize) * asset.tickValue * matchQty
+				: priceDiff * matchQty
 
 			realizedPnl += pnlForMatch
 			matchedQuantity += matchQty
+
+			// Pro-rate fees from both legs onto matched quantity
+			const entryFeePerUnit =
+				entry.quantity > 0 ? (entry.fees ?? 0) / entry.quantity : 0
+			const entryCommPerUnit =
+				entry.quantity > 0 ? (entry.commission ?? 0) / entry.quantity : 0
+			realizedCommission += matchQty * (entryCommPerUnit + exitCommPerUnit)
+			realizedFees += matchQty * (entryFeePerUnit + exitFeePerUnit)
+
 			exitQtyRemaining -= matchQty
 			remainingEntryQty -= matchQty
 
@@ -338,7 +359,6 @@ export const calculateFifoPnL = (
 		}
 	}
 
-	// Calculate remaining quantity (unmatched entries)
 	let totalEntryQty = 0
 	for (const entry of entries) {
 		totalEntryQty += entry.quantity
@@ -349,12 +369,12 @@ export const calculateFifoPnL = (
 	}
 	const remainingQuantity = totalEntryQty - totalExitQty
 
-	// Net P&L after costs
-	const netRealizedPnl = realizedPnl - totalCommission - totalFees
+	// Net P&L only deducts fees for the matched (realized) portion.
+	const netRealizedPnl = realizedPnl - realizedCommission - realizedFees
 
 	return {
 		realizedPnl: netRealizedPnl,
-		unrealizedPnl: 0, // Would need current market price to calculate
+		unrealizedPnl: 0,
 		totalCommission,
 		totalFees,
 		matchedQuantity,
@@ -420,14 +440,26 @@ export interface TickBasedPositionSizeResult {
 export const calculateTickBasedPositionSize = (
 	input: TickBasedPositionSizeInput
 ): TickBasedPositionSizeResult => {
-	const { riskBudgetCents, entryPrice, stopLoss, tickSize, tickValue, maxContracts } = input
+	const {
+		riskBudgetCents,
+		entryPrice,
+		stopLoss,
+		tickSize,
+		tickValue,
+		maxContracts,
+	} = input
 
 	const priceDiff = Math.abs(entryPrice - stopLoss)
 	const ticksAtRisk = priceDiff / tickSize
 
 	// SL at entry price (0 ticks) — cannot size
 	if (ticksAtRisk <= 0 || tickValue <= 0) {
-		return { contracts: 0, ticksAtRisk: 0, riskPerContractCents: 0, actualRiskCents: 0 }
+		return {
+			contracts: 0,
+			ticksAtRisk: 0,
+			riskPerContractCents: 0,
+			actualRiskCents: 0,
+		}
 	}
 
 	const riskPerContractCents = ticksAtRisk * tickValue
@@ -509,7 +541,10 @@ const calculateExecutionSummary = (
 		(sum, e) => sum + (Number(e.commission) || 0),
 		0
 	)
-	const totalFees = executions.reduce((sum, e) => sum + (Number(e.fees) || 0), 0)
+	const totalFees = executions.reduce(
+		(sum, e) => sum + (Number(e.fees) || 0),
+		0
+	)
 
 	return {
 		totalEntryQuantity,

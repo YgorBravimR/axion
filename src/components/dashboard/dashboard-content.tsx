@@ -83,7 +83,7 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	], [t])
 
 	return (
-		<div className="flex rounded-lg border border-bg-300 bg-bg-100 p-s-100" role="group" aria-label="Period filter">
+		<div className="flex rounded-lg border border-bg-300 bg-bg-100 p-s-100" role="group" aria-label={t("filterAriaLabel")}>
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -91,7 +91,7 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 					onClick={() => onChange(option.value)}
 					disabled={disabled}
 					className={cn(
-						"rounded-md px-s-200 py-s-100 text-tiny font-medium transition-colors sm:px-s-300 sm:text-small",
+						"rounded-md min-h-11 px-s-300 py-s-200 text-tiny font-medium transition-colors sm:text-small",
 						period === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -230,7 +230,7 @@ export const DashboardContent = ({
 			)}
 
 			{/* Calendar */}
-			<div id="dashboard-calendar" className="md:col-span-2 lg:col-span-2">
+			<div id="dashboard-calendar" className="md:col-span-1 lg:col-span-2">
 				<TradingCalendar
 					data={dailyPnL}
 					month={currentMonth}
@@ -240,7 +240,7 @@ export const DashboardContent = ({
 			</div>
 
 			{/* Quick Stats */}
-			<div id="dashboard-quick-stats" className="md:col-span-2 lg:col-span-1">
+			<div id="dashboard-quick-stats" className="md:col-span-1 lg:col-span-1">
 				<QuickStats streakData={streakData} stats={stats} />
 			</div>
 

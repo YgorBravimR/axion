@@ -934,8 +934,8 @@
           "tradeRoot": "TRADE {number}",
           "trade": "TRADE {number}",
           "risk": "Risco: {amount}",
-          "loss": "LOSS {amount}",
-          "gain": "GAIN {amount}",
+          "loss": "PERDA {amount}",
+          "gain": "GANHO {amount}",
           "noRecovery": "Nenhum passo de recuperação configurado para este perfil.",
           "probability": "P = {value}",
           "assumedWinRate": "Assumindo 50% de taxa de acerto",
@@ -1358,7 +1358,8 @@
     "period": {
       "month": "Mês",
       "year": "Ano",
-      "allTime": "Geral"
+      "allTime": "Geral",
+      "filterAriaLabel": "Filtro de período"
     },
     "trade": "trade",
     "trades": "trades",
@@ -1907,7 +1908,7 @@
         "custom": "Personalizado"
       },
       "presets": {
-        "label": "Presets",
+        "label": "Predefinições",
         "save": "Salvar Preset",
         "saveAs": "Salvar como Preset",
         "namePlaceholder": "Nome do preset...",
@@ -4513,7 +4514,8 @@
       "newOptimization": "Nova Otimização",
       "stepStatusCurrent": "etapa atual",
       "stepStatusCompleted": "concluída",
-      "stepStatusUpcoming": "próxima"
+      "stepStatusUpcoming": "próxima",
+      "ariaLabel": "Assistente de otimização"
     },
     "summary": {
       "strategy": "Estratégia",

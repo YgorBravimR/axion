@@ -16,6 +16,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 	const t = useTranslations("backtest.table")
 	const tReasons = useTranslations("backtest.exitReasons")
 	const tResults = useTranslations("backtest.results")
+	const tCommon = useTranslations("common")
 
 	const columns: ColumnDef<BacktestTrade>[] = useMemo(
 		() => [
@@ -42,7 +43,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 						<span className={`inline-flex items-center rounded-full px-s-300 py-s-100 text-tiny font-medium ${
 							isLong ? "bg-action-buy/15 text-action-buy" : "bg-action-sell/15 text-action-sell"
 						}`}>
-							{isLong ? "LONG" : "SHORT"}
+							{(isLong ? tCommon("long") : tCommon("short")).toUpperCase()}
 						</span>
 					)
 				},

@@ -85,11 +85,11 @@ const CommandCenterTabs = ({
 			onValueChange={setActiveTab}
 			className="flex h-full flex-col"
 		>
-			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-s-200 overflow-x-auto" aria-label={t("tabs.navigation")}>
+			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-s-200 overflow-x-auto whitespace-nowrap snap-x snap-mandatory" aria-label={t("tabs.navigation")}>
 				{showPlanTab && (
 					<TabsTrigger
 						value="plan"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
 						aria-label={t("tabs.plan")}
 					>
 						<CalendarDays className="h-4 w-4" />
@@ -99,7 +99,7 @@ const CommandCenterTabs = ({
 				{showCommandTab && (
 					<TabsTrigger
 						value="command-center"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
 						aria-label={t("tabs.commandCenter")}
 					>
 						<Target className="h-4 w-4" />
@@ -109,7 +109,7 @@ const CommandCenterTabs = ({
 				{showMonitorTab && (
 					<TabsTrigger
 						value="monitor"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
+						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
 						aria-label={t("tabs.monitor")}
 					>
 						<Activity className="h-4 w-4" />
@@ -118,7 +118,7 @@ const CommandCenterTabs = ({
 				)}
 				<TabsTrigger
 					value="calculator"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200"
+					className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
 					aria-label={t("tabs.calculator")}
 				>
 					<Calculator className="h-4 w-4" />

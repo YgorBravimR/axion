@@ -205,7 +205,7 @@ export const SessionPerformanceChart = memo(({
 	const headerMetricValue = isRMode ? weightedAvgR : totalPnl
 
 	return (
-		<div id="analytics-session-chart" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div id="analytics-session-chart" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500" suppressHydrationWarning>
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-start justify-between">
 				<div>

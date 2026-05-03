@@ -149,7 +149,7 @@ const SimulationConfigPanel = ({
 								<SelectTrigger
 									id="sim-year-filter"
 									size="sm"
-									className="w-[100px]"
+									className="w-full max-w-[100px] min-w-0"
 									aria-label={t("yearFilter")}
 								>
 									<SelectValue placeholder={t("yearFilter")} />

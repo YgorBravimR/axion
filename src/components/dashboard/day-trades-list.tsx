@@ -65,7 +65,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 	}
 
 	return (
-		<div className="border-bg-300 overflow-x-auto rounded-lg border">
+		<div className="border-bg-300 overflow-x-auto overscroll-x-contain touch-pan-x rounded-lg border">
 			<Table>
 				<TableHeader>
 					<TableRow className="bg-bg-100 hover:bg-bg-100">

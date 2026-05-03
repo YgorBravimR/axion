@@ -99,6 +99,7 @@ const applyMethod1 = (
 	let managedPeak = initialBalance
 	let allTimeHigh = initialBalance
 	let originalCumulativePnl = 0
+	let liveCount = 0
 
 	// Rolling MDD: tracks completed drawdowns on the original curve.
 	// A drawdown "completes" when the original equity makes a new high.
@@ -158,9 +159,10 @@ const applyMethod1 = (
 				originalValleyInSim = originalAccountEquity
 			}
 
+			liveCount++
 			points.push({
 				tradeNumber: i + 1,
-				liveTradeNumber: null,
+				liveTradeNumber: liveCount,
 				date: formatDateKey(trade.exitDate ?? trade.entryDate),
 				pnl,
 				originalEquity: originalCumulativePnl,
@@ -266,6 +268,7 @@ const applyMethod2 = (
 	let managedPeak = initialBalance
 	let allTimeHigh = initialBalance
 	let originalCumulativePnl = 0
+	let liveCount = 0
 
 	for (let i = 0; i < trades.length; i++) {
 		const trade = trades[i]
@@ -300,9 +303,10 @@ const applyMethod2 = (
 			}
 		}
 		// sim: managedEquity stays flat
+		if (mode === "live") liveCount++
 		points.push({
 			tradeNumber: i + 1,
-			liveTradeNumber: null,
+			liveTradeNumber: mode === "live" ? liveCount : null,
 			date: formatDateKey(trade.exitDate ?? trade.entryDate),
 			pnl,
 			originalEquity: originalCumulativePnl,
@@ -456,15 +460,11 @@ const runEquityShield = (
 		params.cutAtDdLimit
 	)
 
-	// 4. Build live-only curves
+	// 4. Build live-only curves (liveTradeNumber assigned during method passes)
 	const method1LiveOnly = buildLiveOnlyCurve(method1, initialBalance)
 	const method2LiveOnly = buildLiveOnlyCurve(method2, initialBalance)
 
-	// 5. Assign liveTradeNumber to the full method curves
-	assignLiveTradeNumbers(method1)
-	assignLiveTradeNumbers(method2)
-
-	// 6. Compute stats
+	// 5. Compute stats
 	const method1Stats = computeMethodStats(
 		method1,
 		method1LiveOnly,
@@ -502,17 +502,6 @@ const runEquityShield = (
 			method1: method1Stats,
 			method2: method2Stats,
 		},
-	}
-}
-
-/** Assign sequential liveTradeNumber to live-mode points in-place */
-const assignLiveTradeNumbers = (points: EquityShieldPoint[]): void => {
-	let liveCount = 0
-	for (const point of points) {
-		if (point.mode === "live") {
-			liveCount++
-			point.liveTradeNumber = liveCount
-		}
 	}
 }
 

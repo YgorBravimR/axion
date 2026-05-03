@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -34,11 +34,20 @@ export const PeriodFilter = ({
 }: PeriodFilterProps) => {
 	const t = useTranslations("journal")
 	const [showCustomPicker, setShowCustomPicker] = useState(false)
+	const [isMobile, setIsMobile] = useState(false)
 	const [tempRange, setTempRange] = useState<DateRange | undefined>(
 		customDateRange
 			? { from: customDateRange.from, to: customDateRange.to }
 			: undefined
 	)
+
+	useEffect(() => {
+		const mq = window.matchMedia("(max-width: 419px)")
+		setIsMobile(mq.matches)
+		const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+		mq.addEventListener("change", handleChange)
+		return () => mq.removeEventListener("change", handleChange)
+	}, [])
 
 	const periods = useMemo<{ key: JournalPeriod; label: string }[]>(
 		() => [
@@ -108,12 +117,13 @@ export const PeriodFilter = ({
 
 			{/* Custom Date Range Picker */}
 			{showCustomPicker && (
-				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex flex-wrap items-end rounded-lg border">
+				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex flex-wrap items-end rounded-lg border max-w-[calc(100vw-2rem)]">
 					<div className="w-full sm:min-w-[260px] sm:flex-1">
 						<DateRangePicker
 							id="period-filter-range"
 							value={tempRange}
 							onChange={setTempRange}
+							numberOfMonths={isMobile ? 1 : 2}
 						/>
 					</div>
 					<div className="gap-s-100 flex">

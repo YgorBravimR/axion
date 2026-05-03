@@ -111,7 +111,9 @@ const aggregateStatistics = (
 	params: SimulationParams,
 	runs: SimulationRun[]
 ): SimulationStatistics => {
-	const finalRValues = runs.map((r) => r.finalCumulativeR).toSorted((a, b) => a - b)
+	const finalRValues = runs
+		.map((r) => r.finalCumulativeR)
+		.toSorted((a, b) => a - b)
 	const maxDrawdowns = runs.map((r) => r.maxRDrawdown).toSorted((a, b) => a - b)
 
 	const percentile = (arr: number[], p: number): number => {
@@ -129,27 +131,42 @@ const aggregateStatistics = (
 
 	const profitableRuns = runs.filter((r) => r.finalCumulativeR > 0).length
 
-	// Collect all per-trade R results across all runs for Sharpe/Sortino
-	const allTradeResults: number[] = []
+	// Per-run Sharpe/Sortino, averaged across runs.
+	// Pooling all trades from all runs into one series shrinks stddev by ~√N
+	// (independent runs from same distribution) and inflates Sharpe artificially.
+	// Correct approach: compute the ratio within each run, then average.
+	const perRunSharpes: number[] = []
+	const perRunSortinos: number[] = []
+	let totalWinningR = 0
+	let totalLosingR = 0
 	for (const run of runs) {
-		for (const trade of run.trades) {
-			allTradeResults.push(trade.rResult)
+		const runResults = run.trades.map((t) => t.rResult)
+		const runMean = mean(runResults)
+		const runStd = calculateStdDev(runResults)
+		const runDownside = calculateDownsideDeviation(runResults, 0)
+		perRunSharpes.push(runStd > 0 ? runMean / runStd : 0)
+		perRunSortinos.push(runDownside > 0 ? runMean / runDownside : 0)
+		for (const r of runResults) {
+			if (r > 0) totalWinningR += r
+			else if (r < 0) totalLosingR += -r
 		}
 	}
 
-	const meanRPerTrade = mean(allTradeResults)
-	const stdDev = calculateStdDev(allTradeResults)
-	const downsideDev = calculateDownsideDeviation(allTradeResults, 0)
+	const meanRPerTrade =
+		runs.length > 0
+			? runs.reduce((s, r) => s + r.finalCumulativeR, 0) /
+				(runs.length * params.numberOfTrades)
+			: 0
+	const sharpeRatio = perRunSharpes.length > 0 ? mean(perRunSharpes) : 0
+	const sortinoRatio = perRunSortinos.length > 0 ? mean(perRunSortinos) : 0
 
-	const sharpeRatio = stdDev > 0 ? meanRPerTrade / stdDev : 0
-	const sortinoRatio = downsideDev > 0 ? meanRPerTrade / downsideDev : 0
-
-	// Profit factor: total winning R / total losing R
-	const totalWinningR = allTradeResults.filter((r) => r > 0).reduce((sum, r) => sum + r, 0)
-	const totalLosingR = Math.abs(allTradeResults.filter((r) => r < 0).reduce((sum, r) => sum + r, 0))
-	const profitFactor = totalLosingR > 0
-		? totalWinningR / totalLosingR
-		: totalWinningR > 0 ? Infinity : 0
+	// Profit factor: total winning R / total losing R (across all sims)
+	const profitFactor =
+		totalLosingR > 0
+			? totalWinningR / totalLosingR
+			: totalWinningR > 0
+				? Infinity
+				: 0
 
 	// Streak analysis
 	const avgMaxWinStreak = mean(runs.map((r) => r.maxWinStreak))
@@ -178,13 +195,19 @@ const aggregateStatistics = (
 		if (currentLoss > 0) allLossStreaks.push(currentLoss)
 	}
 
+	// Kelly uses net reward (after commission impact) so f* isn't overstated.
+	const aggregateCommissionFraction = params.commissionImpactR / 100
+	const netRewardRiskRatio = Math.max(
+		0.0001,
+		params.rewardRiskRatio - aggregateCommissionFraction
+	)
 	const {
 		kellyFull,
 		kellyHalf,
 		kellyQuarter,
 		kellyRecommendation,
 		kellyLevel,
-	} = calculateKellyCriterion(params.winRate, params.rewardRiskRatio)
+	} = calculateKellyCriterion(params.winRate, netRewardRiskRatio)
 
 	return {
 		medianFinalR: median(finalRValues),
@@ -258,9 +281,7 @@ export const calculateKellyCriterion = (
 /**
  * Bucket by final cumulative R ranges
  */
-const calculateDistribution = (
-	runs: SimulationRun[]
-): DistributionBucket[] => {
+const calculateDistribution = (runs: SimulationRun[]): DistributionBucket[] => {
 	const finalRValues = runs.map((r) => r.finalCumulativeR)
 	let min = Infinity
 	let max = -Infinity
@@ -309,7 +330,10 @@ const calculateStdDev = (values: number[]): number => {
  *
  * DD = sqrt( (1/N) * Σ min(0, r_i - target)^2 )
  */
-const calculateDownsideDeviation = (values: number[], target: number): number => {
+const calculateDownsideDeviation = (
+	values: number[],
+	target: number
+): number => {
 	if (values.length === 0) return 0
 	const sumSquaredDownside = values.reduce((sum, v) => {
 		const diff = v - target
@@ -369,9 +393,7 @@ export const generateAnalysisInsights = (
 
 	const suggestions: string[] = []
 	if (params.rewardRiskRatio < 1.5) {
-		suggestions.push(
-			"Improve Reward/Risk: Focus on letting winners run longer"
-		)
+		suggestions.push("Improve Reward/Risk: Focus on letting winners run longer")
 	}
 	if (params.winRate < 50) {
 		suggestions.push(

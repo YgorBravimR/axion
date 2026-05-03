@@ -41,6 +41,7 @@ interface TradeForStats {
 interface TradeForEquity {
 	pnl: number | string | null
 	entryDate: Date
+	exitDate?: Date | null
 }
 
 interface TradeForRisk {
@@ -97,11 +98,11 @@ const computeOverallStats = (trades: TradeForStats[]): OverallStats => {
 
 		if (trade.outcome === "win") {
 			winCount++
-			grossProfit += pnl
+			grossProfit += pnl + tradeFees
 			wins.push(pnl)
 		} else if (trade.outcome === "loss") {
 			lossCount++
-			grossLoss += Math.abs(pnl)
+			grossLoss += Math.abs(pnl) - tradeFees
 			losses.push(Math.abs(pnl))
 		} else if (trade.outcome === "breakeven") {
 			breakevenCount++
@@ -237,7 +238,8 @@ const computeEquityCurve = (trades: TradeForEquity[]): EquityPoint[] => {
 
 	const dailyPnlMap = new Map<string, number>()
 	for (const trade of trades) {
-		const dateKey = formatDateKey(trade.entryDate)
+		const realizationDate = trade.exitDate ?? trade.entryDate
+		const dateKey = formatDateKey(realizationDate)
 		const pnl = fromCents(trade.pnl)
 		const existing = dailyPnlMap.get(dateKey) || 0
 		dailyPnlMap.set(dateKey, existing + pnl)
@@ -247,17 +249,18 @@ const computeEquityCurve = (trades: TradeForEquity[]): EquityPoint[] => {
 
 	const equityPoints: EquityPoint[] = []
 	let cumulativePnL = 0
-	let peak = 0
+	let peak: number | null = null
 
 	for (const date of sortedDates) {
 		const dailyPnl = dailyPnlMap.get(date) || 0
 		cumulativePnL += dailyPnl
 
-		if (cumulativePnL > peak) {
+		if (peak === null || cumulativePnL > peak) {
 			peak = cumulativePnL
 		}
 
-		const drawdown = peak > 0 ? ((peak - cumulativePnL) / peak) * 100 : 0
+		const denom = Math.abs(peak)
+		const drawdown = denom > 0 ? ((peak - cumulativePnL) / denom) * 100 : 0
 
 		equityPoints.push({
 			date,
@@ -281,7 +284,7 @@ const computeMaxDrawdown = (
 		return { maxDrawdown: 0, maxDrawdownPercent: 0 }
 	}
 
-	let peak = 0
+	let peak = equityCurve[0].equity
 	let maxDrawdownAbs = 0
 	let maxDrawdownPct = 0
 

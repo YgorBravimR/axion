@@ -366,7 +366,7 @@ const SmartSearch = ({
 								</TooltipContent>
 							</Tooltip>
 						</div>
-						<div className="flex flex-col gap-s-200 sm:flex-row sm:flex-wrap sm:items-end">
+						<div className="flex flex-wrap gap-s-200 items-end">
 							{/* Field selector */}
 							<Select
 								value={newField}

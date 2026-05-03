@@ -85,7 +85,7 @@ export const PostMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PostMa
 					value={postMarketNotes}
 					onChange={(e) => setPostMarketNotes(e.target.value)}
 					placeholder={t("postMarketPlaceholder")}
-					className="min-h-[120px] resize-none"
+					className="min-h-[120px] resize-none sm:resize-y"
 					disabled={isReadOnly}
 				/>
 			</div>

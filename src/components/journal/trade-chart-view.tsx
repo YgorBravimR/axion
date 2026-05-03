@@ -12,8 +12,14 @@ import type { CandleRow, IndicatorGroupWithKeys, TradeChartData } from "@/types/
 import { useCandleChart } from "@/lib/chart/use-candle-chart"
 import { REFERENCE_GROUPS } from "@/lib/chart/constants"
 import { useTranslations } from "next-intl"
-import { LayoutList } from "lucide-react"
+import { LayoutList, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+	Sheet,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet"
 import { TradeInfoPanel } from "@/components/journal/trade-info-panel"
 import type { TradeInfoPanelProps } from "@/components/journal/trade-info-panel"
 
@@ -58,6 +64,7 @@ const TradeChartView = ({
 
 	const [activeGroups, setActiveGroups] = useState<Set<string>>(new Set())
 	const [showExecutions, setShowExecutions] = useState(true)
+	const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
 
 	/** Execution line series refs for toggling visibility */
 	const executionLinesRef = useRef<Array<import("lightweight-charts").ISeriesApi<"Line">>>([])
@@ -461,6 +468,19 @@ const TradeChartView = ({
 					{/* Spacer */}
 					<div className="flex-1" />
 
+					{/* Mobile: open details sheet */}
+					<Button
+						id="toggle-details-sheet"
+						size="sm"
+						variant="outline"
+						onClick={() => setIsDetailSheetOpen(true)}
+						className="lg:hidden border-bg-300 text-txt-300 gap-s-200"
+						aria-label={tCommon("details")}
+					>
+						<SlidersHorizontal className="h-4 w-4" />
+						{tCommon("details")}
+					</Button>
+
 					{/* Switch to detail view */}
 					{onToggleView && (
 						<Button
@@ -478,8 +498,8 @@ const TradeChartView = ({
 				</div>
 			</div>
 
-			{/* Info panel — 30%, full height, independent scroll */}
-			<div className="border-bg-300 shrink-0 lg:h-full lg:w-[30%] lg:min-w-[300px] lg:max-w-[380px] lg:border-l lg:overflow-y-auto">
+			{/* Info panel — desktop: 30% side panel */}
+			<div className="border-bg-300 hidden shrink-0 lg:flex lg:h-full lg:w-[30%] lg:min-w-[300px] lg:max-w-[380px] lg:border-l lg:overflow-y-auto">
 				<TradeInfoPanel
 					trade={trade}
 					executions={executions}
@@ -489,6 +509,29 @@ const TradeChartView = ({
 					onDirtyChange={onDirtyChange}
 				/>
 			</div>
+
+			{/* Info panel — mobile/tablet: Sheet from right */}
+			<Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
+				<SheetContent
+					id="trade-detail-sheet"
+					side="right"
+					className="w-full max-w-[420px] overflow-y-auto p-0"
+				>
+					<SheetHeader className="border-bg-300 border-b px-m-400 py-s-300">
+						<SheetTitle className="text-small font-medium">
+							{tTrade("tradeDetails")}
+						</SheetTitle>
+					</SheetHeader>
+					<TradeInfoPanel
+						trade={trade}
+						executions={executions}
+						fullTrade={fullTrade}
+						tickSize={tickSize}
+						tickValue={tickValue}
+						onDirtyChange={onDirtyChange}
+					/>
+				</SheetContent>
+			</Sheet>
 		</div>
 	)
 }

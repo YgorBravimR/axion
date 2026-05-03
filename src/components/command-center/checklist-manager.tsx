@@ -133,7 +133,7 @@ export const ChecklistManager = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-			<DialogContent id="checklist-manager-dialog" className="max-w-lg" aria-describedby={undefined}>
+			<DialogContent id="checklist-manager-dialog" className="max-w-lg w-[calc(100%-1rem)] sm:w-auto" aria-describedby={undefined}>
 				<DialogHeader>
 					<DialogTitle>
 						{isEditing ? t("editTitle") : t("createTitle")}
@@ -162,8 +162,8 @@ export const ChecklistManager = ({
 						</Label>
 						<div className="space-y-s-200">
 							{items.map((item, index) => (
-								<div key={item.id} className="flex items-center gap-s-200">
-									<div className="flex gap-s-100">
+								<div key={item.id} className="flex items-center gap-s-200 min-w-0">
+									<div className="flex gap-s-100 shrink-0">
 										<Button
 											id={`checklist-item-move-up-${item.id}`}
 											type="button"
@@ -171,7 +171,7 @@ export const ChecklistManager = ({
 											size="sm"
 											onClick={() => handleMoveItem(index, index - 1)}
 											disabled={index === 0}
-											className="h-8 w-8 p-0 text-txt-300"
+											className="h-9 w-9 p-0 text-txt-300"
 											aria-label={tCommon("moveUp")}
 										>
 											&uarr;
@@ -183,7 +183,7 @@ export const ChecklistManager = ({
 											size="sm"
 											onClick={() => handleMoveItem(index, index + 1)}
 											disabled={index === items.length - 1}
-											className="h-8 w-8 p-0 text-txt-300"
+											className="h-9 w-9 p-0 text-txt-300"
 											aria-label={tCommon("moveDown")}
 										>
 											&darr;
@@ -194,7 +194,7 @@ export const ChecklistManager = ({
 										value={item.label}
 										onChange={(e) => handleItemChange(item.id, e.target.value)}
 										placeholder={t("itemPlaceholder")}
-										className="flex-1"
+										className="flex-1 min-w-0"
 									/>
 									<Button
 										id={`checklist-item-delete-${item.id}`}

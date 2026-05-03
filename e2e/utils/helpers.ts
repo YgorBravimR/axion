@@ -203,3 +203,15 @@ export const verifyCardMetric = async (page: Page, label: string | RegExp) => {
 	const element = page.getByText(label).first()
 	await expect(element).toBeVisible({ timeout: 5000 })
 }
+
+/**
+ * Click a locator only if it is currently enabled. No-op when disabled.
+ * Useful for month-pagination buttons that disable at boundary months.
+ */
+export const clickIfEnabled = async (page: Page, selector: string): Promise<boolean> => {
+	const target = page.locator(selector)
+	if (!(await target.isVisible().catch(() => false))) return false
+	if (await target.isDisabled().catch(() => true)) return false
+	await target.click()
+	return true
+}

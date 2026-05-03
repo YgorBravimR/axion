@@ -122,13 +122,13 @@ export const MetricCell = memo(({
 	subLabel,
 	valueClassName = "text-txt-100",
 }: MetricCellProps) => (
-	<dl className="space-y-s-100">
-		<dt className="text-tiny text-txt-300">{label}</dt>
-		<dd className={cn("text-body block font-semibold", valueClassName)}>
+	<dl className="space-y-s-100 min-w-0">
+		<dt className="text-tiny text-txt-300 truncate">{label}</dt>
+		<dd className={cn("text-body block font-semibold truncate min-w-0", valueClassName)}>
 			{value}
 		</dd>
 		{subLabel && (
-			<dd className="text-tiny text-txt-300">{subLabel}</dd>
+			<dd className="text-tiny text-txt-300 truncate">{subLabel}</dd>
 		)}
 	</dl>
 ))
@@ -289,7 +289,7 @@ export const CircuitBreakerPanel = ({
 			)}
 
 			{/* Row 1: Daily metrics (3 columns) */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-bg-300">
 				<MetricCell
 					label={t("dailyPnL")}
 					value={formatCurrency(status.dailyPnL)}
@@ -323,7 +323,7 @@ export const CircuitBreakerPanel = ({
 			</div>
 
 			{/* Row 2: Monthly + Risk metrics (2 columns) */}
-			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-2">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 xs:grid-cols-2">
 				<MetricCell
 					label={t("monthlyPnL")}
 					value={formatCurrency(status.monthlyPnL)}

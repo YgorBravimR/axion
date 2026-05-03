@@ -113,7 +113,10 @@ const calculatePositionSize = (params: CalculatorParams): CalculatorResult => {
 		targetPoints = Math.abs(params.targetPrice - params.entryPrice)
 		const ticksInTarget = targetPoints / params.tickSize
 		returnPerContractCents = Math.round(ticksInTarget * params.tickValue * params.multiplier)
-		riskRewardRatio = stopPoints > 0 ? targetPoints / stopPoints : null
+		riskRewardRatio =
+			riskPerContractCents > 0 && returnPerContractCents !== null
+				? returnPerContractCents / riskPerContractCents
+				: null
 	}
 
 	return {

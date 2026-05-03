@@ -229,7 +229,13 @@ export interface SimulatedDay {
 	dayPnl: number // cents
 	targetHit: boolean
 	skipped: boolean
-	skipReason: "weeklyLimit" | "monthlyLimit" | null
+	skipReason:
+		| "weeklyLimit"
+		| "monthlyLimit"
+		| "consecutiveLossDay"
+		| "consecutiveLossWeek"
+		| "drawdownPause"
+		| null
 }
 
 export interface SimulationRunV2 {
@@ -241,6 +247,9 @@ export interface SimulationRunV2 {
 	daysInGainCompounding: number
 	daysSkippedWeeklyLimit: number
 	daysSkippedMonthlyLimit: number
+	daysSkippedConsecutiveLossDay: number
+	daysSkippedConsecutiveLossWeek: number
+	daysSkippedDrawdownPause: number
 	daysTargetHit: number
 	timesWeeklyLimitHit: number
 	monthlyLimitHit: boolean

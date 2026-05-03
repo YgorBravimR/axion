@@ -91,7 +91,7 @@ const Sidebar = ({
 					variant="ghost"
 					size="icon"
 					onClick={onToggleCollapse}
-					className="bg-bg-200 border-bg-300 text-txt-300 hover:text-txt-100 absolute top-3.5 -right-5 z-50 h-6 w-6 rounded-full border shadow-sm"
+					className="bg-bg-200 border-bg-300 text-txt-300 hover:text-txt-100 absolute top-3.5 -right-5 z-50 h-7 w-7 flex items-center justify-center rounded-full border shadow-sm before:absolute before:inset-[-8px] before:content-['']"
 					aria-label={
 						isCollapsed ? tCommon("expandSidebar") : tCommon("collapseSidebar")
 					}
@@ -218,14 +218,15 @@ const Sidebar = ({
 			</div>
 
 			{/* by Bravo badge */}
-			{!isCompact && (
-				<div className="flex items-center justify-center gap-1.5 pb-s-300">
-					<span className="text-tiny text-txt-placeholder tracking-wide">by</span>
-					<span className="text-tiny text-acc-200 tracking-[0.15em] font-medium">
-						BRAVO
-					</span>
-				</div>
-			)}
+			<div className={cn(
+				"flex items-center justify-center gap-1.5 pb-s-300 transition-opacity duration-200 motion-reduce:transition-none",
+				isCompact ? "opacity-0 pointer-events-none" : "opacity-100"
+			)}>
+				<span className="text-tiny text-txt-placeholder tracking-wide">by</span>
+				<span className="text-tiny text-acc-200 tracking-[0.15em] font-medium">
+					BRAVO
+				</span>
+			</div>
 		</aside>
 	)
 }

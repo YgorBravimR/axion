@@ -70,7 +70,7 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 					{t("noEvents")}
 				</div>
 			) : (
-				<div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+				<div className="min-h-0 flex-1 w-full overflow-x-auto overflow-y-auto">
 					<table className="w-full" role="table" aria-label={t("title")}>
 						<thead className="bg-bg-200 sticky top-0 z-10">
 							<tr className="text-tiny text-txt-300 border-bg-300/50 border-b">

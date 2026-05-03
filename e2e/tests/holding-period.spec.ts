@@ -91,10 +91,12 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 			// The section contains either:
 			//   (a) a ChartContainer with recharts bars (when closed trades exist), or
 			//   (b) an empty-state div with a no-data message
-			const hasChart = await section.locator(".recharts-wrapper").isVisible()
+			const hasChart = await section.locator(".recharts-wrapper").first().isVisible().catch(() => false)
 			const hasEmptyState = await section
 				.locator("div:has(> .recharts-wrapper), div:not(:has(.recharts-wrapper))")
+				.first()
 				.isVisible()
+				.catch(() => false)
 
 			// At least one of the two states must be visible
 			expect(hasChart || hasEmptyState).toBe(true)
@@ -156,17 +158,15 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 			const section = page.locator("#analytics-holding-period")
 			await expect(section).toBeVisible()
 
-			// Find the expectancy mode toggle buttons (may be labeled "$" / "R" or similar)
-			const toggleButtons = page.locator('button[role="radio"], [role="tablist"] button, [data-state]')
-			const toggleCount = await toggleButtons.count()
+			// Find the expectancy mode toggle (radiogroup or labeled button group)
+			const toggleButtons = page.getByRole("radiogroup").first().getByRole("radio")
+			const toggleCount = await toggleButtons.count().catch(() => 0)
 
 			if (toggleCount >= 2) {
-				// Click the second toggle option (switches from default capital → edge mode)
 				await toggleButtons.nth(1).click()
 				await page.waitForTimeout(300)
 				await expect(section).toBeVisible()
 
-				// Switch back
 				await toggleButtons.nth(0).click()
 				await page.waitForTimeout(300)
 				await expect(section).toBeVisible()

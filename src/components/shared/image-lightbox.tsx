@@ -69,7 +69,7 @@ const ImageLightbox = ({
 			<DialogContent
 				id="image-lightbox"
 				aria-describedby={undefined}
-				className="border-bg-300 bg-bg-100/95 !h-[90vh] !max-h-none !w-[95vw] !max-w-none !p-0 backdrop-blur-sm"
+				className="border-bg-300 bg-bg-100/95 !h-[90dvh] !max-h-none !w-[95dvw] !max-w-none !p-0 backdrop-blur-sm"
 			>
 				<DialogTitle className="sr-only">
 					{current?.alt ??

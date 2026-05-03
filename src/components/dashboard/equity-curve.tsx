@@ -59,7 +59,7 @@ const PeriodToggle = ({
 					disabled={disabled}
 					aria-pressed={period === option.value}
 					className={cn(
-						"px-s-300 py-s-200 text-tiny min-h-9 rounded-md font-medium transition-colors",
+						"px-s-300 py-s-200 text-tiny min-h-11 rounded-md font-medium transition-colors",
 						period === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -101,7 +101,7 @@ const ViewModeToggle = ({
 					disabled={disabled}
 					aria-pressed={mode === option.value}
 					className={cn(
-						"px-s-300 py-s-200 text-tiny min-h-9 rounded-md font-medium transition-colors",
+						"px-s-300 py-s-200 text-tiny min-h-11 rounded-md font-medium transition-colors",
 						mode === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -287,7 +287,7 @@ export const EquityCurve = ({
 			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500">
 				<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
 					<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
-					<div className="gap-s-200 flex items-center">
+					<div className="gap-s-200 flex flex-wrap items-center">
 						<ViewModeToggle
 							mode={viewMode}
 							onChange={handleViewModeChange}
@@ -311,7 +311,7 @@ export const EquityCurve = ({
 		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500" role="region" aria-label={t("title")}>
 			<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
 				<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
-				<div className="gap-s-200 flex items-center">
+				<div className="gap-s-200 flex flex-wrap items-center">
 					<ViewModeToggle
 						mode={viewMode}
 						onChange={handleViewModeChange}
@@ -328,7 +328,7 @@ export const EquityCurve = ({
 			</div>
 			<ChartContainer
 				id="chart-dashboard-equity-curve"
-				className={cn("mt-s-300 h-48 sm:mt-m-400 sm:h-64 transition-opacity duration-200", isPending && "opacity-50")}
+				className={cn("mt-s-300 h-48 max-h-80 sm:mt-m-400 sm:h-64 transition-opacity duration-200", isPending && "opacity-50")}
 			>
 				<AreaChart
 					data={data}

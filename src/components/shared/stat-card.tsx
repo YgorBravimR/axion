@@ -27,13 +27,13 @@ const sizeClasses = {
 	md: {
 		container: "p-s-300 sm:p-m-400 lg:p-m-500",
 		label: "text-tiny",
-		value: "text-body sm:text-h3",
+		value: "text-h3",
 		subValue: "text-tiny",
 	},
 	lg: {
 		container: "p-m-400 sm:p-m-500 lg:p-m-600",
 		label: "text-tiny sm:text-small",
-		value: "text-h3 sm:text-h2",
+		value: "text-h2 sm:text-h1",
 		subValue: "text-tiny sm:text-small",
 	},
 }
@@ -118,7 +118,7 @@ const StatCard = memo(({
 		<div
 			className={cn(
 				"rounded-xl border border-bg-300 bg-bg-200 min-w-0 flex flex-col justify-between",
-				accentColorClass && "border-l-2",
+				accentColorClass && "border-l-[3px]",
 				accentColorClass,
 				sizes.container,
 				className

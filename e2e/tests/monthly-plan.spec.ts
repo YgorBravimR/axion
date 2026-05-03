@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test"
 import { ROUTES, TEST_MONTHLY_PLAN } from "../fixtures/test-data"
-import { clickTab, waitForSuspenseLoad, fillNumberInput } from "../utils/helpers"
+import { clickTab, waitForSuspenseLoad, fillNumberInput, clickIfEnabled } from "../utils/helpers"
 
 test.describe("Monthly Plan", () => {
 	test.describe("Plan Tab Layout", () => {
@@ -59,7 +59,7 @@ test.describe("Monthly Plan", () => {
 			const monthLabel = page.getByText(/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i).first()
 			const prevMonth = await monthLabel.textContent()
 
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await page.waitForTimeout(500)
 
 			const nextMonth = await monthLabel.textContent()
@@ -77,9 +77,9 @@ test.describe("Monthly Plan", () => {
 
 		test("should show form or banner when no plan exists for month", async ({ page }) => {
 			// Navigate to a future month that likely has no plan
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 
 			// When no plan exists, the form auto-shows with "No plan configured" banner
@@ -95,9 +95,9 @@ test.describe("Monthly Plan", () => {
 
 		test("should display plan form with account balance field", async ({ page }) => {
 			// Navigate to a future month and try to create
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 
 			const createButton = page.locator("#plan-create")
@@ -118,9 +118,9 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should display risk fields", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 
 			const createButton = page.locator("#plan-create")
@@ -144,7 +144,7 @@ test.describe("Monthly Plan", () => {
 		test("should show live preview panel when values are entered", async ({ page }) => {
 			// Navigate far forward to avoid saved plans from prior test runs
 			for (let i = 0; i < 4; i++) {
-				await page.locator("#plan-next-month").click()
+				await clickIfEnabled(page, "#plan-next-month")
 				await waitForSuspenseLoad(page)
 			}
 
@@ -173,9 +173,9 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should show Live Preview panel alongside the form", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 
 			const createButton = page.locator("#plan-create")
@@ -196,9 +196,9 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should save plan successfully and show summary view", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 
 			const createButton = page.locator("#plan-create")
@@ -242,11 +242,11 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should show Custom/Profile mode toggle", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await page.waitForTimeout(500)
 
 			const createButton = page.locator("#plan-create")
@@ -267,11 +267,11 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should switch to profile mode", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await page.waitForTimeout(500)
 
 			const createButton = page.locator("#plan-create")
@@ -295,11 +295,11 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should display risk profile dropdown with built-in profiles", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await page.waitForTimeout(500)
 
 			const createButton = page.locator("#plan-create")
@@ -329,11 +329,11 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should show locked/derived values from selected profile", async ({ page }) => {
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
-			await page.locator("#plan-next-month").click()
+			await clickIfEnabled(page, "#plan-next-month")
 			await page.waitForTimeout(500)
 
 			const createButton = page.locator("#plan-create")

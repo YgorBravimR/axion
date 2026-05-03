@@ -238,6 +238,9 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 		let combinedDaysInGainCompounding = 0
 		let combinedDaysSkippedWeeklyLimit = 0
 		let combinedDaysSkippedMonthlyLimit = 0
+		let combinedDaysSkippedConsecutiveLossDay = 0
+		let combinedDaysSkippedConsecutiveLossWeek = 0
+		let combinedDaysSkippedDrawdownPause = 0
 		let combinedDaysTargetHit = 0
 		let combinedTimesWeeklyLimitHit = 0
 		let combinedMonthlyLimitHit = false
@@ -266,6 +269,11 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 			combinedDaysInGainCompounding += monthResult.daysInGainCompounding
 			combinedDaysSkippedWeeklyLimit += monthResult.daysSkippedWeeklyLimit
 			combinedDaysSkippedMonthlyLimit += monthResult.daysSkippedMonthlyLimit
+			combinedDaysSkippedConsecutiveLossDay +=
+				monthResult.daysSkippedConsecutiveLossDay
+			combinedDaysSkippedConsecutiveLossWeek +=
+				monthResult.daysSkippedConsecutiveLossWeek
+			combinedDaysSkippedDrawdownPause += monthResult.daysSkippedDrawdownPause
 			combinedDaysTargetHit += monthResult.daysTargetHit
 			combinedTimesWeeklyLimitHit += monthResult.timesWeeklyLimitHit
 			if (monthResult.monthlyLimitHit) combinedMonthlyLimitHit = true
@@ -301,6 +309,9 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 			daysInGainCompounding: combinedDaysInGainCompounding,
 			daysSkippedWeeklyLimit: combinedDaysSkippedWeeklyLimit,
 			daysSkippedMonthlyLimit: combinedDaysSkippedMonthlyLimit,
+			daysSkippedConsecutiveLossDay: combinedDaysSkippedConsecutiveLossDay,
+			daysSkippedConsecutiveLossWeek: combinedDaysSkippedConsecutiveLossWeek,
+			daysSkippedDrawdownPause: combinedDaysSkippedDrawdownPause,
 			daysTargetHit: combinedDaysTargetHit,
 			timesWeeklyLimitHit: combinedTimesWeeklyLimitHit,
 			monthlyLimitHit: combinedMonthlyLimitHit,
@@ -359,6 +370,9 @@ const simulateMonth = (
 	let daysInGainCompounding = 0
 	let daysSkippedWeeklyLimit = 0
 	let daysSkippedMonthlyLimit = 0
+	let daysSkippedConsecutiveLossDay = 0
+	let daysSkippedConsecutiveLossWeek = 0
+	let daysSkippedDrawdownPause = 0
 	let daysTargetHit = 0
 	let timesWeeklyLimitHit = 0
 	let monthlyLimitHit = false
@@ -418,14 +432,20 @@ const simulateMonth = (
 		// 3. Drawdown-tiered risk adjustment
 		const currentDrawdownPercent =
 			peakBalance > 0 ? ((peakBalance - balance) / peakBalance) * 100 : 0
-		// Check if recovered past recovery threshold
+		// "Recovered" means current drawdown shrunk to or below the recovery
+		// threshold (e.g. recoveryPercent=50 → recovered once DD ≤ 50% of the
+		// triggering tier's depth). Previous logic compared against MAX tier
+		// depth, which cleared protection too aggressively on partial recoveries.
 		const drawdownFromPeak = peakBalance - balance
+		const lowestActiveTierDepth = profile.drawdownTiers
+			.filter((t) => currentDrawdownPercent >= t.drawdownPercent)
+			.reduce((min, t) => Math.min(min, t.drawdownPercent), Infinity)
 		const hasRecovered =
 			profile.drawdownTiers.length > 0 &&
 			drawdownFromPeak > 0 &&
+			lowestActiveTierDepth !== Infinity &&
 			currentDrawdownPercent <
-				(profile.drawdownRecoveryPercent / 100) *
-					Math.max(...profile.drawdownTiers.map((t) => t.drawdownPercent))
+				(profile.drawdownRecoveryPercent / 100) * lowestActiveTierDepth
 		const ddAdjustment = applyDrawdownAdjustment(
 			profile,
 			currentDrawdownPercent,
@@ -433,8 +453,8 @@ const simulateMonth = (
 		)
 
 		if (ddAdjustment.shouldPause) {
-			days.push(makeSkippedDay(dayNum, weekNumber, "monthlyLimit"))
-			daysSkippedMonthlyLimit++
+			days.push(makeSkippedDay(dayNum, weekNumber, "drawdownPause"))
+			daysSkippedDrawdownPause++
 			continue
 		}
 
@@ -445,15 +465,15 @@ const simulateMonth = (
 		)
 
 		if (lossRuleAdj.shouldStopDay) {
-			days.push(makeSkippedDay(dayNum, weekNumber, "weeklyLimit"))
-			daysSkippedWeeklyLimit++
+			days.push(makeSkippedDay(dayNum, weekNumber, "consecutiveLossDay"))
+			daysSkippedConsecutiveLossDay++
 			continue
 		}
 
 		if (lossRuleAdj.shouldPauseWeek) {
 			weekPausedUntil = weekNumber
-			days.push(makeSkippedDay(dayNum, weekNumber, "weeklyLimit"))
-			daysSkippedWeeklyLimit++
+			days.push(makeSkippedDay(dayNum, weekNumber, "consecutiveLossWeek"))
+			daysSkippedConsecutiveLossWeek++
 			continue
 		}
 
@@ -530,6 +550,9 @@ const simulateMonth = (
 		daysInGainCompounding,
 		daysSkippedWeeklyLimit,
 		daysSkippedMonthlyLimit,
+		daysSkippedConsecutiveLossDay,
+		daysSkippedConsecutiveLossWeek,
+		daysSkippedDrawdownPause,
 		daysTargetHit,
 		timesWeeklyLimitHit,
 		monthlyLimitHit,
@@ -767,7 +790,12 @@ const simulateTrade = ({
 const makeSkippedDay = (
 	dayNumber: number,
 	weekNumber: number,
-	reason: "weeklyLimit" | "monthlyLimit"
+	reason:
+		| "weeklyLimit"
+		| "monthlyLimit"
+		| "consecutiveLossDay"
+		| "consecutiveLossWeek"
+		| "drawdownPause"
 ): SimulatedDay => ({
 	dayNumber,
 	weekNumber,
@@ -818,20 +846,31 @@ const aggregateStatisticsV2 = (
 	const profitableRuns = runs.filter((r) => r.totalPnl > 0).length
 	const limitHitRuns = runs.filter((r) => r.monthlyLimitHit).length
 
-	const meanReturn = mean(returns)
-	const returnStdDev = stdDev(returns)
-
-	// Downside deviation: sqrt( (1/N) * Σ min(0, r_i)^2 ) using target = 0
-	const downsideDev =
-		returns.length > 0
-			? Math.sqrt(
-					returns.reduce((sum, r) => (r < 0 ? sum + r * r : sum), 0) /
-						returns.length
-				)
-			: 0
-
-	const sharpeRatio = returnStdDev > 0 ? meanReturn / returnStdDev : 0
-	const sortinoRatio = downsideDev > 0 ? meanReturn / downsideDev : 0
+	// Sharpe/Sortino need PERIODIC returns (constant Δt), not cross-scenario
+	// terminal returns. Compute per-run from each run's daily P&L series
+	// (% of initial balance), then average across runs.
+	const perRunSharpes: number[] = []
+	const perRunSortinos: number[] = []
+	for (const run of runs) {
+		const dailyReturns = run.days
+			.filter((d) => !d.skipped)
+			.map((d) => (d.dayPnl / params.initialBalance) * 100)
+		if (dailyReturns.length < 2) {
+			perRunSharpes.push(0)
+			perRunSortinos.push(0)
+			continue
+		}
+		const m = mean(dailyReturns)
+		const sd = stdDev(dailyReturns)
+		const dd = Math.sqrt(
+			dailyReturns.reduce((sum, r) => (r < 0 ? sum + r * r : sum), 0) /
+				dailyReturns.length
+		)
+		perRunSharpes.push(sd > 0 ? m / sd : 0)
+		perRunSortinos.push(dd > 0 ? m / dd : 0)
+	}
+	const sharpeRatio = perRunSharpes.length > 0 ? mean(perRunSharpes) : 0
+	const sortinoRatio = perRunSortinos.length > 0 ? mean(perRunSortinos) : 0
 
 	// Expected daily P&L: total P&L / total trading days across all runs
 	const totalDays = runs.reduce((sum, r) => sum + r.totalTradingDays, 0)

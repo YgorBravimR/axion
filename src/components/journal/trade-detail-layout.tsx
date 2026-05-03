@@ -96,7 +96,7 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 
 	return (
 		<>
-			<div ref={layoutContainerRef} className="flex h-[calc(100dvh-3rem)] flex-col">
+			<div ref={layoutContainerRef} className="flex h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3rem)] flex-col">
 				{view === "chart" ? (
 					<div className="h-full overflow-hidden">
 						<TradeChartView

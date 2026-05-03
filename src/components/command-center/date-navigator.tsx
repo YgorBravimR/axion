@@ -157,7 +157,7 @@ export const DateNavigator = ({
 			)}
 
 			{!isToday && (
-				<span className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm" role="status">
+				<span className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm" role="status" aria-live="polite">
 					{t("readOnlyNotice")}
 				</span>
 			)}

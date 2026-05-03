@@ -22,7 +22,7 @@ export const toCents = (dollars: number | string | null | undefined): number => 
  */
 export const fromCents = (cents: number | string | null | undefined): number => {
 	if (cents === null || cents === undefined || cents === "") return 0
-	const value = typeof cents === "string" ? parseInt(cents, 10) : cents
+	const value = typeof cents === "string" ? Number(cents) : cents
 	if (isNaN(value)) return 0
 	return value / 100
 }

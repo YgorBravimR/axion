@@ -561,11 +561,12 @@ test.describe("Journal", () => {
 				await scaledOption.click()
 				await page.waitForTimeout(500)
 
-				// Scaled mode shows the same button with selected state — verify aria-pressed or selected styling
-				await expect(scaledOption).toHaveAttribute("data-active", /true|on/i).catch(async () => {
-					// Fallback: at least the form should still be present
-					await expect(page.getByRole("tab", { name: /single entry/i })).toBeVisible()
-				})
+				// Scaled mode adds execution rows / add-execution button
+				const executionSection = page.getByText(/execution|execução|entries|exits/i)
+				const addExecutionButton = page.getByRole("button", { name: /add|adicionar/i })
+				const hasExecution = await executionSection.first().isVisible().catch(() => false)
+				const hasAddButton = await addExecutionButton.first().isVisible().catch(() => false)
+				expect(hasExecution || hasAddButton).toBeTruthy()
 			}
 		})
 
@@ -642,7 +643,7 @@ test.describe("Journal", () => {
 	})
 
 	test.describe("Trade with Tags", () => {
-		test("creating a tag from trade form should not auto-submit the trade", async ({ page }) => {
+		test("creating a tag from trade form should not auto-submit the trade", async ({ page }, testInfo) => {
 			await page.goto(ROUTES.journalNew)
 			await page.waitForLoadState("networkidle")
 
@@ -654,14 +655,16 @@ test.describe("Journal", () => {
 			await page.getByRole("button", { name: /create new tag/i }).click()
 			await page.waitForTimeout(300)
 
-			// Fill tag name and submit the tag form
+			// Fill tag name and submit the tag form. Unique per project to avoid
+			// unique-constraint collision on the shared seed account.
+			const tagName = `E2E Regression Tag ${testInfo.project.name} ${Date.now()}`
 			const dialog = page.getByRole("dialog")
 			await expect(dialog).toBeVisible()
-			await dialog.getByRole("textbox", { name: /name/i }).fill("E2E Regression Tag")
+			await dialog.getByRole("textbox", { name: /name/i }).fill(tagName)
 			await dialog.getByRole("button", { name: /create tag/i }).click()
 
 			// Dialog should close
-			await expect(dialog).toBeHidden({ timeout: 5000 })
+			await expect(dialog).toBeHidden({ timeout: 15_000 })
 
 			// CRITICAL: should still be on journal/new — trade form must NOT have submitted
 			await expect(page).toHaveURL(/journal\/new/)

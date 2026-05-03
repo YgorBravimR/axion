@@ -2,7 +2,7 @@
   "cookies": [
     {
       "name": "authjs.csrf-token",
-      "value": "c469b8a3bd9c00c4b4a85f212ac2d53d8c9d9b7755906bbf4230c52e0000a434%7C3ad6fa09eaf8ded074bda1399c4ae480d88c7387efc1cec2678a4daf20cbe2c1",
+      "value": "f1b208ea07da42b3c33882d4673ffc2f70de81f8a29dec9b4fe0a5e440c9eff4%7C452e266dd76943a1921c5d279b9bb59d4c746b5875dc54fb20397cbac54a2dc1",
       "domain": "localhost",
       "path": "/",
       "expires": -1,
@@ -22,10 +22,10 @@
     },
     {
       "name": "authjs.session-token",
-      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiWDA3N3ZTak9nd1RucUh3WGlsVHhzMzhrVlZWM21BV0MwU0FZMWVPYTFlTk1RWm14dThXZ0k0RnNiZDRld0tVSnpjTTZaNm1iLWk1MEtRcTFVSUhxc2cifQ..6_yqHsK7BuVUJkntV7T2rQ.Iarsdd5iX2E9DvyrdYdQu0CQoKoKSSLSZ389Kp_vzF8DxuSQOOD9KwkA9b_euvkX1d49FffcIM1RsqN1NcszzPKa0p_rC5YnPOyAux5MaOWkWmORA1_9J1J-yehoCytFY3GGJPSzYIT-ih6DnjYzAv2KDyhf3UbMj8zZCaHELeK0T_iPhob3JGn3DqranEyG37iSa-kh5_KralnVf6_xgVr4XB-58kKqHLjg85FZ9iB373QPLzznyG6VRxyg33tuTr-l8OiAmL-wUS0LucwQBZIEcrkeAUfsHAzQfQH4wUDhPlXxBtfLRkVI7JOdKObsjlz1z_gQPfk0OKInEALzIefbEdbOS7sOU3TOSJP3aEE4BFGlB29iK5Vop11iHh7Oxvh8zOfjMCVbR1Rp1pU4-w.fgMkqRoQIzTNsGa4kJIcQgcctSIzeEe7cVG1PoEg43M",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiWDA3N3ZTak9nd1RucUh3WGlsVHhzMzhrVlZWM21BV0MwU0FZMWVPYTFlTk1RWm14dThXZ0k0RnNiZDRld0tVSnpjTTZaNm1iLWk1MEtRcTFVSUhxc2cifQ..3_fvG5mpXpVBo_NWe-A3TQ.7O7ocRw_nvozDkjbUNv76rm6mE7t_QQ4oXMso9grL4zejglqkueEGJWu8TTsUoMWxxDd10DiQOg-A28fMOPqAeCohe-eUfxGDNIQVO6UQjAwfC_uiYPqfHi7qn3HyHREyz05dy-L5lYHCE0zKw6yJ96rdKO-D2uD6gyNe8qKtEFvnt9ma3sFElc98qQ-Bo8ksd2lxl41j-ICjoN0qbozRfG9FPAF3_B2Xmeh1VFXlP2x0_2rRdY6frMGzhr-hvNRQxZqfGWYgUMelKUF51RxrDnQmnGMpdaAoWwvCR6Ek7twFyPyyO9moxxDsC_kE21dG8CYYCBmGZxFRHEq24KWuYgi4_-tNKhHWq8rxrg6czwDLtuNIhq8r-3lqHeLPgGIiSJX17pJ_f4eMfNeLKWC5g.1ePsXG1DSSc7wxTcU93HItrOz48fLUczobUTsPldEVs",
       "domain": "localhost",
       "path": "/",
-      "expires": 1777973869.585445,
+      "expires": 1777977786.1835,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"

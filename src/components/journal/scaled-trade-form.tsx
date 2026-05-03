@@ -618,8 +618,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 								</Button>
 							</div>
 
-							<div className="relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
-							<div className="space-y-s-200 overflow-x-auto">
+							<div className="relative overflow-x-auto after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
+							<div className="space-y-s-200">
 								{/* Header */}
 								<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
 									<span>{tExec("date")}</span>
@@ -673,8 +673,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 							</div>
 
 							{exits.length > 0 ? (
-								<div className="relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
-								<div className="space-y-s-200 overflow-x-auto">
+								<div className="relative overflow-x-auto after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
+								<div className="space-y-s-200">
 									{/* Header */}
 									<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
 										<span>{tExec("date")}</span>

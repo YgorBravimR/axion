@@ -52,7 +52,7 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 			<div className="mt-m-500 grid grid-cols-2 gap-m-400">
 				<div className="rounded bg-trade-sell-muted px-s-300 py-s-200">
 					<p className="text-tiny text-txt-300">{t("totalCost")}</p>
-					<p className="text-h3 font-bold text-trade-sell">
+					<p className="text-h3 font-bold text-trade-sell tabular-nums break-all min-w-0">
 						{formatCurrencyWithSign(-totalMistakeCost)}
 					</p>
 				</div>

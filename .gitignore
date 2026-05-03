@@ -53,3 +53,5 @@ video/node_modules/
 
 # claude code
 .claude/settings.local.json
+.design-audit/
+.playwright-mcp/

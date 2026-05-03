@@ -165,8 +165,10 @@ test.describe("Command Center", () => {
 				await settingsButton.first().click()
 			}
 
-			const dialog = page.locator("#checklist-manager-dialog, [role='dialog']")
-			await expect(dialog.first()).toBeVisible({ timeout: 3000 })
+			// Scope strictly to checklist dialog id — `[role='dialog']` matches the Next.js
+			// dev error overlay too and times out with a strict-mode-style mismatch.
+			const dialog = page.locator("#checklist-manager-dialog")
+			await expect(dialog).toBeVisible({ timeout: 5000 })
 		})
 
 		test("should create new checklist with name and items", async ({ page }) => {
@@ -251,19 +253,17 @@ test.describe("Command Center", () => {
 		})
 
 		test("should display mood selector with 5 options", async ({ page }) => {
-			// Mood buttons have aria-label with mood names
-			const moodButtons = page.locator('button[aria-pressed]')
-			const count = await moodButtons.count()
+			// Mood selector is a radiogroup with 5 radio options (Great, Good, Neutral, Bad, Terrible)
+			const moodOptions = page.getByRole("radiogroup", { name: /mood|mindset|humor/i }).getByRole("radio")
+			const count = await moodOptions.count()
 			expect(count).toBeGreaterThanOrEqual(5)
 		})
 
 		test("should select a mood", async ({ page }) => {
-			const moodButton = page.locator('button[aria-pressed]').first()
-			await moodButton.click()
+			const moodOption = page.getByRole("radiogroup", { name: /mood|mindset|humor/i }).getByRole("radio").first()
+			await moodOption.click()
 			await page.waitForTimeout(500)
-
-			// The clicked mood should now be aria-pressed="true"
-			await expect(moodButton).toHaveAttribute("aria-pressed", "true")
+			await expect(moodOption).toBeChecked()
 		})
 
 		test("should fill and save pre-market notes", async ({ page }) => {

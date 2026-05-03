@@ -153,7 +153,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									)}
 								</div>
 								<div>
-									<div className="gap-s-300 flex items-center">
+									<div className="gap-s-300 flex flex-wrap items-center">
 										<h2 className="text-h2 text-txt-100 font-bold">
 											{trade.asset}
 										</h2>

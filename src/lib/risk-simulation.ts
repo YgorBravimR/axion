@@ -73,10 +73,10 @@ const buildOriginalStats = (
 	let maxDd = 0
 
 	for (const trade of trades) {
-		if (trade.pnlCents > 0) {
+		if (trade.outcome === "win") {
 			grossProfitCents += trade.pnlCents
 			wins++
-		} else if (trade.pnlCents < 0) {
+		} else if (trade.outcome === "loss") {
 			grossLossCents += Math.abs(trade.pnlCents)
 			losses++
 		}

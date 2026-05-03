@@ -115,7 +115,7 @@ export const TradeDayGroup = memo(({
 							</div>
 						))
 					) : (
-						<div className="text-txt-300 flex h-[60px] items-center justify-center">
+						<div className="text-txt-300 flex h-[80px] md:h-[60px] items-center justify-center">
 							{t("noTrades")}
 						</div>
 					)}

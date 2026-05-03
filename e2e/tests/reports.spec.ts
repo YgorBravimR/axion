@@ -415,9 +415,9 @@ test.describe("Reports", () => {
 			const hasAvgFee = (await card.getByText(/avg fee \/ trade/i).count()) > 0
 
 			if (hasTotalFees) {
-				await expect(card.getByText(/total fees paid/i)).toBeVisible()
-				await expect(card.getByText(/fees % of gross/i)).toBeVisible()
-				await expect(card.getByText(/avg fee \/ trade/i)).toBeVisible()
+				await expect(card.getByText(/total fees paid/i).first()).toBeVisible()
+				await expect(card.getByText(/fees % of gross/i).first()).toBeVisible()
+				await expect(card.getByText(/avg fee \/ trade/i).first()).toBeVisible()
 			}
 
 			// Always passes — if no data, none of these labels exist (empty state is shown instead)

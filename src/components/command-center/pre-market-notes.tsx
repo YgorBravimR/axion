@@ -96,7 +96,7 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 					value={preMarketNotes}
 					onChange={(e) => setPreMarketNotes(e.target.value)}
 					placeholder={t("placeholder")}
-					className="min-h-[120px] resize-none"
+					className="min-h-[120px] resize-none sm:resize-y"
 					disabled={isReadOnly}
 				/>
 			</div>

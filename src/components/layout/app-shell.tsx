@@ -89,12 +89,12 @@ const AppShell = ({
 			{isMobile ? (
 				<>
 					{/* Mobile top bar */}
-					<header className="border-bg-300 bg-bg-200 fixed top-0 right-0 left-0 z-40 flex h-14 items-center border-b px-m-400" aria-label={tCommon("appHeader")}>
+					<header suppressHydrationWarning className="border-bg-300 bg-bg-200 fixed top-0 right-0 left-0 z-40 flex h-14 items-center border-b px-m-400" aria-label={tCommon("appHeader")}>
 						<Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
 							<SheetTrigger asChild>
 								<button
 									type="button"
-									className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 focus-visible:ring-acc-100 -ml-s-200 rounded-md p-s-200 focus-visible:ring-2 focus-visible:outline-none"
+									className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 focus-visible:ring-acc-100 -ml-s-200 flex h-11 w-11 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none"
 									aria-label={tCommon("openMenu")}
 								>
 									<Menu className="h-5 w-5" />
@@ -138,7 +138,7 @@ const AppShell = ({
 								aria-label={tCommon("notifications")}
 								aria-disabled="true"
 								title={tCommon("comingSoon")}
-								className="cursor-not-allowed opacity-50"
+								className="h-11 w-11 cursor-not-allowed opacity-50"
 							>
 								<Bell className="h-5 w-5" />
 							</Button>
@@ -162,8 +162,9 @@ const AppShell = ({
 
 					{/* Main content */}
 					<div
+						suppressHydrationWarning
 						className={cn(
-							"flex min-h-dvh flex-col transition-[margin-left] duration-300 motion-reduce:transition-none",
+							"flex min-h-dvh min-w-0 flex-col transition-[margin-left] duration-300 motion-reduce:transition-none",
 							effectiveCollapsed ? "ml-20" : "ml-64"
 						)}
 					>
@@ -171,10 +172,6 @@ const AppShell = ({
 						<div className="border-bg-300 bg-bg-200 gap-m-400 flex h-12 shrink-0 items-center border-b px-m-600 lg:px-l-700 lg:pl-l-800">
 							<PageBreadcrumb />
 							<div className="flex-1" />
-							{/* Fixed-width slot so search bar position is stable */}
-							<div className="flex w-8 shrink-0 items-center justify-center">
-								<PageGuideTrigger />
-							</div>
 							{/* Search trigger — opens CommandMenu via Cmd+K */}
 							<Button
 								id="desktop-search-trigger"
@@ -182,29 +179,35 @@ const AppShell = ({
 								variant="outline"
 								size="sm"
 								onClick={handleSearchClick}
-								className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-placeholder hidden w-56 cursor-pointer items-center md:flex lg:w-72"
+								className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-placeholder hidden cursor-pointer items-center lg:flex lg:w-64 xl:w-80"
 								aria-label={tCommon("searchPlaceholder")}
 							>
 								<Search className="h-3.5 w-3.5 shrink-0" />
 								<span className="truncate">{tCommon("searchPlaceholder")}</span>
 							</Button>
-							<Button
-								id="desktop-notifications"
-								type="button"
-								variant="ghost"
-								size="icon"
-								aria-label={tCommon("notifications")}
-								aria-disabled="true"
-								title={tCommon("comingSoon")}
-								className="cursor-not-allowed opacity-50"
-							>
-								<Bell className="h-4.5 w-4.5" />
-							</Button>
-							<UserMenu isCollapsed />
+							<div className="gap-s-200 ml-auto flex items-center">
+								{/* Fixed-width slot so search bar position is stable */}
+								<div className="flex w-8 shrink-0 items-center justify-center">
+									<PageGuideTrigger />
+								</div>
+								<Button
+									id="desktop-notifications"
+									type="button"
+									variant="ghost"
+									size="icon"
+									aria-label={tCommon("notifications")}
+									aria-disabled="true"
+									title={tCommon("comingSoon")}
+									className="cursor-not-allowed opacity-50"
+								>
+									<Bell className="h-4.5 w-4.5" />
+								</Button>
+								<UserMenu isCollapsed />
+							</div>
 						</div>
 
 						{/* Scrollable main area */}
-						<ScrollArea className="h-[calc(100dvh-3rem)]">
+						<ScrollArea className="h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3rem)]">
 							<main id="main-content">{children}</main>
 						</ScrollArea>
 					</div>

@@ -159,7 +159,7 @@ const EquityShieldParamsForm = ({
 								<SelectTrigger
 									id="shield-year-filter"
 									size="sm"
-									className="w-[100px]"
+									className="w-full max-w-[100px] min-w-0"
 									aria-label={t("yearFilter")}
 								>
 									<SelectValue placeholder={t("yearFilter")} />

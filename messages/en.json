@@ -1358,7 +1358,8 @@
     "period": {
       "month": "Month",
       "year": "Year",
-      "allTime": "All Time"
+      "allTime": "All Time",
+      "filterAriaLabel": "Period filter"
     },
     "trade": "trade",
     "trades": "trades",
@@ -4513,7 +4514,8 @@
       "newOptimization": "New Optimization",
       "stepStatusCurrent": "current step",
       "stepStatusCompleted": "completed",
-      "stepStatusUpcoming": "upcoming"
+      "stepStatusUpcoming": "upcoming",
+      "ariaLabel": "Optimization wizard"
     },
     "summary": {
       "strategy": "Strategy",

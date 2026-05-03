@@ -18,7 +18,7 @@ interface KpiCardsProps {
  */
 const KpiCards = ({ stats, discipline }: KpiCardsProps) => {
 	return (
-		<div className="gap-s-300 sm:gap-m-400 lg:gap-m-500 grid grid-cols-2 sm:grid-cols-4 [&>*]:min-w-0">
+		<div className="gap-s-300 sm:gap-m-400 lg:gap-m-500 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 [&>*]:min-w-0 [&>*]:min-h-[7rem]">
 			<PnlCard
 				grossPnl={stats?.grossPnl ?? null}
 				size="lg"

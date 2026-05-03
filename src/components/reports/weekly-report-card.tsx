@@ -139,7 +139,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 							<p className="text-tiny text-txt-200">{tStats("netPnl")}</p>
 							<p
 								className={cn(
-									"text-h3 font-bold truncate whitespace-nowrap",
+									"text-h3 font-bold tabular-nums",
 									summary.netPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 								)}
 							>

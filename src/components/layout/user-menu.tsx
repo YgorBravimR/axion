@@ -60,7 +60,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 		return (
 			<div className={cn(
 				"flex items-center justify-center",
-				isCollapsed ? "h-10 w-10" : "h-10 w-full px-s-300"
+				isCollapsed ? "h-11 w-11" : "h-10 w-full px-s-300"
 			)}>
 				<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
 			</div>
@@ -73,7 +73,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 				<DropdownMenuTrigger asChild>
 					<button
 						type="button"
-						className="flex h-10 w-10 items-center justify-center rounded-full bg-acc-100/20 text-acc-100 hover:bg-acc-100/30"
+						className="flex h-11 w-11 items-center justify-center rounded-full bg-acc-100/20 text-acc-100 hover:bg-acc-100/30"
 						aria-label={t("userMenu")}
 						disabled={isPending}
 					>

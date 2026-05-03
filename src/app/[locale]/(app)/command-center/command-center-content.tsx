@@ -211,29 +211,29 @@ const CommandCenterContent = ({
 									</span>
 								</div>
 							)}
-							<div className="gap-s-300 grid grid-cols-2">
-								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border">
+							<div className="gap-s-300 grid grid-cols-1 xs:grid-cols-2">
+								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border min-w-0">
 									<div className="gap-s-100 flex items-center">
-										<Target className="text-txt-300 h-3.5 w-3.5" />
-										<span className="text-tiny text-txt-300">
+										<Target className="text-txt-300 h-3.5 w-3.5 shrink-0" />
+										<span className="text-tiny text-txt-300 truncate">
 											{tPlan("summary.riskPerTrade")}
 										</span>
 									</div>
-									<p className="mt-s-100 text-small text-txt-100 font-medium">
+									<p className="mt-s-100 text-small text-txt-100 font-medium truncate">
 										{formatCurrency(fromCents(initialPlan.riskPerTradeCents))}
 									</p>
 									<p className="text-tiny text-txt-300">
 										{initialPlan.riskPerTradePercent}%
 									</p>
 								</div>
-								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border">
+								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border min-w-0">
 									<div className="gap-s-100 flex items-center">
-										<TrendingDown className="text-trade-sell h-3.5 w-3.5" />
-										<span className="text-tiny text-txt-300">
+										<TrendingDown className="text-trade-sell h-3.5 w-3.5 shrink-0" />
+										<span className="text-tiny text-txt-300 truncate">
 											{tPlan("summary.dailyLossLimit")}
 										</span>
 									</div>
-									<p className="mt-s-100 text-small text-txt-100 font-medium">
+									<p className="mt-s-100 text-small text-txt-100 font-medium truncate">
 										{formatCurrency(fromCents(initialPlan.dailyLossCents))}
 									</p>
 									<p className="text-tiny text-txt-300">

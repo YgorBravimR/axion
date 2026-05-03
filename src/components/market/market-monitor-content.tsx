@@ -307,9 +307,13 @@ export const MarketMonitorContent = () => {
 			) : null}
 
 			{/* ── Info panels — Calendar + Market Status, same height ──────────── */}
-			<div className="grid grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 lg:h-[22rem] lg:grid-cols-[1fr_340px]">
-				<EconomicCalendar events={events} />
-				<MarketStatusPanel statuses={marketStatuses} />
+			<div className="grid grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 lg:h-[22rem] lg:grid-cols-[1fr_340px] lg:overflow-hidden">
+				<div className="lg:overflow-y-auto min-h-0">
+					<EconomicCalendar events={events} />
+				</div>
+				<div className="lg:overflow-y-auto min-h-0">
+					<MarketStatusPanel statuses={marketStatuses} />
+				</div>
 			</div>
 
 			{/* ── Tabbed asset panel — full width ─────────────────────────────── */}

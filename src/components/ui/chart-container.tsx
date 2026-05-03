@@ -9,6 +9,7 @@ interface ChartContainerProps {
 	className?: string
 	role?: AriaRole
 	"aria-label"?: string
+	suppressHydrationWarning?: boolean
 }
 
 /**
@@ -22,7 +23,7 @@ interface ChartContainerProps {
  *   2. Passing those dimensions as `initialDimension` so RC never
  *      sees -1 values, even on its first render cycle.
  */
-const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel }: ChartContainerProps) => {
+const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel, suppressHydrationWarning }: ChartContainerProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
 
@@ -58,7 +59,7 @@ const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel
 	}, [])
 
 	return (
-		<div id={id} ref={containerRef} className={`overflow-hidden ${className ?? ""}`} role={role} aria-label={ariaLabel}>
+		<div id={id} ref={containerRef} className={`overflow-hidden ${className ?? ""}`} role={role} aria-label={ariaLabel} suppressHydrationWarning={suppressHydrationWarning}>
 			{dimensions && (
 				<ResponsiveContainer
 					width="100%"

@@ -95,11 +95,10 @@ export const DayDetailModal = ({
 				className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-hidden sm:w-full"
 				aria-describedby={undefined}
 			>
-				<ScrollArea className="max-h-[calc(90dvh-3rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="capitalize">{dayName}</DialogTitle>
 				</DialogHeader>
-
+				<ScrollArea className="max-h-[calc(90dvh-6rem)] overflow-y-auto">
 				{isPending ? (
 					<LoadingSpinner size="lg" className="h-[300px]" />
 				) : summary ? (

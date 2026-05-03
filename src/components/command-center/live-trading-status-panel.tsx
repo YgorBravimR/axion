@@ -239,7 +239,7 @@ const TradeBox = ({ summary, directionLabels }: TradeBoxProps) => {
 
 	return (
 		<div
-			className="border-bg-300 bg-bg-200 p-s-200 min-w-[100px] shrink-0 rounded-md border"
+			className="border-bg-300 bg-bg-200 p-s-200 flex-1 min-w-[100px] rounded-md border"
 			aria-label={t("tradeBoxes.tradeLabel", {
 				number: summary.tradeStepNumber,
 			})}
@@ -294,7 +294,7 @@ const TradeBoxRow = ({ summaries, directionLabels }: TradeBoxRowProps) => {
 				{t("tradeBoxes.title")}
 			</span>
 			<div
-				className="gap-s-200 flex overflow-x-auto"
+				className="gap-s-200 flex flex-wrap overflow-x-auto"
 				role="list"
 				aria-label={t("tradeBoxes.title")}
 			>

@@ -8,8 +8,8 @@ test.describe("Analytics", () => {
 	})
 
 	test.describe("Page Layout", () => {
-		test("should display page header", async ({ page }) => {
-			// Page has no h1 heading; verify by checking the active sidebar link
+		test("should display page header", async ({ page, isMobile }) => {
+			test.skip(isMobile, "Desktop sidebar only — mobile uses Sheet")
 			const activeNav = page.locator('a[aria-current="page"]:has-text("Analytics")')
 			await expect(activeNav).toBeVisible()
 		})

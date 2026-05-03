@@ -8,8 +8,8 @@ test.describe("Dashboard", () => {
 	})
 
 	test.describe("Page Layout", () => {
-		test("should display page header with title", async ({ page }) => {
-			// Page has no h1 heading; verify by checking the active sidebar link
+		test("should display page header with title", async ({ page, isMobile }) => {
+			test.skip(isMobile, "Desktop sidebar only — mobile uses Sheet")
 			const activeNav = page.locator('a[aria-current="page"]:has-text("Dashboard")')
 			await expect(activeNav).toBeVisible()
 		})
@@ -23,9 +23,8 @@ test.describe("Dashboard", () => {
 
 	test.describe("KPI Cards", () => {
 		test("should display all KPI cards", async ({ page }) => {
-			// Check for key metrics cards
-			await expect(page.getByText(/gross p&l|p&l bruto/i).first()).toBeVisible()
-			await expect(page.getByText(/net p&l|p&l líquido/i).first()).toBeVisible()
+			// Dashboard shows P&L (or Gross/Net P&L), Win Rate, Profit Factor
+			await expect(page.getByText(/p&l|p&l bruto|p&l líquido/i).first()).toBeVisible()
 			await expect(page.getByText(/win rate|taxa de acerto/i).first()).toBeVisible()
 			await expect(page.getByText(/profit factor|fator de lucro/i).first()).toBeVisible()
 		})

@@ -1117,7 +1117,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 											<Info className="text-txt-300 h-4 w-4 cursor-help" />
 										</TooltipTrigger>
 										<TooltipContent id="tooltip-trade-auto-risk">
-											<p className="text-tiny max-w-[200px]">
+											<p className="text-tiny max-w-[min(200px,calc(100vw-2rem))]">
 												{t("autoCalculatedRisk")}
 											</p>
 										</TooltipContent>

@@ -55,7 +55,7 @@ export const MonthNavigator = ({
 				<ChevronLeft className="h-5 w-5" />
 			</Button>
 
-			<div className="flex min-w-[160px] sm:min-w-[200px] items-center justify-center gap-s-200">
+			<div className="flex flex-1 min-w-0 items-center justify-center gap-s-200">
 				<Calendar className="h-5 w-5 text-acc-100" />
 				<span className="text-body sm:text-h3 font-semibold capitalize text-txt-100">
 					{formattedMonth}

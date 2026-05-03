@@ -548,7 +548,7 @@ const CsvTradeCard = memo(({
 									onChange={(e) =>
 										handleEditField("preTradeThoughts", e.target.value)
 									}
-									className="mt-s-100 min-h-[80px]"
+									className="mt-s-100 min-h-[80px] max-h-[40dvh]"
 									placeholder={t("planPlaceholder")}
 								/>
 							</div>
@@ -567,7 +567,7 @@ const CsvTradeCard = memo(({
 									onChange={(e) =>
 										handleEditField("postTradeReflection", e.target.value)
 									}
-									className="mt-s-100 min-h-[80px]"
+									className="mt-s-100 min-h-[80px] max-h-[40dvh]"
 									placeholder={t("reflectionPlaceholder")}
 								/>
 							</div>
@@ -586,7 +586,7 @@ const CsvTradeCard = memo(({
 									onChange={(e) =>
 										handleEditField("lessonLearned", e.target.value)
 									}
-									className="mt-s-100 min-h-[60px]"
+									className="mt-s-100 min-h-[60px] max-h-[40dvh]"
 									placeholder={t("lessonPlaceholder")}
 								/>
 							</div>
@@ -643,7 +643,7 @@ const CsvTradeCard = memo(({
 										onChange={(e) =>
 											handleEditField("disciplineNotes", e.target.value)
 										}
-										className="mt-s-100 min-h-[60px]"
+										className="mt-s-100 min-h-[60px] max-h-[40dvh]"
 										placeholder={t("disciplinePlaceholder")}
 									/>
 								</div>

@@ -119,18 +119,20 @@ export const TradingCalendar = memo(
 							id="calendar-previous-month"
 							variant="ghost"
 							size="icon"
+							className="h-11 w-11"
 							onClick={handlePreviousMonth}
 							aria-label={t("previousMonth")}
 						>
 							<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 						</Button>
-						<span className="text-tiny text-txt-100 min-w-[100px] text-center font-medium sm:text-small sm:min-w-[140px]">
+						<span className="text-tiny text-txt-100 min-w-0 flex-1 truncate text-center font-medium sm:text-small">
 							{monthName}
 						</span>
 						<Button
 							id="calendar-next-month"
 							variant="ghost"
 							size="icon"
+							className="h-11 w-11"
 							onClick={handleNextMonth}
 							aria-label={t("nextMonth")}
 						>
@@ -209,14 +211,21 @@ export const TradingCalendar = memo(
 											{dayData.date.getDate()}
 										</span>
 										{dailyData && (
-											<div className="mt-auto hidden sm:block">
-												<span className={cn("text-tiny font-medium", textClass)}>
-													{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
-												</span>
-												<span className="text-tiny text-txt-300 block">
-													{dailyData.tradeCount}{tCommon("tradeCountAbbr")}
-												</span>
-											</div>
+											<>
+												{/* Mobile: dot indicator only */}
+												<div className="mt-auto flex justify-center sm:hidden">
+													<span className={cn("h-1 w-1 rounded-full", textClass)} aria-hidden="true" />
+												</div>
+												{/* sm+: full P&L and count */}
+												<div className="mt-auto hidden sm:block">
+													<span className={cn("text-tiny font-medium", textClass)}>
+														{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
+													</span>
+													<span className="text-tiny text-txt-300 block">
+														{dailyData.tradeCount}{tCommon("tradeCountAbbr")}
+													</span>
+												</div>
+											</>
 										)}
 									</div>
 								</div>

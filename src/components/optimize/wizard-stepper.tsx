@@ -25,7 +25,7 @@ const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: Wizar
 	)
 
 	return (
-		<nav aria-label="Optimization wizard" className="flex items-center justify-center">
+		<nav aria-label={t("wizard.ariaLabel")} className="flex items-center justify-center">
 			{steps.map((step, index) => {
 				const isCompleted = completedSteps.has(step.key)
 				const isActive = step.key === activeStep
