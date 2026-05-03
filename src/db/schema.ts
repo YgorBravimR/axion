@@ -170,6 +170,26 @@ export const tradingAccounts = pgTable(
 		showPropCalculations: boolean("show_prop_calculations").default(true).notNull(),
 		brand: varchar("brand", { length: 20 }).default("bravo").notNull(),
 
+		// Annual Reporting: account lifecycle anchor + withdrawal configuration
+		/** First month the account was active (1–12). Used to hide pre-start months. */
+		accountStartMonth: smallint("account_start_month"),
+
+		/** First year the account was active (e.g. 2025). */
+		accountStartYear: smallint("account_start_year"),
+
+		/**
+		 * Opening balance in cents at account start.
+		 * Seeds the patrimônio chain for the first active month.
+		 * Plain BIGINT — no encryption (consistent with aggregate tables).
+		 */
+		startingBalanceCents: bigint("starting_balance_cents", { mode: "number" }),
+
+		/**
+		 * Percentage of net profit to target for withdrawal each month.
+		 * "30.00" = 30%. Null or "0" disables the withdrawal line entirely.
+		 */
+		withdrawalTargetPercent: numeric("withdrawal_target_percent", { precision: 5, scale: 2 }).default("30.00"),
+
 		// Replay mode: the effective "today" for this account
 		replayCurrentDate: timestamp("replay_current_date", { withTimezone: true }),
 
