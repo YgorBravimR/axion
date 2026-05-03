@@ -1,6 +1,7 @@
 "use server"
 
 import { invalidateTradeData } from "@/lib/cache/invalidate"
+import { invalidateAggregates } from "@/lib/aggregation/invalidate"
 import { getLocale, getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import {
@@ -265,6 +266,13 @@ export const createTrade = async (
 
 		// Revalidate journal pages
 		invalidateTradeData(undefined, userId, accountId)
+
+		// Mark aggregates dirty so the next read recomputes
+		try {
+			await invalidateAggregates(accountId, trade.entryDate)
+		} catch (err) {
+			console.error("[trades.action] invalidateAggregates failed", err)
+		}
 
 		return {
 			status: "success",
@@ -578,6 +586,28 @@ export const updateTrade = async (
 		// Revalidate journal pages
 		invalidateTradeData(id, userId, accountId)
 
+		// Mark aggregates dirty so the next read recomputes.
+		// If entryDate changed, both the original and the new period need invalidation.
+		try {
+			const originalDate = existing.entryDate
+			const updatedDate = trade.entryDate
+			const dateChanged =
+				originalDate.getUTCFullYear() !== updatedDate.getUTCFullYear() ||
+				originalDate.getUTCMonth() !== updatedDate.getUTCMonth() ||
+				originalDate.getUTCDate() !== updatedDate.getUTCDate()
+
+			if (dateChanged) {
+				await Promise.all([
+					invalidateAggregates(accountId, originalDate),
+					invalidateAggregates(accountId, updatedDate),
+				])
+			} else {
+				await invalidateAggregates(accountId, updatedDate)
+			}
+		} catch (err) {
+			console.error("[trades.action] invalidateAggregates failed", err)
+		}
+
 		return {
 			status: "success",
 			message: t("actions.tradeUpdated"),
@@ -625,6 +655,13 @@ export const deleteTrade = async (
 
 		// Revalidate journal pages
 		invalidateTradeData(undefined, userId, accountId)
+
+		// Mark aggregates dirty so the next read recomputes
+		try {
+			await invalidateAggregates(accountId, existing.entryDate)
+		} catch (err) {
+			console.error("[trades.action] invalidateAggregates failed", err)
+		}
 
 		return {
 			status: "success",
@@ -1636,6 +1673,13 @@ export const createScaledTrade = async (
 
 		// Revalidate journal pages
 		invalidateTradeData(undefined, userId, accountId)
+
+		// Mark aggregates dirty so the next read recomputes
+		try {
+			await invalidateAggregates(accountId, trade.entryDate)
+		} catch (err) {
+			console.error("[trades.action] invalidateAggregates failed", err)
+		}
 
 		return {
 			status: "success",
