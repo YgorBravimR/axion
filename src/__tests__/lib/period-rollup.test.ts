@@ -62,4 +62,15 @@ describe("rollupTrades", () => {
     expect(result.lossDays).toBe(0)
     expect(result.tradingDays).toBe(0)
   })
+
+  it("classifies mixed-sign same-day trades by net pnl (day-net semantics)", () => {
+    const trades = [
+      makeDay("2026-01-05", 3000),   // +R$30
+      makeDay("2026-01-05", -5000),  // -R$50 → net -R$20 → loss day
+    ]
+    const result = rollupTrades(trades, { year: 2026, month: 1 })
+    expect(result.gainDays).toBe(0)
+    expect(result.lossDays).toBe(1)
+    expect(result.tradingDays).toBe(1)
+  })
 })
