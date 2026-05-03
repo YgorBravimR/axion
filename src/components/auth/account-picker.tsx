@@ -42,20 +42,22 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 	}
 
 	return (
-		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 			<div className="text-center">
 				<h1 className="text-h2 text-txt-100 font-bold">{t("title")}</h1>
 				<p className="mt-s-200 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
-			<div className="space-y-s-300">
+			<div role="radiogroup" aria-label={t("selectAccountLabel")} className="space-y-s-300">
 				{accounts.map((account) => (
 					<button
 						key={account.id}
 						type="button"
+						role="radio"
+						aria-checked={selectedId === account.id}
 						onClick={() => setSelectedId(account.id)}
 						className={cn(
-							"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
+							"gap-m-400 p-m-400 flex min-h-11 w-full items-center rounded-lg border text-left transition-colors",
 							selectedId === account.id
 								? "border-brand-500 bg-brand-500/10"
 								: "border-bg-300 bg-bg-200 hover:border-bg-400"
@@ -63,7 +65,7 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 					>
 						<div
 							className={cn(
-								"flex h-10 w-10 items-center justify-center rounded-lg",
+								"flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
 								account.accountType === "prop"
 									? "bg-brand-500/20 text-brand-500"
 									: "bg-txt-300/20 text-txt-200"
@@ -109,7 +111,7 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 			<Button
 				id="auth-account-picker-continue"
 				onClick={handleContinue}
-				className="w-full"
+				className="h-11 w-full"
 				disabled={!selectedId || isPending}
 			>
 				{isPending && (

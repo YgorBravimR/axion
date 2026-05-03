@@ -109,7 +109,7 @@ const VerifyEmailForm = () => {
 	// Success state
 	if (verified) {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 				<div className="flex justify-center">
 					<Image
 						src="/axion-wordmark-white.png"
@@ -117,6 +117,7 @@ const VerifyEmailForm = () => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						data-axion-logo="invertable"
 						priority
 					/>
 				</div>
@@ -131,7 +132,7 @@ const VerifyEmailForm = () => {
 	}
 
 	return (
-		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -157,7 +158,11 @@ const VerifyEmailForm = () => {
 
 			<div className="space-y-m-400">
 				{error && (
-					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
+					<div
+						role="alert"
+						aria-live="polite"
+						className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md"
+					>
 						{error}
 					</div>
 				)}
@@ -199,25 +204,21 @@ const VerifyEmailForm = () => {
 					{t("verify")}
 				</Button>
 
-				{/* Resend */}
+				{/* Resend — always rendered so focus is never lost */}
 				<div className="text-center">
-					{resendCooldown > 0 ? (
-						<p className="text-tiny text-txt-300">
-							{t("resendIn", { seconds: resendCooldown })}
-						</p>
-					) : (
-						<Button
-							id="resend-verification"
-							variant="link"
-							size="sm"
-							type="button"
-							onClick={handleResend}
-							disabled={isPending}
-							className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
-						>
-							{t("resend")}
-						</Button>
-					)}
+					<Button
+						id="resend-verification"
+						variant="link"
+						size="sm"
+						type="button"
+						onClick={handleResend}
+						disabled={resendCooldown > 0 || isPending}
+						className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
+					>
+						{resendCooldown > 0
+							? t("resendIn", { seconds: resendCooldown })
+							: t("resend")}
+					</Button>
 				</div>
 
 				<Link

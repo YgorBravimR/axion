@@ -3371,7 +3371,9 @@
       "passwordsDoNotMatch": "Passwords do not match",
       "genericError": "An error occurred",
       "showPassword": "Show password",
-      "hidePassword": "Hide password"
+      "hidePassword": "Hide password",
+      "showConfirmPassword": "Show password confirmation",
+      "hideConfirmPassword": "Hide password confirmation"
     },
     "selectAccount": {
       "title": "Select Account",
@@ -3380,7 +3382,8 @@
       "profitShare": "{percentage}% profit share",
       "backToLogin": "Back to login",
       "signInAgain": "To select your trading account, please sign in again.",
-      "backToLoginButton": "Back to Login"
+      "backToLoginButton": "Back to Login",
+      "selectAccountLabel": "Select account"
     },
     "errors": {
       "emailExists": "An account with this email already exists",
@@ -3748,6 +3751,8 @@
     "resetButton": "Reset Password",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
+    "showConfirmPassword": "Show password confirmation",
+    "hideConfirmPassword": "Hide password confirmation",
     "success": "Password reset successfully. You can now sign in.",
     "invalidCode": "Invalid or expired code",
     "expired": "Code has expired. Please request a new one.",

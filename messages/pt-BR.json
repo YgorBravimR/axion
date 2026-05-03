@@ -3371,7 +3371,9 @@
       "passwordsDoNotMatch": "As senhas não coincidem",
       "genericError": "Ocorreu um erro",
       "showPassword": "Mostrar senha",
-      "hidePassword": "Ocultar senha"
+      "hidePassword": "Ocultar senha",
+      "showConfirmPassword": "Mostrar confirmação de senha",
+      "hideConfirmPassword": "Ocultar confirmação de senha"
     },
     "selectAccount": {
       "title": "Selecionar Conta",
@@ -3380,7 +3382,8 @@
       "profitShare": "{percentage}% de participação",
       "backToLogin": "Voltar ao login",
       "signInAgain": "Para selecionar sua conta de trading, faça login novamente.",
-      "backToLoginButton": "Voltar para Login"
+      "backToLoginButton": "Voltar para Login",
+      "selectAccountLabel": "Selecionar conta"
     },
     "errors": {
       "emailExists": "Uma conta com este e-mail já existe",
@@ -3748,6 +3751,8 @@
     "resetButton": "Redefinir Senha",
     "showPassword": "Mostrar senha",
     "hidePassword": "Ocultar senha",
+    "showConfirmPassword": "Mostrar confirmação de senha",
+    "hideConfirmPassword": "Ocultar confirmação de senha",
     "success": "Senha redefinida com sucesso. Você já pode entrar.",
     "invalidCode": "Código inválido ou expirado",
     "expired": "Código expirado. Por favor, solicite um novo.",

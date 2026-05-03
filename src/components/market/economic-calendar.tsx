@@ -37,19 +37,21 @@ const formatEventTime = (isoDate: string): string => {
 
 const ImpactDot = ({ impact }: { impact: EventImpact }) => {
 	const t = useTranslations("market.calendar")
+	const label = t(impact)
 
 	return (
-		<div className="flex items-center gap-1.5" aria-label={t(impact)}>
+		<div className="flex items-center gap-1.5">
 			<span
 				className={cn(
-					"inline-block h-2.5 w-2.5 rounded-full",
+					"inline-block h-2.5 w-2.5 rounded-full shrink-0",
 					impact === "high" && "bg-fb-error",
 					impact === "medium" && "bg-warning",
 					impact === "low" && "bg-txt-300"
 				)}
 				aria-hidden="true"
 			/>
-			<span className="text-tiny text-txt-300 hidden sm:inline">{t(impact)}</span>
+			{/* Always present for screen readers; visually shown from sm up */}
+			<span className="text-tiny text-txt-300 sr-only sm:not-sr-only">{label}</span>
 		</div>
 	)
 }

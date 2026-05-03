@@ -99,7 +99,7 @@ const QuoteCardBase = ({
 	if (showAdr) {
 		return (
 			<div
-				className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[2.5fr_2.5fr_1.2fr_1.8fr_1.2fr_1.8fr] items-center gap-x-2 rounded-lg border px-s-300 py-s-200 transition-colors"
+				className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[2.5fr_2.5fr_1.2fr_1.8fr_1.2fr_1.8fr] items-center gap-x-2 rounded-lg border px-s-300 py-s-200 transition-colors"
 				role="listitem"
 				aria-label={`${quote.name}: ${formatPrice(quote.price)}${adrQuote ? `, ${tQuote("adrAriaLabel", { price: formatPrice(adrQuote.price) })}` : ""}`}
 			>
@@ -120,11 +120,11 @@ const QuoteCardBase = ({
 
 				{/* Col 2: ADR Name + Symbol or placeholder */}
 				{adrQuote ? (
-					<div className="flex min-w-0 items-center gap-s-200">
+					<div className="flex min-w-0 items-center gap-s-200 overflow-hidden">
 						<span className="shrink-0 text-body" aria-hidden="true">
 							🇺🇸
 						</span>
-						<div className="min-w-0">
+						<div className="min-w-0 overflow-hidden">
 							<p
 								className={cn("text-small truncate font-medium", adrColorClass)}
 							>
@@ -178,7 +178,7 @@ const QuoteCardBase = ({
 	// ── Default layout (all other tabs): 5 columns ──────────────────────────
 	return (
 		<div
-			className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[minmax(120px,1.5fr)_auto_auto_auto_auto] items-center gap-x-3 rounded-lg border px-s-300 py-s-200 transition-colors"
+			className="border-bg-300/50 hover:bg-bg-300/20 grid grid-cols-[minmax(0,1.5fr)_auto_auto_auto_auto] items-center gap-x-3 rounded-lg border px-s-300 py-s-200 transition-colors"
 			role="listitem"
 			aria-label={`${quote.name}: ${formatPrice(quote.price)}${isClosed ? "" : `, ${formatChangePercent(quote.changePercent)}`}`}
 		>

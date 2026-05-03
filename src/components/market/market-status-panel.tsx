@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type KeyboardEvent } from "react"
 import { useTranslations } from "next-intl"
 import { ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -76,14 +76,31 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 
 	const handleTabChange = (tab: PanelTab) => setActiveTab(tab)
 
+	const handleTabListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
+		const ids = PANEL_TABS.map((tab) => tab.id)
+		const currentIndex = ids.indexOf(activeTab)
+		if (currentIndex === -1) return
+		const nextIndex =
+			event.key === "ArrowRight"
+				? (currentIndex + 1) % ids.length
+				: (currentIndex - 1 + ids.length) % ids.length
+		const nextId = ids[nextIndex]
+		if (nextId) {
+			setActiveTab(nextId)
+			document.getElementById(`market-tab-${nextId}`)?.focus()
+		}
+	}
+
 	if (statuses.length === 0) return null
 
 	return (
-		<div className="border-bg-300 bg-bg-200 flex h-full flex-col rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 flex min-h-[22rem] lg:h-full flex-col rounded-lg border">
 			{/* Tab bar */}
 			<div
 				className="border-bg-300 flex shrink-0 items-center gap-s-100 border-b px-s-300 py-s-200"
 				role="tablist"
+				onKeyDown={handleTabListKeyDown}
 			>
 				{PANEL_TABS.map((tab) => (
 					<button
@@ -92,7 +109,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 						type="button"
 						onClick={() => handleTabChange(tab.id)}
 						className={cn(
-							"text-tiny shrink-0 rounded-md px-s-300 py-1.5 font-medium transition-colors",
+							"text-tiny shrink-0 rounded-md px-s-300 py-s-200 font-medium transition-colors min-h-[44px] min-w-[44px]",
 							activeTab === tab.id
 								? "bg-acc-100 text-bg-100"
 								: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
@@ -100,6 +117,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 						aria-selected={activeTab === tab.id}
 						aria-controls={`market-tabpanel-${tab.id}`}
 						role="tab"
+						tabIndex={activeTab === tab.id ? 0 : -1}
 					>
 						{t(tab.labelKey)}
 					</button>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo, type KeyboardEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Activity, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -184,6 +184,25 @@ export const MarketMonitorContent = () => {
 	const handleRefresh = fetchData
 	const handleTabChange = useCallback((tabId: string) => setActiveTab(tabId), [])
 
+	const handleTabListKeyDown = useCallback(
+		(event: KeyboardEvent<HTMLDivElement>) => {
+			if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
+			const ids = groups.map((g) => g.id)
+			const currentIndex = ids.indexOf(activeTab)
+			if (currentIndex === -1) return
+			const nextIndex =
+				event.key === "ArrowRight"
+					? (currentIndex + 1) % ids.length
+					: (currentIndex - 1 + ids.length) % ids.length
+			const nextId = ids[nextIndex]
+			if (nextId) {
+				setActiveTab(nextId)
+				document.getElementById(`market-tab-${nextId}`)?.focus()
+			}
+		},
+		[groups, activeTab]
+	)
+
 	// ── Loading state ────────────────────────────────────────────────────────
 	if (isLoading && groups.length === 0) {
 		return (
@@ -219,7 +238,7 @@ export const MarketMonitorContent = () => {
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* ── Header ──────────────────────────────────────────────────────── */}
 			<div>
-				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:gap-x-4">
+				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-s-200 sm:gap-x-4">
 					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">{t("title")}</h1>
 					<div className="flex items-center gap-m-400">
 						{/* Inline market status dots */}
@@ -307,7 +326,7 @@ export const MarketMonitorContent = () => {
 			) : null}
 
 			{/* ── Info panels — Calendar + Market Status, same height ──────────── */}
-			<div className="grid grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 lg:h-[22rem] lg:grid-cols-[1fr_340px] lg:overflow-hidden">
+			<div className="grid grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 min-h-[22rem] lg:h-[22rem] lg:grid-cols-[1fr_340px] lg:overflow-hidden">
 				<div className="lg:overflow-y-auto min-h-0">
 					<EconomicCalendar events={events} />
 				</div>
@@ -323,6 +342,7 @@ export const MarketMonitorContent = () => {
 					<div
 						className="border-bg-300 flex items-center gap-s-100 overflow-x-auto border-b px-s-300 py-s-200"
 						role="tablist"
+						onKeyDown={handleTabListKeyDown}
 					>
 						{groups.map((group) => (
 							<button
@@ -331,7 +351,7 @@ export const MarketMonitorContent = () => {
 								type="button"
 								onClick={() => handleTabChange(group.id)}
 								className={cn(
-									"text-tiny shrink-0 rounded-md px-s-300 py-1.5 font-medium transition-colors",
+									"text-tiny shrink-0 rounded-md px-s-300 py-s-200 font-medium transition-colors min-h-[44px] min-w-[44px]",
 									activeTab === group.id
 										? "bg-acc-100 text-bg-100"
 										: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
@@ -339,6 +359,7 @@ export const MarketMonitorContent = () => {
 								aria-selected={activeTab === group.id}
 								aria-controls={`market-tabpanel-${group.id}`}
 								role="tab"
+								tabIndex={activeTab === group.id ? 0 : -1}
 							>
 								{t(group.labelKey)}
 							</button>

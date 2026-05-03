@@ -134,7 +134,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 	// Account selection step
 	if (step === "account-selection") {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm lg:max-w-md">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 				{/* Logo */}
 				<div className="flex justify-center">
 					<Image
@@ -143,6 +143,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						data-axion-logo="invertable"
 						priority
 					/>
 				</div>
@@ -251,7 +252,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 
 	// Credentials step
 	return (
-		<div className="space-y-m-600 w-full max-w-sm lg:max-w-md">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -260,6 +261,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					width={200}
 					height={57}
 					className="h-14 w-auto object-contain"
+					data-axion-logo="invertable"
 					priority
 				/>
 			</div>
@@ -323,6 +325,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						onChange={(e) => handleChange("email", e.target.value)}
 						required
 						autoComplete="email"
+						autoFocus
 						disabled={isPending}
 					/>
 				</div>
@@ -353,7 +356,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -377,7 +380,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				<Button
 					id="login-submit"
 					type="submit"
-					className="w-full"
+					className="h-11 w-full"
 					disabled={isPending}
 				>
 					{isPending && (
