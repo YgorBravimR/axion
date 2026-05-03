@@ -6,10 +6,8 @@ import { eq, and, gte, lte } from "drizzle-orm"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { rollupTrades } from "@/lib/aggregation/period-rollup"
 import type { TradeFact } from "@/lib/aggregation/period-rollup"
-import { weekStart, weekEnd } from "@/lib/calendar/iso-week"
 import { centsToPoints } from "@/lib/contracts/point-values"
 import type { PeriodResult } from "@/types/integration"
-import { startOfMonth, endOfMonth, setISOWeek, setISOWeekYear } from "date-fns"
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -62,17 +60,17 @@ const loadTradesForRange = async (
 	const decryptedRows = dek ? rawRows.map((t) => decryptTradeFields(t, dek)) : rawRows
 
 	return decryptedRows.map((t) => {
-		// When dek is non-null, decryptTradeFields returns numbers via decryptNumericField.
-		// When dek is null (current state), fields are plaintext strings — parse to numbers.
+		// dek non-null → decryptTradeFields returns numbers; dek null → raw strings.
+		// Fail loudly on NaN: a corrupted ciphertext silently propagating into the
+		// aggregate would poison every dependent reading in the system.
 		const pnlCents = Number(t.pnl ?? 0)
 		const commissionCents = Number(t.commission ?? 0)
 		const feesCents = Number(t.fees ?? 0)
+		if (Number.isNaN(pnlCents) || Number.isNaN(commissionCents) || Number.isNaN(feesCents)) {
+			throw new Error(`period-queries: non-numeric monetary field on trade ${t.id}`)
+		}
 
-		// positionSize is encrypted text; when dek is null it is the raw plaintext string.
 		const contracts = Number(t.positionSize ?? 1) || 1
-
-		// Use centsToPoints for correct per-instrument contract math.
-		// pnlCents is net (commissions already subtracted by broker data layer).
 		const points = centsToPoints(pnlCents, t.asset, contracts)
 
 		return {
@@ -217,9 +215,12 @@ const getMonthAggregate = async (
 		return rowToPeriodResult(row)
 	}
 
-	// Row is missing or dirty — recompute from raw trades
-	const monthStart = startOfMonth(new Date(year, month - 1, 1))
-	const monthEnd = endOfMonth(monthStart)
+	// Row is missing or dirty — recompute from raw trades.
+	// UTC-anchored boundaries: trades.entryDate is timestamptz. Local-midnight
+	// boundaries (date-fns startOfMonth/endOfMonth) would drop trades placed in
+	// the last hour of the month on non-UTC servers.
+	const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
+	const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
 
 	const facts = await loadTradesForRange(accountId, monthStart, monthEnd)
 	const result = rollupTrades(facts, { year, month })
@@ -259,12 +260,23 @@ const getWeekAggregate = async (
 		return rowToPeriodResult(row)
 	}
 
-	// Build the Monday of the target ISO week using date-fns helpers.
-	// setISOWeekYear sets the ISO week-year, then setISOWeek positions the date
-	// to the correct Monday. Using new Date() as an arbitrary starting point.
-	const isoMonday = setISOWeek(setISOWeekYear(new Date(), isoYear), isoWeek)
-	const wStart = weekStart(isoMonday)
-	const wEnd = weekEnd(isoMonday)
+	// Canonical ISO-week anchor: Jan 4 is ALWAYS in ISO week 1 of the
+	// week-year. Walk forward (isoWeek - 1) weeks to land somewhere in the
+	// target week, then snap to that week's Monday in UTC. UTC anchoring
+	// matches trades.entryDate (timestamptz) — local-tz boundaries would
+	// drop late-Sunday trades on non-UTC servers.
+	const jan4Utc = new Date(Date.UTC(isoYear, 0, 4))
+	const someDayInWeekUtc = new Date(jan4Utc)
+	someDayInWeekUtc.setUTCDate(jan4Utc.getUTCDate() + (isoWeek - 1) * 7)
+	// ISO week starts Monday. getUTCDay: Sun=0..Sat=6 → Mon offset = (day+6)%7
+	const dayOfWeek = someDayInWeekUtc.getUTCDay()
+	const mondayOffset = (dayOfWeek + 6) % 7
+	const wStart = new Date(someDayInWeekUtc)
+	wStart.setUTCDate(someDayInWeekUtc.getUTCDate() - mondayOffset)
+	wStart.setUTCHours(0, 0, 0, 0)
+	const wEnd = new Date(wStart)
+	wEnd.setUTCDate(wStart.getUTCDate() + 6)
+	wEnd.setUTCHours(23, 59, 59, 999)
 
 	const facts = await loadTradesForRange(accountId, wStart, wEnd)
 	const result = rollupTrades(facts, { year: isoYear, isoWeek })

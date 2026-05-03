@@ -249,6 +249,38 @@ describe("getMonthAggregate", () => {
 		)
 	})
 
+	it("throws on non-numeric monetary field instead of poisoning aggregate with NaN", async () => {
+		const dirtyRow = {
+			grossCents: 0,
+			netCents: 0,
+			points: "0.00",
+			tradingDays: 0,
+			gainDays: 0,
+			lossDays: 0,
+			isDirty: true,
+		}
+		const corruptedTrade = {
+			id: "trade-bad",
+			asset: "WIN",
+			pnl: "not-a-number",
+			commission: "0",
+			fees: "0",
+			positionSize: "1",
+			entryDate: new Date(2026, 0, 5),
+			isArchived: false,
+		}
+		mockLimit.mockResolvedValueOnce([dirtyRow])
+		mockWhereResolve.mockResolvedValueOnce([corruptedTrade])
+
+		await expect(getMonthAggregate(ACCOUNT_ID, 2026, 1)).rejects.toThrow(
+			/non-numeric monetary field on trade trade-bad/,
+		)
+		// rollupTrades must NOT have been called with NaN
+		expect(mockRollupTrades).not.toHaveBeenCalled()
+		// Aggregate must NOT have been upserted from corrupted data
+		expect(mockInsert).not.toHaveBeenCalled()
+	})
+
 	it("recomputes when no aggregate row exists (missing row)", async () => {
 		mockLimit.mockResolvedValueOnce([])           // no aggregate row
 		mockWhereResolve.mockResolvedValueOnce([])    // no trades either
