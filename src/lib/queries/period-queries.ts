@@ -233,10 +233,10 @@ const getMonthAggregate = async (
 /**
  * Returns the rolled-up PeriodResult for an ISO 8601 week.
  *
- * Uses setISOWeek/setISOWeekYear from date-fns to build a Monday anchor for
- * the requested ISO year+week, then derives the full Mon–Sun range via the
- * iso-week helpers. This correctly handles boundary weeks (e.g. week 1/2026
- * starts Mon 2025-12-29, which lives in calendar year 2025).
+ * Anchors via the canonical "Jan 4 always lives in ISO week 1" rule, then
+ * snaps to the target week's Monday in UTC. Correctly handles boundary
+ * weeks (e.g. week 1/2026 starts Mon 2025-12-29, which lives in calendar
+ * year 2025).
  */
 const getWeekAggregate = async (
 	accountId: string,
