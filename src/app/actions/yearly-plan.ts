@@ -107,32 +107,28 @@ const upsertYearlyPlan = async (
 				.where(eq(yearlyPlans.id, existing.id))
 				.returning()
 
-			// Recalculate future weekly targets' contracts + valorOperacionalCents
+			// Recalculate future weekly targets' contracts + valorOperacionalCents.
+			// Bulk update via SQL OR predicate is one round-trip vs N+1 selects-then-updates.
+			// Future = current ISO week of current ISO year, plus everything in later ISO years.
 			const effectiveNow = await getServerEffectiveNow()
 			const currentIsoWeek = getWeekNumber(effectiveNow)
 			const currentIsoYear = getWeekYear(effectiveNow)
+			const newContracts = contractsForBalance(validated.initialCapitalCents, ladder)
 
-			const futureWeeks = await db.query.weeklyTargets.findMany({
-				where: eq(weeklyTargets.yearlyPlanId, existing.id),
-			})
-
-			const contracts = contractsForBalance(validated.initialCapitalCents, ladder)
-
-			for (const week of futureWeeks) {
-				const isFuture =
-					week.isoYear > currentIsoYear ||
-					(week.isoYear === currentIsoYear && week.isoWeek >= currentIsoWeek)
-				if (!isFuture) continue
-
-				await db
-					.update(weeklyTargets)
-					.set({
-						contracts,
-						valorOperacionalCents: contracts * validated.valorPorContratoCents,
-						updatedAt: new Date(),
-					})
-					.where(eq(weeklyTargets.id, week.id))
-			}
+			await db
+				.update(weeklyTargets)
+				.set({
+					contracts: newContracts,
+					valorOperacionalCents: newContracts * validated.valorPorContratoCents,
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(weeklyTargets.yearlyPlanId, existing.id),
+						sql`(${weeklyTargets.isoYear} > ${currentIsoYear}
+							OR (${weeklyTargets.isoYear} = ${currentIsoYear} AND ${weeklyTargets.isoWeek} >= ${currentIsoWeek}))`,
+					),
+				)
 
 			return { status: "success", message: "Yearly plan updated", data: updated }
 		}
