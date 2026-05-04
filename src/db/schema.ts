@@ -2401,3 +2401,24 @@ export type NewIndicatorDefinition = typeof indicatorDefinitions.$inferInsert
 
 export type PriceDataVersion = typeof priceDataVersions.$inferSelect
 export type NewPriceDataVersion = typeof priceDataVersions.$inferInsert
+
+// ==========================================
+// FRACTAL PLANNING CASCADE — Phase 1 inferred types
+// ==========================================
+
+export type QuarterlyPlan = typeof quarterlyPlan.$inferSelect
+export type NewQuarterlyPlan = typeof quarterlyPlan.$inferInsert
+
+// Note: MonthlyPlan/NewMonthlyPlan are taken by legacy monthlyPlans table.
+// Fractal monthly_plan uses FractalMonthlyPlan to avoid collision until Phase 4 cleanup.
+export type FractalMonthlyPlan = typeof monthlyPlan.$inferSelect
+export type NewFractalMonthlyPlan = typeof monthlyPlan.$inferInsert
+
+export type WeeklyPlan = typeof weeklyPlan.$inferSelect
+export type NewWeeklyPlan = typeof weeklyPlan.$inferInsert
+
+export type DailyPlan = typeof dailyPlan.$inferSelect
+export type NewDailyPlan = typeof dailyPlan.$inferInsert
+
+export type TierChangeLog = typeof tierChangeLog.$inferSelect
+export type NewTierChangeLog = typeof tierChangeLog.$inferInsert
