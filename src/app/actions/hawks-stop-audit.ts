@@ -6,48 +6,12 @@ import { desc, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { hawksStopAudit, trades } from "@/db/schema"
 import { getCurrentAccount } from "@/app/actions/auth"
+import {
+	isStopMovementViolation,
+	type LogStopChangeInput,
+	type StopAuditRecord,
+} from "@/lib/hawks/stop-audit"
 import type { ActionResponse } from "@/types"
-
-interface StopAuditRecord {
-	id: string
-	tradeId: string
-	changedAt: string
-	oldStop: string | null
-	newStop: string
-	direction: "long" | "short"
-	violation: boolean
-}
-
-interface LogStopChangeInput {
-	tradeId: string
-	oldStop: string | null
-	newStop: string
-	direction: "long" | "short"
-}
-
-/**
- * Hawks rule: "stop never moves against position".
- *
- * For longs, the stop may only move UP (toward break-even, never further away
- * from the entry). For shorts, the stop may only move DOWN. Any movement that
- * violates this constitutional rule is recorded with `violation = true` so the
- * journal and coaching surfaces can flag it.
- */
-const isStopMovementViolation = ({
-	oldStop,
-	newStop,
-	direction,
-}: {
-	oldStop: string | null
-	newStop: string
-	direction: "long" | "short"
-}): boolean => {
-	if (oldStop === null) return false
-	const prev = Number(oldStop)
-	const next = Number(newStop)
-	if (Number.isNaN(prev) || Number.isNaN(next)) return false
-	return direction === "long" ? next < prev : next > prev
-}
 
 const guardTradeOwnership = async (tradeId: string): Promise<boolean> => {
 	const account = await getCurrentAccount()
@@ -136,5 +100,4 @@ const fetchHawksStopAudit = async (
 	}
 }
 
-export { logHawksStopChange, fetchHawksStopAudit, isStopMovementViolation }
-export type { StopAuditRecord, LogStopChangeInput }
+export { logHawksStopChange, fetchHawksStopAudit }

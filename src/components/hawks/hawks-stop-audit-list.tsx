@@ -4,10 +4,8 @@ import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { AlertTriangle, ShieldCheck } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-	fetchHawksStopAudit,
-	type StopAuditRecord,
-} from "@/app/actions/hawks-stop-audit"
+import { fetchHawksStopAudit } from "@/app/actions/hawks-stop-audit"
+import type { StopAuditRecord } from "@/lib/hawks/stop-audit"
 import { cn } from "@/lib/utils"
 
 interface HawksStopAuditListProps {
