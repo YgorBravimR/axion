@@ -130,5 +130,138 @@ const resolveDay = async (
 	}
 }
 
-export type { ResolvedDay }
-export { resolveDay }
+// ---------------------------------------------------------------------------
+// resolveMonth: cascade year → quarter → month for month-level R targets
+// ---------------------------------------------------------------------------
+
+interface ResolveMonthInput {
+	accountId: string
+	year: number
+	month: number // 1-12
+}
+
+interface ResolveMonthResult {
+	monthlyWinR: number | null
+	monthlyWinR_provenance: "year" | "quarter" | "month" | "none"
+	monthlyLossR: number | null
+	monthlyLossR_provenance: "year" | "quarter" | "month" | "none"
+	monthlyTargetWeeks: number | null
+	monthlyTargetWeeks_provenance: "year" | "quarter" | "month" | "none"
+}
+
+/** Nullable cascade: walks layers from most-specific to least, returns first defined value. */
+const cascadeNullable = <T extends string | number | null>(
+	layers: { level: "year" | "quarter" | "month" | "none"; value: T | null | undefined }[],
+): { value: number | null; provenance: "year" | "quarter" | "month" | "none" } => {
+	for (const layer of layers) {
+		if (layer.value !== null && layer.value !== undefined) {
+			return { value: Number(layer.value), provenance: layer.level }
+		}
+	}
+	return { value: null, provenance: "none" }
+}
+
+const resolveMonth = async (input: ResolveMonthInput): Promise<ResolveMonthResult> => {
+	const { accountId, year, month } = input
+	const quarter = Math.ceil(month / 3)
+
+	const yearRow = await db.query.yearlyPlans.findFirst({
+		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+	})
+
+	const quarterRow = yearRow
+		? await db.query.quarterlyPlan.findFirst({
+			where: and(eq(quarterlyPlan.yearlyPlanId, yearRow.id), eq(quarterlyPlan.quarter, quarter)),
+		})
+		: null
+
+	// monthlyPlan is keyed by quarterlyPlanId; search by year+month if quarter exists.
+	const monthRow = quarterRow
+		? await db.query.monthlyPlan.findFirst({
+			where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id), eq(monthlyPlan.month, month)),
+		})
+		: null
+
+	// Monthly win R: only year-level default (monthly_plan has no winR override column).
+	const winR = cascadeNullable([
+		{ level: "year", value: yearRow?.defaultMonthlyWinR },
+	])
+
+	// Monthly loss R: month overrides year via overrideMonthlyLossR.
+	const lossR = cascadeNullable([
+		{ level: "month", value: monthRow?.overrideMonthlyLossR },
+		{ level: "year", value: yearRow?.defaultMonthlyLossR },
+	])
+
+	// Target weeks: year-level only.
+	const targetWeeks = cascadeNullable([
+		{ level: "year", value: yearRow?.targetWeeksToYearly != null ? String(yearRow.targetWeeksToYearly) : null },
+	])
+
+	return {
+		monthlyWinR: winR.value,
+		monthlyWinR_provenance: winR.provenance,
+		monthlyLossR: lossR.value,
+		monthlyLossR_provenance: lossR.provenance,
+		monthlyTargetWeeks: targetWeeks.value,
+		monthlyTargetWeeks_provenance: targetWeeks.provenance,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// resolveYear: returns year-level R defaults with provenance
+// ---------------------------------------------------------------------------
+
+interface ResolveYearInput {
+	accountId: string
+	year: number
+}
+
+interface ResolveYearResult {
+	defaultDailyLossR: number | null
+	defaultDailyLossR_provenance: "year" | "none"
+	defaultDailyWinR: number | null
+	defaultDailyWinR_provenance: "year" | "none"
+	defaultWeeklyLossR: number | null
+	defaultWeeklyLossR_provenance: "year" | "none"
+	defaultWeeklyWinR: number | null
+	defaultWeeklyWinR_provenance: "year" | "none"
+	defaultMonthlyLossR: number | null
+	defaultMonthlyLossR_provenance: "year" | "none"
+	defaultMonthlyWinR: number | null
+	defaultMonthlyWinR_provenance: "year" | "none"
+}
+
+const resolveYear = async (input: ResolveYearInput): Promise<ResolveYearResult> => {
+	const yearRow = await db.query.yearlyPlans.findFirst({
+		where: and(eq(yearlyPlans.accountId, input.accountId), eq(yearlyPlans.year, input.year)),
+	})
+
+	const tag = (v: string | null | undefined): { value: number | null; provenance: "year" | "none" } =>
+		v == null ? { value: null, provenance: "none" } : { value: Number(v), provenance: "year" }
+
+	const dl = tag(yearRow?.defaultDailyLossR)
+	const dw = tag(yearRow?.defaultDailyWinR)
+	const wl = tag(yearRow?.defaultWeeklyLossR)
+	const ww = tag(yearRow?.defaultWeeklyWinR)
+	const ml = tag(yearRow?.defaultMonthlyLossR)
+	const mw = tag(yearRow?.defaultMonthlyWinR)
+
+	return {
+		defaultDailyLossR: dl.value,
+		defaultDailyLossR_provenance: dl.provenance,
+		defaultDailyWinR: dw.value,
+		defaultDailyWinR_provenance: dw.provenance,
+		defaultWeeklyLossR: wl.value,
+		defaultWeeklyLossR_provenance: wl.provenance,
+		defaultWeeklyWinR: ww.value,
+		defaultWeeklyWinR_provenance: ww.provenance,
+		defaultMonthlyLossR: ml.value,
+		defaultMonthlyLossR_provenance: ml.provenance,
+		defaultMonthlyWinR: mw.value,
+		defaultMonthlyWinR_provenance: mw.provenance,
+	}
+}
+
+export type { ResolvedDay, ResolveMonthInput, ResolveMonthResult, ResolveYearInput, ResolveYearResult }
+export { resolveDay, resolveMonth, resolveYear }
