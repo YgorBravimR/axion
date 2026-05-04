@@ -2496,11 +2496,12 @@
         "previewTitle": "Coming next",
         "previewDescription": "Phase 2 will lock the active strategy to Hawks — Triple Screen Renko, seed the 24-scenario picker, the daily viés ritual, and the Hawks-specific journal fields.",
         "previewButton": "Phase 2 preview",
-        "openBias": "Open daily viés ritual",
+        "openPlaybook": "Hawks playbook",
+        "openTags": "Hawks scenario tags",
+        "openBias": "Daily viés ritual",
         "openCalibration": "Renko calibration",
         "openCalendar": "Macro calendar",
         "openAnalytics": "Hawks analytics",
-        "openPresets": "Hawks presets",
         "openLearning": "Hawks learning",
         "openMentor": "Hawks mentor"
       }
@@ -4885,49 +4886,6 @@
         "mma_misaligned": "MMA was not aligned at entry.",
         "checklist_skipped": "Daily bias checklist had < 3 items confirmed."
       }
-    }
-  },
-  "hawksPresets": {
-    "page": {
-      "title": "Hawks presets",
-      "subtitle": "Tuned defaults for backtest, Monte Carlo, and Equity Shield. Punch them into the existing tools."
-    },
-    "backtest": {
-      "title": "Backtest preset",
-      "description": "Approximation of the Hawks triple-screen Renko entry on the existing MACD/EMA engine. Faithful Method 3 stop and Fib expansion targets need a follow-up engine pass.",
-      "entry": "Entry engine",
-      "macd": "MACD",
-      "emas": "EMAs",
-      "targets": "Targets",
-      "stop": "Stop",
-      "method3": "fixed_points + on_partial → indicator(EMA27)",
-      "session": "Session window",
-      "cta": "Open backtest"
-    },
-    "mc": {
-      "title": "Monte Carlo preset",
-      "description": "Risk envelope from Pedro's protocol — 5 % daily, 10 % weekly, 20 % monthly. Use these in the V2 simulator profile.",
-      "maxTrades": "Max trades / day",
-      "dailyStop": "Daily stop",
-      "weeklyStop": "Weekly stop",
-      "monthlyStop": "Monthly stop",
-      "stopOnLosses": "Stop after consec. losses",
-      "pfTarget": "Profit factor target",
-      "wrTarget": "Win rate target",
-      "expectancy": "Expectancy / trade",
-      "cta": "Open Monte Carlo"
-    },
-    "shield": {
-      "title": "Equity Shield preset",
-      "description": "Discipline cascade for Hawks combine accounts.",
-      "mddMultiplier": "MDD multiplier",
-      "recoveryPct": "Recovery %",
-      "smaPeriod": "SMA period",
-      "cascade5": "Stop-day cascade — 5",
-      "cascade5Value": "{stops} red days → 50 % size",
-      "cascade10": "Stop-day cascade — 10",
-      "cascade10Value": "{stops} red days → flat for the month",
-      "cta": "Open Equity Shield"
     }
   },
   "hawksLearning": {

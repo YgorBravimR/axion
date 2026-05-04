@@ -68,7 +68,7 @@ const HawksModeSettings = () => {
 	return (
 		<div className="space-y-m-500">
 			<Card id="hawks-mode-toggle-card">
-				<CardHeader className="flex flex-row items-start justify-between gap-m-300">
+				<CardHeader className="flex flex-row items-start justify-between gap-m-400">
 					<div className="space-y-s-200">
 						<div className="flex items-center gap-s-200">
 							<Crosshair className="text-acc-100 h-5 w-5" aria-hidden="true" />
@@ -89,14 +89,14 @@ const HawksModeSettings = () => {
 						/>
 					</div>
 				</CardHeader>
-				<CardContent className="text-text-200 text-fs-200 space-y-s-300">
+				<CardContent className="text-text-200 text-small space-y-s-300">
 					<p>{t("hawks.body")}</p>
 					{isHawks && (
-						<div className="border-acc-100/40 bg-acc-100/5 text-acc-100 rounded-md border p-m-300 text-fs-200">
+						<div className="border-acc-100/40 bg-acc-100/5 text-acc-100 rounded-md border p-m-400 text-small">
 							<p className="font-medium">{t("hawks.activeBanner")}</p>
 						</div>
 					)}
-					<p className="text-text-300 text-fs-100">{t("hawks.scopeNote")}</p>
+					<p className="text-text-300 text-tiny">{t("hawks.scopeNote")}</p>
 				</CardContent>
 			</Card>
 
@@ -108,8 +108,14 @@ const HawksModeSettings = () => {
 				<CardContent className="flex flex-wrap gap-s-200">
 					{isHawks ? (
 						<>
+							<Button id="hawks-mode-preview-playbook" variant="outline" asChild>
+								<Link href="/playbook">{t("hawks.openPlaybook")}</Link>
+							</Button>
+							<Button id="hawks-mode-preview-tags" variant="outline" asChild>
+								<Link href="/settings?tab=tags">{t("hawks.openTags")}</Link>
+							</Button>
 							<Button id="hawks-mode-preview-bias" variant="outline" asChild>
-								<Link href="/hawks/bias">{t("hawks.openBias")}</Link>
+								<Link href="/command-center">{t("hawks.openBias")}</Link>
 							</Button>
 							<Button id="hawks-mode-preview-calibration" variant="outline" asChild>
 								<Link href="/hawks/calibration">{t("hawks.openCalibration")}</Link>
@@ -119,9 +125,6 @@ const HawksModeSettings = () => {
 							</Button>
 							<Button id="hawks-mode-preview-analytics" variant="outline" asChild>
 								<Link href="/hawks/analytics">{t("hawks.openAnalytics")}</Link>
-							</Button>
-							<Button id="hawks-mode-preview-presets" variant="outline" asChild>
-								<Link href="/hawks/presets">{t("hawks.openPresets")}</Link>
 							</Button>
 							<Button id="hawks-mode-preview-learning" variant="outline" asChild>
 								<Link href="/hawks/learning">{t("hawks.openLearning")}</Link>
