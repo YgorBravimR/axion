@@ -1107,6 +1107,12 @@ export const monthlyTaxLedger = pgTable(
 		computedAt: timestamp("computed_at", { withTimezone: true }),
 		tradeCount: integer("trade_count").default(0).notNull(),
 
+		// Fractal Planning Cascade — Phase 1.
+		// Bidirectional link to monthly_plan (auto-set on plan creation when year+month+account match).
+		monthlyPlanId: uuid("monthly_plan_id").references(() => monthlyPlan.id, {
+			onDelete: "set null",
+		}),
+
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},

@@ -34,6 +34,20 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: monthlyTaxLedger.monthlyPlanId FK", () => {
+	it("adds monthlyPlanId column", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.monthlyTaxLedger)
+		expect(cols.monthlyPlanId).toBeDefined()
+	})
+
+	it("keeps monthlyPlanId nullable", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.monthlyTaxLedger)
+		expect(cols.monthlyPlanId.notNull).toBe(false)
+	})
+})
+
 describe("fractal-plan: trades additive columns", () => {
 	it("adds R-snapshot + R-outcome fields", async () => {
 		const schema = await import("@/db/schema")
