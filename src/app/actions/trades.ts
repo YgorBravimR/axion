@@ -59,6 +59,25 @@ import {
 import { computeTradeHash } from "@/lib/deduplication"
 import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
 import { captureROnEntry, computeROutcome } from "@/lib/fractal-plan/r-snapshot"
+import { checkDrawdownTrigger } from "@/lib/fractal-plan/drawdown-trigger"
+
+/**
+ * Flag-guarded drawdown deescalation after a losing trade close.
+ * Silently catches errors — a hook failure must never fail the user's mutation.
+ */
+const maybeTriggerDrawdown = async (
+	accountId: string,
+	outcome: "win" | "loss" | "breakeven" | undefined,
+	exitDate: Date | null
+): Promise<void> => {
+	if (!isFractalPlanDualWriteEnabled()) return
+	if (outcome !== "loss" || !exitDate) return
+	try {
+		await checkDrawdownTrigger({ accountId, asOf: exitDate })
+	} catch (err) {
+		console.error("[fractal-plan] checkDrawdownTrigger failed silently:", err)
+	}
+}
 
 // Type for trade with relations
 export interface TradeWithRelations extends Trade {
@@ -289,6 +308,9 @@ export const createTrade = async (
 		} catch (err) {
 			console.error("[trades.action] invalidateAggregates failed", err)
 		}
+
+		// Fractal plan drawdown deescalation (flag-guarded)
+		await maybeTriggerDrawdown(accountId, outcome, tradeData.exitDate ?? null)
 
 		return {
 			status: "success",
@@ -1373,6 +1395,15 @@ export const bulkCreateTrades = async (
 					.returning()
 				result.successCount += insertedTrades.length
 
+				// Fractal plan drawdown deescalation per inserted trade
+				for (const inserted of insertedTrades) {
+					await maybeTriggerDrawdown(
+						accountId,
+						inserted.outcome ?? undefined,
+						inserted.exitDate ? new Date(inserted.exitDate) : null
+					)
+				}
+
 				// Insert tradeTags entries for matched tag names
 				const tradeTagValues: Array<{ tradeId: string; tagId: string }> = []
 				for (let j = 0; j < insertedTrades.length; j++) {
@@ -1726,6 +1757,9 @@ export const createScaledTrade = async (
 		} catch (err) {
 			console.error("[trades.action] invalidateAggregates failed", err)
 		}
+
+		// Fractal plan drawdown deescalation (flag-guarded)
+		await maybeTriggerDrawdown(accountId, outcome, exitDate ? new Date(exitDate) : null)
 
 		return {
 			status: "success",
