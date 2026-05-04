@@ -1214,6 +1214,52 @@ export const quarterlyPlan = pgTable(
 	],
 )
 
+// Monthly Plan — tier snapshot (1R + capital frozen at month start) + R-cap overrides.
+// Distinct from legacy `monthly_plans` (plural). Phase 4 will drop the legacy table.
+export const monthlyPlan = pgTable(
+	"monthly_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		quarterlyPlanId: uuid("quarterly_plan_id")
+			.notNull()
+			.references(() => quarterlyPlan.id, { onDelete: "cascade" }),
+		year: integer("year").notNull(),
+		month: integer("month").notNull(),
+
+		// Tier snapshot (frozen at month start; refreshed only on drawdown_trigger or manual).
+		snapshotCapitalCents: bigint("snapshot_capital_cents", { mode: "number" }).notNull(),
+		snapshotOneRCents: bigint("snapshot_one_r_cents", { mode: "number" }).notNull(),
+		snapshotTierIndex: integer("snapshot_tier_index").notNull(),
+		snapshotComputedAt: timestamp("snapshot_computed_at", { withTimezone: true }).notNull(),
+		snapshotReason: snapshotReasonEnum("snapshot_reason").notNull(),
+
+		// Override caps (null → fall back to year defaults via cascade resolver)
+		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
+		overrideWeeklyLossR: decimal("override_weekly_loss_r", { precision: 8, scale: 2 }),
+		overrideMonthlyLossR: decimal("override_monthly_loss_r", { precision: 8, scale: 2 }),
+		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Set by auto-link rule when matching ledger row exists.
+		monthlyTaxLedgerId: uuid("monthly_tax_ledger_id").references(() => monthlyTaxLedger.id, {
+			onDelete: "set null",
+		}),
+
+		monthlyGoalCents: bigint("monthly_goal_cents", { mode: "number" }),
+		intentNotes: text("intent_notes"),
+		postMortemNotes: text("post_mortem_notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("monthly_plan_quarter_idx").on(table.quarterlyPlanId),
+		uniqueIndex("monthly_plan_quarter_month_idx").on(table.quarterlyPlanId, table.month),
+		index("monthly_plan_year_month_idx").on(table.year, table.month),
+	],
+)
+
 // ==========================================
 // PLAYBOOK ENHANCEMENT TABLES (Phase 13)
 // ==========================================

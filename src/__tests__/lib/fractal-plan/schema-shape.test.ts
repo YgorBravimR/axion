@@ -34,6 +34,47 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: monthlyPlan table", () => {
+	it("exports monthlyPlan with snapshot + override columns", async () => {
+		const schema = await import("@/db/schema")
+		expect(schema.monthlyPlan).toBeDefined()
+		const cols = getTableColumns(schema.monthlyPlan)
+		expect(cols.id).toBeDefined()
+		expect(cols.quarterlyPlanId).toBeDefined()
+		expect(cols.year).toBeDefined()
+		expect(cols.month).toBeDefined()
+		expect(cols.snapshotCapitalCents).toBeDefined()
+		expect(cols.snapshotOneRCents).toBeDefined()
+		expect(cols.snapshotTierIndex).toBeDefined()
+		expect(cols.snapshotComputedAt).toBeDefined()
+		expect(cols.snapshotReason).toBeDefined()
+		expect(cols.overrideDailyLossR).toBeDefined()
+		expect(cols.overrideWeeklyLossR).toBeDefined()
+		expect(cols.overrideMonthlyLossR).toBeDefined()
+		expect(cols.overrideDailyTargetR).toBeDefined()
+		expect(cols.overrideActivePlaybookIds).toBeDefined()
+		expect(cols.monthlyTaxLedgerId).toBeDefined()
+		expect(cols.monthlyGoalCents).toBeDefined()
+		expect(cols.intentNotes).toBeDefined()
+		expect(cols.postMortemNotes).toBeDefined()
+	})
+
+	it("makes snapshot fields not-null and overrides nullable", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.monthlyPlan)
+		expect(cols.snapshotCapitalCents.notNull).toBe(true)
+		expect(cols.snapshotOneRCents.notNull).toBe(true)
+		expect(cols.snapshotTierIndex.notNull).toBe(true)
+		expect(cols.snapshotComputedAt.notNull).toBe(true)
+		expect(cols.snapshotReason.notNull).toBe(true)
+		expect(cols.overrideDailyLossR.notNull).toBe(false)
+		expect(cols.overrideWeeklyLossR.notNull).toBe(false)
+		expect(cols.overrideMonthlyLossR.notNull).toBe(false)
+		expect(cols.overrideDailyTargetR.notNull).toBe(false)
+		expect(cols.monthlyTaxLedgerId.notNull).toBe(false)
+	})
+})
+
 describe("fractal-plan: quarterlyPlan table", () => {
 	it("exports quarterlyPlan with required columns", async () => {
 		const schema = await import("@/db/schema")
