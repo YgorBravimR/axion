@@ -998,6 +998,93 @@ export const accountFeeRates = pgTable(
 	],
 )
 
+// ─── Monthly Tax Ledger ───────────────────────────────────────────────────────
+// Materialized per-account-month tax summary. Recomputed lazily on read when dirty.
+export const monthlyTaxLedger = pgTable(
+	"monthly_tax_ledger",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+
+		// First day of the month, UTC midnight
+		month: timestamp("month", { withTimezone: true }).notNull(),
+
+		// ── Gross P&L ────────────────────────────────────────────────────────────
+		// Sum of day-trade pnl for all closes in this month, before fees/taxes
+		grossGainCents: bigint("gross_gain_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Fees ─────────────────────────────────────────────────────────────────
+		totalTxCorretagemCents: bigint("total_tx_corretagem_cents", { mode: "number" }).default(0).notNull(),
+		totalTxRegistroCents: bigint("total_tx_registro_cents", { mode: "number" }).default(0).notNull(),
+		totalEmolumentosCents: bigint("total_emolumentos_cents", { mode: "number" }).default(0).notNull(),
+		// ISS = totalTxCorretagem × issRatePercent/100. Municipal tax, informational deduction.
+		totalIssCents: bigint("total_iss_cents", { mode: "number" }).default(0).notNull(),
+		// Sum of all four fee columns above
+		totalFeesCents: bigint("total_fees_cents", { mode: "number" }).default(0).notNull(),
+
+		totalContractsExecuted: decimal("total_contracts_executed", { precision: 20, scale: 4 })
+			.default("0")
+			.notNull(),
+
+		// ── IRRF ─────────────────────────────────────────────────────────────────
+		// Sum of 1% × max(0, dailyGrossPnl) for each trading day in month
+		irrfCents: bigint("irrf_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Net gain for IR base ──────────────────────────────────────────────────
+		// grossGainCents − totalFeesCents
+		netGainBeforeCarryoverCents: bigint("net_gain_before_carryover_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Carryover ────────────────────────────────────────────────────────────
+		// Accumulated loss balance at START of this month (positive = loss owed)
+		carryoverInCents: bigint("carryover_in_cents", { mode: "number" }).default(0).notNull(),
+		carryoverConsumedCents: bigint("carryover_consumed_cents", { mode: "number" }).default(0).notNull(),
+		// Remaining carryover passed to next month
+		carryoverOutCents: bigint("carryover_out_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── IR Calculation ────────────────────────────────────────────────────────
+		// max(0, netGainBeforeCarryover − carryoverConsumed)
+		taxableGainCents: bigint("taxable_gain_cents", { mode: "number" }).default(0).notNull(),
+		// taxableGain × irRateBps / 10000
+		irGrossCents: bigint("ir_gross_cents", { mode: "number" }).default(0).notNull(),
+		// max(0, irGross − irrfCents)
+		darfDueCents: bigint("darf_due_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── DARF status ───────────────────────────────────────────────────────────
+		darfStatus: darfStatusEnum("darf_status").default("pending").notNull(),
+		darfDueDate: timestamp("darf_due_date", { withTimezone: true }),
+		darfPaidAt: timestamp("darf_paid_at", { withTimezone: true }),
+		// Actual amount paid (may differ from darfDueCents if trader paid early/late)
+		darfPaidAmountCents: bigint("darf_paid_amount_cents", { mode: "number" }),
+
+		// ── Informational fields ──────────────────────────────────────────────────
+		// Previous month's unpaid DARF balance (display-only, not added to this DARF calc)
+		previousBalanceCents: bigint("previous_balance_cents", { mode: "number" }).default(0).notNull(),
+		// Operational expenses (VPS, data feeds, etc.) — informational, not tax-deductible
+		gastosGeraisCents: bigint("gastos_gerais_cents", { mode: "number" }).default(0).notNull(),
+		// grossGain − totalFees − darfDue − gastosGerais
+		netLiquidCents: bigint("net_liquid_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Dirty flag ────────────────────────────────────────────────────────────
+		// true = stale, needs recompute before next read
+		isDirty: boolean("is_dirty").default(true).notNull(),
+
+		// ── Audit ─────────────────────────────────────────────────────────────────
+		computedAt: timestamp("computed_at", { withTimezone: true }),
+		tradeCount: integer("trade_count").default(0).notNull(),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("monthly_tax_ledger_account_idx").on(table.accountId),
+		uniqueIndex("monthly_tax_ledger_account_month_idx").on(table.accountId, table.month),
+		index("monthly_tax_ledger_darf_status_idx").on(table.darfStatus),
+		index("monthly_tax_ledger_dirty_idx").on(table.isDirty),
+	],
+)
+
 // ==========================================
 // YEARLY PLAN TABLES
 // ==========================================
@@ -1574,6 +1661,8 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	accountAssetSettings: many(accountAssetSettings),
 	monthlyPlans: many(monthlyPlans),
 	notaImports: many(notaImports),
+	accountFeeRates: many(accountFeeRates),
+	monthlyTaxLedger: many(monthlyTaxLedger),
 }))
 
 // Session Relations
@@ -1770,6 +1859,22 @@ export const riskManagementProfilesRelations = relations(riskManagementProfiles,
 export const notaImportsRelations = relations(notaImports, ({ one }) => ({
 	account: one(tradingAccounts, {
 		fields: [notaImports.accountId],
+		references: [tradingAccounts.id],
+	}),
+}))
+
+// Account Fee Rates Relations
+export const accountFeeRatesRelations = relations(accountFeeRates, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [accountFeeRates.accountId],
+		references: [tradingAccounts.id],
+	}),
+}))
+
+// Monthly Tax Ledger Relations
+export const monthlyTaxLedgerRelations = relations(monthlyTaxLedger, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [monthlyTaxLedger.accountId],
 		references: [tradingAccounts.id],
 	}),
 }))
