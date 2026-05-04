@@ -55,6 +55,7 @@ interface CommandCenterContentProps {
 	initialPlan?: MonthlyPlan | null
 	riskProfileName?: string | null
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
+	isHawksActive?: boolean
 }
 
 const CommandCenterContent = ({
@@ -70,6 +71,7 @@ const CommandCenterContent = ({
 	initialPlan,
 	riskProfileName,
 	initialLiveTradingStatus = null,
+	isHawksActive = false,
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
 	const tPlan = useTranslations("commandCenter.plan")
@@ -160,7 +162,7 @@ const CommandCenterContent = ({
 			/>
 
 			{/* Circuit Breaker Panel - Full Width */}
-			<CircuitBreakerPanel status={circuitBreaker} />
+			<CircuitBreakerPanel status={circuitBreaker} isHawksActive={isHawksActive} />
 
 			{/* Live Trading Status Panel - Full Width */}
 			<LiveTradingStatusPanel
@@ -179,6 +181,7 @@ const CommandCenterContent = ({
 							onManageClick={handleManageChecklist}
 							onRefresh={refreshCompletions}
 							isReadOnly={isReadOnly}
+							isHawksActive={isHawksActive}
 						/>
 					)}
 
@@ -273,6 +276,7 @@ const CommandCenterContent = ({
 					settings={assetSettings}
 					availableAssets={availableAssets}
 					onRefresh={refreshAssetSettings}
+					isHawksActive={isHawksActive}
 				/>
 			)}
 
@@ -286,6 +290,7 @@ const CommandCenterContent = ({
 					onClose={handleChecklistManagerClose}
 					checklist={editingChecklist}
 					onSuccess={handleChecklistManagerSuccess}
+					isHawksActive={isHawksActive}
 				/>
 			)}
 		</div>

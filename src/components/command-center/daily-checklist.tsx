@@ -15,13 +15,17 @@ interface DailyChecklistProps {
 	onManageClick: (checklistId: string) => void
 	onRefresh: () => void
 	isReadOnly?: boolean
+	isHawksActive?: boolean
 }
+
+const isHawksChecklist = (name: string): boolean => name.startsWith("Hawks ")
 
 export const DailyChecklist = ({
 	checklists,
 	onManageClick,
 	onRefresh,
 	isReadOnly = false,
+	isHawksActive = false,
 }: DailyChecklistProps) => {
 	const t = useTranslations("commandCenter.checklist")
 	const { showToast } = useToast()
@@ -98,7 +102,9 @@ export const DailyChecklist = ({
 						key={checklist.id}
 						className={cn(
 							"rounded-lg border bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 transition-colors",
-							isComplete ? "border-trade-buy/50" : "border-bg-300"
+							isComplete && "border-trade-buy/50",
+							!isComplete && isHawksActive && isHawksChecklist(checklist.name) && "border-acc-100/40 ring-1 ring-acc-100/15",
+							!isComplete && !(isHawksActive && isHawksChecklist(checklist.name)) && "border-bg-300"
 						)}
 					>
 						{/* Header */}

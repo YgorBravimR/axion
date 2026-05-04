@@ -25,6 +25,7 @@ interface AssetRulesPanelProps {
 	settings: AssetSettingWithAsset[]
 	availableAssets: Asset[]
 	onRefresh: () => void
+	isHawksActive?: boolean
 }
 
 interface EditingState {
@@ -39,6 +40,7 @@ export const AssetRulesPanel = ({
 	settings,
 	availableAssets,
 	onRefresh,
+	isHawksActive = false,
 }: AssetRulesPanelProps) => {
 	const t = useTranslations("commandCenter.assetRules")
 	const router = useRouter()
@@ -251,6 +253,7 @@ export const AssetRulesPanel = ({
 														setEditing({ ...editing, bias: value })
 													}
 													compact
+													isHawks={isHawksActive}
 												/>
 											) : (
 												<BiasSelector
@@ -258,6 +261,7 @@ export const AssetRulesPanel = ({
 													onChange={(value) => handleBiasChange(setting.assetId, value)}
 													disabled={isSaving}
 													compact
+													isHawks={isHawksActive}
 												/>
 											)}
 										</td>

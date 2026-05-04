@@ -107,6 +107,7 @@ const getCircuitBreakerState = (
 
 interface CircuitBreakerPanelProps {
 	status: CircuitBreakerStatus | null
+	isHawksActive?: boolean
 }
 
 export interface MetricCellProps {
@@ -136,8 +137,10 @@ MetricCell.displayName = "CircuitBreakerMetricCell"
 
 export const CircuitBreakerPanel = ({
 	status,
+	isHawksActive = false,
 }: CircuitBreakerPanelProps) => {
 	const t = useTranslations("commandCenter.circuitBreaker")
+	const tHawks = useTranslations("hawksMode")
 	const { formatCurrency } = useFormatting()
 
 	if (!status) {
@@ -285,6 +288,16 @@ export const CircuitBreakerPanel = ({
 								</span>
 							</div>
 						)}
+				</div>
+			)}
+
+			{/* Hawks cascade hint */}
+			{isHawksActive && (
+				<div className="mb-s-300 sm:mb-m-400 gap-s-200 border-acc-100/30 bg-acc-100/5 px-s-300 py-s-200 flex items-center rounded-md border">
+					<ShieldAlert className="text-acc-100 h-4 w-4 shrink-0" />
+					<span className="text-tiny text-txt-200 font-medium">
+						{tHawks("circuitBreaker.cascadeHint")}
+					</span>
 				</div>
 			)}
 

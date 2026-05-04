@@ -17,6 +17,7 @@ interface BiasSelectorProps {
 	onChange: (value: BiasType | null) => void
 	disabled?: boolean
 	compact?: boolean
+	isHawks?: boolean
 }
 
 const biasConfig = {
@@ -42,8 +43,10 @@ export const BiasSelector = ({
 	onChange,
 	disabled,
 	compact = false,
+	isHawks = false,
 }: BiasSelectorProps) => {
 	const t = useTranslations("commandCenter.assetRules")
+	const tHawks = useTranslations("hawksMode")
 
 	const handleValueChange = (newValue: string) => {
 		if (newValue === "none") {
@@ -61,7 +64,12 @@ export const BiasSelector = ({
 		>
 			<SelectTrigger
 				id="bias-selector"
-				className={cn("w-full", compact && "h-8 w-28")}
+				aria-label={isHawks ? tHawks("bias.hawksAriaLabel") : undefined}
+				className={cn(
+					"w-full",
+					compact && "h-8 w-28",
+					isHawks && "border-acc-100/40 ring-1 ring-acc-100/20"
+				)}
 			>
 				<SelectValue placeholder={t("selectBias")}>
 					{value ? (

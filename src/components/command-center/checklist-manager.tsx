@@ -24,6 +24,7 @@ interface ChecklistManagerProps {
 	onClose: () => void
 	checklist?: DailyChecklist | null
 	onSuccess: () => void
+	isHawksActive?: boolean
 }
 
 const generateId = () => crypto.randomUUID()
@@ -33,11 +34,14 @@ export const ChecklistManager = ({
 	onClose,
 	checklist,
 	onSuccess,
+	isHawksActive = false,
 }: ChecklistManagerProps) => {
 	const t = useTranslations("commandCenter.checklistManager")
 	const tCommon = useTranslations("common")
+	const tHawks = useTranslations("hawksMode")
 	const { showToast } = useToast()
 	const isEditing = !!checklist
+	const isHawksManaged = isHawksActive && !!checklist?.name?.startsWith("Hawks ")
 
 	const [name, setName] = useState(checklist?.name || "")
 	const [items, setItems] = useState<ChecklistItem[]>(() =>
@@ -141,6 +145,13 @@ export const ChecklistManager = ({
 				</DialogHeader>
 
 				<div className="space-y-m-500 py-m-400">
+					{isHawksManaged && (
+						<div className="gap-s-200 border-acc-100/30 bg-acc-100/5 px-s-300 py-s-200 flex items-start rounded-md border">
+							<span className="text-tiny text-txt-200 font-medium">
+								{tHawks("checklistManager.hawksLockedHint")}
+							</span>
+						</div>
+					)}
 					{/* Checklist Name */}
 					<div>
 						<Label id="checklist-name-label" htmlFor="checklist-name" className="mb-s-200 block text-small text-txt-200">

@@ -16,6 +16,7 @@ import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
+import { isHawksModeActive } from "@/lib/hawks/deactivate-mode"
 
 
 interface CommandCenterPageProps {
@@ -70,6 +71,8 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		listActiveRiskProfiles(),
 		getLiveTradingStatus(dateArg),
 	])
+
+	const isHawksActive = account ? await isHawksModeActive(account.id) : false
 
 	const initialCompletions =
 		completionsResult.status === "success" && completionsResult.data
@@ -131,6 +134,7 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 				riskProfiles={riskProfiles}
 				isReplayAccount={account?.accountType === "replay"}
 				initialLiveTradingStatus={initialLiveTradingStatus}
+				isHawksActive={isHawksActive}
 			/>
 		</div>
 	)

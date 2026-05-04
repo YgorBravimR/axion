@@ -4669,6 +4669,15 @@
       "statusFetchFailed": "Could not load Hawk's Mode status.",
       "activationFailed": "Could not activate Hawk's Mode.",
       "deactivationFailed": "Could not deactivate Hawk's Mode."
+    },
+    "bias": {
+      "hawksAriaLabel": "Daily bias — Hawk's Mode aligned with 60min Renko"
+    },
+    "circuitBreaker": {
+      "cascadeHint": "Hawks rule: stop the day at −5R single trade or −10R cumulative."
+    },
+    "checklistManager": {
+      "hawksLockedHint": "This is the Hawk's Mode daily-bias checklist. Keep the 5 mandatory items intact while Hawk's Mode is active."
     }
   },
   "hawksScenario": {

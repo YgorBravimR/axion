@@ -147,6 +147,7 @@ const CommandCenterTabs = ({
 						initialPlan={initialPlan}
 						riskProfileName={riskProfileName}
 						initialLiveTradingStatus={initialLiveTradingStatus}
+						isHawksActive={commandCenterProps.isHawksActive}
 					/>
 				</AnimatedTabsContent>
 			)}

@@ -4669,6 +4669,15 @@
       "statusFetchFailed": "Não foi possível carregar o status do Modo Hawk's.",
       "activationFailed": "Não foi possível ativar o Modo Hawk's.",
       "deactivationFailed": "Não foi possível desativar o Modo Hawk's."
+    },
+    "bias": {
+      "hawksAriaLabel": "Viés diário — Modo Hawk's alinhado ao Renko de 60min"
+    },
+    "circuitBreaker": {
+      "cascadeHint": "Regra Hawks: stop do dia em −5R num trade ou −10R acumulado."
+    },
+    "checklistManager": {
+      "hawksLockedHint": "Esta é a checklist de viés diário do Modo Hawk's. Mantenha os 5 itens obrigatórios enquanto o Modo Hawk's estiver ativo."
     }
   },
   "hawksScenario": {
