@@ -1260,6 +1260,40 @@ export const monthlyPlan = pgTable(
 	],
 )
 
+// Weekly Plan — R-based target/actual + override caps (subset of monthly's).
+// Replaces legacy weekly_targets (points-based) which Phase 4 will drop.
+export const weeklyPlan = pgTable(
+	"weekly_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		monthlyPlanId: uuid("monthly_plan_id")
+			.notNull()
+			.references(() => monthlyPlan.id, { onDelete: "cascade" }),
+		isoWeek: integer("iso_week").notNull(),
+		isoYear: integer("iso_year").notNull(),
+
+		targetR: decimal("target_r", { precision: 8, scale: 2 }),
+		actualR: decimal("actual_r", { precision: 8, scale: 2 }),
+		actualSyncedAt: timestamp("actual_synced_at", { withTimezone: true }),
+
+		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
+		overrideWeeklyLossR: decimal("override_weekly_loss_r", { precision: 8, scale: 2 }),
+		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		intentNotes: text("intent_notes"),
+		postMortemNotes: text("post_mortem_notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("weekly_plan_month_idx").on(table.monthlyPlanId),
+		uniqueIndex("weekly_plan_month_week_idx").on(table.monthlyPlanId, table.isoWeek, table.isoYear),
+	],
+)
+
 // ==========================================
 // PLAYBOOK ENHANCEMENT TABLES (Phase 13)
 // ==========================================

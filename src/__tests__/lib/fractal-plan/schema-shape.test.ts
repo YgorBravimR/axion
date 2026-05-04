@@ -34,6 +34,37 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: weeklyPlan table", () => {
+	it("exports weeklyPlan with target/actual + override columns", async () => {
+		const schema = await import("@/db/schema")
+		expect(schema.weeklyPlan).toBeDefined()
+		const cols = getTableColumns(schema.weeklyPlan)
+		expect(cols.id).toBeDefined()
+		expect(cols.monthlyPlanId).toBeDefined()
+		expect(cols.isoWeek).toBeDefined()
+		expect(cols.isoYear).toBeDefined()
+		expect(cols.targetR).toBeDefined()
+		expect(cols.actualR).toBeDefined()
+		expect(cols.actualSyncedAt).toBeDefined()
+		expect(cols.overrideDailyLossR).toBeDefined()
+		expect(cols.overrideWeeklyLossR).toBeDefined()
+		expect(cols.overrideDailyTargetR).toBeDefined()
+		expect(cols.overrideActivePlaybookIds).toBeDefined()
+		expect(cols.intentNotes).toBeDefined()
+		expect(cols.postMortemNotes).toBeDefined()
+	})
+
+	it("makes monthlyPlanId/isoWeek/isoYear not-null and rest nullable", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.weeklyPlan)
+		expect(cols.monthlyPlanId.notNull).toBe(true)
+		expect(cols.isoWeek.notNull).toBe(true)
+		expect(cols.isoYear.notNull).toBe(true)
+		expect(cols.targetR.notNull).toBe(false)
+		expect(cols.actualR.notNull).toBe(false)
+	})
+})
+
 describe("fractal-plan: monthlyPlan table", () => {
 	it("exports monthlyPlan with snapshot + override columns", async () => {
 		const schema = await import("@/db/schema")
