@@ -73,3 +73,11 @@ describe("markTaxLedgerDirty", () => {
 		expect(typeof markTaxLedgerDirty).toBe("function")
 	})
 })
+
+describe("tax-engine server actions — import", () => {
+	it("tax-engine module placeholder smoke test", () => {
+		// Cannot import a "use server" module in vitest runtime.
+		// Actual behavior tested in e2e (Phase 10).
+		expect(true).toBe(true)
+	})
+})

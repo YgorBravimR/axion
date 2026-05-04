@@ -1,0 +1,494 @@
+"use server"
+
+import { db } from "@/db/drizzle"
+import { monthlyTaxLedger, tradingAccounts } from "@/db/schema"
+import { eq, and, gte, lte, asc } from "drizzle-orm"
+import { requireAuth } from "@/app/actions/auth"
+import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
+import { addMonths, lastDayOfMonth, subDays, isWeekend, startOfMonth } from "date-fns"
+import type { ActionResponse } from "@/types"
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface MonthlyDarfRow {
+	id: string
+	accountId: string
+	month: Date
+	grossGainCents: number
+	totalTxCorretagemCents: number
+	totalTxRegistroCents: number
+	totalEmolumentosCents: number
+	totalIssCents: number
+	totalFeesCents: number
+	irrfCents: number
+	netGainBeforeCarryoverCents: number
+	carryoverInCents: number
+	carryoverConsumedCents: number
+	carryoverOutCents: number
+	taxableGainCents: number
+	irGrossCents: number
+	darfDueCents: number
+	darfStatus: "pending" | "paid" | "exempt" | "overdue"
+	darfDueDate: Date | null
+	darfPaidAt: Date | null
+	darfPaidAmountCents: number | null
+	netLiquidCents: number
+	tradeCount: number
+	isDirty: boolean
+	computedAt: Date | null
+}
+
+interface YearTaxSummary {
+	grossGainCents: number
+	totalFeesCents: number
+	totalIrrfCents: number
+	totalDarfPaidCents: number
+	totalDarfPendingCents: number
+	netLiquidCents: number
+	irBurdenPercent: number
+	heuristicWarning: boolean
+}
+
+// ─── Internal: verify account ownership ──────────────────────────────────────
+
+const verifyAccountOwnership = async (
+	accountId: string,
+	userId: string,
+): Promise<{ id: string; showTaxEstimates: boolean } | null> => {
+	const account = await db
+		.select({ id: tradingAccounts.id, showTaxEstimates: tradingAccounts.showTaxEstimates })
+		.from(tradingAccounts)
+		.where(and(eq(tradingAccounts.id, accountId), eq(tradingAccounts.userId, userId)))
+		.then((rows) => rows[0])
+
+	return account ?? null
+}
+
+// ─── Internal: last business day of month (DARF due date) ────────────────────
+
+const getLastBusinessDay = (year: number, month: number): Date => {
+	let date = lastDayOfMonth(new Date(year, month - 1, 1))
+	while (isWeekend(date)) {
+		date = subDays(date, 1)
+	}
+	return date
+}
+
+// ─── Internal: recomputeFromMonth ─────────────────────────────────────────────
+
+/**
+ * Recomputes all months from (year, month) to present in chronological order.
+ * Threads carryoverOut → carryoverIn to maintain chain integrity.
+ * Returns count of months recomputed.
+ */
+const recomputeFromMonth = async (params: {
+	accountId: string
+	year: number
+	month: number
+	userId: string
+}): Promise<number> => {
+	const { accountId, userId } = params
+	let current = new Date(params.year, params.month - 1, 1)
+	const now = new Date()
+
+	// Resolve carryoverIn for the starting month from the previous month's row
+	const prevMonth = addMonths(current, -1)
+	const prevRow = await db
+		.select({ carryoverOutCents: monthlyTaxLedger.carryoverOutCents })
+		.from(monthlyTaxLedger)
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				eq(monthlyTaxLedger.month, prevMonth),
+			),
+		)
+		.then((rows) => rows[0])
+
+	let carryoverIn = prevRow?.carryoverOutCents ?? 0
+	let recomputedCount = 0
+
+	while (current <= now) {
+		const result = await recomputeAccountMonth({
+			accountId,
+			year: current.getFullYear(),
+			month: current.getMonth() + 1,
+			carryoverInCents: carryoverIn,
+			userId,
+		})
+
+		carryoverIn = result.carryoverOutCents
+		recomputedCount++
+		current = addMonths(current, 1)
+	}
+
+	return recomputedCount
+}
+
+// ─── getMonthlyDarf ───────────────────────────────────────────────────────────
+
+/**
+ * Returns the monthly DARF ledger row for a given account + month.
+ * Lazy-recomputes if the row is missing or dirty (propagates carryover chain).
+ */
+const getMonthlyDarf = async (params: {
+	accountId: string
+	year: number
+	month: number
+}): Promise<ActionResponse<MonthlyDarfRow>> => {
+	const { userId } = await requireAuth()
+	const { accountId, year, month } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: "Account not found.",
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	if (!account.showTaxEstimates) {
+		return {
+			status: "error",
+			message: "Tax estimates are disabled for this account.",
+			errors: [{ code: "TAX_DISABLED", detail: "Tax estimates are disabled for this account." }],
+		}
+	}
+
+	const monthDate = new Date(year, month - 1, 1)
+
+	const existing = await db
+		.select()
+		.from(monthlyTaxLedger)
+		.where(and(eq(monthlyTaxLedger.accountId, accountId), eq(monthlyTaxLedger.month, monthDate)))
+		.then((rows) => rows[0])
+
+	if (!existing || existing.isDirty) {
+		await recomputeFromMonth({ accountId, year, month, userId })
+	}
+
+	const row = await db
+		.select()
+		.from(monthlyTaxLedger)
+		.where(and(eq(monthlyTaxLedger.accountId, accountId), eq(monthlyTaxLedger.month, monthDate)))
+		.then((rows) => rows[0])
+
+	if (!row) {
+		return {
+			status: "error",
+			message: "Could not compute ledger row.",
+			errors: [{ code: "LEDGER_NOT_FOUND", detail: "Could not compute ledger row." }],
+		}
+	}
+
+	return { status: "success", message: "Ledger row retrieved.", data: row as MonthlyDarfRow }
+}
+
+// ─── getCarryoverState ────────────────────────────────────────────────────────
+
+/**
+ * Returns the current outstanding carryover balance and full monthly history.
+ */
+const getCarryoverState = async (params: {
+	accountId: string
+}): Promise<ActionResponse<{
+	currentBalanceCents: number
+	history: Array<{ month: Date; balanceCents: number; consumed: number; netGainCents: number }>
+}>> => {
+	const { userId } = await requireAuth()
+	const { accountId } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: "Account not found.",
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	const rows = await db
+		.select({
+			month: monthlyTaxLedger.month,
+			carryoverOutCents: monthlyTaxLedger.carryoverOutCents,
+			carryoverConsumedCents: monthlyTaxLedger.carryoverConsumedCents,
+			netGainBeforeCarryoverCents: monthlyTaxLedger.netGainBeforeCarryoverCents,
+		})
+		.from(monthlyTaxLedger)
+		.where(eq(monthlyTaxLedger.accountId, accountId))
+		.orderBy(asc(monthlyTaxLedger.month))
+
+	const history = rows.map((row) => ({
+		month: row.month,
+		balanceCents: row.carryoverOutCents,
+		consumed: row.carryoverConsumedCents,
+		netGainCents: row.netGainBeforeCarryoverCents,
+	}))
+
+	const currentBalanceCents = history.at(-1)?.balanceCents ?? 0
+
+	return {
+		status: "success",
+		message: "Carryover state retrieved.",
+		data: { currentBalanceCents, history },
+	}
+}
+
+// ─── recomputeLedger ──────────────────────────────────────────────────────────
+
+/**
+ * Force-recomputes all ledger rows from fromYear/fromMonth to present.
+ * Threads carryoverOut → carryoverIn across months.
+ */
+const recomputeLedger = async (params: {
+	accountId: string
+	fromYear?: number
+	fromMonth?: number
+}): Promise<ActionResponse<{ recomputedMonths: number }>> => {
+	const { userId } = await requireAuth()
+	const { accountId } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: "Account not found.",
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	let startYear = params.fromYear
+	let startMonth = params.fromMonth
+
+	if (!startYear || !startMonth) {
+		const earliest = await db
+			.select({ month: monthlyTaxLedger.month })
+			.from(monthlyTaxLedger)
+			.where(eq(monthlyTaxLedger.accountId, accountId))
+			.orderBy(asc(monthlyTaxLedger.month))
+			.limit(1)
+			.then((rows) => rows[0])
+
+		if (earliest) {
+			startYear = earliest.month.getFullYear()
+			startMonth = earliest.month.getMonth() + 1
+		} else {
+			return { status: "success", message: "No ledger rows to recompute.", data: { recomputedMonths: 0 } }
+		}
+	}
+
+	const recomputedMonths = await recomputeFromMonth({
+		accountId,
+		year: startYear,
+		month: startMonth,
+		userId,
+	})
+
+	return {
+		status: "success",
+		message: `Recomputed ${recomputedMonths} month(s).`,
+		data: { recomputedMonths },
+	}
+}
+
+// ─── getYearTaxSummary ────────────────────────────────────────────────────────
+
+/**
+ * Returns year-to-date tax rollup for annual reporting integration.
+ */
+const getYearTaxSummary = async (params: {
+	accountId: string
+	year: number
+}): Promise<ActionResponse<YearTaxSummary>> => {
+	const { userId } = await requireAuth()
+	const { accountId, year } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: "Account not found.",
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	const yearStart = new Date(year, 0, 1)
+	const yearEnd = new Date(year, 11, 31, 23, 59, 59)
+
+	const rows = await db
+		.select()
+		.from(monthlyTaxLedger)
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				gte(monthlyTaxLedger.month, yearStart),
+				lte(monthlyTaxLedger.month, yearEnd),
+			),
+		)
+
+	const summary = rows.reduce(
+		(acc, row) => ({
+			grossGainCents: acc.grossGainCents + row.grossGainCents,
+			totalFeesCents: acc.totalFeesCents + row.totalFeesCents,
+			totalIrrfCents: acc.totalIrrfCents + row.irrfCents,
+			totalDarfPaidCents: acc.totalDarfPaidCents + (row.darfPaidAmountCents ?? 0),
+			totalDarfPendingCents:
+				acc.totalDarfPendingCents +
+				(row.darfStatus === "pending" || row.darfStatus === "overdue" ? row.darfDueCents : 0),
+			netLiquidCents: acc.netLiquidCents + row.netLiquidCents,
+		}),
+		{
+			grossGainCents: 0,
+			totalFeesCents: 0,
+			totalIrrfCents: 0,
+			totalDarfPaidCents: 0,
+			totalDarfPendingCents: 0,
+			netLiquidCents: 0,
+		},
+	)
+
+	const irBurdenPercent =
+		summary.grossGainCents > 0
+			? ((summary.totalFeesCents + summary.totalDarfPaidCents + summary.totalDarfPendingCents) /
+					summary.grossGainCents) *
+				100
+			: 0
+
+	return {
+		status: "success",
+		message: "Year tax summary retrieved.",
+		data: {
+			...summary,
+			irBurdenPercent: Math.round(irBurdenPercent * 100) / 100,
+			heuristicWarning: irBurdenPercent > 30,
+		},
+	}
+}
+
+// ─── getEffectiveTaxRate ──────────────────────────────────────────────────────
+
+/**
+ * Returns the effective combined tax rate for a month.
+ * Used by Yearly Plan for accurate net liquid projections.
+ */
+const getEffectiveTaxRate = async (params: {
+	accountId: string
+	month: string // ISO date string "YYYY-MM-DD"
+}): Promise<
+	ActionResponse<{ ratePercent: number; breakdown: { feesPercent: number; irPercent: number } }>
+> => {
+	const { userId } = await requireAuth()
+	const { accountId } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: "Account not found.",
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	const [y, m, d] = params.month.split("-").map(Number)
+	const monthDate = startOfMonth(new Date(y, m - 1, d))
+
+	const row = await db
+		.select({
+			grossGainCents: monthlyTaxLedger.grossGainCents,
+			totalFeesCents: monthlyTaxLedger.totalFeesCents,
+			irGrossCents: monthlyTaxLedger.irGrossCents,
+		})
+		.from(monthlyTaxLedger)
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				eq(monthlyTaxLedger.month, monthDate),
+			),
+		)
+		.then((rows) => rows[0])
+
+	if (!row || row.grossGainCents <= 0) {
+		return {
+			status: "success",
+			message: "No taxable gain this month.",
+			data: { ratePercent: 0, breakdown: { feesPercent: 0, irPercent: 0 } },
+		}
+	}
+
+	const feesPercent = (row.totalFeesCents / row.grossGainCents) * 100
+	const irPercent = (row.irGrossCents / row.grossGainCents) * 100
+	const ratePercent = feesPercent + irPercent
+
+	return {
+		status: "success",
+		message: "Effective tax rate retrieved.",
+		data: {
+			ratePercent: Math.round(ratePercent * 100) / 100,
+			breakdown: {
+				feesPercent: Math.round(feesPercent * 100) / 100,
+				irPercent: Math.round(irPercent * 100) / 100,
+			},
+		},
+	}
+}
+
+// ─── markDarfPaid ─────────────────────────────────────────────────────────────
+
+/**
+ * Marks a DARF as paid. Does NOT trigger recompute — paid records are immutable.
+ */
+const markDarfPaid = async (params: {
+	accountId: string
+	year: number
+	month: number
+	paidAmountCents: number
+}): Promise<ActionResponse<void>> => {
+	const { userId } = await requireAuth()
+	const { accountId } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: "Account not found.",
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	const monthDate = new Date(params.year, params.month - 1, 1)
+
+	await db
+		.update(monthlyTaxLedger)
+		.set({
+			darfStatus: "paid",
+			darfPaidAt: new Date(),
+			darfPaidAmountCents: params.paidAmountCents,
+			updatedAt: new Date(),
+		})
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				eq(monthlyTaxLedger.month, monthDate),
+			),
+		)
+
+	return { status: "success", message: "DARF marked as paid." }
+}
+
+// ─── Exports ──────────────────────────────────────────────────────────────────
+
+export type { MonthlyDarfRow, YearTaxSummary }
+export {
+	getMonthlyDarf,
+	getCarryoverState,
+	recomputeLedger,
+	getYearTaxSummary,
+	getEffectiveTaxRate,
+	markDarfPaid,
+}
