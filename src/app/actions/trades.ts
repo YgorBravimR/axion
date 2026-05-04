@@ -2,6 +2,7 @@
 
 import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 import { getLocale, getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import {
@@ -270,6 +271,7 @@ export const createTrade = async (
 		// Mark aggregates dirty so the next read recomputes
 		try {
 			await invalidateAggregates(accountId, trade.entryDate)
+			await markTaxLedgerDirty(accountId, trade.entryDate)
 		} catch (err) {
 			console.error("[trades.action] invalidateAggregates failed", err)
 		}
@@ -600,9 +602,12 @@ export const updateTrade = async (
 				await Promise.all([
 					invalidateAggregates(accountId, originalDate),
 					invalidateAggregates(accountId, updatedDate),
+					markTaxLedgerDirty(accountId, originalDate),
+					markTaxLedgerDirty(accountId, updatedDate),
 				])
 			} else {
 				await invalidateAggregates(accountId, updatedDate)
+				await markTaxLedgerDirty(accountId, updatedDate)
 			}
 		} catch (err) {
 			console.error("[trades.action] invalidateAggregates failed", err)
@@ -659,6 +664,7 @@ export const deleteTrade = async (
 		// Mark aggregates dirty so the next read recomputes
 		try {
 			await invalidateAggregates(accountId, existing.entryDate)
+			await markTaxLedgerDirty(accountId, existing.entryDate)
 		} catch (err) {
 			console.error("[trades.action] invalidateAggregates failed", err)
 		}
@@ -1677,6 +1683,7 @@ export const createScaledTrade = async (
 		// Mark aggregates dirty so the next read recomputes
 		try {
 			await invalidateAggregates(accountId, trade.entryDate)
+			await markTaxLedgerDirty(accountId, trade.entryDate)
 		} catch (err) {
 			console.error("[trades.action] invalidateAggregates failed", err)
 		}

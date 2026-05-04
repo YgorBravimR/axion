@@ -65,3 +65,11 @@ describe("recomputeAccountMonth", () => {
 		expect(result.isDirty).toBe(false)
 	})
 })
+
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
+
+describe("markTaxLedgerDirty", () => {
+	it("exports markTaxLedgerDirty as a function", () => {
+		expect(typeof markTaxLedgerDirty).toBe("function")
+	})
+})
