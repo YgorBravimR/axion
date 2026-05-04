@@ -5,6 +5,8 @@ import { accountCapitalEvents, tradingAccounts } from "@/db/schema"
 import { eq, and, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
+import { getWeekAggregate } from "@/lib/queries/period-queries"
+import { getWeeksInYear } from "@/lib/calendar/iso-week"
 import type { CapitalEvent } from "@/types/integration"
 
 interface RecordCapitalEventParams {
@@ -19,6 +21,39 @@ interface ActionResult<T = void> {
 	data?: T
 	message?: string
 }
+
+interface WeeklyMetaRow {
+	isoWeek: number
+	weekStart: string
+	weekEnd: string
+	metaBruto: number | null
+	metaLiquido: number | null
+	resultado: number
+	autoRetirada: number
+	disabled: boolean
+}
+
+interface WeeklyMetaVsRealData {
+	year: number
+	hasPlan: boolean
+	withdrawalTargetPercent: number | null
+	weeks: WeeklyMetaRow[]
+}
+
+const MONTH_NAMES = [
+	"Janeiro",
+	"Fevereiro",
+	"Março",
+	"Abril",
+	"Maio",
+	"Junho",
+	"Julho",
+	"Agosto",
+	"Setembro",
+	"Outubro",
+	"Novembro",
+	"Dezembro",
+] as const
 
 const recordCapitalEvent = async (
 	params: RecordCapitalEventParams,
@@ -116,4 +151,92 @@ const getCapitalSnapshot = async (): Promise<
 	}
 }
 
-export { recordCapitalEvent, deleteCapitalEvent, getCapitalSnapshot }
+/**
+ * Returns all ISO weeks for `year` with Meta Bruto, Meta Líquido, Resultado, and
+ * auto-withdrawal projection. Weeks before account start are disabled (resultado=0).
+ *
+ * UTC-anchored week boundaries via the canonical "Jan 4 always lives in ISO week 1"
+ * rule, matching period-queries' aggregate boundaries. date-fns weekStart/weekEnd
+ * are local-tz and would drift on non-UTC servers.
+ *
+ * yearlyPlans / weeklyTargets tables don't exist yet (Yearly Plan sub-project).
+ * hasPlan is forced false until that lands; Meta fields stay null.
+ */
+const getWeeklyMetaVsReal = async (
+	year: number,
+): Promise<ActionResult<WeeklyMetaVsRealData>> => {
+	const { accountId } = await requireAuth()
+
+	const accountRows = await db
+		.select({
+			accountStartMonth: tradingAccounts.accountStartMonth,
+			accountStartYear: tradingAccounts.accountStartYear,
+			withdrawalTargetPercent: tradingAccounts.withdrawalTargetPercent,
+		})
+		.from(tradingAccounts)
+		.where(eq(tradingAccounts.id, accountId))
+		.limit(1)
+
+	const account = accountRows[0]
+	if (!account) return { status: "error", message: "Account not found" }
+
+	const withdrawalTarget = account.withdrawalTargetPercent
+		? parseFloat(account.withdrawalTargetPercent.toString())
+		: null
+	const effectiveWithdrawal = withdrawalTarget && withdrawalTarget > 0 ? withdrawalTarget : null
+
+	const accountStartUtc =
+		account.accountStartYear && account.accountStartMonth
+			? new Date(Date.UTC(account.accountStartYear, account.accountStartMonth - 1, 1))
+			: null
+
+	const hasPlan = false
+
+	const totalWeeks = getWeeksInYear(year)
+	const weeks: WeeklyMetaRow[] = []
+
+	for (let isoWeek = 1; isoWeek <= totalWeeks; isoWeek++) {
+		const jan4Utc = new Date(Date.UTC(year, 0, 4))
+		const someDayInWeekUtc = new Date(jan4Utc)
+		someDayInWeekUtc.setUTCDate(jan4Utc.getUTCDate() + (isoWeek - 1) * 7)
+		const dayOfWeek = someDayInWeekUtc.getUTCDay()
+		const mondayOffset = (dayOfWeek + 6) % 7
+		const wStart = new Date(someDayInWeekUtc)
+		wStart.setUTCDate(someDayInWeekUtc.getUTCDate() - mondayOffset)
+		wStart.setUTCHours(0, 0, 0, 0)
+		const wEnd = new Date(wStart)
+		wEnd.setUTCDate(wStart.getUTCDate() + 6)
+
+		const isDisabled = accountStartUtc !== null && wStart < accountStartUtc
+
+		let resultado = 0
+		if (!isDisabled) {
+			const agg = await getWeekAggregate(accountId, year, isoWeek)
+			resultado = agg.netCents
+		}
+
+		const autoRetirada =
+			effectiveWithdrawal && resultado > 0
+				? Math.round(resultado * (effectiveWithdrawal / 100))
+				: 0
+
+		weeks.push({
+			isoWeek,
+			weekStart: wStart.toISOString().slice(0, 10),
+			weekEnd: wEnd.toISOString().slice(0, 10),
+			metaBruto: null,
+			metaLiquido: null,
+			resultado,
+			autoRetirada,
+			disabled: isDisabled,
+		})
+	}
+
+	return {
+		status: "success",
+		data: { year, hasPlan, withdrawalTargetPercent: effectiveWithdrawal, weeks },
+	}
+}
+
+export { recordCapitalEvent, deleteCapitalEvent, getCapitalSnapshot, getWeeklyMetaVsReal, MONTH_NAMES }
+export type { WeeklyMetaRow, WeeklyMetaVsRealData }
