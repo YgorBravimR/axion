@@ -2,10 +2,9 @@
  * Cascade resolver: walks year → quarter → month → week → day,
  * runs resolveCascade per overridable field, returns merged plan + provenance map.
  *
- * NOTE (Phase 2): yearlyPlans.defaultDailyLossR / defaultDailyTargetR / defaultWeeklyLossR /
- * defaultMonthlyLossR / drawdownTriggerThresholdR columns do NOT yet exist on the live DB table.
- * They are read here via optional access and fall back to hardcoded sane defaults when absent.
- * Phase 3 migration script adds these columns + backfills.
+ * Phase 3: yearlyPlans now has defaultDailyLossR / defaultDailyTargetR / defaultWeeklyLossR /
+ * defaultMonthlyLossR columns — columns are read directly (no optional-access cast needed).
+ * Hardcoded FALLBACK_* constants remain in case the column value is null (user hasn't configured).
  */
 import { db } from "@/db/drizzle"
 import { yearlyPlans, quarterlyPlan, monthlyPlan, weeklyPlan, dailyPlan } from "@/db/schema"
@@ -79,34 +78,27 @@ const resolveDay = async (
 		})
 		: null
 
-	// Phase 3 columns — read via optional access, fall back to hardcoded defaults.
-	const yearRecord = yearRow as typeof yearRow & {
-		defaultDailyLossR?: string | null
-		defaultDailyTargetR?: string | null
-		defaultWeeklyLossR?: string | null
-		defaultMonthlyLossR?: string | null
-	}
-
+	// Phase 3: columns now exist on yearlyPlans — read directly, fall back to constants if null.
 	const dailyLossR = resolveCascade<string>([
 		{ level: "day", value: dayRow?.overrideDailyLossR },
 		{ level: "week", value: weekRow?.overrideDailyLossR },
 		{ level: "month", value: monthRow?.overrideDailyLossR },
-		{ level: "year", value: yearRecord.defaultDailyLossR ?? FALLBACK_DAILY_LOSS_R },
+		{ level: "year", value: yearRow.defaultDailyLossR ?? FALLBACK_DAILY_LOSS_R },
 	])
 	const dailyTargetR = resolveCascade<string>([
 		{ level: "day", value: dayRow?.overrideDailyTargetR },
 		{ level: "week", value: weekRow?.overrideDailyTargetR },
 		{ level: "month", value: monthRow?.overrideDailyTargetR },
-		{ level: "year", value: yearRecord.defaultDailyTargetR ?? FALLBACK_DAILY_TARGET_R },
+		{ level: "year", value: yearRow.defaultDailyWinR ?? FALLBACK_DAILY_TARGET_R },
 	])
 	const weeklyLossR = resolveCascade<string>([
 		{ level: "week", value: weekRow?.overrideWeeklyLossR },
 		{ level: "month", value: monthRow?.overrideWeeklyLossR },
-		{ level: "year", value: yearRecord.defaultWeeklyLossR ?? FALLBACK_WEEKLY_LOSS_R },
+		{ level: "year", value: yearRow.defaultWeeklyLossR ?? FALLBACK_WEEKLY_LOSS_R },
 	])
 	const monthlyLossR = resolveCascade<string>([
 		{ level: "month", value: monthRow?.overrideMonthlyLossR },
-		{ level: "year", value: yearRecord.defaultMonthlyLossR ?? FALLBACK_MONTHLY_LOSS_R },
+		{ level: "year", value: yearRow.defaultMonthlyLossR ?? FALLBACK_MONTHLY_LOSS_R },
 	])
 
 	const playbookLayers = [

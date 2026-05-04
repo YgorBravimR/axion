@@ -78,4 +78,24 @@ describe("resolveDay", () => {
 		expect(result!.dailyLossR.value).toBe("2.00")
 		expect(result!.dailyLossR.source).toBe("month")
 	})
+
+	it("reads defaultDailyLossR directly (no cast) when present on yearly row", async () => {
+		mockedDb.query.yearlyPlans.findFirst.mockResolvedValue({
+			id: "y1",
+			defaultDailyLossR: "1.50",
+			defaultDailyTargetR: "2.00",
+			defaultWeeklyLossR: null,
+			defaultMonthlyLossR: null,
+			ladderRules: [],
+		})
+		mockedDb.query.quarterlyPlan.findFirst.mockResolvedValue(null)
+		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue(null)
+		mockedDb.query.weeklyPlan.findFirst.mockResolvedValue(null)
+		mockedDb.query.dailyPlan.findFirst.mockResolvedValue(null)
+
+		const result = await resolveDay("acc-1", new Date("2026-01-15"))
+		expect(result).not.toBeNull()
+		expect(result!.dailyLossR.value).toBe("1.50")
+		expect(result!.dailyLossR.source).toBe("year")
+	})
 })

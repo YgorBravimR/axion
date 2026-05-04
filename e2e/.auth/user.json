@@ -2,7 +2,7 @@
   "cookies": [
     {
       "name": "authjs.csrf-token",
-      "value": "f1b208ea07da42b3c33882d4673ffc2f70de81f8a29dec9b4fe0a5e440c9eff4%7C452e266dd76943a1921c5d279b9bb59d4c746b5875dc54fb20397cbac54a2dc1",
+      "value": "9ee3dbf5828d20a8dfbf4886f3680e7bbb4c7ac392cc60cc0b40e5d8659159fe%7Ca3a35e9b7f66a35bfc2bacb49be2bd7f84128348a55da63ef511da9dcb396740",
       "domain": "localhost",
       "path": "/",
       "expires": -1,
@@ -22,14 +22,24 @@
     },
     {
       "name": "authjs.session-token",
-      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiWDA3N3ZTak9nd1RucUh3WGlsVHhzMzhrVlZWM21BV0MwU0FZMWVPYTFlTk1RWm14dThXZ0k0RnNiZDRld0tVSnpjTTZaNm1iLWk1MEtRcTFVSUhxc2cifQ..3_fvG5mpXpVBo_NWe-A3TQ.7O7ocRw_nvozDkjbUNv76rm6mE7t_QQ4oXMso9grL4zejglqkueEGJWu8TTsUoMWxxDd10DiQOg-A28fMOPqAeCohe-eUfxGDNIQVO6UQjAwfC_uiYPqfHi7qn3HyHREyz05dy-L5lYHCE0zKw6yJ96rdKO-D2uD6gyNe8qKtEFvnt9ma3sFElc98qQ-Bo8ksd2lxl41j-ICjoN0qbozRfG9FPAF3_B2Xmeh1VFXlP2x0_2rRdY6frMGzhr-hvNRQxZqfGWYgUMelKUF51RxrDnQmnGMpdaAoWwvCR6Ek7twFyPyyO9moxxDsC_kE21dG8CYYCBmGZxFRHEq24KWuYgi4_-tNKhHWq8rxrg6czwDLtuNIhq8r-3lqHeLPgGIiSJX17pJ_f4eMfNeLKWC5g.1ePsXG1DSSc7wxTcU93HItrOz48fLUczobUTsPldEVs",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiWDA3N3ZTak9nd1RucUh3WGlsVHhzMzhrVlZWM21BV0MwU0FZMWVPYTFlTk1RWm14dThXZ0k0RnNiZDRld0tVSnpjTTZaNm1iLWk1MEtRcTFVSUhxc2cifQ..dfqX8k2rH7pisFa3ViaGEg.YgOzPh7M97MYOXPXrt0cTnDeaW8n3JFeHuFhiOgYCkADo7M2i6-HlES4GitFOFqlA1kttKiXeTc0BqF3qVN8sf0gxpj5iB6ZmPkJQBaNNUG2PXWlcnPyVi-RfvrH58sWWaK3NJL6FcXPfWb5VZCw7ts8WpxZF0qwgr4awHTsAQ0ZVWIn7gLIAM5y0yKFsEn6lBdsqowM9Ur18vQIIDb4YG04EK7mgxvjh2LaSXUumkU1JSyTQNSoxnLiDeOWGKK4v830UZTYE0KitT_vvjpeeqOXAP4bZAbZMBtsgsl5slO9CfkyodQ3cxU3cQ9kfZ5MLipWzJB0X6nY28tbv3z0BMZIKNI-T8h2M0yU3_ybL8t_p96HaspSK_32hz_e1HV6IDj2yoKsSGD7qwc3zLnYjw.tLxEyXn7_-C00V_oN8buMb2kPYF-zPcdjl7CW9vHYWY",
       "domain": "localhost",
       "path": "/",
-      "expires": 1777977786.1835,
+      "expires": 1778482495.405182,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
     }
   ],
-  "origins": []
+  "origins": [
+    {
+      "origin": "http://localhost:3003",
+      "localStorage": [
+        {
+          "name": "theme",
+          "value": "dark"
+        }
+      ]
+    }
+  ]
 }
