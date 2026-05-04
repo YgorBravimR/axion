@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Plus, Trash2 } from "lucide-react"
 import { upsertYearlyPlan } from "@/app/actions/yearly-plan"
 import { buildCapitalLadder } from "@/lib/yearly-plan/capital-ladder"
 import type { YearlyPlanWithWeeks } from "@/types/yearly-plan"
@@ -30,7 +31,45 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
   const [capitalBRL, setCapitalBRL] = useState("")
   const [valorPorContratoStr, setValorPorContratoStr] = useState("3000")
   const [tradingDays, setTradingDays] = useState(5)
-  const [ladderRules] = useState<LadderRule[]>(DEFAULT_LADDER_RULES)
+  const [ladderRules, setLadderRules] = useState<LadderRule[]>(DEFAULT_LADDER_RULES)
+
+  const handleRuleChange = (index: number, field: keyof LadderRule, value: number) => {
+    setLadderRules((prev) =>
+      prev.map((rule, i) => (i === index ? { ...rule, [field]: value } : rule)),
+    )
+  }
+
+  const handleAddRule = () => {
+    setLadderRules((prev) => {
+      const last = prev[prev.length - 1]
+      const nextMin = last ? last.maxContracts + 1 : 1
+      return [
+        ...prev,
+        {
+          minContracts: nextMin,
+          maxContracts: nextMin + 4,
+          multiplier: (last?.multiplier ?? 0) + 1,
+        },
+      ]
+    })
+  }
+
+  const handleRemoveRule = (index: number) => {
+    setLadderRules((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev))
+  }
+
+  const ladderValidationError = ((): string | null => {
+    for (let i = 0; i < ladderRules.length; i++) {
+      const rule = ladderRules[i]
+      if (rule.minContracts < 1) return `Tier ${i + 1}: contrato mínimo deve ser ≥ 1`
+      if (rule.maxContracts < rule.minContracts) return `Tier ${i + 1}: máximo deve ser ≥ mínimo`
+      if (rule.multiplier <= 0) return `Tier ${i + 1}: tier deve ser > 0`
+      if (i > 0 && rule.minContracts <= ladderRules[i - 1].maxContracts) {
+        return `Tier ${i + 1}: faixa sobrepõe o tier anterior`
+      }
+    }
+    return null
+  })()
   const [exitParcial, setExitParcial] = useState(5.0)
   const [exitFinal, setExitFinal] = useState(10.0)
   const [exitStop, setExitStop] = useState(3.5)
@@ -112,8 +151,9 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
       {step === 2 && (
         <div className="space-y-m-400">
           <div className="space-y-s-200">
-            <Label>Valor por Contrato (R$)</Label>
+            <Label htmlFor="valor-contrato-input">Valor por Contrato (R$)</Label>
             <Input
+              id="valor-contrato-input"
               type="number"
               min={100}
               step={100}
@@ -121,31 +161,136 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
               onChange={(e) => setValorPorContratoStr(e.target.value)}
             />
           </div>
-          <div className="rounded-md border border-border-100 overflow-hidden">
-            <table className="w-full text-t-300 font-mono">
-              <thead className="bg-bg-200">
-                <tr>
-                  <th className="p-s-200 text-left text-text-200">Contratos</th>
-                  <th className="p-s-200 text-right text-text-200">Valor Op.</th>
-                  <th className="p-s-200 text-right text-text-200">Tier</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ladder.slice(0, 10).map((level) => (
-                  <tr key={level.contracts} className="border-t border-border-100">
-                    <td className="p-s-200 text-text-100">{level.contracts}</td>
-                    <td className="p-s-200 text-right text-text-100">
-                      R$ {(level.valorOperacionalCents / 100).toLocaleString("pt-BR")}
-                    </td>
-                    <td className="p-s-200 text-right text-acc-100">{level.multiplier}×</td>
+
+          <div className="space-y-s-300">
+            <div className="flex items-center justify-between">
+              <Label id="ladder-tiers-label">Tiers de Multiplicador</Label>
+              <Button
+                id="ladder-add-tier"
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddRule}
+                aria-label="Adicionar tier"
+              >
+                <Plus className="h-3.5 w-3.5 mr-s-100" />
+                Adicionar tier
+              </Button>
+            </div>
+            <div className="rounded-md border border-border-100 overflow-hidden">
+              <table className="w-full text-t-300">
+                <thead className="bg-bg-200">
+                  <tr>
+                    <th className="p-s-200 text-left text-text-200 text-xs uppercase tracking-wide">De</th>
+                    <th className="p-s-200 text-left text-text-200 text-xs uppercase tracking-wide">Até</th>
+                    <th className="p-s-200 text-left text-text-200 text-xs uppercase tracking-wide">Tier</th>
+                    <th className="p-s-200 w-10" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {ladderRules.map((rule, index) => (
+                    <tr key={index} className="border-t border-border-100">
+                      <td className="p-s-100">
+                        <Input
+                          id={`ladder-rule-${index}-min`}
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={rule.minContracts}
+                          onChange={(e) =>
+                            handleRuleChange(index, "minContracts", Number(e.target.value))
+                          }
+                          className="font-mono h-8"
+                          aria-label={`Tier ${index + 1} contratos mínimos`}
+                        />
+                      </td>
+                      <td className="p-s-100">
+                        <Input
+                          id={`ladder-rule-${index}-max`}
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={rule.maxContracts}
+                          onChange={(e) =>
+                            handleRuleChange(index, "maxContracts", Number(e.target.value))
+                          }
+                          className="font-mono h-8"
+                          aria-label={`Tier ${index + 1} contratos máximos`}
+                        />
+                      </td>
+                      <td className="p-s-100">
+                        <Input
+                          id={`ladder-rule-${index}-multiplier`}
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={rule.multiplier}
+                          onChange={(e) =>
+                            handleRuleChange(index, "multiplier", Number(e.target.value))
+                          }
+                          className="font-mono h-8 text-acc-100"
+                          aria-label={`Tier ${index + 1} multiplicador`}
+                        />
+                      </td>
+                      <td className="p-s-100 text-right">
+                        <Button
+                          id={`ladder-rule-${index}-remove`}
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveRule(index)}
+                          disabled={ladderRules.length <= 1}
+                          aria-label={`Remover tier ${index + 1}`}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {ladderValidationError && (
+              <p role="alert" className="text-tiny text-fb-error">{ladderValidationError}</p>
+            )}
           </div>
+
+          <div className="space-y-s-200">
+            <Label>Prévia (10 primeiros contratos)</Label>
+            <div className="rounded-md border border-border-100 overflow-hidden">
+              <table className="w-full text-t-300 font-mono">
+                <thead className="bg-bg-200">
+                  <tr>
+                    <th className="p-s-200 text-left text-text-200">Contratos</th>
+                    <th className="p-s-200 text-right text-text-200">Valor Op.</th>
+                    <th className="p-s-200 text-right text-text-200">Tier</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ladder.slice(0, 10).map((level) => (
+                    <tr key={level.contracts} className="border-t border-border-100">
+                      <td className="p-s-200 text-text-100">{level.contracts}</td>
+                      <td className="p-s-200 text-right text-text-100">
+                        R$ {(level.valorOperacionalCents / 100).toLocaleString("pt-BR")}
+                      </td>
+                      <td className="p-s-200 text-right text-acc-100">{level.multiplier}×</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="flex gap-s-300">
             <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Voltar</Button>
-            <Button onClick={() => setStep(3)} className="flex-1">Próximo</Button>
+            <Button
+              onClick={() => setStep(3)}
+              disabled={Boolean(ladderValidationError)}
+              className="flex-1"
+            >
+              Próximo
+            </Button>
           </div>
         </div>
       )}

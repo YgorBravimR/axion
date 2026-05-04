@@ -2,6 +2,7 @@
 
 import { db } from "@/db/drizzle"
 import { yearlyPlans, weeklyTargets, monthlyPlans } from "@/db/schema"
+import type { YearlyPlan, WeeklyTarget } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { YearlyPlanWithWeeks } from "@/types/yearly-plan"
 import { eq, and, sql } from "drizzle-orm"
