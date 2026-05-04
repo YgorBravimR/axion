@@ -1311,6 +1311,20 @@ export const bulkCreateTrades = async (
 						screenshotS3Key: tradeData.screenshotS3Key || null,
 					}
 
+					// Fractal plan R-snapshot (flag-guarded, silent failure)
+					let oneRSnapshotCentsCsv: number | null = null
+					if (isFractalPlanDualWriteEnabled()) {
+						try {
+							oneRSnapshotCentsCsv = await captureROnEntry({
+								accountId,
+								entryDate: tradeData.entryDate,
+							})
+						} catch (snapErr) {
+							console.error("[fractal-plan] captureROnEntry (csv) failed silently:", snapErr)
+						}
+					}
+					tradeInsertValues.oneRSnapshotCents = oneRSnapshotCentsCsv
+
 					// Encrypt sensitive fields if user has a DEK
 					if (dek) {
 						Object.assign(
