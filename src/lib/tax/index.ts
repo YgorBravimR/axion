@@ -9,3 +9,6 @@ export type { DarfInput, DarfOutput } from "./darf-calculator"
 
 export { buildCarryoverChain } from "./carryover-ledger"
 export type { MonthSummary, CarryoverState } from "./carryover-ledger"
+
+export { recomputeAccountMonth } from "./recompute-month"
+export type { RecomputeInput, RecomputeOutput } from "./recompute-month"
