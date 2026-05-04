@@ -1186,6 +1186,35 @@ export const weeklyTargets = pgTable(
 )
 
 // ==========================================
+// FRACTAL PLANNING CASCADE — Phase 1
+// ==========================================
+
+// Quarterly Plan — soft strategic layer (goals, reflection, playbook rotation).
+// No tier math, no caps; pure intent + post-mortem container.
+export const quarterlyPlan = pgTable(
+	"quarterly_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		yearlyPlanId: uuid("yearly_plan_id")
+			.notNull()
+			.references(() => yearlyPlans.id, { onDelete: "cascade" }),
+		quarter: integer("quarter").notNull(),
+
+		goalCents: bigint("goal_cents", { mode: "number" }),
+		reflectionNotes: text("reflection_notes"),
+		postMortemNotes: text("post_mortem_notes"),
+		activePlaybookIds: jsonb("active_playbook_ids").$type<string[]>(),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("quarterly_plan_year_idx").on(table.yearlyPlanId),
+		uniqueIndex("quarterly_plan_year_quarter_idx").on(table.yearlyPlanId, table.quarter),
+	],
+)
+
+// ==========================================
 // PLAYBOOK ENHANCEMENT TABLES (Phase 13)
 // ==========================================
 
