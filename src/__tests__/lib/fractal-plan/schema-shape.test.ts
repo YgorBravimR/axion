@@ -34,6 +34,36 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: tierChangeLog table", () => {
+	it("exports tierChangeLog with audit columns", async () => {
+		const schema = await import("@/db/schema")
+		expect(schema.tierChangeLog).toBeDefined()
+		const cols = getTableColumns(schema.tierChangeLog)
+		expect(cols.id).toBeDefined()
+		expect(cols.accountId).toBeDefined()
+		expect(cols.monthlyPlanId).toBeDefined()
+		expect(cols.fromTierIndex).toBeDefined()
+		expect(cols.toTierIndex).toBeDefined()
+		expect(cols.fromOneRCents).toBeDefined()
+		expect(cols.toOneRCents).toBeDefined()
+		expect(cols.triggerReason).toBeDefined()
+		expect(cols.triggeredAt).toBeDefined()
+	})
+
+	it("makes all fields not-null", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.tierChangeLog)
+		expect(cols.accountId.notNull).toBe(true)
+		expect(cols.monthlyPlanId.notNull).toBe(true)
+		expect(cols.fromTierIndex.notNull).toBe(true)
+		expect(cols.toTierIndex.notNull).toBe(true)
+		expect(cols.fromOneRCents.notNull).toBe(true)
+		expect(cols.toOneRCents.notNull).toBe(true)
+		expect(cols.triggerReason.notNull).toBe(true)
+		expect(cols.triggeredAt.notNull).toBe(true)
+	})
+})
+
 describe("fractal-plan: dailyPlan table", () => {
 	it("exports dailyPlan with pre-market + post-market columns", async () => {
 		const schema = await import("@/db/schema")

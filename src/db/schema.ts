@@ -1330,6 +1330,32 @@ export const dailyPlan = pgTable(
 	],
 )
 
+// Tier Change Log — audit trail of every 1R/tier transition.
+export const tierChangeLog = pgTable(
+	"tier_change_log",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		monthlyPlanId: uuid("monthly_plan_id")
+			.notNull()
+			.references(() => monthlyPlan.id, { onDelete: "cascade" }),
+
+		fromTierIndex: integer("from_tier_index").notNull(),
+		toTierIndex: integer("to_tier_index").notNull(),
+		fromOneRCents: bigint("from_one_r_cents", { mode: "number" }).notNull(),
+		toOneRCents: bigint("to_one_r_cents", { mode: "number" }).notNull(),
+		triggerReason: tierChangeReasonEnum("trigger_reason").notNull(),
+		triggeredAt: timestamp("triggered_at", { withTimezone: true }).notNull(),
+	},
+	(table) => [
+		index("tier_change_log_account_idx").on(table.accountId),
+		index("tier_change_log_month_idx").on(table.monthlyPlanId),
+		index("tier_change_log_triggered_at_idx").on(table.triggeredAt),
+	],
+)
+
 // ==========================================
 // PLAYBOOK ENHANCEMENT TABLES (Phase 13)
 // ==========================================
