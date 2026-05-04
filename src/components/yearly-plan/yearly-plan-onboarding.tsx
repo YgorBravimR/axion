@@ -116,7 +116,7 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
       {step === 1 && (
         <div className="space-y-m-400">
           <div className="space-y-s-200">
-            <Label htmlFor="capital-input" aria-label="Capital inicial">Capital Inicial (R$)</Label>
+            <Label id="capital-input-label" htmlFor="capital-input" aria-label="Capital inicial">Capital Inicial (R$)</Label>
             <Input
               id="capital-input"
               type="number"
@@ -129,8 +129,9 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
             />
           </div>
           <div className="space-y-s-200">
-            <Label>Dias de operação por semana</Label>
+            <Label id="trading-days-label" htmlFor="trading-days-input">Dias de operação por semana</Label>
             <Input
+              id="trading-days-input"
               type="number"
               min={1}
               max={7}
@@ -139,6 +140,7 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
             />
           </div>
           <Button
+            id="onboarding-step-1-next"
             disabled={capitalCents <= 0}
             onClick={() => setStep(2)}
             className="w-full"
@@ -151,7 +153,7 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
       {step === 2 && (
         <div className="space-y-m-400">
           <div className="space-y-s-200">
-            <Label htmlFor="valor-contrato-input">Valor por Contrato (R$)</Label>
+            <Label id="valor-contrato-label" htmlFor="valor-contrato-input">Valor por Contrato (R$)</Label>
             <Input
               id="valor-contrato-input"
               type="number"
@@ -257,7 +259,7 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
           </div>
 
           <div className="space-y-s-200">
-            <Label>Prévia (10 primeiros contratos)</Label>
+            <Label id="ladder-preview-label">Prévia (10 primeiros contratos)</Label>
             <div className="rounded-md border border-border-100 overflow-hidden">
               <table className="w-full text-t-300 font-mono">
                 <thead className="bg-bg-200">
@@ -283,8 +285,9 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
           </div>
 
           <div className="flex gap-s-300">
-            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Voltar</Button>
+            <Button id="onboarding-step-2-back" variant="outline" onClick={() => setStep(1)} className="flex-1">Voltar</Button>
             <Button
+              id="onboarding-step-2-next"
               onClick={() => setStep(3)}
               disabled={Boolean(ladderValidationError)}
               className="flex-1"
@@ -303,25 +306,29 @@ const YearlyPlanOnboarding = ({ year, onComplete }: YearlyPlanOnboardingProps) =
               { label: "Final (pts)", value: exitFinal, setter: setExitFinal },
               { label: "Stop (pts)", value: exitStop, setter: setExitStop },
               { label: "Proteção (pts)", value: exitProt, setter: setExitProt },
-            ].map(({ label, value, setter }) => (
-              <div key={label} className="space-y-s-100">
-                <Label>{label}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step={0.5}
-                  value={value}
-                  onChange={(e) => setter(parseFloat(e.target.value))}
-                />
-              </div>
-            ))}
+            ].map(({ label, value, setter }) => {
+              const inputId = `onboarding-exit-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
+              return (
+                <div key={label} className="space-y-s-100">
+                  <Label id={`${inputId}-label`} htmlFor={inputId}>{label}</Label>
+                  <Input
+                    id={inputId}
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={value}
+                    onChange={(e) => setter(parseFloat(e.target.value))}
+                  />
+                </div>
+              )
+            })}
           </div>
           <p className="text-t-300 text-text-200">
             EV por op: {(exitParcial * 0.7 + exitFinal * 0.3).toFixed(2)} pts
           </p>
           <div className="flex gap-s-300">
-            <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Voltar</Button>
-            <Button onClick={handleSubmit} disabled={saving} className="flex-1">
+            <Button id="onboarding-step-3-back" variant="outline" onClick={() => setStep(2)} className="flex-1">Voltar</Button>
+            <Button id="onboarding-submit" onClick={handleSubmit} disabled={saving} className="flex-1">
               {saving ? "Salvando..." : "Criar Plano"}
             </Button>
           </div>

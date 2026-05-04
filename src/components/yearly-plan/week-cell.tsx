@@ -75,6 +75,7 @@ const WeekCell = ({
           </span>
           {isCurrentWeek && (
             <Button
+              id={`week-${week.isoYear}-${week.isoWeek}-sync`}
               variant="ghost"
               size="icon"
               className="size-5"
@@ -108,6 +109,7 @@ const WeekCell = ({
       {isEditing && (
         <div className="pt-s-200 space-y-s-200" onClick={(e) => e.stopPropagation()}>
           <Input
+            id={`week-${week.isoYear}-${week.isoWeek}-pts-input`}
             type="number"
             step={0.5}
             placeholder="Pts Feito"
@@ -115,7 +117,13 @@ const WeekCell = ({
             onChange={(e) => setPtsFeitoStr(e.target.value)}
             aria-label="Pontos feitos na semana"
           />
-          <Button size="sm" className="w-full" onClick={handleSave} disabled={saving}>
+          <Button
+            id={`week-${week.isoYear}-${week.isoWeek}-save`}
+            size="sm"
+            className="w-full"
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>

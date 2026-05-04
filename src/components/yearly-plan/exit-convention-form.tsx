@@ -56,7 +56,7 @@ const ExitConventionForm = ({ plan, onUpdate }: ExitConventionFormProps) => {
           { id: "exit-prot", label: "Proteção (pts)", value: prot, setter: setProt },
         ].map(({ id, label, value, setter }) => (
           <div key={id} className="space-y-s-100">
-            <Label htmlFor={id}>{label}</Label>
+            <Label id={`${id}-label`} htmlFor={id}>{label}</Label>
             <Input
               id={id}
               type="number"
@@ -80,7 +80,7 @@ const ExitConventionForm = ({ plan, onUpdate }: ExitConventionFormProps) => {
         </p>
       </div>
 
-      <Button onClick={handleSave} disabled={saving} className="w-full">
+      <Button id="exit-convention-save" onClick={handleSave} disabled={saving} className="w-full">
         {saving ? "Salvando..." : "Salvar Convenção"}
       </Button>
     </div>

@@ -238,19 +238,24 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		computedAt,
 	}
 
+	const persistable = {
+		...output,
+		totalContractsExecuted: String(output.totalContractsExecuted),
+	}
+
 	// Upsert monthly tax ledger — conflict on (accountId, month) → update all fields
 	await db
 		.insert(monthlyTaxLedger)
 		.values({
 			accountId,
 			month: monthDate,
-			...output,
+			...persistable,
 			updatedAt: computedAt,
-		} as typeof monthlyTaxLedger.$inferInsert)
+		})
 		.onConflictDoUpdate({
 			target: [monthlyTaxLedger.accountId, monthlyTaxLedger.month],
 			set: {
-				...output,
+				...persistable,
 				updatedAt: computedAt,
 			},
 		})

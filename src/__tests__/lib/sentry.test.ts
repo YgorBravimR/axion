@@ -27,9 +27,10 @@ const { mockScope, mockCaptureException, mockWithScope, mockAddBreadcrumb } =
 			setFingerprint: vi.fn(),
 		}
 
+		type Scope = typeof scope
 		const captureException = vi.fn()
 		const addBreadcrumb = vi.fn()
-		const withScope = vi.fn((callback: (scope: typeof scope) => void) => {
+		const withScope = vi.fn((callback: (s: Scope) => void) => {
 			callback(scope)
 		})
 
