@@ -92,6 +92,26 @@ export const darfStatusEnum = pgEnum("darf_status", [
 	"overdue",
 ])
 
+// Fractal Planning Cascade — Phase 1 enums
+export const snapshotReasonEnum = pgEnum("snapshot_reason", [
+	"month_start",
+	"drawdown_trigger",
+	"manual",
+])
+
+export const planMoodEnum = pgEnum("plan_mood", [
+	"focused",
+	"neutral",
+	"distracted",
+	"risk_off",
+])
+
+export const tierChangeReasonEnum = pgEnum("tier_change_reason", [
+	"month_start",
+	"drawdown_trigger",
+	"manual",
+])
+
 // ==========================================
 // AUTH TABLES (Phase 10)
 // ==========================================
