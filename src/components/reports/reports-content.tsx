@@ -12,6 +12,7 @@ import { WeeklyMetaChart } from "./weekly-meta-chart"
 import { AnnualRollupTable } from "./annual-rollup-table"
 import { CapitalEventLog } from "./capital-event-log"
 import { WithdrawalCalculator } from "./withdrawal-calculator"
+import { RDistributionTab } from "./r-distribution-tab"
 import type {
 	WeeklyReport,
 	MonthlyReport,
@@ -194,6 +195,22 @@ export const ReportsContent = ({
 					)}
 				</section>
 			)}
+
+			{/* R-Distribution Section (fractal plan) */}
+			<section aria-labelledby="r-dist-section-heading" className="space-y-m-400">
+				<div className="border-l-2 border-acc-100 pl-s-300">
+					<h2
+						id="r-dist-section-heading"
+						className="text-label uppercase tracking-wider text-txt-200"
+					>
+						R Distribution — {currentYear}
+					</h2>
+				</div>
+				<RDistributionTab
+					from={new Date(currentYear, 0, 1)}
+					to={new Date(currentYear, 11, 31, 23, 59, 59)}
+				/>
+			</section>
 		</div>
 	)
 }
