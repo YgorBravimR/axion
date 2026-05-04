@@ -218,6 +218,13 @@
       "when": 1777882304202,
       "tag": "0030_lively_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1777926123968,
+      "tag": "0031_uneven_clint_barton",
+      "breakpoints": true
     }
   ]
 }
