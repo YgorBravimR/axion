@@ -2,8 +2,8 @@
 
 import { db } from "@/db/drizzle"
 import { yearlyPlans, weeklyTargets, monthlyPlans } from "@/db/schema"
-import type { YearlyPlan, WeeklyTarget } from "@/db/schema"
 import type { ActionResponse } from "@/types"
+import type { YearlyPlanWithWeeks } from "@/types/yearly-plan"
 import { eq, and, sql } from "drizzle-orm"
 import { z } from "zod"
 import { yearlyPlanSchema, weeklyTargetInputSchema } from "@/lib/validations/yearly-plan"
@@ -13,11 +13,6 @@ import { toSafeErrorMessage } from "@/lib/error-utils"
 import { buildCapitalLadder, contractsForBalance } from "@/lib/yearly-plan/capital-ladder"
 import { getWeekNumber, getWeekYear, getWeeksInYear } from "@/lib/calendar/iso-week"
 import { getServerEffectiveNow } from "@/lib/effective-date"
-
-interface YearlyPlanWithWeeks {
-	plan: YearlyPlan
-	weeklyTargets: WeeklyTarget[]
-}
 
 const getIsoWeeksForYear = (year: number): { week: number; isoYear: number }[] => {
 	const total = getWeeksInYear(year)
@@ -447,4 +442,3 @@ export {
 	syncCapitalBetweenPlans,
 	deleteYearlyPlan,
 }
-export type { YearlyPlanWithWeeks }

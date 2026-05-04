@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { upsertYearlyPlan } from "@/app/actions/yearly-plan"
 import { buildCapitalLadder } from "@/lib/yearly-plan/capital-ladder"
-import type { YearlyPlanWithWeeks } from "@/app/actions/yearly-plan"
+import type { YearlyPlanWithWeeks } from "@/types/yearly-plan"
 import type { LadderRule } from "@/db/schema"
 
 const DEFAULT_LADDER_RULES: LadderRule[] = [
