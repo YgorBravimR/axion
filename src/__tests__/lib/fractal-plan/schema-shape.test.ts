@@ -34,6 +34,17 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: relations", () => {
+	it("exports relations for all 5 fractal tables", async () => {
+		const schema = await import("@/db/schema")
+		expect(schema.quarterlyPlanRelations).toBeDefined()
+		expect(schema.monthlyPlanRelations).toBeDefined()
+		expect(schema.weeklyPlanRelations).toBeDefined()
+		expect(schema.dailyPlanRelations).toBeDefined()
+		expect(schema.tierChangeLogRelations).toBeDefined()
+	})
+})
+
 describe("fractal-plan: monthlyTaxLedger.monthlyPlanId FK", () => {
 	it("adds monthlyPlanId column", async () => {
 		const schema = await import("@/db/schema")

@@ -2220,6 +2220,57 @@ export const indicatorDefinitionsRelations = relations(indicatorDefinitions, ({ 
 }))
 
 // ==========================================
+// FRACTAL PLANNING CASCADE — Phase 1 relations
+// ==========================================
+
+export const quarterlyPlanRelations = relations(quarterlyPlan, ({ one, many }) => ({
+	yearlyPlan: one(yearlyPlans, {
+		fields: [quarterlyPlan.yearlyPlanId],
+		references: [yearlyPlans.id],
+	}),
+	monthlyPlans: many(monthlyPlan),
+}))
+
+export const monthlyPlanRelations = relations(monthlyPlan, ({ one, many }) => ({
+	quarterlyPlan: one(quarterlyPlan, {
+		fields: [monthlyPlan.quarterlyPlanId],
+		references: [quarterlyPlan.id],
+	}),
+	taxLedger: one(monthlyTaxLedger, {
+		fields: [monthlyPlan.monthlyTaxLedgerId],
+		references: [monthlyTaxLedger.id],
+	}),
+	weeklyPlans: many(weeklyPlan),
+	tierChanges: many(tierChangeLog),
+}))
+
+export const weeklyPlanRelations = relations(weeklyPlan, ({ one, many }) => ({
+	monthlyPlan: one(monthlyPlan, {
+		fields: [weeklyPlan.monthlyPlanId],
+		references: [monthlyPlan.id],
+	}),
+	dailyPlans: many(dailyPlan),
+}))
+
+export const dailyPlanRelations = relations(dailyPlan, ({ one }) => ({
+	weeklyPlan: one(weeklyPlan, {
+		fields: [dailyPlan.weeklyPlanId],
+		references: [weeklyPlan.id],
+	}),
+}))
+
+export const tierChangeLogRelations = relations(tierChangeLog, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [tierChangeLog.accountId],
+		references: [tradingAccounts.id],
+	}),
+	monthlyPlan: one(monthlyPlan, {
+		fields: [tierChangeLog.monthlyPlanId],
+		references: [monthlyPlan.id],
+	}),
+}))
+
+// ==========================================
 // TYPE EXPORTS
 // ==========================================
 
