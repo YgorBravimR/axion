@@ -200,6 +200,14 @@ const upsertYearlyPlan = async (
 	}
 }
 
+/**
+ * Upserts weekly target overrides for a yearly plan.
+ * Only updates rows that already exist (seeded at plan creation time).
+ * Skips insert to prevent orphan rows outside the plan's ISO week range.
+ *
+ * @param yearlyPlanId - UUID of the parent yearly plan
+ * @param weeks - Array of weekly target inputs (isoWeek + isoYear required)
+ */
 const upsertWeeklyTargets = async (
 	yearlyPlanId: string,
 	weeks: WeeklyTargetInput[],
@@ -258,6 +266,14 @@ const upsertWeeklyTargets = async (
 	}
 }
 
+/**
+ * Syncs ptsFeito (actual points) from raw trades into weekly_targets rows.
+ * Skips weeks where ptsSource === "manual" to preserve user overrides.
+ * Uses EXTRACT(WEEK/YEAR) — matches the ISO week seeding convention.
+ *
+ * @param yearlyPlanId - UUID of the parent yearly plan
+ * @param isoWeeks - ISO week numbers to sync (all matched against plan.year)
+ */
 const syncWeeklyActuals = async (
 	yearlyPlanId: string,
 	isoWeeks: number[],
@@ -324,6 +340,14 @@ const syncWeeklyActuals = async (
 	}
 }
 
+/**
+ * Two-way capital sync between a monthly plan and the yearly plan for the same year.
+ * Direction logic: explicit `source` param wins; on tie, monthlyPlan timestamp wins
+ * (monthly plan owns risk params; yearly plan owns trajectory).
+ *
+ * @param monthlyPlanId - UUID of the monthly plan to sync from/to
+ * @param source - Explicit direction override ("monthly" → push to yearly; "yearly" → push to monthly)
+ */
 const syncCapitalBetweenPlans = async (
 	monthlyPlanId: string,
 	source: "monthly" | "yearly",
@@ -384,6 +408,12 @@ const syncCapitalBetweenPlans = async (
 	}
 }
 
+/**
+ * Deletes a yearly plan and cascades to all weekly_targets via the DB constraint.
+ * Ownership check ensures callers can only delete their own account's plan.
+ *
+ * @param yearlyPlanId - UUID of the yearly plan to delete
+ */
 const deleteYearlyPlan = async (
 	yearlyPlanId: string,
 ): Promise<ActionResponse<void>> => {
