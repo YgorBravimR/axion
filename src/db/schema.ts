@@ -1161,6 +1161,21 @@ export const yearlyPlans = pgTable(
 		exitFinalProportion: decimal("exit_final_proportion", { precision: 4, scale: 3 }).notNull().default("0.300"),
 
 		startWeek: integer("start_week").notNull().default(1),
+
+		// Fractal Planning Cascade — Phase 3 defaults.
+		// Year-level R targets that the cascade falls back to when no quarterly /
+		// monthly / weekly / daily override is set. Stored as decimal R-multiples.
+		defaultDailyLossR: decimal("default_daily_loss_r", { precision: 5, scale: 2 }),
+		defaultDailyWinR: decimal("default_daily_win_r", { precision: 5, scale: 2 }),
+		defaultWeeklyLossR: decimal("default_weekly_loss_r", { precision: 5, scale: 2 }),
+		defaultWeeklyWinR: decimal("default_weekly_win_r", { precision: 5, scale: 2 }),
+		defaultMonthlyLossR: decimal("default_monthly_loss_r", { precision: 5, scale: 2 }),
+		defaultMonthlyWinR: decimal("default_monthly_win_r", { precision: 5, scale: 2 }),
+
+		// Aggregate count targets (cascade Σ-aware projections)
+		targetMonthsToYearly: integer("target_months_to_yearly"),
+		targetWeeksToYearly: integer("target_weeks_to_yearly"),
+
 		notes: text("notes"),
 
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

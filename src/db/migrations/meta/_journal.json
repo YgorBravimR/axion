@@ -225,6 +225,13 @@
       "when": 1777926123968,
       "tag": "0031_uneven_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1777928323646,
+      "tag": "0032_romantic_firedrake",
+      "breakpoints": true
     }
   ]
 }
