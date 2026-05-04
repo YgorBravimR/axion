@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -44,7 +44,7 @@ const HawksBiasRitual = ({
 	const [checklist, setChecklist] = useState<Record<string, boolean>>({})
 	const [notes, setNotes] = useState("")
 
-	const dateIso = date ?? new Date().toISOString()
+	const dateIso = useMemo(() => date ?? new Date().toISOString(), [date])
 
 	useEffect(() => {
 		let mounted = true
