@@ -9,3 +9,5 @@ export type { FeeBreakdownRow, FeeBreakdownTotals, FeeBreakdownTableProps } from
 
 export { AnnualTaxSummary } from "./annual-tax-summary"
 export type { AnnualTaxSummaryProps } from "./annual-tax-summary"
+
+export { FeeRateForm } from "./fee-rate-form"

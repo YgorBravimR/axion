@@ -1,8 +1,8 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { monthlyTaxLedger, tradingAccounts } from "@/db/schema"
-import { eq, and, gte, lte, asc } from "drizzle-orm"
+import { monthlyTaxLedger, tradingAccounts, accountFeeRates } from "@/db/schema"
+import { eq, and, gte, lte, asc, isNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 import { addMonths, lastDayOfMonth, subDays, isWeekend, startOfMonth } from "date-fns"
@@ -481,9 +481,96 @@ const markDarfPaid = async (params: {
 	return { status: "success", message: "DARF marked as paid." }
 }
 
+// ─── getFeeRates ─────────────────────────────────────────────────────────────
+
+interface FeeRatesRow {
+	txCorretagemCents: number
+	txRegistroCents: number
+	emolumentosCents: number
+	issRatePercent: string
+	irrfRateBps: number
+	irRateBps: number
+	subjectToPersonalIr: boolean
+}
+
+const DEFAULT_FEE_RATES: FeeRatesRow = {
+	txCorretagemCents: 5,
+	txRegistroCents: 74,
+	emolumentosCents: 40,
+	issRatePercent: "5.00",
+	irrfRateBps: 100,
+	irRateBps: 2000,
+	subjectToPersonalIr: true,
+}
+
+const getFeeRates = async (): Promise<ActionResponse<FeeRatesRow>> => {
+	const { accountId } = await requireAuth()
+
+	const row = await db
+		.select({
+			txCorretagemCents: accountFeeRates.txCorretagemCents,
+			txRegistroCents: accountFeeRates.txRegistroCents,
+			emolumentosCents: accountFeeRates.emolumentosCents,
+			issRatePercent: accountFeeRates.issRatePercent,
+			irrfRateBps: accountFeeRates.irrfRateBps,
+			irRateBps: accountFeeRates.irRateBps,
+			subjectToPersonalIr: accountFeeRates.subjectToPersonalIr,
+		})
+		.from(accountFeeRates)
+		.where(and(eq(accountFeeRates.accountId, accountId), isNull(accountFeeRates.assetSymbol)))
+		.then((rows) => rows[0])
+
+	return {
+		status: "success",
+		message: "Fee rates retrieved.",
+		data: row ?? DEFAULT_FEE_RATES,
+	}
+}
+
+// ─── upsertFeeRates ──────────────────────────────────────────────────────────
+
+const upsertFeeRates = async (params: {
+	txCorretagemCents: number
+	txRegistroCents: number
+	emolumentosCents: number
+	issRatePercent: string
+	irrfRateBps: number
+	irRateBps: number
+	subjectToPersonalIr: boolean
+}): Promise<ActionResponse<void>> => {
+	const { accountId } = await requireAuth()
+
+	const existing = await db
+		.select({ id: accountFeeRates.id })
+		.from(accountFeeRates)
+		.where(and(eq(accountFeeRates.accountId, accountId), isNull(accountFeeRates.assetSymbol)))
+		.then((rows) => rows[0])
+
+	if (existing) {
+		await db
+			.update(accountFeeRates)
+			.set({ ...params, updatedAt: new Date() })
+			.where(eq(accountFeeRates.id, existing.id))
+	} else {
+		await db.insert(accountFeeRates).values({
+			accountId,
+			assetSymbol: null,
+			...params,
+		})
+	}
+
+	// Rate change retroactively affects all past computations — mark all dirty
+	await db
+		.update(monthlyTaxLedger)
+		.set({ isDirty: true })
+		.where(eq(monthlyTaxLedger.accountId, accountId))
+
+	return { status: "success", message: "Fee rates saved." }
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
-export type { MonthlyDarfRow, YearTaxSummary }
+export type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow }
 export {
 	getMonthlyDarf,
 	getCarryoverState,
@@ -491,4 +578,6 @@ export {
 	getYearTaxSummary,
 	getEffectiveTaxRate,
 	markDarfPaid,
+	getFeeRates,
+	upsertFeeRates,
 }
