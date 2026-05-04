@@ -34,6 +34,38 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: dailyPlan table", () => {
+	it("exports dailyPlan with pre-market + post-market columns", async () => {
+		const schema = await import("@/db/schema")
+		expect(schema.dailyPlan).toBeDefined()
+		const cols = getTableColumns(schema.dailyPlan)
+		expect(cols.id).toBeDefined()
+		expect(cols.weeklyPlanId).toBeDefined()
+		expect(cols.date).toBeDefined()
+		expect(cols.targetR).toBeDefined()
+		expect(cols.maxTradesToday).toBeDefined()
+		expect(cols.preMarketNotes).toBeDefined()
+		expect(cols.mood).toBeDefined()
+		expect(cols.overrideDailyLossR).toBeDefined()
+		expect(cols.overrideDailyTargetR).toBeDefined()
+		expect(cols.overrideActivePlaybookIds).toBeDefined()
+		expect(cols.actualR).toBeDefined()
+		expect(cols.tradesCount).toBeDefined()
+		expect(cols.actualSyncedAt).toBeDefined()
+		expect(cols.postMarketNotes).toBeDefined()
+	})
+
+	it("makes weeklyPlanId/date not-null and rest nullable", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.dailyPlan)
+		expect(cols.weeklyPlanId.notNull).toBe(true)
+		expect(cols.date.notNull).toBe(true)
+		expect(cols.targetR.notNull).toBe(false)
+		expect(cols.mood.notNull).toBe(false)
+		expect(cols.actualR.notNull).toBe(false)
+	})
+})
+
 describe("fractal-plan: weeklyPlan table", () => {
 	it("exports weeklyPlan with target/actual + override columns", async () => {
 		const schema = await import("@/db/schema")

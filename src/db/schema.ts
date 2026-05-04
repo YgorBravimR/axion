@@ -1294,6 +1294,42 @@ export const weeklyPlan = pgTable(
 	],
 )
 
+// Daily Plan — pre-market intent + post-market reflection. Lazy-seeded.
+export const dailyPlan = pgTable(
+	"daily_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		weeklyPlanId: uuid("weekly_plan_id")
+			.notNull()
+			.references(() => weeklyPlan.id, { onDelete: "cascade" }),
+		date: date("date").notNull(),
+
+		// Pre-market intent
+		targetR: decimal("target_r", { precision: 8, scale: 2 }),
+		maxTradesToday: integer("max_trades_today"),
+		preMarketNotes: text("pre_market_notes"),
+		mood: planMoodEnum("mood"),
+
+		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
+		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Post-market actuals (synced from trades)
+		actualR: decimal("actual_r", { precision: 8, scale: 2 }),
+		tradesCount: integer("trades_count"),
+		actualSyncedAt: timestamp("actual_synced_at", { withTimezone: true }),
+		postMarketNotes: text("post_market_notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("daily_plan_week_idx").on(table.weeklyPlanId),
+		uniqueIndex("daily_plan_week_date_idx").on(table.weeklyPlanId, table.date),
+	],
+)
+
 // ==========================================
 // PLAYBOOK ENHANCEMENT TABLES (Phase 13)
 // ==========================================
