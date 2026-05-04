@@ -152,6 +152,21 @@ const getCapitalSnapshot = async (): Promise<
 }
 
 /**
+ * Mensal Máximo derivation. When yearlyPlans data is available, the full formula
+ * applies (maxContracts × pointValue × hitRate × dailyPoints × sessions). That table
+ * doesn't exist yet, so the current implementation always uses the fallback:
+ *   mensalMaximo = round(mensalEsperado × 1.5)
+ * Returns isEstimate: true to flag the fallback for the UI footnote.
+ */
+const getMensalMaximo = (params: {
+	mensalEsperado: number | null
+}): { value: number | null; isEstimate: boolean } => {
+	const { mensalEsperado } = params
+	if (mensalEsperado === null) return { value: null, isEstimate: true }
+	return { value: Math.round(mensalEsperado * 1.5), isEstimate: true }
+}
+
+/**
  * Returns all ISO weeks for `year` with Meta Bruto, Meta Líquido, Resultado, and
  * auto-withdrawal projection. Weeks before account start are disabled (resultado=0).
  *
