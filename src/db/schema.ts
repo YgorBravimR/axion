@@ -451,6 +451,9 @@ export const trades = pgTable(
 		// Results (encrypted)
 		pnl: text("pnl"), // cents (encrypted)
 		pnlPercent: decimal("pnl_percent", { precision: 8, scale: 4 }),
+		// Points P&L — computed at trade-save time via point-values resolver.
+		// NULL = not yet computed or asset has no known point-value mapping.
+		pointsPnl: decimal("points_pnl", { precision: 10, scale: 2 }),
 		realizedRMultiple: decimal("realized_r_multiple", {
 			precision: 8,
 			scale: 2,
