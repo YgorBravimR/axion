@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server"
 import { CommandCenterTabs } from "./command-center-tabs"
+import { TodayStrip } from "@/components/fractal-plan/today-strip"
 import {
 	getTodayCompletions,
 	getTodayNotes,
@@ -111,6 +112,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 
 	return (
 		<div className="flex h-full flex-col">
+			{account?.id ? (
+				<TodayStrip accountId={account.id} now={effectiveDate} locale={locale} />
+			) : null}
 			<CommandCenterTabs
 				initialCompletions={initialCompletions}
 				initialNotes={initialNotes}
