@@ -12,10 +12,8 @@ import {
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { HAWKS_BENCHMARKS } from "@/lib/hawks/analytics"
-import {
-	fetchHawksAnalyticsBundle,
-	type HawksAnalyticsBundle,
-} from "@/app/actions/hawks-analytics"
+import { fetchHawksAnalyticsBundle } from "@/app/actions/hawks-analytics"
+import type { HawksAnalyticsBundle } from "@/lib/hawks/action-types"
 
 const formatPct = (value: number) => `${(value * 100).toFixed(1)}%`
 const formatR = (value: number, digits = 2) => `${value.toFixed(digits)}R`

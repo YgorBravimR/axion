@@ -16,9 +16,11 @@ import {
 	fetchHawksLearningProgress,
 	fetchHawksMentorInsights,
 	toggleHawksLearningSection,
-	type LearningProgressRecord,
-	type MentorInsightRecord,
 } from "@/app/actions/hawks-learning"
+import type {
+	LearningProgressRecord,
+	MentorInsightRecord,
+} from "@/lib/hawks/action-types"
 
 const HawksLearningHub = () => {
 	const t = useTranslations("hawksLearning.hub")

@@ -25,12 +25,12 @@ import { useToast } from "@/components/ui/toast"
 import {
 	listHawksCalibrations,
 	upsertHawksCalibration,
-	type CalibrationRecord,
 } from "@/app/actions/hawks-calibration"
 import {
 	HAWKS_RENKO_LADDER,
 	suggestLadderRung,
 } from "@/lib/hawks/atr-calc"
+import type { CalibrationRecord } from "@/lib/hawks/action-types"
 
 const ASSETS = ["WIN", "WDO", "IND", "DOL"] as const
 const TIMEFRAMES = [5, 15, 60] as const

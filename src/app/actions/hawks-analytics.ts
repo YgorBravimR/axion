@@ -2,22 +2,10 @@
 
 import { getTranslations } from "next-intl/server"
 import { getCurrentAccount } from "@/app/actions/auth"
-import {
-	fetchHawksAnalytics,
-	type DisciplineSummary,
-	type HawksKpis,
-	type ScenarioPerformance,
-} from "@/lib/hawks/analytics"
-import { runHawksCoachDetectors, type CoachInsight } from "@/lib/hawks/coach-detectors"
+import { fetchHawksAnalytics } from "@/lib/hawks/analytics"
+import { runHawksCoachDetectors } from "@/lib/hawks/coach-detectors"
+import type { HawksAnalyticsBundle } from "@/lib/hawks/action-types"
 import type { ActionResponse } from "@/types"
-
-interface HawksAnalyticsBundle {
-	range: { from: string; to: string }
-	kpis: HawksKpis
-	scenarioPerformance: ScenarioPerformance[]
-	discipline: DisciplineSummary
-	insights: CoachInsight[]
-}
 
 const fetchHawksAnalyticsBundle = async (
 	rangeDays = 90
@@ -54,4 +42,3 @@ const fetchHawksAnalyticsBundle = async (
 }
 
 export { fetchHawksAnalyticsBundle }
-export type { HawksAnalyticsBundle }

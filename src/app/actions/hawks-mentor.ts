@@ -11,29 +11,12 @@ import {
 	users,
 } from "@/db/schema"
 import { getCurrentUser } from "@/app/actions/auth"
+import type {
+	HawksCohortStats,
+	MentorInsightInput,
+	MentorInsightRow,
+} from "@/lib/hawks/action-types"
 import type { ActionResponse } from "@/types"
-
-interface MentorInsightInput {
-	id?: string
-	date: string
-	assetSymbol?: string | null
-	biasCalled?: string | null
-	setupCalled?: string | null
-	outcome?: string | null
-	bodyMarkdown: string
-	sourcePath?: string | null
-}
-
-interface MentorInsightRow {
-	id: string
-	date: string
-	assetSymbol: string | null
-	biasCalled: string | null
-	setupCalled: string | null
-	outcome: string | null
-	bodyMarkdown: string
-	sourcePath: string | null
-}
 
 const guardAdmin = async () => {
 	const user = await getCurrentUser()
@@ -104,14 +87,6 @@ const upsertHawksMentorInsight = async (
 		console.error("Failed to upsert mentor insight:", error)
 		return { status: "error", message: t("errors.saveFailed") }
 	}
-}
-
-interface HawksCohortStats {
-	hawksAccounts: number
-	tradesLast90: number
-	avgWinRate: number
-	avgProfitFactor: number | null
-	avgExpectancyR: number
 }
 
 const fetchHawksCohortStats = async (): Promise<ActionResponse<HawksCohortStats>> => {
@@ -201,4 +176,3 @@ export {
 	fetchHawksCohortStats,
 	isCurrentUserAdmin,
 }
-export type { MentorInsightInput, MentorInsightRow, HawksCohortStats }

@@ -6,27 +6,12 @@ import { and, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { hawksDailyBias } from "@/db/schema"
 import { getCurrentAccount } from "@/app/actions/auth"
+import type {
+	BiasValue,
+	DailyBiasRecord,
+	UpsertBiasInput,
+} from "@/lib/hawks/action-types"
 import type { ActionResponse } from "@/types"
-
-type BiasValue = "comprador" | "vendedor" | "lateral"
-
-interface DailyBiasRecord {
-	id: string
-	accountId: string
-	date: string
-	assetSymbol: string
-	bias: BiasValue
-	checklist: Record<string, boolean>
-	notes: string | null
-}
-
-interface UpsertBiasInput {
-	date: string
-	assetSymbol: string
-	bias: BiasValue
-	checklist: Record<string, boolean>
-	notes?: string | null
-}
 
 const dayBoundaries = (isoDate: string) => {
 	const start = new Date(isoDate)
@@ -152,4 +137,3 @@ const upsertHawksDailyBias = async (
 }
 
 export { fetchHawksDailyBias, upsertHawksDailyBias }
-export type { BiasValue, DailyBiasRecord, UpsertBiasInput }

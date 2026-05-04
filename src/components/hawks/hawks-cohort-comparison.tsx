@@ -10,10 +10,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card"
-import {
-	fetchHawksCohortStats,
-	type HawksCohortStats,
-} from "@/app/actions/hawks-mentor"
+import { fetchHawksCohortStats } from "@/app/actions/hawks-mentor"
+import type { HawksCohortStats } from "@/lib/hawks/action-types"
 
 const formatPct = (value: number) => `${(value * 100).toFixed(1)}%`
 const formatPf = (value: number | null) =>

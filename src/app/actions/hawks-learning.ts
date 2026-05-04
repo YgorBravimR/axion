@@ -6,23 +6,11 @@ import { and, desc, eq, gte } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { hawksLearningProgress, hawksMentorInsights } from "@/db/schema"
 import { getCurrentUser } from "@/app/actions/auth"
+import type {
+	LearningProgressRecord,
+	MentorInsightRecord,
+} from "@/lib/hawks/action-types"
 import type { ActionResponse } from "@/types"
-
-interface LearningProgressRecord {
-	sectionKey: string
-	completedAt: string | null
-	notes: string | null
-}
-
-interface MentorInsightRecord {
-	id: string
-	date: string
-	assetSymbol: string | null
-	biasCalled: string | null
-	setupCalled: string | null
-	outcome: string | null
-	bodyMarkdown: string
-}
 
 const fetchHawksLearningProgress = async (): Promise<
 	ActionResponse<LearningProgressRecord[]>
@@ -144,4 +132,3 @@ export {
 	toggleHawksLearningSection,
 	fetchHawksMentorInsights,
 }
-export type { LearningProgressRecord, MentorInsightRecord }

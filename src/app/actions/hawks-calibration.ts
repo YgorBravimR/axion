@@ -7,27 +7,11 @@ import { db } from "@/db/drizzle"
 import { hawksRenkoCalibrations } from "@/db/schema"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { startOfIsoWeek } from "@/lib/hawks/atr-calc"
+import type {
+	CalibrationRecord,
+	UpsertCalibrationInput,
+} from "@/lib/hawks/action-types"
 import type { ActionResponse } from "@/types"
-
-interface CalibrationRecord {
-	id: string
-	accountId: string
-	weekStart: string
-	assetSymbol: string
-	timeframeMinutes: number
-	rValue: number
-	source: string
-	notes: string | null
-}
-
-interface UpsertCalibrationInput {
-	weekStart?: string
-	assetSymbol: string
-	timeframeMinutes: number
-	rValue: number
-	source?: string
-	notes?: string | null
-}
 
 const upsertHawksCalibration = async (
 	input: UpsertCalibrationInput
@@ -135,4 +119,3 @@ const listHawksCalibrations = async (
 }
 
 export { upsertHawksCalibration, listHawksCalibrations }
-export type { CalibrationRecord, UpsertCalibrationInput }

@@ -6,26 +6,11 @@ import { eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { hawksScenarioOnTrade, trades } from "@/db/schema"
 import { getCurrentAccount } from "@/app/actions/auth"
+import type {
+	ScenarioRecord,
+	UpsertScenarioInput,
+} from "@/lib/hawks/action-types"
 import type { ActionResponse } from "@/types"
-
-interface ScenarioRecord {
-	id: string
-	tradeId: string
-	scenarioCode: number | null
-	elliottWave: string | null
-	pullbackLevel: string | null
-	confluencia: string[]
-	mmaAligned: string | null
-}
-
-interface UpsertScenarioInput {
-	tradeId: string
-	scenarioCode: number | null
-	elliottWave?: string | null
-	pullbackLevel?: string | null
-	confluencia?: string[]
-	mmaAligned?: string | null
-}
 
 const guardTradeOwnership = async (tradeId: string): Promise<boolean> => {
 	const account = await getCurrentAccount()
@@ -132,4 +117,3 @@ const upsertHawksScenario = async (
 }
 
 export { fetchHawksScenario, upsertHawksScenario }
-export type { ScenarioRecord, UpsertScenarioInput }

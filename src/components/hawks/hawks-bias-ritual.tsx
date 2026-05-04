@@ -12,8 +12,8 @@ import { useToast } from "@/components/ui/toast"
 import {
 	fetchHawksDailyBias,
 	upsertHawksDailyBias,
-	type BiasValue,
 } from "@/app/actions/hawks-bias"
+import type { BiasValue } from "@/lib/hawks/action-types"
 
 const BIAS_OPTIONS: BiasValue[] = ["comprador", "vendedor", "lateral"]
 const CHECKLIST_KEYS = [
