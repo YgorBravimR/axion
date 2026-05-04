@@ -1,0 +1,1 @@
+DROP TABLE "hawks_daily_bias" CASCADE;

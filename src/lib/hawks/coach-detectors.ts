@@ -21,11 +21,15 @@
 import { and, eq, gte, lte } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import {
-	hawksDailyBias,
+	assets,
+	checklistCompletions,
+	dailyAssetSettings,
+	dailyChecklists,
 	hawksScenarioOnTrade,
 	hawksStopAudit,
 	trades,
 } from "@/db/schema"
+import { HAWKS_CHECKLIST_NAME } from "@/lib/hawks/seed-data"
 
 type CoachKind =
 	| "bias_mismatch"
@@ -107,19 +111,63 @@ const runHawksCoachDetectors = async ({
 
 	const biasRows = await db
 		.select({
-			date: hawksDailyBias.date,
-			assetSymbol: hawksDailyBias.assetSymbol,
-			bias: hawksDailyBias.bias,
-			checklist: hawksDailyBias.checklist,
+			date: dailyAssetSettings.date,
+			assetSymbol: assets.symbol,
+			bias: dailyAssetSettings.bias,
 		})
-		.from(hawksDailyBias)
+		.from(dailyAssetSettings)
+		.innerJoin(assets, eq(assets.id, dailyAssetSettings.assetId))
 		.where(
 			and(
-				eq(hawksDailyBias.accountId, accountId),
-				gte(hawksDailyBias.date, range.from),
-				lte(hawksDailyBias.date, range.to)
+				eq(dailyAssetSettings.accountId, accountId),
+				gte(dailyAssetSettings.date, range.from),
+				lte(dailyAssetSettings.date, range.to)
 			)
 		)
+
+	const hawksChecklist = await db.query.dailyChecklists.findFirst({
+		where: and(
+			eq(dailyChecklists.accountId, accountId),
+			eq(dailyChecklists.name, HAWKS_CHECKLIST_NAME)
+		),
+		columns: { id: true, items: true },
+	})
+
+	const hawksItemCount = (() => {
+		if (!hawksChecklist) return 0
+		try {
+			const items = JSON.parse(hawksChecklist.items) as Array<{ id: string }>
+			return Array.isArray(items) ? items.length : 0
+		} catch {
+			return 0
+		}
+	})()
+
+	const completionRows = hawksChecklist
+		? await db
+				.select({
+					date: checklistCompletions.date,
+					completedItems: checklistCompletions.completedItems,
+				})
+				.from(checklistCompletions)
+				.where(
+					and(
+						eq(checklistCompletions.checklistId, hawksChecklist.id),
+						gte(checklistCompletions.date, range.from),
+						lte(checklistCompletions.date, range.to)
+					)
+				)
+		: []
+
+	const completionsByDay = new Map<string, number>()
+	for (const row of completionRows) {
+		try {
+			const ids = JSON.parse(row.completedItems) as string[]
+			completionsByDay.set(toIsoDay(row.date), Array.isArray(ids) ? ids.length : 0)
+		} catch {
+			completionsByDay.set(toIsoDay(row.date), 0)
+		}
+	}
 
 	const scenarioByTrade = new Map(
 		scenarioRows.map((row) => [row.tradeId, row])
@@ -150,9 +198,9 @@ const runHawksCoachDetectors = async ({
 		const realizedR = toNumber(trade.realizedRMultiple)
 		const mfeR = toNumber(trade.mfeR)
 
-		if (bias) {
+		if (bias && bias.bias) {
 			const expected =
-				bias.bias === "comprador" ? "long" : bias.bias === "vendedor" ? "short" : null
+				bias.bias === "long" ? "long" : bias.bias === "short" ? "short" : null
 			if (expected && trade.direction !== expected) {
 				insights.push({
 					kind: "bias_mismatch",
@@ -162,7 +210,7 @@ const runHawksCoachDetectors = async ({
 					context: { bias: bias.bias, direction: trade.direction },
 				})
 			}
-			if (bias.bias === "lateral") {
+			if (bias.bias === "neutral") {
 				insights.push({
 					kind: "lateral_traded",
 					tradeId: trade.id,
@@ -171,14 +219,17 @@ const runHawksCoachDetectors = async ({
 					context: { bias: bias.bias },
 				})
 			}
-			const checklistFilled = Object.values(bias.checklist ?? {}).filter(Boolean).length
-			if (checklistFilled < 3) {
+		}
+
+		if (hawksChecklist && hawksItemCount > 0) {
+			const completed = completionsByDay.get(dayKey) ?? 0
+			if (completed < 3) {
 				insights.push({
 					kind: "checklist_skipped",
 					tradeId: trade.id,
 					tradeDate: dayKey,
 					asset: trade.asset,
-					context: { confirmed: checklistFilled },
+					context: { confirmed: completed, total: hawksItemCount },
 				})
 			}
 		}

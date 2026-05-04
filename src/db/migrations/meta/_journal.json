@@ -183,6 +183,13 @@
       "when": 1777924497670,
       "tag": "0025_talented_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1777925018979,
+      "tag": "0026_exotic_colossus",
+      "breakpoints": true
     }
   ]
 }

@@ -15,9 +15,14 @@ import {
 	fetchHawksMode,
 } from "@/app/actions/hawks-mode"
 import { HawksCalibrationTable } from "@/components/hawks/hawks-calibration-table"
+import { HawksCalibrationAdminForm } from "@/components/hawks/hawks-calibration-admin-form"
 import type { HawksModeStatus } from "@/lib/hawks/deactivate-mode"
 
-const HawksModeSettings = () => {
+interface HawksModeSettingsProps {
+	isAdmin?: boolean
+}
+
+const HawksModeSettings = ({ isAdmin = false }: HawksModeSettingsProps) => {
 	const t = useTranslations("settings.mode")
 	const router = useRouter()
 	const { showToast } = useToast()
@@ -136,6 +141,7 @@ const HawksModeSettings = () => {
 				</CardContent>
 			</Card>
 
+			{isAdmin && <HawksCalibrationAdminForm />}
 			{isHawks && <HawksCalibrationTable />}
 		</div>
 	)

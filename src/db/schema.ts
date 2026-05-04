@@ -1357,27 +1357,6 @@ export const hawksGlobalCalibrations = pgTable(
 	]
 )
 
-// Daily 60-min bias declaration (Pedro's 5-question viés ritual).
-export const hawksDailyBias = pgTable(
-	"hawks_daily_bias",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		accountId: uuid("account_id")
-			.notNull()
-			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
-		date: timestamp("date", { withTimezone: true }).notNull(),
-		assetSymbol: varchar("asset_symbol", { length: 20 }).notNull(),
-		bias: varchar("bias", { length: 16 }).notNull(),
-		checklist: jsonb("checklist").$type<Record<string, boolean>>().default({}),
-		notes: text("notes"),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-	},
-	(table) => [
-		index("hawks_bias_account_idx").on(table.accountId),
-		uniqueIndex("hawks_bias_unique_idx").on(table.accountId, table.date, table.assetSymbol),
-	]
-)
 
 // Stop-modification audit. "Stop never moves against position" is constitutional.
 export const hawksStopAudit = pgTable(
@@ -1492,19 +1471,11 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 		fields: [tradingAccounts.id],
 		references: [accountModes.accountId],
 	}),
-	hawksDailyBias: many(hawksDailyBias),
 }))
 
 export const accountModesRelations = relations(accountModes, ({ one }) => ({
 	account: one(tradingAccounts, {
 		fields: [accountModes.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
-
-export const hawksDailyBiasRelations = relations(hawksDailyBias, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [hawksDailyBias.accountId],
 		references: [tradingAccounts.id],
 	}),
 }))

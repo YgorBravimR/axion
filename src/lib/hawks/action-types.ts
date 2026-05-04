@@ -1,23 +1,3 @@
-type BiasValue = "comprador" | "vendedor" | "lateral"
-
-interface DailyBiasRecord {
-	id: string
-	accountId: string
-	date: string
-	assetSymbol: string
-	bias: BiasValue
-	checklist: Record<string, boolean>
-	notes: string | null
-}
-
-interface UpsertBiasInput {
-	date: string
-	assetSymbol: string
-	bias: BiasValue
-	checklist: Record<string, boolean>
-	notes?: string | null
-}
-
 interface ScenarioRecord {
 	id: string
 	tradeId: string
@@ -159,9 +139,6 @@ interface HawksCohortStats {
 }
 
 export type {
-	BiasValue,
-	DailyBiasRecord,
-	UpsertBiasInput,
 	ScenarioRecord,
 	UpsertScenarioInput,
 	CalibrationRecord,

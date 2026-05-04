@@ -147,7 +147,7 @@ export const SettingsContent = ({
 			</AnimatedTabsContent>
 
 			<AnimatedTabsContent value="mode">
-				{activeTab === "mode" && <HawksModeSettings />}
+				{activeTab === "mode" && <HawksModeSettings isAdmin={isAdmin} />}
 			</AnimatedTabsContent>
 
 			{isAdmin && (

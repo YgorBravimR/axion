@@ -4671,47 +4671,6 @@
       "deactivationFailed": "Could not deactivate Hawk's Mode."
     }
   },
-  "hawksBias": {
-    "page": {
-      "title": "Daily 60-min Bias Ritual",
-      "subtitle": "Five questions before any trade. The 60-min Renko alone decides the session bias."
-    },
-    "ritual": {
-      "title": "Pre-market viés",
-      "description": "Lock the bias for the session. Re-do the ritual if 60-min flips intra-day.",
-      "biasLabel": "60-min bias",
-      "checklistLabel": "5-question checklist",
-      "notesLabel": "Notes",
-      "notesPlaceholder": "Anything Pedro flagged on the morning call, market context, news risk…",
-      "save": "Save bias",
-      "assetGroups": {
-        "indice": "Índice (WIN / IND)",
-        "dolar": "Dólar (WDO / DOL)"
-      },
-      "bias": {
-        "comprador": "Comprador",
-        "vendedor": "Vendedor",
-        "lateral": "Lateral"
-      },
-      "checklist": {
-        "renko60min": "60-min Renko closed in trend direction",
-        "macd60min": "MACD 27/117/55 histogram aligned",
-        "emaStack": "EMA 27/55 stack confirms direction",
-        "vwapPosition": "Price respects VWAP daily/monthly",
-        "ajusteRespect": "Previous-day settlement (ajuste) respected"
-      }
-    },
-    "actions": {
-      "retrieved": "Bias loaded.",
-      "saved": "Bias saved.",
-      "empty": "No bias recorded yet."
-    },
-    "errors": {
-      "noAccount": "No active trading account.",
-      "fetchFailed": "Could not load bias.",
-      "saveFailed": "Could not save bias."
-    }
-  },
   "hawksScenario": {
     "picker": {
       "title": "Hawks scenario tagging",

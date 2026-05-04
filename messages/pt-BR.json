@@ -4671,47 +4671,6 @@
       "deactivationFailed": "Não foi possível desativar o Modo Hawk's."
     }
   },
-  "hawksBias": {
-    "page": {
-      "title": "Ritual de Viés Diário (60 min)",
-      "subtitle": "Cinco perguntas antes de qualquer trade. O Renko de 60 min sozinho decide o viés da sessão."
-    },
-    "ritual": {
-      "title": "Viés pré-mercado",
-      "description": "Trave o viés da sessão. Refaça o ritual se o 60 min virar durante o pregão.",
-      "biasLabel": "Viés do 60 min",
-      "checklistLabel": "Checklist de 5 perguntas",
-      "notesLabel": "Notas",
-      "notesPlaceholder": "Algo que Pedro sinalizou no call da manhã, contexto de mercado, risco de notícia…",
-      "save": "Salvar viés",
-      "assetGroups": {
-        "indice": "Índice (WIN / IND)",
-        "dolar": "Dólar (WDO / DOL)"
-      },
-      "bias": {
-        "comprador": "Comprador",
-        "vendedor": "Vendedor",
-        "lateral": "Lateral"
-      },
-      "checklist": {
-        "renko60min": "Renko de 60 min fechou na direção do viés",
-        "macd60min": "Histograma MACD 27/117/55 alinhado",
-        "emaStack": "Pilha das EMAs 27/55 confirma a direção",
-        "vwapPosition": "Preço respeita VWAP diária/mensal",
-        "ajusteRespect": "Ajuste do dia anterior respeitado"
-      }
-    },
-    "actions": {
-      "retrieved": "Viés carregado.",
-      "saved": "Viés salvo.",
-      "empty": "Nenhum viés registrado ainda."
-    },
-    "errors": {
-      "noAccount": "Nenhuma conta de trading ativa.",
-      "fetchFailed": "Não foi possível carregar o viés.",
-      "saveFailed": "Não foi possível salvar o viés."
-    }
-  },
   "hawksScenario": {
     "picker": {
       "title": "Tagueamento de cenário Hawks",
