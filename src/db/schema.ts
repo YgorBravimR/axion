@@ -938,6 +938,86 @@ export const monthlyPlans = pgTable(
 )
 
 // ==========================================
+// YEARLY PLAN TABLES
+// ==========================================
+
+export interface LadderRule {
+	minContracts: number
+	maxContracts: number
+	multiplier: number
+}
+
+export const yearlyPlans = pgTable(
+	"yearly_plans",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		year: integer("year").notNull(),
+
+		// Capital & contract settings
+		initialCapitalCents: integer("initial_capital_cents").notNull(),
+		valorPorContratoCents: integer("valor_por_contrato_cents").notNull().default(300000),
+		irTaxRate: decimal("ir_tax_rate", { precision: 5, scale: 2 }).notNull().default("30.00"),
+		tradingDaysPerWeek: integer("trading_days_per_week").notNull().default(5),
+
+		// Capital ladder rules (JSONB array of LadderRule)
+		ladderRules: jsonb("ladder_rules").notNull().$type<LadderRule[]>(),
+
+		// Exit convention
+		exitParcialPts: decimal("exit_parcial_pts", { precision: 6, scale: 2 }).notNull().default("5.00"),
+		exitFinalPts: decimal("exit_final_pts", { precision: 6, scale: 2 }).notNull().default("10.00"),
+		exitStopPts: decimal("exit_stop_pts", { precision: 6, scale: 2 }).notNull().default("3.50"),
+		exitProtPts: decimal("exit_prot_pts", { precision: 6, scale: 2 }).notNull().default("1.00"),
+		exitParcialProportion: decimal("exit_parcial_proportion", { precision: 4, scale: 3 }).notNull().default("0.700"),
+		exitFinalProportion: decimal("exit_final_proportion", { precision: 4, scale: 3 }).notNull().default("0.300"),
+
+		startWeek: integer("start_week").notNull().default(1),
+		notes: text("notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("yearly_plans_account_idx").on(table.accountId),
+		uniqueIndex("yearly_plans_account_year_idx").on(table.accountId, table.year),
+	]
+)
+
+export const weeklyTargets = pgTable(
+	"weekly_targets",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		yearlyPlanId: uuid("yearly_plan_id")
+			.notNull()
+			.references(() => yearlyPlans.id, { onDelete: "cascade" }),
+		isoWeek: integer("iso_week").notNull(),
+		isoYear: integer("iso_year").notNull(),
+
+		// Projection
+		contracts: integer("contracts").notNull().default(1),
+		valorOperacionalCents: integer("valor_operacional_cents").notNull(),
+		ptsAlvo: decimal("pts_alvo", { precision: 8, scale: 2 }),
+
+		// Actuals
+		ptsFeito: decimal("pts_feito", { precision: 8, scale: 2 }),
+		ptsSource: varchar("pts_source", { length: 10 }).default("manual"),
+
+		// Financial actuals (for Annual Reporting)
+		metaBrutoCents: integer("meta_bruto_cents"),
+		metaLiquidoCents: integer("meta_liquido_cents"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("weekly_targets_plan_idx").on(table.yearlyPlanId),
+		uniqueIndex("weekly_targets_plan_week_idx").on(table.yearlyPlanId, table.isoWeek, table.isoYear),
+	]
+)
+
+// ==========================================
 // PLAYBOOK ENHANCEMENT TABLES (Phase 13)
 // ==========================================
 
@@ -1645,6 +1725,22 @@ export const monthlyPlansRelations = relations(monthlyPlans, ({ one }) => ({
 	}),
 }))
 
+// Yearly Plan Relations
+export const yearlyPlansRelations = relations(yearlyPlans, ({ one, many }) => ({
+	account: one(tradingAccounts, {
+		fields: [yearlyPlans.accountId],
+		references: [tradingAccounts.id],
+	}),
+	weeklyTargets: many(weeklyTargets),
+}))
+
+export const weeklyTargetsRelations = relations(weeklyTargets, ({ one }) => ({
+	yearlyPlan: one(yearlyPlans, {
+		fields: [weeklyTargets.yearlyPlanId],
+		references: [yearlyPlans.id],
+	}),
+}))
+
 // Playbook Enhancement Relations
 export const tradingConditionsRelations = relations(tradingConditions, ({ one, many }) => ({
 	user: one(users, {
@@ -1830,6 +1926,11 @@ export type NewAccountAssetSetting = typeof accountAssetSettings.$inferInsert
 
 export type MonthlyPlan = typeof monthlyPlans.$inferSelect
 export type NewMonthlyPlan = typeof monthlyPlans.$inferInsert
+
+export type YearlyPlan = typeof yearlyPlans.$inferSelect
+export type NewYearlyPlan = typeof yearlyPlans.$inferInsert
+export type WeeklyTarget = typeof weeklyTargets.$inferSelect
+export type NewWeeklyTarget = typeof weeklyTargets.$inferInsert
 
 export type RiskManagementProfileRow = typeof riskManagementProfiles.$inferSelect
 export type NewRiskManagementProfileRow = typeof riskManagementProfiles.$inferInsert
