@@ -11,6 +11,13 @@ import {
 	getWeeklyMetaVsReal,
 	getCapitalSnapshot,
 } from "@/app/actions/annual-reports"
+import { requireAuth } from "@/app/actions/auth"
+import { getServerEffectiveNow } from "@/lib/effective-date"
+import {
+	getMonthlyDarf,
+	getCarryoverState,
+	getYearTaxSummary,
+} from "@/app/actions/tax-engine"
 
 interface ReportsPageProps {
 	params: Promise<{ locale: string }>
@@ -20,7 +27,10 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
 
-	const currentYear = new Date().getFullYear()
+	const { accountId: currentAccountId } = await requireAuth()
+	const now = await getServerEffectiveNow()
+	const currentYear = now.getFullYear()
+	const currentMonth = now.getMonth() + 1
 
 	const [
 		weeklyResult,
@@ -30,6 +40,9 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 		annualRollupResult,
 		weeklyMetaResult,
 		capitalSnapshotResult,
+		darfResult,
+		carryoverResult,
+		yearSummaryResult,
 	] = await Promise.all([
 		getWeeklyReport(0).catch(() => ({
 			status: "error" as const,
@@ -59,6 +72,18 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 			status: "error" as const,
 			data: null,
 		})),
+		getMonthlyDarf({ accountId: currentAccountId, year: currentYear, month: currentMonth }).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getCarryoverState({ accountId: currentAccountId }).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getYearTaxSummary({ accountId: currentAccountId, year: currentYear }).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
 	])
 
 	const weeklyReport =
@@ -78,6 +103,11 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 			? capitalSnapshotResult.data?.events ?? []
 			: []
 
+	const darfRow = darfResult.status === "success" ? darfResult.data ?? null : null
+	const carryoverHistory =
+		carryoverResult.status === "success" ? carryoverResult.data?.history ?? [] : []
+	const yearSummary = yearSummaryResult.status === "success" ? yearSummaryResult.data ?? null : null
+
 	return (
 		<div className="flex h-full flex-col">
 			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
@@ -90,6 +120,10 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 					weeklyMetaData={weeklyMetaData}
 					capitalEvents={capitalEvents}
 					currentYear={currentYear}
+					darfRow={darfRow}
+					carryoverHistory={carryoverHistory}
+					yearSummary={yearSummary}
+					currentAccountId={currentAccountId}
 				/>
 			</div>
 		</div>

@@ -22,6 +22,10 @@ import type { AnnualRollupData, WeeklyMetaVsRealData } from "@/app/actions/annua
 import type { CapitalEvent } from "@/types/integration"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { reportsGuide } from "@/components/ui/page-guide/guide-configs/reports"
+import type { MonthlyDarfRow, YearTaxSummary } from "@/app/actions/tax-engine"
+import type { CarryoverHistoryRow } from "@/components/tax"
+import { MonthlyDarfCard, CarryoverLedger, AnnualTaxSummary } from "@/components/tax"
+import { markDarfPaid } from "@/app/actions/tax-engine"
 
 interface ReportsContentProps {
 	weeklyReport: WeeklyReport | null
@@ -32,6 +36,10 @@ interface ReportsContentProps {
 	weeklyMetaData: WeeklyMetaVsRealData | null
 	capitalEvents: CapitalEvent[]
 	currentYear: number
+	darfRow: MonthlyDarfRow | null
+	carryoverHistory: CarryoverHistoryRow[]
+	yearSummary: YearTaxSummary | null
+	currentAccountId: string
 }
 
 export const ReportsContent = ({
@@ -43,6 +51,10 @@ export const ReportsContent = ({
 	weeklyMetaData,
 	capitalEvents,
 	currentYear,
+	darfRow,
+	carryoverHistory,
+	yearSummary,
+	currentAccountId,
 }: ReportsContentProps) => {
 	const t = useTranslations("reports")
 	const router = useRouter()
@@ -54,7 +66,9 @@ export const ReportsContent = ({
 		mistakeCostAnalysis === null &&
 		commissionFeeImpact === null &&
 		annualRollupData === null &&
-		weeklyMetaData === null
+		weeklyMetaData === null &&
+		darfRow === null &&
+		yearSummary === null
 
 	if (allNull) {
 		return (
@@ -138,6 +152,46 @@ export const ReportsContent = ({
 						onEventDeleted={() => router.refresh()}
 						onEventAdded={() => router.refresh()}
 					/>
+				</section>
+			)}
+
+			{darfRow && (
+				<section aria-labelledby="tax-section-heading" className="space-y-m-400 sm:space-y-m-500">
+					<div className="flex items-center justify-between border-l-2 border-acc-100 pl-s-300">
+						<h2
+							id="tax-section-heading"
+							className="text-label uppercase tracking-wider text-txt-200"
+						>
+							Impostos — {currentYear}
+						</h2>
+					</div>
+					<div className="grid gap-m-400 lg:grid-cols-2">
+						<MonthlyDarfCard
+							ledgerRow={darfRow}
+							onMarkPaid={async (paidAmountCents) => {
+								const monthDate = darfRow.month instanceof Date ? darfRow.month : new Date(darfRow.month)
+								const result = await markDarfPaid({
+									accountId: currentAccountId,
+									year: monthDate.getFullYear(),
+									month: monthDate.getMonth() + 1,
+									paidAmountCents,
+								})
+								if (result.status === "error") {
+									console.error("Failed to mark DARF paid:", result.errors)
+								}
+								router.refresh()
+							}}
+						/>
+						{yearSummary && <AnnualTaxSummary year={currentYear} summary={yearSummary} />}
+					</div>
+					{carryoverHistory.length > 0 && (
+						<div className="space-y-s-200">
+							<h3 className="text-xs font-medium text-txt-300 uppercase tracking-wider">
+								Prejuízo a Compensar
+							</h3>
+							<CarryoverLedger history={carryoverHistory} />
+						</div>
+					)}
 				</section>
 			)}
 		</div>
