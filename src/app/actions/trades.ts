@@ -57,6 +57,8 @@ import {
 	decryptTradeFields,
 } from "@/lib/user-crypto"
 import { computeTradeHash } from "@/lib/deduplication"
+import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
+import { captureROnEntry, computeROutcome } from "@/lib/fractal-plan/r-snapshot"
 
 // Type for trade with relations
 export interface TradeWithRelations extends Trade {
@@ -180,6 +182,16 @@ export const createTrade = async (
 			positionSize: tradeData.positionSize,
 		})
 
+		// Capture 1R snapshot from fractal plan (flag-guarded — zero latency when OFF)
+		let oneRSnapshotCents: number | null = null
+		if (isFractalPlanDualWriteEnabled()) {
+			try {
+				oneRSnapshotCents = await captureROnEntry({ accountId, entryDate: tradeData.entryDate })
+			} catch (snapErr) {
+				console.error("[fractal-plan] captureROnEntry failed silently:", snapErr)
+			}
+		}
+
 		// Insert trade - money fields (pnl, plannedRiskAmount) stored as cents in text columns
 		const insertValues: Record<string, unknown> = {
 			accountId,
@@ -218,6 +230,8 @@ export const createTrade = async (
 			rating: tradeData.rating || null,
 			screenshotUrl: tradeData.screenshotUrl || null,
 			screenshotS3Key: tradeData.screenshotS3Key || null,
+			// Fractal plan 1R snapshot (null when flag is OFF or no plan resolved)
+			oneRSnapshotCents,
 		}
 
 		// Encrypt sensitive fields if user has a DEK
