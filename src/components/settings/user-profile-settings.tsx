@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LanguageSwitcher } from "./language-switcher"
+import { AnnualReportingSettings } from "./annual-reporting-settings"
 import { useToast } from "@/components/ui/toast"
 import {
 	getCurrentUser,
@@ -418,6 +419,9 @@ const UserProfileSettings = () => {
 					</div>
 				</div>
 			</div>
+
+			{/* Annual Reporting */}
+			<AnnualReportingSettings />
 		</div>
 	)
 }

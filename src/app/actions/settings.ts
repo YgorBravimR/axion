@@ -410,6 +410,80 @@ export const updateTheme = async (
 	}
 }
 
+const getAccountLifecycle = async (): Promise<{
+  status: "success" | "error"
+  message?: string
+  data?: {
+    accountStartMonth: number | null
+    accountStartYear: number | null
+    startingBalanceCents: number | null
+    withdrawalTargetPercent: number | null
+  }
+}> => {
+  const { accountId } = await requireAuth()
+
+  const account = await db.query.tradingAccounts.findFirst({
+    where: eq(tradingAccounts.id, accountId),
+    columns: {
+      accountStartMonth: true,
+      accountStartYear: true,
+      startingBalanceCents: true,
+      withdrawalTargetPercent: true,
+    },
+  })
+
+  if (!account) return { status: "error", message: "Account not found" }
+
+  return {
+    status: "success",
+    data: {
+      accountStartMonth: account.accountStartMonth ?? null,
+      accountStartYear: account.accountStartYear ?? null,
+      startingBalanceCents: account.startingBalanceCents ?? null,
+      withdrawalTargetPercent: account.withdrawalTargetPercent
+        ? parseFloat(account.withdrawalTargetPercent.toString())
+        : null,
+    },
+  }
+}
+
+const updateAccountLifecycle = async (params: {
+  accountStartMonth: number | null
+  accountStartYear: number | null
+  startingBalanceCents: number | null
+  withdrawalTargetPercent: number | null
+}): Promise<{ status: "success" | "error"; message?: string }> => {
+  const { accountId } = await requireAuth()
+
+  const { accountStartMonth, accountStartYear, startingBalanceCents, withdrawalTargetPercent } = params
+
+  if (accountStartMonth !== null && (accountStartMonth < 1 || accountStartMonth > 12)) {
+    return { status: "error", message: "Start month must be between 1 and 12" }
+  }
+  const currentYear = new Date().getFullYear()
+  if (accountStartYear !== null && (accountStartYear < 2000 || accountStartYear > currentYear)) {
+    return { status: "error", message: `Start year must be between 2000 and ${currentYear}` }
+  }
+  if (startingBalanceCents !== null && startingBalanceCents <= 0) {
+    return { status: "error", message: "Opening balance must be greater than zero" }
+  }
+  if (withdrawalTargetPercent !== null && (withdrawalTargetPercent < 0 || withdrawalTargetPercent > 100)) {
+    return { status: "error", message: "Withdrawal target must be between 0 and 100" }
+  }
+
+  await db
+    .update(tradingAccounts)
+    .set({
+      accountStartMonth: accountStartMonth ?? null,
+      accountStartYear: accountStartYear ?? null,
+      startingBalanceCents: startingBalanceCents ?? null,
+      withdrawalTargetPercent: withdrawalTargetPercent !== null ? String(withdrawalTargetPercent) : null,
+    })
+    .where(eq(tradingAccounts.id, accountId))
+
+  return { status: "success" }
+}
+
 import { BRANDS as VALID_BRANDS, type Brand as BrandValue } from "@/lib/brands"
 
 /**
@@ -477,3 +551,5 @@ export const updateAccountBrand = async (
 		}
 	}
 }
+
+export { getAccountLifecycle, updateAccountLifecycle }
