@@ -34,12 +34,18 @@ describe("recomputeAccountMonth", () => {
 		// Full DB integration tested in e2e
 		const { db } = await import("@/db/drizzle")
 		const mockSelect = db.select as Mock
-		// Simulate: no existing trades → all-zero ledger
+		// Simulate: no existing trades → all-zero ledger.
+		// where() chain serves three call sites:
+		//   1. tradingAccounts lookup (uses .then)
+		//   2. accountFeeRates lookup (awaited directly = thenable)
+		//   3. trades query (uses .orderBy)
+		const whereChain = {
+			orderBy: vi.fn().mockResolvedValue([]),
+			then: (resolve: (v: unknown[]) => unknown) => Promise.resolve([]).then(resolve),
+		}
 		mockSelect.mockReturnValue({
 			from: vi.fn().mockReturnValue({
-				where: vi.fn().mockReturnValue({
-					orderBy: vi.fn().mockResolvedValue([]),
-				}),
+				where: vi.fn().mockReturnValue(whereChain),
 			}),
 		})
 

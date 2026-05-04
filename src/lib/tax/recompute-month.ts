@@ -1,6 +1,6 @@
 // src/lib/tax/recompute-month.ts
 import { db } from "@/db/drizzle"
-import { trades, accountFeeRates, monthlyTaxLedger } from "@/db/schema"
+import { trades, accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, lte, isNull } from "drizzle-orm"
 import { startOfMonth, endOfMonth } from "date-fns"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
@@ -52,6 +52,38 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 	const monthDate = new Date(year, month - 1, 1)
 	const monthStart = startOfMonth(monthDate)
 	const monthEnd = endOfMonth(monthDate)
+
+	// Replay accounts: tax engine disabled entirely. Replay trades are simulated
+	// against historical data and have no real-world tax obligation.
+	const accountRow = await db
+		.select({ accountType: tradingAccounts.accountType })
+		.from(tradingAccounts)
+		.where(eq(tradingAccounts.id, accountId))
+		.then((rows) => rows[0])
+
+	if (accountRow?.accountType === "replay") {
+		return {
+			grossGainCents: 0,
+			totalTxCorretagemCents: 0,
+			totalTxRegistroCents: 0,
+			totalEmolumentosCents: 0,
+			totalIssCents: 0,
+			totalFeesCents: 0,
+			totalContractsExecuted: 0,
+			irrfCents: 0,
+			netGainBeforeCarryoverCents: 0,
+			carryoverInCents: 0,
+			carryoverConsumedCents: 0,
+			carryoverOutCents: 0,
+			taxableGainCents: 0,
+			irGrossCents: 0,
+			darfDueCents: 0,
+			netLiquidCents: 0,
+			tradeCount: 0,
+			isDirty: false,
+			computedAt: new Date(),
+		}
+	}
 
 	// Fetch fee rates for this account (NULL assetSymbol = catch-all default)
 	const feeRatesRows = await db
