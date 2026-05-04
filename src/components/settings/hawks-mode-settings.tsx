@@ -27,12 +27,17 @@ const HawksModeSettings = () => {
 	useEffect(() => {
 		let mounted = true
 		const load = async () => {
-			const result = await fetchHawksMode()
-			if (!mounted) return
-			if (result.status === "success" && result.data) {
-				setStatus(result.data)
+			try {
+				const result = await fetchHawksMode()
+				if (!mounted) return
+				if (result.status === "success" && result.data) {
+					setStatus(result.data)
+				}
+			} catch (error) {
+				console.error("Failed to fetch hawks mode status:", error)
+			} finally {
+				if (mounted) setIsLoading(false)
 			}
-			setIsLoading(false)
 		}
 		load()
 		return () => {
@@ -42,14 +47,19 @@ const HawksModeSettings = () => {
 
 	const handleToggle = (checked: boolean) => {
 		startTransition(async () => {
-			const result = checked ? await enableHawksMode() : await disableHawksMode()
-			if (result.status === "success" && result.data) {
-				setStatus(result.data)
-				showToast("success", result.message)
-				router.refresh()
-				return
+			try {
+				const result = checked ? await enableHawksMode() : await disableHawksMode()
+				if (result.status === "success" && result.data) {
+					setStatus(result.data)
+					showToast("success", result.message)
+					router.refresh()
+					return
+				}
+				showToast("error", result.message)
+			} catch (error) {
+				console.error("Failed to toggle hawks mode:", error)
+				showToast("error", t("hawks.toggleAria"))
 			}
-			showToast("error", result.message)
 		})
 	}
 
