@@ -84,6 +84,14 @@ export const bugReportStatusEnum = pgEnum("bug_report_status", [
 // Capital Event Type Enum (Annual Reporting Phase 1)
 export const capitalEventTypeEnum = pgEnum("capital_event_type", ["deposit", "withdrawal"])
 
+// DARF Payment Status Enum (BR Tax Engine Phase 1)
+export const darfStatusEnum = pgEnum("darf_status", [
+	"pending",
+	"paid",
+	"exempt",
+	"overdue",
+])
+
 // ==========================================
 // AUTH TABLES (Phase 10)
 // ==========================================
@@ -938,6 +946,56 @@ export const monthlyPlans = pgTable(
 		index("monthly_plans_account_idx").on(table.accountId),
 		uniqueIndex("monthly_plans_account_year_month_idx").on(table.accountId, table.year, table.month),
 	]
+)
+
+// ==========================================
+// BR TAX ENGINE TABLES (Phase 1)
+// ==========================================
+
+// ─── Account Fee Rates ────────────────────────────────────────────────────────
+// Per-account (optionally per-asset) brokerage and exchange fee configuration.
+// Single source of truth for the BR tax engine — supersedes tradingAccounts.dayTradeTaxRate.
+export const accountFeeRates = pgTable(
+	"account_fee_rates",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+
+		// NULL = applies to all assets on this account
+		assetSymbol: varchar("asset_symbol", { length: 20 }),
+
+		// Per-contract rates in cents (BRL). e.g. 5 = R$0.05
+		txCorretagemCents: integer("tx_corretagem_cents").default(5).notNull(),
+		txRegistroCents: integer("tx_registro_cents").default(74).notNull(),
+		emolumentosCents: integer("emolumentos_cents").default(40).notNull(),
+
+		// ISS as a percentage of txCorretagem (municipal tax, NOT flat per contract).
+		// São Paulo default = 5.00 → ISS = txCorretagem × 0.05
+		issRatePercent: decimal("iss_rate_percent", { precision: 5, scale: 2 })
+			.default("5.00")
+			.notNull(),
+
+		// IRRF withheld at source: basis points. 100 = 1.00%
+		irrfRateBps: integer("irrf_rate_bps").default(100).notNull(),
+
+		// Day-trade IR rate: basis points. 2000 = 20.00%
+		irRateBps: integer("ir_rate_bps").default(2000).notNull(),
+
+		// false for prop accounts — firm handles IR, personal DARF skipped
+		subjectToPersonalIr: boolean("subject_to_personal_ir").default(true).notNull(),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("account_fee_rates_account_idx").on(table.accountId),
+		uniqueIndex("account_fee_rates_account_asset_idx").on(
+			table.accountId,
+			table.assetSymbol,
+		),
+	],
 )
 
 // ==========================================
