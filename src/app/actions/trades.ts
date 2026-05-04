@@ -1642,6 +1642,17 @@ export const createScaledTrade = async (
 			screenshotS3Key: tradeData.screenshotS3Key || null,
 		}
 
+		// Fractal plan R-snapshot (flag-guarded, silent failure)
+		let oneRSnapshotCentsScaled: number | null = null
+		if (isFractalPlanDualWriteEnabled()) {
+			try {
+				oneRSnapshotCentsScaled = await captureROnEntry({ accountId, entryDate })
+			} catch (snapErr) {
+				console.error("[fractal-plan] captureROnEntry (scaled) failed silently:", snapErr)
+			}
+		}
+		scaledInsertValues.oneRSnapshotCents = oneRSnapshotCentsScaled
+
 		// Encrypt sensitive fields if user has a DEK
 		const dek = await getUserDek(userId)
 		if (dek) {
