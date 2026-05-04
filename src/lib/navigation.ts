@@ -5,6 +5,7 @@ import {
 	FileText,
 	FileBarChart,
 	CalendarDays,
+	CalendarRange,
 	Settings,
 	Target,
 	Dices,
@@ -23,6 +24,7 @@ interface NavItem {
 		| "playbook"
 		| "reports"
 		| "monthly"
+		| "yearlyPlan"
 		| "commandCenter"
 		| "monteCarlo"
 		| "riskSimulation"
@@ -37,6 +39,7 @@ interface NavItem {
 		| "/playbook"
 		| "/reports"
 		| "/monthly"
+		| "/yearly-plan"
 		| "/command-center"
 		| "/monte-carlo"
 		| "/risk-simulation"
@@ -71,6 +74,7 @@ const navItems: NavItem[] = [
 	{ labelKey: "playbook", href: "/playbook", icon: FileText },
 	{ labelKey: "reports", href: "/reports", icon: FileBarChart },
 	{ labelKey: "monthly", href: "/monthly", icon: CalendarDays },
+	{ labelKey: "yearlyPlan", href: "/yearly-plan", icon: CalendarRange },
 	{ labelKey: "settings", href: "/settings", icon: Settings },
 ]
 
