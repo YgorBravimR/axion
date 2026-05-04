@@ -1,6 +1,7 @@
 "use server"
 
 import { invalidateMonthlyPlanData } from "@/lib/cache/invalidate"
+import { syncCapitalBetweenPlans } from "@/app/actions/yearly-plan"
 import { db } from "@/db/drizzle"
 import { monthlyPlans, trades } from "@/db/schema"
 import type { MonthlyPlan } from "@/db/schema"
@@ -198,6 +199,14 @@ export const upsertMonthlyPlan = async (
 
 			invalidateMonthlyPlanData()
 
+			// Sync capital to yearly plan (if one exists for this year). Non-fatal —
+			// yearly-plan sync failure must not block monthly-plan save.
+			try {
+				await syncCapitalBetweenPlans(existing.id, "monthly")
+			} catch {
+				// Swallow — see comment above
+			}
+
 			// Decrypt before returning
 			const decryptedPlan = dek
 				? decryptMonthlyPlanFields(updatedPlan as unknown as Record<string, unknown>, dek) as unknown as MonthlyPlan
@@ -223,6 +232,14 @@ export const upsertMonthlyPlan = async (
 			.returning()
 
 		invalidateMonthlyPlanData()
+
+		// Sync capital to yearly plan (if one exists for this year). Non-fatal —
+		// yearly-plan sync failure must not block monthly-plan save.
+		try {
+			await syncCapitalBetweenPlans(newPlan.id, "monthly")
+		} catch {
+			// Swallow — see comment above
+		}
 
 		// Decrypt before returning
 		const decryptedNewPlan = dek
