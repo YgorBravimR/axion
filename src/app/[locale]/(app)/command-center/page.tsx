@@ -16,9 +16,6 @@ import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
-import { isHawksModeActive } from "@/lib/hawks/deactivate-mode"
-import { HawksBiasRitual } from "@/components/hawks/hawks-bias-ritual"
-import { HawksCircuitBreakerNotice } from "@/components/hawks/hawks-circuit-breaker-notice"
 
 
 interface CommandCenterPageProps {
@@ -112,20 +109,8 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		maxDailyLoss: initialPlan?.dailyLossCents ? Number(initialPlan.dailyLossCents) : null,
 	}
 
-	const hawksActive = account ? await isHawksModeActive(account.id) : false
-	const defaultHawksAsset =
-		account?.defaultAsset === "WDO" || account?.defaultAsset === "WIN"
-			? account.defaultAsset
-			: "WIN"
-
 	return (
 		<div className="flex h-full flex-col">
-			{hawksActive && (
-				<div className="space-y-m-400 px-m-400 pt-m-400 sm:px-m-500 lg:px-m-600">
-					<HawksCircuitBreakerNotice />
-					<HawksBiasRitual defaultAsset={defaultHawksAsset} />
-				</div>
-			)}
 			<CommandCenterTabs
 				initialCompletions={initialCompletions}
 				initialNotes={initialNotes}

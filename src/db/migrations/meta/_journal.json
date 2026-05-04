@@ -176,6 +176,13 @@
       "when": 1777195561515,
       "tag": "0024_noisy_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1777924497670,
+      "tag": "0025_talented_nocturne",
+      "breakpoints": true
     }
   ]
 }

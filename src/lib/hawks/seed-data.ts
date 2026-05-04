@@ -153,10 +153,50 @@ const HAWKS_TAGS: HawksSeedTag[] = [
 const HAWKS_STRATEGY_CODES: readonly string[] = HAWKS_STRATEGIES.map((s) => s.code)
 const HAWKS_TAG_NAMES: readonly string[] = HAWKS_TAGS.map((t) => t.name)
 
+const HAWKS_CHECKLIST_NAME = "Hawks — Viés diário (60min)"
+const HAWKS_DAILY_TRADE_CAP = 3
+
+interface HawksChecklistItemSeed {
+	id: string
+	label: string
+	order: number
+}
+
+const HAWKS_CHECKLIST_ITEMS: HawksChecklistItemSeed[] = [
+	{
+		id: "hwk-renko-60min-direction",
+		label: "Renko de 60 min fechou na direção do viés",
+		order: 0,
+	},
+	{
+		id: "hwk-macd-aligned",
+		label: "Histograma MACD 27/117/55 alinhado",
+		order: 1,
+	},
+	{
+		id: "hwk-ema-stack",
+		label: "Pilha das EMAs 27/55 confirma a direção",
+		order: 2,
+	},
+	{
+		id: "hwk-vwap-respected",
+		label: "Preço respeita VWAP diária/mensal",
+		order: 3,
+	},
+	{
+		id: "hwk-prev-settle",
+		label: "Ajuste do dia anterior respeitado",
+		order: 4,
+	},
+]
+
 export {
 	HAWKS_STRATEGIES,
 	HAWKS_TAGS,
 	HAWKS_STRATEGY_CODES,
 	HAWKS_TAG_NAMES,
+	HAWKS_CHECKLIST_NAME,
+	HAWKS_CHECKLIST_ITEMS,
+	HAWKS_DAILY_TRADE_CAP,
 }
-export type { HawksSeedStrategy, HawksSeedTag }
+export type { HawksSeedStrategy, HawksSeedTag, HawksChecklistItemSeed }

@@ -14,8 +14,7 @@ import {
 	enableHawksMode,
 	fetchHawksMode,
 } from "@/app/actions/hawks-mode"
-import { HawksCalibrationCard } from "@/components/hawks/hawks-calibration-card"
-import { HawksCalendar } from "@/components/hawks/hawks-calendar"
+import { HawksCalibrationTable } from "@/components/hawks/hawks-calibration-table"
 import type { HawksModeStatus } from "@/lib/hawks/deactivate-mode"
 
 const HawksModeSettings = () => {
@@ -137,8 +136,7 @@ const HawksModeSettings = () => {
 				</CardContent>
 			</Card>
 
-			{isHawks && <HawksCalibrationCard />}
-			{isHawks && <HawksCalendar />}
+			{isHawks && <HawksCalibrationTable />}
 		</div>
 	)
 }

@@ -39,12 +39,11 @@ interface UpsertScenarioInput {
 
 interface CalibrationRecord {
 	id: string
-	accountId: string
 	weekStart: string
 	assetSymbol: string
 	timeframeMinutes: number
 	rValue: number
-	source: string
+	atrReading: number | null
 	notes: string | null
 }
 
@@ -53,7 +52,7 @@ interface UpsertCalibrationInput {
 	assetSymbol: string
 	timeframeMinutes: number
 	rValue: number
-	source?: string
+	atrReading?: number | null
 	notes?: string | null
 }
 

@@ -4775,42 +4775,43 @@
     "exceededBody": "You've taken 3 trades today. Stop the day. Open a new entry only after a new session opens."
   },
   "hawksCalibration": {
-    "page": {
-      "title": "Renko calibration",
-      "subtitle": "Recalibrate your Renko box size weekly. ATR-driven suggestion, snap to the Hawks ladder."
+    "table": {
+      "title": "Weekly Renko calibration",
+      "description": "Admin-set box sizes (R) per timeframe. Same values for all Hawks traders. Current week highlighted.",
+      "headers": {
+        "week": "Week",
+        "asset": "Asset",
+        "tfDay": "1d",
+        "tf60": "60m",
+        "tf15": "15m",
+        "tf5": "5m",
+        "tf1": "1m"
+      },
+      "currentBadge": "Current",
+      "loading": "Loading calibrations…",
+      "empty": "No calibrations published yet.",
+      "missing": "—"
     },
-    "card": {
-      "title": "Weekly calibration",
-      "description": "Pick the asset and timeframe, paste an ATR(14) reading or set the box manually. Saves under the current ISO week.",
+    "admin": {
+      "title": "Publish weekly calibration",
+      "description": "Set the R box size per timeframe for the current ISO week. Visible to all Hawks traders.",
       "assetLabel": "Asset",
-      "timeframeLabel": "Timeframe",
-      "timeframeOption": "{minutes}m",
-      "atrLabel": "ATR (optional)",
-      "atrPlaceholder": "e.g. 120",
-      "atrHint": "Wilder ATR(14) on close. Suggestion divides by ~3 to keep bricks smaller than session swings.",
       "rValueLabel": "Box size (R)",
-      "rValuePlaceholder": "e.g. 11",
-      "ladderHint": "Hawks ladder: {rungs}",
-      "suggestionTitle": "Suggested rung: {rung}R",
-      "suggestionBody": "Closest Hawks ladder rung to ATR ÷ 3. Adjust to taste.",
-      "apply": "Apply",
+      "atrLabel": "ATR(14) reference (optional)",
       "notesLabel": "Notes",
-      "notesPlaceholder": "Why this rung? Anything unusual this week.",
-      "save": "Save calibration",
-      "historyTitle": "Recent calibrations",
-      "historyLoading": "Loading…",
-      "historyEmpty": "No calibrations saved yet.",
+      "save": "Publish",
+      "saving": "Publishing…",
       "errors": {
         "invalidRValue": "Enter a positive box size (R)."
       }
     },
     "actions": {
-      "saved": "Calibration saved.",
+      "saved": "Calibration published.",
       "listed": "Calibrations loaded."
     },
     "errors": {
-      "noAccount": "No account in session.",
-      "saveFailed": "Could not save calibration.",
+      "adminOnly": "Admins only.",
+      "saveFailed": "Could not publish calibration.",
       "fetchFailed": "Could not load calibrations."
     }
   },

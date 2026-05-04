@@ -13,9 +13,20 @@
  */
 
 import { db } from "@/db/drizzle"
-import { accountModes, strategies, tags, tradingAccounts } from "@/db/schema"
-import { and, eq, inArray } from "drizzle-orm"
-import { HAWKS_STRATEGY_CODES, HAWKS_TAG_NAMES } from "@/lib/hawks/seed-data"
+import {
+	accountModes,
+	dailyChecklists,
+	monthlyPlans,
+	strategies,
+	tags,
+	tradingAccounts,
+} from "@/db/schema"
+import { and, desc, eq, inArray } from "drizzle-orm"
+import {
+	HAWKS_CHECKLIST_NAME,
+	HAWKS_STRATEGY_CODES,
+	HAWKS_TAG_NAMES,
+} from "@/lib/hawks/seed-data"
 
 interface DeactivateInput {
 	accountId: string
@@ -41,7 +52,10 @@ const resolveUserIdForAccount = async (accountId: string): Promise<string | null
 	return account?.userId ?? null
 }
 
-const removeHawksSeedRows = async (userId: string): Promise<void> => {
+const removeHawksSeedRows = async (
+	userId: string,
+	accountId: string
+): Promise<void> => {
 	await Promise.all([
 		db
 			.delete(strategies)
@@ -59,7 +73,37 @@ const removeHawksSeedRows = async (userId: string): Promise<void> => {
 					inArray(tags.name, [...HAWKS_TAG_NAMES])
 				)
 			),
+		db
+			.delete(dailyChecklists)
+			.where(
+				and(
+					eq(dailyChecklists.userId, userId),
+					eq(dailyChecklists.accountId, accountId),
+					eq(dailyChecklists.name, HAWKS_CHECKLIST_NAME)
+				)
+			),
 	])
+}
+
+const restoreDailyTradeCap = async (
+	accountId: string,
+	archivedSnapshot: Record<string, unknown> | null
+): Promise<void> => {
+	const snapshot = archivedSnapshot?.monthlyPlan as
+		| { id?: string; maxDailyTrades?: number | null }
+		| null
+		| undefined
+	if (!snapshot) return
+	const activePlan = await db.query.monthlyPlans.findFirst({
+		where: eq(monthlyPlans.accountId, accountId),
+		orderBy: [desc(monthlyPlans.year), desc(monthlyPlans.month)],
+		columns: { id: true },
+	})
+	if (!activePlan) return
+	await db
+		.update(monthlyPlans)
+		.set({ maxDailyTrades: snapshot.maxDailyTrades ?? null, updatedAt: new Date() })
+		.where(eq(monthlyPlans.id, activePlan.id))
 }
 
 const deactivateHawksMode = async ({
@@ -73,8 +117,9 @@ const deactivateHawksMode = async ({
 
 	const userId = await resolveUserIdForAccount(accountId)
 	if (userId) {
-		await removeHawksSeedRows(userId)
+		await removeHawksSeedRows(userId, accountId)
 	}
+	await restoreDailyTradeCap(accountId, existing?.archivedState ?? null)
 
 	if (!existing) {
 		await db.insert(accountModes).values({

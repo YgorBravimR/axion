@@ -15,6 +15,7 @@
 import { db } from "@/db/drizzle"
 import {
 	accountModes,
+	dailyChecklists,
 	monthlyPlans,
 	riskManagementProfiles,
 	strategies,
@@ -22,7 +23,13 @@ import {
 	tradingAccounts,
 } from "@/db/schema"
 import { and, desc, eq } from "drizzle-orm"
-import { HAWKS_STRATEGIES, HAWKS_TAGS } from "@/lib/hawks/seed-data"
+import {
+	HAWKS_CHECKLIST_ITEMS,
+	HAWKS_CHECKLIST_NAME,
+	HAWKS_DAILY_TRADE_CAP,
+	HAWKS_STRATEGIES,
+	HAWKS_TAGS,
+} from "@/lib/hawks/seed-data"
 
 interface ActivateInput {
 	accountId: string
@@ -52,8 +59,45 @@ const buildArchivedSnapshot = async (accountId: string): Promise<Record<string, 
 			year: activePlan.year,
 			month: activePlan.month,
 			riskProfileId: activePlan.riskProfileId,
+			maxDailyTrades: activePlan.maxDailyTrades,
 		},
 	}
+}
+
+const enforceDailyTradeCap = async (accountId: string): Promise<void> => {
+	const activePlan = await db.query.monthlyPlans.findFirst({
+		where: eq(monthlyPlans.accountId, accountId),
+		orderBy: [desc(monthlyPlans.year), desc(monthlyPlans.month)],
+		columns: { id: true, maxDailyTrades: true },
+	})
+	if (!activePlan) return
+	if (activePlan.maxDailyTrades === HAWKS_DAILY_TRADE_CAP) return
+	await db
+		.update(monthlyPlans)
+		.set({ maxDailyTrades: HAWKS_DAILY_TRADE_CAP, updatedAt: new Date() })
+		.where(eq(monthlyPlans.id, activePlan.id))
+}
+
+const seedHawksChecklist = async (
+	userId: string,
+	accountId: string
+): Promise<void> => {
+	const existing = await db.query.dailyChecklists.findFirst({
+		where: and(
+			eq(dailyChecklists.userId, userId),
+			eq(dailyChecklists.accountId, accountId),
+			eq(dailyChecklists.name, HAWKS_CHECKLIST_NAME)
+		),
+		columns: { id: true },
+	})
+	if (existing) return
+	await db.insert(dailyChecklists).values({
+		userId,
+		accountId,
+		name: HAWKS_CHECKLIST_NAME,
+		items: JSON.stringify(HAWKS_CHECKLIST_ITEMS),
+		isActive: true,
+	})
 }
 
 const resolveUserIdForAccount = async (accountId: string): Promise<string | null> => {
@@ -103,7 +147,9 @@ const activateHawksMode = async ({ accountId }: ActivateInput): Promise<Activati
 	const userId = await resolveUserIdForAccount(accountId)
 	if (userId) {
 		await seedHawksStrategiesAndTags(userId)
+		await seedHawksChecklist(userId, accountId)
 	}
+	await enforceDailyTradeCap(accountId)
 
 	const existing = await db.query.accountModes.findFirst({
 		where: eq(accountModes.accountId, accountId),

@@ -1324,26 +1324,32 @@ export const accountModes = pgTable(
 	(table) => [uniqueIndex("account_modes_account_idx").on(table.accountId)]
 )
 
-// Weekly Renko box-size calibration log (per account, per asset, per timeframe).
-export const hawksRenkoCalibrations = pgTable(
-	"hawks_renko_calibrations",
+// Global, admin-managed weekly Renko calibration. Rows are shared across all
+// users — no accountId/userId. Fixed timeframes (1d / 60m / 15m / 5m / 1m).
+// Traders see this as a read-only historical table; admin writes weekly.
+export const hawksGlobalCalibrations = pgTable(
+	"hawks_global_calibrations",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		accountId: uuid("account_id")
-			.notNull()
-			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
 		weekStart: timestamp("week_start", { withTimezone: true }).notNull(),
 		assetSymbol: varchar("asset_symbol", { length: 20 }).notNull(),
 		timeframeMinutes: integer("timeframe_minutes").notNull(),
 		rValue: integer("r_value").notNull(),
-		source: varchar("source", { length: 20 }).notNull().default("user_calc"),
+		atrReading: integer("atr_reading"),
 		notes: text("notes"),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdBy: uuid("created_by").references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
-		index("hawks_calib_account_idx").on(table.accountId),
-		uniqueIndex("hawks_calib_unique_idx").on(
-			table.accountId,
+		index("hawks_global_calib_week_idx").on(table.weekStart),
+		uniqueIndex("hawks_global_calib_unique_idx").on(
 			table.weekStart,
 			table.assetSymbol,
 			table.timeframeMinutes
@@ -1486,20 +1492,12 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 		fields: [tradingAccounts.id],
 		references: [accountModes.accountId],
 	}),
-	hawksRenkoCalibrations: many(hawksRenkoCalibrations),
 	hawksDailyBias: many(hawksDailyBias),
 }))
 
 export const accountModesRelations = relations(accountModes, ({ one }) => ({
 	account: one(tradingAccounts, {
 		fields: [accountModes.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
-
-export const hawksRenkoCalibrationsRelations = relations(hawksRenkoCalibrations, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [hawksRenkoCalibrations.accountId],
 		references: [tradingAccounts.id],
 	}),
 }))
