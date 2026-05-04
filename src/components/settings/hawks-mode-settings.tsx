@@ -14,6 +14,8 @@ import {
 	enableHawksMode,
 	fetchHawksMode,
 } from "@/app/actions/hawks-mode"
+import { HawksCalibrationCard } from "@/components/hawks/hawks-calibration-card"
+import { HawksCalendar } from "@/components/hawks/hawks-calendar"
 import type { HawksModeStatus } from "@/lib/hawks/deactivate-mode"
 
 const HawksModeSettings = () => {
@@ -117,12 +119,6 @@ const HawksModeSettings = () => {
 							<Button id="hawks-mode-preview-bias" variant="outline" asChild>
 								<Link href="/command-center">{t("hawks.openBias")}</Link>
 							</Button>
-							<Button id="hawks-mode-preview-calibration" variant="outline" asChild>
-								<Link href="/hawks/calibration">{t("hawks.openCalibration")}</Link>
-							</Button>
-							<Button id="hawks-mode-preview-calendar" variant="outline" asChild>
-								<Link href="/hawks/calendar">{t("hawks.openCalendar")}</Link>
-							</Button>
 							<Button id="hawks-mode-preview-analytics" variant="outline" asChild>
 								<Link href="/hawks/analytics">{t("hawks.openAnalytics")}</Link>
 							</Button>
@@ -140,6 +136,9 @@ const HawksModeSettings = () => {
 					)}
 				</CardContent>
 			</Card>
+
+			{isHawks && <HawksCalibrationCard />}
+			{isHawks && <HawksCalendar />}
 		</div>
 	)
 }
