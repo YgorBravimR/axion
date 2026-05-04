@@ -24,6 +24,11 @@ interface DeactivationResult {
 	archivedSnapshot: Record<string, unknown> | null
 }
 
+interface HawksModeStatus {
+	mode: "default" | "hawks"
+	accountId: string
+}
+
 const deactivateHawksMode = async ({
 	accountId,
 }: DeactivateInput): Promise<DeactivationResult> => {
@@ -79,4 +84,4 @@ const isHawksModeActive = async (accountId: string): Promise<boolean> => {
 }
 
 export { deactivateHawksMode, getAccountMode, isHawksModeActive }
-export type { DeactivateInput, DeactivationResult }
+export type { DeactivateInput, DeactivationResult, HawksModeStatus }

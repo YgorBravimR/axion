@@ -3,14 +3,13 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 import { activateHawksMode } from "@/lib/hawks/activate-mode"
-import { deactivateHawksMode, getAccountMode } from "@/lib/hawks/deactivate-mode"
+import {
+	deactivateHawksMode,
+	getAccountMode,
+	type HawksModeStatus,
+} from "@/lib/hawks/deactivate-mode"
 import { getCurrentAccount } from "@/app/actions/auth"
 import type { ActionResponse } from "@/types"
-
-interface HawksModeStatus {
-	mode: "default" | "hawks"
-	accountId: string
-}
 
 const fetchHawksMode = async (): Promise<ActionResponse<HawksModeStatus>> => {
 	const t = await getTranslations("hawksMode")
@@ -72,4 +71,3 @@ const disableHawksMode = async (): Promise<ActionResponse<HawksModeStatus>> => {
 }
 
 export { fetchHawksMode, enableHawksMode, disableHawksMode }
-export type { HawksModeStatus }

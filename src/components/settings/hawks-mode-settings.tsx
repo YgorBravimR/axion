@@ -13,8 +13,8 @@ import {
 	disableHawksMode,
 	enableHawksMode,
 	fetchHawksMode,
-	type HawksModeStatus,
 } from "@/app/actions/hawks-mode"
+import type { HawksModeStatus } from "@/lib/hawks/deactivate-mode"
 
 const HawksModeSettings = () => {
 	const t = useTranslations("settings.mode")
