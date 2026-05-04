@@ -19,13 +19,7 @@ import {
 	hawksStopAudit,
 	trades,
 } from "@/db/schema"
-
-const HAWKS_BENCHMARKS = {
-	profitFactor: 3.87,
-	winRate: 0.3166,
-	dailyTradeCap: 3,
-	stopDiscipline: 1,
-} as const
+import { HAWKS_BENCHMARKS } from "@/lib/hawks/benchmarks"
 
 interface HawksKpis {
 	tradeCount: number

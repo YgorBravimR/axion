@@ -49,43 +49,43 @@ const HawksCohortComparison = () => {
 			</CardHeader>
 			<CardContent>
 				{loading ? (
-					<div className="flex items-center gap-s-200 text-text-300 text-fs-200">
+					<div className="flex items-center gap-s-200 text-text-300 text-small">
 						<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
 						{t("loading")}
 					</div>
 				) : !stats || stats.hawksAccounts === 0 ? (
-					<p className="text-text-300 text-fs-200">{t("empty")}</p>
+					<p className="text-text-300 text-small">{t("empty")}</p>
 				) : (
-					<div className="grid gap-m-300 sm:grid-cols-4">
-						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-300">
-							<p className="text-text-300 text-fs-100 uppercase tracking-wide">
+					<div className="grid gap-m-400 sm:grid-cols-4">
+						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400">
+							<p className="text-text-300 text-tiny uppercase tracking-wide">
 								{t("accounts")}
 							</p>
-							<p className="text-fs-500 font-mono font-semibold">
+							<p className="text-h3 font-mono font-semibold">
 								{stats.hawksAccounts}
 							</p>
 						</div>
-						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-300">
-							<p className="text-text-300 text-fs-100 uppercase tracking-wide">
+						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400">
+							<p className="text-text-300 text-tiny uppercase tracking-wide">
 								{t("trades")}
 							</p>
-							<p className="text-fs-500 font-mono font-semibold">
+							<p className="text-h3 font-mono font-semibold">
 								{stats.tradesLast90}
 							</p>
 						</div>
-						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-300">
-							<p className="text-text-300 text-fs-100 uppercase tracking-wide">
+						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400">
+							<p className="text-text-300 text-tiny uppercase tracking-wide">
 								{t("winRate")}
 							</p>
-							<p className="text-fs-500 font-mono font-semibold">
+							<p className="text-h3 font-mono font-semibold">
 								{formatPct(stats.avgWinRate)}
 							</p>
 						</div>
-						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-300">
-							<p className="text-text-300 text-fs-100 uppercase tracking-wide">
+						<div className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400">
+							<p className="text-text-300 text-tiny uppercase tracking-wide">
 								{t("profitFactor")}
 							</p>
-							<p className="text-fs-500 font-mono font-semibold">
+							<p className="text-h3 font-mono font-semibold">
 								{formatPf(stats.avgProfitFactor)}
 							</p>
 						</div>

@@ -109,7 +109,7 @@ const HawksCalendar = ({ initialMonth }: HawksCalendarProps) => {
 	return (
 		<Card id="hawks-calendar-card">
 			<CardHeader>
-				<div className="flex items-start justify-between gap-m-300">
+				<div className="flex items-start justify-between gap-m-400">
 					<div className="space-y-s-100">
 						<CardTitle>{t("title")}</CardTitle>
 						<CardDescription>{t("description")}</CardDescription>
@@ -125,7 +125,7 @@ const HawksCalendar = ({ initialMonth }: HawksCalendarProps) => {
 						>
 							<ChevronLeft className="h-4 w-4" />
 						</Button>
-						<span className="min-w-[8rem] text-center text-fs-200 font-medium">
+						<span className="min-w-[8rem] text-center text-small font-medium">
 							{monthLabel}
 						</span>
 						<Button
@@ -142,7 +142,7 @@ const HawksCalendar = ({ initialMonth }: HawksCalendarProps) => {
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-m-400">
-				<div className="grid grid-cols-7 gap-s-100 text-text-300 text-fs-100">
+				<div className="grid grid-cols-7 gap-s-100 text-text-300 text-tiny">
 					{weekdayLabels.map((label) => (
 						<div key={label} className="text-center font-medium uppercase">
 							{label}
@@ -160,7 +160,7 @@ const HawksCalendar = ({ initialMonth }: HawksCalendarProps) => {
 							<div
 								key={cell.iso}
 								className={cn(
-									"flex h-16 flex-col rounded-md border p-s-100 text-fs-100",
+									"flex h-16 flex-col rounded-md border p-s-100 text-tiny",
 									isToday
 										? "border-acc-100/60 bg-acc-100/5"
 										: "border-bg-300 bg-bg-200/40"
@@ -174,12 +174,12 @@ const HawksCalendar = ({ initialMonth }: HawksCalendarProps) => {
 								>
 									{cell.day}
 								</span>
-								<div className="mt-s-050 flex flex-wrap gap-s-050">
+								<div className="mt-s-100 flex flex-wrap gap-s-100">
 									{events.map((event) => (
 										<span
 											key={`${event.kind}-${event.date}`}
 											className={cn(
-												"rounded-sm border px-s-100 py-s-050 text-[0.625rem] font-semibold uppercase tracking-wide",
+												"rounded-sm border px-s-100 py-s-100 text-[0.625rem] font-semibold uppercase tracking-wide",
 												KIND_STYLES[event.kind]
 											)}
 											title={event.label}
@@ -193,26 +193,26 @@ const HawksCalendar = ({ initialMonth }: HawksCalendarProps) => {
 					})}
 				</div>
 
-				<div className="space-y-s-200 pt-m-300 border-t border-bg-300">
-					<h3 className="text-fs-200 font-medium">{t("upcomingTitle")}</h3>
+				<div className="space-y-s-200 pt-m-400 border-t border-bg-300">
+					<h3 className="text-small font-medium">{t("upcomingTitle")}</h3>
 					{upcoming.length === 0 ? (
-						<p className="text-text-300 text-fs-100">{t("upcomingEmpty")}</p>
+						<p className="text-text-300 text-tiny">{t("upcomingEmpty")}</p>
 					) : (
-						<ul className="space-y-s-200 text-fs-200">
+						<ul className="space-y-s-200 text-small">
 							{upcoming.map((event) => (
 								<li
 									key={`${event.kind}-${event.date}`}
-									className="flex items-center justify-between gap-m-200"
+									className="flex items-center justify-between gap-s-300"
 								>
-									<div className="space-y-s-050">
+									<div className="space-y-s-100">
 										<p className="font-medium">{event.label}</p>
-										<p className="text-text-300 text-fs-100">
+										<p className="text-text-300 text-tiny">
 											{event.date} · {event.noTradeStart}–{event.noTradeEnd} BRT · {event.affectedSymbols.join(", ")}
 										</p>
 									</div>
 									<span
 										className={cn(
-											"rounded-sm border px-s-100 py-s-050 text-fs-100 font-semibold uppercase",
+											"rounded-sm border px-s-100 py-s-100 text-tiny font-semibold uppercase",
 											KIND_STYLES[event.kind]
 										)}
 									>

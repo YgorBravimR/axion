@@ -24,6 +24,11 @@ const CHECKLIST_KEYS = [
 	"ajusteRespect",
 ] as const
 
+const ASSET_GROUPS = [
+	{ symbol: "WIN", labelKey: "assetGroups.indice" },
+	{ symbol: "WDO", labelKey: "assetGroups.dolar" },
+] as const
+
 interface HawksBiasRitualProps {
 	id?: string
 	defaultAsset?: string
@@ -96,17 +101,17 @@ const HawksBiasRitual = ({
 				<CardDescription>{t("description")}</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-m-400">
-				<div className="grid grid-cols-2 gap-m-300 sm:grid-cols-4">
-					{(["WIN", "WDO", "IND", "DOL"] as const).map((symbol) => (
+				<div className="grid grid-cols-2 gap-m-400">
+					{ASSET_GROUPS.map((group) => (
 						<Button
-							id={`hawks-bias-asset-${symbol}`}
-							key={symbol}
+							id={`hawks-bias-asset-${group.symbol}`}
+							key={group.symbol}
 							type="button"
-							variant={assetSymbol === symbol ? "default" : "outline"}
-							onClick={() => setAssetSymbol(symbol)}
+							variant={assetSymbol === group.symbol ? "default" : "outline"}
+							onClick={() => setAssetSymbol(group.symbol)}
 							disabled={isLoading || isPending}
 						>
-							{symbol}
+							{t(group.labelKey)}
 						</Button>
 					))}
 				</div>
@@ -144,7 +149,7 @@ const HawksBiasRitual = ({
 									onCheckedChange={handleToggleChecklist(key)}
 									disabled={isLoading || isPending}
 								/>
-								<span className="text-fs-200 leading-snug">{t(`checklist.${key}`)}</span>
+								<span className="text-small leading-snug">{t(`checklist.${key}`)}</span>
 							</label>
 						))}
 					</div>

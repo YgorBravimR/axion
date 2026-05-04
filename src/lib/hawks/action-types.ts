@@ -1,10 +1,3 @@
-import type {
-	DisciplineSummary,
-	HawksKpis,
-	ScenarioPerformance,
-} from "@/lib/hawks/analytics"
-import type { CoachInsight } from "@/lib/hawks/coach-detectors"
-
 type BiasValue = "comprador" | "vendedor" | "lateral"
 
 interface DailyBiasRecord {
@@ -80,6 +73,54 @@ interface MentorInsightRecord {
 	bodyMarkdown: string
 }
 
+interface HawksKpis {
+	tradeCount: number
+	winCount: number
+	lossCount: number
+	winRate: number
+	profitFactor: number | null
+	expectancyR: number
+	avgWinR: number
+	avgLossR: number
+	mfeCapture: number | null
+}
+
+interface ScenarioPerformance {
+	scenarioCode: number
+	tradeCount: number
+	winRate: number
+	expectancyR: number
+	totalR: number
+}
+
+interface DisciplineSummary {
+	stopChanges: number
+	stopViolations: number
+	stopDiscipline: number
+	overCapDays: number
+	totalSessionDays: number
+	avgMfeCapture: number | null
+}
+
+type CoachKind =
+	| "bias_mismatch"
+	| "lateral_traded"
+	| "over_cap"
+	| "stop_against"
+	| "low_mfe_capture"
+	| "missing_scenario"
+	| "missing_pullback"
+	| "mma_misaligned"
+	| "checklist_skipped"
+
+interface CoachInsight {
+	kind: CoachKind
+	tradeId: string | null
+	tradeDate: string
+	asset: string | null
+	context: Record<string, string | number | null>
+}
+
 interface HawksAnalyticsBundle {
 	range: { from: string; to: string }
 	kpis: HawksKpis
@@ -128,6 +169,11 @@ export type {
 	UpsertCalibrationInput,
 	LearningProgressRecord,
 	MentorInsightRecord,
+	HawksKpis,
+	ScenarioPerformance,
+	DisciplineSummary,
+	CoachKind,
+	CoachInsight,
 	HawksAnalyticsBundle,
 	MentorInsightInput,
 	MentorInsightRow,

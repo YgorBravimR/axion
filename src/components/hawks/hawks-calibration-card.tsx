@@ -115,7 +115,7 @@ const HawksCalibrationCard = () => {
 				<CardDescription>{t("description")}</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-m-400">
-				<div className="grid gap-m-300 sm:grid-cols-2">
+				<div className="grid gap-m-400 sm:grid-cols-2">
 					<div className="space-y-s-200">
 						<Label id="hawks-calibration-asset-label" htmlFor="hawks-calibration-asset">
 							{t("assetLabel")}
@@ -160,7 +160,7 @@ const HawksCalibrationCard = () => {
 					</div>
 				</div>
 
-				<div className="grid gap-m-300 sm:grid-cols-2">
+				<div className="grid gap-m-400 sm:grid-cols-2">
 					<div className="space-y-s-200">
 						<Label id="hawks-calibration-atr-label" htmlFor="hawks-calibration-atr">
 							{t("atrLabel")}
@@ -174,7 +174,7 @@ const HawksCalibrationCard = () => {
 							placeholder={t("atrPlaceholder")}
 							disabled={isPending}
 						/>
-						<p className="text-text-300 text-fs-100">{t("atrHint")}</p>
+						<p className="text-text-300 text-tiny">{t("atrHint")}</p>
 					</div>
 					<div className="space-y-s-200">
 						<Label id="hawks-calibration-rvalue-label" htmlFor="hawks-calibration-rvalue">
@@ -189,20 +189,20 @@ const HawksCalibrationCard = () => {
 							placeholder={t("rValuePlaceholder")}
 							disabled={isPending}
 						/>
-						<p className="text-text-300 text-fs-100">
+						<p className="text-text-300 text-tiny">
 							{t("ladderHint", { rungs: HAWKS_RENKO_LADDER.join(", ") })}
 						</p>
 					</div>
 				</div>
 
 				{suggestion !== null && (
-					<div className="flex items-start gap-s-300 rounded-md border border-acc-100/40 bg-acc-100/5 p-m-300 text-fs-200 text-acc-100">
-						<Sparkles className="mt-s-050 h-4 w-4 shrink-0" aria-hidden="true" />
+					<div className="flex items-start gap-s-300 rounded-md border border-acc-100/40 bg-acc-100/5 p-m-400 text-small text-acc-100">
+						<Sparkles className="mt-s-100 h-4 w-4 shrink-0" aria-hidden="true" />
 						<div className="flex-1 space-y-s-100">
 							<p className="font-medium">
 								{t("suggestionTitle", { rung: suggestion })}
 							</p>
-							<p className="text-fs-100 opacity-80">{t("suggestionBody")}</p>
+							<p className="text-tiny opacity-80">{t("suggestionBody")}</p>
 						</div>
 						<Button
 							id="hawks-calibration-apply"
@@ -245,24 +245,24 @@ const HawksCalibrationCard = () => {
 					</Button>
 				</div>
 
-				<div className="space-y-s-200 pt-m-300 border-t border-bg-300">
-					<h3 className="text-fs-200 font-medium">{t("historyTitle")}</h3>
+				<div className="space-y-s-200 pt-m-400 border-t border-bg-300">
+					<h3 className="text-small font-medium">{t("historyTitle")}</h3>
 					{historyLoading ? (
-						<p className="text-text-300 text-fs-100">{t("historyLoading")}</p>
+						<p className="text-text-300 text-tiny">{t("historyLoading")}</p>
 					) : history.length === 0 ? (
-						<p className="text-text-300 text-fs-100">{t("historyEmpty")}</p>
+						<p className="text-text-300 text-tiny">{t("historyEmpty")}</p>
 					) : (
-						<ul className="divide-y divide-bg-300 text-fs-200">
+						<ul className="divide-y divide-bg-300 text-small">
 							{history.map((row) => (
 								<li
 									key={row.id}
 									className="flex items-center justify-between py-s-200"
 								>
-									<div className="space-y-s-050">
+									<div className="space-y-s-100">
 										<p className="font-medium">
 											{row.assetSymbol} · {row.timeframeMinutes}m
 										</p>
-										<p className="text-text-300 text-fs-100">
+										<p className="text-text-300 text-tiny">
 											{formatWeek(row.weekStart)} · {row.source}
 										</p>
 									</div>

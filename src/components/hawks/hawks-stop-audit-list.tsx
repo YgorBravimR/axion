@@ -43,12 +43,12 @@ const HawksStopAuditList = ({ tradeId }: HawksStopAuditListProps) => {
 			</CardHeader>
 			<CardContent>
 				{isLoading ? (
-					<p className="text-text-300 text-fs-200">{t("loading")}</p>
+					<p className="text-text-300 text-small">{t("loading")}</p>
 				) : rows.length === 0 ? (
-					<p className="text-text-300 text-fs-200">{t("empty")}</p>
+					<p className="text-text-300 text-small">{t("empty")}</p>
 				) : (
 					<div className="space-y-s-200">
-						<div className="flex items-center gap-s-200 text-fs-200">
+						<div className="flex items-center gap-s-200 text-small">
 							{violations === 0 ? (
 								<ShieldCheck className="text-acc-100 h-4 w-4" aria-hidden="true" />
 							) : (
@@ -65,7 +65,7 @@ const HawksStopAuditList = ({ tradeId }: HawksStopAuditListProps) => {
 								<li
 									key={row.id}
 									className={cn(
-										"flex items-start justify-between gap-m-300 py-s-300 text-fs-200",
+										"flex items-start justify-between gap-m-400 py-s-300 text-small",
 										row.violation && "text-loss"
 									)}
 								>
@@ -73,13 +73,13 @@ const HawksStopAuditList = ({ tradeId }: HawksStopAuditListProps) => {
 										<p className="font-medium">
 											{t("change", { old: row.oldStop ?? "—", new: row.newStop })}
 										</p>
-										<p className="text-text-300 text-fs-100">
+										<p className="text-text-300 text-tiny">
 											{t("direction", { direction: row.direction })} ·{" "}
 											{new Date(row.changedAt).toLocaleString()}
 										</p>
 									</div>
 									{row.violation && (
-										<span className="border-loss/40 bg-loss/10 text-loss rounded-full border px-s-200 text-fs-100 font-medium">
+										<span className="border-loss/40 bg-loss/10 text-loss rounded-full border px-s-200 text-tiny font-medium">
 											{t("violation")}
 										</span>
 									)}

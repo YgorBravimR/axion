@@ -83,16 +83,16 @@ const HawksLearningHub = () => {
 		<div className="space-y-m-500">
 			<Card id="hawks-learning-summary">
 				<CardHeader>
-					<div className="flex items-start justify-between gap-m-300">
+					<div className="flex items-start justify-between gap-m-400">
 						<div className="space-y-s-100">
 							<CardTitle>{t("summaryTitle")}</CardTitle>
 							<CardDescription>{t("summaryDescription")}</CardDescription>
 						</div>
 						<div className="text-right">
-							<p className="text-fs-100 text-text-300 uppercase tracking-wide">
+							<p className="text-tiny text-text-300 uppercase tracking-wide">
 								{t("progressLabel")}
 							</p>
-							<p className="text-fs-600 font-mono font-semibold text-acc-100">
+							<p className="text-h2 font-mono font-semibold text-acc-100">
 								{progressLoading ? "—" : `${completedCount}/${totalCount}`}
 							</p>
 						</div>
@@ -108,12 +108,12 @@ const HawksLearningHub = () => {
 					</div>
 					<CardDescription>{t("cronogramaDescription")}</CardDescription>
 				</CardHeader>
-				<CardContent className="space-y-m-300">
+				<CardContent className="space-y-m-400">
 					{HAWKS_CRONOGRAMA.map((week) => (
 						<article
 							key={week.key}
 							className={cn(
-								"space-y-s-200 rounded-md border p-m-300",
+								"space-y-s-200 rounded-md border p-m-400",
 								isComplete(week.key)
 									? "border-profit/40 bg-profit/5"
 									: "border-bg-300 bg-bg-200/40"
@@ -126,29 +126,29 @@ const HawksLearningHub = () => {
 									onCheckedChange={handleToggle(week.key)}
 									disabled={isPending || progressLoading}
 								/>
-								<div className="space-y-s-050">
-									<h3 className="text-fs-300 font-semibold">
+								<div className="space-y-s-100">
+									<h3 className="text-body font-semibold">
 										{week.title} · <span className="text-text-300">{week.dateRange}</span>
 									</h3>
-									<p className="text-text-200 text-fs-200">{week.objective}</p>
+									<p className="text-text-200 text-small">{week.objective}</p>
 								</div>
 							</header>
-							<div className="grid gap-m-300 pl-m-500 sm:grid-cols-2">
+							<div className="grid gap-m-400 pl-m-500 sm:grid-cols-2">
 								<div className="space-y-s-100">
-									<p className="text-text-300 text-fs-100 uppercase tracking-wide">
+									<p className="text-text-300 text-tiny uppercase tracking-wide">
 										{t("focus")}
 									</p>
-									<ul className="list-disc space-y-s-050 pl-m-300 text-fs-200">
+									<ul className="list-disc space-y-s-100 pl-m-400 text-small">
 										{week.focus.map((item) => (
 											<li key={item}>{item}</li>
 										))}
 									</ul>
 								</div>
 								<div className="space-y-s-100">
-									<p className="text-text-300 text-fs-100 uppercase tracking-wide">
+									<p className="text-text-300 text-tiny uppercase tracking-wide">
 										{t("assignments")}
 									</p>
-									<ul className="list-disc space-y-s-050 pl-m-300 text-fs-200">
+									<ul className="list-disc space-y-s-100 pl-m-400 text-small">
 										{week.assignments.map((item) => (
 											<li key={item}>{item}</li>
 										))}
@@ -168,11 +168,11 @@ const HawksLearningHub = () => {
 					</div>
 					<CardDescription>{t("conceptsDescription")}</CardDescription>
 				</CardHeader>
-				<CardContent className="space-y-m-300">
+				<CardContent className="space-y-m-400">
 					{HAWKS_CONCEPTS.map((concept) => (
 						<article
 							key={concept.key}
-							className="flex gap-s-300 rounded-md border border-bg-300 bg-bg-200/40 p-m-300"
+							className="flex gap-s-300 rounded-md border border-bg-300 bg-bg-200/40 p-m-400"
 						>
 							<Checkbox
 								id={`hawks-learning-${concept.key}`}
@@ -181,11 +181,11 @@ const HawksLearningHub = () => {
 								disabled={isPending || progressLoading}
 							/>
 							<div className="flex-1 space-y-s-200">
-								<header className="space-y-s-050">
-									<h3 className="text-fs-300 font-semibold">{concept.title}</h3>
-									<p className="text-text-200 text-fs-200">{concept.summary}</p>
+								<header className="space-y-s-100">
+									<h3 className="text-body font-semibold">{concept.title}</h3>
+									<p className="text-text-200 text-small">{concept.summary}</p>
 								</header>
-								<ul className="list-disc space-y-s-050 pl-m-300 text-fs-200">
+								<ul className="list-disc space-y-s-100 pl-m-400 text-small">
 									{concept.bullets.map((item) => (
 										<li key={item}>{item}</li>
 									))}
@@ -205,16 +205,16 @@ const HawksLearningHub = () => {
 					<CardDescription>{t("glossaryDescription")}</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<dl className="grid gap-m-200 sm:grid-cols-2">
+					<dl className="grid gap-s-300 sm:grid-cols-2">
 						{HAWKS_GLOSSARY.map((entry) => (
 							<div
 								key={entry.term}
-								className="space-y-s-050 rounded-md border border-bg-300 bg-bg-200/40 p-m-300"
+								className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400"
 							>
-								<dt className="text-fs-200 font-semibold text-acc-100">
+								<dt className="text-small font-semibold text-acc-100">
 									{entry.term}
 								</dt>
-								<dd className="text-text-200 text-fs-200">{entry.definition}</dd>
+								<dd className="text-text-200 text-small">{entry.definition}</dd>
 							</div>
 						))}
 					</dl>
@@ -231,34 +231,34 @@ const HawksLearningHub = () => {
 				</CardHeader>
 				<CardContent>
 					{insightsLoading ? (
-						<div className="flex items-center gap-s-200 text-text-300 text-fs-200">
+						<div className="flex items-center gap-s-200 text-text-300 text-small">
 							<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
 							{t("mentorLoading")}
 						</div>
 					) : insights.length === 0 ? (
-						<p className="text-text-300 text-fs-200">{t("mentorEmpty")}</p>
+						<p className="text-text-300 text-small">{t("mentorEmpty")}</p>
 					) : (
-						<ul className="space-y-m-200">
+						<ul className="space-y-s-300">
 							{insights.map((insight) => (
 								<li
 									key={insight.id}
-									className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-300"
+									className="space-y-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400"
 								>
 									<header className="flex flex-wrap items-baseline justify-between gap-s-200">
-										<p className="font-medium text-fs-200">
+										<p className="font-medium text-small">
 											{new Date(insight.date).toLocaleDateString()}
 											{insight.assetSymbol ? ` · ${insight.assetSymbol}` : ""}
 										</p>
 										{insight.biasCalled && (
-											<span className="text-acc-100 text-fs-100 uppercase tracking-wide">
+											<span className="text-acc-100 text-tiny uppercase tracking-wide">
 												{insight.biasCalled}
 											</span>
 										)}
 									</header>
 									{insight.setupCalled && (
-										<p className="text-text-200 text-fs-200">{insight.setupCalled}</p>
+										<p className="text-text-200 text-small">{insight.setupCalled}</p>
 									)}
-									<p className="text-text-300 text-fs-100 whitespace-pre-line">
+									<p className="text-text-300 text-tiny whitespace-pre-line">
 										{insight.bodyMarkdown.slice(0, 320)}
 										{insight.bodyMarkdown.length > 320 ? "…" : ""}
 									</p>

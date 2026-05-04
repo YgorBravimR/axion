@@ -4685,6 +4685,10 @@
       "notesLabel": "Notes",
       "notesPlaceholder": "Anything Pedro flagged on the morning call, market context, news risk…",
       "save": "Save bias",
+      "assetGroups": {
+        "indice": "Índice (WIN / IND)",
+        "dolar": "Dólar (WDO / DOL)"
+      },
       "bias": {
         "comprador": "Comprador",
         "vendedor": "Vendedor",

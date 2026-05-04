@@ -4685,6 +4685,10 @@
       "notesLabel": "Notas",
       "notesPlaceholder": "Algo que Pedro sinalizou no call da manhã, contexto de mercado, risco de notícia…",
       "save": "Salvar viés",
+      "assetGroups": {
+        "indice": "Índice (WIN / IND)",
+        "dolar": "Dólar (WDO / DOL)"
+      },
       "bias": {
         "comprador": "Comprador",
         "vendedor": "Vendedor",

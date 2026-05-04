@@ -93,8 +93,8 @@ const HawksScenarioPicker = ({ tradeId }: HawksScenarioPickerProps) => {
 				<CardTitle>{t("title")}</CardTitle>
 				<CardDescription>{t("description")}</CardDescription>
 			</CardHeader>
-			<CardContent className="space-y-m-300">
-				<div className="grid gap-m-300 sm:grid-cols-2">
+			<CardContent className="space-y-m-400">
+				<div className="grid gap-m-400 sm:grid-cols-2">
 					<div className="space-y-s-200">
 						<Label id="hawks-scenario-code-label" htmlFor="hawks-scenario-code">{t("scenarioLabel")}</Label>
 						<Select
@@ -182,7 +182,7 @@ const HawksScenarioPicker = ({ tradeId }: HawksScenarioPickerProps) => {
 						placeholder={t("confluenciaPlaceholder")}
 						disabled={isLoading || isPending}
 					/>
-					<p className="text-text-300 text-fs-100">{t("confluenciaHint")}</p>
+					<p className="text-text-300 text-tiny">{t("confluenciaHint")}</p>
 				</div>
 
 				<div className="flex items-center justify-end gap-s-200">

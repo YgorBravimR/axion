@@ -24,21 +24,21 @@ const HawksCircuitBreakerNotice = async ({
 		<div
 			role={state.exceeded ? "alert" : "status"}
 			className={cn(
-				"flex items-start gap-s-300 rounded-md border p-m-300 text-fs-200",
+				"flex items-start gap-s-300 rounded-md border p-m-400 text-small",
 				state.exceeded
 					? "border-loss/40 bg-loss/10 text-loss"
 					: "border-acc-100/40 bg-acc-100/5 text-acc-100",
 				className
 			)}
 		>
-			<Icon className="mt-s-050 h-4 w-4 shrink-0" aria-hidden="true" />
+			<Icon className="mt-s-100 h-4 w-4 shrink-0" aria-hidden="true" />
 			<div className="space-y-s-100">
 				<p className="font-medium">
 					{state.exceeded
 						? t("exceededTitle")
 						: t("activeTitle", { count: state.tradeCount, limit: state.limit })}
 				</p>
-				<p className="text-fs-100 opacity-80">
+				<p className="text-tiny opacity-80">
 					{state.exceeded ? t("exceededBody") : t("activeBody")}
 				</p>
 			</div>

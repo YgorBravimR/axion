@@ -11,7 +11,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { HAWKS_BENCHMARKS } from "@/lib/hawks/analytics"
+import { HAWKS_BENCHMARKS } from "@/lib/hawks/benchmarks"
 import { fetchHawksAnalyticsBundle } from "@/app/actions/hawks-analytics"
 import type { HawksAnalyticsBundle } from "@/lib/hawks/action-types"
 
@@ -32,16 +32,16 @@ interface KpiTileProps {
 const KpiTile = ({ id, label, value, benchmark, met, hint }: KpiTileProps) => (
 	<div
 		id={id}
-		className="flex flex-col gap-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-300"
+		className="flex flex-col gap-s-100 rounded-md border border-bg-300 bg-bg-200/40 p-m-400"
 	>
 		<div className="flex items-center justify-between">
-			<span className="text-text-300 text-fs-100 uppercase tracking-wide">
+			<span className="text-text-300 text-tiny uppercase tracking-wide">
 				{label}
 			</span>
 			{met !== null && (
 				<span
 					className={cn(
-						"text-fs-100 font-semibold",
+						"text-tiny font-semibold",
 						met ? "text-profit" : "text-loss"
 					)}
 				>
@@ -49,11 +49,11 @@ const KpiTile = ({ id, label, value, benchmark, met, hint }: KpiTileProps) => (
 				</span>
 			)}
 		</div>
-		<span className="text-fs-600 font-mono font-semibold tracking-tight">
+		<span className="text-h2 font-mono font-semibold tracking-tight">
 			{value}
 		</span>
-		<span className="text-text-300 text-fs-100">{benchmark}</span>
-		{hint && <span className="text-text-300 text-fs-100 opacity-80">{hint}</span>}
+		<span className="text-text-300 text-tiny">{benchmark}</span>
+		{hint && <span className="text-text-300 text-tiny opacity-80">{hint}</span>}
 	</div>
 )
 
@@ -83,7 +83,7 @@ const HawksAnalyticsDashboard = () => {
 
 	if (loading) {
 		return (
-			<div className="flex items-center gap-s-200 text-text-300 text-fs-200">
+			<div className="flex items-center gap-s-200 text-text-300 text-small">
 				<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
 				{t("loading")}
 			</div>
@@ -94,7 +94,7 @@ const HawksAnalyticsDashboard = () => {
 		return (
 			<Card id="hawks-analytics-error">
 				<CardContent className="py-m-400">
-					<p className="text-loss text-fs-200">{error ?? t("errors.fetchFailed")}</p>
+					<p className="text-loss text-small">{error ?? t("errors.fetchFailed")}</p>
 				</CardContent>
 			</Card>
 		)
@@ -104,7 +104,7 @@ const HawksAnalyticsDashboard = () => {
 
 	return (
 		<div className="space-y-m-500">
-			<section className="grid gap-m-300 sm:grid-cols-2 lg:grid-cols-4">
+			<section className="grid gap-m-400 sm:grid-cols-2 lg:grid-cols-4">
 				<KpiTile
 					id="hawks-kpi-pf"
 					label={t("kpi.profitFactor")}
@@ -145,7 +145,7 @@ const HawksAnalyticsDashboard = () => {
 					<CardTitle>{t("discipline.title")}</CardTitle>
 					<CardDescription>{t("discipline.description")}</CardDescription>
 				</CardHeader>
-				<CardContent className="grid gap-m-300 sm:grid-cols-3">
+				<CardContent className="grid gap-m-400 sm:grid-cols-3">
 					<KpiTile
 						id="hawks-discipline-stop"
 						label={t("discipline.stopDiscipline")}
@@ -191,11 +191,11 @@ const HawksAnalyticsDashboard = () => {
 				</CardHeader>
 				<CardContent>
 					{scenarioPerformance.length === 0 ? (
-						<p className="text-text-300 text-fs-200">{t("scenario.empty")}</p>
+						<p className="text-text-300 text-small">{t("scenario.empty")}</p>
 					) : (
 						<div className="overflow-x-auto">
-							<table className="w-full text-fs-200">
-								<thead className="text-text-300 text-fs-100 uppercase tracking-wide">
+							<table className="w-full text-small">
+								<thead className="text-text-300 text-tiny uppercase tracking-wide">
 									<tr className="border-b border-bg-300">
 										<th className="py-s-200 text-left">{t("scenario.code")}</th>
 										<th className="py-s-200 text-right">{t("scenario.trades")}</th>
@@ -242,7 +242,7 @@ const HawksAnalyticsDashboard = () => {
 				</CardHeader>
 				<CardContent>
 					{insights.length === 0 ? (
-						<div className="flex items-center gap-s-200 text-profit text-fs-200">
+						<div className="flex items-center gap-s-200 text-profit text-small">
 							<CheckCircle2 className="h-4 w-4" aria-hidden="true" />
 							{t("coach.empty")}
 						</div>
@@ -254,12 +254,12 @@ const HawksAnalyticsDashboard = () => {
 									className="flex items-start gap-s-300 py-s-300"
 								>
 									<AlertTriangle
-										className="mt-s-050 h-4 w-4 shrink-0 text-loss"
+										className="mt-s-100 h-4 w-4 shrink-0 text-loss"
 										aria-hidden="true"
 									/>
-									<div className="space-y-s-050 text-fs-200">
+									<div className="space-y-s-100 text-small">
 										<p className="font-medium">{t(`coach.kinds.${insight.kind}`)}</p>
-										<p className="text-text-300 text-fs-100">
+										<p className="text-text-300 text-tiny">
 											{insight.tradeDate} · {insight.asset ?? "—"}
 										</p>
 									</div>

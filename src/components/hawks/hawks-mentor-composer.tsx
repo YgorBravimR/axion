@@ -72,8 +72,8 @@ const HawksMentorComposer = () => {
 				<CardTitle>{t("title")}</CardTitle>
 				<CardDescription>{t("description")}</CardDescription>
 			</CardHeader>
-			<CardContent className="space-y-m-300">
-				<div className="grid gap-m-300 sm:grid-cols-2">
+			<CardContent className="space-y-m-400">
+				<div className="grid gap-m-400 sm:grid-cols-2">
 					<div className="space-y-s-200">
 						<Label id="hawks-mentor-date-label" htmlFor="hawks-mentor-date">{t("dateLabel")}</Label>
 						<Input

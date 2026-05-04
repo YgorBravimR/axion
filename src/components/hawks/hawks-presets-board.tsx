@@ -34,17 +34,17 @@ const PresetCard = ({ id, title, description, rows, href, cta }: PresetCardProps
 			<CardTitle>{title}</CardTitle>
 			<CardDescription>{description}</CardDescription>
 		</CardHeader>
-		<CardContent className="space-y-m-300">
+		<CardContent className="space-y-m-400">
 			<dl className="grid gap-s-200 sm:grid-cols-2">
 				{rows.map((row) => (
 					<div
 						key={row.label}
 						className="flex items-baseline justify-between gap-s-200 rounded-md border border-bg-300 bg-bg-200/40 px-s-300 py-s-200"
 					>
-						<dt className="text-text-300 text-fs-100 uppercase tracking-wide">
+						<dt className="text-text-300 text-tiny uppercase tracking-wide">
 							{row.label}
 						</dt>
-						<dd className="font-mono text-fs-200">{row.value}</dd>
+						<dd className="font-mono text-small">{row.value}</dd>
 					</div>
 				))}
 			</dl>

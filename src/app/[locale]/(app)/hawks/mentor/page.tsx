@@ -18,8 +18,8 @@ const HawksMentorPage = async () => {
 	return (
 		<div className="mx-auto max-w-4xl space-y-m-500 px-m-600 py-l-700">
 			<header className="space-y-s-200">
-				<h1 className="text-fs-700 font-semibold tracking-tight">{t("title")}</h1>
-				<p className="text-text-200 text-fs-300">{t("subtitle")}</p>
+				<h1 className="text-h1 font-semibold tracking-tight">{t("title")}</h1>
+				<p className="text-text-200 text-body">{t("subtitle")}</p>
 			</header>
 
 			<HawksCohortComparison />
@@ -27,7 +27,7 @@ const HawksMentorPage = async () => {
 			{admin ? (
 				<HawksMentorComposer />
 			) : (
-				<div className="rounded-md border border-bg-300 bg-bg-200/40 p-m-400 text-text-300 text-fs-200">
+				<div className="rounded-md border border-bg-300 bg-bg-200/40 p-m-400 text-text-300 text-small">
 					{t("nonAdminNotice")}
 				</div>
 			)}
