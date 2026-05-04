@@ -4,21 +4,31 @@ vi.mock("@/app/actions/auth", () => ({
 	requireAuth: vi.fn().mockResolvedValue({ accountId: "acc-1", userId: "u-1" }),
 }))
 
-const { mockSet, mockWhere, mockReturning } = vi.hoisted(() => ({
+const { mockSet, mockWhere, mockReturning, mockFindFirst, mockInsertReturning } = vi.hoisted(() => ({
 	mockSet: vi.fn().mockReturnThis(),
 	mockWhere: vi.fn().mockResolvedValue([{ id: "ok" }]),
 	mockReturning: vi.fn().mockResolvedValue([{ id: "ok" }]),
+	mockFindFirst: vi.fn(),
+	mockInsertReturning: vi.fn().mockResolvedValue([{ id: "new-daily-id" }]),
 }))
 
 vi.mock("@/db/drizzle", () => ({
 	db: {
 		update: () => ({ set: mockSet, where: mockWhere, returning: mockReturning }),
+		query: {
+			dailyPlan: { findFirst: mockFindFirst },
+		},
+		insert: () => ({
+			values: () => ({
+				returning: mockInsertReturning,
+			}),
+		}),
 	},
 }))
 
 import { upsertMonthlyPlan, resetMonthlyOverride } from "@/app/actions/fractal-plan/monthly"
 import { upsertWeeklyPlan, resetWeeklyOverride } from "@/app/actions/fractal-plan/weekly"
-import { upsertDailyPlan, resetDailyOverride } from "@/app/actions/fractal-plan/daily"
+import { upsertDailyPlan, resetDailyOverride, lazyEnsureDailyPlan } from "@/app/actions/fractal-plan/daily"
 import { upsertQuarterlyPlan } from "@/app/actions/fractal-plan/quarterly"
 
 describe("fractal upsert actions", () => {
@@ -67,5 +77,33 @@ describe("fractal upsert actions", () => {
 			reflectionNotes: "Stay disciplined",
 		})
 		expect(result.status).toBe("success")
+	})
+})
+
+describe("lazyEnsureDailyPlan", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("returns existing daily plan id when present", async () => {
+		mockFindFirst.mockResolvedValue({ id: "existing-daily-id" })
+		const result = await lazyEnsureDailyPlan({
+			weeklyPlanId: "a1b2c3d4-e5f6-4789-abcd-000000000002",
+			date: "2026-05-04",
+		})
+		expect(result.status).toBe("success")
+		expect(result.data?.id).toBe("existing-daily-id")
+		expect(result.data?.created).toBe(false)
+	})
+
+	it("creates a new daily plan when absent", async () => {
+		mockFindFirst.mockResolvedValue(undefined)
+		const result = await lazyEnsureDailyPlan({
+			weeklyPlanId: "a1b2c3d4-e5f6-4789-abcd-000000000002",
+			date: "2026-05-04",
+		})
+		expect(result.status).toBe("success")
+		expect(result.data?.id).toBe("new-daily-id")
+		expect(result.data?.created).toBe(true)
 	})
 })
