@@ -53,8 +53,8 @@ export const proxy = auth((req) => {
 		}
 	}
 
-	// Fractal-plan cutover redirects (Phase 3, flag-guarded)
-	if (process.env.FRACTAL_PLAN_DUAL_WRITE === "1") {
+	// Fractal-plan cutover redirects (Phase 3, flag-guarded — default ON, disable via "0")
+	if (process.env.FRACTAL_PLAN_DUAL_WRITE !== "0") {
 		const pathWithoutLocaleStripped = pathname.replace(/^\/(en|pt-BR)/, "") || "/"
 		const localeMatch = pathname.match(/^\/(en|pt-BR)/)
 		const localePrefix = localeMatch ? localeMatch[0] : "/en"
