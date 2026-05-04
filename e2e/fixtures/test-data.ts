@@ -81,6 +81,7 @@ export const ROUTES = {
 	playbookNew: "/en/playbook/new",
 	reports: "/en/reports",
 	monthly: "/en/monthly",
+	yearlyPlan: "/en/yearly-plan",
 	settings: "/en/settings",
 	commandCenter: "/en/command-center",
 	monteCarlo: "/en/monte-carlo",

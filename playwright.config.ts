@@ -35,6 +35,7 @@ const dataPhases = [
 	{ name: "monthly", testMatch: /monthly\.spec\.ts/ },
 	{ name: "command-center", testMatch: /command-center\.spec\.ts/ },
 	{ name: "monthly-plan", testMatch: /monthly-plan\.spec\.ts/ },
+	{ name: "yearly-plan", testMatch: /yearly-plan\.spec\.ts/ },
 	{ name: "monte-carlo", testMatch: /monte-carlo\.spec\.ts/ },
 	{ name: "market-monitor", testMatch: /market-monitor\.spec\.ts/ },
 ]
