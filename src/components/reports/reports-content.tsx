@@ -1,18 +1,25 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
 import { Link } from "@/i18n/routing"
 import { BarChart2 } from "lucide-react"
 import { WeeklyReportCard } from "./weekly-report-card"
 import { MonthlyReportCard } from "./monthly-report-card"
 import { MistakeCostCard } from "./mistake-cost-card"
 import { CommissionFeeImpactCard } from "./commission-fee-impact-card"
+import { WeeklyMetaChart } from "./weekly-meta-chart"
+import { AnnualRollupTable } from "./annual-rollup-table"
+import { CapitalEventLog } from "./capital-event-log"
+import { WithdrawalCalculator } from "./withdrawal-calculator"
 import type {
 	WeeklyReport,
 	MonthlyReport,
 	MistakeCostAnalysis,
 	CommissionFeeImpact,
 } from "@/app/actions/reports"
+import type { AnnualRollupData, WeeklyMetaVsRealData } from "@/app/actions/annual-reports"
+import type { CapitalEvent } from "@/types/integration"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { reportsGuide } from "@/components/ui/page-guide/guide-configs/reports"
 
@@ -21,6 +28,10 @@ interface ReportsContentProps {
 	monthlyReport: MonthlyReport | null
 	mistakeCostAnalysis: MistakeCostAnalysis | null
 	commissionFeeImpact: CommissionFeeImpact | null
+	annualRollupData: AnnualRollupData | null
+	weeklyMetaData: WeeklyMetaVsRealData | null
+	capitalEvents: CapitalEvent[]
+	currentYear: number
 }
 
 export const ReportsContent = ({
@@ -28,15 +39,22 @@ export const ReportsContent = ({
 	monthlyReport,
 	mistakeCostAnalysis,
 	commissionFeeImpact,
+	annualRollupData,
+	weeklyMetaData,
+	capitalEvents,
+	currentYear,
 }: ReportsContentProps) => {
 	const t = useTranslations("reports")
+	const router = useRouter()
 	useRegisterPageGuide(reportsGuide)
 
 	const allNull =
 		weeklyReport === null &&
 		monthlyReport === null &&
 		mistakeCostAnalysis === null &&
-		commissionFeeImpact === null
+		commissionFeeImpact === null &&
+		annualRollupData === null &&
+		weeklyMetaData === null
 
 	if (allNull) {
 		return (
@@ -69,6 +87,59 @@ export const ReportsContent = ({
 
 			{/* Commission & Fee Impact */}
 			<CommissionFeeImpactCard data={commissionFeeImpact} />
+
+			{/* Annual Report Section */}
+			{(annualRollupData || weeklyMetaData) && (
+				<section aria-labelledby="annual-section-heading" className="space-y-m-500">
+					<div className="flex items-center justify-between border-l-2 border-acc-100 pl-s-300">
+						<h2
+							id="annual-section-heading"
+							className="text-label uppercase tracking-wider text-txt-200"
+						>
+							Annual Report — {currentYear}
+						</h2>
+					</div>
+
+					{weeklyMetaData && (
+						<div className="space-y-s-200">
+							<h3 className="text-xs font-medium text-txt-300 uppercase tracking-wider">
+								Weekly Meta vs Real
+							</h3>
+							<WeeklyMetaChart data={weeklyMetaData} />
+						</div>
+					)}
+
+					{annualRollupData && (
+						<div className="space-y-s-200">
+							<h3 className="text-xs font-medium text-txt-300 uppercase tracking-wider">
+								Annual Rollup
+							</h3>
+							<AnnualRollupTable data={annualRollupData} />
+						</div>
+					)}
+
+					{annualRollupData &&
+						annualRollupData.withdrawalTargetPercent !== null &&
+						annualRollupData.withdrawalTargetPercent > 0 && (
+							<WithdrawalCalculator
+								currentMonthNetPnl={
+									annualRollupData.rows.find(
+										(r) => r.month === new Date().getMonth() + 1,
+									)?.resultadoLiquido ?? 0
+								}
+								withdrawalTargetPercent={annualRollupData.withdrawalTargetPercent}
+								onLogged={() => router.refresh()}
+							/>
+						)}
+
+					<CapitalEventLog
+						events={capitalEvents}
+						year={currentYear}
+						onEventDeleted={() => router.refresh()}
+						onEventAdded={() => router.refresh()}
+					/>
+				</section>
+			)}
 		</div>
 	)
 }

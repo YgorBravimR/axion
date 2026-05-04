@@ -6,6 +6,11 @@ import {
 	getMistakeCostAnalysis,
 	getCommissionFeeImpact,
 } from "@/app/actions/reports"
+import {
+	getAnnualRollup,
+	getWeeklyMetaVsReal,
+	getCapitalSnapshot,
+} from "@/app/actions/annual-reports"
 
 interface ReportsPageProps {
 	params: Promise<{ locale: string }>
@@ -15,25 +20,46 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
 
-	const [weeklyResult, monthlyResult, mistakeResult, feeResult] =
-		await Promise.all([
-			getWeeklyReport(0).catch(() => ({
-				status: "error" as const,
-				data: null,
-			})),
-			getMonthlyReport(0).catch(() => ({
-				status: "error" as const,
-				data: null,
-			})),
-			getMistakeCostAnalysis().catch(() => ({
-				status: "error" as const,
-				data: null,
-			})),
-			getCommissionFeeImpact().catch(() => ({
-				status: "error" as const,
-				data: null,
-			})),
-		])
+	const currentYear = new Date().getFullYear()
+
+	const [
+		weeklyResult,
+		monthlyResult,
+		mistakeResult,
+		feeResult,
+		annualRollupResult,
+		weeklyMetaResult,
+		capitalSnapshotResult,
+	] = await Promise.all([
+		getWeeklyReport(0).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getMonthlyReport(0).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getMistakeCostAnalysis().catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getCommissionFeeImpact().catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getAnnualRollup(currentYear).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getWeeklyMetaVsReal(currentYear).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getCapitalSnapshot().catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+	])
 
 	const weeklyReport =
 		weeklyResult.status === "success" ? weeklyResult.data ?? null : null
@@ -43,6 +69,14 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 		mistakeResult.status === "success" ? mistakeResult.data ?? null : null
 	const commissionFeeImpact =
 		feeResult.status === "success" ? feeResult.data ?? null : null
+	const annualRollupData =
+		annualRollupResult.status === "success" ? annualRollupResult.data ?? null : null
+	const weeklyMetaData =
+		weeklyMetaResult.status === "success" ? weeklyMetaResult.data ?? null : null
+	const capitalEvents =
+		capitalSnapshotResult.status === "success"
+			? capitalSnapshotResult.data?.events ?? []
+			: []
 
 	return (
 		<div className="flex h-full flex-col">
@@ -52,6 +86,10 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 					monthlyReport={monthlyReport}
 					mistakeCostAnalysis={mistakeCostAnalysis}
 					commissionFeeImpact={commissionFeeImpact}
+					annualRollupData={annualRollupData}
+					weeklyMetaData={weeklyMetaData}
+					capitalEvents={capitalEvents}
+					currentYear={currentYear}
 				/>
 			</div>
 		</div>
