@@ -42,3 +42,40 @@ const centsToPoints = (cents: number, instrument: string, contracts = 1): number
 
 export type { Instrument }
 export { POINT_VALUES, pointsToCents, centsToPoints }
+
+// ---------------------------------------------------------------------------
+// Yearly-plan helpers (cents-denominated for integer math)
+// ---------------------------------------------------------------------------
+//
+// The legacy POINT_VALUES export above stores values in reais (R$0.20/pt for
+// WIN, R$10.00/pt for WDO) — useful for the human-facing contract display.
+// The yearly-plan layer wants them in cents so it can divide integer P&L
+// directly without losing precision to floats. Same regulated facts, two
+// representations, kept in sync by construction.
+
+interface AssetPointValue {
+  asset: string
+  pointValueCents: number
+  description: string
+}
+
+const ASSET_POINT_VALUES: Record<string, AssetPointValue> = {
+  WIN: { asset: "WIN", pointValueCents: 20, description: "Mini Índice — R$0,20/pt" },
+  WDO: { asset: "WDO", pointValueCents: 1000, description: "Mini Dólar — R$10,00/pt" },
+}
+
+const getPointValue = (asset: string): AssetPointValue | null =>
+  ASSET_POINT_VALUES[asset.toUpperCase()] ?? null
+
+const financialToPoints = (
+  financialPnlCents: number,
+  asset: string,
+  contracts: number,
+): number | null => {
+  const pv = getPointValue(asset)
+  if (!pv || contracts <= 0) return null
+  return financialPnlCents / (pv.pointValueCents * contracts)
+}
+
+export { ASSET_POINT_VALUES, getPointValue, financialToPoints }
+export type { AssetPointValue }
