@@ -34,6 +34,36 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: strategies additive columns", () => {
+	it("adds R-multiple fields", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.strategies)
+		expect(cols.stopR).toBeDefined()
+		expect(cols.partialR).toBeDefined()
+		expect(cols.partialProportion).toBeDefined()
+		expect(cols.finalR).toBeDefined()
+		expect(cols.protectionR).toBeDefined()
+		expect(cols.defaultInstrumentSymbol).toBeDefined()
+	})
+
+	it("keeps all new R-multiple fields nullable (additive, zero-break)", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.strategies)
+		expect(cols.stopR.notNull).toBe(false)
+		expect(cols.partialR.notNull).toBe(false)
+		expect(cols.partialProportion.notNull).toBe(false)
+		expect(cols.finalR.notNull).toBe(false)
+		expect(cols.protectionR.notNull).toBe(false)
+		expect(cols.defaultInstrumentSymbol.notNull).toBe(false)
+	})
+
+	it("preserves legacy targetRMultiple (Phase 4 cleanup)", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.strategies)
+		expect(cols.targetRMultiple).toBeDefined()
+	})
+})
+
 describe("fractal-plan: tierChangeLog table", () => {
 	it("exports tierChangeLog with audit columns", async () => {
 		const schema = await import("@/db/schema")

@@ -425,6 +425,14 @@ export const strategies = pgTable(
 		exitCriteria: text("exit_criteria"),
 		riskRules: text("risk_rules"),
 		targetRMultiple: decimal("target_r_multiple", { precision: 8, scale: 2 }),
+		// R-multiple template (Fractal Planning Cascade — Phase 1).
+		// All nullable; populated via Phase 3 backfill (existing targetRMultiple → finalR).
+		stopR: decimal("stop_r", { precision: 8, scale: 2 }),
+		partialR: decimal("partial_r", { precision: 8, scale: 2 }),
+		partialProportion: decimal("partial_proportion", { precision: 4, scale: 3 }),
+		finalR: decimal("final_r", { precision: 8, scale: 2 }),
+		protectionR: decimal("protection_r", { precision: 8, scale: 2 }),
+		defaultInstrumentSymbol: varchar("default_instrument_symbol", { length: 20 }),
 		maxRiskPercent: decimal("max_risk_percent", { precision: 5, scale: 2 }),
 		screenshotUrl: varchar("screenshot_url", { length: 500 }),
 		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
