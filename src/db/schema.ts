@@ -494,6 +494,11 @@ export const trades = pgTable(
 			precision: 8,
 			scale: 2,
 		}),
+		// Fractal Planning Cascade — Phase 1.
+		// 1R captured at entry from resolveDay(today).oneRCents and frozen.
+		// rOutcome = pnl / oneRSnapshotCents, populated on close.
+		oneRSnapshotCents: bigint("one_r_snapshot_cents", { mode: "number" }),
+		rOutcome: decimal("r_outcome", { precision: 8, scale: 2 }),
 		outcome: tradeOutcomeEnum("outcome"),
 
 		// MFE/MAE (prices, not money)

@@ -34,6 +34,22 @@ describe("fractal-plan: enums", () => {
 	})
 })
 
+describe("fractal-plan: trades additive columns", () => {
+	it("adds R-snapshot + R-outcome fields", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.trades)
+		expect(cols.oneRSnapshotCents).toBeDefined()
+		expect(cols.rOutcome).toBeDefined()
+	})
+
+	it("keeps R-snapshot/outcome nullable (additive)", async () => {
+		const schema = await import("@/db/schema")
+		const cols = getTableColumns(schema.trades)
+		expect(cols.oneRSnapshotCents.notNull).toBe(false)
+		expect(cols.rOutcome.notNull).toBe(false)
+	})
+})
+
 describe("fractal-plan: strategies additive columns", () => {
 	it("adds R-multiple fields", async () => {
 		const schema = await import("@/db/schema")
