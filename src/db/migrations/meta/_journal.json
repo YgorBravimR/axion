@@ -267,6 +267,13 @@
       "when": 1778011200000,
       "tag": "0037_rename_monthly_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1778097600000,
+      "tag": "0038_backfill_account_fee_rates",
+      "breakpoints": true
     }
   ]
 }
