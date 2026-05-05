@@ -195,6 +195,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						accountId: account?.id || "",
 						assetId: editingAssetId,
 						isEnabled: true,
+						// Phase 1 — fee columns still exist in DB; preserve existing values until Phase 3 unification
 						commissionOverride: existing?.commissionOverride ?? null,
 						feesOverride: existing?.feesOverride ?? null,
 						breakevenTicksOverride: breakevenTicksValue,
@@ -210,7 +211,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					return [...prev, newData]
 				})
 				setEditingAssetId(null)
-				showToast("success", t("assetFeesUpdated"))
+				showToast("success", t("assetBreakevenUpdated"))
 			} else {
 				showToast("error", result.error || t("assetFeesUpdateError"))
 			}
@@ -239,7 +240,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					)
 				)
 				setEditingAssetId(null)
-				showToast("success", t("assetFeesReset"))
+				showToast("success", t("assetBreakevenReset"))
 			} else {
 				showToast("error", result.error || t("assetFeesUpdateError"))
 			}
@@ -563,10 +564,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Trading Costs (BR) */}
-			<div className="rounded-xl border border-txt-300/15 bg-bg-200/30 p-m-400">
-				<h3 className="text-body font-semibold text-txt-100 mb-m-300">
+			<div id="settings-trading-costs" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body font-semibold text-txt-100 mb-m-300">
 					{t("tradingCosts")}
-				</h3>
+				</h2>
 				<FeeRateForm />
 			</div>
 

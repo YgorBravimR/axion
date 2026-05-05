@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useTransition } from "react"
+import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -97,8 +98,8 @@ const PerContractTotal = ({ values }: { values: DisplayValues }) => {
 	const { iss, total } = useMemo(() => computePerContractTotal(values), [values])
 
 	return (
-		<div className="rounded-lg border border-txt-300/15 bg-bg-200/40 px-m-300 py-m-300">
-			<div className="flex items-center justify-between gap-m-200">
+		<div className="rounded-lg border border-txt-300/15 bg-bg-200/40 px-s-300 py-s-300">
+			<div className="flex items-center justify-between gap-s-200">
 				<span className="text-small text-txt-200">Total por contrato (B3 + ISS)</span>
 				<span className="font-mono text-body text-txt-100">{formatBRL(total)}</span>
 			</div>
@@ -129,15 +130,15 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 
 	const handleTextChange =
 		(field: keyof Omit<DisplayValues, "subjectToPersonalIr">) =>
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			setValues((prev) => ({ ...prev, [field]: e.target.value }))
 		}
 
-	const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
 		setValues((prev) => ({ ...prev, subjectToPersonalIr: e.target.checked }))
 	}
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		startTransition(async () => {
 			const result = await upsertFeeRates({
@@ -224,6 +225,7 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 				</Button>
 				{allowReset && (
 					<Button
+						id={`fee-rate-form-reset-${assetSymbol ?? "default"}`}
 						type="button"
 						variant="outline"
 						disabled={isPending}
@@ -315,7 +317,7 @@ const FeeRateForm = () => {
 
 	return (
 		<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-			<div className="flex items-center justify-between gap-m-300 flex-wrap">
+			<div className="flex items-center justify-between gap-s-300 flex-wrap">
 				<TabsList className="overflow-x-auto">
 					<TabsTrigger value="__default__">Padrão</TabsTrigger>
 					{assetTabs.map((tab) => (
@@ -344,7 +346,7 @@ const FeeRateForm = () => {
 				)}
 			</div>
 			<TabsContent value="__default__" className="pt-m-400">
-				<p className="text-tiny text-txt-300 mb-m-300">
+				<p className="text-tiny text-txt-300 mb-s-300">
 					Taxas padrão da conta. Aplicadas a qualquer ativo sem override específico.
 				</p>
 				<FeeRatePane
@@ -357,7 +359,7 @@ const FeeRateForm = () => {
 			</TabsContent>
 			{assetTabs.map((tab) => (
 				<TabsContent key={tab.symbol} value={tab.symbol} className="pt-m-400">
-					<p className="text-tiny text-txt-300 mb-m-300">
+					<p className="text-tiny text-txt-300 mb-s-300">
 						{tab.hasOverride
 							? `Taxas específicas para ${tab.symbol} (sobrescreve o padrão).`
 							: `Sem override ainda — valores pré-preenchidos com o padrão. Salve para criar override específico de ${tab.symbol}.`}
