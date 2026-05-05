@@ -7,8 +7,16 @@
  * Hardcoded FALLBACK_* constants remain in case the column value is null (user hasn't configured).
  */
 import { db } from "@/db/drizzle"
-import { yearlyPlans, quarterlyPlan, monthlyPlan, weeklyPlan, dailyPlan } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import {
+	yearlyPlans,
+	quarterlyPlan,
+	monthlyPlan,
+	weeklyPlan,
+	dailyPlan,
+	accountCapitalEvents,
+	accountMonthlyAggregate,
+} from "@/db/schema"
+import { eq, and, lte } from "drizzle-orm"
 import { resolveCascade, type CascadeResult } from "./cascade-merge"
 import { getWeekNumber, getWeekYear } from "@/lib/calendar/iso-week"
 
@@ -263,5 +271,235 @@ const resolveYear = async (input: ResolveYearInput): Promise<ResolveYearResult> 
 	}
 }
 
-export type { ResolvedDay, ResolveMonthInput, ResolveMonthResult, ResolveYearInput, ResolveYearResult }
-export { resolveDay, resolveMonth, resolveYear }
+// ---------------------------------------------------------------------------
+// resolveBehavior — cascade adaptive risk-management behaviors (Phase 4b)
+// ---------------------------------------------------------------------------
+
+type BehaviorProvenance = "year" | "month" | "week" | "day" | "fallback"
+
+interface BehaviorResolved {
+	readonly riskProfileId: string | null
+	readonly riskProfileId_provenance: BehaviorProvenance
+	readonly maxConsecutiveLosses: number | null
+	readonly maxConsecutiveLosses_provenance: BehaviorProvenance
+	readonly allowSecondOpAfterLoss: boolean
+	readonly allowSecondOpAfterLoss_provenance: BehaviorProvenance
+	readonly reduceRiskAfterLoss: boolean
+	readonly reduceRiskAfterLoss_provenance: BehaviorProvenance
+	readonly riskReductionFactor: number | null
+	readonly riskReductionFactor_provenance: BehaviorProvenance
+	readonly increaseRiskAfterWin: boolean
+	readonly increaseRiskAfterWin_provenance: BehaviorProvenance
+	readonly capRiskAfterWin: boolean
+	readonly capRiskAfterWin_provenance: BehaviorProvenance
+	readonly profitReinvestmentPercent: number | null
+	readonly profitReinvestmentPercent_provenance: BehaviorProvenance
+}
+
+interface ResolveBehaviorInput {
+	accountId: string
+	date: Date
+}
+
+const pickWithin = <T>(
+	d: T | null | undefined,
+	w: T | null | undefined,
+	m: T | null | undefined,
+	y: T | null | undefined,
+): { value: T | null; level: BehaviorProvenance } => {
+	if (d !== null && d !== undefined) return { value: d, level: "day" }
+	if (w !== null && w !== undefined) return { value: w, level: "week" }
+	if (m !== null && m !== undefined) return { value: m, level: "month" }
+	if (y !== null && y !== undefined) return { value: y, level: "year" }
+	return { value: null, level: "fallback" }
+}
+
+const pickStrategy = <T>(
+	m: T | null | undefined,
+	y: T | null | undefined,
+): { value: T | null; level: BehaviorProvenance } => {
+	if (m !== null && m !== undefined) return { value: m, level: "month" }
+	if (y !== null && y !== undefined) return { value: y, level: "year" }
+	return { value: null, level: "fallback" }
+}
+
+const numOrNull = (v: string | number | null | undefined): number | null =>
+	v === null || v === undefined ? null : Number(v)
+
+const resolveBehavior = async ({
+	accountId,
+	date,
+}: ResolveBehaviorInput): Promise<BehaviorResolved> => {
+	const year = date.getFullYear()
+	const month = date.getMonth() + 1
+	const quarter = Math.ceil(month / 3)
+	const isoWeek = getWeekNumber(date)
+	const isoYear = getWeekYear(date)
+	const dateStr = date.toISOString().slice(0, 10)
+
+	const yearRow = await db.query.yearlyPlans.findFirst({
+		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+	})
+
+	const quarterRow = yearRow
+		? await db.query.quarterlyPlan.findFirst({
+			where: and(eq(quarterlyPlan.yearlyPlanId, yearRow.id), eq(quarterlyPlan.quarter, quarter)),
+		})
+		: null
+
+	const monthRow = quarterRow
+		? await db.query.monthlyPlan.findFirst({
+			where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id), eq(monthlyPlan.month, month)),
+		})
+		: null
+
+	const weekRow = monthRow
+		? await db.query.weeklyPlan.findFirst({
+			where: and(
+				eq(weeklyPlan.monthlyPlanId, monthRow.id),
+				eq(weeklyPlan.isoWeek, isoWeek),
+				eq(weeklyPlan.isoYear, isoYear),
+			),
+		})
+		: null
+
+	const dayRow = weekRow
+		? await db.query.dailyPlan.findFirst({
+			where: and(eq(dailyPlan.weeklyPlanId, weekRow.id), eq(dailyPlan.date, dateStr)),
+		})
+		: null
+
+	const profile = pickStrategy(monthRow?.overrideRiskProfileId, yearRow?.defaultRiskProfileId)
+
+	const maxConsec = pickWithin(
+		dayRow?.overrideMaxConsecutiveLosses,
+		weekRow?.overrideMaxConsecutiveLosses,
+		monthRow?.overrideMaxConsecutiveLosses,
+		yearRow?.defaultMaxConsecutiveLosses,
+	)
+
+	const secondOp = pickWithin(
+		dayRow?.overrideAllowSecondOpAfterLoss,
+		weekRow?.overrideAllowSecondOpAfterLoss,
+		monthRow?.overrideAllowSecondOpAfterLoss,
+		yearRow?.defaultAllowSecondOpAfterLoss,
+	)
+
+	const reduceLoss = pickStrategy(
+		monthRow?.overrideReduceRiskAfterLoss,
+		yearRow?.defaultReduceRiskAfterLoss,
+	)
+
+	const reductionFactor = pickStrategy(
+		numOrNull(monthRow?.overrideRiskReductionFactor),
+		numOrNull(yearRow?.defaultRiskReductionFactor),
+	)
+
+	const increaseWin = pickStrategy(
+		monthRow?.overrideIncreaseRiskAfterWin,
+		yearRow?.defaultIncreaseRiskAfterWin,
+	)
+
+	const capWin = pickStrategy(monthRow?.overrideCapRiskAfterWin, yearRow?.defaultCapRiskAfterWin)
+
+	const reinvest = pickStrategy(
+		numOrNull(monthRow?.overrideProfitReinvestmentPercent),
+		numOrNull(yearRow?.defaultProfitReinvestmentPercent),
+	)
+
+	return {
+		riskProfileId: profile.value,
+		riskProfileId_provenance: profile.level,
+		maxConsecutiveLosses: maxConsec.value,
+		maxConsecutiveLosses_provenance: maxConsec.level,
+		allowSecondOpAfterLoss: secondOp.value ?? false,
+		allowSecondOpAfterLoss_provenance: secondOp.level,
+		reduceRiskAfterLoss: reduceLoss.value ?? false,
+		reduceRiskAfterLoss_provenance: reduceLoss.level,
+		riskReductionFactor: reductionFactor.value,
+		riskReductionFactor_provenance: reductionFactor.level,
+		increaseRiskAfterWin: increaseWin.value ?? false,
+		increaseRiskAfterWin_provenance: increaseWin.level,
+		capRiskAfterWin: capWin.value ?? false,
+		capRiskAfterWin_provenance: capWin.level,
+		profitReinvestmentPercent: reinvest.value,
+		profitReinvestmentPercent_provenance: reinvest.level,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// resolveBalance — derive live balance from initial capital + events + aggregates
+// ---------------------------------------------------------------------------
+
+interface BalanceResolved {
+	readonly balanceCents: number
+	readonly initialCapitalCents: number
+	readonly capitalEventsDelta: number
+	readonly realizedPnlDelta: number
+	readonly computedAt: Date
+}
+
+interface ResolveBalanceInput {
+	accountId: string
+	date: Date
+}
+
+const resolveBalance = async ({
+	accountId,
+	date,
+}: ResolveBalanceInput): Promise<BalanceResolved> => {
+	const year = date.getFullYear()
+	const month = date.getMonth() + 1
+	const dateStr = date.toISOString().slice(0, 10)
+
+	const yearRow = await db.query.yearlyPlans.findFirst({
+		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+	})
+	if (!yearRow) {
+		throw new Error(
+			`resolveBalance: no yearly plan for account ${accountId} year ${year}`,
+		)
+	}
+
+	const events = await db.query.accountCapitalEvents.findMany({
+		where: and(
+			eq(accountCapitalEvents.accountId, accountId),
+			lte(accountCapitalEvents.eventDate, dateStr),
+		),
+	})
+
+	const aggregates = await db.query.accountMonthlyAggregate.findMany({
+		where: eq(accountMonthlyAggregate.accountId, accountId),
+	})
+	const aggUpTo = aggregates.filter(
+		(a) => a.year < year || (a.year === year && a.month <= month),
+	)
+
+	const capitalEventsDelta = events.reduce(
+		(sum, e) => sum + (e.eventType === "deposit" ? e.amountCents : -e.amountCents),
+		0,
+	)
+	const realizedPnlDelta = aggUpTo.reduce((sum, a) => sum + a.netCents, 0)
+
+	return {
+		balanceCents: yearRow.initialCapitalCents + capitalEventsDelta + realizedPnlDelta,
+		initialCapitalCents: yearRow.initialCapitalCents,
+		capitalEventsDelta,
+		realizedPnlDelta,
+		computedAt: new Date(),
+	}
+}
+
+export type {
+	ResolvedDay,
+	ResolveMonthInput,
+	ResolveMonthResult,
+	ResolveYearInput,
+	ResolveYearResult,
+	BehaviorResolved,
+	BehaviorProvenance,
+	ResolveBehaviorInput,
+	BalanceResolved,
+	ResolveBalanceInput,
+}
+export { resolveDay, resolveMonth, resolveYear, resolveBehavior, resolveBalance }
