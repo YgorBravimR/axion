@@ -1,4 +1,4 @@
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profiles/cents-shape"
 
 // ==========================================
 // TRADE STATUSES

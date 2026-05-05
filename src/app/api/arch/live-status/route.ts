@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { trades, monthlyRiskConfig, riskManagementProfiles } from "@/db/schema"
+import { trades, riskManagementProfiles } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
-import { getUserDek, decryptTradeFields, decryptMonthlyPlanFields } from "@/lib/user-crypto"
+import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
-import { fromCents } from "@/lib/money"
+import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
 import { archAuth } from "../_lib/auth"
 import { archSuccess, archError } from "../_lib/helpers"
 import type { DecisionTreeConfig } from "@/types/risk-profile"
@@ -13,11 +14,11 @@ import type { TradeSummary } from "@/types/live-trading-status"
 /**
  * GET /api/arch/live-status
  *
- * Returns the live trading status for the current day, including
- * the resolved decision tree state and trade summaries.
- *
- * Query params:
- * - date (optional): ISO date string, defaults to today
+ * Phase 4b: powered by the fractal-plan resolver. The active risk profile
+ * comes from `resolveBehavior(...).riskProfileId` (cascades month → year);
+ * the decision tree (R-shape) is adapted to cents at the boundary using
+ * `oneRCents` from `resolveDay`. Daily caps, max trades, and profit targets
+ * all read from the cascade.
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
@@ -32,103 +33,76 @@ const GET = async (request: NextRequest) => {
 		const tomorrow = new Date(today)
 		tomorrow.setDate(tomorrow.getDate() + 1)
 
-		const currentYear = today.getFullYear()
-		const currentMonth = today.getMonth() + 1
+		const day = await resolveDay(accountId, today)
+		if (!day) {
+			return archSuccess("No fractal plan configured", {
+				hasProfile: false,
+				fallbackRiskCents: null,
+			})
+		}
+		const behavior = await resolveBehavior({ accountId, date: today })
 
-		// Fetch current month's plan
-		const rawMonthlyRiskConfig = await db.query.monthlyRiskConfig.findFirst({
-			where: and(
-				eq(monthlyRiskConfig.accountId, accountId),
-				eq(monthlyRiskConfig.year, currentYear),
-				eq(monthlyRiskConfig.month, currentMonth)
-			),
-		})
-
-		// Decrypt monthly plan fields if DEK is available
-		const dek = await getUserDek(userId)
-		const monthlyRiskConfigRow = rawMonthlyRiskConfig && dek
-			? decryptMonthlyPlanFields(rawMonthlyRiskConfig as unknown as Record<string, unknown>, dek) as unknown as typeof rawMonthlyRiskConfig
-			: rawMonthlyRiskConfig
-
-		if (!monthlyRiskConfigRow?.riskProfileId) {
+		if (!behavior.riskProfileId) {
 			return archSuccess("No risk profile linked", {
 				hasProfile: false,
-				fallbackRiskCents: monthlyRiskConfigRow?.riskPerTradeCents
-					? Number(monthlyRiskConfigRow.riskPerTradeCents)
-					: null,
+				fallbackRiskCents: day.oneRCents,
 			})
 		}
 
-		// Fetch the linked risk profile directly
 		const [profileRow] = await db
 			.select()
 			.from(riskManagementProfiles)
-			.where(eq(riskManagementProfiles.id, monthlyRiskConfigRow.riskProfileId))
+			.where(eq(riskManagementProfiles.id, behavior.riskProfileId))
 			.limit(1)
 
 		if (!profileRow) {
 			return archSuccess("Risk profile not found", {
 				hasProfile: false,
-				fallbackRiskCents: monthlyRiskConfigRow.riskPerTradeCents
-					? Number(monthlyRiskConfigRow.riskPerTradeCents)
-					: null,
+				fallbackRiskCents: day.oneRCents,
 			})
 		}
 
-		const profile = {
-			...profileRow,
-			decisionTree: JSON.parse(profileRow.decisionTree) as DecisionTreeConfig,
-		}
+		const tree = JSON.parse(profileRow.decisionTree) as DecisionTreeConfig
+		const decisionTree = adaptDecisionTree(tree, day.oneRCents)
 
-		// The monthly plan is the single source of truth for computed values
-		const planRiskPerTradeCents = Number(monthlyRiskConfigRow.riskPerTradeCents) || profile.decisionTree.baseTrade.riskCents
-		const planDailyLossCents = Number(monthlyRiskConfigRow.dailyLossCents) || profile.dailyLossCents
-		const planDailyProfitTargetCents = Number(monthlyRiskConfigRow.dailyProfitTargetCents) || profile.dailyProfitTargetCents
+		const oneRCents = day.oneRCents
+		const dailyLossCents = Math.round(Number(day.dailyLossR.value) * oneRCents)
+		const dailyTargetCents = Math.round(Number(day.dailyTargetR.value) * oneRCents)
 
-		// Override the decision tree's static base risk with the plan-derived value
-		const decisionTree = {
-			...profile.decisionTree,
-			baseTrade: {
-				...profile.decisionTree.baseTrade,
-				riskCents: planRiskPerTradeCents,
-			},
-		}
-
-		// Fetch today's trades
+		const dek = await getUserDek(userId)
 		const rawTodaysTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
 				gte(trades.entryDate, today),
 				lte(trades.entryDate, tomorrow),
-				eq(trades.isArchived, false)
+				eq(trades.isArchived, false),
 			),
 			orderBy: (t, { asc }) => [asc(t.entryDate)],
 		})
-
-		// Decrypt trade fields
 		const todaysTrades = dek
-			? rawTodaysTrades.map((t) => decryptTradeFields(t as unknown as Record<string, unknown>, dek) as unknown as typeof t)
+			? rawTodaysTrades.map(
+					(t) =>
+						decryptTradeFields(t as unknown as Record<string, unknown>, dek) as unknown as typeof t,
+				)
 			: rawTodaysTrades
 
-		// Map trades to the lightweight input shape
 		const tradeInputs = todaysTrades.map((trade) => ({
 			pnlCents: Number(trade.pnl) || 0,
 			outcome: trade.outcome as "win" | "loss" | "breakeven" | null,
 		}))
 
-		// Resolve max trades from explicit plan value or derived fallback
-		const maxTrades = monthlyRiskConfigRow.maxDailyTrades ?? monthlyRiskConfigRow.derivedMaxDailyTrades ?? null
+		const derivedMaxTrades =
+			oneRCents > 0 && dailyLossCents > 0 ? Math.floor(dailyLossCents / oneRCents) : null
 
 		const status = resolveLiveStatus({
 			trades: tradeInputs,
 			decisionTree,
-			profileName: profile.name,
-			dailyLossCents: planDailyLossCents,
-			dailyProfitTargetCents: planDailyProfitTargetCents,
-			maxTrades,
+			profileName: profileRow.name,
+			dailyLossCents,
+			dailyProfitTargetCents: dailyTargetCents > 0 ? dailyTargetCents : null,
+			maxTrades: derivedMaxTrades,
 		})
 
-		// Build trade summaries by zipping decrypted trades with step numbers
 		const tradeSummaries: TradeSummary[] = todaysTrades.map((trade, index) => ({
 			tradeStepNumber: status.tradeStepNumbers[index] ?? index + 1,
 			pnlCents: Number(trade.pnl) || 0,
@@ -146,9 +120,11 @@ const GET = async (request: NextRequest) => {
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"
-		return archError("Failed to get live trading status", [
-			{ code: "FETCH_FAILED", detail: message },
-		], 500)
+		return archError(
+			"Failed to get live trading status",
+			[{ code: "FETCH_FAILED", detail: message }],
+			500,
+		)
 	}
 }
 

@@ -11,7 +11,7 @@ import type {
 	AdvancedSimulationParams,
 	RiskSimulationParams,
 } from "@/types/risk-simulation"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profiles/cents-shape"
 
 interface RiskParamsFormProps {
 	params: RiskSimulationParams

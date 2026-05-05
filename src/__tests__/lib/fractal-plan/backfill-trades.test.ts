@@ -72,7 +72,7 @@ describe("backfillTradesForAccount", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockSelect.mockReturnValue({ from: mockFrom })
 
-		let capturedUpdate: Record<string, unknown> | null = null
+		let capturedUpdate: { rOutcome?: string } | null = null
 		const mockSetWhere = vi.fn().mockResolvedValue([])
 		const mockSet = vi.fn().mockImplementation((updates) => {
 			capturedUpdate = updates
@@ -83,7 +83,8 @@ describe("backfillTradesForAccount", () => {
 		mockCaptureROnEntry.mockResolvedValue(50000) // pnl=75000, snapshot=50000 → R=1.50
 
 		await backfillTradesForAccount({ accountId: "acc-1", dryRun: false })
-		expect(capturedUpdate?.rOutcome).toBe("1.50")
+		const update = capturedUpdate as { rOutcome?: string } | null
+		expect(update?.rOutcome).toBe("1.50")
 	})
 
 	it("returns count of rows modified in dryRun mode without writing", async () => {

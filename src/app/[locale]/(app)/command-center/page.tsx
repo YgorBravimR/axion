@@ -8,7 +8,6 @@ import {
 	getCircuitBreakerStatus,
 	getDailySummary,
 } from "@/app/actions/command-center"
-import { getActiveMonthlyRiskConfig } from "@/app/actions/monthly-risk-config"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getActiveAssets } from "@/app/actions/assets"
 import { getCurrentAccount } from "@/app/actions/auth"
@@ -56,7 +55,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		summaryResult,
 		assetsResult,
 		strategiesResult,
-		monthlyPlanResult,
 		riskProfilesResult,
 		liveTradingStatusResult,
 	] = await Promise.all([
@@ -67,7 +65,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		getDailySummary(dateArg),
 		getActiveAssets().catch(() => []),
 		getStrategies(),
-		getActiveMonthlyRiskConfig(),
 		listActiveRiskProfiles(),
 		getLiveTradingStatus(dateArg),
 	])
@@ -91,8 +88,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		strategiesResult.status === "success" && strategiesResult.data
 			? strategiesResult.data
 			: []
-	const initialPlan =
-		monthlyPlanResult.status === "success" ? (monthlyPlanResult.data ?? null) : null
+	// Phase 4b: legacy monthlyRiskConfig table is being retired; the new
+	// fractal-plan UI (Phase 5) will replace this prop. Pass null until then.
+	const initialPlan = null
 	const riskProfiles =
 		riskProfilesResult.status === "success" ? (riskProfilesResult.data ?? []) : []
 	const initialLiveTradingStatus =
@@ -102,12 +100,12 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 	const planYear = effectiveDate.getFullYear()
 	const planMonth = effectiveDate.getMonth() + 1
 
-	// Account settings: read exclusively from monthly plan
+	// Account settings: derived from circuit-breaker resolver output (Phase 4b)
 	const accountSettings = {
-		defaultRiskPerTrade: initialPlan?.riskPerTradeCents
-			? String(fromCents(initialPlan.riskPerTradeCents))
+		defaultRiskPerTrade: initialCircuitBreaker?.recommendedRiskCents
+			? String(fromCents(initialCircuitBreaker.recommendedRiskCents))
 			: null,
-		maxDailyLoss: initialPlan?.dailyLossCents ? Number(initialPlan.dailyLossCents) : null,
+		maxDailyLoss: initialCircuitBreaker?.dailyLossLimitCents ?? null,
 	}
 
 	return (

@@ -7,32 +7,21 @@ import type { DecisionTreeConfig } from "@/types/risk-profile"
 /**
  * A code-defined template for pre-filling the risk profile creation form.
  * Users select a template, customize values, then save as a real profile.
+ *
+ * Phase 4b: templates are R-shape only. Caps live on the fractal plan; the
+ * profile owns the decision tree.
  */
 interface RiskProfileTemplate {
 	id: string
-	nameKey: string // i18n key under settings.riskProfiles.templates
+	nameKey: string
 	descriptionKey: string
 	author: string
 	category: "sizing" | "drawdown" | "r-based" | "kelly"
 	defaults: {
-		baseRiskCents: number
-		dailyLossCents: number
-		weeklyLossCents: number | null
-		monthlyLossCents: number
-		dailyProfitTargetCents: number | null
 		decisionTree: DecisionTreeConfig
 	}
 }
 
-/**
- * 5 professional risk management model templates.
- *
- * Template 1: Fixed Fractional (Van Tharp) — risk a fixed % of current balance
- * Template 2: Fixed Ratio (Ralph Vince) — scale position size by accumulated profit
- * Template 3: Institutional (CTA/Quant) — conservative with 3-tier drawdown controls
- * Template 4: R-Multiples (Van Tharp) — clean R-based framework with fixed sizing
- * Template 5: Kelly Fractional (Kelly/Shannon) — mathematically optimal sizing with safety divisor
- */
 const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 	// Template 1: Fixed Fractional (Van Tharp)
 	{
@@ -42,14 +31,9 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 		author: "Van Tharp",
 		category: "sizing",
 		defaults: {
-			baseRiskCents: 50000, // R$500 fallback for fixed mode calculations
-			dailyLossCents: 100000, // R$1,000
-			weeklyLossCents: 250000, // R$2,500
-			monthlyLossCents: 500000, // R$5,000
-			dailyProfitTargetCents: 300000, // R$3,000 (6R × R$500 base risk)
 			decisionTree: {
 				baseTrade: {
-					riskCents: 50000,
+					riskR: 1,
 					maxContracts: null,
 					minStopPoints: null,
 				},
@@ -62,12 +46,12 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 				},
 				gainMode: {
 					type: "singleTarget",
-					dailyTargetCents: 300000,
+					dailyTargetR: 6,
 				},
 				cascadingLimits: {
-					weeklyLossCents: 250000,
+					weeklyLossR: 5,
 					weeklyAction: "stopTrading",
-					monthlyLossCents: 500000,
+					monthlyLossR: 10,
 					monthlyAction: "stopTrading",
 				},
 				executionConstraints: {
@@ -101,14 +85,9 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 		author: "Ralph Vince",
 		category: "sizing",
 		defaults: {
-			baseRiskCents: 50000,
-			dailyLossCents: 150000,
-			weeklyLossCents: 300000,
-			monthlyLossCents: 600000,
-			dailyProfitTargetCents: null,
 			decisionTree: {
 				baseTrade: {
-					riskCents: 50000,
+					riskR: 1,
 					maxContracts: null,
 					minStopPoints: null,
 				},
@@ -124,12 +103,12 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 					type: "compounding",
 					reinvestmentPercent: 30,
 					stopOnFirstLoss: true,
-					dailyTargetCents: null,
+					dailyTargetR: null,
 				},
 				cascadingLimits: {
-					weeklyLossCents: 300000,
+					weeklyLossR: 6,
 					weeklyAction: "stopTrading",
-					monthlyLossCents: 600000,
+					monthlyLossR: 12,
 					monthlyAction: "stopTrading",
 				},
 				executionConstraints: {
@@ -138,7 +117,7 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 					operatingHoursStart: null,
 					operatingHoursEnd: null,
 				},
-				riskSizing: { type: "fixedRatio", deltaCents: 500000, baseContractRiskCents: 50000 },
+				riskSizing: { type: "fixedRatio", deltaR: 10, baseContractRiskR: 1 },
 				limitMode: "rMultiples",
 				limitsR: { daily: 3, weekly: 6, monthly: 12 },
 				consecutiveLossRules: [
@@ -157,14 +136,9 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 		author: "CTA/Quant Funds",
 		category: "drawdown",
 		defaults: {
-			baseRiskCents: 50000,
-			dailyLossCents: 75000,
-			weeklyLossCents: 200000,
-			monthlyLossCents: 400000,
-			dailyProfitTargetCents: 100000,
 			decisionTree: {
 				baseTrade: {
-					riskCents: 50000,
+					riskR: 1,
 					maxContracts: null,
 					minStopPoints: null,
 				},
@@ -177,12 +151,12 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 				},
 				gainMode: {
 					type: "singleTarget",
-					dailyTargetCents: 100000,
+					dailyTargetR: 2,
 				},
 				cascadingLimits: {
-					weeklyLossCents: 200000,
+					weeklyLossR: 4,
 					weeklyAction: "stopTrading",
-					monthlyLossCents: 400000,
+					monthlyLossR: 8,
 					monthlyAction: "stopTrading",
 				},
 				executionConstraints: {
@@ -214,14 +188,9 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 		author: "Van Tharp / Larry Williams",
 		category: "r-based",
 		defaults: {
-			baseRiskCents: 50000,
-			dailyLossCents: 150000,
-			weeklyLossCents: 250000,
-			monthlyLossCents: 500000,
-			dailyProfitTargetCents: 200000,
 			decisionTree: {
 				baseTrade: {
-					riskCents: 50000,
+					riskR: 1,
 					maxContracts: null,
 					minStopPoints: null,
 				},
@@ -235,12 +204,12 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 				},
 				gainMode: {
 					type: "singleTarget",
-					dailyTargetCents: 200000,
+					dailyTargetR: 4,
 				},
 				cascadingLimits: {
-					weeklyLossCents: 250000,
+					weeklyLossR: 5,
 					weeklyAction: "stopTrading",
-					monthlyLossCents: 500000,
+					monthlyLossR: 10,
 					monthlyAction: "stopTrading",
 				},
 				executionConstraints: {
@@ -264,14 +233,9 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 		author: "Kelly / Shannon",
 		category: "kelly",
 		defaults: {
-			baseRiskCents: 50000,
-			dailyLossCents: 150000,
-			weeklyLossCents: 350000,
-			monthlyLossCents: 750000,
-			dailyProfitTargetCents: null,
 			decisionTree: {
 				baseTrade: {
-					riskCents: 50000,
+					riskR: 1,
 					maxContracts: null,
 					minStopPoints: null,
 				},
@@ -286,12 +250,12 @@ const RISK_PROFILE_TEMPLATES: RiskProfileTemplate[] = [
 					type: "compounding",
 					reinvestmentPercent: 25,
 					stopOnFirstLoss: true,
-					dailyTargetCents: null,
+					dailyTargetR: null,
 				},
 				cascadingLimits: {
-					weeklyLossCents: 350000,
+					weeklyLossR: 7,
 					weeklyAction: "stopTrading",
-					monthlyLossCents: 750000,
+					monthlyLossR: 15,
 					monthlyAction: "stopTrading",
 				},
 				executionConstraints: {

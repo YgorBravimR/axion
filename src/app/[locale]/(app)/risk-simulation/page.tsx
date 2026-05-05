@@ -1,5 +1,4 @@
 import { Suspense } from "react"
-import { getActiveMonthlyRiskConfig } from "@/app/actions/monthly-risk-config"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getTradeYears } from "@/app/actions/risk-simulation"
 import { RiskSimulationContent } from "@/components/risk-simulation"
@@ -7,14 +6,13 @@ import { LoadingSpinner } from "@/components/shared"
 
 
 const RiskSimulationPage = async () => {
-	const [planResponse, profilesResponse, yearsResponse] = await Promise.all([
-		getActiveMonthlyRiskConfig(),
+	const [profilesResponse, yearsResponse] = await Promise.all([
 		listActiveRiskProfiles(),
 		getTradeYears(),
 	])
 
-	const monthlyPlan =
-		planResponse.status === "success" ? (planResponse.data ?? null) : null
+	// Phase 4b: monthly plan prefill migrated to the fractal-plan resolver.
+	const monthlyPlan = null
 	const riskProfiles =
 		profilesResponse.status === "success" ? (profilesResponse.data ?? []) : []
 	const tradeYears =

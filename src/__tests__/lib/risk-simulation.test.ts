@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach } from "vitest"
 import { runSimpleSimulation } from "@/lib/risk-simulation"
 import { runAdvancedSimulation } from "@/lib/risk-simulation-advanced"
 import type { SimpleSimulationParams, AdvancedSimulationParams } from "@/types/risk-simulation"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profiles/cents-shape"
 import {
 	resetTradeIdCounter,
 	createWinTrade,

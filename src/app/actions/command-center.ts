@@ -11,7 +11,6 @@ import {
 	accountAssets,
 	trades,
 	assets,
-	monthlyRiskConfig,
 } from "@/db/schema"
 import type {
 	DailyChecklist,
@@ -43,10 +42,10 @@ import {
 	getUserDek,
 	encryptDailyNotesFields,
 	decryptDailyNotesFields,
-	decryptMonthlyPlanFields,
 } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
+import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 
 // ==========================================
 // CHECKLIST ACTIONS
@@ -919,7 +918,7 @@ export const getCircuitBreakerStatus = async (
 ): Promise<ActionResponse<CircuitBreakerStatus>> => {
 	const t = await getTranslations("commandCenter")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId } = await requireAuth()
 
 		const today = date ? new Date(date) : await getServerEffectiveNow()
 		today.setHours(0, 0, 0, 0)
@@ -937,28 +936,9 @@ export const getCircuitBreakerStatus = async (
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		// Get monthly plan for current month
-		const effectiveNow = date ? new Date(date) : await getServerEffectiveNow()
-		const currentYear = effectiveNow.getFullYear()
-		const currentMonth = effectiveNow.getMonth() + 1 // 1-indexed
-
-		const rawMonthlyRiskConfig = await db.query.monthlyRiskConfig.findFirst({
-			where: and(
-				eq(monthlyRiskConfig.accountId, accountId),
-				eq(monthlyRiskConfig.year, currentYear),
-				eq(monthlyRiskConfig.month, currentMonth)
-			),
-		})
-
-		// Decrypt monthly plan fields if DEK is available
-		const dek = await getUserDek(userId)
-		const monthlyRiskConfigRow =
-			rawMonthlyRiskConfig && dek
-				? (decryptMonthlyPlanFields(
-						rawMonthlyRiskConfig as unknown as Record<string, unknown>,
-						dek
-					) as unknown as typeof rawMonthlyRiskConfig)
-				: rawMonthlyRiskConfig
+		// Phase 4b: caps + behaviors come from the fractal-plan cascade.
+		const day = await resolveDay(accountId, today)
+		const behavior = await resolveBehavior({ accountId, date: today })
 
 		// Calculate metrics
 		let dailyPnL = 0
@@ -1004,23 +984,29 @@ export const getCircuitBreakerStatus = async (
 			0
 		)
 
-		// Resolve limits from monthly plan (single source of truth)
-		// After decryption, these values are numbers; without DEK, parse from text
-		const dailyLossLimitCents = Number(monthlyRiskConfigRow?.dailyLossCents) || 0
-		const profitTargetCents = Number(monthlyRiskConfigRow?.dailyProfitTargetCents) || 0
-		const rawMaxTrades =
-			monthlyRiskConfigRow?.maxDailyTrades ?? monthlyRiskConfigRow?.derivedMaxDailyTrades ?? null
-		const maxConsecutiveLossesValue = monthlyRiskConfigRow?.maxConsecutiveLosses ?? null
+		// Resolve limits from the fractal-plan cascade (single source of truth)
+		const oneRCents = day?.oneRCents ?? 0
+		const dailyLossLimitCents = day
+			? Math.round(Number(day.dailyLossR.value) * oneRCents)
+			: 0
+		const profitTargetCents = day
+			? Math.round(Number(day.dailyTargetR.value) * oneRCents)
+			: 0
+		const derivedMaxTrades =
+			oneRCents > 0 && dailyLossLimitCents > 0
+				? Math.floor(dailyLossLimitCents / oneRCents)
+				: null
+		const maxConsecutiveLossesValue = behavior.maxConsecutiveLosses ?? null
 
-		// When a recovery profile is linked, derivedMaxDailyTrades (floor(dailyLoss / baseRisk))
-		// underestimates because recovery steps use reduced risk. Ensure maxTrades is at least
-		// maxConsecutiveLosses so the circuit breaker doesn't show a contradictory cap.
+		// When a recovery profile is linked, derivedMaxDailyTrades (floor(dailyLoss / 1R))
+		// underestimates because recovery steps use reduced risk. Ensure maxTrades is at
+		// least maxConsecutiveLosses so the circuit breaker doesn't show a contradictory cap.
 		const maxTradesValue =
-			rawMaxTrades !== null &&
+			derivedMaxTrades !== null &&
 			maxConsecutiveLossesValue !== null &&
-			maxConsecutiveLossesValue > rawMaxTrades
+			maxConsecutiveLossesValue > derivedMaxTrades
 				? maxConsecutiveLossesValue
-				: rawMaxTrades
+				: derivedMaxTrades
 
 		// Calculate remaining daily risk
 		const remainingDailyRiskCents = Math.max(
@@ -1044,8 +1030,10 @@ export const getCircuitBreakerStatus = async (
 			0
 		)
 
-		// Monthly loss limit (plan-only)
-		const monthlyLossLimitCents = Number(monthlyRiskConfigRow?.monthlyLossCents) || 0
+		// Monthly loss limit (resolver — month↔year cascade)
+		const monthlyLossLimitCents = day
+			? Math.round(Number(day.monthlyLossR.value) * oneRCents)
+			: 0
 		const remainingMonthlyCents =
 			monthlyLossLimitCents > 0
 				? Math.max(
@@ -1057,14 +1045,12 @@ export const getCircuitBreakerStatus = async (
 			monthlyLossLimitCents > 0 &&
 			monthlyPnL <= -fromCents(monthlyLossLimitCents)
 
-		// Calculate recommended risk (plan-only)
-		let recommendedRiskCents = Number(monthlyRiskConfigRow?.riskPerTradeCents) || 0
+		// Calculate recommended risk — base is 1R from the active ladder tier
+		let recommendedRiskCents = oneRCents
 
 		// Risk reduction after consecutive losses
-		const shouldReduceRisk = monthlyRiskConfigRow?.reduceRiskAfterLoss ?? false
-		const reductionFactor = monthlyRiskConfigRow?.riskReductionFactor
-			? parseFloat(monthlyRiskConfigRow.riskReductionFactor)
-			: null
+		const shouldReduceRisk = behavior.reduceRiskAfterLoss
+		const reductionFactor = behavior.riskReductionFactor
 
 		if (shouldReduceRisk && currentConsecutiveLosses > 0 && reductionFactor) {
 			recommendedRiskCents = Math.round(
@@ -1074,12 +1060,9 @@ export const getCircuitBreakerStatus = async (
 		}
 
 		// Win risk adjustment (increase or cap — mutually exclusive)
-		if (monthlyRiskConfigRow?.profitReinvestmentPercent) {
-			const reinvestmentPercent = parseFloat(
-				monthlyRiskConfigRow.profitReinvestmentPercent
-			)
-
-			if (monthlyRiskConfigRow.increaseRiskAfterWin) {
+		const reinvestmentPercent = behavior.profitReinvestmentPercent
+		if (reinvestmentPercent) {
+			if (behavior.increaseRiskAfterWin) {
 				// INCREASE: add % of last win's profit to base risk
 				const lastTrade = sortedTrades.at(-1)
 				const lastPnl = Number(lastTrade?.pnl) || 0
@@ -1087,7 +1070,7 @@ export const getCircuitBreakerStatus = async (
 					const bonusCents = Math.round((lastPnl * reinvestmentPercent) / 100)
 					recommendedRiskCents = recommendedRiskCents + bonusCents
 				}
-			} else if (monthlyRiskConfigRow.capRiskAfterWin) {
+			} else if (behavior.capRiskAfterWin) {
 				// CAP: find first winning trade of the day, cap risk to min(base, profit * %)
 				const firstWin = sortedTrades.find(
 					(t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0
@@ -1111,8 +1094,8 @@ export const getCircuitBreakerStatus = async (
 				: recommendedRiskCents
 		)
 
-		// Check second op block (plan-only)
-		const allowSecondOp = monthlyRiskConfigRow?.allowSecondOpAfterLoss ?? true
+		// Check second op block (resolver — cascades all 4 levels)
+		const allowSecondOp = behavior.allowSecondOpAfterLoss
 		const isSecondOpBlocked =
 			allowSecondOp === false &&
 			currentConsecutiveLosses > 0 &&
@@ -1167,7 +1150,10 @@ export const getCircuitBreakerStatus = async (
 				maxTrades: maxTradesValue,
 				maxConsecutiveLosses: maxConsecutiveLossesValue,
 				reduceRiskAfterLoss: shouldReduceRisk,
-				riskReductionFactor: monthlyRiskConfigRow?.riskReductionFactor ?? null,
+				riskReductionFactor:
+					behavior.riskReductionFactor !== null
+						? String(behavior.riskReductionFactor)
+						: null,
 				riskUsedTodayCents,
 				remainingDailyRiskCents,
 				recommendedRiskCents,

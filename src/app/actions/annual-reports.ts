@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { accountCapitalEvents, monthlyRiskConfig, tradingAccounts } from "@/db/schema"
+import { accountCapitalEvents, tradingAccounts } from "@/db/schema"
 import { eq, and, asc, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
@@ -308,16 +308,13 @@ const getAnnualRollup = async (
 		}
 	}
 
-	const plansRows = await db
-		.select({
-			month: monthlyRiskConfig.month,
-			dailyProfitTargetCents: monthlyRiskConfig.dailyProfitTargetCents,
-			accountBalance: monthlyRiskConfig.accountBalance,
-		})
-		.from(monthlyRiskConfig)
-		.where(and(eq(monthlyRiskConfig.accountId, accountId), eq(monthlyRiskConfig.year, year)))
-
-	const planByMonth = new Map(plansRows.map((p) => [p.month, p]))
+	// Phase 4b: monthly risk config retired. The annual report no longer renders
+	// per-month profit targets or aporte inicial from the legacy table — these
+	// will be reintroduced from the fractal-plan cascade in a follow-up.
+	const planByMonth = new Map<
+		number,
+		{ dailyProfitTargetCents: number | null; accountBalance: string | null }
+	>()
 
 	let runningPatrimonio: number | null = account.startingBalanceCents ?? null
 	const rows: AnnualRollupRow[] = []

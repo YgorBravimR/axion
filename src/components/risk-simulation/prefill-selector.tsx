@@ -6,6 +6,11 @@ import { cn } from "@/lib/utils"
 import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { PrefillSource, RiskSimulationParams } from "@/types/risk-simulation"
+import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
+
+// Phase 4b: simulation prefill uses a placeholder 1R baseline when prefilling
+// from a profile. Phase 5 will source 1R from the active fractal-plan ladder.
+const PREFILL_ONE_R_CENTS = 100_00
 
 const buttonBase =
 	"text-small min-h-9 rounded-md border px-s-300 py-s-200 transition-colors"
@@ -72,15 +77,16 @@ const PrefillSelector = ({
 	}, [monthlyPlan, onSelect])
 
 	const handleSelectProfile = useCallback((profile: RiskManagementProfile) => {
+		const tree = adaptDecisionTree(profile.decisionTree, PREFILL_ONE_R_CENTS)
 		onSelect(
 			{
 				mode: "advanced",
-				accountBalanceCents: profile.baseRiskCents * 100,
-				decisionTree: profile.decisionTree,
-				dailyLossCents: profile.dailyLossCents,
-				dailyProfitTargetCents: profile.dailyProfitTargetCents,
-				weeklyLossCents: profile.weeklyLossCents,
-				monthlyLossCents: profile.monthlyLossCents,
+				accountBalanceCents: PREFILL_ONE_R_CENTS * 100,
+				decisionTree: tree,
+				dailyLossCents: PREFILL_ONE_R_CENTS * 3,
+				dailyProfitTargetCents: null,
+				weeklyLossCents: tree.cascadingLimits.weeklyLossCents,
+				monthlyLossCents: tree.cascadingLimits.monthlyLossCents,
 			},
 			"riskProfile",
 			profile.id

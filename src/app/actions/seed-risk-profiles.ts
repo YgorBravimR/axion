@@ -74,11 +74,6 @@ const seedBuiltInRiskProfiles = async (): Promise<string[]> => {
 			description: TEMPLATE_DESCRIPTIONS[template.id] ?? null,
 			createdByUserId: userId,
 			isActive: true,
-			baseRiskCents: template.defaults.baseRiskCents,
-			dailyLossCents: template.defaults.dailyLossCents,
-			weeklyLossCents: template.defaults.weeklyLossCents ?? null,
-			monthlyLossCents: template.defaults.monthlyLossCents,
-			dailyProfitTargetCents: template.defaults.dailyProfitTargetCents ?? null,
 			decisionTree: JSON.stringify(template.defaults.decisionTree),
 		})
 

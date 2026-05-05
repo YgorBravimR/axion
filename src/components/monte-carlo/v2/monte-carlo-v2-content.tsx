@@ -185,9 +185,17 @@ const MonteCarloV2Content = ({
 		if (isNaN(wr) || wr <= 0 || isNaN(effectiveRR) || effectiveRR <= 0)
 			return null
 
+		const initialBalanceCents = toCents(form.initialBalance)
+		// Phase 4b: 1R baseline + caps will resolve from the active fractal plan in Phase 5.
+		// Until then, derive a 1% baseline from the initial balance and use 3R/8R/15R caps.
+		const oneRCents = Math.max(1, Math.round(initialBalanceCents * 0.01))
 		return buildProfileForSim(selectedProfile, {
 			winRate: wr,
 			rewardRiskRatio: effectiveRR,
+			oneRCents,
+			dailyLossCents: oneRCents * 3,
+			weeklyLossCents: oneRCents * 8,
+			monthlyLossCents: oneRCents * 15,
 			breakevenRate: parseFloat(form.breakevenRate) || 0,
 			commissionPerTradeCents: toCents(form.commissionPerTrade),
 			tradingDaysPerMonth: parseInt(form.tradingDaysPerMonth, 10) || 22,

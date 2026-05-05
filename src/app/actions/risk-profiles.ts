@@ -30,11 +30,6 @@ const parseProfileRow = (
 	description: row.description,
 	createdByUserId: row.createdByUserId,
 	isActive: row.isActive,
-	baseRiskCents: row.baseRiskCents,
-	dailyLossCents: row.dailyLossCents,
-	weeklyLossCents: row.weeklyLossCents,
-	monthlyLossCents: row.monthlyLossCents,
-	dailyProfitTargetCents: row.dailyProfitTargetCents,
 	decisionTree: JSON.parse(row.decisionTree) as DecisionTreeConfig,
 	createdAt: row.createdAt,
 	updatedAt: row.updatedAt,
@@ -138,11 +133,6 @@ const createRiskProfile = async (
 				name: validated.name,
 				description: validated.description ?? null,
 				createdByUserId: userId,
-				baseRiskCents: validated.baseRiskCents,
-				dailyLossCents: validated.dailyLossCents,
-				weeklyLossCents: validated.weeklyLossCents ?? null,
-				monthlyLossCents: validated.monthlyLossCents,
-				dailyProfitTargetCents: validated.dailyProfitTargetCents ?? null,
 				decisionTree: JSON.stringify(validated.decisionTree),
 			})
 			.returning()
@@ -206,11 +196,6 @@ const updateRiskProfile = async (
 			.set({
 				name: validated.name,
 				description: validated.description ?? null,
-				baseRiskCents: validated.baseRiskCents,
-				dailyLossCents: validated.dailyLossCents,
-				weeklyLossCents: validated.weeklyLossCents ?? null,
-				monthlyLossCents: validated.monthlyLossCents,
-				dailyProfitTargetCents: validated.dailyProfitTargetCents ?? null,
 				decisionTree: JSON.stringify(validated.decisionTree),
 				updatedAt: new Date(),
 			})

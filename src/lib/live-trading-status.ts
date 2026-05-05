@@ -5,13 +5,13 @@
  * and computes what the NEXT trade's risk/phase/constraints should be.
  */
 
-import type { DecisionTreeConfig } from "@/types/risk-profile"
 import type { LiveTradingStatus, TradeOutcomeInput, DayPhase } from "@/types/live-trading-status"
-import { resolveRiskCalculation, describeRiskCalc } from "@/lib/risk-simulation-advanced"
+import { resolveRiskCalculation } from "@/lib/risk-simulation-advanced"
+import type { DecisionTreeCents } from "@/lib/risk-profiles/cents-shape"
 
 interface ResolveLiveStatusParams {
 	trades: TradeOutcomeInput[]
-	decisionTree: DecisionTreeConfig
+	decisionTree: DecisionTreeCents
 	profileName: string
 	dailyLossCents: number
 	dailyProfitTargetCents: number | null

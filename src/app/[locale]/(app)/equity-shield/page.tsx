@@ -1,5 +1,4 @@
 import { Suspense } from "react"
-import { getActiveMonthlyRiskConfig } from "@/app/actions/monthly-risk-config"
 import { getTradeYears } from "@/app/actions/risk-simulation"
 import { EquityShieldContent } from "@/components/equity-shield"
 import { LoadingSpinner } from "@/components/shared"
@@ -8,13 +7,10 @@ import { requireRole } from "@/lib/auth-utils"
 
 const EquityShieldPage = async () => {
 	await requireRole("premium")
-	const [planResponse, yearsResponse] = await Promise.all([
-		getActiveMonthlyRiskConfig(),
-		getTradeYears(),
-	])
+	const [yearsResponse] = await Promise.all([getTradeYears()])
 
-	const monthlyPlan =
-		planResponse.status === "success" ? (planResponse.data ?? null) : null
+	// Phase 4b: monthly plan prefill is being migrated to the fractal-plan resolver.
+	const monthlyPlan = null
 	const tradeYears =
 		yearsResponse.status === "success" ? (yearsResponse.data ?? []) : []
 
