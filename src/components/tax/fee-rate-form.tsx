@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/toast"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { listFeeRates, upsertFeeRates, deleteFeeRates } from "@/app/actions/tax-engine"
-import { getAccountAssets } from "@/app/actions/accounts"
+import { getActiveAssets } from "@/app/actions/assets"
 import type { FeeRatesEntry } from "@/lib/tax/types"
 
 interface DisplayValues {
@@ -202,39 +203,46 @@ const FeeRateForm = () => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [defaultDisplay, setDefaultDisplay] = useState<DisplayValues>(DEFAULT_DISPLAY)
 	const [assetTabs, setAssetTabs] = useState<AssetTab[]>([])
+	const [availableSymbols, setAvailableSymbols] = useState<string[]>([])
 	const [activeTab, setActiveTab] = useState<string>("__default__")
 	const [reloadKey, setReloadKey] = useState(0)
 
 	useEffect(() => {
 		let mounted = true
 		const load = async () => {
-			const [feeRatesResult, accountAssetsResult] = await Promise.all([
+			const [feeRatesResult, allActiveAssets] = await Promise.all([
 				listFeeRates(),
-				getAccountAssets(),
+				getActiveAssets(),
 			])
 			if (!mounted) return
 
 			const entries = feeRatesResult.status === "success" && feeRatesResult.data
 				? feeRatesResult.data
 				: []
-			const enabledAssets = accountAssetsResult.status === "success" && accountAssetsResult.data
-				? accountAssetsResult.data.filter((a) => a.isEnabled).map((a) => a.asset.symbol)
-				: []
 
 			const defaultEntry = entries.find((e) => e.assetSymbol === null)
 			setDefaultDisplay(defaultEntry ? entryToDisplay(defaultEntry) : DEFAULT_DISPLAY)
 
-			const fallback = defaultEntry ? entryToDisplay(defaultEntry) : DEFAULT_DISPLAY
-			const tabs: AssetTab[] = enabledAssets.map((symbol) => {
-				const override = entries.find((e) => e.assetSymbol === symbol)
+			const overrideSymbols = entries
+				.map((e) => e.assetSymbol)
+				.filter((s): s is string => typeof s === "string")
+
+			// Tabs surface every asset that already has an override row.
+			const tabs: AssetTab[] = overrideSymbols.map((symbol) => {
+				const override = entries.find((e) => e.assetSymbol === symbol)!
 				return {
 					symbol,
-					display: override ? entryToDisplay(override) : fallback,
-					hasOverride: Boolean(override),
+					display: entryToDisplay(override),
+					hasOverride: true,
 				}
 			})
 
 			setAssetTabs(tabs)
+			setAvailableSymbols(
+				allActiveAssets
+					.map((a) => a.symbol)
+					.filter((s) => !overrideSymbols.includes(s)),
+			)
 			setIsLoading(false)
 		}
 		load()
@@ -245,21 +253,49 @@ const FeeRateForm = () => {
 
 	const triggerReload = () => setReloadKey((k) => k + 1)
 
+	const handleAddOverride = (symbol: string) => {
+		setAssetTabs((prev) => [
+			...prev,
+			{ symbol, display: defaultDisplay, hasOverride: false },
+		])
+		setAvailableSymbols((prev) => prev.filter((s) => s !== symbol))
+		setActiveTab(symbol)
+	}
+
 	if (isLoading) {
 		return <p className="text-small text-txt-300">Carregando taxas...</p>
 	}
 
 	return (
 		<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-			<TabsList className="w-full overflow-x-auto">
-				<TabsTrigger value="__default__">Padrão</TabsTrigger>
-				{assetTabs.map((tab) => (
-					<TabsTrigger key={tab.symbol} value={tab.symbol}>
-						{tab.symbol}
-						{tab.hasOverride ? " ●" : ""}
-					</TabsTrigger>
-				))}
-			</TabsList>
+			<div className="flex items-center justify-between gap-m-300 flex-wrap">
+				<TabsList className="overflow-x-auto">
+					<TabsTrigger value="__default__">Padrão</TabsTrigger>
+					{assetTabs.map((tab) => (
+						<TabsTrigger key={tab.symbol} value={tab.symbol}>
+							{tab.symbol}
+							{tab.hasOverride ? " ●" : ""}
+						</TabsTrigger>
+					))}
+				</TabsList>
+				{availableSymbols.length > 0 && (
+					<Select onValueChange={handleAddOverride} value="">
+						<SelectTrigger
+							className="w-auto min-w-[12rem]"
+							aria-label="Adicionar override de taxas por ativo"
+						>
+							<SelectValue placeholder="+ Adicionar override por ativo" />
+						</SelectTrigger>
+						<SelectContent>
+							{availableSymbols.map((symbol) => (
+								<SelectItem key={symbol} value={symbol}>
+									{symbol}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				)}
+			</div>
 			<TabsContent value="__default__" className="pt-m-400">
 				<p className="text-tiny text-txt-300 mb-m-300">
 					Taxas padrão da conta. Aplicadas a qualquer ativo sem override específico.
@@ -277,7 +313,7 @@ const FeeRateForm = () => {
 					<p className="text-tiny text-txt-300 mb-m-300">
 						{tab.hasOverride
 							? `Taxas específicas para ${tab.symbol} (sobrescreve o padrão).`
-							: `Sem override — exibindo valores padrão. Salve para criar override específico de ${tab.symbol}.`}
+							: `Sem override ainda — valores pré-preenchidos com o padrão. Salve para criar override específico de ${tab.symbol}.`}
 					</p>
 					<FeeRatePane
 						assetSymbol={tab.symbol}
