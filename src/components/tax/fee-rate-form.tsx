@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -67,6 +67,48 @@ const FIELDS: PaneFields[] = [
 	{ key: "irrfRate", label: "IRRF (%)", hint: "Padrão: 1,00%", step: "0.01" },
 	{ key: "irRate", label: "IR Day-trade (%)", hint: "Padrão: 20,00%", step: "0.01" },
 ]
+
+const formatBRL = (value: number) =>
+	value.toLocaleString("pt-BR", {
+		style: "currency",
+		currency: "BRL",
+		minimumFractionDigits: 4,
+		maximumFractionDigits: 4,
+	})
+
+const computePerContractTotal = (values: DisplayValues) => {
+	const corretagem = parseFloat(values.txCorretagem)
+	const registro = parseFloat(values.txRegistro)
+	const emolumentos = parseFloat(values.emolumentos)
+	const issRate = parseFloat(values.issRate)
+
+	const safeCorretagem = Number.isFinite(corretagem) ? corretagem : 0
+	const safeRegistro = Number.isFinite(registro) ? registro : 0
+	const safeEmolumentos = Number.isFinite(emolumentos) ? emolumentos : 0
+	const safeIssRate = Number.isFinite(issRate) ? issRate : 0
+
+	const iss = safeCorretagem * (safeIssRate / 100)
+	const total = safeCorretagem + safeRegistro + safeEmolumentos + iss
+
+	return { iss, total }
+}
+
+const PerContractTotal = ({ values }: { values: DisplayValues }) => {
+	const { iss, total } = useMemo(() => computePerContractTotal(values), [values])
+
+	return (
+		<div className="rounded-lg border border-txt-300/15 bg-bg-200/40 px-m-300 py-m-300">
+			<div className="flex items-center justify-between gap-m-200">
+				<span className="text-small text-txt-200">Total por contrato (B3 + ISS)</span>
+				<span className="font-mono text-body text-txt-100">{formatBRL(total)}</span>
+			</div>
+			<p className="mt-s-100 text-tiny text-txt-300">
+				Tx Corretagem + Tx Registro + Emolumentos + ISS ({formatBRL(iss)}). IRRF e IR
+				incidem sobre lucro, não por contrato.
+			</p>
+		</div>
+	)
+}
 
 interface PaneProps {
 	assetSymbol: string | null
@@ -168,6 +210,8 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 				/>
 				Sujeito a IR pessoal (desmarcar para contas prop)
 			</label>
+
+			<PerContractTotal values={values} />
 
 			<div className="flex items-center gap-s-300">
 				<Button
