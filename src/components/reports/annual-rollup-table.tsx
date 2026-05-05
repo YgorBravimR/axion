@@ -1,7 +1,7 @@
 // src/components/reports/annual-rollup-table.tsx
 "use client"
 
-import type { AnnualRollupData, AnnualRollupRow } from "@/app/actions/annual-reports"
+import type { AnnualRollupData, AnnualRollupRow } from "@/lib/reports/annual-types"
 
 interface AnnualRollupTableProps {
   data: AnnualRollupData

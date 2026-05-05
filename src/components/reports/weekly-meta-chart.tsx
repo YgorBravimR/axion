@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts"
-import type { WeeklyMetaVsRealData, WeeklyMetaRow } from "@/app/actions/annual-reports"
+import type { WeeklyMetaVsRealData, WeeklyMetaRow } from "@/lib/reports/annual-types"
 
 interface WeeklyMetaChartProps {
   data: WeeklyMetaVsRealData

@@ -19,7 +19,7 @@ import type {
 	MistakeCostAnalysis,
 	CommissionFeeImpact,
 } from "@/app/actions/reports"
-import type { AnnualRollupData, WeeklyMetaVsRealData } from "@/app/actions/annual-reports"
+import type { AnnualRollupData, WeeklyMetaVsRealData } from "@/lib/reports/annual-types"
 import type { CapitalEvent } from "@/types/integration"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { reportsGuide } from "@/components/ui/page-guide/guide-configs/reports"
