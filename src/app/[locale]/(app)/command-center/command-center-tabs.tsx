@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, lazy, Suspense, useMemo } from "react"
+import { useState, lazy, Suspense } from "react"
 import { Tabs, TabsList, TabsTrigger, AnimatedTabsContent } from "@/components/ui/tabs"
 import { Target, Activity, Calculator, CalendarDays, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { CommandCenterContent, type CommandCenterContentProps } from "./command-center-content"
-import type { Asset, MonthlyRiskConfig } from "@/db/schema"
+import type { Asset } from "@/db/schema"
 import type { StrategyWithStats } from "@/app/actions/strategies"
 import type { AssetSettingWithAsset } from "@/app/actions/command-center"
 import type { RiskManagementProfile } from "@/types/risk-profile"
@@ -38,7 +38,7 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
-	initialPlan: MonthlyRiskConfig | null
+	initialPlan: null
 	initialYear: number
 	initialMonth: number
 	riskProfiles?: RiskManagementProfile[]
@@ -73,11 +73,6 @@ const CommandCenterTabs = ({
 	const showMonitorTab = !isReplayAccount && canAccess("command-center:monitor-tab")
 	const defaultTab = showCommandTab ? "command-center" : "calculator"
 	const [activeTab, setActiveTab] = useState(defaultTab)
-
-	const riskProfileName = useMemo(() => {
-		if (!initialPlan?.riskProfileId) return null
-		return riskProfiles.find((p) => p.id === initialPlan.riskProfileId)?.name ?? null
-	}, [initialPlan?.riskProfileId, riskProfiles])
 
 	return (
 		<Tabs
@@ -144,8 +139,6 @@ const CommandCenterTabs = ({
 					<CommandCenterContent
 						key={commandCenterProps.viewDate}
 						{...commandCenterProps}
-						initialPlan={initialPlan}
-						riskProfileName={riskProfileName}
 						initialLiveTradingStatus={initialLiveTradingStatus}
 					/>
 				</AnimatedTabsContent>

@@ -2,11 +2,10 @@
 
 import { CalendarDays } from "lucide-react"
 import { useTranslations } from "next-intl"
-import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface MonthlyPlanTabProps {
-	initialPlan: MonthlyRiskConfig | null
+	initialPlan: null
 	initialYear: number
 	initialMonth: number
 	riskProfiles?: RiskManagementProfile[]

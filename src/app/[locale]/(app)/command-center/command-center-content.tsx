@@ -32,15 +32,13 @@ import type {
 	DailyAccountNote,
 	Asset,
 	TradingAccount,
-	MonthlyRiskConfig,
 } from "@/db/schema"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { commandCenterGuide } from "@/components/ui/page-guide/guide-configs/command-center"
 import { useFormatting } from "@/hooks/use-formatting"
-import { fromCents } from "@/lib/money"
-import { CalendarDays, Target, TrendingDown, ShieldCheck } from "lucide-react"
+import { CalendarDays } from "lucide-react"
 
 interface CommandCenterContentProps {
 	initialCompletions: ChecklistWithCompletion[]
@@ -52,8 +50,6 @@ interface CommandCenterContentProps {
 	account: TradingAccount | null
 	viewDate: string
 	isToday: boolean
-	initialPlan?: MonthlyRiskConfig | null
-	riskProfileName?: string | null
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
 
@@ -67,15 +63,12 @@ const CommandCenterContent = ({
 	account,
 	viewDate,
 	isToday,
-	initialPlan,
-	riskProfileName,
 	initialLiveTradingStatus = null,
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
 	const tPlan = useTranslations("commandCenter.plan")
 	const { isPremium } = useFeatureAccess()
 	useRegisterPageGuide(commandCenterGuide)
-	const { formatCurrency } = useFormatting()
 
 	// State
 	const [completions, setCompletions] = useState(initialCompletions)
@@ -194,67 +187,18 @@ const CommandCenterContent = ({
 
 				{/* Right Column */}
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
-					{/* Plan summary or "create plan" prompt */}
-					{initialPlan ? (
-						<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border">
-							<div className="mb-s-300 sm:mb-m-400 gap-s-200 flex items-center">
-								<CalendarDays className="text-txt-200 h-4 w-4" />
-								<h3 className="text-small text-txt-100 font-semibold">
-									{tPlan("title")}
-								</h3>
-							</div>
-							{riskProfileName && (
-								<div className="mb-s-300 gap-s-200 border-acc-100/20 bg-acc-100/5 px-s-300 py-s-200 flex items-center rounded-md border">
-									<ShieldCheck className="text-acc-100 h-3.5 w-3.5" />
-									<span className="text-tiny text-txt-200 font-medium">
-										{tPlan("summary.usingProfile", { name: riskProfileName })}
-									</span>
-								</div>
-							)}
-							<div className="gap-s-300 grid grid-cols-1 xs:grid-cols-2">
-								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border min-w-0">
-									<div className="gap-s-100 flex items-center">
-										<Target className="text-txt-300 h-3.5 w-3.5 shrink-0" />
-										<span className="text-tiny text-txt-300 truncate">
-											{tPlan("summary.riskPerTrade")}
-										</span>
-									</div>
-									<p className="mt-s-100 text-small text-txt-100 font-medium truncate">
-										{formatCurrency(fromCents(initialPlan.riskPerTradeCents))}
-									</p>
-									<p className="text-tiny text-txt-300">
-										{initialPlan.riskPerTradePercent}%
-									</p>
-								</div>
-								<div className="border-bg-300 bg-bg-200 p-s-300 rounded-md border min-w-0">
-									<div className="gap-s-100 flex items-center">
-										<TrendingDown className="text-trade-sell h-3.5 w-3.5 shrink-0" />
-										<span className="text-tiny text-txt-300 truncate">
-											{tPlan("summary.dailyLossLimit")}
-										</span>
-									</div>
-									<p className="mt-s-100 text-small text-txt-100 font-medium truncate">
-										{formatCurrency(fromCents(initialPlan.dailyLossCents))}
-									</p>
-									<p className="text-tiny text-txt-300">
-										{initialPlan.dailyLossPercent}%
-									</p>
-								</div>
-							</div>
+					{/* Phase 4b: legacy plan summary removed — fractal-plan UI (Phase 5) replaces this. */}
+					<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed" aria-label={tPlan("title")}>
+						<div className="gap-s-300 flex flex-col items-center text-center">
+							<CalendarDays className="text-txt-300 h-8 w-8" />
+							<h3 className="text-small text-txt-100 font-semibold">
+								{tPlan("title")}
+							</h3>
+							<p className="text-tiny text-txt-300">
+								{tPlan("noPlanPrompt")}
+							</p>
 						</div>
-					) : (
-						<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed" aria-label={tPlan("title")}>
-							<div className="gap-s-300 flex flex-col items-center text-center">
-								<CalendarDays className="text-txt-300 h-8 w-8" />
-								<h3 className="text-small text-txt-100 font-semibold">
-									{tPlan("title")}
-								</h3>
-								<p className="text-tiny text-txt-300">
-									{tPlan("noPlanPrompt")}
-								</p>
-							</div>
-						</div>
-					)}
+					</div>
 
 					{/* Post-Market Notes — premium+ only */}
 					{isPremium && (

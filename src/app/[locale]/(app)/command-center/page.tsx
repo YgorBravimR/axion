@@ -88,8 +88,8 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		strategiesResult.status === "success" && strategiesResult.data
 			? strategiesResult.data
 			: []
-	// Phase 4b: legacy monthlyRiskConfig table is being retired; the new
-	// fractal-plan UI (Phase 5) will replace this prop. Pass null until then.
+	// Phase 4b: legacy monthly_risk_config table dropped; the new fractal-plan
+	// UI (Phase 5) will replace this prop. Pass null until then.
 	const initialPlan = null
 	const riskProfiles =
 		riskProfilesResult.status === "success" ? (riskProfilesResult.data ?? []) : []

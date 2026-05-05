@@ -12,7 +12,6 @@ const RiskSimulationPage = async () => {
 	])
 
 	// Phase 4b: monthly plan prefill migrated to the fractal-plan resolver.
-	const monthlyPlan = null
 	const riskProfiles =
 		profilesResponse.status === "success" ? (profilesResponse.data ?? []) : []
 	const tradeYears =
@@ -22,7 +21,6 @@ const RiskSimulationPage = async () => {
 		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">
 			<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
 				<RiskSimulationContent
-					monthlyPlan={monthlyPlan}
 					riskProfiles={riskProfiles}
 					tradeYears={tradeYears}
 				/>

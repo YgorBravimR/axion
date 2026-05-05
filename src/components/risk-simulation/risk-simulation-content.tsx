@@ -17,7 +17,6 @@ import {
 	getSimulationPreview,
 	runRiskSimulationFromDb,
 } from "@/app/actions/risk-simulation"
-import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type {
 	PrefillSource,
@@ -28,13 +27,11 @@ import type {
 } from "@/types/risk-simulation"
 
 interface RiskSimulationContentProps {
-	monthlyPlan: MonthlyRiskConfig | null
 	riskProfiles: RiskManagementProfile[]
 	tradeYears: number[]
 }
 
 const RiskSimulationContent = ({
-	monthlyPlan,
 	riskProfiles,
 	tradeYears,
 }: RiskSimulationContentProps) => {
@@ -161,7 +158,6 @@ const RiskSimulationContent = ({
 				onParamsChange={setParams}
 				preview={preview}
 				isLoadingPreview={isLoadingPreview}
-				monthlyPlan={monthlyPlan}
 				riskProfiles={riskProfiles}
 				allTradesLackSl={allTradesLackSl}
 				prefillSource={prefillSource}

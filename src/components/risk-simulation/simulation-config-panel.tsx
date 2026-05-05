@@ -15,7 +15,6 @@ import {
 import { PrefillSelector } from "./prefill-selector"
 import { RiskParamsForm } from "./risk-params-form"
 import { PreviewBanner } from "./preview-banner"
-import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type {
 	PrefillSource,
@@ -33,7 +32,6 @@ interface SimulationConfigPanelProps {
 	onParamsChange: (params: RiskSimulationParams) => void
 	preview: SimulationPreview | null
 	isLoadingPreview: boolean
-	monthlyPlan: MonthlyRiskConfig | null
 	riskProfiles: RiskManagementProfile[]
 	allTradesLackSl: boolean
 	prefillSource: PrefillSource | null
@@ -70,7 +68,6 @@ const SimulationConfigPanel = ({
 	onParamsChange,
 	preview,
 	isLoadingPreview,
-	monthlyPlan,
 	riskProfiles,
 	allTradesLackSl,
 	prefillSource,
@@ -190,7 +187,6 @@ const SimulationConfigPanel = ({
 			{preview && preview.totalTrades > 0 && (
 				<>
 					<PrefillSelector
-						monthlyPlan={monthlyPlan}
 						riskProfiles={riskProfiles}
 						onSelect={onPrefillSelect}
 						activeSource={prefillSource}

@@ -10,7 +10,6 @@ const EquityShieldPage = async () => {
 	const [yearsResponse] = await Promise.all([getTradeYears()])
 
 	// Phase 4b: monthly plan prefill is being migrated to the fractal-plan resolver.
-	const monthlyPlan = null
 	const tradeYears =
 		yearsResponse.status === "success" ? (yearsResponse.data ?? []) : []
 
@@ -18,7 +17,6 @@ const EquityShieldPage = async () => {
 		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">
 			<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
 				<EquityShieldContent
-					monthlyPlan={monthlyPlan}
 					tradeYears={tradeYears}
 				/>
 			</Suspense>

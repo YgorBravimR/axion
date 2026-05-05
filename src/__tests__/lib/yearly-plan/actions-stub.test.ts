@@ -4,7 +4,6 @@ const { dbMock } = vi.hoisted(() => {
 	const dbMock = {
 		query: {
 			yearlyPlans: { findFirst: vi.fn(), findMany: vi.fn() },
-			monthlyRiskConfig: { findFirst: vi.fn(), findMany: vi.fn() },
 		},
 		insert: vi.fn(),
 		update: vi.fn(),
@@ -18,7 +17,6 @@ vi.mock("@/db/drizzle", () => ({ db: dbMock }))
 
 vi.mock("@/db/schema", () => ({
 	yearlyPlans: {},
-	monthlyRiskConfig: {},
 }))
 
 vi.mock("@/app/actions/auth", () => ({

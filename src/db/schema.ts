@@ -168,19 +168,19 @@ export const tradingAccounts = pgTable(
 		dayTradeTaxRate: text("day_trade_tax_rate").default("20.00").notNull(), // encrypted
 		swingTradeTaxRate: text("swing_trade_tax_rate").default("15.00").notNull(), // encrypted
 
-		// @deprecated Risk settings — replaced by monthlyRiskConfig. Kept for migration compatibility.
+		// @deprecated Risk settings — replaced by fractal-plan cascade (yearly_plans → monthly_plan). Kept for migration compatibility.
 		defaultRiskPerTrade: decimal("default_risk_per_trade", { precision: 5, scale: 2 }),
-		/** @deprecated Use monthlyRiskConfig.dailyLossCents instead */
+		/** @deprecated Use fractal-plan cascade (resolveDay) instead */
 		maxDailyLoss: text("max_daily_loss"), // cents (encrypted)
-		/** @deprecated Use monthlyRiskConfig.maxDailyTrades instead */
+		/** @deprecated Use fractal-plan cascade (resolveDay) instead */
 		maxDailyTrades: integer("max_daily_trades"),
-		/** @deprecated Use monthlyRiskConfig.monthlyLossCents instead */
+		/** @deprecated Use fractal-plan cascade (resolveDay) instead */
 		maxMonthlyLoss: text("max_monthly_loss"), // cents (encrypted)
-		/** @deprecated Use monthlyRiskConfig.allowSecondOpAfterLoss instead */
+		/** @deprecated Use fractal-plan cascade (resolveBehavior) instead */
 		allowSecondOpAfterLoss: boolean("allow_second_op_after_loss").default(true),
-		/** @deprecated Use monthlyRiskConfig.reduceRiskAfterLoss instead */
+		/** @deprecated Use fractal-plan cascade (resolveBehavior) instead */
 		reduceRiskAfterLoss: boolean("reduce_risk_after_loss").default(false),
-		/** @deprecated Use monthlyRiskConfig.riskReductionFactor instead */
+		/** @deprecated Use fractal-plan cascade (resolveBehavior) instead */
 		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }),
 		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
 
@@ -888,65 +888,6 @@ export const riskManagementProfiles = pgTable(
 	]
 )
 
-// Monthly Risk Config Table (monthly risk configuration per account)
-export const monthlyRiskConfig = pgTable(
-	"monthly_risk_config",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		accountId: uuid("account_id")
-			.notNull()
-			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
-		year: integer("year").notNull(),
-		month: integer("month").notNull(), // 1-12
-
-		// USER INPUTS (required)
-		accountBalance: text("account_balance").notNull(), // cents (encrypted)
-		riskPerTradePercent: decimal("risk_per_trade_percent", { precision: 5, scale: 2 }).notNull(), // e.g. "1.00" = 1%
-		dailyLossPercent: decimal("daily_loss_percent", { precision: 5, scale: 2 }).notNull(), // e.g. "3.00" = 3%
-		monthlyLossPercent: decimal("monthly_loss_percent", { precision: 5, scale: 2 }).notNull(), // e.g. "10.00" = 10%
-
-		// USER INPUTS (optional)
-		dailyProfitTargetPercent: decimal("daily_profit_target_percent", { precision: 5, scale: 2 }), // nullable
-		maxDailyTrades: integer("max_daily_trades"), // overrides auto-derived
-		maxConsecutiveLosses: integer("max_consecutive_losses"),
-		allowSecondOpAfterLoss: boolean("allow_second_op_after_loss").default(true),
-		reduceRiskAfterLoss: boolean("reduce_risk_after_loss").default(false),
-		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }), // multiplier per consecutive loss e.g. 0.50
-		increaseRiskAfterWin: boolean("increase_risk_after_win").default(false),
-		capRiskAfterWin: boolean("cap_risk_after_win").default(false),
-		profitReinvestmentPercent: decimal("profit_reinvestment_percent", { precision: 5, scale: 2 }), // % of profit to add/cap next trade's risk
-		notes: text("notes"),
-
-		// Risk profile reference (nullable — when set, profile's decision tree governs behavior)
-		// FK name shortened explicitly because the auto-generated identifier exceeds Postgres's
-		// 63-char limit and would otherwise be truncated on rename.
-		riskProfileId: uuid("risk_profile_id"),
-
-		// Weekly loss limit (optional, independent of risk profile)
-		weeklyLossPercent: decimal("weekly_loss_percent", { precision: 5, scale: 2 }), // nullable
-		weeklyLossCents: text("weekly_loss_cents"), // nullable, auto-derived (encrypted)
-
-		// AUTO-DERIVED (computed on save, encrypted)
-		riskPerTradeCents: text("risk_per_trade_cents").notNull(), // round(balance * riskPercent / 100) (encrypted)
-		dailyLossCents: text("daily_loss_cents").notNull(), // round(balance * dailyLossPercent / 100) (encrypted)
-		monthlyLossCents: text("monthly_loss_cents").notNull(), // round(balance * monthlyLossPercent / 100) (encrypted)
-		dailyProfitTargetCents: integer("daily_profit_target_cents"), // nullable
-		derivedMaxDailyTrades: integer("derived_max_daily_trades"), // floor(dailyLossCents / riskPerTradeCents)
-
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-	},
-	(table) => [
-		index("monthly_risk_config_account_idx").on(table.accountId),
-		uniqueIndex("monthly_risk_config_account_year_month_idx").on(table.accountId, table.year, table.month),
-		foreignKey({
-			name: "monthly_risk_config_risk_profile_id_fk",
-			columns: [table.riskProfileId],
-			foreignColumns: [riskManagementProfiles.id],
-		}).onDelete("set null"),
-	]
-)
-
 // ==========================================
 // BR TAX ENGINE TABLES (Phase 1)
 // ==========================================
@@ -1189,7 +1130,7 @@ export const quarterlyPlan = pgTable(
 )
 
 // Monthly Plan — tier snapshot (1R + capital frozen at month start) + R-cap overrides.
-// Fractal cascade table. Risk-config lives separately in `monthly_risk_config`.
+// Fractal cascade table. All risk-config flows through resolver (yearly_plans → this table).
 export const monthlyPlan = pgTable(
 	"monthly_plan",
 	{
@@ -1846,7 +1787,6 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	dailyAccountNotes: many(dailyAccountNotes),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
-	monthlyRiskConfig: many(monthlyRiskConfig),
 	notaImports: many(notaImports),
 	accountFeeRates: many(accountFeeRates),
 	monthlyTaxLedger: many(monthlyTaxLedger),
@@ -2027,12 +1967,11 @@ export const dailyAssetSettingsRelations = relations(dailyAssetSettings, ({ one 
 }))
 
 // Risk Management Profiles Relations
-export const riskManagementProfilesRelations = relations(riskManagementProfiles, ({ one, many }) => ({
+export const riskManagementProfilesRelations = relations(riskManagementProfiles, ({ one }) => ({
 	createdBy: one(users, {
 		fields: [riskManagementProfiles.createdByUserId],
 		references: [users.id],
 	}),
-	monthlyRiskConfig: many(monthlyRiskConfig),
 }))
 
 // Nota Imports Relations
@@ -2056,18 +1995,6 @@ export const monthlyTaxLedgerRelations = relations(monthlyTaxLedger, ({ one }) =
 	account: one(tradingAccounts, {
 		fields: [monthlyTaxLedger.accountId],
 		references: [tradingAccounts.id],
-	}),
-}))
-
-// Monthly Risk Config Relations
-export const monthlyRiskConfigRelations = relations(monthlyRiskConfig, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [monthlyRiskConfig.accountId],
-		references: [tradingAccounts.id],
-	}),
-	riskProfile: one(riskManagementProfiles, {
-		fields: [monthlyRiskConfig.riskProfileId],
-		references: [riskManagementProfiles.id],
 	}),
 }))
 
@@ -2308,9 +2235,6 @@ export type NewDailyAssetSetting = typeof dailyAssetSettings.$inferInsert
 export type AccountAssetSetting = typeof accountAssetSettings.$inferSelect
 export type NewAccountAssetSetting = typeof accountAssetSettings.$inferInsert
 
-export type MonthlyRiskConfig = typeof monthlyRiskConfig.$inferSelect
-export type NewMonthlyRiskConfig = typeof monthlyRiskConfig.$inferInsert
-
 export type YearlyPlan = typeof yearlyPlans.$inferSelect
 export type NewYearlyPlan = typeof yearlyPlans.$inferInsert
 
@@ -2364,8 +2288,8 @@ export type NewPriceDataVersion = typeof priceDataVersions.$inferInsert
 export type QuarterlyPlan = typeof quarterlyPlan.$inferSelect
 export type NewQuarterlyPlan = typeof quarterlyPlan.$inferInsert
 
-// Fractal monthly_plan keeps FractalMonthlyPlan naming established before the
-// legacy `monthly_plans` table was renamed to `monthly_risk_config` (Phase 4b).
+// Fractal monthly_plan keeps FractalMonthlyPlan naming for clarity vs legacy
+// `monthly_plans` table that was dropped in Phase 4b.
 export type FractalMonthlyPlan = typeof monthlyPlan.$inferSelect
 export type NewFractalMonthlyPlan = typeof monthlyPlan.$inferInsert
 

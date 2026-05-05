@@ -14,7 +14,6 @@ import { EquityShieldStats } from "./equity-shield-stats"
 import { EquityShieldChart } from "./equity-shield-chart"
 import { MCCalibrationBanner } from "./mc-calibration-banner"
 import type { EquityShieldParams, EquityShieldResult } from "@/types/equity-shield"
-import type { MonthlyRiskConfig } from "@/db/schema"
 
 interface EquityShieldPreview {
 	totalTrades: number
@@ -22,7 +21,6 @@ interface EquityShieldPreview {
 }
 
 interface EquityShieldContentProps {
-	monthlyPlan: MonthlyRiskConfig | null
 	tradeYears: number[]
 }
 
@@ -36,7 +34,6 @@ const DEFAULT_PARAMS: EquityShieldParams = {
 }
 
 const EquityShieldContent = ({
-	monthlyPlan,
 	tradeYears,
 }: EquityShieldContentProps) => {
 	const t = useTranslations("equityShield")
@@ -44,20 +41,8 @@ const EquityShieldContent = ({
 	const { showLoading, hideLoading } = useLoadingOverlay()
 	const { snapshot: mcSnapshot, setSnapshot: setMCSnapshot } = useMCCalibration()
 
-	// Derive initial params from monthly plan if available
-	const [params, setParams] = useState<EquityShieldParams>(() => {
-		if (monthlyPlan?.accountBalance) {
-			const balance =
-				typeof monthlyPlan.accountBalance === "string"
-					? parseInt(monthlyPlan.accountBalance, 10)
-					: monthlyPlan.accountBalance
-			return {
-				...DEFAULT_PARAMS,
-				initialBalanceCents: balance || DEFAULT_PARAMS.initialBalanceCents,
-			}
-		}
-		return DEFAULT_PARAMS
-	})
+	// Phase 4b: legacy monthly plan source-of-balance removed. Phase 5 will rederive from fractal cascade.
+	const [params, setParams] = useState<EquityShieldParams>(DEFAULT_PARAMS)
 
 	const [result, setResult] = useState<EquityShieldResult | null>(null)
 	const [error, setError] = useState<string | null>(null)

@@ -1,0 +1,1 @@
+DROP TABLE "monthly_risk_config" CASCADE;
