@@ -13,7 +13,6 @@ import {
 	monthlyPlans,
 	dailyAccountNotes,
 	dailyChecklists,
-	dailyTargets,
 	dailyAssetSettings,
 	notaImports,
 	type TradingAccount,
@@ -321,7 +320,7 @@ export const deleteAccount = async (
  *
  * Tables cleared: trades (cascades to executions/tags), monthlyPlans,
  * dailyAccountNotes, dailyChecklists (cascades to completions),
- * dailyTargets, dailyAssetSettings, notaImports.
+ * dailyAssetSettings, notaImports.
  */
 export const deleteAllTradingData = async (): Promise<{
 	status: "success" | "error"
@@ -338,7 +337,6 @@ export const deleteAllTradingData = async (): Promise<{
 		await db.delete(monthlyPlans).where(eq(monthlyPlans.accountId, accountId))
 		await db.delete(dailyAccountNotes).where(eq(dailyAccountNotes.accountId, accountId))
 		await db.delete(dailyChecklists).where(eq(dailyChecklists.accountId, accountId))
-		await db.delete(dailyTargets).where(eq(dailyTargets.accountId, accountId))
 		await db.delete(dailyAssetSettings).where(eq(dailyAssetSettings.accountId, accountId))
 		await db.delete(notaImports).where(eq(notaImports.accountId, accountId))
 

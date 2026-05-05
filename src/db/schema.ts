@@ -771,37 +771,6 @@ export const checklistCompletions = pgTable(
 	]
 )
 
-/**
- * @deprecated Replaced by monthlyPlans. Kept for migration compatibility and historical data.
- */
-export const dailyTargets = pgTable(
-	"daily_targets",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		userId: text("user_id").notNull(),
-		accountId: uuid("account_id")
-			.notNull()
-			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
-		profitTarget: integer("profit_target"), // cents
-		lossLimit: integer("loss_limit"), // cents (stored as positive)
-		maxTrades: integer("max_trades"),
-		maxConsecutiveLosses: integer("max_consecutive_losses"),
-		accountBalance: integer("account_balance"), // cents
-		isActive: boolean("is_active").default(true).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-	},
-	(table) => [
-		index("daily_targets_user_idx").on(table.userId),
-		index("daily_targets_account_idx").on(table.accountId),
-		uniqueIndex("daily_targets_account_unique_idx").on(table.accountId),
-	]
-)
-
 // Daily Account Notes Table (pre/post market notes)
 export const dailyAccountNotes = pgTable(
 	"daily_account_notes",
@@ -1880,7 +1849,6 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	accountAssets: many(accountAssets),
 	accountTimeframes: many(accountTimeframes),
 	dailyChecklists: many(dailyChecklists),
-	dailyTargets: many(dailyTargets),
 	dailyAccountNotes: many(dailyAccountNotes),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
@@ -2032,13 +2000,6 @@ export const checklistCompletionsRelations = relations(checklistCompletions, ({ 
 	checklist: one(dailyChecklists, {
 		fields: [checklistCompletions.checklistId],
 		references: [dailyChecklists.id],
-	}),
-}))
-
-export const dailyTargetsRelations = relations(dailyTargets, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [dailyTargets.accountId],
-		references: [tradingAccounts.id],
 	}),
 }))
 
@@ -2351,11 +2312,6 @@ export type NewDailyChecklist = typeof dailyChecklists.$inferInsert
 
 export type ChecklistCompletion = typeof checklistCompletions.$inferSelect
 export type NewChecklistCompletion = typeof checklistCompletions.$inferInsert
-
-/** @deprecated Use MonthlyPlan instead */
-export type DailyTarget = typeof dailyTargets.$inferSelect
-/** @deprecated Use NewMonthlyPlan instead */
-export type NewDailyTarget = typeof dailyTargets.$inferInsert
 
 export type DailyAccountNote = typeof dailyAccountNotes.$inferSelect
 export type NewDailyAccountNote = typeof dailyAccountNotes.$inferInsert
