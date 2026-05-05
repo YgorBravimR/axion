@@ -3,7 +3,14 @@
 	"version": "0.1.0",
 	"private": true,
 	"packageManager": "pnpm@10.30.3",
+	"engines": {
+		"pnpm": ">=10",
+		"npm": "please-use-pnpm",
+		"yarn": "please-use-pnpm",
+		"bun": "please-use-pnpm"
+	},
 	"scripts": {
+		"preinstall": "npx -y only-allow pnpm",
 		"dev": "next dev --turbopack -p ${PORT:-3003}",
 		"build": "next build --turbopack",
 		"start": "next start -p ${PORT:-3003}",
