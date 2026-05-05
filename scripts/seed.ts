@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { neon } from "@neondatabase/serverless"
+import { getScriptDb } from "./_db-adapter"
 import bcrypt from "bcryptjs"
 
 /**
@@ -100,7 +100,7 @@ const runSeed = async () => {
 		process.exit(1)
 	}
 
-	const sql = neon(databaseUrl)
+	const { sql, close } = getScriptDb()
 	console.log("🔗 Connected to database\n")
 
 	// Helper to convert dollars to cents
@@ -971,6 +971,8 @@ const runSeed = async () => {
 	console.log("\n📝 Login credentials:")
 	console.log(`   Email:    ${ADMIN_EMAIL}`)
 	console.log(`   Password: ${ADMIN_PASSWORD}`)
+
+	await close()
 }
 
 runSeed().catch((error) => {
