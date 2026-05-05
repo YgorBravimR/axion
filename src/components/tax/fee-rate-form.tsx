@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { listFeeRates, upsertFeeRates, deleteFeeRates } from "@/app/actions/tax-engine"
 import { getActiveAssets } from "@/app/actions/assets"
 import type { FeeRatesEntry } from "@/lib/tax/types"
+import { ASSET_FEE_DEFAULTS } from "@/lib/tax/asset-defaults"
 
 interface DisplayValues {
 	txCorretagem: string
@@ -254,9 +255,11 @@ const FeeRateForm = () => {
 	const triggerReload = () => setReloadKey((k) => k + 1)
 
 	const handleAddOverride = (symbol: string) => {
+		const preset = ASSET_FEE_DEFAULTS[symbol]
+		const display = preset ? entryToDisplay(preset) : defaultDisplay
 		setAssetTabs((prev) => [
 			...prev,
-			{ symbol, display: defaultDisplay, hasOverride: false },
+			{ symbol, display, hasOverride: false },
 		])
 		setAvailableSymbols((prev) => prev.filter((s) => s !== symbol))
 		setActiveTab(symbol)
