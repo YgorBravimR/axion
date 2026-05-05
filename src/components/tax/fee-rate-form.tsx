@@ -4,50 +4,87 @@ import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/toast"
-import { getFeeRates, upsertFeeRates } from "@/app/actions/tax-engine"
+import { listFeeRates, upsertFeeRates, deleteFeeRates } from "@/app/actions/tax-engine"
+import { getAccountAssets } from "@/app/actions/accounts"
+import type { FeeRatesEntry } from "@/lib/tax/types"
 
-const FeeRateForm = () => {
+interface DisplayValues {
+	txCorretagem: string
+	txRegistro: string
+	emolumentos: string
+	issRate: string
+	irrfRate: string
+	irRate: string
+	subjectToPersonalIr: boolean
+}
+
+const DEFAULT_DISPLAY: DisplayValues = {
+	txCorretagem: "0.0500",
+	txRegistro: "0.7400",
+	emolumentos: "0.4000",
+	issRate: "5.00",
+	irrfRate: "1.00",
+	irRate: "20.00",
+	subjectToPersonalIr: true,
+}
+
+const entryToDisplay = (entry: FeeRatesEntry): DisplayValues => ({
+	txCorretagem: (entry.txCorretagemCents / 100).toFixed(4),
+	txRegistro: (entry.txRegistroCents / 100).toFixed(4),
+	emolumentos: (entry.emolumentosCents / 100).toFixed(4),
+	issRate: entry.issRatePercent,
+	irrfRate: (entry.irrfRateBps / 100).toFixed(2),
+	irRate: (entry.irRateBps / 100).toFixed(2),
+	subjectToPersonalIr: entry.subjectToPersonalIr,
+})
+
+const displayToPersist = (display: DisplayValues) => ({
+	txCorretagemCents: Math.round(parseFloat(display.txCorretagem) * 100),
+	txRegistroCents: Math.round(parseFloat(display.txRegistro) * 100),
+	emolumentosCents: Math.round(parseFloat(display.emolumentos) * 100),
+	issRatePercent: display.issRate,
+	irrfRateBps: Math.round(parseFloat(display.irrfRate) * 100),
+	irRateBps: Math.round(parseFloat(display.irRate) * 100),
+	subjectToPersonalIr: display.subjectToPersonalIr,
+})
+
+interface PaneFields {
+	key: keyof Omit<DisplayValues, "subjectToPersonalIr">
+	label: string
+	hint: string
+	step: string
+}
+
+const FIELDS: PaneFields[] = [
+	{ key: "txCorretagem", label: "Tx Corretagem (R$/contrato)", hint: "Ex: 0.0500 = R$0,05 por contrato", step: "0.0001" },
+	{ key: "txRegistro", label: "Tx Registro (R$/contrato)", hint: "Ex: 0.7400 = R$0,74 por contrato", step: "0.0001" },
+	{ key: "emolumentos", label: "Emolumentos (R$/contrato)", hint: "Ex: 0.4000 = R$0,40 por contrato", step: "0.0001" },
+	{ key: "issRate", label: "ISS (% sobre Corretagem)", hint: "São Paulo: 5,00% (padrão)", step: "0.01" },
+	{ key: "irrfRate", label: "IRRF (%)", hint: "Padrão: 1,00%", step: "0.01" },
+	{ key: "irRate", label: "IR Day-trade (%)", hint: "Padrão: 20,00%", step: "0.01" },
+]
+
+interface PaneProps {
+	assetSymbol: string | null
+	initial: DisplayValues
+	allowReset: boolean
+	onSave: () => void
+	onReset: () => void
+}
+
+const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: PaneProps) => {
 	const { showToast } = useToast()
-	const [isLoading, setIsLoading] = useState(true)
 	const [isPending, startTransition] = useTransition()
-
-	const [values, setValues] = useState({
-		txCorretagem: "0.0500",
-		txRegistro: "0.7400",
-		emolumentos: "0.4000",
-		issRate: "5.00",
-		irrfRate: "1.00",
-		irRate: "20.00",
-		subjectToPersonalIr: true,
-	})
+	const [values, setValues] = useState<DisplayValues>(initial)
 
 	useEffect(() => {
-		let mounted = true
-		const load = async () => {
-			const result = await getFeeRates()
-			if (!mounted) return
-			if (result.status === "success" && result.data) {
-				setValues({
-					txCorretagem: (result.data.txCorretagemCents / 100).toFixed(4),
-					txRegistro: (result.data.txRegistroCents / 100).toFixed(4),
-					emolumentos: (result.data.emolumentosCents / 100).toFixed(4),
-					issRate: result.data.issRatePercent,
-					irrfRate: (result.data.irrfRateBps / 100).toFixed(2),
-					irRate: (result.data.irRateBps / 100).toFixed(2),
-					subjectToPersonalIr: result.data.subjectToPersonalIr,
-				})
-			}
-			setIsLoading(false)
-		}
-		load()
-		return () => {
-			mounted = false
-		}
-	}, [])
+		setValues(initial)
+	}, [initial])
 
 	const handleTextChange =
-		(field: keyof Omit<typeof values, "subjectToPersonalIr">) =>
+		(field: keyof Omit<DisplayValues, "subjectToPersonalIr">) =>
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			setValues((prev) => ({ ...prev, [field]: e.target.value }))
 		}
@@ -60,93 +97,58 @@ const FeeRateForm = () => {
 		e.preventDefault()
 		startTransition(async () => {
 			const result = await upsertFeeRates({
-				txCorretagemCents: Math.round(parseFloat(values.txCorretagem) * 100),
-				txRegistroCents: Math.round(parseFloat(values.txRegistro) * 100),
-				emolumentosCents: Math.round(parseFloat(values.emolumentos) * 100),
-				issRatePercent: values.issRate,
-				irrfRateBps: Math.round(parseFloat(values.irrfRate) * 100),
-				irRateBps: Math.round(parseFloat(values.irRate) * 100),
-				subjectToPersonalIr: values.subjectToPersonalIr,
+				assetSymbol,
+				...displayToPersist(values),
 			})
 			if (result.status === "success") {
 				showToast("success", "Taxas salvas")
+				onSave()
 			} else {
 				showToast("error", result.message ?? "Erro ao salvar taxas")
 			}
 		})
 	}
 
-	const fields: Array<{
-		key: keyof Omit<typeof values, "subjectToPersonalIr">
-		label: string
-		hint: string
-		step: string
-	}> = [
-		{
-			key: "txCorretagem",
-			label: "Tx Corretagem (R$/contrato)",
-			hint: "Ex: 0.0500 = R$0,05 por contrato",
-			step: "0.0001",
-		},
-		{
-			key: "txRegistro",
-			label: "Tx Registro (R$/contrato)",
-			hint: "Ex: 0.7400 = R$0,74 por contrato",
-			step: "0.0001",
-		},
-		{
-			key: "emolumentos",
-			label: "Emolumentos (R$/contrato)",
-			hint: "Ex: 0.4000 = R$0,40 por contrato",
-			step: "0.0001",
-		},
-		{
-			key: "issRate",
-			label: "ISS (% sobre Corretagem)",
-			hint: "São Paulo: 5,00% (padrão)",
-			step: "0.01",
-		},
-		{
-			key: "irrfRate",
-			label: "IRRF (%)",
-			hint: "Padrão: 1,00%",
-			step: "0.01",
-		},
-		{
-			key: "irRate",
-			label: "IR Day-trade (%)",
-			hint: "Padrão: 20,00%",
-			step: "0.01",
-		},
-	]
-
-	if (isLoading) {
-		return <p className="text-small text-txt-300">Carregando taxas...</p>
+	const handleReset = () => {
+		if (!assetSymbol) return
+		startTransition(async () => {
+			const result = await deleteFeeRates(assetSymbol)
+			if (result.status === "success") {
+				showToast("success", "Override removido — usando padrão da conta")
+				onReset()
+			} else {
+				showToast("error", result.message ?? "Erro ao remover override")
+			}
+		})
 	}
 
 	return (
 		<form
 			onSubmit={handleSubmit}
 			className="space-y-m-400"
-			aria-label="Configuração de taxas e corretagem"
+			aria-label={`Configuração de taxas — ${assetSymbol ?? "padrão"}`}
 		>
 			<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
-				{fields.map(({ key, label, hint, step }) => (
+				{FIELDS.map(({ key, label, hint, step }) => (
 					<div key={key} className="space-y-s-100">
-						<Label id={`fee-${key}-label`} htmlFor={`fee-${key}`} className="text-small text-txt-200">
+						<Label
+							id={`fee-${assetSymbol ?? "default"}-${key}-label`}
+							htmlFor={`fee-${assetSymbol ?? "default"}-${key}`}
+							className="text-small text-txt-200"
+						>
 							{label}
 						</Label>
 						<Input
-							id={`fee-${key}`}
+							id={`fee-${assetSymbol ?? "default"}-${key}`}
 							type="number"
 							step={step}
 							min="0"
 							value={values[key]}
 							onChange={handleTextChange(key)}
-							aria-describedby={`fee-${key}-hint`}
+							aria-describedby={`fee-${assetSymbol ?? "default"}-${key}-hint`}
 							className="font-mono"
 						/>
-						<p id={`fee-${key}-hint`} className="text-tiny text-txt-300">
+						<p id={`fee-${assetSymbol ?? "default"}-${key}-hint`} className="text-tiny text-txt-300">
 							{hint}
 						</p>
 					</div>
@@ -155,7 +157,7 @@ const FeeRateForm = () => {
 
 			<label className="flex items-center gap-s-200 text-small text-txt-200 cursor-pointer">
 				<input
-					id="fee-subjectToPersonalIr"
+					id={`fee-${assetSymbol ?? "default"}-subjectToPersonalIr`}
 					type="checkbox"
 					checked={values.subjectToPersonalIr}
 					onChange={handleCheckboxChange}
@@ -165,15 +167,128 @@ const FeeRateForm = () => {
 				Sujeito a IR pessoal (desmarcar para contas prop)
 			</label>
 
-			<Button
-				id="fee-rate-form-submit"
-				type="submit"
-				disabled={isPending}
-				aria-label="Salvar taxas"
-			>
-				{isPending ? "Salvando..." : "Salvar Taxas"}
-			</Button>
+			<div className="flex items-center gap-s-300">
+				<Button
+					id={`fee-rate-form-submit-${assetSymbol ?? "default"}`}
+					type="submit"
+					disabled={isPending}
+					aria-label="Salvar taxas"
+				>
+					{isPending ? "Salvando..." : "Salvar Taxas"}
+				</Button>
+				{allowReset && (
+					<Button
+						type="button"
+						variant="outline"
+						disabled={isPending}
+						onClick={handleReset}
+						aria-label="Reverter para taxas padrão da conta"
+					>
+						Reverter ao padrão
+					</Button>
+				)}
+			</div>
 		</form>
+	)
+}
+
+interface AssetTab {
+	symbol: string
+	display: DisplayValues
+	hasOverride: boolean
+}
+
+const FeeRateForm = () => {
+	const [isLoading, setIsLoading] = useState(true)
+	const [defaultDisplay, setDefaultDisplay] = useState<DisplayValues>(DEFAULT_DISPLAY)
+	const [assetTabs, setAssetTabs] = useState<AssetTab[]>([])
+	const [activeTab, setActiveTab] = useState<string>("__default__")
+	const [reloadKey, setReloadKey] = useState(0)
+
+	useEffect(() => {
+		let mounted = true
+		const load = async () => {
+			const [feeRatesResult, accountAssetsResult] = await Promise.all([
+				listFeeRates(),
+				getAccountAssets(),
+			])
+			if (!mounted) return
+
+			const entries = feeRatesResult.status === "success" && feeRatesResult.data
+				? feeRatesResult.data
+				: []
+			const enabledAssets = accountAssetsResult.status === "success" && accountAssetsResult.data
+				? accountAssetsResult.data.filter((a) => a.isEnabled).map((a) => a.asset.symbol)
+				: []
+
+			const defaultEntry = entries.find((e) => e.assetSymbol === null)
+			setDefaultDisplay(defaultEntry ? entryToDisplay(defaultEntry) : DEFAULT_DISPLAY)
+
+			const fallback = defaultEntry ? entryToDisplay(defaultEntry) : DEFAULT_DISPLAY
+			const tabs: AssetTab[] = enabledAssets.map((symbol) => {
+				const override = entries.find((e) => e.assetSymbol === symbol)
+				return {
+					symbol,
+					display: override ? entryToDisplay(override) : fallback,
+					hasOverride: Boolean(override),
+				}
+			})
+
+			setAssetTabs(tabs)
+			setIsLoading(false)
+		}
+		load()
+		return () => {
+			mounted = false
+		}
+	}, [reloadKey])
+
+	const triggerReload = () => setReloadKey((k) => k + 1)
+
+	if (isLoading) {
+		return <p className="text-small text-txt-300">Carregando taxas...</p>
+	}
+
+	return (
+		<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+			<TabsList className="w-full overflow-x-auto">
+				<TabsTrigger value="__default__">Padrão</TabsTrigger>
+				{assetTabs.map((tab) => (
+					<TabsTrigger key={tab.symbol} value={tab.symbol}>
+						{tab.symbol}
+						{tab.hasOverride ? " ●" : ""}
+					</TabsTrigger>
+				))}
+			</TabsList>
+			<TabsContent value="__default__" className="pt-m-400">
+				<p className="text-tiny text-txt-300 mb-m-300">
+					Taxas padrão da conta. Aplicadas a qualquer ativo sem override específico.
+				</p>
+				<FeeRatePane
+					assetSymbol={null}
+					initial={defaultDisplay}
+					allowReset={false}
+					onSave={triggerReload}
+					onReset={triggerReload}
+				/>
+			</TabsContent>
+			{assetTabs.map((tab) => (
+				<TabsContent key={tab.symbol} value={tab.symbol} className="pt-m-400">
+					<p className="text-tiny text-txt-300 mb-m-300">
+						{tab.hasOverride
+							? `Taxas específicas para ${tab.symbol} (sobrescreve o padrão).`
+							: `Sem override — exibindo valores padrão. Salve para criar override específico de ${tab.symbol}.`}
+					</p>
+					<FeeRatePane
+						assetSymbol={tab.symbol}
+						initial={tab.display}
+						allowReset={tab.hasOverride}
+						onSave={triggerReload}
+						onReset={triggerReload}
+					/>
+				</TabsContent>
+			))}
+		</Tabs>
 	)
 }
 

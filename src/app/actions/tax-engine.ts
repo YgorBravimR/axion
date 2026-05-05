@@ -7,7 +7,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 import { addMonths, lastDayOfMonth, subDays, isWeekend, startOfMonth } from "date-fns"
 import type { ActionResponse } from "@/types"
-import type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow } from "@/lib/tax/types"
+import type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow, FeeRatesEntry } from "@/lib/tax/types"
 
 // ─── Internal: verify account ownership ──────────────────────────────────────
 
@@ -453,8 +453,14 @@ const DEFAULT_FEE_RATES: FeeRatesRow = {
 	subjectToPersonalIr: true,
 }
 
-const getFeeRates = async (): Promise<ActionResponse<FeeRatesRow>> => {
+const getFeeRates = async (
+	assetSymbol: string | null = null,
+): Promise<ActionResponse<FeeRatesRow>> => {
 	const { accountId } = await requireAuth()
+
+	const matcher = assetSymbol === null
+		? isNull(accountFeeRates.assetSymbol)
+		: eq(accountFeeRates.assetSymbol, assetSymbol)
 
 	const row = await db
 		.select({
@@ -467,7 +473,7 @@ const getFeeRates = async (): Promise<ActionResponse<FeeRatesRow>> => {
 			subjectToPersonalIr: accountFeeRates.subjectToPersonalIr,
 		})
 		.from(accountFeeRates)
-		.where(and(eq(accountFeeRates.accountId, accountId), isNull(accountFeeRates.assetSymbol)))
+		.where(and(eq(accountFeeRates.accountId, accountId), matcher))
 		.then((rows) => rows[0])
 
 	return {
@@ -477,9 +483,36 @@ const getFeeRates = async (): Promise<ActionResponse<FeeRatesRow>> => {
 	}
 }
 
+// ─── listFeeRates ────────────────────────────────────────────────────────────
+
+const listFeeRates = async (): Promise<ActionResponse<FeeRatesEntry[]>> => {
+	const { accountId } = await requireAuth()
+
+	const rows = await db
+		.select({
+			assetSymbol: accountFeeRates.assetSymbol,
+			txCorretagemCents: accountFeeRates.txCorretagemCents,
+			txRegistroCents: accountFeeRates.txRegistroCents,
+			emolumentosCents: accountFeeRates.emolumentosCents,
+			issRatePercent: accountFeeRates.issRatePercent,
+			irrfRateBps: accountFeeRates.irrfRateBps,
+			irRateBps: accountFeeRates.irRateBps,
+			subjectToPersonalIr: accountFeeRates.subjectToPersonalIr,
+		})
+		.from(accountFeeRates)
+		.where(eq(accountFeeRates.accountId, accountId))
+
+	return {
+		status: "success",
+		message: "Fee rates list retrieved.",
+		data: rows,
+	}
+}
+
 // ─── upsertFeeRates ──────────────────────────────────────────────────────────
 
 const upsertFeeRates = async (params: {
+	assetSymbol?: string | null
 	txCorretagemCents: number
 	txRegistroCents: number
 	emolumentosCents: number
@@ -489,23 +522,28 @@ const upsertFeeRates = async (params: {
 	subjectToPersonalIr: boolean
 }): Promise<ActionResponse<void>> => {
 	const { accountId } = await requireAuth()
+	const { assetSymbol = null, ...rates } = params
+
+	const matcher = assetSymbol === null
+		? isNull(accountFeeRates.assetSymbol)
+		: eq(accountFeeRates.assetSymbol, assetSymbol)
 
 	const existing = await db
 		.select({ id: accountFeeRates.id })
 		.from(accountFeeRates)
-		.where(and(eq(accountFeeRates.accountId, accountId), isNull(accountFeeRates.assetSymbol)))
+		.where(and(eq(accountFeeRates.accountId, accountId), matcher))
 		.then((rows) => rows[0])
 
 	if (existing) {
 		await db
 			.update(accountFeeRates)
-			.set({ ...params, updatedAt: new Date() })
+			.set({ ...rates, updatedAt: new Date() })
 			.where(eq(accountFeeRates.id, existing.id))
 	} else {
 		await db.insert(accountFeeRates).values({
 			accountId,
-			assetSymbol: null,
-			...params,
+			assetSymbol,
+			...rates,
 		})
 	}
 
@@ -518,6 +556,28 @@ const upsertFeeRates = async (params: {
 	return { status: "success", message: "Fee rates saved." }
 }
 
+// ─── deleteFeeRates ──────────────────────────────────────────────────────────
+
+const deleteFeeRates = async (assetSymbol: string): Promise<ActionResponse<void>> => {
+	const { accountId } = await requireAuth()
+
+	await db
+		.delete(accountFeeRates)
+		.where(
+			and(
+				eq(accountFeeRates.accountId, accountId),
+				eq(accountFeeRates.assetSymbol, assetSymbol),
+			),
+		)
+
+	await db
+		.update(monthlyTaxLedger)
+		.set({ isDirty: true })
+		.where(eq(monthlyTaxLedger.accountId, accountId))
+
+	return { status: "success", message: "Fee rates override removed." }
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
 export {
@@ -528,5 +588,7 @@ export {
 	getEffectiveTaxRate,
 	markDarfPaid,
 	getFeeRates,
+	listFeeRates,
 	upsertFeeRates,
+	deleteFeeRates,
 }

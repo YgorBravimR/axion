@@ -47,4 +47,8 @@ interface FeeRatesRow {
 	subjectToPersonalIr: boolean
 }
 
-export type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow }
+interface FeeRatesEntry extends FeeRatesRow {
+	assetSymbol: string | null
+}
+
+export type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow, FeeRatesEntry }

@@ -1,7 +1,7 @@
 // src/lib/tax/recompute-month.ts
 import { db } from "@/db/drizzle"
 import { trades, accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
-import { eq, and, gte, lte, isNull } from "drizzle-orm"
+import { eq, and, gte, lte } from "drizzle-orm"
 import { startOfMonth, endOfMonth } from "date-fns"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { computeDayFees } from "./fee-allocator"
@@ -85,18 +85,15 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		}
 	}
 
-	// Fetch fee rates for this account (NULL assetSymbol = catch-all default)
+	// Fetch all fee rate rows for this account.
+	// One row may have NULL assetSymbol (catch-all default); zero or more rows
+	// override per-asset (e.g. WDO, WIN). Build a lookup keyed by assetSymbol.
 	const feeRatesRows = await db
 		.select()
 		.from(accountFeeRates)
-		.where(
-			and(
-				eq(accountFeeRates.accountId, accountId),
-				isNull(accountFeeRates.assetSymbol),
-			),
-		)
+		.where(eq(accountFeeRates.accountId, accountId))
 
-	const feeRates = feeRatesRows[0] ?? {
+	const DEFAULT_FEES = {
 		txCorretagemCents: 5,
 		txRegistroCents: 74,
 		emolumentosCents: 40,
@@ -106,10 +103,27 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		subjectToPersonalIr: true,
 	}
 
+	const feeRatesByAsset = new Map<string | null, typeof DEFAULT_FEES>()
+	for (const row of feeRatesRows) {
+		feeRatesByAsset.set(row.assetSymbol, {
+			txCorretagemCents: row.txCorretagemCents,
+			txRegistroCents: row.txRegistroCents,
+			emolumentosCents: row.emolumentosCents,
+			issRatePercent: String(row.issRatePercent),
+			irrfRateBps: row.irrfRateBps,
+			irRateBps: row.irRateBps,
+			subjectToPersonalIr: row.subjectToPersonalIr,
+		})
+	}
+	const defaultFeeRates = feeRatesByAsset.get(null) ?? DEFAULT_FEES
+	const resolveFeeRates = (assetSymbol: string) =>
+		feeRatesByAsset.get(assetSymbol) ?? defaultFeeRates
+
 	// Fetch all closed trades in the month window
 	const rawTrades = await db
 		.select({
 			id: trades.id,
+			asset: trades.asset,
 			entryDate: trades.entryDate,
 			exitDate: trades.exitDate,
 			pnl: trades.pnl,
@@ -130,8 +144,12 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 	const dek = await getUserDek(userId)
 	const decryptedTrades = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
 
-	// Group trades by exit day; only count same-day entries (day-trades)
-	const dayMap = new Map<string, { pnlCents: number; contracts: number }>()
+	// Group trades by (exit day, asset). Same-day entry+exit only (day-trades).
+	// Per-asset bucketing is required because fee rates differ by contract type
+	// (e.g. WDO vs WIN have different B3 emolumentos and tx_registro).
+	type Bucket = { pnlCents: number; contracts: number }
+	const dayAssetMap = new Map<string, Bucket>()
+	const dayPnlMap = new Map<string, number>()
 	let tradeCount = 0
 
 	for (const trade of decryptedTrades) {
@@ -157,19 +175,19 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 
 		const contracts = parseFloat(String(trade.contractsExecuted ?? 0))
 
-		// Day key derived from local date components, not toISOString(), to avoid
-		// UTC midnight boundary issues on non-UTC servers.
 		const dayKey = `${exit.getFullYear()}-${exit.getMonth()}-${exit.getDate()}`
+		const dayAssetKey = `${dayKey}|${trade.asset}`
 
-		const existing = dayMap.get(dayKey) ?? { pnlCents: 0, contracts: 0 }
-		dayMap.set(dayKey, {
+		const existing = dayAssetMap.get(dayAssetKey) ?? { pnlCents: 0, contracts: 0 }
+		dayAssetMap.set(dayAssetKey, {
 			pnlCents: existing.pnlCents + pnlCents,
 			contracts: existing.contracts + contracts,
 		})
+		dayPnlMap.set(dayKey, (dayPnlMap.get(dayKey) ?? 0) + pnlCents)
 		tradeCount++
 	}
 
-	// Aggregate fees and build dailyResults for IRRF accumulation
+	// Aggregate fees per (day, asset) bucket using each asset's resolved rate.
 	let grossGainCents = 0
 	let totalTxCorretagemCents = 0
 	let totalTxRegistroCents = 0
@@ -177,20 +195,19 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 	let totalIssCents = 0
 	let totalContractsExecuted = 0
 
-	const dailyResults: Array<{ date: Date; grossPnlCents: number }> = []
-
-	for (const [, { pnlCents, contracts }] of dayMap.entries()) {
+	for (const [key, { pnlCents, contracts }] of dayAssetMap.entries()) {
+		const asset = key.split("|")[1] ?? ""
+		const rates = resolveFeeRates(asset)
 		grossGainCents += pnlCents
 		totalContractsExecuted += contracts
-		dailyResults.push({ date: monthDate, grossPnlCents: pnlCents })
 
 		const fees = computeDayFees({
 			contractsExecuted: contracts,
 			rates: {
-				txCorretagemCents: feeRates.txCorretagemCents,
-				txRegistroCents: feeRates.txRegistroCents,
-				emolumentosCents: feeRates.emolumentosCents,
-				issRatePercent: parseFloat(String(feeRates.issRatePercent)),
+				txCorretagemCents: rates.txCorretagemCents,
+				txRegistroCents: rates.txRegistroCents,
+				emolumentosCents: rates.emolumentosCents,
+				issRatePercent: parseFloat(rates.issRatePercent),
 			},
 		})
 		totalTxCorretagemCents += fees.txCorretagem
@@ -199,17 +216,25 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		totalIssCents          += fees.iss
 	}
 
+	// IRRF accumulates on day-level gross PnL (asset-agnostic). Use default
+	// rate row's irrfRateBps — IRRF is a federal withholding rate that does
+	// not vary per asset.
+	const dailyResults: Array<{ date: Date; grossPnlCents: number }> = []
+	for (const [, pnl] of dayPnlMap.entries()) {
+		dailyResults.push({ date: monthDate, grossPnlCents: pnl })
+	}
+
 	const totalFeesCents = totalTxCorretagemCents + totalTxRegistroCents + totalEmolumentosCents + totalIssCents
 
-	const irrfResult = accumulateIrrf(dailyResults, feeRates.irrfRateBps)
+	const irrfResult = accumulateIrrf(dailyResults, defaultFeeRates.irrfRateBps)
 
 	const darf = computeDarf({
 		grossGainCents,
 		totalFeesCents,
 		irrfCents: irrfResult.totalIrrfCents,
 		carryoverInCents,
-		irRateBps: feeRates.irRateBps,
-		subjectToPersonalIr: feeRates.subjectToPersonalIr,
+		irRateBps: defaultFeeRates.irRateBps,
+		subjectToPersonalIr: defaultFeeRates.subjectToPersonalIr,
 	})
 
 	const netLiquidCents = grossGainCents - totalFeesCents - darf.darfDue
