@@ -117,7 +117,6 @@ const seedHawksStrategiesAndTags = async (userId: string) => {
 		entryCriteria: seed.entryCriteria,
 		exitCriteria: seed.exitCriteria,
 		riskRules: seed.riskRules,
-		targetRMultiple: seed.targetRMultiple,
 		maxRiskPercent: seed.maxRiskPercent,
 		isActive: true,
 	}))

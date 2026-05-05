@@ -20,7 +20,6 @@ interface HawksSeedStrategy {
 	entryCriteria: string
 	exitCriteria: string
 	riskRules: string
-	targetRMultiple: string
 	maxRiskPercent: string
 }
 
@@ -39,7 +38,6 @@ const HAWKS_STRATEGIES: HawksSeedStrategy[] = [
 		entryCriteria: "Renko 60min em tendência. MACD 60min cruzou. EMA 9/21/50 empilhadas. VWAP a favor. Ajuste respeitado.",
 		exitCriteria: "Stop Method 3 (não move contra). Alvos Fib 76.4 / 100 / 161.8. Saída parcial em cada nível.",
 		riskRules: "Risco fixo: capital ÷ 20 por operação. Cap diário: 3 trades. Stop diário: 5R / 10R cascata.",
-		targetRMultiple: "2.00",
 		maxRiskPercent: "5.00",
 	},
 	{
@@ -49,7 +47,6 @@ const HAWKS_STRATEGIES: HawksSeedStrategy[] = [
 		entryCriteria: "Aplicável a qualquer setup Hawks após entrada confirmada.",
 		exitCriteria: "Trail somente após novo pivô a favor. Violação registra hawksStopAudit.violation = true.",
 		riskRules: "Stop nunca recua. Mover stop contra posição = violação de método.",
-		targetRMultiple: "2.00",
 		maxRiskPercent: "5.00",
 	},
 	{
@@ -59,7 +56,6 @@ const HAWKS_STRATEGIES: HawksSeedStrategy[] = [
 		entryCriteria: "Estrutura Onda 1 → Onda 2 confirmada. Projeção desenhada do início da onda 1 ao topo, retracted ao pivô da onda 2.",
 		exitCriteria: "Saídas parciais: 33% em 76.4, 33% em 100, 34% em 161.8.",
 		riskRules: "Não estende alvo além de 161.8 sem confirmação de continuidade.",
-		targetRMultiple: "2.00",
 		maxRiskPercent: "5.00",
 	},
 	{
@@ -69,7 +65,6 @@ const HAWKS_STRATEGIES: HawksSeedStrategy[] = [
 		entryCriteria: "Preço afastado >2σ da VWAP intradiária. Renko 60min confirma exaustão. MACD divergente.",
 		exitCriteria: "Alvo: VWAP. Stop: máxima/mínima do candle de exaustão.",
 		riskRules: "Setup contraria tendência: operar somente com bias diário lateral.",
-		targetRMultiple: "1.50",
 		maxRiskPercent: "5.00",
 	},
 	{
@@ -79,7 +74,6 @@ const HAWKS_STRATEGIES: HawksSeedStrategy[] = [
 		entryCriteria: "Preço se aproxima do ajuste D-1 com volume crescente. Confirma rejeição ou rompimento.",
 		exitCriteria: "Alvo: próximo ajuste relevante (semanal/mensal). Stop: ajuste violado.",
 		riskRules: "Não opera contra ajuste sem confirmação 60min.",
-		targetRMultiple: "2.00",
 		maxRiskPercent: "5.00",
 	},
 ]
