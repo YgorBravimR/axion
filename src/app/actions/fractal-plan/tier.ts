@@ -53,7 +53,7 @@ const forceTierReeval = async (
 			}
 		}
 
-		const ladderRules = yearly.ladderRules as LadderRuleR[]
+		const ladderRules = yearly.ladderRules as unknown as LadderRuleR[]
 		const newSnapshot = evaluateMonthStart({
 			capitalCents: monthly.snapshotCapitalCents,
 			ladderRules,

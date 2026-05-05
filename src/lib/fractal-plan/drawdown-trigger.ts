@@ -35,7 +35,7 @@ const checkDrawdownTrigger = async (input: CheckInput): Promise<CheckResult | nu
 	})
 	if (!monthRow) return null
 
-	const ladderRules = yearRow.ladderRules as ReadonlyArray<{
+	const ladderRules = yearRow.ladderRules as unknown as ReadonlyArray<{
 		minCapitalCents: number
 		maxCapitalCents: number
 		oneRCents: number

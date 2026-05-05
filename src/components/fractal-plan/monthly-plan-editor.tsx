@@ -8,46 +8,46 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
-import { upsertQuarterlyPlan } from "@/app/actions/fractal-plan/quarterly"
+import { upsertMonthlyPlan } from "@/app/actions/fractal-plan/monthly"
 
-interface QuarterlyPlanEditorProps {
-	quarterlyPlanId: string
+interface MonthlyPlanEditorProps {
+	monthlyPlanId: string
 	existing: {
-		goalCents: number | null
-		reflectionNotes: string | null
+		monthlyGoalCents: number | null
+		intentNotes: string | null
 		postMortemNotes: string | null
 	}
 }
 
-const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorProps) => {
+const MonthlyPlanEditor = ({ monthlyPlanId, existing }: MonthlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 
 	const [goalBRL, setGoalBRL] = useState(
-		existing.goalCents != null ? (existing.goalCents / 100).toFixed(2) : "",
+		existing.monthlyGoalCents != null ? (existing.monthlyGoalCents / 100).toFixed(2) : "",
 	)
-	const [reflectionNotes, setReflectionNotes] = useState(existing.reflectionNotes ?? "")
+	const [intentNotes, setIntentNotes] = useState(existing.intentNotes ?? "")
 	const [postMortemNotes, setPostMortemNotes] = useState(existing.postMortemNotes ?? "")
 
 	const handleSubmit = () => {
-		const goalCents = goalBRL.trim()
+		const monthlyGoalCents = goalBRL.trim()
 			? Math.round(parseFloat(goalBRL.replace(",", ".")) * 100)
 			: undefined
-		if (goalCents !== undefined && (!Number.isFinite(goalCents) || goalCents < 0)) {
+		if (monthlyGoalCents !== undefined && (!Number.isFinite(monthlyGoalCents) || monthlyGoalCents < 0)) {
 			showToast("error", "Goal must be a non-negative number.")
 			return
 		}
 
 		startTransition(async () => {
-			const result = await upsertQuarterlyPlan({
-				quarterlyPlanId,
-				goalCents,
-				reflectionNotes: reflectionNotes || undefined,
+			const result = await upsertMonthlyPlan({
+				monthlyPlanId,
+				monthlyGoalCents,
+				intentNotes: intentNotes || undefined,
 				postMortemNotes: postMortemNotes || undefined,
 			})
 			if (result.status === "success") {
-				showToast("success", "Quarterly plan updated")
+				showToast("success", "Monthly plan updated")
 				router.refresh()
 			} else {
 				showToast("error", result.message || "Save failed")
@@ -64,9 +64,9 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 			className="space-y-m-400"
 		>
 			<div>
-				<Label id="lbl-quarter-goal" htmlFor="quarter-goal">Quarter goal (BRL)</Label>
+				<Label id="lbl-month-goal" htmlFor="month-goal">Monthly goal (BRL)</Label>
 				<Input
-					id="quarter-goal"
+					id="month-goal"
 					type="number"
 					step="0.01"
 					min="0"
@@ -75,28 +75,32 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 				/>
 			</div>
 			<div>
-				<Label id="lbl-quarter-intent" htmlFor="quarter-intent">Reflection / intent</Label>
+				<Label id="lbl-month-intent" htmlFor="month-intent">Intent / focus</Label>
 				<Textarea
-					id="quarter-intent"
+					id="month-intent"
 					rows={3}
-					value={reflectionNotes}
-					onChange={(e) => setReflectionNotes(e.target.value)}
-					placeholder="Themes, focus, playbook rotation rationale..."
+					value={intentNotes}
+					onChange={(e) => setIntentNotes(e.target.value)}
+					placeholder="What's the theme of this month? Specific playbooks to pressure-test?"
 				/>
 			</div>
 			<div>
-				<Label id="lbl-quarter-postmortem" htmlFor="quarter-postmortem">Post-mortem</Label>
+				<Label id="lbl-month-postmortem" htmlFor="month-postmortem">Post-mortem</Label>
 				<Textarea
-					id="quarter-postmortem"
+					id="month-postmortem"
 					rows={3}
 					value={postMortemNotes}
 					onChange={(e) => setPostMortemNotes(e.target.value)}
-					placeholder="What worked, what didn't, lessons forward..."
+					placeholder="End-of-month review: what worked, what to adjust next month..."
 				/>
 			</div>
 			<div className="flex justify-end">
-				<Button id="btn-quarter-save" type="submit" disabled={isPending}>
-					{isPending ? <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Save className="mr-s-200 h-4 w-4" />}
+				<Button id="btn-month-save" type="submit" disabled={isPending}>
+					{isPending ? (
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					) : (
+						<Save className="mr-s-200 h-4 w-4" />
+					)}
 					Save
 				</Button>
 			</div>
@@ -104,5 +108,5 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 	)
 }
 
-export type { QuarterlyPlanEditorProps }
-export { QuarterlyPlanEditor }
+export type { MonthlyPlanEditorProps }
+export { MonthlyPlanEditor }

@@ -39,7 +39,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	const existing = row
 		? {
 			initialCapitalCents: row.initialCapitalCents,
-			ladderRules: row.ladderRules as LadderRuleR[],
+			ladderRules: row.ladderRules as unknown as LadderRuleR[],
 			tradingDaysPerWeek: row.tradingDaysPerWeek,
 			defaultDailyLossR: row.defaultDailyLossR,
 			defaultDailyWinR: row.defaultDailyWinR,

@@ -176,7 +176,7 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 				</legend>
 				<div className="grid grid-cols-1 gap-s-300 sm:grid-cols-2">
 					<div>
-						<Label htmlFor="initial-capital">Initial capital (BRL)</Label>
+						<Label id="lbl-initial-capital" htmlFor="initial-capital">Initial capital (BRL)</Label>
 						<Input
 							id="initial-capital"
 							type="number"
@@ -188,7 +188,7 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 						/>
 					</div>
 					<div>
-						<Label htmlFor="trading-days">Trading days per week</Label>
+						<Label id="lbl-trading-days" htmlFor="trading-days">Trading days per week</Label>
 						<Input
 							id="trading-days"
 							type="number"
@@ -208,32 +208,32 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 				</legend>
 				<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3">
 					<div>
-						<Label htmlFor="daily-loss">Daily loss R</Label>
+						<Label id="lbl-daily-loss" htmlFor="daily-loss">Daily loss R</Label>
 						<Input id="daily-loss" type="number" step="0.01" min="0.01" value={form.defaultDailyLossR}
 							onChange={(e) => handleField("defaultDailyLossR", e.target.value)} required />
 					</div>
 					<div>
-						<Label htmlFor="daily-win">Daily win R</Label>
+						<Label id="lbl-daily-win" htmlFor="daily-win">Daily win R</Label>
 						<Input id="daily-win" type="number" step="0.01" min="0.01" value={form.defaultDailyWinR}
 							onChange={(e) => handleField("defaultDailyWinR", e.target.value)} required />
 					</div>
 					<div>
-						<Label htmlFor="weekly-loss">Weekly loss R</Label>
+						<Label id="lbl-weekly-loss" htmlFor="weekly-loss">Weekly loss R</Label>
 						<Input id="weekly-loss" type="number" step="0.01" min="0.01" value={form.defaultWeeklyLossR}
 							onChange={(e) => handleField("defaultWeeklyLossR", e.target.value)} required />
 					</div>
 					<div>
-						<Label htmlFor="weekly-win">Weekly win R</Label>
+						<Label id="lbl-weekly-win" htmlFor="weekly-win">Weekly win R</Label>
 						<Input id="weekly-win" type="number" step="0.01" min="0.01" value={form.defaultWeeklyWinR}
 							onChange={(e) => handleField("defaultWeeklyWinR", e.target.value)} required />
 					</div>
 					<div>
-						<Label htmlFor="monthly-loss">Monthly loss R</Label>
+						<Label id="lbl-monthly-loss" htmlFor="monthly-loss">Monthly loss R</Label>
 						<Input id="monthly-loss" type="number" step="0.01" min="0.01" value={form.defaultMonthlyLossR}
 							onChange={(e) => handleField("defaultMonthlyLossR", e.target.value)} required />
 					</div>
 					<div>
-						<Label htmlFor="monthly-win">Monthly win R</Label>
+						<Label id="lbl-monthly-win" htmlFor="monthly-win">Monthly win R</Label>
 						<Input id="monthly-win" type="number" step="0.01" min="0.01" value={form.defaultMonthlyWinR}
 							onChange={(e) => handleField("defaultMonthlyWinR", e.target.value)} required />
 					</div>
@@ -270,7 +270,7 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 			</fieldset>
 
 			<div className="flex justify-end gap-s-200">
-				<Button type="submit" disabled={isPending}>
+				<Button id="btn-yearly-save" type="submit" disabled={isPending}>
 					{isPending ? <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Save className="mr-s-200 h-4 w-4" />}
 					{existing ? "Save changes" : "Seed yearly plan"}
 				</Button>
