@@ -35,7 +35,6 @@ const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult>
 				accountId: input.accountId,
 				year: input.year,
 				initialCapitalCents: input.initialCapitalCents,
-				valorPorContratoCents: 0,
 				ladderRules: input.ladderRules as never,
 				tradingDaysPerWeek: input.tradingDaysPerWeek,
 			})

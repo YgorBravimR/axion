@@ -1112,22 +1112,13 @@ export const yearlyPlans = pgTable(
 			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
 		year: integer("year").notNull(),
 
-		// Capital & contract settings
+		// Capital settings
 		initialCapitalCents: integer("initial_capital_cents").notNull(),
-		valorPorContratoCents: integer("valor_por_contrato_cents").notNull().default(300000),
 		irTaxRate: decimal("ir_tax_rate", { precision: 5, scale: 2 }).notNull().default("30.00"),
 		tradingDaysPerWeek: integer("trading_days_per_week").notNull().default(5),
 
 		// Capital ladder rules (JSONB array of LadderRule)
 		ladderRules: jsonb("ladder_rules").notNull().$type<LadderRule[]>(),
-
-		// Exit convention
-		exitParcialPts: decimal("exit_parcial_pts", { precision: 6, scale: 2 }).notNull().default("5.00"),
-		exitFinalPts: decimal("exit_final_pts", { precision: 6, scale: 2 }).notNull().default("10.00"),
-		exitStopPts: decimal("exit_stop_pts", { precision: 6, scale: 2 }).notNull().default("3.50"),
-		exitProtPts: decimal("exit_prot_pts", { precision: 6, scale: 2 }).notNull().default("1.00"),
-		exitParcialProportion: decimal("exit_parcial_proportion", { precision: 4, scale: 3 }).notNull().default("0.700"),
-		exitFinalProportion: decimal("exit_final_proportion", { precision: 4, scale: 3 }).notNull().default("0.300"),
 
 		startWeek: integer("start_week").notNull().default(1),
 
