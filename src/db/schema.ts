@@ -1156,38 +1156,6 @@ export const yearlyPlans = pgTable(
 	]
 )
 
-export const weeklyTargets = pgTable(
-	"weekly_targets",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		yearlyPlanId: uuid("yearly_plan_id")
-			.notNull()
-			.references(() => yearlyPlans.id, { onDelete: "cascade" }),
-		isoWeek: integer("iso_week").notNull(),
-		isoYear: integer("iso_year").notNull(),
-
-		// Projection
-		contracts: integer("contracts").notNull().default(1),
-		valorOperacionalCents: integer("valor_operacional_cents").notNull(),
-		ptsAlvo: decimal("pts_alvo", { precision: 8, scale: 2 }),
-
-		// Actuals
-		ptsFeito: decimal("pts_feito", { precision: 8, scale: 2 }),
-		ptsSource: varchar("pts_source", { length: 10 }).default("manual"),
-
-		// Financial actuals (for Annual Reporting)
-		metaBrutoCents: integer("meta_bruto_cents"),
-		metaLiquidoCents: integer("meta_liquido_cents"),
-
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-	},
-	(table) => [
-		index("weekly_targets_plan_idx").on(table.yearlyPlanId),
-		uniqueIndex("weekly_targets_plan_week_idx").on(table.yearlyPlanId, table.isoWeek, table.isoYear),
-	]
-)
-
 // ==========================================
 // FRACTAL PLANNING CASCADE — Phase 1
 // ==========================================
@@ -2083,14 +2051,6 @@ export const yearlyPlansRelations = relations(yearlyPlans, ({ one, many }) => ({
 		fields: [yearlyPlans.accountId],
 		references: [tradingAccounts.id],
 	}),
-	weeklyTargets: many(weeklyTargets),
-}))
-
-export const weeklyTargetsRelations = relations(weeklyTargets, ({ one }) => ({
-	yearlyPlan: one(yearlyPlans, {
-		fields: [weeklyTargets.yearlyPlanId],
-		references: [yearlyPlans.id],
-	}),
 }))
 
 // Playbook Enhancement Relations
@@ -2327,8 +2287,6 @@ export type NewMonthlyPlan = typeof monthlyPlans.$inferInsert
 
 export type YearlyPlan = typeof yearlyPlans.$inferSelect
 export type NewYearlyPlan = typeof yearlyPlans.$inferInsert
-export type WeeklyTarget = typeof weeklyTargets.$inferSelect
-export type NewWeeklyTarget = typeof weeklyTargets.$inferInsert
 
 export type RiskManagementProfileRow = typeof riskManagementProfiles.$inferSelect
 export type NewRiskManagementProfileRow = typeof riskManagementProfiles.$inferInsert
