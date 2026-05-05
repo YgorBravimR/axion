@@ -1132,6 +1132,16 @@ export const yearlyPlans = pgTable(
 		defaultMonthlyLossR: decimal("default_monthly_loss_r", { precision: 5, scale: 2 }),
 		defaultMonthlyWinR: decimal("default_monthly_win_r", { precision: 5, scale: 2 }),
 
+		// Phase 4b — adaptive behavior defaults (cascade fallback for live circuit breaker)
+		defaultRiskProfileId: uuid("default_risk_profile_id"),
+		defaultMaxConsecutiveLosses: integer("default_max_consecutive_losses"),
+		defaultAllowSecondOpAfterLoss: boolean("default_allow_second_op_after_loss").default(true),
+		defaultReduceRiskAfterLoss: boolean("default_reduce_risk_after_loss").default(false),
+		defaultRiskReductionFactor: decimal("default_risk_reduction_factor", { precision: 5, scale: 2 }),
+		defaultIncreaseRiskAfterWin: boolean("default_increase_risk_after_win").default(false),
+		defaultCapRiskAfterWin: boolean("default_cap_risk_after_win").default(false),
+		defaultProfitReinvestmentPercent: decimal("default_profit_reinvestment_percent", { precision: 5, scale: 2 }),
+
 		// Aggregate count targets (cascade Σ-aware projections)
 		targetMonthsToYearly: integer("target_months_to_yearly"),
 		targetWeeksToYearly: integer("target_weeks_to_yearly"),
@@ -1144,6 +1154,11 @@ export const yearlyPlans = pgTable(
 	(table) => [
 		index("yearly_plans_account_idx").on(table.accountId),
 		uniqueIndex("yearly_plans_account_year_idx").on(table.accountId, table.year),
+		foreignKey({
+			name: "yearly_plans_default_risk_profile_fk",
+			columns: [table.defaultRiskProfileId],
+			foreignColumns: [riskManagementProfiles.id],
+		}).onDelete("set null"),
 	]
 )
 
@@ -1203,6 +1218,16 @@ export const monthlyPlan = pgTable(
 
 		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
 
+		// Phase 4b — adaptive behavior overrides (cascade winner over yearly defaults)
+		overrideRiskProfileId: uuid("override_risk_profile_id"),
+		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
+		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+		overrideReduceRiskAfterLoss: boolean("override_reduce_risk_after_loss"),
+		overrideRiskReductionFactor: decimal("override_risk_reduction_factor", { precision: 5, scale: 2 }),
+		overrideIncreaseRiskAfterWin: boolean("override_increase_risk_after_win"),
+		overrideCapRiskAfterWin: boolean("override_cap_risk_after_win"),
+		overrideProfitReinvestmentPercent: decimal("override_profit_reinvestment_percent", { precision: 5, scale: 2 }),
+
 		// Set by auto-link rule when matching ledger row exists.
 		monthlyTaxLedgerId: uuid("monthly_tax_ledger_id").references(() => monthlyTaxLedger.id, {
 			onDelete: "set null",
@@ -1219,6 +1244,11 @@ export const monthlyPlan = pgTable(
 		index("monthly_plan_quarter_idx").on(table.quarterlyPlanId),
 		uniqueIndex("monthly_plan_quarter_month_idx").on(table.quarterlyPlanId, table.month),
 		index("monthly_plan_year_month_idx").on(table.year, table.month),
+		foreignKey({
+			name: "monthly_plan_override_risk_profile_fk",
+			columns: [table.overrideRiskProfileId],
+			foreignColumns: [riskManagementProfiles.id],
+		}).onDelete("set null"),
 	],
 )
 
@@ -1243,6 +1273,10 @@ export const weeklyPlan = pgTable(
 		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
 
 		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Phase 4b — within-session behavior overrides (subset of monthly)
+		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
+		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
 
 		intentNotes: text("intent_notes"),
 		postMortemNotes: text("post_mortem_notes"),
@@ -1276,6 +1310,10 @@ export const dailyPlan = pgTable(
 		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
 
 		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Phase 4b — within-session behavior overrides
+		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
+		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
 
 		// Post-market actuals (synced from trades)
 		actualR: decimal("actual_r", { precision: 8, scale: 2 }),

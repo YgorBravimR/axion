@@ -281,6 +281,13 @@
       "when": 1777975960685,
       "tag": "0039_eager_hardball",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1777980437032,
+      "tag": "0040_same_cable",
+      "breakpoints": true
     }
   ]
 }
