@@ -16,7 +16,6 @@ import { Switch } from "@/components/ui/switch"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LanguageSwitcher } from "./language-switcher"
 import { AnnualReportingSettings } from "./annual-reporting-settings"
-import { FeeRateForm } from "@/components/tax"
 import { useToast } from "@/components/ui/toast"
 import {
 	getCurrentUser,
@@ -424,16 +423,6 @@ const UserProfileSettings = () => {
 			{/* Annual Reporting */}
 			<AnnualReportingSettings />
 
-			{/* Fee Rates (BR Tax) */}
-			<div className="space-y-m-400 border-t border-bg-300 pt-m-500">
-				<div>
-					<h3 className="text-body text-txt-100 font-medium">Taxas e Corretagem (BR)</h3>
-					<p className="text-small text-txt-300 mt-s-100">
-						Configuração de taxas por contrato para cálculo do DARF. Valores padrão B3 + SP.
-					</p>
-				</div>
-				<FeeRateForm />
-			</div>
 		</div>
 	)
 }
