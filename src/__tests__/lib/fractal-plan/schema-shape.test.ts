@@ -124,10 +124,11 @@ describe("fractal-plan: strategies additive columns", () => {
 		expect(cols.defaultInstrumentSymbol.notNull).toBe(false)
 	})
 
-	it("preserves legacy targetRMultiple (Phase 4 cleanup)", async () => {
+	it("dropped legacy targetRMultiple (Phase 4 cleanup)", async () => {
 		const schema = await import("@/db/schema")
-		const cols = getTableColumns(schema.strategies)
-		expect(cols.targetRMultiple).toBeDefined()
+		const cols = getTableColumns(schema.strategies) as Record<string, unknown>
+		expect(cols.targetRMultiple).toBeUndefined()
+		expect((cols as { finalR?: unknown }).finalR).toBeDefined()
 	})
 })
 

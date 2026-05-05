@@ -113,8 +113,8 @@ const GET = async (request: NextRequest) => {
 					entryCriteria: strategy.entryCriteria,
 					exitCriteria: strategy.exitCriteria,
 					riskRules: strategy.riskRules,
-					targetRMultiple: strategy.targetRMultiple
-						? Number(strategy.targetRMultiple)
+					finalR: strategy.finalR
+						? Number(strategy.finalR)
 						: null,
 					maxRiskPercent: strategy.maxRiskPercent
 						? Number(strategy.maxRiskPercent)

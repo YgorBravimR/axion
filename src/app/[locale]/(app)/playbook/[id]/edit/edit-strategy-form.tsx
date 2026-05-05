@@ -102,8 +102,8 @@ const EditStrategyForm = ({
 				entryCriteria: (formData.get("entryCriteria") as string) || undefined,
 				exitCriteria: (formData.get("exitCriteria") as string) || undefined,
 				riskRules: (formData.get("riskRules") as string) || undefined,
-				targetRMultiple: formData.get("targetRMultiple")
-					? Number(formData.get("targetRMultiple"))
+				finalR: formData.get("finalR")
+					? Number(formData.get("finalR"))
 					: undefined,
 				maxRiskPercent: formData.get("maxRiskPercent")
 					? Number(formData.get("maxRiskPercent"))
@@ -314,17 +314,17 @@ const EditStrategyForm = ({
 									<div>
 										<Label
 											id="label-target-r-multiple"
-											htmlFor="targetRMultiple"
+											htmlFor="finalR"
 										>
-											{t("targetRMultiple")}
+											{t("finalR")}
 										</Label>
 										<Input
-											id="targetRMultiple"
-											name="targetRMultiple"
+											id="finalR"
+											name="finalR"
 											type="number"
 											step="0.1"
 											min="0.1"
-											defaultValue={strategy.targetRMultiple || ""}
+											defaultValue={strategy.finalR || ""}
 											placeholder={t("targetRPlaceholder")}
 											className="mt-s-200"
 										/>

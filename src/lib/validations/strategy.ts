@@ -35,7 +35,7 @@ export const createStrategySchema = z.object({
 		.string()
 		.max(5000, "validation.strategy.riskRulesMax")
 		.optional(),
-	targetRMultiple: z.coerce
+	finalR: z.coerce
 		.number()
 		.positive("validation.strategy.targetRPositive")
 		.max(100, "validation.strategy.targetRMax")

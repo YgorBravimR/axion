@@ -14,7 +14,7 @@ interface ArchUpdateStrategyBody {
 	entryCriteria?: string
 	exitCriteria?: string
 	riskRules?: string
-	targetRMultiple?: number
+	finalR?: number
 	maxRiskPercent?: number
 	screenshotUrl?: string
 	screenshotS3Key?: string
@@ -77,7 +77,7 @@ const POST = async (request: NextRequest) => {
 		if (strategyData.entryCriteria !== undefined) updateValues.entryCriteria = strategyData.entryCriteria
 		if (strategyData.exitCriteria !== undefined) updateValues.exitCriteria = strategyData.exitCriteria
 		if (strategyData.riskRules !== undefined) updateValues.riskRules = strategyData.riskRules
-		if (strategyData.targetRMultiple !== undefined) updateValues.targetRMultiple = strategyData.targetRMultiple.toString()
+		if (strategyData.finalR !== undefined) updateValues.finalR = strategyData.finalR.toString()
 		if (strategyData.maxRiskPercent !== undefined) updateValues.maxRiskPercent = strategyData.maxRiskPercent.toString()
 		if (strategyData.screenshotUrl !== undefined) updateValues.screenshotUrl = strategyData.screenshotUrl || null
 		if (strategyData.screenshotS3Key !== undefined) updateValues.screenshotS3Key = strategyData.screenshotS3Key || null

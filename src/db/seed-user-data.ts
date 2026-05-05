@@ -11,7 +11,7 @@ interface SeedStrategy {
 	code: string
 	name: string
 	description: string | null
-	targetRMultiple: string | null
+	finalR: string | null
 	maxRiskPercent: string | null
 	isActive: boolean
 }
@@ -28,7 +28,7 @@ const DEFAULT_STRATEGIES: SeedStrategy[] = [
 		code: "RJCT",
 		name: "Rejeição",
 		description: "Rejeição de ponto de decisão importante",
-		targetRMultiple: "2.00",
+		finalR: "2.00",
 		maxRiskPercent: "1.00",
 		isActive: true,
 	},
@@ -36,7 +36,7 @@ const DEFAULT_STRATEGIES: SeedStrategy[] = [
 		code: "RPMT",
 		name: "Rompimento",
 		description: "Rompimento de ponto importante",
-		targetRMultiple: "2.00",
+		finalR: "2.00",
 		maxRiskPercent: "1.00",
 		isActive: true,
 	},
@@ -44,7 +44,7 @@ const DEFAULT_STRATEGIES: SeedStrategy[] = [
 		code: "VWBR",
 		name: "VWAP mercado a vista",
 		description: null,
-		targetRMultiple: null,
+		finalR: null,
 		maxRiskPercent: null,
 		isActive: true,
 	},
@@ -52,7 +52,7 @@ const DEFAULT_STRATEGIES: SeedStrategy[] = [
 		code: "VWUS",
 		name: "VWAP mercado americano",
 		description: null,
-		targetRMultiple: null,
+		finalR: null,
 		maxRiskPercent: null,
 		isActive: true,
 	},
@@ -60,7 +60,7 @@ const DEFAULT_STRATEGIES: SeedStrategy[] = [
 		code: "CME",
 		name: "CME - Chicaco Mercantil Exchange",
 		description: null,
-		targetRMultiple: null,
+		finalR: null,
 		maxRiskPercent: null,
 		isActive: true,
 	},
@@ -68,7 +68,7 @@ const DEFAULT_STRATEGIES: SeedStrategy[] = [
 		code: "DEZK",
 		name: "10k",
 		description: null,
-		targetRMultiple: null,
+		finalR: null,
 		maxRiskPercent: null,
 		isActive: true,
 	},

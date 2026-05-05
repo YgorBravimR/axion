@@ -101,7 +101,7 @@ export const createStrategy = async (
 				entryCriteria: validated.entryCriteria || null,
 				exitCriteria: validated.exitCriteria || null,
 				riskRules: validated.riskRules || null,
-				targetRMultiple: validated.targetRMultiple?.toString() || null,
+				finalR: validated.finalR?.toString() || null,
 				maxRiskPercent: validated.maxRiskPercent?.toString() || null,
 				screenshotUrl: validated.screenshotUrl || null,
 				screenshotS3Key: validated.screenshotS3Key || null,
@@ -210,8 +210,8 @@ export const updateStrategy = async (
 				...(validated.riskRules !== undefined && {
 					riskRules: validated.riskRules || null,
 				}),
-				...(validated.targetRMultiple !== undefined && {
-					targetRMultiple: validated.targetRMultiple?.toString() || null,
+				...(validated.finalR !== undefined && {
+					finalR: validated.finalR?.toString() || null,
 				}),
 				...(validated.maxRiskPercent !== undefined && {
 					maxRiskPercent: validated.maxRiskPercent?.toString() || null,

@@ -33,7 +33,7 @@ const POST = async (request: NextRequest) => {
 				entryCriteria: strategyData.entryCriteria,
 				exitCriteria: strategyData.exitCriteria,
 				riskRules: strategyData.riskRules,
-				targetRMultiple: strategyData.targetRMultiple?.toString(),
+				finalR: strategyData.finalR?.toString(),
 				maxRiskPercent: strategyData.maxRiskPercent?.toString(),
 				screenshotUrl: strategyData.screenshotUrl || null,
 				screenshotS3Key: strategyData.screenshotS3Key || null,

@@ -235,14 +235,14 @@ const StrategyCardBase = ({
 			</div>
 
 			{/* Target R and Risk */}
-			{(strategy.targetRMultiple || strategy.maxRiskPercent) && (
+			{(strategy.finalR || strategy.maxRiskPercent) && (
 				<div className="mt-m-400 gap-m-400 flex items-center">
-					{strategy.targetRMultiple && (
+					{strategy.finalR && (
 						<div className="gap-s-100 flex items-center">
 							<TrendingUp className="text-trade-buy h-4 w-4" />
 							<span className="text-tiny text-txt-300">{t("strategy.target")}</span>
 							<span className="text-small text-txt-100 font-medium">
-								{Number(strategy.targetRMultiple).toFixed(1)}R
+								{Number(strategy.finalR).toFixed(1)}R
 							</span>
 						</div>
 					)}

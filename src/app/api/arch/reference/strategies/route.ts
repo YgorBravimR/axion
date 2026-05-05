@@ -17,7 +17,7 @@ const GET = async (request: NextRequest) => {
 				code: strategies.code,
 				name: strategies.name,
 				isActive: strategies.isActive,
-				targetRMultiple: strategies.targetRMultiple,
+				finalR: strategies.finalR,
 				description: strategies.description,
 			})
 			.from(strategies)

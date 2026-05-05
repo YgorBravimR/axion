@@ -424,7 +424,6 @@ export const strategies = pgTable(
 		entryCriteria: text("entry_criteria"),
 		exitCriteria: text("exit_criteria"),
 		riskRules: text("risk_rules"),
-		targetRMultiple: decimal("target_r_multiple", { precision: 8, scale: 2 }),
 		// R-multiple template (Fractal Planning Cascade — Phase 1).
 		// All nullable; populated via Phase 3 backfill (existing targetRMultiple → finalR).
 		stopR: decimal("stop_r", { precision: 8, scale: 2 }),

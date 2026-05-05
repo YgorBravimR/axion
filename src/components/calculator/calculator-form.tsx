@@ -114,7 +114,7 @@ const CalculatorForm = memo(({
 						<SelectContent>
 							{strategies.map((strategy) => (
 								<SelectItem key={strategy.id} value={strategy.id}>
-									{strategy.code} - {strategy.name} ({strategy.targetRMultiple}R)
+									{strategy.code} - {strategy.name} ({strategy.finalR}R)
 								</SelectItem>
 							))}
 						</SelectContent>
@@ -122,7 +122,7 @@ const CalculatorForm = memo(({
 					{selectedStrategyId && (
 						<p className="mt-s-100 text-tiny text-txt-300">
 							{t("strategyHint", {
-								r: strategies.find((s) => s.id === selectedStrategyId)?.targetRMultiple ?? "",
+								r: strategies.find((s) => s.id === selectedStrategyId)?.finalR ?? "",
 							})}
 						</p>
 					)}
@@ -219,7 +219,7 @@ const CalculatorForm = memo(({
 				<label className="mb-s-200 block text-small text-txt-200">
 					{t("targetPrice")}
 					{isTargetFromStrategy && (
-						<PrefilledBadge label={`${strategies.find((s) => s.id === selectedStrategyId)?.targetRMultiple}R`} />
+						<PrefilledBadge label={`${strategies.find((s) => s.id === selectedStrategyId)?.finalR}R`} />
 					)}
 				</label>
 				<Input

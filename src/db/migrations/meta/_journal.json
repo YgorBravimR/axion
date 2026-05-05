@@ -253,6 +253,13 @@
       "when": 1777958500738,
       "tag": "0035_aberrant_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1777958616955,
+      "tag": "0036_tough_paladin",
+      "breakpoints": true
     }
   ]
 }

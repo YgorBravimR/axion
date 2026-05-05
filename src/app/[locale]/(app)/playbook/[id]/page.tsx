@@ -145,7 +145,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					</div>
 
 					{/* Risk Settings */}
-					{(strategy.targetRMultiple != null || strategy.maxRiskPercent != null) && (
+					{(strategy.finalR != null || strategy.maxRiskPercent != null) && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<Target className="text-txt-200 h-5 w-5" />
@@ -155,15 +155,15 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							</div>
 
 							<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
-								{strategy.targetRMultiple != null && (
+								{strategy.finalR != null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingUp className="text-trade-buy h-6 w-6" />
 										<div>
 											<p className="text-tiny text-txt-300">
-												{t("strategy.targetRMultiple")}
+												{t("strategy.finalR")}
 											</p>
 											<p className="text-body text-txt-100 font-bold">
-												{Number(strategy.targetRMultiple).toFixed(1)}R
+												{Number(strategy.finalR).toFixed(1)}R
 											</p>
 										</div>
 									</div>

@@ -331,14 +331,14 @@ const endpoints: EndpointDoc[] = [
 		path: "/api/arch/strategies/create",
 		description: "Create a new strategy.",
 		required: ["code", "name"],
-		optional: ["description", "entryCriteria", "exitCriteria", "riskRules", "targetRMultiple", "maxRiskPercent", "notes", "isActive", "conditions"],
+		optional: ["description", "entryCriteria", "exitCriteria", "riskRules", "finalR", "maxRiskPercent", "notes", "isActive", "conditions"],
 	},
 	{
 		method: "POST",
 		path: "/api/arch/strategies/update",
 		description: "Update an existing strategy.",
 		required: ["id"],
-		optional: ["code", "name", "description", "entryCriteria", "exitCriteria", "riskRules", "targetRMultiple", "maxRiskPercent", "notes", "isActive", "conditions"],
+		optional: ["code", "name", "description", "entryCriteria", "exitCriteria", "riskRules", "finalR", "maxRiskPercent", "notes", "isActive", "conditions"],
 	},
 	// ── Tags CRUD ─────────────────────────────────────────────
 	{

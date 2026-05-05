@@ -54,9 +54,9 @@ const PositionCalculator = ({
 	// Track which fields were pre-filled from asset settings
 	const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set())
 
-	// Filter strategies that have targetRMultiple set
+	// Filter strategies that have finalR set
 	const strategiesWithTarget = useMemo(
-		() => strategies.filter((strategy) => strategy.targetRMultiple !== null),
+		() => strategies.filter((strategy) => strategy.finalR !== null),
 		[strategies]
 	)
 
@@ -133,7 +133,7 @@ const PositionCalculator = ({
 		const stop = parseFloat(stopPrice)
 		if (isNaN(entry) || isNaN(stop) || entry <= 0 || stop <= 0) return
 
-		const rMultiple = parseFloat(selectedStrategy.targetRMultiple!)
+		const rMultiple = parseFloat(selectedStrategy.finalR!)
 		if (isNaN(rMultiple) || rMultiple <= 0) return
 
 		const stopDistance = Math.abs(entry - stop)
