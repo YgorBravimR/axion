@@ -1,7 +1,7 @@
 import { formatCurrency } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import type { Locale } from "@/i18n/config"
-import type { YearTaxSummary } from "@/app/actions/tax-engine"
+import type { YearTaxSummary } from "@/lib/tax/types"
 
 interface AnnualTaxSummaryProps {
 	year: number

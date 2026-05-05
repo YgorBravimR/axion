@@ -7,47 +7,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 import { addMonths, lastDayOfMonth, subDays, isWeekend, startOfMonth } from "date-fns"
 import type { ActionResponse } from "@/types"
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface MonthlyDarfRow {
-	id: string
-	accountId: string
-	month: Date
-	grossGainCents: number
-	totalTxCorretagemCents: number
-	totalTxRegistroCents: number
-	totalEmolumentosCents: number
-	totalIssCents: number
-	totalFeesCents: number
-	irrfCents: number
-	netGainBeforeCarryoverCents: number
-	carryoverInCents: number
-	carryoverConsumedCents: number
-	carryoverOutCents: number
-	taxableGainCents: number
-	irGrossCents: number
-	darfDueCents: number
-	darfStatus: "pending" | "paid" | "exempt" | "overdue"
-	darfDueDate: Date | null
-	darfPaidAt: Date | null
-	darfPaidAmountCents: number | null
-	netLiquidCents: number
-	tradeCount: number
-	isDirty: boolean
-	computedAt: Date | null
-}
-
-interface YearTaxSummary {
-	grossGainCents: number
-	totalFeesCents: number
-	totalIrrfCents: number
-	totalDarfPaidCents: number
-	totalDarfPendingCents: number
-	netLiquidCents: number
-	irBurdenPercent: number
-	heuristicWarning: boolean
-}
+import type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow } from "@/lib/tax/types"
 
 // ─── Internal: verify account ownership ──────────────────────────────────────
 
@@ -483,16 +443,6 @@ const markDarfPaid = async (params: {
 
 // ─── getFeeRates ─────────────────────────────────────────────────────────────
 
-interface FeeRatesRow {
-	txCorretagemCents: number
-	txRegistroCents: number
-	emolumentosCents: number
-	issRatePercent: string
-	irrfRateBps: number
-	irRateBps: number
-	subjectToPersonalIr: boolean
-}
-
 const DEFAULT_FEE_RATES: FeeRatesRow = {
 	txCorretagemCents: 5,
 	txRegistroCents: 74,
@@ -570,7 +520,6 @@ const upsertFeeRates = async (params: {
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
-export type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow }
 export {
 	getMonthlyDarf,
 	getCarryoverState,

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import type { Locale } from "@/i18n/config"
-import type { MonthlyDarfRow } from "@/app/actions/tax-engine"
+import type { MonthlyDarfRow } from "@/lib/tax/types"
 
 interface MonthlyDarfCardProps {
 	ledgerRow: MonthlyDarfRow

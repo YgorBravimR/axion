@@ -23,7 +23,7 @@ import type { AnnualRollupData, WeeklyMetaVsRealData } from "@/app/actions/annua
 import type { CapitalEvent } from "@/types/integration"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { reportsGuide } from "@/components/ui/page-guide/guide-configs/reports"
-import type { MonthlyDarfRow, YearTaxSummary } from "@/app/actions/tax-engine"
+import type { MonthlyDarfRow, YearTaxSummary } from "@/lib/tax/types"
 import type { CarryoverHistoryRow } from "@/components/tax"
 import { MonthlyDarfCard, CarryoverLedger, AnnualTaxSummary } from "@/components/tax"
 import { markDarfPaid } from "@/app/actions/tax-engine"
