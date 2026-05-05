@@ -213,7 +213,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				setEditingAssetId(null)
 				showToast("success", t("assetBreakevenUpdated"))
 			} else {
-				showToast("error", result.error || t("assetFeesUpdateError"))
+				showToast("error", result.error || t("assetBreakevenUpdateError"))
 			}
 		})
 	}
@@ -242,7 +242,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				setEditingAssetId(null)
 				showToast("success", t("assetBreakevenReset"))
 			} else {
-				showToast("error", result.error || t("assetFeesUpdateError"))
+				showToast("error", result.error || t("assetBreakevenUpdateError"))
 			}
 		})
 	}

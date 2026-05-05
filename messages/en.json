@@ -2556,7 +2556,7 @@
       "ticks": "ticks",
       "assetBreakevenUpdated": "Breakeven ticks updated",
       "assetBreakevenReset": "Breakeven ticks reset to account default",
-      "assetFeesUpdateError": "Failed to update asset fees",
+      "assetBreakevenUpdateError": "Failed to update breakeven ticks",
       "resetToDefault": "Reset to Default",
       "override": "Custom",
       "riskManagement": "Risk Management",

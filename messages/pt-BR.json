@@ -2556,7 +2556,7 @@
       "ticks": "ticks",
       "assetBreakevenUpdated": "Ticks de breakeven atualizados",
       "assetBreakevenReset": "Ticks de breakeven redefinidos para o padrão da conta",
-      "assetFeesUpdateError": "Falha ao atualizar taxas do ativo",
+      "assetBreakevenUpdateError": "Falha ao atualizar ticks de breakeven",
       "resetToDefault": "Restaurar Padrão",
       "override": "Personalizado",
       "riskManagement": "Gestão de Risco",
