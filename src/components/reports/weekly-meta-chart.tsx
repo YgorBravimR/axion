@@ -81,26 +81,26 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-300)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-bg-300)" vertical={false} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 11, fill: "var(--txt-300)", fontFamily: "var(--font-mono)" }}
+            tick={{ fontSize: 11, fill: "var(--color-txt-300)", fontFamily: "var(--font-mono)" }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             tickFormatter={formatBRL}
-            tick={{ fontSize: 11, fill: "var(--txt-300)", fontFamily: "var(--font-mono)" }}
+            tick={{ fontSize: 11, fill: "var(--color-txt-300)", fontFamily: "var(--font-mono)" }}
             tickLine={false}
             axisLine={false}
             width={60}
           />
           <Tooltip
             content={<CustomTooltip weeks={data.weeks} />}
-            cursor={{ fill: "var(--bg-300)", opacity: 0.4 }}
+            cursor={{ fill: "var(--color-bg-300)", opacity: 0.4 }}
           />
           <Legend
-            wrapperStyle={{ fontSize: 11, color: "var(--txt-300)" }}
+            wrapperStyle={{ fontSize: 11, color: "var(--color-txt-300)" }}
           />
 
           <Bar dataKey="resultado" name="Resultado" radius={[2, 2, 0, 0]} maxBarSize={24}>
@@ -109,10 +109,10 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
                 key={`cell-${index}`}
                 fill={
                   entry.disabled
-                    ? "var(--bg-300)"
+                    ? "var(--color-bg-300)"
                     : entry.resultado >= 0
-                    ? "var(--trade-buy)"
-                    : "var(--trade-sell)"
+                    ? "var(--color-trade-buy)"
+                    : "var(--color-trade-sell)"
                 }
                 opacity={entry.disabled ? 0.3 : 1}
               />
@@ -123,7 +123,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
             <Line
               dataKey="metaBruto"
               name="Meta Bruto"
-              stroke="var(--acc-100)"
+              stroke="var(--color-acc-100)"
               strokeDasharray="6 3"
               strokeWidth={1.5}
               dot={false}
@@ -134,7 +134,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
             <Line
               dataKey="metaLiquido"
               name="Meta Líquido"
-              stroke="var(--acc-200)"
+              stroke="var(--color-acc-200)"
               strokeDasharray="6 3"
               strokeWidth={1.5}
               dot={false}
@@ -145,7 +145,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
             <Line
               dataKey="autoRetirada"
               name="Retirada Auto"
-              stroke="var(--acc-100)"
+              stroke="var(--color-acc-100)"
               strokeDasharray="2 4"
               strokeWidth={1}
               dot={false}

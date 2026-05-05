@@ -754,11 +754,7 @@ export const getAccountAssetSettings = async (): Promise<
 	}
 }
 
-/**
- * Legacy aliases for backwards compatibility
- */
-export const getTodayAssetSettings = getAccountAssetSettings
-export const getAssetSettings = getAccountAssetSettings
+export const getAssetSettings = async () => getAccountAssetSettings()
 
 /**
  * Upsert account-level asset settings

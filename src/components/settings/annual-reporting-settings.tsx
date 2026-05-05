@@ -79,7 +79,7 @@ const AnnualReportingSettings = () => {
             id="account-start-month"
             value={startMonth ?? ""}
             onChange={(e) => setStartMonth(e.target.value ? parseInt(e.target.value) : null)}
-            className="w-full rounded-md border border-bg-300 bg-bg-200 px-m-300 py-s-200 text-sm text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
+            className="w-full rounded-md border border-bg-300 bg-bg-200 px-s-300 py-s-200 text-sm text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
             aria-label="Account start month"
           >
             <option value="">— Not set —</option>
@@ -100,7 +100,7 @@ const AnnualReportingSettings = () => {
             max={currentYear}
             value={startYear ?? ""}
             onChange={(e) => setStartYear(e.target.value ? parseInt(e.target.value) : null)}
-            className="w-full rounded-md border border-bg-300 bg-bg-200 px-m-300 py-s-200 text-sm font-mono text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
+            className="w-full rounded-md border border-bg-300 bg-bg-200 px-s-300 py-s-200 text-sm font-mono text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
             aria-label="Account start year"
             placeholder="e.g. 2025"
           />
@@ -116,7 +116,7 @@ const AnnualReportingSettings = () => {
             inputMode="decimal"
             value={startingBalanceBRL}
             onChange={(e) => setStartingBalanceBRL(e.target.value)}
-            className="w-full rounded-md border border-bg-300 bg-bg-200 px-m-300 py-s-200 text-sm font-mono text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
+            className="w-full rounded-md border border-bg-300 bg-bg-200 px-s-300 py-s-200 text-sm font-mono text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
             aria-label="Opening balance in BRL"
             placeholder="e.g. 10000"
           />
@@ -134,7 +134,7 @@ const AnnualReportingSettings = () => {
             step={0.01}
             value={withdrawalTarget ?? ""}
             onChange={(e) => setWithdrawalTarget(e.target.value ? parseFloat(e.target.value) : null)}
-            className="w-full rounded-md border border-bg-300 bg-bg-200 px-m-300 py-s-200 text-sm font-mono text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
+            className="w-full rounded-md border border-bg-300 bg-bg-200 px-s-300 py-s-200 text-sm font-mono text-txt-100 focus:outline-none focus:ring-1 focus:ring-acc-100"
             aria-label="Monthly withdrawal target percentage"
             placeholder="30 (0 = disabled)"
           />

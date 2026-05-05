@@ -37,14 +37,14 @@ const TodayStrip = async ({ accountId, now, locale }: TodayStripProps) => {
 	}
 
 	return (
-		<div className="mb-m-400 flex items-center justify-between rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-m-300">
-			<div className="flex items-center gap-m-300">
-				<span className="text-sm text-text-200">Today&apos;s plan</span>
-				<span className="font-mono text-text-100">
+		<div className="mb-m-400 flex items-center justify-between rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-s-300">
+			<div className="flex items-center gap-s-300">
+				<span className="text-sm text-txt-200">Today&apos;s plan</span>
+				<span className="font-mono text-txt-100">
 					Loss: {formatR(r.dailyLossR.value)}
 				</span>
 				<ProvenanceBadge level={r.dailyLossR.source} />
-				<span className="font-mono text-text-100">
+				<span className="font-mono text-txt-100">
 					Target: {formatR(r.dailyTargetR.value)}
 				</span>
 				<ProvenanceBadge level={r.dailyTargetR.source} />

@@ -109,7 +109,7 @@ export const ReportsContent = ({
 					<div className="flex items-center justify-between border-l-2 border-acc-100 pl-s-300">
 						<h2
 							id="annual-section-heading"
-							className="text-label uppercase tracking-wider text-txt-200"
+							className="text-xs uppercase tracking-wider text-txt-200"
 						>
 							Annual Report — {currentYear}
 						</h2>
@@ -161,7 +161,7 @@ export const ReportsContent = ({
 					<div className="flex items-center justify-between border-l-2 border-acc-100 pl-s-300">
 						<h2
 							id="tax-section-heading"
-							className="text-label uppercase tracking-wider text-txt-200"
+							className="text-xs uppercase tracking-wider text-txt-200"
 						>
 							Impostos — {currentYear}
 						</h2>
@@ -201,7 +201,7 @@ export const ReportsContent = ({
 				<div className="border-l-2 border-acc-100 pl-s-300">
 					<h2
 						id="r-dist-section-heading"
-						className="text-label uppercase tracking-wider text-txt-200"
+						className="text-xs uppercase tracking-wider text-txt-200"
 					>
 						R Distribution — {currentYear}
 					</h2>

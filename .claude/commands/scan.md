@@ -68,15 +68,78 @@ For each category, read the corresponding skill SKILL.md for instructions before
 ## Phase 4: Verify
 
 After all fixes:
-1. Run `pnpm tsc --noEmit` to verify TypeScript compilation
+1. Run `bunx tsc --noEmit --pretty false` to verify TypeScript compilation (this repo uses bun, not pnpm)
 2. Run `git diff --stat` to summarize all changes
 3. Present a summary of what was fixed, organized by category
 
 Do NOT commit — let the user decide when to commit.
 
+## Phase 5: Write post-mortem & prevention rules (REQUIRED — never skip)
+
+After verification, persist findings so the same class of bug never ships again. Mirror the bug-fixer agent's post-mortem discipline.
+
+### 5a. Project audit log
+
+Write `docs/scans/YYYY-MM-DD-<slug>.md` (create `docs/scans/` if missing). `<slug>` = short kebab-case target name (e.g. `tax-yearly-reports`, `command-center-redesign`).
+
+Required sections:
+
+```markdown
+# Scan: <target> — <YYYY-MM-DD>
+
+**Branch**: <git branch>
+**Base**: <git base ref> (e.g. `origin/main`)
+**Files audited**: <N source files>
+**Verdict**: <X critical, Y high, Z medium, W low>
+
+## Findings (full table)
+| # | Severity | Category | File:Line | Issue | Rule violated | Status |
+| ... |
+
+(Status = `fixed` | `wontfix` | `deferred` — every row must have one. Items not in fix scope = `deferred`.)
+
+## Root causes
+For every CRITICAL and every HIGH that shares a root cause with another, write 1 paragraph:
+- What the bug class is
+- Why it slipped past review (write/build/runtime — explain WHEN it manifests)
+- Concrete anti-pattern signature (regex / grep that catches it)
+
+## Prevention rules
+For each root cause, write a one-line rule + a one-line detector (grep or rg one-liner).
+Format:
+- **Rule**: <imperative statement>
+  **Detector**: `rg -n '<pattern>' src/`
+  **Auto-fix**: <skill name or "manual">
+
+## Fix log
+List of commits or edit groups produced by this scan, in fix-order. Reference Phase 3 categories.
+
+## Still armed
+Any DEFERRED items that are known-armed bombs but not fixed in this pass — flag for next scan.
+```
+
+### 5b. Global memory append
+
+Append to `~/.claude/memory.md` under a section `## Axion Anti-Pattern Catalog` (create if missing). Each entry:
+
+```
+- [YYYY-MM-DD] **<short bug name>**: <one-sentence rule>. Detector: `<grep>`. First seen: <commit/branch>. Fix recipe: <skill or steps>.
+```
+
+Only add entries for patterns that:
+- Have shipped at least once on a feature branch, AND
+- Will silently re-ship without an explicit detector
+
+Skip one-off mistakes. Skip nits. Only catalogue **recurring class bugs** (e.g. "use server" type-export footgun, broken Tailwind tokens that compile to nothing, TZ-naive `Date` against `timestamptz`).
+
+### 5c. Suggest a future-scan pre-flight
+
+If the catalog now has ≥3 entries that are all greppable, suggest in the closing message that the next `/scan` invocation should add a Phase 0 step that runs every detector before launching diagnose agents — fast, mechanical, catches recurring bombs before they reach the LLM.
+
 ## Important Rules
 
 - **Never skip Phase 2** — the user must approve before fixes are applied
+- **Never skip Phase 5** — the post-mortem is the whole point; without it the same bug ships again
 - **Fix one category at a time** — don't mix spacing fixes with color fixes in the same pass
 - **Read the skill before fixing** — each category has specific patterns and anti-patterns
 - **Preserve functionality** — fixes should improve quality without changing behavior

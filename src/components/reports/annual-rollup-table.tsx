@@ -130,7 +130,7 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
             ))}
           </tbody>
           <tfoot>
-            <tr className="bg-bg-300 border-t-2 border-bg-400 font-semibold">
+            <tr className="bg-bg-300 border-t-2 border-bg-300 font-semibold">
               <th scope="row" className="sticky left-0 bg-bg-300 px-3 py-2 text-left text-xs text-txt-100">
                 Total
               </th>

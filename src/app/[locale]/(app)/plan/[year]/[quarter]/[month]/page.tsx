@@ -19,7 +19,7 @@ const PlanMonthPage = async ({ params }: PageProps) => {
 	if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
 		return (
 			<PlanSection title="Invalid month">
-				<p className="text-text-200">Month must be 1-12.</p>
+				<p className="text-txt-200">Month must be 1-12.</p>
 			</PlanSection>
 		)
 	}
@@ -31,27 +31,27 @@ const PlanMonthPage = async ({ params }: PageProps) => {
 		<PlanSection
 			title={`${MONTH_NAME[month]} ${year}`}
 			subtitle="Month-level cascade-resolved targets"
-			breadcrumb={<a href={`/${locale}/plan/${year}`} className="hover:text-text-100">{year}</a>}
+			breadcrumb={<a href={`/${locale}/plan/${year}`} className="hover:text-txt-100">{year}</a>}
 		>
-			<dl className="grid grid-cols-1 gap-m-300 sm:grid-cols-2">
+			<dl className="grid grid-cols-1 gap-s-300 sm:grid-cols-2">
 				<div>
-					<dt className="text-sm text-text-200">Monthly win R</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{formatR(r.monthlyWinR)}</span>
+					<dt className="text-sm text-txt-200">Monthly win R</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{formatR(r.monthlyWinR)}</span>
 						<ProvenanceBadge level={r.monthlyWinR_provenance} isOverride={r.monthlyWinR_provenance === "month"} />
 					</dd>
 				</div>
 				<div>
-					<dt className="text-sm text-text-200">Monthly loss R</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{formatR(r.monthlyLossR)}</span>
+					<dt className="text-sm text-txt-200">Monthly loss R</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{formatR(r.monthlyLossR)}</span>
 						<ProvenanceBadge level={r.monthlyLossR_provenance} isOverride={r.monthlyLossR_provenance === "month"} />
 					</dd>
 				</div>
 				<div>
-					<dt className="text-sm text-text-200">Target weeks</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{r.monthlyTargetWeeks ?? "—"}</span>
+					<dt className="text-sm text-txt-200">Target weeks</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{r.monthlyTargetWeeks ?? "—"}</span>
 						<ProvenanceBadge level={r.monthlyTargetWeeks_provenance} isOverride={r.monthlyTargetWeeks_provenance === "month"} />
 					</dd>
 				</div>

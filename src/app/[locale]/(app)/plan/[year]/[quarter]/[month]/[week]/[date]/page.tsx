@@ -24,7 +24,7 @@ const PlanDayPage = async ({ params }: PageProps) => {
 	if (Number.isNaN(day.getTime())) {
 		return (
 			<PlanSection title="Invalid date">
-				<p className="text-text-200">Date must be ISO yyyy-MM-dd.</p>
+				<p className="text-txt-200">Date must be ISO yyyy-MM-dd.</p>
 			</PlanSection>
 		)
 	}
@@ -35,39 +35,39 @@ const PlanDayPage = async ({ params }: PageProps) => {
 	if (!r) {
 		return (
 			<PlanSection title={date} subtitle="No yearly plan found for this date">
-				<p className="text-text-200">Create a yearly plan to see cascade-resolved limits.</p>
+				<p className="text-txt-200">Create a yearly plan to see cascade-resolved limits.</p>
 			</PlanSection>
 		)
 	}
 
 	return (
 		<PlanSection title={date} subtitle="Day-level cascade-resolved limits">
-			<dl className="grid grid-cols-1 gap-m-300 sm:grid-cols-2">
+			<dl className="grid grid-cols-1 gap-s-300 sm:grid-cols-2">
 				<div>
-					<dt className="text-sm text-text-200">Daily loss R</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{formatR(r.dailyLossR.value)}</span>
+					<dt className="text-sm text-txt-200">Daily loss R</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{formatR(r.dailyLossR.value)}</span>
 						<ProvenanceBadge level={r.dailyLossR.source} isOverride={r.dailyLossR.source === "day"} />
 					</dd>
 				</div>
 				<div>
-					<dt className="text-sm text-text-200">Daily target R</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{formatR(r.dailyTargetR.value)}</span>
+					<dt className="text-sm text-txt-200">Daily target R</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{formatR(r.dailyTargetR.value)}</span>
 						<ProvenanceBadge level={r.dailyTargetR.source} isOverride={r.dailyTargetR.source === "day"} />
 					</dd>
 				</div>
 				<div>
-					<dt className="text-sm text-text-200">Weekly loss R</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{formatR(r.weeklyLossR.value)}</span>
+					<dt className="text-sm text-txt-200">Weekly loss R</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{formatR(r.weeklyLossR.value)}</span>
 						<ProvenanceBadge level={r.weeklyLossR.source} isOverride={r.weeklyLossR.source === "week"} />
 					</dd>
 				</div>
 				<div>
-					<dt className="text-sm text-text-200">Monthly loss R</dt>
-					<dd className="mt-1 flex items-center gap-m-200">
-						<span className="font-mono text-lg text-text-100">{formatR(r.monthlyLossR.value)}</span>
+					<dt className="text-sm text-txt-200">Monthly loss R</dt>
+					<dd className="mt-1 flex items-center gap-s-200">
+						<span className="font-mono text-lg text-txt-100">{formatR(r.monthlyLossR.value)}</span>
 						<ProvenanceBadge level={r.monthlyLossR.source} isOverride={r.monthlyLossR.source === "month"} />
 					</dd>
 				</div>

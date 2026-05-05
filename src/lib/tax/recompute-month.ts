@@ -2,7 +2,6 @@
 import { db } from "@/db/drizzle"
 import { trades, accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
-import { startOfMonth, endOfMonth } from "date-fns"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
@@ -49,9 +48,9 @@ interface RecomputeOutput {
 const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOutput> => {
 	const { accountId, year, month, carryoverInCents, userId } = input
 
-	const monthDate = new Date(year, month - 1, 1)
-	const monthStart = startOfMonth(monthDate)
-	const monthEnd = endOfMonth(monthDate)
+	// timestamptz columns: build UTC range bounds, never local-tz date-fns helpers
+	const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
+	const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
 
 	// Replay accounts: tax engine disabled entirely. Replay trades are simulated
 	// against historical data and have no real-world tax obligation.
@@ -221,7 +220,7 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 	// not vary per asset.
 	const dailyResults: Array<{ date: Date; grossPnlCents: number }> = []
 	for (const [, pnl] of dayPnlMap.entries()) {
-		dailyResults.push({ date: monthDate, grossPnlCents: pnl })
+		dailyResults.push({ date: monthStart, grossPnlCents: pnl })
 	}
 
 	const totalFeesCents = totalTxCorretagemCents + totalTxRegistroCents + totalEmolumentosCents + totalIssCents
@@ -273,7 +272,7 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		.insert(monthlyTaxLedger)
 		.values({
 			accountId,
-			month: monthDate,
+			month: monthStart,
 			...persistable,
 			updatedAt: computedAt,
 		})

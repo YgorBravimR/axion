@@ -5,7 +5,7 @@ import { monthlyTaxLedger, tradingAccounts, accountFeeRates } from "@/db/schema"
 import { eq, and, gte, lte, asc, isNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
-import { addMonths, lastDayOfMonth, subDays, isWeekend, startOfMonth } from "date-fns"
+import { addMonths, lastDayOfMonth, subDays, isWeekend } from "date-fns"
 import type { ActionResponse } from "@/types"
 import type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow, FeeRatesEntry } from "@/lib/tax/types"
 
@@ -354,8 +354,9 @@ const getEffectiveTaxRate = async (params: {
 		}
 	}
 
-	const [y, m, d] = params.month.split("-").map(Number)
-	const monthDate = startOfMonth(new Date(y, m - 1, d))
+	const [y, m] = params.month.split("-").map(Number)
+	// timestamptz: monthlyTaxLedger.month stored as UTC first-of-month
+	const monthDate = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0))
 
 	const row = await db
 		.select({

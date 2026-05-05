@@ -10,9 +10,11 @@ interface AutoSeedInput {
 	readonly initialCapitalCents: number
 	readonly ladderRules: readonly LadderRuleR[]
 	readonly defaultDailyLossR: number
+	readonly defaultDailyWinR: number
 	readonly defaultWeeklyLossR: number
+	readonly defaultWeeklyWinR: number
 	readonly defaultMonthlyLossR: number
-	readonly defaultDailyTargetR: number
+	readonly defaultMonthlyWinR: number
 	readonly drawdownTriggerThresholdR: number
 	readonly tradingDaysPerWeek: number
 	readonly annualGoalCents?: number
@@ -37,6 +39,12 @@ const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult>
 				initialCapitalCents: input.initialCapitalCents,
 				ladderRules: input.ladderRules as never,
 				tradingDaysPerWeek: input.tradingDaysPerWeek,
+				defaultDailyLossR: input.defaultDailyLossR.toFixed(2),
+				defaultDailyWinR: input.defaultDailyWinR.toFixed(2),
+				defaultWeeklyLossR: input.defaultWeeklyLossR.toFixed(2),
+				defaultWeeklyWinR: input.defaultWeeklyWinR.toFixed(2),
+				defaultMonthlyLossR: input.defaultMonthlyLossR.toFixed(2),
+				defaultMonthlyWinR: input.defaultMonthlyWinR.toFixed(2),
 			})
 			.returning({ id: yearlyPlans.id })
 

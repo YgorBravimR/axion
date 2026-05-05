@@ -20,7 +20,7 @@ const ProvenanceBadge = ({ level, isOverride = false }: ProvenanceBadgeProps) =>
 	return (
 		<span
 			aria-label={`source: ${text}`}
-			className="inline-flex items-center rounded-md bg-bg-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-text-200"
+			className="inline-flex items-center rounded-md bg-bg-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-txt-200"
 		>
 			{text}
 		</span>
