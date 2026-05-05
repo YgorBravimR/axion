@@ -434,5 +434,4 @@ export {
 	getCapitalSnapshot,
 	getWeeklyMetaVsReal,
 	getAnnualRollup,
-	MONTH_NAMES,
 }
