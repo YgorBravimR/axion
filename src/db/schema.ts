@@ -872,12 +872,9 @@ export const riskManagementProfiles = pgTable(
 			.references(() => users.id, { onDelete: "cascade" }),
 		isActive: boolean("is_active").default(true).notNull(),
 
-		// Top-level limits (relational for quick queries)
-		baseRiskCents: integer("base_risk_cents").notNull(),
-		dailyLossCents: integer("daily_loss_cents").notNull(),
-		weeklyLossCents: integer("weekly_loss_cents"), // nullable
-		monthlyLossCents: integer("monthly_loss_cents").notNull(),
-		dailyProfitTargetCents: integer("daily_profit_target_cents"), // nullable
+		// Phase 4b: top-level cents columns dropped — caps now live on the fractal cascade
+		// (yearlyPlans.defaultDailyLossR / defaultMonthlyLossR / etc.). Decision tree is
+		// rebased to R-multiples via scripts/migrate-decision-tree-cents-to-r.ts.
 
 		// Decision tree config (JSON stored as text — matches dailyChecklists.items pattern)
 		decisionTree: text("decision_tree").notNull(), // JSON: DecisionTreeConfig

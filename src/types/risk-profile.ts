@@ -1,6 +1,13 @@
 // ==========================================
 // RISK MANAGEMENT PROFILE TYPES
 // ==========================================
+//
+// Phase 4b: cents → R rebase. All risk magnitudes inside the decision tree are
+// expressed in R-multiples (1R = base risk per trade as derived from the active
+// fractal-plan ladder tier). Top-level cents columns on the
+// `risk_management_profiles` table were dropped in the same phase — caps now
+// live on `yearly_plans.defaultDailyLossR / defaultMonthlyLossR / …` and
+// resolve via `resolveDay` / `resolveMonth`.
 
 /**
  * Defines how risk is calculated for a single step in the loss recovery sequence.
@@ -9,7 +16,7 @@
 type RiskCalculation =
 	| { type: "percentOfBase"; percent: number }
 	| { type: "sameAsPrevious" }
-	| { type: "fixedCents"; amountCents: number }
+	| { type: "fixedR"; amountR: number }
 
 /**
  * A single step in the loss recovery sequence (e.g., T2, T3, T4).
@@ -30,18 +37,18 @@ type GainMode =
 			type: "compounding"
 			reinvestmentPercent: number // 30 = risk 30% of accumulated gain
 			stopOnFirstLoss: boolean
-			dailyTargetCents: number | null
+			dailyTargetR: number | null
 	  }
 	| {
 			type: "singleTarget"
-			dailyTargetCents: number
+			dailyTargetR: number
 	  }
 	| {
 			type: "gainSequence"
 			sequence: LossRecoveryStep[] // reuses the same step shape
 			repeatLastStep: boolean // keep using last step's risk for subsequent trades
 			stopOnFirstLoss: boolean
-			dailyTargetCents: number | null
+			dailyTargetR: number | null
 	  }
 
 // ==========================================
@@ -52,11 +59,11 @@ type GainMode =
 type RiskSizingMode =
 	| { type: "fixed" }
 	| { type: "percentOfBalance"; riskPercent: number } // 0.1-10.0
-	| { type: "fixedRatio"; deltaCents: number; baseContractRiskCents: number }
+	| { type: "fixedRatio"; deltaR: number; baseContractRiskR: number }
 	| { type: "kellyFractional"; divisor: number } // 4 = quarter Kelly, 8 = eighth Kelly
 
 /** How cascading limits are expressed. */
-type LimitMode = "fixedCents" | "percentOfInitial" | "rMultiples"
+type LimitMode = "rMultiples" | "percentOfInitial"
 
 /** Drawdown-tiered risk adjustment. */
 interface DrawdownTier {
@@ -75,16 +82,14 @@ interface ConsecutiveLossRule {
 /**
  * Full decision tree configuration stored as JSON in the riskManagementProfiles table.
  *
- * This governs day-level behavior: what happens on T1 loss (recovery sequence),
- * what happens on T1 win (gain mode), and when to stop trading (cascading limits).
- *
- * All Phase 2 fields are optional for backward compatibility — existing JSON parses unchanged.
+ * Governs day-level behavior: T1 loss recovery, T1 win gain mode, cascading
+ * cap-hit actions. All magnitudes in R-multiples.
  *
  * @see docs/riskManagement/risk-management-flowchart.md
  */
 interface DecisionTreeConfig {
 	baseTrade: {
-		riskCents: number
+		riskR: number
 		maxContracts: number | null
 		minStopPoints: number | null
 	}
@@ -95,9 +100,9 @@ interface DecisionTreeConfig {
 	}
 	gainMode: GainMode
 	cascadingLimits: {
-		weeklyLossCents: number | null
+		weeklyLossR: number | null
 		weeklyAction: "stopTrading" | "reduceRisk"
-		monthlyLossCents: number
+		monthlyLossR: number
 		monthlyAction: "stopTrading" | "reduceRisk"
 	}
 	executionConstraints: {
@@ -114,13 +119,15 @@ interface DecisionTreeConfig {
 		recoveryThresholdPercent: number // resume normal after recovering X% of DD
 	}
 	consecutiveLossRules?: ConsecutiveLossRule[]
-	// Percent/R limit overrides (used when limitMode !== "fixedCents")
+	// Percent/R limit overrides (used when limitMode !== "rMultiples")
 	limitsPercent?: { daily: number; weekly: number | null; monthly: number }
 	limitsR?: { daily: number; weekly: number | null; monthly: number }
 }
 
 /**
  * A risk profile as returned from the DB, with the decision tree parsed from JSON.
+ * Phase 4b: top-level cents fields removed; caps now resolve through the
+ * fractal cascade per-account/date.
  */
 interface RiskManagementProfile {
 	id: string
@@ -128,11 +135,6 @@ interface RiskManagementProfile {
 	description: string | null
 	createdByUserId: string
 	isActive: boolean
-	baseRiskCents: number
-	dailyLossCents: number
-	weeklyLossCents: number | null
-	monthlyLossCents: number
-	dailyProfitTargetCents: number | null
 	decisionTree: DecisionTreeConfig
 	createdAt: Date
 	updatedAt: Date
@@ -144,11 +146,6 @@ interface RiskManagementProfile {
 interface RiskProfileInput {
 	name: string
 	description?: string | null
-	baseRiskCents: number
-	dailyLossCents: number
-	weeklyLossCents?: number | null
-	monthlyLossCents: number
-	dailyProfitTargetCents?: number | null
 	decisionTree: DecisionTreeConfig
 }
 
