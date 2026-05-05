@@ -221,8 +221,8 @@ const getMensalMaximo = (params: {
  * rule, matching period-queries' aggregate boundaries. date-fns weekStart/weekEnd
  * are local-tz and would drift on non-UTC servers.
  *
- * yearlyPlans / weeklyTargets tables don't exist yet (Yearly Plan sub-project).
- * hasPlan is forced false until that lands; Meta fields stay null.
+ * Meta fields stay null — fractal cascade owns plan/target data; this view
+ * surfaces actuals only.
  */
 const getWeeklyMetaVsReal = async (
 	year: number,
