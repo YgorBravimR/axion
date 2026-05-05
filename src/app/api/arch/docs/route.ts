@@ -261,23 +261,23 @@ const endpoints: EndpointDoc[] = [
 		optional: ["date"],
 		notes: "date: ISO string (defaults to today). Returns hasProfile, status (dayPhase, nextTradeRisk, alerts), tradeSummaries.",
 	},
-	// ── Monthly Plans ─────────────────────────────────────────
+	// ── Monthly Risk Config ─────────────────────────────────────────────────────────────────────────
 	{
 		method: "GET",
-		path: "/api/arch/monthly-plans/active",
-		description: "Get the active monthly plan for the current month.",
+		path: "/api/arch/monthly-risk-config/active",
+		description: "Get the active monthly risk config for the current month.",
 	},
 	{
 		method: "GET",
-		path: "/api/arch/monthly-plans/get",
-		description: "Get a monthly plan for a specific year/month.",
+		path: "/api/arch/monthly-risk-config/get",
+		description: "Get the monthly risk config for a specific year/month.",
 		required: ["year", "month"],
 		notes: "month is 1-indexed (1=January).",
 	},
 	{
 		method: "POST",
-		path: "/api/arch/monthly-plans/upsert",
-		description: "Create or update a monthly plan.",
+		path: "/api/arch/monthly-risk-config/upsert",
+		description: "Create or update the monthly risk config.",
 		required: ["year", "month", "accountBalance", "riskPerTradePercent", "dailyLossPercent", "monthlyLossPercent"],
 		optional: ["dailyProfitTargetPercent", "maxDailyTrades", "maxConsecutiveLosses", "riskProfileId", "notes", "weeklyLossPercent", "allowSecondOpAfterLoss", "reduceRiskAfterLoss", "riskReductionFactor", "increaseRiskAfterWin", "capRiskAfterWin", "profitReinvestmentPercent"],
 	},
