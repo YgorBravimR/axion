@@ -363,8 +363,6 @@ export interface AccountComparisonMetrics {
 	accountName: string
 	accountType: "personal" | "prop" | "replay"
 	config: {
-		defaultCommission: number
-		defaultFees: number
 		defaultRiskPerTrade: number | null
 	}
 	stats: OverallStats

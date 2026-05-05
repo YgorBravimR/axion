@@ -47,8 +47,6 @@ interface AccountInput {
 	reduceRiskAfterLoss?: boolean
 	riskReductionFactor?: number
 	defaultCurrency?: string
-	defaultCommission?: number
-	defaultFees?: number
 	defaultBreakevenTicks?: number
 	showTaxEstimates?: boolean
 	showPropCalculations?: boolean
@@ -59,8 +57,6 @@ interface AccountInput {
 interface AccountAssetInput {
 	assetId: string
 	isEnabled: boolean
-	commissionOverride?: number | null
-	feesOverride?: number | null
 	breakevenTicksOverride?: number | null
 	notes?: string
 }
@@ -126,8 +122,6 @@ export const createAccount = async (
 			profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
 			dayTradeTaxRate: input.dayTradeTaxRate?.toString() ?? "20.00",
 			swingTradeTaxRate: input.swingTradeTaxRate?.toString() ?? "15.00",
-			defaultCommission: input.defaultCommission ?? 0,
-			defaultFees: input.defaultFees ?? 0,
 			maxDailyLoss: input.maxDailyLoss,
 			maxMonthlyLoss: input.maxMonthlyLoss,
 		}
@@ -148,8 +142,6 @@ export const createAccount = async (
 				maxDailyLoss: input.maxDailyLoss?.toString() ?? null,
 				maxDailyTrades: input.maxDailyTrades,
 				defaultCurrency: input.defaultCurrency ?? "BRL",
-				defaultCommission: (input.defaultCommission ?? 0).toString(),
-				defaultFees: (input.defaultFees ?? 0).toString(),
 				showTaxEstimates: input.showTaxEstimates ?? true,
 				showPropCalculations: input.showPropCalculations ?? true,
 				...(replayCurrentDate && { replayCurrentDate }),
@@ -226,8 +218,6 @@ export const updateAccount = async (
 		if (input.maxDailyLoss !== undefined) updateData.maxDailyLoss = input.maxDailyLoss?.toString() ?? null
 		if (input.maxDailyTrades !== undefined) updateData.maxDailyTrades = input.maxDailyTrades
 		if (input.defaultCurrency !== undefined) updateData.defaultCurrency = input.defaultCurrency
-		if (input.defaultCommission !== undefined) updateData.defaultCommission = input.defaultCommission.toString()
-		if (input.defaultFees !== undefined) updateData.defaultFees = input.defaultFees.toString()
 		if (input.defaultBreakevenTicks !== undefined) updateData.defaultBreakevenTicks = input.defaultBreakevenTicks
 		if (input.showTaxEstimates !== undefined) updateData.showTaxEstimates = input.showTaxEstimates
 		if (input.showPropCalculations !== undefined)
@@ -508,8 +498,6 @@ export const getAccountAssets = async (
 				accountId: targetAccountId,
 				assetId: asset.id,
 				isEnabled: config?.isEnabled ?? false,
-				commissionOverride: config?.commissionOverride ?? null,
-				feesOverride: config?.feesOverride ?? null,
 				breakevenTicksOverride: config?.breakevenTicksOverride ?? null,
 				notes: config?.notes ?? null,
 				createdAt: config?.createdAt ?? new Date(),
@@ -569,8 +557,6 @@ export const updateAccountAsset = async (
 				.update(accountAssets)
 				.set({
 					isEnabled: input.isEnabled,
-					commissionOverride: input.commissionOverride,
-					feesOverride: input.feesOverride,
 					breakevenTicksOverride: input.breakevenTicksOverride,
 					notes: input.notes,
 					updatedAt: new Date(),
@@ -582,8 +568,6 @@ export const updateAccountAsset = async (
 				accountId: session.user.accountId,
 				assetId: input.assetId,
 				isEnabled: input.isEnabled,
-				commissionOverride: input.commissionOverride,
-				feesOverride: input.feesOverride,
 				breakevenTicksOverride: input.breakevenTicksOverride,
 				notes: input.notes,
 			})

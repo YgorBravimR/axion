@@ -195,9 +195,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						accountId: account?.id || "",
 						assetId: editingAssetId,
 						isEnabled: true,
-						// Phase 1 — fee columns still exist in DB; preserve existing values until Phase 3 unification
-						commissionOverride: existing?.commissionOverride ?? null,
-						feesOverride: existing?.feesOverride ?? null,
 						breakevenTicksOverride: breakevenTicksValue,
 						notes: null,
 						createdAt: existing?.createdAt || new Date(),

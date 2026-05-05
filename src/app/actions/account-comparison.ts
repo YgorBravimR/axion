@@ -129,8 +129,6 @@ const getAccountComparisonData = async (
 				accountName: account.name,
 				accountType: account.accountType,
 				config: {
-					defaultCommission: fromCents(account.defaultCommission),
-					defaultFees: fromCents(account.defaultFees),
 					defaultRiskPerTrade: account.defaultRiskPerTrade
 						? Number(account.defaultRiskPerTrade)
 						: null,

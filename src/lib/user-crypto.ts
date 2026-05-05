@@ -174,7 +174,7 @@ const decryptExecutionFields = <T extends Record<string, unknown>>(execution: T,
 const encryptAccountFields = (fields: Record<string, unknown>, dek: string): Record<string, string | null> => {
 	const encryptableKeys = [
 		"dayTradeTaxRate", "swingTradeTaxRate", "profitSharePercentage",
-		"defaultCommission", "defaultFees", "maxDailyLoss", "maxMonthlyLoss", "propFirmName",
+		"maxDailyLoss", "maxMonthlyLoss", "propFirmName",
 	]
 	const result: Record<string, string | null> = {}
 	for (const key of encryptableKeys) {
@@ -191,8 +191,6 @@ const decryptAccountFields = <T extends Record<string, unknown>>(account: T, dek
 		dayTradeTaxRate: decryptField(account.dayTradeTaxRate as string | null, dek),
 		swingTradeTaxRate: decryptField(account.swingTradeTaxRate as string | null, dek),
 		profitSharePercentage: decryptField(account.profitSharePercentage as string | null, dek),
-		defaultCommission: decryptNumericField(account.defaultCommission as string | null, dek),
-		defaultFees: decryptNumericField(account.defaultFees as string | null, dek),
 		maxDailyLoss: decryptNumericField(account.maxDailyLoss as string | null, dek),
 		maxMonthlyLoss: decryptNumericField(account.maxMonthlyLoss as string | null, dek),
 		propFirmName: decryptField(account.propFirmName as string | null, dek),

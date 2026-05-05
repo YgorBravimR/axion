@@ -1,6 +1,6 @@
 {
-  "id": "8a2da785-b59e-4800-9629-23dd683693c9",
-  "prevId": "b4597c5c-93ad-4feb-8480-a37db585a1fd",
+  "id": "d7022e03-a091-4d57-8751-c67837ff9bd4",
+  "prevId": "8a2da785-b59e-4800-9629-23dd683693c9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -210,18 +210,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
-        },
-        "commission_override": {
-          "name": "commission_override",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fees_override": {
-          "name": "fees_override",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         },
         "breakeven_ticks_override": {
           "name": "breakeven_ticks_override",
@@ -6179,20 +6167,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'BRL'"
-        },
-        "default_commission": {
-          "name": "default_commission",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0'"
-        },
-        "default_fees": {
-          "name": "default_fees",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0'"
         },
         "default_breakeven_ticks": {
           "name": "default_breakeven_ticks",

@@ -274,6 +274,13 @@
       "when": 1778097600000,
       "tag": "0038_backfill_account_fee_rates",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1777975960685,
+      "tag": "0039_eager_hardball",
+      "breakpoints": true
     }
   ]
 }

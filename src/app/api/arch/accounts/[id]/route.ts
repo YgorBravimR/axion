@@ -58,8 +58,6 @@ const GET = async (
 				assetName: config.asset?.name ?? null,
 				assetSymbol: config.asset?.symbol ?? null,
 				isEnabled: config.isEnabled,
-				commissionOverride: config.commissionOverride,
-				feesOverride: config.feesOverride,
 				breakevenTicksOverride: config.breakevenTicksOverride,
 			})),
 			timeframeConfigs: timeframeConfigs.map((config) => ({

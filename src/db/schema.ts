@@ -184,10 +184,6 @@ export const tradingAccounts = pgTable(
 		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }),
 		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
 
-		// Global default fees for this account (encrypted)
-		defaultCommission: text("default_commission").default("0").notNull(), // cents per contract (encrypted)
-		defaultFees: text("default_fees").default("0").notNull(), // cents per contract (encrypted)
-
 		// Breakeven classification: trades within ±N ticks of entry are classified as breakeven
 		defaultBreakevenTicks: integer("default_breakeven_ticks").default(2).notNull(),
 
@@ -312,9 +308,8 @@ export const accountAssets = pgTable(
 
 		isEnabled: boolean("is_enabled").default(true).notNull(),
 
-		// Per-asset fee overrides (NULL = use account default)
-		commissionOverride: integer("commission_override"), // cents, NULL = use account default
-		feesOverride: integer("fees_override"), // cents, NULL = use account default
+		// Per-asset breakeven override (NULL = use account default). Fee overrides
+		// migrated to accountFeeRates table (Phase 3 of fee-config unification).
 		breakevenTicksOverride: integer("breakeven_ticks_override"), // NULL = use account default
 
 		notes: text("notes"),
