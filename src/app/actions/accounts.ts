@@ -24,6 +24,7 @@ import { auth } from "@/auth"
 import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, encryptAccountFields, decryptAccountFields } from "@/lib/user-crypto"
 import { hasAccess } from "@/lib/feature-access"
+import { resolveFeeSnapshot } from "@/lib/tax/fee-resolver"
 import { getTranslations } from "next-intl/server"
 
 // ==========================================
@@ -774,7 +775,8 @@ export const getBreakevenTicks = async (
 
 /**
  * Get commission and fees for an asset in the current account.
- * Priority: per-asset override > account default
+ * Delegates to resolveFeeSnapshot which sources accountFeeRates with per-asset
+ * > NULL-default > hardcoded ASSET_FEE_DEFAULTS > zero fallback chain.
  */
 export const getAssetFees = async (
 	assetSymbol: string,
@@ -787,51 +789,10 @@ export const getAssetFees = async (
 		return { commission: 0, fees: 0 }
 	}
 
-	// Get account defaults
-	const rawAccount = await db.query.tradingAccounts.findFirst({
-		where: eq(tradingAccounts.id, targetAccountId),
+	const { commissionCents, feesCents } = await resolveFeeSnapshot({
+		accountId: targetAccountId,
+		assetSymbol,
 	})
 
-	if (!rawAccount) {
-		return { commission: 0, fees: 0 }
-	}
-
-	// Decrypt account fields to get defaultCommission and defaultFees as numbers
-	const dek = session?.user?.id ? await getUserDek(session.user.id) : null
-	const decryptedAccount = dek
-		? decryptAccountFields(rawAccount as unknown as Record<string, unknown>, dek)
-		: null
-
-	// After decryption, defaultCommission/defaultFees are numbers; without DEK, parse from text
-	const defaultCommission = decryptedAccount
-		? Number(decryptedAccount.defaultCommission) || 0
-		: Number(rawAccount.defaultCommission) || 0
-	const defaultFees = decryptedAccount
-		? Number(decryptedAccount.defaultFees) || 0
-		: Number(rawAccount.defaultFees) || 0
-
-	// Get asset
-	const asset = await db.query.assets.findFirst({
-		where: eq(assets.symbol, assetSymbol),
-	})
-
-	if (!asset) {
-		return {
-			commission: defaultCommission,
-			fees: defaultFees,
-		}
-	}
-
-	// Check for per-asset override
-	const assetConfig = await db.query.accountAssets.findFirst({
-		where: and(
-			eq(accountAssets.accountId, targetAccountId),
-			eq(accountAssets.assetId, asset.id)
-		),
-	})
-
-	return {
-		commission: assetConfig?.commissionOverride ?? defaultCommission,
-		fees: assetConfig?.feesOverride ?? defaultFees,
-	}
+	return { commission: commissionCents, fees: feesCents }
 }
