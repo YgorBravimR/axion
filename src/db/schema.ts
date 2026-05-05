@@ -16,6 +16,7 @@ import {
 	uniqueIndex,
 	primaryKey,
 	date,
+	foreignKey,
 } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
@@ -167,19 +168,19 @@ export const tradingAccounts = pgTable(
 		dayTradeTaxRate: text("day_trade_tax_rate").default("20.00").notNull(), // encrypted
 		swingTradeTaxRate: text("swing_trade_tax_rate").default("15.00").notNull(), // encrypted
 
-		// @deprecated Risk settings — replaced by monthlyPlans. Kept for migration compatibility.
+		// @deprecated Risk settings — replaced by monthlyRiskConfig. Kept for migration compatibility.
 		defaultRiskPerTrade: decimal("default_risk_per_trade", { precision: 5, scale: 2 }),
-		/** @deprecated Use monthlyPlans.dailyLossCents instead */
+		/** @deprecated Use monthlyRiskConfig.dailyLossCents instead */
 		maxDailyLoss: text("max_daily_loss"), // cents (encrypted)
-		/** @deprecated Use monthlyPlans.maxDailyTrades instead */
+		/** @deprecated Use monthlyRiskConfig.maxDailyTrades instead */
 		maxDailyTrades: integer("max_daily_trades"),
-		/** @deprecated Use monthlyPlans.monthlyLossCents instead */
+		/** @deprecated Use monthlyRiskConfig.monthlyLossCents instead */
 		maxMonthlyLoss: text("max_monthly_loss"), // cents (encrypted)
-		/** @deprecated Use monthlyPlans.allowSecondOpAfterLoss instead */
+		/** @deprecated Use monthlyRiskConfig.allowSecondOpAfterLoss instead */
 		allowSecondOpAfterLoss: boolean("allow_second_op_after_loss").default(true),
-		/** @deprecated Use monthlyPlans.reduceRiskAfterLoss instead */
+		/** @deprecated Use monthlyRiskConfig.reduceRiskAfterLoss instead */
 		reduceRiskAfterLoss: boolean("reduce_risk_after_loss").default(false),
-		/** @deprecated Use monthlyPlans.riskReductionFactor instead */
+		/** @deprecated Use monthlyRiskConfig.riskReductionFactor instead */
 		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }),
 		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
 
@@ -895,9 +896,9 @@ export const riskManagementProfiles = pgTable(
 	]
 )
 
-// Monthly Plans Table (monthly risk configuration per account)
-export const monthlyPlans = pgTable(
-	"monthly_plans",
+// Monthly Risk Config Table (monthly risk configuration per account)
+export const monthlyRiskConfig = pgTable(
+	"monthly_risk_config",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		accountId: uuid("account_id")
@@ -925,9 +926,9 @@ export const monthlyPlans = pgTable(
 		notes: text("notes"),
 
 		// Risk profile reference (nullable — when set, profile's decision tree governs behavior)
-		riskProfileId: uuid("risk_profile_id").references(() => riskManagementProfiles.id, {
-			onDelete: "set null",
-		}),
+		// FK name shortened explicitly because the auto-generated identifier exceeds Postgres's
+		// 63-char limit and would otherwise be truncated on rename.
+		riskProfileId: uuid("risk_profile_id"),
 
 		// Weekly loss limit (optional, independent of risk profile)
 		weeklyLossPercent: decimal("weekly_loss_percent", { precision: 5, scale: 2 }), // nullable
@@ -944,8 +945,13 @@ export const monthlyPlans = pgTable(
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},
 	(table) => [
-		index("monthly_plans_account_idx").on(table.accountId),
-		uniqueIndex("monthly_plans_account_year_month_idx").on(table.accountId, table.year, table.month),
+		index("monthly_risk_config_account_idx").on(table.accountId),
+		uniqueIndex("monthly_risk_config_account_year_month_idx").on(table.accountId, table.year, table.month),
+		foreignKey({
+			name: "monthly_risk_config_risk_profile_id_fk",
+			columns: [table.riskProfileId],
+			foreignColumns: [riskManagementProfiles.id],
+		}).onDelete("set null"),
 	]
 )
 
@@ -1176,7 +1182,7 @@ export const quarterlyPlan = pgTable(
 )
 
 // Monthly Plan — tier snapshot (1R + capital frozen at month start) + R-cap overrides.
-// Distinct from legacy `monthly_plans` (plural). Phase 4 will drop the legacy table.
+// Fractal cascade table. Risk-config lives separately in `monthly_risk_config`.
 export const monthlyPlan = pgTable(
 	"monthly_plan",
 	{
@@ -1810,7 +1816,7 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	dailyAccountNotes: many(dailyAccountNotes),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
-	monthlyPlans: many(monthlyPlans),
+	monthlyRiskConfig: many(monthlyRiskConfig),
 	notaImports: many(notaImports),
 	accountFeeRates: many(accountFeeRates),
 	monthlyTaxLedger: many(monthlyTaxLedger),
@@ -1996,7 +2002,7 @@ export const riskManagementProfilesRelations = relations(riskManagementProfiles,
 		fields: [riskManagementProfiles.createdByUserId],
 		references: [users.id],
 	}),
-	monthlyPlans: many(monthlyPlans),
+	monthlyRiskConfig: many(monthlyRiskConfig),
 }))
 
 // Nota Imports Relations
@@ -2023,14 +2029,14 @@ export const monthlyTaxLedgerRelations = relations(monthlyTaxLedger, ({ one }) =
 	}),
 }))
 
-// Monthly Plans Relations
-export const monthlyPlansRelations = relations(monthlyPlans, ({ one }) => ({
+// Monthly Risk Config Relations
+export const monthlyRiskConfigRelations = relations(monthlyRiskConfig, ({ one }) => ({
 	account: one(tradingAccounts, {
-		fields: [monthlyPlans.accountId],
+		fields: [monthlyRiskConfig.accountId],
 		references: [tradingAccounts.id],
 	}),
 	riskProfile: one(riskManagementProfiles, {
-		fields: [monthlyPlans.riskProfileId],
+		fields: [monthlyRiskConfig.riskProfileId],
 		references: [riskManagementProfiles.id],
 	}),
 }))
@@ -2154,7 +2160,7 @@ export const quarterlyPlanRelations = relations(quarterlyPlan, ({ one, many }) =
 		fields: [quarterlyPlan.yearlyPlanId],
 		references: [yearlyPlans.id],
 	}),
-	monthlyPlans: many(monthlyPlan),
+	months: many(monthlyPlan),
 }))
 
 export const monthlyPlanRelations = relations(monthlyPlan, ({ one, many }) => ({
@@ -2272,8 +2278,8 @@ export type NewDailyAssetSetting = typeof dailyAssetSettings.$inferInsert
 export type AccountAssetSetting = typeof accountAssetSettings.$inferSelect
 export type NewAccountAssetSetting = typeof accountAssetSettings.$inferInsert
 
-export type MonthlyPlan = typeof monthlyPlans.$inferSelect
-export type NewMonthlyPlan = typeof monthlyPlans.$inferInsert
+export type MonthlyRiskConfig = typeof monthlyRiskConfig.$inferSelect
+export type NewMonthlyRiskConfig = typeof monthlyRiskConfig.$inferInsert
 
 export type YearlyPlan = typeof yearlyPlans.$inferSelect
 export type NewYearlyPlan = typeof yearlyPlans.$inferInsert
@@ -2328,8 +2334,8 @@ export type NewPriceDataVersion = typeof priceDataVersions.$inferInsert
 export type QuarterlyPlan = typeof quarterlyPlan.$inferSelect
 export type NewQuarterlyPlan = typeof quarterlyPlan.$inferInsert
 
-// Note: MonthlyPlan/NewMonthlyPlan are taken by legacy monthlyPlans table.
-// Fractal monthly_plan uses FractalMonthlyPlan to avoid collision until Phase 4 cleanup.
+// Fractal monthly_plan keeps FractalMonthlyPlan naming established before the
+// legacy `monthly_plans` table was renamed to `monthly_risk_config` (Phase 4b).
 export type FractalMonthlyPlan = typeof monthlyPlan.$inferSelect
 export type NewFractalMonthlyPlan = typeof monthlyPlan.$inferInsert
 

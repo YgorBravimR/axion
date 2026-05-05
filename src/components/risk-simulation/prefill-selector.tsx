@@ -3,7 +3,7 @@
 import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
-import type { MonthlyPlan } from "@/db/schema"
+import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { PrefillSource, RiskSimulationParams } from "@/types/risk-simulation"
 
@@ -14,7 +14,7 @@ const inactiveStyle =
 	"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
 
 interface PrefillSelectorProps {
-	monthlyPlan: MonthlyPlan | null
+	monthlyPlan: MonthlyRiskConfig | null
 	riskProfiles: RiskManagementProfile[]
 	onSelect: (params: RiskSimulationParams, source: PrefillSource, profileId?: string) => void
 	activeSource: PrefillSource | null

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { monthlyPlans } from "@/db/schema"
+import { monthlyRiskConfig } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { z } from "zod"
 import { monthlyPlanSchema } from "@/lib/validations/monthly-plan"
@@ -11,7 +11,7 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
 /**
- * POST /api/arch/monthly-plans/upsert
+ * POST /api/arch/monthly-risk-config/upsert
  *
  * Creates or updates a monthly plan for a given year/month.
  * Validates input, computes derived cent values, encrypts, and upserts.
@@ -47,11 +47,11 @@ const POST = async (request: NextRequest) => {
 		})
 
 		// Check if plan already exists for this account + year + month
-		const existing = await db.query.monthlyPlans.findFirst({
+		const existing = await db.query.monthlyRiskConfig.findFirst({
 			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, validated.year),
-				eq(monthlyPlans.month, validated.month)
+				eq(monthlyRiskConfig.accountId, accountId),
+				eq(monthlyRiskConfig.year, validated.year),
+				eq(monthlyRiskConfig.month, validated.month)
 			),
 		})
 
@@ -94,13 +94,13 @@ const POST = async (request: NextRequest) => {
 
 		if (existing) {
 			const [updatedPlan] = await db
-				.update(monthlyPlans)
+				.update(monthlyRiskConfig)
 				.set({
 					...planFields,
 					...encryptedFields,
 					updatedAt: new Date(),
 				})
-				.where(eq(monthlyPlans.id, existing.id))
+				.where(eq(monthlyRiskConfig.id, existing.id))
 				.returning()
 
 			const decryptedPlan = dek
@@ -111,7 +111,7 @@ const POST = async (request: NextRequest) => {
 		}
 
 		const [newPlan] = await db
-			.insert(monthlyPlans)
+			.insert(monthlyRiskConfig)
 			.values({
 				accountId,
 				year: validated.year,

@@ -1,13 +1,13 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { monthlyPlans } from "@/db/schema"
+import { monthlyRiskConfig } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { getUserDek, decryptMonthlyPlanFields } from "@/lib/user-crypto"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
 /**
- * GET /api/arch/monthly-plans/get
+ * GET /api/arch/monthly-risk-config/get
  *
  * Returns a monthly plan for a specific year/month.
  *
@@ -40,11 +40,11 @@ const GET = async (request: NextRequest) => {
 	}
 
 	try {
-		const plan = await db.query.monthlyPlans.findFirst({
+		const plan = await db.query.monthlyRiskConfig.findFirst({
 			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, year),
-				eq(monthlyPlans.month, month)
+				eq(monthlyRiskConfig.accountId, accountId),
+				eq(monthlyRiskConfig.year, year),
+				eq(monthlyRiskConfig.month, month)
 			),
 		})
 

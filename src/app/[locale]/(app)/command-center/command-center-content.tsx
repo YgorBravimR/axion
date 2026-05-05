@@ -32,7 +32,7 @@ import type {
 	DailyAccountNote,
 	Asset,
 	TradingAccount,
-	MonthlyPlan,
+	MonthlyRiskConfig,
 } from "@/db/schema"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -52,7 +52,7 @@ interface CommandCenterContentProps {
 	account: TradingAccount | null
 	viewDate: string
 	isToday: boolean
-	initialPlan?: MonthlyPlan | null
+	initialPlan?: MonthlyRiskConfig | null
 	riskProfileName?: string | null
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }

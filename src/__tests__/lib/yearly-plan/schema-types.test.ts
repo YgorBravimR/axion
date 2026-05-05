@@ -15,3 +15,15 @@ describe("trades.pointsPnl column", () => {
 		expect(cols.pointsPnl).toBeDefined()
 	})
 })
+
+describe("monthly_risk_config rename (Phase 4b)", () => {
+	it("exports renamed monthlyRiskConfig", async () => {
+		const schema = (await import("@/db/schema")) as Record<string, unknown>
+		expect(schema.monthlyRiskConfig).toBeDefined()
+	})
+
+	it("no longer exports legacy monthlyPlans", async () => {
+		const schema = (await import("@/db/schema")) as Record<string, unknown>
+		expect(schema.monthlyPlans).toBeUndefined()
+	})
+})

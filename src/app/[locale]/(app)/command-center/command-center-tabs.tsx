@@ -6,7 +6,7 @@ import { Target, Activity, Calculator, CalendarDays, Loader2 } from "lucide-reac
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { CommandCenterContent, type CommandCenterContentProps } from "./command-center-content"
-import type { Asset, MonthlyPlan } from "@/db/schema"
+import type { Asset, MonthlyRiskConfig } from "@/db/schema"
 import type { StrategyWithStats } from "@/app/actions/strategies"
 import type { AssetSettingWithAsset } from "@/app/actions/command-center"
 import type { RiskManagementProfile } from "@/types/risk-profile"
@@ -38,7 +38,7 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
-	initialPlan: MonthlyPlan | null
+	initialPlan: MonthlyRiskConfig | null
 	initialYear: number
 	initialMonth: number
 	riskProfiles?: RiskManagementProfile[]

@@ -260,6 +260,13 @@
       "when": 1777958616955,
       "tag": "0036_tough_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1778011200000,
+      "tag": "0037_rename_monthly_plans",
+      "breakpoints": true
     }
   ]
 }

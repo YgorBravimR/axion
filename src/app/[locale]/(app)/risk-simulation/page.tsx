@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getActiveMonthlyPlan } from "@/app/actions/monthly-plans"
+import { getActiveMonthlyRiskConfig } from "@/app/actions/monthly-risk-config"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getTradeYears } from "@/app/actions/risk-simulation"
 import { RiskSimulationContent } from "@/components/risk-simulation"
@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/components/shared"
 
 const RiskSimulationPage = async () => {
 	const [planResponse, profilesResponse, yearsResponse] = await Promise.all([
-		getActiveMonthlyPlan(),
+		getActiveMonthlyRiskConfig(),
 		listActiveRiskProfiles(),
 		getTradeYears(),
 	])

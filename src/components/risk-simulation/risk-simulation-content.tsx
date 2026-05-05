@@ -17,7 +17,7 @@ import {
 	getSimulationPreview,
 	runRiskSimulationFromDb,
 } from "@/app/actions/risk-simulation"
-import type { MonthlyPlan } from "@/db/schema"
+import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type {
 	PrefillSource,
@@ -28,7 +28,7 @@ import type {
 } from "@/types/risk-simulation"
 
 interface RiskSimulationContentProps {
-	monthlyPlan: MonthlyPlan | null
+	monthlyPlan: MonthlyRiskConfig | null
 	riskProfiles: RiskManagementProfile[]
 	tradeYears: number[]
 }

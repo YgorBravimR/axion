@@ -10,7 +10,7 @@ import {
 	assets,
 	timeframes,
 	trades,
-	monthlyPlans,
+	monthlyRiskConfig,
 	dailyAccountNotes,
 	dailyChecklists,
 	dailyAssetSettings,
@@ -318,7 +318,7 @@ export const deleteAccount = async (
  * Deletes all trading data for the current account while preserving the account
  * and its configuration (asset overrides, timeframes, etc.).
  *
- * Tables cleared: trades (cascades to executions/tags), monthlyPlans,
+ * Tables cleared: trades (cascades to executions/tags), monthlyRiskConfig,
  * dailyAccountNotes, dailyChecklists (cascades to completions),
  * dailyAssetSettings, notaImports.
  */
@@ -334,7 +334,7 @@ export const deleteAllTradingData = async (): Promise<{
 		// trades cascade-deletes tradeExecutions + tradeTags
 		// dailyChecklists cascade-deletes checklistCompletions
 		await db.delete(trades).where(eq(trades.accountId, accountId))
-		await db.delete(monthlyPlans).where(eq(monthlyPlans.accountId, accountId))
+		await db.delete(monthlyRiskConfig).where(eq(monthlyRiskConfig.accountId, accountId))
 		await db.delete(dailyAccountNotes).where(eq(dailyAccountNotes.accountId, accountId))
 		await db.delete(dailyChecklists).where(eq(dailyChecklists.accountId, accountId))
 		await db.delete(dailyAssetSettings).where(eq(dailyAssetSettings.accountId, accountId))

@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getActiveMonthlyPlan } from "@/app/actions/monthly-plans"
+import { getActiveMonthlyRiskConfig } from "@/app/actions/monthly-risk-config"
 import { getTradeYears } from "@/app/actions/risk-simulation"
 import { EquityShieldContent } from "@/components/equity-shield"
 import { LoadingSpinner } from "@/components/shared"
@@ -9,7 +9,7 @@ import { requireRole } from "@/lib/auth-utils"
 const EquityShieldPage = async () => {
 	await requireRole("premium")
 	const [planResponse, yearsResponse] = await Promise.all([
-		getActiveMonthlyPlan(),
+		getActiveMonthlyRiskConfig(),
 		getTradeYears(),
 	])
 

@@ -1,13 +1,13 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { monthlyPlans } from "@/db/schema"
+import { monthlyRiskConfig } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { getUserDek, decryptMonthlyPlanFields } from "@/lib/user-crypto"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
 /**
- * GET /api/arch/monthly-plans/active
+ * GET /api/arch/monthly-risk-config/active
  *
  * Returns the active monthly plan for the current month.
  * Uses the current date to determine year/month.
@@ -23,11 +23,11 @@ const GET = async (request: NextRequest) => {
 		const year = now.getFullYear()
 		const month = now.getMonth() + 1
 
-		const plan = await db.query.monthlyPlans.findFirst({
+		const plan = await db.query.monthlyRiskConfig.findFirst({
 			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, year),
-				eq(monthlyPlans.month, month)
+				eq(monthlyRiskConfig.accountId, accountId),
+				eq(monthlyRiskConfig.year, year),
+				eq(monthlyRiskConfig.month, month)
 			),
 		})
 

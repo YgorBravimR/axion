@@ -17,16 +17,16 @@ import { MonthlyPlanSummary } from "./monthly-plan-summary"
 import { useFormatting } from "@/hooks/use-formatting"
 import { fromCents } from "@/lib/money"
 import {
-	upsertMonthlyPlan,
-	getMonthlyPlan,
-	rolloverMonthlyPlan,
-} from "@/app/actions/monthly-plans"
+	upsertMonthlyRiskConfig,
+	getMonthlyRiskConfig,
+	rolloverMonthlyRiskConfig,
+} from "@/app/actions/monthly-risk-config"
 import { getMaxAllowedPlanMonth } from "@/lib/monthly-plan-date-guard"
-import type { MonthlyPlan } from "@/db/schema"
+import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface MonthlyPlanTabProps {
-	initialPlan: MonthlyPlan | null
+	initialPlan: MonthlyRiskConfig | null
 	initialYear: number
 	initialMonth: number
 	riskProfiles?: RiskManagementProfile[]
@@ -42,7 +42,7 @@ export const MonthlyPlanTab = ({
 	const tMonths = useTranslations("months")
 	const { formatCurrency } = useFormatting()
 
-	const [plan, setPlan] = useState<MonthlyPlan | null>(initialPlan)
+	const [plan, setPlan] = useState<MonthlyRiskConfig | null>(initialPlan)
 	const [year, setYear] = useState(initialYear)
 	const [month, setMonth] = useState(initialMonth)
 	const [isEditing, setIsEditing] = useState(!initialPlan)
@@ -81,7 +81,7 @@ export const MonthlyPlanTab = ({
 		setLoading(true)
 
 		try {
-			const result = await getMonthlyPlan({ year: newYear, month: newMonth })
+			const result = await getMonthlyRiskConfig({ year: newYear, month: newMonth })
 			if (result.status === "success") {
 				setPlan(result.data ?? null)
 				setIsEditing(!result.data)
@@ -91,8 +91,8 @@ export const MonthlyPlanTab = ({
 		}
 	}, [month, year])
 
-	const handleSave = useCallback(async (data: Parameters<typeof upsertMonthlyPlan>[0] extends infer T ? T : never) => {
-		const result = await upsertMonthlyPlan(data)
+	const handleSave = useCallback(async (data: Parameters<typeof upsertMonthlyRiskConfig>[0] extends infer T ? T : never) => {
+		const result = await upsertMonthlyRiskConfig(data)
 		if (result.status === "success" && result.data) {
 			setPlan(result.data)
 			setIsEditing(false)
@@ -102,7 +102,7 @@ export const MonthlyPlanTab = ({
 	const handleCopyFromLastMonth = useCallback(async () => {
 		setLoading(true)
 		try {
-			const result = await rolloverMonthlyPlan(null)
+			const result = await rolloverMonthlyRiskConfig(null)
 			if (result.status === "success" && result.data) {
 				setPlan(result.data)
 				setIsEditing(false)

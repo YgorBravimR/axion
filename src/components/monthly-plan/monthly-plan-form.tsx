@@ -19,12 +19,12 @@ import {
 import { useFormatting } from "@/hooks/use-formatting"
 import { deriveMonthlyPlanValues } from "@/lib/monthly-plan"
 import { fromCents, toCents } from "@/lib/money"
-import type { MonthlyPlan } from "@/db/schema"
+import type { MonthlyRiskConfig } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import { DecisionTreeModal } from "@/components/monthly-plan/decision-tree-modal"
 
 interface MonthlyPlanFormProps {
-	plan?: MonthlyPlan | null
+	plan?: MonthlyRiskConfig | null
 	onSave: (data: MonthlyPlanFormData) => Promise<void>
 	year: number
 	month: number

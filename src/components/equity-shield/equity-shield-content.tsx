@@ -14,7 +14,7 @@ import { EquityShieldStats } from "./equity-shield-stats"
 import { EquityShieldChart } from "./equity-shield-chart"
 import { MCCalibrationBanner } from "./mc-calibration-banner"
 import type { EquityShieldParams, EquityShieldResult } from "@/types/equity-shield"
-import type { MonthlyPlan } from "@/db/schema"
+import type { MonthlyRiskConfig } from "@/db/schema"
 
 interface EquityShieldPreview {
 	totalTrades: number
@@ -22,7 +22,7 @@ interface EquityShieldPreview {
 }
 
 interface EquityShieldContentProps {
-	monthlyPlan: MonthlyPlan | null
+	monthlyPlan: MonthlyRiskConfig | null
 	tradeYears: number[]
 }
 

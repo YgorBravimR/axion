@@ -8,7 +8,7 @@ import {
 	getCircuitBreakerStatus,
 	getDailySummary,
 } from "@/app/actions/command-center"
-import { getActiveMonthlyPlan } from "@/app/actions/monthly-plans"
+import { getActiveMonthlyRiskConfig } from "@/app/actions/monthly-risk-config"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getActiveAssets } from "@/app/actions/assets"
 import { getCurrentAccount } from "@/app/actions/auth"
@@ -67,7 +67,7 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		getDailySummary(dateArg),
 		getActiveAssets().catch(() => []),
 		getStrategies(),
-		getActiveMonthlyPlan(),
+		getActiveMonthlyRiskConfig(),
 		listActiveRiskProfiles(),
 		getLiveTradingStatus(dateArg),
 	])

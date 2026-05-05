@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { trades, monthlyPlans } from "@/db/schema"
+import { trades, monthlyRiskConfig } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { getRiskProfile } from "@/app/actions/risk-profiles"
@@ -41,39 +41,39 @@ const getLiveTradingStatus = async (
 		const currentYear = effectiveNow.getFullYear()
 		const currentMonth = effectiveNow.getMonth() + 1
 
-		const rawMonthlyPlan = await db.query.monthlyPlans.findFirst({
+		const rawMonthlyRiskConfig = await db.query.monthlyRiskConfig.findFirst({
 			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, currentYear),
-				eq(monthlyPlans.month, currentMonth)
+				eq(monthlyRiskConfig.accountId, accountId),
+				eq(monthlyRiskConfig.year, currentYear),
+				eq(monthlyRiskConfig.month, currentMonth)
 			),
 		})
 
 		// Decrypt monthly plan fields if DEK is available
 		const dek = await getUserDek(userId)
-		const monthlyPlan =
-			rawMonthlyPlan && dek
+		const monthlyRiskConfigRow =
+			rawMonthlyRiskConfig && dek
 				? (decryptMonthlyPlanFields(
-						rawMonthlyPlan as unknown as Record<string, unknown>,
+						rawMonthlyRiskConfig as unknown as Record<string, unknown>,
 						dek
-					) as unknown as typeof rawMonthlyPlan)
-				: rawMonthlyPlan
+					) as unknown as typeof rawMonthlyRiskConfig)
+				: rawMonthlyRiskConfig
 
-		if (!monthlyPlan?.riskProfileId) {
+		if (!monthlyRiskConfigRow?.riskProfileId) {
 			return {
 				status: "success",
 				message: t("actionErrors.noRiskProfile"),
 				data: {
 					hasProfile: false,
-					fallbackRiskCents: monthlyPlan?.riskPerTradeCents
-						? Number(monthlyPlan.riskPerTradeCents)
+					fallbackRiskCents: monthlyRiskConfigRow?.riskPerTradeCents
+						? Number(monthlyRiskConfigRow.riskPerTradeCents)
 						: null,
 				},
 			}
 		}
 
 		// Fetch the linked risk profile
-		const profileResult = await getRiskProfile(monthlyPlan.riskProfileId)
+		const profileResult = await getRiskProfile(monthlyRiskConfigRow.riskProfileId)
 
 		if (profileResult.status !== "success" || !profileResult.data) {
 			return {
@@ -81,8 +81,8 @@ const getLiveTradingStatus = async (
 				message: t("actionErrors.riskProfileNotFound"),
 				data: {
 					hasProfile: false,
-					fallbackRiskCents: monthlyPlan.riskPerTradeCents
-						? Number(monthlyPlan.riskPerTradeCents)
+					fallbackRiskCents: monthlyRiskConfigRow.riskPerTradeCents
+						? Number(monthlyRiskConfigRow.riskPerTradeCents)
 						: null,
 				},
 			}
@@ -95,12 +95,12 @@ const getLiveTradingStatus = async (
 		// the account balance (e.g., 1.25% of R$20k = R$250), while the profile
 		// stores static fallback amounts for a reference balance.
 		const planRiskPerTradeCents =
-			Number(monthlyPlan.riskPerTradeCents) ||
+			Number(monthlyRiskConfigRow.riskPerTradeCents) ||
 			profile.decisionTree.baseTrade.riskCents
 		const planDailyLossCents =
-			Number(monthlyPlan.dailyLossCents) || profile.dailyLossCents
+			Number(monthlyRiskConfigRow.dailyLossCents) || profile.dailyLossCents
 		const planDailyProfitTargetCents =
-			Number(monthlyPlan.dailyProfitTargetCents) ||
+			Number(monthlyRiskConfigRow.dailyProfitTargetCents) ||
 			profile.dailyProfitTargetCents
 
 		// Override the decision tree's static base risk with the plan-derived value
@@ -142,7 +142,7 @@ const getLiveTradingStatus = async (
 
 		// Resolve max trades from explicit plan value or derived fallback
 		const maxTrades =
-			monthlyPlan.maxDailyTrades ?? monthlyPlan.derivedMaxDailyTrades ?? null
+			monthlyRiskConfigRow.maxDailyTrades ?? monthlyRiskConfigRow.derivedMaxDailyTrades ?? null
 
 		const status = resolveLiveStatus({
 			trades: tradeInputs,

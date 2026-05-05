@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { accountCapitalEvents, monthlyPlans, tradingAccounts } from "@/db/schema"
+import { accountCapitalEvents, monthlyRiskConfig, tradingAccounts } from "@/db/schema"
 import { eq, and, asc, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
@@ -368,12 +368,12 @@ const getAnnualRollup = async (
 
 	const plansRows = await db
 		.select({
-			month: monthlyPlans.month,
-			dailyProfitTargetCents: monthlyPlans.dailyProfitTargetCents,
-			accountBalance: monthlyPlans.accountBalance,
+			month: monthlyRiskConfig.month,
+			dailyProfitTargetCents: monthlyRiskConfig.dailyProfitTargetCents,
+			accountBalance: monthlyRiskConfig.accountBalance,
 		})
-		.from(monthlyPlans)
-		.where(and(eq(monthlyPlans.accountId, accountId), eq(monthlyPlans.year, year)))
+		.from(monthlyRiskConfig)
+		.where(and(eq(monthlyRiskConfig.accountId, accountId), eq(monthlyRiskConfig.year, year)))
 
 	const planByMonth = new Map(plansRows.map((p) => [p.month, p]))
 
@@ -430,7 +430,7 @@ const getAnnualRollup = async (
 			capitalInvestido !== null ? capitalInvestido + agg.netCents - retirada : null
 		runningPatrimonio = patrimonio
 
-		// monthlyPlans.accountBalance is text-encrypted but plaintext while encryption disabled.
+		// monthlyRiskConfig.accountBalance is text-encrypted but plaintext while encryption disabled.
 		const aporteInicial = plan?.accountBalance ? parseInt(plan.accountBalance, 10) || null : null
 
 		rows.push({
