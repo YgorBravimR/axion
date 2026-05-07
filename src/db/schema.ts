@@ -18,7 +18,9 @@ import {
 	date,
 	foreignKey,
 } from "drizzle-orm/pg-core"
+import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
+import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 
 // Enums
 export const tradeDirectionEnum = pgEnum("trade_direction", ["long", "short"])
@@ -168,20 +170,6 @@ export const tradingAccounts = pgTable(
 		dayTradeTaxRate: text("day_trade_tax_rate").default("20.00").notNull(), // encrypted
 		swingTradeTaxRate: text("swing_trade_tax_rate").default("15.00").notNull(), // encrypted
 
-		// @deprecated Risk settings — replaced by fractal-plan cascade (yearly_plans → monthly_plan). Kept for migration compatibility.
-		defaultRiskPerTrade: decimal("default_risk_per_trade", { precision: 5, scale: 2 }),
-		/** @deprecated Use fractal-plan cascade (resolveDay) instead */
-		maxDailyLoss: text("max_daily_loss"), // cents (encrypted)
-		/** @deprecated Use fractal-plan cascade (resolveDay) instead */
-		maxDailyTrades: integer("max_daily_trades"),
-		/** @deprecated Use fractal-plan cascade (resolveDay) instead */
-		maxMonthlyLoss: text("max_monthly_loss"), // cents (encrypted)
-		/** @deprecated Use fractal-plan cascade (resolveBehavior) instead */
-		allowSecondOpAfterLoss: boolean("allow_second_op_after_loss").default(true),
-		/** @deprecated Use fractal-plan cascade (resolveBehavior) instead */
-		reduceRiskAfterLoss: boolean("reduce_risk_after_loss").default(false),
-		/** @deprecated Use fractal-plan cascade (resolveBehavior) instead */
-		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }),
 		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
 
 		// Breakeven classification: trades within ±N ticks of entry are classified as breakeven
@@ -766,34 +754,6 @@ export const checklistCompletions = pgTable(
 	]
 )
 
-// Daily Account Notes Table (pre/post market notes)
-export const dailyAccountNotes = pgTable(
-	"daily_account_notes",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		userId: text("user_id").notNull(),
-		accountId: uuid("account_id").references(() => tradingAccounts.id, {
-			onDelete: "cascade",
-		}),
-		date: timestamp("date", { withTimezone: true }).notNull(),
-		preMarketNotes: text("pre_market_notes"),
-		postMarketNotes: text("post_market_notes"),
-		mood: varchar("mood", { length: 20 }), // 'great' | 'good' | 'neutral' | 'bad' | 'terrible'
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-	},
-	(table) => [
-		index("daily_account_notes_user_idx").on(table.userId),
-		index("daily_account_notes_account_idx").on(table.accountId),
-		index("daily_account_notes_date_idx").on(table.date),
-		uniqueIndex("daily_account_notes_unique_idx").on(table.accountId, table.date),
-	]
-)
-
 // Daily Asset Settings Table (per-asset trading rules, per-day)
 export const dailyAssetSettings = pgTable(
 	"daily_asset_settings",
@@ -1016,7 +976,7 @@ export const monthlyTaxLedger = pgTable(
 
 		// Fractal Planning Cascade — Phase 1.
 		// Bidirectional link to monthly_plan (auto-set on plan creation when year+month+account match).
-		monthlyPlanId: uuid("monthly_plan_id").references(() => monthlyPlan.id, {
+		monthlyPlanId: uuid("monthly_plan_id").references((): AnyPgColumn => monthlyPlan.id, {
 			onDelete: "set null",
 		}),
 
@@ -1035,11 +995,7 @@ export const monthlyTaxLedger = pgTable(
 // YEARLY PLAN TABLES
 // ==========================================
 
-export interface LadderRule {
-	minContracts: number
-	maxContracts: number
-	multiplier: number
-}
+export type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 
 export const yearlyPlans = pgTable(
 	"yearly_plans",
@@ -1055,8 +1011,8 @@ export const yearlyPlans = pgTable(
 		irTaxRate: decimal("ir_tax_rate", { precision: 5, scale: 2 }).notNull().default("30.00"),
 		tradingDaysPerWeek: integer("trading_days_per_week").notNull().default(5),
 
-		// Capital ladder rules (JSONB array of LadderRule)
-		ladderRules: jsonb("ladder_rules").notNull().$type<LadderRule[]>(),
+		// Capital ladder rules (JSONB array of LadderRuleR — money-based tiers)
+		ladderRules: jsonb("ladder_rules").notNull().$type<LadderRuleR[]>(),
 
 		startWeek: integer("start_week").notNull().default(1),
 
@@ -1784,7 +1740,6 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	accountAssets: many(accountAssets),
 	accountTimeframes: many(accountTimeframes),
 	dailyChecklists: many(dailyChecklists),
-	dailyAccountNotes: many(dailyAccountNotes),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
 	notaImports: many(notaImports),
@@ -1937,13 +1892,6 @@ export const checklistCompletionsRelations = relations(checklistCompletions, ({ 
 	}),
 }))
 
-export const dailyAccountNotesRelations = relations(dailyAccountNotes, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [dailyAccountNotes.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
-
 export const accountAssetSettingsRelations = relations(accountAssetSettings, ({ one }) => ({
 	account: one(tradingAccounts, {
 		fields: [accountAssetSettings.accountId],
@@ -2004,6 +1952,7 @@ export const yearlyPlansRelations = relations(yearlyPlans, ({ one, many }) => ({
 		fields: [yearlyPlans.accountId],
 		references: [tradingAccounts.id],
 	}),
+	quarterlyPlans: many(quarterlyPlan),
 }))
 
 // Playbook Enhancement Relations
@@ -2225,9 +2174,6 @@ export type NewDailyChecklist = typeof dailyChecklists.$inferInsert
 
 export type ChecklistCompletion = typeof checklistCompletions.$inferSelect
 export type NewChecklistCompletion = typeof checklistCompletions.$inferInsert
-
-export type DailyAccountNote = typeof dailyAccountNotes.$inferSelect
-export type NewDailyAccountNote = typeof dailyAccountNotes.$inferInsert
 
 export type DailyAssetSetting = typeof dailyAssetSettings.$inferSelect
 export type NewDailyAssetSetting = typeof dailyAssetSettings.$inferInsert

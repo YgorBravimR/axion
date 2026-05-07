@@ -1,1 +1,0 @@
-ALTER TABLE "trades" ADD COLUMN "points_pnl" numeric(10, 2);

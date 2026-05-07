@@ -1,1 +1,0 @@
-ALTER TABLE "strategies" DROP COLUMN "target_r_multiple";
