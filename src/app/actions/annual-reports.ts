@@ -7,6 +7,8 @@ import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
 import { getMonthAggregate, getWeekAggregate } from "@/lib/queries/period-queries"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
+import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
+import { MONTH_LABEL_PT } from "@/lib/fractal-plan/month-labels"
 import type { CapitalEvent } from "@/types/integration"
 import type {
 	WeeklyMetaRow,
@@ -28,21 +30,6 @@ interface ActionResult<T = void> {
 	data?: T
 	message?: string
 }
-
-const MONTH_NAMES = [
-	"Janeiro",
-	"Fevereiro",
-	"Março",
-	"Abril",
-	"Maio",
-	"Junho",
-	"Julho",
-	"Agosto",
-	"Setembro",
-	"Outubro",
-	"Novembro",
-	"Dezembro",
-] as const
 
 const recordCapitalEvent = async (
 	params: RecordCapitalEventParams,
@@ -246,9 +233,9 @@ const getWeeklyMetaVsReal = async (
  * Returns 12 monthly rows + totals for the annual rollup table.
  * Months before accountStartMonth/Year are disabled with null numeric values.
  *
- * Tax handling: encryption is currently disabled, so account.dayTradeTaxRate is
- * the plaintext "20.00" string (default). parseFloat directly. When encryption
- * is re-enabled, this needs the dek/decryptField path.
+ * Tax handling: legal day-trade IR rate by year sourced from getDayTradeIrRate
+ * (Lei 11.033/2004 art. 2° §1°). Per-account override column dropped here so
+ * the rollup matches the tax engine's source of truth.
  *
  * UTC month extraction for capital events: eventDate is Postgres `date` → "YYYY-MM-DD".
  * `new Date("YYYY-MM-DD")` parses as UTC midnight; `.getUTCMonth()` keeps us aligned
@@ -265,7 +252,6 @@ const getAnnualRollup = async (
 			accountStartYear: tradingAccounts.accountStartYear,
 			startingBalanceCents: tradingAccounts.startingBalanceCents,
 			withdrawalTargetPercent: tradingAccounts.withdrawalTargetPercent,
-			dayTradeTaxRate: tradingAccounts.dayTradeTaxRate,
 		})
 		.from(tradingAccounts)
 		.where(eq(tradingAccounts.id, accountId))
@@ -274,8 +260,7 @@ const getAnnualRollup = async (
 	const account = accountRows[0]
 	if (!account) return { status: "error", message: "Account not found" }
 
-	const taxRatePct = parseFloat(account.dayTradeTaxRate) || 0
-	const taxRate = taxRatePct / 100
+	const taxRate = getDayTradeIrRate(year)
 
 	const withdrawalTarget = account.withdrawalTargetPercent
 		? parseFloat(account.withdrawalTargetPercent.toString())
@@ -328,7 +313,7 @@ const getAnnualRollup = async (
 		if (isDisabled) {
 			rows.push({
 				month,
-				monthName: MONTH_NAMES[month - 1],
+				monthName: MONTH_LABEL_PT[month],
 				disabled: true,
 				resultadoBruto: null,
 				resultadoLiquido: null,
@@ -374,7 +359,7 @@ const getAnnualRollup = async (
 
 		rows.push({
 			month,
-			monthName: MONTH_NAMES[month - 1],
+			monthName: MONTH_LABEL_PT[month],
 			disabled: false,
 			resultadoBruto: agg.grossCents,
 			resultadoLiquido: agg.netCents,

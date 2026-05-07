@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-type DarfStatus = "pending" | "paid" | "exempt" | "overdue" | "unknown"
+type DarfStatus = "pending" | "paid" | "exempt" | "overdue" | "unknown" | "in_progress" | "future"
 
 interface DarfStripChip {
 	monthIndex: number // 0-11
@@ -24,6 +24,8 @@ const STATUS_DOT: Record<DarfStatus, string> = {
 	overdue: "bg-fb-error",
 	exempt: "bg-txt-300",
 	unknown: "bg-bg-300",
+	in_progress: "bg-action-buy",
+	future: "bg-bg-400",
 }
 
 const STATUS_LABEL: Record<DarfStatus, string> = {
@@ -32,6 +34,8 @@ const STATUS_LABEL: Record<DarfStatus, string> = {
 	overdue: "Vencido",
 	exempt: "Isento",
 	unknown: "Sem dado",
+	in_progress: "Em curso",
+	future: "Futuro",
 }
 
 const formatBRL = (cents: number): string =>
@@ -47,9 +51,13 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 		>
 			{Array.from({ length: 12 }, (_, i) => {
 				const chip = byIndex.get(i) ?? { monthIndex: i, status: "unknown" as const, dueCents: 0 }
-				const hasData = chip.status !== "unknown"
+				const hasData = chip.status !== "unknown" && chip.status !== "future"
 				const canClick = interactive && hasData
 				const label = `${MONTH_ABBR_PT[i]} — ${STATUS_LABEL[chip.status]} — ${formatBRL(chip.dueCents)}`
+				const showAmount =
+					chip.status !== "exempt" &&
+					chip.status !== "unknown" &&
+					chip.status !== "future"
 				const content = (
 					<>
 						<span className="text-micro uppercase tracking-wide text-txt-300">
@@ -60,9 +68,7 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 							aria-hidden="true"
 						/>
 						<span className="font-mono text-micro tabular-nums text-txt-200">
-							{chip.status === "exempt" || chip.status === "unknown"
-								? "—"
-								: formatBRL(chip.dueCents)}
+							{showAmount ? formatBRL(chip.dueCents) : "—"}
 						</span>
 					</>
 				)

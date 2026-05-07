@@ -35,7 +35,7 @@ const EoyProjectionBanner = ({
 		<section
 			id="plan-year-eoy-banner"
 			aria-label="Projeção de fim de ano"
-			className="mb-m-400 grid grid-cols-1 gap-m-300 rounded-md border border-bg-300 bg-bg-200 p-m-400 sm:grid-cols-4"
+			className="mb-m-400 grid grid-cols-1 gap-m-400 rounded-md border border-bg-300 bg-bg-200 p-m-400 sm:grid-cols-4"
 		>
 			<div className="flex items-start gap-s-300">
 				<div className="rounded-md bg-acc-100/15 p-s-200">

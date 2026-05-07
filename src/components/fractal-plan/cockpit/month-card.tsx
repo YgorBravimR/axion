@@ -214,7 +214,7 @@ const MonthCard = ({
 			<Link
 				href={href}
 				className={cn(
-					"flex h-full flex-col gap-s-400 rounded-md border bg-bg-200 p-m-400 transition-colors",
+					"flex h-full flex-col gap-s-300 rounded-md border bg-bg-200 p-m-400 transition-colors",
 					"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-100",
 					state === "current" &&
 						"border-l-4 border-l-guide border-y-bg-300 border-r-bg-300 hover:border-r-guide/40",

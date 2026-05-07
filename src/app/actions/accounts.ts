@@ -35,8 +35,6 @@ interface AccountInput {
 	accountType: "personal" | "prop" | "replay"
 	propFirmName?: string
 	profitSharePercentage?: number
-	dayTradeTaxRate?: number
-	swingTradeTaxRate?: number
 	defaultCurrency?: string
 	defaultBreakevenTicks?: number
 	showTaxEstimates?: boolean
@@ -111,8 +109,6 @@ export const createAccount = async (
 		const encryptableValues = {
 			propFirmName: input.propFirmName,
 			profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
-			dayTradeTaxRate: input.dayTradeTaxRate?.toString() ?? "20.00",
-			swingTradeTaxRate: input.swingTradeTaxRate?.toString() ?? "15.00",
 		}
 		const encryptedFields = dek ? encryptAccountFields(encryptableValues, dek) : {}
 
@@ -125,8 +121,6 @@ export const createAccount = async (
 				accountType: input.accountType,
 				propFirmName: input.propFirmName,
 				profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
-				dayTradeTaxRate: input.dayTradeTaxRate?.toString() ?? "20.00",
-				swingTradeTaxRate: input.swingTradeTaxRate?.toString() ?? "15.00",
 				defaultCurrency: input.defaultCurrency ?? "BRL",
 				showTaxEstimates: input.showTaxEstimates ?? true,
 				showPropCalculations: input.showPropCalculations ?? true,
@@ -195,10 +189,6 @@ export const updateAccount = async (
 		if (input.propFirmName !== undefined) updateData.propFirmName = input.propFirmName
 		if (input.profitSharePercentage !== undefined)
 			updateData.profitSharePercentage = input.profitSharePercentage.toString()
-		if (input.dayTradeTaxRate !== undefined)
-			updateData.dayTradeTaxRate = input.dayTradeTaxRate.toString()
-		if (input.swingTradeTaxRate !== undefined)
-			updateData.swingTradeTaxRate = input.swingTradeTaxRate.toString()
 		if (input.defaultCurrency !== undefined) updateData.defaultCurrency = input.defaultCurrency
 		if (input.defaultBreakevenTicks !== undefined) updateData.defaultBreakevenTicks = input.defaultBreakevenTicks
 		if (input.showTaxEstimates !== undefined) updateData.showTaxEstimates = input.showTaxEstimates

@@ -27,6 +27,7 @@ import type { MonthlyDarfRow, YearTaxSummary } from "@/lib/tax/types"
 import type { CarryoverHistoryRow } from "@/components/tax"
 import { MonthlyDarfCard, CarryoverLedger, AnnualTaxSummary } from "@/components/tax"
 import { markDarfPaid } from "@/app/actions/tax-engine"
+import { isMonthFinalized } from "@/lib/tax/month-status"
 
 interface ReportsContentProps {
 	weeklyReport: WeeklyReport | null
@@ -167,22 +168,30 @@ export const ReportsContent = ({
 						</h2>
 					</div>
 					<div className="grid gap-m-400 lg:grid-cols-2">
-						<MonthlyDarfCard
-							ledgerRow={darfRow}
-							onMarkPaid={async (paidAmountCents) => {
-								const monthDate = darfRow.month instanceof Date ? darfRow.month : new Date(darfRow.month)
-								const result = await markDarfPaid({
-									accountId: currentAccountId,
-									year: monthDate.getFullYear(),
-									month: monthDate.getMonth() + 1,
-									paidAmountCents,
-								})
-								if (result.status === "error") {
-									console.error("Failed to mark DARF paid:", result.errors)
-								}
-								router.refresh()
-							}}
-						/>
+						{(() => {
+							const monthDate = darfRow.month instanceof Date ? darfRow.month : new Date(darfRow.month)
+							const ledgerYear = monthDate.getUTCFullYear()
+							const ledgerMonth = monthDate.getUTCMonth() + 1
+							const isFinal = isMonthFinalized(ledgerYear, ledgerMonth)
+							return (
+								<MonthlyDarfCard
+									ledgerRow={darfRow}
+									isFinal={isFinal}
+									onMarkPaid={async (paidAmountCents) => {
+										const result = await markDarfPaid({
+											accountId: currentAccountId,
+											year: ledgerYear,
+											month: ledgerMonth,
+											paidAmountCents,
+										})
+										if (result.status === "error") {
+											console.error("Failed to mark DARF paid:", result.errors)
+										}
+										router.refresh()
+									}}
+								/>
+							)
+						})()}
 						{yearSummary && <AnnualTaxSummary year={currentYear} summary={yearSummary} />}
 					</div>
 					{carryoverHistory.length > 0 && (

@@ -1,6 +1,5 @@
 import { setRequestLocale } from "next-intl/server"
 import { CommandCenterTabs } from "./command-center-tabs"
-import { MonthlyPlanTabContent } from "@/components/monthly-plan/monthly-plan-tab-content"
 import {
 	getTodayCompletions,
 	getAccountAssetSettings,
@@ -93,10 +92,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 	const initialLiveTradingStatus =
 		liveTradingStatusResult.status === "success" ? (liveTradingStatusResult.data ?? null) : null
 
-	// Derive current year/month from effective date for the Plan tab
-	const planYear = effectiveDate.getFullYear()
-	const planMonth = effectiveDate.getMonth() + 1
-
 	// Account settings: derived from circuit-breaker resolver output (Phase 4b)
 	const accountSettings = {
 		defaultRiskPerTrade: initialCircuitBreaker?.recommendedRiskCents
@@ -119,16 +114,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 				accountSettings={accountSettings}
 				strategies={initialStrategies}
 				assetSettings={initialAssetSettings}
-				planTabContent={
-					account?.id ? (
-						<MonthlyPlanTabContent
-							accountId={account.id}
-							year={planYear}
-							month={planMonth}
-							locale={locale}
-						/>
-					) : null
-				}
 				viewDate={viewDateStr}
 				isToday={isToday}
 				isReplayAccount={account?.accountType === "replay"}

@@ -1,7 +1,7 @@
 // src/lib/tax/recompute-month.ts
 import { db } from "@/db/drizzle"
 import { trades, accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
-import { eq, and, gte, lte } from "drizzle-orm"
+import { eq, and, gte, lte, sql } from "drizzle-orm"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
@@ -267,19 +267,26 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		totalContractsExecuted: String(output.totalContractsExecuted),
 	}
 
-	// Upsert monthly tax ledger — conflict on (accountId, month) → update all fields
+	// Status derives from darfDueCents: zero-due months are "exempt" (no DARF
+	// emission required), positive-due are "pending" until user confirms payment.
+	// On conflict we must preserve "paid" — payment records are immutable user
+	// truth, never overwritten by recompute.
+	const derivedStatus: "exempt" | "pending" = output.darfDueCents === 0 ? "exempt" : "pending"
+
 	await db
 		.insert(monthlyTaxLedger)
 		.values({
 			accountId,
 			month: monthStart,
 			...persistable,
+			darfStatus: derivedStatus,
 			updatedAt: computedAt,
 		})
 		.onConflictDoUpdate({
 			target: [monthlyTaxLedger.accountId, monthlyTaxLedger.month],
 			set: {
 				...persistable,
+				darfStatus: sql`CASE WHEN ${monthlyTaxLedger.darfStatus} = 'paid' THEN 'paid'::darf_status ELSE ${derivedStatus}::darf_status END`,
 				updatedAt: computedAt,
 			},
 		})

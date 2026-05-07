@@ -166,9 +166,9 @@ export const tradingAccounts = pgTable(
 		propFirmName: text("prop_firm_name"), // encrypted
 		profitSharePercentage: text("profit_share_percentage").default("100.00").notNull(), // encrypted
 
-		// Tax settings (per account, encrypted)
-		dayTradeTaxRate: text("day_trade_tax_rate").default("20.00").notNull(), // encrypted
-		swingTradeTaxRate: text("swing_trade_tax_rate").default("15.00").notNull(), // encrypted
+		// Tax rates intentionally NOT stored — sourced from @/lib/tax/legal-rates by
+		// year (Lei 11.033/2004). Single source of truth across cockpit, reports,
+		// and recompute. Per-account override removed 2026-05-07.
 
 		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
 
@@ -1382,13 +1382,7 @@ export const userSettings = pgTable("user_settings", {
 		.default("100.00")
 		.notNull(),
 
-	// Tax Settings
-	dayTradeTaxRate: decimal("day_trade_tax_rate", { precision: 5, scale: 2 })
-		.default("20.00")
-		.notNull(),
-	swingTradeTaxRate: decimal("swing_trade_tax_rate", { precision: 5, scale: 2 })
-		.default("15.00")
-		.notNull(),
+	// Tax rates removed — sourced from @/lib/tax/legal-rates by year.
 	taxExemptThreshold: integer("tax_exempt_threshold").default(0).notNull(), // cents
 
 	// Display Preferences

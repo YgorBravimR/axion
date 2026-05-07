@@ -9,6 +9,7 @@ import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
 import { getUserDek, decryptTradeFields, decryptAccountFields } from "@/lib/user-crypto"
 import { calculateReportSummary } from "../../_lib/report-summary"
+import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 
 const calculatePropProfit = (
 	grossProfit: number,
@@ -141,10 +142,11 @@ const GET = async (request: NextRequest) => {
 			currentWeekStart.setDate(currentWeekStart.getDate() + 7)
 		}
 
-		// Prop profit calculation
+		// Prop profit calculation. IR rate sourced from legal-rates by month year —
+		// matches cockpit + recompute. Account override column ignored.
 		const isPropAccount = decryptedAccount.accountType === "prop"
 		const profitSharePercentage = Number(decryptedAccount.profitSharePercentage) || 100
-		const dayTradeTaxRate = Number(decryptedAccount.dayTradeTaxRate) || 0
+		const dayTradeTaxRate = getDayTradeIrRate(monthStart.getUTCFullYear()) * 100
 		const showTaxEstimates = decryptedAccount.showTaxEstimates ?? false
 
 		const prop = calculatePropProfit(

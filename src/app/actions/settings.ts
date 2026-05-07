@@ -16,13 +16,10 @@ export interface RiskSettings {
 	accountBalance: number
 }
 
-// User Settings Types
 export interface UserSettingsData {
 	isPropAccount: boolean
 	propFirmName: string | null
 	profitSharePercentage: number
-	dayTradeTaxRate: number
-	swingTradeTaxRate: number
 	taxExemptThreshold: number
 	defaultCurrency: string
 	showTaxEstimates: boolean
@@ -30,13 +27,10 @@ export interface UserSettingsData {
 	showAllAccounts: boolean
 }
 
-// Default settings for new users
 const DEFAULT_USER_SETTINGS: UserSettingsData = {
 	isPropAccount: false,
 	propFirmName: null,
 	profitSharePercentage: 100,
-	dayTradeTaxRate: 20,
-	swingTradeTaxRate: 15,
 	taxExemptThreshold: 0,
 	defaultCurrency: "BRL",
 	showTaxEstimates: true,
@@ -44,13 +38,10 @@ const DEFAULT_USER_SETTINGS: UserSettingsData = {
 	showAllAccounts: false,
 }
 
-// Convert database row to UserSettingsData
 const toUserSettingsData = (row: UserSettings): UserSettingsData => ({
 	isPropAccount: row.isPropAccount,
 	propFirmName: row.propFirmName,
 	profitSharePercentage: Number(row.profitSharePercentage),
-	dayTradeTaxRate: Number(row.dayTradeTaxRate),
-	swingTradeTaxRate: Number(row.swingTradeTaxRate),
 	taxExemptThreshold: row.taxExemptThreshold,
 	defaultCurrency: row.defaultCurrency,
 	showTaxEstimates: row.showTaxEstimates,
@@ -88,8 +79,6 @@ export const getUserSettings = async (): Promise<
 				profitSharePercentage: String(
 					DEFAULT_USER_SETTINGS.profitSharePercentage
 				),
-				dayTradeTaxRate: String(DEFAULT_USER_SETTINGS.dayTradeTaxRate),
-				swingTradeTaxRate: String(DEFAULT_USER_SETTINGS.swingTradeTaxRate),
 				taxExemptThreshold: DEFAULT_USER_SETTINGS.taxExemptThreshold,
 				defaultCurrency: DEFAULT_USER_SETTINGS.defaultCurrency,
 				showTaxEstimates: DEFAULT_USER_SETTINGS.showTaxEstimates,
@@ -148,12 +137,6 @@ export const updateUserSettings = async (
 						data.profitSharePercentage ??
 							DEFAULT_USER_SETTINGS.profitSharePercentage
 					),
-					dayTradeTaxRate: String(
-						data.dayTradeTaxRate ?? DEFAULT_USER_SETTINGS.dayTradeTaxRate
-					),
-					swingTradeTaxRate: String(
-						data.swingTradeTaxRate ?? DEFAULT_USER_SETTINGS.swingTradeTaxRate
-					),
 					taxExemptThreshold:
 						data.taxExemptThreshold ?? DEFAULT_USER_SETTINGS.taxExemptThreshold,
 					defaultCurrency:
@@ -189,12 +172,6 @@ export const updateUserSettings = async (
 		}
 		if (data.profitSharePercentage !== undefined) {
 			updateData.profitSharePercentage = String(data.profitSharePercentage)
-		}
-		if (data.dayTradeTaxRate !== undefined) {
-			updateData.dayTradeTaxRate = String(data.dayTradeTaxRate)
-		}
-		if (data.swingTradeTaxRate !== undefined) {
-			updateData.swingTradeTaxRate = String(data.swingTradeTaxRate)
 		}
 		if (data.taxExemptThreshold !== undefined) {
 			updateData.taxExemptThreshold = data.taxExemptThreshold

@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { MonthlyDarfCard } from "@/components/tax/monthly-darf-card"
 import { markDarfPaid, recomputeLedger } from "@/app/actions/tax-engine"
-import { DarfStrip, type DarfStripChip } from "./darf-strip"
+import { isMonthFinalized, isMonthCurrent } from "@/lib/tax/month-status"
+import { DarfStrip, type DarfStripChip, type DarfStatus as UiDarfStatus } from "./darf-strip"
 import type { MonthlyDarfRow } from "@/lib/tax/types"
 
 interface TaxTabProps {
@@ -33,9 +34,17 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 		}
 	}
 
+	const deriveUiStatus = (row: MonthlyDarfRow): UiDarfStatus => {
+		const m = row.month.getUTCMonth() + 1
+		const y = row.month.getUTCFullYear()
+		if (isMonthFinalized(y, m)) return row.darfStatus
+		if (isMonthCurrent(y, m)) return "in_progress"
+		return "future"
+	}
+
 	const chips: DarfStripChip[] = rows.map((r) => ({
-		monthIndex: r.month.getMonth(),
-		status: r.darfStatus,
+		monthIndex: r.month.getUTCMonth(),
+		status: deriveUiStatus(r),
 		dueCents: r.darfDueCents,
 	}))
 
@@ -90,7 +99,10 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 
 			<div className="grid grid-cols-1 gap-m-400 lg:grid-cols-2">
 				{rows.map((row) => {
-					const monthIndex = row.month.getMonth()
+					const monthIndex = row.month.getUTCMonth()
+					const rowYear = row.month.getUTCFullYear()
+					const rowMonth = monthIndex + 1
+					const isFinal = isMonthFinalized(rowYear, rowMonth)
 					const isOpen = activeMonth === monthIndex
 					return (
 						<div
@@ -111,7 +123,7 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 									{row.month.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
 								</span>
 								<span className="font-mono text-small tabular-nums text-txt-200">
-									DARF: {(row.darfDueCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+									{isFinal ? "DARF" : "Prévia"}: {(row.darfDueCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
 								</span>
 							</button>
 							{isOpen && (
@@ -125,6 +137,7 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 										ledgerRow={row}
 										onMarkPaid={handleMarkPaid(monthIndex)}
 										isProp={isProp}
+										isFinal={isFinal}
 									/>
 								</div>
 							)}

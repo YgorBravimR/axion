@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server"
 import { and, eq, gte, lt } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { trades, yearlyPlans } from "@/db/schema"
+import { trades, yearlyPlans, monthlyTaxLedger } from "@/db/schema"
 import { requireAuth, getCurrentAccount } from "@/app/actions/auth"
 import { resolveYear } from "@/lib/fractal-plan/resolver"
 import { PlanSection } from "@/components/fractal-plan/plan-section"
@@ -16,6 +16,7 @@ import { AnnualCockpitGrid, type MonthInputRow, type RealMonthData } from "@/com
 import type { WeekData } from "@/components/fractal-plan/cockpit/month-card"
 import { TaxTab } from "@/components/fractal-plan/cockpit/tax-tab"
 import type { MonthlyDarfRow } from "@/lib/tax/types"
+import { getDayTradeIrRate, getDayTradeRateSource } from "@/lib/tax/legal-rates"
 import { getActiveAssets } from "@/app/actions/assets"
 import { resolveTier } from "@/lib/fractal-plan/capital-ladder"
 import { projectFromPace } from "@/lib/fractal-plan/projection"
@@ -163,26 +164,36 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	}
 
 	// Cockpit branch — pull full year tree for the grid.
-	const tree = row
-		? await db.query.yearlyPlans.findFirst({
-			where: eq(yearlyPlans.id, row.id),
-			with: {
-				quarterlyPlans: {
-					with: {
-						months: {
-							with: {
-								weeklyPlans: true,
-								taxLedger: true,
+	const [tree, ledgerRows] = await Promise.all([
+		row
+			? db.query.yearlyPlans.findFirst({
+				where: eq(yearlyPlans.id, row.id),
+				with: {
+					quarterlyPlans: {
+						with: {
+							months: {
+								with: {
+									weeklyPlans: true,
+								},
 							},
 						},
 					},
 				},
-			},
-		})
-		: null
+			})
+			: Promise.resolve(null),
+		db
+			.select()
+			.from(monthlyTaxLedger)
+			.where(
+				and(
+					eq(monthlyTaxLedger.accountId, accountId),
+					gte(monthlyTaxLedger.month, new Date(Date.UTC(year, 0, 1))),
+					lt(monthlyTaxLedger.month, new Date(Date.UTC(year + 1, 0, 1))),
+				),
+			),
+	])
 
 	const monthRows: MonthInputRow[] = []
-	const taxRows: MonthlyDarfRow[] = []
 	if (tree) {
 		for (const q of tree.quarterlyPlans) {
 			for (const m of q.months.filter((mp) => mp.year === year)) {
@@ -204,15 +215,16 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					snapshotReason: m.snapshotReason,
 					weeks,
 				})
-				if (m.taxLedger) {
-					taxRows.push(m.taxLedger as unknown as MonthlyDarfRow)
-				}
 			}
 		}
-		taxRows.sort((a, b) => a.month.getTime() - b.month.getTime())
 	}
 
-	const irTaxRate = row ? Number(row.irTaxRate) / 100 : 0.3
+	const taxRows: MonthlyDarfRow[] = (ledgerRows as unknown as MonthlyDarfRow[])
+		.slice()
+		.sort((a, b) => a.month.getTime() - b.month.getTime())
+
+	const irTaxRate = getDayTradeIrRate(year)
+	const irTaxRateSource = getDayTradeRateSource(year)
 	const withdrawalPct =
 		account?.withdrawalTargetPercent != null
 			? Number(account.withdrawalTargetPercent) / 100
@@ -367,6 +379,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					defaultMonthlyLossR={null}
 					defaultMonthlyWinR={null}
 					irTaxRate={irTaxRate}
+					irTaxRateSource={irTaxRateSource}
 					withdrawalPct={withdrawalPct}
 					riskProfiles={riskProfiles}
 					existing={existing}
@@ -398,6 +411,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 				defaultMonthlyLossR={parseDecimal(row.defaultMonthlyLossR)}
 				defaultMonthlyWinR={parseDecimal(row.defaultMonthlyWinR)}
 				irTaxRate={irTaxRate}
+				irTaxRateSource={irTaxRateSource}
 				withdrawalPct={withdrawalPct}
 				riskProfiles={riskProfiles}
 				existing={existing}

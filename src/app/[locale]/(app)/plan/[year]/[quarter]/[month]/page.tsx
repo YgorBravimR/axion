@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server"
 import { requireAuth } from "@/app/actions/auth"
 import { PlanSection } from "@/components/fractal-plan/plan-section"
-import { MonthlyPlanTabContent } from "@/components/monthly-plan/monthly-plan-tab-content"
+import { MonthReport } from "@/components/fractal-plan/cockpit/month-report"
 
 interface PageProps {
 	params: Promise<{
@@ -53,9 +53,10 @@ const PlanMonthPage = async ({ params }: PageProps) => {
 	const { accountId } = await requireAuth()
 
 	return (
-		<MonthlyPlanTabContent
+		<MonthReport
 			accountId={accountId}
 			year={year}
+			quarter={quarter}
 			month={month}
 			locale={locale}
 		/>

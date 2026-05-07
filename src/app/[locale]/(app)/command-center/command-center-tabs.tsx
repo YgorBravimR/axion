@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, lazy, Suspense, type ReactNode } from "react"
+import { useState, lazy, Suspense } from "react"
 import { Tabs, TabsList, TabsTrigger, AnimatedTabsContent } from "@/components/ui/tabs"
-import { Target, Activity, Calculator, CalendarDays, Loader2 } from "lucide-react"
+import { Target, Activity, Calculator, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { CommandCenterContent, type CommandCenterContentProps } from "./command-center-content"
@@ -31,7 +31,6 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
-	planTabContent: ReactNode
 	isReplayAccount?: boolean
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
@@ -47,7 +46,6 @@ const CommandCenterTabs = ({
 	accountSettings,
 	strategies,
 	assetSettings,
-	planTabContent,
 	isReplayAccount = false,
 	initialLiveTradingStatus = null,
 	...commandCenterProps
@@ -55,7 +53,6 @@ const CommandCenterTabs = ({
 	const defaultAssetSymbol = commandCenterProps.account?.defaultAsset ?? undefined
 	const t = useTranslations("commandCenter")
 	const { canAccess } = useFeatureAccess()
-	const showPlanTab = canAccess("command-center:plan-tab")
 	const showCommandTab = canAccess("command-center:command-tab")
 	const showMonitorTab = !isReplayAccount && canAccess("command-center:monitor-tab")
 	const defaultTab = showCommandTab ? "command-center" : "calculator"
@@ -68,16 +65,6 @@ const CommandCenterTabs = ({
 			className="flex h-full flex-col"
 		>
 			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-s-200 overflow-x-auto whitespace-nowrap snap-x snap-mandatory" aria-label={t("tabs.navigation")}>
-				{showPlanTab && (
-					<TabsTrigger
-						value="plan"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
-						aria-label={t("tabs.plan")}
-					>
-						<CalendarDays className="h-4 w-4" />
-						<span className="hidden sm:inline">{t("tabs.plan")}</span>
-					</TabsTrigger>
-				)}
 				{showCommandTab && (
 					<TabsTrigger
 						value="command-center"
@@ -107,12 +94,6 @@ const CommandCenterTabs = ({
 					<span className="hidden sm:inline">{t("tabs.calculator")}</span>
 				</TabsTrigger>
 			</TabsList>
-
-			{showPlanTab && (
-				<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
-					{planTabContent}
-				</AnimatedTabsContent>
-			)}
 
 			{showCommandTab && (
 				<AnimatedTabsContent value="command-center" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">

@@ -764,13 +764,15 @@ const runSeed = async () => {
 	// ==========================================
 	console.log("\n📦 Generating procedural trades (Jan–May 2026)...")
 
-	// Per-month NET pnl target (cents). Sums to compound 3k → 30k = +27k gross.
+	// Per-month NET pnl target (cents). March is intentionally a losing month
+	// so DARF carryover/compensation logic surfaces in tests (March loss reduces
+	// April's taxable base before IR is computed).
 	const MONTHLY_NET_TARGETS_CENTS = [
-		450_000, // Jan: +R$4500
-		450_000, // Feb: +R$4500
-		600_000, // Mar: +R$6000
-		600_000, // Apr: +R$6000
-		600_000, // May: +R$6000
+		450_000,  // Jan: +R$4500
+		450_000,  // Feb: +R$4500
+		-300_000, // Mar: -R$3000  (loser month → seeds carryover into April)
+		600_000,  // Apr: +R$6000  (taxable base reduced by March carryover)
+		600_000,  // May: +R$6000
 	]
 
 	// Deterministic PRNG so the seed is reproducible.
@@ -811,8 +813,10 @@ const runSeed = async () => {
 		)
 		const targetReais = MONTHLY_NET_TARGETS_CENTS[m - 1] / 100
 
-		// 30% loser days @ -1R; remaining target distributed across winner days w/ jitter.
-		const numLosers = Math.floor(tradingDays.length * 0.30)
+		// Loser-day ratio scales with sign: profit months → 30% losers, loss months → 65%.
+		const isLossMonth = targetReais < 0
+		const loserRatio = isLossMonth ? 0.65 : 0.30
+		const numLosers = Math.floor(tradingDays.length * loserRatio)
 		const dayIndices = tradingDays.map((_, i) => i)
 		for (let i = dayIndices.length - 1; i > 0; i--) {
 			const j = Math.floor(rand() * (i + 1))
@@ -833,9 +837,10 @@ const runSeed = async () => {
 				dailyPnls.push(avgWinnerReais * jitter)
 			}
 		}
-		// Renormalize winner days so monthly sum hits target exactly.
+		// Renormalize non-loser days so monthly sum hits target exactly (works for
+		// both profit months and loss months — winnerSum may be negative when target < 0).
 		const winnerSum = dailyPnls.reduce((a, b, i) => (loserIdx.has(i) ? a : a + b), 0)
-		const scale = winnerSum > 0 ? winnersTotalReais / winnerSum : 1
+		const scale = winnerSum !== 0 ? winnersTotalReais / winnerSum : 1
 		for (let i = 0; i < dailyPnls.length; i++) {
 			if (!loserIdx.has(i)) dailyPnls[i] *= scale
 		}

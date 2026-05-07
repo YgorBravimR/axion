@@ -19,7 +19,7 @@ import {
 	type UserSettingsData,
 } from "@/app/actions/settings"
 import { useToast } from "@/components/ui/toast"
-import { Loader2, Building2, Percent, Calculator } from "lucide-react"
+import { Loader2, Building2, Percent } from "lucide-react"
 
 const PROP_FIRMS_BASE = [
 	{ value: "atom", label: "Atom" },
@@ -219,72 +219,7 @@ export const TradingAccountSettings = () => {
 					</div>
 				)}
 
-				{/* Tax Settings */}
-				<div className="space-y-m-400">
-					<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
-						<Calculator className="h-4 w-4 text-acc-100" />
-						{t("taxSettings")}
-					</h3>
-
-					{/* Day Trade Tax Rate */}
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("dayTradeTax")}</p>
-						</div>
-						{isEditing ? (
-							<div className="flex items-center gap-s-200">
-								<Input
-									id="trading-dayTradeTax"
-									type="number"
-									step="0.1"
-									min="0"
-									max="100"
-									value={editValues.dayTradeTaxRate}
-									onChange={(e) =>
-										handleFieldChange("dayTradeTaxRate", Number(e.target.value))
-									}
-									className="w-full sm:w-20 text-right"
-								/>
-								<span className="text-small text-txt-300">%</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{editValues.dayTradeTaxRate}%
-							</span>
-						)}
-					</div>
-
-					{/* Swing Trade Tax Rate */}
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("swingTradeTax")}</p>
-						</div>
-						{isEditing ? (
-							<div className="flex items-center gap-s-200">
-								<Input
-									id="trading-swingTradeTax"
-									type="number"
-									step="0.1"
-									min="0"
-									max="100"
-									value={editValues.swingTradeTaxRate}
-									onChange={(e) =>
-										handleFieldChange(
-											"swingTradeTaxRate",
-											Number(e.target.value)
-										)
-									}
-									className="w-full sm:w-20 text-right"
-								/>
-								<span className="text-small text-txt-300">%</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{editValues.swingTradeTaxRate}%
-							</span>
-						)}
-					</div>
-				</div>
+				{/* Tax rates sourced from @/lib/tax/legal-rates by year — no per-account override. */}
 
 				{/* Display Preferences */}
 				<div className="space-y-m-400 border-t border-bg-300 pt-m-400">

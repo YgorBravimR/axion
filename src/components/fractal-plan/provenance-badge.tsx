@@ -15,12 +15,13 @@ const LEVEL_LABEL: Record<Exclude<CascadeLevel, "none">, string> = {
 
 const ProvenanceBadge = ({ level, isOverride = false }: ProvenanceBadgeProps) => {
 	if (level === "none") return null
+	if (!isOverride) return null
 	const label = LEVEL_LABEL[level]
-	const text = isOverride ? `override at ${label}` : `from ${label}`
+	const text = `override at ${label}`
 	return (
 		<span
 			aria-label={`source: ${text}`}
-			className="inline-flex items-center rounded-md bg-bg-200 px-1.5 py-0.5 text-micro uppercase tracking-wide text-txt-200"
+			className="inline-flex items-center rounded-md bg-acc-100/15 px-1.5 py-0.5 text-micro uppercase tracking-wide text-acc-100"
 		>
 			{text}
 		</span>

@@ -5,7 +5,8 @@ import { monthlyTaxLedger, tradingAccounts, accountFeeRates } from "@/db/schema"
 import { eq, and, gte, lte, asc, isNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
-import { addMonths, lastDayOfMonth, subDays, isWeekend } from "date-fns"
+import { isMonthFinalized } from "@/lib/tax/month-status"
+import { lastDayOfMonth, subDays, isWeekend } from "date-fns"
 import type { ActionResponse } from "@/types"
 import type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow, FeeRatesEntry } from "@/lib/tax/types"
 
@@ -27,7 +28,8 @@ const verifyAccountOwnership = async (
 // ─── Internal: last business day of month (DARF due date) ────────────────────
 
 const getLastBusinessDay = (year: number, month: number): Date => {
-	let date = lastDayOfMonth(new Date(year, month - 1, 1))
+	// UTC-anchored so timestamptz comparisons and display stay TZ-stable.
+	let date = lastDayOfMonth(new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0)))
 	while (isWeekend(date)) {
 		date = subDays(date, 1)
 	}
@@ -48,18 +50,24 @@ const recomputeFromMonth = async (params: {
 	userId: string
 }): Promise<number> => {
 	const { accountId, userId } = params
-	let current = new Date(params.year, params.month - 1, 1)
-	const now = new Date()
+	// timestamptz: ledger.month stored as UTC first-of-month. Iterate integer
+	// year/month so we never feed local-TZ Dates into eq() matchers, and we
+	// avoid date-fns addMonths DST drift around UTC-anchored instants.
+	const toUtcMonth = (y: number, m: number): Date =>
+		new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0))
 
-	// Resolve carryoverIn for the starting month from the previous month's row
-	const prevMonth = addMonths(current, -1)
+	let year = params.year
+	let month = params.month
+
+	const prevYear = month === 1 ? year - 1 : year
+	const prevMonthIdx = month === 1 ? 12 : month - 1
 	const prevRow = await db
 		.select({ carryoverOutCents: monthlyTaxLedger.carryoverOutCents })
 		.from(monthlyTaxLedger)
 		.where(
 			and(
 				eq(monthlyTaxLedger.accountId, accountId),
-				eq(monthlyTaxLedger.month, prevMonth),
+				eq(monthlyTaxLedger.month, toUtcMonth(prevYear, prevMonthIdx)),
 			),
 		)
 		.then((rows) => rows[0])
@@ -67,18 +75,30 @@ const recomputeFromMonth = async (params: {
 	let carryoverIn = prevRow?.carryoverOutCents ?? 0
 	let recomputedCount = 0
 
-	while (current <= now) {
+	const now = new Date()
+	const nowYear = now.getUTCFullYear()
+	const nowMonth = now.getUTCMonth() + 1
+	const reachedFuture = (): boolean =>
+		year > nowYear || (year === nowYear && month > nowMonth)
+
+	while (!reachedFuture()) {
 		const result = await recomputeAccountMonth({
 			accountId,
-			year: current.getFullYear(),
-			month: current.getMonth() + 1,
+			year,
+			month,
 			carryoverInCents: carryoverIn,
 			userId,
 		})
 
 		carryoverIn = result.carryoverOutCents
 		recomputedCount++
-		current = addMonths(current, 1)
+
+		if (month === 12) {
+			year += 1
+			month = 1
+		} else {
+			month += 1
+		}
 	}
 
 	return recomputedCount
@@ -116,7 +136,8 @@ const getMonthlyDarf = async (params: {
 		}
 	}
 
-	const monthDate = new Date(year, month - 1, 1)
+	// timestamptz: align matcher with UTC-stored first-of-month.
+	const monthDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
 
 	const existing = await db
 		.select()
@@ -276,8 +297,10 @@ const getYearTaxSummary = async (params: {
 		}
 	}
 
-	const yearStart = new Date(year, 0, 1)
-	const yearEnd = new Date(year, 11, 31, 23, 59, 59)
+	// timestamptz: ledger.month is UTC first-of-month. Use UTC bounds so the
+	// gte/lte window aligns exactly with stored instants on every host TZ.
+	const yearStart = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0))
+	const yearEnd = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999))
 
 	const rows = await db
 		.select()
@@ -422,9 +445,25 @@ const markDarfPaid = async (params: {
 		}
 	}
 
-	const monthDate = new Date(params.year, params.month - 1, 1)
+	if (!isMonthFinalized(params.year, params.month)) {
+		return {
+			status: "error",
+			message: "Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
+			errors: [
+				{
+					code: "MONTH_NOT_FINALIZED",
+					detail: `Month ${params.year}-${String(params.month).padStart(2, "0")} has not ended yet.`,
+				},
+			],
+		}
+	}
 
-	await db
+	// timestamptz: monthlyTaxLedger.month stored as UTC first-of-month. Build the
+	// matcher with Date.UTC — local-time `new Date(year, m-1, 1)` shifts by the
+	// host TZ offset and silently matches zero rows on non-UTC machines.
+	const monthDate = new Date(Date.UTC(params.year, params.month - 1, 1, 0, 0, 0, 0))
+
+	const result = await db
 		.update(monthlyTaxLedger)
 		.set({
 			darfStatus: "paid",
@@ -438,6 +477,20 @@ const markDarfPaid = async (params: {
 				eq(monthlyTaxLedger.month, monthDate),
 			),
 		)
+		.returning({ id: monthlyTaxLedger.id })
+
+	if (result.length === 0) {
+		return {
+			status: "error",
+			message: "Ledger row not found for month.",
+			errors: [
+				{
+					code: "LEDGER_ROW_NOT_FOUND",
+					detail: `No ledger row for account ${accountId} on ${monthDate.toISOString().slice(0, 7)}.`,
+				},
+			],
+		}
+	}
 
 	return { status: "success", message: "DARF marked as paid." }
 }

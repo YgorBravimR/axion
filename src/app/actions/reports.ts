@@ -19,6 +19,7 @@ import { getUserSettings, type UserSettingsData } from "./settings"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
+import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 import { getTranslations } from "next-intl/server"
 import { isFrameworkSignal } from "@/lib/error-utils"
 
@@ -706,10 +707,12 @@ export interface YearlyOverview {
 	}>
 }
 
-// Calculate prop trading profit breakdown
+// dayTradeTaxRate is transient (computed from legal-rates by year), not DB-backed.
+type PropCalcSettings = UserSettingsData & { dayTradeTaxRate: number }
+
 const calculatePropProfit = (
 	grossProfit: number,
-	settings: UserSettingsData
+	settings: PropCalcSettings
 ): PropProfitCalculation => {
 	// Only calculate shares if profitable
 	if (grossProfit <= 0) {
@@ -810,13 +813,16 @@ export const getMonthlyResultsWithProp = async (
 			: account
 
 		// Use account-specific settings (from tradingAccounts table)
-		// isPropAccount is determined by accountType, other settings come from account
+		// isPropAccount is determined by accountType, other settings come from account.
+		// Day-trade IR rate sourced from legal-rates (Lei 11.033/2004) — single source
+		// of truth shared with cockpit + recompute. Account override column ignored.
 		const isPropAccount = decryptedAccount.accountType === "prop"
 		const profitSharePercentage = Number(decryptedAccount.profitSharePercentage)
-		const dayTradeTaxRate = Number(decryptedAccount.dayTradeTaxRate)
+		const reportYear = Number(report.monthStart.slice(0, 4))
+		const dayTradeTaxRate = getDayTradeIrRate(reportYear) * 100
 
 		// Build settings object for calculation using account-specific values
-		const accountSettings: UserSettingsData = {
+		const accountSettings: PropCalcSettings = {
 			...userSettings,
 			isPropAccount,
 			propFirmName: decryptedAccount.propFirmName,
@@ -920,13 +926,15 @@ export const getMonthlyProjection = async (): Promise<{
 		const projectedMonthlyProfit =
 			currentProfit + dailyAverage * tradingDaysRemaining
 
-		// Use account-specific settings for projection
-		const accountSettings: UserSettingsData = {
+		// Use account-specific settings for projection. IR rate from legal-rates
+		// table by year of the projected month (matches cockpit + recompute).
+		const projectionYear = monthStart.getUTCFullYear()
+		const accountSettings: PropCalcSettings = {
 			...userSettings,
 			isPropAccount: decryptedAccount.accountType === "prop",
 			propFirmName: decryptedAccount.propFirmName,
 			profitSharePercentage: Number(decryptedAccount.profitSharePercentage),
-			dayTradeTaxRate: Number(decryptedAccount.dayTradeTaxRate),
+			dayTradeTaxRate: getDayTradeIrRate(projectionYear) * 100,
 			showTaxEstimates: decryptedAccount.showTaxEstimates,
 		}
 

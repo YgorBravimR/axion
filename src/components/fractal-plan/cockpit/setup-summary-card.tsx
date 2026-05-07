@@ -18,6 +18,7 @@ interface SetupSummaryCardProps {
 	defaultMonthlyLossR: number | null
 	defaultMonthlyWinR: number | null
 	irTaxRate: number
+	irTaxRateSource: string
 	withdrawalPct: number
 	riskProfiles: RiskManagementProfile[]
 	existing: {
@@ -53,6 +54,7 @@ const SetupSummaryCard = ({
 	defaultMonthlyLossR,
 	defaultMonthlyWinR,
 	irTaxRate,
+	irTaxRateSource,
 	withdrawalPct,
 	riskProfiles,
 	existing,
@@ -105,9 +107,13 @@ const SetupSummaryCard = ({
 					</div>
 					<div>
 						<dt className="text-xs text-txt-300">IR (day-trade)</dt>
-						<dd className="mt-1 font-mono text-h3 tabular-nums text-txt-100">
-							{(irTaxRate * 100).toFixed(0)}%
+						<dd
+							className="mt-1 font-mono text-h3 tabular-nums text-txt-100"
+							title={`Alíquota legal · ${irTaxRateSource}`}
+						>
+							{(irTaxRate * 100).toFixed(1).replace(/\.0$/, "")}%
 						</dd>
+						<p className="mt-1 text-micro text-txt-300">{irTaxRateSource}</p>
 					</div>
 					<div>
 						<dt className="text-xs text-txt-300">Retirada mensal</dt>

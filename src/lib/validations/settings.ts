@@ -9,15 +9,7 @@ export const userSettingsSchema = z.object({
 		.min(0, "validation.settings.profitShareMin")
 		.max(100, "validation.settings.profitShareMax"),
 
-	// Tax Settings
-	dayTradeTaxRate: z
-		.number()
-		.min(0, "validation.settings.taxRateMin")
-		.max(100, "validation.settings.taxRateMax"),
-	swingTradeTaxRate: z
-		.number()
-		.min(0, "validation.settings.taxRateMin")
-		.max(100, "validation.settings.taxRateMax"),
+	// Tax Settings — IR rates sourced from @/lib/tax/legal-rates by year (Lei 11.033/2004).
 	taxExemptThreshold: z
 		.number()
 		.min(0, "validation.settings.thresholdMin")

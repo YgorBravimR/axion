@@ -1,5 +1,6 @@
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { RiskManagementProfileForSim } from "@/types/monte-carlo"
+import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
 
 /**
  * Converts a risk management profile (R-shape) into a flat simulation config (cents).
@@ -98,7 +99,7 @@ export const buildProfileForSim = (
 		stopOnFirstLoss,
 		weeklyLossLimitCents: overrides.weeklyLossCents,
 		monthlyLossLimitCents: overrides.monthlyLossCents,
-		tradingDaysPerMonth: overrides.tradingDaysPerMonth ?? 22,
+		tradingDaysPerMonth: overrides.tradingDaysPerMonth ?? DEFAULT_TRADING_DAYS_PER_MONTH,
 		tradingDaysPerWeek: overrides.tradingDaysPerWeek ?? 5,
 		commissionPerTradeCents: overrides.commissionPerTradeCents ?? 0,
 
