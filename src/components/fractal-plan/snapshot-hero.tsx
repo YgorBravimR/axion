@@ -24,7 +24,7 @@ const SnapshotHero = ({ tierIndex, oneRCents, capitalCents, computedAt, reason }
 				<span className="text-tiny font-medium uppercase tracking-wider text-acc-100">Tier snapshot</span>
 				<span className="text-tiny text-txt-300">{REASON_LABEL[reason]}</span>
 			</div>
-			<div className="grid grid-cols-1 gap-s-400 sm:grid-cols-3">
+			<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
 				<div>
 					<dt className="text-tiny text-txt-300">Tier</dt>
 					<dd className="mt-1 font-mono text-2xl font-semibold text-acc-100">T{tierIndex}</dd>

@@ -4,7 +4,7 @@ import { z } from "zod"
 import { and, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { yearlyPlans } from "@/db/schema"
-import { requireAuth } from "@/app/actions/auth"
+import { requireAuth, getCurrentAccount } from "@/app/actions/auth"
 import { autoSeedYearlyTree } from "@/lib/fractal-plan/auto-seed"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
@@ -17,7 +17,7 @@ const ladderRuleSchema = z.object({
 
 const createYearlyPlanInputSchema = z.object({
 	year: z.number().int().min(2000).max(2100),
-	initialCapitalCents: z.number().int().positive(),
+	initialCapitalCents: z.number().int().positive().optional(),
 	ladderRules: z.array(ladderRuleSchema).min(1),
 	defaultDailyLossR: z.number().positive(),
 	defaultDailyWinR: z.number().positive(),
@@ -45,10 +45,23 @@ const createYearlyPlanV2 = async (
 		const parsed = createYearlyPlanInputSchema.parse(input)
 		const { accountId } = await requireAuth()
 
+		let initialCapitalCents = parsed.initialCapitalCents
+		if (initialCapitalCents == null) {
+			const account = await getCurrentAccount()
+			if (account?.startingBalanceCents == null) {
+				return {
+					status: "error",
+					message: "Set the account starting balance in Settings → Annual Reporting before seeding a yearly plan.",
+					errors: [{ code: "MISSING_STARTING_BALANCE", detail: "account.startingBalanceCents is null" }],
+				}
+			}
+			initialCapitalCents = account.startingBalanceCents
+		}
+
 		const result = await autoSeedYearlyTree({
 			accountId,
 			year: parsed.year,
-			initialCapitalCents: parsed.initialCapitalCents,
+			initialCapitalCents,
 			ladderRules: parsed.ladderRules,
 			defaultDailyLossR: parsed.defaultDailyLossR,
 			defaultDailyWinR: parsed.defaultDailyWinR,
@@ -87,6 +100,7 @@ const updateYearlyPlanInputSchema = z.object({
 	defaultWeeklyWinR: z.number().positive().optional(),
 	defaultMonthlyLossR: z.number().positive().optional(),
 	defaultMonthlyWinR: z.number().positive().optional(),
+	defaultRiskProfileId: z.union([z.string().uuid(), z.null()]).optional(),
 	notes: z.string().max(5000).optional(),
 })
 
@@ -120,6 +134,7 @@ const updateYearlyPlan = async (
 		if (parsed.defaultWeeklyWinR !== undefined) updates.defaultWeeklyWinR = parsed.defaultWeeklyWinR.toFixed(2)
 		if (parsed.defaultMonthlyLossR !== undefined) updates.defaultMonthlyLossR = parsed.defaultMonthlyLossR.toFixed(2)
 		if (parsed.defaultMonthlyWinR !== undefined) updates.defaultMonthlyWinR = parsed.defaultMonthlyWinR.toFixed(2)
+		if (parsed.defaultRiskProfileId !== undefined) updates.defaultRiskProfileId = parsed.defaultRiskProfileId
 		if (parsed.notes !== undefined) updates.notes = parsed.notes
 
 		await db.update(yearlyPlans).set(updates).where(eq(yearlyPlans.id, existing.id))

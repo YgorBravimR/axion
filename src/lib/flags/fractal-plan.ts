@@ -3,4 +3,12 @@ const isFractalPlanDualWriteEnabled = (): boolean => {
 	return process.env.FRACTAL_PLAN_DUAL_WRITE !== "0"
 }
 
-export { isFractalPlanDualWriteEnabled }
+/**
+ * Cockpit redesign of `/plan/[year]` (12-month grid + tax tab).
+ * Default ON. Set FRACTAL_PLAN_COCKPIT=0 for emergency rollback to legacy form.
+ */
+const isCockpitEnabled = (): boolean => {
+	return process.env.FRACTAL_PLAN_COCKPIT !== "0"
+}
+
+export { isFractalPlanDualWriteEnabled, isCockpitEnabled }

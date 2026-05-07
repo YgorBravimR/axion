@@ -1,5 +1,12 @@
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 interface BreadcrumbSegment {
 	label: string
@@ -11,25 +18,27 @@ interface PlanBreadcrumbProps {
 }
 
 const PlanBreadcrumb = ({ segments }: PlanBreadcrumbProps) => (
-	<nav aria-label="Plan breadcrumb" className="flex flex-wrap items-center gap-s-100 text-sm">
-		{segments.map((segment, index) => {
-			const isLast = index === segments.length - 1
-			return (
-				<div key={`${segment.label}-${index}`} className="flex items-center gap-s-100">
-					{segment.href && !isLast ? (
-						<Link href={segment.href} className="text-txt-200 hover:text-acc-100 transition-colors">
-							{segment.label}
-						</Link>
-					) : (
-						<span className={isLast ? "text-txt-100 font-medium" : "text-txt-200"}>
-							{segment.label}
-						</span>
-					)}
-					{!isLast && <ChevronRight className="h-3.5 w-3.5 text-txt-300" />}
-				</div>
-			)
-		})}
-	</nav>
+	<Breadcrumb aria-label="Plan breadcrumb">
+		<BreadcrumbList>
+			{segments.map((segment, index) => {
+				const isLast = index === segments.length - 1
+				return (
+					<div key={`${segment.label}-${index}`} className="contents">
+						<BreadcrumbItem>
+							{segment.href && !isLast ? (
+								<BreadcrumbLink asChild>
+									<Link href={segment.href}>{segment.label}</Link>
+								</BreadcrumbLink>
+							) : (
+								<BreadcrumbPage>{segment.label}</BreadcrumbPage>
+							)}
+						</BreadcrumbItem>
+						{!isLast && <BreadcrumbSeparator />}
+					</div>
+				)
+			})}
+		</BreadcrumbList>
+	</Breadcrumb>
 )
 
 export type { BreadcrumbSegment, PlanBreadcrumbProps }

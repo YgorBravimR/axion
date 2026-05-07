@@ -71,7 +71,7 @@ const PlanQuarterPage = async ({ params }: PageProps) => {
 						<li key={m}>
 							<Link
 								href={`/${locale}/plan/${year}/${q}/${m}`}
-								className="block rounded-lg border border-bg-300 bg-bg-100 px-m-300 py-s-300 text-center transition-colors hover:border-acc-100 hover:text-acc-100"
+								className="block rounded-lg border border-bg-300 bg-bg-100 px-s-300 py-s-300 text-center transition-colors hover:border-acc-100 hover:text-acc-100"
 							>
 								<div className="text-sm text-txt-200">Month {m}</div>
 								<div className="text-lg font-medium text-txt-100">{MONTH_NAMES[m - 1]}</div>

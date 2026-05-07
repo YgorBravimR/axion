@@ -1,4 +1,4 @@
-import { db } from "@/db/drizzle"
+import { dbWs } from "@/db/drizzle-ws"
 import { yearlyPlans, quarterlyPlan, monthlyPlan, weeklyPlan } from "@/db/schema"
 import type { LadderRuleR } from "./capital-ladder"
 import { resolveTier } from "./capital-ladder"
@@ -30,7 +30,7 @@ interface AutoSeedResult {
 const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult> => {
 	const { tierIndex, oneRCents } = resolveTier(input.initialCapitalCents, input.ladderRules)
 
-	return await db.transaction(async (tx) => {
+	return await dbWs.transaction(async (tx) => {
 		const [yearRow] = await tx
 			.insert(yearlyPlans)
 			.values({

@@ -4,20 +4,23 @@ import { z } from "zod"
 import { db } from "@/db/drizzle"
 import { dailyPlan } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
-import { requireAuth } from "@/app/actions/auth"
+import { requireAuth, getCurrentAccount } from "@/app/actions/auth"
+import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
+import type { DailyPlan } from "@/db/schema"
 
+// `null` = explicit clear; field omitted = leave untouched.
 const upsertSchema = z.object({
 	dailyPlanId: z.string().uuid(),
-	targetR: z.number().optional(),
-	maxTradesToday: z.number().int().positive().optional(),
-	preMarketNotes: z.string().max(5000).optional(),
-	mood: z.enum(["focused", "neutral", "distracted", "risk_off"]).optional(),
-	overrideDailyLossR: z.number().positive().optional(),
-	overrideDailyTargetR: z.number().positive().optional(),
-	overrideActivePlaybookIds: z.array(z.string().uuid()).optional(),
-	postMarketNotes: z.string().max(5000).optional(),
+	targetR: z.number().nullish(),
+	maxTradesToday: z.number().int().positive().nullish(),
+	preMarketNotes: z.string().max(5000).nullish(),
+	mood: z.enum(["focused", "neutral", "distracted", "risk_off"]).nullish(),
+	overrideDailyLossR: z.number().positive().nullish(),
+	overrideDailyTargetR: z.number().positive().nullish(),
+	overrideActivePlaybookIds: z.array(z.string().uuid()).nullish(),
+	postMarketNotes: z.string().max(5000).nullish(),
 })
 
 const upsertDailyPlan = async (
@@ -26,20 +29,24 @@ const upsertDailyPlan = async (
 	try {
 		const parsed = upsertSchema.parse(input)
 		await requireAuth()
-		await db
-			.update(dailyPlan)
-			.set({
-				targetR: parsed.targetR?.toString(),
-				maxTradesToday: parsed.maxTradesToday,
-				preMarketNotes: parsed.preMarketNotes,
-				mood: parsed.mood,
-				overrideDailyLossR: parsed.overrideDailyLossR?.toString(),
-				overrideDailyTargetR: parsed.overrideDailyTargetR?.toString(),
-				overrideActivePlaybookIds: parsed.overrideActivePlaybookIds,
-				postMarketNotes: parsed.postMarketNotes,
-				updatedAt: new Date(),
-			})
-			.where(eq(dailyPlan.id, parsed.dailyPlanId))
+
+		const updates: Record<string, unknown> = { updatedAt: new Date() }
+		if (parsed.targetR !== undefined)
+			updates.targetR = parsed.targetR === null ? null : parsed.targetR.toString()
+		if (parsed.maxTradesToday !== undefined) updates.maxTradesToday = parsed.maxTradesToday
+		if (parsed.preMarketNotes !== undefined) updates.preMarketNotes = parsed.preMarketNotes
+		if (parsed.mood !== undefined) updates.mood = parsed.mood
+		if (parsed.overrideDailyLossR !== undefined)
+			updates.overrideDailyLossR =
+				parsed.overrideDailyLossR === null ? null : parsed.overrideDailyLossR.toString()
+		if (parsed.overrideDailyTargetR !== undefined)
+			updates.overrideDailyTargetR =
+				parsed.overrideDailyTargetR === null ? null : parsed.overrideDailyTargetR.toString()
+		if (parsed.overrideActivePlaybookIds !== undefined)
+			updates.overrideActivePlaybookIds = parsed.overrideActivePlaybookIds
+		if (parsed.postMarketNotes !== undefined) updates.postMarketNotes = parsed.postMarketNotes
+
+		await db.update(dailyPlan).set(updates).where(eq(dailyPlan.id, parsed.dailyPlanId))
 		return { status: "success", message: "Daily plan updated", data: { id: parsed.dailyPlanId } }
 	} catch (err) {
 		return {
@@ -130,4 +137,92 @@ const lazyEnsureDailyPlan = async (
 	}
 }
 
-export { upsertDailyPlan, resetDailyOverride, lazyEnsureDailyPlan }
+const getDailyPlanByIdSchema = z.object({
+	dailyPlanId: z.string().uuid(),
+})
+
+const getDailyPlanById = async (
+	input: z.infer<typeof getDailyPlanByIdSchema>,
+): Promise<ActionResponse<DailyPlan | null>> => {
+	try {
+		const parsed = getDailyPlanByIdSchema.parse(input)
+		await requireAuth()
+		const row = await db.query.dailyPlan.findFirst({
+			where: eq(dailyPlan.id, parsed.dailyPlanId),
+		})
+		return {
+			status: "success",
+			message: "Daily plan fetched",
+			data: row ?? null,
+		}
+	} catch (err) {
+		return {
+			status: "error",
+			message: toSafeErrorMessage(err),
+			errors: [{ code: "GET_DAILY_PLAN_FAILED", detail: toSafeErrorMessage(err) }],
+		}
+	}
+}
+
+const fetchByDateSchema = z.object({
+	dateISO: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
+})
+
+type FetchByDateResult =
+	| { kind: "ok"; dayRow: DailyPlan }
+	| { kind: "no-account" }
+	| { kind: "no-yearly-plan" }
+	| { kind: "incomplete-cascade"; missing: "quarter" | "month" | "week" }
+
+const getDailyPlanForCurrentAccount = async (
+	input: z.infer<typeof fetchByDateSchema>,
+): Promise<ActionResponse<FetchByDateResult>> => {
+	try {
+		const parsed = fetchByDateSchema.parse(input)
+		await requireAuth()
+		const account = await getCurrentAccount()
+		if (!account?.id) {
+			return {
+				status: "success",
+				message: "No active account",
+				data: { kind: "no-account" },
+			}
+		}
+		const date = new Date(parsed.dateISO)
+		const ensured = await ensureDailyPlanForAccountDate(account.id, date)
+		if (ensured.status === "ok") {
+			return { status: "success", message: "Fetched", data: { kind: "ok", dayRow: ensured.dayRow } }
+		}
+		if (ensured.status === "no-yearly-plan") {
+			return {
+				status: "success",
+				message: "No yearly plan",
+				data: { kind: "no-yearly-plan" },
+			}
+		}
+		return {
+			status: "success",
+			message: "Incomplete cascade",
+			data: { kind: "incomplete-cascade", missing: ensured.missing },
+		}
+	} catch (err) {
+		return {
+			status: "error",
+			message: toSafeErrorMessage(err),
+			errors: [
+				{
+					code: "GET_DAILY_PLAN_FOR_ACCOUNT_FAILED",
+					detail: toSafeErrorMessage(err),
+				},
+			],
+		}
+	}
+}
+
+export {
+	upsertDailyPlan,
+	resetDailyOverride,
+	lazyEnsureDailyPlan,
+	getDailyPlanById,
+	getDailyPlanForCurrentAccount,
+}

@@ -4,36 +4,37 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
 import { upsertMonthlyPlan } from "@/app/actions/fractal-plan/monthly"
+import { RiskProfilePicker } from "@/components/fractal-plan/risk-profile-picker"
+import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface MonthlyPlanEditorProps {
 	monthlyPlanId: string
+	riskProfiles: RiskManagementProfile[]
 	existing: {
 		monthlyGoalCents: number | null
 		intentNotes: string | null
 		postMortemNotes: string | null
+		overrideRiskProfileId: string | null
 	}
 }
 
-const MonthlyPlanEditor = ({ monthlyPlanId, existing }: MonthlyPlanEditorProps) => {
+const MonthlyPlanEditor = ({ monthlyPlanId, riskProfiles, existing }: MonthlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 
-	const [goalBRL, setGoalBRL] = useState(
-		existing.monthlyGoalCents != null ? (existing.monthlyGoalCents / 100).toFixed(2) : "",
-	)
+	const [goalCents, setGoalCents] = useState<number | null>(existing.monthlyGoalCents)
 	const [intentNotes, setIntentNotes] = useState(existing.intentNotes ?? "")
 	const [postMortemNotes, setPostMortemNotes] = useState(existing.postMortemNotes ?? "")
+	const [riskProfileId, setRiskProfileId] = useState<string | null>(existing.overrideRiskProfileId)
 
 	const handleSubmit = () => {
-		const monthlyGoalCents = goalBRL.trim()
-			? Math.round(parseFloat(goalBRL.replace(",", ".")) * 100)
-			: undefined
+		const monthlyGoalCents = goalCents != null ? Math.round(goalCents) : undefined
 		if (monthlyGoalCents !== undefined && (!Number.isFinite(monthlyGoalCents) || monthlyGoalCents < 0)) {
 			showToast("error", "Goal must be a non-negative number.")
 			return
@@ -45,6 +46,7 @@ const MonthlyPlanEditor = ({ monthlyPlanId, existing }: MonthlyPlanEditorProps) 
 				monthlyGoalCents,
 				intentNotes: intentNotes || undefined,
 				postMortemNotes: postMortemNotes || undefined,
+				overrideRiskProfileId: riskProfileId,
 			})
 			if (result.status === "success") {
 				showToast("success", "Monthly plan updated")
@@ -64,14 +66,24 @@ const MonthlyPlanEditor = ({ monthlyPlanId, existing }: MonthlyPlanEditorProps) 
 			className="space-y-m-400"
 		>
 			<div>
+				<Label id="lbl-month-risk-profile" htmlFor="month-risk-profile">
+					Risk profile (override · cascades from year if unset)
+				</Label>
+				<RiskProfilePicker
+					id="month-risk-profile"
+					profiles={riskProfiles}
+					value={riskProfileId}
+					onChange={setRiskProfileId}
+				/>
+			</div>
+			<div>
 				<Label id="lbl-month-goal" htmlFor="month-goal">Monthly goal (BRL)</Label>
-				<Input
+				<CurrencyInput
 					id="month-goal"
-					type="number"
-					step="0.01"
-					min="0"
-					value={goalBRL}
-					onChange={(e) => setGoalBRL(e.target.value)}
+					value={goalCents}
+					onValueChange={setGoalCents}
+					decimals={2}
+					unit="cents"
 				/>
 			</div>
 			<div>
