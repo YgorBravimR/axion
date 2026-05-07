@@ -1,0 +1,45 @@
+name: Lint & Typecheck
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Custom ESLint rule tests
+        run: pnpm test:lint-rules
+
+      - name: ESLint Tier 1 (fast)
+        run: pnpm lint
+
+      - name: ESLint Tier 2 (type-checked)
+        run: pnpm lint:strict
+
+      - name: TypeScript typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Tailwind token drift check
+        run: pnpm exec tsx scripts/token-fix.ts --dry
