@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl"
 import { TrendingUp, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { MonthlyProjection as MonthlyProjectionData } from "@/app/actions/reports"
+import type { MonthlyProjection as MonthlyProjectionData } from "@/app/actions/reports.types"
 
 interface MonthlyProjectionProps {
 	data: MonthlyProjectionData
@@ -20,17 +20,20 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 	)
 
 	return (
-		<div id="monthly-projection" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-			<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
-				<TrendingUp className="h-5 w-5 text-acc-100" />
+		<div
+			id="monthly-projection"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
+			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
+				<TrendingUp className="text-acc-100 h-5 w-5" />
 				{t("title")}
 			</h3>
 
 			<div className="mt-m-400 sm:mt-m-500 space-y-s-300 sm:space-y-m-400">
 				{/* Progress Bar */}
 				<div className="space-y-s-200">
-					<div className="flex items-center justify-between text-small">
-						<div className="flex items-center gap-s-200 text-txt-200">
+					<div className="text-small flex items-center justify-between">
+						<div className="gap-s-200 text-txt-200 flex items-center">
 							<CalendarDays className="h-4 w-4" />
 							<span>
 								{t("daysTraded", {
@@ -39,22 +42,20 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 								})}
 							</span>
 						</div>
-						<span className="text-acc-100">
-							{progressPercent.toFixed(0)}%
-						</span>
+						<span className="text-acc-100">{progressPercent.toFixed(0)}%</span>
 					</div>
-					<div className="h-3 w-full overflow-hidden rounded-full bg-bg-100">
+					<div className="bg-bg-100 h-3 w-full overflow-hidden rounded-full">
 						<div
-							className="h-full rounded-full bg-acc-100 transition-[width] duration-500"
+							className="bg-acc-100 h-full rounded-full transition-[width] duration-500"
 							style={{ width: `${progressPercent}%` }}
 						/>
 					</div>
 				</div>
 
 				{/* Stats Grid */}
-				<div className="grid grid-cols-1 gap-s-300 sm:grid-cols-2 sm:gap-m-400">
+				<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 					{/* Daily Average */}
-					<div className="rounded-sm bg-bg-100 p-s-300">
+					<div className="bg-bg-100 p-s-300 rounded-sm">
 						<p className="text-tiny text-txt-300">{t("dailyAverage")}</p>
 						<p
 							className={cn(
@@ -69,15 +70,15 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 					</div>
 
 					{/* Days Remaining */}
-					<div className="rounded-sm bg-bg-100 p-s-300">
+					<div className="bg-bg-100 p-s-300 rounded-sm">
 						<p className="text-tiny text-txt-300">{t("daysRemaining")}</p>
-						<p className="text-body font-medium text-txt-100">
+						<p className="text-body text-txt-100 font-medium">
 							{data.tradingDaysRemaining}
 						</p>
 					</div>
 
 					{/* Projected Monthly */}
-					<div className="rounded-sm bg-bg-100 p-s-300">
+					<div className="bg-bg-100 p-s-300 rounded-sm">
 						<p className="text-tiny text-txt-300">{t("projectedMonthly")}</p>
 						<p
 							className={cn(
@@ -92,7 +93,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 					</div>
 
 					{/* Projected Net */}
-					<div className="rounded-sm bg-acc-100/10 p-s-300">
+					<div className="bg-acc-100/10 p-s-300 rounded-sm">
 						<p className="text-tiny text-txt-300">{t("projectedNet")}</p>
 						<p
 							className={cn(

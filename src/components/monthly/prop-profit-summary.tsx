@@ -1,10 +1,16 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { TrendingUp, TrendingDown, Building2, Landmark, Wallet } from "lucide-react"
+import {
+	TrendingUp,
+	TrendingDown,
+	Building2,
+	Landmark,
+	Wallet,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { PropProfitCalculation } from "@/app/actions/reports"
+import type { PropProfitCalculation } from "@/app/actions/reports.types"
 
 interface PropProfitSummaryProps {
 	data: PropProfitCalculation
@@ -32,14 +38,14 @@ export const PropProfitSummary = ({
 	return (
 		<div id="monthly-profit-summary" className="space-y-s-300 sm:space-y-m-400">
 			{/* Main Summary Cards */}
-			<div className="grid grid-cols-1 gap-s-300 sm:gap-m-400 sm:grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 				{/* Gross Profit */}
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
-					<div className="flex items-center gap-s-200 text-txt-300">
+				<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+					<div className="gap-s-200 text-txt-300 flex items-center">
 						{isPositive ? (
-							<TrendingUp className="h-4 w-4 text-trade-buy" />
+							<TrendingUp className="text-trade-buy h-4 w-4" />
 						) : isNegative ? (
-							<TrendingDown className="h-4 w-4 text-trade-sell" />
+							<TrendingDown className="text-trade-sell h-4 w-4" />
 						) : null}
 						<span className="text-small">{t("grossProfit")}</span>
 					</div>
@@ -56,9 +62,9 @@ export const PropProfitSummary = ({
 				</div>
 
 				{/* Trader Share */}
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400">
-					<div className="flex items-center gap-s-200 text-txt-300">
-						<Wallet className="h-4 w-4 text-acc-100" />
+				<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+					<div className="gap-s-200 text-txt-300 flex items-center">
+						<Wallet className="text-acc-100 h-4 w-4" />
 						<span className="text-small">{t("traderShare")}</span>
 					</div>
 					<p
@@ -79,9 +85,9 @@ export const PropProfitSummary = ({
 				</div>
 
 				{/* Net Profit */}
-				<div className="rounded-lg border border-acc-100/20 bg-acc-100/5 p-m-400">
-					<div className="flex items-center gap-s-200 text-txt-300">
-						<Landmark className="h-4 w-4 text-acc-100" />
+				<div className="border-acc-100/20 bg-acc-100/5 p-m-400 rounded-lg border">
+					<div className="gap-s-200 text-txt-300 flex items-center">
+						<Landmark className="text-acc-100 h-4 w-4" />
 						<span className="text-small">{t("netProfit")}</span>
 					</div>
 					<p
@@ -104,14 +110,14 @@ export const PropProfitSummary = ({
 
 			{/* Breakdown Details */}
 			{showBreakdown && isPositive && isPropAccount && (
-				<div className="rounded-lg border border-bg-300 bg-bg-100 p-s-300 sm:p-m-400">
-					<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
-						<Building2 className="h-4 w-4 text-acc-100" />
+				<div className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border">
+					<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
+						<Building2 className="text-acc-100 h-4 w-4" />
 						{t("breakdown")}
 					</h3>
 					<div className="mt-m-400 space-y-s-300">
 						{/* Gross Profit Row */}
-						<div className="flex items-center justify-between text-small">
+						<div className="text-small flex items-center justify-between">
 							<span className="text-txt-200">{t("grossProfit")}</span>
 							<span className="text-txt-100">
 								{formatCurrency(data.grossProfit)}
@@ -120,7 +126,7 @@ export const PropProfitSummary = ({
 
 						{/* Prop Firm Share */}
 						{isPropAccount && data.propFirmShare > 0 && (
-							<div className="flex items-center justify-between text-small">
+							<div className="text-small flex items-center justify-between">
 								<span className="text-txt-300">
 									- {propFirmName || t("propShare")} (
 									{100 - profitSharePercentage}%)
@@ -133,7 +139,7 @@ export const PropProfitSummary = ({
 
 						{/* Trader Share Subtotal */}
 						{isPropAccount && (
-							<div className="flex items-center justify-between border-t border-bg-300 pt-s-300 text-small">
+							<div className="border-bg-300 pt-s-300 text-small flex items-center justify-between border-t">
 								<span className="text-txt-200">{t("traderShare")}</span>
 								<span className="text-txt-100">
 									{formatCurrency(data.traderShare)}
@@ -143,7 +149,7 @@ export const PropProfitSummary = ({
 
 						{/* Tax */}
 						{data.estimatedTax > 0 && (
-							<div className="flex items-center justify-between text-small">
+							<div className="text-small flex items-center justify-between">
 								<span className="text-txt-300">
 									- {t("estimatedTax")} ({taxRate}%)
 								</span>
@@ -154,7 +160,7 @@ export const PropProfitSummary = ({
 						)}
 
 						{/* Net Profit */}
-						<div className="flex items-center justify-between border-t border-bg-300 pt-s-300 text-small font-medium">
+						<div className="border-bg-300 pt-s-300 text-small flex items-center justify-between border-t font-medium">
 							<span className="text-txt-100">{t("netProfit")}</span>
 							<span className="text-trade-buy">
 								{formatCurrency(data.netProfit)}

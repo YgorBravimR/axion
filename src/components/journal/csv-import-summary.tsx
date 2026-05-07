@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, AlertTriangle, TrendingUp } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { ProcessedCsvTrade } from "@/app/actions/csv-import"
+import type { ProcessedCsvTrade } from "@/app/actions/csv-import.types"
 
 export type FilterStatus = "all" | "valid" | "warning" | "skipped"
 

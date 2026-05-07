@@ -45,7 +45,7 @@ const buildIdentifier = (email: string): string =>
  * Step 1: Request a password reset code.
  * Always returns success to prevent email enumeration.
  */
-const requestPasswordReset = async (
+export const requestPasswordReset = async (
 	input: RequestResetInput
 ): Promise<{ success: boolean }> => {
 	const parsed = requestResetSchema.safeParse(input)
@@ -108,7 +108,7 @@ const requestPasswordReset = async (
  * Step 2: Verify the OTP code.
  * Rate-limited to 5 attempts per email per 15 minutes.
  */
-const verifyResetCode = async (
+export const verifyResetCode = async (
 	input: VerifyCodeInput
 ): Promise<{ valid: boolean; error?: string }> => {
 	const t = await getTranslations("forgotPassword")
@@ -153,7 +153,7 @@ const verifyResetCode = async (
  * Step 3: Reset the password using a verified OTP code.
  * Re-verifies the OTP to prevent replay without verification step.
  */
-const resetPassword = async (
+export const resetPassword = async (
 	input: ResetPasswordInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const t = await getTranslations("forgotPassword")
@@ -206,5 +206,3 @@ const resetPassword = async (
 
 	return { success: true }
 }
-
-export { requestPasswordReset, verifyResetCode, resetPassword }

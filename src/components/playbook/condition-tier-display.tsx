@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Shield, ShieldCheck, ShieldPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { StrategyConditionWithDetail } from "@/app/actions/strategy-conditions"
+import type { StrategyConditionWithDetail } from "@/app/actions/strategy-conditions.types"
 
 interface ConditionTierDisplayProps {
 	conditions: StrategyConditionWithDetail[]

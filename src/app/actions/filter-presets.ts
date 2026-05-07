@@ -27,7 +27,9 @@ const uuidSchema = z.string().uuid()
 // LIST PRESETS
 // ============================================================================
 
-const listFilterPresets = async (): Promise<ActionResponse<FilterPreset[]>> => {
+export const listFilterPresets = async (): Promise<
+	ActionResponse<FilterPreset[]>
+> => {
 	try {
 		const { userId, accountId } = await requireAuth()
 
@@ -52,7 +54,7 @@ const listFilterPresets = async (): Promise<ActionResponse<FilterPreset[]>> => {
 // CREATE PRESET
 // ============================================================================
 
-const createFilterPreset = async (
+export const createFilterPreset = async (
 	input: unknown
 ): Promise<ActionResponse<FilterPreset>> => {
 	try {
@@ -107,7 +109,7 @@ const createFilterPreset = async (
 // UPDATE PRESET
 // ============================================================================
 
-const updateFilterPreset = async (
+export const updateFilterPreset = async (
 	id: string,
 	input: unknown
 ): Promise<ActionResponse<FilterPreset>> => {
@@ -201,7 +203,7 @@ const updateFilterPreset = async (
 // DELETE PRESET
 // ============================================================================
 
-const deleteFilterPreset = async (
+export const deleteFilterPreset = async (
 	id: string
 ): Promise<ActionResponse<null>> => {
 	try {
@@ -243,11 +245,4 @@ const deleteFilterPreset = async (
 		}
 		return { status: "error", message: "Failed to delete preset" }
 	}
-}
-
-export {
-	listFilterPresets,
-	createFilterPreset,
-	updateFilterPreset,
-	deleteFilterPreset,
 }

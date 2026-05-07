@@ -35,12 +35,11 @@ import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { parseCsvContent, generateCsvTemplate } from "@/lib/csv-parser"
 import type { CsvParseResult } from "@/lib/csv-parser"
-import {
-	validateCsvTrades,
-	importCsvTrades,
-	type ProcessedCsvTrade,
-	type CsvValidationResult,
-} from "@/app/actions/csv-import"
+import { validateCsvTrades, importCsvTrades } from "@/app/actions/csv-import"
+import type {
+	ProcessedCsvTrade,
+	CsvValidationResult,
+} from "@/app/actions/csv-import.types"
 import { APP_TIMEZONE } from "@/lib/dates"
 import { CsvImportSummary, type FilterStatus } from "./csv-import-summary"
 import { CsvTradeCard } from "./csv-trade-card"

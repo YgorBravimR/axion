@@ -108,7 +108,7 @@ export default [
 			"jsx-a11y/aria-role": "error",
 			"jsx-a11y/alt-text": "error",
 
-			"axion/enforce-server-action-async-only": "off",
+			"axion/enforce-server-action-async-only": "error",
 			"axion/enforce-token-usage": "off",
 			"axion/no-hover-only-controls": "off",
 			"axion/enforce-ui-primitives": "off",

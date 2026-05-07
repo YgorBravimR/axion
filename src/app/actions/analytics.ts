@@ -46,6 +46,7 @@ import {
 	getCachedAnalyticsDashboard,
 	getCachedDashboardData,
 } from "@/lib/cache/cached-queries"
+import type { EquityCurveMode } from "./analytics.types"
 
 interface AccountFilter {
 	accountId: string
@@ -283,8 +284,6 @@ export const getDisciplineScore = async (
 		}
 	}
 }
-
-export type EquityCurveMode = "daily" | "trade"
 
 /**
  * Get equity curve data

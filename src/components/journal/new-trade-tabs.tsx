@@ -16,7 +16,7 @@ import type {
 	TradeFormRef,
 } from "@/lib/validations/trade"
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
-import type { AssetWithType } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { newTradeGuide } from "@/components/ui/page-guide/guide-configs/new-trade"
 

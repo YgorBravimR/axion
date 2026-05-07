@@ -35,7 +35,7 @@ const buildIdentifier = (email: string): string =>
  * Rate-limited to 3 requests per 5 minutes.
  * Always returns success to prevent email enumeration.
  */
-const requestEmailVerification = async (
+export const requestEmailVerification = async (
 	input: RequestVerificationInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const parsed = requestVerificationSchema.safeParse(input)
@@ -126,7 +126,7 @@ const requestEmailVerification = async (
  * Verify email with OTP code.
  * Rate-limited to 5 attempts per 15 minutes.
  */
-const verifyEmail = async (
+export const verifyEmail = async (
 	input: VerifyEmailInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const tVerify = await getTranslations("auth.verifyEmail")
@@ -181,5 +181,3 @@ const verifyEmail = async (
 
 	return { success: true }
 }
-
-export { requestEmailVerification, verifyEmail }

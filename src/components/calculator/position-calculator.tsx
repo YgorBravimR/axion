@@ -9,8 +9,8 @@ import { toCents } from "@/lib/money"
 import { CalculatorForm } from "./calculator-form"
 import { CalculatorResults } from "./calculator-results"
 import type { Asset } from "@/db/schema"
-import type { StrategyWithStats } from "@/app/actions/strategies"
-import type { AssetSettingWithAsset } from "@/app/actions/command-center"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
+import type { AssetSettingWithAsset } from "@/app/actions/command-center.types"
 
 interface PositionCalculatorProps {
 	assets: Asset[]

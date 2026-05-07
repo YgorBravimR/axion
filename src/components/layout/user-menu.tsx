@@ -12,7 +12,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Link } from "@/i18n/routing"
-import { logoutUser, getCurrentUser, type SafeUser } from "@/app/actions/auth"
+import { logoutUser, getCurrentUser } from "@/app/actions/auth"
+import type { SafeUser } from "@/app/actions/auth.types"
 import { useBugReport } from "@/components/bug-report/bug-report-provider"
 import { cn } from "@/lib/utils"
 

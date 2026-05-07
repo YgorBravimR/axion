@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
 import type { Asset } from "@/db/schema"
-import type { StrategyWithStats } from "@/app/actions/strategies"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
 
 interface CalculatorFormProps {
 	assets: Asset[]

@@ -48,7 +48,7 @@ import type {
 	TradeFormRef,
 } from "@/lib/validations/trade"
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
-import type { AssetWithType } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import { formatDateKey, formatBrtTimeShort, BRT_OFFSET } from "@/lib/dates"
 
 interface ScaledTradeFormProps {

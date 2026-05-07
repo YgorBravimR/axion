@@ -23,7 +23,7 @@ import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 
 // Fetch candles for a specific time range
-const getCandlesForRange = async (
+export const getCandlesForRange = async (
 	params: CandleQueryParams
 ): Promise<{
 	status: "success" | "error"
@@ -101,7 +101,7 @@ const getCandlesForRange = async (
 }
 
 // Fetch available assets with price data
-const getAssetsWithPriceData = async () => {
+export const getAssetsWithPriceData = async () => {
 	try {
 		const versions = await db.query.priceDataVersions.findMany({
 			with: {
@@ -149,7 +149,7 @@ const getAssetsWithPriceData = async () => {
  * 3. Fetches candles for the trade's time range with 30-minute padding
  * 4. Returns trade details + candles + indicator groups
  */
-const getTradeWithCandles = async (
+export const getTradeWithCandles = async (
 	tradeId: string
 ): Promise<{
 	status: "success" | "error"
@@ -286,7 +286,7 @@ const getTradeWithCandles = async (
  * Check if candle data exists for a given asset symbol.
  * Lightweight query — just checks priceDataVersions.
  */
-const getCandleDataForAsset = async (
+export const getCandleDataForAsset = async (
 	assetSymbol: string
 ): Promise<{ assetId: string; timeframeId: string } | null> => {
 	try {
@@ -316,7 +316,7 @@ const getCandleDataForAsset = async (
  * Used by the trade detail page when candle data is available.
  * Accepts trade timestamps directly to avoid re-fetching the trade.
  */
-const getCandlesForTrade = async (params: {
+export const getCandlesForTrade = async (params: {
 	assetId: string
 	timeframeId: string
 	entryDate: string
@@ -346,12 +346,4 @@ const getCandlesForTrade = async (params: {
 	} catch {
 		return { status: "error", message: "Failed to fetch candles for trade" }
 	}
-}
-
-export {
-	getCandlesForRange,
-	getAssetsWithPriceData,
-	getTradeWithCandles,
-	getCandleDataForAsset,
-	getCandlesForTrade,
 }

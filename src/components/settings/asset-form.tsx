@@ -21,11 +21,8 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog"
-import {
-	createAsset,
-	updateAsset,
-	type AssetWithType,
-} from "@/app/actions/assets"
+import { createAsset, updateAsset } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import type { AssetType } from "@/db/schema"
 import { Loader2 } from "lucide-react"
 import { fromCents } from "@/lib/money"

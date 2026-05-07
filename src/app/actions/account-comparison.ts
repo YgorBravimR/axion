@@ -35,7 +35,7 @@ import { getTranslations } from "next-intl/server"
  * - Avoids N auth round-trips
  * - Groups trades by accountId in application code
  */
-const getAccountComparisonData = async (
+export const getAccountComparisonData = async (
 	accountIds: string[],
 	filters?: TradeFilters
 ): Promise<ActionResponse<AccountComparisonData>> => {
@@ -167,5 +167,3 @@ const getAccountComparisonData = async (
 		}
 	}
 }
-
-export { getAccountComparisonData }

@@ -44,7 +44,7 @@ const ocrImportSchema = z.object({
 	preTradeThoughts: z.string().max(2000).optional(),
 })
 
-export type OcrImportInput = z.input<typeof ocrImportSchema>
+type OcrImportInput = z.input<typeof ocrImportSchema>
 
 // ==========================================
 // Helper Functions
@@ -279,7 +279,7 @@ const processOcrTrade = async (
 // Main Import Action
 // ==========================================
 
-export interface OcrImportResult {
+interface OcrImportResult {
 	trade: Trade
 	executions: TradeExecution[]
 	assetFound: boolean
@@ -339,7 +339,7 @@ export const createTradeFromOcr = async (
 // Bulk Import (Multiple Trades)
 // ==========================================
 
-export interface BulkOcrImportResult {
+interface BulkOcrImportResult {
 	successCount: number
 	failedCount: number
 	trades: Array<{

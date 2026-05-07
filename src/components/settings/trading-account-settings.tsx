@@ -13,11 +13,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import {
-	getUserSettings,
-	updateUserSettings,
-	type UserSettingsData,
-} from "@/app/actions/settings"
+import { getUserSettings, updateUserSettings } from "@/app/actions/settings"
+import type { UserSettingsData } from "@/app/actions/settings.types"
 import { useToast } from "@/components/ui/toast"
 import { Loader2, Building2, Percent } from "lucide-react"
 

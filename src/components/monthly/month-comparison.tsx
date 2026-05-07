@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { MonthlyResultsWithProp } from "@/app/actions/reports"
+import type { MonthlyResultsWithProp } from "@/app/actions/reports.types"
 
 interface MonthComparisonProps {
 	current: MonthlyResultsWithProp

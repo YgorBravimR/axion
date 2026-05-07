@@ -18,7 +18,7 @@ import {
 /**
  * Create a new trading condition (user-level, shared across all strategies)
  */
-const createCondition = async (
+export const createCondition = async (
 	input: CreateConditionInput
 ): Promise<ActionResponse<TradingCondition>> => {
 	try {
@@ -55,7 +55,12 @@ const createCondition = async (
 			return {
 				status: "error",
 				message: "A condition with this name already exists",
-				errors: [{ code: "DUPLICATE_CONDITION", detail: "Condition name must be unique" }],
+				errors: [
+					{
+						code: "DUPLICATE_CONDITION",
+						detail: "Condition name must be unique",
+					},
+				],
 			}
 		}
 
@@ -75,7 +80,7 @@ const createCondition = async (
 /**
  * Update an existing trading condition
  */
-const updateCondition = async (
+export const updateCondition = async (
 	id: string,
 	input: Partial<CreateConditionInput>
 ): Promise<ActionResponse<TradingCondition>> => {
@@ -83,7 +88,10 @@ const updateCondition = async (
 		const { userId } = await requireAuth()
 
 		const existing = await db.query.tradingConditions.findFirst({
-			where: and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId)),
+			where: and(
+				eq(tradingConditions.id, id),
+				eq(tradingConditions.userId, userId)
+			),
 		})
 
 		if (!existing) {
@@ -104,7 +112,9 @@ const updateCondition = async (
 				}),
 				updatedAt: new Date(),
 			})
-			.where(and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId)))
+			.where(
+				and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId))
+			)
 			.returning()
 
 		invalidatePlaybookData()
@@ -119,7 +129,12 @@ const updateCondition = async (
 			return {
 				status: "error",
 				message: "A condition with this name already exists",
-				errors: [{ code: "DUPLICATE_CONDITION", detail: "Condition name must be unique" }],
+				errors: [
+					{
+						code: "DUPLICATE_CONDITION",
+						detail: "Condition name must be unique",
+					},
+				],
 			}
 		}
 
@@ -139,7 +154,7 @@ const updateCondition = async (
 /**
  * Get all trading conditions for the current user, optionally filtered by category.
  */
-const getConditions = async (
+export const getConditions = async (
 	category?: ConditionCategory
 ): Promise<ActionResponse<TradingCondition[]>> => {
 	try {
@@ -151,7 +166,10 @@ const getConditions = async (
 					eq(tradingConditions.category, category),
 					eq(tradingConditions.isActive, true)
 				)
-			: and(eq(tradingConditions.userId, userId), eq(tradingConditions.isActive, true))
+			: and(
+					eq(tradingConditions.userId, userId),
+					eq(tradingConditions.isActive, true)
+				)
 
 		const result = await db.query.tradingConditions.findMany({
 			where: conditions,
@@ -180,12 +198,17 @@ const getConditions = async (
 /**
  * Delete a trading condition (cascades to strategy_conditions junction)
  */
-const deleteCondition = async (id: string): Promise<ActionResponse<void>> => {
+export const deleteCondition = async (
+	id: string
+): Promise<ActionResponse<void>> => {
 	try {
 		const { userId } = await requireAuth()
 
 		const existing = await db.query.tradingConditions.findFirst({
-			where: and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId)),
+			where: and(
+				eq(tradingConditions.id, id),
+				eq(tradingConditions.userId, userId)
+			),
 		})
 
 		if (!existing) {
@@ -199,7 +222,9 @@ const deleteCondition = async (id: string): Promise<ActionResponse<void>> => {
 		// Delete will cascade to strategy_conditions due to onDelete: "cascade"
 		await db
 			.delete(tradingConditions)
-			.where(and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId)))
+			.where(
+				and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId))
+			)
 
 		invalidatePlaybookData()
 
@@ -220,5 +245,3 @@ const deleteCondition = async (id: string): Promise<ActionResponse<void>> => {
 		}
 	}
 }
-
-export { createCondition, updateCondition, getConditions, deleteCondition }

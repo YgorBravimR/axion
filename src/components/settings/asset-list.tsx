@@ -7,11 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
 import { AssetForm } from "./asset-form"
-import {
-	deleteAsset,
-	toggleAssetActive,
-	type AssetWithType,
-} from "@/app/actions/assets"
+import { deleteAsset, toggleAssetActive } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import { useUrlParams } from "@/hooks/use-url-params"
 import { useDebouncedSearch } from "@/hooks/use-debounced-search"
 import type { AssetType } from "@/db/schema"

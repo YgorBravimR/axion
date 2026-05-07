@@ -16,7 +16,7 @@ import { fromCents } from "@/lib/money"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { ColoredValue } from "@/components/shared"
-import type { TradeWithRelations } from "@/app/actions/trades"
+import type { TradeWithRelations } from "@/app/actions/trades.types"
 
 interface TradeCardProps {
 	trade: TradeWithRelations

@@ -38,7 +38,7 @@ interface CreateYearlyPlanResult {
 	monthlyPlanIds: readonly string[]
 }
 
-const createYearlyPlanV2 = async (
+export const createYearlyPlanV2 = async (
 	input: CreateYearlyPlanInput
 ): Promise<ActionResponse<CreateYearlyPlanResult>> => {
 	try {
@@ -114,7 +114,7 @@ const updateYearlyPlanInputSchema = z.object({
 
 type UpdateYearlyPlanInput = z.infer<typeof updateYearlyPlanInputSchema>
 
-const updateYearlyPlan = async (
+export const updateYearlyPlan = async (
 	input: UpdateYearlyPlanInput
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
@@ -190,5 +190,3 @@ const updateYearlyPlan = async (
 		}
 	}
 }
-
-export { createYearlyPlanV2, updateYearlyPlan }

@@ -145,9 +145,7 @@ export const deleteAssetType = async (
 // ASSETS
 // ============================================================================
 
-export interface AssetWithType extends Asset {
-	assetType: AssetType
-}
+import type { AssetWithType } from "./assets.types"
 
 export const getAssets = async (): Promise<AssetWithType[]> => {
 	await requireSession()

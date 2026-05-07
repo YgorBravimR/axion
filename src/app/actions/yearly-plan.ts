@@ -8,15 +8,14 @@ import type { ActionResponse } from "@/types"
  * legacy `monthlyRiskConfig.accountBalance` (encrypted) has been retired.
  * This export is preserved as a no-op until the existence test is removed.
  */
-const syncCapitalBetweenPlans = async (
+export const syncCapitalBetweenPlans = async (
 	_id: string,
-	_source: "monthly" | "yearly",
+	_source: "monthly" | "yearly"
 ): Promise<ActionResponse<void>> => {
 	return {
 		status: "success",
-		message: "syncCapitalBetweenPlans is deprecated — capital lives on yearly_plans",
+		message:
+			"syncCapitalBetweenPlans is deprecated — capital lives on yearly_plans",
 		data: undefined,
 	}
 }
-
-export { syncCapitalBetweenPlans }

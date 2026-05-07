@@ -27,7 +27,7 @@ import {
 	upsertAssetSettings,
 	deleteAssetSettings,
 } from "@/app/actions/command-center"
-import type { AssetSettingWithAsset } from "@/app/actions/command-center"
+import type { AssetSettingWithAsset } from "@/app/actions/command-center.types"
 import type { Asset } from "@/db/schema"
 import type { BiasType } from "@/lib/validations/command-center"
 

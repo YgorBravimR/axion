@@ -63,7 +63,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form"
 import type { Trade, Strategy, Tag, Timeframe } from "@/db/schema"
-import type { AssetWithType } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import { getTags } from "@/app/actions/tags"
 import { TagForm } from "@/components/settings/tag-form"
 import { ImageUpload } from "@/components/shared/image-upload"

@@ -18,11 +18,21 @@ import { UserList } from "./user-list"
 import { ConditionList } from "./condition-list"
 import { IndicatorList } from "./indicator-list"
 import { BugReportsList } from "./bug-reports-list"
-import type { AssetWithType } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import type { AssetType, Timeframe } from "@/db/schema"
-import type { UserWithAccounts } from "@/app/actions/user-management"
+import type { UserWithAccounts } from "@/app/actions/user-management.types"
 import type { IndicatorGroupWithDefinitions } from "@/types/indicator"
-import { User, Briefcase, Coins, Clock, Tag, Users, Filter, Bug, BarChart3 } from "lucide-react"
+import {
+	User,
+	Briefcase,
+	Coins,
+	Clock,
+	Tag,
+	Users,
+	Filter,
+	Bug,
+	BarChart3,
+} from "lucide-react"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { settingsGuide } from "@/components/ui/page-guide/guide-configs/settings"
 
@@ -44,7 +54,16 @@ const CLEAR_TAB_PARAMS = Object.fromEntries(
 ) as Record<string, null>
 
 const BASE_TABS = ["profile"] as const
-const ADMIN_TABS = ["account", "tags", "conditions", "indicators", "assets", "timeframes", "users", "bugs"] as const
+const ADMIN_TABS = [
+	"account",
+	"tags",
+	"conditions",
+	"indicators",
+	"assets",
+	"timeframes",
+	"users",
+	"bugs",
+] as const
 
 interface SettingsContentProps {
 	assets: AssetWithType[]
@@ -74,7 +93,9 @@ export const SettingsContent = ({
 		[isAdmin]
 	)
 	const tabFromUrl = urlParams.get("tab") ?? ""
-	const activeTab = validTabs.includes(tabFromUrl as (typeof validTabs)[number]) ? tabFromUrl : "profile"
+	const activeTab = validTabs.includes(tabFromUrl as (typeof validTabs)[number])
+		? tabFromUrl
+		: "profile"
 
 	const handleTabChange = useCallback(
 		(value: string) => {
@@ -136,7 +157,7 @@ export const SettingsContent = ({
 					aria-hidden="true"
 				/>
 				<div
-					className="from-bg-100 pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-12 bg-linear-to-r to-transparent md:hidden"
+					className="from-bg-100 pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-linear-to-r to-transparent md:hidden"
 					aria-hidden="true"
 				/>
 			</div>
@@ -160,19 +181,30 @@ export const SettingsContent = ({
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="indicators">
-						{activeTab === "indicators" && <IndicatorList groups={indicatorGroups} />}
+						{activeTab === "indicators" && (
+							<IndicatorList groups={indicatorGroups} />
+						)}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="assets">
-						{activeTab === "assets" && <AssetList assets={assets} assetTypes={assetTypes} />}
+						{activeTab === "assets" && (
+							<AssetList assets={assets} assetTypes={assetTypes} />
+						)}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="timeframes">
-						{activeTab === "timeframes" && <TimeframeList timeframes={timeframes} />}
+						{activeTab === "timeframes" && (
+							<TimeframeList timeframes={timeframes} />
+						)}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="users">
-						{activeTab === "users" && <UserList users={usersWithAccounts} currentUserId={currentUserId} />}
+						{activeTab === "users" && (
+							<UserList
+								users={usersWithAccounts}
+								currentUserId={currentUserId}
+							/>
+						)}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="bugs">

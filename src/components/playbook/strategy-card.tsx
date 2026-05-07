@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ColoredValue } from "@/components/shared"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
-import type { StrategyWithStats } from "@/app/actions/strategies"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
 
 interface StrategyCardProps {
 	strategy: StrategyWithStats

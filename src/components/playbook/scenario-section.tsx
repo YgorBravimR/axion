@@ -5,11 +5,8 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ImageLightbox } from "@/components/shared/image-lightbox"
 import { ScenarioForm } from "./scenario-form"
-import {
-	getScenariosByStrategy,
-	deleteScenario,
-	type ScenarioWithImages,
-} from "@/app/actions/scenarios"
+import { getScenariosByStrategy, deleteScenario } from "@/app/actions/scenarios"
+import type { ScenarioWithImages } from "@/app/actions/scenarios.types"
 import {
 	ChevronDown,
 	ChevronUp,

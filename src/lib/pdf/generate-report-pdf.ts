@@ -10,7 +10,7 @@ import type {
 	WeeklyReport,
 	MonthlyReport,
 	CommissionFeeImpact,
-} from "@/app/actions/reports"
+} from "@/app/actions/reports.types"
 
 interface GenerateWeeklyPdfInput {
 	report: WeeklyReport

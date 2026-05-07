@@ -33,7 +33,7 @@
  */
 
 import { describe, it, expect } from "vitest"
-import type { CommissionFeeImpact } from "@/app/actions/reports"
+import type { CommissionFeeImpact } from "@/app/actions/reports.types"
 
 // ---------------------------------------------------------------------------
 // Logic helpers extracted from CommissionFeeImpactCard (mirroring component)

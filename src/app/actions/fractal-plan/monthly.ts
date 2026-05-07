@@ -26,7 +26,7 @@ const upsertSchema = z.object({
 	postMortemNotes: z.string().max(5000).optional(),
 })
 
-const upsertMonthlyPlan = async (
+export const upsertMonthlyPlan = async (
 	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
@@ -93,7 +93,7 @@ const resetSchema = z.object({
 	]),
 })
 
-const resetMonthlyOverride = async (
+export const resetMonthlyOverride = async (
 	input: z.infer<typeof resetSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
@@ -132,7 +132,7 @@ interface SetMonthlyCapitalResult {
 	readonly forwardUpdated: number
 }
 
-const setMonthlyCapital = async (
+export const setMonthlyCapital = async (
 	input: z.infer<typeof setMonthlyCapitalSchema>
 ): Promise<ActionResponse<SetMonthlyCapitalResult>> => {
 	try {
@@ -231,5 +231,3 @@ const setMonthlyCapital = async (
 		}
 	}
 }
-
-export { upsertMonthlyPlan, resetMonthlyOverride, setMonthlyCapital }

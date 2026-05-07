@@ -44,7 +44,7 @@ import {
 import { useToast } from "@/components/ui/toast"
 import { updateUserRole } from "@/app/actions/user-management"
 import { deleteAccount } from "@/app/actions/accounts"
-import type { UserWithAccounts } from "@/app/actions/user-management"
+import type { UserWithAccounts } from "@/app/actions/user-management.types"
 
 interface UserListProps {
 	users: UserWithAccounts[]

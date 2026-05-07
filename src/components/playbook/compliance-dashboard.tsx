@@ -9,7 +9,7 @@ import {
 	TrendingDown,
 	AlertTriangle,
 } from "lucide-react"
-import type { ComplianceOverview } from "@/app/actions/strategies"
+import type { ComplianceOverview } from "@/app/actions/strategies.types"
 
 interface ComplianceDashboardProps {
 	data: ComplianceOverview | null
@@ -20,7 +20,10 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 
 	if (!data) {
 		return (
-			<div id="playbook-compliance" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="playbook-compliance"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("overview")}
 				</h2>
@@ -46,7 +49,10 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 				: "bg-trade-sell"
 
 	return (
-		<div id="playbook-compliance" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div
+			id="playbook-compliance"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 				{t("overview")}
 			</h2>
@@ -55,9 +61,7 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 				<div className="text-txt-300 mt-m-400 flex h-24 items-center justify-center text-center">
 					<div>
 						<p>{t("noDataYet")}</p>
-						<p className="text-tiny mt-s-100">
-							{t("trackAdherence")}
-						</p>
+						<p className="text-tiny mt-s-100">{t("trackAdherence")}</p>
 					</div>
 				</div>
 			) : (
@@ -65,7 +69,14 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					{/* Main Compliance Score */}
 					<div className="gap-m-400 sm:gap-m-500 flex flex-col items-center sm:flex-row">
 						<div className="relative h-24 w-24">
-							<svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100" role="img" aria-label={t("compliancePercent", { percent: data.overallCompliance.toFixed(0) })}>
+							<svg
+								className="h-24 w-24 -rotate-90"
+								viewBox="0 0 100 100"
+								role="img"
+								aria-label={t("compliancePercent", {
+									percent: data.overallCompliance.toFixed(0),
+								})}
+							>
 								<circle
 									cx="50"
 									cy="50"
@@ -100,7 +111,10 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 
 						<div className="flex-1">
 							<p className="text-small text-txt-200">
-								{t("followedPlan", { followed: data.followedPlanCount, total: data.totalTrackedTrades })}
+								{t("followedPlan", {
+									followed: data.followedPlanCount,
+									total: data.totalTrackedTrades,
+								})}
 							</p>
 
 							{/* Compliance Bar */}
@@ -111,7 +125,10 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 									aria-valuenow={data.overallCompliance}
 									aria-valuemin={0}
 									aria-valuemax={100}
-									aria-label={t("followedPlan", { followed: data.followedPlanCount, total: data.totalTrackedTrades })}
+									aria-label={t("followedPlan", {
+										followed: data.followedPlanCount,
+										total: data.totalTrackedTrades,
+									})}
 								>
 									<div
 										className="bg-trade-buy flex items-center justify-center transition-[width]"
@@ -147,12 +164,17 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 								<div className="bg-trade-buy/10 border-trade-buy/30 gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border">
 									<TrendingUp className="text-trade-buy h-5 w-5 shrink-0" />
 									<div>
-										<p className="text-tiny text-txt-300">{t("bestCompliance")}</p>
+										<p className="text-tiny text-txt-300">
+											{t("bestCompliance")}
+										</p>
 										<p className="text-small text-txt-100 font-semibold">
 											{data.topPerformingStrategy.name}
 										</p>
 										<p className="text-tiny text-trade-buy">
-											{t("compliancePercent", { percent: data.topPerformingStrategy.compliance.toFixed(0) })}
+											{t("compliancePercent", {
+												percent:
+													data.topPerformingStrategy.compliance.toFixed(0),
+											})}
 										</p>
 									</div>
 								</div>
@@ -162,12 +184,17 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 								<div className="bg-warning/10 border-warning/30 gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border">
 									<AlertTriangle className="text-warning h-5 w-5 shrink-0" />
 									<div>
-										<p className="text-tiny text-txt-300">{t("needsAttention")}</p>
+										<p className="text-tiny text-txt-300">
+											{t("needsAttention")}
+										</p>
 										<p className="text-small text-txt-100 font-semibold">
 											{data.needsAttentionStrategy.name}
 										</p>
 										<p className="text-tiny text-warning">
-											{t("compliancePercent", { percent: data.needsAttentionStrategy.compliance.toFixed(0) })}
+											{t("compliancePercent", {
+												percent:
+													data.needsAttentionStrategy.compliance.toFixed(0),
+											})}
 										</p>
 									</div>
 								</div>

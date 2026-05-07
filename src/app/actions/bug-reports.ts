@@ -80,7 +80,7 @@ const requireAdmin = async (): Promise<
 /**
  * Submit a new bug report — available to any authenticated user.
  */
-const submitBugReport = async (
+export const submitBugReport = async (
 	input: SubmitBugReportInput
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
@@ -129,7 +129,7 @@ const submitBugReport = async (
  * List bug reports — admin only.
  * Supports optional status filter and pagination.
  */
-const getBugReports = async (filters?: {
+export const getBugReports = async (filters?: {
 	status?: "open" | "accepted" | "rejected" | "closed"
 	limit?: number
 	offset?: number
@@ -246,7 +246,7 @@ const getBugReports = async (filters?: {
 /**
  * Update a bug report's status — admin only.
  */
-const updateBugReportStatus = async (
+export const updateBugReportStatus = async (
 	input: UpdateBugReportStatusInput
 ): Promise<ActionResponse<BugReport>> => {
 	try {
@@ -329,7 +329,7 @@ const updateBugReportStatus = async (
 /**
  * Get full bug report detail with images — admin only.
  */
-const getBugReportDetail = async (
+export const getBugReportDetail = async (
 	id: string
 ): Promise<ActionResponse<BugReportDetail>> => {
 	try {
@@ -405,11 +405,4 @@ const getBugReportDetail = async (
 			errors: [{ code: "FETCH_FAILED", detail: String(error) }],
 		}
 	}
-}
-
-export {
-	submitBugReport,
-	getBugReports,
-	updateBugReportStatus,
-	getBugReportDetail,
 }

@@ -37,6 +37,11 @@ import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import type {
+	ChecklistWithCompletion,
+	AssetSettingWithAsset,
+	DailySummary,
+} from "./command-center.types"
 
 // ==========================================
 // CHECKLIST ACTIONS
@@ -265,12 +270,6 @@ export const deleteChecklist = async (
 // COMPLETION ACTIONS
 // ==========================================
 
-export interface ChecklistWithCompletion extends DailyChecklist {
-	parsedItems: ChecklistItem[]
-	completion: ChecklistCompletion | null
-	completedItemIds: string[]
-}
-
 /**
  * Get checklist completions for a given date (defaults to today)
  */
@@ -476,10 +475,6 @@ export const toggleChecklistItem = async (
 // ==========================================
 // ASSET SETTINGS ACTIONS (Account-Level, Permanent)
 // ==========================================
-
-export interface AssetSettingWithAsset extends AccountAssetSetting {
-	asset: Asset
-}
 
 /**
  * Get account-level asset settings.
@@ -719,17 +714,6 @@ export const deleteAssetSettings = async (
 // ==========================================
 // CIRCUIT BREAKER STATUS
 // ==========================================
-
-export interface DailySummary {
-	totalPnL: number
-	tradesCount: number
-	winCount: number
-	lossCount: number
-	winRate: number
-	bestTrade: number
-	worstTrade: number
-	consecutiveLosses: number
-}
 
 /**
  * Get circuit breaker status for a given date (defaults to today)

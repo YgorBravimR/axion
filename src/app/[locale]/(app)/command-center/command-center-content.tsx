@@ -24,7 +24,7 @@ import type {
 	ChecklistWithCompletion,
 	AssetSettingWithAsset,
 	DailySummary,
-} from "@/app/actions/command-center"
+} from "@/app/actions/command-center.types"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 import type {

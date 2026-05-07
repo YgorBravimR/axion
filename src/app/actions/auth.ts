@@ -22,8 +22,7 @@ import { createDbRateLimiter } from "@/lib/db-rate-limiter"
 import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 import { seedUserData } from "@/db/seed-user-data"
 
-/** User type without passwordHash/encryptedDek — safe to send to the client */
-export type SafeUser = Omit<User, "passwordHash" | "encryptedDek">
+import type { SafeUser } from "./auth.types"
 import { auth, signIn, signOut } from "@/auth"
 import {
 	registerSchema,

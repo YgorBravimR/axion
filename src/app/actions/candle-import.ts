@@ -67,7 +67,7 @@ const uuidSchema = z.string().uuid("Invalid UUID format")
  * @param timeframeCode - Timeframe code (e.g., "5m", "15m")
  * @returns Validation result with parsed candles and metadata
  */
-const validateCandleImport = async (
+export const validateCandleImport = async (
 	fileContent: string,
 	assetSymbol: string,
 	timeframeCode: string
@@ -179,7 +179,7 @@ const validateCandleImport = async (
  * @param candles - Parsed candle rows from validateCandleImport
  * @returns Total rows imported, newly registered indicators, and skipped indicators
  */
-const commitCandleImport = async (
+export const commitCandleImport = async (
 	assetId: string,
 	timeframeId: string,
 	candles: RawCandleRow[]
@@ -388,7 +388,7 @@ const commitCandleImport = async (
  * all indicators from KNOWN_INDICATOR_MAPPINGS with resolved groupIds.
  * Idempotent — uses onConflictDoNothing on unique key columns.
  */
-const seedIndicatorDefinitions = async (): Promise<
+export const seedIndicatorDefinitions = async (): Promise<
 	ActionResponse<{ seeded: number }>
 > => {
 	const t = await getTranslations("candleImport")
@@ -456,6 +456,3 @@ const seedIndicatorDefinitions = async (): Promise<
 		}
 	}
 }
-
-export type { CandleValidationResult, CandleImportResult }
-export { validateCandleImport, commitCandleImport, seedIndicatorDefinitions }

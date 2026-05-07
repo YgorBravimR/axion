@@ -15,7 +15,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import { getMonthlyReport, type MonthlyReport } from "@/app/actions/reports"
+import { getMonthlyReport } from "@/app/actions/reports"
+import type { MonthlyReport } from "@/app/actions/reports.types"
 import { format, parseISO } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
 

@@ -12,7 +12,7 @@ import { deleteStrategy } from "@/app/actions/strategies"
 import type {
 	StrategyWithStats,
 	ComplianceOverview,
-} from "@/app/actions/strategies"
+} from "@/app/actions/strategies.types"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { playbookGuide } from "@/components/ui/page-guide/guide-configs/playbook"
 

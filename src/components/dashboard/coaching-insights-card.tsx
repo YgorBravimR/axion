@@ -13,10 +13,8 @@ import {
 	Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-	getCoachingContext,
-	type CoachingContext,
-} from "@/app/actions/coaching"
+import { getCoachingContext } from "@/app/actions/coaching"
+import type { CoachingContext } from "@/app/actions/coaching.types"
 import type { CoachingInsight } from "@/lib/coaching/pattern-detector"
 
 interface CoachingInsightsCardProps {

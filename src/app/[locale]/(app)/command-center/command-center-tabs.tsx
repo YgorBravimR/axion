@@ -1,14 +1,22 @@
 "use client"
 
 import { useState, lazy, Suspense } from "react"
-import { Tabs, TabsList, TabsTrigger, AnimatedTabsContent } from "@/components/ui/tabs"
+import {
+	Tabs,
+	TabsList,
+	TabsTrigger,
+	AnimatedTabsContent,
+} from "@/components/ui/tabs"
 import { Target, Activity, Calculator, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
-import { CommandCenterContent, type CommandCenterContentProps } from "./command-center-content"
+import {
+	CommandCenterContent,
+	type CommandCenterContentProps,
+} from "./command-center-content"
 import type { Asset } from "@/db/schema"
-import type { StrategyWithStats } from "@/app/actions/strategies"
-import type { AssetSettingWithAsset } from "@/app/actions/command-center"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
+import type { AssetSettingWithAsset } from "@/app/actions/command-center.types"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 
 const MarketMonitorContent = lazy(() =>
@@ -50,11 +58,13 @@ const CommandCenterTabs = ({
 	initialLiveTradingStatus = null,
 	...commandCenterProps
 }: CommandCenterTabsProps) => {
-	const defaultAssetSymbol = commandCenterProps.account?.defaultAsset ?? undefined
+	const defaultAssetSymbol =
+		commandCenterProps.account?.defaultAsset ?? undefined
 	const t = useTranslations("commandCenter")
 	const { canAccess } = useFeatureAccess()
 	const showCommandTab = canAccess("command-center:command-tab")
-	const showMonitorTab = !isReplayAccount && canAccess("command-center:monitor-tab")
+	const showMonitorTab =
+		!isReplayAccount && canAccess("command-center:monitor-tab")
 	const defaultTab = showCommandTab ? "command-center" : "calculator"
 	const [activeTab, setActiveTab] = useState(defaultTab)
 
@@ -64,7 +74,11 @@ const CommandCenterTabs = ({
 			onValueChange={setActiveTab}
 			className="flex h-full flex-col"
 		>
-			<TabsList variant="line" className="border-bg-300 border-b px-s-200 sm:px-s-200 overflow-x-auto whitespace-nowrap snap-x snap-mandatory" aria-label={t("tabs.navigation")}>
+			<TabsList
+				variant="line"
+				className="border-bg-300 px-s-200 sm:px-s-200 snap-x snap-mandatory overflow-x-auto border-b whitespace-nowrap"
+				aria-label={t("tabs.navigation")}
+			>
 				{showCommandTab && (
 					<TabsTrigger
 						value="command-center"
@@ -96,7 +110,10 @@ const CommandCenterTabs = ({
 			</TabsList>
 
 			{showCommandTab && (
-				<AnimatedTabsContent value="command-center" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+				<AnimatedTabsContent
+					value="command-center"
+					className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto"
+				>
 					<CommandCenterContent
 						key={commandCenterProps.viewDate}
 						{...commandCenterProps}
@@ -108,7 +125,7 @@ const CommandCenterTabs = ({
 			{showMonitorTab && (
 				<AnimatedTabsContent
 					value="monitor"
-					className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600"
+					className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto"
 				>
 					<Suspense fallback={tabLoadingFallback}>
 						<MarketMonitorContent />
@@ -118,7 +135,7 @@ const CommandCenterTabs = ({
 
 			<AnimatedTabsContent
 				value="calculator"
-				className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600"
+				className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto"
 			>
 				<Suspense fallback={tabLoadingFallback}>
 					<PositionCalculator

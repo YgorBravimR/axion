@@ -4,7 +4,7 @@ import { BarChart3, Award, AlertTriangle } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { DailySummary } from "@/app/actions/command-center"
+import type { DailySummary } from "@/app/actions/command-center.types"
 
 interface DailySummaryCardProps {
 	summary: DailySummary | null
@@ -17,9 +17,12 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 	if (!summary) {
 		return (
-			<div id="cc-daily-summary" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<div className="flex items-center gap-s-200">
-					<BarChart3 className="h-5 w-5 text-txt-300" />
+			<div
+				id="cc-daily-summary"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
+				<div className="gap-s-200 flex items-center">
+					<BarChart3 className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
 				</div>
 			</div>
@@ -29,17 +32,22 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 	const hasNoTrades = summary.tradesCount === 0
 
 	return (
-		<div id="cc-daily-summary" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div
+			id="cc-daily-summary"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			{/* Header */}
-			<div className="mb-s-300 sm:mb-m-400 flex items-center gap-s-200">
-				<BarChart3 className="h-5 w-5 text-acc-100" />
-				<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
+			<div className="mb-s-300 sm:mb-m-400 gap-s-200 flex items-center">
+				<BarChart3 className="text-acc-100 h-5 w-5" />
+				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+					{t("title")}
+				</h3>
 			</div>
 
 			{hasNoTrades ? (
 				<p className="text-small text-txt-300">{t("noTrades")}</p>
 			) : (
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-s-300 sm:gap-m-400 md:grid-cols-3 lg:grid-cols-6">
+				<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
 					{/* Total P&L */}
 					<div>
 						<p className="text-tiny text-txt-200">{t("totalPnL")}</p>
@@ -56,7 +64,7 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 					{/* Trades */}
 					<div>
 						<p className="text-tiny text-txt-200">{t("trades")}</p>
-						<p className="mt-s-100 text-body font-semibold text-txt-100">
+						<p className="mt-s-100 text-body text-txt-100 font-semibold">
 							{summary.tradesCount}
 						</p>
 					</div>
@@ -64,19 +72,21 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 					{/* Win Rate */}
 					<div>
 						<p className="text-tiny text-txt-200">{t("winRate")}</p>
-						<div className="mt-s-100 flex items-center gap-s-100">
-							<p className="text-body font-semibold text-txt-100">
+						<div className="mt-s-100 gap-s-100 flex items-center">
+							<p className="text-body text-txt-100 font-semibold">
 								{formatPercent(summary.winRate)}
 							</p>
 							<span className="text-tiny text-txt-200">
-								({summary.winCount}{tCommon("winAbbr")} / {summary.lossCount}{tCommon("lossAbbr")})
+								({summary.winCount}
+								{tCommon("winAbbr")} / {summary.lossCount}
+								{tCommon("lossAbbr")})
 							</span>
 						</div>
 					</div>
 
 					{/* Best Trade */}
 					<div>
-						<p className="flex items-center gap-s-100 text-tiny text-txt-200">
+						<p className="gap-s-100 text-tiny text-txt-200 flex items-center">
 							<Award className="h-3 w-3" />
 							{t("bestTrade")}
 						</p>
@@ -94,7 +104,7 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 					{/* Worst Trade */}
 					<div>
-						<p className="flex items-center gap-s-100 text-tiny text-txt-200">
+						<p className="gap-s-100 text-tiny text-txt-200 flex items-center">
 							<AlertTriangle className="h-3 w-3" />
 							{t("worstTrade")}
 						</p>
@@ -112,11 +122,15 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 					{/* Consecutive Losses */}
 					<div>
-						<p className="text-tiny text-txt-200">{t("maxConsecutiveLosses")}</p>
+						<p className="text-tiny text-txt-200">
+							{t("maxConsecutiveLosses")}
+						</p>
 						<p
 							className={cn(
 								"mt-s-100 text-body font-semibold",
-								summary.consecutiveLosses >= 3 ? "text-trade-sell" : "text-txt-100"
+								summary.consecutiveLosses >= 3
+									? "text-trade-sell"
+									: "text-txt-100"
 							)}
 						>
 							{summary.consecutiveLosses}

@@ -34,7 +34,7 @@ interface ActionResult<T = void> {
 	message?: string
 }
 
-const recordCapitalEvent = async (
+export const recordCapitalEvent = async (
 	params: RecordCapitalEventParams
 ): Promise<ActionResult<{ id: string }>> => {
 	const { accountId } = await requireAuth()
@@ -72,7 +72,7 @@ const recordCapitalEvent = async (
 	return { status: "success", data: { id: inserted.id } }
 }
 
-const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
+export const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
 	const { accountId } = await requireAuth()
 
 	const rows = await db
@@ -97,7 +97,7 @@ const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
 	return { status: "success" }
 }
 
-const getCapitalSnapshot = async (): Promise<
+export const getCapitalSnapshot = async (): Promise<
 	ActionResult<{ balanceCents: number; events: CapitalEvent[] }>
 > => {
 	const { accountId } = await requireAuth()
@@ -166,7 +166,7 @@ const getMensalMaximo = (params: {
  * Meta fields stay null — fractal cascade owns plan/target data; this view
  * surfaces actuals only.
  */
-const getWeeklyMetaVsReal = async (
+export const getWeeklyMetaVsReal = async (
 	year: number
 ): Promise<ActionResult<WeeklyMetaVsRealData>> => {
 	const { accountId } = await requireAuth()
@@ -265,7 +265,7 @@ const getWeeklyMetaVsReal = async (
  * `new Date("YYYY-MM-DD")` parses as UTC midnight; `.getUTCMonth()` keeps us aligned
  * with the UTC-anchored month boundaries in period-queries.
  */
-const getAnnualRollup = async (
+export const getAnnualRollup = async (
 	year: number
 ): Promise<ActionResult<AnnualRollupData>> => {
 	const { accountId } = await requireAuth()
@@ -455,12 +455,4 @@ const getAnnualRollup = async (
 			withdrawalTargetPercent: effectiveWithdrawal,
 		},
 	}
-}
-
-export {
-	recordCapitalEvent,
-	deleteCapitalEvent,
-	getCapitalSnapshot,
-	getWeeklyMetaVsReal,
-	getAnnualRollup,
 }

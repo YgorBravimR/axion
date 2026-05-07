@@ -21,8 +21,8 @@ import {
 	getCurrentUser,
 	updateUserProfile,
 	changePassword,
-	type SafeUser,
 } from "@/app/actions/auth"
+import type { SafeUser } from "@/app/actions/auth.types"
 import { getUserSettings, updateUserSettings } from "@/app/actions/settings"
 import { Loader2 } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"

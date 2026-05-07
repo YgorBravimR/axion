@@ -19,8 +19,8 @@ const upsertSchema = z.object({
 	postMortemNotes: z.string().max(5000).optional(),
 })
 
-const upsertWeeklyPlan = async (
-	input: z.infer<typeof upsertSchema>,
+export const upsertWeeklyPlan = async (
+	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = upsertSchema.parse(input)
@@ -38,12 +38,18 @@ const upsertWeeklyPlan = async (
 				updatedAt: new Date(),
 			})
 			.where(eq(weeklyPlan.id, parsed.weeklyPlanId))
-		return { status: "success", message: "Weekly plan updated", data: { id: parsed.weeklyPlanId } }
+		return {
+			status: "success",
+			message: "Weekly plan updated",
+			data: { id: parsed.weeklyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "UPSERT_WEEKLY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "UPSERT_WEEKLY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
@@ -59,8 +65,8 @@ const resetSchema = z.object({
 	]),
 })
 
-const resetWeeklyOverride = async (
-	input: z.infer<typeof resetSchema>,
+export const resetWeeklyOverride = async (
+	input: z.infer<typeof resetSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = resetSchema.parse(input)
@@ -69,14 +75,18 @@ const resetWeeklyOverride = async (
 			.update(weeklyPlan)
 			.set({ [parsed.field]: null, updatedAt: new Date() })
 			.where(eq(weeklyPlan.id, parsed.weeklyPlanId))
-		return { status: "success", message: "Override reset", data: { id: parsed.weeklyPlanId } }
+		return {
+			status: "success",
+			message: "Override reset",
+			data: { id: parsed.weeklyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "RESET_WEEKLY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "RESET_WEEKLY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
-
-export { upsertWeeklyPlan, resetWeeklyOverride }

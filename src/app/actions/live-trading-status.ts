@@ -23,7 +23,7 @@ import type {
  * The decision tree (R-shape) is adapted to cents at the boundary using
  * `oneRCents` from `resolveDay`.
  */
-const getLiveTradingStatus = async (
+export const getLiveTradingStatus = async (
 	date?: Date
 ): Promise<ActionResponse<LiveTradingStatusResult>> => {
 	const t = await getTranslations("commandCenter")
@@ -145,5 +145,3 @@ const getLiveTradingStatus = async (
 		}
 	}
 }
-
-export { getLiveTradingStatus }

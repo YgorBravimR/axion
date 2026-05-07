@@ -44,7 +44,7 @@ const parseProfileRow = (
 /**
  * Returns all active risk profiles. Any authenticated user can read profiles.
  */
-const listActiveRiskProfiles = async (): Promise<
+export const listActiveRiskProfiles = async (): Promise<
 	ActionResponse<RiskManagementProfile[]>
 > => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -78,7 +78,7 @@ const listActiveRiskProfiles = async (): Promise<
 /**
  * Get a single risk profile by ID.
  */
-const getRiskProfile = async (
+export const getRiskProfile = async (
 	id: string
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -119,7 +119,7 @@ const getRiskProfile = async (
 /**
  * Create a new risk management profile. Admin only.
  */
-const createRiskProfile = async (
+export const createRiskProfile = async (
 	input: RiskProfileSchemaInput
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -185,7 +185,7 @@ const createRiskProfile = async (
 /**
  * Update an existing risk management profile. Admin only.
  */
-const updateRiskProfile = async (
+export const updateRiskProfile = async (
 	id: string,
 	input: RiskProfileSchemaInput
 ): Promise<ActionResponse<RiskManagementProfile>> => {
@@ -261,7 +261,7 @@ const updateRiskProfile = async (
 /**
  * Soft-delete a risk profile by marking it inactive. Admin only.
  */
-const deactivateRiskProfile = async (
+export const deactivateRiskProfile = async (
 	id: string
 ): Promise<ActionResponse<null>> => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -304,12 +304,4 @@ const deactivateRiskProfile = async (
 			],
 		}
 	}
-}
-
-export {
-	listActiveRiskProfiles,
-	getRiskProfile,
-	createRiskProfile,
-	updateRiskProfile,
-	deactivateRiskProfile,
 }

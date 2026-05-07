@@ -122,7 +122,7 @@ const fetchCandles = async (
  * Today: calls runBacktest() directly
  * Tomorrow: POST to Python microservice
  */
-const runBacktestAction = async (
+export const runBacktestAction = async (
 	input: BacktestInput
 ): Promise<{ success: boolean; data?: BacktestResult; error?: string }> => {
 	const t = await getTranslations("backtest")
@@ -171,7 +171,7 @@ const runBacktestAction = async (
  * Get available assets with price data for the backtest form.
  * Wraps the existing getAssetsWithPriceData() function.
  */
-const getBacktestDataSources = async (): Promise<{
+export const getBacktestDataSources = async (): Promise<{
 	status: "success" | "error"
 	data?: DataSourceInfo[]
 	message?: string
@@ -192,7 +192,7 @@ const getBacktestDataSources = async (): Promise<{
  * Fetch candles + asset config without running the engine.
  * The client runs runBacktest() locally for zero-server-cost optimization.
  */
-const fetchBacktestData = async (params: {
+export const fetchBacktestData = async (params: {
 	assetId: string
 	timeframeId: string
 	dateRange: { from: string; to: string }
@@ -228,5 +228,3 @@ const fetchBacktestData = async (params: {
 		}
 	}
 }
-
-export { runBacktestAction, getBacktestDataSources, fetchBacktestData }

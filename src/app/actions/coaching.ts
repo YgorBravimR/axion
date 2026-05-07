@@ -20,18 +20,7 @@ import {
 } from "@/lib/coaching/prompt-builder"
 import { computeOverallStats } from "@/lib/analytics-helpers"
 import type { ActionResponse, OverallStats } from "@/types"
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface CoachingContext {
-	insights: CoachingInsight[]
-	prompt: CoachingPrompt
-	stats: OverallStats | null
-	tradeCount: number
-	periodDays: number
-}
+import type { CoachingContext } from "./coaching.types"
 
 // ============================================================================
 // SERVER ACTION
@@ -44,7 +33,7 @@ interface CoachingContext {
  *
  * @param days - Number of days to analyze (default: 90)
  */
-const getCoachingContext = async (
+export const getCoachingContext = async (
 	days = 90
 ): Promise<ActionResponse<CoachingContext>> => {
 	try {
@@ -186,5 +175,3 @@ const getCoachingContext = async (
 		}
 	}
 }
-
-export { getCoachingContext, type CoachingContext }

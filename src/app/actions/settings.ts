@@ -17,21 +17,7 @@ import {
 } from "@/lib/validations/settings"
 import { requireAuth } from "@/app/actions/auth"
 import { getTranslations } from "next-intl/server"
-
-export interface RiskSettings {
-	accountBalance: number
-}
-
-export interface UserSettingsData {
-	isPropAccount: boolean
-	propFirmName: string | null
-	profitSharePercentage: number
-	taxExemptThreshold: number
-	defaultCurrency: string
-	showTaxEstimates: boolean
-	showPropCalculations: boolean
-	showAllAccounts: boolean
-}
+import type { RiskSettings, UserSettingsData } from "./settings.types"
 
 const DEFAULT_USER_SETTINGS: UserSettingsData = {
 	isPropAccount: false,
@@ -357,7 +343,7 @@ export const updateTheme = async (
 	}
 }
 
-const getAccountLifecycle = async (): Promise<{
+export const getAccountLifecycle = async (): Promise<{
 	status: "success" | "error"
 	message?: string
 	data?: {
@@ -396,7 +382,7 @@ const getAccountLifecycle = async (): Promise<{
 	}
 }
 
-const updateAccountLifecycle = async (params: {
+export const updateAccountLifecycle = async (params: {
 	accountStartMonth: number | null
 	accountStartYear: number | null
 	startingBalanceCents: number | null
@@ -531,5 +517,3 @@ export const updateAccountBrand = async (
 		}
 	}
 }
-
-export { getAccountLifecycle, updateAccountLifecycle }

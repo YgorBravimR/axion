@@ -16,8 +16,8 @@ const upsertSchema = z.object({
 	activePlaybookIds: z.array(z.string().uuid()).optional(),
 })
 
-const upsertQuarterlyPlan = async (
-	input: z.infer<typeof upsertSchema>,
+export const upsertQuarterlyPlan = async (
+	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = upsertSchema.parse(input)
@@ -32,14 +32,18 @@ const upsertQuarterlyPlan = async (
 				updatedAt: new Date(),
 			})
 			.where(eq(quarterlyPlan.id, parsed.quarterlyPlanId))
-		return { status: "success", message: "Quarterly plan updated", data: { id: parsed.quarterlyPlanId } }
+		return {
+			status: "success",
+			message: "Quarterly plan updated",
+			data: { id: parsed.quarterlyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "UPSERT_QUARTERLY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "UPSERT_QUARTERLY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
-
-export { upsertQuarterlyPlan }

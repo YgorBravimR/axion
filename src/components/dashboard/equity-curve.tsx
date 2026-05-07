@@ -6,7 +6,8 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatCompactCurrency } from "@/lib/formatting"
-import { getEquityCurve, type EquityCurveMode } from "@/app/actions/analytics"
+import { getEquityCurve } from "@/app/actions/analytics"
+import type { EquityCurveMode } from "@/app/actions/analytics.types"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import { APP_TIMEZONE } from "@/lib/dates"
@@ -50,7 +51,10 @@ const PeriodToggle = ({
 	]
 
 	return (
-		<div className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border" role="group">
+		<div
+			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
+			role="group"
+		>
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -92,7 +96,10 @@ const ViewModeToggle = ({
 	]
 
 	return (
-		<div className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border" role="group">
+		<div
+			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
+			role="group"
+		>
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -161,9 +168,7 @@ const EquityTooltip = ({
 		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border shadow-lg">
 			<p className="text-tiny text-txt-300">{labelDisplay}</p>
 			{viewMode === "trades" && (
-				<p className="text-tiny text-txt-300">
-					{formatDateStr(data.date)}
-				</p>
+				<p className="text-tiny text-txt-300">{formatDateStr(data.date)}</p>
 			)}
 			<p className="text-small text-txt-100 font-semibold">
 				{formatCompactCurrency(data.accountEquity, "R$")}
@@ -216,8 +221,7 @@ export const EquityCurve = ({
 				}
 				// "all" leaves both undefined
 
-				const mode: EquityCurveMode =
-					newMode === "trades" ? "trade" : "daily"
+				const mode: EquityCurveMode = newMode === "trades" ? "trade" : "daily"
 				const result = await getEquityCurve(dateFrom, dateTo, mode)
 				if (result.status === "success" && result.data) {
 					setData(result.data)
@@ -234,16 +238,22 @@ export const EquityCurve = ({
 		}
 	}, [calendarMonth, fetchData, period, viewMode])
 
-	const periodLabels = useMemo(() => ({
-		month: t("period.month"),
-		year: t("period.year"),
-		all: t("period.all"),
-	}), [t])
+	const periodLabels = useMemo(
+		() => ({
+			month: t("period.month"),
+			year: t("period.year"),
+			all: t("period.all"),
+		}),
+		[t]
+	)
 
-	const viewModeLabels = useMemo(() => ({
-		days: t("viewMode.days"),
-		trades: t("viewMode.trades"),
-	}), [t])
+	const viewModeLabels = useMemo(
+		() => ({
+			days: t("viewMode.days"),
+			trades: t("viewMode.trades"),
+		}),
+		[t]
+	)
 
 	const formatDateLocale = useCallback(
 		(dateStr: string): string => {
@@ -257,15 +267,21 @@ export const EquityCurve = ({
 		[locale]
 	)
 
-	const handlePeriodChange = useCallback((newPeriod: Period) => {
-		setPeriod(newPeriod)
-		fetchData(newPeriod, viewMode)
-	}, [fetchData, viewMode])
+	const handlePeriodChange = useCallback(
+		(newPeriod: Period) => {
+			setPeriod(newPeriod)
+			fetchData(newPeriod, viewMode)
+		},
+		[fetchData, viewMode]
+	)
 
-	const handleViewModeChange = useCallback((newMode: ViewMode) => {
-		setViewMode(newMode)
-		fetchData(period, newMode)
-	}, [fetchData, period])
+	const handleViewModeChange = useCallback(
+		(newMode: ViewMode) => {
+			setViewMode(newMode)
+			fetchData(period, newMode)
+		},
+		[fetchData, period]
+	)
 
 	const { minEquity, maxEquity, padding } = useMemo(() => {
 		if (data.length === 0) {
@@ -284,9 +300,11 @@ export const EquityCurve = ({
 
 	if (data.length === 0 && !isPending) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500">
-				<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
-					<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<div className="gap-s-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+					<h2 className="text-small text-txt-100 sm:text-body font-semibold">
+						{t("title")}
+					</h2>
 					<div className="gap-s-200 flex flex-wrap items-center">
 						<ViewModeToggle
 							mode={viewMode}
@@ -300,7 +318,7 @@ export const EquityCurve = ({
 						/>
 					</div>
 				</div>
-				<div className="mt-s-300 text-txt-300 flex h-48 items-center justify-center sm:mt-m-400 sm:h-64">
+				<div className="mt-s-300 text-txt-300 sm:mt-m-400 flex h-48 items-center justify-center sm:h-64">
 					{t("noData")}
 				</div>
 			</div>
@@ -308,9 +326,15 @@ export const EquityCurve = ({
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500" role="region" aria-label={t("title")}>
-			<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
-				<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
+		<div
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			role="region"
+			aria-label={t("title")}
+		>
+			<div className="gap-s-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+				<h2 className="text-small text-txt-100 sm:text-body font-semibold">
+					{t("title")}
+				</h2>
 				<div className="gap-s-200 flex flex-wrap items-center">
 					<ViewModeToggle
 						mode={viewMode}
@@ -328,7 +352,10 @@ export const EquityCurve = ({
 			</div>
 			<ChartContainer
 				id="chart-dashboard-equity-curve"
-				className={cn("mt-s-300 h-48 max-h-80 sm:mt-m-400 sm:h-64 transition-opacity duration-200", isPending && "opacity-50")}
+				className={cn(
+					"mt-s-300 sm:mt-m-400 h-48 max-h-80 transition-opacity duration-200 sm:h-64",
+					isPending && "opacity-50"
+				)}
 			>
 				<AreaChart
 					data={data}
@@ -364,7 +391,9 @@ export const EquityCurve = ({
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={(value: number) => formatCompactCurrency(value, "R$")}
+						tickFormatter={(value: number) =>
+							formatCompactCurrency(value, "R$")
+						}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}

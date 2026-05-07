@@ -18,14 +18,21 @@ import type {
 	MonthlyReport,
 	MistakeCostAnalysis,
 	CommissionFeeImpact,
-} from "@/app/actions/reports"
-import type { AnnualRollupData, WeeklyMetaVsRealData } from "@/lib/reports/annual-types"
+} from "@/app/actions/reports.types"
+import type {
+	AnnualRollupData,
+	WeeklyMetaVsRealData,
+} from "@/lib/reports/annual-types"
 import type { CapitalEvent } from "@/types/integration"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { reportsGuide } from "@/components/ui/page-guide/guide-configs/reports"
 import type { MonthlyDarfRow, YearTaxSummary } from "@/lib/tax/types"
 import type { CarryoverHistoryRow } from "@/components/tax"
-import { MonthlyDarfCard, CarryoverLedger, AnnualTaxSummary } from "@/components/tax"
+import {
+	MonthlyDarfCard,
+	CarryoverLedger,
+	AnnualTaxSummary,
+} from "@/components/tax"
 import { markDarfPaid } from "@/app/actions/tax-engine"
 import { isMonthFinalized } from "@/lib/tax/month-status"
 
@@ -74,15 +81,18 @@ export const ReportsContent = ({
 
 	if (allNull) {
 		return (
-			<div className="flex flex-col items-center justify-center py-l-700 sm:py-l-800 text-center">
-				<BarChart2 className="text-txt-300 mb-m-400 h-12 w-12" aria-hidden="true" />
+			<div className="py-l-700 sm:py-l-800 flex flex-col items-center justify-center text-center">
+				<BarChart2
+					className="text-txt-300 mb-m-400 h-12 w-12"
+					aria-hidden="true"
+				/>
 				<p className="text-body text-txt-200 font-medium">{t("emptyState")}</p>
 				<p className="text-small text-txt-300 mt-s-200 max-w-sm">
 					{t("emptyStateHint")}
 				</p>
 				<Link
 					href="/journal/new"
-					className="text-acc-100 hover:underline text-small mt-m-400"
+					className="text-acc-100 text-small mt-m-400 hover:underline"
 				>
 					{t("goToJournal")}
 				</Link>
@@ -93,7 +103,7 @@ export const ReportsContent = ({
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Weekly and Monthly side by side on larger screens */}
-			<div className="grid gap-m-400 sm:gap-m-500 lg:gap-m-600 md:grid-cols-2 lg:grid-cols-2">
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2 lg:grid-cols-2">
 				<WeeklyReportCard initialReport={weeklyReport} />
 				<MonthlyReportCard initialReport={monthlyReport} />
 			</div>
@@ -106,11 +116,14 @@ export const ReportsContent = ({
 
 			{/* Annual Report Section */}
 			{(annualRollupData || weeklyMetaData) && (
-				<section aria-labelledby="annual-section-heading" className="space-y-m-500">
-					<div className="flex items-center justify-between border-l-2 border-acc-100 pl-s-300">
+				<section
+					aria-labelledby="annual-section-heading"
+					className="space-y-m-500"
+				>
+					<div className="border-acc-100 pl-s-300 flex items-center justify-between border-l-2">
 						<h2
 							id="annual-section-heading"
-							className="text-xs uppercase tracking-wider text-txt-200"
+							className="text-txt-200 text-xs tracking-wider uppercase"
 						>
 							Annual Report — {currentYear}
 						</h2>
@@ -118,7 +131,7 @@ export const ReportsContent = ({
 
 					{weeklyMetaData && (
 						<div className="space-y-s-200">
-							<h3 className="text-xs font-medium text-txt-300 uppercase tracking-wider">
+							<h3 className="text-txt-300 text-xs font-medium tracking-wider uppercase">
 								Weekly Meta vs Real
 							</h3>
 							<WeeklyMetaChart data={weeklyMetaData} />
@@ -127,7 +140,7 @@ export const ReportsContent = ({
 
 					{annualRollupData && (
 						<div className="space-y-s-200">
-							<h3 className="text-xs font-medium text-txt-300 uppercase tracking-wider">
+							<h3 className="text-txt-300 text-xs font-medium tracking-wider uppercase">
 								Annual Rollup
 							</h3>
 							<AnnualRollupTable data={annualRollupData} />
@@ -140,10 +153,12 @@ export const ReportsContent = ({
 							<WithdrawalCalculator
 								currentMonthNetPnl={
 									annualRollupData.rows.find(
-										(r) => r.month === new Date().getMonth() + 1,
+										(r) => r.month === new Date().getMonth() + 1
 									)?.resultadoLiquido ?? 0
 								}
-								withdrawalTargetPercent={annualRollupData.withdrawalTargetPercent}
+								withdrawalTargetPercent={
+									annualRollupData.withdrawalTargetPercent
+								}
 								onLogged={() => router.refresh()}
 							/>
 						)}
@@ -158,18 +173,24 @@ export const ReportsContent = ({
 			)}
 
 			{darfRow && (
-				<section aria-labelledby="tax-section-heading" className="space-y-m-400 sm:space-y-m-500">
-					<div className="flex items-center justify-between border-l-2 border-acc-100 pl-s-300">
+				<section
+					aria-labelledby="tax-section-heading"
+					className="space-y-m-400 sm:space-y-m-500"
+				>
+					<div className="border-acc-100 pl-s-300 flex items-center justify-between border-l-2">
 						<h2
 							id="tax-section-heading"
-							className="text-xs uppercase tracking-wider text-txt-200"
+							className="text-txt-200 text-xs tracking-wider uppercase"
 						>
 							Impostos — {currentYear}
 						</h2>
 					</div>
-					<div className="grid gap-m-400 lg:grid-cols-2">
+					<div className="gap-m-400 grid lg:grid-cols-2">
 						{(() => {
-							const monthDate = darfRow.month instanceof Date ? darfRow.month : new Date(darfRow.month)
+							const monthDate =
+								darfRow.month instanceof Date
+									? darfRow.month
+									: new Date(darfRow.month)
 							const ledgerYear = monthDate.getUTCFullYear()
 							const ledgerMonth = monthDate.getUTCMonth() + 1
 							const isFinal = isMonthFinalized(ledgerYear, ledgerMonth)
@@ -192,11 +213,13 @@ export const ReportsContent = ({
 								/>
 							)
 						})()}
-						{yearSummary && <AnnualTaxSummary year={currentYear} summary={yearSummary} />}
+						{yearSummary && (
+							<AnnualTaxSummary year={currentYear} summary={yearSummary} />
+						)}
 					</div>
 					{carryoverHistory.length > 0 && (
 						<div className="space-y-s-200">
-							<h3 className="text-xs font-medium text-txt-300 uppercase tracking-wider">
+							<h3 className="text-txt-300 text-xs font-medium tracking-wider uppercase">
 								Prejuízo a Compensar
 							</h3>
 							<CarryoverLedger history={carryoverHistory} />
@@ -206,11 +229,14 @@ export const ReportsContent = ({
 			)}
 
 			{/* R-Distribution Section (fractal plan) */}
-			<section aria-labelledby="r-dist-section-heading" className="space-y-m-400">
-				<div className="border-l-2 border-acc-100 pl-s-300">
+			<section
+				aria-labelledby="r-dist-section-heading"
+				className="space-y-m-400"
+			>
+				<div className="border-acc-100 pl-s-300 border-l-2">
 					<h2
 						id="r-dist-section-heading"
-						className="text-xs uppercase tracking-wider text-txt-200"
+						className="text-txt-200 text-xs tracking-wider uppercase"
 					>
 						R Distribution — {currentYear}
 					</h2>

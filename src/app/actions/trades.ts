@@ -100,15 +100,7 @@ const maybeTriggerDrawdown = async (
 	}
 }
 
-// Type for trade with relations
-export interface TradeWithRelations extends Trade {
-	strategy?: typeof strategies.$inferSelect | null
-	timeframe?: typeof timeframes.$inferSelect | null
-	tradeTags?: Array<{
-		tag: typeof tags.$inferSelect
-	}>
-	executions?: TradeExecution[]
-}
+import type { TradeWithRelations } from "./trades.types"
 
 /**
  * Create a new trade
@@ -1046,7 +1038,7 @@ export const getUniqueAssets = async (): Promise<ActionResponse<string[]>> => {
 /**
  * Bulk create trades from CSV import
  */
-export interface BulkCreateResult {
+interface BulkCreateResult {
 	successCount: number
 	failedCount: number
 	errors: Array<{
@@ -1538,7 +1530,7 @@ export const bulkCreateTrades = async (
 /**
  * Input type for scaled trade creation with executions
  */
-export interface CreateScaledTradeInput {
+interface CreateScaledTradeInput {
 	asset: string
 	direction: "long" | "short"
 	timeframeId?: string

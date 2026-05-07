@@ -10,7 +10,11 @@ import { runEquityShield } from "@/lib/equity-shield"
 import { dateRangeSchema } from "@/lib/validations/risk-simulation"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
-import type { EquityShieldParams, EquityShieldResult, TradeForShield } from "@/types/equity-shield"
+import type {
+	EquityShieldParams,
+	EquityShieldResult,
+	TradeForShield,
+} from "@/types/equity-shield"
 
 /**
  * Fetch closed trades within a date range and run the Equity Shield analysis.
@@ -19,7 +23,7 @@ import type { EquityShieldParams, EquityShieldResult, TradeForShield } from "@/t
  * @param dateFrom - Start date in YYYY-MM-DD format
  * @param dateTo - End date in YYYY-MM-DD format
  */
-const runEquityShieldFromDb = async (
+export const runEquityShieldFromDb = async (
 	params: EquityShieldParams,
 	dateFrom: string,
 	dateTo: string
@@ -59,7 +63,10 @@ const runEquityShieldFromDb = async (
 			id: trade.id,
 			entryDate: trade.entryDate,
 			exitDate: trade.exitDate,
-			pnlCents: typeof trade.pnl === "string" ? parseInt(trade.pnl, 10) : (trade.pnl ?? 0),
+			pnlCents:
+				typeof trade.pnl === "string"
+					? parseInt(trade.pnl, 10)
+					: (trade.pnl ?? 0),
 			outcome: trade.outcome as "win" | "loss" | "breakeven" | null,
 			asset: trade.asset,
 		}))
@@ -75,7 +82,12 @@ const runEquityShieldFromDb = async (
 		return {
 			status: "error",
 			message: "Failed to run Equity Shield analysis",
-			errors: [{ code: "SHIELD_FAILED", detail: toSafeErrorMessage(error, "runEquityShieldFromDb") }],
+			errors: [
+				{
+					code: "SHIELD_FAILED",
+					detail: toSafeErrorMessage(error, "runEquityShieldFromDb"),
+				},
+			],
 		}
 	}
 }
@@ -84,7 +96,7 @@ const runEquityShieldFromDb = async (
  * Get a quick count of closed trades within a date range.
  * Used to show the user how many trades will be analyzed before running.
  */
-const getEquityShieldPreview = async (
+export const getEquityShieldPreview = async (
 	dateFrom: string,
 	dateTo: string
 ): Promise<
@@ -120,9 +132,12 @@ const getEquityShieldPreview = async (
 		return {
 			status: "error",
 			message: "Failed to get preview",
-			errors: [{ code: "PREVIEW_FAILED", detail: toSafeErrorMessage(error, "getEquityShieldPreview") }],
+			errors: [
+				{
+					code: "PREVIEW_FAILED",
+					detail: toSafeErrorMessage(error, "getEquityShieldPreview"),
+				},
+			],
 		}
 	}
 }
-
-export { runEquityShieldFromDb, getEquityShieldPreview }

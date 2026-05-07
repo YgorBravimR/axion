@@ -20,7 +20,7 @@ interface ForceTierReevalResult {
 	wrote: boolean
 }
 
-const forceTierReeval = async (
+export const forceTierReeval = async (
 	input: z.infer<typeof inputSchema>
 ): Promise<ActionResponse<ForceTierReevalResult>> => {
 	try {
@@ -30,7 +30,10 @@ const forceTierReeval = async (
 		const month = asOf.getMonth() + 1
 
 		const yearly = await db.query.yearlyPlans.findFirst({
-			where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+			where: and(
+				eq(yearlyPlans.accountId, accountId),
+				eq(yearlyPlans.year, year)
+			),
 		})
 
 		if (!yearly) {
@@ -49,7 +52,9 @@ const forceTierReeval = async (
 			return {
 				status: "error",
 				message: "No monthly plan for the requested month",
-				errors: [{ code: "NO_MONTHLY_PLAN", detail: `year=${year} month=${month}` }],
+				errors: [
+					{ code: "NO_MONTHLY_PLAN", detail: `year=${year} month=${month}` },
+				],
 			}
 		}
 
@@ -99,5 +104,3 @@ const forceTierReeval = async (
 		}
 	}
 }
-
-export { forceTierReeval }

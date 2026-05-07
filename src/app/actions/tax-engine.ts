@@ -121,7 +121,7 @@ const recomputeFromMonth = async (params: {
  * Returns the monthly DARF ledger row for a given account + month.
  * Lazy-recomputes if the row is missing or dirty (propagates carryover chain).
  */
-const getMonthlyDarf = async (params: {
+export const getMonthlyDarf = async (params: {
 	accountId: string
 	year: number
 	month: number
@@ -203,7 +203,7 @@ const getMonthlyDarf = async (params: {
 /**
  * Returns the current outstanding carryover balance and full monthly history.
  */
-const getCarryoverState = async (params: {
+export const getCarryoverState = async (params: {
 	accountId: string
 }): Promise<
 	ActionResponse<{
@@ -262,7 +262,7 @@ const getCarryoverState = async (params: {
  * Force-recomputes all ledger rows from fromYear/fromMonth to present.
  * Threads carryoverOut → carryoverIn across months.
  */
-const recomputeLedger = async (params: {
+export const recomputeLedger = async (params: {
 	accountId: string
 	fromYear?: number
 	fromMonth?: number
@@ -323,7 +323,7 @@ const recomputeLedger = async (params: {
 /**
  * Returns year-to-date tax rollup for annual reporting integration.
  */
-const getYearTaxSummary = async (params: {
+export const getYearTaxSummary = async (params: {
 	accountId: string
 	year: number
 }): Promise<ActionResponse<YearTaxSummary>> => {
@@ -406,7 +406,7 @@ const getYearTaxSummary = async (params: {
  * Returns the effective combined tax rate for a month.
  * Used by Yearly Plan for accurate net liquid projections.
  */
-const getEffectiveTaxRate = async (params: {
+export const getEffectiveTaxRate = async (params: {
 	accountId: string
 	month: string // ISO date string "YYYY-MM-DD"
 }): Promise<
@@ -477,7 +477,7 @@ const getEffectiveTaxRate = async (params: {
 /**
  * Marks a DARF as paid. Does NOT trigger recompute — paid records are immutable.
  */
-const markDarfPaid = async (params: {
+export const markDarfPaid = async (params: {
 	accountId: string
 	year: number
 	month: number
@@ -561,7 +561,7 @@ const DEFAULT_FEE_RATES: FeeRatesRow = {
 	subjectToPersonalIr: true,
 }
 
-const getFeeRates = async (
+export const getFeeRates = async (
 	assetSymbol: string | null = null
 ): Promise<ActionResponse<FeeRatesRow>> => {
 	const { accountId } = await requireAuth()
@@ -594,7 +594,9 @@ const getFeeRates = async (
 
 // ─── listFeeRates ────────────────────────────────────────────────────────────
 
-const listFeeRates = async (): Promise<ActionResponse<FeeRatesEntry[]>> => {
+export const listFeeRates = async (): Promise<
+	ActionResponse<FeeRatesEntry[]>
+> => {
 	const { accountId } = await requireAuth()
 
 	const rows = await db
@@ -620,7 +622,7 @@ const listFeeRates = async (): Promise<ActionResponse<FeeRatesEntry[]>> => {
 
 // ─── upsertFeeRates ──────────────────────────────────────────────────────────
 
-const upsertFeeRates = async (params: {
+export const upsertFeeRates = async (params: {
 	assetSymbol?: string | null
 	txCorretagemCents: number
 	txRegistroCents: number
@@ -668,7 +670,7 @@ const upsertFeeRates = async (params: {
 
 // ─── deleteFeeRates ──────────────────────────────────────────────────────────
 
-const deleteFeeRates = async (
+export const deleteFeeRates = async (
 	assetSymbol: string
 ): Promise<ActionResponse<void>> => {
 	const { accountId } = await requireAuth()
@@ -691,16 +693,3 @@ const deleteFeeRates = async (
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
-
-export {
-	getMonthlyDarf,
-	getCarryoverState,
-	recomputeLedger,
-	getYearTaxSummary,
-	getEffectiveTaxRate,
-	markDarfPaid,
-	getFeeRates,
-	listFeeRates,
-	upsertFeeRates,
-	deleteFeeRates,
-}

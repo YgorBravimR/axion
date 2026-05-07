@@ -52,7 +52,7 @@ const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
  *
  * @returns List of newly created profile names (empty array if all already exist)
  */
-const seedBuiltInRiskProfiles = async (): Promise<string[]> => {
+export const seedBuiltInRiskProfiles = async (): Promise<string[]> => {
 	const { userId } = await requireAuth()
 
 	// Only admins can seed system-level risk profiles — silently skip for non-admin users
@@ -90,5 +90,3 @@ const seedBuiltInRiskProfiles = async (): Promise<string[]> => {
 
 	return createdNames
 }
-
-export { seedBuiltInRiskProfiles }

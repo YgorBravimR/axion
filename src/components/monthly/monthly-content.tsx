@@ -16,10 +16,12 @@ import {
 	getMonthlyResultsWithProp,
 	getMonthlyProjection,
 	getMonthComparison,
-	type MonthlyResultsWithProp,
-	type MonthlyProjection as MonthlyProjectionData,
-	type MonthComparison as MonthComparisonData,
 } from "@/app/actions/reports"
+import type {
+	MonthlyResultsWithProp,
+	MonthlyProjection as MonthlyProjectionData,
+	MonthComparison as MonthComparisonData,
+} from "@/app/actions/reports.types"
 
 interface MonthlyContentProps {
 	initialMonthlyData: MonthlyResultsWithProp | null

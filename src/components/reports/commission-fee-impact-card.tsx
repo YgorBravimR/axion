@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { Receipt, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { CommissionFeeImpact } from "@/app/actions/reports"
+import type { CommissionFeeImpact } from "@/app/actions/reports.types"
 
 interface CommissionFeeImpactCardProps {
 	data: CommissionFeeImpact | null

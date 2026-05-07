@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle } from "lucide-react"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { MistakeCostAnalysis } from "@/app/actions/reports"
+import type { MistakeCostAnalysis } from "@/app/actions/reports.types"
 
 interface MistakeCostCardProps {
 	data: MistakeCostAnalysis | null

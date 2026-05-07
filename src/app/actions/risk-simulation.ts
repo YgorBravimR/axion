@@ -38,7 +38,7 @@ import { getTranslations } from "next-intl/server"
  * Returns a quick preview of trades in the date range:
  * total count, how many have SL, unique assets, day count.
  */
-const getSimulationPreview = async (
+export const getSimulationPreview = async (
 	dateFrom: string,
 	dateTo: string
 ): Promise<ActionResponse<SimulationPreview>> => {
@@ -108,7 +108,7 @@ const getSimulationPreview = async (
 /**
  * Fetches trades from DB, decrypts, enriches with asset config, and runs simulation.
  */
-const runRiskSimulationFromDb = async (
+export const runRiskSimulationFromDb = async (
 	dateFrom: string,
 	dateTo: string,
 	params: RiskSimulationParams
@@ -322,7 +322,7 @@ const runRiskSimulationFromDb = async (
 /**
  * Returns sorted list of distinct years that have closed trades.
  */
-const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
+export const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
 	const t = await getTranslations("riskSimulation")
 	try {
 		const { accountId } = await requireAuth()
@@ -359,5 +359,3 @@ const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
 		}
 	}
 }
-
-export { getSimulationPreview, runRiskSimulationFromDb, getTradeYears }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/toast"
 import { toggleChecklistItem } from "@/app/actions/command-center"
-import type { ChecklistWithCompletion } from "@/app/actions/command-center"
+import type { ChecklistWithCompletion } from "@/app/actions/command-center.types"
 
 interface DailyChecklistProps {
 	checklists: ChecklistWithCompletion[]
