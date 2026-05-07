@@ -1,3 +1,9 @@
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableRow,
+} from "@/components/ui/table"
 import { formatCurrency } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import type { Locale } from "@/i18n/config"
@@ -25,26 +31,26 @@ const AnnualTaxSummary = ({ year, summary, locale = "pt-BR" }: AnnualTaxSummaryP
 		<div className="space-y-4">
 			<h3 className="text-sm font-semibold">Resumo Anual {year}</h3>
 
-			<table className="w-full text-sm" aria-label={`Resumo fiscal ${year}`}>
-				<tbody>
+			<Table aria-label={`Resumo fiscal ${year}`}>
+				<TableBody>
 					{rows.map(({ label, value, highlight, muted }) => (
-						<tr key={label} className="border-b border-border/40 last:border-0">
-							<td className={cn("py-1.5", muted && "text-muted-foreground")}>{label}</td>
-							<td
+						<TableRow key={label}>
+							<TableCell className={cn(muted && "text-txt-300")}>{label}</TableCell>
+							<TableCell
 								className={cn(
-									"py-1.5 text-right tabular-nums",
+									"text-right tabular-nums",
 									highlight && "font-semibold",
-									muted && "text-muted-foreground",
+									muted && "text-txt-300",
 									!muted && value > 0 && "text-trade-buy",
 									!muted && value < 0 && "text-trade-sell",
 								)}
 							>
 								{fmt(value)}
-							</td>
-						</tr>
+							</TableCell>
+						</TableRow>
 					))}
-				</tbody>
-			</table>
+				</TableBody>
+			</Table>
 
 			{/* 30% heuristic gauge */}
 			<div className="space-y-1">

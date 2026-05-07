@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -134,8 +135,8 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 			setValues((prev) => ({ ...prev, [field]: e.target.value }))
 		}
 
-	const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
-		setValues((prev) => ({ ...prev, subjectToPersonalIr: e.target.checked }))
+	const handleCheckedChange = (checked: boolean | "indeterminate") => {
+		setValues((prev) => ({ ...prev, subjectToPersonalIr: checked === true }))
 	}
 
 	const handleSubmit = (e: FormEvent) => {
@@ -200,14 +201,15 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 				))}
 			</div>
 
-			<label className="flex items-center gap-s-200 text-small text-txt-200 cursor-pointer">
-				<input
+			<label
+				htmlFor={`fee-${assetSymbol ?? "default"}-subjectToPersonalIr`}
+				className="flex cursor-pointer items-center gap-s-200 text-small text-txt-200"
+			>
+				<Checkbox
 					id={`fee-${assetSymbol ?? "default"}-subjectToPersonalIr`}
-					type="checkbox"
 					checked={values.subjectToPersonalIr}
-					onChange={handleCheckboxChange}
+					onCheckedChange={handleCheckedChange}
 					aria-label="Sujeito a IR pessoal (desmarcar para contas prop)"
-					className="rounded"
 				/>
 				Sujeito a IR pessoal (desmarcar para contas prop)
 			</label>
@@ -330,6 +332,7 @@ const FeeRateForm = () => {
 				{availableSymbols.length > 0 && (
 					<Select onValueChange={handleAddOverride} value="">
 						<SelectTrigger
+							id="fee-rate-add-override"
 							className="w-auto min-w-[12rem]"
 							aria-label="Adicionar override de taxas por ativo"
 						>

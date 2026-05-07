@@ -54,7 +54,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 				{/* Stats Grid */}
 				<div className="grid grid-cols-1 gap-s-300 sm:grid-cols-2 sm:gap-m-400">
 					{/* Daily Average */}
-					<div className="rounded bg-bg-100 p-s-300">
+					<div className="rounded-sm bg-bg-100 p-s-300">
 						<p className="text-tiny text-txt-300">{t("dailyAverage")}</p>
 						<p
 							className={cn(
@@ -69,7 +69,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 					</div>
 
 					{/* Days Remaining */}
-					<div className="rounded bg-bg-100 p-s-300">
+					<div className="rounded-sm bg-bg-100 p-s-300">
 						<p className="text-tiny text-txt-300">{t("daysRemaining")}</p>
 						<p className="text-body font-medium text-txt-100">
 							{data.tradingDaysRemaining}
@@ -77,7 +77,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 					</div>
 
 					{/* Projected Monthly */}
-					<div className="rounded bg-bg-100 p-s-300">
+					<div className="rounded-sm bg-bg-100 p-s-300">
 						<p className="text-tiny text-txt-300">{t("projectedMonthly")}</p>
 						<p
 							className={cn(
@@ -92,7 +92,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 					</div>
 
 					{/* Projected Net */}
-					<div className="rounded bg-acc-100/10 p-s-300">
+					<div className="rounded-sm bg-acc-100/10 p-s-300">
 						<p className="text-tiny text-txt-300">{t("projectedNet")}</p>
 						<p
 							className={cn(

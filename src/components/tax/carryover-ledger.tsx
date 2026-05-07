@@ -1,3 +1,11 @@
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table"
 import { formatCurrency } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import type { Locale } from "@/i18n/config"
@@ -24,43 +32,40 @@ const CarryoverLedger = ({ history, locale = "pt-BR" }: CarryoverLedgerProps) =>
 		new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(new Date(date))
 
 	return (
-		<div className="overflow-x-auto">
-			<table className="w-full text-sm" aria-label="Histórico de Prejuízo a Compensar">
-				<thead>
-					<tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
-						<th className="py-2 text-left font-medium">Mês</th>
-						<th className="py-2 text-right font-medium">Resultado Líquido</th>
-						<th className="py-2 text-right font-medium">Compensado</th>
-						<th className="py-2 text-right font-medium">Saldo Restante</th>
-					</tr>
-				</thead>
-				<tbody>
-					{history.map((row) => {
-						const isLoss = row.netGainCents < 0
-						return (
-							<tr
-								key={new Date(row.month).toISOString()}
-								className={cn(
-									"border-b border-border/40 last:border-0",
-									isLoss ? "bg-trade-sell/5" : row.consumed > 0 ? "bg-trade-buy/5" : "",
-								)}
-							>
-								<td className="py-2 capitalize">{fmtMonth(row.month)}</td>
-								<td className={cn("py-2 text-right tabular-nums", isLoss ? "text-trade-sell" : "text-trade-buy")}>
-									{fmt(row.netGainCents)}
-								</td>
-								<td className="py-2 text-right tabular-nums text-muted-foreground">
-									{row.consumed > 0 ? fmt(row.consumed) : "—"}
-								</td>
-								<td className={cn("py-2 text-right tabular-nums font-medium", row.balanceCents > 0 ? "text-trade-sell" : "text-muted-foreground")}>
-									{row.balanceCents > 0 ? fmt(row.balanceCents) : "—"}
-								</td>
-							</tr>
-						)
-					})}
-				</tbody>
-			</table>
-		</div>
+		<Table aria-label="Histórico de Prejuízo a Compensar">
+			<TableHeader>
+				<TableRow>
+					<TableHead>Mês</TableHead>
+					<TableHead className="text-right">Resultado Líquido</TableHead>
+					<TableHead className="text-right">Compensado</TableHead>
+					<TableHead className="text-right">Saldo Restante</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{history.map((row) => {
+					const isLoss = row.netGainCents < 0
+					return (
+						<TableRow
+							key={new Date(row.month).toISOString()}
+							className={cn(
+								isLoss ? "bg-trade-sell/5" : row.consumed > 0 ? "bg-trade-buy/5" : "",
+							)}
+						>
+							<TableCell className="capitalize">{fmtMonth(row.month)}</TableCell>
+							<TableCell className={cn("text-right tabular-nums", isLoss ? "text-trade-sell" : "text-trade-buy")}>
+								{fmt(row.netGainCents)}
+							</TableCell>
+							<TableCell className="text-right tabular-nums text-txt-300">
+								{row.consumed > 0 ? fmt(row.consumed) : "—"}
+							</TableCell>
+							<TableCell className={cn("text-right tabular-nums font-medium", row.balanceCents > 0 ? "text-trade-sell" : "text-txt-300")}>
+								{row.balanceCents > 0 ? fmt(row.balanceCents) : "—"}
+							</TableCell>
+						</TableRow>
+					)
+				})}
+			</TableBody>
+		</Table>
 	)
 }
 

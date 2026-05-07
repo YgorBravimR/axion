@@ -1,3 +1,12 @@
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table"
 import { formatCurrency } from "@/lib/formatting"
 import type { Locale } from "@/i18n/config"
 
@@ -35,44 +44,42 @@ const FeeBreakdownTable = ({ rows, totals, locale = "pt-BR" }: FeeBreakdownTable
 	const cols = ["Data", "Cnts.", "Corretagem", "Registro", "Emolumentos", "ISS", "IRRF", "Total"] as const
 
 	return (
-		<div className="overflow-x-auto">
-			<table className="w-full text-sm font-mono" aria-label="Detalhamento de Taxas por Dia">
-				<thead>
-					<tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
-						{cols.map((col) => (
-							<th key={col} className="py-2 text-right first:text-left font-medium">
-								{col}
-							</th>
-						))}
-					</tr>
-				</thead>
-				<tbody>
-					{rows.map((row) => (
-						<tr key={new Date(row.date).toISOString()} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
-							<td className="py-1.5 text-left">{fmtDate(row.date)}</td>
-							<td className="py-1.5 text-right text-muted-foreground">{row.contractsExecuted}</td>
-							<td className="py-1.5 text-right">{fmt(row.txCorretagem)}</td>
-							<td className="py-1.5 text-right">{fmt(row.txRegistro)}</td>
-							<td className="py-1.5 text-right">{fmt(row.emolumentos)}</td>
-							<td className="py-1.5 text-right text-muted-foreground">{fmt(row.iss)}</td>
-							<td className="py-1.5 text-right">{fmt(row.irrf)}</td>
-							<td className="py-1.5 text-right font-medium">{fmt(row.subtotal)}</td>
-						</tr>
+		<Table className="font-mono" aria-label="Detalhamento de Taxas por Dia">
+			<TableHeader>
+				<TableRow>
+					{cols.map((col) => (
+						<TableHead key={col} className="text-right first:text-left">
+							{col}
+						</TableHead>
 					))}
-				</tbody>
-				<tfoot>
-					<tr className="border-t border-border font-semibold">
-						<td className="py-2 text-left" colSpan={2}>Total</td>
-						<td className="py-2 text-right">{fmt(totals.txCorretagem)}</td>
-						<td className="py-2 text-right">{fmt(totals.txRegistro)}</td>
-						<td className="py-2 text-right">{fmt(totals.emolumentos)}</td>
-						<td className="py-2 text-right text-muted-foreground">{fmt(totals.iss)}</td>
-						<td className="py-2 text-right">{fmt(totals.irrf)}</td>
-						<td className="py-2 text-right text-acc-100">{fmt(totals.subtotal)}</td>
-					</tr>
-				</tfoot>
-			</table>
-		</div>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{rows.map((row) => (
+					<TableRow key={new Date(row.date).toISOString()}>
+						<TableCell>{fmtDate(row.date)}</TableCell>
+						<TableCell className="text-right text-txt-300">{row.contractsExecuted}</TableCell>
+						<TableCell className="text-right">{fmt(row.txCorretagem)}</TableCell>
+						<TableCell className="text-right">{fmt(row.txRegistro)}</TableCell>
+						<TableCell className="text-right">{fmt(row.emolumentos)}</TableCell>
+						<TableCell className="text-right text-txt-300">{fmt(row.iss)}</TableCell>
+						<TableCell className="text-right">{fmt(row.irrf)}</TableCell>
+						<TableCell className="text-right font-medium">{fmt(row.subtotal)}</TableCell>
+					</TableRow>
+				))}
+			</TableBody>
+			<TableFooter>
+				<TableRow>
+					<TableCell colSpan={2}>Total</TableCell>
+					<TableCell className="text-right">{fmt(totals.txCorretagem)}</TableCell>
+					<TableCell className="text-right">{fmt(totals.txRegistro)}</TableCell>
+					<TableCell className="text-right">{fmt(totals.emolumentos)}</TableCell>
+					<TableCell className="text-right text-txt-300">{fmt(totals.iss)}</TableCell>
+					<TableCell className="text-right">{fmt(totals.irrf)}</TableCell>
+					<TableCell className="text-right text-acc-100">{fmt(totals.subtotal)}</TableCell>
+				</TableRow>
+			</TableFooter>
+		</Table>
 	)
 }
 

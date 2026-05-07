@@ -4,6 +4,12 @@ import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableRow,
+} from "@/components/ui/table"
 import { formatCurrency } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import type { Locale } from "@/i18n/config"
@@ -13,6 +19,7 @@ interface MonthlyDarfCardProps {
 	ledgerRow: MonthlyDarfRow
 	onMarkPaid: (paidAmountCents: number) => Promise<void>
 	locale?: Locale
+	isProp?: boolean
 }
 
 const STATUS_LABELS: Record<MonthlyDarfRow["darfStatus"], string> = {
@@ -29,7 +36,7 @@ const STATUS_VARIANTS: Record<MonthlyDarfRow["darfStatus"], "default" | "seconda
 	overdue: "destructive",
 }
 
-const MonthlyDarfCard = ({ ledgerRow, onMarkPaid, locale = "pt-BR" }: MonthlyDarfCardProps) => {
+const MonthlyDarfCard = ({ ledgerRow, onMarkPaid, locale = "pt-BR", isProp = false }: MonthlyDarfCardProps) => {
 	const [isPending, setIsPending] = useState(false)
 
 	const fmt = (cents: number) => formatCurrency(cents / 100, locale, "BRL")
@@ -42,8 +49,6 @@ const MonthlyDarfCard = ({ ledgerRow, onMarkPaid, locale = "pt-BR" }: MonthlyDar
 			setIsPending(false)
 		}
 	}
-
-	const isProp = ledgerRow.darfDueCents === 0 && ledgerRow.grossGainCents === 0
 
 	const rows: Array<{ label: string; value: number; muted?: boolean }> = [
 		{ label: "Resultado Bruto",      value: ledgerRow.grossGainCents },
@@ -74,29 +79,23 @@ const MonthlyDarfCard = ({ ledgerRow, onMarkPaid, locale = "pt-BR" }: MonthlyDar
 					<p className="text-sm text-muted-foreground">N/A — Conta Prop. O IR é responsabilidade da corretora/mesa.</p>
 				) : (
 					<>
-						<table className="w-full text-sm" aria-label="Detalhamento DARF">
-							<tbody>
+						<Table aria-label="Detalhamento DARF">
+							<TableBody>
 								{rows.map(({ label, value, muted }) => (
-									<tr
-										key={label}
-										className={cn(
-											"border-b border-border/40 last:border-0",
-											muted && "text-muted-foreground",
-										)}
-									>
-										<td className="py-1">{label}</td>
-										<td
+									<TableRow key={label} className={cn(muted && "text-txt-300")}>
+										<TableCell>{label}</TableCell>
+										<TableCell
 											className={cn(
-												"py-1 text-right tabular-nums",
+												"text-right tabular-nums",
 												value < 0 ? "text-trade-sell" : value > 0 ? "text-trade-buy" : "",
 											)}
 										>
 											{fmt(value)}
-										</td>
-									</tr>
+										</TableCell>
+									</TableRow>
 								))}
-							</tbody>
-						</table>
+							</TableBody>
+						</Table>
 
 						<div className="flex items-center justify-between border-t border-border pt-3">
 							<span className="font-semibold text-sm">DARF a Pagar</span>
