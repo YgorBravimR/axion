@@ -54,7 +54,6 @@ const ALL_TABLES = [
 	"strategies",
 	"daily_journals",
 	"daily_targets",
-	"daily_account_notes",
 	"daily_asset_settings",
 	"account_asset_settings",
 	"checklist_completions",

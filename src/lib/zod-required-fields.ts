@@ -6,7 +6,7 @@
  * Shape is directly accessible via `.shape` even on refined/superRefined schemas.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 /**
  * Introspects a Zod schema and returns a Set of field names that are required.

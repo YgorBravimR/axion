@@ -67,6 +67,12 @@ export const proxy = auth((req) => {
 		if (pathWithoutLocaleStripped === "/yearly-plan") {
 			return NextResponse.redirect(new URL(`${localePrefix}/plan/${year}`, req.url), 308)
 		}
+		if (pathWithoutLocaleStripped === "/quarterly-plan") {
+			return NextResponse.redirect(
+				new URL(`${localePrefix}/plan/${year}/${quarter}`, req.url),
+				308,
+			)
+		}
 		if (pathWithoutLocaleStripped === "/monthly") {
 			return NextResponse.redirect(
 				new URL(`${localePrefix}/plan/${year}/${quarter}/${month}`, req.url),

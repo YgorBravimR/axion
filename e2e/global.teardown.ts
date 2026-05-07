@@ -127,6 +127,23 @@ const teardown = async () => {
 		console.log(`  Deleted ${deletedAccounts.rows.length} E2E trading account(s)`)
 	}
 
+	// 8. Users created by registration tests. All child rows cascade via FK
+	// onDelete: "cascade". Patterns cover: auth.spec NEW_USER (test-<ts>@example.com),
+	// auth-security.spec (e2e-reg-*, e2e-resend-*, e2e-unverified-*).
+	const deletedUsers = await db.execute(sql`
+		DELETE FROM users
+		WHERE email ~ '^test-[0-9]+@example\.(com|org|net)$'
+		   OR email LIKE 'e2e-reg-%@example.com'
+		   OR email LIKE 'e2e-resend-%@example.com'
+		   OR email LIKE 'e2e-unverified-%@example.com'
+		   OR email = 'existing-unverified@example.com'
+		   OR email = 'test-display@example.com'
+		RETURNING id
+	`).catch(logError("users"))
+	if (deletedUsers?.rows?.length) {
+		console.log(`  Deleted ${deletedUsers.rows.length} E2E user(s)`)
+	}
+
 	console.log("[E2E Teardown] Cleanup complete.")
 }
 

@@ -167,10 +167,10 @@ const runSeed = async () => {
 	const [personalAccount] = await sql`
 		INSERT INTO trading_accounts (
 			id, user_id, name, description, is_default, account_type,
-			default_commission, default_fees, default_currency, max_daily_loss
+			default_currency
 		) VALUES (
 			gen_random_uuid(), ${adminUser.id}, 'Personal', 'My personal trading account',
-			true, 'personal', 30, 5, 'BRL', 50000
+			true, 'personal', 'BRL'
 		)
 		RETURNING id
 	`
@@ -180,11 +180,11 @@ const runSeed = async () => {
 	const [propAccount] = await sql`
 		INSERT INTO trading_accounts (
 			id, user_id, name, description, is_default, account_type,
-			prop_firm_name, profit_share_percentage, default_commission, default_fees,
-			default_currency, max_daily_loss, show_prop_calculations
+			prop_firm_name, profit_share_percentage,
+			default_currency, show_prop_calculations
 		) VALUES (
 			gen_random_uuid(), ${adminUser.id}, 'Atom Funded', 'My Atom prop firm account',
-			false, 'prop', 'Atom', 80.00, 30, 5, 'BRL', 100000, true
+			false, 'prop', 'Atom', 80.00, 'BRL', true
 		)
 		RETURNING id
 	`
@@ -194,10 +194,10 @@ const runSeed = async () => {
 	const [demoAccount] = await sql`
 		INSERT INTO trading_accounts (
 			id, user_id, name, description, is_default, account_type,
-			default_commission, default_fees, default_currency
+			default_currency
 		) VALUES (
 			gen_random_uuid(), ${adminUser.id}, 'Demo Account', 'Practice account - no real trades',
-			false, 'personal', 0, 0, 'BRL'
+			false, 'personal', 'BRL'
 		)
 		RETURNING id
 	`
@@ -242,25 +242,25 @@ const runSeed = async () => {
 	// ==========================================
 	console.log("\n📦 Seeding account assets...")
 
-	// Personal account - enable both assets with standard fees
+	// Personal account - enable both assets
 	await sql`
-		INSERT INTO account_assets (id, account_id, asset_id, is_enabled, commission_override, fees_override) VALUES
-			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WIN")}, true, 30, 5),
-			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WDO")}, true, 30, 5)
+		INSERT INTO account_assets (id, account_id, asset_id, is_enabled) VALUES
+			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WIN")}, true),
+			(gen_random_uuid(), ${personalAccount.id}, ${assetMap.get("WDO")}, true)
 	`
 
-	// Prop account - enable both assets with slightly lower fees
+	// Prop account - enable both assets
 	await sql`
-		INSERT INTO account_assets (id, account_id, asset_id, is_enabled, commission_override, fees_override) VALUES
-			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WIN")}, true, 25, 4),
-			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WDO")}, true, 25, 4)
+		INSERT INTO account_assets (id, account_id, asset_id, is_enabled) VALUES
+			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WIN")}, true),
+			(gen_random_uuid(), ${propAccount.id}, ${assetMap.get("WDO")}, true)
 	`
 
-	// Demo account - enable both assets with zero fees
+	// Demo account - enable both assets
 	await sql`
-		INSERT INTO account_assets (id, account_id, asset_id, is_enabled, commission_override, fees_override) VALUES
-			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WIN")}, true, 0, 0),
-			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WDO")}, true, 0, 0)
+		INSERT INTO account_assets (id, account_id, asset_id, is_enabled) VALUES
+			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WIN")}, true),
+			(gen_random_uuid(), ${demoAccount.id}, ${assetMap.get("WDO")}, true)
 	`
 	console.log("✅ Account assets seeded")
 
@@ -289,7 +289,7 @@ const runSeed = async () => {
 
 	// Personal account strategies
 	await sql`
-		INSERT INTO strategies (id, account_id, name, code, description, target_r_multiple, max_risk_percent, is_active) VALUES
+		INSERT INTO strategies (id, account_id, name, code, description, final_r, max_risk_percent, is_active) VALUES
 			(gen_random_uuid(), ${personalAccount.id}, 'Breakout', 'BREAKOUT', 'Trade breakouts from consolidation', 2.0, 1.0, true),
 			(gen_random_uuid(), ${personalAccount.id}, 'Trend Following', 'TREND', 'Follow established trends', 3.0, 2.0, true),
 			(gen_random_uuid(), ${personalAccount.id}, 'Mean Reversion', 'REVERSION', 'Fade extreme moves back to mean', 1.5, 0.5, true),
@@ -298,7 +298,7 @@ const runSeed = async () => {
 
 	// Prop account strategies (similar but separate)
 	await sql`
-		INSERT INTO strategies (id, account_id, name, code, description, target_r_multiple, max_risk_percent, is_active) VALUES
+		INSERT INTO strategies (id, account_id, name, code, description, final_r, max_risk_percent, is_active) VALUES
 			(gen_random_uuid(), ${propAccount.id}, 'Breakout', 'BREAKOUT', 'Trade breakouts from consolidation', 2.0, 0.5, true),
 			(gen_random_uuid(), ${propAccount.id}, 'Trend Following', 'TREND', 'Follow established trends', 3.0, 1.0, true),
 			(gen_random_uuid(), ${propAccount.id}, 'Scalping', 'SCALP', 'Quick in-and-out trades', 1.0, 0.25, true)
@@ -306,7 +306,7 @@ const runSeed = async () => {
 
 	// Demo account strategies
 	await sql`
-		INSERT INTO strategies (id, account_id, name, code, description, target_r_multiple, max_risk_percent, is_active) VALUES
+		INSERT INTO strategies (id, account_id, name, code, description, final_r, max_risk_percent, is_active) VALUES
 			(gen_random_uuid(), ${demoAccount.id}, 'Test Strategy', 'TEST', 'For testing purposes', 1.0, 1.0, true)
 	`
 	console.log("✅ Strategies seeded (per account)")
@@ -653,6 +653,269 @@ const runSeed = async () => {
 	// 	`
 	// }
 	// console.log(`✅ Personal account trades seeded (${personalTrades.length} trades)`)
+
+	// ==========================================
+	// 10.5 Fractal Plan Cascade — 2026 (yearly + quarterly + monthly)
+	// ==========================================
+	console.log("\n📦 Seeding fractal plan cascade for 2026...")
+
+	// Anchor account lifecycle so reporting + balance chain start Jan 2026
+	await sql`
+		UPDATE trading_accounts
+		SET starting_balance_cents = 300000,
+		    account_start_year = 2026,
+		    account_start_month = 1,
+		    withdrawal_target_percent = 0
+		WHERE id = ${personalAccount.id}
+	`
+
+	const LADDER = [
+		{ minCapitalCents: 300_000,        maxCapitalCents: 749_999,           oneRCents: 10_000 },
+		{ minCapitalCents: 750_000,        maxCapitalCents: 1_499_999,         oneRCents: 20_000 },
+		{ minCapitalCents: 1_500_000,      maxCapitalCents: 2_999_999,         oneRCents: 30_000 },
+		{ minCapitalCents: 3_000_000,      maxCapitalCents: 9_999_999,         oneRCents: 50_000 },
+		{ minCapitalCents: 10_000_000,     maxCapitalCents: 99_999_999_999,    oneRCents: 100_000 },
+	]
+
+	const resolveOneR = (capCents: number): { tierIndex: number; oneRCents: number } => {
+		for (let i = 0; i < LADDER.length; i++) {
+			if (capCents >= LADDER[i].minCapitalCents && capCents <= LADDER[i].maxCapitalCents) {
+				return { tierIndex: i, oneRCents: LADDER[i].oneRCents }
+			}
+		}
+		const top = LADDER[LADDER.length - 1]
+		return { tierIndex: LADDER.length - 1, oneRCents: top.oneRCents }
+	}
+
+	// Compound start-balance per month (cents). Jan→May ladders R$3k → R$30k.
+	// Jun-Dec retain R$30k (no trades; projection layer extrapolates).
+	const MONTHLY_START_CENTS = [
+		300_000,   // Jan: tier 0, 1R = R$100
+		750_000,   // Feb: tier 1, 1R = R$200
+		1_200_000, // Mar: tier 1, 1R = R$200
+		1_800_000, // Apr: tier 2, 1R = R$300
+		2_400_000, // May: tier 2, 1R = R$300
+		3_000_000, // Jun
+		3_000_000,
+		3_000_000,
+		3_000_000,
+		3_000_000,
+		3_000_000,
+		3_000_000,
+	]
+
+	const [yearlyPlan2026] = await sql`
+		INSERT INTO yearly_plans (
+			id, account_id, year, initial_capital_cents, ir_tax_rate, trading_days_per_week,
+			ladder_rules, start_week,
+			default_daily_loss_r, default_daily_win_r,
+			default_weekly_loss_r, default_weekly_win_r,
+			default_monthly_loss_r, default_monthly_win_r,
+			notes
+		) VALUES (
+			gen_random_uuid(), ${personalAccount.id}, 2026, 300000, 30.00, 5,
+			${JSON.stringify(LADDER)}::jsonb, 1,
+			2.0, 4.0, 5.0, 8.0, 10.0, 20.0,
+			'Seeded ladder progression — R$3k Jan → R$30k May 2026'
+		)
+		RETURNING id
+	`
+
+	const quarterlyIds: string[] = []
+	for (let q = 1; q <= 4; q++) {
+		const [row] = await sql`
+			INSERT INTO quarterly_plan (id, yearly_plan_id, quarter)
+			VALUES (gen_random_uuid(), ${yearlyPlan2026.id}, ${q})
+			RETURNING id
+		`
+		quarterlyIds.push(row.id)
+	}
+
+	interface MonthMeta {
+		id: string
+		oneRCents: number
+		tierIndex: number
+		startCents: number
+	}
+	const monthlyPlanByMonth = new Map<number, MonthMeta>()
+	for (let m = 1; m <= 12; m++) {
+		const startCents = MONTHLY_START_CENTS[m - 1]
+		const { tierIndex, oneRCents } = resolveOneR(startCents)
+		const qIndex = Math.floor((m - 1) / 3)
+		const computedAt = new Date(Date.UTC(2026, m - 1, 1, 12, 0, 0)).toISOString()
+		const [row] = await sql`
+			INSERT INTO monthly_plan (
+				id, quarterly_plan_id, year, month,
+				snapshot_capital_cents, snapshot_one_r_cents, snapshot_tier_index,
+				snapshot_computed_at, snapshot_reason
+			) VALUES (
+				gen_random_uuid(), ${quarterlyIds[qIndex]}, 2026, ${m},
+				${startCents}, ${oneRCents}, ${tierIndex},
+				${computedAt}, 'month_start'
+			)
+			RETURNING id
+		`
+		monthlyPlanByMonth.set(m, { id: row.id, oneRCents, tierIndex, startCents })
+	}
+	console.log("✅ Yearly + 4 quarterly + 12 monthly plans seeded")
+
+	// ==========================================
+	// 10.6 Procedural trades — Jan–May 2026
+	// ==========================================
+	console.log("\n📦 Generating procedural trades (Jan–May 2026)...")
+
+	// Per-month NET pnl target (cents). Sums to compound 3k → 30k = +27k gross.
+	const MONTHLY_NET_TARGETS_CENTS = [
+		450_000, // Jan: +R$4500
+		450_000, // Feb: +R$4500
+		600_000, // Mar: +R$6000
+		600_000, // Apr: +R$6000
+		600_000, // May: +R$6000
+	]
+
+	// Deterministic PRNG so the seed is reproducible.
+	let prngState = 42
+	const rand = (): number => {
+		prngState = (prngState * 1103515245 + 12345) & 0x7fffffff
+		return prngState / 0x7fffffff
+	}
+	const pickFrom = <T,>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)]
+
+	interface SeedTrade {
+		asset: "WIN" | "WDO"
+		dir: "long" | "short"
+		entryTime: string
+		exitTime: string
+		entryP: number
+		exitP: number
+		size: number
+		sl: number
+		tp: number
+		pnlCents: number
+		outcome: "win" | "loss"
+		plan: boolean
+		strat: string
+		oneRSnapshotCents: number
+		rOutcome: string
+		plannedRiskAmountCents: number
+	}
+
+	const personalTradesGenerated: SeedTrade[] = []
+
+	for (let m = 1; m <= 5; m++) {
+		const meta = monthlyPlanByMonth.get(m)!
+		const oneRReais = meta.oneRCents / 100
+		const tradingDays = getTradingDays(
+			new Date(Date.UTC(2026, m - 1, 1)),
+			new Date(Date.UTC(2026, m, 0)),
+		)
+		const targetReais = MONTHLY_NET_TARGETS_CENTS[m - 1] / 100
+
+		// 30% loser days @ -1R; remaining target distributed across winner days w/ jitter.
+		const numLosers = Math.floor(tradingDays.length * 0.30)
+		const dayIndices = tradingDays.map((_, i) => i)
+		for (let i = dayIndices.length - 1; i > 0; i--) {
+			const j = Math.floor(rand() * (i + 1))
+			;[dayIndices[i], dayIndices[j]] = [dayIndices[j], dayIndices[i]]
+		}
+		const loserIdx = new Set(dayIndices.slice(0, numLosers))
+		const numWinners = tradingDays.length - numLosers
+		const totalLossReais = -1 * numLosers * oneRReais
+		const winnersTotalReais = targetReais - totalLossReais
+		const avgWinnerReais = winnersTotalReais / numWinners
+
+		const dailyPnls: number[] = []
+		for (let i = 0; i < tradingDays.length; i++) {
+			if (loserIdx.has(i)) {
+				dailyPnls.push(-1 * oneRReais)
+			} else {
+				const jitter = 0.55 + rand() * 0.9 // 0.55x..1.45x
+				dailyPnls.push(avgWinnerReais * jitter)
+			}
+		}
+		// Renormalize winner days so monthly sum hits target exactly.
+		const winnerSum = dailyPnls.reduce((a, b, i) => (loserIdx.has(i) ? a : a + b), 0)
+		const scale = winnerSum > 0 ? winnersTotalReais / winnerSum : 1
+		for (let i = 0; i < dailyPnls.length; i++) {
+			if (!loserIdx.has(i)) dailyPnls[i] *= scale
+		}
+
+		for (let dayIdx = 0; dayIdx < tradingDays.length; dayIdx++) {
+			const day = tradingDays[dayIdx]
+			const dayPnl = dailyPnls[dayIdx]
+			const numTrades = rand() < 0.55 ? 1 : 2
+			const tradesPnl = numTrades === 1
+				? [dayPnl]
+				: (() => {
+					const split = 0.4 + rand() * 0.2
+					return [dayPnl * split, dayPnl * (1 - split)]
+				})()
+
+			for (const tradePnl of tradesPnl) {
+				const asset: "WIN" | "WDO" = rand() < 0.55 ? "WDO" : "WIN"
+				const dir: "long" | "short" = rand() < 0.6 ? "long" : "short"
+				const pointsPerContract = asset === "WIN" ? WIN_PER_POINT : WDO_PER_POINT
+				// Position size scaled to monthly 1R: ~1R risk on a ~50pt (WDO) / 100pt (WIN) stop.
+				const refStopPoints = asset === "WDO" ? 50 : 100
+				const size = Math.max(1, Math.round(oneRReais / (refStopPoints * pointsPerContract)))
+				const priceDiffPoints = tradePnl / (size * pointsPerContract)
+				const basePrice = asset === "WIN"
+					? 130000 + Math.floor(rand() * 6000)
+					: 5000 + Math.floor(rand() * 200)
+				const entryP = basePrice
+				const rawExit = dir === "long" ? basePrice + priceDiffPoints : basePrice - priceDiffPoints
+				const exitP = asset === "WIN"
+					? Math.round(rawExit / 5) * 5
+					: Math.round(rawExit * 2) / 2
+				const stopPoints = oneRReais / (size * pointsPerContract)
+				const sl = dir === "long" ? entryP - stopPoints : entryP + stopPoints
+				const tp = dir === "long" ? entryP + stopPoints * 2 : entryP - stopPoints * 2
+
+				const entryTime = randomTradingTime(day)
+				const exitTime = generateExitTime(entryTime)
+
+				// Recompute pnl from actual rounded prices so journal math is internally consistent.
+				const realizedReais = calculatePnl(asset, dir, entryP, exitP, size)
+				const pnlCents = Math.round(realizedReais * 100)
+				const outcome: "win" | "loss" = pnlCents >= 0 ? "win" : "loss"
+				const rOutcome = (pnlCents / meta.oneRCents).toFixed(2)
+				const plan = outcome === "win" || rand() < 0.7
+
+				personalTradesGenerated.push({
+					asset, dir, entryTime, exitTime,
+					entryP, exitP, size,
+					sl: Math.round(sl * 100) / 100,
+					tp: Math.round(tp * 100) / 100,
+					pnlCents, outcome, plan,
+					strat: pickFrom(["BREAKOUT", "TREND", "REVERSION", "SR"]),
+					oneRSnapshotCents: meta.oneRCents,
+					rOutcome,
+					plannedRiskAmountCents: meta.oneRCents,
+				})
+			}
+		}
+	}
+
+	for (const t of personalTradesGenerated) {
+		const strategyId = personalStrategyMap.get(t.strat) ?? null
+		await sql`
+			INSERT INTO trades (
+				id, account_id, asset, direction, timeframe_id, entry_date, exit_date,
+				entry_price, exit_price, position_size, stop_loss, take_profit,
+				planned_risk_amount, realized_r_multiple,
+				pnl, outcome, followed_plan, strategy_id, is_archived,
+				one_r_snapshot_cents, r_outcome, source
+			) VALUES (
+				gen_random_uuid(), ${personalAccount.id}, ${t.asset}, ${t.dir}, NULL, ${t.entryTime}, ${t.exitTime},
+				${t.entryP.toString()}, ${t.exitP.toString()}, ${t.size.toString()},
+				${t.sl.toString()}, ${t.tp.toString()},
+				${t.plannedRiskAmountCents.toString()}, ${t.rOutcome},
+				${t.pnlCents.toString()}, ${t.outcome}, ${t.plan}, ${strategyId}, false,
+				${t.oneRSnapshotCents}, ${t.rOutcome}, 'manual'
+			)
+		`
+	}
+	console.log(`✅ Personal account trades seeded (${personalTradesGenerated.length} trades, Jan–May 2026)`)
 
 	// ==========================================
 	// 11. Trades - Prop Account (Nov 2025 - Jan 2026)
