@@ -29,8 +29,11 @@ export const updateCompletionSchema = z.object({
 	completed: z.boolean(),
 })
 
-// Mood options
-export const moodOptions = ["great", "good", "neutral", "bad", "terrible"] as const
+// Mood options — aligned with planMoodEnum in src/db/schema.ts.
+// Legacy varchar values (great/good/neutral/bad/terrible) are migrated by
+// Task 4 of the fractal-plan consolidation:
+//   great|good -> focused, neutral -> neutral, bad -> distracted, terrible -> risk_off
+export const moodOptions = ["focused", "neutral", "distracted", "risk_off"] as const
 export type MoodType = (typeof moodOptions)[number]
 
 // Bias options

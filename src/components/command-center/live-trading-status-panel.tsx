@@ -185,7 +185,7 @@ const MiniCalculator = ({
 						value={stopPoints}
 						onChange={handleStopPointsChange}
 						placeholder={t("calculator.stopPlaceholder")}
-						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
+						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded-sm border outline-none"
 						aria-label={t("calculator.stopPoints")}
 					/>
 				</div>
@@ -250,7 +250,7 @@ const TradeBox = ({ summary, directionLabels }: TradeBoxProps) => {
 				</span>
 				<span
 					className={cn(
-						"px-s-100 text-tiny rounded font-bold",
+						"px-s-100 text-tiny rounded-sm font-bold",
 						directionBadge.className
 					)}
 				>

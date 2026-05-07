@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, lazy, Suspense } from "react"
+import { useState, lazy, Suspense, type ReactNode } from "react"
 import { Tabs, TabsList, TabsTrigger, AnimatedTabsContent } from "@/components/ui/tabs"
 import { Target, Activity, Calculator, CalendarDays, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -9,7 +9,6 @@ import { CommandCenterContent, type CommandCenterContentProps } from "./command-
 import type { Asset } from "@/db/schema"
 import type { StrategyWithStats } from "@/app/actions/strategies"
 import type { AssetSettingWithAsset } from "@/app/actions/command-center"
-import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 
 const MarketMonitorContent = lazy(() =>
@@ -24,12 +23,6 @@ const PositionCalculator = lazy(() =>
 	}))
 )
 
-const MonthlyPlanTab = lazy(() =>
-	import("@/components/monthly-plan/monthly-plan-tab").then((m) => ({
-		default: m.MonthlyPlanTab,
-	}))
-)
-
 interface CommandCenterTabsProps extends CommandCenterContentProps {
 	calculatorAssets: Asset[]
 	accountSettings: {
@@ -38,10 +31,7 @@ interface CommandCenterTabsProps extends CommandCenterContentProps {
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
-	initialPlan: null
-	initialYear: number
-	initialMonth: number
-	riskProfiles?: RiskManagementProfile[]
+	planTabContent: ReactNode
 	isReplayAccount?: boolean
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
@@ -57,10 +47,7 @@ const CommandCenterTabs = ({
 	accountSettings,
 	strategies,
 	assetSettings,
-	initialPlan,
-	initialYear,
-	initialMonth,
-	riskProfiles = [],
+	planTabContent,
 	isReplayAccount = false,
 	initialLiveTradingStatus = null,
 	...commandCenterProps
@@ -123,14 +110,7 @@ const CommandCenterTabs = ({
 
 			{showPlanTab && (
 				<AnimatedTabsContent value="plan" className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
-					<Suspense fallback={tabLoadingFallback}>
-						<MonthlyPlanTab
-							initialPlan={initialPlan}
-							initialYear={initialYear}
-							initialMonth={initialMonth}
-							riskProfiles={riskProfiles}
-						/>
-					</Suspense>
+					{planTabContent}
 				</AnimatedTabsContent>
 			)}
 

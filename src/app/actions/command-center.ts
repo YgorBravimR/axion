@@ -6,7 +6,6 @@ import { getTranslations } from "next-intl/server"
 import {
 	dailyChecklists,
 	checklistCompletions,
-	dailyAccountNotes,
 	accountAssetSettings,
 	accountAssets,
 	trades,
@@ -15,7 +14,6 @@ import {
 import type {
 	DailyChecklist,
 	ChecklistCompletion,
-	DailyAccountNote,
 	AccountAssetSetting,
 	Asset,
 } from "@/db/schema"
@@ -26,11 +24,9 @@ import {
 	createChecklistSchema,
 	updateChecklistSchema,
 	updateCompletionSchema,
-	dailyNotesSchema,
 	assetSettingsSchema,
 	type CreateChecklistInput,
 	type UpdateChecklistInput,
-	type DailyNotesInput,
 	type AssetSettingsInput,
 	type ChecklistItem,
 	type CircuitBreakerStatus,
@@ -38,11 +34,6 @@ import {
 } from "@/lib/validations/command-center"
 import { fromCents, toCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
-import {
-	getUserDek,
-	encryptDailyNotesFields,
-	decryptDailyNotesFields,
-} from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
@@ -478,186 +469,9 @@ export const toggleChecklistItem = async (
 	}
 }
 
-// ==========================================
-// DAILY NOTES ACTIONS
-// ==========================================
-
-/**
- * Get notes for a given date (defaults to today)
- */
-export const getTodayNotes = async (
-	date?: Date
-): Promise<ActionResponse<DailyAccountNote | null>> => {
-	const t = await getTranslations("commandCenter")
-	try {
-		const { userId, accountId } = await requireAuth()
-
-		const today = date ? new Date(date) : await getServerEffectiveNow()
-		today.setHours(0, 0, 0, 0)
-		const tomorrow = new Date(today)
-		tomorrow.setDate(tomorrow.getDate() + 1)
-
-		const rawNotes = await db.query.dailyAccountNotes.findFirst({
-			where: and(
-				eq(dailyAccountNotes.userId, userId),
-				eq(dailyAccountNotes.accountId, accountId),
-				gte(dailyAccountNotes.date, today),
-				lte(dailyAccountNotes.date, tomorrow)
-			),
-		})
-
-		// Decrypt notes fields if DEK is available
-		const dek = await getUserDek(userId)
-		const notes =
-			rawNotes && dek
-				? (decryptDailyNotesFields(
-						rawNotes as unknown as Record<string, unknown>,
-						dek
-					) as unknown as DailyAccountNote)
-				: rawNotes
-
-		return {
-			status: "success",
-			message: notes ? t("actions.notesRetrieved") : t("actions.notesNotFound"),
-			data: notes || null,
-		}
-	} catch (error) {
-		return {
-			status: "error",
-			message: t("actions.notesFetchFailed"),
-			errors: [
-				{
-					code: "FETCH_FAILED",
-					detail: toSafeErrorMessage(error, "getTodayNotes"),
-				},
-			],
-		}
-	}
-}
-
-/**
- * Upsert daily notes
- */
-export const upsertDailyNotes = async (
-	input: DailyNotesInput
-): Promise<ActionResponse<DailyAccountNote>> => {
-	const t = await getTranslations("commandCenter")
-	try {
-		const { userId, accountId } = await requireAuth()
-		const validated = dailyNotesSchema.parse(input)
-
-		// Parse date
-		const noteDate = new Date(validated.date)
-		noteDate.setHours(0, 0, 0, 0)
-		const nextDay = new Date(noteDate)
-		nextDay.setDate(nextDay.getDate() + 1)
-
-		// Check if notes exist for this date
-		const existing = await db.query.dailyAccountNotes.findFirst({
-			where: and(
-				eq(dailyAccountNotes.userId, userId),
-				eq(dailyAccountNotes.accountId, accountId),
-				gte(dailyAccountNotes.date, noteDate),
-				lte(dailyAccountNotes.date, nextDay)
-			),
-		})
-
-		// Encrypt notes fields if DEK is available
-		const dek = await getUserDek(userId)
-		const encryptedFields = dek
-			? encryptDailyNotesFields(
-					{
-						preMarketNotes: validated.preMarketNotes || null,
-						postMarketNotes: validated.postMarketNotes || null,
-					},
-					dek
-				)
-			: {}
-
-		if (existing) {
-			// Update existing
-			const [notes] = await db
-				.update(dailyAccountNotes)
-				.set({
-					preMarketNotes: validated.preMarketNotes || null,
-					postMarketNotes: validated.postMarketNotes || null,
-					mood: validated.mood || null,
-					updatedAt: new Date(),
-					...encryptedFields,
-				})
-				.where(eq(dailyAccountNotes.id, existing.id))
-				.returning()
-
-			invalidateTradeData(undefined, userId, accountId)
-
-			// Decrypt before returning
-			const decryptedNotes = dek
-				? (decryptDailyNotesFields(
-						notes as unknown as Record<string, unknown>,
-						dek
-					) as unknown as DailyAccountNote)
-				: notes
-
-			return {
-				status: "success",
-				message: t("actions.notesUpdated"),
-				data: decryptedNotes,
-			}
-		} else {
-			// Create new
-			const [notes] = await db
-				.insert(dailyAccountNotes)
-				.values({
-					userId,
-					accountId,
-					date: noteDate,
-					preMarketNotes: validated.preMarketNotes || null,
-					postMarketNotes: validated.postMarketNotes || null,
-					mood: validated.mood || null,
-					...encryptedFields,
-				})
-				.returning()
-
-			invalidateTradeData(undefined, userId, accountId)
-
-			// Decrypt before returning
-			const decryptedNotes = dek
-				? (decryptDailyNotesFields(
-						notes as unknown as Record<string, unknown>,
-						dek
-					) as unknown as DailyAccountNote)
-				: notes
-
-			return {
-				status: "success",
-				message: t("actions.notesCreated"),
-				data: decryptedNotes,
-			}
-		}
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			return {
-				status: "error",
-				message: t("actions.validationError"),
-				errors: error.issues.map((e) => ({
-					code: "VALIDATION_ERROR",
-					detail: `${e.path.join(".")}: ${e.message}`,
-				})),
-			}
-		}
-
-		return {
-			status: "error",
-			message: t("actions.notesSaveFailed"),
-			errors: [
-				{
-					code: "SAVE_FAILED",
-					detail: toSafeErrorMessage(error, "upsertDailyNotes"),
-				},
-			],
-		}
-	}
-}
+// Daily notes (pre/post + mood) live on `dailyPlan` now.
+// See: src/app/actions/fractal-plan/daily.ts (`upsertDailyPlan`,
+// `getDailyPlanForCurrentAccount`) and src/lib/fractal-plan/ensure-daily.ts.
 
 // ==========================================
 // ASSET SETTINGS ACTIONS (Account-Level, Permanent)

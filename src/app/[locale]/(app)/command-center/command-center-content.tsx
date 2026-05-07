@@ -14,11 +14,11 @@ import {
 import { DateNavigator } from "@/components/command-center/date-navigator"
 import {
 	getTodayCompletions,
-	getTodayNotes,
 	getAssetSettings,
 	getCircuitBreakerStatus,
 	getDailySummary,
 } from "@/app/actions/command-center"
+import { getDailyPlanForCurrentAccount } from "@/app/actions/fractal-plan/daily"
 import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import type {
 	ChecklistWithCompletion,
@@ -29,7 +29,7 @@ import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 import type {
 	DailyChecklist as DailyChecklistType,
-	DailyAccountNote,
+	DailyPlan,
 	Asset,
 	TradingAccount,
 } from "@/db/schema"
@@ -42,7 +42,7 @@ import { CalendarDays } from "lucide-react"
 
 interface CommandCenterContentProps {
 	initialCompletions: ChecklistWithCompletion[]
-	initialNotes: DailyAccountNote | null
+	initialDailyPlan: DailyPlan | null
 	initialAssetSettings: AssetSettingWithAsset[]
 	initialCircuitBreaker: CircuitBreakerStatus | null
 	initialSummary: DailySummary | null
@@ -55,7 +55,7 @@ interface CommandCenterContentProps {
 
 const CommandCenterContent = ({
 	initialCompletions,
-	initialNotes,
+	initialDailyPlan,
 	initialAssetSettings,
 	initialCircuitBreaker,
 	initialSummary,
@@ -72,7 +72,7 @@ const CommandCenterContent = ({
 
 	// State
 	const [completions, setCompletions] = useState(initialCompletions)
-	const [notes, setNotes] = useState(initialNotes)
+	const [dailyPlan, setDailyPlan] = useState(initialDailyPlan)
 	const [assetSettings, setAssetSettings] = useState(initialAssetSettings)
 	const [circuitBreaker, setCircuitBreaker] = useState(initialCircuitBreaker)
 	const [summary, setSummary] = useState(initialSummary)
@@ -93,10 +93,10 @@ const CommandCenterContent = ({
 		}
 	}, [viewDate])
 
-	const refreshNotes = useCallback(async () => {
-		const result = await getTodayNotes(new Date(viewDate))
-		if (result.status === "success") {
-			setNotes(result.data ?? null)
+	const refreshDailyPlan = useCallback(async () => {
+		const result = await getDailyPlanForCurrentAccount({ dateISO: viewDate })
+		if (result.status === "success" && result.data?.kind === "ok") {
+			setDailyPlan(result.data.dayRow)
 		}
 	}, [viewDate])
 
@@ -178,8 +178,8 @@ const CommandCenterContent = ({
 					{/* Pre-Market Notes — premium+ only */}
 					{isPremium && (
 						<PreMarketNotes
-							notes={notes}
-							onRefresh={refreshNotes}
+							dailyPlan={dailyPlan}
+							onRefresh={refreshDailyPlan}
 							isReadOnly={isReadOnly}
 						/>
 					)}
@@ -203,8 +203,8 @@ const CommandCenterContent = ({
 					{/* Post-Market Notes — premium+ only */}
 					{isPremium && (
 						<PostMarketNotes
-							notes={notes}
-							onRefresh={refreshNotes}
+							dailyPlan={dailyPlan}
+							onRefresh={refreshDailyPlan}
 							isReadOnly={isReadOnly}
 						/>
 					)}

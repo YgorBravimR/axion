@@ -17,11 +17,10 @@ interface MoodOption {
 }
 
 const moods: MoodOption[] = [
-	{ value: "great", labelKey: "great", tone: "positive" },
-	{ value: "good", labelKey: "good", tone: "positive" },
+	{ value: "focused", labelKey: "focused", tone: "positive" },
 	{ value: "neutral", labelKey: "neutral", tone: "neutral" },
-	{ value: "bad", labelKey: "bad", tone: "negative" },
-	{ value: "terrible", labelKey: "terrible", tone: "negative" },
+	{ value: "distracted", labelKey: "distracted", tone: "negative" },
+	{ value: "risk_off", labelKey: "risk_off", tone: "negative" },
 ]
 
 const TONE_INDICATOR: Record<MoodOption["tone"], string> = {

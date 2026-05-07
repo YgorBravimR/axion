@@ -1,14 +1,12 @@
 import { setRequestLocale } from "next-intl/server"
 import { CommandCenterTabs } from "./command-center-tabs"
-import { TodayStrip } from "@/components/fractal-plan/today-strip"
+import { MonthlyPlanTabContent } from "@/components/monthly-plan/monthly-plan-tab-content"
 import {
 	getTodayCompletions,
-	getTodayNotes,
 	getAccountAssetSettings,
 	getCircuitBreakerStatus,
 	getDailySummary,
 } from "@/app/actions/command-center"
-import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getActiveAssets } from "@/app/actions/assets"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { getStrategies } from "@/app/actions/strategies"
@@ -16,6 +14,8 @@ import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
+import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
+import type { DailyPlan } from "@/db/schema"
 
 
 interface CommandCenterPageProps {
@@ -47,25 +47,29 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 	const dateArg = isToday ? (account?.accountType === "replay" ? effectiveDate : undefined) : effectiveDate
 
 	// Fetch all initial data server-side in parallel
+	const dailyPlanPromise: Promise<DailyPlan | null> = account?.id
+		? ensureDailyPlanForAccountDate(account.id, effectiveDate).then((r) =>
+			r.status === "ok" ? r.dayRow : null,
+		)
+		: Promise.resolve(null)
+
 	const [
 		completionsResult,
-		notesResult,
+		initialDailyPlan,
 		assetSettingsResult,
 		circuitBreakerResult,
 		summaryResult,
 		assetsResult,
 		strategiesResult,
-		riskProfilesResult,
 		liveTradingStatusResult,
 	] = await Promise.all([
 		getTodayCompletions(dateArg),
-		getTodayNotes(dateArg),
+		dailyPlanPromise,
 		getAccountAssetSettings(),
 		getCircuitBreakerStatus(dateArg),
 		getDailySummary(dateArg),
 		getActiveAssets().catch(() => []),
 		getStrategies(),
-		listActiveRiskProfiles(),
 		getLiveTradingStatus(dateArg),
 	])
 
@@ -73,8 +77,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		completionsResult.status === "success" && completionsResult.data
 			? completionsResult.data
 			: []
-	const initialNotes =
-		notesResult.status === "success" ? (notesResult.data ?? null) : null
 	const initialAssetSettings =
 		assetSettingsResult.status === "success" && assetSettingsResult.data
 			? assetSettingsResult.data
@@ -88,11 +90,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		strategiesResult.status === "success" && strategiesResult.data
 			? strategiesResult.data
 			: []
-	// Phase 4b: legacy monthly_risk_config table dropped; the new fractal-plan
-	// UI (Phase 5) will replace this prop. Pass null until then.
-	const initialPlan = null
-	const riskProfiles =
-		riskProfilesResult.status === "success" ? (riskProfilesResult.data ?? []) : []
 	const initialLiveTradingStatus =
 		liveTradingStatusResult.status === "success" ? (liveTradingStatusResult.data ?? null) : null
 
@@ -110,12 +107,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 
 	return (
 		<div className="flex h-full flex-col">
-			{account?.id ? (
-				<TodayStrip accountId={account.id} now={effectiveDate} locale={locale} />
-			) : null}
 			<CommandCenterTabs
 				initialCompletions={initialCompletions}
-				initialNotes={initialNotes}
+				initialDailyPlan={initialDailyPlan}
 				initialAssetSettings={initialAssetSettings}
 				initialCircuitBreaker={initialCircuitBreaker}
 				initialSummary={initialSummary}
@@ -125,12 +119,18 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 				accountSettings={accountSettings}
 				strategies={initialStrategies}
 				assetSettings={initialAssetSettings}
-				initialPlan={initialPlan}
-				initialYear={planYear}
-				initialMonth={planMonth}
+				planTabContent={
+					account?.id ? (
+						<MonthlyPlanTabContent
+							accountId={account.id}
+							year={planYear}
+							month={planMonth}
+							locale={locale}
+						/>
+					) : null
+				}
 				viewDate={viewDateStr}
 				isToday={isToday}
-				riskProfiles={riskProfiles}
 				isReplayAccount={account?.accountType === "replay"}
 				initialLiveTradingStatus={initialLiveTradingStatus}
 			/>

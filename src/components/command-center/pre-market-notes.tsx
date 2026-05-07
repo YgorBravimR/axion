@@ -4,51 +4,80 @@ import { useState, useEffect } from "react"
 import { Sun, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
 import { MoodSelector } from "./mood-selector"
-import { upsertDailyNotes } from "@/app/actions/command-center"
-import { useEffectiveDate } from "@/components/providers/effective-date-provider"
-import type { DailyAccountNote } from "@/db/schema"
+import { upsertDailyPlan } from "@/app/actions/fractal-plan/daily"
+import type { DailyPlan } from "@/db/schema"
 import type { MoodType } from "@/lib/validations/command-center"
 
 interface PreMarketNotesProps {
-	notes: DailyAccountNote | null
+	dailyPlan: DailyPlan | null
 	onRefresh: () => void
 	isReadOnly?: boolean
 }
 
-export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMarketNotesProps) => {
+const NO_PLAN_HINT_KEY = "noPlanPrompt"
+
+export const PreMarketNotes = ({
+	dailyPlan,
+	onRefresh,
+	isReadOnly = false,
+}: PreMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
-	const effectiveDate = useEffectiveDate()
+	const tPlan = useTranslations("commandCenter.plan")
 	const { showToast } = useToast()
 
 	const [preMarketNotes, setPreMarketNotes] = useState("")
 	const [mood, setMood] = useState<MoodType | null>(null)
+	const [targetR, setTargetR] = useState("")
+	const [maxTrades, setMaxTrades] = useState("")
 	const [saving, setSaving] = useState(false)
 
-	// Derive hasChanges inline — no state or effect needed
-	const hasChanges =
-		preMarketNotes !== (notes?.preMarketNotes ?? "") ||
-		mood !== ((notes?.mood as MoodType | null) ?? null)
-
-	// Initialize form values
 	useEffect(() => {
-		if (notes) {
-			setPreMarketNotes(notes.preMarketNotes || "")
-			setMood((notes.mood as MoodType) || null)
+		if (dailyPlan) {
+			setPreMarketNotes(dailyPlan.preMarketNotes ?? "")
+			setMood((dailyPlan.mood as MoodType | null) ?? null)
+			setTargetR(dailyPlan.targetR ?? "")
+			setMaxTrades(
+				dailyPlan.maxTradesToday != null ? String(dailyPlan.maxTradesToday) : "",
+			)
 		}
-	}, [notes])
+	}, [dailyPlan])
+
+	const hasChanges =
+		!!dailyPlan &&
+		(preMarketNotes !== (dailyPlan.preMarketNotes ?? "") ||
+			mood !== ((dailyPlan.mood as MoodType | null) ?? null) ||
+			targetR !== (dailyPlan.targetR ?? "") ||
+			maxTrades !==
+				(dailyPlan.maxTradesToday != null ? String(dailyPlan.maxTradesToday) : ""))
 
 	const handleSave = async () => {
+		if (!dailyPlan) return
+		const targetParsed = targetR.trim()
+			? parseFloat(targetR.replace(",", "."))
+			: null
+		if (targetParsed !== null && !Number.isFinite(targetParsed)) {
+			showToast("error", t("saveError"))
+			return
+		}
+		const maxParsed = maxTrades.trim() ? parseInt(maxTrades, 10) : null
+		if (maxParsed !== null && (!Number.isInteger(maxParsed) || maxParsed <= 0)) {
+			showToast("error", t("saveError"))
+			return
+		}
+
 		setSaving(true)
 		try {
-			const result = await upsertDailyNotes({
-				date: effectiveDate.toISOString(),
+			const result = await upsertDailyPlan({
+				dailyPlanId: dailyPlan.id,
 				preMarketNotes: preMarketNotes || null,
-				postMarketNotes: notes?.postMarketNotes || null,
-				mood: mood || null,
+				mood: mood ?? null,
+				targetR: targetParsed,
+				maxTradesToday: maxParsed,
 			})
 			if (result.status === "error") {
 				showToast("error", result.message)
@@ -62,16 +91,42 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 		}
 	}
 
+	if (!dailyPlan) {
+		return (
+			<div
+				id="cc-pre-market-notes"
+				className="rounded-lg border border-dashed border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500"
+			>
+				<div className="flex items-center gap-s-200">
+					<Sun className="h-5 w-5 text-trade-buy" />
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">
+						{t("preMarket")}
+					</h3>
+				</div>
+				<p className="mt-s-200 text-tiny text-txt-300">{tPlan(NO_PLAN_HINT_KEY)}</p>
+			</div>
+		)
+	}
+
 	return (
-		<div id="cc-pre-market-notes" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-			{/* Header */}
+		<div
+			id="cc-pre-market-notes"
+			className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500"
+		>
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="flex items-center gap-s-200">
 					<Sun className="h-5 w-5 text-trade-buy" />
-					<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("preMarket")}</h3>
+					<h3 className="text-small sm:text-body font-semibold text-txt-100">
+						{t("preMarket")}
+					</h3>
 				</div>
 				{hasChanges && !isReadOnly && (
-					<Button id="pre-market-save" size="sm" onClick={handleSave} disabled={saving}>
+					<Button
+						id="pre-market-save"
+						size="sm"
+						onClick={handleSave}
+						disabled={saving}
+					>
 						{saving ? (
 							<Loader2 className="mr-s-100 h-4 w-4 animate-spin motion-reduce:animate-none" />
 						) : (
@@ -82,15 +137,65 @@ export const PreMarketNotes = ({ notes, onRefresh, isReadOnly = false }: PreMark
 				)}
 			</div>
 
-			{/* Mood Selector */}
+			<div className="mb-s-300 sm:mb-m-400 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
+				<div>
+					<Label
+						id="pre-market-target-r-label"
+						htmlFor="pre-market-target-r"
+						className="mb-s-200 block text-small text-txt-200"
+					>
+						{t("targetR")}
+					</Label>
+					<Input
+						id="pre-market-target-r"
+						type="number"
+						step="0.01"
+						value={targetR}
+						onChange={(e) => setTargetR(e.target.value)}
+						placeholder="2.00"
+						disabled={isReadOnly}
+					/>
+				</div>
+				<div>
+					<Label
+						id="pre-market-max-trades-label"
+						htmlFor="pre-market-max-trades"
+						className="mb-s-200 block text-small text-txt-200"
+					>
+						{t("maxTrades")}
+					</Label>
+					<Input
+						id="pre-market-max-trades"
+						type="number"
+						min="1"
+						step="1"
+						value={maxTrades}
+						onChange={(e) => setMaxTrades(e.target.value)}
+						placeholder="3"
+						disabled={isReadOnly}
+					/>
+				</div>
+			</div>
+
 			<div className="mb-s-300 sm:mb-m-400">
-				<Label id="pre-market-mood-label" htmlFor="pre-market-mood" className="mb-s-200 block text-small text-txt-200">{t("mood")}</Label>
+				<Label
+					id="pre-market-mood-label"
+					htmlFor="pre-market-mood"
+					className="mb-s-200 block text-small text-txt-200"
+				>
+					{t("mood")}
+				</Label>
 				<MoodSelector value={mood} onChange={setMood} disabled={isReadOnly} />
 			</div>
 
-			{/* Notes */}
 			<div>
-				<Label id="pre-market-notes-label" htmlFor="pre-market-notes-textarea" className="mb-s-200 block text-small text-txt-200">{t("preMarketLabel")}</Label>
+				<Label
+					id="pre-market-notes-label"
+					htmlFor="pre-market-notes-textarea"
+					className="mb-s-200 block text-small text-txt-200"
+				>
+					{t("preMarketLabel")}
+				</Label>
 				<Textarea
 					id="pre-market-notes-textarea"
 					value={preMarketNotes}

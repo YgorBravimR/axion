@@ -138,7 +138,7 @@ export const BiasBadge = ({ bias }: BiasBadgeProps) => {
 	return (
 		<div
 			className={cn(
-				"p-s-100 inline-flex items-center justify-center rounded",
+				"p-s-100 inline-flex items-center justify-center rounded-sm",
 				config.bgColor,
 				config.color
 			)}
