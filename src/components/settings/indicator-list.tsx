@@ -275,7 +275,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			{/* ════════ Indicator Groups Section ════════ */}
 			<section className="space-y-m-400">
 				<div className="flex flex-wrap items-center justify-between gap-m-400">
-					<h3 className="text-heading-3 font-semibold text-txt-100">
+					<h3 className="text-h3 font-semibold text-txt-100">
 						{tInd("groups")}
 					</h3>
 					<Button id="indicator-group-add-new" onClick={handleAddGroup}>
@@ -300,7 +300,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 			<section className="space-y-m-400">
 				<div className="flex flex-wrap items-center justify-between gap-m-400">
 					<div className="flex items-center gap-s-300">
-						<h3 className="text-heading-3 font-semibold text-txt-100">
+						<h3 className="text-h3 font-semibold text-txt-100">
 							{tInd("definitions")}
 						</h3>
 						{selectedGroupId && (

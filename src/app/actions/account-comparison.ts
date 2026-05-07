@@ -128,11 +128,6 @@ const getAccountComparisonData = async (
 				accountId: account.id,
 				accountName: account.name,
 				accountType: account.accountType,
-				config: {
-					defaultRiskPerTrade: account.defaultRiskPerTrade
-						? Number(account.defaultRiskPerTrade)
-						: null,
-				},
 				stats,
 				expectedValue,
 				equityCurve,

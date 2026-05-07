@@ -145,7 +145,7 @@ export const SessionAssetTable = ({
 									return (
 										<td key={session} className="py-s-200 hidden text-center sm:table-cell">
 											<div
-												className={`px-s-100 inline-flex flex-col items-center rounded py-px ${
+												className={`px-s-100 inline-flex flex-col items-center rounded-sm py-px ${
 													isBest ? "bg-acc-100/10" : ""
 												}`}
 											>

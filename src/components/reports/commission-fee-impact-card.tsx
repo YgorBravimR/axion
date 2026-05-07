@@ -108,13 +108,13 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Summary */}
 			<div className="mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
-				<div className="bg-trade-sell-muted border border-trade-sell/40 px-s-300 py-s-200 rounded">
+				<div className="bg-trade-sell-muted border border-trade-sell/40 px-s-300 py-s-200 rounded-sm">
 					<p className="text-tiny text-txt-300">{t("totalFees")}</p>
 					<p className="text-body sm:text-h3 text-trade-sell font-bold">
 						{formatCurrencyWithSign(-summary.totalFees)}
 					</p>
 				</div>
-				<div className="bg-bg-100 px-s-300 py-s-200 rounded">
+				<div className="bg-bg-100 px-s-300 py-s-200 rounded-sm">
 					<p className="text-tiny text-txt-300">{t("feesPercentOfGross")}</p>
 					<p className="text-body sm:text-h3 text-txt-100 font-semibold">
 						{summary.grossPnl > 0
@@ -122,7 +122,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 							: "—"}
 					</p>
 				</div>
-				<div className="bg-bg-100 px-s-300 py-s-200 rounded">
+				<div className="bg-bg-100 px-s-300 py-s-200 rounded-sm">
 					<p className="text-tiny text-txt-300">{t("avgFeePerTrade")}</p>
 					<p className="text-body sm:text-h3 text-txt-100 font-semibold">
 						{formatCurrencyWithSign(-summary.avgFeePerTrade)}
@@ -276,7 +276,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Insight */}
 			<div
-				className={cn("mt-m-500 p-s-300 rounded border", feeSeverity.border)}
+				className={cn("mt-m-500 p-s-300 rounded-sm border", feeSeverity.border)}
 			>
 				<p className="text-small text-txt-200">
 					<span className={cn("font-medium", feeSeverity.label)}>

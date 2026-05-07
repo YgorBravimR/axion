@@ -39,7 +39,7 @@ const RunDetailPanel = ({ run, onRecomputeTrades }: RunDetailPanelProps) => {
 			</div>
 
 			{/* Recipe snapshot — key config values */}
-			<div className="bg-bg-100/50 gap-m-300 grid grid-cols-2 rounded-lg p-s-300 sm:grid-cols-4">
+			<div className="bg-bg-100/50 gap-s-300 grid grid-cols-2 rounded-lg p-s-300 sm:grid-cols-4">
 				<ConfigItem label={t("configStop")} value={formatStopConfig(run, t)} />
 				<ConfigItem label={t("configTarget")} value={formatTargetConfig(run, t)} />
 				<ConfigItem label={t("configSizing")} value={formatSizingConfig(run, t)} />

@@ -74,7 +74,7 @@ const fetchCandles = async (
 	const requiredKeys = new Set(requiredIndicators)
 
 	const candles: CandleRow[] = rows.map((r) => {
-		let indicators: Record<string, number> = {}
+		const indicators: Record<string, number> = {}
 		if (needsIndicators && "indicators" in r && r.indicators) {
 			const raw = r.indicators as Record<string, number>
 			for (const key of requiredKeys) {

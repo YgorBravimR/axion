@@ -383,7 +383,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				<div className="mx-auto max-w-2xl space-y-m-400">
 					<p className="text-small text-txt-300 text-center">{t("wizard.setupDesc")}</p>
 
-					<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
+					<div className="border-bg-300 bg-bg-200 space-y-s-300 rounded-lg border p-m-400">
 						{/* Strategy */}
 						<div className="space-y-s-200">
 							<label htmlFor="optimize-strategy" className="text-small font-medium text-txt-200">{tBacktest("builder.strategy")}</label>
@@ -627,7 +627,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								<TabsContent value="chart" className="space-y-m-400 mt-m-400">
 									{pinnedRuns.length > 0 && (
 										<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-											<h3 className="text-h3 mb-m-300 font-semibold text-txt-100">
+											<h3 className="text-h3 mb-s-300 font-semibold text-txt-100">
 												{t("equityOverlay")}
 											</h3>
 											<EquityOverlayChart runs={pinnedRuns} />
@@ -641,7 +641,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 								{/* Table tab: comparison table */}
 								<TabsContent value="table" className="mt-m-400">
-									<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
+									<div className="border-bg-300 bg-bg-200 space-y-s-300 rounded-lg border p-m-400">
 										<div className="flex items-center gap-s-200">
 											<h3 className="text-h3 font-semibold text-txt-100">
 												{t("comparisonTable")}

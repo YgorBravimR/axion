@@ -220,7 +220,7 @@ const BugReportsList = () => {
 					<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-txt-300" />
 				</div>
 			) : reports.length === 0 ? (
-				<div className="flex flex-col items-center justify-center gap-m-300 py-l-700 text-txt-300">
+				<div className="flex flex-col items-center justify-center gap-s-300 py-l-700 text-txt-300">
 					<Bug className="h-10 w-10" />
 					<p className="text-small">{t("noReports")}</p>
 				</div>
@@ -231,7 +231,7 @@ const BugReportsList = () => {
 							key={report.id}
 							type="button"
 							onClick={() => handleViewDetail(report.id)}
-							className="flex w-full items-center gap-m-300 rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-m-300 text-left transition-colors hover:border-bg-300/80 hover:bg-bg-300/50 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
+							className="flex w-full items-center gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-s-300 text-left transition-colors hover:border-bg-300/80 hover:bg-bg-300/50 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
 						>
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-s-200">
@@ -289,7 +289,7 @@ const BugReportsList = () => {
 						) : selectedReport ? (
 							<div className="space-y-m-500">
 								{/* Header */}
-								<div className="flex items-start justify-between gap-m-300">
+								<div className="flex items-start justify-between gap-s-300">
 									<div>
 										<h3 className="text-body font-medium text-txt-100">
 											{selectedReport.subject}
@@ -329,7 +329,7 @@ const BugReportsList = () => {
 								</div>
 
 								{/* Metadata */}
-								<div className="grid grid-cols-2 gap-m-300 text-tiny">
+								<div className="grid grid-cols-2 gap-s-300 text-tiny">
 									<div>
 										<p className="text-txt-300">{t("detail.reportedBy")}</p>
 										<p className="text-txt-100">
@@ -440,7 +440,7 @@ const BugReportsList = () => {
 										<summary className="cursor-pointer text-tiny font-medium text-txt-200">
 											{t("detail.consoleLogs")}
 										</summary>
-										<pre className="mt-s-200 max-h-48 overflow-auto rounded-md bg-bg-100 p-m-300 text-micro text-txt-300">
+										<pre className="mt-s-200 max-h-48 overflow-auto rounded-md bg-bg-100 p-s-300 text-micro text-txt-300">
 											{formatJson(selectedReport.consoleLogs)}
 										</pre>
 									</details>
@@ -452,7 +452,7 @@ const BugReportsList = () => {
 										<summary className="cursor-pointer text-tiny font-medium text-txt-200">
 											{t("detail.networkErrors")}
 										</summary>
-										<pre className="mt-s-200 max-h-48 overflow-auto rounded-md bg-bg-100 p-m-300 text-micro text-txt-300">
+										<pre className="mt-s-200 max-h-48 overflow-auto rounded-md bg-bg-100 p-s-300 text-micro text-txt-300">
 											{formatJson(selectedReport.networkErrors)}
 										</pre>
 									</details>
@@ -460,7 +460,7 @@ const BugReportsList = () => {
 
 								{/* Reject reason (if rejected) */}
 								{selectedReport.rejectReason && (
-									<div className="rounded-md border border-fb-error/20 bg-fb-error/5 p-m-300">
+									<div className="rounded-md border border-fb-error/20 bg-fb-error/5 p-s-300">
 										<p className="text-tiny font-medium text-fb-error mb-s-100">
 											{t("actions.rejectReason")}
 										</p>

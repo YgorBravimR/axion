@@ -247,7 +247,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 									{activeDailyBreakdown.map((day) => (
 											<div
 												key={day.date}
-												className="bg-bg-100 px-s-300 py-s-200 flex items-center justify-between rounded"
+												className="bg-bg-100 px-s-300 py-s-200 flex items-center justify-between rounded-sm"
 											>
 												<span className="text-small text-txt-200">
 													{format(parseISO(day.date), "EEE, MMM d", {
@@ -286,7 +286,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 											<Link
 												key={trade.id}
 												href={`/journal/${trade.id}`}
-												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded transition-colors"
+												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded-sm transition-colors"
 											>
 												<div className="gap-s-200 flex items-center">
 													<Badge
@@ -328,7 +328,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 											<Link
 												key={trade.id}
 												href={`/journal/${trade.id}`}
-												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded transition-colors"
+												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded-sm transition-colors"
 											>
 												<div className="gap-s-200 flex items-center">
 													<Badge

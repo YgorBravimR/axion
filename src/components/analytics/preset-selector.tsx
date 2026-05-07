@@ -240,7 +240,7 @@ const PresetSelector = ({
 								<button
 									type="button"
 									tabIndex={0}
-									className="min-w-0 flex-1 text-left rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+									className="min-w-0 flex-1 text-left rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 									onClick={() => handleApply(preset)}
 									aria-label={preset.name} title={preset.name}
 								>
@@ -257,7 +257,7 @@ const PresetSelector = ({
 										tabIndex={0}
 										onClick={() => handleSetDefault(preset)}
 										className={cn(
-											"rounded p-s-100 transition-colors",
+											"rounded-sm p-s-100 transition-colors",
 											preset.isDefault
 												? "text-acc-100"
 												: "text-txt-300 hover:text-acc-100"
@@ -275,7 +275,7 @@ const PresetSelector = ({
 										type="button"
 										tabIndex={0}
 										onClick={() => handleUpdateFilters(preset)}
-										className="rounded p-s-200 text-txt-300 transition-colors hover:text-txt-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+										className="rounded-sm p-s-200 text-txt-300 transition-colors hover:text-txt-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 										aria-label={t("overwrite")}
 									>
 										<Check className="h-3 w-3" />
@@ -287,7 +287,7 @@ const PresetSelector = ({
 											type="button"
 											tabIndex={0}
 											onClick={() => handleDelete(preset.id)}
-											className="rounded p-s-200 text-trade-sell transition-colors hover:text-trade-sell/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+											className="rounded-sm p-s-200 text-trade-sell transition-colors hover:text-trade-sell/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 											aria-label={t("deleteConfirm")}
 										>
 											<Trash2 className="h-3 w-3" />
@@ -297,7 +297,7 @@ const PresetSelector = ({
 											type="button"
 											tabIndex={0}
 											onClick={() => setConfirmDeleteId(preset.id)}
-											className="rounded p-s-200 text-txt-300 transition-colors hover:text-trade-sell focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+											className="rounded-sm p-s-200 text-txt-300 transition-colors hover:text-trade-sell focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 											aria-label={t("delete")}
 										>
 											<Trash2 className="h-3 w-3" />
@@ -307,7 +307,7 @@ const PresetSelector = ({
 
 								{/* Default badge (always visible) */}
 								{preset.isDefault && (
-									<span className="bg-acc-100/10 text-acc-100 text-micro shrink-0 rounded px-1.5 py-0.5 font-medium">
+									<span className="bg-acc-100/10 text-acc-100 text-micro shrink-0 rounded-sm px-1.5 py-0.5 font-medium">
 										{t("default")}
 									</span>
 								)}

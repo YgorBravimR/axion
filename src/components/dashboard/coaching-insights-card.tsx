@@ -79,7 +79,7 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 						<span className="text-small font-medium text-txt-100 truncate">
 							{title}
 						</span>
-						<span className={cn("text-micro shrink-0 rounded px-1.5 py-0.5 font-medium", styles.badge)}>
+						<span className={cn("text-micro shrink-0 rounded-sm px-1.5 py-0.5 font-medium", styles.badge)}>
 							{t(`severity.${insight.severity}`)}
 						</span>
 					</div>

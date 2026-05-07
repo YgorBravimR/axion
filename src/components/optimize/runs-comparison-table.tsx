@@ -83,7 +83,7 @@ const RunsComparisonTable = ({
 							{run.label}
 						</span>
 						{isBest && (
-							<Badge id={`best-${run.id}`} variant="outline" className="border-acc-100 text-acc-100 text-[10px] px-s-100 py-0">
+							<Badge id={`best-${run.id}`} variant="outline" className="border-acc-100 text-acc-100 text-micro px-s-100 py-0">
 								{t("bestRun")}
 							</Badge>
 						)}

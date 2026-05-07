@@ -133,7 +133,7 @@ const CapitalEventLog = ({ events, year, onEventDeleted, onEventAdded }: Capital
               >
                 <span className="text-txt-300 font-mono">{ev.eventDate}</span>
                 <span
-                  className={`rounded px-2 py-0.5 text-xs font-medium ${
+                  className={`rounded-sm px-2 py-0.5 text-xs font-medium ${
                     ev.eventType === "deposit" ? "bg-trade-buy/20 text-trade-buy" : "bg-acc-100/20 text-acc-100"
                   }`}
                 >

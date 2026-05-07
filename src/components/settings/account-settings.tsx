@@ -562,7 +562,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 
 			{/* Trading Costs (BR) */}
 			<div id="settings-trading-costs" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
-				<h2 className="text-body font-semibold text-txt-100 mb-m-300">
+				<h2 className="text-body font-semibold text-txt-100 mb-s-300">
 					{t("tradingCosts")}
 				</h2>
 				<FeeRateForm />

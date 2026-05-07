@@ -261,7 +261,7 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 	)
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-m-300 p-m-400 rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
 			{/* Header */}
 			<div>
 				<h3 className="text-h3 text-txt-100 font-semibold">

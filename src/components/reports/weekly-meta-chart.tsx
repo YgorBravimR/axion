@@ -74,7 +74,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
   return (
     <div className={className} role="img" aria-label={`Weekly Meta vs Real chart for ${data.year}`}>
       {!data.hasPlan && (
-        <p className="mb-3 text-xs text-txt-300 border border-bg-300 rounded px-3 py-2">
+        <p className="mb-3 text-xs text-txt-300 border border-bg-300 rounded-sm px-3 py-2">
           No yearly plan found — target lines unavailable. Create a yearly plan to see Meta Bruto and Meta Líquido targets.
         </p>
       )}

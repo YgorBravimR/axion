@@ -57,7 +57,7 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 			{cards.map((card) => (
 				<div
 					key={card.label}
-					className="border-bg-300 bg-bg-200 rounded-lg border p-m-300 text-center"
+					className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 text-center"
 				>
 					<p className="text-tiny text-txt-300 mb-s-100">{card.label}</p>
 					<p className={`text-h2 font-semibold tabular-nums ${card.colorClass}`}>

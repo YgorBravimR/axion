@@ -236,7 +236,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 											</td>
 											<td className="px-s-300 py-s-200">
 												<span
-													className={`rounded px-s-200 py-s-100 text-tiny ${
+													className={`rounded-sm px-s-200 py-s-100 text-tiny ${
 														tag.tagType === "setup"
 															? "bg-trade-buy/20 text-trade-buy"
 															: tag.tagType === "mistake"

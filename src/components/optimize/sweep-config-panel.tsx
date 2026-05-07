@@ -163,7 +163,7 @@ const SweepConfigPanel = ({ recipe, activeRanges, onRangesChange }: SweepConfigP
 	const numericParams = availableParams.filter((p): p is NumericSweepableParam => p.kind === "numeric")
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
+		<div className="border-bg-300 bg-bg-200 space-y-s-300 rounded-lg border p-m-400">
 			<h3 className="text-h3 font-semibold text-txt-100">{t("sweepParameters")}</h3>
 			<p className="text-tiny text-txt-300">{t("sweepParametersHint")}</p>
 
@@ -272,7 +272,7 @@ const SweepConfigPanel = ({ recipe, activeRanges, onRangesChange }: SweepConfigP
 
 								{/* Min / Max / Step inputs (only when active) */}
 								{active && range && (
-									<div className="grid grid-cols-3 gap-s-200 pl-m-300">
+									<div className="grid grid-cols-3 gap-s-200 pl-s-300">
 										<div className="space-y-s-100">
 											<span className="text-tiny text-txt-300">{t("sweepMin")}</span>
 											<Input

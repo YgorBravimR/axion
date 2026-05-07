@@ -159,7 +159,7 @@ const ComparisonNormalizedTable = ({
 							step="10"
 							value={referenceRisk}
 							onChange={(e) => handleRiskChange(e.target.value)}
-							className="border-bg-300 bg-bg-100 text-txt-100 text-small w-24 rounded border px-s-200 py-s-100"
+							className="border-bg-300 bg-bg-100 text-txt-100 text-small w-24 rounded-sm border px-s-200 py-s-100"
 						/>
 					</div>
 				</div>

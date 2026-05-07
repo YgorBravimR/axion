@@ -50,13 +50,13 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 
 			{/* Summary */}
 			<div className="mt-m-500 grid grid-cols-2 gap-m-400">
-				<div className="rounded bg-trade-sell-muted px-s-300 py-s-200">
+				<div className="rounded-sm bg-trade-sell-muted px-s-300 py-s-200">
 					<p className="text-tiny text-txt-300">{t("totalCost")}</p>
 					<p className="text-h3 font-bold text-trade-sell tabular-nums break-all min-w-0">
 						{formatCurrencyWithSign(-totalMistakeCost)}
 					</p>
 				</div>
-				<div className="rounded bg-bg-100 px-s-300 py-s-200">
+				<div className="rounded-sm bg-bg-100 px-s-300 py-s-200">
 					<p className="text-tiny text-txt-300">{t("mostCostlyMistake")}</p>
 					<p className="text-body font-medium text-txt-100">
 						{mostCostlyMistake || "-"}
@@ -113,7 +113,7 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 			</div>
 
 			{/* Insight */}
-			<div className="mt-m-500 rounded border border-warning/20 bg-warning/5 p-s-300">
+			<div className="mt-m-500 rounded-sm border border-warning/20 bg-warning/5 p-s-300">
 				<p className="text-small text-txt-200">
 					<span className="font-medium text-warning">{t("insight")}:</span>{" "}
 					{t("insightText", {

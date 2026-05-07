@@ -174,7 +174,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 					{/* Best/Worst Day */}
 					<div className="mt-m-400 grid grid-cols-1 gap-m-400 sm:grid-cols-2">
 						{summary.bestDay && (
-							<div className="flex items-center gap-s-200 rounded bg-trade-buy-muted px-s-300 py-s-200">
+							<div className="flex items-center gap-s-200 rounded-sm bg-trade-buy-muted px-s-300 py-s-200">
 								<TrendingUp className="h-4 w-4 text-trade-buy" />
 								<div>
 									<p className="text-tiny text-txt-200">{t("bestDay")}</p>
@@ -190,7 +190,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 							</div>
 						)}
 						{summary.worstDay && (
-							<div className="flex items-center gap-s-200 rounded bg-trade-sell-muted px-s-300 py-s-200">
+							<div className="flex items-center gap-s-200 rounded-sm bg-trade-sell-muted px-s-300 py-s-200">
 								<TrendingDown className="h-4 w-4 text-trade-sell" />
 								<div>
 									<p className="text-tiny text-txt-200">{t("worstDay")}</p>
@@ -230,7 +230,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 										{formattedWeeklyBreakdown.map((week) => (
 											<div
 												key={week.weekStart}
-												className="flex items-center justify-between rounded bg-bg-100 px-s-300 py-s-200"
+												className="flex items-center justify-between rounded-sm bg-bg-100 px-s-300 py-s-200"
 											>
 												<span className="text-small text-txt-200">
 													{week.weekStartLabel} -{" "}
@@ -270,7 +270,7 @@ export const MonthlyReportCard = ({ initialReport }: MonthlyReportCardProps) => 
 										{assetBreakdown.slice(0, 5).map((asset) => (
 											<div
 												key={asset.asset}
-												className="flex items-center justify-between rounded bg-bg-100 px-s-300 py-s-200"
+												className="flex items-center justify-between rounded-sm bg-bg-100 px-s-300 py-s-200"
 											>
 												<div className="flex items-center gap-s-200">
 													<Badge id={`badge-monthly-asset-${asset.asset}`} variant="outline" className="text-tiny">

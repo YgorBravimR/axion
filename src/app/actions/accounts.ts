@@ -10,7 +10,6 @@ import {
 	assets,
 	timeframes,
 	trades,
-	dailyAccountNotes,
 	dailyChecklists,
 	dailyAssetSettings,
 	notaImports,
@@ -38,13 +37,6 @@ interface AccountInput {
 	profitSharePercentage?: number
 	dayTradeTaxRate?: number
 	swingTradeTaxRate?: number
-	defaultRiskPerTrade?: number
-	maxDailyLoss?: number
-	maxDailyTrades?: number
-	maxMonthlyLoss?: number
-	allowSecondOpAfterLoss?: boolean
-	reduceRiskAfterLoss?: boolean
-	riskReductionFactor?: number
 	defaultCurrency?: string
 	defaultBreakevenTicks?: number
 	showTaxEstimates?: boolean
@@ -121,8 +113,6 @@ export const createAccount = async (
 			profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
 			dayTradeTaxRate: input.dayTradeTaxRate?.toString() ?? "20.00",
 			swingTradeTaxRate: input.swingTradeTaxRate?.toString() ?? "15.00",
-			maxDailyLoss: input.maxDailyLoss,
-			maxMonthlyLoss: input.maxMonthlyLoss,
 		}
 		const encryptedFields = dek ? encryptAccountFields(encryptableValues, dek) : {}
 
@@ -137,9 +127,6 @@ export const createAccount = async (
 				profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
 				dayTradeTaxRate: input.dayTradeTaxRate?.toString() ?? "20.00",
 				swingTradeTaxRate: input.swingTradeTaxRate?.toString() ?? "15.00",
-				defaultRiskPerTrade: input.defaultRiskPerTrade?.toString(),
-				maxDailyLoss: input.maxDailyLoss?.toString() ?? null,
-				maxDailyTrades: input.maxDailyTrades,
 				defaultCurrency: input.defaultCurrency ?? "BRL",
 				showTaxEstimates: input.showTaxEstimates ?? true,
 				showPropCalculations: input.showPropCalculations ?? true,
@@ -212,22 +199,11 @@ export const updateAccount = async (
 			updateData.dayTradeTaxRate = input.dayTradeTaxRate.toString()
 		if (input.swingTradeTaxRate !== undefined)
 			updateData.swingTradeTaxRate = input.swingTradeTaxRate.toString()
-		if (input.defaultRiskPerTrade !== undefined)
-			updateData.defaultRiskPerTrade = input.defaultRiskPerTrade?.toString()
-		if (input.maxDailyLoss !== undefined) updateData.maxDailyLoss = input.maxDailyLoss?.toString() ?? null
-		if (input.maxDailyTrades !== undefined) updateData.maxDailyTrades = input.maxDailyTrades
 		if (input.defaultCurrency !== undefined) updateData.defaultCurrency = input.defaultCurrency
 		if (input.defaultBreakevenTicks !== undefined) updateData.defaultBreakevenTicks = input.defaultBreakevenTicks
 		if (input.showTaxEstimates !== undefined) updateData.showTaxEstimates = input.showTaxEstimates
 		if (input.showPropCalculations !== undefined)
 			updateData.showPropCalculations = input.showPropCalculations
-		if (input.maxMonthlyLoss !== undefined) updateData.maxMonthlyLoss = input.maxMonthlyLoss?.toString() ?? null
-		if (input.allowSecondOpAfterLoss !== undefined)
-			updateData.allowSecondOpAfterLoss = input.allowSecondOpAfterLoss
-		if (input.reduceRiskAfterLoss !== undefined)
-			updateData.reduceRiskAfterLoss = input.reduceRiskAfterLoss
-		if (input.riskReductionFactor !== undefined)
-			updateData.riskReductionFactor = input.riskReductionFactor?.toString()
 		if (input.replayStartDate !== undefined && input.accountType === "replay") {
 			updateData.replayCurrentDate = new Date(input.replayStartDate)
 		}
@@ -308,8 +284,11 @@ export const deleteAccount = async (
  * Deletes all trading data for the current account while preserving the account
  * and its configuration (asset overrides, timeframes, etc.).
  *
- * Tables cleared: trades (cascades to executions/tags), dailyAccountNotes,
+ * Tables cleared: trades (cascades to executions/tags),
  * dailyChecklists (cascades to completions), dailyAssetSettings, notaImports.
+ *
+ * Note: dailyPlan rows are part of the fractal plan cascade and are NOT cleared
+ * here — wiping trade data does not invalidate the planning cascade.
  */
 export const deleteAllTradingData = async (): Promise<{
 	status: "success" | "error"
@@ -323,7 +302,6 @@ export const deleteAllTradingData = async (): Promise<{
 		// trades cascade-deletes tradeExecutions + tradeTags
 		// dailyChecklists cascade-deletes checklistCompletions
 		await db.delete(trades).where(eq(trades.accountId, accountId))
-		await db.delete(dailyAccountNotes).where(eq(dailyAccountNotes.accountId, accountId))
 		await db.delete(dailyChecklists).where(eq(dailyChecklists.accountId, accountId))
 		await db.delete(dailyAssetSettings).where(eq(dailyAssetSettings.accountId, accountId))
 		await db.delete(notaImports).where(eq(notaImports.accountId, accountId))

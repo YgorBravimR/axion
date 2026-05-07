@@ -13,7 +13,6 @@ import { requireAuth } from "@/app/actions/auth"
 import { getTranslations } from "next-intl/server"
 
 export interface RiskSettings {
-	defaultRiskPercent: number
 	accountBalance: number
 }
 
@@ -238,32 +237,16 @@ export const updateUserSettings = async (
 export const getRiskSettings = async (): Promise<ActionResponse<RiskSettings>> => {
 	const t = await getTranslations("settings")
 	try {
-		const { accountId } = await requireAuth()
+		await requireAuth()
 
-		// Get account for risk settings
-		const account = await db.query.tradingAccounts.findFirst({
-			where: eq(tradingAccounts.id, accountId),
+		const balanceSetting = await db.query.settings.findFirst({
+			where: eq(settings.key, "account_balance"),
 		})
-
-		// Fallback to global settings
-		const [riskSetting, balanceSetting] = await Promise.all([
-			db.query.settings.findFirst({
-				where: eq(settings.key, "default_risk_percent"),
-			}),
-			db.query.settings.findFirst({
-				where: eq(settings.key, "account_balance"),
-			}),
-		])
 
 		return {
 			status: "success",
 			message: t("actions.settingsRetrieved"),
 			data: {
-				defaultRiskPercent: account?.defaultRiskPerTrade
-					? Number(account.defaultRiskPerTrade)
-					: riskSetting
-						? Number(riskSetting.value)
-						: 1.0,
 				accountBalance: balanceSetting ? Number(balanceSetting.value) : 10000,
 			},
 		}
@@ -281,38 +264,9 @@ export const updateRiskSettings = async (
 ): Promise<ActionResponse<RiskSettings>> => {
 	const t = await getTranslations("settings")
 	try {
-		const { accountId } = await requireAuth()
+		await requireAuth()
 		const now = new Date()
 
-		// Update account's default risk setting
-		await db
-			.update(tradingAccounts)
-			.set({
-				defaultRiskPerTrade: String(data.defaultRiskPercent),
-				updatedAt: now,
-			})
-			.where(eq(tradingAccounts.id, accountId))
-
-		// Also update global settings for backwards compatibility
-		const existingRisk = await db.query.settings.findFirst({
-			where: eq(settings.key, "default_risk_percent"),
-		})
-
-		if (existingRisk) {
-			await db
-				.update(settings)
-				.set({ value: String(data.defaultRiskPercent), updatedAt: now })
-				.where(eq(settings.key, "default_risk_percent"))
-		} else {
-			await db.insert(settings).values({
-				key: "default_risk_percent",
-				value: String(data.defaultRiskPercent),
-				description: "Default position risk percentage",
-				updatedAt: now,
-			})
-		}
-
-		// Upsert account_balance (still global for now)
 		const existingBalance = await db.query.settings.findFirst({
 			where: eq(settings.key, "account_balance"),
 		})

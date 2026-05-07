@@ -33,9 +33,9 @@ const RDistributionTab = ({ from, to }: Props) => {
 			{rows.map((r) => (
 				<div key={r.bucket} className="flex items-center gap-s-300">
 					<span className="w-24 text-sm text-txt-200">{LABELS[r.bucket]}</span>
-					<div className="h-3 flex-1 rounded bg-bg-300">
+					<div className="h-3 flex-1 rounded-sm bg-bg-300">
 						<div
-							className="h-full rounded bg-acc-100"
+							className="h-full rounded-sm bg-acc-100"
 							style={{ width: `${(r.count / max) * 100}%` }}
 						/>
 					</div>

@@ -14,7 +14,6 @@ import { useToast } from "@/components/ui/toast"
 import { useFormatting } from "@/hooks/use-formatting"
 
 interface RiskSettingsState {
-	defaultRiskPercent: number
 	accountBalance: number
 }
 
@@ -26,11 +25,9 @@ export const GeneralSettings = () => {
 	const [isPending, startTransition] = useTransition()
 	const [isEditing, setIsEditing] = useState(false)
 	const [settings, setSettings] = useState<RiskSettingsState>({
-		defaultRiskPercent: 1.0,
 		accountBalance: 10000,
 	})
 	const [editValues, setEditValues] = useState<RiskSettingsState>({
-		defaultRiskPercent: 1.0,
 		accountBalance: 10000,
 	})
 
@@ -111,38 +108,12 @@ export const GeneralSettings = () => {
 					)}
 				</div>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex items-center justify-between gap-m-400">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("defaultRisk")}</p>
-							<p className="text-tiny text-txt-300">
-								{t("defaultRiskDesc")}
-							</p>
-						</div>
-						{isEditing ? (
-							<div className="flex items-center gap-s-200">
-								<Input
-									id="general-defaultRisk"
-									type="number"
-									step="0.1"
-									min="0.1"
-									max="100"
-									value={editValues.defaultRiskPercent}
-									onChange={(e) =>
-										setEditValues((prev) => ({
-											...prev,
-											defaultRiskPercent: Number(e.target.value),
-										}))
-									}
-									className="max-w-[96px] min-w-[64px] flex-shrink text-right"
-								/>
-								<span className="text-small text-txt-300">%</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{settings.defaultRiskPercent}%
-							</span>
-						)}
-					</div>
+					<p className="text-tiny text-txt-300">
+						{t("riskInPlanHint")}{" "}
+						<Link href="/" className="text-acc-100 hover:underline">
+							{t("openPlans")}
+						</Link>
+					</p>
 					<div className="flex items-center justify-between gap-m-400">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("accountBalance")}</p>
@@ -165,7 +136,7 @@ export const GeneralSettings = () => {
 											accountBalance: Number(e.target.value),
 										}))
 									}
-									className="max-w-[128px] min-w-[80px] flex-shrink text-right"
+									className="max-w-[128px] min-w-[80px] shrink text-right"
 								/>
 							</div>
 						) : (

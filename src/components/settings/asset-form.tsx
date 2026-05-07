@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -50,13 +51,13 @@ export const AssetForm = ({
 		name: asset?.name ?? "",
 		assetTypeId: asset?.assetTypeId ?? "",
 		tickSize: asset?.tickSize ?? "",
-		tickValue: asset?.tickValue ? fromCents(asset.tickValue).toString() : "",
 		currency: asset?.currency ?? "BRL",
 		multiplier: asset?.multiplier ?? "1",
 	})
+	const [tickValue, setTickValue] = useState<number | null>(
+		asset?.tickValue ? fromCents(asset.tickValue) : null,
+	)
 
-	// Update form data when asset prop changes (for edit mode)
-	// Note: tickValue is stored in cents, convert to BRL for display
 	useEffect(() => {
 		if (asset) {
 			setFormData({
@@ -64,21 +65,20 @@ export const AssetForm = ({
 				name: asset.name ?? "",
 				assetTypeId: asset.assetTypeId ?? "",
 				tickSize: asset.tickSize ?? "",
-				tickValue: asset.tickValue ? fromCents(asset.tickValue).toString() : "",
 				currency: asset.currency ?? "BRL",
 				multiplier: asset.multiplier ?? "1",
 			})
+			setTickValue(asset.tickValue ? fromCents(asset.tickValue) : null)
 		} else {
-			// Reset form for create mode
 			setFormData({
 				symbol: "",
 				name: "",
 				assetTypeId: "",
 				tickSize: "",
-				tickValue: "",
 				currency: "BRL",
 				multiplier: "1",
 			})
+			setTickValue(null)
 		}
 	}, [asset])
 
@@ -92,7 +92,7 @@ export const AssetForm = ({
 				name: formData.name,
 				assetTypeId: formData.assetTypeId,
 				tickSize: parseFloat(formData.tickSize.toString()),
-				tickValue: parseFloat(formData.tickValue.toString()),
+				tickValue: tickValue ?? 0,
 				currency: formData.currency,
 				multiplier: parseFloat(formData.multiplier.toString()),
 				isActive: true,
@@ -110,10 +110,10 @@ export const AssetForm = ({
 					name: "",
 					assetTypeId: "",
 					tickSize: "",
-					tickValue: "",
 					currency: "BRL",
 					multiplier: "1",
 				})
+				setTickValue(null)
 			} else {
 				setError(result.error ?? tCommon("genericError"))
 			}
@@ -202,15 +202,13 @@ export const AssetForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-asset-tick-value" htmlFor="tickValue" required filled={!!formData.tickValue}>{t("tickValue")} ({formData.currency})</Label>
-							<Input
+							<Label id="label-asset-tick-value" htmlFor="tickValue" required filled={tickValue != null && tickValue > 0}>{t("tickValue")} ({formData.currency})</Label>
+							<CurrencyInput
 								id="tickValue"
-								type="number"
-								step="0.01"
-								placeholder="1.00"
-								value={formData.tickValue}
-								onChange={(e) => handleChange("tickValue", e.target.value)}
-								required
+								value={tickValue}
+								onValueChange={setTickValue}
+								decimals={2}
+								showPrefix={false}
 							/>
 							<p className="text-tiny text-txt-300">{t("tickValueHint")}</p>
 						</div>

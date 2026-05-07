@@ -189,7 +189,7 @@ export const TradingCalendar = memo(
 									key={dateKey}
 									data-date-key={isClickable ? dateKey : undefined}
 									className={cn(
-										"p-s-100 aspect-square rounded sm:rounded-md",
+										"p-s-100 aspect-square rounded-sm sm:rounded-md",
 										bgClass,
 										isToday && "ring-acc-100 ring-1 sm:ring-2",
 										isClickable && "cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
