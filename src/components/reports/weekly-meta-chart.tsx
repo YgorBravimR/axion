@@ -17,6 +17,15 @@ import type {
 	WeeklyMetaVsRealData,
 	WeeklyMetaRow,
 } from "@/lib/reports/annual-types"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+	TableCaption,
+} from "@/components/ui/table"
 
 interface WeeklyMetaChartProps {
 	data: WeeklyMetaVsRealData
@@ -198,33 +207,37 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 			{/* Accessible tabular fallback for screen readers */}
 			<details className="sr-only">
 				<summary>Weekly data table</summary>
-				<table>
-					<caption>Weekly Meta vs Real — {data.year}</caption>
-					<thead>
-						<tr>
-							<th scope="col">Week</th>
-							<th scope="col">Period</th>
-							<th scope="col">Resultado</th>
-							<th scope="col">Meta Bruto</th>
-							<th scope="col">Meta Líquido</th>
-						</tr>
-					</thead>
-					<tbody>
+				<Table>
+					<TableCaption>Weekly Meta vs Real — {data.year}</TableCaption>
+					<TableHeader>
+						<TableRow>
+							<TableHead scope="col">Week</TableHead>
+							<TableHead scope="col">Period</TableHead>
+							<TableHead scope="col">Resultado</TableHead>
+							<TableHead scope="col">Meta Bruto</TableHead>
+							<TableHead scope="col">Meta Líquido</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
 						{data.weeks.map((w) => (
-							<tr key={w.isoWeek}>
-								<td>W{w.isoWeek}</td>
-								<td>
+							<TableRow key={w.isoWeek}>
+								<TableCell>W{w.isoWeek}</TableCell>
+								<TableCell>
 									{w.weekStart} to {w.weekEnd}
-								</td>
-								<td>{w.disabled ? "—" : formatBRL(w.resultado)}</td>
-								<td>{w.metaBruto !== null ? formatBRL(w.metaBruto) : "—"}</td>
-								<td>
+								</TableCell>
+								<TableCell>
+									{w.disabled ? "—" : formatBRL(w.resultado)}
+								</TableCell>
+								<TableCell>
+									{w.metaBruto !== null ? formatBRL(w.metaBruto) : "—"}
+								</TableCell>
+								<TableCell>
 									{w.metaLiquido !== null ? formatBRL(w.metaLiquido) : "—"}
-								</td>
-							</tr>
+								</TableCell>
+							</TableRow>
 						))}
-					</tbody>
-				</table>
+					</TableBody>
+				</Table>
 			</details>
 		</div>
 	)

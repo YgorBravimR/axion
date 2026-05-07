@@ -39,6 +39,14 @@ import {
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
+import {
 	recognizeImage,
 	parseProfitChartOcr,
 	type OcrProgressInfo,
@@ -869,34 +877,34 @@ export const OcrImport = () => {
 									</div>
 
 									{/* Executions Table */}
-									<div className="border-bg-300 overflow-x-auto rounded-sm border">
-										<table className="w-full">
-											<thead>
-												<tr className="border-bg-300 bg-bg-100 border-b">
-													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-left font-medium">
+									<div className="border-bg-300 rounded-sm border">
+										<Table className="w-full">
+											<TableHeader>
+												<TableRow className="border-bg-300 bg-bg-100 border-b">
+													<TableHead className="px-m-400 py-s-300 text-tiny text-txt-300 text-left font-medium">
 														{tCommon("type")}
-													</th>
-													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-left font-medium">
+													</TableHead>
+													<TableHead className="px-m-400 py-s-300 text-tiny text-txt-300 text-left font-medium">
 														{tCommon("time")}
-													</th>
-													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-right font-medium">
+													</TableHead>
+													<TableHead className="px-m-400 py-s-300 text-tiny text-txt-300 text-right font-medium">
 														{tCommon("qty")}
-													</th>
-													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-right font-medium">
+													</TableHead>
+													<TableHead className="px-m-400 py-s-300 text-tiny text-txt-300 text-right font-medium">
 														{tCommon("price")}
-													</th>
-													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-center font-medium">
+													</TableHead>
+													<TableHead className="px-m-400 py-s-300 text-tiny text-txt-300 text-center font-medium">
 														{tCommon("actions")}
-													</th>
-												</tr>
-											</thead>
-											<tbody>
+													</TableHead>
+												</TableRow>
+											</TableHeader>
+											<TableBody>
 												{trade.executions.map((ex) => (
-													<tr
+													<TableRow
 														key={ex.id}
 														className="border-bg-300 border-b last:border-0"
 													>
-														<td className="px-m-400 py-s-300">
+														<TableCell className="px-m-400 py-s-300">
 															<Select
 																value={ex.type}
 																onValueChange={(value) =>
@@ -925,11 +933,11 @@ export const OcrImport = () => {
 																	</SelectItem>
 																</SelectContent>
 															</Select>
-														</td>
-														<td className="px-m-400 py-s-300 text-small text-txt-200">
+														</TableCell>
+														<TableCell className="px-m-400 py-s-300 text-small text-txt-200">
 															{ex.time}
-														</td>
-														<td className="px-m-400 py-s-300">
+														</TableCell>
+														<TableCell className="px-m-400 py-s-300">
 															<Input
 																id={`ocr-execution-quantity-${ex.id}`}
 																type="number"
@@ -941,8 +949,8 @@ export const OcrImport = () => {
 																}
 																className="text-small w-20 text-right"
 															/>
-														</td>
-														<td className="px-m-400 py-s-300">
+														</TableCell>
+														<TableCell className="px-m-400 py-s-300">
 															<Input
 																id={`ocr-execution-price-${ex.id}`}
 																type="number"
@@ -955,8 +963,8 @@ export const OcrImport = () => {
 																}
 																className="text-small w-28 text-right"
 															/>
-														</td>
-														<td className="px-m-400 py-s-300 text-center">
+														</TableCell>
+														<TableCell className="px-m-400 py-s-300 text-center">
 															<Button
 																id={`ocr-remove-execution-${trade.id}-${ex.id}`}
 																variant="ghost"
@@ -968,11 +976,11 @@ export const OcrImport = () => {
 															>
 																<Trash2 className="text-fb-error h-4 w-4" />
 															</Button>
-														</td>
-													</tr>
+														</TableCell>
+													</TableRow>
 												))}
-											</tbody>
-										</table>
+											</TableBody>
+										</Table>
 									</div>
 								</div>
 							)}

@@ -7,6 +7,14 @@ import { Input } from "@/components/ui/input"
 import type { AccountComparisonMetrics } from "@/types"
 import { COMPARISON_COLORS } from "./comparison-colors"
 import { formatBrlWithSign, formatRatio } from "@/lib/formatting"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 interface ComparisonNormalizedTableProps {
 	accounts: AccountComparisonMetrics[]
@@ -63,46 +71,53 @@ const ComparisonNormalizedTable = ({
 		}
 	}
 
-	const metrics = useMemo<NormalizedMetric[]>(() => [
-		{
-			key: "normalizedEV",
-			label: t("expectedValue"),
-			getRValue: (a) => a.expectedValue.expectedR,
-			direction: "higher-better",
-		},
-		{
-			key: "normalizedAvgWin",
-			label: t("avgWin"),
-			getRValue: (a) => a.expectedValue.avgWinR,
-			direction: "higher-better",
-		},
-		{
-			key: "normalizedAvgLoss",
-			label: t("avgLoss"),
-			getRValue: (a) => a.expectedValue.avgLossR,
-			direction: "lower-better",
-		},
-		{
-			key: "normalizedProjected",
-			label: t("projectedPnl"),
-			getRValue: (a) => a.expectedValue.projectedR100,
-			direction: "higher-better",
-		},
-	], [t])
+	const metrics = useMemo<NormalizedMetric[]>(
+		() => [
+			{
+				key: "normalizedEV",
+				label: t("expectedValue"),
+				getRValue: (a) => a.expectedValue.expectedR,
+				direction: "higher-better",
+			},
+			{
+				key: "normalizedAvgWin",
+				label: t("avgWin"),
+				getRValue: (a) => a.expectedValue.avgWinR,
+				direction: "higher-better",
+			},
+			{
+				key: "normalizedAvgLoss",
+				label: t("avgLoss"),
+				getRValue: (a) => a.expectedValue.avgLossR,
+				direction: "lower-better",
+			},
+			{
+				key: "normalizedProjected",
+				label: t("projectedPnl"),
+				getRValue: (a) => a.expectedValue.projectedR100,
+				direction: "higher-better",
+			},
+		],
+		[t]
+	)
 
-	const getNormalizedValue = (rValue: number): number =>
-		rValue * referenceRisk
+	const getNormalizedValue = (rValue: number): number => rValue * referenceRisk
 
 	/**
 	 * Pre-compute best/worst index sets for ALL metrics in a single pass.
 	 * Map key: metric.key → { bestSet, worstSet }
 	 */
 	const bestWorstMap = useMemo(() => {
-		const map = new Map<string, { bestSet: Set<number>; worstSet: Set<number> }>()
+		const map = new Map<
+			string,
+			{ bestSet: Set<number>; worstSet: Set<number> }
+		>()
 		const empty = { bestSet: new Set<number>(), worstSet: new Set<number>() }
 
 		for (const metric of metrics) {
-			const values = accounts.map((a) => getNormalizedValue(metric.getRValue(a)))
+			const values = accounts.map((a) =>
+				getNormalizedValue(metric.getRValue(a))
+			)
 			const min = Math.min(...values)
 			const max = Math.max(...values)
 			const range = max - min
@@ -131,26 +146,28 @@ const ComparisonNormalizedTable = ({
 		}
 
 		return map
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [metrics, accounts, referenceRisk])
 
 	// Show each account's actual avg risk for reference
 	const hasRiskData = accounts.some((a) => a.avgRiskPerTrade > 0)
 
 	return (
-		<div id="comparison-normalized-table" className="border-bg-300 bg-bg-200 overflow-x-auto rounded-lg border p-s-300 sm:p-m-400">
-			<div className="mb-s-300 flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between">
+		<div
+			id="comparison-normalized-table"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 overflow-x-auto rounded-lg border"
+		>
+			<div className="mb-s-300 gap-s-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("title")}
 				</h3>
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<label
 						htmlFor="reference-risk"
 						className="text-tiny text-txt-300 whitespace-nowrap"
 					>
 						{t("referenceRisk")}:
 					</label>
-					<div className="flex items-center gap-s-100">
+					<div className="gap-s-100 flex items-center">
 						<span className="text-tiny text-txt-300">R$</span>
 						<Input
 							id="reference-risk"
@@ -159,73 +176,72 @@ const ComparisonNormalizedTable = ({
 							step="10"
 							value={referenceRisk}
 							onChange={(e) => handleRiskChange(e.target.value)}
-							className="border-bg-300 bg-bg-100 text-txt-100 text-small w-24 rounded-sm border px-s-200 py-s-100"
+							className="border-bg-300 bg-bg-100 text-txt-100 text-small px-s-200 py-s-100 w-24 rounded-sm border"
 						/>
 					</div>
 				</div>
 			</div>
 
-			<p className="text-tiny text-txt-300 mb-s-300">
-				{t("description")}
-			</p>
+			<p className="text-tiny text-txt-300 mb-s-300">{t("description")}</p>
 
-			<table className="w-full text-small">
-				<thead>
-					<tr className="border-bg-300 border-b">
-						<th className="text-txt-300 py-s-200 pr-m-400 text-left font-medium">
+			<Table className="text-small w-full">
+				<TableHeader>
+					<TableRow className="border-bg-300 border-b">
+						<TableHead className="text-txt-300 py-s-200 pr-m-400 text-left font-medium">
 							{t("metric")}
-						</th>
+						</TableHead>
 						{accounts.map((account, index) => (
-							<th
+							<TableHead
 								key={account.accountId}
 								className="text-txt-100 py-s-200 px-s-300 text-right font-medium"
 							>
-								<div className="flex items-center justify-end gap-s-200">
+								<div className="gap-s-200 flex items-center justify-end">
 									<span
 										className="inline-block h-2.5 w-2.5 rounded-full"
 										style={{
 											backgroundColor:
-												COMPARISON_COLORS[
-													index % COMPARISON_COLORS.length
-												],
+												COMPARISON_COLORS[index % COMPARISON_COLORS.length],
 										}}
 									/>
 									{account.accountName}
 								</div>
-							</th>
+							</TableHead>
 						))}
-					</tr>
-				</thead>
-				<tbody>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
 					{/* Actual avg risk row for context */}
 					{hasRiskData && (
-						<tr className="border-bg-300 border-b">
-							<td className="text-txt-300 py-s-200 pr-m-400 italic whitespace-nowrap">
+						<TableRow className="border-bg-300 border-b">
+							<TableCell className="text-txt-300 py-s-200 pr-m-400 whitespace-nowrap italic">
 								{t("actualAvgRisk")}
-							</td>
+							</TableCell>
 							{accounts.map((account) => (
-								<td
+								<TableCell
 									key={account.accountId}
-									className="text-txt-300 py-s-200 px-s-300 text-right italic whitespace-nowrap"
+									className="text-txt-300 py-s-200 px-s-300 text-right whitespace-nowrap italic"
 								>
 									{account.avgRiskPerTrade > 0
 										? `R$ ${account.avgRiskPerTrade.toFixed(2)}`
 										: "—"}
-								</td>
+								</TableCell>
 							))}
-						</tr>
+						</TableRow>
 					)}
 
 					{metrics.map((metric) => {
-						const { bestSet, worstSet } = bestWorstMap.get(metric.key) ?? { bestSet: new Set<number>(), worstSet: new Set<number>() }
+						const { bestSet, worstSet } = bestWorstMap.get(metric.key) ?? {
+							bestSet: new Set<number>(),
+							worstSet: new Set<number>(),
+						}
 						return (
-							<tr
+							<TableRow
 								key={metric.key}
 								className="border-bg-300 border-b last:border-b-0"
 							>
-								<td className="text-txt-300 py-s-200 pr-m-400 whitespace-nowrap">
+								<TableCell className="text-txt-300 py-s-200 pr-m-400 whitespace-nowrap">
 									{metric.label}
-								</td>
+								</TableCell>
 								{accounts.map((account, index) => {
 									const normalized = getNormalizedValue(
 										metric.getRValue(account)
@@ -233,26 +249,24 @@ const ComparisonNormalizedTable = ({
 									const isBest = bestSet.has(index)
 									const isWorst = worstSet.has(index)
 									return (
-										<td
+										<TableCell
 											key={account.accountId}
 											className={cn(
-												"py-s-200 px-s-300 text-right whitespace-nowrap font-semibold",
+												"py-s-200 px-s-300 text-right font-semibold whitespace-nowrap",
 												isBest && "text-trade-buy",
 												isWorst && "text-trade-sell",
-												!isBest &&
-													!isWorst &&
-													"text-txt-100 font-normal"
+												!isBest && !isWorst && "text-txt-100 font-normal"
 											)}
 										>
 											{formatBrlWithSign(normalized)}
-										</td>
+										</TableCell>
 									)
 								})}
-							</tr>
+							</TableRow>
 						)
 					})}
-				</tbody>
-			</table>
+				</TableBody>
+			</Table>
 		</div>
 	)
 }

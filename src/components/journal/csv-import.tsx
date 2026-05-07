@@ -9,6 +9,7 @@ import {
 	type ChangeEvent,
 } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -605,7 +606,7 @@ export const CsvImport = () => {
 						<p className="text-tiny text-txt-300 mt-s-100">
 							{t("profitChartGuide.columnsNote")}
 						</p>
-						<a
+						<Link
 							href={t("profitChartGuide.docsUrl")}
 							target="_blank"
 							rel="noopener noreferrer"
@@ -614,7 +615,7 @@ export const CsvImport = () => {
 							aria-label={t("profitChartGuide.docsLink")}
 						>
 							{t("profitChartGuide.docsLink")} &#8599;
-						</a>
+						</Link>
 					</div>
 				</div>
 

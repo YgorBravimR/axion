@@ -7,6 +7,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { formatR } from "@/lib/formatting"
 import type { SimulatedTrade } from "@/types/monte-carlo"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 interface TradeSequenceListProps {
 	trades: SimulatedTrade[]
@@ -34,78 +42,74 @@ export const TradeSequenceList = ({
 				{t("title")}
 			</h3>
 
-			<div className="overflow-x-auto">
-				<table className="w-full">
-					<thead>
-						<tr className="border-bg-300 border-b">
-							<th className="pb-s-200 text-tiny text-txt-300 text-left font-medium">
-								{t("number")}
-							</th>
-							<th className="pb-s-200 text-tiny text-txt-300 text-left font-medium">
-								{t("result")}
-							</th>
-							<th className="pb-s-200 text-tiny text-txt-300 text-right font-medium">
-								{t("rResult")}
-							</th>
-							<th className="pb-s-200 text-tiny text-txt-300 text-right font-medium">
-								{t("commission")}
-							</th>
-							<th className="pb-s-200 text-tiny text-txt-300 text-right font-medium">
-								{t("cumulativeR")}
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{displayedTrades.map((trade) => (
-							<tr
-								key={trade.tradeNumber}
-								className="border-bg-300 border-b last:border-0"
-							>
-								<td className="py-s-200 text-small text-txt-200">
-									{trade.tradeNumber}
-								</td>
-								<td className="py-s-200">
+			<Table className="w-full">
+				<TableHeader>
+					<TableRow className="border-bg-300 border-b">
+						<TableHead className="pb-s-200 text-tiny text-txt-300 text-left font-medium">
+							{t("number")}
+						</TableHead>
+						<TableHead className="pb-s-200 text-tiny text-txt-300 text-left font-medium">
+							{t("result")}
+						</TableHead>
+						<TableHead className="pb-s-200 text-tiny text-txt-300 text-right font-medium">
+							{t("rResult")}
+						</TableHead>
+						<TableHead className="pb-s-200 text-tiny text-txt-300 text-right font-medium">
+							{t("commission")}
+						</TableHead>
+						<TableHead className="pb-s-200 text-tiny text-txt-300 text-right font-medium">
+							{t("cumulativeR")}
+						</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{displayedTrades.map((trade) => (
+						<TableRow
+							key={trade.tradeNumber}
+							className="border-bg-300 border-b last:border-0"
+						>
+							<TableCell className="py-s-200 text-small text-txt-200">
+								{trade.tradeNumber}
+							</TableCell>
+							<TableCell className="py-s-200">
+								<span
+									className={cn(
+										"gap-s-100 text-small inline-flex items-center font-medium",
+										trade.isWin ? "text-trade-buy" : "text-trade-sell"
+									)}
+								>
 									<span
 										className={cn(
-											"gap-s-100 text-small inline-flex items-center font-medium",
-											trade.isWin ? "text-trade-buy" : "text-trade-sell"
+											"h-2 w-2 rounded-full",
+											trade.isWin ? "bg-trade-buy" : "bg-trade-sell"
 										)}
-									>
-										<span
-											className={cn(
-												"h-2 w-2 rounded-full",
-												trade.isWin ? "bg-trade-buy" : "bg-trade-sell"
-											)}
-										/>
-										{trade.isWin ? t("win") : t("loss")}
-									</span>
-								</td>
-								<td
-									className={cn(
-										"py-s-200 text-small text-right font-medium",
-										trade.rResult >= 0 ? "text-trade-buy" : "text-trade-sell"
-									)}
-								>
-									{formatR(trade.rResult)}
-								</td>
-								<td className="py-s-200 text-small text-txt-300 text-right">
-									{trade.commission.toFixed(3)}R
-								</td>
-								<td
-									className={cn(
-										"py-s-200 text-small text-right font-medium",
-										trade.cumulativeR >= 0
-											? "text-trade-buy"
-											: "text-trade-sell"
-									)}
-								>
-									{formatR(trade.cumulativeR)}
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+									/>
+									{trade.isWin ? t("win") : t("loss")}
+								</span>
+							</TableCell>
+							<TableCell
+								className={cn(
+									"py-s-200 text-small text-right font-medium",
+									trade.rResult >= 0 ? "text-trade-buy" : "text-trade-sell"
+								)}
+							>
+								{formatR(trade.rResult)}
+							</TableCell>
+							<TableCell className="py-s-200 text-small text-txt-300 text-right">
+								{trade.commission.toFixed(3)}R
+							</TableCell>
+							<TableCell
+								className={cn(
+									"py-s-200 text-small text-right font-medium",
+									trade.cumulativeR >= 0 ? "text-trade-buy" : "text-trade-sell"
+								)}
+							>
+								{formatR(trade.cumulativeR)}
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
 
 			{hasMore && (
 				<div className="mt-s-300 text-center">

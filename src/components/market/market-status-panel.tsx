@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, type KeyboardEvent } from "react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -213,7 +214,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 				{activeTab === "links" ? (
 					<div className="gap-s-100 p-s-300 flex flex-col">
 						{QUICK_LINKS.map((link) => (
-							<a
+							<Link
 								key={link.url}
 								href={link.url}
 								target="_blank"
@@ -231,7 +232,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 									className="text-txt-300 h-3 w-3 shrink-0"
 									aria-hidden="true"
 								/>
-							</a>
+							</Link>
 						))}
 					</div>
 				) : null}

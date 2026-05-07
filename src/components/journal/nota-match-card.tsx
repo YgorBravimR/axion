@@ -14,6 +14,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EnrichmentMatch, NotaFill } from "@/lib/nota-parser/types"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 interface NotaMatchCardProps {
 	match: EnrichmentMatch
@@ -65,35 +73,35 @@ const FillRow = ({
 	t: ReturnType<typeof useTranslations>
 	locale: string
 }) => (
-	<tr className="border-bg-300 border-b last:border-b-0">
-		<td className="py-s-100 px-s-200 text-tiny">
+	<TableRow className="border-bg-300 border-b last:border-b-0">
+		<TableCell className="py-s-100 px-s-200 text-tiny">
 			<span
 				className={fill.side === "C" ? "text-action-buy" : "text-action-sell"}
 			>
 				{fill.side === "C" ? t("buy") : t("sell")}
 			</span>
-		</td>
-		<td className="py-s-100 px-s-200 text-tiny text-txt-200 text-right">
+		</TableCell>
+		<TableCell className="py-s-100 px-s-200 text-tiny text-txt-200 text-right">
 			{fill.quantity}
-		</td>
-		<td className="py-s-100 px-s-200 text-tiny text-txt-200 text-right">
+		</TableCell>
+		<TableCell className="py-s-100 px-s-200 text-tiny text-txt-200 text-right">
 			{fill.price.toLocaleString(locale, { minimumFractionDigits: 2 })}
-		</td>
-		<td className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
+		</TableCell>
+		<TableCell className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
 			{fill.operationalFee > 0
 				? fill.operationalFee.toLocaleString(locale, {
 						minimumFractionDigits: 2,
 					})
 				: "-"}
-		</td>
-		<td className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
+		</TableCell>
+		<TableCell className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
 			{fill.isDayTrade && (
 				<span className="bg-acc-100/20 text-acc-100 px-s-100 text-micro rounded-sm font-medium">
 					{t("dayTrade")}
 				</span>
 			)}
-		</td>
-	</tr>
+		</TableCell>
+	</TableRow>
 )
 
 const FillTable = ({
@@ -141,25 +149,25 @@ const FillTable = ({
 					{t("totalQty")}: {totalQty}
 				</span>
 			</div>
-			<table className="w-full">
-				<thead>
-					<tr className="border-bg-300 border-b">
-						<th className="py-s-100 px-s-200 text-tiny text-txt-300 text-left font-medium">
+			<Table className="w-full">
+				<TableHeader>
+					<TableRow className="border-bg-300 border-b">
+						<TableHead className="py-s-100 px-s-200 text-tiny text-txt-300 text-left font-medium">
 							{t("side")}
-						</th>
-						<th className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium">
+						</TableHead>
+						<TableHead className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium">
 							{t("qty")}
-						</th>
-						<th className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium">
+						</TableHead>
+						<TableHead className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium">
 							{t("price")}
-						</th>
-						<th className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium">
+						</TableHead>
+						<TableHead className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium">
 							{t("fee")}
-						</th>
-						<th className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium" />
-					</tr>
-				</thead>
-				<tbody>
+						</TableHead>
+						<TableHead className="py-s-100 px-s-200 text-tiny text-txt-300 text-right font-medium" />
+					</TableRow>
+				</TableHeader>
+				<TableBody>
 					{fills.map((fill, idx) => (
 						<FillRow
 							key={`${fill.sequenceNumber}-${idx}`}
@@ -168,8 +176,8 @@ const FillTable = ({
 							locale={locale}
 						/>
 					))}
-				</tbody>
-			</table>
+				</TableBody>
+			</Table>
 		</div>
 	)
 }

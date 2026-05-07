@@ -5,6 +5,16 @@ import type {
 	AnnualRollupData,
 	AnnualRollupRow,
 } from "@/lib/reports/annual-types"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableFooter,
+	TableRow,
+	TableHead,
+	TableCell,
+	TableCaption,
+} from "@/components/ui/table"
 
 interface AnnualRollupTableProps {
 	data: AnnualRollupData
@@ -32,7 +42,9 @@ const CellBRL = ({
 }) => {
 	if (value === null) {
 		return (
-			<td className="text-txt-300 px-3 py-2 text-right font-mono text-xs">—</td>
+			<TableCell className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
+				—
+			</TableCell>
 		)
 	}
 	const positive = value >= 0
@@ -42,54 +54,54 @@ const CellBRL = ({
 			: "text-trade-sell"
 		: "text-txt-100"
 	return (
-		<td
+		<TableCell
 			className={`px-3 py-2 text-right font-mono text-xs ${colorClass} tabular-nums`}
 		>
 			{formatBRL(value)}
-		</td>
+		</TableCell>
 	)
 }
 
 const CellNum = ({ value }: { value: number | null }) => (
-	<td className="text-txt-100 px-3 py-2 text-right font-mono text-xs tabular-nums">
+	<TableCell className="text-txt-100 px-3 py-2 text-right font-mono text-xs tabular-nums">
 		{value === null ? "—" : value}
-	</td>
+	</TableCell>
 )
 
 const RowData = ({ row }: { row: AnnualRollupRow }) => {
 	if (row.disabled) {
 		return (
-			<tr className="opacity-30">
-				<th
+			<TableRow className="opacity-30">
+				<TableHead
 					scope="row"
 					className="bg-bg-200 text-txt-200 sticky left-0 min-w-[80px] px-3 py-2 text-left text-xs font-medium"
 				>
 					{row.monthName.slice(0, 3)}
-				</th>
+				</TableHead>
 				{Array.from({ length: 13 }).map((_, i) => (
-					<td
+					<TableCell
 						key={i}
 						className="text-txt-300 px-3 py-2 text-right font-mono text-xs"
 					>
 						—
-					</td>
+					</TableCell>
 				))}
-			</tr>
+			</TableRow>
 		)
 	}
 
 	const rowOpacity = !row.hasTrades ? "opacity-40" : ""
 
 	return (
-		<tr
+		<TableRow
 			className={`border-bg-300 hover:bg-bg-300/30 border-t transition-colors ${rowOpacity}`}
 		>
-			<th
+			<TableHead
 				scope="row"
 				className="bg-bg-200 text-txt-100 sticky left-0 min-w-[80px] px-3 py-2 text-left text-xs font-medium"
 			>
 				{row.monthName.slice(0, 3)}
-			</th>
+			</TableHead>
 			<CellBRL value={row.resultadoBruto} />
 			<CellBRL value={row.resultadoLiquido} highlight />
 			<CellNum value={row.pontos} />
@@ -103,7 +115,7 @@ const RowData = ({ row }: { row: AnnualRollupRow }) => {
 			<CellBRL value={row.patrimonio} />
 			<CellNum value={row.diasGain} />
 			<CellNum value={row.diasLoss} />
-		</tr>
+		</TableRow>
 	)
 }
 
@@ -112,12 +124,14 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 
 	return (
 		<div className={className}>
-			<div className="border-bg-300 overflow-x-auto rounded-md border">
-				<table
+			<div className="border-bg-300 rounded-md border">
+				<Table
 					className="w-full border-collapse text-left"
 					aria-label={`Annual rollup ${data.year}`}
 				>
-					<caption className="sr-only">Annual P&L Rollup — {data.year}</caption>
+					<TableCaption className="sr-only">
+						Annual P&L Rollup — {data.year}
+					</TableCaption>
 					<colgroup>
 						<col className="w-[80px]" />
 						<col span={3} />
@@ -125,69 +139,69 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 						<col span={6} />
 						<col span={2} />
 					</colgroup>
-					<thead>
-						<tr className="bg-bg-300/50">
-							<th
+					<TableHeader>
+						<TableRow className="bg-bg-300/50">
+							<TableHead
 								scope="col"
 								className="bg-bg-300/50 text-txt-300 sticky left-0 px-3 py-2 text-left text-xs font-medium tracking-wider uppercase"
 							>
 								Mês
-							</th>
-							<th
+							</TableHead>
+							<TableHead
 								scope="colgroup"
 								colSpan={3}
 								className="text-txt-300 border-acc-100/20 border-b px-3 py-1 text-center text-xs font-medium tracking-wider uppercase"
 							>
 								Resultado
-							</th>
-							<th
+							</TableHead>
+							<TableHead
 								scope="colgroup"
 								colSpan={2}
 								className="text-txt-300 border-acc-100/20 border-b px-3 py-1 text-center text-xs font-medium tracking-wider uppercase"
 							>
 								Despesas
-							</th>
-							<th
+							</TableHead>
+							<TableHead
 								scope="colgroup"
 								colSpan={6}
 								className="text-txt-300 border-acc-100/20 border-b px-3 py-1 text-center text-xs font-medium tracking-wider uppercase"
 							>
 								Capital
-							</th>
-							<th
+							</TableHead>
+							<TableHead
 								scope="colgroup"
 								colSpan={2}
 								className="text-txt-300 border-acc-100/20 border-b px-3 py-1 text-center text-xs font-medium tracking-wider uppercase"
 							>
 								Dias
-							</th>
-						</tr>
-						<tr className="bg-bg-300/30">
-							<th
+							</TableHead>
+						</TableRow>
+						<TableRow className="bg-bg-300/30">
+							<TableHead
 								scope="col"
 								className="bg-bg-300/30 sticky left-0 px-3 py-2"
 							/>
 							{["Bruto", "Líquido", "Pontos"].map((h) => (
-								<th
+								<TableHead
 									key={h}
 									scope="col"
 									className="text-txt-300 px-3 py-2 text-right font-mono text-xs font-medium"
 								>
 									{h}
-								</th>
+								</TableHead>
 							))}
-							<th
+							<TableHead
 								scope="col"
 								className="text-txt-300 px-3 py-2 text-right font-mono text-xs font-medium"
 							>
 								Taxas
-							</th>
-							<th
+							</TableHead>
+							<TableHead
 								scope="col"
 								className="text-txt-300 px-3 py-2 text-right font-mono text-xs font-medium"
 							>
 								Imposto{taxEstimated ? "*" : ""}
-							</th>
+							</TableHead>
 							{[
 								"Aporte Inicial",
 								"Mês Anterior",
@@ -196,63 +210,63 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 								"Capital Invest.",
 								"Patrimônio",
 							].map((h) => (
-								<th
+								<TableHead
 									key={h}
 									scope="col"
 									className="text-txt-300 px-3 py-2 text-right font-mono text-xs font-medium whitespace-nowrap"
 								>
 									{h}
-								</th>
+								</TableHead>
 							))}
-							<th
+							<TableHead
 								scope="col"
 								className="text-txt-300 px-3 py-2 text-right font-mono text-xs font-medium"
 							>
 								G
-							</th>
-							<th
+							</TableHead>
+							<TableHead
 								scope="col"
 								className="text-txt-300 px-3 py-2 text-right font-mono text-xs font-medium"
 							>
 								L
-							</th>
-						</tr>
-					</thead>
-					<tbody>
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
 						{rows.map((row) => (
 							<RowData key={row.month} row={row} />
 						))}
-					</tbody>
-					<tfoot>
-						<tr className="bg-bg-300 border-bg-300 border-t-2 font-semibold">
-							<th
+					</TableBody>
+					<TableFooter>
+						<TableRow className="bg-bg-300 border-bg-300 border-t-2 font-semibold">
+							<TableHead
 								scope="row"
 								className="bg-bg-300 text-txt-100 sticky left-0 px-3 py-2 text-left text-xs"
 							>
 								Total
-							</th>
+							</TableHead>
 							<CellBRL value={totals.resultadoBruto} />
 							<CellBRL value={totals.resultadoLiquido} highlight />
 							<CellNum value={totals.pontos} />
 							<CellBRL value={totals.taxas} />
 							<CellBRL value={totals.imposto} />
-							<td className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
+							<TableCell className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
 								—
-							</td>
-							<td className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
+							</TableCell>
+							<TableCell className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
 								—
-							</td>
+							</TableCell>
 							<CellBRL value={totals.novoAporte} />
 							<CellBRL value={totals.retirada} />
-							<td className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
+							<TableCell className="text-txt-300 px-3 py-2 text-right font-mono text-xs">
 								—
-							</td>
+							</TableCell>
 							<CellBRL value={totals.patrimonio} />
 							<CellNum value={totals.diasGain} />
 							<CellNum value={totals.diasLoss} />
-						</tr>
-					</tfoot>
-				</table>
+						</TableRow>
+					</TableFooter>
+				</Table>
 			</div>
 
 			{taxEstimated && (

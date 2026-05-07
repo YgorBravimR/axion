@@ -16,6 +16,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/toast"
 import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
+import {
 	Select,
 	SelectContent,
 	SelectItem,
@@ -266,225 +274,217 @@ export const AssetRulesPanel = ({
 			{settings.length === 0 ? (
 				<p className="text-small text-txt-300">{t("noAssets")}</p>
 			) : (
-				<div className="overflow-x-auto">
-					<table className="w-full">
-						<thead>
-							<tr className="border-bg-300 border-b text-left">
-								<th className="pb-s-200 text-tiny text-txt-300 font-medium">
-									{t("asset")}
-								</th>
-								<th className="pb-s-200 text-tiny text-txt-300 font-medium">
-									{t("bias")}
-								</th>
-								<th className="pb-s-200 text-tiny text-txt-300 font-medium">
-									{t("maxTrades")}
-								</th>
-								<th className="pb-s-200 text-tiny text-txt-300 font-medium">
-									{t("positionSize")}
-								</th>
-								<th className="pb-s-200 text-tiny text-txt-300 font-medium">
-									{t("notes")}
-								</th>
-								<th className="pb-s-200 text-tiny text-txt-300 font-medium"></th>
-							</tr>
-						</thead>
-						<tbody>
-							{settings.map((setting) => {
-								const isEditing = editing?.assetId === setting.assetId
-								const isSaving = saving === setting.assetId
-								const isDeleting = deleting === setting.assetId
+				<Table className="w-full">
+					<TableHeader>
+						<TableRow className="border-bg-300 border-b text-left">
+							<TableHead className="pb-s-200 text-tiny text-txt-300 font-medium">
+								{t("asset")}
+							</TableHead>
+							<TableHead className="pb-s-200 text-tiny text-txt-300 font-medium">
+								{t("bias")}
+							</TableHead>
+							<TableHead className="pb-s-200 text-tiny text-txt-300 font-medium">
+								{t("maxTrades")}
+							</TableHead>
+							<TableHead className="pb-s-200 text-tiny text-txt-300 font-medium">
+								{t("positionSize")}
+							</TableHead>
+							<TableHead className="pb-s-200 text-tiny text-txt-300 font-medium">
+								{t("notes")}
+							</TableHead>
+							<TableHead className="pb-s-200 text-tiny text-txt-300 font-medium"></TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{settings.map((setting) => {
+							const isEditing = editing?.assetId === setting.assetId
+							const isSaving = saving === setting.assetId
+							const isDeleting = deleting === setting.assetId
 
-								return (
-									<tr
-										key={setting.id}
-										className="border-bg-300 border-b last:border-0"
-									>
-										<td className="py-s-300 pr-m-400">
-											<span className="text-small text-txt-100 font-medium">
-												{setting.asset.symbol}
+							return (
+								<TableRow
+									key={setting.id}
+									className="border-bg-300 border-b last:border-0"
+								>
+									<TableCell className="py-s-300 pr-m-400">
+										<span className="text-small text-txt-100 font-medium">
+											{setting.asset.symbol}
+										</span>
+									</TableCell>
+									<TableCell className="py-s-300 pr-m-400">
+										{isEditing ? (
+											<BiasSelector
+												value={editing.bias}
+												onChange={(value) =>
+													setEditing({ ...editing, bias: value })
+												}
+												compact
+											/>
+										) : (
+											<BiasSelector
+												value={(setting.bias as BiasType) || null}
+												onChange={(value) =>
+													handleBiasChange(setting.assetId, value)
+												}
+												disabled={isSaving}
+												compact
+											/>
+										)}
+									</TableCell>
+									<TableCell className="py-s-300 pr-m-400">
+										{isEditing ? (
+											<Input
+												id={`asset-rules-max-daily-trades-${setting.assetId}`}
+												type="number"
+												step="1"
+												min="0"
+												value={editing.maxDailyTrades}
+												onChange={(e) =>
+													setEditing({
+														...editing,
+														maxDailyTrades: e.target.value,
+													})
+												}
+												className="h-8 w-full sm:w-20"
+											/>
+										) : (
+											<span className="text-small text-txt-200">
+												{setting.maxDailyTrades || "-"}
 											</span>
-										</td>
-										<td className="py-s-300 pr-m-400">
+										)}
+									</TableCell>
+									<TableCell className="py-s-300 pr-m-400">
+										{isEditing ? (
+											<Input
+												id={`asset-rules-max-position-size-${setting.assetId}`}
+												type="number"
+												step="1"
+												min="0"
+												value={editing.maxPositionSize}
+												onChange={(e) =>
+													setEditing({
+														...editing,
+														maxPositionSize: e.target.value,
+													})
+												}
+												className="h-8 w-full sm:w-20"
+											/>
+										) : (
+											<span className="text-small text-txt-200">
+												{setting.maxPositionSize || "-"}
+											</span>
+										)}
+									</TableCell>
+									<TableCell className="py-s-300 pr-m-400">
+										{isEditing ? (
+											<Input
+												id={`asset-rules-notes-${setting.assetId}`}
+												value={editing.notes}
+												onChange={(e) =>
+													setEditing({ ...editing, notes: e.target.value })
+												}
+												className="h-8"
+												placeholder={t("notesPlaceholder")}
+											/>
+										) : (
+											<span className="text-small text-txt-300">
+												{setting.notes || "-"}
+											</span>
+										)}
+									</TableCell>
+									<TableCell className="py-s-300">
+										<div className="gap-s-100 flex items-center">
 											{isEditing ? (
-												<BiasSelector
-													value={editing.bias}
-													onChange={(value) =>
-														setEditing({ ...editing, bias: value })
-													}
-													compact
-												/>
-											) : (
-												<BiasSelector
-													value={(setting.bias as BiasType) || null}
-													onChange={(value) =>
-														handleBiasChange(setting.assetId, value)
-													}
-													disabled={isSaving}
-													compact
-												/>
-											)}
-										</td>
-										<td className="py-s-300 pr-m-400">
-											{isEditing ? (
-												<Input
-													id={`asset-rules-max-daily-trades-${setting.assetId}`}
-													type="number"
-													step="1"
-													min="0"
-													value={editing.maxDailyTrades}
-													onChange={(e) =>
-														setEditing({
-															...editing,
-															maxDailyTrades: e.target.value,
-														})
-													}
-													className="h-8 w-full sm:w-20"
-												/>
-											) : (
-												<span className="text-small text-txt-200">
-													{setting.maxDailyTrades || "-"}
-												</span>
-											)}
-										</td>
-										<td className="py-s-300 pr-m-400">
-											{isEditing ? (
-												<Input
-													id={`asset-rules-max-position-size-${setting.assetId}`}
-													type="number"
-													step="1"
-													min="0"
-													value={editing.maxPositionSize}
-													onChange={(e) =>
-														setEditing({
-															...editing,
-															maxPositionSize: e.target.value,
-														})
-													}
-													className="h-8 w-full sm:w-20"
-												/>
-											) : (
-												<span className="text-small text-txt-200">
-													{setting.maxPositionSize || "-"}
-												</span>
-											)}
-										</td>
-										<td className="py-s-300 pr-m-400">
-											{isEditing ? (
-												<Input
-													id={`asset-rules-notes-${setting.assetId}`}
-													value={editing.notes}
-													onChange={(e) =>
-														setEditing({ ...editing, notes: e.target.value })
-													}
-													className="h-8"
-													placeholder={t("notesPlaceholder")}
-												/>
-											) : (
-												<span className="text-small text-txt-300">
-													{setting.notes || "-"}
-												</span>
-											)}
-										</td>
-										<td className="py-s-300">
-											<div className="gap-s-100 flex items-center">
-												{isEditing ? (
-													<>
-														<Button
-															id={`asset-rules-save-${setting.assetId}`}
-															variant="ghost"
-															size="sm"
-															onClick={handleSaveEdit}
-															disabled={isSaving}
-															className="h-8 w-8 p-0"
-															aria-label={t("save")}
-														>
-															{isSaving ? (
-																<Loader2
-																	className="h-4 w-4 animate-spin motion-reduce:animate-none"
-																	aria-hidden="true"
-																/>
-															) : (
-																<Save
-																	className="text-trade-buy h-4 w-4"
-																	aria-hidden="true"
-																/>
-															)}
-														</Button>
-														<Button
-															id={`asset-rules-cancel-edit-${setting.assetId}`}
-															variant="ghost"
-															size="sm"
-															onClick={() => setEditing(null)}
-															className="text-txt-300 h-8 w-8 p-0"
-															aria-label={t("cancel")}
-														>
-															&times;
-														</Button>
-													</>
-												) : (
-													<>
-														<Button
-															id={`asset-rules-add-trade-${setting.assetId}`}
-															variant="ghost"
-															size="sm"
-															onClick={() => handleAddTrade(setting.assetId)}
-															className="text-acc-100 hover:text-acc-100/80 h-8 w-8 p-0"
-															aria-label={t("addTrade")}
-														>
-															<PlusCircle
-																className="h-4 w-4"
+												<>
+													<Button
+														id={`asset-rules-save-${setting.assetId}`}
+														variant="ghost"
+														size="sm"
+														onClick={handleSaveEdit}
+														disabled={isSaving}
+														className="h-8 w-8 p-0"
+														aria-label={t("save")}
+													>
+														{isSaving ? (
+															<Loader2
+																className="h-4 w-4 animate-spin motion-reduce:animate-none"
 																aria-hidden="true"
 															/>
-														</Button>
-														<Button
-															id={`asset-rules-edit-${setting.assetId}`}
-															variant="ghost"
-															size="sm"
-															onClick={() => handleStartEdit(setting)}
-															className="text-txt-300 hover:text-txt-100 h-8 w-8 p-0"
-															aria-label={t("edit")}
-														>
-															<Settings2
-																className="h-4 w-4"
+														) : (
+															<Save
+																className="text-trade-buy h-4 w-4"
 																aria-hidden="true"
 															/>
-														</Button>
-														<Button
-															id={`asset-rules-delete-${setting.assetId}`}
-															variant="ghost"
-															size="sm"
-															onClick={() => handleDelete(setting.assetId)}
-															disabled={isDeleting}
-															className={cn(
-																"h-8 w-8 p-0",
-																isDeleting
-																	? "text-txt-placeholder"
-																	: "text-txt-300 hover:text-fb-error"
-															)}
-															aria-label={t("delete")}
-														>
-															{isDeleting ? (
-																<Loader2
-																	className="h-4 w-4 animate-spin motion-reduce:animate-none"
-																	aria-hidden="true"
-																/>
-															) : (
-																<Trash2
-																	className="h-4 w-4"
-																	aria-hidden="true"
-																/>
-															)}
-														</Button>
-													</>
-												)}
-											</div>
-										</td>
-									</tr>
-								)
-							})}
-						</tbody>
-					</table>
-				</div>
+														)}
+													</Button>
+													<Button
+														id={`asset-rules-cancel-edit-${setting.assetId}`}
+														variant="ghost"
+														size="sm"
+														onClick={() => setEditing(null)}
+														className="text-txt-300 h-8 w-8 p-0"
+														aria-label={t("cancel")}
+													>
+														&times;
+													</Button>
+												</>
+											) : (
+												<>
+													<Button
+														id={`asset-rules-add-trade-${setting.assetId}`}
+														variant="ghost"
+														size="sm"
+														onClick={() => handleAddTrade(setting.assetId)}
+														className="text-acc-100 hover:text-acc-100/80 h-8 w-8 p-0"
+														aria-label={t("addTrade")}
+													>
+														<PlusCircle
+															className="h-4 w-4"
+															aria-hidden="true"
+														/>
+													</Button>
+													<Button
+														id={`asset-rules-edit-${setting.assetId}`}
+														variant="ghost"
+														size="sm"
+														onClick={() => handleStartEdit(setting)}
+														className="text-txt-300 hover:text-txt-100 h-8 w-8 p-0"
+														aria-label={t("edit")}
+													>
+														<Settings2 className="h-4 w-4" aria-hidden="true" />
+													</Button>
+													<Button
+														id={`asset-rules-delete-${setting.assetId}`}
+														variant="ghost"
+														size="sm"
+														onClick={() => handleDelete(setting.assetId)}
+														disabled={isDeleting}
+														className={cn(
+															"h-8 w-8 p-0",
+															isDeleting
+																? "text-txt-placeholder"
+																: "text-txt-300 hover:text-fb-error"
+														)}
+														aria-label={t("delete")}
+													>
+														{isDeleting ? (
+															<Loader2
+																className="h-4 w-4 animate-spin motion-reduce:animate-none"
+																aria-hidden="true"
+															/>
+														) : (
+															<Trash2 className="h-4 w-4" aria-hidden="true" />
+														)}
+													</Button>
+												</>
+											)}
+										</div>
+									</TableCell>
+								</TableRow>
+							)
+						})}
+					</TableBody>
+				</Table>
 			)}
 		</div>
 	)

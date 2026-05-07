@@ -3,6 +3,14 @@
 import { useTranslations } from "next-intl"
 import type { EconomicEvent, EventImpact } from "@/types/market"
 import { cn } from "@/lib/utils"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 interface EconomicCalendarProps {
 	events: EconomicEvent[]
@@ -76,71 +84,71 @@ export const EconomicCalendar = ({ events }: EconomicCalendarProps) => {
 					{t("noEvents")}
 				</div>
 			) : (
-				<div className="min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto">
-					<table className="w-full" role="table" aria-label={t("title")}>
-						<thead className="bg-bg-200 sticky top-0 z-10">
-							<tr className="text-tiny text-txt-300 border-bg-300/50 border-b">
-								<th className="px-m-400 py-s-200 text-left font-medium">
+				<div className="min-h-0 w-full flex-1 overflow-y-auto">
+					<Table className="w-full" role="table" aria-label={t("title")}>
+						<TableHeader className="bg-bg-200 sticky top-0 z-10">
+							<TableRow className="text-tiny text-txt-300 border-bg-300/50 border-b">
+								<TableHead className="px-m-400 py-s-200 text-left font-medium">
 									{t("time")}
-								</th>
-								<th className="px-s-300 py-s-200 hidden text-left font-medium sm:table-cell">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 hidden text-left font-medium sm:table-cell">
 									{t("country")}
-								</th>
-								<th className="px-s-300 py-s-200 text-left font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-left font-medium">
 									{t("event")}
-								</th>
-								<th className="px-s-300 py-s-200 hidden text-left font-medium sm:table-cell">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 hidden text-left font-medium sm:table-cell">
 									{t("impact")}
-								</th>
-								<th className="px-s-300 py-s-200 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-right font-medium">
 									{t("actual")}
-								</th>
-								<th className="px-s-300 py-s-200 hidden text-right font-medium sm:table-cell">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 hidden text-right font-medium sm:table-cell">
 									{t("forecast")}
-								</th>
-								<th className="px-m-400 py-s-200 hidden text-right font-medium sm:table-cell">
+								</TableHead>
+								<TableHead className="px-m-400 py-s-200 hidden text-right font-medium sm:table-cell">
 									{t("previous")}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
 							{events.map((event) => (
-								<tr
+								<TableRow
 									key={event.id}
 									className="border-bg-300/50 hover:bg-bg-300/30 border-b transition-colors last:border-b-0"
 								>
-									<td className="text-small text-txt-100 px-m-400 py-2.5 whitespace-nowrap">
+									<TableCell className="text-small text-txt-100 px-m-400 py-2.5 whitespace-nowrap">
 										{formatEventTime(event.time)}
-									</td>
-									<td className="px-s-300 hidden py-2.5 sm:table-cell">
+									</TableCell>
+									<TableCell className="px-s-300 hidden py-2.5 sm:table-cell">
 										<span className="text-body" aria-label={event.country}>
 											{COUNTRY_FLAGS[event.country] || event.country}
 										</span>
-									</td>
-									<td className="text-small text-txt-100 px-s-300 max-w-[150px] truncate py-2.5 sm:max-w-none">
+									</TableCell>
+									<TableCell className="text-small text-txt-100 px-s-300 max-w-[150px] truncate py-2.5 sm:max-w-none">
 										{event.event}
-									</td>
-									<td className="px-s-300 hidden py-2.5 sm:table-cell">
+									</TableCell>
+									<TableCell className="px-s-300 hidden py-2.5 sm:table-cell">
 										<ImpactDot impact={event.impact} />
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={cn(
 											"text-small px-s-300 py-2.5 text-right whitespace-nowrap",
 											event.actual ? "text-txt-100" : "text-txt-300"
 										)}
 									>
 										{event.actual || "—"}
-									</td>
-									<td className="text-small text-txt-200 px-s-300 hidden py-2.5 text-right whitespace-nowrap sm:table-cell">
+									</TableCell>
+									<TableCell className="text-small text-txt-200 px-s-300 hidden py-2.5 text-right whitespace-nowrap sm:table-cell">
 										{event.forecast || "—"}
-									</td>
-									<td className="text-small text-txt-300 px-m-400 hidden py-2.5 text-right whitespace-nowrap sm:table-cell">
+									</TableCell>
+									<TableCell className="text-small text-txt-300 px-m-400 hidden py-2.5 text-right whitespace-nowrap sm:table-cell">
 										{event.previous || "—"}
-									</td>
-								</tr>
+									</TableCell>
+								</TableRow>
 							))}
-						</tbody>
-					</table>
+						</TableBody>
+					</Table>
 				</div>
 			)}
 		</div>

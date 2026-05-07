@@ -6,6 +6,14 @@ import { useTranslations } from "next-intl"
 import type { TagStats, TagType } from "@/types"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 interface TagCloudProps {
 	data: TagStats[]
@@ -274,80 +282,79 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 					<h4 className="mb-s-300 text-small text-txt-200 font-medium">
 						{t("detailedStats")}
 					</h4>
-					<div className="overflow-x-auto">
-						<table className="w-full">
-							<thead>
-								<tr className="border-bg-300 border-b">
-									<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
-										{t("tag")}
-									</th>
-									<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
-										{tHeaders("type")}
-									</th>
-									<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
-										{tHeaders("trades")}
-									</th>
-									<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
-										{tHeaders("pnl")}
-									</th>
-									<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
-										{tHeaders("winRate")}
-									</th>
-									<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
-										{tHeaders("avgR")}
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{data
-									.filter((tag) => tag.tradeCount > 0)
-									.toSorted((a, b) => getMetric(b) - getMetric(a))
-									.map((tag) => (
-										<tr key={tag.tagId} className="border-bg-300/50 border-b">
-											<td className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
-												{tag.tagName}
-											</td>
-											<td className="px-s-300 py-s-200">
-												<span
-													className={`px-s-200 py-s-100 text-tiny rounded-sm ${
-														tag.tagType === "setup"
-															? "bg-trade-buy/20 text-trade-buy"
-															: tag.tagType === "mistake"
-																? "bg-trade-sell/20 text-trade-sell"
-																: "bg-acc-100/20 text-acc-100"
-													}`}
-												>
-													{getTagTypeLabel(tag.tagType)}
-												</span>
-											</td>
-											<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
-												{tag.tradeCount}
-											</td>
-											<td
-												className={`px-s-300 py-s-200 text-small text-right font-medium ${
-													tag.totalPnl >= 0
-														? "text-trade-buy"
-														: "text-trade-sell"
+					<Table className="w-full">
+						<TableHeader>
+							<TableRow className="border-bg-300 border-b">
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
+									{t("tag")}
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
+									{tHeaders("type")}
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+									{tHeaders("trades")}
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+									{tHeaders("pnl")}
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+									{tHeaders("winRate")}
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+									{tHeaders("avgR")}
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{data
+								.filter((tag) => tag.tradeCount > 0)
+								.toSorted((a, b) => getMetric(b) - getMetric(a))
+								.map((tag) => (
+									<TableRow
+										key={tag.tagId}
+										className="border-bg-300/50 border-b"
+									>
+										<TableCell className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
+											{tag.tagName}
+										</TableCell>
+										<TableCell className="px-s-300 py-s-200">
+											<span
+												className={`px-s-200 py-s-100 text-tiny rounded-sm ${
+													tag.tagType === "setup"
+														? "bg-trade-buy/20 text-trade-buy"
+														: tag.tagType === "mistake"
+															? "bg-trade-sell/20 text-trade-sell"
+															: "bg-acc-100/20 text-acc-100"
 												}`}
 											>
-												{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
-											</td>
-											<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
-												{tag.winRate.toFixed(1)}%
-											</td>
-											<td
-												className={`px-s-300 py-s-200 text-small text-right ${
-													tag.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
-												}`}
-											>
-												{tag.avgR >= 0 ? "+" : ""}
-												{tag.avgR.toFixed(2)}R
-											</td>
-										</tr>
-									))}
-							</tbody>
-						</table>
-					</div>
+												{getTagTypeLabel(tag.tagType)}
+											</span>
+										</TableCell>
+										<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
+											{tag.tradeCount}
+										</TableCell>
+										<TableCell
+											className={`px-s-300 py-s-200 text-small text-right font-medium ${
+												tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
+											}`}
+										>
+											{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+										</TableCell>
+										<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
+											{tag.winRate.toFixed(1)}%
+										</TableCell>
+										<TableCell
+											className={`px-s-300 py-s-200 text-small text-right ${
+												tag.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
+											}`}
+										>
+											{tag.avgR >= 0 ? "+" : ""}
+											{tag.avgR.toFixed(2)}R
+										</TableCell>
+									</TableRow>
+								))}
+						</TableBody>
+					</Table>
 				</div>
 			)}
 		</div>

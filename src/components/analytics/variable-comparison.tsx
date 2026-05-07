@@ -20,6 +20,14 @@ import {
 import { formatCompactCurrency } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { PerformanceByGroup } from "@/types"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 // Tooltip wrapper for column headers
 const HeaderWithTooltip = ({
@@ -351,38 +359,38 @@ export const VariableComparison = ({
 
 			{/* Summary Table */}
 			{data.length > 0 && (
-				<div className="mt-m-400 sm:mt-m-500 overflow-x-auto">
-					<table className="w-full">
-						<thead>
-							<tr className="border-bg-300 border-b">
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
+				<div className="mt-m-400 sm:mt-m-500">
+					<Table className="w-full">
+						<TableHeader>
+							<TableRow className="border-bg-300 border-b">
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
 									{groupOptions.find((o) => o.value === groupBy)?.label}
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("trades")}
 										tooltip={tTooltips("trades")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("pnl")}
 										tooltip={tTooltips("pnl")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("winRate")}
 										tooltip={tTooltips("winRate")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("avgR")}
 										tooltip={tTooltips("avgR")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("pf")}
 										tooltip={
@@ -425,37 +433,37 @@ export const VariableComparison = ({
 											</div>
 										}
 									/>
-								</th>
-							</tr>
-						</thead>
-						<tbody>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
 							{data.map((row) => (
-								<tr key={row.group} className="border-bg-300/50 border-b">
-									<td className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
+								<TableRow key={row.group} className="border-bg-300/50 border-b">
+									<TableCell className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
 										{translateGroup(row.group)}
-									</td>
-									<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
+									</TableCell>
+									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.tradeCount}
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={`px-s-300 py-s-200 text-small text-right font-medium ${
 											row.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
 										{formatCompactCurrency(row.pnl, "R$")}
-									</td>
-									<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
+									</TableCell>
+									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.winRate.toFixed(1)}%
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={`px-s-300 py-s-200 text-small text-right ${
 											row.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
 										{row.avgR >= 0 ? "+" : ""}
 										{row.avgR.toFixed(2)}R
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={`px-s-300 py-s-200 text-small text-right ${
 											row.profitFactor >= 1
 												? "text-trade-buy"
@@ -463,11 +471,11 @@ export const VariableComparison = ({
 										}`}
 									>
 										{formatProfitFactor(row.profitFactor)}
-									</td>
-								</tr>
+									</TableCell>
+								</TableRow>
 							))}
-						</tbody>
-					</table>
+						</TableBody>
+					</Table>
 				</div>
 			)}
 		</div>

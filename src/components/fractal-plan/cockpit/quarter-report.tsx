@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { and, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import {
@@ -86,12 +87,12 @@ const QuarterReport = async ({
 			<PlanSection title={quarterLabel} subtitle="Plano anual ainda não criado">
 				<p className="text-txt-200">
 					Crie o plano anual primeiro em{" "}
-					<a
+					<Link
 						href={`/${locale}/plan/${year}`}
 						className="text-acc-100 underline"
 					>
 						/plan/{year}
-					</a>
+					</Link>
 					.
 				</p>
 			</PlanSection>
