@@ -109,7 +109,7 @@ export default [
 			"jsx-a11y/alt-text": "error",
 
 			"axion/enforce-server-action-async-only": "error",
-			"axion/enforce-token-usage": "off",
+			"axion/enforce-token-usage": "error",
 			"axion/no-hover-only-controls": "off",
 			"axion/enforce-ui-primitives": "off",
 			"axion/no-dynamic-functions-in-pages": "off",
