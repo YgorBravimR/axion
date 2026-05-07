@@ -5,6 +5,7 @@ import drizzle from "eslint-plugin-drizzle"
 import jsxA11y from "eslint-plugin-jsx-a11y"
 import nextPlugin from "@next/eslint-plugin-next"
 import reactHooks from "eslint-plugin-react-hooks"
+import axion from "./eslint-rules/index.mjs"
 
 const drizzleObjectName = ["db", "dbWs"]
 
@@ -35,6 +36,7 @@ export default [
 			"jsx-a11y": jsxA11y,
 			"@next/next": nextPlugin,
 			"react-hooks": reactHooks,
+			axion,
 		},
 		rules: {
 			"react/no-unescaped-entities": "off",
@@ -105,6 +107,12 @@ export default [
 			"jsx-a11y/aria-props": "error",
 			"jsx-a11y/aria-role": "error",
 			"jsx-a11y/alt-text": "error",
+
+			"axion/enforce-server-action-async-only": "off",
+			"axion/enforce-token-usage": "off",
+			"axion/no-hover-only-controls": "off",
+			"axion/enforce-ui-primitives": "off",
+			"axion/no-dynamic-functions-in-pages": "off",
 		},
 	},
 	{
@@ -175,6 +183,6 @@ export default [
 		},
 	},
 	{
-		ignores: [".next/*", "node_modules/*", "video/*"],
+		ignores: [".next/*", "node_modules/*", "video/*", "eslint-rules/**"],
 	},
 ]
