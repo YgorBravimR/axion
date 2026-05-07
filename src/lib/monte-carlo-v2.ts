@@ -230,7 +230,7 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 		let peakBalance = balance
 		let runMinBalance = balance // cross-month minimum balance tracking
 		let accumulatedProfit = 0 // cross-month profit for fixedRatio mode
-		let combinedDays: SimulatedDay[] = []
+		const combinedDays: SimulatedDay[] = []
 		let combinedTotalPnl = 0
 		let combinedTotalTrades = 0
 		let combinedTotalTradingDays = 0

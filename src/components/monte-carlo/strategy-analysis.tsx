@@ -53,7 +53,7 @@ const Insight = ({ type, children }: InsightProps) => {
 
 	return (
 		<div className="gap-s-200 flex items-start">
-			<Icon className={cn("mt-0.5 h-4 w-4 flex-shrink-0", color)} />
+			<Icon className={cn("mt-0.5 h-4 w-4 shrink-0", color)} />
 			<p className="text-small text-txt-200">{children}</p>
 		</div>
 	)

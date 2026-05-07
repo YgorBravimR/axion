@@ -2,7 +2,8 @@
  * Central role-based feature access configuration.
  * Pure computation module — edge-compatible, no DB imports.
  */
-import type { NavItem } from "@/lib/navigation"
+import type { NavItem, NavEntry, NavGroup } from "@/lib/navigation"
+import { isGroup } from "@/lib/navigation"
 
 type UserRole = "admin" | "premium" | "trader" | "viewer"
 
@@ -52,7 +53,8 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"/backtest/optimize": { requiredRole: "premium", description: "Backtest Optimizer" },
 	"/playbook": { requiredRole: "viewer", description: "Playbook" },
 	"/reports": { requiredRole: "viewer", description: "Reports" },
-	"/monthly": { requiredRole: "trader", description: "Monthly Plan" },
+	"/monthly": { requiredRole: "trader", description: "Monthly Results" },
+	"/plan": { requiredRole: "trader", description: "Fractal Plan" },
 	"/settings": { requiredRole: "trader", description: "Settings" },
 
 	// Command Center tabs
@@ -95,8 +97,14 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 const hasAccess = (userRole: UserRole, requiredRole: UserRole): boolean =>
 	ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole]
 
+const normalizeFeatureKey = (key: string): string => {
+	// Dynamic plan hrefs (/plan/2026, /plan/2026/2/5) collapse to a single gate.
+	if (key.startsWith("/plan/")) return "/plan"
+	return key
+}
+
 const canAccessFeature = (userRole: UserRole, featureKey: string): boolean => {
-	const config = FEATURE_MAP[featureKey]
+	const config = FEATURE_MAP[normalizeFeatureKey(featureKey)]
 	if (!config) return true // unregistered features default to accessible
 	return hasAccess(userRole, config.requiredRole)
 }
@@ -104,10 +112,24 @@ const canAccessFeature = (userRole: UserRole, featureKey: string): boolean => {
 const getFilteredNavItems = (items: NavItem[], userRole: UserRole): NavItem[] =>
 	items.filter((item) => canAccessFeature(userRole, item.href))
 
+const getFilteredNavStructure = (entries: NavEntry[], userRole: UserRole): NavEntry[] =>
+	entries
+		.map((entry): NavEntry | null => {
+			if (isGroup(entry)) {
+				const allowed = entry.items.filter((item) => canAccessFeature(userRole, item.href))
+				if (allowed.length === 0) return null
+				const filtered: NavGroup = { ...entry, items: allowed }
+				return filtered
+			}
+			return canAccessFeature(userRole, entry.href) ? entry : null
+		})
+		.filter((entry): entry is NavEntry => entry !== null)
+
 export {
 	hasAccess,
 	canAccessFeature,
 	getFilteredNavItems,
+	getFilteredNavStructure,
 	getFeatureLimits,
 	ROLE_HIERARCHY,
 	FEATURE_MAP,

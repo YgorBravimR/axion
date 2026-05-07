@@ -203,7 +203,7 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 			<div className={cn("p-s-200 sm:p-s-300 rounded-lg border", levelBgColor)}>
 				<div className="gap-s-200 flex items-start">
 					<LevelIcon
-						className={cn("mt-0.5 h-4 w-4 flex-shrink-0", levelColor)}
+						className={cn("mt-0.5 h-4 w-4 shrink-0", levelColor)}
 					/>
 					<p className="text-small text-txt-100">
 						{tKelly(kellyRecommendation.replace("monteCarlo.kelly.", ""))}

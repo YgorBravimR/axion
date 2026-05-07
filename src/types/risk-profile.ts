@@ -23,7 +23,10 @@ type RiskCalculation =
  */
 interface LossRecoveryStep {
 	riskCalculation: RiskCalculation
+	/** @deprecated Single-asset relic. Multi-asset model expresses caps in R via `riskCalculation.amountR`. Kept until live circuit-breaker + Monte Carlo migrate to `maxRiskR`. */
 	maxContractsOverride: number | null
+	/** Money-based replacement for `maxContractsOverride`. Cap on this step in R-multiples. */
+	maxRiskR?: number | null
 }
 
 /**
@@ -59,6 +62,7 @@ type GainMode =
 type RiskSizingMode =
 	| { type: "fixed" }
 	| { type: "percentOfBalance"; riskPercent: number } // 0.1-10.0
+	/** @deprecated Single-asset Larry-Williams ratio. Misaligned with multi-asset R=money model. Kept while Monte Carlo simulator references it. */
 	| { type: "fixedRatio"; deltaR: number; baseContractRiskR: number }
 	| { type: "kellyFractional"; divisor: number } // 4 = quarter Kelly, 8 = eighth Kelly
 
@@ -90,8 +94,12 @@ interface ConsecutiveLossRule {
 interface DecisionTreeConfig {
 	baseTrade: {
 		riskR: number
+		/** @deprecated Single-asset cap. Multi-asset model uses `maxRiskR` (R-multiple cap) and lets asset/tick conversion happen at trade entry. Live circuit-breaker still consumes this; remove once migrated. */
 		maxContracts: number | null
+		/** @deprecated Single-asset stop in points. Multi-asset trade entry computes contracts from `R / (stopTicks × tickValue)`. */
 		minStopPoints: number | null
+		/** Money-based cap on a single base trade. Optional companion to `riskR`. */
+		maxRiskR?: number | null
 	}
 	lossRecovery: {
 		sequence: LossRecoveryStep[]
@@ -106,8 +114,12 @@ interface DecisionTreeConfig {
 		monthlyAction: "stopTrading" | "reduceRisk"
 	}
 	executionConstraints: {
+		/** @deprecated Single-asset stop floor in points. */
 		minStopPoints: number | null
+		/** @deprecated Single-asset position cap. Use `maxRiskR` for the money-based equivalent. */
 		maxContracts: number | null
+		/** Money-based execution cap in R-multiples (replaces `maxContracts`). */
+		maxRiskR?: number | null
 		operatingHoursStart: string | null // "09:01"
 		operatingHoursEnd: string | null // "17:00"
 	}
