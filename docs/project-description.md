@@ -126,24 +126,32 @@ Strategy library with rules, conditions, and compliance tracking.
 
 ### 6. Performance Reports
 
-Automated weekly/monthly summaries with mistake cost analysis.
+Automated weekly/monthly summaries, capital tracking, R-distribution, and BR tax outputs.
 
 - **Weekly Report Card** — 7-day performance summary
 - **Monthly Report Card** — 30-day performance summary with trends
 - **Mistake Cost Analysis** — Dollar cost of each mistake tag
 - **Commission/Fee Impact Card** — Brokerage cost breakdown
-- **PDF Export** — Downloadable report generation
+- **R-Distribution Tab** — R-multiple distribution histogram + buckets
+- **Annual Rollup Table** — 12-month patrimônio + capital tracking
+- **Capital Event Log** — Deposit / withdrawal history per account
+- **Withdrawal Calculator** — Auto-withdrawal projection vs target
+- **Weekly Meta Chart** — Weekly meta vs. real result comparison
+- **Monthly DARF Card** — Current-month DARF status, fees, and IRRF breakdown
+- **Carryover Ledger** — IR carryover (prejuízo fiscal) running balance
+- **Annual Tax Summary** — Year-to-date tax rollup card
+- **PDF Export** — Downloadable weekly/monthly report generation
 
 **Page:** `src/app/[locale]/(app)/reports/page.tsx`
-**Components:** `src/components/reports/`
-**Server Actions:** `src/app/actions/reports.ts`
-**Lib:** `src/lib/pdf/` (PDF generation)
+**Components:** `src/components/reports/`, `src/components/tax/`
+**Server Actions:** `src/app/actions/reports.ts`, `src/app/actions/annual-reports.ts`, `src/app/actions/tax-engine.ts`
+**Lib:** `src/lib/pdf/` (PDF generation), `src/lib/reports/` (annual types), `src/lib/tax/` (BR tax engine)
 
 ---
 
 ### 7. Monthly Review
 
-Month-over-month performance tracking and projections.
+Month-over-month performance tracking and projections. Planning has been moved to the Fractal Planning Suite (see §14) — this page is now read-only analysis.
 
 - **Month Navigator** — Browse historical months
 - **Month Comparison** — Side-by-side month metrics
@@ -152,8 +160,8 @@ Month-over-month performance tracking and projections.
 - **Prop Profit Summary** — Prop firm profit tracking
 
 **Page:** `src/app/[locale]/(app)/monthly/page.tsx`
-**Components:** `src/components/monthly/`, `src/components/monthly-plan/`
-**Server Actions:** `src/app/actions/monthly-plans.ts`
+**Components:** `src/components/monthly/`
+**Server Actions:** `src/app/actions/reports.ts` (`getMonthlyResultsWithProp`, `getMonthlyProjection`, `getMonthComparison`)
 
 ---
 
@@ -238,18 +246,7 @@ Strategy backtesting on historical candle data with modular entry/exit logic.
 
 ---
 
-### 12. MACD Test (Experimental)
-
-Experimental MACD indicator visualization and testing.
-
-- **MACD Chart View** — Interactive MACD indicator chart
-
-**Page:** `src/app/[locale]/(app)/macd-test/page.tsx`
-**Components:** `src/components/macd-test/`
-
----
-
-### 13. Settings
+### 12. Settings
 
 User configuration, account management, and data definitions.
 
@@ -268,7 +265,57 @@ User configuration, account management, and data definitions.
 
 **Page:** `src/app/[locale]/(app)/settings/page.tsx`
 **Components:** `src/components/settings/`
-**Server Actions:** `src/app/actions/settings.ts`, `src/app/actions/accounts.ts`, `src/app/actions/assets.ts`, `src/app/actions/tags.ts`, `src/app/actions/timeframes.ts`, `src/app/actions/trading-conditions.ts`, `src/app/actions/indicators.ts`, `src/app/actions/user-management.ts`, `src/app/actions/bug-reports.ts`
+**Server Actions:** `src/app/actions/settings.ts`, `src/app/actions/accounts.ts`, `src/app/actions/assets.ts`, `src/app/actions/tags.ts`, `src/app/actions/timeframes.ts`, `src/app/actions/trading-conditions.ts`, `src/app/actions/indicators.ts`, `src/app/actions/user-management.ts`, `src/app/actions/bug-reports.ts`, `src/app/actions/risk-profiles.ts`, `src/app/actions/tax-engine.ts` (fee-rate config)
+
+---
+
+### 13. Fractal Planning Suite
+
+Three-level hierarchical planning (Year → Quarter → Month → Week → Day) with cascading defaults, capital ladder, and R-based targets. Replaces the old monthly-plan layer.
+
+- **Yearly Plan Editor** — Initial capital, capital-ladder tiers, trading days/week, default daily/weekly/monthly R limits
+- **Quarterly Plan Editor** — Quarter-level R targets, override risk profile; inherits from yearly defaults
+- **Monthly Plan Editor / Slideover** — Month-level R targets, snapshot capital/1R, weekly breakdown strips
+- **Annual Cockpit Grid** — Full-year monthly grid with plan vs. reality
+- **Week Strip / Week Row** — Week-level breakdown inside the month cockpit
+- **Quarter Plan vs Reality** — Quarter-level comparison
+- **Plan vs Reality** — Month-level comparison
+- **Setup Summary Card** — Resolved active setup summary
+- **Provenance Badge** — Marks each value's origin (year / quarter / month / account default)
+- **Risk Profile Picker** — Attach a named risk profile to any plan level
+- **Snapshot Hero** — Active snapshot of capital + 1R for the month
+- **R-Cap Override Popover** — Inline R-cap overrides with snapshot capture
+- **What-If Calculator** — Quick projection sandbox
+
+**Pages:**
+- `src/app/[locale]/(app)/plan/[year]/page.tsx` — Yearly cockpit
+- `src/app/[locale]/(app)/plan/[year]/[quarter]/page.tsx` — Quarter view
+- `src/app/[locale]/(app)/plan/[year]/[quarter]/[month]/page.tsx` — Month cockpit
+
+**Components:** `src/components/fractal-plan/`, `src/components/fractal-plan/cockpit/`
+**Server Actions:** `src/app/actions/fractal-plan/` (yearly, quarterly, monthly, weekly, daily, tier, reports)
+**Lib:** `src/lib/fractal-plan/` (capital-ladder, projection, resolver, cascade-merge, auto-seed, tier-eval, drawdown-trigger)
+
+---
+
+### 14. Yearly Tax Reporting (BR DARF Engine)
+
+Brazilian day-trade IR compliance engine, embedded in the `/plan/[year]` cockpit under an **Impostos** tab and surfaced again in `/reports`.
+
+- **DARF Strip** — 12 chips with DARF status (pending / paid / exempt / overdue) per month
+- **Monthly DARF Card** — Per-month breakdown: gross gain, fees, IRRF, DARF due, status
+- **EOY Projection Banner** — End-of-year capital projection from YTD avg R/day, capital ladder, IR rate, and withdrawal target
+- **Carryover Ledger** — Running prejuízo fiscal balance + history
+- **Annual Tax Summary** — Year-to-date rollup card (in `/reports`)
+- **Fee Rate Form / Table** — Per-account and per-asset fee config (corretagem, emolumentos, ISS, registro)
+- **Mark DARF Paid** — User flow with paid amount; only valid for finalized months
+- **Recompute Ledger** — Force recompute the chained `monthlyTaxLedger` from a given month forward
+
+Storage: `monthlyTaxLedger` table — one row per account per month, lazily recomputed on read, chain-linked via carryover. Legal IR rates sourced from `src/lib/tax/legal-rates.ts` (Lei 11.033/2004).
+
+**Components:** `src/components/fractal-plan/cockpit/tax-tab.tsx`, `darf-strip.tsx`, `eoy-projection-banner.tsx`; `src/components/tax/monthly-darf-card.tsx`, `carryover-ledger.tsx`, `annual-tax-summary.tsx`, `fee-rate-form.tsx`, `fee-breakdown-table.tsx`
+**Server Actions:** `src/app/actions/tax-engine.ts` (`getMonthlyDarf`, `markDarfPaid`, `recomputeLedger`, `getYearTaxSummary`, `getEffectiveTaxRate`, `getFeeRates`, `upsertFeeRates`, `deleteFeeRates`, `listFeeRates`), `src/app/actions/annual-reports.ts` (`recordCapitalEvent`, `deleteCapitalEvent`, `getCapitalSnapshot`, `getWeeklyMetaVsReal`, `getAnnualRollup`)
+**Lib:** `src/lib/tax/` (recompute-month, darf-calculator, fee-allocator, fee-resolver, irrf-accumulator, carryover-ledger, legal-rates, asset-defaults, mark-dirty, month-status, types)
 
 ---
 
@@ -318,9 +365,9 @@ src/
 │   │   ├── command-center/
 │   │   ├── equity-shield/
 │   │   ├── journal/             # CRUD: list, new, [id], [id]/edit
-│   │   ├── macd-test/
 │   │   ├── monte-carlo/
 │   │   ├── monthly/
+│   │   ├── plan/                # Fractal plan: [year], [year]/[quarter], [year]/[quarter]/[month]
 │   │   ├── playbook/            # CRUD: list, new, [id], [id]/edit
 │   │   ├── reports/
 │   │   ├── risk-simulation/
@@ -343,21 +390,21 @@ src/
 │   ├── command-center/          # Daily cockpit panels
 │   ├── dashboard/               # Dashboard + kpi/
 │   ├── equity-shield/           # Shield charts & params
+│   ├── fractal-plan/            # Year/quarter/month plan editors + cockpit/
 │   ├── imports/                 # Detailed trade importer
 │   ├── journal/                 # Trade forms, cards, views
 │   ├── layout/                  # App shell, sidebar, command menu
-│   ├── macd-test/               # MACD chart view
 │   ├── market/                  # Market monitor components
 │   ├── monte-carlo/             # MC v1 + v2/
 │   ├── monthly/                 # Monthly review
-│   ├── monthly-plan/            # Monthly planning
 │   ├── optimize/                # Backtest optimization UI
 │   ├── playbook/                # Strategy management
 │   ├── providers/               # App-wide providers
-│   ├── reports/                 # Report cards
+│   ├── reports/                 # Report cards (weekly, monthly, annual rollup, R-dist, capital events)
 │   ├── risk-simulation/         # What-if simulation UI
 │   ├── settings/                # All settings panels
 │   ├── shared/                  # Reusable primitives
+│   ├── tax/                     # BR tax cards, fee config, carryover ledger
 │   └── ui/                      # Design system (Shadcn-based)
 │
 ├── db/
@@ -401,6 +448,7 @@ src/
 │   │   ├── registry.ts          # Provider registry
 │   │   ├── providers/           # Yahoo, BRAPI, CoinGecko, BCB
 │   │   └── cache.ts
+│   ├── fractal-plan/            # Plan resolver, capital-ladder, projection, cascade-merge, tier-eval
 │   ├── nota-parser/             # Brokerage nota parsing (Sinacor)
 │   ├── ocr/                     # OCR pipeline (Tesseract + OpenAI Vision)
 │   ├── optimize/                # Backtest optimization
@@ -408,6 +456,8 @@ src/
 │   │   ├── parameter-grid.ts    # Grid generation
 │   │   └── heatmap-utils.ts     # Heatmap visualization
 │   ├── pdf/                     # PDF report generation
+│   ├── reports/                 # Annual report types
+│   ├── tax/                     # BR tax engine: recompute, DARF, fees, IRRF, carryover, legal-rates
 │   ├── validations/             # Zod schemas (20+ files)
 │   ├── vision/                  # Vision API integration
 │   ├── equity-shield.ts         # Equity shield engine
@@ -476,7 +526,6 @@ src/
 | Feature | Description | Access |
 |---------|-------------|--------|
 | **Command Center** | Pre-market prep, live session control, and post-market reflection cockpit | All |
-| ↳ Plan | Monthly trading plan creation with goals, risk limits, and recovery paths | Trader |
 | ↳ Centro de Comando | Circuit breaker, live status, checklist, pre/post notes, asset rules, daily summary | Trader |
 | ↳ Monitor | Real-time quotes, B3 calendar, economic calendar, market status | Admin |
 | ↳ Calculadora | Position size calculator with risk-based lot sizing | All |
@@ -510,6 +559,15 @@ src/
 | ↳ Month Comparison | Side-by-side metrics across months | Trader |
 | ↳ Weekly Breakdown | Performance segmented by week within month | Trader |
 | ↳ Projection | Extrapolated performance at current pace (current month only) | Trader |
+| **Fractal Planning Suite** | Year → quarter → month → week cascade with capital ladder and R-based targets | Trader |
+| ↳ Yearly Cockpit | Annual grid + EOY projection + DARF strip | Trader |
+| ↳ Quarter View | Quarter-level R targets and plan vs. reality | Trader |
+| ↳ Month Cockpit | Snapshot hero, week strip, monthly DARF, plan vs. reality, what-if calculator | Trader |
+| ↳ Provenance Badges | Origin marker for each resolved value (year / quarter / month / default) | Trader |
+| **Yearly Tax Reporting** | BR DARF engine: monthly ledger, carryover, IRRF, fee config, mark paid | Trader |
+| ↳ Impostos Tab | Per-month DARF cards inside the year cockpit | Trader |
+| ↳ Carryover Ledger | Running prejuízo fiscal balance + history | Trader |
+| ↳ Fee Rates | Per-account and per-asset fee config (corretagem, emolumentos, ISS, registro) | Admin |
 | **Monte Carlo** | Statistical simulation of trade outcomes for drawdown and risk analysis | All |
 | ↳ Edge Expectancy | Classic MC simulation with manual or trade-based inputs, Kelly criterion | All |
 | ↳ Capital Expectancy | Risk-profile-aware simulation with mode distribution and daily PnL | All |
