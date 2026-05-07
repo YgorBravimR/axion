@@ -42,7 +42,9 @@ export const PreMarketNotes = ({
 			setMood((dailyPlan.mood as MoodType | null) ?? null)
 			setTargetR(dailyPlan.targetR ?? "")
 			setMaxTrades(
-				dailyPlan.maxTradesToday != null ? String(dailyPlan.maxTradesToday) : "",
+				dailyPlan.maxTradesToday !== null
+					? String(dailyPlan.maxTradesToday)
+					: ""
 			)
 		}
 	}, [dailyPlan])
@@ -53,10 +55,14 @@ export const PreMarketNotes = ({
 			mood !== ((dailyPlan.mood as MoodType | null) ?? null) ||
 			targetR !== (dailyPlan.targetR ?? "") ||
 			maxTrades !==
-				(dailyPlan.maxTradesToday != null ? String(dailyPlan.maxTradesToday) : ""))
+				(dailyPlan.maxTradesToday !== null
+					? String(dailyPlan.maxTradesToday)
+					: ""))
 
 	const handleSave = async () => {
-		if (!dailyPlan) return
+		if (!dailyPlan) {
+			return
+		}
 		const targetParsed = targetR.trim()
 			? parseFloat(targetR.replace(",", "."))
 			: null
@@ -65,7 +71,10 @@ export const PreMarketNotes = ({
 			return
 		}
 		const maxParsed = maxTrades.trim() ? parseInt(maxTrades, 10) : null
-		if (maxParsed !== null && (!Number.isInteger(maxParsed) || maxParsed <= 0)) {
+		if (
+			maxParsed !== null &&
+			(!Number.isInteger(maxParsed) || maxParsed <= 0)
+		) {
 			showToast("error", t("saveError"))
 			return
 		}
@@ -95,15 +104,17 @@ export const PreMarketNotes = ({
 		return (
 			<div
 				id="cc-pre-market-notes"
-				className="rounded-lg border border-dashed border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500"
+				className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
 			>
-				<div className="flex items-center gap-s-200">
-					<Sun className="h-5 w-5 text-trade-buy" />
-					<h3 className="text-small sm:text-body font-semibold text-txt-100">
+				<div className="gap-s-200 flex items-center">
+					<Sun className="text-trade-buy h-5 w-5" />
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("preMarket")}
 					</h3>
 				</div>
-				<p className="mt-s-200 text-tiny text-txt-300">{tPlan(NO_PLAN_HINT_KEY)}</p>
+				<p className="mt-s-200 text-tiny text-txt-300">
+					{tPlan(NO_PLAN_HINT_KEY)}
+				</p>
 			</div>
 		)
 	}
@@ -111,12 +122,12 @@ export const PreMarketNotes = ({
 	return (
 		<div
 			id="cc-pre-market-notes"
-			className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
-				<div className="flex items-center gap-s-200">
-					<Sun className="h-5 w-5 text-trade-buy" />
-					<h3 className="text-small sm:text-body font-semibold text-txt-100">
+				<div className="gap-s-200 flex items-center">
+					<Sun className="text-trade-buy h-5 w-5" />
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("preMarket")}
 					</h3>
 				</div>
@@ -137,12 +148,12 @@ export const PreMarketNotes = ({
 				)}
 			</div>
 
-			<div className="mb-s-300 sm:mb-m-400 grid grid-cols-1 gap-s-300 sm:grid-cols-2">
+			<div className="mb-s-300 sm:mb-m-400 gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 				<div>
 					<Label
 						id="pre-market-target-r-label"
 						htmlFor="pre-market-target-r"
-						className="mb-s-200 block text-small text-txt-200"
+						className="mb-s-200 text-small text-txt-200 block"
 					>
 						{t("targetR")}
 					</Label>
@@ -160,7 +171,7 @@ export const PreMarketNotes = ({
 					<Label
 						id="pre-market-max-trades-label"
 						htmlFor="pre-market-max-trades"
-						className="mb-s-200 block text-small text-txt-200"
+						className="mb-s-200 text-small text-txt-200 block"
 					>
 						{t("maxTrades")}
 					</Label>
@@ -181,7 +192,7 @@ export const PreMarketNotes = ({
 				<Label
 					id="pre-market-mood-label"
 					htmlFor="pre-market-mood"
-					className="mb-s-200 block text-small text-txt-200"
+					className="mb-s-200 text-small text-txt-200 block"
 				>
 					{t("mood")}
 				</Label>
@@ -192,7 +203,7 @@ export const PreMarketNotes = ({
 				<Label
 					id="pre-market-notes-label"
 					htmlFor="pre-market-notes-textarea"
-					className="mb-s-200 block text-small text-txt-200"
+					className="mb-s-200 text-small text-txt-200 block"
 				>
 					{t("preMarketLabel")}
 				</Label>

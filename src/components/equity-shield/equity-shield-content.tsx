@@ -7,13 +7,19 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Shield } from "lucide-react"
 import { toCents, fromCents } from "@/lib/money"
-import { runEquityShieldFromDb, getEquityShieldPreview } from "@/app/actions/equity-shield"
+import {
+	runEquityShieldFromDb,
+	getEquityShieldPreview,
+} from "@/app/actions/equity-shield"
 import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
 import { EquityShieldParamsForm } from "./equity-shield-params"
 import { EquityShieldStats } from "./equity-shield-stats"
 import { EquityShieldChart } from "./equity-shield-chart"
 import { MCCalibrationBanner } from "./mc-calibration-banner"
-import type { EquityShieldParams, EquityShieldResult } from "@/types/equity-shield"
+import type {
+	EquityShieldParams,
+	EquityShieldResult,
+} from "@/types/equity-shield"
 
 interface EquityShieldPreview {
 	totalTrades: number
@@ -33,13 +39,12 @@ const DEFAULT_PARAMS: EquityShieldParams = {
 	cutAtDdLimit: false,
 }
 
-const EquityShieldContent = ({
-	tradeYears,
-}: EquityShieldContentProps) => {
+const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 	const t = useTranslations("equityShield")
 	const tOverlay = useTranslations("overlay")
 	const { showLoading, hideLoading } = useLoadingOverlay()
-	const { snapshot: mcSnapshot, setSnapshot: setMCSnapshot } = useMCCalibration()
+	const { snapshot: mcSnapshot, setSnapshot: setMCSnapshot } =
+		useMCCalibration()
 
 	// Phase 4b: legacy monthly plan source-of-balance removed. Phase 5 will rederive from fractal cascade.
 	const [params, setParams] = useState<EquityShieldParams>(DEFAULT_PARAMS)
@@ -67,39 +72,46 @@ const EquityShieldContent = ({
 	const [preview, setPreview] = useState<EquityShieldPreview | null>(null)
 	const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
-	const fetchPreview = useCallback(async (from: string, to: string) => {
-		if (!from || !to) return
-
-		setIsLoadingPreview(true)
-		try {
-			const response = await getEquityShieldPreview(from, to)
-			if (response.status === "success" && response.data) {
-				setPreview(response.data)
-			} else {
-				setError(response.message)
+	const fetchPreview = useCallback(
+		async (from: string, to: string) => {
+			if (!from || !to) {
+				return
 			}
-		} catch {
-			setError(t("errors.unexpected"))
-		} finally {
-			setIsLoadingPreview(false)
-		}
-	}, [t])
 
-	const handleDateChange = useCallback(async (from: string, to: string) => {
-		setDateFrom(from)
-		setDateTo(to)
-		setResult(null)
-		setPreview(null)
-		setError(null)
+			setIsLoadingPreview(true)
+			try {
+				const response = await getEquityShieldPreview(from, to)
+				if (response.status === "success" && response.data) {
+					setPreview(response.data)
+				} else {
+					setError(response.message)
+				}
+			} catch {
+				setError(t("errors.unexpected"))
+			} finally {
+				setIsLoadingPreview(false)
+			}
+		},
+		[t]
+	)
 
-		await fetchPreview(from, to)
-	}, [fetchPreview])
+	const handleDateChange = useCallback(
+		async (from: string, to: string) => {
+			setDateFrom(from)
+			setDateTo(to)
+			setResult(null)
+			setPreview(null)
+			setError(null)
+
+			await fetchPreview(from, to)
+		},
+		[fetchPreview]
+	)
 
 	// Fetch initial preview on mount
 	useEffect(() => {
-		fetchPreview(dateFrom, dateTo)
-	// dateFrom/dateTo are stable initial values — this only runs on mount
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		void fetchPreview(dateFrom, dateTo)
+		// dateFrom/dateTo are stable initial values — this only runs on mount
 	}, [])
 
 	const handleRun = useCallback(async () => {
@@ -108,11 +120,7 @@ const EquityShieldContent = ({
 		showLoading({ message: tOverlay("analyzing") })
 
 		try {
-			const response = await runEquityShieldFromDb(
-				params,
-				dateFrom,
-				dateTo
-			)
+			const response = await runEquityShieldFromDb(params, dateFrom, dateTo)
 
 			if (response.status === "success" && response.data) {
 				setResult(response.data)
@@ -136,15 +144,13 @@ const EquityShieldContent = ({
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div>
-				<div className="flex items-center gap-s-300">
+				<div className="gap-s-300 flex items-center">
 					<Shield className="text-acc-100 h-6 w-6" />
 					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">
 						{t("title")}
 					</h1>
 				</div>
-				<p className="text-small text-txt-300 mt-s-200">
-					{t("subtitle")}
-				</p>
+				<p className="text-small text-txt-300 mt-s-200">{t("subtitle")}</p>
 			</div>
 
 			{/* Monte Carlo Calibration Banner */}
@@ -176,7 +182,7 @@ const EquityShieldContent = ({
 				<div
 					role="alert"
 					aria-live="assertive"
-					className="border-fb-error/30 bg-fb-error/10 text-fb-error rounded-lg border p-s-300"
+					className="border-fb-error/30 bg-fb-error/10 text-fb-error p-s-300 rounded-lg border"
 				>
 					<p className="text-small">{error}</p>
 				</div>
@@ -184,7 +190,7 @@ const EquityShieldContent = ({
 
 			{/* Results */}
 			{result && (
-				<div className="border-t border-bg-300 mt-m-400 pt-m-400 space-y-m-400 sm:space-y-m-500">
+				<div className="border-bg-300 mt-m-400 pt-m-400 space-y-m-400 sm:space-y-m-500 border-t">
 					{/* Summary Stats */}
 					<EquityShieldStats
 						stats={result.stats}
@@ -204,11 +210,11 @@ const EquityShieldContent = ({
 
 					{/* Chart 2: Method 1 - MDD Exercise */}
 					<div className="space-y-s-200">
-						<div className="flex flex-wrap items-center justify-between gap-s-200">
+						<div className="gap-s-200 flex flex-wrap items-center justify-between">
 							<h3 className="text-body text-txt-100 font-semibold">
 								{t("charts.method1")}
 							</h3>
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<Switch
 									id="m1-live-only"
 									checked={method1LiveOnly}
@@ -236,11 +242,11 @@ const EquityShieldContent = ({
 
 					{/* Chart 3: Method 2 - SMA Crossover */}
 					<div className="space-y-s-200">
-						<div className="flex flex-wrap items-center justify-between gap-s-200">
+						<div className="gap-s-200 flex flex-wrap items-center justify-between">
 							<h3 className="text-body text-txt-100 font-semibold">
 								{t("charts.method2")}
 							</h3>
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<Switch
 									id="m2-live-only"
 									checked={method2LiveOnly}

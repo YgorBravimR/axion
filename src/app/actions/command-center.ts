@@ -520,14 +520,17 @@ export const getAccountAssetSettings = async (): Promise<
 
 		// Auto-populate blank rows for missing assets
 		if (missingAssets.length > 0) {
-			await db.insert(accountAssetSettings).values(
-				missingAssets.map((aa) => ({
-					userId,
-					accountId,
-					assetId: aa.assetId,
-					isActive: true,
-				}))
-			).onConflictDoNothing()
+			await db
+				.insert(accountAssetSettings)
+				.values(
+					missingAssets.map((aa) => ({
+						userId,
+						accountId,
+						assetId: aa.assetId,
+						isActive: true,
+					}))
+				)
+				.onConflictDoNothing()
 
 			// Re-fetch with asset relation
 			const allSettings = await db.query.accountAssetSettings.findMany({
@@ -560,7 +563,11 @@ export const getAccountAssetSettings = async (): Promise<
 			errors: [
 				{
 					code: "FETCH_FAILED",
-					detail: toSafeErrorMessage(error, "getAccountAssetSettings", "database"),
+					detail: toSafeErrorMessage(
+						error,
+						"getAccountAssetSettings",
+						"database"
+					),
 				},
 			],
 		}
@@ -784,7 +791,9 @@ export const getCircuitBreakerStatus = async (
 		// Current consecutive losses (from the most recent non-breakeven trades)
 		let currentConsecutiveLosses = 0
 		for (let i = sortedTrades.length - 1; i >= 0; i--) {
-			if (sortedTrades[i].outcome === "breakeven") continue
+			if (sortedTrades[i].outcome === "breakeven") {
+				continue
+			}
 			if (sortedTrades[i].outcome === "loss") {
 				currentConsecutiveLosses++
 			} else {
@@ -939,12 +948,24 @@ export const getCircuitBreakerStatus = async (
 
 		// Build alerts
 		const alerts: string[] = []
-		if (profitTargetHit) alerts.push("profitTargetHit")
-		if (lossLimitHit) alerts.push("lossLimitHit")
-		if (maxTradesHit) alerts.push("maxTradesHit")
-		if (maxConsecutiveLossesHit) alerts.push("maxConsecutiveLossesHit")
-		if (isMonthlyLimitHit) alerts.push("monthlyLimitHit")
-		if (isSecondOpBlocked) alerts.push("secondOpBlocked")
+		if (profitTargetHit) {
+			alerts.push("profitTargetHit")
+		}
+		if (lossLimitHit) {
+			alerts.push("lossLimitHit")
+		}
+		if (maxTradesHit) {
+			alerts.push("maxTradesHit")
+		}
+		if (maxConsecutiveLossesHit) {
+			alerts.push("maxConsecutiveLossesHit")
+		}
+		if (isMonthlyLimitHit) {
+			alerts.push("monthlyLimitHit")
+		}
+		if (isSecondOpBlocked) {
+			alerts.push("secondOpBlocked")
+		}
 
 		return {
 			status: "success",
@@ -1037,8 +1058,12 @@ export const getDailySummary = async (
 			const pnl = fromCents(trade.pnl)
 			totalPnL += pnl
 
-			if (pnl > bestTrade) bestTrade = pnl
-			if (pnl < worstTrade) worstTrade = pnl
+			if (pnl > bestTrade) {
+				bestTrade = pnl
+			}
+			if (pnl < worstTrade) {
+				worstTrade = pnl
+			}
 
 			if (trade.outcome === "win") {
 				winCount++

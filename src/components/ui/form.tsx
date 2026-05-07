@@ -6,18 +6,10 @@ import type {
 	HTMLAttributes,
 	ElementRef,
 } from "react"
-import * as LabelPrimitive from "@radix-ui/react-label"
+import type * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
-import {
-	Controller,
-	FormProvider,
-	useFormContext,
-} from "react-hook-form"
-import type {
-	ControllerProps,
-	FieldPath,
-	FieldValues,
-} from "react-hook-form"
+import { Controller, FormProvider, useFormContext } from "react-hook-form"
+import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
@@ -78,21 +70,22 @@ const FormItemContext = createContext<FormItemContextValue>(
 	{} as FormItemContextValue
 )
 
-const FormItem = forwardRef<
-	HTMLDivElement,
-	HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-	const id = useId()
+const FormItem = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+	({ className, ...props }, ref) => {
+		const id = useId()
 
-	return (
-		<FormItemContext.Provider value={{ id }}>
-			<div ref={ref} className={cn("space-y-s-200", className)} {...props} />
-		</FormItemContext.Provider>
-	)
-})
+		return (
+			<FormItemContext.Provider value={{ id }}>
+				<div ref={ref} className={cn("space-y-s-200", className)} {...props} />
+			</FormItemContext.Provider>
+		)
+	}
+)
 FormItem.displayName = "FormItem"
 
-interface FormLabelProps extends ComponentPropsWithoutRef<typeof LabelPrimitive.Root> {
+interface FormLabelProps extends ComponentPropsWithoutRef<
+	typeof LabelPrimitive.Root
+> {
 	id: string
 	/** Whether this field is required (shows * indicator) */
 	required?: boolean
@@ -174,7 +167,7 @@ const FormMessage = forwardRef<
 		<p
 			ref={ref}
 			id={formMessageId}
-			className={cn("text-tiny font-medium text-fb-error", className)}
+			className={cn("text-tiny text-fb-error font-medium", className)}
 			{...props}
 		>
 			{body}

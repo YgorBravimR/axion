@@ -16,12 +16,20 @@ import type { Trade } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { getStartOfDay, getEndOfDay } from "@/lib/dates"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
-import type { NotaFill, AssetFillGroup, EnrichmentMatch, NotaEnrichmentPreview } from "./types"
+import type {
+	NotaFill,
+	AssetFillGroup,
+	EnrichmentMatch,
+	NotaEnrichmentPreview,
+} from "./types"
 
 /**
  * Group fills by (normalizedAsset, date) and compute weighted averages.
  */
-const groupFillsByAsset = (fills: NotaFill[], notaDate: Date): AssetFillGroup[] => {
+const groupFillsByAsset = (
+	fills: NotaFill[],
+	notaDate: Date
+): AssetFillGroup[] => {
 	const groupMap = new Map<string, AssetFillGroup>()
 
 	for (const fill of fills) {
@@ -54,12 +62,18 @@ const groupFillsByAsset = (fills: NotaFill[], notaDate: Date): AssetFillGroup[] 
 	// Compute weighted averages
 	for (const group of groupMap.values()) {
 		if (group.totalBuyQty > 0) {
-			const totalBuyValue = group.buyFills.reduce((sum, f) => sum + f.price * f.quantity, 0)
+			const totalBuyValue = group.buyFills.reduce(
+				(sum, f) => sum + f.price * f.quantity,
+				0
+			)
 			group.weightedAvgBuyPrice = totalBuyValue / group.totalBuyQty
 		}
 
 		if (group.totalSellQty > 0) {
-			const totalSellValue = group.sellFills.reduce((sum, f) => sum + f.price * f.quantity, 0)
+			const totalSellValue = group.sellFills.reduce(
+				(sum, f) => sum + f.price * f.quantity,
+				0
+			)
 			group.weightedAvgSellPrice = totalSellValue / group.totalSellQty
 		}
 	}
@@ -71,7 +85,9 @@ const groupFillsByAsset = (fills: NotaFill[], notaDate: Date): AssetFillGroup[] 
  * Calculate price delta percentage between two prices.
  */
 const priceDeltaPercent = (notaPrice: number, tradePrice: number): number => {
-	if (tradePrice === 0) return 100
+	if (tradePrice === 0) {
+		return 100
+	}
 	return Math.abs((notaPrice - tradePrice) / tradePrice) * 100
 }
 
@@ -82,7 +98,7 @@ const priceDeltaPercent = (notaPrice: number, tradePrice: number): number => {
  */
 const matchTradeToGroup = (
 	trade: Trade,
-	group: AssetFillGroup,
+	group: AssetFillGroup
 ): EnrichmentMatch => {
 	const tradeDirection = trade.direction
 	const tradePositionSize = Number(trade.positionSize)
@@ -90,12 +106,21 @@ const matchTradeToGroup = (
 	const tradeExitPrice = trade.exitPrice ? Number(trade.exitPrice) : null
 
 	// Determine entry/exit fills based on direction
-	const entryFills = tradeDirection === "long" ? group.buyFills : group.sellFills
+	const entryFills =
+		tradeDirection === "long" ? group.buyFills : group.sellFills
 	const exitFills = tradeDirection === "long" ? group.sellFills : group.buyFills
-	const totalEntryQty = tradeDirection === "long" ? group.totalBuyQty : group.totalSellQty
-	const totalExitQty = tradeDirection === "long" ? group.totalSellQty : group.totalBuyQty
-	const avgEntryPrice = tradeDirection === "long" ? group.weightedAvgBuyPrice : group.weightedAvgSellPrice
-	const avgExitPrice = tradeDirection === "long" ? group.weightedAvgSellPrice : group.weightedAvgBuyPrice
+	const totalEntryQty =
+		tradeDirection === "long" ? group.totalBuyQty : group.totalSellQty
+	const totalExitQty =
+		tradeDirection === "long" ? group.totalSellQty : group.totalBuyQty
+	const avgEntryPrice =
+		tradeDirection === "long"
+			? group.weightedAvgBuyPrice
+			: group.weightedAvgSellPrice
+	const avgExitPrice =
+		tradeDirection === "long"
+			? group.weightedAvgSellPrice
+			: group.weightedAvgBuyPrice
 
 	// Check if trade already has executions (already enriched)
 	if (trade.executionMode === "scaled") {
@@ -169,7 +194,7 @@ const matchNotaFillsToTrades = async (
 	fills: NotaFill[],
 	notaDate: Date,
 	accountId: string,
-	userId: string,
+	userId: string
 ): Promise<NotaEnrichmentPreview> => {
 	const matches: EnrichmentMatch[] = []
 	const allUnmatchedFills: NotaFill[] = []
@@ -187,13 +212,14 @@ const matchNotaFillsToTrades = async (
 		const startOfDay = getStartOfDay(notaDate)
 		const endOfDay = getEndOfDay(notaDate)
 
+		// eslint-disable-next-line no-await-in-loop -- per-asset trade query for nota matching; sequential because match results accumulate into confirmed/unmatched lists
 		const rawTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
 				eq(trades.asset, group.asset),
 				gte(trades.entryDate, startOfDay),
 				lte(trades.entryDate, endOfDay),
-				eq(trades.isArchived, false),
+				eq(trades.isArchived, false)
 			),
 		})
 
@@ -205,7 +231,9 @@ const matchNotaFillsToTrades = async (
 		if (decryptedTrades.length === 0) {
 			// No trades found for this asset+date — all fills are unmatched
 			allUnmatchedFills.push(...group.buyFills, ...group.sellFills)
-			warnings.push(`No trades found for ${group.asset} on ${notaDate.toISOString().split("T")[0]}`)
+			warnings.push(
+				`No trades found for ${group.asset} on ${notaDate.toISOString().split("T")[0]}`
+			)
 			continue
 		}
 
@@ -231,8 +259,10 @@ const matchNotaFillsToTrades = async (
 			const tradeDirection = trade.direction
 
 			// For this trade, find matching fills
-			const fillsPool = tradeDirection === "long" ? unmatchedBuyFills : unmatchedSellFills
-			const exitPool = tradeDirection === "long" ? unmatchedSellFills : unmatchedBuyFills
+			const fillsPool =
+				tradeDirection === "long" ? unmatchedBuyFills : unmatchedSellFills
+			const exitPool =
+				tradeDirection === "long" ? unmatchedSellFills : unmatchedBuyFills
 
 			// Greedy: take fills that sum to the trade's position size
 			let accumulated = 0
@@ -287,21 +317,26 @@ const matchNotaFillsToTrades = async (
 			}
 
 			// Build a temporary group for this trade
-			const avgEntry = matchedEntryFills.length > 0
-				? matchedEntryFills.reduce((s, f) => s + f.price * f.quantity, 0) / accumulated
-				: 0
-			const avgExit = matchedExitFills.length > 0
-				? matchedExitFills.reduce((s, f) => s + f.price * f.quantity, 0) / exitAccumulated
-				: 0
+			const avgEntry =
+				matchedEntryFills.length > 0
+					? matchedEntryFills.reduce((s, f) => s + f.price * f.quantity, 0) /
+						accumulated
+					: 0
+			const avgExit =
+				matchedExitFills.length > 0
+					? matchedExitFills.reduce((s, f) => s + f.price * f.quantity, 0) /
+						exitAccumulated
+					: 0
 
 			const tradeEntryPrice = Number(trade.entryPrice)
 			const entryDelta = priceDeltaPercent(avgEntry, tradeEntryPrice)
 
-			const status = trade.executionMode === "scaled"
-				? "already_enriched" as const
-				: entryDelta > 0.5
-					? "price_mismatch" as const
-					: "matched" as const
+			const status =
+				trade.executionMode === "scaled"
+					? ("already_enriched" as const)
+					: entryDelta > 0.5
+						? ("price_mismatch" as const)
+						: ("matched" as const)
 
 			matches.push({
 				tradeId: trade.id,
@@ -312,11 +347,12 @@ const matchNotaFillsToTrades = async (
 				computedAvgEntry: avgEntry,
 				computedAvgExit: avgExit,
 				priceDeltaPercent: entryDelta,
-				message: status === "price_mismatch"
-					? `nota.priceDelta|${entryDelta.toFixed(2)}`
-					: status === "already_enriched"
-						? "nota.alreadyEnriched"
-						: undefined,
+				message:
+					status === "price_mismatch"
+						? `nota.priceDelta|${entryDelta.toFixed(2)}`
+						: status === "already_enriched"
+							? "nota.alreadyEnriched"
+							: undefined,
 			})
 		}
 

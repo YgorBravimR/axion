@@ -67,8 +67,9 @@ const requireAdmin = async (): Promise<
 		.where(eq(users.id, userId))
 		.limit(1)
 
-	if (!user?.isAdmin)
+	if (!user?.isAdmin) {
 		return { authorized: false, response: UNAUTHORIZED_RESPONSE }
+	}
 	return { authorized: true, userId }
 }
 
@@ -135,7 +136,9 @@ const getBugReports = async (filters?: {
 }): Promise<ActionResponse<PaginatedResponse<BugReportWithReporter>>> => {
 	try {
 		const adminResult = await requireAdmin()
-		if (!adminResult.authorized) return adminResult.response
+		if (!adminResult.authorized) {
+			return adminResult.response
+		}
 
 		const limit = filters?.limit ?? 50
 		const offset = filters?.offset ?? 0
@@ -248,7 +251,9 @@ const updateBugReportStatus = async (
 ): Promise<ActionResponse<BugReport>> => {
 	try {
 		const adminResult = await requireAdmin()
-		if (!adminResult.authorized) return adminResult.response
+		if (!adminResult.authorized) {
+			return adminResult.response
+		}
 		const { userId } = adminResult
 
 		const validated = updateStatusSchema.parse(input)
@@ -329,7 +334,9 @@ const getBugReportDetail = async (
 ): Promise<ActionResponse<BugReportDetail>> => {
 	try {
 		const adminResult = await requireAdmin()
-		if (!adminResult.authorized) return adminResult.response
+		if (!adminResult.authorized) {
+			return adminResult.response
+		}
 
 		const reporter = db
 			.select({ id: users.id, name: users.name, email: users.email })

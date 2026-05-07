@@ -105,13 +105,17 @@ const computeWMAFromSlice = (slice: number[]): number => {
 /** Get WMA value with offset (0 = current, 1 = previous bar, etc.) */
 const getWMAWithOffset = (state: WMAState, offset: number): number | null => {
 	if (offset === 0) {
-		if (state.buffer.length < state.period) return null
+		if (state.buffer.length < state.period) {
+			return null
+		}
 		return computeWMAFromSlice(state.buffer)
 	}
 
 	// For offset > 0, compute WMA on a shorter slice
 	const end = state.buffer.length - offset
-	if (end < state.period) return null
+	if (end < state.period) {
+		return null
+	}
 	return computeWMAFromSlice(state.buffer.slice(end - state.period, end))
 }
 

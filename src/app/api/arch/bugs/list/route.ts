@@ -13,15 +13,19 @@ import { archSuccess, archError } from "../../_lib/helpers"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	try {
 		const { searchParams } = new URL(request.url)
 		const validStatuses = ["open", "accepted", "rejected", "closed"] as const
 		const rawStatus = searchParams.get("status")
-		const statusFilter = rawStatus && validStatuses.includes(rawStatus as typeof validStatuses[number])
-			? (rawStatus as typeof validStatuses[number])
-			: null
+		const statusFilter =
+			rawStatus &&
+			validStatuses.includes(rawStatus as (typeof validStatuses)[number])
+				? (rawStatus as (typeof validStatuses)[number])
+				: null
 		const limit = Math.min(Number(searchParams.get("limit")) || 50, 100)
 		const offset = Number(searchParams.get("offset")) || 0
 

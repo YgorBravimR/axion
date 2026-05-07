@@ -24,35 +24,61 @@ const upsertSchema = z.object({
 })
 
 const upsertDailyPlan = async (
-	input: z.infer<typeof upsertSchema>,
+	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = upsertSchema.parse(input)
 		await requireAuth()
 
 		const updates: Record<string, unknown> = { updatedAt: new Date() }
-		if (parsed.targetR !== undefined)
-			updates.targetR = parsed.targetR === null ? null : parsed.targetR.toString()
-		if (parsed.maxTradesToday !== undefined) updates.maxTradesToday = parsed.maxTradesToday
-		if (parsed.preMarketNotes !== undefined) updates.preMarketNotes = parsed.preMarketNotes
-		if (parsed.mood !== undefined) updates.mood = parsed.mood
-		if (parsed.overrideDailyLossR !== undefined)
+		if (parsed.targetR !== undefined) {
+			updates.targetR =
+				parsed.targetR === null ? null : parsed.targetR.toString()
+		}
+		if (parsed.maxTradesToday !== undefined) {
+			updates.maxTradesToday = parsed.maxTradesToday
+		}
+		if (parsed.preMarketNotes !== undefined) {
+			updates.preMarketNotes = parsed.preMarketNotes
+		}
+		if (parsed.mood !== undefined) {
+			updates.mood = parsed.mood
+		}
+		if (parsed.overrideDailyLossR !== undefined) {
 			updates.overrideDailyLossR =
-				parsed.overrideDailyLossR === null ? null : parsed.overrideDailyLossR.toString()
-		if (parsed.overrideDailyTargetR !== undefined)
+				parsed.overrideDailyLossR === null
+					? null
+					: parsed.overrideDailyLossR.toString()
+		}
+		if (parsed.overrideDailyTargetR !== undefined) {
 			updates.overrideDailyTargetR =
-				parsed.overrideDailyTargetR === null ? null : parsed.overrideDailyTargetR.toString()
-		if (parsed.overrideActivePlaybookIds !== undefined)
+				parsed.overrideDailyTargetR === null
+					? null
+					: parsed.overrideDailyTargetR.toString()
+		}
+		if (parsed.overrideActivePlaybookIds !== undefined) {
 			updates.overrideActivePlaybookIds = parsed.overrideActivePlaybookIds
-		if (parsed.postMarketNotes !== undefined) updates.postMarketNotes = parsed.postMarketNotes
+		}
+		if (parsed.postMarketNotes !== undefined) {
+			updates.postMarketNotes = parsed.postMarketNotes
+		}
 
-		await db.update(dailyPlan).set(updates).where(eq(dailyPlan.id, parsed.dailyPlanId))
-		return { status: "success", message: "Daily plan updated", data: { id: parsed.dailyPlanId } }
+		await db
+			.update(dailyPlan)
+			.set(updates)
+			.where(eq(dailyPlan.id, parsed.dailyPlanId))
+		return {
+			status: "success",
+			message: "Daily plan updated",
+			data: { id: parsed.dailyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "UPSERT_DAILY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "UPSERT_DAILY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
@@ -70,7 +96,7 @@ const resetSchema = z.object({
 })
 
 const resetDailyOverride = async (
-	input: z.infer<typeof resetSchema>,
+	input: z.infer<typeof resetSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = resetSchema.parse(input)
@@ -79,7 +105,11 @@ const resetDailyOverride = async (
 			.update(dailyPlan)
 			.set({ [parsed.field]: null, updatedAt: new Date() })
 			.where(eq(dailyPlan.id, parsed.dailyPlanId))
-		return { status: "success", message: "Override reset", data: { id: parsed.dailyPlanId } }
+		return {
+			status: "success",
+			message: "Override reset",
+			data: { id: parsed.dailyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
@@ -95,7 +125,7 @@ const lazyEnsureSchema = z.object({
 })
 
 const lazyEnsureDailyPlan = async (
-	input: z.infer<typeof lazyEnsureSchema>,
+	input: z.infer<typeof lazyEnsureSchema>
 ): Promise<ActionResponse<{ id: string; created: boolean }>> => {
 	try {
 		const parsed = lazyEnsureSchema.parse(input)
@@ -104,7 +134,7 @@ const lazyEnsureDailyPlan = async (
 		const existing = await db.query.dailyPlan.findFirst({
 			where: and(
 				eq(dailyPlan.weeklyPlanId, parsed.weeklyPlanId),
-				eq(dailyPlan.date, parsed.date),
+				eq(dailyPlan.date, parsed.date)
 			),
 		})
 		if (existing) {
@@ -132,7 +162,9 @@ const lazyEnsureDailyPlan = async (
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "LAZY_ENSURE_DAILY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "LAZY_ENSURE_DAILY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
@@ -142,7 +174,7 @@ const getDailyPlanByIdSchema = z.object({
 })
 
 const getDailyPlanById = async (
-	input: z.infer<typeof getDailyPlanByIdSchema>,
+	input: z.infer<typeof getDailyPlanByIdSchema>
 ): Promise<ActionResponse<DailyPlan | null>> => {
 	try {
 		const parsed = getDailyPlanByIdSchema.parse(input)
@@ -159,13 +191,18 @@ const getDailyPlanById = async (
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "GET_DAILY_PLAN_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "GET_DAILY_PLAN_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
 
 const fetchByDateSchema = z.object({
-	dateISO: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
+	dateISO: z
+		.string()
+		.datetime()
+		.or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
 })
 
 type FetchByDateResult =
@@ -175,7 +212,7 @@ type FetchByDateResult =
 	| { kind: "incomplete-cascade"; missing: "quarter" | "month" | "week" }
 
 const getDailyPlanForCurrentAccount = async (
-	input: z.infer<typeof fetchByDateSchema>,
+	input: z.infer<typeof fetchByDateSchema>
 ): Promise<ActionResponse<FetchByDateResult>> => {
 	try {
 		const parsed = fetchByDateSchema.parse(input)
@@ -191,7 +228,11 @@ const getDailyPlanForCurrentAccount = async (
 		const date = new Date(parsed.dateISO)
 		const ensured = await ensureDailyPlanForAccountDate(account.id, date)
 		if (ensured.status === "ok") {
-			return { status: "success", message: "Fetched", data: { kind: "ok", dayRow: ensured.dayRow } }
+			return {
+				status: "success",
+				message: "Fetched",
+				data: { kind: "ok", dayRow: ensured.dayRow },
+			}
 		}
 		if (ensured.status === "no-yearly-plan") {
 			return {

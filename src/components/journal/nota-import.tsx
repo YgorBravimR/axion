@@ -144,7 +144,9 @@ export const NotaImport = () => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -162,7 +164,9 @@ export const NotaImport = () => {
 	const handleInputChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -213,7 +217,9 @@ export const NotaImport = () => {
 	}, [])
 
 	const handleEnrich = async () => {
-		if (!preview || !parseResult || selectedIds.size === 0) return
+		if (!preview || !parseResult || selectedIds.size === 0) {
+			return
+		}
 
 		setIsEnriching(true)
 		showLoading({ message: t("enriching") })
@@ -398,13 +404,13 @@ export const NotaImport = () => {
 					{/* Match summary badges */}
 					<div className="gap-s-200 flex flex-wrap">
 						{(matchCounts.matched ?? 0) > 0 && (
-							<span className="bg-trade-buy/10 text-trade-buy text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
+							<span className="bg-trade-buy/10 text-trade-buy text-tiny gap-s-100 px-s-300 py-s-100 flex items-center rounded-full font-medium">
 								<CheckCircle2 className="h-3 w-3" />
 								{matchCounts.matched} {t("matched")}
 							</span>
 						)}
 						{(matchCounts.already_enriched ?? 0) > 0 && (
-							<span className="bg-bg-300/30 text-txt-300 text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
+							<span className="bg-bg-300/30 text-txt-300 text-tiny gap-s-100 px-s-300 py-s-100 flex items-center rounded-full font-medium">
 								<Info className="h-3 w-3" />
 								{matchCounts.already_enriched} {t("alreadyEnriched")}
 							</span>
@@ -412,7 +418,7 @@ export const NotaImport = () => {
 						{(matchCounts.quantity_mismatch ?? 0) +
 							(matchCounts.price_mismatch ?? 0) >
 							0 && (
-							<span className="bg-warning/10 text-warning text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
+							<span className="bg-warning/10 text-warning text-tiny gap-s-100 px-s-300 py-s-100 flex items-center rounded-full font-medium">
 								<AlertTriangle className="h-3 w-3" />
 								{(matchCounts.quantity_mismatch ?? 0) +
 									(matchCounts.price_mismatch ?? 0)}{" "}
@@ -558,7 +564,12 @@ export const NotaImport = () => {
 										{t("netTotal")}
 									</span>
 									<span
-										className={cn("text-tiny font-medium", parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell")}
+										className={cn(
+											"text-tiny font-medium",
+											parseResult.netTotalDebitCredit === "C"
+												? "text-trade-buy"
+												: "text-trade-sell"
+										)}
 									>
 										{parseResult.netTotal.toLocaleString(locale, {
 											minimumFractionDigits: 2,

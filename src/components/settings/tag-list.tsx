@@ -61,8 +61,10 @@ export const TagList = () => {
 
 	useEffect(() => {
 		let mounted = true
-		loadTags()
-		return () => { mounted = false }
+		void loadTags()
+		return () => {
+			mounted = false
+		}
 	}, [loadTags])
 
 	const { tagCounts, filteredTags } = useMemo(() => {
@@ -71,9 +73,13 @@ export const TagList = () => {
 
 		for (const tag of tags) {
 			counts.all++
-			if (tag.type === "setup") counts.setup++
-			else if (tag.type === "mistake") counts.mistake++
-			else counts.general++
+			if (tag.type === "setup") {
+				counts.setup++
+			} else if (tag.type === "mistake") {
+				counts.mistake++
+			} else {
+				counts.general++
+			}
 
 			if (filterType === "all" || tag.type === filterType) {
 				filtered.push(tag)
@@ -104,7 +110,7 @@ export const TagList = () => {
 
 	const handleFormSuccess = () => {
 		handleFormClose()
-		loadTags()
+		void loadTags()
 	}
 
 	const handleAddNew = () => {
@@ -145,7 +151,9 @@ export const TagList = () => {
 						aria-pressed={filterType === "all"}
 						onClick={() => setFilterType("all")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("all")
+							if (e.key === "Enter" || e.key === " ") {
+								setFilterType("all")
+							}
 						}}
 					>
 						{tCommon("all")} ({tagCounts.all})
@@ -159,7 +167,9 @@ export const TagList = () => {
 						aria-pressed={filterType === "setup"}
 						onClick={() => setFilterType("setup")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("setup")
+							if (e.key === "Enter" || e.key === " ") {
+								setFilterType("setup")
+							}
 						}}
 					>
 						{t("typeSetup")} ({tagCounts.setup})
@@ -173,7 +183,9 @@ export const TagList = () => {
 						aria-pressed={filterType === "mistake"}
 						onClick={() => setFilterType("mistake")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("mistake")
+							if (e.key === "Enter" || e.key === " ") {
+								setFilterType("mistake")
+							}
 						}}
 					>
 						{t("typeMistake")} ({tagCounts.mistake})
@@ -187,7 +199,9 @@ export const TagList = () => {
 						aria-pressed={filterType === "general"}
 						onClick={() => setFilterType("general")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("general")
+							if (e.key === "Enter" || e.key === " ") {
+								setFilterType("general")
+							}
 						}}
 					>
 						{t("typeGeneral")} ({tagCounts.general})
@@ -222,9 +236,7 @@ export const TagList = () => {
 										<p className="text-body text-txt-100 font-medium">
 											{tag.name}
 										</p>
-										<span
-											className={cn("text-tiny", getTypeColor(tag.type))}
-										>
+										<span className={cn("text-tiny", getTypeColor(tag.type))}>
 											{getTypeLabel(tag.type)}
 										</span>
 									</div>

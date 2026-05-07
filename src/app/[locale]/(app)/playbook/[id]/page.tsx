@@ -33,8 +33,12 @@ const formatCurrency = (value: number): string => {
 }
 
 const formatProfitFactor = (value: number): string => {
-	if (!Number.isFinite(value)) return "∞"
-	if (value === 0) return "0.00"
+	if (!Number.isFinite(value)) {
+		return "∞"
+	}
+	if (value === 0) {
+		return "0.00"
+	}
 	return value.toFixed(2)
 }
 
@@ -72,7 +76,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-4xl">
 					{/* Performance Stats */}
-					<div id="strategy-detail-performance" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+					<div
+						id="strategy-detail-performance"
+						className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+					>
 						<div className="gap-s-200 flex items-center">
 							<BarChart3 className="text-acc-100 h-5 w-5" />
 							<h2 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -94,13 +101,17 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 								</p>
 							</div>
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-								<p className="text-tiny text-txt-300">{t("strategy.winRate")}</p>
+								<p className="text-tiny text-txt-300">
+									{t("strategy.winRate")}
+								</p>
 								<p className="text-body text-txt-100 mt-s-100 font-bold">
 									{strategy.winRate.toFixed(1)}%
 								</p>
 							</div>
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-								<p className="text-tiny text-txt-300">{t("strategy.profitFactor")}</p>
+								<p className="text-tiny text-txt-300">
+									{t("strategy.profitFactor")}
+								</p>
 								<p className="text-body text-txt-100 mt-s-100 font-bold">
 									{formatProfitFactor(strategy.profitFactor)}
 								</p>
@@ -118,9 +129,14 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 								</p>
 							</div>
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
-								<p className="text-tiny text-txt-300">{t("strategy.compliance")}</p>
+								<p className="text-tiny text-txt-300">
+									{t("strategy.compliance")}
+								</p>
 								<p
-									className={cn("text-body mt-s-100 font-bold", complianceColor)}
+									className={cn(
+										"text-body mt-s-100 font-bold",
+										complianceColor
+									)}
 								>
 									{strategy.compliance.toFixed(0)}%
 								</p>
@@ -145,7 +161,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					</div>
 
 					{/* Risk Settings */}
-					{(strategy.finalR != null || strategy.maxRiskPercent != null) && (
+					{(strategy.finalR !== null || strategy.maxRiskPercent !== null) && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
 								<Target className="text-txt-200 h-5 w-5" />
@@ -155,7 +171,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							</div>
 
 							<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
-								{strategy.finalR != null && (
+								{strategy.finalR !== null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingUp className="text-trade-buy h-6 w-6" />
 										<div>
@@ -168,7 +184,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 										</div>
 									</div>
 								)}
-								{strategy.maxRiskPercent != null && (
+								{strategy.maxRiskPercent !== null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
 										<TrendingDown className="text-trade-sell h-6 w-6" />
 										<div>
@@ -236,7 +252,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 
 					{/* Conditions */}
 					{isPremium && strategyConditions.length > 0 && (
-						<div id="strategy-detail-conditions" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+						<div
+							id="strategy-detail-conditions"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+						>
 							<div className="gap-s-200 flex items-center">
 								<Filter className="text-txt-200 h-5 w-5" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -283,6 +302,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 								{t("strategy.referenceChart")}
 							</h2>
 							<div className="mt-m-400">
+								{/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded screenshot URL, dimensions unknown at render time */}
 								<img
 									src={strategy.screenshotUrl}
 									alt={`${strategy.name} reference chart`}

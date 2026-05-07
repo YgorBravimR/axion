@@ -8,7 +8,9 @@ import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -18,12 +20,13 @@ const GET = async (request: NextRequest) => {
 
 		const dek = await getUserDek(auth.userId)
 		const decryptedAccounts = dek
-			? accounts.map((account) =>
-				decryptAccountFields(
-					account as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof account
-			)
+			? accounts.map(
+					(account) =>
+						decryptAccountFields(
+							account as unknown as Record<string, unknown>,
+							dek
+						) as unknown as typeof account
+				)
 			: accounts
 
 		const formatted = decryptedAccounts.map((account) => ({

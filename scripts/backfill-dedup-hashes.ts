@@ -65,7 +65,9 @@ const run = async () => {
 
 	// Helper to get DEK for a user
 	const getDekForUser = async (userId: string): Promise<string | null> => {
-		if (dekCache.has(userId)) return dekCache.get(userId)!
+		if (dekCache.has(userId)) {
+			return dekCache.get(userId)!
+		}
 
 		const user = await db.query.users.findFirst({
 			where: eq(users.id, userId),
@@ -111,7 +113,9 @@ const run = async () => {
 
 				if (dek) {
 					entryPrice = decryptField(entryPrice, dek) || entryPrice
-					exitPrice = exitPrice ? (decryptField(exitPrice, dek) || exitPrice) : exitPrice
+					exitPrice = exitPrice
+						? decryptField(exitPrice, dek) || exitPrice
+						: exitPrice
 					positionSize = decryptField(positionSize, dek) || positionSize
 				}
 
@@ -137,10 +141,14 @@ const run = async () => {
 			}
 		}
 
-		console.log(`Progress: ${Math.min(i + BATCH_SIZE, unhashed.length)}/${unhashed.length} (${updated} updated, ${failed} failed)`)
+		console.log(
+			`Progress: ${Math.min(i + BATCH_SIZE, unhashed.length)}/${unhashed.length} (${updated} updated, ${failed} failed)`
+		)
 	}
 
-	console.log(`\nBackfill complete: ${updated} hashes computed, ${failed} failures`)
+	console.log(
+		`\nBackfill complete: ${updated} hashes computed, ${failed} failures`
+	)
 	process.exit(0)
 }
 

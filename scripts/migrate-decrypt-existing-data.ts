@@ -33,8 +33,12 @@ const BATCH_SIZE = 100
 
 /** Decrypt a value with the given DEK, skipping nulls and already-plaintext values */
 const safeDecrypt = (value: string | null, dek: string): string | null => {
-	if (value === null) return null
-	if (!isEncrypted(value)) return value // already plaintext
+	if (value === null) {
+		return null
+	}
+	if (!isEncrypted(value)) {
+		return value
+	} // already plaintext
 	return decrypt(value, dek) ?? value // keep original on failure to prevent data loss
 }
 
@@ -49,8 +53,12 @@ const decryptUserNames = async (): Promise<number> => {
 
 	let count = 0
 	for (const user of allUsers) {
-		if (!user.encryptedDek || !user.name) continue
-		if (!isEncrypted(user.name)) continue
+		if (!user.encryptedDek || !user.name) {
+			continue
+		}
+		if (!isEncrypted(user.name)) {
+			continue
+		}
 
 		const dek = decryptDek(user.encryptedDek)
 		if (!dek) {
@@ -60,7 +68,10 @@ const decryptUserNames = async (): Promise<number> => {
 
 		const decryptedName = safeDecrypt(user.name, dek)
 		if (decryptedName && decryptedName !== user.name) {
-			await db.update(schema.users).set({ name: decryptedName }).where(eq(schema.users.id, user.id))
+			await db
+				.update(schema.users)
+				.set({ name: decryptedName })
+				.where(eq(schema.users.id, user.id))
 			count++
 		}
 	}
@@ -80,10 +91,14 @@ const decryptTrades = async (): Promise<number> => {
 	let totalDecrypted = 0
 
 	for (const user of allUsers) {
-		if (!user.encryptedDek) continue
+		if (!user.encryptedDek) {
+			continue
+		}
 
 		const dek = decryptDek(user.encryptedDek)
-		if (!dek) continue
+		if (!dek) {
+			continue
+		}
 
 		// Get all account IDs for this user
 		const accounts = await db.query.tradingAccounts.findMany({
@@ -91,7 +106,9 @@ const decryptTrades = async (): Promise<number> => {
 			columns: { id: true },
 		})
 		const accountIds = accounts.map((a) => a.id)
-		if (accountIds.length === 0) continue
+		if (accountIds.length === 0) {
+			continue
+		}
 
 		// Process trades in batches using cursor-based pagination
 		let lastId = ""
@@ -106,44 +123,82 @@ const decryptTrades = async (): Promise<number> => {
 			})
 
 			if (batch.length === 0) {
-				hasMore = false
 				break
 			}
 
 			for (const trade of batch) {
 				// Skip if entryPrice is already plaintext (idempotency check)
-				if (trade.entryPrice && !isEncrypted(trade.entryPrice as string)) continue
+				if (trade.entryPrice && !isEncrypted(trade.entryPrice as string)) {
+					continue
+				}
 
 				const decrypted: Record<string, string | null> = {}
 
 				// Numeric fields
 				decrypted.pnl = safeDecrypt(trade.pnl as string | null, dek)
-				decrypted.plannedRiskAmount = safeDecrypt(trade.plannedRiskAmount as string | null, dek)
-				decrypted.commission = safeDecrypt(trade.commission as string | null, dek)
+				decrypted.plannedRiskAmount = safeDecrypt(
+					trade.plannedRiskAmount as string | null,
+					dek
+				)
+				decrypted.commission = safeDecrypt(
+					trade.commission as string | null,
+					dek
+				)
 				decrypted.fees = safeDecrypt(trade.fees as string | null, dek)
 
 				// Decimal fields
-				decrypted.entryPrice = safeDecrypt(trade.entryPrice as string | null, dek)
+				decrypted.entryPrice = safeDecrypt(
+					trade.entryPrice as string | null,
+					dek
+				)
 				decrypted.exitPrice = safeDecrypt(trade.exitPrice as string | null, dek)
-				decrypted.positionSize = safeDecrypt(trade.positionSize as string | null, dek)
+				decrypted.positionSize = safeDecrypt(
+					trade.positionSize as string | null,
+					dek
+				)
 				decrypted.stopLoss = safeDecrypt(trade.stopLoss as string | null, dek)
-				decrypted.takeProfit = safeDecrypt(trade.takeProfit as string | null, dek)
-				decrypted.plannedRMultiple = safeDecrypt(trade.plannedRMultiple as string | null, dek)
+				decrypted.takeProfit = safeDecrypt(
+					trade.takeProfit as string | null,
+					dek
+				)
+				decrypted.plannedRMultiple = safeDecrypt(
+					trade.plannedRMultiple as string | null,
+					dek
+				)
 
 				// Text fields
-				decrypted.preTradeThoughts = safeDecrypt(trade.preTradeThoughts as string | null, dek)
-				decrypted.postTradeReflection = safeDecrypt(trade.postTradeReflection as string | null, dek)
-				decrypted.lessonLearned = safeDecrypt(trade.lessonLearned as string | null, dek)
-				decrypted.disciplineNotes = safeDecrypt(trade.disciplineNotes as string | null, dek)
+				decrypted.preTradeThoughts = safeDecrypt(
+					trade.preTradeThoughts as string | null,
+					dek
+				)
+				decrypted.postTradeReflection = safeDecrypt(
+					trade.postTradeReflection as string | null,
+					dek
+				)
+				decrypted.lessonLearned = safeDecrypt(
+					trade.lessonLearned as string | null,
+					dek
+				)
+				decrypted.disciplineNotes = safeDecrypt(
+					trade.disciplineNotes as string | null,
+					dek
+				)
 
-				await db.update(schema.trades).set(decrypted).where(eq(schema.trades.id, trade.id))
+				await db
+					.update(schema.trades)
+					.set(decrypted)
+					.where(eq(schema.trades.id, trade.id))
 				totalDecrypted++
 			}
 
 			lastId = batch[batch.length - 1].id
-			console.log(`Decrypted ${totalDecrypted} trades so far for user ${user.id}`)
+			console.log(
+				`Decrypted ${totalDecrypted} trades so far for user ${user.id}`
+			)
 
-			if (batch.length < BATCH_SIZE) hasMore = false
+			if (batch.length < BATCH_SIZE) {
+				hasMore = false
+			}
 		}
 	}
 
@@ -162,17 +217,23 @@ const decryptExecutions = async (): Promise<number> => {
 	let totalDecrypted = 0
 
 	for (const user of allUsers) {
-		if (!user.encryptedDek) continue
+		if (!user.encryptedDek) {
+			continue
+		}
 
 		const dek = decryptDek(user.encryptedDek)
-		if (!dek) continue
+		if (!dek) {
+			continue
+		}
 
 		const accounts = await db.query.tradingAccounts.findMany({
 			where: eq(schema.tradingAccounts.userId, user.id),
 			columns: { id: true },
 		})
 		const accountIds = accounts.map((a) => a.id)
-		if (accountIds.length === 0) continue
+		if (accountIds.length === 0) {
+			continue
+		}
 
 		// Get trade IDs for this user's accounts
 		const userTrades = await db.query.trades.findMany({
@@ -180,7 +241,9 @@ const decryptExecutions = async (): Promise<number> => {
 			columns: { id: true },
 		})
 		const tradeIds = userTrades.map((t) => t.id)
-		if (tradeIds.length === 0) continue
+		if (tradeIds.length === 0) {
+			continue
+		}
 
 		// Cursor-based pagination through executions
 		let lastExecId = ""
@@ -195,12 +258,13 @@ const decryptExecutions = async (): Promise<number> => {
 			})
 
 			if (executions.length === 0) {
-				hasMoreExec = false
 				break
 			}
 
 			for (const exec of executions) {
-				if (exec.price && !isEncrypted(exec.price as string)) continue
+				if (exec.price && !isEncrypted(exec.price as string)) {
+					continue
+				}
 
 				const decrypted: Record<string, string | null> = {
 					price: safeDecrypt(exec.price as string | null, dek),
@@ -208,15 +272,23 @@ const decryptExecutions = async (): Promise<number> => {
 					commission: safeDecrypt(exec.commission as string | null, dek),
 					fees: safeDecrypt(exec.fees as string | null, dek),
 					slippage: safeDecrypt(exec.slippage as string | null, dek),
-					executionValue: safeDecrypt(exec.executionValue as string | null, dek),
+					executionValue: safeDecrypt(
+						exec.executionValue as string | null,
+						dek
+					),
 				}
 
-				await db.update(schema.tradeExecutions).set(decrypted).where(eq(schema.tradeExecutions.id, exec.id))
+				await db
+					.update(schema.tradeExecutions)
+					.set(decrypted)
+					.where(eq(schema.tradeExecutions.id, exec.id))
 				totalDecrypted++
 			}
 
 			lastExecId = executions[executions.length - 1].id
-			if (executions.length < BATCH_SIZE) hasMoreExec = false
+			if (executions.length < BATCH_SIZE) {
+				hasMoreExec = false
+			}
 		}
 	}
 
@@ -235,10 +307,14 @@ const decryptAccounts = async (): Promise<number> => {
 	let totalDecrypted = 0
 
 	for (const user of allUsers) {
-		if (!user.encryptedDek) continue
+		if (!user.encryptedDek) {
+			continue
+		}
 
 		const dek = decryptDek(user.encryptedDek)
-		if (!dek) continue
+		if (!dek) {
+			continue
+		}
 
 		const accounts = await db.query.tradingAccounts.findMany({
 			where: eq(schema.tradingAccounts.userId, user.id),
@@ -246,20 +322,43 @@ const decryptAccounts = async (): Promise<number> => {
 
 		for (const account of accounts) {
 			// Idempotency: check if dayTradeTaxRate looks encrypted
-			if (account.dayTradeTaxRate && !isEncrypted(account.dayTradeTaxRate as string)) continue
+			if (
+				account.dayTradeTaxRate &&
+				!isEncrypted(account.dayTradeTaxRate as string)
+			) {
+				continue
+			}
 
 			const decrypted: Record<string, string | null> = {
-				dayTradeTaxRate: safeDecrypt(account.dayTradeTaxRate as string | null, dek),
-				swingTradeTaxRate: safeDecrypt(account.swingTradeTaxRate as string | null, dek),
-				profitSharePercentage: safeDecrypt(account.profitSharePercentage as string | null, dek),
-				defaultCommission: safeDecrypt(account.defaultCommission as string | null, dek),
+				dayTradeTaxRate: safeDecrypt(
+					account.dayTradeTaxRate as string | null,
+					dek
+				),
+				swingTradeTaxRate: safeDecrypt(
+					account.swingTradeTaxRate as string | null,
+					dek
+				),
+				profitSharePercentage: safeDecrypt(
+					account.profitSharePercentage as string | null,
+					dek
+				),
+				defaultCommission: safeDecrypt(
+					account.defaultCommission as string | null,
+					dek
+				),
 				defaultFees: safeDecrypt(account.defaultFees as string | null, dek),
 				maxDailyLoss: safeDecrypt(account.maxDailyLoss as string | null, dek),
-				maxMonthlyLoss: safeDecrypt(account.maxMonthlyLoss as string | null, dek),
+				maxMonthlyLoss: safeDecrypt(
+					account.maxMonthlyLoss as string | null,
+					dek
+				),
 				propFirmName: safeDecrypt(account.propFirmName as string | null, dek),
 			}
 
-			await db.update(schema.tradingAccounts).set(decrypted).where(eq(schema.tradingAccounts.id, account.id))
+			await db
+				.update(schema.tradingAccounts)
+				.set(decrypted)
+				.where(eq(schema.tradingAccounts.id, account.id))
 			totalDecrypted++
 		}
 	}
@@ -279,34 +378,54 @@ const decryptMonthlyPlans = async (): Promise<number> => {
 	let totalDecrypted = 0
 
 	for (const user of allUsers) {
-		if (!user.encryptedDek) continue
+		if (!user.encryptedDek) {
+			continue
+		}
 
 		const dek = decryptDek(user.encryptedDek)
-		if (!dek) continue
+		if (!dek) {
+			continue
+		}
 
 		const accounts = await db.query.tradingAccounts.findMany({
 			where: eq(schema.tradingAccounts.userId, user.id),
 			columns: { id: true },
 		})
 		const accountIds = accounts.map((a) => a.id)
-		if (accountIds.length === 0) continue
+		if (accountIds.length === 0) {
+			continue
+		}
 
 		const plans = await db.query.monthlyPlans.findMany({
 			where: inArray(schema.monthlyPlans.accountId, accountIds),
 		})
 
 		for (const plan of plans) {
-			if (plan.accountBalance && !isEncrypted(plan.accountBalance as string)) continue
+			if (plan.accountBalance && !isEncrypted(plan.accountBalance as string)) {
+				continue
+			}
 
 			const decrypted: Record<string, string | null> = {
 				accountBalance: safeDecrypt(plan.accountBalance as string | null, dek),
-				riskPerTradeCents: safeDecrypt(plan.riskPerTradeCents as string | null, dek),
+				riskPerTradeCents: safeDecrypt(
+					plan.riskPerTradeCents as string | null,
+					dek
+				),
 				dailyLossCents: safeDecrypt(plan.dailyLossCents as string | null, dek),
-				monthlyLossCents: safeDecrypt(plan.monthlyLossCents as string | null, dek),
-				weeklyLossCents: safeDecrypt(plan.weeklyLossCents as string | null, dek),
+				monthlyLossCents: safeDecrypt(
+					plan.monthlyLossCents as string | null,
+					dek
+				),
+				weeklyLossCents: safeDecrypt(
+					plan.weeklyLossCents as string | null,
+					dek
+				),
 			}
 
-			await db.update(schema.monthlyPlans).set(decrypted).where(eq(schema.monthlyPlans.id, plan.id))
+			await db
+				.update(schema.monthlyPlans)
+				.set(decrypted)
+				.where(eq(schema.monthlyPlans.id, plan.id))
 			totalDecrypted++
 		}
 	}
@@ -320,7 +439,9 @@ const decryptMonthlyPlans = async (): Promise<number> => {
 
 const decryptJournals = async (): Promise<number> => {
 	const allJournals = await db.query.dailyJournals.findMany()
-	console.log(`Found ${allJournals.length} journals — skipping (no userId column for DEK lookup)`)
+	console.log(
+		`Found ${allJournals.length} journals — skipping (no userId column for DEK lookup)`
+	)
 	return 0
 }
 
@@ -336,24 +457,33 @@ const decryptDailyNotes = async (): Promise<number> => {
 	let totalDecrypted = 0
 
 	for (const user of allUsers) {
-		if (!user.encryptedDek) continue
+		if (!user.encryptedDek) {
+			continue
+		}
 
 		const dek = decryptDek(user.encryptedDek)
-		if (!dek) continue
+		if (!dek) {
+			continue
+		}
 
 		const notes = await db.query.dailyAccountNotes.findMany({
 			where: eq(schema.dailyAccountNotes.userId, user.id),
 		})
 
 		for (const note of notes) {
-			if (note.preMarketNotes && !isEncrypted(note.preMarketNotes)) continue
+			if (note.preMarketNotes && !isEncrypted(note.preMarketNotes)) {
+				continue
+			}
 
 			const decrypted: Record<string, string | null> = {
 				preMarketNotes: safeDecrypt(note.preMarketNotes, dek),
 				postMarketNotes: safeDecrypt(note.postMarketNotes, dek),
 			}
 
-			await db.update(schema.dailyAccountNotes).set(decrypted).where(eq(schema.dailyAccountNotes.id, note.id))
+			await db
+				.update(schema.dailyAccountNotes)
+				.set(decrypted)
+				.where(eq(schema.dailyAccountNotes.id, note.id))
 			totalDecrypted++
 		}
 	}
@@ -388,11 +518,15 @@ const verify = async (): Promise<boolean> => {
 	}
 
 	if (failures > 0) {
-		console.error(`Verification FAILED: ${failures} still-encrypted fields found across ${allTrades.length} trades`)
+		console.error(
+			`Verification FAILED: ${failures} still-encrypted fields found across ${allTrades.length} trades`
+		)
 		return false
 	}
 
-	console.log(`Verification passed: all ${allTrades.length} trades have plaintext fields`)
+	console.log(
+		`Verification passed: all ${allTrades.length} trades have plaintext fields`
+	)
 	return true
 }
 

@@ -21,6 +21,16 @@ interface MonthComparisonProps {
 	}
 }
 
+const ChangeIndicator = ({ value }: { value: number }) => {
+	if (value > 0) {
+		return <ArrowUp className="text-trade-buy h-4 w-4" />
+	}
+	if (value < 0) {
+		return <ArrowDown className="text-trade-sell h-4 w-4" />
+	}
+	return <Minus className="text-txt-300 h-4 w-4" />
+}
+
 export const MonthComparison = ({
 	current,
 	previous,
@@ -31,39 +41,31 @@ export const MonthComparison = ({
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
 	const { formatCurrency } = useFormatting()
 
-	const formatChange = useCallback((
-		value: number,
-		type: "currency" | "percent" | "number" | "r"
-	) => {
-		const prefix = value > 0 ? "+" : ""
-		switch (type) {
-			case "currency":
-				return prefix + formatCurrency(value)
-			case "percent":
-				return prefix + value.toFixed(1) + "pp"
-			case "r":
-				return prefix + value.toFixed(2) + "R"
-			default:
-				return prefix + value.toString()
-		}
-	}, [formatCurrency])
-
-	const ChangeIndicator = ({ value }: { value: number }) => {
-		if (value > 0) {
-			return <ArrowUp className="h-4 w-4 text-trade-buy" />
-		}
-		if (value < 0) {
-			return <ArrowDown className="h-4 w-4 text-trade-sell" />
-		}
-		return <Minus className="h-4 w-4 text-txt-300" />
-	}
+	const formatChange = useCallback(
+		(value: number, type: "currency" | "percent" | "number" | "r") => {
+			const prefix = value > 0 ? "+" : ""
+			switch (type) {
+				case "currency":
+					return prefix + formatCurrency(value)
+				case "percent":
+					return prefix + value.toFixed(1) + "pp"
+				case "r":
+					return prefix + value.toFixed(2) + "R"
+				default:
+					return prefix + value.toString()
+			}
+		},
+		[formatCurrency]
+	)
 
 	const previousMonthName = previous
 		? format(new Date(previous.monthStart), "MMMM", { locale: dateLocale })
 		: ""
 
 	const comparisonRows = useMemo(() => {
-		if (!previous) return []
+		if (!previous) {
+			return []
+		}
 		return [
 			{
 				label: t("profit"),
@@ -99,12 +101,15 @@ export const MonthComparison = ({
 
 	if (!previous) {
 		return (
-			<div id="monthly-comparison" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
-					<GitCompare className="h-5 w-5 text-acc-100" />
+			<div
+				id="monthly-comparison"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
+				<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
+					<GitCompare className="text-acc-100 h-5 w-5" />
 					{t("title")}
 				</h3>
-				<p className="mt-m-400 text-center text-small text-txt-300">
+				<p className="mt-m-400 text-small text-txt-300 text-center">
 					{t("noPreviousData")}
 				</p>
 			</div>
@@ -112,9 +117,12 @@ export const MonthComparison = ({
 	}
 
 	return (
-		<div id="monthly-comparison" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-			<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
-				<GitCompare className="h-5 w-5 text-acc-100" />
+		<div
+			id="monthly-comparison"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
+			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
+				<GitCompare className="text-acc-100 h-5 w-5" />
 				{t("titleWithMonth", { month: previousMonthName })}
 			</h3>
 
@@ -122,18 +130,22 @@ export const MonthComparison = ({
 				{comparisonRows.map((row) => (
 					<div
 						key={row.label}
-						className="flex items-center justify-between rounded-sm bg-bg-100 px-s-300 py-s-200 sm:px-m-400 sm:py-s-300"
+						className="bg-bg-100 px-s-300 py-s-200 sm:px-m-400 sm:py-s-300 flex items-center justify-between rounded-sm"
 					>
 						<span className="text-small text-txt-200">{row.label}</span>
-						<div className="flex items-center gap-s-100 sm:gap-m-400 min-w-0">
-							<span className="hidden sm:inline text-tiny text-txt-300">{row.previous}</span>
-							<span className="hidden sm:inline text-small text-txt-100">→</span>
-							<span className="text-tiny sm:text-small font-medium text-txt-100 whitespace-nowrap">
+						<div className="gap-s-100 sm:gap-m-400 flex min-w-0 items-center">
+							<span className="text-tiny text-txt-300 hidden sm:inline">
+								{row.previous}
+							</span>
+							<span className="text-small text-txt-100 hidden sm:inline">
+								→
+							</span>
+							<span className="text-tiny sm:text-small text-txt-100 font-medium whitespace-nowrap">
 								{row.current}
 							</span>
 							<div
 								className={cn(
-									"flex items-center gap-s-100 rounded-sm px-s-200 py-s-100 whitespace-nowrap",
+									"gap-s-100 px-s-200 py-s-100 flex items-center rounded-sm whitespace-nowrap",
 									row.change > 0 && "bg-trade-buy/10",
 									row.change < 0 && "bg-trade-sell/10",
 									row.change === 0 && "bg-bg-300"

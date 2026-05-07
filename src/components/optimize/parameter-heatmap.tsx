@@ -1,6 +1,13 @@
 "use client"
 
-import { Fragment, useState, useMemo, useEffect, useCallback, memo } from "react"
+import {
+	Fragment,
+	useState,
+	useMemo,
+	useEffect,
+	useCallback,
+	memo,
+} from "react"
 import { useTranslations } from "next-intl"
 import {
 	Select,
@@ -73,39 +80,49 @@ interface HeatmapCellItemProps {
 	onSelect: (runId: string) => void
 }
 
-const HeatmapCellItem = memo(({ cell, isHovered, colorClass, metric, ariaLabel, onHover, onSelect }: HeatmapCellItemProps) => (
-	<div
-		className={cn(
-			"relative flex h-10 items-center justify-center rounded-md transition-all",
-			"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
-			colorClass,
-			isHovered && "ring-acc-100 scale-105 ring-2"
-		)}
-		onMouseEnter={() => onHover(cell)}
-		onMouseLeave={() => onHover(null)}
-		onFocus={() => onHover(cell)}
-		onBlur={() => onHover(null)}
-		onClick={() => onSelect(cell.run.id)}
-		onKeyDown={(e) => {
-			if (e.key === "Enter" || e.key === " ") {
-				e.preventDefault()
-				onSelect(cell.run.id)
-			}
-		}}
-		tabIndex={0}
-		role="button"
-		aria-label={ariaLabel}
-	>
-		<span className="text-micro text-txt-100 font-semibold tabular-nums drop-shadow-sm">
-			{formatMetric(cell.metricValue, metric, true)}
-		</span>
-		{cell.count > 1 && (
-			<span className="text-txt-300 absolute top-0 right-0.5 text-[8px]">
-				{cell.count}×
+const HeatmapCellItem = memo(
+	({
+		cell,
+		isHovered,
+		colorClass,
+		metric,
+		ariaLabel,
+		onHover,
+		onSelect,
+	}: HeatmapCellItemProps) => (
+		<div
+			className={cn(
+				"relative flex h-10 items-center justify-center rounded-md transition-all",
+				"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
+				colorClass,
+				isHovered && "ring-acc-100 scale-105 ring-2"
+			)}
+			onMouseEnter={() => onHover(cell)}
+			onMouseLeave={() => onHover(null)}
+			onFocus={() => onHover(cell)}
+			onBlur={() => onHover(null)}
+			onClick={() => onSelect(cell.run.id)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault()
+					onSelect(cell.run.id)
+				}
+			}}
+			tabIndex={0}
+			role="button"
+			aria-label={ariaLabel}
+		>
+			<span className="text-micro text-txt-100 font-semibold tabular-nums drop-shadow-sm">
+				{formatMetric(cell.metricValue, metric, true)}
 			</span>
-		)}
-	</div>
-))
+			{cell.count > 1 && (
+				<span className="text-txt-300 absolute top-0 right-0.5 text-[8px]">
+					{cell.count}×
+				</span>
+			)}
+		</div>
+	)
+)
 HeatmapCellItem.displayName = "HeatmapCellItem"
 
 // ── Component ────────────────────────────────────────────────────
@@ -124,14 +141,18 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 	// Check for mixed strategies
 	const hasMixedStrategies = useMemo(() => {
-		if (runs.length < 2) return false
+		if (runs.length < 2) {
+			return false
+		}
 		const firstType = runs[0].recipe.entry.type
 		return runs.some((r) => r.recipe.entry.type !== firstType)
 	}, [runs])
 
 	// Find best run for slice defaults
 	const bestRun = useMemo(() => {
-		if (runs.length === 0) return null
+		if (runs.length === 0) {
+			return null
+		}
 		return runs.reduce((best, r) =>
 			r.summary.profitFactor > best.summary.profitFactor ? r : best
 		)
@@ -148,7 +169,9 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 	// Auto-initialize X/Y and slices when varying params change
 	useEffect(() => {
-		if (numericVaryingParams.length < 2) return
+		if (numericVaryingParams.length < 2) {
+			return
+		}
 
 		setXParamPath(numericVaryingParams[0].path)
 		setYParamPath(numericVaryingParams[1].path)
@@ -180,25 +203,60 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 	// Build heatmap data with pre-computed color classes
 	const heatmapData = useMemo(() => {
-		if (!xParamPath || !yParamPath || xParamPath === yParamPath) return null
+		if (!xParamPath || !yParamPath || xParamPath === yParamPath) {
+			return null
+		}
 		const data = buildHeatmapData(runs, xParamPath, yParamPath, metric, slices)
 		const colorMap = new Map<string, string>()
 		for (const [key, cell] of data.cells) {
-			colorMap.set(key, getCellIntensityClass(cell.metricValue, data.minMetric, data.maxMetric, metric))
+			colorMap.set(
+				key,
+				getCellIntensityClass(
+					cell.metricValue,
+					data.minMetric,
+					data.maxMetric,
+					metric
+				)
+			)
 		}
 		return { ...data, colorMap }
 	}, [runs, xParamPath, yParamPath, metric, slices])
 
 	// Params not on axes: all enum params (always sliced) + numeric params not assigned to X/Y
 	const sliceParams = useMemo(
-		() => varyingParams.filter(
-			(p) => p.kind === "enum" || (p.path !== xParamPath && p.path !== yParamPath)
-		),
+		() =>
+			varyingParams.filter(
+				(p) =>
+					p.kind === "enum" || (p.path !== xParamPath && p.path !== yParamPath)
+			),
 		[varyingParams, xParamPath, yParamPath]
 	)
 
+	// These callbacks and memos must be before the early return (Rules of Hooks)
+	const handleCellHover = useCallback((cell: HeatmapCell | null) => {
+		setHoveredCell(cell)
+	}, [])
+
+	const handleCellSelect = useCallback(
+		(runId: string) => {
+			onSelectRun(runId)
+		},
+		[onSelectRun]
+	)
+
+	const xParam = useMemo(
+		() => numericVaryingParams.find((p) => p.path === xParamPath),
+		[numericVaryingParams, xParamPath]
+	)
+	const yParam = useMemo(
+		() => numericVaryingParams.find((p) => p.path === yParamPath),
+		[numericVaryingParams, yParamPath]
+	)
+
 	// Need at least 2 numeric varying params for a 2D grid
-	if (numericVaryingParams.length < 2) return null
+	if (numericVaryingParams.length < 2) {
+		return null
+	}
 
 	const handleXChange = (path: string) => {
 		setXParamPath(path)
@@ -242,23 +300,6 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 		const parsed = param?.kind === "enum" ? value : parseFloat(value)
 		setSlices((prev) => ({ ...prev, [path]: parsed }))
 	}
-
-	const handleCellHover = useCallback((cell: HeatmapCell | null) => {
-		setHoveredCell(cell)
-	}, [])
-
-	const handleCellSelect = useCallback((runId: string) => {
-		onSelectRun(runId)
-	}, [onSelectRun])
-
-	const xParam = useMemo(
-		() => numericVaryingParams.find((p) => p.path === xParamPath),
-		[numericVaryingParams, xParamPath]
-	)
-	const yParam = useMemo(
-		() => numericVaryingParams.find((p) => p.path === yParamPath),
-		[numericVaryingParams, yParamPath]
-	)
 
 	return (
 		<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
@@ -387,7 +428,7 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 			{heatmapData && xParam && yParam && (
 				<div className="flex justify-center overflow-x-auto">
 					<div
-						className="grid w-fit gap-s-100"
+						className="gap-s-100 grid w-fit"
 						style={{
 							gridTemplateColumns: `auto repeat(${heatmapData.xValues.length}, minmax(36px, 56px))`,
 						}}

@@ -24,7 +24,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	const { userId, accountId } = authResult.auth
 
@@ -37,7 +39,7 @@ const GET = async (request: NextRequest) => {
 			return archError(
 				"Yearly plan missing for the requested year",
 				[{ code: "NO_YEARLY_PLAN", detail: "Create a yearly plan first." }],
-				404,
+				404
 			)
 		}
 		if (cascade.status === "incomplete-cascade") {
@@ -49,7 +51,7 @@ const GET = async (request: NextRequest) => {
 						detail: `Missing ${cascade.missing} row in the plan cascade.`,
 					},
 				],
-				409,
+				409
 			)
 		}
 
@@ -57,7 +59,7 @@ const GET = async (request: NextRequest) => {
 		const dayRow = dek
 			? (decryptDailyNotesFields(
 					cascade.dayRow as unknown as Record<string, unknown>,
-					dek,
+					dek
 				) as unknown as typeof cascade.dayRow)
 			: cascade.dayRow
 
@@ -67,7 +69,7 @@ const GET = async (request: NextRequest) => {
 		return archError(
 			"Failed to retrieve notes",
 			[{ code: "FETCH_FAILED", detail: message }],
-			500,
+			500
 		)
 	}
 }
@@ -82,7 +84,9 @@ const GET = async (request: NextRequest) => {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	const { userId, accountId } = authResult.auth
 
@@ -100,7 +104,7 @@ const POST = async (request: NextRequest) => {
 			return archError(
 				"Yearly plan missing for the requested year",
 				[{ code: "NO_YEARLY_PLAN", detail: "Create a yearly plan first." }],
-				404,
+				404
 			)
 		}
 		if (cascade.status === "incomplete-cascade") {
@@ -112,7 +116,7 @@ const POST = async (request: NextRequest) => {
 						detail: `Missing ${cascade.missing} row in the plan cascade.`,
 					},
 				],
-				409,
+				409
 			)
 		}
 
@@ -143,7 +147,7 @@ const POST = async (request: NextRequest) => {
 		const decrypted = dek
 			? (decryptDailyNotesFields(
 					updated as unknown as Record<string, unknown>,
-					dek,
+					dek
 				) as unknown as typeof updated)
 			: updated
 
@@ -155,7 +159,7 @@ const POST = async (request: NextRequest) => {
 				error.issues.map((issue) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${issue.path.join(".")}: ${issue.message}`,
-				})),
+				}))
 			)
 		}
 
@@ -163,7 +167,7 @@ const POST = async (request: NextRequest) => {
 		return archError(
 			"Failed to save notes",
 			[{ code: "SAVE_FAILED", detail: message }],
-			500,
+			500
 		)
 	}
 }

@@ -1,9 +1,22 @@
 "use server"
 
-import type { CandleQueryParams, CandleRow, IndicatorGroupWithKeys, DataSourceInfo, TradeChartData } from "@/types/candle"
+import type {
+	CandleQueryParams,
+	CandleRow,
+	IndicatorGroupWithKeys,
+	DataSourceInfo,
+	TradeChartData,
+} from "@/types/candle"
 import type { TradeExecution } from "@/db/schema"
 import { db } from "@/db/drizzle"
-import { priceCandles, indicatorGroups, indicatorDefinitions, trades, assets, priceDataVersions } from "@/db/schema"
+import {
+	priceCandles,
+	indicatorGroups,
+	indicatorDefinitions,
+	trades,
+	assets,
+	priceDataVersions,
+} from "@/db/schema"
 import { and, eq, gte, lte, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
@@ -92,7 +105,16 @@ const getAssetsWithPriceData = async () => {
 	try {
 		const versions = await db.query.priceDataVersions.findMany({
 			with: {
-				asset: { columns: { id: true, symbol: true, name: true, tickSize: true, tickValue: true, currency: true } },
+				asset: {
+					columns: {
+						id: true,
+						symbol: true,
+						name: true,
+						tickSize: true,
+						tickValue: true,
+						currency: true,
+					},
+				},
 				timeframe: { columns: { id: true, code: true, name: true } },
 			},
 		})
@@ -193,7 +215,8 @@ const getTradeWithCandles = async (
 
 		// Prefer the trade's timeframe if it has candle data; otherwise use the first available
 		const matchedVersion = trade.timeframeId
-			? versions.find((v) => v.timeframe.id === trade.timeframeId) ?? versions[0]
+			? (versions.find((v) => v.timeframe.id === trade.timeframeId) ??
+				versions[0])
 			: versions[0]
 
 		// 4. Build the time range: 30 minutes before entry, 30 minutes after exit
@@ -219,14 +242,14 @@ const getTradeWithCandles = async (
 		}
 
 		// 6. Map executions to the simplified shape
-		const executionsList: TradeChartData["executions"] = (trade.executions ?? []).map(
-			(exec: TradeExecution) => ({
-				type: exec.executionType,
-				price: Number(exec.price),
-				quantity: Number(exec.quantity),
-				timestamp: exec.executionDate.toISOString(),
-			})
-		)
+		const executionsList: TradeChartData["executions"] = (
+			trade.executions ?? []
+		).map((exec: TradeExecution) => ({
+			type: exec.executionType,
+			price: Number(exec.price),
+			quantity: Number(exec.quantity),
+			timestamp: exec.executionDate.toISOString(),
+		}))
 
 		return {
 			status: "success",
@@ -271,14 +294,18 @@ const getCandleDataForAsset = async (
 			where: eq(assets.symbol, assetSymbol.toUpperCase()),
 			columns: { id: true },
 		})
-		if (!asset) return null
+		if (!asset) {
+			return null
+		}
 
 		const version = await db.query.priceDataVersions.findFirst({
 			where: eq(priceDataVersions.assetId, asset.id),
 			columns: { assetId: true, timeframeId: true },
 		})
 
-		return version ? { assetId: version.assetId, timeframeId: version.timeframeId } : null
+		return version
+			? { assetId: version.assetId, timeframeId: version.timeframeId }
+			: null
 	} catch {
 		return null
 	}
@@ -321,4 +348,10 @@ const getCandlesForTrade = async (params: {
 	}
 }
 
-export { getCandlesForRange, getAssetsWithPriceData, getTradeWithCandles, getCandleDataForAsset, getCandlesForTrade }
+export {
+	getCandlesForRange,
+	getAssetsWithPriceData,
+	getTradeWithCandles,
+	getCandleDataForAsset,
+	getCandlesForTrade,
+}

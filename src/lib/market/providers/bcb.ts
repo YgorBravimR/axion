@@ -78,7 +78,9 @@ const fetchSeriesLast = async (
 	try {
 		const url = `${SGS_BASE_URL}.${seriesId}/dados/ultimos/1?formato=json`
 		const response = await fetch(url, { next: { revalidate: 0 } })
-		if (!response.ok) return null
+		if (!response.ok) {
+			return null
+		}
 		const data = (await response.json()) as SgsDataPoint[]
 		return data[0] ?? null
 	} catch {
@@ -119,17 +121,23 @@ export const fetchBcbCalendar = async (): Promise<EconomicEvent[]> => {
 	const results = await Promise.allSettled(
 		KEY_SERIES.map(async (series) => {
 			const point = await fetchSeriesLast(series.id)
-			if (!point) return null
+			if (!point) {
+				return null
+			}
 
 			const releaseDate = parseBcbDate(point.data)
-			if (releaseDate !== today) return null
+			if (releaseDate !== today) {
+				return null
+			}
 
 			return { series, value: point.valor }
 		})
 	)
 
 	for (const result of results) {
-		if (result.status !== "fulfilled" || !result.value) continue
+		if (result.status !== "fulfilled" || !result.value) {
+			continue
+		}
 
 		const { series, value } = result.value
 

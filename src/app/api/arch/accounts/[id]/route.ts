@@ -11,7 +11,9 @@ const GET = async (
 	{ params }: { params: Promise<{ id: string }> }
 ) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -25,18 +27,20 @@ const GET = async (
 		})
 
 		if (!account) {
-			return archError("Account not found", [
-				{ code: "NOT_FOUND", detail: "Account does not exist" },
-			], 404)
+			return archError(
+				"Account not found",
+				[{ code: "NOT_FOUND", detail: "Account does not exist" }],
+				404
+			)
 		}
 
 		// Decrypt account fields
 		const dek = await getUserDek(auth.userId)
 		const decryptedAccount = dek
-			? decryptAccountFields(
-				account as unknown as Record<string, unknown>,
-				dek
-			) as unknown as typeof account
+			? (decryptAccountFields(
+					account as unknown as Record<string, unknown>,
+					dek
+				) as unknown as typeof account)
 			: account
 
 		// Fetch asset and timeframe configurations

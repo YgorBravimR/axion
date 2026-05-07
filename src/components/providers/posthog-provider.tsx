@@ -20,7 +20,9 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
 			maskTextSelector: "[data-ph-mask]",
 		},
 		loaded: (ph) => {
-			if (process.env.NODE_ENV === "development") ph.debug()
+			if (process.env.NODE_ENV === "development") {
+				ph.debug()
+			}
 		},
 	})
 }
@@ -35,7 +37,9 @@ const PostHogPageview = () => {
 	const ph = usePostHog()
 
 	useEffect(() => {
-		if (!pathname || !ph) return
+		if (!pathname || !ph) {
+			return
+		}
 
 		const url = searchParams?.size
 			? `${pathname}?${searchParams.toString()}`
@@ -56,7 +60,9 @@ const PostHogIdentify = () => {
 	const ph = usePostHog()
 
 	useEffect(() => {
-		if (!ph) return
+		if (!ph) {
+			return
+		}
 
 		if (status === "authenticated" && session?.user) {
 			ph.identify(session.user.id, {

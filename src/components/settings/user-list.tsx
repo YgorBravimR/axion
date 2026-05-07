@@ -1,6 +1,13 @@
 "use client"
 
-import { Fragment, useState, useTransition, useMemo, useCallback, type KeyboardEvent } from "react"
+import {
+	Fragment,
+	useState,
+	useTransition,
+	useMemo,
+	useCallback,
+	type KeyboardEvent,
+} from "react"
 import { useFormatting } from "@/hooks/use-formatting"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
@@ -66,12 +73,17 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 	const { formatDate } = useFormatting()
 
 	const formattedJoinDates = useMemo(
-		() => new Map(users.map((user) => [user.id, formatDate(new Date(user.createdAt))])),
+		() =>
+			new Map(
+				users.map((user) => [user.id, formatDate(new Date(user.createdAt))])
+			),
 		[users, formatDate]
 	)
 
 	const filteredUsers = useMemo(() => {
-		if (!search.trim()) return users
+		if (!search.trim()) {
+			return users
+		}
 		const query = search.toLowerCase()
 		return users.filter(
 			(user) =>
@@ -122,7 +134,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 	)
 
 	const handleDeleteAccount = useCallback(() => {
-		if (!deleteTarget) return
+		if (!deleteTarget) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await deleteAccount(deleteTarget.accountId)
@@ -157,7 +171,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 			</div>
 
 			{filteredUsers.length === 0 ? (
-				<div className="text-txt-300 flex flex-col items-center justify-center gap-s-200 py-12">
+				<div className="text-txt-300 gap-s-200 flex flex-col items-center justify-center py-12">
 					<Users className="h-8 w-8 opacity-50" />
 					<p className="text-small">{t("noUsers")}</p>
 				</div>
@@ -168,10 +182,10 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 							<TableRow>
 								<TableHead className="w-10" />
 								<TableHead>{t("name")}</TableHead>
-								<TableHead className="hidden sm:table-cell">{t("email")}</TableHead>
-								<TableHead className="text-center">
-									{t("accounts")}
+								<TableHead className="hidden sm:table-cell">
+									{t("email")}
 								</TableHead>
+								<TableHead className="text-center">{t("accounts")}</TableHead>
 								<TableHead>{t("joined")}</TableHead>
 								<TableHead className="whitespace-nowrap">{t("role")}</TableHead>
 							</TableRow>
@@ -180,8 +194,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 							{filteredUsers.map((user) => {
 								const isExpanded = expandedIds.has(user.id)
 								const isCurrentUser = user.id === currentUserId
-								const isRowPending =
-									isPending && pendingId === user.id
+								const isRowPending = isPending && pendingId === user.id
 
 								return (
 									<Fragment key={user.id}>
@@ -191,24 +204,18 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 											role="button"
 											aria-expanded={isExpanded}
 											aria-label={
-												isExpanded
-													? t("collapseAccounts")
-													: t("expandAccounts")
+												isExpanded ? t("collapseAccounts") : t("expandAccounts")
 											}
-											onClick={() =>
-												handleToggleExpand(user.id)
-											}
-											onKeyDown={(e) =>
-												handleRowKeyDown(e, user.id)
-											}
+											onClick={() => handleToggleExpand(user.id)}
+											onKeyDown={(e) => handleRowKeyDown(e, user.id)}
 										>
-											<TableCell className="w-10 px-s-200">
+											<TableCell className="px-s-200 w-10">
 												<ChevronRight
 													className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
 												/>
 											</TableCell>
 											<TableCell className="font-medium">
-												<span className="flex items-center gap-s-200">
+												<span className="gap-s-200 flex items-center">
 													{user.name}
 													{isCurrentUser && (
 														<Badge
@@ -232,56 +239,31 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 											</TableCell>
 											<TableCell
 												className="whitespace-nowrap"
-												onClick={(e) =>
-													e.stopPropagation()
-												}
-												onKeyDown={(e) =>
-													e.stopPropagation()
-												}
+												onClick={(e) => e.stopPropagation()}
+												onKeyDown={(e) => e.stopPropagation()}
 											>
-												<div className="flex items-center gap-s-200">
+												<div className="gap-s-200 flex items-center">
 													<Select
 														value={user.role}
-														onValueChange={(
-															value
-														) =>
-															handleRoleChange(
-																user.id,
-																value
-															)
+														onValueChange={(value) =>
+															handleRoleChange(user.id, value)
 														}
-														disabled={
-															isCurrentUser ||
-															isRowPending
-														}
+														disabled={isCurrentUser || isRowPending}
 													>
 														<SelectTrigger
 															id={`role-select-${user.id}`}
 															size="sm"
-															className="w-28 min-h-[40px]"
-															aria-label={t(
-																"changeRole"
-															)}
+															className="min-h-[40px] w-28"
+															aria-label={t("changeRole")}
 														>
 															<SelectValue />
 														</SelectTrigger>
 														<SelectContent>
-															{ROLES.map(
-																(role) => (
-																	<SelectItem
-																		key={
-																			role
-																		}
-																		value={
-																			role
-																		}
-																	>
-																		{t(
-																			`roles.${role}`
-																		)}
-																	</SelectItem>
-																)
-															)}
+															{ROLES.map((role) => (
+																<SelectItem key={role} value={role}>
+																	{t(`roles.${role}`)}
+																</SelectItem>
+															))}
 														</SelectContent>
 													</Select>
 													{isRowPending && (
@@ -298,85 +280,77 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 											>
 												<TableCell />
 												<TableCell colSpan={5}>
-													{user.tradingAccounts
-														.length === 0 ? (
+													{user.tradingAccounts.length === 0 ? (
 														<p className="text-txt-300 py-s-200 text-small">
 															{t("noAccounts")}
 														</p>
 													) : (
-														<div className="flex flex-wrap gap-s-200 py-s-200">
-															{user.tradingAccounts.map(
-																(account) => (
-																	<div
-																		key={
-																			account.id
-																		}
-																		className="bg-bg-300 flex items-center gap-s-200 rounded-md px-s-300 py-s-200 text-small"
+														<div className="gap-s-200 py-s-200 flex flex-wrap">
+															{user.tradingAccounts.map((account) => (
+																<div
+																	key={account.id}
+																	className="bg-bg-300 gap-s-200 px-s-300 py-s-200 text-small flex items-center rounded-md"
+																>
+																	<span className="font-medium">
+																		{account.name}
+																	</span>
+																	<Badge
+																		id={`account-type-${account.id}`}
+																		variant="outline"
+																		className="text-micro"
 																	>
-																		<span className="font-medium">
-																			{
-																				account.name
-																			}
-																		</span>
+																		{account.accountType}
+																	</Badge>
+																	{account.isDefault && (
 																		<Badge
-																			id={`account-type-${account.id}`}
-																			variant="outline"
+																			id={`account-default-${account.id}`}
+																			variant="secondary"
 																			className="text-micro"
 																		>
-																			{
-																				account.accountType
-																			}
+																			{t("default")}
 																		</Badge>
-																		{account.isDefault && (
-																			<Badge
-																				id={`account-default-${account.id}`}
-																				variant="secondary"
-																				className="text-micro"
-																			>
-																				{t(
-																					"default"
-																				)}
-																			</Badge>
-																		)}
-																		{!account.isActive && (
-																			<Badge
-																				id={`account-inactive-${account.id}`}
-																				variant="destructive"
-																				className="text-micro"
-																			>
-																				{tCommon(
-																					"inactive"
-																				)}
-																			</Badge>
-																		)}
-																		<Button
-																			id={`delete-account-${account.id}`}
-																			variant="ghost"
-																			size="icon"
-																			className="size-10 text-red-500 hover:bg-red-500/10 hover:text-red-600"
-																			disabled={user.tradingAccounts.length <= 1 || (account.isDefault && user.tradingAccounts.length > 1)}
-																			aria-label={t("deleteAccountTitle")}
-																			title={
-																				user.tradingAccounts.length <= 1
-																					? t("cannotDeleteOnlyAccount")
-																					: account.isDefault && user.tradingAccounts.length > 1
-																						? t("cannotDeleteDefaultAccount")
-																						: t("deleteAccountTitle")
-																			}
-																			onClick={(e) => {
-																				e.stopPropagation()
-																				setDeleteTarget({
-																					accountId: account.id,
-																					accountName: account.name,
-																					userName: user.name,
-																				})
-																			}}
+																	)}
+																	{!account.isActive && (
+																		<Badge
+																			id={`account-inactive-${account.id}`}
+																			variant="destructive"
+																			className="text-micro"
 																		>
-																			<Trash2 className="h-3.5 w-3.5" />
-																		</Button>
-																	</div>
-																)
-															)}
+																			{tCommon("inactive")}
+																		</Badge>
+																	)}
+																	<Button
+																		id={`delete-account-${account.id}`}
+																		variant="ghost"
+																		size="icon"
+																		className="size-10 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+																		disabled={
+																			user.tradingAccounts.length <= 1 ||
+																			(account.isDefault &&
+																				user.tradingAccounts.length > 1)
+																		}
+																		aria-label={t("deleteAccountTitle")}
+																		title={
+																			user.tradingAccounts.length <= 1
+																				? t("cannotDeleteOnlyAccount")
+																				: account.isDefault &&
+																					  user.tradingAccounts.length > 1
+																					? t("cannotDeleteDefaultAccount")
+																					: t("deleteAccountTitle")
+																		}
+																		onClick={(e) => {
+																			e.stopPropagation()
+																			setDeleteTarget({
+																				accountId: account.id,
+																				accountName: account.name,
+																				userName: user.name,
+																			})
+																		}}
+																	>
+																		<Trash2 className="h-3.5 w-3.5" />
+																	</Button>
+																</div>
+															))}
 														</div>
 													)}
 												</TableCell>
@@ -389,17 +363,23 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 					</Table>
 				</div>
 			)}
-			<AlertDialog open={deleteTarget !== null} onOpenChange={(open) => {
-				if (!open) setDeleteTarget(null)
-			}}>
+			<AlertDialog
+				open={deleteTarget !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setDeleteTarget(null)
+					}
+				}}
+			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
 						<AlertDialogDescription>
-							{deleteTarget && t("deleteAccountDescription", {
-								accountName: deleteTarget.accountName,
-								userName: deleteTarget.userName,
-							})}
+							{deleteTarget &&
+								t("deleteAccountDescription", {
+									accountName: deleteTarget.accountName,
+									userName: deleteTarget.userName,
+								})}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -412,7 +392,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 							disabled={isPending}
 							onClick={handleDeleteAccount}
 						>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{tCommon("confirm")}
 						</AlertDialogAction>
 					</AlertDialogFooter>

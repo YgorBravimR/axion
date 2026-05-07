@@ -6,7 +6,9 @@ config({ path: ".env" })
 
 const run = async () => {
 	const url = process.env.DATABASE_URL
-	if (!url) throw new Error("DATABASE_URL missing")
+	if (!url) {
+		throw new Error("DATABASE_URL missing")
+	}
 	const db = drizzle(url)
 	await migrate(db, { migrationsFolder: "./src/db/migrations" })
 	console.log("migrations applied")

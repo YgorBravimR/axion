@@ -97,9 +97,17 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
 			const weightedAvgR =
 				totalTrades > 0
-					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) / totalTrades
+					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
+						totalTrades
 					: 0
-			return { hour, label: `${hour}h`, totalTrades, totalPnl, winRate, avgR: weightedAvgR }
+			return {
+				hour,
+				label: `${hour}h`,
+				totalTrades,
+				totalPnl,
+				winRate,
+				avgR: weightedAvgR,
+			}
 		}).filter((h) => h.totalTrades > 0)
 
 		const sortedHours = hourAggregates.toSorted((a, b) =>
@@ -118,9 +126,17 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
 				const weightedAvgR =
 					totalTrades > 0
-						? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) / totalTrades
+						? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
+							totalTrades
 						: 0
-				return { day, dayLabel: dayLabels[index], totalTrades, totalPnl, winRate, avgR: weightedAvgR }
+				return {
+					day,
+					dayLabel: dayLabels[index],
+					totalTrades,
+					totalPnl,
+					winRate,
+					avgR: weightedAvgR,
+				}
 			})
 			.filter((d) => d.totalTrades > 0)
 
@@ -146,16 +162,24 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 	// Get cell color with intensity scaled relative to max value
 	const getCellStyle = (cell: TimeHeatmapCell | undefined): string => {
-		if (!cell || cell.totalTrades === 0) return "bg-bg-300/30"
+		if (!cell || cell.totalTrades === 0) {
+			return "bg-bg-300/30"
+		}
 
 		const metricValue = isRMode ? cell.avgR : cell.totalPnl
 		const absValue = isRMode ? Math.abs(cell.avgR) : Math.abs(cell.totalPnl)
 		const intensity = maxAbsValue > 0 ? absValue / maxAbsValue : 0.5
 		const base = metricValue > 0 ? "bg-trade-buy" : "bg-trade-sell"
 
-		if (intensity > 0.7) return base
-		if (intensity > 0.4) return `${base}/70`
-		if (intensity > 0.15) return `${base}/50`
+		if (intensity > 0.7) {
+			return base
+		}
+		if (intensity > 0.4) {
+			return `${base}/70`
+		}
+		if (intensity > 0.15) {
+			return `${base}/50`
+		}
 		return `${base}/30`
 	}
 
@@ -167,7 +191,10 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div id="analytics-heatmap" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="analytics-heatmap"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("time.heatmapTitle")}
 				</h3>
@@ -179,7 +206,10 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	}
 
 	return (
-		<div id="analytics-heatmap" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div
+			id="analytics-heatmap"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400">
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -193,7 +223,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			{/* Heatmap Grid */}
 			<div className="overflow-x-auto">
 				<div
-					className="grid w-fit gap-s-100"
+					className="gap-s-100 grid w-fit"
 					style={{
 						gridTemplateColumns: `minmax(60px, auto) repeat(${TRADING_HOURS.length}, minmax(36px, 1fr))`,
 					}}
@@ -214,9 +244,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 						const dayOfWeek = dayIndex + 1
 						return (
 							<Fragment key={day}>
-								<div
-									className="text-small text-txt-200 pr-s-200 flex items-center justify-end font-medium"
-								>
+								<div className="text-small text-txt-200 pr-s-200 flex items-center justify-end font-medium">
 									{dayLabels[dayIndex]}
 								</div>
 								{TRADING_HOURS.map((hour) => {
@@ -234,24 +262,42 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												isHovered && "ring-acc-100 scale-105 ring-2"
 											)}
 											onMouseEnter={() => {
-												if (hasData) setHoveredCell(cell)
+												if (hasData) {
+													setHoveredCell(cell)
+												}
 											}}
 											onMouseLeave={() => setHoveredCell(null)}
 											onFocus={() => {
-												if (hasData) setHoveredCell(cell)
+												if (hasData) {
+													setHoveredCell(cell)
+												}
 											}}
 											onBlur={() => setHoveredCell(null)}
 											tabIndex={hasData ? 0 : undefined}
 											role={hasData ? "button" : undefined}
 											aria-label={
 												hasData
-													? t("time.heatmapCellAriaLabel", { day: tDayNames(cell.dayName as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"), hour: cell.hourLabel, trades: cell.totalTrades, winRate: cell.winRate.toFixed(0) })
+													? t("time.heatmapCellAriaLabel", {
+															day: tDayNames(
+																cell.dayName as
+																	| "Monday"
+																	| "Tuesday"
+																	| "Wednesday"
+																	| "Thursday"
+																	| "Friday"
+																	| "Saturday"
+																	| "Sunday"
+															),
+															hour: cell.hourLabel,
+															trades: cell.totalTrades,
+															winRate: cell.winRate.toFixed(0),
+														})
 													: undefined
 											}
 										>
 											{/* Trade count inside cell */}
 											{hasData && (
-												<span className="text-micro font-semibold text-txt-100 drop-shadow-sm">
+												<span className="text-micro text-txt-100 font-semibold drop-shadow-sm">
 													{cell.totalTrades}
 												</span>
 											)}
@@ -277,7 +323,17 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 					<div className="gap-m-400 flex items-center justify-between">
 						<div>
 							<p className="text-small text-txt-100 font-semibold">
-								{tDayNames(hoveredCell.dayName as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday")} {hoveredCell.hourLabel}
+								{tDayNames(
+									hoveredCell.dayName as
+										| "Monday"
+										| "Tuesday"
+										| "Wednesday"
+										| "Thursday"
+										| "Friday"
+										| "Saturday"
+										| "Sunday"
+								)}{" "}
+								{hoveredCell.hourLabel}
 							</p>
 							<p className="text-tiny text-txt-300">
 								{t("time.totalTrades", { count: hoveredCell.totalTrades })}
@@ -300,9 +356,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 							{isRMode ? (
 								<>
 									<div className="text-right">
-										<p className="text-tiny text-txt-300">
-											{t("time.avgR")}
-										</p>
+										<p className="text-tiny text-txt-300">{t("time.avgR")}</p>
 										<p
 											className={cn(
 												"text-small font-semibold",
@@ -345,9 +399,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									</div>
 									{hoveredCell.avgR !== 0 && (
 										<div className="text-right">
-											<p className="text-tiny text-txt-300">
-												{t("time.avgR")}
-											</p>
+											<p className="text-tiny text-txt-300">{t("time.avgR")}</p>
 											<p
 												className={cn(
 													"text-small font-semibold",
@@ -391,42 +443,73 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			{/* Actionable Insights — Best vs Worst table */}
 			{cellsWithTrades.length > 0 && (
 				<div className="mt-s-300 sm:mt-m-400">
-					<div className="border-bg-300 rounded-lg border overflow-x-auto">
-						<table className="w-full text-tiny">
+					<div className="border-bg-300 overflow-x-auto rounded-lg border">
+						<table className="text-tiny w-full">
 							<thead>
 								<tr className="border-bg-300 border-b">
 									<th className="px-s-300 py-s-200 text-txt-300 text-left font-medium" />
-									<th className="px-s-300 py-s-200 text-center font-medium" colSpan={3}>
+									<th
+										className="px-s-300 py-s-200 text-center font-medium"
+										colSpan={3}
+									>
 										<div className="gap-s-100 flex items-center justify-center">
-											<TrendingUp className="text-trade-buy h-3.5 w-3.5" aria-hidden="true" />
-											<span className="text-trade-buy">{t("time.bestWindow")}</span>
+											<TrendingUp
+												className="text-trade-buy h-3.5 w-3.5"
+												aria-hidden="true"
+											/>
+											<span className="text-trade-buy">
+												{t("time.bestWindow")}
+											</span>
 										</div>
 									</th>
-									<th className="px-s-300 py-s-200 text-center font-medium" colSpan={3}>
+									<th
+										className="px-s-300 py-s-200 text-center font-medium"
+										colSpan={3}
+									>
 										<div className="gap-s-100 flex items-center justify-center">
-											<TrendingDown className="text-trade-sell h-3.5 w-3.5" aria-hidden="true" />
-											<span className="text-trade-sell">{t("time.worstWindow")}</span>
+											<TrendingDown
+												className="text-trade-sell h-3.5 w-3.5"
+												aria-hidden="true"
+											/>
+											<span className="text-trade-sell">
+												{t("time.worstWindow")}
+											</span>
 										</div>
 									</th>
 								</tr>
 								<tr className="border-bg-300 border-b">
 									<th className="px-s-300 py-s-100 text-txt-300 text-left font-medium" />
-									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.windowSlot")}</th>
-									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{isRMode ? t("time.avgR") : t("time.pnl")}</th>
-									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.winRate")}</th>
-									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.windowSlot")}</th>
-									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{isRMode ? t("time.avgR") : t("time.pnl")}</th>
-									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">{t("time.winRate")}</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">
+										{t("time.windowSlot")}
+									</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">
+										{isRMode ? t("time.avgR") : t("time.pnl")}
+									</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">
+										{t("time.winRate")}
+									</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">
+										{t("time.windowSlot")}
+									</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">
+										{isRMode ? t("time.avgR") : t("time.pnl")}
+									</th>
+									<th className="px-s-300 py-s-100 text-txt-300 text-center font-medium">
+										{t("time.winRate")}
+									</th>
 								</tr>
 							</thead>
 							<tbody>
 								{/* Slot row (day × hour) */}
 								<tr className="border-bg-300 border-b">
-									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 font-medium whitespace-nowrap min-w-0">{t("time.windowSlot")}</td>
+									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 min-w-0 font-medium whitespace-nowrap">
+										{t("time.windowSlot")}
+									</td>
 									{bestSlot && getMetricValue(bestSlot) >= 0 ? (
 										<>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
-												{getTranslatedDayShort(bestSlot.dayName)} {bestSlot.hourLabel}
+												{getTranslatedDayShort(bestSlot.dayName)}{" "}
+												{bestSlot.hourLabel}
 											</td>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
 												{formatMetric(getMetricValue(bestSlot))}
@@ -436,28 +519,42 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
+										<td
+											colSpan={3}
+											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
+										>
+											—
+										</td>
 									)}
 									{worstSlot && getMetricValue(worstSlot) < 0 ? (
 										<>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
-												{getTranslatedDayShort(worstSlot.dayName)} {worstSlot.hourLabel}
+												{getTranslatedDayShort(worstSlot.dayName)}{" "}
+												{worstSlot.hourLabel}
 											</td>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
 												{formatMetric(getMetricValue(worstSlot))}
 											</td>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{worstSlot.winRate.toFixed(0)}% · {worstSlot.totalTrades}
+												{worstSlot.winRate.toFixed(0)}% ·{" "}
+												{worstSlot.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
+										<td
+											colSpan={3}
+											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
+										>
+											—
+										</td>
 									)}
 								</tr>
 
 								{/* Hour row */}
 								<tr className="border-bg-300 border-b">
-									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 font-medium whitespace-nowrap min-w-0">{t("time.windowHour")}</td>
+									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 min-w-0 font-medium whitespace-nowrap">
+										{t("time.windowHour")}
+									</td>
 									{bestHour ? (
 										<>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
@@ -471,7 +568,12 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
+										<td
+											colSpan={3}
+											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
+										>
+											—
+										</td>
 									)}
 									{worstHour ? (
 										<>
@@ -482,17 +584,25 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatAggregateMetric(worstHour)}
 											</td>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{worstHour.winRate.toFixed(0)}% · {worstHour.totalTrades}
+												{worstHour.winRate.toFixed(0)}% ·{" "}
+												{worstHour.totalTrades}
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
+										<td
+											colSpan={3}
+											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
+										>
+											—
+										</td>
 									)}
 								</tr>
 
 								{/* Day row */}
 								<tr>
-									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 font-medium whitespace-nowrap min-w-0">{t("time.windowDay")}</td>
+									<td className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-200 min-w-0 font-medium whitespace-nowrap">
+										{t("time.windowDay")}
+									</td>
 									{bestDay ? (
 										<>
 											<td className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
@@ -506,7 +616,12 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
+										<td
+											colSpan={3}
+											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
+										>
+											—
+										</td>
 									)}
 									{worstDay ? (
 										<>
@@ -521,7 +636,12 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											</td>
 										</>
 									) : (
-										<td colSpan={3} className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center">—</td>
+										<td
+											colSpan={3}
+											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
+										>
+											—
+										</td>
 									)}
 								</tr>
 							</tbody>

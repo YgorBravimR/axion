@@ -10,7 +10,10 @@
  * `useTranslations("riskSimulation")` hook.
  */
 
-type TranslateFn = (key: string, values?: Record<string, string | number>) => string
+type TranslateFn = (
+	key: string,
+	values?: Record<string, string | number>
+) => string
 
 /**
  * Translates a raw riskReason string using the provided `t` function
@@ -19,8 +22,13 @@ type TranslateFn = (key: string, values?: Record<string, string | number>) => st
  * @param t - useTranslations("riskSimulation") return value
  * @param raw - e.g. "riskSimulation.reasons.t1BaseRisk", "riskSimulation.reasons.gainReinvest|25", or "skipped_daily_target"
  */
-const translateRiskReason = (t: TranslateFn, raw: string | null | undefined): string => {
-	if (!raw) return "—"
+const translateRiskReason = (
+	t: TranslateFn,
+	raw: string | null | undefined
+): string => {
+	if (!raw) {
+		return "—"
+	}
 
 	// Raw status enum values (skipped trades) → resolve via table.statuses.*
 	if (raw.startsWith("skipped_")) {
@@ -28,7 +36,9 @@ const translateRiskReason = (t: TranslateFn, raw: string | null | undefined): st
 	}
 
 	// Strip the "riskSimulation." prefix if present
-	const stripped = raw.startsWith("riskSimulation.") ? raw.slice("riskSimulation.".length) : raw
+	const stripped = raw.startsWith("riskSimulation.")
+		? raw.slice("riskSimulation.".length)
+		: raw
 
 	// Split by pipe to extract base key and all params
 	const segments = stripped.split("|")
@@ -59,7 +69,12 @@ const translateRiskReason = (t: TranslateFn, raw: string | null | undefined): st
 				// Translate base key first if not yet done
 				if (!result) {
 					result = baseParam
-						? t(baseKey, baseKey.endsWith("Step") ? { step: baseParam } : { percent: baseParam })
+						? t(
+								baseKey,
+								baseKey.endsWith("Step")
+									? { step: baseParam }
+									: { percent: baseParam }
+							)
 						: t(baseKey)
 				}
 				result += t("reasons.ddTierSuffix", { percent: paramVal })
@@ -70,7 +85,10 @@ const translateRiskReason = (t: TranslateFn, raw: string | null | undefined): st
 	// If result was never set (no special params like ddTier), translate with plain param
 	if (!result) {
 		if (baseParam) {
-			return t(baseKey, baseKey.endsWith("Step") ? { step: baseParam } : { percent: baseParam })
+			return t(
+				baseKey,
+				baseKey.endsWith("Step") ? { step: baseParam } : { percent: baseParam }
+			)
 		}
 		return t(baseKey)
 	}

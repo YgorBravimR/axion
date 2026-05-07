@@ -1,14 +1,18 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import type { ISeriesMarkersPluginApi, SeriesMarker } from "lightweight-charts"
-import {
-	createSeriesMarkers,
-	LineSeries,
-	LineStyle,
+import type {
+	ISeriesMarkersPluginApi,
+	ISeriesApi,
+	SeriesMarker,
+	UTCTimestamp,
 } from "lightweight-charts"
-import type { UTCTimestamp } from "lightweight-charts"
-import type { CandleRow, IndicatorGroupWithKeys, TradeChartData } from "@/types/candle"
+import { createSeriesMarkers, LineSeries, LineStyle } from "lightweight-charts"
+import type {
+	CandleRow,
+	IndicatorGroupWithKeys,
+	TradeChartData,
+} from "@/types/candle"
 import { useCandleChart } from "@/lib/chart/use-candle-chart"
 import { REFERENCE_GROUPS } from "@/lib/chart/constants"
 import { useTranslations } from "next-intl"
@@ -47,7 +51,9 @@ const TradeChartView = ({
 	onDirtyChange,
 }: TradeChartViewProps) => {
 	const chartContainerRef = useRef<HTMLDivElement>(null)
-	const markersPluginRef = useRef<ISeriesMarkersPluginApi<UTCTimestamp> | null>(null)
+	const markersPluginRef = useRef<ISeriesMarkersPluginApi<UTCTimestamp> | null>(
+		null
+	)
 
 	const {
 		chartRef,
@@ -67,7 +73,7 @@ const TradeChartView = ({
 	const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
 
 	/** Execution line series refs for toggling visibility */
-	const executionLinesRef = useRef<Array<import("lightweight-charts").ISeriesApi<"Line">>>([])
+	const executionLinesRef = useRef<Array<ISeriesApi<"Line">>>([])
 
 	// C2: Track previously active groups to compute add/remove delta — avoids full teardown
 	const prevActiveGroupsRef = useRef<Set<string>>(new Set())
@@ -87,7 +93,9 @@ const TradeChartView = ({
 	 */
 	const findCandleIndex = useCallback(
 		(isoTimestamp: string): number => {
-			if (candleTimestamps.length === 0) return -1
+			if (candleTimestamps.length === 0) {
+				return -1
+			}
 			const target = new Date(isoTimestamp).getTime()
 
 			let lo = 0
@@ -103,7 +111,11 @@ const TradeChartView = ({
 			}
 
 			// lo is now the insertion point — check lo and lo-1 for closest
-			if (lo > 0 && Math.abs(candleTimestamps[lo - 1] - target) <= Math.abs(candleTimestamps[lo] - target)) {
+			if (
+				lo > 0 &&
+				Math.abs(candleTimestamps[lo - 1] - target) <=
+					Math.abs(candleTimestamps[lo] - target)
+			) {
 				return lo - 1
 			}
 			return lo
@@ -116,7 +128,9 @@ const TradeChartView = ({
 	useEffect(() => {
 		candlesRef.current = candles
 		const chart = chartRef.current
-		if (!chart || !candleSeriesRef.current || candles.length === 0) return
+		if (!chart || !candleSeriesRef.current || candles.length === 0) {
+			return
+		}
 
 		const candleData = candles.map((c, i) => ({
 			time: i as unknown as UTCTimestamp,
@@ -129,7 +143,8 @@ const TradeChartView = ({
 
 		if (!markersPluginRef.current) {
 			const markersPlugin = createSeriesMarkers(candleSeriesRef.current)
-			markersPluginRef.current = markersPlugin as ISeriesMarkersPluginApi<UTCTimestamp>
+			markersPluginRef.current =
+				markersPlugin as ISeriesMarkersPluginApi<UTCTimestamp>
 		}
 	}, [candles, chartRef, candleSeriesRef, candlesRef])
 
@@ -137,16 +152,26 @@ const TradeChartView = ({
 	// Runs when overlay-relevant deps change, independently of pure candle data.
 	useEffect(() => {
 		const chart = chartRef.current
-		if (!chart || !candleSeriesRef.current || candles.length === 0) return
+		if (!chart || !candleSeriesRef.current || candles.length === 0) {
+			return
+		}
 
 		// Clean up previous execution lines
 		for (const series of executionLinesRef.current) {
-			try { chart.removeSeries(series) } catch { /* stale ref */ }
+			try {
+				chart.removeSeries(series)
+			} catch {
+				/* stale ref */
+			}
 		}
 		executionLinesRef.current = []
 
 		// Clear markers
-		try { markersPluginRef.current?.setMarkers([]) } catch { /* stale ref */ }
+		try {
+			markersPluginRef.current?.setMarkers([])
+		} catch {
+			/* stale ref */
+		}
 
 		if (!showExecutions) {
 			chart.timeScale().fitContent()
@@ -169,7 +194,9 @@ const TradeChartView = ({
 		if (executions.length > 0) {
 			for (const exec of executions) {
 				const idx = findCandleIndex(exec.timestamp)
-				if (idx < 0) continue
+				if (idx < 0) {
+					continue
+				}
 				executionPoints.push({
 					type: exec.type,
 					price: exec.price,
@@ -204,10 +231,16 @@ const TradeChartView = ({
 		executionPoints.sort((a, b) => a.candleIdx - b.candleIdx)
 
 		// Determine trade boundaries (first entry → last exit candle)
-		const entryIndices = executionPoints.filter((e) => e.type === "entry").map((e) => e.candleIdx)
-		const exitIndices = executionPoints.filter((e) => e.type === "exit").map((e) => e.candleIdx)
-		const tradeStartIdx = entryIndices.length > 0 ? Math.min(...entryIndices) : 0
-		const tradeEndIdx = exitIndices.length > 0 ? Math.max(...exitIndices) : lastIdx
+		const entryIndices = executionPoints
+			.filter((e) => e.type === "entry")
+			.map((e) => e.candleIdx)
+		const exitIndices = executionPoints
+			.filter((e) => e.type === "exit")
+			.map((e) => e.candleIdx)
+		const tradeStartIdx =
+			entryIndices.length > 0 ? Math.min(...entryIndices) : 0
+		const tradeEndIdx =
+			exitIndices.length > 0 ? Math.max(...exitIndices) : lastIdx
 
 		// Execution lines bounded to trade lifespan, with index + quantity as title
 		for (let execIdx = 0; execIdx < executionPoints.length; execIdx++) {
@@ -263,7 +296,9 @@ const TradeChartView = ({
 		}
 
 		markers.sort((a, b) => (a.time as number) - (b.time as number))
-		markersPluginRef.current?.setMarkers(markers as SeriesMarker<UTCTimestamp>[])
+		markersPluginRef.current?.setMarkers(
+			markers as SeriesMarker<UTCTimestamp>[]
+		)
 
 		// SL / TP as bounded line series (trade open → close, not full chart)
 		const slTpPairs: Array<{ price: number; color: string; label: string }> = []
@@ -302,13 +337,26 @@ const TradeChartView = ({
 			}
 		}
 		chart.timeScale().fitContent()
-	}, [candles, trade, executions, isLong, showExecutions, findCandleIndex, chartRef, candleSeriesRef, themeRef, tTrade])
+	}, [
+		candles,
+		trade,
+		executions,
+		isLong,
+		showExecutions,
+		findCandleIndex,
+		chartRef,
+		candleSeriesRef,
+		themeRef,
+		tTrade,
+	])
 
 	// C2: Delta-only indicator update — only remove groups that were deactivated and only add
 	// groups that were newly activated. Avoids tearing down all series on every toggle.
 	useEffect(() => {
 		const chart = chartRef.current
-		if (!chart || candles.length === 0) return
+		if (!chart || candles.length === 0) {
+			return
+		}
 
 		const prev = prevActiveGroupsRef.current
 
@@ -323,11 +371,17 @@ const TradeChartView = ({
 		// Remove deactivated groups
 		for (const groupKey of toRemove) {
 			const group = groupByKey.get(groupKey)
-			if (!group) continue
+			if (!group) {
+				continue
+			}
 			for (const indicator of group.indicatorKeys) {
 				const series = indicatorSeriesRef.current.get(indicator.key)
 				if (series) {
-					try { chart.removeSeries(series) } catch { /* stale ref */ }
+					try {
+						chart.removeSeries(series)
+					} catch {
+						/* stale ref */
+					}
 					indicatorSeriesRef.current.delete(indicator.key)
 				}
 			}
@@ -336,7 +390,9 @@ const TradeChartView = ({
 		// Add newly activated groups
 		for (const groupKey of toAdd) {
 			const group = groupByKey.get(groupKey)
-			if (!group) continue
+			if (!group) {
+				continue
+			}
 
 			const isReference = REFERENCE_GROUPS.has(group.key)
 
@@ -356,7 +412,9 @@ const TradeChartView = ({
 				const lineData: Array<{ time: UTCTimestamp; value: number }> = []
 				for (let idx = 0; idx < candles.length; idx++) {
 					const val = candles[idx].indicators[indicator.key]
-					if (val === undefined || val === null || val === 0) continue
+					if (val === undefined || val === null || val === 0) {
+						continue
+					}
 					lineData.push({
 						time: idx as unknown as UTCTimestamp,
 						value: val,
@@ -377,14 +435,20 @@ const TradeChartView = ({
 		if (toAdd.length === 0 && toRemove.length === 0 && activeGroups.size > 0) {
 			for (const groupKey of activeGroups) {
 				const group = groupByKey.get(groupKey)
-				if (!group) continue
+				if (!group) {
+					continue
+				}
 				for (const indicator of group.indicatorKeys) {
 					const series = indicatorSeriesRef.current.get(indicator.key)
-					if (!series) continue
+					if (!series) {
+						continue
+					}
 					const lineData: Array<{ time: UTCTimestamp; value: number }> = []
 					for (let idx = 0; idx < candles.length; idx++) {
 						const val = candles[idx].indicators[indicator.key]
-						if (val === undefined || val === null || val === 0) continue
+						if (val === undefined || val === null || val === 0) {
+							continue
+						}
 						lineData.push({ time: idx as unknown as UTCTimestamp, value: val })
 					}
 					if (lineData.length > 0) {
@@ -395,7 +459,14 @@ const TradeChartView = ({
 		}
 
 		prevActiveGroupsRef.current = new Set(activeGroups)
-	}, [candles, activeGroups, indicatorGroups, getIndicatorColor, chartRef, indicatorSeriesRef])
+	}, [
+		candles,
+		activeGroups,
+		indicatorGroups,
+		getIndicatorColor,
+		chartRef,
+		indicatorSeriesRef,
+	])
 
 	const handleToggleGroup = (groupKey: string) => {
 		setActiveGroups((prev) => {
@@ -414,7 +485,10 @@ const TradeChartView = ({
 	}
 
 	return (
-		<div id="trade-chart-view" className="flex h-full flex-col lg:flex-row overflow-hidden">
+		<div
+			id="trade-chart-view"
+			className="flex h-full flex-col overflow-hidden lg:flex-row"
+		>
 			{/* Chart area — fills remaining space after panel */}
 			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 				{/* Chart container */}
@@ -426,7 +500,7 @@ const TradeChartView = ({
 				/>
 
 				{/* Toolbar: toggles + view switch */}
-				<div className="border-bg-300 bg-bg-100 flex shrink-0 flex-wrap items-center gap-s-200 border-t px-m-400 py-s-300">
+				<div className="border-bg-300 bg-bg-100 gap-s-200 px-m-400 py-s-300 flex shrink-0 flex-wrap items-center border-t">
 					<Button
 						id="toggle-executions"
 						size="sm"
@@ -458,7 +532,9 @@ const TradeChartView = ({
 								}
 								onClick={() => handleToggleGroup(group.key)}
 								aria-pressed={isActive}
-								aria-label={tChart("toggleIndicatorGroup", { name: group.displayName })}
+								aria-label={tChart("toggleIndicatorGroup", {
+									name: group.displayName,
+								})}
 							>
 								{group.displayName} ({group.indicatorKeys.length})
 							</Button>
@@ -474,7 +550,7 @@ const TradeChartView = ({
 						size="sm"
 						variant="outline"
 						onClick={() => setIsDetailSheetOpen(true)}
-						className="lg:hidden border-bg-300 text-txt-300 gap-s-200"
+						className="border-bg-300 text-txt-300 gap-s-200 lg:hidden"
 						aria-label={tCommon("details")}
 					>
 						<SlidersHorizontal className="h-4 w-4" />
@@ -499,7 +575,7 @@ const TradeChartView = ({
 			</div>
 
 			{/* Info panel — desktop: 30% side panel */}
-			<div className="border-bg-300 hidden shrink-0 lg:flex lg:h-full lg:w-[30%] lg:min-w-[300px] lg:max-w-[380px] lg:border-l lg:overflow-y-auto">
+			<div className="border-bg-300 hidden shrink-0 lg:flex lg:h-full lg:w-[30%] lg:max-w-[380px] lg:min-w-[300px] lg:overflow-y-auto lg:border-l">
 				<TradeInfoPanel
 					trade={trade}
 					executions={executions}
@@ -517,7 +593,7 @@ const TradeChartView = ({
 					side="right"
 					className="w-full max-w-[420px] overflow-y-auto p-0"
 				>
-					<SheetHeader className="border-bg-300 border-b px-m-400 py-s-300">
+					<SheetHeader className="border-bg-300 px-m-400 py-s-300 border-b">
 						<SheetTitle className="text-small font-medium">
 							{tTrade("tradeDetails")}
 						</SheetTitle>

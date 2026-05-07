@@ -20,10 +20,18 @@ interface QuarterHeaderProps {
 	}
 }
 
-const adjacentQuarter = (year: number, quarter: number, delta: -1 | 1): { year: number; quarter: number } => {
+const adjacentQuarter = (
+	year: number,
+	quarter: number,
+	delta: -1 | 1
+): { year: number; quarter: number } => {
 	const next = quarter + delta
-	if (next < 1) return { year: year - 1, quarter: 4 }
-	if (next > 4) return { year: year + 1, quarter: 1 }
+	if (next < 1) {
+		return { year: year - 1, quarter: 4 }
+	}
+	if (next > 4) {
+		return { year: year + 1, quarter: 1 }
+	}
 	return { year, quarter: next }
 }
 
@@ -42,25 +50,31 @@ const QuarterHeader = ({
 
 	return (
 		<>
-			<header className="flex flex-wrap items-baseline justify-between gap-s-300">
-				<nav className="flex items-center gap-s-300 text-small text-txt-300" aria-label="Navegação do trimestre">
+			<header className="gap-s-300 flex flex-wrap items-baseline justify-between">
+				<nav
+					className="gap-s-300 text-small text-txt-300 flex items-center"
+					aria-label="Navegação do trimestre"
+				>
 					<Link
 						href={`/${locale}/plan/${prev.year}/${prev.quarter}`}
-						className="rounded-sm p-1 hover:bg-bg-200 hover:text-txt-100"
+						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
 						aria-label="Trimestre anterior"
 					>
 						<ChevronLeft className="size-4" />
 					</Link>
-					<span className="text-tiny uppercase tracking-wider">
-						<Link href={`/${locale}/plan/${year}`} className="hover:text-txt-100">
+					<span className="text-tiny tracking-wider uppercase">
+						<Link
+							href={`/${locale}/plan/${year}`}
+							className="hover:text-txt-100"
+						>
 							{year}
 						</Link>
 					</span>
-					<h1 className="text-h2 font-semibold text-txt-100">{quarterLabel}</h1>
+					<h1 className="text-h2 text-txt-100 font-semibold">{quarterLabel}</h1>
 					<span className="text-tiny text-txt-300">· {monthRangeLabel}</span>
 					<Link
 						href={`/${locale}/plan/${next.year}/${next.quarter}`}
-						className="rounded-sm p-1 hover:bg-bg-200 hover:text-txt-100"
+						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
 						aria-label="Próximo trimestre"
 					>
 						<ChevronRight className="size-4" />

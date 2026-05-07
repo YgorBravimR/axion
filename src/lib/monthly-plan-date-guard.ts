@@ -9,7 +9,9 @@
  */
 const DAYS_BEFORE_END_TO_ALLOW_NEXT = 5
 
-const getMaxAllowedPlanMonth = (now = new Date()): { maxYear: number; maxMonth: number } => {
+const getMaxAllowedPlanMonth = (
+	now = new Date()
+): { maxYear: number; maxMonth: number } => {
 	const currentYear = now.getFullYear()
 	const currentMonth = now.getMonth() + 1 // 1-indexed
 	const currentDay = now.getDate()
@@ -33,10 +35,18 @@ const getMaxAllowedPlanMonth = (now = new Date()): { maxYear: number; maxMonth: 
  *
  * @returns `true` if the target month is too far in the future.
  */
-const isMonthBeyondAllowed = (targetYear: number, targetMonth: number, now = new Date()): boolean => {
+const isMonthBeyondAllowed = (
+	targetYear: number,
+	targetMonth: number,
+	now = new Date()
+): boolean => {
 	const { maxYear, maxMonth } = getMaxAllowedPlanMonth(now)
-	if (targetYear > maxYear) return true
-	if (targetYear === maxYear && targetMonth > maxMonth) return true
+	if (targetYear > maxYear) {
+		return true
+	}
+	if (targetYear === maxYear && targetMonth > maxMonth) {
+		return true
+	}
 	return false
 }
 

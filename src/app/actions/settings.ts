@@ -1,7 +1,13 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { settings, userSettings, tradingAccounts, users, type UserSettings } from "@/db/schema"
+import {
+	settings,
+	userSettings,
+	tradingAccounts,
+	users,
+	type UserSettings,
+} from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import type { ActionResponse } from "@/types"
@@ -114,7 +120,9 @@ export const updateUserSettings = async (
 		if (!validationResult.success) {
 			return {
 				status: "error",
-				message: validationResult.error.issues[0]?.message || t("actions.validationError"),
+				message:
+					validationResult.error.issues[0]?.message ||
+					t("actions.validationError"),
 			}
 		}
 
@@ -131,7 +139,8 @@ export const updateUserSettings = async (
 				.insert(userSettings)
 				.values({
 					userId: userId,
-					isPropAccount: data.isPropAccount ?? DEFAULT_USER_SETTINGS.isPropAccount,
+					isPropAccount:
+						data.isPropAccount ?? DEFAULT_USER_SETTINGS.isPropAccount,
 					propFirmName: data.propFirmName ?? DEFAULT_USER_SETTINGS.propFirmName,
 					profitSharePercentage: String(
 						data.profitSharePercentage ??
@@ -211,7 +220,9 @@ export const updateUserSettings = async (
 	}
 }
 
-export const getRiskSettings = async (): Promise<ActionResponse<RiskSettings>> => {
+export const getRiskSettings = async (): Promise<
+	ActionResponse<RiskSettings>
+> => {
 	const t = await getTranslations("settings")
 	try {
 		await requireAuth()
@@ -318,7 +329,12 @@ export const updateTheme = async (
 			return {
 				status: "error",
 				message: t("errors.invalidTheme"),
-				errors: [{ code: "INVALID_THEME", detail: `Theme must be one of: ${validThemes.join(", ")}` }],
+				errors: [
+					{
+						code: "INVALID_THEME",
+						detail: `Theme must be one of: ${validThemes.join(", ")}`,
+					},
+				],
 			}
 		}
 
@@ -342,77 +358,105 @@ export const updateTheme = async (
 }
 
 const getAccountLifecycle = async (): Promise<{
-  status: "success" | "error"
-  message?: string
-  data?: {
-    accountStartMonth: number | null
-    accountStartYear: number | null
-    startingBalanceCents: number | null
-    withdrawalTargetPercent: number | null
-  }
+	status: "success" | "error"
+	message?: string
+	data?: {
+		accountStartMonth: number | null
+		accountStartYear: number | null
+		startingBalanceCents: number | null
+		withdrawalTargetPercent: number | null
+	}
 }> => {
-  const { accountId } = await requireAuth()
+	const { accountId } = await requireAuth()
 
-  const account = await db.query.tradingAccounts.findFirst({
-    where: eq(tradingAccounts.id, accountId),
-    columns: {
-      accountStartMonth: true,
-      accountStartYear: true,
-      startingBalanceCents: true,
-      withdrawalTargetPercent: true,
-    },
-  })
+	const account = await db.query.tradingAccounts.findFirst({
+		where: eq(tradingAccounts.id, accountId),
+		columns: {
+			accountStartMonth: true,
+			accountStartYear: true,
+			startingBalanceCents: true,
+			withdrawalTargetPercent: true,
+		},
+	})
 
-  if (!account) return { status: "error", message: "Account not found" }
+	if (!account) {
+		return { status: "error", message: "Account not found" }
+	}
 
-  return {
-    status: "success",
-    data: {
-      accountStartMonth: account.accountStartMonth ?? null,
-      accountStartYear: account.accountStartYear ?? null,
-      startingBalanceCents: account.startingBalanceCents ?? null,
-      withdrawalTargetPercent: account.withdrawalTargetPercent
-        ? parseFloat(account.withdrawalTargetPercent.toString())
-        : null,
-    },
-  }
+	return {
+		status: "success",
+		data: {
+			accountStartMonth: account.accountStartMonth ?? null,
+			accountStartYear: account.accountStartYear ?? null,
+			startingBalanceCents: account.startingBalanceCents ?? null,
+			withdrawalTargetPercent: account.withdrawalTargetPercent
+				? parseFloat(account.withdrawalTargetPercent.toString())
+				: null,
+		},
+	}
 }
 
 const updateAccountLifecycle = async (params: {
-  accountStartMonth: number | null
-  accountStartYear: number | null
-  startingBalanceCents: number | null
-  withdrawalTargetPercent: number | null
+	accountStartMonth: number | null
+	accountStartYear: number | null
+	startingBalanceCents: number | null
+	withdrawalTargetPercent: number | null
 }): Promise<{ status: "success" | "error"; message?: string }> => {
-  const { accountId } = await requireAuth()
+	const { accountId } = await requireAuth()
 
-  const { accountStartMonth, accountStartYear, startingBalanceCents, withdrawalTargetPercent } = params
+	const {
+		accountStartMonth,
+		accountStartYear,
+		startingBalanceCents,
+		withdrawalTargetPercent,
+	} = params
 
-  if (accountStartMonth !== null && (accountStartMonth < 1 || accountStartMonth > 12)) {
-    return { status: "error", message: "Start month must be between 1 and 12" }
-  }
-  const currentYear = new Date().getFullYear()
-  if (accountStartYear !== null && (accountStartYear < 2000 || accountStartYear > currentYear)) {
-    return { status: "error", message: `Start year must be between 2000 and ${currentYear}` }
-  }
-  if (startingBalanceCents !== null && startingBalanceCents <= 0) {
-    return { status: "error", message: "Opening balance must be greater than zero" }
-  }
-  if (withdrawalTargetPercent !== null && (withdrawalTargetPercent < 0 || withdrawalTargetPercent > 100)) {
-    return { status: "error", message: "Withdrawal target must be between 0 and 100" }
-  }
+	if (
+		accountStartMonth !== null &&
+		(accountStartMonth < 1 || accountStartMonth > 12)
+	) {
+		return { status: "error", message: "Start month must be between 1 and 12" }
+	}
+	const currentYear = new Date().getFullYear()
+	if (
+		accountStartYear !== null &&
+		(accountStartYear < 2000 || accountStartYear > currentYear)
+	) {
+		return {
+			status: "error",
+			message: `Start year must be between 2000 and ${currentYear}`,
+		}
+	}
+	if (startingBalanceCents !== null && startingBalanceCents <= 0) {
+		return {
+			status: "error",
+			message: "Opening balance must be greater than zero",
+		}
+	}
+	if (
+		withdrawalTargetPercent !== null &&
+		(withdrawalTargetPercent < 0 || withdrawalTargetPercent > 100)
+	) {
+		return {
+			status: "error",
+			message: "Withdrawal target must be between 0 and 100",
+		}
+	}
 
-  await db
-    .update(tradingAccounts)
-    .set({
-      accountStartMonth: accountStartMonth ?? null,
-      accountStartYear: accountStartYear ?? null,
-      startingBalanceCents: startingBalanceCents ?? null,
-      withdrawalTargetPercent: withdrawalTargetPercent !== null ? String(withdrawalTargetPercent) : null,
-    })
-    .where(eq(tradingAccounts.id, accountId))
+	await db
+		.update(tradingAccounts)
+		.set({
+			accountStartMonth: accountStartMonth ?? null,
+			accountStartYear: accountStartYear ?? null,
+			startingBalanceCents: startingBalanceCents ?? null,
+			withdrawalTargetPercent:
+				withdrawalTargetPercent !== null
+					? String(withdrawalTargetPercent)
+					: null,
+		})
+		.where(eq(tradingAccounts.id, accountId))
 
-  return { status: "success" }
+	return { status: "success" }
 }
 
 import { BRANDS as VALID_BRANDS, type Brand as BrandValue } from "@/lib/brands"
@@ -458,7 +502,12 @@ export const updateAccountBrand = async (
 			return {
 				status: "error",
 				message: t("errors.invalidBrand"),
-				errors: [{ code: "INVALID_BRAND", detail: `Brand must be one of: ${VALID_BRANDS.join(", ")}` }],
+				errors: [
+					{
+						code: "INVALID_BRAND",
+						detail: `Brand must be one of: ${VALID_BRANDS.join(", ")}`,
+					},
+				],
 			}
 		}
 

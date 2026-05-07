@@ -20,7 +20,11 @@ import {
 } from "@/db/schema"
 import { auth } from "@/auth"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, encryptAccountFields, decryptAccountFields } from "@/lib/user-crypto"
+import {
+	getUserDek,
+	encryptAccountFields,
+	decryptAccountFields,
+} from "@/lib/user-crypto"
 import { hasAccess } from "@/lib/feature-access"
 import { resolveFeeSnapshot } from "@/lib/tax/fee-resolver"
 import { getTranslations } from "next-intl/server"
@@ -78,7 +82,11 @@ interface AccountTimeframeWithDetails extends AccountTimeframe {
 
 export const createAccount = async (
 	input: AccountInput
-): Promise<{ status: "success" | "error"; data?: TradingAccount; error?: string }> => {
+): Promise<{
+	status: "success" | "error"
+	data?: TradingAccount
+	error?: string
+}> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
 	try {
@@ -108,9 +116,12 @@ export const createAccount = async (
 		const dek = await getUserDek(session.user.id)
 		const encryptableValues = {
 			propFirmName: input.propFirmName,
-			profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
+			profitSharePercentage:
+				input.profitSharePercentage?.toString() ?? "100.00",
 		}
-		const encryptedFields = dek ? encryptAccountFields(encryptableValues, dek) : {}
+		const encryptedFields = dek
+			? encryptAccountFields(encryptableValues, dek)
+			: {}
 
 		const [newAccount] = await db
 			.insert(tradingAccounts)
@@ -120,7 +131,8 @@ export const createAccount = async (
 				description: input.description,
 				accountType: input.accountType,
 				propFirmName: input.propFirmName,
-				profitSharePercentage: input.profitSharePercentage?.toString() ?? "100.00",
+				profitSharePercentage:
+					input.profitSharePercentage?.toString() ?? "100.00",
 				defaultCurrency: input.defaultCurrency ?? "BRL",
 				showTaxEstimates: input.showTaxEstimates ?? true,
 				showPropCalculations: input.showPropCalculations ?? true,
@@ -132,7 +144,12 @@ export const createAccount = async (
 		invalidateAccountData()
 
 		// Decrypt fields before returning
-		const decryptedAccount = dek ? decryptAccountFields(newAccount as unknown as Record<string, unknown>, dek) as unknown as TradingAccount : newAccount
+		const decryptedAccount = dek
+			? (decryptAccountFields(
+					newAccount as unknown as Record<string, unknown>,
+					dek
+				) as unknown as TradingAccount)
+			: newAccount
 
 		return { status: "success", data: decryptedAccount }
 	} catch (error) {
@@ -144,7 +161,11 @@ export const createAccount = async (
 export const updateAccount = async (
 	accountId: string,
 	input: Partial<AccountInput>
-): Promise<{ status: "success" | "error"; data?: TradingAccount; error?: string }> => {
+): Promise<{
+	status: "success" | "error"
+	data?: TradingAccount
+	error?: string
+}> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
 	try {
@@ -183,25 +204,45 @@ export const updateAccount = async (
 			updatedAt: new Date(),
 		}
 
-		if (input.name !== undefined) updateData.name = input.name
-		if (input.description !== undefined) updateData.description = input.description
-		if (input.accountType !== undefined) updateData.accountType = input.accountType
-		if (input.propFirmName !== undefined) updateData.propFirmName = input.propFirmName
-		if (input.profitSharePercentage !== undefined)
+		if (input.name !== undefined) {
+			updateData.name = input.name
+		}
+		if (input.description !== undefined) {
+			updateData.description = input.description
+		}
+		if (input.accountType !== undefined) {
+			updateData.accountType = input.accountType
+		}
+		if (input.propFirmName !== undefined) {
+			updateData.propFirmName = input.propFirmName
+		}
+		if (input.profitSharePercentage !== undefined) {
 			updateData.profitSharePercentage = input.profitSharePercentage.toString()
-		if (input.defaultCurrency !== undefined) updateData.defaultCurrency = input.defaultCurrency
-		if (input.defaultBreakevenTicks !== undefined) updateData.defaultBreakevenTicks = input.defaultBreakevenTicks
-		if (input.showTaxEstimates !== undefined) updateData.showTaxEstimates = input.showTaxEstimates
-		if (input.showPropCalculations !== undefined)
+		}
+		if (input.defaultCurrency !== undefined) {
+			updateData.defaultCurrency = input.defaultCurrency
+		}
+		if (input.defaultBreakevenTicks !== undefined) {
+			updateData.defaultBreakevenTicks = input.defaultBreakevenTicks
+		}
+		if (input.showTaxEstimates !== undefined) {
+			updateData.showTaxEstimates = input.showTaxEstimates
+		}
+		if (input.showPropCalculations !== undefined) {
 			updateData.showPropCalculations = input.showPropCalculations
+		}
 		if (input.replayStartDate !== undefined && input.accountType === "replay") {
 			updateData.replayCurrentDate = new Date(input.replayStartDate)
 		}
-		if (input.defaultAsset !== undefined) updateData.defaultAsset = input.defaultAsset
+		if (input.defaultAsset !== undefined) {
+			updateData.defaultAsset = input.defaultAsset
+		}
 
 		// Encrypt financial fields if DEK is available
 		const dek = await getUserDek(session.user.id)
-		const encryptedFields = dek ? encryptAccountFields(updateData as Record<string, unknown>, dek) : {}
+		const encryptedFields = dek
+			? encryptAccountFields(updateData as Record<string, unknown>, dek)
+			: {}
 
 		const [updated] = await db
 			.update(tradingAccounts)
@@ -212,7 +253,12 @@ export const updateAccount = async (
 		invalidateAccountData()
 
 		// Decrypt fields before returning
-		const decryptedAccount = dek ? decryptAccountFields(updated as unknown as Record<string, unknown>, dek) as unknown as TradingAccount : updated
+		const decryptedAccount = dek
+			? (decryptAccountFields(
+					updated as unknown as Record<string, unknown>,
+					dek
+				) as unknown as TradingAccount)
+			: updated
 
 		return { status: "success", data: decryptedAccount }
 	} catch (error) {
@@ -223,7 +269,11 @@ export const updateAccount = async (
 
 export const deleteAccount = async (
 	accountId: string
-): Promise<{ status: "success" | "error"; error?: string; shouldLogout?: boolean }> => {
+): Promise<{
+	status: "success" | "error"
+	error?: string
+	shouldLogout?: boolean
+}> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
 	try {
@@ -292,8 +342,12 @@ export const deleteAllTradingData = async (): Promise<{
 		// trades cascade-deletes tradeExecutions + tradeTags
 		// dailyChecklists cascade-deletes checklistCompletions
 		await db.delete(trades).where(eq(trades.accountId, accountId))
-		await db.delete(dailyChecklists).where(eq(dailyChecklists.accountId, accountId))
-		await db.delete(dailyAssetSettings).where(eq(dailyAssetSettings.accountId, accountId))
+		await db
+			.delete(dailyChecklists)
+			.where(eq(dailyChecklists.accountId, accountId))
+		await db
+			.delete(dailyAssetSettings)
+			.where(eq(dailyAssetSettings.accountId, accountId))
 		await db.delete(notaImports).where(eq(notaImports.accountId, accountId))
 
 		invalidateAccountData()
@@ -402,7 +456,12 @@ export const advanceReplayDate = async (): Promise<{
 
 		// Decrypt fields before returning
 		const dek = await getUserDek(session.user.id)
-		const decryptedAccount = dek ? decryptAccountFields(updated as unknown as Record<string, unknown>, dek) as unknown as TradingAccount : updated
+		const decryptedAccount = dek
+			? (decryptAccountFields(
+					updated as unknown as Record<string, unknown>,
+					dek
+				) as unknown as TradingAccount)
+			: updated
 
 		return { status: "success", data: decryptedAccount }
 	} catch (error) {
@@ -417,7 +476,11 @@ export const advanceReplayDate = async (): Promise<{
 
 export const getAccountAssets = async (
 	accountId?: string
-): Promise<{ status: "success" | "error"; data?: AccountAssetWithDetails[]; error?: string }> => {
+): Promise<{
+	status: "success" | "error"
+	data?: AccountAssetWithDetails[]
+	error?: string
+}> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
 	try {
@@ -553,7 +616,11 @@ export const updateAccountAsset = async (
 
 export const getAccountTimeframes = async (
 	accountId?: string
-): Promise<{ status: "success" | "error"; data?: AccountTimeframeWithDetails[]; error?: string }> => {
+): Promise<{
+	status: "success" | "error"
+	data?: AccountTimeframeWithDetails[]
+	error?: string
+}> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
 	try {
@@ -592,7 +659,9 @@ export const getAccountTimeframes = async (
 
 		// Merge: all timeframes with their account-specific config
 		const result: AccountTimeframeWithDetails[] = allTimeframes.map((tf) => {
-			const config = accountTimeframeConfigs.find((c) => c.timeframeId === tf.id)
+			const config = accountTimeframeConfigs.find(
+				(c) => c.timeframeId === tf.id
+			)
 
 			return {
 				id: config?.id ?? "",

@@ -35,7 +35,9 @@ const useDebouncedSearch = (
 
 	// Debounce: sync local value to URL
 	useEffect(() => {
-		if (timerRef.current) clearTimeout(timerRef.current)
+		if (timerRef.current) {
+			clearTimeout(timerRef.current)
+		}
 
 		timerRef.current = setTimeout(() => {
 			if (value !== urlValue) {
@@ -44,13 +46,17 @@ const useDebouncedSearch = (
 		}, delay)
 
 		return () => {
-			if (timerRef.current) clearTimeout(timerRef.current)
+			if (timerRef.current) {
+				clearTimeout(timerRef.current)
+			}
 		}
 	}, [value, delay, urlValue, paramKey, urlParams])
 
 	const clear = useCallback(() => {
 		setValue("")
-		if (timerRef.current) clearTimeout(timerRef.current)
+		if (timerRef.current) {
+			clearTimeout(timerRef.current)
+		}
 		urlParams.set({ [paramKey]: null })
 	}, [paramKey, urlParams])
 

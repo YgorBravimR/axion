@@ -102,7 +102,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					getAccountAssets(),
 					getUserAccounts(),
 				])
-				if (!mounted) return
+				if (!mounted) {
+					return
+				}
 				setAccount(accountData)
 				setUserAccounts(allAccounts)
 				if (assetsResult.status === "success" && assetsResult.data) {
@@ -125,15 +127,21 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					})
 				}
 			} finally {
-				if (mounted) setIsLoading(false)
+				if (mounted) {
+					setIsLoading(false)
+				}
 			}
 		}
-		loadData()
-		return () => { mounted = false }
+		void loadData()
+		return () => {
+			mounted = false
+		}
 	}, [])
 
 	const handleSaveAccount = () => {
-		if (!account) return
+		if (!account) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await updateAccount(account.id, {
@@ -174,7 +182,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	}
 
 	const handleSaveAssetBreakeven = () => {
-		if (!editingAssetId) return
+		if (!editingAssetId) {
+			return
+		}
 
 		startTransition(async () => {
 			const breakevenTicksValue =
@@ -216,7 +226,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	}
 
 	const handleResetAssetBreakeven = () => {
-		if (!editingAssetId) return
+		if (!editingAssetId) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await updateAccountAsset({
@@ -251,7 +263,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	)
 
 	const handleDeleteAccount = () => {
-		if (!account) return
+		if (!account) {
+			return
+		}
 
 		// Resolve the switch target before deletion
 		const switchTarget =
@@ -281,7 +295,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	}
 
 	const handleDeleteAllData = async () => {
-		if (!account) return
+		if (!account) {
+			return
+		}
 
 		setIsDeleteDataDialogOpen(false)
 		setDeleteDataConfirmName("")
@@ -314,7 +330,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
 			{/* Account Information */}
-			<div id="settings-account-info" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-account-info"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("accountInfo")}
@@ -506,7 +525,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									{assets.map((asset) => (
 										<SelectItem key={asset.id} value={asset.symbol}>
 											<span className="font-mono">{asset.symbol}</span>
-											<span className="text-txt-300 ml-s-200">{asset.name}</span>
+											<span className="text-txt-300 ml-s-200">
+												{asset.name}
+											</span>
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -553,7 +574,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							onClick={handleSaveAccount}
 							disabled={isPending}
 						>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{tCommon("save")}
 						</Button>
 					</div>
@@ -561,15 +584,21 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Trading Costs (BR) */}
-			<div id="settings-trading-costs" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
-				<h2 className="text-body font-semibold text-txt-100 mb-s-300">
+			<div
+				id="settings-trading-costs"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
+				<h2 className="text-body text-txt-100 mb-s-300 font-semibold">
 					{t("tradingCosts")}
 				</h2>
 				<FeeRateForm />
 			</div>
 
 			{/* Default Breakeven Ticks */}
-			<div id="settings-default-breakeven" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-default-breakeven"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("breakevenTicks")}
@@ -621,7 +650,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Per-Asset Breakeven Ticks Overrides */}
-			<div id="settings-asset-overrides" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-asset-overrides"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-body text-txt-100 font-semibold">
 					{t("assetOverrides")}
 				</h2>
@@ -631,7 +663,8 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				<div className="mt-m-400 space-y-s-300">
 					{assets.map((asset) => {
 						const assetData = accountAssetsMap.get(asset.id)
-						const hasBreakevenOverride = assetData?.breakevenTicksOverride != null
+						const hasBreakevenOverride =
+							assetData?.breakevenTicksOverride !== null
 						const isEditing = editingAssetId === asset.id
 						return (
 							<div
@@ -668,7 +701,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 															breakevenTicks: e.target.value,
 														}))
 													}
-													className="h-8 text-right text-small"
+													className="text-small h-8 text-right"
 													placeholder={
 														account?.defaultBreakevenTicks?.toString() ?? "2"
 													}
@@ -754,7 +787,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Data Maintenance */}
-			<div id="settings-data-maintenance" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-data-maintenance"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-body text-txt-100 font-semibold">
 					{tGeneral("dataMaintenance")}
 				</h2>
@@ -768,7 +804,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						</p>
 						<RecalculateButton />
 					</div>
-					<div className="border-t border-bg-300 pt-s-300 sm:border-0 sm:pt-0">
+					<div className="border-bg-300 pt-s-300 border-t sm:border-0 sm:pt-0">
 						<p className="text-small text-txt-100">
 							{tGeneral("recalculatePnL")}
 						</p>
@@ -820,8 +856,11 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			)}
 
 			{/* Danger Zone */}
-			<div id="settings-danger-zone" className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-fb-error/30">
-				<h2 className="text-small sm:text-body font-semibold text-fb-error">
+			<div
+				id="settings-danger-zone"
+				className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 border-fb-error/30 rounded-lg border"
+			>
+				<h2 className="text-small sm:text-body text-fb-error font-semibold">
 					{t("dangerZone")}
 				</h2>
 
@@ -836,7 +875,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							open={isDeleteDataDialogOpen}
 							onOpenChange={(open) => {
 								setIsDeleteDataDialogOpen(open)
-								if (!open) setDeleteDataConfirmName("")
+								if (!open) {
+									setDeleteDataConfirmName("")
+								}
 							}}
 						>
 							<AlertDialogTrigger asChild>
@@ -885,7 +926,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									<AlertDialogAction
 										id="account-delete-data-confirm"
 										variant="destructive"
-										disabled={deleteDataConfirmName !== account?.name || isPending}
+										disabled={
+											deleteDataConfirmName !== account?.name || isPending
+										}
 										onClick={handleDeleteAllData}
 									>
 										{isPending && (
@@ -900,7 +943,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</div>
 
 				{/* Delete Account */}
-				<div className="border-bg-300 mt-m-400 border-t pt-m-400">
+				<div className="border-bg-300 mt-m-400 pt-m-400 border-t">
 					<p className="text-small text-txt-100">{t("deleteAccount")}</p>
 					<p className="mt-s-100 text-tiny text-txt-300">
 						{isLastAccount ? t("deleteLastAccountDesc") : t("dangerZoneDesc")}
@@ -915,7 +958,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							open={isDeleteDialogOpen}
 							onOpenChange={(open) => {
 								setIsDeleteDialogOpen(open)
-								if (!open) setDeleteConfirmName("")
+								if (!open) {
+									setDeleteConfirmName("")
+								}
 							}}
 						>
 							<AlertDialogTrigger asChild>

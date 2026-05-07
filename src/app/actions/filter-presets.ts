@@ -41,8 +41,9 @@ const listFilterPresets = async (): Promise<ActionResponse<FilterPreset[]>> => {
 
 		return { status: "success", message: "Presets retrieved", data: presets }
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error listing filter presets:", error)
+		}
 		return { status: "error", message: "Failed to list presets" }
 	}
 }
@@ -95,8 +96,9 @@ const createFilterPreset = async (
 
 		return { status: "success", message: "Preset created", data: preset }
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error creating filter preset:", error)
+		}
 		return { status: "error", message: "Failed to create preset" }
 	}
 }
@@ -170,9 +172,15 @@ const updateFilterPreset = async (
 			updatedAt: new Date(),
 		}
 
-		if (name !== undefined) updateData.name = name
-		if (filters !== undefined) updateData.filters = JSON.stringify(filters)
-		if (isDefault !== undefined) updateData.isDefault = isDefault
+		if (name !== undefined) {
+			updateData.name = name
+		}
+		if (filters !== undefined) {
+			updateData.filters = JSON.stringify(filters)
+		}
+		if (isDefault !== undefined) {
+			updateData.isDefault = isDefault
+		}
 
 		const [updated] = await db
 			.update(filterPresets)
@@ -182,8 +190,9 @@ const updateFilterPreset = async (
 
 		return { status: "success", message: "Preset updated", data: updated }
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error updating filter preset:", error)
+		}
 		return { status: "error", message: "Failed to update preset" }
 	}
 }
@@ -229,8 +238,9 @@ const deleteFilterPreset = async (
 
 		return { status: "success", message: "Preset deleted", data: null }
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error deleting filter preset:", error)
+		}
 		return { status: "error", message: "Failed to delete preset" }
 	}
 }

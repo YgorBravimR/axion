@@ -57,8 +57,10 @@ describe("patrimônio chain logic", () => {
 		const netPnl = 5_000
 		const retirada = 0
 
-		const capitalInvestido = mesAnterior !== null ? mesAnterior + novoAporte : null
-		const patrimonio = capitalInvestido !== null ? capitalInvestido + netPnl - retirada : null
+		const capitalInvestido =
+			mesAnterior !== null ? mesAnterior + novoAporte : null
+		const patrimonio =
+			capitalInvestido !== null ? capitalInvestido + netPnl - retirada : null
 
 		expect(capitalInvestido).toBeNull()
 		expect(patrimonio).toBeNull()
@@ -66,8 +68,13 @@ describe("patrimônio chain logic", () => {
 })
 
 describe("deriveAutoRetirada", () => {
-	const deriveAutoRetirada = (resultado: number, target: number | null): number => {
-		if (!target || target <= 0 || resultado <= 0) return 0
+	const deriveAutoRetirada = (
+		resultado: number,
+		target: number | null
+	): number => {
+		if (!target || target <= 0 || resultado <= 0) {
+			return 0
+		}
 		return Math.round(resultado * (target / 100))
 	}
 
@@ -95,9 +102,11 @@ describe("deriveAutoRetirada", () => {
 
 describe("mensalMaximo fallback", () => {
 	const fallbackMaximo = (
-		mensalEsperado: number | null,
+		mensalEsperado: number | null
 	): { value: number | null; isEstimate: boolean } => {
-		if (mensalEsperado === null) return { value: null, isEstimate: true }
+		if (mensalEsperado === null) {
+			return { value: null, isEstimate: true }
+		}
 		return { value: Math.round(mensalEsperado * 1.5), isEstimate: true }
 	}
 
@@ -124,9 +133,11 @@ describe("disabled month check", () => {
 		startYear: number | null,
 		startMonth: number | null,
 		year: number,
-		month: number,
+		month: number
 	): boolean => {
-		if (startYear === null || startMonth === null) return false
+		if (startYear === null || startMonth === null) {
+			return false
+		}
 		return year < startYear || (year === startYear && month < startMonth)
 	}
 

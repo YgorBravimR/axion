@@ -6,13 +6,16 @@ import { tradingAccounts, accountFeeRates } from "@/db/schema"
 // Prop accounts: subjectToPersonalIr = false.
 // Replay accounts: subjectToPersonalIr = false (engine skips them anyway).
 const seedFeeRates = async (): Promise<void> => {
-	const accounts = await db.select({
-		id: tradingAccounts.id,
-		accountType: tradingAccounts.accountType,
-	}).from(tradingAccounts)
+	const accounts = await db
+		.select({
+			id: tradingAccounts.id,
+			accountType: tradingAccounts.accountType,
+		})
+		.from(tradingAccounts)
 
 	for (const account of accounts) {
 		const isPersonal = account.accountType === "personal"
+		// eslint-disable-next-line no-await-in-loop -- sequential seed inserts per account; one-time migration script, no parallelism needed
 		await db
 			.insert(accountFeeRates)
 			.values({
@@ -28,10 +31,12 @@ const seedFeeRates = async (): Promise<void> => {
 			})
 			.onConflictDoNothing()
 
-		console.log(`Seeded fee rates for account ${account.id} (${account.accountType})`)
+		console.info(
+			`Seeded fee rates for account ${account.id} (${account.accountType})`
+		)
 	}
 
-	console.log(`Done. Seeded ${accounts.length} accounts.`)
+	console.info(`Done. Seeded ${accounts.length} accounts.`)
 }
 
 seedFeeRates()

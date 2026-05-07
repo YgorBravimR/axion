@@ -45,12 +45,21 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"/command-center": { requiredRole: "viewer", description: "Command Center" },
 	"/journal": { requiredRole: "viewer", description: "Journal" },
 	"/analytics": { requiredRole: "viewer", description: "Analytics" },
-	"/analytics/account-comparison": { requiredRole: "viewer", description: "Account Comparison" },
+	"/analytics/account-comparison": {
+		requiredRole: "viewer",
+		description: "Account Comparison",
+	},
 	"/monte-carlo": { requiredRole: "viewer", description: "Monte Carlo" },
-	"/risk-simulation": { requiredRole: "viewer", description: "Risk Simulation" },
+	"/risk-simulation": {
+		requiredRole: "viewer",
+		description: "Risk Simulation",
+	},
 	"/equity-shield": { requiredRole: "premium", description: "Equity Shield" },
 	"/backtest": { requiredRole: "premium", description: "Backtest" },
-	"/backtest/optimize": { requiredRole: "premium", description: "Backtest Optimizer" },
+	"/backtest/optimize": {
+		requiredRole: "premium",
+		description: "Backtest Optimizer",
+	},
 	"/playbook": { requiredRole: "viewer", description: "Playbook" },
 	"/reports": { requiredRole: "viewer", description: "Reports" },
 	"/monthly": { requiredRole: "trader", description: "Monthly Results" },
@@ -58,33 +67,87 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"/settings": { requiredRole: "trader", description: "Settings" },
 
 	// Command Center tabs
-	"command-center:plan-tab": { requiredRole: "trader", description: "Monthly Plan tab" },
-	"command-center:command-tab": { requiredRole: "trader", description: "Command Center tab" },
-	"command-center:monitor-tab": { requiredRole: "premium", description: "Market Monitor tab" },
+	"command-center:plan-tab": {
+		requiredRole: "trader",
+		description: "Monthly Plan tab",
+	},
+	"command-center:command-tab": {
+		requiredRole: "trader",
+		description: "Command Center tab",
+	},
+	"command-center:monitor-tab": {
+		requiredRole: "premium",
+		description: "Market Monitor tab",
+	},
 
 	// Journal granular
-	"journal:new-trade": { requiredRole: "trader", description: "New trade creation" },
+	"journal:new-trade": {
+		requiredRole: "trader",
+		description: "New trade creation",
+	},
 	"journal:csv-tab": { requiredRole: "trader", description: "CSV Import tab" },
-	"journal:nota-tab": { requiredRole: "premium", description: "Nota de Corretagem tab" },
+	"journal:nota-tab": {
+		requiredRole: "premium",
+		description: "Nota de Corretagem tab",
+	},
 	"journal:ocr-tab": { requiredRole: "premium", description: "OCR Import tab" },
 
 	// Dashboard granular
-	"dashboard:coaching-insights": { requiredRole: "trader", description: "AI coaching insights card" },
+	"dashboard:coaching-insights": {
+		requiredRole: "trader",
+		description: "AI coaching insights card",
+	},
 
 	// Settings tabs
-	"settings:admin-tabs": { requiredRole: "admin", description: "Admin settings tabs" },
-	"settings:accounts-tab": { requiredRole: "admin", description: "Trading accounts tab" },
-	"settings:tags-tab": { requiredRole: "admin", description: "Tags management tab" },
-	"settings:conditions-tab": { requiredRole: "admin", description: "Trading conditions tab" },
-	"settings:indicators-tab": { requiredRole: "admin", description: "Indicators tab" },
+	"settings:admin-tabs": {
+		requiredRole: "admin",
+		description: "Admin settings tabs",
+	},
+	"settings:accounts-tab": {
+		requiredRole: "admin",
+		description: "Trading accounts tab",
+	},
+	"settings:tags-tab": {
+		requiredRole: "admin",
+		description: "Tags management tab",
+	},
+	"settings:conditions-tab": {
+		requiredRole: "admin",
+		description: "Trading conditions tab",
+	},
+	"settings:indicators-tab": {
+		requiredRole: "admin",
+		description: "Indicators tab",
+	},
 	"settings:assets-tab": { requiredRole: "admin", description: "Assets tab" },
-	"settings:timeframes-tab": { requiredRole: "admin", description: "Timeframes tab" },
-	"settings:users-tab": { requiredRole: "admin", description: "User management tab" },
-	"settings:bugs-tab": { requiredRole: "admin", description: "Bug reports tab" },
-	"settings:seed-profiles": { requiredRole: "admin", description: "Seed risk profiles" },
-	"settings:data-display": { requiredRole: "admin", description: "Data Display card on profile tab" },
-	"settings:data-import": { requiredRole: "admin", description: "Data Import card on account tab" },
-	"settings:data-export": { requiredRole: "admin", description: "Data Export card on account tab" },
+	"settings:timeframes-tab": {
+		requiredRole: "admin",
+		description: "Timeframes tab",
+	},
+	"settings:users-tab": {
+		requiredRole: "admin",
+		description: "User management tab",
+	},
+	"settings:bugs-tab": {
+		requiredRole: "admin",
+		description: "Bug reports tab",
+	},
+	"settings:seed-profiles": {
+		requiredRole: "admin",
+		description: "Seed risk profiles",
+	},
+	"settings:data-display": {
+		requiredRole: "admin",
+		description: "Data Display card on profile tab",
+	},
+	"settings:data-import": {
+		requiredRole: "admin",
+		description: "Data Import card on account tab",
+	},
+	"settings:data-export": {
+		requiredRole: "admin",
+		description: "Data Export card on account tab",
+	},
 }
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
@@ -99,25 +162,36 @@ const hasAccess = (userRole: UserRole, requiredRole: UserRole): boolean =>
 
 const normalizeFeatureKey = (key: string): string => {
 	// Dynamic plan hrefs (/plan/2026, /plan/2026/2/5) collapse to a single gate.
-	if (key.startsWith("/plan/")) return "/plan"
+	if (key.startsWith("/plan/")) {
+		return "/plan"
+	}
 	return key
 }
 
 const canAccessFeature = (userRole: UserRole, featureKey: string): boolean => {
 	const config = FEATURE_MAP[normalizeFeatureKey(featureKey)]
-	if (!config) return true // unregistered features default to accessible
+	if (!config) {
+		return true
+	} // unregistered features default to accessible
 	return hasAccess(userRole, config.requiredRole)
 }
 
 const getFilteredNavItems = (items: NavItem[], userRole: UserRole): NavItem[] =>
 	items.filter((item) => canAccessFeature(userRole, item.href))
 
-const getFilteredNavStructure = (entries: NavEntry[], userRole: UserRole): NavEntry[] =>
+const getFilteredNavStructure = (
+	entries: NavEntry[],
+	userRole: UserRole
+): NavEntry[] =>
 	entries
 		.map((entry): NavEntry | null => {
 			if (isGroup(entry)) {
-				const allowed = entry.items.filter((item) => canAccessFeature(userRole, item.href))
-				if (allowed.length === 0) return null
+				const allowed = entry.items.filter((item) =>
+					canAccessFeature(userRole, item.href)
+				)
+				if (allowed.length === 0) {
+					return null
+				}
 				const filtered: NavGroup = { ...entry, items: allowed }
 				return filtered
 			}

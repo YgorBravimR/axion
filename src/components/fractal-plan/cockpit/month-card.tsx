@@ -65,7 +65,8 @@ const formatBRLCompact = (cents: number): string => {
 	return formatBRL(cents)
 }
 
-const formatPctSigned = (n: number): string => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`
+const formatPctSigned = (n: number): string =>
+	`${n >= 0 ? "+" : ""}${n.toFixed(1)}%`
 
 interface BarSpec {
 	key: string
@@ -79,7 +80,7 @@ const buildBars = (
 	real: RealMonthSnapshot | null,
 	projection: ProjectMonthResult,
 	pace: PaceData | null,
-	remainder: RemainderData | null,
+	remainder: RemainderData | null
 ): BarSpec[] => {
 	if (real && real.weeklyR.length > 0) {
 		const realBars: BarSpec[] = real.weeklyR.map((w) => ({
@@ -96,11 +97,18 @@ const buildBars = (
 		}
 		return realBars
 	}
-	if (weeks.length > 0 && weeks.some((w) => (w.actualR ?? w.targetR) != null)) {
+	if (
+		weeks.length > 0 &&
+		weeks.some((w) => (w.actualR ?? w.targetR) !== null)
+	) {
 		return weeks.map((w, i) => ({
 			key: `w-${w.isoWeek}-${i}`,
-			rValue: state === "past" ? (w.actualR ?? w.targetR ?? 0) : (w.targetR ?? 0),
-			kind: state === "past" || state === "current" ? "real" as const : "projection" as const,
+			rValue:
+				state === "past" ? (w.actualR ?? w.targetR ?? 0) : (w.targetR ?? 0),
+			kind:
+				state === "past" || state === "current"
+					? ("real" as const)
+					: ("projection" as const),
 		}))
 	}
 	// Pace projection: synthesize 4 even bars from pace gross / 4
@@ -147,30 +155,38 @@ const MonthCard = ({
 		return (
 			<div
 				aria-label={`${monthLabel} — antes da abertura da conta`}
-				className="flex h-full flex-col rounded-md border border-dashed border-bg-300/50 bg-bg-200/40 p-m-400 opacity-60"
+				className="border-bg-300/50 bg-bg-200/40 p-m-400 flex h-full flex-col rounded-md border border-dashed opacity-60"
 				data-state="muted"
 				data-testid={`month-card-${monthLabel}`}
 			>
-				<header className="flex items-baseline justify-between gap-s-200">
-					<h3 className="text-h3 capitalize text-txt-300">{monthLabel}</h3>
+				<header className="gap-s-200 flex items-baseline justify-between">
+					<h3 className="text-h3 text-txt-300 capitalize">{monthLabel}</h3>
 					<span className="text-tiny text-txt-300">—</span>
 				</header>
-				<p className="mt-s-300 text-tiny text-txt-300">Antes do início da conta</p>
+				<p className="mt-s-300 text-tiny text-txt-300">
+					Antes do início da conta
+				</p>
 			</div>
 		)
 	}
 
 	const isProjection = state === "projection"
-	const hasRemainder = remainder != null && remainder.addedRsum > 0
+	const hasRemainder = remainder !== null && remainder.addedRsum > 0
 
 	const realOnlyEndCents = real ? startBalanceCents + real.realPnlCents : null
-	const heroEndCents = hasRemainder && realOnlyEndCents != null ? realOnlyEndCents : endBalanceCents
+	const heroEndCents =
+		hasRemainder && realOnlyEndCents !== null
+			? realOnlyEndCents
+			: endBalanceCents
 	const deltaCents = heroEndCents - startBalanceCents
-	const deltaPct = startBalanceCents > 0 ? (deltaCents / startBalanceCents) * 100 : 0
+	const deltaPct =
+		startBalanceCents > 0 ? (deltaCents / startBalanceCents) * 100 : 0
 
 	const projectedTotalDeltaCents = endBalanceCents - startBalanceCents
 	const projectedTotalDeltaPct =
-		startBalanceCents > 0 ? (projectedTotalDeltaCents / startBalanceCents) * 100 : 0
+		startBalanceCents > 0
+			? (projectedTotalDeltaCents / startBalanceCents) * 100
+			: 0
 
 	const realRSum = real?.realRSum ?? 0
 	const monthlyR = real
@@ -214,55 +230,67 @@ const MonthCard = ({
 			<Link
 				href={href}
 				className={cn(
-					"flex h-full flex-col gap-s-300 rounded-md border bg-bg-200 p-m-400 transition-colors",
-					"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-100",
+					"gap-s-300 bg-bg-200 p-m-400 flex h-full flex-col rounded-md border transition-colors",
+					"focus-visible:ring-acc-100 focus-visible:ring-offset-bg-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					state === "current" &&
-						"border-l-4 border-l-guide border-y-bg-300 border-r-bg-300 hover:border-r-guide/40",
+						"border-l-guide border-y-bg-300 border-r-bg-300 hover:border-r-guide/40 border-l-4",
 					state === "past" && "border-bg-300 hover:border-acc-100/40",
 					state === "future" && "border-bg-300 hover:border-acc-100/30",
-					state === "projection" && "border-dashed border-bg-300/70 hover:border-guide/30",
+					state === "projection" &&
+						"border-bg-300/70 hover:border-guide/30 border-dashed"
 				)}
 				data-state={state}
 			>
-				<header className="flex items-start justify-between gap-s-200 pr-m-400">
+				<header className="gap-s-200 pr-m-400 flex items-start justify-between">
 					<h3
 						className={cn(
 							"text-h3 capitalize",
-							state === "current" ? "text-txt-100" : isProjection ? "text-txt-300" : "text-txt-200",
+							state === "current"
+								? "text-txt-100"
+								: isProjection
+									? "text-txt-300"
+									: "text-txt-200"
 						)}
 					>
 						{monthLabel}
 					</h3>
-					<span className="font-mono text-xs text-txt-300">T{tierIndex + 1}</span>
+					<span className="text-txt-300 font-mono text-xs">
+						T{tierIndex + 1}
+					</span>
 				</header>
 
-				<div className="flex flex-col gap-s-100">
-					<p className="text-tiny uppercase tracking-wide text-txt-300">Saldo final</p>
-					<div className="flex items-baseline justify-between gap-s-200">
+				<div className="gap-s-100 flex flex-col">
+					<p className="text-tiny text-txt-300 tracking-wide uppercase">
+						Saldo final
+					</p>
+					<div className="gap-s-200 flex items-baseline justify-between">
 						<span
 							className={cn(
-								"font-mono text-h2 tabular-nums",
-								isProjection ? "italic text-guide" : "text-txt-100",
+								"text-h2 font-mono tabular-nums",
+								isProjection ? "text-guide italic" : "text-txt-100"
 							)}
 						>
 							{formatBRL(heroEndCents)}
 						</span>
 						<span
 							className={cn(
-								"rounded-sm px-s-200 py-px font-mono text-tiny tabular-nums",
-								deltaCents > 0 && (isProjection ? "bg-guide/10 italic text-guide" : "bg-profit/10 text-profit"),
+								"px-s-200 text-tiny rounded-sm py-px font-mono tabular-nums",
+								deltaCents > 0 &&
+									(isProjection
+										? "bg-guide/10 text-guide italic"
+										: "bg-profit/10 text-profit"),
 								deltaCents < 0 && "bg-loss/10 text-loss",
-								deltaCents === 0 && "bg-bg-300 text-txt-300",
+								deltaCents === 0 && "bg-bg-300 text-txt-300"
 							)}
 						>
 							{formatPctSigned(deltaPct)}
 						</span>
 					</div>
-					<p className="font-mono text-tiny tabular-nums text-txt-300">
+					<p className="text-tiny text-txt-300 font-mono tabular-nums">
 						de {formatBRLCompact(startBalanceCents)}
 					</p>
 					{hasRemainder && (
-						<p className="mt-s-100 flex items-center justify-between gap-s-200 font-mono text-tiny italic tabular-nums text-guide">
+						<p className="mt-s-100 gap-s-200 text-tiny text-guide flex items-center justify-between font-mono italic tabular-nums">
 							<span>+ proj fim mês: {formatBRLCompact(endBalanceCents)}</span>
 							<span>{formatPctSigned(projectedTotalDeltaPct)}</span>
 						</p>
@@ -270,9 +298,12 @@ const MonthCard = ({
 				</div>
 
 				{bars.length > 0 && (
-					<div className="flex flex-1 items-end gap-s-100" aria-hidden="true">
+					<div className="gap-s-100 flex flex-1 items-end" aria-hidden="true">
 						{bars.map((b) => {
-							const heightPct = maxAbsR > 0 ? Math.max(8, (Math.abs(b.rValue) / maxAbsR) * 100) : 0
+							const heightPct =
+								maxAbsR > 0
+									? Math.max(8, (Math.abs(b.rValue) / maxAbsR) * 100)
+									: 0
 							const isPositive = b.rValue >= 0
 							const isReal = b.kind === "real"
 							return (
@@ -289,11 +320,11 @@ const MonthCard = ({
 												isReal && isPositive && "bg-profit/70",
 												isReal && !isPositive && "bg-loss/70",
 												!isReal && isPositive && "border-guide/60 bg-guide/15",
-												!isReal && !isPositive && "border-loss/60 bg-loss/10",
+												!isReal && !isPositive && "border-loss/60 bg-loss/10"
 											)}
 											style={{ height: `${heightPct / 2}%` }}
 										/>
-										<div className="absolute top-1/2 right-0 left-0 h-px bg-bg-300/60" />
+										<div className="bg-bg-300/60 absolute top-1/2 right-0 left-0 h-px" />
 									</div>
 								</div>
 							)
@@ -301,41 +332,49 @@ const MonthCard = ({
 					</div>
 				)}
 
-				<dl className="grid grid-cols-3 gap-s-200 border-t border-bg-300 pt-s-300 text-tiny">
+				<dl className="gap-s-200 border-bg-300 pt-s-300 text-tiny grid grid-cols-3 border-t">
 					<div>
 						<dt className="text-txt-300">{real ? "R real" : "R alvo"}</dt>
 						<dd
 							className={cn(
 								"mt-px font-mono tabular-nums",
-								monthlyR > 0 && (real ? "text-profit" : isProjection ? "italic text-guide" : "text-txt-200"),
+								monthlyR > 0 &&
+									(real
+										? "text-profit"
+										: isProjection
+											? "text-guide italic"
+											: "text-txt-200"),
 								monthlyR < 0 && "text-loss",
-								monthlyR === 0 && "text-txt-200",
+								monthlyR === 0 && "text-txt-200"
 							)}
 						>
-							{monthlyR >= 0 ? "+" : ""}{monthlyR.toFixed(1)}R
+							{monthlyR >= 0 ? "+" : ""}
+							{monthlyR.toFixed(1)}R
 						</dd>
 					</div>
 					<div>
 						<dt className="text-txt-300">1R</dt>
-						<dd className="mt-px font-mono tabular-nums text-txt-200">{formatBRLCompact(oneRCents)}</dd>
+						<dd className="text-txt-200 mt-px font-mono tabular-nums">
+							{formatBRLCompact(oneRCents)}
+						</dd>
 					</div>
 					<div>
 						<dt className="text-txt-300">{real ? "Líq real" : "Líq proj"}</dt>
 						<dd
 							className={cn(
 								"mt-px font-mono tabular-nums",
-								isProjection && "italic text-guide",
+								isProjection && "text-guide italic",
 								!isProjection && monthlyNetCents > 0 && "text-profit",
 								!isProjection && monthlyNetCents < 0 && "text-loss",
-								!isProjection && monthlyNetCents === 0 && "text-txt-200",
+								!isProjection && monthlyNetCents === 0 && "text-txt-200"
 							)}
 						>
 							{formatBRLCompact(monthlyNetCents)}
 						</dd>
 					</div>
 					{hasRemainder && (
-						<div className="col-span-3 mt-s-100 flex items-center justify-between border-t border-bg-300/50 pt-s-200 font-mono text-tiny italic tabular-nums text-guide">
-							<dt className="not-italic text-txt-300">+ proj restante</dt>
+						<div className="mt-s-100 border-bg-300/50 pt-s-200 text-tiny text-guide col-span-3 flex items-center justify-between border-t font-mono italic tabular-nums">
+							<dt className="text-txt-300 not-italic">+ proj restante</dt>
 							<dd>
 								{(remainder?.addedRsum ?? 0) >= 0 ? "+" : ""}
 								{(remainder?.addedRsum ?? 0).toFixed(1)}R
@@ -345,9 +384,11 @@ const MonthCard = ({
 						</div>
 					)}
 					{withdrawalCents != null && (
-						<div className="col-span-3 flex items-center justify-between border-t border-bg-300/50 pt-s-200">
+						<div className="border-bg-300/50 pt-s-200 col-span-3 flex items-center justify-between border-t">
 							<dt className="text-txt-300">Retirada projetada</dt>
-							<dd className="font-mono tabular-nums text-guide">{formatBRLCompact(withdrawalCents)}</dd>
+							<dd className="text-guide font-mono tabular-nums">
+								{formatBRLCompact(withdrawalCents)}
+							</dd>
 						</div>
 					)}
 				</dl>

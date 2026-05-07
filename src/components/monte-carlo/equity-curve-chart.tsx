@@ -7,7 +7,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
@@ -33,14 +32,18 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
 
 const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	if (!active || !payload || payload.length === 0) {
+		return null
+	}
 
 	const data = payload[0].payload
 	const isPositive = data.cumulativeR >= 0
 
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
+			<p className="text-tiny text-txt-300">
+				{tCharts("tradeNumber", { number: data.tradeNumber })}
+			</p>
 			<p
 				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
 			>
@@ -100,18 +103,9 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 				id="chart-monte-carlo-equity-curve"
 				className="h-56 sm:h-64 lg:h-72"
 			>
-				<AreaChart
-					data={chartData}
-					margin={CHART_MARGIN}
-				>
+				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<defs>
-						<linearGradient
-							id={gradientPositiveId}
-							x1="0"
-							y1="0"
-							x2="0"
-							y2="1"
-						>
+						<linearGradient id={gradientPositiveId} x1="0" y1="0" x2="0" y2="1">
 							<stop
 								offset="5%"
 								stopColor="var(--color-trade-buy)"
@@ -123,13 +117,7 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 								stopOpacity={0.02}
 							/>
 						</linearGradient>
-						<linearGradient
-							id={gradientNegativeId}
-							x1="0"
-							y1="0"
-							x2="0"
-							y2="1"
-						>
+						<linearGradient id={gradientNegativeId} x1="0" y1="0" x2="0" y2="1">
 							<stop
 								offset="5%"
 								stopColor="var(--color-trade-sell)"
@@ -165,7 +153,10 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 						width={yAxisWidth}
 						tick={AXIS_TICK}
 					/>
-					<ChartTooltip variant="line" content={<CustomTooltip tCharts={tCharts} />} />
+					<ChartTooltip
+						variant="line"
+						content={<CustomTooltip tCharts={tCharts} />}
+					/>
 					<ReferenceLine
 						y={0}
 						stroke="var(--color-txt-300)"

@@ -192,7 +192,7 @@ const main = async () => {
 		const direction = (trade.direction as string).toLowerCase()
 		const pnl =
 			typeof trade.pnl === "number"
-				? fromCents(trade.pnl as any)
+				? fromCents(trade.pnl as number)
 				: trade.pnl
 					? Number(trade.pnl)
 					: null

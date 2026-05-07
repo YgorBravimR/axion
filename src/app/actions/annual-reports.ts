@@ -5,7 +5,10 @@ import { accountCapitalEvents, tradingAccounts } from "@/db/schema"
 import { eq, and, asc, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
-import { getMonthAggregate, getWeekAggregate } from "@/lib/queries/period-queries"
+import {
+	getMonthAggregate,
+	getWeekAggregate,
+} from "@/lib/queries/period-queries"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
 import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 import { MONTH_LABEL_PT } from "@/lib/fractal-plan/month-labels"
@@ -32,7 +35,7 @@ interface ActionResult<T = void> {
 }
 
 const recordCapitalEvent = async (
-	params: RecordCapitalEventParams,
+	params: RecordCapitalEventParams
 ): Promise<ActionResult<{ id: string }>> => {
 	const { accountId } = await requireAuth()
 
@@ -40,7 +43,10 @@ const recordCapitalEvent = async (
 		return { status: "error", message: "Invalid event type" }
 	}
 	if (!Number.isInteger(params.amountCents) || params.amountCents <= 0) {
-		return { status: "error", message: "Amount must be a positive integer (cents)" }
+		return {
+			status: "error",
+			message: "Amount must be a positive integer (cents)",
+		}
 	}
 	const eventDateObj = new Date(params.eventDate)
 	if (Number.isNaN(eventDateObj.getTime())) {
@@ -72,7 +78,12 @@ const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
 	const rows = await db
 		.select()
 		.from(accountCapitalEvents)
-		.where(and(eq(accountCapitalEvents.id, id), eq(accountCapitalEvents.accountId, accountId)))
+		.where(
+			and(
+				eq(accountCapitalEvents.id, id),
+				eq(accountCapitalEvents.accountId, accountId)
+			)
+		)
 		.limit(1)
 
 	if (!rows[0]) {
@@ -138,7 +149,9 @@ const getMensalMaximo = (params: {
 	mensalEsperado: number | null
 }): { value: number | null; isEstimate: boolean } => {
 	const { mensalEsperado } = params
-	if (mensalEsperado === null) return { value: null, isEstimate: true }
+	if (mensalEsperado === null) {
+		return { value: null, isEstimate: true }
+	}
 	return { value: Math.round(mensalEsperado * 1.5), isEstimate: true }
 }
 
@@ -154,7 +167,7 @@ const getMensalMaximo = (params: {
  * surfaces actuals only.
  */
 const getWeeklyMetaVsReal = async (
-	year: number,
+	year: number
 ): Promise<ActionResult<WeeklyMetaVsRealData>> => {
 	const { accountId } = await requireAuth()
 
@@ -169,16 +182,21 @@ const getWeeklyMetaVsReal = async (
 		.limit(1)
 
 	const account = accountRows[0]
-	if (!account) return { status: "error", message: "Account not found" }
+	if (!account) {
+		return { status: "error", message: "Account not found" }
+	}
 
 	const withdrawalTarget = account.withdrawalTargetPercent
 		? parseFloat(account.withdrawalTargetPercent.toString())
 		: null
-	const effectiveWithdrawal = withdrawalTarget && withdrawalTarget > 0 ? withdrawalTarget : null
+	const effectiveWithdrawal =
+		withdrawalTarget && withdrawalTarget > 0 ? withdrawalTarget : null
 
 	const accountStartUtc =
 		account.accountStartYear && account.accountStartMonth
-			? new Date(Date.UTC(account.accountStartYear, account.accountStartMonth - 1, 1))
+			? new Date(
+					Date.UTC(account.accountStartYear, account.accountStartMonth - 1, 1)
+				)
 			: null
 
 	const hasPlan = false
@@ -202,6 +220,7 @@ const getWeeklyMetaVsReal = async (
 
 		let resultado = 0
 		if (!isDisabled) {
+			// eslint-disable-next-line no-await-in-loop -- weeks loop is intentional sequential DB query to build ordered weekly metadata; parallelising would require restructuring the push/accumulate pattern
 			const agg = await getWeekAggregate(accountId, year, isoWeek)
 			resultado = agg.netCents
 		}
@@ -225,7 +244,12 @@ const getWeeklyMetaVsReal = async (
 
 	return {
 		status: "success",
-		data: { year, hasPlan, withdrawalTargetPercent: effectiveWithdrawal, weeks },
+		data: {
+			year,
+			hasPlan,
+			withdrawalTargetPercent: effectiveWithdrawal,
+			weeks,
+		},
 	}
 }
 
@@ -242,7 +266,7 @@ const getWeeklyMetaVsReal = async (
  * with the UTC-anchored month boundaries in period-queries.
  */
 const getAnnualRollup = async (
-	year: number,
+	year: number
 ): Promise<ActionResult<AnnualRollupData>> => {
 	const { accountId } = await requireAuth()
 
@@ -258,14 +282,17 @@ const getAnnualRollup = async (
 		.limit(1)
 
 	const account = accountRows[0]
-	if (!account) return { status: "error", message: "Account not found" }
+	if (!account) {
+		return { status: "error", message: "Account not found" }
+	}
 
 	const taxRate = getDayTradeIrRate(year)
 
 	const withdrawalTarget = account.withdrawalTargetPercent
 		? parseFloat(account.withdrawalTargetPercent.toString())
 		: null
-	const effectiveWithdrawal = withdrawalTarget && withdrawalTarget > 0 ? withdrawalTarget : null
+	const effectiveWithdrawal =
+		withdrawalTarget && withdrawalTarget > 0 ? withdrawalTarget : null
 
 	const startYear = account.accountStartYear ?? null
 	const startMonth = account.accountStartMonth ?? null
@@ -277,8 +304,8 @@ const getAnnualRollup = async (
 			and(
 				eq(accountCapitalEvents.accountId, accountId),
 				gte(accountCapitalEvents.eventDate, `${year}-01-01`),
-				lte(accountCapitalEvents.eventDate, `${year}-12-31`),
-			),
+				lte(accountCapitalEvents.eventDate, `${year}-12-31`)
+			)
 		)
 		.orderBy(asc(accountCapitalEvents.eventDate))
 
@@ -287,9 +314,15 @@ const getAnnualRollup = async (
 	for (const ev of capitalEventsRows) {
 		const evMonth = new Date(ev.eventDate).getUTCMonth() + 1
 		if (ev.eventType === "deposit") {
-			depositsByMonth.set(evMonth, (depositsByMonth.get(evMonth) ?? 0) + ev.amountCents)
+			depositsByMonth.set(
+				evMonth,
+				(depositsByMonth.get(evMonth) ?? 0) + ev.amountCents
+			)
 		} else {
-			withdrawalsByMonth.set(evMonth, (withdrawalsByMonth.get(evMonth) ?? 0) + ev.amountCents)
+			withdrawalsByMonth.set(
+				evMonth,
+				(withdrawalsByMonth.get(evMonth) ?? 0) + ev.amountCents
+			)
 		}
 	}
 
@@ -336,26 +369,34 @@ const getAnnualRollup = async (
 			continue
 		}
 
+		// eslint-disable-next-line no-await-in-loop -- runningPatrimonio accumulates sequentially; months must execute in order
 		const agg = await getMonthAggregate(accountId, year, month)
 		const plan = planByMonth.get(month)
 		const novoAporte = depositsByMonth.get(month) ?? 0
 		const retirada = withdrawalsByMonth.get(month) ?? 0
 		const mesAnterior = runningPatrimonio
 
-		const mensalEsperado = plan?.dailyProfitTargetCents ? plan.dailyProfitTargetCents * 20 : null
+		const mensalEsperado = plan?.dailyProfitTargetCents
+			? plan.dailyProfitTargetCents * 20
+			: null
 		const { value: mensalMaximo } = getMensalMaximo({ mensalEsperado })
 
 		// Tax estimation — Tax Engine sub-project not deployed; uses account's tax rate.
 		const imposto = agg.netCents > 0 ? Math.round(agg.netCents * taxRate) : 0
 		const taxas = agg.grossCents - agg.netCents
 
-		const capitalInvestido = mesAnterior !== null ? mesAnterior + novoAporte : null
+		const capitalInvestido =
+			mesAnterior !== null ? mesAnterior + novoAporte : null
 		const patrimonio =
-			capitalInvestido !== null ? capitalInvestido + agg.netCents - retirada : null
+			capitalInvestido !== null
+				? capitalInvestido + agg.netCents - retirada
+				: null
 		runningPatrimonio = patrimonio
 
 		// monthlyRiskConfig.accountBalance is text-encrypted but plaintext while encryption disabled.
-		const aporteInicial = plan?.accountBalance ? parseInt(plan.accountBalance, 10) || null : null
+		const aporteInicial = plan?.accountBalance
+			? parseInt(plan.accountBalance, 10) || null
+			: null
 
 		rows.push({
 			month,
@@ -384,7 +425,10 @@ const getAnnualRollup = async (
 	const activeRows = rows.filter((r) => !r.disabled)
 	const totals: AnnualRollupTotals = {
 		resultadoBruto: activeRows.reduce((s, r) => s + (r.resultadoBruto ?? 0), 0),
-		resultadoLiquido: activeRows.reduce((s, r) => s + (r.resultadoLiquido ?? 0), 0),
+		resultadoLiquido: activeRows.reduce(
+			(s, r) => s + (r.resultadoLiquido ?? 0),
+			0
+		),
 		pontos: activeRows.reduce((s, r) => s + (r.pontos ?? 0), 0),
 		taxas: activeRows.reduce((s, r) => s + (r.taxas ?? 0), 0),
 		imposto: activeRows.reduce((s, r) => s + (r.imposto ?? 0), 0),
@@ -394,7 +438,10 @@ const getAnnualRollup = async (
 		mensalMaximo: activeRows.reduce((s, r) => s + (r.mensalMaximo ?? 0), 0),
 		novoAporte: activeRows.reduce((s, r) => s + r.novoAporte, 0),
 		retirada: activeRows.reduce((s, r) => s + r.retirada, 0),
-		capitalInvestido: activeRows.reduce((s, r) => s + (r.capitalInvestido ?? 0), 0),
+		capitalInvestido: activeRows.reduce(
+			(s, r) => s + (r.capitalInvestido ?? 0),
+			0
+		),
 		patrimonio: activeRows[activeRows.length - 1]?.patrimonio ?? null,
 	}
 

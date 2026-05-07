@@ -21,7 +21,9 @@ const getEffectiveDateWithOverride = (
 	account: TradingAccount | null,
 	overrideDate?: Date
 ): Date => {
-	if (overrideDate) return overrideDate
+	if (overrideDate) {
+		return overrideDate
+	}
 	return getEffectiveDate(account)
 }
 

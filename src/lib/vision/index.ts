@@ -9,7 +9,7 @@
  */
 
 // Types
-export * from "./types"
+export type * from "./types"
 
 // Cascade Handler
 export {

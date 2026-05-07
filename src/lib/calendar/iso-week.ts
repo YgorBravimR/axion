@@ -4,11 +4,11 @@
  * @see https://date-fns.org/docs/getISOWeek
  */
 import {
-  getISOWeek,
-  getISOWeekYear,
-  getISOWeeksInYear,
-  startOfISOWeek,
-  endOfISOWeek,
+	getISOWeek,
+	getISOWeekYear,
+	getISOWeeksInYear,
+	startOfISOWeek,
+	endOfISOWeek,
 } from "date-fns"
 
 /**
@@ -39,7 +39,7 @@ const getWeekYear = (date: Date): number => getISOWeekYear(date)
  * @see https://en.wikipedia.org/wiki/ISO_week_date
  */
 const getWeeksInYear = (year: number): number =>
-  getISOWeeksInYear(new Date(year, 6, 1))
+	getISOWeeksInYear(new Date(year, 6, 1))
 
 /**
  * Returns the Monday (ISO week start) for the week containing the given date.
@@ -58,10 +58,10 @@ const weekStart = (date: Date): Date => startOfISOWeek(date)
 const weekEnd = (date: Date): Date => endOfISOWeek(date)
 
 interface IsoWeekEntry {
-  week: number
-  isoYear: number
-  startDate: Date
-  endDate: Date
+	week: number
+	isoYear: number
+	startDate: Date
+	endDate: Date
 }
 
 /**
@@ -73,11 +73,13 @@ interface IsoWeekEntry {
  * @returns ISO week number (1–53)
  */
 const getIsoWeekOfDate = (date: Date): number => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+	const d = new Date(
+		Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+	)
+	const dayNum = d.getUTCDay() || 7
+	d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+	const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+	return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
 /**
@@ -88,10 +90,12 @@ const getIsoWeekOfDate = (date: Date): number => {
  * @returns ISO week-year (e.g. 2026)
  */
 const getIsoYearOfDate = (date: Date): number => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  return d.getUTCFullYear()
+	const d = new Date(
+		Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+	)
+	const dayNum = d.getUTCDay() || 7
+	d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+	return d.getUTCFullYear()
 }
 
 /**
@@ -102,30 +106,32 @@ const getIsoYearOfDate = (date: Date): number => {
  * @returns Ordered array of IsoWeekEntry rows for weeks whose ISO year matches `year`
  */
 const getIsoWeeksForYear = (year: number): IsoWeekEntry[] => {
-  const weeks: IsoWeekEntry[] = []
-  const jan4 = new Date(Date.UTC(year, 0, 4))
-  const startOfWeek1 = new Date(jan4)
-  const dayOfWeek = (jan4.getUTCDay() + 6) % 7
-  startOfWeek1.setUTCDate(jan4.getUTCDate() - dayOfWeek)
+	const weeks: IsoWeekEntry[] = []
+	const jan4 = new Date(Date.UTC(year, 0, 4))
+	const startOfWeek1 = new Date(jan4)
+	const dayOfWeek = (jan4.getUTCDay() + 6) % 7
+	startOfWeek1.setUTCDate(jan4.getUTCDate() - dayOfWeek)
 
-  for (let i = 0; i < 53; i++) {
-    const weekStartDate = new Date(startOfWeek1)
-    weekStartDate.setUTCDate(startOfWeek1.getUTCDate() + i * 7)
-    const weekEndDate = new Date(weekStartDate)
-    weekEndDate.setUTCDate(weekStartDate.getUTCDate() + 6)
+	for (let i = 0; i < 53; i++) {
+		const weekStartDate = new Date(startOfWeek1)
+		weekStartDate.setUTCDate(startOfWeek1.getUTCDate() + i * 7)
+		const weekEndDate = new Date(weekStartDate)
+		weekEndDate.setUTCDate(weekStartDate.getUTCDate() + 6)
 
-    const isoYear = getIsoYearOfDate(weekStartDate)
-    if (isoYear !== year) break
+		const isoYear = getIsoYearOfDate(weekStartDate)
+		if (isoYear !== year) {
+			break
+		}
 
-    weeks.push({
-      week: getIsoWeekOfDate(weekStartDate),
-      isoYear,
-      startDate: weekStartDate,
-      endDate: weekEndDate,
-    })
-  }
+		weeks.push({
+			week: getIsoWeekOfDate(weekStartDate),
+			isoYear,
+			startDate: weekStartDate,
+			endDate: weekEndDate,
+		})
+	}
 
-  return weeks
+	return weeks
 }
 
 /**
@@ -137,34 +143,38 @@ const getIsoWeeksForYear = (year: number): IsoWeekEntry[] => {
  * @returns Map keyed 1..12 — months with no weeks are still present with an empty array
  */
 const groupWeeksByMonth = <T extends { isoWeek: number; isoYear: number }>(
-  weeks: T[],
-  year: number,
+	weeks: T[],
+	year: number
 ): Record<number, T[]> => {
-  const allIsoWeeks = getIsoWeeksForYear(year)
-  const weekToMonth = new Map<number, number>()
+	const allIsoWeeks = getIsoWeeksForYear(year)
+	const weekToMonth = new Map<number, number>()
 
-  for (const entry of allIsoWeeks) {
-    const thursday = new Date(entry.startDate)
-    thursday.setUTCDate(entry.startDate.getUTCDate() + 3)
-    weekToMonth.set(entry.week, thursday.getUTCMonth() + 1)
-  }
+	for (const entry of allIsoWeeks) {
+		const thursday = new Date(entry.startDate)
+		thursday.setUTCDate(entry.startDate.getUTCDate() + 3)
+		weekToMonth.set(entry.week, thursday.getUTCMonth() + 1)
+	}
 
-  const result: Record<number, T[]> = {}
-  for (let m = 1; m <= 12; m++) result[m] = []
+	const result: Record<number, T[]> = {}
+	for (let m = 1; m <= 12; m++) {
+		result[m] = []
+	}
 
-  for (const week of weeks) {
-    const month = weekToMonth.get(week.isoWeek)
-    if (month != null) result[month].push(week)
-  }
+	for (const week of weeks) {
+		const month = weekToMonth.get(week.isoWeek)
+		if (month != null) {
+			result[month].push(week)
+		}
+	}
 
-  return result
+	return result
 }
 
 export { getWeekNumber, getWeekYear, getWeeksInYear, weekStart, weekEnd }
 export {
-  getIsoWeeksForYear,
-  getIsoWeekOfDate,
-  getIsoYearOfDate,
-  groupWeeksByMonth,
+	getIsoWeeksForYear,
+	getIsoWeekOfDate,
+	getIsoYearOfDate,
+	groupWeeksByMonth,
 }
 export type { IsoWeekEntry }

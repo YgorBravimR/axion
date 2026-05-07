@@ -44,18 +44,22 @@ const resolveFeeSnapshot = async ({
 	const perAsset = await db.query.accountFeeRates.findFirst({
 		where: and(
 			eq(accountFeeRates.accountId, accountId),
-			eq(accountFeeRates.assetSymbol, assetSymbol),
+			eq(accountFeeRates.assetSymbol, assetSymbol)
 		),
 	})
-	if (perAsset) return computeSnapshot(perAsset)
+	if (perAsset) {
+		return computeSnapshot(perAsset)
+	}
 
 	const accountDefault = await db.query.accountFeeRates.findFirst({
 		where: and(
 			eq(accountFeeRates.accountId, accountId),
-			isNull(accountFeeRates.assetSymbol),
+			isNull(accountFeeRates.assetSymbol)
 		),
 	})
-	if (accountDefault) return computeSnapshot(accountDefault)
+	if (accountDefault) {
+		return computeSnapshot(accountDefault)
+	}
 
 	return fromHardcodedDefault(assetSymbol)
 }

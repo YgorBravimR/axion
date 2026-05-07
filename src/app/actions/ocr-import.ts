@@ -69,7 +69,9 @@ const calculateAvgPrice = (
 	}>
 ): number => {
 	const filtered = allExecutions.filter((e) => e.executionType === type)
-	if (filtered.length === 0) return 0
+	if (filtered.length === 0) {
+		return 0
+	}
 
 	let totalValue = 0
 	let totalQty = 0
@@ -95,7 +97,9 @@ const findAsset = async (
 	const asset = await db.query.assets.findFirst({
 		where: eq(assets.symbol, resolved.symbol),
 	})
-	if (asset) return asset
+	if (asset) {
+		return asset
+	}
 
 	// Fallback: try original code if different from resolved symbol
 	if (originalCode && originalCode.toUpperCase() !== resolved.symbol) {
@@ -372,6 +376,7 @@ export const bulkCreateTradesFromOcr = async (
 		for (let i = 0; i < inputs.length; i++) {
 			try {
 				const validated = ocrImportSchema.parse(inputs[i])
+				// eslint-disable-next-line no-await-in-loop -- per-trade OCR import; sequential for per-trade error isolation in try/catch
 				const processed = await processOcrTrade(
 					validated,
 					accountId,

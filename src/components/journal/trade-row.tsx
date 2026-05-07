@@ -56,13 +56,17 @@ export const TradeRow = memo(
 		const isDisabled = isAnyDeleting && !isThisDeleting
 
 		const handleClick = useCallback(() => {
-			if (isAnyDeleting) return
+			if (isAnyDeleting) {
+				return
+			}
 			onTradeClick?.(trade.id)
 		}, [onTradeClick, trade.id, isAnyDeleting])
 
 		const handleKeyDown = useCallback(
 			(e: KeyboardEvent<HTMLDivElement>) => {
-				if (isAnyDeleting) return
+				if (isAnyDeleting) {
+					return
+				}
 				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault()
 					onTradeClick?.(trade.id)
@@ -195,7 +199,6 @@ export const TradeRow = memo(
 							size="sm"
 							onClick={handleConfirmClick}
 							disabled={isDeleting}
-							// eslint-disable-next-line jsx-a11y/no-autofocus
 							autoFocus
 							className="px-s-300 text-tiny h-9 sm:h-7"
 						>

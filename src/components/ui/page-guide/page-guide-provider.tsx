@@ -60,7 +60,9 @@ const useRegisterPageGuide = (config: PageGuideConfig) => {
  */
 const isElementVisible = (id: string): boolean => {
 	const el = document.getElementById(id)
-	if (!el) return false
+	if (!el) {
+		return false
+	}
 	// offsetParent is null for display:none elements (and position:fixed, but those are still "visible")
 	return el.offsetParent !== null || el.getClientRects().length > 0
 }
@@ -125,7 +127,9 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 			enteredStepRef.current = null
 			return
 		}
-		if (enteredStepRef.current === currentStepIndex) return
+		if (enteredStepRef.current === currentStepIndex) {
+			return
+		}
 		enteredStepRef.current = currentStepIndex
 		activeConfig.steps[currentStepIndex]?.onEnter?.()
 	}, [activeConfig, currentStepIndex])
@@ -135,7 +139,9 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 
 		// Scroll the first visible step's target into view before starting
 		const indices = computeVisibleIndices(config)
-		if (indices.length === 0) return
+		if (indices.length === 0) {
+			return
+		}
 
 		const firstTargetId = config.steps[indices[0]].targetId
 		const firstTarget = document.getElementById(firstTargetId)
@@ -157,7 +163,9 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		// Wait for scroll to settle, then start
 		setTimeout(() => {
 			const freshIndices = computeVisibleIndices(config)
-			if (freshIndices.length === 0) return
+			if (freshIndices.length === 0) {
+				return
+			}
 			setVisibleIndices(freshIndices)
 			setActiveConfig(config)
 			setCurrentStepIndex(freshIndices[0])
@@ -175,7 +183,9 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	}, [])
 
 	const next = useCallback(() => {
-		if (!activeConfig) return
+		if (!activeConfig) {
+			return
+		}
 
 		// Re-scan DOM at event time (post-commit, safe to call getElementById here)
 		const freshIndices = computeVisibleIndices(activeConfig)
@@ -191,7 +201,9 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	}, [activeConfig, currentStepIndex, close])
 
 	const prev = useCallback(() => {
-		if (!activeConfig) return
+		if (!activeConfig) {
+			return
+		}
 
 		const freshIndices = computeVisibleIndices(activeConfig)
 		const currentPos = freshIndices.indexOf(currentStepIndex)
@@ -204,7 +216,9 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	}, [activeConfig, currentStepIndex])
 
 	useEffect(() => {
-		if (!isActive) return
+		if (!isActive) {
+			return
+		}
 
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
@@ -241,7 +255,18 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 			prev,
 			close,
 		}),
-		[startGuide, registerGuide, unregisterGuide, registeredConfig, isActive, currentStepNumber, totalSteps, next, prev, close]
+		[
+			startGuide,
+			registerGuide,
+			unregisterGuide,
+			registeredConfig,
+			isActive,
+			currentStepNumber,
+			totalSteps,
+			next,
+			prev,
+			close,
+		]
 	)
 
 	return (

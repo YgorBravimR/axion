@@ -1,8 +1,6 @@
 import { setRequestLocale } from "next-intl/server"
-import { requireAuth } from "@/app/actions/auth"
-import { getUserAccounts } from "@/app/actions/auth"
+import { requireAuth, getUserAccounts } from "@/app/actions/auth"
 import { AccountComparisonContent } from "@/components/account-comparison"
-
 
 interface AccountComparisonPageProps {
 	params: Promise<{ locale: string }>
@@ -26,7 +24,7 @@ const AccountComparisonPage = async ({
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<AccountComparisonContent accounts={accountOptions} />
 			</div>
 		</div>

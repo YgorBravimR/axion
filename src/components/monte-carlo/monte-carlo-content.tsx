@@ -75,35 +75,40 @@ export const MonteCarloContent = ({
 	const [error, setError] = useState<string | null>(null)
 
 	// Load stats when source changes
-	const loadSourceStats = useCallback(async (source: DataSource) => {
-		setIsLoadingStats(true)
-		setError(null)
-		try {
-			const response = await getSimulationStats(source)
-			if (response.status === "success" && response.data) {
-				setSourceStats(response.data)
-			} else {
-				setError(response.message)
+	const loadSourceStats = useCallback(
+		async (source: DataSource) => {
+			setIsLoadingStats(true)
+			setError(null)
+			try {
+				const response = await getSimulationStats(source)
+				if (response.status === "success" && response.data) {
+					setSourceStats(response.data)
+				} else {
+					setError(response.message)
+					setSourceStats(null)
+				}
+			} catch {
+				setError(t("errors.failedToLoadStats"))
 				setSourceStats(null)
+			} finally {
+				setIsLoadingStats(false)
 			}
-		} catch {
-			setError(t("errors.failedToLoadStats"))
-			setSourceStats(null)
-		} finally {
-			setIsLoadingStats(false)
-		}
-	}, [t])
+		},
+		[t]
+	)
 
 	// When source changes, load stats
 	useEffect(() => {
 		if (selectedSource && inputMode === "auto") {
-			loadSourceStats(selectedSource)
+			void loadSourceStats(selectedSource)
 		}
 	}, [selectedSource, inputMode, loadSourceStats])
 
 	// Handle "Use These Stats" button — populates R-based params
 	const handleUseStats = () => {
-		if (!sourceStats) return
+		if (!sourceStats) {
+			return
+		}
 		setParams((prev) => ({
 			...prev,
 			winRate: sourceStats.winRate,
@@ -154,9 +159,7 @@ export const MonteCarloContent = ({
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div>
-				<h1 className="text-h3 text-txt-100 font-bold">
-					{t("title")}
-				</h1>
+				<h1 className="text-h3 text-txt-100 font-bold">{t("title")}</h1>
 				<p className="mt-s-100 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
@@ -165,7 +168,7 @@ export const MonteCarloContent = ({
 				<TabsList
 					id="monte-carlo-tabs"
 					variant="line"
-					className="mb-m-400 sm:mb-m-500 overflow-x-auto whitespace-nowrap snap-x snap-mandatory"
+					className="mb-m-400 sm:mb-m-500 snap-x snap-mandatory overflow-x-auto whitespace-nowrap"
 				>
 					<TabsTrigger value="edgeExpectancy">
 						{tV2("tabEdgeExpectancy")}
@@ -235,163 +238,165 @@ interface EdgeExpectancyContentProps {
 	budgetCap: number
 }
 
-const EdgeExpectancyContent = memo(({
-	initialOptions,
-	inputMode,
-	setInputMode,
-	selectedSource,
-	setSelectedSource,
-	sourceStats,
-	isLoadingStats,
-	params,
-	setParams,
-	result,
-	isRunning,
-	error,
-	onUseStats,
-	onCustomize,
-	onRunSimulation,
-	onRunAgain,
-	budgetCap,
-}: EdgeExpectancyContentProps) => {
-	const t = useTranslations("monteCarlo")
+const EdgeExpectancyContent = memo(
+	({
+		initialOptions,
+		inputMode,
+		setInputMode,
+		selectedSource,
+		setSelectedSource,
+		sourceStats,
+		isLoadingStats,
+		params,
+		setParams,
+		result,
+		isRunning,
+		error,
+		onUseStats,
+		onCustomize,
+		onRunSimulation,
+		onRunAgain,
+		budgetCap,
+	}: EdgeExpectancyContentProps) => {
+		const t = useTranslations("monteCarlo")
 
-	return (
-		<div className="space-y-m-400 sm:space-y-m-500">
-			{/* Input Section */}
-			{!result && (
-				<div className="space-y-m-400">
-					{/* Mode Selector */}
-					<InputModeSelector mode={inputMode} onModeChange={setInputMode} />
+		return (
+			<div className="space-y-m-400 sm:space-y-m-500">
+				{/* Input Section */}
+				{!result && (
+					<div className="space-y-m-400">
+						{/* Mode Selector */}
+						<InputModeSelector mode={inputMode} onModeChange={setInputMode} />
 
-					{/* Data Source (Auto mode only) */}
-					{inputMode === "auto" && (
-						<div className="gap-m-400 grid md:grid-cols-2 lg:grid-cols-2">
-							<DataSourceSelector
-								options={initialOptions}
-								selectedSource={selectedSource}
-								onSourceChange={setSelectedSource}
-								isLoading={isLoadingStats}
-							/>
-							<StatsPreview
-								stats={sourceStats}
-								isLoading={isLoadingStats}
-								onUseStats={onUseStats}
-								onCustomize={onCustomize}
-							/>
-						</div>
-					)}
+						{/* Data Source (Auto mode only) */}
+						{inputMode === "auto" && (
+							<div className="gap-m-400 grid md:grid-cols-2 lg:grid-cols-2">
+								<DataSourceSelector
+									options={initialOptions}
+									selectedSource={selectedSource}
+									onSourceChange={setSelectedSource}
+									isLoading={isLoadingStats}
+								/>
+								<StatsPreview
+									stats={sourceStats}
+									isLoading={isLoadingStats}
+									onUseStats={onUseStats}
+									onCustomize={onCustomize}
+								/>
+							</div>
+						)}
 
-					{/* Parameters Form */}
-					<SimulationParamsForm
-						params={params}
-						onChange={setParams}
-						disabled={isRunning}
-						budgetCap={budgetCap}
-					/>
-
-					{/* Error Message */}
-					{error && (
-						<div className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border">
-							{error}
-						</div>
-					)}
-
-					{/* Run Button */}
-					<div className="flex justify-center">
-						<Button
-							id="monte-carlo-run-simulation"
-							size="lg"
-							onClick={onRunSimulation}
+						{/* Parameters Form */}
+						<SimulationParamsForm
+							params={params}
+							onChange={setParams}
 							disabled={isRunning}
-							className="w-full sm:w-auto sm:min-w-[200px]"
-						>
-							{isRunning ? (
-								<LoadingSpinner size="sm" label={t("runningSimulation")} />
-							) : (
-								<>
-									<Dices className="mr-s-200 h-5 w-5" />
-									{t("params.calculate")}
-								</>
-							)}
-						</Button>
-					</div>
-				</div>
-			)}
+							budgetCap={budgetCap}
+						/>
 
-			{/* Results Section */}
-			{result && (
-				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
-					{/* Top Summary Banner */}
-					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 gap-m-400 sm:gap-m-500 grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between rounded-lg border">
-						<div className="gap-m-400 flex items-center">
-							<span className="text-txt-300 text-small">
-								{t("results.simulations")}:
-							</span>
-							<span className="text-txt-100 font-medium">
-								{params.simulationCount.toLocaleString()}
-							</span>
+						{/* Error Message */}
+						{error && (
+							<div className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border">
+								{error}
+							</div>
+						)}
+
+						{/* Run Button */}
+						<div className="flex justify-center">
+							<Button
+								id="monte-carlo-run-simulation"
+								size="lg"
+								onClick={onRunSimulation}
+								disabled={isRunning}
+								className="w-full sm:w-auto sm:min-w-[200px]"
+							>
+								{isRunning ? (
+									<LoadingSpinner size="sm" label={t("runningSimulation")} />
+								) : (
+									<>
+										<Dices className="mr-s-200 h-5 w-5" />
+										{t("params.calculate")}
+									</>
+								)}
+							</Button>
 						</div>
-						<div className="gap-m-400 flex items-center">
-							<span className="text-txt-300 text-small">
-								{t("results.tradesLabel")}:
-							</span>
-							<span className="text-txt-100 font-medium">
-								{params.numberOfTrades}
-							</span>
-						</div>
-						<div className="gap-m-400 flex items-center">
-							<span className="text-txt-300 text-small">
-								{t("results.winRateLabel")}:
-							</span>
-							<span className="text-txt-100 font-medium">
-								{params.winRate}%
-							</span>
-						</div>
-						<div className="gap-m-400 flex items-center">
-							<span className="text-txt-300 text-small">
-								{t("results.rrLabel")}:
-							</span>
-							<span className="text-txt-100 font-medium">
-								1:{params.rewardRiskRatio}
-							</span>
-						</div>
-						<Button
-							id="monte-carlo-run-again"
-							variant="outline"
-							size="sm"
-							onClick={onRunAgain}
-						>
-							<Dices className="mr-s-100 h-4 w-4" />
-							{t("results.runAgain")}
-						</Button>
 					</div>
+				)}
 
-					{/* Charts Row */}
-					<div className="gap-m-400 sm:gap-m-500 grid md:grid-cols-2 lg:grid-cols-2">
-						<EquityCurveChart trades={result.sampleRun.trades} />
-						<DrawdownChart trades={result.sampleRun.trades} />
+				{/* Results Section */}
+				{result && (
+					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+						{/* Top Summary Banner */}
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 gap-m-400 sm:gap-m-500 grid grid-cols-2 rounded-lg border sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+							<div className="gap-m-400 flex items-center">
+								<span className="text-txt-300 text-small">
+									{t("results.simulations")}:
+								</span>
+								<span className="text-txt-100 font-medium">
+									{params.simulationCount.toLocaleString()}
+								</span>
+							</div>
+							<div className="gap-m-400 flex items-center">
+								<span className="text-txt-300 text-small">
+									{t("results.tradesLabel")}:
+								</span>
+								<span className="text-txt-100 font-medium">
+									{params.numberOfTrades}
+								</span>
+							</div>
+							<div className="gap-m-400 flex items-center">
+								<span className="text-txt-300 text-small">
+									{t("results.winRateLabel")}:
+								</span>
+								<span className="text-txt-100 font-medium">
+									{params.winRate}%
+								</span>
+							</div>
+							<div className="gap-m-400 flex items-center">
+								<span className="text-txt-300 text-small">
+									{t("results.rrLabel")}:
+								</span>
+								<span className="text-txt-100 font-medium">
+									1:{params.rewardRiskRatio}
+								</span>
+							</div>
+							<Button
+								id="monte-carlo-run-again"
+								variant="outline"
+								size="sm"
+								onClick={onRunAgain}
+							>
+								<Dices className="mr-s-100 h-4 w-4" />
+								{t("results.runAgain")}
+							</Button>
+						</div>
+
+						{/* Charts Row */}
+						<div className="gap-m-400 sm:gap-m-500 grid md:grid-cols-2 lg:grid-cols-2">
+							<EquityCurveChart trades={result.sampleRun.trades} />
+							<DrawdownChart trades={result.sampleRun.trades} />
+						</div>
+
+						{/* Distribution - Full width */}
+						<DistributionHistogram
+							buckets={result.distributionBuckets}
+							medianFinalR={result.statistics.medianFinalR}
+						/>
+
+						{/* Metrics Cards */}
+						<MetricsCards statistics={result.statistics} />
+
+						{/* Kelly + Trade Sequence - Side by side on desktop */}
+						<div className="gap-m-400 sm:gap-m-500 grid lg:grid-cols-2 xl:grid-cols-2">
+							<KellyCriterionCard statistics={result.statistics} />
+							<TradeSequenceList trades={result.sampleRun.trades} />
+						</div>
+
+						{/* Strategy Analysis - Full width */}
+						<StrategyAnalysis result={result} />
 					</div>
-
-					{/* Distribution - Full width */}
-					<DistributionHistogram
-						buckets={result.distributionBuckets}
-						medianFinalR={result.statistics.medianFinalR}
-					/>
-
-					{/* Metrics Cards */}
-					<MetricsCards statistics={result.statistics} />
-
-					{/* Kelly + Trade Sequence - Side by side on desktop */}
-					<div className="gap-m-400 sm:gap-m-500 grid lg:grid-cols-2 xl:grid-cols-2">
-						<KellyCriterionCard statistics={result.statistics} />
-						<TradeSequenceList trades={result.sampleRun.trades} />
-					</div>
-
-					{/* Strategy Analysis - Full width */}
-					<StrategyAnalysis result={result} />
-				</div>
-			)}
-		</div>
-	)
-})
+				)}
+			</div>
+		)
+	}
+)

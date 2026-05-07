@@ -7,7 +7,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	try {
 		const rows = await db

@@ -33,26 +33,28 @@ export const DeleteConfirmDialog = ({
 	const tCommon = useTranslations("common")
 
 	return (
-		<AlertDialog open onOpenChange={(open) => { if (!open && !isPending) onCancel() }}>
+		<AlertDialog
+			open
+			onOpenChange={(open) => {
+				if (!open && !isPending) {
+					onCancel()
+				}
+			}}
+		>
 			<AlertDialogContent className="min-w-0">
 				<AlertDialogHeader>
 					<AlertDialogMedia className="bg-fb-error/20">
 						<AlertTriangle className="text-fb-error h-5 w-5" />
 					</AlertDialogMedia>
 					<AlertDialogTitle>{t("title")}</AlertDialogTitle>
-					<AlertDialogDescription className="break-words min-w-0">
+					<AlertDialogDescription className="min-w-0 break-words">
 						{t("description", { code: strategyCode, name: strategyName })}
 					</AlertDialogDescription>
-					<p className="text-tiny text-txt-300 mt-s-200">
-						{t("warning")}
-					</p>
+					<p className="text-tiny text-txt-300 mt-s-200">{t("warning")}</p>
 				</AlertDialogHeader>
 
 				<AlertDialogFooter>
-					<AlertDialogCancel
-						id="playbook-delete-cancel"
-						disabled={isPending}
-					>
+					<AlertDialogCancel id="playbook-delete-cancel" disabled={isPending}>
 						{tCommon("cancel")}
 					</AlertDialogCancel>
 					<AlertDialogAction

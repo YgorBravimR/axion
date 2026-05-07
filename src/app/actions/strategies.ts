@@ -33,15 +33,23 @@ import { toSafeErrorMessage } from "@/lib/error-utils"
  * @returns Whether the error is a unique constraint violation
  */
 const isUniqueViolation = (error: unknown): boolean => {
-	if (!(error instanceof Error)) return false
+	if (!(error instanceof Error)) {
+		return false
+	}
 	const msg = error.message
-	if (msg.includes("unique") || msg.includes("23505")) return true
+	if (msg.includes("unique") || msg.includes("23505")) {
+		return true
+	}
 	if (error.cause instanceof Error) {
 		const causeMsg = error.cause.message
-		if (causeMsg.includes("unique") || causeMsg.includes("23505")) return true
+		if (causeMsg.includes("unique") || causeMsg.includes("23505")) {
+			return true
+		}
 	}
 	if (error.cause && typeof error.cause === "object" && "code" in error.cause) {
-		if ((error.cause as Record<string, unknown>).code === "23505") return true
+		if ((error.cause as Record<string, unknown>).code === "23505") {
+			return true
+		}
 	}
 	return false
 }
@@ -494,7 +502,9 @@ export const getStrategies = async (
 		// Build lookup maps for O(1) access
 		const tradesByStrategyId = new Map<string, typeof allStrategyTrades>()
 		for (const trade of allStrategyTrades) {
-			if (!trade.strategyId) continue
+			if (!trade.strategyId) {
+				continue
+			}
 			const existing = tradesByStrategyId.get(trade.strategyId)
 			if (existing) {
 				existing.push(trade)
@@ -685,9 +695,13 @@ export const getComplianceOverview = async (): Promise<
 		}> = []
 
 		for (const row of perStrategyRows) {
-			if (!row.strategyId || row.trackedCount === 0) continue
+			if (!row.strategyId || row.trackedCount === 0) {
+				continue
+			}
 			const name = strategyNameById.get(row.strategyId)
-			if (!name) continue
+			if (!name) {
+				continue
+			}
 			strategyCompliances.push({
 				name,
 				compliance: (row.followedCount / row.trackedCount) * 100,

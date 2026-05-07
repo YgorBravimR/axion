@@ -3,10 +3,15 @@
  * DELETE /api/uploads — Delete an image from S3-compatible storage
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { uploadFile, deleteFile } from "@/lib/storage"
-import { validateFile, buildS3Key, uploadSchema } from "@/lib/validations/upload"
+import {
+	validateFile,
+	buildS3Key,
+	uploadSchema,
+} from "@/lib/validations/upload"
 
 export const POST = async (request: NextRequest) => {
 	const session = await auth()
@@ -55,7 +60,11 @@ export const POST = async (request: NextRequest) => {
 	}
 
 	const buffer = Buffer.from(await file.arrayBuffer())
-	const s3Key = buildS3Key(metaResult.data.path, metaResult.data.entityId, file.name)
+	const s3Key = buildS3Key(
+		metaResult.data.path,
+		metaResult.data.entityId,
+		file.name
+	)
 
 	const result = await uploadFile({
 		key: s3Key,

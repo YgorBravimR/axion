@@ -171,7 +171,9 @@ const EditStrategyForm = ({
 											value={code}
 											onChange={(e) => {
 												setCode(e.target.value)
-												if (fieldErrors.code) setFieldErrors({})
+												if (fieldErrors.code) {
+													setFieldErrors({})
+												}
 											}}
 										/>
 										<p className="text-tiny text-txt-300 mt-s-100">
@@ -312,10 +314,7 @@ const EditStrategyForm = ({
 
 								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 									<div>
-										<Label
-											id="label-target-r-multiple"
-											htmlFor="finalR"
-										>
+										<Label id="label-target-r-multiple" htmlFor="finalR">
 											{t("finalR")}
 										</Label>
 										<Input
@@ -334,10 +333,7 @@ const EditStrategyForm = ({
 									</div>
 
 									<div>
-										<Label
-											id="label-max-risk-percent"
-											htmlFor="maxRiskPercent"
-										>
+										<Label id="label-max-risk-percent" htmlFor="maxRiskPercent">
 											{t("maxRiskPerTrade")}
 										</Label>
 										<Input

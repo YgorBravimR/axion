@@ -8,7 +8,9 @@ import { runMonteCarloV2 } from "@/lib/monte-carlo-v2"
 
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	try {
 		const body: SimulationParamsV2 = await request.json()

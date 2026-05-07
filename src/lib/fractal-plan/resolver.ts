@@ -47,7 +47,7 @@ const FALLBACK_MONTHLY_LOSS_R = "10.00"
 
 const resolveDay = async (
 	accountId: string,
-	date: Date,
+	date: Date
 ): Promise<ResolvedDay | null> => {
 	const year = date.getFullYear()
 	const month = date.getMonth() + 1
@@ -56,34 +56,45 @@ const resolveDay = async (
 	const isoYear = getWeekYear(date)
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+		where: and(
+			eq(yearlyPlans.accountId, accountId),
+			eq(yearlyPlans.year, year)
+		),
 	})
-	if (!yearRow) return null
+	if (!yearRow) {
+		return null
+	}
 
 	const quarterRow = await db.query.quarterlyPlan.findFirst({
-		where: and(eq(quarterlyPlan.yearlyPlanId, yearRow.id), eq(quarterlyPlan.quarter, quarter)),
+		where: and(
+			eq(quarterlyPlan.yearlyPlanId, yearRow.id),
+			eq(quarterlyPlan.quarter, quarter)
+		),
 	})
 	const monthRow = quarterRow
 		? await db.query.monthlyPlan.findFirst({
-			where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id), eq(monthlyPlan.month, month)),
-		})
+				where: and(
+					eq(monthlyPlan.quarterlyPlanId, quarterRow.id),
+					eq(monthlyPlan.month, month)
+				),
+			})
 		: null
 	const weekRow = monthRow
 		? await db.query.weeklyPlan.findFirst({
-			where: and(
-				eq(weeklyPlan.monthlyPlanId, monthRow.id),
-				eq(weeklyPlan.isoWeek, isoWeek),
-				eq(weeklyPlan.isoYear, isoYear),
-			),
-		})
+				where: and(
+					eq(weeklyPlan.monthlyPlanId, monthRow.id),
+					eq(weeklyPlan.isoWeek, isoWeek),
+					eq(weeklyPlan.isoYear, isoYear)
+				),
+			})
 		: null
 	const dayRow = weekRow
 		? await db.query.dailyPlan.findFirst({
-			where: and(
-				eq(dailyPlan.weeklyPlanId, weekRow.id),
-				eq(dailyPlan.date, date.toISOString().slice(0, 10)),
-			),
-		})
+				where: and(
+					eq(dailyPlan.weeklyPlanId, weekRow.id),
+					eq(dailyPlan.date, date.toISOString().slice(0, 10))
+				),
+			})
 		: null
 
 	// Phase 3: columns now exist on yearlyPlans — read directly, fall back to constants if null.
@@ -91,32 +102,60 @@ const resolveDay = async (
 		{ level: "day", value: dayRow?.overrideDailyLossR },
 		{ level: "week", value: weekRow?.overrideDailyLossR },
 		{ level: "month", value: monthRow?.overrideDailyLossR },
-		{ level: "year", value: yearRow.defaultDailyLossR ?? FALLBACK_DAILY_LOSS_R },
+		{
+			level: "year",
+			value: yearRow.defaultDailyLossR ?? FALLBACK_DAILY_LOSS_R,
+		},
 	])
 	const dailyTargetR = resolveCascade<string>([
 		{ level: "day", value: dayRow?.overrideDailyTargetR },
 		{ level: "week", value: weekRow?.overrideDailyTargetR },
 		{ level: "month", value: monthRow?.overrideDailyTargetR },
-		{ level: "year", value: yearRow.defaultDailyWinR ?? FALLBACK_DAILY_TARGET_R },
+		{
+			level: "year",
+			value: yearRow.defaultDailyWinR ?? FALLBACK_DAILY_TARGET_R,
+		},
 	])
 	const weeklyLossR = resolveCascade<string>([
 		{ level: "week", value: weekRow?.overrideWeeklyLossR },
 		{ level: "month", value: monthRow?.overrideWeeklyLossR },
-		{ level: "year", value: yearRow.defaultWeeklyLossR ?? FALLBACK_WEEKLY_LOSS_R },
+		{
+			level: "year",
+			value: yearRow.defaultWeeklyLossR ?? FALLBACK_WEEKLY_LOSS_R,
+		},
 	])
 	const monthlyLossR = resolveCascade<string>([
 		{ level: "month", value: monthRow?.overrideMonthlyLossR },
-		{ level: "year", value: yearRow.defaultMonthlyLossR ?? FALLBACK_MONTHLY_LOSS_R },
+		{
+			level: "year",
+			value: yearRow.defaultMonthlyLossR ?? FALLBACK_MONTHLY_LOSS_R,
+		},
 	])
 
 	const playbookLayers = [
-		{ level: "day" as const, value: dayRow?.overrideActivePlaybookIds as string[] | null | undefined },
-		{ level: "week" as const, value: weekRow?.overrideActivePlaybookIds as string[] | null | undefined },
-		{ level: "month" as const, value: monthRow?.overrideActivePlaybookIds as string[] | null | undefined },
-		{ level: "quarter" as const, value: quarterRow?.activePlaybookIds as string[] | null | undefined },
+		{
+			level: "day" as const,
+			value: dayRow?.overrideActivePlaybookIds as string[] | null | undefined,
+		},
+		{
+			level: "week" as const,
+			value: weekRow?.overrideActivePlaybookIds as string[] | null | undefined,
+		},
+		{
+			level: "month" as const,
+			value: monthRow?.overrideActivePlaybookIds as string[] | null | undefined,
+		},
+		{
+			level: "quarter" as const,
+			value: quarterRow?.activePlaybookIds as string[] | null | undefined,
+		},
 	]
-	const hasPlaybooks = playbookLayers.some((l) => l.value !== null && l.value !== undefined)
-	const activePlaybookIds = hasPlaybooks ? resolveCascade<readonly string[]>(playbookLayers) : null
+	const hasPlaybooks = playbookLayers.some(
+		(l) => l.value !== null && l.value !== undefined
+	)
+	const activePlaybookIds = hasPlaybooks
+		? resolveCascade<readonly string[]>(playbookLayers)
+		: null
 
 	return {
 		accountId,
@@ -159,8 +198,14 @@ interface ResolveMonthResult {
 
 /** Nullable cascade: walks layers from most-specific to least, returns first defined value. */
 const cascadeNullable = <T extends string | number | null>(
-	layers: { level: "year" | "quarter" | "month" | "none"; value: T | null | undefined }[],
-): { value: number | null; provenance: "year" | "quarter" | "month" | "none" } => {
+	layers: {
+		level: "year" | "quarter" | "month" | "none"
+		value: T | null | undefined
+	}[]
+): {
+	value: number | null
+	provenance: "year" | "quarter" | "month" | "none"
+} => {
 	for (const layer of layers) {
 		if (layer.value !== null && layer.value !== undefined) {
 			return { value: Number(layer.value), provenance: layer.level }
@@ -169,25 +214,36 @@ const cascadeNullable = <T extends string | number | null>(
 	return { value: null, provenance: "none" }
 }
 
-const resolveMonth = async (input: ResolveMonthInput): Promise<ResolveMonthResult> => {
+const resolveMonth = async (
+	input: ResolveMonthInput
+): Promise<ResolveMonthResult> => {
 	const { accountId, year, month } = input
 	const quarter = Math.ceil(month / 3)
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+		where: and(
+			eq(yearlyPlans.accountId, accountId),
+			eq(yearlyPlans.year, year)
+		),
 	})
 
 	const quarterRow = yearRow
 		? await db.query.quarterlyPlan.findFirst({
-			where: and(eq(quarterlyPlan.yearlyPlanId, yearRow.id), eq(quarterlyPlan.quarter, quarter)),
-		})
+				where: and(
+					eq(quarterlyPlan.yearlyPlanId, yearRow.id),
+					eq(quarterlyPlan.quarter, quarter)
+				),
+			})
 		: null
 
 	// monthlyPlan is keyed by quarterlyPlanId; search by year+month if quarter exists.
 	const monthRow = quarterRow
 		? await db.query.monthlyPlan.findFirst({
-			where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id), eq(monthlyPlan.month, month)),
-		})
+				where: and(
+					eq(monthlyPlan.quarterlyPlanId, quarterRow.id),
+					eq(monthlyPlan.month, month)
+				),
+			})
 		: null
 
 	// Monthly win R: only year-level default (monthly_plan has no winR override column).
@@ -203,7 +259,13 @@ const resolveMonth = async (input: ResolveMonthInput): Promise<ResolveMonthResul
 
 	// Target weeks: year-level only.
 	const targetWeeks = cascadeNullable([
-		{ level: "year", value: yearRow?.targetWeeksToYearly != null ? String(yearRow.targetWeeksToYearly) : null },
+		{
+			level: "year",
+			value:
+				yearRow?.targetWeeksToYearly != null
+					? String(yearRow.targetWeeksToYearly)
+					: null,
+		},
 	])
 
 	return {
@@ -240,13 +302,22 @@ interface ResolveYearResult {
 	defaultMonthlyWinR_provenance: "year" | "none"
 }
 
-const resolveYear = async (input: ResolveYearInput): Promise<ResolveYearResult> => {
+const resolveYear = async (
+	input: ResolveYearInput
+): Promise<ResolveYearResult> => {
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, input.accountId), eq(yearlyPlans.year, input.year)),
+		where: and(
+			eq(yearlyPlans.accountId, input.accountId),
+			eq(yearlyPlans.year, input.year)
+		),
 	})
 
-	const tag = (v: string | null | undefined): { value: number | null; provenance: "year" | "none" } =>
-		v == null ? { value: null, provenance: "none" } : { value: Number(v), provenance: "year" }
+	const tag = (
+		v: string | null | undefined
+	): { value: number | null; provenance: "year" | "none" } =>
+		v === null
+			? { value: null, provenance: "none" }
+			: { value: Number(v), provenance: "year" }
 
 	const dl = tag(yearRow?.defaultDailyLossR)
 	const dw = tag(yearRow?.defaultDailyWinR)
@@ -305,21 +376,33 @@ const pickWithin = <T>(
 	d: T | null | undefined,
 	w: T | null | undefined,
 	m: T | null | undefined,
-	y: T | null | undefined,
+	y: T | null | undefined
 ): { value: T | null; level: BehaviorProvenance } => {
-	if (d !== null && d !== undefined) return { value: d, level: "day" }
-	if (w !== null && w !== undefined) return { value: w, level: "week" }
-	if (m !== null && m !== undefined) return { value: m, level: "month" }
-	if (y !== null && y !== undefined) return { value: y, level: "year" }
+	if (d !== null && d !== undefined) {
+		return { value: d, level: "day" }
+	}
+	if (w !== null && w !== undefined) {
+		return { value: w, level: "week" }
+	}
+	if (m !== null && m !== undefined) {
+		return { value: m, level: "month" }
+	}
+	if (y !== null && y !== undefined) {
+		return { value: y, level: "year" }
+	}
 	return { value: null, level: "fallback" }
 }
 
 const pickStrategy = <T>(
 	m: T | null | undefined,
-	y: T | null | undefined,
+	y: T | null | undefined
 ): { value: T | null; level: BehaviorProvenance } => {
-	if (m !== null && m !== undefined) return { value: m, level: "month" }
-	if (y !== null && y !== undefined) return { value: y, level: "year" }
+	if (m !== null && m !== undefined) {
+		return { value: m, level: "month" }
+	}
+	if (y !== null && y !== undefined) {
+		return { value: y, level: "year" }
+	}
 	return { value: null, level: "fallback" }
 }
 
@@ -338,73 +421,91 @@ const resolveBehavior = async ({
 	const dateStr = date.toISOString().slice(0, 10)
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+		where: and(
+			eq(yearlyPlans.accountId, accountId),
+			eq(yearlyPlans.year, year)
+		),
 	})
 
 	const quarterRow = yearRow
 		? await db.query.quarterlyPlan.findFirst({
-			where: and(eq(quarterlyPlan.yearlyPlanId, yearRow.id), eq(quarterlyPlan.quarter, quarter)),
-		})
+				where: and(
+					eq(quarterlyPlan.yearlyPlanId, yearRow.id),
+					eq(quarterlyPlan.quarter, quarter)
+				),
+			})
 		: null
 
 	const monthRow = quarterRow
 		? await db.query.monthlyPlan.findFirst({
-			where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id), eq(monthlyPlan.month, month)),
-		})
+				where: and(
+					eq(monthlyPlan.quarterlyPlanId, quarterRow.id),
+					eq(monthlyPlan.month, month)
+				),
+			})
 		: null
 
 	const weekRow = monthRow
 		? await db.query.weeklyPlan.findFirst({
-			where: and(
-				eq(weeklyPlan.monthlyPlanId, monthRow.id),
-				eq(weeklyPlan.isoWeek, isoWeek),
-				eq(weeklyPlan.isoYear, isoYear),
-			),
-		})
+				where: and(
+					eq(weeklyPlan.monthlyPlanId, monthRow.id),
+					eq(weeklyPlan.isoWeek, isoWeek),
+					eq(weeklyPlan.isoYear, isoYear)
+				),
+			})
 		: null
 
 	const dayRow = weekRow
 		? await db.query.dailyPlan.findFirst({
-			where: and(eq(dailyPlan.weeklyPlanId, weekRow.id), eq(dailyPlan.date, dateStr)),
-		})
+				where: and(
+					eq(dailyPlan.weeklyPlanId, weekRow.id),
+					eq(dailyPlan.date, dateStr)
+				),
+			})
 		: null
 
-	const profile = pickStrategy(monthRow?.overrideRiskProfileId, yearRow?.defaultRiskProfileId)
+	const profile = pickStrategy(
+		monthRow?.overrideRiskProfileId,
+		yearRow?.defaultRiskProfileId
+	)
 
 	const maxConsec = pickWithin(
 		dayRow?.overrideMaxConsecutiveLosses,
 		weekRow?.overrideMaxConsecutiveLosses,
 		monthRow?.overrideMaxConsecutiveLosses,
-		yearRow?.defaultMaxConsecutiveLosses,
+		yearRow?.defaultMaxConsecutiveLosses
 	)
 
 	const secondOp = pickWithin(
 		dayRow?.overrideAllowSecondOpAfterLoss,
 		weekRow?.overrideAllowSecondOpAfterLoss,
 		monthRow?.overrideAllowSecondOpAfterLoss,
-		yearRow?.defaultAllowSecondOpAfterLoss,
+		yearRow?.defaultAllowSecondOpAfterLoss
 	)
 
 	const reduceLoss = pickStrategy(
 		monthRow?.overrideReduceRiskAfterLoss,
-		yearRow?.defaultReduceRiskAfterLoss,
+		yearRow?.defaultReduceRiskAfterLoss
 	)
 
 	const reductionFactor = pickStrategy(
 		numOrNull(monthRow?.overrideRiskReductionFactor),
-		numOrNull(yearRow?.defaultRiskReductionFactor),
+		numOrNull(yearRow?.defaultRiskReductionFactor)
 	)
 
 	const increaseWin = pickStrategy(
 		monthRow?.overrideIncreaseRiskAfterWin,
-		yearRow?.defaultIncreaseRiskAfterWin,
+		yearRow?.defaultIncreaseRiskAfterWin
 	)
 
-	const capWin = pickStrategy(monthRow?.overrideCapRiskAfterWin, yearRow?.defaultCapRiskAfterWin)
+	const capWin = pickStrategy(
+		monthRow?.overrideCapRiskAfterWin,
+		yearRow?.defaultCapRiskAfterWin
+	)
 
 	const reinvest = pickStrategy(
 		numOrNull(monthRow?.overrideProfitReinvestmentPercent),
-		numOrNull(yearRow?.defaultProfitReinvestmentPercent),
+		numOrNull(yearRow?.defaultProfitReinvestmentPercent)
 	)
 
 	return {
@@ -453,18 +554,21 @@ const resolveBalance = async ({
 	const dateStr = date.toISOString().slice(0, 10)
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+		where: and(
+			eq(yearlyPlans.accountId, accountId),
+			eq(yearlyPlans.year, year)
+		),
 	})
 	if (!yearRow) {
 		throw new Error(
-			`resolveBalance: no yearly plan for account ${accountId} year ${year}`,
+			`resolveBalance: no yearly plan for account ${accountId} year ${year}`
 		)
 	}
 
 	const events = await db.query.accountCapitalEvents.findMany({
 		where: and(
 			eq(accountCapitalEvents.accountId, accountId),
-			lte(accountCapitalEvents.eventDate, dateStr),
+			lte(accountCapitalEvents.eventDate, dateStr)
 		),
 	})
 
@@ -472,17 +576,19 @@ const resolveBalance = async ({
 		where: eq(accountMonthlyAggregate.accountId, accountId),
 	})
 	const aggUpTo = aggregates.filter(
-		(a) => a.year < year || (a.year === year && a.month <= month),
+		(a) => a.year < year || (a.year === year && a.month <= month)
 	)
 
 	const capitalEventsDelta = events.reduce(
-		(sum, e) => sum + (e.eventType === "deposit" ? e.amountCents : -e.amountCents),
-		0,
+		(sum, e) =>
+			sum + (e.eventType === "deposit" ? e.amountCents : -e.amountCents),
+		0
 	)
 	const realizedPnlDelta = aggUpTo.reduce((sum, a) => sum + a.netCents, 0)
 
 	return {
-		balanceCents: yearRow.initialCapitalCents + capitalEventsDelta + realizedPnlDelta,
+		balanceCents:
+			yearRow.initialCapitalCents + capitalEventsDelta + realizedPnlDelta,
 		initialCapitalCents: yearRow.initialCapitalCents,
 		capitalEventsDelta,
 		realizedPnlDelta,
@@ -502,4 +608,10 @@ export type {
 	BalanceResolved,
 	ResolveBalanceInput,
 }
-export { resolveDay, resolveMonth, resolveYear, resolveBehavior, resolveBalance }
+export {
+	resolveDay,
+	resolveMonth,
+	resolveYear,
+	resolveBehavior,
+	resolveBalance,
+}

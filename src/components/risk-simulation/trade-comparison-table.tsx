@@ -20,14 +20,18 @@ interface TradeComparisonTableProps {
 const PAGE_SIZE = 25
 
 const formatCurrency = (cents: number | null): string => {
-	if (cents === null) return "—"
+	if (cents === null) {
+		return "—"
+	}
 	const value = fromCents(cents)
 	const sign = value >= 0 ? "+" : ""
 	return `${sign}R$${Math.abs(value).toFixed(2)}`
 }
 
 const formatR = (r: number | null): string => {
-	if (r === null) return "—"
+	if (r === null) {
+		return "—"
+	}
 	return `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`
 }
 
@@ -69,7 +73,7 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 	return (
 		<div className="border-bg-300 overflow-hidden rounded-lg border">
 			{/* Status color legend */}
-			<div className="border-bg-300 gap-x-s-300 gap-y-s-100 flex flex-wrap border-b px-s-300 py-s-200">
+			<div className="border-bg-300 gap-x-s-300 gap-y-s-100 px-s-300 py-s-200 flex flex-wrap border-b">
 				{activeStatuses.map((status) => (
 					<div key={status} className="gap-s-100 flex items-center">
 						<span
@@ -94,25 +98,25 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 							<th className="text-tiny text-txt-300 px-s-300 py-s-200 text-left font-medium whitespace-nowrap">
 								{t("trade")}
 							</th>
-							<th className="text-tiny text-txt-300 hidden px-s-300 py-s-200 text-left font-medium whitespace-nowrap xs:table-cell">
+							<th className="text-tiny text-txt-300 px-s-300 py-s-200 xs:table-cell hidden text-left font-medium whitespace-nowrap">
 								{t("asset")}
 							</th>
 							<th className="text-tiny text-txt-300 px-s-300 py-s-200 text-left font-medium whitespace-nowrap">
 								{t("status")}
 							</th>
-							<th className="text-tiny text-txt-300 hidden px-s-300 py-s-200 text-right font-medium whitespace-nowrap md:table-cell">
+							<th className="text-tiny text-txt-300 px-s-300 py-s-200 hidden text-right font-medium whitespace-nowrap md:table-cell">
 								{t("risk")}
 							</th>
-							<th className="text-tiny text-txt-300 hidden px-s-300 py-s-200 text-right font-medium whitespace-nowrap md:table-cell">
+							<th className="text-tiny text-txt-300 px-s-300 py-s-200 hidden text-right font-medium whitespace-nowrap md:table-cell">
 								{t("originalPnl")}
 							</th>
 							<th className="text-tiny text-txt-300 px-s-300 py-s-200 text-right font-medium whitespace-nowrap">
 								{t("simulatedPnl")}
 							</th>
-							<th className="text-tiny text-txt-300 hidden px-s-300 py-s-200 text-right font-medium whitespace-nowrap lg:table-cell">
+							<th className="text-tiny text-txt-300 px-s-300 py-s-200 hidden text-right font-medium whitespace-nowrap lg:table-cell">
 								{t("simR")}
 							</th>
-							<th className="text-tiny text-txt-300 hidden px-s-300 py-s-200 text-left font-medium whitespace-nowrap lg:table-cell">
+							<th className="text-tiny text-txt-300 px-s-300 py-s-200 hidden text-left font-medium whitespace-nowrap lg:table-cell">
 								{t("riskReason")}
 							</th>
 						</tr>
@@ -136,11 +140,11 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 									<td className="text-small text-txt-100 px-s-300 py-s-200 font-medium">
 										T{trade.dayTradeNumber}
 									</td>
-									<td className="text-tiny text-txt-200 hidden px-s-300 py-s-200 xs:table-cell">
+									<td className="text-tiny text-txt-200 px-s-300 py-s-200 xs:table-cell hidden">
 										{trade.asset}
 									</td>
 									<td className="px-s-300 py-s-200">
-										<span className="flex items-center gap-s-100">
+										<span className="gap-s-100 flex items-center">
 											<span
 												role="img"
 												className={cn(
@@ -154,10 +158,10 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 											</span>
 										</span>
 									</td>
-									<td className="text-tiny text-txt-200 hidden px-s-300 py-s-200 text-right whitespace-nowrap md:table-cell">
+									<td className="text-tiny text-txt-200 px-s-300 py-s-200 hidden text-right whitespace-nowrap md:table-cell">
 										{formatCurrency(trade.riskAmountCents)}
 									</td>
-									<td className="hidden px-s-300 py-s-200 text-right md:table-cell">
+									<td className="px-s-300 py-s-200 hidden text-right md:table-cell">
 										<span
 											className={cn(
 												"text-small font-medium whitespace-nowrap",
@@ -185,10 +189,10 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 											{formatCurrency(trade.simulatedPnlCents)}
 										</span>
 									</td>
-									<td className="text-tiny text-txt-200 hidden px-s-300 py-s-200 text-right whitespace-nowrap lg:table-cell">
+									<td className="text-tiny text-txt-200 px-s-300 py-s-200 hidden text-right whitespace-nowrap lg:table-cell">
 										{formatR(trade.simulatedRMultiple)}
 									</td>
-									<td className="text-tiny text-txt-300 hidden max-w-[200px] truncate px-s-300 py-s-200 lg:table-cell">
+									<td className="text-tiny text-txt-300 px-s-300 py-s-200 hidden max-w-[200px] truncate lg:table-cell">
 										{translateRiskReason(tReasons, trade.riskReason)}
 									</td>
 								</tr>
@@ -200,11 +204,11 @@ const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {
 
 			{/* Pagination */}
 			{totalPages > 1 && (
-				<div className="bg-bg-200 border-bg-300 flex items-center justify-between border-t px-m-400 py-s-200">
+				<div className="bg-bg-200 border-bg-300 px-m-400 py-s-200 flex items-center justify-between border-t">
 					<span className="text-tiny text-txt-300">
 						{t("page", { current: page + 1, total: totalPages })}
 					</span>
-					<div className="flex gap-s-100">
+					<div className="gap-s-100 flex">
 						<Button
 							id="comparison-prev-page"
 							type="button"

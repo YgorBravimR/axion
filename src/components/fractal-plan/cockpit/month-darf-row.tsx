@@ -60,10 +60,12 @@ const MonthDarfRow = ({
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [isPrompting, setPrompting] = useState(false)
-	const [paidInputCents, setPaidInputCents] = useState<number | null>(darfDueCents)
+	const [paidInputCents, setPaidInputCents] = useState<number | null>(
+		darfDueCents
+	)
 
 	const handleConfirm = () => {
-		if (paidInputCents == null || paidInputCents < 0) {
+		if (paidInputCents === null || paidInputCents < 0) {
 			showToast("error", "Informe um valor válido em R$.")
 			return
 		}
@@ -85,33 +87,41 @@ const MonthDarfRow = ({
 	}
 
 	const dueDateLabel = darfDueDate
-		? new Date(darfDueDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+		? new Date(darfDueDate).toLocaleDateString("pt-BR", {
+				day: "2-digit",
+				month: "2-digit",
+			})
 		: null
 	const paidAtLabel = darfPaidAt
-		? new Date(darfPaidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+		? new Date(darfPaidAt).toLocaleDateString("pt-BR", {
+				day: "2-digit",
+				month: "2-digit",
+			})
 		: null
 
 	return (
 		<section
 			id="month-darf-row"
-			className="rounded-lg border border-bg-300 bg-bg-200 p-m-400"
+			className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
 			aria-label="DARF do mês"
 		>
-			<div className="flex flex-wrap items-center gap-x-m-400 gap-y-s-200">
-				<div className="flex items-center gap-s-200">
-					<Receipt className="size-4 text-acc-100" />
-					<span className="text-small font-medium text-txt-100">DARF</span>
+			<div className="gap-x-m-400 gap-y-s-200 flex flex-wrap items-center">
+				<div className="gap-s-200 flex items-center">
+					<Receipt className="text-acc-100 size-4" />
+					<span className="text-small text-txt-100 font-medium">DARF</span>
 					<span
 						className={cn("size-2 rounded-full", STATUS_DOT[uiStatus])}
 						aria-hidden="true"
 					/>
-					<span className="text-small text-txt-200">{STATUS_LABEL[uiStatus]}</span>
+					<span className="text-small text-txt-200">
+						{STATUS_LABEL[uiStatus]}
+					</span>
 				</div>
 
 				{uiStatus === "in_progress" && (
-					<div className="flex items-baseline gap-s-200">
+					<div className="gap-s-200 flex items-baseline">
 						<span className="text-tiny text-txt-300">Prévia</span>
-						<span className="font-mono text-small tabular-nums text-txt-200">
+						<span className="text-small text-txt-200 font-mono tabular-nums">
 							{formatBRL(darfDueCents)}
 						</span>
 						<span className="text-tiny text-txt-300">mês ainda em curso</span>
@@ -119,26 +129,30 @@ const MonthDarfRow = ({
 				)}
 
 				{uiStatus !== "in_progress" && uiStatus !== "exempt" && (
-					<div className="flex items-baseline gap-s-200">
+					<div className="gap-s-200 flex items-baseline">
 						<span className="text-tiny text-txt-300">
 							{uiStatus === "paid" ? "Calculado" : "Devido"}
 						</span>
-						<span className="font-mono text-small tabular-nums text-txt-100">
+						<span className="text-small text-txt-100 font-mono tabular-nums">
 							{formatBRL(darfDueCents)}
 						</span>
 						{dueDateLabel && uiStatus !== "paid" && (
-							<span className="text-tiny text-txt-300">venc. {dueDateLabel}</span>
+							<span className="text-tiny text-txt-300">
+								venc. {dueDateLabel}
+							</span>
 						)}
 					</div>
 				)}
 
-				{uiStatus === "paid" && darfPaidAmountCents != null && (
-					<div className="flex items-baseline gap-s-200">
+				{uiStatus === "paid" && darfPaidAmountCents !== null && (
+					<div className="gap-s-200 flex items-baseline">
 						<span className="text-tiny text-txt-300">Pago</span>
-						<span className="font-mono text-small tabular-nums text-trade-buy">
+						<span className="text-small text-trade-buy font-mono tabular-nums">
 							{formatBRL(darfPaidAmountCents)}
 						</span>
-						{paidAtLabel && <span className="text-tiny text-txt-300">em {paidAtLabel}</span>}
+						{paidAtLabel && (
+							<span className="text-tiny text-txt-300">em {paidAtLabel}</span>
+						)}
 					</div>
 				)}
 
@@ -156,8 +170,8 @@ const MonthDarfRow = ({
 			</div>
 
 			{isPrompting && (
-				<div className="mt-m-400 grid gap-s-200 border-t border-bg-300 pt-m-400 sm:grid-cols-[1fr_auto_auto]">
-					<div className="flex flex-col gap-s-100">
+				<div className="mt-m-400 gap-s-200 border-bg-300 pt-m-400 grid border-t sm:grid-cols-[1fr_auto_auto]">
+					<div className="gap-s-100 flex flex-col">
 						<Label
 							id={`monthly-darf-paid-label-${year}-${month}`}
 							htmlFor={`monthly-darf-paid-input-${year}-${month}`}
@@ -172,8 +186,8 @@ const MonthDarfRow = ({
 							placeholder={formatBRL(darfDueCents)}
 						/>
 						<p className="text-micro text-txt-300">
-							Calculado: {formatBRL(darfDueCents)}. Edite caso a guia paga tenha valor diferente — ambos
-							serão registrados.
+							Calculado: {formatBRL(darfDueCents)}. Edite caso a guia paga tenha
+							valor diferente — ambos serão registrados.
 						</p>
 					</div>
 					<Button

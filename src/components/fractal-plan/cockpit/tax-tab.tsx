@@ -8,7 +8,11 @@ import { useToast } from "@/components/ui/toast"
 import { MonthlyDarfCard } from "@/components/tax/monthly-darf-card"
 import { markDarfPaid, recomputeLedger } from "@/app/actions/tax-engine"
 import { isMonthFinalized, isMonthCurrent } from "@/lib/tax/month-status"
-import { DarfStrip, type DarfStripChip, type DarfStatus as UiDarfStatus } from "./darf-strip"
+import {
+	DarfStrip,
+	type DarfStripChip,
+	type DarfStatus as UiDarfStatus,
+} from "./darf-strip"
 import type { MonthlyDarfRow } from "@/lib/tax/types"
 
 interface TaxTabProps {
@@ -37,8 +41,12 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 	const deriveUiStatus = (row: MonthlyDarfRow): UiDarfStatus => {
 		const m = row.month.getUTCMonth() + 1
 		const y = row.month.getUTCFullYear()
-		if (isMonthFinalized(y, m)) return row.darfStatus
-		if (isMonthCurrent(y, m)) return "in_progress"
+		if (isMonthFinalized(y, m)) {
+			return row.darfStatus
+		}
+		if (isMonthCurrent(y, m)) {
+			return "in_progress"
+		}
 		return "future"
 	}
 
@@ -48,24 +56,29 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 		dueCents: r.darfDueCents,
 	}))
 
-	const handleMarkPaid = (monthIndex: number) => async (paidAmountCents: number) => {
-		const result = await markDarfPaid({
-			accountId,
-			year,
-			month: monthIndex + 1,
-			paidAmountCents,
-		})
-		if (result.status === "success") {
-			showToast("success", "DARF marcado como pago")
-			router.refresh()
-		} else {
-			showToast("error", result.message)
+	const handleMarkPaid =
+		(monthIndex: number) => async (paidAmountCents: number) => {
+			const result = await markDarfPaid({
+				accountId,
+				year,
+				month: monthIndex + 1,
+				paidAmountCents,
+			})
+			if (result.status === "success") {
+				showToast("success", "DARF marcado como pago")
+				router.refresh()
+			} else {
+				showToast("error", result.message)
+			}
 		}
-	}
 
 	const handleRecomputeAll = () => {
 		startRecompute(async () => {
-			const result = await recomputeLedger({ accountId, fromYear: year, fromMonth: 1 })
+			const result = await recomputeLedger({
+				accountId,
+				fromYear: year,
+				fromMonth: 1,
+			})
 			if (result.status === "success") {
 				const n = result.data?.recomputedMonths ?? 0
 				showToast("success", `Ledger recalculado · ${n} mês(es)`)
@@ -78,10 +91,12 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 
 	return (
 		<div className="space-y-m-400">
-			<header className="flex items-center justify-between gap-s-300">
+			<header className="gap-s-300 flex items-center justify-between">
 				<div>
 					<h2 className="text-h3 text-txt-100">Impostos {year}</h2>
-					<p className="text-small text-txt-300">DARF mensal — base 20% sobre lucro líquido</p>
+					<p className="text-small text-txt-300">
+						DARF mensal — base 20% sobre lucro líquido
+					</p>
 				</div>
 				<Button
 					id={`tax-recompute-${year}`}
@@ -90,14 +105,16 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 					onClick={handleRecomputeAll}
 					disabled={isRecomputing}
 				>
-					<RefreshCw className={isRecomputing ? "size-3.5 animate-spin" : "size-3.5"} />
+					<RefreshCw
+						className={isRecomputing ? "size-3.5 animate-spin" : "size-3.5"}
+					/>
 					Recalcular ano
 				</Button>
 			</header>
 
 			<DarfStrip chips={chips} onChipClick={handleChipClick} />
 
-			<div className="grid grid-cols-1 gap-m-400 lg:grid-cols-2">
+			<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
 				{rows.map((row) => {
 					const monthIndex = row.month.getUTCMonth()
 					const rowYear = row.month.getUTCFullYear()
@@ -114,16 +131,23 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 							<button
 								type="button"
 								onClick={() => setActiveMonth(isOpen ? null : monthIndex)}
-								className="flex w-full items-center justify-between rounded-md border border-bg-300 bg-bg-200 px-m-400 py-s-300 text-left transition-colors hover:border-acc-100/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100"
+								className="border-bg-300 bg-bg-200 px-m-400 py-s-300 hover:border-acc-100/40 focus-visible:ring-acc-100 flex w-full items-center justify-between rounded-md border text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
 								aria-expanded={isOpen}
 								aria-controls={`darf-panel-${monthIndex}`}
 								id={`darf-trigger-${monthIndex}`}
 							>
-								<span className="font-mono text-small uppercase text-txt-200">
-									{row.month.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+								<span className="text-small text-txt-200 font-mono uppercase">
+									{row.month.toLocaleDateString("pt-BR", {
+										month: "long",
+										year: "numeric",
+									})}
 								</span>
-								<span className="font-mono text-small tabular-nums text-txt-200">
-									{isFinal ? "DARF" : "Prévia"}: {(row.darfDueCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+								<span className="text-small text-txt-200 font-mono tabular-nums">
+									{isFinal ? "DARF" : "Prévia"}:{" "}
+									{(row.darfDueCents / 100).toLocaleString("pt-BR", {
+										style: "currency",
+										currency: "BRL",
+									})}
 								</span>
 							</button>
 							{isOpen && (
@@ -145,8 +169,9 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 					)
 				})}
 				{rows.length === 0 && (
-					<p className="rounded-md border border-dashed border-bg-300 bg-bg-200 px-m-400 py-m-500 text-center text-txt-300">
-						Nenhuma linha de DARF para {year}. Clique em "Recalcular ano" após registrar trades.
+					<p className="border-bg-300 bg-bg-200 px-m-400 py-m-500 text-txt-300 rounded-md border border-dashed text-center">
+						Nenhuma linha de DARF para {year}. Clique em "Recalcular ano" após
+						registrar trades.
 					</p>
 				)}
 			</div>

@@ -1,6 +1,11 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { strategies, trades, strategyConditions, strategyScenarios } from "@/db/schema"
+import {
+	strategies,
+	trades,
+	strategyConditions,
+	strategyScenarios,
+} from "@/db/schema"
 import { eq, and, desc, inArray, sql } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
@@ -16,7 +21,9 @@ import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -24,10 +31,7 @@ const GET = async (request: NextRequest) => {
 			.select()
 			.from(strategies)
 			.where(
-				and(
-					eq(strategies.userId, auth.userId),
-					eq(strategies.isActive, true)
-				)
+				and(eq(strategies.userId, auth.userId), eq(strategies.isActive, true))
 			)
 			.orderBy(desc(strategies.createdAt))
 
@@ -84,7 +88,9 @@ const GET = async (request: NextRequest) => {
 
 					if (trade.followedPlan !== null) {
 						trackedPlanCount++
-						if (trade.followedPlan) followedPlanCount++
+						if (trade.followedPlan) {
+							followedPlanCount++
+						}
 					}
 				}
 
@@ -113,9 +119,7 @@ const GET = async (request: NextRequest) => {
 					entryCriteria: strategy.entryCriteria,
 					exitCriteria: strategy.exitCriteria,
 					riskRules: strategy.riskRules,
-					finalR: strategy.finalR
-						? Number(strategy.finalR)
-						: null,
+					finalR: strategy.finalR ? Number(strategy.finalR) : null,
 					maxRiskPercent: strategy.maxRiskPercent
 						? Number(strategy.maxRiskPercent)
 						: null,

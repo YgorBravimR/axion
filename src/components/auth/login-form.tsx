@@ -9,7 +9,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import { Loader2, Eye, EyeOff, Building2, User, ArrowLeft, Mail } from "lucide-react"
+import {
+	Loader2,
+	Eye,
+	EyeOff,
+	Building2,
+	User,
+	ArrowLeft,
+	Mail,
+} from "lucide-react"
 import { loginUser } from "@/app/actions/auth"
 import { requestEmailVerification } from "@/app/actions/email-verification"
 import { cn } from "@/lib/utils"
@@ -37,7 +45,9 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 	// Multi-step form state
 	const [step, setStep] = useState<FormStep>("credentials")
 	const [accounts, setAccounts] = useState<AccountPickerItem[]>([])
-	const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
+	const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+		null
+	)
 
 	const [emailNotVerified, setEmailNotVerified] = useState(false)
 	const [resendingVerification, setResendingVerification] = useState(false)
@@ -85,7 +95,9 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				if (result.needsAccountSelection && result.accounts) {
 					setAccounts(result.accounts)
 					const defaultAccount = result.accounts.find((a) => a.isDefault)
-					setSelectedAccountId(defaultAccount?.id || result.accounts[0]?.id || null)
+					setSelectedAccountId(
+						defaultAccount?.id || result.accounts[0]?.id || null
+					)
 					setStep("account-selection")
 					return
 				}
@@ -100,7 +112,9 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 	}
 
 	const handleAccountSelect = () => {
-		if (!selectedAccountId) return
+		if (!selectedAccountId) {
+			return
+		}
 
 		startTransition(async () => {
 			try {
@@ -240,7 +254,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						onClick={handleBackToCredentials}
 						disabled={isPending}
 						aria-label={tSelect("backToLogin")}
-						className="text-small text-txt-300 hover:text-txt-200 flex w-full items-center justify-center gap-s-200"
+						className="text-small text-txt-300 hover:text-txt-200 gap-s-200 flex w-full items-center justify-center"
 					>
 						<ArrowLeft className="h-4 w-4" />
 						{tSelect("backToLogin")}
@@ -356,7 +370,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (

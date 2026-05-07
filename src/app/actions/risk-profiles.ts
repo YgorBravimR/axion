@@ -4,8 +4,10 @@ import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { riskManagementProfiles } from "@/db/schema"
 import type { ActionResponse } from "@/types"
-import type { RiskManagementProfile } from "@/types/risk-profile"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type {
+	RiskManagementProfile,
+	DecisionTreeConfig,
+} from "@/types/risk-profile"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { riskProfileSchema } from "@/lib/validations/risk-profile"
@@ -160,7 +162,10 @@ const createRiskProfile = async (
 				status: "error",
 				message: t("actions.premiumRequired"),
 				errors: [
-					{ code: "FORBIDDEN", detail: "Premium role required to create risk profiles" },
+					{
+						code: "FORBIDDEN",
+						detail: "Premium role required to create risk profiles",
+					},
 				],
 			}
 		}
@@ -233,7 +238,10 @@ const updateRiskProfile = async (
 				status: "error",
 				message: t("actions.premiumRequired"),
 				errors: [
-					{ code: "FORBIDDEN", detail: "Premium role required to update risk profiles" },
+					{
+						code: "FORBIDDEN",
+						detail: "Premium role required to update risk profiles",
+					},
 				],
 			}
 		}

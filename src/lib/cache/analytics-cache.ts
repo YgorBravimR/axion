@@ -29,7 +29,9 @@ const getAnalyticsCacheEntry = (
 	filterKey: string
 ): AnalyticsCacheEntry | null => {
 	const entry = cache.get(filterKey)
-	if (!entry) return null
+	if (!entry) {
+		return null
+	}
 
 	if (Date.now() - entry.timestamp > MAX_AGE_MS) {
 		cache.delete(filterKey)

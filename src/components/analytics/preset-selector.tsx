@@ -44,7 +44,9 @@ const PresetSelector = ({
 
 	// Load presets when popover opens
 	useEffect(() => {
-		if (!isOpen) return
+		if (!isOpen) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await listFilterPresets()
@@ -56,7 +58,9 @@ const PresetSelector = ({
 
 	const handleSave = async () => {
 		const name = newPresetName.trim()
-		if (!name) return
+		if (!name) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await createFilterPreset({
@@ -155,20 +159,20 @@ const PresetSelector = ({
 					<Bookmark className="h-3.5 w-3.5" />
 					<span className="hidden sm:inline">{t("label")}</span>
 					{activePresetCount > 0 && (
-						<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-s-100 font-bold">
+						<span className="bg-acc-100 text-micro text-bg-100 px-s-100 flex h-4 min-w-4 items-center justify-center rounded-full font-bold">
 							{activePresetCount}
 						</span>
 					)}
 				</button>
 			</PopoverTrigger>
 			<PopoverContent
-				className="w-72 border-bg-300 bg-bg-200 p-0"
+				className="border-bg-300 bg-bg-200 w-72 p-0"
 				align="end"
 				sideOffset={8}
 			>
 				{/* Header */}
-				<div className="flex items-center justify-between border-b border-bg-300 px-s-300 py-s-200">
-					<span className="text-small font-medium text-txt-100">
+				<div className="border-bg-300 px-s-300 py-s-200 flex items-center justify-between border-b">
+					<span className="text-small text-txt-100 font-medium">
 						{t("label")}
 					</span>
 					{!isCreating && (
@@ -176,7 +180,7 @@ const PresetSelector = ({
 							id="preset-save-new-btn"
 							variant="ghost"
 							size="sm"
-							className="h-7 px-s-200 text-tiny"
+							className="px-s-200 text-tiny h-7"
 							onClick={() => setIsCreating(true)}
 						>
 							<Plus className="mr-s-100 h-3 w-3" />
@@ -187,15 +191,17 @@ const PresetSelector = ({
 
 				{/* Create new preset form */}
 				{isCreating && (
-					<div className="flex gap-s-200 border-b border-bg-300 px-s-300 py-s-200">
+					<div className="gap-s-200 border-bg-300 px-s-300 py-s-200 flex border-b">
 						<Input
 							id="preset-name-input"
 							value={newPresetName}
 							onChange={(e) => setNewPresetName(e.target.value)}
 							placeholder={t("namePlaceholder")}
-							className="h-7 text-tiny"
+							className="text-tiny h-7"
 							onKeyDown={(e) => {
-								if (e.key === "Enter") handleSave()
+								if (e.key === "Enter") {
+									void handleSave()
+								}
 								if (e.key === "Escape") {
 									setIsCreating(false)
 									setNewPresetName("")
@@ -207,7 +213,7 @@ const PresetSelector = ({
 							id="preset-confirm-save-btn"
 							variant="ghost"
 							size="sm"
-							className="h-7 shrink-0 px-s-200"
+							className="px-s-200 h-7 shrink-0"
 							onClick={handleSave}
 							disabled={!newPresetName.trim() || isLoading}
 						>
@@ -223,41 +229,42 @@ const PresetSelector = ({
 				{/* Preset list */}
 				<div className="max-h-60 overflow-y-auto">
 					{isLoading && presets.length === 0 ? (
-						<div className="flex items-center justify-center py-m-400">
-							<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-txt-300" />
+						<div className="py-m-400 flex items-center justify-center">
+							<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
 						</div>
 					) : presets.length === 0 ? (
-						<p className="py-m-400 text-center text-tiny text-txt-300">
+						<p className="py-m-400 text-tiny text-txt-300 text-center">
 							{t("noPresets")}
 						</p>
 					) : (
 						presets.map((preset) => (
 							<div
 								key={preset.id}
-								className="group flex items-center gap-s-200 border-b border-bg-300 px-s-300 py-s-200 last:border-b-0 hover:bg-bg-100"
+								className="group gap-s-200 border-bg-300 px-s-300 py-s-200 hover:bg-bg-100 flex items-center border-b last:border-b-0"
 							>
 								{/* Apply preset */}
 								<button
 									type="button"
 									tabIndex={0}
-									className="min-w-0 flex-1 text-left rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+									className="focus-visible:ring-acc-100 min-w-0 flex-1 rounded-sm text-left focus-visible:ring-1 focus-visible:outline-none"
 									onClick={() => handleApply(preset)}
-									aria-label={preset.name} title={preset.name}
+									aria-label={preset.name}
+									title={preset.name}
 								>
-									<span className="text-small text-txt-100 truncate block">
+									<span className="text-small text-txt-100 block truncate">
 										{preset.name}
 									</span>
 								</button>
 
 								{/* Actions (visible on hover) */}
-								<div className="flex shrink-0 items-center gap-s-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+								<div className="gap-s-100 flex shrink-0 items-center sm:opacity-0 sm:transition-opacity sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
 									{/* Set as default */}
 									<button
 										type="button"
 										tabIndex={0}
 										onClick={() => handleSetDefault(preset)}
 										className={cn(
-											"rounded-sm p-s-100 transition-colors",
+											"p-s-100 rounded-sm transition-colors",
 											preset.isDefault
 												? "text-acc-100"
 												: "text-txt-300 hover:text-acc-100"
@@ -275,7 +282,7 @@ const PresetSelector = ({
 										type="button"
 										tabIndex={0}
 										onClick={() => handleUpdateFilters(preset)}
-										className="rounded-sm p-s-200 text-txt-300 transition-colors hover:text-txt-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+										className="p-s-200 text-txt-300 hover:text-txt-100 focus-visible:ring-acc-100 rounded-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
 										aria-label={t("overwrite")}
 									>
 										<Check className="h-3 w-3" />
@@ -287,7 +294,7 @@ const PresetSelector = ({
 											type="button"
 											tabIndex={0}
 											onClick={() => handleDelete(preset.id)}
-											className="rounded-sm p-s-200 text-trade-sell transition-colors hover:text-trade-sell/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+											className="p-s-200 text-trade-sell hover:text-trade-sell/80 focus-visible:ring-acc-100 rounded-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
 											aria-label={t("deleteConfirm")}
 										>
 											<Trash2 className="h-3 w-3" />
@@ -297,7 +304,7 @@ const PresetSelector = ({
 											type="button"
 											tabIndex={0}
 											onClick={() => setConfirmDeleteId(preset.id)}
-											className="rounded-sm p-s-200 text-txt-300 transition-colors hover:text-trade-sell focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+											className="p-s-200 text-txt-300 hover:text-trade-sell focus-visible:ring-acc-100 rounded-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
 											aria-label={t("delete")}
 										>
 											<Trash2 className="h-3 w-3" />

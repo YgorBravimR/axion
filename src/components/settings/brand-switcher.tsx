@@ -38,9 +38,9 @@ interface BrandColorSwatchProps {
  * @param props.label - The label text to display
  */
 const BrandColorSwatch = ({ brand, label }: BrandColorSwatchProps) => (
-	<div className="flex items-center gap-s-200">
+	<div className="gap-s-200 flex items-center">
 		<span
-			className="h-3 w-3 rounded-full border border-bg-300"
+			className="border-bg-300 h-3 w-3 rounded-full border"
 			style={{ backgroundColor: brandColors[brand].primary }}
 			aria-hidden="true"
 		/>
@@ -67,13 +67,13 @@ const BrandSwitcher = () => {
 		// Optimistic UI update
 		setBrand(newBrand)
 		// Persist to database
-		updateAccountBrand(newBrand)
+		void updateAccountBrand(newBrand)
 	}
 
 	// Avoid hydration mismatch
 	if (!mounted) {
 		return (
-			<div className="h-9 w-36 animate-pulse motion-reduce:animate-none rounded-md bg-bg-300" />
+			<div className="bg-bg-300 h-9 w-36 animate-pulse rounded-md motion-reduce:animate-none" />
 		)
 	}
 

@@ -37,7 +37,9 @@ interface CreateExecutionBody {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -47,8 +49,8 @@ const POST = async (request: NextRequest) => {
 			!body.tradeId ||
 			!body.executionType ||
 			!body.executionDate ||
-			body.price == null ||
-			body.quantity == null
+			body.price === null ||
+			body.quantity === null
 		) {
 			return archError("Missing required fields", [
 				{

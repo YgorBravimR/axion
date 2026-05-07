@@ -25,7 +25,9 @@ type CreateTagInput = z.infer<typeof createTagSchema>
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -47,14 +49,16 @@ const POST = async (request: NextRequest) => {
 		return archSuccess("Tag created successfully", newTag)
 	} catch (error) {
 		if (error instanceof Error && error.name === "ZodError") {
-			return archError(
-				"Validation failed",
-				[{ code: "VALIDATION_ERROR", detail: error.message }]
-			)
+			return archError("Validation failed", [
+				{ code: "VALIDATION_ERROR", detail: error.message },
+			])
 		}
 
 		const errorMessage = String(error)
-		const errorCause = error instanceof Error ? String(error.cause ?? "") : ""
+		const errorCause =
+			error instanceof Error && error.cause instanceof Error
+				? error.cause.message
+				: ""
 
 		if (
 			errorMessage.includes("23505") ||
@@ -63,7 +67,12 @@ const POST = async (request: NextRequest) => {
 		) {
 			return archError(
 				"Tag name already exists",
-				[{ code: "DUPLICATE_NAME", detail: "A tag with this name already exists for your account" }],
+				[
+					{
+						code: "DUPLICATE_NAME",
+						detail: "A tag with this name already exists for your account",
+					},
+				],
 				409
 			)
 		}

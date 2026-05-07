@@ -57,7 +57,15 @@ const getDateRangeForPeriod = (
 
 	if (period === "month") {
 		const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1)
-		const dateTo = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+		const dateTo = new Date(
+			now.getFullYear(),
+			now.getMonth() + 1,
+			0,
+			23,
+			59,
+			59,
+			999
+		)
 		return { dateFrom, dateTo }
 	}
 
@@ -76,14 +84,21 @@ interface PeriodToggleProps {
 const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	const t = useTranslations("dashboard.period")
 
-	const options = useMemo<{ value: DashboardPeriod; label: string }[]>(() => [
-		{ value: "month", label: t("month") },
-		{ value: "year", label: t("year") },
-		{ value: "allTime", label: t("allTime") },
-	], [t])
+	const options = useMemo<{ value: DashboardPeriod; label: string }[]>(
+		() => [
+			{ value: "month", label: t("month") },
+			{ value: "year", label: t("year") },
+			{ value: "allTime", label: t("allTime") },
+		],
+		[t]
+	)
 
 	return (
-		<div className="flex rounded-lg border border-bg-300 bg-bg-100 p-s-100" role="group" aria-label={t("filterAriaLabel")}>
+		<div
+			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
+			role="group"
+			aria-label={t("filterAriaLabel")}
+		>
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -91,7 +106,7 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 					onClick={() => onChange(option.value)}
 					disabled={disabled}
 					className={cn(
-						"rounded-md min-h-11 px-s-300 py-s-200 text-tiny font-medium transition-colors sm:text-small",
+						"px-s-300 py-s-200 text-tiny sm:text-small min-h-11 rounded-md font-medium transition-colors",
 						period === option.value
 							? "bg-acc-100 text-bg-100"
 							: "text-txt-300 hover:text-txt-100",
@@ -120,15 +135,22 @@ export const DashboardContent = ({
 	const { canAccess } = useFeatureAccess()
 	useRegisterPageGuide(dashboardGuide)
 	// Calendar month state (independent of the period filter)
-	const [currentMonth, setCurrentMonth] = useState(() => new Date(initialYear, initialMonthIndex, 1))
+	const [currentMonth, setCurrentMonth] = useState(
+		() => new Date(initialYear, initialMonthIndex, 1)
+	)
 	const [dailyPnL, setDailyPnL] = useState<DailyPnL[]>(initialDailyPnL)
 
 	// Period-filtered data
 	const [period, setPeriod] = useState<DashboardPeriod>("allTime")
 	const [stats, setStats] = useState<OverallStats | null>(initialStats)
-	const [discipline, setDiscipline] = useState<DisciplineData | null>(initialDiscipline)
-	const [equityCurve, setEquityCurve] = useState<EquityPoint[]>(initialEquityCurve)
-	const [streakData, setStreakData] = useState<StreakData | null>(initialStreakData)
+	const [discipline, setDiscipline] = useState<DisciplineData | null>(
+		initialDiscipline
+	)
+	const [equityCurve, setEquityCurve] =
+		useState<EquityPoint[]>(initialEquityCurve)
+	const [streakData, setStreakData] = useState<StreakData | null>(
+		initialStreakData
+	)
 	const [radarData, setRadarData] = useState<RadarChartData[]>(initialRadarData)
 
 	const [isPending, startTransition] = useTransition()
@@ -172,43 +194,68 @@ export const DashboardContent = ({
 	const handleMonthChange = useCallback((newMonth: Date) => {
 		setCurrentMonth(newMonth)
 		startTransition(async () => {
-			const result = await getDailyPnL(newMonth.getFullYear(), newMonth.getMonth())
+			const result = await getDailyPnL(
+				newMonth.getFullYear(),
+				newMonth.getMonth()
+			)
 			if (result.status === "success" && result.data) {
 				setDailyPnL(result.data)
 			}
 		})
 	}, [])
 
-	const handlePeriodChange = useCallback((newPeriod: DashboardPeriod) => {
-		setPeriod(newPeriod)
-		const { dateFrom, dateTo } = getDateRangeForPeriod(newPeriod, effectiveDate)
+	const handlePeriodChange = useCallback(
+		(newPeriod: DashboardPeriod) => {
+			setPeriod(newPeriod)
+			const { dateFrom, dateTo } = getDateRangeForPeriod(
+				newPeriod,
+				effectiveDate
+			)
 
-		startPeriodTransition(async () => {
-			const [statsResult, disciplineResult, equityCurveResult, streakResult, radarResult] =
-				await Promise.all([
+			startPeriodTransition(async () => {
+				const [
+					statsResult,
+					disciplineResult,
+					equityCurveResult,
+					streakResult,
+					radarResult,
+				] = await Promise.all([
 					getOverallStats(dateFrom, dateTo),
 					getDisciplineScore(dateFrom, dateTo),
 					getEquityCurve(dateFrom, dateTo),
 					getStreakData(dateFrom, dateTo),
 					getRadarChartData(
-						dateFrom || dateTo
-							? { dateFrom, dateTo }
-							: undefined
+						dateFrom || dateTo ? { dateFrom, dateTo } : undefined
 					),
 				])
 
-			if (statsResult.status === "success") setStats(statsResult.data ?? null)
-			if (disciplineResult.status === "success") setDiscipline(disciplineResult.data ?? null)
-			if (equityCurveResult.status === "success") setEquityCurve(equityCurveResult.data ?? [])
-			if (streakResult.status === "success") setStreakData(streakResult.data ?? null)
-			if (radarResult.status === "success") setRadarData(radarResult.data ?? [])
-		})
-	}, [effectiveDate])
+				if (statsResult.status === "success") {
+					setStats(statsResult.data ?? null)
+				}
+				if (disciplineResult.status === "success") {
+					setDiscipline(disciplineResult.data ?? null)
+				}
+				if (equityCurveResult.status === "success") {
+					setEquityCurve(equityCurveResult.data ?? [])
+				}
+				if (streakResult.status === "success") {
+					setStreakData(streakResult.data ?? null)
+				}
+				if (radarResult.status === "success") {
+					setRadarData(radarResult.data ?? [])
+				}
+			})
+		},
+		[effectiveDate]
+	)
 
 	return (
-		<div className="grid grid-cols-1 gap-m-400 sm:gap-m-500 md:grid-cols-2 lg:grid-cols-3 lg:gap-m-600">
+		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 			{/* Period Toggle + Loading */}
-			<div id="dashboard-period-toggle" className="md:col-span-2 lg:col-span-3 flex items-center gap-m-400">
+			<div
+				id="dashboard-period-toggle"
+				className="gap-m-400 flex items-center md:col-span-2 lg:col-span-3"
+			>
 				<PeriodToggle
 					period={period}
 					onChange={handlePeriodChange}

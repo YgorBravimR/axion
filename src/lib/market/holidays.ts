@@ -17,30 +17,58 @@ interface Holiday {
 // B3 holidays — only weekday closings (weekends already excluded)
 const B3_HOLIDAYS: Holiday[] = [
 	// ── 2025 ──────────────────────────────────────────────────────────────────
-	{ date: "2025-01-01", name: "Confraternização Universal", nameEn: "New Year's Day" },
+	{
+		date: "2025-01-01",
+		name: "Confraternização Universal",
+		nameEn: "New Year's Day",
+	},
 	{ date: "2025-03-03", name: "Carnaval", nameEn: "Carnival" },
 	{ date: "2025-03-04", name: "Carnaval", nameEn: "Carnival" },
 	{ date: "2025-04-18", name: "Paixão de Cristo", nameEn: "Good Friday" },
 	{ date: "2025-04-21", name: "Tiradentes", nameEn: "Tiradentes Day" },
 	{ date: "2025-05-01", name: "Dia do Trabalho", nameEn: "Labour Day" },
 	{ date: "2025-06-19", name: "Corpus Christi", nameEn: "Corpus Christi" },
-	{ date: "2025-07-09", name: "Revolução Constitucionalista", nameEn: "Constitutionalist Revolution" },
-	{ date: "2025-11-20", name: "Consciência Negra", nameEn: "Black Awareness Day" },
+	{
+		date: "2025-07-09",
+		name: "Revolução Constitucionalista",
+		nameEn: "Constitutionalist Revolution",
+	},
+	{
+		date: "2025-11-20",
+		name: "Consciência Negra",
+		nameEn: "Black Awareness Day",
+	},
 	{ date: "2025-12-24", name: "Véspera de Natal", nameEn: "Christmas Eve" },
 	{ date: "2025-12-25", name: "Natal", nameEn: "Christmas Day" },
 	{ date: "2025-12-31", name: "Véspera de Ano Novo", nameEn: "New Year's Eve" },
 	// ── 2026 ──────────────────────────────────────────────────────────────────
-	{ date: "2026-01-01", name: "Confraternização Universal", nameEn: "New Year's Day" },
+	{
+		date: "2026-01-01",
+		name: "Confraternização Universal",
+		nameEn: "New Year's Day",
+	},
 	{ date: "2026-02-16", name: "Carnaval", nameEn: "Carnival" },
 	{ date: "2026-02-17", name: "Carnaval", nameEn: "Carnival" },
 	{ date: "2026-04-03", name: "Paixão de Cristo", nameEn: "Good Friday" },
 	{ date: "2026-04-21", name: "Tiradentes", nameEn: "Tiradentes Day" },
 	{ date: "2026-05-01", name: "Dia do Trabalho", nameEn: "Labour Day" },
 	{ date: "2026-06-04", name: "Corpus Christi", nameEn: "Corpus Christi" },
-	{ date: "2026-07-09", name: "Revolução Constitucionalista", nameEn: "Constitutionalist Revolution" },
-	{ date: "2026-09-07", name: "Independência do Brasil", nameEn: "Independence Day" },
+	{
+		date: "2026-07-09",
+		name: "Revolução Constitucionalista",
+		nameEn: "Constitutionalist Revolution",
+	},
+	{
+		date: "2026-09-07",
+		name: "Independência do Brasil",
+		nameEn: "Independence Day",
+	},
 	{ date: "2026-11-02", name: "Finados", nameEn: "All Souls' Day" },
-	{ date: "2026-11-20", name: "Consciência Negra", nameEn: "Black Awareness Day" },
+	{
+		date: "2026-11-20",
+		name: "Consciência Negra",
+		nameEn: "Black Awareness Day",
+	},
 	{ date: "2026-12-24", name: "Véspera de Natal", nameEn: "Christmas Eve" },
 	{ date: "2026-12-25", name: "Natal", nameEn: "Christmas Day" },
 	{ date: "2026-12-31", name: "Véspera de Ano Novo", nameEn: "New Year's Eve" },
@@ -50,9 +78,21 @@ const B3_HOLIDAYS: Holiday[] = [
 const NYSE_HOLIDAYS: Holiday[] = [
 	// ── 2025 ──────────────────────────────────────────────────────────────────
 	{ date: "2025-01-01", name: "Ano Novo", nameEn: "New Year's Day" },
-	{ date: "2025-01-09", name: "Luto Nacional (Pres. Carter)", nameEn: "National Day of Mourning" },
-	{ date: "2025-01-20", name: "Martin Luther King Jr.", nameEn: "Martin Luther King Jr. Day" },
-	{ date: "2025-02-17", name: "Dia dos Presidentes", nameEn: "Presidents' Day" },
+	{
+		date: "2025-01-09",
+		name: "Luto Nacional (Pres. Carter)",
+		nameEn: "National Day of Mourning",
+	},
+	{
+		date: "2025-01-20",
+		name: "Martin Luther King Jr.",
+		nameEn: "Martin Luther King Jr. Day",
+	},
+	{
+		date: "2025-02-17",
+		name: "Dia dos Presidentes",
+		nameEn: "Presidents' Day",
+	},
 	{ date: "2025-04-18", name: "Sexta-feira Santa", nameEn: "Good Friday" },
 	{ date: "2025-05-26", name: "Memorial Day", nameEn: "Memorial Day" },
 	{ date: "2025-06-19", name: "Juneteenth", nameEn: "Juneteenth" },
@@ -62,12 +102,24 @@ const NYSE_HOLIDAYS: Holiday[] = [
 	{ date: "2025-12-25", name: "Natal", nameEn: "Christmas Day" },
 	// ── 2026 ──────────────────────────────────────────────────────────────────
 	{ date: "2026-01-01", name: "Ano Novo", nameEn: "New Year's Day" },
-	{ date: "2026-01-19", name: "Martin Luther King Jr.", nameEn: "Martin Luther King Jr. Day" },
-	{ date: "2026-02-16", name: "Dia dos Presidentes", nameEn: "Presidents' Day" },
+	{
+		date: "2026-01-19",
+		name: "Martin Luther King Jr.",
+		nameEn: "Martin Luther King Jr. Day",
+	},
+	{
+		date: "2026-02-16",
+		name: "Dia dos Presidentes",
+		nameEn: "Presidents' Day",
+	},
 	{ date: "2026-04-03", name: "Sexta-feira Santa", nameEn: "Good Friday" },
 	{ date: "2026-05-25", name: "Memorial Day", nameEn: "Memorial Day" },
 	{ date: "2026-06-19", name: "Juneteenth", nameEn: "Juneteenth" },
-	{ date: "2026-07-03", name: "Independência EUA (obs.)", nameEn: "Independence Day (observed)" },
+	{
+		date: "2026-07-03",
+		name: "Independência EUA (obs.)",
+		nameEn: "Independence Day (observed)",
+	},
 	{ date: "2026-09-07", name: "Dia do Trabalho EUA", nameEn: "Labor Day" },
 	{ date: "2026-11-26", name: "Ação de Graças", nameEn: "Thanksgiving" },
 	{ date: "2026-12-25", name: "Natal", nameEn: "Christmas Day" },
@@ -77,18 +129,30 @@ const NYSE_HOLIDAYS: Holiday[] = [
 const b3HolidayMap = new Map(B3_HOLIDAYS.map((h) => [h.date, h]))
 const nyseHolidayMap = new Map(NYSE_HOLIDAYS.map((h) => [h.date, h]))
 
-export const isB3Holiday = (dateStr: string): boolean => b3HolidayMap.has(dateStr)
+export const isB3Holiday = (dateStr: string): boolean =>
+	b3HolidayMap.has(dateStr)
 
-export const isNyseHoliday = (dateStr: string): boolean => nyseHolidayMap.has(dateStr)
+export const isNyseHoliday = (dateStr: string): boolean =>
+	nyseHolidayMap.has(dateStr)
 
-export const getB3HolidayName = (dateStr: string, locale: string): string | null => {
+export const getB3HolidayName = (
+	dateStr: string,
+	locale: string
+): string | null => {
 	const holiday = b3HolidayMap.get(dateStr)
-	if (!holiday) return null
+	if (!holiday) {
+		return null
+	}
 	return locale === "pt-BR" ? holiday.name : holiday.nameEn
 }
 
-export const getNyseHolidayName = (dateStr: string, locale: string): string | null => {
+export const getNyseHolidayName = (
+	dateStr: string,
+	locale: string
+): string | null => {
 	const holiday = nyseHolidayMap.get(dateStr)
-	if (!holiday) return null
+	if (!holiday) {
+		return null
+	}
 	return locale === "pt-BR" ? holiday.name : holiday.nameEn
 }

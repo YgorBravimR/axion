@@ -1,6 +1,7 @@
 import { getRequestConfig } from "next-intl/server"
 import { routing } from "./routing"
 
+// eslint-disable-next-line no-restricted-syntax -- next-intl requires a default export for the request config module
 export default getRequestConfig(async ({ requestLocale }) => {
 	// This typically corresponds to the `[locale]` segment
 	let locale = await requestLocale

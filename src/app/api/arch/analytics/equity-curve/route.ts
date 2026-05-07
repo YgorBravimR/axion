@@ -11,7 +11,9 @@ import type { SQL } from "drizzle-orm"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -39,8 +41,12 @@ const GET = async (request: NextRequest) => {
 
 		const dateFrom = searchParams.get("dateFrom")
 		const dateTo = searchParams.get("dateTo")
-		if (dateFrom) conditions.push(gte(trades.entryDate, new Date(dateFrom)))
-		if (dateTo) conditions.push(lte(trades.entryDate, new Date(dateTo)))
+		if (dateFrom) {
+			conditions.push(gte(trades.entryDate, new Date(dateFrom)))
+		}
+		if (dateTo) {
+			conditions.push(lte(trades.entryDate, new Date(dateTo)))
+		}
 
 		const result = await fetchAndDecryptTrades(auth.userId, conditions, {
 			orderBy: "asc",

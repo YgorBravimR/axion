@@ -1,13 +1,21 @@
 "use server"
 
 import { cache } from "react"
-import { invalidateAllData, invalidateSettingsData } from "@/lib/cache/invalidate"
+import {
+	invalidateAllData,
+	invalidateSettingsData,
+} from "@/lib/cache/invalidate"
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { getTranslations } from "next-intl/server"
 import { eq, and } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { users, tradingAccounts, type User, type TradingAccount } from "@/db/schema"
+import {
+	users,
+	tradingAccounts,
+	type User,
+	type TradingAccount,
+} from "@/db/schema"
 import { createDbRateLimiter } from "@/lib/db-rate-limiter"
 // Field-level encryption disabled — imports preserved for re-activation:
 // import { generateKey, encryptDek, encryptField } from "@/lib/crypto"
@@ -42,10 +50,13 @@ const loginLimiter = createDbRateLimiter({
 
 export const registerUser = async (
 	input: RegisterInput
-): Promise<{ status: "success" | "error"; error?: string; needsVerification?: boolean }> => {
+): Promise<{
+	status: "success" | "error"
+	error?: string
+	needsVerification?: boolean
+}> => {
 	const t = await getTranslations("auth")
 	try {
-
 		const validated = registerSchema.safeParse(input)
 		if (!validated.success) {
 			return { status: "error", error: validated.error.issues[0].message }
@@ -129,8 +140,8 @@ const LOCKOUT_KEY_PREFIX = "login-fail:"
 
 const LOCKOUT_TIERS = [
 	{ failures: 20, lockoutMs: 24 * 60 * 60 * 1000 }, // 20 fails → 24h
-	{ failures: 10, lockoutMs: 60 * 60 * 1000 },       // 10 fails → 1h
-	{ failures: 5, lockoutMs: 15 * 60 * 1000 },        // 5 fails  → 15min
+	{ failures: 10, lockoutMs: 60 * 60 * 1000 }, // 10 fails → 1h
+	{ failures: 5, lockoutMs: 15 * 60 * 1000 }, // 5 fails  → 15min
 ] as const
 
 const checkAccountLockout = async (
@@ -142,8 +153,11 @@ const checkAccountLockout = async (
 	for (const tier of LOCKOUT_TIERS) {
 		if (failCount >= tier.failures) {
 			// Check if the lockout period has passed since the last failure
+			// eslint-disable-next-line no-await-in-loop -- lockout tiers must be checked sequentially; each tier breaks early on match
 			const lastFailure = await loginLimiter.getLatest(key)
-			if (!lastFailure) break
+			if (!lastFailure) {
+				break
+			}
 
 			const lockoutEndsAt = lastFailure.getTime() + tier.lockoutMs
 			const now = Date.now()
@@ -169,7 +183,12 @@ const clearLoginFailures = async (email: string): Promise<void> => {
 
 export const loginUser = async (
 	input: LoginInput
-): Promise<{ status: "success" | "error"; error?: string; needsAccountSelection?: boolean; accounts?: AccountPickerItem[] }> => {
+): Promise<{
+	status: "success" | "error"
+	error?: string
+	needsAccountSelection?: boolean
+	accounts?: AccountPickerItem[]
+}> => {
 	const t = await getTranslations("auth")
 	try {
 		const validated = loginSchema.safeParse(input)
@@ -233,12 +252,14 @@ export const loginUser = async (
 		// If no accountId provided and user has multiple accounts, return for selection
 		// Only expose fields needed for the account picker UI
 		if (!accountId && userAccounts.length > 1) {
-			const safeAccounts = userAccounts.map(({ id, name, accountType, isDefault }) => ({
-				id,
-				name,
-				accountType,
-				isDefault,
-			}))
+			const safeAccounts = userAccounts.map(
+				({ id, name, accountType, isDefault }) => ({
+					id,
+					name,
+					accountType,
+					isDefault,
+				})
+			)
 			return {
 				status: "success",
 				needsAccountSelection: true,
@@ -320,7 +341,7 @@ export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
 	const account = await db.query.tradingAccounts.findFirst({
 		where: and(
 			eq(tradingAccounts.id, session.user.accountId),
-			eq(tradingAccounts.userId, session.user.id),
+			eq(tradingAccounts.userId, session.user.id)
 		),
 	})
 
@@ -333,7 +354,10 @@ export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
 	// Decrypt financial fields if DEK is available
 	const dek = await getUserDek(session.user.id)
 	if (dek) {
-		return decryptAccountFields(account as unknown as Record<string, unknown>, dek) as unknown as TradingAccount
+		return decryptAccountFields(
+			account as unknown as Record<string, unknown>,
+			dek
+		) as unknown as TradingAccount
 	}
 
 	return account
@@ -353,8 +377,12 @@ export const getUserAccounts = async (): Promise<TradingAccount[]> => {
 	// Decrypt financial fields if DEK is available
 	const dek = await getUserDek(session.user.id)
 	if (dek) {
-		return accounts.map((account) =>
-			decryptAccountFields(account as unknown as Record<string, unknown>, dek) as unknown as TradingAccount
+		return accounts.map(
+			(account) =>
+				decryptAccountFields(
+					account as unknown as Record<string, unknown>,
+					dek
+				) as unknown as TradingAccount
 		)
 	}
 
@@ -400,7 +428,7 @@ export const requireAuth = cache(async (): Promise<AuthContext> => {
 	const currentAccount = await db.query.tradingAccounts.findFirst({
 		where: and(
 			eq(tradingAccounts.id, session.user.accountId),
-			eq(tradingAccounts.userId, session.user.id),
+			eq(tradingAccounts.userId, session.user.id)
 		),
 		columns: { id: true },
 	})
@@ -551,13 +579,19 @@ export const changePassword = async (
 		}
 
 		// Verify current password
-		const isValid = await bcrypt.compare(validated.data.currentPassword, user.passwordHash)
+		const isValid = await bcrypt.compare(
+			validated.data.currentPassword,
+			user.passwordHash
+		)
 		if (!isValid) {
 			return { status: "error", error: t("errors.incorrectPassword") }
 		}
 
 		// Hash new password
-		const newPasswordHash = await bcrypt.hash(validated.data.newPassword, SALT_ROUNDS)
+		const newPasswordHash = await bcrypt.hash(
+			validated.data.newPassword,
+			SALT_ROUNDS
+		)
 
 		// Update password
 		await db

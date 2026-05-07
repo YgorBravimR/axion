@@ -54,20 +54,28 @@ const DEFAULT_EXIT_DATE = new Date("2026-01-05T10:30:00-03:00")
  * @param overrides - Fields to override on the default trade
  * @returns A fully typed `TradeForCoaching` object
  */
-const createCoachingTrade = (overrides: CoachingTradeOverrides = {}): TradeForCoaching => ({
+const createCoachingTrade = (
+	overrides: CoachingTradeOverrides = {}
+): TradeForCoaching => ({
 	entryDate: overrides.entryDate ?? DEFAULT_ENTRY_DATE,
-	exitDate: overrides.exitDate !== undefined ? overrides.exitDate : DEFAULT_EXIT_DATE,
+	exitDate:
+		overrides.exitDate !== undefined ? overrides.exitDate : DEFAULT_EXIT_DATE,
 	pnl: overrides.pnl !== undefined ? overrides.pnl : 10000, // 10000 cents = R$100 win
 	outcome: overrides.outcome !== undefined ? overrides.outcome : "win",
-	realizedRMultiple: overrides.realizedRMultiple !== undefined ? overrides.realizedRMultiple : "1",
+	realizedRMultiple:
+		overrides.realizedRMultiple !== undefined
+			? overrides.realizedRMultiple
+			: "1",
 	asset: overrides.asset ?? "WIN",
 	direction: overrides.direction ?? "long",
-	strategyName: overrides.strategyName !== undefined ? overrides.strategyName : null,
+	strategyName:
+		overrides.strategyName !== undefined ? overrides.strategyName : null,
 	setupRank: overrides.setupRank !== undefined ? overrides.setupRank : null,
 	rating: overrides.rating !== undefined ? overrides.rating : null,
-	followedPlan: overrides.followedPlan !== undefined ? overrides.followedPlan : null,
-	commission: overrides.commission !== undefined ? overrides.commission : 50,   // 50 cents
-	fees: overrides.fees !== undefined ? overrides.fees : 10,                     // 10 cents
+	followedPlan:
+		overrides.followedPlan !== undefined ? overrides.followedPlan : null,
+	commission: overrides.commission !== undefined ? overrides.commission : 50, // 50 cents
+	fees: overrides.fees !== undefined ? overrides.fees : 10, // 10 cents
 })
 
 /**
@@ -75,7 +83,9 @@ const createCoachingTrade = (overrides: CoachingTradeOverrides = {}): TradeForCo
  *
  * @param overrides - Optional field overrides
  */
-const createWinTrade = (overrides: CoachingTradeOverrides = {}): TradeForCoaching =>
+const createWinTrade = (
+	overrides: CoachingTradeOverrides = {}
+): TradeForCoaching =>
 	createCoachingTrade({
 		outcome: "win",
 		pnl: 10000,
@@ -88,7 +98,9 @@ const createWinTrade = (overrides: CoachingTradeOverrides = {}): TradeForCoachin
  *
  * @param overrides - Optional field overrides
  */
-const createLossTrade = (overrides: CoachingTradeOverrides = {}): TradeForCoaching =>
+const createLossTrade = (
+	overrides: CoachingTradeOverrides = {}
+): TradeForCoaching =>
 	createCoachingTrade({
 		outcome: "loss",
 		pnl: -10000,
@@ -101,7 +113,9 @@ const createLossTrade = (overrides: CoachingTradeOverrides = {}): TradeForCoachi
  *
  * @param overrides - Optional field overrides
  */
-const createBreakevenTrade = (overrides: CoachingTradeOverrides = {}): TradeForCoaching =>
+const createBreakevenTrade = (
+	overrides: CoachingTradeOverrides = {}
+): TradeForCoaching =>
 	createCoachingTrade({
 		outcome: "breakeven",
 		pnl: 0,
@@ -124,10 +138,16 @@ const createTradeSequence = (
 	minutesBetween = 1
 ): TradeForCoaching[] =>
 	pattern.map((outcome, index) => {
-		const entryDate = new Date(baseDate.getTime() + index * minutesBetween * 60_000)
+		const entryDate = new Date(
+			baseDate.getTime() + index * minutesBetween * 60_000
+		)
 		const exitDate = new Date(entryDate.getTime() + 30 * 60_000)
-		if (outcome === "win") return createWinTrade({ entryDate, exitDate })
-		if (outcome === "loss") return createLossTrade({ entryDate, exitDate })
+		if (outcome === "win") {
+			return createWinTrade({ entryDate, exitDate })
+		}
+		if (outcome === "loss") {
+			return createLossTrade({ entryDate, exitDate })
+		}
 		return createBreakevenTrade({ entryDate, exitDate })
 	})
 
@@ -157,7 +177,9 @@ interface OverallStatsOverrides {
  *
  * @param overrides - Optional field overrides
  */
-const createOverallStats = (overrides: OverallStatsOverrides = {}): OverallStats => ({
+const createOverallStats = (
+	overrides: OverallStatsOverrides = {}
+): OverallStats => ({
 	grossPnl: overrides.grossPnl ?? 5000,
 	netPnl: overrides.netPnl ?? 4500,
 	totalFees: overrides.totalFees ?? 500,

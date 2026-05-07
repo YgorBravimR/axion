@@ -1837,7 +1837,9 @@ export const getSessionPerformance = async (
 
 		for (const trade of result) {
 			const session = getSessionForTime(trade.entryDate)
-			if (!session) continue // Skip trades outside trading hours
+			if (!session) {
+				continue
+			} // Skip trades outside trading hours
 
 			const data = sessionMap.get(session)!
 			const pnl = fromCents(trade.pnl)
@@ -1948,7 +1950,9 @@ export const getSessionAssetPerformance = async (
 
 		for (const trade of result) {
 			const session = getSessionForTime(trade.entryDate)
-			if (!session) continue
+			if (!session) {
+				continue
+			}
 
 			if (!assetSessionMap.has(trade.asset)) {
 				const sessionData = new Map<

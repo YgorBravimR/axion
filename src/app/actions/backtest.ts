@@ -26,7 +26,9 @@ const fetchAssetConfig = async (
 		where: eq(assets.id, assetId),
 		columns: { tickSize: true, tickValue: true, currency: true },
 	})
-	if (!asset) return null
+	if (!asset) {
+		return null
+	}
 	return {
 		tickSize: Number(asset.tickSize),
 		tickValueCents: asset.tickValue,
@@ -78,7 +80,9 @@ const fetchCandles = async (
 		if (needsIndicators && "indicators" in r && r.indicators) {
 			const raw = r.indicators as Record<string, number>
 			for (const key of requiredKeys) {
-				if (key in raw) indicators[key] = raw[key]
+				if (key in raw) {
+					indicators[key] = raw[key]
+				}
 			}
 		}
 
@@ -138,12 +142,15 @@ const runBacktestAction = async (
 			return { success: false, error: t("errors.assetNotFound") }
 		}
 
-		const candleResult = await fetchCandles({
-			assetId,
-			timeframeId,
-			dateRange,
-			requiredIndicators: recipe.requiredIndicators,
-		}, t)
+		const candleResult = await fetchCandles(
+			{
+				assetId,
+				timeframeId,
+				dateRange,
+				requiredIndicators: recipe.requiredIndicators,
+			},
+			t
+		)
 
 		if ("error" in candleResult) {
 			return { success: false, error: candleResult.error }

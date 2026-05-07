@@ -303,7 +303,9 @@ const applyMethod2 = (
 			}
 		}
 		// sim: managedEquity stays flat
-		if (mode === "live") liveCount++
+		if (mode === "live") {
+			liveCount++
+		}
 		points.push({
 			tradeNumber: i + 1,
 			liveTradeNumber: mode === "live" ? liveCount : null,

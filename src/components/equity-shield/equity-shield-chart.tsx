@@ -69,61 +69,81 @@ const CHART_MARGIN = { top: 10, right: 16, left: 10, bottom: 0 }
 // TOOLTIP
 // ==========================================
 
-const CustomTooltip = memo(({ active, payload, variant, showComparison }: CustomTooltipProps) => {
-	const t = useTranslations("equityShield.chart")
+const CustomTooltip = memo(
+	({ active, payload, variant, showComparison }: CustomTooltipProps) => {
+		const t = useTranslations("equityShield.chart")
 
-	if (!active || !payload || payload.length === 0) return null
+		if (!active || !payload || payload.length === 0) {
+			return null
+		}
 
-	const data = payload[0].payload
-	const pnlSign = data.pnl >= 0 ? "+" : ""
+		const data = payload[0].payload
+		const pnlSign = data.pnl >= 0 ? "+" : ""
 
-	return (
-		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">
-				{t("tooltipTrade", { number: data.tradeNumber, date: data.date })}
-			</p>
-			{showComparison ? (
-				<>
-					<p className="text-small text-acc-100 font-medium">
-						{t("tooltipOriginal", { value: formatCompactCurrency(data.originalAccountEquity, "R$") })}
-					</p>
-					<p className="text-small text-txt-100 font-medium">
-						{t("tooltipManaged", { value: formatCompactCurrency(data.accountEquity, "R$") })}
-					</p>
-				</>
-			) : (
-				<>
-					<p className="text-small text-txt-100 font-medium">
-						{t("tooltipEquity", { value: formatCompactCurrency(
-							variant === "method2" ? data.originalAccountEquity : data.accountEquity,
-							"R$"
-						) })}
-					</p>
-				</>
-			)}
-			<p
-				className={`text-tiny ${data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
-			>
-				{t("tooltipPnl", { value: `${pnlSign}${formatCompactCurrency(data.pnl, "R$")}` })}
-			</p>
-			{!showComparison && data.drawdownFromPeak > 0 && (
-				<p className="text-tiny text-trade-sell">
-					{t("tooltipDrawdown", { value: formatCompactCurrency(data.drawdownFromPeak, "R$") })}
+		return (
+			<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
+				<p className="text-tiny text-txt-300">
+					{t("tooltipTrade", { number: data.tradeNumber, date: data.date })}
 				</p>
-			)}
-			{!showComparison && variant !== "original" && (
-				<p className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-trade-buy" : "text-txt-300"}`}>
-					{data.mode === "live" ? t("modeLive") : t("modeSim")}
+				{showComparison ? (
+					<>
+						<p className="text-small text-acc-100 font-medium">
+							{t("tooltipOriginal", {
+								value: formatCompactCurrency(data.originalAccountEquity, "R$"),
+							})}
+						</p>
+						<p className="text-small text-txt-100 font-medium">
+							{t("tooltipManaged", {
+								value: formatCompactCurrency(data.accountEquity, "R$"),
+							})}
+						</p>
+					</>
+				) : (
+					<>
+						<p className="text-small text-txt-100 font-medium">
+							{t("tooltipEquity", {
+								value: formatCompactCurrency(
+									variant === "method2"
+										? data.originalAccountEquity
+										: data.accountEquity,
+									"R$"
+								),
+							})}
+						</p>
+					</>
+				)}
+				<p
+					className={`text-tiny ${data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
+				>
+					{t("tooltipPnl", {
+						value: `${pnlSign}${formatCompactCurrency(data.pnl, "R$")}`,
+					})}
 				</p>
-			)}
-			{!showComparison && data.smaValue !== null && (
-				<p className="text-tiny text-acc-200">
-					{t("tooltipSMA", { value: formatCompactCurrency(data.smaValue, "R$") })}
-				</p>
-			)}
-		</div>
-	)
-})
+				{!showComparison && data.drawdownFromPeak > 0 && (
+					<p className="text-tiny text-trade-sell">
+						{t("tooltipDrawdown", {
+							value: formatCompactCurrency(data.drawdownFromPeak, "R$"),
+						})}
+					</p>
+				)}
+				{!showComparison && variant !== "original" && (
+					<p
+						className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-trade-buy" : "text-txt-300"}`}
+					>
+						{data.mode === "live" ? t("modeLive") : t("modeSim")}
+					</p>
+				)}
+				{!showComparison && data.smaValue !== null && (
+					<p className="text-tiny text-acc-200">
+						{t("tooltipSMA", {
+							value: formatCompactCurrency(data.smaValue, "R$"),
+						})}
+					</p>
+				)}
+			</div>
+		)
+	}
+)
 CustomTooltip.displayName = "EquityShieldTooltip"
 
 // ==========================================
@@ -134,7 +154,9 @@ CustomTooltip.displayName = "EquityShieldTooltip"
  * Build contiguous bands of same-mode trades for ReferenceArea shading.
  */
 const buildZoneBands = (points: EquityShieldPoint[]): ZoneBand[] => {
-	if (points.length === 0) return []
+	if (points.length === 0) {
+		return []
+	}
 
 	const bands: ZoneBand[] = []
 	let currentBand: ZoneBand = {
@@ -192,9 +214,10 @@ const EquityShieldChart = ({
 				smaValue: point.smaValue,
 				drawdownFromPeak: point.drawdownFromPeak,
 				/** Trailing DD limit: peak - drawdownLimit (moves up with equity peak) */
-				ddLimitLine: drawdownLimitDollars > 0
-					? point.peakEquity - drawdownLimitDollars
-					: null,
+				ddLimitLine:
+					drawdownLimitDollars > 0
+						? point.peakEquity - drawdownLimitDollars
+						: null,
 			})),
 		[data, drawdownLimitDollars, initialBalance]
 	)
@@ -216,16 +239,27 @@ const EquityShieldChart = ({
 
 	const { minValue, maxValue } = useMemo(() => {
 		const equityValues = chartData.map((d) => d.accountEquity)
-		const originalValues = isComparisonMode || showOriginalEquity
-			? chartData.map((d) => d.originalAccountEquity)
-			: []
-		const smaValues = showSMA && !isComparisonMode
-			? chartData.filter((d) => d.smaValue !== null).map((d) => d.smaValue as number)
-			: []
+		const originalValues =
+			isComparisonMode || showOriginalEquity
+				? chartData.map((d) => d.originalAccountEquity)
+				: []
+		const smaValues =
+			showSMA && !isComparisonMode
+				? chartData
+						.filter((d) => d.smaValue !== null)
+						.map((d) => d.smaValue as number)
+				: []
 		const ddLimitValues = !isComparisonMode
-			? chartData.filter((d) => d.ddLimitLine !== null).map((d) => d.ddLimitLine as number)
+			? chartData
+					.filter((d) => d.ddLimitLine !== null)
+					.map((d) => d.ddLimitLine as number)
 			: []
-		const allValues = [...equityValues, ...originalValues, ...smaValues, ...ddLimitValues]
+		const allValues = [
+			...equityValues,
+			...originalValues,
+			...smaValues,
+			...ddLimitValues,
+		]
 
 		return {
 			minValue: Math.min(...allValues),
@@ -280,7 +314,9 @@ const EquityShieldChart = ({
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
-			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">{title}</h3>
+			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
+				{title}
+			</h3>
 
 			<ChartContainer
 				id={`equity-shield-${variant}${isComparisonMode ? "-cmp" : ""}`}
@@ -288,19 +324,30 @@ const EquityShieldChart = ({
 				role="img"
 				aria-label={title}
 			>
-				<AreaChart
-					data={chartData}
-					margin={CHART_MARGIN}
-				>
+				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<defs>
 						<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
 							<stop offset="5%" stopColor={strokeColor} stopOpacity={0.2} />
 							<stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
 						</linearGradient>
 						{isComparisonMode && (
-							<linearGradient id={originalGradientId} x1="0" y1="0" x2="0" y2="1">
-								<stop offset="5%" stopColor="var(--color-acc-100)" stopOpacity={0.15} />
-								<stop offset="95%" stopColor="var(--color-acc-100)" stopOpacity={0} />
+							<linearGradient
+								id={originalGradientId}
+								x1="0"
+								y1="0"
+								x2="0"
+								y2="1"
+							>
+								<stop
+									offset="5%"
+									stopColor="var(--color-acc-100)"
+									stopOpacity={0.15}
+								/>
+								<stop
+									offset="95%"
+									stopColor="var(--color-acc-100)"
+									stopOpacity={0}
+								/>
 							</linearGradient>
 						)}
 					</defs>
@@ -329,7 +376,9 @@ const EquityShieldChart = ({
 					<XAxis
 						dataKey={isComparisonMode ? "date" : "tradeNumber"}
 						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
-						tickFormatter={isComparisonMode ? undefined : (val: number) => `#${val}`}
+						tickFormatter={
+							isComparisonMode ? undefined : (val: number) => `#${val}`
+						}
 						tickLine={false}
 						axisLine={false}
 					/>
@@ -337,33 +386,30 @@ const EquityShieldChart = ({
 					<YAxis
 						domain={[minValue - padding, maxValue + padding]}
 						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
-						tickFormatter={(val: number) =>
-							formatCompactCurrency(val, "R$")
-						}
+						tickFormatter={(val: number) => formatCompactCurrency(val, "R$")}
 						width={yAxisWidth}
 						tickLine={false}
 						axisLine={false}
 					/>
 
-					<ChartTooltip
-						variant="line"
-						content={tooltipContent}
-					/>
+					<ChartTooltip variant="line" content={tooltipContent} />
 
 					{/* Trailing DD Limit line — full view, not Method 2 */}
-					{!isComparisonMode && drawdownLimitDollars > 0 && variant !== "method2" && (
-						<Line
-							type="monotone"
-							dataKey="ddLimitLine"
-							stroke="var(--color-trade-sell)"
-							strokeWidth={1.5}
-							strokeDasharray="6 4"
-							dot={false}
-							activeDot={false}
-							connectNulls
-							isAnimationActive={false}
-						/>
-					)}
+					{!isComparisonMode &&
+						drawdownLimitDollars > 0 &&
+						variant !== "method2" && (
+							<Line
+								type="monotone"
+								dataKey="ddLimitLine"
+								stroke="var(--color-trade-sell)"
+								strokeWidth={1.5}
+								strokeDasharray="6 4"
+								dot={false}
+								activeDot={false}
+								connectNulls
+								isAnimationActive={false}
+							/>
+						)}
 
 					{/* Initial balance reference */}
 					<ReferenceLine
@@ -420,17 +466,19 @@ const EquityShieldChart = ({
 
 			{/* Chart legend */}
 			{isComparisonMode ? (
-				<div className="mt-s-200 flex flex-wrap items-center gap-m-400">
+				<div className="mt-s-200 gap-m-400 flex flex-wrap items-center">
 					{/* Original curve (dashed gold) */}
-					<div className="flex items-center gap-s-200">
+					<div className="gap-s-200 flex items-center">
 						<div
 							className="h-0 w-4 border-t-2 border-dashed"
 							style={{ borderColor: "var(--color-acc-100)" }}
 						/>
-						<span className="text-tiny text-txt-300">{t("legendOriginal")}</span>
+						<span className="text-tiny text-txt-300">
+							{t("legendOriginal")}
+						</span>
 					</div>
 					{/* Managed curve (solid method color) */}
-					<div className="flex items-center gap-s-200">
+					<div className="gap-s-200 flex items-center">
 						<div
 							className="h-0 w-4 border-t-2"
 							style={{ borderColor: strokeColor }}
@@ -440,30 +488,32 @@ const EquityShieldChart = ({
 				</div>
 			) : (
 				variant !== "original" && (
-					<div className="mt-s-200 flex flex-wrap items-center gap-m-400">
+					<div className="mt-s-200 gap-m-400 flex flex-wrap items-center">
 						{/* Equity line */}
-						<div className="flex items-center gap-s-200">
+						<div className="gap-s-200 flex items-center">
 							<div
 								className="h-0 w-4 border-t-2"
 								style={{ borderColor: strokeColor }}
 							/>
-							<span className="text-tiny text-txt-300">{t("legendEquity")}</span>
+							<span className="text-tiny text-txt-300">
+								{t("legendEquity")}
+							</span>
 						</div>
 						{/* Sim zone */}
-						<div className="flex items-center gap-s-200">
+						<div className="gap-s-200 flex items-center">
 							<div className="bg-trade-sell h-2.5 w-4 rounded-sm opacity-20" />
 							<span className="text-tiny text-txt-300">{t("legendSim")}</span>
 						</div>
 						{/* DD Limit */}
 						{drawdownLimitDollars > 0 && variant !== "method2" && (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<div className="border-trade-sell h-0 w-4 border-t border-dashed" />
 								<span className="text-tiny text-txt-300">{t("ddLimit")}</span>
 							</div>
 						)}
 						{/* SMA line */}
 						{showSMA && (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<div className="border-txt-300 h-0 w-4 border-t border-dashed" />
 								<span className="text-tiny text-txt-300">{t("legendSMA")}</span>
 							</div>

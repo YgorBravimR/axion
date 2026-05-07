@@ -90,6 +90,7 @@ vi.mock("@/db/schema", () => ({
 }))
 
 vi.mock("drizzle-orm", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("drizzle-orm")>()
 	return {
 		...original,
@@ -106,24 +107,26 @@ vi.mock("drizzle-orm", async (importOriginal) => {
 //   verifyLimiter  → maxAttempts: 5, windowMs: 15 * 60 * 1000
 // We distinguish them by maxAttempts value so each mock fn is wired correctly.
 vi.mock("@/lib/db-rate-limiter", () => ({
-	createDbRateLimiter: vi.fn((config: { maxAttempts: number; windowMs: number }) => {
-		if (config.maxAttempts === 2) {
+	createDbRateLimiter: vi.fn(
+		(config: { maxAttempts: number; windowMs: number }) => {
+			if (config.maxAttempts === 2) {
+				return {
+					check: requestLimiterCheckMock,
+					reset: vi.fn().mockResolvedValue(undefined),
+					countAttempts: vi.fn().mockResolvedValue(0),
+					record: vi.fn().mockResolvedValue(undefined),
+					getLatest: vi.fn().mockResolvedValue(null),
+				}
+			}
 			return {
-				check: requestLimiterCheckMock,
-				reset: vi.fn().mockResolvedValue(undefined),
+				check: verifyLimiterCheckMock,
+				reset: verifyLimiterResetMock,
 				countAttempts: vi.fn().mockResolvedValue(0),
 				record: vi.fn().mockResolvedValue(undefined),
 				getLatest: vi.fn().mockResolvedValue(null),
 			}
 		}
-		return {
-			check: verifyLimiterCheckMock,
-			reset: verifyLimiterResetMock,
-			countAttempts: vi.fn().mockResolvedValue(0),
-			record: vi.fn().mockResolvedValue(undefined),
-			getLatest: vi.fn().mockResolvedValue(null),
-		}
-	}),
+	),
 }))
 
 vi.mock("@/lib/otp", () => ({
@@ -142,26 +145,45 @@ vi.mock("@/lib/email-templates", () => ({
 // Import module under test AFTER mocks
 // ---------------------------------------------------------------------------
 
-import { requestEmailVerification, verifyEmail } from "@/app/actions/email-verification"
+import {
+	requestEmailVerification,
+	verifyEmail,
+} from "@/app/actions/email-verification"
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const allowRequestRateLimit = () => {
-	requestLimiterCheckMock.mockResolvedValue({ allowed: true, remaining: 2, retryAfterMs: 0 })
+	requestLimiterCheckMock.mockResolvedValue({
+		allowed: true,
+		remaining: 2,
+		retryAfterMs: 0,
+	})
 }
 
 const denyRequestRateLimit = (retryAfterMs = 180_000) => {
-	requestLimiterCheckMock.mockResolvedValue({ allowed: false, remaining: 0, retryAfterMs })
+	requestLimiterCheckMock.mockResolvedValue({
+		allowed: false,
+		remaining: 0,
+		retryAfterMs,
+	})
 }
 
 const allowVerifyRateLimit = () => {
-	verifyLimiterCheckMock.mockResolvedValue({ allowed: true, remaining: 4, retryAfterMs: 0 })
+	verifyLimiterCheckMock.mockResolvedValue({
+		allowed: true,
+		remaining: 4,
+		retryAfterMs: 0,
+	})
 }
 
 const denyVerifyRateLimit = (retryAfterMs = 600_000) => {
-	verifyLimiterCheckMock.mockResolvedValue({ allowed: false, remaining: 0, retryAfterMs })
+	verifyLimiterCheckMock.mockResolvedValue({
+		allowed: false,
+		remaining: 0,
+		retryAfterMs,
+	})
 }
 
 const setupInsertToken = () => {
@@ -208,7 +230,9 @@ describe("requestEmailVerification()", () => {
 				emailVerified: null,
 			})
 
-			const result = await requestEmailVerification({ email: "trader@example.com" })
+			const result = await requestEmailVerification({
+				email: "trader@example.com",
+			})
 
 			expect(result.success).toBe(true)
 			expect(generateOTPMock).toHaveBeenCalledOnce()
@@ -223,7 +247,10 @@ describe("requestEmailVerification()", () => {
 		it("should use the lowercased email as the rate-limiter key", async () => {
 			allowRequestRateLimit()
 
-			dbQueryMock.users.findFirst.mockResolvedValue({ id: "uid", emailVerified: null })
+			dbQueryMock.users.findFirst.mockResolvedValue({
+				id: "uid",
+				emailVerified: null,
+			})
 
 			await requestEmailVerification({ email: "Trader@Example.COM" })
 
@@ -235,7 +262,10 @@ describe("requestEmailVerification()", () => {
 		it("should delete any existing token for the email before inserting a new one", async () => {
 			allowRequestRateLimit()
 
-			dbQueryMock.users.findFirst.mockResolvedValue({ id: "uid", emailVerified: null })
+			dbQueryMock.users.findFirst.mockResolvedValue({
+				id: "uid",
+				emailVerified: null,
+			})
 
 			await requestEmailVerification({ email: "trader@example.com" })
 
@@ -249,7 +279,9 @@ describe("requestEmailVerification()", () => {
 			allowRequestRateLimit()
 			dbQueryMock.users.findFirst.mockResolvedValue(null)
 
-			const result = await requestEmailVerification({ email: "nobody@example.com" })
+			const result = await requestEmailVerification({
+				email: "nobody@example.com",
+			})
 
 			expect(result.success).toBe(true)
 			// Must NOT send an email — that would reveal the user does not exist
@@ -263,7 +295,9 @@ describe("requestEmailVerification()", () => {
 				emailVerified: new Date(),
 			})
 
-			const result = await requestEmailVerification({ email: "verified@example.com" })
+			const result = await requestEmailVerification({
+				email: "verified@example.com",
+			})
 
 			expect(result.success).toBe(true)
 			expect(sendEmailMock).not.toHaveBeenCalled()
@@ -283,7 +317,9 @@ describe("requestEmailVerification()", () => {
 		it("should return an error when the request rate limit is exceeded", async () => {
 			denyRequestRateLimit(3 * 60 * 1000) // 3 minutes remaining
 
-			const result = await requestEmailVerification({ email: "trader@example.com" })
+			const result = await requestEmailVerification({
+				email: "trader@example.com",
+			})
 
 			expect(result.success).toBe(false)
 			expect(result.error).toMatch(/too many requests/i)
@@ -293,7 +329,9 @@ describe("requestEmailVerification()", () => {
 		it("should not send an email when rate limited", async () => {
 			denyRequestRateLimit()
 
-			const result = await requestEmailVerification({ email: "trader@example.com" })
+			const result = await requestEmailVerification({
+				email: "trader@example.com",
+			})
 
 			expect(result.success).toBe(false)
 			expect(sendEmailMock).not.toHaveBeenCalled()
@@ -324,7 +362,10 @@ describe("verifyEmail()", () => {
 				expires: new Date(Date.now() + 60_000),
 			})
 
-			const result = await verifyEmail({ email: "trader@example.com", code: "123456" })
+			const result = await verifyEmail({
+				email: "trader@example.com",
+				code: "123456",
+			})
 
 			expect(result.success).toBe(true)
 			expect(dbMock.update).toHaveBeenCalled()
@@ -355,7 +396,9 @@ describe("verifyEmail()", () => {
 
 			await verifyEmail({ email: "trader@example.com", code: "123456" })
 
-			expect(verifyLimiterResetMock).toHaveBeenCalledWith("email-verify:trader@example.com")
+			expect(verifyLimiterResetMock).toHaveBeenCalledWith(
+				"email-verify:trader@example.com"
+			)
 		})
 
 		it("should hash the provided code before looking it up in the database", async () => {
@@ -383,7 +426,9 @@ describe("verifyEmail()", () => {
 
 			await verifyEmail({ email: "TRADER@EXAMPLE.COM", code: "123456" })
 
-			expect(verifyLimiterCheckMock).toHaveBeenCalledWith("email-verify:trader@example.com")
+			expect(verifyLimiterCheckMock).toHaveBeenCalledWith(
+				"email-verify:trader@example.com"
+			)
 		})
 	})
 
@@ -396,13 +441,19 @@ describe("verifyEmail()", () => {
 		})
 
 		it("should return an error when code is not 6 digits", async () => {
-			const result = await verifyEmail({ email: "user@example.com", code: "12345" })
+			const result = await verifyEmail({
+				email: "user@example.com",
+				code: "12345",
+			})
 
 			expect(result.success).toBe(false)
 		})
 
 		it("should return an error when code contains letters", async () => {
-			const result = await verifyEmail({ email: "user@example.com", code: "12345a" })
+			const result = await verifyEmail({
+				email: "user@example.com",
+				code: "12345a",
+			})
 
 			expect(result.success).toBe(false)
 		})
@@ -412,7 +463,10 @@ describe("verifyEmail()", () => {
 		it("should return an error when the verify rate limit is exceeded", async () => {
 			denyVerifyRateLimit(10 * 60 * 1000) // 10 minutes remaining
 
-			const result = await verifyEmail({ email: "trader@example.com", code: "123456" })
+			const result = await verifyEmail({
+				email: "trader@example.com",
+				code: "123456",
+			})
 
 			expect(result.success).toBe(false)
 			expect(result.error).toMatch(/too many requests/i)
@@ -433,7 +487,10 @@ describe("verifyEmail()", () => {
 			allowVerifyRateLimit()
 			dbQueryMock.verificationTokens.findFirst.mockResolvedValue(null)
 
-			const result = await verifyEmail({ email: "trader@example.com", code: "999999" })
+			const result = await verifyEmail({
+				email: "trader@example.com",
+				code: "999999",
+			})
 
 			expect(result.success).toBe(false)
 			expect(result.error).toBe("INVALID_OR_EXPIRED")

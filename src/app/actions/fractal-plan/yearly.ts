@@ -39,7 +39,7 @@ interface CreateYearlyPlanResult {
 }
 
 const createYearlyPlanV2 = async (
-	input: CreateYearlyPlanInput,
+	input: CreateYearlyPlanInput
 ): Promise<ActionResponse<CreateYearlyPlanResult>> => {
 	try {
 		const parsed = createYearlyPlanInputSchema.parse(input)
@@ -51,8 +51,14 @@ const createYearlyPlanV2 = async (
 			if (account?.startingBalanceCents == null) {
 				return {
 					status: "error",
-					message: "Set the account starting balance in Settings → Annual Reporting before seeding a yearly plan.",
-					errors: [{ code: "MISSING_STARTING_BALANCE", detail: "account.startingBalanceCents is null" }],
+					message:
+						"Set the account starting balance in Settings → Annual Reporting before seeding a yearly plan.",
+					errors: [
+						{
+							code: "MISSING_STARTING_BALANCE",
+							detail: "account.startingBalanceCents is null",
+						},
+					],
 				}
 			}
 			initialCapitalCents = account.startingBalanceCents
@@ -84,7 +90,9 @@ const createYearlyPlanV2 = async (
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "CREATE_YEARLY_PLAN_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "CREATE_YEARLY_PLAN_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
@@ -107,14 +115,17 @@ const updateYearlyPlanInputSchema = z.object({
 type UpdateYearlyPlanInput = z.infer<typeof updateYearlyPlanInputSchema>
 
 const updateYearlyPlan = async (
-	input: UpdateYearlyPlanInput,
+	input: UpdateYearlyPlanInput
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = updateYearlyPlanInputSchema.parse(input)
 		const { accountId } = await requireAuth()
 
 		const existing = await db.query.yearlyPlans.findFirst({
-			where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, parsed.year)),
+			where: and(
+				eq(yearlyPlans.accountId, accountId),
+				eq(yearlyPlans.year, parsed.year)
+			),
 		})
 		if (!existing) {
 			return {
@@ -125,26 +136,57 @@ const updateYearlyPlan = async (
 		}
 
 		const updates: Record<string, unknown> = { updatedAt: new Date() }
-		if (parsed.initialCapitalCents !== undefined) updates.initialCapitalCents = parsed.initialCapitalCents
-		if (parsed.ladderRules !== undefined) updates.ladderRules = parsed.ladderRules
-		if (parsed.tradingDaysPerWeek !== undefined) updates.tradingDaysPerWeek = parsed.tradingDaysPerWeek
-		if (parsed.defaultDailyLossR !== undefined) updates.defaultDailyLossR = parsed.defaultDailyLossR.toFixed(2)
-		if (parsed.defaultDailyWinR !== undefined) updates.defaultDailyWinR = parsed.defaultDailyWinR.toFixed(2)
-		if (parsed.defaultWeeklyLossR !== undefined) updates.defaultWeeklyLossR = parsed.defaultWeeklyLossR.toFixed(2)
-		if (parsed.defaultWeeklyWinR !== undefined) updates.defaultWeeklyWinR = parsed.defaultWeeklyWinR.toFixed(2)
-		if (parsed.defaultMonthlyLossR !== undefined) updates.defaultMonthlyLossR = parsed.defaultMonthlyLossR.toFixed(2)
-		if (parsed.defaultMonthlyWinR !== undefined) updates.defaultMonthlyWinR = parsed.defaultMonthlyWinR.toFixed(2)
-		if (parsed.defaultRiskProfileId !== undefined) updates.defaultRiskProfileId = parsed.defaultRiskProfileId
-		if (parsed.notes !== undefined) updates.notes = parsed.notes
+		if (parsed.initialCapitalCents !== undefined) {
+			updates.initialCapitalCents = parsed.initialCapitalCents
+		}
+		if (parsed.ladderRules !== undefined) {
+			updates.ladderRules = parsed.ladderRules
+		}
+		if (parsed.tradingDaysPerWeek !== undefined) {
+			updates.tradingDaysPerWeek = parsed.tradingDaysPerWeek
+		}
+		if (parsed.defaultDailyLossR !== undefined) {
+			updates.defaultDailyLossR = parsed.defaultDailyLossR.toFixed(2)
+		}
+		if (parsed.defaultDailyWinR !== undefined) {
+			updates.defaultDailyWinR = parsed.defaultDailyWinR.toFixed(2)
+		}
+		if (parsed.defaultWeeklyLossR !== undefined) {
+			updates.defaultWeeklyLossR = parsed.defaultWeeklyLossR.toFixed(2)
+		}
+		if (parsed.defaultWeeklyWinR !== undefined) {
+			updates.defaultWeeklyWinR = parsed.defaultWeeklyWinR.toFixed(2)
+		}
+		if (parsed.defaultMonthlyLossR !== undefined) {
+			updates.defaultMonthlyLossR = parsed.defaultMonthlyLossR.toFixed(2)
+		}
+		if (parsed.defaultMonthlyWinR !== undefined) {
+			updates.defaultMonthlyWinR = parsed.defaultMonthlyWinR.toFixed(2)
+		}
+		if (parsed.defaultRiskProfileId !== undefined) {
+			updates.defaultRiskProfileId = parsed.defaultRiskProfileId
+		}
+		if (parsed.notes !== undefined) {
+			updates.notes = parsed.notes
+		}
 
-		await db.update(yearlyPlans).set(updates).where(eq(yearlyPlans.id, existing.id))
+		await db
+			.update(yearlyPlans)
+			.set(updates)
+			.where(eq(yearlyPlans.id, existing.id))
 
-		return { status: "success", message: "Yearly plan updated", data: { id: existing.id } }
+		return {
+			status: "success",
+			message: "Yearly plan updated",
+			data: { id: existing.id },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "UPDATE_YEARLY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "UPDATE_YEARLY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }

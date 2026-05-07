@@ -32,8 +32,12 @@ interface FairEconomyEvent {
 
 const mapImpact = (impact: string): EventImpact => {
 	const normalized = impact.toLowerCase()
-	if (normalized === "high" || normalized === "holiday") return "high"
-	if (normalized === "medium") return "medium"
+	if (normalized === "high" || normalized === "holiday") {
+		return "high"
+	}
+	if (normalized === "medium") {
+		return "medium"
+	}
 	return "low"
 }
 
@@ -61,18 +65,23 @@ const B3_SESSION_END_HOUR_BRT = 19
  */
 const isWithinB3Session = (isoDate: string): boolean => {
 	const date = new Date(isoDate)
-	if (Number.isNaN(date.getTime())) return true // Keep events with unparseable dates
+	if (Number.isNaN(date.getTime())) {
+		return true
+	} // Keep events with unparseable dates
 
 	// Get the hour in Sao Paulo timezone
-	const brtHour = parseInt(
-		new Intl.DateTimeFormat("en-US", {
-			timeZone: "America/Sao_Paulo",
-			hour: "numeric",
-			hour12: false,
-		}).format(date)
-	) % 24
+	const brtHour =
+		parseInt(
+			new Intl.DateTimeFormat("en-US", {
+				timeZone: "America/Sao_Paulo",
+				hour: "numeric",
+				hour12: false,
+			}).format(date)
+		) % 24
 
-	return brtHour >= B3_SESSION_START_HOUR_BRT && brtHour < B3_SESSION_END_HOUR_BRT
+	return (
+		brtHour >= B3_SESSION_START_HOUR_BRT && brtHour < B3_SESSION_END_HOUR_BRT
+	)
 }
 
 /**
@@ -87,7 +96,9 @@ export const fetchEconomicCalendar = async (): Promise<EconomicEvent[]> => {
 	})
 
 	if (!response.ok) {
-		throw new Error(`Calendar API error: ${response.status} ${response.statusText}`)
+		throw new Error(
+			`Calendar API error: ${response.status} ${response.statusText}`
+		)
 	}
 
 	const events = (await response.json()) as FairEconomyEvent[]
@@ -108,15 +119,17 @@ export const fetchEconomicCalendar = async (): Promise<EconomicEvent[]> => {
 			const isDuringSession = isWithinB3Session(event.date)
 			return isToday && isRelevantCountry && isDuringSession
 		})
-		.map((event, index): EconomicEvent => ({
-			id: `cal-${todayUTC}-${index}`,
-			time: event.date,
-			country: mapCountryCode(event.country),
-			event: event.title,
-			impact: mapImpact(event.impact),
-			actual: event.actual || undefined,
-			forecast: event.forecast || undefined,
-			previous: event.previous || undefined,
-		}))
+		.map(
+			(event, index): EconomicEvent => ({
+				id: `cal-${todayUTC}-${index}`,
+				time: event.date,
+				country: mapCountryCode(event.country),
+				event: event.title,
+				impact: mapImpact(event.impact),
+				actual: event.actual || undefined,
+				forecast: event.forecast || undefined,
+				previous: event.previous || undefined,
+			})
+		)
 		.sort((a, b) => a.time.localeCompare(b.time))
 }

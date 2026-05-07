@@ -12,7 +12,9 @@ type Unit = "reais" | "cents"
 const stripDigits = (s: string): string => s.replace(/\D/g, "")
 
 const formatBR = (digits: string, decimals: Decimals): string => {
-	if (!digits) return ""
+	if (!digits) {
+		return ""
+	}
 	if (decimals === 0) {
 		return Number(digits).toLocaleString("pt-BR")
 	}
@@ -23,35 +25,46 @@ const formatBR = (digits: string, decimals: Decimals): string => {
 	return `${intFormatted},${decPart}`
 }
 
-const displayUnitsPerReais = (decimals: Decimals): number => (decimals === 2 ? 100 : 1)
+const displayUnitsPerReais = (decimals: Decimals): number =>
+	decimals === 2 ? 100 : 1
 const valueUnitsPerReais = (unit: Unit): number => (unit === "cents" ? 100 : 1)
 
 const valueToDigits = (
 	value: number | null | undefined,
 	decimals: Decimals,
-	unit: Unit,
+	unit: Unit
 ): string => {
-	if (value == null || !Number.isFinite(value)) return ""
+	if (value == null || !Number.isFinite(value)) {
+		return ""
+	}
 	const ratio = displayUnitsPerReais(decimals) / valueUnitsPerReais(unit)
 	const scaled = Math.round(value * ratio)
-	if (scaled === 0) return ""
+	if (scaled === 0) {
+		return ""
+	}
 	return String(scaled)
 }
 
 const digitsToValue = (
 	digits: string,
 	decimals: Decimals,
-	unit: Unit,
+	unit: Unit
 ): number | null => {
-	if (!digits) return null
+	if (!digits) {
+		return null
+	}
 	const n = Number(digits)
-	if (!Number.isFinite(n)) return null
+	if (!Number.isFinite(n)) {
+		return null
+	}
 	const ratio = valueUnitsPerReais(unit) / displayUnitsPerReais(decimals)
 	return n * ratio
 }
 
-interface CurrencyInputProps
-	extends Omit<ComponentProps<typeof Input>, "value" | "onChange" | "type" | "inputMode"> {
+interface CurrencyInputProps extends Omit<
+	ComponentProps<typeof Input>,
+	"value" | "onChange" | "type" | "inputMode"
+> {
 	id: string
 	value: number | null | undefined
 	onValueChange: (next: number | null) => void
@@ -73,7 +86,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
 			onFocus,
 			...rest
 		},
-		ref,
+		ref
 	) => {
 		const digits = valueToDigits(value, decimals, unit)
 		const display = formatBR(digits, decimals)
@@ -111,7 +124,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
 			<div className="relative">
 				<span
 					aria-hidden="true"
-					className="pointer-events-none absolute left-s-300 top-1/2 -translate-y-1/2 select-none font-mono text-small text-txt-300"
+					className="left-s-300 text-small text-txt-300 pointer-events-none absolute top-1/2 -translate-y-1/2 font-mono select-none"
 				>
 					R$
 				</span>
@@ -129,7 +142,7 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
 				/>
 			</div>
 		)
-	},
+	}
 )
 CurrencyInput.displayName = "CurrencyInput"
 

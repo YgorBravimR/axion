@@ -47,7 +47,9 @@ const groupCandlesByDay = (candles: CandleRow[]): Map<string, CandleRow[]> => {
 		tsCache.set(candle.timestamp, ms)
 		const brt = extractBrt(ms)
 
-		if (brt.hhmm < TRADING_START_HHMM || brt.hhmm >= TRADING_END_HHMM) continue
+		if (brt.hhmm < TRADING_START_HHMM || brt.hhmm >= TRADING_END_HHMM) {
+			continue
+		}
 
 		const existing = days.get(brt.dayKey)
 		if (existing) {
@@ -60,8 +62,11 @@ const groupCandlesByDay = (candles: CandleRow[]): Map<string, CandleRow[]> => {
 	// Sort each day: timestamp ASC, then candleIndex ASC for Renko determinism
 	for (const [, dayCandlesArr] of days) {
 		dayCandlesArr.sort((a, b) => {
-			const timeDiff = (tsCache.get(a.timestamp) ?? 0) - (tsCache.get(b.timestamp) ?? 0)
-			if (timeDiff !== 0) return timeDiff
+			const timeDiff =
+				(tsCache.get(a.timestamp) ?? 0) - (tsCache.get(b.timestamp) ?? 0)
+			if (timeDiff !== 0) {
+				return timeDiff
+			}
 			return (a.candleIndex ?? 0) - (b.candleIndex ?? 0)
 		})
 	}
@@ -72,7 +77,11 @@ const groupCandlesByDay = (candles: CandleRow[]): Map<string, CandleRow[]> => {
 /**
  * Build a DayContext for a candle. Fast arithmetic, no Intl.
  */
-const buildDayContext = (candle: CandleRow, dayKey: string, candleIndexInDay: number): DayContext => {
+const buildDayContext = (
+	candle: CandleRow,
+	dayKey: string,
+	candleIndexInDay: number
+): DayContext => {
 	const ms = new Date(candle.timestamp).getTime()
 	const brt = extractBrt(ms)
 

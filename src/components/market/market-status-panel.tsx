@@ -42,11 +42,27 @@ interface QuickLink {
 }
 
 const QUICK_LINKS: QuickLink[] = [
-	{ emoji: "📅", labelKey: "economicCalendar", url: "https://br.investing.com/economic-calendar" },
-	{ emoji: "💱", labelKey: "brlFutures", url: "https://www.cmegroup.com/markets/fx/emerging-market/brazilian-real.quotes.html" },
-	{ emoji: "📊", labelKey: "bcbStats", url: "https://www.bcb.gov.br/estatisticas" },
+	{
+		emoji: "📅",
+		labelKey: "economicCalendar",
+		url: "https://br.investing.com/economic-calendar",
+	},
+	{
+		emoji: "💱",
+		labelKey: "brlFutures",
+		url: "https://www.cmegroup.com/markets/fx/emerging-market/brazilian-real.quotes.html",
+	},
+	{
+		emoji: "📊",
+		labelKey: "bcbStats",
+		url: "https://www.bcb.gov.br/estatisticas",
+	},
 	{ emoji: "🏛️", labelKey: "bcbPortal", url: "https://www.bcb.gov.br/" },
-	{ emoji: "📰", labelKey: "infomoney", url: "https://www.infomoney.com.br/mercados/" },
+	{
+		emoji: "📰",
+		labelKey: "infomoney",
+		url: "https://www.infomoney.com.br/mercados/",
+	},
 ]
 
 // Header-inline status IDs — shown as dots in the page header
@@ -62,7 +78,9 @@ const formatCountdown = (
 	minutes: number | null,
 	t: ReturnType<typeof useTranslations>
 ): string => {
-	if (minutes === null || minutes <= 0) return ""
+	if (minutes === null || minutes <= 0) {
+		return ""
+	}
 	const hours = Math.round(minutes / 60)
 	const paddedHours = String(Math.max(hours, 1)).padStart(2, "0")
 	return t("status.opensIn", { hours: paddedHours })
@@ -77,10 +95,14 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 	const handleTabChange = (tab: PanelTab) => setActiveTab(tab)
 
 	const handleTabListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
+		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+			return
+		}
 		const ids = PANEL_TABS.map((tab) => tab.id)
 		const currentIndex = ids.indexOf(activeTab)
-		if (currentIndex === -1) return
+		if (currentIndex === -1) {
+			return
+		}
 		const nextIndex =
 			event.key === "ArrowRight"
 				? (currentIndex + 1) % ids.length
@@ -92,14 +114,17 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 		}
 	}
 
-	if (statuses.length === 0) return null
+	if (statuses.length === 0) {
+		return null
+	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 flex min-h-[22rem] lg:h-full flex-col rounded-lg border">
+		<div className="border-bg-300 bg-bg-200 flex min-h-[22rem] flex-col rounded-lg border lg:h-full">
 			{/* Tab bar */}
 			<div
-				className="border-bg-300 flex shrink-0 items-center gap-s-100 border-b px-s-300 py-s-200"
+				className="border-bg-300 gap-s-100 px-s-300 py-s-200 flex shrink-0 items-center border-b"
 				role="tablist"
+				tabIndex={0}
 				onKeyDown={handleTabListKeyDown}
 			>
 				{PANEL_TABS.map((tab) => (
@@ -109,7 +134,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 						type="button"
 						onClick={() => handleTabChange(tab.id)}
 						className={cn(
-							"text-tiny shrink-0 rounded-md px-s-300 py-s-200 font-medium transition-colors min-h-[44px] min-w-[44px]",
+							"text-tiny px-s-300 py-s-200 min-h-[44px] min-w-[44px] shrink-0 rounded-md font-medium transition-colors",
 							activeTab === tab.id
 								? "bg-acc-100 text-bg-100"
 								: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
@@ -132,7 +157,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 				aria-labelledby={`market-tab-${activeTab}`}
 			>
 				{activeTab === "status" ? (
-					<div className="space-y-2.5 p-m-400">
+					<div className="p-m-400 space-y-2.5">
 						{statuses.map((market) => {
 							const label = t(`status.${market.id}`)
 							const countdown =
@@ -147,7 +172,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 									role="status"
 									aria-label={`${label}: ${t(`status.${market.state}`)}`}
 								>
-									<div className="flex items-center gap-s-200">
+									<div className="gap-s-200 flex items-center">
 										<span
 											className={cn(
 												"h-2 w-2 rounded-full",
@@ -160,7 +185,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 										/>
 										<span className="text-small text-txt-100">{label}</span>
 									</div>
-									<div className="flex items-center gap-s-200">
+									<div className="gap-s-200 flex items-center">
 										{countdown ? (
 											<span className="text-tiny text-txt-300">
 												{countdown}
@@ -186,23 +211,26 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 				{activeTab === "calendar" ? <B3TradingCalendar /> : null}
 
 				{activeTab === "links" ? (
-					<div className="flex flex-col gap-s-100 p-s-300">
+					<div className="gap-s-100 p-s-300 flex flex-col">
 						{QUICK_LINKS.map((link) => (
 							<a
 								key={link.url}
 								href={link.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-txt-200 hover:bg-bg-300/50 hover:text-txt-100 flex items-center gap-2.5 rounded-md px-s-200 py-s-200 transition-colors"
+								className="text-txt-200 hover:bg-bg-300/50 hover:text-txt-100 px-s-200 py-s-200 flex items-center gap-2.5 rounded-md transition-colors"
 								aria-label={t(`links.${link.labelKey}`)}
 							>
-								<span className="shrink-0 text-body" aria-hidden="true">
+								<span className="text-body shrink-0" aria-hidden="true">
 									{link.emoji}
 								</span>
 								<span className="text-small flex-1">
 									{t(`links.${link.labelKey}`)}
 								</span>
-								<ExternalLink className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />
+								<ExternalLink
+									className="text-txt-300 h-3 w-3 shrink-0"
+									aria-hidden="true"
+								/>
 							</a>
 						))}
 					</div>
@@ -261,7 +289,10 @@ const isInRange = (
 	closeMinute: number
 ): boolean => {
 	const current = toMinutes(hour, minute)
-	return current >= toMinutes(openHour, openMinute) && current < toMinutes(closeHour, closeMinute)
+	return (
+		current >= toMinutes(openHour, openMinute) &&
+		current < toMinutes(closeHour, closeMinute)
+	)
 }
 
 /**
@@ -369,17 +400,29 @@ export const computeMarketStatuses = (): MarketStatus[] => {
 
 	// CME Globex: complex overnight schedule — Sun 17:00 CT → Fri 16:00 CT, daily break 16:00-17:00 CT
 	const cmeIsOpen = (() => {
-		if (ct.dayOfWeek === 6) return false
-		if (ct.dayOfWeek === 0) return ct.hour >= 17
-		if (ct.dayOfWeek === 5) return ct.hour < 16
+		if (ct.dayOfWeek === 6) {
+			return false
+		}
+		if (ct.dayOfWeek === 0) {
+			return ct.hour >= 17
+		}
+		if (ct.dayOfWeek === 5) {
+			return ct.hour < 16
+		}
 		return !isInRange(ct.hour, ct.minute, 16, 0, 17, 0)
 	})()
 
 	// Forex: Sun 17:00 ET → Fri 17:00 ET (24/5)
 	const forexIsOpen = (() => {
-		if (ny.dayOfWeek === 6) return false
-		if (ny.dayOfWeek === 0) return ny.hour >= 17
-		if (ny.dayOfWeek === 5) return ny.hour < 17
+		if (ny.dayOfWeek === 6) {
+			return false
+		}
+		if (ny.dayOfWeek === 0) {
+			return ny.hour >= 17
+		}
+		if (ny.dayOfWeek === 5) {
+			return ny.hour < 17
+		}
 		return true
 	})()
 

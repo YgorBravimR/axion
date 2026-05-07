@@ -10,9 +10,15 @@
  * @returns The appropriate Tailwind color class
  */
 const getValueColorClass = (value: number | null | undefined): string => {
-	if (value === null || value === undefined) return "text-txt-100"
-	if (value > 0) return "text-trade-buy"
-	if (value < 0) return "text-trade-sell"
+	if (value === null || value === undefined) {
+		return "text-txt-100"
+	}
+	if (value > 0) {
+		return "text-trade-buy"
+	}
+	if (value < 0) {
+		return "text-trade-sell"
+	}
 	return "text-txt-100"
 }
 
@@ -28,9 +34,15 @@ const getThresholdColorClass = (
 	value: number | null | undefined,
 	threshold: number
 ): string => {
-	if (value === null || value === undefined) return "text-txt-100"
-	if (value > threshold) return "text-trade-buy"
-	if (value < threshold) return "text-trade-sell"
+	if (value === null || value === undefined) {
+		return "text-txt-100"
+	}
+	if (value > threshold) {
+		return "text-trade-buy"
+	}
+	if (value < threshold) {
+		return "text-trade-sell"
+	}
 	return "text-txt-100"
 }
 

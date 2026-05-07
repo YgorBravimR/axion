@@ -40,7 +40,9 @@ const computeEffectiveBaseRisk = (
 			return profile.baseRiskCents
 
 		case "percentOfBalance": {
-			if (!profile.riskPercent) return profile.baseRiskCents
+			if (!profile.riskPercent) {
+				return profile.baseRiskCents
+			}
 			return Math.max(
 				1,
 				Math.round((currentBalance * profile.riskPercent) / 100)
@@ -66,7 +68,9 @@ const computeEffectiveBaseRisk = (
 		}
 
 		case "kellyFractional": {
-			if (!profile.kellyDivisor) return profile.baseRiskCents
+			if (!profile.kellyDivisor) {
+				return profile.baseRiskCents
+			}
 			const winProb = profile.winRate / 100
 			const rr = profile.rewardRiskRatio
 			// Kelly formula: f* = W - (1-W)/R
@@ -276,7 +280,9 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 			combinedDaysSkippedDrawdownPause += monthResult.daysSkippedDrawdownPause
 			combinedDaysTargetHit += monthResult.daysTargetHit
 			combinedTimesWeeklyLimitHit += monthResult.timesWeeklyLimitHit
-			if (monthResult.monthlyLimitHit) combinedMonthlyLimitHit = true
+			if (monthResult.monthlyLimitHit) {
+				combinedMonthlyLimitHit = true
+			}
 
 			// Track cross-month minimum balance (the month tracks its own minBalance)
 			runMinBalance = Math.min(runMinBalance, monthResult.minBalance)
@@ -509,9 +515,15 @@ const simulateMonth = (
 		totalTrades += day.trades.length
 
 		// Track mode distribution
-		if (day.mode === "lossRecovery") daysInLossRecovery++
-		if (day.mode === "gainCompounding") daysInGainCompounding++
-		if (day.targetHit) daysTargetHit++
+		if (day.mode === "lossRecovery") {
+			daysInLossRecovery++
+		}
+		if (day.mode === "gainCompounding") {
+			daysInGainCompounding++
+		}
+		if (day.targetHit) {
+			daysTargetHit++
+		}
 
 		// Update consecutive losing days counter
 		if (day.dayPnl < 0) {
@@ -594,7 +606,7 @@ const simulateDay = (
 	const trades: SimulatedTradeV2[] = []
 	let dayPnl = 0
 	let targetHit = false
-	let dayMode: SimulatedDay["mode"] = "lossRecovery" // will be overwritten
+	let dayMode: SimulatedDay["mode"]
 
 	// T1 — base trade
 	const t1 = simulateTrade({
@@ -618,7 +630,9 @@ const simulateDay = (
 
 		for (let i = 0; i < effectiveRecoveryRisks.length; i++) {
 			// Check daily loss limit before each recovery trade
-			if (dayPnl <= -effectiveDailyLimit) break
+			if (dayPnl <= -effectiveDailyLimit) {
+				break
+			}
 
 			const stepRisk = effectiveRecoveryRisks[i]
 			// Cap risk to remaining budget before hitting daily loss limit
@@ -639,7 +653,9 @@ const simulateDay = (
 
 			// If the recovery trade won and profile does NOT require executing all
 			// remaining steps regardless, stop the recovery sequence early
-			if (recoveryTrade.isWin && !profile.executeAllRegardless) break
+			if (recoveryTrade.isWin && !profile.executeAllRegardless) {
+				break
+			}
 		}
 	} else {
 		// Gain compounding mode
@@ -674,10 +690,14 @@ const simulateDay = (
 				)
 
 				// Need meaningful risk to continue
-				if (compoundingRisk <= 0) break
+				if (compoundingRisk <= 0) {
+					break
+				}
 
 				// Check daily loss limit (protect against giving back more than limit)
-				if (dayPnl - compoundingRisk < -effectiveDailyLimit) break
+				if (dayPnl - compoundingRisk < -effectiveDailyLimit) {
+					break
+				}
 
 				const compoundTrade = simulateTrade({
 					profile,
@@ -702,7 +722,9 @@ const simulateDay = (
 				} else {
 					// Loss in compounding: recalculate accumulated gain from current day P&L
 					accumulatedGain = Math.max(0, dayPnl)
-					if (accumulatedGain <= 0) break
+					if (accumulatedGain <= 0) {
+						break
+					}
 				}
 			}
 
@@ -837,7 +859,9 @@ const aggregateStatisticsV2 = (
 	}
 
 	const stdDev = (values: number[]): number => {
-		if (values.length === 0) return 0
+		if (values.length === 0) {
+			return 0
+		}
 		const avg = mean(values)
 		const squaredDiffs = values.map((v) => Math.pow(v - avg, 2))
 		return Math.sqrt(mean(squaredDiffs))
@@ -925,8 +949,12 @@ const calculateDistributionV2 = (
 	let min = Infinity
 	let max = -Infinity
 	for (const pnl of pnls) {
-		if (pnl < min) min = pnl
-		if (pnl > max) max = pnl
+		if (pnl < min) {
+			min = pnl
+		}
+		if (pnl > max) {
+			max = pnl
+		}
 	}
 	const bucketCount = 20
 	const bucketSize = (max - min) / bucketCount || 1

@@ -1,6 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef, useMemo, type KeyboardEvent } from "react"
+import {
+	useState,
+	useEffect,
+	useCallback,
+	useRef,
+	useMemo,
+	type KeyboardEvent,
+} from "react"
 import { useTranslations } from "next-intl"
 import { Activity, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -134,7 +141,9 @@ export const MarketMonitorContent = () => {
 
 	const startIntervals = useCallback(() => {
 		if (!pollIntervalRef.current) {
-			pollIntervalRef.current = setInterval(fetchData, REFRESH_INTERVAL_MS)
+			pollIntervalRef.current = setInterval(() => {
+				void fetchData()
+			}, REFRESH_INTERVAL_MS)
 		}
 		if (!statusIntervalRef.current) {
 			statusIntervalRef.current = setInterval(() => {
@@ -156,7 +165,7 @@ export const MarketMonitorContent = () => {
 
 	// Initial fetch
 	useEffect(() => {
-		fetchData()
+		void fetchData()
 	}, [fetchData])
 
 	// Start intervals and pause/resume based on tab visibility
@@ -182,14 +191,21 @@ export const MarketMonitorContent = () => {
 	}, [startIntervals, stopIntervals])
 
 	const handleRefresh = fetchData
-	const handleTabChange = useCallback((tabId: string) => setActiveTab(tabId), [])
+	const handleTabChange = useCallback(
+		(tabId: string) => setActiveTab(tabId),
+		[]
+	)
 
 	const handleTabListKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLDivElement>) => {
-			if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
+			if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+				return
+			}
 			const ids = groups.map((g) => g.id)
 			const currentIndex = ids.indexOf(activeTab)
-			if (currentIndex === -1) return
+			if (currentIndex === -1) {
+				return
+			}
 			const nextIndex =
 				event.key === "ArrowRight"
 					? (currentIndex + 1) % ids.length
@@ -238,15 +254,19 @@ export const MarketMonitorContent = () => {
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* ── Header ──────────────────────────────────────────────────────── */}
 			<div>
-				<div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-s-200 sm:gap-x-4">
-					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">{t("title")}</h1>
-					<div className="flex items-center gap-m-400">
+				<div className="gap-y-s-200 flex flex-wrap items-center justify-between gap-x-2 sm:gap-x-4">
+					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">
+						{t("title")}
+					</h1>
+					<div className="gap-m-400 flex items-center">
 						{/* Inline market status dots */}
 						{marketStatuses.length > 0 ? (
-							<div className="flex items-center gap-s-300">
+							<div className="gap-s-300 flex items-center">
 								{HEADER_MARKET_IDS.map((id) => {
 									const status = marketStatusMap.get(id)
-									if (!status) return null
+									if (!status) {
+										return null
+									}
 									return (
 										<span
 											key={id}
@@ -283,7 +303,7 @@ export const MarketMonitorContent = () => {
 
 						{/* Last updated */}
 						{lastUpdated ? (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<span className="text-tiny text-txt-300">
 									{t("lastUpdated")}: {formatTime(lastUpdated)}
 								</span>
@@ -309,7 +329,7 @@ export const MarketMonitorContent = () => {
 			{heroQuotes.length > 0 ? (
 				<div className="relative">
 					<div
-						className="scrollbar-none flex gap-s-300 overflow-x-auto pb-s-100"
+						className="scrollbar-none gap-s-300 pb-s-100 flex overflow-x-auto"
 						role="list"
 						aria-label={t("assets")}
 					>
@@ -319,18 +339,18 @@ export const MarketMonitorContent = () => {
 					</div>
 					{/* Right-side fade gradient — indicates more content on scroll */}
 					<div
-						className="pointer-events-none absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-bg-100 to-transparent"
+						className="from-bg-100 pointer-events-none absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l to-transparent"
 						aria-hidden="true"
 					/>
 				</div>
 			) : null}
 
 			{/* ── Info panels — Calendar + Market Status, same height ──────────── */}
-			<div className="grid grid-cols-1 grid-rows-[1fr] items-stretch gap-s-300 sm:gap-m-400 min-h-[22rem] lg:h-[22rem] lg:grid-cols-[1fr_340px] lg:overflow-hidden">
-				<div className="lg:overflow-y-auto min-h-0">
+			<div className="gap-s-300 sm:gap-m-400 grid min-h-[22rem] grid-cols-1 grid-rows-[1fr] items-stretch lg:h-[22rem] lg:grid-cols-[1fr_340px] lg:overflow-hidden">
+				<div className="min-h-0 lg:overflow-y-auto">
 					<EconomicCalendar events={events} />
 				</div>
-				<div className="lg:overflow-y-auto min-h-0">
+				<div className="min-h-0 lg:overflow-y-auto">
 					<MarketStatusPanel statuses={marketStatuses} />
 				</div>
 			</div>
@@ -340,8 +360,9 @@ export const MarketMonitorContent = () => {
 				{/* Tab bar */}
 				<div className="relative">
 					<div
-						className="border-bg-300 flex items-center gap-s-100 overflow-x-auto border-b px-s-300 py-s-200"
+						className="border-bg-300 gap-s-100 px-s-300 py-s-200 flex items-center overflow-x-auto border-b"
 						role="tablist"
+						tabIndex={0}
 						onKeyDown={handleTabListKeyDown}
 					>
 						{groups.map((group) => (
@@ -351,7 +372,7 @@ export const MarketMonitorContent = () => {
 								type="button"
 								onClick={() => handleTabChange(group.id)}
 								className={cn(
-									"text-tiny shrink-0 rounded-md px-s-300 py-s-200 font-medium transition-colors min-h-[44px] min-w-[44px]",
+									"text-tiny px-s-300 py-s-200 min-h-[44px] min-w-[44px] shrink-0 rounded-md font-medium transition-colors",
 									activeTab === group.id
 										? "bg-acc-100 text-bg-100"
 										: "text-txt-300 hover:text-txt-100 hover:bg-bg-300/50"
@@ -365,7 +386,7 @@ export const MarketMonitorContent = () => {
 							</button>
 						))}
 					</div>
-					<div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-bg-200 to-transparent sm:hidden" />
+					<div className="from-bg-200 pointer-events-none absolute top-0 right-0 bottom-0 w-8 bg-linear-to-l to-transparent sm:hidden" />
 				</div>
 
 				{/* Tab content */}
@@ -377,7 +398,7 @@ export const MarketMonitorContent = () => {
 				>
 					{activeGroup && activeGroup.quotes.length > 0 ? (
 						<div
-							className="flex flex-col gap-s-100"
+							className="gap-s-100 flex flex-col"
 							role="list"
 							aria-label={t(activeGroup.labelKey)}
 						>
@@ -408,7 +429,7 @@ export const MarketMonitorContent = () => {
 								variant="ghost"
 								size="sm"
 								onClick={handleRefresh}
-								className="text-tiny text-acc-100 mt-s-200 inline-flex items-center gap-s-100"
+								className="text-tiny text-acc-100 mt-s-200 gap-s-100 inline-flex items-center"
 								aria-label={t("refreshNow")}
 							>
 								<RefreshCw className="h-3 w-3" />

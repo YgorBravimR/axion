@@ -45,12 +45,16 @@ const getBreakevenTicks = async (
 	const account = await db.query.tradingAccounts.findFirst({
 		where: eq(tradingAccounts.id, accountId),
 	})
-	if (!account) return 2
+	if (!account) {
+		return 2
+	}
 
 	const asset = await db.query.assets.findFirst({
 		where: eq(assets.symbol, assetSymbol),
 	})
-	if (!asset) return account.defaultBreakevenTicks
+	if (!asset) {
+		return account.defaultBreakevenTicks
+	}
 
 	const assetConfig = await db.query.accountAssets.findFirst({
 		where: and(

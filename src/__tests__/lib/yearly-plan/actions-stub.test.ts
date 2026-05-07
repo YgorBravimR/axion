@@ -20,7 +20,12 @@ vi.mock("@/db/schema", () => ({
 }))
 
 vi.mock("@/app/actions/auth", () => ({
-	requireAuth: vi.fn().mockResolvedValue({ accountId: "mock-account-id", userId: "mock-user-id" }),
+	requireAuth: vi
+		.fn()
+		.mockResolvedValue({
+			accountId: "mock-account-id",
+			userId: "mock-user-id",
+		}),
 }))
 
 vi.mock("@/lib/error-utils", () => ({
@@ -28,6 +33,7 @@ vi.mock("@/lib/error-utils", () => ({
 }))
 
 vi.mock("drizzle-orm", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("drizzle-orm")>()
 	return {
 		...original,

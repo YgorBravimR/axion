@@ -7,7 +7,11 @@
  * module owns the cents-shape types and the boundary adapter that converts
  * R → cents using `oneRCents` resolved from the active fractal plan.
  */
-import type { DecisionTreeConfig, RiskCalculation, GainMode } from "@/types/risk-profile"
+import type {
+	DecisionTreeConfig,
+	RiskCalculation,
+	GainMode,
+} from "@/types/risk-profile"
 
 type RiskCalculationCents =
 	| { type: "percentOfBase"; percent: number }
@@ -42,7 +46,11 @@ type GainModeCents =
 	  }
 
 interface DecisionTreeCents {
-	baseTrade: { riskCents: number; maxContracts: number | null; minStopPoints: number | null }
+	baseTrade: {
+		riskCents: number
+		maxContracts: number | null
+		minStopPoints: number | null
+	}
 	lossRecovery: {
 		sequence: LossRecoveryStepCents[]
 		executeAllRegardless: boolean
@@ -64,14 +72,25 @@ interface DecisionTreeCents {
 	limitsR?: DecisionTreeConfig["limitsR"]
 }
 
-const adaptCalc = (calc: RiskCalculation, oneRCents: number): RiskCalculationCents => {
-	if (calc.type === "fixedR") return { type: "fixedCents", amountCents: Math.round(calc.amountR * oneRCents) }
+const adaptCalc = (
+	calc: RiskCalculation,
+	oneRCents: number
+): RiskCalculationCents => {
+	if (calc.type === "fixedR") {
+		return {
+			type: "fixedCents",
+			amountCents: Math.round(calc.amountR * oneRCents),
+		}
+	}
 	return calc
 }
 
 const adaptGain = (gain: GainMode, oneRCents: number): GainModeCents => {
 	if (gain.type === "singleTarget") {
-		return { type: "singleTarget", dailyTargetCents: Math.round(gain.dailyTargetR * oneRCents) }
+		return {
+			type: "singleTarget",
+			dailyTargetCents: Math.round(gain.dailyTargetR * oneRCents),
+		}
 	}
 	if (gain.type === "compounding") {
 		return {
@@ -79,7 +98,9 @@ const adaptGain = (gain: GainMode, oneRCents: number): GainModeCents => {
 			reinvestmentPercent: gain.reinvestmentPercent,
 			stopOnFirstLoss: gain.stopOnFirstLoss,
 			dailyTargetCents:
-				gain.dailyTargetR !== null ? Math.round(gain.dailyTargetR * oneRCents) : null,
+				gain.dailyTargetR !== null
+					? Math.round(gain.dailyTargetR * oneRCents)
+					: null,
 		}
 	}
 	return {
@@ -91,15 +112,19 @@ const adaptGain = (gain: GainMode, oneRCents: number): GainModeCents => {
 		repeatLastStep: gain.repeatLastStep,
 		stopOnFirstLoss: gain.stopOnFirstLoss,
 		dailyTargetCents:
-			gain.dailyTargetR !== null ? Math.round(gain.dailyTargetR * oneRCents) : null,
+			gain.dailyTargetR !== null
+				? Math.round(gain.dailyTargetR * oneRCents)
+				: null,
 	}
 }
 
 const adaptRiskSizing = (
 	mode: DecisionTreeConfig["riskSizing"],
-	oneRCents: number,
+	oneRCents: number
 ): RiskSizingModeCents | undefined => {
-	if (!mode) return undefined
+	if (!mode) {
+		return undefined
+	}
 	if (mode.type === "fixedRatio") {
 		return {
 			type: "fixedRatio",
@@ -112,7 +137,7 @@ const adaptRiskSizing = (
 
 const adaptDecisionTree = (
 	tree: DecisionTreeConfig,
-	oneRCents: number,
+	oneRCents: number
 ): DecisionTreeCents => ({
 	baseTrade: {
 		riskCents: Math.round(tree.baseTrade.riskR * oneRCents),

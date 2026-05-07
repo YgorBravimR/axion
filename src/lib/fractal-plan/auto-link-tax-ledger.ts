@@ -10,15 +10,19 @@ interface AutoLinkInput {
 	readonly monthlyPlanId: string
 }
 
-const autoLinkTaxLedger = async (input: AutoLinkInput): Promise<string | null> => {
+const autoLinkTaxLedger = async (
+	input: AutoLinkInput
+): Promise<string | null> => {
 	const monthDate = startOfMonth(new Date(input.year, input.month - 1, 1))
 	const ledgerRow = await db.query.monthlyTaxLedger.findFirst({
 		where: and(
 			eq(monthlyTaxLedger.accountId, input.accountId),
-			eq(monthlyTaxLedger.month, monthDate),
+			eq(monthlyTaxLedger.month, monthDate)
 		),
 	})
-	if (!ledgerRow) return null
+	if (!ledgerRow) {
+		return null
+	}
 
 	await db
 		.update(monthlyPlan)

@@ -38,18 +38,20 @@ const SkippedTradesWarning = ({ summary }: SkippedTradesWarningProps) => {
 	)
 
 	// Early return after hook calls — hooks cannot be called conditionally
-	if (totalSkipped === 0) return null
+	if (totalSkipped === 0) {
+		return null
+	}
 
 	return (
 		<div className="border-bg-300 bg-bg-200 rounded-lg border">
 			<button
 				type="button"
 				onClick={() => setIsExpanded(!isExpanded)}
-				className="flex w-full items-center justify-between p-s-300"
+				className="p-s-300 flex w-full items-center justify-between"
 				aria-expanded={isExpanded}
 				aria-label={t("toggle")}
 			>
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<AlertTriangle
 						className="text-warning h-4 w-4 shrink-0"
 						aria-hidden="true"
@@ -66,7 +68,7 @@ const SkippedTradesWarning = ({ summary }: SkippedTradesWarningProps) => {
 			</button>
 
 			{isExpanded && (
-				<div className="border-bg-300 space-y-s-200 border-t px-s-300 py-s-200">
+				<div className="border-bg-300 space-y-s-200 px-s-300 py-s-200 border-t">
 					{skipReasons.map(({ key, count }) => (
 						<div key={key} className="flex items-center justify-between">
 							<span className="text-tiny text-txt-300">

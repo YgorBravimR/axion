@@ -80,9 +80,12 @@ const MonteCarloV2Content = ({
 		commissionPerTrade: "0",
 	})
 
-	const updateField = useCallback(<K extends keyof FormState>(field: K, value: string) => {
-		setForm((prev) => ({ ...prev, [field]: value }))
-	}, [])
+	const updateField = useCallback(
+		<K extends keyof FormState>(field: K, value: string) => {
+			setForm((prev) => ({ ...prev, [field]: value }))
+		},
+		[]
+	)
 
 	// Data source state (auto-populate from strategy)
 	const [inputMode, setInputMode] = useState<"auto" | "manual">("auto")
@@ -108,20 +111,24 @@ const MonteCarloV2Content = ({
 
 	useEffect(() => {
 		if (selectedSource && inputMode === "auto") {
-			loadSourceStats(selectedSource)
+			void loadSourceStats(selectedSource)
 		}
 	}, [selectedSource, inputMode, loadSourceStats])
 
 	const handleUseStats = useCallback(() => {
-		if (!sourceStats) return
+		if (!sourceStats) {
+			return
+		}
 
 		setForm((prev) => ({
 			...prev,
 			winRate: sourceStats.winRate.toFixed(1),
-			profitFactor: sourceStats.profitFactor === Infinity
-				? ""
-				: sourceStats.profitFactor.toFixed(2),
-			commissionPerTrade: sourceStats.avgCommissionPerTradeCents?.toString() ?? "0",
+			profitFactor:
+				sourceStats.profitFactor === Infinity
+					? ""
+					: sourceStats.profitFactor.toFixed(2),
+			commissionPerTrade:
+				sourceStats.avgCommissionPerTradeCents?.toString() ?? "0",
 			breakevenRate: sourceStats.breakevenRate?.toFixed(1) ?? "0",
 		}))
 	}, [sourceStats])
@@ -134,7 +141,9 @@ const MonteCarloV2Content = ({
 	const derivedRR = useMemo(() => {
 		const pf = parseFloat(form.profitFactor)
 		const wr = parseFloat(form.winRate) / 100
-		if (isNaN(pf) || pf <= 0 || isNaN(wr) || wr <= 0 || wr >= 1) return null
+		if (isNaN(pf) || pf <= 0 || isNaN(wr) || wr <= 0 || wr >= 1) {
+			return null
+		}
 		return (pf * (1 - wr)) / wr
 	}, [form.profitFactor, form.winRate])
 
@@ -150,8 +159,9 @@ const MonteCarloV2Content = ({
 			wr >= 1 ||
 			isNaN(effectiveRR) ||
 			effectiveRR <= 0
-		)
+		) {
 			return null
+		}
 		return (wr * effectiveRR) / (1 - wr)
 	}, [form.winRate, effectiveRR])
 
@@ -165,7 +175,12 @@ const MonteCarloV2Content = ({
 		const budgetUsage = totalIterations / budgetCap
 		const isOverBudget = totalIterations > budgetCap
 		return { totalIterations, budgetUsage, isOverBudget }
-	}, [form.tradingDaysPerMonth, form.monthsToTrade, form.simulationCount, budgetCap])
+	}, [
+		form.tradingDaysPerMonth,
+		form.monthsToTrade,
+		form.simulationCount,
+		budgetCap,
+	])
 
 	// Results state
 	const [result, setResult] = useState<MonteCarloResultV2 | null>(null)
@@ -179,11 +194,14 @@ const MonteCarloV2Content = ({
 
 	// Build simulation profile from the selected risk management profile
 	const simProfile = useMemo<RiskManagementProfileForSim | null>(() => {
-		if (!selectedProfile) return null
+		if (!selectedProfile) {
+			return null
+		}
 
 		const wr = parseFloat(form.winRate)
-		if (isNaN(wr) || wr <= 0 || isNaN(effectiveRR) || effectiveRR <= 0)
+		if (isNaN(wr) || wr <= 0 || isNaN(effectiveRR) || effectiveRR <= 0) {
 			return null
+		}
 
 		const initialBalanceCents = toCents(form.initialBalance)
 		// Phase 4b: 1R baseline + caps will resolve from the active fractal plan in Phase 5.
@@ -204,7 +222,9 @@ const MonteCarloV2Content = ({
 	}, [form, selectedProfile])
 
 	const handleRunSimulation = useCallback(async () => {
-		if (!simProfile) return
+		if (!simProfile) {
+			return
+		}
 
 		setIsRunning(true)
 		setError(null)
@@ -382,7 +402,9 @@ const MonteCarloV2Content = ({
 									step="0.01"
 									min="0"
 									value={form.rewardRiskRatio}
-									onChange={(e) => updateField("rewardRiskRatio", e.target.value)}
+									onChange={(e) =>
+										updateField("rewardRiskRatio", e.target.value)
+									}
 									placeholder="1.38"
 									aria-label={t("params.rewardRiskRatio")}
 								/>
@@ -451,7 +473,9 @@ const MonteCarloV2Content = ({
 									step="100"
 									min="0"
 									value={form.initialBalance}
-									onChange={(e) => updateField("initialBalance", e.target.value)}
+									onChange={(e) =>
+										updateField("initialBalance", e.target.value)
+									}
 									placeholder="50000"
 									className="pl-l-700"
 									aria-label={t("params.initialBalance")}
@@ -470,7 +494,9 @@ const MonteCarloV2Content = ({
 								min="1"
 								max="30"
 								value={form.tradingDaysPerMonth}
-								onChange={(e) => updateField("tradingDaysPerMonth", e.target.value)}
+								onChange={(e) =>
+									updateField("tradingDaysPerMonth", e.target.value)
+								}
 								placeholder="22"
 								aria-label={t("params.tradingDaysPerMonth")}
 							/>
@@ -487,7 +513,9 @@ const MonteCarloV2Content = ({
 								min="1"
 								max="7"
 								value={form.tradingDaysPerWeek}
-								onChange={(e) => updateField("tradingDaysPerWeek", e.target.value)}
+								onChange={(e) =>
+									updateField("tradingDaysPerWeek", e.target.value)
+								}
 								placeholder="5"
 								aria-label={t("params.tradingDaysPerWeek")}
 							/>
@@ -502,7 +530,9 @@ const MonteCarloV2Content = ({
 								step="0.01"
 								min="0"
 								value={form.commissionPerTrade}
-								onChange={(e) => updateField("commissionPerTrade", e.target.value)}
+								onChange={(e) =>
+									updateField("commissionPerTrade", e.target.value)
+								}
 								placeholder="0"
 								aria-label={t("params.commissionPerTrade")}
 							/>
@@ -577,7 +607,7 @@ const MonteCarloV2Content = ({
 						<div
 							role="alert"
 							aria-live="assertive"
-							className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border flex items-start justify-between gap-s-300"
+							className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error gap-s-300 flex items-start justify-between rounded-lg border"
 						>
 							<span>{error}</span>
 							<button

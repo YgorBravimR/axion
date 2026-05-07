@@ -7,7 +7,10 @@ import { monthlyPlan, quarterlyPlan } from "@/db/schema"
 import { and, eq, gt, inArray, ne } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
-import { resolveTier, type LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+import {
+	resolveTier,
+	type LadderRuleR,
+} from "@/lib/fractal-plan/capital-ladder"
 import type { ActionResponse } from "@/types"
 
 const upsertSchema = z.object({
@@ -24,29 +27,56 @@ const upsertSchema = z.object({
 })
 
 const upsertMonthlyPlan = async (
-	input: z.infer<typeof upsertSchema>,
+	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = upsertSchema.parse(input)
 		await requireAuth()
 		const updates: Record<string, unknown> = { updatedAt: new Date() }
-		if (parsed.overrideDailyLossR !== undefined) updates.overrideDailyLossR = parsed.overrideDailyLossR.toString()
-		if (parsed.overrideWeeklyLossR !== undefined) updates.overrideWeeklyLossR = parsed.overrideWeeklyLossR.toString()
-		if (parsed.overrideMonthlyLossR !== undefined) updates.overrideMonthlyLossR = parsed.overrideMonthlyLossR.toString()
-		if (parsed.overrideDailyTargetR !== undefined) updates.overrideDailyTargetR = parsed.overrideDailyTargetR.toString()
-		if (parsed.overrideActivePlaybookIds !== undefined) updates.overrideActivePlaybookIds = parsed.overrideActivePlaybookIds
-		if (parsed.overrideRiskProfileId !== undefined) updates.overrideRiskProfileId = parsed.overrideRiskProfileId
-		if (parsed.monthlyGoalCents !== undefined) updates.monthlyGoalCents = parsed.monthlyGoalCents
-		if (parsed.intentNotes !== undefined) updates.intentNotes = parsed.intentNotes
-		if (parsed.postMortemNotes !== undefined) updates.postMortemNotes = parsed.postMortemNotes
+		if (parsed.overrideDailyLossR !== undefined) {
+			updates.overrideDailyLossR = parsed.overrideDailyLossR.toString()
+		}
+		if (parsed.overrideWeeklyLossR !== undefined) {
+			updates.overrideWeeklyLossR = parsed.overrideWeeklyLossR.toString()
+		}
+		if (parsed.overrideMonthlyLossR !== undefined) {
+			updates.overrideMonthlyLossR = parsed.overrideMonthlyLossR.toString()
+		}
+		if (parsed.overrideDailyTargetR !== undefined) {
+			updates.overrideDailyTargetR = parsed.overrideDailyTargetR.toString()
+		}
+		if (parsed.overrideActivePlaybookIds !== undefined) {
+			updates.overrideActivePlaybookIds = parsed.overrideActivePlaybookIds
+		}
+		if (parsed.overrideRiskProfileId !== undefined) {
+			updates.overrideRiskProfileId = parsed.overrideRiskProfileId
+		}
+		if (parsed.monthlyGoalCents !== undefined) {
+			updates.monthlyGoalCents = parsed.monthlyGoalCents
+		}
+		if (parsed.intentNotes !== undefined) {
+			updates.intentNotes = parsed.intentNotes
+		}
+		if (parsed.postMortemNotes !== undefined) {
+			updates.postMortemNotes = parsed.postMortemNotes
+		}
 
-		await db.update(monthlyPlan).set(updates).where(eq(monthlyPlan.id, parsed.monthlyPlanId))
-		return { status: "success", message: "Monthly plan updated", data: { id: parsed.monthlyPlanId } }
+		await db
+			.update(monthlyPlan)
+			.set(updates)
+			.where(eq(monthlyPlan.id, parsed.monthlyPlanId))
+		return {
+			status: "success",
+			message: "Monthly plan updated",
+			data: { id: parsed.monthlyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "UPSERT_MONTHLY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "UPSERT_MONTHLY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
@@ -64,7 +94,7 @@ const resetSchema = z.object({
 })
 
 const resetMonthlyOverride = async (
-	input: z.infer<typeof resetSchema>,
+	input: z.infer<typeof resetSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = resetSchema.parse(input)
@@ -73,12 +103,18 @@ const resetMonthlyOverride = async (
 			.update(monthlyPlan)
 			.set({ [parsed.field]: null, updatedAt: new Date() })
 			.where(eq(monthlyPlan.id, parsed.monthlyPlanId))
-		return { status: "success", message: "Override reset", data: { id: parsed.monthlyPlanId } }
+		return {
+			status: "success",
+			message: "Override reset",
+			data: { id: parsed.monthlyPlanId },
+		}
 	} catch (err) {
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "RESET_MONTHLY_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "RESET_MONTHLY_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }
@@ -97,7 +133,7 @@ interface SetMonthlyCapitalResult {
 }
 
 const setMonthlyCapital = async (
-	input: z.infer<typeof setMonthlyCapitalSchema>,
+	input: z.infer<typeof setMonthlyCapitalSchema>
 ): Promise<ActionResponse<SetMonthlyCapitalResult>> => {
 	try {
 		const parsed = setMonthlyCapitalSchema.parse(input)
@@ -124,7 +160,8 @@ const setMonthlyCapital = async (
 			}
 		}
 
-		const ladder = target.quarterlyPlan.yearlyPlan.ladderRules as unknown as LadderRuleR[]
+		const ladder = target.quarterlyPlan.yearlyPlan
+			.ladderRules as unknown as LadderRuleR[]
 		const { tierIndex, oneRCents } = resolveTier(parsed.capitalCents, ladder)
 		const now = new Date()
 
@@ -141,7 +178,9 @@ const setMonthlyCapital = async (
 				})
 				.where(eq(monthlyPlan.id, parsed.monthlyPlanId))
 
-			if (!parsed.propagateForward) return 0
+			if (!parsed.propagateForward) {
+				return 0
+			}
 
 			// Cascade to forward months in same year that haven't been manually overridden.
 			const yearlyPlanId = target.quarterlyPlan.yearlyPlan.id
@@ -152,7 +191,9 @@ const setMonthlyCapital = async (
 					.where(eq(quarterlyPlan.yearlyPlanId, yearlyPlanId))
 			).map((q) => q.id)
 
-			if (quarterIds.length === 0) return 0
+			if (quarterIds.length === 0) {
+				return 0
+			}
 
 			const updated = await tx
 				.update(monthlyPlan)
@@ -168,8 +209,8 @@ const setMonthlyCapital = async (
 						inArray(monthlyPlan.quarterlyPlanId, quarterIds),
 						gt(monthlyPlan.month, target.month),
 						eq(monthlyPlan.year, target.year),
-						ne(monthlyPlan.snapshotReason, "manual"),
-					),
+						ne(monthlyPlan.snapshotReason, "manual")
+					)
 				)
 				.returning({ id: monthlyPlan.id })
 			return updated.length
@@ -184,7 +225,9 @@ const setMonthlyCapital = async (
 		return {
 			status: "error",
 			message: toSafeErrorMessage(err),
-			errors: [{ code: "SET_MONTHLY_CAPITAL_FAILED", detail: toSafeErrorMessage(err) }],
+			errors: [
+				{ code: "SET_MONTHLY_CAPITAL_FAILED", detail: toSafeErrorMessage(err) },
+			],
 		}
 	}
 }

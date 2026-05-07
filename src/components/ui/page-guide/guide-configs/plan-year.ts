@@ -1,9 +1,11 @@
 import type { PageGuideConfig } from "@/types/page-guide"
 
 const setDrawer = (open: boolean): void => {
-	if (typeof window === "undefined") return
+	if (typeof window === "undefined") {
+		return
+	}
 	window.dispatchEvent(
-		new CustomEvent("plan-year-guide:set-drawer", { detail: { open } }),
+		new CustomEvent("plan-year-guide:set-drawer", { detail: { open } })
 	)
 }
 

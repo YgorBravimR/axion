@@ -49,7 +49,9 @@ const requestPasswordReset = async (
 	input: RequestResetInput
 ): Promise<{ success: boolean }> => {
 	const parsed = requestResetSchema.safeParse(input)
-	if (!parsed.success) return { success: true } // anti-enumeration
+	if (!parsed.success) {
+		return { success: true }
+	} // anti-enumeration
 
 	const email = parsed.data.email.toLowerCase()
 	const identifier = buildIdentifier(email)
@@ -60,7 +62,9 @@ const requestPasswordReset = async (
 		columns: { id: true },
 	})
 
-	if (!user) return { success: true }
+	if (!user) {
+		return { success: true }
+	}
 
 	// Delete any existing tokens for this identifier
 	await db
@@ -120,7 +124,10 @@ const verifyResetCode = async (
 	const rateLimitResult = await verifyLimiter.check(`pw-verify:${lowerEmail}`)
 	if (!rateLimitResult.allowed) {
 		const retryMinutes = Math.ceil(rateLimitResult.retryAfterMs / 60_000)
-		return { valid: false, error: t("errors.rateLimited", { minutes: retryMinutes }) }
+		return {
+			valid: false,
+			error: t("errors.rateLimited", { minutes: retryMinutes }),
+		}
 	}
 
 	const identifier = buildIdentifier(lowerEmail)
@@ -153,7 +160,8 @@ const resetPassword = async (
 	const tAuth = await getTranslations("auth")
 	const parsed = resetPasswordSchema.safeParse(input)
 	if (!parsed.success) {
-		const firstError = parsed.error.issues[0]?.message ?? t("errors.invalidInput")
+		const firstError =
+			parsed.error.issues[0]?.message ?? t("errors.invalidInput")
 		return { success: false, error: firstError }
 	}
 

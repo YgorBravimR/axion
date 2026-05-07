@@ -211,6 +211,7 @@ export const getTagStats = async (
 
 		for (const tag of allTags) {
 			// Get all trades with this tag
+			// eslint-disable-next-line no-await-in-loop -- per-tag trade query to build tag statistics; user-bounded N (typically <50 tags)
 			const tradeTagsResult = await db.query.tradeTags.findMany({
 				where: eq(tradeTags.tagId, tag.id),
 				with: {
@@ -222,42 +223,55 @@ export const getTagStats = async (
 			const filteredTrades = tradeTagsResult
 				.map((tt) => tt.trade)
 				.filter((trade) => {
-					if (trade.isArchived) return false
-					if (!trade.accountId) return false
+					if (trade.isArchived) {
+						return false
+					}
+					if (!trade.accountId) {
+						return false
+					}
 					// Check account ownership based on showAllAccounts mode
 					const accountMatch = authContext.showAllAccounts
 						? authContext.allAccountIds.includes(trade.accountId)
 						: trade.accountId === authContext.accountId
-					if (!accountMatch) return false
-					if (filters?.dateFrom && trade.entryDate < filters.dateFrom)
+					if (!accountMatch) {
 						return false
-					if (filters?.dateTo && trade.entryDate > filters.dateTo) return false
+					}
+					if (filters?.dateFrom && trade.entryDate < filters.dateFrom) {
+						return false
+					}
+					if (filters?.dateTo && trade.entryDate > filters.dateTo) {
+						return false
+					}
 					if (
 						filters?.assets &&
 						filters.assets.length > 0 &&
 						!filters.assets.includes(trade.asset)
-					)
+					) {
 						return false
+					}
 					if (
 						filters?.directions &&
 						filters.directions.length > 0 &&
 						!filters.directions.includes(trade.direction)
-					)
+					) {
 						return false
+					}
 					if (
 						filters?.outcomes &&
 						filters.outcomes.length > 0 &&
 						trade.outcome &&
 						!filters.outcomes.includes(trade.outcome)
-					)
+					) {
 						return false
+					}
 					if (
 						filters?.timeframeIds &&
 						filters.timeframeIds.length > 0 &&
 						trade.timeframeId &&
 						!filters.timeframeIds.includes(trade.timeframeId)
-					)
+					) {
 						return false
+					}
 					return true
 				})
 
@@ -289,8 +303,11 @@ export const getTagStats = async (
 					rCount++
 				}
 
-				if (trade.outcome === "win") winCount++
-				else if (trade.outcome === "loss") lossCount++
+				if (trade.outcome === "win") {
+					winCount++
+				} else if (trade.outcome === "loss") {
+					lossCount++
+				}
 			}
 
 			tagStats.push({

@@ -95,7 +95,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 	}, [])
 
 	const handleConfirmDelete = useCallback(() => {
-		if (!deleteTarget) return
+		if (!deleteTarget) {
+			return
+		}
 		const asset = deleteTarget
 		setPendingId(asset.id)
 		startTransition(async () => {
@@ -304,7 +306,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 							aria-pressed={filterType === null}
 							onClick={() => setFilterType(null)}
 							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") setFilterType(null)
+								if (e.key === "Enter" || e.key === " ") {
+									setFilterType(null)
+								}
 							}}
 						>
 							{tCommon("all")}
@@ -322,8 +326,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 									setFilterType(filterType === type.id ? null : type.id)
 								}
 								onKeyDown={(e) => {
-									if (e.key === "Enter" || e.key === " ")
+									if (e.key === "Enter" || e.key === " ") {
 										setFilterType(filterType === type.id ? null : type.id)
+									}
 								}}
 							>
 								{type.name}
@@ -372,7 +377,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			<AlertDialog
 				open={!!deleteTarget}
 				onOpenChange={(open) => {
-					if (!open && !isPending) setDeleteTarget(null)
+					if (!open && !isPending) {
+						setDeleteTarget(null)
+					}
 				}}
 			>
 				<AlertDialogContent id="delete-asset-confirm">

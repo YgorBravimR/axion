@@ -14,9 +14,13 @@ import type { CandleRow } from "@/types/candle"
  *
  * Returns "low_first" or "high_first".
  */
-const getCandleTraversalOrder = (candle: CandleRow): "low_first" | "high_first" => {
-	if (candle.close >= candle.open) return "low_first"   // bullish: low came first
-	return "high_first"                                    // bearish: high came first
+const getCandleTraversalOrder = (
+	candle: CandleRow
+): "low_first" | "high_first" => {
+	if (candle.close >= candle.open) {
+		return "low_first"
+	} // bullish: low came first
+	return "high_first" // bearish: high came first
 }
 
 interface HitCheckResult {
@@ -44,22 +48,24 @@ const checkHits = (
 	targetPrice: number | null,
 	direction: Direction
 ): HitCheckResult => {
-	const stopHit = direction === "long"
-		? candle.low <= stopPrice
-		: candle.high >= stopPrice
+	const stopHit =
+		direction === "long" ? candle.low <= stopPrice : candle.high >= stopPrice
 
-	const targetHit = targetPrice !== null && (direction === "long"
-		? candle.high >= targetPrice
-		: candle.low <= targetPrice)
+	const targetHit =
+		targetPrice !== null &&
+		(direction === "long"
+			? candle.high >= targetPrice
+			: candle.low <= targetPrice)
 
 	if (stopHit && targetHit) {
 		const traversal = getCandleTraversalOrder(candle)
 
 		// For long: stop is on the low side, target on the high side
 		// "low_first" means stop hit first for long
-		const stopHitFirst = direction === "long"
-			? traversal === "low_first"
-			: traversal === "high_first"
+		const stopHitFirst =
+			direction === "long"
+				? traversal === "low_first"
+				: traversal === "high_first"
 
 		return { stopHit, targetHit, stopHitFirst }
 	}
@@ -80,13 +86,17 @@ const applySlippage = (
 	slippageTicks: number,
 	tickSize: number
 ): number => {
-	if (slippageTicks === 0) return price
+	if (slippageTicks === 0) {
+		return price
+	}
 
 	const slippagePoints = slippageTicks * tickSize
 
 	// Worsening direction depends on entry vs exit and direction
 	if (isEntry) {
-		return direction === "long" ? price + slippagePoints : price - slippagePoints
+		return direction === "long"
+			? price + slippagePoints
+			: price - slippagePoints
 	}
 	// Exit: opposite — long stop fills lower, short stop fills higher
 	return direction === "long" ? price - slippagePoints : price + slippagePoints

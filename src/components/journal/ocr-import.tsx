@@ -1,6 +1,14 @@
 "use client"
 
-import { useState, useRef, useCallback, useEffect, useMemo, type DragEvent, type ChangeEvent } from "react"
+import {
+	useState,
+	useRef,
+	useCallback,
+	useEffect,
+	useMemo,
+	type DragEvent,
+	type ChangeEvent,
+} from "react"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -106,11 +114,13 @@ export const OcrImport = () => {
 		let isMounted = true
 		const checkVision = async () => {
 			const result = await checkVisionAvailability()
-			if (!isMounted) return
+			if (!isMounted) {
+				return
+			}
 			const isAvailable = result.data?.available ?? false
 			setVisionAvailable(isAvailable)
 		}
-		checkVision()
+		void checkVision()
 		return () => {
 			isMounted = false
 		}
@@ -120,98 +130,105 @@ export const OcrImport = () => {
 	// Handlers
 	// ==========================================
 
-	const handleFileSelect = useCallback(async (file: File) => {
-		const validTypes = ["image/png", "image/jpeg", "image/webp", "image/jpg"]
-		if (!validTypes.includes(file.type)) {
-			showToast("error", t("invalidImageFile"))
-			return
-		}
+	const handleFileSelect = useCallback(
+		async (file: File) => {
+			const validTypes = ["image/png", "image/jpeg", "image/webp", "image/jpg"]
+			if (!validTypes.includes(file.type)) {
+				showToast("error", t("invalidImageFile"))
+				return
+			}
 
-		const reader = new FileReader()
-		reader.onload = async (e) => {
-			const imageData = e.target?.result as string
-			setImage(imageData)
-			setFileName(file.name)
-			setStep("processing")
-			showLoading({ message: tOverlay("processingImage") })
+			const reader = new FileReader()
+			reader.onload = async (e) => {
+				const imageData = e.target?.result as string
+				setImage(imageData)
+				setFileName(file.name)
+				setStep("processing")
+				showLoading({ message: tOverlay("processingImage") })
 
-			try {
-				let parsed: OcrParseResult
+				try {
+					let parsed: OcrParseResult
 
-				// Try AI Vision cascade first if available
-				if (visionAvailable) {
-					setProgress({
-						status: "recognizing",
-						progress: 50,
-						message: t("analyzingVision"),
-					})
-
-					// Extract base64 without the data URL prefix
-					const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "")
-					const mimeType = file.type
-
-					const result = await extractTradesWithVision(base64Data, mimeType)
-
-					if (result.status === "success" && result.data) {
-						const provider = (result.data as OcrParseResult & { provider?: string }).provider ?? "ai"
-						setOcrProvider(provider)
-						parsed = result.data
-					} else {
-						// Fall back to Tesseract if all AI providers fail
-						setOcrProvider("tesseract")
+					// Try AI Vision cascade first if available
+					if (visionAvailable) {
 						setProgress({
 							status: "recognizing",
-							progress: 30,
-							message: t("visionFallback"),
+							progress: 50,
+							message: t("analyzingVision"),
 						})
+
+						// Extract base64 without the data URL prefix
+						const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "")
+						const mimeType = file.type
+
+						const result = await extractTradesWithVision(base64Data, mimeType)
+
+						if (result.status === "success" && result.data) {
+							const provider =
+								(result.data as OcrParseResult & { provider?: string })
+									.provider ?? "ai"
+							setOcrProvider(provider)
+							parsed = result.data
+						} else {
+							// Fall back to Tesseract if all AI providers fail
+							setOcrProvider("tesseract")
+							setProgress({
+								status: "recognizing",
+								progress: 30,
+								message: t("visionFallback"),
+							})
+							const ocrResult = await recognizeImage(imageData, setProgress)
+							parsed = parseProfitChartOcr(ocrResult)
+						}
+					} else {
+						// Use Tesseract as fallback
+						setOcrProvider("tesseract")
 						const ocrResult = await recognizeImage(imageData, setProgress)
 						parsed = parseProfitChartOcr(ocrResult)
 					}
-				} else {
-					// Use Tesseract as fallback
-					setOcrProvider("tesseract")
-					const ocrResult = await recognizeImage(imageData, setProgress)
-					parsed = parseProfitChartOcr(ocrResult)
+
+					setParseResult(parsed)
+
+					// Initialize editable state from parsed trades
+					const trades = parsed.trades.map((trade) => ({
+						id: trade.id,
+						asset: trade.summary.asset,
+						originalContractCode: trade.summary.originalContractCode,
+						direction: trade.summary.direction ?? ("long" as const),
+						executions: trade.executions.map((ex, idx) => ({
+							...ex,
+							id: `${trade.id}-ex-${idx}`,
+						})),
+						isExpanded: true,
+					}))
+
+					setEditedTrades(trades)
+					setEditedDate(formatDateKey(new Date()))
+
+					hideLoading()
+					setStep("review")
+				} catch {
+					hideLoading()
+					showToast("error", t("failedToProcess"))
+					setStep("upload")
 				}
-
-				setParseResult(parsed)
-
-				// Initialize editable state from parsed trades
-				const trades = parsed.trades.map((trade) => ({
-					id: trade.id,
-					asset: trade.summary.asset,
-					originalContractCode: trade.summary.originalContractCode,
-					direction: trade.summary.direction ?? ("long" as const),
-					executions: trade.executions.map((ex, idx) => ({
-						...ex,
-						id: `${trade.id}-ex-${idx}`,
-					})),
-					isExpanded: true,
-				}))
-
-				setEditedTrades(trades)
-				setEditedDate(formatDateKey(new Date()))
-
-				hideLoading()
-				setStep("review")
-			} catch {
-				hideLoading()
-				showToast("error", t("failedToProcess"))
-				setStep("upload")
 			}
-		}
-		reader.onerror = () => {
-			showToast("error", t("failedToReadFile"))
-		}
-		reader.readAsDataURL(file)
-	}, [showToast, visionAvailable, showLoading, hideLoading, tOverlay])
+			reader.onerror = () => {
+				showToast("error", t("failedToReadFile"))
+			}
+			reader.readAsDataURL(file)
+		},
+		[showToast, visionAvailable, showLoading, hideLoading, tOverlay]
+	)
 
 	const handleDrop = useCallback(
 		(e: DragEvent) => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -229,7 +246,9 @@ export const OcrImport = () => {
 	const handleInputChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -253,47 +272,63 @@ export const OcrImport = () => {
 
 	const handleToggleTradeExpand = useCallback((tradeId: string) => {
 		setEditedTrades((prev) =>
-			prev.map((t) => (t.id === tradeId ? { ...t, isExpanded: !t.isExpanded } : t))
-		)
-	}, [])
-
-	const handleUpdateTrade = useCallback((tradeId: string, updates: Partial<EditableTrade>) => {
-		setEditedTrades((prev) =>
-			prev.map((t) => (t.id === tradeId ? { ...t, ...updates } : t))
-		)
-	}, [])
-
-	const handleRemoveExecution = useCallback((tradeId: string, executionId: string) => {
-		setEditedTrades((prev) =>
 			prev.map((t) =>
-				t.id === tradeId
-					? { ...t, executions: t.executions.filter((ex) => ex.id !== executionId) }
-					: t
+				t.id === tradeId ? { ...t, isExpanded: !t.isExpanded } : t
 			)
 		)
 	}, [])
 
-	const handleUpdateExecution = useCallback((
-		tradeId: string,
-		executionId: string,
-		updates: Partial<EditableExecution>
-	) => {
-		setEditedTrades((prev) =>
-			prev.map((t) =>
-				t.id === tradeId
-					? {
-							...t,
-							executions: t.executions.map((ex) =>
-								ex.id === executionId ? { ...ex, ...updates } : ex
-							),
-						}
-					: t
+	const handleUpdateTrade = useCallback(
+		(tradeId: string, updates: Partial<EditableTrade>) => {
+			setEditedTrades((prev) =>
+				prev.map((t) => (t.id === tradeId ? { ...t, ...updates } : t))
 			)
-		)
-	}, [])
+		},
+		[]
+	)
+
+	const handleRemoveExecution = useCallback(
+		(tradeId: string, executionId: string) => {
+			setEditedTrades((prev) =>
+				prev.map((t) =>
+					t.id === tradeId
+						? {
+								...t,
+								executions: t.executions.filter((ex) => ex.id !== executionId),
+							}
+						: t
+				)
+			)
+		},
+		[]
+	)
+
+	const handleUpdateExecution = useCallback(
+		(
+			tradeId: string,
+			executionId: string,
+			updates: Partial<EditableExecution>
+		) => {
+			setEditedTrades((prev) =>
+				prev.map((t) =>
+					t.id === tradeId
+						? {
+								...t,
+								executions: t.executions.map((ex) =>
+									ex.id === executionId ? { ...ex, ...updates } : ex
+								),
+							}
+						: t
+				)
+			)
+		},
+		[]
+	)
 
 	const handleImport = useCallback(async () => {
-		const validTrades = editedTrades.filter((t) => t.executions.length > 0 && t.asset)
+		const validTrades = editedTrades.filter(
+			(t) => t.executions.length > 0 && t.asset
+		)
 
 		if (validTrades.length === 0) {
 			showToast("error", t("noValidTrades"))
@@ -326,7 +361,9 @@ export const OcrImport = () => {
 				})
 
 				const firstExecution = executions[0]
-				const lastExit = [...executions].reverse().find((e) => e.executionType === "exit")
+				const lastExit = [...executions]
+					.reverse()
+					.find((e) => e.executionType === "exit")
 
 				return {
 					asset: trade.asset,
@@ -354,7 +391,17 @@ export const OcrImport = () => {
 			hideLoading()
 			setIsImporting(false)
 		}
-	}, [editedTrades, editedDate, showToast, showLoading, hideLoading, router, t, tCommon, tOverlay])
+	}, [
+		editedTrades,
+		editedDate,
+		showToast,
+		showLoading,
+		hideLoading,
+		router,
+		t,
+		tCommon,
+		tOverlay,
+	])
 
 	// ==========================================
 	// Computed Values
@@ -376,57 +423,64 @@ export const OcrImport = () => {
 	return (
 		<div className="space-y-m-600">
 			{/* Requirements Section */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200">
+			<div className="border-bg-300 bg-bg-200 rounded-lg border">
 				<Button
 					id="ocr-requirements-toggle"
 					type="button"
 					variant="ghost"
-					className="flex w-full items-center justify-between p-m-400 text-left"
+					className="p-m-400 flex w-full items-center justify-between text-left"
 					onClick={() => setRequirementsExpanded(!requirementsExpanded)}
 				>
-					<div className="flex items-center gap-s-200">
-						<Info className="h-4 w-4 text-acc-100" />
-						<span className="text-small font-medium text-txt-100">
+					<div className="gap-s-200 flex items-center">
+						<Info className="text-acc-100 h-4 w-4" />
+						<span className="text-small text-txt-100 font-medium">
 							{t("requirements.title")}
 						</span>
 					</div>
 					{requirementsExpanded ? (
-						<ChevronUp className="h-4 w-4 text-txt-300" />
+						<ChevronUp className="text-txt-300 h-4 w-4" />
 					) : (
-						<ChevronDown className="h-4 w-4 text-txt-300" />
+						<ChevronDown className="text-txt-300 h-4 w-4" />
 					)}
 				</Button>
 
 				{requirementsExpanded && (
-					<div className="border-t border-bg-300 p-s-300 sm:p-m-400">
-						<p className="text-small text-txt-300">{t("requirements.description")}</p>
+					<div className="border-bg-300 p-s-300 sm:p-m-400 border-t">
+						<p className="text-small text-txt-300">
+							{t("requirements.description")}
+						</p>
 
-						<div className="mt-m-400 grid gap-m-400 md:grid-cols-2">
+						<div className="mt-m-400 gap-m-400 grid md:grid-cols-2">
 							<div>
-								<h4 className="text-tiny font-medium text-txt-200">
+								<h4 className="text-tiny text-txt-200 font-medium">
 									{t("requirements.requiredColumns")}
 								</h4>
 								<ul className="mt-s-200 space-y-s-100 text-small text-txt-300">
-									<li className="flex items-center gap-s-200">
-										<span className="text-trade-buy">✓</span> {t("requirements.columns.ativo")}
+									<li className="gap-s-200 flex items-center">
+										<span className="text-trade-buy">✓</span>{" "}
+										{t("requirements.columns.ativo")}
 									</li>
-									<li className="flex items-center gap-s-200">
-										<span className="text-trade-buy">✓</span> {t("requirements.columns.abertura")}
+									<li className="gap-s-200 flex items-center">
+										<span className="text-trade-buy">✓</span>{" "}
+										{t("requirements.columns.abertura")}
 									</li>
-									<li className="flex items-center gap-s-200">
-										<span className="text-trade-buy">✓</span> {t("requirements.columns.qtd")}
+									<li className="gap-s-200 flex items-center">
+										<span className="text-trade-buy">✓</span>{" "}
+										{t("requirements.columns.qtd")}
 									</li>
-									<li className="flex items-center gap-s-200">
-										<span className="text-trade-buy">✓</span> {t("requirements.columns.precoCompra")}
+									<li className="gap-s-200 flex items-center">
+										<span className="text-trade-buy">✓</span>{" "}
+										{t("requirements.columns.precoCompra")}
 									</li>
-									<li className="flex items-center gap-s-200">
-										<span className="text-trade-buy">✓</span> {t("requirements.columns.precoVenda")}
+									<li className="gap-s-200 flex items-center">
+										<span className="text-trade-buy">✓</span>{" "}
+										{t("requirements.columns.precoVenda")}
 									</li>
 								</ul>
 							</div>
 
 							<div>
-								<h4 className="text-tiny font-medium text-txt-200">
+								<h4 className="text-tiny text-txt-200 font-medium">
 									{t("requirements.settings")}
 								</h4>
 								<ul className="mt-s-200 space-y-s-100 text-small text-txt-300">
@@ -448,7 +502,7 @@ export const OcrImport = () => {
 			{step === "upload" && (
 				<div
 					className={cn(
-						"rounded-lg border-2 border-dashed p-m-500 sm:p-l-700 lg:p-l-800 text-center transition-colors",
+						"p-m-500 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -466,23 +520,25 @@ export const OcrImport = () => {
 						id="ocr-file-input"
 					/>
 
-					<ImageIcon className="mx-auto h-12 w-12 text-txt-300" />
-					<h3 className="mt-m-400 text-body font-semibold text-txt-100">
+					<ImageIcon className="text-txt-300 mx-auto h-12 w-12" />
+					<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
 						{t("dropImage")}
 					</h3>
 					<p className="mt-s-200 text-small text-txt-300">{t("orClick")}</p>
 
 					{/* OCR Engine Indicator */}
-					<div className="mt-m-400 flex items-center justify-center gap-s-200">
+					<div className="mt-m-400 gap-s-200 flex items-center justify-center">
 						{visionAvailable === null ? (
-							<span className="text-tiny text-txt-300">{t("checkingEngine")}</span>
+							<span className="text-tiny text-txt-300">
+								{t("checkingEngine")}
+							</span>
 						) : visionAvailable ? (
-							<span className="flex items-center gap-s-200 rounded-full bg-trade-buy/20 px-s-300 py-s-100 text-tiny font-medium text-trade-buy">
+							<span className="gap-s-200 bg-trade-buy/20 px-s-300 py-s-100 text-tiny text-trade-buy flex items-center rounded-full font-medium">
 								<Sparkles className="h-3 w-3" />
 								{t("visionEngine")}
 							</span>
 						) : (
-							<span className="flex items-center gap-s-200 rounded-full bg-warning/20 px-s-300 py-s-100 text-tiny font-medium text-warning">
+							<span className="gap-s-200 bg-warning/20 px-s-300 py-s-100 text-tiny text-warning flex items-center rounded-full font-medium">
 								<Cpu className="h-3 w-3" />
 								{t("tesseractEngine")}
 							</span>
@@ -504,20 +560,22 @@ export const OcrImport = () => {
 
 			{/* Processing */}
 			{step === "processing" && progress && (
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-800 text-center">
-					<Loader2 className="mx-auto h-12 w-12 animate-spin motion-reduce:animate-none text-acc-100" />
-					<h3 className="mt-m-400 text-body font-semibold text-txt-100">
+				<div className="border-bg-300 bg-bg-200 p-l-800 rounded-lg border text-center">
+					<Loader2 className="text-acc-100 mx-auto h-12 w-12 animate-spin motion-reduce:animate-none" />
+					<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
 						{t("processing")}
 					</h3>
 					<p className="mt-s-200 text-small text-txt-300">{progress.message}</p>
 
-					<div className="mx-auto mt-m-400 h-2 w-64 overflow-hidden rounded-full bg-bg-300">
+					<div className="mt-m-400 bg-bg-300 mx-auto h-2 w-64 overflow-hidden rounded-full">
 						<div
-							className="h-full bg-acc-100 transition-all duration-300"
+							className="bg-acc-100 h-full transition-all duration-300"
 							style={{ width: `${progress.progress}%` }}
 						/>
 					</div>
-					<p className="mt-s-200 text-tiny text-txt-300">{progress.progress}%</p>
+					<p className="mt-s-200 text-tiny text-txt-300">
+						{progress.progress}%
+					</p>
 				</div>
 			)}
 
@@ -525,22 +583,30 @@ export const OcrImport = () => {
 			{step === "review" && parseResult && (
 				<div className="space-y-m-500">
 					{/* Image Preview */}
-					<div className="flex items-center justify-between rounded-lg bg-bg-200 p-s-300 sm:p-m-400">
-						<div className="flex items-center gap-s-300">
-							<FileText className="h-5 w-5 text-txt-300" />
-							<span className="text-small font-medium text-txt-100">{fileName}</span>
+					<div className="bg-bg-200 p-s-300 sm:p-m-400 flex items-center justify-between rounded-lg">
+						<div className="gap-s-300 flex items-center">
+							<FileText className="text-txt-300 h-5 w-5" />
+							<span className="text-small text-txt-100 font-medium">
+								{fileName}
+							</span>
 						</div>
-						<Button id="ocr-import-clear" variant="ghost" size="icon" onClick={handleClear} aria-label={tCommon("clear")}>
+						<Button
+							id="ocr-import-clear"
+							variant="ghost"
+							size="icon"
+							onClick={handleClear}
+							aria-label={tCommon("clear")}
+						>
 							<X className="h-4 w-4" />
 						</Button>
 					</div>
 
 					{/* Column Detection Status */}
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
-						<h3 className="text-small font-semibold text-txt-100">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+						<h3 className="text-small text-txt-100 font-semibold">
 							{t("columnDetection.title")}
 						</h3>
-						<div className="mt-s-300 flex flex-wrap gap-s-300">
+						<div className="mt-s-300 gap-s-300 flex flex-wrap">
 							{REQUIRED_COLUMNS.map((col) => {
 								const detected = parseResult.columnDetection.columns.some(
 									(c) => c.type === col
@@ -549,7 +615,7 @@ export const OcrImport = () => {
 									<span
 										key={col}
 										className={cn(
-											"rounded-full px-s-300 py-s-100 text-tiny font-medium",
+											"px-s-300 py-s-100 text-tiny rounded-full font-medium",
 											detected
 												? "bg-trade-buy/20 text-trade-buy"
 												: "bg-fb-error/20 text-fb-error"
@@ -569,8 +635,8 @@ export const OcrImport = () => {
 
 					{/* Errors */}
 					{parseResult.errors.length > 0 && (
-						<div className="rounded-lg border border-fb-error/30 bg-fb-error/10 p-s-300 sm:p-m-400">
-							<div className="flex items-center gap-s-200 text-fb-error">
+						<div className="border-fb-error/30 bg-fb-error/10 p-s-300 sm:p-m-400 rounded-lg border">
+							<div className="gap-s-200 text-fb-error flex items-center">
 								<AlertCircle className="h-4 w-4" />
 								<span className="text-small font-medium">
 									{t("errorsCount", { count: parseResult.errors.length })}
@@ -579,7 +645,10 @@ export const OcrImport = () => {
 							<ul className="mt-s-300 space-y-s-200 text-small text-txt-200">
 								{parseResult.errors.map((error, i) => (
 									<li key={i}>
-										{t("errorLine", { line: error.line, message: error.message })}
+										{t("errorLine", {
+											line: error.line,
+											message: error.message,
+										})}
 									</li>
 								))}
 							</ul>
@@ -588,8 +657,8 @@ export const OcrImport = () => {
 
 					{/* Warnings */}
 					{parseResult.warnings.length > 0 && (
-						<div className="rounded-lg border border-warning/30 bg-warning/10 p-s-300 sm:p-m-400">
-							<div className="flex items-center gap-s-200 text-warning">
+						<div className="border-warning/30 bg-warning/10 p-s-300 sm:p-m-400 rounded-lg border">
+							<div className="gap-s-200 text-warning flex items-center">
 								<AlertTriangle className="h-4 w-4" />
 								<span className="text-small font-medium">
 									{t("warningsCount", { count: parseResult.warnings.length })}
@@ -598,7 +667,10 @@ export const OcrImport = () => {
 							<ul className="mt-s-300 space-y-s-200 text-small text-txt-200">
 								{parseResult.warnings.slice(0, 5).map((warning, i) => (
 									<li key={i}>
-										{t("warningLine", { line: warning.line, message: warning.message })}
+										{t("warningLine", {
+											line: warning.line,
+											message: warning.message,
+										})}
 									</li>
 								))}
 								{parseResult.warnings.length > 5 && (
@@ -611,49 +683,53 @@ export const OcrImport = () => {
 					)}
 
 					{/* Date Picker (shared for all trades) */}
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 						<div className="flex items-center justify-between">
 							<div>
-								<h3 className="text-small font-semibold text-txt-100">
+								<h3 className="text-small text-txt-100 font-semibold">
 									{t("tradeDate")}
 								</h3>
-								<p className="text-tiny text-txt-300">
-									{t("tradeDateDesc")}
-								</p>
+								<p className="text-tiny text-txt-300">{t("tradeDateDesc")}</p>
 							</div>
 							<DatePicker
 								id="ocr-trade-date"
-								value={editedDate ? new Date(editedDate + "T12:00:00") : undefined}
-								onChange={(date) => setEditedDate(date ? formatDateKey(date) : "")}
+								value={
+									editedDate ? new Date(editedDate + "T12:00:00") : undefined
+								}
+								onChange={(date) =>
+									setEditedDate(date ? formatDateKey(date) : "")
+								}
 								className="w-48"
 							/>
 						</div>
 					</div>
 
 					{/* Summary Stats */}
-					<div className="grid grid-cols-2 gap-s-200 sm:gap-m-400 sm:grid-cols-4">
-						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
-							<p className="text-h3 font-bold text-acc-100">{totalTrades}</p>
+					<div className="gap-s-200 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-4">
+						<div className="bg-bg-200 p-s-300 sm:p-m-400 rounded-lg text-center">
+							<p className="text-h3 text-acc-100 font-bold">{totalTrades}</p>
 							<p className="text-tiny text-txt-300">{t("tradesDetected")}</p>
 						</div>
-						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
-							<p className="text-h3 font-bold text-trade-buy">{totalExecutions}</p>
+						<div className="bg-bg-200 p-s-300 sm:p-m-400 rounded-lg text-center">
+							<p className="text-h3 text-trade-buy font-bold">
+								{totalExecutions}
+							</p>
 							<p className="text-tiny text-txt-300">{t("totalExecutions")}</p>
 						</div>
-						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
-							<p className="text-h3 font-bold text-txt-100">
+						<div className="bg-bg-200 p-s-300 sm:p-m-400 rounded-lg text-center">
+							<p className="text-h3 text-txt-100 font-bold">
 								{parseResult.confidence.toFixed(0)}%
 							</p>
 							<p className="text-tiny text-txt-300">{t("confidence")}</p>
 						</div>
-						<div className="rounded-lg bg-bg-200 p-s-300 sm:p-m-400 text-center">
-							<div className="flex items-center justify-center gap-s-100">
+						<div className="bg-bg-200 p-s-300 sm:p-m-400 rounded-lg text-center">
+							<div className="gap-s-100 flex items-center justify-center">
 								{ocrProvider && ocrProvider !== "tesseract" ? (
-									<Sparkles className="h-4 w-4 text-trade-buy" />
+									<Sparkles className="text-trade-buy h-4 w-4" />
 								) : (
-									<Cpu className="h-4 w-4 text-warning" />
+									<Cpu className="text-warning h-4 w-4" />
 								)}
-								<p className="text-small font-bold text-txt-100 capitalize">
+								<p className="text-small text-txt-100 font-bold capitalize">
 									{ocrProvider ?? t("unknown")}
 								</p>
 							</div>
@@ -665,31 +741,31 @@ export const OcrImport = () => {
 					{editedTrades.map((trade, tradeIndex) => (
 						<div
 							key={trade.id}
-							className="rounded-lg border border-bg-300 bg-bg-200 overflow-hidden"
+							className="border-bg-300 bg-bg-200 overflow-hidden rounded-lg border"
 						>
 							{/* Trade Header */}
-							<div className="flex items-center justify-between border-b border-bg-300 p-s-300 sm:p-m-400">
+							<div className="border-bg-300 p-s-300 sm:p-m-400 flex items-center justify-between border-b">
 								<Button
 									id={`ocr-trade-toggle-${trade.id}`}
 									type="button"
 									variant="ghost"
-									className="flex items-center gap-s-300"
+									className="gap-s-300 flex items-center"
 									onClick={() => handleToggleTradeExpand(trade.id)}
 								>
 									{trade.isExpanded ? (
-										<ChevronUp className="h-4 w-4 text-txt-300" />
+										<ChevronUp className="text-txt-300 h-4 w-4" />
 									) : (
-										<ChevronDown className="h-4 w-4 text-txt-300" />
+										<ChevronDown className="text-txt-300 h-4 w-4" />
 									)}
-									<span className="text-small font-semibold text-txt-100">
+									<span className="text-small text-txt-100 font-semibold">
 										{t("tradeNumber", { number: tradeIndex + 1 })}
 									</span>
-									<span className="rounded-sm bg-bg-100 px-s-200 py-s-100 text-tiny font-medium text-txt-200">
+									<span className="bg-bg-100 px-s-200 py-s-100 text-tiny text-txt-200 rounded-sm font-medium">
 										{trade.asset}
 									</span>
 									<span
 										className={cn(
-											"rounded-sm px-s-200 py-s-100 text-tiny font-medium",
+											"px-s-200 py-s-100 text-tiny rounded-sm font-medium",
 											trade.direction === "long"
 												? "bg-trade-buy/20 text-trade-buy"
 												: "bg-trade-sell/20 text-trade-sell"
@@ -708,35 +784,45 @@ export const OcrImport = () => {
 									onClick={() => handleRemoveTrade(trade.id)}
 									aria-label={tCommon("removeTrade")}
 								>
-									<Trash2 className="h-4 w-4 text-fb-error" />
+									<Trash2 className="text-fb-error h-4 w-4" />
 								</Button>
 							</div>
 
 							{trade.isExpanded && (
 								<div className="p-s-300 sm:p-m-400">
 									{/* Trade Details */}
-									<div className="mb-m-400 grid gap-m-400 md:grid-cols-3">
+									<div className="mb-m-400 gap-m-400 grid md:grid-cols-3">
 										<div>
-											<label className="text-tiny text-txt-300" htmlFor={`${trade.id}-asset`}>
+											<label
+												className="text-tiny text-txt-300"
+												htmlFor={`${trade.id}-asset`}
+											>
 												{tTrade("asset")}
 											</label>
 											<Input
 												id={`${trade.id}-asset`}
 												value={trade.asset}
 												onChange={(e) =>
-													handleUpdateTrade(trade.id, { asset: e.target.value.toUpperCase() })
+													handleUpdateTrade(trade.id, {
+														asset: e.target.value.toUpperCase(),
+													})
 												}
 												className="mt-s-100"
 											/>
 											{trade.originalContractCode !== trade.asset && (
 												<p className="mt-s-100 text-tiny text-txt-300">
-													{t("originalLabel", { code: trade.originalContractCode })}
+													{t("originalLabel", {
+														code: trade.originalContractCode,
+													})}
 												</p>
 											)}
 										</div>
 
 										<div>
-											<label className="text-tiny text-txt-300" htmlFor={`${trade.id}-direction`}>
+											<label
+												className="text-tiny text-txt-300"
+												htmlFor={`${trade.id}-direction`}
+											>
 												{tTrade("direction.label")}
 											</label>
 											<select
@@ -747,43 +833,59 @@ export const OcrImport = () => {
 														direction: e.target.value as "long" | "short",
 													})
 												}
-												className="mt-s-100 w-full rounded-md border border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100"
+												className="mt-s-100 border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100 w-full rounded-md border"
 											>
 												<option value="long">{tTrade("direction.long")}</option>
-												<option value="short">{tTrade("direction.short")}</option>
+												<option value="short">
+													{tTrade("direction.short")}
+												</option>
 											</select>
 										</div>
 
 										<div className="flex items-end">
 											<div className="text-tiny text-txt-300">
 												<p>
-													{t("entriesCount", { count: trade.executions.filter((e) => e.type === "entry").length, qty: trade.executions.filter((e) => e.type === "entry").reduce((s, e) => s + e.quantity, 0) })}
+													{t("entriesCount", {
+														count: trade.executions.filter(
+															(e) => e.type === "entry"
+														).length,
+														qty: trade.executions
+															.filter((e) => e.type === "entry")
+															.reduce((s, e) => s + e.quantity, 0),
+													})}
 												</p>
 												<p>
-													{t("exitsCount", { count: trade.executions.filter((e) => e.type === "exit").length, qty: trade.executions.filter((e) => e.type === "exit").reduce((s, e) => s + e.quantity, 0) })}
+													{t("exitsCount", {
+														count: trade.executions.filter(
+															(e) => e.type === "exit"
+														).length,
+														qty: trade.executions
+															.filter((e) => e.type === "exit")
+															.reduce((s, e) => s + e.quantity, 0),
+													})}
 												</p>
 											</div>
 										</div>
 									</div>
 
 									{/* Executions Table */}
-									<div className="overflow-x-auto rounded-sm border border-bg-300">
+									<div className="border-bg-300 overflow-x-auto rounded-sm border">
 										<table className="w-full">
 											<thead>
-												<tr className="border-b border-bg-300 bg-bg-100">
-													<th className="px-m-400 py-s-300 text-left text-tiny font-medium text-txt-300">
+												<tr className="border-bg-300 bg-bg-100 border-b">
+													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-left font-medium">
 														{tCommon("type")}
 													</th>
-													<th className="px-m-400 py-s-300 text-left text-tiny font-medium text-txt-300">
+													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-left font-medium">
 														{tCommon("time")}
 													</th>
-													<th className="px-m-400 py-s-300 text-right text-tiny font-medium text-txt-300">
+													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-right font-medium">
 														{tCommon("qty")}
 													</th>
-													<th className="px-m-400 py-s-300 text-right text-tiny font-medium text-txt-300">
+													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-right font-medium">
 														{tCommon("price")}
 													</th>
-													<th className="px-m-400 py-s-300 text-center text-tiny font-medium text-txt-300">
+													<th className="px-m-400 py-s-300 text-tiny text-txt-300 text-center font-medium">
 														{tCommon("actions")}
 													</th>
 												</tr>
@@ -792,7 +894,7 @@ export const OcrImport = () => {
 												{trade.executions.map((ex) => (
 													<tr
 														key={ex.id}
-														className="border-b border-bg-300 last:border-0"
+														className="border-bg-300 border-b last:border-0"
 													>
 														<td className="px-m-400 py-s-300">
 															<Select
@@ -806,7 +908,7 @@ export const OcrImport = () => {
 																<SelectTrigger
 																	id={`ocr-execution-type-${ex.id}`}
 																	className={cn(
-																		"rounded-sm px-s-200 py-s-100 text-tiny font-medium",
+																		"px-s-200 py-s-100 text-tiny rounded-sm font-medium",
 																		ex.type === "entry"
 																			? "bg-trade-buy/20 text-trade-buy"
 																			: "bg-trade-sell/20 text-trade-sell"
@@ -815,8 +917,12 @@ export const OcrImport = () => {
 																	<SelectValue />
 																</SelectTrigger>
 																<SelectContent>
-																	<SelectItem value="entry">{tCommon("entry")}</SelectItem>
-																	<SelectItem value="exit">{tCommon("exit")}</SelectItem>
+																	<SelectItem value="entry">
+																		{tCommon("entry")}
+																	</SelectItem>
+																	<SelectItem value="exit">
+																		{tCommon("exit")}
+																	</SelectItem>
 																</SelectContent>
 															</Select>
 														</td>
@@ -833,7 +939,7 @@ export const OcrImport = () => {
 																		quantity: parseInt(e.target.value, 10) || 0,
 																	})
 																}
-																className="w-20 text-right text-small"
+																className="text-small w-20 text-right"
 															/>
 														</td>
 														<td className="px-m-400 py-s-300">
@@ -847,7 +953,7 @@ export const OcrImport = () => {
 																		price: parseFloat(e.target.value) || 0,
 																	})
 																}
-																className="w-28 text-right text-small"
+																className="text-small w-28 text-right"
 															/>
 														</td>
 														<td className="px-m-400 py-s-300 text-center">
@@ -855,10 +961,12 @@ export const OcrImport = () => {
 																id={`ocr-remove-execution-${trade.id}-${ex.id}`}
 																variant="ghost"
 																size="icon"
-																onClick={() => handleRemoveExecution(trade.id, ex.id)}
+																onClick={() =>
+																	handleRemoveExecution(trade.id, ex.id)
+																}
 																aria-label={tCommon("removeExecution")}
 															>
-																<Trash2 className="h-4 w-4 text-fb-error" />
+																<Trash2 className="text-fb-error h-4 w-4" />
 															</Button>
 														</td>
 													</tr>
@@ -873,31 +981,33 @@ export const OcrImport = () => {
 
 					{/* No trades message */}
 					{editedTrades.length === 0 && (
-						<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-800 text-center">
-							<p className="text-small text-txt-300">{t("noExecutionsFound")}</p>
+						<div className="border-bg-300 bg-bg-200 p-l-800 rounded-lg border text-center">
+							<p className="text-small text-txt-300">
+								{t("noExecutionsFound")}
+							</p>
 						</div>
 					)}
 
 					{/* Raw Text Preview (Collapsed) */}
-					<div className="rounded-lg border border-bg-300 bg-bg-200">
+					<div className="border-bg-300 bg-bg-200 rounded-lg border">
 						<Button
 							id="ocr-raw-text-toggle"
 							type="button"
 							variant="ghost"
-							className="flex w-full items-center justify-between p-m-400 text-left"
+							className="p-m-400 flex w-full items-center justify-between text-left"
 							onClick={() => setRawTextExpanded(!rawTextExpanded)}
 						>
-							<span className="text-small font-medium text-txt-200">
+							<span className="text-small text-txt-200 font-medium">
 								{t("rawText")}
 							</span>
 							{rawTextExpanded ? (
-								<ChevronUp className="h-4 w-4 text-txt-300" />
+								<ChevronUp className="text-txt-300 h-4 w-4" />
 							) : (
-								<ChevronDown className="h-4 w-4 text-txt-300" />
+								<ChevronDown className="text-txt-300 h-4 w-4" />
 							)}
 						</Button>
 						{rawTextExpanded && (
-							<pre className="max-h-48 overflow-auto border-t border-bg-300 p-s-300 sm:p-m-400 text-tiny text-txt-300">
+							<pre className="border-bg-300 p-s-300 sm:p-m-400 text-tiny text-txt-300 max-h-48 overflow-auto border-t">
 								{parseResult.rawText}
 							</pre>
 						)}
@@ -905,25 +1015,32 @@ export const OcrImport = () => {
 
 					{/* Success Indicator */}
 					{totalTrades > 0 && (
-						<div className="flex items-center gap-s-200 rounded-lg border border-trade-buy/30 bg-trade-buy/10 p-s-300 sm:p-m-400 text-trade-buy">
+						<div className="gap-s-200 border-trade-buy/30 bg-trade-buy/10 p-s-300 sm:p-m-400 text-trade-buy flex items-center rounded-lg border">
 							<CheckCircle2 className="h-4 w-4" />
 							<span className="text-small font-medium">
-								{t("readyToImport", { trades: totalTrades, executions: totalExecutions })}
+								{t("readyToImport", {
+									trades: totalTrades,
+									executions: totalExecutions,
+								})}
 							</span>
 						</div>
 					)}
 
 					{/* Low Confidence Warning */}
 					{parseResult.confidence < 70 && (
-						<div className="flex items-center gap-s-200 rounded-lg border border-warning/30 bg-warning/10 p-s-300 sm:p-m-400 text-warning">
+						<div className="gap-s-200 border-warning/30 bg-warning/10 p-s-300 sm:p-m-400 text-warning flex items-center rounded-lg border">
 							<AlertTriangle className="h-4 w-4" />
 							<span className="text-small">{t("lowConfidence")}</span>
 						</div>
 					)}
 
 					{/* Actions */}
-					<div className="flex items-center justify-end gap-m-400">
-						<Button id="ocr-import-cancel" variant="outline" onClick={handleClear}>
+					<div className="gap-m-400 flex items-center justify-end">
+						<Button
+							id="ocr-import-cancel"
+							variant="outline"
+							onClick={handleClear}
+						>
 							{tCommon("cancel")}
 						</Button>
 						<Button
@@ -939,7 +1056,10 @@ export const OcrImport = () => {
 							) : (
 								<>
 									<Upload className="mr-s-200 h-4 w-4" />
-									{t("importTrades", { count: totalTrades, suffix: totalTrades !== 1 ? "s" : "" })}
+									{t("importTrades", {
+										count: totalTrades,
+										suffix: totalTrades !== 1 ? "s" : "",
+									})}
 								</>
 							)}
 						</Button>
@@ -949,16 +1069,16 @@ export const OcrImport = () => {
 
 			{/* Importing */}
 			{step === "importing" && (
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-800 text-center">
-					<Loader2 className="mx-auto h-12 w-12 animate-spin motion-reduce:animate-none text-acc-100" />
-					<h3 className="mt-m-400 text-body font-semibold text-txt-100">
+				<div className="border-bg-300 bg-bg-200 p-l-800 rounded-lg border text-center">
+					<Loader2 className="text-acc-100 mx-auto h-12 w-12 animate-spin motion-reduce:animate-none" />
+					<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
 						{t("importingTrades", { count: totalTrades })}
 					</h3>
 				</div>
 			)}
 
 			{/* Help Tip */}
-			<p className="text-center text-tiny text-txt-300">
+			<p className="text-tiny text-txt-300 text-center">
 				{t("imageQualityTip")}
 			</p>
 		</div>

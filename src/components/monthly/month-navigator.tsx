@@ -1,12 +1,11 @@
 "use client"
 
 import { useCallback } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
 import { format, subMonths, addMonths } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
-import { useLocale } from "next-intl"
 
 interface MonthNavigatorProps {
 	currentDate: Date
@@ -40,11 +39,17 @@ export const MonthNavigator = ({
 		}
 	}, [canGoNext, currentDate, onMonthChange])
 
-	const formattedMonth = format(currentDate, "MMMM yyyy", { locale: dateLocale })
+	const formattedMonth = format(currentDate, "MMMM yyyy", {
+		locale: dateLocale,
+	})
 
 	return (
-		<div id="monthly-navigator" className="flex items-center justify-center gap-s-300 sm:gap-m-400">
-			<Button id="month-nav-previous"
+		<div
+			id="monthly-navigator"
+			className="gap-s-300 sm:gap-m-400 flex items-center justify-center"
+		>
+			<Button
+				id="month-nav-previous"
 				variant="ghost"
 				size="sm"
 				onClick={handlePrevious}
@@ -55,14 +60,15 @@ export const MonthNavigator = ({
 				<ChevronLeft className="h-5 w-5" />
 			</Button>
 
-			<div className="flex flex-1 min-w-0 items-center justify-center gap-s-200">
-				<Calendar className="h-5 w-5 text-acc-100" />
-				<span className="text-body sm:text-h3 font-semibold capitalize text-txt-100">
+			<div className="gap-s-200 flex min-w-0 flex-1 items-center justify-center">
+				<Calendar className="text-acc-100 h-5 w-5" />
+				<span className="text-body sm:text-h3 text-txt-100 font-semibold capitalize">
 					{formattedMonth}
 				</span>
 			</div>
 
-			<Button id="month-nav-next"
+			<Button
+				id="month-nav-next"
 				variant="ghost"
 				size="sm"
 				onClick={handleNext}

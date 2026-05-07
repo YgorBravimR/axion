@@ -7,7 +7,9 @@ interface CaptureInput {
 
 const captureROnEntry = async (input: CaptureInput): Promise<number | null> => {
 	const resolved = await resolveDay(input.accountId, input.entryDate)
-	if (!resolved || resolved.oneRCents === 0) return null
+	if (!resolved || resolved.oneRCents === 0) {
+		return null
+	}
 	return resolved.oneRCents
 }
 
@@ -17,7 +19,9 @@ interface OutcomeInput {
 }
 
 const computeROutcome = (input: OutcomeInput): string | null => {
-	if (!input.oneRSnapshotCents || input.oneRSnapshotCents === 0) return null
+	if (!input.oneRSnapshotCents || input.oneRSnapshotCents === 0) {
+		return null
+	}
 	const r = input.pnlCents / input.oneRSnapshotCents
 	return r.toFixed(2)
 }

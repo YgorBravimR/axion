@@ -53,10 +53,13 @@ const projectMonth = (input: ProjectMonthInput): ProjectMonthResult => {
 
 	const weeks = weekTargetRs.length || 1
 	const avgRPerWeek = totalTargetR / weeks
-	const avgRPerDay = tradingDaysPerWeek > 0 ? avgRPerWeek / tradingDaysPerWeek : 0
+	const avgRPerDay =
+		tradingDaysPerWeek > 0 ? avgRPerWeek / tradingDaysPerWeek : 0
 
 	const monthlyRentPct =
-		startBalanceCents > 0 ? (projectedNetLiquidCents / startBalanceCents) * 100 : 0
+		startBalanceCents > 0
+			? (projectedNetLiquidCents / startBalanceCents) * 100
+			: 0
 
 	return {
 		endBalanceCents,
@@ -130,7 +133,9 @@ const projectYear = (input: ProjectYearInput): ProjectYearResult => {
 
 	const projectedNetLiquidCents = running - initialCapitalCents
 	const totalRentPct =
-		initialCapitalCents > 0 ? (projectedNetLiquidCents / initialCapitalCents) * 100 : 0
+		initialCapitalCents > 0
+			? (projectedNetLiquidCents / initialCapitalCents) * 100
+			: 0
 
 	return {
 		months: projected,
@@ -147,10 +152,17 @@ interface LadderRuleLite {
 	readonly oneRCents: number
 }
 
-const resolveOneRFromLadder = (capCents: number, rules: readonly LadderRuleLite[]): number => {
-	if (rules.length === 0) return 0
+const resolveOneRFromLadder = (
+	capCents: number,
+	rules: readonly LadderRuleLite[]
+): number => {
+	if (rules.length === 0) {
+		return 0
+	}
 	for (const r of rules) {
-		if (capCents >= r.minCapitalCents && capCents <= r.maxCapitalCents) return r.oneRCents
+		if (capCents >= r.minCapitalCents && capCents <= r.maxCapitalCents) {
+			return r.oneRCents
+		}
 	}
 	return rules[rules.length - 1].oneRCents
 }
@@ -186,7 +198,9 @@ interface ProjectFromPaceResult {
  * Forward-project remaining months at a fixed YTD daily-R pace, recompounding each month.
  * Re-resolves 1R from the ladder as the balance grows so projections respect tier breaks.
  */
-const projectFromPace = (input: ProjectFromPaceInput): ProjectFromPaceResult => {
+const projectFromPace = (
+	input: ProjectFromPaceInput
+): ProjectFromPaceResult => {
 	const {
 		startBalanceCents,
 		monthsRemaining,
@@ -205,20 +219,42 @@ const projectFromPace = (input: ProjectFromPaceInput): ProjectFromPaceResult => 
 		const oneRCents = resolveOneRFromLadder(running, ladderRules)
 		const monthlyR = avgRPerDayYtd * tradingDaysPerWeek * weeksPerMonth
 		const grossPnlCents = Math.round(monthlyR * oneRCents)
-		const taxCents = grossPnlCents > 0 ? Math.round(grossPnlCents * irTaxRate) : 0
+		const taxCents =
+			grossPnlCents > 0 ? Math.round(grossPnlCents * irTaxRate) : 0
 		const netAfterTax = grossPnlCents - taxCents
-		const withdrawal = netAfterTax > 0 && withdrawalPct > 0 ? Math.round(netAfterTax * withdrawalPct) : 0
+		const withdrawal =
+			netAfterTax > 0 && withdrawalPct > 0
+				? Math.round(netAfterTax * withdrawalPct)
+				: 0
 		const netLiquidCents = netAfterTax - withdrawal
 		const endBalanceCents = running + netLiquidCents
-		months.push({ index: i, startBalanceCents: running, endBalanceCents, oneRCents, grossPnlCents, netLiquidCents })
+		months.push({
+			index: i,
+			startBalanceCents: running,
+			endBalanceCents,
+			oneRCents,
+			grossPnlCents,
+			netLiquidCents,
+		})
 		running = endBalanceCents
 	}
 
 	const totalNetLiquidCents = running - startBalanceCents
-	const totalRentPct = startBalanceCents > 0 ? (totalNetLiquidCents / startBalanceCents) * 100 : 0
+	const totalRentPct =
+		startBalanceCents > 0 ? (totalNetLiquidCents / startBalanceCents) * 100 : 0
 
 	return { months, endBalanceCents: running, totalNetLiquidCents, totalRentPct }
 }
 
-export type { ProjectMonthInput, ProjectMonthResult, ProjectYearInput, ProjectYearResult, ProjectYearMonth, MonthInput, ProjectFromPaceInput, ProjectFromPaceResult, ProjectFromPaceMonth }
+export type {
+	ProjectMonthInput,
+	ProjectMonthResult,
+	ProjectYearInput,
+	ProjectYearResult,
+	ProjectYearMonth,
+	MonthInput,
+	ProjectFromPaceInput,
+	ProjectFromPaceResult,
+	ProjectFromPaceMonth,
+}
 export { projectMonth, projectYear, projectFromPace }

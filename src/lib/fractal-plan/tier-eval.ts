@@ -17,7 +17,10 @@ interface MonthStartInput {
 }
 
 const evaluateMonthStart = (input: MonthStartInput): TierSnapshot => {
-	const { tierIndex, oneRCents } = resolveTier(input.capitalCents, input.ladderRules)
+	const { tierIndex, oneRCents } = resolveTier(
+		input.capitalCents,
+		input.ladderRules
+	)
 	return {
 		snapshotCapitalCents: input.capitalCents,
 		snapshotOneRCents: oneRCents,
@@ -37,16 +40,26 @@ interface DrawdownInput {
 }
 
 const evaluateDrawdownTrigger = (input: DrawdownInput): TierSnapshot | null => {
-	if (input.currentTierIndex === 0) return null
+	if (input.currentTierIndex === 0) {
+		return null
+	}
 
 	const currentRule = input.ladderRules[input.currentTierIndex]
-	const dropBelowFloorCents = currentRule.minCapitalCents - input.currentCapitalCents
+	const dropBelowFloorCents =
+		currentRule.minCapitalCents - input.currentCapitalCents
 	const thresholdCents = input.thresholdR * input.currentOneRCents
 
-	if (dropBelowFloorCents < thresholdCents) return null
+	if (dropBelowFloorCents < thresholdCents) {
+		return null
+	}
 
-	const { tierIndex, oneRCents } = resolveTier(input.currentCapitalCents, input.ladderRules)
-	if (tierIndex >= input.currentTierIndex) return null
+	const { tierIndex, oneRCents } = resolveTier(
+		input.currentCapitalCents,
+		input.ladderRules
+	)
+	if (tierIndex >= input.currentTierIndex) {
+		return null
+	}
 
 	return {
 		snapshotCapitalCents: input.currentCapitalCents,

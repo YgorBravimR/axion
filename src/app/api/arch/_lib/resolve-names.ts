@@ -100,7 +100,9 @@ const resolveTagNames = async (
 	names: string[],
 	userId: string
 ): Promise<string[]> => {
-	if (names.length === 0) return []
+	if (names.length === 0) {
+		return []
+	}
 
 	const rows = await db
 		.select({ id: tags.id, name: tags.name })
@@ -134,4 +136,9 @@ const resolveTimeframeName = async (name: string): Promise<string | null> => {
 	return fuzzyMatch(name, rows)
 }
 
-export { resolveStrategyName, resolveTagName, resolveTagNames, resolveTimeframeName }
+export {
+	resolveStrategyName,
+	resolveTagName,
+	resolveTagNames,
+	resolveTimeframeName,
+}

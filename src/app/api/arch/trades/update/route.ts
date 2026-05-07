@@ -62,7 +62,9 @@ interface ArchUpdateTradeBody {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -244,48 +246,74 @@ const POST = async (request: NextRequest) => {
 			updatedAt: new Date(),
 		}
 
-		if (body.asset !== undefined) updateData.asset = resolvedAsset ?? body.asset.toUpperCase()
-		if (body.direction !== undefined) updateData.direction = body.direction
-		if (strategyId !== undefined) updateData.strategyId = strategyId || null
-		if (timeframeId !== undefined) updateData.timeframeId = timeframeId || null
-		if (body.entryDate !== undefined)
+		if (body.asset !== undefined) {
+			updateData.asset = resolvedAsset ?? body.asset.toUpperCase()
+		}
+		if (body.direction !== undefined) {
+			updateData.direction = body.direction
+		}
+		if (strategyId !== undefined) {
+			updateData.strategyId = strategyId || null
+		}
+		if (timeframeId !== undefined) {
+			updateData.timeframeId = timeframeId || null
+		}
+		if (body.entryDate !== undefined) {
 			updateData.entryDate = new Date(body.entryDate)
-		if (body.exitDate !== undefined)
+		}
+		if (body.exitDate !== undefined) {
 			updateData.exitDate = new Date(body.exitDate)
-		if (body.entryPrice !== undefined)
+		}
+		if (body.entryPrice !== undefined) {
 			updateData.entryPrice = toNumericString(Number(body.entryPrice))
-		if (body.exitPrice !== undefined)
+		}
+		if (body.exitPrice !== undefined) {
 			updateData.exitPrice = toNumericString(Number(body.exitPrice))
-		if (body.positionSize !== undefined)
+		}
+		if (body.positionSize !== undefined) {
 			updateData.positionSize = toNumericString(Number(body.positionSize))
-		if (body.stopLoss !== undefined)
+		}
+		if (body.stopLoss !== undefined) {
 			updateData.stopLoss = toNumericString(Number(body.stopLoss))
-		if (body.takeProfit !== undefined)
+		}
+		if (body.takeProfit !== undefined) {
 			updateData.takeProfit = toNumericString(Number(body.takeProfit))
-		if (plannedRiskAmount !== undefined)
+		}
+		if (plannedRiskAmount !== undefined) {
 			updateData.plannedRiskAmount = toNumericString(toCents(plannedRiskAmount))
-		if (plannedRMultiple !== undefined)
+		}
+		if (plannedRMultiple !== undefined) {
 			updateData.plannedRMultiple = toNumericString(plannedRMultiple)
-		if (body.mfe !== undefined)
+		}
+		if (body.mfe !== undefined) {
 			updateData.mfe = toNumericString(Number(body.mfe))
-		if (body.mae !== undefined)
+		}
+		if (body.mae !== undefined) {
 			updateData.mae = toNumericString(Number(body.mae))
-		if (body.contractsExecuted !== undefined)
+		}
+		if (body.contractsExecuted !== undefined) {
 			updateData.contractsExecuted = toNumericString(
 				Number(body.contractsExecuted)
 			)
-		if (body.followedPlan !== undefined)
+		}
+		if (body.followedPlan !== undefined) {
 			updateData.followedPlan = body.followedPlan
-		if (body.preTradeThoughts !== undefined)
+		}
+		if (body.preTradeThoughts !== undefined) {
 			updateData.preTradeThoughts = body.preTradeThoughts
-		if (body.postTradeReflection !== undefined)
+		}
+		if (body.postTradeReflection !== undefined) {
 			updateData.postTradeReflection = body.postTradeReflection
-		if (body.lessonLearned !== undefined)
+		}
+		if (body.lessonLearned !== undefined) {
 			updateData.lessonLearned = body.lessonLearned
-		if (body.disciplineNotes !== undefined)
+		}
+		if (body.disciplineNotes !== undefined) {
 			updateData.disciplineNotes = body.disciplineNotes
-		if (body.setupRank !== undefined)
+		}
+		if (body.setupRank !== undefined) {
 			updateData.setupRank = body.setupRank || null
+		}
 
 		// Always include calculated fields when we have exit data
 		if (exitPrice) {
@@ -300,31 +328,43 @@ const POST = async (request: NextRequest) => {
 		// Encrypt sensitive fields if DEK is available
 		if (dek) {
 			const fieldsToEncrypt: Record<string, unknown> = {}
-			if (updateData.pnl !== undefined)
+			if (updateData.pnl !== undefined) {
 				fieldsToEncrypt.pnl = pnl !== undefined ? toCents(pnl) : null
-			if (updateData.plannedRiskAmount !== undefined)
+			}
+			if (updateData.plannedRiskAmount !== undefined) {
 				fieldsToEncrypt.plannedRiskAmount =
 					plannedRiskAmount !== undefined ? toCents(plannedRiskAmount) : null
-			if (updateData.entryPrice !== undefined)
+			}
+			if (updateData.entryPrice !== undefined) {
 				fieldsToEncrypt.entryPrice = updateData.entryPrice
-			if (updateData.exitPrice !== undefined)
+			}
+			if (updateData.exitPrice !== undefined) {
 				fieldsToEncrypt.exitPrice = updateData.exitPrice
-			if (updateData.positionSize !== undefined)
+			}
+			if (updateData.positionSize !== undefined) {
 				fieldsToEncrypt.positionSize = updateData.positionSize
-			if (updateData.stopLoss !== undefined)
+			}
+			if (updateData.stopLoss !== undefined) {
 				fieldsToEncrypt.stopLoss = updateData.stopLoss
-			if (updateData.takeProfit !== undefined)
+			}
+			if (updateData.takeProfit !== undefined) {
 				fieldsToEncrypt.takeProfit = updateData.takeProfit
-			if (updateData.plannedRMultiple !== undefined)
+			}
+			if (updateData.plannedRMultiple !== undefined) {
 				fieldsToEncrypt.plannedRMultiple = updateData.plannedRMultiple
-			if (updateData.preTradeThoughts !== undefined)
+			}
+			if (updateData.preTradeThoughts !== undefined) {
 				fieldsToEncrypt.preTradeThoughts = updateData.preTradeThoughts
-			if (updateData.postTradeReflection !== undefined)
+			}
+			if (updateData.postTradeReflection !== undefined) {
 				fieldsToEncrypt.postTradeReflection = updateData.postTradeReflection
-			if (updateData.lessonLearned !== undefined)
+			}
+			if (updateData.lessonLearned !== undefined) {
 				fieldsToEncrypt.lessonLearned = updateData.lessonLearned
-			if (updateData.disciplineNotes !== undefined)
+			}
+			if (updateData.disciplineNotes !== undefined) {
 				fieldsToEncrypt.disciplineNotes = updateData.disciplineNotes
+			}
 			Object.assign(
 				updateData,
 				encryptTradeFields(

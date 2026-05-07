@@ -31,7 +31,9 @@ export const AutoRefreshIndicator = ({
 		const timerRef = { current: null as ReturnType<typeof setInterval> | null }
 
 		const startCountdown = () => {
-			if (timerRef.current) return
+			if (timerRef.current) {
+				return
+			}
 			timerRef.current = setInterval(() => {
 				setSecondsLeft((prev) => (prev <= 1 ? intervalSeconds : prev - 1))
 			}, 1000)
@@ -72,18 +74,22 @@ export const AutoRefreshIndicator = ({
 	}
 
 	const formattedTime = lastUpdated
-		? new Date(lastUpdated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+		? new Date(lastUpdated).toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit",
+				second: "2-digit",
+			})
 		: "--:--:--"
 
 	return (
-		<div className="flex items-center gap-s-300 text-tiny">
+		<div className="gap-s-300 text-tiny flex items-center">
 			{/* Pulsing dot */}
 			<div className="flex items-center gap-1.5">
 				<span
 					className={cn(
 						"inline-block h-2 w-2 rounded-full",
 						isLoading
-							? "animate-pulse motion-reduce:animate-none bg-warning"
+							? "bg-warning animate-pulse motion-reduce:animate-none"
 							: "bg-trade-buy"
 					)}
 					aria-hidden="true"
@@ -106,7 +112,7 @@ export const AutoRefreshIndicator = ({
 				size="sm"
 				onClick={handleRefresh}
 				disabled={isLoading}
-				className="text-txt-200 inline-flex items-center gap-s-100 px-s-200 py-s-100"
+				className="text-txt-200 gap-s-100 px-s-200 py-s-100 inline-flex items-center"
 				aria-label={t("refreshNow")}
 			>
 				<RefreshCw

@@ -24,8 +24,21 @@ import { QuickFilters } from "./quick-filters"
 // TYPES
 // ============================================================================
 
-type FilterField = "asset" | "direction" | "outcome" | "rating" | "followedPlan" | "timeOfDay" | "pnl"
-type FilterOperator = "is" | "isNot" | "isAtLeast" | "greaterThan" | "lessThan" | "between"
+type FilterField =
+	| "asset"
+	| "direction"
+	| "outcome"
+	| "rating"
+	| "followedPlan"
+	| "timeOfDay"
+	| "pnl"
+type FilterOperator =
+	| "is"
+	| "isNot"
+	| "isAtLeast"
+	| "greaterThan"
+	| "lessThan"
+	| "between"
 
 interface FilterCondition {
 	id: string
@@ -114,23 +127,34 @@ const FIELD_CONFIGS: FieldConfig[] = [
 const RATING_ORDER = ["A", "B", "C", "D", "F"]
 
 /** Convert conditions to the filter params format expected by the journal */
-const conditionsToParams = (conditions: FilterCondition[]): Record<string, string | string[]> => {
+const conditionsToParams = (
+	conditions: FilterCondition[]
+): Record<string, string | string[]> => {
 	const params: Record<string, string | string[]> = {}
 
 	for (const condition of conditions) {
 		switch (condition.field) {
 			case "outcome":
-				params.outcomes = [...(params.outcomes as string[] ?? []), condition.value]
+				params.outcomes = [
+					...((params.outcomes as string[]) ?? []),
+					condition.value,
+				]
 				break
 			case "direction":
-				params.directions = [...(params.directions as string[] ?? []), condition.value]
+				params.directions = [
+					...((params.directions as string[]) ?? []),
+					condition.value,
+				]
 				break
 			case "rating":
 				if (condition.operator === "isAtLeast") {
 					const idx = RATING_ORDER.indexOf(condition.value)
 					params.rating = RATING_ORDER.slice(0, idx + 1)
 				} else {
-					params.rating = [...(params.rating as string[] ?? []), condition.value]
+					params.rating = [
+						...((params.rating as string[]) ?? []),
+						condition.value,
+					]
 				}
 				break
 			case "followedPlan":
@@ -145,12 +169,19 @@ const conditionsToParams = (conditions: FilterCondition[]): Record<string, strin
 				break
 			case "timeOfDay": {
 				const [from, to] = condition.value.split("-")
-				if (from) params.hourFrom = from
-				if (to) params.hourTo = to
+				if (from) {
+					params.hourFrom = from
+				}
+				if (to) {
+					params.hourTo = to
+				}
 				break
 			}
 			case "asset":
-				params.assets = [...(params.assets as string[] ?? []), condition.value]
+				params.assets = [
+					...((params.assets as string[]) ?? []),
+					condition.value,
+				]
 				break
 		}
 	}
@@ -175,12 +206,21 @@ const SmartSearch = ({
 	const tCommon = useTranslations("common")
 
 	/** Translate select option labels based on field type */
-	const translateLabel = useCallback((field: FilterField, labelKey: string): string => {
-		if (field === "outcome") return tTrade(`outcome.${labelKey}`)
-		if (field === "direction") return tTrade(`direction.${labelKey}`)
-		if (field === "followedPlan") return labelKey === "yes" ? tCommon("yes") : tCommon("no")
-		return labelKey
-	}, [tTrade, tCommon])
+	const translateLabel = useCallback(
+		(field: FilterField, labelKey: string): string => {
+			if (field === "outcome") {
+				return tTrade(`outcome.${labelKey}`)
+			}
+			if (field === "direction") {
+				return tTrade(`direction.${labelKey}`)
+			}
+			if (field === "followedPlan") {
+				return labelKey === "yes" ? tCommon("yes") : tCommon("no")
+			}
+			return labelKey
+		},
+		[tTrade, tCommon]
+	)
 
 	const [isOpen, setIsOpen] = useState(false)
 	const [conditions, setConditions] = useState<FilterCondition[]>([])
@@ -190,7 +230,10 @@ const SmartSearch = ({
 	const [newOperator, setNewOperator] = useState<FilterOperator | "">("")
 	const [newValue, setNewValue] = useState("")
 
-	const handleQuickFilterApply = (params: Record<string, string | string[]>, key: string) => {
+	const handleQuickFilterApply = (
+		params: Record<string, string | string[]>,
+		key: string
+	) => {
 		setConditions([])
 		onFiltersChange(params)
 		onQuickFilterChange?.(key)
@@ -202,7 +245,9 @@ const SmartSearch = ({
 	}
 
 	const handleAddCondition = () => {
-		if (!newField || !newOperator || !newValue) return
+		if (!newField || !newOperator || !newValue) {
+			return
+		}
 
 		const condition: FilterCondition = {
 			id: `${newField}-${Date.now()}`,
@@ -254,7 +299,7 @@ const SmartSearch = ({
 				tabIndex={0}
 				onClick={() => setIsOpen(!isOpen)}
 				className={cn(
-					"flex items-center gap-s-200 rounded-md border px-s-300 py-s-100 text-tiny font-medium transition-colors",
+					"gap-s-200 px-s-300 py-s-100 text-tiny flex items-center rounded-md border font-medium transition-colors",
 					isOpen || activeFilterCount > 0
 						? "border-acc-100/30 bg-acc-100/5 text-acc-100"
 						: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"
@@ -265,7 +310,7 @@ const SmartSearch = ({
 				<Search className="h-3.5 w-3.5" />
 				{t("toggle")}
 				{activeFilterCount > 0 && (
-					<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-s-100 font-bold">
+					<span className="bg-acc-100 text-micro text-bg-100 px-s-100 flex h-4 min-w-4 items-center justify-center rounded-full font-bold">
 						{activeFilterCount}
 					</span>
 				)}
@@ -273,18 +318,19 @@ const SmartSearch = ({
 
 			{/* Active conditions summary — visible when panel is closed and conditions are set */}
 			{!isOpen && conditions.length > 0 && (
-				<div className="flex flex-wrap items-center gap-s-200">
+				<div className="gap-s-200 flex flex-wrap items-center">
 					{conditions.map((condition) => (
 						<span
 							key={condition.id}
-							className="flex items-center gap-s-100 rounded-full border border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100"
+							className="gap-s-100 border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 flex items-center rounded-full border"
 						>
-							{t(`fields.${condition.field}`)} {t(`operators.${condition.operator}`)} {condition.value}
+							{t(`fields.${condition.field}`)}{" "}
+							{t(`operators.${condition.operator}`)} {condition.value}
 							<button
 								type="button"
 								tabIndex={0}
 								onClick={() => handleRemoveCondition(condition.id)}
-								className="rounded-full p-0.5 hover:bg-acc-100/20"
+								className="hover:bg-acc-100/20 rounded-full p-0.5"
 								aria-label={`${t("clearAll")} ${t(`fields.${condition.field}`)}`}
 							>
 								<X className="h-2.5 w-2.5" />
@@ -295,7 +341,7 @@ const SmartSearch = ({
 						type="button"
 						tabIndex={0}
 						onClick={handleClearAll}
-						className="text-tiny text-txt-300 hover:text-txt-100 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+						className="text-tiny text-txt-300 hover:text-txt-100 focus-visible:ring-acc-100 rounded-sm focus-visible:ring-1 focus-visible:outline-none"
 					>
 						{t("clearAll")}
 					</button>
@@ -304,10 +350,10 @@ const SmartSearch = ({
 
 			{/* Expanded panel */}
 			{isOpen && (
-				<div className="space-y-s-300 rounded-lg border border-bg-300 bg-bg-200 p-s-300">
+				<div className="space-y-s-300 border-bg-300 bg-bg-200 p-s-300 rounded-lg border">
 					{/* Quick Filters */}
 					<div>
-						<p className="mb-s-200 text-tiny font-medium text-txt-300">
+						<p className="mb-s-200 text-tiny text-txt-300 font-medium">
 							{t("quickFilters")}
 						</p>
 						<QuickFilters
@@ -319,18 +365,19 @@ const SmartSearch = ({
 
 					{/* Active conditions as chips */}
 					{conditions.length > 0 && (
-						<div className="flex flex-wrap gap-s-200">
+						<div className="gap-s-200 flex flex-wrap">
 							{conditions.map((condition) => (
 								<span
 									key={condition.id}
-									className="flex items-center gap-s-100 rounded-full border border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100"
+									className="gap-s-100 border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 flex items-center rounded-full border"
 								>
-									{t(`fields.${condition.field}`)} {t(`operators.${condition.operator}`)} {condition.value}
+									{t(`fields.${condition.field}`)}{" "}
+									{t(`operators.${condition.operator}`)} {condition.value}
 									<button
 										type="button"
 										tabIndex={0}
 										onClick={() => handleRemoveCondition(condition.id)}
-										className="rounded-full p-0.5 hover:bg-acc-100/20"
+										className="hover:bg-acc-100/20 rounded-full p-0.5"
 										aria-label={`${t("clearAll")} ${t(`fields.${condition.field}`)}`}
 									>
 										<X className="h-2.5 w-2.5" />
@@ -341,7 +388,7 @@ const SmartSearch = ({
 								type="button"
 								tabIndex={0}
 								onClick={handleClearAll}
-								className="text-tiny text-txt-300 hover:text-txt-100 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+								className="text-tiny text-txt-300 hover:text-txt-100 focus-visible:ring-acc-100 rounded-sm focus-visible:ring-1 focus-visible:outline-none"
 							>
 								{t("clearAll")}
 							</button>
@@ -350,23 +397,26 @@ const SmartSearch = ({
 
 					{/* Filter Builder */}
 					<div>
-						<div className="mb-s-200 flex items-center gap-s-200">
-							<p className="text-tiny font-medium text-txt-300">
+						<div className="mb-s-200 gap-s-200 flex items-center">
+							<p className="text-tiny text-txt-300 font-medium">
 								{t("builder")}
 							</p>
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Info
-										className="h-3.5 w-3.5 cursor-help text-txt-300 hover:text-txt-200"
+										className="text-txt-300 hover:text-txt-200 h-3.5 w-3.5 cursor-help"
 										aria-label={t("builderHint")}
 									/>
 								</TooltipTrigger>
-								<TooltipContent id="smart-search-builder-hint" className="max-w-[256px] text-tiny">
+								<TooltipContent
+									id="smart-search-builder-hint"
+									className="text-tiny max-w-[256px]"
+								>
 									{t("builderHint")}
 								</TooltipContent>
 							</Tooltip>
 						</div>
-						<div className="flex flex-wrap gap-s-200 items-end">
+						<div className="gap-s-200 flex flex-wrap items-end">
 							{/* Field selector */}
 							<Select
 								value={newField}
@@ -376,7 +426,10 @@ const SmartSearch = ({
 									setNewValue("")
 								}}
 							>
-								<SelectTrigger id="smart-search-field" className="h-8 w-32 text-tiny">
+								<SelectTrigger
+									id="smart-search-field"
+									className="text-tiny h-8 w-32"
+								>
 									<SelectValue placeholder={t("field")} />
 								</SelectTrigger>
 								<SelectContent>
@@ -386,9 +439,7 @@ const SmartSearch = ({
 										</SelectItem>
 									))}
 									{availableAssets.length > 0 && (
-										<SelectItem value="asset">
-											{t("fields.asset")}
-										</SelectItem>
+										<SelectItem value="asset">{t("fields.asset")}</SelectItem>
 									)}
 								</SelectContent>
 							</Select>
@@ -399,7 +450,10 @@ const SmartSearch = ({
 									value={newOperator}
 									onValueChange={(val) => setNewOperator(val as FilterOperator)}
 								>
-									<SelectTrigger id="smart-search-operator" className="h-8 w-28 text-tiny">
+									<SelectTrigger
+										id="smart-search-operator"
+										className="text-tiny h-8 w-28"
+									>
 										<SelectValue placeholder={t("operator")} />
 									</SelectTrigger>
 									<SelectContent>
@@ -415,22 +469,31 @@ const SmartSearch = ({
 							{/* Value input */}
 							{newOperator && selectedFieldConfig && (
 								<>
-									{selectedFieldConfig.inputType === "select" && selectedFieldConfig.values ? (
+									{selectedFieldConfig.inputType === "select" &&
+									selectedFieldConfig.values ? (
 										<Select value={newValue} onValueChange={setNewValue}>
-											<SelectTrigger id="smart-search-value" className="h-8 w-28 text-tiny">
+											<SelectTrigger
+												id="smart-search-value"
+												className="text-tiny h-8 w-28"
+											>
 												<SelectValue placeholder={t("value")} />
 											</SelectTrigger>
 											<SelectContent>
 												{selectedFieldConfig.values.map((v) => (
 													<SelectItem key={v.value} value={v.value}>
-														{newField ? translateLabel(newField, v.labelKey) : v.labelKey}
+														{newField
+															? translateLabel(newField, v.labelKey)
+															: v.labelKey}
 													</SelectItem>
 												))}
 											</SelectContent>
 										</Select>
 									) : newField === "asset" ? (
 										<Select value={newValue} onValueChange={setNewValue}>
-											<SelectTrigger id="smart-search-asset-value" className="h-8 w-28 text-tiny">
+											<SelectTrigger
+												id="smart-search-asset-value"
+												className="text-tiny h-8 w-28"
+											>
 												<SelectValue placeholder={t("value")} />
 											</SelectTrigger>
 											<SelectContent>
@@ -442,7 +505,7 @@ const SmartSearch = ({
 											</SelectContent>
 										</Select>
 									) : newField === "timeOfDay" ? (
-										<div className="flex items-center gap-s-100">
+										<div className="gap-s-100 flex items-center">
 											<Input
 												id="smart-search-hour-from"
 												aria-label={t("hourFrom")}
@@ -450,7 +513,7 @@ const SmartSearch = ({
 												min={0}
 												max={23}
 												placeholder="9"
-												className="h-8 w-16 text-tiny"
+												className="text-tiny h-8 w-16"
 												value={newValue.split("-")[0] || ""}
 												onChange={(e) => {
 													const to = newValue.split("-")[1] || ""
@@ -465,7 +528,7 @@ const SmartSearch = ({
 												min={0}
 												max={23}
 												placeholder="12"
-												className="h-8 w-16 text-tiny"
+												className="text-tiny h-8 w-16"
 												value={newValue.split("-")[1] || ""}
 												onChange={(e) => {
 													const from = newValue.split("-")[0] || ""
@@ -478,11 +541,13 @@ const SmartSearch = ({
 											id="smart-search-number-value"
 											type="number"
 											placeholder={t("value")}
-											className="h-8 w-28 text-tiny"
+											className="text-tiny h-8 w-28"
 											value={newValue}
 											onChange={(e) => setNewValue(e.target.value)}
 											onKeyDown={(e) => {
-												if (e.key === "Enter") handleAddCondition()
+												if (e.key === "Enter") {
+													handleAddCondition()
+												}
 											}}
 										/>
 									)}
@@ -495,7 +560,7 @@ const SmartSearch = ({
 									id="smart-search-add-btn"
 									variant="ghost"
 									size="sm"
-									className="h-8 px-s-200"
+									className="px-s-200 h-8"
 									onClick={handleAddCondition}
 								>
 									<Plus className="mr-s-100 h-3 w-3" />
@@ -510,4 +575,11 @@ const SmartSearch = ({
 	)
 }
 
-export { SmartSearch, conditionsToParams, RATING_ORDER, type FilterCondition, type FilterField, type FilterOperator }
+export {
+	SmartSearch,
+	conditionsToParams,
+	RATING_ORDER,
+	type FilterCondition,
+	type FilterField,
+	type FilterOperator,
+}

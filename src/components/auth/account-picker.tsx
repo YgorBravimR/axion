@@ -15,7 +15,11 @@ interface AccountPickerProps {
 	password: string
 }
 
-export const AccountPicker = ({ accounts, email, password }: AccountPickerProps) => {
+export const AccountPicker = ({
+	accounts,
+	email,
+	password,
+}: AccountPickerProps) => {
 	const t = useTranslations("auth.selectAccount")
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
@@ -24,7 +28,9 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 	)
 
 	const handleContinue = () => {
-		if (!selectedId) return
+		if (!selectedId) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await signIn("credentials", {
@@ -48,7 +54,11 @@ export const AccountPicker = ({ accounts, email, password }: AccountPickerProps)
 				<p className="mt-s-200 text-small text-txt-300">{t("subtitle")}</p>
 			</div>
 
-			<div role="radiogroup" aria-label={t("selectAccountLabel")} className="space-y-s-300">
+			<div
+				role="radiogroup"
+				aria-label={t("selectAccountLabel")}
+				className="space-y-s-300"
+			>
 				{accounts.map((account) => (
 					<button
 						key={account.id}

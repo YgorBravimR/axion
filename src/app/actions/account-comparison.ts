@@ -5,7 +5,11 @@ import { trades, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, lte, inArray } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { requireRole } from "@/lib/auth-utils"
-import { getUserDek, decryptTradeFields, decryptAccountFields } from "@/lib/user-crypto"
+import {
+	getUserDek,
+	decryptTradeFields,
+	decryptAccountFields,
+} from "@/lib/user-crypto"
 import { fromCents } from "@/lib/money"
 import {
 	computeOverallStats,
@@ -45,7 +49,9 @@ const getAccountComparisonData = async (
 			return {
 				status: "error",
 				message: t("minAccountsRequired"),
-				errors: [{ code: "INVALID_INPUT", detail: "Select at least 2 accounts" }],
+				errors: [
+					{ code: "INVALID_INPUT", detail: "Select at least 2 accounts" },
+				],
 			}
 		}
 
@@ -68,11 +74,12 @@ const getAccountComparisonData = async (
 		// Decrypt account fields for config display
 		const dek = await getUserDek(authContext.userId)
 		const decryptedAccounts = dek
-			? userAccounts.map((a) =>
-					decryptAccountFields(
-						a as unknown as Record<string, unknown>,
-						dek
-					) as unknown as typeof a
+			? userAccounts.map(
+					(a) =>
+						decryptAccountFields(
+							a as unknown as Record<string, unknown>,
+							dek
+						) as unknown as typeof a
 				)
 			: userAccounts
 
@@ -104,7 +111,9 @@ const getAccountComparisonData = async (
 			tradesByAccount.set(accountId, [])
 		}
 		for (const trade of decryptedTrades) {
-			if (!trade.accountId) continue
+			if (!trade.accountId) {
+				continue
+			}
 			const group = tradesByAccount.get(trade.accountId)
 			if (group) {
 				group.push(trade)
@@ -149,7 +158,10 @@ const getAccountComparisonData = async (
 			errors: [
 				{
 					code: "FETCH_FAILED",
-					detail: error instanceof Error ? error.message : "Failed to retrieve comparison data",
+					detail:
+						error instanceof Error
+							? error.message
+							: "Failed to retrieve comparison data",
 				},
 			],
 		}

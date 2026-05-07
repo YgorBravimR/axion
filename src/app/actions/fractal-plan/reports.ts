@@ -12,10 +12,18 @@ interface RDistRow {
 }
 
 const bucketize = (r: number): RDistRow["bucket"] => {
-	if (r < -1) return "lt_neg1"
-	if (r < 0) return "neg1_to_0"
-	if (r < 1) return "0_to_1"
-	if (r < 2) return "1_to_2"
+	if (r < -1) {
+		return "lt_neg1"
+	}
+	if (r < 0) {
+		return "neg1_to_0"
+	}
+	if (r < 1) {
+		return "0_to_1"
+	}
+	if (r < 2) {
+		return "1_to_2"
+	}
 	return "ge_2"
 }
 
@@ -40,7 +48,9 @@ export const getRDistribution = async (range: {
 	const counts = new Map<RDistRow["bucket"], number>()
 	for (const row of rows) {
 		const r = Number(row.rOutcome)
-		if (!Number.isFinite(r)) continue
+		if (!Number.isFinite(r)) {
+			continue
+		}
 		const b = bucketize(r)
 		counts.set(b, (counts.get(b) ?? 0) + 1)
 	}

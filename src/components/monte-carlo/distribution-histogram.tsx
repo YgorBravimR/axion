@@ -7,7 +7,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 	Cell,
 	Rectangle,
@@ -139,7 +138,9 @@ const CustomBarBackground = (props: CustomBarBackgroundProps) => {
 	const zone = payload?.percentileZone ?? "outer"
 	const fill = ZONE_COLORS[zone]
 
-	if (fill === "transparent") return null
+	if (fill === "transparent") {
+		return null
+	}
 
 	return (
 		<Rectangle
@@ -154,7 +155,9 @@ const CustomBarBackground = (props: CustomBarBackgroundProps) => {
 }
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	if (!active || !payload || payload.length === 0) {
+		return null
+	}
 
 	const data = payload[0].payload
 	const isProfit = data.midPoint >= 0
@@ -200,9 +203,13 @@ export const DistributionHistogram = ({
 		let profitable = 0
 		let total = 0
 		for (const d of chartData) {
-			if (d.count > max) max = d.count
+			if (d.count > max) {
+				max = d.count
+			}
 			total += d.count
-			if (d.midPoint >= 0) profitable += d.count
+			if (d.midPoint >= 0) {
+				profitable += d.count
+			}
 		}
 		return { maxCount: max, profitableCount: profitable, totalCount: total }
 	}, [chartData])

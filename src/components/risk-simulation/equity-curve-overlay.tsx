@@ -1,15 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import {
-	AreaChart,
-	Area,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-
-	Legend,
-} from "recharts"
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { fromCents } from "@/lib/money"
@@ -37,7 +29,9 @@ const CHART_MARGIN = { top: 10, right: 30, left: 10, bottom: 0 } as const
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("riskSimulation.chart")
-	if (!active || !payload || payload.length === 0) return null
+	if (!active || !payload || payload.length === 0) {
+		return null
+	}
 
 	const data = payload[0].payload
 
@@ -75,17 +69,27 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 		let min = Infinity
 		let max = -Infinity
 		for (const d of chartData) {
-			if (d.original < min) min = d.original
-			if (d.original > max) max = d.original
-			if (d.simulated < min) min = d.simulated
-			if (d.simulated > max) max = d.simulated
+			if (d.original < min) {
+				min = d.original
+			}
+			if (d.original > max) {
+				max = d.original
+			}
+			if (d.simulated < min) {
+				min = d.simulated
+			}
+			if (d.simulated > max) {
+				max = d.simulated
+			}
 		}
 		return { minValue: min, maxValue: max }
 	}, [chartData])
 
 	const padding = (maxValue - minValue) * 0.05 || 100
 
-	if (chartData.length === 0) return null
+	if (chartData.length === 0) {
+		return null
+	}
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
@@ -96,10 +100,7 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 				id="risk-sim-equity-chart"
 				className="h-[250px] w-full sm:h-[300px] lg:h-[350px]"
 			>
-				<AreaChart
-					data={chartData}
-					margin={CHART_MARGIN}
-				>
+				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<CartesianGrid strokeDasharray="3 3" stroke="var(--color-bg-300)" />
 					<XAxis
 						dataKey="tradeIndex"

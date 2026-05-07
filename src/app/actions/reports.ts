@@ -368,8 +368,9 @@ export const getWeeklyReport = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching weekly report:", error)
+		}
 		return { status: "error", message: t("actions.weeklyFetchFailed") }
 	}
 }
@@ -535,8 +536,9 @@ export const getMonthlyReport = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching monthly report:", error)
+		}
 		return { status: "error", message: t("actions.monthlyFetchFailed") }
 	}
 }
@@ -582,7 +584,9 @@ export const getMistakeCostAnalysis = async (): Promise<{
 
 		// Filter by account (through trade relation) - support all accounts mode
 		const filteredAssociations = tradeTagAssociations.filter((assoc) => {
-			if (!assoc.trade.accountId) return false
+			if (!assoc.trade.accountId) {
+				return false
+			}
 			return authContext.showAllAccounts
 				? authContext.allAccountIds.includes(assoc.trade.accountId)
 				: assoc.trade.accountId === authContext.accountId
@@ -641,8 +645,9 @@ export const getMistakeCostAnalysis = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching mistake cost analysis:", error)
+		}
 		return { status: "error", message: t("actions.mistakeFetchFailed") }
 	}
 }
@@ -851,8 +856,9 @@ export const getMonthlyResultsWithProp = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching monthly results with prop:", error)
+		}
 		return { status: "error", message: t("actions.monthlyResultsFetchFailed") }
 	}
 }
@@ -958,8 +964,9 @@ export const getMonthlyProjection = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching monthly projection:", error)
+		}
 		return { status: "error", message: t("actions.projectionFetchFailed") }
 	}
 }
@@ -1024,8 +1031,9 @@ export const getMonthComparison = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching month comparison:", error)
+		}
 		return { status: "error", message: t("actions.comparisonFetchFailed") }
 	}
 }
@@ -1101,8 +1109,9 @@ export const getYearlyOverview = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching yearly overview:", error)
+		}
 		return { status: "error", message: t("actions.yearlyFetchFailed") }
 	}
 }
@@ -1179,7 +1188,9 @@ export const getCommissionFeeImpact = async (): Promise<{
 			totalExchangeFees += fees
 			totalNetPnl += netPnl
 
-			if (tradeFee > 0) hasData = true
+			if (tradeFee > 0) {
+				hasData = true
+			}
 
 			// Asset breakdown
 			const assetEntry = assetMap.get(trade.asset) || {
@@ -1216,10 +1227,8 @@ export const getCommissionFeeImpact = async (): Promise<{
 			totalCommission,
 			totalExchangeFees,
 			grossPnl,
-			feesAsPercentOfGross:
-				grossPnl > 0 ? (totalFees / grossPnl) * 100 : 0,
-			avgFeePerTrade:
-				allTrades.length > 0 ? totalFees / allTrades.length : 0,
+			feesAsPercentOfGross: grossPnl > 0 ? (totalFees / grossPnl) * 100 : 0,
+			avgFeePerTrade: allTrades.length > 0 ? totalFees / allTrades.length : 0,
 			totalTrades: allTrades.length,
 		}
 
@@ -1239,9 +1248,7 @@ export const getCommissionFeeImpact = async (): Promise<{
 				totalFees: data.totalFees,
 				grossPnl: data.grossPnl,
 				feesAsPercentOfGross:
-					data.grossPnl > 0
-						? (data.totalFees / data.grossPnl) * 100
-						: 0,
+					data.grossPnl > 0 ? (data.totalFees / data.grossPnl) * 100 : 0,
 				tradeCount: data.tradeCount,
 			}))
 			.toSorted((a, b) => a.month.localeCompare(b.month))
@@ -1256,8 +1263,9 @@ export const getCommissionFeeImpact = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching commission fee impact:", error)
+		}
 		return {
 			status: "error",
 			message: t("actions.commissionFetchFailed"),

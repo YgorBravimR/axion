@@ -17,7 +17,9 @@ const PageGuideTrigger = () => {
 	const t = useTranslations("pageGuide")
 	const { startGuide, registeredConfig } = usePageGuide()
 
-	if (!registeredConfig) return null
+	if (!registeredConfig) {
+		return null
+	}
 
 	const handleClick = () => {
 		startGuide(registeredConfig)

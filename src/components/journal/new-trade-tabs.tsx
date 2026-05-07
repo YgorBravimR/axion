@@ -56,7 +56,9 @@ export const NewTradeTabs = ({
 	// Capture state from current form before switching modes
 	const handleModeChange = useCallback(
 		(newMode: TradeMode) => {
-			if (newMode === tradeMode) return
+			if (newMode === tradeMode) {
+				return
+			}
 			const currentRef = tradeMode === "simple" ? tradeFormRef : scaledFormRef
 			const captured = currentRef.current?.getSharedState()
 			setSharedState(captured)
@@ -68,7 +70,10 @@ export const NewTradeTabs = ({
 	return (
 		<div>
 			{/* Tab Buttons */}
-			<div className="mb-m-400 sm:mb-m-500 lg:mb-m-600 gap-s-100 sm:gap-s-200 border-bg-300 flex overflow-x-auto border-b" role="tablist">
+			<div
+				className="mb-m-400 sm:mb-m-500 lg:mb-m-600 gap-s-100 sm:gap-s-200 border-bg-300 flex overflow-x-auto border-b"
+				role="tablist"
+			>
 				<button
 					type="button"
 					onClick={() => setActiveTab("single")}
@@ -148,7 +153,10 @@ export const NewTradeTabs = ({
 					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 						{/* Trade Mode Selector — premium+ only */}
 						{isPremium && (
-							<TradeModeSelector value={tradeMode} onChange={handleModeChange} />
+							<TradeModeSelector
+								value={tradeMode}
+								onChange={handleModeChange}
+							/>
 						)}
 
 						{/* Form based on mode */}
@@ -181,8 +189,12 @@ export const NewTradeTabs = ({
 					</div>
 				</div>
 				{activeTab === "csv" && canAccess("journal:csv-tab") && <CsvImport />}
-				{activeTab === "nota" && canAccess("journal:nota-tab") && <NotaImport />}
-				{activeTab === "screenshot" && canAccess("journal:ocr-tab") && <OcrImport />}
+				{activeTab === "nota" && canAccess("journal:nota-tab") && (
+					<NotaImport />
+				)}
+				{activeTab === "screenshot" && canAccess("journal:ocr-tab") && (
+					<OcrImport />
+				)}
 			</div>
 		</div>
 	)

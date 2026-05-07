@@ -41,7 +41,9 @@ const BugReportPanel = () => {
 
 	// Close on Escape + focus trap
 	useEffect(() => {
-		if (!isOpen) return
+		if (!isOpen) {
+			return
+		}
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
@@ -49,7 +51,9 @@ const BugReportPanel = () => {
 				const openDialog = document.querySelector(
 					"[data-state='open'][role='dialog']"
 				)
-				if (openDialog && !panelRef.current?.contains(openDialog)) return
+				if (openDialog && !panelRef.current?.contains(openDialog)) {
+					return
+				}
 				closeBugReport()
 				return
 			}
@@ -59,7 +63,9 @@ const BugReportPanel = () => {
 				const focusable = panelRef.current.querySelectorAll<HTMLElement>(
 					'button, [href], input, textarea, [tabindex]:not([tabindex="-1"])'
 				)
-				if (focusable.length === 0) return
+				if (focusable.length === 0) {
+					return
+				}
 
 				const first = focusable[0]
 				const last = focusable[focusable.length - 1]
@@ -133,7 +139,9 @@ const BugReportPanel = () => {
 	}, [])
 
 	const handleSubmit = useCallback(async () => {
-		if (!subject.trim() || !description.trim()) return
+		if (!subject.trim() || !description.trim()) {
+			return
+		}
 
 		setIsSubmitting(true)
 		try {
@@ -192,7 +200,9 @@ const BugReportPanel = () => {
 		closeBugReport,
 	])
 
-	if (!isOpen) return null
+	if (!isOpen) {
+		return null
+	}
 
 	const canSubmit =
 		subject.trim().length > 0 && description.trim().length > 0 && !isSubmitting

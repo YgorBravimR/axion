@@ -1,7 +1,15 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from "react"
+import {
+	createContext,
+	useContext,
+	useState,
+	useCallback,
+	useEffect,
+	useRef,
+	useMemo,
+} from "react"
 
 // ==========================================
 // Types
@@ -24,12 +32,16 @@ interface LoadingOverlayContextType {
 // Context
 // ==========================================
 
-const LoadingOverlayContext = createContext<LoadingOverlayContextType | undefined>(undefined)
+const LoadingOverlayContext = createContext<
+	LoadingOverlayContextType | undefined
+>(undefined)
 
 const useLoadingOverlay = () => {
 	const context = useContext(LoadingOverlayContext)
 	if (!context) {
-		throw new Error("useLoadingOverlay must be used within LoadingOverlayProvider")
+		throw new Error(
+			"useLoadingOverlay must be used within LoadingOverlayProvider"
+		)
 	}
 	return context
 }
@@ -50,12 +62,17 @@ const LoadingOverlayProvider = ({ children }: { children: ReactNode }) => {
 		setOptions(newOptions)
 	}, [])
 
-	const updateLoading = useCallback((updates: Partial<LoadingOverlayOptions>) => {
-		setOptions((prev) => {
-			if (!prev) return prev
-			return { ...prev, ...updates }
-		})
-	}, [])
+	const updateLoading = useCallback(
+		(updates: Partial<LoadingOverlayOptions>) => {
+			setOptions((prev) => {
+				if (!prev) {
+					return prev
+				}
+				return { ...prev, ...updates }
+			})
+		},
+		[]
+	)
 
 	const hideLoading = useCallback(() => {
 		setOptions(null)
@@ -75,7 +92,9 @@ const LoadingOverlayProvider = ({ children }: { children: ReactNode }) => {
 
 	// Trap keyboard events while overlay is visible
 	useEffect(() => {
-		if (!isLoading) return
+		if (!isLoading) {
+			return
+		}
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			// Prevent tab navigation and most keyboard interactions
@@ -89,7 +108,10 @@ const LoadingOverlayProvider = ({ children }: { children: ReactNode }) => {
 		return () => document.removeEventListener("keydown", handleKeyDown, true)
 	}, [isLoading])
 
-	const contextValue = useMemo(() => ({ showLoading, updateLoading, hideLoading, isLoading }), [showLoading, updateLoading, hideLoading, isLoading])
+	const contextValue = useMemo(
+		() => ({ showLoading, updateLoading, hideLoading, isLoading }),
+		[showLoading, updateLoading, hideLoading, isLoading]
+	)
 
 	return (
 		<LoadingOverlayContext.Provider value={contextValue}>
@@ -105,43 +127,43 @@ const LoadingOverlayProvider = ({ children }: { children: ReactNode }) => {
 					aria-live="assertive"
 					aria-label={options.message}
 					tabIndex={-1}
-					className="fixed inset-0 z-50 flex items-center justify-center bg-bg-100/90 backdrop-blur-sm animate-overlay-fade-in outline-none"
+					className="bg-bg-100/90 animate-overlay-fade-in fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm outline-none"
 				>
-					<div className="flex flex-col items-center gap-m-600">
+					<div className="gap-m-600 flex flex-col items-center">
 						{/* Pulsing golden line */}
 						<div
-							className="h-[2px] rounded-full bg-acc-100 animate-overlay-pulse-line"
+							className="bg-acc-100 animate-overlay-pulse-line h-[2px] rounded-full"
 							aria-hidden="true"
 						/>
 
 						{/* Message */}
-						<p className="text-body font-medium text-txt-100 text-center">
+						<p className="text-body text-txt-100 text-center font-medium">
 							{options.message}
 						</p>
 
 						{/* Sub-message */}
 						{options.subMessage && (
-							<p className="text-small text-txt-300 text-center -mt-m-400">
+							<p className="text-small text-txt-300 -mt-m-400 text-center">
 								{options.subMessage}
 							</p>
 						)}
 
 						{/* Progress bar */}
 						{options.progress !== undefined && (
-							<div className="w-64 space-y-s-200">
-								<div className="h-1.5 overflow-hidden rounded-full bg-bg-300">
+							<div className="space-y-s-200 w-64">
+								<div className="bg-bg-300 h-1.5 overflow-hidden rounded-full">
 									<div
-										className="relative h-full rounded-full bg-acc-100 transition-all duration-300"
+										className="bg-acc-100 relative h-full rounded-full transition-all duration-300"
 										style={{ width: `${Math.min(options.progress, 100)}%` }}
 									>
 										{/* Shimmer effect */}
 										<div
-											className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent animate-overlay-progress-shimmer"
+											className="animate-overlay-progress-shimmer absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent"
 											aria-hidden="true"
 										/>
 									</div>
 								</div>
-								<p className="text-center text-tiny text-txt-300">
+								<p className="text-tiny text-txt-300 text-center">
 									{Math.round(options.progress)}%
 								</p>
 							</div>

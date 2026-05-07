@@ -5,7 +5,9 @@ import type { ExecutionSummary, PositionStatus } from "@/types"
  * Calculate win rate percentage
  */
 export const calculateWinRate = (wins: number, total: number): number => {
-	if (total === 0) return 0
+	if (total === 0) {
+		return 0
+	}
 	return (wins / total) * 100
 }
 
@@ -16,7 +18,9 @@ export const calculateProfitFactor = (
 	grossProfit: number,
 	grossLoss: number
 ): number => {
-	if (grossLoss === 0) return grossProfit > 0 ? Infinity : 0
+	if (grossLoss === 0) {
+		return grossProfit > 0 ? Infinity : 0
+	}
 	return grossProfit / Math.abs(grossLoss)
 }
 
@@ -37,7 +41,9 @@ export const calculateExpectedValue = (
  * Calculate drawdown percentage from peak
  */
 export const calculateDrawdown = (equity: number, peak: number): number => {
-	if (peak <= 0) return 0
+	if (peak <= 0) {
+		return 0
+	}
 	return ((peak - equity) / peak) * 100
 }
 
@@ -45,7 +51,9 @@ export const calculateDrawdown = (equity: number, peak: number): number => {
  * Calculate R-Multiple (profit/loss divided by risk amount)
  */
 export const calculateRMultiple = (pnl: number, riskAmount: number): number => {
-	if (riskAmount === 0) return 0
+	if (riskAmount === 0) {
+		return 0
+	}
 	return pnl / riskAmount
 }
 
@@ -65,7 +73,9 @@ export const calculatePositionSize = ({
 }): number => {
 	const riskAmount = accountBalance * (riskPercent / 100)
 	const riskPerShare = Math.abs(entryPrice - stopLoss)
-	if (riskPerShare === 0) return 0
+	if (riskPerShare === 0) {
+		return 0
+	}
 	return riskAmount / riskPerShare
 }
 
@@ -115,12 +125,18 @@ export const determineOutcome = ({
 }): "win" | "loss" | "breakeven" => {
 	// Tick-based classification when both values are available
 	if (ticksGained != null && breakevenTicks > 0) {
-		if (Math.abs(ticksGained) <= breakevenTicks) return "breakeven"
+		if (Math.abs(ticksGained) <= breakevenTicks) {
+			return "breakeven"
+		}
 		return ticksGained > 0 ? "win" : "loss"
 	}
 	// Fallback: P&L-based (non-asset trades or breakevenTicks=0)
-	if (pnl > 0) return "win"
-	if (pnl < 0) return "loss"
+	if (pnl > 0) {
+		return "win"
+	}
+	if (pnl < 0) {
+		return "loss"
+	}
 	return "breakeven"
 }
 
@@ -390,7 +406,9 @@ export const calculateWeightedAvgPrice = (
 	type: "entry" | "exit"
 ): number => {
 	const filtered = executions.filter((e) => e.executionType === type)
-	if (filtered.length === 0) return 0
+	if (filtered.length === 0) {
+		return 0
+	}
 
 	let totalValue = 0
 	let totalQty = 0
@@ -487,9 +505,15 @@ const getPositionStatus = (
 	totalEntryQty: number,
 	totalExitQty: number
 ): PositionStatus => {
-	if (totalExitQty === 0) return "open"
-	if (totalExitQty < totalEntryQty) return "partial"
-	if (totalExitQty === totalEntryQty) return "closed"
+	if (totalExitQty === 0) {
+		return "open"
+	}
+	if (totalExitQty < totalEntryQty) {
+		return "partial"
+	}
+	if (totalExitQty === totalEntryQty) {
+		return "closed"
+	}
 	return "over_exit"
 }
 
@@ -501,7 +525,9 @@ const calculateAvgPrice = (
 	type: "entry" | "exit"
 ): number => {
 	const filtered = executions.filter((e) => e.executionType === type)
-	if (filtered.length === 0) return 0
+	if (filtered.length === 0) {
+		return 0
+	}
 
 	let totalValue = 0
 	let totalQty = 0

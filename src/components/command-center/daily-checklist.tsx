@@ -36,7 +36,7 @@ export const DailyChecklist = ({
 				totalCount: number
 				progress: number
 				isComplete: boolean
-				sortedItems: typeof checklists[number]["parsedItems"]
+				sortedItems: (typeof checklists)[number]["parsedItems"]
 			}
 		>()
 
@@ -45,16 +45,30 @@ export const DailyChecklist = ({
 			const totalCount = checklist.parsedItems.length
 			const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 			const isComplete = completedCount === totalCount && totalCount > 0
-			const sortedItems = checklist.parsedItems.toSorted((a, b) => a.order - b.order)
+			const sortedItems = checklist.parsedItems.toSorted(
+				(a, b) => a.order - b.order
+			)
 
-			statsMap.set(checklist.id, { completedCount, totalCount, progress, isComplete, sortedItems })
+			statsMap.set(checklist.id, {
+				completedCount,
+				totalCount,
+				progress,
+				isComplete,
+				sortedItems,
+			})
 		}
 
 		return statsMap
 	}, [checklists])
 
-	const handleToggle = async (checklistId: string, itemId: string, completed: boolean) => {
-		if (isReadOnly) return
+	const handleToggle = async (
+		checklistId: string,
+		itemId: string,
+		completed: boolean
+	) => {
+		if (isReadOnly) {
+			return
+		}
 		setLoading(`${checklistId}-${itemId}`)
 		try {
 			const result = await toggleChecklistItem(checklistId, itemId, completed)
@@ -72,11 +86,18 @@ export const DailyChecklist = ({
 
 	if (checklists.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
-					<h3 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h3>
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("title")}
+					</h3>
 					{!isReadOnly && (
-						<Button id="daily-checklist-manage" variant="ghost" size="sm" onClick={() => onManageClick("")}>
+						<Button
+							id="daily-checklist-manage"
+							variant="ghost"
+							size="sm"
+							onClick={() => onManageClick("")}
+						>
 							<Settings className="mr-s-100 h-4 w-4" />
 							{t("editChecklist")}
 						</Button>
@@ -91,31 +112,42 @@ export const DailyChecklist = ({
 		<div id="cc-daily-checklist" className="space-y-s-300 sm:space-y-m-400">
 			{checklists.map((checklist) => {
 				const stats = checklistStats.get(checklist.id)!
-				const { completedCount, totalCount, progress, isComplete, sortedItems } = stats
+				const {
+					completedCount,
+					totalCount,
+					progress,
+					isComplete,
+					sortedItems,
+				} = stats
 
 				return (
 					<div
 						key={checklist.id}
 						className={cn(
-							"rounded-lg border bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 transition-colors",
+							"bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border transition-colors",
 							isComplete ? "border-trade-buy/50" : "border-bg-300"
 						)}
 					>
 						{/* Header */}
 						<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
-							<div className="flex items-center gap-s-200">
-								<h3 className="text-small sm:text-body font-semibold text-txt-100">
+							<div className="gap-s-200 flex items-center">
+								<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 									{checklist.name}
 								</h3>
 								{isComplete && (
-									<span className="flex items-center gap-s-100 text-tiny text-trade-buy">
+									<span className="gap-s-100 text-tiny text-trade-buy flex items-center">
 										<Check className="h-3 w-3" />
 										{t("completed")}
 									</span>
 								)}
 							</div>
 							{!isReadOnly && (
-								<Button id={`daily-checklist-settings-${checklist.id}`} variant="ghost" size="sm" onClick={() => onManageClick(checklist.id)}>
+								<Button
+									id={`daily-checklist-settings-${checklist.id}`}
+									variant="ghost"
+									size="sm"
+									onClick={() => onManageClick(checklist.id)}
+								>
 									<Settings className="h-4 w-4" />
 								</Button>
 							)}
@@ -132,7 +164,7 @@ export const DailyChecklist = ({
 								</span>
 							</div>
 							<div
-								className="h-1.5 overflow-hidden rounded-full bg-bg-300"
+								className="bg-bg-300 h-1.5 overflow-hidden rounded-full"
 								role="progressbar"
 								aria-valuenow={completedCount}
 								aria-valuemin={0}
@@ -152,39 +184,39 @@ export const DailyChecklist = ({
 						{/* Items */}
 						<div className="space-y-s-200">
 							{sortedItems.map((item) => {
-									const isChecked = checklist.completedItemIds.includes(item.id)
-									const isLoading = loading === `${checklist.id}-${item.id}`
+								const isChecked = checklist.completedItemIds.includes(item.id)
+								const isLoading = loading === `${checklist.id}-${item.id}`
 
-									return (
-										<label
-											key={item.id}
+								return (
+									<label
+										key={item.id}
+										className={cn(
+											"gap-s-300 p-s-200 flex items-center rounded-md transition-colors",
+											isReadOnly
+												? "cursor-default"
+												: "hover:bg-bg-300 active:bg-bg-300/70 cursor-pointer",
+											isLoading && "opacity-50"
+										)}
+									>
+										<Checkbox
+											id={`checklist-item-${checklist.id}-${item.id}`}
+											checked={isChecked}
+											onCheckedChange={(checked) =>
+												handleToggle(checklist.id, item.id, !!checked)
+											}
+											disabled={isReadOnly || isLoading}
+										/>
+										<span
 											className={cn(
-												"flex items-center gap-s-300 rounded-md p-s-200 transition-colors",
-												isReadOnly ? "cursor-default" : "cursor-pointer hover:bg-bg-300 active:bg-bg-300/70",
-												isLoading && "opacity-50"
+												"text-small transition-colors",
+												isChecked ? "text-txt-300 line-through" : "text-txt-100"
 											)}
 										>
-											<Checkbox
-												id={`checklist-item-${checklist.id}-${item.id}`}
-												checked={isChecked}
-												onCheckedChange={(checked) =>
-													handleToggle(checklist.id, item.id, !!checked)
-												}
-												disabled={isReadOnly || isLoading}
-											/>
-											<span
-												className={cn(
-													"text-small transition-colors",
-													isChecked
-														? "text-txt-300 line-through"
-														: "text-txt-100"
-												)}
-											>
-												{item.label}
-											</span>
-										</label>
-									)
-								})}
+											{item.label}
+										</span>
+									</label>
+								)
+							})}
 						</div>
 					</div>
 				)

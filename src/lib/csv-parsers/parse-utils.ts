@@ -34,7 +34,9 @@ const normalizeHeader = (header: string): string => {
  * @returns The parsed number, or null if invalid
  */
 const parseBrazilianNumber = (value: string): number | null => {
-	if (!value || value === "-") return null
+	if (!value || value === "-") {
+		return null
+	}
 	// Remove thousand separators (dots) and replace decimal comma with dot
 	const cleaned = value.replace(/\./g, "").replace(",", ".").trim()
 	const num = parseFloat(cleaned)
@@ -51,7 +53,9 @@ const parseBrazilianNumber = (value: string): number | null => {
  * @returns Parsed Date object, or null if invalid
  */
 const parseBrazilianDateTime = (value: string): Date | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 
 	// Format: DD/MM/YYYY HH:MM:SS (e.g., "13/06/2025 12:10:56")
 	const match = value.match(
@@ -61,7 +65,9 @@ const parseBrazilianDateTime = (value: string): Date | null => {
 		const [, d, m, y, h, mi, s] = match.map(Number)
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T${pad2(h)}:${pad2(mi)}:${pad2(s)}${BRT_OFFSET}`
 		const date = new Date(iso)
-		if (!isNaN(date.getTime())) return date
+		if (!isNaN(date.getTime())) {
+			return date
+		}
 	}
 
 	// Try without time: DD/MM/YYYY — midnight BRT
@@ -70,7 +76,9 @@ const parseBrazilianDateTime = (value: string): Date | null => {
 		const [, d, m, y] = dateOnlyMatch.map(Number)
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T00:00:00${BRT_OFFSET}`
 		const date = new Date(iso)
-		if (!isNaN(date.getTime())) return date
+		if (!isNaN(date.getTime())) {
+			return date
+		}
 	}
 
 	return null
@@ -85,7 +93,9 @@ const parseBrazilianDateTime = (value: string): Date | null => {
  * @returns Parsed Date object, or null if invalid
  */
 const parseBrazilianDateTimeMs = (value: string): Date | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 
 	// Format: DD/MM/YYYY HH:MM:SS.mmm (e.g., "17/03/2026 18:14:47.778")
 	const match = value.match(
@@ -96,7 +106,9 @@ const parseBrazilianDateTimeMs = (value: string): Date | null => {
 		const ms = match[7] ? match[7].padEnd(3, "0") : "000"
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T${pad2(h)}:${pad2(mi)}:${pad2(s)}.${ms}${BRT_OFFSET}`
 		const date = new Date(iso)
-		if (!isNaN(date.getTime())) return date
+		if (!isNaN(date.getTime())) {
+			return date
+		}
 	}
 
 	// Try without time: DD/MM/YYYY — midnight BRT
@@ -105,7 +117,9 @@ const parseBrazilianDateTimeMs = (value: string): Date | null => {
 		const [, d, m, y] = dateOnlyMatch.map(Number)
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T00:00:00.000${BRT_OFFSET}`
 		const date = new Date(iso)
-		if (!isNaN(date.getTime())) return date
+		if (!isNaN(date.getTime())) {
+			return date
+		}
 	}
 
 	return null

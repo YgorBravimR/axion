@@ -18,12 +18,16 @@ interface DeriveMonthGoalResult {
 
 const sumWeekTargetRs = (raws: readonly (string | null)[]): number =>
 	raws.reduce((acc, raw) => {
-		if (raw == null) return acc
+		if (raw === null) {
+			return acc
+		}
 		const n = parseFloat(raw)
 		return acc + (Number.isFinite(n) ? n : 0)
 	}, 0)
 
-const deriveMonthGoal = (input: DeriveMonthGoalInput): DeriveMonthGoalResult => {
+const deriveMonthGoal = (
+	input: DeriveMonthGoalInput
+): DeriveMonthGoalResult => {
 	const {
 		manualGoalCents,
 		weekTargetRs,
@@ -32,20 +36,26 @@ const deriveMonthGoal = (input: DeriveMonthGoalInput): DeriveMonthGoalResult => 
 		totalTradingDays,
 	} = input
 
-	if (manualGoalCents != null && manualGoalCents > 0) {
+	if (manualGoalCents !== null && manualGoalCents > 0) {
 		return { planGoalCents: manualGoalCents, planGoalSource: "manual" }
 	}
 
 	const weeksSum = sumWeekTargetRs(weekTargetRs)
 	const fromWeeksCents =
-		weeksSum > 0 && snapshotOneRCents > 0 ? Math.round(weeksSum * snapshotOneRCents) : 0
+		weeksSum > 0 && snapshotOneRCents > 0
+			? Math.round(weeksSum * snapshotOneRCents)
+			: 0
 	if (fromWeeksCents > 0) {
 		return { planGoalCents: fromWeeksCents, planGoalSource: "weeks" }
 	}
 
-	const cascadeR = cascadeDailyTargetR != null ? parseFloat(cascadeDailyTargetR) : NaN
+	const cascadeR =
+		cascadeDailyTargetR !== null ? parseFloat(cascadeDailyTargetR) : NaN
 	const fromCascadeCents =
-		Number.isFinite(cascadeR) && cascadeR > 0 && snapshotOneRCents > 0 && totalTradingDays > 0
+		Number.isFinite(cascadeR) &&
+		cascadeR > 0 &&
+		snapshotOneRCents > 0 &&
+		totalTradingDays > 0
 			? Math.round(cascadeR * totalTradingDays * snapshotOneRCents)
 			: 0
 	if (fromCascadeCents > 0) {

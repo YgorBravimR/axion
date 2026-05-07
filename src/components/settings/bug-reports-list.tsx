@@ -20,7 +20,10 @@ import {
 	getBugReportDetail,
 	updateBugReportStatus,
 } from "@/app/actions/bug-reports"
-import type { BugReportWithReporter, BugReportDetail } from "@/app/actions/bug-report-types"
+import type {
+	BugReportWithReporter,
+	BugReportDetail,
+} from "@/app/actions/bug-report-types"
 import { ImageLightbox } from "@/components/shared/image-lightbox"
 import { cn } from "@/lib/utils"
 
@@ -33,7 +36,13 @@ const STATUS_STYLES: Record<string, string> = {
 	closed: "bg-fb-success/20 text-fb-success",
 }
 
-const STATUS_FILTERS: StatusFilter[] = ["all", "open", "accepted", "rejected", "closed"]
+const STATUS_FILTERS: StatusFilter[] = [
+	"all",
+	"open",
+	"accepted",
+	"rejected",
+	"closed",
+]
 
 const formatJson = (raw: string): string => {
 	try {
@@ -49,7 +58,9 @@ const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
 })
 
 const formatDate = (date: Date | null): string => {
-	if (!date) return "—"
+	if (!date) {
+		return "—"
+	}
 	return dateTimeFormatter.format(new Date(date))
 }
 
@@ -60,7 +71,9 @@ const BugReportsList = () => {
 	const [reports, setReports] = useState<BugReportWithReporter[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [filter, setFilter] = useState<StatusFilter>("all")
-	const [selectedReport, setSelectedReport] = useState<BugReportDetail | null>(null)
+	const [selectedReport, setSelectedReport] = useState<BugReportDetail | null>(
+		null
+	)
 	const [isDetailLoading, setIsDetailLoading] = useState(false)
 	const [isActionPending, setIsActionPending] = useState(false)
 	const [rejectReason, setRejectReason] = useState("")
@@ -94,7 +107,9 @@ const BugReportsList = () => {
 
 			if (e.key === "Tab") {
 				const focusable = focusableRef.current
-				if (focusable.length === 0) return
+				if (focusable.length === 0) {
+					return
+				}
 
 				const first = focusable[0]
 				const last = focusable[focusable.length - 1]
@@ -113,7 +128,9 @@ const BugReportsList = () => {
 
 	// Escape key + focus trap for detail slide-over
 	useEffect(() => {
-		if (!selectedReport) return
+		if (!selectedReport) {
+			return
+		}
 		document.addEventListener("keydown", handlePanelKeyDown)
 		return () => document.removeEventListener("keydown", handlePanelKeyDown)
 	}, [selectedReport, handlePanelKeyDown])
@@ -135,30 +152,37 @@ const BugReportsList = () => {
 	}, [filter, showToast])
 
 	useEffect(() => {
-		fetchReports()
+		void fetchReports()
 	}, [fetchReports])
 
-	const handleViewDetail = useCallback(async (id: string) => {
-		setIsDetailLoading(true)
-		try {
-			const result = await getBugReportDetail(id)
-			if (result.status === "success" && result.data) {
-				setSelectedReport(result.data)
-				setAdminNotes(result.data.adminNotes ?? "")
-				setRejectReason("")
-				setShowRejectForm(false)
+	const handleViewDetail = useCallback(
+		async (id: string) => {
+			setIsDetailLoading(true)
+			try {
+				const result = await getBugReportDetail(id)
+				if (result.status === "success" && result.data) {
+					setSelectedReport(result.data)
+					setAdminNotes(result.data.adminNotes ?? "")
+					setRejectReason("")
+					setShowRejectForm(false)
+				}
+			} catch {
+				showToast("error", t("fetchDetailError"))
+			} finally {
+				setIsDetailLoading(false)
 			}
-		} catch {
-			showToast("error", t("fetchDetailError"))
-		} finally {
-			setIsDetailLoading(false)
-		}
-	}, [showToast])
+		},
+		[showToast]
+	)
 
 	const handleAction = useCallback(
 		async (action: "accept" | "reject" | "close") => {
-			if (!selectedReport) return
-			if (action === "reject" && !rejectReason.trim()) return
+			if (!selectedReport) {
+				return
+			}
+			if (action === "reject" && !rejectReason.trim()) {
+				return
+			}
 
 			setIsActionPending(true)
 			try {
@@ -177,7 +201,7 @@ const BugReportsList = () => {
 					}
 					showToast("success", successMessages[action])
 					setSelectedReport(null)
-					fetchReports()
+					void fetchReports()
 				} else {
 					showToast("error", t("actions.actionError"))
 				}
@@ -193,7 +217,7 @@ const BugReportsList = () => {
 	return (
 		<div className="space-y-m-400">
 			{/* Filter tabs */}
-			<div className="flex flex-wrap gap-s-200">
+			<div className="gap-s-200 flex flex-wrap">
 				{STATUS_FILTERS.map((f) => (
 					<Button
 						id={`bug-filter-${f}`}
@@ -216,11 +240,11 @@ const BugReportsList = () => {
 
 			{/* Report list */}
 			{isLoading ? (
-				<div className="flex items-center justify-center py-l-700">
-					<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-txt-300" />
+				<div className="py-l-700 flex items-center justify-center">
+					<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 				</div>
 			) : reports.length === 0 ? (
-				<div className="flex flex-col items-center justify-center gap-s-300 py-l-700 text-txt-300">
+				<div className="gap-s-300 py-l-700 text-txt-300 flex flex-col items-center justify-center">
 					<Bug className="h-10 w-10" />
 					<p className="text-small">{t("noReports")}</p>
 				</div>
@@ -231,35 +255,39 @@ const BugReportsList = () => {
 							key={report.id}
 							type="button"
 							onClick={() => handleViewDetail(report.id)}
-							className="flex w-full items-center gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-m-400 py-s-300 text-left transition-colors hover:border-bg-300/80 hover:bg-bg-300/50 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
+							className="gap-s-300 border-bg-300 bg-bg-200 px-m-400 py-s-300 hover:border-bg-300/80 hover:bg-bg-300/50 focus-visible:ring-acc-100 flex w-full items-center rounded-lg border text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
 						>
-							<div className="flex-1 min-w-0">
-								<div className="flex items-center gap-s-200">
-									<p className="text-small font-medium text-txt-100 truncate">
+							<div className="min-w-0 flex-1">
+								<div className="gap-s-200 flex items-center">
+									<p className="text-small text-txt-100 truncate font-medium">
 										{report.subject}
 									</p>
 									<span
 										className={cn(
-											"shrink-0 rounded-full px-s-200 py-s-100 text-micro font-medium",
+											"px-s-200 py-s-100 text-micro shrink-0 rounded-full font-medium",
 											STATUS_STYLES[report.status]
 										)}
 									>
 										{t(`status.${report.status}`)}
 									</span>
 								</div>
-								<div className="mt-s-100 flex items-center gap-s-200 text-tiny text-txt-300">
+								<div className="mt-s-100 gap-s-200 text-tiny text-txt-300 flex items-center">
 									<span>{report.reporterName ?? report.reporterEmail}</span>
 									<span className="text-txt-300/50">·</span>
 									<span>{formatDate(report.reportedAt)}</span>
 									{report.imageCount > 0 && (
 										<>
 											<span className="text-txt-300/50">·</span>
-											<span>{report.imageCount === 1 ? t("imageCountSingle") : t("imageCountPlural", { count: report.imageCount })}</span>
+											<span>
+												{report.imageCount === 1
+													? t("imageCountSingle")
+													: t("imageCountPlural", { count: report.imageCount })}
+											</span>
 										</>
 									)}
 								</div>
 							</div>
-							<ChevronRight className="h-4 w-4 shrink-0 text-txt-300" />
+							<ChevronRight className="text-txt-300 h-4 w-4 shrink-0" />
 						</button>
 					))}
 				</div>
@@ -275,29 +303,32 @@ const BugReportsList = () => {
 				>
 					{/* Backdrop — decorative, click-to-dismiss only */}
 					<div
-						className="absolute inset-0 bg-bg-100/80"
+						className="bg-bg-100/80 absolute inset-0"
 						onClick={() => !isActionPending && setSelectedReport(null)}
 						aria-hidden="true"
 					/>
 
 					{/* Panel */}
-					<div ref={detailPanelRef} className="relative z-10 h-full w-full max-w-lg overflow-y-auto border-l border-bg-300 bg-bg-200 p-m-500 shadow-xl animate-in slide-in-from-right duration-200 motion-reduce:animate-none motion-reduce:transition-none">
+					<div
+						ref={detailPanelRef}
+						className="border-bg-300 bg-bg-200 p-m-500 animate-in slide-in-from-right relative z-10 h-full w-full max-w-lg overflow-y-auto border-l shadow-xl duration-200 motion-reduce:animate-none motion-reduce:transition-none"
+					>
 						{isDetailLoading ? (
 							<div className="flex h-full items-center justify-center">
-								<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-txt-300" />
+								<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 							</div>
 						) : selectedReport ? (
 							<div className="space-y-m-500">
 								{/* Header */}
-								<div className="flex items-start justify-between gap-s-300">
+								<div className="gap-s-300 flex items-start justify-between">
 									<div>
-										<h3 className="text-body font-medium text-txt-100">
+										<h3 className="text-body text-txt-100 font-medium">
 											{selectedReport.subject}
 										</h3>
-										<div className="mt-s-100 flex items-center gap-s-200">
+										<div className="mt-s-100 gap-s-200 flex items-center">
 											<span
 												className={cn(
-													"rounded-full px-s-200 py-s-100 text-micro font-medium",
+													"px-s-200 py-s-100 text-micro rounded-full font-medium",
 													STATUS_STYLES[selectedReport.status]
 												)}
 											>
@@ -320,7 +351,7 @@ const BugReportsList = () => {
 
 								{/* Description */}
 								<div>
-									<p className="text-tiny font-medium text-txt-200 mb-s-100">
+									<p className="text-tiny text-txt-200 mb-s-100 font-medium">
 										{t("detail.description")}
 									</p>
 									<p className="text-small text-txt-100 whitespace-pre-wrap">
@@ -329,39 +360,50 @@ const BugReportsList = () => {
 								</div>
 
 								{/* Metadata */}
-								<div className="grid grid-cols-2 gap-s-300 text-tiny">
+								<div className="gap-s-300 text-tiny grid grid-cols-2">
 									<div>
 										<p className="text-txt-300">{t("detail.reportedBy")}</p>
 										<p className="text-txt-100">
-											{selectedReport.reporterName ?? selectedReport.reporterEmail}
+											{selectedReport.reporterName ??
+												selectedReport.reporterEmail}
 										</p>
 									</div>
 									<div>
 										<p className="text-txt-300">{t("detail.reportedAt")}</p>
-										<p className="text-txt-100">{formatDate(selectedReport.reportedAt)}</p>
+										<p className="text-txt-100">
+											{formatDate(selectedReport.reportedAt)}
+										</p>
 									</div>
 									{selectedReport.handlerName && (
 										<div>
 											<p className="text-txt-300">{t("detail.handledBy")}</p>
-											<p className="text-txt-100">{selectedReport.handlerName}</p>
+											<p className="text-txt-100">
+												{selectedReport.handlerName}
+											</p>
 										</div>
 									)}
 									{selectedReport.acceptedAt && (
 										<div>
 											<p className="text-txt-300">{t("detail.acceptedAt")}</p>
-											<p className="text-txt-100">{formatDate(selectedReport.acceptedAt)}</p>
+											<p className="text-txt-100">
+												{formatDate(selectedReport.acceptedAt)}
+											</p>
 										</div>
 									)}
 									{selectedReport.rejectedAt && (
 										<div>
 											<p className="text-txt-300">{t("detail.rejectedAt")}</p>
-											<p className="text-txt-100">{formatDate(selectedReport.rejectedAt)}</p>
+											<p className="text-txt-100">
+												{formatDate(selectedReport.rejectedAt)}
+											</p>
 										</div>
 									)}
 									{selectedReport.closedAt && (
 										<div>
 											<p className="text-txt-300">{t("detail.closedAt")}</p>
-											<p className="text-txt-100">{formatDate(selectedReport.closedAt)}</p>
+											<p className="text-txt-100">
+												{formatDate(selectedReport.closedAt)}
+											</p>
 										</div>
 									)}
 								</div>
@@ -369,10 +411,10 @@ const BugReportsList = () => {
 								{/* Page URL */}
 								{selectedReport.currentUrl && (
 									<div>
-										<p className="text-tiny font-medium text-txt-200 mb-s-100">
+										<p className="text-tiny text-txt-200 mb-s-100 font-medium">
 											{t("detail.url")}
 										</p>
-										<p className="text-tiny text-acc-200 flex items-center gap-s-100 break-all">
+										<p className="text-tiny text-acc-200 gap-s-100 flex items-center break-all">
 											<ExternalLink className="h-3 w-3 shrink-0" />
 											{selectedReport.currentUrl}
 										</p>
@@ -382,7 +424,7 @@ const BugReportsList = () => {
 								{/* User Agent */}
 								{selectedReport.userAgent && (
 									<div>
-										<p className="text-tiny font-medium text-txt-200 mb-s-100">
+										<p className="text-tiny text-txt-200 mb-s-100 font-medium">
 											{t("detail.userAgent")}
 										</p>
 										<p className="text-micro text-txt-300 break-all">
@@ -394,20 +436,21 @@ const BugReportsList = () => {
 								{/* Images */}
 								{selectedReport.images.length > 0 && (
 									<div>
-										<p className="text-tiny font-medium text-txt-200 mb-s-100">
+										<p className="text-tiny text-txt-200 mb-s-100 font-medium">
 											{t("detail.images")}
 										</p>
-										<div className="grid grid-cols-2 gap-s-200">
+										<div className="gap-s-200 grid grid-cols-2">
 											{selectedReport.images.map((img, imgIndex) => (
 												<button
 													key={img.id}
 													type="button"
-													className="cursor-pointer overflow-hidden rounded-lg border border-bg-300 transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
+													className="border-bg-300 focus-visible:ring-acc-100 cursor-pointer overflow-hidden rounded-lg border transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none"
 													onClick={() => {
 														setLightboxIndex(imgIndex)
 														setLightboxOpen(true)
 													}}
 												>
+													{/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded bug report image URL, dimensions unknown at render time */}
 													<img
 														src={img.imageUrl}
 														alt={
@@ -437,10 +480,10 @@ const BugReportsList = () => {
 								{/* Console Logs */}
 								{selectedReport.consoleLogs && (
 									<details>
-										<summary className="cursor-pointer text-tiny font-medium text-txt-200">
+										<summary className="text-tiny text-txt-200 cursor-pointer font-medium">
 											{t("detail.consoleLogs")}
 										</summary>
-										<pre className="mt-s-200 max-h-48 overflow-auto rounded-md bg-bg-100 p-s-300 text-micro text-txt-300">
+										<pre className="mt-s-200 bg-bg-100 p-s-300 text-micro text-txt-300 max-h-48 overflow-auto rounded-md">
 											{formatJson(selectedReport.consoleLogs)}
 										</pre>
 									</details>
@@ -449,10 +492,10 @@ const BugReportsList = () => {
 								{/* Network Errors */}
 								{selectedReport.networkErrors && (
 									<details>
-										<summary className="cursor-pointer text-tiny font-medium text-txt-200">
+										<summary className="text-tiny text-txt-200 cursor-pointer font-medium">
 											{t("detail.networkErrors")}
 										</summary>
-										<pre className="mt-s-200 max-h-48 overflow-auto rounded-md bg-bg-100 p-s-300 text-micro text-txt-300">
+										<pre className="mt-s-200 bg-bg-100 p-s-300 text-micro text-txt-300 max-h-48 overflow-auto rounded-md">
 											{formatJson(selectedReport.networkErrors)}
 										</pre>
 									</details>
@@ -460,8 +503,8 @@ const BugReportsList = () => {
 
 								{/* Reject reason (if rejected) */}
 								{selectedReport.rejectReason && (
-									<div className="rounded-md border border-fb-error/20 bg-fb-error/5 p-s-300">
-										<p className="text-tiny font-medium text-fb-error mb-s-100">
+									<div className="border-fb-error/20 bg-fb-error/5 p-s-300 rounded-md border">
+										<p className="text-tiny text-fb-error mb-s-100 font-medium">
 											{t("actions.rejectReason")}
 										</p>
 										<p className="text-small text-txt-100">
@@ -475,7 +518,7 @@ const BugReportsList = () => {
 									<div>
 										<label
 											htmlFor="admin-notes"
-											className="text-tiny font-medium text-txt-200 mb-s-100 block"
+											className="text-tiny text-txt-200 mb-s-100 block font-medium"
 										>
 											{t("actions.adminNotes")}
 										</label>
@@ -492,7 +535,7 @@ const BugReportsList = () => {
 
 								{/* Actions */}
 								{selectedReport.status === "open" && !showRejectForm && (
-									<div className="flex gap-s-200">
+									<div className="gap-s-200 flex">
 										<Button
 											id="bug-report-accept"
 											type="button"
@@ -525,10 +568,10 @@ const BugReportsList = () => {
 
 								{/* Reject form — replaces the action buttons */}
 								{selectedReport.status === "open" && showRejectForm && (
-									<div className="space-y-s-200 rounded-md border border-fb-error/20 bg-fb-error/5 p-m-400">
+									<div className="space-y-s-200 border-fb-error/20 bg-fb-error/5 p-m-400 rounded-md border">
 										<label
 											htmlFor="reject-reason"
-											className="text-tiny font-medium text-txt-200 block"
+											className="text-tiny text-txt-200 block font-medium"
 										>
 											{t("actions.rejectReason")}
 										</label>
@@ -540,7 +583,7 @@ const BugReportsList = () => {
 											rows={2}
 											autoFocus
 										/>
-										<div className="flex gap-s-200">
+										<div className="gap-s-200 flex">
 											<Button
 												id="bug-report-confirm-reject"
 												type="button"

@@ -1,6 +1,12 @@
 "use client"
 
-import { useMemo, useCallback, memo, type KeyboardEvent, type MouseEvent } from "react"
+import {
+	useMemo,
+	useCallback,
+	memo,
+	type KeyboardEvent,
+	type MouseEvent,
+} from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -39,15 +45,18 @@ export const TradingCalendar = memo(
 		const year = month.getFullYear()
 		const monthIndex = month.getMonth()
 
-		const daysOfWeek = useMemo(() => [
-			tDays("sunShort"),
-			tDays("monShort"),
-			tDays("tueShort"),
-			tDays("wedShort"),
-			tDays("thuShort"),
-			tDays("friShort"),
-			tDays("satShort"),
-		], [tDays])
+		const daysOfWeek = useMemo(
+			() => [
+				tDays("sunShort"),
+				tDays("monShort"),
+				tDays("tueShort"),
+				tDays("wedShort"),
+				tDays("thuShort"),
+				tDays("friShort"),
+				tDays("satShort"),
+			],
+			[tDays]
+		)
 
 		const dailyPnLMap = useMemo(() => {
 			const map = new Map<string, DailyPnL>()
@@ -90,18 +99,28 @@ export const TradingCalendar = memo(
 			onMonthChange(new Date(year, monthIndex + 1, 1))
 		}, [onMonthChange, year, monthIndex])
 
-		const handleCellClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
-			const key = e.currentTarget.dataset.dateKey
-			if (key && onDayClick) onDayClick(key)
-		}, [onDayClick])
+		const handleCellClick = useCallback(
+			(e: MouseEvent<HTMLDivElement>) => {
+				const key = e.currentTarget.dataset.dateKey
+				if (key && onDayClick) {
+					onDayClick(key)
+				}
+			},
+			[onDayClick]
+		)
 
-		const handleCellKeyDown = useCallback((e: KeyboardEvent) => {
-			if (e.key === "Enter" || e.key === " ") {
-				e.preventDefault()
-				const key = (e.currentTarget as HTMLElement).dataset.dateKey
-				if (key && onDayClick) onDayClick(key)
-			}
-		}, [onDayClick])
+		const handleCellKeyDown = useCallback(
+			(e: KeyboardEvent) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault()
+					const key = (e.currentTarget as HTMLElement).dataset.dateKey
+					if (key && onDayClick) {
+						onDayClick(key)
+					}
+				}
+			},
+			[onDayClick]
+		)
 
 		// Use day 15 to avoid timezone edge at month boundaries
 		// (midnight UTC on day 1 can shift to previous month in BRT during SSR)
@@ -111,10 +130,12 @@ export const TradingCalendar = memo(
 		)
 
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400 lg:p-m-500">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
-					<h2 className="text-small text-txt-100 font-semibold sm:text-body">{t("title")}</h2>
-					<div className="gap-s-100 flex items-center sm:gap-s-200">
+					<h2 className="text-small text-txt-100 sm:text-body font-semibold">
+						{t("title")}
+					</h2>
+					<div className="gap-s-100 sm:gap-s-200 flex items-center">
 						<Button
 							id="calendar-previous-month"
 							variant="ghost"
@@ -125,7 +146,7 @@ export const TradingCalendar = memo(
 						>
 							<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 						</Button>
-						<span className="text-tiny text-txt-100 min-w-0 flex-1 truncate text-center font-medium sm:text-small">
+						<span className="text-tiny text-txt-100 sm:text-small min-w-0 flex-1 truncate text-center font-medium">
 							{monthName}
 						</span>
 						<Button
@@ -143,11 +164,11 @@ export const TradingCalendar = memo(
 
 				<div className="mt-s-300 sm:mt-m-400">
 					{/* Days of week header */}
-					<div className="gap-px grid grid-cols-7 sm:gap-s-100">
+					<div className="sm:gap-s-100 grid grid-cols-7 gap-px">
 						{daysOfWeek.map((day) => (
 							<div
 								key={day}
-								className="py-s-100 text-center font-medium text-txt-300 text-micro sm:py-s-200 sm:text-tiny"
+								className="py-s-100 text-txt-300 text-micro sm:py-s-200 sm:text-tiny text-center font-medium"
 							>
 								{day}
 							</div>
@@ -155,7 +176,7 @@ export const TradingCalendar = memo(
 					</div>
 
 					{/* Calendar grid */}
-					<div className="gap-px grid grid-cols-7 sm:gap-s-100">
+					<div className="sm:gap-s-100 grid grid-cols-7 gap-px">
 						{calendarDays.map((dayData, index) => {
 							if (!dayData) {
 								return <div key={`empty-${index}`} className="aspect-square" />
@@ -192,7 +213,8 @@ export const TradingCalendar = memo(
 										"p-s-100 aspect-square rounded-sm sm:rounded-md",
 										bgClass,
 										isToday && "ring-acc-100 ring-1 sm:ring-2",
-										isClickable && "cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
+										isClickable &&
+											"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
 									)}
 									onClick={isClickable ? handleCellClick : undefined}
 									onKeyDown={isClickable ? handleCellKeyDown : undefined}
@@ -200,29 +222,42 @@ export const TradingCalendar = memo(
 									role={isClickable ? "button" : undefined}
 									aria-label={
 										dailyData
-											? t("dayAriaLabel", { date: dateKey, pnl: formatCompactCurrencyWithSign(dailyData.pnl, "R$"), count: dailyData.tradeCount })
+											? t("dayAriaLabel", {
+													date: dateKey,
+													pnl: formatCompactCurrencyWithSign(
+														dailyData.pnl,
+														"R$"
+													),
+													count: dailyData.tradeCount,
+												})
 											: isToday
 												? t("todayAriaLabel", { date: dateKey })
 												: undefined
 									}
 								>
 									<div className="flex h-full flex-col">
-										<span className="text-micro text-txt-200 leading-tight sm:text-tiny">
+										<span className="text-micro text-txt-200 sm:text-tiny leading-tight">
 											{dayData.date.getDate()}
 										</span>
 										{dailyData && (
 											<>
 												{/* Mobile: dot indicator only */}
 												<div className="mt-auto flex justify-center sm:hidden">
-													<span className={cn("h-1 w-1 rounded-full", textClass)} aria-hidden="true" />
+													<span
+														className={cn("h-1 w-1 rounded-full", textClass)}
+														aria-hidden="true"
+													/>
 												</div>
 												{/* sm+: full P&L and count */}
 												<div className="mt-auto hidden sm:block">
-													<span className={cn("text-tiny font-medium", textClass)}>
+													<span
+														className={cn("text-tiny font-medium", textClass)}
+													>
 														{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
 													</span>
 													<span className="text-tiny text-txt-300 block">
-														{dailyData.tradeCount}{tCommon("tradeCountAbbr")}
+														{dailyData.tradeCount}
+														{tCommon("tradeCountAbbr")}
 													</span>
 												</div>
 											</>

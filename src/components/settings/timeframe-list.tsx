@@ -68,11 +68,15 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 	const [pendingId, setPendingId] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<Timeframe | null>(null)
 
-	const filteredTimeframes = useMemo(() => timeframes.filter((tf) => {
-		const matchesType = filterType === "all" || tf.type === filterType
-		const matchesActive = showInactive || tf.isActive
-		return matchesType && matchesActive
-	}), [timeframes, filterType, showInactive])
+	const filteredTimeframes = useMemo(
+		() =>
+			timeframes.filter((tf) => {
+				const matchesType = filterType === "all" || tf.type === filterType
+				const matchesActive = showInactive || tf.isActive
+				return matchesType && matchesActive
+			}),
+		[timeframes, filterType, showInactive]
+	)
 
 	const handleEdit = (timeframe: Timeframe) => {
 		setEditingTimeframe(timeframe)
@@ -92,7 +96,9 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 	}
 
 	const handleConfirmDelete = () => {
-		if (!deleteTarget) return
+		if (!deleteTarget) {
+			return
+		}
 		const timeframe = deleteTarget
 		setPendingId(timeframe.id)
 		startTransition(async () => {
@@ -121,7 +127,9 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						aria-pressed={filterType === "all"}
 						onClick={() => setFilterType("all")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("all")
+							if (e.key === "Enter" || e.key === " ") {
+								setFilterType("all")
+							}
 						}}
 					>
 						{tCommon("all")}
@@ -135,8 +143,9 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						aria-pressed={filterType === "time_based"}
 						onClick={() => setFilterType("time_based")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ")
+							if (e.key === "Enter" || e.key === " ") {
 								setFilterType("time_based")
+							}
 						}}
 					>
 						<Clock className="mr-s-100 h-3 w-3" />
@@ -151,7 +160,9 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 						aria-pressed={filterType === "renko"}
 						onClick={() => setFilterType("renko")}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") setFilterType("renko")
+							if (e.key === "Enter" || e.key === " ") {
+								setFilterType("renko")
+							}
 						}}
 					>
 						<BarChart3 className="mr-s-100 h-3 w-3" />
@@ -294,7 +305,9 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 			<AlertDialog
 				open={!!deleteTarget}
 				onOpenChange={(open) => {
-					if (!open && !isPending) setDeleteTarget(null)
+					if (!open && !isPending) {
+						setDeleteTarget(null)
+					}
 				}}
 			>
 				<AlertDialogContent id="delete-timeframe-confirm">

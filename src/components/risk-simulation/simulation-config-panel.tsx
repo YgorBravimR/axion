@@ -36,7 +36,11 @@ interface SimulationConfigPanelProps {
 	allTradesLackSl: boolean
 	prefillSource: PrefillSource | null
 	activeProfileId: string | null
-	onPrefillSelect: (params: RiskSimulationParams, source: PrefillSource, profileId?: string) => void
+	onPrefillSelect: (
+		params: RiskSimulationParams,
+		source: PrefillSource,
+		profileId?: string
+	) => void
 	isLocked: boolean
 	originalAdvancedParams: AdvancedSimulationParams | null
 }
@@ -45,7 +49,9 @@ interface SimulationConfigPanelProps {
  * Convert a YYYY-MM-DD string to a Date at noon (avoids timezone-shift issues).
  */
 const parseToDate = (dateStr: string): Date | undefined => {
-	if (!dateStr) return undefined
+	if (!dateStr) {
+		return undefined
+	}
 	return new Date(dateStr + "T12:00:00")
 }
 
@@ -97,13 +103,17 @@ const SimulationConfigPanel = ({
 	}
 
 	const handleAllTime = () => {
-		if (tradeYears.length === 0) return
+		if (tradeYears.length === 0) {
+			return
+		}
 		const oldest = tradeYears[tradeYears.length - 1]
 		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
 	}
 
 	const activeQuickFilter = useMemo(() => {
-		if (!dateFrom || !dateTo) return null
+		if (!dateFrom || !dateTo) {
+			return null
+		}
 
 		for (const year of tradeYears) {
 			if (dateFrom === `${year}-01-01` && dateTo === `${year}-12-31`) {
@@ -123,13 +133,13 @@ const SimulationConfigPanel = ({
 	}, [dateFrom, dateTo, tradeYears])
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-s-300 sm:p-m-400">
+		<div className="border-bg-300 bg-bg-200 space-y-m-400 p-s-300 sm:p-m-400 rounded-lg border">
 			{/* Date Range */}
 			<div>
 				<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 					{t("dateRange")}
 				</h3>
-				<div className="flex flex-wrap items-end gap-s-300">
+				<div className="gap-s-300 flex flex-wrap items-end">
 					<DateRangePicker
 						id="sim-date-range"
 						value={rangeValue}
@@ -138,9 +148,13 @@ const SimulationConfigPanel = ({
 					/>
 
 					{tradeYears.length > 0 && (
-						<div className="flex items-center gap-s-200">
+						<div className="gap-s-200 flex items-center">
 							<Select
-								value={activeQuickFilter?.startsWith("year-") ? activeQuickFilter.replace("year-", "") : ""}
+								value={
+									activeQuickFilter?.startsWith("year-")
+										? activeQuickFilter.replace("year-", "")
+										: ""
+								}
 								onValueChange={handleYearSelect}
 							>
 								<SelectTrigger

@@ -67,7 +67,9 @@ const UserProfileSettings = () => {
 					getCurrentUser(),
 					getUserSettings(),
 				])
-				if (!mounted) return
+				if (!mounted) {
+					return
+				}
 				setUser(userData)
 				if (userData) {
 					setProfileForm({ name: userData.name })
@@ -76,10 +78,12 @@ const UserProfileSettings = () => {
 					setShowAllAccounts(settingsResult.data.showAllAccounts)
 				}
 			} finally {
-				if (mounted) setIsLoading(false)
+				if (mounted) {
+					setIsLoading(false)
+				}
 			}
 		}
-		loadData()
+		void loadData()
 		return () => {
 			mounted = false
 			controller.abort()
@@ -205,7 +209,10 @@ const UserProfileSettings = () => {
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
 			{/* Profile Information */}
-			<div id="settings-profile-info" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-profile-info"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("profileInfo")}
@@ -222,7 +229,7 @@ const UserProfileSettings = () => {
 					) : null}
 				</div>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("name")}</p>
 						</div>
@@ -237,7 +244,7 @@ const UserProfileSettings = () => {
 							<span className="text-small text-txt-200">{user?.name}</span>
 						)}
 					</div>
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
+					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("email")}</p>
 							<p className="text-tiny text-txt-300">{t("emailCannotChange")}</p>
@@ -272,7 +279,10 @@ const UserProfileSettings = () => {
 			</div>
 
 			{/* Change Password */}
-			<div id="settings-password" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-password"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("changePassword")}
@@ -291,7 +301,12 @@ const UserProfileSettings = () => {
 				{isChangingPassword ? (
 					<div className="mt-m-400 space-y-m-400">
 						<div className="space-y-s-200">
-							<Label id="label-current-password" htmlFor="currentPassword" required filled={!!passwordForm.currentPassword}>
+							<Label
+								id="label-current-password"
+								htmlFor="currentPassword"
+								required
+								filled={!!passwordForm.currentPassword}
+							>
 								{t("currentPassword")}
 							</Label>
 							<Input
@@ -302,7 +317,12 @@ const UserProfileSettings = () => {
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label id="label-new-password" htmlFor="newPassword" required filled={!!passwordForm.newPassword}>
+							<Label
+								id="label-new-password"
+								htmlFor="newPassword"
+								required
+								filled={!!passwordForm.newPassword}
+							>
 								{t("newPassword")}
 							</Label>
 							<Input
@@ -313,7 +333,12 @@ const UserProfileSettings = () => {
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label id="label-confirm-new-password" htmlFor="confirmPassword" required filled={!!passwordForm.confirmPassword}>
+							<Label
+								id="label-confirm-new-password"
+								htmlFor="confirmPassword"
+								required
+								filled={!!passwordForm.confirmPassword}
+							>
 								{t("confirmNewPassword")}
 							</Label>
 							<Input
@@ -355,7 +380,10 @@ const UserProfileSettings = () => {
 
 			{/* Data Display — admin only */}
 			{isAdmin && (
-				<div id="settings-data-display" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<div
+					id="settings-data-display"
+					className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+				>
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("dataDisplay")}
 					</h2>
@@ -382,7 +410,10 @@ const UserProfileSettings = () => {
 			)}
 
 			{/* Appearance */}
-			<div id="settings-appearance" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-appearance"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-body text-txt-100 font-semibold">
 					{t("appearance")}
 				</h2>
@@ -422,7 +453,6 @@ const UserProfileSettings = () => {
 
 			{/* Annual Reporting */}
 			<AnnualReportingSettings />
-
 		</div>
 	)
 }

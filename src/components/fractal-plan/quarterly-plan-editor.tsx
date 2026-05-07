@@ -19,22 +19,32 @@ interface QuarterlyPlanEditorProps {
 	}
 }
 
-const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorProps) => {
+const QuarterlyPlanEditor = ({
+	quarterlyPlanId,
+	existing,
+}: QuarterlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 
 	const [goalBRL, setGoalBRL] = useState(
-		existing.goalCents != null ? (existing.goalCents / 100).toFixed(2) : "",
+		existing.goalCents !== null ? (existing.goalCents / 100).toFixed(2) : ""
 	)
-	const [reflectionNotes, setReflectionNotes] = useState(existing.reflectionNotes ?? "")
-	const [postMortemNotes, setPostMortemNotes] = useState(existing.postMortemNotes ?? "")
+	const [reflectionNotes, setReflectionNotes] = useState(
+		existing.reflectionNotes ?? ""
+	)
+	const [postMortemNotes, setPostMortemNotes] = useState(
+		existing.postMortemNotes ?? ""
+	)
 
 	const handleSubmit = () => {
 		const goalCents = goalBRL.trim()
 			? Math.round(parseFloat(goalBRL.replace(",", ".")) * 100)
 			: undefined
-		if (goalCents !== undefined && (!Number.isFinite(goalCents) || goalCents < 0)) {
+		if (
+			goalCents !== undefined &&
+			(!Number.isFinite(goalCents) || goalCents < 0)
+		) {
 			showToast("error", "Goal must be a non-negative number.")
 			return
 		}
@@ -64,7 +74,9 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 			className="space-y-m-400"
 		>
 			<div>
-				<Label id="lbl-quarter-goal" htmlFor="quarter-goal">Quarter goal (BRL)</Label>
+				<Label id="lbl-quarter-goal" htmlFor="quarter-goal">
+					Quarter goal (BRL)
+				</Label>
 				<Input
 					id="quarter-goal"
 					type="number"
@@ -75,7 +87,9 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 				/>
 			</div>
 			<div>
-				<Label id="lbl-quarter-intent" htmlFor="quarter-intent">Reflection / intent</Label>
+				<Label id="lbl-quarter-intent" htmlFor="quarter-intent">
+					Reflection / intent
+				</Label>
 				<Textarea
 					id="quarter-intent"
 					rows={3}
@@ -85,7 +99,9 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 				/>
 			</div>
 			<div>
-				<Label id="lbl-quarter-postmortem" htmlFor="quarter-postmortem">Post-mortem</Label>
+				<Label id="lbl-quarter-postmortem" htmlFor="quarter-postmortem">
+					Post-mortem
+				</Label>
 				<Textarea
 					id="quarter-postmortem"
 					rows={3}
@@ -96,7 +112,11 @@ const QuarterlyPlanEditor = ({ quarterlyPlanId, existing }: QuarterlyPlanEditorP
 			</div>
 			<div className="flex justify-end">
 				<Button id="btn-quarter-save" type="submit" disabled={isPending}>
-					{isPending ? <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Save className="mr-s-200 h-4 w-4" />}
+					{isPending ? (
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					) : (
+						<Save className="mr-s-200 h-4 w-4" />
+					)}
 					Save
 				</Button>
 			</div>

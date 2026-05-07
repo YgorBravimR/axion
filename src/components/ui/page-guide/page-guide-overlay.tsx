@@ -49,9 +49,16 @@ const PageGuideOverlay = ({
 	/** Measure a DOM element by id and return its rect (without setting state) */
 	const getElementRect = useCallback((id: string): TargetRect | null => {
 		const element = document.getElementById(id)
-		if (!element) return null
+		if (!element) {
+			return null
+		}
 		const rect = element.getBoundingClientRect()
-		return { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+		return {
+			top: rect.top,
+			left: rect.left,
+			width: rect.width,
+			height: rect.height,
+		}
 	}, [])
 
 	/**
@@ -59,7 +66,9 @@ const PageGuideOverlay = ({
 	 */
 	const scrollTargetIntoView = useCallback(() => {
 		const element = document.getElementById(step.targetId)
-		if (!element) return
+		if (!element) {
+			return
+		}
 
 		const findScrollParent = (el: HTMLElement): HTMLElement | null => {
 			let current = el.parentElement
@@ -96,7 +105,9 @@ const PageGuideOverlay = ({
 
 	/** Clear any pending transition timers */
 	const clearTimers = useCallback(() => {
-		for (const t of transitionTimersRef.current) clearTimeout(t)
+		for (const t of transitionTimersRef.current) {
+			clearTimeout(t)
+		}
 		transitionTimersRef.current = []
 	}, [])
 
@@ -143,13 +154,19 @@ const PageGuideOverlay = ({
 	// Live tracking: keep renderedRect in sync with scroll/resize — but ONLY when visible
 	useEffect(() => {
 		const element = document.getElementById(step.targetId)
-		if (!element) return
+		if (!element) {
+			return
+		}
 
 		const rafPending = { current: false }
 
 		const update = () => {
-			if (!isVisible) return
-			if (rafPending.current) return
+			if (!isVisible) {
+				return
+			}
+			if (rafPending.current) {
+				return
+			}
 			rafPending.current = true
 			requestAnimationFrame(() => {
 				rafPending.current = false
@@ -178,10 +195,18 @@ const PageGuideOverlay = ({
 
 	const spotlightX = renderedRect ? renderedRect.left - SPOTLIGHT_PADDING : 0
 	const spotlightY = renderedRect ? renderedRect.top - SPOTLIGHT_PADDING : 0
-	const spotlightW = renderedRect ? renderedRect.width + SPOTLIGHT_PADDING * 2 : 0
-	const spotlightH = renderedRect ? renderedRect.height + SPOTLIGHT_PADDING * 2 : 0
+	const spotlightW = renderedRect
+		? renderedRect.width + SPOTLIGHT_PADDING * 2
+		: 0
+	const spotlightH = renderedRect
+		? renderedRect.height + SPOTLIGHT_PADDING * 2
+		: 0
 
-	const calloutStyle = computeCalloutPosition(step.placement, renderedRect, calloutRef.current)
+	const calloutStyle = computeCalloutPosition(
+		step.placement,
+		renderedRect,
+		calloutRef.current
+	)
 
 	const isFirst = currentStep === 1
 	const isLast = currentStep === totalSteps
@@ -195,12 +220,14 @@ const PageGuideOverlay = ({
 			tabIndex={-1}
 			className="fixed inset-0 z-[60] outline-none"
 			onClick={onClose}
+			onKeyDown={(e) => {
+				if (e.key === "Escape") {
+					onClose()
+				}
+			}}
 		>
 			{/* SVG Spotlight Mask — scrim always visible, cutout hole fades in/out */}
-			<svg
-				className="absolute inset-0 h-full w-full"
-				aria-hidden="true"
-			>
+			<svg className="absolute inset-0 h-full w-full" aria-hidden="true">
 				<defs>
 					<mask id="page-guide-mask">
 						<rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -232,7 +259,7 @@ const PageGuideOverlay = ({
 			{/* Spotlight border ring */}
 			{renderedRect && (
 				<div
-					className="pointer-events-none absolute rounded-lg border border-acc-100/40"
+					className="border-acc-100/40 pointer-events-none absolute rounded-lg border"
 					style={{
 						top: spotlightY,
 						left: spotlightX,
@@ -248,27 +275,28 @@ const PageGuideOverlay = ({
 			{/* Callout Card — content only, no navigation */}
 			<div
 				ref={calloutRef}
-				className="absolute z-10 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-acc-100/30 bg-bg-200 p-m-400 shadow-lg"
+				className="border-acc-100/30 bg-bg-200 p-m-400 absolute z-10 w-80 max-w-[calc(100vw-2rem)] rounded-lg border shadow-lg"
 				style={{
 					...calloutStyle,
 					opacity: isVisible ? 1 : 0,
 					transition: "opacity 200ms ease-out",
 				}}
 				onClick={(event) => event.stopPropagation()}
+				onKeyDown={(event) => event.stopPropagation()}
 				role="document"
 			>
 				{/* Close button */}
 				<button
 					type="button"
 					onClick={onClose}
-					className="absolute right-2 top-2 rounded-sm p-s-100 text-txt-300 transition-colors hover:text-txt-100"
+					className="p-s-100 text-txt-300 hover:text-txt-100 absolute top-2 right-2 rounded-sm transition-colors"
 					aria-label={t("close")}
 				>
 					<X className="h-4 w-4" />
 				</button>
 
 				{/* Content */}
-				<h3 className="pr-m-600 text-small font-semibold text-acc-100">
+				<h3 className="pr-m-600 text-small text-acc-100 font-semibold">
 					{t(`${pageKey}.${step.titleKey}`)}
 				</h3>
 				<p className="mt-s-200 text-small text-txt-200">
@@ -278,13 +306,15 @@ const PageGuideOverlay = ({
 
 			{/* Fixed navigation bar — always bottom-right so cursor stays in place */}
 			<div
-				className="fixed bottom-6 right-6 z-10 flex items-center gap-m-400 rounded-lg border border-acc-100/30 bg-bg-200 px-m-400 py-s-300 shadow-lg"
+				className="gap-m-400 border-acc-100/30 bg-bg-200 px-m-400 py-s-300 fixed right-6 bottom-6 z-10 flex items-center rounded-lg border shadow-lg"
 				onClick={(event) => event.stopPropagation()}
+				onKeyDown={(event) => event.stopPropagation()}
+				role="presentation"
 			>
 				<span className="text-tiny text-txt-300">
 					{currentStep} {t("stepOf")} {totalSteps}
 				</span>
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					{!isFirst && (
 						<Button
 							id="page-guide-prev"
@@ -292,7 +322,7 @@ const PageGuideOverlay = ({
 							size="sm"
 							onClick={onPrev}
 							aria-label={t("back")}
-							className="h-8 px-s-200 text-txt-200 hover:text-txt-100"
+							className="px-s-200 text-txt-200 hover:text-txt-100 h-8"
 						>
 							<ChevronLeft className="mr-s-100 h-4 w-4" />
 							{t("back")}
@@ -304,7 +334,7 @@ const PageGuideOverlay = ({
 						size="sm"
 						onClick={isLast ? onClose : onNext}
 						aria-label={isLast ? t("close") : t("next")}
-						className="h-8 px-s-200 text-acc-100 hover:text-acc-100/80"
+						className="px-s-200 text-acc-100 hover:text-acc-100/80 h-8"
 					>
 						{isLast ? t("close") : t("next")}
 						{!isLast && <ChevronRight className="ml-s-100 h-4 w-4" />}
@@ -339,14 +369,20 @@ const computeCalloutPosition = (
 
 	const centerX = targetRect.left + targetRect.width / 2
 
-	const spaceBelow = viewportH - (targetRect.top + targetRect.height + SPOTLIGHT_PADDING + CALLOUT_GAP)
+	const spaceBelow =
+		viewportH -
+		(targetRect.top + targetRect.height + SPOTLIGHT_PADDING + CALLOUT_GAP)
 	const spaceAbove = targetRect.top - SPOTLIGHT_PADDING - CALLOUT_GAP
-	const spaceRight = viewportW - (targetRect.left + targetRect.width + SPOTLIGHT_PADDING + CALLOUT_GAP)
+	const spaceRight =
+		viewportW -
+		(targetRect.left + targetRect.width + SPOTLIGHT_PADDING + CALLOUT_GAP)
 	const spaceLeft = targetRect.left - SPOTLIGHT_PADDING - CALLOUT_GAP
 
 	// Resolve actual placement — flip if preferred side doesn't have enough room
 	const placement = (() => {
-		if (preferredPlacement === "center") return "center"
+		if (preferredPlacement === "center") {
+			return "center"
+		}
 
 		if (preferredPlacement === "bottom") {
 			return spaceBelow >= calloutH ? "bottom" : "top"
@@ -355,24 +391,34 @@ const computeCalloutPosition = (
 			return spaceAbove >= calloutH ? "top" : "bottom"
 		}
 		if (preferredPlacement === "right") {
-			if (spaceRight >= CALLOUT_WIDTH) return "right"
-			if (spaceLeft >= CALLOUT_WIDTH) return "left"
+			if (spaceRight >= CALLOUT_WIDTH) {
+				return "right"
+			}
+			if (spaceLeft >= CALLOUT_WIDTH) {
+				return "left"
+			}
 			return spaceBelow >= calloutH ? "bottom" : "top"
 		}
 		if (preferredPlacement === "left") {
-			if (spaceLeft >= CALLOUT_WIDTH) return "left"
-			if (spaceRight >= CALLOUT_WIDTH) return "right"
+			if (spaceLeft >= CALLOUT_WIDTH) {
+				return "left"
+			}
+			if (spaceRight >= CALLOUT_WIDTH) {
+				return "right"
+			}
 			return spaceBelow >= calloutH ? "bottom" : "top"
 		}
 		return preferredPlacement
 	})()
 
-	const clampLeft = (x: number) => Math.max(16, Math.min(x, viewportW - CALLOUT_WIDTH - 16))
+	const clampLeft = (x: number) =>
+		Math.max(16, Math.min(x, viewportW - CALLOUT_WIDTH - 16))
 
 	switch (placement) {
 		case "bottom": {
 			return {
-				top: targetRect.top + targetRect.height + SPOTLIGHT_PADDING + CALLOUT_GAP,
+				top:
+					targetRect.top + targetRect.height + SPOTLIGHT_PADDING + CALLOUT_GAP,
 				left: clampLeft(centerX - CALLOUT_WIDTH / 2),
 			}
 		}
@@ -386,15 +432,25 @@ const computeCalloutPosition = (
 		case "right": {
 			const centerY = targetRect.top + targetRect.height / 2
 			return {
-				top: Math.max(16, Math.min(centerY - calloutH / 2, viewportH - calloutH - 16)),
-				left: targetRect.left + targetRect.width + SPOTLIGHT_PADDING + CALLOUT_GAP,
+				top: Math.max(
+					16,
+					Math.min(centerY - calloutH / 2, viewportH - calloutH - 16)
+				),
+				left:
+					targetRect.left + targetRect.width + SPOTLIGHT_PADDING + CALLOUT_GAP,
 			}
 		}
 		case "left": {
 			const centerY = targetRect.top + targetRect.height / 2
 			return {
-				top: Math.max(16, Math.min(centerY - calloutH / 2, viewportH - calloutH - 16)),
-				left: Math.max(16, targetRect.left - SPOTLIGHT_PADDING - CALLOUT_GAP - CALLOUT_WIDTH),
+				top: Math.max(
+					16,
+					Math.min(centerY - calloutH / 2, viewportH - calloutH - 16)
+				),
+				left: Math.max(
+					16,
+					targetRect.left - SPOTLIGHT_PADDING - CALLOUT_GAP - CALLOUT_WIDTH
+				),
 			}
 		}
 		case "center":

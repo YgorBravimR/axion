@@ -38,7 +38,9 @@ export const PostMarketNotes = ({
 		!!dailyPlan && postMarketNotes !== (dailyPlan.postMarketNotes ?? "")
 
 	const handleSave = async () => {
-		if (!dailyPlan) return
+		if (!dailyPlan) {
+			return
+		}
 		setSaving(true)
 		try {
 			const result = await upsertDailyPlan({
@@ -61,15 +63,17 @@ export const PostMarketNotes = ({
 		return (
 			<div
 				id="cc-post-market-notes"
-				className="rounded-lg border border-dashed border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500"
+				className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
 			>
-				<div className="flex items-center gap-s-200">
-					<Moon className="h-5 w-5 text-acc-100" />
-					<h3 className="text-small sm:text-body font-semibold text-txt-100">
+				<div className="gap-s-200 flex items-center">
+					<Moon className="text-acc-100 h-5 w-5" />
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("postMarket")}
 					</h3>
 				</div>
-				<p className="mt-s-200 text-tiny text-txt-300">{tPlan("noPlanPrompt")}</p>
+				<p className="mt-s-200 text-tiny text-txt-300">
+					{tPlan("noPlanPrompt")}
+				</p>
 			</div>
 		)
 	}
@@ -77,12 +81,12 @@ export const PostMarketNotes = ({
 	return (
 		<div
 			id="cc-post-market-notes"
-			className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
-				<div className="flex items-center gap-s-200">
-					<Moon className="h-5 w-5 text-acc-100" />
-					<h3 className="text-small sm:text-body font-semibold text-txt-100">
+				<div className="gap-s-200 flex items-center">
+					<Moon className="text-acc-100 h-5 w-5" />
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("postMarket")}
 					</h3>
 				</div>
@@ -107,7 +111,7 @@ export const PostMarketNotes = ({
 				<Label
 					id="post-market-notes-label"
 					htmlFor="post-market-notes-textarea"
-					className="mb-s-200 block text-small text-txt-200"
+					className="mb-s-200 text-small text-txt-200 block"
 				>
 					{t("postMarketLabel")}
 				</Label>

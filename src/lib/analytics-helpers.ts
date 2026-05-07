@@ -317,7 +317,9 @@ const computeAvgRiskPerTrade = (trades: TradeForRisk[]): number => {
 			risks.push(risk)
 		}
 	}
-	if (risks.length === 0) return 0
+	if (risks.length === 0) {
+		return 0
+	}
 	return risks.reduce((a, b) => a + b, 0) / risks.length
 }
 
@@ -732,7 +734,9 @@ const computeSessionPerformance = (
 
 	for (const trade of trades) {
 		const session = getSessionForTime(trade.entryDate)
-		if (!session) continue
+		if (!session) {
+			continue
+		}
 
 		const data = sessionMap.get(session)!
 		const pnl = fromCents(trade.pnl)
@@ -806,7 +810,9 @@ const computeSessionAssetPerformance = (
 
 	for (const trade of trades) {
 		const session = getSessionForTime(trade.entryDate)
-		if (!session) continue
+		if (!session) {
+			continue
+		}
 
 		if (!assetSessionMap.has(trade.asset)) {
 			const sessionData = new Map<
@@ -1016,7 +1022,9 @@ const HOLDING_PERIOD_BUCKETS: BucketConfig[] = [
 
 const getBucketForDuration = (minutes: number): BucketConfig => {
 	for (const bucket of HOLDING_PERIOD_BUCKETS) {
-		if (minutes < bucket.maxMinutes) return bucket
+		if (minutes < bucket.maxMinutes) {
+			return bucket
+		}
 	}
 	return HOLDING_PERIOD_BUCKETS[HOLDING_PERIOD_BUCKETS.length - 1]
 }
@@ -1033,7 +1041,9 @@ const computeHoldingPeriodAnalysis = (
 		(t): t is TradeForHoldingPeriod & { exitDate: Date } => t.exitDate !== null
 	)
 
-	if (closedTrades.length === 0) return []
+	if (closedTrades.length === 0) {
+		return []
+	}
 
 	const bucketMap = new Map<
 		string,
@@ -1111,13 +1121,8 @@ const computeHoldingPeriodAnalysis = (
 				avgPnl: data.tradeCount > 0 ? data.totalPnl / data.tradeCount : 0,
 				avgR: data.rCount > 0 ? data.totalR / data.rCount : 0,
 				avgDurationMinutes:
-					data.tradeCount > 0
-						? data.totalDurationMinutes / data.tradeCount
-						: 0,
-				profitFactor: calculateProfitFactor(
-					data.grossProfit,
-					data.grossLoss
-				),
+					data.tradeCount > 0 ? data.totalDurationMinutes / data.tradeCount : 0,
+				profitFactor: calculateProfitFactor(data.grossProfit, data.grossLoss),
 			}
 		})
 		.toSorted((a, b) => a.bucketOrder - b.bucketOrder)

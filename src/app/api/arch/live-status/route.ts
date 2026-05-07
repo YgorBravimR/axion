@@ -22,7 +22,9 @@ import type { TradeSummary } from "@/types/live-trading-status"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	const { userId, accountId } = authResult.auth
 
@@ -67,7 +69,9 @@ const GET = async (request: NextRequest) => {
 
 		const oneRCents = day.oneRCents
 		const dailyLossCents = Math.round(Number(day.dailyLossR.value) * oneRCents)
-		const dailyTargetCents = Math.round(Number(day.dailyTargetR.value) * oneRCents)
+		const dailyTargetCents = Math.round(
+			Number(day.dailyTargetR.value) * oneRCents
+		)
 
 		const dek = await getUserDek(userId)
 		const rawTodaysTrades = await db.query.trades.findMany({
@@ -75,14 +79,17 @@ const GET = async (request: NextRequest) => {
 				eq(trades.accountId, accountId),
 				gte(trades.entryDate, today),
 				lte(trades.entryDate, tomorrow),
-				eq(trades.isArchived, false),
+				eq(trades.isArchived, false)
 			),
 			orderBy: (t, { asc }) => [asc(t.entryDate)],
 		})
 		const todaysTrades = dek
 			? rawTodaysTrades.map(
 					(t) =>
-						decryptTradeFields(t as unknown as Record<string, unknown>, dek) as unknown as typeof t,
+						decryptTradeFields(
+							t as unknown as Record<string, unknown>,
+							dek
+						) as unknown as typeof t
 				)
 			: rawTodaysTrades
 
@@ -92,7 +99,9 @@ const GET = async (request: NextRequest) => {
 		}))
 
 		const derivedMaxTrades =
-			oneRCents > 0 && dailyLossCents > 0 ? Math.floor(dailyLossCents / oneRCents) : null
+			oneRCents > 0 && dailyLossCents > 0
+				? Math.floor(dailyLossCents / oneRCents)
+				: null
 
 		const status = resolveLiveStatus({
 			trades: tradeInputs,
@@ -110,7 +119,9 @@ const GET = async (request: NextRequest) => {
 			direction: trade.direction,
 			asset: trade.asset,
 			positionSize: Number(trade.positionSize) || 0,
-			riskAmountCents: trade.plannedRiskAmount ? Number(trade.plannedRiskAmount) : null,
+			riskAmountCents: trade.plannedRiskAmount
+				? Number(trade.plannedRiskAmount)
+				: null,
 		}))
 
 		return archSuccess("Live trading status resolved", {
@@ -123,7 +134,7 @@ const GET = async (request: NextRequest) => {
 		return archError(
 			"Failed to get live trading status",
 			[{ code: "FETCH_FAILED", detail: message }],
-			500,
+			500
 		)
 	}
 }

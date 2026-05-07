@@ -66,17 +66,24 @@ const buildCacheConditions = (
 
 	const conditions = [accountCondition, eq(trades.isArchived, false)]
 
-	if (filters?.dateFrom)
+	if (filters?.dateFrom) {
 		conditions.push(gte(trades.entryDate, filters.dateFrom))
-	if (filters?.dateTo) conditions.push(lte(trades.entryDate, filters.dateTo))
-	if (filters?.assets?.length)
+	}
+	if (filters?.dateTo) {
+		conditions.push(lte(trades.entryDate, filters.dateTo))
+	}
+	if (filters?.assets?.length) {
 		conditions.push(inArray(trades.asset, filters.assets))
-	if (filters?.directions?.length)
+	}
+	if (filters?.directions?.length) {
 		conditions.push(inArray(trades.direction, filters.directions))
-	if (filters?.outcomes?.length)
+	}
+	if (filters?.outcomes?.length) {
 		conditions.push(inArray(trades.outcome, filters.outcomes))
-	if (filters?.timeframeIds?.length)
+	}
+	if (filters?.timeframeIds?.length) {
 		conditions.push(inArray(trades.timeframeId, filters.timeframeIds))
+	}
 
 	return conditions
 }
@@ -141,8 +148,7 @@ const getCachedAnalyticsDashboard = async (
 		sessionPerformance: computeSessionPerformance(tradesForComputation),
 		sessionAssetPerformance:
 			computeSessionAssetPerformance(tradesForComputation),
-		holdingPeriodAnalysis:
-			computeHoldingPeriodAnalysis(tradesForComputation),
+		holdingPeriodAnalysis: computeHoldingPeriodAnalysis(tradesForComputation),
 	}
 	const computeMs = (performance.now() - computeStart).toFixed(1)
 
@@ -186,8 +192,11 @@ const computeDiscipline = (
 		).length
 		const olderCompliance =
 			olderTrades.length > 0 ? (olderFollowed / olderTrades.length) * 100 : 0
-		if (recentCompliance > olderCompliance + 5) trend = "up"
-		else if (recentCompliance < olderCompliance - 5) trend = "down"
+		if (recentCompliance > olderCompliance + 5) {
+			trend = "up"
+		} else if (recentCompliance < olderCompliance - 5) {
+			trend = "down"
+		}
 	}
 
 	return { score, totalTrades, followedCount, trend, recentCompliance }
@@ -225,11 +234,13 @@ const computeStreaks = (
 					? "loss"
 					: "none"
 		for (const trade of sortedDescTrades) {
-			if (currentStreakType === "win" && trade.outcome === "win")
+			if (currentStreakType === "win" && trade.outcome === "win") {
 				currentStreak++
-			else if (currentStreakType === "loss" && trade.outcome === "loss")
+			} else if (currentStreakType === "loss" && trade.outcome === "loss") {
 				currentStreak++
-			else break
+			} else {
+				break
+			}
 		}
 	}
 
@@ -264,8 +275,12 @@ const computeStreaks = (
 	let bestDay: { date: string; pnl: number } | null = null
 	let worstDay: { date: string; pnl: number } | null = null
 	for (const [date, pnl] of dailyMap) {
-		if (!bestDay || pnl > bestDay.pnl) bestDay = { date, pnl }
-		if (!worstDay || pnl < worstDay.pnl) worstDay = { date, pnl }
+		if (!bestDay || pnl > bestDay.pnl) {
+			bestDay = { date, pnl }
+		}
+		if (!worstDay || pnl < worstDay.pnl) {
+			worstDay = { date, pnl }
+		}
 	}
 
 	return {
@@ -285,7 +300,9 @@ const computeEquityCurveFromTrades = (
 	sortedAscTrades: Array<{ entryDate: Date; pnl: number | string | null }>,
 	initialBalance: number
 ): EquityPoint[] => {
-	if (sortedAscTrades.length === 0) return []
+	if (sortedAscTrades.length === 0) {
+		return []
+	}
 
 	const dailyPnlMap = new Map<string, number>()
 	for (const trade of sortedAscTrades) {
@@ -304,7 +321,9 @@ const computeEquityCurveFromTrades = (
 		const dailyPnl = dailyPnlMap.get(date) || 0
 		cumulativePnL += dailyPnl
 		const accountEquity = initialBalance + cumulativePnL
-		if (accountEquity > peak) peak = accountEquity
+		if (accountEquity > peak) {
+			peak = accountEquity
+		}
 		const drawdown = peak > 0 ? ((peak - accountEquity) / peak) * 100 : 0
 		equityPoints.push({ date, equity: cumulativePnL, accountEquity, drawdown })
 	}
@@ -327,7 +346,9 @@ const computeDailyPnLFromTrades = (
 	const dailyMap = new Map<string, { pnl: number; count: number }>()
 
 	for (const trade of sortedAscTrades) {
-		if (trade.entryDate < startOfMonth || trade.entryDate > endOfMonth) continue
+		if (trade.entryDate < startOfMonth || trade.entryDate > endOfMonth) {
+			continue
+		}
 		const dateKey = formatDateKey(trade.entryDate)
 		const existing = dailyMap.get(dateKey) || { pnl: 0, count: 0 }
 		existing.pnl += fromCents(trade.pnl)
@@ -353,7 +374,9 @@ const computeRadar = (
 		followedPlan: boolean | null
 	}>
 ): RadarChartData[] => {
-	if (allTrades.length === 0) return []
+	if (allTrades.length === 0) {
+		return []
+	}
 
 	let wins = 0
 	let losses = 0
@@ -383,7 +406,9 @@ const computeRadar = (
 		}
 		if (trade.followedPlan !== null) {
 			planTradesCount++
-			if (trade.followedPlan === true) followedPlanCount++
+			if (trade.followedPlan === true) {
+				followedPlanCount++
+			}
 		}
 	}
 

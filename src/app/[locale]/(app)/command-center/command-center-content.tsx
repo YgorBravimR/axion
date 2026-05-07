@@ -128,11 +128,14 @@ const CommandCenterContent = ({
 		}
 	}, [viewDate])
 
-	const handleManageChecklist = useCallback((checklistId: string) => {
-		const checklist = completions.find((c) => c.id === checklistId) ?? null
-		setEditingChecklist(checklist)
-		setChecklistManagerOpen(true)
-	}, [completions])
+	const handleManageChecklist = useCallback(
+		(checklistId: string) => {
+			const checklist = completions.find((c) => c.id === checklistId) ?? null
+			setEditingChecklist(checklist)
+			setChecklistManagerOpen(true)
+		},
+		[completions]
+	)
 
 	const handleChecklistManagerClose = useCallback(() => {
 		setChecklistManagerOpen(false)
@@ -140,7 +143,7 @@ const CommandCenterContent = ({
 	}, [])
 
 	const handleChecklistManagerSuccess = useCallback(() => {
-		refreshCompletions()
+		void refreshCompletions()
 	}, [refreshCompletions])
 
 	return (
@@ -188,15 +191,17 @@ const CommandCenterContent = ({
 				{/* Right Column */}
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
 					{/* Phase 4b: legacy plan summary removed — fractal-plan UI (Phase 5) replaces this. */}
-					<div id="cc-plan-summary" className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed" aria-label={tPlan("title")}>
+					<div
+						id="cc-plan-summary"
+						className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
+						aria-label={tPlan("title")}
+					>
 						<div className="gap-s-300 flex flex-col items-center text-center">
 							<CalendarDays className="text-txt-300 h-8 w-8" />
 							<h3 className="text-small text-txt-100 font-semibold">
 								{tPlan("title")}
 							</h3>
-							<p className="text-tiny text-txt-300">
-								{tPlan("noPlanPrompt")}
-							</p>
+							<p className="text-tiny text-txt-300">{tPlan("noPlanPrompt")}</p>
 						</div>
 					</div>
 

@@ -40,27 +40,32 @@ const ImageUpload = ({
 	const canUpload = totalImages < maxImages
 
 	// Unified thumbnail list: persisted images (S3) first, then pending (local blobs)
-	const thumbnails = useMemo(() => [
-		...persistedImages.map((img) => ({
-			key: img.s3Key,
-			src: img.url,
-			borderClass: "border-bg-300",
-			onRemove: () => onPersistedRemove?.(img.s3Key),
-		})),
-		...pendingImages.map((img) => ({
-			key: img.previewUrl,
-			src: img.previewUrl,
-			borderClass: "border-acc-100/30",
-			onRemove: () => {
-				URL.revokeObjectURL(img.previewUrl)
-				onPendingRemove(img.previewUrl)
-			},
-		})),
-	], [persistedImages, pendingImages, onPersistedRemove, onPendingRemove])
+	const thumbnails = useMemo(
+		() => [
+			...persistedImages.map((img) => ({
+				key: img.s3Key,
+				src: img.url,
+				borderClass: "border-bg-300",
+				onRemove: () => onPersistedRemove?.(img.s3Key),
+			})),
+			...pendingImages.map((img) => ({
+				key: img.previewUrl,
+				src: img.previewUrl,
+				borderClass: "border-acc-100/30",
+				onRemove: () => {
+					URL.revokeObjectURL(img.previewUrl)
+					onPendingRemove(img.previewUrl)
+				},
+			})),
+		],
+		[persistedImages, pendingImages, onPersistedRemove, onPendingRemove]
+	)
 
 	const handleFileSelect = useCallback(
 		(file: File) => {
-			if (!canUpload) return
+			if (!canUpload) {
+				return
+			}
 
 			// Client-side validation
 			if (
@@ -90,9 +95,13 @@ const ImageUpload = ({
 	const handleInputChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				handleFileSelect(file)
+			}
 			// Reset so the same file can be re-selected
-			if (fileInputRef.current) fileInputRef.current.value = ""
+			if (fileInputRef.current) {
+				fileInputRef.current.value = ""
+			}
 		},
 		[handleFileSelect]
 	)
@@ -102,7 +111,9 @@ const ImageUpload = ({
 			e.preventDefault()
 			setIsDragOver(false)
 			const file = e.dataTransfer.files[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -132,12 +143,13 @@ const ImageUpload = ({
 						>
 							<button
 								type="button"
-								className="w-full cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:outline-none"
+								className="focus-visible:ring-acc-100 w-full cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:outline-none"
 								onClick={() => {
 									setLightboxIndex(index)
 									setLightboxOpen(true)
 								}}
 							>
+								{/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded image blob URL, dimensions unknown at render time */}
 								<img
 									src={thumb.src}
 									alt={t("imageUpload.thumbnail", { index: index + 1 })}
@@ -149,7 +161,7 @@ const ImageUpload = ({
 								type="button"
 								variant="ghost"
 								size="sm"
-								className="bg-bg-100/80 absolute top-s-100 right-s-100 size-9 p-0 opacity-100 sm:opacity-0 transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+								className="bg-bg-100/80 top-s-100 right-s-100 absolute size-9 p-0 opacity-100 transition-opacity sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
 								onClick={thumb.onRemove}
 								aria-label={t("remove")}
 							>
@@ -166,13 +178,14 @@ const ImageUpload = ({
 					role="button"
 					tabIndex={0}
 					className={cn(
-						"border-bg-300 p-l-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-100 focus-visible:outline-none",
+						"border-bg-300 p-l-700 focus-visible:ring-acc-100 focus-visible:ring-offset-bg-100 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 						isDragOver && "border-acc-100 bg-acc-100/5"
 					)}
 					onClick={() => fileInputRef.current?.click()}
 					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ")
+						if (e.key === "Enter" || e.key === " ") {
 							fileInputRef.current?.click()
+						}
 					}}
 					onDrop={handleDrop}
 					onDragOver={handleDragOver}

@@ -147,8 +147,11 @@ const aggregateStatistics = (
 		perRunSharpes.push(runStd > 0 ? runMean / runStd : 0)
 		perRunSortinos.push(runDownside > 0 ? runMean / runDownside : 0)
 		for (const r of runResults) {
-			if (r > 0) totalWinningR += r
-			else if (r < 0) totalLosingR += -r
+			if (r > 0) {
+				totalWinningR += r
+			} else if (r < 0) {
+				totalLosingR += -r
+			}
 		}
 	}
 
@@ -191,8 +194,12 @@ const aggregateStatistics = (
 				}
 			}
 		}
-		if (currentWin > 0) allWinStreaks.push(currentWin)
-		if (currentLoss > 0) allLossStreaks.push(currentLoss)
+		if (currentWin > 0) {
+			allWinStreaks.push(currentWin)
+		}
+		if (currentLoss > 0) {
+			allLossStreaks.push(currentLoss)
+		}
 	}
 
 	// Kelly uses net reward (after commission impact) so f* isn't overstated.
@@ -286,8 +293,12 @@ const calculateDistribution = (runs: SimulationRun[]): DistributionBucket[] => {
 	let min = Infinity
 	let max = -Infinity
 	for (const rValue of finalRValues) {
-		if (rValue < min) min = rValue
-		if (rValue > max) max = rValue
+		if (rValue < min) {
+			min = rValue
+		}
+		if (rValue > max) {
+			max = rValue
+		}
 	}
 	const bucketCount = 20
 	const bucketSize = (max - min) / bucketCount || 1
@@ -315,7 +326,9 @@ const calculateDistribution = (runs: SimulationRun[]): DistributionBucket[] => {
 }
 
 const calculateStdDev = (values: number[]): number => {
-	if (values.length === 0) return 0
+	if (values.length === 0) {
+		return 0
+	}
 	const avg = values.reduce((sum, v) => sum + v, 0) / values.length
 	const squaredDiffs = values.map((v) => Math.pow(v - avg, 2))
 	const avgSquaredDiff =
@@ -334,7 +347,9 @@ const calculateDownsideDeviation = (
 	values: number[],
 	target: number
 ): number => {
-	if (values.length === 0) return 0
+	if (values.length === 0) {
+		return 0
+	}
 	const sumSquaredDownside = values.reduce((sum, v) => {
 		const diff = v - target
 		return diff < 0 ? sum + diff * diff : sum
@@ -356,8 +371,12 @@ export const generateAnalysisInsights = (
 	const { statistics: stats, params } = result
 
 	const getProfitabilityQuality = (): "robust" | "moderate" | "risky" => {
-		if (stats.profitablePct >= 70) return "robust"
-		if (stats.profitablePct >= 50) return "moderate"
+		if (stats.profitablePct >= 70) {
+			return "robust"
+		}
+		if (stats.profitablePct >= 50) {
+			return "moderate"
+		}
 		return "risky"
 	}
 
@@ -366,11 +385,15 @@ export const generateAnalysisInsights = (
 		| "good"
 		| "moderate"
 		| "concerning" => {
-		if (stats.sharpeRatio >= 0.5 && stats.medianMaxRDrawdown <= 3)
+		if (stats.sharpeRatio >= 0.5 && stats.medianMaxRDrawdown <= 3) {
 			return "excellent"
-		if (stats.sharpeRatio >= 0.3 && stats.medianMaxRDrawdown <= 5) return "good"
-		if (stats.sharpeRatio >= 0.1 && stats.medianMaxRDrawdown <= 8)
+		}
+		if (stats.sharpeRatio >= 0.3 && stats.medianMaxRDrawdown <= 5) {
+			return "good"
+		}
+		if (stats.sharpeRatio >= 0.1 && stats.medianMaxRDrawdown <= 8) {
 			return "moderate"
+		}
 		return "concerning"
 	}
 
@@ -386,8 +409,12 @@ export const generateAnalysisInsights = (
 	}
 
 	const getCommissionAssessment = (): "negligible" | "moderate" | "high" => {
-		if (params.commissionImpactR <= 1) return "negligible"
-		if (params.commissionImpactR <= 5) return "moderate"
+		if (params.commissionImpactR <= 1) {
+			return "negligible"
+		}
+		if (params.commissionImpactR <= 5) {
+			return "moderate"
+		}
 		return "high"
 	}
 

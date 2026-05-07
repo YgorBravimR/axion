@@ -41,7 +41,9 @@ const toSafeErrorMessage = (
 	category?: ErrorCategoryValue
 ): string => {
 	// Skip logging for Next.js framework signals (prerender bailouts, redirects)
-	if (isFrameworkSignal(error)) return GENERIC_MESSAGE
+	if (isFrameworkSignal(error)) {
+		return GENERIC_MESSAGE
+	}
 
 	if (context) {
 		console.error(`[${context}]`, error)

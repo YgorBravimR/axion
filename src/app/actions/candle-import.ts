@@ -18,7 +18,10 @@ import {
 } from "@/lib/csv-parsers/candle-header-mappings"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
-import type { RawCandleRow, DetectedIndicator } from "@/lib/csv-parsers/candle-parser"
+import type {
+	RawCandleRow,
+	DetectedIndicator,
+} from "@/lib/csv-parsers/candle-parser"
 import type { ActionResponse } from "@/types"
 
 // ==========================================
@@ -246,6 +249,7 @@ const commitCandleImport = async (
 				}
 			})
 
+			// eslint-disable-next-line no-await-in-loop -- batch inserts are intentionally sequential to avoid saturating the DB connection pool
 			await db
 				.insert(priceCandles)
 				.values(values)
@@ -295,7 +299,9 @@ const commitCandleImport = async (
 				return {
 					key,
 					displayName: knownMapping?.displayName ?? key,
-					groupId: knownMapping ? (groupKeyToId.get(knownMapping.groupKey) ?? null) : null,
+					groupId: knownMapping
+						? (groupKeyToId.get(knownMapping.groupKey) ?? null)
+						: null,
 					csvHeader: knownMapping?.csvHeader ?? null,
 				}
 			})
@@ -308,11 +314,13 @@ const commitCandleImport = async (
 					continue
 				}
 
+				// eslint-disable-next-line no-await-in-loop -- indicator definitions must be checked/inserted sequentially to avoid duplicate key races
 				const existing = await db.query.indicatorDefinitions.findFirst({
 					where: eq(indicatorDefinitions.key, indicator.key),
 				})
 
 				if (!existing) {
+					// eslint-disable-next-line no-await-in-loop -- sequential insert after existence check; parallelising would require upsert
 					await db.insert(indicatorDefinitions).values({
 						key: indicator.key,
 						displayName: indicator.displayName,
@@ -413,7 +421,9 @@ const seedIndicatorDefinitions = async (): Promise<
 		const values = KNOWN_INDICATOR_MAPPINGS.map((mapping, index) => {
 			const resolvedGroupId = groupKeyToId.get(mapping.groupKey)
 			if (!resolvedGroupId) {
-				throw new Error(`Group "${mapping.groupKey}" not found for indicator "${mapping.key}"`)
+				throw new Error(
+					`Group "${mapping.groupKey}" not found for indicator "${mapping.key}"`
+				)
 			}
 			return {
 				key: mapping.key,

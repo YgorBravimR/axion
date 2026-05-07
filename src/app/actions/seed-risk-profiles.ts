@@ -29,11 +29,16 @@ const TEMPLATE_DISPLAY_NAMES: Record<string, string> = {
 }
 
 const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
-	"fixed-fractional": "Risk a fixed % of current balance per trade. Conservative position sizing with drawdown protection.",
-	"fixed-ratio": "Scale position size based on accumulated profit. Aggressive non-linear growth.",
-	"institutional": "Conservative risk with 3-tier drawdown controls. Extremely stable.",
-	"r-multiples": "Clean R-based risk framework. Fixed risk per trade measured in R units.",
-	"kelly-fractional": "Mathematically optimal sizing divided by safety factor. Maximum theoretical growth.",
+	"fixed-fractional":
+		"Risk a fixed % of current balance per trade. Conservative position sizing with drawdown protection.",
+	"fixed-ratio":
+		"Scale position size based on accumulated profit. Aggressive non-linear growth.",
+	"institutional":
+		"Conservative risk with 3-tier drawdown controls. Extremely stable.",
+	"r-multiples":
+		"Clean R-based risk framework. Fixed risk per trade measured in R units.",
+	"kelly-fractional":
+		"Mathematically optimal sizing divided by safety factor. Maximum theoretical growth.",
 }
 
 // ==========================================
@@ -67,8 +72,11 @@ const seedBuiltInRiskProfiles = async (): Promise<string[]> => {
 
 	for (const template of RISK_PROFILE_TEMPLATES) {
 		const displayName = TEMPLATE_DISPLAY_NAMES[template.id] ?? template.id
-		if (existingNames.has(displayName)) continue
+		if (existingNames.has(displayName)) {
+			continue
+		}
 
+		// eslint-disable-next-line no-await-in-loop -- sequential inserts; small N (fixed template list), each skipped if already exists
 		await db.insert(riskManagementProfiles).values({
 			name: displayName,
 			description: TEMPLATE_DESCRIPTIONS[template.id] ?? null,

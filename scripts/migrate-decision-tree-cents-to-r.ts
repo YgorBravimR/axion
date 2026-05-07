@@ -18,7 +18,11 @@
  * Output: per-profile log + summary "Converted: N, Skipped: M".
  */
 import { db } from "@/db/drizzle"
-import { riskManagementProfiles, monthlyRiskConfig, yearlyPlans } from "@/db/schema"
+import {
+	riskManagementProfiles,
+	monthlyRiskConfig,
+	yearlyPlans,
+} from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 
 interface YearlyLadderRule {
@@ -28,8 +32,11 @@ interface YearlyLadderRule {
 
 const isAlreadyConverted = (tree: Record<string, unknown>): boolean => {
 	const json = JSON.stringify(tree)
-	return /(thresholdR|baseRiskR|riskR|dailyTargetR|monthlyLossR|weeklyLossR)/.test(json) &&
-		!/Cents/.test(json)
+	return (
+		/(thresholdR|baseRiskR|riskR|dailyTargetR|monthlyLossR|weeklyLossR)/.test(
+			json
+		) && !/Cents/.test(json)
+	)
 }
 
 const deriveOneRCents = async (profileId: string): Promise<number> => {
@@ -39,13 +46,19 @@ const deriveOneRCents = async (profileId: string): Promise<number> => {
 	})
 	if (config?.riskPerTradeCents) {
 		const cents = Number(config.riskPerTradeCents)
-		if (Number.isFinite(cents) && cents > 0) return cents
+		if (Number.isFinite(cents) && cents > 0) {
+			return cents
+		}
 	}
 	const yp = await db.query.yearlyPlans.findFirst({
 		orderBy: [desc(yearlyPlans.year)],
 	})
 	const ladder = yp?.ladderRules as YearlyLadderRule[] | null | undefined
-	if (Array.isArray(ladder) && ladder.length > 0 && typeof ladder[0]?.oneRCents === "number") {
+	if (
+		Array.isArray(ladder) &&
+		ladder.length > 0 &&
+		typeof ladder[0]?.oneRCents === "number"
+	) {
 		return ladder[0].oneRCents
 	}
 	throw new Error(`cannot derive 1R cents for profile ${profileId}`)
@@ -53,13 +66,17 @@ const deriveOneRCents = async (profileId: string): Promise<number> => {
 
 const convertCentsToR = (
 	tree: Record<string, unknown>,
-	oneRCents: number,
+	oneRCents: number
 ): Record<string, unknown> => {
 	const walk = (node: unknown): unknown => {
-		if (Array.isArray(node)) return node.map(walk)
+		if (Array.isArray(node)) {
+			return node.map(walk)
+		}
 		if (node && typeof node === "object") {
 			const out: Record<string, unknown> = {}
-			for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+			for (const [key, value] of Object.entries(
+				node as Record<string, unknown>
+			)) {
 				if (typeof value === "number" && /Cents$/.test(key)) {
 					const newKey = key.replace(/Cents$/, "R")
 					out[newKey] = Number((value / oneRCents).toFixed(2))

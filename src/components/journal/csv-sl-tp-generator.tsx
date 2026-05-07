@@ -55,7 +55,9 @@ export const CsvSlTpGenerator = ({
 	}, [processedTrades])
 
 	// Asset config state - initialize with reasonable defaults
-	const [assetConfigs, setAssetConfigs] = useState<Record<string, AssetSlTpConfig>>({})
+	const [assetConfigs, setAssetConfigs] = useState<
+		Record<string, AssetSlTpConfig>
+	>({})
 
 	// Initialize configs when assets change
 	const initializeConfigs = useCallback(() => {
@@ -89,7 +91,9 @@ export const CsvSlTpGenerator = ({
 		value: string
 	) => {
 		const numValue = parseInt(value, 10)
-		if (isNaN(numValue)) return
+		if (isNaN(numValue)) {
+			return
+		}
 
 		setAssetConfigs((prev) => ({
 			...prev,
@@ -108,11 +112,20 @@ export const CsvSlTpGenerator = ({
 
 	const generateSlTpForTrade = useCallback(
 		(trade: ProcessedCsvTrade): ProcessedCsvTrade => {
-			if (trade.status === "skipped" || !trade.assetConfig) return trade
-			if (trade.originalData.entryPrice === null || !trade.originalData.entryPrice) return trade
+			if (trade.status === "skipped" || !trade.assetConfig) {
+				return trade
+			}
+			if (
+				trade.originalData.entryPrice === null ||
+				!trade.originalData.entryPrice
+			) {
+				return trade
+			}
 
 			const config = assetConfigs[trade.assetConfig.symbol]
-			if (!config) return trade
+			if (!config) {
+				return trade
+			}
 
 			const entryPrice = Number(trade.originalData.entryPrice)
 			const exitPrice = trade.originalData.exitPrice
@@ -143,7 +156,9 @@ export const CsvSlTpGenerator = ({
 					tpPrice = entryPrice - tpTicks * tickSize
 				}
 			} else {
-				if (!exitPrice) return trade
+				if (!exitPrice) {
+					return trade
+				}
 
 				slPrice = exitPrice
 				const tpTicks = getRandomInt(
@@ -183,7 +198,9 @@ export const CsvSlTpGenerator = ({
 			}
 		}
 
-		if (eligibleIndices.length === 0) return
+		if (eligibleIndices.length === 0) {
+			return
+		}
 
 		cancelledRef.current = false
 		setIsGenerating(true)
@@ -202,11 +219,14 @@ export const CsvSlTpGenerator = ({
 
 			for (let j = start; j < end; j++) {
 				const tradeIndex = eligibleIndices[j]
-				updatedTrades[tradeIndex] = generateSlTpForTrade(updatedTrades[tradeIndex])
+				updatedTrades[tradeIndex] = generateSlTpForTrade(
+					updatedTrades[tradeIndex]
+				)
 			}
 
 			const progress = Math.round(((i + 1) / CHUNKS) * 100)
 			updateLoading({ progress })
+			// eslint-disable-next-line no-await-in-loop -- intentional UI progress delay between chunks to yield to React rendering and allow cancellation check
 			await delay(chunkDelay)
 
 			if (cancelledRef.current) {
@@ -256,12 +276,14 @@ export const CsvSlTpGenerator = ({
 					<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2">
 						{uniqueAssets.map((asset) => {
 							const config = assetConfigs[asset]
-							if (!config) return null
+							if (!config) {
+								return null
+							}
 
 							return (
 								<div
 									key={asset}
-									className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border space-y-s-200"
+									className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 space-y-s-200 rounded-lg border"
 								>
 									{/* Asset Title */}
 									<h4 className="text-small text-txt-100 font-semibold">
@@ -269,7 +291,7 @@ export const CsvSlTpGenerator = ({
 									</h4>
 
 									{/* SL Inputs */}
-									<div className="grid gap-s-200 grid-cols-2">
+									<div className="gap-s-200 grid grid-cols-2">
 										<div>
 											<Label
 												id={`sl-ticks-${asset}`}
@@ -314,7 +336,7 @@ export const CsvSlTpGenerator = ({
 									</p>
 
 									{/* TP Inputs */}
-									<div className="mt-s-300 grid gap-s-200 grid-cols-2">
+									<div className="mt-s-300 gap-s-200 grid grid-cols-2">
 										<div>
 											<Label
 												id={`tp-ticks-${asset}`}

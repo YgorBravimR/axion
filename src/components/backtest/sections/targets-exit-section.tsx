@@ -16,12 +16,19 @@ interface TargetsExitSectionProps {
 }
 
 /** Inline unit suffix for each target mode — removes ambiguity */
-const getModeSuffix = (mode: TargetMode, t: ReturnType<typeof useTranslations>): string => {
+const getModeSuffix = (
+	mode: TargetMode,
+	t: ReturnType<typeof useTranslations>
+): string => {
 	switch (mode) {
-		case "r_multiple": return t("modeSuffixR")
-		case "pct_range": return t("modeSuffixPctRange")
-		case "pct_stop": return t("modeSuffixPctStop")
-		case "fixed_points": return t("modeSuffixPts")
+		case "r_multiple":
+			return t("modeSuffixR")
+		case "pct_range":
+			return t("modeSuffixPctRange")
+		case "pct_stop":
+			return t("modeSuffixPctStop")
+		case "fixed_points":
+			return t("modeSuffixPts")
 	}
 }
 
@@ -32,186 +39,238 @@ const TARGET_MODE_OPTIONS: { value: TargetMode; labelKey: string }[] = [
 	{ value: "fixed_points", labelKey: "modeFixedPoints" },
 ]
 
-const TargetsExitSection = memo(({ recipe, onRecipeChange }: TargetsExitSectionProps) => {
-	const t = useTranslations("backtest.builder")
+const TargetsExitSection = memo(
+	({ recipe, onRecipeChange }: TargetsExitSectionProps) => {
+		const t = useTranslations("backtest.builder")
 
-	if (recipe.target.type !== "fixed_levels") return null
-	const targetConfig = recipe.target
+		// ── Shared target mode — must be before any early return ────────────────────────────────────
+		const targetModeOptionsPrecomputed = useMemo(
+			() =>
+				TARGET_MODE_OPTIONS.map((opt) => ({
+					value: opt.value,
+					label: t(opt.labelKey),
+					description: t(`${opt.labelKey}Desc`),
+				})),
+			[t]
+		)
 
-	const totalAllocation = targetConfig.levels.reduce((sum, level) => sum + level.exitPct, 0)
-	const remaining = 100 - totalAllocation
-	const isExact = totalAllocation === 100
-	const isOver = totalAllocation > 100
-	const isUnder = totalAllocation < 100
-
-	// ── Exit level management ────────────────────────────────
-
-	const handleAddLevel = () => {
-		const newLevel: TargetLevel = {
-			value: 1,
-			mode: targetConfig.levels[0]?.mode ?? "r_multiple",
-			exitPct: 100,
-			label: `target${targetConfig.levels.length + 1}`,
+		if (recipe.target.type !== "fixed_levels") {
+			return null
 		}
-		onRecipeChange({
-			...recipe,
-			target: { ...targetConfig, levels: [...targetConfig.levels, newLevel] },
-		})
-	}
+		const targetConfig = recipe.target
 
-	const handleRemoveLevel = (index: number) => {
-		const levels = targetConfig.levels.filter((_, i) => i !== index)
-		onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
-	}
+		const totalAllocation = targetConfig.levels.reduce(
+			(sum, level) => sum + level.exitPct,
+			0
+		)
+		const remaining = 100 - totalAllocation
+		const isExact = totalAllocation === 100
+		const isOver = totalAllocation > 100
+		const isUnder = totalAllocation < 100
 
-	const handleLevelChange = (index: number, field: keyof TargetLevel, value: string | number) => {
-		const levels = [...targetConfig.levels]
-		levels[index] = { ...levels[index], [field]: value }
-		onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
-	}
+		// ── Exit level management ────────────────────────────────
 
-	const handleEodChange = (time: string) => {
-		onRecipeChange({ ...recipe, target: { ...targetConfig, eodTime: timeStringToHhmm(time) } })
-	}
+		const handleAddLevel = () => {
+			const newLevel: TargetLevel = {
+				value: 1,
+				mode: targetConfig.levels[0]?.mode ?? "r_multiple",
+				exitPct: 100,
+				label: `target${targetConfig.levels.length + 1}`,
+			}
+			onRecipeChange({
+				...recipe,
+				target: { ...targetConfig, levels: [...targetConfig.levels, newLevel] },
+			})
+		}
 
-	// ── Shared target mode ───────────────────────────────────
+		const handleRemoveLevel = (index: number) => {
+			const levels = targetConfig.levels.filter((_, i) => i !== index)
+			onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
+		}
 
-	const targetModeOptions = useMemo(() => TARGET_MODE_OPTIONS.map((opt) => ({
-		value: opt.value,
-		label: t(opt.labelKey),
-		description: t(`${opt.labelKey}Desc`),
-	})), [t])
+		const handleLevelChange = (
+			index: number,
+			field: keyof TargetLevel,
+			value: string | number
+		) => {
+			const levels = [...targetConfig.levels]
+			levels[index] = { ...levels[index], [field]: value }
+			onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
+		}
 
-	const currentMode = targetConfig.levels[0]?.mode ?? "r_multiple"
+		const handleEodChange = (time: string) => {
+			onRecipeChange({
+				...recipe,
+				target: { ...targetConfig, eodTime: timeStringToHhmm(time) },
+			})
+		}
 
-	const handleModeChange = (mode: string) => {
-		const levels = targetConfig.levels.map((level) => ({ ...level, mode: mode as TargetMode }))
-		onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
-	}
+		// ── Shared target mode ───────────────────────────────────
 
-	return (
-		<div className="border-bg-300 bg-bg-200 space-y-m-500 rounded-lg border p-m-400">
-			<h2 className="text-h3 font-semibold text-txt-100">{t("targetsExit")}</h2>
+		const currentMode = targetConfig.levels[0]?.mode ?? "r_multiple"
 
-			{/* Target pricing mode */}
-			<div className="space-y-s-300">
-				<p className="text-small font-medium text-txt-200">{t("targetMode")}</p>
-				<PluginPicker
-					options={targetModeOptions}
-					selected={currentMode}
-					onSelect={handleModeChange}
-				/>
-			</div>
+		const handleModeChange = (mode: string) => {
+			const levels = targetConfig.levels.map((level) => ({
+				...level,
+				mode: mode as TargetMode,
+			}))
+			onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
+		}
 
-			{/* Exit levels */}
-			<div className="space-y-s-300">
-				<div className="flex items-center justify-between">
-					<p className="text-small font-medium text-txt-200">{t("exitLevels")}</p>
-					<Button
-						id="add-exit-level"
-						variant="outline"
-						size="sm"
-						onClick={handleAddLevel}
-						className="gap-s-200"
-					>
-						<Plus className="h-3.5 w-3.5" />
-						{t("addLevel")}
-					</Button>
+		return (
+			<div className="border-bg-300 bg-bg-200 space-y-m-500 p-m-400 rounded-lg border">
+				<h2 className="text-h3 text-txt-100 font-semibold">
+					{t("targetsExit")}
+				</h2>
+
+				{/* Target pricing mode */}
+				<div className="space-y-s-300">
+					<p className="text-small text-txt-200 font-medium">
+						{t("targetMode")}
+					</p>
+					<PluginPicker
+						options={targetModeOptionsPrecomputed}
+						selected={currentMode}
+						onSelect={handleModeChange}
+					/>
 				</div>
 
-				<div className="space-y-s-200">
-					{targetConfig.levels.map((level, index) => (
-						<div
-							key={index}
-							className="border-bg-300 bg-bg-100/50 gap-m-400 flex items-end rounded-lg border p-s-300"
-						>
-							<div className="space-y-s-100 flex-1">
-								<Label id={`label-level-value-${index}`}>{t("targetValue")}</Label>
-								<div className="flex items-center gap-s-100">
-									<Input
-										id={`level-value-${index}`}
-										type="number"
-										step="any"
-										value={level.value}
-										onChange={(e) => handleLevelChange(index, "value", parseFloat(e.target.value) || 1)}
-									/>
-									<span className="text-small text-txt-300 shrink-0">{getModeSuffix(currentMode, t)}</span>
-								</div>
-							</div>
-
-							<div className="space-y-s-100 w-28">
-								<Label id={`label-level-exit-${index}`}>{t("exitPct")}</Label>
-								<div className="flex items-center gap-s-100">
-									<Input
-										id={`level-exit-${index}`}
-										type="number"
-										min={1}
-										max={100}
-										value={level.exitPct}
-										onChange={(e) => handleLevelChange(index, "exitPct", parseInt(e.target.value) || 50)}
-									/>
-									<span className="text-small text-txt-300 shrink-0">%</span>
-								</div>
-							</div>
-
-							{targetConfig.levels.length > 1 && (
-								<Button
-									id={`remove-level-${index}`}
-									variant="ghost"
-									size="sm"
-									onClick={() => handleRemoveLevel(index)}
-									className="text-txt-300 hover:text-fb-error shrink-0"
-									aria-label={`Remove exit level ${index + 1}`}
-								>
-									<Trash2 className="h-4 w-4" />
-								</Button>
-							)}
-						</div>
-					))}
-				</div>
-
-				{/* Allocation tracker */}
-				<div className="space-y-s-100">
+				{/* Exit levels */}
+				<div className="space-y-s-300">
 					<div className="flex items-center justify-between">
-						<span className="text-small text-txt-300">
-							{t("allocationUsed", { total: totalAllocation })}
-						</span>
-						<span
-							className={`text-small font-medium ${
-								isExact ? "text-fb-success" : isOver ? "text-fb-error" : "text-txt-300"
-							}`}
+						<p className="text-small text-txt-200 font-medium">
+							{t("exitLevels")}
+						</p>
+						<Button
+							id="add-exit-level"
+							variant="outline"
+							size="sm"
+							onClick={handleAddLevel}
+							className="gap-s-200"
 						>
-							{isExact && t("allocationExact")}
-							{isOver && t("allocationOver", { over: totalAllocation - 100 })}
-							{isUnder && t("allocationRemaining", { remaining })}
-						</span>
+							<Plus className="h-3.5 w-3.5" />
+							{t("addLevel")}
+						</Button>
 					</div>
-					<div className="bg-bg-300 h-1.5 overflow-hidden rounded-full">
-						<div
-							className={`h-full rounded-full transition-all duration-200 ${
-								isExact ? "bg-fb-success" : isOver ? "bg-fb-error" : "bg-txt-300"
-							}`}
-							style={{ width: `${Math.min(totalAllocation, 100)}%` }}
+
+					<div className="space-y-s-200">
+						{targetConfig.levels.map((level, index) => (
+							<div
+								key={index}
+								className="border-bg-300 bg-bg-100/50 gap-m-400 p-s-300 flex items-end rounded-lg border"
+							>
+								<div className="space-y-s-100 flex-1">
+									<Label id={`label-level-value-${index}`}>
+										{t("targetValue")}
+									</Label>
+									<div className="gap-s-100 flex items-center">
+										<Input
+											id={`level-value-${index}`}
+											type="number"
+											step="any"
+											value={level.value}
+											onChange={(e) =>
+												handleLevelChange(
+													index,
+													"value",
+													parseFloat(e.target.value) || 1
+												)
+											}
+										/>
+										<span className="text-small text-txt-300 shrink-0">
+											{getModeSuffix(currentMode, t)}
+										</span>
+									</div>
+								</div>
+
+								<div className="space-y-s-100 w-28">
+									<Label id={`label-level-exit-${index}`}>{t("exitPct")}</Label>
+									<div className="gap-s-100 flex items-center">
+										<Input
+											id={`level-exit-${index}`}
+											type="number"
+											min={1}
+											max={100}
+											value={level.exitPct}
+											onChange={(e) =>
+												handleLevelChange(
+													index,
+													"exitPct",
+													parseInt(e.target.value) || 50
+												)
+											}
+										/>
+										<span className="text-small text-txt-300 shrink-0">%</span>
+									</div>
+								</div>
+
+								{targetConfig.levels.length > 1 && (
+									<Button
+										id={`remove-level-${index}`}
+										variant="ghost"
+										size="sm"
+										onClick={() => handleRemoveLevel(index)}
+										className="text-txt-300 hover:text-fb-error shrink-0"
+										aria-label={`Remove exit level ${index + 1}`}
+									>
+										<Trash2 className="h-4 w-4" />
+									</Button>
+								)}
+							</div>
+						))}
+					</div>
+
+					{/* Allocation tracker */}
+					<div className="space-y-s-100">
+						<div className="flex items-center justify-between">
+							<span className="text-small text-txt-300">
+								{t("allocationUsed", { total: totalAllocation })}
+							</span>
+							<span
+								className={`text-small font-medium ${
+									isExact
+										? "text-fb-success"
+										: isOver
+											? "text-fb-error"
+											: "text-txt-300"
+								}`}
+							>
+								{isExact && t("allocationExact")}
+								{isOver && t("allocationOver", { over: totalAllocation - 100 })}
+								{isUnder && t("allocationRemaining", { remaining })}
+							</span>
+						</div>
+						<div className="bg-bg-300 h-1.5 overflow-hidden rounded-full">
+							<div
+								className={`h-full rounded-full transition-all duration-200 ${
+									isExact
+										? "bg-fb-success"
+										: isOver
+											? "bg-fb-error"
+											: "bg-txt-300"
+								}`}
+								style={{ width: `${Math.min(totalAllocation, 100)}%` }}
+							/>
+						</div>
+					</div>
+				</div>
+
+				{/* EOD Exit */}
+				<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-4">
+					<div className="space-y-s-200">
+						<Label id="label-eod">{t("eodTime")}</Label>
+						<Input
+							id="eod-time"
+							type="time"
+							value={hhmmToTimeString(targetConfig.eodTime)}
+							onChange={(e) => handleEodChange(e.target.value)}
 						/>
 					</div>
 				</div>
 			</div>
-
-			{/* EOD Exit */}
-			<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-4">
-				<div className="space-y-s-200">
-					<Label id="label-eod">{t("eodTime")}</Label>
-					<Input
-						id="eod-time"
-						type="time"
-						value={hhmmToTimeString(targetConfig.eodTime)}
-						onChange={(e) => handleEodChange(e.target.value)}
-					/>
-				</div>
-			</div>
-		</div>
-	)
-})
+		)
+	}
+)
 TargetsExitSection.displayName = "TargetsExitSection"
 
 export { TargetsExitSection }

@@ -7,7 +7,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
@@ -69,10 +68,12 @@ const CustomTooltip = ({
 	locale,
 	accountMap,
 }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	if (!active || !payload || payload.length === 0) {
+		return null
+	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 shadow-lg">
+		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border shadow-lg">
 			<p className="text-tiny text-txt-300 mb-s-100">
 				{formatDate(label || "", locale)}
 			</p>
@@ -81,7 +82,7 @@ const CustomTooltip = ({
 				return (
 					<div
 						key={entry.name}
-						className="flex items-center gap-s-200 text-small"
+						className="gap-s-200 text-small flex items-center"
 					>
 						<span
 							className="inline-block h-2 w-2 rounded-full"
@@ -107,9 +108,7 @@ const CustomTooltip = ({
 	)
 }
 
-const ComparisonEquityChart = ({
-	accounts,
-}: ComparisonEquityChartProps) => {
+const ComparisonEquityChart = ({ accounts }: ComparisonEquityChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("accountComparison.chart")
 	const locale = useLocale()
@@ -117,7 +116,9 @@ const ComparisonEquityChart = ({
 	const hasData = accounts.some((a) => a.equityCurve.length > 0)
 
 	const chartData = useMemo(() => {
-		if (!hasData) return null
+		if (!hasData) {
+			return null
+		}
 
 		const mergedData = mergeEquityCurves(accounts)
 		const accountMap = new Map(
@@ -125,7 +126,9 @@ const ComparisonEquityChart = ({
 		)
 
 		// Compute Y axis domain from all equity values
-		const allValues = accounts.flatMap((a) => a.equityCurve.map((p) => p.equity))
+		const allValues = accounts.flatMap((a) =>
+			a.equityCurve.map((p) => p.equity)
+		)
 		const minVal = Math.min(0, ...allValues)
 		const maxVal = Math.max(0, ...allValues)
 		const padding = (maxVal - minVal) * 0.1 || 100
@@ -135,7 +138,10 @@ const ComparisonEquityChart = ({
 
 	if (!hasData || !chartData) {
 		return (
-			<div id="comparison-equity-chart" className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
+			<div
+				id="comparison-equity-chart"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
+			>
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("title")}
 				</h3>
@@ -149,7 +155,10 @@ const ComparisonEquityChart = ({
 	const { mergedData, accountMap, minVal, maxVal, padding } = chartData
 
 	return (
-		<div id="comparison-equity-chart" className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
+		<div
+			id="comparison-equity-chart"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
+		>
 			<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 				{t("title")}
 			</h3>
@@ -187,23 +196,15 @@ const ComparisonEquityChart = ({
 					/>
 					<ChartTooltip
 						variant="line"
-						content={
-							<CustomTooltip locale={locale} accountMap={accountMap} />
-						}
+						content={<CustomTooltip locale={locale} accountMap={accountMap} />}
 					/>
-					<ReferenceLine
-						y={0}
-						stroke="var(--color-bg-300)"
-						strokeWidth={2}
-					/>
+					<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeWidth={2} />
 					{accounts.map((account, index) => (
 						<Line
 							key={account.accountId}
 							type="monotone"
 							dataKey={account.accountId}
-							stroke={
-								COMPARISON_COLORS[index % COMPARISON_COLORS.length]
-							}
+							stroke={COMPARISON_COLORS[index % COMPARISON_COLORS.length]}
 							strokeWidth={2}
 							dot={false}
 							connectNulls

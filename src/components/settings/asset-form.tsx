@@ -21,7 +21,11 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog"
-import { createAsset, updateAsset, type AssetWithType } from "@/app/actions/assets"
+import {
+	createAsset,
+	updateAsset,
+	type AssetWithType,
+} from "@/app/actions/assets"
 import type { AssetType } from "@/db/schema"
 import { Loader2 } from "lucide-react"
 import { fromCents } from "@/lib/money"
@@ -55,7 +59,7 @@ export const AssetForm = ({
 		multiplier: asset?.multiplier ?? "1",
 	})
 	const [tickValue, setTickValue] = useState<number | null>(
-		asset?.tickValue ? fromCents(asset.tickValue) : null,
+		asset?.tickValue ? fromCents(asset.tickValue) : null
 	)
 
 	useEffect(() => {
@@ -136,14 +140,21 @@ export const AssetForm = ({
 
 				<form onSubmit={handleSubmit} className="space-y-m-400">
 					{error && (
-						<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+						<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 							{error}
 						</div>
 					)}
 
-					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
-							<Label id="label-asset-symbol" htmlFor="symbol" required filled={!!formData.symbol.trim()}>{t("symbol")}</Label>
+							<Label
+								id="label-asset-symbol"
+								htmlFor="symbol"
+								required
+								filled={!!formData.symbol.trim()}
+							>
+								{t("symbol")}
+							</Label>
 							<Input
 								id="symbol"
 								placeholder={t("symbolPlaceholder")}
@@ -156,7 +167,14 @@ export const AssetForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-asset-type" htmlFor="assetTypeId" required filled={!!formData.assetTypeId}>{t("type")}</Label>
+							<Label
+								id="label-asset-type"
+								htmlFor="assetTypeId"
+								required
+								filled={!!formData.assetTypeId}
+							>
+								{t("type")}
+							</Label>
 							<Select
 								value={formData.assetTypeId}
 								onValueChange={(value) => handleChange("assetTypeId", value)}
@@ -177,7 +195,14 @@ export const AssetForm = ({
 					</div>
 
 					<div className="space-y-s-200">
-						<Label id="label-asset-name" htmlFor="name" required filled={!!formData.name.trim()}>{t("name")}</Label>
+						<Label
+							id="label-asset-name"
+							htmlFor="name"
+							required
+							filled={!!formData.name.trim()}
+						>
+							{t("name")}
+						</Label>
 						<Input
 							id="name"
 							placeholder={t("namePlaceholder")}
@@ -187,9 +212,16 @@ export const AssetForm = ({
 						/>
 					</div>
 
-					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 						<div className="space-y-s-200">
-							<Label id="label-asset-tick-size" htmlFor="tickSize" required filled={!!formData.tickSize}>{t("tickSize")}</Label>
+							<Label
+								id="label-asset-tick-size"
+								htmlFor="tickSize"
+								required
+								filled={!!formData.tickSize}
+							>
+								{t("tickSize")}
+							</Label>
 							<Input
 								id="tickSize"
 								type="number"
@@ -202,7 +234,14 @@ export const AssetForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-asset-tick-value" htmlFor="tickValue" required filled={tickValue != null && tickValue > 0}>{t("tickValue")} ({formData.currency})</Label>
+							<Label
+								id="label-asset-tick-value"
+								htmlFor="tickValue"
+								required
+								filled={tickValue !== null && tickValue > 0}
+							>
+								{t("tickValue")} ({formData.currency})
+							</Label>
 							<CurrencyInput
 								id="tickValue"
 								value={tickValue}
@@ -214,7 +253,9 @@ export const AssetForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-asset-currency" htmlFor="currency">{t("currency")}</Label>
+							<Label id="label-asset-currency" htmlFor="currency">
+								{t("currency")}
+							</Label>
 							<Select
 								value={formData.currency}
 								onValueChange={(value) => handleChange("currency", value)}
@@ -232,7 +273,9 @@ export const AssetForm = ({
 					</div>
 
 					<div className="space-y-s-200">
-						<Label id="label-asset-multiplier" htmlFor="multiplier">{t("multiplier")}</Label>
+						<Label id="label-asset-multiplier" htmlFor="multiplier">
+							{t("multiplier")}
+						</Label>
 						<Input
 							id="multiplier"
 							type="number"
@@ -253,7 +296,9 @@ export const AssetForm = ({
 							{tCommon("cancel")}
 						</Button>
 						<Button id="asset-form-submit" type="submit" disabled={isPending}>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{asset ? tCommon("saveChanges") : t("addAsset")}
 						</Button>
 					</DialogFooter>

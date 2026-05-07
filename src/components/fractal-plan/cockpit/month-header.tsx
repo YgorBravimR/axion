@@ -28,10 +28,18 @@ const navHref = (locale: string, year: number, month: number): string => {
 	return `/${locale}/plan/${year}/${q}/${month}`
 }
 
-const computeAdjacent = (year: number, month: number, delta: -1 | 1): { year: number; month: number } => {
+const computeAdjacent = (
+	year: number,
+	month: number,
+	delta: -1 | 1
+): { year: number; month: number } => {
 	const next = month + delta
-	if (next < 1) return { year: year - 1, month: 12 }
-	if (next > 12) return { year: year + 1, month: 1 }
+	if (next < 1) {
+		return { year: year - 1, month: 12 }
+	}
+	if (next > 12) {
+		return { year: year + 1, month: 1 }
+	}
 	return { year, month: next }
 }
 
@@ -51,28 +59,37 @@ const MonthHeader = ({
 
 	return (
 		<>
-			<header className="flex flex-wrap items-baseline justify-between gap-s-300">
-				<nav className="flex items-center gap-s-300 text-small text-txt-300" aria-label="Navegação do mês">
+			<header className="gap-s-300 flex flex-wrap items-baseline justify-between">
+				<nav
+					className="gap-s-300 text-small text-txt-300 flex items-center"
+					aria-label="Navegação do mês"
+				>
 					<Link
 						href={navHref(locale, prev.year, prev.month)}
-						className="rounded-sm p-1 hover:bg-bg-200 hover:text-txt-100"
+						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
 						aria-label="Mês anterior"
 					>
 						<ChevronLeft className="size-4" />
 					</Link>
-					<span className="text-tiny uppercase tracking-wider">
-						<Link href={`/${locale}/plan/${year}`} className="hover:text-txt-100">
+					<span className="text-tiny tracking-wider uppercase">
+						<Link
+							href={`/${locale}/plan/${year}`}
+							className="hover:text-txt-100"
+						>
 							{year}
 						</Link>
 						<span className="mx-s-100 text-bg-300">▸</span>
-						<Link href={`/${locale}/plan/${year}/${quarter}`} className="hover:text-txt-100">
+						<Link
+							href={`/${locale}/plan/${year}/${quarter}`}
+							className="hover:text-txt-100"
+						>
 							Q{quarter}
 						</Link>
 					</span>
-					<h1 className="text-h2 font-semibold text-txt-100">{monthLabel}</h1>
+					<h1 className="text-h2 text-txt-100 font-semibold">{monthLabel}</h1>
 					<Link
 						href={navHref(locale, next.year, next.month)}
-						className="rounded-sm p-1 hover:bg-bg-200 hover:text-txt-100"
+						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
 						aria-label="Próximo mês"
 					>
 						<ChevronRight className="size-4" />

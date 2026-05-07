@@ -150,13 +150,15 @@ const seedRiskProfiles = async () => {
 	const profiles = [
 		{
 			name: "Bravo Risk Management",
-			description: "R-multiple risk: 1R per trade, 4R weekly cap, 15R monthly cap, 3R daily target. Anti-martingale recovery with gain sequence (1x, 0.5x, 0.25x...).",
+			description:
+				"R-multiple risk: 1R per trade, 4R weekly cap, 15R monthly cap, 3R daily target. Anti-martingale recovery with gain sequence (1x, 0.5x, 0.25x...).",
 			createdByUserId,
 			decisionTree: JSON.stringify(bravoTree),
 		},
 		{
 			name: "TSR Iniciante",
-			description: "Plano arrojado para teste mesa TSR. WIN 2cts, stop 175-225pts, R:R 1.5-2.5. Recovery: 2cts cheio (max 3 stops/dia). Gain: compounding 50% do lucro. Caps: 6.25R semanal (laranja), 18.75R mensal (eliminação).",
+			description:
+				"Plano arrojado para teste mesa TSR. WIN 2cts, stop 175-225pts, R:R 1.5-2.5. Recovery: 2cts cheio (max 3 stops/dia). Gain: compounding 50% do lucro. Caps: 6.25R semanal (laranja), 18.75R mensal (eliminação).",
 			createdByUserId,
 			decisionTree: JSON.stringify(tsrInicianteTree),
 		},
@@ -167,11 +169,13 @@ const seedRiskProfiles = async () => {
 	}
 
 	for (const profile of profiles) {
+		// eslint-disable-next-line no-await-in-loop -- sequential upsert per profile in seed script; no parallelism needed for one-time seeding
 		const existing = await db.query.riskManagementProfiles.findFirst({
 			where: eq(riskManagementProfiles.name, profile.name),
 		})
 
 		if (existing) {
+			// eslint-disable-next-line no-await-in-loop -- update depends on prior existence check
 			await db
 				.update(riskManagementProfiles)
 				.set({
@@ -179,17 +183,19 @@ const seedRiskProfiles = async () => {
 					decisionTree: profile.decisionTree,
 				})
 				.where(eq(riskManagementProfiles.id, existing.id))
-			console.log(`Updated profile: "${profile.name}"`)
+			console.info(`Updated profile: "${profile.name}"`)
 			continue
 		}
 
 		const oldName = renameMap[profile.name]
 		if (oldName) {
+			// eslint-disable-next-line no-await-in-loop -- rename check depends on profile iteration order
 			const oldProfile = await db.query.riskManagementProfiles.findFirst({
 				where: eq(riskManagementProfiles.name, oldName),
 			})
 
 			if (oldProfile) {
+				// eslint-disable-next-line no-await-in-loop -- migration update depends on old profile lookup above
 				await db
 					.update(riskManagementProfiles)
 					.set({
@@ -198,16 +204,17 @@ const seedRiskProfiles = async () => {
 						decisionTree: profile.decisionTree,
 					})
 					.where(eq(riskManagementProfiles.id, oldProfile.id))
-				console.log(`Migrated profile: "${oldName}" → "${profile.name}"`)
+				console.info(`Migrated profile: "${oldName}" → "${profile.name}"`)
 				continue
 			}
 		}
 
+		// eslint-disable-next-line no-await-in-loop -- insert only when no existing/old profile found; sequential for seed script
 		await db.insert(riskManagementProfiles).values(profile)
-		console.log(`Created profile: "${profile.name}"`)
+		console.info(`Created profile: "${profile.name}"`)
 	}
 
-	console.log("Seed complete.")
+	console.info("Seed complete.")
 	process.exit(0)
 }
 

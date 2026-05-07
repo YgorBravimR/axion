@@ -88,18 +88,34 @@ const normalizeForOhlcMatch = (header: string): string =>
  * @param header - The raw CSV header
  * @param columnIndex - Zero-based column position (used to disambiguate "Fechamento")
  */
-const classifyOhlcHeader = (header: string, columnIndex: number): OhlcField | null => {
+const classifyOhlcHeader = (
+	header: string,
+	columnIndex: number
+): OhlcField | null => {
 	const normalized = normalizeForOhlcMatch(header)
 
-	if (normalized === "data") return "timestamp"
-	if (normalized === "abertura") return "open"
-	if (normalized === "maxima" || normalized === "máxima") return "high"
-	if (normalized === "minima" || normalized === "mínima") return "low"
+	if (normalized === "data") {
+		return "timestamp"
+	}
+	if (normalized === "abertura") {
+		return "open"
+	}
+	if (normalized === "maxima" || normalized === "máxima") {
+		return "high"
+	}
+	if (normalized === "minima" || normalized === "mínima") {
+		return "low"
+	}
 
 	// "Fechamento" is only the close price when it appears as the 5th column (index 4)
-	if (normalized === "fechamento" && columnIndex === 4) return "close"
+	if (normalized === "fechamento" && columnIndex === 4) {
+		return "close"
+	}
 
-	if (normalized === "contador de candles" || normalized === "contador_de_candles") {
+	if (
+		normalized === "contador de candles" ||
+		normalized === "contador_de_candles"
+	) {
 		return "candleIndex"
 	}
 
@@ -127,7 +143,13 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 			success: false,
 			candles: [],
 			detectedIndicators: [],
-			errors: [{ row: 0, field: "file", message: "CSV must contain at least a header and one data row" }],
+			errors: [
+				{
+					row: 0,
+					field: "file",
+					message: "CSV must contain at least a header and one data row",
+				},
+			],
 			warnings: [],
 			dateRange: null,
 		}
@@ -145,7 +167,9 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 
 	for (let colIndex = 0; colIndex < rawHeaders.length; colIndex++) {
 		const rawHeader = rawHeaders[colIndex]
-		if (!rawHeader) continue
+		if (!rawHeader) {
+			continue
+		}
 
 		// Check if it's an OHLC column
 		const ohlcField = classifyOhlcHeader(rawHeader, colIndex)
@@ -201,7 +225,9 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 	// Step 4: Parse data rows
 	for (let rowIndex = 1; rowIndex < lines.length; rowIndex++) {
 		const line = lines[rowIndex]
-		if (!line) continue
+		if (!line) {
+			continue
+		}
 
 		const values = parseCSVLine(line, delimiter)
 
@@ -217,7 +243,9 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 
 		for (const mapping of columnMappings) {
 			const rawValue = values[mapping.columnIndex]
-			if (rawValue === undefined || rawValue === "") continue
+			if (rawValue === undefined || rawValue === "") {
+				continue
+			}
 
 			if (mapping.type === "ohlc") {
 				switch (mapping.field) {
@@ -291,7 +319,8 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 					}
 					case "candleIndex": {
 						const parsed = parseBrazilianNumber(rawValue)
-						candleIndex = parsed !== null && !isNaN(parsed) ? Math.round(parsed) : null
+						candleIndex =
+							parsed !== null && !isNaN(parsed) ? Math.round(parsed) : null
 						break
 					}
 				}
@@ -301,20 +330,33 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 				const parsed = parseBrazilianNumber(rawValue)
 
 				// Skip null/NaN values
-				if (parsed === null || isNaN(parsed)) continue
+				if (parsed === null || isNaN(parsed)) {
+					continue
+				}
 
 				// Sentinel filter: absurd values from ProfitChart mean "no data"
-				if (Math.abs(parsed) > SENTINEL_THRESHOLD) continue
+				if (Math.abs(parsed) > SENTINEL_THRESHOLD) {
+					continue
+				}
 
 				// Strategy-level indicators treat 0 as "not set"
-				if (parsed === 0 && STRATEGY_LEVEL_KEYS.has(mapping.indicatorKey)) continue
+				if (parsed === 0 && STRATEGY_LEVEL_KEYS.has(mapping.indicatorKey)) {
+					continue
+				}
 
 				indicators[mapping.indicatorKey] = parsed
 			}
 		}
 
 		// Skip rows with missing required OHLC fields
-		if (hasOhlcError || !timestamp || open === null || high === null || low === null || close === null) {
+		if (
+			hasOhlcError ||
+			!timestamp ||
+			open === null ||
+			high === null ||
+			low === null ||
+			close === null
+		) {
 			if (!hasOhlcError) {
 				const missingFields = [
 					!timestamp && "timestamp",

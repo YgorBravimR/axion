@@ -115,15 +115,27 @@ export const updateTimeframe = async (
 
 	const updateValues: Record<string, unknown> = {}
 
-	if (updateData.code !== undefined) updateValues.code = updateData.code
-	if (updateData.name !== undefined) updateValues.name = updateData.name
-	if (updateData.type !== undefined) updateValues.type = updateData.type
-	if (updateData.value !== undefined) updateValues.value = updateData.value
-	if (updateData.unit !== undefined) updateValues.unit = updateData.unit
-	if (updateData.sortOrder !== undefined)
+	if (updateData.code !== undefined) {
+		updateValues.code = updateData.code
+	}
+	if (updateData.name !== undefined) {
+		updateValues.name = updateData.name
+	}
+	if (updateData.type !== undefined) {
+		updateValues.type = updateData.type
+	}
+	if (updateData.value !== undefined) {
+		updateValues.value = updateData.value
+	}
+	if (updateData.unit !== undefined) {
+		updateValues.unit = updateData.unit
+	}
+	if (updateData.sortOrder !== undefined) {
 		updateValues.sortOrder = updateData.sortOrder
-	if (updateData.isActive !== undefined)
+	}
+	if (updateData.isActive !== undefined) {
 		updateValues.isActive = updateData.isActive
+	}
 
 	const [timeframe] = await db
 		.update(timeframes)
@@ -156,10 +168,7 @@ export const toggleTimeframeActive = async (
 	isActive: boolean
 ): Promise<{ success: boolean; error?: string }> => {
 	await requireRole("admin")
-	await db
-		.update(timeframes)
-		.set({ isActive })
-		.where(eq(timeframes.id, id))
+	await db.update(timeframes).set({ isActive }).where(eq(timeframes.id, id))
 
 	invalidateSettingsData()
 
@@ -171,6 +180,7 @@ export const reorderTimeframes = async (
 ): Promise<{ success: boolean; error?: string }> => {
 	await requireRole("admin")
 	for (let i = 0; i < orderedIds.length; i++) {
+		// eslint-disable-next-line no-await-in-loop -- sequential sort order updates; order index depends on loop index
 		await db
 			.update(timeframes)
 			.set({ sortOrder: i })

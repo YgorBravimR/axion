@@ -28,12 +28,16 @@ const MetricRow = ({
 	value: string | number | null | undefined
 	valueClassName?: string
 }) => {
-	if (value === null || value === undefined || value === "") return null
+	if (value === null || value === undefined || value === "") {
+		return null
+	}
 
 	return (
-		<div className="flex items-center justify-between py-s-100">
+		<div className="py-s-100 flex items-center justify-between">
 			<span className="text-tiny text-txt-300">{label}</span>
-			<span className={cn("text-small font-medium text-txt-100", valueClassName)}>
+			<span
+				className={cn("text-small text-txt-100 font-medium", valueClassName)}
+			>
 				{value}
 			</span>
 		</div>
@@ -62,12 +66,21 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 		const general: typeof allTags = []
 
 		for (const tag of allTags) {
-			if (tag.type === "setup") setup.push(tag)
-			else if (tag.type === "mistake") mistake.push(tag)
-			else general.push(tag)
+			if (tag.type === "setup") {
+				setup.push(tag)
+			} else if (tag.type === "mistake") {
+				mistake.push(tag)
+			} else {
+				general.push(tag)
+			}
 		}
 
-		return { tags: allTags, setupTags: setup, mistakeTags: mistake, generalTags: general }
+		return {
+			tags: allTags,
+			setupTags: setup,
+			mistakeTags: mistake,
+			generalTags: general,
+		}
 	}, [fullTrade.tradeTags])
 
 	return (
@@ -122,7 +135,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 
 			{/* P&L */}
 			{pnl !== null && (
-				<div className="flex items-center justify-between py-s-100">
+				<div className="py-s-100 flex items-center justify-between">
 					<span className="text-tiny text-txt-300">{tTrade("pnl")}</span>
 					<PnLDisplay value={pnl} size="sm" />
 				</div>
@@ -137,7 +150,10 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 				/>
 			)}
 			{plannedR > 0 && (
-				<MetricRow label={tTrade("plannedR")} value={formatRMultiple(plannedR)} />
+				<MetricRow
+					label={tTrade("plannedR")}
+					value={formatRMultiple(plannedR)}
+				/>
 			)}
 
 			<Separator id="panel-separator-prices" />
@@ -216,7 +232,10 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						/>
 					)}
 					{fullTrade.timeframe && (
-						<MetricRow label={tTrade("timeframe")} value={fullTrade.timeframe.name} />
+						<MetricRow
+							label={tTrade("timeframe")}
+							value={fullTrade.timeframe.name}
+						/>
 					)}
 				</>
 			)}
@@ -226,16 +245,18 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 				<>
 					<Separator id="panel-separator-discipline" />
 					{fullTrade.rating && (
-						<div className="flex items-center justify-between py-s-100">
+						<div className="py-s-100 flex items-center justify-between">
 							<span className="text-tiny text-txt-300">{tTrade("rating")}</span>
 							<Badge
 								id="panel-rating-badge"
 								className={cn(
 									"text-tiny",
 									fullTrade.rating === "A" && "bg-trade-buy/20 text-trade-buy",
-									fullTrade.rating === "B" && "bg-trade-buy/10 text-trade-buy/70",
+									fullTrade.rating === "B" &&
+										"bg-trade-buy/10 text-trade-buy/70",
 									fullTrade.rating === "C" && "bg-warning/20 text-warning",
-									fullTrade.rating === "D" && "bg-trade-sell/10 text-trade-sell/70",
+									fullTrade.rating === "D" &&
+										"bg-trade-sell/10 text-trade-sell/70",
 									fullTrade.rating === "F" && "bg-trade-sell/20 text-trade-sell"
 								)}
 							>
@@ -244,8 +265,10 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						</div>
 					)}
 					{fullTrade.followedPlan === true && (
-						<div className="flex items-center justify-between py-s-100">
-							<span className="text-tiny text-txt-300">{tTrade("followedPlan")}</span>
+						<div className="py-s-100 flex items-center justify-between">
+							<span className="text-tiny text-txt-300">
+								{tTrade("followedPlan")}
+							</span>
 							<Badge
 								id="panel-followed-plan-badge"
 								className="bg-trade-buy/20 text-trade-buy text-tiny"
@@ -256,8 +279,10 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						</div>
 					)}
 					{fullTrade.followedPlan === false && (
-						<div className="flex items-center justify-between py-s-100">
-							<span className="text-tiny text-txt-300">{tTrade("followedPlan")}</span>
+						<div className="py-s-100 flex items-center justify-between">
+							<span className="text-tiny text-txt-300">
+								{tTrade("followedPlan")}
+							</span>
 							<Badge
 								id="panel-discipline-breach-badge"
 								className="bg-warning/20 text-warning text-tiny"
@@ -274,7 +299,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 			{tags.length > 0 && (
 				<>
 					<Separator id="panel-separator-tags" />
-					<div className="gap-s-200 flex flex-wrap pt-s-100">
+					<div className="gap-s-200 pt-s-100 flex flex-wrap">
 						{setupTags.map((tag) => (
 							<Badge
 								id={`panel-setup-tag-${tag.id}`}

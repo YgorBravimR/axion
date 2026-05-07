@@ -13,7 +13,10 @@ import {
 	Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getCoachingContext, type CoachingContext } from "@/app/actions/coaching"
+import {
+	getCoachingContext,
+	type CoachingContext,
+} from "@/app/actions/coaching"
 import type { CoachingInsight } from "@/lib/coaching/pattern-detector"
 
 interface CoachingInsightsCardProps {
@@ -28,7 +31,10 @@ const CATEGORY_ICONS: Record<string, typeof Brain> = {
 	fees: Receipt,
 }
 
-const SEVERITY_STYLES: Record<string, { border: string; bg: string; badge: string }> = {
+const SEVERITY_STYLES: Record<
+	string,
+	{ border: string; bg: string; badge: string }
+> = {
 	warning: {
 		border: "border-trade-sell/30",
 		bg: "bg-trade-sell/5",
@@ -55,12 +61,15 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 
 	// Resolve translated title and description
 	const title = t(insight.titleKey.replace("coaching.", ""))
-	const description = t(insight.descriptionKey.replace("coaching.", ""), insight.params)
+	const description = t(
+		insight.descriptionKey.replace("coaching.", ""),
+		insight.params
+	)
 
 	return (
 		<div
 			className={cn(
-				"rounded-lg border p-s-300 transition-colors",
+				"p-s-300 rounded-lg border transition-colors",
 				styles.border,
 				isExpanded && styles.bg
 			)}
@@ -68,33 +77,39 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 			<button
 				type="button"
 				tabIndex={0}
-				className="flex w-full items-center gap-s-200 text-left"
+				className="gap-s-200 flex w-full items-center text-left"
 				onClick={() => setIsExpanded(!isExpanded)}
-				aria-expanded={isExpanded} aria-controls={`insight-${insight.id}-content`}
+				aria-expanded={isExpanded}
+				aria-controls={`insight-${insight.id}-content`}
 				aria-label={title}
 			>
-				<Icon className="h-4 w-4 shrink-0 text-txt-300" />
+				<Icon className="text-txt-300 h-4 w-4 shrink-0" />
 				<div className="min-w-0 flex-1">
-					<div className="flex items-center gap-s-200">
-						<span className="text-small font-medium text-txt-100 truncate">
+					<div className="gap-s-200 flex items-center">
+						<span className="text-small text-txt-100 truncate font-medium">
 							{title}
 						</span>
-						<span className={cn("text-micro shrink-0 rounded-sm px-1.5 py-0.5 font-medium", styles.badge)}>
+						<span
+							className={cn(
+								"text-micro shrink-0 rounded-sm px-1.5 py-0.5 font-medium",
+								styles.badge
+							)}
+						>
 							{t(`severity.${insight.severity}`)}
 						</span>
 					</div>
 				</div>
 				{isExpanded ? (
-					<ChevronUp className="h-3 w-3 shrink-0 text-txt-300" />
+					<ChevronUp className="text-txt-300 h-3 w-3 shrink-0" />
 				) : (
-					<ChevronDown className="h-3 w-3 shrink-0 text-txt-300" />
+					<ChevronDown className="text-txt-300 h-3 w-3 shrink-0" />
 				)}
 			</button>
 
 			{isExpanded && (
 				<div id={`insight-${insight.id}-content`} className="mt-s-200 pl-m-400">
 					<p className="text-tiny text-txt-200">{description}</p>
-					<div className="mt-s-200 flex items-center gap-s-200">
+					<div className="mt-s-200 gap-s-200 flex items-center">
 						<span className="text-micro text-txt-300">
 							{t(`category.${insight.category}`)}
 						</span>
@@ -110,15 +125,21 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 
 InsightRow.displayName = "InsightRow"
 
-const CoachingInsightsCardBase = ({ initialContext }: CoachingInsightsCardProps) => {
+const CoachingInsightsCardBase = ({
+	initialContext,
+}: CoachingInsightsCardProps) => {
 	const t = useTranslations("coaching")
-	const [context, setContext] = useState<CoachingContext | null>(initialContext ?? null)
+	const [context, setContext] = useState<CoachingContext | null>(
+		initialContext ?? null
+	)
 	const [isPending, startTransition] = useTransition()
 	const hasLoadedRef = useRef(!!initialContext)
 
 	// Load coaching context on mount if not provided
 	useEffect(() => {
-		if (hasLoadedRef.current) return
+		if (hasLoadedRef.current) {
+			return
+		}
 		hasLoadedRef.current = true
 
 		const COACHING_ANALYSIS_DAYS = 90
@@ -136,13 +157,13 @@ const CoachingInsightsCardBase = ({ initialContext }: CoachingInsightsCardProps)
 	return (
 		<div
 			id="dashboard-coaching-insights"
-			className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
 		>
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-s-200">
-					<Brain className="h-5 w-5 text-acc-100" />
-					<h2 className="text-small sm:text-body font-semibold text-txt-100">
+				<div className="gap-s-200 flex items-center">
+					<Brain className="text-acc-100 h-5 w-5" />
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
 					</h2>
 				</div>
@@ -159,16 +180,16 @@ const CoachingInsightsCardBase = ({ initialContext }: CoachingInsightsCardProps)
 			<div className="mt-s-300 sm:mt-m-400">
 				{isPending && !context ? (
 					<div className="space-y-s-200 animate-pulse motion-reduce:animate-none">
-						<div className="h-10 rounded-lg bg-bg-300" />
-						<div className="h-10 rounded-lg bg-bg-300" />
-						<div className="h-10 rounded-lg bg-bg-300" />
+						<div className="bg-bg-300 h-10 rounded-lg" />
+						<div className="bg-bg-300 h-10 rounded-lg" />
+						<div className="bg-bg-300 h-10 rounded-lg" />
 					</div>
 				) : isPending ? (
-					<div className="flex items-center justify-center py-m-500">
-						<Loader2 className="h-5 w-5 animate-spin text-txt-300 motion-reduce:animate-none" />
+					<div className="py-m-500 flex items-center justify-center">
+						<Loader2 className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none" />
 					</div>
 				) : displayInsights.length === 0 ? (
-					<p className="py-m-400 text-center text-tiny text-txt-300">
+					<p className="py-m-400 text-tiny text-txt-300 text-center">
 						{context?.tradeCount === 0 ? t("noTrades") : t("noInsights")}
 					</p>
 				) : (
@@ -179,7 +200,6 @@ const CoachingInsightsCardBase = ({ initialContext }: CoachingInsightsCardProps)
 					</div>
 				)}
 			</div>
-
 		</div>
 	)
 }

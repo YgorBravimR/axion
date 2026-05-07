@@ -10,10 +10,10 @@ import {
 	tradeTags,
 	tags,
 	strategies,
-	timeframes,
 	tradeExecutions,
+	monthlyPlan as monthlyPlanTable,
 } from "@/db/schema"
-import type { Trade, TradeExecution } from "@/db/schema"
+import type { Trade, TradeExecution, timeframes } from "@/db/schema"
 import type {
 	ActionResponse,
 	PaginatedResponse,
@@ -60,7 +60,6 @@ import { computeTradeHash } from "@/lib/deduplication"
 import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
 import { captureROnEntry, computeROutcome } from "@/lib/fractal-plan/r-snapshot"
 import { checkDrawdownTrigger } from "@/lib/fractal-plan/drawdown-trigger"
-import { monthlyPlan as monthlyPlanTable } from "@/db/schema"
 
 /**
  * Flag-guarded drawdown deescalation after a losing trade close.
@@ -71,19 +70,25 @@ const maybeTriggerDrawdown = async (
 	outcome: "win" | "loss" | "breakeven" | undefined,
 	exitDate: Date | null
 ): Promise<void> => {
-	if (!isFractalPlanDualWriteEnabled()) return
-	if (outcome !== "loss" || !exitDate) return
+	if (!isFractalPlanDualWriteEnabled()) {
+		return
+	}
+	if (outcome !== "loss" || !exitDate) {
+		return
+	}
 	try {
 		const year = exitDate.getUTCFullYear()
 		const month = exitDate.getUTCMonth() + 1
 		const planRow = await db.query.monthlyPlan.findFirst({
 			where: and(
 				eq(monthlyPlanTable.year, year),
-				eq(monthlyPlanTable.month, month),
+				eq(monthlyPlanTable.month, month)
 			),
 			columns: { snapshotCapitalCents: true },
 		})
-		if (!planRow) return
+		if (!planRow) {
+			return
+		}
 		await checkDrawdownTrigger({
 			accountId,
 			year,
@@ -221,9 +226,15 @@ export const createTrade = async (
 		let oneRSnapshotCents: number | null = null
 		if (isFractalPlanDualWriteEnabled()) {
 			try {
-				oneRSnapshotCents = await captureROnEntry({ accountId, entryDate: tradeData.entryDate })
+				oneRSnapshotCents = await captureROnEntry({
+					accountId,
+					entryDate: tradeData.entryDate,
+				})
 			} catch (snapErr) {
-				console.error("[fractal-plan] captureROnEntry failed silently:", snapErr)
+				console.error(
+					"[fractal-plan] captureROnEntry failed silently:",
+					snapErr
+				)
 			}
 		}
 
@@ -501,58 +512,84 @@ export const updateTrade = async (
 		}
 
 		// Only include fields that were provided
-		if (tradeData.asset !== undefined) updateData.asset = tradeData.asset
-		if (tradeData.direction !== undefined)
+		if (tradeData.asset !== undefined) {
+			updateData.asset = tradeData.asset
+		}
+		if (tradeData.direction !== undefined) {
 			updateData.direction = tradeData.direction
-		if (tradeData.timeframeId !== undefined)
+		}
+		if (tradeData.timeframeId !== undefined) {
 			updateData.timeframeId = tradeData.timeframeId || null
-		if (tradeData.entryDate !== undefined)
+		}
+		if (tradeData.entryDate !== undefined) {
 			updateData.entryDate = tradeData.entryDate
-		if (tradeData.exitDate !== undefined)
+		}
+		if (tradeData.exitDate !== undefined) {
 			updateData.exitDate = tradeData.exitDate
-		if (tradeData.entryPrice !== undefined)
+		}
+		if (tradeData.entryPrice !== undefined) {
 			updateData.entryPrice = toNumericString(tradeData.entryPrice)
-		if (tradeData.exitPrice !== undefined)
+		}
+		if (tradeData.exitPrice !== undefined) {
 			updateData.exitPrice = toNumericString(tradeData.exitPrice)
-		if (tradeData.positionSize !== undefined)
+		}
+		if (tradeData.positionSize !== undefined) {
 			updateData.positionSize = toNumericString(tradeData.positionSize)
-		if (tradeData.stopLoss !== undefined)
+		}
+		if (tradeData.stopLoss !== undefined) {
 			updateData.stopLoss = toNumericString(tradeData.stopLoss)
-		if (tradeData.takeProfit !== undefined)
+		}
+		if (tradeData.takeProfit !== undefined) {
 			updateData.takeProfit = toNumericString(tradeData.takeProfit)
+		}
 		// Always update calculated risk values (derived from SL/TP)
-		if (plannedRiskAmount !== undefined)
+		if (plannedRiskAmount !== undefined) {
 			updateData.plannedRiskAmount = toNumericString(plannedRiskAmount)
-		if (plannedRMultiple !== undefined)
+		}
+		if (plannedRMultiple !== undefined) {
 			updateData.plannedRMultiple = toNumericString(plannedRMultiple)
-		if (tradeData.mfe !== undefined)
+		}
+		if (tradeData.mfe !== undefined) {
 			updateData.mfe = toNumericString(tradeData.mfe)
-		if (tradeData.mae !== undefined)
+		}
+		if (tradeData.mae !== undefined) {
 			updateData.mae = toNumericString(tradeData.mae)
-		if (tradeData.contractsExecuted !== undefined)
+		}
+		if (tradeData.contractsExecuted !== undefined) {
 			updateData.contractsExecuted = toNumericString(
 				tradeData.contractsExecuted
 			)
-		if (tradeData.followedPlan !== undefined)
+		}
+		if (tradeData.followedPlan !== undefined) {
 			updateData.followedPlan = tradeData.followedPlan
-		if (tradeData.strategyId !== undefined)
+		}
+		if (tradeData.strategyId !== undefined) {
 			updateData.strategyId = tradeData.strategyId
-		if (tradeData.preTradeThoughts !== undefined)
+		}
+		if (tradeData.preTradeThoughts !== undefined) {
 			updateData.preTradeThoughts = tradeData.preTradeThoughts
-		if (tradeData.postTradeReflection !== undefined)
+		}
+		if (tradeData.postTradeReflection !== undefined) {
 			updateData.postTradeReflection = tradeData.postTradeReflection
-		if (tradeData.lessonLearned !== undefined)
+		}
+		if (tradeData.lessonLearned !== undefined) {
 			updateData.lessonLearned = tradeData.lessonLearned
-		if (tradeData.disciplineNotes !== undefined)
+		}
+		if (tradeData.disciplineNotes !== undefined) {
 			updateData.disciplineNotes = tradeData.disciplineNotes
-		if (tradeData.setupRank !== undefined)
+		}
+		if (tradeData.setupRank !== undefined) {
 			updateData.setupRank = tradeData.setupRank || null
-		if (tradeData.rating !== undefined)
+		}
+		if (tradeData.rating !== undefined) {
 			updateData.rating = tradeData.rating || null
-		if (tradeData.screenshotUrl !== undefined)
+		}
+		if (tradeData.screenshotUrl !== undefined) {
 			updateData.screenshotUrl = tradeData.screenshotUrl || null
-		if (tradeData.screenshotS3Key !== undefined)
+		}
+		if (tradeData.screenshotS3Key !== undefined) {
 			updateData.screenshotS3Key = tradeData.screenshotS3Key || null
+		}
 
 		// Always include calculated fields when we have exit data
 		// Money fields (pnl, plannedRiskAmount) stored as cents in text columns
@@ -568,31 +605,43 @@ export const updateTrade = async (
 		// Encrypt sensitive fields if user has a DEK
 		if (dek) {
 			const fieldsToEncrypt: Record<string, unknown> = {}
-			if (updateData.pnl !== undefined)
+			if (updateData.pnl !== undefined) {
 				fieldsToEncrypt.pnl = pnl !== undefined ? toCents(pnl) : null
-			if (updateData.plannedRiskAmount !== undefined)
+			}
+			if (updateData.plannedRiskAmount !== undefined) {
 				fieldsToEncrypt.plannedRiskAmount =
 					plannedRiskAmount !== undefined ? toCents(plannedRiskAmount) : null
-			if (updateData.entryPrice !== undefined)
+			}
+			if (updateData.entryPrice !== undefined) {
 				fieldsToEncrypt.entryPrice = updateData.entryPrice
-			if (updateData.exitPrice !== undefined)
+			}
+			if (updateData.exitPrice !== undefined) {
 				fieldsToEncrypt.exitPrice = updateData.exitPrice
-			if (updateData.positionSize !== undefined)
+			}
+			if (updateData.positionSize !== undefined) {
 				fieldsToEncrypt.positionSize = updateData.positionSize
-			if (updateData.stopLoss !== undefined)
+			}
+			if (updateData.stopLoss !== undefined) {
 				fieldsToEncrypt.stopLoss = updateData.stopLoss
-			if (updateData.takeProfit !== undefined)
+			}
+			if (updateData.takeProfit !== undefined) {
 				fieldsToEncrypt.takeProfit = updateData.takeProfit
-			if (updateData.plannedRMultiple !== undefined)
+			}
+			if (updateData.plannedRMultiple !== undefined) {
 				fieldsToEncrypt.plannedRMultiple = updateData.plannedRMultiple
-			if (updateData.preTradeThoughts !== undefined)
+			}
+			if (updateData.preTradeThoughts !== undefined) {
 				fieldsToEncrypt.preTradeThoughts = updateData.preTradeThoughts
-			if (updateData.postTradeReflection !== undefined)
+			}
+			if (updateData.postTradeReflection !== undefined) {
 				fieldsToEncrypt.postTradeReflection = updateData.postTradeReflection
-			if (updateData.lessonLearned !== undefined)
+			}
+			if (updateData.lessonLearned !== undefined) {
 				fieldsToEncrypt.lessonLearned = updateData.lessonLearned
-			if (updateData.disciplineNotes !== undefined)
+			}
+			if (updateData.disciplineNotes !== undefined) {
 				fieldsToEncrypt.disciplineNotes = updateData.disciplineNotes
+			}
 			Object.assign(
 				updateData,
 				encryptTradeFields(
@@ -1130,9 +1179,12 @@ export const bulkCreateTrades = async (
 		// Look up asset configs using canonical symbols
 		const canonicalSymbols = [...new Set(symbolResolutionMap.values())]
 		for (const symbol of canonicalSymbols) {
+			// eslint-disable-next-line no-await-in-loop -- asset config lookups per unique symbol; small N, sequential to build map before trade loop
 			const assetConfig = await getAssetBySymbol(symbol)
 			if (assetConfig) {
+				// eslint-disable-next-line no-await-in-loop -- fee and breakeven lookups depend on resolved assetConfig from prior await; small N
 				const assetFees = await getAssetFees(assetConfig.symbol, accountId)
+				// eslint-disable-next-line no-await-in-loop -- breakeven ticks depend on resolved assetConfig from prior await; small N
 				const breakevenTicks = await getBreakevenTicks(
 					assetConfig.symbol,
 					accountId
@@ -1178,20 +1230,22 @@ export const bulkCreateTrades = async (
 					// (negative/zero or on wrong side of entry) so the trade can still be imported
 					const entryPriceNum = Number(tradeInput.entryPrice)
 					const dir = tradeInput.direction
-					if (tradeInput.takeProfit != null) {
+					if (tradeInput.takeProfit !== null) {
 						const tp = Number(tradeInput.takeProfit)
 						if (
-							!tp || tp <= 0 ||
+							!tp ||
+							tp <= 0 ||
 							(dir === "long" && tp <= entryPriceNum) ||
 							(dir === "short" && tp >= entryPriceNum)
 						) {
 							delete tradeInput.takeProfit
 						}
 					}
-					if (tradeInput.stopLoss != null) {
+					if (tradeInput.stopLoss !== null) {
 						const sl = Number(tradeInput.stopLoss)
 						if (
-							!sl || sl <= 0 ||
+							!sl ||
+							sl <= 0 ||
 							(dir === "long" && sl >= entryPriceNum) ||
 							(dir === "short" && sl <= entryPriceNum)
 						) {
@@ -1203,7 +1257,9 @@ export const bulkCreateTrades = async (
 					const { tagIds, ...tradeData } = validated
 
 					// Resolve asset symbol to canonical form
-					const canonicalSymbol = symbolResolutionMap.get(tradeData.asset.toUpperCase()) ?? tradeData.asset.toUpperCase()
+					const canonicalSymbol =
+						symbolResolutionMap.get(tradeData.asset.toUpperCase()) ??
+						tradeData.asset.toUpperCase()
 					tradeData.asset = canonicalSymbol
 
 					// Look up strategy ID from code or name
@@ -1228,20 +1284,25 @@ export const bulkCreateTrades = async (
 					let plannedRiskAmount: number | undefined
 					let plannedRMultiple: number | undefined
 					if (tradeData.stopLoss) {
-						const priceDiff = Math.abs(tradeData.entryPrice - tradeData.stopLoss)
+						const priceDiff = Math.abs(
+							tradeData.entryPrice - tradeData.stopLoss
+						)
 
 						if (assetConfig) {
 							const tickSize = parseFloat(assetConfig.tickSize)
 							const tickValue = fromCents(assetConfig.tickValue)
 							const ticksAtRisk = priceDiff / tickSize
-							plannedRiskAmount = ticksAtRisk * tickValue * tradeData.positionSize
+							plannedRiskAmount =
+								ticksAtRisk * tickValue * tradeData.positionSize
 						} else {
 							plannedRiskAmount = priceDiff * tradeData.positionSize
 						}
 
 						// Calculate plannedRMultiple from take profit (reward/risk ratio)
 						if (tradeData.takeProfit && priceDiff > 0) {
-							const rewardDiff = Math.abs(tradeData.takeProfit - tradeData.entryPrice)
+							const rewardDiff = Math.abs(
+								tradeData.takeProfit - tradeData.entryPrice
+							)
 							plannedRMultiple = rewardDiff / priceDiff
 						}
 					}
@@ -1353,12 +1414,16 @@ export const bulkCreateTrades = async (
 					let oneRSnapshotCentsCsv: number | null = null
 					if (isFractalPlanDualWriteEnabled()) {
 						try {
+							// eslint-disable-next-line no-await-in-loop -- fractal plan R-snapshot is captured per-trade at entry date; must be sequential per trade
 							oneRSnapshotCentsCsv = await captureROnEntry({
 								accountId,
 								entryDate: tradeData.entryDate,
 							})
 						} catch (snapErr) {
-							console.error("[fractal-plan] captureROnEntry (csv) failed silently:", snapErr)
+							console.error(
+								"[fractal-plan] captureROnEntry (csv) failed silently:",
+								snapErr
+							)
 						}
 					}
 					tradeInsertValues.oneRSnapshotCents = oneRSnapshotCentsCsv
@@ -1405,6 +1470,7 @@ export const bulkCreateTrades = async (
 
 			// Bulk insert valid trades (use returning to get IDs for tag associations)
 			if (tradeValues.length > 0) {
+				// eslint-disable-next-line no-await-in-loop -- batch inserts are intentionally sequential across batches to control DB load
 				const insertedTrades = await db
 					.insert(trades)
 					.values(tradeValues)
@@ -1413,6 +1479,7 @@ export const bulkCreateTrades = async (
 
 				// Fractal plan drawdown deescalation per inserted trade
 				for (const inserted of insertedTrades) {
+					// eslint-disable-next-line no-await-in-loop -- drawdown trigger per trade is intentionally sequential (stateful fractal-plan side-effect)
 					await maybeTriggerDrawdown(
 						accountId,
 						inserted.outcome ?? undefined,
@@ -1434,6 +1501,7 @@ export const bulkCreateTrades = async (
 					}
 				}
 				if (tradeTagValues.length > 0) {
+					// eslint-disable-next-line no-await-in-loop -- tag associations inserted per batch; sequential to pair with inserted trade IDs from same batch
 					await db.insert(tradeTags).values(tradeTagValues)
 				}
 			}
@@ -1693,9 +1761,15 @@ export const createScaledTrade = async (
 		let oneRSnapshotCentsScaled: number | null = null
 		if (isFractalPlanDualWriteEnabled()) {
 			try {
-				oneRSnapshotCentsScaled = await captureROnEntry({ accountId, entryDate })
+				oneRSnapshotCentsScaled = await captureROnEntry({
+					accountId,
+					entryDate,
+				})
 			} catch (snapErr) {
-				console.error("[fractal-plan] captureROnEntry (scaled) failed silently:", snapErr)
+				console.error(
+					"[fractal-plan] captureROnEntry (scaled) failed silently:",
+					snapErr
+				)
 			}
 		}
 		scaledInsertValues.oneRSnapshotCents = oneRSnapshotCentsScaled
@@ -1775,7 +1849,11 @@ export const createScaledTrade = async (
 		}
 
 		// Fractal plan drawdown deescalation (flag-guarded)
-		await maybeTriggerDrawdown(accountId, outcome, exitDate ? new Date(exitDate) : null)
+		await maybeTriggerDrawdown(
+			accountId,
+			outcome,
+			exitDate ? new Date(exitDate) : null
+		)
 
 		return {
 			status: "success",
@@ -1875,21 +1953,47 @@ export const getTradesGroupedByDay = async (
 		const result = extendedFilters
 			? decryptedResult.filter((t) => {
 					// Hour filter (BRT timezone)
-					if (extendedFilters.hourFrom !== undefined || extendedFilters.hourTo !== undefined) {
+					if (
+						extendedFilters.hourFrom !== undefined ||
+						extendedFilters.hourTo !== undefined
+					) {
 						const brtHour = new Date(t.entryDate).toLocaleString("en-US", {
 							timeZone: "America/Sao_Paulo",
 							hour: "numeric",
 							hour12: false,
 						})
 						const hour = parseInt(brtHour, 10)
-						if (extendedFilters.hourFrom !== undefined && hour < extendedFilters.hourFrom) return false
-						if (extendedFilters.hourTo !== undefined && hour > extendedFilters.hourTo) return false
+						if (
+							extendedFilters.hourFrom !== undefined &&
+							hour < extendedFilters.hourFrom
+						) {
+							return false
+						}
+						if (
+							extendedFilters.hourTo !== undefined &&
+							hour > extendedFilters.hourTo
+						) {
+							return false
+						}
 					}
 					// P&L filter (requires decrypted pnl)
-					if (extendedFilters.pnlMin !== undefined || extendedFilters.pnlMax !== undefined) {
+					if (
+						extendedFilters.pnlMin !== undefined ||
+						extendedFilters.pnlMax !== undefined
+					) {
 						const pnl = fromCents(t.pnl)
-						if (extendedFilters.pnlMin !== undefined && pnl < extendedFilters.pnlMin) return false
-						if (extendedFilters.pnlMax !== undefined && pnl > extendedFilters.pnlMax) return false
+						if (
+							extendedFilters.pnlMin !== undefined &&
+							pnl < extendedFilters.pnlMin
+						) {
+							return false
+						}
+						if (
+							extendedFilters.pnlMax !== undefined &&
+							pnl > extendedFilters.pnlMax
+						) {
+							return false
+						}
 					}
 					return true
 				})
@@ -2078,6 +2182,7 @@ export const recalculateRValues = async (): Promise<
 		const uniqueAssets = [...new Set(allTrades.map((t) => t.asset))]
 		const assetMap = new Map<string, { tickSize: number; tickValue: number }>()
 		for (const symbol of uniqueAssets) {
+			// eslint-disable-next-line no-await-in-loop -- asset config lookup per unique symbol; sequential to build map before recalculation loop
 			const assetConfig = await getAssetBySymbol(symbol)
 			if (assetConfig) {
 				assetMap.set(symbol, {
@@ -2097,7 +2202,9 @@ export const recalculateRValues = async (): Promise<
 			const pnl = trade.pnl !== null ? fromCents(trade.pnl) : null
 
 			// Only process trades that have stopLoss and entry data
-			if (!stopLoss || !entryPrice || !positionSize) continue
+			if (!stopLoss || !entryPrice || !positionSize) {
+				continue
+			}
 
 			// Calculate plannedRiskAmount using asset tick config when available
 			const priceDiff = Math.abs(entryPrice - stopLoss)
@@ -2111,7 +2218,9 @@ export const recalculateRValues = async (): Promise<
 				plannedRiskAmount = priceDiff * positionSize
 			}
 
-			if (plannedRiskAmount <= 0) continue
+			if (plannedRiskAmount <= 0) {
+				continue
+			}
 
 			// Calculate plannedRMultiple from take profit (reward/risk ratio)
 			let plannedRMultiple: number | null = null
@@ -2148,6 +2257,7 @@ export const recalculateRValues = async (): Promise<
 				)
 			}
 
+			// eslint-disable-next-line no-await-in-loop -- per-trade update with encrypted fields; sequential to avoid race on DEK/encryption context
 			await db
 				.update(trades)
 				.set(recalcUpdateData)
@@ -2216,10 +2326,13 @@ export const recalculateAllTradesPnL = async (): Promise<
 		>()
 
 		for (const symbol of uniqueAssets) {
+			// eslint-disable-next-line no-await-in-loop -- asset config lookups per unique symbol; sequential because fee lookup depends on resolved config
 			const assetConfig = await getAssetBySymbol(symbol)
 			if (assetConfig) {
 				// Use the resolved symbol (e.g., "WINFUT") for fee lookup, not the trade's stored symbol ("WIN")
+				// eslint-disable-next-line no-await-in-loop -- fee lookup depends on assetConfig resolved in prior await; small N
 				const assetFees = await getAssetFees(assetConfig.symbol, accountId)
+				// eslint-disable-next-line no-await-in-loop -- breakeven ticks depend on assetConfig resolved in prior await; small N
 				const breakevenTicks = await getBreakevenTicks(
 					assetConfig.symbol,
 					accountId
@@ -2245,7 +2358,9 @@ export const recalculateAllTradesPnL = async (): Promise<
 				? Number(trade.contractsExecuted)
 				: positionSize * 2
 
-			if (!entryPrice || !exitPrice || !positionSize) continue
+			if (!entryPrice || !exitPrice || !positionSize) {
+				continue
+			}
 
 			let pnl: number
 			let ticksGained: number | null = null
@@ -2339,6 +2454,7 @@ export const recalculateAllTradesPnL = async (): Promise<
 				)
 			}
 
+			// eslint-disable-next-line no-await-in-loop -- per-trade update with encrypted PnL fields; sequential to avoid race on DEK/encryption context
 			await db.update(trades).set(pnlUpdateData).where(eq(trades.id, trade.id))
 
 			updatedCount++

@@ -18,5 +18,22 @@
 		"titleBar.inactiveBackground": "#1d055299",
 		"titleBar.inactiveForeground": "#e7e7e799"
 	},
-	"peacock.color": "#1d0552"
+	"peacock.color": "#1d0552",
+	"tailwindCSS.experimental.classRegex": [
+		["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"],
+		["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"],
+		["clsx\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"]
+	],
+	"tailwindCSS.lint.invalidApply": "error",
+	"tailwindCSS.lint.cssConflict": "warning",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+	"eslint.validate": [
+		"javascript",
+		"javascriptreact",
+		"typescript",
+		"typescriptreact"
+	],
+	"eslint.workingDirectories": [{ "mode": "auto" }]
 }

@@ -36,7 +36,9 @@ export const MonthlyContent = ({
 	const effectiveDate = useEffectiveDate()
 	useRegisterPageGuide(monthlyGuide)
 	const [isPending, startTransition] = useTransition()
-	const [currentDate, setCurrentDate] = useState(() => startOfMonth(effectiveDate))
+	const [currentDate, setCurrentDate] = useState(() =>
+		startOfMonth(effectiveDate)
+	)
 	const [monthOffset, setMonthOffset] = useState(0)
 	const [hasNavigated, setHasNavigated] = useState(false)
 
@@ -57,63 +59,81 @@ export const MonthlyContent = ({
 		setMonthOffset(0)
 		setHasNavigated(false)
 		setCurrentDate(startOfMonth(effectiveDate))
-	}, [initialMonthlyData, initialProjectionData, initialComparisonData, effectiveDate])
+	}, [
+		initialMonthlyData,
+		initialProjectionData,
+		initialComparisonData,
+		effectiveDate,
+	])
 
 	// Determine if we're viewing the current month
 	const isCurrentMonth = monthOffset === 0
 
-	const loadData = useCallback(async (offset: number) => {
-		setError(null)
+	const loadData = useCallback(
+		async (offset: number) => {
+			setError(null)
 
-		const [monthlyResult, comparisonResult, projectionResult] = await Promise.all([
-			getMonthlyResultsWithProp(offset),
-			getMonthComparison(offset),
-			offset === 0 ? getMonthlyProjection() : Promise.resolve(null),
-		])
+			const [monthlyResult, comparisonResult, projectionResult] =
+				await Promise.all([
+					getMonthlyResultsWithProp(offset),
+					getMonthComparison(offset),
+					offset === 0 ? getMonthlyProjection() : Promise.resolve(null),
+				])
 
-		if (monthlyResult.status === "success" && monthlyResult.data) {
-			setMonthlyData(monthlyResult.data)
-		} else {
-			setError(monthlyResult.message || t("errorLoading"))
-		}
-
-		if (comparisonResult.status === "success" && comparisonResult.data) {
-			setComparisonData(comparisonResult.data)
-		}
-
-		// Only load projection for current month
-		if (offset === 0) {
-			if (projectionResult && projectionResult.status === "success" && projectionResult.data) {
-				setProjectionData(projectionResult.data)
+			if (monthlyResult.status === "success" && monthlyResult.data) {
+				setMonthlyData(monthlyResult.data)
+			} else {
+				setError(monthlyResult.message || t("errorLoading"))
 			}
-		} else {
-			setProjectionData(null)
-		}
-	}, [t])
+
+			if (comparisonResult.status === "success" && comparisonResult.data) {
+				setComparisonData(comparisonResult.data)
+			}
+
+			// Only load projection for current month
+			if (offset === 0) {
+				if (
+					projectionResult &&
+					projectionResult.status === "success" &&
+					projectionResult.data
+				) {
+					setProjectionData(projectionResult.data)
+				}
+			} else {
+				setProjectionData(null)
+			}
+		},
+		[t]
+	)
 
 	// Load data when month changes (but not on initial render since we have initial data)
 	useEffect(() => {
 		// Skip initial render - we already have server-provided data
-		if (!hasNavigated) return
+		if (!hasNavigated) {
+			return
+		}
 
 		startTransition(() => {
-			loadData(monthOffset)
+			void loadData(monthOffset)
 		})
 	}, [monthOffset, hasNavigated, loadData])
 
-	const handleMonthChange = useCallback((newDate: Date) => {
-		const currentMonthStart = startOfMonth(effectiveDate)
-		const newMonthStart = startOfMonth(newDate)
+	const handleMonthChange = useCallback(
+		(newDate: Date) => {
+			const currentMonthStart = startOfMonth(effectiveDate)
+			const newMonthStart = startOfMonth(newDate)
 
-		// Calculate offset from current month
-		const diffMonths =
-			(currentMonthStart.getFullYear() - newMonthStart.getFullYear()) * 12 +
-			(currentMonthStart.getMonth() - newMonthStart.getMonth())
+			// Calculate offset from current month
+			const diffMonths =
+				(currentMonthStart.getFullYear() - newMonthStart.getFullYear()) * 12 +
+				(currentMonthStart.getMonth() - newMonthStart.getMonth())
 
-		setHasNavigated(true)
-		setMonthOffset(diffMonths)
-		setCurrentDate(newMonthStart)
-	}, [effectiveDate])
+			setHasNavigated(true)
+			setMonthOffset(diffMonths)
+			setCurrentDate(newMonthStart)
+		},
+		[effectiveDate]
+	)
 
 	if (isPending && !monthlyData) {
 		return <LoadingSpinner size="md" className="h-96" />
@@ -123,7 +143,7 @@ export const MonthlyContent = ({
 		return (
 			<div
 				role="alert"
-				className="rounded-lg border border-fb-error/20 bg-fb-error/10 p-m-500 text-center"
+				className="border-fb-error/20 bg-fb-error/10 p-m-500 rounded-lg border text-center"
 			>
 				<p className="text-small text-fb-error">{error}</p>
 			</div>
@@ -174,9 +194,11 @@ export const MonthlyContent = ({
 							<WeeklyBreakdown weeks={monthlyData.weeklyBreakdown} />
 						</>
 					) : (
-						<div className="rounded-lg border border-bg-300 bg-bg-200 p-l-700 text-center">
+						<div className="border-bg-300 bg-bg-200 p-l-700 rounded-lg border text-center">
 							<p className="text-txt-200 font-medium">{t("noData")}</p>
-							<p className="mt-s-200 text-small text-txt-300">{t("noDataGuidance")}</p>
+							<p className="mt-s-200 text-small text-txt-300">
+								{t("noDataGuidance")}
+							</p>
 						</div>
 					)}
 				</>

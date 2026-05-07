@@ -35,7 +35,10 @@ const createScenario = async (
 
 		// Verify strategy ownership
 		const strategy = await db.query.strategies.findFirst({
-			where: and(eq(strategies.id, validated.strategyId), eq(strategies.userId, userId)),
+			where: and(
+				eq(strategies.id, validated.strategyId),
+				eq(strategies.userId, userId)
+			),
 		})
 
 		if (!strategy) {
@@ -118,7 +121,9 @@ const updateScenario = async (
 				...(validated.description !== undefined && {
 					description: validated.description || null,
 				}),
-				...(validated.sortOrder !== undefined && { sortOrder: validated.sortOrder }),
+				...(validated.sortOrder !== undefined && {
+					sortOrder: validated.sortOrder,
+				}),
 				updatedAt: new Date(),
 			})
 			.where(eq(strategyScenarios.id, id))
@@ -169,6 +174,7 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 
 		// Delete S3 images before DB cascade
 		for (const image of existing.images) {
+			// eslint-disable-next-line no-await-in-loop -- S3 file deletion per image; sequential to track individual failures without failing the batch
 			await deleteFile(image.s3Key).catch(() => {
 				// Log but don't fail — image may already be deleted from S3
 			})
@@ -276,7 +282,9 @@ const addScenarioImage = async (
 			return {
 				status: "error",
 				message: t("actions.scenarioImageLimitExceeded"),
-				errors: [{ code: "LIMIT_EXCEEDED", detail: "Cannot add more than 3 images" }],
+				errors: [
+					{ code: "LIMIT_EXCEEDED", detail: "Cannot add more than 3 images" },
+				],
 			}
 		}
 
@@ -309,7 +317,9 @@ const addScenarioImage = async (
 /**
  * Remove an image from a scenario
  */
-const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void>> => {
+const removeScenarioImage = async (
+	imageId: string
+): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()

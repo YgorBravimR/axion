@@ -26,7 +26,7 @@ const ADMIN_PASSWORD = "Admin123!"
 const SALT_ROUNDS = 12
 
 // Asset P&L multipliers (per point per contract)
-const WIN_PER_POINT = 0.20 // R$0.20 per point per contract
+const WIN_PER_POINT = 0.2 // R$0.20 per point per contract
 const WDO_PER_POINT = 10.0 // R$10.00 per point per contract
 
 // Helper to calculate P&L based on asset
@@ -38,7 +38,8 @@ const calculatePnl = (
 	size: number
 ): number => {
 	const pointsPerContract = asset === "WIN" ? WIN_PER_POINT : WDO_PER_POINT
-	const priceDiff = direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
+	const priceDiff =
+		direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
 	return Math.round(priceDiff * size * pointsPerContract * 100) / 100
 }
 
@@ -54,7 +55,9 @@ const B3_HOLIDAYS = [
 // Check if date is a trading day (Mon-Fri, not holiday)
 const isTradingDay = (date: Date): boolean => {
 	const dayOfWeek = date.getDay()
-	if (dayOfWeek === 0 || dayOfWeek === 6) return false // Weekend
+	if (dayOfWeek === 0 || dayOfWeek === 6) {
+		return false
+	} // Weekend
 	const dateStr = date.toISOString().split("T")[0]
 	return !B3_HOLIDAYS.includes(dateStr)
 }
@@ -73,7 +76,11 @@ const getTradingDays = (startDate: Date, endDate: Date): Date[] => {
 }
 
 // Generate random time within B3 trading hours (09:00-17:55 São Paulo = 12:00-20:55 UTC)
-const randomTradingTime = (date: Date, startHour = 12, endHour = 20): string => {
+const randomTradingTime = (
+	date: Date,
+	startHour = 12,
+	endHour = 20
+): string => {
 	const hour = startHour + Math.floor(Math.random() * (endHour - startHour))
 	const minute = Math.floor(Math.random() * 60)
 	const d = new Date(date)
@@ -115,7 +122,9 @@ const runSeed = async () => {
 		positionSize: number,
 		pnl: number
 	) => {
-		if (!stopLoss) return { plannedRiskAmount: null, realizedRMultiple: null }
+		if (!stopLoss) {
+			return { plannedRiskAmount: null, realizedRMultiple: null }
+		}
 
 		const riskPerUnit =
 			direction === "long" ? entryPrice - stopLoss : stopLoss - entryPrice
@@ -670,16 +679,33 @@ const runSeed = async () => {
 	`
 
 	const LADDER = [
-		{ minCapitalCents: 300_000,        maxCapitalCents: 749_999,           oneRCents: 10_000 },
-		{ minCapitalCents: 750_000,        maxCapitalCents: 1_499_999,         oneRCents: 20_000 },
-		{ minCapitalCents: 1_500_000,      maxCapitalCents: 2_999_999,         oneRCents: 30_000 },
-		{ minCapitalCents: 3_000_000,      maxCapitalCents: 9_999_999,         oneRCents: 50_000 },
-		{ minCapitalCents: 10_000_000,     maxCapitalCents: 99_999_999_999,    oneRCents: 100_000 },
+		{ minCapitalCents: 300_000, maxCapitalCents: 749_999, oneRCents: 10_000 },
+		{ minCapitalCents: 750_000, maxCapitalCents: 1_499_999, oneRCents: 20_000 },
+		{
+			minCapitalCents: 1_500_000,
+			maxCapitalCents: 2_999_999,
+			oneRCents: 30_000,
+		},
+		{
+			minCapitalCents: 3_000_000,
+			maxCapitalCents: 9_999_999,
+			oneRCents: 50_000,
+		},
+		{
+			minCapitalCents: 10_000_000,
+			maxCapitalCents: 99_999_999_999,
+			oneRCents: 100_000,
+		},
 	]
 
-	const resolveOneR = (capCents: number): { tierIndex: number; oneRCents: number } => {
+	const resolveOneR = (
+		capCents: number
+	): { tierIndex: number; oneRCents: number } => {
 		for (let i = 0; i < LADDER.length; i++) {
-			if (capCents >= LADDER[i].minCapitalCents && capCents <= LADDER[i].maxCapitalCents) {
+			if (
+				capCents >= LADDER[i].minCapitalCents &&
+				capCents <= LADDER[i].maxCapitalCents
+			) {
 				return { tierIndex: i, oneRCents: LADDER[i].oneRCents }
 			}
 		}
@@ -690,8 +716,8 @@ const runSeed = async () => {
 	// Compound start-balance per month (cents). Jan→May ladders R$3k → R$30k.
 	// Jun-Dec retain R$30k (no trades; projection layer extrapolates).
 	const MONTHLY_START_CENTS = [
-		300_000,   // Jan: tier 0, 1R = R$100
-		750_000,   // Feb: tier 1, 1R = R$200
+		300_000, // Jan: tier 0, 1R = R$100
+		750_000, // Feb: tier 1, 1R = R$200
 		1_200_000, // Mar: tier 1, 1R = R$200
 		1_800_000, // Apr: tier 2, 1R = R$300
 		2_400_000, // May: tier 2, 1R = R$300
@@ -742,7 +768,9 @@ const runSeed = async () => {
 		const startCents = MONTHLY_START_CENTS[m - 1]
 		const { tierIndex, oneRCents } = resolveOneR(startCents)
 		const qIndex = Math.floor((m - 1) / 3)
-		const computedAt = new Date(Date.UTC(2026, m - 1, 1, 12, 0, 0)).toISOString()
+		const computedAt = new Date(
+			Date.UTC(2026, m - 1, 1, 12, 0, 0)
+		).toISOString()
 		const [row] = await sql`
 			INSERT INTO monthly_plan (
 				id, quarterly_plan_id, year, month,
@@ -768,11 +796,11 @@ const runSeed = async () => {
 	// so DARF carryover/compensation logic surfaces in tests (March loss reduces
 	// April's taxable base before IR is computed).
 	const MONTHLY_NET_TARGETS_CENTS = [
-		450_000,  // Jan: +R$4500
-		450_000,  // Feb: +R$4500
+		450_000, // Jan: +R$4500
+		450_000, // Feb: +R$4500
 		-300_000, // Mar: -R$3000  (loser month → seeds carryover into April)
-		600_000,  // Apr: +R$6000  (taxable base reduced by March carryover)
-		600_000,  // May: +R$6000
+		600_000, // Apr: +R$6000  (taxable base reduced by March carryover)
+		600_000, // May: +R$6000
 	]
 
 	// Deterministic PRNG so the seed is reproducible.
@@ -781,7 +809,8 @@ const runSeed = async () => {
 		prngState = (prngState * 1103515245 + 12345) & 0x7fffffff
 		return prngState / 0x7fffffff
 	}
-	const pickFrom = <T,>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)]
+	const pickFrom = <T>(arr: readonly T[]): T =>
+		arr[Math.floor(rand() * arr.length)]
 
 	interface SeedTrade {
 		asset: "WIN" | "WDO"
@@ -809,13 +838,13 @@ const runSeed = async () => {
 		const oneRReais = meta.oneRCents / 100
 		const tradingDays = getTradingDays(
 			new Date(Date.UTC(2026, m - 1, 1)),
-			new Date(Date.UTC(2026, m, 0)),
+			new Date(Date.UTC(2026, m, 0))
 		)
 		const targetReais = MONTHLY_NET_TARGETS_CENTS[m - 1] / 100
 
 		// Loser-day ratio scales with sign: profit months → 30% losers, loss months → 65%.
 		const isLossMonth = targetReais < 0
-		const loserRatio = isLossMonth ? 0.65 : 0.30
+		const loserRatio = isLossMonth ? 0.65 : 0.3
 		const numLosers = Math.floor(tradingDays.length * loserRatio)
 		const dayIndices = tradingDays.map((_, i) => i)
 		for (let i = dayIndices.length - 1; i > 0; i--) {
@@ -839,42 +868,58 @@ const runSeed = async () => {
 		}
 		// Renormalize non-loser days so monthly sum hits target exactly (works for
 		// both profit months and loss months — winnerSum may be negative when target < 0).
-		const winnerSum = dailyPnls.reduce((a, b, i) => (loserIdx.has(i) ? a : a + b), 0)
+		const winnerSum = dailyPnls.reduce(
+			(a, b, i) => (loserIdx.has(i) ? a : a + b),
+			0
+		)
 		const scale = winnerSum !== 0 ? winnersTotalReais / winnerSum : 1
 		for (let i = 0; i < dailyPnls.length; i++) {
-			if (!loserIdx.has(i)) dailyPnls[i] *= scale
+			if (!loserIdx.has(i)) {
+				dailyPnls[i] *= scale
+			}
 		}
 
 		for (let dayIdx = 0; dayIdx < tradingDays.length; dayIdx++) {
 			const day = tradingDays[dayIdx]
 			const dayPnl = dailyPnls[dayIdx]
 			const numTrades = rand() < 0.55 ? 1 : 2
-			const tradesPnl = numTrades === 1
-				? [dayPnl]
-				: (() => {
-					const split = 0.4 + rand() * 0.2
-					return [dayPnl * split, dayPnl * (1 - split)]
-				})()
+			const tradesPnl =
+				numTrades === 1
+					? [dayPnl]
+					: (() => {
+							const split = 0.4 + rand() * 0.2
+							return [dayPnl * split, dayPnl * (1 - split)]
+						})()
 
 			for (const tradePnl of tradesPnl) {
 				const asset: "WIN" | "WDO" = rand() < 0.55 ? "WDO" : "WIN"
 				const dir: "long" | "short" = rand() < 0.6 ? "long" : "short"
-				const pointsPerContract = asset === "WIN" ? WIN_PER_POINT : WDO_PER_POINT
+				const pointsPerContract =
+					asset === "WIN" ? WIN_PER_POINT : WDO_PER_POINT
 				// Position size scaled to monthly 1R: ~1R risk on a ~50pt (WDO) / 100pt (WIN) stop.
 				const refStopPoints = asset === "WDO" ? 50 : 100
-				const size = Math.max(1, Math.round(oneRReais / (refStopPoints * pointsPerContract)))
+				const size = Math.max(
+					1,
+					Math.round(oneRReais / (refStopPoints * pointsPerContract))
+				)
 				const priceDiffPoints = tradePnl / (size * pointsPerContract)
-				const basePrice = asset === "WIN"
-					? 130000 + Math.floor(rand() * 6000)
-					: 5000 + Math.floor(rand() * 200)
+				const basePrice =
+					asset === "WIN"
+						? 130000 + Math.floor(rand() * 6000)
+						: 5000 + Math.floor(rand() * 200)
 				const entryP = basePrice
-				const rawExit = dir === "long" ? basePrice + priceDiffPoints : basePrice - priceDiffPoints
-				const exitP = asset === "WIN"
-					? Math.round(rawExit / 5) * 5
-					: Math.round(rawExit * 2) / 2
+				const rawExit =
+					dir === "long"
+						? basePrice + priceDiffPoints
+						: basePrice - priceDiffPoints
+				const exitP =
+					asset === "WIN"
+						? Math.round(rawExit / 5) * 5
+						: Math.round(rawExit * 2) / 2
 				const stopPoints = oneRReais / (size * pointsPerContract)
 				const sl = dir === "long" ? entryP - stopPoints : entryP + stopPoints
-				const tp = dir === "long" ? entryP + stopPoints * 2 : entryP - stopPoints * 2
+				const tp =
+					dir === "long" ? entryP + stopPoints * 2 : entryP - stopPoints * 2
 
 				const entryTime = randomTradingTime(day)
 				const exitTime = generateExitTime(entryTime)
@@ -887,11 +932,18 @@ const runSeed = async () => {
 				const plan = outcome === "win" || rand() < 0.7
 
 				personalTradesGenerated.push({
-					asset, dir, entryTime, exitTime,
-					entryP, exitP, size,
+					asset,
+					dir,
+					entryTime,
+					exitTime,
+					entryP,
+					exitP,
+					size,
 					sl: Math.round(sl * 100) / 100,
 					tp: Math.round(tp * 100) / 100,
-					pnlCents, outcome, plan,
+					pnlCents,
+					outcome,
+					plan,
 					strat: pickFrom(["BREAKOUT", "TREND", "REVERSION", "SR"]),
 					oneRSnapshotCents: meta.oneRCents,
 					rOutcome,
@@ -920,7 +972,9 @@ const runSeed = async () => {
 			)
 		`
 	}
-	console.log(`✅ Personal account trades seeded (${personalTradesGenerated.length} trades, Jan–May 2026)`)
+	console.log(
+		`✅ Personal account trades seeded (${personalTradesGenerated.length} trades, Jan–May 2026)`
+	)
 
 	// ==========================================
 	// 11. Trades - Prop Account (Nov 2025 - Jan 2026)

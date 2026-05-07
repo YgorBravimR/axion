@@ -34,10 +34,13 @@ const db = drizzle(sql, { schema })
 // HELPERS
 // ==========================================
 
-const pickRandom = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
+const pickRandom = <T>(arr: T[]): T =>
+	arr[Math.floor(Math.random() * arr.length)]
 
 const pickRandomN = <T>(arr: T[], min: number, max: number): T[] => {
-	if (arr.length === 0) return []
+	if (arr.length === 0) {
+		return []
+	}
 	const count = Math.floor(Math.random() * (max - min + 1)) + min
 	const capped = Math.min(count, arr.length)
 	const shuffled = [...arr].sort(() => Math.random() - 0.5)
@@ -95,7 +98,9 @@ const main = async () => {
 	})
 
 	if (strategies.length === 0) {
-		console.error("❌ No active strategies found for this user. Create some strategies first.")
+		console.error(
+			"❌ No active strategies found for this user. Create some strategies first."
+		)
 		process.exit(1)
 	}
 
@@ -111,7 +116,9 @@ const main = async () => {
 	})
 
 	if (tags.length === 0) {
-		console.warn("⚠️  No tags found for this user — trades will only get strategies assigned.")
+		console.warn(
+			"⚠️  No tags found for this user — trades will only get strategies assigned."
+		)
 	} else {
 		console.log(`✓ Found ${tags.length} tags:`)
 		const setupTags = tags.filter((t) => t.type === "setup")
@@ -168,7 +175,8 @@ const main = async () => {
 
 	const tradeTagsToInsert: Array<{ tradeId: string; tagId: string }> = []
 	const tradeStrategyUpdates: Array<{ id: string; strategyId: string }> = []
-	const tradeDisciplineUpdates: Array<{ id: string; followedPlan: boolean }> = []
+	const tradeDisciplineUpdates: Array<{ id: string; followedPlan: boolean }> =
+		[]
 
 	for (const trade of trades) {
 		const isWin = trade.outcome === "win"
@@ -220,7 +228,9 @@ const main = async () => {
 			continue
 		}
 
-		if (!rollPercent(75)) continue
+		if (!rollPercent(75)) {
+			continue
+		}
 
 		// Build pool of candidates based on trade outcome
 		const tagCandidates: Array<{ id: string; name: string; type: string }> = []
@@ -245,7 +255,9 @@ const main = async () => {
 			tagCandidates.push(...tags)
 		}
 
-		if (tagCandidates.length === 0) continue
+		if (tagCandidates.length === 0) {
+			continue
+		}
 
 		// Pick 1-3 unique tags
 		const uniqueCandidates = [
@@ -255,7 +267,9 @@ const main = async () => {
 
 		for (const tag of selectedTags) {
 			// Skip if already assigned (deduplication)
-			if (existingTagsForTrade.has(tag.id)) continue
+			if (existingTagsForTrade.has(tag.id)) {
+				continue
+			}
 
 			tradeTagsToInsert.push({ tradeId: trade.id, tagId: tag.id })
 			existingTagsForTrade.add(tag.id) // prevent duplicate within this batch
@@ -266,7 +280,9 @@ const main = async () => {
 	// 7. Summary before writing
 	console.log(`📋 Plan:`)
 	console.log(`   Strategy updates:   ${tradeStrategyUpdates.length} trades`)
-	console.log(`   Tag insertions:     ${tradeTagsToInsert.length} trade-tag links`)
+	console.log(
+		`   Tag insertions:     ${tradeTagsToInsert.length} trade-tag links`
+	)
 	console.log(`   Discipline updates: ${tradeDisciplineUpdates.length} trades`)
 	console.log(`   Strategy skipped (already set):   ${strategySkippedCount}`)
 	console.log(`   Tags skipped (already set):       ${tagsSkippedCount}`)
@@ -280,7 +296,9 @@ const main = async () => {
 		console.log("\n📊 Sample assignments (first 10):")
 		for (const update of tradeStrategyUpdates.slice(0, 10)) {
 			const strategy = strategies.find((s) => s.id === update.strategyId)
-			console.log(`   Trade ${update.id.slice(0, 8)}… → Strategy [${strategy?.code}] ${strategy?.name}`)
+			console.log(
+				`   Trade ${update.id.slice(0, 8)}… → Strategy [${strategy?.code}] ${strategy?.name}`
+			)
 		}
 		return
 	}
@@ -301,7 +319,9 @@ const main = async () => {
 			)
 		)
 		strategyBatchCount += batch.length
-		process.stdout.write(`\r   ${strategyBatchCount}/${tradeStrategyUpdates.length} strategies assigned`)
+		process.stdout.write(
+			`\r   ${strategyBatchCount}/${tradeStrategyUpdates.length} strategies assigned`
+		)
 	}
 
 	if (tradeStrategyUpdates.length > 0) {
@@ -321,7 +341,9 @@ const main = async () => {
 			}))
 		)
 		tagBatchCount += batch.length
-		process.stdout.write(`\r   ${tagBatchCount}/${tradeTagsToInsert.length} tag links inserted`)
+		process.stdout.write(
+			`\r   ${tagBatchCount}/${tradeTagsToInsert.length} tag links inserted`
+		)
 	}
 
 	if (tradeTagsToInsert.length > 0) {
@@ -343,7 +365,9 @@ const main = async () => {
 			)
 		)
 		disciplineBatchCount += batch.length
-		process.stdout.write(`\r   ${disciplineBatchCount}/${tradeDisciplineUpdates.length} discipline values set`)
+		process.stdout.write(
+			`\r   ${disciplineBatchCount}/${tradeDisciplineUpdates.length} discipline values set`
+		)
 	}
 
 	if (tradeDisciplineUpdates.length > 0) {
@@ -351,8 +375,12 @@ const main = async () => {
 	}
 
 	// 11. Final summary
-	const followedCount = tradeDisciplineUpdates.filter((u) => u.followedPlan).length
-	const notFollowedCount = tradeDisciplineUpdates.filter((u) => !u.followedPlan).length
+	const followedCount = tradeDisciplineUpdates.filter(
+		(u) => u.followedPlan
+	).length
+	const notFollowedCount = tradeDisciplineUpdates.filter(
+		(u) => !u.followedPlan
+	).length
 
 	console.log(`\n${"=".repeat(60)}`)
 	console.log(`Total trades:        ${trades.length}`)
@@ -360,10 +388,14 @@ const main = async () => {
 	console.log(`Strategies skipped:  ${strategySkippedCount}`)
 	console.log(`Tag links created:   ${tagsAssignedCount}`)
 	console.log(`Tags skipped:        ${tagsSkippedCount}`)
-	console.log(`Discipline set:      ${disciplineAssignedCount} (followed: ${followedCount} | not followed: ${notFollowedCount})`)
+	console.log(
+		`Discipline set:      ${disciplineAssignedCount} (followed: ${followedCount} | not followed: ${notFollowedCount})`
+	)
 	console.log(`Discipline skipped:  ${disciplineSkippedCount}`)
 	console.log(`${"=".repeat(60)}`)
-	console.log("\n✅ Done! Charts should now have meaningful playbook, tag & discipline data.")
+	console.log(
+		"\n✅ Done! Charts should now have meaningful playbook, tag & discipline data."
+	)
 }
 
 main().catch((error) => {

@@ -3,7 +3,64 @@
 ## Avoid Jokes
 
 - Variables should have meaningful names (not single letters)
-- Function names should follow consistent casing (not alternating caps)# DIV Brands Code Standards and Best Practices
+- Function names should follow consistent casing (not alternating caps)
+
+## Hardening Guardrails (2026-05-07)
+
+Lint runs in two tiers — both must stay green before merge.
+
+- `pnpm lint` — Tier 1 fast-loop (drizzle-where, type-imports, no-default-export, no-forEach, no-enum, jsx-a11y, @next/next, no-console, eqeqeq with `null: "ignore"`, curly: all). Edits & PRs must finish at **0 errors**.
+- `pnpm lint:strict` — Tier 2 type-checked (no-floating-promises, no-misused-promises, consistent-type-exports, no-base-to-string, react-hooks/rules-of-hooks, @eslint-react/no-nested-component-definitions, import-x/no-cycle/no-duplicates). Errors at 0; ~900 warnings on `no-unsafe-*` are intentional phase-in — do not silence globally.
+- Husky pre-commit runs `lint-staged` (eslint --fix + prettier on staged files). Do not commit with `--no-verify`.
+- Husky commit-msg runs `commitlint` against `@commitlint/config-conventional`. Use `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, etc.
+
+### Protected paths (agents must refuse to modify without explicit user request)
+
+- `src/db/migrations/` — Drizzle migrations are append-only. Generate with `pnpm db:generate`; never hand-edit.
+- `src/lib/tax/recompute-month.ts` — single source of truth for tax recomputation. Changes affect financial output retroactively.
+- `src/lib/crypto.ts`, `src/lib/user-crypto.ts` — cryptographic primitives. Changes require security review.
+
+### Recurring agent footguns (prevention rules)
+
+- **`"use server"` files must export only async functions or values.** Re-exporting types from a `"use server"` file rewrites them as runtime refs at build time. Move type re-exports to a sibling `*.types.ts`.
+- **`!= null` is the idiomatic null+undefined check.** Lint allows it. Don't rewrite to `!== null` (lets undefined slip through).
+- **Tailwind v4 tokens only.** No arbitrary classes (`text-[28px]`, `rounded-[12px]`). No legacy spacing (`s-400`, `m-200`). Run `bun scripts/token-fix.ts --dry` to detect drift; commit fixes from the same script. See `docs/scans/2026-05-07-cockpit-tokens.md` for invalid-token catalog.
+- **Hover-only controls fail touch.** Anything with `opacity-0 group-hover:opacity-100` must also have a focus-visible/touch-active alternative (or be a real `<button>` with `aria-label`).
+- **Raw `<table>`, `<input type="checkbox">`, `<a>`, `<img>` are banned.** Use `@/components/ui/{table,checkbox}`, `next/link`, `next/image`. Lint enforces the last two; the first two are still convention-only — flag in review.
+- **Hooks must run before any early return.** rules-of-hooks now blocks merges; nullable narrowing belongs **inside** the hook callback, not before the hook call.
+- **`.forEach()` is banned.** Use `for...of` (side effects), `.map()` (transform), `.reduce()` (aggregate). Lint blocks .forEach.
+- **`pages/`-style raw `<a>`** breaks client routing. Use `<Link>` from `next/link`.
+
+### PR template (every agent-generated PR)
+
+```markdown
+## Summary
+
+<1-3 bullets — what changed and why>
+
+## WCAG checklist
+
+- [ ] Keyboard reachable (Tab/Enter/Esc)
+- [ ] aria-label on icon-only controls
+- [ ] Focus ring visible
+- [ ] prefers-reduced-motion respected
+- [ ] Contrast ≥ AA on touched surfaces
+
+## Test plan
+
+- [ ] `pnpm lint` 0 errors
+- [ ] `pnpm lint:strict` 0 errors
+- [ ] `pnpm exec tsc --noEmit` clean
+- [ ] Manual smoke on golden path
+
+<details>
+<summary>Session prompts</summary>
+1. <verbatim user prompt 1>
+2. <verbatim user prompt 2>
+</details>
+```
+
+# DIV Brands Code Standards and Best Practices
 
 ## Library Management
 
@@ -31,9 +88,11 @@
   - Other helpful constraints
 
 #### React Imports
-  - Never use `import * as React from "react"` or `React.*` namespace acce<ss                             
-  - Always import React utilities directly: `import { forwardRef, useState, useContext } from "react"`          
-  - Same applies to types: `import type { ComponentProps, HTMLAttributes, ElementRef } from "reac>t"`     
+
+- Never use `import * as React from "react"` or `React.*` namespace acce<ss
+- Always import React utilities directly: `import { forwardRef, useState, useContext } from "react"`
+- Same applies to types: `import type { ComponentProps, HTMLAttributes, ElementRef } from "reac>t"`
+
 #### Syntax and Structure
 
 - Be consistent with tabs or spaces - do not mix both
@@ -239,10 +298,12 @@ Their context: they open Axion before market open to prepare (reviewing playbook
 **Visual tone**: Minimal, fast, keyboard-driven elegance with polished data visualization. Dark-first design with metallic gold as the signature accent.
 
 **References**:
+
 - **Linear / Raycast**: Elegance through restraint. Keyboard-first, fast transitions, clean surfaces, no visual noise. The gold-on-dark palette already aligns with this premium-minimal direction.
 - **Stripe Dashboard**: Best-in-class data visualization hierarchy. Clean charts that communicate instantly. Warm polish that never feels sterile.
 
 **Anti-references** (what Axion must NOT be):
+
 - **Robinhood / gamified apps**: No confetti, no achievement badges, no dopamine-loop design patterns. Trading is serious work. Celebrate consistency, not individual wins.
 - **Generic SaaS dashboards**: No cookie-cutter admin panels with corporate blue/gray blandness. Axion has a distinct identity — the navy + gold palette exists for a reason.
 

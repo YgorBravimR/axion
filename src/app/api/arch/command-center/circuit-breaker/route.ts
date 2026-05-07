@@ -3,10 +3,7 @@ import { db } from "@/db/drizzle"
 import { trades } from "@/db/schema"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { fromCents, toCents } from "@/lib/money"
-import {
-	resolveDay,
-	resolveBehavior,
-} from "@/lib/fractal-plan/resolver"
+import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
@@ -20,7 +17,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	const { accountId } = authResult.auth
 
@@ -35,16 +34,27 @@ const GET = async (request: NextRequest) => {
 		if (!day) {
 			return archError(
 				"No fractal plan configured for this account/date",
-				[{ code: "NO_PLAN", detail: `No yearly plan for ${today.getFullYear()}` }],
-				404,
+				[
+					{
+						code: "NO_PLAN",
+						detail: `No yearly plan for ${today.getFullYear()}`,
+					},
+				],
+				404
 			)
 		}
 		const behavior = await resolveBehavior({ accountId, date: today })
 
 		const oneRCents = day.oneRCents
-		const dailyLossLimitCents = Math.round(Number(day.dailyLossR.value) * oneRCents)
-		const profitTargetCents = Math.round(Number(day.dailyTargetR.value) * oneRCents)
-		const monthlyLossLimitCents = Math.round(Number(day.monthlyLossR.value) * oneRCents)
+		const dailyLossLimitCents = Math.round(
+			Number(day.dailyLossR.value) * oneRCents
+		)
+		const profitTargetCents = Math.round(
+			Number(day.dailyTargetR.value) * oneRCents
+		)
+		const monthlyLossLimitCents = Math.round(
+			Number(day.monthlyLossR.value) * oneRCents
+		)
 		const recommendedRiskBaseCents = oneRCents
 
 		const todaysTrades = await db.query.trades.findMany({
@@ -52,7 +62,7 @@ const GET = async (request: NextRequest) => {
 				eq(trades.accountId, accountId),
 				gte(trades.entryDate, today),
 				lte(trades.entryDate, tomorrow),
-				eq(trades.isArchived, false),
+				eq(trades.isArchived, false)
 			),
 			orderBy: [desc(trades.entryDate)],
 		})
@@ -62,15 +72,21 @@ const GET = async (request: NextRequest) => {
 		let maxConsecutiveLossesCount = 0
 
 		const sortedTrades = todaysTrades.toSorted(
-			(a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime(),
+			(a, b) =>
+				new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
 		)
-		const nonBreakevenCount = sortedTrades.filter((t) => t.outcome !== "breakeven").length
+		const nonBreakevenCount = sortedTrades.filter(
+			(t) => t.outcome !== "breakeven"
+		).length
 
 		for (const trade of sortedTrades) {
 			dailyPnL += fromCents(trade.pnl)
 			if (trade.outcome === "loss") {
 				consecutiveLosses++
-				maxConsecutiveLossesCount = Math.max(maxConsecutiveLossesCount, consecutiveLosses)
+				maxConsecutiveLossesCount = Math.max(
+					maxConsecutiveLossesCount,
+					consecutiveLosses
+				)
 			} else if (trade.outcome === "win") {
 				consecutiveLosses = 0
 			}
@@ -78,7 +94,9 @@ const GET = async (request: NextRequest) => {
 
 		let currentConsecutiveLosses = 0
 		for (let i = sortedTrades.length - 1; i >= 0; i--) {
-			if (sortedTrades[i].outcome === "breakeven") continue
+			if (sortedTrades[i].outcome === "breakeven") {
+				continue
+			}
 			if (sortedTrades[i].outcome === "loss") {
 				currentConsecutiveLosses++
 			} else {
@@ -88,7 +106,7 @@ const GET = async (request: NextRequest) => {
 
 		const riskUsedTodayCents = todaysTrades.reduce(
 			(sum, trade) => sum + (Number(trade.plannedRiskAmount) || 0),
-			0,
+			0
 		)
 
 		const maxConsecutiveLossesValue = behavior.maxConsecutiveLosses
@@ -103,7 +121,7 @@ const GET = async (request: NextRequest) => {
 
 		const remainingDailyRiskCents = Math.max(
 			0,
-			dailyLossLimitCents - Math.abs(Math.min(0, toCents(dailyPnL))),
+			dailyLossLimitCents - Math.abs(Math.min(0, toCents(dailyPnL)))
 		)
 
 		const monthStart = new Date(today)
@@ -113,16 +131,23 @@ const GET = async (request: NextRequest) => {
 			where: and(
 				eq(trades.accountId, accountId),
 				gte(trades.entryDate, monthStart),
-				eq(trades.isArchived, false),
+				eq(trades.isArchived, false)
 			),
 		})
-		const monthlyPnL = monthlyTrades.reduce((sum, trade) => sum + fromCents(trade.pnl), 0)
+		const monthlyPnL = monthlyTrades.reduce(
+			(sum, trade) => sum + fromCents(trade.pnl),
+			0
+		)
 		const remainingMonthlyCents =
 			monthlyLossLimitCents > 0
-				? Math.max(0, monthlyLossLimitCents - Math.abs(Math.min(0, toCents(monthlyPnL))))
+				? Math.max(
+						0,
+						monthlyLossLimitCents - Math.abs(Math.min(0, toCents(monthlyPnL)))
+					)
 				: Infinity
 		const isMonthlyLimitHit =
-			monthlyLossLimitCents > 0 && monthlyPnL <= -fromCents(monthlyLossLimitCents)
+			monthlyLossLimitCents > 0 &&
+			monthlyPnL <= -fromCents(monthlyLossLimitCents)
 
 		let recommendedRiskCents = recommendedRiskBaseCents
 
@@ -133,7 +158,7 @@ const GET = async (request: NextRequest) => {
 		) {
 			recommendedRiskCents = Math.round(
 				recommendedRiskCents *
-					Math.pow(behavior.riskReductionFactor, currentConsecutiveLosses),
+					Math.pow(behavior.riskReductionFactor, currentConsecutiveLosses)
 			)
 		}
 
@@ -148,7 +173,7 @@ const GET = async (request: NextRequest) => {
 				}
 			} else if (behavior.capRiskAfterWin) {
 				const firstWin = sortedTrades.find(
-					(t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0,
+					(t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0
 				)
 				const firstWinPnl = Number(firstWin?.pnl) || 0
 				if (firstWinPnl > 0 && sortedTrades.length > 1) {
@@ -160,8 +185,12 @@ const GET = async (request: NextRequest) => {
 
 		recommendedRiskCents = Math.min(
 			recommendedRiskCents,
-			remainingDailyRiskCents > 0 ? remainingDailyRiskCents : recommendedRiskCents,
-			remainingMonthlyCents !== Infinity ? remainingMonthlyCents : recommendedRiskCents,
+			remainingDailyRiskCents > 0
+				? remainingDailyRiskCents
+				: recommendedRiskCents,
+			remainingMonthlyCents !== Infinity
+				? remainingMonthlyCents
+				: recommendedRiskCents
 		)
 
 		const isSecondOpBlocked =
@@ -172,8 +201,12 @@ const GET = async (request: NextRequest) => {
 		const profitTargetHit =
 			profitTargetCents > 0 ? dailyPnL >= fromCents(profitTargetCents) : false
 		const lossLimitHit =
-			dailyLossLimitCents > 0 ? dailyPnL <= -fromCents(dailyLossLimitCents) : false
-		const maxTradesHit = maxTradesValue ? nonBreakevenCount >= maxTradesValue : false
+			dailyLossLimitCents > 0
+				? dailyPnL <= -fromCents(dailyLossLimitCents)
+				: false
+		const maxTradesHit = maxTradesValue
+			? nonBreakevenCount >= maxTradesValue
+			: false
 		const maxConsecutiveLossesHit = maxConsecutiveLossesValue
 			? currentConsecutiveLosses >= maxConsecutiveLossesValue
 			: false
@@ -187,12 +220,24 @@ const GET = async (request: NextRequest) => {
 			isSecondOpBlocked
 
 		const alerts: string[] = []
-		if (profitTargetHit) alerts.push("profitTargetHit")
-		if (lossLimitHit) alerts.push("lossLimitHit")
-		if (maxTradesHit) alerts.push("maxTradesHit")
-		if (maxConsecutiveLossesHit) alerts.push("maxConsecutiveLossesHit")
-		if (isMonthlyLimitHit) alerts.push("monthlyLimitHit")
-		if (isSecondOpBlocked) alerts.push("secondOpBlocked")
+		if (profitTargetHit) {
+			alerts.push("profitTargetHit")
+		}
+		if (lossLimitHit) {
+			alerts.push("lossLimitHit")
+		}
+		if (maxTradesHit) {
+			alerts.push("maxTradesHit")
+		}
+		if (maxConsecutiveLossesHit) {
+			alerts.push("maxConsecutiveLossesHit")
+		}
+		if (isMonthlyLimitHit) {
+			alerts.push("monthlyLimitHit")
+		}
+		if (isSecondOpBlocked) {
+			alerts.push("secondOpBlocked")
+		}
 
 		return archSuccess("Circuit breaker status retrieved", {
 			dailyPnL,
@@ -210,7 +255,9 @@ const GET = async (request: NextRequest) => {
 			maxConsecutiveLosses: maxConsecutiveLossesValue,
 			reduceRiskAfterLoss: behavior.reduceRiskAfterLoss,
 			riskReductionFactor:
-				behavior.riskReductionFactor !== null ? String(behavior.riskReductionFactor) : null,
+				behavior.riskReductionFactor !== null
+					? String(behavior.riskReductionFactor)
+					: null,
 			riskUsedTodayCents,
 			remainingDailyRiskCents,
 			recommendedRiskCents,
@@ -226,7 +273,7 @@ const GET = async (request: NextRequest) => {
 		return archError(
 			"Failed to get circuit breaker status",
 			[{ code: "FETCH_FAILED", detail: message }],
-			500,
+			500
 		)
 	}
 }

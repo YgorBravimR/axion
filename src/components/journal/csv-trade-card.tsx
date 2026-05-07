@@ -46,18 +46,24 @@ const priceFormatter = new Intl.NumberFormat("pt-BR", {
 })
 
 const formatCurrency = (value: number | null): string => {
-	if (value === null) return "--"
+	if (value === null) {
+		return "--"
+	}
 	const formatted = currencyFormatter.format(value)
 	return value >= 0 ? `+${formatted}` : formatted
 }
 
 const formatPrice = (value: number | string | undefined): string => {
-	if (!value) return "--"
+	if (!value) {
+		return "--"
+	}
 	return priceFormatter.format(Number(value))
 }
 
 const formatTime = (date: Date | string | number | undefined): string => {
-	if (!date) return "--"
+	if (!date) {
+		return "--"
+	}
 	const d = date instanceof Date ? date : new Date(date)
 	return d.toLocaleTimeString("pt-BR", {
 		hour: "2-digit",
@@ -67,7 +73,9 @@ const formatTime = (date: Date | string | number | undefined): string => {
 }
 
 const formatDate = (date: Date | string | number | undefined): string => {
-	if (!date) return "--"
+	if (!date) {
+		return "--"
+	}
 	const d = date instanceof Date ? date : new Date(date)
 	return d.toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })
 }
@@ -84,683 +92,735 @@ interface CsvTradeCardProps {
 	tags: Tag[]
 }
 
-const CsvTradeCard = memo(({
-	trade,
-	isExpanded,
-	isSelected,
-	onToggleExpand,
-	onToggleSelect,
-	onEdit,
-	strategies,
-	timeframes,
-	tags,
-}: CsvTradeCardProps) => {
-	const t = useTranslations("journal.csvCard")
-	const tCommon = useTranslations("common")
-	const tForm = useTranslations("journal.form")
-	const [activeTab, setActiveTab] = useState("basic")
+const CsvTradeCard = memo(
+	({
+		trade,
+		isExpanded,
+		isSelected,
+		onToggleExpand,
+		onToggleSelect,
+		onEdit,
+		strategies,
+		timeframes,
+		tags,
+	}: CsvTradeCardProps) => {
+		const t = useTranslations("journal.csvCard")
+		const tCommon = useTranslations("common")
+		const tForm = useTranslations("journal.form")
+		const [activeTab, setActiveTab] = useState("basic")
 
-	const handleEditField = <K extends keyof ProcessedCsvTrade["edits"]>(
-		field: K,
-		value: ProcessedCsvTrade["edits"][K]
-	) => {
-		onEdit(trade.id, { ...trade.edits, [field]: value })
-	}
+		const handleEditField = <K extends keyof ProcessedCsvTrade["edits"]>(
+			field: K,
+			value: ProcessedCsvTrade["edits"][K]
+		) => {
+			onEdit(trade.id, { ...trade.edits, [field]: value })
+		}
 
-	const setupTags = tags.filter((tag) => tag.type === "setup")
-	const mistakeTags = tags.filter((tag) => tag.type === "mistake")
-	const generalTags = tags.filter((tag) => tag.type === "general")
+		const setupTags = tags.filter((tag) => tag.type === "setup")
+		const mistakeTags = tags.filter((tag) => tag.type === "mistake")
+		const generalTags = tags.filter((tag) => tag.type === "general")
 
-	const handleTagToggle = (tagId: string) => {
-		const currentTags = trade.edits.tagIds || []
-		const newTags = currentTags.includes(tagId)
-			? currentTags.filter((id) => id !== tagId)
-			: [...currentTags, tagId]
-		handleEditField("tagIds", newTags)
-	}
+		const handleTagToggle = (tagId: string) => {
+			const currentTags = trade.edits.tagIds || []
+			const newTags = currentTags.includes(tagId)
+				? currentTags.filter((id) => id !== tagId)
+				: [...currentTags, tagId]
+			handleEditField("tagIds", newTags)
+		}
 
-	const isSkipped = trade.status === "skipped"
-	const isWarning = trade.status === "warning"
+		const isSkipped = trade.status === "skipped"
+		const isWarning = trade.status === "warning"
 
-	return (
-		<div
-			className={cn(
-				"rounded-lg border transition-all",
-				isSkipped
-					? "border-fb-error/30 bg-fb-error/5"
-					: isWarning
-						? "border-warning/30 bg-warning/5"
-						: "border-bg-300 bg-bg-200",
-				isExpanded && "ring-acc-100 ring-1"
-			)}
-		>
-			{/* Collapsed Header */}
+		return (
 			<div
 				className={cn(
-					"gap-s-100 sm:gap-s-200 md:gap-m-400 px-s-300 sm:px-m-400 py-s-300 flex flex-wrap items-center",
-					!isSkipped && "cursor-pointer"
+					"rounded-lg border transition-all",
+					isSkipped
+						? "border-fb-error/30 bg-fb-error/5"
+						: isWarning
+							? "border-warning/30 bg-warning/5"
+							: "border-bg-300 bg-bg-200",
+					isExpanded && "ring-acc-100 ring-1"
 				)}
-				onClick={() => !isSkipped && onToggleExpand(trade.id)}
-				onKeyDown={(e) => e.key === "Enter" && !isSkipped && onToggleExpand(trade.id)}
-				tabIndex={isSkipped ? -1 : 0}
-				role="button"
-				aria-expanded={isExpanded}
 			>
-				{/* Select Checkbox */}
-				<div onClick={(e) => e.stopPropagation()}>
-					<Checkbox
-						id={`csv-trade-select-${trade.rowNumber}`}
-						checked={isSelected}
-						onCheckedChange={() => onToggleSelect(trade.id)}
-						disabled={isSkipped}
-						aria-label={t("selectTrade", { identifier: trade.rowNumber })}
-					/>
-				</div>
-
-				{/* Status Icon */}
-				<div className="shrink-0">
-					{isSkipped ? (
-						<XCircle className="text-fb-error h-5 w-5" />
-					) : isWarning ? (
-						<AlertTriangle className="text-warning h-5 w-5" />
-					) : (
-						<CheckCircle2 className="text-trade-buy h-5 w-5" />
-					)}
-				</div>
-
-				{/* Row Number */}
-				<span className="text-tiny text-txt-300">#{trade.rowNumber}</span>
-
-				{/* Asset */}
-				<div className="gap-s-100 flex items-center">
-					<span className="text-small text-txt-100 font-semibold">
-						{trade.originalData.normalizedAsset}
-					</span>
-					{trade.originalData.originalAssetCode !==
-						trade.originalData.normalizedAsset && (
-						<Tooltip>
-							<TooltipTrigger>
-								<Info className="text-txt-300 h-3 w-3" />
-							</TooltipTrigger>
-							<TooltipContent id={`tooltip-csv-asset-${trade.rowNumber}`}>
-								{t("original", { value: trade.originalData.originalAssetCode })}
-							</TooltipContent>
-						</Tooltip>
-					)}
-				</div>
-
-				{/* Direction */}
-				<span
+				{/* Collapsed Header */}
+				<div
 					className={cn(
-						"px-s-200 py-s-100 text-tiny rounded-sm font-medium",
-						trade.originalData.direction === "long"
-							? "bg-action-buy/20 text-action-buy"
-							: "bg-action-sell/20 text-action-sell"
+						"gap-s-100 sm:gap-s-200 md:gap-m-400 px-s-300 sm:px-m-400 py-s-300 flex flex-wrap items-center",
+						!isSkipped && "cursor-pointer"
 					)}
+					onClick={() => !isSkipped && onToggleExpand(trade.id)}
+					onKeyDown={(e) =>
+						e.key === "Enter" && !isSkipped && onToggleExpand(trade.id)
+					}
+					tabIndex={isSkipped ? -1 : 0}
+					role="button"
+					aria-expanded={isExpanded}
 				>
-					{trade.originalData.direction.toUpperCase()}
-				</span>
+					{/* Select Checkbox */}
+					<div
+						onClick={(e) => e.stopPropagation()}
+						onKeyDown={(e) => e.stopPropagation()}
+						role="presentation"
+					>
+						<Checkbox
+							id={`csv-trade-select-${trade.rowNumber}`}
+							checked={isSelected}
+							onCheckedChange={() => onToggleSelect(trade.id)}
+							disabled={isSkipped}
+							aria-label={t("selectTrade", { identifier: trade.rowNumber })}
+						/>
+					</div>
 
-				{/* Time Range */}
-				<span className="text-small text-txt-200">
-					{formatTime(trade.originalData.entryDate)}
-					{trade.originalData.exitDate &&
-						` → ${formatTime(trade.originalData.exitDate)}`}
-				</span>
+					{/* Status Icon */}
+					<div className="shrink-0">
+						{isSkipped ? (
+							<XCircle className="text-fb-error h-5 w-5" />
+						) : isWarning ? (
+							<AlertTriangle className="text-warning h-5 w-5" />
+						) : (
+							<CheckCircle2 className="text-trade-buy h-5 w-5" />
+						)}
+					</div>
 
-				{/* Position Size */}
-				<span className="text-small text-txt-300">
-					{trade.originalData.positionSize} {t("contracts")}
-				</span>
+					{/* Row Number */}
+					<span className="text-tiny text-txt-300">#{trade.rowNumber}</span>
 
-				{/* Spacer */}
-				<div className="flex-1" />
-
-				{/* Skipped Reason or P&L */}
-				{isSkipped ? (
-					<span className="text-small text-fb-error">{trade.skipReason}</span>
-				) : (
-					<div className="gap-m-400 flex items-center">
-						{/* Entry → Exit */}
-						<span className="text-small text-txt-200">
-							{formatPrice(trade.originalData.entryPrice)} →{" "}
-							{formatPrice(trade.originalData.exitPrice)}
+					{/* Asset */}
+					<div className="gap-s-100 flex items-center">
+						<span className="text-small text-txt-100 font-semibold">
+							{trade.originalData.normalizedAsset}
 						</span>
+						{trade.originalData.originalAssetCode !==
+							trade.originalData.normalizedAsset && (
+							<Tooltip>
+								<TooltipTrigger>
+									<Info className="text-txt-300 h-3 w-3" />
+								</TooltipTrigger>
+								<TooltipContent id={`tooltip-csv-asset-${trade.rowNumber}`}>
+									{t("original", {
+										value: trade.originalData.originalAssetCode,
+									})}
+								</TooltipContent>
+							</Tooltip>
+						)}
+					</div>
 
-						{/* Net P&L */}
-						<span
-							className={cn(
-								"text-small font-semibold",
-								trade.netPnl !== null
-									? trade.netPnl >= 0
-										? "text-trade-buy"
-										: "text-trade-sell"
-									: "text-txt-300"
-							)}
-						>
-							{formatCurrency(trade.netPnl)}
-						</span>
+					{/* Direction */}
+					<span
+						className={cn(
+							"px-s-200 py-s-100 text-tiny rounded-sm font-medium",
+							trade.originalData.direction === "long"
+								? "bg-action-buy/20 text-action-buy"
+								: "bg-action-sell/20 text-action-sell"
+						)}
+					>
+						{trade.originalData.direction.toUpperCase()}
+					</span>
 
-						{/* Expand Button */}
-						<Button
-							id={`csv-trade-expand-${trade.rowNumber}`}
-							type="button"
-							variant="ghost"
-							size="icon"
-							onClick={(e) => {
-								e.stopPropagation()
-								onToggleExpand(trade.id)
-							}}
-							aria-label={isExpanded ? tCommon("collapse") : tCommon("expand")}
-						>
-							{isExpanded ? (
-								<ChevronUp className="h-4 w-4" />
-							) : (
-								<ChevronDown className="h-4 w-4" />
-							)}
-						</Button>
+					{/* Time Range */}
+					<span className="text-small text-txt-200">
+						{formatTime(trade.originalData.entryDate)}
+						{trade.originalData.exitDate &&
+							` → ${formatTime(trade.originalData.exitDate)}`}
+					</span>
+
+					{/* Position Size */}
+					<span className="text-small text-txt-300">
+						{trade.originalData.positionSize} {t("contracts")}
+					</span>
+
+					{/* Spacer */}
+					<div className="flex-1" />
+
+					{/* Skipped Reason or P&L */}
+					{isSkipped ? (
+						<span className="text-small text-fb-error">{trade.skipReason}</span>
+					) : (
+						<div className="gap-m-400 flex items-center">
+							{/* Entry → Exit */}
+							<span className="text-small text-txt-200">
+								{formatPrice(trade.originalData.entryPrice)} →{" "}
+								{formatPrice(trade.originalData.exitPrice)}
+							</span>
+
+							{/* Net P&L */}
+							<span
+								className={cn(
+									"text-small font-semibold",
+									trade.netPnl !== null
+										? trade.netPnl >= 0
+											? "text-trade-buy"
+											: "text-trade-sell"
+										: "text-txt-300"
+								)}
+							>
+								{formatCurrency(trade.netPnl)}
+							</span>
+
+							{/* Expand Button */}
+							<Button
+								id={`csv-trade-expand-${trade.rowNumber}`}
+								type="button"
+								variant="ghost"
+								size="icon"
+								onClick={(e) => {
+									e.stopPropagation()
+									onToggleExpand(trade.id)
+								}}
+								aria-label={
+									isExpanded ? tCommon("collapse") : tCommon("expand")
+								}
+							>
+								{isExpanded ? (
+									<ChevronUp className="h-4 w-4" />
+								) : (
+									<ChevronDown className="h-4 w-4" />
+								)}
+							</Button>
+						</div>
+					)}
+				</div>
+
+				{/* Expanded Content */}
+				{isExpanded && !isSkipped && (
+					<div className="border-bg-300 p-s-300 sm:p-m-400 border-t">
+						{/* P&L Breakdown */}
+						{trade.assetConfig && (
+							<div className="mb-s-300 sm:mb-m-400 border-bg-300 bg-bg-100 p-s-200 sm:p-s-300 rounded-lg border">
+								<div className="gap-s-200 flex flex-wrap items-center justify-between">
+									<div className="gap-s-200 sm:gap-m-400 text-small flex flex-wrap items-center">
+										<span className="text-txt-300">
+											{t("ticks")} {trade.ticksGained?.toFixed(1) || "--"}
+										</span>
+										<span className="text-txt-300">
+											{t("gross")} {formatCurrency(trade.grossPnl)}
+										</span>
+										<span className="text-txt-300">
+											{t("costs")}{" "}
+											{formatCurrency(
+												trade.totalCosts ? -trade.totalCosts : null
+											)}
+										</span>
+									</div>
+									<span
+										className={cn(
+											"text-body font-bold",
+											trade.netPnl !== null
+												? trade.netPnl >= 0
+													? "text-trade-buy"
+													: "text-trade-sell"
+												: "text-txt-300"
+										)}
+									>
+										{t("net")} {formatCurrency(trade.netPnl)}
+									</span>
+								</div>
+								<div className="mt-s-200 text-tiny text-txt-300">
+									{t("commission", {
+										value: (
+											(trade.assetConfig.commission / 100) *
+											Number(trade.originalData.positionSize) *
+											2
+										).toFixed(2),
+									})}
+									{" | "}
+									{t("fees", {
+										value: (
+											(trade.assetConfig.fees / 100) *
+											Number(trade.originalData.positionSize) *
+											2
+										).toFixed(2),
+									})}
+									{" | "}
+									{t("tickSize", { value: trade.assetConfig.tickSize })}
+									{" | "}
+									{t("tickValue", {
+										value: (trade.assetConfig.tickValue / 100).toFixed(2),
+									})}
+								</div>
+							</div>
+						)}
+
+						{/* Tabbed Editor */}
+						<Tabs value={activeTab} onValueChange={setActiveTab}>
+							<TabsList className="mb-s-300 sm:mb-m-400 w-full justify-start">
+								<TabsTrigger value="basic">{tForm("basicInfo")}</TabsTrigger>
+								<TabsTrigger value="risk">{tForm("risk")}</TabsTrigger>
+								<TabsTrigger value="journal">{tForm("journal")}</TabsTrigger>
+								<TabsTrigger value="tags">{tForm("tagsSection")}</TabsTrigger>
+							</TabsList>
+
+							{/* Basic Info Tab */}
+							<TabsContent
+								value="basic"
+								className="space-y-s-300 sm:space-y-m-400"
+							>
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
+									{/* Date */}
+									<div>
+										<Label
+											id="label-csv-date"
+											className="text-tiny text-txt-300"
+										>
+											{t("date")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{formatDate(trade.originalData.entryDate)}
+										</div>
+									</div>
+
+									{/* Direction (readonly) */}
+									<div>
+										<Label
+											id="label-csv-direction"
+											className="text-tiny text-txt-300"
+										>
+											{t("direction")}
+										</Label>
+										<div
+											className={cn(
+												"mt-s-100 text-small font-medium",
+												trade.originalData.direction === "long"
+													? "text-action-buy"
+													: "text-action-sell"
+											)}
+										>
+											{trade.originalData.direction.toUpperCase()}
+										</div>
+									</div>
+
+									{/* Strategy */}
+									<div>
+										<Label
+											id="label-csv-strategy"
+											className="text-tiny text-txt-300"
+										>
+											{t("strategy")}
+										</Label>
+										<Select
+											value={trade.edits.strategyId || ""}
+											onValueChange={(v) =>
+												handleEditField("strategyId", v || undefined)
+											}
+										>
+											<SelectTrigger
+												id="csv-trade-strategy"
+												className="mt-s-100 h-8"
+											>
+												<SelectValue placeholder={t("selectPlaceholder")} />
+											</SelectTrigger>
+											<SelectContent>
+												{strategies.map((s) => (
+													<SelectItem key={s.id} value={s.id}>
+														{s.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+
+									{/* Timeframe */}
+									<div>
+										<Label
+											id="label-csv-timeframe"
+											className="text-tiny text-txt-300"
+										>
+											{t("timeframe")}
+										</Label>
+										<Select
+											value={trade.edits.timeframeId || ""}
+											onValueChange={(v) =>
+												handleEditField("timeframeId", v || undefined)
+											}
+										>
+											<SelectTrigger
+												id="csv-trade-timeframe"
+												className="mt-s-100 h-8"
+											>
+												<SelectValue placeholder={t("selectPlaceholder")} />
+											</SelectTrigger>
+											<SelectContent>
+												{timeframes.map((tf) => (
+													<SelectItem key={tf.id} value={tf.id}>
+														{tf.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+								</div>
+
+								{/* Prices (readonly) */}
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
+									<div>
+										<Label
+											id="label-csv-entry-price"
+											className="text-tiny text-txt-300"
+										>
+											{t("entryPrice")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{formatPrice(trade.originalData.entryPrice)}
+										</div>
+									</div>
+									<div>
+										<Label
+											id="label-csv-exit-price"
+											className="text-tiny text-txt-300"
+										>
+											{t("exitPrice")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{formatPrice(trade.originalData.exitPrice)}
+										</div>
+									</div>
+									<div>
+										<Label
+											id="label-csv-position-size"
+											className="text-tiny text-txt-300"
+										>
+											{t("positionSize")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{trade.originalData.positionSize}
+										</div>
+									</div>
+									<div>
+										<Label
+											id="label-csv-pnl"
+											className="text-tiny text-txt-300"
+										>
+											{t("pnlFromCsv")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{trade.originalData.pnl
+												? formatCurrency(Number(trade.originalData.pnl))
+												: "--"}
+										</div>
+									</div>
+								</div>
+							</TabsContent>
+
+							{/* Risk Tab */}
+							<TabsContent
+								value="risk"
+								className="space-y-s-300 sm:space-y-m-400"
+							>
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
+									<div>
+										<Label
+											id={`label-csv-sl-${trade.id}`}
+											htmlFor={`sl-${trade.id}`}
+											className="text-tiny text-txt-300"
+										>
+											{t("stopLoss")}
+										</Label>
+										<Input
+											id={`sl-${trade.id}`}
+											type="number"
+											step="0.01"
+											value={trade.edits.stopLoss || ""}
+											onChange={(e) =>
+												handleEditField(
+													"stopLoss",
+													e.target.value ? Number(e.target.value) : undefined
+												)
+											}
+											className="mt-s-100 h-8"
+											placeholder={t("optionalPlaceholder")}
+										/>
+									</div>
+									<div>
+										<Label
+											id={`label-csv-tp-${trade.id}`}
+											htmlFor={`tp-${trade.id}`}
+											className="text-tiny text-txt-300"
+										>
+											{t("takeProfit")}
+										</Label>
+										<Input
+											id={`tp-${trade.id}`}
+											type="number"
+											step="0.01"
+											value={trade.edits.takeProfit || ""}
+											onChange={(e) =>
+												handleEditField(
+													"takeProfit",
+													e.target.value ? Number(e.target.value) : undefined
+												)
+											}
+											className="mt-s-100 h-8"
+											placeholder={t("optionalPlaceholder")}
+										/>
+									</div>
+									<div>
+										<Label
+											id="label-csv-mfe"
+											className="text-tiny text-txt-300"
+										>
+											{t("mfeFromCsv")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{trade.originalData.mfe
+												? formatCurrency(Number(trade.originalData.mfe))
+												: "--"}
+										</div>
+									</div>
+									<div>
+										<Label
+											id="label-csv-mae"
+											className="text-tiny text-txt-300"
+										>
+											{t("maeFromCsv")}
+										</Label>
+										<div className="mt-s-100 text-small text-txt-100">
+											{trade.originalData.mae
+												? formatCurrency(-Number(trade.originalData.mae))
+												: "--"}
+										</div>
+									</div>
+								</div>
+							</TabsContent>
+
+							{/* Journal Tab */}
+							<TabsContent
+								value="journal"
+								className="space-y-s-300 sm:space-y-m-400"
+							>
+								<div>
+									<Label
+										id={`label-csv-thoughts-${trade.id}`}
+										htmlFor={`thoughts-${trade.id}`}
+										className="text-tiny text-txt-300"
+									>
+										{t("preTradeThoughts")}
+									</Label>
+									<Textarea
+										id={`thoughts-${trade.id}`}
+										value={trade.edits.preTradeThoughts || ""}
+										onChange={(e) =>
+											handleEditField("preTradeThoughts", e.target.value)
+										}
+										className="mt-s-100 max-h-[40dvh] min-h-[80px]"
+										placeholder={t("planPlaceholder")}
+									/>
+								</div>
+
+								<div>
+									<Label
+										id={`label-csv-reflection-${trade.id}`}
+										htmlFor={`reflection-${trade.id}`}
+										className="text-tiny text-txt-300"
+									>
+										{t("postTradeReflection")}
+									</Label>
+									<Textarea
+										id={`reflection-${trade.id}`}
+										value={trade.edits.postTradeReflection || ""}
+										onChange={(e) =>
+											handleEditField("postTradeReflection", e.target.value)
+										}
+										className="mt-s-100 max-h-[40dvh] min-h-[80px]"
+										placeholder={t("reflectionPlaceholder")}
+									/>
+								</div>
+
+								<div>
+									<Label
+										id={`label-csv-lesson-${trade.id}`}
+										htmlFor={`lesson-${trade.id}`}
+										className="text-tiny text-txt-300"
+									>
+										{t("lessonLearned")}
+									</Label>
+									<Textarea
+										id={`lesson-${trade.id}`}
+										value={trade.edits.lessonLearned || ""}
+										onChange={(e) =>
+											handleEditField("lessonLearned", e.target.value)
+										}
+										className="mt-s-100 max-h-[40dvh] min-h-[60px]"
+										placeholder={t("lessonPlaceholder")}
+									/>
+								</div>
+
+								{/* Follow Plan */}
+								<div className="gap-m-400 flex items-center">
+									<Label
+										id="label-csv-followed-plan"
+										className="text-tiny text-txt-300"
+									>
+										{t("followedPlan")}
+									</Label>
+									<div className="gap-s-200 flex">
+										<button
+											type="button"
+											onClick={() => handleEditField("followedPlan", true)}
+											className={cn(
+												"px-m-400 py-s-200 text-small rounded-md font-medium transition-colors",
+												trade.edits.followedPlan === true
+													? "bg-trade-buy text-bg-100"
+													: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+											)}
+										>
+											{tCommon("yes")}
+										</button>
+										<button
+											type="button"
+											onClick={() => handleEditField("followedPlan", false)}
+											className={cn(
+												"px-m-400 py-s-200 text-small rounded-md font-medium transition-colors",
+												trade.edits.followedPlan === false
+													? "bg-fb-error text-bg-100"
+													: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+											)}
+										>
+											{tCommon("no")}
+										</button>
+									</div>
+								</div>
+
+								{/* Discipline Notes (shown when followedPlan is false) */}
+								{trade.edits.followedPlan === false && (
+									<div>
+										<Label
+											id={`label-csv-discipline-${trade.id}`}
+											htmlFor={`discipline-${trade.id}`}
+											className="text-tiny text-txt-300"
+										>
+											{t("whatWentWrong")}
+										</Label>
+										<Textarea
+											id={`discipline-${trade.id}`}
+											value={trade.edits.disciplineNotes || ""}
+											onChange={(e) =>
+												handleEditField("disciplineNotes", e.target.value)
+											}
+											className="mt-s-100 max-h-[40dvh] min-h-[60px]"
+											placeholder={t("disciplinePlaceholder")}
+										/>
+									</div>
+								)}
+							</TabsContent>
+
+							{/* Tags Tab */}
+							<TabsContent
+								value="tags"
+								className="space-y-s-300 sm:space-y-m-400"
+							>
+								{/* Setup Tags */}
+								{setupTags.length > 0 && (
+									<div>
+										<Label
+											id="label-csv-setup-type"
+											className="text-tiny text-txt-300"
+										>
+											{t("setupType")}
+										</Label>
+										<div className="mt-s-200 gap-s-200 flex flex-wrap">
+											{setupTags.map((tag) => (
+												<button
+													key={tag.id}
+													type="button"
+													onClick={() => handleTagToggle(tag.id)}
+													className={cn(
+														"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
+														trade.edits.tagIds?.includes(tag.id)
+															? "bg-acc-100 text-bg-100"
+															: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+													)}
+													style={
+														trade.edits.tagIds?.includes(tag.id) && tag.color
+															? { backgroundColor: tag.color }
+															: undefined
+													}
+												>
+													{tag.name}
+												</button>
+											))}
+										</div>
+									</div>
+								)}
+
+								{/* Mistake Tags */}
+								{mistakeTags.length > 0 && (
+									<div>
+										<Label
+											id="label-csv-mistakes"
+											className="text-tiny text-txt-300"
+										>
+											{t("mistakes")}
+										</Label>
+										<div className="mt-s-200 gap-s-200 flex flex-wrap">
+											{mistakeTags.map((tag) => (
+												<button
+													key={tag.id}
+													type="button"
+													onClick={() => handleTagToggle(tag.id)}
+													className={cn(
+														"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
+														trade.edits.tagIds?.includes(tag.id)
+															? "bg-warning text-bg-100"
+															: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+													)}
+												>
+													{tag.name}
+												</button>
+											))}
+										</div>
+									</div>
+								)}
+
+								{/* General Tags */}
+								{generalTags.length > 0 && (
+									<div>
+										<Label
+											id="label-csv-general-tags"
+											className="text-tiny text-txt-300"
+										>
+											{t("generalTags")}
+										</Label>
+										<div className="mt-s-200 gap-s-200 flex flex-wrap">
+											{generalTags.map((tag) => (
+												<button
+													key={tag.id}
+													type="button"
+													onClick={() => handleTagToggle(tag.id)}
+													className={cn(
+														"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
+														trade.edits.tagIds?.includes(tag.id)
+															? "bg-acc-100 text-bg-100"
+															: "bg-bg-300 text-txt-200 hover:bg-bg-100"
+													)}
+													style={
+														trade.edits.tagIds?.includes(tag.id) && tag.color
+															? { backgroundColor: tag.color }
+															: undefined
+													}
+												>
+													{tag.name}
+												</button>
+											))}
+										</div>
+									</div>
+								)}
+
+								{setupTags.length === 0 &&
+									mistakeTags.length === 0 &&
+									generalTags.length === 0 && (
+										<p className="text-small text-txt-300">
+											{t("noTagsConfigured")}
+										</p>
+									)}
+							</TabsContent>
+						</Tabs>
 					</div>
 				)}
 			</div>
-
-			{/* Expanded Content */}
-			{isExpanded && !isSkipped && (
-				<div className="border-bg-300 p-s-300 sm:p-m-400 border-t">
-					{/* P&L Breakdown */}
-					{trade.assetConfig && (
-						<div className="mb-s-300 sm:mb-m-400 border-bg-300 bg-bg-100 p-s-200 sm:p-s-300 rounded-lg border">
-							<div className="flex flex-wrap items-center justify-between gap-s-200">
-								<div className="gap-s-200 sm:gap-m-400 text-small flex flex-wrap items-center">
-									<span className="text-txt-300">
-										{t("ticks")} {trade.ticksGained?.toFixed(1) || "--"}
-									</span>
-									<span className="text-txt-300">
-										{t("gross")} {formatCurrency(trade.grossPnl)}
-									</span>
-									<span className="text-txt-300">
-										{t("costs")}{" "}
-										{formatCurrency(
-											trade.totalCosts ? -trade.totalCosts : null
-										)}
-									</span>
-								</div>
-								<span
-									className={cn(
-										"text-body font-bold",
-										trade.netPnl !== null
-											? trade.netPnl >= 0
-												? "text-trade-buy"
-												: "text-trade-sell"
-											: "text-txt-300"
-									)}
-								>
-									{t("net")} {formatCurrency(trade.netPnl)}
-								</span>
-							</div>
-							<div className="mt-s-200 text-tiny text-txt-300">
-								{t("commission", { value: (trade.assetConfig.commission / 100 * Number(trade.originalData.positionSize) * 2).toFixed(2) })}
-								{" | "}
-								{t("fees", { value: (trade.assetConfig.fees / 100 * Number(trade.originalData.positionSize) * 2).toFixed(2) })}
-								{" | "}
-								{t("tickSize", { value: trade.assetConfig.tickSize })}
-								{" | "}
-								{t("tickValue", { value: (trade.assetConfig.tickValue / 100).toFixed(2) })}
-							</div>
-						</div>
-					)}
-
-					{/* Tabbed Editor */}
-					<Tabs value={activeTab} onValueChange={setActiveTab}>
-						<TabsList className="mb-s-300 sm:mb-m-400 w-full justify-start">
-							<TabsTrigger value="basic">{tForm("basicInfo")}</TabsTrigger>
-							<TabsTrigger value="risk">{tForm("risk")}</TabsTrigger>
-							<TabsTrigger value="journal">{tForm("journal")}</TabsTrigger>
-							<TabsTrigger value="tags">{tForm("tagsSection")}</TabsTrigger>
-						</TabsList>
-
-						{/* Basic Info Tab */}
-						<TabsContent value="basic" className="space-y-s-300 sm:space-y-m-400">
-							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
-								{/* Date */}
-								<div>
-									<Label id="label-csv-date" className="text-tiny text-txt-300">
-										{t("date")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{formatDate(trade.originalData.entryDate)}
-									</div>
-								</div>
-
-								{/* Direction (readonly) */}
-								<div>
-									<Label
-										id="label-csv-direction"
-										className="text-tiny text-txt-300"
-									>
-										{t("direction")}
-									</Label>
-									<div
-										className={cn(
-											"mt-s-100 text-small font-medium",
-											trade.originalData.direction === "long"
-												? "text-action-buy"
-												: "text-action-sell"
-										)}
-									>
-										{trade.originalData.direction.toUpperCase()}
-									</div>
-								</div>
-
-								{/* Strategy */}
-								<div>
-									<Label
-										id="label-csv-strategy"
-										className="text-tiny text-txt-300"
-									>
-										{t("strategy")}
-									</Label>
-									<Select
-										value={trade.edits.strategyId || ""}
-										onValueChange={(v) =>
-											handleEditField("strategyId", v || undefined)
-										}
-									>
-										<SelectTrigger
-											id="csv-trade-strategy"
-											className="mt-s-100 h-8"
-										>
-											<SelectValue placeholder={t("selectPlaceholder")} />
-										</SelectTrigger>
-										<SelectContent>
-											{strategies.map((s) => (
-												<SelectItem key={s.id} value={s.id}>
-													{s.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-
-								{/* Timeframe */}
-								<div>
-									<Label
-										id="label-csv-timeframe"
-										className="text-tiny text-txt-300"
-									>
-										{t("timeframe")}
-									</Label>
-									<Select
-										value={trade.edits.timeframeId || ""}
-										onValueChange={(v) =>
-											handleEditField("timeframeId", v || undefined)
-										}
-									>
-										<SelectTrigger
-											id="csv-trade-timeframe"
-											className="mt-s-100 h-8"
-										>
-											<SelectValue placeholder={t("selectPlaceholder")} />
-										</SelectTrigger>
-										<SelectContent>
-											{timeframes.map((tf) => (
-												<SelectItem key={tf.id} value={tf.id}>
-													{tf.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
-
-							{/* Prices (readonly) */}
-							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
-								<div>
-									<Label
-										id="label-csv-entry-price"
-										className="text-tiny text-txt-300"
-									>
-										{t("entryPrice")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{formatPrice(trade.originalData.entryPrice)}
-									</div>
-								</div>
-								<div>
-									<Label
-										id="label-csv-exit-price"
-										className="text-tiny text-txt-300"
-									>
-										{t("exitPrice")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{formatPrice(trade.originalData.exitPrice)}
-									</div>
-								</div>
-								<div>
-									<Label
-										id="label-csv-position-size"
-										className="text-tiny text-txt-300"
-									>
-										{t("positionSize")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{trade.originalData.positionSize}
-									</div>
-								</div>
-								<div>
-									<Label id="label-csv-pnl" className="text-tiny text-txt-300">
-										{t("pnlFromCsv")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{trade.originalData.pnl
-											? formatCurrency(Number(trade.originalData.pnl))
-											: "--"}
-									</div>
-								</div>
-							</div>
-						</TabsContent>
-
-						{/* Risk Tab */}
-						<TabsContent value="risk" className="space-y-s-300 sm:space-y-m-400">
-							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
-								<div>
-									<Label
-										id={`label-csv-sl-${trade.id}`}
-										htmlFor={`sl-${trade.id}`}
-										className="text-tiny text-txt-300"
-									>
-										{t("stopLoss")}
-									</Label>
-									<Input
-										id={`sl-${trade.id}`}
-										type="number"
-										step="0.01"
-										value={trade.edits.stopLoss || ""}
-										onChange={(e) =>
-											handleEditField(
-												"stopLoss",
-												e.target.value ? Number(e.target.value) : undefined
-											)
-										}
-										className="mt-s-100 h-8"
-										placeholder={t("optionalPlaceholder")}
-									/>
-								</div>
-								<div>
-									<Label
-										id={`label-csv-tp-${trade.id}`}
-										htmlFor={`tp-${trade.id}`}
-										className="text-tiny text-txt-300"
-									>
-										{t("takeProfit")}
-									</Label>
-									<Input
-										id={`tp-${trade.id}`}
-										type="number"
-										step="0.01"
-										value={trade.edits.takeProfit || ""}
-										onChange={(e) =>
-											handleEditField(
-												"takeProfit",
-												e.target.value ? Number(e.target.value) : undefined
-											)
-										}
-										className="mt-s-100 h-8"
-										placeholder={t("optionalPlaceholder")}
-									/>
-								</div>
-								<div>
-									<Label id="label-csv-mfe" className="text-tiny text-txt-300">
-										{t("mfeFromCsv")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{trade.originalData.mfe
-											? formatCurrency(Number(trade.originalData.mfe))
-											: "--"}
-									</div>
-								</div>
-								<div>
-									<Label id="label-csv-mae" className="text-tiny text-txt-300">
-										{t("maeFromCsv")}
-									</Label>
-									<div className="mt-s-100 text-small text-txt-100">
-										{trade.originalData.mae
-											? formatCurrency(-Number(trade.originalData.mae))
-											: "--"}
-									</div>
-								</div>
-							</div>
-						</TabsContent>
-
-						{/* Journal Tab */}
-						<TabsContent value="journal" className="space-y-s-300 sm:space-y-m-400">
-							<div>
-								<Label
-									id={`label-csv-thoughts-${trade.id}`}
-									htmlFor={`thoughts-${trade.id}`}
-									className="text-tiny text-txt-300"
-								>
-									{t("preTradeThoughts")}
-								</Label>
-								<Textarea
-									id={`thoughts-${trade.id}`}
-									value={trade.edits.preTradeThoughts || ""}
-									onChange={(e) =>
-										handleEditField("preTradeThoughts", e.target.value)
-									}
-									className="mt-s-100 min-h-[80px] max-h-[40dvh]"
-									placeholder={t("planPlaceholder")}
-								/>
-							</div>
-
-							<div>
-								<Label
-									id={`label-csv-reflection-${trade.id}`}
-									htmlFor={`reflection-${trade.id}`}
-									className="text-tiny text-txt-300"
-								>
-									{t("postTradeReflection")}
-								</Label>
-								<Textarea
-									id={`reflection-${trade.id}`}
-									value={trade.edits.postTradeReflection || ""}
-									onChange={(e) =>
-										handleEditField("postTradeReflection", e.target.value)
-									}
-									className="mt-s-100 min-h-[80px] max-h-[40dvh]"
-									placeholder={t("reflectionPlaceholder")}
-								/>
-							</div>
-
-							<div>
-								<Label
-									id={`label-csv-lesson-${trade.id}`}
-									htmlFor={`lesson-${trade.id}`}
-									className="text-tiny text-txt-300"
-								>
-									{t("lessonLearned")}
-								</Label>
-								<Textarea
-									id={`lesson-${trade.id}`}
-									value={trade.edits.lessonLearned || ""}
-									onChange={(e) =>
-										handleEditField("lessonLearned", e.target.value)
-									}
-									className="mt-s-100 min-h-[60px] max-h-[40dvh]"
-									placeholder={t("lessonPlaceholder")}
-								/>
-							</div>
-
-							{/* Follow Plan */}
-							<div className="gap-m-400 flex items-center">
-								<Label
-									id="label-csv-followed-plan"
-									className="text-tiny text-txt-300"
-								>
-									{t("followedPlan")}
-								</Label>
-								<div className="gap-s-200 flex">
-									<button
-										type="button"
-										onClick={() => handleEditField("followedPlan", true)}
-										className={cn(
-											"px-m-400 py-s-200 text-small rounded-md font-medium transition-colors",
-											trade.edits.followedPlan === true
-												? "bg-trade-buy text-bg-100"
-												: "bg-bg-300 text-txt-200 hover:bg-bg-100"
-										)}
-									>
-										{tCommon("yes")}
-									</button>
-									<button
-										type="button"
-										onClick={() => handleEditField("followedPlan", false)}
-										className={cn(
-											"px-m-400 py-s-200 text-small rounded-md font-medium transition-colors",
-											trade.edits.followedPlan === false
-												? "bg-fb-error text-bg-100"
-												: "bg-bg-300 text-txt-200 hover:bg-bg-100"
-										)}
-									>
-										{tCommon("no")}
-									</button>
-								</div>
-							</div>
-
-							{/* Discipline Notes (shown when followedPlan is false) */}
-							{trade.edits.followedPlan === false && (
-								<div>
-									<Label
-										id={`label-csv-discipline-${trade.id}`}
-										htmlFor={`discipline-${trade.id}`}
-										className="text-tiny text-txt-300"
-									>
-										{t("whatWentWrong")}
-									</Label>
-									<Textarea
-										id={`discipline-${trade.id}`}
-										value={trade.edits.disciplineNotes || ""}
-										onChange={(e) =>
-											handleEditField("disciplineNotes", e.target.value)
-										}
-										className="mt-s-100 min-h-[60px] max-h-[40dvh]"
-										placeholder={t("disciplinePlaceholder")}
-									/>
-								</div>
-							)}
-						</TabsContent>
-
-						{/* Tags Tab */}
-						<TabsContent value="tags" className="space-y-s-300 sm:space-y-m-400">
-							{/* Setup Tags */}
-							{setupTags.length > 0 && (
-								<div>
-									<Label
-										id="label-csv-setup-type"
-										className="text-tiny text-txt-300"
-									>
-										{t("setupType")}
-									</Label>
-									<div className="mt-s-200 gap-s-200 flex flex-wrap">
-										{setupTags.map((tag) => (
-											<button
-												key={tag.id}
-												type="button"
-												onClick={() => handleTagToggle(tag.id)}
-												className={cn(
-													"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
-													trade.edits.tagIds?.includes(tag.id)
-														? "bg-acc-100 text-bg-100"
-														: "bg-bg-300 text-txt-200 hover:bg-bg-100"
-												)}
-												style={
-													trade.edits.tagIds?.includes(tag.id) && tag.color
-														? { backgroundColor: tag.color }
-														: undefined
-												}
-											>
-												{tag.name}
-											</button>
-										))}
-									</div>
-								</div>
-							)}
-
-							{/* Mistake Tags */}
-							{mistakeTags.length > 0 && (
-								<div>
-									<Label
-										id="label-csv-mistakes"
-										className="text-tiny text-txt-300"
-									>
-										{t("mistakes")}
-									</Label>
-									<div className="mt-s-200 gap-s-200 flex flex-wrap">
-										{mistakeTags.map((tag) => (
-											<button
-												key={tag.id}
-												type="button"
-												onClick={() => handleTagToggle(tag.id)}
-												className={cn(
-													"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
-													trade.edits.tagIds?.includes(tag.id)
-														? "bg-warning text-bg-100"
-														: "bg-bg-300 text-txt-200 hover:bg-bg-100"
-												)}
-											>
-												{tag.name}
-											</button>
-										))}
-									</div>
-								</div>
-							)}
-
-							{/* General Tags */}
-							{generalTags.length > 0 && (
-								<div>
-									<Label
-										id="label-csv-general-tags"
-										className="text-tiny text-txt-300"
-									>
-										{t("generalTags")}
-									</Label>
-									<div className="mt-s-200 gap-s-200 flex flex-wrap">
-										{generalTags.map((tag) => (
-											<button
-												key={tag.id}
-												type="button"
-												onClick={() => handleTagToggle(tag.id)}
-												className={cn(
-													"px-s-300 py-s-100 text-tiny rounded-full font-medium transition-colors",
-													trade.edits.tagIds?.includes(tag.id)
-														? "bg-acc-100 text-bg-100"
-														: "bg-bg-300 text-txt-200 hover:bg-bg-100"
-												)}
-												style={
-													trade.edits.tagIds?.includes(tag.id) && tag.color
-														? { backgroundColor: tag.color }
-														: undefined
-												}
-											>
-												{tag.name}
-											</button>
-										))}
-									</div>
-								</div>
-							)}
-
-							{setupTags.length === 0 && mistakeTags.length === 0 && generalTags.length === 0 && (
-								<p className="text-small text-txt-300">
-									{t("noTagsConfigured")}
-								</p>
-							)}
-						</TabsContent>
-					</Tabs>
-				</div>
-			)}
-		</div>
-	)
-})
+		)
+	}
+)
 
 CsvTradeCard.displayName = "CsvTradeCard"
 

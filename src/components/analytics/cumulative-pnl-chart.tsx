@@ -7,7 +7,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
@@ -73,9 +72,22 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 	const t = useTranslations("dashboard.equity")
 	const locale = useLocale()
 
+	const { minEquity, maxEquity, padding } = useMemo(() => {
+		if (data.length === 0) {
+			return { minEquity: 0, maxEquity: 0, padding: 100 }
+		}
+
+		const min = Math.min(...data.map((d) => d.equity))
+		const max = Math.max(...data.map((d) => d.equity))
+		return { minEquity: min, maxEquity: max, padding: (max - min) * 0.1 || 100 }
+	}, [data])
+
 	if (data.length === 0) {
 		return (
-			<div id="analytics-equity-curve" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="analytics-equity-curve"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("cumulative")}
 				</h2>
@@ -86,12 +98,6 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 		)
 	}
 
-	const { minEquity, maxEquity, padding } = useMemo(() => {
-		const min = Math.min(...data.map((d) => d.equity))
-		const max = Math.max(...data.map((d) => d.equity))
-		return { minEquity: min, maxEquity: max, padding: (max - min) * 0.1 || 100 }
-	}, [data])
-
 	const lastEquity = data[data.length - 1]?.equity ?? 0
 	const isPositive = lastEquity >= 0
 	const strokeColor = isPositive
@@ -100,7 +106,10 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 	const gradientColor = isPositive ? "0, 255, 150" : "128, 128, 255"
 
 	return (
-		<div id="analytics-equity-curve" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div
+			id="analytics-equity-curve"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 				{t("cumulative")}
 			</h2>
@@ -140,7 +149,9 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={(value: number) => formatCompactCurrency(value, "R$")}
+						tickFormatter={(value: number) =>
+							formatCompactCurrency(value, "R$")
+						}
 						stroke="var(--color-txt-300)"
 						tick={AXIS_TICK}
 						tickLine={false}
@@ -148,7 +159,10 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 						domain={[minEquity - padding, maxEquity + padding]}
 						width={yAxisWidth}
 					/>
-					<ChartTooltip variant="line" content={<CustomTooltip locale={locale} />} />
+					<ChartTooltip
+						variant="line"
+						content={<CustomTooltip locale={locale} />}
+					/>
 					<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeWidth={2} />
 					<Area
 						type="monotone"

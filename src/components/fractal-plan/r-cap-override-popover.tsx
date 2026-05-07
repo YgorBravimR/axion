@@ -6,11 +6,24 @@ import { Loader2, RotateCcw, Save, Settings2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover"
 import { useToast } from "@/components/ui/toast"
-import { upsertMonthlyPlan, resetMonthlyOverride } from "@/app/actions/fractal-plan/monthly"
-import { upsertWeeklyPlan, resetWeeklyOverride } from "@/app/actions/fractal-plan/weekly"
-import { upsertDailyPlan, resetDailyOverride } from "@/app/actions/fractal-plan/daily"
+import {
+	upsertMonthlyPlan,
+	resetMonthlyOverride,
+} from "@/app/actions/fractal-plan/monthly"
+import {
+	upsertWeeklyPlan,
+	resetWeeklyOverride,
+} from "@/app/actions/fractal-plan/weekly"
+import {
+	upsertDailyPlan,
+	resetDailyOverride,
+} from "@/app/actions/fractal-plan/daily"
 import { ProvenanceBadge } from "./provenance-badge"
 import type { CascadeLevel } from "@/lib/fractal-plan/cascade-merge"
 
@@ -33,38 +46,65 @@ interface RCapOverridePopoverProps {
 }
 
 const formatR = (v: string | null): string => {
-	if (v == null) return "—"
+	if (v === null) {
+		return "—"
+	}
 	const n = Number(v)
 	return Number.isFinite(n) ? `${n.toFixed(2)}R` : "—"
 }
 
-const callUpsert = async (level: Level, planRowId: string, fieldKey: FieldKey, value: number) => {
+const callUpsert = async (
+	level: Level,
+	planRowId: string,
+	fieldKey: FieldKey,
+	value: number
+) => {
 	if (level === "month") {
 		return upsertMonthlyPlan({ monthlyPlanId: planRowId, [fieldKey]: value })
 	}
 	if (level === "week") {
 		if (fieldKey === "overrideMonthlyLossR") {
-			return { status: "error" as const, message: "monthlyLossR not overridable at week level" }
+			return {
+				status: "error" as const,
+				message: "monthlyLossR not overridable at week level",
+			}
 		}
 		return upsertWeeklyPlan({ weeklyPlanId: planRowId, [fieldKey]: value })
 	}
-	if (fieldKey === "overrideWeeklyLossR" || fieldKey === "overrideMonthlyLossR") {
-		return { status: "error" as const, message: `${fieldKey} not overridable at day level` }
+	if (
+		fieldKey === "overrideWeeklyLossR" ||
+		fieldKey === "overrideMonthlyLossR"
+	) {
+		return {
+			status: "error" as const,
+			message: `${fieldKey} not overridable at day level`,
+		}
 	}
 	return upsertDailyPlan({ dailyPlanId: planRowId, [fieldKey]: value })
 }
 
-const callReset = async (level: Level, planRowId: string, fieldKey: FieldKey) => {
+const callReset = async (
+	level: Level,
+	planRowId: string,
+	fieldKey: FieldKey
+) => {
 	if (level === "month") {
 		return resetMonthlyOverride({
 			monthlyPlanId: planRowId,
-			field: fieldKey as "overrideDailyLossR" | "overrideWeeklyLossR" | "overrideMonthlyLossR" | "overrideDailyTargetR",
+			field: fieldKey as
+				| "overrideDailyLossR"
+				| "overrideWeeklyLossR"
+				| "overrideMonthlyLossR"
+				| "overrideDailyTargetR",
 		})
 	}
 	if (level === "week") {
 		return resetWeeklyOverride({
 			weeklyPlanId: planRowId,
-			field: fieldKey as "overrideDailyLossR" | "overrideWeeklyLossR" | "overrideDailyTargetR",
+			field: fieldKey as
+				| "overrideDailyLossR"
+				| "overrideWeeklyLossR"
+				| "overrideDailyTargetR",
 		})
 	}
 	return resetDailyOverride({
@@ -123,8 +163,10 @@ const RCapOverridePopover = ({
 	}
 
 	return (
-		<div className="flex items-center gap-s-200">
-			<span className="font-mono text-lg text-txt-100">{formatR(currentValue)}</span>
+		<div className="gap-s-200 flex items-center">
+			<span className="text-txt-100 font-mono text-lg">
+				{formatR(currentValue)}
+			</span>
 			<ProvenanceBadge level={currentSource} isOverride={isOverridden} />
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
@@ -132,7 +174,7 @@ const RCapOverridePopover = ({
 						id={`${idPrefix}-trigger`}
 						variant="ghost"
 						size="sm"
-						className="h-7 px-2 text-tiny text-txt-300 hover:text-txt-100"
+						className="text-tiny text-txt-300 hover:text-txt-100 h-7 px-2"
 						aria-label={`Edit ${fieldLabel} override`}
 					>
 						<Settings2 className="h-3.5 w-3.5" />
@@ -141,15 +183,19 @@ const RCapOverridePopover = ({
 				<PopoverContent className="w-72" align="end">
 					<div className="space-y-s-300">
 						<div>
-							<p className="text-tiny font-medium uppercase tracking-wider text-txt-300">
+							<p className="text-tiny text-txt-300 font-medium tracking-wider uppercase">
 								Override {fieldLabel} at {level}
 							</p>
-							<p className="mt-1 text-tiny text-txt-300">
-								Current: {formatR(currentValue)} from <strong className="text-txt-200">{currentSource}</strong>
+							<p className="text-tiny text-txt-300 mt-1">
+								Current: {formatR(currentValue)} from{" "}
+								<strong className="text-txt-200">{currentSource}</strong>
 							</p>
 						</div>
 						<div>
-							<Label id={`${idPrefix}-input-label`} htmlFor={`${idPrefix}-input`}>
+							<Label
+								id={`${idPrefix}-input-label`}
+								htmlFor={`${idPrefix}-input`}
+							>
 								New R value
 							</Label>
 							<Input
@@ -163,7 +209,7 @@ const RCapOverridePopover = ({
 								autoFocus
 							/>
 						</div>
-						<div className="flex items-center justify-between gap-s-200">
+						<div className="gap-s-200 flex items-center justify-between">
 							<Button
 								id={`${idPrefix}-reset`}
 								variant="ghost"

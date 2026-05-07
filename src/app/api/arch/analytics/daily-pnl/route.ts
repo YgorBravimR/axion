@@ -10,7 +10,9 @@ import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -19,20 +21,29 @@ const GET = async (request: NextRequest) => {
 		const monthParam = searchParams.get("month")
 
 		if (!yearParam || !monthParam) {
-			return archError(
-				"Missing required parameters",
-				[{ code: "MISSING_PARAMS", detail: "year and month query params are required" }]
-			)
+			return archError("Missing required parameters", [
+				{
+					code: "MISSING_PARAMS",
+					detail: "year and month query params are required",
+				},
+			])
 		}
 
 		const year = parseInt(yearParam, 10)
 		const monthIndex = parseInt(monthParam, 10)
 
-		if (Number.isNaN(year) || Number.isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) {
-			return archError(
-				"Invalid parameters",
-				[{ code: "INVALID_PARAMS", detail: "year must be a number, month must be 0-11" }]
-			)
+		if (
+			Number.isNaN(year) ||
+			Number.isNaN(monthIndex) ||
+			monthIndex < 0 ||
+			monthIndex > 11
+		) {
+			return archError("Invalid parameters", [
+				{
+					code: "INVALID_PARAMS",
+					detail: "year must be a number, month must be 0-11",
+				},
+			])
 		}
 
 		const accountCondition = auth.showAllAccounts
@@ -71,13 +82,11 @@ const GET = async (request: NextRequest) => {
 			dailyMap.set(dateKey, existing)
 		}
 
-		const dailyPnL = Array.from(dailyMap.entries()).map(
-			([date, data]) => ({
-				date,
-				pnl: data.pnl,
-				tradeCount: data.count,
-			})
-		)
+		const dailyPnL = Array.from(dailyMap.entries()).map(([date, data]) => ({
+			date,
+			pnl: data.pnl,
+			tradeCount: data.count,
+		}))
 
 		return archSuccess("Daily P&L retrieved", dailyPnL)
 	} catch (error) {

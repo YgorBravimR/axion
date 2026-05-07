@@ -8,8 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/toast"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { listFeeRates, upsertFeeRates, deleteFeeRates } from "@/app/actions/tax-engine"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
+import {
+	listFeeRates,
+	upsertFeeRates,
+	deleteFeeRates,
+} from "@/app/actions/tax-engine"
 import { getActiveAssets } from "@/app/actions/assets"
 import type { FeeRatesEntry } from "@/lib/tax/types"
 import { ASSET_FEE_DEFAULTS } from "@/lib/tax/asset-defaults"
@@ -62,12 +72,37 @@ interface PaneFields {
 }
 
 const FIELDS: PaneFields[] = [
-	{ key: "txCorretagem", label: "Tx Corretagem (R$/contrato)", hint: "Ex: 0.0500 = R$0,05 por contrato", step: "0.0001" },
-	{ key: "txRegistro", label: "Tx Registro (R$/contrato)", hint: "Ex: 0.7400 = R$0,74 por contrato", step: "0.0001" },
-	{ key: "emolumentos", label: "Emolumentos (R$/contrato)", hint: "Ex: 0.4000 = R$0,40 por contrato", step: "0.0001" },
-	{ key: "issRate", label: "ISS (% sobre Corretagem)", hint: "São Paulo: 5,00% (padrão)", step: "0.01" },
+	{
+		key: "txCorretagem",
+		label: "Tx Corretagem (R$/contrato)",
+		hint: "Ex: 0.0500 = R$0,05 por contrato",
+		step: "0.0001",
+	},
+	{
+		key: "txRegistro",
+		label: "Tx Registro (R$/contrato)",
+		hint: "Ex: 0.7400 = R$0,74 por contrato",
+		step: "0.0001",
+	},
+	{
+		key: "emolumentos",
+		label: "Emolumentos (R$/contrato)",
+		hint: "Ex: 0.4000 = R$0,40 por contrato",
+		step: "0.0001",
+	},
+	{
+		key: "issRate",
+		label: "ISS (% sobre Corretagem)",
+		hint: "São Paulo: 5,00% (padrão)",
+		step: "0.01",
+	},
 	{ key: "irrfRate", label: "IRRF (%)", hint: "Padrão: 1,00%", step: "0.01" },
-	{ key: "irRate", label: "IR Day-trade (%)", hint: "Padrão: 20,00%", step: "0.01" },
+	{
+		key: "irRate",
+		label: "IR Day-trade (%)",
+		hint: "Padrão: 20,00%",
+		step: "0.01",
+	},
 ]
 
 const formatBRL = (value: number) =>
@@ -96,17 +131,24 @@ const computePerContractTotal = (values: DisplayValues) => {
 }
 
 const PerContractTotal = ({ values }: { values: DisplayValues }) => {
-	const { iss, total } = useMemo(() => computePerContractTotal(values), [values])
+	const { iss, total } = useMemo(
+		() => computePerContractTotal(values),
+		[values]
+	)
 
 	return (
-		<div className="rounded-lg border border-txt-300/15 bg-bg-200/40 px-s-300 py-s-300">
-			<div className="flex items-center justify-between gap-s-200">
-				<span className="text-small text-txt-200">Total por contrato (B3 + ISS)</span>
-				<span className="font-mono text-body text-txt-100">{formatBRL(total)}</span>
+		<div className="border-txt-300/15 bg-bg-200/40 px-s-300 py-s-300 rounded-lg border">
+			<div className="gap-s-200 flex items-center justify-between">
+				<span className="text-small text-txt-200">
+					Total por contrato (B3 + ISS)
+				</span>
+				<span className="text-body text-txt-100 font-mono">
+					{formatBRL(total)}
+				</span>
 			</div>
 			<p className="mt-s-100 text-tiny text-txt-300">
-				Tx Corretagem + Tx Registro + Emolumentos + ISS ({formatBRL(iss)}). IRRF e IR
-				incidem sobre lucro, não por contrato.
+				Tx Corretagem + Tx Registro + Emolumentos + ISS ({formatBRL(iss)}). IRRF
+				e IR incidem sobre lucro, não por contrato.
 			</p>
 		</div>
 	)
@@ -120,7 +162,13 @@ interface PaneProps {
 	onReset: () => void
 }
 
-const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: PaneProps) => {
+const FeeRatePane = ({
+	assetSymbol,
+	initial,
+	allowReset,
+	onSave,
+	onReset,
+}: PaneProps) => {
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [values, setValues] = useState<DisplayValues>(initial)
@@ -156,7 +204,9 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 	}
 
 	const handleReset = () => {
-		if (!assetSymbol) return
+		if (!assetSymbol) {
+			return
+		}
 		startTransition(async () => {
 			const result = await deleteFeeRates(assetSymbol)
 			if (result.status === "success") {
@@ -174,7 +224,7 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 			className="space-y-m-400"
 			aria-label={`Configuração de taxas — ${assetSymbol ?? "padrão"}`}
 		>
-			<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
+			<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 				{FIELDS.map(({ key, label, hint, step }) => (
 					<div key={key} className="space-y-s-100">
 						<Label
@@ -194,7 +244,10 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 							aria-describedby={`fee-${assetSymbol ?? "default"}-${key}-hint`}
 							className="font-mono"
 						/>
-						<p id={`fee-${assetSymbol ?? "default"}-${key}-hint`} className="text-tiny text-txt-300">
+						<p
+							id={`fee-${assetSymbol ?? "default"}-${key}-hint`}
+							className="text-tiny text-txt-300"
+						>
 							{hint}
 						</p>
 					</div>
@@ -203,7 +256,7 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 
 			<label
 				htmlFor={`fee-${assetSymbol ?? "default"}-subjectToPersonalIr`}
-				className="flex cursor-pointer items-center gap-s-200 text-small text-txt-200"
+				className="gap-s-200 text-small text-txt-200 flex cursor-pointer items-center"
 			>
 				<Checkbox
 					id={`fee-${assetSymbol ?? "default"}-subjectToPersonalIr`}
@@ -216,7 +269,7 @@ const FeeRatePane = ({ assetSymbol, initial, allowReset, onSave, onReset }: Pane
 
 			<PerContractTotal values={values} />
 
-			<div className="flex items-center gap-s-300">
+			<div className="gap-s-300 flex items-center">
 				<Button
 					id={`fee-rate-form-submit-${assetSymbol ?? "default"}`}
 					type="submit"
@@ -250,7 +303,8 @@ interface AssetTab {
 
 const FeeRateForm = () => {
 	const [isLoading, setIsLoading] = useState(true)
-	const [defaultDisplay, setDefaultDisplay] = useState<DisplayValues>(DEFAULT_DISPLAY)
+	const [defaultDisplay, setDefaultDisplay] =
+		useState<DisplayValues>(DEFAULT_DISPLAY)
 	const [assetTabs, setAssetTabs] = useState<AssetTab[]>([])
 	const [availableSymbols, setAvailableSymbols] = useState<string[]>([])
 	const [activeTab, setActiveTab] = useState<string>("__default__")
@@ -263,14 +317,19 @@ const FeeRateForm = () => {
 				listFeeRates(),
 				getActiveAssets(),
 			])
-			if (!mounted) return
+			if (!mounted) {
+				return
+			}
 
-			const entries = feeRatesResult.status === "success" && feeRatesResult.data
-				? feeRatesResult.data
-				: []
+			const entries =
+				feeRatesResult.status === "success" && feeRatesResult.data
+					? feeRatesResult.data
+					: []
 
 			const defaultEntry = entries.find((e) => e.assetSymbol === null)
-			setDefaultDisplay(defaultEntry ? entryToDisplay(defaultEntry) : DEFAULT_DISPLAY)
+			setDefaultDisplay(
+				defaultEntry ? entryToDisplay(defaultEntry) : DEFAULT_DISPLAY
+			)
 
 			const overrideSymbols = entries
 				.map((e) => e.assetSymbol)
@@ -290,11 +349,11 @@ const FeeRateForm = () => {
 			setAvailableSymbols(
 				allActiveAssets
 					.map((a) => a.symbol)
-					.filter((s) => !overrideSymbols.includes(s)),
+					.filter((s) => !overrideSymbols.includes(s))
 			)
 			setIsLoading(false)
 		}
-		load()
+		void load()
 		return () => {
 			mounted = false
 		}
@@ -305,10 +364,7 @@ const FeeRateForm = () => {
 	const handleAddOverride = (symbol: string) => {
 		const preset = ASSET_FEE_DEFAULTS[symbol]
 		const display = preset ? entryToDisplay(preset) : defaultDisplay
-		setAssetTabs((prev) => [
-			...prev,
-			{ symbol, display, hasOverride: false },
-		])
+		setAssetTabs((prev) => [...prev, { symbol, display, hasOverride: false }])
 		setAvailableSymbols((prev) => prev.filter((s) => s !== symbol))
 		setActiveTab(symbol)
 	}
@@ -319,7 +375,7 @@ const FeeRateForm = () => {
 
 	return (
 		<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-			<div className="flex items-center justify-between gap-s-300 flex-wrap">
+			<div className="gap-s-300 flex flex-wrap items-center justify-between">
 				<TabsList className="overflow-x-auto">
 					<TabsTrigger value="__default__">Padrão</TabsTrigger>
 					{assetTabs.map((tab) => (
@@ -350,7 +406,8 @@ const FeeRateForm = () => {
 			</div>
 			<TabsContent value="__default__" className="pt-m-400">
 				<p className="text-tiny text-txt-300 mb-s-300">
-					Taxas padrão da conta. Aplicadas a qualquer ativo sem override específico.
+					Taxas padrão da conta. Aplicadas a qualquer ativo sem override
+					específico.
 				</p>
 				<FeeRatePane
 					assetSymbol={null}

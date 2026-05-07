@@ -10,8 +10,21 @@ import type {
 } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 import { groupCandlesByDay, buildDayContext } from "./day-grouper"
-import { checkHits, applySlippage, calculatePnlCents, getNextTargetPrice } from "./candle-utils"
-import { processOrbCandle, createInitialOrbState, type OrbState, processDezkCandle, createInitialDezkState, resetDezkForNewDay, type DezkState } from "./modules/entry"
+import {
+	checkHits,
+	applySlippage,
+	calculatePnlCents,
+	getNextTargetPrice,
+} from "./candle-utils"
+import {
+	processOrbCandle,
+	createInitialOrbState,
+	type OrbState,
+	processDezkCandle,
+	createInitialDezkState,
+	resetDezkForNewDay,
+	type DezkState,
+} from "./modules/entry"
 import { createStopModule } from "./modules/stop"
 import { createTargetModule } from "./modules/target"
 import { createSizingModule } from "./modules/sizing"
@@ -48,23 +61,26 @@ const runBacktest = (
 	let tradeCounter = 0
 
 	// Get valuePerPointCents from sizing config (for P&L calculation)
-	const valuePerPointCents = recipe.sizing.type === "monetary_risk"
-		? recipe.sizing.valuePerPointCents
-		: assetConfig.tickValueCents / assetConfig.tickSize
+	const valuePerPointCents =
+		recipe.sizing.type === "monetary_risk"
+			? recipe.sizing.valuePerPointCents
+			: assetConfig.tickValueCents / assetConfig.tickSize
 
 	// For indicator-based strategies (10K), state carries across days for warmup.
 	// ORB resets fresh each day (only cares about current day's opening range).
-	let persistentEntryState: DezkState | null = recipe.entry.type === "macd_wma_alignment"
-		? createInitialDezkState(recipe.entry.config)
-		: null
+	let persistentEntryState: DezkState | null =
+		recipe.entry.type === "macd_wma_alignment"
+			? createInitialDezkState(recipe.entry.config)
+			: null
 
 	for (const dayKey of sortedDayKeys) {
 		const dayCandlesArr = days.get(dayKey)!
 		let position: Position | null = null
 		let reversalState = reversalModule.init()
-		let entryState: OrbState | DezkState = recipe.entry.type === "orb_breakout"
-			? createInitialOrbState()
-			: resetDezkForNewDay(persistentEntryState!)
+		let entryState: OrbState | DezkState =
+			recipe.entry.type === "orb_breakout"
+				? createInitialOrbState()
+				: resetDezkForNewDay(persistentEntryState!)
 		let dayRangeHigh: number | null = null
 		let dayRangeLow: number | null = null
 		const dayTrades: BacktestTrade[] = []
@@ -79,8 +95,22 @@ const runBacktest = (
 
 				// EOD forced close
 				if (ctx.brtHHMM >= EOD_TIME) {
-					const exitPrice = applySlippage(candle.close, pos.direction, false, recipe.slippageTicks, assetConfig.tickSize)
-					const trade = closeTrade(pos, exitPrice, candle.timestamp, "eod", valuePerPointCents, recipe.slippageTicks, assetConfig.tickSize)
+					const exitPrice = applySlippage(
+						candle.close,
+						pos.direction,
+						false,
+						recipe.slippageTicks,
+						assetConfig.tickSize
+					)
+					const trade = closeTrade(
+						pos,
+						exitPrice,
+						candle.timestamp,
+						"eod",
+						valuePerPointCents,
+						recipe.slippageTicks,
+						assetConfig.tickSize
+					)
 					trade.id = ++tradeCounter
 					dayTrades.push(trade)
 					position = null
@@ -88,37 +118,123 @@ const runBacktest = (
 				}
 
 				// Check stop
-				const stopResult = stopModule.onCandle(candle, pos.stopState, recipe.stop)
+				const stopResult = stopModule.onCandle(
+					candle,
+					pos.stopState,
+					recipe.stop
+				)
 				const updatedPos: Position = { ...pos, stopState: stopResult.state }
 
 				// Check targets
-				const targetResult = targetModule.onCandle(candle, pos.targetState, recipe.target, pos.direction, ctx)
-				const currentPos: Position = { ...updatedPos, targetState: targetResult.state }
+				const targetResult = targetModule.onCandle(
+					candle,
+					pos.targetState,
+					recipe.target,
+					pos.direction,
+					ctx
+				)
+				const currentPos: Position = {
+					...updatedPos,
+					targetState: targetResult.state,
+				}
 				position = currentPos
 
 				// Determine what hit and in what order
 				const nextTargetPrice = getNextTargetPrice(currentPos)
-				const hitResult = checkHits(candle, stopResult.currentStopPrice, nextTargetPrice, currentPos.direction)
+				const hitResult = checkHits(
+					candle,
+					stopResult.currentStopPrice,
+					nextTargetPrice,
+					currentPos.direction
+				)
 
 				if (hitResult.stopHit && hitResult.targetHit) {
 					if (hitResult.stopHitFirst) {
-						const exitReason = stopResult.state.breakevenTriggered ? "breakeven_stop" : "stop"
-						position = handleStopHit(currentPos, stopResult.currentStopPrice, candle, exitReason, recipe, assetConfig, valuePerPointCents, dayTrades, trades, dayKey, reversalModule, reversalState, stopModule, targetModule, sizingModule, entryState, dayRangeHigh, dayRangeLow, tradeCounter)
-						tradeCounter = dayTrades.length > 0 ? dayTrades[dayTrades.length - 1].id : tradeCounter
+						const exitReason = stopResult.state.breakevenTriggered
+							? "breakeven_stop"
+							: "stop"
+						position = handleStopHit(
+							currentPos,
+							stopResult.currentStopPrice,
+							candle,
+							exitReason,
+							recipe,
+							assetConfig,
+							valuePerPointCents,
+							dayTrades,
+							trades,
+							dayKey,
+							reversalModule,
+							reversalState,
+							stopModule,
+							targetModule,
+							sizingModule,
+							entryState,
+							dayRangeHigh,
+							dayRangeLow,
+							tradeCounter
+						)
+						tradeCounter =
+							dayTrades.length > 0
+								? dayTrades[dayTrades.length - 1].id
+								: tradeCounter
 					} else {
-						position = handleTargetHit(currentPos, targetResult, candle, recipe, assetConfig, valuePerPointCents, dayTrades, tradeCounter, stopModule)
-						tradeCounter = dayTrades.length > 0 ? dayTrades[dayTrades.length - 1].id : tradeCounter
+						position = handleTargetHit(
+							currentPos,
+							targetResult,
+							candle,
+							recipe,
+							assetConfig,
+							valuePerPointCents,
+							dayTrades,
+							tradeCounter,
+							stopModule
+						)
+						tradeCounter =
+							dayTrades.length > 0
+								? dayTrades[dayTrades.length - 1].id
+								: tradeCounter
 					}
 				} else if (hitResult.stopHit) {
-					const exitReason = stopResult.state.breakevenTriggered ? "breakeven_stop" : "stop"
-					const result = processStopHit(currentPos, stopResult.currentStopPrice, candle, exitReason, recipe, assetConfig, valuePerPointCents, reversalModule, reversalState, stopModule, targetModule, sizingModule, entryState, tradeCounter)
+					const exitReason = stopResult.state.breakevenTriggered
+						? "breakeven_stop"
+						: "stop"
+					const result = processStopHit(
+						currentPos,
+						stopResult.currentStopPrice,
+						candle,
+						exitReason,
+						recipe,
+						assetConfig,
+						valuePerPointCents,
+						reversalModule,
+						reversalState,
+						stopModule,
+						targetModule,
+						sizingModule,
+						entryState,
+						tradeCounter
+					)
 					dayTrades.push(result.trade)
 					tradeCounter = result.trade.id
 					position = result.newPosition
 					reversalState = result.reversalState
 				} else if (targetResult.exits.length > 0) {
-					position = handleTargetHit(currentPos, targetResult, candle, recipe, assetConfig, valuePerPointCents, dayTrades, tradeCounter, stopModule)
-					tradeCounter = dayTrades.length > 0 ? dayTrades[dayTrades.length - 1].id : tradeCounter
+					position = handleTargetHit(
+						currentPos,
+						targetResult,
+						candle,
+						recipe,
+						assetConfig,
+						valuePerPointCents,
+						dayTrades,
+						tradeCounter,
+						stopModule
+					)
+					tradeCounter =
+						dayTrades.length > 0
+							? dayTrades[dayTrades.length - 1].id
+							: tradeCounter
 				}
 
 				continue
@@ -128,7 +244,13 @@ const runBacktest = (
 			let entrySignal: EntrySignal | null = null
 
 			if (recipe.entry.type === "orb_breakout") {
-				const result = processOrbCandle(candle, entryState as OrbState, ctx, assetConfig.tickSize, recipe.entry.config)
+				const result = processOrbCandle(
+					candle,
+					entryState as OrbState,
+					ctx,
+					assetConfig.tickSize,
+					recipe.entry.config
+				)
 				entryState = result.state
 				entrySignal = result.signal
 
@@ -138,21 +260,51 @@ const runBacktest = (
 					dayRangeLow = (result.state as OrbState).rangeLow
 				}
 			} else if (recipe.entry.type === "macd_wma_alignment") {
-				const result = processDezkCandle(candle, entryState as DezkState, ctx, assetConfig.tickSize, recipe.entry.config)
+				const result = processDezkCandle(
+					candle,
+					entryState as DezkState,
+					ctx,
+					assetConfig.tickSize,
+					recipe.entry.config
+				)
 				entryState = result.state
 				entrySignal = result.signal
 			}
 
 			if (entrySignal) {
-				position = openPosition(entrySignal, recipe, assetConfig, valuePerPointCents, candle, dayKey, stopModule, targetModule, sizingModule)
+				position = openPosition(
+					entrySignal,
+					recipe,
+					assetConfig,
+					valuePerPointCents,
+					candle,
+					dayKey,
+					stopModule,
+					targetModule,
+					sizingModule
+				)
 			}
 		}
 
 		// Force-close any remaining position at EOD (if not already closed)
 		if (position) {
 			const lastCandle = dayCandlesArr[dayCandlesArr.length - 1]
-			const exitPrice = applySlippage(lastCandle.close, position.direction, false, recipe.slippageTicks, assetConfig.tickSize)
-			const trade = closeTrade(position, exitPrice, lastCandle.timestamp, "eod", valuePerPointCents, recipe.slippageTicks, assetConfig.tickSize)
+			const exitPrice = applySlippage(
+				lastCandle.close,
+				position.direction,
+				false,
+				recipe.slippageTicks,
+				assetConfig.tickSize
+			)
+			const trade = closeTrade(
+				position,
+				exitPrice,
+				lastCandle.timestamp,
+				"eod",
+				valuePerPointCents,
+				recipe.slippageTicks,
+				assetConfig.tickSize
+			)
 			trade.id = ++tradeCounter
 			dayTrades.push(trade)
 		}
@@ -195,17 +347,35 @@ const openPosition = (
 	targetMod: ReturnType<typeof createTargetModule>,
 	sizingMod: ReturnType<typeof createSizingModule>
 ): Position => {
-	const entryPrice = applySlippage(signal.price, signal.direction, true, recipe.slippageTicks, assetConfig.tickSize)
+	const entryPrice = applySlippage(
+		signal.price,
+		signal.direction,
+		true,
+		recipe.slippageTicks,
+		assetConfig.tickSize
+	)
 
 	// Initialize stop module
-	const stopState = stopMod.init(entryPrice, signal.direction, signal, recipe.stop, assetConfig.tickSize)
+	const stopState = stopMod.init(
+		entryPrice,
+		signal.direction,
+		signal,
+		recipe.stop,
+		assetConfig.tickSize
+	)
 	const stopDistance = stopState.initialStopDistance
 
 	// Calculate position size
 	const contracts = sizingMod.calculate(stopDistance, recipe.sizing)
 
 	// Initialize target module (pass stopDistance for R-multiple and pct_stop modes)
-	const targetState = targetMod.init(entryPrice, signal.direction, signal, recipe.target, stopDistance)
+	const targetState = targetMod.init(
+		entryPrice,
+		signal.direction,
+		signal,
+		recipe.target,
+		stopDistance
+	)
 
 	// Calculate initial risk for R-multiple
 	const riskCents = Math.round(stopDistance * contracts * valuePerPointCents)
@@ -234,10 +404,21 @@ const closeTrade = (
 	tickSize: number
 ): BacktestTrade => {
 	const contracts = position.contractsRemaining
-	const grossPnlCents = calculatePnlCents(position.entryPrice, exitPrice, position.direction, contracts, valuePerPointCents)
-	const slippageCostCents = Math.round(slippageTicks * tickSize * valuePerPointCents * contracts * 2) // entry + exit slippage
+	const grossPnlCents = calculatePnlCents(
+		position.entryPrice,
+		exitPrice,
+		position.direction,
+		contracts,
+		valuePerPointCents
+	)
+	const slippageCostCents = Math.round(
+		slippageTicks * tickSize * valuePerPointCents * contracts * 2
+	) // entry + exit slippage
 	const netPnlCents = grossPnlCents
-	const rMultiple = position.riskCents > 0 ? Math.round((netPnlCents / position.riskCents) * 100) / 100 : 0
+	const rMultiple =
+		position.riskCents > 0
+			? Math.round((netPnlCents / position.riskCents) * 100) / 100
+			: 0
 
 	return {
 		id: 0, // set by caller
@@ -266,33 +447,73 @@ const processStopHit = (
 	assetConfig: AssetConfig,
 	valuePerPointCents: number,
 	reversalMod: ReturnType<typeof createReversalModule>,
-	reversalState: ReturnType<typeof createReversalModule>["init"] extends () => infer R ? R : never,
+	reversalState: ReturnType<
+		typeof createReversalModule
+	>["init"] extends () => infer R
+		? R
+		: never,
 	stopMod: ReturnType<typeof createStopModule>,
 	targetMod: ReturnType<typeof createTargetModule>,
 	sizingMod: ReturnType<typeof createSizingModule>,
 	entryState: unknown,
 	tradeCounter: number
-): { trade: BacktestTrade; newPosition: Position | null; reversalState: typeof reversalState } => {
-	const exitPrice = applySlippage(stopPrice, position.direction, false, recipe.slippageTicks, assetConfig.tickSize)
-	const trade = closeTrade(position, exitPrice, candle.timestamp, exitReason, valuePerPointCents, recipe.slippageTicks, assetConfig.tickSize)
+): {
+	trade: BacktestTrade
+	newPosition: Position | null
+	reversalState: typeof reversalState
+} => {
+	const exitPrice = applySlippage(
+		stopPrice,
+		position.direction,
+		false,
+		recipe.slippageTicks,
+		assetConfig.tickSize
+	)
+	const trade = closeTrade(
+		position,
+		exitPrice,
+		candle.timestamp,
+		exitReason,
+		valuePerPointCents,
+		recipe.slippageTicks,
+		assetConfig.tickSize
+	)
 	trade.id = tradeCounter + 1
 
 	// Check reversal
-	const reversalResult = reversalMod.check(exitReason, reversalState, recipe.reversal)
+	const reversalResult = reversalMod.check(
+		exitReason,
+		reversalState,
+		recipe.reversal
+	)
 
 	if (reversalResult.shouldReverse) {
 		// Create a mirrored signal for the reverse position
-		const reverseDirection: Direction = position.direction === "long" ? "short" : "long"
+		const reverseDirection: Direction =
+			position.direction === "long" ? "short" : "long"
 		const reverseSignal: EntrySignal = {
 			direction: reverseDirection,
 			price: candle.close,
 			rangeHigh: position.targetState.targetPrices[0] ?? candle.high, // use existing range reference
 			rangeLow: position.stopState.currentStopPrice,
-			rangeWidth: Math.abs((position.targetState.targetPrices[0] ?? candle.high) - position.stopState.currentStopPrice),
+			rangeWidth: Math.abs(
+				(position.targetState.targetPrices[0] ?? candle.high) -
+					position.stopState.currentStopPrice
+			),
 			label: `Reversal ${reverseDirection} after ${exitReason}`,
 		}
 
-		const newPosition = openPosition(reverseSignal, recipe, assetConfig, valuePerPointCents, candle, position.entryDayKey, stopMod, targetMod, sizingMod)
+		const newPosition = openPosition(
+			reverseSignal,
+			recipe,
+			assetConfig,
+			valuePerPointCents,
+			candle,
+			position.entryDayKey,
+			stopMod,
+			targetMod,
+			sizingMod
+		)
 
 		return {
 			trade,
@@ -320,7 +541,11 @@ const handleStopHit = (
 	_allTrades: BacktestTrade[],
 	_dayKey: string,
 	reversalMod: ReturnType<typeof createReversalModule>,
-	reversalState: ReturnType<typeof createReversalModule>["init"] extends () => infer R ? R : never,
+	reversalState: ReturnType<
+		typeof createReversalModule
+	>["init"] extends () => infer R
+		? R
+		: never,
 	stopMod: ReturnType<typeof createStopModule>,
 	targetMod: ReturnType<typeof createTargetModule>,
 	sizingMod: ReturnType<typeof createSizingModule>,
@@ -329,14 +554,32 @@ const handleStopHit = (
 	_dayRangeLow: number | null,
 	tradeCounter: number
 ): Position | null => {
-	const result = processStopHit(position, stopPrice, candle, exitReason, recipe, assetConfig, valuePerPointCents, reversalMod, reversalState, stopMod, targetMod, sizingMod, _entryState, tradeCounter)
+	const result = processStopHit(
+		position,
+		stopPrice,
+		candle,
+		exitReason,
+		recipe,
+		assetConfig,
+		valuePerPointCents,
+		reversalMod,
+		reversalState,
+		stopMod,
+		targetMod,
+		sizingMod,
+		_entryState,
+		tradeCounter
+	)
 	dayTrades.push(result.trade)
 	return result.newPosition
 }
 
 const handleTargetHit = (
 	position: Position,
-	targetResult: { exits: Array<{ price: number; fraction: number; reason: string }>; state: Position["targetState"] },
+	targetResult: {
+		exits: Array<{ price: number; fraction: number; reason: string }>
+		state: Position["targetState"]
+	},
 	candle: CandleRow,
 	recipe: StrategyRecipe,
 	assetConfig: AssetConfig,
@@ -348,20 +591,46 @@ const handleTargetHit = (
 	let updatedPosition = { ...position, targetState: targetResult.state }
 
 	for (const exit of targetResult.exits) {
-		if (updatedPosition.contractsRemaining <= 0) break
+		if (updatedPosition.contractsRemaining <= 0) {
+			break
+		}
 
 		// Determine contracts to exit based on allocation
-		const exitContracts = exit.fraction >= 1.0
-			? updatedPosition.contractsRemaining
-			: Math.floor(updatedPosition.contracts * exit.fraction)
+		const exitContracts =
+			exit.fraction >= 1.0
+				? updatedPosition.contractsRemaining
+				: Math.floor(updatedPosition.contracts * exit.fraction)
 
-		if (exitContracts <= 0) continue
+		if (exitContracts <= 0) {
+			continue
+		}
 
-		const actualExitContracts = Math.min(exitContracts, updatedPosition.contractsRemaining)
-		const exitPrice = applySlippage(exit.price, updatedPosition.direction, false, recipe.slippageTicks, assetConfig.tickSize)
+		const actualExitContracts = Math.min(
+			exitContracts,
+			updatedPosition.contractsRemaining
+		)
+		const exitPrice = applySlippage(
+			exit.price,
+			updatedPosition.direction,
+			false,
+			recipe.slippageTicks,
+			assetConfig.tickSize
+		)
 
-		const grossPnlCents = calculatePnlCents(updatedPosition.entryPrice, exitPrice, updatedPosition.direction, actualExitContracts, valuePerPointCents)
-		const slippageCostCents = Math.round(recipe.slippageTicks * assetConfig.tickSize * valuePerPointCents * actualExitContracts * 2)
+		const grossPnlCents = calculatePnlCents(
+			updatedPosition.entryPrice,
+			exitPrice,
+			updatedPosition.direction,
+			actualExitContracts,
+			valuePerPointCents
+		)
+		const slippageCostCents = Math.round(
+			recipe.slippageTicks *
+				assetConfig.tickSize *
+				valuePerPointCents *
+				actualExitContracts *
+				2
+		)
 
 		const trade: BacktestTrade = {
 			id: ++tradeCounter,
@@ -376,23 +645,28 @@ const handleTargetHit = (
 			grossPnlCents,
 			slippageCostCents,
 			netPnlCents: grossPnlCents,
-			rMultiple: updatedPosition.riskCents > 0
-				? Math.round((grossPnlCents / updatedPosition.riskCents) * 100) / 100
-				: 0,
+			rMultiple:
+				updatedPosition.riskCents > 0
+					? Math.round((grossPnlCents / updatedPosition.riskCents) * 100) / 100
+					: 0,
 			label: updatedPosition.label,
 		}
 
 		dayTrades.push(trade)
 		updatedPosition = {
 			...updatedPosition,
-			contractsRemaining: updatedPosition.contractsRemaining - actualExitContracts,
+			contractsRemaining:
+				updatedPosition.contractsRemaining - actualExitContracts,
 		}
 
 		// Notify stop module of partial exit (for breakeven trigger)
 		if (updatedPosition.contractsRemaining > 0) {
 			updatedPosition = {
 				...updatedPosition,
-				stopState: stopMod.notifyPartialExit(updatedPosition.stopState, recipe.stop),
+				stopState: stopMod.notifyPartialExit(
+					updatedPosition.stopState,
+					recipe.stop
+				),
 			}
 		}
 	}

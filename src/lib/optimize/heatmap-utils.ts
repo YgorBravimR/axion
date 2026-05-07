@@ -1,5 +1,11 @@
-import { getSweepableParams, getNestedValue } from "@/lib/optimize/parameter-grid"
-import type { NumericSweepableParam, EnumSweepableParam } from "@/lib/optimize/parameter-grid"
+import {
+	getSweepableParams,
+	getNestedValue,
+} from "@/lib/optimize/parameter-grid"
+import type {
+	NumericSweepableParam,
+	EnumSweepableParam,
+} from "@/lib/optimize/parameter-grid"
 import type { OptimizationRun } from "@/types/backtest"
 
 // ── Types ────────────────────────────────────────────────────────
@@ -97,11 +103,17 @@ const getNestedStringValue = (obj: unknown, path: string): string => {
  * Detects both numeric and enum (categorical) variation.
  */
 const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
-	if (runs.length < 2) return []
+	if (runs.length < 2) {
+		return []
+	}
 
 	const strategyType = runs[0].recipe.entry.type
-	const sameStrategyRuns = runs.filter((r) => r.recipe.entry.type === strategyType)
-	if (sameStrategyRuns.length < 2) return []
+	const sameStrategyRuns = runs.filter(
+		(r) => r.recipe.entry.type === strategyType
+	)
+	if (sameStrategyRuns.length < 2) {
+		return []
+	}
 
 	const catalog = getSweepableParams(sameStrategyRuns[0].recipe)
 
@@ -165,12 +177,17 @@ const buildHeatmapData = (
 
 	// Filter to same strategy + matching slice values (supports both numeric and string)
 	const filtered = runs.filter((r) => {
-		if (r.recipe.entry.type !== strategyType) return false
+		if (r.recipe.entry.type !== strategyType) {
+			return false
+		}
 		for (const [path, value] of Object.entries(slices)) {
-			const actual = typeof value === "string"
-				? getNestedStringValue(r.recipe, path)
-				: getNestedValue(r.recipe, path)
-			if (actual !== value) return false
+			const actual =
+				typeof value === "string"
+					? getNestedStringValue(r.recipe, path)
+					: getNestedValue(r.recipe, path)
+			if (actual !== value) {
+				return false
+			}
 		}
 		return true
 	})
@@ -217,8 +234,12 @@ const buildHeatmapData = (
 	let minMetric = Infinity
 	let maxMetric = -Infinity
 	for (const cell of cellMap.values()) {
-		if (cell.metricValue < minMetric) minMetric = cell.metricValue
-		if (cell.metricValue > maxMetric) maxMetric = cell.metricValue
+		if (cell.metricValue < minMetric) {
+			minMetric = cell.metricValue
+		}
+		if (cell.metricValue > maxMetric) {
+			maxMetric = cell.metricValue
+		}
 	}
 
 	// Handle degenerate case (all cells same value)
@@ -261,9 +282,15 @@ const getCellIntensityClass = (
 		// Higher absolute drawdown = worse = more intense red
 		const intensity = range > 0 ? (absVal - absMin) / range : 0.5
 
-		if (intensity > 0.7) return "bg-trade-sell"
-		if (intensity > 0.4) return "bg-trade-sell/70"
-		if (intensity > 0.15) return "bg-trade-sell/50"
+		if (intensity > 0.7) {
+			return "bg-trade-sell"
+		}
+		if (intensity > 0.4) {
+			return "bg-trade-sell/70"
+		}
+		if (intensity > 0.15) {
+			return "bg-trade-sell/50"
+		}
 		return "bg-trade-sell/30"
 	}
 
@@ -274,9 +301,15 @@ const getCellIntensityClass = (
 		const maxDist = max - center
 		const intensity = maxDist > 0 ? distFromCenter / maxDist : 0.5
 
-		if (intensity > 0.7) return "bg-trade-buy"
-		if (intensity > 0.4) return "bg-trade-buy/70"
-		if (intensity > 0.15) return "bg-trade-buy/50"
+		if (intensity > 0.7) {
+			return "bg-trade-buy"
+		}
+		if (intensity > 0.4) {
+			return "bg-trade-buy/70"
+		}
+		if (intensity > 0.15) {
+			return "bg-trade-buy/50"
+		}
 		return "bg-trade-buy/30"
 	}
 
@@ -285,9 +318,15 @@ const getCellIntensityClass = (
 	const maxDist = center - min
 	const intensity = maxDist > 0 ? distFromCenter / maxDist : 0.5
 
-	if (intensity > 0.7) return "bg-trade-sell"
-	if (intensity > 0.4) return "bg-trade-sell/70"
-	if (intensity > 0.15) return "bg-trade-sell/50"
+	if (intensity > 0.7) {
+		return "bg-trade-sell"
+	}
+	if (intensity > 0.4) {
+		return "bg-trade-sell/70"
+	}
+	if (intensity > 0.15) {
+		return "bg-trade-sell/50"
+	}
 	return "bg-trade-sell/30"
 }
 

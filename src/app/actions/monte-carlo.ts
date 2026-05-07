@@ -33,21 +33,20 @@ export const getDataSourceOptions = async (): Promise<
 > => {
 	const t = await getTranslations("monteCarlo")
 	try {
-		const { accountId, userId, showAllAccounts, allAccountIds } = await requireAuth()
+		const { accountId, userId, showAllAccounts, allAccountIds } =
+			await requireAuth()
 
 		const options: DataSourceOption[] = []
 
 		// Get strategies for current user (strategies are user-level, not account-level)
 		const accountStrategies = await db.query.strategies.findMany({
-			where: and(
-				eq(strategies.userId, userId),
-				eq(strategies.isActive, true)
-			),
+			where: and(eq(strategies.userId, userId), eq(strategies.isActive, true)),
 			orderBy: [desc(strategies.name)],
 		})
 
 		// Add individual strategy options
 		for (const strategy of accountStrategies) {
+			// eslint-disable-next-line no-await-in-loop -- trade count per strategy; small N, sequential to build data source options list
 			const tradesCount = await db
 				.select()
 				.from(trades)
@@ -118,7 +117,12 @@ export const getDataSourceOptions = async (): Promise<
 		return {
 			status: "error",
 			message: t("actions.failedToGetDataSources"),
-			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "getDataSourceOptions") }],
+			errors: [
+				{
+					code: "FETCH_ERROR",
+					detail: toSafeErrorMessage(error, "getDataSourceOptions"),
+				},
+			],
 		}
 	}
 }
@@ -129,7 +133,8 @@ export const getSimulationStats = async (
 	const t = await getTranslations("monteCarlo")
 	try {
 		const validated = dataSourceSchema.parse(source)
-		const { accountId, userId, showAllAccounts, allAccountIds } = await requireAuth()
+		const { accountId, userId, showAllAccounts, allAccountIds } =
+			await requireAuth()
 
 		// After decryption, pnl/plannedRiskAmount/commission/fees are numbers (from decryptNumericField)
 		// For non-encrypted users, these come back as strings from text columns and need Number() conversion
@@ -152,7 +157,10 @@ export const getSimulationStats = async (
 
 		if (validated.type === "strategy") {
 			const strategy = await db.query.strategies.findFirst({
-				where: and(eq(strategies.id, validated.strategyId), eq(strategies.userId, userId)),
+				where: and(
+					eq(strategies.id, validated.strategyId),
+					eq(strategies.userId, userId)
+				),
 			})
 			if (!strategy) {
 				return {
@@ -181,7 +189,9 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+			tradesList = dek
+				? rawTrades.map((t) => decryptTradeFields(t, dek))
+				: rawTrades
 		} else if (validated.type === "all_strategies") {
 			sourceName = t("dataSources.allStrategies")
 
@@ -204,7 +214,9 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+			tradesList = dek
+				? rawTrades.map((t) => decryptTradeFields(t, dek))
+				: rawTrades
 		} else if (validated.type === "universal") {
 			if (!showAllAccounts) {
 				return {
@@ -243,7 +255,9 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+			tradesList = dek
+				? rawTrades.map((t) => decryptTradeFields(t, dek))
+				: rawTrades
 		}
 
 		if (tradesList.length === 0) {
@@ -301,7 +315,9 @@ export const getSimulationStats = async (
 
 		// Profit factor uses PnL values (consistent with dashboard), not R-multiples
 		const grossProfit = wins.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0)
-		const grossLoss = Math.abs(losses.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0))
+		const grossLoss = Math.abs(
+			losses.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0)
+		)
 		const profitFactor =
 			grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0
 
@@ -339,8 +355,12 @@ export const getSimulationStats = async (
 				}
 				const entry = breakdown.get(name)!
 				entry.tradesCount++
-				if (trade.outcome === "win") entry.wins++
-				if (trade.outcome === "loss") entry.losses++
+				if (trade.outcome === "win") {
+					entry.wins++
+				}
+				if (trade.outcome === "loss") {
+					entry.losses++
+				}
 			}
 
 			// Win rate excludes breakeven trades from denominator (consistent with dashboard)
@@ -402,7 +422,12 @@ export const getSimulationStats = async (
 		return {
 			status: "error",
 			message: t("actions.failedToGetSimulationStats"),
-			errors: [{ code: "FETCH_ERROR", detail: toSafeErrorMessage(error, "getSimulationStats") }],
+			errors: [
+				{
+					code: "FETCH_ERROR",
+					detail: toSafeErrorMessage(error, "getSimulationStats"),
+				},
+			],
 		}
 	}
 }
@@ -436,7 +461,12 @@ export const runSimulation = async (
 		return {
 			status: "error",
 			message: t("actions.failedToRunSimulation"),
-			errors: [{ code: "SIMULATION_ERROR", detail: toSafeErrorMessage(error, "runSimulation") }],
+			errors: [
+				{
+					code: "SIMULATION_ERROR",
+					detail: toSafeErrorMessage(error, "runSimulation"),
+				},
+			],
 		}
 	}
 }
@@ -454,20 +484,20 @@ export const runComparisonSimulation = async (
 		const { userId } = await requireAuth()
 
 		const allStrategies = await db.query.strategies.findMany({
-			where: and(
-				eq(strategies.userId, userId),
-				eq(strategies.isActive, true)
-			),
+			where: and(eq(strategies.userId, userId), eq(strategies.isActive, true)),
 		})
 
 		const results: StrategyComparisonResult[] = []
 
 		for (const strategy of allStrategies) {
+			// eslint-disable-next-line no-await-in-loop -- simulation stats per strategy; sequential because each strategy is independent but results accumulate into a comparison array
 			const statsResponse = await getSimulationStats({
 				type: "strategy",
 				strategyId: strategy.id,
 			})
-			if (statsResponse.status !== "success" || !statsResponse.data) continue
+			if (statsResponse.status !== "success" || !statsResponse.data) {
+				continue
+			}
 
 			const stats = statsResponse.data
 			const params: SimulationParams = {
@@ -511,8 +541,12 @@ export const runComparisonSimulation = async (
 			0
 		)
 		const getAllocationReason = (pct: number): string => {
-			if (pct >= 80) return t("allocation.excellent")
-			if (pct >= 70) return t("allocation.good")
+			if (pct >= 80) {
+				return t("allocation.excellent")
+			}
+			if (pct >= 70) {
+				return t("allocation.good")
+			}
 			return t("allocation.moderate")
 		}
 
@@ -552,7 +586,12 @@ export const runComparisonSimulation = async (
 		return {
 			status: "error",
 			message: t("actions.failedToRunComparison"),
-			errors: [{ code: "COMPARISON_ERROR", detail: toSafeErrorMessage(error, "runComparisonSimulation") }],
+			errors: [
+				{
+					code: "COMPARISON_ERROR",
+					detail: toSafeErrorMessage(error, "runComparisonSimulation"),
+				},
+			],
 		}
 	}
 }
@@ -593,7 +632,12 @@ export const runSimulationV2 = async (
 		return {
 			status: "error",
 			message: t("actions.failedToRunV2Simulation"),
-			errors: [{ code: "SIMULATION_V2_ERROR", detail: toSafeErrorMessage(error, "runSimulationV2") }],
+			errors: [
+				{
+					code: "SIMULATION_V2_ERROR",
+					detail: toSafeErrorMessage(error, "runSimulationV2"),
+				},
+			],
 		}
 	}
 }

@@ -12,7 +12,11 @@ import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import { isCockpitEnabled } from "@/lib/flags/fractal-plan"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { SetupSummaryCard } from "@/components/fractal-plan/cockpit/setup-summary-card"
-import { AnnualCockpitGrid, type MonthInputRow, type RealMonthData } from "@/components/fractal-plan/cockpit/annual-cockpit-grid"
+import {
+	AnnualCockpitGrid,
+	type MonthInputRow,
+	type RealMonthData,
+} from "@/components/fractal-plan/cockpit/annual-cockpit-grid"
 import type { WeekData } from "@/components/fractal-plan/cockpit/month-card"
 import { TaxTab } from "@/components/fractal-plan/cockpit/tax-tab"
 import type { MonthlyDarfRow } from "@/lib/tax/types"
@@ -28,10 +32,13 @@ interface PageProps {
 	params: Promise<{ locale: string; year: string }>
 }
 
-const formatR = (n: number | null): string => (n == null ? "—" : `${n.toFixed(2)}R`)
+const formatR = (n: number | null): string =>
+	n === null ? "—" : `${n.toFixed(2)}R`
 
 const parseDecimal = (raw: string | null): number | null => {
-	if (raw == null) return null
+	if (raw === null) {
+		return null
+	}
 	const n = Number(raw)
 	return Number.isFinite(n) ? n : null
 }
@@ -39,18 +46,18 @@ const parseDecimal = (raw: string | null): number | null => {
 const buildExisting = (row: typeof yearlyPlans.$inferSelect | undefined) =>
 	row
 		? {
-			initialCapitalCents: row.initialCapitalCents,
-			ladderRules: row.ladderRules as unknown as LadderRuleR[],
-			tradingDaysPerWeek: row.tradingDaysPerWeek,
-			defaultDailyLossR: row.defaultDailyLossR,
-			defaultDailyWinR: row.defaultDailyWinR,
-			defaultWeeklyLossR: row.defaultWeeklyLossR,
-			defaultWeeklyWinR: row.defaultWeeklyWinR,
-			defaultMonthlyLossR: row.defaultMonthlyLossR,
-			defaultMonthlyWinR: row.defaultMonthlyWinR,
-			defaultRiskProfileId: row.defaultRiskProfileId,
-			notes: row.notes,
-		}
+				initialCapitalCents: row.initialCapitalCents,
+				ladderRules: row.ladderRules as unknown as LadderRuleR[],
+				tradingDaysPerWeek: row.tradingDaysPerWeek,
+				defaultDailyLossR: row.defaultDailyLossR,
+				defaultDailyWinR: row.defaultDailyWinR,
+				defaultWeeklyLossR: row.defaultWeeklyLossR,
+				defaultWeeklyWinR: row.defaultWeeklyWinR,
+				defaultMonthlyLossR: row.defaultMonthlyLossR,
+				defaultMonthlyWinR: row.defaultMonthlyWinR,
+				defaultRiskProfileId: row.defaultRiskProfileId,
+				notes: row.notes,
+			}
 		: null
 
 const PlanYearPage = async ({ params }: PageProps) => {
@@ -60,22 +67,28 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	if (!Number.isInteger(year) || year < 2000 || year > 2100) {
 		return (
 			<PlanSection title="Invalid year">
-				<p className="text-txt-200">Year must be a 4-digit integer between 2000 and 2100.</p>
+				<p className="text-txt-200">
+					Year must be a 4-digit integer between 2000 and 2100.
+				</p>
 			</PlanSection>
 		)
 	}
 
 	const { accountId } = await requireAuth()
 
-	const [resolved, row, profilesResult, account, activeAssets] = await Promise.all([
-		resolveYear({ accountId, year }),
-		db.query.yearlyPlans.findFirst({
-			where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
-		}),
-		listActiveRiskProfiles(),
-		getCurrentAccount(),
-		getActiveAssets(),
-	])
+	const [resolved, row, profilesResult, account, activeAssets] =
+		await Promise.all([
+			resolveYear({ accountId, year }),
+			db.query.yearlyPlans.findFirst({
+				where: and(
+					eq(yearlyPlans.accountId, accountId),
+					eq(yearlyPlans.year, year)
+				),
+			}),
+			listActiveRiskProfiles(),
+			getCurrentAccount(),
+			getActiveAssets(),
+		])
 
 	const availableAssets: AssetOption[] = activeAssets.map((a) => ({
 		symbol: a.symbol,
@@ -90,7 +103,9 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			: null
 
 	const riskProfiles =
-		profilesResult.status === "success" && profilesResult.data ? profilesResult.data : []
+		profilesResult.status === "success" && profilesResult.data
+			? profilesResult.data
+			: []
 
 	const existing = buildExisting(row)
 
@@ -102,48 +117,62 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					subtitle="Year-level defaults — propagate down to quarter, month, week, day"
 				>
 					{existing ? (
-						<dl className="grid grid-cols-1 gap-s-300 sm:grid-cols-2">
+						<dl className="gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 							<div>
-								<dt className="text-sm text-txt-200">Default daily loss R</dt>
-								<dd className="mt-1 flex items-center gap-s-200">
-									<span className="font-mono text-lg text-txt-100">
+								<dt className="text-txt-200 text-sm">Default daily loss R</dt>
+								<dd className="gap-s-200 mt-1 flex items-center">
+									<span className="text-txt-100 font-mono text-lg">
 										{formatR(resolved.defaultDailyLossR)}
 									</span>
-									<ProvenanceBadge level={resolved.defaultDailyLossR_provenance} />
+									<ProvenanceBadge
+										level={resolved.defaultDailyLossR_provenance}
+									/>
 								</dd>
 							</div>
 							<div>
-								<dt className="text-sm text-txt-200">Default daily win R</dt>
-								<dd className="mt-1 flex items-center gap-s-200">
-									<span className="font-mono text-lg text-txt-100">
+								<dt className="text-txt-200 text-sm">Default daily win R</dt>
+								<dd className="gap-s-200 mt-1 flex items-center">
+									<span className="text-txt-100 font-mono text-lg">
 										{formatR(resolved.defaultDailyWinR)}
 									</span>
-									<ProvenanceBadge level={resolved.defaultDailyWinR_provenance} />
+									<ProvenanceBadge
+										level={resolved.defaultDailyWinR_provenance}
+									/>
 								</dd>
 							</div>
 							<div>
-								<dt className="text-sm text-txt-200">Default weekly loss / win R</dt>
-								<dd className="mt-1 flex items-center gap-s-200">
-									<span className="font-mono text-lg text-txt-100">
-										{formatR(resolved.defaultWeeklyLossR)} / {formatR(resolved.defaultWeeklyWinR)}
+								<dt className="text-txt-200 text-sm">
+									Default weekly loss / win R
+								</dt>
+								<dd className="gap-s-200 mt-1 flex items-center">
+									<span className="text-txt-100 font-mono text-lg">
+										{formatR(resolved.defaultWeeklyLossR)} /{" "}
+										{formatR(resolved.defaultWeeklyWinR)}
 									</span>
-									<ProvenanceBadge level={resolved.defaultWeeklyWinR_provenance} />
+									<ProvenanceBadge
+										level={resolved.defaultWeeklyWinR_provenance}
+									/>
 								</dd>
 							</div>
 							<div>
-								<dt className="text-sm text-txt-200">Default monthly loss / win R</dt>
-								<dd className="mt-1 flex items-center gap-s-200">
-									<span className="font-mono text-lg text-txt-100">
-										{formatR(resolved.defaultMonthlyLossR)} / {formatR(resolved.defaultMonthlyWinR)}
+								<dt className="text-txt-200 text-sm">
+									Default monthly loss / win R
+								</dt>
+								<dd className="gap-s-200 mt-1 flex items-center">
+									<span className="text-txt-100 font-mono text-lg">
+										{formatR(resolved.defaultMonthlyLossR)} /{" "}
+										{formatR(resolved.defaultMonthlyWinR)}
 									</span>
-									<ProvenanceBadge level={resolved.defaultMonthlyWinR_provenance} />
+									<ProvenanceBadge
+										level={resolved.defaultMonthlyWinR_provenance}
+									/>
 								</dd>
 							</div>
 						</dl>
 					) : (
 						<p className="text-txt-200">
-							No yearly plan for {year}. Fill the form below to seed defaults + the
-							quarter/month/week tree.
+							No yearly plan for {year}. Fill the form below to seed defaults +
+							the quarter/month/week tree.
 						</p>
 					)}
 				</PlanSection>
@@ -167,19 +196,19 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	const [tree, ledgerRows] = await Promise.all([
 		row
 			? db.query.yearlyPlans.findFirst({
-				where: eq(yearlyPlans.id, row.id),
-				with: {
-					quarterlyPlans: {
-						with: {
-							months: {
-								with: {
-									weeklyPlans: true,
+					where: eq(yearlyPlans.id, row.id),
+					with: {
+						quarterlyPlans: {
+							with: {
+								months: {
+									with: {
+										weeklyPlans: true,
+									},
 								},
 							},
 						},
 					},
-				},
-			})
+				})
 			: Promise.resolve(null),
 		db
 			.select()
@@ -188,8 +217,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 				and(
 					eq(monthlyTaxLedger.accountId, accountId),
 					gte(monthlyTaxLedger.month, new Date(Date.UTC(year, 0, 1))),
-					lt(monthlyTaxLedger.month, new Date(Date.UTC(year + 1, 0, 1))),
-				),
+					lt(monthlyTaxLedger.month, new Date(Date.UTC(year + 1, 0, 1)))
+				)
 			),
 	])
 
@@ -230,7 +259,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			? Number(account.withdrawalTargetPercent) / 100
 			: 0
 	const tradingDaysPerWeek = row?.tradingDaysPerWeek ?? 5
-	const initialCapitalCents = defaultInitialCapitalCents ?? row?.initialCapitalCents ?? 0
+	const initialCapitalCents =
+		defaultInitialCapitalCents ?? row?.initialCapitalCents ?? 0
 	const ladderRules = (row?.ladderRules as unknown as LadderRuleR[]) ?? []
 	const accountStartYear = account?.accountStartYear ?? null
 	const accountStartMonth = account?.accountStartMonth ?? null
@@ -247,7 +277,13 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			oneRSnapshotCents: trades.oneRSnapshotCents,
 		})
 		.from(trades)
-		.where(and(eq(trades.accountId, accountId), gte(trades.entryDate, yearStart), lt(trades.entryDate, yearEnd)))
+		.where(
+			and(
+				eq(trades.accountId, accountId),
+				gte(trades.entryDate, yearStart),
+				lt(trades.entryDate, yearEnd)
+			)
+		)
 
 	const realByMonth: RealMonthData[] = Array.from({ length: 12 }, (_, i) => ({
 		monthIndex: i,
@@ -257,10 +293,18 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		tradingDaysWithTrades: 0,
 		weeklyR: [],
 	}))
-	const dayKeySetByMonth: Set<string>[] = Array.from({ length: 12 }, () => new Set())
-	const weekIsoBucketsByMonth: Map<number, number>[] = Array.from({ length: 12 }, () => new Map())
+	const dayKeySetByMonth: Set<string>[] = Array.from(
+		{ length: 12 },
+		() => new Set()
+	)
+	const weekIsoBucketsByMonth: Map<number, number>[] = Array.from(
+		{ length: 12 },
+		() => new Map()
+	)
 	const isoWeekOf = (d: Date): number => {
-		const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+		const t = new Date(
+			Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+		)
 		const dayNum = t.getUTCDay() || 7
 		t.setUTCDate(t.getUTCDate() + 4 - dayNum)
 		const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1))
@@ -268,7 +312,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	}
 
 	for (const t of yearTrades) {
-		const r = t.rOutcome != null ? Number(t.rOutcome) : 0
+		const r = t.rOutcome !== null ? Number(t.rOutcome) : 0
 		const oneR = t.oneRSnapshotCents ?? 0
 		const m = t.entryDate.getUTCMonth()
 		const dayKey = t.entryDate.toISOString().slice(0, 10)
@@ -288,20 +332,32 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	}
 
 	const lastActualMonthIdx = (() => {
-		for (let i = 11; i >= 0; i--) if (realByMonth[i].tradesCount > 0) return i
+		for (let i = 11; i >= 0; i--) {
+			if (realByMonth[i].tradesCount > 0) {
+				return i
+			}
+		}
 		return -1
 	})()
 
 	const totalRealRSum = realByMonth.reduce((acc, m) => acc + m.realRSum, 0)
-	const totalDaysWithTrades = realByMonth.reduce((acc, m) => acc + m.tradingDaysWithTrades, 0)
-	const avgRPerDayYtd = totalDaysWithTrades > 0 ? totalRealRSum / totalDaysWithTrades : 0
+	const totalDaysWithTrades = realByMonth.reduce(
+		(acc, m) => acc + m.tradingDaysWithTrades,
+		0
+	)
+	const avgRPerDayYtd =
+		totalDaysWithTrades > 0 ? totalRealRSum / totalDaysWithTrades : 0
 
 	let realEndBalanceCents = initialCapitalCents
 	for (let i = 0; i <= lastActualMonthIdx && i < 12; i++) {
 		realEndBalanceCents += realByMonth[i].realPnlCents
 	}
 
-	let currentMonthRemainder: { addedRsum: number; addedNetCents: number; projectedEndBalanceCents: number } | null = null
+	let currentMonthRemainder: {
+		addedRsum: number
+		addedNetCents: number
+		projectedEndBalanceCents: number
+	} | null = null
 	if (
 		currentMonthIndex >= 0 &&
 		currentMonthIndex === lastActualMonthIdx &&
@@ -314,19 +370,25 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		const cur = new Date(Date.UTC(year, m, today.getDate() + 1))
 		while (cur <= lastDay) {
 			const d = cur.getUTCDay()
-			if (d !== 0 && d !== 6) weekdaysRemaining++
+			if (d !== 0 && d !== 6) {
+				weekdaysRemaining++
+			}
 			cur.setUTCDate(cur.getUTCDate() + 1)
 		}
 		if (weekdaysRemaining > 0) {
 			const monthStartCapital =
-				monthRows.find((r) => r.monthIndex === m)?.snapshotCapitalCents ?? initialCapitalCents
+				monthRows.find((r) => r.monthIndex === m)?.snapshotCapitalCents ??
+				initialCapitalCents
 			const realEnd = monthStartCapital + realByMonth[m].realPnlCents
 			const oneRForMonth = resolveTier(realEnd, ladderRules).oneRCents
 			const addedRsum = avgRPerDayYtd * weekdaysRemaining
 			const addedGross = Math.round(addedRsum * oneRForMonth)
 			const tax = addedGross > 0 ? Math.round(addedGross * irTaxRate) : 0
 			const netAfterTax = addedGross - tax
-			const wd = netAfterTax > 0 && withdrawalPct > 0 ? Math.round(netAfterTax * withdrawalPct) : 0
+			const wd =
+				netAfterTax > 0 && withdrawalPct > 0
+					? Math.round(netAfterTax * withdrawalPct)
+					: 0
 			const addedNet = netAfterTax - wd
 			currentMonthRemainder = {
 				addedRsum,
@@ -336,23 +398,33 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		}
 	}
 
-	const paceStartBalanceCents = realEndBalanceCents + (currentMonthRemainder?.addedNetCents ?? 0)
+	const paceStartBalanceCents =
+		realEndBalanceCents + (currentMonthRemainder?.addedNetCents ?? 0)
 	const monthsRemaining = lastActualMonthIdx >= 0 ? 11 - lastActualMonthIdx : 0
-	const eoy = monthsRemaining > 0 && avgRPerDayYtd > 0
-		? projectFromPace({
-			startBalanceCents: paceStartBalanceCents,
-			monthsRemaining,
-			avgRPerDayYtd,
-			tradingDaysPerWeek,
-			ladderRules,
-			irTaxRate,
-			withdrawalPct,
-		})
-		: null
+	const eoy =
+		monthsRemaining > 0 && avgRPerDayYtd > 0
+			? projectFromPace({
+					startBalanceCents: paceStartBalanceCents,
+					monthsRemaining,
+					avgRPerDayYtd,
+					tradingDaysPerWeek,
+					ladderRules,
+					irTaxRate,
+					withdrawalPct,
+				})
+			: null
 
-	const paceByMonthIdx = new Map<number, { endBalanceCents: number; oneRCents: number; netLiquidCents: number; grossPnlCents: number }>()
+	const paceByMonthIdx = new Map<
+		number,
+		{
+			endBalanceCents: number
+			oneRCents: number
+			netLiquidCents: number
+			grossPnlCents: number
+		}
+	>()
 	if (eoy) {
-		eoy.months.forEach((m, k) => {
+		eoy.months.map((m, k) => {
 			paceByMonthIdx.set(lastActualMonthIdx + 1 + k, {
 				endBalanceCents: m.endBalanceCents,
 				oneRCents: m.oneRCents,
@@ -362,9 +434,10 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		})
 	}
 
-	const currentOneRCents = ladderRules.length > 0
-		? resolveTier(initialCapitalCents, ladderRules).oneRCents
-		: 0
+	const currentOneRCents =
+		ladderRules.length > 0
+			? resolveTier(initialCapitalCents, ladderRules).oneRCents
+			: 0
 
 	if (!row) {
 		return (
@@ -392,7 +465,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					subtitle='Clique em "Editar" no card acima para semear o plano anual e gerar a grade.'
 				>
 					<p className="text-small text-txt-300">
-						Sem plano anual a grade mensal fica vazia. O editor abre como slideover.
+						Sem plano anual a grade mensal fica vazia. O editor abre como
+						slideover.
 					</p>
 				</PlanSection>
 			</div>

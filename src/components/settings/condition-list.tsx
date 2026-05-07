@@ -47,7 +47,8 @@ export const ConditionList = () => {
 	const t = useTranslations("settings.conditions")
 	const tCommon = useTranslations("common")
 	const urlParams = useUrlParams()
-	const filterCategory = (urlParams.get("conditionCat") ?? "all") as FilterCategory
+	const filterCategory = (urlParams.get("conditionCat") ??
+		"all") as FilterCategory
 	const setFilterCategory = (value: FilterCategory) => {
 		urlParams.set({ conditionCat: value === "all" ? null : value })
 	}
@@ -71,8 +72,10 @@ export const ConditionList = () => {
 
 	useEffect(() => {
 		let mounted = true
-		loadConditions()
-		return () => { mounted = false }
+		void loadConditions()
+		return () => {
+			mounted = false
+		}
 	}, [loadConditions])
 
 	const { categoryCounts, filteredConditions } = useMemo(() => {
@@ -87,10 +90,15 @@ export const ConditionList = () => {
 
 		for (const condition of conditions) {
 			counts.all++
-			if (condition.category === "indicator") counts.indicator++
-			else if (condition.category === "price_action") counts.price_action++
-			else if (condition.category === "market_context") counts.market_context++
-			else if (condition.category === "custom") counts.custom++
+			if (condition.category === "indicator") {
+				counts.indicator++
+			} else if (condition.category === "price_action") {
+				counts.price_action++
+			} else if (condition.category === "market_context") {
+				counts.market_context++
+			} else if (condition.category === "custom") {
+				counts.custom++
+			}
 
 			if (filterCategory === "all" || condition.category === filterCategory) {
 				filtered.push(condition)
@@ -121,7 +129,7 @@ export const ConditionList = () => {
 
 	const handleFormSuccess = () => {
 		handleFormClose()
-		loadConditions()
+		void loadConditions()
 	}
 
 	const handleAddNew = () => {
@@ -176,8 +184,9 @@ export const ConditionList = () => {
 							aria-pressed={filterCategory === badge.key}
 							onClick={() => setFilterCategory(badge.key)}
 							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ")
+								if (e.key === "Enter" || e.key === " ") {
 									setFilterCategory(badge.key)
+								}
 							}}
 						>
 							{badge.label} ({categoryCounts[badge.key]})

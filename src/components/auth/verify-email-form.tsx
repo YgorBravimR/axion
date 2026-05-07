@@ -40,7 +40,9 @@ const VerifyEmailForm = () => {
 	// period (keyed on cooldownEpoch) and uses a functional state update so it doesn't
 	// restart every second as resendCooldown decrements.
 	useEffect(() => {
-		if (resendCooldown <= 0) return
+		if (resendCooldown <= 0) {
+			return
+		}
 		const timer = setInterval(() => {
 			setResendCooldown((prev) => {
 				if (prev <= 1) {
@@ -51,7 +53,6 @@ const VerifyEmailForm = () => {
 			})
 		}, 1000)
 		return () => clearInterval(timer)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [cooldownEpoch])
 
 	// Cleanup redirect timeout on unmount
@@ -64,7 +65,9 @@ const VerifyEmailForm = () => {
 	}, [])
 
 	const handleVerify = (otpValue: string) => {
-		if (otpValue.length !== 6 || !email) return
+		if (otpValue.length !== 6 || !email) {
+			return
+		}
 
 		setError(null)
 		startTransition(async () => {
@@ -89,7 +92,9 @@ const VerifyEmailForm = () => {
 	}
 
 	const handleResend = () => {
-		if (resendCooldown > 0 || !email) return
+		if (resendCooldown > 0 || !email) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await requestEmailVerification({ email })
@@ -223,7 +228,7 @@ const VerifyEmailForm = () => {
 
 				<Link
 					href="/login"
-					className="text-small text-txt-300 hover:text-txt-200 flex items-center justify-center gap-s-200"
+					className="text-small text-txt-300 hover:text-txt-200 gap-s-200 flex items-center justify-center"
 				>
 					<ArrowLeft className="h-4 w-4" />
 					{t("backToLogin")}

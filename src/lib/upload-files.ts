@@ -34,18 +34,22 @@ const uploadFiles = async ({
 		formData.append("path", path)
 		formData.append("entityId", entityId)
 
+		// eslint-disable-next-line no-await-in-loop -- sequential file uploads to avoid overwhelming the upload API and to accumulate per-file errors
 		const response = await fetch("/api/uploads", {
 			method: "POST",
 			body: formData,
 		})
 
+		// eslint-disable-next-line no-await-in-loop -- JSON parse depends on response from prior await
 		const result = await response.json()
 
 		if (result.status === "success" && result.data) {
 			uploaded.push({ url: result.data.url, s3Key: result.data.s3Key })
 			URL.revokeObjectURL(pending.previewUrl)
 		} else {
-			errors.push(result.message ?? `upload.errors.uploadFailed|${pending.file.name}`)
+			errors.push(
+				result.message ?? `upload.errors.uploadFailed|${pending.file.name}`
+			)
 		}
 	}
 

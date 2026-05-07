@@ -16,30 +16,39 @@ import * as Sentry from "@sentry/nextjs"
 
 type SupportedLocale = "pt-BR" | "en"
 
-const translations: Record<SupportedLocale, {
-	title: string
-	description: string
-	reference: string
-	tryAgain: string
-}> = {
-	en: {
+const translations: Record<
+	SupportedLocale,
+	{
+		title: string
+		description: string
+		reference: string
+		tryAgain: string
+	}
+> = {
+	"en": {
 		title: "Something went wrong!",
-		description: "A critical error occurred. Please try again or reload the page.",
+		description:
+			"A critical error occurred. Please try again or reload the page.",
 		reference: "Reference: {digest}",
 		tryAgain: "Try Again",
 	},
 	"pt-BR": {
 		title: "Algo deu errado!",
-		description: "Um erro critico ocorreu. Por favor, tente novamente ou recarregue a pagina.",
+		description:
+			"Um erro critico ocorreu. Por favor, tente novamente ou recarregue a pagina.",
 		reference: "Referencia: {digest}",
 		tryAgain: "Tentar Novamente",
 	},
 }
 
 const detectLocale = (): SupportedLocale => {
-	if (typeof navigator === "undefined") return "pt-BR"
+	if (typeof navigator === "undefined") {
+		return "pt-BR"
+	}
 	const lang = navigator.language
-	if (lang.startsWith("pt")) return "pt-BR"
+	if (lang.startsWith("pt")) {
+		return "pt-BR"
+	}
 	return "en"
 }
 
@@ -162,4 +171,5 @@ const GlobalError = (props: {
 	)
 }
 
+// eslint-disable-next-line no-restricted-syntax -- Next.js global-error.tsx requires a default export per App Router convention
 export default GlobalError

@@ -42,7 +42,9 @@ const requireSession = async (): Promise<string> => {
 /**
  * Fetch all indicator groups with their indicator definitions, ordered by sortOrder.
  */
-const getIndicatorGroups = async (): Promise<IndicatorGroupWithDefinitions[]> => {
+const getIndicatorGroups = async (): Promise<
+	IndicatorGroupWithDefinitions[]
+> => {
 	await requireSession()
 	const result = await db.query.indicatorGroups.findMany({
 		with: { indicators: true },
@@ -168,7 +170,11 @@ const toggleIndicatorGroupActive = async (
 
 const createIndicatorDefinition = async (
 	data: CreateIndicatorDefinitionInput
-): Promise<{ success: boolean; data?: IndicatorDefinition; error?: string }> => {
+): Promise<{
+	success: boolean
+	data?: IndicatorDefinition
+	error?: string
+}> => {
 	await requireRole("admin")
 	const validated = createIndicatorDefinitionSchema.safeParse(data)
 
@@ -198,7 +204,11 @@ const createIndicatorDefinition = async (
 const updateIndicatorDefinition = async (
 	id: string,
 	data: UpdateIndicatorDefinitionInput
-): Promise<{ success: boolean; data?: IndicatorDefinition; error?: string }> => {
+): Promise<{
+	success: boolean
+	data?: IndicatorDefinition
+	error?: string
+}> => {
 	await requireRole("admin")
 	const validated = updateIndicatorDefinitionSchema.safeParse(data)
 
@@ -211,11 +221,21 @@ const updateIndicatorDefinition = async (
 
 	const updateValues: Record<string, unknown> = {}
 
-	if (validated.data.key !== undefined) updateValues.key = validated.data.key
-	if (validated.data.displayName !== undefined) updateValues.displayName = validated.data.displayName
-	if (validated.data.groupId !== undefined) updateValues.groupId = validated.data.groupId
-	if (validated.data.csvHeader !== undefined) updateValues.csvHeader = validated.data.csvHeader
-	if (validated.data.sortOrder !== undefined) updateValues.sortOrder = validated.data.sortOrder
+	if (validated.data.key !== undefined) {
+		updateValues.key = validated.data.key
+	}
+	if (validated.data.displayName !== undefined) {
+		updateValues.displayName = validated.data.displayName
+	}
+	if (validated.data.groupId !== undefined) {
+		updateValues.groupId = validated.data.groupId
+	}
+	if (validated.data.csvHeader !== undefined) {
+		updateValues.csvHeader = validated.data.csvHeader
+	}
+	if (validated.data.sortOrder !== undefined) {
+		updateValues.sortOrder = validated.data.sortOrder
+	}
 
 	const [definition] = await db
 		.update(indicatorDefinitions)

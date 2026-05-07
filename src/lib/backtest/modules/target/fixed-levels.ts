@@ -30,7 +30,10 @@ const computeTargetPrice = (
 		case "r_multiple":
 			return entryPrice + stopDistance * level.value * mult
 		case "pct_range": {
-			const rangeBase = direction === "long" ? (signal.rangeHigh ?? entryPrice) : (signal.rangeLow ?? entryPrice)
+			const rangeBase =
+				direction === "long"
+					? (signal.rangeHigh ?? entryPrice)
+					: (signal.rangeLow ?? entryPrice)
 			return rangeBase + (signal.rangeWidth ?? 0) * (level.value / 100) * mult
 		}
 		case "pct_stop":
@@ -87,12 +90,15 @@ const onCandleFixedLevels = (
 
 	// Check each target level in order
 	for (let i = 0; i < config.levels.length; i++) {
-		if (updatedLevelsHit[i]) continue
+		if (updatedLevelsHit[i]) {
+			continue
+		}
 
 		const targetPrice = state.targetPrices[i]
-		const isHit = direction === "long"
-			? candle.high >= targetPrice
-			: candle.low <= targetPrice
+		const isHit =
+			direction === "long"
+				? candle.high >= targetPrice
+				: candle.low <= targetPrice
 
 		if (isHit) {
 			updatedLevelsHit[i] = true

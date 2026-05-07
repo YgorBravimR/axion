@@ -24,7 +24,10 @@ const getFormatPrice = (locale: string) => {
 	if (!priceFormatterCache.has(locale)) {
 		priceFormatterCache.set(
 			locale,
-			new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			new Intl.NumberFormat(locale, {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		)
 	}
 	const formatter = priceFormatterCache.get(locale)!
@@ -50,7 +53,9 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 			if ((e.key === "Enter" || e.key === " ") && onTradeClick) {
 				e.preventDefault()
 				const tradeId = e.currentTarget.dataset.tradeId
-				if (tradeId) onTradeClick(tradeId)
+				if (tradeId) {
+					onTradeClick(tradeId)
+				}
 			}
 		},
 		[onTradeClick]
@@ -58,14 +63,14 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 
 	if (trades.length === 0) {
 		return (
-			<div className="text-txt-300 flex h-[80px] sm:h-[100px] items-center justify-center">
+			<div className="text-txt-300 flex h-[80px] items-center justify-center sm:h-[100px]">
 				{t("dayDetail.noTrades")}
 			</div>
 		)
 	}
 
 	return (
-		<div className="border-bg-300 overflow-x-auto overscroll-x-contain touch-pan-x rounded-lg border">
+		<div className="border-bg-300 touch-pan-x overflow-x-auto overscroll-x-contain rounded-lg border">
 			<Table>
 				<TableHeader>
 					<TableRow className="bg-bg-100 hover:bg-bg-100">
@@ -87,7 +92,9 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 						<TableHead className="px-s-300 py-s-200 text-right">
 							{t("dayDetail.pnl")}
 						</TableHead>
-						<TableHead className="px-s-300 py-s-200 text-right">{tCommon("rMultipleAbbr")}</TableHead>
+						<TableHead className="px-s-300 py-s-200 text-right">
+							{tCommon("rMultipleAbbr")}
+						</TableHead>
 						<TableHead className="px-s-200 py-s-200 size-10" />
 					</TableRow>
 				</TableHeader>
@@ -101,7 +108,11 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 							onKeyDown={onTradeClick ? handleKeyDown : undefined}
 							tabIndex={onTradeClick ? 0 : undefined}
 							role={onTradeClick ? "button" : undefined}
-							aria-label={onTradeClick ? `${trade.asset} ${tCommon(trade.direction)} ${trade.time}` : undefined}
+							aria-label={
+								onTradeClick
+									? `${trade.asset} ${tCommon(trade.direction)} ${trade.time}`
+									: undefined
+							}
 						>
 							<TableCell className="px-s-300 py-s-200 text-small text-txt-100">
 								{trade.time}

@@ -34,7 +34,9 @@ const computePointsPnl = ({
 	contracts,
 }: ComputePointsPnlInput): number | null => {
 	const pv = POINT_VALUE_CENTS[asset.toUpperCase()]
-	if (!pv || contracts <= 0) return null
+	if (!pv || contracts <= 0) {
+		return null
+	}
 	return financialPnlCents / (pv * contracts)
 }
 
@@ -54,7 +56,9 @@ const runBackfill = async (): Promise<void> => {
 		columns: { id: true, pnl: true, asset: true, positionSize: true },
 	})
 
-	console.log(`[backfill-points-pnl] Found ${rows.length} trades with NULL pointsPnl`)
+	console.log(
+		`[backfill-points-pnl] Found ${rows.length} trades with NULL pointsPnl`
+	)
 
 	let updated = 0
 	let skipped = 0
@@ -62,7 +66,11 @@ const runBackfill = async (): Promise<void> => {
 	for (const trade of rows) {
 		const financialPnlCents = Number(trade.pnl ?? 0)
 		const contracts = Number(trade.positionSize ?? 1) || 1
-		const pointsPnl = computePointsPnl({ financialPnlCents, asset: trade.asset, contracts })
+		const pointsPnl = computePointsPnl({
+			financialPnlCents,
+			asset: trade.asset,
+			contracts,
+		})
 
 		if (pointsPnl === null) {
 			skipped++
@@ -77,7 +85,9 @@ const runBackfill = async (): Promise<void> => {
 		updated++
 	}
 
-	console.log(`[backfill-points-pnl] Done. Updated: ${updated}, Skipped (unknown asset): ${skipped}`)
+	console.log(
+		`[backfill-points-pnl] Done. Updated: ${updated}, Skipped (unknown asset): ${skipped}`
+	)
 }
 
 export { computePointsPnl }

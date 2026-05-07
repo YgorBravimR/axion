@@ -84,23 +84,54 @@ interface TradeEncryptedFields {
  * Encrypt trade fields before writing to the database.
  * Only encrypts fields that are present (not undefined).
  */
-const encryptTradeFields = (fields: TradeEncryptableFields, dek: string): Partial<TradeEncryptedFields> => {
+const encryptTradeFields = (
+	fields: TradeEncryptableFields,
+	dek: string
+): Partial<TradeEncryptedFields> => {
 	const result: Partial<TradeEncryptedFields> = {}
 
-	if (fields.pnl !== undefined) result.pnl = encryptField(fields.pnl, dek)
-	if (fields.plannedRiskAmount !== undefined) result.plannedRiskAmount = encryptField(fields.plannedRiskAmount, dek)
-	if (fields.commission !== undefined) result.commission = encryptField(fields.commission, dek)
-	if (fields.fees !== undefined) result.fees = encryptField(fields.fees, dek)
-	if (fields.entryPrice !== undefined) result.entryPrice = encryptField(fields.entryPrice, dek)
-	if (fields.exitPrice !== undefined) result.exitPrice = encryptField(fields.exitPrice, dek)
-	if (fields.positionSize !== undefined) result.positionSize = encryptField(fields.positionSize, dek)
-	if (fields.stopLoss !== undefined) result.stopLoss = encryptField(fields.stopLoss, dek)
-	if (fields.takeProfit !== undefined) result.takeProfit = encryptField(fields.takeProfit, dek)
-	if (fields.plannedRMultiple !== undefined) result.plannedRMultiple = encryptField(fields.plannedRMultiple, dek)
-	if (fields.preTradeThoughts !== undefined) result.preTradeThoughts = encryptField(fields.preTradeThoughts, dek)
-	if (fields.postTradeReflection !== undefined) result.postTradeReflection = encryptField(fields.postTradeReflection, dek)
-	if (fields.lessonLearned !== undefined) result.lessonLearned = encryptField(fields.lessonLearned, dek)
-	if (fields.disciplineNotes !== undefined) result.disciplineNotes = encryptField(fields.disciplineNotes, dek)
+	if (fields.pnl !== undefined) {
+		result.pnl = encryptField(fields.pnl, dek)
+	}
+	if (fields.plannedRiskAmount !== undefined) {
+		result.plannedRiskAmount = encryptField(fields.plannedRiskAmount, dek)
+	}
+	if (fields.commission !== undefined) {
+		result.commission = encryptField(fields.commission, dek)
+	}
+	if (fields.fees !== undefined) {
+		result.fees = encryptField(fields.fees, dek)
+	}
+	if (fields.entryPrice !== undefined) {
+		result.entryPrice = encryptField(fields.entryPrice, dek)
+	}
+	if (fields.exitPrice !== undefined) {
+		result.exitPrice = encryptField(fields.exitPrice, dek)
+	}
+	if (fields.positionSize !== undefined) {
+		result.positionSize = encryptField(fields.positionSize, dek)
+	}
+	if (fields.stopLoss !== undefined) {
+		result.stopLoss = encryptField(fields.stopLoss, dek)
+	}
+	if (fields.takeProfit !== undefined) {
+		result.takeProfit = encryptField(fields.takeProfit, dek)
+	}
+	if (fields.plannedRMultiple !== undefined) {
+		result.plannedRMultiple = encryptField(fields.plannedRMultiple, dek)
+	}
+	if (fields.preTradeThoughts !== undefined) {
+		result.preTradeThoughts = encryptField(fields.preTradeThoughts, dek)
+	}
+	if (fields.postTradeReflection !== undefined) {
+		result.postTradeReflection = encryptField(fields.postTradeReflection, dek)
+	}
+	if (fields.lessonLearned !== undefined) {
+		result.lessonLearned = encryptField(fields.lessonLearned, dek)
+	}
+	if (fields.disciplineNotes !== undefined) {
+		result.disciplineNotes = encryptField(fields.disciplineNotes, dek)
+	}
 
 	return result
 }
@@ -109,11 +140,17 @@ const encryptTradeFields = (fields: TradeEncryptableFields, dek: string): Partia
  * Decrypt a trade record from the database.
  * Returns a new object with decrypted numeric and text fields.
  */
-const decryptTradeFields = <T extends Record<string, unknown>>(trade: T, dek: string): T => {
+const decryptTradeFields = <T extends Record<string, unknown>>(
+	trade: T,
+	dek: string
+): T => {
 	return {
 		...trade,
 		pnl: decryptNumericField(trade.pnl as string | null, dek),
-		plannedRiskAmount: decryptNumericField(trade.plannedRiskAmount as string | null, dek),
+		plannedRiskAmount: decryptNumericField(
+			trade.plannedRiskAmount as string | null,
+			dek
+		),
 		commission: decryptNumericField(trade.commission as string | null, dek),
 		fees: decryptNumericField(trade.fees as string | null, dek),
 		entryPrice: decryptField(trade.entryPrice as string | null, dek),
@@ -121,9 +158,18 @@ const decryptTradeFields = <T extends Record<string, unknown>>(trade: T, dek: st
 		positionSize: decryptField(trade.positionSize as string | null, dek),
 		stopLoss: decryptField(trade.stopLoss as string | null, dek),
 		takeProfit: decryptField(trade.takeProfit as string | null, dek),
-		plannedRMultiple: decryptField(trade.plannedRMultiple as string | null, dek),
-		preTradeThoughts: decryptField(trade.preTradeThoughts as string | null, dek),
-		postTradeReflection: decryptField(trade.postTradeReflection as string | null, dek),
+		plannedRMultiple: decryptField(
+			trade.plannedRMultiple as string | null,
+			dek
+		),
+		preTradeThoughts: decryptField(
+			trade.preTradeThoughts as string | null,
+			dek
+		),
+		postTradeReflection: decryptField(
+			trade.postTradeReflection as string | null,
+			dek
+		),
 		lessonLearned: decryptField(trade.lessonLearned as string | null, dek),
 		disciplineNotes: decryptField(trade.disciplineNotes as string | null, dek),
 	}
@@ -142,20 +188,38 @@ interface ExecutionEncryptableFields {
 	executionValue?: number | null
 }
 
-const encryptExecutionFields = (fields: ExecutionEncryptableFields, dek: string): Record<string, string | null> => {
+const encryptExecutionFields = (
+	fields: ExecutionEncryptableFields,
+	dek: string
+): Record<string, string | null> => {
 	const result: Record<string, string | null> = {}
 
-	if (fields.price !== undefined) result.price = encryptField(fields.price, dek)
-	if (fields.quantity !== undefined) result.quantity = encryptField(fields.quantity, dek)
-	if (fields.commission !== undefined) result.commission = encryptField(fields.commission, dek)
-	if (fields.fees !== undefined) result.fees = encryptField(fields.fees, dek)
-	if (fields.slippage !== undefined) result.slippage = encryptField(fields.slippage, dek)
-	if (fields.executionValue !== undefined) result.executionValue = encryptField(fields.executionValue, dek)
+	if (fields.price !== undefined) {
+		result.price = encryptField(fields.price, dek)
+	}
+	if (fields.quantity !== undefined) {
+		result.quantity = encryptField(fields.quantity, dek)
+	}
+	if (fields.commission !== undefined) {
+		result.commission = encryptField(fields.commission, dek)
+	}
+	if (fields.fees !== undefined) {
+		result.fees = encryptField(fields.fees, dek)
+	}
+	if (fields.slippage !== undefined) {
+		result.slippage = encryptField(fields.slippage, dek)
+	}
+	if (fields.executionValue !== undefined) {
+		result.executionValue = encryptField(fields.executionValue, dek)
+	}
 
 	return result
 }
 
-const decryptExecutionFields = <T extends Record<string, unknown>>(execution: T, dek: string): T => {
+const decryptExecutionFields = <T extends Record<string, unknown>>(
+	execution: T,
+	dek: string
+): T => {
 	return {
 		...execution,
 		price: decryptField(execution.price as string | null, dek),
@@ -163,7 +227,10 @@ const decryptExecutionFields = <T extends Record<string, unknown>>(execution: T,
 		commission: decryptNumericField(execution.commission as string | null, dek),
 		fees: decryptNumericField(execution.fees as string | null, dek),
 		slippage: decryptNumericField(execution.slippage as string | null, dek),
-		executionValue: decryptNumericField(execution.executionValue as string | null, dek),
+		executionValue: decryptNumericField(
+			execution.executionValue as string | null,
+			dek
+		),
 	}
 }
 
@@ -171,11 +238,11 @@ const decryptExecutionFields = <T extends Record<string, unknown>>(execution: T,
 // ACCOUNT FIELD ENCRYPTION/DECRYPTION
 // ==========================================
 
-const encryptAccountFields = (fields: Record<string, unknown>, dek: string): Record<string, string | null> => {
-	const encryptableKeys = [
-		"profitSharePercentage",
-		"propFirmName",
-	]
+const encryptAccountFields = (
+	fields: Record<string, unknown>,
+	dek: string
+): Record<string, string | null> => {
+	const encryptableKeys = ["profitSharePercentage", "propFirmName"]
 	const result: Record<string, string | null> = {}
 	for (const key of encryptableKeys) {
 		if (fields[key] !== undefined) {
@@ -185,10 +252,16 @@ const encryptAccountFields = (fields: Record<string, unknown>, dek: string): Rec
 	return result
 }
 
-const decryptAccountFields = <T extends Record<string, unknown>>(account: T, dek: string): T => {
+const decryptAccountFields = <T extends Record<string, unknown>>(
+	account: T,
+	dek: string
+): T => {
 	return {
 		...account,
-		profitSharePercentage: decryptField(account.profitSharePercentage as string | null, dek),
+		profitSharePercentage: decryptField(
+			account.profitSharePercentage as string | null,
+			dek
+		),
 		propFirmName: decryptField(account.propFirmName as string | null, dek),
 	}
 }
@@ -197,9 +270,16 @@ const decryptAccountFields = <T extends Record<string, unknown>>(account: T, dek
 // MONTHLY PLAN FIELD ENCRYPTION/DECRYPTION
 // ==========================================
 
-const encryptMonthlyPlanFields = (fields: Record<string, unknown>, dek: string): Record<string, string | null> => {
+const encryptMonthlyPlanFields = (
+	fields: Record<string, unknown>,
+	dek: string
+): Record<string, string | null> => {
 	const encryptableKeys = [
-		"accountBalance", "riskPerTradeCents", "dailyLossCents", "monthlyLossCents", "weeklyLossCents",
+		"accountBalance",
+		"riskPerTradeCents",
+		"dailyLossCents",
+		"monthlyLossCents",
+		"weeklyLossCents",
 	]
 	const result: Record<string, string | null> = {}
 	for (const key of encryptableKeys) {
@@ -210,14 +290,32 @@ const encryptMonthlyPlanFields = (fields: Record<string, unknown>, dek: string):
 	return result
 }
 
-const decryptMonthlyPlanFields = <T extends Record<string, unknown>>(plan: T, dek: string): T => {
+const decryptMonthlyPlanFields = <T extends Record<string, unknown>>(
+	plan: T,
+	dek: string
+): T => {
 	return {
 		...plan,
-		accountBalance: decryptNumericField(plan.accountBalance as string | null, dek),
-		riskPerTradeCents: decryptNumericField(plan.riskPerTradeCents as string | null, dek),
-		dailyLossCents: decryptNumericField(plan.dailyLossCents as string | null, dek),
-		monthlyLossCents: decryptNumericField(plan.monthlyLossCents as string | null, dek),
-		weeklyLossCents: decryptNumericField(plan.weeklyLossCents as string | null, dek),
+		accountBalance: decryptNumericField(
+			plan.accountBalance as string | null,
+			dek
+		),
+		riskPerTradeCents: decryptNumericField(
+			plan.riskPerTradeCents as string | null,
+			dek
+		),
+		dailyLossCents: decryptNumericField(
+			plan.dailyLossCents as string | null,
+			dek
+		),
+		monthlyLossCents: decryptNumericField(
+			plan.monthlyLossCents as string | null,
+			dek
+		),
+		weeklyLossCents: decryptNumericField(
+			plan.weeklyLossCents as string | null,
+			dek
+		),
 	}
 }
 
@@ -225,8 +323,16 @@ const decryptMonthlyPlanFields = <T extends Record<string, unknown>>(plan: T, de
 // JOURNAL FIELD ENCRYPTION/DECRYPTION
 // ==========================================
 
-const encryptJournalFields = (fields: Record<string, unknown>, dek: string): Record<string, string | null> => {
-	const encryptableKeys = ["marketOutlook", "focusGoals", "keyTakeaways", "sessionReview"]
+const encryptJournalFields = (
+	fields: Record<string, unknown>,
+	dek: string
+): Record<string, string | null> => {
+	const encryptableKeys = [
+		"marketOutlook",
+		"focusGoals",
+		"keyTakeaways",
+		"sessionReview",
+	]
 	const result: Record<string, string | null> = {}
 	for (const key of encryptableKeys) {
 		if (fields[key] !== undefined) {
@@ -236,7 +342,10 @@ const encryptJournalFields = (fields: Record<string, unknown>, dek: string): Rec
 	return result
 }
 
-const decryptJournalFields = <T extends Record<string, unknown>>(journal: T, dek: string): T => {
+const decryptJournalFields = <T extends Record<string, unknown>>(
+	journal: T,
+	dek: string
+): T => {
 	return {
 		...journal,
 		marketOutlook: decryptField(journal.marketOutlook as string | null, dek),
@@ -250,7 +359,10 @@ const decryptJournalFields = <T extends Record<string, unknown>>(journal: T, dek
 // DAILY NOTES FIELD ENCRYPTION/DECRYPTION
 // ==========================================
 
-const encryptDailyNotesFields = (fields: Record<string, unknown>, dek: string): Record<string, string | null> => {
+const encryptDailyNotesFields = (
+	fields: Record<string, unknown>,
+	dek: string
+): Record<string, string | null> => {
 	const encryptableKeys = ["preMarketNotes", "postMarketNotes"]
 	const result: Record<string, string | null> = {}
 	for (const key of encryptableKeys) {
@@ -261,7 +373,10 @@ const encryptDailyNotesFields = (fields: Record<string, unknown>, dek: string): 
 	return result
 }
 
-const decryptDailyNotesFields = <T extends Record<string, unknown>>(notes: T, dek: string): T => {
+const decryptDailyNotesFields = <T extends Record<string, unknown>>(
+	notes: T,
+	dek: string
+): T => {
 	return {
 		...notes,
 		preMarketNotes: decryptField(notes.preMarketNotes as string | null, dek),

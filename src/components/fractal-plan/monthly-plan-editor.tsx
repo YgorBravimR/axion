@@ -23,19 +23,33 @@ interface MonthlyPlanEditorProps {
 	}
 }
 
-const MonthlyPlanEditor = ({ monthlyPlanId, riskProfiles, existing }: MonthlyPlanEditorProps) => {
+const MonthlyPlanEditor = ({
+	monthlyPlanId,
+	riskProfiles,
+	existing,
+}: MonthlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 
-	const [goalCents, setGoalCents] = useState<number | null>(existing.monthlyGoalCents)
+	const [goalCents, setGoalCents] = useState<number | null>(
+		existing.monthlyGoalCents
+	)
 	const [intentNotes, setIntentNotes] = useState(existing.intentNotes ?? "")
-	const [postMortemNotes, setPostMortemNotes] = useState(existing.postMortemNotes ?? "")
-	const [riskProfileId, setRiskProfileId] = useState<string | null>(existing.overrideRiskProfileId)
+	const [postMortemNotes, setPostMortemNotes] = useState(
+		existing.postMortemNotes ?? ""
+	)
+	const [riskProfileId, setRiskProfileId] = useState<string | null>(
+		existing.overrideRiskProfileId
+	)
 
 	const handleSubmit = () => {
-		const monthlyGoalCents = goalCents != null ? Math.round(goalCents) : undefined
-		if (monthlyGoalCents !== undefined && (!Number.isFinite(monthlyGoalCents) || monthlyGoalCents < 0)) {
+		const monthlyGoalCents =
+			goalCents !== null ? Math.round(goalCents) : undefined
+		if (
+			monthlyGoalCents !== undefined &&
+			(!Number.isFinite(monthlyGoalCents) || monthlyGoalCents < 0)
+		) {
 			showToast("error", "Goal must be a non-negative number.")
 			return
 		}
@@ -77,7 +91,9 @@ const MonthlyPlanEditor = ({ monthlyPlanId, riskProfiles, existing }: MonthlyPla
 				/>
 			</div>
 			<div>
-				<Label id="lbl-month-goal" htmlFor="month-goal">Monthly goal (BRL)</Label>
+				<Label id="lbl-month-goal" htmlFor="month-goal">
+					Monthly goal (BRL)
+				</Label>
 				<CurrencyInput
 					id="month-goal"
 					value={goalCents}
@@ -87,7 +103,9 @@ const MonthlyPlanEditor = ({ monthlyPlanId, riskProfiles, existing }: MonthlyPla
 				/>
 			</div>
 			<div>
-				<Label id="lbl-month-intent" htmlFor="month-intent">Intent / focus</Label>
+				<Label id="lbl-month-intent" htmlFor="month-intent">
+					Intent / focus
+				</Label>
 				<Textarea
 					id="month-intent"
 					rows={3}
@@ -97,7 +115,9 @@ const MonthlyPlanEditor = ({ monthlyPlanId, riskProfiles, existing }: MonthlyPla
 				/>
 			</div>
 			<div>
-				<Label id="lbl-month-postmortem" htmlFor="month-postmortem">Post-mortem</Label>
+				<Label id="lbl-month-postmortem" htmlFor="month-postmortem">
+					Post-mortem
+				</Label>
 				<Textarea
 					id="month-postmortem"
 					rows={3}

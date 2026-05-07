@@ -8,7 +8,10 @@ import {
 	tradingAccounts,
 } from "@/db/schema"
 import { resolveDay } from "@/lib/fractal-plan/resolver"
-import { deriveMonthGoal, type PlanGoalSource } from "@/lib/fractal-plan/derive-goal"
+import {
+	deriveMonthGoal,
+	type PlanGoalSource,
+} from "@/lib/fractal-plan/derive-goal"
 import {
 	MONTH_LABEL_PT,
 	MONTH_ABBR_PT,
@@ -25,7 +28,11 @@ import { PlanSection } from "@/components/fractal-plan/plan-section"
 import { QuarterHeader } from "./quarter-header"
 import { QuarterPlanVsReality } from "./quarter-plan-vs-reality"
 import { QuarterMonthCard } from "./quarter-month-card"
-import { DarfStrip, type DarfStripChip, type DarfStatus as UiDarfStatus } from "./darf-strip"
+import {
+	DarfStrip,
+	type DarfStripChip,
+	type DarfStatus as UiDarfStatus,
+} from "./darf-strip"
 
 interface QuarterReportProps {
 	accountId: string
@@ -41,26 +48,48 @@ const computeMonthOffset = (year: number, month: number): number => {
 	return (nowY - year) * 12 + (nowM - month)
 }
 
-const monthState = (year: number, month: number): "past" | "current" | "future" => {
-	if (isMonthFinalized(year, month)) return "past"
-	if (isMonthCurrent(year, month)) return "current"
+const monthState = (
+	year: number,
+	month: number
+): "past" | "current" | "future" => {
+	if (isMonthFinalized(year, month)) {
+		return "past"
+	}
+	if (isMonthCurrent(year, month)) {
+		return "current"
+	}
 	return "future"
 }
 
-const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReportProps) => {
+const QuarterReport = async ({
+	accountId,
+	year,
+	quarter,
+	locale,
+}: QuarterReportProps) => {
 	const quarterLabel = `Q${quarter} ${year}`
-	const months = [(quarter - 1) * 3 + 1, (quarter - 1) * 3 + 2, (quarter - 1) * 3 + 3] as const
+	const months = [
+		(quarter - 1) * 3 + 1,
+		(quarter - 1) * 3 + 2,
+		(quarter - 1) * 3 + 3,
+	] as const
 	const monthRangeLabel = months.map((m) => MONTH_ABBR_PT[m]).join(" · ")
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+		where: and(
+			eq(yearlyPlans.accountId, accountId),
+			eq(yearlyPlans.year, year)
+		),
 	})
 	if (!yearRow) {
 		return (
 			<PlanSection title={quarterLabel} subtitle="Plano anual ainda não criado">
 				<p className="text-txt-200">
 					Crie o plano anual primeiro em{" "}
-					<a href={`/${locale}/plan/${year}`} className="text-acc-100 underline">
+					<a
+						href={`/${locale}/plan/${year}`}
+						className="text-acc-100 underline"
+					>
 						/plan/{year}
 					</a>
 					.
@@ -70,14 +99,21 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 	}
 
 	const quarterRow = await db.query.quarterlyPlan.findFirst({
-		where: and(eq(quarterlyPlan.yearlyPlanId, yearRow.id), eq(quarterlyPlan.quarter, quarter)),
+		where: and(
+			eq(quarterlyPlan.yearlyPlanId, yearRow.id),
+			eq(quarterlyPlan.quarter, quarter)
+		),
 	})
 
 	if (!quarterRow) {
 		return (
-			<PlanSection title={quarterLabel} subtitle="Linha trimestral não encontrada">
+			<PlanSection
+				title={quarterLabel}
+				subtitle="Linha trimestral não encontrada"
+			>
 				<p className="text-txt-200">
-					O plano anual deveria ter auto-semeado este trimestre. Verifique a integridade do plano anual.
+					O plano anual deveria ter auto-semeado este trimestre. Verifique a
+					integridade do plano anual.
 				</p>
 			</PlanSection>
 		)
@@ -95,7 +131,9 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 
 	const irTaxRate = getDayTradeIrRate(year)
 	const isPropAccount = account?.accountType === "prop"
-	const profitSharePercent = account ? Number(account.profitSharePercentage) : 100
+	const profitSharePercent = account
+		? Number(account.profitSharePercentage)
+		: 100
 	const showTaxEstimates = account?.showTaxEstimates ?? true
 
 	const computeNetAfterTaxCents = (netPnl: number): number => {
@@ -110,9 +148,7 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 	}
 
 	const monthRowsRaw = await db.query.monthlyPlan.findMany({
-		where: and(
-			eq(monthlyPlan.quarterlyPlanId, quarterRow.id),
-		),
+		where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id)),
 	})
 	const monthRowByMonth = new Map(monthRowsRaw.map((m) => [m.month, m]))
 
@@ -123,31 +159,39 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 			const offset = computeMonthOffset(year, m)
 			const isCurrent = isMonthCurrent(year, m)
 
-			const [weeks, resolved, monthlyResult, projectionResult, darfResult] = await Promise.all([
-				row
-					? db.query.weeklyPlan.findMany({ where: eq(weeklyPlan.monthlyPlanId, row.id) })
-					: Promise.resolve([]),
-				resolveDay(accountId, firstOfMonth),
-				getMonthlyResultsWithProp(offset),
-				isCurrent ? getMonthlyProjection() : Promise.resolve(null),
-				getMonthlyDarf({ accountId, year, month: m }),
-			])
+			const [weeks, resolved, monthlyResult, projectionResult, darfResult] =
+				await Promise.all([
+					row
+						? db.query.weeklyPlan.findMany({
+								where: eq(weeklyPlan.monthlyPlanId, row.id),
+							})
+						: Promise.resolve([]),
+					resolveDay(accountId, firstOfMonth),
+					getMonthlyResultsWithProp(offset),
+					isCurrent ? getMonthlyProjection() : Promise.resolve(null),
+					getMonthlyDarf({ accountId, year, month: m }),
+				])
 
-			const monthlyData = monthlyResult.status === "success" ? monthlyResult.data ?? null : null
+			const monthlyData =
+				monthlyResult.status === "success" ? (monthlyResult.data ?? null) : null
 			const projectionData =
-				projectionResult && projectionResult.status === "success" ? projectionResult.data ?? null : null
-			const darfRow = darfResult.status === "success" ? darfResult.data ?? null : null
+				projectionResult && projectionResult.status === "success"
+					? (projectionResult.data ?? null)
+					: null
+			const darfRow =
+				darfResult.status === "success" ? (darfResult.data ?? null) : null
 
-			const totalTradingDays = projectionData?.totalTradingDays ?? DEFAULT_TRADING_DAYS_PER_MONTH
+			const totalTradingDays =
+				projectionData?.totalTradingDays ?? DEFAULT_TRADING_DAYS_PER_MONTH
 
 			const goal = row
 				? deriveMonthGoal({
-					manualGoalCents: row.monthlyGoalCents,
-					weekTargetRs: weeks.map((w) => w.targetR),
-					snapshotOneRCents: row.snapshotOneRCents,
-					cascadeDailyTargetR: resolved?.dailyTargetR.value ?? null,
-					totalTradingDays,
-				})
+						manualGoalCents: row.monthlyGoalCents,
+						weekTargetRs: weeks.map((w) => w.targetR),
+						snapshotOneRCents: row.snapshotOneRCents,
+						cascadeDailyTargetR: resolved?.dailyTargetR.value ?? null,
+						totalTradingDays,
+					})
 				: { planGoalCents: null, planGoalSource: "none" as PlanGoalSource }
 
 			const realizedNetCents = monthlyData
@@ -161,7 +205,7 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 
 			const finalized = isMonthFinalized(year, m)
 			const uiDarfStatus: UiDarfStatus = finalized
-				? darfRow?.darfStatus ?? "unknown"
+				? (darfRow?.darfStatus ?? "unknown")
 				: isCurrent
 					? "in_progress"
 					: "future"
@@ -179,22 +223,29 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 				tierIndex: row?.snapshotTierIndex ?? 0,
 				oneRCents: row?.snapshotOneRCents ?? 0,
 			}
-		}),
+		})
 	)
 
 	const goalSums = perMonth.reduce(
 		(acc, p) => {
-			if (p.goal.planGoalCents != null) {
+			if (p.goal.planGoalCents !== null) {
 				acc.cents += p.goal.planGoalCents
 				acc.sources.add(p.goal.planGoalSource)
 			}
 			return acc
 		},
-		{ cents: 0, sources: new Set<PlanGoalSource>() },
+		{ cents: 0, sources: new Set<PlanGoalSource>() }
 	)
 	const aggregatedGoalCents = goalSums.cents > 0 ? goalSums.cents : null
-	const aggregatedGoalSource: "manual" | "weeks" | "default" | "mixed" | "none" = (() => {
-		if (aggregatedGoalCents == null) return "none"
+	const aggregatedGoalSource:
+		| "manual"
+		| "weeks"
+		| "default"
+		| "mixed"
+		| "none" = (() => {
+		if (aggregatedGoalCents === null) {
+			return "none"
+		}
 		if (goalSums.sources.size === 1) {
 			const only = [...goalSums.sources][0]
 			return only === "none" ? "none" : (only as "manual" | "weeks" | "default")
@@ -204,22 +255,23 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 
 	const realizedTotalCents = perMonth.reduce(
 		(acc, p) => acc + (p.realizedNetCents ?? 0),
-		0,
+		0
 	)
 	const monthsTraded = perMonth.filter((p) => p.tradeCount > 0).length
 	const totalMonths = months.length
 
 	const currentMonthInQ = perMonth.find((p) => p.state === "current")
-	const projectedQuarterNetCents = currentMonthInQ?.projectedNetCents != null
-		? perMonth.reduce(
-			(acc, p) =>
-				acc +
-				(p === currentMonthInQ
-					? currentMonthInQ.projectedNetCents ?? 0
-					: p.realizedNetCents ?? 0),
-			0,
-		)
-		: null
+	const projectedQuarterNetCents =
+		currentMonthInQ?.projectedNetCents !== null
+			? perMonth.reduce(
+					(acc, p) =>
+						acc +
+						(p === currentMonthInQ
+							? (currentMonthInQ.projectedNetCents ?? 0)
+							: (p.realizedNetCents ?? 0)),
+					0
+				)
+			: null
 
 	return (
 		<div className="space-y-m-400">
@@ -240,12 +292,12 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 			<QuarterPlanVsReality
 				quarterLabel={quarterLabel}
 				planGoalCents={
-					quarterRow.goalCents != null && quarterRow.goalCents > 0
+					quarterRow.goalCents !== null && quarterRow.goalCents > 0
 						? quarterRow.goalCents
 						: aggregatedGoalCents
 				}
 				planGoalSource={
-					quarterRow.goalCents != null && quarterRow.goalCents > 0
+					quarterRow.goalCents !== null && quarterRow.goalCents > 0
 						? "manual"
 						: aggregatedGoalSource
 				}
@@ -255,7 +307,10 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 				totalMonths={totalMonths}
 			/>
 
-			<section aria-label="Meses do trimestre" className="grid grid-cols-1 gap-m-400 md:grid-cols-3">
+			<section
+				aria-label="Meses do trimestre"
+				className="gap-m-400 grid grid-cols-1 md:grid-cols-3"
+			>
 				{perMonth.map((p) => (
 					<QuarterMonthCard
 						key={p.month}
@@ -275,14 +330,16 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 			</section>
 
 			<section
-				className="rounded-lg border border-bg-300 bg-bg-200"
+				className="border-bg-300 bg-bg-200 rounded-lg border"
 				aria-label="DARF do trimestre"
 			>
-				<header className="flex items-baseline justify-between px-m-400 py-s-300">
-					<span className="font-medium text-small text-txt-100">DARF · trimestre</span>
+				<header className="px-m-400 py-s-300 flex items-baseline justify-between">
+					<span className="text-small text-txt-100 font-medium">
+						DARF · trimestre
+					</span>
 					<span className="text-tiny text-txt-300">visão por mês</span>
 				</header>
-				<div className="border-t border-bg-300 p-m-400">
+				<div className="border-bg-300 p-m-400 border-t">
 					<DarfStrip
 						chips={perMonth.map<DarfStripChip>((p) => ({
 							monthIndex: p.month - 1,
@@ -296,27 +353,37 @@ const QuarterReport = async ({ accountId, year, quarter, locale }: QuarterReport
 			{(quarterRow.reflectionNotes || quarterRow.postMortemNotes) && (
 				<section
 					id="quarter-narrative"
-					className="rounded-lg border border-bg-300 bg-bg-200 p-m-400"
+					className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
 					aria-label="Reflexão e pós-mortem do trimestre"
 				>
 					<header className="flex items-baseline justify-between">
-						<h2 className="text-small font-medium text-txt-100">Reflexão · pós-mortem</h2>
+						<h2 className="text-small text-txt-100 font-medium">
+							Reflexão · pós-mortem
+						</h2>
 						<span className="text-tiny text-txt-300">{quarterLabel}</span>
 					</header>
-					<div className="mt-s-300 grid gap-m-400 sm:grid-cols-2">
+					<div className="mt-s-300 gap-m-400 grid sm:grid-cols-2">
 						<div>
-							<p className="text-tiny uppercase tracking-wider text-txt-300">Reflexão</p>
-							<p className="mt-s-100 whitespace-pre-wrap text-small text-txt-100">
+							<p className="text-tiny text-txt-300 tracking-wider uppercase">
+								Reflexão
+							</p>
+							<p className="mt-s-100 text-small text-txt-100 whitespace-pre-wrap">
 								{quarterRow.reflectionNotes || (
-									<span className="text-txt-300">Sem nota — defina pelo botão "Editar plano".</span>
+									<span className="text-txt-300">
+										Sem nota — defina pelo botão "Editar plano".
+									</span>
 								)}
 							</p>
 						</div>
 						<div>
-							<p className="text-tiny uppercase tracking-wider text-txt-300">Pós-mortem</p>
-							<p className="mt-s-100 whitespace-pre-wrap text-small text-txt-100">
+							<p className="text-tiny text-txt-300 tracking-wider uppercase">
+								Pós-mortem
+							</p>
+							<p className="mt-s-100 text-small text-txt-100 whitespace-pre-wrap">
 								{quarterRow.postMortemNotes || (
-									<span className="text-txt-300">Sem revisão — defina pelo botão "Editar plano".</span>
+									<span className="text-txt-300">
+										Sem revisão — defina pelo botão "Editar plano".
+									</span>
 								)}
 							</p>
 						</div>

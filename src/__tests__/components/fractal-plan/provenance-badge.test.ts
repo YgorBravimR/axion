@@ -18,8 +18,13 @@ const LEVEL_LABEL: Record<Exclude<CascadeLevel, "none">, string> = {
 	day: "Day",
 }
 
-const getBadgeText = (level: CascadeLevel, isOverride = false): string | null => {
-	if (level === "none") return null
+const getBadgeText = (
+	level: CascadeLevel,
+	isOverride = false
+): string | null => {
+	if (level === "none") {
+		return null
+	}
 	const label = LEVEL_LABEL[level]
 	return isOverride ? `override at ${label}` : `from ${label}`
 }
@@ -50,7 +55,13 @@ describe("ProvenanceBadge text logic", () => {
 	})
 
 	it("covers all non-none levels without throwing", () => {
-		const levels: Exclude<CascadeLevel, "none">[] = ["year", "quarter", "month", "week", "day"]
+		const levels: Exclude<CascadeLevel, "none">[] = [
+			"year",
+			"quarter",
+			"month",
+			"week",
+			"day",
+		]
 		for (const level of levels) {
 			expect(() => getBadgeText(level)).not.toThrow()
 			expect(() => getBadgeText(level, true)).not.toThrow()

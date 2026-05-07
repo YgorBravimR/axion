@@ -30,7 +30,7 @@ type EnsureDailyResult =
 
 const ensureDailyPlanForAccountDate = async (
 	accountId: string,
-	date: Date,
+	date: Date
 ): Promise<EnsureDailyResult> => {
 	const year = date.getFullYear()
 	const month = date.getMonth() + 1
@@ -40,39 +40,55 @@ const ensureDailyPlanForAccountDate = async (
 	const dateKey = formatDateKey(date)
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
-		where: and(eq(yearlyPlans.accountId, accountId), eq(yearlyPlans.year, year)),
+		where: and(
+			eq(yearlyPlans.accountId, accountId),
+			eq(yearlyPlans.year, year)
+		),
 	})
-	if (!yearRow) return { status: "no-yearly-plan" }
+	if (!yearRow) {
+		return { status: "no-yearly-plan" }
+	}
 
 	const quarterRow = await db.query.quarterlyPlan.findFirst({
 		where: and(
 			eq(quarterlyPlan.yearlyPlanId, yearRow.id),
-			eq(quarterlyPlan.quarter, quarter),
+			eq(quarterlyPlan.quarter, quarter)
 		),
 	})
-	if (!quarterRow) return { status: "incomplete-cascade", missing: "quarter" }
+	if (!quarterRow) {
+		return { status: "incomplete-cascade", missing: "quarter" }
+	}
 
 	const monthRow = await db.query.monthlyPlan.findFirst({
 		where: and(
 			eq(monthlyPlan.quarterlyPlanId, quarterRow.id),
-			eq(monthlyPlan.month, month),
+			eq(monthlyPlan.month, month)
 		),
 	})
-	if (!monthRow) return { status: "incomplete-cascade", missing: "month" }
+	if (!monthRow) {
+		return { status: "incomplete-cascade", missing: "month" }
+	}
 
 	const weekRow = await db.query.weeklyPlan.findFirst({
 		where: and(
 			eq(weeklyPlan.monthlyPlanId, monthRow.id),
 			eq(weeklyPlan.isoWeek, isoWeek),
-			eq(weeklyPlan.isoYear, isoYear),
+			eq(weeklyPlan.isoYear, isoYear)
 		),
 	})
-	if (!weekRow) return { status: "incomplete-cascade", missing: "week" }
+	if (!weekRow) {
+		return { status: "incomplete-cascade", missing: "week" }
+	}
 
 	const existing = await db.query.dailyPlan.findFirst({
-		where: and(eq(dailyPlan.weeklyPlanId, weekRow.id), eq(dailyPlan.date, dateKey)),
+		where: and(
+			eq(dailyPlan.weeklyPlanId, weekRow.id),
+			eq(dailyPlan.date, dateKey)
+		),
 	})
-	if (existing) return { status: "ok", dayRow: existing }
+	if (existing) {
+		return { status: "ok", dayRow: existing }
+	}
 
 	const [created] = await db
 		.insert(dailyPlan)

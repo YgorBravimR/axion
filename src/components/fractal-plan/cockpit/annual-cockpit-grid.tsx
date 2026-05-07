@@ -1,6 +1,9 @@
 import { MonthCard, type WeekData } from "./month-card"
 import { projectMonth } from "@/lib/fractal-plan/projection"
-import { resolveTier, type LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+import {
+	resolveTier,
+	type LadderRuleR,
+} from "@/lib/fractal-plan/capital-ladder"
 
 interface MonthInputRow {
 	monthIndex: number
@@ -54,8 +57,18 @@ interface AnnualCockpitGridProps {
 }
 
 const MONTH_LABELS_PT = [
-	"jan", "fev", "mar", "abr", "mai", "jun",
-	"jul", "ago", "set", "out", "nov", "dez",
+	"jan",
+	"fev",
+	"mar",
+	"abr",
+	"mai",
+	"jun",
+	"jul",
+	"ago",
+	"set",
+	"out",
+	"nov",
+	"dez",
 ]
 
 const AnnualCockpitGrid = ({
@@ -82,8 +95,8 @@ const AnnualCockpitGrid = ({
 
 	const cards = Array.from({ length: 12 }, (_, i) => {
 		const isMuted =
-			accountStartYear != null &&
-			accountStartMonth != null &&
+			accountStartYear !== null &&
+			accountStartMonth !== null &&
 			year === accountStartYear &&
 			i < accountStartMonth - 1
 
@@ -92,14 +105,20 @@ const AnnualCockpitGrid = ({
 		const hasRealData = real.tradesCount > 0
 
 		const isManual = row?.snapshotReason === "manual"
-		const startBalanceCents = isManual && row ? row.snapshotCapitalCents : runningCapitalCents
-		const tier = ladderRules.length > 0 ? resolveTier(startBalanceCents, ladderRules) : null
-		const oneRCents = isManual && row
-			? row.snapshotOneRCents
-			: tier?.oneRCents ?? row?.snapshotOneRCents ?? 0
-		const tierIndex = isManual && row
-			? row.snapshotTierIndex
-			: tier?.tierIndex ?? row?.snapshotTierIndex ?? 0
+		const startBalanceCents =
+			isManual && row ? row.snapshotCapitalCents : runningCapitalCents
+		const tier =
+			ladderRules.length > 0
+				? resolveTier(startBalanceCents, ladderRules)
+				: null
+		const oneRCents =
+			isManual && row
+				? row.snapshotOneRCents
+				: (tier?.oneRCents ?? row?.snapshotOneRCents ?? 0)
+		const tierIndex =
+			isManual && row
+				? row.snapshotTierIndex
+				: (tier?.tierIndex ?? row?.snapshotTierIndex ?? 0)
 		const weeks: WeekData[] = row?.weeks ?? []
 
 		const projection = projectMonth({
@@ -112,8 +131,11 @@ const AnnualCockpitGrid = ({
 		})
 
 		const pace = paceByMonthIdx[String(i)] ?? null
-		const isCurrentWithRemainder = i === currentMonthIndex && hasRealData && currentMonthRemainder != null
-		const realOnlyEndCents = hasRealData ? startBalanceCents + real.realPnlCents : null
+		const isCurrentWithRemainder =
+			i === currentMonthIndex && hasRealData && currentMonthRemainder !== null
+		const realOnlyEndCents = hasRealData
+			? startBalanceCents + real.realPnlCents
+			: null
 		const effectiveEndCents = isCurrentWithRemainder
 			? currentMonthRemainder!.projectedEndBalanceCents
 			: hasRealData
@@ -136,7 +158,9 @@ const AnnualCockpitGrid = ({
 
 		// Refine: future month with no real data yet → "projection"; current/past w/ real data stays factual.
 		const state: "past" | "current" | "future" | "muted" | "projection" =
-			baseState === "future" && i > lastActualMonthIdx ? "projection" : baseState
+			baseState === "future" && i > lastActualMonthIdx
+				? "projection"
+				: baseState
 
 		const quarter = row?.quarter ?? Math.floor(i / 3) + 1
 		const month1Indexed = i + 1
@@ -156,7 +180,8 @@ const AnnualCockpitGrid = ({
 			projection,
 			state,
 			prevMonthEndCents: cardPrevEndCents,
-			withdrawalCents: projection.withdrawalCents > 0 ? projection.withdrawalCents : undefined,
+			withdrawalCents:
+				projection.withdrawalCents > 0 ? projection.withdrawalCents : undefined,
 			real: hasRealData ? real : null,
 			pace: !hasRealData && pace ? pace : null,
 			remainder: isCurrentWithRemainder ? currentMonthRemainder : null,
@@ -167,39 +192,47 @@ const AnnualCockpitGrid = ({
 	return (
 		<section
 			aria-label={`Grade anual de planos para ${year}`}
-			className="grid auto-rows-fr grid-cols-1 gap-m-400 sm:grid-cols-2 lg:grid-cols-3"
+			className="gap-m-400 grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
 		>
 			{cards.map((c) => {
 				const anchorKey = c.state === "muted" ? null : c.state
-				const isAnchor = anchorKey != null && !seenAnchorStates.has(anchorKey)
-				if (isAnchor && anchorKey) seenAnchorStates.add(anchorKey)
+				const isAnchor = anchorKey !== null && !seenAnchorStates.has(anchorKey)
+				if (isAnchor && anchorKey) {
+					seenAnchorStates.add(anchorKey)
+				}
 				return (
-				<MonthCard
-					key={c.key}
-					year={year}
-					monthIndex={c.key}
-					monthLabel={c.monthLabel}
-					href={c.href}
-					monthlyPlanId={c.monthlyPlanId}
-					startBalanceCents={c.startBalanceCents}
-					endBalanceCents={c.endBalanceCents}
-					oneRCents={c.oneRCents}
-					tierIndex={c.tierIndex}
-					weeks={c.weeks}
-					projection={c.projection}
-					state={c.state}
-					prevMonthEndCents={c.prevMonthEndCents}
-					withdrawalCents={c.withdrawalCents}
-					real={c.real}
-					pace={c.pace}
-					remainder={c.remainder}
-					guideAnchor={isAnchor}
-				/>
-			)
+					<MonthCard
+						key={c.key}
+						year={year}
+						monthIndex={c.key}
+						monthLabel={c.monthLabel}
+						href={c.href}
+						monthlyPlanId={c.monthlyPlanId}
+						startBalanceCents={c.startBalanceCents}
+						endBalanceCents={c.endBalanceCents}
+						oneRCents={c.oneRCents}
+						tierIndex={c.tierIndex}
+						weeks={c.weeks}
+						projection={c.projection}
+						state={c.state}
+						prevMonthEndCents={c.prevMonthEndCents}
+						withdrawalCents={c.withdrawalCents}
+						real={c.real}
+						pace={c.pace}
+						remainder={c.remainder}
+						guideAnchor={isAnchor}
+					/>
+				)
 			})}
 		</section>
 	)
 }
 
 export { AnnualCockpitGrid }
-export type { AnnualCockpitGridProps, MonthInputRow, RealMonthData, PaceMonthData, CurrentMonthRemainder }
+export type {
+	AnnualCockpitGridProps,
+	MonthInputRow,
+	RealMonthData,
+	PaceMonthData,
+	CurrentMonthRemainder,
+}

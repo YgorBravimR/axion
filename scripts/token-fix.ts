@@ -57,7 +57,10 @@ const SPACING_PROPS = [
 ]
 
 const wordBound = (literal: string): RegExp =>
-	new RegExp(`\\b${literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w.-])`, "g")
+	new RegExp(
+		`\\b${literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w.-])`,
+		"g"
+	)
 
 const buildSpacingFixes = (): Rule[] => {
 	const fixes: Rule[] = []
@@ -138,13 +141,15 @@ const RULES: Rule[] = [
 		category: "typography",
 		from: wordBound("text-h4"),
 		to: "text-h3",
-		reason: "No `--text-h4` token; demote to `text-h3` or use `text-body font-semibold`.",
+		reason:
+			"No `--text-h4` token; demote to `text-h3` or use `text-body font-semibold`.",
 	},
 	{
 		category: "typography",
 		from: /\btext-heading-(\d+)\b/g,
 		to: "text-h$1",
-		reason: "Use Axion `text-h{N}` (matches `--text-h{N}` token), not `text-heading-{N}`.",
+		reason:
+			"Use Axion `text-h{N}` (matches `--text-h{N}` token), not `text-heading-{N}`.",
 	},
 
 	// Tailwind v4 deprecated utilities (still common from v3 muscle memory).
@@ -164,13 +169,15 @@ const RULES: Rule[] = [
 		category: "v3-deprecated",
 		from: /\btransition-colors\s+transition-opacity\b/g,
 		to: "transition",
-		reason: "Conflicting transition-* utilities both set `transition-property`; use `transition` (covers all).",
+		reason:
+			"Conflicting transition-* utilities both set `transition-property`; use `transition` (covers all).",
 	},
 	{
 		category: "typography",
 		from: /\btext-\[10px\]/g,
 		to: "text-micro",
-		reason: "Use design-system `text-micro` instead of arbitrary `text-[10px]`.",
+		reason:
+			"Use design-system `text-micro` instead of arbitrary `text-[10px]`.",
 	},
 	{
 		category: "typography",
@@ -182,7 +189,8 @@ const RULES: Rule[] = [
 		category: "typography",
 		from: /\btext-\[12px\]/g,
 		to: "text-small",
-		reason: "Use design-system `text-small` instead of arbitrary `text-[12px]`.",
+		reason:
+			"Use design-system `text-small` instead of arbitrary `text-[12px]`.",
 	},
 
 	// Semantic colors — fb-error/warning/success.
@@ -202,7 +210,8 @@ const RULES: Rule[] = [
 		category: "semantic-color",
 		from: /\b(text|bg|border|ring|fill|stroke|outline)-fb-warning\b/g,
 		to: "$1-warning",
-		reason: "No `fb-warning` token (only `fb-error` and `fb-success` exist with `fb-` prefix); use `warning`.",
+		reason:
+			"No `fb-warning` token (only `fb-error` and `fb-success` exist with `fb-` prefix); use `warning`.",
 	},
 	{
 		category: "semantic-color",
@@ -218,7 +227,7 @@ const RULES: Rule[] = [
 const listFiles = (): string[] => {
 	const out = execSync(
 		`find src -type f \\( -name "*.tsx" -o -name "*.ts" \\) -not -path "*/node_modules/*"`,
-		{ encoding: "utf8" },
+		{ encoding: "utf8" }
 	)
 	return out.split("\n").filter(Boolean)
 }
@@ -242,8 +251,12 @@ const processFile = (path: string, dry: boolean): FileChange | null => {
 			hits.set(key, (hits.get(key) ?? 0) + count)
 		}
 	}
-	if (modified === original) return null
-	if (!dry) writeFileSync(path, modified, "utf8")
+	if (modified === original) {
+		return null
+	}
+	if (!dry) {
+		writeFileSync(path, modified, "utf8")
+	}
 	return { path, hits }
 }
 
@@ -253,7 +266,9 @@ const main = (): void => {
 	const changes: FileChange[] = []
 	for (const file of files) {
 		const change = processFile(file, dry)
-		if (change) changes.push(change)
+		if (change) {
+			changes.push(change)
+		}
 	}
 
 	const totals = new Map<string, number>()
@@ -266,7 +281,7 @@ const main = (): void => {
 	}
 
 	console.log(
-		`\n${changes.length} / ${files.length} files ${dry ? "would change" : "updated"}.`,
+		`\n${changes.length} / ${files.length} files ${dry ? "would change" : "updated"}.`
 	)
 	if (totals.size > 0) {
 		console.log("\nTotals by rule:")
@@ -275,7 +290,9 @@ const main = (): void => {
 		}
 	}
 
-	if (dry && changes.length > 0) process.exit(1)
+	if (dry && changes.length > 0) {
+		process.exit(1)
+	}
 }
 
 main()

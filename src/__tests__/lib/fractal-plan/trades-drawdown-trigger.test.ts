@@ -29,8 +29,12 @@ const maybeTriggerDrawdown = async (
 	outcome: "win" | "loss" | "breakeven" | undefined,
 	exitDate: Date | null
 ): Promise<void> => {
-	if (!mockIsFractalPlanEnabled()) return
-	if (outcome !== "loss" || !exitDate) return
+	if (!mockIsFractalPlanEnabled()) {
+		return
+	}
+	if (outcome !== "loss" || !exitDate) {
+		return
+	}
 	try {
 		await mockCheckDrawdownTrigger({ accountId, asOf: exitDate })
 	} catch (err) {
@@ -87,6 +91,8 @@ describe("maybeTriggerDrawdown (createTrade path)", () => {
 		mockCheckDrawdownTrigger.mockRejectedValue(new Error("trigger failed"))
 
 		// Should not throw
-		await expect(maybeTriggerDrawdown("acc-1", "loss", new Date("2026-01-15"))).resolves.toBeUndefined()
+		await expect(
+			maybeTriggerDrawdown("acc-1", "loss", new Date("2026-01-15"))
+		).resolves.toBeUndefined()
 	})
 })

@@ -29,7 +29,9 @@ interface ProviderConfig {
 	type: VisionProviderType
 	name: string
 	isAvailable: () => boolean
-	extract: (request: VisionExtractionRequest) => Promise<VisionExtractionResponse>
+	extract: (
+		request: VisionExtractionRequest
+	) => Promise<VisionExtractionResponse>
 	supportsStructuredOutput: boolean
 }
 
@@ -160,6 +162,7 @@ export const extractWithCascade = async (
 		triedProviders.push(provider.type)
 
 		try {
+			// eslint-disable-next-line no-await-in-loop -- cascade providers must be tried sequentially; next provider is only attempted on failure of the current one
 			const response = await provider.extract(request)
 
 			return {
@@ -269,7 +272,10 @@ export const extractTradesWithCascade = async (
 		const jsonMatch = content.match(/\{[\s\S]*\}/)
 
 		if (!jsonMatch) {
-			console.error("[VISION:Cascade] No JSON found in response, content:", content.substring(0, 500))
+			console.error(
+				"[VISION:Cascade] No JSON found in response, content:",
+				content.substring(0, 500)
+			)
 			throw new Error("No JSON found in response")
 		}
 
@@ -287,7 +293,10 @@ export const extractTradesWithCascade = async (
 		}
 	} catch (error) {
 		console.error("[VISION:Cascade] Failed to parse response:", error)
-		console.error("[VISION:Cascade] Raw content:", result.response.content.substring(0, 500))
+		console.error(
+			"[VISION:Cascade] Raw content:",
+			result.response.content.substring(0, 500)
+		)
 
 		// Return raw text for parsing
 		return {

@@ -70,7 +70,9 @@ const levenshteinDistance = (a: string, b: string): number => {
  */
 const stringSimilarity = (a: string, b: string): number => {
 	const maxLen = Math.max(a.length, b.length)
-	if (maxLen === 0) return 1
+	if (maxLen === 0) {
+		return 1
+	}
 	const distance = levenshteinDistance(a.toLowerCase(), b.toLowerCase())
 	return 1 - distance / maxLen
 }
@@ -121,7 +123,9 @@ const findBestHeaderMatch = (
  * Also handles: 187.450 (which could be 187450 or 187.45)
  */
 export const parseBrazilianNumber = (value: string): number | null => {
-	if (!value || value.trim() === "") return null
+	if (!value || value.trim() === "") {
+		return null
+	}
 
 	// Clean the string
 	let cleaned = value.trim()
@@ -135,7 +139,9 @@ export const parseBrazilianNumber = (value: string): number | null => {
 	// Remove any remaining non-numeric chars except . , -
 	cleaned = cleaned.replace(/[^\d.,-]/g, "")
 
-	if (!cleaned) return null
+	if (!cleaned) {
+		return null
+	}
 
 	// If it has both dots and commas, it's Brazilian format
 	// 1.234,56 → 1234.56
@@ -158,7 +164,9 @@ export const parseBrazilianNumber = (value: string): number | null => {
  * Parse time string (HH:MM:SS) - tolerates OCR errors
  */
 export const parseTimeString = (value: string): string | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 
 	// Clean common OCR errors (o → 0, l → 1, etc.)
 	const cleaned = value
@@ -168,7 +176,9 @@ export const parseTimeString = (value: string): string | null => {
 
 	// Match HH:MM:SS pattern (allowing some flexibility)
 	const match = cleaned.match(/(\d{1,2}):(\d{2}):(\d{2})/)
-	if (!match) return null
+	if (!match) {
+		return null
+	}
 
 	const [, hours, minutes, seconds] = match
 	return `${hours.padStart(2, "0")}:${minutes}:${seconds}`
@@ -179,11 +189,15 @@ export const parseTimeString = (value: string): string | null => {
  * e.g., "9 V" → 9, "10 C" → 10
  */
 export const parseQuantity = (value: string): number | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 
 	// Clean and extract just the number
 	const cleaned = value.replace(/[^\d]/g, "")
-	if (!cleaned) return null
+	if (!cleaned) {
+		return null
+	}
 
 	return parseInt(cleaned, 10)
 }
@@ -450,7 +464,9 @@ const parseDataRow = (
 		.map((v) => v.trim())
 		.filter(Boolean)
 
-	if (values.length < 2) return null
+	if (values.length < 2) {
+		return null
+	}
 
 	const row: ParsedRow = { isSummary: false }
 
@@ -466,7 +482,9 @@ const parseDataRow = (
 		const valueIndex = col.index + valueOffset
 		const value = values[valueIndex]
 
-		if (!value) continue
+		if (!value) {
+			continue
+		}
 
 		switch (col.type) {
 			case "asset":
@@ -617,7 +635,9 @@ const parseWithPatterns = (
 		}
 
 		// Skip empty or very short lines
-		if (line.trim().length < 10) continue
+		if (line.trim().length < 10) {
+			continue
+		}
 
 		// Check if this is a summary row (two times = new trade)
 		if (isSummaryRow(line)) {
@@ -793,7 +813,9 @@ const classifyEntryExit = (
 	let entryQty = 0
 	return sorted.map((exec) => {
 		const isEntry = entryQty < targetEntryQty
-		if (isEntry) entryQty += exec.quantity
+		if (isEntry) {
+			entryQty += exec.quantity
+		}
 		return { ...exec, type: isEntry ? "entry" : "exit" } as ProfitChartExecution
 	})
 }
@@ -818,13 +840,17 @@ const collectVerticalData = (
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i].trim()
-		if (!line) continue
+		if (!line) {
+			continue
+		}
 
 		// Standalone "C" or "V" indicates previous number was a summary quantity
 		if (/^[CV]$/i.test(line)) {
 			if (prevNumberLine) {
 				const idx = quantities.findIndex((q) => q.line === prevNumberLine?.line)
-				if (idx !== -1) quantities.splice(idx, 1)
+				if (idx !== -1) {
+					quantities.splice(idx, 1)
+				}
 			}
 			prevNumberLine = null
 			continue
@@ -892,7 +918,9 @@ const buildTradeFromData = (
 	tradeQuantities: LineData<number>[],
 	tradeIndex: number
 ): ParsedTrade | null => {
-	if (tradeTimes.length < 1 || tradePrices.length < 1) return null
+	if (tradeTimes.length < 1 || tradePrices.length < 1) {
+		return null
+	}
 
 	const normalized = normalizeB3Asset(assetValue)
 
@@ -942,7 +970,9 @@ const buildTradeFromData = (
 		})
 	}
 
-	if (rawExecutions.length === 0) return null
+	if (rawExecutions.length === 0) {
+		return null
+	}
 
 	const executions = classifyEntryExit(rawExecutions)
 	const totalQty = executions.reduce((sum, e) => sum + e.quantity, 0)
@@ -993,7 +1023,9 @@ const buildUnknownTrade = (
 		}
 	}
 
-	if (executions.length === 0) return null
+	if (executions.length === 0) {
+		return null
+	}
 
 	return {
 		id: "trade-vertical-unknown",
@@ -1050,11 +1082,15 @@ const parseVerticalText = (
 				a
 			)
 
-			if (trade) trades.push(trade)
+			if (trade) {
+				trades.push(trade)
+			}
 		}
 	} else if (times.length > 0 && prices.length > 0) {
 		const unknownTrade = buildUnknownTrade(times, prices, quantities)
-		if (unknownTrade) trades.push(unknownTrade)
+		if (unknownTrade) {
+			trades.push(unknownTrade)
+		}
 	}
 
 	return { trades, warnings }
@@ -1093,11 +1129,19 @@ const isVerticalFormat = (lines: string[]): boolean => {
 
 	for (const line of lines.slice(0, FORMAT_DETECTION_LINE_LIMIT)) {
 		const trimmed = line.trim()
-		if (!trimmed) continue
+		if (!trimmed) {
+			continue
+		}
 
-		if (STANDALONE_ASSET_REGEX.test(trimmed)) standaloneAssets++
-		if (/^\d{1,2}:\d{2}:\d{2}$/.test(trimmed)) standaloneTimes++
-		if (/^\d{3}[.,]?\d{3}$/.test(trimmed)) standalonePrices++
+		if (STANDALONE_ASSET_REGEX.test(trimmed)) {
+			standaloneAssets++
+		}
+		if (/^\d{1,2}:\d{2}:\d{2}$/.test(trimmed)) {
+			standaloneTimes++
+		}
+		if (/^\d{3}[.,]?\d{3}$/.test(trimmed)) {
+			standalonePrices++
+		}
 	}
 
 	return (
@@ -1404,7 +1448,9 @@ export const toImportInput = (
 ): OcrImportInput | null => {
 	const { summary, executions } = parseResult
 
-	if (!summary || executions.length === 0) return null
+	if (!summary || executions.length === 0) {
+		return null
+	}
 
 	// Convert time strings to full dates using base date
 	const parseTimeToDate = (timeStr: string): Date => {

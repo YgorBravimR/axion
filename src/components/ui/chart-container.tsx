@@ -1,15 +1,22 @@
 "use client"
 
-import { useState, useEffect, useRef, type ReactElement, type ComponentProps, type AriaRole } from "react"
+import {
+	useState,
+	useEffect,
+	useRef,
+	type ReactElement,
+	type ComponentProps,
+	type AriaRole,
+} from "react"
 import { ResponsiveContainer, Tooltip } from "recharts"
 
 interface ChartContainerProps {
-	id: string
-	children: ReactElement
-	className?: string
-	role?: AriaRole
+	"id": string
+	"children": ReactElement
+	"className"?: string
+	"role"?: AriaRole
 	"aria-label"?: string
-	suppressHydrationWarning?: boolean
+	"suppressHydrationWarning"?: boolean
 }
 
 /**
@@ -23,19 +30,33 @@ interface ChartContainerProps {
  *   2. Passing those dimensions as `initialDimension` so RC never
  *      sees -1 values, even on its first render cycle.
  */
-const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel, suppressHydrationWarning }: ChartContainerProps) => {
+const ChartContainer = ({
+	id,
+	children,
+	className,
+	role,
+	"aria-label": ariaLabel,
+	suppressHydrationWarning,
+}: ChartContainerProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
-	const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
+	const [dimensions, setDimensions] = useState<{
+		width: number
+		height: number
+	} | null>(null)
 
 	useEffect(() => {
 		const el = containerRef.current
-		if (!el) return
+		if (!el) {
+			return
+		}
 
 		const measure = () => {
 			const { clientWidth, clientHeight } = el
 			if (clientWidth > 0 && clientHeight > 0) {
 				setDimensions((prev) => {
-					if (prev?.width === clientWidth && prev?.height === clientHeight) return prev
+					if (prev?.width === clientWidth && prev?.height === clientHeight) {
+						return prev
+					}
 					return { width: clientWidth, height: clientHeight }
 				})
 				return true
@@ -44,7 +65,9 @@ const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel
 		}
 
 		// Check immediately — the element may already have dimensions
-		if (measure()) return
+		if (measure()) {
+			return
+		}
 
 		// Otherwise wait for layout via ResizeObserver
 		const observer = new ResizeObserver(() => {
@@ -59,7 +82,14 @@ const ChartContainer = ({ id, children, className, role, "aria-label": ariaLabel
 	}, [])
 
 	return (
-		<div id={id} ref={containerRef} className={`overflow-hidden ${className ?? ""}`} role={role} aria-label={ariaLabel} suppressHydrationWarning={suppressHydrationWarning}>
+		<div
+			id={id}
+			ref={containerRef}
+			className={`overflow-hidden ${className ?? ""}`}
+			role={role}
+			aria-label={ariaLabel}
+			suppressHydrationWarning={suppressHydrationWarning}
+		>
 			{dimensions && (
 				<ResponsiveContainer
 					width="100%"
@@ -89,7 +119,11 @@ type ChartTooltipProps = ComponentProps<typeof Tooltip> & {
 const BAR_CURSOR = { fill: "var(--color-bg-300)", opacity: 0.3 }
 const LINE_CURSOR = { stroke: "var(--color-bg-300)", strokeWidth: 1 }
 
-const ChartTooltip = ({ variant = "bar", cursor, ...rest }: ChartTooltipProps) => {
+const ChartTooltip = ({
+	variant = "bar",
+	cursor,
+	...rest
+}: ChartTooltipProps) => {
 	const defaultCursor = variant === "line" ? LINE_CURSOR : BAR_CURSOR
 	return <Tooltip cursor={cursor ?? defaultCursor} {...rest} />
 }

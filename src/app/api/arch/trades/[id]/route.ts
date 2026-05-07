@@ -21,7 +21,9 @@ const GET = async (
 	{ params }: { params: Promise<{ id: string }> }
 ) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	const { id: tradeId } = await params

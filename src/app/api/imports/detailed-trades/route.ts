@@ -5,7 +5,8 @@
  * Validates 30-minute cooldown between imports
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import {
 	parseStatementCSV,
@@ -47,7 +48,10 @@ export const POST = async (req: NextRequest) => {
 		// Authenticate using NextAuth
 		const session = await auth()
 		if (!session?.user?.id) {
-			return NextResponse.json({ error: "api.errors.unauthorized" }, { status: 401 })
+			return NextResponse.json(
+				{ error: "api.errors.unauthorized" },
+				{ status: 401 }
+			)
 		}
 		const userId = session.user.id
 
@@ -109,7 +113,12 @@ export const POST = async (req: NextRequest) => {
 
 		// Create import preview
 		const importId = generateImportId()
-		const preview = createImportPreview(trades, brokerName, executions.length, importId)
+		const preview = createImportPreview(
+			trades,
+			brokerName,
+			executions.length,
+			importId
+		)
 
 		// Cache preview for confirmation step (1 hour TTL)
 		previewCache.set(importId, {
@@ -125,7 +134,8 @@ export const POST = async (req: NextRequest) => {
 	} catch (error) {
 		console.error("[POST /api/imports/detailed-trades]", error)
 
-		const message = error instanceof Error ? error.message : "imports.errors.parseFailed"
+		const message =
+			error instanceof Error ? error.message : "imports.errors.parseFailed"
 
 		return NextResponse.json(
 			{ error: "imports.errors.parseFailed", message },

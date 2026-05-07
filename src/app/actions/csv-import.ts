@@ -1,7 +1,13 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { assets, strategies, tags, timeframes, trades as tradesTable } from "@/db/schema"
+import {
+	assets,
+	strategies,
+	tags,
+	timeframes,
+	trades as tradesTable,
+} from "@/db/schema"
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { CsvTradeInput } from "@/lib/csv-parser"
@@ -158,6 +164,7 @@ export const validateCsvTrades = async (
 		// Batch lookup fees for found assets
 		const feesMap = new Map<string, { commission: number; fees: number }>()
 		for (const asset of foundAssets) {
+			// eslint-disable-next-line no-await-in-loop -- sequential asset fee lookups; small N (user-defined assets per account, typically <20)
 			const fees = await getAssetFees(asset.symbol, accountId)
 			feesMap.set(asset.symbol.toUpperCase(), fees)
 		}
@@ -216,6 +223,7 @@ export const validateCsvTrades = async (
 			const HASH_BATCH = 100
 			for (let i = 0; i < allHashes.length; i += HASH_BATCH) {
 				const batch = allHashes.slice(i, i + HASH_BATCH)
+				// eslint-disable-next-line no-await-in-loop -- SQL parameter limit requires batching; batches are independent but must accumulate results sequentially
 				const found = await db
 					.select({ hash: tradesTable.deduplicationHash })
 					.from(tradesTable)
@@ -223,11 +231,13 @@ export const validateCsvTrades = async (
 						and(
 							eq(tradesTable.accountId, accountId),
 							inArray(tradesTable.deduplicationHash, batch),
-							eq(tradesTable.isArchived, false),
+							eq(tradesTable.isArchived, false)
 						)
 					)
 				for (const row of found) {
-					if (row.hash) existingHashes.add(row.hash)
+					if (row.hash) {
+						existingHashes.add(row.hash)
+					}
 				}
 			}
 		}
@@ -279,7 +289,8 @@ export const validateCsvTrades = async (
 				})
 				if (existingHashes.has(hash)) {
 					processed.status = "skipped"
-					processed.skipReason = "Duplicate: this trade has already been imported"
+					processed.skipReason =
+						"Duplicate: this trade has already been imported"
 					skippedCount++
 					duplicateCount++
 					processedTrades.push(processed)
@@ -495,7 +506,9 @@ export const importCsvTrades = async (
 			// Apply edits — resolve IDs back to codes/names for bulkCreateTrades
 			if (t.edits.strategyId) {
 				const strategyCode = strategyIdMap.get(t.edits.strategyId)
-				if (strategyCode) base.strategyCode = strategyCode
+				if (strategyCode) {
+					base.strategyCode = strategyCode
+				}
 			}
 			if (t.edits.timeframeId) {
 				base.timeframeId = t.edits.timeframeId
@@ -504,19 +517,31 @@ export const importCsvTrades = async (
 				const tagNames = t.edits.tagIds
 					.map((id) => tagIdMap.get(id))
 					.filter((name): name is string => !!name)
-				if (tagNames.length > 0) base.tagNames = tagNames
+				if (tagNames.length > 0) {
+					base.tagNames = tagNames
+				}
 			}
-			if (t.edits.preTradeThoughts)
+			if (t.edits.preTradeThoughts) {
 				base.preTradeThoughts = t.edits.preTradeThoughts
-			if (t.edits.postTradeReflection)
+			}
+			if (t.edits.postTradeReflection) {
 				base.postTradeReflection = t.edits.postTradeReflection
-			if (t.edits.lessonLearned) base.lessonLearned = t.edits.lessonLearned
-			if (t.edits.followedPlan !== undefined)
+			}
+			if (t.edits.lessonLearned) {
+				base.lessonLearned = t.edits.lessonLearned
+			}
+			if (t.edits.followedPlan !== undefined) {
 				base.followedPlan = t.edits.followedPlan
-			if (t.edits.disciplineNotes)
+			}
+			if (t.edits.disciplineNotes) {
 				base.disciplineNotes = t.edits.disciplineNotes
-			if (t.edits.stopLoss) base.stopLoss = t.edits.stopLoss
-			if (t.edits.takeProfit) base.takeProfit = t.edits.takeProfit
+			}
+			if (t.edits.stopLoss) {
+				base.stopLoss = t.edits.stopLoss
+			}
+			if (t.edits.takeProfit) {
+				base.takeProfit = t.edits.takeProfit
+			}
 
 			return base
 		})

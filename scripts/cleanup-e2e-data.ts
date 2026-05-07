@@ -25,9 +25,10 @@ const run = async () => {
 
 	const db = drizzle(dbUrl)
 
-	console.log(isDryRun
-		? "=== DRY RUN MODE (set EXECUTE=true to delete) ==="
-		: "=== EXECUTING DELETIONS ==="
+	console.log(
+		isDryRun
+			? "=== DRY RUN MODE (set EXECUTE=true to delete) ==="
+			: "=== EXECUTING DELETIONS ==="
 	)
 	console.log("")
 
@@ -42,9 +43,13 @@ const run = async () => {
 	console.log(`Found ${e2eTrades.rows.length} E2E trade(s):`)
 	for (const row of e2eTrades.rows.slice(0, 10)) {
 		const r = row as Record<string, unknown>
-		console.log(`  - ID: ${r.id}, entry: ${r.entry_price}, pos: ${r.position_size}, outcome: ${r.outcome}, created: ${r.created_at}`)
+		console.log(
+			`  - ID: ${r.id}, entry: ${r.entry_price}, pos: ${r.position_size}, outcome: ${r.outcome}, created: ${r.created_at}`
+		)
 	}
-	if (e2eTrades.rows.length > 10) console.log(`  ... and ${e2eTrades.rows.length - 10} more`)
+	if (e2eTrades.rows.length > 10) {
+		console.log(`  ... and ${e2eTrades.rows.length - 10} more`)
+	}
 	console.log("")
 
 	// 2. Count E2E strategies (name contains "E2E" or "Test Strategy")
@@ -58,7 +63,9 @@ const run = async () => {
 	console.log(`Found ${e2eStrategies.rows.length} E2E strategy(ies):`)
 	for (const row of e2eStrategies.rows) {
 		const r = row as Record<string, unknown>
-		console.log(`  - ID: ${r.id}, code: ${r.code}, name: ${r.name}, created: ${r.created_at}`)
+		console.log(
+			`  - ID: ${r.id}, code: ${r.code}, name: ${r.name}, created: ${r.created_at}`
+		)
 	}
 	console.log("")
 
@@ -87,7 +94,9 @@ const run = async () => {
 	console.log(`Found ${e2eAssets.rows.length} E2E asset(s):`)
 	for (const row of e2eAssets.rows) {
 		const r = row as Record<string, unknown>
-		console.log(`  - ID: ${r.id}, symbol: ${r.symbol}, name: ${r.name}, created: ${r.created_at}`)
+		console.log(
+			`  - ID: ${r.id}, symbol: ${r.symbol}, name: ${r.name}, created: ${r.created_at}`
+		)
 	}
 	console.log("")
 

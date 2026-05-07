@@ -16,7 +16,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	const { accountId } = authResult.auth
 
@@ -46,15 +48,20 @@ const GET = async (request: NextRequest) => {
 		let maxConsecutiveLosses = 0
 
 		const sortedTrades = todaysTrades.toSorted(
-			(a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+			(a, b) =>
+				new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
 		)
 
 		for (const trade of sortedTrades) {
 			const pnl = fromCents(trade.pnl)
 			totalPnL += pnl
 
-			if (pnl > bestTrade) bestTrade = pnl
-			if (pnl < worstTrade) worstTrade = pnl
+			if (pnl > bestTrade) {
+				bestTrade = pnl
+			}
+			if (pnl < worstTrade) {
+				worstTrade = pnl
+			}
 
 			if (trade.outcome === "win") {
 				winCount++
@@ -66,10 +73,11 @@ const GET = async (request: NextRequest) => {
 			}
 		}
 
-		const tradesCount = sortedTrades.filter((t) => t.outcome !== "breakeven").length
-		const winRate = winCount + lossCount > 0
-			? (winCount / (winCount + lossCount)) * 100
-			: 0
+		const tradesCount = sortedTrades.filter(
+			(t) => t.outcome !== "breakeven"
+		).length
+		const winRate =
+			winCount + lossCount > 0 ? (winCount / (winCount + lossCount)) * 100 : 0
 
 		return archSuccess("Daily summary retrieved", {
 			totalPnL,
@@ -83,9 +91,11 @@ const GET = async (request: NextRequest) => {
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"
-		return archError("Failed to get daily summary", [
-			{ code: "FETCH_FAILED", detail: message },
-		], 500)
+		return archError(
+			"Failed to get daily summary",
+			[{ code: "FETCH_FAILED", detail: message }],
+			500
+		)
 	}
 }
 

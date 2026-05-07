@@ -1,8 +1,16 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react"
+import {
+	AlertTriangle,
+	Loader2,
+	Plus,
+	RotateCcw,
+	Save,
+	Trash2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CurrencyInput } from "@/components/ui/currency-input"
 import { Input } from "@/components/ui/input"
@@ -17,7 +25,10 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
-import { createYearlyPlanV2, updateYearlyPlan } from "@/app/actions/fractal-plan/yearly"
+import {
+	createYearlyPlanV2,
+	updateYearlyPlan,
+} from "@/app/actions/fractal-plan/yearly"
 import { RiskProfilePicker } from "@/components/fractal-plan/risk-profile-picker"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
@@ -82,11 +93,15 @@ interface FormState {
 }
 
 const DEFAULT_LADDER: LadderRuleR[] = [
-	{ minCapitalCents: 3_000_00,   maxCapitalCents: 7_499_99,        oneRCents: 100_00 },
-	{ minCapitalCents: 7_500_00,   maxCapitalCents: 14_999_99,       oneRCents: 200_00 },
-	{ minCapitalCents: 15_000_00,  maxCapitalCents: 29_999_99,       oneRCents: 300_00 },
-	{ minCapitalCents: 30_000_00,  maxCapitalCents: 99_999_99,       oneRCents: 500_00 },
-	{ minCapitalCents: 100_000_00, maxCapitalCents: 999_999_999_99,  oneRCents: 1000_00 },
+	{ minCapitalCents: 3_000_00, maxCapitalCents: 7_499_99, oneRCents: 100_00 },
+	{ minCapitalCents: 7_500_00, maxCapitalCents: 14_999_99, oneRCents: 200_00 },
+	{ minCapitalCents: 15_000_00, maxCapitalCents: 29_999_99, oneRCents: 300_00 },
+	{ minCapitalCents: 30_000_00, maxCapitalCents: 99_999_99, oneRCents: 500_00 },
+	{
+		minCapitalCents: 100_000_00,
+		maxCapitalCents: 999_999_999_99,
+		oneRCents: 1000_00,
+	},
 ]
 
 const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
@@ -111,7 +126,10 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 		defaultWeeklyWinR: existing.defaultWeeklyWinR ?? "",
 		defaultMonthlyLossR: existing.defaultMonthlyLossR ?? "",
 		defaultMonthlyWinR: existing.defaultMonthlyWinR ?? "",
-		ladderRows: (existing.ladderRules.length > 0 ? existing.ladderRules : DEFAULT_LADDER).map(ruleToDraft),
+		ladderRows: (existing.ladderRules.length > 0
+			? existing.ladderRules
+			: DEFAULT_LADDER
+		).map(ruleToDraft),
 		notes: existing.notes ?? "",
 	}
 }
@@ -126,44 +144,54 @@ const YearlyPlanEditor = ({
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [form, setForm] = useState<FormState>(() => seedForm(existing))
-	const accountCapitalAvailable = defaultInitialCapitalCents != null
+	const accountCapitalAvailable = defaultInitialCapitalCents !== null
 	const accountCapitalLabel =
-		defaultInitialCapitalCents != null
+		defaultInitialCapitalCents !== null
 			? (defaultInitialCapitalCents / 100).toLocaleString("pt-BR", {
-				style: "currency",
-				currency: "BRL",
-				minimumFractionDigits: 0,
-				maximumFractionDigits: 0,
-			})
+					style: "currency",
+					currency: "BRL",
+					minimumFractionDigits: 0,
+					maximumFractionDigits: 0,
+				})
 			: null
 	const [riskProfileId, setRiskProfileId] = useState<string | null>(
-		existing?.defaultRiskProfileId ?? null,
+		existing?.defaultRiskProfileId ?? null
 	)
 
 	const sortedLadder = [...form.ladderRows].sort(
-		(a, b) => (a.minCents ?? 0) - (b.minCents ?? 0),
+		(a, b) => (a.minCents ?? 0) - (b.minCents ?? 0)
 	)
 	const tier1MinCents = sortedLadder[0]?.minCents ?? 0
 	const tier1MinReais = Math.floor(tier1MinCents / 100)
 	const accountCapitalCents = defaultInitialCapitalCents ?? 0
 	const capitalBelowMin =
-		accountCapitalAvailable && tier1MinCents > 0 && accountCapitalCents < tier1MinCents
+		accountCapitalAvailable &&
+		tier1MinCents > 0 &&
+		accountCapitalCents < tier1MinCents
 
-	const handleField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+	const handleField = <K extends keyof FormState>(
+		key: K,
+		value: FormState[K]
+	) => {
 		setForm((prev) => ({ ...prev, [key]: value }))
 	}
 
-	const updateLadderRow = (id: string, patch: Partial<Omit<LadderRowDraft, "id">>) => {
+	const updateLadderRow = (
+		id: string,
+		patch: Partial<Omit<LadderRowDraft, "id">>
+	) => {
 		setForm((prev) => ({
 			...prev,
-			ladderRows: prev.ladderRows.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+			ladderRows: prev.ladderRows.map((row) =>
+				row.id === id ? { ...row, ...patch } : row
+			),
 		}))
 	}
 
 	const addLadderRow = () => {
 		setForm((prev) => {
 			const sortedPrev = [...prev.ladderRows].sort(
-				(a, b) => (a.minCents ?? 0) - (b.minCents ?? 0),
+				(a, b) => (a.minCents ?? 0) - (b.minCents ?? 0)
 			)
 			const last = sortedPrev[sortedPrev.length - 1]
 			return { ...prev, ladderRows: [...prev.ladderRows, newRowDraft(last)] }
@@ -171,14 +199,22 @@ const YearlyPlanEditor = ({
 	}
 
 	const removeLadderRow = (id: string) => {
-		setForm((prev) => ({ ...prev, ladderRows: prev.ladderRows.filter((row) => row.id !== id) }))
+		setForm((prev) => ({
+			...prev,
+			ladderRows: prev.ladderRows.filter((row) => row.id !== id),
+		}))
 	}
 
 	const restoreLadderDefaults = () => {
-		setForm((prev) => ({ ...prev, ladderRows: DEFAULT_LADDER.map(ruleToDraft) }))
+		setForm((prev) => ({
+			...prev,
+			ladderRows: DEFAULT_LADDER.map(ruleToDraft),
+		}))
 	}
 
-	const parseLadder = (): { ok: true; rules: LadderRuleR[] } | { ok: false; reason: string } => {
+	const parseLadder = ():
+		| { ok: true; rules: LadderRuleR[] }
+		| { ok: false; reason: string } => {
 		if (form.ladderRows.length === 0) {
 			return { ok: false, reason: "Add at least one ladder tier." }
 		}
@@ -187,7 +223,12 @@ const YearlyPlanEditor = ({
 			const row = form.ladderRows[i]
 			const minCents = row.minCents ?? 0
 			const oneRCents = row.oneRCents ?? 0
-			if (!Number.isFinite(minCents) || !Number.isFinite(oneRCents) || minCents < 0 || oneRCents <= 0) {
+			if (
+				!Number.isFinite(minCents) ||
+				!Number.isFinite(oneRCents) ||
+				minCents < 0 ||
+				oneRCents <= 0
+			) {
 				return { ok: false, reason: `Tier ${i + 1}: From ≥ 0, 1R > 0.` }
 			}
 			parsed.push({ minCents, oneRCents, idx: i })
@@ -222,7 +263,10 @@ const YearlyPlanEditor = ({
 		const ladder = ladderResult.rules
 
 		if (!existing && !accountCapitalAvailable) {
-			showToast("error", "Set the account starting balance in Settings → Annual Reporting first.")
+			showToast(
+				"error",
+				"Set the account starting balance in Settings → Annual Reporting first."
+			)
 			return
 		}
 
@@ -242,7 +286,11 @@ const YearlyPlanEditor = ({
 		}
 
 		const tradingDaysPerWeek = parseInt(form.tradingDaysPerWeek, 10)
-		if (!Number.isInteger(tradingDaysPerWeek) || tradingDaysPerWeek < 1 || tradingDaysPerWeek > 7) {
+		if (
+			!Number.isInteger(tradingDaysPerWeek) ||
+			tradingDaysPerWeek < 1 ||
+			tradingDaysPerWeek > 7
+		) {
 			showToast("error", "Trading days per week must be 1–7.")
 			return
 		}
@@ -250,22 +298,27 @@ const YearlyPlanEditor = ({
 		startTransition(async () => {
 			const result = existing
 				? await updateYearlyPlan({
-					year,
-					ladderRules: ladder,
-					tradingDaysPerWeek,
-					...numericFields,
-					defaultRiskProfileId: riskProfileId,
-					notes: form.notes || undefined,
-				})
+						year,
+						ladderRules: ladder,
+						tradingDaysPerWeek,
+						...numericFields,
+						defaultRiskProfileId: riskProfileId,
+						notes: form.notes || undefined,
+					})
 				: await createYearlyPlanV2({
-					year,
-					ladderRules: ladder,
-					tradingDaysPerWeek,
-					...numericFields,
-					drawdownTriggerThresholdR: 2,
-				})
+						year,
+						ladderRules: ladder,
+						tradingDaysPerWeek,
+						...numericFields,
+						drawdownTriggerThresholdR: 2,
+					})
 			if (result.status === "success") {
-				showToast("success", existing ? "Yearly plan updated" : "Yearly plan seeded — quarter/month/week tree created")
+				showToast(
+					"success",
+					existing
+						? "Yearly plan updated"
+						: "Yearly plan seeded — quarter/month/week tree created"
+				)
 				router.refresh()
 			} else {
 				showToast("error", result.message || "Save failed")
@@ -284,9 +337,9 @@ const YearlyPlanEditor = ({
 			<section
 				id="plan-year-drawer-capital"
 				aria-labelledby="sec-capital-anchor"
-				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400"
+				className="border-bg-300 bg-bg-100 p-m-400 rounded-lg border"
 			>
-				<div className="flex flex-col gap-s-300 sm:flex-row sm:items-start sm:justify-between">
+				<div className="gap-s-300 flex flex-col sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0">
 						<h3 id="sec-capital-anchor" className="text-h3 text-txt-100">
 							Capital inicial
@@ -295,38 +348,48 @@ const YearlyPlanEditor = ({
 							{accountCapitalAvailable ? (
 								<>
 									Configurado em{" "}
-									<a href="/settings" className="text-acc-100 underline-offset-2 hover:underline">
+									<Link
+										href="/settings"
+										className="text-acc-100 underline-offset-2 hover:underline"
+									>
 										Settings → Relatório Anual
-									</a>
+									</Link>
 									. Capital por mês é editável na grade.
 								</>
 							) : (
 								<>
 									Defina o saldo inicial em{" "}
-									<a href="/settings" className="text-acc-100 underline-offset-2 hover:underline">
+									<Link
+										href="/settings"
+										className="text-acc-100 underline-offset-2 hover:underline"
+									>
 										Settings → Relatório Anual
-									</a>{" "}
+									</Link>{" "}
 									antes de criar o plano.
 								</>
 							)}
 						</p>
 					</div>
-					<p className="font-mono text-h2 tabular-nums text-acc-100 shrink-0">
+					<p className="text-h2 text-acc-100 shrink-0 font-mono tabular-nums">
 						{accountCapitalLabel ?? "—"}
 					</p>
 				</div>
 				{capitalBelowMin && (
 					<div
 						role="alert"
-						className="mt-m-400 flex items-start gap-s-300 rounded-md border border-fb-error/40 bg-fb-error/10 p-s-300"
+						className="mt-m-400 gap-s-300 border-fb-error/40 bg-fb-error/10 p-s-300 flex items-start rounded-md border"
 					>
-						<AlertTriangle className="mt-s-100 h-4 w-4 shrink-0 text-fb-error" aria-hidden="true" />
+						<AlertTriangle
+							className="mt-s-100 text-fb-error h-4 w-4 shrink-0"
+							aria-hidden="true"
+						/>
 						<div className="min-w-0">
-							<p className="text-small font-medium text-fb-error">
+							<p className="text-small text-fb-error font-medium">
 								Não opere — capital mínimo R$ {formatBRNoCents(tier1MinReais)}
 							</p>
 							<p className="mt-s-100 text-tiny text-txt-300">
-								Capital atual abaixo do primeiro tier da ladder. Aumente o capital ou ajuste a ladder.
+								Capital atual abaixo do primeiro tier da ladder. Aumente o
+								capital ou ajuste a ladder.
 							</p>
 						</div>
 					</div>
@@ -336,7 +399,7 @@ const YearlyPlanEditor = ({
 			<fieldset
 				id="plan-year-drawer-defaults"
 				aria-labelledby="sec-defaults"
-				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+				className="border-bg-300 bg-bg-100 p-m-400 space-y-s-300 rounded-lg border"
 			>
 				<header>
 					<h3 id="sec-defaults" className="text-h3 text-txt-100">
@@ -346,48 +409,112 @@ const YearlyPlanEditor = ({
 						Cascade fallback aplicado quando o mês não tem override.
 					</p>
 				</header>
-				<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3 lg:grid-cols-4">
+				<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
 					<div>
-						<Label id="lbl-trading-days" htmlFor="trading-days">Dias / semana</Label>
+						<Label id="lbl-trading-days" htmlFor="trading-days">
+							Dias / semana
+						</Label>
 						<Input
 							id="trading-days"
 							type="number"
 							min="1"
 							max="7"
 							value={form.tradingDaysPerWeek}
-							onChange={(e) => handleField("tradingDaysPerWeek", e.target.value)}
+							onChange={(e) =>
+								handleField("tradingDaysPerWeek", e.target.value)
+							}
 							required
 						/>
 					</div>
 					<div>
-						<Label id="lbl-daily-loss" htmlFor="daily-loss">Daily loss R</Label>
-						<Input id="daily-loss" type="number" step="0.01" min="0.01" value={form.defaultDailyLossR}
-							onChange={(e) => handleField("defaultDailyLossR", e.target.value)} required />
+						<Label id="lbl-daily-loss" htmlFor="daily-loss">
+							Daily loss R
+						</Label>
+						<Input
+							id="daily-loss"
+							type="number"
+							step="0.01"
+							min="0.01"
+							value={form.defaultDailyLossR}
+							onChange={(e) => handleField("defaultDailyLossR", e.target.value)}
+							required
+						/>
 					</div>
 					<div>
-						<Label id="lbl-daily-win" htmlFor="daily-win">Daily win R</Label>
-						<Input id="daily-win" type="number" step="0.01" min="0.01" value={form.defaultDailyWinR}
-							onChange={(e) => handleField("defaultDailyWinR", e.target.value)} required />
+						<Label id="lbl-daily-win" htmlFor="daily-win">
+							Daily win R
+						</Label>
+						<Input
+							id="daily-win"
+							type="number"
+							step="0.01"
+							min="0.01"
+							value={form.defaultDailyWinR}
+							onChange={(e) => handleField("defaultDailyWinR", e.target.value)}
+							required
+						/>
 					</div>
 					<div>
-						<Label id="lbl-weekly-loss" htmlFor="weekly-loss">Weekly loss R</Label>
-						<Input id="weekly-loss" type="number" step="0.01" min="0.01" value={form.defaultWeeklyLossR}
-							onChange={(e) => handleField("defaultWeeklyLossR", e.target.value)} required />
+						<Label id="lbl-weekly-loss" htmlFor="weekly-loss">
+							Weekly loss R
+						</Label>
+						<Input
+							id="weekly-loss"
+							type="number"
+							step="0.01"
+							min="0.01"
+							value={form.defaultWeeklyLossR}
+							onChange={(e) =>
+								handleField("defaultWeeklyLossR", e.target.value)
+							}
+							required
+						/>
 					</div>
 					<div>
-						<Label id="lbl-weekly-win" htmlFor="weekly-win">Weekly win R</Label>
-						<Input id="weekly-win" type="number" step="0.01" min="0.01" value={form.defaultWeeklyWinR}
-							onChange={(e) => handleField("defaultWeeklyWinR", e.target.value)} required />
+						<Label id="lbl-weekly-win" htmlFor="weekly-win">
+							Weekly win R
+						</Label>
+						<Input
+							id="weekly-win"
+							type="number"
+							step="0.01"
+							min="0.01"
+							value={form.defaultWeeklyWinR}
+							onChange={(e) => handleField("defaultWeeklyWinR", e.target.value)}
+							required
+						/>
 					</div>
 					<div>
-						<Label id="lbl-monthly-loss" htmlFor="monthly-loss">Monthly loss R</Label>
-						<Input id="monthly-loss" type="number" step="0.01" min="0.01" value={form.defaultMonthlyLossR}
-							onChange={(e) => handleField("defaultMonthlyLossR", e.target.value)} required />
+						<Label id="lbl-monthly-loss" htmlFor="monthly-loss">
+							Monthly loss R
+						</Label>
+						<Input
+							id="monthly-loss"
+							type="number"
+							step="0.01"
+							min="0.01"
+							value={form.defaultMonthlyLossR}
+							onChange={(e) =>
+								handleField("defaultMonthlyLossR", e.target.value)
+							}
+							required
+						/>
 					</div>
 					<div>
-						<Label id="lbl-monthly-win" htmlFor="monthly-win">Monthly win R</Label>
-						<Input id="monthly-win" type="number" step="0.01" min="0.01" value={form.defaultMonthlyWinR}
-							onChange={(e) => handleField("defaultMonthlyWinR", e.target.value)} required />
+						<Label id="lbl-monthly-win" htmlFor="monthly-win">
+							Monthly win R
+						</Label>
+						<Input
+							id="monthly-win"
+							type="number"
+							step="0.01"
+							min="0.01"
+							value={form.defaultMonthlyWinR}
+							onChange={(e) =>
+								handleField("defaultMonthlyWinR", e.target.value)
+							}
+							required
+						/>
 					</div>
 				</div>
 			</fieldset>
@@ -395,18 +522,20 @@ const YearlyPlanEditor = ({
 			<fieldset
 				id="plan-year-drawer-ladder"
 				aria-labelledby="sec-ladder"
-				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+				className="border-bg-300 bg-bg-100 p-m-400 space-y-s-300 rounded-lg border"
 			>
 				<header>
 					<h3 id="sec-ladder" className="text-h3 text-txt-100">
 						Capital ladder
 					</h3>
 					<p className="mt-s-100 text-small text-txt-300">
-						Define quanto vale 1R conforme o capital cresce. Cada tier começa em <strong>From</strong> e termina onde o próximo começa. O último tier é ilimitado.
+						Define quanto vale 1R conforme o capital cresce. Cada tier começa em{" "}
+						<strong>From</strong> e termina onde o próximo começa. O último tier
+						é ilimitado.
 					</p>
 				</header>
 
-				<div className="overflow-x-auto rounded-md border border-bg-300">
+				<div className="border-bg-300 overflow-x-auto rounded-md border">
 					<Table>
 						<TableHeader className="bg-bg-200">
 							<TableRow>
@@ -419,12 +548,16 @@ const YearlyPlanEditor = ({
 						<TableBody>
 							{sortedLadder.map((row, idx) => (
 								<TableRow key={row.id}>
-									<TableCell className="text-txt-200 font-mono tabular-nums">{idx + 1}</TableCell>
+									<TableCell className="text-txt-200 font-mono tabular-nums">
+										{idx + 1}
+									</TableCell>
 									<TableCell>
 										<CurrencyInput
 											id={`ladder-min-${row.id}`}
 											value={row.minCents}
-											onValueChange={(next) => updateLadderRow(row.id, { minCents: next })}
+											onValueChange={(next) =>
+												updateLadderRow(row.id, { minCents: next })
+											}
 											decimals={0}
 											unit="cents"
 											aria-label={`Tier ${idx + 1} from BRL`}
@@ -435,7 +568,9 @@ const YearlyPlanEditor = ({
 										<CurrencyInput
 											id={`ladder-oner-${row.id}`}
 											value={row.oneRCents}
-											onValueChange={(next) => updateLadderRow(row.id, { oneRCents: next })}
+											onValueChange={(next) =>
+												updateLadderRow(row.id, { oneRCents: next })
+											}
 											decimals={0}
 											unit="cents"
 											aria-label={`Tier ${idx + 1} one-R BRL`}
@@ -451,7 +586,7 @@ const YearlyPlanEditor = ({
 											onClick={() => removeLadderRow(row.id)}
 											disabled={form.ladderRows.length === 1}
 											aria-label={`Remove tier ${idx + 1}`}
-											className="size-8 p-0 text-txt-300 hover:text-fb-error"
+											className="text-txt-300 hover:text-fb-error size-8 p-0"
 										>
 											<Trash2 className="h-4 w-4" />
 										</Button>
@@ -462,7 +597,7 @@ const YearlyPlanEditor = ({
 					</Table>
 				</div>
 
-				<div className="flex flex-wrap items-center gap-s-200">
+				<div className="gap-s-200 flex flex-wrap items-center">
 					<Button
 						id="btn-ladder-add-row"
 						type="button"
@@ -488,7 +623,7 @@ const YearlyPlanEditor = ({
 
 			<fieldset
 				aria-labelledby="sec-risk-profile"
-				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+				className="border-bg-300 bg-bg-100 p-m-400 space-y-s-300 rounded-lg border"
 			>
 				<header>
 					<h3 id="sec-risk-profile" className="text-h3 text-txt-100">
@@ -517,7 +652,7 @@ const YearlyPlanEditor = ({
 
 			<fieldset
 				aria-labelledby="sec-notes"
-				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+				className="border-bg-300 bg-bg-100 p-m-400 space-y-s-300 rounded-lg border"
 			>
 				<header>
 					<h3 id="sec-notes" className="text-h3 text-txt-100">
@@ -536,9 +671,13 @@ const YearlyPlanEditor = ({
 				/>
 			</fieldset>
 
-			<div className="flex justify-end gap-s-200 pt-s-200">
+			<div className="gap-s-200 pt-s-200 flex justify-end">
 				<Button id="btn-yearly-save" type="submit" disabled={isPending}>
-					{isPending ? <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Save className="mr-s-200 h-4 w-4" />}
+					{isPending ? (
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					) : (
+						<Save className="mr-s-200 h-4 w-4" />
+					)}
 					{existing ? "Save changes" : "Seed yearly plan"}
 				</Button>
 			</div>

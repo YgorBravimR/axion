@@ -18,22 +18,28 @@ interface CheckResult {
 	readonly monthlyPlanId: string
 }
 
-const checkDrawdownTrigger = async (input: CheckInput): Promise<CheckResult | null> => {
+const checkDrawdownTrigger = async (
+	input: CheckInput
+): Promise<CheckResult | null> => {
 	const yearRow = await db.query.yearlyPlans.findFirst({
 		where: and(
 			eq(yearlyPlans.accountId, input.accountId),
-			eq(yearlyPlans.year, input.year),
+			eq(yearlyPlans.year, input.year)
 		),
 	})
-	if (!yearRow) return null
+	if (!yearRow) {
+		return null
+	}
 
 	const monthRow = await db.query.monthlyPlan.findFirst({
 		where: and(
 			eq(monthlyPlan.year, input.year),
-			eq(monthlyPlan.month, input.month),
+			eq(monthlyPlan.month, input.month)
 		),
 	})
-	if (!monthRow) return null
+	if (!monthRow) {
+		return null
+	}
 
 	const ladderRules = yearRow.ladderRules as unknown as ReadonlyArray<{
 		minCapitalCents: number
@@ -41,7 +47,13 @@ const checkDrawdownTrigger = async (input: CheckInput): Promise<CheckResult | nu
 		oneRCents: number
 	}>
 	const thresholdR = parseFloat(
-		String((yearRow as typeof yearRow & { drawdownTriggerThresholdR?: string | null }).drawdownTriggerThresholdR ?? "2.00")
+		String(
+			(
+				yearRow as typeof yearRow & {
+					drawdownTriggerThresholdR?: string | null
+				}
+			).drawdownTriggerThresholdR ?? "2.00"
+		)
 	)
 
 	const newSnapshot = evaluateDrawdownTrigger({
@@ -51,7 +63,9 @@ const checkDrawdownTrigger = async (input: CheckInput): Promise<CheckResult | nu
 		ladderRules,
 		thresholdR,
 	})
-	if (!newSnapshot) return null
+	if (!newSnapshot) {
+		return null
+	}
 
 	const now = new Date()
 	await db

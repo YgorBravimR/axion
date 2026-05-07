@@ -43,8 +43,12 @@ export const formatCurrencyWithSign = (
 	currency?: string
 ): string => {
 	const formatted = formatCurrency(Math.abs(value), locale, currency)
-	if (value > 0) return `+${formatted}`
-	if (value < 0) return `-${formatted}`
+	if (value > 0) {
+		return `+${formatted}`
+	}
+	if (value < 0) {
+		return `-${formatted}`
+	}
 	return formatted
 }
 
@@ -89,8 +93,12 @@ export const formatRMultiple = (value: number, locale: Locale): string => {
 		minimumFractionDigits: 1,
 		maximumFractionDigits: 2,
 	})
-	if (value > 0) return `+${formatted}R`
-	if (value < 0) return `-${formatted}R`
+	if (value > 0) {
+		return `+${formatted}R`
+	}
+	if (value < 0) {
+		return `-${formatted}R`
+	}
 	return `${formatted}R`
 }
 
@@ -248,7 +256,10 @@ export const formatHourOfDay = (hour: number, locale: Locale): string => {
 /**
  * Format currency in compact form for charts (e.g., $10K, $1.5M)
  */
-export const formatCompactCurrency = (value: number, symbol: string): string => {
+export const formatCompactCurrency = (
+	value: number,
+	symbol: string
+): string => {
 	const absValue = Math.abs(value)
 	const sign = value < 0 ? "-" : ""
 
@@ -269,8 +280,12 @@ export const formatCompactCurrencyWithSign = (
 	symbol: string
 ): string => {
 	const formatted = formatCompactCurrency(Math.abs(value), symbol)
-	if (value > 0) return `+${formatted}`
-	if (value < 0) return `-${formatted}`
+	if (value > 0) {
+		return `+${formatted}`
+	}
+	if (value < 0) {
+		return `-${formatted}`
+	}
 	return formatted
 }
 
@@ -286,7 +301,9 @@ export const formatChartPercent = (value: number, showSign = true): string => {
  * Format ratio for display (handles infinity)
  */
 export const formatRatio = (value: number): string => {
-	if (!Number.isFinite(value)) return "∞"
+	if (!Number.isFinite(value)) {
+		return "∞"
+	}
 	return value.toFixed(2)
 }
 

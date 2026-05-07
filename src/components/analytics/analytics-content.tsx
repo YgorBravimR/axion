@@ -1,6 +1,13 @@
 "use client"
 
-import { useState, useEffect, useTransition, useRef, useCallback, useMemo } from "react"
+import {
+	useState,
+	useEffect,
+	useTransition,
+	useRef,
+	useCallback,
+	useMemo,
+} from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -139,24 +146,28 @@ const AnalyticsContent = ({
 
 	const dashboard = initialDashboard ?? EMPTY_DASHBOARD
 
-	const [performanceData, setPerformanceData] =
-		useState<PerformanceByGroup[]>(dashboard.performance)
+	const [performanceData, setPerformanceData] = useState<PerformanceByGroup[]>(
+		dashboard.performance
+	)
 	const [tagStats, setTagStats] = useState<TagStats[]>(initialTagStats)
 	const [expectedValue, setExpectedValue] = useState<ExpectedValueData | null>(
 		dashboard.expectedValue
 	)
-	const [rDistribution, setRDistribution] =
-		useState<RDistributionBucket[]>(dashboard.rDistribution)
-	const [equityCurve, setEquityCurve] =
-		useState<EquityPoint[]>(dashboard.equityCurve)
+	const [rDistribution, setRDistribution] = useState<RDistributionBucket[]>(
+		dashboard.rDistribution
+	)
+	const [equityCurve, setEquityCurve] = useState<EquityPoint[]>(
+		dashboard.equityCurve
+	)
 	const [hourlyPerformance, setHourlyPerformance] = useState<
 		HourlyPerformance[]
 	>(dashboard.hourlyPerformance)
 	const [dayOfWeekPerformance, setDayOfWeekPerformance] = useState<
 		DayOfWeekPerformance[]
 	>(dashboard.dayOfWeekPerformance)
-	const [timeHeatmap, setTimeHeatmap] =
-		useState<TimeHeatmapCell[]>(dashboard.timeHeatmap)
+	const [timeHeatmap, setTimeHeatmap] = useState<TimeHeatmapCell[]>(
+		dashboard.timeHeatmap
+	)
 	const [sessionPerformance, setSessionPerformance] = useState<
 		SessionPerformance[]
 	>(dashboard.sessionPerformance)
@@ -172,19 +183,22 @@ const AnalyticsContent = ({
 	const lastAccountKey = useRef(accountKey)
 
 	// Applies dashboard + tag data to all state variables — stable via useCallback so it's safe in deps arrays
-	const applyDashboard = useCallback((d: AnalyticsDashboardData, tags: TagStats[]) => {
-		setPerformanceData(d.performance)
-		setExpectedValue(d.expectedValue)
-		setRDistribution(d.rDistribution)
-		setEquityCurve(d.equityCurve)
-		setHourlyPerformance(d.hourlyPerformance)
-		setDayOfWeekPerformance(d.dayOfWeekPerformance)
-		setTimeHeatmap(d.timeHeatmap)
-		setSessionPerformance(d.sessionPerformance)
-		setSessionAssetPerformance(d.sessionAssetPerformance)
-		setHoldingPeriodAnalysis(d.holdingPeriodAnalysis)
-		setTagStats(tags)
-	}, [])
+	const applyDashboard = useCallback(
+		(d: AnalyticsDashboardData, tags: TagStats[]) => {
+			setPerformanceData(d.performance)
+			setExpectedValue(d.expectedValue)
+			setRDistribution(d.rDistribution)
+			setEquityCurve(d.equityCurve)
+			setHourlyPerformance(d.hourlyPerformance)
+			setDayOfWeekPerformance(d.dayOfWeekPerformance)
+			setTimeHeatmap(d.timeHeatmap)
+			setSessionPerformance(d.sessionPerformance)
+			setSessionAssetPerformance(d.sessionAssetPerformance)
+			setHoldingPeriodAnalysis(d.holdingPeriodAnalysis)
+			setTagStats(tags)
+		},
+		[]
+	)
 
 	// Reset analytics state when initial props change (SSR re-render)
 	useEffect(() => {
@@ -206,7 +220,9 @@ const AnalyticsContent = ({
 	const [lastFetchedKey, setLastFetchedKey] = useState(filterKey)
 
 	useEffect(() => {
-		if (filterKey === lastFetchedKey) return
+		if (filterKey === lastFetchedKey) {
+			return
+		}
 
 		setLastFetchedKey(filterKey)
 
@@ -243,7 +259,6 @@ const AnalyticsContent = ({
 		// applyDashboard is stable (useCallback with no deps).
 		// tagStats is intentionally excluded: we only want stale fallback in the rare cache-miss path,
 		// not re-fetch every time tagStats changes as a side-effect of a fetch.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [filterKey, applyDashboard])
 
 	return (
@@ -253,7 +268,7 @@ const AnalyticsContent = ({
 				<div className="flex justify-end">
 					<Link
 						href="/analytics/account-comparison"
-						className="text-acc-100 hover:text-acc-100/80 flex items-center gap-s-200 text-small transition-colors focus-visible:ring-2 focus-visible:ring-acc-100 focus-visible:ring-offset-2 focus-visible:outline-none rounded-sm"
+						className="text-acc-100 hover:text-acc-100/80 gap-s-200 text-small focus-visible:ring-acc-100 flex items-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 						aria-label={tComparison("title")}
 					>
 						<GitCompareArrows className="h-4 w-4" />
@@ -296,7 +311,7 @@ const AnalyticsContent = ({
 			<TagCloud data={tagStats} expectancyMode={expectancyMode} />
 
 			{/* Time-Based Analysis Section */}
-			<div className="border-t border-bg-300" />
+			<div className="border-bg-300 border-t" />
 			<div id="analytics-time-section">
 				<h2 className="mb-s-300 sm:mb-m-400 text-body sm:text-h3 text-txt-100 font-semibold">
 					{t("time.title")}

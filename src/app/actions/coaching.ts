@@ -127,10 +127,14 @@ const getCoachingContext = async (
 		// Compute top assets
 		const assetMap = new Map<string, { wins: number; total: number }>()
 		for (const trade of allTrades) {
-			if (trade.outcome !== "win" && trade.outcome !== "loss") continue
+			if (trade.outcome !== "win" && trade.outcome !== "loss") {
+				continue
+			}
 			const entry = assetMap.get(trade.asset) || { wins: 0, total: 0 }
 			entry.total++
-			if (trade.outcome === "win") entry.wins++
+			if (trade.outcome === "win") {
+				entry.wins++
+			}
 			assetMap.set(trade.asset, entry)
 		}
 
@@ -173,8 +177,9 @@ const getCoachingContext = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error generating coaching context:", error)
+		}
 		return {
 			status: "error",
 			message: "Failed to generate coaching context",

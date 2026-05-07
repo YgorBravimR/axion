@@ -44,27 +44,37 @@ let frameCounter = 0
 let currentScene = ""
 
 const capture = async (page: Page, label: string) => {
-	if (!CAPTURE_SCREENSHOTS) return
+	if (!CAPTURE_SCREENSHOTS) {
+		return
+	}
 	fs.mkdirSync(SCREENSHOT_DIR, { recursive: true })
 	frameCounter++
 	const paddedNum = String(frameCounter).padStart(4, "0")
 	const safeLabel = label.replace(/[^a-zA-Z0-9_-]/g, "_")
 	const filename = `${paddedNum}_${currentScene}_${safeLabel}.png`
-	await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: false })
+	await page.screenshot({
+		path: path.join(SCREENSHOT_DIR, filename),
+		fullPage: false,
+	})
 }
 
 /** Auto-capture: takes a screenshot every 1s while recording is active */
 let autoCaptureInterval: ReturnType<typeof setInterval> | null = null
 
 const startAutoCapture = (page: Page) => {
-	if (!CAPTURE_SCREENSHOTS) return
+	if (!CAPTURE_SCREENSHOTS) {
+		return
+	}
 	fs.mkdirSync(SCREENSHOT_DIR, { recursive: true })
 	autoCaptureInterval = setInterval(async () => {
 		try {
 			frameCounter++
 			const paddedNum = String(frameCounter).padStart(4, "0")
 			const filename = `${paddedNum}_${currentScene}_auto.png`
-			await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: false })
+			await page.screenshot({
+				path: path.join(SCREENSHOT_DIR, filename),
+				fullPage: false,
+			})
 		} catch {
 			// Page may be navigating — skip this frame
 		}
@@ -88,19 +98,24 @@ const scrollTo = async (page: Page, top: number) => {
 		let bestMatch: Element | null = null
 		let bestHeight = 0
 
-		document.querySelectorAll("*").forEach(el => {
+		for (const el of Array.from(document.querySelectorAll("*"))) {
 			const s = getComputedStyle(el)
-			if ((s.overflowY === "auto" || s.overflowY === "scroll" || s.overflowY === "hidden") && el.scrollHeight > el.clientHeight) {
+			if (
+				(s.overflowY === "auto" ||
+					s.overflowY === "scroll" ||
+					s.overflowY === "hidden") &&
+				el.scrollHeight > el.clientHeight
+			) {
 				const diff = el.scrollHeight - el.clientHeight
 				if (diff > bestHeight) {
 					bestHeight = diff
 					bestMatch = el
 				}
 			}
-		})
+		}
 
 		if (bestMatch) {
-			(bestMatch as Element).scrollTo({ top: scrollTop, behavior: "smooth" })
+			;(bestMatch as Element).scrollTo({ top: scrollTop, behavior: "smooth" })
 		}
 	}, top)
 }
@@ -111,12 +126,21 @@ const scrollTo = async (page: Page, top: number) => {
 const scrollToElement = async (page: Page, selector: string) => {
 	await page.evaluate((sel) => {
 		const el = document.querySelector(sel)
-		if (!el) return
+		if (!el) {
+			return
+		}
 
 		let scrollParent = el.parentElement
 		while (scrollParent) {
 			const s = getComputedStyle(scrollParent)
-			if ((s.overflowY === "auto" || s.overflowY === "scroll" || s.overflowY === "hidden") && scrollParent.scrollHeight > scrollParent.clientHeight) break
+			if (
+				(s.overflowY === "auto" ||
+					s.overflowY === "scroll" ||
+					s.overflowY === "hidden") &&
+				scrollParent.scrollHeight > scrollParent.clientHeight
+			) {
+				break
+			}
 			scrollParent = scrollParent.parentElement
 		}
 
@@ -124,7 +148,13 @@ const scrollToElement = async (page: Page, selector: string) => {
 			const elRect = el.getBoundingClientRect()
 			const parentRect = scrollParent.getBoundingClientRect()
 			const offset = elRect.top - parentRect.top + elRect.height / 2
-			scrollParent.scrollTo({ top: Math.max(0, scrollParent.scrollTop + offset - parentRect.height / 2), behavior: "smooth" })
+			scrollParent.scrollTo({
+				top: Math.max(
+					0,
+					scrollParent.scrollTop + offset - parentRect.height / 2
+				),
+				behavior: "smooth",
+			})
 		} else {
 			el.scrollIntoView({ behavior: "smooth", block: "center" })
 		}
@@ -132,15 +162,27 @@ const scrollToElement = async (page: Page, selector: string) => {
 	await pause(800)
 }
 
-const scrollLocatorIntoView = async (page: Page, locator: ReturnType<Page["locator"]>) => {
+const scrollLocatorIntoView = async (
+	page: Page,
+	locator: ReturnType<Page["locator"]>
+) => {
 	const elHandle = await locator.elementHandle()
-	if (!elHandle) return
+	if (!elHandle) {
+		return
+	}
 
 	await page.evaluate((el) => {
 		let scrollParent = (el as Element).parentElement
 		while (scrollParent) {
 			const s = getComputedStyle(scrollParent)
-			if ((s.overflowY === "auto" || s.overflowY === "scroll" || s.overflowY === "hidden") && scrollParent.scrollHeight > scrollParent.clientHeight) break
+			if (
+				(s.overflowY === "auto" ||
+					s.overflowY === "scroll" ||
+					s.overflowY === "hidden") &&
+				scrollParent.scrollHeight > scrollParent.clientHeight
+			) {
+				break
+			}
 			scrollParent = scrollParent.parentElement
 		}
 
@@ -148,9 +190,15 @@ const scrollLocatorIntoView = async (page: Page, locator: ReturnType<Page["locat
 			const elRect = (el as Element).getBoundingClientRect()
 			const parentRect = scrollParent.getBoundingClientRect()
 			const offset = elRect.top - parentRect.top + elRect.height / 2
-			scrollParent.scrollTo({ top: Math.max(0, scrollParent.scrollTop + offset - parentRect.height / 2), behavior: "smooth" })
+			scrollParent.scrollTo({
+				top: Math.max(
+					0,
+					scrollParent.scrollTop + offset - parentRect.height / 2
+				),
+				behavior: "smooth",
+			})
 		} else {
-			(el as Element).scrollIntoView({ behavior: "smooth", block: "center" })
+			;(el as Element).scrollIntoView({ behavior: "smooth", block: "center" })
 		}
 	}, elHandle)
 
@@ -163,12 +211,21 @@ const log = (msg: string) => console.log(`  ${msg}`)
  * Navigate to a page by clicking the sidebar link.
  * Falls back to direct URL if sidebar link not found.
  */
-const navigateViaSidebar = async (page: Page, sidebarText: RegExp, fallbackPath: string) => {
-	const sidebarLink = page.locator("nav a, aside a").filter({ hasText: sidebarText }).first()
+const navigateViaSidebar = async (
+	page: Page,
+	sidebarText: RegExp,
+	fallbackPath: string
+) => {
+	const sidebarLink = page
+		.locator("nav a, aside a")
+		.filter({ hasText: sidebarText })
+		.first()
 	if (await sidebarLink.isVisible().catch(() => false)) {
 		const box = await sidebarLink.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 20,
+			})
 			await pause(CONFIG.timing.beforeClick)
 			await sidebarLink.click()
 		}
@@ -179,12 +236,23 @@ const navigateViaSidebar = async (page: Page, sidebarText: RegExp, fallbackPath:
 	await pause(CONFIG.timing.pageLoad)
 }
 
-const smoothClick = async (page: Page, selector: string, options?: { timeout?: number }) => {
+const smoothClick = async (
+	page: Page,
+	selector: string,
+	options?: { timeout?: number }
+) => {
 	const locator = page.locator(selector).first()
-	await locator.waitFor({ state: "visible", timeout: options?.timeout ?? 10000 })
+	await locator.waitFor({
+		state: "visible",
+		timeout: options?.timeout ?? 10000,
+	})
 	const box = await locator.boundingBox()
-	if (!box) return
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 })
+	if (!box) {
+		return
+	}
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+		steps: 20,
+	})
 	await pause(CONFIG.timing.beforeClick)
 	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 	await pause(CONFIG.timing.afterClick)
@@ -194,19 +262,31 @@ const smoothClickText = async (page: Page, text: string | RegExp) => {
 	const locator = page.getByText(text).first()
 	await locator.waitFor({ state: "visible", timeout: 10000 })
 	const box = await locator.boundingBox()
-	if (!box) return
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 })
+	if (!box) {
+		return
+	}
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+		steps: 20,
+	})
 	await pause(CONFIG.timing.beforeClick)
 	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 	await pause(CONFIG.timing.afterClick)
 }
 
-const smoothClickRole = async (page: Page, role: "button" | "link" | "tab", name: string | RegExp) => {
+const smoothClickRole = async (
+	page: Page,
+	role: "button" | "link" | "tab",
+	name: string | RegExp
+) => {
 	const locator = page.getByRole(role, { name })
 	await locator.waitFor({ state: "visible", timeout: 10000 })
 	const box = await locator.boundingBox()
-	if (!box) return
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 })
+	if (!box) {
+		return
+	}
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+		steps: 20,
+	})
 	await pause(CONFIG.timing.beforeClick)
 	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 	await pause(CONFIG.timing.afterClick)
@@ -216,8 +296,12 @@ const smoothFill = async (page: Page, selector: string, value: string) => {
 	const locator = page.locator(selector).first()
 	await locator.waitFor({ state: "visible", timeout: 10000 })
 	const box = await locator.boundingBox()
-	if (!box) return
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+	if (!box) {
+		return
+	}
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+		steps: 15,
+	})
 	await pause(300)
 	await locator.click()
 	await pause(200)
@@ -282,14 +366,21 @@ const sceneLogin = async (page: Page) => {
 	await pause(CONFIG.timing.sectionView)
 	await capture(page, "login-page")
 
-	await smoothFill(page, "[name='email'], #email, input[type='email']", CONFIG.credentials.email)
+	await smoothFill(
+		page,
+		"[name='email'], #email, input[type='email']",
+		CONFIG.credentials.email
+	)
 	await smoothFill(page, "#password", CONFIG.credentials.password)
 	await smoothClickRole(page, "button", /sign in|entrar/i)
 
 	log("🔑 Selecting account...")
 	const loginResult = await Promise.race([
 		page.waitForURL("**/", { timeout: 10000 }).then(() => "dashboard" as const),
-		page.getByText(/Select Account|Selecionar Conta/i).waitFor({ timeout: 5000 }).then(() => "select-account" as const),
+		page
+			.getByText(/Select Account|Selecionar Conta/i)
+			.waitFor({ timeout: 5000 })
+			.then(() => "select-account" as const),
 	]).catch(() => "dashboard" as const)
 
 	if (loginResult === "select-account") {
@@ -322,10 +413,16 @@ const sceneCsvImport = async (page: Page) => {
 	const uploadZone = page.locator("#csv-upload-zone")
 	const zoneBox = await uploadZone.boundingBox()
 	if (zoneBox) {
-		await page.mouse.move(zoneBox.x + zoneBox.width / 2, zoneBox.y + zoneBox.height / 2, { steps: 20 })
+		await page.mouse.move(
+			zoneBox.x + zoneBox.width / 2,
+			zoneBox.y + zoneBox.height / 2,
+			{ steps: 20 }
+		)
 	}
 
-	await page.locator("#csv-import-submit").waitFor({ state: "visible", timeout: 120000 })
+	await page
+		.locator("#csv-import-submit")
+		.waitFor({ state: "visible", timeout: 120000 })
 	await pause(timing.pageLoad)
 	log("   ✅ CSV validated")
 
@@ -361,7 +458,10 @@ const sceneJournal = async (page: Page) => {
 	await pause(timing.sectionView)
 
 	// Click "All" / "Todos" filter
-	const allFilter = page.locator("button").filter({ hasText: /^(all|todos|tudo)$/i }).first()
+	const allFilter = page
+		.locator("button")
+		.filter({ hasText: /^(all|todos|tudo)$/i })
+		.first()
 	if (await allFilter.isVisible().catch(() => false)) {
 		await smoothClickText(page, /^(all|todos|tudo)$/i)
 		await page.waitForLoadState("domcontentloaded")
@@ -409,8 +509,12 @@ const scenePageGuide = async (page: Page) => {
 
 	log("💡 Starting Page Guide...")
 
-	const guideTrigger = page.getByRole("button", { name: /page guide|guia da página/i })
-	const isVisible = await guideTrigger.isVisible({ timeout: 5000 }).catch(() => false)
+	const guideTrigger = page.getByRole("button", {
+		name: /page guide|guia da página/i,
+	})
+	const isVisible = await guideTrigger
+		.isVisible({ timeout: 5000 })
+		.catch(() => false)
 
 	if (!isVisible) {
 		log("   ⚠️ Guide trigger not found")
@@ -419,7 +523,11 @@ const scenePageGuide = async (page: Page) => {
 
 	const triggerBox = await guideTrigger.boundingBox()
 	if (triggerBox) {
-		await page.mouse.move(triggerBox.x + triggerBox.width / 2, triggerBox.y + triggerBox.height / 2, { steps: 20 })
+		await page.mouse.move(
+			triggerBox.x + triggerBox.width / 2,
+			triggerBox.y + triggerBox.height / 2,
+			{ steps: 20 }
+		)
 		await pause(timing.beforeClick)
 		await guideTrigger.click()
 	}
@@ -432,14 +540,23 @@ const scenePageGuide = async (page: Page) => {
 	while (stepCount < maxSteps) {
 		await pause(timing.sectionView)
 
-		const nextBtn = page.locator("button").filter({ hasText: /^(next|próximo)$/i }).first()
+		const nextBtn = page
+			.locator("button")
+			.filter({ hasText: /^(next|próximo)$/i })
+			.first()
 		const hasNext = await nextBtn.isVisible().catch(() => false)
 
-		if (!hasNext) break
+		if (!hasNext) {
+			break
+		}
 
 		const nextBox = await nextBtn.boundingBox()
 		if (nextBox) {
-			await page.mouse.move(nextBox.x + nextBox.width / 2, nextBox.y + nextBox.height / 2, { steps: 15 })
+			await page.mouse.move(
+				nextBox.x + nextBox.width / 2,
+				nextBox.y + nextBox.height / 2,
+				{ steps: 15 }
+			)
 			await pause(timing.beforeClick)
 			await nextBtn.click()
 			await pause(timing.afterClick)
@@ -450,11 +567,16 @@ const scenePageGuide = async (page: Page) => {
 	log(`   Completed ${stepCount + 1} guide steps`)
 
 	// Close the guide overlay
-	const closeBtn = page.locator("button").filter({ hasText: /^(close|fechar)$/i }).first()
+	const closeBtn = page
+		.locator("button")
+		.filter({ hasText: /^(close|fechar)$/i })
+		.first()
 	if (await closeBtn.isVisible().catch(() => false)) {
 		const box = await closeBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await closeBtn.click()
 			await pause(timing.afterClick)
@@ -474,12 +596,18 @@ const sceneTradeDetail = async (page: Page) => {
 
 	// Click "All" / "Todos" filter to show all trades
 	// Click "All" filter
-	const periodButtons = page.locator("main button, [data-radix-scroll-area-viewport] button")
-	const allBtn = periodButtons.filter({ hasText: /^(all|todos|tudo)$/i }).first()
+	const periodButtons = page.locator(
+		"main button, [data-radix-scroll-area-viewport] button"
+	)
+	const allBtn = periodButtons
+		.filter({ hasText: /^(all|todos|tudo)$/i })
+		.first()
 	if (await allBtn.isVisible().catch(() => false)) {
 		const box = await allBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await allBtn.click()
 			await pause(timing.afterClick)
@@ -489,7 +617,9 @@ const sceneTradeDetail = async (page: Page) => {
 	}
 
 	// Find a clickable trade row
-	const tradeRows = page.locator("[class*='cursor-pointer']").filter({ hasText: /WIN|WDO|PETR|VALE/i })
+	const tradeRows = page
+		.locator("[class*='cursor-pointer']")
+		.filter({ hasText: /WIN|WDO|PETR|VALE/i })
 	const rowCount = await tradeRows.count()
 
 	if (rowCount > 1) {
@@ -499,7 +629,9 @@ const sceneTradeDetail = async (page: Page) => {
 		await pause(timing.shortPause)
 		const box = await tradeRow.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 20,
+			})
 			await pause(timing.beforeClick)
 			await tradeRow.click()
 		}
@@ -510,7 +642,11 @@ const sceneTradeDetail = async (page: Page) => {
 		await pause(timing.pageLoad)
 
 		// Only proceed if we actually navigated to a trade detail
-		if (page.url().includes("/journal/") && !page.url().endsWith("/journal") && !page.url().includes("/new")) {
+		if (
+			page.url().includes("/journal/") &&
+			!page.url().endsWith("/journal") &&
+			!page.url().includes("/new")
+		) {
 			// Start at top — header with asset, direction, P&L
 			await scrollTo(page, 0)
 			await pause(timing.sectionView)
@@ -632,13 +768,18 @@ const sceneCommandCenter = async (page: Page) => {
 		await pause(timing.shortPause)
 		const box = await calcAsset.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await calcAsset.click()
 			await pause(timing.afterClick)
 		}
 		// Click the WIN option from the Radix dropdown (portal — needs force click)
-		const winfutOption = page.locator("[role='option']").filter({ hasText: "WIN" }).first()
+		const winfutOption = page
+			.locator("[role='option']")
+			.filter({ hasText: "WIN" })
+			.first()
 		if (await winfutOption.isVisible({ timeout: 3000 }).catch(() => false)) {
 			await pause(timing.shortPause)
 			await winfutOption.click({ force: true })
@@ -651,7 +792,9 @@ const sceneCommandCenter = async (page: Page) => {
 	if (await stopField.isVisible().catch(() => false)) {
 		const box = await stopField.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 		}
 		await stopField.click()
@@ -755,21 +898,30 @@ const sceneMonteCarlo = async (page: Page) => {
 	await pause(timing.sectionView)
 
 	// Open data source dropdown and select "Todas as Estratégias"
-	const dataSourceSelect = page.locator("button[role='combobox'], [data-radix-select-trigger]").filter({ hasText: /selecione|select/i }).first()
+	const dataSourceSelect = page
+		.locator("button[role='combobox'], [data-radix-select-trigger]")
+		.filter({ hasText: /selecione|select/i })
+		.first()
 	if (await dataSourceSelect.isVisible().catch(() => false)) {
 		await scrollLocatorIntoView(page, dataSourceSelect)
 		await pause(timing.shortPause)
 		const box = await dataSourceSelect.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await dataSourceSelect.click()
 			await pause(timing.afterClick)
 		}
 
 		// Click "Todas as Estratégias" option
-		const allStrategiesOption = page.getByText(/todas as estratégias|all strategies/i).first()
-		if (await allStrategiesOption.isVisible({ timeout: 3000 }).catch(() => false)) {
+		const allStrategiesOption = page
+			.getByText(/todas as estratégias|all strategies/i)
+			.first()
+		if (
+			await allStrategiesOption.isVisible({ timeout: 3000 }).catch(() => false)
+		) {
 			await pause(timing.shortPause)
 			await allStrategiesOption.click()
 			await pause(timing.afterClick)
@@ -779,13 +931,18 @@ const sceneMonteCarlo = async (page: Page) => {
 	}
 
 	// Click "Usar Estas Estatísticas"
-	const useStatsBtn = page.locator("button").filter({ hasText: /usar estas|use these/i }).first()
+	const useStatsBtn = page
+		.locator("button")
+		.filter({ hasText: /usar estas|use these/i })
+		.first()
 	if (await useStatsBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
 		await scrollLocatorIntoView(page, useStatsBtn)
 		await pause(timing.shortPause)
 		const box = await useStatsBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await useStatsBtn.click()
 			await pause(timing.afterClick)
@@ -798,13 +955,18 @@ const sceneMonteCarlo = async (page: Page) => {
 	await pause(timing.sectionView)
 
 	// Click "Calcular Resultados"
-	const calcBtn = page.locator("button").filter({ hasText: /calcular|calculate|run/i }).first()
+	const calcBtn = page
+		.locator("button")
+		.filter({ hasText: /calcular|calculate|run/i })
+		.first()
 	if (await calcBtn.isVisible().catch(() => false)) {
 		await scrollLocatorIntoView(page, calcBtn)
 		await pause(timing.shortPause)
 		const box = await calcBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await calcBtn.click()
 			await pause(timing.afterClick)
@@ -841,11 +1003,16 @@ const sceneRiskSimulation = async (page: Page) => {
 	await pause(timing.sectionView)
 
 	// Click "Todos" year filter
-	const todosBtn = page.locator("button").filter({ hasText: /^todos$/i }).first()
+	const todosBtn = page
+		.locator("button")
+		.filter({ hasText: /^todos$/i })
+		.first()
 	if (await todosBtn.isVisible().catch(() => false)) {
 		const box = await todosBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await todosBtn.click()
 			await pause(timing.afterClick)
@@ -855,13 +1022,18 @@ const sceneRiskSimulation = async (page: Page) => {
 	}
 
 	// Click "Bravo Risk Management" prefill
-	const bravoBtn = page.locator("button").filter({ hasText: /bravo risk/i }).first()
+	const bravoBtn = page
+		.locator("button")
+		.filter({ hasText: /bravo risk/i })
+		.first()
 	if (await bravoBtn.isVisible().catch(() => false)) {
 		await scrollLocatorIntoView(page, bravoBtn)
 		await pause(timing.shortPause)
 		const box = await bravoBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await bravoBtn.click()
 			await pause(timing.afterClick)
@@ -877,7 +1049,9 @@ const sceneRiskSimulation = async (page: Page) => {
 		await pause(timing.shortPause)
 		const box = await balanceInput.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 		}
 		await balanceInput.click({ clickCount: 3 }) // Select all
@@ -891,13 +1065,18 @@ const sceneRiskSimulation = async (page: Page) => {
 	await pause(timing.sectionView)
 
 	// Click "Executar Simulação"
-	const execBtn = page.locator("button").filter({ hasText: /executar|run.*simul/i }).first()
+	const execBtn = page
+		.locator("button")
+		.filter({ hasText: /executar|run.*simul/i })
+		.first()
 	if (await execBtn.isVisible().catch(() => false)) {
 		await scrollLocatorIntoView(page, execBtn)
 		await pause(timing.shortPause)
 		const box = await execBtn.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await execBtn.click()
 			await pause(timing.afterClick)
@@ -932,13 +1111,18 @@ const sceneReports = async (page: Page) => {
 	await pause(timing.sectionView)
 
 	// Expand weekly report details
-	const expandWeekly = page.locator("#reports-weekly button").filter({ hasText: /detail|detalh/i }).first()
+	const expandWeekly = page
+		.locator("#reports-weekly button")
+		.filter({ hasText: /detail|detalh/i })
+		.first()
 	if (await expandWeekly.isVisible().catch(() => false)) {
 		await scrollLocatorIntoView(page, expandWeekly)
 		await pause(timing.shortPause)
 		const box = await expandWeekly.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await expandWeekly.click()
 			await pause(timing.afterClick)
@@ -952,11 +1136,16 @@ const sceneReports = async (page: Page) => {
 	await pause(timing.scrollPause)
 
 	// Expand monthly report details
-	const expandMonthly = page.locator("#reports-monthly button").filter({ hasText: /detail|detalh/i }).first()
+	const expandMonthly = page
+		.locator("#reports-monthly button")
+		.filter({ hasText: /detail|detalh/i })
+		.first()
 	if (await expandMonthly.isVisible().catch(() => false)) {
 		const box = await expandMonthly.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await expandMonthly.click()
 			await pause(timing.afterClick)
@@ -984,23 +1173,43 @@ const sceneMonthly = async (page: Page) => {
 	await pause(timing.sectionView)
 	await capture(page, "monthly-overview")
 
-	if (await page.locator("#monthly-profit-summary").isVisible().catch(() => false)) {
+	if (
+		await page
+			.locator("#monthly-profit-summary")
+			.isVisible()
+			.catch(() => false)
+	) {
 		await scrollToElement(page, "#monthly-profit-summary")
 		await pause(timing.sectionView)
 		await capture(page, "monthly-profit-summary")
 	}
 
-	if (await page.locator("#monthly-projection").isVisible().catch(() => false)) {
+	if (
+		await page
+			.locator("#monthly-projection")
+			.isVisible()
+			.catch(() => false)
+	) {
 		await scrollToElement(page, "#monthly-projection")
 		await pause(timing.scrollPause)
 	}
 
-	if (await page.locator("#monthly-comparison").isVisible().catch(() => false)) {
+	if (
+		await page
+			.locator("#monthly-comparison")
+			.isVisible()
+			.catch(() => false)
+	) {
 		await scrollToElement(page, "#monthly-comparison")
 		await pause(timing.scrollPause)
 	}
 
-	if (await page.locator("#monthly-weekly-breakdown").isVisible().catch(() => false)) {
+	if (
+		await page
+			.locator("#monthly-weekly-breakdown")
+			.isVisible()
+			.catch(() => false)
+	) {
 		await scrollToElement(page, "#monthly-weekly-breakdown")
 		await pause(timing.sectionView)
 	}
@@ -1019,13 +1228,20 @@ const scenePlaybook = async (page: Page) => {
 	// Get scroll height and scroll smoothly to bottom
 	const pbScrollHeight = await page.evaluate(() => {
 		let best = 0
-		document.querySelectorAll("*").forEach(el => {
+		for (const el of Array.from(document.querySelectorAll("*"))) {
 			const s = getComputedStyle(el)
-			if ((s.overflowY === "auto" || s.overflowY === "scroll" || s.overflowY === "hidden") && el.scrollHeight > el.clientHeight) {
+			if (
+				(s.overflowY === "auto" ||
+					s.overflowY === "scroll" ||
+					s.overflowY === "hidden") &&
+				el.scrollHeight > el.clientHeight
+			) {
 				const diff = el.scrollHeight - el.clientHeight
-				if (diff > best) best = el.scrollHeight
+				if (diff > best) {
+					best = el.scrollHeight
+				}
 			}
-		})
+		}
 		return best || 2000
 	})
 
@@ -1049,11 +1265,16 @@ const sceneSettings = async (page: Page) => {
 	await capture(page, "settings-profile")
 
 	// Switch to Account tab
-	const accountTab = page.locator("button[role='tab']").filter({ hasText: /conta|account/i }).first()
+	const accountTab = page
+		.locator("button[role='tab']")
+		.filter({ hasText: /conta|account/i })
+		.first()
 	if (await accountTab.isVisible().catch(() => false)) {
 		const box = await accountTab.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await accountTab.click()
 			await pause(timing.tabSwitch)
@@ -1069,11 +1290,16 @@ const sceneSettings = async (page: Page) => {
 	await pause(timing.shortPause)
 
 	// Switch to Tags tab
-	const tagsTab = page.locator("button[role='tab']").filter({ hasText: /^tags$/i }).first()
+	const tagsTab = page
+		.locator("button[role='tab']")
+		.filter({ hasText: /^tags$/i })
+		.first()
 	if (await tagsTab.isVisible().catch(() => false)) {
 		const box = await tagsTab.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await tagsTab.click()
 			await pause(timing.tabSwitch)
@@ -1082,11 +1308,16 @@ const sceneSettings = async (page: Page) => {
 	}
 
 	// Switch to Conditions tab
-	const conditionsTab = page.locator("button[role='tab']").filter({ hasText: /condições|conditions/i }).first()
+	const conditionsTab = page
+		.locator("button[role='tab']")
+		.filter({ hasText: /condições|conditions/i })
+		.first()
 	if (await conditionsTab.isVisible().catch(() => false)) {
 		const box = await conditionsTab.boundingBox()
 		if (box) {
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 15 })
+			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+				steps: 15,
+			})
 			await pause(timing.beforeClick)
 			await conditionsTab.click()
 			await pause(timing.tabSwitch)
@@ -1120,8 +1351,13 @@ const sceneCleanup = async () => {
 		await page.getByRole("button", { name: /sign in|entrar/i }).click()
 
 		const result = await Promise.race([
-			page.waitForURL("**/", { timeout: 10000 }).then(() => "dashboard" as const),
-			page.getByText(/Select Account|Selecionar Conta/i).waitFor({ timeout: 5000 }).then(() => "select-account" as const),
+			page
+				.waitForURL("**/", { timeout: 10000 })
+				.then(() => "dashboard" as const),
+			page
+				.getByText(/Select Account|Selecionar Conta/i)
+				.waitFor({ timeout: 5000 })
+				.then(() => "select-account" as const),
 		]).catch(() => "dashboard" as const)
 
 		if (result === "select-account") {
@@ -1138,7 +1374,9 @@ const sceneCleanup = async () => {
 
 		await page.evaluate(() => {
 			const s = document.querySelector("[data-radix-scroll-area-viewport]")
-			if (s) s.scrollTo({ top: 9999, behavior: "instant" })
+			if (s) {
+				s.scrollTo({ top: 9999, behavior: "instant" })
+			}
 		})
 		await pause(1000)
 
@@ -1166,18 +1404,27 @@ const sceneCleanup = async () => {
 // ── Video Save ──────────────────────────────────────────────────────────────
 
 const saveVideo = (videoDir: string) => {
-	const files = fs.readdirSync(videoDir).filter((f) => f.endsWith(".webm") && f !== "axion-demo.webm")
-	if (files.length === 0) return
+	const files = fs
+		.readdirSync(videoDir)
+		.filter((f) => f.endsWith(".webm") && f !== "axion-demo.webm")
+	if (files.length === 0) {
+		return
+	}
 	// Pick the most recently modified file (not alphabetically last)
 	const latestFile = files
-		.map((f) => ({ name: f, mtime: fs.statSync(path.join(videoDir, f)).mtimeMs }))
+		.map((f) => ({
+			name: f,
+			mtime: fs.statSync(path.join(videoDir, f)).mtimeMs,
+		}))
 		.sort((a, b) => b.mtime - a.mtime)[0].name
 	const src = path.join(videoDir, latestFile)
 	const dest = path.join(videoDir, "axion-demo.webm")
 	if (src === dest) {
 		console.log(`\n🎬 Video saved to: ${dest}`)
 	} else {
-		if (fs.existsSync(dest)) fs.unlinkSync(dest)
+		if (fs.existsSync(dest)) {
+			fs.unlinkSync(dest)
+		}
 		fs.renameSync(src, dest)
 		console.log(`\n🎬 Video saved to: ${dest}`)
 	}
@@ -1224,7 +1471,9 @@ const run = async () => {
 	fs.mkdirSync(CONFIG.videoDir, { recursive: true })
 
 	const enabledScenes = SCENES.filter((s) => s.enabled)
-	console.log(`\n🎬 Recording ${enabledScenes.length} scenes: ${enabledScenes.map((s) => s.name).join(" → ")}\n`)
+	console.log(
+		`\n🎬 Recording ${enabledScenes.length} scenes: ${enabledScenes.map((s) => s.name).join(" → ")}\n`
+	)
 
 	const browser = await chromium.launch({ headless: true, slowMo: 30 })
 	const context = await browser.newContext({

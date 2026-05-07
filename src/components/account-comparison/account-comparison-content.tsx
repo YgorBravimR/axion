@@ -9,7 +9,10 @@ import { ComparisonStatsTable } from "./comparison-stats-table"
 import { ComparisonEquityChart } from "./comparison-equity-chart"
 import { ComparisonConfigSummary } from "./comparison-config-summary"
 import { ComparisonNormalizedTable } from "./comparison-normalized-table"
-import { ExpectancyModeToggle, type ExpectancyMode } from "@/components/analytics/expectancy-mode-toggle"
+import {
+	ExpectancyModeToggle,
+	type ExpectancyMode,
+} from "@/components/analytics/expectancy-mode-toggle"
 import { getAccountComparisonData } from "@/app/actions/account-comparison"
 import type { AccountComparisonData } from "@/types"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
@@ -33,7 +36,9 @@ const AccountComparisonContent = ({
 	const [isPending, startTransition] = useTransition()
 
 	const handleCompare = () => {
-		if (selectedIds.length < 2) return
+		if (selectedIds.length < 2) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await getAccountComparisonData(selectedIds)
@@ -46,8 +51,8 @@ const AccountComparisonContent = ({
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
-			<div className="flex flex-col gap-s-300 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-s-300">
+			<div className="gap-s-300 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+				<div className="gap-s-300 flex items-center">
 					<Link
 						href="/analytics"
 						className="text-txt-300 hover:text-txt-100 transition-colors"
@@ -97,17 +102,13 @@ const AccountComparisonContent = ({
 					/>
 
 					{/* Normalized Monetary Comparison */}
-					<ComparisonNormalizedTable
-						accounts={comparisonData.accounts}
-					/>
+					<ComparisonNormalizedTable accounts={comparisonData.accounts} />
 
 					{/* Equity Chart */}
 					<ComparisonEquityChart accounts={comparisonData.accounts} />
 
 					{/* Config Summary */}
-					<ComparisonConfigSummary
-						accounts={comparisonData.accounts}
-					/>
+					<ComparisonConfigSummary accounts={comparisonData.accounts} />
 				</div>
 			)}
 		</div>

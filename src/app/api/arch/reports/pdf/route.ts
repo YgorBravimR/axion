@@ -52,7 +52,8 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 
 		// Fetch fee data (shared between both report types)
 		const feeResult = await getCommissionFeeImpact()
-		const feeData = feeResult.status === "success" ? feeResult.data ?? null : null
+		const feeData =
+			feeResult.status === "success" ? (feeResult.data ?? null) : null
 
 		if (type === "weekly") {
 			const result = await getWeeklyReport(offset)
@@ -69,7 +70,10 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 				feeData,
 			})
 
-			return pdfResponse(pdfBuffer, buildWeeklyPdfFilename(result.data.weekStart))
+			return pdfResponse(
+				pdfBuffer,
+				buildWeeklyPdfFilename(result.data.weekStart)
+			)
 		}
 
 		// Monthly
@@ -87,9 +91,14 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 			feeData,
 		})
 
-		return pdfResponse(pdfBuffer, buildMonthlyPdfFilename(result.data.monthStart))
+		return pdfResponse(
+			pdfBuffer,
+			buildMonthlyPdfFilename(result.data.monthStart)
+		)
 	} catch (error) {
-		if (isFrameworkSignal(error)) throw error
+		if (isFrameworkSignal(error)) {
+			throw error
+		}
 		console.error("Error generating PDF report:", error)
 		return NextResponse.json(
 			{ error: "Failed to generate PDF report" },

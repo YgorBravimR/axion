@@ -25,7 +25,9 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	if (!active || !payload || payload.length === 0) {
+		return null
+	}
 
 	const data = payload[0].payload
 
@@ -90,37 +92,40 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 				{t("modeDistribution")}
 			</h3>
 
-			<div className="flex flex-col sm:flex-row items-center gap-m-500">
-				<div className="mx-auto p-s-200 sm:p-0">
-				<ChartContainer id="chart-monte-carlo-v2-mode-distribution" className="h-40 w-40 sm:h-52 sm:w-52">
-					<PieChart>
-						<Pie
-							data={data}
-							dataKey="value"
-							nameKey="name"
-							cx="50%"
-							cy="50%"
-							innerRadius={35}
-							outerRadius={70}
-							paddingAngle={2}
-						>
-							{data.map((entry, index) => (
-								<Cell
-									key={`cell-${index}`}
-									fill={entry.color}
-									fillOpacity={0.75}
-									stroke="var(--color-bg-200)"
-									strokeWidth={2}
-								/>
-							))}
-						</Pie>
-						<ChartTooltip content={tooltipContent} />
-					</PieChart>
-				</ChartContainer>
+			<div className="gap-m-500 flex flex-col items-center sm:flex-row">
+				<div className="p-s-200 mx-auto sm:p-0">
+					<ChartContainer
+						id="chart-monte-carlo-v2-mode-distribution"
+						className="h-40 w-40 sm:h-52 sm:w-52"
+					>
+						<PieChart>
+							<Pie
+								data={data}
+								dataKey="value"
+								nameKey="name"
+								cx="50%"
+								cy="50%"
+								innerRadius={35}
+								outerRadius={70}
+								paddingAngle={2}
+							>
+								{data.map((entry, index) => (
+									<Cell
+										key={`cell-${index}`}
+										fill={entry.color}
+										fillOpacity={0.75}
+										stroke="var(--color-bg-200)"
+										strokeWidth={2}
+									/>
+								))}
+							</Pie>
+							<ChartTooltip content={tooltipContent} />
+						</PieChart>
+					</ChartContainer>
 				</div>
 
 				{/* Legend */}
-				<div className="flex-1 space-y-s-300">
+				<div className="space-y-s-300 flex-1">
 					{data.map((slice) => (
 						<div key={slice.name} className="flex items-center justify-between">
 							<div className="gap-s-200 flex items-center">
@@ -131,7 +136,11 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 								<span className="text-tiny text-txt-300">{slice.name}</span>
 							</div>
 							<span className="text-tiny text-txt-100 font-medium">
-								{slice.value.toFixed(1)}d ({totalDays > 0 ? ((slice.value / totalDays) * 100).toFixed(0) : 0}%)
+								{slice.value.toFixed(1)}d (
+								{totalDays > 0
+									? ((slice.value / totalDays) * 100).toFixed(0)
+									: 0}
+								%)
 							</span>
 						</div>
 					))}

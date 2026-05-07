@@ -1,6 +1,11 @@
 // src/lib/tax/recompute-month.ts
 import { db } from "@/db/drizzle"
-import { trades, accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
+import {
+	trades,
+	accountFeeRates,
+	monthlyTaxLedger,
+	tradingAccounts,
+} from "@/db/schema"
 import { eq, and, gte, lte, sql } from "drizzle-orm"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { computeDayFees } from "./fee-allocator"
@@ -10,7 +15,7 @@ import { computeDarf } from "./darf-calculator"
 interface RecomputeInput {
 	accountId: string
 	year: number
-	month: number        // 1–12
+	month: number // 1–12
 	carryoverInCents: number
 	userId: string
 }
@@ -45,7 +50,9 @@ interface RecomputeOutput {
  *
  * @param input - accountId, year, month (1-12), carryoverIn, userId for decryption
  */
-const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOutput> => {
+const recomputeAccountMonth = async (
+	input: RecomputeInput
+): Promise<RecomputeOutput> => {
 	const { accountId, year, month, carryoverInCents, userId } = input
 
 	// timestamptz columns: build UTC range bounds, never local-tz date-fns helpers
@@ -133,15 +140,17 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 			and(
 				eq(trades.accountId, accountId),
 				gte(trades.exitDate, monthStart),
-				lte(trades.exitDate, monthEnd),
-			),
+				lte(trades.exitDate, monthEnd)
+			)
 		)
 		.orderBy(trades.exitDate)
 
 	// Encryption is currently disabled (getUserDek always returns null).
 	// When dek is null, pnl is already plaintext string-encoded cents.
 	const dek = await getUserDek(userId)
-	const decryptedTrades = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+	const decryptedTrades = dek
+		? rawTrades.map((t) => decryptTradeFields(t, dek))
+		: rawTrades
 
 	// Group trades by (exit day, asset). Same-day entry+exit only (day-trades).
 	// Per-asset bucketing is required because fee rates differ by contract type
@@ -153,7 +162,9 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 
 	for (const trade of decryptedTrades) {
 		// Skip trades with no exit date
-		if (!trade.exitDate) continue
+		if (!trade.exitDate) {
+			continue
+		}
 
 		// Skip swing trades — entry and exit must be on the same calendar day.
 		// Use year/month/date components to avoid toISOString() timezone drift.
@@ -163,7 +174,9 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 			entry.getFullYear() === exit.getFullYear() &&
 			entry.getMonth() === exit.getMonth() &&
 			entry.getDate() === exit.getDate()
-		if (!sameDay) continue
+		if (!sameDay) {
+			continue
+		}
 
 		// Fail loudly on corrupted numeric fields — silently propagating NaN
 		// into aggregates would poison every dependent tax calculation.
@@ -177,7 +190,10 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		const dayKey = `${exit.getFullYear()}-${exit.getMonth()}-${exit.getDate()}`
 		const dayAssetKey = `${dayKey}|${trade.asset}`
 
-		const existing = dayAssetMap.get(dayAssetKey) ?? { pnlCents: 0, contracts: 0 }
+		const existing = dayAssetMap.get(dayAssetKey) ?? {
+			pnlCents: 0,
+			contracts: 0,
+		}
 		dayAssetMap.set(dayAssetKey, {
 			pnlCents: existing.pnlCents + pnlCents,
 			contracts: existing.contracts + contracts,
@@ -210,9 +226,9 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 			},
 		})
 		totalTxCorretagemCents += fees.txCorretagem
-		totalTxRegistroCents   += fees.txRegistro
-		totalEmolumentosCents  += fees.emolumentos
-		totalIssCents          += fees.iss
+		totalTxRegistroCents += fees.txRegistro
+		totalEmolumentosCents += fees.emolumentos
+		totalIssCents += fees.iss
 	}
 
 	// IRRF accumulates on day-level gross PnL (asset-agnostic). Use default
@@ -223,7 +239,11 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 		dailyResults.push({ date: monthStart, grossPnlCents: pnl })
 	}
 
-	const totalFeesCents = totalTxCorretagemCents + totalTxRegistroCents + totalEmolumentosCents + totalIssCents
+	const totalFeesCents =
+		totalTxCorretagemCents +
+		totalTxRegistroCents +
+		totalEmolumentosCents +
+		totalIssCents
 
 	const irrfResult = accumulateIrrf(dailyResults, defaultFeeRates.irrfRateBps)
 
@@ -271,7 +291,8 @@ const recomputeAccountMonth = async (input: RecomputeInput): Promise<RecomputeOu
 	// emission required), positive-due are "pending" until user confirms payment.
 	// On conflict we must preserve "paid" — payment records are immutable user
 	// truth, never overwritten by recompute.
-	const derivedStatus: "exempt" | "pending" = output.darfDueCents === 0 ? "exempt" : "pending"
+	const derivedStatus: "exempt" | "pending" =
+		output.darfDueCents === 0 ? "exempt" : "pending"
 
 	await db
 		.insert(monthlyTaxLedger)

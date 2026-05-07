@@ -8,18 +8,28 @@ import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 import { isMonthFinalized } from "@/lib/tax/month-status"
 import { lastDayOfMonth, subDays, isWeekend } from "date-fns"
 import type { ActionResponse } from "@/types"
-import type { MonthlyDarfRow, YearTaxSummary, FeeRatesRow, FeeRatesEntry } from "@/lib/tax/types"
+import type {
+	MonthlyDarfRow,
+	YearTaxSummary,
+	FeeRatesRow,
+	FeeRatesEntry,
+} from "@/lib/tax/types"
 
 // ─── Internal: verify account ownership ──────────────────────────────────────
 
 const verifyAccountOwnership = async (
 	accountId: string,
-	userId: string,
+	userId: string
 ): Promise<{ id: string; showTaxEstimates: boolean } | null> => {
 	const account = await db
-		.select({ id: tradingAccounts.id, showTaxEstimates: tradingAccounts.showTaxEstimates })
+		.select({
+			id: tradingAccounts.id,
+			showTaxEstimates: tradingAccounts.showTaxEstimates,
+		})
 		.from(tradingAccounts)
-		.where(and(eq(tradingAccounts.id, accountId), eq(tradingAccounts.userId, userId)))
+		.where(
+			and(eq(tradingAccounts.id, accountId), eq(tradingAccounts.userId, userId))
+		)
 		.then((rows) => rows[0])
 
 	return account ?? null
@@ -67,8 +77,8 @@ const recomputeFromMonth = async (params: {
 		.where(
 			and(
 				eq(monthlyTaxLedger.accountId, accountId),
-				eq(monthlyTaxLedger.month, toUtcMonth(prevYear, prevMonthIdx)),
-			),
+				eq(monthlyTaxLedger.month, toUtcMonth(prevYear, prevMonthIdx))
+			)
 		)
 		.then((rows) => rows[0])
 
@@ -82,6 +92,7 @@ const recomputeFromMonth = async (params: {
 		year > nowYear || (year === nowYear && month > nowMonth)
 
 	while (!reachedFuture()) {
+		// eslint-disable-next-line no-await-in-loop -- tax months must be computed sequentially; carryoverIn depends on previous month's carryoverOut
 		const result = await recomputeAccountMonth({
 			accountId,
 			year,
@@ -132,7 +143,12 @@ const getMonthlyDarf = async (params: {
 		return {
 			status: "error",
 			message: "Tax estimates are disabled for this account.",
-			errors: [{ code: "TAX_DISABLED", detail: "Tax estimates are disabled for this account." }],
+			errors: [
+				{
+					code: "TAX_DISABLED",
+					detail: "Tax estimates are disabled for this account.",
+				},
+			],
 		}
 	}
 
@@ -142,7 +158,12 @@ const getMonthlyDarf = async (params: {
 	const existing = await db
 		.select()
 		.from(monthlyTaxLedger)
-		.where(and(eq(monthlyTaxLedger.accountId, accountId), eq(monthlyTaxLedger.month, monthDate)))
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				eq(monthlyTaxLedger.month, monthDate)
+			)
+		)
 		.then((rows) => rows[0])
 
 	if (!existing || existing.isDirty) {
@@ -152,18 +173,29 @@ const getMonthlyDarf = async (params: {
 	const row = await db
 		.select()
 		.from(monthlyTaxLedger)
-		.where(and(eq(monthlyTaxLedger.accountId, accountId), eq(monthlyTaxLedger.month, monthDate)))
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				eq(monthlyTaxLedger.month, monthDate)
+			)
+		)
 		.then((rows) => rows[0])
 
 	if (!row) {
 		return {
 			status: "error",
 			message: "Could not compute ledger row.",
-			errors: [{ code: "LEDGER_NOT_FOUND", detail: "Could not compute ledger row." }],
+			errors: [
+				{ code: "LEDGER_NOT_FOUND", detail: "Could not compute ledger row." },
+			],
 		}
 	}
 
-	return { status: "success", message: "Ledger row retrieved.", data: row as MonthlyDarfRow }
+	return {
+		status: "success",
+		message: "Ledger row retrieved.",
+		data: row as MonthlyDarfRow,
+	}
 }
 
 // ─── getCarryoverState ────────────────────────────────────────────────────────
@@ -173,10 +205,17 @@ const getMonthlyDarf = async (params: {
  */
 const getCarryoverState = async (params: {
 	accountId: string
-}): Promise<ActionResponse<{
-	currentBalanceCents: number
-	history: Array<{ month: Date; balanceCents: number; consumed: number; netGainCents: number }>
-}>> => {
+}): Promise<
+	ActionResponse<{
+		currentBalanceCents: number
+		history: Array<{
+			month: Date
+			balanceCents: number
+			consumed: number
+			netGainCents: number
+		}>
+	}>
+> => {
 	const { userId } = await requireAuth()
 	const { accountId } = params
 
@@ -257,7 +296,11 @@ const recomputeLedger = async (params: {
 			startYear = earliest.month.getFullYear()
 			startMonth = earliest.month.getMonth() + 1
 		} else {
-			return { status: "success", message: "No ledger rows to recompute.", data: { recomputedMonths: 0 } }
+			return {
+				status: "success",
+				message: "No ledger rows to recompute.",
+				data: { recomputedMonths: 0 },
+			}
 		}
 	}
 
@@ -309,8 +352,8 @@ const getYearTaxSummary = async (params: {
 			and(
 				eq(monthlyTaxLedger.accountId, accountId),
 				gte(monthlyTaxLedger.month, yearStart),
-				lte(monthlyTaxLedger.month, yearEnd),
-			),
+				lte(monthlyTaxLedger.month, yearEnd)
+			)
 		)
 
 	const summary = rows.reduce(
@@ -318,10 +361,13 @@ const getYearTaxSummary = async (params: {
 			grossGainCents: acc.grossGainCents + row.grossGainCents,
 			totalFeesCents: acc.totalFeesCents + row.totalFeesCents,
 			totalIrrfCents: acc.totalIrrfCents + row.irrfCents,
-			totalDarfPaidCents: acc.totalDarfPaidCents + (row.darfPaidAmountCents ?? 0),
+			totalDarfPaidCents:
+				acc.totalDarfPaidCents + (row.darfPaidAmountCents ?? 0),
 			totalDarfPendingCents:
 				acc.totalDarfPendingCents +
-				(row.darfStatus === "pending" || row.darfStatus === "overdue" ? row.darfDueCents : 0),
+				(row.darfStatus === "pending" || row.darfStatus === "overdue"
+					? row.darfDueCents
+					: 0),
 			netLiquidCents: acc.netLiquidCents + row.netLiquidCents,
 		}),
 		{
@@ -331,12 +377,14 @@ const getYearTaxSummary = async (params: {
 			totalDarfPaidCents: 0,
 			totalDarfPendingCents: 0,
 			netLiquidCents: 0,
-		},
+		}
 	)
 
 	const irBurdenPercent =
 		summary.grossGainCents > 0
-			? ((summary.totalFeesCents + summary.totalDarfPaidCents + summary.totalDarfPendingCents) /
+			? ((summary.totalFeesCents +
+					summary.totalDarfPaidCents +
+					summary.totalDarfPendingCents) /
 					summary.grossGainCents) *
 				100
 			: 0
@@ -362,7 +410,10 @@ const getEffectiveTaxRate = async (params: {
 	accountId: string
 	month: string // ISO date string "YYYY-MM-DD"
 }): Promise<
-	ActionResponse<{ ratePercent: number; breakdown: { feesPercent: number; irPercent: number } }>
+	ActionResponse<{
+		ratePercent: number
+		breakdown: { feesPercent: number; irPercent: number }
+	}>
 > => {
 	const { userId } = await requireAuth()
 	const { accountId } = params
@@ -391,8 +442,8 @@ const getEffectiveTaxRate = async (params: {
 		.where(
 			and(
 				eq(monthlyTaxLedger.accountId, accountId),
-				eq(monthlyTaxLedger.month, monthDate),
-			),
+				eq(monthlyTaxLedger.month, monthDate)
+			)
 		)
 		.then((rows) => rows[0])
 
@@ -448,7 +499,8 @@ const markDarfPaid = async (params: {
 	if (!isMonthFinalized(params.year, params.month)) {
 		return {
 			status: "error",
-			message: "Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
+			message:
+				"Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
 			errors: [
 				{
 					code: "MONTH_NOT_FINALIZED",
@@ -461,7 +513,9 @@ const markDarfPaid = async (params: {
 	// timestamptz: monthlyTaxLedger.month stored as UTC first-of-month. Build the
 	// matcher with Date.UTC — local-time `new Date(year, m-1, 1)` shifts by the
 	// host TZ offset and silently matches zero rows on non-UTC machines.
-	const monthDate = new Date(Date.UTC(params.year, params.month - 1, 1, 0, 0, 0, 0))
+	const monthDate = new Date(
+		Date.UTC(params.year, params.month - 1, 1, 0, 0, 0, 0)
+	)
 
 	const result = await db
 		.update(monthlyTaxLedger)
@@ -474,8 +528,8 @@ const markDarfPaid = async (params: {
 		.where(
 			and(
 				eq(monthlyTaxLedger.accountId, accountId),
-				eq(monthlyTaxLedger.month, monthDate),
-			),
+				eq(monthlyTaxLedger.month, monthDate)
+			)
 		)
 		.returning({ id: monthlyTaxLedger.id })
 
@@ -508,13 +562,14 @@ const DEFAULT_FEE_RATES: FeeRatesRow = {
 }
 
 const getFeeRates = async (
-	assetSymbol: string | null = null,
+	assetSymbol: string | null = null
 ): Promise<ActionResponse<FeeRatesRow>> => {
 	const { accountId } = await requireAuth()
 
-	const matcher = assetSymbol === null
-		? isNull(accountFeeRates.assetSymbol)
-		: eq(accountFeeRates.assetSymbol, assetSymbol)
+	const matcher =
+		assetSymbol === null
+			? isNull(accountFeeRates.assetSymbol)
+			: eq(accountFeeRates.assetSymbol, assetSymbol)
 
 	const row = await db
 		.select({
@@ -578,9 +633,10 @@ const upsertFeeRates = async (params: {
 	const { accountId } = await requireAuth()
 	const { assetSymbol = null, ...rates } = params
 
-	const matcher = assetSymbol === null
-		? isNull(accountFeeRates.assetSymbol)
-		: eq(accountFeeRates.assetSymbol, assetSymbol)
+	const matcher =
+		assetSymbol === null
+			? isNull(accountFeeRates.assetSymbol)
+			: eq(accountFeeRates.assetSymbol, assetSymbol)
 
 	const existing = await db
 		.select({ id: accountFeeRates.id })
@@ -612,7 +668,9 @@ const upsertFeeRates = async (params: {
 
 // ─── deleteFeeRates ──────────────────────────────────────────────────────────
 
-const deleteFeeRates = async (assetSymbol: string): Promise<ActionResponse<void>> => {
+const deleteFeeRates = async (
+	assetSymbol: string
+): Promise<ActionResponse<void>> => {
 	const { accountId } = await requireAuth()
 
 	await db
@@ -620,8 +678,8 @@ const deleteFeeRates = async (assetSymbol: string): Promise<ActionResponse<void>
 		.where(
 			and(
 				eq(accountFeeRates.accountId, accountId),
-				eq(accountFeeRates.assetSymbol, assetSymbol),
-			),
+				eq(accountFeeRates.assetSymbol, assetSymbol)
+			)
 		)
 
 	await db

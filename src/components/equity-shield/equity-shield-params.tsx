@@ -47,7 +47,9 @@ interface EquityShieldParamsProps {
 
 /** Convert YYYY-MM-DD string to Date at noon (avoids timezone shift) */
 const parseToDate = (dateStr: string): Date | undefined => {
-	if (!dateStr) return undefined
+	if (!dateStr) {
+		return undefined
+	}
 	return new Date(dateStr + "T12:00:00")
 }
 
@@ -77,9 +79,14 @@ const EquityShieldParamsForm = ({
 }: EquityShieldParamsProps) => {
 	const t = useTranslations("equityShield.params")
 
-	const handleFieldChange = (field: keyof EquityShieldParams, rawValue: string) => {
+	const handleFieldChange = (
+		field: keyof EquityShieldParams,
+		rawValue: string
+	) => {
 		const value = parseFloat(rawValue)
-		if (Number.isNaN(value)) return
+		if (Number.isNaN(value)) {
+			return
+		}
 
 		if (field === "initialBalanceCents" || field === "drawdownLimitCents") {
 			onParamsChange({ ...params, [field]: toCents(value) })
@@ -108,13 +115,17 @@ const EquityShieldParamsForm = ({
 	}
 
 	const handleAllTime = () => {
-		if (tradeYears.length === 0) return
+		if (tradeYears.length === 0) {
+			return
+		}
 		const oldest = tradeYears[tradeYears.length - 1]
 		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
 	}
 
 	const activeQuickFilter = useMemo(() => {
-		if (!dateFrom || !dateTo) return null
+		if (!dateFrom || !dateTo) {
+			return null
+		}
 		for (const year of tradeYears) {
 			if (dateFrom === `${year}-01-01` && dateTo === `${year}-12-31`) {
 				return `year-${year}`
@@ -123,13 +134,15 @@ const EquityShieldParamsForm = ({
 		if (tradeYears.length > 0) {
 			const oldest = tradeYears[tradeYears.length - 1]
 			const today = new Date().toISOString().split("T")[0]
-			if (dateFrom === `${oldest}-01-01` && dateTo === today) return "all"
+			if (dateFrom === `${oldest}-01-01` && dateTo === today) {
+				return "all"
+			}
 		}
 		return null
 	}, [dateFrom, dateTo, tradeYears])
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-m-400 rounded-lg border p-s-300 sm:p-m-400">
+		<div className="border-bg-300 bg-bg-200 space-y-m-400 p-s-300 sm:p-m-400 rounded-lg border">
 			<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">
 				{t("title")}
 			</h2>
@@ -139,7 +152,7 @@ const EquityShieldParamsForm = ({
 				<Label id="label-date-range" className="text-tiny text-txt-300">
 					{t("dateRange")}
 				</Label>
-				<div className="flex flex-wrap items-end gap-s-300">
+				<div className="gap-s-300 flex flex-wrap items-end">
 					<DateRangePicker
 						id="shield-date-range"
 						value={rangeValue}
@@ -147,7 +160,7 @@ const EquityShieldParamsForm = ({
 						className="w-full sm:max-w-sm"
 					/>
 					{tradeYears.length > 0 && (
-						<div className="flex items-center gap-s-200">
+						<div className="gap-s-200 flex items-center">
 							<Select
 								value={
 									activeQuickFilter?.startsWith("year-")
@@ -188,14 +201,14 @@ const EquityShieldParamsForm = ({
 
 			{/* Preview Banner */}
 			{isLoadingPreview && (
-				<div className="bg-bg-100 border-bg-300 rounded-md border p-s-300">
+				<div className="bg-bg-100 border-bg-300 p-s-300 rounded-md border">
 					<p className="text-small text-txt-300 animate-pulse motion-reduce:animate-none">
 						{t("preview.loading")}
 					</p>
 				</div>
 			)}
 			{!isLoadingPreview && preview && (
-				<div className="bg-bg-100 border-bg-300 rounded-md border p-s-300">
+				<div className="bg-bg-100 border-bg-300 p-s-300 rounded-md border">
 					<p className="text-small text-txt-100">
 						{t("preview.totalTrades", { count: preview.totalTrades })}
 					</p>
@@ -213,18 +226,20 @@ const EquityShieldParamsForm = ({
 			)}
 
 			{/* Tip about sample size */}
-			<div className="bg-bg-100 border-bg-300 flex items-start gap-s-200 rounded-md border p-s-300">
+			<div className="bg-bg-100 border-bg-300 gap-s-200 p-s-300 flex items-start rounded-md border">
 				<Info className="text-txt-300 mt-0.5 h-4 w-4 shrink-0" />
-				<p className="text-tiny text-txt-300">
-					{t("sampleSizeTip")}
-				</p>
+				<p className="text-tiny text-txt-300">{t("sampleSizeTip")}</p>
 			</div>
 
 			{/* Computation Parameters Grid */}
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 				{/* Account Balance */}
 				<div className="space-y-s-200">
-					<Label id="label-initial-balance" htmlFor="initial-balance" className="text-tiny text-txt-300">
+					<Label
+						id="label-initial-balance"
+						htmlFor="initial-balance"
+						className="text-tiny text-txt-300"
+					>
 						{t("initialBalance")}
 					</Label>
 					<Input
@@ -242,7 +257,11 @@ const EquityShieldParamsForm = ({
 
 				{/* DD Limit */}
 				<div className="space-y-s-200">
-					<Label id="label-dd-limit" htmlFor="dd-limit" className="text-tiny text-txt-300">
+					<Label
+						id="label-dd-limit"
+						htmlFor="dd-limit"
+						className="text-tiny text-txt-300"
+					>
 						{t("drawdownLimit")}
 					</Label>
 					<Input
@@ -260,7 +279,11 @@ const EquityShieldParamsForm = ({
 
 				{/* MDD Multiplier */}
 				<div className="space-y-s-200">
-					<Label id="label-mdd-multiplier" htmlFor="mdd-multiplier" className="text-tiny text-txt-300">
+					<Label
+						id="label-mdd-multiplier"
+						htmlFor="mdd-multiplier"
+						className="text-tiny text-txt-300"
+					>
 						{t("mddMultiplier")}
 					</Label>
 					<Input
@@ -270,16 +293,18 @@ const EquityShieldParamsForm = ({
 						max={3}
 						step={0.1}
 						value={params.mddMultiplier}
-						onChange={(e) =>
-							handleFieldChange("mddMultiplier", e.target.value)
-						}
+						onChange={(e) => handleFieldChange("mddMultiplier", e.target.value)}
 						aria-label={t("mddMultiplier")}
 					/>
 				</div>
 
 				{/* Recovery % */}
 				<div className="space-y-s-200">
-					<Label id="label-recovery-percent" htmlFor="recovery-percent" className="text-tiny text-txt-300">
+					<Label
+						id="label-recovery-percent"
+						htmlFor="recovery-percent"
+						className="text-tiny text-txt-300"
+					>
 						{t("recoveryPercent")}
 					</Label>
 					<Input
@@ -301,7 +326,11 @@ const EquityShieldParamsForm = ({
 
 				{/* SMA Period */}
 				<div className="space-y-s-200">
-					<Label id="label-sma-period" htmlFor="sma-period" className="text-tiny text-txt-300">
+					<Label
+						id="label-sma-period"
+						htmlFor="sma-period"
+						className="text-tiny text-txt-300"
+					>
 						{t("smaPeriod")}
 					</Label>
 					<Input
@@ -318,7 +347,7 @@ const EquityShieldParamsForm = ({
 			</div>
 
 			{/* Cut at DD Limit toggle */}
-			<div className="flex items-center gap-s-300">
+			<div className="gap-s-300 flex items-center">
 				<Switch
 					id="cut-at-dd-limit"
 					checked={params.cutAtDdLimit}

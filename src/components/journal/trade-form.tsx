@@ -210,7 +210,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 				}
 				// Pre-select asset if defaultAssetId is provided (supports both id and symbol)
 				if (defaultAssetId && assets.length > 0) {
-					return assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId) ?? null
+					return (
+						assets.find(
+							(a) => a.id === defaultAssetId || a.symbol === defaultAssetId
+						) ?? null
+					)
 				}
 				return null
 			}
@@ -244,20 +248,26 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 		const effectiveNow = useMemo(
 			() => (defaultDate ? new Date(defaultDate) : new Date()),
-			// eslint-disable-next-line react-hooks/exhaustive-deps -- date string is stable for component lifetime
+
 			[]
 		)
-		const endOfDay = useMemo(() => getEndOfDayLocal(effectiveNow), [effectiveNow])
+		const endOfDay = useMemo(
+			() => getEndOfDayLocal(effectiveNow),
+			[effectiveNow]
+		)
 
 		// Resolve default asset symbol for new trades
 		const resolvedDefaultAssetSymbol = useMemo(() => {
-			if (initialSharedState?.asset) return initialSharedState.asset
+			if (initialSharedState?.asset) {
+				return initialSharedState.asset
+			}
 			if (defaultAssetId && assets.length > 0) {
-				const match = assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId)
+				const match = assets.find(
+					(a) => a.id === defaultAssetId || a.symbol === defaultAssetId
+				)
 				return match?.symbol
 			}
 			return undefined
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- deps are stable on mount
 		}, [initialSharedState?.asset, defaultAssetId, assets])
 
 		const defaultValues: Partial<TradeFormInput> = trade
@@ -267,7 +277,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 					entryDate: formatDateTimeLocal(effectiveNow),
 					exitDate: formatDateTimeLocal(effectiveNow),
 					tagIds: initialSharedState?.tagIds ?? [],
-					...(resolvedDefaultAssetSymbol && { asset: resolvedDefaultAssetSymbol }),
+					...(resolvedDefaultAssetSymbol && {
+						asset: resolvedDefaultAssetSymbol,
+					}),
 					...(initialSharedState && {
 						asset: initialSharedState.asset,
 						timeframeId: initialSharedState.timeframeId,
@@ -293,7 +305,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			// parameter that doesn't satisfy UseFormProps resolver constraint when the
 			// schema uses discriminated unions or transform — cast required until
 			// @hookform/resolvers ships updated types for zod v4.
-			 
+
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- zodResolver return type doesn't satisfy react-hook-form resolver constraint with Zod 4 discriminated unions; cast required until @hookform/resolvers ships updated types
 			resolver: zodResolver(createTradeSchema) as any,
 			defaultValues,
 		})
@@ -355,36 +368,52 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 		// Real-time SL/TP cross-field validation indicators
 		const stopLossWarning = useMemo(() => {
-			if (!entryPrice || !stopLoss || !direction) return null
+			if (!entryPrice || !stopLoss || !direction) {
+				return null
+			}
 			const entry = Number(entryPrice)
 			const sl = Number(stopLoss)
-			if (isNaN(entry) || isNaN(sl)) return null
-			if (direction === "long" && sl >= entry)
+			if (isNaN(entry) || isNaN(sl)) {
+				return null
+			}
+			if (direction === "long" && sl >= entry) {
 				return tValidation("stopLossMustBeBelowEntry")
-			if (direction === "short" && sl <= entry)
+			}
+			if (direction === "short" && sl <= entry) {
 				return tValidation("stopLossMustBeAboveEntry")
+			}
 			return null
 		}, [entryPrice, stopLoss, direction, tValidation])
 
 		const takeProfitWarning = useMemo(() => {
-			if (!entryPrice || !takeProfit || !direction) return null
+			if (!entryPrice || !takeProfit || !direction) {
+				return null
+			}
 			const entry = Number(entryPrice)
 			const tp = Number(takeProfit)
-			if (isNaN(entry) || isNaN(tp)) return null
-			if (direction === "long" && tp <= entry)
+			if (isNaN(entry) || isNaN(tp)) {
+				return null
+			}
+			if (direction === "long" && tp <= entry) {
 				return tValidation("takeProfitMustBeAboveEntry")
-			if (direction === "short" && tp >= entry)
+			}
+			if (direction === "short" && tp >= entry) {
 				return tValidation("takeProfitMustBeBelowEntry")
+			}
 			return null
 		}, [entryPrice, takeProfit, direction, tValidation])
 
 		// Auto-calculate planned risk from stop loss using asset-based calculation when available
 		const calculatedRisk = useMemo(() => {
-			if (!entryPrice || !stopLoss || !positionSize) return null
+			if (!entryPrice || !stopLoss || !positionSize) {
+				return null
+			}
 			const entry = Number(entryPrice)
 			const sl = Number(stopLoss)
 			const size = Number(positionSize)
-			if (isNaN(entry) || isNaN(sl) || isNaN(size)) return null
+			if (isNaN(entry) || isNaN(sl) || isNaN(size)) {
+				return null
+			}
 
 			if (selectedAsset) {
 				// Use asset-based calculation (tick size and tick value)
@@ -402,13 +431,19 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 		// Auto-calculate planned R target from TP/SL ratio (always derived, never user input)
 		const calculatedPlannedR = useMemo(() => {
-			if (!entryPrice || !stopLoss || !takeProfit) return null
+			if (!entryPrice || !stopLoss || !takeProfit) {
+				return null
+			}
 			const entry = Number(entryPrice)
 			const sl = Number(stopLoss)
 			const tp = Number(takeProfit)
-			if (isNaN(entry) || isNaN(sl) || isNaN(tp)) return null
+			if (isNaN(entry) || isNaN(sl) || isNaN(tp)) {
+				return null
+			}
 			const riskPerUnit = direction === "long" ? entry - sl : sl - entry
-			if (riskPerUnit === 0) return null
+			if (riskPerUnit === 0) {
+				return null
+			}
 			const rewardPerUnit = direction === "long" ? tp - entry : entry - tp
 			return Math.abs(rewardPerUnit / riskPerUnit)
 		}, [entryPrice, stopLoss, takeProfit, direction])
@@ -417,7 +452,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 		// Calculate P&L preview using asset-based calculation when available
 		const calculatedPnLResult = useMemo(() => {
-			if (!entryPrice || !exitPrice || !positionSize) return null
+			if (!entryPrice || !exitPrice || !positionSize) {
+				return null
+			}
 
 			const entry = Number(entryPrice)
 			const exit = Number(exitPrice)
@@ -476,13 +513,16 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 				? calculateRMultiple(calculatedPnL, calculatedRisk)
 				: null
 
-		const handleTagToggle = useCallback((tagId: string) => {
-			const current = selectedTagIds || []
-			const updated = current.includes(tagId)
-				? current.filter((id) => id !== tagId)
-				: [...current, tagId]
-			setValue("tagIds", updated)
-		}, [selectedTagIds, setValue])
+		const handleTagToggle = useCallback(
+			(tagId: string) => {
+				const current = selectedTagIds || []
+				const updated = current.includes(tagId)
+					? current.filter((id) => id !== tagId)
+					: [...current, tagId]
+				setValue("tagIds", updated)
+			},
+			[selectedTagIds, setValue]
+		)
 
 		const onSubmit = async (data: TradeFormInput) => {
 			setIsSubmitting(true)
@@ -542,9 +582,18 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			}
 		}
 
-		const setupTags = useMemo(() => localTags.filter((t) => t.type === "setup"), [localTags])
-		const mistakeTags = useMemo(() => localTags.filter((t) => t.type === "mistake"), [localTags])
-		const generalTags = useMemo(() => localTags.filter((t) => t.type === "general"), [localTags])
+		const setupTags = useMemo(
+			() => localTags.filter((t) => t.type === "setup"),
+			[localTags]
+		)
+		const mistakeTags = useMemo(
+			() => localTags.filter((t) => t.type === "mistake"),
+			[localTags]
+		)
+		const generalTags = useMemo(
+			() => localTags.filter((t) => t.type === "general"),
+			[localTags]
+		)
 
 		// Stable arrays/callbacks for ImageUpload to prevent unnecessary re-renders
 		const persistedImages = useMemo(
@@ -556,11 +605,17 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			[pendingScreenshot]
 		)
 		const handleFileAdd = useCallback(
-			(img: import("@/lib/validations/upload").PendingImage) => setPendingScreenshot(img),
+			(img: PendingImage) => setPendingScreenshot(img),
 			[]
 		)
-		const handlePendingRemove = useCallback(() => setPendingScreenshot(null), [])
-		const handlePersistedRemove = useCallback(() => setPersistedScreenshot(null), [])
+		const handlePendingRemove = useCallback(
+			() => setPendingScreenshot(null),
+			[]
+		)
+		const handlePersistedRemove = useCallback(
+			() => setPersistedScreenshot(null),
+			[]
+		)
 
 		// Map fields to tabs for error highlighting
 		const basicFields = [
@@ -655,7 +710,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Direction Toggle */}
 							<div className="space-y-s-200">
 								<Label id="label-trade-direction">{t("direction.label")}</Label>
-								<div className="gap-m-400 flex" role="group" aria-labelledby="label-trade-direction">
+								<div
+									className="gap-m-400 flex"
+									role="group"
+									aria-labelledby="label-trade-direction"
+								>
 									<button
 										type="button"
 										onClick={() => setValue("direction", "long")}
@@ -697,7 +756,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									render={({ field }) => (
 										<FormItem>
 											<div className="gap-s-200 flex items-center">
-												<FormLabel id="form-label-asset" required filled={!!asset}>
+												<FormLabel
+													id="form-label-asset"
+													required
+													filled={!!asset}
+												>
 													{t("assetRequired")}
 												</FormLabel>
 												{selectedAsset && (
@@ -735,7 +798,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												value={field.value || ""}
 												onValueChange={(value) => {
 													field.onChange(value)
-													const foundAsset = assets.find((a) => a.symbol === value)
+													const foundAsset = assets.find(
+														(a) => a.symbol === value
+													)
 													setSelectedAsset(foundAsset ?? null)
 												}}
 												disabled={!hasConfiguredAssets}
@@ -821,7 +886,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									name="entryDate"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel id="form-label-entry-date" required filled={!!entryDate}>
+											<FormLabel
+												id="form-label-entry-date"
+												required
+												filled={!!entryDate}
+											>
 												{t("entryDateRequired")}
 											</FormLabel>
 											<FormControl>
@@ -877,7 +946,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									name="entryPrice"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel id="form-label-entry-price" required filled={!!entryPrice}>
+											<FormLabel
+												id="form-label-entry-price"
+												required
+												filled={!!entryPrice}
+											>
 												{t("entryPriceRequired")}
 											</FormLabel>
 											<FormControl>
@@ -937,7 +1010,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								name="positionSize"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel id="form-label-position-size" required filled={!!positionSize}>
+										<FormLabel
+											id="form-label-position-size"
+											required
+											filled={!!positionSize}
+										>
 											{t("positionSizeRequired")}
 										</FormLabel>
 										<FormControl>
@@ -997,7 +1074,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								<div id="new-trade-setup-rank" className="space-y-s-200">
 									<Label id="label-trade-setup-rank">{t("setupRank")}</Label>
 									<p className="text-tiny text-txt-300">{t("setupRankHint")}</p>
-									<div className="gap-s-200 flex" role="radiogroup" aria-labelledby="label-trade-setup-rank">
+									<div
+										className="gap-s-200 flex"
+										role="radiogroup"
+										aria-labelledby="label-trade-setup-rank"
+									>
 										{(["A", "AA", "AAA"] as const).map((rank) => (
 											<button
 												key={rank}
@@ -1033,7 +1114,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							className="space-y-m-400 sm:space-y-m-500 pt-m-400 sm:pt-m-500"
 						>
 							{/* Stop Loss and Take Profit */}
-							<div id="new-trade-sl-tp" className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
+							<div
+								id="new-trade-sl-tp"
+								className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2"
+							>
 								<FormField
 									control={form.control}
 									name="stopLoss"
@@ -1163,7 +1247,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							</div>
 
 							{/* MFE/MAE */}
-							<div id="new-trade-mfe-mae" className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
+							<div
+								id="new-trade-mfe-mae"
+								className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2"
+							>
 								<FormField
 									control={form.control}
 									name="mfe"
@@ -1222,58 +1309,63 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 							{/* Contracts Executed (for fee calculation) */}
 							<div id="new-trade-contracts-executed">
-							<FormField
-								control={form.control}
-								name="contractsExecuted"
-								render={({ field }) => (
-									<FormItem>
-										<div className="gap-s-200 flex items-center">
-											<FormLabel id="form-label-contracts-executed">
-												{t("contractsExecuted")}
-											</FormLabel>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<Info className="text-txt-300 h-4 w-4" />
-												</TooltipTrigger>
-												<TooltipContent id="tooltip-trade-contracts-executed">
-													<div className="text-tiny max-w-xs space-y-1">
-														<p>{t("contractsExecutedDesc")}</p>
-														<p>{t("contractsExecutedDefault")}</p>
-														<p>{t("contractsExecutedScaling")}</p>
-													</div>
-												</TooltipContent>
-											</Tooltip>
-										</div>
-										<FormControl>
-											<Input
-												id="trade-contracts-executed"
-												type="number"
-												step="1"
-												placeholder={
-													positionSize
-														? t("contractsExecutedPlaceholder", {
-																count: Number(positionSize) * 2,
-															})
-														: t("contractsAutoCalculated")
-												}
-												{...field}
-												value={field.value ?? ""}
-												onChange={(e) =>
-													field.onChange(
-														e.target.value ? Number(e.target.value) : undefined
-													)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="contractsExecuted"
+									render={({ field }) => (
+										<FormItem>
+											<div className="gap-s-200 flex items-center">
+												<FormLabel id="form-label-contracts-executed">
+													{t("contractsExecuted")}
+												</FormLabel>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<Info className="text-txt-300 h-4 w-4" />
+													</TooltipTrigger>
+													<TooltipContent id="tooltip-trade-contracts-executed">
+														<div className="text-tiny max-w-xs space-y-1">
+															<p>{t("contractsExecutedDesc")}</p>
+															<p>{t("contractsExecutedDefault")}</p>
+															<p>{t("contractsExecutedScaling")}</p>
+														</div>
+													</TooltipContent>
+												</Tooltip>
+											</div>
+											<FormControl>
+												<Input
+													id="trade-contracts-executed"
+													type="number"
+													step="1"
+													placeholder={
+														positionSize
+															? t("contractsExecutedPlaceholder", {
+																	count: Number(positionSize) * 2,
+																})
+															: t("contractsAutoCalculated")
+													}
+													{...field}
+													value={field.value ?? ""}
+													onChange={(e) =>
+														field.onChange(
+															e.target.value
+																? Number(e.target.value)
+																: undefined
+														)
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 							</div>
 
 							{/* P&L Preview */}
 							{calculatedPnLResult !== null && (
-								<div id="new-trade-pnl-summary" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+								<div
+									id="new-trade-pnl-summary"
+									className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
+								>
 									<p className="text-small text-txt-300">
 										{t("calculatedPnl")}
 									</p>
@@ -1389,7 +1481,11 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								<Label id="label-trade-followed-plan">
 									{t("didYouFollowPlan")}
 								</Label>
-								<div className="gap-m-400 flex" role="group" aria-labelledby="label-trade-followed-plan">
+								<div
+									className="gap-m-400 flex"
+									role="group"
+									aria-labelledby="label-trade-followed-plan"
+								>
 									<button
 										type="button"
 										onClick={() => setValue("followedPlan", true)}
@@ -1447,27 +1543,35 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 							{/* Execution Rating */}
 							<div className="space-y-s-200">
-								<Label id="label-trade-rating">
-									{t("rating")}
-								</Label>
-								<p className="text-tiny text-txt-300">
-									{t("ratingHint")}
-								</p>
+								<Label id="label-trade-rating">{t("rating")}</Label>
+								<p className="text-tiny text-txt-300">{t("ratingHint")}</p>
 								{(() => {
-									const focusedIndex = currentRating ? GRADES.indexOf(currentRating as typeof GRADES[number]) : 0
+									const focusedIndex = currentRating
+										? GRADES.indexOf(currentRating as (typeof GRADES)[number])
+										: 0
 									return (
 										<div
-											className="flex gap-s-200"
+											className="gap-s-200 flex"
 											role="radiogroup"
+											tabIndex={0}
 											aria-label={t("rating")}
 											onKeyDown={(e) => {
 												if (e.key === "ArrowRight" || e.key === "ArrowDown") {
 													e.preventDefault()
-													const nextIndex = focusedIndex < GRADES.length - 1 ? focusedIndex + 1 : 0
+													const nextIndex =
+														focusedIndex < GRADES.length - 1
+															? focusedIndex + 1
+															: 0
 													setValue("rating", GRADES[nextIndex])
-												} else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+												} else if (
+													e.key === "ArrowLeft" ||
+													e.key === "ArrowUp"
+												) {
 													e.preventDefault()
-													const prevIndex = focusedIndex > 0 ? focusedIndex - 1 : GRADES.length - 1
+													const prevIndex =
+														focusedIndex > 0
+															? focusedIndex - 1
+															: GRADES.length - 1
 													setValue("rating", GRADES[prevIndex])
 												}
 											}}
@@ -1486,7 +1590,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 															setValue("rating", isSelected ? undefined : grade)
 														}}
 														className={cn(
-															"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors",
+															"py-s-200 text-small flex-1 rounded-lg border-2 text-center font-semibold transition-colors",
 															isSelected
 																? GRADE_COLORS[grade]
 																: "border-bg-300 text-txt-300 hover:border-txt-300/50"
@@ -1583,7 +1687,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* General Tags */}
 							{generalTags.length > 0 && (
 								<div className="space-y-s-200">
-									<Label id="label-trade-general-tags">{t("generalTags")}</Label>
+									<Label id="label-trade-general-tags">
+										{t("generalTags")}
+									</Label>
 									<div className="gap-s-200 flex flex-wrap">
 										{generalTags.map((tag) => (
 											<button
