@@ -170,7 +170,7 @@ export const PositionSummary = ({
 							positionStatus === "closed"
 								? "bg-trade-buy"
 								: positionStatus === "partial"
-									? "bg-fb-warning"
+									? "bg-warning"
 									: "bg-action-buy"
 						)}
 						style={{ width: `${Math.min(closedPercent, 100)}%` }}

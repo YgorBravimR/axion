@@ -293,7 +293,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			// parameter that doesn't satisfy UseFormProps resolver constraint when the
 			// schema uses discriminated unions or transform — cast required until
 			// @hookform/resolvers ships updated types for zod v4.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			 
 			resolver: zodResolver(createTradeSchema) as any,
 			defaultValues,
 		})

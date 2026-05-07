@@ -165,7 +165,7 @@ export const TradeRow = memo(
 
 				{/* Timeframe */}
 				{trade.timeframeName && (
-					<span className="bg-bg-300 px-s-100 text-tiny text-txt-300 hidden shrink-0 rounded py-px md:inline">
+					<span className="bg-bg-300 px-s-100 text-tiny text-txt-300 hidden shrink-0 rounded-sm py-px md:inline">
 						{trade.timeframeName}
 					</span>
 				)}

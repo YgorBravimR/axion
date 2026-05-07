@@ -80,7 +80,7 @@ const StrategyCardBase = ({
 					</div>
 					<div>
 						<div className="gap-s-200 flex items-center">
-							<span className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded font-mono">
+							<span className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded-sm font-mono">
 								{strategy.code}
 							</span>
 							<Link href={`/playbook/${strategy.id}`} className="text-body text-txt-100 font-semibold hover:underline">

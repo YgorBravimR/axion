@@ -684,12 +684,12 @@ export const OcrImport = () => {
 									<span className="text-small font-semibold text-txt-100">
 										{t("tradeNumber", { number: tradeIndex + 1 })}
 									</span>
-									<span className="rounded bg-bg-100 px-s-200 py-s-100 text-tiny font-medium text-txt-200">
+									<span className="rounded-sm bg-bg-100 px-s-200 py-s-100 text-tiny font-medium text-txt-200">
 										{trade.asset}
 									</span>
 									<span
 										className={cn(
-											"rounded px-s-200 py-s-100 text-tiny font-medium",
+											"rounded-sm px-s-200 py-s-100 text-tiny font-medium",
 											trade.direction === "long"
 												? "bg-trade-buy/20 text-trade-buy"
 												: "bg-trade-sell/20 text-trade-sell"
@@ -767,7 +767,7 @@ export const OcrImport = () => {
 									</div>
 
 									{/* Executions Table */}
-									<div className="overflow-x-auto rounded border border-bg-300">
+									<div className="overflow-x-auto rounded-sm border border-bg-300">
 										<table className="w-full">
 											<thead>
 												<tr className="border-b border-bg-300 bg-bg-100">
@@ -806,7 +806,7 @@ export const OcrImport = () => {
 																<SelectTrigger
 																	id={`ocr-execution-type-${ex.id}`}
 																	className={cn(
-																		"rounded px-s-200 py-s-100 text-tiny font-medium",
+																		"rounded-sm px-s-200 py-s-100 text-tiny font-medium",
 																		ex.type === "entry"
 																			? "bg-trade-buy/20 text-trade-buy"
 																			: "bg-trade-sell/20 text-trade-sell"

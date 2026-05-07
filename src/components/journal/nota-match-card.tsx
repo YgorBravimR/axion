@@ -40,7 +40,7 @@ const FillRow = ({ fill, t, locale }: { fill: NotaFill; t: ReturnType<typeof use
 		</td>
 		<td className="py-s-100 px-s-200 text-tiny text-txt-300 text-right">
 			{fill.isDayTrade && (
-				<span className="bg-acc-100/20 text-acc-100 px-s-100 rounded text-micro font-medium">{t("dayTrade")}</span>
+				<span className="bg-acc-100/20 text-acc-100 px-s-100 rounded-sm text-micro font-medium">{t("dayTrade")}</span>
 			)}
 		</td>
 	</tr>
@@ -134,12 +134,12 @@ const NotaMatchCard = memo(({
 					<div className="flex flex-wrap items-center gap-s-200">
 						<span className="text-small text-txt-100 font-semibold">{match.trade.asset}</span>
 						<span className={cn(
-							"text-tiny px-s-100 rounded font-medium",
+							"text-tiny px-s-100 rounded-sm font-medium",
 							match.trade.direction === "long" ? "bg-action-buy-muted text-action-buy" : "bg-action-sell-muted text-action-sell"
 						)}>
 							{match.trade.direction === "long" ? tCommon("long") : tCommon("short")}
 						</span>
-						<span className={cn("text-tiny px-s-100 rounded font-medium", config.bg, config.color)}>
+						<span className={cn("text-tiny px-s-100 rounded-sm font-medium", config.bg, config.color)}>
 							{t(match.status === "already_enriched" ? "alreadyEnriched" :
 								match.status === "quantity_mismatch" ? "quantityMismatch" :
 								match.status === "price_mismatch" ? "priceMismatch" :

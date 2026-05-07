@@ -214,9 +214,9 @@ export const DetailedTradeImporter = ({
 						<div
 							role="alert"
 							aria-live="assertive"
-							className="flex gap-s-200 p-s-300 rounded bg-fb-error/10 border border-fb-error/30"
+							className="flex gap-s-200 p-s-300 rounded-sm bg-fb-error/10 border border-fb-error/30"
 						>
-							<AlertCircle className="w-5 h-5 text-fb-error flex-shrink-0" />
+							<AlertCircle className="w-5 h-5 text-fb-error shrink-0" />
 							<p className="text-small text-fb-error">{error}</p>
 						</div>
 					)}
@@ -248,13 +248,13 @@ export const DetailedTradeImporter = ({
 
 				{/* Summary Stats */}
 				<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
-					<div className="p-s-300 rounded bg-bg-200 border border-bg-300">
+					<div className="p-s-300 rounded-sm bg-bg-200 border border-bg-300">
 						<p className="text-tiny text-txt-300 mb-s-100">{t("successfulTrades")}</p>
 						<p className="text-h2 font-semibold text-txt-100">
 							{preview.successfulTrades}
 						</p>
 					</div>
-					<div className="p-s-300 rounded bg-bg-200 border border-bg-300">
+					<div className="p-s-300 rounded-sm bg-bg-200 border border-bg-300">
 						<p className="text-tiny text-txt-300 mb-s-100">{t("totalGrossPnl")}</p>
 						<p
 							className={cn(
@@ -265,7 +265,7 @@ export const DetailedTradeImporter = ({
 							{preview.totalGrossPnl.toFixed(2)}
 						</p>
 					</div>
-					<div className="p-s-300 rounded bg-bg-200 border border-bg-300">
+					<div className="p-s-300 rounded-sm bg-bg-200 border border-bg-300">
 						<p className="text-tiny text-txt-300 mb-s-100">{t("netPnl")}</p>
 						<p
 							className={cn(
@@ -280,7 +280,7 @@ export const DetailedTradeImporter = ({
 
 				{/* Warnings */}
 				{preview.warningTrades > 0 && (
-					<div className="p-s-300 rounded bg-warning/10 border border-warning/30">
+					<div className="p-s-300 rounded-sm bg-warning/10 border border-warning/30">
 						<p className="text-small font-medium text-warning">
 							{t("warningText", { count: preview.warningTrades })}
 						</p>
@@ -294,7 +294,7 @@ export const DetailedTradeImporter = ({
 						{preview.trades.map((trade, idx) => (
 							<div
 								key={`${trade.asset}-${trade.direction}-${trade.entryPrice}-${idx}`}
-								className="p-s-300 rounded border border-bg-300 bg-bg-200"
+								className="p-s-300 rounded-sm border border-bg-300 bg-bg-200"
 							>
 								<div className="flex justify-between items-start mb-s-200">
 									<div>
@@ -331,9 +331,9 @@ export const DetailedTradeImporter = ({
 					<div
 						role="alert"
 						aria-live="assertive"
-						className="flex gap-s-200 p-s-300 rounded bg-fb-error/10 border border-fb-error/30"
+						className="flex gap-s-200 p-s-300 rounded-sm bg-fb-error/10 border border-fb-error/30"
 					>
-						<AlertCircle className="w-5 h-5 text-fb-error flex-shrink-0" />
+						<AlertCircle className="w-5 h-5 text-fb-error shrink-0" />
 						<p className="text-small text-fb-error">{error}</p>
 					</div>
 				)}
@@ -401,7 +401,7 @@ export const DetailedTradeImporter = ({
 				className="space-y-6 border border-fb-error/30 rounded-lg p-m-600 bg-fb-error/10"
 			>
 				<div className="flex gap-s-300">
-					<AlertCircle className="w-12 h-12 text-fb-error flex-shrink-0" />
+					<AlertCircle className="w-12 h-12 text-fb-error shrink-0" />
 					<div>
 						<h3 className="text-h3 font-semibold text-txt-100">{t("failedTitle")}</h3>
 						<p className="text-small text-fb-error mt-s-100">{error}</p>

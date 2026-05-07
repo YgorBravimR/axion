@@ -161,7 +161,7 @@ export const parseTimeString = (value: string): string | null => {
 	if (!value) return null
 
 	// Clean common OCR errors (o → 0, l → 1, etc.)
-	let cleaned = value
+	const cleaned = value
 		.replace(/[oO]/g, "0")
 		.replace(/[lI]/g, "1")
 		.replace(/[sS]$/g, "") // Remove trailing 's' that OCR might add

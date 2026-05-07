@@ -158,7 +158,7 @@ const CsvTradeCard = memo(({
 				</div>
 
 				{/* Status Icon */}
-				<div className="flex-shrink-0">
+				<div className="shrink-0">
 					{isSkipped ? (
 						<XCircle className="text-fb-error h-5 w-5" />
 					) : isWarning ? (
@@ -192,7 +192,7 @@ const CsvTradeCard = memo(({
 				{/* Direction */}
 				<span
 					className={cn(
-						"px-s-200 py-s-100 text-tiny rounded font-medium",
+						"px-s-200 py-s-100 text-tiny rounded-sm font-medium",
 						trade.originalData.direction === "long"
 							? "bg-action-buy/20 text-action-buy"
 							: "bg-action-sell/20 text-action-sell"

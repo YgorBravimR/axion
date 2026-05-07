@@ -317,7 +317,7 @@ const ExecutionRow = ({
 					<span className="text-txt-100">{formatPrice(execution.price)}</span>
 				</div>
 				{execution.orderType && (
-					<span className="bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-300 rounded">
+					<span className="bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-300 rounded-sm">
 						{execution.orderType}
 					</span>
 				)}

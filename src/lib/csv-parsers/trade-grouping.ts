@@ -103,8 +103,8 @@ export const groupExecutionsIntoTrades = (
 		})
 
 		// Determine entry and exit sides
-		let entryExecutions: RawExecution[] = []
-		let exitExecutions: RawExecution[] = []
+		const entryExecutions: RawExecution[] = []
+		const exitExecutions: RawExecution[] = []
 
 		// First execution determines direction
 		if (sorted.length > 0) {

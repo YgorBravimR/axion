@@ -606,25 +606,25 @@ export const CsvImport = () => {
 				</p>
 				<ul className="mt-s-300 gap-s-200 text-small text-txt-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">asset</code>
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">asset</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							direction
 						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							entry_date
 						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							entry_price
 						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							position_size
 						</code>
 					</li>
@@ -650,7 +650,7 @@ export const CsvImport = () => {
 									.filter((trade) => trade.originalData.isReplayTrade)
 									.map((trade) => (
 										<li key={trade.id} className="gap-s-200 flex items-center">
-											<span className="bg-warn-100/20 px-s-100 text-tiny text-warn-100 rounded font-medium">
+											<span className="bg-warning/20 px-s-100 text-tiny text-warning rounded-sm font-medium">
 												[R]
 											</span>
 											<span className="font-medium">

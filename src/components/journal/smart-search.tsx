@@ -295,7 +295,7 @@ const SmartSearch = ({
 						type="button"
 						tabIndex={0}
 						onClick={handleClearAll}
-						className="text-tiny text-txt-300 hover:text-txt-100 rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+						className="text-tiny text-txt-300 hover:text-txt-100 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 					>
 						{t("clearAll")}
 					</button>
@@ -341,7 +341,7 @@ const SmartSearch = ({
 								type="button"
 								tabIndex={0}
 								onClick={handleClearAll}
-								className="text-tiny text-txt-300 hover:text-txt-100 rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
+								className="text-tiny text-txt-300 hover:text-txt-100 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-acc-100"
 							>
 								{t("clearAll")}
 							</button>

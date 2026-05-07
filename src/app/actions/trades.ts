@@ -60,6 +60,7 @@ import { computeTradeHash } from "@/lib/deduplication"
 import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
 import { captureROnEntry, computeROutcome } from "@/lib/fractal-plan/r-snapshot"
 import { checkDrawdownTrigger } from "@/lib/fractal-plan/drawdown-trigger"
+import { monthlyPlan as monthlyPlanTable } from "@/db/schema"
 
 /**
  * Flag-guarded drawdown deescalation after a losing trade close.
@@ -73,7 +74,22 @@ const maybeTriggerDrawdown = async (
 	if (!isFractalPlanDualWriteEnabled()) return
 	if (outcome !== "loss" || !exitDate) return
 	try {
-		await checkDrawdownTrigger({ accountId, asOf: exitDate })
+		const year = exitDate.getUTCFullYear()
+		const month = exitDate.getUTCMonth() + 1
+		const planRow = await db.query.monthlyPlan.findFirst({
+			where: and(
+				eq(monthlyPlanTable.year, year),
+				eq(monthlyPlanTable.month, month),
+			),
+			columns: { snapshotCapitalCents: true },
+		})
+		if (!planRow) return
+		await checkDrawdownTrigger({
+			accountId,
+			year,
+			month,
+			currentCapitalCents: planRow.snapshotCapitalCents,
+		})
 	} catch (err) {
 		console.error("[fractal-plan] checkDrawdownTrigger failed silently:", err)
 	}
