@@ -17,8 +17,24 @@ Lint runs in two tiers — both must stay green before merge.
 ### Protected paths (agents must refuse to modify without explicit user request)
 
 - `src/db/migrations/` — Drizzle migrations are append-only. Generate with `pnpm db:generate`; never hand-edit.
+- `src/db/schema.ts` — Drizzle schema source. Changes ripple to migrations + generated types; coordinate before editing.
+- `src/lib/auth-utils.ts` — session + JWT logic. Changes require security review.
 - `src/lib/tax/recompute-month.ts` — single source of truth for tax recomputation. Changes affect financial output retroactively.
 - `src/lib/crypto.ts`, `src/lib/user-crypto.ts` — cryptographic primitives. Changes require security review.
+
+### PR target
+
+PRs target `main`. There is no `staging` branch. `main` auto-deploys to production via `.github/workflows/deploy.yml`; the `lint.yml` workflow gates merges on PRs.
+
+### Custom ESLint rules (`eslint-rules/`)
+
+The project ships an inline ESLint plugin at `eslint-rules/` registered as `axion/*` in `eslint.config.mjs`. Tests live alongside under `eslint-rules/tests/` and run via `pnpm test:lint-rules` (Node `--test` runner + ESLint `RuleTester`). All five rules are enabled at `error`:
+
+- `axion/enforce-server-action-async-only` — `"use server"` files may export only async functions, async values, or `export type { ... }` re-exports. Type aliases, interfaces, enums, classes, sync functions/values, barrel re-exports, and sync defaults are forbidden.
+- `axion/enforce-token-usage` — invalid Tailwind v4 tokens (`s-400`, `text-h4`, `rounded-m-200`, etc.). Catalog at `eslint-rules/token-rules.mjs` is the single source of truth, also consumed by `scripts/token-fix.ts`.
+- `axion/no-hover-only-controls` — `opacity-0` + `group-hover:opacity-*` without a focus-visible / focus-within / aria-label / aria-hidden escape.
+- `axion/enforce-ui-primitives` — raw `<table>`, internal `<a href>`, and `<input type="checkbox">` are banned outside `src/components/ui/`. Use `@/components/ui/table`, `next/link`, `@/components/ui/checkbox`.
+- `axion/no-dynamic-functions-in-pages` — `cookies`/`headers`/`draftMode`/`unstable_after` from `next/headers` are banned in `page.tsx`/`layout.tsx`/`template.tsx`. Move into a server action or set `export const dynamic = "force-dynamic"` explicitly. `connection()` from `next/server` is allowed (explicit dynamic opt-in).
 
 ### Recurring agent footguns (prevention rules)
 
