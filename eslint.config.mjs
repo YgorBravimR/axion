@@ -183,6 +183,12 @@ export default [
 		},
 	},
 	{
-		ignores: [".next/*", "node_modules/*", "video/*", "eslint-rules/**"],
+		ignores: [
+			".next/*",
+			"node_modules/*",
+			"video/*",
+			"eslint-rules/**",
+			"e2e/**",
+		],
 	},
 ]

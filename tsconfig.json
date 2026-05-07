@@ -5,6 +5,7 @@
 		"allowJs": true,
 		"skipLibCheck": true,
 		"strict": true,
+		"noUncheckedIndexedAccess": true,
 		"noEmit": true,
 		"esModuleInterop": true,
 		"module": "esnext",
@@ -31,5 +32,5 @@
 		".next/types/**/*.ts",
 		".next/dev/types/**/*.ts"
 	],
-	"exclude": ["node_modules", "scripts", "video"]
+	"exclude": ["node_modules", "scripts", "video", "e2e"]
 }
