@@ -112,7 +112,7 @@ export default [
 			"axion/enforce-token-usage": "error",
 			"axion/no-hover-only-controls": "error",
 			"axion/enforce-ui-primitives": "error",
-			"axion/no-dynamic-functions-in-pages": "off",
+			"axion/no-dynamic-functions-in-pages": "error",
 		},
 	},
 	{
