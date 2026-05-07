@@ -2,17 +2,57 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Save } from "lucide-react"
+import { AlertTriangle, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
 import { createYearlyPlanV2, updateYearlyPlan } from "@/app/actions/fractal-plan/yearly"
+import { RiskProfilePicker } from "@/components/fractal-plan/risk-profile-picker"
+import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+
+interface LadderRowDraft {
+	id: string
+	minCents: number | null
+	oneRCents: number | null
+}
+
+const TOP_TIER_MAX_CENTS = 999_999_999_99
+
+const formatBRNoCents = (reais: number): string => reais.toLocaleString("pt-BR")
+
+const ruleToDraft = (rule: LadderRuleR, idx: number): LadderRowDraft => ({
+	id: `row-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+	minCents: rule.minCapitalCents,
+	oneRCents: rule.oneRCents,
+})
+
+const newRowDraft = (prev: LadderRowDraft | undefined): LadderRowDraft => {
+	const prevMinCents = prev?.minCents ?? 0
+	const nextMinCents = prev
+		? Math.max(prevMinCents * 5, prevMinCents + 1_000_000_00)
+		: 0
+	return {
+		id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+		minCents: nextMinCents,
+		oneRCents: prev?.oneRCents ?? 100_00,
+	}
+}
 
 interface YearlyPlanEditorProps {
 	year: number
+	riskProfiles: RiskManagementProfile[]
 	existing: {
 		initialCapitalCents: number
 		ladderRules: LadderRuleR[]
@@ -23,12 +63,13 @@ interface YearlyPlanEditorProps {
 		defaultWeeklyWinR: string | null
 		defaultMonthlyLossR: string | null
 		defaultMonthlyWinR: string | null
+		defaultRiskProfileId: string | null
 		notes: string | null
 	} | null
+	defaultInitialCapitalCents?: number | null
 }
 
 interface FormState {
-	initialCapitalBRL: string
 	tradingDaysPerWeek: string
 	defaultDailyLossR: string
 	defaultDailyWinR: string
@@ -36,20 +77,21 @@ interface FormState {
 	defaultWeeklyWinR: string
 	defaultMonthlyLossR: string
 	defaultMonthlyWinR: string
-	ladderRulesJson: string
+	ladderRows: LadderRowDraft[]
 	notes: string
 }
 
 const DEFAULT_LADDER: LadderRuleR[] = [
-	{ minCapitalCents: 0, maxCapitalCents: 999_999_99, oneRCents: 100_00 },
-	{ minCapitalCents: 1_000_000_00, maxCapitalCents: 4_999_999_99, oneRCents: 200_00 },
-	{ minCapitalCents: 5_000_000_00, maxCapitalCents: 999_999_999_99, oneRCents: 500_00 },
+	{ minCapitalCents: 3_000_00,   maxCapitalCents: 7_499_99,        oneRCents: 100_00 },
+	{ minCapitalCents: 7_500_00,   maxCapitalCents: 14_999_99,       oneRCents: 200_00 },
+	{ minCapitalCents: 15_000_00,  maxCapitalCents: 29_999_99,       oneRCents: 300_00 },
+	{ minCapitalCents: 30_000_00,  maxCapitalCents: 99_999_99,       oneRCents: 500_00 },
+	{ minCapitalCents: 100_000_00, maxCapitalCents: 999_999_999_99,  oneRCents: 1000_00 },
 ]
 
 const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 	if (!existing) {
 		return {
-			initialCapitalBRL: "",
 			tradingDaysPerWeek: "5",
 			defaultDailyLossR: "3.00",
 			defaultDailyWinR: "2.00",
@@ -57,12 +99,11 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 			defaultWeeklyWinR: "4.00",
 			defaultMonthlyLossR: "10.00",
 			defaultMonthlyWinR: "8.00",
-			ladderRulesJson: JSON.stringify(DEFAULT_LADDER, null, 2),
+			ladderRows: DEFAULT_LADDER.map(ruleToDraft),
 			notes: "",
 		}
 	}
 	return {
-		initialCapitalBRL: (existing.initialCapitalCents / 100).toFixed(2),
 		tradingDaysPerWeek: String(existing.tradingDaysPerWeek),
 		defaultDailyLossR: existing.defaultDailyLossR ?? "",
 		defaultDailyWinR: existing.defaultDailyWinR ?? "",
@@ -70,47 +111,118 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 		defaultWeeklyWinR: existing.defaultWeeklyWinR ?? "",
 		defaultMonthlyLossR: existing.defaultMonthlyLossR ?? "",
 		defaultMonthlyWinR: existing.defaultMonthlyWinR ?? "",
-		ladderRulesJson: JSON.stringify(existing.ladderRules, null, 2),
+		ladderRows: (existing.ladderRules.length > 0 ? existing.ladderRules : DEFAULT_LADDER).map(ruleToDraft),
 		notes: existing.notes ?? "",
 	}
 }
 
-const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
+const YearlyPlanEditor = ({
+	year,
+	riskProfiles,
+	existing,
+	defaultInitialCapitalCents = null,
+}: YearlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [form, setForm] = useState<FormState>(() => seedForm(existing))
+	const accountCapitalAvailable = defaultInitialCapitalCents != null
+	const accountCapitalLabel =
+		defaultInitialCapitalCents != null
+			? (defaultInitialCapitalCents / 100).toLocaleString("pt-BR", {
+				style: "currency",
+				currency: "BRL",
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 0,
+			})
+			: null
+	const [riskProfileId, setRiskProfileId] = useState<string | null>(
+		existing?.defaultRiskProfileId ?? null,
+	)
+
+	const sortedLadder = [...form.ladderRows].sort(
+		(a, b) => (a.minCents ?? 0) - (b.minCents ?? 0),
+	)
+	const tier1MinCents = sortedLadder[0]?.minCents ?? 0
+	const tier1MinReais = Math.floor(tier1MinCents / 100)
+	const accountCapitalCents = defaultInitialCapitalCents ?? 0
+	const capitalBelowMin =
+		accountCapitalAvailable && tier1MinCents > 0 && accountCapitalCents < tier1MinCents
 
 	const handleField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
 		setForm((prev) => ({ ...prev, [key]: value }))
 	}
 
-	const parseLadder = (): LadderRuleR[] | null => {
-		try {
-			const parsed = JSON.parse(form.ladderRulesJson) as unknown
-			if (!Array.isArray(parsed) || parsed.length === 0) return null
-			return parsed.map((r) => {
-				const rule = r as { minCapitalCents: number; maxCapitalCents: number; oneRCents: number }
-				return {
-					minCapitalCents: Number(rule.minCapitalCents),
-					maxCapitalCents: Number(rule.maxCapitalCents),
-					oneRCents: Number(rule.oneRCents),
-				}
-			})
-		} catch {
-			return null
+	const updateLadderRow = (id: string, patch: Partial<Omit<LadderRowDraft, "id">>) => {
+		setForm((prev) => ({
+			...prev,
+			ladderRows: prev.ladderRows.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+		}))
+	}
+
+	const addLadderRow = () => {
+		setForm((prev) => {
+			const sortedPrev = [...prev.ladderRows].sort(
+				(a, b) => (a.minCents ?? 0) - (b.minCents ?? 0),
+			)
+			const last = sortedPrev[sortedPrev.length - 1]
+			return { ...prev, ladderRows: [...prev.ladderRows, newRowDraft(last)] }
+		})
+	}
+
+	const removeLadderRow = (id: string) => {
+		setForm((prev) => ({ ...prev, ladderRows: prev.ladderRows.filter((row) => row.id !== id) }))
+	}
+
+	const restoreLadderDefaults = () => {
+		setForm((prev) => ({ ...prev, ladderRows: DEFAULT_LADDER.map(ruleToDraft) }))
+	}
+
+	const parseLadder = (): { ok: true; rules: LadderRuleR[] } | { ok: false; reason: string } => {
+		if (form.ladderRows.length === 0) {
+			return { ok: false, reason: "Add at least one ladder tier." }
 		}
+		const parsed: { minCents: number; oneRCents: number; idx: number }[] = []
+		for (let i = 0; i < form.ladderRows.length; i++) {
+			const row = form.ladderRows[i]
+			const minCents = row.minCents ?? 0
+			const oneRCents = row.oneRCents ?? 0
+			if (!Number.isFinite(minCents) || !Number.isFinite(oneRCents) || minCents < 0 || oneRCents <= 0) {
+				return { ok: false, reason: `Tier ${i + 1}: From ≥ 0, 1R > 0.` }
+			}
+			parsed.push({ minCents, oneRCents, idx: i })
+		}
+		const sorted = [...parsed].sort((a, b) => a.minCents - b.minCents)
+		for (let i = 1; i < sorted.length; i++) {
+			if (sorted[i].minCents <= sorted[i - 1].minCents) {
+				return {
+					ok: false,
+					reason: `Tier ${sorted[i].idx + 1} must start above tier ${sorted[i - 1].idx + 1}.`,
+				}
+			}
+		}
+		const rules: LadderRuleR[] = sorted.map((r, i, arr) => {
+			const next = arr[i + 1]
+			const maxCents = next ? next.minCents - 1 : TOP_TIER_MAX_CENTS
+			return {
+				minCapitalCents: r.minCents,
+				maxCapitalCents: maxCents,
+				oneRCents: r.oneRCents,
+			}
+		})
+		return { ok: true, rules }
 	}
 
 	const handleSubmit = () => {
-		const ladder = parseLadder()
-		if (!ladder) {
-			showToast("error", "Invalid ladder JSON. Must be array with minCapitalCents/maxCapitalCents/oneRCents.")
+		const ladderResult = parseLadder()
+		if (!ladderResult.ok) {
+			showToast("error", ladderResult.reason)
 			return
 		}
-		const initialCapitalCents = Math.round(parseFloat(form.initialCapitalBRL.replace(",", ".")) * 100)
-		if (!Number.isFinite(initialCapitalCents) || initialCapitalCents <= 0) {
-			showToast("error", "Initial capital must be positive number.")
+		const ladder = ladderResult.rules
+
+		if (!existing && !accountCapitalAvailable) {
+			showToast("error", "Set the account starting balance in Settings → Annual Reporting first.")
 			return
 		}
 
@@ -139,15 +251,14 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 			const result = existing
 				? await updateYearlyPlan({
 					year,
-					initialCapitalCents,
 					ladderRules: ladder,
 					tradingDaysPerWeek,
 					...numericFields,
+					defaultRiskProfileId: riskProfileId,
 					notes: form.notes || undefined,
 				})
 				: await createYearlyPlanV2({
 					year,
-					initialCapitalCents,
 					ladderRules: ladder,
 					tradingDaysPerWeek,
 					...numericFields,
@@ -170,25 +281,74 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 			}}
 			className="space-y-m-400"
 		>
-			<fieldset className="space-y-s-300">
-				<legend className="text-xs font-medium uppercase tracking-wider text-txt-300">
-					Capital
-				</legend>
-				<div className="grid grid-cols-1 gap-s-300 sm:grid-cols-2">
-					<div>
-						<Label id="lbl-initial-capital" htmlFor="initial-capital">Initial capital (BRL)</Label>
-						<Input
-							id="initial-capital"
-							type="number"
-							step="0.01"
-							min="0"
-							value={form.initialCapitalBRL}
-							onChange={(e) => handleField("initialCapitalBRL", e.target.value)}
-							required
-						/>
+			<section
+				id="plan-year-drawer-capital"
+				aria-labelledby="sec-capital-anchor"
+				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400"
+			>
+				<div className="flex flex-col gap-s-300 sm:flex-row sm:items-start sm:justify-between">
+					<div className="min-w-0">
+						<h3 id="sec-capital-anchor" className="text-h3 text-txt-100">
+							Capital inicial
+						</h3>
+						<p className="mt-s-100 text-small text-txt-300">
+							{accountCapitalAvailable ? (
+								<>
+									Configurado em{" "}
+									<a href="/settings" className="text-acc-100 underline-offset-2 hover:underline">
+										Settings → Relatório Anual
+									</a>
+									. Capital por mês é editável na grade.
+								</>
+							) : (
+								<>
+									Defina o saldo inicial em{" "}
+									<a href="/settings" className="text-acc-100 underline-offset-2 hover:underline">
+										Settings → Relatório Anual
+									</a>{" "}
+									antes de criar o plano.
+								</>
+							)}
+						</p>
 					</div>
+					<p className="font-mono text-h2 tabular-nums text-acc-100 shrink-0">
+						{accountCapitalLabel ?? "—"}
+					</p>
+				</div>
+				{capitalBelowMin && (
+					<div
+						role="alert"
+						className="mt-m-400 flex items-start gap-s-300 rounded-md border border-fb-error/40 bg-fb-error/10 p-s-300"
+					>
+						<AlertTriangle className="mt-s-100 h-4 w-4 shrink-0 text-fb-error" aria-hidden="true" />
+						<div className="min-w-0">
+							<p className="text-small font-medium text-fb-error">
+								Não opere — capital mínimo R$ {formatBRNoCents(tier1MinReais)}
+							</p>
+							<p className="mt-s-100 text-tiny text-txt-300">
+								Capital atual abaixo do primeiro tier da ladder. Aumente o capital ou ajuste a ladder.
+							</p>
+						</div>
+					</div>
+				)}
+			</section>
+
+			<fieldset
+				id="plan-year-drawer-defaults"
+				aria-labelledby="sec-defaults"
+				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+			>
+				<header>
+					<h3 id="sec-defaults" className="text-h3 text-txt-100">
+						Defaults
+					</h3>
+					<p className="mt-s-100 text-small text-txt-300">
+						Cascade fallback aplicado quando o mês não tem override.
+					</p>
+				</header>
+				<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3 lg:grid-cols-4">
 					<div>
-						<Label id="lbl-trading-days" htmlFor="trading-days">Trading days per week</Label>
+						<Label id="lbl-trading-days" htmlFor="trading-days">Dias / semana</Label>
 						<Input
 							id="trading-days"
 							type="number"
@@ -199,14 +359,6 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 							required
 						/>
 					</div>
-				</div>
-			</fieldset>
-
-			<fieldset className="space-y-s-300">
-				<legend className="text-xs font-medium uppercase tracking-wider text-txt-300">
-					Default R-multiples (cascade fallback)
-				</legend>
-				<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3">
 					<div>
 						<Label id="lbl-daily-loss" htmlFor="daily-loss">Daily loss R</Label>
 						<Input id="daily-loss" type="number" step="0.01" min="0.01" value={form.defaultDailyLossR}
@@ -240,26 +392,141 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 				</div>
 			</fieldset>
 
-			<fieldset className="space-y-s-300">
-				<legend className="text-xs font-medium uppercase tracking-wider text-txt-300">
-					Capital ladder rules (JSON)
-				</legend>
-				<p className="text-tiny text-txt-300">
-					Each rule: {"{ minCapitalCents, maxCapitalCents, oneRCents }"}. Defines tier 1R as
-					capital grows.
-				</p>
-				<Textarea
-					id="ladder-rules"
-					rows={8}
-					value={form.ladderRulesJson}
-					onChange={(e) => handleField("ladderRulesJson", e.target.value)}
-					className="font-mono text-xs"
-					required
-				/>
+			<fieldset
+				id="plan-year-drawer-ladder"
+				aria-labelledby="sec-ladder"
+				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+			>
+				<header>
+					<h3 id="sec-ladder" className="text-h3 text-txt-100">
+						Capital ladder
+					</h3>
+					<p className="mt-s-100 text-small text-txt-300">
+						Define quanto vale 1R conforme o capital cresce. Cada tier começa em <strong>From</strong> e termina onde o próximo começa. O último tier é ilimitado.
+					</p>
+				</header>
+
+				<div className="overflow-x-auto rounded-md border border-bg-300">
+					<Table>
+						<TableHeader className="bg-bg-200">
+							<TableRow>
+								<TableHead className="w-12">Tier</TableHead>
+								<TableHead>From (R$)</TableHead>
+								<TableHead>1R (R$)</TableHead>
+								<TableHead className="text-right" aria-label="Actions" />
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{sortedLadder.map((row, idx) => (
+								<TableRow key={row.id}>
+									<TableCell className="text-txt-200 font-mono tabular-nums">{idx + 1}</TableCell>
+									<TableCell>
+										<CurrencyInput
+											id={`ladder-min-${row.id}`}
+											value={row.minCents}
+											onValueChange={(next) => updateLadderRow(row.id, { minCents: next })}
+											decimals={0}
+											unit="cents"
+											aria-label={`Tier ${idx + 1} from BRL`}
+											className="h-9"
+										/>
+									</TableCell>
+									<TableCell>
+										<CurrencyInput
+											id={`ladder-oner-${row.id}`}
+											value={row.oneRCents}
+											onValueChange={(next) => updateLadderRow(row.id, { oneRCents: next })}
+											decimals={0}
+											unit="cents"
+											aria-label={`Tier ${idx + 1} one-R BRL`}
+											className="h-9"
+										/>
+									</TableCell>
+									<TableCell className="text-right">
+										<Button
+											id={`ladder-remove-${row.id}`}
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => removeLadderRow(row.id)}
+											disabled={form.ladderRows.length === 1}
+											aria-label={`Remove tier ${idx + 1}`}
+											className="size-8 p-0 text-txt-300 hover:text-fb-error"
+										>
+											<Trash2 className="h-4 w-4" />
+										</Button>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</div>
+
+				<div className="flex flex-wrap items-center gap-s-200">
+					<Button
+						id="btn-ladder-add-row"
+						type="button"
+						variant="outline"
+						size="sm"
+						onClick={addLadderRow}
+					>
+						<Plus className="mr-s-200 h-3.5 w-3.5" />
+						Add tier
+					</Button>
+					<Button
+						id="btn-ladder-restore-defaults"
+						type="button"
+						variant="ghost"
+						size="sm"
+						onClick={restoreLadderDefaults}
+					>
+						<RotateCcw className="mr-s-200 h-3.5 w-3.5" />
+						Restore defaults
+					</Button>
+				</div>
 			</fieldset>
 
-			<fieldset className="space-y-s-300">
-				<legend className="text-xs font-medium uppercase tracking-wider text-txt-300">Notes</legend>
+			<fieldset
+				aria-labelledby="sec-risk-profile"
+				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+			>
+				<header>
+					<h3 id="sec-risk-profile" className="text-h3 text-txt-100">
+						Risk profile
+					</h3>
+					<p className="mt-s-100 text-small text-txt-300">
+						Picked when no monthly override is set. Drives adaptive sizing rules
+						(consecutive losses, post-loss reduction, etc.).
+					</p>
+				</header>
+				<div className="max-w-sm">
+					<RiskProfilePicker
+						id="yearly-risk-profile"
+						profiles={riskProfiles}
+						value={riskProfileId}
+						onChange={setRiskProfileId}
+						disabled={!existing}
+					/>
+				</div>
+				{!existing && (
+					<p className="text-tiny text-txt-300">
+						Seed the yearly plan first, then set the default profile.
+					</p>
+				)}
+			</fieldset>
+
+			<fieldset
+				aria-labelledby="sec-notes"
+				className="rounded-lg border border-bg-300 bg-bg-100 p-m-400 space-y-s-300"
+			>
+				<header>
+					<h3 id="sec-notes" className="text-h3 text-txt-100">
+						Notes
+					</h3>
+					<p className="mt-s-100 text-small text-txt-300">
+						Annual intent, themes, key adjustments.
+					</p>
+				</header>
 				<Textarea
 					id="yearly-notes"
 					rows={3}
@@ -269,7 +536,7 @@ const YearlyPlanEditor = ({ year, existing }: YearlyPlanEditorProps) => {
 				/>
 			</fieldset>
 
-			<div className="flex justify-end gap-s-200">
+			<div className="flex justify-end gap-s-200 pt-s-200">
 				<Button id="btn-yearly-save" type="submit" disabled={isPending}>
 					{isPending ? <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Save className="mr-s-200 h-4 w-4" />}
 					{existing ? "Save changes" : "Seed yearly plan"}

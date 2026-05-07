@@ -4,6 +4,7 @@ interface GuideStep {
 	descriptionKey: string
 	placement: "top" | "bottom" | "left" | "right" | "center"
 	optional?: boolean
+	onEnter?: () => void
 }
 
 interface PageGuideConfig {

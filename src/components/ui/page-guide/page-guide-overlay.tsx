@@ -193,7 +193,7 @@ const PageGuideOverlay = ({
 			aria-modal="true"
 			aria-label={t(`${pageKey}.${step.titleKey}`)}
 			tabIndex={-1}
-			className="fixed inset-0 z-50 outline-none"
+			className="fixed inset-0 z-[60] outline-none"
 			onClick={onClose}
 		>
 			{/* SVG Spotlight Mask — scrim always visible, cutout hole fades in/out */}

@@ -41,6 +41,9 @@ const usePageGuide = () => {
 /**
  * Hook for pages to register their guide config on mount.
  * The header reads `registeredConfig` to show/hide the trigger button.
+ *
+ * Pass a stable reference (module-level const) — re-registers on identity change
+ * so HMR module swaps and live config edits propagate without a full reload.
  */
 const useRegisterPageGuide = (config: PageGuideConfig) => {
 	const { registerGuide, unregisterGuide } = usePageGuide()
@@ -48,8 +51,7 @@ const useRegisterPageGuide = (config: PageGuideConfig) => {
 	useEffect(() => {
 		registerGuide(config)
 		return () => unregisterGuide()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [config.pageKey])
+	}, [config, registerGuide, unregisterGuide])
 }
 
 /**
@@ -114,6 +116,18 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		})
 
 		return () => cancelAnimationFrame(rafId)
+	}, [activeConfig, currentStepIndex])
+
+	// Fire each step's onEnter side-effect exactly once when entering it.
+	const enteredStepRef = useRef<number | null>(null)
+	useEffect(() => {
+		if (!activeConfig) {
+			enteredStepRef.current = null
+			return
+		}
+		if (enteredStepRef.current === currentStepIndex) return
+		enteredStepRef.current = currentStepIndex
+		activeConfig.steps[currentStepIndex]?.onEnter?.()
 	}, [activeConfig, currentStepIndex])
 
 	const startGuide = useCallback((config: PageGuideConfig) => {
