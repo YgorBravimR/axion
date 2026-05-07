@@ -22,6 +22,7 @@ const AppLayout = async ({ children }: AppLayoutProps) => {
 	const serverBrand = account
 		? getAccountTypeBrand(account.accountType)
 		: undefined
+	const nowIso = new Date().toISOString()
 
 	return (
 		<EffectiveDateProvider date={effectiveDate.toISOString()}>
@@ -30,6 +31,7 @@ const AppLayout = async ({ children }: AppLayoutProps) => {
 					isReplayAccount={isReplayAccount}
 					replayDate={replayDate}
 					serverBrand={serverBrand}
+					nowIso={nowIso}
 				>
 					{children}
 				</AppShell>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Menu, Search, Bell } from "lucide-react"
 import Image from "next/image"
@@ -25,12 +25,14 @@ import { useBreakpoint } from "@/hooks/use-is-mobile"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 import type { Brand } from "@/lib/brands"
+import { buildNavStructure } from "@/lib/navigation"
 
 interface AppShellProps {
 	children: ReactNode
 	isReplayAccount?: boolean
 	replayDate?: string
 	serverBrand?: Brand
+	nowIso: string
 }
 
 /**
@@ -47,11 +49,13 @@ const AppShell = ({
 	isReplayAccount = false,
 	replayDate,
 	serverBrand,
+	nowIso,
 }: AppShellProps) => {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 	const breakpoint = useBreakpoint()
 	const tCommon = useTranslations("common")
+	const navStructure = useMemo(() => buildNavStructure(new Date(nowIso)), [nowIso])
 
 	const isMobile = breakpoint === "mobile"
 	const isTablet = breakpoint === "tablet"
@@ -84,7 +88,7 @@ const AppShell = ({
 				{tCommon("skipToContent")}
 			</a>
 			<ThemeSynchronizer />
-			<CommandMenu />
+			<CommandMenu navStructure={navStructure} />
 
 			{isMobile ? (
 				<>
@@ -116,6 +120,7 @@ const AppShell = ({
 									replayDate={replayDate}
 									variant="sheet"
 									onNavigate={() => setIsMobileMenuOpen(false)}
+									navStructure={navStructure}
 								/>
 							</SheetContent>
 						</Sheet>
@@ -158,6 +163,7 @@ const AppShell = ({
 						isReplayAccount={isReplayAccount}
 						replayDate={replayDate}
 						hideCollapseToggle={isTablet}
+						navStructure={navStructure}
 					/>
 
 					{/* Main content */}
@@ -170,7 +176,7 @@ const AppShell = ({
 					>
 						{/* Top bar: breadcrumbs | search | notifications + user */}
 						<div className="border-bg-300 bg-bg-200 gap-m-400 flex h-12 shrink-0 items-center border-b px-m-600 lg:px-l-700 lg:pl-l-800">
-							<PageBreadcrumb />
+							<PageBreadcrumb navStructure={navStructure} />
 							<div className="flex-1" />
 							{/* Search trigger — opens CommandMenu via Cmd+K */}
 							<Button

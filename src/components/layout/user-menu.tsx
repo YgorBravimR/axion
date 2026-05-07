@@ -134,7 +134,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 					)}
 					disabled={isPending}
 				>
-					<div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-acc-100/20 text-acc-100">
+					<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-acc-100/20 text-acc-100">
 						<span className="text-small font-medium">
 							{getInitials(user?.name ?? null)}
 						</span>

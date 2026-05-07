@@ -4,7 +4,7 @@ import { Fragment, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { usePathname } from "@/i18n/routing"
 import { Link } from "@/i18n/routing"
-import { navItems } from "@/lib/navigation"
+import { buildNavItems, type NavEntry } from "@/lib/navigation"
 import {
 	Breadcrumb,
 	BreadcrumbList,
@@ -14,17 +14,22 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
-const PageBreadcrumb = () => {
+interface PageBreadcrumbProps {
+	navStructure: NavEntry[]
+}
+
+const PageBreadcrumb = ({ navStructure }: PageBreadcrumbProps) => {
 	const pathname = usePathname()
 	const tNav = useTranslations("nav")
 	const tBreadcrumb = useTranslations("breadcrumb")
+	const navItems = useMemo(() => buildNavItems(navStructure), [navStructure])
 
 	const segments = useMemo(() => pathname.split("/").filter(Boolean), [pathname])
 
 	const matchedNavItem = useMemo(() => navItems.find((item) => {
 		if (item.href === "/") return false
 		return pathname.startsWith(item.href)
-	}), [pathname])
+	}), [pathname, navItems])
 
 	const crumbs = useMemo((): Array<{ label: string; href?: string }> => {
 		if (segments.length === 0) return []

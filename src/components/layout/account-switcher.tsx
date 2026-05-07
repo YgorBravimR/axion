@@ -254,13 +254,13 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 						disabled={isPending}
 						aria-label={t("switchAccount")}
 					>
-						<AccountIcon className="h-4 w-4 flex-shrink-0" />
+						<AccountIcon className="h-4 w-4 shrink-0" />
 						<span className="flex-1 truncate">
 							{currentAccount?.name || t("noAccount")}
 						</span>
 						<ChevronDown
 							className={cn(
-								"h-4 w-4 flex-shrink-0 transition-transform",
+								"h-4 w-4 shrink-0 transition-transform",
 								isOpen && "rotate-180"
 							)}
 						/>

@@ -1,15 +1,22 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { Link, usePathname } from "@/i18n/routing"
-import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw } from "lucide-react"
+import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { navItems, NEW_TRADE_FEATURE_KEY } from "@/lib/navigation"
+import {
+	buildNavItems,
+	isGroup,
+	NEW_TRADE_FEATURE_KEY,
+	type NavItem,
+	type NavEntry,
+	type NavGroupKey,
+} from "@/lib/navigation"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
-import { getFilteredNavItems } from "@/lib/feature-access"
+import { getFilteredNavStructure } from "@/lib/feature-access"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { AccountSwitcher } from "./account-switcher"
 
@@ -21,6 +28,20 @@ interface SidebarProps {
 	variant?: "default" | "sheet"
 	onNavigate?: () => void
 	hideCollapseToggle?: boolean
+	navStructure: NavEntry[]
+}
+
+const STORAGE_KEY = "axion:sidebar:groups"
+
+const isItemActive = (href: string, pathname: string, allItems: NavItem[]): boolean => {
+	if (href === "/") return pathname === "/"
+	if (!pathname.startsWith(href)) return false
+	return !allItems.some(
+		(other) =>
+			other.href !== href &&
+			other.href.startsWith(href) &&
+			pathname.startsWith(other.href)
+	)
 }
 
 const Sidebar = ({
@@ -31,18 +52,86 @@ const Sidebar = ({
 	variant = "default",
 	onNavigate,
 	hideCollapseToggle = false,
+	navStructure,
 }: SidebarProps) => {
 	const t = useTranslations("nav")
 	const tReplay = useTranslations("commandCenter.dateNavigator")
 	const tCommon = useTranslations("common")
 	const pathname = usePathname()
 	const { role, canAccess } = useFeatureAccess()
-	const filteredNavItems = useMemo(() => getFilteredNavItems(navItems, role), [role])
+	const filteredStructure = useMemo(
+		() => getFilteredNavStructure(navStructure, role),
+		[navStructure, role]
+	)
+	const navItems = useMemo(() => buildNavItems(navStructure), [navStructure])
 	const canCreateTrade = useMemo(() => canAccess(NEW_TRADE_FEATURE_KEY), [canAccess])
 
 	const isSheet = variant === "sheet"
 	const isCompact = isCollapsed && !isSheet
 	const showLabels = !isCollapsed || isSheet
+
+	// Group open/closed state — defaults: open if active child, else closed
+	const initialGroupState = useMemo(() => {
+		const state: Partial<Record<NavGroupKey, boolean>> = {}
+		filteredStructure.forEach((entry) => {
+			if (isGroup(entry)) {
+				state[entry.groupKey] = entry.items.some((item) =>
+					isItemActive(item.href, pathname, navItems)
+				)
+			}
+		})
+		return state
+	}, [filteredStructure, pathname, navItems])
+
+	const [groupsOpen, setGroupsOpen] = useState<Partial<Record<NavGroupKey, boolean>>>(
+		initialGroupState
+	)
+
+	// Hydrate from localStorage on mount
+	useEffect(() => {
+		try {
+			const raw = window.localStorage.getItem(STORAGE_KEY)
+			if (!raw) return
+			const parsed = JSON.parse(raw) as Partial<Record<NavGroupKey, boolean>>
+			setGroupsOpen((prev) => ({ ...prev, ...parsed }))
+		} catch {
+			// ignore corrupted storage
+		}
+	}, [])
+
+	const toggleGroup = (key: NavGroupKey) => {
+		setGroupsOpen((prev) => {
+			const next = { ...prev, [key]: !prev[key] }
+			try {
+				window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+			} catch {
+				// ignore quota
+			}
+			return next
+		})
+	}
+
+	const renderItem = (item: NavItem) => {
+		const isActive = isItemActive(item.href, pathname, navItems)
+		return (
+			<Link
+				key={item.href}
+				href={item.href}
+				className={cn(
+					"text-small flex h-10 items-center gap-s-300 rounded-md px-s-300 py-s-200 transition-colors",
+					isActive
+						? "bg-acc-100/10 text-acc-100"
+						: "text-txt-200 hover:bg-bg-300 hover:text-txt-100",
+					isCompact && "justify-center"
+				)}
+				aria-current={isActive ? "page" : undefined}
+				onClick={onNavigate}
+			>
+				<item.icon className="h-5 w-5 shrink-0" />
+				{showLabels && <span className="truncate">{t(item.labelKey)}</span>}
+			</Link>
+		)
+	}
 
 	return (
 		<aside
@@ -138,37 +227,55 @@ const Sidebar = ({
 			{/* Navigation */}
 			<ScrollArea className="flex-1">
 				<nav className="space-y-s-100 p-s-200">
-					{filteredNavItems.map((item) => {
-						const isActive =
-							item.href === "/"
-								? pathname === "/"
-								: pathname.startsWith(item.href) &&
-									!filteredNavItems.some(
-										(other) =>
-											other.href !== item.href &&
-											other.href.startsWith(item.href) &&
-											pathname.startsWith(other.href)
-									)
+					{filteredStructure.map((entry) => {
+						if (!isGroup(entry)) return renderItem(entry)
+
+						// Compact: render children flat (no group chrome)
+						if (isCompact) {
+							return (
+								<div key={entry.groupKey} className="space-y-s-100">
+									{entry.items.map((item) => renderItem(item))}
+								</div>
+							)
+						}
+
+						const open = groupsOpen[entry.groupKey] ?? false
+						const hasActive = entry.items.some((item) =>
+							isItemActive(item.href, pathname, navItems)
+						)
+						const GroupIcon = entry.icon
 
 						return (
-							<Link
-								key={item.href}
-								href={item.href}
-								className={cn(
-									"text-small flex h-10 items-center gap-s-300 rounded-md px-s-300 py-s-200 transition-colors",
-									isActive
-										? "bg-acc-100/10 text-acc-100"
-										: "text-txt-200 hover:bg-bg-300 hover:text-txt-100",
-									isCompact && "justify-center"
+							<div key={entry.groupKey} className="space-y-s-100">
+								<button
+									type="button"
+									onClick={() => toggleGroup(entry.groupKey)}
+									aria-expanded={open}
+									className={cn(
+										"text-small flex h-10 w-full items-center gap-s-300 rounded-md px-s-300 py-s-200 transition-colors",
+										hasActive
+											? "text-txt-100"
+											: "text-txt-200 hover:bg-bg-300 hover:text-txt-100"
+									)}
+								>
+									<GroupIcon className="h-5 w-5 shrink-0" />
+									<span className="flex-1 truncate text-left">
+										{t(entry.groupKey)}
+									</span>
+									<ChevronRight
+										className={cn(
+											"h-4 w-4 shrink-0 transition-transform duration-200 motion-reduce:transition-none",
+											open && "rotate-90"
+										)}
+										aria-hidden="true"
+									/>
+								</button>
+								{open && (
+									<div className="space-y-s-100 ml-m-400 border-l border-bg-300 pl-s-200">
+										{entry.items.map((item) => renderItem(item))}
+									</div>
 								)}
-								aria-current={isActive ? "page" : undefined}
-								onClick={onNavigate}
-							>
-								<item.icon className="h-5 w-5 shrink-0" />
-								{showLabels && (
-									<span className="truncate">{t(item.labelKey)}</span>
-								)}
-							</Link>
+							</div>
 						)
 					})}
 				</nav>
