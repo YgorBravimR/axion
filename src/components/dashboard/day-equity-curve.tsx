@@ -37,11 +37,12 @@ interface CustomTooltipProps {
 const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.cumulativePnl >= 0
 
 	return (

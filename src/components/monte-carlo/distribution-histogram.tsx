@@ -54,8 +54,13 @@ const calculatePercentileBoundaries = (
 	let cumulative = 0
 
 	const sortedBuckets = buckets.toSorted((a, b) => a.midPoint - b.midPoint)
-	const min = sortedBuckets[0].midPoint
-	const max = sortedBuckets[sortedBuckets.length - 1].midPoint
+	const [firstBucket] = sortedBuckets
+	const lastBucket = sortedBuckets[sortedBuckets.length - 1]
+	if (!firstBucket || !lastBucket) {
+		return { p5: 0, p15: 0, p40: 0, p60: 0, p85: 0, p95: 0, min: 0, max: 0 }
+	}
+	const min = firstBucket.midPoint
+	const max = lastBucket.midPoint
 
 	let p5 = min
 	let p15 = min
@@ -155,11 +160,12 @@ const CustomBarBackground = (props: CustomBarBackgroundProps) => {
 }
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.midPoint >= 0
 
 	return (

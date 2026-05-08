@@ -539,15 +539,17 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						entityId,
 					})
 
-					if (errors.length > 0) {
-						showToast("error", errors[0])
+					const [firstError] = errors
+					if (firstError) {
+						showToast("error", firstError)
 						setIsSubmitting(false)
 						return
 					}
 
-					if (uploaded.length > 0) {
-						screenshotUrl = uploaded[0].url
-						screenshotS3Key = uploaded[0].s3Key
+					const [firstUploaded] = uploaded
+					if (firstUploaded) {
+						screenshotUrl = firstUploaded.url
+						screenshotS3Key = firstUploaded.s3Key
 					}
 				} else if (persistedScreenshot) {
 					screenshotUrl = persistedScreenshot.url

@@ -60,13 +60,16 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 		if (!name) {
 			return "U"
 		}
-		const parts = name.split(" ")
-		if (parts.length === 1) {
-			return parts[0].charAt(0).toUpperCase()
+		const parts = name.split(" ").filter((part) => part.length > 0)
+		const [first, ...rest] = parts
+		if (!first) {
+			return "U"
 		}
-		return (
-			parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
-		).toUpperCase()
+		const last = rest.length > 0 ? rest[rest.length - 1] : undefined
+		if (!last) {
+			return first.charAt(0).toUpperCase()
+		}
+		return (first.charAt(0) + last.charAt(0)).toUpperCase()
 	}
 
 	if (isLoading) {

@@ -107,12 +107,11 @@ const BugReportsList = () => {
 
 			if (e.key === "Tab") {
 				const focusable = focusableRef.current
-				if (focusable.length === 0) {
-					return
-				}
-
 				const first = focusable[0]
 				const last = focusable[focusable.length - 1]
+				if (!first || !last) {
+					return
+				}
 
 				if (e.shiftKey && document.activeElement === first) {
 					e.preventDefault()
@@ -194,7 +193,7 @@ const BugReportsList = () => {
 				})
 
 				if (result.status === "success") {
-					const successMessages: Record<string, string> = {
+					const successMessages: Record<typeof action, string> = {
 						accept: t("actions.acceptSuccess"),
 						reject: t("actions.rejectSuccess"),
 						close: t("actions.closeSuccess"),

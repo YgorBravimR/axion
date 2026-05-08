@@ -55,10 +55,7 @@ const ComparisonNormalizedTable = ({
 		[accounts]
 	)
 
-	const defaultRisk =
-		risksWithData.length > 0
-			? risksWithData[Math.floor(risksWithData.length / 2)]
-			: 100
+	const defaultRisk = risksWithData[Math.floor(risksWithData.length / 2)] ?? 100
 
 	const [referenceRisk, setReferenceRisk] = useState(
 		Math.round(defaultRisk * 100) / 100
@@ -134,10 +131,10 @@ const ComparisonNormalizedTable = ({
 			const bestSet = new Set<number>()
 			const worstSet = new Set<number>()
 
-			for (let i = 0; i < values.length; i++) {
-				if (Math.abs(values[i] - bestVal) <= tolerance) {
+			for (const [i, value] of values.entries()) {
+				if (Math.abs(value - bestVal) <= tolerance) {
 					bestSet.add(i)
-				} else if (Math.abs(values[i] - worstVal) <= tolerance) {
+				} else if (Math.abs(value - worstVal) <= tolerance) {
 					worstSet.add(i)
 				}
 			}

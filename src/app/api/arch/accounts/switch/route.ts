@@ -56,6 +56,14 @@ const POST = async (request: NextRequest) => {
 			.where(eq(tradingAccounts.id, accountId))
 			.returning()
 
+		if (!updatedAccount) {
+			return archError(
+				"Failed to switch account",
+				[{ code: "ACCOUNT_NOT_UPDATED", detail: "Update returned no rows" }],
+				500
+			)
+		}
+
 		return archSuccess("Default account switched", {
 			id: updatedAccount.id,
 			name: updatedAccount.name,

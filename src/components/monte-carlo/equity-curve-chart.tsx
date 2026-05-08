@@ -32,11 +32,12 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
 
 const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isPositive = data.cumulativeR >= 0
 
 	return (

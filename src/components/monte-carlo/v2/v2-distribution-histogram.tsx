@@ -33,11 +33,12 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({ active, payload, currency }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.midPoint >= 0
 
 	return (

@@ -120,8 +120,9 @@ const CustomTooltip = ({ active, payload, metric }: CustomTooltipProps) => {
 		return group
 	}
 
-	if (active && payload && payload.length > 0) {
-		const data = payload[0].payload
+	const head = payload?.[0]
+	if (active && head) {
+		const data = head.payload
 		return (
 			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border shadow-lg">
 				<p className="text-small text-txt-100 font-semibold">

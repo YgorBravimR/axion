@@ -37,11 +37,12 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload?.length) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 
 	return (
 		<div className="bg-bg-200 border-bg-300 p-s-300 rounded-lg border shadow-lg">

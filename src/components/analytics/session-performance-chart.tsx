@@ -51,11 +51,12 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("analytics")
 	const tLabels = useTranslations("analytics.session.labels")
 
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.totalPnl >= 0
 	const timeRange = `${formatTime(data.startHour)} - ${formatTime(data.endHour)}`
 	const translatedLabel = tLabels(data.session)

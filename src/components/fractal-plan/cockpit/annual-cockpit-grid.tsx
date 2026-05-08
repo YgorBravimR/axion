@@ -101,7 +101,14 @@ const AnnualCockpitGrid = ({
 			i < accountStartMonth - 1
 
 		const row = byIndex.get(i)
-		const real = realByMonth[i]
+		const real: RealMonthData = realByMonth[i] ?? {
+			monthIndex: i,
+			tradesCount: 0,
+			realPnlCents: 0,
+			realRSum: 0,
+			tradingDaysWithTrades: 0,
+			weeklyR: [],
+		}
 		const hasRealData = real.tradesCount > 0
 
 		const isManual = row?.snapshotReason === "manual"
@@ -170,7 +177,7 @@ const AnnualCockpitGrid = ({
 		return {
 			key: i,
 			href,
-			monthLabel: MONTH_LABELS_PT[i],
+			monthLabel: MONTH_LABELS_PT[i] ?? "",
 			monthlyPlanId: row?.monthlyPlanId ?? null,
 			startBalanceCents,
 			endBalanceCents: effectiveEndCents,

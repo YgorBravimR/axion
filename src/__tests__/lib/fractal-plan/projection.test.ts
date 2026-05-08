@@ -140,10 +140,10 @@ describe("projectYear", () => {
 			months,
 			irTaxRate: 0,
 		})
-		expect(result.months[0].startBalanceCents).toBe(100_000)
-		expect(result.months[0].endBalanceCents).toBe(150_000)
-		expect(result.months[1].startBalanceCents).toBe(150_000)
-		expect(result.months[1].endBalanceCents).toBe(180_000)
+		expect(result.months[0]?.startBalanceCents).toBe(100_000)
+		expect(result.months[0]?.endBalanceCents).toBe(150_000)
+		expect(result.months[1]?.startBalanceCents).toBe(150_000)
+		expect(result.months[1]?.endBalanceCents).toBe(180_000)
 	})
 
 	it("totalRentPct reflects compounded gain on initial capital", () => {

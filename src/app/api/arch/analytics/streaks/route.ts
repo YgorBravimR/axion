@@ -35,11 +35,12 @@ const GET = async (request: NextRequest) => {
 		let currentStreak = 0
 		let currentStreakType: "win" | "loss" | "none" = "none"
 
-		if (result.length > 0 && result[0].outcome) {
+		const [head] = result
+		if (head?.outcome) {
 			currentStreakType =
-				result[0].outcome === "win"
+				head.outcome === "win"
 					? "win"
-					: result[0].outcome === "loss"
+					: head.outcome === "loss"
 						? "loss"
 						: "none"
 			for (const trade of result) {

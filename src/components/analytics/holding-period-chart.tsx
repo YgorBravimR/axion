@@ -50,11 +50,12 @@ const formatDuration = (
 }
 
 const CustomTooltip = ({ active, payload, labels }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0 || !labels) {
+	const head = payload?.[0]
+	if (!active || !head || !labels) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.totalPnl >= 0
 
 	return (
@@ -172,8 +173,11 @@ const HoldingPeriodChart = memo(
 
 		// Best and worst buckets (only show worst if different from best)
 		const sorted = activeBuckets.toSorted((a, b) => b[metricKey] - a[metricKey])
-		const bestBucket = sorted[0]
+		const [bestBucket] = sorted
 		const worstBucket = sorted.length > 1 ? sorted[sorted.length - 1] : null
+		if (!bestBucket) {
+			return null
+		}
 
 		const formatMetric = (value: number): string =>
 			isRMode

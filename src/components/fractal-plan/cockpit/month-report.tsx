@@ -10,7 +10,7 @@ import {
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
 import {
-	MONTH_LABEL_PT,
+	monthLabelPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
 } from "@/lib/fractal-plan/month-labels"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
@@ -53,7 +53,7 @@ const MonthReport = async ({
 	month,
 	locale,
 }: MonthReportProps) => {
-	const monthLabel = `${MONTH_LABEL_PT[month]} ${year}`
+	const monthLabel = `${monthLabelPt(month)} ${year}`
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
 		where: and(

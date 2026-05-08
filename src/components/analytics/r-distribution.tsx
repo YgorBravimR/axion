@@ -54,8 +54,9 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("analytics.rDistribution")
 
-	if (active && payload && payload.length > 0) {
-		const data = payload[0].payload
+	const head = payload?.[0]
+	if (active && head) {
+		const data = head.payload
 		return (
 			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border shadow-lg">
 				<p className="text-small text-txt-100 font-semibold">{data.range}</p>
@@ -94,12 +95,13 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 			const pnl = data.reduce((sum, b) => sum + b.pnl, 0)
 			const posBuckets = data.filter((b) => b.rangeMin >= 0)
 			const negBuckets = data.filter((b) => b.rangeMax <= 0)
+			const [seed, ...rest] = data
 			return {
 				totalTrades: trades,
 				totalPnl: pnl,
 				positiveCount: posBuckets.reduce((sum, b) => sum + b.count, 0),
 				negativeCount: negBuckets.reduce((sum, b) => sum + b.count, 0),
-				mode: data.reduce((max, b) => (b.count > max.count ? b : max), data[0]),
+				mode: rest.reduce((max, b) => (b.count > max.count ? b : max), seed),
 			}
 		}, [data])
 

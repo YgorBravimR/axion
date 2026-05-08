@@ -138,11 +138,12 @@ const EquityTooltip = ({
 	drawdownLabel,
 	tradeNumberLabel,
 }: EquityTooltipProps) => {
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	// Calculate drawdown value: if we're X% down from peak, the dollar amount is
 	// accountEquity * (drawdown / (100 - drawdown))
 	const drawdownValue =

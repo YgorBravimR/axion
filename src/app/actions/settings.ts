@@ -79,6 +79,10 @@ export const getUserSettings = async (): Promise<
 			})
 			.returning()
 
+		if (!newSettings) {
+			throw new Error("Failed to insert user settings")
+		}
+
 		return {
 			status: "success",
 			message: t("actions.settingsCreated"),
@@ -147,6 +151,10 @@ export const updateUserSettings = async (
 				})
 				.returning()
 
+			if (!newSettings) {
+				throw new Error("Failed to insert user settings")
+			}
+
 			invalidateSettingsData()
 
 			return {
@@ -189,6 +197,10 @@ export const updateUserSettings = async (
 			.set(updateData)
 			.where(eq(userSettings.userId, userId))
 			.returning()
+
+		if (!updated) {
+			throw new Error("Failed to update user settings")
+		}
 
 		invalidateSettingsData()
 

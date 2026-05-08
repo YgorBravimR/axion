@@ -14,8 +14,8 @@ import {
 	type PlanGoalSource,
 } from "@/lib/fractal-plan/derive-goal"
 import {
-	MONTH_LABEL_PT,
-	MONTH_ABBR_PT,
+	monthLabelPt,
+	monthAbbrPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
 } from "@/lib/fractal-plan/month-labels"
 import {
@@ -74,7 +74,7 @@ const QuarterReport = async ({
 		(quarter - 1) * 3 + 2,
 		(quarter - 1) * 3 + 3,
 	] as const
-	const monthRangeLabel = months.map((m) => MONTH_ABBR_PT[m]).join(" · ")
+	const monthRangeLabel = months.map((m) => monthAbbrPt(m)).join(" · ")
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
 		where: and(
@@ -316,7 +316,7 @@ const QuarterReport = async ({
 					<QuarterMonthCard
 						key={p.month}
 						href={`/${locale}/plan/${year}/${quarter}/${p.month}`}
-						monthLabel={MONTH_LABEL_PT[p.month]}
+						monthLabel={monthLabelPt(p.month)}
 						state={p.state}
 						tierIndex={p.tierIndex}
 						oneRCents={p.oneRCents}

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { formatDateKey } from "@/lib/dates"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { AlertCircle, FlaskConical } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -47,11 +48,9 @@ const RiskSimulationContent = ({
 	const [dateFrom, setDateFrom] = useState(() => {
 		const d = new Date()
 		d.setDate(d.getDate() - 30)
-		return d.toISOString().split("T")[0]
+		return formatDateKey(d)
 	})
-	const [dateTo, setDateTo] = useState(
-		() => new Date().toISOString().split("T")[0]
-	)
+	const [dateTo, setDateTo] = useState(() => formatDateKey(new Date()))
 	const [params, setParams] = useState<RiskSimulationParams | null>(null)
 	const [preview, setPreview] = useState<SimulationPreview | null>(null)
 	const [isLoadingPreview, setIsLoadingPreview] = useState(false)

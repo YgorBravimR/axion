@@ -29,10 +29,19 @@ const CATEGORY_ICONS: Record<string, typeof Brain> = {
 	fees: Receipt,
 }
 
-const SEVERITY_STYLES: Record<
-	string,
-	{ border: string; bg: string; badge: string }
-> = {
+interface SeverityStyle {
+	border: string
+	bg: string
+	badge: string
+}
+
+const DEFAULT_SEVERITY_STYLE: SeverityStyle = {
+	border: "border-bg-300",
+	bg: "bg-bg-300/30",
+	badge: "bg-bg-300/60 text-txt-200",
+}
+
+const SEVERITY_STYLES: Record<string, SeverityStyle> = {
 	warning: {
 		border: "border-trade-sell/30",
 		bg: "bg-trade-sell/5",
@@ -43,19 +52,15 @@ const SEVERITY_STYLES: Record<
 		bg: "bg-warning/5",
 		badge: "bg-warning/20 text-warning",
 	},
-	info: {
-		border: "border-bg-300",
-		bg: "bg-bg-300/30",
-		badge: "bg-bg-300/60 text-txt-200",
-	},
+	info: DEFAULT_SEVERITY_STYLE,
 }
 
 const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 	const t = useTranslations("coaching")
 	const [isExpanded, setIsExpanded] = useState(false)
 
-	const Icon = CATEGORY_ICONS[insight.category] || Brain
-	const styles = SEVERITY_STYLES[insight.severity] || SEVERITY_STYLES.info
+	const Icon = CATEGORY_ICONS[insight.category] ?? Brain
+	const styles = SEVERITY_STYLES[insight.severity] ?? DEFAULT_SEVERITY_STYLE
 
 	// Resolve translated title and description
 	const title = t(insight.titleKey.replace("coaching.", ""))

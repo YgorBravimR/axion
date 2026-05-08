@@ -247,6 +247,10 @@ const processOcrTrade = async (
 		})
 		.returning()
 
+	if (!trade) {
+		throw new Error("Failed to insert trade")
+	}
+
 	// Insert all executions
 	const executionValues = validated.executions.map((ex) => ({
 		tradeId: trade.id,
@@ -373,9 +377,9 @@ export const bulkCreateTradesFromOcr = async (
 		// Load registered symbols once for all trades
 		const registeredSymbols = await getRegisteredAssetSymbols()
 
-		for (let i = 0; i < inputs.length; i++) {
+		for (const [i, inputItem] of inputs.entries()) {
 			try {
-				const validated = ocrImportSchema.parse(inputs[i])
+				const validated = ocrImportSchema.parse(inputItem)
 				// eslint-disable-next-line no-await-in-loop -- per-trade OCR import; sequential for per-trade error isolation in try/catch
 				const processed = await processOcrTrade(
 					validated,
@@ -389,7 +393,7 @@ export const bulkCreateTradesFromOcr = async (
 				result.failedCount++
 				result.errors.push({
 					index: i,
-					asset: inputs[i].asset,
+					asset: inputItem.asset,
 					message: toSafeErrorMessage(error, "bulkCreateTradesFromOcr"),
 				})
 			}

@@ -100,6 +100,10 @@ export const submitBugReport = async (
 			})
 			.returning()
 
+		if (!report) {
+			throw new Error("Failed to insert bug report")
+		}
+
 		if (validated.images && validated.images.length > 0) {
 			await db.insert(bugReportImages).values(
 				validated.images.map((img) => ({
@@ -210,10 +214,11 @@ export const getBugReports = async (filters?: {
 		)
 
 		// Total count for pagination
-		const [{ total }] = await db
+		const [totalRow] = await db
 			.select({ total: sql<number>`count(*)::int` })
 			.from(bugReports)
 			.where(conditions)
+		const total = totalRow?.total ?? 0
 
 		const items: BugReportWithReporter[] = rows.map((row) => ({
 			...row,

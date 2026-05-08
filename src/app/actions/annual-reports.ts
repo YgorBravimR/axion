@@ -11,7 +11,7 @@ import {
 } from "@/lib/queries/period-queries"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
 import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
-import { MONTH_LABEL_PT } from "@/lib/fractal-plan/month-labels"
+import { monthLabelPt } from "@/lib/fractal-plan/month-labels"
 import type { CapitalEvent } from "@/types/integration"
 import type {
 	WeeklyMetaRow,
@@ -66,6 +66,10 @@ export const recordCapitalEvent = async (
 			notes: params.notes ?? null,
 		})
 		.returning({ id: accountCapitalEvents.id })
+
+	if (!inserted) {
+		return { status: "error", message: "Failed to insert capital event" }
+	}
 
 	await invalidateAggregates(accountId, eventDateObj)
 
@@ -346,7 +350,7 @@ export const getAnnualRollup = async (
 		if (isDisabled) {
 			rows.push({
 				month,
-				monthName: MONTH_LABEL_PT[month],
+				monthName: monthLabelPt(month),
 				disabled: true,
 				resultadoBruto: null,
 				resultadoLiquido: null,
@@ -400,7 +404,7 @@ export const getAnnualRollup = async (
 
 		rows.push({
 			month,
-			monthName: MONTH_LABEL_PT[month],
+			monthName: monthLabelPt(month),
 			disabled: false,
 			resultadoBruto: agg.grossCents,
 			resultadoLiquido: agg.netCents,

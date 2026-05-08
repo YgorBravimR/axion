@@ -29,11 +29,12 @@ const CHART_MARGIN = { top: 10, right: 30, left: 10, bottom: 0 } as const
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("riskSimulation.chart")
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
