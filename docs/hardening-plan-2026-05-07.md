@@ -16,6 +16,7 @@ Axion ships a lot of agent-written code. Several recurring bug classes have alre
 - Mixed PT/EN i18n strings.
 
 Three layers of defence already exist:
+
 1. `eslint-plugin-better-tailwindcss` (no-unknown-classes, no-deprecated-classes, no-conflicting-classes).
 2. `scripts/token-fix.ts` (declarative bulk-rewrite of invalid tokens; CI-friendly `--dry`).
 3. `docs/scans/*.md` post-mortems with prevention rules.
@@ -62,18 +63,19 @@ ESLint config — flat, ESLint 10. Plugins beyond axion baseline: `eslint-plugin
 
 ```json
 {
-  "compilerOptions": {
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-    "strict": true,
-    "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true
-  }
+	"compilerOptions": {
+		"verbatimModuleSyntax": true,
+		"noEmit": true,
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true
+	}
 }
 ```
 
 Custom in-house rules worth porting:
+
 - **`custom/enforce-date-fns`** — flags `.toISOString().split("T")[0]`, `Date.now() + 86400000` style ms arithmetic, `.getFullYear()`/`.getMonth()`/`.getDate()` in string contexts, `.setDate()`/`.setHours()` mutations. Forces `date-fns` usage.
 - **`custom/enforce-transaction-on-sequential-mutations`** — tracks `await db.insert/update/delete(...)` calls per function scope; warns when 2+ mutations on same db object aren't wrapped in `.transaction()`.
 
@@ -81,16 +83,17 @@ Husky pre-commit:
 
 ```bash
 # Full repo lint + per-app typecheck scoped to staged files
-bun lint
+pnpm lint
 declare -a app_paths=( "apps/bff" "apps/canary" ... )
 for app_path in "${app_paths[@]}"; do
   if git diff --cached --name-only | grep --quiet "$app_path"; then
-    (cd $app_path && bun tsc --noEmit)
+    (cd $app_path && pnpm tsc --noEmit)
   fi
 done
 ```
 
 CLAUDE.md notable agent rules:
+
 - "no default exports", "no await in loops"
 - Always `import type` for type-only imports
 - Pinned versions only — no `^` or `~`
@@ -165,10 +168,12 @@ ESLint — flat config in `packages/eslint-config-custom/eslint.config.mjs`. Plu
 ```
 
 Custom in-house rules worth porting:
+
 - **`no-dynamic-functions-in-pages`** — bans `cookies()`, `headers()`, `connection()` imported from `"next/headers"`/`"next/server"` inside `page.tsx`/`layout.tsx`. Rationale: those calls force the route into dynamic rendering, killing RSC island architecture.
 - **`no-components-in-store-app`** — flags JSX in `store/src/` files outside `store/src/app/`. Components belong in `@local/*` packages. Pattern: package-boundary enforcement via JSX detection.
 
 Husky:
+
 ```bash
 # .husky/pre-commit
 pnpm lint-staged
@@ -178,6 +183,7 @@ pnpm commitlint --verbose --edit $1
 ```
 
 `lint-staged`:
+
 ```json
 "lint-staged": {
   "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
@@ -190,6 +196,7 @@ pnpm commitlint --verbose --edit $1
 CI: `pnpm test:unit` (Vitest) on PRs to main/staging.
 
 CLAUDE.md / agent rules to borrow:
+
 - **Protected directories** — agent must refuse modifications to `packages/cart/src/{shelf,cart}`; suggest alternatives instead.
 - **Cached fetchers** — always `@local/offer/src/fetchers/cached`, never raw fetcher classes.
 - "Minimize 'use client', useEffect, setState; prefer RSC."
@@ -200,6 +207,7 @@ CLAUDE.md / agent rules to borrow:
 - **Session Prompts format** — agent-created PRs include a collapsible `<details>` section listing all substantive user prompts verbatim, numbered, secrets redacted.
 
 `packages/ui/CLAUDE.md` design-system rules:
+
 - "NEVER use arbitrary hex (`bg-[#xxx]`) — every colour has a token."
 - "NEVER add `dark:` variants — dark mode unsupported."
 - "NEVER use `rounded-lg` or `rounded-xl` — use `rounded-md`, `rounded`, `rounded-sm`, `rounded-full`, `rounded-none`."
@@ -213,6 +221,7 @@ CLAUDE.md / agent rules to borrow:
 ### 2026 best-practice research
 
 Sources:
+
 - https://typescript-eslint.io/rules/
 - https://typescript-eslint.io/rules/consistent-type-imports
 - https://react.dev/reference/eslint-plugin-react-hooks
@@ -242,38 +251,38 @@ Key findings:
 
 ## Tier 1 — wire now, low blast, big bug coverage
 
-| Rule / setting | Severity | Source | Bug class caught |
-|---|---|---|---|
-| `drizzle/enforce-delete-with-where` | error | services | `db.delete(table)` without `.where()` = full table wipe |
-| `drizzle/enforce-update-with-where` | error | services | mass-overwrite on update without `.where()` |
-| `@typescript-eslint/consistent-type-imports` (`fixStyle: "separate-type-imports"`) | error | both | runtime imports of type-only symbols; `"use server"` type-export footgun |
-| `@typescript-eslint/no-import-type-side-effects` | error | web | `import type` specifiers with side-effect imports |
-| `@typescript-eslint/no-explicit-any` | error | services | agents reach for `any` to bypass inference |
-| `@typescript-eslint/no-empty-object-type` | error | both | empty `{}` types defeat type narrowing |
-| `@typescript-eslint/ban-ts-comment` w/ `minimumDescriptionLength: 10` | error | channels | naked `@ts-ignore` / `@ts-expect-error` |
-| `@typescript-eslint/no-non-null-asserted-optional-chain` | error | channels | `foo?.bar!` defeats null safety |
-| `@typescript-eslint/no-unused-expressions` | error | channels | dead expression statements |
-| `no-restricted-syntax: ExportDefaultDeclaration` (with msg) | error | services | aligns with axion CLAUDE.md "no default exports" |
-| `no-restricted-syntax: TSEnumDeclaration` (with msg) | error | web | enums emit runtime objects → break `"use server"` re-exports |
-| `no-restricted-syntax: CallExpression[callee.property.name='forEach']` (with msg) | error | channels | aligns with axion CLAUDE.md "use map/reduce/for-of" |
-| `no-await-in-loop` (off in `scripts/**` and `**/*.test.ts`) | error | both | sequential awaits where `Promise.all` was meant |
-| `no-console` (allow `warn`, `error`, `info`) | error | web + channels | strewn debug logs from agents |
-| `eqeqeq` | error | web | `==` / `!=` instead of strict equality |
-| `no-debugger` | error | channels | `debugger` left in by agents |
-| `no-unreachable` | error | channels | dead code after `return`/`throw` |
-| `no-useless-catch` | error | services | `try { ... } catch (e) { throw e }` no-op wraps |
-| `curly: ["error", "all"]` | error | channels | brace-required prevents one-liner footguns |
-| `@next/next/no-async-client-component` | error | next docs | `"use client"` + async function = RSC violation |
-| `@next/next/no-html-link-for-pages` | error | channels + next | raw `<a href="/dashboard">` breaks client routing |
-| `@next/next/no-img-element` | error | channels + next | raw `<img>` instead of `next/image` (LCP regression) |
-| `@next/next/no-typos` | error | next | typos in convention exports (`getStaticProps` etc.) |
-| `jsx-a11y/anchor-is-valid` | error | web | `<a href="#">` / `<a onClick>` without real `href` |
-| `jsx-a11y/interactive-supports-focus` | error | web | `onClick` on `<div>` without `tabIndex`/`role` |
-| `jsx-a11y/label-has-associated-control` | error | web | `<label>` not linked to input |
-| `jsx-a11y/click-events-have-key-events` | error | web | click handler without keyboard equivalent |
-| **tsconfig**: `"verbatimModuleSyntax": true` | — | services | type-only imports enforced at TS layer; complements consistent-type-imports |
-| **tsconfig**: `"noUncheckedIndexedAccess": true` | — | web | `arr[0].foo` runtime crash on empty array |
-| **tsconfig**: `"noFallthroughCasesInSwitch": true` | — | services | missing `break`/`return` in switch |
+| Rule / setting                                                                     | Severity | Source          | Bug class caught                                                            |
+| ---------------------------------------------------------------------------------- | -------- | --------------- | --------------------------------------------------------------------------- |
+| `drizzle/enforce-delete-with-where`                                                | error    | services        | `db.delete(table)` without `.where()` = full table wipe                     |
+| `drizzle/enforce-update-with-where`                                                | error    | services        | mass-overwrite on update without `.where()`                                 |
+| `@typescript-eslint/consistent-type-imports` (`fixStyle: "separate-type-imports"`) | error    | both            | runtime imports of type-only symbols; `"use server"` type-export footgun    |
+| `@typescript-eslint/no-import-type-side-effects`                                   | error    | web             | `import type` specifiers with side-effect imports                           |
+| `@typescript-eslint/no-explicit-any`                                               | error    | services        | agents reach for `any` to bypass inference                                  |
+| `@typescript-eslint/no-empty-object-type`                                          | error    | both            | empty `{}` types defeat type narrowing                                      |
+| `@typescript-eslint/ban-ts-comment` w/ `minimumDescriptionLength: 10`              | error    | channels        | naked `@ts-ignore` / `@ts-expect-error`                                     |
+| `@typescript-eslint/no-non-null-asserted-optional-chain`                           | error    | channels        | `foo?.bar!` defeats null safety                                             |
+| `@typescript-eslint/no-unused-expressions`                                         | error    | channels        | dead expression statements                                                  |
+| `no-restricted-syntax: ExportDefaultDeclaration` (with msg)                        | error    | services        | aligns with axion CLAUDE.md "no default exports"                            |
+| `no-restricted-syntax: TSEnumDeclaration` (with msg)                               | error    | web             | enums emit runtime objects → break `"use server"` re-exports                |
+| `no-restricted-syntax: CallExpression[callee.property.name='forEach']` (with msg)  | error    | channels        | aligns with axion CLAUDE.md "use map/reduce/for-of"                         |
+| `no-await-in-loop` (off in `scripts/**` and `**/*.test.ts`)                        | error    | both            | sequential awaits where `Promise.all` was meant                             |
+| `no-console` (allow `warn`, `error`, `info`)                                       | error    | web + channels  | strewn debug logs from agents                                               |
+| `eqeqeq`                                                                           | error    | web             | `==` / `!=` instead of strict equality                                      |
+| `no-debugger`                                                                      | error    | channels        | `debugger` left in by agents                                                |
+| `no-unreachable`                                                                   | error    | channels        | dead code after `return`/`throw`                                            |
+| `no-useless-catch`                                                                 | error    | services        | `try { ... } catch (e) { throw e }` no-op wraps                             |
+| `curly: ["error", "all"]`                                                          | error    | channels        | brace-required prevents one-liner footguns                                  |
+| `@next/next/no-async-client-component`                                             | error    | next docs       | `"use client"` + async function = RSC violation                             |
+| `@next/next/no-html-link-for-pages`                                                | error    | channels + next | raw `<a href="/dashboard">` breaks client routing                           |
+| `@next/next/no-img-element`                                                        | error    | channels + next | raw `<img>` instead of `next/image` (LCP regression)                        |
+| `@next/next/no-typos`                                                              | error    | next            | typos in convention exports (`getStaticProps` etc.)                         |
+| `jsx-a11y/anchor-is-valid`                                                         | error    | web             | `<a href="#">` / `<a onClick>` without real `href`                          |
+| `jsx-a11y/interactive-supports-focus`                                              | error    | web             | `onClick` on `<div>` without `tabIndex`/`role`                              |
+| `jsx-a11y/label-has-associated-control`                                            | error    | web             | `<label>` not linked to input                                               |
+| `jsx-a11y/click-events-have-key-events`                                            | error    | web             | click handler without keyboard equivalent                                   |
+| **tsconfig**: `"verbatimModuleSyntax": true`                                       | —        | services        | type-only imports enforced at TS layer; complements consistent-type-imports |
+| **tsconfig**: `"noUncheckedIndexedAccess": true`                                   | —        | web             | `arr[0].foo` runtime crash on empty array                                   |
+| **tsconfig**: `"noFallthroughCasesInSwitch": true`                                 | —        | services        | missing `break`/`return` in switch                                          |
 
 Estimated initial backlog: drizzle rules ~0 hits; type-import rules ~50–100 (auto-fixable); `noUncheckedIndexedAccess` ~50–150 places needing guards; `no-console` ~30–50 hits.
 
@@ -281,59 +290,59 @@ Estimated initial backlog: drizzle rules ~0 hits; type-import rules ~50–100 (a
 
 Requires `parserOptions.projectService: true` in flat config. Lint cost ~3–5x slower on cold runs. Split into `pnpm lint:strict` (CI-only) so editor + dev loop stays fast.
 
-| Rule | Severity | Source | Bug class caught |
-|---|---|---|---|
-| `@typescript-eslint/no-floating-promises` | error | web | unhandled async in server actions / event handlers |
-| `@typescript-eslint/no-misused-promises` (`checksVoidReturn: { attributes: true }`) | error | web | `async` passed to JSX `void` event handlers (errors swallowed) |
-| `@typescript-eslint/await-thenable` | error | web | `await nonPromise` |
-| `@typescript-eslint/no-unsafe-assignment` | error | web | `any` spreading into typed vars |
-| `@typescript-eslint/no-unsafe-member-access` | error | web | member access on `any` (raw fetch responses) |
-| `@typescript-eslint/no-unsafe-return` | error | web | `any` leaking out of functions |
-| `@typescript-eslint/no-unsafe-argument` | error | web | `any` into typed params |
-| `@typescript-eslint/no-unsafe-call` | error | web | calling `any` as a function |
-| `@typescript-eslint/restrict-template-expressions` | error | web | `${complexObject}` → `[object Object]` |
-| `@typescript-eslint/no-base-to-string` | error | web | `.toString()` on objects without override |
-| `@typescript-eslint/consistent-type-exports` | error | web | mixed value/type in single `export {}` (= "use server" bomb) |
-| `@typescript-eslint/no-unnecessary-condition` | warn | web | always-true/false conditions agent didn't read types for |
-| `@eslint-react/eslint-plugin` recommended preset | error | web | React 19 `use()`, RSC patterns |
-| `@eslint-react/no-nested-component-definitions` | error | web | inline-component remount loop |
-| `@eslint-react/no-missing-key` | error | web | missing `key` on list renders |
-| `@eslint-react/no-array-index-key` | warn | web | array-index keys break reconciliation on reorder |
-| `@eslint-react/dom/no-dangerously-set-innerhtml` | warn | web | `dangerouslySetInnerHTML` injection |
-| `@eslint-react/set-state-in-render` | error | web | unconditional `setState` during render = infinite loop |
-| `react-hooks/immutability` (v5) | error | channels | prop/state mutation (`props.list.push(item)`) |
-| `react-hooks/refs` (v5) | error | channels | reading/writing refs during render |
-| `react-hooks/set-state-in-effect` (v5) | warn | channels | synchronous `setState` in effect = double render |
-| `react-hooks/static-components` (v5) | warn | channels | components recreated every render |
-| `react-hooks/purity` (v5) | error | channels | side effects in render |
-| `react/no-unstable-nested-components` | error | channels | (legacy variant of nested-component-defs) |
-| `import-x/no-default-export` (Next conventions exempt) | error | web | matches axion CLAUDE.md preference |
-| `import-x/no-cycle` (`maxDepth: 5`) | error | web | circular deps from sloppy module splits |
-| `import-x/no-duplicates` | error | web | duplicate imports for same module |
-| `import-x/no-relative-parent-imports` | warn | web | enforces `@/` alias usage |
+| Rule                                                                                | Severity | Source   | Bug class caught                                               |
+| ----------------------------------------------------------------------------------- | -------- | -------- | -------------------------------------------------------------- |
+| `@typescript-eslint/no-floating-promises`                                           | error    | web      | unhandled async in server actions / event handlers             |
+| `@typescript-eslint/no-misused-promises` (`checksVoidReturn: { attributes: true }`) | error    | web      | `async` passed to JSX `void` event handlers (errors swallowed) |
+| `@typescript-eslint/await-thenable`                                                 | error    | web      | `await nonPromise`                                             |
+| `@typescript-eslint/no-unsafe-assignment`                                           | error    | web      | `any` spreading into typed vars                                |
+| `@typescript-eslint/no-unsafe-member-access`                                        | error    | web      | member access on `any` (raw fetch responses)                   |
+| `@typescript-eslint/no-unsafe-return`                                               | error    | web      | `any` leaking out of functions                                 |
+| `@typescript-eslint/no-unsafe-argument`                                             | error    | web      | `any` into typed params                                        |
+| `@typescript-eslint/no-unsafe-call`                                                 | error    | web      | calling `any` as a function                                    |
+| `@typescript-eslint/restrict-template-expressions`                                  | error    | web      | `${complexObject}` → `[object Object]`                         |
+| `@typescript-eslint/no-base-to-string`                                              | error    | web      | `.toString()` on objects without override                      |
+| `@typescript-eslint/consistent-type-exports`                                        | error    | web      | mixed value/type in single `export {}` (= "use server" bomb)   |
+| `@typescript-eslint/no-unnecessary-condition`                                       | warn     | web      | always-true/false conditions agent didn't read types for       |
+| `@eslint-react/eslint-plugin` recommended preset                                    | error    | web      | React 19 `use()`, RSC patterns                                 |
+| `@eslint-react/no-nested-component-definitions`                                     | error    | web      | inline-component remount loop                                  |
+| `@eslint-react/no-missing-key`                                                      | error    | web      | missing `key` on list renders                                  |
+| `@eslint-react/no-array-index-key`                                                  | warn     | web      | array-index keys break reconciliation on reorder               |
+| `@eslint-react/dom/no-dangerously-set-innerhtml`                                    | warn     | web      | `dangerouslySetInnerHTML` injection                            |
+| `@eslint-react/set-state-in-render`                                                 | error    | web      | unconditional `setState` during render = infinite loop         |
+| `react-hooks/immutability` (v5)                                                     | error    | channels | prop/state mutation (`props.list.push(item)`)                  |
+| `react-hooks/refs` (v5)                                                             | error    | channels | reading/writing refs during render                             |
+| `react-hooks/set-state-in-effect` (v5)                                              | warn     | channels | synchronous `setState` in effect = double render               |
+| `react-hooks/static-components` (v5)                                                | warn     | channels | components recreated every render                              |
+| `react-hooks/purity` (v5)                                                           | error    | channels | side effects in render                                         |
+| `react/no-unstable-nested-components`                                               | error    | channels | (legacy variant of nested-component-defs)                      |
+| `import-x/no-default-export` (Next conventions exempt)                              | error    | web      | matches axion CLAUDE.md preference                             |
+| `import-x/no-cycle` (`maxDepth: 5`)                                                 | error    | web      | circular deps from sloppy module splits                        |
+| `import-x/no-duplicates`                                                            | error    | web      | duplicate imports for same module                              |
+| `import-x/no-relative-parent-imports`                                               | warn     | web      | enforces `@/` alias usage                                      |
 
 Estimated backlog: `no-unsafe-*` cluster typically surfaces 200+ hits on first run; `no-floating-promises` ~20–50 in server actions; React hook rules ~10–30. Budget 2–3 hours of triage + fix.
 
 ## Tier 3 — process / hooks / templates
 
-| Item | Source | Effect |
-|---|---|---|
-| `lint-staged` config: `eslint --fix` + `prettier --write` on staged `.ts/.tsx` | channels | catches before commit |
-| Husky `pre-commit` hook: `pnpm lint-staged` | channels | runs lint-staged automatically |
-| Husky `pre-commit` (alternative — heavier): full repo `pnpm lint` + per-area `tsc --noEmit` scoped to staged files | services | catches more, slower |
-| Husky `commit-msg` hook: `commitlint --edit $1` | channels | enforces Conventional Commits |
-| `commitlint.config.ts`: `extends: ["@commitlint/config-conventional"]` | channels | normalized history |
-| `.vscode/settings.json` workspace: `tailwindCSS.experimental.classRegex` for `cva()` calls | web | IntelliSense in cva variants |
-| `.vscode/settings.json`: `tailwindCSS.lint.invalidApply: "error"` + `tailwindCSS.lint.cssConflict: "warning"` | web | in-editor surface |
-| Prebuild step in CI: `pnpm tailwindcss --input src/app/globals.css --output /dev/null` | web | catches `@theme` reference rot before deploy |
-| Custom rule `enforce-token-usage` (extension of `scripts/token-fix.ts` as ESLint rule) | axion-original | auto-fix in editor, not just CLI |
-| Custom rule `no-dynamic-functions-in-pages` (ban `cookies()`/`headers()` from `next/headers` in `page.tsx`/`layout.tsx`) | channels | preserves RSC static rendering |
-| Custom rule `enforce-server-action-async-only` (forbid non-async exports in `"use server"` files) | axion-original | prevents the recurring footgun |
-| Custom rule `no-hover-only-controls` (flag `opacity-0 group-hover:opacity-100` patterns) | axion-original | touch a11y |
-| Custom rule `enforce-ui-primitives` (flag raw `<table>`, `<input type="checkbox">` when `@/components/ui/*` exists) | axion-original | matches scan #2 findings |
-| `CLAUDE.md` section: protected-directory list | channels | agent refuses modifications |
-| `CLAUDE.md` section: PR template with WCAG checklist + Session Prompts collapsible | channels | every agent PR self-documents |
-| `CLAUDE.md` section: design-system token rules ("NEVER use arbitrary hex / z-index / font-size") | channels (`packages/ui/CLAUDE.md`) | reinforces token discipline |
+| Item                                                                                                                     | Source                             | Effect                                       |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | -------------------------------------------- |
+| `lint-staged` config: `eslint --fix` + `prettier --write` on staged `.ts/.tsx`                                           | channels                           | catches before commit                        |
+| Husky `pre-commit` hook: `pnpm lint-staged`                                                                              | channels                           | runs lint-staged automatically               |
+| Husky `pre-commit` (alternative — heavier): full repo `pnpm lint` + per-area `tsc --noEmit` scoped to staged files       | services                           | catches more, slower                         |
+| Husky `commit-msg` hook: `commitlint --edit $1`                                                                          | channels                           | enforces Conventional Commits                |
+| `commitlint.config.ts`: `extends: ["@commitlint/config-conventional"]`                                                   | channels                           | normalized history                           |
+| `.vscode/settings.json` workspace: `tailwindCSS.experimental.classRegex` for `cva()` calls                               | web                                | IntelliSense in cva variants                 |
+| `.vscode/settings.json`: `tailwindCSS.lint.invalidApply: "error"` + `tailwindCSS.lint.cssConflict: "warning"`            | web                                | in-editor surface                            |
+| Prebuild step in CI: `pnpm tailwindcss --input src/app/globals.css --output /dev/null`                                   | web                                | catches `@theme` reference rot before deploy |
+| Custom rule `enforce-token-usage` (extension of `scripts/token-fix.ts` as ESLint rule)                                   | axion-original                     | auto-fix in editor, not just CLI             |
+| Custom rule `no-dynamic-functions-in-pages` (ban `cookies()`/`headers()` from `next/headers` in `page.tsx`/`layout.tsx`) | channels                           | preserves RSC static rendering               |
+| Custom rule `enforce-server-action-async-only` (forbid non-async exports in `"use server"` files)                        | axion-original                     | prevents the recurring footgun               |
+| Custom rule `no-hover-only-controls` (flag `opacity-0 group-hover:opacity-100` patterns)                                 | axion-original                     | touch a11y                                   |
+| Custom rule `enforce-ui-primitives` (flag raw `<table>`, `<input type="checkbox">` when `@/components/ui/*` exists)      | axion-original                     | matches scan #2 findings                     |
+| `CLAUDE.md` section: protected-directory list                                                                            | channels                           | agent refuses modifications                  |
+| `CLAUDE.md` section: PR template with WCAG checklist + Session Prompts collapsible                                       | channels                           | every agent PR self-documents                |
+| `CLAUDE.md` section: design-system token rules ("NEVER use arbitrary hex / z-index / font-size")                         | channels (`packages/ui/CLAUDE.md`) | reinforces token discipline                  |
 
 ## Gaps not currently covered by tooling
 

@@ -40,7 +40,7 @@ The project ships an inline ESLint plugin at `eslint-rules/` registered as `axio
 
 - **`"use server"` files must export only async functions or values.** Re-exporting types from a `"use server"` file rewrites them as runtime refs at build time. Move type re-exports to a sibling `*.types.ts`.
 - **`!= null` is the idiomatic null+undefined check.** Lint allows it. Don't rewrite to `!== null` (lets undefined slip through).
-- **Tailwind v4 tokens only.** No arbitrary classes (`text-[28px]`, `rounded-[12px]`). No legacy spacing (`s-400`, `m-200`). Run `bun scripts/token-fix.ts --dry` to detect drift; commit fixes from the same script. See `docs/scans/2026-05-07-cockpit-tokens.md` for invalid-token catalog.
+- **Tailwind v4 tokens only.** No arbitrary classes (`text-[28px]`, `rounded-[12px]`). No legacy spacing (`s-400`, `m-200`). Run `pnpm scripts/token-fix.ts --dry` to detect drift; commit fixes from the same script. See `docs/scans/2026-05-07-cockpit-tokens.md` for invalid-token catalog.
 - **Hover-only controls fail touch.** Anything with `opacity-0 group-hover:opacity-100` must also have a focus-visible/touch-active alternative (or be a real `<button>` with `aria-label`).
 - **Raw `<table>`, `<input type="checkbox">`, `<a>`, `<img>` are banned.** Use `@/components/ui/{table,checkbox}`, `next/link`, `next/image`. Lint enforces the last two; the first two are still convention-only — flag in review.
 - **Hooks must run before any early return.** rules-of-hooks now blocks merges; nullable narrowing belongs **inside** the hook callback, not before the hook call.

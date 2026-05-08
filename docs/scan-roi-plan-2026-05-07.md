@@ -174,10 +174,10 @@ This plan defines **horizontal subject sweeps**. Each pass covers one concern ac
 
 - **Why**: Library audit per CLAUDE.md (avoid abandoned/unused deps).
 - **Hot targets**: `package.json` deps, `src/lib/*`, unused exports.
-- **Skill**: manual + `bun run build --analyze` (if available).
+- **Skill**: manual + `pnpm run build --analyze` (if available).
 - **Detectors**:
-  - `bunx knip` → dead code if installed
-  - `bunx depcheck`
+  - `pnpm knip` → dead code if installed
+  - `pnpm depcheck`
 
 ### 16. DB / schema correctness
 
@@ -191,18 +191,18 @@ This plan defines **horizontal subject sweeps**. Each pass covers one concern ac
 
 ## Recommended execution order
 
-| # | Subject | Why first | Cost | Yield |
-|---|---------|-----------|------|-------|
-| 1 | i18n coverage | Mechanical, biggest visible win, fastest scan | low | high |
-| 2 | Theming tokens | Already proven detectable; extend cockpit-scan reach | low | high |
-| 3 | Performance | Highest user-felt impact; skill primed | medium | high |
-| 4 | Accessibility | Non-negotiable baseline before shipping branches | medium | high |
-| 5 | Responsiveness | Single afternoon sweep, big mobile-user payoff | medium | medium |
-| 6 | Type safety | Mechanical, compounds with hardening plan ESLint rules | low | medium |
-| 7 | Server-action correctness | Trust boundary; one footgun = data corruption | medium | high |
-| 8 | Loading/error/empty states | Polish gap most visible to new users | medium | medium |
-| 9 | Security | Run before any prod deploy of branch | high | high |
-| 10+ | Tier B/C subjects | After Tier S/A catalog stabilizes | varies | varies |
+| #   | Subject                    | Why first                                              | Cost   | Yield  |
+| --- | -------------------------- | ------------------------------------------------------ | ------ | ------ |
+| 1   | i18n coverage              | Mechanical, biggest visible win, fastest scan          | low    | high   |
+| 2   | Theming tokens             | Already proven detectable; extend cockpit-scan reach   | low    | high   |
+| 3   | Performance                | Highest user-felt impact; skill primed                 | medium | high   |
+| 4   | Accessibility              | Non-negotiable baseline before shipping branches       | medium | high   |
+| 5   | Responsiveness             | Single afternoon sweep, big mobile-user payoff         | medium | medium |
+| 6   | Type safety                | Mechanical, compounds with hardening plan ESLint rules | low    | medium |
+| 7   | Server-action correctness  | Trust boundary; one footgun = data corruption          | medium | high   |
+| 8   | Loading/error/empty states | Polish gap most visible to new users                   | medium | medium |
+| 9   | Security                   | Run before any prod deploy of branch                   | high   | high   |
+| 10+ | Tier B/C subjects          | After Tier S/A catalog stabilizes                      | varies | varies |
 
 After subjects 1–4 land, vertical scans (`/scan journal`, `/scan command-center`, `/scan analytics`) gain Phase 0 detectors → cheaper, more thorough each run.
 
@@ -211,7 +211,7 @@ After subjects 1–4 land, vertical scans (`/scan journal`, `/scan command-cente
 - `docs/scans/YYYY-MM-DD-<subject>.md` written with full Phase 5 sections.
 - Every CRITICAL/HIGH finding either fixed, marked `wontfix`, or marked `deferred` with explicit reason.
 - ≥1 greppable detector added to `~/.claude/memory.md` Anti-Pattern Catalog if class-bug recurs.
-- TypeScript clean (`bunx tsc --noEmit --pretty false`).
+- TypeScript clean (`pnpm tsc --noEmit --pretty false`).
 - No new ESLint regressions vs base branch.
 
 ## Out of scope

@@ -1,7 +1,7 @@
 # Axion — Database Schema
 
 > **Single source of truth: `src/db/schema.ts`.**
-> This doc explains the *system* — domain groupings, conventions, and invariants — not column-level values.
+> This doc explains the _system_ — domain groupings, conventions, and invariants — not column-level values.
 > For the live shape of any table, read `schema.ts`.
 
 ## 1. Stack
@@ -14,23 +14,23 @@
 
 Tables group into the following domains. Each domain owns a set of related tables and the relations between them.
 
-| Domain | Purpose | Key tables (representative) |
-|---|---|---|
-| **Auth** | Identity, sessions, OAuth, rate limiting | `users`, `sessions`, `oauth_accounts`, `verification_tokens`, `rate_limit_attempts` |
-| **Trading accounts** | Multi-account ownership (personal / prop / replay) | `trading_accounts`, `account_assets`, `account_timeframes`, `account_asset_settings`, `daily_asset_settings` |
-| **Reference data** | Asset catalog and timeframe definitions | `assets`, `asset_types`, `timeframes` |
-| **Trade journal** | Trades, executions, tags, daily journals | `trades`, `trade_executions`, `tags`, `trade_tags`, `daily_journals` |
-| **Strategies & playbook** | Strategy library + condition system | `strategies`, `trading_conditions`, `strategy_conditions`, `strategy_scenarios`, `scenario_images` |
-| **Command center** | Daily checklists, asset rules | `daily_checklists`, `checklist_completions` |
-| **Risk management** | Risk profiles, equity-shield params | `risk_management_profiles` |
-| **Fractal planning** | Year → quarter → month → week → day cascade | `yearly_plans`, `quarterly_plan`, `monthly_plan`, `weekly_plan`, `daily_plan`, `tier_change_log` |
-| **BR tax engine** | Monthly DARF ledger and per-account fee config | `monthly_tax_ledger`, `account_fee_rates` |
-| **Imports** | Nota fiscal imports, OCR, CSV | `nota_imports` |
-| **Bug reports** | In-app bug capture | `bug_reports`, `bug_report_images` |
-| **Indicators / candles** | Technical indicator definitions and price data | `indicator_groups`, `indicator_definitions`, `price_candles`, `price_data_versions` |
-| **Aggregates** | Pre-computed monthly / weekly rollups | `account_monthly_aggregate`, `account_weekly_aggregate` |
-| **Capital events** | Deposits / withdrawals | `account_capital_events` |
-| **Settings & filters** | App-level config and saved filter presets | `settings`, `user_settings`, `filter_presets` |
+| Domain                    | Purpose                                            | Key tables (representative)                                                                                  |
+| ------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Auth**                  | Identity, sessions, OAuth, rate limiting           | `users`, `sessions`, `oauth_accounts`, `verification_tokens`, `rate_limit_attempts`                          |
+| **Trading accounts**      | Multi-account ownership (personal / prop / replay) | `trading_accounts`, `account_assets`, `account_timeframes`, `account_asset_settings`, `daily_asset_settings` |
+| **Reference data**        | Asset catalog and timeframe definitions            | `assets`, `asset_types`, `timeframes`                                                                        |
+| **Trade journal**         | Trades, executions, tags, daily journals           | `trades`, `trade_executions`, `tags`, `trade_tags`, `daily_journals`                                         |
+| **Strategies & playbook** | Strategy library + condition system                | `strategies`, `trading_conditions`, `strategy_conditions`, `strategy_scenarios`, `scenario_images`           |
+| **Command center**        | Daily checklists, asset rules                      | `daily_checklists`, `checklist_completions`                                                                  |
+| **Risk management**       | Risk profiles, equity-shield params                | `risk_management_profiles`                                                                                   |
+| **Fractal planning**      | Year → quarter → month → week → day cascade        | `yearly_plans`, `quarterly_plan`, `monthly_plan`, `weekly_plan`, `daily_plan`, `tier_change_log`             |
+| **BR tax engine**         | Monthly DARF ledger and per-account fee config     | `monthly_tax_ledger`, `account_fee_rates`                                                                    |
+| **Imports**               | Nota fiscal imports, OCR, CSV                      | `nota_imports`                                                                                               |
+| **Bug reports**           | In-app bug capture                                 | `bug_reports`, `bug_report_images`                                                                           |
+| **Indicators / candles**  | Technical indicator definitions and price data     | `indicator_groups`, `indicator_definitions`, `price_candles`, `price_data_versions`                          |
+| **Aggregates**            | Pre-computed monthly / weekly rollups              | `account_monthly_aggregate`, `account_weekly_aggregate`                                                      |
+| **Capital events**        | Deposits / withdrawals                             | `account_capital_events`                                                                                     |
+| **Settings & filters**    | App-level config and saved filter presets          | `settings`, `user_settings`, `filter_presets`                                                                |
 
 ## 3. Conventions & Invariants
 
@@ -87,9 +87,9 @@ A `trade` may have one or many `trade_executions`. `executionMode` (`simple` | `
 ## 6. Editing the Schema
 
 1. Edit `src/db/schema.ts`.
-2. Run `bun drizzle-kit generate` to produce a migration.
+2. Run `pnpm drizzle-kit generate` to produce a migration.
 3. Inspect the generated SQL — Drizzle is good but not perfect with renames and type changes.
-4. Run `bun drizzle-kit migrate` (or apply via the deploy pipeline).
+4. Run `pnpm drizzle-kit migrate` (or apply via the deploy pipeline).
 5. Update any server action / query / type that reads the changed column.
 6. Update `scripts/seed.ts` if seed data is affected.
 
