@@ -17,6 +17,7 @@ import {
 } from "@/lib/user-crypto"
 import { updateTradeAggregates } from "@/app/actions/executions"
 import { toCents } from "@/lib/money"
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 
 interface CreateExecutionBody {
 	tradeId: string
@@ -172,6 +173,13 @@ const POST = async (request: NextRequest) => {
 			.returning()
 
 		await updateTradeAggregates(body.tradeId, dek)
+
+		if (trade.entryDate) {
+			await markTaxLedgerDirty(
+				trade.accountId ?? auth.accountId,
+				new Date(trade.entryDate)
+			)
+		}
 
 		const decryptedExecution = dek
 			? (decryptExecutionFields(

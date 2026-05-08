@@ -16,6 +16,7 @@ import {
 } from "@/lib/user-crypto"
 import { updateTradeAggregates } from "@/app/actions/executions"
 import { toCents } from "@/lib/money"
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 
 interface UpdateExecutionBody {
 	id: string
@@ -193,6 +194,13 @@ const POST = async (request: NextRequest) => {
 			.returning()
 
 		await updateTradeAggregates(existing.tradeId, dek)
+
+		if (existing.trade.entryDate) {
+			await markTaxLedgerDirty(
+				existing.trade.accountId ?? auth.accountId,
+				new Date(existing.trade.entryDate)
+			)
+		}
 
 		const decryptedExecution = dek
 			? (decryptExecutionFields(

@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { buildAccountCondition } from "../../_lib/filters"
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 
 interface ArchDeleteTradeBody {
 	id: string
@@ -37,7 +38,7 @@ const POST = async (request: NextRequest) => {
 		// Verify trade exists and belongs to the user
 		const existing = await db.query.trades.findFirst({
 			where: and(eq(trades.id, body.id), accountCondition),
-			columns: { id: true },
+			columns: { id: true, accountId: true, entryDate: true },
 		})
 
 		if (!existing) {
@@ -58,6 +59,13 @@ const POST = async (request: NextRequest) => {
 			.update(trades)
 			.set({ isArchived: true, updatedAt: new Date() })
 			.where(and(eq(trades.id, body.id), accountCondition))
+
+		if (existing.entryDate) {
+			await markTaxLedgerDirty(
+				existing.accountId ?? auth.accountId,
+				new Date(existing.entryDate)
+			)
+		}
 
 		return archSuccess("Trade deleted successfully", { id: body.id })
 	} catch (error) {

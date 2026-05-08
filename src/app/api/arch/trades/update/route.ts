@@ -25,6 +25,9 @@ import {
 	encryptTradeFields,
 	decryptTradeFields,
 } from "@/lib/user-crypto"
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
+import { applyScaledExecutionOps, hasOps } from "../../_lib/scaled-update"
+import type { ScaledExecutionOps } from "../../_lib/scaled-update"
 
 interface ArchUpdateTradeBody {
 	id: string
@@ -47,9 +50,14 @@ interface ArchUpdateTradeBody {
 	disciplineNotes?: string
 	followedPlan?: boolean
 	setupRank?: "A" | "AA" | "AAA" | null
+	rating?: "A" | "B" | "C" | "D" | "F" | null
+	screenshotUrl?: string | null
+	screenshotS3Key?: string | null
+	isArchived?: boolean
 	mfe?: number | string
 	mae?: number | string
 	contractsExecuted?: number | string
+	executions?: ScaledExecutionOps
 }
 
 /**
@@ -314,6 +322,18 @@ const POST = async (request: NextRequest) => {
 		if (body.setupRank !== undefined) {
 			updateData.setupRank = body.setupRank || null
 		}
+		if (body.rating !== undefined) {
+			updateData.rating = body.rating || null
+		}
+		if (body.screenshotUrl !== undefined) {
+			updateData.screenshotUrl = body.screenshotUrl
+		}
+		if (body.screenshotS3Key !== undefined) {
+			updateData.screenshotS3Key = body.screenshotS3Key
+		}
+		if (body.isArchived !== undefined) {
+			updateData.isArchived = body.isArchived
+		}
 
 		// Always include calculated fields when we have exit data
 		if (exitPrice) {
@@ -392,6 +412,47 @@ const POST = async (request: NextRequest) => {
 				],
 				404
 			)
+		}
+
+		// Apply executions ops (add/update/delete) if provided. This will
+		// recompute aggregates from legs via updateTradeAggregates, overriding
+		// any prior trade-field updates that came from this same request body.
+		if (hasOps(body.executions)) {
+			try {
+				await applyScaledExecutionOps(
+					body.id,
+					body.executions ?? {},
+					dek ?? null
+				)
+			} catch (opsError) {
+				const raw =
+					opsError instanceof Error ? opsError.message : String(opsError)
+				const [, code, ...detailParts] = raw.split(":")
+				return archError("Invalid execution operations", [
+					{
+						code: code ?? "SCALED_OPS",
+						detail: detailParts.join(":") || raw,
+					},
+				])
+			}
+		}
+
+		const originalEntryDate = existing.entryDate
+			? new Date(existing.entryDate)
+			: null
+		const newEntryDate = updatedTrade.entryDate
+			? new Date(updatedTrade.entryDate)
+			: null
+		const tradeAccountId = updatedTrade.accountId ?? auth.accountId
+		if (originalEntryDate) {
+			await markTaxLedgerDirty(tradeAccountId, originalEntryDate)
+		}
+		if (
+			newEntryDate &&
+			(!originalEntryDate ||
+				newEntryDate.getTime() !== originalEntryDate.getTime())
+		) {
+			await markTaxLedgerDirty(tradeAccountId, newEntryDate)
 		}
 
 		// Replace tag associations if tags were provided

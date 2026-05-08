@@ -1,25 +1,36 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { trades, tradeTags } from "@/db/schema"
-import { eq, and, gte, lte, inArray, desc, asc, count } from "drizzle-orm"
+import { trades } from "@/db/schema"
+import { and, desc, asc, count } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError, formatTradeForArch } from "../../_lib/helpers"
-import { buildAccountCondition } from "../../_lib/filters"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import {
-	resolveStrategyName,
-	resolveTagNames,
-	resolveTimeframeName,
-} from "../../_lib/resolve-names"
+	parseArchFilters,
+	parseArchPostDecryptFilters,
+	matchesPostDecryptFilters,
+} from "../../_lib/filters"
+import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
-type SortByColumn = "entryDate" | "pnl" | "realizedRMultiple" | "asset"
+type SortByColumn =
+	| "entryDate"
+	| "exitDate"
+	| "pnl"
+	| "realizedRMultiple"
+	| "asset"
+	| "outcome"
+	| "rOutcome"
+	| "createdAt"
 type SortOrder = "asc" | "desc"
 
 const VALID_SORT_COLUMNS: SortByColumn[] = [
 	"entryDate",
+	"exitDate",
 	"pnl",
 	"realizedRMultiple",
 	"asset",
+	"outcome",
+	"rOutcome",
+	"createdAt",
 ]
 const VALID_SORT_ORDERS: SortOrder[] = ["asc", "desc"]
 const MAX_LIMIT = 100
@@ -27,18 +38,17 @@ const DEFAULT_LIMIT = 20
 
 const sortColumnMap = {
 	entryDate: trades.entryDate,
+	exitDate: trades.exitDate,
 	pnl: trades.pnl,
 	realizedRMultiple: trades.realizedRMultiple,
 	asset: trades.asset,
+	outcome: trades.outcome,
+	rOutcome: trades.rOutcome,
+	createdAt: trades.createdAt,
 } as const
 
 /**
- * Clamps a numeric query param between min and max, returning a fallback if invalid.
- *
- * @param value - Raw query param string
- * @param fallback - Default value when param is absent or invalid
- * @param max - Upper bound
- * @returns Clamped integer
+ * Clamps a numeric query param between 0 and `max`, returning fallback if invalid.
  */
 const clampInt = (
 	value: string | null,
@@ -55,6 +65,24 @@ const clampInt = (
 	return Math.min(parsed, max)
 }
 
+/**
+ * GET /api/arch/trades/list
+ *
+ * Paginated trade list with full filter capacity.
+ *
+ * SQL filters (efficient): dateFrom/To, assets, directions, outcomes, rating,
+ * setupRank, executionMode, source, followedPlan, isArchived, strategy/strategyIds,
+ * timeframe/timeframeIds, tags/tagIds.
+ *
+ * Post-decrypt filters (applied after row decryption — narrows the page):
+ * - hourFrom, hourTo: 0-23, entry-date hour
+ * - pnlMin, pnlMax: numeric dollars
+ *
+ * Note: when post-decrypt filters are active, the response `total` reflects the
+ * SQL-pre-filter count. The returned `items.length` may be smaller than `limit`
+ * because filtering happens after the page is loaded. Callers should rely on
+ * `pagination.hasMore` for cursor-style traversal.
+ */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
 	if (!authResult.success) {
@@ -65,15 +93,6 @@ const GET = async (request: NextRequest) => {
 	try {
 		const searchParams = request.nextUrl.searchParams
 
-		// Parse query params
-		const dateFrom = searchParams.get("dateFrom")
-		const dateTo = searchParams.get("dateTo")
-		const assetsParam = searchParams.get("assets")
-		const directionsParam = searchParams.get("directions")
-		const outcomesParam = searchParams.get("outcomes")
-		const strategyParam = searchParams.get("strategy")
-		const tagsParam = searchParams.get("tags")
-		const timeframeParam = searchParams.get("timeframe")
 		const limit = clampInt(searchParams.get("limit"), DEFAULT_LIMIT, MAX_LIMIT)
 		const offset = clampInt(
 			searchParams.get("offset"),
@@ -93,81 +112,10 @@ const GET = async (request: NextRequest) => {
 				? sortOrderRaw
 				: "desc"
 
-		const assets = assetsParam
-			? assetsParam
-					.split(",")
-					.map((asset) => asset.trim())
-					.filter(Boolean)
-			: []
-		const directions = directionsParam
-			? (directionsParam
-					.split(",")
-					.map((direction) => direction.trim())
-					.filter(Boolean) as ("long" | "short")[])
-			: []
-		const outcomes = outcomesParam
-			? (outcomesParam
-					.split(",")
-					.map((outcome) => outcome.trim())
-					.filter(Boolean) as ("win" | "loss" | "breakeven")[])
-			: []
-		const tagNames = tagsParam
-			? tagsParam
-					.split(",")
-					.map((tag) => tag.trim())
-					.filter(Boolean)
-			: []
-
-		const conditions = [
-			buildAccountCondition(auth),
-			eq(trades.isArchived, false),
-		]
-
-		if (dateFrom) {
-			conditions.push(gte(trades.entryDate, new Date(dateFrom)))
-		}
-		if (dateTo) {
-			conditions.push(lte(trades.entryDate, new Date(dateTo)))
-		}
-		if (assets.length) {
-			conditions.push(inArray(trades.asset, assets))
-		}
-		if (directions.length) {
-			conditions.push(inArray(trades.direction, directions))
-		}
-		if (outcomes.length) {
-			conditions.push(inArray(trades.outcome, outcomes))
-		}
-
-		// Resolve fuzzy names
-		if (strategyParam) {
-			const strategyId = await resolveStrategyName(strategyParam, auth.userId)
-			if (strategyId) {
-				conditions.push(eq(trades.strategyId, strategyId))
-			}
-		}
-
-		if (timeframeParam) {
-			const timeframeId = await resolveTimeframeName(timeframeParam)
-			if (timeframeId) {
-				conditions.push(eq(trades.timeframeId, timeframeId))
-			}
-		}
-
-		if (tagNames.length) {
-			const tagIds = await resolveTagNames(tagNames, auth.userId)
-			if (tagIds.length) {
-				const tradesWithTags = db
-					.select({ tradeId: tradeTags.tradeId })
-					.from(tradeTags)
-					.where(inArray(tradeTags.tagId, tagIds))
-				conditions.push(inArray(trades.id, tradesWithTags))
-			}
-		}
-
+		const conditions = await parseArchFilters(searchParams, auth)
+		const postFilters = parseArchPostDecryptFilters(searchParams)
 		const whereClause = and(...conditions)
 
-		// Get total count
 		const [totalRow] = await db
 			.select({ total: count() })
 			.from(trades)
@@ -175,7 +123,6 @@ const GET = async (request: NextRequest) => {
 
 		const total = totalRow?.total ?? 0
 
-		// Get paginated trades with relations
 		const sortColumn = sortColumnMap[sortBy]
 		const orderFn = sortOrder === "asc" ? asc : desc
 
@@ -191,14 +138,22 @@ const GET = async (request: NextRequest) => {
 			offset,
 		})
 
-		// Decrypt fields
 		const dek = await getUserDek(auth.userId)
 		const decryptedTrades = dek
 			? result.map((trade) => decryptTradeFields(trade, dek))
 			: result
 
-		// Format for Arch response
-		const formattedTrades = decryptedTrades.map((trade) =>
+		const filteredTrades = decryptedTrades.filter((trade) =>
+			matchesPostDecryptFilters(
+				{
+					entryDate: trade.entryDate as Date | string,
+					pnl: (trade as { pnl?: string | number | null }).pnl ?? null,
+				},
+				postFilters
+			)
+		)
+
+		const formattedTrades = filteredTrades.map((trade) =>
 			formatTradeForArch(trade)
 		)
 

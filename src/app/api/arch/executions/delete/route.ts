@@ -6,6 +6,7 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { getUserDek } from "@/lib/user-crypto"
 import { updateTradeAggregates } from "@/app/actions/executions"
+import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 
 interface DeleteExecutionBody {
 	id: string
@@ -64,11 +65,18 @@ const POST = async (request: NextRequest) => {
 		}
 
 		const tradeId = existing.tradeId
+		const tradeEntryDate = existing.trade.entryDate
+			? new Date(existing.trade.entryDate)
+			: null
 
 		await db.delete(tradeExecutions).where(eq(tradeExecutions.id, body.id))
 
 		const dek = await getUserDek(auth.userId)
 		await updateTradeAggregates(tradeId, dek)
+
+		if (tradeEntryDate) {
+			await markTaxLedgerDirty(tradeAccountId, tradeEntryDate)
+		}
 
 		// Check if any executions remain
 		const remainingExecutions = await db.query.tradeExecutions.findMany({
