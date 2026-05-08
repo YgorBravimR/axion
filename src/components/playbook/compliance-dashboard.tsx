@@ -40,13 +40,6 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 				? "text-warning"
 				: "text-trade-sell"
 
-	const complianceBgColor =
-		data.overallCompliance >= 80
-			? "bg-trade-buy"
-			: data.overallCompliance >= 50
-				? "bg-warning"
-				: "bg-trade-sell"
-
 	return (
 		<div
 			id="playbook-compliance"

@@ -101,29 +101,18 @@ export const TradeRow = memo(
 
 		const formatBrl = useCallback((v: number) => formatBrlWithSign(v), [])
 
-		return (
-			<div
-				className={cn(
-					"gap-s-200 px-s-300 py-s-200 flex min-w-0 items-center border-l-2 transition-colors",
-					trade.outcome === "win" && "border-l-trade-buy",
-					trade.outcome === "loss" && "border-l-trade-sell",
-					trade.outcome === "breakeven" && "border-l-txt-300",
-					!trade.outcome && "border-l-transparent",
-					isThisDeleting && "bg-fb-error/8",
-					isDisabled && "pointer-events-none opacity-40",
-					!isAnyDeleting && onTradeClick && "hover:bg-bg-100 cursor-pointer"
-				)}
-				onClick={handleClick}
-				onKeyDown={handleKeyDown}
-				tabIndex={!isAnyDeleting && onTradeClick ? 0 : undefined}
-				role={!isAnyDeleting && onTradeClick ? "button" : undefined}
-				aria-label={t("tradeRowAriaLabel", {
-					asset: trade.asset,
-					direction: trade.direction,
-					time: trade.time,
-				})}
-				aria-disabled={isDisabled}
-			>
+		const baseRowClass = cn(
+			"group/row gap-s-200 px-s-300 py-s-200 flex min-w-0 items-center border-l-2 transition-colors",
+			trade.outcome === "win" && "border-l-trade-buy",
+			trade.outcome === "loss" && "border-l-trade-sell",
+			trade.outcome === "breakeven" && "border-l-txt-300",
+			!trade.outcome && "border-l-transparent",
+			isThisDeleting && "bg-fb-error/8",
+			isDisabled && "pointer-events-none opacity-40"
+		)
+
+		const rowContent = (
+			<>
 				{/* Outcome Icon */}
 				{trade.outcome === "win" && (
 					<Target
@@ -270,6 +259,31 @@ export const TradeRow = memo(
 						)}
 					</>
 				)}
+			</>
+		)
+
+		if (!isAnyDeleting && onTradeClick) {
+			return (
+				<div
+					role="button"
+					tabIndex={0}
+					className={cn(baseRowClass, "hover:bg-bg-100 cursor-pointer")}
+					onClick={handleClick}
+					onKeyDown={handleKeyDown}
+					aria-label={t("tradeRowAriaLabel", {
+						asset: trade.asset,
+						direction: trade.direction,
+						time: trade.time,
+					})}
+				>
+					{rowContent}
+				</div>
+			)
+		}
+
+		return (
+			<div className={baseRowClass} aria-disabled={isDisabled || undefined}>
+				{rowContent}
 			</div>
 		)
 	}

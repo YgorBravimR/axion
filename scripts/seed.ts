@@ -110,34 +110,6 @@ const runSeed = async () => {
 	const sql = neon(databaseUrl)
 	console.log("🔗 Connected to database\n")
 
-	// Helper to convert dollars to cents
-	const toCents = (dollars: number | null) =>
-		dollars !== null ? Math.round(dollars * 100) : null
-
-	// Helper to calculate planned risk amount and realized R-multiple
-	const calculateRiskValues = (
-		direction: string,
-		entryPrice: number,
-		stopLoss: number | null,
-		positionSize: number,
-		pnl: number
-	) => {
-		if (!stopLoss) {
-			return { plannedRiskAmount: null, realizedRMultiple: null }
-		}
-
-		const riskPerUnit =
-			direction === "long" ? entryPrice - stopLoss : stopLoss - entryPrice
-		const plannedRiskAmount = Math.abs(riskPerUnit * positionSize)
-		const realizedRMultiple =
-			plannedRiskAmount > 0 ? pnl / plannedRiskAmount : null
-
-		return {
-			plannedRiskAmount: toCents(plannedRiskAmount),
-			realizedRMultiple: realizedRMultiple?.toFixed(2) ?? null,
-		}
-	}
-
 	// ==========================================
 	// 1. Clean up existing data (in order due to FK constraints)
 	// ==========================================
@@ -382,8 +354,6 @@ const runSeed = async () => {
 	const personalStrategyMap = new Map(
 		personalStrategies.map((s) => [s.code, s.id])
 	)
-	const timeframes = await sql`SELECT id, code FROM timeframes`
-	const timeframeMap = new Map(timeframes.map((t) => [t.code, t.id]))
 
 	// Comprehensive trades from Nov 2025 to Jan 2026
 	// P&L calculated using: WIN = R$0.20/pt/contract, WDO = R$10/pt/contract
@@ -980,11 +950,6 @@ const runSeed = async () => {
 	// 11. Trades - Prop Account (Nov 2025 - Jan 2026)
 	// ==========================================
 	console.log("\n📦 Seeding trades for Prop account...")
-
-	// Get strategy IDs for prop account
-	const propStrategies =
-		await sql`SELECT id, code FROM strategies WHERE account_id = ${propAccount.id}`
-	const propStrategyMap = new Map(propStrategies.map((s) => [s.code, s.id]))
 
 	// Prop account trades - more disciplined, better risk management
 	// const propTrades = [

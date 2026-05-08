@@ -100,7 +100,7 @@ const JournalContent = () => {
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
 	const effectiveDate = useEffectiveDate()
-	const [isPending, startTransition] = useTransition()
+	const [, startTransition] = useTransition()
 	const urlParams = useUrlParams()
 
 	// Read period from URL, default to "week"

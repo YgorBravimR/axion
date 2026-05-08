@@ -15,7 +15,14 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	await requireRole("trader")
 	const { returnTo, asset } = await searchParams
 
-	const [strategiesResult, tagsResult, assets, timeframes, effectiveDate, account] = await Promise.all([
+	const [
+		strategiesResult,
+		tagsResult,
+		assets,
+		timeframes,
+		effectiveDate,
+		account,
+	] = await Promise.all([
 		getStrategies(),
 		getTags(),
 		getActiveAssets().catch(() => []),
@@ -31,14 +38,11 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	// URL query param takes priority, then account's default asset
 	const resolvedDefaultAsset = asset || account?.defaultAsset || undefined
 
-	// Determine back link based on returnTo
-	const backLink = returnTo || "/journal"
-
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<div className="mx-auto max-w-5xl">
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600">
+					<div className="border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600 rounded-lg border">
 						<NewTradeTabs
 							strategies={strategies}
 							tags={tags}

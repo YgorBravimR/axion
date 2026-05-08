@@ -1,24 +1,24 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { assets, strategies, tags, trades as tradesTable } from "@/db/schema"
 import type { Tag } from "@/db/schema"
-import type { ActionResponse } from "@/types"
-import type { CsvTradeInput } from "@/lib/csv-parser"
-import { eq, and, inArray } from "drizzle-orm"
+import { assets, strategies, tags, trades as tradesTable } from "@/db/schema"
+import { B3_FUT_PREFIXES, resolveTradeAsset } from "@/lib/asset-resolution"
 import { calculateAssetPnL } from "@/lib/calculations"
-import { getAssetFees } from "./accounts"
-import { bulkCreateTrades } from "./trades"
-import { requireAuth, getCurrentAccount } from "./auth"
+import type { CsvTradeInput } from "@/lib/csv-parser"
+import { computeTradeHash } from "@/lib/deduplication"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { fromCents } from "@/lib/money"
-import { computeTradeHash } from "@/lib/deduplication"
-import { resolveTradeAsset, B3_FUT_PREFIXES } from "@/lib/asset-resolution"
+import type { ActionResponse } from "@/types"
+import { and, eq, inArray } from "drizzle-orm"
+import { getAssetFees } from "./accounts"
+import { getCurrentAccount, requireAuth } from "./auth"
 import type {
-	ProcessedCsvTrade,
-	CsvValidationResult,
 	CsvImportResult,
+	CsvValidationResult,
+	ProcessedCsvTrade,
 } from "./csv-import.types"
+import { bulkCreateTrades } from "./trades"
 
 // ==========================================
 // Validate CSV Trades
@@ -373,7 +373,7 @@ export const importCsvTrades = async (
 	trades: ProcessedCsvTrade[]
 ): Promise<ActionResponse<CsvImportResult>> => {
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { userId } = await requireAuth()
 
 		// Filter to only valid/warning trades (not skipped)
 		const validTrades = trades.filter(

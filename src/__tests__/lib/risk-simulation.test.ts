@@ -163,9 +163,6 @@ describe("runSimpleSimulation", () => {
 			const trades = createDaySequence(["loss", "loss", "loss", "win"])
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
-			const skippedDaily = result.trades.filter(
-				(t) => t.status === "skipped_daily_limit"
-			)
 			const executed = result.trades.filter((t) => t.status === "executed")
 
 			// At least one trade should be skipped due to daily limit
@@ -248,9 +245,6 @@ describe("runSimpleSimulation", () => {
 			)
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
-			const monthlySkips = result.trades.filter(
-				(t) => t.status === "skipped_monthly_limit"
-			)
 			// Some trades should be skipped due to monthly limit (or daily limit kicks in first)
 			expect(
 				result.summary.skippedMonthlyLimit + result.summary.skippedDailyLimit

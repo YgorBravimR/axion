@@ -153,7 +153,7 @@ export const DashboardContent = ({
 	)
 	const [radarData, setRadarData] = useState<RadarChartData[]>(initialRadarData)
 
-	const [isPending, startTransition] = useTransition()
+	const [, startTransition] = useTransition()
 	const [isPeriodLoading, startPeriodTransition] = useTransition()
 
 	// Day detail modal state

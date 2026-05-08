@@ -695,14 +695,6 @@ describe("detectOvertrading", () => {
 			// Diff = 50% - 40% = 10pp → exactly meets threshold → FIRES
 			// To NOT fire: make both equal WR
 			// Low: 50%, High: 50% → diff = 0
-			const trades = [
-				...Array.from({ length: 5 }, (_, i) =>
-					createTradesOnDistinctDay(3, i, 1)
-				), // 50% WR
-				...Array.from({ length: 5 }, (_, i) =>
-					createTradesOnDistinctDay(5, i + 10, 2)
-				), // 40% WR — fires
-			].flat()
 			// Actually 50-40=10pp fires. Let's build equal WR instead.
 			const equalTrades = [
 				...Array.from({ length: 5 }, (_, i) =>

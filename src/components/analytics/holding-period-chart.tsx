@@ -35,20 +35,6 @@ interface CustomTooltipProps {
 	labels?: TooltipLabels
 }
 
-const formatDuration = (
-	minutes: number,
-	t: (_key: string, _params?: Record<string, string>) => string
-): string => {
-	if (minutes < 1) {
-		return t("minutes", { value: "< 1" })
-	}
-	if (minutes < 60) {
-		return t("minutes", { value: String(Math.round(minutes)) })
-	}
-	const hours = minutes / 60
-	return t("hours", { value: hours.toFixed(1) })
-}
-
 const CustomTooltip = ({ active, payload, labels }: CustomTooltipProps) => {
 	const head = payload?.[0]
 	if (!active || !head || !labels) {

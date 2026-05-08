@@ -1,42 +1,39 @@
 "use client"
 
-import { useState, useCallback } from "react"
 import {
-	CircuitBreakerPanel,
-	DailyChecklist,
-	ChecklistManager,
-	PreMarketNotes,
-	PostMarketNotes,
-	AssetRulesPanel,
-	DailySummaryCard,
-	LiveTradingStatusPanel,
-} from "@/components/command-center"
-import { DateNavigator } from "@/components/command-center/date-navigator"
-import {
-	getTodayCompletions,
 	getAssetSettings,
-	getCircuitBreakerStatus,
-	getDailySummary,
+	getTodayCompletions,
 } from "@/app/actions/command-center"
-import { getDailyPlanForCurrentAccount } from "@/app/actions/fractal-plan/daily"
-import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import type {
-	ChecklistWithCompletion,
 	AssetSettingWithAsset,
+	ChecklistWithCompletion,
 	DailySummary,
 } from "@/app/actions/command-center.types"
-import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
-import type { LiveTradingStatusResult } from "@/types/live-trading-status"
-import type {
-	DailyChecklist as DailyChecklistType,
-	DailyPlan,
-	Asset,
-	TradingAccount,
-} from "@/db/schema"
-import { useTranslations } from "next-intl"
-import { useFeatureAccess } from "@/hooks/use-feature-access"
+import { getDailyPlanForCurrentAccount } from "@/app/actions/fractal-plan/daily"
+import {
+	AssetRulesPanel,
+	ChecklistManager,
+	CircuitBreakerPanel,
+	DailyChecklist,
+	DailySummaryCard,
+	LiveTradingStatusPanel,
+	PostMarketNotes,
+	PreMarketNotes,
+} from "@/components/command-center"
+import { DateNavigator } from "@/components/command-center/date-navigator"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { commandCenterGuide } from "@/components/ui/page-guide/guide-configs/command-center"
+import type {
+	Asset,
+	DailyChecklist as DailyChecklistType,
+	DailyPlan,
+	TradingAccount,
+} from "@/db/schema"
+import { useFeatureAccess } from "@/hooks/use-feature-access"
+import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
+import type { LiveTradingStatusResult } from "@/types/live-trading-status"
+import { useTranslations } from "next-intl"
+import { useCallback, useState } from "react"
 
 import { CalendarDays } from "lucide-react"
 
@@ -74,11 +71,9 @@ const CommandCenterContent = ({
 	const [completions, setCompletions] = useState(initialCompletions)
 	const [dailyPlan, setDailyPlan] = useState(initialDailyPlan)
 	const [assetSettings, setAssetSettings] = useState(initialAssetSettings)
-	const [circuitBreaker, setCircuitBreaker] = useState(initialCircuitBreaker)
-	const [summary, setSummary] = useState(initialSummary)
-	const [liveTradingStatus, setLiveTradingStatus] = useState(
-		initialLiveTradingStatus
-	)
+	const [circuitBreaker] = useState(initialCircuitBreaker)
+	const [summary] = useState(initialSummary)
+	const [liveTradingStatus] = useState(initialLiveTradingStatus)
 
 	// Checklist manager
 	const [checklistManagerOpen, setChecklistManagerOpen] = useState(false)
@@ -106,27 +101,6 @@ const CommandCenterContent = ({
 			setAssetSettings(result.data)
 		}
 	}, [])
-
-	const refreshCircuitBreaker = useCallback(async () => {
-		const result = await getCircuitBreakerStatus(new Date(viewDate))
-		if (result.status === "success" && result.data) {
-			setCircuitBreaker(result.data)
-		}
-	}, [viewDate])
-
-	const refreshSummary = useCallback(async () => {
-		const result = await getDailySummary(new Date(viewDate))
-		if (result.status === "success" && result.data) {
-			setSummary(result.data)
-		}
-	}, [viewDate])
-
-	const refreshLiveTradingStatus = useCallback(async () => {
-		const result = await getLiveTradingStatus(new Date(viewDate))
-		if (result.status === "success" && result.data) {
-			setLiveTradingStatus(result.data)
-		}
-	}, [viewDate])
 
 	const handleManageChecklist = useCallback(
 		(checklistId: string) => {

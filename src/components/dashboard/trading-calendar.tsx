@@ -1,12 +1,6 @@
 "use client"
 
-import {
-	useMemo,
-	useCallback,
-	memo,
-	type KeyboardEvent,
-	type MouseEvent,
-} from "react"
+import { useMemo, useCallback, memo, type MouseEvent } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -100,23 +94,10 @@ export const TradingCalendar = memo(
 		}, [onMonthChange, year, monthIndex])
 
 		const handleCellClick = useCallback(
-			(e: MouseEvent<HTMLDivElement>) => {
+			(e: MouseEvent<HTMLButtonElement>) => {
 				const key = e.currentTarget.dataset.dateKey
 				if (key && onDayClick) {
 					onDayClick(key)
-				}
-			},
-			[onDayClick]
-		)
-
-		const handleCellKeyDown = useCallback(
-			(e: KeyboardEvent) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault()
-					const key = (e.currentTarget as HTMLElement).dataset.dateKey
-					if (key && onDayClick) {
-						onDayClick(key)
-					}
 				}
 			},
 			[onDayClick]
@@ -205,64 +186,79 @@ export const TradingCalendar = memo(
 
 							const isClickable = dailyData && onDayClick
 
+							const cellContent = (
+								<div className="flex h-full flex-col">
+									<span className="text-micro text-txt-200 sm:text-tiny leading-tight">
+										{dayData.date.getDate()}
+									</span>
+									{dailyData && (
+										<>
+											<div className="mt-auto flex justify-center sm:hidden">
+												<span
+													className={cn("h-1 w-1 rounded-full", textClass)}
+													aria-hidden="true"
+												/>
+											</div>
+											<div className="mt-auto hidden sm:block">
+												<span
+													className={cn("text-tiny font-medium", textClass)}
+												>
+													{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
+												</span>
+												<span className="text-tiny text-txt-300 block">
+													{dailyData.tradeCount}
+													{tCommon("tradeCountAbbr")}
+												</span>
+											</div>
+										</>
+									)}
+								</div>
+							)
+
+							const baseClass = cn(
+								"p-s-100 aspect-square rounded-sm sm:rounded-md",
+								bgClass,
+								isToday && "ring-acc-100 ring-1 sm:ring-2"
+							)
+
+							if (isClickable) {
+								return (
+									<button
+										key={dateKey}
+										type="button"
+										data-date-key={dateKey}
+										className={cn(
+											baseClass,
+											"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
+										)}
+										onClick={handleCellClick}
+										aria-label={
+											dailyData
+												? t("dayAriaLabel", {
+														date: dateKey,
+														pnl: formatCompactCurrencyWithSign(
+															dailyData.pnl,
+															"R$"
+														),
+														count: dailyData.tradeCount,
+													})
+												: undefined
+										}
+									>
+										{cellContent}
+									</button>
+								)
+							}
+
 							return (
 								<div
 									key={dateKey}
-									data-date-key={isClickable ? dateKey : undefined}
-									className={cn(
-										"p-s-100 aspect-square rounded-sm sm:rounded-md",
-										bgClass,
-										isToday && "ring-acc-100 ring-1 sm:ring-2",
-										isClickable &&
-											"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
-									)}
-									onClick={isClickable ? handleCellClick : undefined}
-									onKeyDown={isClickable ? handleCellKeyDown : undefined}
-									tabIndex={isClickable ? 0 : -1}
-									role={isClickable ? "button" : undefined}
+									className={baseClass}
 									aria-label={
-										dailyData
-											? t("dayAriaLabel", {
-													date: dateKey,
-													pnl: formatCompactCurrencyWithSign(
-														dailyData.pnl,
-														"R$"
-													),
-													count: dailyData.tradeCount,
-												})
-											: isToday
-												? t("todayAriaLabel", { date: dateKey })
-												: undefined
+										isToday ? t("todayAriaLabel", { date: dateKey }) : undefined
 									}
 								>
-									<div className="flex h-full flex-col">
-										<span className="text-micro text-txt-200 sm:text-tiny leading-tight">
-											{dayData.date.getDate()}
-										</span>
-										{dailyData && (
-											<>
-												{/* Mobile: dot indicator only */}
-												<div className="mt-auto flex justify-center sm:hidden">
-													<span
-														className={cn("h-1 w-1 rounded-full", textClass)}
-														aria-hidden="true"
-													/>
-												</div>
-												{/* sm+: full P&L and count */}
-												<div className="mt-auto hidden sm:block">
-													<span
-														className={cn("text-tiny font-medium", textClass)}
-													>
-														{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
-													</span>
-													<span className="text-tiny text-txt-300 block">
-														{dailyData.tradeCount}
-														{tCommon("tradeCountAbbr")}
-													</span>
-												</div>
-											</>
-										)}
-									</div>
+									{cellContent}
 								</div>
 							)
 						})}

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { ReactNode } from "react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -38,7 +37,6 @@ interface TradeDetailLayoutProps {
 }
 
 const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
-	const router = useRouter()
 	const tChart = useTranslations("trade.chart")
 	const tDialog = useTranslations("trade.unsavedDialog")
 	const [view, setView] = useState<"chart" | "details">(

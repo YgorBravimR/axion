@@ -60,11 +60,7 @@ export const TagList = () => {
 	}, [])
 
 	useEffect(() => {
-		let mounted = true
 		void loadTags()
-		return () => {
-			mounted = false
-		}
 	}, [loadTags])
 
 	const { tagCounts, filteredTags } = useMemo(() => {

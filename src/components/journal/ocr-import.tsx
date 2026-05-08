@@ -99,7 +99,7 @@ export const OcrImport = () => {
 
 	// State
 	const [step, setStep] = useState<Step>("upload")
-	const [image, setImage] = useState<string | null>(null)
+	const [, setImage] = useState<string | null>(null)
 	const [fileName, setFileName] = useState<string | null>(null)
 	const [progress, setProgress] = useState<OcrProgressInfo | null>(null)
 	const [parseResult, setParseResult] = useState<OcrParseResult | null>(null)
@@ -520,9 +520,10 @@ export const OcrImport = () => {
 
 			{/* Upload Area */}
 			{step === "upload" && (
-				<div
+				<label
+					htmlFor="ocr-file-input"
 					className={cn(
-						"p-m-500 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
+						"p-m-500 sm:p-l-700 lg:p-l-800 block cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -575,7 +576,7 @@ export const OcrImport = () => {
 							{t("selectImage")}
 						</Button>
 					</div>
-				</div>
+				</label>
 			)}
 
 			{/* Processing */}

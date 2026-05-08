@@ -40,7 +40,6 @@ type Step = "upload" | "review" | "enriching"
 export const NotaImport = () => {
 	const t = useTranslations("journal.nota")
 	const tCommon = useTranslations("common")
-	const tOverlay = useTranslations("overlay")
 	const locale = useLocale()
 	const router = useRouter()
 	const { showToast } = useToast()
@@ -285,9 +284,10 @@ export const NotaImport = () => {
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Step 1: Upload Area */}
 			{step === "upload" && (
-				<div
+				<label
+					htmlFor="nota-file-input"
 					className={cn(
-						"p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
+						"p-m-600 sm:p-l-700 lg:p-l-800 block cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -335,7 +335,7 @@ export const NotaImport = () => {
 							</div>
 						</>
 					)}
-				</div>
+				</label>
 			)}
 
 			{/* Step 2: Review Matches */}
@@ -601,7 +601,7 @@ export const NotaImport = () => {
 								id="nota-import-enrich"
 								onClick={handleEnrich}
 								disabled={isEnriching || selectedCount === 0}
-								className="w-full sm:min-w-[180px]"
+								className="w-full sm:min-w-45"
 							>
 								{isEnriching ? (
 									<>

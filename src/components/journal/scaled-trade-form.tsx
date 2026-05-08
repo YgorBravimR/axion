@@ -150,9 +150,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const [disciplineNotes, setDisciplineNotes] = useState(
 			initialSharedState?.disciplineNotes ?? ""
 		)
-		const [setupRank, setSetupRank] = useState<
-			"A" | "AA" | "AAA" | null | undefined
-		>(initialSharedState?.setupRank)
+		const [setupRank] = useState<"A" | "AA" | "AAA" | null | undefined>(
+			initialSharedState?.setupRank
+		)
 
 		// Tags
 		const [selectedTagIds, setSelectedTagIds] = useState<string[]>(

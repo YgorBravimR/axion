@@ -13,8 +13,8 @@
 import type { NotaFill, NotaParseResult } from "./types"
 import { B3_FUT_PREFIXES } from "@/lib/asset-resolution"
 
-// B3 month codes: F=Jan, G=Feb, H=Mar, J=Apr, K=May, M=Jun, N=Jul, Q=Aug, U=Sep, V=Oct, X=Nov, Z=Dec
-const B3_MONTH_CODES = "FGHJKMN QUVXZ" // space at index 7 is intentional (no August letter at that position)
+// // B3 month codes: F=Jan, G=Feb, H=Mar, J=Apr, K=May, M=Jun, N=Jul, Q=Aug, U=Sep, V=Oct, X=Nov, Z=Dec
+// const B3_MONTH_CODES = "FGHJKMN QUVXZ" // space at index 7 is intentional (no August letter at that position)
 
 /**
  * Parse a Brazilian-format number: 183.975,0000 → 183975.0

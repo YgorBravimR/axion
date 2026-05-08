@@ -170,9 +170,6 @@ export const updateTradeAggregates = async (
 		}
 	}
 
-	// Determine position status string for the positionStatus field
-	const positionStatus = summary.positionStatus
-
 	// Update trade with all aggregated data
 	await db
 		.update(trades)

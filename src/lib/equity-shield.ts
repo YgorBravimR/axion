@@ -274,7 +274,6 @@ const applyMethod2 = (
 		const trade = trades[i]!
 		const pnl = fromCents(trade.pnlCents)
 		originalCumulativePnl += pnl
-		const originalAccountEquity = initialBalance + originalCumulativePnl
 		const sma = smaValues[i]
 
 		// Mode decision: based on state BEFORE this trade (pre-entry).

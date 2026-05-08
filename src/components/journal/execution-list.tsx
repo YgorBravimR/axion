@@ -72,7 +72,7 @@ export const ExecutionList = ({
 	const t = useTranslations("execution")
 	const tCommon = useTranslations("common")
 	const locale = useLocale()
-	const [isPending, startTransition] = useTransition()
+	const [, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
 	// C4: All derived data in one memoised block keyed on executions reference

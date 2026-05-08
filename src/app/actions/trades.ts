@@ -1248,7 +1248,7 @@ export const bulkCreateTrades = async (
 					}
 
 					const validated = createTradeSchema.parse(tradeInput)
-					const { tagIds, ...tradeData } = validated
+					const { ...tradeData } = validated
 
 					// Resolve asset symbol to canonical form
 					const canonicalSymbol =

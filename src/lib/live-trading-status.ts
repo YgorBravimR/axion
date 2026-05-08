@@ -44,7 +44,6 @@ const resolveLiveStatus = ({
 	let consecutiveLosses = 0
 	let dailyTargetHit = false
 	let recoveryWinExit = false
-	let lastUsedRiskCents = baseRiskCents
 
 	// Logical step counter — breakeven trades are invisible to the phase machine
 	let currentStepNumber = 0
@@ -114,7 +113,6 @@ const resolveLiveStatus = ({
 		}
 
 		previousRiskCents = usedRiskCents
-		lastUsedRiskCents = usedRiskCents
 
 		// T1 branching: determine phase after this trade
 		if (isT1) {

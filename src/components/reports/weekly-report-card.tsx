@@ -72,7 +72,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 		)
 	}
 
-	const { summary, dailyBreakdown, topWins, topLosses } = report
+	const { summary, topWins, topLosses } = report
 
 	const weekLabel =
 		weekOffset === 0

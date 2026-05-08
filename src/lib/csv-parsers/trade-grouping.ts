@@ -268,7 +268,6 @@ export const calculateRMetrics = (trade: GroupedTrade) => {
 	// netPnl = (exit - entry) * qty - commission
 	// realizedR = netPnl / ((exit - entry) * qty)
 
-	const direction = trade.direction
 	const grossPnl = trade.grossPnl ?? 0
 
 	// Risk is implicitly 1R (the realized gross P&L per contract)

@@ -103,7 +103,6 @@ const matchTradeToGroup = (
 	const tradeDirection = trade.direction
 	const tradePositionSize = Number(trade.positionSize)
 	const tradeEntryPrice = Number(trade.entryPrice)
-	const tradeExitPrice = trade.exitPrice ? Number(trade.exitPrice) : null
 
 	// Determine entry/exit fills based on direction
 	const entryFills =
@@ -111,8 +110,6 @@ const matchTradeToGroup = (
 	const exitFills = tradeDirection === "long" ? group.sellFills : group.buyFills
 	const totalEntryQty =
 		tradeDirection === "long" ? group.totalBuyQty : group.totalSellQty
-	const totalExitQty =
-		tradeDirection === "long" ? group.totalSellQty : group.totalBuyQty
 	const avgEntryPrice =
 		tradeDirection === "long"
 			? group.weightedAvgBuyPrice

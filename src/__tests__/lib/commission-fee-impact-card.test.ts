@@ -93,28 +93,6 @@ const computeBarWidth = (fee: number, maxFee: number): number => {
 }
 
 /**
- * Mirrors the trend direction computation in the monthly trend section.
- */
-const computeTrendDirection = (
-	currentFees: number,
-	previousFees: number | null
-): "up" | "down" | "flat" | null => {
-	if (previousFees === null) {
-		return null
-	}
-	if (currentFees > previousFees) {
-		return "up"
-	}
-	if (currentFees < previousFees) {
-		return "flat"
-	} // wait — let me check:
-	// from component: month.totalFees < prevMonth.totalFees → "down"
-	// month.totalFees > prevMonth.totalFees → "up"
-	// else → "flat"
-	return "flat"
-}
-
-/**
  * Correct implementation matching the component exactly.
  */
 const computeTrendDirectionCorrect = (

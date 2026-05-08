@@ -71,11 +71,7 @@ export const ConditionList = () => {
 	}, [])
 
 	useEffect(() => {
-		let mounted = true
 		void loadConditions()
-		return () => {
-			mounted = false
-		}
 	}, [loadConditions])
 
 	const { categoryCounts, filteredConditions } = useMemo(() => {

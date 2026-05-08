@@ -236,28 +236,6 @@ const navigateViaSidebar = async (
 	await pause(CONFIG.timing.pageLoad)
 }
 
-const smoothClick = async (
-	page: Page,
-	selector: string,
-	options?: { timeout?: number }
-) => {
-	const locator = page.locator(selector).first()
-	await locator.waitFor({
-		state: "visible",
-		timeout: options?.timeout ?? 10000,
-	})
-	const box = await locator.boundingBox()
-	if (!box) {
-		return
-	}
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
-		steps: 20,
-	})
-	await pause(CONFIG.timing.beforeClick)
-	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-	await pause(CONFIG.timing.afterClick)
-}
-
 const smoothClickText = async (page: Page, text: string | RegExp) => {
 	const locator = page.getByText(text).first()
 	await locator.waitFor({ state: "visible", timeout: 10000 })
@@ -395,58 +373,8 @@ const sceneLogin = async (page: Page) => {
 	await pause(CONFIG.timing.pageLoad)
 }
 
-const sceneCsvImport = async (page: Page) => {
-	const { timing } = CONFIG
-
-	log("➕ Navigating to New Trade...")
-	await navigateViaSidebar(page, /novo trade|new trade/i, "/journal/new")
-
-	log("📄 Switching to CSV Import...")
-	await smoothClickText(page, /Importar CSV|CSV Import/i)
-	await pause(timing.tabSwitch)
-	await capture(page, "csv-upload-zone")
-
-	log("📤 Waiting for CSV file drop...")
-	log("   👉 DROP the video-trades.csv file onto the upload area now")
-	await pause(timing.sectionView)
-
-	const uploadZone = page.locator("#csv-upload-zone")
-	const zoneBox = await uploadZone.boundingBox()
-	if (zoneBox) {
-		await page.mouse.move(
-			zoneBox.x + zoneBox.width / 2,
-			zoneBox.y + zoneBox.height / 2,
-			{ steps: 20 }
-		)
-	}
-
-	await page
-		.locator("#csv-import-submit")
-		.waitFor({ state: "visible", timeout: 120000 })
-	await pause(timing.pageLoad)
-	log("   ✅ CSV validated")
-
-	log("👀 Viewing imported trades...")
-	await pause(timing.sectionView)
-	await capture(page, "csv-validated-trades")
-	await scrollTo(page, 500)
-	await pause(timing.scrollPause)
-
-	log("✅ Saving imported trades...")
-	const importBtn = page.locator("#csv-import-submit")
-	await scrollLocatorIntoView(page, importBtn)
-	await pause(timing.sectionView)
-	await smoothClick(page, "#csv-import-submit", { timeout: 15000 })
-
-	log("   Waiting for import processing...")
-	await page.waitForURL("**/journal**", { timeout: 60000 })
-	await page.waitForLoadState("domcontentloaded")
-	await pause(timing.pageLoad)
-}
-
 const sceneJournal = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📓 Browsing trades in Journal...")
 
@@ -477,7 +405,6 @@ const sceneJournal = async (page: Page) => {
 
 const sceneDashboard = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📊 Showing Dashboard...")
 	await navigateViaSidebar(page, /painel|dashboard/i, "/")
@@ -588,7 +515,6 @@ const scenePageGuide = async (page: Page) => {
 
 const sceneTradeDetail = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📋 Opening Trade Detail...")
 
@@ -863,7 +789,6 @@ const sceneCommandCenter = async (page: Page) => {
 
 const sceneAnalytics = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📈 Analytics...")
 	await navigateViaSidebar(page, /análises|analytics/i, "/analytics")
@@ -890,7 +815,6 @@ const sceneAnalytics = async (page: Page) => {
 
 const sceneMonteCarlo = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("🎲 Monte Carlo...")
 	await navigateViaSidebar(page, /monte carlo/i, "/monte-carlo")
@@ -995,7 +919,6 @@ const sceneMonteCarlo = async (page: Page) => {
 
 const sceneRiskSimulation = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("⚗️  Risk Simulation...")
 	await navigateViaSidebar(page, /simulador|risk simul/i, "/risk-simulation")
@@ -1103,7 +1026,6 @@ const sceneRiskSimulation = async (page: Page) => {
 
 const sceneReports = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📋 Reports...")
 	await navigateViaSidebar(page, /relatórios|reports/i, "/reports")
@@ -1165,7 +1087,6 @@ const sceneReports = async (page: Page) => {
 
 const sceneMonthly = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📅 Monthly Plan...")
 	await navigateViaSidebar(page, /mensal|monthly/i, "/monthly")
@@ -1217,7 +1138,6 @@ const sceneMonthly = async (page: Page) => {
 
 const scenePlaybook = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("📖 Playbook...")
 	await navigateViaSidebar(page, /playbook/i, "/playbook")
@@ -1256,7 +1176,6 @@ const scenePlaybook = async (page: Page) => {
 
 const sceneSettings = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("⚙️  Settings...")
 	await navigateViaSidebar(page, /configurações|settings/i, "/settings")
@@ -1328,7 +1247,6 @@ const sceneSettings = async (page: Page) => {
 
 const sceneEnd = async (page: Page) => {
 	const { timing } = CONFIG
-	const loc = CONFIG.locale
 
 	log("🏁 Final shot — Dashboard...")
 	await navigateViaSidebar(page, /painel|dashboard/i, "/")

@@ -29,8 +29,6 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 	// pnl is stored in cents, convert to dollars for display
 	const pnl = fromCents(trade.pnl)
 	const realizedR = Number(trade.realizedRMultiple) || 0
-	const isWin = trade.outcome === "win"
-	const isLoss = trade.outcome === "loss"
 	const isLong = trade.direction === "long"
 
 	// C5: Memoize tag categorization — avoids 3× inline .filter() per render

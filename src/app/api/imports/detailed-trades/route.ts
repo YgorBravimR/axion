@@ -34,7 +34,6 @@ const previewCache = new Map<
 >()
 
 const CACHE_TTL = 3600000 // 1 hour
-const RATE_LIMIT_MINUTES = 30
 
 /**
  * Generate unique import ID for caching
@@ -53,7 +52,6 @@ export const POST = async (req: NextRequest) => {
 				{ status: 401 }
 			)
 		}
-		const userId = session.user.id
 
 		// Parse request
 		const body = await req.json()

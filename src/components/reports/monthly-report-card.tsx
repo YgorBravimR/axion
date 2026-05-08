@@ -83,7 +83,7 @@ export const MonthlyReportCard = ({
 		)
 	}
 
-	const { summary, weeklyBreakdown, assetBreakdown } = report
+	const { summary, assetBreakdown } = report
 
 	const monthLabel =
 		monthOffset === 0

@@ -1,52 +1,52 @@
 "use server"
 
-import { db } from "@/db/drizzle"
-import { trades, settings, tradingAccounts } from "@/db/schema"
-import { eq, and, gte, lte, desc, asc, inArray } from "drizzle-orm"
-import type {
-	ActionResponse,
-	OverallStats,
-	DisciplineData,
-	EquityPoint,
-	DailyPnL,
-	StreakData,
-	PerformanceByGroup,
-	ExpectedValueData,
-	RDistributionBucket,
-	TradeFilters,
-	HourlyPerformance,
-	DayOfWeekPerformance,
-	TimeHeatmapCell,
-	DaySummary,
-	DayTrade,
-	DayEquityPoint,
-	RadarChartData,
-	TradingSession,
-	SessionPerformance,
-	SessionAssetPerformance,
-	AnalyticsDashboardData,
-	DashboardBatchData,
-} from "@/types"
-import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
-import {
-	getStartOfMonth,
-	getEndOfMonth,
-	getStartOfDay,
-	getEndOfDay,
-	formatDateKey,
-	APP_TIMEZONE,
-	getBrtTimeParts,
-} from "@/lib/dates"
-import { dayNameKey, dayNameKeyLower } from "@/lib/calendar/day-names"
-import { fromCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
-import { toSafeErrorMessage } from "@/lib/error-utils"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
-import { getTranslations } from "next-intl/server"
+import { db } from "@/db/drizzle"
+import { settings, trades } from "@/db/schema"
 import {
 	getCachedAnalyticsDashboard,
 	getCachedDashboardData,
 } from "@/lib/cache/cached-queries"
+import { calculateProfitFactor, calculateWinRate } from "@/lib/calculations"
+import { dayNameKey, dayNameKeyLower } from "@/lib/calendar/day-names"
+import {
+	APP_TIMEZONE,
+	formatDateKey,
+	getBrtTimeParts,
+	getEndOfDay,
+	getEndOfMonth,
+	getStartOfDay,
+	getStartOfMonth,
+} from "@/lib/dates"
+import { toSafeErrorMessage } from "@/lib/error-utils"
+import { fromCents } from "@/lib/money"
+import { decryptTradeFields, getUserDek } from "@/lib/user-crypto"
+import type {
+	ActionResponse,
+	AnalyticsDashboardData,
+	DailyPnL,
+	DashboardBatchData,
+	DayEquityPoint,
+	DayOfWeekPerformance,
+	DaySummary,
+	DayTrade,
+	DisciplineData,
+	EquityPoint,
+	ExpectedValueData,
+	HourlyPerformance,
+	OverallStats,
+	PerformanceByGroup,
+	RadarChartData,
+	RDistributionBucket,
+	SessionAssetPerformance,
+	SessionPerformance,
+	StreakData,
+	TimeHeatmapCell,
+	TradeFilters,
+	TradingSession,
+} from "@/types"
+import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm"
+import { getTranslations } from "next-intl/server"
 import type { EquityCurveMode } from "./analytics.types"
 
 interface AccountFilter {
@@ -300,10 +300,6 @@ export const getEquityCurve = async (
 	try {
 		const authContext = await requireAuth()
 
-		// Get account balance from trading account
-		const account = await db.query.tradingAccounts.findFirst({
-			where: eq(tradingAccounts.id, authContext.accountId),
-		})
 		// Fallback to global settings if account doesn't have balance
 		const accountBalanceSetting = await db.query.settings.findFirst({
 			where: eq(settings.key, "account_balance"),

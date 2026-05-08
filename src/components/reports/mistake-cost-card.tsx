@@ -13,7 +13,6 @@ interface MistakeCostCardProps {
 
 export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 	const t = useTranslations("reports.mistakeCost")
-	const tStats = useTranslations("reports.stats")
 	const { formatCurrencyWithSign, formatCurrency } = useFormatting()
 
 	// Must be before any early return (Rules of Hooks)

@@ -58,7 +58,7 @@ export const CsvImport = () => {
 	// File state
 	const [isDragging, setIsDragging] = useState(false)
 	const [fileName, setFileName] = useState<string | null>(null)
-	const [parseResult, setParseResult] = useState<CsvParseResult | null>(null)
+	const [, setParseResult] = useState<CsvParseResult | null>(null)
 
 	// Validation state
 	const [validationResult, setValidationResult] =
@@ -79,7 +79,7 @@ export const CsvImport = () => {
 
 	// Import state
 	const [isImporting, setIsImporting] = useState(false)
-	const [importProgress, setImportProgress] = useState(0)
+	const [, setImportProgress] = useState(0)
 
 	// M8: Accumulate per-trade edits without re-mapping the full array on every keystroke
 	const editsMapRef = useRef<Map<string, ProcessedCsvTrade["edits"]>>(new Map())
@@ -406,10 +406,11 @@ export const CsvImport = () => {
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Upload Area */}
 			{!validationResult && (
-				<div
+				<label
+					htmlFor="csv-file-input"
 					id="csv-upload-zone"
 					className={cn(
-						"p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
+						"p-m-600 sm:p-l-700 lg:p-l-800 block cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -465,7 +466,7 @@ export const CsvImport = () => {
 							</div>
 						</>
 					)}
-				</div>
+				</label>
 			)}
 
 			{/* Validation Results */}

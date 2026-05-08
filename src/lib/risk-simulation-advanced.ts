@@ -67,7 +67,7 @@ const runAdvancedSimulation = (
 		monthlyLossCents,
 	} = params
 
-	const { baseTrade, lossRecovery, gainMode, cascadingLimits } = decisionTree
+	const { baseTrade, lossRecovery, gainMode } = decisionTree
 	const baseRiskCents = baseTrade.riskCents
 
 	// Running state

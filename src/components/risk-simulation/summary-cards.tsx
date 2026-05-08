@@ -6,12 +6,6 @@ import { ColoredValue } from "@/components/shared/colored-value"
 import { fromCents } from "@/lib/money"
 import type { SimulationSummary } from "@/types/risk-simulation"
 
-const formatCurrency = (cents: number): string => {
-	const value = fromCents(cents)
-	const sign = value >= 0 ? "+" : ""
-	return `${sign}R$${Math.abs(value).toFixed(2)}`
-}
-
 const formatPercent = (value: number): string => `${value.toFixed(1)}%`
 
 const formatPf = (value: number): string =>
@@ -39,16 +33,20 @@ const ComparisonRow = ({
 	delta,
 	deltaPositive,
 }: ComparisonRowProps) => (
-	<div className="flex items-center justify-between py-s-100">
+	<div className="py-s-100 flex items-center justify-between">
 		<span className="text-tiny text-txt-300">{label}</span>
-		<div className="flex items-center gap-s-200 sm:gap-s-300">
-			<span className="text-tiny text-txt-300 whitespace-nowrap">{originalValue}</span>
+		<div className="gap-s-200 sm:gap-s-300 flex items-center">
+			<span className="text-tiny text-txt-300 whitespace-nowrap">
+				{originalValue}
+			</span>
 			<span className="text-tiny text-txt-300">&rarr;</span>
-			<span className="text-tiny sm:text-small text-txt-100 whitespace-nowrap font-medium">{simulatedValue}</span>
+			<span className="text-tiny sm:text-small text-txt-100 font-medium whitespace-nowrap">
+				{simulatedValue}
+			</span>
 			{delta && (
 				<span
 					className={cn(
-						"text-tiny whitespace-nowrap font-medium",
+						"text-tiny font-medium whitespace-nowrap",
 						deltaPositive ? "text-trade-buy" : "text-trade-sell"
 					)}
 				>
@@ -64,12 +62,14 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 
 	return (
 		<div className="space-y-s-300 sm:space-y-m-400">
-			<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">{t("title")}</h2>
+			<h2 className="text-body sm:text-h3 text-txt-100 font-semibold">
+				{t("title")}
+			</h2>
 
 			{/* Top-level P&L comparison */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 [&>div]:min-w-0 [&_p]:truncate">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 [&_p]:truncate [&>div]:min-w-0">
 				{/* Original P&L */}
-				<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 					<p className="text-tiny text-txt-300 mb-s-100">{t("originalPnl")}</p>
 					<ColoredValue
 						value={fromCents(summary.originalTotalPnlCents)}
@@ -80,7 +80,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 				</div>
 
 				{/* Simulated P&L */}
-				<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 					<p className="text-tiny text-txt-300 mb-s-100">{t("simulatedPnl")}</p>
 					<ColoredValue
 						value={fromCents(summary.simulatedTotalPnlCents)}
@@ -91,7 +91,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 				</div>
 
 				{/* Delta */}
-				<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 					<p className="text-tiny text-txt-300 mb-s-100">{t("delta")}</p>
 					<ColoredValue
 						value={fromCents(summary.pnlDeltaCents)}
@@ -105,8 +105,10 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 			{/* Detailed comparisons */}
 			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2">
 				{/* Performance */}
-				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
-					<h3 className="text-small text-txt-100 font-semibold">{t("performance")}</h3>
+				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
+					<h3 className="text-small text-txt-100 font-semibold">
+						{t("performance")}
+					</h3>
 					<ComparisonRow
 						label={t("winRate")}
 						originalValue={formatPercent(summary.originalWinRate)}
@@ -130,29 +132,35 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 				</div>
 
 				{/* Trade counts */}
-				<div className="border-bg-300 bg-bg-200 space-y-s-200 rounded-lg border p-m-400">
-					<h3 className="text-small text-txt-100 font-semibold">{t("tradeCounts")}</h3>
-					<div className="flex items-center justify-between py-s-100">
+				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
+					<h3 className="text-small text-txt-100 font-semibold">
+						{t("tradeCounts")}
+					</h3>
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("totalTrades")}</span>
-						<span className="text-small text-txt-100 font-medium">{summary.totalTrades}</span>
+						<span className="text-small text-txt-100 font-medium">
+							{summary.totalTrades}
+						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("executed")}</span>
-						<span className="text-small text-trade-buy font-medium">{summary.executedTrades}</span>
+						<span className="text-small text-trade-buy font-medium">
+							{summary.executedTrades}
+						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("skipped")}</span>
 						<span className="text-small text-txt-300 font-medium">
 							{summary.totalTrades - summary.executedTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("daysHitLimit")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{summary.daysHitDailyLimit}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("daysHitTarget")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{summary.daysHitDailyTarget}

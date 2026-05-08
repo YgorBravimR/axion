@@ -1,19 +1,18 @@
 "use server"
 
-import { db } from "@/db/drizzle"
-import { monthlyTaxLedger, tradingAccounts, accountFeeRates } from "@/db/schema"
-import { eq, and, gte, lte, asc, isNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
+import { db } from "@/db/drizzle"
+import { accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
 import { isMonthFinalized } from "@/lib/tax/month-status"
-import { lastDayOfMonth, subDays, isWeekend } from "date-fns"
-import type { ActionResponse } from "@/types"
+import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 import type {
+	FeeRatesEntry,
+	FeeRatesRow,
 	MonthlyDarfRow,
 	YearTaxSummary,
-	FeeRatesRow,
-	FeeRatesEntry,
 } from "@/lib/tax/types"
+import type { ActionResponse } from "@/types"
+import { and, asc, eq, gte, isNull, lte } from "drizzle-orm"
 
 // ─── Internal: verify account ownership ──────────────────────────────────────
 
@@ -33,17 +32,6 @@ const verifyAccountOwnership = async (
 		.then((rows) => rows[0])
 
 	return account ?? null
-}
-
-// ─── Internal: last business day of month (DARF due date) ────────────────────
-
-const getLastBusinessDay = (year: number, month: number): Date => {
-	// UTC-anchored so timestamptz comparisons and display stay TZ-stable.
-	let date = lastDayOfMonth(new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0)))
-	while (isWeekend(date)) {
-		date = subDays(date, 1)
-	}
-	return date
 }
 
 // ─── Internal: recomputeFromMonth ─────────────────────────────────────────────

@@ -116,8 +116,6 @@ const getCachedAnalyticsDashboard = async (
 
 	const conditions = buildCacheConditions(ctx, filters)
 
-	// Cache miss — hitting DB. On cache hit this entire function is skipped.
-	const dbStart = performance.now()
 	const result = await db.query.trades.findMany({
 		where: and(...conditions),
 		with: {
@@ -126,9 +124,7 @@ const getCachedAnalyticsDashboard = async (
 		},
 		orderBy: [asc(trades.entryDate)],
 	})
-	const dbMs = (performance.now() - dbStart).toFixed(1)
 
-	const computeStart = performance.now()
 	const tradesForComputation = result.map((t) => ({
 		...t,
 		strategyName: t.strategy?.name ?? null,
@@ -150,7 +146,6 @@ const getCachedAnalyticsDashboard = async (
 			computeSessionAssetPerformance(tradesForComputation),
 		holdingPeriodAnalysis: computeHoldingPeriodAnalysis(tradesForComputation),
 	}
-	const computeMs = (performance.now() - computeStart).toFixed(1)
 
 	return data
 }
@@ -485,7 +480,6 @@ const getCachedDashboardData = async (
 	const accountCondition = buildAccountCondition(ctx)
 
 	// 1 DB query: all non-archived trades + 1 for initial balance
-	const dbStart = performance.now()
 	const [allTrades, accountBalanceSetting] = await Promise.all([
 		db.query.trades.findMany({
 			where: and(accountCondition, eq(trades.isArchived, false)),
@@ -495,13 +489,10 @@ const getCachedDashboardData = async (
 			where: eq(settings.key, "account_balance"),
 		}),
 	])
-	const dbMs = (performance.now() - dbStart).toFixed(1)
 
 	const initialBalance = accountBalanceSetting
 		? Number(accountBalanceSetting.value) || 10000
 		: 10000
-
-	const computeStart = performance.now()
 
 	// allTrades is sorted desc (newest first) — needed for discipline + streaks
 	const sortedDesc = allTrades
@@ -514,8 +505,6 @@ const getCachedDashboardData = async (
 	const streakData = computeStreaks(sortedDesc)
 	const dailyPnL = computeDailyPnLFromTrades(sortedAsc, year, monthIndex)
 	const radarData = computeRadar(sortedAsc)
-
-	const computeMs = (performance.now() - computeStart).toFixed(1)
 
 	return { stats, discipline, equityCurve, streakData, dailyPnL, radarData }
 }
