@@ -280,12 +280,18 @@ const TradeInfoNotesTab = ({
 								e.preventDefault()
 								const nextIndex =
 									currentIndex < RATING_GRADES.length - 1 ? currentIndex + 1 : 0
-								handleFieldChange("rating", RATING_GRADES[nextIndex])
+								const next = RATING_GRADES[nextIndex]
+								if (next) {
+									handleFieldChange("rating", next)
+								}
 							} else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
 								e.preventDefault()
 								const prevIndex =
 									currentIndex > 0 ? currentIndex - 1 : RATING_GRADES.length - 1
-								handleFieldChange("rating", RATING_GRADES[prevIndex])
+								const prev = RATING_GRADES[prevIndex]
+								if (prev) {
+									handleFieldChange("rating", prev)
+								}
 							}
 						}}
 					>

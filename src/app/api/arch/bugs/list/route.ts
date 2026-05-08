@@ -68,10 +68,11 @@ const GET = async (request: NextRequest) => {
 			.limit(limit)
 			.offset(offset)
 
-		const [{ total }] = await db
+		const [totalRow] = await db
 			.select({ total: sql<number>`count(*)::int` })
 			.from(bugReports)
 			.where(conditions)
+		const total = totalRow?.total ?? 0
 
 		return archSuccess("Bug reports retrieved", { items: rows, total })
 	} catch (error) {

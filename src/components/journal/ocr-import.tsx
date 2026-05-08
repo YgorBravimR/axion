@@ -354,9 +354,16 @@ export const OcrImport = () => {
 			const baseDate = new Date(editedDate)
 
 			// Build import inputs for all trades
-			const importInputs: OcrImportInput[] = validTrades.map((trade) => {
+			const importInputs: OcrImportInput[] = validTrades.flatMap((trade) => {
 				const executions = trade.executions.map((ex) => {
 					const [hours, minutes, seconds] = ex.time.split(":").map(Number)
+					if (
+						hours === undefined ||
+						minutes === undefined ||
+						seconds === undefined
+					) {
+						throw new Error(`Invalid time format for execution: ${ex.time}`)
+					}
 					const executionDate = new Date(baseDate)
 					executionDate.setHours(hours, minutes, seconds, 0)
 
@@ -368,19 +375,24 @@ export const OcrImport = () => {
 					}
 				})
 
-				const firstExecution = executions[0]
+				const [firstExecution] = executions
+				if (!firstExecution) {
+					return []
+				}
 				const lastExit = [...executions]
 					.reverse()
 					.find((e) => e.executionType === "exit")
 
-				return {
-					asset: trade.asset,
-					originalContractCode: trade.originalContractCode,
-					direction: trade.direction,
-					entryDate: firstExecution.executionDate,
-					exitDate: lastExit?.executionDate,
-					executions,
-				}
+				return [
+					{
+						asset: trade.asset,
+						originalContractCode: trade.originalContractCode,
+						direction: trade.direction,
+						entryDate: firstExecution.executionDate,
+						exitDate: lastExit?.executionDate,
+						executions,
+					},
+				]
 			})
 
 			const result = await bulkCreateTradesFromOcr(importInputs)

@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Shield } from "lucide-react"
 import { toCents, fromCents } from "@/lib/money"
+import { formatDateKey } from "@/lib/dates"
 import {
 	runEquityShieldFromDb,
 	getEquityShieldPreview,
@@ -59,16 +60,15 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 
 	// Date range — defaults to "All Time"
 	const [dateFrom, setDateFrom] = useState<string>(() => {
-		if (tradeYears.length > 0) {
-			return `${tradeYears[tradeYears.length - 1]}-01-01`
+		const lastYear = tradeYears[tradeYears.length - 1]
+		if (lastYear !== undefined) {
+			return `${lastYear}-01-01`
 		}
 		const d = new Date()
 		d.setFullYear(d.getFullYear() - 10)
-		return d.toISOString().split("T")[0]
+		return formatDateKey(d)
 	})
-	const [dateTo, setDateTo] = useState<string>(
-		() => new Date().toISOString().split("T")[0]
-	)
+	const [dateTo, setDateTo] = useState<string>(() => formatDateKey(new Date()))
 	const [preview, setPreview] = useState<EquityShieldPreview | null>(null)
 	const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 

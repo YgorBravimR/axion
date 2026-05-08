@@ -527,8 +527,8 @@ describe("getCommissionFeeImpact()", () => {
 
 			const result = await getCommissionFeeImpact()
 
-			expect(result.data!.assetBreakdown[0].asset).toBe("WIN")
-			expect(result.data!.assetBreakdown[1].asset).toBe("MINI")
+			expect(result.data!.assetBreakdown[0]?.asset).toBe("WIN")
+			expect(result.data!.assetBreakdown[1]?.asset).toBe("MINI")
 		})
 
 		it("should compute avgFeePerTrade within each asset group", async () => {

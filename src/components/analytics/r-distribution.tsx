@@ -96,12 +96,15 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 			const posBuckets = data.filter((b) => b.rangeMin >= 0)
 			const negBuckets = data.filter((b) => b.rangeMax <= 0)
 			const [seed, ...rest] = data
+			const mode = seed
+				? rest.reduce((max, b) => (b.count > max.count ? b : max), seed)
+				: null
 			return {
 				totalTrades: trades,
 				totalPnl: pnl,
 				positiveCount: posBuckets.reduce((sum, b) => sum + b.count, 0),
 				negativeCount: negBuckets.reduce((sum, b) => sum + b.count, 0),
-				mode: rest.reduce((max, b) => (b.count > max.count ? b : max), seed),
+				mode,
 			}
 		}, [data])
 

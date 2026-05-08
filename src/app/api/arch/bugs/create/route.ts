@@ -45,6 +45,14 @@ const POST = async (request: NextRequest) => {
 			})
 			.returning()
 
+		if (!report) {
+			return archError(
+				"Failed to create bug report",
+				[{ code: "CREATE_FAILED", detail: "Insert returned no row" }],
+				500
+			)
+		}
+
 		return archSuccess("Bug report created", { id: report.id })
 	} catch (error) {
 		if (error instanceof z.ZodError) {

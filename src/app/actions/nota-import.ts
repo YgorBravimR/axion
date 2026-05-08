@@ -9,6 +9,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
 import { toCents, toNumericString } from "@/lib/money"
+import { formatDateKey } from "@/lib/dates"
 import {
 	getUserDek,
 	encryptTradeFields,
@@ -209,7 +210,7 @@ export const enrichTradesFromNota = async (
 					{
 						code: "DUPLICATE_NOTA",
 						detail: t("errors.duplicateImportDetail", {
-							date: existingImport.createdAt.toISOString().split("T")[0],
+							date: formatDateKey(existingImport.createdAt),
 						}),
 					},
 				],

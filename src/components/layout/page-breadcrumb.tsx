@@ -58,8 +58,8 @@ const PageBreadcrumb = ({ navStructure }: PageBreadcrumbProps) => {
 			const remainingPath = pathname.slice(matchedNavItem.href.length)
 			const nestedSegments = remainingPath.split("/").filter(Boolean)
 
-			if (nestedSegments.length > 0) {
-				const lastSegment = nestedSegments[nestedSegments.length - 1]
+			const lastSegment = nestedSegments[nestedSegments.length - 1]
+			if (lastSegment) {
 				const nestedLabel = getNestedLabel(
 					lastSegment,
 					matchedNavItem.labelKey,
@@ -68,10 +68,13 @@ const PageBreadcrumb = ({ navStructure }: PageBreadcrumbProps) => {
 				result.push({ label: nestedLabel })
 			}
 		} else {
-			const label = segments[0]
-				.replace(/-/g, " ")
-				.replace(/\b\w/g, (char) => char.toUpperCase())
-			result.push({ label })
+			const firstSegment = segments[0]
+			if (firstSegment) {
+				const label = firstSegment
+					.replace(/-/g, " ")
+					.replace(/\b\w/g, (char) => char.toUpperCase())
+				result.push({ label })
+			}
 		}
 
 		return result

@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import { formatDateKey } from "@/lib/dates"
 import { PrefillSelector } from "./prefill-selector"
 import { RiskParamsForm } from "./risk-params-form"
 import { PreviewBanner } from "./preview-banner"
@@ -103,11 +104,11 @@ const SimulationConfigPanel = ({
 	}
 
 	const handleAllTime = () => {
-		if (tradeYears.length === 0) {
+		const oldest = tradeYears[tradeYears.length - 1]
+		if (oldest === undefined) {
 			return
 		}
-		const oldest = tradeYears[tradeYears.length - 1]
-		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
+		onDateChange(`${oldest}-01-01`, formatDateKey(new Date()))
 	}
 
 	const activeQuickFilter = useMemo(() => {

@@ -77,6 +77,9 @@ export const ChecklistManager = ({
 		}
 		const newItems = [...items]
 		const [removed] = newItems.splice(fromIndex, 1)
+		if (!removed) {
+			return
+		}
 		newItems.splice(toIndex, 0, removed)
 		setItems(newItems.map((item, idx) => ({ ...item, order: idx })))
 	}

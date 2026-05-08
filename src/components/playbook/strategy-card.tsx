@@ -58,7 +58,7 @@ const StrategyCardBase = ({
 				e.key === "ArrowDown"
 					? (currentIndex + 1) % items.length
 					: (currentIndex - 1 + items.length) % items.length
-			items[nextIndex].focus()
+			items[nextIndex]?.focus()
 		}
 	}, [])
 

@@ -429,6 +429,18 @@ export const getEffectiveTaxRate = async (params: {
 	}
 
 	const [y, m] = params.month.split("-").map(Number)
+	if (y === undefined || m === undefined) {
+		return {
+			status: "error",
+			message: "Invalid month format.",
+			errors: [
+				{
+					code: "INVALID_MONTH",
+					detail: `Expected YYYY-MM, got ${params.month}`,
+				},
+			],
+		}
+	}
 	// timestamptz: monthlyTaxLedger.month stored as UTC first-of-month
 	const monthDate = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0))
 

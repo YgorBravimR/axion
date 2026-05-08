@@ -41,7 +41,10 @@ import { forceTierReeval } from "@/app/actions/fractal-plan/tier"
 describe("forceTierReeval", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
-		mockRequireAuth.mockResolvedValue({ accountId: "acc-uuid-1", userId: "user-1" })
+		mockRequireAuth.mockResolvedValue({
+			accountId: "acc-uuid-1",
+			userId: "user-1",
+		})
 	})
 
 	it("returns error when account has no yearly plan", async () => {
@@ -49,14 +52,16 @@ describe("forceTierReeval", () => {
 
 		const result = await forceTierReeval({ asOf: new Date("2026-03-01") })
 		expect(result.status).toBe("error")
-		expect(result.errors?.[0].code).toBe("NO_YEARLY_PLAN")
+		expect(result.errors?.[0]?.code).toBe("NO_YEARLY_PLAN")
 	})
 
 	it("returns success with recomputed tier when plan exists", async () => {
 		mockYearlyFindFirst.mockResolvedValue({
 			id: "y1",
 			year: 2026,
-			ladderRules: [{ minCapitalCents: 0, maxCapitalCents: 1_000_000, oneRCents: 5_000 }],
+			ladderRules: [
+				{ minCapitalCents: 0, maxCapitalCents: 1_000_000, oneRCents: 5_000 },
+			],
 		})
 		mockMonthlyFindFirst.mockResolvedValue({
 			id: "m1",

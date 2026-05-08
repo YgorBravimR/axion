@@ -94,7 +94,7 @@ const GET = async (request: NextRequest) => {
 				}
 				case "dayOfWeek": {
 					const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-					groupKey = DAY_NAMES[dayOfWeek]
+					groupKey = DAY_NAMES[dayOfWeek] ?? "Unknown"
 					break
 				}
 				case "strategy":

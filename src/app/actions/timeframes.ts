@@ -179,12 +179,12 @@ export const reorderTimeframes = async (
 	orderedIds: string[]
 ): Promise<{ success: boolean; error?: string }> => {
 	await requireRole("admin")
-	for (let i = 0; i < orderedIds.length; i++) {
+	for (const [i, id] of orderedIds.entries()) {
 		// eslint-disable-next-line no-await-in-loop -- sequential sort order updates; order index depends on loop index
 		await db
 			.update(timeframes)
 			.set({ sortOrder: i })
-			.where(eq(timeframes.id, orderedIds[i]))
+			.where(eq(timeframes.id, id))
 	}
 
 	invalidateSettingsData()

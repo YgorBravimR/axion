@@ -1348,8 +1348,13 @@ describe("detectAllPatterns", () => {
 			if (insights.length >= 2) {
 				const severityOrder = { warning: 0, attention: 1, info: 2 }
 				for (let index = 0; index < insights.length - 1; index++) {
-					expect(severityOrder[insights[index].severity]).toBeLessThanOrEqual(
-						severityOrder[insights[index + 1].severity]
+					const current = insights[index]
+					const next = insights[index + 1]
+					if (!current || !next) {
+						continue
+					}
+					expect(severityOrder[current.severity]).toBeLessThanOrEqual(
+						severityOrder[next.severity]
 					)
 				}
 			}

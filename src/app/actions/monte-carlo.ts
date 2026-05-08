@@ -526,8 +526,8 @@ export const runComparisonSimulation = async (
 		const sortedResults = results.toSorted(
 			(a, b) => b.profitablePct - a.profitablePct
 		)
-		for (let i = 0; i < sortedResults.length; i++) {
-			sortedResults[i].rank = i + 1
+		for (const [i, result] of sortedResults.entries()) {
+			result.rank = i + 1
 		}
 
 		const topPerformers = sortedResults

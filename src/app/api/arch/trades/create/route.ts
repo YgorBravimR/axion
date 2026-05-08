@@ -293,6 +293,14 @@ const POST = async (request: NextRequest) => {
 			.values(insertValues as typeof trades.$inferInsert)
 			.returning()
 
+		if (!trade) {
+			return archError(
+				"Failed to create trade",
+				[{ code: "CREATE_FAILED", detail: "Insert returned no row" }],
+				500
+			)
+		}
+
 		// Insert tag associations
 		if (validatedTagIds?.length) {
 			await db.insert(tradeTags).values(

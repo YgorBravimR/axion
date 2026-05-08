@@ -80,8 +80,9 @@ const fetchCandles = async (
 		if (needsIndicators && "indicators" in r && r.indicators) {
 			const raw = r.indicators as Record<string, number>
 			for (const key of requiredKeys) {
-				if (key in raw) {
-					indicators[key] = raw[key]
+				const value = raw[key]
+				if (value !== undefined) {
+					indicators[key] = value
 				}
 			}
 		}

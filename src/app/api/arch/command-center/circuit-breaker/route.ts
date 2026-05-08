@@ -94,10 +94,11 @@ const GET = async (request: NextRequest) => {
 
 		let currentConsecutiveLosses = 0
 		for (let i = sortedTrades.length - 1; i >= 0; i--) {
-			if (sortedTrades[i].outcome === "breakeven") {
+			const trade = sortedTrades[i]
+			if (!trade || trade.outcome === "breakeven") {
 				continue
 			}
-			if (sortedTrades[i].outcome === "loss") {
+			if (trade.outcome === "loss") {
 				currentConsecutiveLosses++
 			} else {
 				break

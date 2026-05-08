@@ -139,6 +139,10 @@ export const createRiskProfile = async (
 			})
 			.returning()
 
+		if (!row) {
+			throw new Error("Failed to insert risk management profile")
+		}
+
 		invalidateSettingsData()
 
 		return {

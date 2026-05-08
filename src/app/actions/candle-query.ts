@@ -214,10 +214,17 @@ export const getTradeWithCandles = async (
 		}
 
 		// Prefer the trade's timeframe if it has candle data; otherwise use the first available
+		const [firstVersion] = versions
+		if (!firstVersion) {
+			return {
+				status: "error",
+				message: `No candle data available for asset "${trade.asset}"`,
+			}
+		}
 		const matchedVersion = trade.timeframeId
 			? (versions.find((v) => v.timeframe.id === trade.timeframeId) ??
-				versions[0])
-			: versions[0]
+				firstVersion)
+			: firstVersion
 
 		// 4. Build the time range: 30 minutes before entry, 30 minutes after exit
 		const PADDING_MS = 30 * 60 * 1000

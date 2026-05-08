@@ -119,9 +119,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						profitSharePercentage: accountData.profitSharePercentage,
 						defaultBreakevenTicks: accountData.defaultBreakevenTicks.toString(),
 						replayStartDate: accountData.replayCurrentDate
-							? new Date(accountData.replayCurrentDate)
-									.toISOString()
-									.split("T")[0]
+							? formatDateKey(new Date(accountData.replayCurrentDate))
 							: "",
 						defaultAsset: accountData.defaultAsset || "",
 					})
@@ -556,9 +554,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										defaultBreakevenTicks:
 											account.defaultBreakevenTicks.toString(),
 										replayStartDate: account.replayCurrentDate
-											? new Date(account.replayCurrentDate)
-													.toISOString()
-													.split("T")[0]
+											? formatDateKey(new Date(account.replayCurrentDate))
 											: "",
 										defaultAsset: account.defaultAsset || "",
 									})

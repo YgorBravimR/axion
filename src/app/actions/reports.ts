@@ -523,7 +523,7 @@ export const getMistakeCostAnalysis = async (): Promise<{
 			.toSorted((a, b) => b.totalLoss - a.totalLoss)
 
 		const totalMistakeCost = mistakes.reduce((sum, m) => sum + m.totalLoss, 0)
-		const mostCostlyMistake = mistakes.length > 0 ? mistakes[0].tagName : null
+		const mostCostlyMistake = mistakes[0]?.tagName ?? null
 
 		return {
 			status: "success",

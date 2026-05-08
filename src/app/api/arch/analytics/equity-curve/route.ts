@@ -68,8 +68,7 @@ const GET = async (request: NextRequest) => {
 			let cumulativePnL = 0
 			let peak = initialBalance
 
-			for (let i = 0; i < result.length; i++) {
-				const trade = result[i]
+			for (const [i, trade] of result.entries()) {
 				const pnl = fromCents(trade.pnl)
 				cumulativePnL += pnl
 				const accountEquity = initialBalance + cumulativePnL

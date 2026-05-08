@@ -804,6 +804,10 @@ export const convertToScaledMode = async (
 			.values({ ...entryInsertValues, ...entryEncryptedFields })
 			.returning()
 
+		if (!entryExecution) {
+			throw new Error("Failed to insert entry execution")
+		}
+
 		createdExecutions.push(entryExecution)
 
 		// Create exit execution if trade has exit data
@@ -842,6 +846,10 @@ export const convertToScaledMode = async (
 				.insert(tradeExecutions)
 				.values({ ...exitInsertValues, ...exitEncryptedFields })
 				.returning()
+
+			if (!exitExecution) {
+				throw new Error("Failed to insert exit execution")
+			}
 
 			createdExecutions.push(exitExecution)
 		}

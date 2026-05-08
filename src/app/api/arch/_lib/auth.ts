@@ -72,7 +72,8 @@ const archAuth = async (request: Request): Promise<AuthResult> => {
 	}
 
 	const allowedEmails = getAllowedEmails()
-	if (allowedEmails.length === 0) {
+	const [defaultEmail] = allowedEmails
+	if (!defaultEmail) {
 		return {
 			success: false,
 			response: NextResponse.json(
@@ -83,16 +84,23 @@ const archAuth = async (request: Request): Promise<AuthResult> => {
 	}
 
 	// Caller can select which email via X-Arch-User header; defaults to first in allowlist
-	const requestedEmail = request.headers.get("x-arch-user")?.trim().toLowerCase()
-	const targetEmail = requestedEmail && allowedEmails.includes(requestedEmail)
-		? requestedEmail
-		: allowedEmails[0]
+	const requestedEmail = request.headers
+		.get("x-arch-user")
+		?.trim()
+		.toLowerCase()
+	const targetEmail =
+		requestedEmail && allowedEmails.includes(requestedEmail)
+			? requestedEmail
+			: defaultEmail
 
 	if (requestedEmail && !allowedEmails.includes(requestedEmail)) {
 		return {
 			success: false,
 			response: NextResponse.json(
-				{ status: "error", message: "Requested email is not in the allowed list" },
+				{
+					status: "error",
+					message: "Requested email is not in the allowed list",
+				},
 				{ status: 403 }
 			),
 		}

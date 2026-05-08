@@ -44,6 +44,14 @@ const POST = async (request: NextRequest) => {
 			})
 			.returning()
 
+		if (!newStrategy) {
+			return archError(
+				"Failed to create strategy",
+				[{ code: "CREATE_FAILED", detail: "Insert returned no row" }],
+				500
+			)
+		}
+
 		if (conditions?.length) {
 			await db.insert(strategyConditions).values(
 				conditions.map((condition) => ({

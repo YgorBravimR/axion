@@ -94,7 +94,11 @@ const TargetsExitSection = memo(
 			value: string | number
 		) => {
 			const levels = [...targetConfig.levels]
-			levels[index] = { ...levels[index], [field]: value }
+			const current = levels[index]
+			if (!current) {
+				return
+			}
+			levels[index] = { ...current, [field]: value }
 			onRecipeChange({ ...recipe, target: { ...targetConfig, levels } })
 		}
 

@@ -18,6 +18,7 @@ import {
 import { Play, Info } from "lucide-react"
 import type { EquityShieldParams } from "@/types/equity-shield"
 import { toCents } from "@/lib/money"
+import { formatDateKey } from "@/lib/dates"
 
 // ==========================================
 // TYPES
@@ -115,11 +116,11 @@ const EquityShieldParamsForm = ({
 	}
 
 	const handleAllTime = () => {
-		if (tradeYears.length === 0) {
+		const oldest = tradeYears[tradeYears.length - 1]
+		if (oldest === undefined) {
 			return
 		}
-		const oldest = tradeYears[tradeYears.length - 1]
-		onDateChange(`${oldest}-01-01`, new Date().toISOString().split("T")[0])
+		onDateChange(`${oldest}-01-01`, formatDateKey(new Date()))
 	}
 
 	const activeQuickFilter = useMemo(() => {

@@ -153,6 +153,10 @@ export const lazyEnsureDailyPlan = async (
 			})
 			.returning({ id: dailyPlan.id })
 
+		if (!created) {
+			throw new Error("Failed to insert daily plan")
+		}
+
 		return {
 			status: "success",
 			message: "Daily plan created",
