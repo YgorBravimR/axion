@@ -54,8 +54,8 @@ const dezk10kV3: StrategyRecipe = {
 			macdSignal: 15,
 			wmaFast: 9,
 			wmaSlow: 21,
-			candlesAfterAlignment: 0,  // enter same bar
-			stopBufferPoints: 10,      // tighter stop (1 Renko + buffer)
+			candlesAfterAlignment: 0, // enter same bar
+			stopBufferPoints: 10, // tighter stop (1 Renko + buffer)
 			requireZeroCross: true,
 			startTime: 905,
 			endTime: 1630,
@@ -80,6 +80,9 @@ const dezk10kV3: StrategyRecipe = {
 	requiredIndicators: [],
 }
 
-const dezkPresets: StrategyRecipe[] = [dezk10kV4, dezk10kV3]
+const dezkPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
+	dezk10kV4,
+	dezk10kV3,
+]
 
 export { dezkPresets, dezk10kV4, dezk10kV3 }

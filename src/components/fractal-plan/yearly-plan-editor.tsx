@@ -219,8 +219,7 @@ const YearlyPlanEditor = ({
 			return { ok: false, reason: "Add at least one ladder tier." }
 		}
 		const parsed: { minCents: number; oneRCents: number; idx: number }[] = []
-		for (let i = 0; i < form.ladderRows.length; i++) {
-			const row = form.ladderRows[i]
+		for (const [i, row] of form.ladderRows.entries()) {
 			const minCents = row.minCents ?? 0
 			const oneRCents = row.oneRCents ?? 0
 			if (
@@ -235,10 +234,15 @@ const YearlyPlanEditor = ({
 		}
 		const sorted = [...parsed].sort((a, b) => a.minCents - b.minCents)
 		for (let i = 1; i < sorted.length; i++) {
-			if (sorted[i].minCents <= sorted[i - 1].minCents) {
+			const cur = sorted[i]
+			const prev = sorted[i - 1]
+			if (!cur || !prev) {
+				continue
+			}
+			if (cur.minCents <= prev.minCents) {
 				return {
 					ok: false,
-					reason: `Tier ${sorted[i].idx + 1} must start above tier ${sorted[i - 1].idx + 1}.`,
+					reason: `Tier ${cur.idx + 1} must start above tier ${prev.idx + 1}.`,
 				}
 			}
 		}

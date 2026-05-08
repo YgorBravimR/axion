@@ -14,6 +14,7 @@ import {
 	getEndOfDay,
 	getMonthBoundaries,
 	formatDateKey,
+	parseDateKey,
 	BRT_OFFSET,
 } from "@/lib/dates"
 import { formatBrlWithSign } from "@/lib/formatting"
@@ -45,8 +46,7 @@ const getDateRange = (
 			return { from: getStartOfDay(now), to: getEndOfDay(now) }
 		case "week": {
 			// Get BRT date components and compute Monday-based week
-			const brtKey = formatDateKey(now)
-			const [year, month, day] = brtKey.split("-").map(Number)
+			const { year, month, day } = parseDateKey(formatDateKey(now))
 			const tempDate = new Date(year, month - 1, day)
 			const dayOfWeek = tempDate.getDay()
 			const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek

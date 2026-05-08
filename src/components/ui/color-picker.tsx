@@ -79,13 +79,15 @@ const parseRgbString = (input: string): RgbaColor | null => {
 		.trim()
 	const parts = cleaned.split(/[,\s]+/).map(Number)
 
-	if (parts.length < 3 || parts.some(isNaN)) {
+	const [r, g, b, alpha] = parts
+	if (r === undefined || g === undefined || b === undefined) {
+		return null
+	}
+	if ([r, g, b].some(isNaN)) {
 		return null
 	}
 
-	const [r, g, b] = parts
-	const a = parts.length >= 4 ? parts[3] : 1
-
+	const a = alpha === undefined || isNaN(alpha) ? 1 : alpha
 	return { r, g, b, a: a > 1 ? a / 255 : a }
 }
 

@@ -63,12 +63,11 @@ const BugReportPanel = () => {
 				const focusable = panelRef.current.querySelectorAll<HTMLElement>(
 					'button, [href], input, textarea, [tabindex]:not([tabindex="-1"])'
 				)
-				if (focusable.length === 0) {
-					return
-				}
-
 				const first = focusable[0]
 				const last = focusable[focusable.length - 1]
+				if (!first || !last) {
+					return
+				}
 
 				if (e.shiftKey && document.activeElement === first) {
 					e.preventDefault()
@@ -106,8 +105,12 @@ const BugReportPanel = () => {
 			})
 
 			// Convert data URL to blob without fetch() — avoids CSP connect-src restrictions
-			const byteString = atob(dataUrl.split(",")[1])
-			const mimeType = dataUrl.split(",")[0].split(":")[1].split(";")[0]
+			const match = /^data:([^;,]+)(?:;[^,]*)?,(.*)$/.exec(dataUrl)
+			if (!match) {
+				throw new Error("Invalid screenshot data URL")
+			}
+			const [, mimeType, payload] = match as unknown as [string, string, string]
+			const byteString = atob(payload)
 			const ab = new ArrayBuffer(byteString.length)
 			const ia = new Uint8Array(ab)
 			for (let i = 0; i < byteString.length; i++) {

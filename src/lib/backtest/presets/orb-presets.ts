@@ -24,7 +24,12 @@ const orbTest1: StrategyRecipe = {
 		],
 		eodTime: 1730,
 	},
-	sizing: { type: "monetary_risk", riskAmountCents: 8000, valuePerPointCents: 20, riskDistribution: "per_trade" },
+	sizing: {
+		type: "monetary_risk",
+		riskAmountCents: 8000,
+		valuePerPointCents: 20,
+		riskDistribution: "per_trade",
+	},
 	reversal: { type: "none" },
 	slippageTicks: 1,
 	requiredIndicators: [],
@@ -50,7 +55,12 @@ const orbTest2: StrategyRecipe = {
 		],
 		eodTime: 1730,
 	},
-	sizing: { type: "monetary_risk", riskAmountCents: 8000, valuePerPointCents: 20, riskDistribution: "per_trade" },
+	sizing: {
+		type: "monetary_risk",
+		riskAmountCents: 8000,
+		valuePerPointCents: 20,
+		riskDistribution: "per_trade",
+	},
 	reversal: { type: "reverse_on_stop", maxReversals: 1, virarNoBE: false },
 	slippageTicks: 1,
 	requiredIndicators: [],
@@ -76,7 +86,12 @@ const orbTest3: StrategyRecipe = {
 		],
 		eodTime: 1730,
 	},
-	sizing: { type: "monetary_risk", riskAmountCents: 8000, valuePerPointCents: 20, riskDistribution: "per_trade" },
+	sizing: {
+		type: "monetary_risk",
+		riskAmountCents: 8000,
+		valuePerPointCents: 20,
+		riskDistribution: "per_trade",
+	},
 	reversal: { type: "reverse_on_stop", maxReversals: 1, virarNoBE: false },
 	slippageTicks: 1,
 	requiredIndicators: [],
@@ -101,12 +116,22 @@ const orbTest4: StrategyRecipe = {
 		],
 		eodTime: 1730,
 	},
-	sizing: { type: "monetary_risk", riskAmountCents: 8000, valuePerPointCents: 20, riskDistribution: "per_trade" },
+	sizing: {
+		type: "monetary_risk",
+		riskAmountCents: 8000,
+		valuePerPointCents: 20,
+		riskDistribution: "per_trade",
+	},
 	reversal: { type: "none" },
 	slippageTicks: 1,
 	requiredIndicators: [],
 }
 
-const orbPresets: StrategyRecipe[] = [orbTest1, orbTest2, orbTest3, orbTest4]
+const orbPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
+	orbTest1,
+	orbTest2,
+	orbTest3,
+	orbTest4,
+]
 
 export { orbPresets, orbTest1, orbTest2, orbTest3, orbTest4 }

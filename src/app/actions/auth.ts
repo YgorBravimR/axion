@@ -17,6 +17,7 @@ import {
 	type TradingAccount,
 } from "@/db/schema"
 import { createDbRateLimiter } from "@/lib/db-rate-limiter"
+import { firstIssueMessage } from "@/lib/zod-helpers"
 // Field-level encryption disabled — imports preserved for re-activation:
 // import { generateKey, encryptDek, encryptField } from "@/lib/crypto"
 import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
@@ -58,7 +59,7 @@ export const registerUser = async (
 	try {
 		const validated = registerSchema.safeParse(input)
 		if (!validated.success) {
-			return { status: "error", error: validated.error.issues[0].message }
+			return { status: "error", error: firstIssueMessage(validated.error) }
 		}
 
 		const { name, email, password } = validated.data
@@ -93,6 +94,9 @@ export const registerUser = async (
 				encryptedDek: null,
 			})
 			.returning()
+		if (!newUser) {
+			throw new Error("Failed to create user")
+		}
 
 		await db.insert(tradingAccounts).values({
 			userId: newUser.id,
@@ -192,7 +196,7 @@ export const loginUser = async (
 	try {
 		const validated = loginSchema.safeParse(input)
 		if (!validated.success) {
-			return { status: "error", error: validated.error.issues[0].message }
+			return { status: "error", error: firstIssueMessage(validated.error) }
 		}
 
 		const { email, password, accountId } = validated.data
@@ -525,7 +529,7 @@ export const updateUserProfile = async (
 
 		const validated = updateProfileSchema.safeParse(input)
 		if (!validated.success) {
-			return { status: "error", error: validated.error.issues[0].message }
+			return { status: "error", error: firstIssueMessage(validated.error) }
 		}
 
 		const updateData = { ...validated.data } as Record<string, unknown>
@@ -565,7 +569,7 @@ export const changePassword = async (
 
 		const validated = changePasswordSchema.safeParse(input)
 		if (!validated.success) {
-			return { status: "error", error: validated.error.issues[0].message }
+			return { status: "error", error: firstIssueMessage(validated.error) }
 		}
 
 		// Get current user

@@ -28,7 +28,7 @@ import type { TagType } from "@/types"
 import { ColorPicker } from "@/components/ui/color-picker"
 import { Loader2, Pipette } from "lucide-react"
 
-const TAG_COLORS = [
+const TAG_COLORS: readonly [string, ...string[]] = [
 	"#3B82F6", // blue
 	"#10B981", // emerald
 	"#F59E0B", // amber
@@ -127,14 +127,21 @@ export const TagForm = ({
 
 				<form onSubmit={handleSubmit} className="space-y-m-400">
 					{error && (
-						<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+						<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 							{error}
 						</div>
 					)}
 
 					{/* Name */}
 					<div className="space-y-s-200">
-						<Label id="label-tag-name" htmlFor="tagName" required filled={!!formData.name.trim()}>{t("name")}</Label>
+						<Label
+							id="label-tag-name"
+							htmlFor="tagName"
+							required
+							filled={!!formData.name.trim()}
+						>
+							{t("name")}
+						</Label>
 						<Input
 							id="tagName"
 							placeholder={t("namePlaceholder")}
@@ -147,7 +154,14 @@ export const TagForm = ({
 
 					{/* Type */}
 					<div className="space-y-s-200">
-						<Label id="label-tag-type" htmlFor="tagType" required filled={!!formData.type}>{t("type")}</Label>
+						<Label
+							id="label-tag-type"
+							htmlFor="tagType"
+							required
+							filled={!!formData.type}
+						>
+							{t("type")}
+						</Label>
 						<Select
 							value={formData.type}
 							onValueChange={(value) => handleChange("type", value)}
@@ -165,17 +179,20 @@ export const TagForm = ({
 
 					{/* Color */}
 					<div className="space-y-s-200">
-						<Label id="label-tag-color" required filled={!!formData.color}>{t("color")}</Label>
-						<div className="flex flex-wrap items-center gap-s-200">
+						<Label id="label-tag-color" required filled={!!formData.color}>
+							{t("color")}
+						</Label>
+						<div className="gap-s-200 flex flex-wrap items-center">
 							{TAG_COLORS.map((color) => (
 								<button
 									key={color}
 									type="button"
 									onClick={() => handleChange("color", color)}
-									className="size-10 sm:size-8 rounded-full border-2 transition-transform hover:scale-110"
+									className="size-10 rounded-full border-2 transition-transform hover:scale-110 sm:size-8"
 									style={{
 										backgroundColor: color,
-										borderColor: formData.color === color ? "white" : "transparent",
+										borderColor:
+											formData.color === color ? "white" : "transparent",
 									}}
 									aria-label={t("selectColor", { color })}
 									aria-pressed={formData.color === color}
@@ -189,7 +206,7 @@ export const TagForm = ({
 							>
 								<button
 									type="button"
-									className="size-10 sm:size-8 rounded-full border-2 border-dashed border-txt-300 transition-transform hover:scale-110 flex items-center justify-center"
+									className="border-txt-300 flex size-10 items-center justify-center rounded-full border-2 border-dashed transition-transform hover:scale-110 sm:size-8"
 									style={{
 										backgroundColor: TAG_COLORS.includes(formData.color)
 											? undefined
@@ -204,7 +221,7 @@ export const TagForm = ({
 									aria-label={t("selectColor", { color: "custom" })}
 								>
 									{TAG_COLORS.includes(formData.color) && (
-										<Pipette className="h-4 w-4 text-txt-300" />
+										<Pipette className="text-txt-300 h-4 w-4" />
 									)}
 								</button>
 							</ColorPicker>
@@ -213,7 +230,9 @@ export const TagForm = ({
 
 					{/* Description */}
 					<div className="space-y-s-200">
-						<Label id="label-tag-description" htmlFor="tagDescription">{t("description")}</Label>
+						<Label id="label-tag-description" htmlFor="tagDescription">
+							{t("description")}
+						</Label>
 						<Textarea
 							id="tagDescription"
 							placeholder={t("descriptionPlaceholder")}
@@ -234,7 +253,9 @@ export const TagForm = ({
 							{tCommon("cancel")}
 						</Button>
 						<Button id="tag-form-submit" type="submit" disabled={isPending}>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{isEdit ? tCommon("saveChanges") : t("createTag")}
 						</Button>
 					</DialogFooter>

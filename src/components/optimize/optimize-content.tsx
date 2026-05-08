@@ -191,7 +191,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const preset = { ...ALL_PRESETS[index] }
+		const source = ALL_PRESETS[index]
+		if (!source) {
+			return
+		}
+		const preset: StrategyRecipe = { ...source }
 		if (preset.sizing.type === "monetary_risk") {
 			preset.sizing = {
 				...preset.sizing,

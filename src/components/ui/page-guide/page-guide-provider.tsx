@@ -73,8 +73,7 @@ const isElementVisible = (id: string): boolean => {
  */
 const computeVisibleIndices = (config: PageGuideConfig): number[] => {
 	const indices: number[] = []
-	for (let i = 0; i < config.steps.length; i++) {
-		const step = config.steps[i]
+	for (const [i, step] of config.steps.entries()) {
 		if (!step.optional || isElementVisible(step.targetId)) {
 			indices.push(i)
 		}
@@ -139,12 +138,15 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 
 		// Scroll the first visible step's target into view before starting
 		const indices = computeVisibleIndices(config)
-		if (indices.length === 0) {
+		const [firstIdx] = indices
+		if (firstIdx === undefined) {
 			return
 		}
-
-		const firstTargetId = config.steps[indices[0]].targetId
-		const firstTarget = document.getElementById(firstTargetId)
+		const firstStep = config.steps[firstIdx]
+		if (!firstStep) {
+			return
+		}
+		const firstTarget = document.getElementById(firstStep.targetId)
 
 		if (firstTarget) {
 			firstTarget.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -163,12 +165,13 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		// Wait for scroll to settle, then start
 		setTimeout(() => {
 			const freshIndices = computeVisibleIndices(config)
-			if (freshIndices.length === 0) {
+			const [firstFresh] = freshIndices
+			if (firstFresh === undefined) {
 				return
 			}
 			setVisibleIndices(freshIndices)
 			setActiveConfig(config)
-			setCurrentStepIndex(freshIndices[0])
+			setCurrentStepIndex(firstFresh)
 		}, 400)
 	}, [])
 
@@ -191,8 +194,8 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		const freshIndices = computeVisibleIndices(activeConfig)
 		const currentPos = freshIndices.indexOf(currentStepIndex)
 
-		if (currentPos < freshIndices.length - 1) {
-			const nextIdx = freshIndices[currentPos + 1]
+		const nextIdx = freshIndices[currentPos + 1]
+		if (nextIdx !== undefined) {
 			setCurrentStepIndex(nextIdx)
 			setVisibleIndices(freshIndices)
 		} else {
@@ -208,8 +211,8 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		const freshIndices = computeVisibleIndices(activeConfig)
 		const currentPos = freshIndices.indexOf(currentStepIndex)
 
-		if (currentPos > 0) {
-			const prevIdx = freshIndices[currentPos - 1]
+		const prevIdx = currentPos > 0 ? freshIndices[currentPos - 1] : undefined
+		if (prevIdx !== undefined) {
 			setCurrentStepIndex(prevIdx)
 			setVisibleIndices(freshIndices)
 		}
@@ -272,7 +275,7 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	return (
 		<PageGuideContext.Provider value={contextValue}>
 			{children}
-			{isActive && activeConfig && (
+			{isActive && activeConfig && activeConfig.steps[currentStepIndex] && (
 				<PageGuideOverlay
 					step={activeConfig.steps[currentStepIndex]}
 					pageKey={activeConfig.pageKey}

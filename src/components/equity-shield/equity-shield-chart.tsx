@@ -73,11 +73,12 @@ const CustomTooltip = memo(
 	({ active, payload, variant, showComparison }: CustomTooltipProps) => {
 		const t = useTranslations("equityShield.chart")
 
-		if (!active || !payload || payload.length === 0) {
+		const head = payload?.[0]
+		if (!active || !head) {
 			return null
 		}
 
-		const data = payload[0].payload
+		const data = head.payload
 		const pnlSign = data.pnl >= 0 ? "+" : ""
 
 		return (
@@ -154,19 +155,19 @@ CustomTooltip.displayName = "EquityShieldTooltip"
  * Build contiguous bands of same-mode trades for ReferenceArea shading.
  */
 const buildZoneBands = (points: EquityShieldPoint[]): ZoneBand[] => {
-	if (points.length === 0) {
+	const [first, ...rest] = points
+	if (!first) {
 		return []
 	}
 
 	const bands: ZoneBand[] = []
 	let currentBand: ZoneBand = {
-		x1: points[0].tradeNumber,
-		x2: points[0].tradeNumber,
-		mode: points[0].mode,
+		x1: first.tradeNumber,
+		x2: first.tradeNumber,
+		mode: first.mode,
 	}
 
-	for (let i = 1; i < points.length; i++) {
-		const point = points[i]
+	for (const point of rest) {
 		if (point.mode === currentBand.mode) {
 			currentBand.x2 = point.tradeNumber
 		} else {

@@ -96,6 +96,9 @@ export const createStrategy = async (
 				isActive: validated.isActive ?? true,
 			})
 			.returning()
+		if (!strategy) {
+			throw new Error("Failed to create strategy")
+		}
 
 		// Sync conditions if provided
 		if (validated.conditions && validated.conditions.length > 0) {
@@ -696,23 +699,16 @@ export const getComplianceOverview = async (): Promise<
 			(a, b) => b.compliance - a.compliance
 		)
 
-		const topPerformingStrategy =
-			sortedByCompliance.length > 0
-				? {
-						name: sortedByCompliance[0].name,
-						compliance: sortedByCompliance[0].compliance,
-					}
-				: null
+		const top = sortedByCompliance[0]
+		const topPerformingStrategy = top
+			? { name: top.name, compliance: top.compliance }
+			: null
 
 		// Find needs attention (lowest compliance with at least 3 trades)
-		const needsAttentionStrategy =
-			sortedByCompliance.length > 0
-				? {
-						name: sortedByCompliance[sortedByCompliance.length - 1].name,
-						compliance:
-							sortedByCompliance[sortedByCompliance.length - 1].compliance,
-					}
-				: null
+		const bottom = sortedByCompliance[sortedByCompliance.length - 1]
+		const needsAttentionStrategy = bottom
+			? { name: bottom.name, compliance: bottom.compliance }
+			: null
 
 		return {
 			status: "success",

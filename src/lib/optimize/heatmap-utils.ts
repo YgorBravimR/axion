@@ -90,11 +90,14 @@ const getMetricValue = (run: OptimizationRun, metric: HeatmapMetric): number =>
 /** Get a string value at a dot-path (for enum params like stop.initial.type) */
 const getNestedStringValue = (obj: unknown, path: string): string => {
 	const keys = path.split(".")
-	let current = obj as Record<string, unknown>
-	for (let i = 0; i < keys.length - 1; i++) {
-		current = current[keys[i]] as Record<string, unknown>
+	let current: unknown = obj
+	for (const key of keys) {
+		if (current == null || typeof current !== "object") {
+			return "undefined"
+		}
+		current = (current as Record<string, unknown>)[key]
 	}
-	return String(current[keys[keys.length - 1]])
+	return String(current)
 }
 
 /**
@@ -103,19 +106,21 @@ const getNestedStringValue = (obj: unknown, path: string): string => {
  * Detects both numeric and enum (categorical) variation.
  */
 const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
-	if (runs.length < 2) {
+	const [firstRun] = runs
+	if (!firstRun || runs.length < 2) {
 		return []
 	}
 
-	const strategyType = runs[0].recipe.entry.type
+	const strategyType = firstRun.recipe.entry.type
 	const sameStrategyRuns = runs.filter(
 		(r) => r.recipe.entry.type === strategyType
 	)
-	if (sameStrategyRuns.length < 2) {
+	const [pivot] = sameStrategyRuns
+	if (!pivot || sameStrategyRuns.length < 2) {
 		return []
 	}
 
-	const catalog = getSweepableParams(sameStrategyRuns[0].recipe)
+	const catalog = getSweepableParams(pivot.recipe)
 
 	const varying: VaryingParam[] = []
 	for (const param of catalog) {
@@ -172,7 +177,8 @@ const buildHeatmapData = (
 	metric: HeatmapMetric,
 	slices: Record<string, number | string>
 ): HeatmapData => {
-	const strategyType = runs[0].recipe.entry.type
+	const [firstRun] = runs
+	const strategyType = firstRun?.recipe.entry.type
 	const higherIsBetter = METRIC_HIGHER_IS_BETTER[metric]
 
 	// Filter to same strategy + matching slice values (supports both numeric and string)

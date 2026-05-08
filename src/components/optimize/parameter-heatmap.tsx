@@ -141,11 +141,12 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 	// Check for mixed strategies
 	const hasMixedStrategies = useMemo(() => {
-		if (runs.length < 2) {
+		const [firstRun, ...rest] = runs
+		if (!firstRun || rest.length === 0) {
 			return false
 		}
-		const firstType = runs[0].recipe.entry.type
-		return runs.some((r) => r.recipe.entry.type !== firstType)
+		const firstType = firstRun.recipe.entry.type
+		return rest.some((r) => r.recipe.entry.type !== firstType)
 	}, [runs])
 
 	// Find best run for slice defaults
@@ -169,12 +170,13 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 	// Auto-initialize X/Y and slices when varying params change
 	useEffect(() => {
-		if (numericVaryingParams.length < 2) {
+		const [xParam, yParam, ...sliceParams] = numericVaryingParams
+		if (!xParam || !yParam) {
 			return
 		}
 
-		setXParamPath(numericVaryingParams[0].path)
-		setYParamPath(numericVaryingParams[1].path)
+		setXParamPath(xParam.path)
+		setYParamPath(yParam.path)
 
 		// Default slices: all enum params + numeric params beyond the first 2
 		if (bestRun) {
@@ -189,11 +191,8 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 				}
 			}
 			// Numeric params beyond the first 2 also go to slices
-			for (let i = 2; i < numericVaryingParams.length; i++) {
-				defaultSlices[numericVaryingParams[i].path] = getNestedValue(
-					bestRun.recipe,
-					numericVaryingParams[i].path
-				)
+			for (const param of sliceParams) {
+				defaultSlices[param.path] = getNestedValue(bestRun.recipe, param.path)
 			}
 			setSlices(defaultSlices)
 		} else {

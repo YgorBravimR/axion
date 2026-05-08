@@ -141,6 +141,32 @@ export const formatDateKey = (date: Date): string => {
 }
 
 /**
+ * Parse a YYYY-MM-DD date key back into numeric components.
+ * Throws on malformed input — this is the inverse of formatDateKey,
+ * so callers should always pass strings produced by formatDateKey or
+ * an equivalent contract.
+ */
+export const parseDateKey = (
+	dateKey: string
+): { year: number; month: number; day: number } => {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey)
+	if (!match) {
+		throw new Error(`Invalid date key: ${dateKey}`)
+	}
+	const [, yearStr, monthStr, dayStr] = match as unknown as [
+		string,
+		string,
+		string,
+		string,
+	]
+	return {
+		year: Number(yearStr),
+		month: Number(monthStr),
+		day: Number(dayStr),
+	}
+}
+
+/**
  * Get start of month for a given date (in BRT)
  */
 export const getStartOfMonth = (date: Date): Date => {

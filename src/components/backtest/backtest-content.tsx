@@ -46,10 +46,15 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0)
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState<string>("")
-	const { dateFrom, dateTo } = useMemo(() => ({
-		dateFrom: dateRange?.from ? dateRange.from.toISOString().slice(0, 10) : "",
-		dateTo: dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : "",
-	}), [dateRange])
+	const { dateFrom, dateTo } = useMemo(
+		() => ({
+			dateFrom: dateRange?.from
+				? dateRange.from.toISOString().slice(0, 10)
+				: "",
+			dateTo: dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : "",
+		}),
+		[dateRange]
+	)
 
 	// Results state
 	const [result, setResult] = useState<BacktestResult | null>(null)
@@ -61,23 +66,32 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const assetValuePerPointCents = useMemo(
 		() =>
 			selectedSource
-				? Math.round(selectedSource.assetTickValueCents / selectedSource.assetTickSize)
+				? Math.round(
+						selectedSource.assetTickValueCents / selectedSource.assetTickSize
+					)
 				: 20,
 		[selectedSource]
 	)
 
-	const handlePresetChange = useCallback((value: string) => {
-		const index = parseInt(value, 10)
-		const preset = { ...ALL_PRESETS[index] }
-		// Auto-fill valuePerPoint from asset
-		if (preset.sizing.type === "monetary_risk") {
-			preset.sizing = {
-				...preset.sizing,
-				valuePerPointCents: assetValuePerPointCents,
+	const handlePresetChange = useCallback(
+		(value: string) => {
+			const index = parseInt(value, 10)
+			const source = ALL_PRESETS[index]
+			if (!source) {
+				return
 			}
-		}
-		setRecipe(preset)
-	}, [assetValuePerPointCents])
+			const preset: StrategyRecipe = { ...source }
+			// Auto-fill valuePerPoint from asset
+			if (preset.sizing.type === "monetary_risk") {
+				preset.sizing = {
+					...preset.sizing,
+					valuePerPointCents: assetValuePerPointCents,
+				}
+			}
+			setRecipe(preset)
+		},
+		[assetValuePerPointCents]
+	)
 
 	const handleStrategyChange = useCallback((type: string) => {
 		if (type === "orb_breakout") {
@@ -87,22 +101,27 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		}
 	}, [])
 
-	const handleSourceChange = useCallback((value: string) => {
-		const index = parseInt(value, 10)
-		setSelectedSourceIndex(index)
-		// Auto-update valuePerPoint in recipe when asset changes
-		const source = dataSources[index]
-		if (source && recipe.sizing.type === "monetary_risk") {
-			const vpp = Math.round(source.assetTickValueCents / source.assetTickSize)
-			setRecipe((prev) => ({
-				...prev,
-				sizing:
-					prev.sizing.type === "monetary_risk"
-						? { ...prev.sizing, valuePerPointCents: vpp }
-						: prev.sizing,
-			}))
-		}
-	}, [dataSources, recipe.sizing.type])
+	const handleSourceChange = useCallback(
+		(value: string) => {
+			const index = parseInt(value, 10)
+			setSelectedSourceIndex(index)
+			// Auto-update valuePerPoint in recipe when asset changes
+			const source = dataSources[index]
+			if (source && recipe.sizing.type === "monetary_risk") {
+				const vpp = Math.round(
+					source.assetTickValueCents / source.assetTickSize
+				)
+				setRecipe((prev) => ({
+					...prev,
+					sizing:
+						prev.sizing.type === "monetary_risk"
+							? { ...prev.sizing, valuePerPointCents: vpp }
+							: prev.sizing,
+				}))
+			}
+		},
+		[dataSources, recipe.sizing.type]
+	)
 
 	const handleQuickRange = useCallback((value: string) => {
 		setQuickRangeKey(value)
@@ -180,7 +199,17 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 				showToast("error", response.error ?? t("errors.engineError"))
 			}
 		})
-	}, [selectedSource, dateFrom, dateTo, showToast, t, showLoading, startTransition, recipe, hideLoading])
+	}, [
+		selectedSource,
+		dateFrom,
+		dateTo,
+		showToast,
+		t,
+		showLoading,
+		startTransition,
+		recipe,
+		hideLoading,
+	])
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
@@ -290,7 +319,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						<Select value={quickRangeKey} onValueChange={handleQuickRange}>
 							<SelectTrigger
 								id="backtest-quick-range"
-								className="min-w-[80px] max-w-[128px]"
+								className="max-w-[128px] min-w-[80px]"
 							>
 								<SelectValue placeholder={t("builder.quickRange")} />
 							</SelectTrigger>

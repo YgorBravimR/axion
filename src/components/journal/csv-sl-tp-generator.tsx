@@ -95,13 +95,22 @@ export const CsvSlTpGenerator = ({
 			return
 		}
 
-		setAssetConfigs((prev) => ({
-			...prev,
-			[asset]: {
-				...prev[asset],
-				[field]: numValue,
-			},
-		}))
+		setAssetConfigs((prev) => {
+			const existing = prev[asset] ?? {
+				asset,
+				slTicks: 0,
+				slVariance: 0,
+				tpTicks: 0,
+				tpVariance: 0,
+			}
+			return {
+				...prev,
+				[asset]: {
+					...existing,
+					[field]: numValue,
+				},
+			}
+		})
 	}
 
 	const getRangeLabel = (base: number, variance: number): string => {
@@ -187,8 +196,7 @@ export const CsvSlTpGenerator = ({
 
 	const handleGenerate = async () => {
 		const eligibleIndices: number[] = []
-		for (let i = 0; i < processedTrades.length; i++) {
-			const trade = processedTrades[i]
+		for (const [i, trade] of processedTrades.entries()) {
 			if (
 				trade.status !== "skipped" &&
 				trade.assetConfig &&
@@ -219,9 +227,14 @@ export const CsvSlTpGenerator = ({
 
 			for (let j = start; j < end; j++) {
 				const tradeIndex = eligibleIndices[j]
-				updatedTrades[tradeIndex] = generateSlTpForTrade(
-					updatedTrades[tradeIndex]
-				)
+				if (tradeIndex === undefined) {
+					continue
+				}
+				const target = updatedTrades[tradeIndex]
+				if (!target) {
+					continue
+				}
+				updatedTrades[tradeIndex] = generateSlTpForTrade(target)
 			}
 
 			const progress = Math.round(((i + 1) / CHUNKS) * 100)
