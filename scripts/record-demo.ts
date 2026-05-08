@@ -1444,7 +1444,7 @@ const saveVideo = (videoDir: string) => {
 const SCENES: Array<{
 	name: string
 	enabled: boolean
-	run: (page: Page) => Promise<void>
+	run: (_page: Page) => Promise<void>
 }> = [
 	{ name: "Login", enabled: true, run: sceneLogin },
 	// { name: "CSV Import", enabled: true, run: sceneCsvImport },
