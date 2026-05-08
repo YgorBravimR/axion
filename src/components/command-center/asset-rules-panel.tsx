@@ -30,7 +30,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { BiasSelector, BiasBadge } from "./bias-selector"
+import { BiasSelector } from "./bias-selector"
 import {
 	upsertAssetSettings,
 	deleteAssetSettings,

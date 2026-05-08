@@ -10,7 +10,7 @@ import type { OptimizationRun } from "@/types/backtest"
 
 interface RunDetailPanelProps {
 	run: OptimizationRun
-	onRecomputeTrades?: (runId: string) => void
+	onRecomputeTrades?: (_runId: string) => void
 }
 
 const RunDetailPanel = ({ run, onRecomputeTrades }: RunDetailPanelProps) => {

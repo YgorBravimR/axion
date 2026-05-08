@@ -335,14 +335,16 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 // Dialog component for creating accounts
 interface CreateAccountDialogProps {
 	isOpen: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	form: CreateAccountForm
 	setForm: (
-		value: CreateAccountForm | ((prev: CreateAccountForm) => CreateAccountForm)
+		_value:
+			| CreateAccountForm
+			| ((_prev: CreateAccountForm) => CreateAccountForm)
 	) => void
 	onSubmit: () => void
 	isPending: boolean
-	t: (key: string) => string
+	t: (_key: string) => string
 	isPremium: boolean
 }
 

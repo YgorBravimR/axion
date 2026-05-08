@@ -97,7 +97,7 @@ interface ColorPickerProps {
 	/** Current color value in HEX format */
 	value: string
 	/** Callback when color changes — always receives HEX */
-	onChange: (hex: string) => void
+	onChange: (_hex: string) => void
 	/** Custom trigger element. Defaults to a pipette icon circle. */
 	children?: ReactNode
 	/** Additional className for the popover content */

@@ -27,10 +27,10 @@ import type {
 interface SimulationConfigPanelProps {
 	dateFrom: string
 	dateTo: string
-	onDateChange: (from: string, to: string) => void
+	onDateChange: (_from: string, _to: string) => void
 	tradeYears: number[]
 	params: RiskSimulationParams | null
-	onParamsChange: (params: RiskSimulationParams) => void
+	onParamsChange: (_params: RiskSimulationParams) => void
 	preview: SimulationPreview | null
 	isLoadingPreview: boolean
 	riskProfiles: RiskManagementProfile[]
@@ -38,9 +38,9 @@ interface SimulationConfigPanelProps {
 	prefillSource: PrefillSource | null
 	activeProfileId: string | null
 	onPrefillSelect: (
-		params: RiskSimulationParams,
-		source: PrefillSource,
-		profileId?: string
+		_params: RiskSimulationParams,
+		_source: PrefillSource,
+		_profileId?: string
 	) => void
 	isLocked: boolean
 	originalAdvancedParams: AdvancedSimulationParams | null

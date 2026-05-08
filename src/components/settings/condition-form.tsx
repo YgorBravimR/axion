@@ -22,7 +22,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { createCondition, updateCondition } from "@/app/actions/trading-conditions"
+import {
+	createCondition,
+	updateCondition,
+} from "@/app/actions/trading-conditions"
 import type { TradingCondition } from "@/db/schema"
 import type { ConditionCategory } from "@/types/trading-condition"
 import { Loader2 } from "lucide-react"
@@ -30,7 +33,7 @@ import { Loader2 } from "lucide-react"
 interface ConditionFormProps {
 	condition?: TradingCondition | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 
@@ -105,20 +108,27 @@ export const ConditionForm = ({
 						{isEdit ? t("editCondition") : t("addCondition")}
 					</DialogTitle>
 					<DialogDescription>
-						{isEdit ? t("editConditionDescription") : t("addConditionDescription")}
+						{isEdit
+							? t("editConditionDescription")
+							: t("addConditionDescription")}
 					</DialogDescription>
 				</DialogHeader>
 
 				<form onSubmit={handleSubmit} className="space-y-m-400">
 					{error && (
-						<div className="text-small text-fb-error rounded-md bg-fb-error/10 p-s-300">
+						<div className="text-small text-fb-error bg-fb-error/10 p-s-300 rounded-md">
 							{error}
 						</div>
 					)}
 
 					{/* Name */}
 					<div className="space-y-s-200">
-						<Label id="label-condition-name" htmlFor="conditionName" required filled={!!formData.name.trim()}>
+						<Label
+							id="label-condition-name"
+							htmlFor="conditionName"
+							required
+							filled={!!formData.name.trim()}
+						>
 							{t("name")}
 						</Label>
 						<Input
@@ -133,7 +143,12 @@ export const ConditionForm = ({
 
 					{/* Category */}
 					<div className="space-y-s-200">
-						<Label id="label-condition-category" htmlFor="conditionCategory" required filled={!!formData.category}>
+						<Label
+							id="label-condition-category"
+							htmlFor="conditionCategory"
+							required
+							filled={!!formData.category}
+						>
 							{t("category")}
 						</Label>
 						<Select
@@ -144,9 +159,15 @@ export const ConditionForm = ({
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="indicator">{t("categoryIndicator")}</SelectItem>
-								<SelectItem value="price_action">{t("categoryPriceAction")}</SelectItem>
-								<SelectItem value="market_context">{t("categoryMarketContext")}</SelectItem>
+								<SelectItem value="indicator">
+									{t("categoryIndicator")}
+								</SelectItem>
+								<SelectItem value="price_action">
+									{t("categoryPriceAction")}
+								</SelectItem>
+								<SelectItem value="market_context">
+									{t("categoryMarketContext")}
+								</SelectItem>
 								<SelectItem value="custom">{t("categoryCustom")}</SelectItem>
 							</SelectContent>
 						</Select>
@@ -154,7 +175,10 @@ export const ConditionForm = ({
 
 					{/* Description */}
 					<div className="space-y-s-200">
-						<Label id="label-condition-description" htmlFor="conditionDescription">
+						<Label
+							id="label-condition-description"
+							htmlFor="conditionDescription"
+						>
 							{t("description")}
 						</Label>
 						<Textarea
@@ -176,8 +200,14 @@ export const ConditionForm = ({
 						>
 							{tCommon("cancel")}
 						</Button>
-						<Button id="condition-form-submit" type="submit" disabled={isPending}>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+						<Button
+							id="condition-form-submit"
+							type="submit"
+							disabled={isPending}
+						>
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{isEdit ? tCommon("saveChanges") : t("createCondition")}
 						</Button>
 					</DialogFooter>

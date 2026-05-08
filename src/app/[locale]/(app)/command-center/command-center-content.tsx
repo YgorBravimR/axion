@@ -37,7 +37,7 @@ import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { commandCenterGuide } from "@/components/ui/page-guide/guide-configs/command-center"
-import { useFormatting } from "@/hooks/use-formatting"
+
 import { CalendarDays } from "lucide-react"
 
 interface CommandCenterContentProps {

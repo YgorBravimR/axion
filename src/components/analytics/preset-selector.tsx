@@ -26,7 +26,7 @@ import type { FilterPreset } from "@/db/schema"
 
 interface PresetSelectorProps {
 	currentFilters: SavedFilterState
-	onApplyPreset: (filters: SavedFilterState) => void
+	onApplyPreset: (_filters: SavedFilterState) => void
 }
 
 const PresetSelector = ({

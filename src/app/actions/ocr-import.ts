@@ -6,11 +6,7 @@ import { trades, tradeExecutions, assets } from "@/db/schema"
 import type { Trade, TradeExecution } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import { eq } from "drizzle-orm"
-import {
-	calculateAssetPnL,
-	calculateRMultiple,
-	determineOutcome,
-} from "@/lib/calculations"
+import { calculateAssetPnL, determineOutcome } from "@/lib/calculations"
 import { fromCents, toCents, toNumericString } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"

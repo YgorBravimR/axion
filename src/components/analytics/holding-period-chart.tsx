@@ -37,7 +37,7 @@ interface CustomTooltipProps {
 
 const formatDuration = (
 	minutes: number,
-	t: (key: string, params?: Record<string, string>) => string
+	t: (_key: string, _params?: Record<string, string>) => string
 ): string => {
 	if (minutes < 1) {
 		return t("minutes", { value: "< 1" })

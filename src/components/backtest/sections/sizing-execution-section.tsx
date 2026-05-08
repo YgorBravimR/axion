@@ -13,7 +13,7 @@ import type {
 
 interface SizingExecutionSectionProps {
 	recipe: StrategyRecipe
-	onRecipeChange: (recipe: StrategyRecipe) => void
+	onRecipeChange: (_recipe: StrategyRecipe) => void
 }
 
 const SizingExecutionSection = memo(

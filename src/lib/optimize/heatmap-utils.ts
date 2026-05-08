@@ -2,10 +2,6 @@ import {
 	getSweepableParams,
 	getNestedValue,
 } from "@/lib/optimize/parameter-grid"
-import type {
-	NumericSweepableParam,
-	EnumSweepableParam,
-} from "@/lib/optimize/parameter-grid"
 import type { OptimizationRun } from "@/types/backtest"
 
 // ── Types ────────────────────────────────────────────────────────

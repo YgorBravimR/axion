@@ -27,11 +27,7 @@ import { KellyCriterionCard } from "./kelly-criterion-card"
 import { TradeSequenceList } from "./trade-sequence-list"
 import { StrategyAnalysis } from "./strategy-analysis"
 import { MonteCarloV2Content } from "./v2/monte-carlo-v2-content"
-import {
-	getDataSourceOptions,
-	getSimulationStats,
-	runSimulation,
-} from "@/app/actions/monte-carlo"
+import { getSimulationStats, runSimulation } from "@/app/actions/monte-carlo"
 import { defaultSimulationParams } from "@/lib/validations/monte-carlo"
 import { useMCCalibrationDispatch } from "@/components/providers/mc-calibration-provider"
 import { buildCalibrationSnapshot } from "@/lib/mc-calibration"
@@ -219,14 +215,14 @@ export const MonteCarloContent = ({
 interface EdgeExpectancyContentProps {
 	initialOptions: DataSourceOption[]
 	inputMode: "auto" | "manual"
-	setInputMode: (mode: "auto" | "manual") => void
+	setInputMode: (_mode: "auto" | "manual") => void
 	selectedSource: DataSource | null
-	setSelectedSource: (source: DataSource | null) => void
+	setSelectedSource: (_source: DataSource | null) => void
 	sourceStats: SourceStats | null
 	isLoadingStats: boolean
 	params: SimulationParams
 	setParams: (
-		params: SimulationParams | ((prev: SimulationParams) => SimulationParams)
+		_params: SimulationParams | ((_prev: SimulationParams) => SimulationParams)
 	) => void
 	result: MonteCarloResult | null
 	isRunning: boolean

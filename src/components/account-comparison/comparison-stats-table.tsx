@@ -26,8 +26,8 @@ type MetricDirection = "higher-better" | "lower-better" | "neutral"
 interface MetricRow {
 	key: string
 	label: string
-	getValue: (account: AccountComparisonMetrics) => number
-	format: (value: number) => string
+	getValue: (_account: AccountComparisonMetrics) => number
+	format: (_value: number) => string
 	direction: MetricDirection
 	mode: "always" | "capital" | "edge"
 }

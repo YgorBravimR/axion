@@ -14,7 +14,7 @@ interface AccountOption {
 interface AccountSelectorProps {
 	accounts: AccountOption[]
 	selectedIds: string[]
-	onSelectionChange: (ids: string[]) => void
+	onSelectionChange: (_ids: string[]) => void
 	onCompare: () => void
 	isPending: boolean
 }
@@ -35,31 +35,38 @@ const AccountSelector = ({
 	const t = useTranslations("accountComparison.selector")
 	const tCommon = useTranslations("common")
 
-	const handleToggle = useCallback((accountId: string) => {
-		if (selectedIds.includes(accountId)) {
-			onSelectionChange(selectedIds.filter((id) => id !== accountId))
-		} else {
-			onSelectionChange([...selectedIds, accountId])
-		}
-	}, [selectedIds, onSelectionChange])
+	const handleToggle = useCallback(
+		(accountId: string) => {
+			if (selectedIds.includes(accountId)) {
+				onSelectionChange(selectedIds.filter((id) => id !== accountId))
+			} else {
+				onSelectionChange([...selectedIds, accountId])
+			}
+		},
+		[selectedIds, onSelectionChange]
+	)
 
 	const canCompare = selectedIds.length >= 2
 
 	if (accounts.length < 2) {
 		return (
-			<div id="comparison-selector" className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
+			<div
+				id="comparison-selector"
+				className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
+			>
 				<p className="text-txt-300 text-small">{t("noAccounts")}</p>
 			</div>
 		)
 	}
 
 	return (
-		<div id="comparison-selector" className="border-bg-300 bg-bg-200 rounded-lg border p-s-300 sm:p-m-400">
-			<p className="text-small text-txt-200 mb-s-300">
-				{t("selectAccounts")}
-			</p>
+		<div
+			id="comparison-selector"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
+		>
+			<p className="text-small text-txt-200 mb-s-300">{t("selectAccounts")}</p>
 
-			<div className="flex flex-wrap gap-s-200">
+			<div className="gap-s-200 flex flex-wrap">
 				{accounts.map((account) => {
 					const isSelected = selectedIds.includes(account.id)
 					return (
@@ -70,7 +77,7 @@ const AccountSelector = ({
 							aria-label={`${isSelected ? tCommon("deselect") : tCommon("select")} ${account.name}`}
 							aria-pressed={isSelected}
 							className={cn(
-								"flex items-center gap-s-200 rounded-md border px-s-300 py-s-200 text-small transition-colors",
+								"gap-s-200 px-s-300 py-s-200 text-small flex items-center rounded-md border transition-colors",
 								isSelected
 									? "border-acc-100 bg-acc-100/10 text-txt-100"
 									: "border-bg-300 bg-bg-100 text-txt-300 hover:border-txt-300 hover:text-txt-200"
@@ -98,7 +105,7 @@ const AccountSelector = ({
 				})}
 			</div>
 
-			<div className="mt-s-300 flex items-center gap-s-300">
+			<div className="mt-s-300 gap-s-300 flex items-center">
 				<Button
 					id="compare-accounts"
 					type="button"

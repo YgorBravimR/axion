@@ -33,9 +33,9 @@ interface NumericSweepableParam {
 	defaultMin: number
 	defaultMax: number
 	defaultStep: number
-	condition?: (recipe: StrategyRecipe) => boolean
-	unitSuffix?: (recipe: StrategyRecipe) => string
-	dynamicDefaults?: (recipe: StrategyRecipe) => {
+	condition?: (_recipe: StrategyRecipe) => boolean
+	unitSuffix?: (_recipe: StrategyRecipe) => string
+	dynamicDefaults?: (_recipe: StrategyRecipe) => {
 		min: number
 		max: number
 		step: number
@@ -46,7 +46,7 @@ interface EnumOption {
 	value: string
 	labelKey: string
 	/** Apply this option's structural mutation to a recipe (mutates and returns) */
-	applyOption: (recipe: StrategyRecipe) => StrategyRecipe
+	applyOption: (_recipe: StrategyRecipe) => StrategyRecipe
 }
 
 interface EnumSweepableParam {
@@ -54,9 +54,9 @@ interface EnumSweepableParam {
 	path: string
 	labelKey: string
 	options: EnumOption[]
-	condition?: (recipe: StrategyRecipe) => boolean
+	condition?: (_recipe: StrategyRecipe) => boolean
 	/** Read the current value from a recipe (for UI pre-selection) */
-	getCurrentValue: (recipe: StrategyRecipe) => string
+	getCurrentValue: (_recipe: StrategyRecipe) => string
 }
 
 type SweepableParam = NumericSweepableParam | EnumSweepableParam

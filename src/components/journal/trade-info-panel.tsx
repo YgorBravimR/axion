@@ -11,7 +11,7 @@ import type { TradeChartData } from "@/types/candle"
 interface TradeInfoPanelProps {
 	trade: TradeChartData["trade"]
 	executions: TradeChartData["executions"]
-	onDirtyChange?: (dirty: boolean) => void
+	onDirtyChange?: (_dirty: boolean) => void
 	fullTrade: {
 		preTradeThoughts?: string | null
 		postTradeReflection?: string | null
@@ -43,18 +43,25 @@ const TradeInfoPanel = ({
 	const [isDirty, setIsDirty] = useState(false)
 
 	// M3: useCallback prevents TradeInfoNotesTab from re-rendering due to new function reference
-	const handleDirtyChange = useCallback((dirty: boolean) => {
-		setIsDirty(dirty)
-		onDirtyChange?.(dirty)
-	}, [onDirtyChange])
+	const handleDirtyChange = useCallback(
+		(dirty: boolean) => {
+			setIsDirty(dirty)
+			onDirtyChange?.(dirty)
+		},
+		[onDirtyChange]
+	)
 
 	return (
 		<div
 			id="trade-info-panel"
-			className="bg-bg-200 border-bg-300 flex h-full flex-col border-l p-m-400"
+			className="bg-bg-200 border-bg-300 p-m-400 flex h-full flex-col border-l"
 		>
 			<Tabs defaultValue="stats" className="flex h-full flex-col">
-				<TabsList id="trade-info-tabs-list" variant="line" className="w-full shrink-0">
+				<TabsList
+					id="trade-info-tabs-list"
+					variant="line"
+					className="w-full shrink-0"
+				>
 					<TabsTrigger id="trade-info-tab-stats" value="stats">
 						{tPanel("stats")}
 					</TabsTrigger>
@@ -73,12 +80,15 @@ const TradeInfoPanel = ({
 				</TabsList>
 
 				{/* Stats Tab */}
-				<TabsContent value="stats" className="flex-1 overflow-y-auto pt-m-400">
+				<TabsContent value="stats" className="pt-m-400 flex-1 overflow-y-auto">
 					<TradeInfoStatsTab trade={trade} fullTrade={fullTrade} />
 				</TabsContent>
 
 				{/* Notes Tab — Editable Form */}
-				<TabsContent value="notes" className="flex flex-1 flex-col overflow-hidden pt-m-400">
+				<TabsContent
+					value="notes"
+					className="pt-m-400 flex flex-1 flex-col overflow-hidden"
+				>
 					<TradeInfoNotesTab
 						tradeId={trade.id}
 						fullTrade={fullTrade}
@@ -87,7 +97,10 @@ const TradeInfoPanel = ({
 				</TabsContent>
 
 				{/* Executions Tab */}
-				<TabsContent value="executions" className="flex-1 overflow-y-auto pt-m-400">
+				<TabsContent
+					value="executions"
+					className="pt-m-400 flex-1 overflow-y-auto"
+				>
 					<TradeInfoExecutionsTab trade={trade} executions={executions} />
 				</TabsContent>
 			</Tabs>

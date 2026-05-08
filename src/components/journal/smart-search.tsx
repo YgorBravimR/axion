@@ -49,11 +49,11 @@ interface FilterCondition {
 
 interface SmartSearchProps {
 	availableAssets: string[]
-	onFiltersChange: (filters: Record<string, string | string[]>) => void
+	onFiltersChange: (_filters: Record<string, string | string[]>) => void
 	onClear: () => void
 	activeFilterCount: number
 	activeQuickFilterKey?: string
-	onQuickFilterChange?: (key: string | null) => void
+	onQuickFilterChange?: (_key: string | null) => void
 }
 
 // ============================================================================

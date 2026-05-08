@@ -13,7 +13,7 @@ type ExpectancyMode = "edge" | "capital"
 
 interface ExpectancyModeToggleProps {
 	mode: ExpectancyMode
-	onModeChange: (mode: ExpectancyMode) => void
+	onModeChange: (_mode: ExpectancyMode) => void
 }
 
 const ExpectancyModeToggle = ({

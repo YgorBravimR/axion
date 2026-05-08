@@ -12,7 +12,7 @@ import type { ChecklistWithCompletion } from "@/app/actions/command-center.types
 
 interface DailyChecklistProps {
 	checklists: ChecklistWithCompletion[]
-	onManageClick: (checklistId: string) => void
+	onManageClick: (_checklistId: string) => void
 	onRefresh: () => void
 	isReadOnly?: boolean
 }

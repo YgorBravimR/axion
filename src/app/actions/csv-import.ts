@@ -1,14 +1,8 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import {
-	assets,
-	strategies,
-	tags,
-	timeframes,
-	trades as tradesTable,
-} from "@/db/schema"
-import type { Strategy, Tag, Timeframe } from "@/db/schema"
+import { assets, strategies, tags, trades as tradesTable } from "@/db/schema"
+import type { Tag } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { CsvTradeInput } from "@/lib/csv-parser"
 import { eq, and, inArray } from "drizzle-orm"

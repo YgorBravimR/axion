@@ -10,7 +10,7 @@ import type { StrategyRecipe, OrbEntryConfig } from "@/types/backtest"
 
 interface OrbEntrySectionProps {
 	recipe: StrategyRecipe
-	onRecipeChange: (recipe: StrategyRecipe) => void
+	onRecipeChange: (_recipe: StrategyRecipe) => void
 }
 
 const OrbEntrySection = memo(

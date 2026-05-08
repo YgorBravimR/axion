@@ -2,8 +2,8 @@
 
 import { invalidatePlaybookData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
-import { strategyConditions, strategies, tradingConditions } from "@/db/schema"
-import type { StrategyCondition, TradingCondition } from "@/db/schema"
+import { strategyConditions, strategies } from "@/db/schema"
+import type { StrategyCondition } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { StrategyConditionInput } from "@/types/trading-condition"
 import { eq, and, asc } from "drizzle-orm"

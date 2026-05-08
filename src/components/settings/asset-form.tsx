@@ -31,7 +31,7 @@ interface AssetFormProps {
 	asset?: AssetWithType | null
 	assetTypes: AssetType[]
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 

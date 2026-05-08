@@ -13,10 +13,10 @@ import type { OptimizationRun } from "@/types/backtest"
 interface RunsComparisonTableProps {
 	runs: OptimizationRun[]
 	expandedRunId: string | null
-	onTogglePin: (runId: string) => void
-	onToggleExpand: (runId: string) => void
-	onDelete: (runId: string) => void
-	onUpdateLabel: (runId: string, label: string) => void
+	onTogglePin: (_runId: string) => void
+	onToggleExpand: (_runId: string) => void
+	onDelete: (_runId: string) => void
+	onUpdateLabel: (_runId: string, _label: string) => void
 }
 
 const MIN_TRADES_THRESHOLD = 30
@@ -27,7 +27,7 @@ const RunsComparisonTable = ({
 	onTogglePin,
 	onToggleExpand,
 	onDelete,
-	onUpdateLabel,
+	onUpdateLabel: _onUpdateLabel,
 }: RunsComparisonTableProps) => {
 	const t = useTranslations("optimize")
 

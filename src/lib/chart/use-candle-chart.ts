@@ -20,7 +20,7 @@ interface UseCandleChartResult {
 	themeRef: RefObject<ChartThemeColors | null>
 	indicatorColorMapRef: RefObject<Record<string, string>>
 	candlesRef: RefObject<CandleRow[]>
-	getIndicatorColor: (key: string) => string
+	getIndicatorColor: (_key: string) => string
 }
 
 /**

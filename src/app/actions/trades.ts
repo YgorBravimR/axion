@@ -13,7 +13,7 @@ import {
 	tradeExecutions,
 	monthlyPlan as monthlyPlanTable,
 } from "@/db/schema"
-import type { Trade, TradeExecution, timeframes } from "@/db/schema"
+import type { Trade } from "@/db/schema"
 import type {
 	ActionResponse,
 	PaginatedResponse,
@@ -32,7 +32,7 @@ import {
 	type PaginationParams,
 } from "@/lib/validations/trade"
 import type { CsvTradeInput } from "@/lib/csv-parser"
-import { eq, and, gte, lte, inArray, desc, asc, count, sql } from "drizzle-orm"
+import { eq, and, gte, lte, inArray, desc, asc, count } from "drizzle-orm"
 import {
 	calculatePnL,
 	calculateAssetPnL,
@@ -58,7 +58,7 @@ import {
 } from "@/lib/user-crypto"
 import { computeTradeHash } from "@/lib/deduplication"
 import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
-import { captureROnEntry, computeROutcome } from "@/lib/fractal-plan/r-snapshot"
+import { captureROnEntry } from "@/lib/fractal-plan/r-snapshot"
 import { checkDrawdownTrigger } from "@/lib/fractal-plan/drawdown-trigger"
 
 /**

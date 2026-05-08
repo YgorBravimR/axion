@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import type { AccountComparisonMetrics } from "@/types"
 import { COMPARISON_COLORS } from "./comparison-colors"
-import { formatBrlWithSign, formatRatio } from "@/lib/formatting"
+import { formatBrlWithSign } from "@/lib/formatting"
 import {
 	Table,
 	TableHeader,
@@ -24,7 +24,7 @@ interface NormalizedMetric {
 	key: string
 	label: string
 	/** Raw R-based value per account */
-	getRValue: (a: AccountComparisonMetrics) => number
+	getRValue: (_a: AccountComparisonMetrics) => number
 	direction: "higher-better" | "lower-better"
 }
 

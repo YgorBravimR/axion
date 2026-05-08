@@ -11,7 +11,7 @@ import {
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
-import { formatR } from "@/lib/formatting"
+
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SimulatedTrade } from "@/types/monte-carlo"
 

@@ -22,7 +22,7 @@ import type { EquityShieldParams } from "@/types/equity-shield"
 interface MCCalibrationBannerProps {
 	snapshot: MCCalibrationSnapshot
 	params: EquityShieldParams
-	onParamsChange: (params: EquityShieldParams) => void
+	onParamsChange: (_params: EquityShieldParams) => void
 	onDismiss: () => void
 }
 
@@ -41,7 +41,7 @@ interface SuggestionRow {
 
 const getTimestampLabel = (
 	timestamp: number,
-	tAge: (key: string, values?: Record<string, string | number>) => string,
+	tAge: (_key: string, _values?: Record<string, string | number>) => string,
 	tAgeNow: string
 ): string => {
 	const minutes = Math.round((Date.now() - timestamp) / 60000)

@@ -13,9 +13,9 @@ import type { PersistedImage, PendingImage } from "@/lib/validations/upload"
 interface ImageUploadProps {
 	persistedImages?: PersistedImage[]
 	pendingImages?: PendingImage[]
-	onFileAdd: (pending: PendingImage) => void
-	onPendingRemove: (previewUrl: string) => void
-	onPersistedRemove?: (s3Key: string) => void
+	onFileAdd: (_pending: PendingImage) => void
+	onPendingRemove: (_previewUrl: string) => void
+	onPersistedRemove?: (_s3Key: string) => void
 	maxImages?: number
 	className?: string
 }

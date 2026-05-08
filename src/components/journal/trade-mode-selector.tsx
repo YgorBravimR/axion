@@ -8,7 +8,7 @@ export type TradeMode = "simple" | "scaled"
 
 interface TradeModeSelectorProps {
 	value: TradeMode
-	onChange: (mode: TradeMode) => void
+	onChange: (_mode: TradeMode) => void
 	disabled?: boolean
 }
 
@@ -21,7 +21,9 @@ export const TradeModeSelector = ({
 
 	return (
 		<div id="new-trade-mode-selector" className="space-y-s-200">
-			<label className="text-small text-txt-100 font-medium">{t("label")}</label>
+			<label className="text-small text-txt-100 font-medium">
+				{t("label")}
+			</label>
 			<div className="gap-s-300 grid grid-cols-2">
 				<button
 					type="button"

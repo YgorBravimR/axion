@@ -9,7 +9,7 @@ import { ptBR, enUS } from "date-fns/locale"
 
 interface MonthNavigatorProps {
 	currentDate: Date
-	onMonthChange: (date: Date) => void
+	onMonthChange: (_date: Date) => void
 	minDate?: Date
 	maxDate?: Date
 }

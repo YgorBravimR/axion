@@ -7,7 +7,7 @@ interface UseDebouncedSearchReturn {
 	/** Current local value for the input (immediate feedback) */
 	value: string
 	/** Update local value — syncs to URL after debounce */
-	setValue: (value: string) => void
+	setValue: (_value: string) => void
 	/** Clear the search immediately (removes URL param) */
 	clear: () => void
 }

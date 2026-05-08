@@ -58,7 +58,7 @@ interface VariableComparisonProps {
 	data: PerformanceByGroup[]
 	groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 	onGroupByChange: (
-		groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
+		_groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 	) => void
 }
 
@@ -101,7 +101,11 @@ interface CustomTooltipProps {
 	metric: MetricType
 }
 
-const CustomTooltip = ({ active, payload, metric }: CustomTooltipProps) => {
+const CustomTooltip = ({
+	active,
+	payload,
+	metric: _metric,
+}: CustomTooltipProps) => {
 	const t = useTranslations("analytics.tableHeaders")
 	const tDays = useTranslations("days")
 	const tCommon = useTranslations("common")

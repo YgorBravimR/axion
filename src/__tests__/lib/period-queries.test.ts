@@ -48,8 +48,8 @@ const {
 	const whereResult = {
 		limit: mockLimit,
 		then: (
-			onFulfilled?: ((value: unknown) => unknown) | null,
-			onRejected?: ((reason: unknown) => unknown) | null,
+			onFulfilled?: ((_value: unknown) => unknown) | null,
+			onRejected?: ((_reason: unknown) => unknown) | null
 		) => mockWhereResolve().then(onFulfilled, onRejected),
 	}
 	mockWhere.mockReturnValue(whereResult)
@@ -105,7 +105,11 @@ vi.mock("@/lib/aggregation/period-rollup", () => ({
 	rollupTrades: mockRollupTrades,
 }))
 
-import { getMonthAggregate, getWeekAggregate, getYearAggregate } from "@/lib/queries/period-queries"
+import {
+	getMonthAggregate,
+	getWeekAggregate,
+	getYearAggregate,
+} from "@/lib/queries/period-queries"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -118,8 +122,8 @@ const restoreChainDefaults = () => {
 	const whereResult = {
 		limit: mockLimit,
 		then: (
-			onFulfilled?: ((value: unknown) => unknown) | null,
-			onRejected?: ((reason: unknown) => unknown) | null,
+			onFulfilled?: ((_value: unknown) => unknown) | null,
+			onRejected?: ((_reason: unknown) => unknown) | null
 		) => mockWhereResolve().then(onFulfilled, onRejected),
 	}
 	mockWhere.mockReturnValue(whereResult)
@@ -245,7 +249,12 @@ describe("getMonthAggregate", () => {
 
 		expect(mockInsert).toHaveBeenCalledOnce()
 		expect(mockValues).toHaveBeenCalledWith(
-			expect.objectContaining({ isDirty: false, accountId: ACCOUNT_ID, year: 2026, month: 1 }),
+			expect.objectContaining({
+				isDirty: false,
+				accountId: ACCOUNT_ID,
+				year: 2026,
+				month: 1,
+			})
 		)
 	})
 
@@ -273,7 +282,7 @@ describe("getMonthAggregate", () => {
 		mockWhereResolve.mockResolvedValueOnce([corruptedTrade])
 
 		await expect(getMonthAggregate(ACCOUNT_ID, 2026, 1)).rejects.toThrow(
-			/non-numeric monetary field on trade trade-bad/,
+			/non-numeric monetary field on trade trade-bad/
 		)
 		// rollupTrades must NOT have been called with NaN
 		expect(mockRollupTrades).not.toHaveBeenCalled()
@@ -282,8 +291,8 @@ describe("getMonthAggregate", () => {
 	})
 
 	it("recomputes when no aggregate row exists (missing row)", async () => {
-		mockLimit.mockResolvedValueOnce([])           // no aggregate row
-		mockWhereResolve.mockResolvedValueOnce([])    // no trades either
+		mockLimit.mockResolvedValueOnce([]) // no aggregate row
+		mockWhereResolve.mockResolvedValueOnce([]) // no trades either
 
 		mockRollupTrades.mockReturnValue({
 			grossCents: 0,
@@ -314,7 +323,9 @@ describe("getWeekAggregate", () => {
 		vi.clearAllMocks()
 		restoreChainDefaults()
 
-		mockDbQuery.tradingAccounts.findFirst.mockResolvedValue({ userId: "user-789" })
+		mockDbQuery.tradingAccounts.findFirst.mockResolvedValue({
+			userId: "user-789",
+		})
 		mockGetUserDek.mockResolvedValue(null)
 		mockRollupTrades.mockReturnValue({
 			grossCents: 0,
@@ -347,8 +358,8 @@ describe("getWeekAggregate", () => {
 	})
 
 	it("week 1 of 2026 triggers a trades range query when aggregate is missing", async () => {
-		mockLimit.mockResolvedValueOnce([])           // no aggregate row
-		mockWhereResolve.mockResolvedValueOnce([])    // no trades
+		mockLimit.mockResolvedValueOnce([]) // no aggregate row
+		mockWhereResolve.mockResolvedValueOnce([]) // no trades
 
 		await getWeekAggregate(ACCOUNT_ID, 2026, 1)
 

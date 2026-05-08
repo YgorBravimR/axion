@@ -10,12 +10,7 @@ import bcrypt from "bcryptjs"
 import { getTranslations } from "next-intl/server"
 import { eq, and } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import {
-	users,
-	tradingAccounts,
-	type User,
-	type TradingAccount,
-} from "@/db/schema"
+import { users, tradingAccounts, type TradingAccount } from "@/db/schema"
 import { createDbRateLimiter } from "@/lib/db-rate-limiter"
 import { firstIssueMessage } from "@/lib/zod-helpers"
 // Field-level encryption disabled — imports preserved for re-activation:

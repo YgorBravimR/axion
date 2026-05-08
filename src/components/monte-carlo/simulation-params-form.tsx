@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 
 interface SimulationParamsFormProps {
 	params: SimulationParams
-	onChange: (params: SimulationParams) => void
+	onChange: (_params: SimulationParams) => void
 	disabled?: boolean
 	budgetCap: number
 }
@@ -69,7 +69,7 @@ export const SimulationParamsForm = ({
 							onChange={(e) =>
 								handleChange("winRate", parseFloat(e.target.value) || 0)
 							}
-							className="min-w-0 w-full pr-7"
+							className="w-full min-w-0 pr-7"
 							disabled={disabled}
 						/>
 						<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -98,7 +98,7 @@ export const SimulationParamsForm = ({
 						onChange={(e) =>
 							handleChange("rewardRiskRatio", parseFloat(e.target.value) || 0)
 						}
-						className="min-w-0 w-full"
+						className="w-full min-w-0"
 						disabled={disabled}
 					/>
 				</div>
@@ -123,7 +123,7 @@ export const SimulationParamsForm = ({
 						onChange={(e) =>
 							handleChange("numberOfTrades", parseInt(e.target.value) || 0)
 						}
-						className="min-w-0 w-full"
+						className="w-full min-w-0"
 						disabled={disabled}
 					/>
 				</div>
@@ -152,7 +152,7 @@ export const SimulationParamsForm = ({
 									parseFloat(e.target.value) || 0
 								)
 							}
-							className="min-w-0 w-full pr-7"
+							className="w-full min-w-0 pr-7"
 							disabled={disabled}
 						/>
 						<span className="text-tiny text-txt-300 absolute top-1/2 right-3 -translate-y-1/2">
@@ -181,7 +181,7 @@ export const SimulationParamsForm = ({
 						onChange={(e) =>
 							handleChange("simulationCount", parseInt(e.target.value) || 0)
 						}
-						className="min-w-0 w-full"
+						className="w-full min-w-0"
 						disabled={disabled}
 					/>
 				</div>

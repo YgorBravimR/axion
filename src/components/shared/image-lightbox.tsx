@@ -16,7 +16,7 @@ interface ImageLightboxProps {
 	images: LightboxImage[]
 	initialIndex?: number
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 }
 
 /**

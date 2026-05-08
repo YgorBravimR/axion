@@ -8,7 +8,7 @@
 import Tesseract from "tesseract.js"
 import type { OcrProgressInfo, OcrRawResult } from "./types"
 
-type ProgressCallback = (info: OcrProgressInfo) => void
+type ProgressCallback = (_info: OcrProgressInfo) => void
 
 /**
  * Map Tesseract status to translation keys.

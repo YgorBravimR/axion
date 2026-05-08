@@ -1,6 +1,13 @@
 import { cn } from "@/lib/utils"
 
-type DarfStatus = "pending" | "paid" | "exempt" | "overdue" | "unknown" | "in_progress" | "future"
+type DarfStatus =
+	| "pending"
+	| "paid"
+	| "exempt"
+	| "overdue"
+	| "unknown"
+	| "in_progress"
+	| "future"
 
 interface DarfStripChip {
 	monthIndex: number // 0-11
@@ -10,12 +17,22 @@ interface DarfStripChip {
 
 interface DarfStripProps {
 	chips: readonly DarfStripChip[]
-	onChipClick?: (monthIndex: number) => void
+	onChipClick?: (_monthIndex: number) => void
 }
 
 const MONTH_ABBR_PT = [
-	"jan", "fev", "mar", "abr", "mai", "jun",
-	"jul", "ago", "set", "out", "nov", "dez",
+	"jan",
+	"fev",
+	"mar",
+	"abr",
+	"mai",
+	"jun",
+	"jul",
+	"ago",
+	"set",
+	"out",
+	"nov",
+	"dez",
 ]
 
 const STATUS_DOT: Record<DarfStatus, string> = {
@@ -46,11 +63,15 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 	const interactive = typeof onChipClick === "function"
 	return (
 		<ol
-			className="grid grid-cols-6 gap-s-200 sm:grid-cols-12"
+			className="gap-s-200 grid grid-cols-6 sm:grid-cols-12"
 			aria-label="DARF mensal — visão anual"
 		>
 			{Array.from({ length: 12 }, (_, i) => {
-				const chip = byIndex.get(i) ?? { monthIndex: i, status: "unknown" as const, dueCents: 0 }
+				const chip = byIndex.get(i) ?? {
+					monthIndex: i,
+					status: "unknown" as const,
+					dueCents: 0,
+				}
 				const hasData = chip.status !== "unknown" && chip.status !== "future"
 				const canClick = interactive && hasData
 				const label = `${MONTH_ABBR_PT[i]} — ${STATUS_LABEL[chip.status]} — ${formatBRL(chip.dueCents)}`
@@ -60,14 +81,14 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 					chip.status !== "future"
 				const content = (
 					<>
-						<span className="text-micro uppercase tracking-wide text-txt-300">
+						<span className="text-micro text-txt-300 tracking-wide uppercase">
 							{MONTH_ABBR_PT[i]}
 						</span>
 						<span
 							className={cn("size-2 rounded-full", STATUS_DOT[chip.status])}
 							aria-hidden="true"
 						/>
-						<span className="font-mono text-micro tabular-nums text-txt-200">
+						<span className="text-micro text-txt-200 font-mono tabular-nums">
 							{showAmount ? formatBRL(chip.dueCents) : "—"}
 						</span>
 					</>
@@ -79,8 +100,8 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 								type="button"
 								onClick={() => onChipClick(i)}
 								className={cn(
-									"flex w-full flex-col items-center gap-s-100 rounded-sm border border-bg-300 bg-bg-200 px-s-200 py-s-200 transition-colors",
-									"hover:border-acc-100/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100 cursor-pointer",
+									"gap-s-100 border-bg-300 bg-bg-200 px-s-200 py-s-200 flex w-full flex-col items-center rounded-sm border transition-colors",
+									"hover:border-acc-100/40 focus-visible:ring-acc-100 cursor-pointer focus-visible:ring-2 focus-visible:outline-none"
 								)}
 								aria-label={label}
 							>
@@ -89,7 +110,7 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 						) : (
 							<div
 								className={cn(
-									"flex w-full flex-col items-center gap-s-100 rounded-sm border border-bg-300 bg-bg-200 px-s-200 py-s-200",
+									"gap-s-100 border-bg-300 bg-bg-200 px-s-200 py-s-200 flex w-full flex-col items-center rounded-sm border"
 								)}
 								aria-label={label}
 							>

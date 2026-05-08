@@ -12,10 +12,10 @@ export type FilterStatus = "all" | "valid" | "warning" | "skipped"
 interface CsvImportSummaryProps {
 	trades: ProcessedCsvTrade[]
 	filter: FilterStatus
-	onFilterChange: (filter: FilterStatus) => void
+	onFilterChange: (_filter: FilterStatus) => void
 	selectedCount: number
 	selectableCount: number
-	onSelectAll: (selected: boolean) => void
+	onSelectAll: (_selected: boolean) => void
 	allSelected: boolean
 }
 

@@ -25,7 +25,7 @@ import { LoadingSpinner } from "@/components/shared"
 interface DayDetailModalProps {
 	date: string | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 }
 
 export const DayDetailModal = ({

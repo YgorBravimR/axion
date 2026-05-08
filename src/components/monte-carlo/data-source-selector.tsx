@@ -28,7 +28,7 @@ const getIcon = (type: DataSource["type"]) => {
 interface DataSourceSelectorProps {
 	options: DataSourceOption[]
 	selectedSource: DataSource | null
-	onSourceChange: (source: DataSource) => void
+	onSourceChange: (_source: DataSource) => void
 	isLoading: boolean
 }
 

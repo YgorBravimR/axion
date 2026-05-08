@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback, memo } from "react"
+import { useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
@@ -14,7 +14,7 @@ const formatDay = (date: string): string => new Date(date).getDate().toString()
 
 interface DailyPnLBarChartProps {
 	data: DailyPnL[]
-	onDayClick?: (date: string) => void
+	onDayClick?: (_date: string) => void
 }
 
 interface CustomTooltipProps {

@@ -22,7 +22,7 @@ import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profile
 
 interface RiskParamsFormProps {
 	params: RiskSimulationParams
-	onChange: (params: RiskSimulationParams) => void
+	onChange: (_params: RiskSimulationParams) => void
 	isLocked: boolean
 	originalAdvancedParams: AdvancedSimulationParams | null
 }
@@ -30,7 +30,7 @@ interface RiskParamsFormProps {
 interface FieldProps {
 	label: string
 	value: string | number
-	onChange: (value: string) => void
+	onChange: (_value: string) => void
 	type?: "number" | "text"
 	prefix?: string
 	suffix?: string
@@ -94,7 +94,7 @@ const Field = ({
 interface CurrencyFieldProps {
 	label: string
 	valueCents: number
-	onChange: (rawValue: string) => void
+	onChange: (_rawValue: string) => void
 	prefix?: string
 	suffix?: string
 	disabled?: boolean
@@ -188,7 +188,7 @@ const CheckboxField = ({
 }: {
 	label: string
 	checked: boolean
-	onChange: (checked: boolean) => void
+	onChange: (_checked: boolean) => void
 	locked?: boolean
 }) => {
 	const generatedId = useId()

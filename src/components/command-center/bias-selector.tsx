@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl"
 
 interface BiasSelectorProps {
 	value: BiasType | null
-	onChange: (value: BiasType | null) => void
+	onChange: (_value: BiasType | null) => void
 	disabled?: boolean
 	compact?: boolean
 }

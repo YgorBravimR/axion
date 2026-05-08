@@ -6,7 +6,6 @@ import {
 	XCircle,
 	Target,
 	TrendingUp,
-	TrendingDown,
 	AlertTriangle,
 } from "lucide-react"
 import type { ComplianceOverview } from "@/app/actions/strategies.types"

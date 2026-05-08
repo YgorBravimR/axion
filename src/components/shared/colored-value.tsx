@@ -9,7 +9,7 @@ interface ColoredValueProps {
 	showSign?: boolean
 	size?: "xs" | "sm" | "md" | "lg" | "xl"
 	className?: string
-	formatFn?: (value: number) => string
+	formatFn?: (_value: number) => string
 	neutralThreshold?: number
 }
 
@@ -75,7 +75,11 @@ const ColoredValueInner = ({
 	}
 
 	const formattedValue = formatValue()
-	const semanticLabel = isPositive ? "positive" : isNegative ? "negative" : "neutral"
+	const semanticLabel = isPositive
+		? "positive"
+		: isNegative
+			? "negative"
+			: "neutral"
 
 	return (
 		<span

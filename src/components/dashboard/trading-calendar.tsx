@@ -19,8 +19,8 @@ import { APP_TIMEZONE } from "@/lib/dates"
 interface TradingCalendarProps {
 	data: DailyPnL[]
 	month: Date
-	onMonthChange: (month: Date) => void
-	onDayClick?: (date: string) => void
+	onMonthChange: (_month: Date) => void
+	onDayClick?: (_date: string) => void
 }
 
 const formatDateKey = (date: Date): string => {

@@ -14,7 +14,7 @@ import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface YearlyPlanSlideoverProps {
 	open: boolean
-	onOpenChange: (next: boolean) => void
+	onOpenChange: (_next: boolean) => void
 	year: number
 	riskProfiles: RiskManagementProfile[]
 	existing: {

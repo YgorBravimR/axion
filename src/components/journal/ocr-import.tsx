@@ -404,7 +404,7 @@ export const OcrImport = () => {
 				showToast("error", result.message)
 				setStep("review")
 			}
-		} catch (error) {
+		} catch {
 			showToast("error", tCommon("unexpectedError"))
 			setStep("review")
 		} finally {

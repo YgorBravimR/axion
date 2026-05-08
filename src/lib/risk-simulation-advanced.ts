@@ -15,10 +15,7 @@ import type {
 	RiskSimulationResult,
 	EquityCurvePoint,
 } from "@/types/risk-simulation"
-import type {
-	DecisionTreeCents as DecisionTreeConfig,
-	RiskCalculationCents as RiskCalculation,
-} from "@/lib/risk-profiles/cents-shape"
+import type { RiskCalculationCents as RiskCalculation } from "@/lib/risk-profiles/cents-shape"
 import {
 	calculateTickBasedPositionSize,
 	calculateAssetPnL,

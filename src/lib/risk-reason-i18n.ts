@@ -11,8 +11,8 @@
  */
 
 type TranslateFn = (
-	key: string,
-	values?: Record<string, string | number>
+	_key: string,
+	_values?: Record<string, string | number>
 ) => string
 
 /**

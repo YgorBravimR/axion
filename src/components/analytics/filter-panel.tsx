@@ -46,7 +46,7 @@ interface FilterPanelProps {
 interface DatePreset {
 	key: string
 	urlKey: string
-	getDates: (now: Date) => { from: Date | null; to: Date | null }
+	getDates: (_now: Date) => { from: Date | null; to: Date | null }
 }
 
 const OUTCOME_VARIANT_MAP: Record<string, FilterVariant> = {
@@ -220,7 +220,8 @@ const useAnalyticsFilters = () => {
 		assets: filters.assets.length > 0 ? filters.assets : undefined,
 		directions: filters.directions.length > 0 ? filters.directions : undefined,
 		outcomes: filters.outcomes.length > 0 ? filters.outcomes : undefined,
-		timeframeIds: filters.timeframeIds.length > 0 ? filters.timeframeIds : undefined,
+		timeframeIds:
+			filters.timeframeIds.length > 0 ? filters.timeframeIds : undefined,
 		groupBy,
 		expectancyMode,
 	})
@@ -263,19 +264,28 @@ const FilterPanel = ({
 	const [isSheetOpen, setIsSheetOpen] = useState(false)
 	const [isCustomDateOpen, setIsCustomDateOpen] = useState(false)
 
-	const directions = useMemo(() => [
-		{ value: "long" as const, label: tTrade("direction.long") },
-		{ value: "short" as const, label: tTrade("direction.short") },
-	], [tTrade])
+	const directions = useMemo(
+		() => [
+			{ value: "long" as const, label: tTrade("direction.long") },
+			{ value: "short" as const, label: tTrade("direction.short") },
+		],
+		[tTrade]
+	)
 
-	const outcomes = useMemo(() => [
-		{ value: "win" as const, label: tTrade("outcome.win") },
-		{ value: "loss" as const, label: tTrade("outcome.loss") },
-		{ value: "breakeven" as const, label: tTrade("outcome.breakeven") },
-	], [tTrade])
+	const outcomes = useMemo(
+		() => [
+			{ value: "win" as const, label: tTrade("outcome.win") },
+			{ value: "loss" as const, label: tTrade("outcome.loss") },
+			{ value: "breakeven" as const, label: tTrade("outcome.breakeven") },
+		],
+		[tTrade]
+	)
 
 	// Memoize serialized filters to avoid creating new object on every render
-	const currentFiltersMemo = useMemo(() => serializeFilters(), [filters, groupBy, expectancyMode, activePresetKey])
+	const currentFiltersMemo = useMemo(
+		() => serializeFilters(),
+		[filters, groupBy, expectancyMode, activePresetKey]
+	)
 
 	// Count active advanced filters (excludes date since that's in the main bar)
 	const advancedFilterCount =
@@ -292,8 +302,8 @@ const FilterPanel = ({
 			{/* Slim filter bar */}
 			<div className="gap-s-200 sm:gap-s-300 flex flex-wrap items-center">
 				{/* Period presets */}
-				<div className="scrollbar-none relative flex items-center gap-s-100 overflow-x-auto">
-					<div className="from-bg-100 pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-linear-to-l sm:hidden" />
+				<div className="scrollbar-none gap-s-100 relative flex items-center overflow-x-auto">
+					<div className="from-bg-100 pointer-events-none absolute top-0 right-0 bottom-0 w-6 bg-linear-to-l sm:hidden" />
 					{DATE_PRESET_CONFIGS.map((preset) => (
 						<button
 							key={preset.key}
@@ -317,7 +327,7 @@ const FilterPanel = ({
 						tabIndex={0}
 						onClick={() => setIsCustomDateOpen((prev) => !prev)}
 						className={cn(
-							"px-s-300 py-s-100 text-tiny flex items-center gap-s-100 rounded-md font-medium whitespace-nowrap transition-colors",
+							"px-s-300 py-s-100 text-tiny gap-s-100 flex items-center rounded-md font-medium whitespace-nowrap transition-colors",
 							activePresetKey === "custom"
 								? "bg-acc-100 text-bg-100"
 								: "text-txt-300 hover:bg-bg-300 hover:text-txt-100"
@@ -329,7 +339,7 @@ const FilterPanel = ({
 				</div>
 
 				{/* Right side: spacer + controls */}
-				<div className="gap-s-200 ml-auto flex items-center min-w-[200px]">
+				<div className="gap-s-200 ml-auto flex min-w-[200px] items-center">
 					<PresetSelector
 						currentFilters={currentFiltersMemo}
 						onApplyPreset={applyPreset}
@@ -365,7 +375,7 @@ const FilterPanel = ({
 								<SlidersHorizontal className="h-3.5 w-3.5" />
 								<span className="hidden sm:inline">{t("advancedFilters")}</span>
 								{advancedFilterCount > 0 && (
-									<span className="bg-acc-100 text-micro text-bg-100 flex h-4 min-w-4 items-center justify-center rounded-full px-s-100 font-bold">
+									<span className="bg-acc-100 text-micro text-bg-100 px-s-100 flex h-4 min-w-4 items-center justify-center rounded-full font-bold">
 										{advancedFilterCount}
 									</span>
 								)}

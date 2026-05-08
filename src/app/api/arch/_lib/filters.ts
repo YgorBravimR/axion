@@ -1,5 +1,5 @@
 import type { SQL } from "drizzle-orm"
-import { eq, and, gte, lte, inArray } from "drizzle-orm"
+import { eq, gte, lte, inArray } from "drizzle-orm"
 import { trades, tradeTags } from "@/db/schema"
 import { db } from "@/db/drizzle"
 import type { ArchAuthContext } from "./auth"

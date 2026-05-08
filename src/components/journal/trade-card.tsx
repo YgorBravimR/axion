@@ -11,7 +11,7 @@ import {
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatDateTime } from "@/lib/dates"
-import { formatCurrency, formatRMultiple } from "@/lib/calculations"
+import { formatCurrency } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"

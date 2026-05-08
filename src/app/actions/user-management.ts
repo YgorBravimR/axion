@@ -11,7 +11,7 @@ import {
 } from "@/lib/validations/user-management"
 import { getTranslations } from "next-intl/server"
 
-import type { UserAccount, UserWithAccounts } from "./user-management.types"
+import type { UserWithAccounts } from "./user-management.types"
 
 export const getAllUsersWithAccounts = async (): Promise<
 	UserWithAccounts[]

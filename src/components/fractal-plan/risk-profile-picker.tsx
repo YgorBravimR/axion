@@ -12,7 +12,7 @@ import type { RiskManagementProfile } from "@/types/risk-profile"
 interface RiskProfilePickerProps {
 	profiles: RiskManagementProfile[]
 	value: string | null
-	onChange: (next: string | null) => void
+	onChange: (_next: string | null) => void
 	id: string
 	placeholder?: string
 	disabled?: boolean

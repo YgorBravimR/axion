@@ -6,7 +6,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import type { ProcessedCsvTrade } from "@/app/actions/csv-import.types"
 
@@ -20,7 +19,7 @@ interface AssetSlTpConfig {
 
 interface CsvSlTpGeneratorProps {
 	processedTrades: ProcessedCsvTrade[]
-	onApply: (updatedTrades: ProcessedCsvTrade[]) => void
+	onApply: (_updatedTrades: ProcessedCsvTrade[]) => void
 }
 
 const getRandomInt = (min: number, max: number): number => {

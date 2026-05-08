@@ -13,7 +13,7 @@ interface PluginOption {
 interface PluginPickerProps {
 	options: PluginOption[]
 	selected: string
-	onSelect: (value: string) => void
+	onSelect: (_value: string) => void
 }
 
 /**
@@ -31,8 +31,8 @@ const PluginPicker = ({ options, selected, onSelect }: PluginPickerProps) => {
 						type="button"
 						onClick={() => onSelect(option.value)}
 						className={cn(
-							"rounded-lg border px-m-400 py-s-300 text-left transition-colors",
-							"focus-visible:ring-acc-100 focus-visible:outline-none focus-visible:ring-2",
+							"px-m-400 py-s-300 rounded-lg border text-left transition-colors",
+							"focus-visible:ring-acc-100 focus-visible:ring-2 focus-visible:outline-none",
 							isSelected
 								? "border-acc-100/50 bg-acc-100/5 text-txt-100"
 								: "border-bg-300 bg-bg-100/50 text-txt-300 hover:border-bg-400 hover:text-txt-200"
@@ -40,12 +40,14 @@ const PluginPicker = ({ options, selected, onSelect }: PluginPickerProps) => {
 						aria-pressed={isSelected}
 						tabIndex={0}
 					>
-						<div className="flex items-center gap-s-200">
+						<div className="gap-s-200 flex items-center">
 							{option.icon && <span className="text-small">{option.icon}</span>}
 							<span className="text-small font-medium">{option.label}</span>
 						</div>
 						{option.description && (
-							<p className="text-tiny text-txt-300 mt-s-100">{option.description}</p>
+							<p className="text-tiny text-txt-300 mt-s-100">
+								{option.description}
+							</p>
 						)}
 					</button>
 				)
@@ -58,18 +60,24 @@ interface TogglePluginProps {
 	label: string
 	description?: string
 	enabled: boolean
-	onToggle: (enabled: boolean) => void
+	onToggle: (_enabled: boolean) => void
 	children?: ReactNode
 }
 
 /**
  * Toggle-able plugin block. When enabled, expands to show config inputs.
  */
-const TogglePlugin = ({ label, description, enabled, onToggle, children }: TogglePluginProps) => {
+const TogglePlugin = ({
+	label,
+	description,
+	enabled,
+	onToggle,
+	children,
+}: TogglePluginProps) => {
 	return (
 		<div
 			className={cn(
-				"rounded-lg border px-m-400 py-s-300 transition-colors",
+				"px-m-400 py-s-300 rounded-lg border transition-colors",
 				enabled
 					? "border-acc-100/30 bg-acc-100/5"
 					: "border-bg-300 bg-bg-100/50"
@@ -78,12 +86,17 @@ const TogglePlugin = ({ label, description, enabled, onToggle, children }: Toggl
 			<button
 				type="button"
 				onClick={() => onToggle(!enabled)}
-				className="flex w-full items-center justify-between gap-m-400 text-left"
+				className="gap-m-400 flex w-full items-center justify-between text-left"
 				aria-pressed={enabled}
 				tabIndex={0}
 			>
 				<div>
-					<span className={cn("text-small font-medium", enabled ? "text-txt-100" : "text-txt-300")}>
+					<span
+						className={cn(
+							"text-small font-medium",
+							enabled ? "text-txt-100" : "text-txt-300"
+						)}
+					>
 						{label}
 					</span>
 					{description && (
@@ -98,7 +111,7 @@ const TogglePlugin = ({ label, description, enabled, onToggle, children }: Toggl
 				/>
 			</button>
 			{enabled && children && (
-				<div className="mt-m-400 border-bg-300 border-t pt-m-400">
+				<div className="mt-m-400 border-bg-300 pt-m-400 border-t">
 					{children}
 				</div>
 			)}

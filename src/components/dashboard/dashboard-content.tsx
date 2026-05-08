@@ -77,7 +77,7 @@ const getDateRangeForPeriod = (
 
 interface PeriodToggleProps {
 	period: DashboardPeriod
-	onChange: (period: DashboardPeriod) => void
+	onChange: (_period: DashboardPeriod) => void
 	disabled?: boolean
 }
 

@@ -31,10 +31,10 @@ interface EquityShieldPreview {
 
 interface EquityShieldParamsProps {
 	params: EquityShieldParams
-	onParamsChange: (params: EquityShieldParams) => void
+	onParamsChange: (_params: EquityShieldParams) => void
 	dateFrom: string
 	dateTo: string
-	onDateChange: (from: string, to: string) => void
+	onDateChange: (_from: string, _to: string) => void
 	tradeYears: number[]
 	preview: EquityShieldPreview | null
 	isLoadingPreview: boolean

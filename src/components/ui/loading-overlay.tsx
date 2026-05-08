@@ -22,8 +22,8 @@ interface LoadingOverlayOptions {
 }
 
 interface LoadingOverlayContextType {
-	showLoading: (options: LoadingOverlayOptions) => void
-	updateLoading: (options: Partial<LoadingOverlayOptions>) => void
+	showLoading: (_options: LoadingOverlayOptions) => void
+	updateLoading: (_options: Partial<LoadingOverlayOptions>) => void
 	hideLoading: () => void
 	isLoading: boolean
 }

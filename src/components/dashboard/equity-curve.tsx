@@ -33,7 +33,7 @@ interface CustomTooltipProps {
 
 interface PeriodToggleProps {
 	period: Period
-	onChange: (period: Period) => void
+	onChange: (_period: Period) => void
 	disabled?: boolean
 	labels: { month: string; year: string; all: string }
 }
@@ -79,7 +79,7 @@ const PeriodToggle = ({
 
 interface ViewModeToggleProps {
 	mode: ViewMode
-	onChange: (mode: ViewMode) => void
+	onChange: (_mode: ViewMode) => void
 	disabled?: boolean
 	labels: { days: string; trades: string }
 }
@@ -126,7 +126,7 @@ interface EquityTooltipProps extends CustomTooltipProps {
 	viewMode: ViewMode
 	locale: string
 	drawdownLabel: string
-	tradeNumberLabel: (number: number) => string
+	tradeNumberLabel: (_number: number) => string
 }
 
 const EquityTooltip = ({

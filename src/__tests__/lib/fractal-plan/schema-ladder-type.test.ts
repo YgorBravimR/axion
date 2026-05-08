@@ -3,9 +3,8 @@ import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 
 describe("fractal-plan: ladderRules JSONB shape", () => {
 	it("LadderRuleR re-exported from schema barrel", async () => {
-		const mod = await import("@/db/schema")
+		await import("@/db/schema")
 		// Type-only re-export — runtime no-op. If barrel drops it, vitest refuses to load.
-		type _Re = typeof mod extends { LadderRuleR: infer _T } ? _T : never
 		expect(true).toBe(true)
 	})
 

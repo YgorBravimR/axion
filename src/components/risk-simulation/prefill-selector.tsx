@@ -4,7 +4,10 @@ import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import type { RiskManagementProfile } from "@/types/risk-profile"
-import type { PrefillSource, RiskSimulationParams } from "@/types/risk-simulation"
+import type {
+	PrefillSource,
+	RiskSimulationParams,
+} from "@/types/risk-simulation"
 import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
 
 // Phase 4b: simulation prefill uses a placeholder 1R baseline when prefilling
@@ -19,7 +22,11 @@ const inactiveStyle =
 
 interface PrefillSelectorProps {
 	riskProfiles: RiskManagementProfile[]
-	onSelect: (params: RiskSimulationParams, source: PrefillSource, profileId?: string) => void
+	onSelect: (
+		_params: RiskSimulationParams,
+		_source: PrefillSource,
+		_profileId?: string
+	) => void
 	activeSource: PrefillSource | null
 	activeProfileId: string | null
 }
@@ -32,22 +39,25 @@ const PrefillSelector = ({
 }: PrefillSelectorProps) => {
 	const t = useTranslations("riskSimulation.config")
 
-	const handleSelectProfile = useCallback((profile: RiskManagementProfile) => {
-		const tree = adaptDecisionTree(profile.decisionTree, PREFILL_ONE_R_CENTS)
-		onSelect(
-			{
-				mode: "advanced",
-				accountBalanceCents: PREFILL_ONE_R_CENTS * 100,
-				decisionTree: tree,
-				dailyLossCents: PREFILL_ONE_R_CENTS * 3,
-				dailyProfitTargetCents: null,
-				weeklyLossCents: tree.cascadingLimits.weeklyLossCents,
-				monthlyLossCents: tree.cascadingLimits.monthlyLossCents,
-			},
-			"riskProfile",
-			profile.id
-		)
-	}, [onSelect])
+	const handleSelectProfile = useCallback(
+		(profile: RiskManagementProfile) => {
+			const tree = adaptDecisionTree(profile.decisionTree, PREFILL_ONE_R_CENTS)
+			onSelect(
+				{
+					mode: "advanced",
+					accountBalanceCents: PREFILL_ONE_R_CENTS * 100,
+					decisionTree: tree,
+					dailyLossCents: PREFILL_ONE_R_CENTS * 3,
+					dailyProfitTargetCents: null,
+					weeklyLossCents: tree.cascadingLimits.weeklyLossCents,
+					monthlyLossCents: tree.cascadingLimits.monthlyLossCents,
+				},
+				"riskProfile",
+				profile.id
+			)
+		},
+		[onSelect]
+	)
 
 	const handleSelectManual = useCallback(() => {
 		onSelect(
@@ -76,18 +86,16 @@ const PrefillSelector = ({
 			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 				{t("prefillFrom")}
 			</h3>
-			<div className="flex flex-wrap gap-s-100 sm:gap-s-200">
+			<div className="gap-s-100 sm:gap-s-200 flex flex-wrap">
 				{riskProfiles.map((profile) => {
-					const isActive = activeSource === "riskProfile" && activeProfileId === profile.id
+					const isActive =
+						activeSource === "riskProfile" && activeProfileId === profile.id
 					return (
 						<button
 							key={profile.id}
 							type="button"
 							onClick={() => handleSelectProfile(profile)}
-							className={cn(
-								buttonBase,
-								isActive ? activeStyle : inactiveStyle
-							)}
+							className={cn(buttonBase, isActive ? activeStyle : inactiveStyle)}
 							aria-label={profile.name}
 							aria-pressed={isActive}
 						>

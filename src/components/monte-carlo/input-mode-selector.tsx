@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 interface InputModeSelectorProps {
 	mode: "auto" | "manual"
-	onModeChange: (mode: "auto" | "manual") => void
+	onModeChange: (_mode: "auto" | "manual") => void
 }
 
 export const InputModeSelector = ({

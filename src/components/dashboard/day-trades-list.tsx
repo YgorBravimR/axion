@@ -36,7 +36,7 @@ const getFormatPrice = (locale: string) => {
 
 interface DayTradesListProps {
 	trades: DayTrade[]
-	onTradeClick?: (tradeId: string) => void
+	onTradeClick?: (_tradeId: string) => void
 }
 
 export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {

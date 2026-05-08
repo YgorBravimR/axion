@@ -25,7 +25,7 @@ interface AccountTransitionOptions {
 
 interface AccountTransitionContextType {
 	showAccountTransition: (
-		options: AccountTransitionOptions & {
+		_options: AccountTransitionOptions & {
 			onTransition: () => Promise<void>
 		}
 	) => void
@@ -119,7 +119,7 @@ interface TransitionOverlayProps {
 	options: AccountTransitionOptions
 	phase: TransitionPhase
 	overlayRef: RefObject<HTMLDivElement | null>
-	getAccountTypeLabel: (accountType: string) => string
+	getAccountTypeLabel: (_accountType: string) => string
 	transitionLabel: string
 	switchingToLabel: string
 }

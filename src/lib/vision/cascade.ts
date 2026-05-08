@@ -30,7 +30,7 @@ interface ProviderConfig {
 	name: string
 	isAvailable: () => boolean
 	extract: (
-		request: VisionExtractionRequest
+		_request: VisionExtractionRequest
 	) => Promise<VisionExtractionResponse>
 	supportsStructuredOutput: boolean
 }

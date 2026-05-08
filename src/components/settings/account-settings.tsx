@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
-import { cn } from "@/lib/utils"
+
 import { RecalculateButton } from "./recalculate-button"
 import { RecalculatePnLButton } from "./recalculate-pnl-button"
 import { Link } from "@/i18n/routing"
@@ -109,7 +109,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				setUserAccounts(allAccounts)
 				if (assetsResult.status === "success" && assetsResult.data) {
 					// Extract the base AccountAsset data from AccountAssetWithDetails
-					setAccountAssets(assetsResult.data.map(({ asset, ...rest }) => rest))
+					setAccountAssets(
+						assetsResult.data.map(({ asset: _asset, ...rest }) => rest)
+					)
 				}
 				if (accountData) {
 					setAccountForm({

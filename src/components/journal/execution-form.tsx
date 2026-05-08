@@ -1,6 +1,12 @@
 "use client"
 
-import { useState, useTransition, useEffect, useId, type FormEvent } from "react"
+import {
+	useState,
+	useTransition,
+	useEffect,
+	useId,
+	type FormEvent,
+} from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,7 +40,7 @@ interface ExecutionFormProps {
 	execution?: TradeExecution | null
 	existingExecutions?: TradeExecution[]
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 
@@ -197,7 +203,13 @@ export const ExecutionForm = ({
 
 					{/* Execution Type */}
 					<div className="space-y-s-200">
-						<Label id="label-execution-type" required filled={!!formData.executionType}>{t("type")}</Label>
+						<Label
+							id="label-execution-type"
+							required
+							filled={!!formData.executionType}
+						>
+							{t("type")}
+						</Label>
 						<RadioGroup
 							id="execution-type-group"
 							value={formData.executionType}
@@ -230,18 +242,34 @@ export const ExecutionForm = ({
 					{/* Date and Time */}
 					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
-							<Label id="label-execution-date" htmlFor="executionDate" required filled={!!formData.executionDate}>
+							<Label
+								id="label-execution-date"
+								htmlFor="executionDate"
+								required
+								filled={!!formData.executionDate}
+							>
 								{t("date")}
 							</Label>
 							<DatePicker
 								id="executionDate"
-								value={formData.executionDate ? new Date(formData.executionDate + "T12:00:00") : undefined}
-								onChange={(date) => handleChange("executionDate", date ? formatDateKey(date) : "")}
+								value={
+									formData.executionDate
+										? new Date(formData.executionDate + "T12:00:00")
+										: undefined
+								}
+								onChange={(date) =>
+									handleChange("executionDate", date ? formatDateKey(date) : "")
+								}
 								maxDate={effectiveDate}
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label id="label-execution-time" htmlFor="executionTime" required filled={!!formData.executionTime}>
+							<Label
+								id="label-execution-time"
+								htmlFor="executionTime"
+								required
+								filled={!!formData.executionTime}
+							>
 								{t("time")}
 							</Label>
 							<Input
@@ -258,7 +286,12 @@ export const ExecutionForm = ({
 					{/* Price and Quantity */}
 					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
-							<Label id="label-execution-price" htmlFor="price" required filled={!!formData.price}>
+							<Label
+								id="label-execution-price"
+								htmlFor="price"
+								required
+								filled={!!formData.price}
+							>
 								{t("price")}
 							</Label>
 							<Input
@@ -272,7 +305,12 @@ export const ExecutionForm = ({
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label id="label-execution-quantity" htmlFor="quantity" required filled={!!formData.quantity}>
+							<Label
+								id="label-execution-quantity"
+								htmlFor="quantity"
+								required
+								filled={!!formData.quantity}
+							>
 								{t("quantity")}
 							</Label>
 							<Input
@@ -394,7 +432,9 @@ export const ExecutionForm = ({
 							type="submit"
 							disabled={isPending}
 						>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{isEdit ? tCommon("saveChanges") : t("addExecution")}
 						</Button>
 					</DialogFooter>

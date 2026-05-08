@@ -10,7 +10,7 @@ export const isNonEmpty = <T>(arr: readonly T[]): arr is NonEmptyArray<T> =>
 
 export const assertNonEmpty: <T>(
 	arr: readonly T[],
-	message?: string
+	_message?: string
 ) => asserts arr is NonEmptyArray<T> = (arr, message) => {
 	if (arr.length === 0) {
 		throw new Error(message ?? "expected non-empty array")
@@ -20,13 +20,13 @@ export const assertNonEmpty: <T>(
 // Sort preserving non-emptiness — `Array.prototype.toSorted` widens the result.
 export const toSortedNonEmpty = <T>(
 	arr: NonEmptyArray<T>,
-	compare?: (a: T, b: T) => number
+	compare?: (_a: T, _b: T) => number
 ): NonEmptyArray<T> => arr.toSorted(compare) as unknown as NonEmptyArray<T>
 
 // Map preserving non-emptiness — TS cannot infer it from `Array.prototype.map`.
 export const mapNonEmpty = <T, U>(
 	arr: NonEmptyArray<T>,
-	fn: (value: T, index: number) => U
+	fn: (_value: T, _index: number) => U
 ): NonEmptyArray<U> => {
 	const [head, ...rest] = arr
 	return [fn(head, 0), ...rest.map((v, i) => fn(v, i + 1))]

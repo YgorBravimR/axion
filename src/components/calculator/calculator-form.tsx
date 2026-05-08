@@ -26,16 +26,16 @@ interface CalculatorFormProps {
 	manualContracts: string
 	maxRiskOverride: string
 	settingsRiskCents: number
-	onAssetChange: (id: string) => void
-	onDirectionChange: (dir: "long" | "short") => void
-	onEntryPriceChange: (value: string) => void
-	onStopPriceChange: (value: string) => void
-	onTargetPriceChange: (value: string) => void
-	onManualContractsChange: (value: string) => void
-	onMaxRiskOverrideChange: (value: string) => void
+	onAssetChange: (_id: string) => void
+	onDirectionChange: (_dir: "long" | "short") => void
+	onEntryPriceChange: (_value: string) => void
+	onStopPriceChange: (_value: string) => void
+	onTargetPriceChange: (_value: string) => void
+	onManualContractsChange: (_value: string) => void
+	onMaxRiskOverrideChange: (_value: string) => void
 	strategies: StrategyWithStats[]
 	selectedStrategyId: string
-	onStrategyChange: (id: string) => void
+	onStrategyChange: (_id: string) => void
 	isTargetFromStrategy: boolean
 	prefilledFields: Set<string>
 }

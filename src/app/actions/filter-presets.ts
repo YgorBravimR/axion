@@ -9,12 +9,8 @@ import { requireAuth } from "@/app/actions/auth"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
 import {
-	savedFilterStateSchema,
 	createPresetInputSchema,
 	updatePresetInputSchema,
-	type SavedFilterState,
-	type CreatePresetInput,
-	type UpdatePresetInput,
 } from "@/lib/filter-preset-schema"
 
 // ============================================================================

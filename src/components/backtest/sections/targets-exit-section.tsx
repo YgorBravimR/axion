@@ -12,7 +12,7 @@ import type { StrategyRecipe, TargetLevel, TargetMode } from "@/types/backtest"
 
 interface TargetsExitSectionProps {
 	recipe: StrategyRecipe
-	onRecipeChange: (recipe: StrategyRecipe) => void
+	onRecipeChange: (_recipe: StrategyRecipe) => void
 }
 
 /** Inline unit suffix for each target mode — removes ambiguity */

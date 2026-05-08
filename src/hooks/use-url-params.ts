@@ -13,15 +13,15 @@ type ParamValue = string | string[] | number | boolean | null
 
 interface UseUrlParamsReturn {
 	/** Get a single string param */
-	get: (key: string) => string | null
+	get: (_key: string) => string | null
 	/** Get a CSV-encoded array param */
-	getArray: (key: string) => string[]
+	getArray: (_key: string) => string[]
 	/** Get a numeric param with fallback */
-	getNumber: (key: string, fallback: number) => number
+	getNumber: (_key: string, _fallback: number) => number
 	/** Get a boolean param ("1" = true) */
-	getBoolean: (key: string) => boolean
+	getBoolean: (_key: string) => boolean
 	/** Merge updates into current params. null/empty removes the param. Auto-resets page unless explicitly included. */
-	set: (updates: Record<string, ParamValue>) => void
+	set: (_updates: Record<string, ParamValue>) => void
 }
 
 const useUrlParams = (): UseUrlParamsReturn => {
@@ -105,7 +105,10 @@ const useUrlParams = (): UseUrlParamsReturn => {
 		[searchParams, router, pathname]
 	)
 
-	return useMemo(() => ({ get, getArray, getNumber, getBoolean, set }), [get, getArray, getNumber, getBoolean, set])
+	return useMemo(
+		() => ({ get, getArray, getNumber, getBoolean, set }),
+		[get, getArray, getNumber, getBoolean, set]
+	)
 }
 
 export { useUrlParams }

@@ -14,7 +14,7 @@ import type { MonthlyDarfRow } from "@/lib/tax/types"
 
 interface MonthlyDarfCardProps {
 	ledgerRow: MonthlyDarfRow
-	onMarkPaid: (paidAmountCents: number) => Promise<void>
+	onMarkPaid: (_paidAmountCents: number) => Promise<void>
 	locale?: Locale
 	isProp?: boolean
 	isFinal?: boolean

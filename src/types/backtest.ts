@@ -80,17 +80,17 @@ type EntryModuleConfig =
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
 
 interface EntryModule {
-	init: (config: OrbEntryConfig) => EntryState
+	init: (_config: OrbEntryConfig) => EntryState
 	onCandle: (
-		candle: CandleRow,
-		state: EntryState,
-		ctx: DayContext,
-		tickSize: number
+		_candle: CandleRow,
+		_state: EntryState,
+		_ctx: DayContext,
+		_tickSize: number
 	) => {
 		state: EntryState
 		signal: EntrySignal | null
 	}
-	onDayEnd: (state: EntryState) => EntryState
+	onDayEnd: (_state: EntryState) => EntryState
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -178,18 +178,18 @@ interface StopResult {
 
 interface StopModule {
 	init: (
-		entryPrice: number,
-		direction: Direction,
-		signal: EntrySignal,
-		config: StopConfig,
-		tickSize: number
+		_entryPrice: number,
+		_direction: Direction,
+		_signal: EntrySignal,
+		_config: StopConfig,
+		_tickSize: number
 	) => StopState
 	onCandle: (
-		candle: CandleRow,
-		state: StopState,
-		config: StopConfig
+		_candle: CandleRow,
+		_state: StopState,
+		_config: StopConfig
 	) => StopResult
-	notifyPartialExit: (state: StopState, config: StopConfig) => StopState
+	notifyPartialExit: (_state: StopState, _config: StopConfig) => StopState
 }
 
 // ═══════════════════════════════════════════════════════════════════

@@ -20,7 +20,7 @@
 
 import "dotenv/config"
 import { drizzle } from "drizzle-orm/neon-http"
-import { eq, inArray, sql, asc, gt } from "drizzle-orm"
+import { eq, inArray, sql, asc } from "drizzle-orm"
 import * as schema from "../src/db/schema"
 import {
 	generateKey,

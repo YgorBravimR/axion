@@ -22,7 +22,7 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 10 }
 
 interface DayEquityCurveProps {
 	data: DayEquityPoint[]
-	onPointClick?: (tradeId: string) => void
+	onPointClick?: (_tradeId: string) => void
 }
 
 interface CustomTooltipProps {

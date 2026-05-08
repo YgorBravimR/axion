@@ -67,7 +67,7 @@ interface CurrencyInputProps extends Omit<
 > {
 	id: string
 	value: number | null | undefined
-	onValueChange: (next: number | null) => void
+	onValueChange: (_next: number | null) => void
 	decimals?: Decimals
 	unit?: Unit
 	showPrefix?: boolean

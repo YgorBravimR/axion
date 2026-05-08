@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 
 interface ConditionPickerProps {
 	value: StrategyConditionInput[]
-	onChange: (conditions: StrategyConditionInput[]) => void
+	onChange: (_conditions: StrategyConditionInput[]) => void
 }
 
 const CATEGORY_ORDER = [

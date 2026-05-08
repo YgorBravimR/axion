@@ -4,7 +4,13 @@ vi.mock("@/app/actions/auth", () => ({
 	requireAuth: vi.fn().mockResolvedValue({ accountId: "acc-1", userId: "u-1" }),
 }))
 
-const { mockSet, mockWhere, mockReturning, mockFindFirst, mockInsertReturning } = vi.hoisted(() => ({
+const {
+	mockSet,
+	mockWhere,
+	mockReturning,
+	mockFindFirst,
+	mockInsertReturning,
+} = vi.hoisted(() => ({
 	mockSet: vi.fn().mockReturnThis(),
 	mockWhere: vi.fn().mockResolvedValue([{ id: "ok" }]),
 	mockReturning: vi.fn().mockResolvedValue([{ id: "ok" }]),
@@ -14,7 +20,11 @@ const { mockSet, mockWhere, mockReturning, mockFindFirst, mockInsertReturning } 
 
 vi.mock("@/db/drizzle", () => ({
 	db: {
-		update: () => ({ set: mockSet, where: mockWhere, returning: mockReturning }),
+		update: () => ({
+			set: mockSet,
+			where: mockWhere,
+			returning: mockReturning,
+		}),
 		query: {
 			dailyPlan: { findFirst: mockFindFirst },
 		},
@@ -26,9 +36,15 @@ vi.mock("@/db/drizzle", () => ({
 	},
 }))
 
-import { upsertMonthlyPlan, resetMonthlyOverride } from "@/app/actions/fractal-plan/monthly"
-import { upsertWeeklyPlan, resetWeeklyOverride } from "@/app/actions/fractal-plan/weekly"
-import { upsertDailyPlan, resetDailyOverride, lazyEnsureDailyPlan } from "@/app/actions/fractal-plan/daily"
+import {
+	upsertMonthlyPlan,
+	resetMonthlyOverride,
+} from "@/app/actions/fractal-plan/monthly"
+import { upsertWeeklyPlan } from "@/app/actions/fractal-plan/weekly"
+import {
+	upsertDailyPlan,
+	lazyEnsureDailyPlan,
+} from "@/app/actions/fractal-plan/daily"
 import { upsertQuarterlyPlan } from "@/app/actions/fractal-plan/quarterly"
 
 describe("fractal upsert actions", () => {

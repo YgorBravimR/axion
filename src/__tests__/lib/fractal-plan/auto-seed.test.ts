@@ -8,7 +8,9 @@ const mockTx = {
 
 vi.mock("@/db/drizzle", () => ({
 	db: {
-		transaction: vi.fn(async (cb: (tx: typeof mockTx) => unknown) => cb(mockTx)),
+		transaction: vi.fn(async (cb: (_tx: typeof mockTx) => unknown) =>
+			cb(mockTx)
+		),
 	},
 }))
 
@@ -21,12 +23,18 @@ describe("autoSeedYearlyTree", () => {
 		mockTx.returning
 			.mockResolvedValueOnce([{ id: "y1" }])
 			.mockResolvedValueOnce([
-				{ id: "q1" }, { id: "q2" }, { id: "q3" }, { id: "q4" },
+				{ id: "q1" },
+				{ id: "q2" },
+				{ id: "q3" },
+				{ id: "q4" },
 			])
 			.mockResolvedValueOnce(
-				Array.from({ length: 12 }, (_, i) => ({ id: `m${i + 1}`, month: i + 1 })),
+				Array.from({ length: 12 }, (_, i) => ({
+					id: `m${i + 1}`,
+					month: i + 1,
+				}))
 			)
-			.mockResolvedValueOnce([])  // weekly inserts
+			.mockResolvedValueOnce([]) // weekly inserts
 	})
 
 	it("seeds 4 quarterly + 12 monthly rows under one transaction", async () => {

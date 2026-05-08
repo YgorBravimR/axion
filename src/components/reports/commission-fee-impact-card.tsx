@@ -17,8 +17,8 @@ interface CommissionFeeImpactCardProps {
 
 const getInsightMessage = (
 	summary: CommissionFeeImpact["summary"],
-	formatCurrency: (v: number) => string,
-	t: (key: string, params?: Record<string, string>) => string
+	formatCurrency: (_v: number) => string,
+	t: (_key: string, _params?: Record<string, string>) => string
 ): string => {
 	if (summary.grossPnl <= 0 && summary.totalFees > 0) {
 		return summary.grossPnl < 0
@@ -84,7 +84,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 				? getInsightMessage(
 						data.summary,
 						formatCurrency,
-						t as (key: string, params?: Record<string, string>) => string
+						t as (_key: string, _params?: Record<string, string>) => string
 					)
 				: "",
 		[data?.summary, formatCurrency, t]

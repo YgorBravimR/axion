@@ -41,7 +41,8 @@ describe("recomputeAccountMonth", () => {
 		//   3. trades query (uses .orderBy)
 		const whereChain = {
 			orderBy: vi.fn().mockResolvedValue([]),
-			then: (resolve: (v: unknown[]) => unknown) => Promise.resolve([]).then(resolve),
+			then: (resolve: (_v: unknown[]) => unknown) =>
+				Promise.resolve([]).then(resolve),
 		}
 		mockSelect.mockReturnValue({
 			from: vi.fn().mockReturnValue({
@@ -92,7 +93,7 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 
 		// 1st select: tradingAccounts row (.then on .where)
 		const accountWhere = {
-			then: (resolve: (v: unknown[]) => unknown) =>
+			then: (resolve: (_v: unknown[]) => unknown) =>
 				Promise.resolve([{ accountType: "personal" }]).then(resolve),
 		}
 		// 2nd select: all accountFeeRates rows (awaited on .where directly)

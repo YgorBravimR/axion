@@ -36,7 +36,7 @@ interface TradeChartViewProps {
 	tickSize?: number
 	tickValue?: number
 	onToggleView?: () => void
-	onDirtyChange?: (dirty: boolean) => void
+	onDirtyChange?: (_dirty: boolean) => void
 }
 
 const TradeChartView = ({

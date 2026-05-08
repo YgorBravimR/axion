@@ -17,7 +17,7 @@ import { getDateFnsLocale } from "@/lib/dates"
 interface DatePickerProps {
 	id: string
 	value: Date | undefined
-	onChange: (date: Date | undefined) => void
+	onChange: (_date: Date | undefined) => void
 	maxDate?: Date
 	minDate?: Date
 	disabled?: boolean

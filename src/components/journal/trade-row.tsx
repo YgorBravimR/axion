@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils"
 
 interface TradeRowProps {
 	trade: DayTradeCompact
-	onTradeClick?: (tradeId: string) => void
+	onTradeClick?: (_tradeId: string) => void
 	deletingTradeId: string | null
-	onDeleteRequest: (tradeId: string) => void
-	onDeleteConfirm: (tradeId: string) => void
+	onDeleteRequest: (_tradeId: string) => void
+	onDeleteConfirm: (_tradeId: string) => void
 	onDeleteCancel: () => void
 	isDeleting: boolean
 }

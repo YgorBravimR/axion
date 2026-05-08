@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import Image from "next/image"
-import { Loader2, ArrowLeft, CheckCircle2, Mail } from "lucide-react"
+import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
 import {
 	requestEmailVerification,
 	verifyEmail,

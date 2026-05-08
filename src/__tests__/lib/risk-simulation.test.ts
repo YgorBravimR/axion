@@ -16,7 +16,6 @@ import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profile
 import {
 	resetTradeIdCounter,
 	createWinTrade,
-	createLossTrade,
 	createNoSlTrade,
 	createZeroDistanceSLTrade,
 	createDaySequence,

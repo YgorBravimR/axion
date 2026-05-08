@@ -14,8 +14,8 @@ import type { PageGuideConfig } from "@/types/page-guide"
 import { PageGuideOverlay } from "./page-guide-overlay"
 
 interface PageGuideContextType {
-	startGuide: (config: PageGuideConfig) => void
-	registerGuide: (config: PageGuideConfig) => void
+	startGuide: (_config: PageGuideConfig) => void
+	registerGuide: (_config: PageGuideConfig) => void
 	unregisterGuide: () => void
 	registeredConfig: PageGuideConfig | null
 	isActive: boolean

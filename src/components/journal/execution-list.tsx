@@ -56,7 +56,7 @@ interface ExecutionListProps {
 	executions: TradeExecution[]
 	direction: "long" | "short"
 	onAddExecution: () => void
-	onEditExecution: (execution: TradeExecution) => void
+	onEditExecution: (_execution: TradeExecution) => void
 	onExecutionDeleted?: () => void
 	className?: string
 }
@@ -259,8 +259,8 @@ interface ExecutionRowProps {
 	onEdit: () => void
 	onDelete: () => void
 	isDeleting: boolean
-	formatPrice: (price: string | number) => string
-	formatQuantity: (qty: string | number) => string
+	formatPrice: (_price: string | number) => string
+	formatQuantity: (_qty: string | number) => string
 	t: ReturnType<typeof useTranslations>
 	tCommon: ReturnType<typeof useTranslations>
 }

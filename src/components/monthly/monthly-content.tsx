@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, useCallback } from "react"
 import { useTranslations } from "next-intl"
-import { startOfMonth, subMonths } from "date-fns"
+import { startOfMonth } from "date-fns"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { MonthNavigator } from "./month-navigator"
 import { LoadingSpinner } from "@/components/shared"

@@ -84,9 +84,9 @@ interface CsvTradeCardProps {
 	trade: ProcessedCsvTrade
 	isExpanded: boolean
 	isSelected: boolean
-	onToggleExpand: (id: string) => void
-	onToggleSelect: (id: string) => void
-	onEdit: (id: string, edits: ProcessedCsvTrade["edits"]) => void
+	onToggleExpand: (_id: string) => void
+	onToggleSelect: (_id: string) => void
+	onEdit: (_id: string, _edits: ProcessedCsvTrade["edits"]) => void
 	strategies: Strategy[]
 	timeframes: Timeframe[]
 	tags: Tag[]

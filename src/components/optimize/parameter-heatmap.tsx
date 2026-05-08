@@ -22,7 +22,6 @@ import { formatCentsAsCurrency } from "@/lib/money"
 import { getNestedValue } from "@/lib/optimize/parameter-grid"
 import {
 	getVaryingParams,
-	getMetricValue,
 	getNestedStringValue,
 	buildHeatmapData,
 	getCellIntensityClass,
@@ -38,7 +37,7 @@ import type { OptimizationRun } from "@/types/backtest"
 
 interface ParameterHeatmapProps {
 	runs: OptimizationRun[]
-	onSelectRun: (runId: string) => void
+	onSelectRun: (_runId: string) => void
 }
 
 // ── Metric formatting helpers ────────────────────────────────────
@@ -76,8 +75,8 @@ interface HeatmapCellItemProps {
 	colorClass: string
 	metric: HeatmapMetric
 	ariaLabel: string
-	onHover: (cell: HeatmapCell | null) => void
-	onSelect: (runId: string) => void
+	onHover: (_cell: HeatmapCell | null) => void
+	onSelect: (_runId: string) => void
 }
 
 const HeatmapCellItem = memo(

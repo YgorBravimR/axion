@@ -37,7 +37,6 @@ import {
 	getAnalyticsCacheEntry,
 	setAnalyticsCacheEntry,
 	clearAnalyticsCache,
-	getAnalyticsCacheSize,
 } from "@/lib/cache/analytics-cache"
 import type {
 	PerformanceByGroup,

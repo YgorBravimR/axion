@@ -4,7 +4,6 @@ import type {
 	CandleQueryParams,
 	CandleRow,
 	IndicatorGroupWithKeys,
-	DataSourceInfo,
 	TradeChartData,
 } from "@/types/candle"
 import type { TradeExecution } from "@/db/schema"
@@ -135,7 +134,7 @@ export const getAssetsWithPriceData = async () => {
 				lastImported: v.lastImportedAt?.toISOString() ?? null,
 			})),
 		}
-	} catch (error) {
+	} catch {
 		return { status: "error" as const, data: [] }
 	}
 }

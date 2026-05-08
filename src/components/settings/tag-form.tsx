@@ -42,7 +42,7 @@ const TAG_COLORS: readonly [string, ...string[]] = [
 interface TagFormProps {
 	tag?: Tag | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 

@@ -23,8 +23,8 @@ import type { StrategyWithStats } from "@/app/actions/strategies.types"
 
 interface StrategyCardProps {
 	strategy: StrategyWithStats
-	onEdit: (strategy: StrategyWithStats) => void
-	onDelete: (strategyId: string) => void
+	onEdit: (_strategy: StrategyWithStats) => void
+	onDelete: (_strategyId: string) => void
 }
 
 const StrategyCardBase = ({

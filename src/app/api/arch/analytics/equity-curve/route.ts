@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
-import { eq, and, gte, lte, inArray } from "drizzle-orm"
+import { eq, gte, lte, inArray } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { trades, settings, tradingAccounts } from "@/db/schema"
+import { trades, settings } from "@/db/schema"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { fetchAndDecryptTrades } from "../../_lib/decrypt"
@@ -20,11 +20,7 @@ const GET = async (request: NextRequest) => {
 		const searchParams = request.nextUrl.searchParams
 		const mode = searchParams.get("mode") === "trade" ? "trade" : "daily"
 
-		// Get account balance from trading account
-		const account = await db.query.tradingAccounts.findFirst({
-			where: eq(tradingAccounts.id, auth.accountId),
-		})
-		// Fallback to global settings if account doesn't have balance
+		// Get account balance from settings
 		const accountBalanceSetting = await db.query.settings.findFirst({
 			where: eq(settings.key, "account_balance"),
 		})

@@ -33,7 +33,7 @@ const GRADE_COLORS: Record<string, string> = {
 interface TradeInfoNotesTabProps {
 	tradeId: string
 	fullTrade: TradeInfoPanelProps["fullTrade"]
-	onDirtyChange: (dirty: boolean) => void
+	onDirtyChange: (_dirty: boolean) => void
 }
 
 const TradeInfoNotesTab = ({

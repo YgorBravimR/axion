@@ -10,7 +10,7 @@ import type { StrategyRecipe, MACDWMAConfig } from "@/types/backtest"
 
 interface DezkEntrySectionProps {
 	recipe: StrategyRecipe
-	onRecipeChange: (recipe: StrategyRecipe) => void
+	onRecipeChange: (_recipe: StrategyRecipe) => void
 }
 
 const DezkEntrySection = memo(

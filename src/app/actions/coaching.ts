@@ -4,22 +4,17 @@ import { db } from "@/db/drizzle"
 import { trades, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, desc, inArray } from "drizzle-orm"
 import { subDays } from "date-fns"
-import { fromCents } from "@/lib/money"
 import { calculateWinRate } from "@/lib/calculations"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import {
 	detectAllPatterns,
-	type CoachingInsight,
 	type TradeForCoaching,
 } from "@/lib/coaching/pattern-detector"
-import {
-	buildCoachingPrompt,
-	type CoachingPrompt,
-} from "@/lib/coaching/prompt-builder"
+import { buildCoachingPrompt } from "@/lib/coaching/prompt-builder"
 import { computeOverallStats } from "@/lib/analytics-helpers"
-import type { ActionResponse, OverallStats } from "@/types"
+import type { ActionResponse } from "@/types"
 import type { CoachingContext } from "./coaching.types"
 
 // ============================================================================

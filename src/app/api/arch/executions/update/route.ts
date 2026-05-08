@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { trades, tradeExecutions } from "@/db/schema"
+import { tradeExecutions } from "@/db/schema"
 import type { TradeExecution } from "@/db/schema"
-import { eq, and, inArray } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import {
 	archSuccess,

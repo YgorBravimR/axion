@@ -31,7 +31,7 @@ interface ScenarioFormProps {
 	strategyId: string
 	scenario?: ScenarioWithImages | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 

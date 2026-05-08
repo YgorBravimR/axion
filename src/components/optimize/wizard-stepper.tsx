@@ -13,10 +13,15 @@ interface WizardStepperProps {
 	steps: WizardStepDef[]
 	activeStep: string
 	completedSteps: Set<string>
-	onStepClick: (stepKey: string) => void
+	onStepClick: (_stepKey: string) => void
 }
 
-const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: WizardStepperProps) => {
+const WizardStepper = ({
+	steps,
+	activeStep,
+	completedSteps,
+	onStepClick,
+}: WizardStepperProps) => {
 	const t = useTranslations("optimize")
 
 	const activeIndex = useMemo(
@@ -25,7 +30,10 @@ const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: Wizar
 	)
 
 	return (
-		<nav aria-label={t("wizard.ariaLabel")} className="flex items-center justify-center">
+		<nav
+			aria-label={t("wizard.ariaLabel")}
+			className="flex items-center justify-center"
+		>
 			{steps.map((step, index) => {
 				const isCompleted = completedSteps.has(step.key)
 				const isActive = step.key === activeStep
@@ -38,18 +46,22 @@ const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: Wizar
 							type="button"
 							onClick={() => isClickable && onStepClick(step.key)}
 							disabled={!isClickable}
-							className={`group flex flex-col items-center gap-s-100 ${
+							className={`group gap-s-100 flex flex-col items-center ${
 								isClickable ? "cursor-pointer" : "cursor-default opacity-50"
 							}`}
 							aria-current={isActive ? "step" : undefined}
 							aria-label={`${t(step.labelKey)} — ${
-								isActive ? t("wizard.stepStatusCurrent") : isCompleted ? t("wizard.stepStatusCompleted") : t("wizard.stepStatusUpcoming")
+								isActive
+									? t("wizard.stepStatusCurrent")
+									: isCompleted
+										? t("wizard.stepStatusCompleted")
+										: t("wizard.stepStatusUpcoming")
 							}`}
 							tabIndex={isClickable ? 0 : -1}
 						>
 							{/* Circle */}
 							<div
-								className={`flex h-8 w-8 items-center justify-center rounded-full text-small font-semibold transition-colors ${
+								className={`text-small flex h-8 w-8 items-center justify-center rounded-full font-semibold transition-colors ${
 									isActive
 										? "bg-acc-100 text-bg-100"
 										: isCompleted
@@ -80,7 +92,7 @@ const WizardStepper = ({ steps, activeStep, completedSteps, onStepClick }: Wizar
 						{/* Connector line */}
 						{index < steps.length - 1 && (
 							<div
-								className={`mx-s-200 h-px w-10 sm:mx-s-300 sm:w-16 transition-colors ${
+								className={`mx-s-200 sm:mx-s-300 h-px w-10 transition-colors sm:w-16 ${
 									index < activeIndex ? "bg-trade-buy/40" : "bg-bg-300"
 								}`}
 								aria-hidden="true"

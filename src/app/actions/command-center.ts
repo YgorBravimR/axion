@@ -9,13 +9,11 @@ import {
 	accountAssetSettings,
 	accountAssets,
 	trades,
-	assets,
 } from "@/db/schema"
 import type {
 	DailyChecklist,
 	ChecklistCompletion,
 	AccountAssetSetting,
-	Asset,
 } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import { eq, and, desc, gte, lte, inArray } from "drizzle-orm"
@@ -30,7 +28,6 @@ import {
 	type AssetSettingsInput,
 	type ChecklistItem,
 	type CircuitBreakerStatus,
-	type BiasType,
 } from "@/lib/validations/command-center"
 import { fromCents, toCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"

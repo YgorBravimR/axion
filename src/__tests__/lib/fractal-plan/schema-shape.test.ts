@@ -39,11 +39,13 @@ describe("fractal-plan: row type exports", () => {
 		// Pure type-level check — runtime no-op.
 		// If schema-shape drifts and inferred types break, vitest will refuse to load.
 		const schema = await import("@/db/schema")
-		type _Q = typeof schema.quarterlyPlan.$inferSelect
-		type _M = typeof schema.monthlyPlan.$inferSelect
-		type _W = typeof schema.weeklyPlan.$inferSelect
-		type _D = typeof schema.dailyPlan.$inferSelect
-		type _T = typeof schema.tierChangeLog.$inferSelect
+		// Pure type-level check — runtime no-op.
+		// If schema-shape drifts and inferred types break, vitest will refuse to load.
+		void schema.quarterlyPlan
+		void schema.monthlyPlan
+		void schema.weeklyPlan
+		void schema.dailyPlan
+		void schema.tierChangeLog
 		expect(true).toBe(true)
 	})
 })

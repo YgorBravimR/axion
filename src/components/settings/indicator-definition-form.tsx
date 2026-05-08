@@ -1,6 +1,12 @@
 "use client"
 
-import { useState, useTransition, useEffect, useMemo, type FormEvent } from "react"
+import {
+	useState,
+	useTransition,
+	useEffect,
+	useMemo,
+	type FormEvent,
+} from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,8 +34,8 @@ interface IndicatorDefinitionFormProps {
 	definition?: IndicatorDefinition | null
 	groups: IndicatorGroupWithDefinitions[]
 	open: boolean
-	onOpenChange: (open: boolean) => void
-	onSubmit: (data: {
+	onOpenChange: (_open: boolean) => void
+	onSubmit: (_data: {
 		key: string
 		displayName: string
 		groupId: string
@@ -118,9 +124,11 @@ const IndicatorDefinitionForm = ({
 	}
 
 	const activeGroups = useMemo(
-		() => groups.filter(
-			(group) => group.isActive || (isEdit && group.id === definition?.groupId)
-		),
+		() =>
+			groups.filter(
+				(group) =>
+					group.isActive || (isEdit && group.id === definition?.groupId)
+			),
 		[groups, isEdit, definition?.groupId]
 	)
 
@@ -129,7 +137,9 @@ const IndicatorDefinitionForm = ({
 			<DialogContent id="indicator-definition-form-dialog" className="max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEdit ? tInd("definitionForm.editTitle") : tInd("definitionForm.addTitle")}
+						{isEdit
+							? tInd("definitionForm.editTitle")
+							: tInd("definitionForm.addTitle")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEdit
@@ -140,12 +150,12 @@ const IndicatorDefinitionForm = ({
 
 				<form onSubmit={handleSubmit} className="space-y-m-400">
 					{error && (
-						<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+						<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 							{error}
 						</div>
 					)}
 
-					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
 							<Label
 								id="label-indicator-def-key"
