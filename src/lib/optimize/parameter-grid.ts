@@ -126,7 +126,7 @@ const getTargetUnitSuffix = (recipe: StrategyRecipe): string => {
 	) {
 		return ""
 	}
-	const mode = recipe.target.levels[0].mode
+	const mode = recipe.target.levels[0]!.mode
 	switch (mode) {
 		case "r_multiple":
 			return "R"
@@ -148,7 +148,7 @@ const getTargetDefaults = (
 	) {
 		return { min: 1, max: 3, step: 0.5 }
 	}
-	const mode = recipe.target.levels[0].mode
+	const mode = recipe.target.levels[0]!.mode
 	switch (mode) {
 		case "r_multiple":
 			return { min: 0.5, max: 3, step: 0.5 }
@@ -170,7 +170,7 @@ const getTarget2Defaults = (
 	) {
 		return { min: 1, max: 4, step: 0.5 }
 	}
-	const mode = recipe.target.levels[0].mode
+	const mode = recipe.target.levels[0]!.mode
 	switch (mode) {
 		case "r_multiple":
 			return { min: 1, max: 4, step: 0.5 }
@@ -219,7 +219,9 @@ const ORB_PARAMS: SweepableParam[] = [
 		condition: (r) =>
 			r.target.type === "fixed_levels" && r.target.levels.length > 0,
 		getCurrentValue: (r) =>
-			r.target.type === "fixed_levels" ? r.target.levels[0].mode : "r_multiple",
+			r.target.type === "fixed_levels"
+				? r.target.levels[0]!.mode
+				: "r_multiple",
 		options: [
 			{
 				value: "r_multiple",
@@ -334,7 +336,7 @@ const DEZK_PARAMS: SweepableParam[] = [
 			r.target.type === "fixed_levels" && r.target.levels.length > 0,
 		getCurrentValue: (r) =>
 			r.target.type === "fixed_levels"
-				? r.target.levels[0].mode
+				? r.target.levels[0]!.mode
 				: "fixed_points",
 		options: [
 			{
@@ -540,10 +542,10 @@ const setNestedValue = (obj: unknown, path: string, value: number): void => {
 	let current = obj as Record<string, unknown>
 
 	for (let i = 0; i < keys.length - 1; i++) {
-		current = current[keys[i]] as Record<string, unknown>
+		current = current[keys[i]!] as Record<string, unknown>
 	}
 
-	current[keys[keys.length - 1]] = value
+	current[keys[keys.length - 1]!] = value
 }
 
 /** Get a value at a dot-path from a deeply nested object */
@@ -552,10 +554,10 @@ const getNestedValue = (obj: unknown, path: string): number => {
 	let current = obj as Record<string, unknown>
 
 	for (let i = 0; i < keys.length - 1; i++) {
-		current = current[keys[i]] as Record<string, unknown>
+		current = current[keys[i]!] as Record<string, unknown>
 	}
 
-	return current[keys[keys.length - 1]] as number
+	return current[keys[keys.length - 1]!] as number
 }
 
 // ── Combination counting ────────────────────────────────────────
@@ -615,7 +617,7 @@ const countCombinations = (
 	for (const combo of enumCombos) {
 		let variant = structuredClone(baseRecipe)
 		for (let i = 0; i < enumRanges.length; i++) {
-			const option = enumRanges[i].enumDef.options.find(
+			const option = enumRanges[i]!.enumDef.options.find(
 				(o) => o.value === combo[i]
 			)
 			if (option) {
@@ -669,12 +671,12 @@ const generateRecipeGrid = (
 		const enumDescs: string[] = []
 
 		for (let i = 0; i < enumRanges.length; i++) {
-			const option = enumRanges[i].enumDef.options.find(
+			const option = enumRanges[i]!.enumDef.options.find(
 				(o) => o.value === combo[i]
 			)
 			if (option) {
 				variant = option.applyOption(variant)
-				enumDescs.push(`${enumRanges[i].label}=${combo[i]}`)
+				enumDescs.push(`${enumRanges[i]!.label}=${combo[i]}`)
 			}
 		}
 
@@ -704,8 +706,8 @@ const generateRecipeGrid = (
 				const r = structuredClone(variant)
 				const numDescs: string[] = []
 				for (let j = 0; j < applicable.length; j++) {
-					setNestedValue(r, applicable[j].path, numValues[j])
-					numDescs.push(`${applicable[j].label}=${numValues[j]}`)
+					setNestedValue(r, applicable[j]!.path, numValues[j]!)
+					numDescs.push(`${applicable[j]!.label}=${numValues[j]}`)
 				}
 				r.displayName = `${baseRecipe.displayName} (${[...enumDescs, ...numDescs].join(", ")})`
 				recipes.push(r)

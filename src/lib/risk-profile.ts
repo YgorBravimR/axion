@@ -31,13 +31,14 @@ export const buildProfileForSim = (
 		Array<{ riskCents: number; riskMultiplier: number }>
 	>((acc, step) => {
 		let riskCents: number
-		const previousRisk = acc.length > 0
-			? acc[acc.length - 1].riskCents
-			: baseRiskCents
+		const previousRisk =
+			acc.length > 0 ? acc[acc.length - 1]!.riskCents : baseRiskCents
 
 		switch (step.riskCalculation.type) {
 			case "percentOfBase":
-				riskCents = Math.round(baseRiskCents * step.riskCalculation.percent / 100)
+				riskCents = Math.round(
+					(baseRiskCents * step.riskCalculation.percent) / 100
+				)
 				break
 			case "sameAsPrevious":
 				riskCents = previousRisk
@@ -52,36 +53,44 @@ export const buildProfileForSim = (
 		return acc
 	}, [])
 
-	const compoundingRiskPercent = tree.gainMode.type === "compounding"
-		? tree.gainMode.reinvestmentPercent
-		: 0
+	const compoundingRiskPercent =
+		tree.gainMode.type === "compounding" ? tree.gainMode.reinvestmentPercent : 0
 
-	const stopOnFirstLoss = (tree.gainMode.type === "compounding" || tree.gainMode.type === "gainSequence")
-		? tree.gainMode.stopOnFirstLoss
-		: true
+	const stopOnFirstLoss =
+		tree.gainMode.type === "compounding" ||
+		tree.gainMode.type === "gainSequence"
+			? tree.gainMode.stopOnFirstLoss
+			: true
 
-	const gainTargetR = tree.gainMode.type === "singleTarget"
-		? tree.gainMode.dailyTargetR
-		: tree.gainMode.dailyTargetR
-	const dailyTargetCents = gainTargetR !== null && gainTargetR !== undefined
-		? Math.round(gainTargetR * oneRCents)
-		: overrides.dailyProfitTargetCents ?? null
+	const gainTargetR =
+		tree.gainMode.type === "singleTarget"
+			? tree.gainMode.dailyTargetR
+			: tree.gainMode.dailyTargetR
+	const dailyTargetCents =
+		gainTargetR !== null && gainTargetR !== undefined
+			? Math.round(gainTargetR * oneRCents)
+			: (overrides.dailyProfitTargetCents ?? null)
 
 	const riskSizing = tree.riskSizing ?? { type: "fixed" as const }
 	const limitMode = tree.limitMode ?? "rMultiples"
 
 	const riskSizingMode = riskSizing.type
-	const riskPercent = riskSizing.type === "percentOfBalance" ? riskSizing.riskPercent : null
-	const fixedRatioDeltaCents = riskSizing.type === "fixedRatio"
-		? Math.round(riskSizing.deltaR * oneRCents)
-		: null
-	const fixedRatioBaseContractRiskCents = riskSizing.type === "fixedRatio"
-		? Math.round(riskSizing.baseContractRiskR * oneRCents)
-		: null
-	const kellyDivisor = riskSizing.type === "kellyFractional" ? riskSizing.divisor : null
+	const riskPercent =
+		riskSizing.type === "percentOfBalance" ? riskSizing.riskPercent : null
+	const fixedRatioDeltaCents =
+		riskSizing.type === "fixedRatio"
+			? Math.round(riskSizing.deltaR * oneRCents)
+			: null
+	const fixedRatioBaseContractRiskCents =
+		riskSizing.type === "fixedRatio"
+			? Math.round(riskSizing.baseContractRiskR * oneRCents)
+			: null
+	const kellyDivisor =
+		riskSizing.type === "kellyFractional" ? riskSizing.divisor : null
 
 	const drawdownTiers = tree.drawdownControl?.tiers ?? []
-	const drawdownRecoveryPercent = tree.drawdownControl?.recoveryThresholdPercent ?? 50
+	const drawdownRecoveryPercent =
+		tree.drawdownControl?.recoveryThresholdPercent ?? 50
 	const consecutiveLossRules = tree.consecutiveLossRules ?? []
 
 	return {
@@ -99,7 +108,8 @@ export const buildProfileForSim = (
 		stopOnFirstLoss,
 		weeklyLossLimitCents: overrides.weeklyLossCents,
 		monthlyLossLimitCents: overrides.monthlyLossCents,
-		tradingDaysPerMonth: overrides.tradingDaysPerMonth ?? DEFAULT_TRADING_DAYS_PER_MONTH,
+		tradingDaysPerMonth:
+			overrides.tradingDaysPerMonth ?? DEFAULT_TRADING_DAYS_PER_MONTH,
 		tradingDaysPerWeek: overrides.tradingDaysPerWeek ?? 5,
 		commissionPerTradeCents: overrides.commissionPerTradeCents ?? 0,
 

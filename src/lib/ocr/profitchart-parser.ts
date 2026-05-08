@@ -45,24 +45,24 @@ const levenshteinDistance = (a: string, b: string): number => {
 		matrix[i] = [i]
 	}
 	for (let j = 0; j <= a.length; j++) {
-		matrix[0][j] = j
+		matrix[0]![j] = j
 	}
 
 	for (let i = 1; i <= b.length; i++) {
 		for (let j = 1; j <= a.length; j++) {
 			if (b.charAt(i - 1) === a.charAt(j - 1)) {
-				matrix[i][j] = matrix[i - 1][j - 1]
+				matrix[i]![j] = matrix[i - 1]![j - 1]!
 			} else {
-				matrix[i][j] = Math.min(
-					matrix[i - 1][j - 1] + 1, // substitution
-					matrix[i][j - 1] + 1, // insertion
-					matrix[i - 1][j] + 1 // deletion
+				matrix[i]![j] = Math.min(
+					matrix[i - 1]![j - 1]! + 1,
+					matrix[i]![j - 1]! + 1,
+					matrix[i - 1]![j]! + 1
 				)
 			}
 		}
 	}
 
-	return matrix[b.length][a.length]
+	return matrix[b.length]![a.length]!
 }
 
 /**
@@ -181,7 +181,7 @@ export const parseTimeString = (value: string): string | null => {
 	}
 
 	const [, hours, minutes, seconds] = match
-	return `${hours.padStart(2, "0")}:${minutes}:${seconds}`
+	return `${hours!.padStart(2, "0")}:${minutes}:${seconds}`
 }
 
 /**
@@ -220,13 +220,13 @@ export const normalizeB3Asset = (
 
 	if (futuresMatch) {
 		const [, prefix, monthCode, year] = futuresMatch
-		const monthName = B3_MONTH_CODES[monthCode.toUpperCase()]
+		const monthName = B3_MONTH_CODES[monthCode!.toUpperCase()]
 
 		return {
 			originalCode: code,
-			normalizedSymbol: prefix.toUpperCase(),
+			normalizedSymbol: prefix!.toUpperCase(),
 			isRecognized: B3_FUTURES_MAPPINGS.some(
-				(m) => m.prefix === prefix.toUpperCase()
+				(m) => m.prefix === prefix!.toUpperCase()
 			),
 			isFutures: true,
 			expirationMonth: monthName,
@@ -279,7 +279,7 @@ const extractDataFromLine = (
 	// Try to find asset (futures contract)
 	const futuresMatch = line.match(PATTERNS.futures)
 	if (futuresMatch) {
-		result.asset = futuresMatch[1].toUpperCase()
+		result.asset = futuresMatch[1]!.toUpperCase()
 		result.isSummary = true
 	}
 
@@ -305,25 +305,23 @@ const extractDataFromLine = (
 	const priceMatch = line.match(/(\d{3}\.\d{3})/)
 
 	if (timeMatch && priceMatch) {
-		const timeEndIndex = line.indexOf(timeMatch[1]) + timeMatch[1].length
-		const priceStartIndex = line.indexOf(priceMatch[1])
+		const timeEndIndex = line.indexOf(timeMatch[1]!) + timeMatch[1]!.length
+		const priceStartIndex = line.indexOf(priceMatch[1]!)
 
 		if (priceStartIndex > timeEndIndex) {
 			const betweenTimeAndPrice = line.substring(timeEndIndex, priceStartIndex)
-			// Look for quantity with optional C/V suffix first, then plain number
 			const qtyMatch = betweenTimeAndPrice.match(/\b(\d{1,3})\s*[CV]?\b/i)
 			if (qtyMatch) {
-				const qty = parseInt(qtyMatch[1], 10)
+				const qty = parseInt(qtyMatch[1]!, 10)
 				if (qty > 0 && qty < 1000) {
 					result.quantity = qty
 				}
 			}
 		}
 	} else {
-		// Fallback: look for number with C/V suffix anywhere
 		const qtyMatch = line.match(/\b(\d{1,2})\s*[CV]\b/i)
 		if (qtyMatch) {
-			const qty = parseInt(qtyMatch[1], 10)
+			const qty = parseInt(qtyMatch[1]!, 10)
 			if (qty > 0 && qty < 100) {
 				result.quantity = qty
 			}
@@ -371,7 +369,7 @@ export const detectColumns = (headerLine: string): ColumnDetectionResult => {
 		const combined: string[] = []
 
 		for (let i = 0; i < singleSpaceHeaders.length; i++) {
-			const current = singleSpaceHeaders[i]
+			const current = singleSpaceHeaders[i]!
 			const next = singleSpaceHeaders[i + 1]
 
 			// Try combining with next word for two-word headers
@@ -399,7 +397,7 @@ export const detectColumns = (headerLine: string): ColumnDetectionResult => {
 	}
 
 	for (let index = 0; index < headers.length; index++) {
-		const header = headers[index]
+		const header = headers[index]!
 
 		// Use fuzzy matching to find best column type (lower threshold for OCR errors)
 		const matchedType = findBestHeaderMatch(header, 0.45)
@@ -471,7 +469,7 @@ const parseDataRow = (
 	const row: ParsedRow = { isSummary: false }
 
 	// Check if this is a summary row (has asset name) or execution row (starts with time)
-	const firstValue = values[0]
+	const firstValue = values[0]!
 	const isTimeOnly = /^\d{1,2}:\d{2}:\d{2}$/.test(firstValue)
 
 	// If first value is time only, this is an execution row
@@ -493,7 +491,7 @@ const parseDataRow = (
 					const assetMatch =
 						value.match(PATTERNS.futures) || value.match(PATTERNS.asset)
 					if (assetMatch) {
-						row.asset = assetMatch[1].toUpperCase()
+						row.asset = assetMatch[1]!.toUpperCase()
 						row.isSummary = true
 					}
 				}
@@ -620,7 +618,7 @@ const parseWithPatterns = (
 	}
 
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i]
+		const line = lines[i]!
 		const rowNum = i + 1
 
 		// Skip header-like lines
@@ -697,7 +695,7 @@ const parseWithPatterns = (
 			const betweenTimeAndPrice = line.substring(timeEndIndex, priceStartIndex)
 
 			const qtyMatch = betweenTimeAndPrice.match(/\b(\d{1,3})\b/)
-			const quantity = qtyMatch ? parseInt(qtyMatch[1], 10) : 1
+			const quantity = qtyMatch ? parseInt(qtyMatch[1]!, 10) : 1
 			const price = parseBrazilianNumber(priceMatch)
 
 			if (price && quantity > 0 && quantity < 1000) {
@@ -839,7 +837,7 @@ const collectVerticalData = (
 	let prevNumberLine: LineData<number> | null = null
 
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i].trim()
+		const line = lines[i]!.trim()
 		if (!line) {
 			continue
 		}
@@ -869,7 +867,7 @@ const collectVerticalData = (
 		// Time (HH:MM:SS)
 		const timeMatch = line.match(/^(\d{1,2}:\d{2}:\d{2})$/)
 		if (timeMatch) {
-			times.push({ line: i, value: timeMatch[1] })
+			times.push({ line: i, value: timeMatch[1]! })
 			prevNumberLine = null
 			continue
 		}
@@ -877,7 +875,7 @@ const collectVerticalData = (
 		// Price (185.875 or 185,875 or 185875)
 		const priceMatch = line.match(/^(\d{3}[.,]?\d{3})$/)
 		if (priceMatch) {
-			const price = parseBrazilianNumber(priceMatch[1])
+			const price = parseBrazilianNumber(priceMatch[1]!)
 			if (price && price > 100) {
 				prices.push({ line: i, value: price })
 			}
@@ -894,7 +892,7 @@ const collectVerticalData = (
 		// Pure quantity numbers (executions only)
 		const qtyMatch = line.match(/^(\d{1,2})$/)
 		if (qtyMatch) {
-			const qty = parseInt(qtyMatch[1], 10)
+			const qty = parseInt(qtyMatch[1]!, 10)
 			if (qty > 0 && qty < 100) {
 				quantities.push({ line: i, value: qty })
 				prevNumberLine = { line: i, value: qty }
@@ -1069,7 +1067,7 @@ const parseVerticalText = (
 		const executionsPerTrade = Math.floor(quantities.length / numTrades)
 
 		for (let a = 0; a < numTrades; a++) {
-			const assetInfo = assets[a]
+			const assetInfo = assets[a]!
 			const tradeTimes = sliceTradeData(times, a, timesPerTrade)
 			const tradePrices = sliceTradeData(prices, a, pricesPerTrade)
 			const tradeQuantities = sliceTradeData(quantities, a, executionsPerTrade)
@@ -1222,7 +1220,7 @@ export const parseProfitChartOcr = (
 	}
 
 	for (let i = 0; i < Math.min(3, lines.length); i++) {
-		const detection = detectColumns(lines[i])
+		const detection = detectColumns(lines[i]!)
 		if (detection.columns.length > columnDetection.columns.length) {
 			columnDetection = detection
 		}
@@ -1238,7 +1236,7 @@ export const parseProfitChartOcr = (
 	const finalizeCurrentTrade = () => {
 		if (currentTrade && currentTrade.executions.length > 0) {
 			// Determine direction from first execution
-			const firstExecution = currentTrade.executions[0]
+			const firstExecution = currentTrade.executions[0]!
 			currentTrade.summary.direction =
 				firstExecution.type === "entry" ? "long" : "short"
 
@@ -1255,7 +1253,7 @@ export const parseProfitChartOcr = (
 	if (columnDetection.columns.length >= 3) {
 		// Parse data rows
 		for (let i = 1; i < lines.length; i++) {
-			const line = lines[i]
+			const line = lines[i]!
 			const rowNum = i + 1
 
 			const parsed = parseDataRow(line, columnDetection.columns)
@@ -1389,7 +1387,7 @@ const convertTradeToImportInput = (
 	const parseTimeToDate = (timeStr: string): Date => {
 		const [hours, minutes, seconds] = timeStr.split(":").map(Number)
 		const date = new Date(baseDate)
-		date.setHours(hours, minutes, seconds, 0)
+		date.setHours(hours!, minutes!, seconds!, 0)
 		return date
 	}
 
@@ -1400,8 +1398,8 @@ const convertTradeToImportInput = (
 		return timeA.localeCompare(timeB)
 	})
 
-	const firstExecution = sortedExecutions[0]
-	const lastExecution = sortedExecutions[sortedExecutions.length - 1]
+	const firstExecution = sortedExecutions[0]!
+	const lastExecution = sortedExecutions[sortedExecutions.length - 1]!
 
 	// Determine entry/exit dates
 	const entryDate = parseTimeToDate(firstExecution.time)
@@ -1456,7 +1454,7 @@ export const toImportInput = (
 	const parseTimeToDate = (timeStr: string): Date => {
 		const [hours, minutes, seconds] = timeStr.split(":").map(Number)
 		const date = new Date(baseDate)
-		date.setHours(hours, minutes, seconds, 0)
+		date.setHours(hours!, minutes!, seconds!, 0)
 		return date
 	}
 
@@ -1467,8 +1465,8 @@ export const toImportInput = (
 		return timeA.localeCompare(timeB)
 	})
 
-	const firstExecution = sortedExecutions[0]
-	const lastExecution = sortedExecutions[sortedExecutions.length - 1]
+	const firstExecution = sortedExecutions[0]!
+	const lastExecution = sortedExecutions[sortedExecutions.length - 1]!
 
 	// Determine entry/exit dates
 	const entryDate = parseTimeToDate(firstExecution.time)

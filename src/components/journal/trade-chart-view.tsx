@@ -103,7 +103,7 @@ const TradeChartView = ({
 
 			while (lo < hi) {
 				const mid = (lo + hi) >>> 1
-				if (candleTimestamps[mid] < target) {
+				if (candleTimestamps[mid]! < target) {
 					lo = mid + 1
 				} else {
 					hi = mid
@@ -113,8 +113,8 @@ const TradeChartView = ({
 			// lo is now the insertion point — check lo and lo-1 for closest
 			if (
 				lo > 0 &&
-				Math.abs(candleTimestamps[lo - 1] - target) <=
-					Math.abs(candleTimestamps[lo] - target)
+				Math.abs(candleTimestamps[lo - 1]! - target) <=
+					Math.abs(candleTimestamps[lo]! - target)
 			) {
 				return lo - 1
 			}
@@ -244,7 +244,7 @@ const TradeChartView = ({
 
 		// Execution lines bounded to trade lifespan, with index + quantity as title
 		for (let execIdx = 0; execIdx < executionPoints.length; execIdx++) {
-			const exec = executionPoints[execIdx]
+			const exec = executionPoints[execIdx]!
 			const isBuy = isLong ? exec.type === "entry" : exec.type === "exit"
 			const color = isBuy ? entryColor : exitColor
 			const lineData: Array<{ time: UTCTimestamp; value: number }> = []
@@ -411,7 +411,7 @@ const TradeChartView = ({
 
 				const lineData: Array<{ time: UTCTimestamp; value: number }> = []
 				for (let idx = 0; idx < candles.length; idx++) {
-					const val = candles[idx].indicators[indicator.key]
+					const val = candles[idx]!.indicators[indicator.key]
 					if (val === undefined || val === null || val === 0) {
 						continue
 					}
@@ -445,7 +445,7 @@ const TradeChartView = ({
 					}
 					const lineData: Array<{ time: UTCTimestamp; value: number }> = []
 					for (let idx = 0; idx < candles.length; idx++) {
-						const val = candles[idx].indicators[indicator.key]
+						const val = candles[idx]!.indicators[indicator.key]
 						if (val === undefined || val === null || val === 0) {
 							continue
 						}

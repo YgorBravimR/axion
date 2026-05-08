@@ -163,7 +163,7 @@ const groupWeeksByMonth = <T extends { isoWeek: number; isoYear: number }>(
 	for (const week of weeks) {
 		const month = weekToMonth.get(week.isoWeek)
 		if (month != null) {
-			result[month].push(week)
+			result[month]!.push(week)
 		}
 	}
 

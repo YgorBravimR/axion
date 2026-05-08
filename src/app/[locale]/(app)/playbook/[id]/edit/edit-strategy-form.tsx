@@ -80,13 +80,13 @@ const EditStrategyForm = ({
 				})
 
 				if (errors.length > 0) {
-					showToast("error", errors[0])
+					showToast("error", errors[0]!)
 					return
 				}
 
 				if (uploaded.length > 0) {
-					screenshotUrl = uploaded[0].url
-					screenshotS3Key = uploaded[0].s3Key
+					screenshotUrl = uploaded[0]!.url
+					screenshotS3Key = uploaded[0]!.s3Key
 				}
 			} else if (persistedScreenshot) {
 				// Keep existing screenshot

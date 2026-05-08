@@ -342,7 +342,7 @@ export const calculateFifoPnL = (
 			exit.quantity > 0 ? (exit.commission ?? 0) / exit.quantity : 0
 
 		while (exitQtyRemaining > 0 && entryIndex < entries.length) {
-			const entry = entries[entryIndex]
+			const entry = entries[entryIndex]!
 			const matchQty = Math.min(exitQtyRemaining, remainingEntryQty)
 			const entryPrice = entry.price
 			const exitPrice = exit.price

@@ -316,24 +316,24 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		const oneR = t.oneRSnapshotCents ?? 0
 		const m = t.entryDate.getUTCMonth()
 		const dayKey = t.entryDate.toISOString().slice(0, 10)
-		dayKeySetByMonth[m].add(dayKey)
-		realByMonth[m].tradesCount += 1
-		realByMonth[m].realPnlCents += Math.round(r * oneR)
-		realByMonth[m].realRSum += r
+		dayKeySetByMonth[m]!.add(dayKey)
+		realByMonth[m]!.tradesCount += 1
+		realByMonth[m]!.realPnlCents += Math.round(r * oneR)
+		realByMonth[m]!.realRSum += r
 		const iso = isoWeekOf(t.entryDate)
-		const map = weekIsoBucketsByMonth[m]
+		const map = weekIsoBucketsByMonth[m]!
 		map.set(iso, (map.get(iso) ?? 0) + r)
 	}
 	for (let i = 0; i < 12; i++) {
-		realByMonth[i].tradingDaysWithTrades = dayKeySetByMonth[i].size
-		realByMonth[i].weeklyR = Array.from(weekIsoBucketsByMonth[i].entries())
+		realByMonth[i]!.tradingDaysWithTrades = dayKeySetByMonth[i]!.size
+		realByMonth[i]!.weeklyR = Array.from(weekIsoBucketsByMonth[i]!.entries())
 			.sort(([a], [b]) => a - b)
 			.map(([isoWeek, sumR]) => ({ isoWeek, sumR }))
 	}
 
 	const lastActualMonthIdx = (() => {
 		for (let i = 11; i >= 0; i--) {
-			if (realByMonth[i].tradesCount > 0) {
+			if (realByMonth[i]!.tradesCount > 0) {
 				return i
 			}
 		}
@@ -350,7 +350,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 
 	let realEndBalanceCents = initialCapitalCents
 	for (let i = 0; i <= lastActualMonthIdx && i < 12; i++) {
-		realEndBalanceCents += realByMonth[i].realPnlCents
+		realEndBalanceCents += realByMonth[i]!.realPnlCents
 	}
 
 	let currentMonthRemainder: {
@@ -379,7 +379,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			const monthStartCapital =
 				monthRows.find((r) => r.monthIndex === m)?.snapshotCapitalCents ??
 				initialCapitalCents
-			const realEnd = monthStartCapital + realByMonth[m].realPnlCents
+			const realEnd = monthStartCapital + realByMonth[m]!.realPnlCents
 			const oneRForMonth = resolveTier(realEnd, ladderRules).oneRCents
 			const addedRsum = avgRPerDayYtd * weekdaysRemaining
 			const addedGross = Math.round(addedRsum * oneRForMonth)

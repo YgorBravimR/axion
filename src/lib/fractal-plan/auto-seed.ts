@@ -1,5 +1,10 @@
 import { dbWs } from "@/db/drizzle-ws"
-import { yearlyPlans, quarterlyPlan, monthlyPlan, weeklyPlan } from "@/db/schema"
+import {
+	yearlyPlans,
+	quarterlyPlan,
+	monthlyPlan,
+	weeklyPlan,
+} from "@/db/schema"
 import type { LadderRuleR } from "./capital-ladder"
 import { resolveTier } from "./capital-ladder"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
@@ -27,8 +32,13 @@ interface AutoSeedResult {
 	readonly monthlyPlanIds: readonly string[]
 }
 
-const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult> => {
-	const { tierIndex, oneRCents } = resolveTier(input.initialCapitalCents, input.ladderRules)
+const autoSeedYearlyTree = async (
+	input: AutoSeedInput
+): Promise<AutoSeedResult> => {
+	const { tierIndex, oneRCents } = resolveTier(
+		input.initialCapitalCents,
+		input.ladderRules
+	)
 
 	return await dbWs.transaction(async (tx) => {
 		const [yearRow] = await tx
@@ -52,17 +62,21 @@ const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult>
 			.insert(quarterlyPlan)
 			.values(
 				[1, 2, 3, 4].map((q) => ({
-					yearlyPlanId: yearRow.id,
+					yearlyPlanId: yearRow!.id,
 					quarter: q,
-				})),
+				}))
 			)
 			.returning({ id: quarterlyPlan.id })
 
-		const monthsByQuarter: { quarterlyPlanId: string; year: number; month: number }[] = []
+		const monthsByQuarter: {
+			quarterlyPlanId: string
+			year: number
+			month: number
+		}[] = []
 		for (let m = 1; m <= 12; m++) {
 			const q = Math.ceil(m / 3) - 1
 			monthsByQuarter.push({
-				quarterlyPlanId: quarters[q].id,
+				quarterlyPlanId: quarters[q]!.id,
 				year: input.year,
 				month: m,
 			})
@@ -80,12 +94,16 @@ const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult>
 					snapshotTierIndex: tierIndex,
 					snapshotComputedAt: input.now,
 					snapshotReason: "month_start" as const,
-				})),
+				}))
 			)
 			.returning({ id: monthlyPlan.id, month: monthlyPlan.month })
 
 		const totalIsoWeeks = getWeeksInYear(input.year)
-		const weeklyRows: { monthlyPlanId: string; isoWeek: number; isoYear: number }[] = []
+		const weeklyRows: {
+			monthlyPlanId: string
+			isoWeek: number
+			isoYear: number
+		}[] = []
 		for (let w = 1; w <= totalIsoWeeks; w++) {
 			// Map ISO week → calendar month using mid-week (Wednesday) for stable assignment.
 			const midWeekDate = new Date(input.year, 0, 1 + (w - 1) * 7 + 3)
@@ -104,7 +122,7 @@ const autoSeedYearlyTree = async (input: AutoSeedInput): Promise<AutoSeedResult>
 		}
 
 		return {
-			yearlyPlanId: yearRow.id,
+			yearlyPlanId: yearRow!.id,
 			quarterlyPlanIds: quarters.map((q) => q.id),
 			monthlyPlanIds: months.map((m) => m.id),
 		}

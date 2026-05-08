@@ -51,7 +51,7 @@ const mapSparkQuote = (result: YahooSparkResult): MarketQuote => {
 		flag: "", // Overridden by orchestrator from registry
 		updatedAt: result.timestamp[result.timestamp.length - 1]
 			? new Date(
-					result.timestamp[result.timestamp.length - 1] * 1000
+					result.timestamp[result.timestamp.length - 1]! * 1000
 				).toISOString()
 			: new Date().toISOString(),
 	}

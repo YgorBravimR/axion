@@ -14,10 +14,21 @@ vi.mock("@/db/drizzle", () => ({
 }))
 
 import { db } from "@/db/drizzle"
-import { resolveDay, resolveMonth, resolveYear } from "@/lib/fractal-plan/resolver"
+import {
+	resolveDay,
+	resolveMonth,
+	resolveYear,
+} from "@/lib/fractal-plan/resolver"
 
+type MockTable = { findFirst: ReturnType<typeof vi.fn> }
 const mockedDb = db as unknown as {
-	query: Record<string, { findFirst: ReturnType<typeof vi.fn> }>
+	query: {
+		yearlyPlans: MockTable
+		quarterlyPlan: MockTable
+		monthlyPlan: MockTable
+		weeklyPlan: MockTable
+		dailyPlan: MockTable
+	}
 }
 
 describe("resolveDay", () => {
@@ -37,7 +48,9 @@ describe("resolveDay", () => {
 			id: "y1",
 			defaultDailyLossR: "3.00",
 			defaultDailyTargetR: "2.00",
-			ladderRules: [{ minCapitalCents: 0, maxCapitalCents: 1_000_000, oneRCents: 5_000 }],
+			ladderRules: [
+				{ minCapitalCents: 0, maxCapitalCents: 1_000_000, oneRCents: 5_000 },
+			],
 		})
 		mockedDb.query.quarterlyPlan.findFirst.mockResolvedValue({ id: "q1" })
 		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({
@@ -62,7 +75,9 @@ describe("resolveDay", () => {
 			id: "y1",
 			defaultDailyLossR: "3.00",
 			defaultDailyTargetR: "2.00",
-			ladderRules: [{ minCapitalCents: 0, maxCapitalCents: 1_000_000, oneRCents: 5_000 }],
+			ladderRules: [
+				{ minCapitalCents: 0, maxCapitalCents: 1_000_000, oneRCents: 5_000 },
+			],
 		})
 		mockedDb.query.quarterlyPlan.findFirst.mockResolvedValue({ id: "q1" })
 		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({
@@ -113,9 +128,16 @@ describe("resolveMonth", () => {
 			targetWeeksToYearly: null,
 		})
 		mockedDb.query.quarterlyPlan.findFirst.mockResolvedValue({ id: "q1" })
-		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({ id: "m1", overrideMonthlyLossR: null })
+		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({
+			id: "m1",
+			overrideMonthlyLossR: null,
+		})
 
-		const result = await resolveMonth({ accountId: "acc-1", year: 2026, month: 3 })
+		const result = await resolveMonth({
+			accountId: "acc-1",
+			year: 2026,
+			month: 3,
+		})
 		expect(result.monthlyWinR).toBe(8)
 		expect(result.monthlyWinR_provenance).toBe("year")
 		expect(result.monthlyLossR).toBe(5)
@@ -130,9 +152,16 @@ describe("resolveMonth", () => {
 			targetWeeksToYearly: null,
 		})
 		mockedDb.query.quarterlyPlan.findFirst.mockResolvedValue({ id: "q1" })
-		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({ id: "m1", overrideMonthlyLossR: "4.00" })
+		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({
+			id: "m1",
+			overrideMonthlyLossR: "4.00",
+		})
 
-		const result = await resolveMonth({ accountId: "acc-1", year: 2026, month: 3 })
+		const result = await resolveMonth({
+			accountId: "acc-1",
+			year: 2026,
+			month: 3,
+		})
 		expect(result.monthlyLossR).toBe(4)
 		expect(result.monthlyLossR_provenance).toBe("month")
 	})
@@ -145,9 +174,16 @@ describe("resolveMonth", () => {
 			targetWeeksToYearly: null,
 		})
 		mockedDb.query.quarterlyPlan.findFirst.mockResolvedValue({ id: "q1" })
-		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({ id: "m1", overrideMonthlyLossR: null })
+		mockedDb.query.monthlyPlan.findFirst.mockResolvedValue({
+			id: "m1",
+			overrideMonthlyLossR: null,
+		})
 
-		const result = await resolveMonth({ accountId: "acc-1", year: 2026, month: 3 })
+		const result = await resolveMonth({
+			accountId: "acc-1",
+			year: 2026,
+			month: 3,
+		})
 		expect(result.monthlyWinR).toBeNull()
 		expect(result.monthlyWinR_provenance).toBe("none")
 	})

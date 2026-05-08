@@ -25,7 +25,7 @@ interface GenerateMonthlyPdfInput {
 const generateWeeklyReportPdf = async (
 	input: GenerateWeeklyPdfInput
 ): Promise<Uint8Array> => {
-	const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+	const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]!
 
 	const element = createElement(WeeklyReportPdf, {
 		report: input.report,
@@ -44,7 +44,7 @@ const generateWeeklyReportPdf = async (
 const generateMonthlyReportPdf = async (
 	input: GenerateMonthlyPdfInput
 ): Promise<Uint8Array> => {
-	const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]
+	const generatedAt = new Date().toISOString().replace("T", " ").split(".")[0]!
 
 	const element = createElement(MonthlyReportPdf, {
 		report: input.report,

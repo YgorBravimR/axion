@@ -52,7 +52,7 @@ const resolveLiveStatus = ({
 
 	// Replay each completed trade
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 
 		dailyPnlCents += trade.pnlCents
 
@@ -82,7 +82,7 @@ const resolveLiveStatus = ({
 			usedRiskCents = baseRiskCents
 		} else if (dayPhase === "loss_recovery") {
 			if (recoveryIndex < totalRecoverySteps) {
-				const step = lossRecovery.sequence[recoveryIndex]
+				const step = lossRecovery.sequence[recoveryIndex]!
 				usedRiskCents = resolveRiskCalculation(
 					step.riskCalculation,
 					baseRiskCents,
@@ -97,14 +97,14 @@ const resolveLiveStatus = ({
 		} else if (dayPhase === "gain_mode" && gainMode.type === "gainSequence") {
 			const seqLen = gainMode.sequence.length
 			if (gainSequenceIndex < seqLen) {
-				const step = gainMode.sequence[gainSequenceIndex]
+				const step = gainMode.sequence[gainSequenceIndex]!
 				usedRiskCents = resolveRiskCalculation(
 					step.riskCalculation,
 					baseRiskCents,
 					previousRiskCents
 				)
 			} else if (gainMode.repeatLastStep && seqLen > 0) {
-				const lastStep = gainMode.sequence[seqLen - 1]
+				const lastStep = gainMode.sequence[seqLen - 1]!
 				usedRiskCents = resolveRiskCalculation(
 					lastStep.riskCalculation,
 					baseRiskCents,
@@ -237,7 +237,7 @@ const resolveLiveStatus = ({
 				riskReason = "riskSimulation.reasons.postRecoveryBase"
 			}
 		} else {
-			const step = lossRecovery.sequence[recoveryIndex]
+			const step = lossRecovery.sequence[recoveryIndex]!
 			nextTradeRiskCents = resolveRiskCalculation(
 				step.riskCalculation,
 				baseRiskCents,
@@ -267,7 +267,7 @@ const resolveLiveStatus = ({
 		} else if (gainMode.type === "gainSequence") {
 			const seqLen = gainMode.sequence.length
 			if (gainSequenceIndex < seqLen) {
-				const step = gainMode.sequence[gainSequenceIndex]
+				const step = gainMode.sequence[gainSequenceIndex]!
 				nextTradeRiskCents = resolveRiskCalculation(
 					step.riskCalculation,
 					baseRiskCents,
@@ -277,7 +277,7 @@ const resolveLiveStatus = ({
 				nextTradeMaxContracts =
 					step.maxContractsOverride ?? baseTrade.maxContracts
 			} else if (gainMode.repeatLastStep && seqLen > 0) {
-				const lastStep = gainMode.sequence[seqLen - 1]
+				const lastStep = gainMode.sequence[seqLen - 1]!
 				nextTradeRiskCents = resolveRiskCalculation(
 					lastStep.riskCalculation,
 					baseRiskCents,

@@ -345,7 +345,7 @@ export const getEquityCurve = async (
 			let peak = initialBalance
 
 			for (let i = 0; i < result.length; i++) {
-				const trade = result[i]
+				const trade = result[i]!
 				const pnl = fromCents(trade.pnl)
 				cumulativePnL += pnl
 				const accountEquity = initialBalance + cumulativePnL
@@ -534,11 +534,11 @@ export const getStreakData = async (
 		let currentStreak = 0
 		let currentStreakType: "win" | "loss" | "none" = "none"
 
-		if (result.length > 0 && result[0].outcome) {
+		if (result.length > 0 && result[0]!.outcome) {
 			currentStreakType =
-				result[0].outcome === "win"
+				result[0]!.outcome === "win"
 					? "win"
-					: result[0].outcome === "loss"
+					: result[0]!.outcome === "loss"
 						? "loss"
 						: "none"
 			for (const trade of result) {
@@ -692,7 +692,7 @@ export const getPerformanceByVariable = async (
 						"saturday",
 					] as const
 					const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-					groupKey = tDaysTranslation(dayKeys[dayOfWeek])
+					groupKey = tDaysTranslation(dayKeys[dayOfWeek]!)
 					break
 				}
 				case "strategy":
@@ -1191,7 +1191,7 @@ export const getDayOfWeekPerformance = async (
 
 				return {
 					dayOfWeek,
-					dayName: dayNameKeys[dayOfWeek],
+					dayName: dayNameKeys[dayOfWeek]!,
 					totalTrades: data.trades.length,
 					wins: data.wins,
 					losses: data.losses,
@@ -1306,10 +1306,10 @@ export const getTimeHeatmap = async (
 
 		const heatmapData: TimeHeatmapCell[] = Array.from(cellMap.entries()).map(
 			([key, data]) => {
-				const [dayOfWeek, hour] = key.split("-").map(Number)
+				const [dayOfWeek, hour] = key.split("-").map(Number) as [number, number]
 				return {
 					dayOfWeek,
-					dayName: dayNameKeys[dayOfWeek],
+					dayName: dayNameKeys[dayOfWeek]!,
 					hour,
 					hourLabel: `${hour.toString().padStart(2, "0")}:00`,
 					totalTrades: data.totalTrades,

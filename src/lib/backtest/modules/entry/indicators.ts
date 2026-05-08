@@ -83,7 +83,7 @@ const updateWMA = (
 	let weightSum = 0
 	for (let i = 0; i < buffer.length; i++) {
 		const weight = i + 1
-		weightedSum += buffer[i] * weight
+		weightedSum += buffer[i]! * weight
 		weightSum += weight
 	}
 
@@ -96,7 +96,7 @@ const computeWMAFromSlice = (slice: number[]): number => {
 	let weightSum = 0
 	for (let i = 0; i < slice.length; i++) {
 		const weight = i + 1
-		weightedSum += slice[i] * weight
+		weightedSum += slice[i]! * weight
 		weightSum += weight
 	}
 	return weightedSum / weightSum

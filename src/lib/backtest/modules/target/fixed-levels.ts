@@ -94,7 +94,7 @@ const onCandleFixedLevels = (
 			continue
 		}
 
-		const targetPrice = state.targetPrices[i]
+		const targetPrice = state.targetPrices[i]!
 		const isHit =
 			direction === "long"
 				? candle.high >= targetPrice
@@ -104,8 +104,8 @@ const onCandleFixedLevels = (
 			updatedLevelsHit[i] = true
 			exits.push({
 				price: targetPrice,
-				fraction: config.levels[i].exitPct / 100,
-				reason: config.levels[i].label,
+				fraction: config.levels[i]!.exitPct / 100,
+				reason: config.levels[i]!.label,
 			})
 		}
 	}

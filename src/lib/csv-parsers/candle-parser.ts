@@ -159,7 +159,7 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 	const delimiter = detectDelimiter(lines)
 
 	// Step 2: Parse header row
-	const rawHeaders = parseCSVLine(lines[0], delimiter)
+	const rawHeaders = parseCSVLine(lines[0]!, delimiter)
 
 	// Step 3: Build column mappings
 	const columnMappings: ColumnMapping[] = []
@@ -390,8 +390,8 @@ const parseCandleCSV = (content: string): CandleParseResult => {
 	let dateRange: CandleParseResult["dateRange"] = null
 	if (candles.length > 0) {
 		dateRange = {
-			from: candles[0].timestamp,
-			to: candles[candles.length - 1].timestamp,
+			from: candles[0]!.timestamp,
+			to: candles[candles.length - 1]!.timestamp,
 		}
 	}
 

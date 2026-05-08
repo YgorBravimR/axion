@@ -112,7 +112,7 @@ const projectYear = (input: ProjectYearInput): ProjectYearResult => {
 	let totalR = 0
 
 	for (let i = 0; i < months.length; i++) {
-		const m = months[i]
+		const m = months[i]!
 		const result = projectMonth({
 			startBalanceCents: running,
 			weekTargetRs: m.weekTargetRs,
@@ -164,7 +164,7 @@ const resolveOneRFromLadder = (
 			return r.oneRCents
 		}
 	}
-	return rules[rules.length - 1].oneRCents
+	return rules[rules.length - 1]!.oneRCents
 }
 
 interface ProjectFromPaceInput {

@@ -30,7 +30,7 @@ export const runMonteCarloSimulation = (
 		(a, b) => a.finalCumulativeR - b.finalCumulativeR
 	)
 	const medianIndex = Math.floor(sortedByFinalR.length / 2)
-	const sampleRun = sortedByFinalR[medianIndex]
+	const sampleRun = sortedByFinalR[medianIndex]!
 
 	return {
 		params,
@@ -118,12 +118,12 @@ const aggregateStatistics = (
 
 	const percentile = (arr: number[], p: number): number => {
 		const index = Math.ceil((p / 100) * arr.length) - 1
-		return arr[Math.max(0, Math.min(index, arr.length - 1))]
+		return arr[Math.max(0, Math.min(index, arr.length - 1))]!
 	}
 
 	const median = (arr: number[]): number => {
 		const mid = Math.floor(arr.length / 2)
-		return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2
+		return arr.length % 2 !== 0 ? arr[mid]! : (arr[mid - 1]! + arr[mid]!) / 2
 	}
 
 	const mean = (arr: number[]): number =>

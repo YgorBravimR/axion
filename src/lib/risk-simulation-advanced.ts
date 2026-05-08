@@ -109,7 +109,7 @@ const runAdvancedSimulation = (
 	let daysHitDailyTarget = 0
 
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 		const dayKey = formatDateKey(trade.entryDate)
 		const monthKey = dayKey.slice(0, 7)
 		const weekKey = buildWeekKey(trade.entryDate)
@@ -245,7 +245,7 @@ const runAdvancedSimulation = (
 				riskCents = baseRiskCents
 				riskReason = "riskSimulation.reasons.postRecoveryBase"
 			} else {
-				const step = lossRecovery.sequence[recoveryIndex]
+				const step = lossRecovery.sequence[recoveryIndex]!
 				riskCents = resolveRiskCalculation(
 					step.riskCalculation,
 					baseRiskCents,
@@ -293,7 +293,7 @@ const runAdvancedSimulation = (
 			if (gainMode.type === "gainSequence") {
 				const seqLen = gainMode.sequence.length
 				if (gainSequenceIndex < seqLen) {
-					const step = gainMode.sequence[gainSequenceIndex]
+					const step = gainMode.sequence[gainSequenceIndex]!
 					riskCents = resolveRiskCalculation(
 						step.riskCalculation,
 						baseRiskCents,
@@ -302,7 +302,7 @@ const runAdvancedSimulation = (
 					riskReason = `riskSimulation.reasons.gainStep|${gainSequenceIndex + 1}`
 					maxContracts = step.maxContractsOverride ?? baseTrade.maxContracts
 				} else if (gainMode.repeatLastStep && seqLen > 0) {
-					const lastStep = gainMode.sequence[seqLen - 1]
+					const lastStep = gainMode.sequence[seqLen - 1]!
 					riskCents = resolveRiskCalculation(
 						lastStep.riskCalculation,
 						baseRiskCents,
@@ -614,8 +614,8 @@ const runAdvancedSimulation = (
 	const dateRange =
 		trades.length > 0
 			? {
-					from: formatDateKey(trades[0].entryDate),
-					to: formatDateKey(trades[trades.length - 1].entryDate),
+					from: formatDateKey(trades[0]!.entryDate),
+					to: formatDateKey(trades[trades.length - 1]!.entryDate),
 				}
 			: { from: "", to: "" }
 

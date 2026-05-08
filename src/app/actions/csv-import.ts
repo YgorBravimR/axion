@@ -128,7 +128,7 @@ export const validateCsvTrades = async (
 		// Pre-compute dedup hashes for batch lookup
 		const hashToIndex = new Map<string, number[]>()
 		for (let i = 0; i < csvTrades.length; i++) {
-			const trade = csvTrades[i]
+			const trade = csvTrades[i]!
 			if (trade.entryPrice && trade.entryDate && trade.positionSize) {
 				const hash = computeTradeHash({
 					accountId,
@@ -173,7 +173,7 @@ export const validateCsvTrades = async (
 		}
 
 		for (let i = 0; i < csvTrades.length; i++) {
-			const trade = csvTrades[i]
+			const trade = csvTrades[i]!
 			const rowNumber = i + 1
 
 			const processed: ProcessedCsvTrade = {

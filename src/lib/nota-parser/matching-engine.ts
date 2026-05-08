@@ -239,7 +239,7 @@ const matchNotaFillsToTrades = async (
 
 		if (decryptedTrades.length === 1) {
 			// Single trade: direct match attempt
-			const match = matchTradeToGroup(decryptedTrades[0], group)
+			const match = matchTradeToGroup(decryptedTrades[0]!, group)
 			matches.push(match)
 			continue
 		}
@@ -272,9 +272,9 @@ const matchNotaFillsToTrades = async (
 			// Try to accumulate entry fills
 			const entryIndicesToRemove: number[] = []
 			for (let i = 0; i < fillsPool.length && accumulated < tradeSize; i++) {
-				if (accumulated + fillsPool[i].quantity <= tradeSize) {
-					matchedEntryFills.push(fillsPool[i])
-					accumulated += fillsPool[i].quantity
+				if (accumulated + fillsPool[i]!.quantity <= tradeSize) {
+					matchedEntryFills.push(fillsPool[i]!)
+					accumulated += fillsPool[i]!.quantity
 					entryIndicesToRemove.push(i)
 				}
 			}
@@ -297,23 +297,23 @@ const matchNotaFillsToTrades = async (
 
 			// Remove matched entry fills from pool (in reverse to keep indices stable)
 			for (let i = entryIndicesToRemove.length - 1; i >= 0; i--) {
-				fillsPool.splice(entryIndicesToRemove[i], 1)
+				fillsPool.splice(entryIndicesToRemove[i]!, 1)
 			}
 
 			// Try to match exit fills similarly
 			let exitAccumulated = 0
 			const exitIndicesToRemove: number[] = []
 			for (let i = 0; i < exitPool.length && exitAccumulated < tradeSize; i++) {
-				if (exitAccumulated + exitPool[i].quantity <= tradeSize) {
-					matchedExitFills.push(exitPool[i])
-					exitAccumulated += exitPool[i].quantity
+				if (exitAccumulated + exitPool[i]!.quantity <= tradeSize) {
+					matchedExitFills.push(exitPool[i]!)
+					exitAccumulated += exitPool[i]!.quantity
 					exitIndicesToRemove.push(i)
 				}
 			}
 
 			// Remove matched exit fills from pool
 			for (let i = exitIndicesToRemove.length - 1; i >= 0; i--) {
-				exitPool.splice(exitIndicesToRemove[i], 1)
+				exitPool.splice(exitIndicesToRemove[i]!, 1)
 			}
 
 			// Build a temporary group for this trade

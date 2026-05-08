@@ -100,7 +100,7 @@ const parseBcbDate = (bcbDate: string): string => {
  * Returns empty array if no events match today.
  */
 export const fetchBcbCalendar = async (): Promise<EconomicEvent[]> => {
-	const today = new Date().toISOString().split("T")[0]
+	const today = new Date().toISOString().split("T")[0]!
 	const events: EconomicEvent[] = []
 
 	// 1. Check if today is a COPOM decision day

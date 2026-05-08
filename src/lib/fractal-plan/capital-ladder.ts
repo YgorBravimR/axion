@@ -9,7 +9,10 @@ interface TierResolution {
 	readonly oneRCents: number
 }
 
-const resolveTier = (capitalCents: number, rules: readonly LadderRuleR[]): TierResolution => {
+const resolveTier = (
+	capitalCents: number,
+	rules: readonly LadderRuleR[]
+): TierResolution => {
 	if (rules.length === 0) {
 		throw new Error("ladder rules cannot be empty")
 	}
@@ -18,14 +21,17 @@ const resolveTier = (capitalCents: number, rules: readonly LadderRuleR[]): TierR
 	}
 
 	for (let i = 0; i < rules.length; i++) {
-		const rule = rules[i]
-		if (capitalCents >= rule.minCapitalCents && capitalCents <= rule.maxCapitalCents) {
+		const rule = rules[i]!
+		if (
+			capitalCents >= rule.minCapitalCents &&
+			capitalCents <= rule.maxCapitalCents
+		) {
 			return { tierIndex: i, oneRCents: rule.oneRCents }
 		}
 	}
 
 	// Above the top band: clamp to highest tier.
-	const top = rules[rules.length - 1]
+	const top = rules[rules.length - 1]!
 	return { tierIndex: rules.length - 1, oneRCents: top.oneRCents }
 }
 

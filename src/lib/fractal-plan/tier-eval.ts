@@ -44,7 +44,7 @@ const evaluateDrawdownTrigger = (input: DrawdownInput): TierSnapshot | null => {
 		return null
 	}
 
-	const currentRule = input.ladderRules[input.currentTierIndex]
+	const currentRule = input.ladderRules[input.currentTierIndex]!
 	const dropBelowFloorCents =
 		currentRule.minCapitalCents - input.currentCapitalCents
 	const thresholdCents = input.thresholdR * input.currentOneRCents

@@ -26,7 +26,7 @@ const lookup = (year: number): LegalRateEntry => {
 			return entry
 		}
 	}
-	return DAY_TRADE_RATES[DAY_TRADE_RATES.length - 1]
+	return DAY_TRADE_RATES[DAY_TRADE_RATES.length - 1]!
 }
 
 const getDayTradeIrRate = (year: number): number => lookup(year).irRate

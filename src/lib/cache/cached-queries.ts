@@ -226,11 +226,11 @@ const computeStreaks = (
 	let currentStreak = 0
 	let currentStreakType: "win" | "loss" | "none" = "none"
 
-	if (sortedDescTrades[0].outcome) {
+	if (sortedDescTrades[0]!.outcome) {
 		currentStreakType =
-			sortedDescTrades[0].outcome === "win"
+			sortedDescTrades[0]!.outcome === "win"
 				? "win"
-				: sortedDescTrades[0].outcome === "loss"
+				: sortedDescTrades[0]!.outcome === "loss"
 					? "loss"
 					: "none"
 		for (const trade of sortedDescTrades) {

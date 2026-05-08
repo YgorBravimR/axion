@@ -206,7 +206,7 @@ const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 			titleKey: "coaching.insights.worstDay.title",
 			descriptionKey: "coaching.insights.worstDay.description",
 			params: {
-				day: dayNames[worstDay.day],
+				day: dayNames[worstDay.day]!,
 				avgPnl: Math.round(worstDay.avgPnl * 100) / 100,
 				trades: worstDay.count,
 			},
@@ -252,8 +252,8 @@ const detectStrategyGap = (trades: TradeForCoaching[]): CoachingInsight[] => {
 		.toSorted((a, b) => b.winRate - a.winRate)
 
 	if (strategies.length >= 2) {
-		const best = strategies[0]
-		const worst = strategies[strategies.length - 1]
+		const best = strategies[0]!
+		const worst = strategies[strategies.length - 1]!
 		const gap = best.winRate - worst.winRate
 
 		if (gap >= MIN_WIN_RATE_DIFF) {
@@ -654,7 +654,7 @@ const detectAllPatterns = (trades: TradeForCoaching[]): CoachingInsight[] => {
 
 	return allInsights
 		.filter((i) => i.confidence >= MIN_CONFIDENCE)
-		.toSorted((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+		.toSorted((a, b) => severityOrder[a.severity]! - severityOrder[b.severity]!)
 }
 
 export {

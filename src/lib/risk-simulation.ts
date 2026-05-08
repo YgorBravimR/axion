@@ -182,7 +182,7 @@ const runSimpleSimulation = (
 	let daysHitDailyTarget = 0
 
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 		const dayKey = formatDateKey(trade.entryDate)
 		const monthKey = dayKey.slice(0, 7)
 		const weekKey = buildWeekKey(trade.entryDate)
@@ -461,8 +461,8 @@ const runSimpleSimulation = (
 	const dateRange =
 		trades.length > 0
 			? {
-					from: formatDateKey(trades[0].entryDate),
-					to: formatDateKey(trades[trades.length - 1].entryDate),
+					from: formatDateKey(trades[0]!.entryDate),
+					to: formatDateKey(trades[trades.length - 1]!.entryDate),
 				}
 			: { from: "", to: "" }
 

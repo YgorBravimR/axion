@@ -284,7 +284,7 @@ const computeMaxDrawdown = (
 		return { maxDrawdown: 0, maxDrawdownPercent: 0 }
 	}
 
-	let peak = equityCurve[0].equity
+	let peak = equityCurve[0]!.equity
 	let maxDrawdownAbs = 0
 	let maxDrawdownPct = 0
 
@@ -606,7 +606,7 @@ const computeDayOfWeekPerformance = (
 
 			return {
 				dayOfWeek,
-				dayName: DAY_NAME_KEYS[dayOfWeek],
+				dayName: DAY_NAME_KEYS[dayOfWeek]!,
 				totalTrades: data.tradeCount,
 				wins: data.wins,
 				losses: data.losses,
@@ -675,10 +675,10 @@ const computeTimeHeatmap = (trades: TradeForHourly[]): TimeHeatmapCell[] => {
 	}
 
 	return Array.from(cellMap.entries()).map(([key, data]) => {
-		const [dayOfWeek, hour] = key.split("-").map(Number)
+		const [dayOfWeek, hour] = key.split("-").map(Number) as [number, number]
 		return {
 			dayOfWeek,
-			dayName: DAY_NAME_KEYS[dayOfWeek],
+			dayName: DAY_NAME_KEYS[dayOfWeek]!,
 			hour,
 			hourLabel: `${hour.toString().padStart(2, "0")}:00`,
 			totalTrades: data.totalTrades,
@@ -939,7 +939,7 @@ const computePerformanceByVariable = (
 			}
 			case "dayOfWeek": {
 				const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-				groupKey = DAY_NAME_KEYS[dayOfWeek]
+				groupKey = DAY_NAME_KEYS[dayOfWeek]!
 				break
 			}
 			case "strategy":
@@ -1026,7 +1026,7 @@ const getBucketForDuration = (minutes: number): BucketConfig => {
 			return bucket
 		}
 	}
-	return HOLDING_PERIOD_BUCKETS[HOLDING_PERIOD_BUCKETS.length - 1]
+	return HOLDING_PERIOD_BUCKETS[HOLDING_PERIOD_BUCKETS.length - 1]!
 }
 
 /**

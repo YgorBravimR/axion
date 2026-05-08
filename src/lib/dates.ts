@@ -232,7 +232,7 @@ export const getBrtTimeParts = (
 	return {
 		hour: parseInt(parts.find((p) => p.type === "hour")!.value),
 		minute: parseInt(parts.find((p) => p.type === "minute")!.value),
-		dayOfWeek: dayMap[weekday],
+		dayOfWeek: dayMap[weekday]!,
 	}
 }
 

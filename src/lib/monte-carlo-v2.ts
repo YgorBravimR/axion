@@ -154,7 +154,7 @@ const applyDrawdownAdjustment = (
 		return { riskMultiplier: 1, shouldPause: false }
 	}
 
-	const activeTier = applicableTiers[0]
+	const activeTier = applicableTiers[0]!
 
 	if (activeTier.action === "pause") {
 		return { riskMultiplier: 0, shouldPause: true }
@@ -193,7 +193,7 @@ const applyConsecutiveLossRules = (
 		return { riskMultiplier: 1, shouldStopDay: false, shouldPauseWeek: false }
 	}
 
-	const activeRule = applicableRules[0]
+	const activeRule = applicableRules[0]!
 
 	switch (activeRule.action) {
 		case "reduceRisk":
@@ -337,7 +337,7 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 	// Find median run by total P&L
 	const sortedByPnl = runs.toSorted((a, b) => a.totalPnl - b.totalPnl)
 	const medianIndex = Math.floor(sortedByPnl.length / 2)
-	const sampleRun = sortedByPnl[medianIndex]
+	const sampleRun = sortedByPnl[medianIndex]!
 
 	return { params, statistics, distributionBuckets, sampleRun }
 }
@@ -634,7 +634,7 @@ const simulateDay = (
 				break
 			}
 
-			const stepRisk = effectiveRecoveryRisks[i]
+			const stepRisk = effectiveRecoveryRisks[i]!
 			// Cap risk to remaining budget before hitting daily loss limit
 			const remainingBudget = effectiveDailyLimit + dayPnl // dayPnl is negative
 			const cappedRisk = Math.min(stepRisk, Math.max(0, remainingBudget))
@@ -847,7 +847,7 @@ const aggregateStatisticsV2 = (
 
 	const median = (arr: number[]): number => {
 		const mid = Math.floor(arr.length / 2)
-		return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2
+		return arr.length % 2 !== 0 ? arr[mid]! : (arr[mid - 1]! + arr[mid]!) / 2
 	}
 
 	const mean = (arr: number[]): number =>
@@ -855,7 +855,7 @@ const aggregateStatisticsV2 = (
 
 	const percentile = (arr: number[], p: number): number => {
 		const idx = Math.ceil((p / 100) * arr.length) - 1
-		return arr[Math.max(0, Math.min(idx, arr.length - 1))]
+		return arr[Math.max(0, Math.min(idx, arr.length - 1))]!
 	}
 
 	const stdDev = (values: number[]): number => {

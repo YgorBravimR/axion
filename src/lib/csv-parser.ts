@@ -283,7 +283,15 @@ const parseDate = (value: string): Date | null => {
 	for (const fmt of dateTimeFormats) {
 		const match = value.match(fmt)
 		if (match) {
-			const [, p1, p2, p3, hours, minutes, seconds] = match
+			const [, p1, p2, p3, hours, minutes, seconds] = match as [
+				string,
+				string,
+				string,
+				string,
+				string,
+				string,
+				string | undefined,
+			]
 			const h = parseInt(hours)
 			const m = parseInt(minutes)
 			const s = seconds ? parseInt(seconds) : 0
@@ -319,7 +327,7 @@ const parseDate = (value: string): Date | null => {
 	for (const fmt of dateOnlyFormats) {
 		const match = value.match(fmt)
 		if (match) {
-			const [, part1, part2, part3] = match
+			const [, part1, part2, part3] = match as [string, string, string, string]
 			let year: number, month: number, day: number
 			if (part1.length === 4) {
 				year = parseInt(part1)
@@ -378,7 +386,7 @@ const isProfitChartFormat = (headers: string[]): boolean => {
 // Find the actual header row in ProfitChart format (skip metadata rows)
 const findHeaderRow = (lines: string[], delimiter: string): number => {
 	for (let i = 0; i < Math.min(lines.length, 10); i++) {
-		const line = lines[i]
+		const line = lines[i]!
 		const values = line.split(delimiter)
 		const normalizedValues = values.map(normalizeHeader)
 
@@ -400,7 +408,7 @@ const stripReplayPrefix = (
 	const trimmed = assetCode.trim()
 	const match = trimmed.match(/^\[R\]\s*(.+)$/)
 	if (match) {
-		return { cleanAsset: match[1].trim(), isReplay: true }
+		return { cleanAsset: match[1]!.trim(), isReplay: true }
 	}
 	return { cleanAsset: trimmed, isReplay: false }
 }
@@ -433,7 +441,7 @@ export const parseCsvContent = (content: string): CsvParseResult => {
 	const headerRowIndex = findHeaderRow(lines, delimiter)
 
 	// Parse header row
-	const headerLine = lines[headerRowIndex]
+	const headerLine = lines[headerRowIndex]!
 	const headers = parseCSVLine(headerLine, delimiter).map(normalizeHeader)
 
 	// Check if this is ProfitChart format
@@ -517,7 +525,7 @@ const parseProfitChartContent = (
 	// Parse data rows (starting after header row)
 	for (let i = headerRowIndex + 1; i < lines.length; i++) {
 		const rowNumber = i + 1
-		const line = lines[i].trim()
+		const line = lines[i]!.trim()
 
 		if (!line) {
 			continue
@@ -719,7 +727,7 @@ const parseStandardContent = (
 	// Parse data rows
 	for (let i = 1; i < lines.length; i++) {
 		const rowNumber = i + 1
-		const line = lines[i].trim()
+		const line = lines[i]!.trim()
 
 		if (!line) {
 			continue

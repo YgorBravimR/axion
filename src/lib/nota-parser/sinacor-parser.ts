@@ -61,12 +61,12 @@ const normalizeAssetName = (rawAsset: string): string => {
 
 	if (parts.length === 1) {
 		// Single token: could be stock (PETR4) or already normalized
-		return parts[0].toUpperCase()
+		return parts[0]!.toUpperCase()
 	}
 
 	// Two tokens: e.g., "WIN G26" → base="WIN", expiryCode="G26"
-	const base = parts[0].toUpperCase()
-	const expiryCode = parts[1].toUpperCase()
+	const base = parts[0]!.toUpperCase()
+	const expiryCode = parts[1]!.toUpperCase()
 
 	// Validate expiry code format: single letter + 2 digits (e.g., G26)
 	const isExpiryCode = /^[A-Z]\d{2}$/.test(expiryCode)
@@ -92,7 +92,11 @@ const parseNotaDate = (text: string): Date | null => {
 	// The nota date is typically the first date in the document (in the header area)
 	// It appears in "1 \t09/02/2026\t417577" format
 	for (const match of matches) {
-		const [day, month, year] = match[1].split("/").map(Number)
+		const [day, month, year] = match[1]!.split("/").map(Number) as [
+			number,
+			number,
+			number,
+		]
 		// Validate it's a reasonable trading date (not an expiry date far in the future)
 		if (
 			year >= 2020 &&
@@ -121,13 +125,13 @@ const parseNotaNumber = (text: string): string => {
 	// Format: "1 \t09/02/2026\t417577"
 	const headerLineMatch = text.match(/^\d+\s*\t\d{2}\/\d{2}\/\d{4}\t(\d+)/m)
 	if (headerLineMatch) {
-		return headerLineMatch[1]
+		return headerLineMatch[1]!
 	}
 
 	// Fallback: look for "Nr. nota" followed by a number
 	const nrNotaMatch = text.match(/Nr\.\s*nota\s*\n?\s*(\d+)/i)
 	if (nrNotaMatch) {
-		return nrNotaMatch[1]
+		return nrNotaMatch[1]!
 	}
 
 	return ""
@@ -160,7 +164,7 @@ const parseBrokerName = (text: string): string => {
 	// Fallback: look for "Corretora" label followed by a name
 	const corretoraMatch = text.match(/Corretora\s*\n\s*.*?\t([^\t\n]+)/i)
 	if (corretoraMatch) {
-		return corretoraMatch[1].trim()
+		return corretoraMatch[1]!.trim()
 	}
 
 	return "nota.unknownBroker"
@@ -315,7 +319,7 @@ const parseFinancialSummary = (
 	// The values line follows: "6,00\t0,00 \tC\t0,00\t0,00\t0,00"
 	const valorNegociosMatch = text.match(/Valor dos neg[óo]cios\s*\n([^\n]+)/i)
 	if (valorNegociosMatch) {
-		const parts = valorNegociosMatch[1].split("\t").map((p) => p.trim())
+		const parts = valorNegociosMatch[1]!.split("\t").map((p) => p.trim())
 		// The valor dos negócios value is the first or last significant number with C/D indicator
 		// From real output: "6,00\t0,00 \tC\t0,00\t0,00\t0,00"
 		// Here the "6,00" followed eventually by "C" tells us the net trade value
@@ -323,10 +327,12 @@ const parseFinancialSummary = (
 		if (valueWithDC) {
 			const valueIndex = parts.indexOf(valueWithDC)
 			if (valueIndex > 0) {
-				result.totalOperationValue = parseBrazilianNumber(parts[valueIndex - 1])
+				result.totalOperationValue = parseBrazilianNumber(
+					parts[valueIndex - 1]!
+				)
 			}
 		} else if (parts.length > 0) {
-			result.totalOperationValue = parseBrazilianNumber(parts[0])
+			result.totalOperationValue = parseBrazilianNumber(parts[0]!)
 		}
 	}
 
@@ -335,7 +341,7 @@ const parseFinancialSummary = (
 		/Taxa registro BM&?F\s*\n?[^\n]*?(\d[\d.,]*)/i
 	)
 	if (registroMatch) {
-		result.registrationFee = parseBrazilianNumber(registroMatch[1])
+		result.registrationFee = parseBrazilianNumber(registroMatch[1]!)
 	}
 
 	// Extract "Taxas BM&F (emol+f.gar)" — look for the value on the same line or next
@@ -343,13 +349,13 @@ const parseFinancialSummary = (
 		/Taxas BM&?F\s*\([^)]+\)\s*\n?[^\n]*?(\d[\d.,]*)/i
 	)
 	if (taxasBmfMatch) {
-		result.bmfFees = parseBrazilianNumber(taxasBmfMatch[1])
+		result.bmfFees = parseBrazilianNumber(taxasBmfMatch[1]!)
 	}
 
 	// Extract "IRRF Day Trade"
 	const irrfMatch = text.match(/IRRF Day Trade[^0-9]*(\d[\d.,]*)/i)
 	if (irrfMatch) {
-		result.irrf = parseBrazilianNumber(irrfMatch[1])
+		result.irrf = parseBrazilianNumber(irrfMatch[1]!)
 	}
 
 	// Extract "Total líquido da nota" — the most important value
@@ -357,16 +363,16 @@ const parseFinancialSummary = (
 		/Total l[íi]quido da nota\s*\n?([^\n]+)/i
 	)
 	if (totalLiquidoMatch) {
-		const parts = totalLiquidoMatch[1]
+		const parts = totalLiquidoMatch[1]!
 			.split("\t")
 			.map((p) => p.trim())
 			.filter(Boolean)
 		// Look for last number followed by C/D
 		for (let i = parts.length - 1; i >= 0; i--) {
-			if (parts[i] === "C" || parts[i] === "D") {
-				result.netTotalDebitCredit = parts[i] as "D" | "C"
+			if (parts[i]! === "C" || parts[i]! === "D") {
+				result.netTotalDebitCredit = parts[i]! as "D" | "C"
 				if (i > 0) {
-					result.netTotal = parseBrazilianNumber(parts[i - 1])
+					result.netTotal = parseBrazilianNumber(parts[i - 1]!)
 				}
 				break
 			}
@@ -374,7 +380,7 @@ const parseFinancialSummary = (
 		// Fallback: if no C/D found, try last numeric value
 		if (result.netTotal === 0) {
 			for (let i = parts.length - 1; i >= 0; i--) {
-				const num = parseBrazilianNumber(parts[i])
+				const num = parseBrazilianNumber(parts[i]!)
 				if (num > 0) {
 					result.netTotal = num
 					break
@@ -386,7 +392,7 @@ const parseFinancialSummary = (
 	// Extract "Corretagem"
 	const corretagemMatch = text.match(/Corretagem\s*\n?[^\n]*?(\d[\d.,]*)/i)
 	if (corretagemMatch) {
-		result.totalBrokerage = parseBrazilianNumber(corretagemMatch[1])
+		result.totalBrokerage = parseBrazilianNumber(corretagemMatch[1]!)
 	}
 
 	return result

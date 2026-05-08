@@ -86,7 +86,7 @@ const runBacktest = (
 		const dayTrades: BacktestTrade[] = []
 
 		for (let i = 0; i < dayCandlesArr.length; i++) {
-			const candle = dayCandlesArr[i]
+			const candle = dayCandlesArr[i]!
 			const ctx = buildDayContext(candle, dayKey, i)
 
 			// ═══ Position exists: check stop/target hits ═══
@@ -176,7 +176,7 @@ const runBacktest = (
 						)
 						tradeCounter =
 							dayTrades.length > 0
-								? dayTrades[dayTrades.length - 1].id
+								? dayTrades[dayTrades.length - 1]!.id
 								: tradeCounter
 					} else {
 						position = handleTargetHit(
@@ -192,7 +192,7 @@ const runBacktest = (
 						)
 						tradeCounter =
 							dayTrades.length > 0
-								? dayTrades[dayTrades.length - 1].id
+								? dayTrades[dayTrades.length - 1]!.id
 								: tradeCounter
 					}
 				} else if (hitResult.stopHit) {
@@ -233,7 +233,7 @@ const runBacktest = (
 					)
 					tradeCounter =
 						dayTrades.length > 0
-							? dayTrades[dayTrades.length - 1].id
+							? dayTrades[dayTrades.length - 1]!.id
 							: tradeCounter
 				}
 
@@ -288,7 +288,7 @@ const runBacktest = (
 
 		// Force-close any remaining position at EOD (if not already closed)
 		if (position) {
-			const lastCandle = dayCandlesArr[dayCandlesArr.length - 1]
+			const lastCandle = dayCandlesArr[dayCandlesArr.length - 1]!
 			const exitPrice = applySlippage(
 				lastCandle.close,
 				position.direction,

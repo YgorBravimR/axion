@@ -57,7 +57,7 @@ const parseBrazilianNumber = (value: string): number => {
 	if (trimmed.includes(".") && !trimmed.includes(",")) {
 		// If more than 3 digits after last dot, it's decimal
 		const parts = trimmed.split(".")
-		const afterDot = parts[parts.length - 1]
+		const afterDot = parts[parts.length - 1]!
 		if (afterDot.length > 2) {
 			// Likely decimal, remove all other dots
 			return parseFloat(parts.join(""))
@@ -170,8 +170,7 @@ const mapHeadersToColumns = (
 		)
 
 		for (let i = 0; i < headers.length; i++) {
-			const normalizedHeader = headers[i]
-				.toLowerCase()
+			const normalizedHeader = headers[i]!.toLowerCase()
 				.normalize("NFD")
 				.replace(/[\u0300-\u036f]/g, "")
 
@@ -204,7 +203,7 @@ export const parseClearCSV = (
 	}
 
 	// Parse header row
-	const headerLine = lines[0]
+	const headerLine = lines[0]!
 	const headers = parseCSVLine(headerLine, delimiter).map((h) =>
 		h
 			.toLowerCase()
@@ -313,7 +312,7 @@ export const validateClearCSV = (
 			return { valid: false, error: "imports.errors.csvMinRows" }
 		}
 
-		const headers = parseCSVLine(lines[0], delimiter)
+		const headers = parseCSVLine(lines[0]!, delimiter)
 		if (headers.length < 7) {
 			return {
 				valid: false,

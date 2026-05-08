@@ -54,9 +54,9 @@ const decrypt = (ciphertext: string, keyHex: string): string | null => {
 			return null
 		}
 
-		const iv = Buffer.from(parts[0], "base64")
-		const encrypted = Buffer.from(parts[1], "base64")
-		const authTag = Buffer.from(parts[2], "base64")
+		const iv = Buffer.from(parts[0]!, "base64")
+		const encrypted = Buffer.from(parts[1]!, "base64")
+		const authTag = Buffer.from(parts[2]!, "base64")
 		const key = Buffer.from(keyHex, "hex")
 
 		const decipher = createDecipheriv(ALGORITHM, key, iv, {

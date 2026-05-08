@@ -94,7 +94,7 @@ const ensureDailyPlanForAccountDate = async (
 		.insert(dailyPlan)
 		.values({ weeklyPlanId: weekRow.id, date: dateKey })
 		.returning()
-	return { status: "ok", dayRow: created }
+	return { status: "ok", dayRow: created! }
 }
 
 export type { EnsureDailyResult }

@@ -52,7 +52,7 @@ const parseBrazilianNumber = (value: string): number => {
 	// Only dot present
 	if (trimmed.includes(".") && !trimmed.includes(",")) {
 		const parts = trimmed.split(".")
-		const afterDot = parts[parts.length - 1]
+		const afterDot = parts[parts.length - 1]!
 		if (afterDot.length > 2) {
 			return parseFloat(parts.join(""))
 		} else {
@@ -158,8 +158,7 @@ const mapHeadersToColumns = (
 		)
 
 		for (let i = 0; i < headers.length; i++) {
-			const normalizedHeader = headers[i]
-				.toLowerCase()
+			const normalizedHeader = headers[i]!.toLowerCase()
 				.normalize("NFD")
 				.replace(/[\u0300-\u036f]/g, "")
 
@@ -192,7 +191,7 @@ export const parseXPCSV = (
 	}
 
 	// Parse header row
-	const headerLine = lines[0]
+	const headerLine = lines[0]!
 	const headers = parseCSVLine(headerLine, delimiter).map((h) =>
 		h
 			.toLowerCase()
@@ -300,7 +299,7 @@ export const validateXPCSV = (
 			return { valid: false, error: "imports.errors.csvMinRows" }
 		}
 
-		const headers = parseCSVLine(lines[0], delimiter)
+		const headers = parseCSVLine(lines[0]!, delimiter)
 		if (headers.length < 7) {
 			return {
 				valid: false,

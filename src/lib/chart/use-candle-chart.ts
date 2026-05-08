@@ -64,7 +64,7 @@ const useCandleChart = ({
 			if (idx < 0 || idx >= candlesRef.current.length) {
 				return ""
 			}
-			const ts = new Date(candlesRef.current[idx].timestamp)
+			const ts = new Date(candlesRef.current[idx]!.timestamp)
 			const brtHours = (ts.getUTCHours() - 3 + 24) % 24
 			const brtMinutes = ts.getUTCMinutes()
 			return `${brtHours.toString().padStart(2, "0")}:${brtMinutes.toString().padStart(2, "0")}`

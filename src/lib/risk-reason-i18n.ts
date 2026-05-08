@@ -42,7 +42,7 @@ const translateRiskReason = (
 
 	// Split by pipe to extract base key and all params
 	const segments = stripped.split("|")
-	const baseKey = segments[0]
+	const baseKey = segments[0]!
 
 	// No params — simple key
 	if (segments.length === 1) {
@@ -55,7 +55,7 @@ const translateRiskReason = (
 
 	// First param may be a plain value (e.g. "reasons.gainReinvest|25") or key:value (e.g. "ddTier:50")
 	for (let i = 1; i < segments.length; i++) {
-		const segment = segments[i]
+		const segment = segments[i]!
 		const colonIndex = segment.indexOf(":")
 
 		if (colonIndex === -1) {

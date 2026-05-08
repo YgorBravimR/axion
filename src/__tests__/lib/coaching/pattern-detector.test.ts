@@ -50,16 +50,27 @@ import type { TradeForCoaching } from "@/lib/coaching/pattern-detector"
 const createWinsAtHour = (count: number, isoHour: string): TradeForCoaching[] =>
 	Array.from({ length: count }, (_, index) =>
 		createWinTrade({
-			entryDate: new Date(`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:00-03:00`),
-			exitDate: new Date(`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:30-03:00`),
+			entryDate: new Date(
+				`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:00-03:00`
+			),
+			exitDate: new Date(
+				`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:30-03:00`
+			),
 		})
 	)
 
-const createLossesAtHour = (count: number, isoHour: string): TradeForCoaching[] =>
+const createLossesAtHour = (
+	count: number,
+	isoHour: string
+): TradeForCoaching[] =>
 	Array.from({ length: count }, (_, index) =>
 		createLossTrade({
-			entryDate: new Date(`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:00-03:00`),
-			exitDate: new Date(`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:30-03:00`),
+			entryDate: new Date(
+				`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:00-03:00`
+			),
+			exitDate: new Date(
+				`2026-01-05T${isoHour}:${String(index % 60).padStart(2, "0")}:30-03:00`
+			),
 		})
 	)
 
@@ -71,13 +82,13 @@ const createLossesAtHour = (count: number, isoHour: string): TradeForCoaching[] 
  *   Thu=2026-01-08, Fri=2026-01-09, Sat=2026-01-10
  */
 const DAY_OF_WEEK_DATES: Record<string, string> = {
-	Sunday:    "2026-01-04",
-	Monday:    "2026-01-05",
-	Tuesday:   "2026-01-06",
+	Sunday: "2026-01-04",
+	Monday: "2026-01-05",
+	Tuesday: "2026-01-06",
 	Wednesday: "2026-01-07",
-	Thursday:  "2026-01-08",
-	Friday:    "2026-01-09",
-	Saturday:  "2026-01-10",
+	Thursday: "2026-01-08",
+	Friday: "2026-01-09",
+	Saturday: "2026-01-10",
 }
 
 const createTradesOnDay = (
@@ -86,7 +97,7 @@ const createTradesOnDay = (
 	outcome: "win" | "loss",
 	pnlCents = 10000
 ): TradeForCoaching[] => {
-	const dateStr = DAY_OF_WEEK_DATES[dayName]
+	const dateStr = DAY_OF_WEEK_DATES[dayName]!
 	return Array.from({ length: count }, (_, index) => {
 		const minute = String(index % 60).padStart(2, "0")
 		// Each subsequent hour to avoid hitting the 60-minute limit
@@ -132,25 +143,25 @@ describe("calcConfidence (tested through insight.confidence)", () => {
 		// calcConfidence(15) = 0.6 ≥ MIN_CONFIDENCE (0.4) → insight IS returned.
 		const insights = detectFeeDrag(buildFeeHeavyTrades(15))
 		expect(insights).toHaveLength(1)
-		expect(insights[0].confidence).toBe(0.6)
+		expect(insights[0]!.confidence).toBe(0.6)
 	})
 
 	it("should return confidence=0.75 for sample size 20-49", () => {
 		const insights = detectFeeDrag(buildFeeHeavyTrades(20))
 		expect(insights).toHaveLength(1)
-		expect(insights[0].confidence).toBe(0.75)
+		expect(insights[0]!.confidence).toBe(0.75)
 	})
 
 	it("should return confidence=0.85 for sample size 50-99", () => {
 		const insights = detectFeeDrag(buildFeeHeavyTrades(50))
 		expect(insights).toHaveLength(1)
-		expect(insights[0].confidence).toBe(0.85)
+		expect(insights[0]!.confidence).toBe(0.85)
 	})
 
 	it("should return confidence=0.95 for sample size 100+", () => {
 		const insights = detectFeeDrag(buildFeeHeavyTrades(100))
 		expect(insights).toHaveLength(1)
-		expect(insights[0].confidence).toBe(0.95)
+		expect(insights[0]!.confidence).toBe(0.95)
 	})
 })
 
@@ -180,7 +191,9 @@ describe("detectTimeOfDayEdge", () => {
 			const trades = Array.from({ length: 20 }, (_, index) =>
 				createWinTrade({
 					// Use hours 9-13 (all valid 24h), cycling through 5 distinct hours so no bucket hits 5.
-					entryDate: new Date(`2026-01-05T${String(9 + (index % 5)).padStart(2, "0")}:${String(index * 3 % 60).padStart(2, "0")}:00-03:00`),
+					entryDate: new Date(
+						`2026-01-05T${String(9 + (index % 5)).padStart(2, "0")}:${String((index * 3) % 60).padStart(2, "0")}:00-03:00`
+					),
 				})
 			)
 			// 20 trades / 5 hours = 4 trades per hour → no bucket ≥ MIN_GROUP_SIZE (5) → no insight
@@ -301,12 +314,12 @@ describe("detectDayOfWeekEdge", () => {
 			]
 			const insights = detectDayOfWeekEdge(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("day-worst")
-			expect(insights[0].category).toBe("time")
-			expect(insights[0].severity).toBe("attention")
-			expect(insights[0].params.day).toBe("Friday")
-			expect(insights[0].params.trades).toBe(10)
-			expect(insights[0].params.avgPnl).toBeLessThan(0)
+			expect(insights[0]!.id).toBe("day-worst")
+			expect(insights[0]!.category).toBe("time")
+			expect(insights[0]!.severity).toBe("attention")
+			expect(insights[0]!.params.day).toBe("Friday")
+			expect(insights[0]!.params.trades).toBe(10)
+			expect(insights[0]!.params.avgPnl).toBeLessThan(0)
 		})
 
 		it("should assign confidence=0.6 when worst day has 10-19 trades", () => {
@@ -316,7 +329,7 @@ describe("detectDayOfWeekEdge", () => {
 			]
 			const insights = detectDayOfWeekEdge(trades)
 			// calcConfidence(10) = 0.6 (10 ≥ MIN_GROUP_SIZE=5 and < 20)
-			expect(insights[0].confidence).toBe(0.6)
+			expect(insights[0]!.confidence).toBe(0.6)
 		})
 	})
 
@@ -353,8 +366,12 @@ describe("detectStrategyGap", () => {
 		it("should return empty array when only one strategy has ≥10 trades", () => {
 			// 15 VWAP wins, 5 ORB wins — only VWAP has ≥10, ORB doesn't qualify
 			const trades = [
-				...Array.from({ length: 15 }, () => createWinTrade({ strategyName: "VWAP" })),
-				...Array.from({ length: 5 }, () => createWinTrade({ strategyName: "ORB" })),
+				...Array.from({ length: 15 }, () =>
+					createWinTrade({ strategyName: "VWAP" })
+				),
+				...Array.from({ length: 5 }, () =>
+					createWinTrade({ strategyName: "ORB" })
+				),
 			]
 			expect(detectStrategyGap(trades)).toHaveLength(0)
 		})
@@ -363,13 +380,25 @@ describe("detectStrategyGap", () => {
 			// VWAP: 6 wins / 10 = 60%. ORB: 5 wins / 10 = 50%. Gap = 10pp → fires at ≥10
 			// To avoid: VWAP 6/10=60%, ORB 6/10=60% → gap=0
 			const trades = [
-				...Array.from({ length: 6 }, () => createWinTrade({ strategyName: "VWAP" })),
-				...Array.from({ length: 4 }, () => createLossTrade({ strategyName: "VWAP" })),
-				...Array.from({ length: 6 }, () => createWinTrade({ strategyName: "ORB" })),
-				...Array.from({ length: 4 }, () => createLossTrade({ strategyName: "ORB" })),
+				...Array.from({ length: 6 }, () =>
+					createWinTrade({ strategyName: "VWAP" })
+				),
+				...Array.from({ length: 4 }, () =>
+					createLossTrade({ strategyName: "VWAP" })
+				),
+				...Array.from({ length: 6 }, () =>
+					createWinTrade({ strategyName: "ORB" })
+				),
+				...Array.from({ length: 4 }, () =>
+					createLossTrade({ strategyName: "ORB" })
+				),
 				// pad to ≥20 total decided trades with strategy
-				...Array.from({ length: 5 }, () => createWinTrade({ strategyName: "VWAP" })),
-				...Array.from({ length: 5 }, () => createWinTrade({ strategyName: "ORB" })),
+				...Array.from({ length: 5 }, () =>
+					createWinTrade({ strategyName: "VWAP" })
+				),
+				...Array.from({ length: 5 }, () =>
+					createWinTrade({ strategyName: "ORB" })
+				),
 			]
 			// Both strategies now at ~60% WR → gap = 0
 			expect(detectStrategyGap(trades)).toHaveLength(0)
@@ -380,59 +409,83 @@ describe("detectStrategyGap", () => {
 		it("should return 'strategy-gap' insight when gap is ≥10pp", () => {
 			// VWAP: 10 wins / 10 = 100%. ORB: 0 wins / 10 = 0%. Gap = 100pp.
 			const trades = [
-				...Array.from({ length: 10 }, () => createWinTrade({ strategyName: "VWAP" })),
-				...Array.from({ length: 10 }, () => createLossTrade({ strategyName: "ORB" })),
+				...Array.from({ length: 10 }, () =>
+					createWinTrade({ strategyName: "VWAP" })
+				),
+				...Array.from({ length: 10 }, () =>
+					createLossTrade({ strategyName: "ORB" })
+				),
 			]
 			const insights = detectStrategyGap(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("strategy-gap")
-			expect(insights[0].category).toBe("strategy")
-			expect(insights[0].params.bestStrategy).toBe("VWAP")
-			expect(insights[0].params.worstStrategy).toBe("ORB")
-			expect(insights[0].params.bestWinRate).toBe(100)
-			expect(insights[0].params.worstWinRate).toBe(0)
-			expect(insights[0].params.gap).toBe(100)
+			expect(insights[0]!.id).toBe("strategy-gap")
+			expect(insights[0]!.category).toBe("strategy")
+			expect(insights[0]!.params.bestStrategy).toBe("VWAP")
+			expect(insights[0]!.params.worstStrategy).toBe("ORB")
+			expect(insights[0]!.params.bestWinRate).toBe(100)
+			expect(insights[0]!.params.worstWinRate).toBe(0)
+			expect(insights[0]!.params.gap).toBe(100)
 		})
 
 		it("should assign severity 'warning' when gap is ≥25pp", () => {
 			// Gap = 100pp → "warning"
 			const trades = [
-				...Array.from({ length: 10 }, () => createWinTrade({ strategyName: "Alpha" })),
-				...Array.from({ length: 10 }, () => createLossTrade({ strategyName: "Beta" })),
+				...Array.from({ length: 10 }, () =>
+					createWinTrade({ strategyName: "Alpha" })
+				),
+				...Array.from({ length: 10 }, () =>
+					createLossTrade({ strategyName: "Beta" })
+				),
 			]
 			const insights = detectStrategyGap(trades)
-			expect(insights[0].severity).toBe("warning")
+			expect(insights[0]!.severity).toBe("warning")
 		})
 
 		it("should assign severity 'attention' when gap is ≥10pp but <25pp", () => {
 			// Alpha: 7/10=70%. Beta: 5/10=50%. Gap=20pp → "attention"
 			const trades = [
-				...Array.from({ length: 7 }, () => createWinTrade({ strategyName: "Alpha" })),
-				...Array.from({ length: 3 }, () => createLossTrade({ strategyName: "Alpha" })),
-				...Array.from({ length: 5 }, () => createWinTrade({ strategyName: "Beta" })),
-				...Array.from({ length: 5 }, () => createLossTrade({ strategyName: "Beta" })),
+				...Array.from({ length: 7 }, () =>
+					createWinTrade({ strategyName: "Alpha" })
+				),
+				...Array.from({ length: 3 }, () =>
+					createLossTrade({ strategyName: "Alpha" })
+				),
+				...Array.from({ length: 5 }, () =>
+					createWinTrade({ strategyName: "Beta" })
+				),
+				...Array.from({ length: 5 }, () =>
+					createLossTrade({ strategyName: "Beta" })
+				),
 			]
 			const insights = detectStrategyGap(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].severity).toBe("attention")
+			expect(insights[0]!.severity).toBe("attention")
 		})
 
 		it("should use the smaller of best/worst count for confidence", () => {
 			// Both have 10 trades → calcConfidence(10) = 0.6 (10 >= MIN_GROUP_SIZE=5 and < 20)
 			const trades = [
-				...Array.from({ length: 10 }, () => createWinTrade({ strategyName: "Alpha" })),
-				...Array.from({ length: 10 }, () => createLossTrade({ strategyName: "Beta" })),
+				...Array.from({ length: 10 }, () =>
+					createWinTrade({ strategyName: "Alpha" })
+				),
+				...Array.from({ length: 10 }, () =>
+					createLossTrade({ strategyName: "Beta" })
+				),
 			]
 			const insights = detectStrategyGap(trades)
-			expect(insights[0].confidence).toBe(0.6)
+			expect(insights[0]!.confidence).toBe(0.6)
 		})
 	})
 
 	describe("edge cases", () => {
 		it("should handle all wins across all strategies without crashing", () => {
 			const trades = [
-				...Array.from({ length: 10 }, () => createWinTrade({ strategyName: "Alpha" })),
-				...Array.from({ length: 10 }, () => createWinTrade({ strategyName: "Beta" })),
+				...Array.from({ length: 10 }, () =>
+					createWinTrade({ strategyName: "Alpha" })
+				),
+				...Array.from({ length: 10 }, () =>
+					createWinTrade({ strategyName: "Beta" })
+				),
 			]
 			// Both 100% WR → gap = 0 → no insight
 			expect(detectStrategyGap(trades)).toHaveLength(0)
@@ -440,8 +493,12 @@ describe("detectStrategyGap", () => {
 
 		it("should handle all losses across all strategies without crashing", () => {
 			const trades = [
-				...Array.from({ length: 10 }, () => createLossTrade({ strategyName: "Alpha" })),
-				...Array.from({ length: 10 }, () => createLossTrade({ strategyName: "Beta" })),
+				...Array.from({ length: 10 }, () =>
+					createLossTrade({ strategyName: "Alpha" })
+				),
+				...Array.from({ length: 10 }, () =>
+					createLossTrade({ strategyName: "Beta" })
+				),
 			]
 			// Both 0% WR → gap = 0 → no insight
 			expect(detectStrategyGap(trades)).toHaveLength(0)
@@ -490,8 +547,12 @@ describe("detectHoldingPeriodEdge", () => {
 		it("should return empty array when short holds is exactly MIN_GROUP_SIZE (5) and medium is also 5 — but avg R diff ≤ 0.3", () => {
 			// 20 medium holds, 4 short holds → short bucket < MIN_GROUP_SIZE (5) → no insight
 			const trades = [
-				...Array.from({ length: 20 }, () => createTradeWithDuration(30, "win", "1")),
-				...Array.from({ length: 4 }, () => createTradeWithDuration(2, "loss", "-1")),
+				...Array.from({ length: 20 }, () =>
+					createTradeWithDuration(30, "win", "1")
+				),
+				...Array.from({ length: 4 }, () =>
+					createTradeWithDuration(2, "loss", "-1")
+				),
 			]
 			// 4 short holds < MIN_GROUP_SIZE (5) → no insight
 			expect(detectHoldingPeriodEdge(trades)).toHaveLength(0)
@@ -502,8 +563,12 @@ describe("detectHoldingPeriodEdge", () => {
 		it("should return empty array when avg R difference is ≤0.3", () => {
 			// Short holds: avgR = 1.0. Medium holds: avgR = 1.2. Diff = 0.2 < 0.3 threshold.
 			const trades = [
-				...Array.from({ length: 10 }, () => createTradeWithDuration(2, "win", "1")),
-				...Array.from({ length: 10 }, () => createTradeWithDuration(30, "win", "1.2")),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(2, "win", "1")
+				),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(30, "win", "1.2")
+				),
 			]
 			expect(detectHoldingPeriodEdge(trades)).toHaveLength(0)
 		})
@@ -513,44 +578,60 @@ describe("detectHoldingPeriodEdge", () => {
 		it("should return 'holding-period-edge' insight when medium holds outperform short holds by >0.3R", () => {
 			// Short: 10 trades, avgR = -0.5. Medium: 10 trades, avgR = 1.0. Diff = 1.5 > 0.3
 			const trades = [
-				...Array.from({ length: 10 }, () => createTradeWithDuration(2, "loss", "-0.5")),
-				...Array.from({ length: 10 }, () => createTradeWithDuration(30, "win", "1")),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(2, "loss", "-0.5")
+				),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(30, "win", "1")
+				),
 			]
 			const insights = detectHoldingPeriodEdge(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("holding-period-edge")
-			expect(insights[0].category).toBe("time")
-			expect(insights[0].params.shortCount).toBe(10)
-			expect(insights[0].params.mediumCount).toBe(10)
+			expect(insights[0]!.id).toBe("holding-period-edge")
+			expect(insights[0]!.category).toBe("time")
+			expect(insights[0]!.params.shortCount).toBe(10)
+			expect(insights[0]!.params.mediumCount).toBe(10)
 		})
 
 		it("should assign severity 'warning' when short holds have negative avg R", () => {
 			const trades = [
-				...Array.from({ length: 10 }, () => createTradeWithDuration(2, "loss", "-0.5")),
-				...Array.from({ length: 10 }, () => createTradeWithDuration(30, "win", "1")),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(2, "loss", "-0.5")
+				),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(30, "win", "1")
+				),
 			]
 			const insights = detectHoldingPeriodEdge(trades)
-			expect(insights[0].severity).toBe("warning")
+			expect(insights[0]!.severity).toBe("warning")
 		})
 
 		it("should assign severity 'info' when short holds have positive avg R but medium is higher", () => {
 			// Short: avgR = 0.5. Medium: avgR = 1.0. Diff = 0.5 > 0.3. Short is positive → "info"
 			const trades = [
-				...Array.from({ length: 10 }, () => createTradeWithDuration(2, "win", "0.5")),
-				...Array.from({ length: 10 }, () => createTradeWithDuration(30, "win", "1")),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(2, "win", "0.5")
+				),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(30, "win", "1")
+				),
 			]
 			const insights = detectHoldingPeriodEdge(trades)
-			expect(insights[0].severity).toBe("info")
+			expect(insights[0]!.severity).toBe("info")
 		})
 
 		it("should correctly compute avg R params in the insight", () => {
 			const trades = [
-				...Array.from({ length: 10 }, () => createTradeWithDuration(2, "loss", "-1")),
-				...Array.from({ length: 10 }, () => createTradeWithDuration(30, "win", "2")),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(2, "loss", "-1")
+				),
+				...Array.from({ length: 10 }, () =>
+					createTradeWithDuration(30, "win", "2")
+				),
 			]
 			const insights = detectHoldingPeriodEdge(trades)
-			expect(insights[0].params.shortAvgR).toBe(-1)
-			expect(insights[0].params.mediumAvgR).toBe(2)
+			expect(insights[0]!.params.shortAvgR).toBe(-1)
+			expect(insights[0]!.params.mediumAvgR).toBe(2)
 		})
 	})
 })
@@ -615,13 +696,21 @@ describe("detectOvertrading", () => {
 			// To NOT fire: make both equal WR
 			// Low: 50%, High: 50% → diff = 0
 			const trades = [
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(3, i, 1)),      // 50% WR
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(5, i + 10, 2)), // 40% WR — fires
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(3, i, 1)
+				), // 50% WR
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(5, i + 10, 2)
+				), // 40% WR — fires
 			].flat()
 			// Actually 50-40=10pp fires. Let's build equal WR instead.
 			const equalTrades = [
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(3, i, 2)),       // 2/3 = 67% WR
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(5, i + 10, 3)), // 3/5 = 60% WR
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(3, i, 2)
+				), // 2/3 = 67% WR
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(5, i + 10, 3)
+				), // 3/5 = 60% WR
 			].flat()
 			// Diff = 67% - 60% = 7pp < 10pp → no insight
 			expect(detectOvertrading(equalTrades)).toHaveLength(0)
@@ -634,26 +723,34 @@ describe("detectOvertrading", () => {
 			// High-volume: 5 days × 5 trades/day, all losses = 0% WR (25 trades total)
 			// Diff = 100pp → fires
 			const trades = [
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(3, i, 3)),
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(5, i + 10, 0)),
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(3, i, 3)
+				),
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(5, i + 10, 0)
+				),
 			].flat()
 			const insights = detectOvertrading(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("overtrading")
-			expect(insights[0].category).toBe("psychology")
-			expect(insights[0].severity).toBe("warning")
-			expect(insights[0].params.lowVolumeWinRate).toBe(100)
-			expect(insights[0].params.highVolumeWinRate).toBe(0)
+			expect(insights[0]!.id).toBe("overtrading")
+			expect(insights[0]!.category).toBe("psychology")
+			expect(insights[0]!.severity).toBe("warning")
+			expect(insights[0]!.params.lowVolumeWinRate).toBe(100)
+			expect(insights[0]!.params.highVolumeWinRate).toBe(0)
 		})
 
 		it("should include trade counts in params", () => {
 			const trades = [
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(3, i, 3)),
-				...Array.from({ length: 5 }, (_, i) => createTradesOnDistinctDay(5, i + 10, 0)),
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(3, i, 3)
+				),
+				...Array.from({ length: 5 }, (_, i) =>
+					createTradesOnDistinctDay(5, i + 10, 0)
+				),
 			].flat()
 			const insights = detectOvertrading(trades)
-			expect(insights[0].params.lowVolumeTrades).toBe(15)
-			expect(insights[0].params.highVolumeTrades).toBe(25)
+			expect(insights[0]!.params.lowVolumeTrades).toBe(15)
+			expect(insights[0]!.params.highVolumeTrades).toBe(25)
 		})
 	})
 })
@@ -686,7 +783,12 @@ describe("detectFeeDrag", () => {
 			// 20 trades: totalFees = 1200 cents, totalNetPnl = 180000 cents
 			// grossPnl = 180000 + 1200 = 181200 cents → feePercent = 1200/181200 ≈ 0.66% < 5%
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 9000, commission: 50, fees: 10, outcome: "win" })
+				createCoachingTrade({
+					pnl: 9000,
+					commission: 50,
+					fees: 10,
+					outcome: "win",
+				})
 			)
 			expect(detectFeeDrag(trades)).toHaveLength(0)
 		})
@@ -698,31 +800,46 @@ describe("detectFeeDrag", () => {
 			// grossPnl = 100 + 200 = 300 cents per trade
 			// feePercent = 200/300 ≈ 66.7% > 5% → fires
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: 100,
+					fees: 100,
+					outcome: "win",
+				})
 			)
 			const insights = detectFeeDrag(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("fee-drag")
-			expect(insights[0].category).toBe("fees")
+			expect(insights[0]!.id).toBe("fee-drag")
+			expect(insights[0]!.category).toBe("fees")
 		})
 
 		it("should assign severity 'warning' when fees exceed 20% of gross P&L", () => {
 			// 66.7% > 20% → "warning"
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: 100,
+					fees: 100,
+					outcome: "win",
+				})
 			)
 			const insights = detectFeeDrag(trades)
-			expect(insights[0].severity).toBe("warning")
+			expect(insights[0]!.severity).toBe("warning")
 		})
 
 		it("should assign severity 'attention' when fees are between 10% and 20% of gross P&L", () => {
 			// Net pnl = 1000 cents, fees = 150 cents per trade
 			// grossPnl = 1000 + 150 = 1150. feePercent = 150/1150 ≈ 13% → "attention"
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 1000, commission: 75, fees: 75, outcome: "win" })
+				createCoachingTrade({
+					pnl: 1000,
+					commission: 75,
+					fees: 75,
+					outcome: "win",
+				})
 			)
 			const insights = detectFeeDrag(trades)
-			expect(insights[0].severity).toBe("attention")
+			expect(insights[0]!.severity).toBe("attention")
 		})
 
 		it("should correctly compute feePercent and totalFees in params", () => {
@@ -731,17 +848,27 @@ describe("detectFeeDrag", () => {
 			// grossPnl = 20 × (100 + 200) = 6000 cents → 60 dollars
 			// feePercent = 40/60 × 100 = 66.67% → rounded to 1dp = 66.7%
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: 100,
+					fees: 100,
+					outcome: "win",
+				})
 			)
 			const insights = detectFeeDrag(trades)
-			expect(insights[0].params.totalFees).toBeCloseTo(40, 1)
-			expect(insights[0].params.feePercent).toBeCloseTo(66.7, 1)
+			expect(insights[0]!.params.totalFees).toBeCloseTo(40, 1)
+			expect(insights[0]!.params.feePercent).toBeCloseTo(66.7, 1)
 		})
 
 		it("should handle null commission and fees (treated as zero)", () => {
 			// pnl = 100, commission = null, fees = null → totalFees = 0 → feePercent = 0 → no insight
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 100, commission: null, fees: null, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: null,
+					fees: null,
+					outcome: "win",
+				})
 			)
 			expect(detectFeeDrag(trades)).toHaveLength(0)
 		})
@@ -755,9 +882,7 @@ describe("detectFeeDrag", () => {
 describe("detectStreakPatterns", () => {
 	describe("insufficient sample size", () => {
 		it("should return empty array when fewer than 10 decided trades", () => {
-			const trades = createTradeSequence(
-				Array.from({ length: 9 }, () => "win")
-			)
+			const trades = createTradeSequence(Array.from({ length: 9 }, () => "win"))
 			expect(detectStreakPatterns(trades)).toHaveLength(0)
 		})
 	})
@@ -768,12 +893,28 @@ describe("detectStreakPatterns", () => {
 			// After first streak: 3 wins tracked. After second streak: 3 more → afterStreakTotal = 6 ≥ MIN_GROUP_SIZE (5).
 			// afterStreakWR = 100% (all wins), overallWR = 16/20 = 80%.
 			// overallWR - afterStreakWR = 80 - 100 = -20 → not ≥ MIN_WIN_RATE_DIFF (8) → no insight.
-			const trades = createTradeSequence(
-				["loss", "loss", "win", "win", "win",
-				 "loss", "loss", "win", "win", "win",
-				 "win", "win", "win", "win", "win",
-				 "win", "win", "win", "win", "win"]
-			)
+			const trades = createTradeSequence([
+				"loss",
+				"loss",
+				"win",
+				"win",
+				"win",
+				"loss",
+				"loss",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+				"win",
+			])
 			expect(detectStreakPatterns(trades)).toHaveLength(0)
 		})
 
@@ -809,9 +950,9 @@ describe("detectStreakPatterns", () => {
 			const trades = createTradeSequence(pattern)
 			const insights = detectStreakPatterns(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("streak-tilt")
-			expect(insights[0].category).toBe("psychology")
-			expect(insights[0].severity).toBe("warning")
+			expect(insights[0]!.id).toBe("streak-tilt")
+			expect(insights[0]!.category).toBe("psychology")
+			expect(insights[0]!.severity).toBe("warning")
 		})
 
 		it("should include afterStreakTrades, afterStreakWinRate, and overallWinRate in params", () => {
@@ -822,9 +963,9 @@ describe("detectStreakPatterns", () => {
 			]
 			const trades = createTradeSequence(pattern)
 			const insights = detectStreakPatterns(trades)
-			expect(insights[0].params.afterStreakTrades).toBeGreaterThanOrEqual(10)
-			expect(insights[0].params.afterStreakWinRate).toBeDefined()
-			expect(insights[0].params.overallWinRate).toBeDefined()
+			expect(insights[0]!.params.afterStreakTrades).toBeGreaterThanOrEqual(10)
+			expect(insights[0]!.params.afterStreakWinRate).toBeDefined()
+			expect(insights[0]!.params.overallWinRate).toBeDefined()
 		})
 
 		it("should sort trades by entryDate before computing streak sequence", () => {
@@ -836,10 +977,18 @@ describe("detectStreakPatterns", () => {
 			const base = new Date("2026-01-05T10:00:00-03:00")
 			const trades = pattern.map((outcome, index) => {
 				// Assign timestamps in REVERSE order so array order != chronological order
-				const entryDate = new Date(base.getTime() + (pattern.length - 1 - index) * 60_000)
+				const entryDate = new Date(
+					base.getTime() + (pattern.length - 1 - index) * 60_000
+				)
 				return outcome === "win"
-					? createWinTrade({ entryDate, exitDate: new Date(entryDate.getTime() + 30_000) })
-					: createLossTrade({ entryDate, exitDate: new Date(entryDate.getTime() + 30_000) })
+					? createWinTrade({
+							entryDate,
+							exitDate: new Date(entryDate.getTime() + 30_000),
+						})
+					: createLossTrade({
+							entryDate,
+							exitDate: new Date(entryDate.getTime() + 30_000),
+						})
 			})
 			const insights = detectStreakPatterns(trades)
 			// Should still detect the pattern because the detector sorts internally
@@ -912,13 +1061,13 @@ describe("detectRatingCorrelation", () => {
 			]
 			const insights = detectRatingCorrelation(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("rating-correlation")
-			expect(insights[0].category).toBe("psychology")
-			expect(insights[0].severity).toBe("info")
-			expect(insights[0].params.highWinRate).toBe(100)
-			expect(insights[0].params.lowWinRate).toBe(0)
-			expect(insights[0].params.highCount).toBe(10)
-			expect(insights[0].params.lowCount).toBe(10)
+			expect(insights[0]!.id).toBe("rating-correlation")
+			expect(insights[0]!.category).toBe("psychology")
+			expect(insights[0]!.severity).toBe("info")
+			expect(insights[0]!.params.highWinRate).toBe(100)
+			expect(insights[0]!.params.lowWinRate).toBe(0)
+			expect(insights[0]!.params.highCount).toBe(10)
+			expect(insights[0]!.params.lowCount).toBe(10)
 		})
 
 		it("should include both A and B ratings in high bucket", () => {
@@ -928,7 +1077,7 @@ describe("detectRatingCorrelation", () => {
 				...Array.from({ length: 10 }, () => createLossTrade({ rating: "D" })),
 			]
 			const insights = detectRatingCorrelation(trades)
-			expect(insights[0].params.highCount).toBe(10) // A(7) + B(3)
+			expect(insights[0]!.params.highCount).toBe(10) // A(7) + B(3)
 		})
 
 		it("should include both D and F ratings in low bucket", () => {
@@ -938,7 +1087,7 @@ describe("detectRatingCorrelation", () => {
 				...Array.from({ length: 5 }, () => createLossTrade({ rating: "F" })),
 			]
 			const insights = detectRatingCorrelation(trades)
-			expect(insights[0].params.lowCount).toBe(10) // D(5) + F(5)
+			expect(insights[0]!.params.lowCount).toBe(10) // D(5) + F(5)
 		})
 
 		it("should ignore C-rated trades (neither high nor low bucket)", () => {
@@ -949,14 +1098,16 @@ describe("detectRatingCorrelation", () => {
 				...Array.from({ length: 20 }, () => createWinTrade({ rating: "C" })),
 			]
 			const insights = detectRatingCorrelation(trades)
-			expect(insights[0].params.highCount).toBe(10)
-			expect(insights[0].params.lowCount).toBe(10)
+			expect(insights[0]!.params.highCount).toBe(10)
+			expect(insights[0]!.params.lowCount).toBe(10)
 		})
 	})
 
 	describe("edge cases", () => {
 		it("should handle all-A trades without crashing", () => {
-			const trades = Array.from({ length: 25 }, () => createWinTrade({ rating: "A" }))
+			const trades = Array.from({ length: 25 }, () =>
+				createWinTrade({ rating: "A" })
+			)
 			expect(() => detectRatingCorrelation(trades)).not.toThrow()
 		})
 	})
@@ -981,14 +1132,22 @@ describe("detectDisciplineImpact", () => {
 
 		it("should return empty array when realizedRMultiple is null on all trades", () => {
 			const trades = Array.from({ length: 25 }, () =>
-				createCoachingTrade({ followedPlan: true, realizedRMultiple: null, outcome: "win" })
+				createCoachingTrade({
+					followedPlan: true,
+					realizedRMultiple: null,
+					outcome: "win",
+				})
 			)
 			expect(detectDisciplineImpact(trades)).toHaveLength(0)
 		})
 
 		it("should return empty array when followedPlan is null on all trades", () => {
 			const trades = Array.from({ length: 25 }, () =>
-				createCoachingTrade({ followedPlan: null, realizedRMultiple: "1", outcome: "win" })
+				createCoachingTrade({
+					followedPlan: null,
+					realizedRMultiple: "1",
+					outcome: "win",
+				})
 			)
 			expect(detectDisciplineImpact(trades)).toHaveLength(0)
 		})
@@ -997,10 +1156,18 @@ describe("detectDisciplineImpact", () => {
 			// 15 followed, 4 not-followed → not-followed < MIN_GROUP_SIZE (5) → no insight
 			const trades = [
 				...Array.from({ length: 15 }, () =>
-					createCoachingTrade({ followedPlan: true, realizedRMultiple: "2", outcome: "win" })
+					createCoachingTrade({
+						followedPlan: true,
+						realizedRMultiple: "2",
+						outcome: "win",
+					})
 				),
 				...Array.from({ length: 4 }, () =>
-					createCoachingTrade({ followedPlan: false, realizedRMultiple: "-1", outcome: "loss" })
+					createCoachingTrade({
+						followedPlan: false,
+						realizedRMultiple: "-1",
+						outcome: "loss",
+					})
 				),
 			]
 			expect(detectDisciplineImpact(trades)).toHaveLength(0)
@@ -1012,10 +1179,18 @@ describe("detectDisciplineImpact", () => {
 			// Followed: avgR = 1.0. Not-followed: avgR = 0.8. Diff = 0.2 ≤ 0.3.
 			const trades = [
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ followedPlan: true, realizedRMultiple: "1", outcome: "win" })
+					createCoachingTrade({
+						followedPlan: true,
+						realizedRMultiple: "1",
+						outcome: "win",
+					})
 				),
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ followedPlan: false, realizedRMultiple: "0.8", outcome: "win" })
+					createCoachingTrade({
+						followedPlan: false,
+						realizedRMultiple: "0.8",
+						outcome: "win",
+					})
 				),
 			]
 			expect(detectDisciplineImpact(trades)).toHaveLength(0)
@@ -1027,40 +1202,60 @@ describe("detectDisciplineImpact", () => {
 			// Followed: avgR = 2.0. Not-followed: avgR = -1.0. Diff = 3.0 > 0.3.
 			const trades = [
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ followedPlan: true, realizedRMultiple: "2", outcome: "win" })
+					createCoachingTrade({
+						followedPlan: true,
+						realizedRMultiple: "2",
+						outcome: "win",
+					})
 				),
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ followedPlan: false, realizedRMultiple: "-1", outcome: "loss" })
+					createCoachingTrade({
+						followedPlan: false,
+						realizedRMultiple: "-1",
+						outcome: "loss",
+					})
 				),
 			]
 			const insights = detectDisciplineImpact(trades)
 			expect(insights).toHaveLength(1)
-			expect(insights[0].id).toBe("discipline-impact")
-			expect(insights[0].category).toBe("psychology")
-			expect(insights[0].severity).toBe("attention")
+			expect(insights[0]!.id).toBe("discipline-impact")
+			expect(insights[0]!.category).toBe("psychology")
+			expect(insights[0]!.severity).toBe("attention")
 		})
 
 		it("should correctly compute followedAvgR and notFollowedAvgR in params", () => {
 			const trades = [
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ followedPlan: true, realizedRMultiple: "2", outcome: "win" })
+					createCoachingTrade({
+						followedPlan: true,
+						realizedRMultiple: "2",
+						outcome: "win",
+					})
 				),
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ followedPlan: false, realizedRMultiple: "-1", outcome: "loss" })
+					createCoachingTrade({
+						followedPlan: false,
+						realizedRMultiple: "-1",
+						outcome: "loss",
+					})
 				),
 			]
 			const insights = detectDisciplineImpact(trades)
-			expect(insights[0].params.followedAvgR).toBe(2)
-			expect(insights[0].params.notFollowedAvgR).toBe(-1)
-			expect(insights[0].params.followedCount).toBe(10)
-			expect(insights[0].params.notFollowedCount).toBe(10)
+			expect(insights[0]!.params.followedAvgR).toBe(2)
+			expect(insights[0]!.params.notFollowedAvgR).toBe(-1)
+			expect(insights[0]!.params.followedCount).toBe(10)
+			expect(insights[0]!.params.notFollowedCount).toBe(10)
 		})
 	})
 
 	describe("edge cases", () => {
 		it("should handle all trades with followedPlan=true and no not-followed trades", () => {
 			const trades = Array.from({ length: 25 }, () =>
-				createCoachingTrade({ followedPlan: true, realizedRMultiple: "1", outcome: "win" })
+				createCoachingTrade({
+					followedPlan: true,
+					realizedRMultiple: "1",
+					outcome: "win",
+				})
 			)
 			expect(() => detectDisciplineImpact(trades)).not.toThrow()
 			expect(detectDisciplineImpact(trades)).toHaveLength(0)
@@ -1089,7 +1284,12 @@ describe("detectAllPatterns", () => {
 			// 15 trades: calcConfidence(15) = 0.6 ≥ MIN_CONFIDENCE (0.4) → included
 			// Use fee-drag scenario where 15 fee-heavy trades exist
 			const trades = Array.from({ length: 15 }, () =>
-				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: 100,
+					fees: 100,
+					outcome: "win",
+				})
 			)
 			const insights = detectAllPatterns(trades)
 			// All surfaced insights must meet the MIN_CONFIDENCE threshold of 0.4
@@ -1099,7 +1299,12 @@ describe("detectAllPatterns", () => {
 		it("should include insights with confidence 0.75 (sample size 20-49)", () => {
 			// 20 fee-heavy trades → confidence = 0.75 ≥ MIN_CONFIDENCE (0.4) → included
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: 100,
+					fees: 100,
+					outcome: "win",
+				})
 			)
 			const insights = detectAllPatterns(trades)
 			const feeDragInsight = insights.find((i) => i.id === "fee-drag")
@@ -1154,14 +1359,28 @@ describe("detectAllPatterns", () => {
 			// Fee drag at >20% = "warning". Rating correlation = "info".
 			const trades = [
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ pnl: 100, commission: 200, fees: 200, rating: "A", outcome: "win" })
+					createCoachingTrade({
+						pnl: 100,
+						commission: 200,
+						fees: 200,
+						rating: "A",
+						outcome: "win",
+					})
 				),
 				...Array.from({ length: 10 }, () =>
-					createCoachingTrade({ pnl: -10000, commission: 200, fees: 200, rating: "F", outcome: "loss" })
+					createCoachingTrade({
+						pnl: -10000,
+						commission: 200,
+						fees: 200,
+						rating: "F",
+						outcome: "loss",
+					})
 				),
 			]
 			const insights = detectAllPatterns(trades)
-			const firstWarningIndex = insights.findIndex((i) => i.severity === "warning")
+			const firstWarningIndex = insights.findIndex(
+				(i) => i.severity === "warning"
+			)
 			const firstInfoIndex = insights.findIndex((i) => i.severity === "info")
 			if (firstWarningIndex !== -1 && firstInfoIndex !== -1) {
 				expect(firstWarningIndex).toBeLessThan(firstInfoIndex)
@@ -1178,8 +1397,12 @@ describe("detectAllPatterns", () => {
 			const dayMs = 24 * 60 * 60 * 1000
 			const vwapWins = Array.from({ length: 20 }, (_, index) =>
 				createCoachingTrade({
-					entryDate: new Date(new Date("2026-01-05T10:00:00-03:00").getTime() + index * dayMs),
-					exitDate: new Date(new Date("2026-01-05T10:30:00-03:00").getTime() + index * dayMs),
+					entryDate: new Date(
+						new Date("2026-01-05T10:00:00-03:00").getTime() + index * dayMs
+					),
+					exitDate: new Date(
+						new Date("2026-01-05T10:30:00-03:00").getTime() + index * dayMs
+					),
 					pnl: 10000,
 					commission: 50,
 					fees: 10,
@@ -1190,8 +1413,12 @@ describe("detectAllPatterns", () => {
 			)
 			const orbLosses = Array.from({ length: 20 }, (_, index) =>
 				createCoachingTrade({
-					entryDate: new Date(new Date("2026-01-05T11:00:00-03:00").getTime() + index * dayMs),
-					exitDate: new Date(new Date("2026-01-05T11:30:00-03:00").getTime() + index * dayMs),
+					entryDate: new Date(
+						new Date("2026-01-05T11:00:00-03:00").getTime() + index * dayMs
+					),
+					exitDate: new Date(
+						new Date("2026-01-05T11:30:00-03:00").getTime() + index * dayMs
+					),
 					pnl: -10000,
 					commission: 50,
 					fees: 10,
@@ -1216,8 +1443,12 @@ describe("detectAllPatterns", () => {
 			const dayMs = 24 * 60 * 60 * 1000
 			const feeHeavyWins = Array.from({ length: 20 }, (_, index) =>
 				createCoachingTrade({
-					entryDate: new Date(new Date("2026-01-05T10:00:00-03:00").getTime() + index * dayMs),
-					exitDate: new Date(new Date("2026-01-05T10:30:00-03:00").getTime() + index * dayMs),
+					entryDate: new Date(
+						new Date("2026-01-05T10:00:00-03:00").getTime() + index * dayMs
+					),
+					exitDate: new Date(
+						new Date("2026-01-05T10:30:00-03:00").getTime() + index * dayMs
+					),
 					pnl: 1000,
 					commission: 200,
 					fees: 200,
@@ -1233,7 +1464,12 @@ describe("detectAllPatterns", () => {
 	describe("returned insight shape", () => {
 		it("should return insights with all required CoachingInsight fields", () => {
 			const trades = Array.from({ length: 20 }, () =>
-				createCoachingTrade({ pnl: 100, commission: 100, fees: 100, outcome: "win" })
+				createCoachingTrade({
+					pnl: 100,
+					commission: 100,
+					fees: 100,
+					outcome: "win",
+				})
 			)
 			const insights = detectAllPatterns(trades)
 			for (const insight of insights) {

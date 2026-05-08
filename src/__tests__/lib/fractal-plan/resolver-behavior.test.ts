@@ -15,8 +15,15 @@ vi.mock("@/db/drizzle", () => ({
 import { db } from "@/db/drizzle"
 import { resolveBehavior } from "@/lib/fractal-plan/resolver"
 
+type MockTable = { findFirst: ReturnType<typeof vi.fn> }
 const mockedDb = db as unknown as {
-	query: Record<string, { findFirst: ReturnType<typeof vi.fn> }>
+	query: {
+		yearlyPlans: MockTable
+		quarterlyPlan: MockTable
+		monthlyPlan: MockTable
+		weeklyPlan: MockTable
+		dailyPlan: MockTable
+	}
 }
 
 const baseYear = {

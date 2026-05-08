@@ -302,10 +302,12 @@ export const createTrade = async (
 			)
 		}
 
-		const [trade] = await db
+		const inserted = await db
 			.insert(trades)
 			.values(insertValues as typeof trades.$inferInsert)
 			.returning()
+
+		const trade = inserted[0]!
 
 		// Insert tag associations
 		if (tagIds?.length) {
@@ -1207,7 +1209,7 @@ export const bulkCreateTrades = async (
 			const batchTagNames: Array<string[] | undefined> = [] // parallel array for tag names per trade
 
 			for (let i = 0; i < batch.length; i++) {
-				const input = batch[i]
+				const input = batch[i]!
 				const globalIndex = inputs.indexOf(input)
 
 				try {
@@ -1487,7 +1489,7 @@ export const bulkCreateTrades = async (
 						for (const tagName of tagNamesForTrade) {
 							const tagId = tagNameMap.get(tagName.toLowerCase())
 							if (tagId) {
-								tradeTagValues.push({ tradeId: insertedTrades[j].id, tagId })
+								tradeTagValues.push({ tradeId: insertedTrades[j]!.id, tagId })
 							}
 						}
 					}
@@ -1613,7 +1615,7 @@ export const createScaledTrade = async (
 		const entryDate = entries.reduce(
 			(earliest, e) =>
 				e.executionDate < earliest ? e.executionDate : earliest,
-			entries[0].executionDate
+			entries[0]!.executionDate
 		)
 
 		const exitDate =
@@ -1621,7 +1623,7 @@ export const createScaledTrade = async (
 				? exits.reduce(
 						(latest, e) =>
 							e.executionDate > latest ? e.executionDate : latest,
-						exits[0].executionDate
+						exits[0]!.executionDate
 					)
 				: null
 
@@ -1794,10 +1796,12 @@ export const createScaledTrade = async (
 			)
 		}
 
-		const [trade] = await db
+		const insertedTrades = await db
 			.insert(trades)
 			.values(scaledInsertValues as typeof trades.$inferInsert)
 			.returning()
+
+		const trade = insertedTrades[0]!
 
 		// Insert all executions
 		if (executions.length > 0) {

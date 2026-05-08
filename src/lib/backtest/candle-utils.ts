@@ -123,7 +123,7 @@ const calculatePnlCents = (
 const getNextTargetPrice = (position: Position): number | null => {
 	for (let i = 0; i < position.targetState.targetPrices.length; i++) {
 		if (!position.targetState.levelsHit[i]) {
-			return position.targetState.targetPrices[i]
+			return position.targetState.targetPrices[i] ?? null
 		}
 	}
 	return null

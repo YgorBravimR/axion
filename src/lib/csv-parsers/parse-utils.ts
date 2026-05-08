@@ -62,7 +62,15 @@ const parseBrazilianDateTime = (value: string): Date | null => {
 		/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/
 	)
 	if (match) {
-		const [, d, m, y, h, mi, s] = match.map(Number)
+		const [, d, m, y, h, mi, s] = match.map(Number) as [
+			number,
+			number,
+			number,
+			number,
+			number,
+			number,
+			number,
+		]
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T${pad2(h)}:${pad2(mi)}:${pad2(s)}${BRT_OFFSET}`
 		const date = new Date(iso)
 		if (!isNaN(date.getTime())) {
@@ -73,7 +81,12 @@ const parseBrazilianDateTime = (value: string): Date | null => {
 	// Try without time: DD/MM/YYYY — midnight BRT
 	const dateOnlyMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
 	if (dateOnlyMatch) {
-		const [, d, m, y] = dateOnlyMatch.map(Number)
+		const [, d, m, y] = dateOnlyMatch.map(Number) as [
+			number,
+			number,
+			number,
+			number,
+		]
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T00:00:00${BRT_OFFSET}`
 		const date = new Date(iso)
 		if (!isNaN(date.getTime())) {
@@ -102,7 +115,15 @@ const parseBrazilianDateTimeMs = (value: string): Date | null => {
 		/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$/
 	)
 	if (match) {
-		const [, d, m, y, h, mi, s] = match.map(Number)
+		const [, d, m, y, h, mi, s] = match.map(Number) as [
+			number,
+			number,
+			number,
+			number,
+			number,
+			number,
+			number,
+		]
 		const ms = match[7] ? match[7].padEnd(3, "0") : "000"
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T${pad2(h)}:${pad2(mi)}:${pad2(s)}.${ms}${BRT_OFFSET}`
 		const date = new Date(iso)
@@ -114,7 +135,12 @@ const parseBrazilianDateTimeMs = (value: string): Date | null => {
 	// Try without time: DD/MM/YYYY — midnight BRT
 	const dateOnlyMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
 	if (dateOnlyMatch) {
-		const [, d, m, y] = dateOnlyMatch.map(Number)
+		const [, d, m, y] = dateOnlyMatch.map(Number) as [
+			number,
+			number,
+			number,
+			number,
+		]
 		const iso = `${y}-${pad2(m)}-${pad2(d)}T00:00:00.000${BRT_OFFSET}`
 		const date = new Date(iso)
 		if (!isNaN(date.getTime())) {

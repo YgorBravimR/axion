@@ -72,7 +72,7 @@ const createRateLimiter = (config: RateLimiterConfig) => {
 		)
 
 		if (entry.timestamps.length >= config.maxAttempts) {
-			const oldestTimestamp = entry.timestamps[0]
+			const oldestTimestamp = entry.timestamps[0]!
 			const retryAfterMs = config.windowMs - (now - oldestTimestamp)
 			return { allowed: false, remaining: 0, retryAfterMs }
 		}

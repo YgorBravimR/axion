@@ -117,18 +117,18 @@ export const groupExecutionsIntoTrades = (
 
 		// First execution determines direction
 		if (sorted.length > 0) {
-			const firstSide = sorted[0].side
+			const firstSide = sorted[0]!.side
 
 			// Collect consecutive executions with same side as entry
 			let i = 0
-			while (i < sorted.length && sorted[i].side === firstSide) {
-				entryExecutions.push(sorted[i])
+			while (i < sorted.length && sorted[i]!.side === firstSide) {
+				entryExecutions.push(sorted[i]!)
 				i++
 			}
 
 			// Rest are exits (if any)
 			while (i < sorted.length) {
-				exitExecutions.push(sorted[i])
+				exitExecutions.push(sorted[i]!)
 				i++
 			}
 		}
@@ -145,7 +145,7 @@ export const groupExecutionsIntoTrades = (
 
 		// Determine direction based on first execution
 		const direction: "long" | "short" =
-			entryExecutions[0].side === "BUY" ? "long" : "short"
+			entryExecutions[0]!.side === "BUY" ? "long" : "short"
 
 		// Calculate P&L
 		const entryPrice = entryGroup.weightedAveragePrice
@@ -189,8 +189,8 @@ export const groupExecutionsIntoTrades = (
 		}
 
 		trades.push({
-			asset: groupExecutions[0].asset,
-			date: groupExecutions[0].date,
+			asset: groupExecutions[0]!.asset,
+			date: groupExecutions[0]!.date,
 			entryGroup,
 			exitGroup,
 			grossPnl,
