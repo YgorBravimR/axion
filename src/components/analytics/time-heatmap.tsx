@@ -259,58 +259,47 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									const cell = cellMap.get(`${dayOfWeek}-${hour}`)
 									const hasData = cell && cell.totalTrades > 0
 									const isHovered = hoveredCell === cell
-									return (
-										<div
-											key={`${day}-${hour}`}
-											className={cn(
-												"relative flex h-11 items-center justify-center rounded-md transition-all",
-												getCellStyle(cell),
-												hasData &&
-													"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none",
-												isHovered && "ring-acc-100 scale-105 ring-2"
-											)}
-											onMouseEnter={() => {
-												if (hasData) {
-													setHoveredCell(cell)
-												}
-											}}
-											onMouseLeave={() => setHoveredCell(null)}
-											onFocus={() => {
-												if (hasData) {
-													setHoveredCell(cell)
-												}
-											}}
-											onBlur={() => setHoveredCell(null)}
-											tabIndex={hasData ? 0 : undefined}
-											role={hasData ? "button" : undefined}
-											aria-label={
-												hasData
-													? t("time.heatmapCellAriaLabel", {
-															day: tDayNames(
-																cell.dayName as
-																	| "Monday"
-																	| "Tuesday"
-																	| "Wednesday"
-																	| "Thursday"
-																	| "Friday"
-																	| "Saturday"
-																	| "Sunday"
-															),
-															hour: cell.hourLabel,
-															trades: cell.totalTrades,
-															winRate: cell.winRate.toFixed(0),
-														})
-													: undefined
-											}
-										>
-											{/* Trade count inside cell */}
-											{hasData && (
+									const cellClass = cn(
+										"relative flex h-11 items-center justify-center rounded-md transition-all",
+										getCellStyle(cell),
+										isHovered && "ring-acc-100 scale-105 ring-2"
+									)
+									if (hasData) {
+										return (
+											<button
+												key={`${day}-${hour}`}
+												type="button"
+												className={cn(
+													cellClass,
+													"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none"
+												)}
+												onMouseEnter={() => setHoveredCell(cell)}
+												onMouseLeave={() => setHoveredCell(null)}
+												onFocus={() => setHoveredCell(cell)}
+												onBlur={() => setHoveredCell(null)}
+												aria-label={t("time.heatmapCellAriaLabel", {
+													day: tDayNames(
+														cell.dayName as
+															| "Monday"
+															| "Tuesday"
+															| "Wednesday"
+															| "Thursday"
+															| "Friday"
+															| "Saturday"
+															| "Sunday"
+													),
+													hour: cell.hourLabel,
+													trades: cell.totalTrades,
+													winRate: cell.winRate.toFixed(0),
+												})}
+											>
 												<span className="text-micro text-txt-100 font-semibold drop-shadow-sm">
 													{cell.totalTrades}
 												</span>
-											)}
-										</div>
-									)
+											</button>
+										)
+									}
+									return <div key={`${day}-${hour}`} className={cellClass} />
 								})}
 							</Fragment>
 						)
