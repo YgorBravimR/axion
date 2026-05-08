@@ -6,6 +6,15 @@ import type {
 	MonteCarloResult,
 	DistributionBucket,
 } from "@/types/monte-carlo"
+import {
+	assertNonEmpty,
+	mapNonEmpty,
+	mean,
+	median,
+	percentile,
+	toSortedNonEmpty,
+	type NonEmptyArray,
+} from "@/lib/non-empty"
 
 /**
  * Run a Monte Carlo simulation in R-multiples (Edge Expectancy).
@@ -15,12 +24,15 @@ import type {
 export const runMonteCarloSimulation = (
 	params: SimulationParams
 ): MonteCarloResult => {
-	const runs: SimulationRun[] = []
-
-	for (let i = 0; i < params.simulationCount; i++) {
-		const run = simulateSingleRun(params, i)
-		runs.push(run)
+	if (params.simulationCount < 1) {
+		throw new Error("monte-carlo: simulationCount must be ≥ 1")
 	}
+
+	const runs: SimulationRun[] = []
+	for (let i = 0; i < params.simulationCount; i++) {
+		runs.push(simulateSingleRun(params, i))
+	}
+	assertNonEmpty(runs, "monte-carlo: runs must be non-empty after simulation")
 
 	const statistics = aggregateStatistics(params, runs)
 	const distributionBuckets = calculateDistribution(runs)
@@ -29,8 +41,12 @@ export const runMonteCarloSimulation = (
 	const sortedByFinalR = runs.toSorted(
 		(a, b) => a.finalCumulativeR - b.finalCumulativeR
 	)
+	assertNonEmpty(
+		sortedByFinalR,
+		"monte-carlo: sortedByFinalR must be non-empty"
+	)
 	const medianIndex = Math.floor(sortedByFinalR.length / 2)
-	const sampleRun = sortedByFinalR[medianIndex]!
+	const sampleRun = sortedByFinalR[medianIndex] ?? sortedByFinalR[0]
 
 	return {
 		params,
@@ -109,27 +125,21 @@ const simulateSingleRun = (
 
 const aggregateStatistics = (
 	params: SimulationParams,
-	runs: SimulationRun[]
+	runs: NonEmptyArray<SimulationRun>
 ): SimulationStatistics => {
-	const finalRValues = runs
-		.map((r) => r.finalCumulativeR)
-		.toSorted((a, b) => a - b)
-	const maxDrawdowns = runs.map((r) => r.maxRDrawdown).toSorted((a, b) => a - b)
-
-	const percentile = (arr: number[], p: number): number => {
-		const index = Math.ceil((p / 100) * arr.length) - 1
-		return arr[Math.max(0, Math.min(index, arr.length - 1))]!
-	}
-
-	const median = (arr: number[]): number => {
-		const mid = Math.floor(arr.length / 2)
-		return arr.length % 2 !== 0 ? arr[mid]! : (arr[mid - 1]! + arr[mid]!) / 2
-	}
-
-	const mean = (arr: number[]): number =>
-		arr.reduce((sum, v) => sum + v, 0) / arr.length
+	const finalRValues = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.finalCumulativeR),
+		(a, b) => a - b
+	)
+	const maxDrawdowns = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.maxRDrawdown),
+		(a, b) => a - b
+	)
 
 	const profitableRuns = runs.filter((r) => r.finalCumulativeR > 0).length
+
+	const meanOrZero = (arr: readonly number[]): number =>
+		arr.length === 0 ? 0 : mean(arr as NonEmptyArray<number>)
 
 	// Per-run Sharpe/Sortino, averaged across runs.
 	// Pooling all trades from all runs into one series shrinks stddev by ~√N
@@ -141,7 +151,7 @@ const aggregateStatistics = (
 	let totalLosingR = 0
 	for (const run of runs) {
 		const runResults = run.trades.map((t) => t.rResult)
-		const runMean = mean(runResults)
+		const runMean = meanOrZero(runResults)
 		const runStd = calculateStdDev(runResults)
 		const runDownside = calculateDownsideDeviation(runResults, 0)
 		perRunSharpes.push(runStd > 0 ? runMean / runStd : 0)
@@ -156,12 +166,12 @@ const aggregateStatistics = (
 	}
 
 	const meanRPerTrade =
-		runs.length > 0
+		params.numberOfTrades > 0
 			? runs.reduce((s, r) => s + r.finalCumulativeR, 0) /
 				(runs.length * params.numberOfTrades)
 			: 0
-	const sharpeRatio = perRunSharpes.length > 0 ? mean(perRunSharpes) : 0
-	const sortinoRatio = perRunSortinos.length > 0 ? mean(perRunSortinos) : 0
+	const sharpeRatio = meanOrZero(perRunSharpes)
+	const sortinoRatio = meanOrZero(perRunSortinos)
 
 	// Profit factor: total winning R / total losing R (across all sims)
 	const profitFactor =
@@ -171,9 +181,9 @@ const aggregateStatistics = (
 				? Infinity
 				: 0
 
-	// Streak analysis
-	const avgMaxWinStreak = mean(runs.map((r) => r.maxWinStreak))
-	const avgMaxLossStreak = mean(runs.map((r) => r.maxLossStreak))
+	// Streak analysis (runs is NonEmpty by contract)
+	const avgMaxWinStreak = mean(mapNonEmpty(runs, (r) => r.maxWinStreak))
+	const avgMaxLossStreak = mean(mapNonEmpty(runs, (r) => r.maxLossStreak))
 	const allWinStreaks: number[] = []
 	const allLossStreaks: number[] = []
 	for (const run of runs) {
@@ -230,8 +240,8 @@ const aggregateStatistics = (
 		expectedRPerTrade: meanRPerTrade,
 		expectedMaxWinStreak: avgMaxWinStreak,
 		expectedMaxLossStreak: avgMaxLossStreak,
-		avgWinStreak: allWinStreaks.length > 0 ? mean(allWinStreaks) : 0,
-		avgLossStreak: allLossStreaks.length > 0 ? mean(allLossStreaks) : 0,
+		avgWinStreak: meanOrZero(allWinStreaks),
+		avgLossStreak: meanOrZero(allLossStreaks),
 		kellyFull,
 		kellyHalf,
 		kellyQuarter,

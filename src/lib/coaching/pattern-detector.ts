@@ -7,6 +7,7 @@
 import { fromCents } from "@/lib/money"
 import { calculateWinRate } from "@/lib/calculations"
 import { getBrtTimeParts, formatDateKey } from "@/lib/dates"
+import { dayNameKey } from "@/lib/calendar/day-names"
 
 // ============================================================================
 // TYPES
@@ -166,17 +167,6 @@ const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 		return insights
 	}
 
-	// English keys — client translates via analytics.time.dayNames.{key}
-	const dayNames = [
-		"Sunday",
-		"Monday",
-		"Tuesday",
-		"Wednesday",
-		"Thursday",
-		"Friday",
-		"Saturday",
-	]
-
 	const dayMap = new Map<number, { totalPnl: number; count: number }>()
 	for (const trade of decidedTrades) {
 		const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
@@ -206,7 +196,7 @@ const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 			titleKey: "coaching.insights.worstDay.title",
 			descriptionKey: "coaching.insights.worstDay.description",
 			params: {
-				day: dayNames[worstDay.day]!,
+				day: dayNameKey(worstDay.day),
 				avgPnl: Math.round(worstDay.avgPnl * 100) / 100,
 				trades: worstDay.count,
 			},

@@ -37,6 +37,7 @@ import {
 	APP_TIMEZONE,
 	getBrtTimeParts,
 } from "@/lib/dates"
+import { dayNameKey, dayNameKeyLower } from "@/lib/calendar/day-names"
 import { fromCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
@@ -682,17 +683,8 @@ export const getPerformanceByVariable = async (
 					break
 				}
 				case "dayOfWeek": {
-					const dayKeys = [
-						"sunday",
-						"monday",
-						"tuesday",
-						"wednesday",
-						"thursday",
-						"friday",
-						"saturday",
-					] as const
 					const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-					groupKey = tDaysTranslation(dayKeys[dayOfWeek]!)
+					groupKey = tDaysTranslation(dayNameKeyLower(dayOfWeek))
 					break
 				}
 				case "strategy":
@@ -1104,17 +1096,6 @@ export const getDayOfWeekPerformance = async (
 			}
 		}
 
-		// English day names used as i18n keys on the client
-		const dayNameKeys = [
-			"Sunday",
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-		] as const
-
 		// Group by day of week
 		const dayMap = new Map<
 			number,
@@ -1191,7 +1172,7 @@ export const getDayOfWeekPerformance = async (
 
 				return {
 					dayOfWeek,
-					dayName: dayNameKeys[dayOfWeek]!,
+					dayName: dayNameKey(dayOfWeek),
 					totalTrades: data.trades.length,
 					wins: data.wins,
 					losses: data.losses,
@@ -1250,17 +1231,6 @@ export const getTimeHeatmap = async (
 			}
 		}
 
-		// English day names used as i18n keys on the client
-		const dayNameKeys = [
-			"Sunday",
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-		] as const
-
 		// Group by day × hour
 		const cellMap = new Map<
 			string,
@@ -1309,7 +1279,7 @@ export const getTimeHeatmap = async (
 				const [dayOfWeek, hour] = key.split("-").map(Number) as [number, number]
 				return {
 					dayOfWeek,
-					dayName: dayNameKeys[dayOfWeek]!,
+					dayName: dayNameKey(dayOfWeek),
 					hour,
 					hourLabel: `${hour.toString().padStart(2, "0")}:00`,
 					totalTrades: data.totalTrades,

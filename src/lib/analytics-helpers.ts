@@ -9,6 +9,7 @@
 import { fromCents } from "@/lib/money"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { formatDateKey, getBrtTimeParts } from "@/lib/dates"
+import { dayNameKey } from "@/lib/calendar/day-names"
 import type {
 	OverallStats,
 	ExpectedValueData,
@@ -323,18 +324,6 @@ const computeAvgRiskPerTrade = (trades: TradeForRisk[]): number => {
 	return risks.reduce((a, b) => a + b, 0) / risks.length
 }
 
-// --- Shared constants ---
-
-const DAY_NAME_KEYS = [
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday",
-] as const
-
 // --- New interfaces for pure computation functions ---
 
 interface TradeForRDistribution {
@@ -606,7 +595,7 @@ const computeDayOfWeekPerformance = (
 
 			return {
 				dayOfWeek,
-				dayName: DAY_NAME_KEYS[dayOfWeek]!,
+				dayName: dayNameKey(dayOfWeek),
 				totalTrades: data.tradeCount,
 				wins: data.wins,
 				losses: data.losses,
@@ -678,7 +667,7 @@ const computeTimeHeatmap = (trades: TradeForHourly[]): TimeHeatmapCell[] => {
 		const [dayOfWeek, hour] = key.split("-").map(Number) as [number, number]
 		return {
 			dayOfWeek,
-			dayName: DAY_NAME_KEYS[dayOfWeek]!,
+			dayName: dayNameKey(dayOfWeek),
 			hour,
 			hourLabel: `${hour.toString().padStart(2, "0")}:00`,
 			totalTrades: data.totalTrades,
@@ -939,7 +928,7 @@ const computePerformanceByVariable = (
 			}
 			case "dayOfWeek": {
 				const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-				groupKey = DAY_NAME_KEYS[dayOfWeek]!
+				groupKey = dayNameKey(dayOfWeek)
 				break
 			}
 			case "strategy":
