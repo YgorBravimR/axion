@@ -7,12 +7,11 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
-import { formatR } from "@/lib/formatting"
+
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { SimulatedTrade } from "@/types/monte-carlo"
 
@@ -33,12 +32,17 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
 
 const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	const head = payload?.[0]
+	if (!active || !head) {
+		return null
+	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">{tCharts("tradeNumber", { number: data.tradeNumber })}</p>
+			<p className="text-tiny text-txt-300">
+				{tCharts("tradeNumber", { number: data.tradeNumber })}
+			</p>
 			<p className="text-small text-trade-sell font-semibold">
 				-{data.rDrawdown.toFixed(2)}R
 			</p>
@@ -82,10 +86,7 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 				id="chart-monte-carlo-drawdown"
 				className="h-56 sm:h-64 lg:h-72"
 			>
-				<AreaChart
-					data={chartData}
-					margin={CHART_MARGIN}
-				>
+				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<defs>
 						<linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
 							<stop
@@ -124,7 +125,10 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 						width={yAxisWidth}
 						tick={AXIS_TICK}
 					/>
-					<ChartTooltip variant="line" content={<CustomTooltip tCharts={tCharts} />} />
+					<ChartTooltip
+						variant="line"
+						content={<CustomTooltip tCharts={tCharts} />}
+					/>
 					<ReferenceLine
 						y={0}
 						stroke="var(--color-txt-300)"

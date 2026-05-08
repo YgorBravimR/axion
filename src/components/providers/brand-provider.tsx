@@ -1,11 +1,18 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
+import {
+	createContext,
+	useContext,
+	useState,
+	useCallback,
+	useMemo,
+	type ReactNode,
+} from "react"
 import { BRANDS, DEFAULT_BRAND, type Brand } from "@/lib/brands"
 
 interface BrandContextType {
 	brand: Brand
-	setBrand: (brand: Brand) => void
+	setBrand: (_brand: Brand) => void
 	brands: readonly Brand[]
 }
 

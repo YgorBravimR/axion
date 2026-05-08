@@ -2,13 +2,10 @@ import { setRequestLocale } from "next-intl/server"
 import { CommandCenterTabs } from "./command-center-tabs"
 import {
 	getTodayCompletions,
-	getTodayNotes,
 	getAccountAssetSettings,
 	getCircuitBreakerStatus,
 	getDailySummary,
 } from "@/app/actions/command-center"
-import { getActiveMonthlyPlan } from "@/app/actions/monthly-plans"
-import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import { getActiveAssets } from "@/app/actions/assets"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { getStrategies } from "@/app/actions/strategies"
@@ -16,6 +13,8 @@ import { getLiveTradingStatus } from "@/app/actions/live-trading-status"
 import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
+import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
+import type { DailyPlan } from "@/db/schema"
 
 
 interface CommandCenterPageProps {
@@ -47,27 +46,29 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 	const dateArg = isToday ? (account?.accountType === "replay" ? effectiveDate : undefined) : effectiveDate
 
 	// Fetch all initial data server-side in parallel
+	const dailyPlanPromise: Promise<DailyPlan | null> = account?.id
+		? ensureDailyPlanForAccountDate(account.id, effectiveDate).then((r) =>
+			r.status === "ok" ? r.dayRow : null,
+		)
+		: Promise.resolve(null)
+
 	const [
 		completionsResult,
-		notesResult,
+		initialDailyPlan,
 		assetSettingsResult,
 		circuitBreakerResult,
 		summaryResult,
 		assetsResult,
 		strategiesResult,
-		monthlyPlanResult,
-		riskProfilesResult,
 		liveTradingStatusResult,
 	] = await Promise.all([
 		getTodayCompletions(dateArg),
-		getTodayNotes(dateArg),
+		dailyPlanPromise,
 		getAccountAssetSettings(),
 		getCircuitBreakerStatus(dateArg),
 		getDailySummary(dateArg),
 		getActiveAssets().catch(() => []),
 		getStrategies(),
-		getActiveMonthlyPlan(),
-		listActiveRiskProfiles(),
 		getLiveTradingStatus(dateArg),
 	])
 
@@ -75,8 +76,6 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		completionsResult.status === "success" && completionsResult.data
 			? completionsResult.data
 			: []
-	const initialNotes =
-		notesResult.status === "success" ? (notesResult.data ?? null) : null
 	const initialAssetSettings =
 		assetSettingsResult.status === "success" && assetSettingsResult.data
 			? assetSettingsResult.data
@@ -90,30 +89,22 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		strategiesResult.status === "success" && strategiesResult.data
 			? strategiesResult.data
 			: []
-	const initialPlan =
-		monthlyPlanResult.status === "success" ? (monthlyPlanResult.data ?? null) : null
-	const riskProfiles =
-		riskProfilesResult.status === "success" ? (riskProfilesResult.data ?? []) : []
 	const initialLiveTradingStatus =
 		liveTradingStatusResult.status === "success" ? (liveTradingStatusResult.data ?? null) : null
 
-	// Derive current year/month from effective date for the Plan tab
-	const planYear = effectiveDate.getFullYear()
-	const planMonth = effectiveDate.getMonth() + 1
-
-	// Account settings: read exclusively from monthly plan
+	// Account settings: derived from circuit-breaker resolver output (Phase 4b)
 	const accountSettings = {
-		defaultRiskPerTrade: initialPlan?.riskPerTradeCents
-			? String(fromCents(initialPlan.riskPerTradeCents))
+		defaultRiskPerTrade: initialCircuitBreaker?.recommendedRiskCents
+			? String(fromCents(initialCircuitBreaker.recommendedRiskCents))
 			: null,
-		maxDailyLoss: initialPlan?.dailyLossCents ? Number(initialPlan.dailyLossCents) : null,
+		maxDailyLoss: initialCircuitBreaker?.dailyLossLimitCents ?? null,
 	}
 
 	return (
 		<div className="flex h-full flex-col">
 			<CommandCenterTabs
 				initialCompletions={initialCompletions}
-				initialNotes={initialNotes}
+				initialDailyPlan={initialDailyPlan}
 				initialAssetSettings={initialAssetSettings}
 				initialCircuitBreaker={initialCircuitBreaker}
 				initialSummary={initialSummary}
@@ -123,12 +114,8 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 				accountSettings={accountSettings}
 				strategies={initialStrategies}
 				assetSettings={initialAssetSettings}
-				initialPlan={initialPlan}
-				initialYear={planYear}
-				initialMonth={planMonth}
 				viewDate={viewDateStr}
 				isToday={isToday}
-				riskProfiles={riskProfiles}
 				isReplayAccount={account?.accountType === "replay"}
 				initialLiveTradingStatus={initialLiveTradingStatus}
 			/>

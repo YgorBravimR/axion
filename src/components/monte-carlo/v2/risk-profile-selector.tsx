@@ -27,7 +27,7 @@ const BUILT_IN_PROFILE_NAMES = [
 interface RiskProfileSelectorProps {
 	profiles: RiskManagementProfile[]
 	selectedProfileId: string
-	onProfileChange: (profileId: string) => void
+	onProfileChange: (_profileId: string) => void
 	simProfile: RiskManagementProfileForSim | null
 }
 
@@ -43,7 +43,9 @@ const getRiskSizingLabel = (
 		case "fixedRatio":
 			return t("profileSummary.fixedRatioLabel")
 		case "kellyFractional":
-			return t("profileSummary.kellyLabel", { divisor: profile.kellyDivisor ?? 4 })
+			return t("profileSummary.kellyLabel", {
+				divisor: profile.kellyDivisor ?? 4,
+			})
 		default:
 			return formatCompactCurrency(fromCents(profile.baseRiskCents), "R$")
 	}
@@ -87,7 +89,11 @@ const RiskProfileSelector = ({
 				{t("profileSelector.title")}
 			</label>
 			<Select value={selectedProfileId} onValueChange={onProfileChange}>
-				<SelectTrigger id="risk-profile-selector" className="border-bg-300 bg-bg-100 text-small text-txt-100 w-full" aria-label={t("profileSelector.title")}>
+				<SelectTrigger
+					id="risk-profile-selector"
+					className="border-bg-300 bg-bg-100 text-small text-txt-100 w-full"
+					aria-label={t("profileSelector.title")}
+				>
 					<SelectValue placeholder={t("profileSelector.selectProfile")} />
 				</SelectTrigger>
 				<SelectContent>
@@ -130,7 +136,10 @@ const RiskProfileSelector = ({
 							{t("profileSummary.dailyLossLimit")}:
 						</span>
 						<span className="text-txt-100 font-medium">
-							{formatCompactCurrency(fromCents(simProfile.dailyLossLimitCents), "R$")}
+							{formatCompactCurrency(
+								fromCents(simProfile.dailyLossLimitCents),
+								"R$"
+							)}
 						</span>
 						{simProfile.weeklyLossLimitCents && (
 							<>
@@ -139,7 +148,8 @@ const RiskProfileSelector = ({
 								</span>
 								<span className="text-txt-100 font-medium">
 									{formatCompactCurrency(
-										fromCents(simProfile.weeklyLossLimitCents), "R$"
+										fromCents(simProfile.weeklyLossLimitCents),
+										"R$"
 									)}
 								</span>
 							</>
@@ -149,7 +159,8 @@ const RiskProfileSelector = ({
 						</span>
 						<span className="text-txt-100 font-medium">
 							{formatCompactCurrency(
-								fromCents(simProfile.monthlyLossLimitCents), "R$"
+								fromCents(simProfile.monthlyLossLimitCents),
+								"R$"
 							)}
 						</span>
 						{simProfile.dailyTargetCents && (
@@ -159,7 +170,8 @@ const RiskProfileSelector = ({
 								</span>
 								<span className="text-txt-100 font-medium">
 									{formatCompactCurrency(
-										fromCents(simProfile.dailyTargetCents), "R$"
+										fromCents(simProfile.dailyTargetCents),
+										"R$"
 									)}
 								</span>
 							</>

@@ -7,6 +7,7 @@
 import { fromCents } from "@/lib/money"
 import { calculateWinRate } from "@/lib/calculations"
 import { getBrtTimeParts, formatDateKey } from "@/lib/dates"
+import { dayNameKey } from "@/lib/calendar/day-names"
 
 // ============================================================================
 // TYPES
@@ -50,11 +51,21 @@ const MIN_WIN_RATE_DIFF = 8
 
 /** Calculate confidence based on sample size (0-1) */
 const calcConfidence = (sampleSize: number): number => {
-	if (sampleSize < MIN_GROUP_SIZE) return 0
-	if (sampleSize < 10) return 0.4
-	if (sampleSize < 20) return 0.6
-	if (sampleSize < 50) return 0.75
-	if (sampleSize < 100) return 0.85
+	if (sampleSize < MIN_GROUP_SIZE) {
+		return 0
+	}
+	if (sampleSize < 10) {
+		return 0.4
+	}
+	if (sampleSize < 20) {
+		return 0.6
+	}
+	if (sampleSize < 50) {
+		return 0.75
+	}
+	if (sampleSize < 100) {
+		return 0.85
+	}
 	return 0.95
 }
 
@@ -64,8 +75,12 @@ const calcConfidence = (sampleSize: number): number => {
 
 const detectTimeOfDayEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
-	const decidedTrades = trades.filter((t) => t.outcome === "win" || t.outcome === "loss")
-	if (decidedTrades.length < MIN_SAMPLE_SIZE) return insights
+	const decidedTrades = trades.filter(
+		(t) => t.outcome === "win" || t.outcome === "loss"
+	)
+	if (decidedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	const overallWinRate = calculateWinRate(
 		decidedTrades.filter((t) => t.outcome === "win").length,
@@ -78,7 +93,9 @@ const detectTimeOfDayEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 		const { hour } = getBrtTimeParts(trade.entryDate)
 		const entry = hourMap.get(hour) || { wins: 0, total: 0 }
 		entry.total++
-		if (trade.outcome === "win") entry.wins++
+		if (trade.outcome === "win") {
+			entry.wins++
+		}
 		hourMap.set(hour, entry)
 	}
 
@@ -87,7 +104,9 @@ const detectTimeOfDayEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	let worstHour: { hour: number; winRate: number; count: number } | null = null
 
 	for (const [hour, data] of hourMap) {
-		if (data.total < MIN_GROUP_SIZE) continue
+		if (data.total < MIN_GROUP_SIZE) {
+			continue
+		}
 		const wr = calculateWinRate(data.wins, data.total)
 
 		if (!bestHour || wr > bestHour.winRate) {
@@ -141,11 +160,12 @@ const detectTimeOfDayEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 
 const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
-	const decidedTrades = trades.filter((t) => t.outcome === "win" || t.outcome === "loss")
-	if (decidedTrades.length < MIN_SAMPLE_SIZE) return insights
-
-	// English keys — client translates via analytics.time.dayNames.{key}
-	const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+	const decidedTrades = trades.filter(
+		(t) => t.outcome === "win" || t.outcome === "loss"
+	)
+	if (decidedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	const dayMap = new Map<number, { totalPnl: number; count: number }>()
 	for (const trade of decidedTrades) {
@@ -159,7 +179,9 @@ const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	// Find worst day with sufficient sample
 	let worstDay: { day: number; avgPnl: number; count: number } | null = null
 	for (const [day, data] of dayMap) {
-		if (data.count < 10) continue
+		if (data.count < 10) {
+			continue
+		}
 		const avgPnl = data.totalPnl / data.count
 		if (!worstDay || avgPnl < worstDay.avgPnl) {
 			worstDay = { day, avgPnl, count: data.count }
@@ -174,7 +196,7 @@ const detectDayOfWeekEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
 			titleKey: "coaching.insights.worstDay.title",
 			descriptionKey: "coaching.insights.worstDay.description",
 			params: {
-				day: dayNames[worstDay.day],
+				day: dayNameKey(worstDay.day),
 				avgPnl: Math.round(worstDay.avgPnl * 100) / 100,
 				trades: worstDay.count,
 			},
@@ -194,14 +216,18 @@ const detectStrategyGap = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	const decidedTrades = trades.filter(
 		(t) => (t.outcome === "win" || t.outcome === "loss") && t.strategyName
 	)
-	if (decidedTrades.length < MIN_SAMPLE_SIZE) return insights
+	if (decidedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	const stratMap = new Map<string, { wins: number; total: number }>()
 	for (const trade of decidedTrades) {
 		const name = trade.strategyName!
 		const entry = stratMap.get(name) || { wins: 0, total: 0 }
 		entry.total++
-		if (trade.outcome === "win") entry.wins++
+		if (trade.outcome === "win") {
+			entry.wins++
+		}
 		stratMap.set(name, entry)
 	}
 
@@ -216,8 +242,8 @@ const detectStrategyGap = (trades: TradeForCoaching[]): CoachingInsight[] => {
 		.toSorted((a, b) => b.winRate - a.winRate)
 
 	if (strategies.length >= 2) {
-		const best = strategies[0]
-		const worst = strategies[strategies.length - 1]
+		const best = strategies[0]!
+		const worst = strategies[strategies.length - 1]!
 		const gap = best.winRate - worst.winRate
 
 		if (gap >= MIN_WIN_RATE_DIFF) {
@@ -246,12 +272,16 @@ const detectStrategyGap = (trades: TradeForCoaching[]): CoachingInsight[] => {
 // DETECTOR 4: Holding Period Insight
 // ============================================================================
 
-const detectHoldingPeriodEdge = (trades: TradeForCoaching[]): CoachingInsight[] => {
+const detectHoldingPeriodEdge = (
+	trades: TradeForCoaching[]
+): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
 	const closedTrades = trades.filter(
 		(t) => t.exitDate && (t.outcome === "win" || t.outcome === "loss")
 	)
-	if (closedTrades.length < MIN_SAMPLE_SIZE) return insights
+	if (closedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	// Compare short holds (< 5min) vs medium holds (15-60min)
 	const shortHolds = closedTrades.filter((t) => {
@@ -263,16 +293,21 @@ const detectHoldingPeriodEdge = (trades: TradeForCoaching[]): CoachingInsight[] 
 		return dur >= 15 && dur <= 60
 	})
 
-	if (shortHolds.length >= MIN_GROUP_SIZE && mediumHolds.length >= MIN_GROUP_SIZE) {
+	if (
+		shortHolds.length >= MIN_GROUP_SIZE &&
+		mediumHolds.length >= MIN_GROUP_SIZE
+	) {
 		const shortRCount = shortHolds.filter((t) => t.realizedRMultiple).length
-		const shortRSum = shortHolds.reduce((sum, t) =>
-			sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0), 0
+		const shortRSum = shortHolds.reduce(
+			(sum, t) => sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0),
+			0
 		)
 		const shortAvgR = shortRCount > 0 ? shortRSum / shortRCount : 0
 
 		const mediumRCount = mediumHolds.filter((t) => t.realizedRMultiple).length
-		const mediumRSum = mediumHolds.reduce((sum, t) =>
-			sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0), 0
+		const mediumRSum = mediumHolds.reduce(
+			(sum, t) => sum + (t.realizedRMultiple ? Number(t.realizedRMultiple) : 0),
+			0
 		)
 		const mediumAvgR = mediumRCount > 0 ? mediumRSum / mediumRCount : 0
 
@@ -289,7 +324,9 @@ const detectHoldingPeriodEdge = (trades: TradeForCoaching[]): CoachingInsight[] 
 					shortCount: shortHolds.length,
 					mediumCount: mediumHolds.length,
 				},
-				confidence: calcConfidence(Math.min(shortHolds.length, mediumHolds.length)),
+				confidence: calcConfidence(
+					Math.min(shortHolds.length, mediumHolds.length)
+				),
 			})
 		}
 	}
@@ -303,8 +340,12 @@ const detectHoldingPeriodEdge = (trades: TradeForCoaching[]): CoachingInsight[] 
 
 const detectOvertrading = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
-	const decidedTrades = trades.filter((t) => t.outcome === "win" || t.outcome === "loss")
-	if (decidedTrades.length < MIN_SAMPLE_SIZE) return insights
+	const decidedTrades = trades.filter(
+		(t) => t.outcome === "win" || t.outcome === "loss"
+	)
+	if (decidedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	// Group trades by day
 	const dayMap = new Map<string, { wins: number; total: number }>()
@@ -312,7 +353,9 @@ const detectOvertrading = (trades: TradeForCoaching[]): CoachingInsight[] => {
 		const dateKey = formatDateKey(trade.entryDate)
 		const entry = dayMap.get(dateKey) || { wins: 0, total: 0 }
 		entry.total++
-		if (trade.outcome === "win") entry.wins++
+		if (trade.outcome === "win") {
+			entry.wins++
+		}
 		dayMap.set(dateKey, entry)
 	}
 
@@ -363,7 +406,9 @@ const detectOvertrading = (trades: TradeForCoaching[]): CoachingInsight[] => {
 
 const detectFeeDrag = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
-	if (trades.length < MIN_SAMPLE_SIZE) return insights
+	if (trades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	let totalFees = 0
 	let totalNetPnl = 0
@@ -374,7 +419,9 @@ const detectFeeDrag = (trades: TradeForCoaching[]): CoachingInsight[] => {
 	}
 
 	const grossPnl = totalNetPnl + totalFees
-	if (grossPnl <= 0) return insights
+	if (grossPnl <= 0) {
+		return insights
+	}
 
 	const feePercent = (totalFees / grossPnl) * 100
 
@@ -400,13 +447,17 @@ const detectFeeDrag = (trades: TradeForCoaching[]): CoachingInsight[] => {
 // DETECTOR 7: Streak Patterns
 // ============================================================================
 
-const detectStreakPatterns = (trades: TradeForCoaching[]): CoachingInsight[] => {
+const detectStreakPatterns = (
+	trades: TradeForCoaching[]
+): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
 	const decidedTrades = trades
 		.filter((t) => t.outcome === "win" || t.outcome === "loss")
 		.toSorted((a, b) => a.entryDate.getTime() - b.entryDate.getTime())
 
-	if (decidedTrades.length < MIN_SAMPLE_SIZE) return insights
+	if (decidedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	// Track win rate after 2+ consecutive losses
 	let consecutiveLosses = 0
@@ -416,7 +467,9 @@ const detectStreakPatterns = (trades: TradeForCoaching[]): CoachingInsight[] => 
 	for (const trade of decidedTrades) {
 		if (consecutiveLosses >= 2) {
 			afterStreakTotal++
-			if (trade.outcome === "win") afterStreakWins++
+			if (trade.outcome === "win") {
+				afterStreakWins++
+			}
 		}
 
 		if (trade.outcome === "loss") {
@@ -457,15 +510,23 @@ const detectStreakPatterns = (trades: TradeForCoaching[]): CoachingInsight[] => 
 // DETECTOR 8: Rating Correlation
 // ============================================================================
 
-const detectRatingCorrelation = (trades: TradeForCoaching[]): CoachingInsight[] => {
+const detectRatingCorrelation = (
+	trades: TradeForCoaching[]
+): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
 	const ratedTrades = trades.filter(
 		(t) => t.rating && (t.outcome === "win" || t.outcome === "loss")
 	)
-	if (ratedTrades.length < MIN_SAMPLE_SIZE) return insights
+	if (ratedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
-	const highRated = ratedTrades.filter((t) => t.rating === "A" || t.rating === "B")
-	const lowRated = ratedTrades.filter((t) => t.rating === "D" || t.rating === "F")
+	const highRated = ratedTrades.filter(
+		(t) => t.rating === "A" || t.rating === "B"
+	)
+	const lowRated = ratedTrades.filter(
+		(t) => t.rating === "D" || t.rating === "F"
+	)
 
 	if (highRated.length >= MIN_GROUP_SIZE && lowRated.length >= MIN_GROUP_SIZE) {
 		const highWR = calculateWinRate(
@@ -502,24 +563,31 @@ const detectRatingCorrelation = (trades: TradeForCoaching[]): CoachingInsight[] 
 // DETECTOR 9: Discipline Impact
 // ============================================================================
 
-const detectDisciplineImpact = (trades: TradeForCoaching[]): CoachingInsight[] => {
+const detectDisciplineImpact = (
+	trades: TradeForCoaching[]
+): CoachingInsight[] => {
 	const insights: CoachingInsight[] = []
 	const trackedTrades = trades.filter(
 		(t) => t.followedPlan !== null && t.realizedRMultiple
 	)
-	if (trackedTrades.length < MIN_SAMPLE_SIZE) return insights
+	if (trackedTrades.length < MIN_SAMPLE_SIZE) {
+		return insights
+	}
 
 	const followed = trackedTrades.filter((t) => t.followedPlan === true)
 	const notFollowed = trackedTrades.filter((t) => t.followedPlan === false)
 
-	if (followed.length >= MIN_GROUP_SIZE && notFollowed.length >= MIN_GROUP_SIZE) {
-		const followedAvgR = followed.reduce(
-			(sum, t) => sum + Number(t.realizedRMultiple), 0
-		) / followed.length
+	if (
+		followed.length >= MIN_GROUP_SIZE &&
+		notFollowed.length >= MIN_GROUP_SIZE
+	) {
+		const followedAvgR =
+			followed.reduce((sum, t) => sum + Number(t.realizedRMultiple), 0) /
+			followed.length
 
-		const notFollowedAvgR = notFollowed.reduce(
-			(sum, t) => sum + Number(t.realizedRMultiple), 0
-		) / notFollowed.length
+		const notFollowedAvgR =
+			notFollowed.reduce((sum, t) => sum + Number(t.realizedRMultiple), 0) /
+			notFollowed.length
 
 		if (followedAvgR - notFollowedAvgR > 0.3) {
 			insights.push({
@@ -534,7 +602,9 @@ const detectDisciplineImpact = (trades: TradeForCoaching[]): CoachingInsight[] =
 					followedCount: followed.length,
 					notFollowedCount: notFollowed.length,
 				},
-				confidence: calcConfidence(Math.min(followed.length, notFollowed.length)),
+				confidence: calcConfidence(
+					Math.min(followed.length, notFollowed.length)
+				),
 			})
 		}
 	}
@@ -574,7 +644,7 @@ const detectAllPatterns = (trades: TradeForCoaching[]): CoachingInsight[] => {
 
 	return allInsights
 		.filter((i) => i.confidence >= MIN_CONFIDENCE)
-		.toSorted((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+		.toSorted((a, b) => severityOrder[a.severity]! - severityOrder[b.severity]!)
 }
 
 export {

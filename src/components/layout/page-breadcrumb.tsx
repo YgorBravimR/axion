@@ -2,9 +2,8 @@
 
 import { Fragment, useMemo } from "react"
 import { useTranslations } from "next-intl"
-import { usePathname } from "@/i18n/routing"
-import { Link } from "@/i18n/routing"
-import { navItems } from "@/lib/navigation"
+import { usePathname, Link } from "@/i18n/routing"
+import { buildNavItems, type NavEntry } from "@/lib/navigation"
 import {
 	Breadcrumb,
 	BreadcrumbList,
@@ -14,20 +13,36 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
-const PageBreadcrumb = () => {
+interface PageBreadcrumbProps {
+	navStructure: NavEntry[]
+}
+
+const PageBreadcrumb = ({ navStructure }: PageBreadcrumbProps) => {
 	const pathname = usePathname()
 	const tNav = useTranslations("nav")
 	const tBreadcrumb = useTranslations("breadcrumb")
+	const navItems = useMemo(() => buildNavItems(navStructure), [navStructure])
 
-	const segments = useMemo(() => pathname.split("/").filter(Boolean), [pathname])
+	const segments = useMemo(
+		() => pathname.split("/").filter(Boolean),
+		[pathname]
+	)
 
-	const matchedNavItem = useMemo(() => navItems.find((item) => {
-		if (item.href === "/") return false
-		return pathname.startsWith(item.href)
-	}), [pathname])
+	const matchedNavItem = useMemo(
+		() =>
+			navItems.find((item) => {
+				if (item.href === "/") {
+					return false
+				}
+				return pathname.startsWith(item.href)
+			}),
+		[pathname, navItems]
+	)
 
 	const crumbs = useMemo((): Array<{ label: string; href?: string }> => {
-		if (segments.length === 0) return []
+		if (segments.length === 0) {
+			return []
+		}
 
 		const result: Array<{ label: string; href?: string }> = [
 			{ label: tBreadcrumb("home"), href: "/" },
@@ -43,16 +58,23 @@ const PageBreadcrumb = () => {
 			const remainingPath = pathname.slice(matchedNavItem.href.length)
 			const nestedSegments = remainingPath.split("/").filter(Boolean)
 
-			if (nestedSegments.length > 0) {
-				const lastSegment = nestedSegments[nestedSegments.length - 1]
-				const nestedLabel = getNestedLabel(lastSegment, matchedNavItem.labelKey, tBreadcrumb)
+			const lastSegment = nestedSegments[nestedSegments.length - 1]
+			if (lastSegment) {
+				const nestedLabel = getNestedLabel(
+					lastSegment,
+					matchedNavItem.labelKey,
+					tBreadcrumb
+				)
 				result.push({ label: nestedLabel })
 			}
 		} else {
-			const label = segments[0]
-				.replace(/-/g, " ")
-				.replace(/\b\w/g, (char) => char.toUpperCase())
-			result.push({ label })
+			const firstSegment = segments[0]
+			if (firstSegment) {
+				const label = firstSegment
+					.replace(/-/g, " ")
+					.replace(/\b\w/g, (char) => char.toUpperCase())
+				result.push({ label })
+			}
 		}
 
 		return result
@@ -102,19 +124,31 @@ const getNestedLabel = (
 	t: ReturnType<typeof useTranslations<"breadcrumb">>
 ): string => {
 	if (segment === "new") {
-		if (parentKey === "journal") return t("newTrade")
-		if (parentKey === "playbook") return t("newPlaybook")
+		if (parentKey === "journal") {
+			return t("newTrade")
+		}
+		if (parentKey === "playbook") {
+			return t("newPlaybook")
+		}
 	}
 
 	if (segment === "edit") {
-		if (parentKey === "journal") return t("editTrade")
-		if (parentKey === "playbook") return t("editPlaybook")
+		if (parentKey === "journal") {
+			return t("editTrade")
+		}
+		if (parentKey === "playbook") {
+			return t("editPlaybook")
+		}
 	}
 
 	// UUID-like segments (trade/playbook detail pages)
 	if (segment.length > 8 && segment.includes("-")) {
-		if (parentKey === "journal") return t("tradeDetails")
-		if (parentKey === "playbook") return t("playbookDetails")
+		if (parentKey === "journal") {
+			return t("tradeDetails")
+		}
+		if (parentKey === "playbook") {
+			return t("playbookDetails")
+		}
 	}
 
 	// Fallback: capitalize the segment

@@ -5,13 +5,17 @@
  * and computes what the NEXT trade's risk/phase/constraints should be.
  */
 
-import type { DecisionTreeConfig } from "@/types/risk-profile"
-import type { LiveTradingStatus, TradeOutcomeInput, DayPhase } from "@/types/live-trading-status"
-import { resolveRiskCalculation, describeRiskCalc } from "@/lib/risk-simulation-advanced"
+import type {
+	LiveTradingStatus,
+	TradeOutcomeInput,
+	DayPhase,
+} from "@/types/live-trading-status"
+import { resolveRiskCalculation } from "@/lib/risk-simulation-advanced"
+import type { DecisionTreeCents } from "@/lib/risk-profiles/cents-shape"
 
 interface ResolveLiveStatusParams {
 	trades: TradeOutcomeInput[]
-	decisionTree: DecisionTreeConfig
+	decisionTree: DecisionTreeCents
 	profileName: string
 	dailyLossCents: number
 	dailyProfitTargetCents: number | null
@@ -40,7 +44,6 @@ const resolveLiveStatus = ({
 	let consecutiveLosses = 0
 	let dailyTargetHit = false
 	let recoveryWinExit = false
-	let lastUsedRiskCents = baseRiskCents
 
 	// Logical step counter — breakeven trades are invisible to the phase machine
 	let currentStepNumber = 0
@@ -48,7 +51,7 @@ const resolveLiveStatus = ({
 
 	// Replay each completed trade
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 
 		dailyPnlCents += trade.pnlCents
 
@@ -78,24 +81,38 @@ const resolveLiveStatus = ({
 			usedRiskCents = baseRiskCents
 		} else if (dayPhase === "loss_recovery") {
 			if (recoveryIndex < totalRecoverySteps) {
-				const step = lossRecovery.sequence[recoveryIndex]
-				usedRiskCents = resolveRiskCalculation(step.riskCalculation, baseRiskCents, previousRiskCents)
+				const step = lossRecovery.sequence[recoveryIndex]!
+				usedRiskCents = resolveRiskCalculation(
+					step.riskCalculation,
+					baseRiskCents,
+					previousRiskCents
+				)
 			}
 		} else if (dayPhase === "gain_mode" && gainMode.type === "compounding") {
-			usedRiskCents = Math.max(1, Math.round(dayGainsCents * (gainMode.reinvestmentPercent / 100)))
+			usedRiskCents = Math.max(
+				1,
+				Math.round(dayGainsCents * (gainMode.reinvestmentPercent / 100))
+			)
 		} else if (dayPhase === "gain_mode" && gainMode.type === "gainSequence") {
 			const seqLen = gainMode.sequence.length
 			if (gainSequenceIndex < seqLen) {
-				const step = gainMode.sequence[gainSequenceIndex]
-				usedRiskCents = resolveRiskCalculation(step.riskCalculation, baseRiskCents, previousRiskCents)
+				const step = gainMode.sequence[gainSequenceIndex]!
+				usedRiskCents = resolveRiskCalculation(
+					step.riskCalculation,
+					baseRiskCents,
+					previousRiskCents
+				)
 			} else if (gainMode.repeatLastStep && seqLen > 0) {
-				const lastStep = gainMode.sequence[seqLen - 1]
-				usedRiskCents = resolveRiskCalculation(lastStep.riskCalculation, baseRiskCents, previousRiskCents)
+				const lastStep = gainMode.sequence[seqLen - 1]!
+				usedRiskCents = resolveRiskCalculation(
+					lastStep.riskCalculation,
+					baseRiskCents,
+					previousRiskCents
+				)
 			}
 		}
 
 		previousRiskCents = usedRiskCents
-		lastUsedRiskCents = usedRiskCents
 
 		// T1 branching: determine phase after this trade
 		if (isT1) {
@@ -106,13 +123,24 @@ const resolveLiveStatus = ({
 				dayGainsCents += trade.pnlCents
 				dayPhase = "gain_mode"
 				gainSequenceIndex = 0
-				if (gainMode.type === "singleTarget" && dayGainsCents >= gainMode.dailyTargetCents) {
+				if (
+					gainMode.type === "singleTarget" &&
+					dayGainsCents >= gainMode.dailyTargetCents
+				) {
 					dailyTargetHit = true
 				}
-				if (gainMode.type === "compounding" && gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
+				if (
+					gainMode.type === "compounding" &&
+					gainMode.dailyTargetCents &&
+					dayGainsCents >= gainMode.dailyTargetCents
+				) {
 					dailyTargetHit = true
 				}
-				if (gainMode.type === "gainSequence" && gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
+				if (
+					gainMode.type === "gainSequence" &&
+					gainMode.dailyTargetCents &&
+					dayGainsCents >= gainMode.dailyTargetCents
+				) {
 					dailyTargetHit = true
 				}
 			}
@@ -135,7 +163,10 @@ const resolveLiveStatus = ({
 				dailyTargetHit = true
 			} else if (trade.outcome === "win") {
 				dayGainsCents += trade.pnlCents
-				if (gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
+				if (
+					gainMode.dailyTargetCents &&
+					dayGainsCents >= gainMode.dailyTargetCents
+				) {
 					dailyTargetHit = true
 				}
 			}
@@ -145,17 +176,21 @@ const resolveLiveStatus = ({
 			} else if (trade.outcome === "win") {
 				dayGainsCents += trade.pnlCents
 				gainSequenceIndex++
-				if (gainMode.dailyTargetCents && dayGainsCents >= gainMode.dailyTargetCents) {
+				if (
+					gainMode.dailyTargetCents &&
+					dayGainsCents >= gainMode.dailyTargetCents
+				) {
 					dailyTargetHit = true
 				}
 			}
 		}
-
 	}
 
 	// Evaluate daily limits on FINAL P&L (non-sticky — recovery wins can clear them)
 	const dailyLimitHit = dailyPnlCents <= -dailyLossCents
-	if (dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents) dailyTargetHit = true
+	if (dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents) {
+		dailyTargetHit = true
+	}
 
 	// Now compute the NEXT trade's state
 	const isNextT1 = currentStepNumber === 0
@@ -200,10 +235,15 @@ const resolveLiveStatus = ({
 				riskReason = "riskSimulation.reasons.postRecoveryBase"
 			}
 		} else {
-			const step = lossRecovery.sequence[recoveryIndex]
-			nextTradeRiskCents = resolveRiskCalculation(step.riskCalculation, baseRiskCents, previousRiskCents)
+			const step = lossRecovery.sequence[recoveryIndex]!
+			nextTradeRiskCents = resolveRiskCalculation(
+				step.riskCalculation,
+				baseRiskCents,
+				previousRiskCents
+			)
 			riskReason = `riskSimulation.reasons.recoveryStep|${recoveryIndex + 1}`
-			nextTradeMaxContracts = step.maxContractsOverride ?? baseTrade.maxContracts
+			nextTradeMaxContracts =
+				step.maxContractsOverride ?? baseTrade.maxContracts
 			nextRecoveryStepIndex = recoveryIndex
 		}
 	} else if (dayPhase === "gain_mode") {
@@ -213,7 +253,10 @@ const resolveLiveStatus = ({
 			riskReason = "riskSimulation.reasons.singleTarget"
 		} else if (gainMode.type === "compounding") {
 			if (dayGainsCents > 0) {
-				nextTradeRiskCents = Math.max(1, Math.round(dayGainsCents * (gainMode.reinvestmentPercent / 100)))
+				nextTradeRiskCents = Math.max(
+					1,
+					Math.round(dayGainsCents * (gainMode.reinvestmentPercent / 100))
+				)
 				riskReason = `riskSimulation.reasons.gainReinvest|${gainMode.reinvestmentPercent}`
 			} else {
 				nextTradeRiskCents = baseRiskCents
@@ -222,15 +265,25 @@ const resolveLiveStatus = ({
 		} else if (gainMode.type === "gainSequence") {
 			const seqLen = gainMode.sequence.length
 			if (gainSequenceIndex < seqLen) {
-				const step = gainMode.sequence[gainSequenceIndex]
-				nextTradeRiskCents = resolveRiskCalculation(step.riskCalculation, baseRiskCents, previousRiskCents)
+				const step = gainMode.sequence[gainSequenceIndex]!
+				nextTradeRiskCents = resolveRiskCalculation(
+					step.riskCalculation,
+					baseRiskCents,
+					previousRiskCents
+				)
 				riskReason = `riskSimulation.reasons.gainStep|${gainSequenceIndex + 1}`
-				nextTradeMaxContracts = step.maxContractsOverride ?? baseTrade.maxContracts
+				nextTradeMaxContracts =
+					step.maxContractsOverride ?? baseTrade.maxContracts
 			} else if (gainMode.repeatLastStep && seqLen > 0) {
-				const lastStep = gainMode.sequence[seqLen - 1]
-				nextTradeRiskCents = resolveRiskCalculation(lastStep.riskCalculation, baseRiskCents, previousRiskCents)
+				const lastStep = gainMode.sequence[seqLen - 1]!
+				nextTradeRiskCents = resolveRiskCalculation(
+					lastStep.riskCalculation,
+					baseRiskCents,
+					previousRiskCents
+				)
 				riskReason = "riskSimulation.reasons.gainRepeat"
-				nextTradeMaxContracts = lastStep.maxContractsOverride ?? baseTrade.maxContracts
+				nextTradeMaxContracts =
+					lastStep.maxContractsOverride ?? baseTrade.maxContracts
 			} else {
 				shouldStopTrading = true
 				stopReason = "gainSequenceExhausted"
@@ -244,7 +297,9 @@ const resolveLiveStatus = ({
 	}
 
 	// Minimum 1 cent risk
-	if (nextTradeRiskCents < 1) nextTradeRiskCents = 1
+	if (nextTradeRiskCents < 1) {
+		nextTradeRiskCents = 1
+	}
 
 	// Size direction signals
 	const shouldIncreaseSize = nextTradeRiskCents > baseRiskCents
@@ -276,9 +331,12 @@ const resolveLiveStatus = ({
 		profileName,
 		baseRiskCents,
 		gainModeType: gainMode.type,
-		gainModeReinvestPercent: gainMode.type === "compounding" ? gainMode.reinvestmentPercent : null,
-		gainSequenceStepIndex: gainMode.type === "gainSequence" ? gainSequenceIndex : null,
-		totalGainSequenceSteps: gainMode.type === "gainSequence" ? gainMode.sequence.length : 0,
+		gainModeReinvestPercent:
+			gainMode.type === "compounding" ? gainMode.reinvestmentPercent : null,
+		gainSequenceStepIndex:
+			gainMode.type === "gainSequence" ? gainSequenceIndex : null,
+		totalGainSequenceSteps:
+			gainMode.type === "gainSequence" ? gainMode.sequence.length : 0,
 		dailyTargetCents: gainMode.dailyTargetCents ?? null,
 		recoverySequenceExhausted,
 		tradeStepNumbers,

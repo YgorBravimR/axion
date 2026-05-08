@@ -1,7 +1,16 @@
 "use client"
 
 import type { RefObject, ReactNode } from "react"
-import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from "react"
+import {
+	createContext,
+	useContext,
+	useState,
+	useCallback,
+	useEffect,
+	useRef,
+	useMemo,
+} from "react"
+import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { getAccountTypeBrand, getAccountIcon } from "@/lib/account-brand"
 
@@ -15,9 +24,11 @@ interface AccountTransitionOptions {
 }
 
 interface AccountTransitionContextType {
-	showAccountTransition: (options: AccountTransitionOptions & {
-		onTransition: () => Promise<void>
-	}) => void
+	showAccountTransition: (
+		_options: AccountTransitionOptions & {
+			onTransition: () => Promise<void>
+		}
+	) => void
 	isTransitioning: boolean
 }
 
@@ -33,12 +44,16 @@ const TRANSITION_SESSION_KEY = "account-transition"
 // Context
 // ==========================================
 
-const AccountTransitionContext = createContext<AccountTransitionContextType | undefined>(undefined)
+const AccountTransitionContext = createContext<
+	AccountTransitionContextType | undefined
+>(undefined)
 
 const useAccountTransition = (): AccountTransitionContextType => {
 	const context = useContext(AccountTransitionContext)
 	if (!context) {
-		throw new Error("useAccountTransition must be used within AccountTransitionOverlayProvider")
+		throw new Error(
+			"useAccountTransition must be used within AccountTransitionOverlayProvider"
+		)
 	}
 	return context
 }
@@ -47,7 +62,8 @@ const useAccountTransition = (): AccountTransitionContextType => {
 // Helpers
 // ==========================================
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+const sleep = (ms: number): Promise<void> =>
+	new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * Checks if we're resuming from a cross-reload account transition.
@@ -83,12 +99,14 @@ const ResumedOverlay = () => {
 		return () => clearTimeout(fadeTimer)
 	}, [])
 
-	if (!isVisible) return null
+	if (!isVisible) {
+		return null
+	}
 
 	return (
 		<div
 			aria-hidden="true"
-			className="fixed inset-0 z-50 bg-bg-100 animate-overlay-fade-out"
+			className="bg-bg-100 animate-overlay-fade-out fixed inset-0 z-50"
 		/>
 	)
 }
@@ -101,7 +119,7 @@ interface TransitionOverlayProps {
 	options: AccountTransitionOptions
 	phase: TransitionPhase
 	overlayRef: RefObject<HTMLDivElement | null>
-	getAccountTypeLabel: (accountType: string) => string
+	getAccountTypeLabel: (_accountType: string) => string
 	transitionLabel: string
 	switchingToLabel: string
 }
@@ -129,25 +147,30 @@ const TransitionOverlay = ({
 			aria-busy="true"
 			aria-label={transitionLabel}
 			tabIndex={-1}
-			className="fixed inset-0 z-50 flex items-center justify-center bg-bg-100 outline-none animate-overlay-fade-in"
+			className="bg-bg-100 animate-overlay-fade-in fixed inset-0 z-50 flex items-center justify-center outline-none"
 		>
-			<div className="flex flex-col items-center gap-m-600">
+			<div className="gap-m-600 flex flex-col items-center">
 				{/* Video with gold gradient ring -- expands at the end */}
-				<div className={isExpanding
-					? "relative will-change-transform-opacity animate-transition-video-expand"
-					: "relative animate-transition-scale-in"
-				}>
+				<div
+					className={
+						isExpanding
+							? "will-change-transform-opacity animate-transition-video-expand relative"
+							: "animate-transition-scale-in relative"
+					}
+				>
 					{/* Pulsing gold ring */}
 					<div
-						className="absolute -inset-3 rounded-full bg-linear-to-br from-brand-400 via-acc-100 to-brand-600 animate-transition-ring-pulse"
+						className="from-brand-400 via-acc-100 to-brand-600 animate-transition-ring-pulse absolute -inset-3 rounded-full bg-linear-to-br"
 						aria-hidden="true"
 					/>
 
 					{/* Brand mark */}
-					<div className="relative flex h-60 w-60 items-center justify-center overflow-hidden rounded-full bg-bg-100">
-						<img
+					<div className="bg-bg-100 relative flex h-60 w-60 items-center justify-center overflow-hidden rounded-full">
+						<Image
 							src="/bravo-mark-gold-nobg.png"
 							alt=""
+							width={144}
+							height={144}
 							className="h-36 w-36 object-contain"
 						/>
 					</div>
@@ -156,21 +179,21 @@ const TransitionOverlay = ({
 				{/* Gold pulse line divider -- fade wrapper avoids dual-animation conflict */}
 				<div className={isExpanding ? "animate-transition-content-fade" : ""}>
 					<div
-						className="h-0.5 w-20 rounded-full bg-acc-100 animate-overlay-pulse-line"
+						className="bg-acc-100 animate-overlay-pulse-line h-0.5 w-20 rounded-full"
 						aria-hidden="true"
 					/>
 				</div>
 
 				{/* Text content -- fade wrapper keeps fade separate from text-up animation */}
 				<div className={isExpanding ? "animate-transition-content-fade" : ""}>
-					<div className="flex flex-col items-center gap-s-200">
+					<div className="gap-s-200 flex flex-col items-center">
 						<p className="text-small text-txt-300 animate-transition-text-up">
 							{switchingToLabel}
 						</p>
-						<p className="text-h3 font-semibold text-acc-100 animate-transition-text-up animation-delay-100">
+						<p className="text-h3 text-acc-100 animate-transition-text-up animation-delay-100 font-semibold">
 							{options.accountName}
 						</p>
-						<div className="flex items-center gap-s-200 text-small text-txt-300 animate-transition-text-up animation-delay-200">
+						<div className="gap-s-200 text-small text-txt-300 animate-transition-text-up animation-delay-200 flex items-center">
 							<AccountIcon className="h-4 w-4" aria-hidden="true" />
 							<span>{getAccountTypeLabel(options.accountType)}</span>
 						</div>
@@ -185,7 +208,11 @@ const TransitionOverlay = ({
 // Provider
 // ==========================================
 
-const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode }) => {
+const AccountTransitionOverlayProvider = ({
+	children,
+}: {
+	children: ReactNode
+}) => {
 	const t = useTranslations("auth.accountSwitcher")
 	const [phase, setPhase] = useState<TransitionPhase>("idle")
 	const [options, setOptions] = useState<AccountTransitionOptions | null>(null)
@@ -195,53 +222,62 @@ const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode })
 
 	const isTransitioning = phase !== "idle"
 
-	const showAccountTransition = useCallback((transitionOptions: AccountTransitionOptions & {
-		onTransition: () => Promise<void>
-	}) => {
-		if (isTransitioning) return
-
-		previousFocusRef.current = document.activeElement as HTMLElement | null
-		setOptions({
-			accountName: transitionOptions.accountName,
-			accountType: transitionOptions.accountType,
-		})
-		setPhase("entering")
-
-		// 300ms enter + 1800ms active + 500ms expand, then hard reload
-		setTimeout(async () => {
-			setPhase("active")
-
-			const minimumDelay = sleep(1800)
-
-			try {
-				await Promise.all([transitionOptions.onTransition(), minimumDelay])
-			} catch {
-				// On error, still proceed to reload
+	const showAccountTransition = useCallback(
+		(
+			transitionOptions: AccountTransitionOptions & {
+				onTransition: () => Promise<void>
+			}
+		) => {
+			if (isTransitioning) {
+				return
 			}
 
-			// Video grows into screen, text fades out — overlay stays solid bg-bg-100
-			setPhase("expanding")
-			await sleep(500)
+			previousFocusRef.current = document.activeElement as HTMLElement | null
+			setOptions({
+				accountName: transitionOptions.accountName,
+				accountType: transitionOptions.accountType,
+			})
+			setPhase("entering")
 
-			// Pre-set the target brand before reload so the new page renders correctly
-			const targetBrand = getAccountTypeBrand(transitionOptions.accountType)
-			try {
-				localStorage.setItem("brand", targetBrand)
-			} catch {
-				// localStorage unavailable
-			}
-			document.documentElement.setAttribute("data-brand", targetBrand)
+			// 300ms enter + 1800ms active + 500ms expand, then hard reload
+			setTimeout(() => {
+				void (async () => {
+					setPhase("active")
 
-			// Signal the resumed overlay to show on the new page
-			try {
-				sessionStorage.setItem(TRANSITION_SESSION_KEY, "1")
-			} catch {
-				// sessionStorage unavailable
-			}
+					const minimumDelay = sleep(1800)
 
-			window.location.reload()
-		}, 300)
-	}, [isTransitioning])
+					try {
+						await Promise.all([transitionOptions.onTransition(), minimumDelay])
+					} catch {
+						// On error, still proceed to reload
+					}
+
+					// Video grows into screen, text fades out — overlay stays solid bg-bg-100
+					setPhase("expanding")
+					await sleep(500)
+
+					// Pre-set the target brand before reload so the new page renders correctly
+					const targetBrand = getAccountTypeBrand(transitionOptions.accountType)
+					try {
+						localStorage.setItem("brand", targetBrand)
+					} catch {
+						// localStorage unavailable
+					}
+					document.documentElement.setAttribute("data-brand", targetBrand)
+
+					// Signal the resumed overlay to show on the new page
+					try {
+						sessionStorage.setItem(TRANSITION_SESSION_KEY, "1")
+					} catch {
+						// sessionStorage unavailable
+					}
+
+					window.location.reload()
+				})()
+			}, 300)
+		},
+		[isTransitioning]
+	)
 
 	// Focus trap: move focus to overlay on mount
 	useEffect(() => {
@@ -252,7 +288,9 @@ const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode })
 
 	// Trap keyboard events while overlay is visible
 	useEffect(() => {
-		if (!isTransitioning) return
+		if (!isTransitioning) {
+			return
+		}
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Tab" || e.key === "Escape") {
@@ -265,18 +303,24 @@ const AccountTransitionOverlayProvider = ({ children }: { children: ReactNode })
 		return () => document.removeEventListener("keydown", handleKeyDown, true)
 	}, [isTransitioning])
 
-	const getAccountTypeLabel = useCallback((accountType: string): string => {
-		switch (accountType) {
-			case "prop":
-				return t("propFirm")
-			case "replay":
-				return t("replay")
-			default:
-				return t("personal")
-		}
-	}, [t])
+	const getAccountTypeLabel = useCallback(
+		(accountType: string): string => {
+			switch (accountType) {
+				case "prop":
+					return t("propFirm")
+				case "replay":
+					return t("replay")
+				default:
+					return t("personal")
+			}
+		},
+		[t]
+	)
 
-	const contextValue = useMemo(() => ({ showAccountTransition, isTransitioning }), [showAccountTransition, isTransitioning])
+	const contextValue = useMemo(
+		() => ({ showAccountTransition, isTransitioning }),
+		[showAccountTransition, isTransitioning]
+	)
 
 	return (
 		<AccountTransitionContext.Provider value={contextValue}>

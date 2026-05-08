@@ -8,10 +8,16 @@
  * @param dollars - Amount in dollars (e.g., 10.50)
  * @returns Amount in cents (e.g., 1050)
  */
-export const toCents = (dollars: number | string | null | undefined): number => {
-	if (dollars === null || dollars === undefined || dollars === "") return 0
+export const toCents = (
+	dollars: number | string | null | undefined
+): number => {
+	if (dollars === null || dollars === undefined || dollars === "") {
+		return 0
+	}
 	const value = typeof dollars === "string" ? parseFloat(dollars) : dollars
-	if (isNaN(value)) return 0
+	if (isNaN(value)) {
+		return 0
+	}
 	return Math.round(value * 100)
 }
 
@@ -20,10 +26,16 @@ export const toCents = (dollars: number | string | null | undefined): number => 
  * @param cents - Amount in cents (e.g., 1050)
  * @returns Amount in dollars (e.g., 10.50)
  */
-export const fromCents = (cents: number | string | null | undefined): number => {
-	if (cents === null || cents === undefined || cents === "") return 0
+export const fromCents = (
+	cents: number | string | null | undefined
+): number => {
+	if (cents === null || cents === undefined || cents === "") {
+		return 0
+	}
 	const value = typeof cents === "string" ? Number(cents) : cents
-	if (isNaN(value)) return 0
+	if (isNaN(value)) {
+		return 0
+	}
 	return value / 100
 }
 
@@ -69,7 +81,9 @@ export const parseCurrencyToCents = (input: string): number => {
 	}
 
 	const value = parseFloat(cleaned)
-	if (isNaN(value)) return 0
+	if (isNaN(value)) {
+		return 0
+	}
 
 	return toCents(value)
 }
@@ -82,10 +96,16 @@ export const parseCurrencyToCents = (input: string): number => {
  * @param value - Number or numeric string to normalize
  * @returns Normalized string, or null if value is null/undefined
  */
-export const toNumericString = (value: number | string | null | undefined): string | null => {
-	if (value === null || value === undefined) return null
+export const toNumericString = (
+	value: number | string | null | undefined
+): string | null => {
+	if (value === null || value === undefined) {
+		return null
+	}
 	const num = typeof value === "string" ? Number(value) : value
-	if (Number.isNaN(num)) return null
+	if (Number.isNaN(num)) {
+		return null
+	}
 	return num.toString()
 }
 
@@ -114,6 +134,8 @@ export const multiplyCents = (cents: number, factor: number): number => {
  * Divide cents by a divisor
  */
 export const divideCents = (cents: number, divisor: number): number => {
-	if (divisor === 0) return 0
+	if (divisor === 0) {
+		return 0
+	}
 	return Math.round(cents / divisor)
 }

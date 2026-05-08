@@ -5,17 +5,17 @@ import { CheckCircle2, XCircle, AlertTriangle, TrendingUp } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { ProcessedCsvTrade } from "@/app/actions/csv-import"
+import type { ProcessedCsvTrade } from "@/app/actions/csv-import.types"
 
 export type FilterStatus = "all" | "valid" | "warning" | "skipped"
 
 interface CsvImportSummaryProps {
 	trades: ProcessedCsvTrade[]
 	filter: FilterStatus
-	onFilterChange: (filter: FilterStatus) => void
+	onFilterChange: (_filter: FilterStatus) => void
 	selectedCount: number
 	selectableCount: number
-	onSelectAll: (selected: boolean) => void
+	onSelectAll: (_selected: boolean) => void
 	allSelected: boolean
 }
 
@@ -32,7 +32,14 @@ export const CsvImportSummary = ({
 	const tCommon = useTranslations("common")
 
 	// C3: Single pass computes all 6 values instead of 3× .filter() + 3× .reduce()
-	const { validCount, warningCount, skippedCount, grossPnl, netPnl, totalCosts } = useMemo(() => {
+	const {
+		validCount,
+		warningCount,
+		skippedCount,
+		grossPnl,
+		netPnl,
+		totalCosts,
+	} = useMemo(() => {
 		let valid = 0
 		let warning = 0
 		let skipped = 0
@@ -40,14 +47,25 @@ export const CsvImportSummary = ({
 		let net = 0
 		let costs = 0
 		for (const trade of trades) {
-			if (trade.status === "valid") valid++
-			else if (trade.status === "warning") warning++
-			else if (trade.status === "skipped") skipped++
+			if (trade.status === "valid") {
+				valid++
+			} else if (trade.status === "warning") {
+				warning++
+			} else if (trade.status === "skipped") {
+				skipped++
+			}
 			gross += trade.grossPnl || 0
 			net += trade.netPnl || 0
 			costs += trade.totalCosts || 0
 		}
-		return { validCount: valid, warningCount: warning, skippedCount: skipped, grossPnl: gross, netPnl: net, totalCosts: costs }
+		return {
+			validCount: valid,
+			warningCount: warning,
+			skippedCount: skipped,
+			grossPnl: gross,
+			netPnl: net,
+			totalCosts: costs,
+		}
 	}, [trades])
 
 	const formatCurrency = (value: number) => {
@@ -62,21 +80,23 @@ export const CsvImportSummary = ({
 	return (
 		<div id="csv-import-summary" className="space-y-m-400">
 			{/* Stats Cards */}
-			<div className="grid grid-cols-2 gap-s-200 sm:gap-s-300 md:grid-cols-4">
+			<div className="gap-s-200 sm:gap-s-300 grid grid-cols-2 md:grid-cols-4">
 				{/* Valid */}
 				<button
 					type="button"
 					onClick={() => onFilterChange(filter === "valid" ? "all" : "valid")}
 					className={cn(
-						"rounded-lg border p-s-300 sm:p-m-400 text-center transition-all",
+						"p-s-300 sm:p-m-400 rounded-lg border text-center transition-all",
 						filter === "valid"
 							? "border-trade-buy bg-trade-buy/10"
 							: "border-bg-300 bg-bg-200 hover:border-trade-buy/50"
 					)}
 				>
-					<div className="flex items-center justify-center gap-s-200">
-						<CheckCircle2 className="h-5 w-5 text-trade-buy" />
-						<span className="text-h3 font-bold text-trade-buy">{validCount}</span>
+					<div className="gap-s-200 flex items-center justify-center">
+						<CheckCircle2 className="text-trade-buy h-5 w-5" />
+						<span className="text-h3 text-trade-buy font-bold">
+							{validCount}
+						</span>
 					</div>
 					<p className="mt-s-100 text-tiny text-txt-300">{t("validTrades")}</p>
 				</button>
@@ -84,44 +104,57 @@ export const CsvImportSummary = ({
 				{/* Skipped */}
 				<button
 					type="button"
-					onClick={() => onFilterChange(filter === "skipped" ? "all" : "skipped")}
+					onClick={() =>
+						onFilterChange(filter === "skipped" ? "all" : "skipped")
+					}
 					className={cn(
-						"rounded-lg border p-s-300 sm:p-m-400 text-center transition-all",
+						"p-s-300 sm:p-m-400 rounded-lg border text-center transition-all",
 						filter === "skipped"
 							? "border-fb-error bg-fb-error/10"
 							: "border-bg-300 bg-bg-200 hover:border-fb-error/50"
 					)}
 				>
-					<div className="flex items-center justify-center gap-s-200">
-						<XCircle className="h-5 w-5 text-fb-error" />
-						<span className="text-h3 font-bold text-fb-error">{skippedCount}</span>
+					<div className="gap-s-200 flex items-center justify-center">
+						<XCircle className="text-fb-error h-5 w-5" />
+						<span className="text-h3 text-fb-error font-bold">
+							{skippedCount}
+						</span>
 					</div>
-					<p className="mt-s-100 text-tiny text-txt-300">{tCommon("skipped")}</p>
+					<p className="mt-s-100 text-tiny text-txt-300">
+						{tCommon("skipped")}
+					</p>
 				</button>
 
 				{/* Warnings */}
 				<button
 					type="button"
-					onClick={() => onFilterChange(filter === "warning" ? "all" : "warning")}
+					onClick={() =>
+						onFilterChange(filter === "warning" ? "all" : "warning")
+					}
 					className={cn(
-						"rounded-lg border p-s-300 sm:p-m-400 text-center transition-all",
+						"p-s-300 sm:p-m-400 rounded-lg border text-center transition-all",
 						filter === "warning"
 							? "border-warning bg-warning/10"
 							: "border-bg-300 bg-bg-200 hover:border-warning/50"
 					)}
 				>
-					<div className="flex items-center justify-center gap-s-200">
-						<AlertTriangle className="h-5 w-5 text-warning" />
-						<span className="text-h3 font-bold text-warning">{warningCount}</span>
+					<div className="gap-s-200 flex items-center justify-center">
+						<AlertTriangle className="text-warning h-5 w-5" />
+						<span className="text-h3 text-warning font-bold">
+							{warningCount}
+						</span>
 					</div>
 					<p className="mt-s-100 text-tiny text-txt-300">{t("warnings")}</p>
 				</button>
 
 				{/* Net P&L */}
-				<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 text-center">
-					<div className="flex items-center justify-center gap-s-200">
+				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border text-center">
+					<div className="gap-s-200 flex items-center justify-center">
 						<TrendingUp
-							className={cn("h-5 w-5", netPnl >= 0 ? "text-trade-buy" : "text-trade-sell")}
+							className={cn(
+								"h-5 w-5",
+								netPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
+							)}
 						/>
 						<span
 							className={cn(
@@ -133,40 +166,48 @@ export const CsvImportSummary = ({
 						</span>
 					</div>
 					<p className="mt-s-100 text-tiny text-txt-300">
-						{tCommon("grossCostBreakdown", { gross: formatCurrency(grossPnl), costs: formatCurrency(-totalCosts) })}
+						{tCommon("grossCostBreakdown", {
+							gross: formatCurrency(grossPnl),
+							costs: formatCurrency(-totalCosts),
+						})}
 					</p>
 				</div>
 			</div>
 
 			{/* Filter Bar */}
-			<div className="flex flex-wrap items-center justify-between gap-s-300 rounded-lg border border-bg-300 bg-bg-200 px-s-300 sm:px-m-400 py-s-300 min-w-0">
+			<div className="gap-s-300 border-bg-300 bg-bg-200 px-s-300 sm:px-m-400 py-s-300 flex min-w-0 flex-wrap items-center justify-between rounded-lg border">
 				{/* Filter Buttons */}
-				<div className="flex flex-wrap items-center gap-s-200">
-					<span className="text-tiny text-txt-300">{tCommon("filterLabel")}</span>
-					<div className="flex flex-wrap gap-s-100">
+				<div className="gap-s-200 flex flex-wrap items-center">
+					<span className="text-tiny text-txt-300">
+						{tCommon("filterLabel")}
+					</span>
+					<div className="gap-s-100 flex flex-wrap">
 						{(["all", "valid", "warning", "skipped"] as const).map((status) => (
 							<button
 								key={status}
 								type="button"
 								onClick={() => onFilterChange(status)}
 								className={cn(
-									"rounded-md px-s-300 py-s-100 text-tiny font-medium transition-colors",
+									"px-s-300 py-s-100 text-tiny rounded-md font-medium transition-colors",
 									filter === status
 										? "bg-acc-100 text-bg-100"
 										: "bg-bg-300 text-txt-200 hover:bg-bg-100"
 								)}
 							>
 								{status === "all" && tCommon("filterAll")}
-								{status === "valid" && tCommon("filterValid", { count: validCount })}
-								{status === "warning" && tCommon("filterWarnings", { count: warningCount })}
-								{status === "skipped" && tCommon("filterSkipped", { count: skippedCount })}
+								{status === "valid" &&
+									tCommon("filterValid", { count: validCount })}
+								{status === "warning" &&
+									tCommon("filterWarnings", { count: warningCount })}
+								{status === "skipped" &&
+									tCommon("filterSkipped", { count: skippedCount })}
 							</button>
 						))}
 					</div>
 				</div>
 
 				{/* Select All */}
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<Checkbox
 						id="select-all"
 						checked={allSelected}
@@ -175,9 +216,12 @@ export const CsvImportSummary = ({
 					/>
 					<label
 						htmlFor="select-all"
-						className="cursor-pointer text-small text-txt-200"
+						className="text-small text-txt-200 cursor-pointer"
 					>
-						{tCommon("selectAllValid", { selected: selectedCount, total: selectableCount })}
+						{tCommon("selectAllValid", {
+							selected: selectedCount,
+							total: selectableCount,
+						})}
 					</label>
 				</div>
 			</div>

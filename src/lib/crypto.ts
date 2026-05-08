@@ -29,9 +29,14 @@ const AUTH_TAG_LENGTH = 16 // 128 bits
 const encrypt = (plaintext: string, keyHex: string): string => {
 	const key = Buffer.from(keyHex, "hex")
 	const iv = randomBytes(IV_LENGTH)
-	const cipher = createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH })
+	const cipher = createCipheriv(ALGORITHM, key, iv, {
+		authTagLength: AUTH_TAG_LENGTH,
+	})
 
-	const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
+	const encrypted = Buffer.concat([
+		cipher.update(plaintext, "utf8"),
+		cipher.final(),
+	])
 	const authTag = cipher.getAuthTag()
 
 	return `${iv.toString("base64")}:${encrypted.toString("base64")}:${authTag.toString("base64")}`
@@ -45,20 +50,30 @@ const encrypt = (plaintext: string, keyHex: string): string => {
 const decrypt = (ciphertext: string, keyHex: string): string | null => {
 	try {
 		const parts = ciphertext.split(":")
-		if (parts.length !== 3) return null
+		if (parts.length !== 3) {
+			return null
+		}
 
-		const iv = Buffer.from(parts[0], "base64")
-		const encrypted = Buffer.from(parts[1], "base64")
-		const authTag = Buffer.from(parts[2], "base64")
+		const iv = Buffer.from(parts[0]!, "base64")
+		const encrypted = Buffer.from(parts[1]!, "base64")
+		const authTag = Buffer.from(parts[2]!, "base64")
 		const key = Buffer.from(keyHex, "hex")
 
-		const decipher = createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH })
+		const decipher = createDecipheriv(ALGORITHM, key, iv, {
+			authTagLength: AUTH_TAG_LENGTH,
+		})
 		decipher.setAuthTag(authTag)
 
-		const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()])
+		const decrypted = Buffer.concat([
+			decipher.update(encrypted),
+			decipher.final(),
+		])
 		return decrypted.toString("utf8")
 	} catch (error) {
-		console.error("[crypto.decrypt] Decryption failed:", error instanceof Error ? error.message : error)
+		console.error(
+			"[crypto.decrypt] Decryption failed:",
+			error instanceof Error ? error.message : error
+		)
 		return null
 	}
 }
@@ -82,7 +97,7 @@ const getMasterKey = (): string => {
 	if (!masterKey || masterKey.length !== 64) {
 		throw new Error(
 			"ENCRYPTION_MASTER_KEY must be set as a 64-character hex string. " +
-			"Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+				"Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
 		)
 	}
 	return masterKey
@@ -109,25 +124,40 @@ const decryptDek = (encryptedDek: string): string | null => {
 /**
  * Encrypt a field value with a DEK. Returns null if value is null/undefined.
  */
-const encryptField = (value: string | number | null | undefined, dek: string): string | null => {
-	if (value === null || value === undefined) return null
+const encryptField = (
+	value: string | number | null | undefined,
+	dek: string
+): string | null => {
+	if (value === null || value === undefined) {
+		return null
+	}
 	return encrypt(String(value), dek)
 }
 
 /**
  * Decrypt a field value with a DEK. Returns null if value is null/undefined or decryption fails.
  */
-const decryptField = (value: string | null | undefined, dek: string): string | null => {
-	if (!value) return null
+const decryptField = (
+	value: string | null | undefined,
+	dek: string
+): string | null => {
+	if (!value) {
+		return null
+	}
 	return decrypt(value, dek)
 }
 
 /**
  * Decrypt a field and parse as number. Returns null if value is null or decryption fails.
  */
-const decryptNumericField = (value: string | null | undefined, dek: string): number | null => {
+const decryptNumericField = (
+	value: string | null | undefined,
+	dek: string
+): number | null => {
 	const decrypted = decryptField(value, dek)
-	if (decrypted === null) return null
+	if (decrypted === null) {
+		return null
+	}
 	const parsed = Number(decrypted)
 	return Number.isNaN(parsed) ? null : parsed
 }
@@ -137,9 +167,13 @@ const decryptNumericField = (value: string | null | undefined, dek: string): num
  * Used for idempotency in migration scripts.
  */
 const isEncrypted = (value: string | null | undefined): boolean => {
-	if (!value) return false
+	if (!value) {
+		return false
+	}
 	const parts = value.split(":")
-	if (parts.length !== 3) return false
+	if (parts.length !== 3) {
+		return false
+	}
 	// Check that each part looks like valid base64
 	const base64Regex = /^[A-Za-z0-9+/]+=*$/
 	return parts.every((part) => part.length > 0 && base64Regex.test(part))

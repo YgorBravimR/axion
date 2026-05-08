@@ -1,7 +1,14 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
+import {
+	createContext,
+	useContext,
+	useState,
+	useCallback,
+	useEffect,
+	useRef,
+} from "react"
 import { useTranslations } from "next-intl"
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react"
 
@@ -14,7 +21,7 @@ interface Toast {
 }
 
 interface ToastContextType {
-	showToast: (type: ToastType, message: string) => void
+	showToast: (_type: ToastType, _message: string) => void
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
@@ -59,7 +66,9 @@ const getStyles = (type: ToastType): string => {
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
 	const t = useTranslations("common")
 	const [toasts, setToasts] = useState<Toast[]>([])
-	const timerRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+	const timerRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+		new Map()
+	)
 
 	useEffect(() => {
 		const timers = timerRefs.current
@@ -96,11 +105,11 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
 			{children}
 
 			{/* Toast container */}
-			<div className="pointer-events-none fixed bottom-m-600 right-m-600 z-50 flex flex-col gap-m-400">
+			<div className="bottom-m-600 right-m-600 gap-m-400 pointer-events-none fixed z-50 flex flex-col">
 				{toasts.map((toast) => (
 					<div
 						key={toast.id}
-						className={`pointer-events-auto flex items-center gap-m-400 rounded-lg px-m-600 py-m-500 shadow-xl ${getStyles(toast.type)} animate-in slide-in-from-bottom-5 motion-reduce:animate-none`}
+						className={`gap-m-400 px-m-600 py-m-500 pointer-events-auto flex items-center rounded-lg shadow-xl ${getStyles(toast.type)} animate-in slide-in-from-bottom-5 motion-reduce:animate-none`}
 					>
 						{getIcon(toast.type)}
 						<span className="text-body font-medium">{toast.message}</span>

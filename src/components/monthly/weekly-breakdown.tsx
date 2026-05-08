@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { MonthlyReport } from "@/app/actions/reports"
+import type { MonthlyReport } from "@/app/actions/reports.types"
 
 interface WeeklyBreakdownProps {
 	weeks: MonthlyReport["weeklyBreakdown"]
@@ -20,10 +20,13 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
 	const { formatCurrency } = useFormatting()
 
-	const { maxAbsPnl, totalPnl } = useMemo(() => ({
-		maxAbsPnl: Math.max(...weeks.map((w) => Math.abs(w.pnl))),
-		totalPnl: weeks.reduce((sum, w) => sum + w.pnl, 0),
-	}), [weeks])
+	const { maxAbsPnl, totalPnl } = useMemo(
+		() => ({
+			maxAbsPnl: Math.max(...weeks.map((w) => Math.abs(w.pnl))),
+			totalPnl: weeks.reduce((sum, w) => sum + w.pnl, 0),
+		}),
+		[weeks]
+	)
 
 	const formatDateRange = useCallback(
 		(start: string, end: string) => {
@@ -41,15 +44,19 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 	}
 
 	return (
-		<div id="monthly-weekly-breakdown" className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-			<h3 className="flex items-center gap-s-200 text-small sm:text-body font-semibold text-txt-100">
-				<Calendar className="h-5 w-5 text-acc-100" />
+		<div
+			id="monthly-weekly-breakdown"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
+			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
+				<Calendar className="text-acc-100 h-5 w-5" />
 				{t("title")}
 			</h3>
 
 			<div className="mt-m-400 sm:mt-m-500 space-y-s-200 sm:space-y-s-300">
 				{weeks.map((week, index) => {
-					const barWidth = maxAbsPnl > 0 ? (Math.abs(week.pnl) / maxAbsPnl) * 100 : 0
+					const barWidth =
+						maxAbsPnl > 0 ? (Math.abs(week.pnl) / maxAbsPnl) * 100 : 0
 					const isPositive = week.pnl > 0
 					const pnlContribution =
 						totalPnl !== 0 ? (week.pnl / totalPnl) * 100 : 0
@@ -57,20 +64,23 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 					return (
 						<div key={week.weekStart} className="space-y-s-100">
 							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-s-200">
-									<span className="text-small font-medium text-txt-100">
+								<div className="gap-s-200 flex items-center">
+									<span className="text-small text-txt-100 font-medium">
 										{t("week", { number: index + 1 })}
 									</span>
 									<span className="text-tiny text-txt-300">
 										({formatDateRange(week.weekStart, week.weekEnd)})
 									</span>
 								</div>
-								<div className="flex items-center gap-s-200 sm:gap-m-400">
-									<span className="hidden sm:inline text-tiny text-txt-300">
+								<div className="gap-s-200 sm:gap-m-400 flex items-center">
+									<span className="text-tiny text-txt-300 hidden sm:inline">
 										{t("tradesCount", { count: week.tradeCount })}
 									</span>
-									<span className="hidden sm:inline text-tiny text-txt-300">
-										{t("winRateSummary", { rate: week.winRate.toFixed(0), abbr: tCommon("winRateAbbr") })}
+									<span className="text-tiny text-txt-300 hidden sm:inline">
+										{t("winRateSummary", {
+											rate: week.winRate.toFixed(0),
+											abbr: tCommon("winRateAbbr"),
+										})}
 									</span>
 									<span
 										className={cn(
@@ -85,7 +95,7 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 								</div>
 							</div>
 							{/* P&L Bar */}
-							<div className="relative h-3 w-full overflow-hidden rounded-full bg-bg-100">
+							<div className="bg-bg-100 relative h-3 w-full overflow-hidden rounded-full">
 								<div
 									className={cn(
 										"h-full rounded-full transition-[width]",
@@ -98,7 +108,7 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 								{pnlContribution !== 0 && (
 									<span
 										className={cn(
-											"absolute right-2 top-1/2 -translate-y-1/2 text-micro font-medium",
+											"text-micro absolute top-1/2 right-2 -translate-y-1/2 font-medium",
 											Math.abs(pnlContribution) > 20
 												? "text-bg-100"
 												: "text-txt-300"

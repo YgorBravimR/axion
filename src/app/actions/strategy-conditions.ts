@@ -2,24 +2,21 @@
 
 import { invalidatePlaybookData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
-import { strategyConditions, strategies, tradingConditions } from "@/db/schema"
-import type { StrategyCondition, TradingCondition } from "@/db/schema"
+import { strategyConditions, strategies } from "@/db/schema"
+import type { StrategyCondition } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { StrategyConditionInput } from "@/types/trading-condition"
 import { eq, and, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
-
-interface StrategyConditionWithDetail extends StrategyCondition {
-	condition: TradingCondition
-}
+import type { StrategyConditionWithDetail } from "./strategy-conditions.types"
 
 /**
  * Sync strategy conditions — delete-all + bulk-insert (replacement strategy).
  * Simpler than diffing, and the junction table is small per strategy.
  */
-const syncStrategyConditions = async (
+export const syncStrategyConditions = async (
 	strategyId: string,
 	conditions: StrategyConditionInput[]
 ): Promise<ActionResponse<StrategyCondition[]>> => {
@@ -91,7 +88,7 @@ const syncStrategyConditions = async (
 /**
  * Get all conditions linked to a strategy, joined with full condition data
  */
-const getStrategyConditions = async (
+export const getStrategyConditions = async (
 	strategyId: string
 ): Promise<ActionResponse<StrategyConditionWithDetail[]>> => {
 	const t = await getTranslations("playbook")
@@ -134,10 +131,4 @@ const getStrategyConditions = async (
 			],
 		}
 	}
-}
-
-export {
-	syncStrategyConditions,
-	getStrategyConditions,
-	type StrategyConditionWithDetail,
 }

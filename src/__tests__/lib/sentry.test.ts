@@ -27,9 +27,10 @@ const { mockScope, mockCaptureException, mockWithScope, mockAddBreadcrumb } =
 			setFingerprint: vi.fn(),
 		}
 
+		type Scope = typeof scope
 		const captureException = vi.fn()
 		const addBreadcrumb = vi.fn()
-		const withScope = vi.fn((callback: (scope: typeof scope) => void) => {
+		const withScope = vi.fn((callback: (_s: Scope) => void) => {
 			callback(scope)
 		})
 
@@ -109,11 +110,19 @@ describe("shouldIgnore", () => {
 
 	describe("ignored patterns — browser extension / chunk noise", () => {
 		it("should ignore ResizeObserver loop errors", () => {
-			expect(shouldIgnore(new Error("ResizeObserver loop limit exceeded"))).toBe(true)
+			expect(
+				shouldIgnore(new Error("ResizeObserver loop limit exceeded"))
+			).toBe(true)
 		})
 
 		it("should ignore ResizeObserver errors with different trailing text", () => {
-			expect(shouldIgnore(new Error("ResizeObserver loop completed with undelivered notifications"))).toBe(true)
+			expect(
+				shouldIgnore(
+					new Error(
+						"ResizeObserver loop completed with undelivered notifications"
+					)
+				)
+			).toBe(true)
 		})
 
 		it("should ignore Loading chunk errors", () => {
@@ -121,7 +130,9 @@ describe("shouldIgnore", () => {
 		})
 
 		it("should ignore ChunkLoadError", () => {
-			expect(shouldIgnore(new Error("ChunkLoadError: Loading chunk 7 failed."))).toBe(true)
+			expect(
+				shouldIgnore(new Error("ChunkLoadError: Loading chunk 7 failed."))
+			).toBe(true)
 		})
 	})
 
@@ -131,11 +142,17 @@ describe("shouldIgnore", () => {
 		})
 
 		it("should ignore NetworkError errors", () => {
-			expect(shouldIgnore(new Error("NetworkError when attempting to fetch resource"))).toBe(true)
+			expect(
+				shouldIgnore(
+					new Error("NetworkError when attempting to fetch resource")
+				)
+			).toBe(true)
 		})
 
 		it("should ignore AbortError errors", () => {
-			expect(shouldIgnore(new Error("AbortError: The operation was aborted"))).toBe(true)
+			expect(
+				shouldIgnore(new Error("AbortError: The operation was aborted"))
+			).toBe(true)
 		})
 
 		it("should ignore Load failed errors", () => {
@@ -146,7 +163,9 @@ describe("shouldIgnore", () => {
 	describe("partial message matching", () => {
 		it("should ignore an error whose message contains an ignored pattern mid-string", () => {
 			// The pattern check uses String.includes(), not an exact match.
-			expect(shouldIgnore(new Error("Unhandled: NEXT_REDIRECT to /dashboard"))).toBe(true)
+			expect(
+				shouldIgnore(new Error("Unhandled: NEXT_REDIRECT to /dashboard"))
+			).toBe(true)
 		})
 	})
 
@@ -179,15 +198,23 @@ describe("shouldIgnore", () => {
 
 	describe("legitimate errors that must pass through", () => {
 		it("should not ignore a generic database error", () => {
-			expect(shouldIgnore(new Error("duplicate key value violates unique constraint"))).toBe(false)
+			expect(
+				shouldIgnore(
+					new Error("duplicate key value violates unique constraint")
+				)
+			).toBe(false)
 		})
 
 		it("should not ignore an encryption error", () => {
-			expect(shouldIgnore(new Error("Decryption failed: invalid tag"))).toBe(false)
+			expect(shouldIgnore(new Error("Decryption failed: invalid tag"))).toBe(
+				false
+			)
 		})
 
 		it("should not ignore an auth error", () => {
-			expect(shouldIgnore(new Error("Invalid credentials provided"))).toBe(false)
+			expect(shouldIgnore(new Error("Invalid credentials provided"))).toBe(
+				false
+			)
 		})
 
 		it("should not ignore an empty string (no patterns match empty)", () => {
@@ -216,21 +243,20 @@ describe("reportError", () => {
 		})
 
 		it("should not call withScope for VALIDATION category errors", () => {
-			reportError(new Error("Field is required"), { category: ErrorCategory.VALIDATION })
+			reportError(new Error("Field is required"), {
+				category: ErrorCategory.VALIDATION,
+			})
 
 			expect(mockWithScope).not.toHaveBeenCalled()
 			expect(mockCaptureException).not.toHaveBeenCalled()
 		})
 
 		it("should skip VALIDATION even when context and extra are provided", () => {
-			reportError(
-				new Error("Invalid email format"),
-				{
-					category: ErrorCategory.VALIDATION,
-					context: "auth.register",
-					extra: { field: "email" },
-				}
-			)
+			reportError(new Error("Invalid email format"), {
+				category: ErrorCategory.VALIDATION,
+				context: "auth.register",
+				extra: { field: "email" },
+			})
 
 			expect(mockWithScope).not.toHaveBeenCalled()
 		})
@@ -238,7 +264,9 @@ describe("reportError", () => {
 
 	describe("Sentry is called for reportable errors", () => {
 		it("should call withScope and captureException for a database error", () => {
-			reportError(new Error("connection timeout"), { category: ErrorCategory.DATABASE })
+			reportError(new Error("connection timeout"), {
+				category: ErrorCategory.DATABASE,
+			})
 
 			expect(mockWithScope).toHaveBeenCalledOnce()
 			expect(mockCaptureException).toHaveBeenCalledOnce()
@@ -246,7 +274,9 @@ describe("reportError", () => {
 	})
 
 	describe("severity levels — default mapping per category", () => {
-		const severityCases: Array<[string, ReportErrorOptions["category"], string]> = [
+		const severityCases: Array<
+			[string, ReportErrorOptions["category"], string]
+		> = [
 			["auth → warning", ErrorCategory.AUTH, "warning"],
 			["database → error", ErrorCategory.DATABASE, "error"],
 			["api → error", ErrorCategory.API, "error"],
@@ -269,20 +299,20 @@ describe("reportError", () => {
 
 	describe("severity level override", () => {
 		it("should use the provided level override instead of the category default", () => {
-			reportError(
-				new Error("custom severity"),
-				{ category: ErrorCategory.DATABASE, level: "info" }
-			)
+			reportError(new Error("custom severity"), {
+				category: ErrorCategory.DATABASE,
+				level: "info",
+			})
 
 			// database default is "error", but override is "info"
 			expect(mockScope.setLevel).toHaveBeenCalledWith("info")
 		})
 
 		it("should use fatal level override even when category default is warning", () => {
-			reportError(
-				new Error("escalated network error"),
-				{ category: ErrorCategory.NETWORK, level: "fatal" }
-			)
+			reportError(new Error("escalated network error"), {
+				category: ErrorCategory.NETWORK,
+				level: "fatal",
+			})
 
 			expect(mockScope.setLevel).toHaveBeenCalledWith("fatal")
 		})
@@ -292,56 +322,71 @@ describe("reportError", () => {
 		it("should always set the error.category tag", () => {
 			reportError(new Error("test"), { category: ErrorCategory.DATABASE })
 
-			expect(mockScope.setTag).toHaveBeenCalledWith("error.category", "database")
+			expect(mockScope.setTag).toHaveBeenCalledWith(
+				"error.category",
+				"database"
+			)
 		})
 
 		it("should set error.category to the encryption value", () => {
 			reportError(new Error("test"), { category: ErrorCategory.ENCRYPTION })
 
-			expect(mockScope.setTag).toHaveBeenCalledWith("error.category", "encryption")
+			expect(mockScope.setTag).toHaveBeenCalledWith(
+				"error.category",
+				"encryption"
+			)
 		})
 	})
 
 	describe("context tag", () => {
 		it("should set the error.context tag when context is provided", () => {
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.DATABASE, context: "trades.create" }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.DATABASE,
+				context: "trades.create",
+			})
 
-			expect(mockScope.setTag).toHaveBeenCalledWith("error.context", "trades.create")
+			expect(mockScope.setTag).toHaveBeenCalledWith(
+				"error.context",
+				"trades.create"
+			)
 		})
 
 		it("should not set error.context tag when context is omitted", () => {
 			reportError(new Error("test"), { category: ErrorCategory.DATABASE })
 
-			const contextTagCall = capturedTags().find(([name]) => name === "error.context")
+			const contextTagCall = capturedTags().find(
+				([name]) => name === "error.context"
+			)
 			expect(contextTagCall).toBeUndefined()
 		})
 
 		it("should not set error.context tag when context is undefined", () => {
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.DATABASE, context: undefined }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.DATABASE,
+				context: undefined,
+			})
 
-			const contextTagCall = capturedTags().find(([name]) => name === "error.context")
+			const contextTagCall = capturedTags().find(
+				([name]) => name === "error.context"
+			)
 			expect(contextTagCall).toBeUndefined()
 		})
 	})
 
 	describe("fingerprinting", () => {
 		it("should fingerprint with [category, message] when no context is given", () => {
-			reportError(new Error("connection refused"), { category: ErrorCategory.DATABASE })
+			reportError(new Error("connection refused"), {
+				category: ErrorCategory.DATABASE,
+			})
 
 			expect(capturedFingerprint()).toEqual(["database", "connection refused"])
 		})
 
 		it("should fingerprint with [category, context, message] when context is given", () => {
-			reportError(
-				new Error("constraint violation"),
-				{ category: ErrorCategory.DATABASE, context: "trades.create" }
-			)
+			reportError(new Error("constraint violation"), {
+				category: ErrorCategory.DATABASE,
+				context: "trades.create",
+			})
 
 			expect(capturedFingerprint()).toEqual([
 				"database",
@@ -358,10 +403,10 @@ describe("reportError", () => {
 		})
 
 		it("should use context in fingerprint for an api error", () => {
-			reportError(
-				new Error("timeout"),
-				{ category: ErrorCategory.API, context: "market.quotes" }
-			)
+			reportError(new Error("timeout"), {
+				category: ErrorCategory.API,
+				context: "market.quotes",
+			})
 
 			expect(capturedFingerprint()).toEqual(["api", "market.quotes", "timeout"])
 		})
@@ -369,10 +414,10 @@ describe("reportError", () => {
 
 	describe("userId", () => {
 		it("should call scope.setUser with the provided userId", () => {
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.DATABASE, userId: "user-abc-123" }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.DATABASE,
+				userId: "user-abc-123",
+			})
 
 			expect(mockScope.setUser).toHaveBeenCalledWith({ id: "user-abc-123" })
 		})
@@ -384,10 +429,10 @@ describe("reportError", () => {
 		})
 
 		it("should not call scope.setUser when userId is undefined", () => {
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.DATABASE, userId: undefined }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.DATABASE,
+				userId: undefined,
+			})
 
 			expect(mockScope.setUser).not.toHaveBeenCalled()
 		})
@@ -397,10 +442,10 @@ describe("reportError", () => {
 		it("should call scope.setExtras when extra is provided", () => {
 			const extraData = { tradeId: "trade-999", operation: "insert" }
 
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.DATABASE, extra: extraData }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.DATABASE,
+				extra: extraData,
+			})
 
 			expect(mockScope.setExtras).toHaveBeenCalledWith(extraData)
 		})
@@ -412,10 +457,10 @@ describe("reportError", () => {
 		})
 
 		it("should not call scope.setExtras when extra is undefined", () => {
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.DATABASE, extra: undefined }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.DATABASE,
+				extra: undefined,
+			})
 
 			expect(mockScope.setExtras).not.toHaveBeenCalled()
 		})
@@ -423,10 +468,10 @@ describe("reportError", () => {
 		it("should attach nested extra data as-is", () => {
 			const extraData = { meta: { userId: "u1", payload: [1, 2, 3] } }
 
-			reportError(
-				new Error("test"),
-				{ category: ErrorCategory.IMPORT, extra: extraData }
-			)
+			reportError(new Error("test"), {
+				category: ErrorCategory.IMPORT,
+				extra: extraData,
+			})
 
 			expect(mockScope.setExtras).toHaveBeenCalledWith(extraData)
 		})
@@ -463,20 +508,23 @@ describe("reportError", () => {
 		it("should set level, all tags, user, extras and fingerprint in a single call", () => {
 			const extraData = { queryTime: 42 }
 
-			reportError(
-				new Error("deadlock detected"),
-				{
-					category: ErrorCategory.DATABASE,
-					context: "trades.bulkInsert",
-					extra: extraData,
-					userId: "user-xyz",
-					level: "fatal",
-				}
-			)
+			reportError(new Error("deadlock detected"), {
+				category: ErrorCategory.DATABASE,
+				context: "trades.bulkInsert",
+				extra: extraData,
+				userId: "user-xyz",
+				level: "fatal",
+			})
 
 			expect(mockScope.setLevel).toHaveBeenCalledWith("fatal")
-			expect(mockScope.setTag).toHaveBeenCalledWith("error.category", "database")
-			expect(mockScope.setTag).toHaveBeenCalledWith("error.context", "trades.bulkInsert")
+			expect(mockScope.setTag).toHaveBeenCalledWith(
+				"error.category",
+				"database"
+			)
+			expect(mockScope.setTag).toHaveBeenCalledWith(
+				"error.context",
+				"trades.bulkInsert"
+			)
 			expect(mockScope.setUser).toHaveBeenCalledWith({ id: "user-xyz" })
 			expect(mockScope.setExtras).toHaveBeenCalledWith(extraData)
 			expect(capturedFingerprint()).toEqual([

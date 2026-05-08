@@ -9,7 +9,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
@@ -23,7 +22,7 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 10 }
 
 interface DayEquityCurveProps {
 	data: DayEquityPoint[]
-	onPointClick?: (tradeId: string) => void
+	onPointClick?: (_tradeId: string) => void
 }
 
 interface CustomTooltipProps {
@@ -38,17 +37,23 @@ interface CustomTooltipProps {
 const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.cumulativePnl >= 0
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 px-s-300 py-s-200 shadow-lg">
-			<p className="text-small font-medium text-txt-100">{data.time}</p>
-			<p className={cn("text-body font-semibold", isProfit ? "text-trade-buy" : "text-trade-sell")}>
+		<div className="border-bg-300 bg-bg-200 px-s-300 py-s-200 rounded-lg border shadow-lg">
+			<p className="text-small text-txt-100 font-medium">{data.time}</p>
+			<p
+				className={cn(
+					"text-body font-semibold",
+					isProfit ? "text-trade-buy" : "text-trade-sell"
+				)}
+			>
 				{formatCompactCurrencyWithSign(data.cumulativePnl, "R$")}
 			</p>
 			{data.tradeId && (
@@ -61,22 +66,25 @@ const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 })
 CustomTooltip.displayName = "DayEquityCurveTooltip"
 
-const tickFormatter = (value: number) => formatCompactCurrencyWithSign(value, "R$")
+const tickFormatter = (value: number) =>
+	formatCompactCurrencyWithSign(value, "R$")
 
 export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
 
-	if (data.length === 0) {
-		return (
-			<div className="flex h-[120px] sm:h-[150px] items-center justify-center text-txt-300">
-				{t("noData")}
-			</div>
-		)
-	}
-
-	// Derived chart values — recomputed only when data changes
+	// Derived chart values — recomputed only when data changes (must be before early return)
 	const { minPnl, maxPnl, padding, finalPnl, lineColor } = useMemo(() => {
+		if (data.length === 0) {
+			return {
+				minPnl: 0,
+				maxPnl: 0,
+				padding: 50,
+				finalPnl: 0,
+				lineColor: "var(--color-trade-buy)",
+			}
+		}
+
 		const pnlValues = data.map((d) => d.cumulativePnl)
 		const min = Math.min(...pnlValues, 0)
 		const max = Math.max(...pnlValues, 0)
@@ -87,7 +95,8 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 			maxPnl: max,
 			padding: pad,
 			finalPnl: last,
-			lineColor: last >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)",
+			lineColor:
+				last >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)",
 		}
 	}, [data])
 
@@ -114,7 +123,9 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 
 	const handleClick = useCallback(
 		(e: unknown) => {
-			const payload = (e as { activePayload?: Array<{ payload: DayEquityPoint }> })?.activePayload?.[0]?.payload
+			const payload = (
+				e as { activePayload?: Array<{ payload: DayEquityPoint }> }
+			)?.activePayload?.[0]?.payload
 			if (payload && onPointClick && payload.tradeId) {
 				onPointClick(payload.tradeId)
 			}
@@ -122,49 +133,64 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 		[onPointClick]
 	)
 
+	if (data.length === 0) {
+		return (
+			<div className="text-txt-300 flex h-[120px] items-center justify-center sm:h-[150px]">
+				{t("noData")}
+			</div>
+		)
+	}
+
 	// Silence unused-variable warning — finalPnl is consumed inside useMemo above
 	void finalPnl
 
 	return (
-		<ChartContainer id="chart-dashboard-day-equity-curve" className="h-[120px] sm:h-[150px] w-full">
-				<LineChart
-					data={data}
-					margin={CHART_MARGIN}
-					// @see Recharts lacks typed onClick payloads — cast is required
-					onClick={handleClick}
-				>
-					<CartesianGrid
-						strokeDasharray="3 3"
-						stroke="var(--color-bg-300)"
-						vertical={false}
-					/>
-					<XAxis
-						dataKey="time"
-						stroke="var(--color-txt-300)"
-						tick={AXIS_TICK}
-						tickLine={false}
-						axisLine={{ stroke: "var(--color-bg-300)" }}
-					/>
-					<YAxis
-						tickFormatter={tickFormatter}
-						stroke="var(--color-txt-300)"
-						tick={AXIS_TICK}
-						tickLine={false}
-						axisLine={false}
-						domain={[minPnl - padding, maxPnl + padding]}
-						width={yAxisWidth}
-					/>
-					<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeDasharray="3 3" />
-					<ChartTooltip variant="line" content={<CustomTooltip />} />
-					<Line
-						type="stepAfter"
-						dataKey="cumulativePnl"
-						stroke={lineColor}
-						strokeWidth={2}
-						dot={dot}
-						activeDot={activeDot}
-					/>
-				</LineChart>
+		<ChartContainer
+			id="chart-dashboard-day-equity-curve"
+			className="h-[120px] w-full sm:h-[150px]"
+		>
+			<LineChart
+				data={data}
+				margin={CHART_MARGIN}
+				// @see Recharts lacks typed onClick payloads — cast is required
+				onClick={handleClick}
+			>
+				<CartesianGrid
+					strokeDasharray="3 3"
+					stroke="var(--color-bg-300)"
+					vertical={false}
+				/>
+				<XAxis
+					dataKey="time"
+					stroke="var(--color-txt-300)"
+					tick={AXIS_TICK}
+					tickLine={false}
+					axisLine={{ stroke: "var(--color-bg-300)" }}
+				/>
+				<YAxis
+					tickFormatter={tickFormatter}
+					stroke="var(--color-txt-300)"
+					tick={AXIS_TICK}
+					tickLine={false}
+					axisLine={false}
+					domain={[minPnl - padding, maxPnl + padding]}
+					width={yAxisWidth}
+				/>
+				<ReferenceLine
+					y={0}
+					stroke="var(--color-bg-300)"
+					strokeDasharray="3 3"
+				/>
+				<ChartTooltip variant="line" content={<CustomTooltip />} />
+				<Line
+					type="stepAfter"
+					dataKey="cumulativePnl"
+					stroke={lineColor}
+					strokeWidth={2}
+					dot={dot}
+					activeDot={activeDot}
+				/>
+			</LineChart>
 		</ChartContainer>
 	)
 }

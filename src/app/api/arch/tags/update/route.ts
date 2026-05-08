@@ -7,7 +7,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
 
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -25,9 +27,11 @@ const POST = async (request: NextRequest) => {
 		})
 
 		if (!existing) {
-			return archError("Tag not found", [
-				{ code: "NOT_FOUND", detail: "Tag does not exist" },
-			], 404)
+			return archError(
+				"Tag not found",
+				[{ code: "NOT_FOUND", detail: "Tag does not exist" }],
+				404
+			)
 		}
 
 		const [tag] = await db

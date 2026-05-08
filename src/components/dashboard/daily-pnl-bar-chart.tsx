@@ -1,16 +1,8 @@
 "use client"
 
-import { useMemo, useCallback, memo } from "react"
+import { useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
-import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-
-	Cell,
-} from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { cn } from "@/lib/utils"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
@@ -22,7 +14,7 @@ const formatDay = (date: string): string => new Date(date).getDate().toString()
 
 interface DailyPnLBarChartProps {
 	data: DailyPnL[]
-	onDayClick?: (date: string) => void
+	onDayClick?: (_date: string) => void
 }
 
 interface CustomTooltipProps {
@@ -38,11 +30,12 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
 
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.pnl >= 0
 
 	return (
@@ -56,7 +49,10 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				})}
 			</p>
 			<p
-				className={cn("text-body font-semibold", isProfit ? "text-trade-buy" : "text-trade-sell")}
+				className={cn(
+					"text-body font-semibold",
+					isProfit ? "text-trade-buy" : "text-trade-sell"
+				)}
 			>
 				{formatCompactCurrencyWithSign(data.pnl, "R$")}
 			</p>
@@ -98,11 +94,11 @@ export const DailyPnLBarChart = ({
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
-				<h3 className="mb-s-300 text-small text-txt-100 font-semibold sm:mb-m-400 sm:text-body">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+				<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 					{t("dailyPnL.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[160px] sm:h-[200px] items-center justify-center">
+				<div className="text-txt-300 flex h-[160px] items-center justify-center sm:h-[200px]">
 					{t("noData")}
 				</div>
 			</div>
@@ -110,8 +106,8 @@ export const DailyPnLBarChart = ({
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
-			<h3 className="mb-s-300 text-small text-txt-100 font-semibold sm:mb-m-400 sm:text-body">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 				{t("dailyPnL.title")}
 			</h3>
 			<ChartContainer

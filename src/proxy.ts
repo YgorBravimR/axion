@@ -53,6 +53,38 @@ export const proxy = auth((req) => {
 		}
 	}
 
+	// Fractal-plan cutover redirects (Phase 3, flag-guarded — default ON, disable via "0")
+	if (process.env.FRACTAL_PLAN_DUAL_WRITE !== "0") {
+		const pathWithoutLocaleStripped =
+			pathname.replace(/^\/(en|pt-BR)/, "") || "/"
+		const localeMatch = pathname.match(/^\/(en|pt-BR)/)
+		const localePrefix = localeMatch ? localeMatch[0] : "/en"
+
+		const now = new Date()
+		const year = now.getFullYear()
+		const month = now.getMonth() + 1
+		const quarter = Math.ceil(month / 3)
+
+		if (pathWithoutLocaleStripped === "/yearly-plan") {
+			return NextResponse.redirect(
+				new URL(`${localePrefix}/plan/${year}`, req.url),
+				308
+			)
+		}
+		if (pathWithoutLocaleStripped === "/quarterly-plan") {
+			return NextResponse.redirect(
+				new URL(`${localePrefix}/plan/${year}/${quarter}`, req.url),
+				308
+			)
+		}
+		// if (pathWithoutLocaleStripped === "/monthly") {
+		// 	return NextResponse.redirect(
+		// 		new URL(`${localePrefix}/plan/${year}/${quarter}/${month}`, req.url),
+		// 		308
+		// 	)
+		// }
+	}
+
 	// Apply i18n middleware for locale routing
 	return intlMiddleware(req)
 })

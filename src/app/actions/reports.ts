@@ -15,136 +15,26 @@ import {
 } from "date-fns"
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
-import { getUserSettings, type UserSettingsData } from "./settings"
+import { getUserSettings } from "./settings"
+import type { UserSettingsData } from "./settings.types"
+import type {
+	DailyBreakdown,
+	WeeklyReport,
+	MonthlyReport,
+	CommissionFeeImpact,
+	MistakeCostAnalysis,
+	PropProfitCalculation,
+	MonthlyResultsWithProp,
+	MonthlyProjection,
+	MonthComparison,
+	YearlyOverview,
+} from "./reports.types"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
+import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 import { getTranslations } from "next-intl/server"
 import { isFrameworkSignal } from "@/lib/error-utils"
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface DailyBreakdown {
-	date: string
-	tradeCount: number
-	winCount: number
-	lossCount: number
-	pnl: number
-	winRate: number
-}
-
-export interface WeeklyReport {
-	weekStart: string
-	weekEnd: string
-	summary: {
-		totalTrades: number
-		winCount: number
-		lossCount: number
-		breakevenCount: number
-		grossPnl: number
-		netPnl: number
-		totalFees: number
-		winRate: number
-		avgWin: number
-		avgLoss: number
-		profitFactor: number
-		avgR: number
-		bestTrade: number
-		worstTrade: number
-	}
-	dailyBreakdown: DailyBreakdown[]
-	topWins: Array<{
-		id: string
-		asset: string
-		pnl: number
-		r: number | null
-		direction: string
-		date: string
-	}>
-	topLosses: Array<{
-		id: string
-		asset: string
-		pnl: number
-		r: number | null
-		direction: string
-		date: string
-	}>
-}
-
-export interface MonthlyReport {
-	monthStart: string
-	monthEnd: string
-	summary: {
-		totalTrades: number
-		winCount: number
-		lossCount: number
-		breakevenCount: number
-		grossPnl: number
-		netPnl: number
-		totalFees: number
-		winRate: number
-		avgWin: number
-		avgLoss: number
-		profitFactor: number
-		avgR: number
-		bestDay: { date: string; pnl: number } | null
-		worstDay: { date: string; pnl: number } | null
-	}
-	weeklyBreakdown: Array<{
-		weekStart: string
-		weekEnd: string
-		tradeCount: number
-		pnl: number
-		winRate: number
-	}>
-	assetBreakdown: Array<{
-		asset: string
-		tradeCount: number
-		pnl: number
-		winRate: number
-	}>
-}
-
-export interface CommissionFeeImpact {
-	summary: {
-		totalFees: number
-		totalCommission: number
-		totalExchangeFees: number
-		grossPnl: number
-		feesAsPercentOfGross: number
-		avgFeePerTrade: number
-		totalTrades: number
-	}
-	assetBreakdown: Array<{
-		asset: string
-		totalFees: number
-		tradeCount: number
-		avgFeePerTrade: number
-	}>
-	monthlyTrend: Array<{
-		month: string
-		totalFees: number
-		grossPnl: number
-		feesAsPercentOfGross: number
-		tradeCount: number
-	}>
-	hasData: boolean
-}
-
-export interface MistakeCostAnalysis {
-	mistakes: Array<{
-		tagId: string
-		tagName: string
-		color: string | null
-		tradeCount: number
-		totalLoss: number
-		avgLoss: number
-	}>
-	totalMistakeCost: number
-	mostCostlyMistake: string | null
-}
 
 // ============================================================================
 // SHARED SUMMARY CALCULATION
@@ -367,8 +257,9 @@ export const getWeeklyReport = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching weekly report:", error)
+		}
 		return { status: "error", message: t("actions.weeklyFetchFailed") }
 	}
 }
@@ -534,8 +425,9 @@ export const getMonthlyReport = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching monthly report:", error)
+		}
 		return { status: "error", message: t("actions.monthlyFetchFailed") }
 	}
 }
@@ -581,7 +473,9 @@ export const getMistakeCostAnalysis = async (): Promise<{
 
 		// Filter by account (through trade relation) - support all accounts mode
 		const filteredAssociations = tradeTagAssociations.filter((assoc) => {
-			if (!assoc.trade.accountId) return false
+			if (!assoc.trade.accountId) {
+				return false
+			}
 			return authContext.showAllAccounts
 				? authContext.allAccountIds.includes(assoc.trade.accountId)
 				: assoc.trade.accountId === authContext.accountId
@@ -629,7 +523,7 @@ export const getMistakeCostAnalysis = async (): Promise<{
 			.toSorted((a, b) => b.totalLoss - a.totalLoss)
 
 		const totalMistakeCost = mistakes.reduce((sum, m) => sum + m.totalLoss, 0)
-		const mostCostlyMistake = mistakes.length > 0 ? mistakes[0].tagName : null
+		const mostCostlyMistake = mistakes[0]?.tagName ?? null
 
 		return {
 			status: "success",
@@ -640,8 +534,9 @@ export const getMistakeCostAnalysis = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching mistake cost analysis:", error)
+		}
 		return { status: "error", message: t("actions.mistakeFetchFailed") }
 	}
 }
@@ -650,66 +545,12 @@ export const getMistakeCostAnalysis = async (): Promise<{
 // PROP TRADING CALCULATIONS
 // ============================================================================
 
-export interface PropProfitCalculation {
-	grossProfit: number
-	propFirmShare: number
-	traderShare: number
-	estimatedTax: number
-	netProfit: number
-}
+// dayTradeTaxRate is transient (computed from legal-rates by year), not DB-backed.
+type PropCalcSettings = UserSettingsData & { dayTradeTaxRate: number }
 
-export interface MonthlyResultsWithProp {
-	monthStart: string
-	monthEnd: string
-	report: MonthlyReport["summary"]
-	prop: PropProfitCalculation
-	settings: {
-		isPropAccount: boolean
-		propFirmName: string | null
-		profitSharePercentage: number
-		dayTradeTaxRate: number
-	}
-	weeklyBreakdown: MonthlyReport["weeklyBreakdown"]
-}
-
-export interface MonthlyProjection {
-	daysTraded: number
-	totalTradingDays: number
-	tradingDaysRemaining: number
-	currentProfit: number
-	dailyAverage: number
-	projectedMonthlyProfit: number
-	projectedTraderShare: number
-	projectedNetProfit: number
-}
-
-export interface MonthComparison {
-	currentMonth: MonthlyResultsWithProp
-	previousMonth: MonthlyResultsWithProp | null
-	changes: {
-		profitChange: number
-		profitChangePercent: number
-		winRateChange: number
-		avgRChange: number
-		tradeCountChange: number
-	}
-}
-
-export interface YearlyOverview {
-	year: number
-	months: Array<{
-		month: number
-		monthName: string
-		netPnl: number
-		tradeCount: number
-		hasTrades: boolean
-	}>
-}
-
-// Calculate prop trading profit breakdown
 const calculatePropProfit = (
 	grossProfit: number,
-	settings: UserSettingsData
+	settings: PropCalcSettings
 ): PropProfitCalculation => {
 	// Only calculate shares if profitable
 	if (grossProfit <= 0) {
@@ -810,13 +651,16 @@ export const getMonthlyResultsWithProp = async (
 			: account
 
 		// Use account-specific settings (from tradingAccounts table)
-		// isPropAccount is determined by accountType, other settings come from account
+		// isPropAccount is determined by accountType, other settings come from account.
+		// Day-trade IR rate sourced from legal-rates (Lei 11.033/2004) — single source
+		// of truth shared with cockpit + recompute. Account override column ignored.
 		const isPropAccount = decryptedAccount.accountType === "prop"
 		const profitSharePercentage = Number(decryptedAccount.profitSharePercentage)
-		const dayTradeTaxRate = Number(decryptedAccount.dayTradeTaxRate)
+		const reportYear = Number(report.monthStart.slice(0, 4))
+		const dayTradeTaxRate = getDayTradeIrRate(reportYear) * 100
 
 		// Build settings object for calculation using account-specific values
-		const accountSettings: UserSettingsData = {
+		const accountSettings: PropCalcSettings = {
 			...userSettings,
 			isPropAccount,
 			propFirmName: decryptedAccount.propFirmName,
@@ -845,8 +689,9 @@ export const getMonthlyResultsWithProp = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching monthly results with prop:", error)
+		}
 		return { status: "error", message: t("actions.monthlyResultsFetchFailed") }
 	}
 }
@@ -920,13 +765,15 @@ export const getMonthlyProjection = async (): Promise<{
 		const projectedMonthlyProfit =
 			currentProfit + dailyAverage * tradingDaysRemaining
 
-		// Use account-specific settings for projection
-		const accountSettings: UserSettingsData = {
+		// Use account-specific settings for projection. IR rate from legal-rates
+		// table by year of the projected month (matches cockpit + recompute).
+		const projectionYear = monthStart.getUTCFullYear()
+		const accountSettings: PropCalcSettings = {
 			...userSettings,
 			isPropAccount: decryptedAccount.accountType === "prop",
 			propFirmName: decryptedAccount.propFirmName,
 			profitSharePercentage: Number(decryptedAccount.profitSharePercentage),
-			dayTradeTaxRate: Number(decryptedAccount.dayTradeTaxRate),
+			dayTradeTaxRate: getDayTradeIrRate(projectionYear) * 100,
 			showTaxEstimates: decryptedAccount.showTaxEstimates,
 		}
 
@@ -950,8 +797,9 @@ export const getMonthlyProjection = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching monthly projection:", error)
+		}
 		return { status: "error", message: t("actions.projectionFetchFailed") }
 	}
 }
@@ -1016,8 +864,9 @@ export const getMonthComparison = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching month comparison:", error)
+		}
 		return { status: "error", message: t("actions.comparisonFetchFailed") }
 	}
 }
@@ -1093,8 +942,9 @@ export const getYearlyOverview = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching yearly overview:", error)
+		}
 		return { status: "error", message: t("actions.yearlyFetchFailed") }
 	}
 }
@@ -1171,7 +1021,9 @@ export const getCommissionFeeImpact = async (): Promise<{
 			totalExchangeFees += fees
 			totalNetPnl += netPnl
 
-			if (tradeFee > 0) hasData = true
+			if (tradeFee > 0) {
+				hasData = true
+			}
 
 			// Asset breakdown
 			const assetEntry = assetMap.get(trade.asset) || {
@@ -1208,10 +1060,8 @@ export const getCommissionFeeImpact = async (): Promise<{
 			totalCommission,
 			totalExchangeFees,
 			grossPnl,
-			feesAsPercentOfGross:
-				grossPnl > 0 ? (totalFees / grossPnl) * 100 : 0,
-			avgFeePerTrade:
-				allTrades.length > 0 ? totalFees / allTrades.length : 0,
+			feesAsPercentOfGross: grossPnl > 0 ? (totalFees / grossPnl) * 100 : 0,
+			avgFeePerTrade: allTrades.length > 0 ? totalFees / allTrades.length : 0,
 			totalTrades: allTrades.length,
 		}
 
@@ -1231,9 +1081,7 @@ export const getCommissionFeeImpact = async (): Promise<{
 				totalFees: data.totalFees,
 				grossPnl: data.grossPnl,
 				feesAsPercentOfGross:
-					data.grossPnl > 0
-						? (data.totalFees / data.grossPnl) * 100
-						: 0,
+					data.grossPnl > 0 ? (data.totalFees / data.grossPnl) * 100 : 0,
 				tradeCount: data.tradeCount,
 			}))
 			.toSorted((a, b) => a.month.localeCompare(b.month))
@@ -1248,8 +1096,9 @@ export const getCommissionFeeImpact = async (): Promise<{
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error fetching commission fee impact:", error)
+		}
 		return {
 			status: "error",
 			message: t("actions.commissionFetchFailed"),

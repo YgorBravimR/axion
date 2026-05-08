@@ -20,8 +20,8 @@ import type { IndicatorGroupWithDefinitions } from "@/types/indicator"
 interface IndicatorGroupFormProps {
 	group?: IndicatorGroupWithDefinitions | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
-	onSubmit: (data: {
+	onOpenChange: (_open: boolean) => void
+	onSubmit: (_data: {
 		key: string
 		displayName: string
 		description?: string
@@ -108,7 +108,7 @@ const IndicatorGroupForm = ({
 
 				<form onSubmit={handleSubmit} className="space-y-m-400">
 					{error && (
-						<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+						<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 							{error}
 						</div>
 					)}

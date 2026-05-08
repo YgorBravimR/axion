@@ -29,7 +29,7 @@ type YahooSparkResponse = Record<string, YahooSparkResult>
 // ── Mapping ──────────────────────────────────────────────────────────────────
 
 const mapSparkQuote = (result: YahooSparkResult): MarketQuote => {
-	const validCloses = result.close.filter((c) => c != null && !Number.isNaN(c))
+	const validCloses = result.close.filter((c) => c !== null && !Number.isNaN(c))
 	const price = validCloses[validCloses.length - 1] ?? 0
 	const previousClose = result.chartPreviousClose ?? 0
 	const change = price - previousClose
@@ -50,7 +50,9 @@ const mapSparkQuote = (result: YahooSparkResult): MarketQuote => {
 		sessionLow,
 		flag: "", // Overridden by orchestrator from registry
 		updatedAt: result.timestamp[result.timestamp.length - 1]
-			? new Date(result.timestamp[result.timestamp.length - 1] * 1000).toISOString()
+			? new Date(
+					result.timestamp[result.timestamp.length - 1]! * 1000
+				).toISOString()
 			: new Date().toISOString(),
 	}
 }
@@ -61,7 +63,9 @@ const mapSparkQuote = (result: YahooSparkResult): MarketQuote => {
  * Fetch a single batch of symbols from Yahoo Finance v8 spark endpoint.
  * Uses 15m interval to get intraday data for session high/low computation.
  */
-const fetchSparkBatch = async (symbols: string[]): Promise<YahooSparkResponse> => {
+const fetchSparkBatch = async (
+	symbols: string[]
+): Promise<YahooSparkResponse> => {
 	const symbolsParam = symbols.join(",")
 	const url = `${YAHOO_BASE_URL}?symbols=${encodeURIComponent(symbolsParam)}&range=1d&interval=15m`
 
@@ -73,7 +77,9 @@ const fetchSparkBatch = async (symbols: string[]): Promise<YahooSparkResponse> =
 	})
 
 	if (!response.ok) {
-		throw new Error(`Yahoo Finance API error: ${response.status} ${response.statusText}`)
+		throw new Error(
+			`Yahoo Finance API error: ${response.status} ${response.statusText}`
+		)
 	}
 
 	return (await response.json()) as YahooSparkResponse
@@ -86,7 +92,9 @@ const fetchSparkBatch = async (symbols: string[]): Promise<YahooSparkResponse> =
  * @param symbols - List of Yahoo-compatible symbols to fetch
  * @returns Map of symbol → MarketQuote for successfully resolved symbols
  */
-const fetchYahooQuotes = async (symbols: string[]): Promise<Map<string, MarketQuote>> => {
+const fetchYahooQuotes = async (
+	symbols: string[]
+): Promise<Map<string, MarketQuote>> => {
 	const unique = [...new Set(symbols)]
 	const quoteMap = new Map<string, MarketQuote>()
 

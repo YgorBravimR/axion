@@ -28,7 +28,9 @@ interface ParseClearCSVOptions {
  * Handles both formats gracefully.
  */
 const parseBrazilianNumber = (value: string): number => {
-	if (!value || value === "-" || value === "0") return 0
+	if (!value || value === "-" || value === "0") {
+		return 0
+	}
 
 	const trimmed = value.trim()
 
@@ -55,7 +57,7 @@ const parseBrazilianNumber = (value: string): number => {
 	if (trimmed.includes(".") && !trimmed.includes(",")) {
 		// If more than 3 digits after last dot, it's decimal
 		const parts = trimmed.split(".")
-		const afterDot = parts[parts.length - 1]
+		const afterDot = parts[parts.length - 1]!
 		if (afterDot.length > 2) {
 			// Likely decimal, remove all other dots
 			return parseFloat(parts.join(""))
@@ -81,8 +83,12 @@ const parseClearDate = (dateStr: string): string => {
  */
 const parseOperationType = (tipo: string): "BUY" | "SELL" => {
 	const normalized = tipo.toUpperCase().trim()
-	if (normalized === "COMPRA") return "BUY"
-	if (normalized === "VENDA") return "SELL"
+	if (normalized === "COMPRA") {
+		return "BUY"
+	}
+	if (normalized === "VENDA") {
+		return "SELL"
+	}
 	// Default to BUY if unclear
 	return "BUY"
 }
@@ -157,12 +163,14 @@ const mapHeadersToColumns = (
 
 	for (const [key, names] of Object.entries(headerNames)) {
 		const normalizedNames = names.map((n) =>
-			n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+			n
+				.toLowerCase()
+				.normalize("NFD")
+				.replace(/[\u0300-\u036f]/g, "")
 		)
 
 		for (let i = 0; i < headers.length; i++) {
-			const normalizedHeader = headers[i]
-				.toLowerCase()
+			const normalizedHeader = headers[i]!.toLowerCase()
 				.normalize("NFD")
 				.replace(/[\u0300-\u036f]/g, "")
 
@@ -195,9 +203,12 @@ export const parseClearCSV = (
 	}
 
 	// Parse header row
-	const headerLine = lines[0]
+	const headerLine = lines[0]!
 	const headers = parseCSVLine(headerLine, delimiter).map((h) =>
-		h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+		h
+			.toLowerCase()
+			.normalize("NFD")
+			.replace(/[\u0300-\u036f]/g, "")
 	)
 
 	const columnMap = mapHeadersToColumns(headers)
@@ -225,7 +236,9 @@ export const parseClearCSV = (
 	// Parse data rows (starting from row 1)
 	for (let i = 1; i < lines.length; i++) {
 		const line = lines[i]
-		if (!line) continue
+		if (!line) {
+			continue
+		}
 
 		const values = parseCSVLine(line, delimiter)
 
@@ -238,7 +251,9 @@ export const parseClearCSV = (
 			}
 
 			// Skip empty rows
-			if (!row.ativo) continue
+			if (!row.ativo) {
+				continue
+			}
 
 			// Parse required fields
 			const date = parseClearDate(row.data || "")
@@ -297,7 +312,7 @@ export const validateClearCSV = (
 			return { valid: false, error: "imports.errors.csvMinRows" }
 		}
 
-		const headers = parseCSVLine(lines[0], delimiter)
+		const headers = parseCSVLine(lines[0]!, delimiter)
 		if (headers.length < 7) {
 			return {
 				valid: false,

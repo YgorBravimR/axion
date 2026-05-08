@@ -12,16 +12,18 @@ export const isQuoteStale = (updatedAt: string): boolean =>
 	Date.now() - new Date(updatedAt).getTime() > STALE_THRESHOLD_MS
 
 export const formatPrice = (price: number): string => {
-	if (price >= 1000)
+	if (price >= 1000) {
 		return price.toLocaleString("en-US", {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2,
 		})
-	if (price >= 1)
+	}
+	if (price >= 1) {
 		return price.toLocaleString("en-US", {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 4,
 		})
+	}
 	return price.toLocaleString("en-US", {
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 6,

@@ -6,19 +6,14 @@ import { getTranslations } from "next-intl/server"
 import {
 	dailyChecklists,
 	checklistCompletions,
-	dailyAccountNotes,
 	accountAssetSettings,
 	accountAssets,
 	trades,
-	assets,
-	monthlyPlans,
 } from "@/db/schema"
 import type {
 	DailyChecklist,
 	ChecklistCompletion,
-	DailyAccountNote,
 	AccountAssetSetting,
-	Asset,
 } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import { eq, and, desc, gte, lte, inArray } from "drizzle-orm"
@@ -27,26 +22,23 @@ import {
 	createChecklistSchema,
 	updateChecklistSchema,
 	updateCompletionSchema,
-	dailyNotesSchema,
 	assetSettingsSchema,
 	type CreateChecklistInput,
 	type UpdateChecklistInput,
-	type DailyNotesInput,
 	type AssetSettingsInput,
 	type ChecklistItem,
 	type CircuitBreakerStatus,
-	type BiasType,
 } from "@/lib/validations/command-center"
 import { fromCents, toCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
-import {
-	getUserDek,
-	encryptDailyNotesFields,
-	decryptDailyNotesFields,
-	decryptMonthlyPlanFields,
-} from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
+import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import type {
+	ChecklistWithCompletion,
+	AssetSettingWithAsset,
+	DailySummary,
+} from "./command-center.types"
 
 // ==========================================
 // CHECKLIST ACTIONS
@@ -275,12 +267,6 @@ export const deleteChecklist = async (
 // COMPLETION ACTIONS
 // ==========================================
 
-export interface ChecklistWithCompletion extends DailyChecklist {
-	parsedItems: ChecklistItem[]
-	completion: ChecklistCompletion | null
-	completedItemIds: string[]
-}
-
 /**
  * Get checklist completions for a given date (defaults to today)
  */
@@ -479,194 +465,13 @@ export const toggleChecklistItem = async (
 	}
 }
 
-// ==========================================
-// DAILY NOTES ACTIONS
-// ==========================================
-
-/**
- * Get notes for a given date (defaults to today)
- */
-export const getTodayNotes = async (
-	date?: Date
-): Promise<ActionResponse<DailyAccountNote | null>> => {
-	const t = await getTranslations("commandCenter")
-	try {
-		const { userId, accountId } = await requireAuth()
-
-		const today = date ? new Date(date) : await getServerEffectiveNow()
-		today.setHours(0, 0, 0, 0)
-		const tomorrow = new Date(today)
-		tomorrow.setDate(tomorrow.getDate() + 1)
-
-		const rawNotes = await db.query.dailyAccountNotes.findFirst({
-			where: and(
-				eq(dailyAccountNotes.userId, userId),
-				eq(dailyAccountNotes.accountId, accountId),
-				gte(dailyAccountNotes.date, today),
-				lte(dailyAccountNotes.date, tomorrow)
-			),
-		})
-
-		// Decrypt notes fields if DEK is available
-		const dek = await getUserDek(userId)
-		const notes =
-			rawNotes && dek
-				? (decryptDailyNotesFields(
-						rawNotes as unknown as Record<string, unknown>,
-						dek
-					) as unknown as DailyAccountNote)
-				: rawNotes
-
-		return {
-			status: "success",
-			message: notes ? t("actions.notesRetrieved") : t("actions.notesNotFound"),
-			data: notes || null,
-		}
-	} catch (error) {
-		return {
-			status: "error",
-			message: t("actions.notesFetchFailed"),
-			errors: [
-				{
-					code: "FETCH_FAILED",
-					detail: toSafeErrorMessage(error, "getTodayNotes"),
-				},
-			],
-		}
-	}
-}
-
-/**
- * Upsert daily notes
- */
-export const upsertDailyNotes = async (
-	input: DailyNotesInput
-): Promise<ActionResponse<DailyAccountNote>> => {
-	const t = await getTranslations("commandCenter")
-	try {
-		const { userId, accountId } = await requireAuth()
-		const validated = dailyNotesSchema.parse(input)
-
-		// Parse date
-		const noteDate = new Date(validated.date)
-		noteDate.setHours(0, 0, 0, 0)
-		const nextDay = new Date(noteDate)
-		nextDay.setDate(nextDay.getDate() + 1)
-
-		// Check if notes exist for this date
-		const existing = await db.query.dailyAccountNotes.findFirst({
-			where: and(
-				eq(dailyAccountNotes.userId, userId),
-				eq(dailyAccountNotes.accountId, accountId),
-				gte(dailyAccountNotes.date, noteDate),
-				lte(dailyAccountNotes.date, nextDay)
-			),
-		})
-
-		// Encrypt notes fields if DEK is available
-		const dek = await getUserDek(userId)
-		const encryptedFields = dek
-			? encryptDailyNotesFields(
-					{
-						preMarketNotes: validated.preMarketNotes || null,
-						postMarketNotes: validated.postMarketNotes || null,
-					},
-					dek
-				)
-			: {}
-
-		if (existing) {
-			// Update existing
-			const [notes] = await db
-				.update(dailyAccountNotes)
-				.set({
-					preMarketNotes: validated.preMarketNotes || null,
-					postMarketNotes: validated.postMarketNotes || null,
-					mood: validated.mood || null,
-					updatedAt: new Date(),
-					...encryptedFields,
-				})
-				.where(eq(dailyAccountNotes.id, existing.id))
-				.returning()
-
-			invalidateTradeData(undefined, userId, accountId)
-
-			// Decrypt before returning
-			const decryptedNotes = dek
-				? (decryptDailyNotesFields(
-						notes as unknown as Record<string, unknown>,
-						dek
-					) as unknown as DailyAccountNote)
-				: notes
-
-			return {
-				status: "success",
-				message: t("actions.notesUpdated"),
-				data: decryptedNotes,
-			}
-		} else {
-			// Create new
-			const [notes] = await db
-				.insert(dailyAccountNotes)
-				.values({
-					userId,
-					accountId,
-					date: noteDate,
-					preMarketNotes: validated.preMarketNotes || null,
-					postMarketNotes: validated.postMarketNotes || null,
-					mood: validated.mood || null,
-					...encryptedFields,
-				})
-				.returning()
-
-			invalidateTradeData(undefined, userId, accountId)
-
-			// Decrypt before returning
-			const decryptedNotes = dek
-				? (decryptDailyNotesFields(
-						notes as unknown as Record<string, unknown>,
-						dek
-					) as unknown as DailyAccountNote)
-				: notes
-
-			return {
-				status: "success",
-				message: t("actions.notesCreated"),
-				data: decryptedNotes,
-			}
-		}
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			return {
-				status: "error",
-				message: t("actions.validationError"),
-				errors: error.issues.map((e) => ({
-					code: "VALIDATION_ERROR",
-					detail: `${e.path.join(".")}: ${e.message}`,
-				})),
-			}
-		}
-
-		return {
-			status: "error",
-			message: t("actions.notesSaveFailed"),
-			errors: [
-				{
-					code: "SAVE_FAILED",
-					detail: toSafeErrorMessage(error, "upsertDailyNotes"),
-				},
-			],
-		}
-	}
-}
+// Daily notes (pre/post + mood) live on `dailyPlan` now.
+// See: src/app/actions/fractal-plan/daily.ts (`upsertDailyPlan`,
+// `getDailyPlanForCurrentAccount`) and src/lib/fractal-plan/ensure-daily.ts.
 
 // ==========================================
 // ASSET SETTINGS ACTIONS (Account-Level, Permanent)
 // ==========================================
-
-export interface AssetSettingWithAsset extends AccountAssetSetting {
-	asset: Asset
-}
 
 /**
  * Get account-level asset settings.
@@ -707,14 +512,17 @@ export const getAccountAssetSettings = async (): Promise<
 
 		// Auto-populate blank rows for missing assets
 		if (missingAssets.length > 0) {
-			await db.insert(accountAssetSettings).values(
-				missingAssets.map((aa) => ({
-					userId,
-					accountId,
-					assetId: aa.assetId,
-					isActive: true,
-				}))
-			).onConflictDoNothing()
+			await db
+				.insert(accountAssetSettings)
+				.values(
+					missingAssets.map((aa) => ({
+						userId,
+						accountId,
+						assetId: aa.assetId,
+						isActive: true,
+					}))
+				)
+				.onConflictDoNothing()
 
 			// Re-fetch with asset relation
 			const allSettings = await db.query.accountAssetSettings.findMany({
@@ -747,18 +555,18 @@ export const getAccountAssetSettings = async (): Promise<
 			errors: [
 				{
 					code: "FETCH_FAILED",
-					detail: toSafeErrorMessage(error, "getAccountAssetSettings", "database"),
+					detail: toSafeErrorMessage(
+						error,
+						"getAccountAssetSettings",
+						"database"
+					),
 				},
 			],
 		}
 	}
 }
 
-/**
- * Legacy aliases for backwards compatibility
- */
-export const getTodayAssetSettings = getAccountAssetSettings
-export const getAssetSettings = getAccountAssetSettings
+export const getAssetSettings = async () => getAccountAssetSettings()
 
 /**
  * Upsert account-level asset settings
@@ -904,17 +712,6 @@ export const deleteAssetSettings = async (
 // CIRCUIT BREAKER STATUS
 // ==========================================
 
-export interface DailySummary {
-	totalPnL: number
-	tradesCount: number
-	winCount: number
-	lossCount: number
-	winRate: number
-	bestTrade: number
-	worstTrade: number
-	consecutiveLosses: number
-}
-
 /**
  * Get circuit breaker status for a given date (defaults to today)
  */
@@ -923,7 +720,7 @@ export const getCircuitBreakerStatus = async (
 ): Promise<ActionResponse<CircuitBreakerStatus>> => {
 	const t = await getTranslations("commandCenter")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId } = await requireAuth()
 
 		const today = date ? new Date(date) : await getServerEffectiveNow()
 		today.setHours(0, 0, 0, 0)
@@ -941,28 +738,9 @@ export const getCircuitBreakerStatus = async (
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		// Get monthly plan for current month
-		const effectiveNow = date ? new Date(date) : await getServerEffectiveNow()
-		const currentYear = effectiveNow.getFullYear()
-		const currentMonth = effectiveNow.getMonth() + 1 // 1-indexed
-
-		const rawMonthlyPlan = await db.query.monthlyPlans.findFirst({
-			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, currentYear),
-				eq(monthlyPlans.month, currentMonth)
-			),
-		})
-
-		// Decrypt monthly plan fields if DEK is available
-		const dek = await getUserDek(userId)
-		const monthlyPlan =
-			rawMonthlyPlan && dek
-				? (decryptMonthlyPlanFields(
-						rawMonthlyPlan as unknown as Record<string, unknown>,
-						dek
-					) as unknown as typeof rawMonthlyPlan)
-				: rawMonthlyPlan
+		// Phase 4b: caps + behaviors come from the fractal-plan cascade.
+		const day = await resolveDay(accountId, today)
+		const behavior = await resolveBehavior({ accountId, date: today })
 
 		// Calculate metrics
 		let dailyPnL = 0
@@ -994,8 +772,11 @@ export const getCircuitBreakerStatus = async (
 		// Current consecutive losses (from the most recent non-breakeven trades)
 		let currentConsecutiveLosses = 0
 		for (let i = sortedTrades.length - 1; i >= 0; i--) {
-			if (sortedTrades[i].outcome === "breakeven") continue
-			if (sortedTrades[i].outcome === "loss") {
+			const trade = sortedTrades[i]
+			if (!trade || trade.outcome === "breakeven") {
+				continue
+			}
+			if (trade.outcome === "loss") {
 				currentConsecutiveLosses++
 			} else {
 				break
@@ -1008,23 +789,29 @@ export const getCircuitBreakerStatus = async (
 			0
 		)
 
-		// Resolve limits from monthly plan (single source of truth)
-		// After decryption, these values are numbers; without DEK, parse from text
-		const dailyLossLimitCents = Number(monthlyPlan?.dailyLossCents) || 0
-		const profitTargetCents = Number(monthlyPlan?.dailyProfitTargetCents) || 0
-		const rawMaxTrades =
-			monthlyPlan?.maxDailyTrades ?? monthlyPlan?.derivedMaxDailyTrades ?? null
-		const maxConsecutiveLossesValue = monthlyPlan?.maxConsecutiveLosses ?? null
+		// Resolve limits from the fractal-plan cascade (single source of truth)
+		const oneRCents = day?.oneRCents ?? 0
+		const dailyLossLimitCents = day
+			? Math.round(Number(day.dailyLossR.value) * oneRCents)
+			: 0
+		const profitTargetCents = day
+			? Math.round(Number(day.dailyTargetR.value) * oneRCents)
+			: 0
+		const derivedMaxTrades =
+			oneRCents > 0 && dailyLossLimitCents > 0
+				? Math.floor(dailyLossLimitCents / oneRCents)
+				: null
+		const maxConsecutiveLossesValue = behavior.maxConsecutiveLosses ?? null
 
-		// When a recovery profile is linked, derivedMaxDailyTrades (floor(dailyLoss / baseRisk))
-		// underestimates because recovery steps use reduced risk. Ensure maxTrades is at least
-		// maxConsecutiveLosses so the circuit breaker doesn't show a contradictory cap.
+		// When a recovery profile is linked, derivedMaxDailyTrades (floor(dailyLoss / 1R))
+		// underestimates because recovery steps use reduced risk. Ensure maxTrades is at
+		// least maxConsecutiveLosses so the circuit breaker doesn't show a contradictory cap.
 		const maxTradesValue =
-			rawMaxTrades !== null &&
+			derivedMaxTrades !== null &&
 			maxConsecutiveLossesValue !== null &&
-			maxConsecutiveLossesValue > rawMaxTrades
+			maxConsecutiveLossesValue > derivedMaxTrades
 				? maxConsecutiveLossesValue
-				: rawMaxTrades
+				: derivedMaxTrades
 
 		// Calculate remaining daily risk
 		const remainingDailyRiskCents = Math.max(
@@ -1048,8 +835,10 @@ export const getCircuitBreakerStatus = async (
 			0
 		)
 
-		// Monthly loss limit (plan-only)
-		const monthlyLossLimitCents = Number(monthlyPlan?.monthlyLossCents) || 0
+		// Monthly loss limit (resolver — month↔year cascade)
+		const monthlyLossLimitCents = day
+			? Math.round(Number(day.monthlyLossR.value) * oneRCents)
+			: 0
 		const remainingMonthlyCents =
 			monthlyLossLimitCents > 0
 				? Math.max(
@@ -1061,14 +850,12 @@ export const getCircuitBreakerStatus = async (
 			monthlyLossLimitCents > 0 &&
 			monthlyPnL <= -fromCents(monthlyLossLimitCents)
 
-		// Calculate recommended risk (plan-only)
-		let recommendedRiskCents = Number(monthlyPlan?.riskPerTradeCents) || 0
+		// Calculate recommended risk — base is 1R from the active ladder tier
+		let recommendedRiskCents = oneRCents
 
 		// Risk reduction after consecutive losses
-		const shouldReduceRisk = monthlyPlan?.reduceRiskAfterLoss ?? false
-		const reductionFactor = monthlyPlan?.riskReductionFactor
-			? parseFloat(monthlyPlan.riskReductionFactor)
-			: null
+		const shouldReduceRisk = behavior.reduceRiskAfterLoss
+		const reductionFactor = behavior.riskReductionFactor
 
 		if (shouldReduceRisk && currentConsecutiveLosses > 0 && reductionFactor) {
 			recommendedRiskCents = Math.round(
@@ -1078,12 +865,9 @@ export const getCircuitBreakerStatus = async (
 		}
 
 		// Win risk adjustment (increase or cap — mutually exclusive)
-		if (monthlyPlan?.profitReinvestmentPercent) {
-			const reinvestmentPercent = parseFloat(
-				monthlyPlan.profitReinvestmentPercent
-			)
-
-			if (monthlyPlan.increaseRiskAfterWin) {
+		const reinvestmentPercent = behavior.profitReinvestmentPercent
+		if (reinvestmentPercent) {
+			if (behavior.increaseRiskAfterWin) {
 				// INCREASE: add % of last win's profit to base risk
 				const lastTrade = sortedTrades.at(-1)
 				const lastPnl = Number(lastTrade?.pnl) || 0
@@ -1091,7 +875,7 @@ export const getCircuitBreakerStatus = async (
 					const bonusCents = Math.round((lastPnl * reinvestmentPercent) / 100)
 					recommendedRiskCents = recommendedRiskCents + bonusCents
 				}
-			} else if (monthlyPlan.capRiskAfterWin) {
+			} else if (behavior.capRiskAfterWin) {
 				// CAP: find first winning trade of the day, cap risk to min(base, profit * %)
 				const firstWin = sortedTrades.find(
 					(t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0
@@ -1115,8 +899,8 @@ export const getCircuitBreakerStatus = async (
 				: recommendedRiskCents
 		)
 
-		// Check second op block (plan-only)
-		const allowSecondOp = monthlyPlan?.allowSecondOpAfterLoss ?? true
+		// Check second op block (resolver — cascades all 4 levels)
+		const allowSecondOp = behavior.allowSecondOpAfterLoss
 		const isSecondOpBlocked =
 			allowSecondOp === false &&
 			currentConsecutiveLosses > 0 &&
@@ -1146,12 +930,24 @@ export const getCircuitBreakerStatus = async (
 
 		// Build alerts
 		const alerts: string[] = []
-		if (profitTargetHit) alerts.push("profitTargetHit")
-		if (lossLimitHit) alerts.push("lossLimitHit")
-		if (maxTradesHit) alerts.push("maxTradesHit")
-		if (maxConsecutiveLossesHit) alerts.push("maxConsecutiveLossesHit")
-		if (isMonthlyLimitHit) alerts.push("monthlyLimitHit")
-		if (isSecondOpBlocked) alerts.push("secondOpBlocked")
+		if (profitTargetHit) {
+			alerts.push("profitTargetHit")
+		}
+		if (lossLimitHit) {
+			alerts.push("lossLimitHit")
+		}
+		if (maxTradesHit) {
+			alerts.push("maxTradesHit")
+		}
+		if (maxConsecutiveLossesHit) {
+			alerts.push("maxConsecutiveLossesHit")
+		}
+		if (isMonthlyLimitHit) {
+			alerts.push("monthlyLimitHit")
+		}
+		if (isSecondOpBlocked) {
+			alerts.push("secondOpBlocked")
+		}
 
 		return {
 			status: "success",
@@ -1171,7 +967,10 @@ export const getCircuitBreakerStatus = async (
 				maxTrades: maxTradesValue,
 				maxConsecutiveLosses: maxConsecutiveLossesValue,
 				reduceRiskAfterLoss: shouldReduceRisk,
-				riskReductionFactor: monthlyPlan?.riskReductionFactor ?? null,
+				riskReductionFactor:
+					behavior.riskReductionFactor !== null
+						? String(behavior.riskReductionFactor)
+						: null,
 				riskUsedTodayCents,
 				remainingDailyRiskCents,
 				recommendedRiskCents,
@@ -1241,8 +1040,12 @@ export const getDailySummary = async (
 			const pnl = fromCents(trade.pnl)
 			totalPnL += pnl
 
-			if (pnl > bestTrade) bestTrade = pnl
-			if (pnl < worstTrade) worstTrade = pnl
+			if (pnl > bestTrade) {
+				bestTrade = pnl
+			}
+			if (pnl < worstTrade) {
+				worstTrade = pnl
+			}
 
 			if (trade.outcome === "win") {
 				winCount++

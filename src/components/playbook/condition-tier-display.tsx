@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Shield, ShieldCheck, ShieldPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { StrategyConditionWithDetail } from "@/app/actions/strategy-conditions"
+import type { StrategyConditionWithDetail } from "@/app/actions/strategy-conditions.types"
 
 interface ConditionTierDisplayProps {
 	conditions: StrategyConditionWithDetail[]
@@ -26,7 +26,9 @@ const getCategoryColor = (category: string): string => {
 	}
 }
 
-export const ConditionTierDisplay = ({ conditions }: ConditionTierDisplayProps) => {
+export const ConditionTierDisplay = ({
+	conditions,
+}: ConditionTierDisplayProps) => {
 	const t = useTranslations("playbook.conditions")
 
 	const { mandatory, tier2, tier3 } = useMemo(() => {
@@ -34,14 +36,20 @@ export const ConditionTierDisplay = ({ conditions }: ConditionTierDisplayProps) 
 		const t2: StrategyConditionWithDetail[] = []
 		const t3: StrategyConditionWithDetail[] = []
 		for (const c of conditions) {
-			if (c.tier === "mandatory") m.push(c)
-			else if (c.tier === "tier_2") t2.push(c)
-			else if (c.tier === "tier_3") t3.push(c)
+			if (c.tier === "mandatory") {
+				m.push(c)
+			} else if (c.tier === "tier_2") {
+				t2.push(c)
+			} else if (c.tier === "tier_3") {
+				t3.push(c)
+			}
 		}
 		return { mandatory: m, tier2: t2, tier3: t3 }
 	}, [conditions])
 
-	if (conditions.length === 0) return null
+	if (conditions.length === 0) {
+		return null
+	}
 
 	const tiers = [
 		{
@@ -75,25 +83,39 @@ export const ConditionTierDisplay = ({ conditions }: ConditionTierDisplayProps) 
 			{/* Rank legend */}
 			<div className="gap-s-300 flex items-center">
 				<span className="text-tiny text-txt-300">{t("rankBreakdown")}:</span>
-				<Badge id="legend-rank-a" variant="outline" className="text-trade-buy border-trade-buy/40">
+				<Badge
+					id="legend-rank-a"
+					variant="outline"
+					className="text-trade-buy border-trade-buy/40"
+				>
 					A = {t("tierMandatory")}
 				</Badge>
-				<Badge id="legend-rank-aa" variant="outline" className="text-acc-100 border-acc-100/40">
+				<Badge
+					id="legend-rank-aa"
+					variant="outline"
+					className="text-acc-100 border-acc-100/40"
+				>
 					AA = + {t("tierTwo")}
 				</Badge>
-				<Badge id="legend-rank-aaa" variant="outline" className="border-warning/40 text-warning">
+				<Badge
+					id="legend-rank-aaa"
+					variant="outline"
+					className="border-warning/40 text-warning"
+				>
 					AAA = + {t("tierThree")}
 				</Badge>
 			</div>
 
 			{/* Tier sections */}
 			{tiers.map((tier) => {
-				if (tier.items.length === 0) return null
+				if (tier.items.length === 0) {
+					return null
+				}
 
 				const TierIcon = tier.icon
 				return (
 					<div key={tier.key}>
-						<div className="mb-s-200 flex items-center gap-s-200">
+						<div className="mb-s-200 gap-s-200 flex items-center">
 							<TierIcon className="text-txt-200 h-4 w-4" />
 							<span className="text-small text-txt-100 font-medium">
 								{tier.label}
@@ -108,7 +130,10 @@ export const ConditionTierDisplay = ({ conditions }: ConditionTierDisplayProps) 
 									id={`condition-badge-${sc.id}`}
 									key={sc.id}
 									variant="outline"
-									className={cn("text-small", getCategoryColor(sc.condition.category))}
+									className={cn(
+										"text-small",
+										getCategoryColor(sc.condition.category)
+									)}
 								>
 									{sc.condition.name}
 								</Badge>

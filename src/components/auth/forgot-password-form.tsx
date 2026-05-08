@@ -37,6 +37,7 @@ export const ForgotPasswordForm = () => {
 	const [newPassword, setNewPassword] = useState("")
 	const [confirmPassword, setConfirmPassword] = useState("")
 	const [showPassword, setShowPassword] = useState(false)
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 	const [resendCooldown, setResendCooldown] = useState(0)
 	// Incremented each time a new cooldown period starts; used as the effect trigger.
 	const [cooldownEpoch, setCooldownEpoch] = useState(0)
@@ -45,7 +46,9 @@ export const ForgotPasswordForm = () => {
 	// period (keyed on cooldownEpoch) and uses a functional state update so it doesn't
 	// restart every second as resendCooldown decrements.
 	useEffect(() => {
-		if (resendCooldown <= 0) return
+		if (resendCooldown <= 0) {
+			return
+		}
 		const timer = setInterval(() => {
 			setResendCooldown((prev) => {
 				if (prev <= 1) {
@@ -56,7 +59,6 @@ export const ForgotPasswordForm = () => {
 			})
 		}, 1000)
 		return () => clearInterval(timer)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [cooldownEpoch])
 
 	// Step 1: Request OTP code
@@ -77,7 +79,9 @@ export const ForgotPasswordForm = () => {
 	// Step 2: Verify OTP code
 	const handleCodeVerify = useCallback(
 		(currentCode: string) => {
-			if (currentCode.length !== 6) return
+			if (currentCode.length !== 6) {
+				return
+			}
 
 			setError(null)
 			startTransition(async () => {
@@ -103,7 +107,9 @@ export const ForgotPasswordForm = () => {
 
 	// Resend code
 	const handleResend = () => {
-		if (resendCooldown > 0) return
+		if (resendCooldown > 0) {
+			return
+		}
 		setError(null)
 
 		startTransition(async () => {
@@ -137,7 +143,7 @@ export const ForgotPasswordForm = () => {
 	// Step 1: Email input
 	if (step === "email") {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 				<div className="flex justify-center">
 					<Image
 						src="/axion-wordmark-white.png"
@@ -145,6 +151,7 @@ export const ForgotPasswordForm = () => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						data-axion-logo="invertable"
 						priority
 					/>
 				</div>
@@ -192,7 +199,7 @@ export const ForgotPasswordForm = () => {
 					<Button
 						id="forgot-send-code"
 						type="submit"
-						className="w-full"
+						className="h-11 w-full"
 						disabled={isPending}
 					>
 						{isPending && (
@@ -205,7 +212,7 @@ export const ForgotPasswordForm = () => {
 				<p className="text-small text-txt-300 text-center">
 					<Link
 						href="/login"
-						className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-s-100 font-medium"
+						className="text-brand-500 hover:text-brand-400 gap-s-100 inline-flex items-center font-medium"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" />
 						{t("backToLogin")}
@@ -218,7 +225,7 @@ export const ForgotPasswordForm = () => {
 	// Step 2: OTP verification
 	if (step === "code") {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 				<div className="flex justify-center">
 					<Image
 						src="/axion-wordmark-white.png"
@@ -226,6 +233,7 @@ export const ForgotPasswordForm = () => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						data-axion-logo="invertable"
 						priority
 					/>
 				</div>
@@ -301,7 +309,7 @@ export const ForgotPasswordForm = () => {
 							setCode("")
 							setError(null)
 						}}
-						className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-s-100 font-medium"
+						className="text-brand-500 hover:text-brand-400 gap-s-100 inline-flex items-center font-medium"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" />
 						{t("backToEmail")}
@@ -313,7 +321,7 @@ export const ForgotPasswordForm = () => {
 
 	// Step 3: New password
 	return (
-		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 			<div className="flex justify-center">
 				<Image
 					src="/axion-wordmark-white.png"
@@ -375,7 +383,7 @@ export const ForgotPasswordForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -396,24 +404,46 @@ export const ForgotPasswordForm = () => {
 					>
 						{t("confirmPassword")}
 					</Label>
-					<Input
-						id="confirm-password"
-						type={showPassword ? "text" : "password"}
-						value={confirmPassword}
-						onChange={(e) => {
-							setConfirmPassword(e.target.value)
-							setError(null)
-						}}
-						required
-						autoComplete="new-password"
-						disabled={isPending}
-					/>
+					<div className="relative">
+						<Input
+							id="confirm-password"
+							type={showConfirmPassword ? "text" : "password"}
+							value={confirmPassword}
+							onChange={(e) => {
+								setConfirmPassword(e.target.value)
+								setError(null)
+							}}
+							required
+							autoComplete="new-password"
+							disabled={isPending}
+							className="pr-10"
+						/>
+						<Button
+							id="forgot-confirm-password-toggle"
+							variant="ghost"
+							size="icon"
+							type="button"
+							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
+							aria-label={
+								showConfirmPassword
+									? t("hideConfirmPassword")
+									: t("showConfirmPassword")
+							}
+						>
+							{showConfirmPassword ? (
+								<EyeOff className="h-4 w-4" aria-hidden="true" />
+							) : (
+								<Eye className="h-4 w-4" aria-hidden="true" />
+							)}
+						</Button>
+					</div>
 				</div>
 
 				<Button
 					id="forgot-reset-password"
 					type="submit"
-					className="w-full"
+					className="h-11 w-full"
 					disabled={isPending}
 				>
 					{isPending && (

@@ -26,7 +26,9 @@ const suggestMddMultiplier = (
 	worstMaxRDrawdown: number,
 	medianMaxRDrawdown: number
 ): number => {
-	if (medianMaxRDrawdown < 0.1) return 1.3
+	if (medianMaxRDrawdown < 0.1) {
+		return 1.3
+	}
 	const ratio = worstMaxRDrawdown / medianMaxRDrawdown
 	return Math.round(Math.max(1.1, Math.min(3.0, ratio)) * 10) / 10
 }
@@ -39,7 +41,7 @@ const suggestDrawdownLimitCents = (
 	worstMaxDrawdownPercent: number,
 	initialBalanceCents: number
 ): number => {
-	return Math.round(initialBalanceCents * worstMaxDrawdownPercent / 100)
+	return Math.round((initialBalanceCents * worstMaxDrawdownPercent) / 100)
 }
 
 // ==========================================

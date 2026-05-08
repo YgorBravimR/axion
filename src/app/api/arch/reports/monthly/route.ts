@@ -2,7 +2,13 @@ import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
 import { trades } from "@/db/schema"
 import { eq, and, gte, lte, desc, inArray } from "drizzle-orm"
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths } from "date-fns"
+import {
+	startOfMonth,
+	endOfMonth,
+	startOfWeek,
+	endOfWeek,
+	subMonths,
+} from "date-fns"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { fromCents } from "@/lib/money"
@@ -12,7 +18,9 @@ import { calculateReportSummary } from "../../_lib/report-summary"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -25,10 +33,15 @@ const GET = async (request: NextRequest) => {
 		let referenceDate: Date
 		const yearParam = searchParams.get("year")
 		const monthParam = searchParams.get("month")
-		const monthOffset = parseInt(searchParams.get("monthOffset") ?? "0", 10) || 0
+		const monthOffset =
+			parseInt(searchParams.get("monthOffset") ?? "0", 10) || 0
 
 		if (yearParam && monthParam) {
-			referenceDate = new Date(parseInt(yearParam, 10), parseInt(monthParam, 10) - 1, 15)
+			referenceDate = new Date(
+				parseInt(yearParam, 10),
+				parseInt(monthParam, 10) - 1,
+				15
+			)
 		} else {
 			referenceDate = subMonths(new Date(), monthOffset)
 		}
@@ -56,10 +69,20 @@ const GET = async (request: NextRequest) => {
 				monthStart: formatDateKey(monthStart),
 				monthEnd: formatDateKey(monthEnd),
 				summary: {
-					totalTrades: 0, winCount: 0, lossCount: 0, breakevenCount: 0,
-					grossPnl: 0, netPnl: 0, totalFees: 0, winRate: 0,
-					avgWin: 0, avgLoss: 0, profitFactor: 0, avgR: 0,
-					bestDay: null, worstDay: null,
+					totalTrades: 0,
+					winCount: 0,
+					lossCount: 0,
+					breakevenCount: 0,
+					grossPnl: 0,
+					netPnl: 0,
+					totalFees: 0,
+					winRate: 0,
+					avgWin: 0,
+					avgLoss: 0,
+					profitFactor: 0,
+					avgR: 0,
+					bestDay: null,
+					worstDay: null,
 				},
 				weeklyBreakdown: [],
 				assetBreakdown: [],
@@ -79,8 +102,12 @@ const GET = async (request: NextRequest) => {
 		let bestDay: { date: string; pnl: number } | null = null
 		let worstDay: { date: string; pnl: number } | null = null
 		for (const [date, pnl] of dailyPnl) {
-			if (!bestDay || pnl > bestDay.pnl) bestDay = { date, pnl }
-			if (!worstDay || pnl < worstDay.pnl) worstDay = { date, pnl }
+			if (!bestDay || pnl > bestDay.pnl) {
+				bestDay = { date, pnl }
+			}
+			if (!worstDay || pnl < worstDay.pnl) {
+				worstDay = { date, pnl }
+			}
 		}
 
 		// Weekly breakdown
@@ -120,9 +147,17 @@ const GET = async (request: NextRequest) => {
 		}
 
 		// Asset breakdown
-		const assetMap = new Map<string, { tradeCount: number; pnl: number; winCount: number; lossCount: number }>()
+		const assetMap = new Map<
+			string,
+			{ tradeCount: number; pnl: number; winCount: number; lossCount: number }
+		>()
 		for (const trade of monthTrades) {
-			const current = assetMap.get(trade.asset) || { tradeCount: 0, pnl: 0, winCount: 0, lossCount: 0 }
+			const current = assetMap.get(trade.asset) || {
+				tradeCount: 0,
+				pnl: 0,
+				winCount: 0,
+				lossCount: 0,
+			}
 			assetMap.set(trade.asset, {
 				tradeCount: current.tradeCount + 1,
 				pnl: current.pnl + fromCents(trade.pnl),

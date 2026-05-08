@@ -1,6 +1,11 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { strategies, trades, strategyConditions, strategyScenarios } from "@/db/schema"
+import {
+	strategies,
+	trades,
+	strategyConditions,
+	strategyScenarios,
+} from "@/db/schema"
 import { eq, and, inArray, sql } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
@@ -19,17 +24,16 @@ interface RouteParams {
  */
 const GET = async (request: NextRequest, { params }: RouteParams) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
 		const { id } = await params
 
 		const strategy = await db.query.strategies.findFirst({
-			where: and(
-				eq(strategies.id, id),
-				eq(strategies.userId, auth.userId)
-			),
+			where: and(eq(strategies.id, id), eq(strategies.userId, auth.userId)),
 			with: {
 				strategyConditions: {
 					with: { condition: true },
@@ -43,7 +47,12 @@ const GET = async (request: NextRequest, { params }: RouteParams) => {
 		if (!strategy) {
 			return archError(
 				"Strategy not found",
-				[{ code: "NOT_FOUND", detail: "Strategy does not exist or does not belong to this user" }],
+				[
+					{
+						code: "NOT_FOUND",
+						detail: "Strategy does not exist or does not belong to this user",
+					},
+				],
 				404
 			)
 		}
@@ -94,14 +103,14 @@ const GET = async (request: NextRequest, { params }: RouteParams) => {
 
 			if (trade.followedPlan !== null) {
 				trackedPlanCount++
-				if (trade.followedPlan) followedPlanCount++
+				if (trade.followedPlan) {
+					followedPlanCount++
+				}
 			}
 		}
 
 		const compliance =
-			trackedPlanCount > 0
-				? (followedPlanCount / trackedPlanCount) * 100
-				: 0
+			trackedPlanCount > 0 ? (followedPlanCount / trackedPlanCount) * 100 : 0
 
 		const [conditionCountResult] = await db
 			.select({ count: sql<number>`count(*)::int` })
@@ -123,9 +132,7 @@ const GET = async (request: NextRequest, { params }: RouteParams) => {
 			entryCriteria: strategy.entryCriteria,
 			exitCriteria: strategy.exitCriteria,
 			riskRules: strategy.riskRules,
-			targetRMultiple: strategy.targetRMultiple
-				? Number(strategy.targetRMultiple)
-				: null,
+			finalR: strategy.finalR ? Number(strategy.finalR) : null,
 			maxRiskPercent: strategy.maxRiskPercent
 				? Number(strategy.maxRiskPercent)
 				: null,

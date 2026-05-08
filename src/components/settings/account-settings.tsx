@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
-import { cn } from "@/lib/utils"
+
 import { RecalculateButton } from "./recalculate-button"
 import { RecalculatePnLButton } from "./recalculate-pnl-button"
 import { Link } from "@/i18n/routing"
@@ -45,8 +45,8 @@ import {
 	deleteAllTradingData,
 } from "@/app/actions/accounts"
 import { Loader2, Trash2, DatabaseZap } from "lucide-react"
+import { FeeRateForm } from "@/components/tax"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
-import { fromCents, toCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { TradingAccount, AccountAsset, Asset } from "@/db/schema"
@@ -82,18 +82,14 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		accountType: "personal" as "personal" | "prop" | "replay",
 		propFirmName: "",
 		profitSharePercentage: "100",
-		defaultCommission: "0",
-		defaultFees: "0",
 		defaultBreakevenTicks: "2",
 		replayStartDate: "",
 		defaultAsset: "" as string,
 	})
 
-	// Asset fees editing
+	// Asset breakeven ticks editing
 	const [editingAssetId, setEditingAssetId] = useState<string | null>(null)
-	const [assetFeesForm, setAssetFeesForm] = useState({
-		commission: "0",
-		fees: "0",
+	const [assetBreakevenForm, setAssetBreakevenForm] = useState({
 		breakevenTicks: "",
 	})
 
@@ -106,12 +102,16 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					getAccountAssets(),
 					getUserAccounts(),
 				])
-				if (!mounted) return
+				if (!mounted) {
+					return
+				}
 				setAccount(accountData)
 				setUserAccounts(allAccounts)
 				if (assetsResult.status === "success" && assetsResult.data) {
 					// Extract the base AccountAsset data from AccountAssetWithDetails
-					setAccountAssets(assetsResult.data.map(({ asset, ...rest }) => rest))
+					setAccountAssets(
+						assetsResult.data.map(({ asset: _asset, ...rest }) => rest)
+					)
 				}
 				if (accountData) {
 					setAccountForm({
@@ -119,29 +119,29 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						accountType: accountData.accountType,
 						propFirmName: accountData.propFirmName || "",
 						profitSharePercentage: accountData.profitSharePercentage,
-						defaultCommission: fromCents(
-							accountData.defaultCommission
-						).toString(),
-						defaultFees: fromCents(accountData.defaultFees).toString(),
 						defaultBreakevenTicks: accountData.defaultBreakevenTicks.toString(),
 						replayStartDate: accountData.replayCurrentDate
-							? new Date(accountData.replayCurrentDate)
-									.toISOString()
-									.split("T")[0]
+							? formatDateKey(new Date(accountData.replayCurrentDate))
 							: "",
 						defaultAsset: accountData.defaultAsset || "",
 					})
 				}
 			} finally {
-				if (mounted) setIsLoading(false)
+				if (mounted) {
+					setIsLoading(false)
+				}
 			}
 		}
-		loadData()
-		return () => { mounted = false }
+		void loadData()
+		return () => {
+			mounted = false
+		}
 	}, [])
 
 	const handleSaveAccount = () => {
-		if (!account) return
+		if (!account) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await updateAccount(account.id, {
@@ -153,10 +153,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						: undefined,
 				profitSharePercentage:
 					parseFloat(accountForm.profitSharePercentage) || 100,
-				defaultCommission: toCents(
-					parseFloat(accountForm.defaultCommission) || 0
-				),
-				defaultFees: toCents(parseFloat(accountForm.defaultFees) || 0),
 				defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
 				replayStartDate:
 					accountForm.accountType === "replay"
@@ -174,13 +170,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		})
 	}
 
-	const handleEditAssetFees = (assetId: string) => {
+	const handleEditAssetBreakeven = (assetId: string) => {
 		const existing = accountAssets.find((aa) => aa.assetId === assetId)
-		setAssetFeesForm({
-			commission: existing
-				? fromCents(existing.commissionOverride || 0).toString()
-				: "0",
-			fees: existing ? fromCents(existing.feesOverride || 0).toString() : "0",
+		setAssetBreakevenForm({
 			breakevenTicks:
 				existing?.breakevenTicksOverride != null
 					? existing.breakevenTicksOverride.toString()
@@ -189,19 +181,19 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		setEditingAssetId(assetId)
 	}
 
-	const handleSaveAssetFees = () => {
-		if (!editingAssetId) return
+	const handleSaveAssetBreakeven = () => {
+		if (!editingAssetId) {
+			return
+		}
 
 		startTransition(async () => {
 			const breakevenTicksValue =
-				assetFeesForm.breakevenTicks.trim() === ""
+				assetBreakevenForm.breakevenTicks.trim() === ""
 					? null
-					: parseInt(assetFeesForm.breakevenTicks) || null
+					: parseInt(assetBreakevenForm.breakevenTicks) || null
 			const result = await updateAccountAsset({
 				assetId: editingAssetId,
 				isEnabled: true,
-				commissionOverride: toCents(parseFloat(assetFeesForm.commission) || 0),
-				feesOverride: toCents(parseFloat(assetFeesForm.fees) || 0),
 				breakevenTicksOverride: breakevenTicksValue,
 			})
 			if (result.status === "success") {
@@ -213,10 +205,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						accountId: account?.id || "",
 						assetId: editingAssetId,
 						isEnabled: true,
-						commissionOverride: toCents(
-							parseFloat(assetFeesForm.commission) || 0
-						),
-						feesOverride: toCents(parseFloat(assetFeesForm.fees) || 0),
 						breakevenTicksOverride: breakevenTicksValue,
 						notes: null,
 						createdAt: existing?.createdAt || new Date(),
@@ -230,22 +218,22 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					return [...prev, newData]
 				})
 				setEditingAssetId(null)
-				showToast("success", t("assetFeesUpdated"))
+				showToast("success", t("assetBreakevenUpdated"))
 			} else {
-				showToast("error", result.error || t("assetFeesUpdateError"))
+				showToast("error", result.error || t("assetBreakevenUpdateError"))
 			}
 		})
 	}
 
-	const handleResetAssetFees = () => {
-		if (!editingAssetId) return
+	const handleResetAssetBreakeven = () => {
+		if (!editingAssetId) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await updateAccountAsset({
 				assetId: editingAssetId,
 				isEnabled: true,
-				commissionOverride: null,
-				feesOverride: null,
 				breakevenTicksOverride: null,
 			})
 			if (result.status === "success") {
@@ -254,8 +242,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						aa.assetId === editingAssetId
 							? {
 									...aa,
-									commissionOverride: null,
-									feesOverride: null,
 									breakevenTicksOverride: null,
 									updatedAt: new Date(),
 								}
@@ -263,9 +249,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					)
 				)
 				setEditingAssetId(null)
-				showToast("success", t("assetFeesReset"))
+				showToast("success", t("assetBreakevenReset"))
 			} else {
-				showToast("error", result.error || t("assetFeesUpdateError"))
+				showToast("error", result.error || t("assetBreakevenUpdateError"))
 			}
 		})
 	}
@@ -276,31 +262,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		[accountAssets]
 	)
 
-	const getAssetFees = (assetId: string) => {
-		const override = accountAssetsMap.get(assetId)
-		const hasOverride =
-			override &&
-			(override.commissionOverride !== null ||
-				override.feesOverride !== null ||
-				override.breakevenTicksOverride !== null)
-		if (hasOverride) {
-			return {
-				commission: fromCents(override.commissionOverride || 0),
-				fees: fromCents(override.feesOverride || 0),
-				breakevenTicks: override.breakevenTicksOverride,
-				isOverride: true,
-			}
-		}
-		return {
-			commission: fromCents(account?.defaultCommission || 0),
-			fees: fromCents(account?.defaultFees || 0),
-			breakevenTicks: null as number | null,
-			isOverride: false,
-		}
-	}
-
 	const handleDeleteAccount = () => {
-		if (!account) return
+		if (!account) {
+			return
+		}
 
 		// Resolve the switch target before deletion
 		const switchTarget =
@@ -330,7 +295,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	}
 
 	const handleDeleteAllData = async () => {
-		if (!account) return
+		if (!account) {
+			return
+		}
 
 		setIsDeleteDataDialogOpen(false)
 		setDeleteDataConfirmName("")
@@ -363,7 +330,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
 			{/* Account Information */}
-			<div id="settings-account-info" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-account-info"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("accountInfo")}
@@ -555,7 +525,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									{assets.map((asset) => (
 										<SelectItem key={asset.id} value={asset.symbol}>
 											<span className="font-mono">{asset.symbol}</span>
-											<span className="text-txt-300 ml-s-200">{asset.name}</span>
+											<span className="text-txt-300 ml-s-200">
+												{asset.name}
+											</span>
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -581,16 +553,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										accountType: account.accountType,
 										propFirmName: account.propFirmName || "",
 										profitSharePercentage: account.profitSharePercentage,
-										defaultCommission: fromCents(
-											account.defaultCommission
-										).toString(),
-										defaultFees: fromCents(account.defaultFees).toString(),
 										defaultBreakevenTicks:
 											account.defaultBreakevenTicks.toString(),
 										replayStartDate: account.replayCurrentDate
-											? new Date(account.replayCurrentDate)
-													.toISOString()
-													.split("T")[0]
+											? formatDateKey(new Date(account.replayCurrentDate))
 											: "",
 										defaultAsset: account.defaultAsset || "",
 									})
@@ -606,22 +572,38 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							onClick={handleSaveAccount}
 							disabled={isPending}
 						>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{tCommon("save")}
 						</Button>
 					</div>
 				)}
 			</div>
 
-			{/* Default Commission & Fees */}
-			<div id="settings-default-fees" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			{/* Trading Costs (BR) */}
+			<div
+				id="settings-trading-costs"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
+				<h2 className="text-body text-txt-100 mb-s-300 font-semibold">
+					{t("tradingCosts")}
+				</h2>
+				<FeeRateForm />
+			</div>
+
+			{/* Default Breakeven Ticks */}
+			<div
+				id="settings-default-breakeven"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-						{t("defaultFees")}
+						{t("breakevenTicks")}
 					</h2>
 					{!isEditingAccount && (
 						<Button
-							id="account-edit-fees"
+							id="account-edit-breakeven"
 							variant="ghost"
 							size="sm"
 							onClick={() => setIsEditingAccount(true)}
@@ -631,73 +613,12 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					)}
 				</div>
 				<p className="mt-s-200 text-tiny text-txt-300">
-					{t("defaultFeesDesc")}
+					{t("breakevenTicksDesc")}
 				</p>
-				<div className="mt-m-400 space-y-m-400">
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("commission")}</p>
-							<p className="text-tiny text-txt-300">{t("perContract")}</p>
-						</div>
-						{isEditingAccount ? (
-							<div className="gap-s-200 flex items-center">
-								<span className="text-small text-txt-300">$</span>
-								<Input
-									id="account-default-commission"
-									type="number"
-									step="0.01"
-									min="0"
-									value={accountForm.defaultCommission}
-									onChange={(e) =>
-										setAccountForm((prev) => ({
-											...prev,
-											defaultCommission: e.target.value,
-										}))
-									}
-									className="w-full text-right sm:w-24"
-								/>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								${fromCents(account?.defaultCommission || 0).toFixed(2)}
-							</span>
-						)}
-					</div>
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("fees")}</p>
-							<p className="text-tiny text-txt-300">{t("perContract")}</p>
-						</div>
-						{isEditingAccount ? (
-							<div className="gap-s-200 flex items-center">
-								<span className="text-small text-txt-300">$</span>
-								<Input
-									id="account-default-fees"
-									type="number"
-									step="0.01"
-									min="0"
-									value={accountForm.defaultFees}
-									onChange={(e) =>
-										setAccountForm((prev) => ({
-											...prev,
-											defaultFees: e.target.value,
-										}))
-									}
-									className="w-full text-right sm:w-24"
-								/>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								${fromCents(account?.defaultFees || 0).toFixed(2)}
-							</span>
-						)}
-					</div>
+				<div className="mt-m-400">
 					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("breakevenTicks")}</p>
-							<p className="text-tiny text-txt-300">
-								{t("breakevenTicksDesc")}
-							</p>
 						</div>
 						{isEditingAccount ? (
 							<div className="gap-s-200 flex items-center">
@@ -726,8 +647,11 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</div>
 			</div>
 
-			{/* Per-Asset Overrides */}
-			<div id="settings-asset-overrides" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			{/* Per-Asset Breakeven Ticks Overrides */}
+			<div
+				id="settings-asset-overrides"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-body text-txt-100 font-semibold">
 					{t("assetOverrides")}
 				</h2>
@@ -736,7 +660,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</p>
 				<div className="mt-m-400 space-y-s-300">
 					{assets.map((asset) => {
-						const fees = getAssetFees(asset.id)
+						const assetData = accountAssetsMap.get(asset.id)
+						const hasBreakevenOverride =
+							assetData?.breakevenTicksOverride !== null
 						const isEditing = editingAssetId === asset.id
 						return (
 							<div
@@ -753,51 +679,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 												<p className="text-tiny text-txt-300">{asset.name}</p>
 											</div>
 										</div>
-										<div className="gap-s-300 grid grid-cols-3">
-											<div className="space-y-s-100">
-												<Label
-													id="label-asset-commission"
-													className="text-tiny text-txt-300"
-												>
-													{t("commission")}
-												</Label>
-												<Input
-													id="account-asset-commission"
-													type="number"
-													step="0.01"
-													min="0"
-													value={assetFeesForm.commission}
-													onChange={(e) =>
-														setAssetFeesForm((prev) => ({
-															...prev,
-															commission: e.target.value,
-														}))
-													}
-													className="h-8 text-right text-small"
-												/>
-											</div>
-											<div className="space-y-s-100">
-												<Label
-													id="label-asset-fees"
-													className="text-tiny text-txt-300"
-												>
-													{t("fees")}
-												</Label>
-												<Input
-													id="account-asset-fees"
-													type="number"
-													step="0.01"
-													min="0"
-													value={assetFeesForm.fees}
-													onChange={(e) =>
-														setAssetFeesForm((prev) => ({
-															...prev,
-															fees: e.target.value,
-														}))
-													}
-													className="h-8 text-right text-small"
-												/>
-											</div>
+										<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 											<div className="space-y-s-100">
 												<Label
 													id="label-asset-breakeven-ticks"
@@ -810,14 +692,14 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 													type="number"
 													step="1"
 													min="0"
-													value={assetFeesForm.breakevenTicks}
+													value={assetBreakevenForm.breakevenTicks}
 													onChange={(e) =>
-														setAssetFeesForm((prev) => ({
+														setAssetBreakevenForm((prev) => ({
 															...prev,
 															breakevenTicks: e.target.value,
 														}))
 													}
-													className="h-8 text-right text-small"
+													className="text-small h-8 text-right"
 													placeholder={
 														account?.defaultBreakevenTicks?.toString() ?? "2"
 													}
@@ -826,12 +708,12 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										</div>
 										<div className="flex items-center justify-between">
 											<div>
-												{fees.isOverride && (
+												{hasBreakevenOverride && (
 													<Button
 														id={`account-reset-asset-${asset.id}`}
 														variant="ghost"
 														size="sm"
-														onClick={handleResetAssetFees}
+														onClick={handleResetAssetBreakeven}
 														disabled={isPending}
 														className="text-txt-300 hover:text-fb-error"
 													>
@@ -852,7 +734,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 												<Button
 													id={`account-save-asset-${asset.id}`}
 													size="sm"
-													onClick={handleSaveAssetFees}
+													onClick={handleSaveAssetBreakeven}
 													disabled={isPending}
 												>
 													{isPending && (
@@ -874,14 +756,12 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										<div className="gap-m-400 flex items-center">
 											<div className="text-right">
 												<p className="text-small text-txt-200">
-													${fees.commission.toFixed(2)} / $
-													{fees.fees.toFixed(2)} /{" "}
-													{fees.breakevenTicks ??
+													{assetData?.breakevenTicksOverride ??
 														account?.defaultBreakevenTicks ??
 														2}{" "}
 													{t("ticks")}
 												</p>
-												{fees.isOverride && (
+												{hasBreakevenOverride && (
 													<p className="text-tiny text-acc-100">
 														{t("override")}
 													</p>
@@ -891,7 +771,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 												id={`account-edit-asset-${asset.id}`}
 												variant="ghost"
 												size="sm"
-												onClick={() => handleEditAssetFees(asset.id)}
+												onClick={() => handleEditAssetBreakeven(asset.id)}
 											>
 												{tCommon("edit")}
 											</Button>
@@ -905,7 +785,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			</div>
 
 			{/* Data Maintenance */}
-			<div id="settings-data-maintenance" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="settings-data-maintenance"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<h2 className="text-body text-txt-100 font-semibold">
 					{tGeneral("dataMaintenance")}
 				</h2>
@@ -919,7 +802,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						</p>
 						<RecalculateButton />
 					</div>
-					<div className="border-t border-bg-300 pt-s-300 sm:border-0 sm:pt-0">
+					<div className="border-bg-300 pt-s-300 border-t sm:border-0 sm:pt-0">
 						<p className="text-small text-txt-100">
 							{tGeneral("recalculatePnL")}
 						</p>
@@ -971,8 +854,11 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			)}
 
 			{/* Danger Zone */}
-			<div id="settings-danger-zone" className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-fb-error/30">
-				<h2 className="text-small sm:text-body font-semibold text-fb-error">
+			<div
+				id="settings-danger-zone"
+				className="bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 border-fb-error/30 rounded-lg border"
+			>
+				<h2 className="text-small sm:text-body text-fb-error font-semibold">
 					{t("dangerZone")}
 				</h2>
 
@@ -987,7 +873,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							open={isDeleteDataDialogOpen}
 							onOpenChange={(open) => {
 								setIsDeleteDataDialogOpen(open)
-								if (!open) setDeleteDataConfirmName("")
+								if (!open) {
+									setDeleteDataConfirmName("")
+								}
 							}}
 						>
 							<AlertDialogTrigger asChild>
@@ -1036,7 +924,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									<AlertDialogAction
 										id="account-delete-data-confirm"
 										variant="destructive"
-										disabled={deleteDataConfirmName !== account?.name || isPending}
+										disabled={
+											deleteDataConfirmName !== account?.name || isPending
+										}
 										onClick={handleDeleteAllData}
 									>
 										{isPending && (
@@ -1051,7 +941,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</div>
 
 				{/* Delete Account */}
-				<div className="border-bg-300 mt-m-400 border-t pt-m-400">
+				<div className="border-bg-300 mt-m-400 pt-m-400 border-t">
 					<p className="text-small text-txt-100">{t("deleteAccount")}</p>
 					<p className="mt-s-100 text-tiny text-txt-300">
 						{isLastAccount ? t("deleteLastAccountDesc") : t("dangerZoneDesc")}
@@ -1066,7 +956,9 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							open={isDeleteDialogOpen}
 							onOpenChange={(open) => {
 								setIsDeleteDialogOpen(open)
-								if (!open) setDeleteConfirmName("")
+								if (!open) {
+									setDeleteConfirmName("")
+								}
 							}}
 						>
 							<AlertDialogTrigger asChild>

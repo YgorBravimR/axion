@@ -45,11 +45,13 @@ const buildIdentifier = (email: string): string =>
  * Step 1: Request a password reset code.
  * Always returns success to prevent email enumeration.
  */
-const requestPasswordReset = async (
+export const requestPasswordReset = async (
 	input: RequestResetInput
 ): Promise<{ success: boolean }> => {
 	const parsed = requestResetSchema.safeParse(input)
-	if (!parsed.success) return { success: true } // anti-enumeration
+	if (!parsed.success) {
+		return { success: true }
+	} // anti-enumeration
 
 	const email = parsed.data.email.toLowerCase()
 	const identifier = buildIdentifier(email)
@@ -60,7 +62,9 @@ const requestPasswordReset = async (
 		columns: { id: true },
 	})
 
-	if (!user) return { success: true }
+	if (!user) {
+		return { success: true }
+	}
 
 	// Delete any existing tokens for this identifier
 	await db
@@ -104,7 +108,7 @@ const requestPasswordReset = async (
  * Step 2: Verify the OTP code.
  * Rate-limited to 5 attempts per email per 15 minutes.
  */
-const verifyResetCode = async (
+export const verifyResetCode = async (
 	input: VerifyCodeInput
 ): Promise<{ valid: boolean; error?: string }> => {
 	const t = await getTranslations("forgotPassword")
@@ -120,7 +124,10 @@ const verifyResetCode = async (
 	const rateLimitResult = await verifyLimiter.check(`pw-verify:${lowerEmail}`)
 	if (!rateLimitResult.allowed) {
 		const retryMinutes = Math.ceil(rateLimitResult.retryAfterMs / 60_000)
-		return { valid: false, error: t("errors.rateLimited", { minutes: retryMinutes }) }
+		return {
+			valid: false,
+			error: t("errors.rateLimited", { minutes: retryMinutes }),
+		}
 	}
 
 	const identifier = buildIdentifier(lowerEmail)
@@ -146,14 +153,15 @@ const verifyResetCode = async (
  * Step 3: Reset the password using a verified OTP code.
  * Re-verifies the OTP to prevent replay without verification step.
  */
-const resetPassword = async (
+export const resetPassword = async (
 	input: ResetPasswordInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const t = await getTranslations("forgotPassword")
 	const tAuth = await getTranslations("auth")
 	const parsed = resetPasswordSchema.safeParse(input)
 	if (!parsed.success) {
-		const firstError = parsed.error.issues[0]?.message ?? t("errors.invalidInput")
+		const firstError =
+			parsed.error.issues[0]?.message ?? t("errors.invalidInput")
 		return { success: false, error: firstError }
 	}
 
@@ -198,5 +206,3 @@ const resetPassword = async (
 
 	return { success: true }
 }
-
-export { requestPasswordReset, verifyResetCode, resetPassword }

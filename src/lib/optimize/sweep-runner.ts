@@ -1,11 +1,15 @@
 import type { CandleRow } from "@/types/candle"
-import type { StrategyRecipe, AssetConfig, OptimizationRun } from "@/types/backtest"
+import type {
+	StrategyRecipe,
+	AssetConfig,
+	OptimizationRun,
+} from "@/types/backtest"
 import type { WorkerOutMessage } from "./backtest-worker"
 
 interface SweepCallbacks {
-	onProgress: (run: OptimizationRun, index: number, total: number) => void
-	onComplete: (totalMs: number) => void
-	onError: (message: string) => void
+	onProgress: (_run: OptimizationRun, _index: number, _total: number) => void
+	onComplete: (_totalMs: number) => void
+	onError: (_message: string) => void
 }
 
 interface SweepHandle {
@@ -25,9 +29,7 @@ const runSweep = (
 	recipes: StrategyRecipe[],
 	callbacks: SweepCallbacks
 ): SweepHandle => {
-	const worker = new Worker(
-		new URL("./backtest-worker.ts", import.meta.url)
-	)
+	const worker = new Worker(new URL("./backtest-worker.ts", import.meta.url))
 
 	let runCounter = 0
 
@@ -42,7 +44,7 @@ const runSweep = (
 				recipe: msg.recipe,
 				summary: msg.summary,
 				equityCurve: msg.equityCurve,
-				trades: [],          // lightweight — re-computed on expand
+				trades: [], // lightweight — re-computed on expand
 				dayBreakdown: [],
 				pinned: false,
 				createdAt: new Date().toISOString(),

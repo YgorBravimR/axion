@@ -6,7 +6,7 @@ export type ProviderId = "yahoo" | "brapi" | "coingecko"
 
 export interface QuoteProvider {
 	id: ProviderId
-	fetchQuotes: (symbols: string[]) => Promise<Map<string, MarketQuote>>
+	fetchQuotes: (_symbols: string[]) => Promise<Map<string, MarketQuote>>
 }
 
 export interface SymbolDefinition {

@@ -40,7 +40,6 @@ type Step = "upload" | "review" | "enriching"
 export const NotaImport = () => {
 	const t = useTranslations("journal.nota")
 	const tCommon = useTranslations("common")
-	const tOverlay = useTranslations("overlay")
 	const locale = useLocale()
 	const router = useRouter()
 	const { showToast } = useToast()
@@ -144,7 +143,9 @@ export const NotaImport = () => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -162,7 +163,9 @@ export const NotaImport = () => {
 	const handleInputChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -213,7 +216,9 @@ export const NotaImport = () => {
 	}, [])
 
 	const handleEnrich = async () => {
-		if (!preview || !parseResult || selectedIds.size === 0) return
+		if (!preview || !parseResult || selectedIds.size === 0) {
+			return
+		}
 
 		setIsEnriching(true)
 		showLoading({ message: t("enriching") })
@@ -279,9 +284,10 @@ export const NotaImport = () => {
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Step 1: Upload Area */}
 			{step === "upload" && (
-				<div
+				<label
+					htmlFor="nota-file-input"
 					className={cn(
-						"p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
+						"p-m-600 sm:p-l-700 lg:p-l-800 block cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -329,7 +335,7 @@ export const NotaImport = () => {
 							</div>
 						</>
 					)}
-				</div>
+				</label>
 			)}
 
 			{/* Step 2: Review Matches */}
@@ -398,13 +404,13 @@ export const NotaImport = () => {
 					{/* Match summary badges */}
 					<div className="gap-s-200 flex flex-wrap">
 						{(matchCounts.matched ?? 0) > 0 && (
-							<span className="bg-trade-buy/10 text-trade-buy text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
+							<span className="bg-trade-buy/10 text-trade-buy text-tiny gap-s-100 px-s-300 py-s-100 flex items-center rounded-full font-medium">
 								<CheckCircle2 className="h-3 w-3" />
 								{matchCounts.matched} {t("matched")}
 							</span>
 						)}
 						{(matchCounts.already_enriched ?? 0) > 0 && (
-							<span className="bg-bg-300/30 text-txt-300 text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
+							<span className="bg-bg-300/30 text-txt-300 text-tiny gap-s-100 px-s-300 py-s-100 flex items-center rounded-full font-medium">
 								<Info className="h-3 w-3" />
 								{matchCounts.already_enriched} {t("alreadyEnriched")}
 							</span>
@@ -412,7 +418,7 @@ export const NotaImport = () => {
 						{(matchCounts.quantity_mismatch ?? 0) +
 							(matchCounts.price_mismatch ?? 0) >
 							0 && (
-							<span className="bg-warning/10 text-warning text-tiny gap-s-100 flex items-center rounded-full px-s-300 py-s-100 font-medium">
+							<span className="bg-warning/10 text-warning text-tiny gap-s-100 px-s-300 py-s-100 flex items-center rounded-full font-medium">
 								<AlertTriangle className="h-3 w-3" />
 								{(matchCounts.quantity_mismatch ?? 0) +
 									(matchCounts.price_mismatch ?? 0)}{" "}
@@ -558,7 +564,12 @@ export const NotaImport = () => {
 										{t("netTotal")}
 									</span>
 									<span
-										className={cn("text-tiny font-medium", parseResult.netTotalDebitCredit === "C" ? "text-trade-buy" : "text-trade-sell")}
+										className={cn(
+											"text-tiny font-medium",
+											parseResult.netTotalDebitCredit === "C"
+												? "text-trade-buy"
+												: "text-trade-sell"
+										)}
 									>
 										{parseResult.netTotal.toLocaleString(locale, {
 											minimumFractionDigits: 2,
@@ -590,7 +601,7 @@ export const NotaImport = () => {
 								id="nota-import-enrich"
 								onClick={handleEnrich}
 								disabled={isEnriching || selectedCount === 0}
-								className="w-full sm:min-w-[180px]"
+								className="w-full sm:min-w-45"
 							>
 								{isEnriching ? (
 									<>

@@ -20,7 +20,7 @@ interface UseCandleChartResult {
 	themeRef: RefObject<ChartThemeColors | null>
 	indicatorColorMapRef: RefObject<Record<string, string>>
 	candlesRef: RefObject<CandleRow[]>
-	getIndicatorColor: (key: string) => string
+	getIndicatorColor: (_key: string) => string
 }
 
 /**
@@ -28,7 +28,9 @@ interface UseCandleChartResult {
  * Creates the chart, candlestick series, and theme-aware color maps on mount.
  * Callers are responsible for setting candle data, indicator data, markers, and price lines.
  */
-const useCandleChart = ({ containerRef }: UseCandleChartOptions): UseCandleChartResult => {
+const useCandleChart = ({
+	containerRef,
+}: UseCandleChartOptions): UseCandleChartResult => {
 	const chartRef = useRef<IChartApi | null>(null)
 	const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
 	const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
@@ -39,13 +41,17 @@ const useCandleChart = ({ containerRef }: UseCandleChartOptions): UseCandleChart
 	/** Resolve indicator key to color from live theme + ProfitChart scheme */
 	const getIndicatorColor = useCallback(
 		(key: string): string =>
-			indicatorColorMapRef.current[key] ?? (themeRef.current?.txtPlaceholder ?? "rgb(80, 86, 95)"),
+			indicatorColorMapRef.current[key] ??
+			themeRef.current?.txtPlaceholder ??
+			"rgb(80, 86, 95)",
 		[]
 	)
 
 	// Create chart on mount
 	useEffect(() => {
-		if (!containerRef.current) return
+		if (!containerRef.current) {
+			return
+		}
 
 		// Read live theme colors from CSS variables
 		const theme = getChartThemeColors()
@@ -55,8 +61,10 @@ const useCandleChart = ({ containerRef }: UseCandleChartOptions): UseCandleChart
 		// Resolve sequential candle index to BRT time label
 		const indexToBrtTime = (time: number): string => {
 			const idx = Math.round(time)
-			if (idx < 0 || idx >= candlesRef.current.length) return ""
-			const ts = new Date(candlesRef.current[idx].timestamp)
+			if (idx < 0 || idx >= candlesRef.current.length) {
+				return ""
+			}
+			const ts = new Date(candlesRef.current[idx]!.timestamp)
 			const brtHours = (ts.getUTCHours() - 3 + 24) % 24
 			const brtMinutes = ts.getUTCMinutes()
 			return `${brtHours.toString().padStart(2, "0")}:${brtMinutes.toString().padStart(2, "0")}`

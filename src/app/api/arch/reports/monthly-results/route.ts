@@ -2,13 +2,24 @@ import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
 import { trades, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, lte, desc, inArray } from "drizzle-orm"
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths } from "date-fns"
+import {
+	startOfMonth,
+	endOfMonth,
+	startOfWeek,
+	endOfWeek,
+	subMonths,
+} from "date-fns"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
-import { getUserDek, decryptTradeFields, decryptAccountFields } from "@/lib/user-crypto"
+import {
+	getUserDek,
+	decryptTradeFields,
+	decryptAccountFields,
+} from "@/lib/user-crypto"
 import { calculateReportSummary } from "../../_lib/report-summary"
+import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 
 const calculatePropProfit = (
 	grossProfit: number,
@@ -30,7 +41,9 @@ const calculatePropProfit = (
 	const sharePercent = isPropAccount ? profitSharePercent : 100
 	const traderShare = grossProfit * (sharePercent / 100)
 	const propFirmShare = grossProfit - traderShare
-	const estimatedTax = showTaxEstimates ? traderShare * (dayTradeTaxRate / 100) : 0
+	const estimatedTax = showTaxEstimates
+		? traderShare * (dayTradeTaxRate / 100)
+		: 0
 	const netProfit = traderShare - estimatedTax
 
 	return { grossProfit, propFirmShare, traderShare, estimatedTax, netProfit }
@@ -38,7 +51,9 @@ const calculatePropProfit = (
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -51,10 +66,15 @@ const GET = async (request: NextRequest) => {
 		let referenceDate: Date
 		const yearParam = searchParams.get("year")
 		const monthParam = searchParams.get("month")
-		const monthOffset = parseInt(searchParams.get("monthOffset") ?? "0", 10) || 0
+		const monthOffset =
+			parseInt(searchParams.get("monthOffset") ?? "0", 10) || 0
 
 		if (yearParam && monthParam) {
-			referenceDate = new Date(parseInt(yearParam, 10), parseInt(monthParam, 10) - 1, 15)
+			referenceDate = new Date(
+				parseInt(yearParam, 10),
+				parseInt(monthParam, 10) - 1,
+				15
+			)
 		} else {
 			referenceDate = subMonths(new Date(), monthOffset)
 		}
@@ -79,9 +99,11 @@ const GET = async (request: NextRequest) => {
 		])
 
 		if (!account) {
-			return archError("Trading account not found", [
-				{ code: "NOT_FOUND", detail: "Account not found" },
-			], 404)
+			return archError(
+				"Trading account not found",
+				[{ code: "NOT_FOUND", detail: "Account not found" }],
+				404
+			)
 		}
 
 		const dek = await getUserDek(auth.userId)
@@ -89,7 +111,10 @@ const GET = async (request: NextRequest) => {
 			? rawMonthTrades.map((t) => decryptTradeFields(t, dek))
 			: rawMonthTrades
 		const decryptedAccount = dek
-			? decryptAccountFields(account as unknown as Record<string, unknown>, dek) as unknown as typeof account
+			? (decryptAccountFields(
+					account as unknown as Record<string, unknown>,
+					dek
+				) as unknown as typeof account)
 			: account
 
 		// Calculate report summary
@@ -105,13 +130,21 @@ const GET = async (request: NextRequest) => {
 		let bestDay: { date: string; pnl: number } | null = null
 		let worstDay: { date: string; pnl: number } | null = null
 		for (const [date, pnl] of dailyPnl) {
-			if (!bestDay || pnl > bestDay.pnl) bestDay = { date, pnl }
-			if (!worstDay || pnl < worstDay.pnl) worstDay = { date, pnl }
+			if (!bestDay || pnl > bestDay.pnl) {
+				bestDay = { date, pnl }
+			}
+			if (!worstDay || pnl < worstDay.pnl) {
+				worstDay = { date, pnl }
+			}
 		}
 
 		// Weekly breakdown
 		const weeklyBreakdown: Array<{
-			weekStart: string; weekEnd: string; tradeCount: number; pnl: number; winRate: number
+			weekStart: string
+			weekEnd: string
+			tradeCount: number
+			pnl: number
+			winRate: number
 		}> = []
 		let currentWeekStart = startOfWeek(monthStart, { weekStartsOn: 1 })
 
@@ -141,10 +174,12 @@ const GET = async (request: NextRequest) => {
 			currentWeekStart.setDate(currentWeekStart.getDate() + 7)
 		}
 
-		// Prop profit calculation
+		// Prop profit calculation. IR rate sourced from legal-rates by month year —
+		// matches cockpit + recompute. Account override column ignored.
 		const isPropAccount = decryptedAccount.accountType === "prop"
-		const profitSharePercentage = Number(decryptedAccount.profitSharePercentage) || 100
-		const dayTradeTaxRate = Number(decryptedAccount.dayTradeTaxRate) || 0
+		const profitSharePercentage =
+			Number(decryptedAccount.profitSharePercentage) || 100
+		const dayTradeTaxRate = getDayTradeIrRate(monthStart.getUTCFullYear()) * 100
 		const showTaxEstimates = decryptedAccount.showTaxEstimates ?? false
 
 		const prop = calculatePropProfit(

@@ -7,7 +7,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -17,7 +19,7 @@ const GET = async (request: NextRequest) => {
 				code: strategies.code,
 				name: strategies.name,
 				isActive: strategies.isActive,
-				targetRMultiple: strategies.targetRMultiple,
+				finalR: strategies.finalR,
 				description: strategies.description,
 			})
 			.from(strategies)

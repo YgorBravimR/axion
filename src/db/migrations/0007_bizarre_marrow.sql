@@ -1,1 +1,0 @@
-ALTER TABLE "monthly_plans" ADD COLUMN "cap_risk_after_win" boolean DEFAULT false;

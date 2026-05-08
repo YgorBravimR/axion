@@ -23,7 +23,9 @@ const createSchema = z.object({
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -42,6 +44,14 @@ const POST = async (request: NextRequest) => {
 				userAgent: ARCH_USER_AGENT,
 			})
 			.returning()
+
+		if (!report) {
+			return archError(
+				"Failed to create bug report",
+				[{ code: "CREATE_FAILED", detail: "Insert returned no row" }],
+				500
+			)
+		}
 
 		return archSuccess("Bug report created", { id: report.id })
 	} catch (error) {

@@ -59,13 +59,13 @@ const NewStrategyPage = () => {
 				})
 
 				if (errors.length > 0) {
-					showToast("error", errors[0])
+					showToast("error", errors[0]!)
 					return
 				}
 
 				if (uploaded.length > 0) {
-					screenshotUrl = uploaded[0].url
-					screenshotS3Key = uploaded[0].s3Key
+					screenshotUrl = uploaded[0]!.url
+					screenshotS3Key = uploaded[0]!.s3Key
 				}
 			}
 
@@ -76,8 +76,8 @@ const NewStrategyPage = () => {
 				entryCriteria: (formData.get("entryCriteria") as string) || undefined,
 				exitCriteria: (formData.get("exitCriteria") as string) || undefined,
 				riskRules: (formData.get("riskRules") as string) || undefined,
-				targetRMultiple: formData.get("targetRMultiple")
-					? Number(formData.get("targetRMultiple"))
+				finalR: formData.get("finalR")
+					? Number(formData.get("finalR"))
 					: undefined,
 				maxRiskPercent: formData.get("maxRiskPercent")
 					? Number(formData.get("maxRiskPercent"))
@@ -106,13 +106,18 @@ const NewStrategyPage = () => {
 					if (err.code === "DUPLICATE_STRATEGY") {
 						errors.code = true
 					}
-					if (err.code === "VALIDATION_ERROR" && err.detail.startsWith("code:")) {
+					if (
+						err.code === "VALIDATION_ERROR" &&
+						err.detail.startsWith("code:")
+					) {
 						errors.code = true
 					}
 				}
 				if (Object.keys(errors).length > 0) {
 					setFieldErrors(errors)
-					if (errors.code) codeInputRef.current?.focus()
+					if (errors.code) {
+						codeInputRef.current?.focus()
+					}
 				}
 			}
 		})
@@ -135,7 +140,12 @@ const NewStrategyPage = () => {
 							<div className="space-y-m-400">
 								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 									<div>
-										<Label id="label-code" htmlFor="code" required filled={!!code.trim()}>
+										<Label
+											id="label-code"
+											htmlFor="code"
+											required
+											filled={!!code.trim()}
+										>
 											{t("codeLabel")}
 										</Label>
 										<Input
@@ -151,7 +161,9 @@ const NewStrategyPage = () => {
 											value={code}
 											onChange={(e) => {
 												setCode(e.target.value)
-												if (fieldErrors.code) setFieldErrors({})
+												if (fieldErrors.code) {
+													setFieldErrors({})
+												}
 											}}
 										/>
 										<p className="text-tiny text-txt-300 mt-s-100">
@@ -159,7 +171,12 @@ const NewStrategyPage = () => {
 										</p>
 									</div>
 									<div className="sm:col-span-2">
-										<Label id="label-strategy-name" htmlFor="name" required filled={!!name.trim()}>
+										<Label
+											id="label-strategy-name"
+											htmlFor="name"
+											required
+											filled={!!name.trim()}
+										>
 											{t("strategyNameLabel")}
 										</Label>
 										<Input
@@ -203,7 +220,10 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Rules & Criteria Section */}
-						<div id="strategy-rules-criteria" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+						<div
+							id="strategy-rules-criteria"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+						>
 							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("rulesCriteria")}
 							</h2>
@@ -257,7 +277,10 @@ const NewStrategyPage = () => {
 						</div>
 
 						{/* Risk Settings Section */}
-						<div id="strategy-risk-settings" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+						<div
+							id="strategy-risk-settings"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+						>
 							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
 								{t("riskSettings")}
 							</h2>
@@ -278,15 +301,12 @@ const NewStrategyPage = () => {
 
 								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 									<div>
-										<Label
-											id="label-target-r-multiple"
-											htmlFor="targetRMultiple"
-										>
-											{t("targetRMultiple")}
+										<Label id="label-target-r-multiple" htmlFor="finalR">
+											{t("finalR")}
 										</Label>
 										<Input
-											id="targetRMultiple"
-											name="targetRMultiple"
+											id="finalR"
+											name="finalR"
 											type="number"
 											step="0.1"
 											min="0.1"
@@ -322,18 +342,21 @@ const NewStrategyPage = () => {
 
 						{/* Conditions Section */}
 						{isPremium && (
-						<div id="strategy-conditions" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
-							<div className="gap-s-200 flex items-center">
-								<Filter className="text-txt-200 h-5 w-5" />
-								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-									{t("tradingConditions")}
-								</h2>
+							<div
+								id="strategy-conditions"
+								className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+							>
+								<div className="gap-s-200 flex items-center">
+									<Filter className="text-txt-200 h-5 w-5" />
+									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+										{t("tradingConditions")}
+									</h2>
+								</div>
+								<p className="text-tiny text-txt-300 mt-s-200 mb-m-400">
+									{t("tradingConditionsHint")}
+								</p>
+								<ConditionPicker value={conditions} onChange={setConditions} />
 							</div>
-							<p className="text-tiny text-txt-300 mt-s-200 mb-m-400">
-								{t("tradingConditionsHint")}
-							</p>
-							<ConditionPicker value={conditions} onChange={setConditions} />
-						</div>
 						)}
 
 						{/* Scenarios hint */}

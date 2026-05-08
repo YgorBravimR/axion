@@ -10,6 +10,7 @@
   --color-bg-100: rgb(11 14 17);
   --color-bg-200: rgb(21 25 33);
   --color-bg-300: rgb(43 47 54);
+  --color-bg-400: rgb(60 65 75);
   --color-bg-stripe: rgb(26 31 38);
   --color-txt-100: rgb(240 242 245);
   --color-txt-200: rgb(170 180 195);
@@ -113,11 +114,13 @@
   --screen-xl: 1280px;
   --screen-2xl: 1536px;
 
-  --box-shadow-small: 0 1px 2px rgb(0 0 0 / 0.1);
-  --box-shadow-medium: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06);
-  --box-shadow-large: 0 10px 15px rgb(0 0 0 / 0.1), 0 4px 6px rgb(0 0 0 / 0.05);
-  --box-shadow-xl: 20px 25px rgb(0 0 0 / 0.1), 0 10px 10px rgb(0 0 0 / 0.04);
-  --box-shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --breakpoint-xs: 30rem;
+
+  --shadow-small: 0 1px 2px rgb(0 0 0 / 0.1);
+  --shadow-medium: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06);
+  --shadow-large: 0 10px 15px rgb(0 0 0 / 0.1), 0 4px 6px rgb(0 0 0 / 0.05);
+  --shadow-xl: 20px 25px rgb(0 0 0 / 0.1), 0 10px 10px rgb(0 0 0 / 0.04);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 
   --animate-overlay-pulse-line: overlay-pulse-line 2s ease-in-out infinite;
   --animate-overlay-fade-in: overlay-fade-in 300ms ease-out both;
@@ -940,7 +943,7 @@
    Gradient for days where both B3 and NYSE are closed (holidays)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.bg-both-closed {
+@utility bg-both-closed {
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--color-fb-error) 25%, transparent) 50%,
@@ -1070,15 +1073,15 @@ body {
 
 
 /* Staggered animation delay utilities */
-.animation-delay-100 {
+@utility animation-delay-100 {
   animation-delay: 100ms;
 }
-.animation-delay-200 {
+@utility animation-delay-200 {
   animation-delay: 200ms;
 }
 
 /* GPU layer promotion for the video expand (scale 1→4x) */
-.will-change-transform-opacity {
+@utility will-change-transform-opacity {
   will-change: transform, opacity;
 }
 
@@ -1092,6 +1095,17 @@ body {
   .animate-overlay-fade-out {
     animation: none !important;
   }
+
+  /* Global guard: nuke all transitions + animations so any future utility
+     (transition-colors, transition-transform, transform/scale hover, etc.)
+     respects the OS-level preference without per-component motion-reduce
+     audits. WCAG 2.3.3 (Animations from Interactions). */
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1100,12 +1114,12 @@ body {
    horizontally-scrollable tab lists and carousels on mobile.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.scrollbar-none {
+@utility scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

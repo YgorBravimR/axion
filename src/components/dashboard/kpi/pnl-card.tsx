@@ -12,9 +12,15 @@ interface PnlCardProps {
 }
 
 const getAccentBorder = (value: number | null): string | undefined => {
-	if (value === null) return undefined
-	if (value > 0) return "border-l-trade-buy"
-	if (value < 0) return "border-l-trade-sell"
+	if (value === null) {
+		return undefined
+	}
+	if (value > 0) {
+		return "border-l-trade-buy"
+	}
+	if (value < 0) {
+		return "border-l-trade-sell"
+	}
 	return undefined
 }
 
@@ -25,11 +31,7 @@ const PnlCard = ({ grossPnl, size, className }: PnlCardProps) => {
 	return (
 		<StatCard
 			label={t("pnl")}
-			value={
-				grossPnl !== null
-					? formatCompactCurrency(grossPnl, "R$")
-					: "--"
-			}
+			value={grossPnl !== null ? formatCompactCurrency(grossPnl, "R$") : "--"}
 			valueColorClass={grossColor}
 			accentColorClass={getAccentBorder(grossPnl)}
 			size={size}

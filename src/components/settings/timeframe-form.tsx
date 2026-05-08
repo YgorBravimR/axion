@@ -27,7 +27,7 @@ import { Loader2 } from "lucide-react"
 interface TimeframeFormProps {
 	timeframe?: Timeframe | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 
@@ -119,11 +119,11 @@ export const TimeframeForm = ({
 					{ value: "hours", label: tUnits("hours") },
 					{ value: "days", label: tUnits("days") },
 					{ value: "weeks", label: tUnits("weeks") },
-			  ]
+				]
 			: [
 					{ value: "ticks", label: tUnits("ticks") },
 					{ value: "points", label: tUnits("points") },
-			  ]
+				]
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -139,14 +139,21 @@ export const TimeframeForm = ({
 
 				<form onSubmit={handleSubmit} className="space-y-m-400">
 					{error && (
-						<div className="rounded-md bg-fb-error/10 p-s-300 text-small text-fb-error">
+						<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
 							{error}
 						</div>
 					)}
 
-					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						<div className="space-y-s-200">
-							<Label id="label-timeframe-code" htmlFor="code" required filled={!!formData.code.trim()}>{t("code")}</Label>
+							<Label
+								id="label-timeframe-code"
+								htmlFor="code"
+								required
+								filled={!!formData.code.trim()}
+							>
+								{t("code")}
+							</Label>
 							<Input
 								id="code"
 								placeholder={t("codePlaceholder")}
@@ -159,7 +166,14 @@ export const TimeframeForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-timeframe-type" htmlFor="type" required filled={!!formData.type}>{t("type")}</Label>
+							<Label
+								id="label-timeframe-type"
+								htmlFor="type"
+								required
+								filled={!!formData.type}
+							>
+								{t("type")}
+							</Label>
 							<Select
 								value={formData.type}
 								onValueChange={(value) => {
@@ -182,7 +196,14 @@ export const TimeframeForm = ({
 					</div>
 
 					<div className="space-y-s-200">
-						<Label id="label-timeframe-name" htmlFor="name" required filled={!!formData.name.trim()}>{t("name")}</Label>
+						<Label
+							id="label-timeframe-name"
+							htmlFor="name"
+							required
+							filled={!!formData.name.trim()}
+						>
+							{t("name")}
+						</Label>
 						<Input
 							id="name"
 							placeholder={t("namePlaceholder")}
@@ -192,9 +213,16 @@ export const TimeframeForm = ({
 						/>
 					</div>
 
-					<div className="grid grid-cols-1 gap-m-400 sm:grid-cols-3">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 						<div className="space-y-s-200">
-							<Label id="label-timeframe-value" htmlFor="value" required filled={!!formData.value}>{t("value")}</Label>
+							<Label
+								id="label-timeframe-value"
+								htmlFor="value"
+								required
+								filled={!!formData.value}
+							>
+								{t("value")}
+							</Label>
 							<Input
 								id="value"
 								type="number"
@@ -206,7 +234,14 @@ export const TimeframeForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-timeframe-unit" htmlFor="unit" required filled={!!formData.unit}>{t("unit")}</Label>
+							<Label
+								id="label-timeframe-unit"
+								htmlFor="unit"
+								required
+								filled={!!formData.unit}
+							>
+								{t("unit")}
+							</Label>
 							<Select
 								value={formData.unit}
 								onValueChange={(value) => handleChange("unit", value)}
@@ -225,7 +260,9 @@ export const TimeframeForm = ({
 						</div>
 
 						<div className="space-y-s-200">
-							<Label id="label-timeframe-sort-order" htmlFor="sortOrder">{t("sortOrder")}</Label>
+							<Label id="label-timeframe-sort-order" htmlFor="sortOrder">
+								{t("sortOrder")}
+							</Label>
 							<Input
 								id="sortOrder"
 								type="number"
@@ -245,8 +282,14 @@ export const TimeframeForm = ({
 						>
 							{tCommon("cancel")}
 						</Button>
-						<Button id="timeframe-form-submit" type="submit" disabled={isPending}>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+						<Button
+							id="timeframe-form-submit"
+							type="submit"
+							disabled={isPending}
+						>
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{timeframe ? tCommon("saveChanges") : t("addTimeframe")}
 						</Button>
 					</DialogFooter>

@@ -11,25 +11,11 @@ import {
 } from "@/lib/validations/user-management"
 import { getTranslations } from "next-intl/server"
 
-interface UserAccount {
-	id: string
-	name: string
-	accountType: string
-	isDefault: boolean
-	isActive: boolean
-}
+import type { UserWithAccounts } from "./user-management.types"
 
-interface UserWithAccounts {
-	id: string
-	name: string
-	email: string
-	role: "admin" | "premium" | "trader" | "viewer"
-	image: string | null
-	createdAt: Date
-	tradingAccounts: UserAccount[]
-}
-
-const getAllUsersWithAccounts = async (): Promise<UserWithAccounts[]> => {
+export const getAllUsersWithAccounts = async (): Promise<
+	UserWithAccounts[]
+> => {
 	await requireRole("admin")
 
 	const result = await db.query.users.findMany({
@@ -58,7 +44,7 @@ const getAllUsersWithAccounts = async (): Promise<UserWithAccounts[]> => {
 	return result
 }
 
-const updateUserRole = async (
+export const updateUserRole = async (
 	data: UpdateUserRoleInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const t = await getTranslations("settings.users")
@@ -83,11 +69,4 @@ const updateUserRole = async (
 	invalidateSettingsData()
 
 	return { success: true }
-}
-
-export {
-	getAllUsersWithAccounts,
-	updateUserRole,
-	type UserWithAccounts,
-	type UserAccount,
 }

@@ -230,16 +230,24 @@ const PROFITCHART_REQUIRED_FIELDS: ProfitChartField[] = [
 
 const parseDirection = (value: string): "long" | "short" | null => {
 	const normalized = value.toLowerCase().trim()
-	if (normalized === "long" || normalized === "buy") return "long"
-	if (normalized === "short" || normalized === "sell") return "short"
+	if (normalized === "long" || normalized === "buy") {
+		return "long"
+	}
+	if (normalized === "short" || normalized === "sell") {
+		return "short"
+	}
 	return null
 }
 
 // Parse ProfitChart side (C = Compra/Buy/Long, V = Venda/Sell/Short)
 const parseProfitChartSide = (value: string): "long" | "short" | null => {
 	const normalized = value.toUpperCase().trim()
-	if (normalized === "C") return "long"
-	if (normalized === "V") return "short"
+	if (normalized === "C") {
+		return "long"
+	}
+	if (normalized === "V") {
+		return "short"
+	}
 	return null
 }
 
@@ -249,7 +257,9 @@ const parseProfitChartSide = (value: string): "long" | "short" | null => {
  * We construct ISO strings with the BRT offset to avoid system timezone dependency.
  */
 const parseDate = (value: string): Date | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 
 	// Try ISO format first — if it already has timezone info, respect it
 	if (
@@ -257,7 +267,9 @@ const parseDate = (value: string): Date | null => {
 		(value.includes("Z") || value.includes("+") || /T.*-\d{2}:/.test(value))
 	) {
 		const date = new Date(value)
-		if (!isNaN(date.getTime())) return date
+		if (!isNaN(date.getTime())) {
+			return date
+		}
 	}
 
 	// Try date+time formats first (before date-only)
@@ -271,7 +283,15 @@ const parseDate = (value: string): Date | null => {
 	for (const fmt of dateTimeFormats) {
 		const match = value.match(fmt)
 		if (match) {
-			const [, p1, p2, p3, hours, minutes, seconds] = match
+			const [, p1, p2, p3, hours, minutes, seconds] = match as [
+				string,
+				string,
+				string,
+				string,
+				string,
+				string,
+				string | undefined,
+			]
 			const h = parseInt(hours)
 			const m = parseInt(minutes)
 			const s = seconds ? parseInt(seconds) : 0
@@ -291,7 +311,9 @@ const parseDate = (value: string): Date | null => {
 
 			const iso = `${year}-${pad2(month)}-${pad2(day)}T${pad2(h)}:${pad2(m)}:${pad2(s)}${BRT_OFFSET}`
 			const date = new Date(iso)
-			if (!isNaN(date.getTime())) return date
+			if (!isNaN(date.getTime())) {
+				return date
+			}
 		}
 	}
 
@@ -305,7 +327,7 @@ const parseDate = (value: string): Date | null => {
 	for (const fmt of dateOnlyFormats) {
 		const match = value.match(fmt)
 		if (match) {
-			const [, part1, part2, part3] = match
+			const [, part1, part2, part3] = match as [string, string, string, string]
 			let year: number, month: number, day: number
 			if (part1.length === 4) {
 				year = parseInt(part1)
@@ -321,7 +343,9 @@ const parseDate = (value: string): Date | null => {
 
 			const iso = `${year}-${pad2(month)}-${pad2(day)}T00:00:00${BRT_OFFSET}`
 			const date = new Date(iso)
-			if (!isNaN(date.getTime())) return date
+			if (!isNaN(date.getTime())) {
+				return date
+			}
 		}
 	}
 
@@ -329,7 +353,9 @@ const parseDate = (value: string): Date | null => {
 }
 
 const parseNumber = (value: string): number | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 	// Remove currency symbols and commas
 	const cleaned = value.replace(/[$,€£]/g, "").trim()
 	const num = parseFloat(cleaned)
@@ -338,8 +364,12 @@ const parseNumber = (value: string): number | null => {
 
 const parseBoolean = (value: string): boolean | null => {
 	const normalized = value.toLowerCase().trim()
-	if (["true", "yes", "1", "y", "sim"].includes(normalized)) return true
-	if (["false", "no", "0", "n", "não", "nao"].includes(normalized)) return false
+	if (["true", "yes", "1", "y", "sim"].includes(normalized)) {
+		return true
+	}
+	if (["false", "no", "0", "n", "não", "nao"].includes(normalized)) {
+		return false
+	}
 	return null
 }
 
@@ -356,7 +386,7 @@ const isProfitChartFormat = (headers: string[]): boolean => {
 // Find the actual header row in ProfitChart format (skip metadata rows)
 const findHeaderRow = (lines: string[], delimiter: string): number => {
 	for (let i = 0; i < Math.min(lines.length, 10); i++) {
-		const line = lines[i]
+		const line = lines[i]!
 		const values = line.split(delimiter)
 		const normalizedValues = values.map(normalizeHeader)
 
@@ -377,7 +407,9 @@ const stripReplayPrefix = (
 ): { cleanAsset: string; isReplay: boolean } => {
 	const trimmed = assetCode.trim()
 	const match = trimmed.match(/^\[R\]\s*(.+)$/)
-	if (match) return { cleanAsset: match[1].trim(), isReplay: true }
+	if (match) {
+		return { cleanAsset: match[1]!.trim(), isReplay: true }
+	}
 	return { cleanAsset: trimmed, isReplay: false }
 }
 
@@ -409,7 +441,7 @@ export const parseCsvContent = (content: string): CsvParseResult => {
 	const headerRowIndex = findHeaderRow(lines, delimiter)
 
 	// Parse header row
-	const headerLine = lines[headerRowIndex]
+	const headerLine = lines[headerRowIndex]!
 	const headers = parseCSVLine(headerLine, delimiter).map(normalizeHeader)
 
 	// Check if this is ProfitChart format
@@ -493,9 +525,11 @@ const parseProfitChartContent = (
 	// Parse data rows (starting after header row)
 	for (let i = headerRowIndex + 1; i < lines.length; i++) {
 		const rowNumber = i + 1
-		const line = lines[i].trim()
+		const line = lines[i]!.trim()
 
-		if (!line) continue
+		if (!line) {
+			continue
+		}
 
 		const values = parseCSVLine(line, delimiter)
 
@@ -599,11 +633,21 @@ const parseProfitChartContent = (
 			isReplayTrade: isReplay,
 		}
 
-		if (exitDate) trade.exitDate = exitDate
-		if (exitPrice !== null && exitPrice !== 0) trade.exitPrice = exitPrice
-		if (pnl !== null) trade.pnl = pnl
-		if (mfe !== null && mfe > 0) trade.mfe = mfe
-		if (mae !== null && mae < 0) trade.mae = Math.abs(mae) // MAE should be positive in our system
+		if (exitDate) {
+			trade.exitDate = exitDate
+		}
+		if (exitPrice !== null && exitPrice !== 0) {
+			trade.exitPrice = exitPrice
+		}
+		if (pnl !== null) {
+			trade.pnl = pnl
+		}
+		if (mfe !== null && mfe > 0) {
+			trade.mfe = mfe
+		}
+		if (mae !== null && mae < 0) {
+			trade.mae = Math.abs(mae)
+		} // MAE should be positive in our system
 
 		result.trades.push(trade)
 	}
@@ -683,9 +727,11 @@ const parseStandardContent = (
 	// Parse data rows
 	for (let i = 1; i < lines.length; i++) {
 		const rowNumber = i + 1
-		const line = lines[i].trim()
+		const line = lines[i]!.trim()
 
-		if (!line) continue
+		if (!line) {
+			continue
+		}
 
 		const values = parseCSVLine(line, delimiter)
 		const trade: Partial<CsvTradeInput> = {}

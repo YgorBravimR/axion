@@ -96,15 +96,21 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 					getUserAccounts(),
 					getCurrentAccount(),
 				])
-				if (!mounted) return
+				if (!mounted) {
+					return
+				}
 				setAccounts(accountsData)
 				setCurrentAccount(currentAccountData)
 			} finally {
-				if (mounted) setIsLoading(false)
+				if (mounted) {
+					setIsLoading(false)
+				}
 			}
 		}
-		fetchData()
-		return () => { mounted = false }
+		void fetchData()
+		return () => {
+			mounted = false
+		}
 	}, [])
 
 	const handleSwitchAccount = (accountId: string) => {
@@ -126,7 +132,9 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 	}
 
 	const handleCreateAccount = () => {
-		if (!createForm.name.trim()) return
+		if (!createForm.name.trim()) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await createAccount({
@@ -171,7 +179,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 			<div
 				className={cn(
 					"flex items-center justify-center",
-					isCollapsed ? "h-10 w-10" : "h-10 w-full px-s-300"
+					isCollapsed ? "h-10 w-10" : "px-s-300 h-10 w-full"
 				)}
 			>
 				<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
@@ -250,17 +258,17 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 				<DropdownMenuTrigger asChild>
 					<button
 						type="button"
-						className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 flex w-full items-center gap-s-200 rounded-md px-s-300 py-s-200 text-left text-small"
+						className="text-txt-200 hover:bg-bg-300 hover:text-txt-100 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center rounded-md text-left"
 						disabled={isPending}
 						aria-label={t("switchAccount")}
 					>
-						<AccountIcon className="h-4 w-4 flex-shrink-0" />
+						<AccountIcon className="h-4 w-4 shrink-0" />
 						<span className="flex-1 truncate">
 							{currentAccount?.name || t("noAccount")}
 						</span>
 						<ChevronDown
 							className={cn(
-								"h-4 w-4 flex-shrink-0 transition-transform",
+								"h-4 w-4 shrink-0 transition-transform",
 								isOpen && "rotate-180"
 							)}
 						/>
@@ -287,7 +295,7 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 								<div className="flex-1 truncate">
 									<p className="truncate">{account.name}</p>
 									{account.accountType === "prop" && account.propFirmName && (
-										<p className="text-txt-300 truncate text-tiny">
+										<p className="text-txt-300 text-tiny truncate">
 											{account.propFirmName}
 										</p>
 									)}
@@ -327,12 +335,16 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 // Dialog component for creating accounts
 interface CreateAccountDialogProps {
 	isOpen: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	form: CreateAccountForm
-	setForm: (value: CreateAccountForm | ((prev: CreateAccountForm) => CreateAccountForm)) => void
+	setForm: (
+		_value:
+			| CreateAccountForm
+			| ((_prev: CreateAccountForm) => CreateAccountForm)
+	) => void
 	onSubmit: () => void
 	isPending: boolean
-	t: (key: string) => string
+	t: (_key: string) => string
 	isPremium: boolean
 }
 
@@ -393,20 +405,20 @@ const CreateAccountDialog = ({
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="personal">
-									<div className="flex items-center gap-s-200">
+									<div className="gap-s-200 flex items-center">
 										<User className="h-4 w-4" />
 										{t("personal")}
 									</div>
 								</SelectItem>
 								<SelectItem value="prop">
-									<div className="flex items-center gap-s-200">
+									<div className="gap-s-200 flex items-center">
 										<Building2 className="h-4 w-4" />
 										{t("propFirm")}
 									</div>
 								</SelectItem>
 								{isPremium && (
 									<SelectItem value="replay">
-										<div className="flex items-center gap-s-200">
+										<div className="gap-s-200 flex items-center">
 											<RotateCcw className="h-4 w-4" />
 											{t("replay")}
 										</div>
@@ -504,7 +516,9 @@ const CreateAccountDialog = ({
 						onClick={onSubmit}
 						disabled={!form.name.trim() || isPending}
 					>
-						{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+						{isPending && (
+							<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						)}
 						{t("createAccount")}
 					</Button>
 				</div>

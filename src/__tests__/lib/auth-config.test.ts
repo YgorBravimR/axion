@@ -69,7 +69,7 @@ describe("authConfig CSRF audit (Fix 5)", () => {
 	it("should not contain a csrfTokenSecret override that disables protection", () => {
 		// NextAuth v5 manages CSRF internally. The config should not contain
 		// a custom csrfTokenSecret set to an empty string, which would weaken it.
-		const config = authConfig as Record<string, unknown>
+		const config = authConfig as unknown as Record<string, unknown>
 
 		if ("csrfTokenSecret" in config) {
 			expect(typeof config.csrfTokenSecret).not.toBe("string")
@@ -80,7 +80,7 @@ describe("authConfig CSRF audit (Fix 5)", () => {
 	})
 
 	it("should not set trustHost to false (required for CSRF validation on custom domains)", () => {
-		const config = authConfig as Record<string, unknown>
+		const config = authConfig as unknown as Record<string, unknown>
 
 		if ("trustHost" in config) {
 			expect(config.trustHost).not.toBe(false)

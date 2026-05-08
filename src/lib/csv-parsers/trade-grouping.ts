@@ -16,9 +16,14 @@ import type {
  * Formula: sum(qty * price) / sum(qty)
  */
 const calculateWeightedAveragePrice = (executions: RawExecution[]): number => {
-	if (executions.length === 0) return 0
+	if (executions.length === 0) {
+		return 0
+	}
 
-	const totalValue = executions.reduce((sum, ex) => sum + ex.quantity * ex.price, 0)
+	const totalValue = executions.reduce(
+		(sum, ex) => sum + ex.quantity * ex.price,
+		0
+	)
 	const totalQty = executions.reduce((sum, ex) => sum + ex.quantity, 0)
 
 	return totalQty > 0 ? totalValue / totalQty : 0
@@ -54,7 +59,9 @@ const createGroupedExecutions = (
 	const totalCommission = executions.reduce((sum, ex) => sum + ex.commission, 0)
 
 	const times = executions.map(parseExecutionTime)
-	const firstExecutionTime = new Date(Math.min(...times.map((t) => t.getTime())))
+	const firstExecutionTime = new Date(
+		Math.min(...times.map((t) => t.getTime()))
+	)
 	const lastExecutionTime = new Date(Math.max(...times.map((t) => t.getTime())))
 
 	return {
@@ -78,7 +85,9 @@ const createGroupedExecutions = (
 export const groupExecutionsIntoTrades = (
 	executions: RawExecution[]
 ): GroupedTrade[] => {
-	if (executions.length === 0) return []
+	if (executions.length === 0) {
+		return []
+	}
 
 	// Group by (asset, date)
 	const assetDateGroups: Map<string, RawExecution[]> = new Map()
@@ -103,36 +112,40 @@ export const groupExecutionsIntoTrades = (
 		})
 
 		// Determine entry and exit sides
-		let entryExecutions: RawExecution[] = []
-		let exitExecutions: RawExecution[] = []
+		const entryExecutions: RawExecution[] = []
+		const exitExecutions: RawExecution[] = []
 
 		// First execution determines direction
 		if (sorted.length > 0) {
-			const firstSide = sorted[0].side
+			const firstSide = sorted[0]!.side
 
 			// Collect consecutive executions with same side as entry
 			let i = 0
-			while (i < sorted.length && sorted[i].side === firstSide) {
-				entryExecutions.push(sorted[i])
+			while (i < sorted.length && sorted[i]!.side === firstSide) {
+				entryExecutions.push(sorted[i]!)
 				i++
 			}
 
 			// Rest are exits (if any)
 			while (i < sorted.length) {
-				exitExecutions.push(sorted[i])
+				exitExecutions.push(sorted[i]!)
 				i++
 			}
 		}
 
 		// Skip if no entry
-		if (entryExecutions.length === 0) continue
+		if (entryExecutions.length === 0) {
+			continue
+		}
 
 		// Build trade
 		const entryGroup = createGroupedExecutions(entryExecutions)
-		const exitGroup = exitExecutions.length > 0 ? createGroupedExecutions(exitExecutions) : null
+		const exitGroup =
+			exitExecutions.length > 0 ? createGroupedExecutions(exitExecutions) : null
 
 		// Determine direction based on first execution
-		const direction: "long" | "short" = entryExecutions[0].side === "BUY" ? "long" : "short"
+		const direction: "long" | "short" =
+			entryExecutions[0]!.side === "BUY" ? "long" : "short"
 
 		// Calculate P&L
 		const entryPrice = entryGroup.weightedAveragePrice
@@ -140,7 +153,10 @@ export const groupExecutionsIntoTrades = (
 
 		let grossPnl: number | null = null
 		if (exitPrice !== null) {
-			const tradedQuantity = Math.min(entryGroup.totalQuantity, exitGroup!.totalQuantity)
+			const tradedQuantity = Math.min(
+				entryGroup.totalQuantity,
+				exitGroup!.totalQuantity
+			)
 			if (direction === "long") {
 				grossPnl = (exitPrice - entryPrice) * tradedQuantity
 			} else {
@@ -148,7 +164,8 @@ export const groupExecutionsIntoTrades = (
 			}
 		}
 
-		const totalCommission = entryGroup.totalCommission + (exitGroup?.totalCommission ?? 0)
+		const totalCommission =
+			entryGroup.totalCommission + (exitGroup?.totalCommission ?? 0)
 		const netPnl = grossPnl !== null ? grossPnl - totalCommission : null
 
 		// Generate warnings
@@ -172,8 +189,8 @@ export const groupExecutionsIntoTrades = (
 		}
 
 		trades.push({
-			asset: groupExecutions[0].asset,
-			date: groupExecutions[0].date,
+			asset: groupExecutions[0]!.asset,
+			date: groupExecutions[0]!.date,
 			entryGroup,
 			exitGroup,
 			grossPnl,
@@ -209,7 +226,9 @@ export const createImportPreview = (
 
 	const globalWarnings: string[] = []
 	if (warningTrades > 0) {
-		globalWarnings.push(`${warningTrades} trades have warnings (partial exits or open positions)`)
+		globalWarnings.push(
+			`${warningTrades} trades have warnings (partial exits or open positions)`
+		)
 	}
 
 	return {
@@ -249,7 +268,6 @@ export const calculateRMetrics = (trade: GroupedTrade) => {
 	// netPnl = (exit - entry) * qty - commission
 	// realizedR = netPnl / ((exit - entry) * qty)
 
-	const direction = trade.direction
 	const grossPnl = trade.grossPnl ?? 0
 
 	// Risk is implicitly 1R (the realized gross P&L per contract)

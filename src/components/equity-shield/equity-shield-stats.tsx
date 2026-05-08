@@ -27,7 +27,7 @@ const StatCard = memo(({
 	variant = "default",
 }: StatCardProps) => {
 	const valueClass = cn(
-		"text-body sm:text-h3 font-semibold",
+		"text-body sm:text-h3 font-semibold tabular-nums truncate",
 		variant === "positive" && "text-trade-buy",
 		variant === "negative" && "text-trade-sell",
 		variant === "pass" && "text-trade-buy",
@@ -77,7 +77,7 @@ const PassFailBadge = memo(({
 					)}
 					<span
 						className={cn(
-							"text-body font-semibold",
+							"text-body font-semibold truncate",
 							wouldPass ? "text-trade-buy" : "text-trade-sell"
 						)}
 					>
@@ -121,7 +121,7 @@ const EquityShieldStats = ({
 			</h2>
 
 			{/* Top row: Key comparisons */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 [&>div]:min-w-0 [&>div]:overflow-hidden">
 				<StatCard label={t("totalTrades")} value={String(stats.totalTrades)} />
 				<StatCard
 					label={t("observedMDD")}
@@ -142,7 +142,7 @@ const EquityShieldStats = ({
 			</div>
 
 			{/* Method comparison row */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-3">
+			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 [&>div]:min-w-0 [&>div]:overflow-hidden">
 				{/* Original */}
 				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
 					<h3 className="text-small text-acc-100 font-semibold">

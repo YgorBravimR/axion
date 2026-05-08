@@ -6,14 +6,21 @@ import {
 	decimal,
 	integer,
 	bigint,
+	smallint,
+	numeric,
 	timestamp,
 	boolean,
 	jsonb,
 	pgEnum,
 	index,
 	uniqueIndex,
+	primaryKey,
+	date,
+	foreignKey,
 } from "drizzle-orm/pg-core"
+import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
+import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 
 // Enums
 export const tradeDirectionEnum = pgEnum("trade_direction", ["long", "short"])
@@ -77,6 +84,37 @@ export const bugReportStatusEnum = pgEnum("bug_report_status", [
 	"closed",
 ])
 
+// Capital Event Type Enum (Annual Reporting Phase 1)
+export const capitalEventTypeEnum = pgEnum("capital_event_type", ["deposit", "withdrawal"])
+
+// DARF Payment Status Enum (BR Tax Engine Phase 1)
+export const darfStatusEnum = pgEnum("darf_status", [
+	"pending",
+	"paid",
+	"exempt",
+	"overdue",
+])
+
+// Fractal Planning Cascade — Phase 1 enums
+export const snapshotReasonEnum = pgEnum("snapshot_reason", [
+	"month_start",
+	"drawdown_trigger",
+	"manual",
+])
+
+export const planMoodEnum = pgEnum("plan_mood", [
+	"focused",
+	"neutral",
+	"distracted",
+	"risk_off",
+])
+
+export const tierChangeReasonEnum = pgEnum("tier_change_reason", [
+	"month_start",
+	"drawdown_trigger",
+	"manual",
+])
+
 // ==========================================
 // AUTH TABLES (Phase 10)
 // ==========================================
@@ -128,29 +166,11 @@ export const tradingAccounts = pgTable(
 		propFirmName: text("prop_firm_name"), // encrypted
 		profitSharePercentage: text("profit_share_percentage").default("100.00").notNull(), // encrypted
 
-		// Tax settings (per account, encrypted)
-		dayTradeTaxRate: text("day_trade_tax_rate").default("20.00").notNull(), // encrypted
-		swingTradeTaxRate: text("swing_trade_tax_rate").default("15.00").notNull(), // encrypted
+		// Tax rates intentionally NOT stored — sourced from @/lib/tax/legal-rates by
+		// year (Lei 11.033/2004). Single source of truth across cockpit, reports,
+		// and recompute. Per-account override removed 2026-05-07.
 
-		// @deprecated Risk settings — replaced by monthlyPlans. Kept for migration compatibility.
-		defaultRiskPerTrade: decimal("default_risk_per_trade", { precision: 5, scale: 2 }),
-		/** @deprecated Use monthlyPlans.dailyLossCents instead */
-		maxDailyLoss: text("max_daily_loss"), // cents (encrypted)
-		/** @deprecated Use monthlyPlans.maxDailyTrades instead */
-		maxDailyTrades: integer("max_daily_trades"),
-		/** @deprecated Use monthlyPlans.monthlyLossCents instead */
-		maxMonthlyLoss: text("max_monthly_loss"), // cents (encrypted)
-		/** @deprecated Use monthlyPlans.allowSecondOpAfterLoss instead */
-		allowSecondOpAfterLoss: boolean("allow_second_op_after_loss").default(true),
-		/** @deprecated Use monthlyPlans.reduceRiskAfterLoss instead */
-		reduceRiskAfterLoss: boolean("reduce_risk_after_loss").default(false),
-		/** @deprecated Use monthlyPlans.riskReductionFactor instead */
-		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }),
 		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
-
-		// Global default fees for this account (encrypted)
-		defaultCommission: text("default_commission").default("0").notNull(), // cents per contract (encrypted)
-		defaultFees: text("default_fees").default("0").notNull(), // cents per contract (encrypted)
 
 		// Breakeven classification: trades within ±N ticks of entry are classified as breakeven
 		defaultBreakevenTicks: integer("default_breakeven_ticks").default(2).notNull(),
@@ -162,6 +182,26 @@ export const tradingAccounts = pgTable(
 		showTaxEstimates: boolean("show_tax_estimates").default(true).notNull(),
 		showPropCalculations: boolean("show_prop_calculations").default(true).notNull(),
 		brand: varchar("brand", { length: 20 }).default("bravo").notNull(),
+
+		// Annual Reporting: account lifecycle anchor + withdrawal configuration
+		/** First month the account was active (1–12). Used to hide pre-start months. */
+		accountStartMonth: smallint("account_start_month"),
+
+		/** First year the account was active (e.g. 2025). */
+		accountStartYear: smallint("account_start_year"),
+
+		/**
+		 * Opening balance in cents at account start.
+		 * Seeds the patrimônio chain for the first active month.
+		 * Plain BIGINT — no encryption (consistent with aggregate tables).
+		 */
+		startingBalanceCents: bigint("starting_balance_cents", { mode: "number" }),
+
+		/**
+		 * Percentage of net profit to target for withdrawal each month.
+		 * "30.00" = 30%. Null or "0" disables the withdrawal line entirely.
+		 */
+		withdrawalTargetPercent: numeric("withdrawal_target_percent", { precision: 5, scale: 2 }).default("30.00"),
 
 		// Replay mode: the effective "today" for this account
 		replayCurrentDate: timestamp("replay_current_date", { withTimezone: true }),
@@ -256,9 +296,8 @@ export const accountAssets = pgTable(
 
 		isEnabled: boolean("is_enabled").default(true).notNull(),
 
-		// Per-asset fee overrides (NULL = use account default)
-		commissionOverride: integer("commission_override"), // cents, NULL = use account default
-		feesOverride: integer("fees_override"), // cents, NULL = use account default
+		// Per-asset breakeven override (NULL = use account default). Fee overrides
+		// migrated to accountFeeRates table (Phase 3 of fee-config unification).
 		breakevenTicksOverride: integer("breakeven_ticks_override"), // NULL = use account default
 
 		notes: text("notes"),
@@ -369,7 +408,14 @@ export const strategies = pgTable(
 		entryCriteria: text("entry_criteria"),
 		exitCriteria: text("exit_criteria"),
 		riskRules: text("risk_rules"),
-		targetRMultiple: decimal("target_r_multiple", { precision: 8, scale: 2 }),
+		// R-multiple template (Fractal Planning Cascade — Phase 1).
+		// All nullable; populated via Phase 3 backfill (existing targetRMultiple → finalR).
+		stopR: decimal("stop_r", { precision: 8, scale: 2 }),
+		partialR: decimal("partial_r", { precision: 8, scale: 2 }),
+		partialProportion: decimal("partial_proportion", { precision: 4, scale: 3 }),
+		finalR: decimal("final_r", { precision: 8, scale: 2 }),
+		protectionR: decimal("protection_r", { precision: 8, scale: 2 }),
+		defaultInstrumentSymbol: varchar("default_instrument_symbol", { length: 20 }),
 		maxRiskPercent: decimal("max_risk_percent", { precision: 5, scale: 2 }),
 		screenshotUrl: varchar("screenshot_url", { length: 500 }),
 		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
@@ -424,10 +470,18 @@ export const trades = pgTable(
 		// Results (encrypted)
 		pnl: text("pnl"), // cents (encrypted)
 		pnlPercent: decimal("pnl_percent", { precision: 8, scale: 4 }),
+		// Points P&L — computed at trade-save time via point-values resolver.
+		// NULL = not yet computed or asset has no known point-value mapping.
+		pointsPnl: decimal("points_pnl", { precision: 10, scale: 2 }),
 		realizedRMultiple: decimal("realized_r_multiple", {
 			precision: 8,
 			scale: 2,
 		}),
+		// Fractal Planning Cascade — Phase 1.
+		// 1R captured at entry from resolveDay(today).oneRCents and frozen.
+		// rOutcome = pnl / oneRSnapshotCents, populated on close.
+		oneRSnapshotCents: bigint("one_r_snapshot_cents", { mode: "number" }),
+		rOutcome: decimal("r_outcome", { precision: 8, scale: 2 }),
 		outcome: tradeOutcomeEnum("outcome"),
 
 		// MFE/MAE (prices, not money)
@@ -700,65 +754,6 @@ export const checklistCompletions = pgTable(
 	]
 )
 
-/**
- * @deprecated Replaced by monthlyPlans. Kept for migration compatibility and historical data.
- */
-export const dailyTargets = pgTable(
-	"daily_targets",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		userId: text("user_id").notNull(),
-		accountId: uuid("account_id")
-			.notNull()
-			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
-		profitTarget: integer("profit_target"), // cents
-		lossLimit: integer("loss_limit"), // cents (stored as positive)
-		maxTrades: integer("max_trades"),
-		maxConsecutiveLosses: integer("max_consecutive_losses"),
-		accountBalance: integer("account_balance"), // cents
-		isActive: boolean("is_active").default(true).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-	},
-	(table) => [
-		index("daily_targets_user_idx").on(table.userId),
-		index("daily_targets_account_idx").on(table.accountId),
-		uniqueIndex("daily_targets_account_unique_idx").on(table.accountId),
-	]
-)
-
-// Daily Account Notes Table (pre/post market notes)
-export const dailyAccountNotes = pgTable(
-	"daily_account_notes",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		userId: text("user_id").notNull(),
-		accountId: uuid("account_id").references(() => tradingAccounts.id, {
-			onDelete: "cascade",
-		}),
-		date: timestamp("date", { withTimezone: true }).notNull(),
-		preMarketNotes: text("pre_market_notes"),
-		postMarketNotes: text("post_market_notes"),
-		mood: varchar("mood", { length: 20 }), // 'great' | 'good' | 'neutral' | 'bad' | 'terrible'
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-	},
-	(table) => [
-		index("daily_account_notes_user_idx").on(table.userId),
-		index("daily_account_notes_account_idx").on(table.accountId),
-		index("daily_account_notes_date_idx").on(table.date),
-		uniqueIndex("daily_account_notes_unique_idx").on(table.accountId, table.date),
-	]
-)
-
 // Daily Asset Settings Table (per-asset trading rules, per-day)
 export const dailyAssetSettings = pgTable(
 	"daily_asset_settings",
@@ -837,12 +832,9 @@ export const riskManagementProfiles = pgTable(
 			.references(() => users.id, { onDelete: "cascade" }),
 		isActive: boolean("is_active").default(true).notNull(),
 
-		// Top-level limits (relational for quick queries)
-		baseRiskCents: integer("base_risk_cents").notNull(),
-		dailyLossCents: integer("daily_loss_cents").notNull(),
-		weeklyLossCents: integer("weekly_loss_cents"), // nullable
-		monthlyLossCents: integer("monthly_loss_cents").notNull(),
-		dailyProfitTargetCents: integer("daily_profit_target_cents"), // nullable
+		// Phase 4b: top-level cents columns dropped — caps now live on the fractal cascade
+		// (yearlyPlans.defaultDailyLossR / defaultMonthlyLossR / etc.). Decision tree is
+		// rebased to R-multiples via scripts/migrate-decision-tree-cents-to-r.ts.
 
 		// Decision tree config (JSON stored as text — matches dailyChecklists.items pattern)
 		decisionTree: text("decision_tree").notNull(), // JSON: DecisionTreeConfig
@@ -856,58 +848,406 @@ export const riskManagementProfiles = pgTable(
 	]
 )
 
-// Monthly Plans Table (monthly risk configuration per account)
-export const monthlyPlans = pgTable(
-	"monthly_plans",
+// ==========================================
+// BR TAX ENGINE TABLES (Phase 1)
+// ==========================================
+
+// ─── Account Fee Rates ────────────────────────────────────────────────────────
+// Per-account (optionally per-asset) brokerage and exchange fee configuration.
+// Single source of truth for the BR tax engine — supersedes tradingAccounts.dayTradeTaxRate.
+export const accountFeeRates = pgTable(
+	"account_fee_rates",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+
+		// NULL = applies to all assets on this account
+		assetSymbol: varchar("asset_symbol", { length: 20 }),
+
+		// Per-contract rates in cents (BRL). e.g. 5 = R$0.05
+		txCorretagemCents: integer("tx_corretagem_cents").default(5).notNull(),
+		txRegistroCents: integer("tx_registro_cents").default(74).notNull(),
+		emolumentosCents: integer("emolumentos_cents").default(40).notNull(),
+
+		// ISS as a percentage of txCorretagem (municipal tax, NOT flat per contract).
+		// São Paulo default = 5.00 → ISS = txCorretagem × 0.05
+		issRatePercent: decimal("iss_rate_percent", { precision: 5, scale: 2 })
+			.default("5.00")
+			.notNull(),
+
+		// IRRF withheld at source: basis points. 100 = 1.00%
+		irrfRateBps: integer("irrf_rate_bps").default(100).notNull(),
+
+		// Day-trade IR rate: basis points. 2000 = 20.00%
+		irRateBps: integer("ir_rate_bps").default(2000).notNull(),
+
+		// false for prop accounts — firm handles IR, personal DARF skipped
+		subjectToPersonalIr: boolean("subject_to_personal_ir").default(true).notNull(),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("account_fee_rates_account_idx").on(table.accountId),
+		uniqueIndex("account_fee_rates_account_asset_idx").on(
+			table.accountId,
+			table.assetSymbol,
+		),
+	],
+)
+
+// ─── Monthly Tax Ledger ───────────────────────────────────────────────────────
+// Materialized per-account-month tax summary. Recomputed lazily on read when dirty.
+export const monthlyTaxLedger = pgTable(
+	"monthly_tax_ledger",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+
+		// First day of the month, UTC midnight
+		month: timestamp("month", { withTimezone: true }).notNull(),
+
+		// ── Gross P&L ────────────────────────────────────────────────────────────
+		// Sum of day-trade pnl for all closes in this month, before fees/taxes
+		grossGainCents: bigint("gross_gain_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Fees ─────────────────────────────────────────────────────────────────
+		totalTxCorretagemCents: bigint("total_tx_corretagem_cents", { mode: "number" }).default(0).notNull(),
+		totalTxRegistroCents: bigint("total_tx_registro_cents", { mode: "number" }).default(0).notNull(),
+		totalEmolumentosCents: bigint("total_emolumentos_cents", { mode: "number" }).default(0).notNull(),
+		// ISS = totalTxCorretagem × issRatePercent/100. Municipal tax, informational deduction.
+		totalIssCents: bigint("total_iss_cents", { mode: "number" }).default(0).notNull(),
+		// Sum of all four fee columns above
+		totalFeesCents: bigint("total_fees_cents", { mode: "number" }).default(0).notNull(),
+
+		totalContractsExecuted: decimal("total_contracts_executed", { precision: 20, scale: 4 })
+			.default("0")
+			.notNull(),
+
+		// ── IRRF ─────────────────────────────────────────────────────────────────
+		// Sum of 1% × max(0, dailyGrossPnl) for each trading day in month
+		irrfCents: bigint("irrf_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Net gain for IR base ──────────────────────────────────────────────────
+		// grossGainCents − totalFeesCents
+		netGainBeforeCarryoverCents: bigint("net_gain_before_carryover_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Carryover ────────────────────────────────────────────────────────────
+		// Accumulated loss balance at START of this month (positive = loss owed)
+		carryoverInCents: bigint("carryover_in_cents", { mode: "number" }).default(0).notNull(),
+		carryoverConsumedCents: bigint("carryover_consumed_cents", { mode: "number" }).default(0).notNull(),
+		// Remaining carryover passed to next month
+		carryoverOutCents: bigint("carryover_out_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── IR Calculation ────────────────────────────────────────────────────────
+		// max(0, netGainBeforeCarryover − carryoverConsumed)
+		taxableGainCents: bigint("taxable_gain_cents", { mode: "number" }).default(0).notNull(),
+		// taxableGain × irRateBps / 10000
+		irGrossCents: bigint("ir_gross_cents", { mode: "number" }).default(0).notNull(),
+		// max(0, irGross − irrfCents)
+		darfDueCents: bigint("darf_due_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── DARF status ───────────────────────────────────────────────────────────
+		darfStatus: darfStatusEnum("darf_status").default("pending").notNull(),
+		darfDueDate: timestamp("darf_due_date", { withTimezone: true }),
+		darfPaidAt: timestamp("darf_paid_at", { withTimezone: true }),
+		// Actual amount paid (may differ from darfDueCents if trader paid early/late)
+		darfPaidAmountCents: bigint("darf_paid_amount_cents", { mode: "number" }),
+
+		// ── Informational fields ──────────────────────────────────────────────────
+		// Previous month's unpaid DARF balance (display-only, not added to this DARF calc)
+		previousBalanceCents: bigint("previous_balance_cents", { mode: "number" }).default(0).notNull(),
+		// Operational expenses (VPS, data feeds, etc.) — informational, not tax-deductible
+		gastosGeraisCents: bigint("gastos_gerais_cents", { mode: "number" }).default(0).notNull(),
+		// grossGain − totalFees − darfDue − gastosGerais
+		netLiquidCents: bigint("net_liquid_cents", { mode: "number" }).default(0).notNull(),
+
+		// ── Dirty flag ────────────────────────────────────────────────────────────
+		// true = stale, needs recompute before next read
+		isDirty: boolean("is_dirty").default(true).notNull(),
+
+		// ── Audit ─────────────────────────────────────────────────────────────────
+		computedAt: timestamp("computed_at", { withTimezone: true }),
+		tradeCount: integer("trade_count").default(0).notNull(),
+
+		// Fractal Planning Cascade — Phase 1.
+		// Bidirectional link to monthly_plan (auto-set on plan creation when year+month+account match).
+		monthlyPlanId: uuid("monthly_plan_id").references((): AnyPgColumn => monthlyPlan.id, {
+			onDelete: "set null",
+		}),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("monthly_tax_ledger_account_idx").on(table.accountId),
+		uniqueIndex("monthly_tax_ledger_account_month_idx").on(table.accountId, table.month),
+		index("monthly_tax_ledger_darf_status_idx").on(table.darfStatus),
+		index("monthly_tax_ledger_dirty_idx").on(table.isDirty),
+	],
+)
+
+// ==========================================
+// YEARLY PLAN TABLES
+// ==========================================
+
+export type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+
+export const yearlyPlans = pgTable(
+	"yearly_plans",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		accountId: uuid("account_id")
 			.notNull()
 			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
 		year: integer("year").notNull(),
-		month: integer("month").notNull(), // 1-12
 
-		// USER INPUTS (required)
-		accountBalance: text("account_balance").notNull(), // cents (encrypted)
-		riskPerTradePercent: decimal("risk_per_trade_percent", { precision: 5, scale: 2 }).notNull(), // e.g. "1.00" = 1%
-		dailyLossPercent: decimal("daily_loss_percent", { precision: 5, scale: 2 }).notNull(), // e.g. "3.00" = 3%
-		monthlyLossPercent: decimal("monthly_loss_percent", { precision: 5, scale: 2 }).notNull(), // e.g. "10.00" = 10%
+		// Capital settings
+		initialCapitalCents: integer("initial_capital_cents").notNull(),
+		irTaxRate: decimal("ir_tax_rate", { precision: 5, scale: 2 }).notNull().default("30.00"),
+		tradingDaysPerWeek: integer("trading_days_per_week").notNull().default(5),
 
-		// USER INPUTS (optional)
-		dailyProfitTargetPercent: decimal("daily_profit_target_percent", { precision: 5, scale: 2 }), // nullable
-		maxDailyTrades: integer("max_daily_trades"), // overrides auto-derived
-		maxConsecutiveLosses: integer("max_consecutive_losses"),
-		allowSecondOpAfterLoss: boolean("allow_second_op_after_loss").default(true),
-		reduceRiskAfterLoss: boolean("reduce_risk_after_loss").default(false),
-		riskReductionFactor: decimal("risk_reduction_factor", { precision: 5, scale: 2 }), // multiplier per consecutive loss e.g. 0.50
-		increaseRiskAfterWin: boolean("increase_risk_after_win").default(false),
-		capRiskAfterWin: boolean("cap_risk_after_win").default(false),
-		profitReinvestmentPercent: decimal("profit_reinvestment_percent", { precision: 5, scale: 2 }), // % of profit to add/cap next trade's risk
+		// Capital ladder rules (JSONB array of LadderRuleR — money-based tiers)
+		ladderRules: jsonb("ladder_rules").notNull().$type<LadderRuleR[]>(),
+
+		startWeek: integer("start_week").notNull().default(1),
+
+		// Fractal Planning Cascade — Phase 3 defaults.
+		// Year-level R targets that the cascade falls back to when no quarterly /
+		// monthly / weekly / daily override is set. Stored as decimal R-multiples.
+		defaultDailyLossR: decimal("default_daily_loss_r", { precision: 5, scale: 2 }),
+		defaultDailyWinR: decimal("default_daily_win_r", { precision: 5, scale: 2 }),
+		defaultWeeklyLossR: decimal("default_weekly_loss_r", { precision: 5, scale: 2 }),
+		defaultWeeklyWinR: decimal("default_weekly_win_r", { precision: 5, scale: 2 }),
+		defaultMonthlyLossR: decimal("default_monthly_loss_r", { precision: 5, scale: 2 }),
+		defaultMonthlyWinR: decimal("default_monthly_win_r", { precision: 5, scale: 2 }),
+
+		// Phase 4b — adaptive behavior defaults (cascade fallback for live circuit breaker)
+		defaultRiskProfileId: uuid("default_risk_profile_id"),
+		defaultMaxConsecutiveLosses: integer("default_max_consecutive_losses"),
+		defaultAllowSecondOpAfterLoss: boolean("default_allow_second_op_after_loss").default(true),
+		defaultReduceRiskAfterLoss: boolean("default_reduce_risk_after_loss").default(false),
+		defaultRiskReductionFactor: decimal("default_risk_reduction_factor", { precision: 5, scale: 2 }),
+		defaultIncreaseRiskAfterWin: boolean("default_increase_risk_after_win").default(false),
+		defaultCapRiskAfterWin: boolean("default_cap_risk_after_win").default(false),
+		defaultProfitReinvestmentPercent: decimal("default_profit_reinvestment_percent", { precision: 5, scale: 2 }),
+
+		// Aggregate count targets (cascade Σ-aware projections)
+		targetMonthsToYearly: integer("target_months_to_yearly"),
+		targetWeeksToYearly: integer("target_weeks_to_yearly"),
+
 		notes: text("notes"),
-
-		// Risk profile reference (nullable — when set, profile's decision tree governs behavior)
-		riskProfileId: uuid("risk_profile_id").references(() => riskManagementProfiles.id, {
-			onDelete: "set null",
-		}),
-
-		// Weekly loss limit (optional, independent of risk profile)
-		weeklyLossPercent: decimal("weekly_loss_percent", { precision: 5, scale: 2 }), // nullable
-		weeklyLossCents: text("weekly_loss_cents"), // nullable, auto-derived (encrypted)
-
-		// AUTO-DERIVED (computed on save, encrypted)
-		riskPerTradeCents: text("risk_per_trade_cents").notNull(), // round(balance * riskPercent / 100) (encrypted)
-		dailyLossCents: text("daily_loss_cents").notNull(), // round(balance * dailyLossPercent / 100) (encrypted)
-		monthlyLossCents: text("monthly_loss_cents").notNull(), // round(balance * monthlyLossPercent / 100) (encrypted)
-		dailyProfitTargetCents: integer("daily_profit_target_cents"), // nullable
-		derivedMaxDailyTrades: integer("derived_max_daily_trades"), // floor(dailyLossCents / riskPerTradeCents)
 
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},
 	(table) => [
-		index("monthly_plans_account_idx").on(table.accountId),
-		uniqueIndex("monthly_plans_account_year_month_idx").on(table.accountId, table.year, table.month),
+		index("yearly_plans_account_idx").on(table.accountId),
+		uniqueIndex("yearly_plans_account_year_idx").on(table.accountId, table.year),
+		foreignKey({
+			name: "yearly_plans_default_risk_profile_fk",
+			columns: [table.defaultRiskProfileId],
+			foreignColumns: [riskManagementProfiles.id],
+		}).onDelete("set null"),
 	]
+)
+
+// ==========================================
+// FRACTAL PLANNING CASCADE — Phase 1
+// ==========================================
+
+// Quarterly Plan — soft strategic layer (goals, reflection, playbook rotation).
+// No tier math, no caps; pure intent + post-mortem container.
+export const quarterlyPlan = pgTable(
+	"quarterly_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		yearlyPlanId: uuid("yearly_plan_id")
+			.notNull()
+			.references(() => yearlyPlans.id, { onDelete: "cascade" }),
+		quarter: integer("quarter").notNull(),
+
+		goalCents: bigint("goal_cents", { mode: "number" }),
+		reflectionNotes: text("reflection_notes"),
+		postMortemNotes: text("post_mortem_notes"),
+		activePlaybookIds: jsonb("active_playbook_ids").$type<string[]>(),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("quarterly_plan_year_idx").on(table.yearlyPlanId),
+		uniqueIndex("quarterly_plan_year_quarter_idx").on(table.yearlyPlanId, table.quarter),
+	],
+)
+
+// Monthly Plan — tier snapshot (1R + capital frozen at month start) + R-cap overrides.
+// Fractal cascade table. All risk-config flows through resolver (yearly_plans → this table).
+export const monthlyPlan = pgTable(
+	"monthly_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		quarterlyPlanId: uuid("quarterly_plan_id")
+			.notNull()
+			.references(() => quarterlyPlan.id, { onDelete: "cascade" }),
+		year: integer("year").notNull(),
+		month: integer("month").notNull(),
+
+		// Tier snapshot (frozen at month start; refreshed only on drawdown_trigger or manual).
+		snapshotCapitalCents: bigint("snapshot_capital_cents", { mode: "number" }).notNull(),
+		snapshotOneRCents: bigint("snapshot_one_r_cents", { mode: "number" }).notNull(),
+		snapshotTierIndex: integer("snapshot_tier_index").notNull(),
+		snapshotComputedAt: timestamp("snapshot_computed_at", { withTimezone: true }).notNull(),
+		snapshotReason: snapshotReasonEnum("snapshot_reason").notNull(),
+
+		// Override caps (null → fall back to year defaults via cascade resolver)
+		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
+		overrideWeeklyLossR: decimal("override_weekly_loss_r", { precision: 8, scale: 2 }),
+		overrideMonthlyLossR: decimal("override_monthly_loss_r", { precision: 8, scale: 2 }),
+		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Phase 4b — adaptive behavior overrides (cascade winner over yearly defaults)
+		overrideRiskProfileId: uuid("override_risk_profile_id"),
+		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
+		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+		overrideReduceRiskAfterLoss: boolean("override_reduce_risk_after_loss"),
+		overrideRiskReductionFactor: decimal("override_risk_reduction_factor", { precision: 5, scale: 2 }),
+		overrideIncreaseRiskAfterWin: boolean("override_increase_risk_after_win"),
+		overrideCapRiskAfterWin: boolean("override_cap_risk_after_win"),
+		overrideProfitReinvestmentPercent: decimal("override_profit_reinvestment_percent", { precision: 5, scale: 2 }),
+
+		// Set by auto-link rule when matching ledger row exists.
+		monthlyTaxLedgerId: uuid("monthly_tax_ledger_id").references(() => monthlyTaxLedger.id, {
+			onDelete: "set null",
+		}),
+
+		monthlyGoalCents: bigint("monthly_goal_cents", { mode: "number" }),
+		intentNotes: text("intent_notes"),
+		postMortemNotes: text("post_mortem_notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("monthly_plan_quarter_idx").on(table.quarterlyPlanId),
+		uniqueIndex("monthly_plan_quarter_month_idx").on(table.quarterlyPlanId, table.month),
+		index("monthly_plan_year_month_idx").on(table.year, table.month),
+		foreignKey({
+			name: "monthly_plan_override_risk_profile_fk",
+			columns: [table.overrideRiskProfileId],
+			foreignColumns: [riskManagementProfiles.id],
+		}).onDelete("set null"),
+	],
+)
+
+// Weekly Plan — R-based target/actual + override caps (subset of monthly's).
+// Replaces legacy weekly_targets (points-based) which Phase 4 will drop.
+export const weeklyPlan = pgTable(
+	"weekly_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		monthlyPlanId: uuid("monthly_plan_id")
+			.notNull()
+			.references(() => monthlyPlan.id, { onDelete: "cascade" }),
+		isoWeek: integer("iso_week").notNull(),
+		isoYear: integer("iso_year").notNull(),
+
+		targetR: decimal("target_r", { precision: 8, scale: 2 }),
+		actualR: decimal("actual_r", { precision: 8, scale: 2 }),
+		actualSyncedAt: timestamp("actual_synced_at", { withTimezone: true }),
+
+		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
+		overrideWeeklyLossR: decimal("override_weekly_loss_r", { precision: 8, scale: 2 }),
+		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Phase 4b — within-session behavior overrides (subset of monthly)
+		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
+		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+
+		intentNotes: text("intent_notes"),
+		postMortemNotes: text("post_mortem_notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("weekly_plan_month_idx").on(table.monthlyPlanId),
+		uniqueIndex("weekly_plan_month_week_idx").on(table.monthlyPlanId, table.isoWeek, table.isoYear),
+	],
+)
+
+// Daily Plan — pre-market intent + post-market reflection. Lazy-seeded.
+export const dailyPlan = pgTable(
+	"daily_plan",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		weeklyPlanId: uuid("weekly_plan_id")
+			.notNull()
+			.references(() => weeklyPlan.id, { onDelete: "cascade" }),
+		date: date("date").notNull(),
+
+		// Pre-market intent
+		targetR: decimal("target_r", { precision: 8, scale: 2 }),
+		maxTradesToday: integer("max_trades_today"),
+		preMarketNotes: text("pre_market_notes"),
+		mood: planMoodEnum("mood"),
+
+		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
+		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+
+		// Phase 4b — within-session behavior overrides
+		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
+		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+
+		// Post-market actuals (synced from trades)
+		actualR: decimal("actual_r", { precision: 8, scale: 2 }),
+		tradesCount: integer("trades_count"),
+		actualSyncedAt: timestamp("actual_synced_at", { withTimezone: true }),
+		postMarketNotes: text("post_market_notes"),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("daily_plan_week_idx").on(table.weeklyPlanId),
+		uniqueIndex("daily_plan_week_date_idx").on(table.weeklyPlanId, table.date),
+	],
+)
+
+// Tier Change Log — audit trail of every 1R/tier transition.
+export const tierChangeLog = pgTable(
+	"tier_change_log",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		monthlyPlanId: uuid("monthly_plan_id")
+			.notNull()
+			.references(() => monthlyPlan.id, { onDelete: "cascade" }),
+
+		fromTierIndex: integer("from_tier_index").notNull(),
+		toTierIndex: integer("to_tier_index").notNull(),
+		fromOneRCents: bigint("from_one_r_cents", { mode: "number" }).notNull(),
+		toOneRCents: bigint("to_one_r_cents", { mode: "number" }).notNull(),
+		triggerReason: tierChangeReasonEnum("trigger_reason").notNull(),
+		triggeredAt: timestamp("triggered_at", { withTimezone: true }).notNull(),
+	},
+	(table) => [
+		index("tier_change_log_account_idx").on(table.accountId),
+		index("tier_change_log_month_idx").on(table.monthlyPlanId),
+		index("tier_change_log_triggered_at_idx").on(table.triggeredAt),
+	],
 )
 
 // ==========================================
@@ -1042,13 +1382,7 @@ export const userSettings = pgTable("user_settings", {
 		.default("100.00")
 		.notNull(),
 
-	// Tax Settings
-	dayTradeTaxRate: decimal("day_trade_tax_rate", { precision: 5, scale: 2 })
-		.default("20.00")
-		.notNull(),
-	swingTradeTaxRate: decimal("swing_trade_tax_rate", { precision: 5, scale: 2 })
-		.default("15.00")
-		.notNull(),
+	// Tax rates removed — sourced from @/lib/tax/legal-rates by year.
 	taxExemptThreshold: integer("tax_exempt_threshold").default(0).notNull(), // cents
 
 	// Display Preferences
@@ -1299,6 +1633,79 @@ export const priceDataVersions = pgTable(
 )
 
 // ==========================================
+// MATERIALIZED AGGREGATE TABLES (Annual Reporting Phase 0)
+// ==========================================
+
+export const accountMonthlyAggregate = pgTable(
+	"account_monthly_aggregate",
+	{
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		year: smallint("year").notNull(),
+		month: smallint("month").notNull(),
+		grossCents: bigint("gross_cents", { mode: "number" }).notNull().default(0),
+		netCents: bigint("net_cents", { mode: "number" }).notNull().default(0),
+		points: numeric("points", { precision: 12, scale: 2 }).notNull().default("0"),
+		tradingDays: smallint("trading_days").notNull().default(0),
+		gainDays: smallint("gain_days").notNull().default(0),
+		lossDays: smallint("loss_days").notNull().default(0),
+		isDirty: boolean("is_dirty").notNull().default(true),
+		computedAt: timestamp("computed_at", { withTimezone: true }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.year, table.month] }),
+	]
+)
+
+export const accountWeeklyAggregate = pgTable(
+	"account_weekly_aggregate",
+	{
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		isoYear: smallint("iso_year").notNull(),
+		isoWeek: smallint("iso_week").notNull(),
+		grossCents: bigint("gross_cents", { mode: "number" }).notNull().default(0),
+		netCents: bigint("net_cents", { mode: "number" }).notNull().default(0),
+		points: numeric("points", { precision: 12, scale: 2 }).notNull().default("0"),
+		tradingDays: smallint("trading_days").notNull().default(0),
+		gainDays: smallint("gain_days").notNull().default(0),
+		lossDays: smallint("loss_days").notNull().default(0),
+		isDirty: boolean("is_dirty").notNull().default(true),
+		computedAt: timestamp("computed_at", { withTimezone: true }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.isoYear, table.isoWeek] }),
+	]
+)
+
+// ==========================================
+// CAPITAL EVENTS TABLE (Annual Reporting Phase 1)
+// ==========================================
+
+export const accountCapitalEvents = pgTable(
+	"account_capital_events",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		eventType: capitalEventTypeEnum("event_type").notNull(),
+		// Always positive; direction implied by eventType.
+		// Plain BIGINT (no encryption) — consistent with aggregate tables.
+		amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
+		eventDate: date("event_date").notNull(),  // actual transfer date, not log date
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("ace_account_date_idx").on(table.accountId, table.eventDate),
+	]
+)
+
+// ==========================================
 // RELATIONS
 // ==========================================
 
@@ -1327,12 +1734,11 @@ export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many 
 	accountAssets: many(accountAssets),
 	accountTimeframes: many(accountTimeframes),
 	dailyChecklists: many(dailyChecklists),
-	dailyTargets: many(dailyTargets),
-	dailyAccountNotes: many(dailyAccountNotes),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
-	monthlyPlans: many(monthlyPlans),
 	notaImports: many(notaImports),
+	accountFeeRates: many(accountFeeRates),
+	monthlyTaxLedger: many(monthlyTaxLedger),
 }))
 
 // Session Relations
@@ -1480,20 +1886,6 @@ export const checklistCompletionsRelations = relations(checklistCompletions, ({ 
 	}),
 }))
 
-export const dailyTargetsRelations = relations(dailyTargets, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [dailyTargets.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
-
-export const dailyAccountNotesRelations = relations(dailyAccountNotes, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [dailyAccountNotes.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
-
 export const accountAssetSettingsRelations = relations(accountAssetSettings, ({ one }) => ({
 	account: one(tradingAccounts, {
 		fields: [accountAssetSettings.accountId],
@@ -1517,12 +1909,11 @@ export const dailyAssetSettingsRelations = relations(dailyAssetSettings, ({ one 
 }))
 
 // Risk Management Profiles Relations
-export const riskManagementProfilesRelations = relations(riskManagementProfiles, ({ one, many }) => ({
+export const riskManagementProfilesRelations = relations(riskManagementProfiles, ({ one }) => ({
 	createdBy: one(users, {
 		fields: [riskManagementProfiles.createdByUserId],
 		references: [users.id],
 	}),
-	monthlyPlans: many(monthlyPlans),
 }))
 
 // Nota Imports Relations
@@ -1533,16 +1924,29 @@ export const notaImportsRelations = relations(notaImports, ({ one }) => ({
 	}),
 }))
 
-// Monthly Plans Relations
-export const monthlyPlansRelations = relations(monthlyPlans, ({ one }) => ({
+// Account Fee Rates Relations
+export const accountFeeRatesRelations = relations(accountFeeRates, ({ one }) => ({
 	account: one(tradingAccounts, {
-		fields: [monthlyPlans.accountId],
+		fields: [accountFeeRates.accountId],
 		references: [tradingAccounts.id],
 	}),
-	riskProfile: one(riskManagementProfiles, {
-		fields: [monthlyPlans.riskProfileId],
-		references: [riskManagementProfiles.id],
+}))
+
+// Monthly Tax Ledger Relations
+export const monthlyTaxLedgerRelations = relations(monthlyTaxLedger, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [monthlyTaxLedger.accountId],
+		references: [tradingAccounts.id],
 	}),
+}))
+
+// Yearly Plan Relations
+export const yearlyPlansRelations = relations(yearlyPlans, ({ one, many }) => ({
+	account: one(tradingAccounts, {
+		fields: [yearlyPlans.accountId],
+		references: [tradingAccounts.id],
+	}),
+	quarterlyPlans: many(quarterlyPlan),
 }))
 
 // Playbook Enhancement Relations
@@ -1648,6 +2052,57 @@ export const indicatorDefinitionsRelations = relations(indicatorDefinitions, ({ 
 }))
 
 // ==========================================
+// FRACTAL PLANNING CASCADE — Phase 1 relations
+// ==========================================
+
+export const quarterlyPlanRelations = relations(quarterlyPlan, ({ one, many }) => ({
+	yearlyPlan: one(yearlyPlans, {
+		fields: [quarterlyPlan.yearlyPlanId],
+		references: [yearlyPlans.id],
+	}),
+	months: many(monthlyPlan),
+}))
+
+export const monthlyPlanRelations = relations(monthlyPlan, ({ one, many }) => ({
+	quarterlyPlan: one(quarterlyPlan, {
+		fields: [monthlyPlan.quarterlyPlanId],
+		references: [quarterlyPlan.id],
+	}),
+	taxLedger: one(monthlyTaxLedger, {
+		fields: [monthlyPlan.monthlyTaxLedgerId],
+		references: [monthlyTaxLedger.id],
+	}),
+	weeklyPlans: many(weeklyPlan),
+	tierChanges: many(tierChangeLog),
+}))
+
+export const weeklyPlanRelations = relations(weeklyPlan, ({ one, many }) => ({
+	monthlyPlan: one(monthlyPlan, {
+		fields: [weeklyPlan.monthlyPlanId],
+		references: [monthlyPlan.id],
+	}),
+	dailyPlans: many(dailyPlan),
+}))
+
+export const dailyPlanRelations = relations(dailyPlan, ({ one }) => ({
+	weeklyPlan: one(weeklyPlan, {
+		fields: [dailyPlan.weeklyPlanId],
+		references: [weeklyPlan.id],
+	}),
+}))
+
+export const tierChangeLogRelations = relations(tierChangeLog, ({ one }) => ({
+	account: one(tradingAccounts, {
+		fields: [tierChangeLog.accountId],
+		references: [tradingAccounts.id],
+	}),
+	monthlyPlan: one(monthlyPlan, {
+		fields: [tierChangeLog.monthlyPlanId],
+		references: [monthlyPlan.id],
+	}),
+}))
+
+// ==========================================
 // TYPE EXPORTS
 // ==========================================
 
@@ -1714,22 +2169,14 @@ export type NewDailyChecklist = typeof dailyChecklists.$inferInsert
 export type ChecklistCompletion = typeof checklistCompletions.$inferSelect
 export type NewChecklistCompletion = typeof checklistCompletions.$inferInsert
 
-/** @deprecated Use MonthlyPlan instead */
-export type DailyTarget = typeof dailyTargets.$inferSelect
-/** @deprecated Use NewMonthlyPlan instead */
-export type NewDailyTarget = typeof dailyTargets.$inferInsert
-
-export type DailyAccountNote = typeof dailyAccountNotes.$inferSelect
-export type NewDailyAccountNote = typeof dailyAccountNotes.$inferInsert
-
 export type DailyAssetSetting = typeof dailyAssetSettings.$inferSelect
 export type NewDailyAssetSetting = typeof dailyAssetSettings.$inferInsert
 
 export type AccountAssetSetting = typeof accountAssetSettings.$inferSelect
 export type NewAccountAssetSetting = typeof accountAssetSettings.$inferInsert
 
-export type MonthlyPlan = typeof monthlyPlans.$inferSelect
-export type NewMonthlyPlan = typeof monthlyPlans.$inferInsert
+export type YearlyPlan = typeof yearlyPlans.$inferSelect
+export type NewYearlyPlan = typeof yearlyPlans.$inferInsert
 
 export type RiskManagementProfileRow = typeof riskManagementProfiles.$inferSelect
 export type NewRiskManagementProfileRow = typeof riskManagementProfiles.$inferInsert
@@ -1773,3 +2220,24 @@ export type NewIndicatorDefinition = typeof indicatorDefinitions.$inferInsert
 
 export type PriceDataVersion = typeof priceDataVersions.$inferSelect
 export type NewPriceDataVersion = typeof priceDataVersions.$inferInsert
+
+// ==========================================
+// FRACTAL PLANNING CASCADE — Phase 1 inferred types
+// ==========================================
+
+export type QuarterlyPlan = typeof quarterlyPlan.$inferSelect
+export type NewQuarterlyPlan = typeof quarterlyPlan.$inferInsert
+
+// Fractal monthly_plan keeps FractalMonthlyPlan naming for clarity vs legacy
+// `monthly_plans` table that was dropped in Phase 4b.
+export type FractalMonthlyPlan = typeof monthlyPlan.$inferSelect
+export type NewFractalMonthlyPlan = typeof monthlyPlan.$inferInsert
+
+export type WeeklyPlan = typeof weeklyPlan.$inferSelect
+export type NewWeeklyPlan = typeof weeklyPlan.$inferInsert
+
+export type DailyPlan = typeof dailyPlan.$inferSelect
+export type NewDailyPlan = typeof dailyPlan.$inferInsert
+
+export type TierChangeLog = typeof tierChangeLog.$inferSelect
+export type NewTierChangeLog = typeof tierChangeLog.$inferInsert

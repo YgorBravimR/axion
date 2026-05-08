@@ -4,34 +4,18 @@ import { db } from "@/db/drizzle"
 import { trades, tradingAccounts } from "@/db/schema"
 import { eq, and, gte, desc, inArray } from "drizzle-orm"
 import { subDays } from "date-fns"
-import { fromCents } from "@/lib/money"
 import { calculateWinRate } from "@/lib/calculations"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import {
 	detectAllPatterns,
-	type CoachingInsight,
 	type TradeForCoaching,
 } from "@/lib/coaching/pattern-detector"
-import {
-	buildCoachingPrompt,
-	type CoachingPrompt,
-} from "@/lib/coaching/prompt-builder"
+import { buildCoachingPrompt } from "@/lib/coaching/prompt-builder"
 import { computeOverallStats } from "@/lib/analytics-helpers"
-import type { ActionResponse, OverallStats } from "@/types"
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface CoachingContext {
-	insights: CoachingInsight[]
-	prompt: CoachingPrompt
-	stats: OverallStats | null
-	tradeCount: number
-	periodDays: number
-}
+import type { ActionResponse } from "@/types"
+import type { CoachingContext } from "./coaching.types"
 
 // ============================================================================
 // SERVER ACTION
@@ -44,7 +28,7 @@ interface CoachingContext {
  *
  * @param days - Number of days to analyze (default: 90)
  */
-const getCoachingContext = async (
+export const getCoachingContext = async (
 	days = 90
 ): Promise<ActionResponse<CoachingContext>> => {
 	try {
@@ -127,10 +111,14 @@ const getCoachingContext = async (
 		// Compute top assets
 		const assetMap = new Map<string, { wins: number; total: number }>()
 		for (const trade of allTrades) {
-			if (trade.outcome !== "win" && trade.outcome !== "loss") continue
+			if (trade.outcome !== "win" && trade.outcome !== "loss") {
+				continue
+			}
 			const entry = assetMap.get(trade.asset) || { wins: 0, total: 0 }
 			entry.total++
-			if (trade.outcome === "win") entry.wins++
+			if (trade.outcome === "win") {
+				entry.wins++
+			}
 			assetMap.set(trade.asset, entry)
 		}
 
@@ -173,13 +161,12 @@ const getCoachingContext = async (
 			},
 		}
 	} catch (error) {
-		if (!isFrameworkSignal(error))
+		if (!isFrameworkSignal(error)) {
 			console.error("Error generating coaching context:", error)
+		}
 		return {
 			status: "error",
 			message: "Failed to generate coaching context",
 		}
 	}
 }
-
-export { getCoachingContext, type CoachingContext }

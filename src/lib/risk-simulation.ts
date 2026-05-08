@@ -85,9 +85,13 @@ const buildOriginalStats = (
 			rCount++
 		}
 		equity += trade.pnlCents
-		if (equity > peak) peak = equity
+		if (equity > peak) {
+			peak = equity
+		}
 		const dd = calculateDrawdown(equity, peak)
-		if (dd > maxDd) maxDd = dd
+		if (dd > maxDd) {
+			maxDd = dd
+		}
 	}
 
 	const totalDecided = wins + losses
@@ -130,16 +134,20 @@ const runSimpleSimulation = (
 	} = params
 
 	// Derived cent values
-	const baseRiskCents = Math.round(accountBalanceCents * riskPerTradePercent / 100)
-	const dailyLossCents = Math.round(accountBalanceCents * dailyLossPercent / 100)
+	const baseRiskCents = Math.round(
+		(accountBalanceCents * riskPerTradePercent) / 100
+	)
+	const dailyLossCents = Math.round(
+		(accountBalanceCents * dailyLossPercent) / 100
+	)
 	const dailyProfitTargetCents = dailyProfitTargetPercent
-		? Math.round(accountBalanceCents * dailyProfitTargetPercent / 100)
+		? Math.round((accountBalanceCents * dailyProfitTargetPercent) / 100)
 		: null
 	const monthlyLossCents = monthlyLossPercent
-		? Math.round(accountBalanceCents * monthlyLossPercent / 100)
+		? Math.round((accountBalanceCents * monthlyLossPercent) / 100)
 		: null
 	const weeklyLossCents = weeklyLossPercent
-		? Math.round(accountBalanceCents * weeklyLossPercent / 100)
+		? Math.round((accountBalanceCents * weeklyLossPercent) / 100)
 		: null
 
 	// Running state
@@ -174,7 +182,7 @@ const runSimpleSimulation = (
 	let daysHitDailyTarget = 0
 
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 		const dayKey = formatDateKey(trade.entryDate)
 		const monthKey = dayKey.slice(0, 7)
 		const weekKey = buildWeekKey(trade.entryDate)
@@ -182,8 +190,12 @@ const runSimpleSimulation = (
 		// ── Day boundary reset ──
 		if (dayKey !== currentDayKey) {
 			// Track previous day's limit/target hits
-			if (currentDayKey && dailyLimitHit) daysHitDailyLimit++
-			if (currentDayKey && dailyTargetHit) daysHitDailyTarget++
+			if (currentDayKey && dailyLimitHit) {
+				daysHitDailyLimit++
+			}
+			if (currentDayKey && dailyTargetHit) {
+				daysHitDailyTarget++
+			}
 
 			currentDayKey = dayKey
 			dailyPnlCents = 0
@@ -228,14 +240,20 @@ const runSimpleSimulation = (
 			skipStatus = "skipped_daily_limit"
 			skippedDailyLimit++
 			dailyLimitHit = true
-		} else if (dailyTargetHit || (dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents)) {
+		} else if (
+			dailyTargetHit ||
+			(dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents)
+		) {
 			skipStatus = "skipped_daily_target"
 			skippedDailyTarget++
 			dailyTargetHit = true
 		} else if (maxDailyTrades && dailyTradeCount > maxDailyTrades) {
 			skipStatus = "skipped_max_trades"
 			skippedMaxTrades++
-		} else if (maxConsecutiveLosses && consecutiveLosses >= maxConsecutiveLosses) {
+		} else if (
+			maxConsecutiveLosses &&
+			consecutiveLosses >= maxConsecutiveLosses
+		) {
 			skipStatus = "skipped_consecutive_loss"
 			skippedConsecutiveLoss++
 		}
@@ -286,14 +304,23 @@ const runSimpleSimulation = (
 				baseRiskCents * Math.pow(riskReductionFactor, consecutiveLosses)
 			)
 			riskReason = `riskSimulation.reasons.reducedLoss|${consecutiveLosses}|${Math.pow(riskReductionFactor, consecutiveLosses).toFixed(2)}`
-		} else if (increaseRiskAfterWin && lastOutcome === "win" && profitReinvestmentPercent && lastSimulatedPnlCents > 0) {
-			const bonus = Math.round(lastSimulatedPnlCents * (profitReinvestmentPercent / 100))
+		} else if (
+			increaseRiskAfterWin &&
+			lastOutcome === "win" &&
+			profitReinvestmentPercent &&
+			lastSimulatedPnlCents > 0
+		) {
+			const bonus = Math.round(
+				lastSimulatedPnlCents * (profitReinvestmentPercent / 100)
+			)
 			adjustedRiskCents = baseRiskCents + bonus
 			riskReason = `riskSimulation.reasons.winBonus|${profitReinvestmentPercent}`
 		}
 
 		// Minimum 1 cent risk
-		if (adjustedRiskCents < 1) adjustedRiskCents = 1
+		if (adjustedRiskCents < 1) {
+			adjustedRiskCents = 1
+		}
 
 		// ── CALCULATE POSITION + P&L ──
 		const sizing = calculateTickBasedPositionSize({
@@ -319,13 +346,16 @@ const runSimpleSimulation = (
 
 		const simulatedPnlCents = Math.round(pnlResult.netPnl * 100)
 		const simulatedOutcome = determineOutcome({ pnl: pnlResult.netPnl })
-		const simulatedRMultiple = sizing.actualRiskCents > 0
-			? calculateRMultiple(simulatedPnlCents, sizing.actualRiskCents)
-			: null
+		const simulatedRMultiple =
+			sizing.actualRiskCents > 0
+				? calculateRMultiple(simulatedPnlCents, sizing.actualRiskCents)
+				: null
 
 		// ── UPDATE STATE ──
 		equity += simulatedPnlCents
-		if (equity > peak) peak = equity
+		if (equity > peak) {
+			peak = equity
+		}
 		dailyPnlCents += simulatedPnlCents
 		monthlyPnlCents += simulatedPnlCents
 		weeklyPnlCents += simulatedPnlCents
@@ -340,8 +370,12 @@ const runSimpleSimulation = (
 		lastSimulatedPnlCents = simulatedPnlCents
 
 		// Check if limits were just hit
-		if (dailyPnlCents <= -dailyLossCents) dailyLimitHit = true
-		if (dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents) dailyTargetHit = true
+		if (dailyPnlCents <= -dailyLossCents) {
+			dailyLimitHit = true
+		}
+		if (dailyProfitTargetCents && dailyPnlCents >= dailyProfitTargetCents) {
+			dailyTargetHit = true
+		}
 
 		const drawdownPercent = calculateDrawdown(equity, peak)
 
@@ -380,8 +414,12 @@ const runSimpleSimulation = (
 	}
 
 	// Final day boundary counters
-	if (currentDayKey && dailyLimitHit) daysHitDailyLimit++
-	if (currentDayKey && dailyTargetHit) daysHitDailyTarget++
+	if (currentDayKey && dailyLimitHit) {
+		daysHitDailyLimit++
+	}
+	if (currentDayKey && dailyTargetHit) {
+		daysHitDailyTarget++
+	}
 
 	// ── BUILD WEEK/DAY TRACE ──
 	const weeks = buildWeekTraces(trades, simulatedTrades)
@@ -392,7 +430,8 @@ const runSimpleSimulation = (
 
 	const summary: SimulationSummary = {
 		totalTrades: trades.length,
-		executedTrades: simulatedTrades.filter((t) => t.status === "executed").length,
+		executedTrades: simulatedTrades.filter((t) => t.status === "executed")
+			.length,
 		skippedNoSl,
 		skippedDailyLimit,
 		skippedDailyTarget,
@@ -402,12 +441,16 @@ const runSimpleSimulation = (
 		skippedWeeklyLimit,
 		originalTotalPnlCents: originalStats.totalPnlCents,
 		originalWinRate: originalStats.winRate,
-		originalProfitFactor: originalStats.profitFactor === Infinity ? 999 : originalStats.profitFactor,
+		originalProfitFactor:
+			originalStats.profitFactor === Infinity
+				? 999
+				: originalStats.profitFactor,
 		originalMaxDrawdownPercent: originalStats.maxDrawdownPercent,
 		originalAvgR: originalStats.avgR,
 		simulatedTotalPnlCents: simStats.totalPnlCents,
 		simulatedWinRate: simStats.winRate,
-		simulatedProfitFactor: simStats.profitFactor === Infinity ? 999 : simStats.profitFactor,
+		simulatedProfitFactor:
+			simStats.profitFactor === Infinity ? 999 : simStats.profitFactor,
 		simulatedMaxDrawdownPercent: simStats.maxDrawdownPercent,
 		simulatedAvgR: simStats.avgR,
 		pnlDeltaCents: simStats.totalPnlCents - originalStats.totalPnlCents,
@@ -415,12 +458,13 @@ const runSimpleSimulation = (
 		daysHitDailyTarget,
 	}
 
-	const dateRange = trades.length > 0
-		? {
-				from: formatDateKey(trades[0].entryDate),
-				to: formatDateKey(trades[trades.length - 1].entryDate),
-			}
-		: { from: "", to: "" }
+	const dateRange =
+		trades.length > 0
+			? {
+					from: formatDateKey(trades[0]!.entryDate),
+					to: formatDateKey(trades[trades.length - 1]!.entryDate),
+				}
+			: { from: "", to: "" }
 
 	return {
 		params,
@@ -471,14 +515,21 @@ const buildSimulatedStats = (
 			rCount++
 		}
 		equity += pnl
-		if (equity > peak) peak = equity
+		if (equity > peak) {
+			peak = equity
+		}
 		const dd = calculateDrawdown(equity, peak)
-		if (dd > maxDd) maxDd = dd
+		if (dd > maxDd) {
+			maxDd = dd
+		}
 	}
 
 	const totalDecided = wins + losses
 	return {
-		totalPnlCents: executed.reduce((sum, t) => sum + (t.simulatedPnlCents ?? 0), 0),
+		totalPnlCents: executed.reduce(
+			(sum, t) => sum + (t.simulatedPnlCents ?? 0),
+			0
+		),
 		winRate: totalDecided > 0 ? (wins / totalDecided) * 100 : 0,
 		profitFactor:
 			grossLossCents > 0
@@ -507,8 +558,12 @@ const buildWeekTraces = (
 	const weekMap = new Map<string, DayTrace[]>()
 
 	for (const [dayKey, dayTrades] of dayMap) {
-		const firstTrade = originalTrades.find((t) => formatDateKey(t.entryDate) === dayKey)
-		if (!firstTrade) continue
+		const firstTrade = originalTrades.find(
+			(t) => formatDateKey(t.entryDate) === dayKey
+		)
+		if (!firstTrade) {
+			continue
+		}
 
 		const weekKey = buildWeekKey(firstTrade.entryDate)
 		const executedTrades = dayTrades.filter((t) => t.status === "executed")
@@ -519,11 +574,18 @@ const buildWeekTraces = (
 			weekKey,
 			trades: dayTrades,
 			dayResult: {
-				totalPnlCents: executedTrades.reduce((sum, t) => sum + (t.simulatedPnlCents ?? 0), 0),
+				totalPnlCents: executedTrades.reduce(
+					(sum, t) => sum + (t.simulatedPnlCents ?? 0),
+					0
+				),
 				executedCount: executedTrades.length,
 				skippedCount: skippedTrades.length,
-				hitDailyLimit: dayTrades.some((t) => t.status === "skipped_daily_limit"),
-				hitDailyTarget: dayTrades.some((t) => t.status === "skipped_daily_target"),
+				hitDailyLimit: dayTrades.some(
+					(t) => t.status === "skipped_daily_limit"
+				),
+				hitDailyTarget: dayTrades.some(
+					(t) => t.status === "skipped_daily_target"
+				),
 				finalPhase: dayTrades[dayTrades.length - 1]?.dayPhase ?? "normal",
 			},
 		}
@@ -555,4 +617,10 @@ const buildWeekTraces = (
 	return weeks.toSorted((a, b) => a.weekKey.localeCompare(b.weekKey))
 }
 
-export { runSimpleSimulation, buildWeekKey, buildWeekTraces, buildSimulatedStats, buildOriginalStats }
+export {
+	runSimpleSimulation,
+	buildWeekKey,
+	buildWeekTraces,
+	buildSimulatedStats,
+	buildOriginalStats,
+}

@@ -16,7 +16,7 @@ interface ImageLightboxProps {
 	images: LightboxImage[]
 	initialIndex?: number
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 }
 
 /**
@@ -35,7 +35,9 @@ const ImageLightbox = ({
 
 	// Reset to initial index when opening
 	useEffect(() => {
-		if (open) setCurrentIndex(initialIndex)
+		if (open) {
+			setCurrentIndex(initialIndex)
+		}
 	}, [open, initialIndex])
 
 	const hasMultiple = images.length > 1
@@ -50,17 +52,25 @@ const ImageLightbox = ({
 
 	// Keyboard navigation
 	useEffect(() => {
-		if (!open || !hasMultiple) return
+		if (!open || !hasMultiple) {
+			return
+		}
 
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "ArrowLeft") handlePrev()
-			if (e.key === "ArrowRight") handleNext()
+			if (e.key === "ArrowLeft") {
+				handlePrev()
+			}
+			if (e.key === "ArrowRight") {
+				handleNext()
+			}
 		}
 		document.addEventListener("keydown", handleKeyDown)
 		return () => document.removeEventListener("keydown", handleKeyDown)
 	}, [open, hasMultiple, handlePrev, handleNext])
 
-	if (images.length === 0) return null
+	if (images.length === 0) {
+		return null
+	}
 
 	const current = images[currentIndex]
 
@@ -80,6 +90,7 @@ const ImageLightbox = ({
 				<div className="p-m-500 relative h-full w-full overflow-auto">
 					{/* Current image */}
 					<div className="flex min-h-full w-full items-center justify-center">
+						{/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded image blob/URL, dimensions unknown at render time */}
 						<img
 							src={current?.src}
 							alt={

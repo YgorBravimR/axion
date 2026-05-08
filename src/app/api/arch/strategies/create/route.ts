@@ -14,7 +14,9 @@ import type { CreateStrategyInput } from "@/lib/validations/strategy"
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -33,7 +35,7 @@ const POST = async (request: NextRequest) => {
 				entryCriteria: strategyData.entryCriteria,
 				exitCriteria: strategyData.exitCriteria,
 				riskRules: strategyData.riskRules,
-				targetRMultiple: strategyData.targetRMultiple?.toString(),
+				finalR: strategyData.finalR?.toString(),
 				maxRiskPercent: strategyData.maxRiskPercent?.toString(),
 				screenshotUrl: strategyData.screenshotUrl || null,
 				screenshotS3Key: strategyData.screenshotS3Key || null,
@@ -41,6 +43,14 @@ const POST = async (request: NextRequest) => {
 				isActive: strategyData.isActive,
 			})
 			.returning()
+
+		if (!newStrategy) {
+			return archError(
+				"Failed to create strategy",
+				[{ code: "CREATE_FAILED", detail: "Insert returned no row" }],
+				500
+			)
+		}
 
 		if (conditions?.length) {
 			await db.insert(strategyConditions).values(
@@ -65,14 +75,16 @@ const POST = async (request: NextRequest) => {
 		return archSuccess("Strategy created successfully", createdStrategy)
 	} catch (error) {
 		if (error instanceof Error && error.name === "ZodError") {
-			return archError(
-				"Validation failed",
-				[{ code: "VALIDATION_ERROR", detail: error.message }]
-			)
+			return archError("Validation failed", [
+				{ code: "VALIDATION_ERROR", detail: error.message },
+			])
 		}
 
 		const errorMessage = String(error)
-		const errorCause = error instanceof Error ? String(error.cause ?? "") : ""
+		const errorCause =
+			error instanceof Error && error.cause instanceof Error
+				? error.cause.message
+				: ""
 
 		if (
 			errorMessage.includes("23505") ||
@@ -81,7 +93,12 @@ const POST = async (request: NextRequest) => {
 		) {
 			return archError(
 				"Strategy code already exists",
-				[{ code: "DUPLICATE_CODE", detail: "A strategy with this code already exists for your account" }],
+				[
+					{
+						code: "DUPLICATE_CODE",
+						detail: "A strategy with this code already exists for your account",
+					},
+				],
 				409
 			)
 		}

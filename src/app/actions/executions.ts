@@ -2,7 +2,7 @@
 
 import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
-import { tradeExecutions, trades } from "@/db/schema"
+import { tradeExecutions, trades, assets } from "@/db/schema"
 import type { TradeExecution } from "@/db/schema"
 import type { ActionResponse, ExecutionSummary } from "@/types"
 import {
@@ -14,11 +14,18 @@ import {
 import { eq, asc, and } from "drizzle-orm"
 import { toCents, fromCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, encryptExecutionFields, decryptExecutionFields } from "@/lib/user-crypto"
+import {
+	getUserDek,
+	encryptExecutionFields,
+	decryptExecutionFields,
+} from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
-import { calculateAssetPnL, determineOutcome, calculateExecutionSummary } from "@/lib/calculations"
-import { assets } from "@/db/schema"
+import {
+	calculateAssetPnL,
+	determineOutcome,
+	calculateExecutionSummary,
+} from "@/lib/calculations"
 import { getBreakevenTicks } from "@/app/actions/accounts"
 
 /**
@@ -32,7 +39,10 @@ const calculateExecutionValue = (price: number, quantity: number): number => {
  * Update trade aggregates from executions, including P&L recalculation.
  * Called after every create/update/delete on executions to keep trade in sync.
  */
-export const updateTradeAggregates = async (tradeId: string, dek: string | null): Promise<void> => {
+export const updateTradeAggregates = async (
+	tradeId: string,
+	dek: string | null
+): Promise<void> => {
 	const rawExecutions = await db.query.tradeExecutions.findMany({
 		where: eq(tradeExecutions.tradeId, tradeId),
 		orderBy: [asc(tradeExecutions.executionDate)],
@@ -40,7 +50,13 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 
 	// Decrypt execution fields if DEK is available
 	const executions = dek
-		? rawExecutions.map((ex) => decryptExecutionFields(ex as unknown as Record<string, unknown>, dek) as unknown as TradeExecution)
+		? rawExecutions.map(
+				(ex) =>
+					decryptExecutionFields(
+						ex as unknown as Record<string, unknown>,
+						dek
+					) as unknown as TradeExecution
+			)
 		: rawExecutions
 
 	if (executions.length === 0) {
@@ -69,23 +85,31 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 		where: eq(trades.id, tradeId),
 	})
 
-	if (!trade) return
+	if (!trade) {
+		return
+	}
 
 	// Sort executions by date for entry/exit date extraction
 	const entries = executions.filter((e) => e.executionType === "entry")
 	const exits = executions.filter((e) => e.executionType === "exit")
 
-	const earliestEntryDate = entries.length > 0
-		? entries.reduce((earliest, e) =>
-			new Date(e.executionDate) < new Date(earliest.executionDate) ? e : earliest
-		).executionDate
-		: trade.entryDate
+	const earliestEntryDate =
+		entries.length > 0
+			? entries.reduce((earliest, e) =>
+					new Date(e.executionDate) < new Date(earliest.executionDate)
+						? e
+						: earliest
+				).executionDate
+			: trade.entryDate
 
-	const latestExitDate = exits.length > 0
-		? exits.reduce((latest, e) =>
-			new Date(e.executionDate) > new Date(latest.executionDate) ? e : latest
-		).executionDate
-		: null
+	const latestExitDate =
+		exits.length > 0
+			? exits.reduce((latest, e) =>
+					new Date(e.executionDate) > new Date(latest.executionDate)
+						? e
+						: latest
+				).executionDate
+			: null
 
 	// Use pre-computed values from summary
 	const { totalCommission, totalFees } = summary
@@ -101,7 +125,8 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 			where: eq(assets.symbol, trade.asset),
 		})
 
-		const contractsExecuted = summary.totalEntryQuantity + summary.totalExitQuantity
+		const contractsExecuted =
+			summary.totalEntryQuantity + summary.totalExitQuantity
 		let ticksGained: number | null = null
 
 		if (assetConfig) {
@@ -121,9 +146,10 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 			ticksGained = result.ticksGained
 		} else {
 			// Fallback: simple P&L calculation
-			const priceDiff = trade.direction === "long"
-				? summary.avgExitPrice - summary.avgEntryPrice
-				: summary.avgEntryPrice - summary.avgExitPrice
+			const priceDiff =
+				trade.direction === "long"
+					? summary.avgExitPrice - summary.avgEntryPrice
+					: summary.avgEntryPrice - summary.avgExitPrice
 			const grossPnl = priceDiff * summary.totalEntryQuantity
 			pnl = toCents(grossPnl) - totalCommission - totalFees
 		}
@@ -133,7 +159,9 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 
 		// Calculate realized R-multiple if stop loss is set
 		if (trade.stopLoss && summary.avgEntryPrice > 0) {
-			const riskPerUnit = Math.abs(summary.avgEntryPrice - Number(trade.stopLoss))
+			const riskPerUnit = Math.abs(
+				summary.avgEntryPrice - Number(trade.stopLoss)
+			)
 			const riskAmount = riskPerUnit * summary.totalEntryQuantity
 			if (riskAmount > 0) {
 				const rMultiple = fromCents(pnl) / riskAmount
@@ -142,9 +170,6 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 		}
 	}
 
-	// Determine position status string for the positionStatus field
-	const positionStatus = summary.positionStatus
-
 	// Update trade with all aggregated data
 	await db
 		.update(trades)
@@ -152,15 +177,19 @@ export const updateTradeAggregates = async (tradeId: string, dek: string | null)
 			totalEntryQuantity: summary.totalEntryQuantity.toString(),
 			totalExitQuantity: summary.totalExitQuantity.toString(),
 			avgEntryPrice: summary.avgEntryPrice.toString(),
-			avgExitPrice: summary.avgExitPrice > 0 ? summary.avgExitPrice.toString() : null,
+			avgExitPrice:
+				summary.avgExitPrice > 0 ? summary.avgExitPrice.toString() : null,
 			remainingQuantity: summary.remainingQuantity.toString(),
 			// Backwards-compatible fields
 			entryPrice: summary.avgEntryPrice.toString(),
-			exitPrice: summary.avgExitPrice > 0 ? summary.avgExitPrice.toString() : null,
+			exitPrice:
+				summary.avgExitPrice > 0 ? summary.avgExitPrice.toString() : null,
 			positionSize: summary.totalEntryQuantity.toString(),
-			contractsExecuted: (summary.totalEntryQuantity + summary.totalExitQuantity).toString(),
+			contractsExecuted: (
+				summary.totalEntryQuantity + summary.totalExitQuantity
+			).toString(),
 			// P&L and outcome recalculation
-			pnl: pnl != null ? String(pnl) : null,
+			pnl: pnl !== null ? String(pnl) : null,
 			outcome,
 			realizedRMultiple,
 			// Aggregated costs from executions
@@ -212,7 +241,13 @@ export const createExecution = async (
 
 			// Decrypt to get numeric quantity values
 			const existingExecutions = dek
-				? rawExistingExecutions.map((ex) => decryptExecutionFields(ex as unknown as Record<string, unknown>, dek) as unknown as TradeExecution)
+				? rawExistingExecutions.map(
+						(ex) =>
+							decryptExecutionFields(
+								ex as unknown as Record<string, unknown>,
+								dek
+							) as unknown as TradeExecution
+					)
 				: rawExistingExecutions
 
 			const totalEntryQty = existingExecutions
@@ -228,10 +263,12 @@ export const createExecution = async (
 				return {
 					status: "error",
 					message: t("errors.exitQuantityExceeds", { qty: remainingQty }),
-					errors: [{
-						code: "EXIT_EXCEEDS_ENTRIES",
-						detail: `Total exit quantity (${totalExitQty + validated.quantity}) would exceed total entry quantity (${totalEntryQty})`,
-					}],
+					errors: [
+						{
+							code: "EXIT_EXCEEDS_ENTRIES",
+							detail: `Total exit quantity (${totalExitQty + validated.quantity}) would exceed total entry quantity (${totalEntryQty})`,
+						},
+					],
 				}
 			}
 		}
@@ -250,14 +287,17 @@ export const createExecution = async (
 			validated.quantity
 		)
 		const encryptedFields = dek
-			? encryptExecutionFields({
-				price: validated.price,
-				quantity: validated.quantity,
-				commission: validated.commission,
-				fees: validated.fees,
-				slippage: validated.slippage,
-				executionValue,
-			}, dek)
+			? encryptExecutionFields(
+					{
+						price: validated.price,
+						quantity: validated.quantity,
+						commission: validated.commission,
+						fees: validated.fees,
+						slippage: validated.slippage,
+						executionValue,
+					},
+					dek
+				)
 			: {}
 
 		// Insert execution (convert numeric fields to text for DB storage)
@@ -287,7 +327,10 @@ export const createExecution = async (
 
 		// Decrypt before returning
 		const decryptedExecution = dek
-			? decryptExecutionFields(execution as unknown as Record<string, unknown>, dek) as unknown as TradeExecution
+			? (decryptExecutionFields(
+					execution as unknown as Record<string, unknown>,
+					dek
+				) as unknown as TradeExecution)
 			: execution
 
 		return {
@@ -307,7 +350,12 @@ export const createExecution = async (
 		return {
 			status: "error",
 			message: t("actions.createFailed"),
-			errors: [{ code: "CREATE_FAILED", detail: toSafeErrorMessage(error, "createExecution") }],
+			errors: [
+				{
+					code: "CREATE_FAILED",
+					detail: toSafeErrorMessage(error, "createExecution"),
+				},
+			],
 		}
 	}
 }
@@ -343,7 +391,13 @@ export const updateExecution = async (
 
 		// Decrypt existing execution fields to get numeric values for calculation
 		const existing = dek
-			? { ...decryptExecutionFields(rawExisting as unknown as Record<string, unknown>, dek) as unknown as typeof rawExisting, trade: rawExisting.trade }
+			? {
+					...(decryptExecutionFields(
+						rawExisting as unknown as Record<string, unknown>,
+						dek
+					) as unknown as typeof rawExisting),
+					trade: rawExisting.trade,
+				}
 			: rawExisting
 
 		// Validate exit quantity if the result would be an exit execution
@@ -357,7 +411,13 @@ export const updateExecution = async (
 
 			// Decrypt all executions for quantity calculations
 			const allExecutions = dek
-				? rawAllExecutions.map((ex) => decryptExecutionFields(ex as unknown as Record<string, unknown>, dek) as unknown as TradeExecution)
+				? rawAllExecutions.map(
+						(ex) =>
+							decryptExecutionFields(
+								ex as unknown as Record<string, unknown>,
+								dek
+							) as unknown as TradeExecution
+					)
 				: rawAllExecutions
 
 			const totalEntryQty = allExecutions
@@ -374,10 +434,12 @@ export const updateExecution = async (
 				return {
 					status: "error",
 					message: t("errors.exitQuantityExceeds", { qty: remainingQty }),
-					errors: [{
-						code: "EXIT_EXCEEDS_ENTRIES",
-						detail: `Total exit quantity (${otherExitQty + resultQuantity}) would exceed total entry quantity (${totalEntryQty})`,
-					}],
+					errors: [
+						{
+							code: "EXIT_EXCEEDS_ENTRIES",
+							detail: `Total exit quantity (${otherExitQty + resultQuantity}) would exceed total entry quantity (${totalEntryQty})`,
+						},
+					],
 				}
 			}
 		}
@@ -393,33 +455,47 @@ export const updateExecution = async (
 			updatedAt: new Date(),
 		}
 
-		if (validated.executionType !== undefined)
+		if (validated.executionType !== undefined) {
 			updateData.executionType = validated.executionType
-		if (validated.executionDate !== undefined)
+		}
+		if (validated.executionDate !== undefined) {
 			updateData.executionDate = validated.executionDate
-		if (validated.price !== undefined)
+		}
+		if (validated.price !== undefined) {
 			updateData.price = validated.price.toString()
-		if (validated.quantity !== undefined)
+		}
+		if (validated.quantity !== undefined) {
 			updateData.quantity = validated.quantity.toString()
-		if (validated.orderType !== undefined)
+		}
+		if (validated.orderType !== undefined) {
 			updateData.orderType = validated.orderType
-		if (validated.notes !== undefined) updateData.notes = validated.notes
-		if (validated.commission !== undefined)
+		}
+		if (validated.notes !== undefined) {
+			updateData.notes = validated.notes
+		}
+		if (validated.commission !== undefined) {
 			updateData.commission = validated.commission?.toString() ?? null
-		if (validated.fees !== undefined) updateData.fees = validated.fees?.toString() ?? null
-		if (validated.slippage !== undefined)
+		}
+		if (validated.fees !== undefined) {
+			updateData.fees = validated.fees?.toString() ?? null
+		}
+		if (validated.slippage !== undefined) {
 			updateData.slippage = validated.slippage?.toString() ?? null
+		}
 
 		// Encrypt financial fields if DEK is available
 		const encryptedFields = dek
-			? encryptExecutionFields({
-				price: validated.price,
-				quantity: validated.quantity,
-				commission: validated.commission,
-				fees: validated.fees,
-				slippage: validated.slippage,
-				executionValue,
-			}, dek)
+			? encryptExecutionFields(
+					{
+						price: validated.price,
+						quantity: validated.quantity,
+						commission: validated.commission,
+						fees: validated.fees,
+						slippage: validated.slippage,
+						executionValue,
+					},
+					dek
+				)
 			: {}
 
 		const [execution] = await db
@@ -436,7 +512,10 @@ export const updateExecution = async (
 
 		// Decrypt before returning
 		const decryptedExecution = dek
-			? decryptExecutionFields(execution as unknown as Record<string, unknown>, dek) as unknown as TradeExecution
+			? (decryptExecutionFields(
+					execution as unknown as Record<string, unknown>,
+					dek
+				) as unknown as TradeExecution)
 			: execution
 
 		return {
@@ -448,7 +527,12 @@ export const updateExecution = async (
 		return {
 			status: "error",
 			message: t("actions.updateFailed"),
-			errors: [{ code: "UPDATE_FAILED", detail: toSafeErrorMessage(error, "updateExecution") }],
+			errors: [
+				{
+					code: "UPDATE_FAILED",
+					detail: toSafeErrorMessage(error, "updateExecution"),
+				},
+			],
 		}
 	}
 }
@@ -510,7 +594,12 @@ export const deleteExecution = async (
 		return {
 			status: "error",
 			message: t("actions.deleteFailed"),
-			errors: [{ code: "DELETE_FAILED", detail: toSafeErrorMessage(error, "deleteExecution") }],
+			errors: [
+				{
+					code: "DELETE_FAILED",
+					detail: toSafeErrorMessage(error, "deleteExecution"),
+				},
+			],
 		}
 	}
 }
@@ -546,7 +635,13 @@ export const getExecutions = async (
 		// Decrypt execution fields if DEK is available
 		const dek = await getUserDek(userId)
 		const executions = dek
-			? rawExecutions.map((ex) => decryptExecutionFields(ex as unknown as Record<string, unknown>, dek) as unknown as TradeExecution)
+			? rawExecutions.map(
+					(ex) =>
+						decryptExecutionFields(
+							ex as unknown as Record<string, unknown>,
+							dek
+						) as unknown as TradeExecution
+				)
 			: rawExecutions
 
 		return {
@@ -558,7 +653,12 @@ export const getExecutions = async (
 		return {
 			status: "error",
 			message: t("actions.fetchFailed"),
-			errors: [{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getExecutions") }],
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getExecutions"),
+				},
+			],
 		}
 	}
 }
@@ -594,7 +694,13 @@ export const getExecutionSummary = async (
 		// Decrypt execution fields if DEK is available
 		const dek = await getUserDek(userId)
 		const executions = dek
-			? rawExecutions.map((ex) => decryptExecutionFields(ex as unknown as Record<string, unknown>, dek) as unknown as TradeExecution)
+			? rawExecutions.map(
+					(ex) =>
+						decryptExecutionFields(
+							ex as unknown as Record<string, unknown>,
+							dek
+						) as unknown as TradeExecution
+				)
 			: rawExecutions
 
 		const summary = calculateExecutionSummary(executions)
@@ -608,7 +714,12 @@ export const getExecutionSummary = async (
 		return {
 			status: "error",
 			message: t("actions.calculationFailed"),
-			errors: [{ code: "CALCULATION_FAILED", detail: toSafeErrorMessage(error, "getExecutionSummary") }],
+			errors: [
+				{
+					code: "CALCULATION_FAILED",
+					detail: toSafeErrorMessage(error, "getExecutionSummary"),
+				},
+			],
 		}
 	}
 }
@@ -672,20 +783,27 @@ export const convertToScaledMode = async (
 
 		// Encrypt financial fields if DEK is available
 		const entryEncryptedFields = dek
-			? encryptExecutionFields({
-				price: entryPrice,
-				quantity: positionSize,
-				commission: entryCommission,
-				fees: entryFees,
-				slippage: 0,
-				executionValue: entryValue,
-			}, dek)
+			? encryptExecutionFields(
+					{
+						price: entryPrice,
+						quantity: positionSize,
+						commission: entryCommission,
+						fees: entryFees,
+						slippage: 0,
+						executionValue: entryValue,
+					},
+					dek
+				)
 			: {}
 
 		const [entryExecution] = await db
 			.insert(tradeExecutions)
 			.values({ ...entryInsertValues, ...entryEncryptedFields })
 			.returning()
+
+		if (!entryExecution) {
+			throw new Error("Failed to insert entry execution")
+		}
 
 		createdExecutions.push(entryExecution)
 
@@ -708,20 +826,27 @@ export const convertToScaledMode = async (
 			}
 
 			const exitEncryptedFields = dek
-				? encryptExecutionFields({
-					price: exitPrice,
-					quantity: positionSize,
-					commission: 0,
-					fees: 0,
-					slippage: 0,
-					executionValue: exitValue,
-				}, dek)
+				? encryptExecutionFields(
+						{
+							price: exitPrice,
+							quantity: positionSize,
+							commission: 0,
+							fees: 0,
+							slippage: 0,
+							executionValue: exitValue,
+						},
+						dek
+					)
 				: {}
 
 			const [exitExecution] = await db
 				.insert(tradeExecutions)
 				.values({ ...exitInsertValues, ...exitEncryptedFields })
 				.returning()
+
+			if (!exitExecution) {
+				throw new Error("Failed to insert exit execution")
+			}
 
 			createdExecutions.push(exitExecution)
 		}
@@ -747,7 +872,12 @@ export const convertToScaledMode = async (
 		return {
 			status: "error",
 			message: t("actions.convertFailed"),
-			errors: [{ code: "CONVERT_FAILED", detail: toSafeErrorMessage(error, "convertToScaledMode") }],
+			errors: [
+				{
+					code: "CONVERT_FAILED",
+					detail: toSafeErrorMessage(error, "convertToScaledMode"),
+				},
+			],
 		}
 	}
 }
@@ -797,7 +927,13 @@ export const recalculateTradeFromExecutions = async (
 
 		// Decrypt execution fields if DEK is available
 		const executions = dek
-			? rawExecutions.map((ex) => decryptExecutionFields(ex as unknown as Record<string, unknown>, dek) as unknown as TradeExecution)
+			? rawExecutions.map(
+					(ex) =>
+						decryptExecutionFields(
+							ex as unknown as Record<string, unknown>,
+							dek
+						) as unknown as TradeExecution
+				)
 			: rawExecutions
 
 		const summary = calculateExecutionSummary(executions)
@@ -813,7 +949,12 @@ export const recalculateTradeFromExecutions = async (
 		return {
 			status: "error",
 			message: t("actions.recalculateFailed"),
-			errors: [{ code: "RECALCULATE_FAILED", detail: toSafeErrorMessage(error, "recalculateTradeFromExecutions") }],
+			errors: [
+				{
+					code: "RECALCULATE_FAILED",
+					detail: toSafeErrorMessage(error, "recalculateTradeFromExecutions"),
+				},
+			],
 		}
 	}
 }

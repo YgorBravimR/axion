@@ -6,8 +6,6 @@
  * Shape is directly accessible via `.shape` even on refined/superRefined schemas.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Introspects a Zod schema and returns a Set of field names that are required.
  * Works with ZodObject, including those wrapped in .refine()/.superRefine().
@@ -15,10 +13,13 @@
  * @param schema - Any Zod schema (typically a ZodObject or effects wrapping one)
  * @returns Set of required field name strings
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 schema introspection via internal _zod.def; no stable public types available
 const getRequiredFields = (schema: any): Set<string> => {
 	// In Zod 4, .shape is available directly even on refined schemas
 	const shape = schema?.shape
-	if (!shape || typeof shape !== "object") return new Set()
+	if (!shape || typeof shape !== "object") {
+		return new Set()
+	}
 
 	const required = new Set<string>()
 
@@ -36,13 +37,20 @@ const getRequiredFields = (schema: any): Set<string> => {
  * A field is optional if it uses .optional(), .nullable(), .default(),
  * or is a union that includes z.literal("").
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 schema introspection via internal _zod.def; no stable public types available
 const isOptionalField = (schema: any): boolean => {
 	const typeName = schema?._zod?.def?.type ?? schema?._zod?.type
 
-	if (!typeName) return false
+	if (!typeName) {
+		return false
+	}
 
-	if (typeName === "optional" || typeName === "nullable") return true
-	if (typeName === "default") return true
+	if (typeName === "optional" || typeName === "nullable") {
+		return true
+	}
+	if (typeName === "default") {
+		return true
+	}
 
 	// Unwrap pipe (.pipe()) — check the input side
 	if (typeName === "pipe") {
@@ -51,8 +59,12 @@ const isOptionalField = (schema: any): boolean => {
 
 	// Union — check if any branch is z.literal("")
 	if (typeName === "union") {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 internal union options array has no stable public type
 		const options = schema._zod.def.options as any[]
-		if (!options) return false
+		if (!options) {
+			return false
+		}
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 internal union option has no stable public type
 		return options.some((option: any) => {
 			const optType = option?._zod?.def?.type ?? option?._zod?.type
 			if (optType === "literal") {
@@ -69,6 +81,7 @@ const isOptionalField = (schema: any): boolean => {
 /**
  * Helper to check if a specific field is required in a schema.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 schema introspection via internal _zod.def; no stable public types available
 const isFieldRequired = (schema: any, fieldName: string): boolean => {
 	return getRequiredFields(schema).has(fieldName)
 }

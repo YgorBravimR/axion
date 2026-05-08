@@ -16,8 +16,13 @@ dotenv.config()
 
 const authState = { storageState: "e2e/.auth/user.json" }
 
+interface PhaseDef {
+	name: string
+	testMatch: RegExp
+}
+
 /** Sequential test phases — order matters for data dependencies */
-const orderedPhases = [
+const orderedPhases: readonly [PhaseDef, ...PhaseDef[]] = [
 	{ name: "auth", testMatch: /auth\.spec\.ts/ },
 	{ name: "navigation", testMatch: /navigation\.spec\.ts/ },
 	{ name: "settings", testMatch: /settings\.spec\.ts/ },
@@ -31,9 +36,12 @@ const dataPhases = [
 	{ name: "analytics", testMatch: /analytics\.spec\.ts/ },
 	{ name: "holding-period", testMatch: /holding-period\.spec\.ts/ },
 	{ name: "reports", testMatch: /reports\.spec\.ts/ },
+	{ name: "annual-reporting", testMatch: /annual-reporting\.spec\.ts/ },
 	{ name: "monthly", testMatch: /monthly\.spec\.ts/ },
 	{ name: "command-center", testMatch: /command-center\.spec\.ts/ },
 	{ name: "monthly-plan", testMatch: /monthly-plan\.spec\.ts/ },
+	{ name: "tax-engine", testMatch: /tax-engine\.spec\.ts/ },
+	{ name: "yearly-plan", testMatch: /yearly-plan\.spec\.ts/ },
 	{ name: "monte-carlo", testMatch: /monte-carlo\.spec\.ts/ },
 	{ name: "market-monitor", testMatch: /market-monitor\.spec\.ts/ },
 ]
@@ -53,16 +61,22 @@ const buildDeviceProjects = (device: string, deviceUse: DeviceConfig) => {
 	const prefix = (name: string) => `${device}-${name}`
 
 	// Sequential chain: setup → auth → navigation → settings → playbook → journal
-	const sequential = orderedPhases.map((phase, index) => ({
-		name: prefix(phase.name),
-		testMatch: phase.testMatch,
-		use,
-		dependencies:
-			index === 0 ? ["setup"] : [prefix(orderedPhases[index - 1].name)],
-	}))
+	let prevDependency = "setup"
+	const sequential = orderedPhases.map((phase) => {
+		const name = prefix(phase.name)
+		const project = {
+			name,
+			testMatch: phase.testMatch,
+			use,
+			dependencies: [prevDependency],
+		}
+		prevDependency = name
+		return project
+	})
 
-	// Parallel fan-out: all depend on journal completing
-	const lastOrdered = prefix(orderedPhases[orderedPhases.length - 1].name)
+	// Parallel fan-out: all depend on journal completing.
+	// `prevDependency` now holds the prefixed last sequential name.
+	const lastOrdered = prevDependency
 	const parallel = dataPhases.map((phase) => ({
 		name: prefix(phase.name),
 		testMatch: phase.testMatch,
@@ -75,15 +89,14 @@ const buildDeviceProjects = (device: string, deviceUse: DeviceConfig) => {
 	// so they must wait for the entire ordered chain on this device to finish
 	// before seeding. Non-chromium devices additionally wait for chromium's
 	// self-seeding run to avoid cross-device races on the same admin account.
-	const lastOrderedForSelfSeed = prefix(orderedPhases[orderedPhases.length - 1].name)
 	const selfSeeding = selfSeedingPhases.map((phase) => ({
 		name: prefix(phase.name),
 		testMatch: phase.testMatch,
 		use,
 		dependencies:
 			device === "chromium"
-				? ["setup", lastOrderedForSelfSeed]
-				: ["setup", lastOrderedForSelfSeed, `chromium-${phase.name}`],
+				? ["setup", lastOrdered]
+				: ["setup", lastOrdered, `chromium-${phase.name}`],
 	}))
 
 	return [...sequential, ...parallel, ...selfSeeding]

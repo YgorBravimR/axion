@@ -12,7 +12,9 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 	const t = useTranslations("optimize")
 
 	const stats = useMemo(() => {
-		if (runs.length === 0) return null
+		if (runs.length === 0) {
+			return null
+		}
 
 		const profitable = runs.filter((r) => r.summary.totalPnlCents > 0).length
 		const losing = runs.length - profitable
@@ -22,7 +24,9 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 		return { profitable, losing, bestPF, bestSharpe }
 	}, [runs])
 
-	if (!stats) return null
+	if (!stats) {
+		return null
+	}
 
 	const cards = [
 		{
@@ -53,14 +57,16 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 	]
 
 	return (
-		<div className="grid grid-cols-2 gap-s-300 sm:grid-cols-3 lg:grid-cols-5">
+		<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
 			{cards.map((card) => (
 				<div
 					key={card.label}
-					className="border-bg-300 bg-bg-200 rounded-lg border p-m-300 text-center"
+					className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border text-center"
 				>
 					<p className="text-tiny text-txt-300 mb-s-100">{card.label}</p>
-					<p className={`text-h2 font-semibold tabular-nums ${card.colorClass}`}>
+					<p
+						className={`text-h2 font-semibold tabular-nums ${card.colorClass}`}
+					>
 						{card.value}
 					</p>
 				</div>

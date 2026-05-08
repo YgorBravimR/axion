@@ -28,12 +28,16 @@ let initialized = false
 
 const pushToBuffer = <T>(buffer: T[], entry: T): T[] => {
 	buffer.push(entry)
-	if (buffer.length > MAX_ENTRIES) buffer.shift()
+	if (buffer.length > MAX_ENTRIES) {
+		buffer.shift()
+	}
 	return buffer
 }
 
 const initCapture = () => {
-	if (initialized || typeof window === "undefined") return
+	if (initialized || typeof window === "undefined") {
+		return
+	}
 
 	initialized = true
 

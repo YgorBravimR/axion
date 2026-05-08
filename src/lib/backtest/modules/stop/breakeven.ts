@@ -10,7 +10,9 @@ const shouldTriggerBreakeven = (
 	state: StopState,
 	config: BreakevenConfig
 ): boolean => {
-	if (state.breakevenTriggered) return false
+	if (state.breakevenTriggered) {
+		return false
+	}
 
 	switch (config.type) {
 		case "on_partial":

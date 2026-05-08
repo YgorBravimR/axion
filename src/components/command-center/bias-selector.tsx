@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl"
 
 interface BiasSelectorProps {
 	value: BiasType | null
-	onChange: (value: BiasType | null) => void
+	onChange: (_value: BiasType | null) => void
 	disabled?: boolean
 	compact?: boolean
 }
@@ -138,7 +138,7 @@ export const BiasBadge = ({ bias }: BiasBadgeProps) => {
 	return (
 		<div
 			className={cn(
-				"p-s-100 inline-flex items-center justify-center rounded",
+				"p-s-100 inline-flex items-center justify-center rounded-sm",
 				config.bgColor,
 				config.color
 			)}

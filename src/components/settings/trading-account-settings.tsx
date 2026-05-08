@@ -13,13 +13,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import {
-	getUserSettings,
-	updateUserSettings,
-	type UserSettingsData,
-} from "@/app/actions/settings"
+import { getUserSettings, updateUserSettings } from "@/app/actions/settings"
+import type { UserSettingsData } from "@/app/actions/settings.types"
 import { useToast } from "@/components/ui/toast"
-import { Loader2, Building2, Percent, Calculator } from "lucide-react"
+import { Loader2, Building2, Percent } from "lucide-react"
 
 const PROP_FIRMS_BASE = [
 	{ value: "atom", label: "Atom" },
@@ -36,7 +33,10 @@ export const TradingAccountSettings = () => {
 	const tCommon = useTranslations("common")
 
 	const PROP_FIRMS = useMemo(
-		() => [...PROP_FIRMS_BASE, { value: "other", label: tTrading("propFirms.other") }],
+		() => [
+			...PROP_FIRMS_BASE,
+			{ value: "other", label: tTrading("propFirms.other") },
+		],
 		[tTrading]
 	)
 	const { showToast } = useToast()
@@ -51,15 +51,19 @@ export const TradingAccountSettings = () => {
 		let mounted = true
 		const loadSettings = async () => {
 			const result = await getUserSettings()
-			if (!mounted) return
+			if (!mounted) {
+				return
+			}
 			if (result.status === "success" && result.data) {
 				setSettings(result.data)
 				setEditValues(result.data)
 			}
 			setIsLoading(false)
 		}
-		loadSettings()
-		return () => { mounted = false }
+		void loadSettings()
+		return () => {
+			mounted = false
+		}
 	}, [])
 
 	const handleEdit = () => {
@@ -77,7 +81,9 @@ export const TradingAccountSettings = () => {
 	}
 
 	const handleSave = () => {
-		if (!editValues) return
+		if (!editValues) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await updateUserSettings(editValues)
@@ -100,8 +106,8 @@ export const TradingAccountSettings = () => {
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-txt-300" />
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 flex items-center justify-center rounded-lg border">
+				<Loader2 className="text-txt-300 h-6 w-6 animate-spin motion-reduce:animate-none" />
 			</div>
 		)
 	}
@@ -111,15 +117,22 @@ export const TradingAccountSettings = () => {
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-s-200">
-					<Building2 className="h-5 w-5 text-acc-100" />
-					<h2 className="text-small sm:text-body font-semibold text-txt-100">{t("title")}</h2>
+				<div className="gap-s-200 flex items-center">
+					<Building2 className="text-acc-100 h-5 w-5" />
+					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("title")}
+					</h2>
 				</div>
 				{!isEditing && (
-					<Button id="trading-edit" variant="ghost" size="sm" onClick={handleEdit}>
+					<Button
+						id="trading-edit"
+						variant="ghost"
+						size="sm"
+						onClick={handleEdit}
+					>
 						{tCommon("edit")}
 					</Button>
 				)}
@@ -146,17 +159,19 @@ export const TradingAccountSettings = () => {
 
 				{/* Prop Trading Settings - only show when isPropAccount is true */}
 				{editValues.isPropAccount && (
-					<div
-						className="space-y-m-400 rounded-md border border-acc-100/20 bg-acc-100/5 p-m-400"
-					>
-						<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
-							<Percent className="h-4 w-4 text-acc-100" />
+					<div className="space-y-m-400 border-acc-100/20 bg-acc-100/5 p-m-400 rounded-md border">
+						<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
+							<Percent className="text-acc-100 h-4 w-4" />
 							{t("propSettings")}
 						</h3>
 
 						{/* Prop Firm Name */}
 						<div className="space-y-s-200">
-							<Label id="label-trading-firm-name" htmlFor="propFirm" className="text-small text-txt-200">
+							<Label
+								id="label-trading-firm-name"
+								htmlFor="propFirm"
+								className="text-small text-txt-200"
+							>
 								{t("firmName")}
 							</Label>
 							{isEditing ? (
@@ -180,19 +195,25 @@ export const TradingAccountSettings = () => {
 							) : (
 								<p className="text-small text-txt-100">
 									{PROP_FIRMS.find((f) => f.value === editValues.propFirmName)
-										?.label || editValues.propFirmName || "-"}
+										?.label ||
+										editValues.propFirmName ||
+										"-"}
 								</p>
 							)}
 						</div>
 
 						{/* Profit Share Percentage */}
 						<div className="space-y-s-200">
-							<Label id="label-trading-profit-share" htmlFor="profitShare" className="text-small text-txt-200">
+							<Label
+								id="label-trading-profit-share"
+								htmlFor="profitShare"
+								className="text-small text-txt-200"
+							>
 								{t("profitShare")}
 							</Label>
 							<p className="text-tiny text-txt-300">{t("profitShareHelp")}</p>
 							{isEditing ? (
-								<div className="flex items-center gap-s-200">
+								<div className="gap-s-200 flex items-center">
 									<Input
 										id="profitShare"
 										type="number"
@@ -219,75 +240,10 @@ export const TradingAccountSettings = () => {
 					</div>
 				)}
 
-				{/* Tax Settings */}
-				<div className="space-y-m-400">
-					<h3 className="flex items-center gap-s-200 text-small font-medium text-txt-100">
-						<Calculator className="h-4 w-4 text-acc-100" />
-						{t("taxSettings")}
-					</h3>
-
-					{/* Day Trade Tax Rate */}
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("dayTradeTax")}</p>
-						</div>
-						{isEditing ? (
-							<div className="flex items-center gap-s-200">
-								<Input
-									id="trading-dayTradeTax"
-									type="number"
-									step="0.1"
-									min="0"
-									max="100"
-									value={editValues.dayTradeTaxRate}
-									onChange={(e) =>
-										handleFieldChange("dayTradeTaxRate", Number(e.target.value))
-									}
-									className="w-full sm:w-20 text-right"
-								/>
-								<span className="text-small text-txt-300">%</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{editValues.dayTradeTaxRate}%
-							</span>
-						)}
-					</div>
-
-					{/* Swing Trade Tax Rate */}
-					<div className="flex flex-col gap-s-200 sm:flex-row sm:items-center sm:justify-between sm:gap-m-400">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("swingTradeTax")}</p>
-						</div>
-						{isEditing ? (
-							<div className="flex items-center gap-s-200">
-								<Input
-									id="trading-swingTradeTax"
-									type="number"
-									step="0.1"
-									min="0"
-									max="100"
-									value={editValues.swingTradeTaxRate}
-									onChange={(e) =>
-										handleFieldChange(
-											"swingTradeTaxRate",
-											Number(e.target.value)
-										)
-									}
-									className="w-full sm:w-20 text-right"
-								/>
-								<span className="text-small text-txt-300">%</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{editValues.swingTradeTaxRate}%
-							</span>
-						)}
-					</div>
-				</div>
+				{/* Tax rates sourced from @/lib/tax/legal-rates by year — no per-account override. */}
 
 				{/* Display Preferences */}
-				<div className="space-y-m-400 border-t border-bg-300 pt-m-400">
+				<div className="space-y-m-400 border-bg-300 pt-m-400 border-t">
 					<div className="flex items-center justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("showTaxEstimates")}</p>
@@ -322,7 +278,7 @@ export const TradingAccountSettings = () => {
 
 			{/* Action Buttons */}
 			{isEditing && (
-				<div className="mt-m-500 flex justify-end gap-s-300">
+				<div className="mt-m-500 gap-s-300 flex justify-end">
 					<Button
 						id="trading-cancel"
 						variant="ghost"
@@ -332,7 +288,12 @@ export const TradingAccountSettings = () => {
 					>
 						{tCommon("cancel")}
 					</Button>
-					<Button id="trading-save" size="sm" onClick={handleSave} disabled={isPending}>
+					<Button
+						id="trading-save"
+						size="sm"
+						onClick={handleSave}
+						disabled={isPending}
+					>
 						{isPending ? tCommon("saving") : tCommon("save")}
 					</Button>
 				</div>

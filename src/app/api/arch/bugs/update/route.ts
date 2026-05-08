@@ -20,7 +20,9 @@ const updateSchema = z.object({
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -37,7 +39,9 @@ const POST = async (request: NextRequest) => {
 
 		const baseValues = {
 			handledBy: auth.userId,
-			...(validated.adminNotes !== undefined && { adminNotes: validated.adminNotes }),
+			...(validated.adminNotes !== undefined && {
+				adminNotes: validated.adminNotes,
+			}),
 		}
 
 		const statusValues = (() => {
@@ -45,7 +49,11 @@ const POST = async (request: NextRequest) => {
 				case "accept":
 					return { status: "accepted" as const, acceptedAt: now }
 				case "reject":
-					return { status: "rejected" as const, rejectedAt: now, rejectReason: validated.rejectReason }
+					return {
+						status: "rejected" as const,
+						rejectedAt: now,
+						rejectReason: validated.rejectReason,
+					}
 				case "close":
 					return { status: "closed" as const, closedAt: now }
 			}
@@ -65,7 +73,8 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const actionLabel = validated.action === "close" ? "closed" : `${validated.action}ed`
+		const actionLabel =
+			validated.action === "close" ? "closed" : `${validated.action}ed`
 		return archSuccess(`Bug report ${actionLabel}`, updated)
 	} catch (error) {
 		if (error instanceof z.ZodError) {

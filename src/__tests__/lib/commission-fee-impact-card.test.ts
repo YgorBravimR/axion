@@ -33,7 +33,7 @@
  */
 
 import { describe, it, expect } from "vitest"
-import type { CommissionFeeImpact } from "@/app/actions/reports"
+import type { CommissionFeeImpact } from "@/app/actions/reports.types"
 
 // ---------------------------------------------------------------------------
 // Logic helpers extracted from CommissionFeeImpactCard (mirroring component)
@@ -46,14 +46,21 @@ import type { CommissionFeeImpact } from "@/app/actions/reports"
  * @see src/components/reports/commission-fee-impact-card.tsx
  */
 const getInsightPath = (
-	summary: Pick<CommissionFeeImpact["summary"], "grossPnl" | "totalFees" | "feesAsPercentOfGross">
+	summary: Pick<
+		CommissionFeeImpact["summary"],
+		"grossPnl" | "totalFees" | "feesAsPercentOfGross"
+	>
 ): "negativeGross" | "noGross" | "high" | "moderate" | "low" => {
 	if (summary.grossPnl <= 0 && summary.totalFees > 0) {
 		return summary.grossPnl < 0 ? "negativeGross" : "noGross"
 	}
 
-	if (summary.feesAsPercentOfGross > 15) return "high"
-	if (summary.feesAsPercentOfGross > 5) return "moderate"
+	if (summary.feesAsPercentOfGross > 15) {
+		return "high"
+	}
+	if (summary.feesAsPercentOfGross > 5) {
+		return "moderate"
+	}
 	return "low"
 }
 
@@ -62,9 +69,15 @@ const getInsightPath = (
  *
  * @see src/components/reports/commission-fee-impact-card.tsx
  */
-const getInsightSeverity = (feesAsPercentOfGross: number): "high" | "moderate" | "low" => {
-	if (feesAsPercentOfGross > 15) return "high"
-	if (feesAsPercentOfGross > 5) return "moderate"
+const getInsightSeverity = (
+	feesAsPercentOfGross: number
+): "high" | "moderate" | "low" => {
+	if (feesAsPercentOfGross > 15) {
+		return "high"
+	}
+	if (feesAsPercentOfGross > 5) {
+		return "moderate"
+	}
 	return "low"
 }
 
@@ -73,24 +86,10 @@ const getInsightSeverity = (feesAsPercentOfGross: number): "high" | "moderate" |
  * Returns width as a percentage [0, 100].
  */
 const computeBarWidth = (fee: number, maxFee: number): number => {
-	if (maxFee <= 0) return 0
+	if (maxFee <= 0) {
+		return 0
+	}
 	return (fee / maxFee) * 100
-}
-
-/**
- * Mirrors the trend direction computation in the monthly trend section.
- */
-const computeTrendDirection = (
-	currentFees: number,
-	previousFees: number | null
-): "up" | "down" | "flat" | null => {
-	if (previousFees === null) return null
-	if (currentFees > previousFees) return "up"
-	if (currentFees < previousFees) return "flat" // wait — let me check:
-	// from component: month.totalFees < prevMonth.totalFees → "down"
-	// month.totalFees > prevMonth.totalFees → "up"
-	// else → "flat"
-	return "flat"
 }
 
 /**
@@ -100,9 +99,15 @@ const computeTrendDirectionCorrect = (
 	currentFees: number,
 	previousFees: number | null
 ): "up" | "down" | "flat" | null => {
-	if (previousFees === null) return null
-	if (currentFees > previousFees) return "up"
-	if (currentFees < previousFees) return "down"
+	if (previousFees === null) {
+		return null
+	}
+	if (currentFees > previousFees) {
+		return "up"
+	}
+	if (currentFees < previousFees) {
+		return "down"
+	}
 	return "flat"
 }
 
@@ -172,19 +177,31 @@ describe("CommissionFeeImpactCard — empty state logic", () => {
 
 describe("CommissionFeeImpactCard — insight severity (getInsightPath)", () => {
 	it("should use the 'negativeGross' path when grossPnl is negative and fees > 0", () => {
-		const summary = createSummary({ grossPnl: -50.0, totalFees: 5.0, feesAsPercentOfGross: 0 })
+		const summary = createSummary({
+			grossPnl: -50.0,
+			totalFees: 5.0,
+			feesAsPercentOfGross: 0,
+		})
 		expect(getInsightPath(summary)).toBe("negativeGross")
 	})
 
 	it("should use the 'noGross' path when grossPnl is exactly zero and fees > 0", () => {
-		const summary = createSummary({ grossPnl: 0, totalFees: 5.0, feesAsPercentOfGross: 0 })
+		const summary = createSummary({
+			grossPnl: 0,
+			totalFees: 5.0,
+			feesAsPercentOfGross: 0,
+		})
 		expect(getInsightPath(summary)).toBe("noGross")
 	})
 
 	it("should not use the negative-gross paths when grossPnl <= 0 but totalFees is also 0", () => {
 		// No fees paid — falls through to the percent-based path
 		// grossPnl=0, fees=0 → feesAsPercentOfGross=0 → "low"
-		const summary = createSummary({ grossPnl: 0, totalFees: 0, feesAsPercentOfGross: 0 })
+		const summary = createSummary({
+			grossPnl: 0,
+			totalFees: 0,
+			feesAsPercentOfGross: 0,
+		})
 		expect(getInsightPath(summary)).toBe("low")
 	})
 
@@ -194,7 +211,10 @@ describe("CommissionFeeImpactCard — insight severity (getInsightPath)", () => 
 	})
 
 	it("should use the 'high' severity path at exactly the boundary + 0.01%", () => {
-		const summary = createSummary({ grossPnl: 100, feesAsPercentOfGross: 15.01 })
+		const summary = createSummary({
+			grossPnl: 100,
+			feesAsPercentOfGross: 15.01,
+		})
 		expect(getInsightPath(summary)).toBe("high")
 	})
 
@@ -330,13 +350,16 @@ describe("CommissionFeeImpactCard — monthly trend direction arrows", () => {
 		// Jan: no prev → null; Feb: up from Jan; Mar: down from Feb
 		const months = [
 			{ month: "2026-01", totalFees: 5.0 },
-			{ month: "2026-02", totalFees: 8.0 },  // up
-			{ month: "2026-03", totalFees: 3.0 },  // down
+			{ month: "2026-02", totalFees: 8.0 }, // up
+			{ month: "2026-03", totalFees: 3.0 }, // down
 		]
 
 		const directions = months.map((m, index) => {
 			const prev = index > 0 ? months[index - 1] : null
-			return computeTrendDirectionCorrect(m.totalFees, prev ? prev.totalFees : null)
+			return computeTrendDirectionCorrect(
+				m.totalFees,
+				prev ? prev.totalFees : null
+			)
 		})
 
 		expect(directions[0]).toBeNull()
@@ -362,25 +385,25 @@ describe("CommissionFeeImpactCard — feesAsPercentOfGross display logic", () =>
 	it("should display a dash (—) for the percentage when grossPnl is 0", () => {
 		// From the component: `grossPnl > 0 ? \`${...}%\` : "—"`
 		const summary = createSummary({ grossPnl: 0, feesAsPercentOfGross: 0 })
-		const display = summary.grossPnl > 0
-			? `${summary.feesAsPercentOfGross.toFixed(1)}%`
-			: "—"
+		const display =
+			summary.grossPnl > 0 ? `${summary.feesAsPercentOfGross.toFixed(1)}%` : "—"
 		expect(display).toBe("—")
 	})
 
 	it("should display a dash (—) for the percentage when grossPnl is negative", () => {
 		const summary = createSummary({ grossPnl: -50, feesAsPercentOfGross: 0 })
-		const display = summary.grossPnl > 0
-			? `${summary.feesAsPercentOfGross.toFixed(1)}%`
-			: "—"
+		const display =
+			summary.grossPnl > 0 ? `${summary.feesAsPercentOfGross.toFixed(1)}%` : "—"
 		expect(display).toBe("—")
 	})
 
 	it("should format feesAsPercentOfGross to one decimal place", () => {
-		const summary = createSummary({ grossPnl: 100, feesAsPercentOfGross: 7.3456 })
-		const display = summary.grossPnl > 0
-			? `${summary.feesAsPercentOfGross.toFixed(1)}%`
-			: "—"
+		const summary = createSummary({
+			grossPnl: 100,
+			feesAsPercentOfGross: 7.3456,
+		})
+		const display =
+			summary.grossPnl > 0 ? `${summary.feesAsPercentOfGross.toFixed(1)}%` : "—"
 		expect(display).toBe("7.3%")
 	})
 })

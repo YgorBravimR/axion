@@ -22,7 +22,7 @@ import type { EquityShieldParams } from "@/types/equity-shield"
 interface MCCalibrationBannerProps {
 	snapshot: MCCalibrationSnapshot
 	params: EquityShieldParams
-	onParamsChange: (params: EquityShieldParams) => void
+	onParamsChange: (_params: EquityShieldParams) => void
 	onDismiss: () => void
 }
 
@@ -41,25 +41,35 @@ interface SuggestionRow {
 
 const getTimestampLabel = (
 	timestamp: number,
-	tAge: (key: string, values?: Record<string, string | number>) => string,
+	tAge: (_key: string, _values?: Record<string, string | number>) => string,
 	tAgeNow: string
 ): string => {
 	const minutes = Math.round((Date.now() - timestamp) / 60000)
-	if (minutes < 1) return tAgeNow
+	if (minutes < 1) {
+		return tAgeNow
+	}
 	return tAge("age", { minutes })
 }
 
 type ConfidenceLevel = "robust" | "moderate" | "weak"
 
 const getV1Confidence = (profitablePct: number): ConfidenceLevel => {
-	if (profitablePct >= 70) return "robust"
-	if (profitablePct >= 50) return "moderate"
+	if (profitablePct >= 70) {
+		return "robust"
+	}
+	if (profitablePct >= 50) {
+		return "moderate"
+	}
 	return "weak"
 }
 
 const getV2Confidence = (riskOfRuinPercent: number): ConfidenceLevel => {
-	if (riskOfRuinPercent <= 5) return "robust"
-	if (riskOfRuinPercent <= 20) return "moderate"
+	if (riskOfRuinPercent <= 5) {
+		return "robust"
+	}
+	if (riskOfRuinPercent <= 20) {
+		return "moderate"
+	}
 	return "weak"
 }
 
@@ -187,7 +197,9 @@ const MCCalibrationBanner = ({
 
 	const timestampLabel = getTimestampLabel(snapshot.timestamp, t, t("ageNow"))
 
-	if (suggestions.length === 0) return null
+	if (suggestions.length === 0) {
+		return null
+	}
 
 	return (
 		<div className="border-acc-100/30 bg-acc-100/5 space-y-s-300 p-s-300 sm:p-m-400 rounded-lg border">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Trash2, X } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,11 @@ import {
 	DialogTitle,
 	DialogFooter,
 } from "@/components/ui/dialog"
-import { createChecklist, updateChecklist, deleteChecklist } from "@/app/actions/command-center"
+import {
+	createChecklist,
+	updateChecklist,
+	deleteChecklist,
+} from "@/app/actions/command-center"
 import type { DailyChecklist } from "@/db/schema"
 import type { ChecklistItem } from "@/lib/validations/command-center"
 
@@ -49,15 +53,18 @@ export const ChecklistManager = ({
 	const [deleting, setDeleting] = useState(false)
 
 	const handleAddItem = () => {
-		setItems([
-			...items,
-			{ id: generateId(), label: "", order: items.length },
-		])
+		setItems([...items, { id: generateId(), label: "", order: items.length }])
 	}
 
 	const handleRemoveItem = (id: string) => {
-		if (items.length <= 1) return
-		setItems(items.filter((item) => item.id !== id).map((item, idx) => ({ ...item, order: idx })))
+		if (items.length <= 1) {
+			return
+		}
+		setItems(
+			items
+				.filter((item) => item.id !== id)
+				.map((item, idx) => ({ ...item, order: idx }))
+		)
 	}
 
 	const handleItemChange = (id: string, label: string) => {
@@ -65,17 +72,26 @@ export const ChecklistManager = ({
 	}
 
 	const handleMoveItem = (fromIndex: number, toIndex: number) => {
-		if (toIndex < 0 || toIndex >= items.length) return
+		if (toIndex < 0 || toIndex >= items.length) {
+			return
+		}
 		const newItems = [...items]
 		const [removed] = newItems.splice(fromIndex, 1)
+		if (!removed) {
+			return
+		}
 		newItems.splice(toIndex, 0, removed)
 		setItems(newItems.map((item, idx) => ({ ...item, order: idx })))
 	}
 
 	const handleSave = async () => {
-		if (!name.trim()) return
+		if (!name.trim()) {
+			return
+		}
 		const validItems = items.filter((item) => item.label.trim())
-		if (validItems.length === 0) return
+		if (validItems.length === 0) {
+			return
+		}
 
 		setSaving(true)
 		try {
@@ -109,7 +125,9 @@ export const ChecklistManager = ({
 	}
 
 	const handleDelete = async () => {
-		if (!checklist) return
+		if (!checklist) {
+			return
+		}
 
 		setDeleting(true)
 		try {
@@ -129,11 +147,17 @@ export const ChecklistManager = ({
 
 	const canSave = name.trim() && items.some((item) => item.label.trim())
 
-	if (!open) return null
+	if (!open) {
+		return null
+	}
 
 	return (
 		<Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-			<DialogContent id="checklist-manager-dialog" className="max-w-lg w-[calc(100%-1rem)] sm:w-auto" aria-describedby={undefined}>
+			<DialogContent
+				id="checklist-manager-dialog"
+				className="w-[calc(100%-1rem)] max-w-lg sm:w-auto"
+				aria-describedby={undefined}
+			>
 				<DialogHeader>
 					<DialogTitle>
 						{isEditing ? t("editTitle") : t("createTitle")}
@@ -143,7 +167,11 @@ export const ChecklistManager = ({
 				<div className="space-y-m-500 py-m-400">
 					{/* Checklist Name */}
 					<div>
-						<Label id="checklist-name-label" htmlFor="checklist-name" className="mb-s-200 block text-small text-txt-200">
+						<Label
+							id="checklist-name-label"
+							htmlFor="checklist-name"
+							className="mb-s-200 text-small text-txt-200 block"
+						>
 							{t("nameLabel")}
 						</Label>
 						<Input
@@ -157,13 +185,19 @@ export const ChecklistManager = ({
 
 					{/* Checklist Items */}
 					<div>
-						<Label id="checklist-items-label" className="mb-s-200 block text-small text-txt-200">
+						<Label
+							id="checklist-items-label"
+							className="mb-s-200 text-small text-txt-200 block"
+						>
 							{t("itemsLabel")}
 						</Label>
 						<div className="space-y-s-200">
 							{items.map((item, index) => (
-								<div key={item.id} className="flex items-center gap-s-200 min-w-0">
-									<div className="flex gap-s-100 shrink-0">
+								<div
+									key={item.id}
+									className="gap-s-200 flex min-w-0 items-center"
+								>
+									<div className="gap-s-100 flex shrink-0">
 										<Button
 											id={`checklist-item-move-up-${item.id}`}
 											type="button"
@@ -171,7 +205,7 @@ export const ChecklistManager = ({
 											size="sm"
 											onClick={() => handleMoveItem(index, index - 1)}
 											disabled={index === 0}
-											className="h-9 w-9 p-0 text-txt-300"
+											className="text-txt-300 h-9 w-9 p-0"
 											aria-label={tCommon("moveUp")}
 										>
 											&uarr;
@@ -183,7 +217,7 @@ export const ChecklistManager = ({
 											size="sm"
 											onClick={() => handleMoveItem(index, index + 1)}
 											disabled={index === items.length - 1}
-											className="h-9 w-9 p-0 text-txt-300"
+											className="text-txt-300 h-9 w-9 p-0"
 											aria-label={tCommon("moveDown")}
 										>
 											&darr;
@@ -194,7 +228,7 @@ export const ChecklistManager = ({
 										value={item.label}
 										onChange={(e) => handleItemChange(item.id, e.target.value)}
 										placeholder={t("itemPlaceholder")}
-										className="flex-1 min-w-0"
+										className="min-w-0 flex-1"
 									/>
 									<Button
 										id={`checklist-item-delete-${item.id}`}
@@ -215,7 +249,8 @@ export const ChecklistManager = ({
 								</div>
 							))}
 						</div>
-						<Button id="checklist-add-item"
+						<Button
+							id="checklist-add-item"
 							type="button"
 							variant="ghost"
 							size="sm"
@@ -231,7 +266,8 @@ export const ChecklistManager = ({
 				<DialogFooter className="flex items-center justify-between">
 					<div>
 						{isEditing && (
-							<Button id="checklist-delete"
+							<Button
+								id="checklist-delete"
 								type="button"
 								variant="ghost"
 								onClick={handleDelete}
@@ -243,11 +279,22 @@ export const ChecklistManager = ({
 							</Button>
 						)}
 					</div>
-					<div className="flex gap-s-200">
-						<Button id="checklist-cancel" type="button" variant="outline" onClick={onClose} disabled={saving}>
+					<div className="gap-s-200 flex">
+						<Button
+							id="checklist-cancel"
+							type="button"
+							variant="outline"
+							onClick={onClose}
+							disabled={saving}
+						>
 							{t("cancel")}
 						</Button>
-						<Button id="checklist-save" type="button" onClick={handleSave} disabled={!canSave || saving}>
+						<Button
+							id="checklist-save"
+							type="button"
+							onClick={handleSave}
+							disabled={!canSave || saving}
+						>
 							{saving ? t("saving") : isEditing ? t("update") : t("create")}
 						</Button>
 					</div>

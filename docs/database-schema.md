@@ -1,475 +1,103 @@
-# Axion - Database Schema Design
-
-## Overview
-
-This document defines the complete database schema for the Axion trading platform. The schema is designed for **Drizzle ORM** with **PostgreSQL (Neon serverless)**.
-
----
-
-## Entity Relationship Diagram
-
-```
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│   trades    │───────│ trade_tags  │───────│    tags     │
-└─────────────┘       └─────────────┘       └─────────────┘
-       │                                           │
-       │                                           │
-       ▼                                           │
-┌─────────────┐                                    │
-│ strategies  │◄───────────────────────────────────┘
-└─────────────┘
-
-┌─────────────┐       ┌─────────────┐
-│daily_journals│       │  settings   │
-└─────────────┘       └─────────────┘
-```
-
----
-
-## Tables
-
-### 1. trades
-
-The core table storing all trade records.
-
-```typescript
-// src/db/schema.ts
-
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  decimal,
-  integer,
-  timestamp,
-  boolean,
-  pgEnum,
-} from "drizzle-orm/pg-core"
-
-// Enums
-export const tradeDirectionEnum = pgEnum("trade_direction", ["long", "short"])
-export const tradeOutcomeEnum = pgEnum("trade_outcome", ["win", "loss", "breakeven"])
-export const timeframeEnum = pgEnum("timeframe", ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"])
-
-export const trades = pgTable("trades", {
-  // Primary Key
-  id: uuid("id").primaryKey().defaultRandom(),
-
-  // Basic Info
-  asset: varchar("asset", { length: 20 }).notNull(),        // e.g., "NVDA", "SPY", "BTC"
-  direction: tradeDirectionEnum("direction").notNull(),     // long or short
-  timeframe: timeframeEnum("timeframe"),                    // chart timeframe used
-
-  // Timing
-  entryDate: timestamp("entry_date", { withTimezone: true }).notNull(),
-  exitDate: timestamp("exit_date", { withTimezone: true }),
+# Axion — Database Schema
 
-  // Execution
-  entryPrice: decimal("entry_price", { precision: 18, scale: 8 }).notNull(),
-  exitPrice: decimal("exit_price", { precision: 18, scale: 8 }),
-  positionSize: decimal("position_size", { precision: 18, scale: 8 }).notNull(), // shares/contracts/units
+> **Single source of truth: `src/db/schema.ts`.**
+> This doc explains the _system_ — domain groupings, conventions, and invariants — not column-level values.
+> For the live shape of any table, read `schema.ts`.
 
-  // Risk Management
-  stopLoss: decimal("stop_loss", { precision: 18, scale: 8 }),
-  takeProfit: decimal("take_profit", { precision: 18, scale: 8 }),
-  plannedRiskAmount: decimal("planned_risk_amount", { precision: 18, scale: 2 }), // $ amount at risk
-  plannedRMultiple: decimal("planned_r_multiple", { precision: 8, scale: 2 }),    // planned R target
-
-  // Results (calculated or entered)
-  pnl: decimal("pnl", { precision: 18, scale: 2 }),                // actual profit/loss in $
-  pnlPercent: decimal("pnl_percent", { precision: 8, scale: 4 }),  // % return
-  realizedRMultiple: decimal("realized_r_multiple", { precision: 8, scale: 2 }), // actual R achieved
-  outcome: tradeOutcomeEnum("outcome"),                            // win/loss/breakeven
+## 1. Stack
 
-  // MFE/MAE (Maximum Favorable/Adverse Excursion)
-  mfe: decimal("mfe", { precision: 18, scale: 8 }),  // highest price reached (for longs)
-  mae: decimal("mae", { precision: 18, scale: 8 }),  // lowest price reached (for longs)
-  mfeR: decimal("mfe_r", { precision: 8, scale: 2 }), // MFE in R terms
-  maeR: decimal("mae_r", { precision: 8, scale: 2 }), // MAE in R terms
+- **Drizzle ORM** + **PostgreSQL** (Neon serverless).
+- Migrations: `src/db/migrations/`. Generated and managed via `drizzle-kit`.
+- Seed: `scripts/seed.ts` (top-level), with domain-specific seed scripts under `src/db/seed-*.ts`.
 
-  // Commission & Fees
-  commission: decimal("commission", { precision: 18, scale: 2 }).default("0"),
-  fees: decimal("fees", { precision: 18, scale: 2 }).default("0"),
+## 2. Domain Map
 
-  // Narrative
-  preTradeThoughts: text("pre_trade_thoughts"),   // "Why did I take this?"
-  postTradeReflection: text("post_trade_reflection"), // "How did I feel?"
-  lessonLearned: text("lesson_learned"),
+Tables group into the following domains. Each domain owns a set of related tables and the relations between them.
 
-  // Strategy Reference
-  strategyId: uuid("strategy_id").references(() => strategies.id, { onDelete: "set null" }),
+| Domain                    | Purpose                                            | Key tables (representative)                                                                                  |
+| ------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Auth**                  | Identity, sessions, OAuth, rate limiting           | `users`, `sessions`, `oauth_accounts`, `verification_tokens`, `rate_limit_attempts`                          |
+| **Trading accounts**      | Multi-account ownership (personal / prop / replay) | `trading_accounts`, `account_assets`, `account_timeframes`, `account_asset_settings`, `daily_asset_settings` |
+| **Reference data**        | Asset catalog and timeframe definitions            | `assets`, `asset_types`, `timeframes`                                                                        |
+| **Trade journal**         | Trades, executions, tags, daily journals           | `trades`, `trade_executions`, `tags`, `trade_tags`, `daily_journals`                                         |
+| **Strategies & playbook** | Strategy library + condition system                | `strategies`, `trading_conditions`, `strategy_conditions`, `strategy_scenarios`, `scenario_images`           |
+| **Command center**        | Daily checklists, asset rules                      | `daily_checklists`, `checklist_completions`                                                                  |
+| **Risk management**       | Risk profiles, equity-shield params                | `risk_management_profiles`                                                                                   |
+| **Fractal planning**      | Year → quarter → month → week → day cascade        | `yearly_plans`, `quarterly_plan`, `monthly_plan`, `weekly_plan`, `daily_plan`, `tier_change_log`             |
+| **BR tax engine**         | Monthly DARF ledger and per-account fee config     | `monthly_tax_ledger`, `account_fee_rates`                                                                    |
+| **Imports**               | Nota fiscal imports, OCR, CSV                      | `nota_imports`                                                                                               |
+| **Bug reports**           | In-app bug capture                                 | `bug_reports`, `bug_report_images`                                                                           |
+| **Indicators / candles**  | Technical indicator definitions and price data     | `indicator_groups`, `indicator_definitions`, `price_candles`, `price_data_versions`                          |
+| **Aggregates**            | Pre-computed monthly / weekly rollups              | `account_monthly_aggregate`, `account_weekly_aggregate`                                                      |
+| **Capital events**        | Deposits / withdrawals                             | `account_capital_events`                                                                                     |
+| **Settings & filters**    | App-level config and saved filter presets          | `settings`, `user_settings`, `filter_presets`                                                                |
 
-  // Compliance
-  followedPlan: boolean("followed_plan"),              // did you follow your rules?
-  disciplineNotes: text("discipline_notes"),           // what went wrong/right
+## 3. Conventions & Invariants
 
-  // Metadata
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  isArchived: boolean("is_archived").default(false),
-})
-```
+### Account scoping
 
-**Key Fields Explained:**
-- `plannedRMultiple` vs `realizedRMultiple`: Shows if you hit your target or cut early/late
-- `mfe`/`mae`: Reveals if stops are too tight or if you're leaving money on the table
-- `followedPlan`: Critical for discipline scoring
+- Every owned table FKs to `trading_accounts.id` (and through it to `users.id`). The exception is global reference data (`asset_types`, `assets`, `timeframes`) and per-user catalog tables (`tags`, `strategies`) which scope to `users.id` directly.
+- Queries MUST filter by the active `accountId` from the auth context. Server actions enforce this — never query `trades` (or any account-scoped table) without an account filter.
 
----
+### Money columns
 
-### 2. strategies
+- Money is stored as **encrypted text** (column-level encryption) for sensitive trade fields (`entryPrice`, `exitPrice`, `pnl`, `commission`, `fees`, …). Read/write goes through the encryption layer in `src/lib/db/`.
+- For aggregate / ledger / capital tables (`monthly_tax_ledger`, `account_capital_events`, `account_monthly_aggregate`), money is stored as `bigint` cents (integer). Never as floating decimal — avoids rounding drift.
+- Display layer formats via `src/lib/formatting.ts`.
 
-The playbook of trading setups and rules.
+### Enums
 
-```typescript
-export const strategies = pgTable("strategies", {
-  id: uuid("id").primaryKey().defaultRandom(),
+Every status / category column uses a Postgres enum declared in `schema.ts`. Add new values via migration; don't store free-form strings.
 
-  // Basic Info
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
+### Indexes
 
-  // Criteria
-  entryCriteria: text("entry_criteria"),   // when to enter
-  exitCriteria: text("exit_criteria"),     // when to exit
-  riskRules: text("risk_rules"),           // max R, stop placement rules
+Defined inline as the second argument to `pgTable(...)`. Don't export indexes separately — Drizzle's inline form is the project convention.
 
-  // Target Metrics
-  targetRMultiple: decimal("target_r_multiple", { precision: 8, scale: 2 }),
-  maxRiskPercent: decimal("max_risk_percent", { precision: 5, scale: 2 }),
+### Soft state vs hard delete
 
-  // Reference
-  screenshotUrl: varchar("screenshot_url", { length: 500 }), // "Gold Standard" example
-  notes: text("notes"),
+- Trades are hard-deleted (no soft delete). Imports keep a hash on `trades.deduplicationHash` to dedupe re-imports.
+- Tags / strategies use `isActive` flags or per-table soft-delete columns depending on the table (read `schema.ts` per table).
 
-  // Status
-  isActive: boolean("is_active").default(true),
+### Timestamps
 
-  // Metadata
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
-```
+`createdAt` and `updatedAt` on every owned table. Use Drizzle's `defaultNow()` for inserts and `$onUpdate` triggers for mutations.
 
----
+## 4. Key Cross-Domain Patterns
 
-### 3. tags
+### Fractal planning cascade
 
-Reusable tags for categorizing trades (setups and mistakes).
+`yearlyPlan → quarterlyPlan → monthlyPlan → weeklyPlan → dailyPlan` form a hierarchical override chain. Each level inherits defaults from the parent and may override specific fields. The resolver in `src/lib/fractal-plan/resolver.ts` collapses the chain to a single effective plan for a given date. `tier_change_log` audits tier changes (month-start vs drawdown trigger vs manual).
 
-```typescript
-export const tagTypeEnum = pgEnum("tag_type", ["setup", "mistake", "general"])
+### Tax engine — lazy recompute + chained carryover
 
-export const tags = pgTable("tags", {
-  id: uuid("id").primaryKey().defaultRandom(),
+`monthly_tax_ledger` rows are never directly mutated. They are recomputed by `src/lib/tax/recompute-month.ts` from underlying `trades` + `account_fee_rates` + previous-month carryover. `mark-dirty.ts` flags downstream months when a trade or fee changes, and `getMonthlyDarf` lazily recomputes on read. The chain links via `carryoverInCents` / `carryoverOutCents` columns.
 
-  name: varchar("name", { length: 50 }).notNull().unique(),
-  type: tagTypeEnum("type").notNull(),
-  color: varchar("color", { length: 7 }),  // hex color for display
-  description: text("description"),
+### Snapshots vs live values
 
-  // Metadata
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-})
-```
+Several tables (e.g. `monthly_plan.snapshotCapitalCents`, `monthly_plan.snapshotOneRCents`) capture point-in-time values for use in projections. These are persisted (not recomputed) so historical R-values stay stable even if account capital drifts. Use the snapshot for retro analysis; use live capital for forward planning.
 
-**Example Tags:**
-- Setup: "Bull Flag", "Breakout", "VWAP Bounce", "Gap Fill"
-- Mistake: "FOMO", "Revenge Trade", "Moved Stop", "Oversized", "No Plan"
+### Trade execution model
 
----
+A `trade` may have one or many `trade_executions`. `executionMode` (`simple` | `scaled`) selects the input pattern. Aggregates like `avgEntryPrice`, `totalEntryQuantity`, `pnl` are denormalised on `trade` for fast queries; the source-of-truth is the executions. `recalculateTradeFromExecutions` rebuilds them.
 
-### 4. trade_tags
+## 5. Type Exports
 
-Many-to-many relationship between trades and tags.
+`schema.ts` exports `$inferSelect` / `$inferInsert` types for every table. Always use these in server actions and queries — never re-define table types by hand.
 
-```typescript
-export const tradeTags = pgTable("trade_tags", {
-  id: uuid("id").primaryKey().defaultRandom(),
+## 6. Editing the Schema
 
-  tradeId: uuid("trade_id").notNull().references(() => trades.id, { onDelete: "cascade" }),
-  tagId: uuid("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+1. Edit `src/db/schema.ts`.
+2. Run `pnpm drizzle-kit generate` to produce a migration.
+3. Inspect the generated SQL — Drizzle is good but not perfect with renames and type changes.
+4. Run `pnpm drizzle-kit migrate` (or apply via the deploy pipeline).
+5. Update any server action / query / type that reads the changed column.
+6. Update `scripts/seed.ts` if seed data is affected.
 
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-})
-```
+## 7. Things This Doc Deliberately Does NOT List
 
----
+- Column names, types, defaults, FKs.
+- The full ERD.
+- Index definitions.
+- Enum values.
 
-### 5. daily_journals
-
-Separate journal entries for daily reflections (not tied to specific trades).
-
-```typescript
-export const dailyJournals = pgTable("daily_journals", {
-  id: uuid("id").primaryKey().defaultRandom(),
-
-  date: timestamp("date", { withTimezone: true }).notNull().unique(),
-
-  // Pre-Session
-  marketOutlook: text("market_outlook"),     // market bias for the day
-  focusGoals: text("focus_goals"),           // what to focus on
-  mentalState: integer("mental_state"),       // 1-10 rating
-
-  // Post-Session
-  sessionReview: text("session_review"),     // how did it go?
-  emotionalState: integer("emotional_state"), // 1-10 rating after
-  keyTakeaways: text("key_takeaways"),
-
-  // Metrics (auto-calculated or entered)
-  totalPnl: decimal("total_pnl", { precision: 18, scale: 2 }),
-  tradeCount: integer("trade_count"),
-  winCount: integer("win_count"),
-  lossCount: integer("loss_count"),
-
-  // Metadata
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
-```
-
----
-
-### 6. settings
-
-User preferences and configuration.
-
-```typescript
-export const settings = pgTable("settings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-
-  key: varchar("key", { length: 50 }).notNull().unique(),
-  value: text("value").notNull(),
-  description: text("description"),
-
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
-```
-
-**Example Settings:**
-| Key | Value | Description |
-|-----|-------|-------------|
-| `default_risk_percent` | `1.0` | Default position risk % |
-| `default_timeframe` | `15m` | Default chart timeframe |
-| `account_balance` | `50000` | Current account balance |
-| `currency` | `USD` | Display currency |
-| `theme` | `dark` | UI theme preference |
-
----
-
-## Relations
-
-```typescript
-// src/db/schema.ts - Relations
-
-import { relations } from "drizzle-orm"
-
-export const tradesRelations = relations(trades, ({ one, many }) => ({
-  strategy: one(strategies, {
-    fields: [trades.strategyId],
-    references: [strategies.id],
-  }),
-  tags: many(tradeTags),
-}))
-
-export const strategiesRelations = relations(strategies, ({ many }) => ({
-  trades: many(trades),
-}))
-
-export const tagsRelations = relations(tags, ({ many }) => ({
-  tradeTags: many(tradeTags),
-}))
-
-export const tradeTagsRelations = relations(tradeTags, ({ one }) => ({
-  trade: one(trades, {
-    fields: [tradeTags.tradeId],
-    references: [trades.id],
-  }),
-  tag: one(tags, {
-    fields: [tradeTags.tagId],
-    references: [tags.id],
-  }),
-}))
-```
-
----
-
-## Indexes
-
-For optimal query performance:
-
-```typescript
-import { index } from "drizzle-orm/pg-core"
-
-// Add to trades table definition
-// (indexes as separate export or inline)
-
-export const tradesAssetIdx = index("trades_asset_idx").on(trades.asset)
-export const tradesEntryDateIdx = index("trades_entry_date_idx").on(trades.entryDate)
-export const tradesOutcomeIdx = index("trades_outcome_idx").on(trades.outcome)
-export const tradesStrategyIdx = index("trades_strategy_idx").on(trades.strategyId)
-
-export const tradeTagsTradeIdx = index("trade_tags_trade_idx").on(tradeTags.tradeId)
-export const tradeTagsTagIdx = index("trade_tags_tag_idx").on(tradeTags.tagId)
-
-export const dailyJournalsDateIdx = index("daily_journals_date_idx").on(dailyJournals.date)
-```
-
----
-
-## Type Exports
-
-```typescript
-// src/db/schema.ts - Type exports
-
-export type Trade = typeof trades.$inferSelect
-export type NewTrade = typeof trades.$inferInsert
-
-export type Strategy = typeof strategies.$inferSelect
-export type NewStrategy = typeof strategies.$inferInsert
-
-export type Tag = typeof tags.$inferSelect
-export type NewTag = typeof tags.$inferInsert
-
-export type TradeTag = typeof tradeTags.$inferSelect
-export type NewTradeTag = typeof tradeTags.$inferInsert
-
-export type DailyJournal = typeof dailyJournals.$inferSelect
-export type NewDailyJournal = typeof dailyJournals.$inferInsert
-
-export type Setting = typeof settings.$inferSelect
-export type NewSetting = typeof settings.$inferInsert
-```
-
----
-
-## Seed Data
-
-Initial data for tags (common setups and mistakes):
-
-```typescript
-// src/db/seed.ts
-
-const setupTags = [
-  { name: "Breakout", type: "setup", color: "#00FF96" },
-  { name: "Bull Flag", type: "setup", color: "#00FF96" },
-  { name: "Bear Flag", type: "setup", color: "#8080FF" },
-  { name: "VWAP Bounce", type: "setup", color: "#00FF96" },
-  { name: "Gap Fill", type: "setup", color: "#00FF96" },
-  { name: "Trend Continuation", type: "setup", color: "#00FF96" },
-  { name: "Reversal", type: "setup", color: "#8080FF" },
-  { name: "Range Break", type: "setup", color: "#00FF96" },
-]
-
-const mistakeTags = [
-  { name: "FOMO", type: "mistake", color: "#FCD535" },
-  { name: "Revenge Trade", type: "mistake", color: "#FCD535" },
-  { name: "Moved Stop", type: "mistake", color: "#FCD535" },
-  { name: "Oversized", type: "mistake", color: "#FCD535" },
-  { name: "No Plan", type: "mistake", color: "#FCD535" },
-  { name: "Early Entry", type: "mistake", color: "#FCD535" },
-  { name: "Late Entry", type: "mistake", color: "#FCD535" },
-  { name: "Held Too Long", type: "mistake", color: "#FCD535" },
-  { name: "Cut Too Early", type: "mistake", color: "#FCD535" },
-  { name: "Chased", type: "mistake", color: "#FCD535" },
-]
-
-const defaultSettings = [
-  { key: "default_risk_percent", value: "1.0", description: "Default position risk %" },
-  { key: "default_timeframe", value: "15m", description: "Default chart timeframe" },
-  { key: "account_balance", value: "10000", description: "Starting account balance" },
-  { key: "currency", value: "USD", description: "Display currency" },
-]
-```
-
----
-
-## Migration Commands
-
-```bash
-# Generate migration from schema changes
-pnpm db:generate
-
-# Push schema directly to database (development)
-pnpm db:push
-
-# Run migrations (production)
-pnpm db:migrate
-```
-
----
-
-## Query Examples
-
-### Get trades with tags and strategy
-
-```typescript
-const tradesWithRelations = await db.query.trades.findMany({
-  with: {
-    strategy: true,
-    tags: {
-      with: {
-        tag: true,
-      },
-    },
-  },
-  where: eq(trades.isArchived, false),
-  orderBy: [desc(trades.entryDate)],
-  limit: 50,
-})
-```
-
-### Get trade stats by asset
-
-```typescript
-const statsByAsset = await db
-  .select({
-    asset: trades.asset,
-    totalTrades: count(),
-    totalPnl: sum(trades.pnl),
-    winCount: sql<number>`count(*) filter (where ${trades.outcome} = 'win')`,
-    avgR: avg(trades.realizedRMultiple),
-  })
-  .from(trades)
-  .groupBy(trades.asset)
-```
-
-### Get mistake cost analysis
-
-```typescript
-const mistakeCosts = await db
-  .select({
-    tagName: tags.name,
-    tradeCount: count(),
-    totalLoss: sum(trades.pnl),
-  })
-  .from(tradeTags)
-  .innerJoin(trades, eq(tradeTags.tradeId, trades.id))
-  .innerJoin(tags, eq(tradeTags.tagId, tags.id))
-  .where(and(
-    eq(tags.type, "mistake"),
-    lt(trades.pnl, 0)
-  ))
-  .groupBy(tags.name)
-  .orderBy(asc(sum(trades.pnl)))
-```
-
----
-
-## Data Integrity Rules
-
-1. **Trade Completion**: `exitDate`, `exitPrice`, `pnl`, and `outcome` should be set together when closing a trade
-2. **R-Multiple Calculation**: `realizedRMultiple = pnl / plannedRiskAmount`
-3. **MFE/MAE**: Only meaningful after trade is closed
-4. **Discipline Score**: Calculated from `followedPlan` across trades
-5. **Tag Constraints**: A trade can have multiple setup tags but ideally categorized properly
-
----
-
-## Future Considerations
-
-- **Images Table**: For storing trade screenshots and chart images
-- **Account Snapshots**: Daily account balance history for accurate equity curve
-- **Import History**: Track CSV imports for data lineage
-- **Audit Log**: Track changes to trades for data integrity
+All of those drift the moment a migration lands. Read `schema.ts` directly — it is short, generated types are exported, and the Drizzle DSL is more readable than any markdown table.

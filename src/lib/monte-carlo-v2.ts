@@ -9,6 +9,15 @@ import type {
 	DistributionBucket,
 	TradeMode,
 } from "@/types/monte-carlo"
+import {
+	assertNonEmpty,
+	mapNonEmpty,
+	mean,
+	median,
+	percentile,
+	toSortedNonEmpty,
+	type NonEmptyArray,
+} from "@/lib/non-empty"
 
 // ==========================================
 // MONTE CARLO V2 — DAY-AWARE SIMULATION
@@ -40,7 +49,9 @@ const computeEffectiveBaseRisk = (
 			return profile.baseRiskCents
 
 		case "percentOfBalance": {
-			if (!profile.riskPercent) return profile.baseRiskCents
+			if (!profile.riskPercent) {
+				return profile.baseRiskCents
+			}
 			return Math.max(
 				1,
 				Math.round((currentBalance * profile.riskPercent) / 100)
@@ -66,7 +77,9 @@ const computeEffectiveBaseRisk = (
 		}
 
 		case "kellyFractional": {
-			if (!profile.kellyDivisor) return profile.baseRiskCents
+			if (!profile.kellyDivisor) {
+				return profile.baseRiskCents
+			}
 			const winProb = profile.winRate / 100
 			const rr = profile.rewardRiskRatio
 			// Kelly formula: f* = W - (1-W)/R
@@ -146,11 +159,10 @@ const applyDrawdownAdjustment = (
 		.filter((tier) => currentDrawdownPercent >= tier.drawdownPercent)
 		.toSorted((a, b) => b.drawdownPercent - a.drawdownPercent)
 
-	if (applicableTiers.length === 0) {
+	const [activeTier] = applicableTiers
+	if (!activeTier) {
 		return { riskMultiplier: 1, shouldPause: false }
 	}
-
-	const activeTier = applicableTiers[0]
 
 	if (activeTier.action === "pause") {
 		return { riskMultiplier: 0, shouldPause: true }
@@ -185,11 +197,10 @@ const applyConsecutiveLossRules = (
 		.filter((rule) => consecutiveLosingDays >= rule.consecutiveDays)
 		.toSorted((a, b) => b.consecutiveDays - a.consecutiveDays)
 
-	if (applicableRules.length === 0) {
+	const [activeRule] = applicableRules
+	if (!activeRule) {
 		return { riskMultiplier: 1, shouldStopDay: false, shouldPauseWeek: false }
 	}
-
-	const activeRule = applicableRules[0]
 
 	switch (activeRule.action) {
 		case "reduceRisk":
@@ -220,8 +231,11 @@ const applyConsecutiveLossRules = (
  * accumulates into weekly and monthly results.
  */
 const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
-	const runs: SimulationRunV2[] = []
+	if (params.simulationCount < 1) {
+		throw new Error("monte-carlo-v2: simulationCount must be ≥ 1")
+	}
 
+	const runs: SimulationRunV2[] = []
 	const months = params.monthsToTrade
 
 	for (let i = 0; i < params.simulationCount; i++) {
@@ -230,7 +244,7 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 		let peakBalance = balance
 		let runMinBalance = balance // cross-month minimum balance tracking
 		let accumulatedProfit = 0 // cross-month profit for fixedRatio mode
-		let combinedDays: SimulatedDay[] = []
+		const combinedDays: SimulatedDay[] = []
 		let combinedTotalPnl = 0
 		let combinedTotalTrades = 0
 		let combinedTotalTradingDays = 0
@@ -276,7 +290,9 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 			combinedDaysSkippedDrawdownPause += monthResult.daysSkippedDrawdownPause
 			combinedDaysTargetHit += monthResult.daysTargetHit
 			combinedTimesWeeklyLimitHit += monthResult.timesWeeklyLimitHit
-			if (monthResult.monthlyLimitHit) combinedMonthlyLimitHit = true
+			if (monthResult.monthlyLimitHit) {
+				combinedMonthlyLimitHit = true
+			}
 
 			// Track cross-month minimum balance (the month tracks its own minBalance)
 			runMinBalance = Math.min(runMinBalance, monthResult.minBalance)
@@ -325,13 +341,19 @@ const runMonteCarloV2 = (params: SimulationParamsV2): MonteCarloResultV2 => {
 		})
 	}
 
+	assertNonEmpty(
+		runs,
+		"monte-carlo-v2: runs must be non-empty after simulation"
+	)
+
 	const statistics = aggregateStatisticsV2(runs, params)
 	const distributionBuckets = calculateDistributionV2(runs)
 
 	// Find median run by total P&L
 	const sortedByPnl = runs.toSorted((a, b) => a.totalPnl - b.totalPnl)
+	assertNonEmpty(sortedByPnl, "monte-carlo-v2: sortedByPnl must be non-empty")
 	const medianIndex = Math.floor(sortedByPnl.length / 2)
-	const sampleRun = sortedByPnl[medianIndex]
+	const sampleRun = sortedByPnl[medianIndex] ?? sortedByPnl[0]
 
 	return { params, statistics, distributionBuckets, sampleRun }
 }
@@ -509,9 +531,15 @@ const simulateMonth = (
 		totalTrades += day.trades.length
 
 		// Track mode distribution
-		if (day.mode === "lossRecovery") daysInLossRecovery++
-		if (day.mode === "gainCompounding") daysInGainCompounding++
-		if (day.targetHit) daysTargetHit++
+		if (day.mode === "lossRecovery") {
+			daysInLossRecovery++
+		}
+		if (day.mode === "gainCompounding") {
+			daysInGainCompounding++
+		}
+		if (day.targetHit) {
+			daysTargetHit++
+		}
 
 		// Update consecutive losing days counter
 		if (day.dayPnl < 0) {
@@ -594,7 +622,7 @@ const simulateDay = (
 	const trades: SimulatedTradeV2[] = []
 	let dayPnl = 0
 	let targetHit = false
-	let dayMode: SimulatedDay["mode"] = "lossRecovery" // will be overwritten
+	let dayMode: SimulatedDay["mode"]
 
 	// T1 — base trade
 	const t1 = simulateTrade({
@@ -616,11 +644,11 @@ const simulateDay = (
 		// Loss recovery mode
 		dayMode = "lossRecovery"
 
-		for (let i = 0; i < effectiveRecoveryRisks.length; i++) {
+		for (const stepRisk of effectiveRecoveryRisks) {
 			// Check daily loss limit before each recovery trade
-			if (dayPnl <= -effectiveDailyLimit) break
-
-			const stepRisk = effectiveRecoveryRisks[i]
+			if (dayPnl <= -effectiveDailyLimit) {
+				break
+			}
 			// Cap risk to remaining budget before hitting daily loss limit
 			const remainingBudget = effectiveDailyLimit + dayPnl // dayPnl is negative
 			const cappedRisk = Math.min(stepRisk, Math.max(0, remainingBudget))
@@ -639,7 +667,9 @@ const simulateDay = (
 
 			// If the recovery trade won and profile does NOT require executing all
 			// remaining steps regardless, stop the recovery sequence early
-			if (recoveryTrade.isWin && !profile.executeAllRegardless) break
+			if (recoveryTrade.isWin && !profile.executeAllRegardless) {
+				break
+			}
 		}
 	} else {
 		// Gain compounding mode
@@ -674,10 +704,14 @@ const simulateDay = (
 				)
 
 				// Need meaningful risk to continue
-				if (compoundingRisk <= 0) break
+				if (compoundingRisk <= 0) {
+					break
+				}
 
 				// Check daily loss limit (protect against giving back more than limit)
-				if (dayPnl - compoundingRisk < -effectiveDailyLimit) break
+				if (dayPnl - compoundingRisk < -effectiveDailyLimit) {
+					break
+				}
 
 				const compoundTrade = simulateTrade({
 					profile,
@@ -702,7 +736,9 @@ const simulateDay = (
 				} else {
 					// Loss in compounding: recalculate accumulated gain from current day P&L
 					accumulatedGain = Math.max(0, dayPnl)
-					if (accumulatedGain <= 0) break
+					if (accumulatedGain <= 0) {
+						break
+					}
 				}
 			}
 
@@ -812,35 +848,32 @@ const makeSkippedDay = (
 // ==========================================
 
 const aggregateStatisticsV2 = (
-	runs: SimulationRunV2[],
+	runs: NonEmptyArray<SimulationRunV2>,
 	params: SimulationParamsV2
 ): SimulationStatisticsV2 => {
-	const pnls = runs.map((r) => r.totalPnl).toSorted((a, b) => a - b)
-	const returns = runs
-		.map((r) => r.totalReturnPercent)
-		.toSorted((a, b) => a - b)
-	const drawdowns = runs
-		.map((r) => r.maxDrawdownPercent)
-		.toSorted((a, b) => a - b)
+	const pnls = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.totalPnl),
+		(a, b) => a - b
+	)
+	const returns = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.totalReturnPercent),
+		(a, b) => a - b
+	)
+	const drawdowns = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.maxDrawdownPercent),
+		(a, b) => a - b
+	)
 
-	const median = (arr: number[]): number => {
-		const mid = Math.floor(arr.length / 2)
-		return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2
-	}
+	const meanOrZero = (arr: readonly number[]): number =>
+		arr.length === 0 ? 0 : mean(arr as NonEmptyArray<number>)
 
-	const mean = (arr: number[]): number =>
-		arr.reduce((sum, v) => sum + v, 0) / arr.length
-
-	const percentile = (arr: number[], p: number): number => {
-		const idx = Math.ceil((p / 100) * arr.length) - 1
-		return arr[Math.max(0, Math.min(idx, arr.length - 1))]
-	}
-
-	const stdDev = (values: number[]): number => {
-		if (values.length === 0) return 0
-		const avg = mean(values)
+	const stdDev = (values: readonly number[]): number => {
+		if (values.length === 0) {
+			return 0
+		}
+		const avg = meanOrZero(values)
 		const squaredDiffs = values.map((v) => Math.pow(v - avg, 2))
-		return Math.sqrt(mean(squaredDiffs))
+		return Math.sqrt(meanOrZero(squaredDiffs))
 	}
 
 	const profitableRuns = runs.filter((r) => r.totalPnl > 0).length
@@ -860,7 +893,7 @@ const aggregateStatisticsV2 = (
 			perRunSortinos.push(0)
 			continue
 		}
-		const m = mean(dailyReturns)
+		const m = meanOrZero(dailyReturns)
 		const sd = stdDev(dailyReturns)
 		const dd = Math.sqrt(
 			dailyReturns.reduce((sum, r) => (r < 0 ? sum + r * r : sum), 0) /
@@ -869,8 +902,8 @@ const aggregateStatisticsV2 = (
 		perRunSharpes.push(sd > 0 ? m / sd : 0)
 		perRunSortinos.push(dd > 0 ? m / dd : 0)
 	}
-	const sharpeRatio = perRunSharpes.length > 0 ? mean(perRunSharpes) : 0
-	const sortinoRatio = perRunSortinos.length > 0 ? mean(perRunSortinos) : 0
+	const sharpeRatio = meanOrZero(perRunSharpes)
+	const sortinoRatio = meanOrZero(perRunSortinos)
 
 	// Expected daily P&L: total P&L / total trading days across all runs
 	const totalDays = runs.reduce((sum, r) => sum + r.totalTradingDays, 0)
@@ -882,9 +915,10 @@ const aggregateStatisticsV2 = (
 	const riskOfRuinPercent = (ruinCount / runs.length) * 100
 
 	// Median lowest balance as % of initial
-	const minBalPcts = runs
-		.map((r) => (r.minBalance / params.initialBalance) * 100)
-		.toSorted((a, b) => a - b)
+	const minBalPcts = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => (r.minBalance / params.initialBalance) * 100),
+		(a, b) => a - b
+	)
 	const medianMinBalancePercent = median(minBalPcts)
 
 	return {
@@ -895,15 +929,19 @@ const aggregateStatisticsV2 = (
 		medianReturnPercent: median(returns),
 		profitableMonthsPct: (profitableRuns / runs.length) * 100,
 		monthlyLimitHitPct: (limitHitRuns / runs.length) * 100,
-		avgTradingDaysPerMonth: mean(runs.map((r) => r.totalTradingDays)),
-		avgDaysInLossRecovery: mean(runs.map((r) => r.daysInLossRecovery)),
-		avgDaysInGainCompounding: mean(runs.map((r) => r.daysInGainCompounding)),
-		avgDaysTargetHit: mean(runs.map((r) => r.daysTargetHit)),
-		avgDaysSkippedWeeklyLimit: mean(runs.map((r) => r.daysSkippedWeeklyLimit)),
-		avgDaysSkippedMonthlyLimit: mean(
-			runs.map((r) => r.daysSkippedMonthlyLimit)
+		avgTradingDaysPerMonth: mean(mapNonEmpty(runs, (r) => r.totalTradingDays)),
+		avgDaysInLossRecovery: mean(mapNonEmpty(runs, (r) => r.daysInLossRecovery)),
+		avgDaysInGainCompounding: mean(
+			mapNonEmpty(runs, (r) => r.daysInGainCompounding)
 		),
-		avgTradesPerMonth: mean(runs.map((r) => r.totalTrades)),
+		avgDaysTargetHit: mean(mapNonEmpty(runs, (r) => r.daysTargetHit)),
+		avgDaysSkippedWeeklyLimit: mean(
+			mapNonEmpty(runs, (r) => r.daysSkippedWeeklyLimit)
+		),
+		avgDaysSkippedMonthlyLimit: mean(
+			mapNonEmpty(runs, (r) => r.daysSkippedMonthlyLimit)
+		),
+		avgTradesPerMonth: mean(mapNonEmpty(runs, (r) => r.totalTrades)),
 		medianMaxDrawdownPercent: median(drawdowns),
 		worstMaxDrawdownPercent: percentile(drawdowns, 95),
 		sharpeRatio,
@@ -925,8 +963,12 @@ const calculateDistributionV2 = (
 	let min = Infinity
 	let max = -Infinity
 	for (const pnl of pnls) {
-		if (pnl < min) min = pnl
-		if (pnl > max) max = pnl
+		if (pnl < min) {
+			min = pnl
+		}
+		if (pnl > max) {
+			max = pnl
+		}
 	}
 	const bucketCount = 20
 	const bucketSize = (max - min) / bucketCount || 1

@@ -14,7 +14,7 @@ interface ArchUpdateStrategyBody {
 	entryCriteria?: string
 	exitCriteria?: string
 	riskRules?: string
-	targetRMultiple?: number
+	finalR?: number
 	maxRiskPercent?: number
 	screenshotUrl?: string
 	screenshotS3Key?: string
@@ -35,17 +35,18 @@ interface ArchUpdateStrategyBody {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
 		const body = (await request.json()) as ArchUpdateStrategyBody
 
 		if (!body.id) {
-			return archError(
-				"Missing required field: id",
-				[{ code: "MISSING_FIELDS", detail: "Required: id (UUID)" }]
-			)
+			return archError("Missing required field: id", [
+				{ code: "MISSING_FIELDS", detail: "Required: id (UUID)" },
+			])
 		}
 
 		const existing = await db.query.strategies.findFirst({
@@ -58,7 +59,12 @@ const POST = async (request: NextRequest) => {
 		if (!existing) {
 			return archError(
 				"Strategy not found",
-				[{ code: "NOT_FOUND", detail: "Strategy does not exist or does not belong to this user" }],
+				[
+					{
+						code: "NOT_FOUND",
+						detail: "Strategy does not exist or does not belong to this user",
+					},
+				],
 				404
 			)
 		}
@@ -71,28 +77,47 @@ const POST = async (request: NextRequest) => {
 			updatedAt: new Date(),
 		}
 
-		if (strategyData.code !== undefined) updateValues.code = strategyData.code
-		if (strategyData.name !== undefined) updateValues.name = strategyData.name
-		if (strategyData.description !== undefined) updateValues.description = strategyData.description
-		if (strategyData.entryCriteria !== undefined) updateValues.entryCriteria = strategyData.entryCriteria
-		if (strategyData.exitCriteria !== undefined) updateValues.exitCriteria = strategyData.exitCriteria
-		if (strategyData.riskRules !== undefined) updateValues.riskRules = strategyData.riskRules
-		if (strategyData.targetRMultiple !== undefined) updateValues.targetRMultiple = strategyData.targetRMultiple.toString()
-		if (strategyData.maxRiskPercent !== undefined) updateValues.maxRiskPercent = strategyData.maxRiskPercent.toString()
-		if (strategyData.screenshotUrl !== undefined) updateValues.screenshotUrl = strategyData.screenshotUrl || null
-		if (strategyData.screenshotS3Key !== undefined) updateValues.screenshotS3Key = strategyData.screenshotS3Key || null
-		if (strategyData.notes !== undefined) updateValues.notes = strategyData.notes
-		if (strategyData.isActive !== undefined) updateValues.isActive = strategyData.isActive
+		if (strategyData.code !== undefined) {
+			updateValues.code = strategyData.code
+		}
+		if (strategyData.name !== undefined) {
+			updateValues.name = strategyData.name
+		}
+		if (strategyData.description !== undefined) {
+			updateValues.description = strategyData.description
+		}
+		if (strategyData.entryCriteria !== undefined) {
+			updateValues.entryCriteria = strategyData.entryCriteria
+		}
+		if (strategyData.exitCriteria !== undefined) {
+			updateValues.exitCriteria = strategyData.exitCriteria
+		}
+		if (strategyData.riskRules !== undefined) {
+			updateValues.riskRules = strategyData.riskRules
+		}
+		if (strategyData.finalR !== undefined) {
+			updateValues.finalR = strategyData.finalR.toString()
+		}
+		if (strategyData.maxRiskPercent !== undefined) {
+			updateValues.maxRiskPercent = strategyData.maxRiskPercent.toString()
+		}
+		if (strategyData.screenshotUrl !== undefined) {
+			updateValues.screenshotUrl = strategyData.screenshotUrl || null
+		}
+		if (strategyData.screenshotS3Key !== undefined) {
+			updateValues.screenshotS3Key = strategyData.screenshotS3Key || null
+		}
+		if (strategyData.notes !== undefined) {
+			updateValues.notes = strategyData.notes
+		}
+		if (strategyData.isActive !== undefined) {
+			updateValues.isActive = strategyData.isActive
+		}
 
 		await db
 			.update(strategies)
 			.set(updateValues)
-			.where(
-				and(
-					eq(strategies.id, id),
-					eq(strategies.userId, auth.userId)
-				)
-			)
+			.where(and(eq(strategies.id, id), eq(strategies.userId, auth.userId)))
 
 		const conditionsToInsert = validatedConditions ?? conditions
 		if (conditionsToInsert !== undefined) {
@@ -124,14 +149,16 @@ const POST = async (request: NextRequest) => {
 		return archSuccess("Strategy updated successfully", updatedStrategy)
 	} catch (error) {
 		if (error instanceof Error && error.name === "ZodError") {
-			return archError(
-				"Validation failed",
-				[{ code: "VALIDATION_ERROR", detail: error.message }]
-			)
+			return archError("Validation failed", [
+				{ code: "VALIDATION_ERROR", detail: error.message },
+			])
 		}
 
 		const errorMessage = String(error)
-		const errorCause = error instanceof Error ? String(error.cause ?? "") : ""
+		const errorCause =
+			error instanceof Error && error.cause instanceof Error
+				? error.cause.message
+				: ""
 
 		if (
 			errorMessage.includes("23505") ||
@@ -140,7 +167,12 @@ const POST = async (request: NextRequest) => {
 		) {
 			return archError(
 				"Strategy code already exists",
-				[{ code: "DUPLICATE_CODE", detail: "A strategy with this code already exists for your account" }],
+				[
+					{
+						code: "DUPLICATE_CODE",
+						detail: "A strategy with this code already exists for your account",
+					},
+				],
 				409
 			)
 		}

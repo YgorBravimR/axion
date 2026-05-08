@@ -66,17 +66,24 @@ const buildCacheConditions = (
 
 	const conditions = [accountCondition, eq(trades.isArchived, false)]
 
-	if (filters?.dateFrom)
+	if (filters?.dateFrom) {
 		conditions.push(gte(trades.entryDate, filters.dateFrom))
-	if (filters?.dateTo) conditions.push(lte(trades.entryDate, filters.dateTo))
-	if (filters?.assets?.length)
+	}
+	if (filters?.dateTo) {
+		conditions.push(lte(trades.entryDate, filters.dateTo))
+	}
+	if (filters?.assets?.length) {
 		conditions.push(inArray(trades.asset, filters.assets))
-	if (filters?.directions?.length)
+	}
+	if (filters?.directions?.length) {
 		conditions.push(inArray(trades.direction, filters.directions))
-	if (filters?.outcomes?.length)
+	}
+	if (filters?.outcomes?.length) {
 		conditions.push(inArray(trades.outcome, filters.outcomes))
-	if (filters?.timeframeIds?.length)
+	}
+	if (filters?.timeframeIds?.length) {
 		conditions.push(inArray(trades.timeframeId, filters.timeframeIds))
+	}
 
 	return conditions
 }
@@ -109,8 +116,6 @@ const getCachedAnalyticsDashboard = async (
 
 	const conditions = buildCacheConditions(ctx, filters)
 
-	// Cache miss — hitting DB. On cache hit this entire function is skipped.
-	const dbStart = performance.now()
 	const result = await db.query.trades.findMany({
 		where: and(...conditions),
 		with: {
@@ -119,9 +124,7 @@ const getCachedAnalyticsDashboard = async (
 		},
 		orderBy: [asc(trades.entryDate)],
 	})
-	const dbMs = (performance.now() - dbStart).toFixed(1)
 
-	const computeStart = performance.now()
 	const tradesForComputation = result.map((t) => ({
 		...t,
 		strategyName: t.strategy?.name ?? null,
@@ -141,10 +144,8 @@ const getCachedAnalyticsDashboard = async (
 		sessionPerformance: computeSessionPerformance(tradesForComputation),
 		sessionAssetPerformance:
 			computeSessionAssetPerformance(tradesForComputation),
-		holdingPeriodAnalysis:
-			computeHoldingPeriodAnalysis(tradesForComputation),
+		holdingPeriodAnalysis: computeHoldingPeriodAnalysis(tradesForComputation),
 	}
-	const computeMs = (performance.now() - computeStart).toFixed(1)
 
 	return data
 }
@@ -186,8 +187,11 @@ const computeDiscipline = (
 		).length
 		const olderCompliance =
 			olderTrades.length > 0 ? (olderFollowed / olderTrades.length) * 100 : 0
-		if (recentCompliance > olderCompliance + 5) trend = "up"
-		else if (recentCompliance < olderCompliance - 5) trend = "down"
+		if (recentCompliance > olderCompliance + 5) {
+			trend = "up"
+		} else if (recentCompliance < olderCompliance - 5) {
+			trend = "down"
+		}
 	}
 
 	return { score, totalTrades, followedCount, trend, recentCompliance }
@@ -217,19 +221,21 @@ const computeStreaks = (
 	let currentStreak = 0
 	let currentStreakType: "win" | "loss" | "none" = "none"
 
-	if (sortedDescTrades[0].outcome) {
+	if (sortedDescTrades[0]!.outcome) {
 		currentStreakType =
-			sortedDescTrades[0].outcome === "win"
+			sortedDescTrades[0]!.outcome === "win"
 				? "win"
-				: sortedDescTrades[0].outcome === "loss"
+				: sortedDescTrades[0]!.outcome === "loss"
 					? "loss"
 					: "none"
 		for (const trade of sortedDescTrades) {
-			if (currentStreakType === "win" && trade.outcome === "win")
+			if (currentStreakType === "win" && trade.outcome === "win") {
 				currentStreak++
-			else if (currentStreakType === "loss" && trade.outcome === "loss")
+			} else if (currentStreakType === "loss" && trade.outcome === "loss") {
 				currentStreak++
-			else break
+			} else {
+				break
+			}
 		}
 	}
 
@@ -264,8 +270,12 @@ const computeStreaks = (
 	let bestDay: { date: string; pnl: number } | null = null
 	let worstDay: { date: string; pnl: number } | null = null
 	for (const [date, pnl] of dailyMap) {
-		if (!bestDay || pnl > bestDay.pnl) bestDay = { date, pnl }
-		if (!worstDay || pnl < worstDay.pnl) worstDay = { date, pnl }
+		if (!bestDay || pnl > bestDay.pnl) {
+			bestDay = { date, pnl }
+		}
+		if (!worstDay || pnl < worstDay.pnl) {
+			worstDay = { date, pnl }
+		}
 	}
 
 	return {
@@ -285,7 +295,9 @@ const computeEquityCurveFromTrades = (
 	sortedAscTrades: Array<{ entryDate: Date; pnl: number | string | null }>,
 	initialBalance: number
 ): EquityPoint[] => {
-	if (sortedAscTrades.length === 0) return []
+	if (sortedAscTrades.length === 0) {
+		return []
+	}
 
 	const dailyPnlMap = new Map<string, number>()
 	for (const trade of sortedAscTrades) {
@@ -304,7 +316,9 @@ const computeEquityCurveFromTrades = (
 		const dailyPnl = dailyPnlMap.get(date) || 0
 		cumulativePnL += dailyPnl
 		const accountEquity = initialBalance + cumulativePnL
-		if (accountEquity > peak) peak = accountEquity
+		if (accountEquity > peak) {
+			peak = accountEquity
+		}
 		const drawdown = peak > 0 ? ((peak - accountEquity) / peak) * 100 : 0
 		equityPoints.push({ date, equity: cumulativePnL, accountEquity, drawdown })
 	}
@@ -327,7 +341,9 @@ const computeDailyPnLFromTrades = (
 	const dailyMap = new Map<string, { pnl: number; count: number }>()
 
 	for (const trade of sortedAscTrades) {
-		if (trade.entryDate < startOfMonth || trade.entryDate > endOfMonth) continue
+		if (trade.entryDate < startOfMonth || trade.entryDate > endOfMonth) {
+			continue
+		}
 		const dateKey = formatDateKey(trade.entryDate)
 		const existing = dailyMap.get(dateKey) || { pnl: 0, count: 0 }
 		existing.pnl += fromCents(trade.pnl)
@@ -353,7 +369,9 @@ const computeRadar = (
 		followedPlan: boolean | null
 	}>
 ): RadarChartData[] => {
-	if (allTrades.length === 0) return []
+	if (allTrades.length === 0) {
+		return []
+	}
 
 	let wins = 0
 	let losses = 0
@@ -383,7 +401,9 @@ const computeRadar = (
 		}
 		if (trade.followedPlan !== null) {
 			planTradesCount++
-			if (trade.followedPlan === true) followedPlanCount++
+			if (trade.followedPlan === true) {
+				followedPlanCount++
+			}
 		}
 	}
 
@@ -460,7 +480,6 @@ const getCachedDashboardData = async (
 	const accountCondition = buildAccountCondition(ctx)
 
 	// 1 DB query: all non-archived trades + 1 for initial balance
-	const dbStart = performance.now()
 	const [allTrades, accountBalanceSetting] = await Promise.all([
 		db.query.trades.findMany({
 			where: and(accountCondition, eq(trades.isArchived, false)),
@@ -470,13 +489,10 @@ const getCachedDashboardData = async (
 			where: eq(settings.key, "account_balance"),
 		}),
 	])
-	const dbMs = (performance.now() - dbStart).toFixed(1)
 
 	const initialBalance = accountBalanceSetting
 		? Number(accountBalanceSetting.value) || 10000
 		: 10000
-
-	const computeStart = performance.now()
 
 	// allTrades is sorted desc (newest first) — needed for discipline + streaks
 	const sortedDesc = allTrades
@@ -489,8 +505,6 @@ const getCachedDashboardData = async (
 	const streakData = computeStreaks(sortedDesc)
 	const dailyPnL = computeDailyPnLFromTrades(sortedAsc, year, monthIndex)
 	const radarData = computeRadar(sortedAsc)
-
-	const computeMs = (performance.now() - computeStart).toFixed(1)
 
 	return { stats, discipline, equityCurve, streakData, dailyPnL, radarData }
 }

@@ -16,14 +16,16 @@ const Kbd = ({ keys, className }: KbdProps) => {
 	}, [])
 
 	const displayKeys = keys.map((key) => {
-		if (key === "mod") return isMac ? "\u2318" : "Ctrl"
+		if (key === "mod") {
+			return isMac ? "\u2318" : "Ctrl"
+		}
 		return key
 	})
 
 	return (
 		<kbd
 			className={cn(
-				"bg-bg-300 text-txt-300 border-bg-300 inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 font-mono text-tiny",
+				"bg-bg-300 text-txt-300 border-bg-300 text-tiny inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 font-mono",
 				className
 			)}
 		>

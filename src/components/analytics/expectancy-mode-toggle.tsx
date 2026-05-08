@@ -13,7 +13,7 @@ type ExpectancyMode = "edge" | "capital"
 
 interface ExpectancyModeToggleProps {
 	mode: ExpectancyMode
-	onModeChange: (mode: ExpectancyMode) => void
+	onModeChange: (_mode: ExpectancyMode) => void
 }
 
 const ExpectancyModeToggle = ({
@@ -23,8 +23,8 @@ const ExpectancyModeToggle = ({
 	const t = useTranslations("analytics")
 
 	return (
-		<div className="flex items-center gap-s-200">
-			<div className="flex rounded-md border border-bg-300 bg-bg-100">
+		<div className="gap-s-200 flex items-center">
+			<div className="border-bg-300 bg-bg-100 flex rounded-md border">
 				<button
 					type="button"
 					tabIndex={0}
@@ -37,8 +37,9 @@ const ExpectancyModeToggle = ({
 					)}
 					onClick={() => onModeChange("edge")}
 					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ")
+						if (event.key === "Enter" || event.key === " ") {
 							onModeChange("edge")
+						}
 					}}
 				>
 					R
@@ -55,8 +56,9 @@ const ExpectancyModeToggle = ({
 					)}
 					onClick={() => onModeChange("capital")}
 					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ")
+						if (event.key === "Enter" || event.key === " ") {
 							onModeChange("capital")
+						}
 					}}
 				>
 					$
@@ -76,19 +78,19 @@ const ExpectancyModeToggle = ({
 				<TooltipContent
 					id="tooltip-expectancy-mode"
 					side="bottom"
-					className="border-bg-300 bg-bg-100 text-txt-200 max-w-sm border p-m-400 shadow-lg"
+					className="border-bg-300 bg-bg-100 text-txt-200 p-m-400 max-w-sm border shadow-lg"
 				>
-					<p className="text-small font-semibold text-txt-100 mb-s-200">
+					<p className="text-small text-txt-100 mb-s-200 font-semibold">
 						{t("expectancyTooltipTitle")}
 					</p>
 					<div className="space-y-s-200 text-tiny">
 						<p>
-							<span className="font-semibold text-txt-100">R</span>{" "}
-							— {t("expectancyTooltipR")}
+							<span className="text-txt-100 font-semibold">R</span> —{" "}
+							{t("expectancyTooltipR")}
 						</p>
 						<p>
-							<span className="font-semibold text-txt-100">$</span>{" "}
-							— {t("expectancyTooltipCapital")}
+							<span className="text-txt-100 font-semibold">$</span> —{" "}
+							{t("expectancyTooltipCapital")}
 						</p>
 						<p className="text-txt-300 italic">
 							{t("expectancyTooltipDiffer")}
@@ -100,4 +102,8 @@ const ExpectancyModeToggle = ({
 	)
 }
 
-export { ExpectancyModeToggle, type ExpectancyMode, type ExpectancyModeToggleProps }
+export {
+	ExpectancyModeToggle,
+	type ExpectancyMode,
+	type ExpectancyModeToggleProps,
+}

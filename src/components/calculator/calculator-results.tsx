@@ -31,8 +31,12 @@ const formatPoints = (points: number): string => {
 }
 
 const getRiskRewardColor = (ratio: number): string => {
-	if (ratio >= 2) return "text-trade-buy"
-	if (ratio >= 1) return "text-acc-100"
+	if (ratio >= 2) {
+		return "text-trade-buy"
+	}
+	if (ratio >= 1) {
+		return "text-acc-100"
+	}
 	return "text-trade-sell"
 }
 

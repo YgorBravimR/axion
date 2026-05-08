@@ -25,7 +25,7 @@
 import "dotenv/config"
 import { drizzle } from "drizzle-orm/neon-http"
 import { neon } from "@neondatabase/serverless"
-import { eq, and, isNotNull } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import * as schema from "../src/db/schema"
 import {
 	decryptDek,
@@ -192,7 +192,7 @@ const main = async () => {
 		const direction = (trade.direction as string).toLowerCase()
 		const pnl =
 			typeof trade.pnl === "number"
-				? fromCents(trade.pnl as any)
+				? fromCents(trade.pnl as number)
 				: trade.pnl
 					? Number(trade.pnl)
 					: null

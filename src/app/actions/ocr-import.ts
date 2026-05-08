@@ -6,11 +6,7 @@ import { trades, tradeExecutions, assets } from "@/db/schema"
 import type { Trade, TradeExecution } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import { eq } from "drizzle-orm"
-import {
-	calculateAssetPnL,
-	calculateRMultiple,
-	determineOutcome,
-} from "@/lib/calculations"
+import { calculateAssetPnL, determineOutcome } from "@/lib/calculations"
 import { fromCents, toCents, toNumericString } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
@@ -44,7 +40,7 @@ const ocrImportSchema = z.object({
 	preTradeThoughts: z.string().max(2000).optional(),
 })
 
-export type OcrImportInput = z.input<typeof ocrImportSchema>
+type OcrImportInput = z.input<typeof ocrImportSchema>
 
 // ==========================================
 // Helper Functions
@@ -69,7 +65,9 @@ const calculateAvgPrice = (
 	}>
 ): number => {
 	const filtered = allExecutions.filter((e) => e.executionType === type)
-	if (filtered.length === 0) return 0
+	if (filtered.length === 0) {
+		return 0
+	}
 
 	let totalValue = 0
 	let totalQty = 0
@@ -95,7 +93,9 @@ const findAsset = async (
 	const asset = await db.query.assets.findFirst({
 		where: eq(assets.symbol, resolved.symbol),
 	})
-	if (asset) return asset
+	if (asset) {
+		return asset
+	}
 
 	// Fallback: try original code if different from resolved symbol
 	if (originalCode && originalCode.toUpperCase() !== resolved.symbol) {
@@ -243,6 +243,10 @@ const processOcrTrade = async (
 		})
 		.returning()
 
+	if (!trade) {
+		throw new Error("Failed to insert trade")
+	}
+
 	// Insert all executions
 	const executionValues = validated.executions.map((ex) => ({
 		tradeId: trade.id,
@@ -275,7 +279,7 @@ const processOcrTrade = async (
 // Main Import Action
 // ==========================================
 
-export interface OcrImportResult {
+interface OcrImportResult {
 	trade: Trade
 	executions: TradeExecution[]
 	assetFound: boolean
@@ -335,7 +339,7 @@ export const createTradeFromOcr = async (
 // Bulk Import (Multiple Trades)
 // ==========================================
 
-export interface BulkOcrImportResult {
+interface BulkOcrImportResult {
 	successCount: number
 	failedCount: number
 	trades: Array<{
@@ -369,9 +373,10 @@ export const bulkCreateTradesFromOcr = async (
 		// Load registered symbols once for all trades
 		const registeredSymbols = await getRegisteredAssetSymbols()
 
-		for (let i = 0; i < inputs.length; i++) {
+		for (const [i, inputItem] of inputs.entries()) {
 			try {
-				const validated = ocrImportSchema.parse(inputs[i])
+				const validated = ocrImportSchema.parse(inputItem)
+				// eslint-disable-next-line no-await-in-loop -- per-trade OCR import; sequential for per-trade error isolation in try/catch
 				const processed = await processOcrTrade(
 					validated,
 					accountId,
@@ -384,7 +389,7 @@ export const bulkCreateTradesFromOcr = async (
 				result.failedCount++
 				result.errors.push({
 					index: i,
-					asset: inputs[i].asset,
+					asset: inputItem.asset,
 					message: toSafeErrorMessage(error, "bulkCreateTradesFromOcr"),
 				})
 			}

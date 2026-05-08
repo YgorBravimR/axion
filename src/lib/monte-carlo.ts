@@ -6,6 +6,15 @@ import type {
 	MonteCarloResult,
 	DistributionBucket,
 } from "@/types/monte-carlo"
+import {
+	assertNonEmpty,
+	mapNonEmpty,
+	mean,
+	median,
+	percentile,
+	toSortedNonEmpty,
+	type NonEmptyArray,
+} from "@/lib/non-empty"
 
 /**
  * Run a Monte Carlo simulation in R-multiples (Edge Expectancy).
@@ -15,12 +24,15 @@ import type {
 export const runMonteCarloSimulation = (
 	params: SimulationParams
 ): MonteCarloResult => {
-	const runs: SimulationRun[] = []
-
-	for (let i = 0; i < params.simulationCount; i++) {
-		const run = simulateSingleRun(params, i)
-		runs.push(run)
+	if (params.simulationCount < 1) {
+		throw new Error("monte-carlo: simulationCount must be ≥ 1")
 	}
+
+	const runs: SimulationRun[] = []
+	for (let i = 0; i < params.simulationCount; i++) {
+		runs.push(simulateSingleRun(params, i))
+	}
+	assertNonEmpty(runs, "monte-carlo: runs must be non-empty after simulation")
 
 	const statistics = aggregateStatistics(params, runs)
 	const distributionBuckets = calculateDistribution(runs)
@@ -29,8 +41,12 @@ export const runMonteCarloSimulation = (
 	const sortedByFinalR = runs.toSorted(
 		(a, b) => a.finalCumulativeR - b.finalCumulativeR
 	)
+	assertNonEmpty(
+		sortedByFinalR,
+		"monte-carlo: sortedByFinalR must be non-empty"
+	)
 	const medianIndex = Math.floor(sortedByFinalR.length / 2)
-	const sampleRun = sortedByFinalR[medianIndex]
+	const sampleRun = sortedByFinalR[medianIndex] ?? sortedByFinalR[0]
 
 	return {
 		params,
@@ -109,27 +125,21 @@ const simulateSingleRun = (
 
 const aggregateStatistics = (
 	params: SimulationParams,
-	runs: SimulationRun[]
+	runs: NonEmptyArray<SimulationRun>
 ): SimulationStatistics => {
-	const finalRValues = runs
-		.map((r) => r.finalCumulativeR)
-		.toSorted((a, b) => a - b)
-	const maxDrawdowns = runs.map((r) => r.maxRDrawdown).toSorted((a, b) => a - b)
-
-	const percentile = (arr: number[], p: number): number => {
-		const index = Math.ceil((p / 100) * arr.length) - 1
-		return arr[Math.max(0, Math.min(index, arr.length - 1))]
-	}
-
-	const median = (arr: number[]): number => {
-		const mid = Math.floor(arr.length / 2)
-		return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2
-	}
-
-	const mean = (arr: number[]): number =>
-		arr.reduce((sum, v) => sum + v, 0) / arr.length
+	const finalRValues = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.finalCumulativeR),
+		(a, b) => a - b
+	)
+	const maxDrawdowns = toSortedNonEmpty(
+		mapNonEmpty(runs, (r) => r.maxRDrawdown),
+		(a, b) => a - b
+	)
 
 	const profitableRuns = runs.filter((r) => r.finalCumulativeR > 0).length
+
+	const meanOrZero = (arr: readonly number[]): number =>
+		arr.length === 0 ? 0 : mean(arr as NonEmptyArray<number>)
 
 	// Per-run Sharpe/Sortino, averaged across runs.
 	// Pooling all trades from all runs into one series shrinks stddev by ~√N
@@ -141,24 +151,27 @@ const aggregateStatistics = (
 	let totalLosingR = 0
 	for (const run of runs) {
 		const runResults = run.trades.map((t) => t.rResult)
-		const runMean = mean(runResults)
+		const runMean = meanOrZero(runResults)
 		const runStd = calculateStdDev(runResults)
 		const runDownside = calculateDownsideDeviation(runResults, 0)
 		perRunSharpes.push(runStd > 0 ? runMean / runStd : 0)
 		perRunSortinos.push(runDownside > 0 ? runMean / runDownside : 0)
 		for (const r of runResults) {
-			if (r > 0) totalWinningR += r
-			else if (r < 0) totalLosingR += -r
+			if (r > 0) {
+				totalWinningR += r
+			} else if (r < 0) {
+				totalLosingR += -r
+			}
 		}
 	}
 
 	const meanRPerTrade =
-		runs.length > 0
+		params.numberOfTrades > 0
 			? runs.reduce((s, r) => s + r.finalCumulativeR, 0) /
 				(runs.length * params.numberOfTrades)
 			: 0
-	const sharpeRatio = perRunSharpes.length > 0 ? mean(perRunSharpes) : 0
-	const sortinoRatio = perRunSortinos.length > 0 ? mean(perRunSortinos) : 0
+	const sharpeRatio = meanOrZero(perRunSharpes)
+	const sortinoRatio = meanOrZero(perRunSortinos)
 
 	// Profit factor: total winning R / total losing R (across all sims)
 	const profitFactor =
@@ -168,9 +181,9 @@ const aggregateStatistics = (
 				? Infinity
 				: 0
 
-	// Streak analysis
-	const avgMaxWinStreak = mean(runs.map((r) => r.maxWinStreak))
-	const avgMaxLossStreak = mean(runs.map((r) => r.maxLossStreak))
+	// Streak analysis (runs is NonEmpty by contract)
+	const avgMaxWinStreak = mean(mapNonEmpty(runs, (r) => r.maxWinStreak))
+	const avgMaxLossStreak = mean(mapNonEmpty(runs, (r) => r.maxLossStreak))
 	const allWinStreaks: number[] = []
 	const allLossStreaks: number[] = []
 	for (const run of runs) {
@@ -191,8 +204,12 @@ const aggregateStatistics = (
 				}
 			}
 		}
-		if (currentWin > 0) allWinStreaks.push(currentWin)
-		if (currentLoss > 0) allLossStreaks.push(currentLoss)
+		if (currentWin > 0) {
+			allWinStreaks.push(currentWin)
+		}
+		if (currentLoss > 0) {
+			allLossStreaks.push(currentLoss)
+		}
 	}
 
 	// Kelly uses net reward (after commission impact) so f* isn't overstated.
@@ -223,8 +240,8 @@ const aggregateStatistics = (
 		expectedRPerTrade: meanRPerTrade,
 		expectedMaxWinStreak: avgMaxWinStreak,
 		expectedMaxLossStreak: avgMaxLossStreak,
-		avgWinStreak: allWinStreaks.length > 0 ? mean(allWinStreaks) : 0,
-		avgLossStreak: allLossStreaks.length > 0 ? mean(allLossStreaks) : 0,
+		avgWinStreak: meanOrZero(allWinStreaks),
+		avgLossStreak: meanOrZero(allLossStreaks),
 		kellyFull,
 		kellyHalf,
 		kellyQuarter,
@@ -286,8 +303,12 @@ const calculateDistribution = (runs: SimulationRun[]): DistributionBucket[] => {
 	let min = Infinity
 	let max = -Infinity
 	for (const rValue of finalRValues) {
-		if (rValue < min) min = rValue
-		if (rValue > max) max = rValue
+		if (rValue < min) {
+			min = rValue
+		}
+		if (rValue > max) {
+			max = rValue
+		}
 	}
 	const bucketCount = 20
 	const bucketSize = (max - min) / bucketCount || 1
@@ -315,7 +336,9 @@ const calculateDistribution = (runs: SimulationRun[]): DistributionBucket[] => {
 }
 
 const calculateStdDev = (values: number[]): number => {
-	if (values.length === 0) return 0
+	if (values.length === 0) {
+		return 0
+	}
 	const avg = values.reduce((sum, v) => sum + v, 0) / values.length
 	const squaredDiffs = values.map((v) => Math.pow(v - avg, 2))
 	const avgSquaredDiff =
@@ -334,7 +357,9 @@ const calculateDownsideDeviation = (
 	values: number[],
 	target: number
 ): number => {
-	if (values.length === 0) return 0
+	if (values.length === 0) {
+		return 0
+	}
 	const sumSquaredDownside = values.reduce((sum, v) => {
 		const diff = v - target
 		return diff < 0 ? sum + diff * diff : sum
@@ -356,8 +381,12 @@ export const generateAnalysisInsights = (
 	const { statistics: stats, params } = result
 
 	const getProfitabilityQuality = (): "robust" | "moderate" | "risky" => {
-		if (stats.profitablePct >= 70) return "robust"
-		if (stats.profitablePct >= 50) return "moderate"
+		if (stats.profitablePct >= 70) {
+			return "robust"
+		}
+		if (stats.profitablePct >= 50) {
+			return "moderate"
+		}
 		return "risky"
 	}
 
@@ -366,11 +395,15 @@ export const generateAnalysisInsights = (
 		| "good"
 		| "moderate"
 		| "concerning" => {
-		if (stats.sharpeRatio >= 0.5 && stats.medianMaxRDrawdown <= 3)
+		if (stats.sharpeRatio >= 0.5 && stats.medianMaxRDrawdown <= 3) {
 			return "excellent"
-		if (stats.sharpeRatio >= 0.3 && stats.medianMaxRDrawdown <= 5) return "good"
-		if (stats.sharpeRatio >= 0.1 && stats.medianMaxRDrawdown <= 8)
+		}
+		if (stats.sharpeRatio >= 0.3 && stats.medianMaxRDrawdown <= 5) {
+			return "good"
+		}
+		if (stats.sharpeRatio >= 0.1 && stats.medianMaxRDrawdown <= 8) {
 			return "moderate"
+		}
 		return "concerning"
 	}
 
@@ -386,8 +419,12 @@ export const generateAnalysisInsights = (
 	}
 
 	const getCommissionAssessment = (): "negligible" | "moderate" | "high" => {
-		if (params.commissionImpactR <= 1) return "negligible"
-		if (params.commissionImpactR <= 5) return "moderate"
+		if (params.commissionImpactR <= 1) {
+			return "negligible"
+		}
+		if (params.commissionImpactR <= 5) {
+			return "moderate"
+		}
 		return "high"
 	}
 

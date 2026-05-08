@@ -9,8 +9,8 @@ import { toCents } from "@/lib/money"
 import { CalculatorForm } from "./calculator-form"
 import { CalculatorResults } from "./calculator-results"
 import type { Asset } from "@/db/schema"
-import type { StrategyWithStats } from "@/app/actions/strategies"
-import type { AssetSettingWithAsset } from "@/app/actions/command-center"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
+import type { AssetSettingWithAsset } from "@/app/actions/command-center.types"
 
 interface PositionCalculatorProps {
 	assets: Asset[]
@@ -36,7 +36,9 @@ const PositionCalculator = ({
 	const [selectedAssetId, setSelectedAssetId] = useState(() => {
 		if (defaultAssetSymbol) {
 			const match = assets.find((a) => a.symbol === defaultAssetSymbol)
-			if (match) return match.id
+			if (match) {
+				return match.id
+			}
 		}
 		return ""
 	})
@@ -54,9 +56,9 @@ const PositionCalculator = ({
 	// Track which fields were pre-filled from asset settings
 	const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set())
 
-	// Filter strategies that have targetRMultiple set
+	// Filter strategies that have finalR set
 	const strategiesWithTarget = useMemo(
-		() => strategies.filter((strategy) => strategy.targetRMultiple !== null),
+		() => strategies.filter((strategy) => strategy.finalR !== null),
 		[strategies]
 	)
 
@@ -68,7 +70,10 @@ const PositionCalculator = ({
 
 	// Derived: find the selected strategy
 	const selectedStrategy = useMemo(
-		() => strategiesWithTarget.find((strategy) => strategy.id === selectedStrategyId) ?? null,
+		() =>
+			strategiesWithTarget.find(
+				(strategy) => strategy.id === selectedStrategyId
+			) ?? null,
 		[strategiesWithTarget, selectedStrategyId]
 	)
 
@@ -98,7 +103,9 @@ const PositionCalculator = ({
 
 	// Pre-fill from asset settings when asset changes
 	useEffect(() => {
-		if (!selectedAssetId) return
+		if (!selectedAssetId) {
+			return
+		}
 
 		const assetSetting = assetSettings.find(
 			(setting) => setting.assetId === selectedAssetId
@@ -127,21 +134,26 @@ const PositionCalculator = ({
 
 	// Auto-calculate target price from strategy R-multiple
 	useEffect(() => {
-		if (!selectedStrategy || isTargetManual) return
+		if (!selectedStrategy || isTargetManual) {
+			return
+		}
 
 		const entry = parseFloat(entryPrice)
 		const stop = parseFloat(stopPrice)
-		if (isNaN(entry) || isNaN(stop) || entry <= 0 || stop <= 0) return
+		if (isNaN(entry) || isNaN(stop) || entry <= 0 || stop <= 0) {
+			return
+		}
 
-		const rMultiple = parseFloat(selectedStrategy.targetRMultiple!)
-		if (isNaN(rMultiple) || rMultiple <= 0) return
+		const rMultiple = parseFloat(selectedStrategy.finalR!)
+		if (isNaN(rMultiple) || rMultiple <= 0) {
+			return
+		}
 
 		const stopDistance = Math.abs(entry - stop)
 		const targetDistance = stopDistance * rMultiple
 
-		const computedTarget = direction === "long"
-			? entry + targetDistance
-			: entry - targetDistance
+		const computedTarget =
+			direction === "long" ? entry + targetDistance : entry - targetDistance
 
 		// Round to a reasonable precision (match tick size if available)
 		if (selectedAsset) {
@@ -151,7 +163,14 @@ const PositionCalculator = ({
 		} else {
 			setTargetPrice(String(parseFloat(computedTarget.toFixed(2))))
 		}
-	}, [selectedStrategy, entryPrice, stopPrice, direction, isTargetManual, selectedAsset])
+	}, [
+		selectedStrategy,
+		entryPrice,
+		stopPrice,
+		direction,
+		isTargetManual,
+		selectedAsset,
+	])
 
 	// Handle manual target price change — marks target as manual
 	const handleTargetPriceChange = useCallback((value: string) => {
@@ -172,18 +191,27 @@ const PositionCalculator = ({
 
 	// Compute result
 	const calculatorResult = useMemo(() => {
-		if (!selectedAsset) return null
+		if (!selectedAsset) {
+			return null
+		}
 
 		const entry = parseFloat(entryPrice)
 		const stop = parseFloat(stopPrice)
 
-		if (isNaN(entry) || isNaN(stop) || entry <= 0 || stop <= 0) return null
+		if (isNaN(entry) || isNaN(stop) || entry <= 0 || stop <= 0) {
+			return null
+		}
 
 		const target = targetPrice ? parseFloat(targetPrice) : null
-		if (targetPrice && (target === null || isNaN(target) || target <= 0)) return null
+		if (targetPrice && (target === null || isNaN(target) || target <= 0)) {
+			return null
+		}
 
 		const contracts = manualContracts ? parseInt(manualContracts, 10) : null
-		if (manualContracts && (contracts === null || isNaN(contracts) || contracts <= 0)) {
+		if (
+			manualContracts &&
+			(contracts === null || isNaN(contracts) || contracts <= 0)
+		) {
 			return null
 		}
 
@@ -209,15 +237,15 @@ const PositionCalculator = ({
 	])
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 			{/* Header */}
-			<div className="mb-m-400 flex items-center gap-s-200">
-				<Calculator className="h-5 w-5 text-acc-100" />
-				<h3 className="text-body font-semibold text-txt-100">{t("title")}</h3>
+			<div className="mb-m-400 gap-s-200 flex items-center">
+				<Calculator className="text-acc-100 h-5 w-5" />
+				<h3 className="text-body text-txt-100 font-semibold">{t("title")}</h3>
 			</div>
 
 			{/* Two Column Layout */}
-			<div className="grid gap-m-500 lg:grid-cols-2">
+			<div className="gap-m-500 grid lg:grid-cols-2">
 				{/* Left: Form */}
 				<CalculatorForm
 					assets={assets}
@@ -258,7 +286,7 @@ const PositionCalculator = ({
 					{t("noRiskConfiguredMessage")}{" "}
 					<Link
 						href="/settings?tab=account"
-						className="underline transition-colors hover:text-acc-100"
+						className="hover:text-acc-100 underline transition-colors"
 						aria-label={t("setInAccountSettings")}
 					>
 						{t("setInAccountSettings")}

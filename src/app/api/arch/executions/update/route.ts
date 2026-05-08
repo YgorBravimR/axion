@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { trades, tradeExecutions } from "@/db/schema"
+import { tradeExecutions } from "@/db/schema"
 import type { TradeExecution } from "@/db/schema"
-import { eq, and, inArray } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import {
 	archSuccess,
@@ -36,7 +36,9 @@ interface UpdateExecutionBody {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -141,19 +143,33 @@ const POST = async (request: NextRequest) => {
 			updatedAt: new Date(),
 		}
 
-		if (body.executionType !== undefined)
+		if (body.executionType !== undefined) {
 			updateData.executionType = body.executionType
-		if (body.executionDate !== undefined)
+		}
+		if (body.executionDate !== undefined) {
 			updateData.executionDate = new Date(body.executionDate)
-		if (body.price !== undefined) updateData.price = String(body.price)
-		if (body.quantity !== undefined) updateData.quantity = String(body.quantity)
-		if (body.orderType !== undefined) updateData.orderType = body.orderType
-		if (body.notes !== undefined) updateData.notes = body.notes
-		if (body.commission !== undefined)
+		}
+		if (body.price !== undefined) {
+			updateData.price = String(body.price)
+		}
+		if (body.quantity !== undefined) {
+			updateData.quantity = String(body.quantity)
+		}
+		if (body.orderType !== undefined) {
+			updateData.orderType = body.orderType
+		}
+		if (body.notes !== undefined) {
+			updateData.notes = body.notes
+		}
+		if (body.commission !== undefined) {
 			updateData.commission = String(body.commission ?? 0)
-		if (body.fees !== undefined) updateData.fees = String(body.fees ?? 0)
-		if (body.slippage !== undefined)
+		}
+		if (body.fees !== undefined) {
+			updateData.fees = String(body.fees ?? 0)
+		}
+		if (body.slippage !== undefined) {
 			updateData.slippage = String(body.slippage ?? 0)
+		}
 
 		// Encrypt financial fields if DEK is available
 		const encryptedFields = dek

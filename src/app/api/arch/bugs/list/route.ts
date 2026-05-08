@@ -13,15 +13,19 @@ import { archSuccess, archError } from "../../_lib/helpers"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	try {
 		const { searchParams } = new URL(request.url)
 		const validStatuses = ["open", "accepted", "rejected", "closed"] as const
 		const rawStatus = searchParams.get("status")
-		const statusFilter = rawStatus && validStatuses.includes(rawStatus as typeof validStatuses[number])
-			? (rawStatus as typeof validStatuses[number])
-			: null
+		const statusFilter =
+			rawStatus &&
+			validStatuses.includes(rawStatus as (typeof validStatuses)[number])
+				? (rawStatus as (typeof validStatuses)[number])
+				: null
 		const limit = Math.min(Number(searchParams.get("limit")) || 50, 100)
 		const offset = Number(searchParams.get("offset")) || 0
 
@@ -64,10 +68,11 @@ const GET = async (request: NextRequest) => {
 			.limit(limit)
 			.offset(offset)
 
-		const [{ total }] = await db
+		const [totalRow] = await db
 			.select({ total: sql<number>`count(*)::int` })
 			.from(bugReports)
 			.where(conditions)
+		const total = totalRow?.total ?? 0
 
 		return archSuccess("Bug reports retrieved", { items: rows, total })
 	} catch (error) {

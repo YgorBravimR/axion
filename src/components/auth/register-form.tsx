@@ -81,7 +81,7 @@ const RegisterForm = () => {
 	}
 
 	return (
-		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -90,6 +90,7 @@ const RegisterForm = () => {
 					width={200}
 					height={57}
 					className="h-14 w-auto object-contain"
+					data-axion-logo="invertable"
 					priority
 				/>
 			</div>
@@ -178,7 +179,7 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -238,9 +239,9 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-3 -translate-y-1/2"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
 							aria-label={
-								showConfirmPassword ? t("hidePassword") : t("showPassword")
+								showConfirmPassword ? t("hideConfirmPassword") : t("showConfirmPassword")
 							}
 						>
 							{showConfirmPassword ? (
@@ -260,7 +261,7 @@ const RegisterForm = () => {
 				<Button
 					id="register-submit"
 					type="submit"
-					className="w-full"
+					className="h-11 w-full"
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
 					{isPending && (

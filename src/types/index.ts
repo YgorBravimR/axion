@@ -362,11 +362,6 @@ export interface AccountComparisonMetrics {
 	accountId: string
 	accountName: string
 	accountType: "personal" | "prop" | "replay"
-	config: {
-		defaultCommission: number
-		defaultFees: number
-		defaultRiskPerTrade: number | null
-	}
 	stats: OverallStats
 	expectedValue: ExpectedValueData
 	equityCurve: EquityPoint[]

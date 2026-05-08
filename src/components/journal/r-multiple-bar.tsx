@@ -27,7 +27,6 @@ export const RMultipleBar = ({
 
 	const actualPercent = normalizeToPercent(actual, maxR)
 	const plannedPercent = planned ? normalizeToPercent(planned, maxR) : null
-	const zeroPercent = 50 // Zero is at the center
 
 	const isPositive = actual > 0
 	const hitTarget = planned ? actual >= planned : false

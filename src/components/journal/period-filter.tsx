@@ -13,8 +13,8 @@ import { APP_TIMEZONE } from "@/lib/dates"
 interface PeriodFilterProps {
 	value: JournalPeriod
 	onChange: (
-		period: JournalPeriod,
-		dateRange?: { from: Date; to: Date }
+		_period: JournalPeriod,
+		_dateRange?: { from: Date; to: Date }
 	) => void
 	customDateRange?: { from: Date; to: Date }
 }
@@ -92,7 +92,7 @@ export const PeriodFilter = ({
 			<div
 				role="group"
 				aria-label={t("period.filterGroupLabel")}
-				className="gap-s-100 flex items-center overflow-x-auto scrollbar-none"
+				className="gap-s-100 scrollbar-none flex items-center overflow-x-auto"
 			>
 				{periods.map((period) => (
 					<button
@@ -117,7 +117,7 @@ export const PeriodFilter = ({
 
 			{/* Custom Date Range Picker */}
 			{showCustomPicker && (
-				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex flex-wrap items-end rounded-lg border max-w-[calc(100vw-2rem)]">
+				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex max-w-[calc(100vw-2rem)] flex-wrap items-end rounded-lg border">
 					<div className="w-full sm:min-w-[260px] sm:flex-1">
 						<DateRangePicker
 							id="period-filter-range"

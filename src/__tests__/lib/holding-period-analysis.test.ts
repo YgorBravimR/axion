@@ -78,13 +78,15 @@ const BASE_ENTRY = new Date("2026-01-06T09:00:00.000Z")
  * Creates a minimal `TradeForHoldingPeriod` fixture.
  * Duration is controlled via `exitDate` relative to `entryDate`.
  */
-const makeTrade = (options: HoldingTradeOptions = {}): TradeForHoldingPeriod => {
+const makeTrade = (
+	options: HoldingTradeOptions = {}
+): TradeForHoldingPeriod => {
 	const entryDate = options.entryDate ?? BASE_ENTRY
 
 	// exitDate can be explicitly null (open trade) or a Date (closed trade)
 	const exitDate =
 		"exitDate" in options
-			? options.exitDate ?? null
+			? (options.exitDate ?? null)
 			: new Date(entryDate.getTime() + 10 * 60_000) // default: 10-minute hold
 
 	return {
@@ -116,8 +118,10 @@ const makeTradeWithDuration = (
  * Returns the bucket result for the given label from a result array.
  * Throws if the bucket is not present (test should catch this separately).
  */
-const getBucket = (results: ReturnType<typeof computeHoldingPeriodAnalysis>, label: BucketLabel) =>
-	results.find((b) => b.bucket === label)
+const getBucket = (
+	results: ReturnType<typeof computeHoldingPeriodAnalysis>,
+	label: BucketLabel
+) => results.find((b) => b.bucket === label)
 
 // ---------------------------------------------------------------------------
 // formatDuration logic — re-implemented to test in isolation
@@ -125,8 +129,12 @@ const getBucket = (results: ReturnType<typeof computeHoldingPeriodAnalysis>, lab
 // ---------------------------------------------------------------------------
 
 const formatDuration = (minutes: number): string => {
-	if (minutes < 1) return "< 1min"
-	if (minutes < 60) return `${Math.round(minutes)}min`
+	if (minutes < 1) {
+		return "< 1min"
+	}
+	if (minutes < 60) {
+		return `${Math.round(minutes)}min`
+	}
 	const hours = minutes / 60
 	return `${hours.toFixed(1)}h`
 }
@@ -170,8 +178,8 @@ describe("computeHoldingPeriodAnalysis()", () => {
 
 			const result = computeHoldingPeriodAnalysis(trades)
 			expect(result).toHaveLength(1)
-			expect(result[0].bucket).toBe("5-15min")
-			expect(result[0].totalTrades).toBe(1)
+			expect(result[0]!.bucket).toBe("5-15min")
+			expect(result[0]!.totalTrades).toBe(1)
 		})
 	})
 
@@ -183,72 +191,72 @@ describe("computeHoldingPeriodAnalysis()", () => {
 		it('should assign a 0-minute trade to "< 1min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(0)])
 			expect(result).toHaveLength(1)
-			expect(result[0].bucket).toBe("< 1min")
+			expect(result[0]!.bucket).toBe("< 1min")
 		})
 
 		it('should assign a 0.5-minute trade to "< 1min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(0.5)])
-			expect(result[0].bucket).toBe("< 1min")
+			expect(result[0]!.bucket).toBe("< 1min")
 		})
 
 		it('should assign a 1-minute trade to "1-5min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(1)])
-			expect(result[0].bucket).toBe("1-5min")
+			expect(result[0]!.bucket).toBe("1-5min")
 		})
 
 		it('should assign a 4.9-minute trade to "1-5min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(4.9)])
-			expect(result[0].bucket).toBe("1-5min")
+			expect(result[0]!.bucket).toBe("1-5min")
 		})
 
 		it('should assign a 5-minute trade to "5-15min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(5)])
-			expect(result[0].bucket).toBe("5-15min")
+			expect(result[0]!.bucket).toBe("5-15min")
 		})
 
 		it('should assign a 14-minute trade to "5-15min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(14)])
-			expect(result[0].bucket).toBe("5-15min")
+			expect(result[0]!.bucket).toBe("5-15min")
 		})
 
 		it('should assign a 15-minute trade to "15-30min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(15)])
-			expect(result[0].bucket).toBe("15-30min")
+			expect(result[0]!.bucket).toBe("15-30min")
 		})
 
 		it('should assign a 29-minute trade to "15-30min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(29)])
-			expect(result[0].bucket).toBe("15-30min")
+			expect(result[0]!.bucket).toBe("15-30min")
 		})
 
 		it('should assign a 30-minute trade to "30-60min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(30)])
-			expect(result[0].bucket).toBe("30-60min")
+			expect(result[0]!.bucket).toBe("30-60min")
 		})
 
 		it('should assign a 59-minute trade to "30-60min"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(59)])
-			expect(result[0].bucket).toBe("30-60min")
+			expect(result[0]!.bucket).toBe("30-60min")
 		})
 
 		it('should assign a 60-minute trade to "1-2h"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(60)])
-			expect(result[0].bucket).toBe("1-2h")
+			expect(result[0]!.bucket).toBe("1-2h")
 		})
 
 		it('should assign a 239-minute trade to "2-4h"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(239)])
-			expect(result[0].bucket).toBe("2-4h")
+			expect(result[0]!.bucket).toBe("2-4h")
 		})
 
 		it('should assign a 240-minute trade to "> 4h"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(240)])
-			expect(result[0].bucket).toBe("> 4h")
+			expect(result[0]!.bucket).toBe("> 4h")
 		})
 
 		it('should assign a 1440-minute (24h) trade to "> 4h"', () => {
 			const result = computeHoldingPeriodAnalysis([makeTradeWithDuration(1440)])
-			expect(result[0].bucket).toBe("> 4h")
+			expect(result[0]!.bucket).toBe("> 4h")
 		})
 	})
 
@@ -263,8 +271,8 @@ describe("computeHoldingPeriodAnalysis()", () => {
 
 			const result = computeHoldingPeriodAnalysis([trade])
 			expect(result).toHaveLength(1)
-			expect(result[0].bucket).toBe("< 1min")
-			expect(result[0].avgDurationMinutes).toBe(0)
+			expect(result[0]!.bucket).toBe("< 1min")
+			expect(result[0]!.avgDurationMinutes).toBe(0)
 		})
 	})
 
@@ -281,9 +289,9 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			const result = computeHoldingPeriodAnalysis([trade])
 
 			expect(result).toHaveLength(1)
-			expect(result[0].bucket).toBe("< 1min")
+			expect(result[0]!.bucket).toBe("< 1min")
 			// avgDurationMinutes should reflect the clamped value of 0
-			expect(result[0].avgDurationMinutes).toBe(0)
+			expect(result[0]!.avgDurationMinutes).toBe(0)
 		})
 	})
 
@@ -413,8 +421,16 @@ describe("computeHoldingPeriodAnalysis()", () => {
 	describe("avgR computation", () => {
 		it("should compute avgR as the mean of all non-null R-multiples in the bucket", () => {
 			const trades = [
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000", realizedRMultiple: "2.0" }),
-				makeTradeWithDuration(11, { outcome: "win", pnl: "3000", realizedRMultiple: "1.0" }),
+				makeTradeWithDuration(10, {
+					outcome: "win",
+					pnl: "5000",
+					realizedRMultiple: "2.0",
+				}),
+				makeTradeWithDuration(11, {
+					outcome: "win",
+					pnl: "3000",
+					realizedRMultiple: "1.0",
+				}),
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
@@ -427,8 +443,16 @@ describe("computeHoldingPeriodAnalysis()", () => {
 
 		it("should return 0 for avgR when no trades in the bucket have R-multiples", () => {
 			const trades = [
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000", realizedRMultiple: null }),
-				makeTradeWithDuration(12, { outcome: "loss", pnl: "-3000", realizedRMultiple: null }),
+				makeTradeWithDuration(10, {
+					outcome: "win",
+					pnl: "5000",
+					realizedRMultiple: null,
+				}),
+				makeTradeWithDuration(12, {
+					outcome: "loss",
+					pnl: "-3000",
+					realizedRMultiple: null,
+				}),
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
@@ -441,9 +465,21 @@ describe("computeHoldingPeriodAnalysis()", () => {
 		it("should average only the trades that have non-null R-multiples", () => {
 			// 2 trades have R, 1 trade does not — avgR computed from the 2 with R only
 			const trades = [
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000", realizedRMultiple: "3.0" }),
-				makeTradeWithDuration(11, { outcome: "win", pnl: "3000", realizedRMultiple: "1.0" }),
-				makeTradeWithDuration(12, { outcome: "loss", pnl: "-2000", realizedRMultiple: null }),
+				makeTradeWithDuration(10, {
+					outcome: "win",
+					pnl: "5000",
+					realizedRMultiple: "3.0",
+				}),
+				makeTradeWithDuration(11, {
+					outcome: "win",
+					pnl: "3000",
+					realizedRMultiple: "1.0",
+				}),
+				makeTradeWithDuration(12, {
+					outcome: "loss",
+					pnl: "-2000",
+					realizedRMultiple: null,
+				}),
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
@@ -456,8 +492,16 @@ describe("computeHoldingPeriodAnalysis()", () => {
 
 		it("should handle negative R-multiples (loss trades)", () => {
 			const trades = [
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000", realizedRMultiple: "2.0" }),
-				makeTradeWithDuration(11, { outcome: "loss", pnl: "-5000", realizedRMultiple: "-1.0" }),
+				makeTradeWithDuration(10, {
+					outcome: "win",
+					pnl: "5000",
+					realizedRMultiple: "2.0",
+				}),
+				makeTradeWithDuration(11, {
+					outcome: "loss",
+					pnl: "-5000",
+					realizedRMultiple: "-1.0",
+				}),
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
@@ -534,8 +578,20 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			const exitB = new Date(entryB.getTime() + 14 * 60_000) // 14min
 
 			const trades: TradeForHoldingPeriod[] = [
-				{ entryDate: entryA, exitDate: exitA, pnl: "5000", outcome: "win", realizedRMultiple: null },
-				{ entryDate: entryB, exitDate: exitB, pnl: "3000", outcome: "win", realizedRMultiple: null },
+				{
+					entryDate: entryA,
+					exitDate: exitA,
+					pnl: "5000",
+					outcome: "win",
+					realizedRMultiple: null,
+				},
+				{
+					entryDate: entryB,
+					exitDate: exitB,
+					pnl: "3000",
+					outcome: "win",
+					realizedRMultiple: null,
+				},
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
@@ -550,7 +606,7 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			const trade = makeTrade({ exitDate: BASE_ENTRY }) // entry === exit
 			const result = computeHoldingPeriodAnalysis([trade])
 
-			expect(result[0].avgDurationMinutes).toBe(0)
+			expect(result[0]!.avgDurationMinutes).toBe(0)
 		})
 	})
 
@@ -563,11 +619,11 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			const trades = [
 				makeTradeWithDuration(300, { outcome: "win", pnl: "5000" }), // > 4h   (order 7)
 				makeTradeWithDuration(0.5, { outcome: "win", pnl: "5000" }), // < 1min (order 0)
-				makeTradeWithDuration(90, { outcome: "win", pnl: "5000" }),  // 1-2h   (order 5)
-				makeTradeWithDuration(3, { outcome: "win", pnl: "5000" }),   // 1-5min (order 1)
-				makeTradeWithDuration(45, { outcome: "win", pnl: "5000" }),  // 30-60min (order 4)
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000" }),  // 5-15min (order 2)
-				makeTradeWithDuration(20, { outcome: "win", pnl: "5000" }),  // 15-30min (order 3)
+				makeTradeWithDuration(90, { outcome: "win", pnl: "5000" }), // 1-2h   (order 5)
+				makeTradeWithDuration(3, { outcome: "win", pnl: "5000" }), // 1-5min (order 1)
+				makeTradeWithDuration(45, { outcome: "win", pnl: "5000" }), // 30-60min (order 4)
+				makeTradeWithDuration(10, { outcome: "win", pnl: "5000" }), // 5-15min (order 2)
+				makeTradeWithDuration(20, { outcome: "win", pnl: "5000" }), // 15-30min (order 3)
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
@@ -581,13 +637,13 @@ describe("computeHoldingPeriodAnalysis()", () => {
 		it("should preserve ascending order for a subset of buckets", () => {
 			// Only 2 buckets populated — sort must still be ascending among those
 			const trades = [
-				makeTradeWithDuration(90, { outcome: "win", pnl: "5000" }),  // 1-2h   (order 5)
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000" }),  // 5-15min (order 2)
+				makeTradeWithDuration(90, { outcome: "win", pnl: "5000" }), // 1-2h   (order 5)
+				makeTradeWithDuration(10, { outcome: "win", pnl: "5000" }), // 5-15min (order 2)
 			]
 
 			const result = computeHoldingPeriodAnalysis(trades)
 			expect(result).toHaveLength(2)
-			expect(result[0].bucketOrder).toBeLessThan(result[1].bucketOrder)
+			expect(result[0]!.bucketOrder).toBeLessThan(result[1]!.bucketOrder)
 		})
 	})
 
@@ -598,17 +654,19 @@ describe("computeHoldingPeriodAnalysis()", () => {
 	describe("empty buckets exclusion", () => {
 		it("should not include buckets that have no trades", () => {
 			// Only trades in one bucket → only that bucket should appear
-			const trades = [makeTradeWithDuration(10, { outcome: "win", pnl: "5000" })]
+			const trades = [
+				makeTradeWithDuration(10, { outcome: "win", pnl: "5000" }),
+			]
 			const result = computeHoldingPeriodAnalysis(trades)
 
 			expect(result).toHaveLength(1)
-			expect(result[0].bucket).toBe("5-15min")
+			expect(result[0]!.bucket).toBe("5-15min")
 		})
 
 		it("should return exactly the number of distinct buckets that have trades", () => {
 			const trades = [
 				makeTradeWithDuration(0.5, { outcome: "win", pnl: "5000" }), // < 1min
-				makeTradeWithDuration(2, { outcome: "win", pnl: "5000" }),   // 1-5min
+				makeTradeWithDuration(2, { outcome: "win", pnl: "5000" }), // 1-5min
 				makeTradeWithDuration(2, { outcome: "loss", pnl: "-3000" }), // 1-5min (same bucket)
 			]
 
@@ -633,7 +691,7 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			const result = computeHoldingPeriodAnalysis([trade])
 
 			expect(result).toHaveLength(1)
-			const bucket = result[0]
+			const bucket = result[0]!
 
 			expect(bucket.bucket).toBe("30-60min")
 			expect(bucket.bucketOrder).toBe(4)
@@ -659,7 +717,7 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			const result = computeHoldingPeriodAnalysis([trade])
 
 			expect(result).toHaveLength(1)
-			const bucket = result[0]
+			const bucket = result[0]!
 
 			expect(bucket.bucket).toBe("15-30min")
 			expect(bucket.totalTrades).toBe(1)
@@ -727,7 +785,7 @@ describe("computeHoldingPeriodAnalysis()", () => {
 			])
 
 			expect(result).toHaveLength(1)
-			const bucket = result[0]
+			const bucket = result[0]!
 
 			expect(bucket).toHaveProperty("bucket")
 			expect(bucket).toHaveProperty("bucketOrder")
@@ -745,10 +803,14 @@ describe("computeHoldingPeriodAnalysis()", () => {
 
 		it("should return numbers (not strings) for all numeric fields", () => {
 			const result = computeHoldingPeriodAnalysis([
-				makeTradeWithDuration(10, { outcome: "win", pnl: "5000", realizedRMultiple: "2.0" }),
+				makeTradeWithDuration(10, {
+					outcome: "win",
+					pnl: "5000",
+					realizedRMultiple: "2.0",
+				}),
 			])
 
-			const bucket = result[0]
+			const bucket = result[0]!
 			expect(typeof bucket.bucketOrder).toBe("number")
 			expect(typeof bucket.totalTrades).toBe("number")
 			expect(typeof bucket.wins).toBe("number")
@@ -814,7 +876,7 @@ describe("formatDuration()", () => {
 			expect(formatDuration(5)).toBe("5min")
 		})
 
-		it('should round to the nearest minute', () => {
+		it("should round to the nearest minute", () => {
 			// 4.6 rounds to 5
 			expect(formatDuration(4.6)).toBe("5min")
 			// 4.4 rounds to 4
@@ -839,7 +901,7 @@ describe("formatDuration()", () => {
 			expect(formatDuration(240)).toBe("4.0h")
 		})
 
-		it('should format fractional hours to one decimal place', () => {
+		it("should format fractional hours to one decimal place", () => {
 			// 70 / 60 = 1.1666... → "1.2h"
 			expect(formatDuration(70)).toBe("1.2h")
 		})
@@ -856,7 +918,9 @@ describe("expectancyMode metric key selection", () => {
 	 *   const isRMode = expectancyMode === "edge"
 	 *   const metricKey = isRMode ? "avgR" : "totalPnl"
 	 */
-	const getMetricKey = (expectancyMode: "capital" | "edge"): "avgR" | "totalPnl" => {
+	const getMetricKey = (
+		expectancyMode: "capital" | "edge"
+	): "avgR" | "totalPnl" => {
 		return expectancyMode === "edge" ? "avgR" : "totalPnl"
 	}
 
@@ -897,7 +961,7 @@ describe("best and worst bucket selection", () => {
 	/**
 	 * Mirrors the component sort logic for totalPnl mode:
 	 *   sorted = activeBuckets.toSorted((a, b) => b[metricKey] - a[metricKey])
-	 *   bestBucket  = sorted[0]
+	 *   bestBucket  = sorted[0]!
 	 *   worstBucket = sorted[sorted.length - 1]
 	 */
 	const selectBestWorst = (
@@ -916,8 +980,8 @@ describe("best and worst bucket selection", () => {
 		]
 
 		const { best, worst } = selectBestWorst(buckets, "totalPnl")
-		expect(best.bucket).toBe("< 1min")
-		expect(worst.bucket).toBe("1-2h")
+		expect(best!.bucket).toBe("< 1min")
+		expect(worst!.bucket).toBe("1-2h")
 	})
 
 	it("should identify the bucket with the highest avgR as best in edge mode", () => {
@@ -928,14 +992,14 @@ describe("best and worst bucket selection", () => {
 		]
 
 		const { best, worst } = selectBestWorst(buckets, "avgR")
-		expect(best.bucket).toBe("< 1min")
-		expect(worst.bucket).toBe("1-2h")
+		expect(best!.bucket).toBe("< 1min")
+		expect(worst!.bucket).toBe("1-2h")
 	})
 
 	it("should handle a single bucket (best === worst)", () => {
 		const buckets = [createBucket("5-15min", 2, 100, 1.5)]
 		const { best, worst } = selectBestWorst(buckets, "totalPnl")
-		expect(best.bucket).toBe(worst.bucket)
+		expect(best!.bucket).toBe(worst!.bucket)
 	})
 })
 
@@ -956,10 +1020,7 @@ describe("activeBuckets empty state guard", () => {
 	})
 
 	it("should result in an empty activeBuckets array when all buckets have 0 trades", () => {
-		const allEmpty = [
-			{ totalTrades: 0 },
-			{ totalTrades: 0 },
-		]
+		const allEmpty = [{ totalTrades: 0 }, { totalTrades: 0 }]
 		expect(getActiveBuckets(allEmpty)).toHaveLength(0)
 	})
 

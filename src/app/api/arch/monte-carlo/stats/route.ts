@@ -11,7 +11,9 @@ import type { SourceStats } from "@/types/monte-carlo"
 
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -47,7 +49,10 @@ const POST = async (request: NextRequest) => {
 
 		if (validated.type === "strategy") {
 			const strategy = await db.query.strategies.findFirst({
-				where: and(eq(strategies.id, validated.strategyId), eq(strategies.userId, auth.userId)),
+				where: and(
+					eq(strategies.id, validated.strategyId),
+					eq(strategies.userId, auth.userId)
+				),
 			})
 			if (!strategy) {
 				return archError(
@@ -67,7 +72,9 @@ const POST = async (request: NextRequest) => {
 				orderBy: [desc(trades.entryDate)],
 				columns: tradeColumns,
 			})
-			tradesList = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+			tradesList = dek
+				? rawTrades.map((t) => decryptTradeFields(t, dek))
+				: rawTrades
 		} else if (validated.type === "all_strategies") {
 			sourceName = "All Strategies"
 
@@ -77,16 +84,26 @@ const POST = async (request: NextRequest) => {
 			strategiesCount = accountStrategies.length
 
 			const rawTrades = await db.query.trades.findMany({
-				where: and(eq(trades.accountId, auth.accountId), isNotNull(trades.outcome)),
+				where: and(
+					eq(trades.accountId, auth.accountId),
+					isNotNull(trades.outcome)
+				),
 				orderBy: [desc(trades.entryDate)],
 				columns: tradeColumns,
 			})
-			tradesList = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+			tradesList = dek
+				? rawTrades.map((t) => decryptTradeFields(t, dek))
+				: rawTrades
 		} else if (validated.type === "universal") {
 			if (!auth.showAllAccounts) {
 				return archError(
 					"Universal source requires show all accounts enabled",
-					[{ code: "NOT_ALLOWED", detail: "Enable show all accounts in settings" }],
+					[
+						{
+							code: "NOT_ALLOWED",
+							detail: "Enable show all accounts in settings",
+						},
+					],
 					403
 				)
 			}
@@ -106,7 +123,9 @@ const POST = async (request: NextRequest) => {
 				orderBy: [desc(trades.entryDate)],
 				columns: tradeColumns,
 			})
-			tradesList = dek ? rawTrades.map((t) => decryptTradeFields(t, dek)) : rawTrades
+			tradesList = dek
+				? rawTrades.map((t) => decryptTradeFields(t, dek))
+				: rawTrades
 		}
 
 		if (tradesList.length === 0) {
@@ -161,7 +180,9 @@ const POST = async (request: NextRequest) => {
 			totalRisk > 0 ? (totalCommission / totalRisk) * 100 : 0
 
 		const grossProfit = wins.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0)
-		const grossLoss = Math.abs(losses.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0))
+		const grossLoss = Math.abs(
+			losses.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0)
+		)
 		const profitFactor =
 			grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0
 
@@ -199,8 +220,12 @@ const POST = async (request: NextRequest) => {
 				}
 				const entry = breakdown.get(name)!
 				entry.tradesCount++
-				if (trade.outcome === "win") entry.wins++
-				if (trade.outcome === "loss") entry.losses++
+				if (trade.outcome === "win") {
+					entry.wins++
+				}
+				if (trade.outcome === "loss") {
+					entry.losses++
+				}
 			}
 
 			strategiesBreakdown = Array.from(breakdown.values()).map((s) => {

@@ -23,7 +23,7 @@ export const HeroQuoteCard = memo(({ quote }: HeroQuoteCardProps) => {
 	return (
 		<div
 			className={cn(
-				"border-bg-300 bg-bg-200 min-w-[140px] shrink-0 flex-1 rounded-lg border p-s-300",
+				"border-bg-300 bg-bg-200 min-w-0 sm:min-w-[140px] shrink-0 flex-1 rounded-lg border p-s-300",
 				!isClosed && !isZero && isPositive && "border-l-2 border-l-trade-buy",
 				!isClosed && !isZero && !isPositive && "border-l-2 border-l-trade-sell"
 			)}
@@ -31,7 +31,7 @@ export const HeroQuoteCard = memo(({ quote }: HeroQuoteCardProps) => {
 			aria-label={`${quote.name}: ${formatPrice(quote.price)}${isClosed ? "" : `, ${formatChangePercent(quote.changePercent)}`}`}
 		>
 			<div className="flex items-center justify-between gap-s-200">
-				<span className="text-tiny text-txt-200 flex items-center gap-1.5 truncate font-medium">
+				<span className="text-tiny text-txt-200 flex min-w-0 items-center gap-1.5 truncate font-medium">
 					{quote.flag ? (
 						<span className="shrink-0" aria-hidden="true">
 							{quote.flag}

@@ -26,13 +26,21 @@ interface TradeHashInput {
  * Compute a SHA-256 deduplication hash for a trade.
  *
  * Fingerprint components (pipe-delimited):
- *   accountId | asset (uppercase) | direction | entryDate (YYYY-MM-DD) | entryPrice (2dp) | exitPrice (2dp) | positionSize
+ *   accountId | asset (uppercase) | direction | entryDate (YYYY-MM-DD HH:mm:ss) | entryPrice (2dp) | exitPrice (2dp) | positionSize
  *
  * Prices are rounded to 2 decimal places to avoid floating-point noise
  * (e.g., 128000.00000001 vs 128000.0 would otherwise produce different hashes).
+ *
+ * EntryDate uses full datetime (down to seconds) so two trades with identical
+ * prices on the same day but different entry times don't collide.
  */
 const computeTradeHash = (input: TradeHashInput): string => {
-	const dateKey = formatDateKey(input.entryDate)
+	const date = input.entryDate instanceof Date ? input.entryDate : new Date(input.entryDate)
+	const dateKey = formatDateKey(date)
+	const hh = String(date.getUTCHours()).padStart(2, "0")
+	const mm = String(date.getUTCMinutes()).padStart(2, "0")
+	const ss = String(date.getUTCSeconds()).padStart(2, "0")
+	const datetimeKey = `${dateKey} ${hh}:${mm}:${ss}`
 	const entryPriceNormalized = input.entryPrice.toFixed(2)
 	const exitPriceNormalized = input.exitPrice != null ? input.exitPrice.toFixed(2) : "null"
 	const positionSizeNormalized = input.positionSize.toString()
@@ -41,7 +49,7 @@ const computeTradeHash = (input: TradeHashInput): string => {
 		input.accountId,
 		input.asset.toUpperCase(),
 		input.direction,
-		dateKey,
+		datetimeKey,
 		entryPriceNormalized,
 		exitPriceNormalized,
 		positionSizeNormalized,

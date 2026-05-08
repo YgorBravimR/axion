@@ -24,7 +24,9 @@ const BrandSynchronizer = ({ serverBrand }: BrandSynchronizerProps) => {
 	const hasSynced = useRef(false)
 
 	useEffect(() => {
-		if (hasSynced.current) return
+		if (hasSynced.current) {
+			return
+		}
 		hasSynced.current = true
 
 		if (serverBrand) {
@@ -48,9 +50,8 @@ const BrandSynchronizer = ({ serverBrand }: BrandSynchronizerProps) => {
 			}
 		}
 
-		syncBrand()
+		void syncBrand()
 		// Only run on mount — hasSynced ref prevents re-execution
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	return null

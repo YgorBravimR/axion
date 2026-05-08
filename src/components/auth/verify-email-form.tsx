@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import Image from "next/image"
-import { Loader2, ArrowLeft, CheckCircle2, Mail } from "lucide-react"
+import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
 import {
 	requestEmailVerification,
 	verifyEmail,
@@ -40,7 +40,9 @@ const VerifyEmailForm = () => {
 	// period (keyed on cooldownEpoch) and uses a functional state update so it doesn't
 	// restart every second as resendCooldown decrements.
 	useEffect(() => {
-		if (resendCooldown <= 0) return
+		if (resendCooldown <= 0) {
+			return
+		}
 		const timer = setInterval(() => {
 			setResendCooldown((prev) => {
 				if (prev <= 1) {
@@ -51,7 +53,6 @@ const VerifyEmailForm = () => {
 			})
 		}, 1000)
 		return () => clearInterval(timer)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [cooldownEpoch])
 
 	// Cleanup redirect timeout on unmount
@@ -64,7 +65,9 @@ const VerifyEmailForm = () => {
 	}, [])
 
 	const handleVerify = (otpValue: string) => {
-		if (otpValue.length !== 6 || !email) return
+		if (otpValue.length !== 6 || !email) {
+			return
+		}
 
 		setError(null)
 		startTransition(async () => {
@@ -89,7 +92,9 @@ const VerifyEmailForm = () => {
 	}
 
 	const handleResend = () => {
-		if (resendCooldown > 0 || !email) return
+		if (resendCooldown > 0 || !email) {
+			return
+		}
 
 		startTransition(async () => {
 			const result = await requestEmailVerification({ email })
@@ -109,7 +114,7 @@ const VerifyEmailForm = () => {
 	// Success state
 	if (verified) {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 				<div className="flex justify-center">
 					<Image
 						src="/axion-wordmark-white.png"
@@ -117,6 +122,7 @@ const VerifyEmailForm = () => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						data-axion-logo="invertable"
 						priority
 					/>
 				</div>
@@ -131,7 +137,7 @@ const VerifyEmailForm = () => {
 	}
 
 	return (
-		<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
+		<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
 			{/* Logo */}
 			<div className="flex justify-center">
 				<Image
@@ -157,7 +163,11 @@ const VerifyEmailForm = () => {
 
 			<div className="space-y-m-400">
 				{error && (
-					<div className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md">
+					<div
+						role="alert"
+						aria-live="polite"
+						className="bg-fb-error/10 p-s-300 text-small text-fb-error rounded-md"
+					>
 						{error}
 					</div>
 				)}
@@ -199,30 +209,26 @@ const VerifyEmailForm = () => {
 					{t("verify")}
 				</Button>
 
-				{/* Resend */}
+				{/* Resend — always rendered so focus is never lost */}
 				<div className="text-center">
-					{resendCooldown > 0 ? (
-						<p className="text-tiny text-txt-300">
-							{t("resendIn", { seconds: resendCooldown })}
-						</p>
-					) : (
-						<Button
-							id="resend-verification"
-							variant="link"
-							size="sm"
-							type="button"
-							onClick={handleResend}
-							disabled={isPending}
-							className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
-						>
-							{t("resend")}
-						</Button>
-					)}
+					<Button
+						id="resend-verification"
+						variant="link"
+						size="sm"
+						type="button"
+						onClick={handleResend}
+						disabled={resendCooldown > 0 || isPending}
+						className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
+					>
+						{resendCooldown > 0
+							? t("resendIn", { seconds: resendCooldown })
+							: t("resend")}
+					</Button>
 				</div>
 
 				<Link
 					href="/login"
-					className="text-small text-txt-300 hover:text-txt-200 flex items-center justify-center gap-s-200"
+					className="text-small text-txt-300 hover:text-txt-200 gap-s-200 flex items-center justify-center"
 				>
 					<ArrowLeft className="h-4 w-4" />
 					{t("backToLogin")}

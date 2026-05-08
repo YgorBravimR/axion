@@ -17,15 +17,12 @@ import {
 	type CreateScenarioInput,
 	type UpdateScenarioInput,
 } from "@/lib/validations/scenario"
-
-interface ScenarioWithImages extends StrategyScenario {
-	images: ScenarioImage[]
-}
+import type { ScenarioWithImages } from "./scenarios.types"
 
 /**
  * Create a new scenario for a strategy
  */
-const createScenario = async (
+export const createScenario = async (
 	input: CreateScenarioInput
 ): Promise<ActionResponse<StrategyScenario>> => {
 	const t = await getTranslations("playbook")
@@ -35,7 +32,10 @@ const createScenario = async (
 
 		// Verify strategy ownership
 		const strategy = await db.query.strategies.findFirst({
-			where: and(eq(strategies.id, validated.strategyId), eq(strategies.userId, userId)),
+			where: and(
+				eq(strategies.id, validated.strategyId),
+				eq(strategies.userId, userId)
+			),
 		})
 
 		if (!strategy) {
@@ -88,7 +88,7 @@ const createScenario = async (
 /**
  * Update an existing scenario
  */
-const updateScenario = async (
+export const updateScenario = async (
 	id: string,
 	input: UpdateScenarioInput
 ): Promise<ActionResponse<StrategyScenario>> => {
@@ -118,7 +118,9 @@ const updateScenario = async (
 				...(validated.description !== undefined && {
 					description: validated.description || null,
 				}),
-				...(validated.sortOrder !== undefined && { sortOrder: validated.sortOrder }),
+				...(validated.sortOrder !== undefined && {
+					sortOrder: validated.sortOrder,
+				}),
 				updatedAt: new Date(),
 			})
 			.where(eq(strategyScenarios.id, id))
@@ -148,7 +150,9 @@ const updateScenario = async (
 /**
  * Delete a scenario and clean up its S3 images
  */
-const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
+export const deleteScenario = async (
+	id: string
+): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
@@ -169,6 +173,7 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 
 		// Delete S3 images before DB cascade
 		for (const image of existing.images) {
+			// eslint-disable-next-line no-await-in-loop -- S3 file deletion per image; sequential to track individual failures without failing the batch
 			await deleteFile(image.s3Key).catch(() => {
 				// Log but don't fail — image may already be deleted from S3
 			})
@@ -199,7 +204,7 @@ const deleteScenario = async (id: string): Promise<ActionResponse<void>> => {
 /**
  * Get all scenarios for a strategy, with images
  */
-const getScenariosByStrategy = async (
+export const getScenariosByStrategy = async (
 	strategyId: string
 ): Promise<ActionResponse<ScenarioWithImages[]>> => {
 	const t = await getTranslations("playbook")
@@ -247,7 +252,7 @@ const getScenariosByStrategy = async (
 /**
  * Add an image to a scenario
  */
-const addScenarioImage = async (
+export const addScenarioImage = async (
 	scenarioId: string,
 	url: string,
 	s3Key: string,
@@ -276,7 +281,9 @@ const addScenarioImage = async (
 			return {
 				status: "error",
 				message: t("actions.scenarioImageLimitExceeded"),
-				errors: [{ code: "LIMIT_EXCEEDED", detail: "Cannot add more than 3 images" }],
+				errors: [
+					{ code: "LIMIT_EXCEEDED", detail: "Cannot add more than 3 images" },
+				],
 			}
 		}
 
@@ -309,7 +316,9 @@ const addScenarioImage = async (
 /**
  * Remove an image from a scenario
  */
-const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void>> => {
+export const removeScenarioImage = async (
+	imageId: string
+): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("playbook")
 	try {
 		const { userId } = await requireAuth()
@@ -350,14 +359,4 @@ const removeScenarioImage = async (imageId: string): Promise<ActionResponse<void
 			],
 		}
 	}
-}
-
-export {
-	createScenario,
-	updateScenario,
-	deleteScenario,
-	getScenariosByStrategy,
-	addScenarioImage,
-	removeScenarioImage,
-	type ScenarioWithImages,
 }

@@ -38,7 +38,7 @@ import { getTranslations } from "next-intl/server"
  * Returns a quick preview of trades in the date range:
  * total count, how many have SL, unique assets, day count.
  */
-const getSimulationPreview = async (
+export const getSimulationPreview = async (
 	dateFrom: string,
 	dateTo: string
 ): Promise<ActionResponse<SimulationPreview>> => {
@@ -72,7 +72,9 @@ const getSimulationPreview = async (
 		)
 
 		const assets = [...new Set(decryptedTrades.map((t) => t.asset))]
-		const dayKeys = new Set(decryptedTrades.map((t) => formatDateKey(t.entryDate)))
+		const dayKeys = new Set(
+			decryptedTrades.map((t) => formatDateKey(t.entryDate))
+		)
 
 		return {
 			status: "success",
@@ -89,7 +91,12 @@ const getSimulationPreview = async (
 		return {
 			status: "error",
 			message: t("actions.failedToGeneratePreview"),
-			errors: [{ code: "PREVIEW_FAILED", detail: toSafeErrorMessage(error, "getSimulationPreview") }],
+			errors: [
+				{
+					code: "PREVIEW_FAILED",
+					detail: toSafeErrorMessage(error, "getSimulationPreview"),
+				},
+			],
 		}
 	}
 }
@@ -101,7 +108,7 @@ const getSimulationPreview = async (
 /**
  * Fetches trades from DB, decrypts, enriches with asset config, and runs simulation.
  */
-const runRiskSimulationFromDb = async (
+export const runRiskSimulationFromDb = async (
 	dateFrom: string,
 	dateTo: string,
 	params: RiskSimulationParams
@@ -112,8 +119,12 @@ const runRiskSimulationFromDb = async (
 		const validatedDates = dateRangeSchema.parse({ dateFrom, dateTo })
 		const validatedParams = riskSimulationParamsSchema.parse(params)
 
-		const startDate = new Date(`${validatedDates.dateFrom}T00:00:00${BRT_OFFSET}`)
-		const endDate = new Date(`${validatedDates.dateTo}T23:59:59.999${BRT_OFFSET}`)
+		const startDate = new Date(
+			`${validatedDates.dateFrom}T00:00:00${BRT_OFFSET}`
+		)
+		const endDate = new Date(
+			`${validatedDates.dateTo}T23:59:59.999${BRT_OFFSET}`
+		)
 
 		// Query closed trades in date range, sorted chronologically
 		const rawTrades = await db.query.trades.findMany({
@@ -155,10 +166,16 @@ const runRiskSimulationFromDb = async (
 		>()
 
 		for (const symbol of uniqueAssets) {
+			// eslint-disable-next-line no-await-in-loop -- asset config per unique symbol; sequential because fee/breakeven lookups depend on resolved config
 			const assetConfig = await getAssetBySymbol(symbol)
 			if (assetConfig) {
+				// eslint-disable-next-line no-await-in-loop -- fee lookup depends on resolved assetConfig; small N
 				const assetFees = await getAssetFees(assetConfig.symbol, accountId)
-				const breakevenTicks = await getBreakevenTicks(assetConfig.symbol, accountId)
+				// eslint-disable-next-line no-await-in-loop -- breakeven ticks depend on resolved assetConfig; small N
+				const breakevenTicks = await getBreakevenTicks(
+					assetConfig.symbol,
+					accountId
+				)
 				assetConfigMap.set(symbol, {
 					tickSize: parseFloat(assetConfig.tickSize),
 					tickValue: assetConfig.tickValue, // already in cents
@@ -182,7 +199,9 @@ const runRiskSimulationFromDb = async (
 				? Number(trade.contractsExecuted)
 				: positionSize * 2
 
-			if (!entryPrice || !exitPrice || !positionSize) continue
+			if (!entryPrice || !exitPrice || !positionSize) {
+				continue
+			}
 
 			const config = assetConfigMap.get(trade.asset.toUpperCase())
 			const tickSize = config?.tickSize ?? 1
@@ -210,11 +229,16 @@ const runRiskSimulationFromDb = async (
 				pnlCents = Math.round(pnlResult.netPnl * 100)
 				ticksGained = pnlResult.ticksGained
 			} else {
-				const priceDiff = direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
+				const priceDiff =
+					direction === "long" ? exitPrice - entryPrice : entryPrice - exitPrice
 				pnlCents = Math.round(priceDiff * positionSize * 100)
 			}
 
-			const outcome = determineOutcome({ pnl: pnlCents / 100, ticksGained, breakevenTicks })
+			const outcome = determineOutcome({
+				pnl: pnlCents / 100,
+				ticksGained,
+				breakevenTicks,
+			})
 
 			// Calculate R-multiple from SL
 			let rMultiple: number | null = null
@@ -257,14 +281,20 @@ const runRiskSimulationFromDb = async (
 			return {
 				status: "error",
 				message: t("errors.noValidTrades"),
-				errors: [{ code: "NO_VALID_TRADES", detail: "No trades with valid price data found" }],
+				errors: [
+					{
+						code: "NO_VALID_TRADES",
+						detail: "No trades with valid price data found",
+					},
+				],
 			}
 		}
 
 		// Run the appropriate engine
-		const result = validatedParams.mode === "simple"
-			? runSimpleSimulation(tradesForSim, validatedParams)
-			: runAdvancedSimulation(tradesForSim, validatedParams)
+		const result =
+			validatedParams.mode === "simple"
+				? runSimpleSimulation(tradesForSim, validatedParams)
+				: runAdvancedSimulation(tradesForSim, validatedParams)
 
 		return {
 			status: "success",
@@ -275,7 +305,12 @@ const runRiskSimulationFromDb = async (
 		return {
 			status: "error",
 			message: t("actions.failedToRunSimulation"),
-			errors: [{ code: "SIMULATION_FAILED", detail: toSafeErrorMessage(error, "runRiskSimulationFromDb") }],
+			errors: [
+				{
+					code: "SIMULATION_FAILED",
+					detail: toSafeErrorMessage(error, "runRiskSimulationFromDb"),
+				},
+			],
 		}
 	}
 }
@@ -287,7 +322,7 @@ const runRiskSimulationFromDb = async (
 /**
  * Returns sorted list of distinct years that have closed trades.
  */
-const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
+export const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
 	const t = await getTranslations("riskSimulation")
 	try {
 		const { accountId } = await requireAuth()
@@ -315,9 +350,12 @@ const getTradeYears = async (): Promise<ActionResponse<number[]>> => {
 		return {
 			status: "error",
 			message: t("actions.failedToGetTradeYears"),
-			errors: [{ code: "YEARS_FAILED", detail: toSafeErrorMessage(error, "getTradeYears") }],
+			errors: [
+				{
+					code: "YEARS_FAILED",
+					detail: toSafeErrorMessage(error, "getTradeYears"),
+				},
+			],
 		}
 	}
 }
-
-export { getSimulationPreview, runRiskSimulationFromDb, getTradeYears }

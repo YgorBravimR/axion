@@ -35,20 +35,27 @@ const buildIdentifier = (email: string): string =>
  * Rate-limited to 3 requests per 5 minutes.
  * Always returns success to prevent email enumeration.
  */
-const requestEmailVerification = async (
+export const requestEmailVerification = async (
 	input: RequestVerificationInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const parsed = requestVerificationSchema.safeParse(input)
-	if (!parsed.success) return { success: true }
+	if (!parsed.success) {
+		return { success: true }
+	}
 
 	const email = parsed.data.email.toLowerCase()
 
 	// Rate limit
-	const rateLimitResult = await requestLimiter.check(`email-verify-req:${email}`)
+	const rateLimitResult = await requestLimiter.check(
+		`email-verify-req:${email}`
+	)
 	if (!rateLimitResult.allowed) {
 		const retryMinutes = Math.ceil(rateLimitResult.retryAfterMs / 60_000)
 		const tVerify = await getTranslations("auth.verifyEmail")
-		return { success: false, error: tVerify("errors.rateLimited", { minutes: retryMinutes }) }
+		return {
+			success: false,
+			error: tVerify("errors.rateLimited", { minutes: retryMinutes }),
+		}
 	}
 
 	// Look up user — if not found, return success anyway (anti-enumeration)
@@ -57,10 +64,14 @@ const requestEmailVerification = async (
 		columns: { id: true, emailVerified: true },
 	})
 
-	if (!user) return { success: true }
+	if (!user) {
+		return { success: true }
+	}
 
 	// Already verified — no need to send code
-	if (user.emailVerified) return { success: true }
+	if (user.emailVerified) {
+		return { success: true }
+	}
 
 	const identifier = buildIdentifier(email)
 
@@ -115,7 +126,7 @@ const requestEmailVerification = async (
  * Verify email with OTP code.
  * Rate-limited to 5 attempts per 15 minutes.
  */
-const verifyEmail = async (
+export const verifyEmail = async (
 	input: VerifyEmailInput
 ): Promise<{ success: boolean; error?: string }> => {
 	const tVerify = await getTranslations("auth.verifyEmail")
@@ -128,10 +139,15 @@ const verifyEmail = async (
 	const lowerEmail = email.toLowerCase()
 
 	// Rate limiting
-	const rateLimitResult = await verifyLimiter.check(`email-verify:${lowerEmail}`)
+	const rateLimitResult = await verifyLimiter.check(
+		`email-verify:${lowerEmail}`
+	)
 	if (!rateLimitResult.allowed) {
 		const retryMinutes = Math.ceil(rateLimitResult.retryAfterMs / 60_000)
-		return { success: false, error: tVerify("errors.rateLimited", { minutes: retryMinutes }) }
+		return {
+			success: false,
+			error: tVerify("errors.rateLimited", { minutes: retryMinutes }),
+		}
 	}
 
 	const identifier = buildIdentifier(lowerEmail)
@@ -165,5 +181,3 @@ const verifyEmail = async (
 
 	return { success: true }
 }
-
-export { requestEmailVerification, verifyEmail }

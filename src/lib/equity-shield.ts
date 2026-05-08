@@ -32,7 +32,7 @@ const buildOriginalCurve = (
 	let observedMDDPercent = 0
 
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 		const pnl = fromCents(trade.pnlCents)
 		cumulativePnl += pnl
 		const accountEquity = initialBalance + cumulativePnl
@@ -113,7 +113,7 @@ const applyMethod1 = (
 	let originalValleyInSim = 0
 
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 		const pnl = fromCents(trade.pnlCents)
 		originalCumulativePnl += pnl
 		const originalAccountEquity = initialBalance + originalCumulativePnl
@@ -229,7 +229,7 @@ const computeSMA = (values: number[], period: number): (number | null)[] => {
 
 		let sum = 0
 		for (let j = i - period + 1; j <= i; j++) {
-			sum += values[j]
+			sum += values[j]!
 		}
 		sma.push(sum / period)
 	}
@@ -271,16 +271,15 @@ const applyMethod2 = (
 	let liveCount = 0
 
 	for (let i = 0; i < trades.length; i++) {
-		const trade = trades[i]
+		const trade = trades[i]!
 		const pnl = fromCents(trade.pnlCents)
 		originalCumulativePnl += pnl
-		const originalAccountEquity = initialBalance + originalCumulativePnl
 		const sma = smaValues[i]
 
 		// Mode decision: based on state BEFORE this trade (pre-entry).
 		// You decide live/sim before entering, not after seeing the result.
-		const preTradeEquity = i > 0 ? rawEquityValues[i - 1] : initialBalance
-		const preTradeSma = i > 0 ? smaValues[i - 1] : null
+		const preTradeEquity = i > 0 ? rawEquityValues[i - 1]! : initialBalance
+		const preTradeSma = i > 0 ? smaValues[i - 1]! : null
 		const isAboveSMA = preTradeSma === null || preTradeEquity > preTradeSma
 		const mode: TradingMode = isAboveSMA ? "live" : "sim"
 
@@ -303,7 +302,9 @@ const applyMethod2 = (
 			}
 		}
 		// sim: managedEquity stays flat
-		if (mode === "live") liveCount++
+		if (mode === "live") {
+			liveCount++
+		}
 		points.push({
 			tradeNumber: i + 1,
 			liveTradeNumber: mode === "live" ? liveCount : null,
@@ -314,7 +315,7 @@ const applyMethod2 = (
 			peakEquity: allTimeHigh,
 			drawdownFromPeak: allTimeHigh - managedEquity,
 			mode,
-			smaValue: sma,
+			smaValue: sma ?? null,
 		})
 	}
 
@@ -339,7 +340,7 @@ const buildLiveOnlyCurve = (
 	let peak = initialBalance
 
 	for (let i = 0; i < livePoints.length; i++) {
-		const point = livePoints[i]
+		const point = livePoints[i]!
 		cumulativePnl += point.pnl
 		const accountEquity = initialBalance + cumulativePnl
 
@@ -400,7 +401,7 @@ const computeMethodStats = (
 	// Count mode transitions (sim→live or live→sim)
 	let modeTransitions = 0
 	for (let i = 1; i < points.length; i++) {
-		if (points[i].mode !== points[i - 1].mode) {
+		if (points[i]!.mode !== points[i - 1]!.mode) {
 			modeTransitions++
 		}
 	}

@@ -8,15 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-
-	Cell,
-} from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { Info } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -28,6 +20,14 @@ import {
 import { formatCompactCurrency } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { PerformanceByGroup } from "@/types"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 // Tooltip wrapper for column headers
 const HeaderWithTooltip = ({
@@ -58,7 +58,7 @@ interface VariableComparisonProps {
 	data: PerformanceByGroup[]
 	groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 	onGroupByChange: (
-		groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
+		_groupBy: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 	) => void
 }
 
@@ -66,8 +66,12 @@ type MetricType = "pnl" | "winRate" | "avgR" | "tradeCount" | "profitFactor"
 type GroupByType = "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 
 const formatProfitFactor = (value: number): string => {
-	if (!Number.isFinite(value)) return "∞"
-	if (value === 0) return "0.00"
+	if (!Number.isFinite(value)) {
+		return "∞"
+	}
+	if (value === 0) {
+		return "0.00"
+	}
 	return value.toFixed(2)
 }
 
@@ -97,24 +101,37 @@ interface CustomTooltipProps {
 	metric: MetricType
 }
 
-const CustomTooltip = ({ active, payload, metric }: CustomTooltipProps) => {
+const CustomTooltip = ({
+	active,
+	payload,
+	metric: _metric,
+}: CustomTooltipProps) => {
 	const t = useTranslations("analytics.tableHeaders")
 	const tDays = useTranslations("days")
 	const tCommon = useTranslations("common")
 
 	const translateLabel = (group: string): string => {
 		const dayKey = DAY_KEY_MAP[group]
-		if (dayKey) return tDays(dayKey as "sunday")
-		if (group === "No Strategy") return tCommon("noStrategy")
-		if (group === "Unknown") return tCommon("unknown")
+		if (dayKey) {
+			return tDays(dayKey as "sunday")
+		}
+		if (group === "No Strategy") {
+			return tCommon("noStrategy")
+		}
+		if (group === "Unknown") {
+			return tCommon("unknown")
+		}
 		return group
 	}
 
-	if (active && payload && payload.length > 0) {
-		const data = payload[0].payload
+	const head = payload?.[0]
+	if (active && head) {
+		const data = head.payload
 		return (
 			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border shadow-lg">
-				<p className="text-small text-txt-100 font-semibold">{translateLabel(data.group)}</p>
+				<p className="text-small text-txt-100 font-semibold">
+					{translateLabel(data.group)}
+				</p>
 				<div className="mt-s-200 space-y-s-100 text-tiny">
 					<p className={data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
 						{t("pnl")}: {formatCompactCurrency(data.pnl, "R$")}
@@ -165,63 +182,103 @@ export const VariableComparison = ({
 	const tCommon = useTranslations("common")
 
 	/** Translate group labels that come as English keys from pure computation functions */
-	const translateGroup = useCallback((group: string): string => {
-		if (groupBy === "dayOfWeek" && DAY_KEY_MAP[group]) {
-			return tDays(DAY_KEY_MAP[group] as "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday")
-		}
-		if (group === "No Strategy") return tCommon("noStrategy")
-		if (group === "Unknown") return tCommon("unknown")
-		return group
-	}, [groupBy, tDays, tCommon])
+	const translateGroup = useCallback(
+		(group: string): string => {
+			if (groupBy === "dayOfWeek" && DAY_KEY_MAP[group]) {
+				return tDays(
+					DAY_KEY_MAP[group] as
+						| "sunday"
+						| "monday"
+						| "tuesday"
+						| "wednesday"
+						| "thursday"
+						| "friday"
+						| "saturday"
+				)
+			}
+			if (group === "No Strategy") {
+				return tCommon("noStrategy")
+			}
+			if (group === "Unknown") {
+				return tCommon("unknown")
+			}
+			return group
+		},
+		[groupBy, tDays, tCommon]
+	)
 
 	const [metric, setMetric] = useState<MetricType>("pnl")
 
-	const groupOptions = useMemo<{ value: GroupByType; label: string }[]>(() => [
-		{ value: "asset", label: t("asset") },
-		{ value: "timeframe", label: t("timeframe") },
-		{ value: "hour", label: t("hour") },
-		{ value: "dayOfWeek", label: t("dayOfWeek") },
-		{ value: "strategy", label: t("strategy") },
-	], [t])
+	const groupOptions = useMemo<{ value: GroupByType; label: string }[]>(
+		() => [
+			{ value: "asset", label: t("asset") },
+			{ value: "timeframe", label: t("timeframe") },
+			{ value: "hour", label: t("hour") },
+			{ value: "dayOfWeek", label: t("dayOfWeek") },
+			{ value: "strategy", label: t("strategy") },
+		],
+		[t]
+	)
 
-	const metricOptions = useMemo<{ value: MetricType; label: string }[]>(() => [
-		{ value: "pnl", label: t("metrics.pnl") },
-		{ value: "winRate", label: t("metrics.winRate") },
-		{ value: "avgR", label: t("metrics.avgR") },
-		{ value: "tradeCount", label: t("metrics.tradeCount") },
-		{ value: "profitFactor", label: t("metrics.profitFactor") },
-	], [t])
+	const metricOptions = useMemo<{ value: MetricType; label: string }[]>(
+		() => [
+			{ value: "pnl", label: t("metrics.pnl") },
+			{ value: "winRate", label: t("metrics.winRate") },
+			{ value: "avgR", label: t("metrics.avgR") },
+			{ value: "tradeCount", label: t("metrics.tradeCount") },
+			{ value: "profitFactor", label: t("metrics.profitFactor") },
+		],
+		[t]
+	)
 
-	const getBarColor = useCallback((value: number, metricArg: MetricType): string => {
-		if (metricArg === "tradeCount") return "var(--color-acc-100)"
-		if (metricArg === "profitFactor") {
-			return value >= 1 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
-		}
-		return value >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
-	}, [])
+	const getBarColor = useCallback(
+		(value: number, metricArg: MetricType): string => {
+			if (metricArg === "tradeCount") {
+				return "var(--color-acc-100)"
+			}
+			if (metricArg === "profitFactor") {
+				return value >= 1 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
+			}
+			return value >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
+		},
+		[]
+	)
 
-	const chartData = useMemo(() => data.map((item) => {
-		let value = item[metric]
-		// Cap Infinity profit factor at a visible value for chart display
-		if (metric === "profitFactor" && !Number.isFinite(value)) {
-			value = 10 // Cap at 10 for visualization
-		}
-		return {
-			...item,
-			value,
-		}
-	}), [data, metric])
+	const chartData = useMemo(
+		() =>
+			data.map((item) => {
+				let value = item[metric]
+				// Cap Infinity profit factor at a visible value for chart display
+				if (metric === "profitFactor" && !Number.isFinite(value)) {
+					value = 10 // Cap at 10 for visualization
+				}
+				return {
+					...item,
+					value,
+				}
+			}),
+		[data, metric]
+	)
 
 	return (
-		<div id="analytics-variable-comparison" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div
+			id="analytics-variable-comparison"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			<div className="gap-m-400 flex flex-wrap items-center justify-between">
-				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+				<h3 className="text-body sm:text-h3 text-txt-100 font-semibold">
 					{t("title")}
 				</h3>
 				<div className="gap-s-300 flex flex-wrap">
 					{/* Group By Selector */}
-					<Select value={groupBy} onValueChange={(value) => onGroupByChange(value as typeof groupBy)}>
-						<SelectTrigger id="variable-comparison-group-by" className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
+					<Select
+						value={groupBy}
+						onValueChange={(value) => onGroupByChange(value as typeof groupBy)}
+					>
+						<SelectTrigger
+							id="variable-comparison-group-by"
+							className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100 w-full sm:w-auto"
+						>
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -234,8 +291,14 @@ export const VariableComparison = ({
 					</Select>
 
 					{/* Metric Selector */}
-					<Select value={metric} onValueChange={(value) => setMetric(value as MetricType)}>
-						<SelectTrigger id="variable-comparison-metric" className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100">
+					<Select
+						value={metric}
+						onValueChange={(value) => setMetric(value as MetricType)}
+					>
+						<SelectTrigger
+							id="variable-comparison-metric"
+							className="border-bg-300 bg-bg-100 px-s-300 py-s-200 text-small text-txt-100 w-full sm:w-auto"
+						>
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -256,7 +319,7 @@ export const VariableComparison = ({
 			) : (
 				<ChartContainer
 					id="chart-analytics-variable-comparison"
-					className="mt-s-300 sm:mt-m-400 h-64 min-w-0 overflow-hidden sm:h-80"
+					className="mt-s-300 sm:mt-m-400 pb-s-200 h-64 min-w-0 overflow-hidden sm:h-80"
 				>
 					<BarChart
 						data={chartData}
@@ -301,38 +364,38 @@ export const VariableComparison = ({
 
 			{/* Summary Table */}
 			{data.length > 0 && (
-				<div className="mt-m-400 sm:mt-m-500 overflow-x-auto">
-					<table className="w-full">
-						<thead>
-							<tr className="border-bg-300 border-b">
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
+				<div className="mt-m-400 sm:mt-m-500">
+					<Table className="w-full">
+						<TableHeader>
+							<TableRow className="border-bg-300 border-b">
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-left font-medium">
 									{groupOptions.find((o) => o.value === groupBy)?.label}
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("trades")}
 										tooltip={tTooltips("trades")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("pnl")}
 										tooltip={tTooltips("pnl")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("winRate")}
 										tooltip={tTooltips("winRate")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("avgR")}
 										tooltip={tTooltips("avgR")}
 									/>
-								</th>
-								<th className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
+								</TableHead>
+								<TableHead className="px-s-300 py-s-200 text-tiny text-txt-300 text-right font-medium">
 									<HeaderWithTooltip
 										label={tHeaders("pf")}
 										tooltip={
@@ -375,37 +438,37 @@ export const VariableComparison = ({
 											</div>
 										}
 									/>
-								</th>
-							</tr>
-						</thead>
-						<tbody>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
 							{data.map((row) => (
-								<tr key={row.group} className="border-bg-300/50 border-b">
-									<td className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
+								<TableRow key={row.group} className="border-bg-300/50 border-b">
+									<TableCell className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
 										{translateGroup(row.group)}
-									</td>
-									<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
+									</TableCell>
+									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.tradeCount}
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={`px-s-300 py-s-200 text-small text-right font-medium ${
 											row.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
 										{formatCompactCurrency(row.pnl, "R$")}
-									</td>
-									<td className="px-s-300 py-s-200 text-small text-txt-200 text-right">
+									</TableCell>
+									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.winRate.toFixed(1)}%
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={`px-s-300 py-s-200 text-small text-right ${
 											row.avgR >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
 										{row.avgR >= 0 ? "+" : ""}
 										{row.avgR.toFixed(2)}R
-									</td>
-									<td
+									</TableCell>
+									<TableCell
 										className={`px-s-300 py-s-200 text-small text-right ${
 											row.profitFactor >= 1
 												? "text-trade-buy"
@@ -413,11 +476,11 @@ export const VariableComparison = ({
 										}`}
 									>
 										{formatProfitFactor(row.profitFactor)}
-									</td>
-								</tr>
+									</TableCell>
+								</TableRow>
 							))}
-						</tbody>
-					</table>
+						</TableBody>
+					</Table>
 				</div>
 			)}
 		</div>

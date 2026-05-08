@@ -48,7 +48,7 @@ import type {
 	TradeFormRef,
 } from "@/lib/validations/trade"
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
-import type { AssetWithType } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import { formatDateKey, formatBrtTimeShort, BRT_OFFSET } from "@/lib/dates"
 
 interface ScaledTradeFormProps {
@@ -107,9 +107,13 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 		// Basic info - restore from shared state, then fallback to defaults
 		const [asset, setAsset] = useState(() => {
-			if (initialSharedState?.asset) return initialSharedState.asset
+			if (initialSharedState?.asset) {
+				return initialSharedState.asset
+			}
 			if (defaultAssetId) {
-				const match = assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId)
+				const match = assets.find(
+					(a) => a.id === defaultAssetId || a.symbol === defaultAssetId
+				)
 				return match?.symbol || ""
 			}
 			return ""
@@ -146,9 +150,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const [disciplineNotes, setDisciplineNotes] = useState(
 			initialSharedState?.disciplineNotes ?? ""
 		)
-		const [setupRank, setSetupRank] = useState<
-			"A" | "AA" | "AAA" | null | undefined
-		>(initialSharedState?.setupRank)
+		const [setupRank] = useState<"A" | "AA" | "AAA" | null | undefined>(
+			initialSharedState?.setupRank
+		)
 
 		// Tags
 		const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
@@ -272,8 +276,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 				!sl ||
 				positionSummary.avgEntryPrice <= 0 ||
 				positionSummary.totalEntryQty <= 0
-			)
+			) {
 				return null
+			}
 
 			const priceDiff = Math.abs(positionSummary.avgEntryPrice - sl)
 
@@ -300,8 +305,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 				!calculatedRisk ||
 				calculatedRisk <= 0 ||
 				positionSummary.netPnl === 0
-			)
+			) {
 				return null
+			}
 			return positionSummary.netPnl / calculatedRisk
 		}, [calculatedRisk, positionSummary.netPnl])
 
@@ -309,22 +315,30 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const stopLossWarning = useMemo(() => {
 			const sl = parseFloat(stopLoss)
 			const entry = positionSummary.avgEntryPrice
-			if (!sl || entry <= 0) return null
-			if (direction === "long" && sl >= entry)
+			if (!sl || entry <= 0) {
+				return null
+			}
+			if (direction === "long" && sl >= entry) {
 				return t("validation.stopLossMustBeBelowEntry")
-			if (direction === "short" && sl <= entry)
+			}
+			if (direction === "short" && sl <= entry) {
 				return t("validation.stopLossMustBeAboveEntry")
+			}
 			return null
 		}, [stopLoss, positionSummary.avgEntryPrice, direction])
 
 		const takeProfitWarning = useMemo(() => {
 			const tp = parseFloat(takeProfit)
 			const entry = positionSummary.avgEntryPrice
-			if (!tp || entry <= 0) return null
-			if (direction === "long" && tp <= entry)
+			if (!tp || entry <= 0) {
+				return null
+			}
+			if (direction === "long" && tp <= entry) {
 				return t("validation.takeProfitMustBeAboveEntry")
-			if (direction === "short" && tp >= entry)
+			}
+			if (direction === "short" && tp >= entry) {
 				return t("validation.takeProfitMustBeBelowEntry")
+			}
 			return null
 		}, [takeProfit, positionSummary.avgEntryPrice, direction])
 
@@ -470,25 +484,56 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 			}
 		}
 
-		const setupTags = useMemo(() => tags.filter((tag) => tag.type === "setup"), [tags])
-		const mistakeTags = useMemo(() => tags.filter((tag) => tag.type === "mistake"), [tags])
-		const generalTags = useMemo(() => tags.filter((tag) => tag.type === "general"), [tags])
+		const setupTags = useMemo(
+			() => tags.filter((tag) => tag.type === "setup"),
+			[tags]
+		)
+		const mistakeTags = useMemo(
+			() => tags.filter((tag) => tag.type === "mistake"),
+			[tags]
+		)
+		const generalTags = useMemo(
+			() => tags.filter((tag) => tag.type === "general"),
+			[tags]
+		)
 
-		const handleEntryChange = useCallback((id: string, field: string, value: string) => {
-			handleExecutionChange("entry", id, field as keyof ExecutionRowData, value)
-		}, [handleExecutionChange])
+		const handleEntryChange = useCallback(
+			(id: string, field: string, value: string) => {
+				handleExecutionChange(
+					"entry",
+					id,
+					field as keyof ExecutionRowData,
+					value
+				)
+			},
+			[handleExecutionChange]
+		)
 
-		const handleEntryRemove = useCallback((id: string) => {
-			handleRemoveExecution("entry", id)
-		}, [handleRemoveExecution])
+		const handleEntryRemove = useCallback(
+			(id: string) => {
+				handleRemoveExecution("entry", id)
+			},
+			[handleRemoveExecution]
+		)
 
-		const handleExitChange = useCallback((id: string, field: string, value: string) => {
-			handleExecutionChange("exit", id, field as keyof ExecutionRowData, value)
-		}, [handleExecutionChange])
+		const handleExitChange = useCallback(
+			(id: string, field: string, value: string) => {
+				handleExecutionChange(
+					"exit",
+					id,
+					field as keyof ExecutionRowData,
+					value
+				)
+			},
+			[handleExecutionChange]
+		)
 
-		const handleExitRemove = useCallback((id: string) => {
-			handleRemoveExecution("exit", id)
-		}, [handleRemoveExecution])
+		const handleExitRemove = useCallback(
+			(id: string) => {
+				handleRemoveExecution("exit", id)
+			},
+			[handleRemoveExecution]
+		)
 
 		return (
 			<form
@@ -618,29 +663,29 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 								</Button>
 							</div>
 
-							<div className="relative overflow-x-auto after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
-							<div className="space-y-s-200">
-								{/* Header */}
-								<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
-									<span>{tExec("date")}</span>
-									<span>{tExec("time")}</span>
-									<span>{tExec("price")}</span>
-									<span>{tExec("quantity")}</span>
-									<span>{tExec("commission")}</span>
-									<span></span>
-								</div>
+							<div className="after:from-bg-200 relative overflow-x-auto after:pointer-events-none after:absolute after:top-0 after:right-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:to-transparent sm:after:hidden">
+								<div className="space-y-s-200">
+									{/* Header */}
+									<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
+										<span>{tExec("date")}</span>
+										<span>{tExec("time")}</span>
+										<span>{tExec("price")}</span>
+										<span>{tExec("quantity")}</span>
+										<span>{tExec("commission")}</span>
+										<span></span>
+									</div>
 
-								{entries.map((entry) => (
-									<InlineExecutionRow
-										key={entry.id}
-										data={entry}
-										onChange={handleEntryChange}
-										onRemove={handleEntryRemove}
-										canRemove={entries.length > 1}
-										currency={selectedAsset?.currency ?? "$"}
-									/>
-								))}
-							</div>
+									{entries.map((entry) => (
+										<InlineExecutionRow
+											key={entry.id}
+											data={entry}
+											onChange={handleEntryChange}
+											onRemove={handleEntryRemove}
+											canRemove={entries.length > 1}
+											currency={selectedAsset?.currency ?? "$"}
+										/>
+									))}
+								</div>
 							</div>
 
 							{positionSummary.totalEntryQty > 0 && (
@@ -673,29 +718,29 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 							</div>
 
 							{exits.length > 0 ? (
-								<div className="relative overflow-x-auto after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:from-bg-200 after:to-transparent after:pointer-events-none sm:after:hidden">
-								<div className="space-y-s-200">
-									{/* Header */}
-									<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
-										<span>{tExec("date")}</span>
-										<span>{tExec("time")}</span>
-										<span>{tExec("price")}</span>
-										<span>{tExec("quantity")}</span>
-										<span>{tExec("commission")}</span>
-										<span></span>
-									</div>
+								<div className="after:from-bg-200 relative overflow-x-auto after:pointer-events-none after:absolute after:top-0 after:right-0 after:bottom-0 after:w-6 after:bg-linear-to-l after:to-transparent sm:after:hidden">
+									<div className="space-y-s-200">
+										{/* Header */}
+										<div className="gap-s-200 text-tiny text-txt-300 grid min-w-[480px] grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]">
+											<span>{tExec("date")}</span>
+											<span>{tExec("time")}</span>
+											<span>{tExec("price")}</span>
+											<span>{tExec("quantity")}</span>
+											<span>{tExec("commission")}</span>
+											<span></span>
+										</div>
 
-									{exits.map((exit) => (
-										<InlineExecutionRow
-											key={exit.id}
-											data={exit}
-											onChange={handleExitChange}
-											onRemove={handleExitRemove}
-											canRemove={true}
-											currency={selectedAsset?.currency ?? "$"}
-										/>
-									))}
-								</div>
+										{exits.map((exit) => (
+											<InlineExecutionRow
+												key={exit.id}
+												data={exit}
+												onChange={handleExitChange}
+												onRemove={handleExitRemove}
+												canRemove={true}
+												currency={selectedAsset?.currency ?? "$"}
+											/>
+										))}
+									</div>
 								</div>
 							) : (
 								<div className="border-bg-300 p-m-400 rounded-lg border border-dashed text-center">
@@ -717,7 +762,10 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 						{/* Position Summary */}
 						{positionSummary.validEntries > 0 && (
-							<div id="scaled-trade-position-summary" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+							<div
+								id="scaled-trade-position-summary"
+								className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
+							>
 								<p className="text-small text-txt-100 font-medium">
 									{tScaled("positionSummary")}
 								</p>

@@ -23,18 +23,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 // vi.hoisted: all mock references must be declared before vi.mock hoisting
 // ---------------------------------------------------------------------------
 
-const {
-	dbQueryTradesMock,
-	requireAuthMock,
-	getServerEffectiveNowMock,
-} = vi.hoisted(() => {
-	const dbQueryTradesMock = { findMany: vi.fn() }
+const { dbQueryTradesMock, requireAuthMock, getServerEffectiveNowMock } =
+	vi.hoisted(() => {
+		const dbQueryTradesMock = { findMany: vi.fn() }
 
-	const requireAuthMock = vi.fn()
-	const getServerEffectiveNowMock = vi.fn()
+		const requireAuthMock = vi.fn()
+		const getServerEffectiveNowMock = vi.fn()
 
-	return { dbQueryTradesMock, requireAuthMock, getServerEffectiveNowMock }
-})
+		return { dbQueryTradesMock, requireAuthMock, getServerEffectiveNowMock }
+	})
 
 // ---------------------------------------------------------------------------
 // Module-level mock registrations
@@ -53,6 +50,7 @@ vi.mock("@/db/schema", () => ({
 }))
 
 vi.mock("drizzle-orm", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("drizzle-orm")>()
 	return {
 		...original,
@@ -92,6 +90,7 @@ vi.mock("@/lib/error-utils", () => ({
 }))
 
 vi.mock("react", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("react")>()
 	return { ...original, cache: (fn: unknown) => fn }
 })
@@ -136,9 +135,9 @@ const createMockTrade = (options: MockTradeOptions = {}) => ({
 	asset: options.asset ?? "WIN",
 	entryDate: options.entryDate ?? "2026-01-15T12:00:00.000Z",
 	// Use explicit `in` check so that a passed `null` is preserved as `null`
-	pnl: "pnl" in options ? options.pnl : "5000",             // R$50.00 net P&L default
+	pnl: "pnl" in options ? options.pnl : "5000", // R$50.00 net P&L default
 	commission: "commission" in options ? options.commission : "150", // R$1.50 default
-	fees: "fees" in options ? options.fees : "50",             // R$0.50 default
+	fees: "fees" in options ? options.fees : "50", // R$0.50 default
 	isArchived: options.isArchived ?? false,
 	accountId: options.accountId ?? "account-abc-123",
 	outcome: options.outcome ?? "win",
@@ -287,7 +286,8 @@ describe("getCommissionFeeImpact()", () => {
 
 			const result = await getCommissionFeeImpact()
 
-			const { totalCommission, totalExchangeFees, totalFees } = result.data!.summary
+			const { totalCommission, totalExchangeFees, totalFees } =
+				result.data!.summary
 			expect(totalFees).toBeCloseTo(totalCommission + totalExchangeFees)
 			expect(totalFees).toBeCloseTo(2.0)
 		})
@@ -469,16 +469,33 @@ describe("getCommissionFeeImpact()", () => {
 			// WIN: 2 trades, each with R$2.00 in fees → totalFees=R$4.00
 			// WINGUT: 1 trade with R$3.00 in fees → totalFees=R$3.00
 			const mockTrades = [
-				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "5000" }),
-				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "3000" }),
-				createMockTrade({ asset: "WINGUT", commission: "250", fees: "50", pnl: "2000" }),
+				createMockTrade({
+					asset: "WIN",
+					commission: "150",
+					fees: "50",
+					pnl: "5000",
+				}),
+				createMockTrade({
+					asset: "WIN",
+					commission: "150",
+					fees: "50",
+					pnl: "3000",
+				}),
+				createMockTrade({
+					asset: "WINGUT",
+					commission: "250",
+					fees: "50",
+					pnl: "2000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
 			const winfut = result.data!.assetBreakdown.find((a) => a.asset === "WIN")
-			const wingut = result.data!.assetBreakdown.find((a) => a.asset === "WINGUT")
+			const wingut = result.data!.assetBreakdown.find(
+				(a) => a.asset === "WINGUT"
+			)
 
 			expect(winfut).toBeDefined()
 			expect(winfut!.tradeCount).toBe(2)
@@ -493,22 +510,42 @@ describe("getCommissionFeeImpact()", () => {
 			// MINI: totalFees=R$1.00 (lower)
 			// WIN: totalFees=R$4.00 (higher) — should appear first
 			const mockTrades = [
-				createMockTrade({ asset: "MINI", commission: "100", fees: "0", pnl: "1000" }),
-				createMockTrade({ asset: "WIN", commission: "200", fees: "200", pnl: "5000" }),
+				createMockTrade({
+					asset: "MINI",
+					commission: "100",
+					fees: "0",
+					pnl: "1000",
+				}),
+				createMockTrade({
+					asset: "WIN",
+					commission: "200",
+					fees: "200",
+					pnl: "5000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			expect(result.data!.assetBreakdown[0].asset).toBe("WIN")
-			expect(result.data!.assetBreakdown[1].asset).toBe("MINI")
+			expect(result.data!.assetBreakdown[0]?.asset).toBe("WIN")
+			expect(result.data!.assetBreakdown[1]?.asset).toBe("MINI")
 		})
 
 		it("should compute avgFeePerTrade within each asset group", async () => {
 			// WIN: 2 trades, totalFees=R$4.00 → avg=R$2.00
 			const mockTrades = [
-				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "5000" }),
-				createMockTrade({ asset: "WIN", commission: "150", fees: "50", pnl: "3000" }),
+				createMockTrade({
+					asset: "WIN",
+					commission: "150",
+					fees: "50",
+					pnl: "5000",
+				}),
+				createMockTrade({
+					asset: "WIN",
+					commission: "150",
+					fees: "50",
+					pnl: "3000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
@@ -521,7 +558,12 @@ describe("getCommissionFeeImpact()", () => {
 		it("should include an asset entry even when its fees are zero", async () => {
 			// A trade with zero fees still appears in the asset breakdown with tradeCount=1
 			const mockTrades = [
-				createMockTrade({ asset: "WIN", commission: "0", fees: "0", pnl: "5000" }),
+				createMockTrade({
+					asset: "WIN",
+					commission: "0",
+					fees: "0",
+					pnl: "5000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
@@ -535,9 +577,27 @@ describe("getCommissionFeeImpact()", () => {
 
 		it("should handle a single asset with multiple trades across different months", async () => {
 			const mockTrades = [
-				createMockTrade({ asset: "WIN", commission: "100", fees: "0", entryDate: "2026-01-10T12:00:00.000Z", pnl: "5000" }),
-				createMockTrade({ asset: "WIN", commission: "100", fees: "0", entryDate: "2026-02-10T12:00:00.000Z", pnl: "3000" }),
-				createMockTrade({ asset: "WIN", commission: "100", fees: "0", entryDate: "2026-03-10T12:00:00.000Z", pnl: "2000" }),
+				createMockTrade({
+					asset: "WIN",
+					commission: "100",
+					fees: "0",
+					entryDate: "2026-01-10T12:00:00.000Z",
+					pnl: "5000",
+				}),
+				createMockTrade({
+					asset: "WIN",
+					commission: "100",
+					fees: "0",
+					entryDate: "2026-02-10T12:00:00.000Z",
+					pnl: "3000",
+				}),
+				createMockTrade({
+					asset: "WIN",
+					commission: "100",
+					fees: "0",
+					entryDate: "2026-03-10T12:00:00.000Z",
+					pnl: "2000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
@@ -576,9 +636,24 @@ describe("getCommissionFeeImpact()", () => {
 			// effectiveNow = 2026-04-01 → window starts 2025-11-01
 			// November 2025, January 2026, April 2026 are all within the window
 			const mockTrades = [
-				createMockTrade({ entryDate: "2025-11-15T12:00:00.000Z", commission: "100", fees: "0", pnl: "3000" }),
-				createMockTrade({ entryDate: "2026-01-15T12:00:00.000Z", commission: "150", fees: "50", pnl: "5000" }),
-				createMockTrade({ entryDate: "2026-04-01T12:00:00.000Z", commission: "200", fees: "0", pnl: "2000" }),
+				createMockTrade({
+					entryDate: "2025-11-15T12:00:00.000Z",
+					commission: "100",
+					fees: "0",
+					pnl: "3000",
+				}),
+				createMockTrade({
+					entryDate: "2026-01-15T12:00:00.000Z",
+					commission: "150",
+					fees: "50",
+					pnl: "5000",
+				}),
+				createMockTrade({
+					entryDate: "2026-04-01T12:00:00.000Z",
+					commission: "200",
+					fees: "0",
+					pnl: "2000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
@@ -593,9 +668,24 @@ describe("getCommissionFeeImpact()", () => {
 		it("should sort monthlyTrend ascending by month key", async () => {
 			// Feed trades out of chronological order; expect sorted output
 			const mockTrades = [
-				createMockTrade({ entryDate: "2026-03-10T12:00:00.000Z", commission: "100", fees: "0", pnl: "2000" }),
-				createMockTrade({ entryDate: "2026-01-10T12:00:00.000Z", commission: "100", fees: "0", pnl: "5000" }),
-				createMockTrade({ entryDate: "2026-02-10T12:00:00.000Z", commission: "100", fees: "0", pnl: "3000" }),
+				createMockTrade({
+					entryDate: "2026-03-10T12:00:00.000Z",
+					commission: "100",
+					fees: "0",
+					pnl: "2000",
+				}),
+				createMockTrade({
+					entryDate: "2026-01-10T12:00:00.000Z",
+					commission: "100",
+					fees: "0",
+					pnl: "5000",
+				}),
+				createMockTrade({
+					entryDate: "2026-02-10T12:00:00.000Z",
+					commission: "100",
+					fees: "0",
+					pnl: "3000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
@@ -607,15 +697,32 @@ describe("getCommissionFeeImpact()", () => {
 
 		it("should group multiple trades from the same month into a single monthlyTrend entry", async () => {
 			const mockTrades = [
-				createMockTrade({ entryDate: "2026-01-05T12:00:00.000Z", commission: "100", fees: "50", pnl: "3000" }),
-				createMockTrade({ entryDate: "2026-01-15T12:00:00.000Z", commission: "150", fees: "50", pnl: "2000" }),
-				createMockTrade({ entryDate: "2026-01-28T12:00:00.000Z", commission: "200", fees: "0", pnl: "1000" }),
+				createMockTrade({
+					entryDate: "2026-01-05T12:00:00.000Z",
+					commission: "100",
+					fees: "50",
+					pnl: "3000",
+				}),
+				createMockTrade({
+					entryDate: "2026-01-15T12:00:00.000Z",
+					commission: "150",
+					fees: "50",
+					pnl: "2000",
+				}),
+				createMockTrade({
+					entryDate: "2026-01-28T12:00:00.000Z",
+					commission: "200",
+					fees: "0",
+					pnl: "1000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const january = result.data!.monthlyTrend.find((m) => m.month === "2026-01")
+			const january = result.data!.monthlyTrend.find(
+				(m) => m.month === "2026-01"
+			)
 			expect(january).toBeDefined()
 			expect(january!.tradeCount).toBe(3)
 			// totalFees: (100+50) + (150+50) + (200+0) = 150+200+200 = 550 cents = R$5.50
@@ -625,46 +732,72 @@ describe("getCommissionFeeImpact()", () => {
 		it("should compute grossPnl within each monthly trend entry as netPnl + tradeFees for that month", async () => {
 			// Jan 2026: netPnl=R$50.00, tradeFee=R$2.00 → grossPnl=R$52.00
 			const mockTrades = [
-				createMockTrade({ entryDate: "2026-01-15T12:00:00.000Z", pnl: "5000", commission: "150", fees: "50" }),
+				createMockTrade({
+					entryDate: "2026-01-15T12:00:00.000Z",
+					pnl: "5000",
+					commission: "150",
+					fees: "50",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const january = result.data!.monthlyTrend.find((m) => m.month === "2026-01")
+			const january = result.data!.monthlyTrend.find(
+				(m) => m.month === "2026-01"
+			)
 			expect(january!.grossPnl).toBeCloseTo(52.0)
 		})
 
 		it("should compute feesAsPercentOfGross for each month only when grossPnl > 0", async () => {
 			// Jan 2026: grossPnl=R$52.00, totalFees=R$2.00 → 2/52 × 100 ≈ 3.846%
 			const mockTrades = [
-				createMockTrade({ entryDate: "2026-01-15T12:00:00.000Z", pnl: "5000", commission: "150", fees: "50" }),
+				createMockTrade({
+					entryDate: "2026-01-15T12:00:00.000Z",
+					pnl: "5000",
+					commission: "150",
+					fees: "50",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const january = result.data!.monthlyTrend.find((m) => m.month === "2026-01")
+			const january = result.data!.monthlyTrend.find(
+				(m) => m.month === "2026-01"
+			)
 			expect(january!.feesAsPercentOfGross).toBeCloseTo(3.846, 2)
 		})
 
 		it("should set feesAsPercentOfGross=0 for months with grossPnl <= 0", async () => {
 			// Losing month: netPnl=-R$100.00, fees=R$2.00 → grossPnl=-R$98.00 → percent=0
 			const mockTrades = [
-				createMockTrade({ entryDate: "2026-01-15T12:00:00.000Z", pnl: "-10000", commission: "150", fees: "50" }),
+				createMockTrade({
+					entryDate: "2026-01-15T12:00:00.000Z",
+					pnl: "-10000",
+					commission: "150",
+					fees: "50",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
 			const result = await getCommissionFeeImpact()
 
-			const january = result.data!.monthlyTrend.find((m) => m.month === "2026-01")
+			const january = result.data!.monthlyTrend.find(
+				(m) => m.month === "2026-01"
+			)
 			expect(january!.feesAsPercentOfGross).toBe(0)
 		})
 
 		it("should use the correct YYYY-MM key format for month grouping", async () => {
 			// Verify that months are zero-padded: "2026-01" not "2026-1"
 			const mockTrades = [
-				createMockTrade({ entryDate: "2026-01-15T12:00:00.000Z", commission: "100", fees: "0", pnl: "5000" }),
+				createMockTrade({
+					entryDate: "2026-01-15T12:00:00.000Z",
+					commission: "100",
+					fees: "0",
+					pnl: "5000",
+				}),
 			]
 			dbQueryTradesMock.findMany.mockResolvedValue(mockTrades)
 
@@ -717,7 +850,9 @@ describe("getCommissionFeeImpact()", () => {
 		})
 
 		it("should return status=error when the DB query throws", async () => {
-			dbQueryTradesMock.findMany.mockRejectedValue(new Error("DB connection failure"))
+			dbQueryTradesMock.findMany.mockRejectedValue(
+				new Error("DB connection failure")
+			)
 
 			const result = await getCommissionFeeImpact()
 
@@ -726,7 +861,9 @@ describe("getCommissionFeeImpact()", () => {
 		})
 
 		it("should not expose internal error details in the response message", async () => {
-			dbQueryTradesMock.findMany.mockRejectedValue(new Error("Sensitive: admin password 12345"))
+			dbQueryTradesMock.findMany.mockRejectedValue(
+				new Error("Sensitive: admin password 12345")
+			)
 
 			const result = await getCommissionFeeImpact()
 
@@ -788,7 +925,9 @@ describe("getCommissionFeeImpact()", () => {
 
 			const result = await getCommissionFeeImpact()
 
-			const november = result.data!.monthlyTrend.find((m) => m.month === "2025-11")
+			const november = result.data!.monthlyTrend.find(
+				(m) => m.month === "2025-11"
+			)
 			expect(november).toBeDefined()
 		})
 	})

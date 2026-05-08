@@ -145,9 +145,7 @@ export const deleteAssetType = async (
 // ASSETS
 // ============================================================================
 
-export interface AssetWithType extends Asset {
-	assetType: AssetType
-}
+import type { AssetWithType } from "./assets.types"
 
 export const getAssets = async (): Promise<AssetWithType[]> => {
 	await requireSession()
@@ -264,21 +262,30 @@ export const updateAsset = async (
 
 	const updateValues: Record<string, unknown> = {}
 
-	if (updateData.symbol !== undefined)
+	if (updateData.symbol !== undefined) {
 		updateValues.symbol = updateData.symbol
-	if (updateData.name !== undefined) updateValues.name = updateData.name
-	if (updateData.assetTypeId !== undefined)
+	}
+	if (updateData.name !== undefined) {
+		updateValues.name = updateData.name
+	}
+	if (updateData.assetTypeId !== undefined) {
 		updateValues.assetTypeId = updateData.assetTypeId
-	if (updateData.tickSize !== undefined)
+	}
+	if (updateData.tickSize !== undefined) {
 		updateValues.tickSize = updateData.tickSize.toString()
-	if (updateData.tickValue !== undefined)
+	}
+	if (updateData.tickValue !== undefined) {
 		updateValues.tickValue = toCents(updateData.tickValue)
-	if (updateData.currency !== undefined)
+	}
+	if (updateData.currency !== undefined) {
 		updateValues.currency = updateData.currency
-	if (updateData.multiplier !== undefined)
+	}
+	if (updateData.multiplier !== undefined) {
 		updateValues.multiplier = updateData.multiplier.toString()
-	if (updateData.isActive !== undefined)
+	}
+	if (updateData.isActive !== undefined) {
 		updateValues.isActive = updateData.isActive
+	}
 
 	updateValues.updatedAt = new Date()
 

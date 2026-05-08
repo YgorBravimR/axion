@@ -78,14 +78,28 @@ const GRADE_COLOR_CLASSES: Record<TradeRating, string> = {
  *
  * Returns `null` when no rating is present (badge is not rendered).
  */
-const resolveRatingBadgeClass = (rating: string | null | undefined): string | null => {
-	if (!rating) return null
+const resolveRatingBadgeClass = (
+	rating: string | null | undefined
+): string | null => {
+	if (!rating) {
+		return null
+	}
 
-	if (rating === "A") return "bg-trade-buy/20 text-trade-buy"
-	if (rating === "B") return "bg-trade-buy/10 text-trade-buy/70"
-	if (rating === "C") return "bg-warning/20 text-warning"
-	if (rating === "D") return "bg-trade-sell/10 text-trade-sell/70"
-	if (rating === "F") return "bg-trade-sell/20 text-trade-sell"
+	if (rating === "A") {
+		return "bg-trade-buy/20 text-trade-buy"
+	}
+	if (rating === "B") {
+		return "bg-trade-buy/10 text-trade-buy/70"
+	}
+	if (rating === "C") {
+		return "bg-warning/20 text-warning"
+	}
+	if (rating === "D") {
+		return "bg-trade-sell/10 text-trade-sell/70"
+	}
+	if (rating === "F") {
+		return "bg-trade-sell/20 text-trade-sell"
+	}
 
 	return null
 }
@@ -182,7 +196,11 @@ describe("createTradeSchema — rating field", () => {
 
 		it("should not affect other fields when rating is provided", () => {
 			const result = createTradeSchema.safeParse(
-				buildMinimalTradePayload({ rating: "A", direction: "long", entryPrice: 5000 })
+				buildMinimalTradePayload({
+					rating: "A",
+					direction: "long",
+					entryPrice: 5000,
+				})
 			)
 			expect(result.success).toBe(true)
 			if (result.success) {
@@ -321,7 +339,9 @@ describe("grade selector — toggle behavior", () => {
 
 describe("grade selector — color class mapping", () => {
 	it("should map grade A to the trade-buy (green) color class", () => {
-		expect(GRADE_COLOR_CLASSES["A"]).toBe("border-trade-buy bg-trade-buy/10 text-trade-buy")
+		expect(GRADE_COLOR_CLASSES["A"]).toBe(
+			"border-trade-buy bg-trade-buy/10 text-trade-buy"
+		)
 	})
 
 	it("should map grade B to the muted trade-buy (green/70) color class", () => {
@@ -331,7 +351,9 @@ describe("grade selector — color class mapping", () => {
 	})
 
 	it("should map grade C to the warning (amber) color class", () => {
-		expect(GRADE_COLOR_CLASSES["C"]).toBe("border-warning bg-warning/10 text-warning")
+		expect(GRADE_COLOR_CLASSES["C"]).toBe(
+			"border-warning bg-warning/10 text-warning"
+		)
 	})
 
 	it("should map grade D to the muted trade-sell (red/70) color class", () => {
@@ -341,7 +363,9 @@ describe("grade selector — color class mapping", () => {
 	})
 
 	it("should map grade F to the trade-sell (red) color class", () => {
-		expect(GRADE_COLOR_CLASSES["F"]).toBe("border-trade-sell bg-trade-sell/10 text-trade-sell")
+		expect(GRADE_COLOR_CLASSES["F"]).toBe(
+			"border-trade-sell bg-trade-sell/10 text-trade-sell"
+		)
 	})
 
 	it("should have a color entry for every grade in the grade list", () => {
@@ -369,7 +393,9 @@ describe("trade detail — rating badge color mapping", () => {
 	})
 
 	it("should return the muted trade-buy class for grade B", () => {
-		expect(resolveRatingBadgeClass("B")).toBe("bg-trade-buy/10 text-trade-buy/70")
+		expect(resolveRatingBadgeClass("B")).toBe(
+			"bg-trade-buy/10 text-trade-buy/70"
+		)
 	})
 
 	it("should return the warning class for grade C", () => {
@@ -377,11 +403,15 @@ describe("trade detail — rating badge color mapping", () => {
 	})
 
 	it("should return the muted trade-sell class for grade D", () => {
-		expect(resolveRatingBadgeClass("D")).toBe("bg-trade-sell/10 text-trade-sell/70")
+		expect(resolveRatingBadgeClass("D")).toBe(
+			"bg-trade-sell/10 text-trade-sell/70"
+		)
 	})
 
 	it("should return the trade-sell class for grade F", () => {
-		expect(resolveRatingBadgeClass("F")).toBe("bg-trade-sell/20 text-trade-sell")
+		expect(resolveRatingBadgeClass("F")).toBe(
+			"bg-trade-sell/20 text-trade-sell"
+		)
 	})
 
 	it("should assign a distinct class to every grade (no two grades produce the same badge class)", () => {

@@ -8,6 +8,7 @@ import { users, tradingAccounts } from "@/db/schema"
 import { authConfig } from "./auth.config"
 import type { UserRole } from "@/lib/feature-access"
 
+/* eslint-disable no-unused-vars */
 declare module "next-auth" {
 	interface User {
 		id: string
@@ -32,6 +33,7 @@ declare module "next-auth" {
 		role: UserRole
 	}
 }
+/* eslint-enable no-unused-vars */
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
 	...authConfig,
@@ -88,9 +90,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				const password = credentials.password as string
 				// Handle accountId - could be undefined, null, or empty string
 				const rawAccountId = credentials.accountId
-				const accountId = typeof rawAccountId === "string" && rawAccountId.trim() !== ""
-					? rawAccountId.trim()
-					: null
+				const accountId =
+					typeof rawAccountId === "string" && rawAccountId.trim() !== ""
+						? rawAccountId.trim()
+						: null
 
 				// Find user by email
 				const user = await db.query.users.findFirst({

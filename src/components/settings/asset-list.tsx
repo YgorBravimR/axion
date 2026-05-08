@@ -7,11 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
 import { AssetForm } from "./asset-form"
-import {
-	deleteAsset,
-	toggleAssetActive,
-	type AssetWithType,
-} from "@/app/actions/assets"
+import { deleteAsset, toggleAssetActive } from "@/app/actions/assets"
+import type { AssetWithType } from "@/app/actions/assets.types"
 import { useUrlParams } from "@/hooks/use-url-params"
 import { useDebouncedSearch } from "@/hooks/use-debounced-search"
 import type { AssetType } from "@/db/schema"
@@ -95,7 +92,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 	}, [])
 
 	const handleConfirmDelete = useCallback(() => {
-		if (!deleteTarget) return
+		if (!deleteTarget) {
+			return
+		}
 		const asset = deleteTarget
 		setPendingId(asset.id)
 		startTransition(async () => {
@@ -294,17 +293,19 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 							className="w-full pl-9 sm:w-64"
 						/>
 					</div>
-					<div className="gap-s-200 flex">
+					<div className="gap-s-200 scrollbar-none flex overflow-x-auto">
 						<Badge
 							id="badge-asset-filter-all"
 							variant={filterType === null ? "default" : "outline"}
-							className="cursor-pointer"
+							className="cursor-pointer whitespace-nowrap"
 							tabIndex={0}
 							role="button"
 							aria-pressed={filterType === null}
 							onClick={() => setFilterType(null)}
 							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") setFilterType(null)
+								if (e.key === "Enter" || e.key === " ") {
+									setFilterType(null)
+								}
 							}}
 						>
 							{tCommon("all")}
@@ -314,7 +315,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 								id={`badge-asset-filter-${type.id}`}
 								key={type.id}
 								variant={filterType === type.id ? "default" : "outline"}
-								className="cursor-pointer"
+								className="cursor-pointer whitespace-nowrap"
 								tabIndex={0}
 								role="button"
 								aria-pressed={filterType === type.id}
@@ -322,8 +323,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 									setFilterType(filterType === type.id ? null : type.id)
 								}
 								onKeyDown={(e) => {
-									if (e.key === "Enter" || e.key === " ")
+									if (e.key === "Enter" || e.key === " ") {
 										setFilterType(filterType === type.id ? null : type.id)
+									}
 								}}
 							>
 								{type.name}
@@ -372,7 +374,9 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			<AlertDialog
 				open={!!deleteTarget}
 				onOpenChange={(open) => {
-					if (!open && !isPending) setDeleteTarget(null)
+					if (!open && !isPending) {
+						setDeleteTarget(null)
+					}
 				}}
 			>
 				<AlertDialogContent id="delete-asset-confirm">

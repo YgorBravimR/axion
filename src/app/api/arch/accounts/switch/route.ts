@@ -7,7 +7,9 @@ import { archSuccess, archError } from "../../_lib/helpers"
 
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -29,9 +31,16 @@ const POST = async (request: NextRequest) => {
 		})
 
 		if (!targetAccount) {
-			return archError("Account not found", [
-				{ code: "NOT_FOUND", detail: "Account does not exist or does not belong to this user" },
-			], 404)
+			return archError(
+				"Account not found",
+				[
+					{
+						code: "NOT_FOUND",
+						detail: "Account does not exist or does not belong to this user",
+					},
+				],
+				404
+			)
 		}
 
 		// Unset all defaults for this user
@@ -46,6 +55,14 @@ const POST = async (request: NextRequest) => {
 			.set({ isDefault: true })
 			.where(eq(tradingAccounts.id, accountId))
 			.returning()
+
+		if (!updatedAccount) {
+			return archError(
+				"Failed to switch account",
+				[{ code: "ACCOUNT_NOT_UPDATED", detail: "Update returned no rows" }],
+				500
+			)
+		}
 
 		return archSuccess("Default account switched", {
 			id: updatedAccount.id,

@@ -45,15 +45,21 @@ const clampInt = (
 	fallback: number,
 	max: number
 ): number => {
-	if (!value) return fallback
+	if (!value) {
+		return fallback
+	}
 	const parsed = parseInt(value, 10)
-	if (Number.isNaN(parsed) || parsed < 0) return fallback
+	if (Number.isNaN(parsed) || parsed < 0) {
+		return fallback
+	}
 	return Math.min(parsed, max)
 }
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -117,22 +123,35 @@ const GET = async (request: NextRequest) => {
 			eq(trades.isArchived, false),
 		]
 
-		if (dateFrom) conditions.push(gte(trades.entryDate, new Date(dateFrom)))
-		if (dateTo) conditions.push(lte(trades.entryDate, new Date(dateTo)))
-		if (assets.length) conditions.push(inArray(trades.asset, assets))
-		if (directions.length)
+		if (dateFrom) {
+			conditions.push(gte(trades.entryDate, new Date(dateFrom)))
+		}
+		if (dateTo) {
+			conditions.push(lte(trades.entryDate, new Date(dateTo)))
+		}
+		if (assets.length) {
+			conditions.push(inArray(trades.asset, assets))
+		}
+		if (directions.length) {
 			conditions.push(inArray(trades.direction, directions))
-		if (outcomes.length) conditions.push(inArray(trades.outcome, outcomes))
+		}
+		if (outcomes.length) {
+			conditions.push(inArray(trades.outcome, outcomes))
+		}
 
 		// Resolve fuzzy names
 		if (strategyParam) {
 			const strategyId = await resolveStrategyName(strategyParam, auth.userId)
-			if (strategyId) conditions.push(eq(trades.strategyId, strategyId))
+			if (strategyId) {
+				conditions.push(eq(trades.strategyId, strategyId))
+			}
 		}
 
 		if (timeframeParam) {
 			const timeframeId = await resolveTimeframeName(timeframeParam)
-			if (timeframeId) conditions.push(eq(trades.timeframeId, timeframeId))
+			if (timeframeId) {
+				conditions.push(eq(trades.timeframeId, timeframeId))
+			}
 		}
 
 		if (tagNames.length) {

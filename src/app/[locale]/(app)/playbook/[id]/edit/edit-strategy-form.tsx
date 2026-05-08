@@ -12,14 +12,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
 import { updateStrategy } from "@/app/actions/strategies"
-import type { StrategyWithStats } from "@/app/actions/strategies"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
 import { ConditionPicker } from "@/components/playbook/condition-picker"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
 import type { PersistedImage, PendingImage } from "@/lib/validations/upload"
 import type { StrategyConditionInput } from "@/types/trading-condition"
-import type { StrategyConditionWithDetail } from "@/app/actions/strategy-conditions"
+import type { StrategyConditionWithDetail } from "@/app/actions/strategy-conditions.types"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 
 interface EditStrategyFormProps {
@@ -80,13 +80,13 @@ const EditStrategyForm = ({
 				})
 
 				if (errors.length > 0) {
-					showToast("error", errors[0])
+					showToast("error", errors[0]!)
 					return
 				}
 
 				if (uploaded.length > 0) {
-					screenshotUrl = uploaded[0].url
-					screenshotS3Key = uploaded[0].s3Key
+					screenshotUrl = uploaded[0]!.url
+					screenshotS3Key = uploaded[0]!.s3Key
 				}
 			} else if (persistedScreenshot) {
 				// Keep existing screenshot
@@ -102,8 +102,8 @@ const EditStrategyForm = ({
 				entryCriteria: (formData.get("entryCriteria") as string) || undefined,
 				exitCriteria: (formData.get("exitCriteria") as string) || undefined,
 				riskRules: (formData.get("riskRules") as string) || undefined,
-				targetRMultiple: formData.get("targetRMultiple")
-					? Number(formData.get("targetRMultiple"))
+				finalR: formData.get("finalR")
+					? Number(formData.get("finalR"))
 					: undefined,
 				maxRiskPercent: formData.get("maxRiskPercent")
 					? Number(formData.get("maxRiskPercent"))
@@ -171,7 +171,9 @@ const EditStrategyForm = ({
 											value={code}
 											onChange={(e) => {
 												setCode(e.target.value)
-												if (fieldErrors.code) setFieldErrors({})
+												if (fieldErrors.code) {
+													setFieldErrors({})
+												}
 											}}
 										/>
 										<p className="text-tiny text-txt-300 mt-s-100">
@@ -312,19 +314,16 @@ const EditStrategyForm = ({
 
 								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 									<div>
-										<Label
-											id="label-target-r-multiple"
-											htmlFor="targetRMultiple"
-										>
-											{t("targetRMultiple")}
+										<Label id="label-target-r-multiple" htmlFor="finalR">
+											{t("finalR")}
 										</Label>
 										<Input
-											id="targetRMultiple"
-											name="targetRMultiple"
+											id="finalR"
+											name="finalR"
 											type="number"
 											step="0.1"
 											min="0.1"
-											defaultValue={strategy.targetRMultiple || ""}
+											defaultValue={strategy.finalR || ""}
 											placeholder={t("targetRPlaceholder")}
 											className="mt-s-200"
 										/>
@@ -334,10 +333,7 @@ const EditStrategyForm = ({
 									</div>
 
 									<div>
-										<Label
-											id="label-max-risk-percent"
-											htmlFor="maxRiskPercent"
-										>
+										<Label id="label-max-risk-percent" htmlFor="maxRiskPercent">
 											{t("maxRiskPerTrade")}
 										</Label>
 										<Input

@@ -1,51 +1,53 @@
 "use server"
 
-import { db } from "@/db/drizzle"
-import { trades, settings, tradingAccounts } from "@/db/schema"
-import { eq, and, gte, lte, desc, asc, inArray } from "drizzle-orm"
-import type {
-	ActionResponse,
-	OverallStats,
-	DisciplineData,
-	EquityPoint,
-	DailyPnL,
-	StreakData,
-	PerformanceByGroup,
-	ExpectedValueData,
-	RDistributionBucket,
-	TradeFilters,
-	HourlyPerformance,
-	DayOfWeekPerformance,
-	TimeHeatmapCell,
-	DaySummary,
-	DayTrade,
-	DayEquityPoint,
-	RadarChartData,
-	TradingSession,
-	SessionPerformance,
-	SessionAssetPerformance,
-	AnalyticsDashboardData,
-	DashboardBatchData,
-} from "@/types"
-import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
-import {
-	getStartOfMonth,
-	getEndOfMonth,
-	getStartOfDay,
-	getEndOfDay,
-	formatDateKey,
-	APP_TIMEZONE,
-	getBrtTimeParts,
-} from "@/lib/dates"
-import { fromCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
-import { toSafeErrorMessage } from "@/lib/error-utils"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
-import { getTranslations } from "next-intl/server"
+import { db } from "@/db/drizzle"
+import { settings, trades } from "@/db/schema"
 import {
 	getCachedAnalyticsDashboard,
 	getCachedDashboardData,
 } from "@/lib/cache/cached-queries"
+import { calculateProfitFactor, calculateWinRate } from "@/lib/calculations"
+import { dayNameKey, dayNameKeyLower } from "@/lib/calendar/day-names"
+import {
+	APP_TIMEZONE,
+	formatDateKey,
+	getBrtTimeParts,
+	getEndOfDay,
+	getEndOfMonth,
+	getStartOfDay,
+	getStartOfMonth,
+} from "@/lib/dates"
+import { toSafeErrorMessage } from "@/lib/error-utils"
+import { fromCents } from "@/lib/money"
+import { decryptTradeFields, getUserDek } from "@/lib/user-crypto"
+import type {
+	ActionResponse,
+	AnalyticsDashboardData,
+	DailyPnL,
+	DashboardBatchData,
+	DayEquityPoint,
+	DayOfWeekPerformance,
+	DaySummary,
+	DayTrade,
+	DisciplineData,
+	EquityPoint,
+	ExpectedValueData,
+	HourlyPerformance,
+	OverallStats,
+	PerformanceByGroup,
+	RadarChartData,
+	RDistributionBucket,
+	SessionAssetPerformance,
+	SessionPerformance,
+	StreakData,
+	TimeHeatmapCell,
+	TradeFilters,
+	TradingSession,
+} from "@/types"
+import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm"
+import { getTranslations } from "next-intl/server"
+import type { EquityCurveMode } from "./analytics.types"
 
 interface AccountFilter {
 	accountId: string
@@ -284,8 +286,6 @@ export const getDisciplineScore = async (
 	}
 }
 
-export type EquityCurveMode = "daily" | "trade"
-
 /**
  * Get equity curve data
  * Returns both cumulative P&L (equity) and actual account value (accountEquity)
@@ -300,10 +300,6 @@ export const getEquityCurve = async (
 	try {
 		const authContext = await requireAuth()
 
-		// Get account balance from trading account
-		const account = await db.query.tradingAccounts.findFirst({
-			where: eq(tradingAccounts.id, authContext.accountId),
-		})
 		// Fallback to global settings if account doesn't have balance
 		const accountBalanceSetting = await db.query.settings.findFirst({
 			where: eq(settings.key, "account_balance"),
@@ -346,7 +342,7 @@ export const getEquityCurve = async (
 			let peak = initialBalance
 
 			for (let i = 0; i < result.length; i++) {
-				const trade = result[i]
+				const trade = result[i]!
 				const pnl = fromCents(trade.pnl)
 				cumulativePnL += pnl
 				const accountEquity = initialBalance + cumulativePnL
@@ -535,11 +531,11 @@ export const getStreakData = async (
 		let currentStreak = 0
 		let currentStreakType: "win" | "loss" | "none" = "none"
 
-		if (result.length > 0 && result[0].outcome) {
+		if (result.length > 0 && result[0]!.outcome) {
 			currentStreakType =
-				result[0].outcome === "win"
+				result[0]!.outcome === "win"
 					? "win"
-					: result[0].outcome === "loss"
+					: result[0]!.outcome === "loss"
 						? "loss"
 						: "none"
 			for (const trade of result) {
@@ -683,17 +679,8 @@ export const getPerformanceByVariable = async (
 					break
 				}
 				case "dayOfWeek": {
-					const dayKeys = [
-						"sunday",
-						"monday",
-						"tuesday",
-						"wednesday",
-						"thursday",
-						"friday",
-						"saturday",
-					] as const
 					const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-					groupKey = tDaysTranslation(dayKeys[dayOfWeek])
+					groupKey = tDaysTranslation(dayNameKeyLower(dayOfWeek))
 					break
 				}
 				case "strategy":
@@ -1105,17 +1092,6 @@ export const getDayOfWeekPerformance = async (
 			}
 		}
 
-		// English day names used as i18n keys on the client
-		const dayNameKeys = [
-			"Sunday",
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-		] as const
-
 		// Group by day of week
 		const dayMap = new Map<
 			number,
@@ -1192,7 +1168,7 @@ export const getDayOfWeekPerformance = async (
 
 				return {
 					dayOfWeek,
-					dayName: dayNameKeys[dayOfWeek],
+					dayName: dayNameKey(dayOfWeek),
 					totalTrades: data.trades.length,
 					wins: data.wins,
 					losses: data.losses,
@@ -1251,17 +1227,6 @@ export const getTimeHeatmap = async (
 			}
 		}
 
-		// English day names used as i18n keys on the client
-		const dayNameKeys = [
-			"Sunday",
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-		] as const
-
 		// Group by day × hour
 		const cellMap = new Map<
 			string,
@@ -1307,10 +1272,10 @@ export const getTimeHeatmap = async (
 
 		const heatmapData: TimeHeatmapCell[] = Array.from(cellMap.entries()).map(
 			([key, data]) => {
-				const [dayOfWeek, hour] = key.split("-").map(Number)
+				const [dayOfWeek, hour] = key.split("-").map(Number) as [number, number]
 				return {
 					dayOfWeek,
-					dayName: dayNameKeys[dayOfWeek],
+					dayName: dayNameKey(dayOfWeek),
 					hour,
 					hourLabel: `${hour.toString().padStart(2, "0")}:00`,
 					totalTrades: data.totalTrades,
@@ -1837,7 +1802,9 @@ export const getSessionPerformance = async (
 
 		for (const trade of result) {
 			const session = getSessionForTime(trade.entryDate)
-			if (!session) continue // Skip trades outside trading hours
+			if (!session) {
+				continue
+			} // Skip trades outside trading hours
 
 			const data = sessionMap.get(session)!
 			const pnl = fromCents(trade.pnl)
@@ -1948,7 +1915,9 @@ export const getSessionAssetPerformance = async (
 
 		for (const trade of result) {
 			const session = getSessionForTime(trade.entryDate)
-			if (!session) continue
+			if (!session) {
+				continue
+			}
 
 			if (!assetSessionMap.has(trade.asset)) {
 				const sessionData = new Map<

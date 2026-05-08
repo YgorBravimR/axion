@@ -60,10 +60,17 @@ Tone: Professional, confident, precise. Like a cockpit pre-flight briefing — e
 // ============================================================================
 
 const buildCoachingPrompt = (input: BuildPromptInput): CoachingPrompt => {
-	const { stats, insights, tradeCount, periodDays, accountType, topAssets } = input
+	const { stats, insights, tradeCount, periodDays, accountType, topAssets } =
+		input
 
 	// Build the data summary section
-	const dataSummary = buildDataSummary({ stats, tradeCount, periodDays, accountType, topAssets })
+	const dataSummary = buildDataSummary({
+		stats,
+		tradeCount,
+		periodDays,
+		accountType,
+		topAssets,
+	})
 
 	// Build the insights section
 	const insightsSummary = buildInsightsSummary(insights)
@@ -103,7 +110,9 @@ const buildDataSummary = ({
 	accountType,
 	topAssets,
 }: Omit<BuildPromptInput, "insights">): string => {
-	if (!stats) return "No statistics available yet."
+	if (!stats) {
+		return "No statistics available yet."
+	}
 
 	const lines = [
 		`- Account type: ${accountType}`,
@@ -115,22 +124,27 @@ const buildDataSummary = ({
 	]
 
 	if (topAssets.length > 0) {
-		lines.push(`- Top assets: ${topAssets.map((a) => `${a.asset} (${a.tradeCount} trades, ${a.winRate.toFixed(0)}% WR)`).join(", ")}`)
+		lines.push(
+			`- Top assets: ${topAssets.map((a) => `${a.asset} (${a.tradeCount} trades, ${a.winRate.toFixed(0)}% WR)`).join(", ")}`
+		)
 	}
 
 	return lines.join("\n")
 }
 
 const buildInsightsSummary = (insights: CoachingInsight[]): string => {
-	if (insights.length === 0) return "No significant patterns detected yet. Need more trade data."
+	if (insights.length === 0) {
+		return "No significant patterns detected yet. Need more trade data."
+	}
 
 	return insights
 		.map((insight, index) => {
-			const severity = insight.severity === "warning"
-				? "[WARNING]"
-				: insight.severity === "attention"
-					? "[ATTENTION]"
-					: "[INFO]"
+			const severity =
+				insight.severity === "warning"
+					? "[WARNING]"
+					: insight.severity === "attention"
+						? "[ATTENTION]"
+						: "[INFO]"
 
 			const paramsStr = Object.entries(insight.params)
 				.map(([key, value]) => `${key}: ${value}`)

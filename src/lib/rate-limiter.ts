@@ -34,7 +34,9 @@ const createRateLimiter = (config: RateLimiterConfig) => {
 
 	const cleanup = () => {
 		const now = Date.now()
-		if (now - lastCleanup < CLEANUP_INTERVAL_MS) return
+		if (now - lastCleanup < CLEANUP_INTERVAL_MS) {
+			return
+		}
 		lastCleanup = now
 
 		for (const [key, entry] of store) {
@@ -57,7 +59,11 @@ const createRateLimiter = (config: RateLimiterConfig) => {
 
 		if (!entry) {
 			store.set(key, { timestamps: [now] })
-			return { allowed: true, remaining: config.maxAttempts - 1, retryAfterMs: 0 }
+			return {
+				allowed: true,
+				remaining: config.maxAttempts - 1,
+				retryAfterMs: 0,
+			}
 		}
 
 		// Prune expired timestamps
@@ -66,7 +72,7 @@ const createRateLimiter = (config: RateLimiterConfig) => {
 		)
 
 		if (entry.timestamps.length >= config.maxAttempts) {
-			const oldestTimestamp = entry.timestamps[0]
+			const oldestTimestamp = entry.timestamps[0]!
 			const retryAfterMs = config.windowMs - (now - oldestTimestamp)
 			return { allowed: false, remaining: 0, retryAfterMs }
 		}

@@ -1,30 +1,29 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { trades, monthlyPlans } from "@/db/schema"
+import { trades, riskManagementProfiles } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { getRiskProfile } from "@/app/actions/risk-profiles"
-import {
-	getUserDek,
-	decryptTradeFields,
-	decryptMonthlyPlanFields,
-} from "@/lib/user-crypto"
+import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
+import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
 import type { ActionResponse } from "@/types"
+import type { DecisionTreeConfig } from "@/types/risk-profile"
 import type {
 	LiveTradingStatusResult,
 	TradeSummary,
 } from "@/types/live-trading-status"
 
 /**
- * Fetches today's trades and resolves the live trading status
- * using the active monthly plan's linked risk profile.
+ * Phase 4b: caps + active risk profile come from the fractal-plan cascade.
+ * The decision tree (R-shape) is adapted to cents at the boundary using
+ * `oneRCents` from `resolveDay`.
  */
-const getLiveTradingStatus = async (
+export const getLiveTradingStatus = async (
 	date?: Date
 ): Promise<ActionResponse<LiveTradingStatusResult>> => {
 	const t = await getTranslations("commandCenter")
@@ -36,83 +35,48 @@ const getLiveTradingStatus = async (
 		const tomorrow = new Date(today)
 		tomorrow.setDate(tomorrow.getDate() + 1)
 
-		// Get current month's plan
-		const effectiveNow = date ? new Date(date) : await getServerEffectiveNow()
-		const currentYear = effectiveNow.getFullYear()
-		const currentMonth = effectiveNow.getMonth() + 1
-
-		const rawMonthlyPlan = await db.query.monthlyPlans.findFirst({
-			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, currentYear),
-				eq(monthlyPlans.month, currentMonth)
-			),
-		})
-
-		// Decrypt monthly plan fields if DEK is available
-		const dek = await getUserDek(userId)
-		const monthlyPlan =
-			rawMonthlyPlan && dek
-				? (decryptMonthlyPlanFields(
-						rawMonthlyPlan as unknown as Record<string, unknown>,
-						dek
-					) as unknown as typeof rawMonthlyPlan)
-				: rawMonthlyPlan
-
-		if (!monthlyPlan?.riskProfileId) {
+		const day = await resolveDay(accountId, today)
+		if (!day) {
 			return {
 				status: "success",
 				message: t("actionErrors.noRiskProfile"),
-				data: {
-					hasProfile: false,
-					fallbackRiskCents: monthlyPlan?.riskPerTradeCents
-						? Number(monthlyPlan.riskPerTradeCents)
-						: null,
-				},
+				data: { hasProfile: false, fallbackRiskCents: null },
 			}
 		}
 
-		// Fetch the linked risk profile
-		const profileResult = await getRiskProfile(monthlyPlan.riskProfileId)
+		const behavior = await resolveBehavior({ accountId, date: today })
+		if (!behavior.riskProfileId) {
+			return {
+				status: "success",
+				message: t("actionErrors.noRiskProfile"),
+				data: { hasProfile: false, fallbackRiskCents: day.oneRCents },
+			}
+		}
 
-		if (profileResult.status !== "success" || !profileResult.data) {
+		const [profileRow] = await db
+			.select()
+			.from(riskManagementProfiles)
+			.where(eq(riskManagementProfiles.id, behavior.riskProfileId))
+			.limit(1)
+
+		if (!profileRow) {
 			return {
 				status: "success",
 				message: t("actionErrors.riskProfileNotFound"),
-				data: {
-					hasProfile: false,
-					fallbackRiskCents: monthlyPlan.riskPerTradeCents
-						? Number(monthlyPlan.riskPerTradeCents)
-						: null,
-				},
+				data: { hasProfile: false, fallbackRiskCents: day.oneRCents },
 			}
 		}
 
-		const profile = profileResult.data
+		const tree = JSON.parse(profileRow.decisionTree) as DecisionTreeConfig
+		const decisionTree = adaptDecisionTree(tree, day.oneRCents)
 
-		// The monthly plan is the single source of truth for computed values.
-		// When using percentage-based sizing, the plan derives actual amounts from
-		// the account balance (e.g., 1.25% of R$20k = R$250), while the profile
-		// stores static fallback amounts for a reference balance.
-		const planRiskPerTradeCents =
-			Number(monthlyPlan.riskPerTradeCents) ||
-			profile.decisionTree.baseTrade.riskCents
-		const planDailyLossCents =
-			Number(monthlyPlan.dailyLossCents) || profile.dailyLossCents
-		const planDailyProfitTargetCents =
-			Number(monthlyPlan.dailyProfitTargetCents) ||
-			profile.dailyProfitTargetCents
+		const oneRCents = day.oneRCents
+		const dailyLossCents = Math.round(Number(day.dailyLossR.value) * oneRCents)
+		const dailyTargetCents = Math.round(
+			Number(day.dailyTargetR.value) * oneRCents
+		)
 
-		// Override the decision tree's static base risk with the plan-derived value
-		const decisionTree = {
-			...profile.decisionTree,
-			baseTrade: {
-				...profile.decisionTree.baseTrade,
-				riskCents: planRiskPerTradeCents,
-			},
-		}
-
-		// Fetch today's trades (same pattern as circuit breaker)
+		const dek = await getUserDek(userId)
 		const rawTodaysTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
@@ -122,8 +86,6 @@ const getLiveTradingStatus = async (
 			),
 			orderBy: (t, { asc }) => [asc(t.entryDate)],
 		})
-
-		// Decrypt trade fields for accurate P&L and position data
 		const todaysTrades = dek
 			? rawTodaysTrades.map(
 					(t) =>
@@ -134,26 +96,25 @@ const getLiveTradingStatus = async (
 				)
 			: rawTodaysTrades
 
-		// Map trades to the lightweight input shape
 		const tradeInputs = todaysTrades.map((trade) => ({
 			pnlCents: Number(trade.pnl) || 0,
 			outcome: trade.outcome as "win" | "loss" | "breakeven" | null,
 		}))
 
-		// Resolve max trades from explicit plan value or derived fallback
-		const maxTrades =
-			monthlyPlan.maxDailyTrades ?? monthlyPlan.derivedMaxDailyTrades ?? null
+		const derivedMaxTrades =
+			oneRCents > 0 && dailyLossCents > 0
+				? Math.floor(dailyLossCents / oneRCents)
+				: null
 
 		const status = resolveLiveStatus({
 			trades: tradeInputs,
 			decisionTree,
-			profileName: profile.name,
-			dailyLossCents: planDailyLossCents,
-			dailyProfitTargetCents: planDailyProfitTargetCents,
-			maxTrades,
+			profileName: profileRow.name,
+			dailyLossCents,
+			dailyProfitTargetCents: dailyTargetCents > 0 ? dailyTargetCents : null,
+			maxTrades: derivedMaxTrades,
 		})
 
-		// Build trade summaries by zipping decrypted trades with step numbers
 		const tradeSummaries: TradeSummary[] = todaysTrades.map((trade, index) => ({
 			tradeStepNumber: status.tradeStepNumbers[index] ?? index + 1,
 			pnlCents: Number(trade.pnl) || 0,
@@ -184,5 +145,3 @@ const getLiveTradingStatus = async (
 		}
 	}
 }
-
-export { getLiveTradingStatus }

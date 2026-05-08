@@ -1,7 +1,14 @@
 "use client"
 
 import { useMemo } from "react"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
+import {
+	AreaChart,
+	Area,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	ReferenceLine,
+} from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useTranslations } from "next-intl"
 import { useChartConfig } from "@/hooks/use-chart-config"
@@ -30,18 +37,21 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-	if (!active || !payload?.length) return null
+	const head = payload?.[0]
+	if (!active || !head) {
+		return null
+	}
 
-	const data = payload[0].payload
+	const data = head.payload
 
 	return (
-		<div className="bg-bg-200 border-bg-300 rounded-lg border p-s-300 shadow-lg">
+		<div className="bg-bg-200 border-bg-300 p-s-300 rounded-lg border shadow-lg">
 			<p className="text-tiny text-txt-300">{data.label}</p>
-			<p className="font-mono text-small font-medium text-acc-100">
+			<p className="text-small text-acc-100 font-mono font-medium">
 				{formatCompactCurrency(data.equity, "R$")}
 			</p>
 			{data.drawdown < 0 && (
-				<p className="font-mono text-tiny text-fb-error">
+				<p className="text-tiny text-fb-error font-mono">
 					DD: {formatCompactCurrency(data.drawdown, "R$")}
 				</p>
 			)}
@@ -63,17 +73,29 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 		[equityCurve]
 	)
 
-	if (equityCurve.length === 0) return null
+	if (equityCurve.length === 0) {
+		return null
+	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-			<h3 className="text-h3 font-semibold text-txt-100 mb-m-400">{t("equityCurve")}</h3>
+		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+			<h3 className="text-h3 text-txt-100 mb-m-400 font-semibold">
+				{t("equityCurve")}
+			</h3>
 			<ChartContainer id="backtest-equity" className="h-72">
 				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<defs>
 						<linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-							<stop offset="5%" stopColor="var(--color-acc-100)" stopOpacity={0.3} />
-							<stop offset="95%" stopColor="var(--color-acc-100)" stopOpacity={0} />
+							<stop
+								offset="5%"
+								stopColor="var(--color-acc-100)"
+								stopOpacity={0.3}
+							/>
+							<stop
+								offset="95%"
+								stopColor="var(--color-acc-100)"
+								stopOpacity={0}
+							/>
 						</linearGradient>
 					</defs>
 					<CartesianGrid
@@ -95,7 +117,12 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 						tickLine={false}
 					/>
 					<ChartTooltip content={<CustomTooltip />} />
-					<ReferenceLine y={0} stroke="var(--color-txt-300)" strokeDasharray="3 3" strokeOpacity={0.5} />
+					<ReferenceLine
+						y={0}
+						stroke="var(--color-txt-300)"
+						strokeDasharray="3 3"
+						strokeOpacity={0.5}
+					/>
 					<Area
 						type="monotone"
 						dataKey="equity"

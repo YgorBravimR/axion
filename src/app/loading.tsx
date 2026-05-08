@@ -23,9 +23,9 @@ const Loading = () => {
 					{[1, 2, 3, 4].map((i) => (
 						<Card id={`loading-stat-card-${i}`} key={i} className="bg-bg-200 p-m-600 shadow-medium">
 							<div className="space-y-s-300 animate-pulse motion-reduce:animate-none">
-								<div className="h-4 w-20 rounded bg-bg-300" />
-								<div className="h-8 w-32 rounded bg-bg-300" />
-								<div className="h-4 w-24 rounded bg-bg-300" />
+								<div className="h-4 w-20 rounded-sm bg-bg-300" />
+								<div className="h-8 w-32 rounded-sm bg-bg-300" />
+								<div className="h-4 w-24 rounded-sm bg-bg-300" />
 							</div>
 						</Card>
 					))}
@@ -35,7 +35,7 @@ const Loading = () => {
 				<div className="lg:col-span-2">
 					<Card id="loading-tasks-card" className="bg-bg-200 p-l-700 shadow-medium">
 						<div className="space-y-m-500 animate-pulse motion-reduce:animate-none">
-							<div className="h-8 w-48 rounded bg-bg-300" />
+							<div className="h-8 w-48 rounded-sm bg-bg-300" />
 							<div className="space-y-m-400">
 								{[1, 2, 3].map((i) => (
 									<div key={i} className="h-32 w-full rounded-lg bg-bg-300" />
@@ -50,7 +50,7 @@ const Loading = () => {
 			<div className="mt-l-700">
 				<Card id="loading-goals-card" className="bg-bg-200 p-l-700 shadow-medium">
 					<div className="space-y-m-500 animate-pulse motion-reduce:animate-none">
-						<div className="h-8 w-56 rounded bg-bg-300" />
+						<div className="h-8 w-56 rounded-sm bg-bg-300" />
 						<div className="space-y-m-400">
 							{[1, 2].map((i) => (
 								<div key={i} className="h-40 w-full rounded-lg bg-bg-300" />

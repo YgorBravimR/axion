@@ -25,7 +25,7 @@ import { LoadingSpinner } from "@/components/shared"
 interface DayDetailModalProps {
 	date: string | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 }
 
 export const DayDetailModal = ({
@@ -42,7 +42,9 @@ export const DayDetailModal = ({
 	const [equityCurve, setEquityCurve] = useState<DayEquityPoint[]>([])
 
 	useEffect(() => {
-		if (!open) return
+		if (!open) {
+			return
+		}
 		if (date) {
 			startTransition(async () => {
 				const dateObj = new Date(date)
@@ -75,7 +77,9 @@ export const DayDetailModal = ({
 	)
 
 	const dayName = useMemo(() => {
-		if (!date) return ""
+		if (!date) {
+			return ""
+		}
 		const d = new Date(date)
 		return d.toLocaleDateString(locale, {
 			weekday: "long",
@@ -86,7 +90,9 @@ export const DayDetailModal = ({
 		})
 	}, [date, locale])
 
-	if (!open) return null
+	if (!open) {
+		return null
+	}
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,40 +105,43 @@ export const DayDetailModal = ({
 					<DialogTitle className="capitalize">{dayName}</DialogTitle>
 				</DialogHeader>
 				<ScrollArea className="max-h-[calc(90dvh-6rem)] overflow-y-auto">
-				{isPending ? (
-					<LoadingSpinner size="lg" className="h-[300px]" />
-				) : summary ? (
-					<div className="space-y-m-400">
-						{/* Summary Stats */}
-						<DaySummaryStats summary={summary} />
+					{isPending ? (
+						<LoadingSpinner size="lg" className="h-[300px]" />
+					) : summary ? (
+						<div className="space-y-m-400">
+							{/* Summary Stats */}
+							<DaySummaryStats summary={summary} />
 
-						{/* Equity Curve */}
-						<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
-							<h4 className="mb-s-300 text-small text-txt-100 font-medium">
-								{t("dayDetail.equityCurve")}
-							</h4>
-							<DayEquityCurve
-								data={equityCurve}
-								onPointClick={handleTradeClick}
-							/>
-						</div>
+							{/* Equity Curve */}
+							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+								<h4 className="mb-s-300 text-small text-txt-100 font-medium">
+									{t("dayDetail.equityCurve")}
+								</h4>
+								<DayEquityCurve
+									data={equityCurve}
+									onPointClick={handleTradeClick}
+								/>
+							</div>
 
-						{/* Trades List */}
-						<div>
-							<h4 className="mb-s-300 text-small text-txt-100 font-medium">
-								{t("dayDetail.tradesTitle")}
-							</h4>
-							<DayTradesList trades={trades} onTradeClick={handleTradeClick} />
-							<p className="mt-s-200 text-tiny text-txt-300">
-								{t("dayDetail.clickHint")}
-							</p>
+							{/* Trades List */}
+							<div>
+								<h4 className="mb-s-300 text-small text-txt-100 font-medium">
+									{t("dayDetail.tradesTitle")}
+								</h4>
+								<DayTradesList
+									trades={trades}
+									onTradeClick={handleTradeClick}
+								/>
+								<p className="mt-s-200 text-tiny text-txt-300">
+									{t("dayDetail.clickHint")}
+								</p>
+							</div>
 						</div>
-					</div>
-				) : (
-					<div className="text-txt-300 flex h-[150px] sm:h-[200px] items-center justify-center">
-						{t("dayDetail.noData")}
-					</div>
-				)}
+					) : (
+						<div className="text-txt-300 flex h-[150px] items-center justify-center sm:h-[200px]">
+							{t("dayDetail.noData")}
+						</div>
+					)}
 				</ScrollArea>
 			</DialogContent>
 		</Dialog>

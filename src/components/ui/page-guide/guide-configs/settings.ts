@@ -17,9 +17,9 @@ const settingsGuide: PageGuideConfig = {
 			optional: true,
 		},
 		{
-			targetId: "settings-default-fees",
-			titleKey: "defaultFees",
-			descriptionKey: "defaultFeesDesc",
+			targetId: "settings-trading-costs",
+			titleKey: "tradingCosts",
+			descriptionKey: "tradingCostsDesc",
 			placement: "top",
 			optional: true,
 		},

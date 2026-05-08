@@ -1,6 +1,12 @@
 "use client"
 
-import { useState, useEffect, useId, useCallback, type ChangeEvent } from "react"
+import {
+	useState,
+	useEffect,
+	useId,
+	useCallback,
+	type ChangeEvent,
+} from "react"
 import { useTranslations } from "next-intl"
 import { Lock } from "lucide-react"
 import { fromCents } from "@/lib/money"
@@ -10,12 +16,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type {
 	AdvancedSimulationParams,
 	RiskSimulationParams,
+	SimpleSimulationParams,
 } from "@/types/risk-simulation"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profiles/cents-shape"
 
 interface RiskParamsFormProps {
 	params: RiskSimulationParams
-	onChange: (params: RiskSimulationParams) => void
+	onChange: (_params: RiskSimulationParams) => void
 	isLocked: boolean
 	originalAdvancedParams: AdvancedSimulationParams | null
 }
@@ -23,7 +30,7 @@ interface RiskParamsFormProps {
 interface FieldProps {
 	label: string
 	value: string | number
-	onChange: (value: string) => void
+	onChange: (_value: string) => void
 	type?: "number" | "text"
 	prefix?: string
 	suffix?: string
@@ -31,16 +38,32 @@ interface FieldProps {
 	locked?: boolean
 }
 
-const Field = ({ label, value, onChange, type = "number", prefix, suffix, disabled, locked }: FieldProps) => {
+const Field = ({
+	label,
+	value,
+	onChange,
+	type = "number",
+	prefix,
+	suffix,
+	disabled,
+	locked,
+}: FieldProps) => {
 	const generatedId = useId()
 	return (
-		<div className="flex flex-col gap-s-100">
-			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-s-100">
+		<div className="gap-s-100 flex flex-col">
+			<label
+				htmlFor={generatedId}
+				className="text-tiny text-txt-300 gap-s-100 flex items-center"
+			>
 				{label}
-				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
+				{locked && (
+					<Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />
+				)}
 			</label>
-			<div className="flex items-center gap-s-100">
-				{prefix && <span className="text-tiny text-txt-300 shrink-0">{prefix}</span>}
+			<div className="gap-s-100 flex items-center">
+				{prefix && (
+					<span className="text-tiny text-txt-300 shrink-0">{prefix}</span>
+				)}
 				<Input
 					id={generatedId}
 					type={type}
@@ -48,11 +71,15 @@ const Field = ({ label, value, onChange, type = "number", prefix, suffix, disabl
 					onChange={(event) => onChange(event.target.value)}
 					disabled={disabled || locked}
 					className={cn(
-						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-s-300 py-1.5",
-						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed" : "bg-bg-100"
+						"border-bg-300 text-txt-100 text-small px-s-300 w-full rounded-md border py-1.5",
+						disabled || locked
+							? "bg-bg-300/50 text-txt-300 cursor-not-allowed"
+							: "bg-bg-100"
 					)}
 				/>
-				{suffix && <span className="text-tiny text-txt-300 shrink-0">{suffix}</span>}
+				{suffix && (
+					<span className="text-tiny text-txt-300 shrink-0">{suffix}</span>
+				)}
 			</div>
 		</div>
 	)
@@ -67,16 +94,26 @@ const Field = ({ label, value, onChange, type = "number", prefix, suffix, disabl
 interface CurrencyFieldProps {
 	label: string
 	valueCents: number
-	onChange: (rawValue: string) => void
+	onChange: (_rawValue: string) => void
 	prefix?: string
 	suffix?: string
 	disabled?: boolean
 	locked?: boolean
 }
 
-const CurrencyField = ({ label, valueCents, onChange, prefix, suffix, disabled, locked }: CurrencyFieldProps) => {
+const CurrencyField = ({
+	label,
+	valueCents,
+	onChange,
+	prefix,
+	suffix,
+	disabled,
+	locked,
+}: CurrencyFieldProps) => {
 	const generatedId = useId()
-	const [localValue, setLocalValue] = useState(() => fromCents(valueCents).toFixed(2))
+	const [localValue, setLocalValue] = useState(() =>
+		fromCents(valueCents).toFixed(2)
+	)
 	const [isFocused, setIsFocused] = useState(false)
 
 	// Sync from parent when not focused (e.g. prefill selection, balance scaling)
@@ -105,13 +142,20 @@ const CurrencyField = ({ label, valueCents, onChange, prefix, suffix, disabled, 
 	}
 
 	return (
-		<div className="flex flex-col gap-s-100">
-			<label htmlFor={generatedId} className="text-tiny text-txt-300 flex items-center gap-s-100">
+		<div className="gap-s-100 flex flex-col">
+			<label
+				htmlFor={generatedId}
+				className="text-tiny text-txt-300 gap-s-100 flex items-center"
+			>
 				{label}
-				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
+				{locked && (
+					<Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />
+				)}
 			</label>
-			<div className="flex items-center gap-s-100">
-				{prefix && <span className="text-tiny text-txt-300 shrink-0">{prefix}</span>}
+			<div className="gap-s-100 flex items-center">
+				{prefix && (
+					<span className="text-tiny text-txt-300 shrink-0">{prefix}</span>
+				)}
 				<Input
 					id={generatedId}
 					type="number"
@@ -122,11 +166,15 @@ const CurrencyField = ({ label, valueCents, onChange, prefix, suffix, disabled, 
 					disabled={disabled || locked}
 					step="0.01"
 					className={cn(
-						"border-bg-300 text-txt-100 text-small w-full rounded-md border px-s-300 py-1.5",
-						disabled || locked ? "bg-bg-300/50 text-txt-300 cursor-not-allowed" : "bg-bg-100"
+						"border-bg-300 text-txt-100 text-small px-s-300 w-full rounded-md border py-1.5",
+						disabled || locked
+							? "bg-bg-300/50 text-txt-300 cursor-not-allowed"
+							: "bg-bg-100"
 					)}
 				/>
-				{suffix && <span className="text-tiny text-txt-300 shrink-0">{suffix}</span>}
+				{suffix && (
+					<span className="text-tiny text-txt-300 shrink-0">{suffix}</span>
+				)}
 			</div>
 		</div>
 	)
@@ -140,21 +188,31 @@ const CheckboxField = ({
 }: {
 	label: string
 	checked: boolean
-	onChange: (checked: boolean) => void
+	onChange: (_checked: boolean) => void
 	locked?: boolean
 }) => {
 	const generatedId = useId()
 	return (
-		<div className={cn("flex items-center gap-s-200", locked ? "cursor-not-allowed opacity-70" : "cursor-pointer")}>
+		<div
+			className={cn(
+				"gap-s-200 flex items-center",
+				locked ? "cursor-not-allowed opacity-70" : "cursor-pointer"
+			)}
+		>
 			<Checkbox
 				id={generatedId}
 				checked={checked}
 				onCheckedChange={(value) => onChange(value === true)}
 				disabled={locked}
 			/>
-			<label htmlFor={generatedId} className="text-small text-txt-200 flex items-center gap-s-100">
+			<label
+				htmlFor={generatedId}
+				className="text-small text-txt-200 gap-s-100 flex items-center"
+			>
 				{label}
-				{locked && <Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />}
+				{locked && (
+					<Lock className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />
+				)}
 			</label>
 		</div>
 	)
@@ -164,7 +222,10 @@ const CheckboxField = ({
  * Scales all cents-based values in a DecisionTreeConfig proportionally.
  * percentOfBase and sameAsPrevious steps scale automatically via baseTrade.riskCents.
  */
-const scaleDecisionTree = (tree: DecisionTreeConfig, scaleFactor: number): DecisionTreeConfig => ({
+const scaleDecisionTree = (
+	tree: DecisionTreeConfig,
+	scaleFactor: number
+): DecisionTreeConfig => ({
 	...tree,
 	baseTrade: {
 		...tree.baseTrade,
@@ -176,18 +237,29 @@ const scaleDecisionTree = (tree: DecisionTreeConfig, scaleFactor: number): Decis
 			...step,
 			riskCalculation:
 				step.riskCalculation.type === "fixedCents"
-					? { ...step.riskCalculation, amountCents: Math.round(step.riskCalculation.amountCents * scaleFactor) }
+					? {
+							...step.riskCalculation,
+							amountCents: Math.round(
+								step.riskCalculation.amountCents * scaleFactor
+							),
+						}
 					: step.riskCalculation,
 		})),
 	},
 	gainMode: (() => {
 		const gm = tree.gainMode
 		if (gm.type === "singleTarget") {
-			return { ...gm, dailyTargetCents: Math.round(gm.dailyTargetCents * scaleFactor) }
+			return {
+				...gm,
+				dailyTargetCents: Math.round(gm.dailyTargetCents * scaleFactor),
+			}
 		}
 		if (gm.type === "compounding") {
 			return gm.dailyTargetCents
-				? { ...gm, dailyTargetCents: Math.round(gm.dailyTargetCents * scaleFactor) }
+				? {
+						...gm,
+						dailyTargetCents: Math.round(gm.dailyTargetCents * scaleFactor),
+					}
 				: gm
 		}
 		if (gm.type === "gainSequence") {
@@ -197,7 +269,12 @@ const scaleDecisionTree = (tree: DecisionTreeConfig, scaleFactor: number): Decis
 					...step,
 					riskCalculation:
 						step.riskCalculation.type === "fixedCents"
-							? { ...step.riskCalculation, amountCents: Math.round(step.riskCalculation.amountCents * scaleFactor) }
+							? {
+									...step.riskCalculation,
+									amountCents: Math.round(
+										step.riskCalculation.amountCents * scaleFactor
+									),
+								}
 							: step.riskCalculation,
 				})),
 				dailyTargetCents: gm.dailyTargetCents
@@ -212,38 +289,69 @@ const scaleDecisionTree = (tree: DecisionTreeConfig, scaleFactor: number): Decis
 		weeklyLossCents: tree.cascadingLimits.weeklyLossCents
 			? Math.round(tree.cascadingLimits.weeklyLossCents * scaleFactor)
 			: null,
-		monthlyLossCents: Math.round(tree.cascadingLimits.monthlyLossCents * scaleFactor),
+		monthlyLossCents: Math.round(
+			tree.cascadingLimits.monthlyLossCents * scaleFactor
+		),
 	},
 })
 
-const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: RiskParamsFormProps) => {
+const RiskParamsForm = ({
+	params,
+	onChange,
+	isLocked,
+	originalAdvancedParams,
+}: RiskParamsFormProps) => {
 	const t = useTranslations("riskSimulation.params")
 
 	/** Handle balance change for advanced mode — scales all cents proportionally from original snapshot */
 	const handleAdvancedBalanceChange = useCallback(
 		(rawValue: string) => {
-			if (params.mode !== "advanced" || !originalAdvancedParams) return
+			if (params.mode !== "advanced" || !originalAdvancedParams) {
+				return
+			}
 
 			const newBalanceCents = Math.round(parseFloat(rawValue || "0") * 100)
-			if (originalAdvancedParams.accountBalanceCents === 0) return
+			if (originalAdvancedParams.accountBalanceCents === 0) {
+				return
+			}
 
 			const scale = newBalanceCents / originalAdvancedParams.accountBalanceCents
 
 			onChange({
 				...params,
 				accountBalanceCents: newBalanceCents,
-				dailyLossCents: Math.round(originalAdvancedParams.dailyLossCents * scale),
+				dailyLossCents: Math.round(
+					originalAdvancedParams.dailyLossCents * scale
+				),
 				dailyProfitTargetCents: originalAdvancedParams.dailyProfitTargetCents
 					? Math.round(originalAdvancedParams.dailyProfitTargetCents * scale)
 					: null,
 				weeklyLossCents: originalAdvancedParams.weeklyLossCents
 					? Math.round(originalAdvancedParams.weeklyLossCents * scale)
 					: null,
-				monthlyLossCents: Math.round(originalAdvancedParams.monthlyLossCents * scale),
-				decisionTree: scaleDecisionTree(originalAdvancedParams.decisionTree, scale),
+				monthlyLossCents: Math.round(
+					originalAdvancedParams.monthlyLossCents * scale
+				),
+				decisionTree: scaleDecisionTree(
+					originalAdvancedParams.decisionTree,
+					scale
+				),
 			})
 		},
 		[params, originalAdvancedParams, onChange]
+	)
+
+	// Must be before any early return (Rules of Hooks).
+	// updateSimple is only called in the simple-mode branch, but must be declared
+	// unconditionally. Narrow params to SimpleSimulationParams before spreading.
+	const updateSimple = useCallback(
+		(partial: Partial<SimpleSimulationParams>) => {
+			if (params.mode !== "simple") {
+				return
+			}
+			onChange({ ...params, ...partial })
+		},
+		[params, onChange]
 	)
 
 	if (params.mode === "advanced") {
@@ -306,14 +414,6 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 			</div>
 		)
 	}
-
-	// Simple mode
-	const updateSimple = useCallback(
-		(partial: Partial<typeof params>) => {
-			onChange({ ...params, ...partial })
-		},
-		[params, onChange]
-	)
 
 	return (
 		<div id="sim-risk-params" className="space-y-s-300">
@@ -403,7 +503,7 @@ const RiskParamsForm = ({ params, onChange, isLocked, originalAdvancedParams }: 
 					locked={isLocked}
 				/>
 			</div>
-			<div className="flex flex-wrap gap-m-400">
+			<div className="gap-m-400 flex flex-wrap">
 				<CheckboxField
 					label={t("reduceRiskAfterLoss")}
 					checked={params.reduceRiskAfterLoss}

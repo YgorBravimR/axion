@@ -28,7 +28,7 @@ const getIcon = (type: DataSource["type"]) => {
 interface DataSourceSelectorProps {
 	options: DataSourceOption[]
 	selectedSource: DataSource | null
-	onSourceChange: (source: DataSource) => void
+	onSourceChange: (_source: DataSource) => void
 	isLoading: boolean
 }
 
@@ -40,46 +40,59 @@ const DataSourceSelector = ({
 }: DataSourceSelectorProps) => {
 	const t = useTranslations("monteCarlo.dataSource")
 
-	const handleValueChange = useCallback((value: string) => {
-		if (value === "all_strategies") {
-			onSourceChange({ type: "all_strategies" })
-		} else if (value === "universal") {
-			onSourceChange({ type: "universal" })
-		} else {
-			onSourceChange({ type: "strategy", strategyId: value })
-		}
-	}, [onSourceChange])
+	const handleValueChange = useCallback(
+		(value: string) => {
+			if (value === "all_strategies") {
+				onSourceChange({ type: "all_strategies" })
+			} else if (value === "universal") {
+				onSourceChange({ type: "universal" })
+			} else {
+				onSourceChange({ type: "strategy", strategyId: value })
+			}
+		},
+		[onSourceChange]
+	)
 
 	const getCurrentValue = useCallback((): string => {
-		if (!selectedSource) return ""
-		if (selectedSource.type === "strategy") return selectedSource.strategyId
+		if (!selectedSource) {
+			return ""
+		}
+		if (selectedSource.type === "strategy") {
+			return selectedSource.strategyId
+		}
 		return selectedSource.type
 	}, [selectedSource])
 
-	const { hasAnyDisabled, strategyOptions, aggregateOptions } = useMemo(() => ({
-		hasAnyDisabled: options.some((o) => o.disabled),
-		strategyOptions: options.filter((o) => o.type === "strategy"),
-		aggregateOptions: options.filter((o) => o.type !== "strategy"),
-	}), [options])
+	const { hasAnyDisabled, strategyOptions, aggregateOptions } = useMemo(
+		() => ({
+			hasAnyDisabled: options.some((o) => o.disabled),
+			strategyOptions: options.filter((o) => o.type === "strategy"),
+			aggregateOptions: options.filter((o) => o.type !== "strategy"),
+		}),
+		[options]
+	)
 
-	const renderTradeCount = useCallback((option: DataSourceOption) => {
-		if (option.disabled) {
-			return (
-				<span className="text-tiny text-txt-300 ml-auto flex items-center gap-s-100">
-					<Lock className="h-3 w-3" aria-hidden="true" />
-					<span>
-						{option.tradesCount}/{MIN_TRADES}
+	const renderTradeCount = useCallback(
+		(option: DataSourceOption) => {
+			if (option.disabled) {
+				return (
+					<span className="text-tiny text-txt-300 gap-s-100 ml-auto flex items-center">
+						<Lock className="h-3 w-3" aria-hidden="true" />
+						<span>
+							{option.tradesCount}/{MIN_TRADES}
+						</span>
 					</span>
+				)
+			}
+
+			return (
+				<span className="text-tiny text-txt-300">
+					({option.tradesCount} {t("trades")})
 				</span>
 			)
-		}
-
-		return (
-			<span className="text-tiny text-txt-300">
-				({option.tradesCount} {t("trades")})
-			</span>
-		)
-	}, [t])
+		},
+		[t]
+	)
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
@@ -161,7 +174,7 @@ const DataSourceSelector = ({
 
 					{/* Helper hint when some options are disabled */}
 					{hasAnyDisabled && (
-						<div className="text-tiny text-txt-300 border-bg-300 mt-s-100 border-t px-s-200 py-s-200">
+						<div className="text-tiny text-txt-300 border-bg-300 mt-s-100 px-s-200 py-s-200 border-t">
 							{t("minTradesHint", { min: MIN_TRADES })}
 						</div>
 					)}

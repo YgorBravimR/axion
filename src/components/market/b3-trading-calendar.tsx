@@ -168,7 +168,7 @@ export const B3TradingCalendar = () => {
 				{Array.from({ length: firstDayOffset }).map((_, i) => (
 					<div
 						key={`empty-${i}`}
-						className="flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-small text-transparent transition-colors"
+						className="flex items-center justify-center rounded-sm border-2 border-transparent py-s-100 text-center text-small text-transparent transition-colors"
 					>
 						-
 					</div>
@@ -197,7 +197,7 @@ export const B3TradingCalendar = () => {
 						<div
 							key={day.day}
 							className={cn(
-								"flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-small transition-colors",
+								"flex items-center justify-center rounded-sm border-2 border-transparent py-s-100 text-center text-small transition-colors",
 								// Default: weekend
 								day.isWeekend && "text-txt-300/30",
 								// Default: regular trading day
@@ -233,7 +233,7 @@ export const B3TradingCalendar = () => {
 				{Array.from({ length: trailingEmpty }).map((_, i) => (
 					<div
 						key={`trail-${i}`}
-						className="flex items-center justify-center rounded-sm border-2 border-transparent py-0.75 text-center text-small text-transparent transition-colors"
+						className="flex items-center justify-center rounded-sm border-2 border-transparent py-s-100 text-center text-small text-transparent transition-colors"
 					>
 						-
 					</div>

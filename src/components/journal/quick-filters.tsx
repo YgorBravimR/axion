@@ -45,43 +45,49 @@ const QUICK_FILTERS: QuickFilter[] = [
 
 interface QuickFiltersProps {
 	activeFilterKey: string | null
-	onApply: (params: Record<string, string | string[]>, key: string) => void
+	onApply: (_params: Record<string, string | string[]>, _key: string) => void
 	onClear: () => void
 }
 
-const QuickFilters = memo(({ activeFilterKey, onApply, onClear }: QuickFiltersProps) => {
-	const t = useTranslations("journal.smartSearch")
+const QuickFilters = memo(
+	({ activeFilterKey, onApply, onClear }: QuickFiltersProps) => {
+		const t = useTranslations("journal.smartSearch")
 
-	const handleClick = (filter: QuickFilter) => {
-		if (activeFilterKey === filter.key) {
-			onClear()
-			return
+		const handleClick = (filter: QuickFilter) => {
+			if (activeFilterKey === filter.key) {
+				onClear()
+				return
+			}
+			onApply(filter.params, filter.key)
 		}
-		onApply(filter.params, filter.key)
-	}
 
-	return (
-		<div className="flex flex-wrap gap-s-200" role="group" aria-label={t("quickFilters")}>
-			{QUICK_FILTERS.map((filter) => (
-				<button
-					key={filter.key}
-					type="button"
-					tabIndex={0}
-					onClick={() => handleClick(filter)}
-					className={cn(
-						"rounded-full border px-s-300 py-s-200 text-tiny font-medium transition-colors",
-						activeFilterKey === filter.key
-							? "border-acc-100 bg-acc-100/10 text-acc-100"
-							: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"
-					)}
-					aria-pressed={activeFilterKey === filter.key}
-				>
-					{t(filter.labelKey)}
-				</button>
-			))}
-		</div>
-	)
-})
+		return (
+			<div
+				className="gap-s-200 flex flex-wrap"
+				role="group"
+				aria-label={t("quickFilters")}
+			>
+				{QUICK_FILTERS.map((filter) => (
+					<button
+						key={filter.key}
+						type="button"
+						tabIndex={0}
+						onClick={() => handleClick(filter)}
+						className={cn(
+							"px-s-300 py-s-200 text-tiny rounded-full border font-medium transition-colors",
+							activeFilterKey === filter.key
+								? "border-acc-100 bg-acc-100/10 text-acc-100"
+								: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"
+						)}
+						aria-pressed={activeFilterKey === filter.key}
+					>
+						{t(filter.labelKey)}
+					</button>
+				))}
+			</div>
+		)
+	}
+)
 
 QuickFilters.displayName = "QuickFilters"
 

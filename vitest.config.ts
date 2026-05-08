@@ -6,6 +6,9 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "node",
+		env: {
+			TZ: "UTC",
+		},
 		include: ["src/__tests__/**/*.test.ts"],
 		setupFiles: ["src/__tests__/setup.ts"],
 		coverage: {

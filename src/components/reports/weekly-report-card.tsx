@@ -14,7 +14,8 @@ import {
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import { getWeeklyReport, type WeeklyReport } from "@/app/actions/reports"
+import { getWeeklyReport } from "@/app/actions/reports"
+import type { WeeklyReport } from "@/app/actions/reports.types"
 import { format, parseISO } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
 import { Link } from "@/i18n/routing"
@@ -53,21 +54,25 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 		})
 	}
 
+	// Must be before any early return (Rules of Hooks)
+	const activeDailyBreakdown = useMemo(
+		() => (report?.dailyBreakdown ?? []).filter((d) => d.tradeCount > 0),
+		[report?.dailyBreakdown]
+	)
+
 	if (!report) {
 		return (
-			<div id="reports-weekly" className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
+			<div
+				id="reports-weekly"
+				className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border"
+			>
 				<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
 				<p className="mt-m-400 text-txt-300">{tCommon("noData")}</p>
 			</div>
 		)
 	}
 
-	const { summary, dailyBreakdown, topWins, topLosses } = report
-
-	const activeDailyBreakdown = useMemo(
-		() => dailyBreakdown.filter((d) => d.tradeCount > 0),
-		[dailyBreakdown]
-	)
+	const { summary, topWins, topLosses } = report
 
 	const weekLabel =
 		weekOffset === 0
@@ -77,9 +82,12 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 				: t("weeksAgo", { n: weekOffset })
 
 	return (
-		<div id="reports-weekly" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div
+			id="reports-weekly"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="gap-s-200 flex flex-wrap items-center justify-between">
 				<div>
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
@@ -94,7 +102,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						})}
 					</p>
 				</div>
-				<div className="gap-s-200 flex items-center">
+				<div className="gap-s-200 flex flex-wrap items-center">
 					<Button
 						id="weekly-report-previous-week"
 						variant="ghost"
@@ -122,7 +130,10 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						variant="ghost"
 						size="sm"
 						onClick={() => {
-							window.open(`/api/arch/reports/pdf?type=weekly&offset=${weekOffset}`, "_blank")
+							window.open(
+								`/api/arch/reports/pdf?type=weekly&offset=${weekOffset}`,
+								"_blank"
+							)
 						}}
 						aria-label={t("downloadPdf")}
 					>
@@ -186,7 +197,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 					</div>
 
 					{/* Secondary Stats */}
-					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-6 [&>div]:min-w-0">
+					<div className="mt-m-400 gap-m-400 border-bg-300 pt-m-400 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-6 [&_p]:truncate [&>div]:min-w-0">
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("wins")}</p>
 							<p className="text-small text-trade-buy font-medium">
@@ -245,32 +256,30 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 								</h3>
 								<div className="mt-s-300 space-y-s-200">
 									{activeDailyBreakdown.map((day) => (
-											<div
-												key={day.date}
-												className="bg-bg-100 px-s-300 py-s-200 flex items-center justify-between rounded"
-											>
-												<span className="text-small text-txt-200">
-													{format(parseISO(day.date), "EEE, MMM d", {
-														locale: dateLocale,
-													})}
+										<div
+											key={day.date}
+											className="bg-bg-100 px-s-300 py-s-200 flex items-center justify-between rounded-sm"
+										>
+											<span className="text-small text-txt-200">
+												{format(parseISO(day.date), "EEE, MMM d", {
+													locale: dateLocale,
+												})}
+											</span>
+											<div className="gap-m-400 flex items-center">
+												<span className="text-tiny text-txt-200">
+													{day.tradeCount} trades
 												</span>
-												<div className="gap-m-400 flex items-center">
-													<span className="text-tiny text-txt-200">
-														{day.tradeCount} trades
-													</span>
-													<span
-														className={cn(
-															"text-small",
-															day.pnl >= 0
-																? "text-trade-buy"
-																: "text-trade-sell"
-														)}
-													>
-														{formatCurrencyWithSign(day.pnl)}
-													</span>
-												</div>
+												<span
+													className={cn(
+														"text-small",
+														day.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"
+													)}
+												>
+													{formatCurrencyWithSign(day.pnl)}
+												</span>
 											</div>
-										))}
+										</div>
+									))}
 								</div>
 							</div>
 
@@ -286,7 +295,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 											<Link
 												key={trade.id}
 												href={`/journal/${trade.id}`}
-												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded transition-colors"
+												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded-sm transition-colors"
 											>
 												<div className="gap-s-200 flex items-center">
 													<Badge
@@ -328,7 +337,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 											<Link
 												key={trade.id}
 												href={`/journal/${trade.id}`}
-												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded transition-colors"
+												className="bg-bg-100 px-s-300 py-s-200 hover:bg-bg-300 flex items-center justify-between rounded-sm transition-colors"
 											>
 												<div className="gap-s-200 flex items-center">
 													<Badge

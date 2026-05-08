@@ -13,8 +13,8 @@
 import type { NotaFill, NotaParseResult } from "./types"
 import { B3_FUT_PREFIXES } from "@/lib/asset-resolution"
 
-// B3 month codes: F=Jan, G=Feb, H=Mar, J=Apr, K=May, M=Jun, N=Jul, Q=Aug, U=Sep, V=Oct, X=Nov, Z=Dec
-const B3_MONTH_CODES = "FGHJKMN QUVXZ" // space at index 7 is intentional (no August letter at that position)
+// // B3 month codes: F=Jan, G=Feb, H=Mar, J=Apr, K=May, M=Jun, N=Jul, Q=Aug, U=Sep, V=Oct, X=Nov, Z=Dec
+// const B3_MONTH_CODES = "FGHJKMN QUVXZ" // space at index 7 is intentional (no August letter at that position)
 
 /**
  * Parse a Brazilian-format number: 183.975,0000 → 183975.0
@@ -22,7 +22,9 @@ const B3_MONTH_CODES = "FGHJKMN QUVXZ" // space at index 7 is intentional (no Au
  * Also handles plain numbers like "0,00" or "6,00".
  */
 const parseBrazilianNumber = (value: string): number => {
-	if (!value || value.trim() === "-" || value.trim() === "") return 0
+	if (!value || value.trim() === "-" || value.trim() === "") {
+		return 0
+	}
 
 	const trimmed = value.trim()
 
@@ -59,12 +61,12 @@ const normalizeAssetName = (rawAsset: string): string => {
 
 	if (parts.length === 1) {
 		// Single token: could be stock (PETR4) or already normalized
-		return parts[0].toUpperCase()
+		return parts[0]!.toUpperCase()
 	}
 
 	// Two tokens: e.g., "WIN G26" → base="WIN", expiryCode="G26"
-	const base = parts[0].toUpperCase()
-	const expiryCode = parts[1].toUpperCase()
+	const base = parts[0]!.toUpperCase()
+	const expiryCode = parts[1]!.toUpperCase()
 
 	// Validate expiry code format: single letter + 2 digits (e.g., G26)
 	const isExpiryCode = /^[A-Z]\d{2}$/.test(expiryCode)
@@ -90,11 +92,24 @@ const parseNotaDate = (text: string): Date | null => {
 	// The nota date is typically the first date in the document (in the header area)
 	// It appears in "1 \t09/02/2026\t417577" format
 	for (const match of matches) {
-		const [day, month, year] = match[1].split("/").map(Number)
+		const [day, month, year] = match[1]!.split("/").map(Number) as [
+			number,
+			number,
+			number,
+		]
 		// Validate it's a reasonable trading date (not an expiry date far in the future)
-		if (year >= 2020 && year <= 2030 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+		if (
+			year >= 2020 &&
+			year <= 2030 &&
+			month >= 1 &&
+			month <= 12 &&
+			day >= 1 &&
+			day <= 31
+		) {
 			// Return as BRT midnight (Brazil doesn't observe DST since 2019)
-			return new Date(`${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00-03:00`)
+			return new Date(
+				`${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00-03:00`
+			)
 		}
 	}
 
@@ -109,11 +124,15 @@ const parseNotaNumber = (text: string): string => {
 	// Look for the line with page number, date, and nota number
 	// Format: "1 \t09/02/2026\t417577"
 	const headerLineMatch = text.match(/^\d+\s*\t\d{2}\/\d{2}\/\d{4}\t(\d+)/m)
-	if (headerLineMatch) return headerLineMatch[1]
+	if (headerLineMatch) {
+		return headerLineMatch[1]!
+	}
 
 	// Fallback: look for "Nr. nota" followed by a number
 	const nrNotaMatch = text.match(/Nr\.\s*nota\s*\n?\s*(\d+)/i)
-	if (nrNotaMatch) return nrNotaMatch[1]
+	if (nrNotaMatch) {
+		return nrNotaMatch[1]!
+	}
 
 	return ""
 }
@@ -137,12 +156,16 @@ const parseBrokerName = (text: string): string => {
 
 	for (const pattern of brokerPatterns) {
 		const match = text.match(pattern)
-		if (match) return match[0]
+		if (match) {
+			return match[0]
+		}
 	}
 
 	// Fallback: look for "Corretora" label followed by a name
 	const corretoraMatch = text.match(/Corretora\s*\n\s*.*?\t([^\t\n]+)/i)
-	if (corretoraMatch) return corretoraMatch[1].trim()
+	if (corretoraMatch) {
+		return corretoraMatch[1]!.trim()
+	}
 
 	return "nota.unknownBroker"
 }
@@ -159,7 +182,9 @@ const parseBrokerName = (text: string): string => {
  * Real example from pdf-parse output:
  *   "V \tWIN G26 \t18/02/2026 \t1 \t183.975,0000 \tDAY TRADE \t561,00 \tD \t0,00"
  */
-const parseTradeRows = (text: string): { fills: NotaFill[]; warnings: string[] } => {
+const parseTradeRows = (
+	text: string
+): { fills: NotaFill[]; warnings: string[] } => {
 	const fills: NotaFill[] = []
 	const warnings: string[] = []
 	const lines = text.split("\n")
@@ -182,18 +207,24 @@ const parseTradeRows = (text: string): { fills: NotaFill[]; warnings: string[] }
 			continue
 		}
 
-		if (!inTradeSection) continue
+		if (!inTradeSection) {
+			continue
+		}
 
 		// Split by tabs
 		const columns = trimmedLine.split("\t").map((col) => col.trim())
 
 		// Trade rows start with C or V
 		const side = columns[0]
-		if (side !== "C" && side !== "V") continue
+		if (side !== "C" && side !== "V") {
+			continue
+		}
 
 		// Must have at least 9 columns for a valid trade row
 		if (columns.length < 8) {
-			warnings.push(`Row ${sequenceNumber + 1}: insufficient columns (${columns.length}), skipping`)
+			warnings.push(
+				`Row ${sequenceNumber + 1}: insufficient columns (${columns.length}), skipping`
+			)
 			continue
 		}
 
@@ -207,9 +238,9 @@ const parseTradeRows = (text: string): { fills: NotaFill[]; warnings: string[] }
 		// Columns 5+ can shift depending on whether Obs.(*) is present
 		// Look for "DAY TRADE" to identify the trade type column
 		let isDayTrade = false
-		let operationValue = 0
-		let debitCredit: "D" | "C" = "D"
-		let operationalFee = 0
+		let operationValue: number
+		let debitCredit: "D" | "C"
+		let operationalFee: number
 
 		// Find DAY TRADE marker and parse remaining columns relative to it
 		const dayTradeIndex = columns.findIndex((col) => col === "DAY TRADE")
@@ -229,7 +260,9 @@ const parseTradeRows = (text: string): { fills: NotaFill[]; warnings: string[] }
 		}
 
 		if (quantity <= 0 || price <= 0) {
-			warnings.push(`Row ${sequenceNumber}: invalid quantity (${quantity}) or price (${price}), skipping`)
+			warnings.push(
+				`Row ${sequenceNumber}: invalid quantity (${quantity}) or price (${price}), skipping`
+			)
 			continue
 		}
 
@@ -259,7 +292,9 @@ const parseTradeRows = (text: string): { fills: NotaFill[]; warnings: string[] }
  * Parse the financial summary section from the nota footer.
  * Extracts: valor dos negócios, IRRF, taxas BM&F, total líquido, etc.
  */
-const parseFinancialSummary = (text: string): {
+const parseFinancialSummary = (
+	text: string
+): {
 	totalOperationValue: number
 	totalBrokerage: number
 	settlementFee: number
@@ -284,7 +319,7 @@ const parseFinancialSummary = (text: string): {
 	// The values line follows: "6,00\t0,00 \tC\t0,00\t0,00\t0,00"
 	const valorNegociosMatch = text.match(/Valor dos neg[óo]cios\s*\n([^\n]+)/i)
 	if (valorNegociosMatch) {
-		const parts = valorNegociosMatch[1].split("\t").map((p) => p.trim())
+		const parts = valorNegociosMatch[1]!.split("\t").map((p) => p.trim())
 		// The valor dos negócios value is the first or last significant number with C/D indicator
 		// From real output: "6,00\t0,00 \tC\t0,00\t0,00\t0,00"
 		// Here the "6,00" followed eventually by "C" tells us the net trade value
@@ -292,41 +327,52 @@ const parseFinancialSummary = (text: string): {
 		if (valueWithDC) {
 			const valueIndex = parts.indexOf(valueWithDC)
 			if (valueIndex > 0) {
-				result.totalOperationValue = parseBrazilianNumber(parts[valueIndex - 1])
+				result.totalOperationValue = parseBrazilianNumber(
+					parts[valueIndex - 1]!
+				)
 			}
 		} else if (parts.length > 0) {
-			result.totalOperationValue = parseBrazilianNumber(parts[0])
+			result.totalOperationValue = parseBrazilianNumber(parts[0]!)
 		}
 	}
 
 	// Extract "Taxa registro BM&F"
-	const registroMatch = text.match(/Taxa registro BM&?F\s*\n?[^\n]*?(\d[\d.,]*)/i)
+	const registroMatch = text.match(
+		/Taxa registro BM&?F\s*\n?[^\n]*?(\d[\d.,]*)/i
+	)
 	if (registroMatch) {
-		result.registrationFee = parseBrazilianNumber(registroMatch[1])
+		result.registrationFee = parseBrazilianNumber(registroMatch[1]!)
 	}
 
 	// Extract "Taxas BM&F (emol+f.gar)" — look for the value on the same line or next
-	const taxasBmfMatch = text.match(/Taxas BM&?F\s*\([^)]+\)\s*\n?[^\n]*?(\d[\d.,]*)/i)
+	const taxasBmfMatch = text.match(
+		/Taxas BM&?F\s*\([^)]+\)\s*\n?[^\n]*?(\d[\d.,]*)/i
+	)
 	if (taxasBmfMatch) {
-		result.bmfFees = parseBrazilianNumber(taxasBmfMatch[1])
+		result.bmfFees = parseBrazilianNumber(taxasBmfMatch[1]!)
 	}
 
 	// Extract "IRRF Day Trade"
 	const irrfMatch = text.match(/IRRF Day Trade[^0-9]*(\d[\d.,]*)/i)
 	if (irrfMatch) {
-		result.irrf = parseBrazilianNumber(irrfMatch[1])
+		result.irrf = parseBrazilianNumber(irrfMatch[1]!)
 	}
 
 	// Extract "Total líquido da nota" — the most important value
-	const totalLiquidoMatch = text.match(/Total l[íi]quido da nota\s*\n?([^\n]+)/i)
+	const totalLiquidoMatch = text.match(
+		/Total l[íi]quido da nota\s*\n?([^\n]+)/i
+	)
 	if (totalLiquidoMatch) {
-		const parts = totalLiquidoMatch[1].split("\t").map((p) => p.trim()).filter(Boolean)
+		const parts = totalLiquidoMatch[1]!
+			.split("\t")
+			.map((p) => p.trim())
+			.filter(Boolean)
 		// Look for last number followed by C/D
 		for (let i = parts.length - 1; i >= 0; i--) {
-			if (parts[i] === "C" || parts[i] === "D") {
-				result.netTotalDebitCredit = parts[i] as "D" | "C"
+			if (parts[i]! === "C" || parts[i]! === "D") {
+				result.netTotalDebitCredit = parts[i]! as "D" | "C"
 				if (i > 0) {
-					result.netTotal = parseBrazilianNumber(parts[i - 1])
+					result.netTotal = parseBrazilianNumber(parts[i - 1]!)
 				}
 				break
 			}
@@ -334,7 +380,7 @@ const parseFinancialSummary = (text: string): {
 		// Fallback: if no C/D found, try last numeric value
 		if (result.netTotal === 0) {
 			for (let i = parts.length - 1; i >= 0; i--) {
-				const num = parseBrazilianNumber(parts[i])
+				const num = parseBrazilianNumber(parts[i]!)
 				if (num > 0) {
 					result.netTotal = num
 					break
@@ -346,7 +392,7 @@ const parseFinancialSummary = (text: string): {
 	// Extract "Corretagem"
 	const corretagemMatch = text.match(/Corretagem\s*\n?[^\n]*?(\d[\d.,]*)/i)
 	if (corretagemMatch) {
-		result.totalBrokerage = parseBrazilianNumber(corretagemMatch[1])
+		result.totalBrokerage = parseBrazilianNumber(corretagemMatch[1]!)
 	}
 
 	return result
@@ -358,7 +404,9 @@ const parseFinancialSummary = (text: string): {
  * @param pdfBuffer - Raw PDF file content as Buffer/Uint8Array
  * @returns Parsed nota result with fills and financial summary
  */
-const parseSinacorNota = async (pdfBuffer: Buffer | Uint8Array): Promise<NotaParseResult> => {
+const parseSinacorNota = async (
+	pdfBuffer: Buffer | Uint8Array
+): Promise<NotaParseResult> => {
 	const errors: string[] = []
 	const warnings: string[] = []
 
@@ -368,15 +416,17 @@ const parseSinacorNota = async (pdfBuffer: Buffer | Uint8Array): Promise<NotaPar
 	const { PDFParse } = await import("pdf-parse")
 
 	// Convert Buffer to Uint8Array if needed (pdf-parse v2 requirement)
-	const uint8Data = pdfBuffer instanceof Uint8Array ? pdfBuffer : new Uint8Array(pdfBuffer)
+	const uint8Data =
+		pdfBuffer instanceof Uint8Array ? pdfBuffer : new Uint8Array(pdfBuffer)
 
 	const parser = new PDFParse(uint8Data)
 	const textResult = await parser.getText()
 
 	// pdf-parse v2 getText() returns { pages: [...], text: string, total: number }
-	const fullText: string = typeof textResult === "string"
-		? textResult
-		: (textResult as { text: string }).text || ""
+	const fullText: string =
+		typeof textResult === "string"
+			? textResult
+			: (textResult as { text: string }).text || ""
 
 	if (!fullText || fullText.trim().length < 50) {
 		return {
@@ -394,7 +444,9 @@ const parseSinacorNota = async (pdfBuffer: Buffer | Uint8Array): Promise<NotaPar
 			irrf: 0,
 			netTotal: 0,
 			netTotalDebitCredit: "C",
-			errors: ["PDF appears empty or contains insufficient text. Is it a scanned image?"],
+			errors: [
+				"PDF appears empty or contains insufficient text. Is it a scanned image?",
+			],
 			warnings: [],
 		}
 	}

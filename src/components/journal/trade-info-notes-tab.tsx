@@ -33,10 +33,14 @@ const GRADE_COLORS: Record<string, string> = {
 interface TradeInfoNotesTabProps {
 	tradeId: string
 	fullTrade: TradeInfoPanelProps["fullTrade"]
-	onDirtyChange: (dirty: boolean) => void
+	onDirtyChange: (_dirty: boolean) => void
 }
 
-const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotesTabProps) => {
+const TradeInfoNotesTab = ({
+	tradeId,
+	fullTrade,
+	onDirtyChange,
+}: TradeInfoNotesTabProps) => {
 	const tTrade = useTranslations("trade")
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
@@ -54,7 +58,10 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 	// L1: Ref mirrors isDirty so beforeunload handler reads current value without being a dep
 	const isDirtyRef = useRef(false)
 
-	const handleFieldChange = (field: keyof NotesFormData, value: string | boolean | null) => {
+	const handleFieldChange = (
+		field: keyof NotesFormData,
+		value: string | boolean | null
+	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }))
 		isDirtyRef.current = true
 		setIsDirty(true)
@@ -92,7 +99,9 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 	// without re-subscribing on every keystroke.
 	useEffect(() => {
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-			if (!isDirtyRef.current) return
+			if (!isDirtyRef.current) {
+				return
+			}
 			event.preventDefault()
 		}
 
@@ -102,10 +111,14 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 
 	return (
 		<>
-			<div className="flex-1 space-y-m-400 overflow-y-auto pb-m-400">
+			<div className="space-y-m-400 pb-m-400 flex-1 overflow-y-auto">
 				{/* Pre-Trade Thoughts */}
 				<div className="space-y-s-200">
-					<Label id="label-panel-pre-trade-thoughts" htmlFor="panel-pre-trade-thoughts" className="text-tiny text-txt-300 font-medium">
+					<Label
+						id="label-panel-pre-trade-thoughts"
+						htmlFor="panel-pre-trade-thoughts"
+						className="text-tiny text-txt-300 font-medium"
+					>
 						{tTrade("preTradeThoughts")}
 					</Label>
 					<Textarea
@@ -113,14 +126,20 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 						placeholder={tTrade("preTradeHint")}
 						rows={3}
 						value={formData.preTradeThoughts}
-						onChange={(event) => handleFieldChange("preTradeThoughts", event.target.value)}
-						className="bg-bg-300 border-bg-300 text-small text-txt-100 rounded-md p-s-300"
+						onChange={(event) =>
+							handleFieldChange("preTradeThoughts", event.target.value)
+						}
+						className="bg-bg-300 border-bg-300 text-small text-txt-100 p-s-300 rounded-md"
 					/>
 				</div>
 
 				{/* Post-Trade Reflection */}
 				<div className="space-y-s-200">
-					<Label id="label-panel-post-trade-reflection" htmlFor="panel-post-trade-reflection" className="text-tiny text-txt-300 font-medium">
+					<Label
+						id="label-panel-post-trade-reflection"
+						htmlFor="panel-post-trade-reflection"
+						className="text-tiny text-txt-300 font-medium"
+					>
 						{tTrade("postTradeReflection")}
 					</Label>
 					<Textarea
@@ -128,14 +147,20 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 						placeholder={tTrade("postTradeHint")}
 						rows={3}
 						value={formData.postTradeReflection}
-						onChange={(event) => handleFieldChange("postTradeReflection", event.target.value)}
-						className="bg-bg-300 border-bg-300 text-small text-txt-100 rounded-md p-s-300"
+						onChange={(event) =>
+							handleFieldChange("postTradeReflection", event.target.value)
+						}
+						className="bg-bg-300 border-bg-300 text-small text-txt-100 p-s-300 rounded-md"
 					/>
 				</div>
 
 				{/* Lesson Learned */}
 				<div className="space-y-s-200">
-					<Label id="label-panel-lesson-learned" htmlFor="panel-lesson-learned" className="text-tiny text-txt-300 font-medium">
+					<Label
+						id="label-panel-lesson-learned"
+						htmlFor="panel-lesson-learned"
+						className="text-tiny text-txt-300 font-medium"
+					>
 						{tTrade("lessonLearned")}
 					</Label>
 					<Textarea
@@ -143,26 +168,40 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 						placeholder={tTrade("lessonHint")}
 						rows={3}
 						value={formData.lessonLearned}
-						onChange={(event) => handleFieldChange("lessonLearned", event.target.value)}
-						className="bg-bg-300 border-bg-300 text-small text-txt-100 rounded-md p-s-300"
+						onChange={(event) =>
+							handleFieldChange("lessonLearned", event.target.value)
+						}
+						className="bg-bg-300 border-bg-300 text-small text-txt-100 p-s-300 rounded-md"
 					/>
 				</div>
 
 				{/* Followed Plan Toggle */}
 				<div className="space-y-s-200">
-					<span id="label-panel-followed-plan" className="text-tiny text-txt-300 font-medium">
+					<span
+						id="label-panel-followed-plan"
+						className="text-tiny text-txt-300 font-medium"
+					>
 						{tTrade("didYouFollowPlan")}
 					</span>
-					<div className="gap-m-400 flex" role="group" aria-labelledby="label-panel-followed-plan">
+					<div
+						className="gap-m-400 flex"
+						role="group"
+						aria-labelledby="label-panel-followed-plan"
+					>
 						<button
 							id="panel-followed-plan-yes"
 							type="button"
 							tabIndex={0}
-							onClick={() => handleFieldChange("followedPlan", formData.followedPlan === true ? null : true)}
+							onClick={() =>
+								handleFieldChange(
+									"followedPlan",
+									formData.followedPlan === true ? null : true
+								)
+							}
 							aria-label={`${tTrade("followedPlan")}: ${tCommon("yes")}`}
 							aria-pressed={formData.followedPlan === true}
 							className={cn(
-								"p-s-300 flex-1 rounded-lg border-2 text-center text-small transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100/30",
+								"p-s-300 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
 								formData.followedPlan === true
 									? "border-trade-buy bg-trade-buy/10 text-trade-buy"
 									: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
@@ -174,11 +213,16 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 							id="panel-followed-plan-no"
 							type="button"
 							tabIndex={0}
-							onClick={() => handleFieldChange("followedPlan", formData.followedPlan === false ? null : false)}
+							onClick={() =>
+								handleFieldChange(
+									"followedPlan",
+									formData.followedPlan === false ? null : false
+								)
+							}
 							aria-label={`${tTrade("followedPlan")}: ${tCommon("no")}`}
 							aria-pressed={formData.followedPlan === false}
 							className={cn(
-								"p-s-300 flex-1 rounded-lg border-2 text-center text-small transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100/30",
+								"p-s-300 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
 								formData.followedPlan === false
 									? "border-trade-sell bg-trade-sell/10 text-trade-sell"
 									: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
@@ -192,7 +236,11 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 				{/* Discipline Notes — shown when followedPlan is false */}
 				{formData.followedPlan === false && (
 					<div className="space-y-s-200">
-						<Label id="label-panel-discipline-notes" htmlFor="panel-discipline-notes" className="text-tiny text-txt-300 font-medium">
+						<Label
+							id="label-panel-discipline-notes"
+							htmlFor="panel-discipline-notes"
+							className="text-tiny text-txt-300 font-medium"
+						>
 							{tTrade("whatWentWrong")}
 						</Label>
 						<Textarea
@@ -200,40 +248,60 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 							placeholder={tTrade("describeBreach")}
 							rows={3}
 							value={formData.disciplineNotes}
-							onChange={(event) => handleFieldChange("disciplineNotes", event.target.value)}
-							className="bg-bg-300 border-bg-300 text-small text-txt-100 rounded-md p-s-300"
+							onChange={(event) =>
+								handleFieldChange("disciplineNotes", event.target.value)
+							}
+							className="bg-bg-300 border-bg-300 text-small text-txt-100 p-s-300 rounded-md"
 						/>
 					</div>
 				)}
 
 				{/* Execution Rating */}
 				<div className="space-y-s-200">
-					<span id="label-panel-rating" className="text-tiny text-txt-300 font-medium">
+					<span
+						id="label-panel-rating"
+						className="text-tiny text-txt-300 font-medium"
+					>
 						{tTrade("rating")}
 					</span>
-					<p className="text-tiny text-txt-300">
-						{tTrade("ratingHint")}
-					</p>
+					<p className="text-tiny text-txt-300">{tTrade("ratingHint")}</p>
 					<div
-						className="flex gap-s-200"
+						className="gap-s-200 flex"
 						role="radiogroup"
+						tabIndex={0}
 						aria-labelledby="label-panel-rating"
 						onKeyDown={(e) => {
-							const currentIndex = formData.rating ? RATING_GRADES.indexOf(formData.rating as typeof RATING_GRADES[number]) : -1
+							const currentIndex = formData.rating
+								? RATING_GRADES.indexOf(
+										formData.rating as (typeof RATING_GRADES)[number]
+									)
+								: -1
 							if (e.key === "ArrowRight" || e.key === "ArrowDown") {
 								e.preventDefault()
-								const nextIndex = currentIndex < RATING_GRADES.length - 1 ? currentIndex + 1 : 0
-								handleFieldChange("rating", RATING_GRADES[nextIndex])
+								const nextIndex =
+									currentIndex < RATING_GRADES.length - 1 ? currentIndex + 1 : 0
+								const next = RATING_GRADES[nextIndex]
+								if (next) {
+									handleFieldChange("rating", next)
+								}
 							} else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
 								e.preventDefault()
-								const prevIndex = currentIndex > 0 ? currentIndex - 1 : RATING_GRADES.length - 1
-								handleFieldChange("rating", RATING_GRADES[prevIndex])
+								const prevIndex =
+									currentIndex > 0 ? currentIndex - 1 : RATING_GRADES.length - 1
+								const prev = RATING_GRADES[prevIndex]
+								if (prev) {
+									handleFieldChange("rating", prev)
+								}
 							}
 						}}
 					>
 						{RATING_GRADES.map((grade, gradeIndex) => {
 							const isSelected = formData.rating === grade
-							const focusedIndex = formData.rating ? RATING_GRADES.indexOf(formData.rating as typeof RATING_GRADES[number]) : 0
+							const focusedIndex = formData.rating
+								? RATING_GRADES.indexOf(
+										formData.rating as (typeof RATING_GRADES)[number]
+									)
+								: 0
 
 							return (
 								<button
@@ -244,9 +312,11 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 									aria-checked={isSelected}
 									aria-label={`${tTrade("rating")}: ${grade}`}
 									tabIndex={gradeIndex === focusedIndex ? 0 : -1}
-									onClick={() => handleFieldChange("rating", isSelected ? null : grade)}
+									onClick={() =>
+										handleFieldChange("rating", isSelected ? null : grade)
+									}
 									className={cn(
-										"flex-1 rounded-lg border-2 py-s-200 text-center text-small font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-100/30",
+										"py-s-200 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
 										isSelected
 											? GRADE_COLORS[grade]
 											: "border-bg-300 text-txt-300 hover:border-txt-300/50"
@@ -261,14 +331,16 @@ const TradeInfoNotesTab = ({ tradeId, fullTrade, onDirtyChange }: TradeInfoNotes
 			</div>
 
 			{/* Save Button — sticky at bottom */}
-			<div className="border-bg-300 shrink-0 border-t pt-m-400">
+			<div className="border-bg-300 pt-m-400 shrink-0 border-t">
 				<Button
 					id="save-trade-notes"
 					onClick={handleSave}
 					disabled={!isDirty || isSaving}
 					className="w-full"
 				>
-					{isSaving && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+					{isSaving && (
+						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					)}
 					{tTrade("saveNotes")}
 				</Button>
 			</div>

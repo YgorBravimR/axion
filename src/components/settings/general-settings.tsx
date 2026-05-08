@@ -14,7 +14,6 @@ import { useToast } from "@/components/ui/toast"
 import { useFormatting } from "@/hooks/use-formatting"
 
 interface RiskSettingsState {
-	defaultRiskPercent: number
 	accountBalance: number
 }
 
@@ -26,11 +25,9 @@ export const GeneralSettings = () => {
 	const [isPending, startTransition] = useTransition()
 	const [isEditing, setIsEditing] = useState(false)
 	const [settings, setSettings] = useState<RiskSettingsState>({
-		defaultRiskPercent: 1.0,
 		accountBalance: 10000,
 	})
 	const [editValues, setEditValues] = useState<RiskSettingsState>({
-		defaultRiskPercent: 1.0,
 		accountBalance: 10000,
 	})
 
@@ -38,14 +35,18 @@ export const GeneralSettings = () => {
 		let mounted = true
 		const loadSettings = async () => {
 			const result = await getRiskSettings()
-			if (!mounted) return
+			if (!mounted) {
+				return
+			}
 			if (result.status === "success" && result.data) {
 				setSettings(result.data)
 				setEditValues(result.data)
 			}
 		}
-		loadSettings()
-		return () => { mounted = false }
+		void loadSettings()
+		return () => {
+			mounted = false
+		}
 	}, [])
 
 	const handleEdit = () => {
@@ -72,10 +73,10 @@ export const GeneralSettings = () => {
 	}
 
 	return (
-		<div className="mx-auto max-w-2xl space-y-m-600">
+		<div className="space-y-m-600 mx-auto max-w-2xl">
 			{/* Appearance */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">{t("title")}</h2>
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
 				<div className="mt-m-400 space-y-m-500">
 					{/* Theme */}
 					<div className="flex items-center justify-between">
@@ -91,9 +92,7 @@ export const GeneralSettings = () => {
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="text-small text-txt-100">{t("language")}</p>
-							<p className="text-tiny text-txt-300">
-								{t("languageDesc")}
-							</p>
+							<p className="text-tiny text-txt-300">{t("languageDesc")}</p>
 						</div>
 						<LanguageSwitcher />
 					</div>
@@ -101,49 +100,31 @@ export const GeneralSettings = () => {
 			</div>
 
 			{/* Risk Settings */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="flex items-center justify-between">
-					<h2 className="text-body font-semibold text-txt-100">{t("riskSettings")}</h2>
+					<h2 className="text-body text-txt-100 font-semibold">
+						{t("riskSettings")}
+					</h2>
 					{!isEditing && (
-						<Button id="general-edit-risk" variant="ghost" size="sm" onClick={handleEdit}>
+						<Button
+							id="general-edit-risk"
+							variant="ghost"
+							size="default"
+							className="min-h-11"
+							onClick={handleEdit}
+						>
 							{tCommon("edit")}
 						</Button>
 					)}
 				</div>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="flex items-center justify-between gap-m-400">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("defaultRisk")}</p>
-							<p className="text-tiny text-txt-300">
-								{t("defaultRiskDesc")}
-							</p>
-						</div>
-						{isEditing ? (
-							<div className="flex items-center gap-s-200">
-								<Input
-									id="general-defaultRisk"
-									type="number"
-									step="0.1"
-									min="0.1"
-									max="100"
-									value={editValues.defaultRiskPercent}
-									onChange={(e) =>
-										setEditValues((prev) => ({
-											...prev,
-											defaultRiskPercent: Number(e.target.value),
-										}))
-									}
-									className="w-24 text-right"
-								/>
-								<span className="text-small text-txt-300">%</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{settings.defaultRiskPercent}%
-							</span>
-						)}
-					</div>
-					<div className="flex items-center justify-between gap-m-400">
+					<p className="text-tiny text-txt-300">
+						{t("riskInPlanHint")}{" "}
+						<Link href="/" className="text-acc-100 hover:underline">
+							{t("openPlans")}
+						</Link>
+					</p>
+					<div className="gap-m-400 flex items-center justify-between">
 						<div className="flex-1">
 							<p className="text-small text-txt-100">{t("accountBalance")}</p>
 							<p className="text-tiny text-txt-300">
@@ -151,7 +132,7 @@ export const GeneralSettings = () => {
 							</p>
 						</div>
 						{isEditing ? (
-							<div className="flex items-center gap-s-200">
+							<div className="gap-s-200 flex items-center">
 								<span className="text-small text-txt-300">$</span>
 								<Input
 									id="general-accountBalance"
@@ -165,7 +146,7 @@ export const GeneralSettings = () => {
 											accountBalance: Number(e.target.value),
 										}))
 									}
-									className="w-32 text-right"
+									className="max-w-[128px] min-w-[80px] shrink text-right"
 								/>
 							</div>
 						) : (
@@ -176,11 +157,24 @@ export const GeneralSettings = () => {
 					</div>
 				</div>
 				{isEditing && (
-					<div className="mt-m-500 flex justify-end gap-s-300">
-						<Button id="general-cancel-risk" variant="ghost" size="sm" onClick={handleCancel} disabled={isPending}>
+					<div className="mt-m-500 gap-s-300 flex justify-end">
+						<Button
+							id="general-cancel-risk"
+							variant="ghost"
+							size="default"
+							className="min-h-11"
+							onClick={handleCancel}
+							disabled={isPending}
+						>
 							{tCommon("cancel")}
 						</Button>
-						<Button id="general-save-risk" size="sm" onClick={handleSave} disabled={isPending}>
+						<Button
+							id="general-save-risk"
+							size="default"
+							className="min-h-11"
+							onClick={handleSave}
+							disabled={isPending}
+						>
 							{isPending ? tCommon("saving") : tCommon("save")}
 						</Button>
 					</div>
@@ -191,8 +185,8 @@ export const GeneralSettings = () => {
 			<TradingAccountSettings />
 
 			{/* Data Maintenance */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">
 					{t("dataMaintenance")}
 				</h2>
 				<div className="mt-m-400 space-y-m-400">
@@ -207,18 +201,15 @@ export const GeneralSettings = () => {
 			</div>
 
 			{/* Data Import */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">{t("dataImport")}</h2>
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">
+					{t("dataImport")}
+				</h2>
 				<div className="mt-m-400">
-					<p className="text-small text-txt-200">
-						{t("dataImportDesc")}
-					</p>
+					<p className="text-small text-txt-200">{t("dataImportDesc")}</p>
 					<p className="mt-m-400 text-tiny text-txt-300">
 						{t("goTo")}{" "}
-						<Link
-							href="/journal/new"
-							className="text-acc-100 hover:underline"
-						>
+						<Link href="/journal/new" className="text-acc-100 hover:underline">
 							{t("importNavLink")}
 						</Link>{" "}
 						{t("toImport")}
@@ -227,8 +218,10 @@ export const GeneralSettings = () => {
 			</div>
 
 			{/* Data Export */}
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-				<h2 className="text-body font-semibold text-txt-100">{t("dataExport")}</h2>
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+				<h2 className="text-body text-txt-100 font-semibold">
+					{t("dataExport")}
+				</h2>
 				<p className="mt-m-400 text-small text-txt-200">
 					{t("dataExportDesc")}
 				</p>

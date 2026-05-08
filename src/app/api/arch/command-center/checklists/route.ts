@@ -16,7 +16,9 @@ import type { ChecklistItem } from "@/lib/validations/command-center"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
 	const { userId, accountId } = authResult.auth
 
@@ -39,19 +41,21 @@ const GET = async (request: NextRequest) => {
 
 		// Get today's completions for these checklists
 		const checklistIds = checklists.map((c) => c.id)
-		const completions = checklistIds.length > 0
-			? await db.query.checklistCompletions.findMany({
-					where: and(
-						inArray(checklistCompletions.checklistId, checklistIds),
-						gte(checklistCompletions.date, today),
-						lte(checklistCompletions.date, tomorrow)
-					),
-				})
-			: []
+		const completions =
+			checklistIds.length > 0
+				? await db.query.checklistCompletions.findMany({
+						where: and(
+							inArray(checklistCompletions.checklistId, checklistIds),
+							gte(checklistCompletions.date, today),
+							lte(checklistCompletions.date, tomorrow)
+						),
+					})
+				: []
 
 		// Map completions to checklists
 		const checklistsWithCompletions = checklists.map((checklist) => {
-			const completion = completions.find((c) => c.checklistId === checklist.id) ?? null
+			const completion =
+				completions.find((c) => c.checklistId === checklist.id) ?? null
 			const completedItemIds: string[] = completion
 				? JSON.parse(completion.completedItems)
 				: []
@@ -67,9 +71,11 @@ const GET = async (request: NextRequest) => {
 		return archSuccess("Checklists retrieved", checklistsWithCompletions)
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"
-		return archError("Failed to retrieve checklists", [
-			{ code: "FETCH_FAILED", detail: message },
-		], 500)
+		return archError(
+			"Failed to retrieve checklists",
+			[{ code: "FETCH_FAILED", detail: message }],
+			500
+		)
 	}
 }
 

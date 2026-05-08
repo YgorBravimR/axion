@@ -1,26 +1,27 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
-import { trades, monthlyPlans } from "@/db/schema"
+import { trades } from "@/db/schema"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
-import { getUserDek, decryptMonthlyPlanFields } from "@/lib/user-crypto"
 import { fromCents, toCents } from "@/lib/money"
+import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
 /**
  * GET /api/arch/command-center/circuit-breaker
  *
- * Returns the circuit breaker status for a given date, including daily/monthly
- * P&L tracking, risk limits, and all trigger states.
- *
- * Query params:
- * - date (optional): ISO date string, defaults to today
+ * Phase 4b: powered exclusively by the fractal-plan resolver. Daily/monthly
+ * caps come from `resolveDay`; adaptive behavior (max consec losses,
+ * second-op gating, risk reduction, post-win adjustments) comes from
+ * `resolveBehavior`. The legacy `monthlyRiskConfig` table is no longer read.
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 
-	const { userId, accountId } = authResult.auth
+	const { accountId } = authResult.auth
 
 	try {
 		const dateParam = request.nextUrl.searchParams.get("date")
@@ -29,7 +30,33 @@ const GET = async (request: NextRequest) => {
 		const tomorrow = new Date(today)
 		tomorrow.setDate(tomorrow.getDate() + 1)
 
-		// Get today's trades
+		const day = await resolveDay(accountId, today)
+		if (!day) {
+			return archError(
+				"No fractal plan configured for this account/date",
+				[
+					{
+						code: "NO_PLAN",
+						detail: `No yearly plan for ${today.getFullYear()}`,
+					},
+				],
+				404
+			)
+		}
+		const behavior = await resolveBehavior({ accountId, date: today })
+
+		const oneRCents = day.oneRCents
+		const dailyLossLimitCents = Math.round(
+			Number(day.dailyLossR.value) * oneRCents
+		)
+		const profitTargetCents = Math.round(
+			Number(day.dailyTargetR.value) * oneRCents
+		)
+		const monthlyLossLimitCents = Math.round(
+			Number(day.monthlyLossR.value) * oneRCents
+		)
+		const recommendedRiskBaseCents = oneRCents
+
 		const todaysTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
@@ -40,85 +67,64 @@ const GET = async (request: NextRequest) => {
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		// Get monthly plan for current month
-		const currentYear = today.getFullYear()
-		const currentMonth = today.getMonth() + 1
-
-		const rawMonthlyPlan = await db.query.monthlyPlans.findFirst({
-			where: and(
-				eq(monthlyPlans.accountId, accountId),
-				eq(monthlyPlans.year, currentYear),
-				eq(monthlyPlans.month, currentMonth)
-			),
-		})
-
-		// Decrypt monthly plan fields if DEK is available
-		const dek = await getUserDek(userId)
-		const monthlyPlan = rawMonthlyPlan && dek
-			? decryptMonthlyPlanFields(rawMonthlyPlan as unknown as Record<string, unknown>, dek) as unknown as typeof rawMonthlyPlan
-			: rawMonthlyPlan
-
-		// Calculate metrics
 		let dailyPnL = 0
 		let consecutiveLosses = 0
 		let maxConsecutiveLossesCount = 0
 
-		// Sort trades by entry date for proper consecutive loss tracking
 		const sortedTrades = todaysTrades.toSorted(
-			(a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+			(a, b) =>
+				new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
 		)
-
-		// Breakevens are invisible to trade counts, max trades, and consecutive losses
-		const nonBreakevenCount = sortedTrades.filter((t) => t.outcome !== "breakeven").length
+		const nonBreakevenCount = sortedTrades.filter(
+			(t) => t.outcome !== "breakeven"
+		).length
 
 		for (const trade of sortedTrades) {
 			dailyPnL += fromCents(trade.pnl)
-
 			if (trade.outcome === "loss") {
 				consecutiveLosses++
-				maxConsecutiveLossesCount = Math.max(maxConsecutiveLossesCount, consecutiveLosses)
+				maxConsecutiveLossesCount = Math.max(
+					maxConsecutiveLossesCount,
+					consecutiveLosses
+				)
 			} else if (trade.outcome === "win") {
 				consecutiveLosses = 0
 			}
 		}
 
-		// Current consecutive losses (from the most recent non-breakeven trades)
 		let currentConsecutiveLosses = 0
 		for (let i = sortedTrades.length - 1; i >= 0; i--) {
-			if (sortedTrades[i].outcome === "breakeven") continue
-			if (sortedTrades[i].outcome === "loss") {
+			const trade = sortedTrades[i]
+			if (!trade || trade.outcome === "breakeven") {
+				continue
+			}
+			if (trade.outcome === "loss") {
 				currentConsecutiveLosses++
 			} else {
 				break
 			}
 		}
 
-		// Calculate risk used today (sum of plannedRiskAmount from today's trades)
 		const riskUsedTodayCents = todaysTrades.reduce(
 			(sum, trade) => sum + (Number(trade.plannedRiskAmount) || 0),
 			0
 		)
 
-		// Resolve limits from monthly plan (single source of truth)
-		const dailyLossLimitCents = Number(monthlyPlan?.dailyLossCents) || 0
-		const profitTargetCents = Number(monthlyPlan?.dailyProfitTargetCents) || 0
-		const rawMaxTrades = monthlyPlan?.maxDailyTrades ?? monthlyPlan?.derivedMaxDailyTrades ?? null
-		const maxConsecutiveLossesValue = monthlyPlan?.maxConsecutiveLosses ?? null
-
-		// Ensure maxTrades is at least maxConsecutiveLosses so the circuit breaker
-		// doesn't show a contradictory cap when a recovery profile is linked
+		const maxConsecutiveLossesValue = behavior.maxConsecutiveLosses
+		const derivedMaxTrades =
+			recommendedRiskBaseCents > 0 && dailyLossLimitCents > 0
+				? Math.floor(dailyLossLimitCents / recommendedRiskBaseCents)
+				: null
 		const maxTradesValue =
-			rawMaxTrades !== null && maxConsecutiveLossesValue !== null && maxConsecutiveLossesValue > rawMaxTrades
-				? maxConsecutiveLossesValue
-				: rawMaxTrades
+			derivedMaxTrades !== null && maxConsecutiveLossesValue !== null
+				? Math.max(derivedMaxTrades, maxConsecutiveLossesValue)
+				: derivedMaxTrades
 
-		// Calculate remaining daily risk
 		const remainingDailyRiskCents = Math.max(
 			0,
 			dailyLossLimitCents - Math.abs(Math.min(0, toCents(dailyPnL)))
 		)
 
-		// Get monthly P&L (using the target date's month)
 		const monthStart = new Date(today)
 		monthStart.setDate(1)
 
@@ -133,75 +139,72 @@ const GET = async (request: NextRequest) => {
 			(sum, trade) => sum + fromCents(trade.pnl),
 			0
 		)
-
-		// Monthly loss limit (plan-only)
-		const monthlyLossLimitCents = Number(monthlyPlan?.monthlyLossCents) || 0
 		const remainingMonthlyCents =
 			monthlyLossLimitCents > 0
-				? Math.max(0, monthlyLossLimitCents - Math.abs(Math.min(0, toCents(monthlyPnL))))
+				? Math.max(
+						0,
+						monthlyLossLimitCents - Math.abs(Math.min(0, toCents(monthlyPnL)))
+					)
 				: Infinity
 		const isMonthlyLimitHit =
-			monthlyLossLimitCents > 0 && monthlyPnL <= -fromCents(monthlyLossLimitCents)
+			monthlyLossLimitCents > 0 &&
+			monthlyPnL <= -fromCents(monthlyLossLimitCents)
 
-		// Calculate recommended risk (plan-only)
-		let recommendedRiskCents = Number(monthlyPlan?.riskPerTradeCents) || 0
+		let recommendedRiskCents = recommendedRiskBaseCents
 
-		// Risk reduction after consecutive losses
-		const shouldReduceRisk = monthlyPlan?.reduceRiskAfterLoss ?? false
-		const reductionFactor = monthlyPlan?.riskReductionFactor
-			? parseFloat(monthlyPlan.riskReductionFactor)
-			: null
-
-		if (shouldReduceRisk && currentConsecutiveLosses > 0 && reductionFactor) {
+		if (
+			behavior.reduceRiskAfterLoss &&
+			currentConsecutiveLosses > 0 &&
+			behavior.riskReductionFactor !== null
+		) {
 			recommendedRiskCents = Math.round(
-				recommendedRiskCents * Math.pow(reductionFactor, currentConsecutiveLosses)
+				recommendedRiskCents *
+					Math.pow(behavior.riskReductionFactor, currentConsecutiveLosses)
 			)
 		}
 
-		// Win risk adjustment (increase or cap -- mutually exclusive)
-		if (monthlyPlan?.profitReinvestmentPercent) {
-			const reinvestmentPercent = parseFloat(monthlyPlan.profitReinvestmentPercent)
-
-			if (monthlyPlan.increaseRiskAfterWin) {
-				// INCREASE: add % of last win's profit to base risk
+		if (behavior.profitReinvestmentPercent !== null) {
+			const reinvestmentPercent = behavior.profitReinvestmentPercent
+			if (behavior.increaseRiskAfterWin) {
 				const lastTrade = sortedTrades.at(-1)
 				const lastPnl = Number(lastTrade?.pnl) || 0
 				if (lastTrade?.outcome === "win" && lastPnl > 0) {
-					const bonusCents = Math.round(lastPnl * reinvestmentPercent / 100)
+					const bonusCents = Math.round((lastPnl * reinvestmentPercent) / 100)
 					recommendedRiskCents = recommendedRiskCents + bonusCents
 				}
-			} else if (monthlyPlan.capRiskAfterWin) {
-				// CAP: find first winning trade of the day, cap risk to min(base, profit * %)
-				const firstWin = sortedTrades.find((t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0)
+			} else if (behavior.capRiskAfterWin) {
+				const firstWin = sortedTrades.find(
+					(t) => t.outcome === "win" && t.pnl && Number(t.pnl) > 0
+				)
 				const firstWinPnl = Number(firstWin?.pnl) || 0
 				if (firstWinPnl > 0 && sortedTrades.length > 1) {
-					const capCents = Math.round(firstWinPnl * reinvestmentPercent / 100)
+					const capCents = Math.round((firstWinPnl * reinvestmentPercent) / 100)
 					recommendedRiskCents = Math.min(recommendedRiskCents, capCents)
 				}
 			}
 		}
 
-		// Cap at remaining budgets
 		recommendedRiskCents = Math.min(
 			recommendedRiskCents,
-			remainingDailyRiskCents > 0 ? remainingDailyRiskCents : recommendedRiskCents,
-			remainingMonthlyCents !== Infinity ? remainingMonthlyCents : recommendedRiskCents
+			remainingDailyRiskCents > 0
+				? remainingDailyRiskCents
+				: recommendedRiskCents,
+			remainingMonthlyCents !== Infinity
+				? remainingMonthlyCents
+				: recommendedRiskCents
 		)
 
-		// Check second op block (plan-only)
-		const allowSecondOp = monthlyPlan?.allowSecondOpAfterLoss ?? true
 		const isSecondOpBlocked =
-			allowSecondOp === false &&
+			behavior.allowSecondOpAfterLoss === false &&
 			currentConsecutiveLosses > 0 &&
 			nonBreakevenCount > 0
 
-		// Calculate circuit breaker triggers
-		const profitTargetHit = profitTargetCents > 0
-			? dailyPnL >= fromCents(profitTargetCents)
-			: false
-		const lossLimitHit = dailyLossLimitCents > 0
-			? dailyPnL <= -fromCents(dailyLossLimitCents)
-			: false
+		const profitTargetHit =
+			profitTargetCents > 0 ? dailyPnL >= fromCents(profitTargetCents) : false
+		const lossLimitHit =
+			dailyLossLimitCents > 0
+				? dailyPnL <= -fromCents(dailyLossLimitCents)
+				: false
 		const maxTradesHit = maxTradesValue
 			? nonBreakevenCount >= maxTradesValue
 			: false
@@ -217,14 +220,25 @@ const GET = async (request: NextRequest) => {
 			isMonthlyLimitHit ||
 			isSecondOpBlocked
 
-		// Build alerts
 		const alerts: string[] = []
-		if (profitTargetHit) alerts.push("profitTargetHit")
-		if (lossLimitHit) alerts.push("lossLimitHit")
-		if (maxTradesHit) alerts.push("maxTradesHit")
-		if (maxConsecutiveLossesHit) alerts.push("maxConsecutiveLossesHit")
-		if (isMonthlyLimitHit) alerts.push("monthlyLimitHit")
-		if (isSecondOpBlocked) alerts.push("secondOpBlocked")
+		if (profitTargetHit) {
+			alerts.push("profitTargetHit")
+		}
+		if (lossLimitHit) {
+			alerts.push("lossLimitHit")
+		}
+		if (maxTradesHit) {
+			alerts.push("maxTradesHit")
+		}
+		if (maxConsecutiveLossesHit) {
+			alerts.push("maxConsecutiveLossesHit")
+		}
+		if (isMonthlyLimitHit) {
+			alerts.push("monthlyLimitHit")
+		}
+		if (isSecondOpBlocked) {
+			alerts.push("secondOpBlocked")
+		}
 
 		return archSuccess("Circuit breaker status retrieved", {
 			dailyPnL,
@@ -240,22 +254,28 @@ const GET = async (request: NextRequest) => {
 			dailyLossLimitCents,
 			maxTrades: maxTradesValue,
 			maxConsecutiveLosses: maxConsecutiveLossesValue,
-			reduceRiskAfterLoss: shouldReduceRisk,
-			riskReductionFactor: monthlyPlan?.riskReductionFactor ?? null,
+			reduceRiskAfterLoss: behavior.reduceRiskAfterLoss,
+			riskReductionFactor:
+				behavior.riskReductionFactor !== null
+					? String(behavior.riskReductionFactor)
+					: null,
 			riskUsedTodayCents,
 			remainingDailyRiskCents,
 			recommendedRiskCents,
 			monthlyPnL,
 			monthlyLossLimitCents,
-			remainingMonthlyCents: remainingMonthlyCents === Infinity ? 0 : remainingMonthlyCents,
+			remainingMonthlyCents:
+				remainingMonthlyCents === Infinity ? 0 : remainingMonthlyCents,
 			isMonthlyLimitHit,
 			isSecondOpBlocked,
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"
-		return archError("Failed to get circuit breaker status", [
-			{ code: "FETCH_FAILED", detail: message },
-		], 500)
+		return archError(
+			"Failed to get circuit breaker status",
+			[{ code: "FETCH_FAILED", detail: message }],
+			500
+		)
 	}
 }
 

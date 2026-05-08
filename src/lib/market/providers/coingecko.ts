@@ -23,14 +23,18 @@ const YAHOO_TO_COINGECKO: Record<string, string> = {
  * @param symbols - Canonical symbols (e.g., "BTC-USD", "ETH-USD")
  * @returns Map of symbol → MarketQuote for successfully resolved symbols
  */
-const fetchCoinGeckoQuotes = async (symbols: string[]): Promise<Map<string, MarketQuote>> => {
+const fetchCoinGeckoQuotes = async (
+	symbols: string[]
+): Promise<Map<string, MarketQuote>> => {
 	const quoteMap = new Map<string, MarketQuote>()
 
 	const coinIds = symbols
 		.map((s) => YAHOO_TO_COINGECKO[s])
 		.filter((id): id is string => id !== undefined)
 
-	if (coinIds.length === 0) return quoteMap
+	if (coinIds.length === 0) {
+		return quoteMap
+	}
 
 	const idsParam = coinIds.join(",")
 	const url = `${COINGECKO_BASE_URL}?ids=${idsParam}&vs_currencies=usd&include_24hr_change=true`
@@ -40,20 +44,28 @@ const fetchCoinGeckoQuotes = async (symbols: string[]): Promise<Map<string, Mark
 	})
 
 	if (!response.ok) {
-		throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`)
+		throw new Error(
+			`CoinGecko API error: ${response.status} ${response.statusText}`
+		)
 	}
 
-	const data = (await response.json()) as Record<string, { usd?: number; usd_24h_change?: number }>
+	const data = (await response.json()) as Record<
+		string,
+		{ usd?: number; usd_24h_change?: number }
+	>
 
 	for (const yahooSymbol of symbols) {
 		const coinId = YAHOO_TO_COINGECKO[yahooSymbol]
-		if (!coinId || !data[coinId]) continue
+		if (!coinId || !data[coinId]) {
+			continue
+		}
 
 		const coinData = data[coinId]
 		const price = coinData.usd ?? 0
 		const changePercent = coinData.usd_24h_change ?? 0
 		// Estimate previous close from current price and 24h % change
-		const previousClose = changePercent !== 0 ? price / (1 + changePercent / 100) : price
+		const previousClose =
+			changePercent !== 0 ? price / (1 + changePercent / 100) : price
 		const change = price - previousClose
 
 		quoteMap.set(yahooSymbol, {

@@ -3,9 +3,16 @@
 import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
-import type { MonthlyPlan } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
-import type { PrefillSource, RiskSimulationParams } from "@/types/risk-simulation"
+import type {
+	PrefillSource,
+	RiskSimulationParams,
+} from "@/types/risk-simulation"
+import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
+
+// Phase 4b: simulation prefill uses a placeholder 1R baseline when prefilling
+// from a profile. Phase 5 will source 1R from the active fractal-plan ladder.
+const PREFILL_ONE_R_CENTS = 100_00
 
 const buttonBase =
 	"text-small min-h-9 rounded-md border px-s-300 py-s-200 transition-colors"
@@ -14,15 +21,17 @@ const inactiveStyle =
 	"border-bg-300 bg-bg-100 text-txt-200 hover:border-acc-100 hover:text-acc-100"
 
 interface PrefillSelectorProps {
-	monthlyPlan: MonthlyPlan | null
 	riskProfiles: RiskManagementProfile[]
-	onSelect: (params: RiskSimulationParams, source: PrefillSource, profileId?: string) => void
+	onSelect: (
+		_params: RiskSimulationParams,
+		_source: PrefillSource,
+		_profileId?: string
+	) => void
 	activeSource: PrefillSource | null
 	activeProfileId: string | null
 }
 
 const PrefillSelector = ({
-	monthlyPlan,
 	riskProfiles,
 	onSelect,
 	activeSource,
@@ -30,62 +39,25 @@ const PrefillSelector = ({
 }: PrefillSelectorProps) => {
 	const t = useTranslations("riskSimulation.config")
 
-	const handleSelectMonthlyPlan = useCallback(() => {
-		if (!monthlyPlan) return
-
-		const balance = Number(monthlyPlan.accountBalance)
-		const riskPercent = parseFloat(monthlyPlan.riskPerTradePercent)
-		const dailyLossPercent = parseFloat(monthlyPlan.dailyLossPercent)
-		const monthlyLossPercent = parseFloat(monthlyPlan.monthlyLossPercent)
-		const dailyProfitTargetPercent = monthlyPlan.dailyProfitTargetPercent
-			? parseFloat(monthlyPlan.dailyProfitTargetPercent)
-			: null
-		const weeklyLossPercent = monthlyPlan.weeklyLossPercent
-			? parseFloat(monthlyPlan.weeklyLossPercent)
-			: null
-		const reductionFactor = monthlyPlan.riskReductionFactor
-			? parseFloat(monthlyPlan.riskReductionFactor) * 100
-			: 50
-		const reinvestPercent = monthlyPlan.profitReinvestmentPercent
-			? parseFloat(monthlyPlan.profitReinvestmentPercent)
-			: null
-
-		onSelect(
-			{
-				mode: "simple",
-				accountBalanceCents: balance,
-				riskPerTradePercent: riskPercent,
-				dailyLossPercent,
-				dailyProfitTargetPercent,
-				maxDailyTrades: monthlyPlan.maxDailyTrades,
-				maxConsecutiveLosses: monthlyPlan.maxConsecutiveLosses,
-				consecutiveLossScope: "daily",
-				reduceRiskAfterLoss: monthlyPlan.reduceRiskAfterLoss ?? false,
-				riskReductionFactor: reductionFactor,
-				increaseRiskAfterWin: monthlyPlan.increaseRiskAfterWin ?? false,
-				profitReinvestmentPercent: reinvestPercent,
-				monthlyLossPercent,
-				weeklyLossPercent,
-			},
-			"monthlyPlan"
-		)
-	}, [monthlyPlan, onSelect])
-
-	const handleSelectProfile = useCallback((profile: RiskManagementProfile) => {
-		onSelect(
-			{
-				mode: "advanced",
-				accountBalanceCents: profile.baseRiskCents * 100,
-				decisionTree: profile.decisionTree,
-				dailyLossCents: profile.dailyLossCents,
-				dailyProfitTargetCents: profile.dailyProfitTargetCents,
-				weeklyLossCents: profile.weeklyLossCents,
-				monthlyLossCents: profile.monthlyLossCents,
-			},
-			"riskProfile",
-			profile.id
-		)
-	}, [onSelect])
+	const handleSelectProfile = useCallback(
+		(profile: RiskManagementProfile) => {
+			const tree = adaptDecisionTree(profile.decisionTree, PREFILL_ONE_R_CENTS)
+			onSelect(
+				{
+					mode: "advanced",
+					accountBalanceCents: PREFILL_ONE_R_CENTS * 100,
+					decisionTree: tree,
+					dailyLossCents: PREFILL_ONE_R_CENTS * 3,
+					dailyProfitTargetCents: null,
+					weeklyLossCents: tree.cascadingLimits.weeklyLossCents,
+					monthlyLossCents: tree.cascadingLimits.monthlyLossCents,
+				},
+				"riskProfile",
+				profile.id
+			)
+		},
+		[onSelect]
+	)
 
 	const handleSelectManual = useCallback(() => {
 		onSelect(
@@ -114,32 +86,16 @@ const PrefillSelector = ({
 			<h3 className="text-small text-txt-100 mb-s-300 font-semibold">
 				{t("prefillFrom")}
 			</h3>
-			<div className="flex flex-wrap gap-s-100 sm:gap-s-200">
-				{monthlyPlan && (
-					<button
-						type="button"
-						onClick={handleSelectMonthlyPlan}
-						className={cn(
-							buttonBase,
-							activeSource === "monthlyPlan" ? activeStyle : inactiveStyle
-						)}
-						aria-label={t("monthlyPlan")}
-						aria-pressed={activeSource === "monthlyPlan"}
-					>
-						{t("monthlyPlan")}
-					</button>
-				)}
+			<div className="gap-s-100 sm:gap-s-200 flex flex-wrap">
 				{riskProfiles.map((profile) => {
-					const isActive = activeSource === "riskProfile" && activeProfileId === profile.id
+					const isActive =
+						activeSource === "riskProfile" && activeProfileId === profile.id
 					return (
 						<button
 							key={profile.id}
 							type="button"
 							onClick={() => handleSelectProfile(profile)}
-							className={cn(
-								buttonBase,
-								isActive ? activeStyle : inactiveStyle
-							)}
+							className={cn(buttonBase, isActive ? activeStyle : inactiveStyle)}
 							aria-label={profile.name}
 							aria-pressed={isActive}
 						>

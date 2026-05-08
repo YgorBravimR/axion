@@ -50,7 +50,9 @@ const RecoveryStepTracker = ({
 
 	return (
 		<div className="space-y-s-200">
-			<span className="text-tiny text-txt-300 block">{t("recovery.title")}</span>
+			<span className="text-tiny text-txt-300 block">
+				{t("recovery.title")}
+			</span>
 			<div
 				className="gap-s-200 flex items-center"
 				role="progressbar"
@@ -77,7 +79,9 @@ const RecoveryStepTracker = ({
 				})}
 			</div>
 			{exhausted && (
-				<span className="text-tiny text-fb-error">{t("recovery.exhausted")}</span>
+				<span className="text-tiny text-fb-error">
+					{t("recovery.exhausted")}
+				</span>
 			)}
 		</div>
 	)
@@ -105,15 +109,21 @@ const MiniCalculator = ({
 	)
 
 	const result = useMemo(() => {
-		if (!selectedAsset || !stopPoints) return null
+		if (!selectedAsset || !stopPoints) {
+			return null
+		}
 
 		const stopParsed = parseFloat(stopPoints)
-		if (isNaN(stopParsed) || stopParsed <= 0) return null
+		if (isNaN(stopParsed) || stopParsed <= 0) {
+			return null
+		}
 
 		const tickSize = parseFloat(String(selectedAsset.tickSize))
 		const tickValue = selectedAsset.tickValue
 
-		if (tickSize <= 0 || tickValue <= 0) return null
+		if (tickSize <= 0 || tickValue <= 0) {
+			return null
+		}
 
 		// Build a synthetic entry/SL pair to use calculateTickBasedPositionSize
 		const entryPrice = 1000 // arbitrary reference
@@ -148,7 +158,7 @@ const MiniCalculator = ({
 
 			<div className="gap-s-100 sm:gap-s-300 flex flex-wrap items-end">
 				{/* Asset selector */}
-				<div className="w-full sm:min-w-[140px] sm:w-auto flex-1">
+				<div className="w-full flex-1 sm:w-auto sm:min-w-[140px]">
 					<label
 						htmlFor="calc-asset"
 						className="text-tiny text-txt-300 mb-s-100 block"
@@ -156,7 +166,11 @@ const MiniCalculator = ({
 						{t("calculator.asset")}
 					</label>
 					<Select value={selectedAssetId} onValueChange={handleAssetChange}>
-						<SelectTrigger id="calc-asset" className="border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 w-full" aria-label={t("calculator.asset")}>
+						<SelectTrigger
+							id="calc-asset"
+							className="border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 w-full"
+							aria-label={t("calculator.asset")}
+						>
 							<SelectValue placeholder={t("calculator.selectAsset")} />
 						</SelectTrigger>
 						<SelectContent>
@@ -170,7 +184,7 @@ const MiniCalculator = ({
 				</div>
 
 				{/* Stop points input */}
-				<div className="w-full sm:min-w-[100px] sm:w-auto flex-1">
+				<div className="w-full flex-1 sm:w-auto sm:min-w-[100px]">
 					<label
 						htmlFor="calc-stop"
 						className="text-tiny text-txt-300 mb-s-100 block"
@@ -185,13 +199,13 @@ const MiniCalculator = ({
 						value={stopPoints}
 						onChange={handleStopPointsChange}
 						placeholder={t("calculator.stopPlaceholder")}
-						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded border outline-none"
+						className="text-small border-bg-300 bg-bg-100 px-s-200 py-s-100 text-txt-100 focus:border-acc-100 w-full rounded-sm border outline-none"
 						aria-label={t("calculator.stopPoints")}
 					/>
 				</div>
 
 				{/* Result */}
-				<div className="w-full sm:min-w-[120px] sm:w-auto flex-1">
+				<div className="w-full flex-1 sm:w-auto sm:min-w-[120px]">
 					{result && result.contracts > 0 ? (
 						<div className="space-y-s-100">
 							<span className="text-body text-acc-100 block font-semibold">
@@ -234,12 +248,18 @@ const TradeBox = ({ summary, directionLabels }: TradeBoxProps) => {
 
 	const directionBadge =
 		summary.direction === "long"
-			? { label: directionLabels.long, className: "bg-action-buy-muted text-action-buy" }
-			: { label: directionLabels.short, className: "bg-action-sell-muted text-action-sell" }
+			? {
+					label: directionLabels.long,
+					className: "bg-action-buy-muted text-action-buy",
+				}
+			: {
+					label: directionLabels.short,
+					className: "bg-action-sell-muted text-action-sell",
+				}
 
 	return (
 		<div
-			className="border-bg-300 bg-bg-200 p-s-200 flex-1 min-w-[100px] rounded-md border"
+			className="border-bg-300 bg-bg-200 p-s-200 min-w-[100px] flex-1 rounded-md border"
 			aria-label={t("tradeBoxes.tradeLabel", {
 				number: summary.tradeStepNumber,
 			})}
@@ -250,7 +270,7 @@ const TradeBox = ({ summary, directionLabels }: TradeBoxProps) => {
 				</span>
 				<span
 					className={cn(
-						"px-s-100 text-tiny rounded font-bold",
+						"px-s-100 text-tiny rounded-sm font-bold",
 						directionBadge.className
 					)}
 				>
@@ -286,7 +306,9 @@ interface TradeBoxRowProps {
 const TradeBoxRow = ({ summaries, directionLabels }: TradeBoxRowProps) => {
 	const t = useTranslations("commandCenter.liveStatus")
 
-	if (summaries.length === 0) return null
+	if (summaries.length === 0) {
+		return null
+	}
 
 	return (
 		<div className="mt-s-300 sm:mt-m-400">
@@ -329,6 +351,95 @@ const LiveTradingStatusPanel = ({
 		() => ({ long: tDir("long"), short: tDir("short") }),
 		[tDir]
 	)
+
+	// These memos must be declared before any early return (Rules of Hooks).
+	// data is a discriminated union — use `data && 'status' in data` to narrow safely.
+	const dataStatus = data && "status" in data ? data.status : undefined
+
+	const phaseStyles = useMemo(() => {
+		const dayPhase = dataStatus?.dayPhase
+		if (dayPhase === "loss_recovery") {
+			return { borderClass: "border-trade-sell/30", bgClass: "bg-trade-sell/5" }
+		}
+		if (dayPhase === "gain_mode") {
+			return { borderClass: "border-trade-buy/30", bgClass: "bg-trade-buy/5" }
+		}
+		return { borderClass: "border-acc-100/30", bgClass: "bg-acc-100/5" }
+	}, [dataStatus?.dayPhase])
+
+	const badge = useMemo(() => {
+		const status = dataStatus
+		if (!status) {
+			return { text: "", className: "bg-acc-100/20 text-acc-100" }
+		}
+		if (
+			status.dayPhase === "loss_recovery" &&
+			status.recoveryStepIndex !== null
+		) {
+			return {
+				text: t("recovery.badge", {
+					current: status.recoveryStepIndex + 1,
+					total: status.totalRecoverySteps,
+				}),
+				className: "bg-trade-sell/20 text-trade-sell",
+			}
+		}
+		if (status.dayPhase === "gain_mode") {
+			return {
+				text: t(`phase.${status.dayPhase}`),
+				className: "bg-trade-buy/20 text-trade-buy",
+			}
+		}
+		return {
+			text: t(`phase.${status.dayPhase}`),
+			className: "bg-acc-100/20 text-acc-100",
+		}
+	}, [dataStatus, t])
+
+	const sizeDirection = useMemo(() => {
+		const status = dataStatus
+		if (status?.shouldIncreaseSize) {
+			return {
+				label: t("metrics.increase"),
+				Icon: ArrowUp,
+				className: "text-trade-buy",
+			}
+		}
+		if (status?.shouldDecreaseSize) {
+			return {
+				label: t("metrics.decrease"),
+				Icon: ArrowDown,
+				className: "text-trade-sell",
+			}
+		}
+		return {
+			label: t("metrics.unchanged"),
+			Icon: Minus,
+			className: "text-txt-300",
+		}
+	}, [dataStatus?.shouldIncreaseSize, dataStatus?.shouldDecreaseSize, t])
+
+	const gainModeLabel = useMemo(() => {
+		const status = dataStatus
+		if (!status || status.dayPhase !== "gain_mode") {
+			return undefined
+		}
+		if (
+			status.gainModeType === "compounding" &&
+			status.gainModeReinvestPercent
+		) {
+			return t("gainMode.compounding", {
+				percent: status.gainModeReinvestPercent,
+			})
+		}
+		if (status.gainModeType === "gainSequence") {
+			return t("gainMode.gainSequence", {
+				current: (status.gainSequenceStepIndex ?? 0) + 1,
+				total: status.totalGainSequenceSteps,
+			})
+		}
+		return t("gainMode.singleTarget")
+	}, [dataStatus, t])
 
 	// Loading state
 	if (!data) {
@@ -423,100 +534,6 @@ const LiveTradingStatusPanel = ({
 	}
 
 	// Active trading — full interactive panel
-	const phaseStyles = useMemo(() => {
-		switch (status.dayPhase) {
-			case "loss_recovery":
-				return {
-					borderClass: "border-trade-sell/30",
-					bgClass: "bg-trade-sell/5",
-				}
-			case "gain_mode":
-				return {
-					borderClass: "border-trade-buy/30",
-					bgClass: "bg-trade-buy/5",
-				}
-			case "base":
-			case "normal":
-			default:
-				return {
-					borderClass: "border-acc-100/30",
-					bgClass: "bg-acc-100/5",
-				}
-		}
-	}, [status.dayPhase])
-
-	// Phase badge
-	const badge = useMemo(() => {
-		if (
-			status.dayPhase === "loss_recovery" &&
-			status.recoveryStepIndex !== null
-		) {
-			return {
-				text: t("recovery.badge", {
-					current: status.recoveryStepIndex + 1,
-					total: status.totalRecoverySteps,
-				}),
-				className: "bg-trade-sell/20 text-trade-sell",
-			}
-		}
-
-		if (status.dayPhase === "gain_mode") {
-			return {
-				text: t(`phase.${status.dayPhase}`),
-				className: "bg-trade-buy/20 text-trade-buy",
-			}
-		}
-
-		return {
-			text: t(`phase.${status.dayPhase}`),
-			className: "bg-acc-100/20 text-acc-100",
-		}
-	}, [status.dayPhase, status.recoveryStepIndex, status.totalRecoverySteps, t])
-
-	// Size direction
-	const sizeDirection = useMemo(() => {
-		if (status.shouldIncreaseSize) {
-			return {
-				label: t("metrics.increase"),
-				Icon: ArrowUp,
-				className: "text-trade-buy",
-			}
-		}
-		if (status.shouldDecreaseSize) {
-			return {
-				label: t("metrics.decrease"),
-				Icon: ArrowDown,
-				className: "text-trade-sell",
-			}
-		}
-		return {
-			label: t("metrics.unchanged"),
-			Icon: Minus,
-			className: "text-txt-300",
-		}
-	}, [status.shouldIncreaseSize, status.shouldDecreaseSize, t])
-
-	// Gain mode sub-label
-	const gainModeLabel = useMemo(() => {
-		if (status.dayPhase !== "gain_mode") return undefined
-
-		if (
-			status.gainModeType === "compounding" &&
-			status.gainModeReinvestPercent
-		) {
-			return t("gainMode.compounding", {
-				percent: status.gainModeReinvestPercent,
-			})
-		}
-		if (status.gainModeType === "gainSequence") {
-			return t("gainMode.gainSequence", {
-				current: (status.gainSequenceStepIndex ?? 0) + 1,
-				total: status.totalGainSequenceSteps,
-			})
-		}
-		return t("gainMode.singleTarget")
-	}, [status.dayPhase, status.gainModeType, status.gainModeReinvestPercent, status.gainSequenceStepIndex, status.totalGainSequenceSteps, t])
-
 	return (
 		<div
 			id="cc-live-trading"

@@ -14,6 +14,7 @@ import {
 	getEndOfDay,
 	getMonthBoundaries,
 	formatDateKey,
+	parseDateKey,
 	BRT_OFFSET,
 } from "@/lib/dates"
 import { formatBrlWithSign } from "@/lib/formatting"
@@ -45,8 +46,7 @@ const getDateRange = (
 			return { from: getStartOfDay(now), to: getEndOfDay(now) }
 		case "week": {
 			// Get BRT date components and compute Monday-based week
-			const brtKey = formatDateKey(now)
-			const [year, month, day] = brtKey.split("-").map(Number)
+			const { year, month, day } = parseDateKey(formatDateKey(now))
 			const tempDate = new Date(year, month - 1, day)
 			const dayOfWeek = tempDate.getDay()
 			const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
@@ -100,7 +100,7 @@ const JournalContent = () => {
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
 	const effectiveDate = useEffectiveDate()
-	const [isPending, startTransition] = useTransition()
+	const [, startTransition] = useTransition()
 	const urlParams = useUrlParams()
 
 	// Read period from URL, default to "week"
@@ -137,19 +137,38 @@ const JournalContent = () => {
 
 	const extendedFilters = useMemo(() => {
 		const filters: Record<string, string | string[]> = {}
-		if (outcomesParam.length > 0) filters.outcomes = outcomesParam
-		if (directionsParam.length > 0) filters.directions = directionsParam
-		if (assetsParam.length > 0) filters.assets = assetsParam
-		if (ratingParam.length > 0) filters.rating = ratingParam
-		if (followedPlanParam) filters.followedPlan = followedPlanParam
-		if (hourFromParam) filters.hourFrom = hourFromParam
-		if (hourToParam) filters.hourTo = hourToParam
-		if (pnlMinParam) filters.pnlMin = pnlMinParam
-		if (pnlMaxParam) filters.pnlMax = pnlMaxParam
-		if (quickFilterParam) filters._qf = quickFilterParam
+		if (outcomesParam.length > 0) {
+			filters.outcomes = outcomesParam
+		}
+		if (directionsParam.length > 0) {
+			filters.directions = directionsParam
+		}
+		if (assetsParam.length > 0) {
+			filters.assets = assetsParam
+		}
+		if (ratingParam.length > 0) {
+			filters.rating = ratingParam
+		}
+		if (followedPlanParam) {
+			filters.followedPlan = followedPlanParam
+		}
+		if (hourFromParam) {
+			filters.hourFrom = hourFromParam
+		}
+		if (hourToParam) {
+			filters.hourTo = hourToParam
+		}
+		if (pnlMinParam) {
+			filters.pnlMin = pnlMinParam
+		}
+		if (pnlMaxParam) {
+			filters.pnlMax = pnlMaxParam
+		}
+		if (quickFilterParam) {
+			filters._qf = quickFilterParam
+		}
 		return filters
 	}, [
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- array params need stable refs
 		outcomesParam.join(","),
 		directionsParam.join(","),
 		assetsParam.join(","),
@@ -165,21 +184,24 @@ const JournalContent = () => {
 		(k) => k !== "_qf"
 	).length
 
-	const handleFiltersChange = useCallback((filters: Record<string, string | string[]>) => {
-		// Write to URL params
-		const updates: Record<string, string | string[] | null> = {
-			outcomes: (filters.outcomes as string[]) ?? null,
-			directions: (filters.directions as string[]) ?? null,
-			assets: (filters.assets as string[]) ?? null,
-			rating: (filters.rating as string[]) ?? null,
-			followedPlan: (filters.followedPlan as string) ?? null,
-			hourFrom: (filters.hourFrom as string) ?? null,
-			hourTo: (filters.hourTo as string) ?? null,
-			pnlMin: (filters.pnlMin as string) ?? null,
-			pnlMax: (filters.pnlMax as string) ?? null,
-		}
-		urlParams.set(updates)
-	}, [urlParams])
+	const handleFiltersChange = useCallback(
+		(filters: Record<string, string | string[]>) => {
+			// Write to URL params
+			const updates: Record<string, string | string[] | null> = {
+				outcomes: (filters.outcomes as string[]) ?? null,
+				directions: (filters.directions as string[]) ?? null,
+				assets: (filters.assets as string[]) ?? null,
+				rating: (filters.rating as string[]) ?? null,
+				followedPlan: (filters.followedPlan as string) ?? null,
+				hourFrom: (filters.hourFrom as string) ?? null,
+				hourTo: (filters.hourTo as string) ?? null,
+				pnlMin: (filters.pnlMin as string) ?? null,
+				pnlMax: (filters.pnlMax as string) ?? null,
+			}
+			urlParams.set(updates)
+		},
+		[urlParams]
+	)
 
 	const handleFiltersClear = useCallback(() => {
 		urlParams.set({
@@ -259,7 +281,7 @@ const JournalContent = () => {
 		}
 
 		startTransition(() => {
-			fetchTrades()
+			void fetchTrades()
 		})
 	}, [
 		period,
@@ -356,13 +378,18 @@ const JournalContent = () => {
 	const periodWinRate = useMemo(
 		() =>
 			periodSummary.wins + periodSummary.losses > 0
-				? (periodSummary.wins / (periodSummary.wins + periodSummary.losses)) * 100
+				? (periodSummary.wins / (periodSummary.wins + periodSummary.losses)) *
+					100
 				: 0,
 		[periodSummary]
 	)
 
 	const availableAssets = useMemo(
-		() => [...new Set(tradesByDay.flatMap((d) => d.trades.map((trade) => trade.asset)))],
+		() => [
+			...new Set(
+				tradesByDay.flatMap((d) => d.trades.map((trade) => trade.asset))
+			),
+		],
 		[tradesByDay]
 	)
 
@@ -392,7 +419,7 @@ const JournalContent = () => {
 				{!isLoading && totalTrades > 0 && (
 					<div
 						id="journal-period-summary"
-						className="gap-s-300 sm:gap-m-400 text-small flex flex-wrap items-center border-t border-bg-300 pt-s-200 sm:border-t-0 sm:pt-0"
+						className="gap-s-300 sm:gap-m-400 text-small border-bg-300 pt-s-200 flex flex-wrap items-center border-t sm:border-t-0 sm:pt-0"
 					>
 						<span className="text-txt-300">
 							{totalTrades} {t("tradesCount")}

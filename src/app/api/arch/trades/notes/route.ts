@@ -21,7 +21,9 @@ interface UpdateNotesBody {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -76,14 +78,18 @@ const POST = async (request: NextRequest) => {
 			updatedAt: new Date(),
 		}
 
-		if (noteFields.preTradeThoughts !== undefined)
+		if (noteFields.preTradeThoughts !== undefined) {
 			updateData.preTradeThoughts = noteFields.preTradeThoughts
-		if (noteFields.postTradeReflection !== undefined)
+		}
+		if (noteFields.postTradeReflection !== undefined) {
 			updateData.postTradeReflection = noteFields.postTradeReflection
-		if (noteFields.lessonLearned !== undefined)
+		}
+		if (noteFields.lessonLearned !== undefined) {
 			updateData.lessonLearned = noteFields.lessonLearned
-		if (noteFields.disciplineNotes !== undefined)
+		}
+		if (noteFields.disciplineNotes !== undefined) {
 			updateData.disciplineNotes = noteFields.disciplineNotes
+		}
 
 		const dek = await getUserDek(auth.userId)
 		if (dek) {

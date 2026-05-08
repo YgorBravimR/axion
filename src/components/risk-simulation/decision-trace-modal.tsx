@@ -14,7 +14,7 @@ import type { WeekTrace } from "@/types/risk-simulation"
 
 interface DecisionTraceModalProps {
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	weeks: WeekTrace[]
 }
 
@@ -30,7 +30,7 @@ const DecisionTraceModal = ({
 			<SheetContent
 				id="risk-sim-trace-sheet"
 				side="right"
-				className="bg-bg-100 border-bg-300 w-full overflow-y-auto border-l px-m-400 pt-m-400 pb-m-500 sm:max-w-2xl"
+				className="bg-bg-100 border-bg-300 px-m-400 pt-m-400 pb-m-500 w-full overflow-y-auto border-l sm:max-w-2xl"
 				aria-describedby={undefined}
 			>
 				<SheetHeader className="mb-m-400">
@@ -44,7 +44,7 @@ const DecisionTraceModal = ({
 						{weeks.map((week) => (
 							<div key={week.weekKey}>
 								{/* Week header */}
-								<div className="mb-s-300 flex items-center justify-between">
+								<div className="bg-bg-200 mb-s-300 sticky top-0 z-10 flex items-center justify-between">
 									<h3 className="text-small text-txt-100 font-semibold">
 										{t("weekOf", { label: week.weekLabel })}
 									</h3>

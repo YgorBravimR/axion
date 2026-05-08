@@ -21,8 +21,12 @@ export interface ExecutionRowData {
 
 interface InlineExecutionRowProps {
 	data: ExecutionRowData
-	onChange: (id: string, field: keyof ExecutionRowData, value: string) => void
-	onRemove: (id: string) => void
+	onChange: (
+		_id: string,
+		_field: keyof ExecutionRowData,
+		_value: string
+	) => void
+	onRemove: (_id: string) => void
 	canRemove: boolean
 	currency?: string
 }

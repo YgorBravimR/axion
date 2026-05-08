@@ -1,94 +1,24 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { assets, strategies, tags, timeframes, trades as tradesTable } from "@/db/schema"
-import type { Strategy, Tag, Timeframe } from "@/db/schema"
-import type { ActionResponse } from "@/types"
-import type { CsvTradeInput } from "@/lib/csv-parser"
-import { eq, and, inArray } from "drizzle-orm"
+import type { Tag } from "@/db/schema"
+import { assets, strategies, tags, trades as tradesTable } from "@/db/schema"
+import { B3_FUT_PREFIXES, resolveTradeAsset } from "@/lib/asset-resolution"
 import { calculateAssetPnL } from "@/lib/calculations"
-import { getAssetFees } from "./accounts"
-import { bulkCreateTrades } from "./trades"
-import { requireAuth, getCurrentAccount } from "./auth"
+import type { CsvTradeInput } from "@/lib/csv-parser"
+import { computeTradeHash } from "@/lib/deduplication"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { fromCents } from "@/lib/money"
-import { computeTradeHash } from "@/lib/deduplication"
-import { resolveTradeAsset, B3_FUT_PREFIXES } from "@/lib/asset-resolution"
-
-// ==========================================
-// Types for CSV Import Processing
-// ==========================================
-
-export interface ProcessedCsvTrade {
-	id: string
-	rowNumber: number
-	status: "valid" | "warning" | "skipped"
-
-	// Validation
-	errors: Array<{ field: string; message: string }>
-	warnings: Array<{ message: string }>
-	skipReason?: string
-
-	// Original data from CSV parser
-	originalData: CsvTradeInput
-
-	// Asset lookup result
-	assetFound: boolean
-	assetConfig?: {
-		id: string
-		symbol: string
-		tickSize: number
-		tickValue: number // cents
-		commission: number // cents
-		fees: number // cents
-	}
-
-	// Calculated P&L (in currency, not cents)
-	grossPnl: number | null
-	netPnl: number | null
-	totalCosts: number | null
-	ticksGained: number | null
-
-	// User edits (applied on top of originalData)
-	edits: {
-		strategyId?: string
-		timeframeId?: string
-		tagIds?: string[]
-		preTradeThoughts?: string
-		postTradeReflection?: string
-		lessonLearned?: string
-		followedPlan?: boolean
-		disciplineNotes?: string
-		stopLoss?: number
-		takeProfit?: number
-	}
-}
-
-export interface CsvValidationResult {
-	trades: ProcessedCsvTrade[]
-	summary: {
-		total: number
-		valid: number
-		warnings: number
-		skipped: number
-		duplicates: number
-		grossPnl: number
-		netPnl: number
-		totalCosts: number
-	}
-	// Lookup data for the UI
-	strategies: Strategy[]
-	timeframes: Timeframe[]
-	tags: Tag[]
-	// Account type for replay trade detection
-	accountType: "personal" | "prop" | "replay"
-}
-
-export interface CsvImportResult {
-	success: number
-	failed: number
-	errors: Array<{ index: number; message: string }>
-}
+import type { ActionResponse } from "@/types"
+import { and, eq, inArray } from "drizzle-orm"
+import { getAssetFees } from "./accounts"
+import { getCurrentAccount, requireAuth } from "./auth"
+import type {
+	CsvImportResult,
+	CsvValidationResult,
+	ProcessedCsvTrade,
+} from "./csv-import.types"
+import { bulkCreateTrades } from "./trades"
 
 // ==========================================
 // Validate CSV Trades
@@ -158,6 +88,7 @@ export const validateCsvTrades = async (
 		// Batch lookup fees for found assets
 		const feesMap = new Map<string, { commission: number; fees: number }>()
 		for (const asset of foundAssets) {
+			// eslint-disable-next-line no-await-in-loop -- sequential asset fee lookups; small N (user-defined assets per account, typically <20)
 			const fees = await getAssetFees(asset.symbol, accountId)
 			feesMap.set(asset.symbol.toUpperCase(), fees)
 		}
@@ -191,7 +122,7 @@ export const validateCsvTrades = async (
 		// Pre-compute dedup hashes for batch lookup
 		const hashToIndex = new Map<string, number[]>()
 		for (let i = 0; i < csvTrades.length; i++) {
-			const trade = csvTrades[i]
+			const trade = csvTrades[i]!
 			if (trade.entryPrice && trade.entryDate && trade.positionSize) {
 				const hash = computeTradeHash({
 					accountId,
@@ -216,6 +147,7 @@ export const validateCsvTrades = async (
 			const HASH_BATCH = 100
 			for (let i = 0; i < allHashes.length; i += HASH_BATCH) {
 				const batch = allHashes.slice(i, i + HASH_BATCH)
+				// eslint-disable-next-line no-await-in-loop -- SQL parameter limit requires batching; batches are independent but must accumulate results sequentially
 				const found = await db
 					.select({ hash: tradesTable.deduplicationHash })
 					.from(tradesTable)
@@ -223,17 +155,19 @@ export const validateCsvTrades = async (
 						and(
 							eq(tradesTable.accountId, accountId),
 							inArray(tradesTable.deduplicationHash, batch),
-							eq(tradesTable.isArchived, false),
+							eq(tradesTable.isArchived, false)
 						)
 					)
 				for (const row of found) {
-					if (row.hash) existingHashes.add(row.hash)
+					if (row.hash) {
+						existingHashes.add(row.hash)
+					}
 				}
 			}
 		}
 
 		for (let i = 0; i < csvTrades.length; i++) {
-			const trade = csvTrades[i]
+			const trade = csvTrades[i]!
 			const rowNumber = i + 1
 
 			const processed: ProcessedCsvTrade = {
@@ -279,7 +213,8 @@ export const validateCsvTrades = async (
 				})
 				if (existingHashes.has(hash)) {
 					processed.status = "skipped"
-					processed.skipReason = "Duplicate: this trade has already been imported"
+					processed.skipReason =
+						"Duplicate: this trade has already been imported"
 					skippedCount++
 					duplicateCount++
 					processedTrades.push(processed)
@@ -438,7 +373,7 @@ export const importCsvTrades = async (
 	trades: ProcessedCsvTrade[]
 ): Promise<ActionResponse<CsvImportResult>> => {
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { userId } = await requireAuth()
 
 		// Filter to only valid/warning trades (not skipped)
 		const validTrades = trades.filter(
@@ -495,7 +430,9 @@ export const importCsvTrades = async (
 			// Apply edits — resolve IDs back to codes/names for bulkCreateTrades
 			if (t.edits.strategyId) {
 				const strategyCode = strategyIdMap.get(t.edits.strategyId)
-				if (strategyCode) base.strategyCode = strategyCode
+				if (strategyCode) {
+					base.strategyCode = strategyCode
+				}
 			}
 			if (t.edits.timeframeId) {
 				base.timeframeId = t.edits.timeframeId
@@ -504,19 +441,31 @@ export const importCsvTrades = async (
 				const tagNames = t.edits.tagIds
 					.map((id) => tagIdMap.get(id))
 					.filter((name): name is string => !!name)
-				if (tagNames.length > 0) base.tagNames = tagNames
+				if (tagNames.length > 0) {
+					base.tagNames = tagNames
+				}
 			}
-			if (t.edits.preTradeThoughts)
+			if (t.edits.preTradeThoughts) {
 				base.preTradeThoughts = t.edits.preTradeThoughts
-			if (t.edits.postTradeReflection)
+			}
+			if (t.edits.postTradeReflection) {
 				base.postTradeReflection = t.edits.postTradeReflection
-			if (t.edits.lessonLearned) base.lessonLearned = t.edits.lessonLearned
-			if (t.edits.followedPlan !== undefined)
+			}
+			if (t.edits.lessonLearned) {
+				base.lessonLearned = t.edits.lessonLearned
+			}
+			if (t.edits.followedPlan !== undefined) {
 				base.followedPlan = t.edits.followedPlan
-			if (t.edits.disciplineNotes)
+			}
+			if (t.edits.disciplineNotes) {
 				base.disciplineNotes = t.edits.disciplineNotes
-			if (t.edits.stopLoss) base.stopLoss = t.edits.stopLoss
-			if (t.edits.takeProfit) base.takeProfit = t.edits.takeProfit
+			}
+			if (t.edits.stopLoss) {
+				base.stopLoss = t.edits.stopLoss
+			}
+			if (t.edits.takeProfit) {
+				base.takeProfit = t.edits.takeProfit
+			}
 
 			return base
 		})

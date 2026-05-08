@@ -11,12 +11,12 @@ import {
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatDateTime } from "@/lib/dates"
-import { formatCurrency, formatRMultiple } from "@/lib/calculations"
+import { formatCurrency } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { ColoredValue } from "@/components/shared"
-import type { TradeWithRelations } from "@/app/actions/trades"
+import type { TradeWithRelations } from "@/app/actions/trades.types"
 
 interface TradeCardProps {
 	trade: TradeWithRelations
@@ -29,8 +29,6 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 	// pnl is stored in cents, convert to dollars for display
 	const pnl = fromCents(trade.pnl)
 	const realizedR = Number(trade.realizedRMultiple) || 0
-	const isWin = trade.outcome === "win"
-	const isLoss = trade.outcome === "loss"
 	const isLong = trade.direction === "long"
 
 	// C5: Memoize tag categorization — avoids 3× inline .filter() per render

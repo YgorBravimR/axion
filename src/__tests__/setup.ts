@@ -20,8 +20,10 @@ const TRANSLATION_MAP: Record<string, string> = {
 	// auth namespace (used in src/app/actions/auth.ts)
 	"errors.emailExists": "An account with this email already exists",
 	"errors.registrationFailed": "An error occurred during registration",
-	"errors.rateLimited": "Too many requests. Please wait {minutes} minute(s) and try again",
-	"errors.accountLocked": "Your account is locked. Please wait {minutes} minute(s)",
+	"errors.rateLimited":
+		"Too many requests. Please wait {minutes} minute(s) and try again",
+	"errors.accountLocked":
+		"Your account is locked. Please wait {minutes} minute(s)",
 	"errors.invalidCredentials": "Invalid email or password",
 	"errors.loginFailed": "An error occurred. Please try again",
 	"errors.notAuthenticated": "Not authenticated",
@@ -34,18 +36,22 @@ const TRANSLATION_MAP: Record<string, string> = {
 	// so "auth.verifyEmail" + "errors.rateLimited" → lookup key below.
 	"auth.verifyEmail.errors.invalidInput": "Invalid input",
 	// Matches the actual en.json translation: auth.verifyEmail.errors.rateLimited
-	"auth.verifyEmail.errors.rateLimited": "Too many requests. Try again in {minutes} minute(s).",
+	"auth.verifyEmail.errors.rateLimited":
+		"Too many requests. Try again in {minutes} minute(s).",
 	"errors.invalidInput": "Invalid input",
 }
 
-const buildTranslator = (namespace: string) =>
+const buildTranslator =
+	(namespace: string) =>
 	(key: string, params?: Record<string, unknown>): string => {
 		// Prefer the fully-qualified namespace.key lookup so per-namespace overrides
 		// take precedence over generic key matches (e.g. "auth.verifyEmail.errors.rateLimited"
 		// returns a different string than the generic "errors.rateLimited").
 		const fullKey = `${namespace}.${key}`
 		const template = TRANSLATION_MAP[fullKey] ?? TRANSLATION_MAP[key] ?? key
-		if (!params) return template
+		if (!params) {
+			return template
+		}
 		// Interpolate {paramName} placeholders in the template string
 		return Object.entries(params).reduce<string>(
 			(str, [paramKey, paramValue]) =>
@@ -55,9 +61,11 @@ const buildTranslator = (namespace: string) =>
 	}
 
 vi.mock("next-intl/server", () => ({
-	getTranslations: vi.fn().mockImplementation((namespace: string) =>
-		Promise.resolve(buildTranslator(namespace))
-	),
+	getTranslations: vi
+		.fn()
+		.mockImplementation((namespace: string) =>
+			Promise.resolve(buildTranslator(namespace))
+		),
 	getLocale: vi.fn().mockResolvedValue("en"),
 	getMessages: vi.fn().mockResolvedValue({}),
 	getNow: vi.fn().mockResolvedValue(new Date()),

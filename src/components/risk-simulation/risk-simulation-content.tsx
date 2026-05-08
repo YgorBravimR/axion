@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { formatDateKey } from "@/lib/dates"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { AlertCircle, FlaskConical } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -17,7 +18,6 @@ import {
 	getSimulationPreview,
 	runRiskSimulationFromDb,
 } from "@/app/actions/risk-simulation"
-import type { MonthlyPlan } from "@/db/schema"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type {
 	PrefillSource,
@@ -28,13 +28,11 @@ import type {
 } from "@/types/risk-simulation"
 
 interface RiskSimulationContentProps {
-	monthlyPlan: MonthlyPlan | null
 	riskProfiles: RiskManagementProfile[]
 	tradeYears: number[]
 }
 
 const RiskSimulationContent = ({
-	monthlyPlan,
 	riskProfiles,
 	tradeYears,
 }: RiskSimulationContentProps) => {
@@ -50,9 +48,9 @@ const RiskSimulationContent = ({
 	const [dateFrom, setDateFrom] = useState(() => {
 		const d = new Date()
 		d.setDate(d.getDate() - 30)
-		return d.toISOString().split("T")[0]
+		return formatDateKey(d)
 	})
-	const [dateTo, setDateTo] = useState(() => new Date().toISOString().split("T")[0])
+	const [dateTo, setDateTo] = useState(() => formatDateKey(new Date()))
 	const [params, setParams] = useState<RiskSimulationParams | null>(null)
 	const [preview, setPreview] = useState<SimulationPreview | null>(null)
 	const [isLoadingPreview, setIsLoadingPreview] = useState(false)
@@ -60,7 +58,9 @@ const RiskSimulationContent = ({
 	// Prefill state
 	const [prefillSource, setPrefillSource] = useState<PrefillSource | null>(null)
 	const [activeProfileId, setActiveProfileId] = useState<string | null>(null)
-	const originalAdvancedParamsRef = useRef<AdvancedSimulationParams | null>(null)
+	const originalAdvancedParamsRef = useRef<AdvancedSimulationParams | null>(
+		null
+	)
 
 	// Result state
 	const [result, setResult] = useState<RiskSimulationResult | null>(null)
@@ -68,7 +68,9 @@ const RiskSimulationContent = ({
 	const [error, setError] = useState<string | null>(null)
 
 	const fetchPreview = useCallback(async (from: string, to: string) => {
-		if (!from || !to) return
+		if (!from || !to) {
+			return
+		}
 
 		setIsLoadingPreview(true)
 		const response = await getSimulationPreview(from, to)
@@ -98,13 +100,19 @@ const RiskSimulationContent = ({
 
 	// Fetch preview for the initial date range on mount
 	useEffect(() => {
-		if (hasInitialFetchRef.current) return
+		if (hasInitialFetchRef.current) {
+			return
+		}
 		hasInitialFetchRef.current = true
-		fetchPreview(dateFrom, dateTo)
+		void fetchPreview(dateFrom, dateTo)
 	}, [fetchPreview, dateFrom, dateTo])
 
 	const handlePrefillSelect = useCallback(
-		(newParams: RiskSimulationParams, source: PrefillSource, profileId?: string) => {
+		(
+			newParams: RiskSimulationParams,
+			source: PrefillSource,
+			profileId?: string
+		) => {
 			setPrefillSource(source)
 			setActiveProfileId(profileId ?? null)
 			setParams(newParams)
@@ -120,7 +128,9 @@ const RiskSimulationContent = ({
 	)
 
 	const handleRunSimulation = useCallback(async () => {
-		if (!dateFrom || !dateTo || !params) return
+		if (!dateFrom || !dateTo || !params) {
+			return
+		}
 
 		setError(null)
 		showLoading({ message: tOverlay("runningRiskSimulation") })
@@ -136,7 +146,8 @@ const RiskSimulationContent = ({
 		}
 	}, [dateFrom, dateTo, params, showLoading, hideLoading, tOverlay])
 
-	const allTradesLackSl = preview !== null && preview.tradesWithSl === 0 && preview.totalTrades > 0
+	const allTradesLackSl =
+		preview !== null && preview.tradesWithSl === 0 && preview.totalTrades > 0
 	const canRun = dateFrom && dateTo && params && preview && !allTradesLackSl
 	const isLocked = prefillSource !== null && prefillSource !== "manual"
 
@@ -144,9 +155,11 @@ const RiskSimulationContent = ({
 		<div className="space-y-m-400 sm:space-y-m-500">
 			{/* Header */}
 			<div>
-				<div className="flex items-center gap-s-300">
+				<div className="gap-s-300 flex items-center">
 					<FlaskConical className="text-acc-100 h-7 w-7" aria-hidden="true" />
-					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">{t("title")}</h1>
+					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">
+						{t("title")}
+					</h1>
 				</div>
 				<p className="text-small text-txt-300 mt-s-200">{t("subtitle")}</p>
 			</div>
@@ -161,7 +174,6 @@ const RiskSimulationContent = ({
 				onParamsChange={setParams}
 				preview={preview}
 				isLoadingPreview={isLoadingPreview}
-				monthlyPlan={monthlyPlan}
 				riskProfiles={riskProfiles}
 				allTradesLackSl={allTradesLackSl}
 				prefillSource={prefillSource}
@@ -177,7 +189,7 @@ const RiskSimulationContent = ({
 					id="btn-run-simulation"
 					onClick={handleRunSimulation}
 					disabled={!canRun}
-					className="bg-acc-100 hover:bg-acc-100/90 text-bg-100"
+					className="bg-acc-100 hover:bg-acc-100/90 text-bg-100 min-h-11"
 					aria-label={t("runSimulation")}
 				>
 					{t("runSimulation")}
@@ -192,11 +204,13 @@ const RiskSimulationContent = ({
 				<div
 					role="alert"
 					aria-live="assertive"
-					className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error rounded-lg border flex items-start gap-s-300"
+					className="border-fb-error/30 bg-fb-error/10 p-m-400 text-small text-fb-error gap-s-300 flex items-start rounded-lg border"
 				>
-					<AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+					<AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
 					<span>
-						{error === "common.unexpectedError" ? tCommon("unexpectedError") : error}
+						{error === "common.unexpectedError"
+							? tCommon("unexpectedError")
+							: error}
 					</span>
 				</div>
 			)}

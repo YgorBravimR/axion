@@ -7,7 +7,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 	Cell,
 } from "recharts"
@@ -49,21 +48,28 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 } as const
 
 const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	const head = payload?.[0]
+	if (!active || !head) {
+		return null
+	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isPositive = data.pnl >= 0
 
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
-			<p className="text-tiny text-txt-300">{tCharts("dayNumber", { number: data.dayNumber })}</p>
+			<p className="text-tiny text-txt-300">
+				{tCharts("dayNumber", { number: data.dayNumber })}
+			</p>
 			<p
 				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
 			>
 				{formatCompactCurrency(data.pnl, "R$")}
 			</p>
 			<p className="text-tiny text-txt-300 capitalize">
-				{data.mode === "skipped" ? tCharts("skipped") : data.mode.replace(/([A-Z])/g, " $1").trim()}
+				{data.mode === "skipped"
+					? tCharts("skipped")
+					: data.mode.replace(/([A-Z])/g, " $1").trim()}
 				{data.targetHit ? ` ${tCharts("target")}` : ""}
 			</p>
 		</div>
@@ -100,15 +106,14 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 		<div className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border">
 			<div className="mb-m-400 flex items-center justify-between">
 				<h3 className="text-body text-txt-100 font-semibold">
-					{isMultiMonth ? t("dailyPnlPeriod", { months: monthsToTrade }) : t("dailyPnl")}
+					{isMultiMonth
+						? t("dailyPnlPeriod", { months: monthsToTrade })
+						: t("dailyPnl")}
 				</h3>
 			</div>
 
 			<ChartContainer id="chart-monte-carlo-v2-daily-pnl" className="h-72">
-				<BarChart
-					data={chartData}
-					margin={CHART_MARGIN}
-				>
+				<BarChart data={chartData} margin={CHART_MARGIN}>
 					<CartesianGrid
 						strokeDasharray="3 3"
 						stroke="var(--color-bg-300)"
@@ -162,16 +167,24 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 					<div className="gap-s-200 flex items-center">
 						<div
 							className="h-3 w-6 rounded-sm"
-							style={{ backgroundColor: MODE_COLORS.lossRecovery, opacity: 0.75 }}
+							style={{
+								backgroundColor: MODE_COLORS.lossRecovery,
+								opacity: 0.75,
+							}}
 						/>
 						<span className="text-tiny text-txt-300">{t("lossRecovery")}</span>
 					</div>
 					<div className="gap-s-200 flex items-center">
 						<div
 							className="h-3 w-6 rounded-sm"
-							style={{ backgroundColor: MODE_COLORS.gainCompounding, opacity: 0.75 }}
+							style={{
+								backgroundColor: MODE_COLORS.gainCompounding,
+								opacity: 0.75,
+							}}
 						/>
-						<span className="text-tiny text-txt-300">{t("gainCompounding")}</span>
+						<span className="text-tiny text-txt-300">
+							{t("gainCompounding")}
+						</span>
 					</div>
 					<div className="gap-s-200 flex items-center">
 						<div

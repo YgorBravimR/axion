@@ -7,7 +7,6 @@ import {
 	XAxis,
 	YAxis,
 	CartesianGrid,
-
 	ReferenceLine,
 	Cell,
 } from "recharts"
@@ -34,9 +33,12 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({ active, payload, currency }: CustomTooltipProps) => {
-	if (!active || !payload || payload.length === 0) return null
+	const head = payload?.[0]
+	if (!active || !head) {
+		return null
+	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.midPoint >= 0
 
 	return (
@@ -111,9 +113,7 @@ export const V2DistributionHistogram = ({
 						fontSize={10}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) =>
-							formatCompactCurrency(value, currency)
-						}
+						tickFormatter={(value) => formatCompactCurrency(value, currency)}
 						interval="preserveStartEnd"
 					/>
 					<YAxis

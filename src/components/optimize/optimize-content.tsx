@@ -5,20 +5,38 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import {
-	Database, Play, Trash2, ChevronDown, Settings2,
-	ArrowLeft, ArrowRight, RotateCcw, BarChart3, Table2,
+	Database,
+	Play,
+	Trash2,
+	ChevronDown,
+	Settings2,
+	ArrowLeft,
+	ArrowRight,
+	RotateCcw,
+	BarChart3,
+	Table2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchBacktestData } from "@/app/actions/backtest"
 import { runBacktest } from "@/lib/backtest/engine"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
-import { generateRecipeGrid, countCombinations, MAX_COMBINATIONS } from "@/lib/optimize/parameter-grid"
+import {
+	generateRecipeGrid,
+	countCombinations,
+	MAX_COMBINATIONS,
+} from "@/lib/optimize/parameter-grid"
 import { runSweep } from "@/lib/optimize/sweep-runner"
 import { OrbEntrySection } from "@/components/backtest/sections/orb-entry-section"
 import { DezkEntrySection } from "@/components/backtest/sections/dezk-entry-section"
@@ -35,9 +53,12 @@ import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
 import { loadRuns, saveRuns, clearRuns } from "@/lib/optimize/storage"
 import type { DateRange } from "react-day-picker"
-import type { DataSourceInfo } from "@/types/candle"
-import type { CandleRow } from "@/types/candle"
-import type { StrategyRecipe, AssetConfig, OptimizationRun } from "@/types/backtest"
+import type { DataSourceInfo, CandleRow } from "@/types/candle"
+import type {
+	StrategyRecipe,
+	AssetConfig,
+	OptimizationRun,
+} from "@/types/backtest"
 import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
@@ -86,7 +107,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
 	const runCounterRef = useRef(0)
-	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+		undefined
+	)
 
 	// Hydrate from localStorage on mount
 	useEffect(() => {
@@ -107,25 +130,34 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	}, [runs])
 
 	const selectedSource = dataSources[selectedSourceIndex]
-	const dateFrom = dateRange?.from ? dateRange.from.toISOString().slice(0, 10) : ""
+	const dateFrom = dateRange?.from
+		? dateRange.from.toISOString().slice(0, 10)
+		: ""
 	const dateTo = dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : ""
 	const hasData = candleCount > 0
 
 	const assetValuePerPointCents = selectedSource
-		? Math.round(selectedSource.assetTickValueCents / selectedSource.assetTickSize)
+		? Math.round(
+				selectedSource.assetTickValueCents / selectedSource.assetTickSize
+			)
 		: 20
 
 	// ── Wizard steps definition ───────────────────────────────────
 
-	const wizardSteps: WizardStepDef[] = useMemo(() => [
-		{ key: "setup", labelKey: "wizard.setup" },
-		{ key: "parameters", labelKey: "wizard.parameters" },
-		{ key: "results", labelKey: "wizard.results" },
-	], [])
+	const wizardSteps: WizardStepDef[] = useMemo(
+		() => [
+			{ key: "setup", labelKey: "wizard.setup" },
+			{ key: "parameters", labelKey: "wizard.parameters" },
+			{ key: "results", labelKey: "wizard.results" },
+		],
+		[]
+	)
 
 	const completedSteps = useMemo(() => {
 		const set = new Set<string>()
-		if (hasData) set.add("setup")
+		if (hasData) {
+			set.add("setup")
+		}
 		if (runs.length > 0) {
 			set.add("parameters")
 			set.add("results")
@@ -136,13 +168,19 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Wizard navigation ─────────────────────────────────────────
 
 	const handleNext = useCallback(() => {
-		if (step === "setup" && hasData) setStep("parameters")
-		else if (step === "parameters") setStep("results")
+		if (step === "setup" && hasData) {
+			setStep("parameters")
+		} else if (step === "parameters") {
+			setStep("results")
+		}
 	}, [step, hasData])
 
 	const handleBack = useCallback(() => {
-		if (step === "results") setStep("parameters")
-		else if (step === "parameters") setStep("setup")
+		if (step === "results") {
+			setStep("parameters")
+		} else if (step === "parameters") {
+			setStep("setup")
+		}
 	}, [step])
 
 	const handleStepClick = useCallback((key: string) => {
@@ -153,16 +191,26 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const preset = { ...ALL_PRESETS[index] }
+		const source = ALL_PRESETS[index]
+		if (!source) {
+			return
+		}
+		const preset: StrategyRecipe = { ...source }
 		if (preset.sizing.type === "monetary_risk") {
-			preset.sizing = { ...preset.sizing, valuePerPointCents: assetValuePerPointCents }
+			preset.sizing = {
+				...preset.sizing,
+				valuePerPointCents: assetValuePerPointCents,
+			}
 		}
 		setRecipe(preset)
 	}
 
 	const handleStrategyChange = (type: string) => {
-		if (type === "orb_breakout") setRecipe(orbPresets[0])
-		else if (type === "macd_wma_alignment") setRecipe(dezkPresets[0])
+		if (type === "orb_breakout") {
+			setRecipe(orbPresets[0])
+		} else if (type === "macd_wma_alignment") {
+			setRecipe(dezkPresets[0])
+		}
 		setActiveRanges([])
 	}
 
@@ -177,9 +225,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			const vpp = Math.round(source.assetTickValueCents / source.assetTickSize)
 			setRecipe((prev) => ({
 				...prev,
-				sizing: prev.sizing.type === "monetary_risk"
-					? { ...prev.sizing, valuePerPointCents: vpp }
-					: prev.sizing,
+				sizing:
+					prev.sizing.type === "monetary_risk"
+						? { ...prev.sizing, valuePerPointCents: vpp }
+						: prev.sizing,
 			}))
 		}
 	}
@@ -190,13 +239,26 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		let from: Date
 
 		switch (value) {
-			case "all": from = new Date("2020-01-01"); break
-			case "this_month": from = new Date(now.getFullYear(), now.getMonth(), 1); break
-			case "this_year": from = new Date(now.getFullYear(), 0, 1); break
-			case "3m": from = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()); break
-			case "6m": from = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()); break
-			case "1y": from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()); break
-			default: return
+			case "all":
+				from = new Date("2020-01-01")
+				break
+			case "this_month":
+				from = new Date(now.getFullYear(), now.getMonth(), 1)
+				break
+			case "this_year":
+				from = new Date(now.getFullYear(), 0, 1)
+				break
+			case "3m":
+				from = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+				break
+			case "6m":
+				from = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
+				break
+			case "1y":
+				from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+				break
+			default:
+				return
 		}
 
 		setDateRange({ from, to: now })
@@ -236,7 +298,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			candlesRef.current = response.data.candles
 			assetConfigRef.current = response.data.assetConfig
 			setCandleCount(response.data.candles.length)
-			showToast("success", t("candlesLoaded", { count: response.data.candles.length.toLocaleString() }))
+			showToast(
+				"success",
+				t("candlesLoaded", {
+					count: response.data.candles.length.toLocaleString(),
+				})
+			)
 		} else {
 			showToast("error", response.error ?? "Failed to load data")
 		}
@@ -256,7 +323,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		const totalCombos = countCombinations(activeRanges, recipe)
 		if (totalCombos > MAX_COMBINATIONS) {
-			showToast("error", t("sweepOverLimit", { max: MAX_COMBINATIONS.toLocaleString() }))
+			showToast(
+				"error",
+				t("sweepOverLimit", { max: MAX_COMBINATIONS.toLocaleString() })
+			)
 			return
 		}
 
@@ -266,35 +336,48 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		const sweepRuns: OptimizationRun[] = []
 
-		const handle = runSweep(candlesRef.current, assetConfigRef.current, recipes, {
-			onProgress: (run, index, total) => {
-				sweepRuns.push(run)
-				setSweepProgress({ current: index + 1, total })
-			},
-			onComplete: (totalMs) => {
-				const sorted = [...sweepRuns].sort((a, b) => b.summary.profitFactor - a.summary.profitFactor)
-				const top3Ids = new Set(sorted.slice(0, 3).map((r) => r.id))
-				const finalRuns = sweepRuns.map((r) => ({ ...r, pinned: top3Ids.has(r.id) }))
+		const handle = runSweep(
+			candlesRef.current,
+			assetConfigRef.current,
+			recipes,
+			{
+				onProgress: (run, index, total) => {
+					sweepRuns.push(run)
+					setSweepProgress({ current: index + 1, total })
+				},
+				onComplete: (totalMs) => {
+					const sorted = [...sweepRuns].sort(
+						(a, b) => b.summary.profitFactor - a.summary.profitFactor
+					)
+					const top3Ids = new Set(sorted.slice(0, 3).map((r) => r.id))
+					const finalRuns = sweepRuns.map((r) => ({
+						...r,
+						pinned: top3Ids.has(r.id),
+					}))
 
-				setRuns((prev) => [...finalRuns, ...prev])
-				runCounterRef.current += sweepRuns.length
-				setIsSweeping(false)
-				sweepHandleRef.current = null
-				const seconds = (totalMs / 1000).toFixed(1)
-				showToast("success", t("sweepComplete", { total: sweepRuns.length, seconds }))
-				// Auto-advance to results after sweep
-				setStep("results")
-			},
-			onError: (message) => {
-				if (sweepRuns.length > 0) {
-					setRuns((prev) => [...sweepRuns, ...prev])
+					setRuns((prev) => [...finalRuns, ...prev])
 					runCounterRef.current += sweepRuns.length
-				}
-				setIsSweeping(false)
-				sweepHandleRef.current = null
-				showToast("error", t("sweepError", { message }))
-			},
-		})
+					setIsSweeping(false)
+					sweepHandleRef.current = null
+					const seconds = (totalMs / 1000).toFixed(1)
+					showToast(
+						"success",
+						t("sweepComplete", { total: sweepRuns.length, seconds })
+					)
+					// Auto-advance to results after sweep
+					setStep("results")
+				},
+				onError: (message) => {
+					if (sweepRuns.length > 0) {
+						setRuns((prev) => [...sweepRuns, ...prev])
+						runCounterRef.current += sweepRuns.length
+					}
+					setIsSweeping(false)
+					sweepHandleRef.current = null
+					showToast("error", t("sweepError", { message }))
+				},
+			}
+		)
 
 		sweepHandleRef.current = handle
 	}, [hasData, recipe, activeRanges, showToast, t])
@@ -303,24 +386,34 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		sweepHandleRef.current?.cancel()
 		sweepHandleRef.current = null
 		setIsSweeping(false)
-		showToast("info", t("sweepCancelled", { count: sweepProgressRef.current.current }))
+		showToast(
+			"info",
+			t("sweepCancelled", { count: sweepProgressRef.current.current })
+		)
 	}, [showToast, t])
 
 	// ── Shared run actions ────────────────────────────────────────
 
 	const handleTogglePin = useCallback((runId: string) => {
-		setRuns((prev) => prev.map((run) =>
-			run.id === runId ? { ...run, pinned: !run.pinned } : run
-		))
+		setRuns((prev) =>
+			prev.map((run) =>
+				run.id === runId ? { ...run, pinned: !run.pinned } : run
+			)
+		)
 	}, [])
 
-	const handleDeleteRun = useCallback((runId: string) => {
-		setRuns((prev) => prev.filter((run) => run.id !== runId))
-		if (expandedRunId === runId) setExpandedRunId(null)
-	}, [expandedRunId])
+	const handleDeleteRun = useCallback(
+		(runId: string) => {
+			setRuns((prev) => prev.filter((run) => run.id !== runId))
+			if (expandedRunId === runId) {
+				setExpandedRunId(null)
+			}
+		},
+		[expandedRunId]
+	)
 
 	const handleToggleExpand = useCallback((runId: string) => {
-		setExpandedRunId((prev) => prev === runId ? null : runId)
+		setExpandedRunId((prev) => (prev === runId ? null : runId))
 	}, [])
 
 	const handleClearAll = useCallback(() => {
@@ -331,25 +424,37 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	}, [])
 
 	const handleUpdateLabel = useCallback((runId: string, label: string) => {
-		setRuns((prev) => prev.map((run) =>
-			run.id === runId ? { ...run, label } : run
-		))
+		setRuns((prev) =>
+			prev.map((run) => (run.id === runId ? { ...run, label } : run))
+		)
 	}, [])
 
 	const handleRecomputeTrades = useCallback((runId: string) => {
-		if (!assetConfigRef.current) return
+		if (!assetConfigRef.current) {
+			return
+		}
 
-		setRuns((prev) => prev.map((run) => {
-			if (run.id !== runId) return run
-			if (run.trades.length > 0) return run
+		setRuns((prev) =>
+			prev.map((run) => {
+				if (run.id !== runId) {
+					return run
+				}
+				if (run.trades.length > 0) {
+					return run
+				}
 
-			const result = runBacktest(candlesRef.current, run.recipe, assetConfigRef.current!)
-			return {
-				...run,
-				trades: result.trades,
-				dayBreakdown: result.dayBreakdown,
-			}
-		}))
+				const result = runBacktest(
+					candlesRef.current,
+					run.recipe,
+					assetConfigRef.current!
+				)
+				return {
+					...run,
+					trades: result.trades,
+					dayBreakdown: result.dayBreakdown,
+				}
+			})
+		)
 	}, [])
 
 	const handleNewOptimization = useCallback(() => {
@@ -357,8 +462,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	}, [])
 
 	const pinnedRuns = runs.filter((r) => r.pinned)
-	const expandedRun = expandedRunId ? runs.find((r) => r.id === expandedRunId) : null
-	const totalCombinations = activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
+	const expandedRun = expandedRunId
+		? runs.find((r) => r.id === expandedRunId)
+		: null
+	const totalCombinations =
+		activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
 
 	// ── Render ────────────────────────────────────────────────────
 
@@ -366,7 +474,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		<div className="space-y-m-500">
 			{/* Header */}
 			<div>
-				<h1 className="text-h2 font-semibold text-txt-100">{t("title")}</h1>
+				<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
 				<p className="text-body text-txt-200">{t("description")}</p>
 			</div>
 
@@ -380,34 +488,56 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 			{/* ─── Step 1: Setup ──────────────────────────────────── */}
 			{step === "setup" && (
-				<div className="mx-auto max-w-2xl space-y-m-400">
-					<p className="text-small text-txt-300 text-center">{t("wizard.setupDesc")}</p>
+				<div className="space-y-m-400 mx-auto max-w-2xl">
+					<p className="text-small text-txt-300 text-center">
+						{t("wizard.setupDesc")}
+					</p>
 
-					<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
+					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
 						{/* Strategy */}
 						<div className="space-y-s-200">
-							<label htmlFor="optimize-strategy" className="text-small font-medium text-txt-200">{tBacktest("builder.strategy")}</label>
-							<Select value={recipe.entry.type} onValueChange={handleStrategyChange}>
+							<label
+								htmlFor="optimize-strategy"
+								className="text-small text-txt-200 font-medium"
+							>
+								{tBacktest("builder.strategy")}
+							</label>
+							<Select
+								value={recipe.entry.type}
+								onValueChange={handleStrategyChange}
+							>
 								<SelectTrigger id="optimize-strategy">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="orb_breakout">{tBacktest("orb.name")}</SelectItem>
-									<SelectItem value="macd_wma_alignment">{tBacktest("dezk.name")}</SelectItem>
+									<SelectItem value="orb_breakout">
+										{tBacktest("orb.name")}
+									</SelectItem>
+									<SelectItem value="macd_wma_alignment">
+										{tBacktest("dezk.name")}
+									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 
 						{/* Preset */}
 						<div className="space-y-s-200">
-							<label htmlFor="optimize-preset" className="text-small font-medium text-txt-200">{tBacktest("builder.loadPreset")}</label>
+							<label
+								htmlFor="optimize-preset"
+								className="text-small text-txt-200 font-medium"
+							>
+								{tBacktest("builder.loadPreset")}
+							</label>
 							<Select onValueChange={handlePresetChange}>
 								<SelectTrigger id="optimize-preset">
 									<SelectValue placeholder={tBacktest("config.selectPreset")} />
 								</SelectTrigger>
 								<SelectContent>
 									{ALL_PRESETS.map((preset, i) => (
-										<SelectItem key={`${preset.entry.type}-${i}`} value={String(i)}>
+										<SelectItem
+											key={`${preset.entry.type}-${i}`}
+											value={String(i)}
+										>
 											{preset.displayName}
 										</SelectItem>
 									))}
@@ -417,18 +547,29 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 						{/* Asset + Timeframe */}
 						<div className="space-y-s-200">
-							<label htmlFor="optimize-source" className="text-small font-medium text-txt-200">
+							<label
+								htmlFor="optimize-source"
+								className="text-small text-txt-200 font-medium"
+							>
 								{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
 							</label>
-							<Select value={String(selectedSourceIndex)} onValueChange={handleSourceChange}>
+							<Select
+								value={String(selectedSourceIndex)}
+								onValueChange={handleSourceChange}
+							>
 								<SelectTrigger id="optimize-source">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
 									{dataSources.map((source, i) => (
-										<SelectItem key={`${source.assetId}-${source.timeframeId}`} value={String(i)}>
+										<SelectItem
+											key={`${source.assetId}-${source.timeframeId}`}
+											value={String(i)}
+										>
 											{source.assetSymbol} — {source.timeframeCode}
-											{source.rowCount ? ` (${source.rowCount.toLocaleString()})` : ""}
+											{source.rowCount
+												? ` (${source.rowCount.toLocaleString()})`
+												: ""}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -437,37 +578,61 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 						{/* Date Range */}
 						<div className="space-y-s-200">
-							<label htmlFor="optimize-quick-range" className="text-small font-medium text-txt-200">{tBacktest("config.dateRange")}</label>
+							<label
+								htmlFor="optimize-quick-range"
+								className="text-small text-txt-200 font-medium"
+							>
+								{tBacktest("config.dateRange")}
+							</label>
 							<Select value={quickRangeKey} onValueChange={handleQuickRange}>
 								<SelectTrigger id="optimize-quick-range">
 									<SelectValue placeholder={tBacktest("builder.quickRange")} />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="all">{tBacktest("builder.rangeAll")}</SelectItem>
-									<SelectItem value="this_month">{tBacktest("builder.rangeThisMonth")}</SelectItem>
-									<SelectItem value="this_year">{tBacktest("builder.rangeThisYear")}</SelectItem>
-									<SelectItem value="3m">{tBacktest("builder.range3m")}</SelectItem>
-									<SelectItem value="6m">{tBacktest("builder.range6m")}</SelectItem>
-									<SelectItem value="1y">{tBacktest("builder.range1y")}</SelectItem>
-									<SelectItem value="custom">{tBacktest("builder.rangeCustom")}</SelectItem>
+									<SelectItem value="all">
+										{tBacktest("builder.rangeAll")}
+									</SelectItem>
+									<SelectItem value="this_month">
+										{tBacktest("builder.rangeThisMonth")}
+									</SelectItem>
+									<SelectItem value="this_year">
+										{tBacktest("builder.rangeThisYear")}
+									</SelectItem>
+									<SelectItem value="3m">
+										{tBacktest("builder.range3m")}
+									</SelectItem>
+									<SelectItem value="6m">
+										{tBacktest("builder.range6m")}
+									</SelectItem>
+									<SelectItem value="1y">
+										{tBacktest("builder.range1y")}
+									</SelectItem>
+									<SelectItem value="custom">
+										{tBacktest("builder.rangeCustom")}
+									</SelectItem>
 								</SelectContent>
 							</Select>
-							<DateRangePicker id="optimize-date-range" value={dateRange} onChange={handleDateRangeManual} />
+							<DateRangePicker
+								id="optimize-date-range"
+								value={dateRange}
+								onChange={handleDateRangeManual}
+							/>
 						</div>
 
 						{/* Load Data */}
 						<Button
 							id="optimize-load-data"
 							onClick={handleLoadData}
-							disabled={isLoadingData || !selectedSource || !dateFrom || !dateTo}
-							className="w-full gap-s-200"
+							disabled={
+								isLoadingData || !selectedSource || !dateFrom || !dateTo
+							}
+							className="gap-s-200 w-full"
 							variant={hasData ? "outline" : "default"}
 						>
 							<Database className="h-4 w-4" />
 							{hasData
 								? t("candlesLoaded", { count: candleCount.toLocaleString() })
-								: t("loadData")
-							}
+								: t("loadData")}
 						</Button>
 					</div>
 				</div>
@@ -478,7 +643,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				<div className="gap-m-500 grid grid-cols-1 lg:grid-cols-[1fr_280px]">
 					{/* Sweep config + base config */}
 					<div className="space-y-m-400">
-						<p className="text-small text-txt-300">{t("wizard.parametersDesc")}</p>
+						<p className="text-small text-txt-300">
+							{t("wizard.parametersDesc")}
+						</p>
 
 						<SweepConfigPanel
 							recipe={recipe}
@@ -491,17 +658,17 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							<button
 								type="button"
 								onClick={() => setBaseConfigOpen((prev) => !prev)}
-								className="hover:bg-bg-300/50 flex w-full items-center justify-between px-m-400 py-s-300 transition-colors"
+								className="hover:bg-bg-300/50 px-m-400 py-s-300 flex w-full items-center justify-between transition-colors"
 								aria-expanded={baseConfigOpen}
 								aria-controls="base-config-panel"
 							>
-								<span className="text-small flex items-center gap-s-200 font-medium text-txt-200">
+								<span className="text-small gap-s-200 text-txt-200 flex items-center font-medium">
 									<Settings2 className="h-4 w-4" />
 									{t("baseConfig")}
 								</span>
 								<ChevronDown
 									className={cn(
-										"h-4 w-4 text-txt-300 transition-transform",
+										"text-txt-300 h-4 w-4 transition-transform",
 										baseConfigOpen && "rotate-180"
 									)}
 								/>
@@ -509,19 +676,36 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{baseConfigOpen && (
 								<div
 									id="base-config-panel"
-									className="border-bg-300 space-y-m-400 border-t p-m-400"
+									className="border-bg-300 space-y-m-400 p-m-400 border-t"
 								>
-									<p className="text-tiny text-txt-300">{t("baseConfigHint")}</p>
-									<div className="grid grid-cols-1 gap-m-400 lg:grid-cols-2">
+									<p className="text-tiny text-txt-300">
+										{t("baseConfigHint")}
+									</p>
+									<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
 										{recipe.entry.type === "orb_breakout" && (
-											<OrbEntrySection recipe={recipe} onRecipeChange={setRecipe} />
+											<OrbEntrySection
+												recipe={recipe}
+												onRecipeChange={setRecipe}
+											/>
 										)}
 										{recipe.entry.type === "macd_wma_alignment" && (
-											<DezkEntrySection recipe={recipe} onRecipeChange={setRecipe} />
+											<DezkEntrySection
+												recipe={recipe}
+												onRecipeChange={setRecipe}
+											/>
 										)}
-										<StopProtectionSection recipe={recipe} onRecipeChange={setRecipe} />
-										<TargetsExitSection recipe={recipe} onRecipeChange={setRecipe} />
-										<SizingExecutionSection recipe={recipe} onRecipeChange={setRecipe} />
+										<StopProtectionSection
+											recipe={recipe}
+											onRecipeChange={setRecipe}
+										/>
+										<TargetsExitSection
+											recipe={recipe}
+											onRecipeChange={setRecipe}
+										/>
+										<SizingExecutionSection
+											recipe={recipe}
+											onRecipeChange={setRecipe}
+										/>
 									</div>
 								</div>
 							)}
@@ -545,7 +729,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								onClick={handleRunSweep}
 								disabled={!hasData || activeRanges.length === 0}
 								size="lg"
-								className="w-full gap-s-200"
+								className="gap-s-200 w-full"
 							>
 								<Play className="h-4 w-4" />
 								{t("runSweep")}
@@ -554,34 +738,47 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					</div>
 
 					{/* Summary sidebar */}
-					<div className="border-bg-300 bg-bg-200 h-fit space-y-s-300 rounded-lg border p-m-400">
-						<h4 className="text-small font-semibold text-txt-100">{t("summary.strategy")}</h4>
+					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 h-fit rounded-lg border">
+						<h4 className="text-small text-txt-100 font-semibold">
+							{t("summary.strategy")}
+						</h4>
 						<div className="space-y-s-200 text-tiny">
 							<div className="flex justify-between">
 								<span className="text-txt-300">{t("summary.strategy")}</span>
-								<span className="text-txt-100 font-medium">{recipe.displayName}</span>
+								<span className="text-txt-100 font-medium">
+									{recipe.displayName}
+								</span>
 							</div>
 							{selectedSource && (
 								<div className="flex justify-between">
 									<span className="text-txt-300">{t("summary.asset")}</span>
 									<span className="text-txt-100 font-medium">
-										{selectedSource.assetSymbol} — {selectedSource.timeframeCode}
+										{selectedSource.assetSymbol} —{" "}
+										{selectedSource.timeframeCode}
 									</span>
 								</div>
 							)}
 							{dateFrom && dateTo && (
 								<div className="flex justify-between">
 									<span className="text-txt-300">{t("summary.period")}</span>
-									<span className="text-txt-100 font-medium">{dateFrom} — {dateTo}</span>
+									<span className="text-txt-100 font-medium">
+										{dateFrom} — {dateTo}
+									</span>
 								</div>
 							)}
 							<div className="border-bg-300 my-s-200 border-t" />
 							<div className="flex justify-between">
-								<span className="text-txt-300">{t("summary.paramsSelected", { count: activeRanges.length })}</span>
+								<span className="text-txt-300">
+									{t("summary.paramsSelected", { count: activeRanges.length })}
+								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className={`font-semibold tabular-nums ${totalCombinations > MAX_COMBINATIONS ? "text-fb-error" : "text-acc-100"}`}>
-									{t("summary.combinations", { count: totalCombinations.toLocaleString() })}
+								<span
+									className={`font-semibold tabular-nums ${totalCombinations > MAX_COMBINATIONS ? "text-fb-error" : "text-acc-100"}`}
+								>
+									{t("summary.combinations", {
+										count: totalCombinations.toLocaleString(),
+									})}
 								</span>
 							</div>
 						</div>
@@ -626,8 +823,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								{/* Chart tab: equity overlay + heatmap */}
 								<TabsContent value="chart" className="space-y-m-400 mt-m-400">
 									{pinnedRuns.length > 0 && (
-										<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-											<h3 className="text-h3 mb-m-300 font-semibold text-txt-100">
+										<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+											<h3 className="text-h3 mb-s-300 text-txt-100 font-semibold">
 												{t("equityOverlay")}
 											</h3>
 											<EquityOverlayChart runs={pinnedRuns} />
@@ -635,15 +832,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									)}
 
 									{runs.length > 1 && (
-										<ParameterHeatmap runs={runs} onSelectRun={handleToggleExpand} />
+										<ParameterHeatmap
+											runs={runs}
+											onSelectRun={handleToggleExpand}
+										/>
 									)}
 								</TabsContent>
 
 								{/* Table tab: comparison table */}
 								<TabsContent value="table" className="mt-m-400">
-									<div className="border-bg-300 bg-bg-200 space-y-m-300 rounded-lg border p-m-400">
-										<div className="flex items-center gap-s-200">
-											<h3 className="text-h3 font-semibold text-txt-100">
+									<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
+										<div className="gap-s-200 flex items-center">
+											<h3 className="text-h3 text-txt-100 font-semibold">
 												{t("comparisonTable")}
 											</h3>
 											<Badge id="optimize-runs-count" variant="secondary">
@@ -671,15 +871,15 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							)}
 						</>
 					) : (
-						<div className="border-bg-300 bg-bg-200 flex flex-col items-center justify-center rounded-lg border p-l-700 text-center">
-							<p className="text-h3 font-medium text-txt-200">{t("noRuns")}</p>
+						<div className="border-bg-300 bg-bg-200 p-l-700 flex flex-col items-center justify-center rounded-lg border text-center">
+							<p className="text-h3 text-txt-200 font-medium">{t("noRuns")}</p>
 						</div>
 					)}
 				</div>
 			)}
 
 			{/* ─── Navigation footer ──────────────────────────────── */}
-			<div className="border-bg-300 flex items-center justify-between border-t pt-m-400">
+			<div className="border-bg-300 pt-m-400 flex items-center justify-between border-t">
 				{/* Left: Back button */}
 				<div>
 					{step !== "setup" && (
@@ -696,7 +896,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				</div>
 
 				{/* Right: context-dependent action */}
-				<div className="flex gap-s-300">
+				<div className="gap-s-300 flex">
 					{step === "setup" && (
 						<Button
 							id="optimize-next"

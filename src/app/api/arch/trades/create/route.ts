@@ -59,7 +59,9 @@ interface ArchCreateTradeBody {
  */
 const POST = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -290,6 +292,14 @@ const POST = async (request: NextRequest) => {
 			.insert(trades)
 			.values(insertValues as typeof trades.$inferInsert)
 			.returning()
+
+		if (!trade) {
+			return archError(
+				"Failed to create trade",
+				[{ code: "CREATE_FAILED", detail: "Insert returned no row" }],
+				500
+			)
+		}
 
 		// Insert tag associations
 		if (validatedTagIds?.length) {

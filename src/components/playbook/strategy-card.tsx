@@ -19,12 +19,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { ColoredValue } from "@/components/shared"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
-import type { StrategyWithStats } from "@/app/actions/strategies"
+import type { StrategyWithStats } from "@/app/actions/strategies.types"
 
 interface StrategyCardProps {
 	strategy: StrategyWithStats
-	onEdit: (strategy: StrategyWithStats) => void
-	onDelete: (strategyId: string) => void
+	onEdit: (_strategy: StrategyWithStats) => void
+	onDelete: (_strategyId: string) => void
 }
 
 const StrategyCardBase = ({
@@ -46,19 +46,26 @@ const StrategyCardBase = ({
 		}
 		if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 			e.preventDefault()
-			const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
-			if (!items?.length) return
-			const currentIndex = Array.from(items).findIndex((el) => el === document.activeElement)
-			const nextIndex = e.key === "ArrowDown"
-				? (currentIndex + 1) % items.length
-				: (currentIndex - 1 + items.length) % items.length
-			items[nextIndex].focus()
+			const items =
+				menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+			if (!items?.length) {
+				return
+			}
+			const currentIndex = Array.from(items).findIndex(
+				(el) => el === document.activeElement
+			)
+			const nextIndex =
+				e.key === "ArrowDown"
+					? (currentIndex + 1) % items.length
+					: (currentIndex - 1 + items.length) % items.length
+			items[nextIndex]?.focus()
 		}
 	}, [])
 
 	useEffect(() => {
 		if (showMenu) {
-			const firstItem = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')
+			const firstItem =
+				menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')
 			firstItem?.focus()
 		}
 	}, [showMenu])
@@ -80,10 +87,13 @@ const StrategyCardBase = ({
 					</div>
 					<div>
 						<div className="gap-s-200 flex items-center">
-							<span className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded font-mono">
+							<span className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded-sm font-mono">
 								{strategy.code}
 							</span>
-							<Link href={`/playbook/${strategy.id}`} className="text-body text-txt-100 font-semibold hover:underline">
+							<Link
+								href={`/playbook/${strategy.id}`}
+								className="text-body text-txt-100 font-semibold hover:underline"
+							>
 								{strategy.name}
 							</Link>
 						</div>
@@ -102,7 +112,7 @@ const StrategyCardBase = ({
 						id="playbook-strategy-menu"
 						variant="ghost"
 						size="sm"
-						className="h-8 w-8 p-0"
+						className="h-11 w-11 p-0"
 						onClick={() => setShowMenu(!showMenu)}
 						aria-label={t("strategy.optionsMenu")}
 						aria-expanded={showMenu}
@@ -117,19 +127,20 @@ const StrategyCardBase = ({
 								onClick={() => setShowMenu(false)}
 								aria-hidden="true"
 							/>
-							{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+							{}
 							<div
 								ref={menuRef}
 								role="menu"
+								tabIndex={0}
 								aria-label={t("strategy.optionsMenu")}
-								className="border-bg-300 bg-bg-100 absolute top-full right-0 z-20 mt-s-100 w-40 max-w-[calc(100vw-2rem)] rounded-lg border py-s-100 shadow-lg"
+								className="border-bg-300 bg-bg-100 mt-s-100 py-s-100 absolute top-full right-0 z-20 w-40 max-w-[calc(100vw-2rem)] rounded-lg border shadow-lg"
 								onKeyDown={handleMenuKeyDown}
 							>
 								<Link
 									href={`/playbook/${strategy.id}`}
 									role="menuitem"
 									tabIndex={-1}
-									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center text-left"
+									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center text-left"
 								>
 									<Eye className="h-4 w-4" />
 									{t("strategy.viewDetails")}
@@ -144,7 +155,7 @@ const StrategyCardBase = ({
 										setShowMenu(false)
 										onEdit(strategy)
 									}}
-									className="gap-s-200 px-s-300 py-s-200 text-small text-txt-200 flex w-full items-center justify-start text-left"
+									className="gap-s-200 px-s-300 py-s-300 text-small text-txt-200 flex w-full items-center justify-start text-left"
 								>
 									<Edit className="h-4 w-4" />
 									{tCommon("edit")}
@@ -155,7 +166,7 @@ const StrategyCardBase = ({
 									variant="ghost"
 									role="menuitem"
 									tabIndex={-1}
-									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-200 text-small flex w-full items-center justify-start text-left"
+									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center justify-start text-left"
 									onClick={() => {
 										setShowMenu(false)
 										onDelete(strategy.id)
@@ -171,10 +182,10 @@ const StrategyCardBase = ({
 			</div>
 
 			{/* Stats Grid */}
-			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4 [&_p]:truncate [&>div]:min-w-0">
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">{t("strategy.trades")}</p>
-					<p className="text-body text-txt-100 mt-s-100 font-bold">
+					<p className="text-body text-txt-100 mt-s-100 font-bold tabular-nums">
 						{strategy.tradeCount}
 					</p>
 				</div>
@@ -184,12 +195,12 @@ const StrategyCardBase = ({
 						value={strategy.totalPnl}
 						showSign
 						formatFn={(v) => formatCompactCurrencyWithSign(v, "R$")}
-						className="mt-s-100 text-body font-bold"
+						className="mt-s-100 text-body font-bold tabular-nums"
 					/>
 				</div>
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">{t("strategy.winRate")}</p>
-					<p className="text-body text-txt-100 mt-s-100 font-bold">
+					<p className="text-body text-txt-100 mt-s-100 font-bold tabular-nums">
 						{strategy.winRate.toFixed(1)}%
 					</p>
 				</div>
@@ -199,7 +210,7 @@ const StrategyCardBase = ({
 						value={strategy.avgR}
 						type="r-multiple"
 						showSign
-						className="mt-s-100 text-body font-bold"
+						className="mt-s-100 text-body font-bold tabular-nums"
 					/>
 				</div>
 			</div>
@@ -207,7 +218,9 @@ const StrategyCardBase = ({
 			{/* Compliance Bar */}
 			<div className="mt-m-400">
 				<div className="flex items-center justify-between">
-					<span className="text-tiny text-txt-300">{t("compliance.planCompliance")}</span>
+					<span className="text-tiny text-txt-300">
+						{t("compliance.planCompliance")}
+					</span>
 					<span className={cn("text-small font-semibold", complianceColor)}>
 						{strategy.compliance.toFixed(0)}%
 					</span>
@@ -235,21 +248,25 @@ const StrategyCardBase = ({
 			</div>
 
 			{/* Target R and Risk */}
-			{(strategy.targetRMultiple || strategy.maxRiskPercent) && (
+			{(strategy.finalR || strategy.maxRiskPercent) && (
 				<div className="mt-m-400 gap-m-400 flex items-center">
-					{strategy.targetRMultiple && (
+					{strategy.finalR && (
 						<div className="gap-s-100 flex items-center">
 							<TrendingUp className="text-trade-buy h-4 w-4" />
-							<span className="text-tiny text-txt-300">{t("strategy.target")}</span>
+							<span className="text-tiny text-txt-300">
+								{t("strategy.target")}
+							</span>
 							<span className="text-small text-txt-100 font-medium">
-								{Number(strategy.targetRMultiple).toFixed(1)}R
+								{Number(strategy.finalR).toFixed(1)}R
 							</span>
 						</div>
 					)}
 					{strategy.maxRiskPercent && (
 						<div className="gap-s-100 flex items-center">
 							<TrendingDown className="text-trade-sell h-4 w-4" />
-							<span className="text-tiny text-txt-300">{t("strategy.maxRisk")}</span>
+							<span className="text-tiny text-txt-300">
+								{t("strategy.maxRisk")}
+							</span>
 							<span className="text-small text-txt-100 font-medium">
 								{Number(strategy.maxRiskPercent).toFixed(1)}%
 							</span>
@@ -259,7 +276,8 @@ const StrategyCardBase = ({
 			)}
 
 			{/* Conditions & Scenarios counts */}
-			{(strategy.scenarioCount > 0 || (isPremium && strategy.conditionCount > 0)) && (
+			{(strategy.scenarioCount > 0 ||
+				(isPremium && strategy.conditionCount > 0)) && (
 				<div className="mt-s-300 gap-m-400 flex items-center">
 					{isPremium && strategy.conditionCount > 0 && (
 						<div className="gap-s-100 flex items-center">
@@ -267,7 +285,9 @@ const StrategyCardBase = ({
 							<span className="text-tiny text-txt-300">
 								{strategy.conditionCount === 1
 									? t("strategy.condition", { count: strategy.conditionCount })
-									: t("strategy.conditionPlural", { count: strategy.conditionCount })}
+									: t("strategy.conditionPlural", {
+											count: strategy.conditionCount,
+										})}
 							</span>
 						</div>
 					)}
@@ -277,7 +297,9 @@ const StrategyCardBase = ({
 							<span className="text-tiny text-txt-300">
 								{strategy.scenarioCount === 1
 									? t("strategy.scenario", { count: strategy.scenarioCount })
-									: t("strategy.scenarioPlural", { count: strategy.scenarioCount })}
+									: t("strategy.scenarioPlural", {
+											count: strategy.scenarioCount,
+										})}
 							</span>
 						</div>
 					)}

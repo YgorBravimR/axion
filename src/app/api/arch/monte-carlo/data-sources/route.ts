@@ -8,7 +8,9 @@ import type { DataSourceOption } from "@/types/monte-carlo"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -23,6 +25,7 @@ const GET = async (request: NextRequest) => {
 		})
 
 		for (const strategy of accountStrategies) {
+			// eslint-disable-next-line no-await-in-loop -- trade count per strategy for data source options; small N, sequential acceptable
 			const tradesCount = await db
 				.select()
 				.from(trades)
@@ -46,7 +49,9 @@ const GET = async (request: NextRequest) => {
 		const allAccountTrades = await db
 			.select()
 			.from(trades)
-			.where(and(eq(trades.accountId, auth.accountId), isNotNull(trades.outcome)))
+			.where(
+				and(eq(trades.accountId, auth.accountId), isNotNull(trades.outcome))
+			)
 			.then((rows) => rows.length)
 
 		options.push({

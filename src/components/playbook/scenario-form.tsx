@@ -24,14 +24,14 @@ import {
 	addScenarioImage,
 	removeScenarioImage,
 } from "@/app/actions/scenarios"
-import type { ScenarioWithImages } from "@/app/actions/scenarios"
+import type { ScenarioWithImages } from "@/app/actions/scenarios.types"
 import { Loader2 } from "lucide-react"
 
 interface ScenarioFormProps {
 	strategyId: string
 	scenario?: ScenarioWithImages | null
 	open: boolean
-	onOpenChange: (open: boolean) => void
+	onOpenChange: (_open: boolean) => void
 	onSuccess?: () => void
 }
 
@@ -212,7 +212,12 @@ const ScenarioForm = ({
 
 					{/* Name */}
 					<div className="space-y-s-200">
-						<Label id="label-scenario-name" htmlFor="scenarioName" required filled={!!formData.name.trim()}>
+						<Label
+							id="label-scenario-name"
+							htmlFor="scenarioName"
+							required
+							filled={!!formData.name.trim()}
+						>
 							{t("name")}
 						</Label>
 						<Input
@@ -278,7 +283,9 @@ const ScenarioForm = ({
 							type="submit"
 							disabled={isPending}
 						>
-							{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							{isPending && (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							)}
 							{isEdit ? tCommon("saveChanges") : t("createScenario")}
 						</Button>
 					</DialogFooter>

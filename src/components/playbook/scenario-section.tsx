@@ -5,11 +5,8 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ImageLightbox } from "@/components/shared/image-lightbox"
 import { ScenarioForm } from "./scenario-form"
-import {
-	getScenariosByStrategy,
-	deleteScenario,
-	type ScenarioWithImages,
-} from "@/app/actions/scenarios"
+import { getScenariosByStrategy, deleteScenario } from "@/app/actions/scenarios"
+import type { ScenarioWithImages } from "@/app/actions/scenarios.types"
 import {
 	ChevronDown,
 	ChevronUp,
@@ -19,7 +16,7 @@ import {
 	ImageIcon,
 	Loader2,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -51,7 +48,9 @@ export const ScenarioSection = ({
 		useState<ScenarioWithImages | null>(null)
 	const [lightboxOpen, setLightboxOpen] = useState(false)
 	const [lightboxIndex, setLightboxIndex] = useState(0)
-	const [lightboxImages, setLightboxImages] = useState<{ src: string; alt?: string }[]>([])
+	const [lightboxImages, setLightboxImages] = useState<
+		{ src: string; alt?: string }[]
+	>([])
 
 	const loadScenarios = useCallback(async () => {
 		setIsLoading(true)
@@ -63,7 +62,7 @@ export const ScenarioSection = ({
 	}, [strategyId])
 
 	useEffect(() => {
-		loadScenarios()
+		void loadScenarios()
 	}, [loadScenarios])
 
 	const handleToggleExpand = (id: string) => {
@@ -90,13 +89,13 @@ export const ScenarioSection = ({
 
 	const handleDelete = async (id: string) => {
 		await deleteScenario(id)
-		loadScenarios()
+		void loadScenarios()
 	}
 
 	const handleFormSuccess = () => {
 		setFormOpen(false)
 		setEditingScenario(null)
-		loadScenarios()
+		void loadScenarios()
 	}
 
 	if (isLoading) {
@@ -165,13 +164,16 @@ export const ScenarioSection = ({
 													type="button"
 													className="overflow-hidden rounded-lg transition-transform hover:scale-[1.02]"
 													onClick={() => {
-													const imgs = scenario.images.map((i) => ({ src: i.url }))
-													setLightboxImages(imgs)
-													setLightboxIndex(scenario.images.indexOf(img))
-													setLightboxOpen(true)
-												}}
+														const imgs = scenario.images.map((i) => ({
+															src: i.url,
+														}))
+														setLightboxImages(imgs)
+														setLightboxIndex(scenario.images.indexOf(img))
+														setLightboxOpen(true)
+													}}
 													aria-label={tCommon("viewImage")}
 												>
+													{/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded image URL, dimensions unknown at render time */}
 													<img
 														src={img.url}
 														alt=""
@@ -263,7 +265,9 @@ export const ScenarioSection = ({
 				open={formOpen}
 				onOpenChange={(open) => {
 					setFormOpen(open)
-					if (!open) setEditingScenario(null)
+					if (!open) {
+						setEditingScenario(null)
+					}
 				}}
 				onSuccess={handleFormSuccess}
 			/>

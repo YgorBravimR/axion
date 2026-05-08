@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 
 interface ConditionPickerProps {
 	value: StrategyConditionInput[]
-	onChange: (conditions: StrategyConditionInput[]) => void
+	onChange: (_conditions: StrategyConditionInput[]) => void
 }
 
 const CATEGORY_ORDER = [
@@ -76,7 +76,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 	}, [])
 
 	useEffect(() => {
-		loadConditions()
+		void loadConditions()
 	}, [loadConditions])
 
 	const getConditionTier = (conditionId: string): ConditionTier | "none" => {
@@ -113,7 +113,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 
 	const handleCreateSuccess = () => {
 		setShowCreateForm(false)
-		loadConditions()
+		void loadConditions()
 	}
 
 	// Group conditions by category and compute tier counts in one memoized pass
@@ -122,9 +122,13 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 		let t2 = 0
 		let t3 = 0
 		for (const c of value) {
-			if (c.tier === "mandatory") mandatory++
-			else if (c.tier === "tier_2") t2++
-			else if (c.tier === "tier_3") t3++
+			if (c.tier === "mandatory") {
+				mandatory++
+			} else if (c.tier === "tier_2") {
+				t2++
+			} else if (c.tier === "tier_3") {
+				t3++
+			}
 		}
 		const groups = CATEGORY_ORDER.map((cat) => ({
 			category: cat,
@@ -219,7 +223,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 										<div
 											key={condition.id}
 											className={cn(
-												"border-bg-300 bg-bg-200 gap-s-200 sm:gap-m-400 p-s-200 sm:p-s-300 flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border transition-colors",
+												"border-bg-300 bg-bg-200 gap-s-200 sm:gap-m-400 p-s-200 sm:p-s-300 flex flex-col rounded-lg border transition-colors sm:flex-row sm:items-center sm:justify-between",
 												currentTier !== "none" &&
 													"border-acc-100/30 bg-acc-100/5"
 											)}
@@ -240,7 +244,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 											>
 												<SelectTrigger
 													id={`condition-tier-${condition.id}`}
-													className="min-w-0 w-full sm:w-[160px]"
+													className="w-full min-w-0 sm:w-[160px]"
 												>
 													<SelectValue />
 												</SelectTrigger>

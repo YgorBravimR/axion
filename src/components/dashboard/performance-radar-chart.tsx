@@ -8,7 +8,6 @@ import {
 	PolarGrid,
 	PolarAngleAxis,
 	PolarRadiusAxis,
-
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useIsMobile } from "@/hooks/use-is-mobile"
@@ -33,11 +32,12 @@ const RADIUS_AXIS_TICK = false as const
 const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 
 	const formatValue = (key: string, value: number): string => {
 		switch (key) {
@@ -55,11 +55,11 @@ const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 px-s-300 py-s-200 shadow-lg">
-			<p className="text-small font-medium text-txt-100">
+		<div className="border-bg-300 bg-bg-200 px-s-300 py-s-200 rounded-lg border shadow-lg">
+			<p className="text-small text-txt-100 font-medium">
 				{t(`radar.${data.metricKey}`)}
 			</p>
-			<p className="text-body font-semibold text-acc-100">
+			<p className="text-body text-acc-100 font-semibold">
 				{formatValue(data.metricKey, data.value)}
 			</p>
 			<p className="text-tiny text-txt-300">
@@ -95,11 +95,11 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400">
-				<h3 className="mb-s-300 text-small font-semibold text-txt-100 sm:mb-m-400 sm:text-body">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+				<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 					{t("radar.title")}
 				</h3>
-				<div className="flex h-[200px] sm:h-[250px] items-center justify-center text-txt-300">
+				<div className="text-txt-300 flex h-[200px] items-center justify-center sm:h-[250px]">
 					{t("noData")}
 				</div>
 			</div>
@@ -107,33 +107,43 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 	}
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400" role="region" aria-label={t("radar.title")}>
-			<h3 className="mb-s-300 text-small font-semibold text-txt-100 sm:mb-m-400 sm:text-body">
+		<div
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
+			role="region"
+			aria-label={t("radar.title")}
+		>
+			<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 				{t("radar.title")}
 			</h3>
-			<ChartContainer id="chart-dashboard-performance-radar" className="h-[180px] sm:h-[200px] w-full" suppressHydrationWarning>
-					<RadarChart data={chartData} cx="50%" cy="50%" outerRadius={isMobile ? "55%" : "70%"}>
-						<PolarGrid stroke="var(--color-bg-300)" />
-						<PolarAngleAxis
-							dataKey="metric"
-							tick={angleAxisTick}
-						/>
-						<PolarRadiusAxis
-							angle={90}
-							domain={[0, 100]}
-							tick={RADIUS_AXIS_TICK}
-							axisLine={false}
-						/>
-						<ChartTooltip content={tooltipContent} />
-						<Radar
-							name={tCharts("performance")}
-							dataKey="normalized"
-							stroke="var(--color-acc-100)"
-							fill="var(--color-acc-100)"
-							fillOpacity={0.3}
-							strokeWidth={2}
-						/>
-					</RadarChart>
+			<ChartContainer
+				id="chart-dashboard-performance-radar"
+				className="h-[180px] w-full sm:h-[200px]"
+				suppressHydrationWarning
+			>
+				<RadarChart
+					data={chartData}
+					cx="50%"
+					cy="50%"
+					outerRadius={isMobile ? "55%" : "70%"}
+				>
+					<PolarGrid stroke="var(--color-bg-300)" />
+					<PolarAngleAxis dataKey="metric" tick={angleAxisTick} />
+					<PolarRadiusAxis
+						angle={90}
+						domain={[0, 100]}
+						tick={RADIUS_AXIS_TICK}
+						axisLine={false}
+					/>
+					<ChartTooltip content={tooltipContent} />
+					<Radar
+						name={tCharts("performance")}
+						dataKey="normalized"
+						stroke="var(--color-acc-100)"
+						fill="var(--color-acc-100)"
+						fillOpacity={0.3}
+						strokeWidth={2}
+					/>
+				</RadarChart>
 			</ChartContainer>
 		</div>
 	)

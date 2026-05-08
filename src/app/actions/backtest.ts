@@ -26,7 +26,9 @@ const fetchAssetConfig = async (
 		where: eq(assets.id, assetId),
 		columns: { tickSize: true, tickValue: true, currency: true },
 	})
-	if (!asset) return null
+	if (!asset) {
+		return null
+	}
 	return {
 		tickSize: Number(asset.tickSize),
 		tickValueCents: asset.tickValue,
@@ -74,11 +76,14 @@ const fetchCandles = async (
 	const requiredKeys = new Set(requiredIndicators)
 
 	const candles: CandleRow[] = rows.map((r) => {
-		let indicators: Record<string, number> = {}
+		const indicators: Record<string, number> = {}
 		if (needsIndicators && "indicators" in r && r.indicators) {
 			const raw = r.indicators as Record<string, number>
 			for (const key of requiredKeys) {
-				if (key in raw) indicators[key] = raw[key]
+				const value = raw[key]
+				if (value !== undefined) {
+					indicators[key] = value
+				}
 			}
 		}
 
@@ -118,7 +123,7 @@ const fetchCandles = async (
  * Today: calls runBacktest() directly
  * Tomorrow: POST to Python microservice
  */
-const runBacktestAction = async (
+export const runBacktestAction = async (
 	input: BacktestInput
 ): Promise<{ success: boolean; data?: BacktestResult; error?: string }> => {
 	const t = await getTranslations("backtest")
@@ -138,12 +143,15 @@ const runBacktestAction = async (
 			return { success: false, error: t("errors.assetNotFound") }
 		}
 
-		const candleResult = await fetchCandles({
-			assetId,
-			timeframeId,
-			dateRange,
-			requiredIndicators: recipe.requiredIndicators,
-		}, t)
+		const candleResult = await fetchCandles(
+			{
+				assetId,
+				timeframeId,
+				dateRange,
+				requiredIndicators: recipe.requiredIndicators,
+			},
+			t
+		)
 
 		if ("error" in candleResult) {
 			return { success: false, error: candleResult.error }
@@ -164,7 +172,7 @@ const runBacktestAction = async (
  * Get available assets with price data for the backtest form.
  * Wraps the existing getAssetsWithPriceData() function.
  */
-const getBacktestDataSources = async (): Promise<{
+export const getBacktestDataSources = async (): Promise<{
 	status: "success" | "error"
 	data?: DataSourceInfo[]
 	message?: string
@@ -185,7 +193,7 @@ const getBacktestDataSources = async (): Promise<{
  * Fetch candles + asset config without running the engine.
  * The client runs runBacktest() locally for zero-server-cost optimization.
  */
-const fetchBacktestData = async (params: {
+export const fetchBacktestData = async (params: {
 	assetId: string
 	timeframeId: string
 	dateRange: { from: string; to: string }
@@ -221,5 +229,3 @@ const fetchBacktestData = async (params: {
 		}
 	}
 }
-
-export { runBacktestAction, getBacktestDataSources, fetchBacktestData }

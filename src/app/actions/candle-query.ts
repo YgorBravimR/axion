@@ -1,16 +1,28 @@
 "use server"
 
-import type { CandleQueryParams, CandleRow, IndicatorGroupWithKeys, DataSourceInfo, TradeChartData } from "@/types/candle"
+import type {
+	CandleQueryParams,
+	CandleRow,
+	IndicatorGroupWithKeys,
+	TradeChartData,
+} from "@/types/candle"
 import type { TradeExecution } from "@/db/schema"
 import { db } from "@/db/drizzle"
-import { priceCandles, indicatorGroups, indicatorDefinitions, trades, assets, priceDataVersions } from "@/db/schema"
+import {
+	priceCandles,
+	indicatorGroups,
+	indicatorDefinitions,
+	trades,
+	assets,
+	priceDataVersions,
+} from "@/db/schema"
 import { and, eq, gte, lte, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 
 // Fetch candles for a specific time range
-const getCandlesForRange = async (
+export const getCandlesForRange = async (
 	params: CandleQueryParams
 ): Promise<{
 	status: "success" | "error"
@@ -88,11 +100,20 @@ const getCandlesForRange = async (
 }
 
 // Fetch available assets with price data
-const getAssetsWithPriceData = async () => {
+export const getAssetsWithPriceData = async () => {
 	try {
 		const versions = await db.query.priceDataVersions.findMany({
 			with: {
-				asset: { columns: { id: true, symbol: true, name: true, tickSize: true, tickValue: true, currency: true } },
+				asset: {
+					columns: {
+						id: true,
+						symbol: true,
+						name: true,
+						tickSize: true,
+						tickValue: true,
+						currency: true,
+					},
+				},
 				timeframe: { columns: { id: true, code: true, name: true } },
 			},
 		})
@@ -113,7 +134,7 @@ const getAssetsWithPriceData = async () => {
 				lastImported: v.lastImportedAt?.toISOString() ?? null,
 			})),
 		}
-	} catch (error) {
+	} catch {
 		return { status: "error" as const, data: [] }
 	}
 }
@@ -127,7 +148,7 @@ const getAssetsWithPriceData = async () => {
  * 3. Fetches candles for the trade's time range with 30-minute padding
  * 4. Returns trade details + candles + indicator groups
  */
-const getTradeWithCandles = async (
+export const getTradeWithCandles = async (
 	tradeId: string
 ): Promise<{
 	status: "success" | "error"
@@ -192,9 +213,17 @@ const getTradeWithCandles = async (
 		}
 
 		// Prefer the trade's timeframe if it has candle data; otherwise use the first available
+		const [firstVersion] = versions
+		if (!firstVersion) {
+			return {
+				status: "error",
+				message: `No candle data available for asset "${trade.asset}"`,
+			}
+		}
 		const matchedVersion = trade.timeframeId
-			? versions.find((v) => v.timeframe.id === trade.timeframeId) ?? versions[0]
-			: versions[0]
+			? (versions.find((v) => v.timeframe.id === trade.timeframeId) ??
+				firstVersion)
+			: firstVersion
 
 		// 4. Build the time range: 30 minutes before entry, 30 minutes after exit
 		const PADDING_MS = 30 * 60 * 1000
@@ -219,14 +248,14 @@ const getTradeWithCandles = async (
 		}
 
 		// 6. Map executions to the simplified shape
-		const executionsList: TradeChartData["executions"] = (trade.executions ?? []).map(
-			(exec: TradeExecution) => ({
-				type: exec.executionType,
-				price: Number(exec.price),
-				quantity: Number(exec.quantity),
-				timestamp: exec.executionDate.toISOString(),
-			})
-		)
+		const executionsList: TradeChartData["executions"] = (
+			trade.executions ?? []
+		).map((exec: TradeExecution) => ({
+			type: exec.executionType,
+			price: Number(exec.price),
+			quantity: Number(exec.quantity),
+			timestamp: exec.executionDate.toISOString(),
+		}))
 
 		return {
 			status: "success",
@@ -263,7 +292,7 @@ const getTradeWithCandles = async (
  * Check if candle data exists for a given asset symbol.
  * Lightweight query — just checks priceDataVersions.
  */
-const getCandleDataForAsset = async (
+export const getCandleDataForAsset = async (
 	assetSymbol: string
 ): Promise<{ assetId: string; timeframeId: string } | null> => {
 	try {
@@ -271,14 +300,18 @@ const getCandleDataForAsset = async (
 			where: eq(assets.symbol, assetSymbol.toUpperCase()),
 			columns: { id: true },
 		})
-		if (!asset) return null
+		if (!asset) {
+			return null
+		}
 
 		const version = await db.query.priceDataVersions.findFirst({
 			where: eq(priceDataVersions.assetId, asset.id),
 			columns: { assetId: true, timeframeId: true },
 		})
 
-		return version ? { assetId: version.assetId, timeframeId: version.timeframeId } : null
+		return version
+			? { assetId: version.assetId, timeframeId: version.timeframeId }
+			: null
 	} catch {
 		return null
 	}
@@ -289,7 +322,7 @@ const getCandleDataForAsset = async (
  * Used by the trade detail page when candle data is available.
  * Accepts trade timestamps directly to avoid re-fetching the trade.
  */
-const getCandlesForTrade = async (params: {
+export const getCandlesForTrade = async (params: {
 	assetId: string
 	timeframeId: string
 	entryDate: string
@@ -320,5 +353,3 @@ const getCandlesForTrade = async (params: {
 		return { status: "error", message: "Failed to fetch candles for trade" }
 	}
 }
-
-export { getCandlesForRange, getAssetsWithPriceData, getTradeWithCandles, getCandleDataForAsset, getCandlesForTrade }

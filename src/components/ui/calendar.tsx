@@ -1,13 +1,15 @@
 "use client"
 
-import { type ComponentProps } from "react"
+import type { ComponentProps } from "react"
 import { DayPicker } from "react-day-picker"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type CalendarProps = ComponentProps<typeof DayPicker>
 
-const CalendarChevron = ({ orientation }: {
+const CalendarChevron = ({
+	orientation,
+}: {
 	className?: string
 	size?: number
 	disabled?: boolean
@@ -46,10 +48,14 @@ const Calendar = ({ className, classNames, ...props }: CalendarProps) => (
 				"[&>button]:bg-acc-100 [&>button]:text-bg-100 [&>button]:font-semibold [&>button]:hover:bg-acc-100",
 			today: "[&>button]:border [&>button]:border-acc-100",
 			outside: "[&>button]:text-txt-300/40",
-			disabled: "[&>button]:text-txt-300/30 [&>button]:cursor-not-allowed [&>button]:hover:bg-transparent",
-			range_start: "[&>button]:bg-acc-100 [&>button]:text-bg-100 [&>button]:rounded-r-none",
-			range_end: "[&>button]:bg-acc-100 [&>button]:text-bg-100 [&>button]:rounded-l-none",
-			range_middle: "[&>button]:bg-acc-100/20 [&>button]:text-txt-100 [&>button]:rounded-none",
+			disabled:
+				"[&>button]:text-txt-300/30 [&>button]:cursor-not-allowed [&>button]:hover:bg-transparent",
+			range_start:
+				"[&>button]:bg-acc-100 [&>button]:text-bg-100 [&>button]:rounded-r-none",
+			range_end:
+				"[&>button]:bg-acc-100 [&>button]:text-bg-100 [&>button]:rounded-l-none",
+			range_middle:
+				"[&>button]:bg-acc-100/20 [&>button]:text-txt-100 [&>button]:rounded-none",
 			hidden: "invisible",
 			...classNames,
 		}}

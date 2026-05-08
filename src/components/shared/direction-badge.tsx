@@ -70,7 +70,7 @@ const DirectionBadgeInner = ({
 	return (
 		<span
 			className={cn(
-				"inline-flex items-center gap-s-100 rounded font-medium",
+				"inline-flex items-center gap-s-100 rounded-sm font-medium",
 				sizes.padding,
 				sizes.text,
 				colorClasses,

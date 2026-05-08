@@ -10,27 +10,38 @@ export const tradeOutcomeSchema = z.enum(["win", "loss", "breakeven"])
  * datetime-local inputs produce strings like "2026-03-11T09:00" without timezone.
  * Without this, `new Date()` would interpret them in the server/browser's local TZ.
  */
-const coerceDateAsBrt = z.union([z.date(), z.string(), z.number()]).transform((val, ctx) => {
-	if (val instanceof Date) return val
+const coerceDateAsBrt = z
+	.union([z.date(), z.string(), z.number()])
+	.transform((val, ctx) => {
+		if (val instanceof Date) {
+			return val
+		}
 
-	if (typeof val === "string") {
-		const hasTimezone = val.includes("Z") || val.includes("+") || /T.*-\d{2}:/.test(val)
-		const dateStr = hasTimezone ? val : `${val}${BRT_OFFSET}`
-		const date = new Date(dateStr)
+		if (typeof val === "string") {
+			const hasTimezone =
+				val.includes("Z") || val.includes("+") || /T.*-\d{2}:/.test(val)
+			const dateStr = hasTimezone ? val : `${val}${BRT_OFFSET}`
+			const date = new Date(dateStr)
+			if (isNaN(date.getTime())) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "validation.invalidDate",
+				})
+				return z.NEVER
+			}
+			return date
+		}
+
+		const date = new Date(val)
 		if (isNaN(date.getTime())) {
-			ctx.addIssue({ code: z.ZodIssueCode.custom, message: "validation.invalidDate" })
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "validation.invalidDate",
+			})
 			return z.NEVER
 		}
 		return date
-	}
-
-	const date = new Date(val)
-	if (isNaN(date.getTime())) {
-		ctx.addIssue({ code: z.ZodIssueCode.custom, message: "validation.invalidDate" })
-		return z.NEVER
-	}
-	return date
-})
+	})
 
 // Base trade fields (used by both createTradeSchema and cross-field validation)
 const tradeBaseFields = {
@@ -44,7 +55,9 @@ const tradeBaseFields = {
 	timeframeId: z.string().uuid().optional().nullable(),
 
 	// Timing
-	entryDate: coerceDateAsBrt.pipe(z.date({ message: "validation.trade.entryDateRequired" })),
+	entryDate: coerceDateAsBrt.pipe(
+		z.date({ message: "validation.trade.entryDateRequired" })
+	),
 	exitDate: coerceDateAsBrt.optional(),
 
 	// Execution
@@ -60,14 +73,20 @@ const tradeBaseFields = {
 		.positive("validation.trade.positionSizePositive"),
 
 	// Risk Management
-	stopLoss: z.coerce.number().positive("validation.trade.stopLossPositive").optional(),
+	stopLoss: z.coerce
+		.number()
+		.positive("validation.trade.stopLossPositive")
+		.optional(),
 	takeProfit: z.coerce
 		.number()
 		.positive("validation.trade.takeProfitPositive")
 		.optional(),
 	// Risk amount can be manually entered if stopLoss is not used
 	// If stopLoss is provided, riskAmount will be auto-calculated from it
-	riskAmount: z.coerce.number().positive("validation.trade.riskAmountPositive").optional(),
+	riskAmount: z.coerce
+		.number()
+		.positive("validation.trade.riskAmountPositive")
+		.optional(),
 	// Note: plannedRMultiple is always calculated from takeProfit/stopLoss ratio
 
 	// Results (can be auto-calculated or manual)
@@ -113,7 +132,9 @@ const tradeBaseSchema = z.object(tradeBaseFields)
 
 // Create trade input schema with cross-field SL/TP validation
 export const createTradeSchema = tradeBaseSchema.superRefine((data, ctx) => {
-	if (!data.entryPrice || !data.direction) return
+	if (!data.entryPrice || !data.direction) {
+		return
+	}
 
 	// Validate stop loss is on the correct side of entry price
 	if (data.stopLoss) {

@@ -6,27 +6,37 @@
 
 /** Splits a CSV param value into an array, returns [] for null/empty */
 const parseArrayParam = (value: string | null): string[] => {
-	if (!value) return []
+	if (!value) {
+		return []
+	}
 	return value.split(",").filter(Boolean)
 }
 
 /** Joins an array to CSV, returns null for empty arrays */
 const serializeArrayParam = (values: string[]): string | null => {
-	if (values.length === 0) return null
+	if (values.length === 0) {
+		return null
+	}
 	return values.join(",")
 }
 
 /** Parses an ISO date string param, returns null for invalid/null */
 const parseDateParam = (value: string | null): Date | null => {
-	if (!value) return null
+	if (!value) {
+		return null
+	}
 	const date = new Date(value)
-	if (isNaN(date.getTime())) return null
+	if (isNaN(date.getTime())) {
+		return null
+	}
 	return date
 }
 
 /** Serializes a Date to ISO date string (YYYY-MM-DD), returns null for null */
 const serializeDateParam = (date: Date | null): string | null => {
-	if (!date) return null
+	if (!date) {
+		return null
+	}
 	const year = date.getFullYear()
 	const month = String(date.getMonth() + 1).padStart(2, "0")
 	const day = String(date.getDate()).padStart(2, "0")
@@ -40,9 +50,13 @@ const parseBooleanParam = (value: string | null): boolean => {
 
 /** Parses a numeric param with a fallback for invalid/null values */
 const parseNumberParam = (value: string | null, fallback: number): number => {
-	if (!value) return fallback
+	if (!value) {
+		return fallback
+	}
 	const num = Number(value)
-	if (isNaN(num)) return fallback
+	if (isNaN(num)) {
+		return fallback
+	}
 	return num
 }
 

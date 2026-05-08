@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from "vitest"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type { DecisionTreeCents } from "@/lib/risk-profiles/cents-shape"
 import type { TradeOutcomeInput } from "@/types/live-trading-status"
 
 // ==========================================
@@ -18,7 +18,7 @@ import type { TradeOutcomeInput } from "@/types/live-trading-status"
 // ==========================================
 
 /** Bravo decision tree — mirrors seed-risk-profiles.ts exactly */
-const bravoTree: DecisionTreeConfig = {
+const bravoTree: DecisionTreeCents = {
 	baseTrade: {
 		riskCents: 50000,
 		maxContracts: 20,

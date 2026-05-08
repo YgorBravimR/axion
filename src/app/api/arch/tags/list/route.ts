@@ -16,7 +16,9 @@ import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
  */
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -82,7 +84,9 @@ const GET = async (request: NextRequest) => {
 				for (const trade of tagTrades) {
 					totalPnl += fromCents(trade.pnl)
 
-					if (trade.outcome === "win") winCount++
+					if (trade.outcome === "win") {
+						winCount++
+					}
 
 					if (trade.realizedRMultiple) {
 						totalR += Number(trade.realizedRMultiple)

@@ -27,11 +27,12 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
 
-	if (!active || !payload || payload.length === 0) {
+	const head = payload?.[0]
+	if (!active || !head) {
 		return null
 	}
 
-	const data = payload[0].payload
+	const data = head.payload
 	const isProfit = data.equity >= 0
 
 	return (
@@ -48,7 +49,10 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				<p className="text-tiny text-txt-300">
 					{t("cumulativePnL.cumulative")}:{" "}
 					<span
-						className={cn("font-semibold", isProfit ? "text-trade-buy" : "text-trade-sell")}
+						className={cn(
+							"font-semibold",
+							isProfit ? "text-trade-buy" : "text-trade-sell"
+						)}
 					>
 						{formatCompactCurrencyWithSign(data.equity, "R$")}
 					</span>
@@ -66,9 +70,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	)
 }
 
-export const CumulativePnLChart = ({
-	data,
-}: CumulativePnLChartProps) => {
+export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
@@ -82,7 +84,7 @@ export const CumulativePnLChart = ({
 				timeZone: APP_TIMEZONE,
 			})
 		},
-		[locale],
+		[locale]
 	)
 
 	const { minEquity, maxEquity, padding } = useMemo(() => {
@@ -98,11 +100,11 @@ export const CumulativePnLChart = ({
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 				<h3 className="mb-s-300 text-small sm:mb-m-400 sm:text-body text-txt-100 font-semibold">
 					{t("cumulativePnL.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[150px] sm:h-[200px] items-center justify-center">
+				<div className="text-txt-300 flex h-[150px] items-center justify-center sm:h-[200px]">
 					{t("noData")}
 				</div>
 			</div>
@@ -114,13 +116,13 @@ export const CumulativePnLChart = ({
 		finalPnl >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border sm:p-m-400">
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
 			<h3 className="mb-s-300 text-small sm:mb-m-400 sm:text-body text-txt-100 font-semibold">
 				{t("cumulativePnL.title")}
 			</h3>
 			<ChartContainer
 				id="chart-dashboard-cumulative-pnl"
-				className="h-[150px] sm:h-[200px] w-full"
+				className="h-[150px] w-full sm:h-[200px]"
 			>
 				<LineChart
 					data={data}

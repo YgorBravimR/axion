@@ -24,7 +24,7 @@
 
 ## 2. Color Palette
 
-All assets must use ONLY these colors. No gradients unless specified.
+All assets must use ONLY these colors. No gradients unless specified. Live token values live in `src/app/globals.css` under `[data-brand="axion"]` (dark) and `[data-brand="axion"][data-theme="light"]` (light); see `docs/theming.md` for the full token system.
 
 | Role | Color | Hex | Usage |
 |------|-------|-----|-------|
@@ -32,13 +32,29 @@ All assets must use ONLY these colors. No gradients unless specified.
 | Violet Deep | Darker violet | #7C3AED | Hover states, depth |
 | Violet Glow | Light violet | #A78BFA | Highlights, glows, light accents |
 | Bravo Gold (heritage) | Metallic gold | #D4AF37 | Secondary accent, "by Bravo" elements, premium badges |
-| Background Dark | Near-black | #08090A | Primary dark background |
-| Surface Dark | Dark charcoal | #0F1114 | Card/surface background |
+| Background Dark | Near-black | #0C0E0F | Primary dark background (`--color-bg-100` axion) |
+| Surface Dark | Dark slate | #171A1D | Card/surface background (`--color-bg-200` axion) |
 | Border Dark | Navy edge | #252A33 | Subtle borders and structure |
-| Text Primary | Crisp white | #F0F2F5 | Primary text on dark |
-| Text Muted | Silver gray | #8C96A5 | Secondary text |
+| Text Primary | Crisp white | #EFF1F4 | Primary text on dark (`--color-txt-100` axion) |
+| Text Muted | Silver gray | #A5AFBE | Secondary text (`--color-txt-200` axion); use #7A8592 for tertiary (`--color-txt-300`) |
 | Pure White | White | #FFFFFF | Wordmark on dark, primary-foreground |
 | Pure Black | Black | #000000 | Wordmark on light backgrounds |
+
+---
+
+### Light Mode (Axion brand)
+
+Stone-white paper with deeper violet ink — supported but secondary to dark mode.
+
+| Role | Hex | Token |
+|------|-----|-------|
+| Background | #F5F4F2 | `--color-bg-100` |
+| Surface | #E6E3DD | `--color-bg-200` |
+| Border / muted | #CFCBC4 | `--color-bg-300` |
+| Text Primary | #1A1818 | `--color-txt-100` |
+| Text Muted | #4A4744 | `--color-txt-200` |
+| Violet (primary) | #7C3AED | `--color-acc-100` |
+| Gold (heritage) | #B8941F | `--color-acc-200` |
 
 ---
 

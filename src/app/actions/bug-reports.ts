@@ -67,8 +67,9 @@ const requireAdmin = async (): Promise<
 		.where(eq(users.id, userId))
 		.limit(1)
 
-	if (!user?.isAdmin)
+	if (!user?.isAdmin) {
 		return { authorized: false, response: UNAUTHORIZED_RESPONSE }
+	}
 	return { authorized: true, userId }
 }
 
@@ -79,7 +80,7 @@ const requireAdmin = async (): Promise<
 /**
  * Submit a new bug report — available to any authenticated user.
  */
-const submitBugReport = async (
+export const submitBugReport = async (
 	input: SubmitBugReportInput
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
@@ -98,6 +99,10 @@ const submitBugReport = async (
 				networkErrors: validated.networkErrors ?? null,
 			})
 			.returning()
+
+		if (!report) {
+			throw new Error("Failed to insert bug report")
+		}
 
 		if (validated.images && validated.images.length > 0) {
 			await db.insert(bugReportImages).values(
@@ -128,14 +133,16 @@ const submitBugReport = async (
  * List bug reports — admin only.
  * Supports optional status filter and pagination.
  */
-const getBugReports = async (filters?: {
+export const getBugReports = async (filters?: {
 	status?: "open" | "accepted" | "rejected" | "closed"
 	limit?: number
 	offset?: number
 }): Promise<ActionResponse<PaginatedResponse<BugReportWithReporter>>> => {
 	try {
 		const adminResult = await requireAdmin()
-		if (!adminResult.authorized) return adminResult.response
+		if (!adminResult.authorized) {
+			return adminResult.response
+		}
 
 		const limit = filters?.limit ?? 50
 		const offset = filters?.offset ?? 0
@@ -207,10 +214,11 @@ const getBugReports = async (filters?: {
 		)
 
 		// Total count for pagination
-		const [{ total }] = await db
+		const [totalRow] = await db
 			.select({ total: sql<number>`count(*)::int` })
 			.from(bugReports)
 			.where(conditions)
+		const total = totalRow?.total ?? 0
 
 		const items: BugReportWithReporter[] = rows.map((row) => ({
 			...row,
@@ -243,12 +251,14 @@ const getBugReports = async (filters?: {
 /**
  * Update a bug report's status — admin only.
  */
-const updateBugReportStatus = async (
+export const updateBugReportStatus = async (
 	input: UpdateBugReportStatusInput
 ): Promise<ActionResponse<BugReport>> => {
 	try {
 		const adminResult = await requireAdmin()
-		if (!adminResult.authorized) return adminResult.response
+		if (!adminResult.authorized) {
+			return adminResult.response
+		}
 		const { userId } = adminResult
 
 		const validated = updateStatusSchema.parse(input)
@@ -324,12 +334,14 @@ const updateBugReportStatus = async (
 /**
  * Get full bug report detail with images — admin only.
  */
-const getBugReportDetail = async (
+export const getBugReportDetail = async (
 	id: string
 ): Promise<ActionResponse<BugReportDetail>> => {
 	try {
 		const adminResult = await requireAdmin()
-		if (!adminResult.authorized) return adminResult.response
+		if (!adminResult.authorized) {
+			return adminResult.response
+		}
 
 		const reporter = db
 			.select({ id: users.id, name: users.name, email: users.email })
@@ -398,11 +410,4 @@ const getBugReportDetail = async (
 			errors: [{ code: "FETCH_FAILED", detail: String(error) }],
 		}
 	}
-}
-
-export {
-	submitBugReport,
-	getBugReports,
-	updateBugReportStatus,
-	getBugReportDetail,
 }

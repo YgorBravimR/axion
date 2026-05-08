@@ -1,5 +1,5 @@
 import type { SQL } from "drizzle-orm"
-import { eq, and, gte, lte, inArray } from "drizzle-orm"
+import { eq, gte, lte, inArray } from "drizzle-orm"
 import { trades, tradeTags } from "@/db/schema"
 import { db } from "@/db/drizzle"
 import type { ArchAuthContext } from "./auth"
@@ -35,8 +35,12 @@ const parseArchFilters = async (
 	// Date range
 	const dateFrom = searchParams.get("dateFrom")
 	const dateTo = searchParams.get("dateTo")
-	if (dateFrom) conditions.push(gte(trades.entryDate, new Date(dateFrom)))
-	if (dateTo) conditions.push(lte(trades.entryDate, new Date(dateTo)))
+	if (dateFrom) {
+		conditions.push(gte(trades.entryDate, new Date(dateFrom)))
+	}
+	if (dateTo) {
+		conditions.push(lte(trades.entryDate, new Date(dateTo)))
+	}
 
 	// Direct array filters
 	const assetsParam = searchParams.get("assets")
@@ -45,7 +49,9 @@ const parseArchFilters = async (
 			.split(",")
 			.map((a) => a.trim())
 			.filter(Boolean)
-		if (assets.length) conditions.push(inArray(trades.asset, assets))
+		if (assets.length) {
+			conditions.push(inArray(trades.asset, assets))
+		}
 	}
 
 	const directionsParam = searchParams.get("directions")
@@ -54,8 +60,9 @@ const parseArchFilters = async (
 			.split(",")
 			.map((d) => d.trim())
 			.filter(Boolean) as ("long" | "short")[]
-		if (directions.length)
+		if (directions.length) {
 			conditions.push(inArray(trades.direction, directions))
+		}
 	}
 
 	const outcomesParam = searchParams.get("outcomes")
@@ -64,20 +71,26 @@ const parseArchFilters = async (
 			.split(",")
 			.map((o) => o.trim())
 			.filter(Boolean) as ("win" | "loss" | "breakeven")[]
-		if (outcomes.length) conditions.push(inArray(trades.outcome, outcomes))
+		if (outcomes.length) {
+			conditions.push(inArray(trades.outcome, outcomes))
+		}
 	}
 
 	// Fuzzy name resolution
 	const strategyParam = searchParams.get("strategy")
 	if (strategyParam) {
 		const strategyId = await resolveStrategyName(strategyParam, auth.userId)
-		if (strategyId) conditions.push(eq(trades.strategyId, strategyId))
+		if (strategyId) {
+			conditions.push(eq(trades.strategyId, strategyId))
+		}
 	}
 
 	const timeframeParam = searchParams.get("timeframe")
 	if (timeframeParam) {
 		const timeframeId = await resolveTimeframeName(timeframeParam)
-		if (timeframeId) conditions.push(eq(trades.timeframeId, timeframeId))
+		if (timeframeId) {
+			conditions.push(eq(trades.timeframeId, timeframeId))
+		}
 	}
 
 	const tagsParam = searchParams.get("tags")
@@ -105,7 +118,9 @@ const parseArchFilters = async (
 			.split(",")
 			.map((id) => id.trim())
 			.filter(Boolean)
-		if (ids.length) conditions.push(inArray(trades.strategyId, ids))
+		if (ids.length) {
+			conditions.push(inArray(trades.strategyId, ids))
+		}
 	}
 
 	const tagIds = searchParams.get("tagIds")
@@ -129,7 +144,9 @@ const parseArchFilters = async (
 			.split(",")
 			.map((id) => id.trim())
 			.filter(Boolean)
-		if (ids.length) conditions.push(inArray(trades.timeframeId, ids))
+		if (ids.length) {
+			conditions.push(inArray(trades.timeframeId, ids))
+		}
 	}
 
 	return conditions

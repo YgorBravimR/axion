@@ -63,7 +63,9 @@ const mergeQuotes = (
 	skipExisting = false
 ): void => {
 	for (const [symbol, quote] of source) {
-		if (skipExisting && target.has(symbol)) continue
+		if (skipExisting && target.has(symbol)) {
+			continue
+		}
 		target.set(symbol, quote)
 	}
 }
@@ -86,7 +88,9 @@ export const fetchMarketQuotes = async (): Promise<QuotesResult> => {
 
 	for (const [providerId, symbols] of providerSymbols.entries()) {
 		const provider = PROVIDERS.get(providerId)
-		if (!provider || symbols.length === 0) continue
+		if (!provider || symbols.length === 0) {
+			continue
+		}
 
 		primaryTasks.push(
 			provider.fetchQuotes(symbols).catch((error) => {
@@ -110,7 +114,9 @@ export const fetchMarketQuotes = async (): Promise<QuotesResult> => {
 
 	for (const [providerId, provider] of PROVIDERS.entries()) {
 		const fallbackSymbols = getSymbolsNeedingFallback(providerId, resolved)
-		if (fallbackSymbols.length === 0) continue
+		if (fallbackSymbols.length === 0) {
+			continue
+		}
 
 		fallbackTasks.push(
 			provider.fetchQuotes(fallbackSymbols).catch((error) => {

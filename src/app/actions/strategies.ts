@@ -33,41 +33,28 @@ import { toSafeErrorMessage } from "@/lib/error-utils"
  * @returns Whether the error is a unique constraint violation
  */
 const isUniqueViolation = (error: unknown): boolean => {
-	if (!(error instanceof Error)) return false
+	if (!(error instanceof Error)) {
+		return false
+	}
 	const msg = error.message
-	if (msg.includes("unique") || msg.includes("23505")) return true
+	if (msg.includes("unique") || msg.includes("23505")) {
+		return true
+	}
 	if (error.cause instanceof Error) {
 		const causeMsg = error.cause.message
-		if (causeMsg.includes("unique") || causeMsg.includes("23505")) return true
+		if (causeMsg.includes("unique") || causeMsg.includes("23505")) {
+			return true
+		}
 	}
 	if (error.cause && typeof error.cause === "object" && "code" in error.cause) {
-		if ((error.cause as Record<string, unknown>).code === "23505") return true
+		if ((error.cause as Record<string, unknown>).code === "23505") {
+			return true
+		}
 	}
 	return false
 }
 
-export interface StrategyWithStats extends Strategy {
-	tradeCount: number
-	winCount: number
-	lossCount: number
-	compliance: number
-	totalPnl: number
-	winRate: number
-	profitFactor: number
-	avgR: number
-	conditionCount: number
-	scenarioCount: number
-}
-
-export interface ComplianceOverview {
-	overallCompliance: number
-	totalTrackedTrades: number
-	followedPlanCount: number
-	notFollowedCount: number
-	strategiesCount: number
-	topPerformingStrategy: { name: string; compliance: number } | null
-	needsAttentionStrategy: { name: string; compliance: number } | null
-}
+import type { StrategyWithStats, ComplianceOverview } from "./strategies.types"
 
 /**
  * Create a new strategy
@@ -101,7 +88,7 @@ export const createStrategy = async (
 				entryCriteria: validated.entryCriteria || null,
 				exitCriteria: validated.exitCriteria || null,
 				riskRules: validated.riskRules || null,
-				targetRMultiple: validated.targetRMultiple?.toString() || null,
+				finalR: validated.finalR?.toString() || null,
 				maxRiskPercent: validated.maxRiskPercent?.toString() || null,
 				screenshotUrl: validated.screenshotUrl || null,
 				screenshotS3Key: validated.screenshotS3Key || null,
@@ -109,6 +96,9 @@ export const createStrategy = async (
 				isActive: validated.isActive ?? true,
 			})
 			.returning()
+		if (!strategy) {
+			throw new Error("Failed to create strategy")
+		}
 
 		// Sync conditions if provided
 		if (validated.conditions && validated.conditions.length > 0) {
@@ -210,8 +200,8 @@ export const updateStrategy = async (
 				...(validated.riskRules !== undefined && {
 					riskRules: validated.riskRules || null,
 				}),
-				...(validated.targetRMultiple !== undefined && {
-					targetRMultiple: validated.targetRMultiple?.toString() || null,
+				...(validated.finalR !== undefined && {
+					finalR: validated.finalR?.toString() || null,
 				}),
 				...(validated.maxRiskPercent !== undefined && {
 					maxRiskPercent: validated.maxRiskPercent?.toString() || null,
@@ -494,7 +484,9 @@ export const getStrategies = async (
 		// Build lookup maps for O(1) access
 		const tradesByStrategyId = new Map<string, typeof allStrategyTrades>()
 		for (const trade of allStrategyTrades) {
-			if (!trade.strategyId) continue
+			if (!trade.strategyId) {
+				continue
+			}
 			const existing = tradesByStrategyId.get(trade.strategyId)
 			if (existing) {
 				existing.push(trade)
@@ -685,9 +677,13 @@ export const getComplianceOverview = async (): Promise<
 		}> = []
 
 		for (const row of perStrategyRows) {
-			if (!row.strategyId || row.trackedCount === 0) continue
+			if (!row.strategyId || row.trackedCount === 0) {
+				continue
+			}
 			const name = strategyNameById.get(row.strategyId)
-			if (!name) continue
+			if (!name) {
+				continue
+			}
 			strategyCompliances.push({
 				name,
 				compliance: (row.followedCount / row.trackedCount) * 100,
@@ -703,23 +699,16 @@ export const getComplianceOverview = async (): Promise<
 			(a, b) => b.compliance - a.compliance
 		)
 
-		const topPerformingStrategy =
-			sortedByCompliance.length > 0
-				? {
-						name: sortedByCompliance[0].name,
-						compliance: sortedByCompliance[0].compliance,
-					}
-				: null
+		const top = sortedByCompliance[0]
+		const topPerformingStrategy = top
+			? { name: top.name, compliance: top.compliance }
+			: null
 
 		// Find needs attention (lowest compliance with at least 3 trades)
-		const needsAttentionStrategy =
-			sortedByCompliance.length > 0
-				? {
-						name: sortedByCompliance[sortedByCompliance.length - 1].name,
-						compliance:
-							sortedByCompliance[sortedByCompliance.length - 1].compliance,
-					}
-				: null
+		const bottom = sortedByCompliance[sortedByCompliance.length - 1]
+		const needsAttentionStrategy = bottom
+			? { name: bottom.name, compliance: bottom.compliance }
+			: null
 
 		return {
 			status: "success",

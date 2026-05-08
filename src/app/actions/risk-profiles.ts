@@ -4,8 +4,10 @@ import { invalidateSettingsData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { riskManagementProfiles } from "@/db/schema"
 import type { ActionResponse } from "@/types"
-import type { RiskManagementProfile } from "@/types/risk-profile"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type {
+	RiskManagementProfile,
+	DecisionTreeConfig,
+} from "@/types/risk-profile"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { riskProfileSchema } from "@/lib/validations/risk-profile"
@@ -30,11 +32,6 @@ const parseProfileRow = (
 	description: row.description,
 	createdByUserId: row.createdByUserId,
 	isActive: row.isActive,
-	baseRiskCents: row.baseRiskCents,
-	dailyLossCents: row.dailyLossCents,
-	weeklyLossCents: row.weeklyLossCents,
-	monthlyLossCents: row.monthlyLossCents,
-	dailyProfitTargetCents: row.dailyProfitTargetCents,
 	decisionTree: JSON.parse(row.decisionTree) as DecisionTreeConfig,
 	createdAt: row.createdAt,
 	updatedAt: row.updatedAt,
@@ -47,7 +44,7 @@ const parseProfileRow = (
 /**
  * Returns all active risk profiles. Any authenticated user can read profiles.
  */
-const listActiveRiskProfiles = async (): Promise<
+export const listActiveRiskProfiles = async (): Promise<
 	ActionResponse<RiskManagementProfile[]>
 > => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -81,7 +78,7 @@ const listActiveRiskProfiles = async (): Promise<
 /**
  * Get a single risk profile by ID.
  */
-const getRiskProfile = async (
+export const getRiskProfile = async (
 	id: string
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -122,7 +119,7 @@ const getRiskProfile = async (
 /**
  * Create a new risk management profile. Admin only.
  */
-const createRiskProfile = async (
+export const createRiskProfile = async (
 	input: RiskProfileSchemaInput
 ): Promise<ActionResponse<RiskManagementProfile>> => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -138,14 +135,13 @@ const createRiskProfile = async (
 				name: validated.name,
 				description: validated.description ?? null,
 				createdByUserId: userId,
-				baseRiskCents: validated.baseRiskCents,
-				dailyLossCents: validated.dailyLossCents,
-				weeklyLossCents: validated.weeklyLossCents ?? null,
-				monthlyLossCents: validated.monthlyLossCents,
-				dailyProfitTargetCents: validated.dailyProfitTargetCents ?? null,
 				decisionTree: JSON.stringify(validated.decisionTree),
 			})
 			.returning()
+
+		if (!row) {
+			throw new Error("Failed to insert risk management profile")
+		}
 
 		invalidateSettingsData()
 
@@ -170,7 +166,10 @@ const createRiskProfile = async (
 				status: "error",
 				message: t("actions.premiumRequired"),
 				errors: [
-					{ code: "FORBIDDEN", detail: "Premium role required to create risk profiles" },
+					{
+						code: "FORBIDDEN",
+						detail: "Premium role required to create risk profiles",
+					},
 				],
 			}
 		}
@@ -190,7 +189,7 @@ const createRiskProfile = async (
 /**
  * Update an existing risk management profile. Admin only.
  */
-const updateRiskProfile = async (
+export const updateRiskProfile = async (
 	id: string,
 	input: RiskProfileSchemaInput
 ): Promise<ActionResponse<RiskManagementProfile>> => {
@@ -206,11 +205,6 @@ const updateRiskProfile = async (
 			.set({
 				name: validated.name,
 				description: validated.description ?? null,
-				baseRiskCents: validated.baseRiskCents,
-				dailyLossCents: validated.dailyLossCents,
-				weeklyLossCents: validated.weeklyLossCents ?? null,
-				monthlyLossCents: validated.monthlyLossCents,
-				dailyProfitTargetCents: validated.dailyProfitTargetCents ?? null,
 				decisionTree: JSON.stringify(validated.decisionTree),
 				updatedAt: new Date(),
 			})
@@ -248,7 +242,10 @@ const updateRiskProfile = async (
 				status: "error",
 				message: t("actions.premiumRequired"),
 				errors: [
-					{ code: "FORBIDDEN", detail: "Premium role required to update risk profiles" },
+					{
+						code: "FORBIDDEN",
+						detail: "Premium role required to update risk profiles",
+					},
 				],
 			}
 		}
@@ -268,7 +265,7 @@ const updateRiskProfile = async (
 /**
  * Soft-delete a risk profile by marking it inactive. Admin only.
  */
-const deactivateRiskProfile = async (
+export const deactivateRiskProfile = async (
 	id: string
 ): Promise<ActionResponse<null>> => {
 	const t = await getTranslations("settings.riskProfiles")
@@ -311,12 +308,4 @@ const deactivateRiskProfile = async (
 			],
 		}
 	}
-}
-
-export {
-	listActiveRiskProfiles,
-	getRiskProfile,
-	createRiskProfile,
-	updateRiskProfile,
-	deactivateRiskProfile,
 }

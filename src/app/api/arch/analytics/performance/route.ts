@@ -9,7 +9,13 @@ import { getBrtTimeParts } from "@/lib/dates"
 
 type GroupByOption = "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
 
-const VALID_GROUP_BY: GroupByOption[] = ["asset", "timeframe", "hour", "dayOfWeek", "strategy"]
+const VALID_GROUP_BY: GroupByOption[] = [
+	"asset",
+	"timeframe",
+	"hour",
+	"dayOfWeek",
+	"strategy",
+]
 
 const DAY_NAMES = [
 	"Sunday",
@@ -34,7 +40,9 @@ interface GroupData {
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
-	if (!authResult.success) return authResult.response
+	if (!authResult.success) {
+		return authResult.response
+	}
 	const { auth } = authResult
 
 	try {
@@ -42,16 +50,19 @@ const GET = async (request: NextRequest) => {
 		const groupByParam = searchParams.get("groupBy") as GroupByOption | null
 
 		if (!groupByParam || !VALID_GROUP_BY.includes(groupByParam)) {
-			return archError(
-				"Invalid or missing groupBy parameter",
-				[{ code: "INVALID_PARAMS", detail: `groupBy must be one of: ${VALID_GROUP_BY.join(", ")}` }]
-			)
+			return archError("Invalid or missing groupBy parameter", [
+				{
+					code: "INVALID_PARAMS",
+					detail: `groupBy must be one of: ${VALID_GROUP_BY.join(", ")}`,
+				},
+			])
 		}
 
 		const conditions = await parseArchFilters(searchParams, auth)
 
 		// Fetch trades with relations for strategy/timeframe grouping
-		const needsRelations = groupByParam === "strategy" || groupByParam === "timeframe"
+		const needsRelations =
+			groupByParam === "strategy" || groupByParam === "timeframe"
 		const result = await fetchAndDecryptTrades(auth.userId, conditions, {
 			...(needsRelations && { with: { strategy: true, timeframe: true } }),
 		})
@@ -72,7 +83,8 @@ const GET = async (request: NextRequest) => {
 					break
 				case "timeframe":
 					groupKey = (trade as Record<string, unknown>).timeframe
-						? ((trade as Record<string, unknown>).timeframe as { name: string }).name
+						? ((trade as Record<string, unknown>).timeframe as { name: string })
+								.name
 						: "Unknown"
 					break
 				case "hour": {
@@ -82,12 +94,13 @@ const GET = async (request: NextRequest) => {
 				}
 				case "dayOfWeek": {
 					const { dayOfWeek } = getBrtTimeParts(trade.entryDate)
-					groupKey = DAY_NAMES[dayOfWeek]
+					groupKey = DAY_NAMES[dayOfWeek] ?? "Unknown"
 					break
 				}
 				case "strategy":
 					groupKey = (trade as Record<string, unknown>).strategy
-						? ((trade as Record<string, unknown>).strategy as { name: string }).name
+						? ((trade as Record<string, unknown>).strategy as { name: string })
+								.name
 						: "No Strategy"
 					break
 				default:
@@ -131,7 +144,10 @@ const GET = async (request: NextRequest) => {
 				group,
 				tradeCount: data.tradeCount,
 				pnl: data.pnl,
-				winRate: calculateWinRate(data.winCount, data.winCount + data.lossCount),
+				winRate: calculateWinRate(
+					data.winCount,
+					data.winCount + data.lossCount
+				),
 				avgR: data.rCount > 0 ? data.totalR / data.rCount : 0,
 				profitFactor: calculateProfitFactor(data.grossProfit, data.grossLoss),
 			}))

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { Receipt, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
-import type { CommissionFeeImpact } from "@/app/actions/reports"
+import type { CommissionFeeImpact } from "@/app/actions/reports.types"
 
 interface CommissionFeeImpactCardProps {
 	data: CommissionFeeImpact | null
@@ -17,8 +17,8 @@ interface CommissionFeeImpactCardProps {
 
 const getInsightMessage = (
 	summary: CommissionFeeImpact["summary"],
-	formatCurrency: (v: number) => string,
-	t: (key: string, params?: Record<string, string>) => string
+	formatCurrency: (_v: number) => string,
+	t: (_key: string, _params?: Record<string, string>) => string
 ): string => {
 	if (summary.grossPnl <= 0 && summary.totalFees > 0) {
 		return summary.grossPnl < 0
@@ -28,21 +28,27 @@ const getInsightMessage = (
 
 	const percent = summary.feesAsPercentOfGross.toFixed(1)
 
-	if (summary.feesAsPercentOfGross > 15) return t("insightHigh", { percent })
-	if (summary.feesAsPercentOfGross > 5) return t("insightModerate", { percent })
+	if (summary.feesAsPercentOfGross > 15) {
+		return t("insightHigh", { percent })
+	}
+	if (summary.feesAsPercentOfGross > 5) {
+		return t("insightModerate", { percent })
+	}
 	return t("insightLow", { percent })
 }
 
 const getFeeSeverityClasses = (
 	percent: number
 ): { border: string; label: string } => {
-	if (percent > 15)
+	if (percent > 15) {
 		return {
 			border: "border-trade-sell/20 bg-trade-sell/5",
 			label: "text-trade-sell",
 		}
-	if (percent > 5)
+	}
+	if (percent > 5) {
 		return { border: "border-warning/20 bg-warning/5", label: "text-warning" }
+	}
 	return { border: "border-bg-300 bg-bg-100", label: "text-txt-300" }
 }
 
@@ -53,6 +59,41 @@ const getFeeSeverityClasses = (
 const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 	const t = useTranslations("reports.commissionFees")
 	const { formatCurrencyWithSign, formatCurrency } = useFormatting()
+
+	// All memos must be before any early return (Rules of Hooks)
+	const maxAssetFee = useMemo(
+		() =>
+			data?.assetBreakdown && data.assetBreakdown.length > 0
+				? Math.max(...data.assetBreakdown.map((a) => a.totalFees))
+				: 0,
+		[data?.assetBreakdown]
+	)
+
+	const maxMonthFee = useMemo(
+		() =>
+			data?.monthlyTrend && data.monthlyTrend.length > 0
+				? Math.max(...data.monthlyTrend.map((m) => m.totalFees))
+				: 0,
+		[data?.monthlyTrend]
+	)
+
+	// Insight message and severity — memoized
+	const insightMessage = useMemo(
+		() =>
+			data?.summary
+				? getInsightMessage(
+						data.summary,
+						formatCurrency,
+						t as (_key: string, _params?: Record<string, string>) => string
+					)
+				: "",
+		[data?.summary, formatCurrency, t]
+	)
+
+	const feeSeverity = useMemo(
+		() => getFeeSeverityClasses(data?.summary?.feesAsPercentOfGross ?? 0),
+		[data?.summary?.feesAsPercentOfGross]
+	)
 
 	if (!data || !data.hasData) {
 		return (
@@ -71,28 +112,6 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 	const { summary, assetBreakdown, monthlyTrend } = data
 
-	// Bar scaling — memoized
-	const maxAssetFee = useMemo(
-		() => (assetBreakdown.length > 0 ? Math.max(...assetBreakdown.map((a) => a.totalFees)) : 0),
-		[assetBreakdown]
-	)
-
-	const maxMonthFee = useMemo(
-		() => (monthlyTrend.length > 0 ? Math.max(...monthlyTrend.map((m) => m.totalFees)) : 0),
-		[monthlyTrend]
-	)
-
-	// Insight message and severity — memoized
-	const insightMessage = useMemo(
-		() => getInsightMessage(summary, formatCurrency, t as (key: string, params?: Record<string, string>) => string),
-		[summary, formatCurrency, t]
-	)
-
-	const feeSeverity = useMemo(
-		() => getFeeSeverityClasses(summary.feesAsPercentOfGross),
-		[summary.feesAsPercentOfGross]
-	)
-
 	return (
 		<div
 			id="reports-commission-fees"
@@ -108,13 +127,13 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Summary */}
 			<div className="mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
-				<div className="bg-trade-sell-muted px-s-300 py-s-200 rounded">
+				<div className="bg-trade-sell-muted border-trade-sell/40 px-s-300 py-s-200 rounded-sm border">
 					<p className="text-tiny text-txt-300">{t("totalFees")}</p>
 					<p className="text-body sm:text-h3 text-trade-sell font-bold">
 						{formatCurrencyWithSign(-summary.totalFees)}
 					</p>
 				</div>
-				<div className="bg-bg-100 px-s-300 py-s-200 rounded">
+				<div className="bg-bg-100 px-s-300 py-s-200 rounded-sm">
 					<p className="text-tiny text-txt-300">{t("feesPercentOfGross")}</p>
 					<p className="text-body sm:text-h3 text-txt-100 font-semibold">
 						{summary.grossPnl > 0
@@ -122,7 +141,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 							: "—"}
 					</p>
 				</div>
-				<div className="bg-bg-100 px-s-300 py-s-200 rounded">
+				<div className="bg-bg-100 px-s-300 py-s-200 rounded-sm">
 					<p className="text-tiny text-txt-300">{t("avgFeePerTrade")}</p>
 					<p className="text-body sm:text-h3 text-txt-100 font-semibold">
 						{formatCurrencyWithSign(-summary.avgFeePerTrade)}
@@ -154,7 +173,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 											{t("trades", { count: asset.tradeCount })}
 										</span>
 									</div>
-									<div className="gap-m-400 flex shrink-0 items-center">
+									<div className="gap-m-400 flex shrink-0 flex-wrap items-center">
 										<span className="text-tiny text-txt-300 hidden whitespace-nowrap sm:inline">
 											{t("avgFeePerTrade")}:{" "}
 											{formatCurrencyWithSign(-asset.avgFeePerTrade)}
@@ -238,7 +257,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 											{t("trades", { count: month.tradeCount })}
 										</span>
 									</div>
-									<div className="gap-m-400 flex shrink-0 items-center">
+									<div className="gap-m-400 flex shrink-0 flex-wrap items-center">
 										{month.grossPnl > 0 && (
 											<span
 												className={cn(
@@ -276,7 +295,7 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 
 			{/* Insight */}
 			<div
-				className={cn("mt-m-500 p-s-300 rounded border", feeSeverity.border)}
+				className={cn("mt-m-500 p-s-300 rounded-sm border", feeSeverity.border)}
 			>
 				<p className="text-small text-txt-200">
 					<span className={cn("font-medium", feeSeverity.label)}>

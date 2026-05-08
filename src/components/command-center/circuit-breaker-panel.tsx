@@ -116,33 +116,60 @@ export interface MetricCellProps {
 	valueClassName?: string
 }
 
-export const MetricCell = memo(({
-	label,
-	value,
-	subLabel,
-	valueClassName = "text-txt-100",
-}: MetricCellProps) => (
-	<dl className="space-y-s-100 min-w-0">
-		<dt className="text-tiny text-txt-300 truncate">{label}</dt>
-		<dd className={cn("text-body block font-semibold truncate min-w-0", valueClassName)}>
-			{value}
-		</dd>
-		{subLabel && (
-			<dd className="text-tiny text-txt-300 truncate">{subLabel}</dd>
-		)}
-	</dl>
-))
+export const MetricCell = memo(
+	({
+		label,
+		value,
+		subLabel,
+		valueClassName = "text-txt-100",
+	}: MetricCellProps) => (
+		<dl className="space-y-s-100 min-w-0">
+			<dt className="text-tiny text-txt-300 truncate">{label}</dt>
+			<dd
+				className={cn(
+					"text-body block min-w-0 truncate font-semibold",
+					valueClassName
+				)}
+			>
+				{value}
+			</dd>
+			{subLabel && (
+				<dd className="text-tiny text-txt-300 truncate">{subLabel}</dd>
+			)}
+		</dl>
+	)
+)
 MetricCell.displayName = "CircuitBreakerMetricCell"
 
-export const CircuitBreakerPanel = ({
-	status,
-}: CircuitBreakerPanelProps) => {
+export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 	const t = useTranslations("commandCenter.circuitBreaker")
 	const { formatCurrency } = useFormatting()
 
+	// Daily P&L sub-label — must be before any early return
+	const profitTargetForMemo =
+		status && (status.profitTargetCents ?? 0) > 0
+			? fromCents(status.profitTargetCents!)
+			: null
+	const lossLimitForMemo =
+		status && (status.dailyLossLimitCents ?? 0) > 0
+			? fromCents(status.dailyLossLimitCents!)
+			: null
+	const dailyPnLSubLabel = useMemo(
+		() =>
+			profitTargetForMemo && (status?.dailyPnL ?? -1) >= 0
+				? `${t("target")}: ${formatCurrency(profitTargetForMemo)}`
+				: lossLimitForMemo
+					? `${t("limit")}: ${formatCurrency(lossLimitForMemo)}`
+					: undefined,
+		[profitTargetForMemo, lossLimitForMemo, status?.dailyPnL, t, formatCurrency]
+	)
+
 	if (!status) {
 		return (
-			<div id="cc-circuit-breaker" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<div
+				id="cc-circuit-breaker"
+				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			>
 				<div className="gap-s-200 flex items-center">
 					<AlertCircle className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
@@ -154,12 +181,8 @@ export const CircuitBreakerPanel = ({
 	const hasWarnings = status.alerts.length > 0
 
 	// Read limits directly from status (resolved from monthly plan)
-	const profitTarget =
-		status.profitTargetCents > 0 ? fromCents(status.profitTargetCents) : null
-	const lossLimit =
-		status.dailyLossLimitCents > 0
-			? fromCents(status.dailyLossLimitCents)
-			: null
+	const profitTarget = profitTargetForMemo
+	const lossLimit = lossLimitForMemo
 
 	const stateConfig = getCircuitBreakerState(status, profitTarget, lossLimit)
 	const StateIcon = stateConfig.icon
@@ -169,17 +192,6 @@ export const CircuitBreakerPanel = ({
 		status.monthlyLossLimitCents > 0
 			? fromCents(status.monthlyLossLimitCents)
 			: null
-
-	// Daily P&L sub-label — memoized to avoid string construction each render
-	const dailyPnLSubLabel = useMemo(
-		() =>
-			profitTarget && status.dailyPnL >= 0
-				? `${t("target")}: ${formatCurrency(profitTarget)}`
-				: lossLimit
-					? `${t("limit")}: ${formatCurrency(lossLimit)}`
-					: undefined,
-		[profitTarget, lossLimit, status.dailyPnL, t, formatCurrency]
-	)
 
 	return (
 		<div
@@ -289,7 +301,7 @@ export const CircuitBreakerPanel = ({
 			)}
 
 			{/* Row 1: Daily metrics (3 columns) */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-bg-300">
+			<div className="gap-s-300 sm:gap-m-400 divide-bg-300 grid grid-cols-1 divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-3">
 				<MetricCell
 					label={t("dailyPnL")}
 					value={formatCurrency(status.dailyPnL)}
@@ -323,7 +335,7 @@ export const CircuitBreakerPanel = ({
 			</div>
 
 			{/* Row 2: Monthly + Risk metrics (2 columns) */}
-			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 xs:grid-cols-2">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 xs:grid-cols-2 grid grid-cols-1">
 				<MetricCell
 					label={t("monthlyPnL")}
 					value={formatCurrency(status.monthlyPnL)}

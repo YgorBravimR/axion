@@ -34,7 +34,9 @@ const fetchAndDecryptTrades = async (
 	})
 
 	const dek = await getUserDek(userId)
-	if (!dek) return rawResult
+	if (!dek) {
+		return rawResult
+	}
 
 	return rawResult.map((trade) => decryptTradeFields(trade, dek))
 }

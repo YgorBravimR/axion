@@ -8,6 +8,8 @@ import {
 	type DragEvent,
 	type ChangeEvent,
 } from "react"
+import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
 	Upload,
@@ -34,12 +36,11 @@ import { useToast } from "@/components/ui/toast"
 import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { parseCsvContent, generateCsvTemplate } from "@/lib/csv-parser"
 import type { CsvParseResult } from "@/lib/csv-parser"
-import {
-	validateCsvTrades,
-	importCsvTrades,
-	type ProcessedCsvTrade,
-	type CsvValidationResult,
-} from "@/app/actions/csv-import"
+import { validateCsvTrades, importCsvTrades } from "@/app/actions/csv-import"
+import type {
+	ProcessedCsvTrade,
+	CsvValidationResult,
+} from "@/app/actions/csv-import.types"
 import { APP_TIMEZONE } from "@/lib/dates"
 import { CsvImportSummary, type FilterStatus } from "./csv-import-summary"
 import { CsvTradeCard } from "./csv-trade-card"
@@ -57,7 +58,7 @@ export const CsvImport = () => {
 	// File state
 	const [isDragging, setIsDragging] = useState(false)
 	const [fileName, setFileName] = useState<string | null>(null)
-	const [parseResult, setParseResult] = useState<CsvParseResult | null>(null)
+	const [, setParseResult] = useState<CsvParseResult | null>(null)
 
 	// Validation state
 	const [validationResult, setValidationResult] =
@@ -78,14 +79,16 @@ export const CsvImport = () => {
 
 	// Import state
 	const [isImporting, setIsImporting] = useState(false)
-	const [importProgress, setImportProgress] = useState(0)
+	const [, setImportProgress] = useState(0)
 
 	// M8: Accumulate per-trade edits without re-mapping the full array on every keystroke
 	const editsMapRef = useRef<Map<string, ProcessedCsvTrade["edits"]>>(new Map())
 
 	// Filtered trades based on filter selection
 	const filteredTrades = useMemo(() => {
-		if (filter === "all") return processedTrades
+		if (filter === "all") {
+			return processedTrades
+		}
 		return processedTrades.filter((trade) => trade.status === filter)
 	}, [processedTrades, filter])
 
@@ -96,7 +99,9 @@ export const CsvImport = () => {
 	)
 
 	const allSelected = useMemo(() => {
-		if (selectableTrades.length === 0) return false
+		if (selectableTrades.length === 0) {
+			return false
+		}
 		return selectableTrades.every((trade) => selectedIds.has(trade.id))
 	}, [selectableTrades, selectedIds])
 
@@ -163,7 +168,9 @@ export const CsvImport = () => {
 				setValidationResult(validation.data!)
 
 				// Check for replay trades on non-replay accounts
-				const replayCount = result.trades.filter((trade) => trade.isReplayTrade).length
+				const replayCount = result.trades.filter(
+					(trade) => trade.isReplayTrade
+				).length
 				if (validation.data!.accountType !== "replay" && replayCount > 0) {
 					setReplayTradeCount(replayCount)
 					setShowReplayAlert(true)
@@ -196,7 +203,9 @@ export const CsvImport = () => {
 			e.preventDefault()
 			setIsDragging(false)
 			const file = e.dataTransfer.files[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -214,7 +223,9 @@ export const CsvImport = () => {
 	const handleInputChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
 			const file = e.target.files?.[0]
-			if (file) handleFileSelect(file)
+			if (file) {
+				void handleFileSelect(file)
+			}
 		},
 		[handleFileSelect]
 	)
@@ -247,7 +258,9 @@ export const CsvImport = () => {
 
 	// Replay alert handlers
 	const handleAcceptReplayTrades = () => {
-		if (!validationResult) return
+		if (!validationResult) {
+			return
+		}
 		setProcessedTrades(validationResult.trades)
 		const validIds = new Set(
 			validationResult.trades
@@ -259,7 +272,9 @@ export const CsvImport = () => {
 	}
 
 	const handleRejectReplayTrades = () => {
-		if (!validationResult) return
+		if (!validationResult) {
+			return
+		}
 		const nonReplayTrades = validationResult.trades.filter(
 			(trade) => !trade.originalData.isReplayTrade
 		)
@@ -271,7 +286,9 @@ export const CsvImport = () => {
 		}
 		setProcessedTrades(nonReplayTrades)
 		const validIds = new Set(
-			nonReplayTrades.filter((trade) => trade.status !== "skipped").map((trade) => trade.id)
+			nonReplayTrades
+				.filter((trade) => trade.status !== "skipped")
+				.map((trade) => trade.id)
 		)
 		setSelectedIds(validIds)
 		setShowReplayAlert(false)
@@ -313,16 +330,18 @@ export const CsvImport = () => {
 
 	// M8: Write edits into the ref map only — no full array re-map per keystroke.
 	// The card reads from `trade.edits` which is merged at submission time.
-	const handleEditTrade = useCallback((
-		tradeId: string,
-		edits: ProcessedCsvTrade["edits"]
-	) => {
-		editsMapRef.current.set(tradeId, edits)
-		// Update state so the card re-renders with the latest edits value
-		setProcessedTrades((prev) =>
-			prev.map((trade) => (trade.id === tradeId ? { ...trade, edits } : trade))
-		)
-	}, [])
+	const handleEditTrade = useCallback(
+		(tradeId: string, edits: ProcessedCsvTrade["edits"]) => {
+			editsMapRef.current.set(tradeId, edits)
+			// Update state so the card re-renders with the latest edits value
+			setProcessedTrades((prev) =>
+				prev.map((trade) =>
+					trade.id === tradeId ? { ...trade, edits } : trade
+				)
+			)
+		},
+		[]
+	)
 
 	// Import — merges any pending edits from the map before submitting
 	const handleImport = async () => {
@@ -387,10 +406,11 @@ export const CsvImport = () => {
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
 			{/* Upload Area */}
 			{!validationResult && (
-				<div
+				<label
+					htmlFor="csv-file-input"
 					id="csv-upload-zone"
 					className={cn(
-						"p-m-600 sm:p-l-700 lg:p-l-800 rounded-lg border-2 border-dashed text-center transition-colors",
+						"p-m-600 sm:p-l-700 lg:p-l-800 block cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors",
 						isDragging
 							? "border-acc-100 bg-acc-100/10"
 							: "border-bg-300 hover:border-txt-300"
@@ -446,7 +466,7 @@ export const CsvImport = () => {
 							</div>
 						</>
 					)}
-				</div>
+				</label>
 			)}
 
 			{/* Validation Results */}
@@ -566,7 +586,7 @@ export const CsvImport = () => {
 						<p className="text-tiny text-txt-200 font-medium">
 							{t("profitChartGuide.title")}:
 						</p>
-						<ol className="text-tiny text-txt-300 list-inside list-decimal space-y-s-100">
+						<ol className="text-tiny text-txt-300 space-y-s-100 list-inside list-decimal">
 							<li>{t("profitChartGuide.step1")}</li>
 							<li>{t("profitChartGuide.step2")}</li>
 							<li>{t("profitChartGuide.step3")}</li>
@@ -574,13 +594,12 @@ export const CsvImport = () => {
 							<li>{t("profitChartGuide.step5")}</li>
 						</ol>
 						{/* H6: lazy-loaded image with explicit dimensions to prevent layout shift */}
-						<img
+						<Image
 							src="/operations_tab.png"
 							alt={t("profitChartGuide.title")}
-							loading="lazy"
 							width={800}
 							height={450}
-							className="mt-s-300 w-full rounded-md border border-bg-300"
+							className="mt-s-300 border-bg-300 w-full rounded-md border"
 						/>
 						<p className="text-tiny text-txt-300 mt-s-200 italic">
 							{t("profitChartGuide.tip")}
@@ -588,7 +607,7 @@ export const CsvImport = () => {
 						<p className="text-tiny text-txt-300 mt-s-100">
 							{t("profitChartGuide.columnsNote")}
 						</p>
-						<a
+						<Link
 							href={t("profitChartGuide.docsUrl")}
 							target="_blank"
 							rel="noopener noreferrer"
@@ -597,7 +616,7 @@ export const CsvImport = () => {
 							aria-label={t("profitChartGuide.docsLink")}
 						>
 							{t("profitChartGuide.docsLink")} &#8599;
-						</a>
+						</Link>
 					</div>
 				</div>
 
@@ -606,25 +625,27 @@ export const CsvImport = () => {
 				</p>
 				<ul className="mt-s-300 gap-s-200 text-small text-txt-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">asset</code>
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
+							asset
+						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							direction
 						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							entry_date
 						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							entry_price
 						</code>
 					</li>
 					<li>
-						<code className="bg-bg-100 px-s-100 text-tiny rounded">
+						<code className="bg-bg-100 px-s-100 text-tiny rounded-sm">
 							position_size
 						</code>
 					</li>
@@ -650,7 +671,7 @@ export const CsvImport = () => {
 									.filter((trade) => trade.originalData.isReplayTrade)
 									.map((trade) => (
 										<li key={trade.id} className="gap-s-200 flex items-center">
-											<span className="bg-warn-100/20 px-s-100 text-tiny text-warn-100 rounded font-medium">
+											<span className="bg-warning/20 px-s-100 text-tiny text-warning rounded-sm font-medium">
 												[R]
 											</span>
 											<span className="font-medium">

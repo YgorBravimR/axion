@@ -6,16 +6,21 @@ import type { CandleRow } from "./candle"
 
 type Direction = "long" | "short"
 
-type StrategyPresetId = "orb_test_1" | "orb_test_2" | "orb_test_3" | "orb_test_4" | "custom"
+type StrategyPresetId =
+	| "orb_test_1"
+	| "orb_test_2"
+	| "orb_test_3"
+	| "orb_test_4"
+	| "custom"
 
 // ═══════════════════════════════════════════════════════════════════
 // Asset Configuration
 // ═══════════════════════════════════════════════════════════════════
 
 interface AssetConfig {
-	tickSize: number       // minimum price increment (e.g., 5 for WINFUT)
+	tickSize: number // minimum price increment (e.g., 5 for WINFUT)
 	tickValueCents: number // cents per tick (e.g., 100 for WINFUT = R$1.00/tick)
-	currency: string       // "BRL"
+	currency: string // "BRL"
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -23,11 +28,11 @@ interface AssetConfig {
 // ═══════════════════════════════════════════════════════════════════
 
 interface DayContext {
-	dayKey: string            // "YYYY-MM-DD"
-	candleIndexInDay: number  // 0-based within the trading day
+	dayKey: string // "YYYY-MM-DD"
+	candleIndexInDay: number // 0-based within the trading day
 	brtHour: number
 	brtMinute: number
-	brtHHMM: number           // e.g., 930 for 09:30
+	brtHHMM: number // e.g., 930 for 09:30
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -36,11 +41,11 @@ interface DayContext {
 
 interface EntrySignal {
 	direction: Direction
-	price: number              // entry price (before slippage)
-	stopReference?: number     // pre-computed stop price (entry module can suggest)
-	rangeHigh?: number         // optional — only for range-based strategies
-	rangeLow?: number          // optional
-	rangeWidth?: number        // optional
+	price: number // entry price (before slippage)
+	stopReference?: number // pre-computed stop price (entry module can suggest)
+	rangeHigh?: number // optional — only for range-based strategies
+	rangeLow?: number // optional
+	rangeWidth?: number // optional
 	label: string
 }
 
@@ -51,23 +56,23 @@ interface EntryState {
 // --- Entry module configs (union for all strategy types) ---
 
 interface OrbEntryConfig {
-	startTime: number       // HHMM, e.g., 900
-	endTime: number         // HHMM, e.g., 905
-	ticksBuffer: number     // ticks added to range for breakout trigger
-	ignorarGaps: boolean    // use body (open/close) instead of high/low for range
+	startTime: number // HHMM, e.g., 900
+	endTime: number // HHMM, e.g., 905
+	ticksBuffer: number // ticks added to range for breakout trigger
+	ignorarGaps: boolean // use body (open/close) instead of high/low for range
 }
 
 interface MACDWMAConfig {
-	macdFast: number         // 12
-	macdSlow: number         // 26
-	macdSignal: number       // 15
-	wmaFast: number          // 9
-	wmaSlow: number          // 21
-	candlesAfterAlignment: number  // 2 (v4) or 0 (v3 = same bar)
-	stopBufferPoints: number       // 30 (v4) or 10 (v3)
-	requireZeroCross: boolean      // false (v4) or true (v3)
-	startTime: number        // 903
-	endTime: number          // 1630
+	macdFast: number // 12
+	macdSlow: number // 26
+	macdSignal: number // 15
+	wmaFast: number // 9
+	wmaSlow: number // 21
+	candlesAfterAlignment: number // 2 (v4) or 0 (v3 = same bar)
+	stopBufferPoints: number // 30 (v4) or 10 (v3)
+	requireZeroCross: boolean // false (v4) or true (v3)
+	startTime: number // 903
+	endTime: number // 1630
 }
 
 type EntryModuleConfig =
@@ -75,12 +80,17 @@ type EntryModuleConfig =
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
 
 interface EntryModule {
-	init: (config: OrbEntryConfig) => EntryState
-	onCandle: (candle: CandleRow, state: EntryState, ctx: DayContext, tickSize: number) => {
+	init: (_config: OrbEntryConfig) => EntryState
+	onCandle: (
+		_candle: CandleRow,
+		_state: EntryState,
+		_ctx: DayContext,
+		_tickSize: number
+	) => {
 		state: EntryState
 		signal: EntrySignal | null
 	}
-	onDayEnd: (state: EntryState) => EntryState
+	onDayEnd: (_state: EntryState) => EntryState
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -93,20 +103,23 @@ type StopPhase = "initial" | "breakeven" | "trailing"
 
 interface PctRangeStopConfig {
 	type: "pct_range"
-	pct: number            // % of range (e.g., 30 = stop at 30% of range from entry)
+	pct: number // % of range (e.g., 30 = stop at 30% of range from entry)
 }
 
 interface FixedPointsStopConfig {
 	type: "fixed_points"
-	points: number         // fixed points from entry
+	points: number // fixed points from entry
 }
 
 interface FullRangeStopConfig {
 	type: "full_range"
-	ticksBuffer: number    // ticks beyond opposite range end
+	ticksBuffer: number // ticks beyond opposite range end
 }
 
-type InitialStopConfig = PctRangeStopConfig | FixedPointsStopConfig | FullRangeStopConfig
+type InitialStopConfig =
+	| PctRangeStopConfig
+	| FixedPointsStopConfig
+	| FullRangeStopConfig
 
 // --- Breakeven types ---
 
@@ -116,7 +129,7 @@ interface OnPartialBreakevenConfig {
 
 interface OnPctRiskBreakevenConfig {
 	type: "on_pct_risk"
-	triggerPct: number     // % of risk distance in favorable direction
+	triggerPct: number // % of risk distance in favorable direction
 }
 
 type BreakevenConfig = OnPartialBreakevenConfig | OnPctRiskBreakevenConfig
@@ -125,14 +138,14 @@ type BreakevenConfig = OnPartialBreakevenConfig | OnPctRiskBreakevenConfig
 
 interface PriceDistanceTrailingConfig {
 	type: "price_distance"
-	distance: number       // points behind best price
+	distance: number // points behind best price
 	activationPct?: number // optional: start trailing after X% of risk recovered
 }
 
 interface IndicatorTrailingConfig {
 	type: "indicator"
-	wmaPeriod: number        // WMA period for trailing (e.g., 9)
-	offset: number           // lookback offset (e.g., 1 = previous bar's WMA)
+	wmaPeriod: number // WMA period for trailing (e.g., 9)
+	offset: number // lookback offset (e.g., 1 = previous bar's WMA)
 }
 
 type TrailingConfig = PriceDistanceTrailingConfig | IndicatorTrailingConfig
@@ -150,8 +163,8 @@ interface StopState {
 	currentStopPrice: number
 	entryPrice: number
 	direction: Direction
-	initialStopDistance: number   // absolute distance from entry to initial stop
-	bestPrice: number            // best favorable price seen (for trailing)
+	initialStopDistance: number // absolute distance from entry to initial stop
+	bestPrice: number // best favorable price seen (for trailing)
 	breakevenTriggered: boolean
 	partialExitOccurred: boolean // set by engine when partial TP fills
 }
@@ -164,9 +177,19 @@ interface StopResult {
 }
 
 interface StopModule {
-	init: (entryPrice: number, direction: Direction, signal: EntrySignal, config: StopConfig, tickSize: number) => StopState
-	onCandle: (candle: CandleRow, state: StopState, config: StopConfig) => StopResult
-	notifyPartialExit: (state: StopState, config: StopConfig) => StopState
+	init: (
+		_entryPrice: number,
+		_direction: Direction,
+		_signal: EntrySignal,
+		_config: StopConfig,
+		_tickSize: number
+	) => StopState
+	onCandle: (
+		_candle: CandleRow,
+		_state: StopState,
+		_config: StopConfig
+	) => StopResult
+	notifyPartialExit: (_state: StopState, _config: StopConfig) => StopState
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -184,22 +207,22 @@ interface StopModule {
 type TargetMode = "r_multiple" | "pct_range" | "pct_stop" | "fixed_points"
 
 interface TargetLevel {
-	value: number          // interpreted based on mode (e.g., 2 for 2R, 100 for 100% range)
+	value: number // interpreted based on mode (e.g., 2 for 2R, 100 for 100% range)
 	mode: TargetMode
-	exitPct: number        // % of total position to exit at this level (1-100)
-	label: string          // "target1", "target2", etc.
+	exitPct: number // % of total position to exit at this level (1-100)
+	label: string // "target1", "target2", etc.
 }
 
 interface FixedLevelsTargetConfig {
 	type: "fixed_levels"
 	levels: TargetLevel[]
-	eodTime: number        // HHMM for end-of-day forced exit (e.g., 1730)
+	eodTime: number // HHMM for end-of-day forced exit (e.g., 1730)
 }
 
 type TargetConfig = FixedLevelsTargetConfig
 
 interface TargetState {
-	levelsHit: boolean[]   // track which levels have been reached
+	levelsHit: boolean[] // track which levels have been reached
 	targetPrices: number[] // computed absolute prices
 }
 
@@ -215,8 +238,20 @@ interface TargetResult {
 }
 
 interface TargetModule {
-	init: (entryPrice: number, direction: Direction, signal: EntrySignal, config: TargetConfig, stopDistance?: number) => TargetState
-	onCandle: (candle: CandleRow, state: TargetState, config: TargetConfig, direction: Direction, ctx: DayContext) => TargetResult
+	init: (
+		_entryPrice: number,
+		_direction: Direction,
+		_signal: EntrySignal,
+		_config: TargetConfig,
+		_stopDistance?: number
+	) => TargetState
+	onCandle: (
+		_candle: CandleRow,
+		_state: TargetState,
+		_config: TargetConfig,
+		_direction: Direction,
+		_ctx: DayContext
+	) => TargetResult
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -233,8 +268,8 @@ type RiskDistribution = "per_trade" | "per_day"
 
 interface MonetaryRiskSizingConfig {
 	type: "monetary_risk"
-	riskAmountCents: number       // max risk in cents (e.g., 8000 = R$80)
-	valuePerPointCents: number    // cents per point per contract (e.g., 20 = R$0.20)
+	riskAmountCents: number // max risk in cents (e.g., 8000 = R$80)
+	valuePerPointCents: number // cents per point per contract (e.g., 20 = R$0.20)
 	riskDistribution: RiskDistribution
 }
 
@@ -254,7 +289,7 @@ interface FixedLotsSizingConfig {
 type SizingConfig = MonetaryRiskSizingConfig | FixedLotsSizingConfig
 
 interface SizingModule {
-	calculate: (stopDistance: number, config: SizingConfig) => number
+	calculate: (_stopDistance: number, _config: SizingConfig) => number
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -267,8 +302,8 @@ interface NoReversalConfig {
 
 interface ReverseOnStopConfig {
 	type: "reverse_on_stop"
-	maxReversals: number   // max reversals per day (typically 1)
-	virarNoBE: boolean     // allow reversal when stopped at breakeven? false = block
+	maxReversals: number // max reversals per day (typically 1)
+	virarNoBE: boolean // allow reversal when stopped at breakeven? false = block
 }
 
 type ReversalConfig = NoReversalConfig | ReverseOnStopConfig
@@ -285,7 +320,11 @@ interface ReversalResult {
 
 interface ReversalModule {
 	init: () => ReversalState
-	check: (exitReason: string, state: ReversalState, config: ReversalConfig) => ReversalResult
+	check: (
+		_exitReason: string,
+		_state: ReversalState,
+		_config: ReversalConfig
+	) => ReversalResult
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -314,7 +353,7 @@ interface StrategyRecipe {
 interface BacktestInput {
 	assetId: string
 	timeframeId: string
-	dateRange: { from: string; to: string }  // ISO date strings
+	dateRange: { from: string; to: string } // ISO date strings
 	recipe: StrategyRecipe
 }
 
@@ -324,13 +363,13 @@ interface BacktestInput {
 
 interface Position {
 	direction: Direction
-	entryPrice: number          // after slippage
+	entryPrice: number // after slippage
 	contracts: number
-	contractsRemaining: number  // decreases on partial exits
+	contractsRemaining: number // decreases on partial exits
 	stopState: StopState
 	targetState: TargetState
-	riskCents: number           // initial risk for R-multiple calculation
-	entryTimestamp: string      // ISO timestamp of entry candle
+	riskCents: number // initial risk for R-multiple calculation
+	entryTimestamp: string // ISO timestamp of entry candle
 	entryDayKey: string
 	label: string
 }
@@ -347,7 +386,13 @@ interface BacktestTrade {
 	entryTime: string
 	exitPrice: number
 	exitTime: string
-	exitReason: "target1" | "target2" | "stop" | "breakeven_stop" | "eod" | "reverse_stop"
+	exitReason:
+		| "target1"
+		| "target2"
+		| "stop"
+		| "breakeven_stop"
+		| "eod"
+		| "reverse_stop"
 	contracts: number
 	grossPnlCents: number
 	slippageCostCents: number
@@ -368,7 +413,7 @@ interface BacktestSummary {
 	wins: number
 	losses: number
 	breakevens: number
-	winRate: number              // 0-100
+	winRate: number // 0-100
 	profitFactor: number
 	totalPnlCents: number
 	avgPnlCents: number
@@ -379,9 +424,9 @@ interface BacktestSummary {
 	maxConsecutiveLosses: number
 	maxConsecutiveWins: number
 	sharpeRatio: number
-	expectancy: number           // avg R-multiple (same as avgRMultiple, kept for clarity)
+	expectancy: number // avg R-multiple (same as avgRMultiple, kept for clarity)
 	totalDays: number
-	tradingDays: number          // days with at least one trade
+	tradingDays: number // days with at least one trade
 }
 
 interface DayBreakdown {

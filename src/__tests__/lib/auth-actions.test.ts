@@ -94,6 +94,7 @@ vi.mock("@/db/schema", () => ({
 }))
 
 vi.mock("drizzle-orm", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("drizzle-orm")>()
 	return {
 		...original,
@@ -119,6 +120,7 @@ vi.mock("@/auth", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }))
 vi.mock("react", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("react")>()
 	return { ...original, cache: (fn: unknown) => fn }
 })
@@ -168,7 +170,8 @@ const createMockUser = (options: MockUserOptions = {}) => ({
 	id: options.id ?? "user-abc-123",
 	email: options.email ?? "trader@example.com",
 	passwordHash: options.passwordHash ?? "$2b$12$hashedpassword",
-	emailVerified: options.emailVerified !== undefined ? options.emailVerified : new Date(),
+	emailVerified:
+		options.emailVerified !== undefined ? options.emailVerified : new Date(),
 	name: "Test Trader",
 	encryptedDek: null,
 	isAdmin: false,
@@ -181,13 +184,15 @@ const createMockUser = (options: MockUserOptions = {}) => ({
 	updatedAt: new Date("2026-01-01"),
 })
 
-const createMockAccount = (overrides: Partial<{
-	id: string
-	name: string
-	accountType: string
-	isDefault: boolean
-	userId: string
-}> = {}) => ({
+const createMockAccount = (
+	overrides: Partial<{
+		id: string
+		name: string
+		accountType: string
+		isDefault: boolean
+		userId: string
+	}> = {}
+) => ({
 	id: overrides.id ?? "account-xyz-789",
 	name: overrides.name ?? "Personal",
 	accountType: overrides.accountType ?? "personal",
@@ -196,11 +201,19 @@ const createMockAccount = (overrides: Partial<{
 })
 
 const allowRateLimit = () => {
-	loginLimiterCheckMock.mockResolvedValue({ allowed: true, remaining: 4, retryAfterMs: 0 })
+	loginLimiterCheckMock.mockResolvedValue({
+		allowed: true,
+		remaining: 4,
+		retryAfterMs: 0,
+	})
 }
 
 const denyRateLimit = (retryAfterMs = 300_000) => {
-	loginLimiterCheckMock.mockResolvedValue({ allowed: false, remaining: 0, retryAfterMs })
+	loginLimiterCheckMock.mockResolvedValue({
+		allowed: false,
+		remaining: 0,
+		retryAfterMs,
+	})
 }
 
 const allowLockout = () => {
@@ -208,10 +221,7 @@ const allowLockout = () => {
 	loginLimiterGetLatestMock.mockResolvedValue(null)
 }
 
-const lockAccount = ({
-	failures = 5,
-	lastFailureAgo = 5_000,
-} = {}) => {
+const lockAccount = ({ failures = 5, lastFailureAgo = 5_000 } = {}) => {
 	loginLimiterCountAttemptsMock.mockResolvedValue(failures)
 	const lastFailure = new Date(Date.now() - lastFailureAgo)
 	loginLimiterGetLatestMock.mockResolvedValue(lastFailure)
@@ -230,14 +240,20 @@ describe("loginUser()", () => {
 
 	describe("input validation", () => {
 		it("should return an error for an invalid email format", async () => {
-			const result = await loginUser({ email: "not-an-email", password: "Password1" })
+			const result = await loginUser({
+				email: "not-an-email",
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toBeTruthy()
 		})
 
 		it("should return an error when password is empty", async () => {
-			const result = await loginUser({ email: "user@example.com", password: "" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toBeTruthy()
@@ -248,7 +264,10 @@ describe("loginUser()", () => {
 		it("should return an error when the rate limit is exceeded", async () => {
 			denyRateLimit(5 * 60 * 1000) // 5 minutes remaining
 
-			const result = await loginUser({ email: "user@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toMatch(/too many/i)
@@ -258,7 +277,10 @@ describe("loginUser()", () => {
 		it("should include the rounded-up minute count in the rate limit error message", async () => {
 			denyRateLimit(90_000) // 90 seconds → ceil(90000/60000) = 2 minutes
 
-			const result = await loginUser({ email: "user@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toMatch(/2 minute/i)
@@ -270,7 +292,10 @@ describe("loginUser()", () => {
 			allowRateLimit()
 			lockAccount({ failures: 5, lastFailureAgo: 5_000 }) // last failure 5 seconds ago
 
-			const result = await loginUser({ email: "user@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toMatch(/locked/i)
@@ -282,7 +307,10 @@ describe("loginUser()", () => {
 
 			dbQueryMock.users.findFirst.mockResolvedValue(null)
 
-			const result = await loginUser({ email: "user@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "Password1",
+			})
 
 			// Should fail because user not found — NOT because of lockout
 			expect(result.error).not.toMatch(/locked/i)
@@ -295,7 +323,10 @@ describe("loginUser()", () => {
 
 			dbQueryMock.users.findFirst.mockResolvedValue(null)
 
-			const result = await loginUser({ email: "user@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "Password1",
+			})
 
 			expect(result.error).not.toMatch(/locked/i)
 		})
@@ -332,7 +363,9 @@ describe("loginUser()", () => {
 			allowRateLimit()
 			allowLockout()
 
-			const verifiedUser = createMockUser({ emailVerified: new Date("2026-01-15T00:00:00Z") })
+			const verifiedUser = createMockUser({
+				emailVerified: new Date("2026-01-15T00:00:00Z"),
+			})
 			const account = createMockAccount()
 
 			dbQueryMock.users.findFirst.mockResolvedValue(verifiedUser)
@@ -340,7 +373,10 @@ describe("loginUser()", () => {
 			dbQueryMock.tradingAccounts.findMany.mockResolvedValue([account])
 			signInMock.mockResolvedValue(undefined)
 
-			const result = await loginUser({ email: verifiedUser.email, password: "Password1" })
+			const result = await loginUser({
+				email: verifiedUser.email,
+				password: "Password1",
+			})
 
 			expect(result.error).not.toBe("EMAIL_NOT_VERIFIED")
 		})
@@ -358,7 +394,9 @@ describe("loginUser()", () => {
 			await loginUser({ email: user.email, password: "WrongPassword1" })
 
 			expect(loginLimiterRecordMock).toHaveBeenCalledOnce()
-			expect(loginLimiterRecordMock).toHaveBeenCalledWith(`login-fail:${user.email}`)
+			expect(loginLimiterRecordMock).toHaveBeenCalledWith(
+				`login-fail:${user.email}`
+			)
 		})
 
 		it("should return an invalid credentials error when password is wrong", async () => {
@@ -369,7 +407,10 @@ describe("loginUser()", () => {
 			dbQueryMock.users.findFirst.mockResolvedValue(user)
 			bcryptCompareMock.mockResolvedValue(false)
 
-			const result = await loginUser({ email: user.email, password: "WrongPass1" })
+			const result = await loginUser({
+				email: user.email,
+				password: "WrongPass1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toMatch(/invalid email or password/i)
@@ -381,7 +422,10 @@ describe("loginUser()", () => {
 
 			dbQueryMock.users.findFirst.mockResolvedValue(null)
 
-			const result = await loginUser({ email: "nobody@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "nobody@example.com",
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toMatch(/invalid email or password/i)
@@ -403,7 +447,9 @@ describe("loginUser()", () => {
 
 			await loginUser({ email: user.email, password: "Password1" })
 
-			expect(loginLimiterResetMock).toHaveBeenCalledWith(`login-fail:${user.email}`)
+			expect(loginLimiterResetMock).toHaveBeenCalledWith(
+				`login-fail:${user.email}`
+			)
 		})
 
 		it("should return status=success after a valid login with a single account", async () => {
@@ -418,7 +464,10 @@ describe("loginUser()", () => {
 			dbQueryMock.tradingAccounts.findMany.mockResolvedValue([account])
 			signInMock.mockResolvedValue(undefined)
 
-			const result = await loginUser({ email: user.email, password: "Password1" })
+			const result = await loginUser({
+				email: user.email,
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("success")
 		})
@@ -437,7 +486,10 @@ describe("loginUser()", () => {
 			bcryptCompareMock.mockResolvedValue(true)
 			dbQueryMock.tradingAccounts.findMany.mockResolvedValue(accounts)
 
-			const result = await loginUser({ email: user.email, password: "Password1" })
+			const result = await loginUser({
+				email: user.email,
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("success")
 			expect(result.needsAccountSelection).toBe(true)
@@ -458,7 +510,10 @@ describe("loginUser()", () => {
 			bcryptCompareMock.mockResolvedValue(true)
 			dbQueryMock.tradingAccounts.findMany.mockResolvedValue(accounts)
 
-			const result = await loginUser({ email: user.email, password: "Password1" })
+			const result = await loginUser({
+				email: user.email,
+				password: "Password1",
+			})
 
 			if (result.accounts) {
 				for (const account of result.accounts) {
@@ -473,7 +528,10 @@ describe("loginUser()", () => {
 			allowRateLimit()
 			allowLockout()
 
-			const user = createMockUser({ email: "trader@example.com", emailVerified: new Date() })
+			const user = createMockUser({
+				email: "trader@example.com",
+				emailVerified: new Date(),
+			})
 			const account = createMockAccount()
 
 			dbQueryMock.users.findFirst.mockResolvedValue(user)
@@ -483,7 +541,9 @@ describe("loginUser()", () => {
 
 			await loginUser({ email: "TRADER@EXAMPLE.COM", password: "Password1" })
 
-			expect(loginLimiterCheckMock).toHaveBeenCalledWith("login:trader@example.com")
+			expect(loginLimiterCheckMock).toHaveBeenCalledWith(
+				"login:trader@example.com"
+			)
 		})
 	})
 
@@ -492,9 +552,14 @@ describe("loginUser()", () => {
 			allowRateLimit()
 			allowLockout()
 
-			dbQueryMock.users.findFirst.mockRejectedValue(new Error("DB connection failure"))
+			dbQueryMock.users.findFirst.mockRejectedValue(
+				new Error("DB connection failure")
+			)
 
-			const result = await loginUser({ email: "user@example.com", password: "Password1" })
+			const result = await loginUser({
+				email: "user@example.com",
+				password: "Password1",
+			})
 
 			expect(result.status).toBe("error")
 			expect(result.error).toMatch(/error occurred/i)

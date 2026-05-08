@@ -1,4 +1,5 @@
-import { Page, expect, Locator } from "@playwright/test"
+import type { Page, Locator } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { ROUTES } from "../fixtures/test-data"
 
 /**
@@ -56,7 +57,11 @@ export const waitForLoading = async (page: Page) => {
 /**
  * Fill a form field by label
  */
-export const fillField = async (page: Page, label: string | RegExp, value: string) => {
+export const fillField = async (
+	page: Page,
+	label: string | RegExp,
+	value: string
+) => {
 	const field = page.getByLabel(label)
 	await field.clear()
 	await field.fill(value)
@@ -65,8 +70,15 @@ export const fillField = async (page: Page, label: string | RegExp, value: strin
 /**
  * Select an option from a dropdown
  */
-export const selectOption = async (page: Page, triggerSelector: string | Locator, optionText: string | RegExp) => {
-	const trigger = typeof triggerSelector === "string" ? page.locator(triggerSelector) : triggerSelector
+export const selectOption = async (
+	page: Page,
+	triggerSelector: string | Locator,
+	optionText: string | RegExp
+) => {
+	const trigger =
+		typeof triggerSelector === "string"
+			? page.locator(triggerSelector)
+			: triggerSelector
 	await trigger.click()
 	await page.getByRole("option", { name: optionText }).click()
 }
@@ -74,14 +86,20 @@ export const selectOption = async (page: Page, triggerSelector: string | Locator
 /**
  * Check if element exists
  */
-export const elementExists = async (page: Page, selector: string): Promise<boolean> => {
+export const elementExists = async (
+	page: Page,
+	selector: string
+): Promise<boolean> => {
 	return (await page.locator(selector).count()) > 0
 }
 
 /**
  * Get table row count
  */
-export const getTableRowCount = async (page: Page, tableSelector: string = "table"): Promise<number> => {
+export const getTableRowCount = async (
+	page: Page,
+	tableSelector: string = "table"
+): Promise<number> => {
 	return await page.locator(`${tableSelector} tbody tr`).count()
 }
 
@@ -95,21 +113,32 @@ export const screenshot = async (page: Page, name: string) => {
 /**
  * Wait for navigation to complete
  */
-export const waitForNavigation = async (page: Page, urlPattern: string | RegExp) => {
+export const waitForNavigation = async (
+	page: Page,
+	urlPattern: string | RegExp
+) => {
 	await expect(page).toHaveURL(urlPattern, { timeout: 10000 })
 }
 
 /**
  * Click and wait for navigation
  */
-export const clickAndNavigate = async (page: Page, locator: Locator, urlPattern: string | RegExp) => {
+export const clickAndNavigate = async (
+	page: Page,
+	locator: Locator,
+	urlPattern: string | RegExp
+) => {
 	await Promise.all([page.waitForURL(urlPattern), locator.click()])
 }
 
 /**
  * Fill date input
  */
-export const fillDateInput = async (page: Page, label: string | RegExp, date: Date) => {
+export const fillDateInput = async (
+	page: Page,
+	label: string | RegExp,
+	date: Date
+) => {
 	const dateStr = date.toISOString().split("T")[0]
 	const field = page.getByLabel(label)
 	await field.fill(dateStr)
@@ -143,7 +172,10 @@ export const checkAccessibility = async (page: Page) => {
 /**
  * Check responsive layout
  */
-export const checkResponsive = async (page: Page, viewport: { width: number; height: number }) => {
+export const checkResponsive = async (
+	page: Page,
+	viewport: { width: number; height: number }
+) => {
 	await page.setViewportSize(viewport)
 	await page.waitForTimeout(500) // Wait for layout to adjust
 }
@@ -188,10 +220,15 @@ export const waitForSuspenseLoad = async (page: Page, timeout = 15000) => {
 /**
  * Clear and fill a number input field by its label or id
  */
-export const fillNumberInput = async (page: Page, labelOrId: string | RegExp, value: string) => {
-	const field = typeof labelOrId === "string" && labelOrId.startsWith("#")
-		? page.locator(labelOrId)
-		: page.getByLabel(labelOrId)
+export const fillNumberInput = async (
+	page: Page,
+	labelOrId: string | RegExp,
+	value: string
+) => {
+	const field =
+		typeof labelOrId === "string" && labelOrId.startsWith("#")
+			? page.locator(labelOrId)
+			: page.getByLabel(labelOrId)
 	await field.clear()
 	await field.fill(value)
 }
@@ -208,10 +245,17 @@ export const verifyCardMetric = async (page: Page, label: string | RegExp) => {
  * Click a locator only if it is currently enabled. No-op when disabled.
  * Useful for month-pagination buttons that disable at boundary months.
  */
-export const clickIfEnabled = async (page: Page, selector: string): Promise<boolean> => {
+export const clickIfEnabled = async (
+	page: Page,
+	selector: string
+): Promise<boolean> => {
 	const target = page.locator(selector)
-	if (!(await target.isVisible().catch(() => false))) return false
-	if (await target.isDisabled().catch(() => true)) return false
+	if (!(await target.isVisible().catch(() => false))) {
+		return false
+	}
+	if (await target.isDisabled().catch(() => true)) {
+		return false
+	}
 	await target.click()
 	return true
 }

@@ -83,7 +83,7 @@ const updateWMA = (
 	let weightSum = 0
 	for (let i = 0; i < buffer.length; i++) {
 		const weight = i + 1
-		weightedSum += buffer[i] * weight
+		weightedSum += buffer[i]! * weight
 		weightSum += weight
 	}
 
@@ -96,7 +96,7 @@ const computeWMAFromSlice = (slice: number[]): number => {
 	let weightSum = 0
 	for (let i = 0; i < slice.length; i++) {
 		const weight = i + 1
-		weightedSum += slice[i] * weight
+		weightedSum += slice[i]! * weight
 		weightSum += weight
 	}
 	return weightedSum / weightSum
@@ -105,13 +105,17 @@ const computeWMAFromSlice = (slice: number[]): number => {
 /** Get WMA value with offset (0 = current, 1 = previous bar, etc.) */
 const getWMAWithOffset = (state: WMAState, offset: number): number | null => {
 	if (offset === 0) {
-		if (state.buffer.length < state.period) return null
+		if (state.buffer.length < state.period) {
+			return null
+		}
 		return computeWMAFromSlice(state.buffer)
 	}
 
 	// For offset > 0, compute WMA on a shorter slice
 	const end = state.buffer.length - offset
-	if (end < state.period) return null
+	if (end < state.period) {
+		return null
+	}
 	return computeWMAFromSlice(state.buffer.slice(end - state.period, end))
 }
 

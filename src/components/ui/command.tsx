@@ -10,11 +10,7 @@ import {
 import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-	Dialog,
-	DialogContent,
-	DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 const Command = forwardRef<
 	ElementRef<typeof CommandPrimitive>,
@@ -34,7 +30,7 @@ Command.displayName = CommandPrimitive.displayName
 interface CommandDialogProps {
 	children: ReactNode
 	open?: boolean
-	onOpenChange?: (open: boolean) => void
+	onOpenChange?: (_open: boolean) => void
 	title?: string
 }
 
@@ -50,7 +46,7 @@ const CommandDialog = ({
 			aria-describedby={undefined}
 		>
 			<DialogTitle className="sr-only">{title}</DialogTitle>
-			<Command className="[&_[cmdk-group-heading]]:text-txt-300 [&_[cmdk-group-heading]]:px-s-200 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-s-200 [&_[cmdk-item]]:py-s-300 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+			<Command className="[&_[cmdk-group-heading]]:text-txt-300 [&_[cmdk-group-heading]]:px-s-200 [&_[cmdk-item]]:px-s-200 [&_[cmdk-item]]:py-s-300 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
 				{children}
 			</Command>
 		</DialogContent>
@@ -61,12 +57,15 @@ const CommandInput = forwardRef<
 	ElementRef<typeof CommandPrimitive.Input>,
 	ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
-	<div className="flex items-center border-b border-bg-300 px-s-300" cmdk-input-wrapper="">
-		<Search className="mr-s-200 h-4 w-4 shrink-0 text-txt-300 opacity-50" />
+	<div
+		className="border-bg-300 px-s-300 flex items-center border-b"
+		cmdk-input-wrapper=""
+	>
+		<Search className="mr-s-200 text-txt-300 h-4 w-4 shrink-0 opacity-50" />
 		<CommandPrimitive.Input
 			ref={ref}
 			className={cn(
-				"placeholder:text-txt-placeholder flex h-11 w-full rounded-md bg-transparent py-s-300 text-small outline-none disabled:cursor-not-allowed disabled:opacity-50",
+				"placeholder:text-txt-placeholder py-s-300 text-small flex h-11 w-full rounded-md bg-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50",
 				className
 			)}
 			{...props}
@@ -81,10 +80,7 @@ const CommandList = forwardRef<
 >(({ className, ...props }, ref) => (
 	<CommandPrimitive.List
 		ref={ref}
-		className={cn(
-			"max-h-[300px] overflow-y-auto overflow-x-hidden",
-			className
-		)}
+		className={cn("max-h-[300px] overflow-x-hidden overflow-y-auto", className)}
 		{...props}
 	/>
 ))
@@ -96,7 +92,7 @@ const CommandEmpty = forwardRef<
 >((props, ref) => (
 	<CommandPrimitive.Empty
 		ref={ref}
-		className="py-m-600 text-center text-small text-txt-300"
+		className="py-m-600 text-small text-txt-300 text-center"
 		{...props}
 	/>
 ))
@@ -109,7 +105,7 @@ const CommandGroup = forwardRef<
 	<CommandPrimitive.Group
 		ref={ref}
 		className={cn(
-			"text-txt-100 overflow-hidden p-s-100 [&_[cmdk-group-heading]]:px-s-200 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-tiny [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-txt-300",
+			"text-txt-100 p-s-100 [&_[cmdk-group-heading]]:px-s-200 [&_[cmdk-group-heading]]:text-tiny [&_[cmdk-group-heading]]:text-txt-300 overflow-hidden [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-medium",
 			className
 		)}
 		{...props}
@@ -123,7 +119,7 @@ const CommandSeparator = forwardRef<
 >(({ className, ...props }, ref) => (
 	<CommandPrimitive.Separator
 		ref={ref}
-		className={cn("-mx-s-100 h-px bg-bg-300", className)}
+		className={cn("-mx-s-100 bg-bg-300 h-px", className)}
 		{...props}
 	/>
 ))
@@ -136,7 +132,7 @@ const CommandItem = forwardRef<
 	<CommandPrimitive.Item
 		ref={ref}
 		className={cn(
-			"relative flex cursor-default select-none items-center gap-s-200 rounded-sm px-s-200 py-1.5 text-small outline-none data-[selected=true]:bg-bg-300 data-[selected=true]:text-txt-100 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+			"gap-s-200 px-s-200 text-small data-[selected=true]:bg-bg-300 data-[selected=true]:text-txt-100 relative flex cursor-default items-center rounded-sm py-1.5 outline-none select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 			className
 		)}
 		{...props}
@@ -149,10 +145,7 @@ const CommandShortcut = ({
 	...props
 }: HTMLAttributes<HTMLSpanElement>) => (
 	<span
-		className={cn(
-			"ml-auto text-tiny tracking-widest text-txt-300",
-			className
-		)}
+		className={cn("text-tiny text-txt-300 ml-auto tracking-widest", className)}
 		{...props}
 	/>
 )

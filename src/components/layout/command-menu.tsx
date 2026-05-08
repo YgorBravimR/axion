@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "@/i18n/routing"
 import { Plus } from "lucide-react"
-import { navItems } from "@/lib/navigation"
+import { buildNavItems, type NavEntry } from "@/lib/navigation"
 import {
 	CommandDialog,
 	CommandInput,
@@ -15,11 +15,16 @@ import {
 	CommandShortcut,
 } from "@/components/ui/command"
 
-const CommandMenu = () => {
+interface CommandMenuProps {
+	navStructure: NavEntry[]
+}
+
+const CommandMenu = ({ navStructure }: CommandMenuProps) => {
 	const [open, setOpen] = useState(false)
 	const router = useRouter()
 	const tNav = useTranslations("nav")
 	const tCmd = useTranslations("commandMenu")
+	const navItems = useMemo(() => buildNavItems(navStructure), [navStructure])
 
 	const handleKeyDown = useCallback((event: KeyboardEvent) => {
 		if (event.key === "k" && (event.metaKey || event.ctrlKey)) {

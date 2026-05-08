@@ -13,7 +13,9 @@ export const ThemeSynchronizer = () => {
 	const hasSynced = useRef(false)
 
 	useEffect(() => {
-		if (hasSynced.current) return
+		if (hasSynced.current) {
+			return
+		}
 		hasSynced.current = true
 
 		const syncTheme = async () => {
@@ -27,7 +29,7 @@ export const ThemeSynchronizer = () => {
 			}
 		}
 
-		syncTheme()
+		void syncTheme()
 	}, [setTheme])
 
 	return null

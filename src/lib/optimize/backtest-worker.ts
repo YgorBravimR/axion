@@ -2,7 +2,12 @@
 
 import { runBacktest } from "@/lib/backtest/engine"
 import type { CandleRow } from "@/types/candle"
-import type { StrategyRecipe, AssetConfig, BacktestSummary, EquityCurvePoint } from "@/types/backtest"
+import type {
+	StrategyRecipe,
+	AssetConfig,
+	BacktestSummary,
+	EquityCurvePoint,
+} from "@/types/backtest"
 
 // ── Message types ────────────────────────────────────────────────
 
@@ -44,13 +49,13 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 		const startTime = performance.now()
 
 		for (let i = 0; i < recipes.length; i++) {
-			const result = runBacktest(candles, recipes[i], assetConfig)
+			const result = runBacktest(candles, recipes[i]!, assetConfig)
 
 			const msg: ProgressMessage = {
 				type: "progress",
 				index: i,
 				total: recipes.length,
-				recipe: recipes[i],
+				recipe: recipes[i]!,
 				summary: result.summary,
 				equityCurve: result.equityCurve,
 			}
@@ -71,4 +76,10 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 	}
 }
 
-export type { StartMessage, ProgressMessage, CompleteMessage, ErrorMessage, WorkerOutMessage }
+export type {
+	StartMessage,
+	ProgressMessage,
+	CompleteMessage,
+	ErrorMessage,
+	WorkerOutMessage,
+}

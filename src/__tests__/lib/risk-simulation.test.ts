@@ -8,12 +8,14 @@
 import { describe, it, expect, beforeEach } from "vitest"
 import { runSimpleSimulation } from "@/lib/risk-simulation"
 import { runAdvancedSimulation } from "@/lib/risk-simulation-advanced"
-import type { SimpleSimulationParams, AdvancedSimulationParams } from "@/types/risk-simulation"
-import type { DecisionTreeConfig } from "@/types/risk-profile"
+import type {
+	SimpleSimulationParams,
+	AdvancedSimulationParams,
+} from "@/types/risk-simulation"
+import type { DecisionTreeCents as DecisionTreeConfig } from "@/lib/risk-profiles/cents-shape"
 import {
 	resetTradeIdCounter,
 	createWinTrade,
-	createLossTrade,
 	createNoSlTrade,
 	createZeroDistanceSLTrade,
 	createDaySequence,
@@ -52,8 +54,14 @@ const defaultDecisionTree: DecisionTreeConfig = {
 	},
 	lossRecovery: {
 		sequence: [
-			{ riskCalculation: { type: "percentOfBase", percent: 50 }, maxContractsOverride: null },
-			{ riskCalculation: { type: "percentOfBase", percent: 25 }, maxContractsOverride: null },
+			{
+				riskCalculation: { type: "percentOfBase", percent: 50 },
+				maxContractsOverride: null,
+			},
+			{
+				riskCalculation: { type: "percentOfBase", percent: 25 },
+				maxContractsOverride: null,
+			},
 		],
 		executeAllRegardless: false,
 		stopAfterSequence: true,
@@ -112,7 +120,7 @@ describe("runSimpleSimulation", () => {
 			const trades = createDaySequence(["win"])
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
-			const simTrade = result.trades[0]
+			const simTrade = result.trades[0]!
 			expect(simTrade.simulatedPositionSize).toBeGreaterThanOrEqual(1)
 			expect(simTrade.riskAmountCents).toBeGreaterThan(0)
 		})
@@ -122,8 +130,8 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
 			expect(result.equityCurve).toHaveLength(2)
-			expect(result.equityCurve[0].tradeIndex).toBe(0)
-			expect(result.equityCurve[1].tradeIndex).toBe(1)
+			expect(result.equityCurve[0]!.tradeIndex).toBe(0)
+			expect(result.equityCurve[1]!.tradeIndex).toBe(1)
 		})
 	})
 
@@ -133,15 +141,15 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
 			expect(result.summary.skippedNoSl).toBe(1)
-			expect(result.trades[0].status).toBe("skipped_no_sl")
-			expect(result.trades[1].status).toBe("executed")
+			expect(result.trades[0]!.status).toBe("skipped_no_sl")
+			expect(result.trades[1]!.status).toBe("executed")
 		})
 
 		it("should skip trades where entry === stop loss (zero distance)", () => {
 			const trades = [createZeroDistanceSLTrade(), createWinTrade()]
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
-			expect(result.trades[0].status).toBe("skipped_no_sl")
+			expect(result.trades[0]!.status).toBe("skipped_no_sl")
 			expect(result.summary.skippedNoSl).toBe(1)
 		})
 	})
@@ -155,12 +163,15 @@ describe("runSimpleSimulation", () => {
 			const trades = createDaySequence(["loss", "loss", "loss", "win"])
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
-			const skippedDaily = result.trades.filter((t) => t.status === "skipped_daily_limit")
 			const executed = result.trades.filter((t) => t.status === "executed")
 
 			// At least one trade should be skipped due to daily limit
 			expect(executed.length).toBeGreaterThanOrEqual(1)
-			expect(result.summary.skippedDailyLimit + executed.length + result.summary.skippedNoSl).toBe(4)
+			expect(
+				result.summary.skippedDailyLimit +
+					executed.length +
+					result.summary.skippedNoSl
+			).toBe(4)
 		})
 	})
 
@@ -175,7 +186,9 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, params)
 
 			// First trade wins → may hit target → remaining skip
-			const skipCount = result.trades.filter((t) => t.status === "skipped_daily_target").length
+			const skipCount = result.trades.filter(
+				(t) => t.status === "skipped_daily_target"
+			).length
 			expect(skipCount).toBeGreaterThanOrEqual(0) // at least verified it doesn't crash
 		})
 	})
@@ -191,7 +204,7 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, params)
 
 			expect(result.summary.skippedMaxTrades).toBe(1)
-			expect(result.trades[2].status).toBe("skipped_max_trades")
+			expect(result.trades[2]!.status).toBe("skipped_max_trades")
 		})
 	})
 
@@ -215,17 +228,30 @@ describe("runSimpleSimulation", () => {
 			// monthlyLossPercent=10 on R$50k = R$5,000 limit
 			// Each loss ~R$500, so after ~10 losses the monthly limit triggers
 			const trades = createTwoMonthSequence(
-				["loss", "loss", "loss", "loss", "loss", "loss", "loss", "loss", "loss", "loss", "loss"],
+				[
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+					"loss",
+				],
 				["win"]
 			)
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
-			const monthlySkips = result.trades.filter((t) => t.status === "skipped_monthly_limit")
 			// Some trades should be skipped due to monthly limit (or daily limit kicks in first)
-			expect(result.summary.skippedMonthlyLimit + result.summary.skippedDailyLimit).toBeGreaterThan(0)
+			expect(
+				result.summary.skippedMonthlyLimit + result.summary.skippedDailyLimit
+			).toBeGreaterThan(0)
 
 			// Month 2 trade should be executed (counter resets)
-			const lastTrade = result.trades[result.trades.length - 1]
+			const lastTrade = result.trades[result.trades.length - 1]!
 			expect(lastTrade.status).toBe("executed")
 		})
 	})
@@ -246,7 +272,7 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, params)
 
 			// Week 2 trade should be executed (fresh weekly counter)
-			const lastTrade = result.trades[result.trades.length - 1]
+			const lastTrade = result.trades[result.trades.length - 1]!
 			expect(lastTrade.status).toBe("executed")
 		})
 	})
@@ -262,8 +288,8 @@ describe("runSimpleSimulation", () => {
 			const trades = createDaySequence(["loss", "loss"])
 			const result = runSimpleSimulation(trades, params)
 
-			const t1 = result.trades[0]
-			const t2 = result.trades[1]
+			const t1 = result.trades[0]!
+			const t2 = result.trades[1]!
 
 			if (t1.status === "executed" && t2.status === "executed") {
 				expect(t1.riskReason).toContain("riskSimulation.reasons.baseRisk")
@@ -283,7 +309,7 @@ describe("runSimpleSimulation", () => {
 			const trades = createDaySequence(["win", "win"])
 			const result = runSimpleSimulation(trades, params)
 
-			const t2 = result.trades[1]
+			const t2 = result.trades[1]!
 			if (t2.status === "executed") {
 				expect(t2.riskReason).toContain("riskSimulation.reasons.winBonus")
 			}
@@ -306,7 +332,8 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
 			expect(result.summary.pnlDeltaCents).toBe(
-				result.summary.simulatedTotalPnlCents - result.summary.originalTotalPnlCents
+				result.summary.simulatedTotalPnlCents -
+					result.summary.originalTotalPnlCents
 			)
 		})
 	})
@@ -317,8 +344,8 @@ describe("runSimpleSimulation", () => {
 			const result = runSimpleSimulation(trades, defaultSimpleParams)
 
 			expect(result.weeks.length).toBe(2)
-			expect(result.weeks[0].days.length).toBe(1)
-			expect(result.weeks[1].days.length).toBe(1)
+			expect(result.weeks[0]!.days.length).toBe(1)
+			expect(result.weeks[1]!.days.length).toBe(1)
 		})
 	})
 })
@@ -337,7 +364,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["win"])
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			const t1 = result.trades[0]
+			const t1 = result.trades[0]!
 			expect(t1.status).toBe("executed")
 			expect(t1.riskReason).toContain("riskSimulation.reasons.t1BaseRisk")
 			expect(t1.dayPhase).toBe("base")
@@ -356,7 +383,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["win"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const t1 = result.trades[0]
+			const t1 = result.trades[0]!
 			if (t1.status === "executed" && t1.simulatedPositionSize !== null) {
 				expect(t1.simulatedPositionSize).toBeLessThanOrEqual(2)
 			}
@@ -368,7 +395,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["loss", "loss"])
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			const t2 = result.trades[1]
+			const t2 = result.trades[1]!
 			expect(t2.dayPhase).toBe("loss_recovery")
 			expect(t2.recoveryStepIndex).toBe(0)
 			expect(t2.riskReason).toContain("riskSimulation.reasons.recoveryStep")
@@ -382,17 +409,21 @@ describe("runAdvancedSimulation", () => {
 			// actualRiskCents is discretised by floor(budget / riskPerContract) × riskPerContract,
 			// so we check it's within one contract's worth of the target budget.
 			const WINFUT_RISK_PER_CONTRACT = 2_000 // 20 ticks × 100 cents/tick
-			const t2 = result.trades[1]
-			const t3 = result.trades[2]
+			const t2 = result.trades[1]!
+			const t3 = result.trades[2]!
 
 			if (t2.status === "executed" && t2.riskAmountCents) {
 				// 50% of 50,000 = 25,000 budget → floor(25000/2000)=12 contracts → 24,000 actual
-				expect(t2.riskAmountCents).toBeGreaterThanOrEqual(25_000 - WINFUT_RISK_PER_CONTRACT)
+				expect(t2.riskAmountCents).toBeGreaterThanOrEqual(
+					25_000 - WINFUT_RISK_PER_CONTRACT
+				)
 				expect(t2.riskAmountCents).toBeLessThanOrEqual(25_000)
 			}
 			if (t3.status === "executed" && t3.riskAmountCents) {
 				// 25% of 50,000 = 12,500 budget → floor(12500/2000)=6 contracts → 12,000 actual
-				expect(t3.riskAmountCents).toBeGreaterThanOrEqual(12_500 - WINFUT_RISK_PER_CONTRACT)
+				expect(t3.riskAmountCents).toBeGreaterThanOrEqual(
+					12_500 - WINFUT_RISK_PER_CONTRACT
+				)
 				expect(t3.riskAmountCents).toBeLessThanOrEqual(12_500)
 			}
 		})
@@ -403,7 +434,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["loss", "loss", "loss", "loss"])
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			const t4 = result.trades[3]
+			const t4 = result.trades[3]!
 			expect(t4.status).toBe("skipped_recovery_complete")
 		})
 
@@ -423,7 +454,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["loss", "win", "win"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const t3 = result.trades[2]
+			const t3 = result.trades[2]!
 			expect(t3.dayPhase).toBe("gain_mode")
 			expect(t3.riskReason).toContain("riskSimulation.reasons.gainReinvest")
 		})
@@ -436,7 +467,10 @@ describe("runAdvancedSimulation", () => {
 					lossRecovery: {
 						...defaultDecisionTree.lossRecovery,
 						sequence: [
-							{ riskCalculation: { type: "fixedCents", amountCents: 30_000 }, maxContractsOverride: null },
+							{
+								riskCalculation: { type: "fixedCents", amountCents: 30_000 },
+								maxContractsOverride: null,
+							},
 						],
 					},
 				},
@@ -445,7 +479,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["loss", "loss"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const t2 = result.trades[1]
+			const t2 = result.trades[1]!
 			if (t2.status === "executed" && t2.riskAmountCents) {
 				expect(t2.riskAmountCents).toBeCloseTo(30_000, -2)
 			}
@@ -459,7 +493,10 @@ describe("runAdvancedSimulation", () => {
 					lossRecovery: {
 						...defaultDecisionTree.lossRecovery,
 						sequence: [
-							{ riskCalculation: { type: "sameAsPrevious" }, maxContractsOverride: null },
+							{
+								riskCalculation: { type: "sameAsPrevious" },
+								maxContractsOverride: null,
+							},
 						],
 					},
 				},
@@ -468,8 +505,8 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["loss", "loss"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const t1 = result.trades[0]
-			const t2 = result.trades[1]
+			const t1 = result.trades[0]!
+			const t2 = result.trades[1]!
 			if (t1.status === "executed" && t2.status === "executed") {
 				// Recovery should use the same risk as T1 (base risk)
 				expect(t2.riskAmountCents).toBeCloseTo(t1.riskAmountCents!, -2)
@@ -482,7 +519,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["win", "win"])
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			const t2 = result.trades[1]
+			const t2 = result.trades[1]!
 			expect(t2.dayPhase).toBe("gain_mode")
 			expect(t2.riskReason).toContain("riskSimulation.reasons.gainReinvest")
 		})
@@ -494,14 +531,16 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["win", "win"])
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			const t1 = result.trades[0]
-			const t2 = result.trades[1]
+			const t1 = result.trades[0]!
+			const t2 = result.trades[1]!
 
 			if (t1.status === "executed" && t2.status === "executed") {
 				const dayGains = t1.simulatedPnlCents!
-				const expectedBudget = Math.round(dayGains * 30 / 100)
+				const expectedBudget = Math.round((dayGains * 30) / 100)
 				if (t2.riskAmountCents && expectedBudget > 0) {
-					expect(t2.riskAmountCents).toBeGreaterThanOrEqual(expectedBudget - WINFUT_RISK_PER_CONTRACT)
+					expect(t2.riskAmountCents).toBeGreaterThanOrEqual(
+						expectedBudget - WINFUT_RISK_PER_CONTRACT
+					)
 					expect(t2.riskAmountCents).toBeLessThanOrEqual(expectedBudget)
 				}
 			}
@@ -525,7 +564,9 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["win", "win", "win"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const targetSkips = result.trades.filter((t) => t.status === "skipped_daily_target")
+			const targetSkips = result.trades.filter(
+				(t) => t.status === "skipped_daily_target"
+			)
 			expect(targetSkips.length).toBeGreaterThanOrEqual(0)
 		})
 
@@ -548,8 +589,8 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["win", "loss", "win"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const t2 = result.trades[1]
-			const t3 = result.trades[2]
+			const t2 = result.trades[1]!
+			const t3 = result.trades[2]!
 
 			// T2 executes (the loss itself still runs)
 			expect(t2.status).toBe("executed")
@@ -575,7 +616,7 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, params)
 
 			// After T1 win, singleTarget means day is done (or T2 is skipped)
-			const t2 = result.trades[1]
+			const t2 = result.trades[1]!
 			const isSkipped = t2.status.startsWith("skipped_")
 			// Should either skip or execute with base risk, but NOT gain mode compounding
 			expect(t2.dayPhase !== "gain_mode" || isSkipped).toBe(true)
@@ -587,7 +628,7 @@ describe("runAdvancedSimulation", () => {
 			const trades = [createNoSlTrade(), createWinTrade()]
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			expect(result.trades[0].status).toBe("skipped_no_sl")
+			expect(result.trades[0]!.status).toBe("skipped_no_sl")
 			expect(result.summary.skippedNoSl).toBe(1)
 		})
 	})
@@ -603,7 +644,9 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, params)
 
 			// T1 loss ~R$500 should hit the R$500 daily limit, T3 skipped
-			const dailySkips = result.trades.filter((t) => t.status === "skipped_daily_limit").length
+			const dailySkips = result.trades.filter(
+				(t) => t.status === "skipped_daily_limit"
+			).length
 			expect(dailySkips).toBeGreaterThanOrEqual(0) // engine-specific — depends on exact P&L
 		})
 
@@ -621,7 +664,7 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, params)
 
 			// Week 2 trade must be executed (fresh weekly counter)
-			const lastTrade = result.trades[result.trades.length - 1]
+			const lastTrade = result.trades[result.trades.length - 1]!
 			expect(lastTrade.status).toBe("executed")
 		})
 
@@ -634,9 +677,13 @@ describe("runAdvancedSimulation", () => {
 			const trades = createDaySequence(["loss", "loss", "loss", "loss", "loss"])
 			const result = runAdvancedSimulation(trades, params)
 
-			const monthlySkips = result.trades.filter((t) => t.status === "skipped_monthly_limit").length
+			const monthlySkips = result.trades.filter(
+				(t) => t.status === "skipped_monthly_limit"
+			).length
 			// After enough losses hit R$1,000, monthly limit should kick in
-			expect(monthlySkips + result.summary.skippedDailyLimit).toBeGreaterThanOrEqual(0)
+			expect(
+				monthlySkips + result.summary.skippedDailyLimit
+			).toBeGreaterThanOrEqual(0)
 		})
 
 		it("should reset monthly counter at month boundaries", () => {
@@ -647,7 +694,7 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
 			// Month 2 trade should execute (fresh counter)
-			const lastTrade = result.trades[result.trades.length - 1]
+			const lastTrade = result.trades[result.trades.length - 1]!
 			expect(lastTrade.status).toBe("executed")
 		})
 	})
@@ -658,15 +705,19 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
 			expect(result.equityCurve).toHaveLength(2)
-			expect(result.equityCurve[0].originalEquityCents).toBeGreaterThan(defaultAdvancedParams.accountBalanceCents)
-			expect(result.equityCurve[1].originalEquityCents).toBeLessThan(result.equityCurve[0].originalEquityCents)
+			expect(result.equityCurve[0]!.originalEquityCents).toBeGreaterThan(
+				defaultAdvancedParams.accountBalanceCents
+			)
+			expect(result.equityCurve[1]!.originalEquityCents).toBeLessThan(
+				result.equityCurve[0]!.originalEquityCents
+			)
 		})
 
 		it("should compute drawdown percentage correctly", () => {
 			const trades = createDaySequence(["win", "loss"])
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
-			const losingTrade = result.trades[1]
+			const losingTrade = result.trades[1]!
 			if (losingTrade.status === "executed") {
 				expect(losingTrade.drawdownPercent).toBeGreaterThanOrEqual(0)
 			}
@@ -690,7 +741,8 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
 			expect(result.summary.pnlDeltaCents).toBe(
-				result.summary.simulatedTotalPnlCents - result.summary.originalTotalPnlCents
+				result.summary.simulatedTotalPnlCents -
+					result.summary.originalTotalPnlCents
 			)
 		})
 
@@ -713,8 +765,8 @@ describe("runAdvancedSimulation", () => {
 			const result = runAdvancedSimulation(trades, defaultAdvancedParams)
 
 			expect(result.weeks.length).toBe(2)
-			expect(result.weeks[0].days).toHaveLength(1)
-			expect(result.weeks[1].days).toHaveLength(1)
+			expect(result.weeks[0]!.days).toHaveLength(1)
+			expect(result.weeks[1]!.days).toHaveLength(1)
 		})
 
 		it("should include week labels and P&L totals", () => {
@@ -735,7 +787,9 @@ describe("runAdvancedSimulation", () => {
 			for (const week of result.weeks) {
 				for (const day of week.days) {
 					expect(day.dayKey).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-					expect(day.dayResult.executedCount + day.dayResult.skippedCount).toBe(day.trades.length)
+					expect(day.dayResult.executedCount + day.dayResult.skippedCount).toBe(
+						day.trades.length
+					)
 				}
 			}
 		})

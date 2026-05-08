@@ -7,6 +7,14 @@ import type { AccountComparisonMetrics } from "@/types"
 import type { ExpectancyMode } from "@/components/analytics/expectancy-mode-toggle"
 import { COMPARISON_COLORS } from "./comparison-colors"
 import { formatBrlWithSign, formatR, formatRatio } from "@/lib/formatting"
+import {
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
+} from "@/components/ui/table"
 
 interface ComparisonStatsTableProps {
 	accounts: AccountComparisonMetrics[]
@@ -18,8 +26,8 @@ type MetricDirection = "higher-better" | "lower-better" | "neutral"
 interface MetricRow {
 	key: string
 	label: string
-	getValue: (account: AccountComparisonMetrics) => number
-	format: (value: number) => string
+	getValue: (_account: AccountComparisonMetrics) => number
+	format: (_value: number) => string
 	direction: MetricDirection
 	mode: "always" | "capital" | "edge"
 }
@@ -30,120 +38,123 @@ const ComparisonStatsTable = ({
 }: ComparisonStatsTableProps) => {
 	const t = useTranslations("accountComparison.table")
 
-	const metrics = useMemo<MetricRow[]>(() => [
-		{
-			key: "netPnl",
-			label: t("netPnl"),
-			getValue: (a) => a.stats.netPnl,
-			format: (v) => formatBrlWithSign(v),
-			direction: "higher-better",
-			mode: "always",
-		},
-		{
-			key: "grossPnl",
-			label: t("grossPnl"),
-			getValue: (a) => a.stats.grossPnl,
-			format: (v) => formatBrlWithSign(v),
-			direction: "neutral",
-			mode: "always",
-		},
-		{
-			key: "totalFees",
-			label: t("totalFees"),
-			getValue: (a) => a.stats.totalFees,
-			format: (v) => `R$ ${v.toFixed(2)}`,
-			direction: "lower-better",
-			mode: "always",
-		},
-		{
-			key: "winRate",
-			label: t("winRate"),
-			getValue: (a) => a.stats.winRate,
-			format: (v) => `${v.toFixed(1)}%`,
-			direction: "higher-better",
-			mode: "always",
-		},
-		{
-			key: "profitFactor",
-			label: t("profitFactor"),
-			getValue: (a) => a.stats.profitFactor,
-			format: (v) => formatRatio(v),
-			direction: "higher-better",
-			mode: "always",
-		},
-		{
-			key: "expectedValue",
-			label: t("expectedValue"),
-			getValue: (a) => a.expectedValue.expectedValue,
-			format: (v) => formatBrlWithSign(v),
-			direction: "higher-better",
-			mode: "capital",
-		},
-		{
-			key: "expectedR",
-			label: t("expectedR"),
-			getValue: (a) => a.expectedValue.expectedR,
-			format: (v) => formatR(v),
-			direction: "higher-better",
-			mode: "edge",
-		},
-		{
-			key: "averageR",
-			label: t("averageR"),
-			getValue: (a) => a.stats.averageR,
-			format: (v) => formatR(v),
-			direction: "higher-better",
-			mode: "edge",
-		},
-		{
-			key: "avgWin",
-			label: t("avgWin"),
-			getValue: (a) => a.stats.avgWin,
-			format: (v) => formatBrlWithSign(v),
-			direction: "higher-better",
-			mode: "capital",
-		},
-		{
-			key: "avgLoss",
-			label: t("avgLoss"),
-			getValue: (a) => a.stats.avgLoss,
-			format: (v) => `R$ ${v.toFixed(2)}`,
-			direction: "lower-better",
-			mode: "capital",
-		},
-		{
-			key: "projectedPnl",
-			label: t("projectedPnl"),
-			getValue: (a) => a.expectedValue.projectedPnl100,
-			format: (v) => formatBrlWithSign(v),
-			direction: "higher-better",
-			mode: "capital",
-		},
-		{
-			key: "projectedR",
-			label: t("projectedR"),
-			getValue: (a) => a.expectedValue.projectedR100,
-			format: (v) => formatR(v),
-			direction: "higher-better",
-			mode: "edge",
-		},
-		{
-			key: "totalTrades",
-			label: t("totalTrades"),
-			getValue: (a) => a.stats.totalTrades,
-			format: (v) => v.toString(),
-			direction: "neutral",
-			mode: "always",
-		},
-		{
-			key: "maxDrawdown",
-			label: t("maxDrawdown"),
-			getValue: (a) => a.maxDrawdown,
-			format: (v) => formatBrlWithSign(-v),
-			direction: "lower-better",
-			mode: "always",
-		},
-	], [t, expectancyMode])
+	const metrics = useMemo<MetricRow[]>(
+		() => [
+			{
+				key: "netPnl",
+				label: t("netPnl"),
+				getValue: (a) => a.stats.netPnl,
+				format: (v) => formatBrlWithSign(v),
+				direction: "higher-better",
+				mode: "always",
+			},
+			{
+				key: "grossPnl",
+				label: t("grossPnl"),
+				getValue: (a) => a.stats.grossPnl,
+				format: (v) => formatBrlWithSign(v),
+				direction: "neutral",
+				mode: "always",
+			},
+			{
+				key: "totalFees",
+				label: t("totalFees"),
+				getValue: (a) => a.stats.totalFees,
+				format: (v) => `R$ ${v.toFixed(2)}`,
+				direction: "lower-better",
+				mode: "always",
+			},
+			{
+				key: "winRate",
+				label: t("winRate"),
+				getValue: (a) => a.stats.winRate,
+				format: (v) => `${v.toFixed(1)}%`,
+				direction: "higher-better",
+				mode: "always",
+			},
+			{
+				key: "profitFactor",
+				label: t("profitFactor"),
+				getValue: (a) => a.stats.profitFactor,
+				format: (v) => formatRatio(v),
+				direction: "higher-better",
+				mode: "always",
+			},
+			{
+				key: "expectedValue",
+				label: t("expectedValue"),
+				getValue: (a) => a.expectedValue.expectedValue,
+				format: (v) => formatBrlWithSign(v),
+				direction: "higher-better",
+				mode: "capital",
+			},
+			{
+				key: "expectedR",
+				label: t("expectedR"),
+				getValue: (a) => a.expectedValue.expectedR,
+				format: (v) => formatR(v),
+				direction: "higher-better",
+				mode: "edge",
+			},
+			{
+				key: "averageR",
+				label: t("averageR"),
+				getValue: (a) => a.stats.averageR,
+				format: (v) => formatR(v),
+				direction: "higher-better",
+				mode: "edge",
+			},
+			{
+				key: "avgWin",
+				label: t("avgWin"),
+				getValue: (a) => a.stats.avgWin,
+				format: (v) => formatBrlWithSign(v),
+				direction: "higher-better",
+				mode: "capital",
+			},
+			{
+				key: "avgLoss",
+				label: t("avgLoss"),
+				getValue: (a) => a.stats.avgLoss,
+				format: (v) => `R$ ${v.toFixed(2)}`,
+				direction: "lower-better",
+				mode: "capital",
+			},
+			{
+				key: "projectedPnl",
+				label: t("projectedPnl"),
+				getValue: (a) => a.expectedValue.projectedPnl100,
+				format: (v) => formatBrlWithSign(v),
+				direction: "higher-better",
+				mode: "capital",
+			},
+			{
+				key: "projectedR",
+				label: t("projectedR"),
+				getValue: (a) => a.expectedValue.projectedR100,
+				format: (v) => formatR(v),
+				direction: "higher-better",
+				mode: "edge",
+			},
+			{
+				key: "totalTrades",
+				label: t("totalTrades"),
+				getValue: (a) => a.stats.totalTrades,
+				format: (v) => v.toString(),
+				direction: "neutral",
+				mode: "always",
+			},
+			{
+				key: "maxDrawdown",
+				label: t("maxDrawdown"),
+				getValue: (a) => a.maxDrawdown,
+				format: (v) => formatBrlWithSign(-v),
+				direction: "lower-better",
+				mode: "always",
+			},
+		],
+		[t, expectancyMode]
+	)
 
 	const visibleMetrics = useMemo(
 		() =>
@@ -162,7 +173,10 @@ const ComparisonStatsTable = ({
 	 * Uses a tolerance of 1% of the value range so near-equal values share rank.
 	 */
 	const bestWorstMap = useMemo(() => {
-		const map = new Map<string, { bestSet: Set<number>; worstSet: Set<number> }>()
+		const map = new Map<
+			string,
+			{ bestSet: Set<number>; worstSet: Set<number> }
+		>()
 		const empty = { bestSet: new Set<number>(), worstSet: new Set<number>() }
 
 		for (const metric of visibleMetrics) {
@@ -188,10 +202,10 @@ const ComparisonStatsTable = ({
 			const bestSet = new Set<number>()
 			const worstSet = new Set<number>()
 
-			for (let i = 0; i < values.length; i++) {
-				if (Math.abs(values[i] - bestVal) <= tolerance) {
+			for (const [i, value] of values.entries()) {
+				if (Math.abs(value - bestVal) <= tolerance) {
 					bestSet.add(i)
-				} else if (Math.abs(values[i] - worstVal) <= tolerance) {
+				} else if (Math.abs(value - worstVal) <= tolerance) {
 					worstSet.add(i)
 				}
 			}
@@ -203,68 +217,72 @@ const ComparisonStatsTable = ({
 	}, [visibleMetrics, accounts])
 
 	return (
-		<div id="comparison-stats-table" className="border-bg-300 bg-bg-200 overflow-x-auto rounded-lg border p-s-300 sm:p-m-400">
-			<table className="w-full text-small">
-				<thead>
-					<tr className="border-bg-300 border-b">
-						<th className="text-txt-300 py-s-200 pr-m-400 text-left font-medium">
+		<div
+			id="comparison-stats-table"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 overflow-x-auto rounded-lg border"
+		>
+			<Table className="text-small w-full">
+				<TableHeader>
+					<TableRow className="border-bg-300 border-b">
+						<TableHead className="text-txt-300 py-s-200 pr-m-400 text-left font-medium">
 							{t("metric")}
-						</th>
+						</TableHead>
 						{accounts.map((account, index) => (
-							<th
+							<TableHead
 								key={account.accountId}
 								className="text-txt-100 py-s-200 px-s-300 text-right font-medium"
 							>
-								<div className="flex items-center justify-end gap-s-200">
+								<div className="gap-s-200 flex items-center justify-end">
 									<span
 										className="inline-block h-2.5 w-2.5 rounded-full"
 										style={{
 											backgroundColor:
-												COMPARISON_COLORS[
-													index % COMPARISON_COLORS.length
-												],
+												COMPARISON_COLORS[index % COMPARISON_COLORS.length],
 										}}
 									/>
 									{account.accountName}
 								</div>
-							</th>
+							</TableHead>
 						))}
-					</tr>
-				</thead>
-				<tbody>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
 					{visibleMetrics.map((metric) => {
-						const { bestSet, worstSet } = bestWorstMap.get(metric.key) ?? { bestSet: new Set<number>(), worstSet: new Set<number>() }
+						const { bestSet, worstSet } = bestWorstMap.get(metric.key) ?? {
+							bestSet: new Set<number>(),
+							worstSet: new Set<number>(),
+						}
 						return (
-							<tr
+							<TableRow
 								key={metric.key}
 								className="border-bg-300 border-b last:border-b-0"
 							>
-								<td className="text-txt-300 py-s-200 pr-m-400 whitespace-nowrap">
+								<TableCell className="text-txt-300 py-s-200 pr-m-400 whitespace-nowrap">
 									{metric.label}
-								</td>
+								</TableCell>
 								{accounts.map((account, index) => {
 									const value = metric.getValue(account)
 									const isBest = bestSet.has(index)
 									const isWorst = worstSet.has(index)
 									return (
-										<td
+										<TableCell
 											key={account.accountId}
 											className={cn(
-												"py-s-200 px-s-300 text-right whitespace-nowrap font-semibold",
+												"py-s-200 px-s-300 text-right font-semibold whitespace-nowrap",
 												isBest && "text-trade-buy",
 												isWorst && "text-trade-sell",
 												!isBest && !isWorst && "text-txt-100 font-normal"
 											)}
 										>
 											{metric.format(value)}
-										</td>
+										</TableCell>
 									)
 								})}
-							</tr>
+							</TableRow>
 						)
 					})}
-				</tbody>
-			</table>
+				</TableBody>
+			</Table>
 		</div>
 	)
 }

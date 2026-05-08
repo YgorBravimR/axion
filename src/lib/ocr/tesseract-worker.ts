@@ -8,7 +8,7 @@
 import Tesseract from "tesseract.js"
 import type { OcrProgressInfo, OcrRawResult } from "./types"
 
-type ProgressCallback = (info: OcrProgressInfo) => void
+type ProgressCallback = (_info: OcrProgressInfo) => void
 
 /**
  * Map Tesseract status to translation keys.
@@ -16,13 +16,13 @@ type ProgressCallback = (info: OcrProgressInfo) => void
  */
 const getProgressMessage = (status: string): string => {
 	const keyMap: Record<string, string> = {
-		loading: "ocr.progress.loading",
-		initializing: "ocr.progress.initializing",
+		"loading": "ocr.progress.loading",
+		"initializing": "ocr.progress.initializing",
 		"loading tesseract core": "ocr.progress.loadingCore",
 		"initializing tesseract": "ocr.progress.initializingOcr",
 		"loading language traineddata": "ocr.progress.loadingLanguage",
 		"initializing api": "ocr.progress.preparingRecognition",
-		recognizing: "ocr.progress.recognizing",
+		"recognizing": "ocr.progress.recognizing",
 	}
 
 	const key = status.toLowerCase()
@@ -32,13 +32,17 @@ const getProgressMessage = (status: string): string => {
 /**
  * Map Tesseract status to our status enum
  */
-const mapStatus = (
-	tesseractStatus: string
-): OcrProgressInfo["status"] => {
+const mapStatus = (tesseractStatus: string): OcrProgressInfo["status"] => {
 	const status = tesseractStatus.toLowerCase()
-	if (status.includes("loading")) return "loading"
-	if (status.includes("initializing")) return "initializing"
-	if (status.includes("recognizing")) return "recognizing"
+	if (status.includes("loading")) {
+		return "loading"
+	}
+	if (status.includes("initializing")) {
+		return "initializing"
+	}
+	if (status.includes("recognizing")) {
+		return "recognizing"
+	}
 	return "loading"
 }
 
@@ -91,13 +95,16 @@ export const preprocessImage = async (
 
 			for (let i = 0; i < data.length; i += 4) {
 				// Weighted grayscale (better for text)
-				const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])
+				const gray = Math.round(
+					0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!
+				)
 				grayscaleValues.push(gray)
 				histogram[gray]++
 			}
 
 			// Calculate average brightness
-			const avgBrightness = grayscaleValues.reduce((a, b) => a + b, 0) / grayscaleValues.length
+			const avgBrightness =
+				grayscaleValues.reduce((a, b) => a + b, 0) / grayscaleValues.length
 			const isDarkTheme = avgBrightness < 100
 
 			// Otsu's method for optimal threshold
@@ -114,16 +121,23 @@ export const preprocessImage = async (
 
 			for (let t = 0; t < 256; t++) {
 				weightBackground += histogram[t]
-				if (weightBackground === 0) continue
+				if (weightBackground === 0) {
+					continue
+				}
 
 				const weightForeground = totalPixels - weightBackground
-				if (weightForeground === 0) break
+				if (weightForeground === 0) {
+					break
+				}
 
 				sumBackground += t * histogram[t]
 				const meanBackground = sumBackground / weightBackground
 				const meanForeground = (sumTotal - sumBackground) / weightForeground
 
-				const variance = weightBackground * weightForeground * Math.pow(meanBackground - meanForeground, 2)
+				const variance =
+					weightBackground *
+					weightForeground *
+					Math.pow(meanBackground - meanForeground, 2)
 				if (variance > maxVariance) {
 					maxVariance = variance
 					threshold = t
@@ -132,7 +146,7 @@ export const preprocessImage = async (
 
 			// Step 2: Process each pixel
 			for (let i = 0; i < data.length; i += 4) {
-				let gray = grayscaleValues[i / 4]
+				let gray = grayscaleValues[i / 4]!
 
 				// Invert if dark theme
 				if (isDarkTheme) {
@@ -211,14 +225,15 @@ export const preprocessImageSoft = async (
 			// Calculate average brightness
 			let totalBrightness = 0
 			for (let i = 0; i < data.length; i += 4) {
-				totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3
+				totalBrightness += (data[i]! + data[i + 1]! + data[i + 2]!) / 3
 			}
 			const avgBrightness = totalBrightness / (data.length / 4)
 			const isDarkTheme = avgBrightness < 100
 
 			for (let i = 0; i < data.length; i += 4) {
 				// Grayscale
-				let gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+				let gray =
+					0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!
 
 				// Invert if dark
 				if (isDarkTheme) {
@@ -227,7 +242,8 @@ export const preprocessImageSoft = async (
 
 				// Gentle contrast boost
 				const contrast = 1.3
-				const factor = (259 * (contrast * 100 + 255)) / (255 * (259 - contrast * 100))
+				const factor =
+					(259 * (contrast * 100 + 255)) / (255 * (259 - contrast * 100))
 				gray = Math.min(255, Math.max(0, factor * (gray - 128) + 128))
 
 				data[i] = gray
@@ -267,7 +283,9 @@ export const recognizeImage = async (
 	onProgress?: ProgressCallback,
 	preprocess = true
 ): Promise<OcrRawResult> => {
-	const runOcr = async (image: string | File | Blob): Promise<Tesseract.RecognizeResult> => {
+	const runOcr = async (
+		image: string | File | Blob
+	): Promise<Tesseract.RecognizeResult> => {
 		return Tesseract.recognize(image, "por+eng", {
 			logger: (info) => {
 				if (info.status && onProgress) {

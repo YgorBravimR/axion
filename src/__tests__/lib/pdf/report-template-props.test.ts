@@ -19,8 +19,15 @@
  */
 
 import { describe, it, expect } from "vitest"
-import type { WeeklyReportPdfProps, MonthlyReportPdfProps } from "@/lib/pdf/report-template"
-import type { WeeklyReport, MonthlyReport, CommissionFeeImpact } from "@/app/actions/reports"
+import type {
+	WeeklyReportPdfProps,
+	MonthlyReportPdfProps,
+} from "@/lib/pdf/report-template"
+import type {
+	WeeklyReport,
+	MonthlyReport,
+	CommissionFeeImpact,
+} from "@/app/actions/reports.types"
 
 // ============================================================================
 // FIXTURE FACTORIES
@@ -247,7 +254,11 @@ describe("WeeklyReportPdf prop shape", () => {
 
 	describe("summary field contracts", () => {
 		it("should allow a negative netPnl (losing week)", () => {
-			const summary = { ...createWeeklyReportSummary(), netPnl: -320.0, grossPnl: -200.0 }
+			const summary = {
+				...createWeeklyReportSummary(),
+				netPnl: -320.0,
+				grossPnl: -200.0,
+			}
 			expect(summary.netPnl).toBeLessThan(0)
 			expect(summary.grossPnl).toBeLessThan(0)
 		})
@@ -258,7 +269,11 @@ describe("WeeklyReportPdf prop shape", () => {
 		})
 
 		it("should allow a breakevenCount greater than zero", () => {
-			const summary = { ...createWeeklyReportSummary(), breakevenCount: 2, totalTrades: 12 }
+			const summary = {
+				...createWeeklyReportSummary(),
+				breakevenCount: 2,
+				totalTrades: 12,
+			}
 			expect(summary.breakevenCount).toBe(2)
 		})
 	})
@@ -396,7 +411,11 @@ describe("MonthlyReportPdf prop shape", () => {
 		})
 
 		it("should accept both bestDay and worstDay as null simultaneously", () => {
-			const summary = { ...createMonthlyReportSummary(), bestDay: null, worstDay: null }
+			const summary = {
+				...createMonthlyReportSummary(),
+				bestDay: null,
+				worstDay: null,
+			}
 
 			const props: MonthlyReportPdfProps = {
 				report: {
@@ -417,12 +436,20 @@ describe("MonthlyReportPdf prop shape", () => {
 
 	describe("summary field contracts", () => {
 		it("should allow a negative netPnl (losing month)", () => {
-			const summary = { ...createMonthlyReportSummary(), netPnl: -1500.0, grossPnl: -1100.0 }
+			const summary = {
+				...createMonthlyReportSummary(),
+				netPnl: -1500.0,
+				grossPnl: -1100.0,
+			}
 			expect(summary.netPnl).toBeLessThan(0)
 		})
 
 		it("should allow a profitFactor of zero (no winning trades)", () => {
-			const summary = { ...createMonthlyReportSummary(), profitFactor: 0, winCount: 0 }
+			const summary = {
+				...createMonthlyReportSummary(),
+				profitFactor: 0,
+				winCount: 0,
+			}
 			expect(summary.profitFactor).toBe(0)
 		})
 

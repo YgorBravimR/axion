@@ -46,7 +46,8 @@ export const TradeExecutionsSection = ({
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
 	const [isFormOpen, setIsFormOpen] = useState(false)
-	const [editingExecution, setEditingExecution] = useState<TradeExecution | null>(null)
+	const [editingExecution, setEditingExecution] =
+		useState<TradeExecution | null>(null)
 
 	// H6: Memoized — avoids repeated filter()/reduce() passes on every render
 	const summary = useMemo((): ExecutionSummary => {
@@ -67,7 +68,7 @@ export const TradeExecutionsSection = ({
 				? entries.reduce(
 						(sum, e) => sum + Number(e.price) * Number(e.quantity),
 						0
-				  ) / totalEntryQuantity
+					) / totalEntryQuantity
 				: 0
 
 		const avgExitPrice =
@@ -75,20 +76,28 @@ export const TradeExecutionsSection = ({
 				? exits.reduce(
 						(sum, e) => sum + Number(e.price) * Number(e.quantity),
 						0
-				  ) / totalExitQuantity
+					) / totalExitQuantity
 				: 0
 
 		const totalCommission = executions.reduce(
 			(sum, e) => sum + (Number(e.commission) || 0),
 			0
 		)
-		const totalFees = executions.reduce((sum, e) => sum + (Number(e.fees) || 0), 0)
+		const totalFees = executions.reduce(
+			(sum, e) => sum + (Number(e.fees) || 0),
+			0
+		)
 
-		let positionStatus: PositionStatus = "open"
-		if (totalExitQuantity === 0) positionStatus = "open"
-		else if (totalExitQuantity < totalEntryQuantity) positionStatus = "partial"
-		else if (totalExitQuantity === totalEntryQuantity) positionStatus = "closed"
-		else positionStatus = "over_exit"
+		let positionStatus: PositionStatus
+		if (totalExitQuantity === 0) {
+			positionStatus = "open"
+		} else if (totalExitQuantity < totalEntryQuantity) {
+			positionStatus = "partial"
+		} else if (totalExitQuantity === totalEntryQuantity) {
+			positionStatus = "closed"
+		} else {
+			positionStatus = "over_exit"
+		}
 
 		return {
 			totalEntryQuantity,
@@ -130,21 +139,32 @@ export const TradeExecutionsSection = ({
 	// If in simple mode, show convert option
 	if (executionMode === "simple") {
 		return (
-			<Card id="trade-detail-executions" className="p-m-400 sm:p-m-500 lg:p-m-600">
-				<div className="flex flex-col gap-s-300 sm:flex-row sm:items-center sm:justify-between">
-					<div className="flex items-center gap-s-300">
-						<Layers className="h-5 w-5 shrink-0 text-txt-300" />
+			<Card
+				id="trade-detail-executions"
+				className="p-m-400 sm:p-m-500 lg:p-m-600"
+			>
+				<div className="gap-s-300 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+					<div className="gap-s-300 flex items-center">
+						<Layers className="text-txt-300 h-5 w-5 shrink-0" />
 						<div>
-							<h3 className="text-small sm:text-body font-semibold text-txt-100">
+							<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 								{t("scaledMode")}
 							</h3>
-							<p className="text-small text-txt-300">{t("convertDescription")}</p>
+							<p className="text-small text-txt-300">
+								{t("convertDescription")}
+							</p>
 						</div>
 					</div>
 					<AlertDialog>
 						<AlertDialogTrigger asChild>
-							<Button id="trade-executions-convert-to-scaled" variant="outline" disabled={isPending}>
-								{isPending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+							<Button
+								id="trade-executions-convert-to-scaled"
+								variant="outline"
+								disabled={isPending}
+							>
+								{isPending && (
+									<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								)}
 								{t("convertToScaled")}
 							</Button>
 						</AlertDialogTrigger>
@@ -156,8 +176,13 @@ export const TradeExecutionsSection = ({
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<AlertDialogFooter>
-								<AlertDialogCancel id="convert-scaled-cancel">{tCommon("cancel")}</AlertDialogCancel>
-								<AlertDialogAction id="convert-scaled-confirm" onClick={handleConvertToScaled}>
+								<AlertDialogCancel id="convert-scaled-cancel">
+									{tCommon("cancel")}
+								</AlertDialogCancel>
+								<AlertDialogAction
+									id="convert-scaled-confirm"
+									onClick={handleConvertToScaled}
+								>
 									{tCommon("confirm")}
 								</AlertDialogAction>
 							</AlertDialogFooter>
@@ -182,7 +207,10 @@ export const TradeExecutionsSection = ({
 			)}
 
 			{/* Execution List */}
-			<Card id="trade-detail-executions" className="p-m-400 sm:p-m-500 lg:p-m-600">
+			<Card
+				id="trade-detail-executions"
+				className="p-m-400 sm:p-m-500 lg:p-m-600"
+			>
 				<ExecutionList
 					executions={executions}
 					direction={direction}

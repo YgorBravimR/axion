@@ -22,7 +22,9 @@ export const CACHE_TTL = {
 
 export const cacheGet = <T>(key: string): T | null => {
 	const entry = cache.get(key) as CacheEntry<T> | undefined
-	if (!entry) return null
+	if (!entry) {
+		return null
+	}
 	if (Date.now() > entry.expiresAt) {
 		cache.delete(key)
 		return null

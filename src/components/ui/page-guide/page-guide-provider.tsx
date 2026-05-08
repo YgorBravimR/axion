@@ -14,8 +14,8 @@ import type { PageGuideConfig } from "@/types/page-guide"
 import { PageGuideOverlay } from "./page-guide-overlay"
 
 interface PageGuideContextType {
-	startGuide: (config: PageGuideConfig) => void
-	registerGuide: (config: PageGuideConfig) => void
+	startGuide: (_config: PageGuideConfig) => void
+	registerGuide: (_config: PageGuideConfig) => void
 	unregisterGuide: () => void
 	registeredConfig: PageGuideConfig | null
 	isActive: boolean
@@ -41,6 +41,9 @@ const usePageGuide = () => {
 /**
  * Hook for pages to register their guide config on mount.
  * The header reads `registeredConfig` to show/hide the trigger button.
+ *
+ * Pass a stable reference (module-level const) — re-registers on identity change
+ * so HMR module swaps and live config edits propagate without a full reload.
  */
 const useRegisterPageGuide = (config: PageGuideConfig) => {
 	const { registerGuide, unregisterGuide } = usePageGuide()
@@ -48,8 +51,7 @@ const useRegisterPageGuide = (config: PageGuideConfig) => {
 	useEffect(() => {
 		registerGuide(config)
 		return () => unregisterGuide()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [config.pageKey])
+	}, [config, registerGuide, unregisterGuide])
 }
 
 /**
@@ -58,7 +60,9 @@ const useRegisterPageGuide = (config: PageGuideConfig) => {
  */
 const isElementVisible = (id: string): boolean => {
 	const el = document.getElementById(id)
-	if (!el) return false
+	if (!el) {
+		return false
+	}
 	// offsetParent is null for display:none elements (and position:fixed, but those are still "visible")
 	return el.offsetParent !== null || el.getClientRects().length > 0
 }
@@ -69,8 +73,7 @@ const isElementVisible = (id: string): boolean => {
  */
 const computeVisibleIndices = (config: PageGuideConfig): number[] => {
 	const indices: number[] = []
-	for (let i = 0; i < config.steps.length; i++) {
-		const step = config.steps[i]
+	for (const [i, step] of config.steps.entries()) {
 		if (!step.optional || isElementVisible(step.targetId)) {
 			indices.push(i)
 		}
@@ -116,15 +119,34 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		return () => cancelAnimationFrame(rafId)
 	}, [activeConfig, currentStepIndex])
 
+	// Fire each step's onEnter side-effect exactly once when entering it.
+	const enteredStepRef = useRef<number | null>(null)
+	useEffect(() => {
+		if (!activeConfig) {
+			enteredStepRef.current = null
+			return
+		}
+		if (enteredStepRef.current === currentStepIndex) {
+			return
+		}
+		enteredStepRef.current = currentStepIndex
+		activeConfig.steps[currentStepIndex]?.onEnter?.()
+	}, [activeConfig, currentStepIndex])
+
 	const startGuide = useCallback((config: PageGuideConfig) => {
 		previousFocusRef.current = document.activeElement as HTMLElement | null
 
 		// Scroll the first visible step's target into view before starting
 		const indices = computeVisibleIndices(config)
-		if (indices.length === 0) return
-
-		const firstTargetId = config.steps[indices[0]].targetId
-		const firstTarget = document.getElementById(firstTargetId)
+		const [firstIdx] = indices
+		if (firstIdx === undefined) {
+			return
+		}
+		const firstStep = config.steps[firstIdx]
+		if (!firstStep) {
+			return
+		}
+		const firstTarget = document.getElementById(firstStep.targetId)
 
 		if (firstTarget) {
 			firstTarget.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -143,10 +165,13 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 		// Wait for scroll to settle, then start
 		setTimeout(() => {
 			const freshIndices = computeVisibleIndices(config)
-			if (freshIndices.length === 0) return
+			const [firstFresh] = freshIndices
+			if (firstFresh === undefined) {
+				return
+			}
 			setVisibleIndices(freshIndices)
 			setActiveConfig(config)
-			setCurrentStepIndex(freshIndices[0])
+			setCurrentStepIndex(firstFresh)
 		}, 400)
 	}, [])
 
@@ -161,14 +186,16 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	}, [])
 
 	const next = useCallback(() => {
-		if (!activeConfig) return
+		if (!activeConfig) {
+			return
+		}
 
 		// Re-scan DOM at event time (post-commit, safe to call getElementById here)
 		const freshIndices = computeVisibleIndices(activeConfig)
 		const currentPos = freshIndices.indexOf(currentStepIndex)
 
-		if (currentPos < freshIndices.length - 1) {
-			const nextIdx = freshIndices[currentPos + 1]
+		const nextIdx = freshIndices[currentPos + 1]
+		if (nextIdx !== undefined) {
 			setCurrentStepIndex(nextIdx)
 			setVisibleIndices(freshIndices)
 		} else {
@@ -177,20 +204,24 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 	}, [activeConfig, currentStepIndex, close])
 
 	const prev = useCallback(() => {
-		if (!activeConfig) return
+		if (!activeConfig) {
+			return
+		}
 
 		const freshIndices = computeVisibleIndices(activeConfig)
 		const currentPos = freshIndices.indexOf(currentStepIndex)
 
-		if (currentPos > 0) {
-			const prevIdx = freshIndices[currentPos - 1]
+		const prevIdx = currentPos > 0 ? freshIndices[currentPos - 1] : undefined
+		if (prevIdx !== undefined) {
 			setCurrentStepIndex(prevIdx)
 			setVisibleIndices(freshIndices)
 		}
 	}, [activeConfig, currentStepIndex])
 
 	useEffect(() => {
-		if (!isActive) return
+		if (!isActive) {
+			return
+		}
 
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
@@ -227,13 +258,24 @@ const PageGuideProvider = ({ children }: { children: ReactNode }) => {
 			prev,
 			close,
 		}),
-		[startGuide, registerGuide, unregisterGuide, registeredConfig, isActive, currentStepNumber, totalSteps, next, prev, close]
+		[
+			startGuide,
+			registerGuide,
+			unregisterGuide,
+			registeredConfig,
+			isActive,
+			currentStepNumber,
+			totalSteps,
+			next,
+			prev,
+			close,
+		]
 	)
 
 	return (
 		<PageGuideContext.Provider value={contextValue}>
 			{children}
-			{isActive && activeConfig && (
+			{isActive && activeConfig && activeConfig.steps[currentStepIndex] && (
 				<PageGuideOverlay
 					step={activeConfig.steps[currentStepIndex]}
 					pageKey={activeConfig.pageKey}

@@ -56,7 +56,7 @@ interface ExecutionListProps {
 	executions: TradeExecution[]
 	direction: "long" | "short"
 	onAddExecution: () => void
-	onEditExecution: (execution: TradeExecution) => void
+	onEditExecution: (_execution: TradeExecution) => void
 	onExecutionDeleted?: () => void
 	className?: string
 }
@@ -72,7 +72,7 @@ export const ExecutionList = ({
 	const t = useTranslations("execution")
 	const tCommon = useTranslations("common")
 	const locale = useLocale()
-	const [isPending, startTransition] = useTransition()
+	const [, startTransition] = useTransition()
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 
 	// C4: All derived data in one memoised block keyed on executions reference
@@ -259,8 +259,8 @@ interface ExecutionRowProps {
 	onEdit: () => void
 	onDelete: () => void
 	isDeleting: boolean
-	formatPrice: (price: string | number) => string
-	formatQuantity: (qty: string | number) => string
+	formatPrice: (_price: string | number) => string
+	formatQuantity: (_qty: string | number) => string
 	t: ReturnType<typeof useTranslations>
 	tCommon: ReturnType<typeof useTranslations>
 }
@@ -317,7 +317,7 @@ const ExecutionRow = ({
 					<span className="text-txt-100">{formatPrice(execution.price)}</span>
 				</div>
 				{execution.orderType && (
-					<span className="bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-300 rounded">
+					<span className="bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-300 rounded-sm">
 						{execution.orderType}
 					</span>
 				)}

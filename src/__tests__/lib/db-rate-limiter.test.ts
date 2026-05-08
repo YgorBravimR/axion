@@ -59,6 +59,7 @@ vi.mock("@/db/drizzle", () => ({ db: dbMock }))
 // drizzle-orm operators are structural helpers; we pass them through as
 // lightweight stubs so the code can call eq/and/gt/lt/count without failing.
 vi.mock("drizzle-orm", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest importOriginal generic requires inline typeof import() for module-level type capture
 	const original = await importOriginal<typeof import("drizzle-orm")>()
 	return {
 		...original,
@@ -140,7 +141,9 @@ const setupTwoSelectCalls = (
 	let callIndex = 0
 	dbMock.select.mockImplementation(() => {
 		const index = callIndex++
-		if (index === 0) return buildCountChain(countRows)
+		if (index === 0) {
+			return buildCountChain(countRows)
+		}
 		return buildOldestRowChain(oldestRows)
 	})
 }
@@ -390,7 +393,10 @@ describe("createDbRateLimiter", () => {
 			setupSingleSelectCall([{ total: 15 }])
 
 			const limiter = createDbRateLimiter({ maxAttempts: 10, windowMs: 60_000 })
-			const total = await limiter.countAttempts("custom-window-key", 24 * 60 * 60 * 1000)
+			const total = await limiter.countAttempts(
+				"custom-window-key",
+				24 * 60 * 60 * 1000
+			)
 
 			expect(total).toBe(15)
 			expect(dbMock.select).toHaveBeenCalledOnce()
@@ -432,7 +438,9 @@ describe("createDbRateLimiter", () => {
 		it("should return the createdAt date of the most recent row", async () => {
 			const expectedDate = new Date("2026-03-13T10:00:00Z")
 
-			dbMock.select.mockReturnValue(buildGetLatestChain([{ createdAt: expectedDate }]))
+			dbMock.select.mockReturnValue(
+				buildGetLatestChain([{ createdAt: expectedDate }])
+			)
 
 			const limiter = createDbRateLimiter({ maxAttempts: 5, windowMs: 60_000 })
 			const result = await limiter.getLatest("latest-key")
@@ -482,8 +490,14 @@ describe("createDbRateLimiter", () => {
 			setupInsert()
 			setupDelete()
 
-			const limiterSmall = createDbRateLimiter({ maxAttempts: 3, windowMs: 60_000 })
-			const limiterLarge = createDbRateLimiter({ maxAttempts: 10, windowMs: 60_000 })
+			const limiterSmall = createDbRateLimiter({
+				maxAttempts: 3,
+				windowMs: 60_000,
+			})
+			const limiterLarge = createDbRateLimiter({
+				maxAttempts: 10,
+				windowMs: 60_000,
+			})
 
 			const resultSmall = await limiterSmall.check("shared-key")
 			const resultLarge = await limiterLarge.check("shared-key")

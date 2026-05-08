@@ -42,37 +42,52 @@ const rgbaToHex = ({ r, g, b, a }: RgbaColor): string => {
 	return `#${toHex(r)}${toHex(g)}${toHex(b)}${alpha === 255 ? "" : toHex(alpha)}`
 }
 
-const rgbaToRgbString = ({ r, g, b }: RgbaColor): string =>
-	`${r}, ${g}, ${b}`
+const rgbaToRgbString = ({ r, g, b }: RgbaColor): string => `${r}, ${g}, ${b}`
 
 const hexToRgba = (hex: string): RgbaColor | null => {
-	if (!hex) return null
+	if (!hex) {
+		return null
+	}
 	let h = hex.replace(/^#/, "")
 
 	if (h.length === 3) {
-		h = h.split("").map((c) => c + c).join("")
+		h = h
+			.split("")
+			.map((c) => c + c)
+			.join("")
 	}
 
-	if (h.length !== 6 && h.length !== 8) return null
+	if (h.length !== 6 && h.length !== 8) {
+		return null
+	}
 
 	const r = parseInt(h.substring(0, 2), 16)
 	const g = parseInt(h.substring(2, 4), 16)
 	const b = parseInt(h.substring(4, 6), 16)
 	const a = h.length === 8 ? parseInt(h.substring(6, 8), 16) / 255 : 1
 
-	if (isNaN(r) || isNaN(g) || isNaN(b) || isNaN(a)) return null
+	if (isNaN(r) || isNaN(g) || isNaN(b) || isNaN(a)) {
+		return null
+	}
 	return { r, g, b, a }
 }
 
 const parseRgbString = (input: string): RgbaColor | null => {
-	const cleaned = input.replace(/rgb[a]?\s*\(/i, "").replace(")", "").trim()
+	const cleaned = input
+		.replace(/rgb[a]?\s*\(/i, "")
+		.replace(")", "")
+		.trim()
 	const parts = cleaned.split(/[,\s]+/).map(Number)
 
-	if (parts.length < 3 || parts.some(isNaN)) return null
+	const [r, g, b, alpha] = parts
+	if (r === undefined || g === undefined || b === undefined) {
+		return null
+	}
+	if ([r, g, b].some(isNaN)) {
+		return null
+	}
 
-	const [r, g, b] = parts
-	const a = parts.length >= 4 ? parts[3] : 1
-
+	const a = alpha === undefined || isNaN(alpha) ? 1 : alpha
 	return { r, g, b, a: a > 1 ? a / 255 : a }
 }
 
@@ -82,7 +97,7 @@ interface ColorPickerProps {
 	/** Current color value in HEX format */
 	value: string
 	/** Callback when color changes — always receives HEX */
-	onChange: (hex: string) => void
+	onChange: (_hex: string) => void
 	/** Custom trigger element. Defaults to a pipette icon circle. */
 	children?: ReactNode
 	/** Additional className for the popover content */
@@ -107,7 +122,7 @@ const ColorPicker = ({
 
 	// Local state drives the picker — never reads from parent `value` during interaction.
 	const [localColor, setLocalColor] = useState<RgbaColor>(
-		() => hexToRgba(value) ?? { r: 0, g: 0, b: 0, a: 1 },
+		() => hexToRgba(value) ?? { r: 0, g: 0, b: 0, a: 1 }
 	)
 	const [hexInput, setHexInput] = useState(value || "#000000")
 	const [rgbInput, setRgbInput] = useState(() => {
@@ -122,35 +137,45 @@ const ColorPicker = ({
 
 	// Sync from parent ONLY when not interacting (e.g. preset swatch click)
 	useEffect(() => {
-		if (interactingRef.current) return
+		if (interactingRef.current) {
+			return
+		}
 
 		const rgba = hexToRgba(value)
-		if (!rgba) return
+		if (!rgba) {
+			return
+		}
 
 		// Skip if local state already matches
 		const localHex = rgbaToHex(localColor)
-		if (localHex.toLowerCase() === value.toLowerCase()) return
+		if (localHex.toLowerCase() === value.toLowerCase()) {
+			return
+		}
 
 		setLocalColor(rgba)
 		setHexInput(value)
 		setRgbInput(rgbaToRgbString(rgba))
-	}, [value]) // eslint-disable-line react-hooks/exhaustive-deps
+	}, [value])
 
 	// Debounced parent notification — prevents render storms during drag
 	const notifyParent = useCallback(
 		(hex: string) => {
-			if (debounceRef.current) clearTimeout(debounceRef.current)
+			if (debounceRef.current) {
+				clearTimeout(debounceRef.current)
+			}
 			debounceRef.current = setTimeout(() => {
 				onChange(hex)
 			}, 80)
 		},
-		[onChange],
+		[onChange]
 	)
 
 	// Cleanup debounce timer
 	useEffect(() => {
 		return () => {
-			if (debounceRef.current) clearTimeout(debounceRef.current)
+			if (debounceRef.current) {
+				clearTimeout(debounceRef.current)
+			}
 		}
 	}, [])
 
@@ -163,7 +188,7 @@ const ColorPicker = ({
 			setRgbInput(rgbaToRgbString(rgba))
 			notifyParent(hex)
 		},
-		[notifyParent],
+		[notifyParent]
 	)
 
 	// Picker drag — mark as interacting to block external sync
@@ -173,15 +198,19 @@ const ColorPicker = ({
 			updateColor(rgba)
 
 			// Release interaction lock after drag settles
-			if (debounceRef.current) clearTimeout(debounceRef.current)
+			if (debounceRef.current) {
+				clearTimeout(debounceRef.current)
+			}
 			debounceRef.current = setTimeout(() => {
 				onChange(rgbaToHex(rgba))
 				// Small delay before releasing lock so the parent re-render
 				// from onChange doesn't trigger the useEffect sync
-				setTimeout(() => { interactingRef.current = false }, 50)
+				setTimeout(() => {
+					interactingRef.current = false
+				}, 50)
 			}, 80)
 		},
-		[onChange, updateColor],
+		[onChange, updateColor]
 	)
 
 	const handleHexInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -197,7 +226,9 @@ const ColorPicker = ({
 			notifyParent(normalized)
 		}
 
-		setTimeout(() => { interactingRef.current = false }, 400)
+		setTimeout(() => {
+			interactingRef.current = false
+		}, 400)
 	}
 
 	const handleRgbInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -212,13 +243,15 @@ const ColorPicker = ({
 			notifyParent(rgbaToHex(rgba))
 		}
 
-		setTimeout(() => { interactingRef.current = false }, 400)
+		setTimeout(() => {
+			interactingRef.current = false
+		}, 400)
 	}
 
 	const defaultTrigger = (
 		<button
 			type="button"
-			className="flex h-9 w-9 items-center justify-center rounded-full border border-bg-300 transition-transform hover:scale-110"
+			className="border-bg-300 flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-110"
 			style={{ backgroundColor: value }}
 			aria-label={t("pickColor")}
 		>
@@ -228,14 +261,12 @@ const ColorPicker = ({
 
 	return (
 		<Popover>
-			<PopoverTrigger asChild>
-				{children ?? defaultTrigger}
-			</PopoverTrigger>
+			<PopoverTrigger asChild>{children ?? defaultTrigger}</PopoverTrigger>
 			<PopoverContent
 				align="start"
 				side="bottom"
 				container={container}
-				className={cn("w-64 space-y-s-300", className)}
+				className={cn("space-y-s-300 w-64", className)}
 			>
 				<RgbaColorPicker
 					color={localColor}
@@ -245,11 +276,11 @@ const ColorPicker = ({
 				/>
 
 				{/* HEX / RGB toggle + input */}
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<button
 						type="button"
 						onClick={() => setInputMode(inputMode === "hex" ? "rgb" : "hex")}
-						className="shrink-0 rounded border border-bg-300 px-s-200 py-s-100 text-tiny font-mono text-txt-200 transition-colors hover:bg-bg-300"
+						className="border-bg-300 px-s-200 py-s-100 text-tiny text-txt-200 hover:bg-bg-300 shrink-0 rounded-sm border font-mono transition-colors"
 						aria-label={t("toggleFormat")}
 					>
 						{inputMode === "hex" ? "HEX" : "RGB"}
@@ -259,7 +290,7 @@ const ColorPicker = ({
 							id="color-picker-hex"
 							value={hexInput}
 							onChange={handleHexInputChange}
-							className="h-8 font-mono text-small tracking-wider"
+							className="text-small h-8 font-mono tracking-wider"
 							placeholder="#FF5733"
 							aria-label={t("hexValue")}
 						/>
@@ -268,7 +299,7 @@ const ColorPicker = ({
 							id="color-picker-rgb"
 							value={rgbInput}
 							onChange={handleRgbInputChange}
-							className="h-8 font-mono text-small tracking-wider"
+							className="text-small h-8 font-mono tracking-wider"
 							placeholder="255, 87, 51"
 							aria-label={t("rgbValue")}
 						/>
@@ -276,12 +307,12 @@ const ColorPicker = ({
 				</div>
 
 				{/* Preview swatch */}
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<div
-						className="h-6 w-6 rounded-full border border-bg-300"
+						className="border-bg-300 h-6 w-6 rounded-full border"
 						style={{ backgroundColor: rgbaToHex(localColor) }}
 					/>
-					<span className="font-mono text-tiny text-txt-300 uppercase">
+					<span className="text-tiny text-txt-300 font-mono uppercase">
 						{rgbaToHex(localColor)}
 					</span>
 				</div>
