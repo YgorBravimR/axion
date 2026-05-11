@@ -38,5 +38,17 @@ test.describe("Journey Stage 4b — Multi-month history seeder", () => {
 		for (const month of result.monthsSeeded) {
 			expect(month.count).toBeGreaterThan(0)
 		}
+
+		expect(result.ledgerRowsComputed).toBe(4)
+
+		// The plan is shaped so Month -3 nets a loss → its carryoverOut must be
+		// non-zero. If this assertion fails, either the recompute path didn't
+		// run, the plan shape regressed, or recompute-month.ts changed its
+		// carryover semantics. All three are signals worth catching here, not
+		// downstream in a flaky UI assertion.
+		const hasNonZeroCarryover = result.carryoverOutCentsByMonth.some(
+			(entry) => entry.carryoverOutCents > 0
+		)
+		expect(hasNonZeroCarryover).toBe(true)
 	})
 })

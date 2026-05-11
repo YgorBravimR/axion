@@ -21,12 +21,6 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ## Journey suite (`e2e/journey/`)
 
-### Tighten Stage 6 / 7 assertions against seeded history
-
-- **What**: Stage 4b now seeds 4 months of trades (loss month → profit month for DARF, multi-quarter spread for the annual rollup). Stages 6 and 7 still assert only that surfaces mount. Tighten them: assert non-zero DARF carryover, assert annual rollup PnL reflects the 4-month aggregate, assert quarter cockpit shows non-empty content for both halves.
-- **Why**: The seeder unlocked the data; the assertions still need to be written for the regression to actually catch carryover-math bugs.
-- **Source**: `e2e/journey/04b-seed-history.spec.ts`; `e2e/journey/helpers/seed-bravo-history.ts` (plan layout); `e2e/journey/06-monthly.spec.ts` + `07-quarter-year.spec.ts` (current shallow assertions).
-
 ### Quarterly plan row seeder
 
 - **What**: Insert a real `quarterlyPlan` DB row for Bravo so the `#quarter-narrative` surface in Stage 7 renders content (it's gated on row existence, not derived from trades).

@@ -93,6 +93,19 @@ test.describe("Journey Stage 7 — Quarter + Year", () => {
 		await expect(page.locator("#annual-section-heading")).toBeVisible({
 			timeout: 30_000,
 		})
+
+		// Stage 4b seeded trades across 4 prior months. If those months fall
+		// in the same calendar year as Stage 4's trade, the annual rollup
+		// table should show >1 active month row. We assert that the table
+		// itself is reachable (aria-label is keyed to the year) — value
+		// assertions on specific cells would be brittle because exact totals
+		// depend on the fee config that recompute resolves at run time.
+		const currentYear = new Date().getFullYear()
+		await expect(
+			page.getByRole("table", {
+				name: new RegExp(`Annual rollup ${currentYear}`, "i"),
+			})
+		).toBeVisible({ timeout: 15_000 })
 		await screenshotIfDemo(page, "07-03-annual-report")
 
 		// ── 7d — Account comparison

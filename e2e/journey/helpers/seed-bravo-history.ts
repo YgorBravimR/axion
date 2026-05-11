@@ -29,6 +29,7 @@
 
 import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 
 const SEED_MARKER = "JOURNEY_SEED"
 const BRAVO_ASSET_SYMBOL = "BRVE2E"
@@ -41,6 +42,12 @@ interface BravoIds {
 interface SeedResult {
 	inserted: number
 	monthsSeeded: ReadonlyArray<{ year: number; month: number; count: number }>
+	ledgerRowsComputed: number
+	carryoverOutCentsByMonth: ReadonlyArray<{
+		year: number
+		month: number
+		carryoverOutCents: number
+	}>
 }
 
 interface IdRow extends Record<string, unknown> {
@@ -479,6 +486,52 @@ const deletePriorSeed = async (accountId: string): Promise<number> => {
 	return Number(result.rows[0]?.count ?? 0)
 }
 
+interface MonthlyRecomputeOutcome {
+	year: number
+	month: number
+	carryoverOutCents: number
+}
+
+/**
+ * Walk seeded months chronologically and trigger `recomputeAccountMonth`
+ * so monthly_tax_ledger rows are populated. Without this, the carryover
+ * ledger (`CarryoverLedger` in `reports-content.tsx`) is empty in Stage 6
+ * even though the seeded loss month should produce a non-zero balance.
+ *
+ * `carryoverIn` is threaded: month N's carryoverOut becomes month N+1's
+ * carryoverIn. This mirrors what `getMonthlyDarf` does at request time
+ * when it walks back to seed missing months.
+ *
+ * Note: `recompute-month.ts` is a protected path per CLAUDE.md (single
+ * source of truth for tax recomputation). We only INVOKE the exported
+ * function — we do not modify it.
+ */
+const recomputeSeededMonths = async (
+	userId: string,
+	accountId: string,
+	plan: ReadonlyArray<PlannedTrade>
+): Promise<ReadonlyArray<MonthlyRecomputeOutcome>> => {
+	const ordered = summarize(plan)
+	const outcomes: MonthlyRecomputeOutcome[] = []
+	let carryoverIn = 0
+	for (const { year, month } of ordered) {
+		const result = await recomputeAccountMonth({
+			accountId,
+			year,
+			month,
+			carryoverInCents: carryoverIn,
+			userId,
+		})
+		outcomes.push({
+			year,
+			month,
+			carryoverOutCents: result.carryoverOutCents,
+		})
+		carryoverIn = result.carryoverOutCents
+	}
+	return outcomes
+}
+
 const summarize = (
 	plan: ReadonlyArray<PlannedTrade>
 ): ReadonlyArray<{ year: number; month: number; count: number }> => {
@@ -508,17 +561,23 @@ const summarize = (
  *
  * Looks up Bravo via her email (from `getBravo()` in fixtures), resolves
  * her primary trading account, wipes any prior seed-marked trades on that
- * account, then inserts the multi-month plan.
+ * account, then inserts the multi-month plan. After inserts, triggers
+ * `recomputeAccountMonth` for each seeded month in chronological order so
+ * the monthly_tax_ledger rows are populated and the carryover ledger in
+ * Stage 6 has real data to render.
  */
 export const seedBravoHistory = async (
 	bravoEmail: string
 ): Promise<SeedResult> => {
-	const { accountId } = await resolveBravoIds(bravoEmail)
+	const { userId, accountId } = await resolveBravoIds(bravoEmail)
 	await deletePriorSeed(accountId)
 	const plan = buildPlan()
 	const inserted = await insertPlan(accountId, plan)
+	const recomputed = await recomputeSeededMonths(userId, accountId, plan)
 	return {
 		inserted,
 		monthsSeeded: summarize(plan),
+		ledgerRowsComputed: recomputed.length,
+		carryoverOutCentsByMonth: recomputed,
 	}
 }

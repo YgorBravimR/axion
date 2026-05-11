@@ -81,6 +81,15 @@ test.describe("Journey Stage 6 — Monthly Close", () => {
 		await expect(page.locator("#tax-section-heading")).toBeVisible({
 			timeout: 30_000,
 		})
+
+		// Stage 4b seeded a loss month → carryover history must contain at
+		// least one non-zero entry → CarryoverLedger renders the "Prejuízo
+		// a Compensar" heading. If this fails, either the seeder regressed,
+		// recompute-month.ts changed carryover semantics, or reports-content
+		// stopped surfacing the ledger. All three are real signals.
+		await expect(
+			page.getByRole("heading", { name: /Prejuízo a Compensar/i })
+		).toBeVisible({ timeout: 15_000 })
 		await screenshotIfDemo(page, "06-02-darf-section")
 
 		// ── 6c — Month plan cockpit card (fractal tree leaf for the trade month)
