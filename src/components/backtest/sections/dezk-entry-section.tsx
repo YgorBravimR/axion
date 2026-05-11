@@ -43,7 +43,7 @@ const DezkEntrySection = memo(
 				{/* MACD params */}
 				<div className="space-y-s-200">
 					<p className="text-small text-txt-200 font-medium">MACD</p>
-					<div className="gap-m-400 grid grid-cols-3">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 						<div className="space-y-s-200">
 							<Label htmlFor="macd-fast" id="label-macd-fast">
 								{t("macdFast")}

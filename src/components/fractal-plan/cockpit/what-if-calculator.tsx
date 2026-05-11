@@ -121,7 +121,7 @@ const WhatIfCalculator = ({ oneRCents, assets }: WhatIfCalculatorProps) => {
 				</div>
 			</div>
 
-			<dl className="mt-s-300 gap-s-300 border-bg-300 pt-s-300 text-tiny grid grid-cols-3 border-t">
+			<dl className="mt-s-300 gap-s-300 border-bg-300 pt-s-300 text-tiny grid grid-cols-1 border-t sm:grid-cols-3">
 				<div>
 					<dt className="text-txt-300">{t("contracts")}</dt>
 					<dd className="text-h3 text-acc-100 mt-px font-mono tabular-nums">
