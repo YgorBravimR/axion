@@ -4,15 +4,26 @@ Stage-scoped Playwright suite that encodes [`docs/zero-to-hero.md`](../../docs/z
 
 Design rationale, options considered, and the full rollout plan live in [`docs/design/zero-to-hero-e2e.md`](../../docs/design/zero-to-hero-e2e.md).
 
-## Current scope (Phase 1 — proof of concept)
+## Current scope
 
-| Stage | File                    | Status              |
-| ----- | ----------------------- | ------------------- |
-| 0     | `00-welcome.spec.ts`    | implemented         |
-| 1     | `01-foundation.spec.ts` | implemented (POC)\* |
-| 2–8   | —                       | Phase 2–3           |
+All 9 stages (0–8) are implemented and chain end-to-end via Playwright project dependencies. Full chain runtime: ~2–3 min locally on a warm cache.
 
-\* Stage 1 currently only verifies storageState handoff + the Profile/Account tabs. The full Foundation flow (assets, timeframes, tags, conditions, risk profiles, fee rates, first playbook strategy) lands in Phase 2 once we resolve admin-only tab gating for the Bravo persona.
+| Stage | File                       | Surfaces covered                                                      |
+| ----- | -------------------------- | --------------------------------------------------------------------- |
+| 0     | `00-welcome.spec.ts`       | Register, sign in, dashboard mount                                    |
+| 1     | `01-foundation.spec.ts`    | Settings — profile, account, assets, timeframes, tags, fees, playbook |
+| 2     | `02-fractal-plan.spec.ts`  | Yearly plan seeded; fractal tree mount proof                          |
+| 3     | `03-pressure-test.spec.ts` | Backtest + Monte Carlo + equity shield surfaces                       |
+| 4     | `04-daily-loop.spec.ts`    | Log one trade end-to-end; trade appears in journal                    |
+| 5     | `05-weekly.spec.ts`        | `/en/reports` weekly card + mistake-cost + fee-impact; analytics dash |
+| 6     | `06-monthly.spec.ts`       | Monthly perf; `/en/reports` DARF/tax section; month plan cockpit      |
+| 7     | `07-quarter-year.spec.ts`  | Quarter + year cockpits; annual rollup; account comparison            |
+| 8     | `08-improvement.spec.ts`   | Bug-report panel open/close; analytics drill on the equity curve      |
+
+Known data gaps (not bugs, future work):
+
+- Stage 7 quarter narrative is gated on a seeded `quarterlyPlan` DB row; the suite currently asserts the always-rendered quarter navigation landmark instead. Seeding a multi-month trade history is the next acceptance step.
+- Stage 6 DARF assertion relies on `getMonthlyDarf` lazy-recompute for a single trade; multi-month carryover correctness is not yet exercised.
 
 ## Running
 
@@ -29,10 +40,23 @@ Run the full available chain:
 ```bash
 pnpm exec playwright test \
   --project=journey-00-welcome-ci \
-  --project=journey-01-foundation-ci
+  --project=journey-01-foundation-ci \
+  --project=journey-02-fractal-plan-ci \
+  --project=journey-03-pressure-test-ci \
+  --project=journey-04-daily-loop-ci \
+  --project=journey-05-weekly-ci \
+  --project=journey-06-monthly-ci \
+  --project=journey-07-quarter-year-ci \
+  --project=journey-08-improvement-ci
 ```
 
-Project dependencies guarantee Stage 0 runs before Stage 1, and Stage 1 picks up the storageState snapshot Stage 0 wrote.
+Project dependencies guarantee Stage N runs before Stage N+1, and each stage picks up the storageState snapshot the previous stage wrote.
+
+Before re-running the full chain, clear stale auth so the DB-backed login rate-limit (`login:<email>`) doesn't fire on Stage 0:
+
+```bash
+rm -f e2e/.auth/bravo.json e2e/.auth/journey-stage-*.json
+```
 
 ### Demo mode (showcase, headed, slow, narrated, video)
 
@@ -58,15 +82,22 @@ The HTML reporter renders video + screenshots inline per test.
 
 ```
 e2e/journey/
-├── 00-welcome.spec.ts        Bravo registers, signs in, lands on dashboard
-├── 01-foundation.spec.ts     Bravo opens Settings (POC: tabs only)
+├── 00-welcome.spec.ts         Bravo registers, signs in, lands on dashboard
+├── 01-foundation.spec.ts      Bravo seeds her foundation in Settings
+├── 02-fractal-plan.spec.ts    Yearly plan seeded; fractal tree mounts
+├── 03-pressure-test.spec.ts   Backtest + Monte Carlo + equity shield
+├── 04-daily-loop.spec.ts      Log one trade end-to-end
+├── 05-weekly.spec.ts          Weekly reports + analytics dashboard
+├── 06-monthly.spec.ts         Monthly perf + DARF/tax + month cockpit
+├── 07-quarter-year.spec.ts    Quarter + year cockpits + annual rollup
+├── 08-improvement.spec.ts     Bug-report panel + analytics drill
 ├── fixtures/
-│   └── bravo-seed.ts         Bravo persona constants (timestamped email)
+│   └── bravo-seed.ts          Bravo persona constants (timestamped email)
 ├── helpers/
-│   ├── annotate.ts           Demo-mode narration banner (no-op in CI)
-│   ├── screenshot-if-demo.ts Demo-mode capture (no-op in CI)
-│   └── storage-state.ts      Save / load between stages
-└── README.md                 (this file)
+│   ├── annotate.ts            Demo-mode narration banner (no-op in CI)
+│   ├── screenshot-if-demo.ts  Demo-mode capture (no-op in CI)
+│   └── storage-state.ts       Save / load between stages
+└── README.md                  (this file)
 ```
 
 State flows through `e2e/.auth/journey-stage-N.json` snapshots. Stage N saves at the end of its test body; Stage N+1 declares `test.use(loadStageState(N))` at the top of the spec.
@@ -103,11 +134,11 @@ Hard assertions (`expect(...)`) run in **both** modes — demo mode must still f
 
 Each test run gets a fresh timestamped email (`bravo-${Date.now()}@axion-demo.com`) so journey runs don't collide with each other or with the admin user used by the rest of the E2E suite. Password and display name are stable for narrative coherence.
 
-Phase 2 will move to a fixed Bravo email backed by a per-run seeder reset, so the showcase video has a recognizable identity.
+A future iteration may move to a fixed Bravo email backed by a per-run seeder reset (cascade-delete + insert), so the showcase video has a recognizable identity. Today the timestamped email is the cheapest way to guarantee a clean DB-backed login rate-limit slot for each run.
 
 ## Tags
 
-Spec files include `@journey` and `@stage:<name>` tags in their JSDoc headers. Filtering by tag is **not** wired yet — Phase 1 uses Playwright project selection (`--project=journey-XX-...`) which is more explicit. Tag-based filtering may be added in Phase 2 if it proves useful.
+Spec files include `@journey` and `@stage:<name>` tags in their JSDoc headers. Filtering by tag is **not** wired yet — the suite uses Playwright project selection (`--project=journey-XX-...`) which is more explicit. Tag-based filtering may be added later if it proves useful.
 
 ## What's NOT covered
 
@@ -129,11 +160,11 @@ The trace viewer shows DOM snapshots, network calls, console errors, and the exa
 
 In demo mode, look at the per-step screenshots in `test-results/journey-demo/` and the video in the HTML report.
 
-## Adding a new stage (Phase 2+)
+## Adding a new stage
 
 1. Update [`docs/zero-to-hero.md`](../../docs/zero-to-hero.md) if the user-visible flow changes.
 2. Write `NN-name.spec.ts` following the shape above.
-3. Append the stage to `journeyStages` in [`playwright.config.ts`](../../playwright.config.ts).
+3. Append the stage to `journeyStages` in [`playwright.config.ts`](../../playwright.config.ts). Both `-ci` and `-demo` projects are generated automatically.
 4. Run locally: `pnpm exec playwright test --project=journey-NN-name-ci`.
 5. Run the demo variant to verify narration coherence: `DEMO=1 pnpm exec playwright test --project=journey-NN-name-demo`.
-6. Open a PR. CI runs all journey stages in dependency order.
+6. Open a PR (when a journey CI workflow exists). The chain runs in dependency order.

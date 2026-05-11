@@ -58,7 +58,9 @@ const selfSeedingPhases = [
  * Stage N completes before Stage N+1 starts).
  *
  * Tagged @journey in spec files so they can be filtered with --grep.
- * Phase 1: only Stages 0+1. Phases 2-3 will append more entries.
+ * All 9 stages (0-8) implemented. Each builds a `-ci` and `-demo` Playwright
+ * project via `buildJourneyProjects` below; add a new stage by appending to
+ * `journeyStages` and the project pair is generated automatically.
  *
  * @see docs/design/zero-to-hero-e2e.md
  */
