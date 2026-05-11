@@ -46,6 +46,10 @@ next-env.d.ts
 playwright-report
 test-results
 demo-videos
+
+# journey suite per-run artifacts (persona + stage snapshots)
+e2e/.auth/bravo.json
+e2e/.auth/journey-stage-*.json
 video-trades.csv
 video/out/
 video/public/

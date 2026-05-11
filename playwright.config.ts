@@ -52,6 +52,68 @@ const selfSeedingPhases = [
 	{ name: "auth-security", testMatch: /auth-security\.spec\.ts/ },
 ]
 
+/**
+ * Journey suite stages — ordered, each depends on the previous so that
+ * storageState handoff works in PR-mode (project dependencies guarantee
+ * Stage N completes before Stage N+1 starts).
+ *
+ * Tagged @journey in spec files so they can be filtered with --grep.
+ * Phase 1: only Stages 0+1. Phases 2-3 will append more entries.
+ *
+ * @see docs/design/zero-to-hero-e2e.md
+ */
+interface JourneyStage {
+	name: string
+	testMatch: RegExp
+}
+
+const journeyStages: readonly JourneyStage[] = [
+	{ name: "journey-00-welcome", testMatch: /journey\/00-welcome\.spec\.ts/ },
+	{
+		name: "journey-01-foundation",
+		testMatch: /journey\/01-foundation\.spec\.ts/,
+	},
+]
+
+/**
+ * Build journey projects for a given profile (ci vs demo).
+ *
+ * CI profile: headless, default speed, no video, parallel where possible.
+ * Demo profile: headed, slowMo, video on, serial (workers:1 via top-level config).
+ */
+const buildJourneyProjects = (
+	profile: "ci" | "demo"
+): Array<{
+	name: string
+	testMatch: RegExp
+	use: Record<string, unknown>
+	dependencies?: string[]
+}> => {
+	const baseUse =
+		profile === "demo"
+			? {
+					...devices["Desktop Chrome"],
+					headless: false,
+					launchOptions: { slowMo: 400 },
+					video: "on" as const,
+					screenshot: "on" as const,
+				}
+			: { ...devices["Desktop Chrome"] }
+
+	let prev: string | undefined
+	return journeyStages.map((stage) => {
+		const name = `${stage.name}-${profile}`
+		const project = {
+			name,
+			testMatch: stage.testMatch,
+			use: baseUse,
+			...(prev ? { dependencies: [prev] } : {}),
+		}
+		prev = name
+		return project
+	})
+}
+
 interface DeviceConfig {
 	[key: string]: unknown
 }
@@ -125,6 +187,8 @@ export default defineConfig({
 		},
 		...buildDeviceProjects("chromium", devices["Desktop Chrome"]),
 		...buildDeviceProjects("mobile", devices["iPhone 14"]),
+		...buildJourneyProjects("ci"),
+		...buildJourneyProjects("demo"),
 	],
 	webServer: {
 		command: "pnpm dev",
