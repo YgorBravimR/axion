@@ -1,5 +1,26 @@
 # Code Conventions
 
+# Agent Conventions — Axion
+
+## Package manager
+
+**Use `pnpm` only. Never use `bun` or `bunx` in this project.**
+
+- Install: `pnpm install`
+- Run script: `pnpm <script>` (e.g. `pnpm dev`, `pnpm test`)
+- One-shot binary: `pnpm exec <bin>` (e.g. `pnpm exec tsc --noEmit`)
+- Add dep: `pnpm add <pkg>` / `pnpm add -D <pkg>`
+
+This applies to every command issued by an agent: typecheck, tests, codegen, migrations, lint, dev server, anything.
+
+## General
+
+Never use `window.confirm()`, `window.alert()`, or `confirm()` for any user-facing confirmations or messages.
+
+**Why:** Native browser dialogs are ugly, unthemed, inaccessible, and break the brand experience. The project has a proper `AlertDialog` component (`src/components/ui/alert-dialog.tsx`) that provides accessible, themed confirmation modals.
+
+**How to apply:** For any destructive or confirmation action, use `AlertDialog` with two buttons (confirm + cancel). Pattern: controlled `open` state, `onOpenChange` for dismiss, `AlertDialogAction` for confirm, `AlertDialogCancel` for cancel.
+
 ## Avoid Jokes
 
 - Variables should have meaningful names (not single letters)

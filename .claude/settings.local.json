@@ -152,7 +152,8 @@
       "Skill(scan)",
       "Skill(review-team)",
       "Bash(bunx drizzle-kit *)",
-      "WebFetch(domain:getdesign.md)"
+      "WebFetch(domain:getdesign.md)",
+      "Bash(pnpm lint:strict)"
     ],
     "deny": [],
     "ask": []
