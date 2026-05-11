@@ -9,6 +9,7 @@ import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
 import type { DailyPlan } from "@/db/schema"
+import type { FetchByDateResult } from "./daily.types"
 
 // `null` = explicit clear; field omitted = leave untouched.
 const upsertSchema = z.object({
@@ -208,12 +209,6 @@ const fetchByDateSchema = z.object({
 		.datetime()
 		.or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
 })
-
-type FetchByDateResult =
-	| { kind: "ok"; dayRow: DailyPlan }
-	| { kind: "no-account" }
-	| { kind: "no-yearly-plan" }
-	| { kind: "incomplete-cascade"; missing: "quarter" | "month" | "week" }
 
 export const getDailyPlanForCurrentAccount = async (
 	input: z.infer<typeof fetchByDateSchema>
