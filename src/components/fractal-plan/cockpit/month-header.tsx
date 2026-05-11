@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { MonthlyPlanSlideover } from "./monthly-plan-slideover"
 import type { RiskManagementProfile } from "@/types/risk-profile"
@@ -53,6 +54,7 @@ const MonthHeader = ({
 	riskProfiles,
 	existing,
 }: MonthHeaderProps) => {
+	const t = useTranslations("plan.month.header")
 	const [editing, setEditing] = useState(false)
 	const prev = computeAdjacent(year, month, -1)
 	const next = computeAdjacent(year, month, 1)
@@ -62,12 +64,12 @@ const MonthHeader = ({
 			<header className="gap-s-300 flex flex-wrap items-baseline justify-between">
 				<nav
 					className="gap-s-300 text-small text-txt-300 flex items-center"
-					aria-label="Navegação do mês"
+					aria-label={t("navAriaLabel")}
 				>
 					<Link
 						href={navHref(locale, prev.year, prev.month)}
 						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
-						aria-label="Mês anterior"
+						aria-label={t("prevAriaLabel")}
 					>
 						<ChevronLeft className="size-4" />
 					</Link>
@@ -90,7 +92,7 @@ const MonthHeader = ({
 					<Link
 						href={navHref(locale, next.year, next.month)}
 						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
-						aria-label="Próximo mês"
+						aria-label={t("nextAriaLabel")}
 					>
 						<ChevronRight className="size-4" />
 					</Link>
@@ -100,10 +102,10 @@ const MonthHeader = ({
 					variant="ghost"
 					size="sm"
 					onClick={() => setEditing(true)}
-					aria-label="Editar plano do mês"
+					aria-label={t("editAriaLabel")}
 				>
 					<Pencil className="size-3.5" />
-					Editar plano
+					{t("editButton")}
 				</Button>
 			</header>
 

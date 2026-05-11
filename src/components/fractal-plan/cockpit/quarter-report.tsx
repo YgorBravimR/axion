@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import { and, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import {
@@ -68,6 +69,10 @@ const QuarterReport = async ({
 	quarter,
 	locale,
 }: QuarterReportProps) => {
+	const [t, tSetup] = await Promise.all([
+		getTranslations("plan.quarter"),
+		getTranslations("plan.setup"),
+	])
 	const quarterLabel = `Q${quarter} ${year}`
 	const months = [
 		(quarter - 1) * 3 + 1,
@@ -84,9 +89,9 @@ const QuarterReport = async ({
 	})
 	if (!yearRow) {
 		return (
-			<PlanSection title={quarterLabel} subtitle="Plano anual ainda não criado">
+			<PlanSection title={quarterLabel} subtitle={tSetup("noAnnualPlan")}>
 				<p className="text-txt-200">
-					Crie o plano anual primeiro em{" "}
+					{tSetup("noAnnualPlanBody")}{" "}
 					<Link
 						href={`/${locale}/plan/${year}`}
 						className="text-acc-100 underline"
@@ -108,14 +113,8 @@ const QuarterReport = async ({
 
 	if (!quarterRow) {
 		return (
-			<PlanSection
-				title={quarterLabel}
-				subtitle="Linha trimestral não encontrada"
-			>
-				<p className="text-txt-200">
-					O plano anual deveria ter auto-semeado este trimestre. Verifique a
-					integridade do plano anual.
-				</p>
+			<PlanSection title={quarterLabel} subtitle={t("noQuarterPlan")}>
+				<p className="text-txt-200">{t("noQuarterPlanBody")}</p>
 			</PlanSection>
 		)
 	}
@@ -309,7 +308,7 @@ const QuarterReport = async ({
 			/>
 
 			<section
-				aria-label="Meses do trimestre"
+				aria-label={t("monthsAriaLabel")}
 				className="gap-m-400 grid grid-cols-1 md:grid-cols-3"
 			>
 				{perMonth.map((p) => (
@@ -332,13 +331,13 @@ const QuarterReport = async ({
 
 			<section
 				className="border-bg-300 bg-bg-200 rounded-lg border"
-				aria-label="DARF do trimestre"
+				aria-label={t("darfAriaLabel")}
 			>
 				<header className="px-m-400 py-s-300 flex items-baseline justify-between">
 					<span className="text-small text-txt-100 font-medium">
-						DARF · trimestre
+						{t("darfTitle")}
 					</span>
-					<span className="text-tiny text-txt-300">visão por mês</span>
+					<span className="text-tiny text-txt-300">{t("darfSubtitle")}</span>
 				</header>
 				<div className="border-bg-300 p-m-400 border-t">
 					<DarfStrip
@@ -355,35 +354,35 @@ const QuarterReport = async ({
 				<section
 					id="quarter-narrative"
 					className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
-					aria-label="Reflexão e pós-mortem do trimestre"
+					aria-label={t("narrative.ariaLabel")}
 				>
 					<header className="flex items-baseline justify-between">
 						<h2 className="text-small text-txt-100 font-medium">
-							Reflexão · pós-mortem
+							{t("narrative.heading")}
 						</h2>
 						<span className="text-tiny text-txt-300">{quarterLabel}</span>
 					</header>
 					<div className="mt-s-300 gap-m-400 grid sm:grid-cols-2">
 						<div>
 							<p className="text-tiny text-txt-300 tracking-wider uppercase">
-								Reflexão
+								{t("narrative.reflectionLabel")}
 							</p>
 							<p className="mt-s-100 text-small text-txt-100 whitespace-pre-wrap">
 								{quarterRow.reflectionNotes || (
 									<span className="text-txt-300">
-										Sem nota — defina pelo botão "Editar plano".
+										{t("narrative.noReflectionNote")}
 									</span>
 								)}
 							</p>
 						</div>
 						<div>
 							<p className="text-tiny text-txt-300 tracking-wider uppercase">
-								Pós-mortem
+								{t("narrative.postMortemLabel")}
 							</p>
 							<p className="mt-s-100 text-small text-txt-100 whitespace-pre-wrap">
 								{quarterRow.postMortemNotes || (
 									<span className="text-txt-300">
-										Sem revisão — defina pelo botão "Editar plano".
+										{t("narrative.noPostMortemNote")}
 									</span>
 								)}
 							</p>

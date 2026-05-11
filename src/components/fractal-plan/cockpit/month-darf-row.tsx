@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { Receipt } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { CurrencyInput } from "@/components/ui/currency-input"
 import { Label } from "@/components/ui/label"
@@ -23,14 +24,6 @@ interface MonthDarfRowProps {
 	darfPaidAmountCents: number | null
 	darfPaidAt: Date | null
 	isFinal: boolean
-}
-
-const STATUS_LABEL: Record<UiDarfStatus, string> = {
-	paid: "Pago",
-	pending: "Pendente",
-	overdue: "Vencido",
-	exempt: "Isento",
-	in_progress: "Em curso",
 }
 
 const STATUS_DOT: Record<UiDarfStatus, string> = {
@@ -55,6 +48,7 @@ const MonthDarfRow = ({
 	darfPaidAt,
 	isFinal,
 }: MonthDarfRowProps) => {
+	const t = useTranslations("plan.month.darf")
 	const uiStatus: UiDarfStatus = isFinal ? darfStatus : "in_progress"
 	const router = useRouter()
 	const { showToast } = useToast()
@@ -66,7 +60,7 @@ const MonthDarfRow = ({
 
 	const handleConfirm = () => {
 		if (paidInputCents === null || paidInputCents < 0) {
-			showToast("error", "Informe um valor válido em R$.")
+			showToast("error", t("toastInvalidAmount"))
 			return
 		}
 		startTransition(async () => {
@@ -77,11 +71,11 @@ const MonthDarfRow = ({
 				paidAmountCents: paidInputCents,
 			})
 			if (result.status === "success") {
-				showToast("success", "DARF marcado como pago.")
+				showToast("success", t("toastSuccess"))
 				setPrompting(false)
 				router.refresh()
 			} else {
-				showToast("error", result.message ?? "Erro ao marcar como pago.")
+				showToast("error", result.message ?? t("toastError"))
 			}
 		})
 	}
@@ -103,7 +97,7 @@ const MonthDarfRow = ({
 		<section
 			id="month-darf-row"
 			className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
-			aria-label="DARF do mês"
+			aria-label={t("ariaLabel")}
 		>
 			<div className="gap-x-m-400 gap-y-s-200 flex flex-wrap items-center">
 				<div className="gap-s-200 flex items-center">
@@ -114,31 +108,31 @@ const MonthDarfRow = ({
 						aria-hidden="true"
 					/>
 					<span className="text-small text-txt-200">
-						{STATUS_LABEL[uiStatus]}
+						{t(`statusLabel.${uiStatus}`)}
 					</span>
 				</div>
 
 				{uiStatus === "in_progress" && (
 					<div className="gap-s-200 flex items-baseline">
-						<span className="text-tiny text-txt-300">Prévia</span>
+						<span className="text-tiny text-txt-300">{t("preview")}</span>
 						<span className="text-small text-txt-200 font-mono tabular-nums">
 							{formatBRL(darfDueCents)}
 						</span>
-						<span className="text-tiny text-txt-300">mês ainda em curso</span>
+						<span className="text-tiny text-txt-300">{t("inCourse")}</span>
 					</div>
 				)}
 
 				{uiStatus !== "in_progress" && uiStatus !== "exempt" && (
 					<div className="gap-s-200 flex items-baseline">
 						<span className="text-tiny text-txt-300">
-							{uiStatus === "paid" ? "Calculado" : "Devido"}
+							{uiStatus === "paid" ? t("calculated") : t("due")}
 						</span>
 						<span className="text-small text-txt-100 font-mono tabular-nums">
 							{formatBRL(darfDueCents)}
 						</span>
 						{dueDateLabel && uiStatus !== "paid" && (
 							<span className="text-tiny text-txt-300">
-								venc. {dueDateLabel}
+								{t("dueDate", { date: dueDateLabel })}
 							</span>
 						)}
 					</div>
@@ -146,12 +140,14 @@ const MonthDarfRow = ({
 
 				{uiStatus === "paid" && darfPaidAmountCents !== null && (
 					<div className="gap-s-200 flex items-baseline">
-						<span className="text-tiny text-txt-300">Pago</span>
+						<span className="text-tiny text-txt-300">{t("paidLabel")}</span>
 						<span className="text-small text-trade-buy font-mono tabular-nums">
 							{formatBRL(darfPaidAmountCents)}
 						</span>
 						{paidAtLabel && (
-							<span className="text-tiny text-txt-300">em {paidAtLabel}</span>
+							<span className="text-tiny text-txt-300">
+								{t("paidAt", { date: paidAtLabel })}
+							</span>
 						)}
 					</div>
 				)}
@@ -164,7 +160,7 @@ const MonthDarfRow = ({
 						className="ml-auto"
 						onClick={() => setPrompting(true)}
 					>
-						Marcar como pago
+						{t("markPaid")}
 					</Button>
 				)}
 			</div>
@@ -176,7 +172,7 @@ const MonthDarfRow = ({
 							id={`monthly-darf-paid-label-${year}-${month}`}
 							htmlFor={`monthly-darf-paid-input-${year}-${month}`}
 						>
-							Valor pago
+							{t("paidAmountLabel")}
 						</Label>
 						<CurrencyInput
 							id={`monthly-darf-paid-input-${year}-${month}`}
@@ -186,8 +182,7 @@ const MonthDarfRow = ({
 							placeholder={formatBRL(darfDueCents)}
 						/>
 						<p className="text-micro text-txt-300">
-							Calculado: {formatBRL(darfDueCents)}. Edite caso a guia paga tenha
-							valor diferente — ambos serão registrados.
+							{t("paidAmountNote", { amount: formatBRL(darfDueCents) })}
 						</p>
 					</div>
 					<Button
@@ -197,7 +192,7 @@ const MonthDarfRow = ({
 						onClick={handleConfirm}
 						disabled={isPending}
 					>
-						Confirmar
+						{t("confirm")}
 					</Button>
 					<Button
 						id={`monthly-darf-cancel-${year}-${month}`}
@@ -209,7 +204,7 @@ const MonthDarfRow = ({
 						}}
 						disabled={isPending}
 					>
-						Cancelar
+						{t("cancel")}
 					</Button>
 				</div>
 			)}

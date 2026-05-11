@@ -158,6 +158,63 @@ const PnlText = ({ value }: { value: number }) => (
 )
 
 // ============================================================================
+// LABEL INTERFACES
+// ============================================================================
+
+interface WeeklyReportLabels {
+	headerTitle: string
+	performanceSummary: string
+	netPnl: string
+	grossPnl: string
+	winRate: string
+	profitFactor: string
+	avgR: string
+	trades: string
+	dailyBreakdown: string
+	colDate: string
+	colTrades: string
+	colWL: string
+	colWinRate: string
+	colPnl: string
+	topTrades: string
+	bestTrades: string
+	worstTrades: string
+	commissionFeeImpact: string
+	totalFees: string
+	feesPercentGross: string
+	avgFeePerTrade: string
+	generatedBy: string
+	colAsset: string
+	colWeek: string
+}
+
+interface MonthlyReportLabels {
+	headerTitle: string
+	performanceSummary: string
+	netPnl: string
+	grossPnl: string
+	winRate: string
+	profitFactor: string
+	avgR: string
+	trades: string
+	weeklyBreakdown: string
+	colWeek: string
+	colTrades: string
+	colWinRate: string
+	colPnl: string
+	assetPerformance: string
+	colAsset: string
+	notableDays: string
+	bestDay: string
+	worstDay: string
+	commissionFeeImpact: string
+	totalFees: string
+	feesPercentGross: string
+	avgFeePerTrade: string
+	generatedBy: string
+}
+
+// ============================================================================
 // WEEKLY REPORT TEMPLATE
 // ============================================================================
 
@@ -165,12 +222,14 @@ interface WeeklyReportPdfProps {
 	report: WeeklyReport
 	feeData: CommissionFeeImpact | null
 	generatedAt: string
+	labels: WeeklyReportLabels
 }
 
 const WeeklyReportPdf = ({
 	report,
 	feeData,
 	generatedAt,
+	labels,
 }: WeeklyReportPdfProps) => {
 	const { summary, dailyBreakdown, topWins, topLosses } = report
 
@@ -180,7 +239,7 @@ const WeeklyReportPdf = ({
 				{/* Header */}
 				<View style={styles.header}>
 					<View>
-						<Text style={styles.headerTitle}>Weekly Report</Text>
+						<Text style={styles.headerTitle}>{labels.headerTitle}</Text>
 						<Text style={styles.headerSubtitle}>
 							{report.weekStart} — {report.weekEnd}
 						</Text>
@@ -190,30 +249,30 @@ const WeeklyReportPdf = ({
 
 				{/* Summary Metrics */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Performance Summary</Text>
+					<Text style={styles.sectionTitle}>{labels.performanceSummary}</Text>
 					<View style={styles.metricsGrid}>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Net P&L</Text>
+							<Text style={styles.metricLabel}>{labels.netPnl}</Text>
 							<PnlText value={summary.netPnl} />
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Gross P&L</Text>
+							<Text style={styles.metricLabel}>{labels.grossPnl}</Text>
 							<PnlText value={summary.grossPnl} />
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Win Rate</Text>
+							<Text style={styles.metricLabel}>{labels.winRate}</Text>
 							<Text style={styles.metricValue}>
 								{formatPercent(summary.winRate)}
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Profit Factor</Text>
+							<Text style={styles.metricLabel}>{labels.profitFactor}</Text>
 							<Text style={styles.metricValue}>
 								{summary.profitFactor.toFixed(2)}
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Avg R</Text>
+							<Text style={styles.metricLabel}>{labels.avgR}</Text>
 							<Text
 								style={[
 									styles.metricValue,
@@ -224,7 +283,7 @@ const WeeklyReportPdf = ({
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Trades</Text>
+							<Text style={styles.metricLabel}>{labels.trades}</Text>
 							<Text style={styles.metricValue}>
 								{summary.totalTrades} ({summary.winCount}W / {summary.lossCount}
 								L)
@@ -236,23 +295,23 @@ const WeeklyReportPdf = ({
 				{/* Daily Breakdown */}
 				{dailyBreakdown.length > 0 && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Daily Breakdown</Text>
+						<Text style={styles.sectionTitle}>{labels.dailyBreakdown}</Text>
 						<View style={styles.table}>
 							<View style={styles.tableHeader}>
 								<Text style={[styles.tableHeaderCell, { width: "25%" }]}>
-									Date
+									{labels.colDate}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "15%" }]}>
-									Trades
+									{labels.colTrades}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "15%" }]}>
-									W/L
+									{labels.colWL}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "20%" }]}>
-									Win Rate
+									{labels.colWinRate}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "25%" }]}>
-									P&L
+									{labels.colPnl}
 								</Text>
 							</View>
 							{dailyBreakdown.map((day, i) => (
@@ -290,12 +349,12 @@ const WeeklyReportPdf = ({
 				{/* Top Trades */}
 				{(topWins.length > 0 || topLosses.length > 0) && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Top Trades</Text>
+						<Text style={styles.sectionTitle}>{labels.topTrades}</Text>
 						<View style={{ flexDirection: "row", gap: 12 }}>
 							{topWins.length > 0 && (
 								<View style={{ flex: 1 }}>
 									<Text style={[styles.metricLabel, { marginBottom: 4 }]}>
-										Best Trades
+										{labels.bestTrades}
 									</Text>
 									{topWins.slice(0, 3).map((trade) => (
 										<View
@@ -319,7 +378,7 @@ const WeeklyReportPdf = ({
 							{topLosses.length > 0 && (
 								<View style={{ flex: 1 }}>
 									<Text style={[styles.metricLabel, { marginBottom: 4 }]}>
-										Worst Trades
+										{labels.worstTrades}
 									</Text>
 									{topLosses.slice(0, 3).map((trade) => (
 										<View
@@ -347,7 +406,9 @@ const WeeklyReportPdf = ({
 				{/* Fee Impact */}
 				{feeData && feeData.hasData && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Commission & Fee Impact</Text>
+						<Text style={styles.sectionTitle}>
+							{labels.commissionFeeImpact}
+						</Text>
 						<View style={styles.feeSection}>
 							<View
 								style={{
@@ -356,13 +417,15 @@ const WeeklyReportPdf = ({
 								}}
 							>
 								<View>
-									<Text style={styles.metricLabel}>Total Fees</Text>
+									<Text style={styles.metricLabel}>{labels.totalFees}</Text>
 									<Text style={[styles.tableCell, styles.negative]}>
 										{formatCurrency(-feeData.summary.totalFees)}
 									</Text>
 								</View>
 								<View>
-									<Text style={styles.metricLabel}>Fees % of Gross</Text>
+									<Text style={styles.metricLabel}>
+										{labels.feesPercentGross}
+									</Text>
 									<Text style={styles.tableCell}>
 										{feeData.summary.grossPnl > 0
 											? formatPercent(feeData.summary.feesAsPercentOfGross)
@@ -370,7 +433,9 @@ const WeeklyReportPdf = ({
 									</Text>
 								</View>
 								<View>
-									<Text style={styles.metricLabel}>Avg Fee/Trade</Text>
+									<Text style={styles.metricLabel}>
+										{labels.avgFeePerTrade}
+									</Text>
 									<Text style={[styles.tableCell, styles.negative]}>
 										{formatCurrency(-feeData.summary.avgFeePerTrade)}
 									</Text>
@@ -382,7 +447,7 @@ const WeeklyReportPdf = ({
 
 				{/* Footer */}
 				<View style={styles.footer}>
-					<Text style={styles.footerText}>Generated by Axion</Text>
+					<Text style={styles.footerText}>{labels.generatedBy}</Text>
 					<Text style={styles.footerText}>{generatedAt}</Text>
 				</View>
 			</Page>
@@ -398,12 +463,14 @@ interface MonthlyReportPdfProps {
 	report: MonthlyReport
 	feeData: CommissionFeeImpact | null
 	generatedAt: string
+	labels: MonthlyReportLabels
 }
 
 const MonthlyReportPdf = ({
 	report,
 	feeData,
 	generatedAt,
+	labels,
 }: MonthlyReportPdfProps) => {
 	const { summary, weeklyBreakdown, assetBreakdown } = report
 
@@ -413,7 +480,7 @@ const MonthlyReportPdf = ({
 				{/* Header */}
 				<View style={styles.header}>
 					<View>
-						<Text style={styles.headerTitle}>Monthly Report</Text>
+						<Text style={styles.headerTitle}>{labels.headerTitle}</Text>
 						<Text style={styles.headerSubtitle}>
 							{report.monthStart} — {report.monthEnd}
 						</Text>
@@ -423,30 +490,30 @@ const MonthlyReportPdf = ({
 
 				{/* Summary Metrics */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Performance Summary</Text>
+					<Text style={styles.sectionTitle}>{labels.performanceSummary}</Text>
 					<View style={styles.metricsGrid}>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Net P&L</Text>
+							<Text style={styles.metricLabel}>{labels.netPnl}</Text>
 							<PnlText value={summary.netPnl} />
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Gross P&L</Text>
+							<Text style={styles.metricLabel}>{labels.grossPnl}</Text>
 							<PnlText value={summary.grossPnl} />
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Win Rate</Text>
+							<Text style={styles.metricLabel}>{labels.winRate}</Text>
 							<Text style={styles.metricValue}>
 								{formatPercent(summary.winRate)}
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Profit Factor</Text>
+							<Text style={styles.metricLabel}>{labels.profitFactor}</Text>
 							<Text style={styles.metricValue}>
 								{summary.profitFactor.toFixed(2)}
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Avg R</Text>
+							<Text style={styles.metricLabel}>{labels.avgR}</Text>
 							<Text
 								style={[
 									styles.metricValue,
@@ -457,7 +524,7 @@ const MonthlyReportPdf = ({
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
-							<Text style={styles.metricLabel}>Trades</Text>
+							<Text style={styles.metricLabel}>{labels.trades}</Text>
 							<Text style={styles.metricValue}>
 								{summary.totalTrades} ({summary.winCount}W / {summary.lossCount}
 								L)
@@ -469,20 +536,20 @@ const MonthlyReportPdf = ({
 				{/* Weekly Breakdown */}
 				{weeklyBreakdown.length > 0 && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Weekly Breakdown</Text>
+						<Text style={styles.sectionTitle}>{labels.weeklyBreakdown}</Text>
 						<View style={styles.table}>
 							<View style={styles.tableHeader}>
 								<Text style={[styles.tableHeaderCell, { width: "30%" }]}>
-									Week
+									{labels.colWeek}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "15%" }]}>
-									Trades
+									{labels.colTrades}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "20%" }]}>
-									Win Rate
+									{labels.colWinRate}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "35%" }]}>
-									P&L
+									{labels.colPnl}
 								</Text>
 							</View>
 							{weeklyBreakdown.map((week, i) => (
@@ -517,20 +584,20 @@ const MonthlyReportPdf = ({
 				{/* Asset Breakdown */}
 				{assetBreakdown.length > 0 && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Asset Performance</Text>
+						<Text style={styles.sectionTitle}>{labels.assetPerformance}</Text>
 						<View style={styles.table}>
 							<View style={styles.tableHeader}>
 								<Text style={[styles.tableHeaderCell, { width: "25%" }]}>
-									Asset
+									{labels.colAsset}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "15%" }]}>
-									Trades
+									{labels.colTrades}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "20%" }]}>
-									Win Rate
+									{labels.colWinRate}
 								</Text>
 								<Text style={[styles.tableHeaderCell, { width: "40%" }]}>
-									P&L
+									{labels.colPnl}
 								</Text>
 							</View>
 							{assetBreakdown.map((asset, i) => (
@@ -565,11 +632,11 @@ const MonthlyReportPdf = ({
 				{/* Best/Worst Days */}
 				{(summary.bestDay || summary.worstDay) && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Notable Days</Text>
+						<Text style={styles.sectionTitle}>{labels.notableDays}</Text>
 						<View style={{ flexDirection: "row", gap: 12 }}>
 							{summary.bestDay && (
 								<View style={[styles.metricCard, { flex: 1 }]}>
-									<Text style={styles.metricLabel}>Best Day</Text>
+									<Text style={styles.metricLabel}>{labels.bestDay}</Text>
 									<Text style={styles.tableCell}>{summary.bestDay.date}</Text>
 									<Text style={[styles.tableCell, styles.positive]}>
 										{formatCurrency(summary.bestDay.pnl)}
@@ -578,7 +645,7 @@ const MonthlyReportPdf = ({
 							)}
 							{summary.worstDay && (
 								<View style={[styles.metricCard, { flex: 1 }]}>
-									<Text style={styles.metricLabel}>Worst Day</Text>
+									<Text style={styles.metricLabel}>{labels.worstDay}</Text>
 									<Text style={styles.tableCell}>{summary.worstDay.date}</Text>
 									<Text style={[styles.tableCell, styles.negative]}>
 										{formatCurrency(summary.worstDay.pnl)}
@@ -592,7 +659,9 @@ const MonthlyReportPdf = ({
 				{/* Fee Impact */}
 				{feeData && feeData.hasData && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Commission & Fee Impact</Text>
+						<Text style={styles.sectionTitle}>
+							{labels.commissionFeeImpact}
+						</Text>
 						<View style={styles.feeSection}>
 							<View
 								style={{
@@ -601,13 +670,15 @@ const MonthlyReportPdf = ({
 								}}
 							>
 								<View>
-									<Text style={styles.metricLabel}>Total Fees</Text>
+									<Text style={styles.metricLabel}>{labels.totalFees}</Text>
 									<Text style={[styles.tableCell, styles.negative]}>
 										{formatCurrency(-feeData.summary.totalFees)}
 									</Text>
 								</View>
 								<View>
-									<Text style={styles.metricLabel}>Fees % of Gross</Text>
+									<Text style={styles.metricLabel}>
+										{labels.feesPercentGross}
+									</Text>
 									<Text style={styles.tableCell}>
 										{feeData.summary.grossPnl > 0
 											? formatPercent(feeData.summary.feesAsPercentOfGross)
@@ -615,7 +686,9 @@ const MonthlyReportPdf = ({
 									</Text>
 								</View>
 								<View>
-									<Text style={styles.metricLabel}>Avg Fee/Trade</Text>
+									<Text style={styles.metricLabel}>
+										{labels.avgFeePerTrade}
+									</Text>
 									<Text style={[styles.tableCell, styles.negative]}>
 										{formatCurrency(-feeData.summary.avgFeePerTrade)}
 									</Text>
@@ -627,7 +700,7 @@ const MonthlyReportPdf = ({
 
 				{/* Footer */}
 				<View style={styles.footer}>
-					<Text style={styles.footerText}>Generated by Axion</Text>
+					<Text style={styles.footerText}>{labels.generatedBy}</Text>
 					<Text style={styles.footerText}>{generatedAt}</Text>
 				</View>
 			</Page>
@@ -636,4 +709,9 @@ const MonthlyReportPdf = ({
 }
 
 export { WeeklyReportPdf, MonthlyReportPdf }
-export type { WeeklyReportPdfProps, MonthlyReportPdfProps }
+export type {
+	WeeklyReportPdfProps,
+	MonthlyReportPdfProps,
+	WeeklyReportLabels,
+	MonthlyReportLabels,
+}

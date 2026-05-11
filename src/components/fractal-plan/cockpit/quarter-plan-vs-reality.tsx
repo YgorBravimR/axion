@@ -1,6 +1,7 @@
 "use client"
 
 import { Activity, Target, TrendingUp, Trophy } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface QuarterPlanVsRealityProps {
@@ -29,6 +30,8 @@ const QuarterPlanVsReality = ({
 	monthsTraded,
 	totalMonths,
 }: QuarterPlanVsRealityProps) => {
+	const t = useTranslations("plan.planVsReality")
+	const tQ = useTranslations("plan.quarter.planVsReality")
 	const planSet = planGoalCents !== null && planGoalCents > 0
 	const projection = projectedNetCents
 	const hitPctOfGoal = planSet ? (realizedNetCents / planGoalCents!) * 100 : 0
@@ -57,11 +60,11 @@ const QuarterPlanVsReality = ({
 		<section
 			id="quarter-plan-vs-reality"
 			className="border-acc-100/30 from-acc-100/5 p-m-500 rounded-lg border bg-gradient-to-br to-transparent"
-			aria-label={`Plano vs realidade · ${quarterLabel}`}
+			aria-label={t("sectionAriaLabel", { label: quarterLabel })}
 		>
 			<div className="flex items-baseline justify-between">
 				<span className="text-tiny text-acc-100 font-medium tracking-wider uppercase">
-					Plano vs realidade
+					{t("heading")}
 				</span>
 				<span className="text-tiny text-txt-300">{quarterLabel}</span>
 			</div>
@@ -69,11 +72,11 @@ const QuarterPlanVsReality = ({
 			<div className="mt-m-400 gap-m-400 grid grid-cols-2 lg:grid-cols-4">
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Target className="size-3.5" /> Meta
+						<Target className="size-3.5" /> {t("meta")}
 						{isAuto && (
 							<span
 								className="bg-bg-100 px-s-100 text-micro text-txt-300 rounded-sm py-px tracking-wider uppercase"
-								title="Soma das metas mensais (manuais ou cascateadas)"
+								title={tQ("autoTitle")}
 							>
 								auto
 							</span>
@@ -84,22 +87,24 @@ const QuarterPlanVsReality = ({
 							{formatBRL(planGoalCents!)}
 						</p>
 					) : (
-						<p className="mt-s-100 text-h3 text-txt-placeholder">Sem meta</p>
+						<p className="mt-s-100 text-h3 text-txt-placeholder">
+							{t("noGoal")}
+						</p>
 					)}
 					<p className="mt-s-100 text-micro text-txt-300">
 						{planSet
 							? planGoalSource === "manual"
-								? "Definida manualmente"
+								? tQ("manualGoalNote")
 								: planGoalSource === "mixed"
-									? "Soma · manual + auto"
-									: "Soma das metas mensais"
-							: "Defina metas mensais ou trimestral no botão Editar"}
+									? tQ("mixedGoalNote")
+									: tQ("monthlyGoalNote")
+							: tQ("noGoalNote")}
 					</p>
 				</div>
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Activity className="size-3.5" /> Realizado
+						<Activity className="size-3.5" /> {t("realized")}
 					</div>
 					<p
 						className={cn(
@@ -110,17 +115,17 @@ const QuarterPlanVsReality = ({
 						{formatBRL(realizedNetCents)}
 					</p>
 					<p className="mt-s-100 text-micro text-txt-300">
-						{monthsTraded}/{totalMonths} mês(es) c/ trades · líq. pós-IR
+						{tQ("monthsNote", { traded: monthsTraded, total: totalMonths })}
 					</p>
 				</div>
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<TrendingUp className="size-3.5" /> Projeção fim Q
+						<TrendingUp className="size-3.5" /> {tQ("projectionLabel")}
 					</div>
 					{projection === null ? (
 						<p className="mt-s-100 text-h3 text-txt-placeholder">
-							Sem projeção
+							{t("noProjection")}
 						</p>
 					) : (
 						<p
@@ -134,14 +139,14 @@ const QuarterPlanVsReality = ({
 					)}
 					<p className="mt-s-100 text-micro text-txt-300">
 						{projection === null
-							? "trade pra projetar"
-							: "realizado + projeção do mês corrente"}
+							? tQ("noProjectionNote")
+							: tQ("projectionNoteHasData")}
 					</p>
 				</div>
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Trophy className="size-3.5" /> Hit rate
+						<Trophy className="size-3.5" /> {t("hitRate")}
 					</div>
 					{planSet ? (
 						<>
@@ -159,7 +164,7 @@ const QuarterPlanVsReality = ({
 							</div>
 							{projection !== null && (
 								<p className="mt-s-100 text-micro text-txt-300">
-									Projetado: {Math.round(projectedHitPct)}% da meta
+									{tQ("projected", { pct: Math.round(projectedHitPct) })}
 								</p>
 							)}
 						</>
@@ -167,7 +172,7 @@ const QuarterPlanVsReality = ({
 						<>
 							<p className="mt-s-100 text-h3 text-txt-placeholder">—</p>
 							<p className="mt-s-100 text-micro text-txt-300">
-								Defina meta para acompanhar
+								{tQ("noGoalHitNote")}
 							</p>
 						</>
 					)}

@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import type { CapitalEvent } from "@/types/integration"
 import {
 	recordCapitalEvent,
@@ -21,6 +22,7 @@ const CapitalEventLog = ({
 	onEventDeleted,
 	onEventAdded,
 }: CapitalEventLogProps) => {
+	const t = useTranslations("reports.capitalEventLog")
 	const [isPending, startTransition] = useTransition()
 	const [formType, setFormType] = useState<"deposit" | "withdrawal">("deposit")
 	const [formAmount, setFormAmount] = useState("")
@@ -44,7 +46,7 @@ const CapitalEventLog = ({
 		setFormError(null)
 		const amountBRL = parseFloat(formAmount.replace(",", "."))
 		if (isNaN(amountBRL) || amountBRL <= 0) {
-			setFormError("Amount must be greater than zero")
+			setFormError(t("amountError"))
 			return
 		}
 		const amountCents = Math.round(amountBRL * 100)
@@ -60,7 +62,7 @@ const CapitalEventLog = ({
 				setFormNotes("")
 				onEventAdded()
 			} else {
-				setFormError(result.message ?? "Failed to record event")
+				setFormError(result.message ?? t("failedToRecord"))
 			}
 		})
 	}
@@ -70,7 +72,9 @@ const CapitalEventLog = ({
 	return (
 		<details className="group">
 			<summary className="text-txt-200 hover:text-txt-100 flex cursor-pointer list-none items-center justify-between py-2 text-sm font-medium transition-colors">
-				<span>Capital Events ({yearEvents.length})</span>
+				<span>
+					{t("capitalEvents")} ({yearEvents.length})
+				</span>
 				<span className="text-txt-300 text-xs transition-transform group-open:rotate-180">
 					▼
 				</span>
@@ -93,7 +97,7 @@ const CapitalEventLog = ({
 							}`}
 							aria-pressed={formType === "deposit"}
 						>
-							Deposit
+							{t("deposit")}
 						</button>
 						<button
 							type="button"
@@ -105,18 +109,18 @@ const CapitalEventLog = ({
 							}`}
 							aria-pressed={formType === "withdrawal"}
 						>
-							Withdrawal
+							{t("withdrawal")}
 						</button>
 					</div>
 
 					<input
 						type="text"
 						inputMode="decimal"
-						placeholder="Amount (R$)"
+						placeholder={t("amountPlaceholder")}
 						value={formAmount}
 						onChange={(e) => setFormAmount(e.target.value)}
 						className="border-bg-300 bg-bg-200 text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 rounded-md border px-3 py-2 text-xs focus:ring-1 focus:outline-none"
-						aria-label="Amount in BRL"
+						aria-label={t("amountAriaLabel")}
 						required
 					/>
 
@@ -126,7 +130,7 @@ const CapitalEventLog = ({
 						onChange={(e) => setFormDate(e.target.value)}
 						max={new Date().toISOString().slice(0, 10)}
 						className="border-bg-300 bg-bg-200 text-txt-100 focus:ring-acc-100 rounded-md border px-3 py-2 text-xs focus:ring-1 focus:outline-none"
-						aria-label="Event date"
+						aria-label={t("eventDateAriaLabel")}
 					/>
 
 					<button
@@ -134,7 +138,7 @@ const CapitalEventLog = ({
 						disabled={isPending}
 						className="bg-acc-100 text-bg-100 rounded-md px-4 py-2 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
 					>
-						{isPending ? "Saving…" : "Log"}
+						{isPending ? t("saving") : t("log")}
 					</button>
 
 					{formError && (
@@ -144,11 +148,9 @@ const CapitalEventLog = ({
 
 				{/* Event list */}
 				{yearEvents.length === 0 ? (
-					<p className="text-txt-300 text-xs">
-						No deposits or withdrawals recorded for {year}.
-					</p>
+					<p className="text-txt-300 text-xs">{t("noEvents", { year })}</p>
 				) : (
-					<ul className="space-y-1" aria-label={`Capital events for ${year}`}>
+					<ul className="space-y-1" aria-label={t("listAriaLabel", { year })}>
 						{[...yearEvents].reverse().map((ev) => (
 							<li
 								key={ev.id}
@@ -162,7 +164,9 @@ const CapitalEventLog = ({
 											: "bg-acc-100/20 text-acc-100"
 									}`}
 								>
-									{ev.eventType === "deposit" ? "Depósito" : "Retirada"}
+									{ev.eventType === "deposit"
+										? t("depositLabel")
+										: t("withdrawalLabel")}
 								</span>
 								<span className="text-txt-100 ml-auto font-mono tabular-nums">
 									{new Intl.NumberFormat("pt-BR", {
@@ -180,7 +184,10 @@ const CapitalEventLog = ({
 									onClick={() => handleDelete(ev.id)}
 									disabled={isPending}
 									className="text-txt-300 hover:text-trade-sell ml-2 transition-colors disabled:opacity-50"
-									aria-label={`Delete ${ev.eventType} on ${ev.eventDate}`}
+									aria-label={t("deleteAriaLabel", {
+										eventType: ev.eventType,
+										date: ev.eventDate,
+									})}
 								>
 									×
 								</button>

@@ -6,6 +6,7 @@
 import { renderToBuffer } from "@react-pdf/renderer"
 import { createElement } from "react"
 import { WeeklyReportPdf, MonthlyReportPdf } from "./report-template"
+import type { WeeklyReportLabels, MonthlyReportLabels } from "./report-template"
 import type {
 	WeeklyReport,
 	MonthlyReport,
@@ -15,11 +16,13 @@ import type {
 interface GenerateWeeklyPdfInput {
 	report: WeeklyReport
 	feeData: CommissionFeeImpact | null
+	labels: WeeklyReportLabels
 }
 
 interface GenerateMonthlyPdfInput {
 	report: MonthlyReport
 	feeData: CommissionFeeImpact | null
+	labels: MonthlyReportLabels
 }
 
 const generateWeeklyReportPdf = async (
@@ -31,6 +34,7 @@ const generateWeeklyReportPdf = async (
 		report: input.report,
 		feeData: input.feeData,
 		generatedAt,
+		labels: input.labels,
 	})
 
 	// renderToBuffer expects ReactElement<DocumentProps> but our wrapper component
@@ -50,6 +54,7 @@ const generateMonthlyReportPdf = async (
 		report: input.report,
 		feeData: input.feeData,
 		generatedAt,
+		labels: input.labels,
 	})
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- @react-pdf/renderer renderToBuffer expects DocumentProps but createElement returns ReactElement<unknown>; cast is safe

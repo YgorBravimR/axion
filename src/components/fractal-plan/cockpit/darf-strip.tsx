@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { cn } from "@/lib/utils"
 
 type DarfStatus =
@@ -45,26 +46,17 @@ const STATUS_DOT: Record<DarfStatus, string> = {
 	future: "bg-bg-400",
 }
 
-const STATUS_LABEL: Record<DarfStatus, string> = {
-	paid: "Pago",
-	pending: "Pendente",
-	overdue: "Vencido",
-	exempt: "Isento",
-	unknown: "Sem dado",
-	in_progress: "Em curso",
-	future: "Futuro",
-}
-
 const formatBRL = (cents: number): string =>
 	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 
-const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
+const DarfStrip = async ({ chips, onChipClick }: DarfStripProps) => {
+	const t = await getTranslations("plan.darfStrip")
 	const byIndex = new Map(chips.map((c) => [c.monthIndex, c]))
 	const interactive = typeof onChipClick === "function"
 	return (
 		<ol
 			className="gap-s-200 grid grid-cols-6 sm:grid-cols-12"
-			aria-label="DARF mensal — visão anual"
+			aria-label={t("ariaLabel")}
 		>
 			{Array.from({ length: 12 }, (_, i) => {
 				const chip = byIndex.get(i) ?? {
@@ -74,7 +66,13 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 				}
 				const hasData = chip.status !== "unknown" && chip.status !== "future"
 				const canClick = interactive && hasData
-				const label = `${MONTH_ABBR_PT[i]} — ${STATUS_LABEL[chip.status]} — ${formatBRL(chip.dueCents)}`
+				const statusLabel = t(`statusLabel.${chip.status}`)
+				const monthAbbr = MONTH_ABBR_PT[i] ?? ""
+				const label = t("chipAriaLabel", {
+					month: monthAbbr,
+					status: statusLabel,
+					amount: formatBRL(chip.dueCents),
+				})
 				const showAmount =
 					chip.status !== "exempt" &&
 					chip.status !== "unknown" &&
@@ -82,7 +80,7 @@ const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 				const content = (
 					<>
 						<span className="text-micro text-txt-300 tracking-wide uppercase">
-							{MONTH_ABBR_PT[i]}
+							{monthAbbr}
 						</span>
 						<span
 							className={cn("size-2 rounded-full", STATUS_DOT[chip.status])}

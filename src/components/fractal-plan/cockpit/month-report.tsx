@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { and, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import {
@@ -53,6 +54,7 @@ const MonthReport = async ({
 	month,
 	locale,
 }: MonthReportProps) => {
+	const t = await getTranslations("plan.month")
 	const monthLabel = `${monthLabelPt(month)} ${year}`
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
@@ -64,9 +66,9 @@ const MonthReport = async ({
 
 	if (!yearRow) {
 		return (
-			<PlanSection title={monthLabel} subtitle="Plano anual ainda não criado">
+			<PlanSection title={monthLabel} subtitle={t("noAnnualPlan")}>
 				<p className="text-txt-200">
-					Crie o plano anual primeiro em{" "}
+					{t("noAnnualPlanBody")}{" "}
 					<Link
 						href={`/${locale}/plan/${year}`}
 						className="text-acc-100 underline"
@@ -97,11 +99,8 @@ const MonthReport = async ({
 
 	if (!monthRow) {
 		return (
-			<PlanSection title={monthLabel} subtitle="Linha mensal não encontrada">
-				<p className="text-txt-200">
-					O plano anual deveria ter auto-semeado este mês. Verifique a
-					integridade do plano anual.
-				</p>
+			<PlanSection title={monthLabel} subtitle={t("noMonthRow")}>
+				<p className="text-txt-200">{t("noMonthRowBody")}</p>
 			</PlanSection>
 		)
 	}
@@ -280,13 +279,13 @@ const MonthReport = async ({
 			{comparisonData?.previousMonth && (
 				<section
 					className="border-bg-300 bg-bg-200 rounded-lg border"
-					aria-label="Comparativo mês a mês"
+					aria-label={t("comparison.ariaLabel")}
 				>
 					<header className="px-m-400 py-s-300 flex items-baseline justify-between">
 						<span className="text-small text-txt-100 font-medium">
-							Comparativo
+							{t("comparison.heading")}
 						</span>
-						<span className="text-tiny text-txt-300">vs mês anterior</span>
+						<span className="text-tiny text-txt-300">{t("comparison.vs")}</span>
 					</header>
 					<div className="border-bg-300 p-m-400 border-t">
 						<MonthComparison
@@ -301,20 +300,20 @@ const MonthReport = async ({
 			<section
 				id="month-narrative"
 				className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
-				aria-label="Foco e pós-mortem do mês"
+				aria-label={t("narrative.ariaLabel")}
 			>
 				<header className="flex items-baseline justify-between">
 					<h2 className="text-small text-txt-100 font-medium">
-						Foco · pós-mortem
+						{t("narrative.heading")}
 					</h2>
 					<span className="text-tiny text-txt-300">
-						Perfil de risco:{" "}
+						{t("narrative.riskProfile")}{" "}
 						<span className="text-txt-200">
-							{resolvedProfile?.name ?? "Nenhum"}
+							{resolvedProfile?.name ?? t("narrative.none")}
 						</span>
 						<span className="ml-s-100 bg-bg-100 px-s-100 text-micro rounded-sm py-px tracking-wider uppercase">
 							{resolvedProfileSource === "fallback"
-								? "padrão"
+								? t("narrative.default")
 								: resolvedProfileSource}
 						</span>
 					</span>
@@ -322,24 +321,24 @@ const MonthReport = async ({
 				<div className="mt-s-300 gap-m-400 grid sm:grid-cols-2">
 					<div>
 						<p className="text-tiny text-txt-300 tracking-wider uppercase">
-							Foco
+							{t("narrative.focusLabel")}
 						</p>
 						<p className="mt-s-100 text-small text-txt-100 whitespace-pre-wrap">
 							{monthRow.intentNotes || (
 								<span className="text-txt-300">
-									Sem nota — defina pelo botão "Editar plano".
+									{t("narrative.noFocusNote")}
 								</span>
 							)}
 						</p>
 					</div>
 					<div>
 						<p className="text-tiny text-txt-300 tracking-wider uppercase">
-							Pós-mortem
+							{t("narrative.postMortemLabel")}
 						</p>
 						<p className="mt-s-100 text-small text-txt-100 whitespace-pre-wrap">
 							{monthRow.postMortemNotes || (
 								<span className="text-txt-300">
-									Sem revisão — defina pelo botão "Editar plano".
+									{t("narrative.noPostMortemNote")}
 								</span>
 							)}
 						</p>

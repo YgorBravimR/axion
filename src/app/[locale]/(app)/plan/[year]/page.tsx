@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server"
+import { setRequestLocale, getTranslations } from "next-intl/server"
 import { and, eq, gte, lt } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { trades, yearlyPlans, monthlyTaxLedger } from "@/db/schema"
@@ -63,13 +63,12 @@ const buildExisting = (row: typeof yearlyPlans.$inferSelect | undefined) =>
 const PlanYearPage = async ({ params }: PageProps) => {
 	const { locale, year: yearStr } = await params
 	setRequestLocale(locale)
+	const t = await getTranslations({ locale, namespace: "plan" })
 	const year = Number(yearStr)
 	if (!Number.isInteger(year) || year < 2000 || year > 2100) {
 		return (
-			<PlanSection title="Invalid year">
-				<p className="text-txt-200">
-					Year must be a 4-digit integer between 2000 and 2100.
-				</p>
+			<PlanSection title={t("errors.invalidYear")}>
+				<p className="text-txt-200">{t("errors.invalidYearBody")}</p>
 			</PlanSection>
 		)
 	}
@@ -113,13 +112,15 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		return (
 			<div className="space-y-m-500">
 				<PlanSection
-					title={`Plan ${year}`}
-					subtitle="Year-level defaults — propagate down to quarter, month, week, day"
+					title={t("yearPage.title", { year })}
+					subtitle={t("yearPage.subtitle")}
 				>
 					{existing ? (
 						<dl className="gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 							<div>
-								<dt className="text-txt-200 text-sm">Default daily loss R</dt>
+								<dt className="text-txt-200 text-sm">
+									{t("daily.defaultLossR")}
+								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
 									<span className="text-txt-100 font-mono text-lg">
 										{formatR(resolved.defaultDailyLossR)}
@@ -130,7 +131,9 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								</dd>
 							</div>
 							<div>
-								<dt className="text-txt-200 text-sm">Default daily win R</dt>
+								<dt className="text-txt-200 text-sm">
+									{t("daily.defaultWinR")}
+								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
 									<span className="text-txt-100 font-mono text-lg">
 										{formatR(resolved.defaultDailyWinR)}
@@ -142,7 +145,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 							</div>
 							<div>
 								<dt className="text-txt-200 text-sm">
-									Default weekly loss / win R
+									{t("daily.defaultWeeklyLossWinR")}
 								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
 									<span className="text-txt-100 font-mono text-lg">
@@ -156,7 +159,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 							</div>
 							<div>
 								<dt className="text-txt-200 text-sm">
-									Default monthly loss / win R
+									{t("daily.defaultMonthlyLossWinR")}
 								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
 									<span className="text-txt-100 font-mono text-lg">
@@ -170,16 +173,17 @@ const PlanYearPage = async ({ params }: PageProps) => {
 							</div>
 						</dl>
 					) : (
-						<p className="text-txt-200">
-							No yearly plan for {year}. Fill the form below to seed defaults +
-							the quarter/month/week tree.
-						</p>
+						<p className="text-txt-200">{t("daily.noYearlyPlan", { year })}</p>
 					)}
 				</PlanSection>
 
 				<PlanSection
-					title={existing ? "Edit yearly defaults" : "Seed yearly plan"}
-					subtitle="Sets year-level R-multiples, capital ladder, and trading-days context."
+					title={
+						existing
+							? t("yearPage.editDefaultsTitle")
+							: t("yearPage.seedDefaultsTitle")
+					}
+					subtitle={t("yearPage.editDefaultsSubtitle")}
 				>
 					<YearlyPlanEditor
 						year={year}
@@ -461,12 +465,11 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					availableAssets={availableAssets}
 				/>
 				<PlanSection
-					title={`Plano ${year} ainda não criado`}
-					subtitle='Clique em "Editar" no card acima para semear o plano anual e gerar a grade.'
+					title={t("yearPage.notCreatedTitle", { year })}
+					subtitle={t("yearPage.notCreatedSubtitle")}
 				>
 					<p className="text-small text-txt-300">
-						Sem plano anual a grade mensal fica vazia. O editor abre como
-						slideover.
+						{t("yearPage.notCreatedBody")}
 					</p>
 				</PlanSection>
 			</div>
@@ -497,8 +500,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			<PlanYearGuide />
 			<Tabs defaultValue="plan">
 				<TabsList id="plan-year-tabs" variant="line">
-					<TabsTrigger value="plan">Plano</TabsTrigger>
-					<TabsTrigger value="impostos">Impostos</TabsTrigger>
+					<TabsTrigger value="plan">{t("yearPage.tabPlan")}</TabsTrigger>
+					<TabsTrigger value="impostos">{t("yearPage.tabTax")}</TabsTrigger>
 				</TabsList>
 				<TabsContent value="plan">
 					{eoy && (

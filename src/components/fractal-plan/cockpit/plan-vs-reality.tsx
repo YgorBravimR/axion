@@ -1,6 +1,7 @@
 "use client"
 
 import { Target, TrendingUp, Activity, Trophy } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 type PlanGoalSource = "manual" | "weeks" | "default" | "none"
@@ -43,6 +44,7 @@ const PlanVsReality = ({
 	dailyAverageCents,
 	irTaxRate,
 }: PlanVsRealityProps) => {
+	const t = useTranslations("plan.planVsReality")
 	const planSet = planGoalCents !== null && planGoalCents > 0
 	const dailyPlanCents =
 		planSet && totalTradingDays > 0
@@ -75,11 +77,11 @@ const PlanVsReality = ({
 		<section
 			id="month-plan-vs-reality"
 			className="border-acc-100/30 from-acc-100/5 p-m-500 rounded-lg border bg-gradient-to-br to-transparent"
-			aria-label={`Plano vs realidade · ${monthLabel}`}
+			aria-label={t("sectionAriaLabel", { label: monthLabel })}
 		>
 			<div className="flex items-baseline justify-between">
 				<span className="text-tiny text-acc-100 font-medium tracking-wider uppercase">
-					Plano vs realidade
+					{t("heading")}
 				</span>
 				<span className="text-tiny text-txt-300">{monthLabel}</span>
 			</div>
@@ -87,14 +89,14 @@ const PlanVsReality = ({
 			<div className="mt-m-400 gap-m-400 grid grid-cols-2 lg:grid-cols-4">
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Target className="size-3.5" /> Meta
+						<Target className="size-3.5" /> {t("meta")}
 						{(planGoalSource === "weeks" || planGoalSource === "default") && (
 							<span
 								className="bg-bg-100 px-s-100 text-micro text-txt-300 rounded-sm py-px tracking-wider uppercase"
 								title={
 									planGoalSource === "weeks"
-										? "Calculada a partir das metas semanais"
-										: "Calculada a partir do alvo diário cascateado do plano anual"
+										? t("metaAutoTitle.weeks")
+										: t("metaAutoTitle.default")
 								}
 							>
 								auto
@@ -106,22 +108,30 @@ const PlanVsReality = ({
 							{formatBRL(planGoalCents!)}
 						</p>
 					) : (
-						<p className="mt-s-100 text-h3 text-txt-placeholder">Sem meta</p>
+						<p className="mt-s-100 text-h3 text-txt-placeholder">
+							{t("noGoal")}
+						</p>
 					)}
 					<p className="mt-s-100 text-micro text-txt-300">
 						{planSet
 							? planGoalSource === "weeks"
-								? `${formatBRL(dailyPlanCents)}/dia · soma das semanas`
+								? t("dayNote.weeks", { daily: formatBRL(dailyPlanCents) })
 								: planGoalSource === "default"
-									? `${formatBRL(dailyPlanCents)}/dia · alvo diário × ${totalTradingDays} dias`
-									: `${formatBRL(dailyPlanCents)}/dia · ${totalTradingDays} dias úteis`
-							: "Preencha as metas semanais ou defina meta no botão Editar"}
+									? t("dayNote.default", {
+											daily: formatBRL(dailyPlanCents),
+											days: totalTradingDays,
+										})
+									: t("dayNote.manual", {
+											daily: formatBRL(dailyPlanCents),
+											days: totalTradingDays,
+										})
+							: t("noGoalNote")}
 					</p>
 				</div>
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Activity className="size-3.5" /> Realizado
+						<Activity className="size-3.5" /> {t("realized")}
 					</div>
 					<p
 						className={cn(
@@ -132,18 +142,21 @@ const PlanVsReality = ({
 						{formatBRL(currentNetProfitCents)}
 					</p>
 					<p className="mt-s-100 text-micro text-txt-300">
-						{daysTraded}/{totalTradingDays} dias ·{" "}
-						{formatBRL(dailyAverageCents)}/dia
+						{t("realizedNote", {
+							traded: daysTraded,
+							total: totalTradingDays,
+							daily: formatBRL(dailyAverageCents),
+						})}
 					</p>
 				</div>
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<TrendingUp className="size-3.5" /> Projeção
+						<TrendingUp className="size-3.5" /> {t("projection")}
 					</div>
 					{projection === null ? (
 						<p className="mt-s-100 text-h3 text-txt-placeholder">
-							Sem projeção
+							{t("noProjection")}
 						</p>
 					) : (
 						<p
@@ -157,14 +170,17 @@ const PlanVsReality = ({
 					)}
 					<p className="mt-s-100 text-micro text-txt-300">
 						{projection === null
-							? `${tradingDaysRemaining} dias restantes · trade pra projetar`
-							: `IR ~${formatBRLPrecise(projectedDarfCents)} · ${tradingDaysRemaining} dias restantes`}
+							? t("noProjectionNote", { remaining: tradingDaysRemaining })
+							: t("projectionNote", {
+									darf: formatBRLPrecise(projectedDarfCents),
+									remaining: tradingDaysRemaining,
+								})}
 					</p>
 				</div>
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Trophy className="size-3.5" /> Hit rate
+						<Trophy className="size-3.5" /> {t("hitRate")}
 					</div>
 					{planSet ? (
 						<>
@@ -182,7 +198,7 @@ const PlanVsReality = ({
 							</div>
 							{projection !== null && (
 								<p className="mt-s-100 text-micro text-txt-300">
-									Projetado: {Math.round(projectedHitPct)}% da meta
+									{t("projectedHit", { pct: Math.round(projectedHitPct) })}
 								</p>
 							)}
 						</>
@@ -190,7 +206,7 @@ const PlanVsReality = ({
 						<>
 							<p className="mt-s-100 text-h3 text-txt-placeholder">—</p>
 							<p className="mt-s-100 text-micro text-txt-300">
-								Defina a meta para acompanhar
+								{t("noHitRateNote")}
 							</p>
 						</>
 					)}

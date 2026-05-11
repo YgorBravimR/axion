@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +26,7 @@ const QuarterlyPlanEditor = ({
 }: QuarterlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const t = useTranslations("plan")
 	const [isPending, startTransition] = useTransition()
 
 	const [goalBRL, setGoalBRL] = useState(
@@ -45,7 +47,7 @@ const QuarterlyPlanEditor = ({
 			goalCents !== undefined &&
 			(!Number.isFinite(goalCents) || goalCents < 0)
 		) {
-			showToast("error", "Goal must be a non-negative number.")
+			showToast("error", t("editors.goalError"))
 			return
 		}
 
@@ -57,10 +59,10 @@ const QuarterlyPlanEditor = ({
 				postMortemNotes: postMortemNotes || undefined,
 			})
 			if (result.status === "success") {
-				showToast("success", "Quarterly plan updated")
+				showToast("success", t("editors.quarterly.saveSuccess"))
 				router.refresh()
 			} else {
-				showToast("error", result.message || "Save failed")
+				showToast("error", result.message || t("editors.saveFailed"))
 			}
 		})
 	}
@@ -75,7 +77,7 @@ const QuarterlyPlanEditor = ({
 		>
 			<div>
 				<Label id="lbl-quarter-goal" htmlFor="quarter-goal">
-					Quarter goal (BRL)
+					{t("editors.quarterly.goalLabel")}
 				</Label>
 				<Input
 					id="quarter-goal"
@@ -88,26 +90,26 @@ const QuarterlyPlanEditor = ({
 			</div>
 			<div>
 				<Label id="lbl-quarter-intent" htmlFor="quarter-intent">
-					Reflection / intent
+					{t("editors.quarterly.reflectionLabel")}
 				</Label>
 				<Textarea
 					id="quarter-intent"
 					rows={3}
 					value={reflectionNotes}
 					onChange={(e) => setReflectionNotes(e.target.value)}
-					placeholder="Themes, focus, playbook rotation rationale..."
+					placeholder={t("editors.quarterly.reflectionPlaceholder")}
 				/>
 			</div>
 			<div>
 				<Label id="lbl-quarter-postmortem" htmlFor="quarter-postmortem">
-					Post-mortem
+					{t("editors.quarterly.postMortemLabel")}
 				</Label>
 				<Textarea
 					id="quarter-postmortem"
 					rows={3}
 					value={postMortemNotes}
 					onChange={(e) => setPostMortemNotes(e.target.value)}
-					placeholder="What worked, what didn't, lessons forward..."
+					placeholder={t("editors.quarterly.postMortemPlaceholder")}
 				/>
 			</div>
 			<div className="flex justify-end">
@@ -117,7 +119,7 @@ const QuarterlyPlanEditor = ({
 					) : (
 						<Save className="mr-s-200 h-4 w-4" />
 					)}
-					Save
+					{t("editors.save")}
 				</Button>
 			</div>
 		</form>

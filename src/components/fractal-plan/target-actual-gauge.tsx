@@ -1,3 +1,7 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+
 interface TargetActualGaugeProps {
 	targetR: string | null
 	actualR: string | null
@@ -15,6 +19,7 @@ const formatR = (v: number | null): string =>
 	v === null ? "—" : `${v.toFixed(2)}R`
 
 const TargetActualGauge = ({ targetR, actualR }: TargetActualGaugeProps) => {
+	const t = useTranslations("plan")
 	const target = num(targetR)
 	const actual = num(actualR)
 	const pct =
@@ -28,13 +33,13 @@ const TargetActualGauge = ({ targetR, actualR }: TargetActualGaugeProps) => {
 		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
 			<div className="gap-m-400 grid grid-cols-2">
 				<div>
-					<dt className="text-tiny text-txt-300">Target</dt>
+					<dt className="text-tiny text-txt-300">{t("common.target")}</dt>
 					<dd className="text-txt-100 mt-1 font-mono text-2xl">
 						{formatR(target)}
 					</dd>
 				</div>
 				<div>
-					<dt className="text-tiny text-txt-300">Actual</dt>
+					<dt className="text-tiny text-txt-300">{t("common.actual")}</dt>
 					<dd
 						className={`mt-1 font-mono text-2xl ${
 							ahead
@@ -59,8 +64,8 @@ const TargetActualGauge = ({ targetR, actualR }: TargetActualGaugeProps) => {
 			</div>
 			<p className="mt-s-200 text-tiny text-txt-300">
 				{target === null || actual === null
-					? "Set a target and run trades to see progress."
-					: `${pct.toFixed(0)}% of target`}
+					? t("gauge.noData")
+					: t("gauge.pctOfTarget", { pct: pct.toFixed(0) })}
 			</p>
 		</div>
 	)

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import {
 	Table,
 	TableBody,
@@ -22,23 +23,32 @@ interface CarryoverLedgerProps {
 	locale?: Locale
 }
 
-const CarryoverLedger = ({ history, locale = "pt-BR" }: CarryoverLedgerProps) => {
+const CarryoverLedger = async ({
+	history,
+	locale = "pt-BR",
+}: CarryoverLedgerProps) => {
+	const t = await getTranslations("tax.carryoverLedger")
+
 	if (history.length === 0) {
-		return <p className="text-sm text-muted-foreground">Nenhum histórico de carryover disponível.</p>
+		return <p className="text-muted-foreground text-sm">{t("emptyState")}</p>
 	}
 
 	const fmt = (cents: number) => formatCurrency(cents / 100, locale, "BRL")
 	const fmtMonth = (date: Date) =>
-		new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(new Date(date))
+		new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
+			new Date(date)
+		)
 
 	return (
-		<Table aria-label="Histórico de Prejuízo a Compensar">
+		<Table aria-label={t("tableAriaLabel")}>
 			<TableHeader>
 				<TableRow>
-					<TableHead>Mês</TableHead>
-					<TableHead className="text-right">Resultado Líquido</TableHead>
-					<TableHead className="text-right">Compensado</TableHead>
-					<TableHead className="text-right">Saldo Restante</TableHead>
+					<TableHead>{t("columns.month")}</TableHead>
+					<TableHead className="text-right">{t("columns.netResult")}</TableHead>
+					<TableHead className="text-right">{t("columns.consumed")}</TableHead>
+					<TableHead className="text-right">
+						{t("columns.remainingBalance")}
+					</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -48,17 +58,33 @@ const CarryoverLedger = ({ history, locale = "pt-BR" }: CarryoverLedgerProps) =>
 						<TableRow
 							key={new Date(row.month).toISOString()}
 							className={cn(
-								isLoss ? "bg-trade-sell/5" : row.consumed > 0 ? "bg-trade-buy/5" : "",
+								isLoss
+									? "bg-trade-sell/5"
+									: row.consumed > 0
+										? "bg-trade-buy/5"
+										: ""
 							)}
 						>
-							<TableCell className="capitalize">{fmtMonth(row.month)}</TableCell>
-							<TableCell className={cn("text-right tabular-nums", isLoss ? "text-trade-sell" : "text-trade-buy")}>
+							<TableCell className="capitalize">
+								{fmtMonth(row.month)}
+							</TableCell>
+							<TableCell
+								className={cn(
+									"text-right tabular-nums",
+									isLoss ? "text-trade-sell" : "text-trade-buy"
+								)}
+							>
 								{fmt(row.netGainCents)}
 							</TableCell>
-							<TableCell className="text-right tabular-nums text-txt-300">
+							<TableCell className="text-txt-300 text-right tabular-nums">
 								{row.consumed > 0 ? fmt(row.consumed) : "—"}
 							</TableCell>
-							<TableCell className={cn("text-right tabular-nums font-medium", row.balanceCents > 0 ? "text-trade-sell" : "text-txt-300")}>
+							<TableCell
+								className={cn(
+									"text-right font-medium tabular-nums",
+									row.balanceCents > 0 ? "text-trade-sell" : "text-txt-300"
+								)}
+							>
 								{row.balanceCents > 0 ? fmt(row.balanceCents) : "—"}
 							</TableCell>
 						</TableRow>

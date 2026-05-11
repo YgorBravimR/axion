@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import {
 	AlertTriangle,
 	Loader2,
@@ -142,6 +143,7 @@ const YearlyPlanEditor = ({
 }: YearlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const t = useTranslations("plan")
 	const [isPending, startTransition] = useTransition()
 	const [form, setForm] = useState<FormState>(() => seedForm(existing))
 	const accountCapitalAvailable = defaultInitialCapitalCents !== null
@@ -216,7 +218,7 @@ const YearlyPlanEditor = ({
 		| { ok: true; rules: LadderRuleR[] }
 		| { ok: false; reason: string } => {
 		if (form.ladderRows.length === 0) {
-			return { ok: false, reason: "Add at least one ladder tier." }
+			return { ok: false, reason: t("editors.yearly.ladderTierError") }
 		}
 		const parsed: { minCents: number; oneRCents: number; idx: number }[] = []
 		for (const [i, row] of form.ladderRows.entries()) {
@@ -228,7 +230,10 @@ const YearlyPlanEditor = ({
 				minCents < 0 ||
 				oneRCents <= 0
 			) {
-				return { ok: false, reason: `Tier ${i + 1}: From ≥ 0, 1R > 0.` }
+				return {
+					ok: false,
+					reason: t("editors.yearly.ladderTierInvalid", { n: i + 1 }),
+				}
 			}
 			parsed.push({ minCents, oneRCents, idx: i })
 		}
@@ -242,7 +247,10 @@ const YearlyPlanEditor = ({
 			if (cur.minCents <= prev.minCents) {
 				return {
 					ok: false,
-					reason: `Tier ${cur.idx + 1} must start above tier ${prev.idx + 1}.`,
+					reason: t("editors.yearly.ladderTierOrder", {
+						cur: cur.idx + 1,
+						prev: prev.idx + 1,
+					}),
 				}
 			}
 		}
@@ -267,10 +275,7 @@ const YearlyPlanEditor = ({
 		const ladder = ladderResult.rules
 
 		if (!existing && !accountCapitalAvailable) {
-			showToast(
-				"error",
-				"Set the account starting balance in Settings → Annual Reporting first."
-			)
+			showToast("error", t("editors.yearly.noAccountBalance"))
 			return
 		}
 
@@ -284,7 +289,10 @@ const YearlyPlanEditor = ({
 		}
 		for (const [key, val] of Object.entries(numericFields)) {
 			if (!Number.isFinite(val) || val <= 0) {
-				showToast("error", `${key} must be positive number.`)
+				showToast(
+					"error",
+					t("editors.yearly.fieldPositiveError", { field: key })
+				)
 				return
 			}
 		}
@@ -295,7 +303,7 @@ const YearlyPlanEditor = ({
 			tradingDaysPerWeek < 1 ||
 			tradingDaysPerWeek > 7
 		) {
-			showToast("error", "Trading days per week must be 1–7.")
+			showToast("error", t("editors.yearly.tradingDaysError"))
 			return
 		}
 
@@ -320,12 +328,12 @@ const YearlyPlanEditor = ({
 				showToast(
 					"success",
 					existing
-						? "Yearly plan updated"
-						: "Yearly plan seeded — quarter/month/week tree created"
+						? t("editors.yearly.saveSuccess")
+						: t("editors.yearly.seedSuccess")
 				)
 				router.refresh()
 			} else {
-				showToast("error", result.message || "Save failed")
+				showToast("error", result.message || t("editors.saveFailed"))
 			}
 		})
 	}
@@ -346,32 +354,30 @@ const YearlyPlanEditor = ({
 				<div className="gap-s-300 flex flex-col sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0">
 						<h3 id="sec-capital-anchor" className="text-h3 text-txt-100">
-							Capital inicial
+							{t("editors.yearly.capitalSection")}
 						</h3>
 						<p className="mt-s-100 text-small text-txt-300">
-							{accountCapitalAvailable ? (
-								<>
-									Configurado em{" "}
-									<Link
-										href="/settings"
-										className="text-acc-100 underline-offset-2 hover:underline"
-									>
-										Settings → Relatório Anual
-									</Link>
-									. Capital por mês é editável na grade.
-								</>
-							) : (
-								<>
-									Defina o saldo inicial em{" "}
-									<Link
-										href="/settings"
-										className="text-acc-100 underline-offset-2 hover:underline"
-									>
-										Settings → Relatório Anual
-									</Link>{" "}
-									antes de criar o plano.
-								</>
-							)}
+							{accountCapitalAvailable
+								? t.rich("editors.yearly.capitalConfigured", {
+										link: (chunks) => (
+											<Link
+												href="/settings"
+												className="text-acc-100 underline-offset-2 hover:underline"
+											>
+												{chunks}
+											</Link>
+										),
+									})
+								: t.rich("editors.yearly.capitalSetFirst", {
+										link: (chunks) => (
+											<Link
+												href="/settings"
+												className="text-acc-100 underline-offset-2 hover:underline"
+											>
+												{chunks}
+											</Link>
+										),
+									})}
 						</p>
 					</div>
 					<p className="text-h2 text-acc-100 shrink-0 font-mono tabular-nums">
@@ -389,11 +395,12 @@ const YearlyPlanEditor = ({
 						/>
 						<div className="min-w-0">
 							<p className="text-small text-fb-error font-medium">
-								Não opere — capital mínimo R$ {formatBRNoCents(tier1MinReais)}
+								{t("editors.yearly.capitalBelowMinTitle", {
+									amount: formatBRNoCents(tier1MinReais),
+								})}
 							</p>
 							<p className="mt-s-100 text-tiny text-txt-300">
-								Capital atual abaixo do primeiro tier da ladder. Aumente o
-								capital ou ajuste a ladder.
+								{t("editors.yearly.capitalBelowMinBody")}
 							</p>
 						</div>
 					</div>
@@ -407,16 +414,16 @@ const YearlyPlanEditor = ({
 			>
 				<header>
 					<h3 id="sec-defaults" className="text-h3 text-txt-100">
-						Defaults
+						{t("editors.yearly.defaultsSection")}
 					</h3>
 					<p className="mt-s-100 text-small text-txt-300">
-						Cascade fallback aplicado quando o mês não tem override.
+						{t("editors.yearly.defaultsSubtitle")}
 					</p>
 				</header>
 				<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
 					<div>
 						<Label id="lbl-trading-days" htmlFor="trading-days">
-							Dias / semana
+							{t("editors.yearly.daysPerWeekLabel")}
 						</Label>
 						<Input
 							id="trading-days"
@@ -432,7 +439,7 @@ const YearlyPlanEditor = ({
 					</div>
 					<div>
 						<Label id="lbl-daily-loss" htmlFor="daily-loss">
-							Daily loss R
+							{t("editors.yearly.dailyLossLabel")}
 						</Label>
 						<Input
 							id="daily-loss"
@@ -446,7 +453,7 @@ const YearlyPlanEditor = ({
 					</div>
 					<div>
 						<Label id="lbl-daily-win" htmlFor="daily-win">
-							Daily win R
+							{t("editors.yearly.dailyWinLabel")}
 						</Label>
 						<Input
 							id="daily-win"
@@ -460,7 +467,7 @@ const YearlyPlanEditor = ({
 					</div>
 					<div>
 						<Label id="lbl-weekly-loss" htmlFor="weekly-loss">
-							Weekly loss R
+							{t("editors.yearly.weeklyLossLabel")}
 						</Label>
 						<Input
 							id="weekly-loss"
@@ -476,7 +483,7 @@ const YearlyPlanEditor = ({
 					</div>
 					<div>
 						<Label id="lbl-weekly-win" htmlFor="weekly-win">
-							Weekly win R
+							{t("editors.yearly.weeklyWinLabel")}
 						</Label>
 						<Input
 							id="weekly-win"
@@ -490,7 +497,7 @@ const YearlyPlanEditor = ({
 					</div>
 					<div>
 						<Label id="lbl-monthly-loss" htmlFor="monthly-loss">
-							Monthly loss R
+							{t("editors.yearly.monthlyLossLabel")}
 						</Label>
 						<Input
 							id="monthly-loss"
@@ -506,7 +513,7 @@ const YearlyPlanEditor = ({
 					</div>
 					<div>
 						<Label id="lbl-monthly-win" htmlFor="monthly-win">
-							Monthly win R
+							{t("editors.yearly.monthlyWinLabel")}
 						</Label>
 						<Input
 							id="monthly-win"
@@ -530,12 +537,12 @@ const YearlyPlanEditor = ({
 			>
 				<header>
 					<h3 id="sec-ladder" className="text-h3 text-txt-100">
-						Capital ladder
+						{t("editors.yearly.ladderSection")}
 					</h3>
 					<p className="mt-s-100 text-small text-txt-300">
-						Define quanto vale 1R conforme o capital cresce. Cada tier começa em{" "}
-						<strong>From</strong> e termina onde o próximo começa. O último tier
-						é ilimitado.
+						{t.rich("editors.yearly.ladderSubtitle", {
+							strong: (chunks) => <strong>{chunks}</strong>,
+						})}
 					</p>
 				</header>
 
@@ -543,10 +550,13 @@ const YearlyPlanEditor = ({
 					<Table>
 						<TableHeader className="bg-bg-200">
 							<TableRow>
-								<TableHead className="w-12">Tier</TableHead>
-								<TableHead>From (R$)</TableHead>
-								<TableHead>1R (R$)</TableHead>
-								<TableHead className="text-right" aria-label="Actions" />
+								<TableHead className="w-12">{t("common.tier")}</TableHead>
+								<TableHead>{t("editors.yearly.fromColumnHead")}</TableHead>
+								<TableHead>{t("editors.yearly.oneRColumnHead")}</TableHead>
+								<TableHead
+									className="text-right"
+									aria-label={t("common.actions")}
+								/>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -564,7 +574,9 @@ const YearlyPlanEditor = ({
 											}
 											decimals={0}
 											unit="cents"
-											aria-label={`Tier ${idx + 1} from BRL`}
+											aria-label={t("editors.yearly.tierFromBrl", {
+												n: idx + 1,
+											})}
 											className="h-9"
 										/>
 									</TableCell>
@@ -577,7 +589,9 @@ const YearlyPlanEditor = ({
 											}
 											decimals={0}
 											unit="cents"
-											aria-label={`Tier ${idx + 1} one-R BRL`}
+											aria-label={t("editors.yearly.tierOneRBrl", {
+												n: idx + 1,
+											})}
 											className="h-9"
 										/>
 									</TableCell>
@@ -589,7 +603,9 @@ const YearlyPlanEditor = ({
 											size="sm"
 											onClick={() => removeLadderRow(row.id)}
 											disabled={form.ladderRows.length === 1}
-											aria-label={`Remove tier ${idx + 1}`}
+											aria-label={t("editors.yearly.removeTier", {
+												n: idx + 1,
+											})}
 											className="text-txt-300 hover:text-fb-error size-8 p-0"
 										>
 											<Trash2 className="h-4 w-4" />
@@ -610,7 +626,7 @@ const YearlyPlanEditor = ({
 						onClick={addLadderRow}
 					>
 						<Plus className="mr-s-200 h-3.5 w-3.5" />
-						Add tier
+						{t("editors.yearly.addTier")}
 					</Button>
 					<Button
 						id="btn-ladder-restore-defaults"
@@ -620,7 +636,7 @@ const YearlyPlanEditor = ({
 						onClick={restoreLadderDefaults}
 					>
 						<RotateCcw className="mr-s-200 h-3.5 w-3.5" />
-						Restore defaults
+						{t("editors.yearly.restoreDefaults")}
 					</Button>
 				</div>
 			</fieldset>
@@ -631,11 +647,10 @@ const YearlyPlanEditor = ({
 			>
 				<header>
 					<h3 id="sec-risk-profile" className="text-h3 text-txt-100">
-						Risk profile
+						{t("editors.yearly.riskProfileSection")}
 					</h3>
 					<p className="mt-s-100 text-small text-txt-300">
-						Picked when no monthly override is set. Drives adaptive sizing rules
-						(consecutive losses, post-loss reduction, etc.).
+						{t("editors.yearly.riskProfileSubtitle")}
 					</p>
 				</header>
 				<div className="max-w-sm">
@@ -649,7 +664,7 @@ const YearlyPlanEditor = ({
 				</div>
 				{!existing && (
 					<p className="text-tiny text-txt-300">
-						Seed the yearly plan first, then set the default profile.
+						{t("editors.yearly.riskProfileSeedFirst")}
 					</p>
 				)}
 			</fieldset>
@@ -660,10 +675,10 @@ const YearlyPlanEditor = ({
 			>
 				<header>
 					<h3 id="sec-notes" className="text-h3 text-txt-100">
-						Notes
+						{t("editors.yearly.notesSection")}
 					</h3>
 					<p className="mt-s-100 text-small text-txt-300">
-						Annual intent, themes, key adjustments.
+						{t("editors.yearly.notesSubtitle")}
 					</p>
 				</header>
 				<Textarea
@@ -671,7 +686,7 @@ const YearlyPlanEditor = ({
 					rows={3}
 					value={form.notes}
 					onChange={(e) => handleField("notes", e.target.value)}
-					placeholder="Annual intent, themes, key adjustments..."
+					placeholder={t("editors.yearly.notesPlaceholder")}
 				/>
 			</fieldset>
 
@@ -682,7 +697,7 @@ const YearlyPlanEditor = ({
 					) : (
 						<Save className="mr-s-200 h-4 w-4" />
 					)}
-					{existing ? "Save changes" : "Seed yearly plan"}
+					{existing ? t("editors.saveChanges") : t("editors.seedYearlyPlan")}
 				</Button>
 			</div>
 		</form>
