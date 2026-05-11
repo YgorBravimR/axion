@@ -1,5 +1,3 @@
-"use client"
-
 import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -29,7 +27,8 @@ export const LoadingSpinner = ({
 	label,
 }: LoadingSpinnerProps) => {
 	const tCommon = useTranslations("common")
-	const displayLabel = label && !label.endsWith("\u2026") ? `${label}\u2026` : label
+	const displayLabel =
+		label && !label.endsWith("\u2026") ? `${label}\u2026` : label
 
 	const accessibleLabel = displayLabel ?? tCommon("loading")
 
@@ -41,7 +40,10 @@ export const LoadingSpinner = ({
 			aria-label={!displayLabel ? accessibleLabel : undefined}
 		>
 			<Loader2
-				className={cn("animate-spin motion-reduce:animate-none text-txt-300", sizeClasses[size])}
+				className={cn(
+					"text-txt-300 animate-spin motion-reduce:animate-none",
+					sizeClasses[size]
+				)}
 				aria-hidden="true"
 			/>
 			{displayLabel && (

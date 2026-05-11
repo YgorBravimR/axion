@@ -252,8 +252,8 @@ export const StrategyAnalysis = memo(({ result }: StrategyAnalysisProps) => {
 							{t("keyAreasOptimization")}
 						</p>
 						<ul className="space-y-s-100 text-small text-txt-200">
-							{insights.improvementSuggestions.map((suggestion, i) => (
-								<li key={i}>• {suggestion}</li>
+							{insights.improvementSuggestions.map((suggestion) => (
+								<li key={suggestion}>• {suggestion}</li>
 							))}
 						</ul>
 						<Insight type="tip">{t("bestStrategyTip")}</Insight>

@@ -1,5 +1,3 @@
-"use client"
-
 import { useTranslations } from "next-intl"
 import { AlertTriangle, CheckCircle } from "lucide-react"
 import type { SimulationPreview } from "@/types/risk-simulation"
