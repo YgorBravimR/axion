@@ -73,6 +73,10 @@ const journeyStages: readonly JourneyStage[] = [
 		name: "journey-01-foundation",
 		testMatch: /journey\/01-foundation\.spec\.ts/,
 	},
+	{
+		name: "journey-02-fractal-plan",
+		testMatch: /journey\/02-fractal-plan\.spec\.ts/,
+	},
 ]
 
 /**
