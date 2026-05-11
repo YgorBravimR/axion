@@ -2,6 +2,10 @@
 
 # Agent Conventions — Axion
 
+## Deferred work backlog
+
+Ideas, follow-ups, and "for later" items live in **[`docs/backlog.md`](docs/backlog.md)** — the single source of truth. Before scattering a new `// TODO` or "Phase 2 will…" note across the repo, add it there with a Source link. When you cherry-pick an item, delete it from the backlog in the same PR.
+
 ## Package manager
 
 **Use `pnpm` only. Never use `bun` or `bunx` in this project.**

@@ -20,10 +20,7 @@ All 9 stages (0–8) are implemented and chain end-to-end via Playwright project
 | 7     | `07-quarter-year.spec.ts`  | Quarter + year cockpits; annual rollup; account comparison            |
 | 8     | `08-improvement.spec.ts`   | Bug-report panel open/close; analytics drill on the equity curve      |
 
-Known data gaps (not bugs, future work):
-
-- Stage 7 quarter narrative is gated on a seeded `quarterlyPlan` DB row; the suite currently asserts the always-rendered quarter navigation landmark instead. Seeding a multi-month trade history is the next acceptance step.
-- Stage 6 DARF assertion relies on `getMonthlyDarf` lazy-recompute for a single trade; multi-month carryover correctness is not yet exercised.
+Known data gaps and follow-ups live in [`docs/backlog.md`](../../docs/backlog.md) under "Journey suite" — including the multi-month trade-history seeder that would tighten Stage 6 DARF + Stage 7 quarter/annual assertions.
 
 ## Running
 
@@ -134,11 +131,11 @@ Hard assertions (`expect(...)`) run in **both** modes — demo mode must still f
 
 Each test run gets a fresh timestamped email (`bravo-${Date.now()}@axion-demo.com`) so journey runs don't collide with each other or with the admin user used by the rest of the E2E suite. Password and display name are stable for narrative coherence.
 
-A future iteration may move to a fixed Bravo email backed by a per-run seeder reset (cascade-delete + insert), so the showcase video has a recognizable identity. Today the timestamped email is the cheapest way to guarantee a clean DB-backed login rate-limit slot for each run.
+Switching to a fixed Bravo email + per-chain DB reset is tracked in [`docs/backlog.md`](../../docs/backlog.md). Today the timestamped email is the cheapest way to guarantee a clean DB-backed login rate-limit slot for each run.
 
 ## Tags
 
-Spec files include `@journey` and `@stage:<name>` tags in their JSDoc headers. Filtering by tag is **not** wired yet — the suite uses Playwright project selection (`--project=journey-XX-...`) which is more explicit. Tag-based filtering may be added later if it proves useful.
+Spec files include `@journey` and `@stage:<name>` tags in their JSDoc headers. Filtering by tag is **not** wired yet — the suite uses Playwright project selection (`--project=journey-XX-...`) which is more explicit. Wiring tag-based filtering is tracked in [`docs/backlog.md`](../../docs/backlog.md).
 
 ## What's NOT covered
 

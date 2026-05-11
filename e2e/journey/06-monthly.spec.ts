@@ -24,8 +24,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  * NOT exercised in this stage:
  *   • recompute-month trigger — no test-only endpoint exists, and a
  *     single-trade month does not exercise meaningful DARF carryover.
- *     Future iterations should seed a multi-month trade history before
- *     asserting recompute behaviour.
+ *     Multi-month trade-history seeder is tracked in `docs/backlog.md`.
  *
  * Trade lives in the current month (Stage 4 logged it with default
  * date = now). PLAN_YEAR=2026 matches the seeded fractal tree from

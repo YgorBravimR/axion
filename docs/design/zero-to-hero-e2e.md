@@ -1,9 +1,9 @@
 # Design — Zero-to-Hero E2E (Journey Suite)
 
-**Status**: Draft / awaiting greenlight
+**Status**: Phases 1-3 substantially shipped (Stages 0-8 implemented). Open follow-ups (multi-month seeder, CI workflow, demo artifact policy) live in [`docs/backlog.md`](../backlog.md).
 **Date**: 2026-05-11
 **Owner**: TBD
-**Related docs**: `docs/zero-to-hero.md` (the user journey spec this implements), `docs/features.md` (feature catalog), `docs/project-description.md` (dev-side catalog), `e2e/` (existing per-feature E2E suite)
+**Related docs**: `docs/zero-to-hero.md` (the user journey spec this implements), `docs/features.md` (feature catalog), `docs/project-description.md` (dev-side catalog), `e2e/` (existing per-feature E2E suite), [`docs/backlog.md`](../backlog.md) (deferred work)
 
 ---
 

@@ -9,11 +9,8 @@ import path from "node:path"
  * stable across the chain, the FIRST stage that calls `getBravo()` writes the
  * persona to `e2e/.auth/bravo.json`; subsequent stages read it back.
  *
- * Reset the chain by deleting that file (or by Playwright's globalSetup
- * teardown if wired in Phase 2).
- *
- * Phase 1 (proof of concept): timestamped email, persisted on first use.
- * Phase 2+: switch to fixed email backed by a per-chain DB seeder reset.
+ * Reset the chain by deleting that file. A fixed-email + per-chain DB
+ * seeder reset alternative is tracked in `docs/backlog.md`.
  */
 
 const PERSONA_PATH = path.join("e2e", ".auth", "bravo.json")

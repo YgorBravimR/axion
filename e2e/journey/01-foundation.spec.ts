@@ -13,8 +13,8 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  *   - She can create a real asset via the dialog
  *
  * Subsequent foundation work (timeframes, tags, conditions, risk profiles,
- * fee rates, first playbook strategy) lands incrementally in Phase 2 follow-ups
- * as they become required by Stages 2-4.
+ * fee rates, first playbook strategy) is added incrementally as it becomes
+ * required by Stages 2-4.
  *
  * Pre-condition: Stage 0 snapshot — Bravo authenticated AND admin.
  * Post-condition: One Bravo-owned asset persisted; storageState saved as Stage 1.
