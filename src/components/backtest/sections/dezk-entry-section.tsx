@@ -45,7 +45,9 @@ const DezkEntrySection = memo(
 					<p className="text-small text-txt-200 font-medium">MACD</p>
 					<div className="gap-m-400 grid grid-cols-3">
 						<div className="space-y-s-200">
-							<Label id="label-macd-fast">{t("macdFast")}</Label>
+							<Label htmlFor="macd-fast" id="label-macd-fast">
+								{t("macdFast")}
+							</Label>
 							<Input
 								id="macd-fast"
 								type="number"
@@ -56,7 +58,9 @@ const DezkEntrySection = memo(
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label id="label-macd-slow">{t("macdSlow")}</Label>
+							<Label htmlFor="macd-slow" id="label-macd-slow">
+								{t("macdSlow")}
+							</Label>
 							<Input
 								id="macd-slow"
 								type="number"
@@ -67,7 +71,9 @@ const DezkEntrySection = memo(
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label id="label-macd-signal">{t("macdSignal")}</Label>
+							<Label htmlFor="macd-signal" id="label-macd-signal">
+								{t("macdSignal")}
+							</Label>
 							<Input
 								id="macd-signal"
 								type="number"
@@ -83,7 +89,9 @@ const DezkEntrySection = memo(
 				{/* WMA + Entry + Stop params */}
 				<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-4">
 					<div className="space-y-s-200">
-						<Label id="label-wma-fast">{t("wmaFast")}</Label>
+						<Label htmlFor="wma-fast" id="label-wma-fast">
+							{t("wmaFast")}
+						</Label>
 						<Input
 							id="wma-fast"
 							type="number"
@@ -92,7 +100,9 @@ const DezkEntrySection = memo(
 						/>
 					</div>
 					<div className="space-y-s-200">
-						<Label id="label-wma-slow">{t("wmaSlow")}</Label>
+						<Label htmlFor="wma-slow" id="label-wma-slow">
+							{t("wmaSlow")}
+						</Label>
 						<Input
 							id="wma-slow"
 							type="number"
@@ -103,7 +113,9 @@ const DezkEntrySection = memo(
 						/>
 					</div>
 					<div className="space-y-s-200">
-						<Label id="label-candles-after">{t("candlesAfter")}</Label>
+						<Label htmlFor="candles-after" id="label-candles-after">
+							{t("candlesAfter")}
+						</Label>
 						<Input
 							id="candles-after"
 							type="number"
@@ -114,7 +126,9 @@ const DezkEntrySection = memo(
 						/>
 					</div>
 					<div className="space-y-s-200">
-						<Label id="label-stop-buffer">{t("stopBuffer")}</Label>
+						<Label htmlFor="stop-buffer" id="label-stop-buffer">
+							{t("stopBuffer")}
+						</Label>
 						<div className="gap-s-100 flex items-center">
 							<Input
 								id="stop-buffer"
@@ -132,7 +146,9 @@ const DezkEntrySection = memo(
 				{/* Time + flags */}
 				<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-4">
 					<div className="space-y-s-200">
-						<Label id="label-dezk-start">{t("startTime")}</Label>
+						<Label htmlFor="dezk-start" id="label-dezk-start">
+							{t("startTime")}
+						</Label>
 						<Input
 							id="dezk-start"
 							type="time"
@@ -143,7 +159,9 @@ const DezkEntrySection = memo(
 						/>
 					</div>
 					<div className="space-y-s-200">
-						<Label id="label-dezk-end">{t("endTime")}</Label>
+						<Label htmlFor="dezk-end" id="label-dezk-end">
+							{t("endTime")}
+						</Label>
 						<Input
 							id="dezk-end"
 							type="time"
@@ -159,7 +177,9 @@ const DezkEntrySection = memo(
 							checked={config.requireZeroCross}
 							onCheckedChange={(checked) => update("requireZeroCross", checked)}
 						/>
-						<Label id="label-zero-cross">{t("requireZeroCross")}</Label>
+						<Label htmlFor="dezk-zero-cross" id="label-zero-cross">
+							{t("requireZeroCross")}
+						</Label>
 					</div>
 				</div>
 			</div>

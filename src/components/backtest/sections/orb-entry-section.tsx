@@ -39,7 +39,9 @@ const OrbEntrySection = memo(
 
 				<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-3">
 					<div className="space-y-s-200">
-						<Label id="label-startTime">{t("startTime")}</Label>
+						<Label htmlFor="orb-startTime" id="label-startTime">
+							{t("startTime")}
+						</Label>
 						<Input
 							id="orb-startTime"
 							type="time"
@@ -51,7 +53,9 @@ const OrbEntrySection = memo(
 					</div>
 
 					<div className="space-y-s-200">
-						<Label id="label-endTime">{t("endTime")}</Label>
+						<Label htmlFor="orb-endTime" id="label-endTime">
+							{t("endTime")}
+						</Label>
 						<Input
 							id="orb-endTime"
 							type="time"
@@ -68,7 +72,9 @@ const OrbEntrySection = memo(
 							checked={config.ignorarGaps}
 							onCheckedChange={(checked) => update("ignorarGaps", checked)}
 						/>
-						<Label id="label-ignorarGaps">{t("ignorarGaps")}</Label>
+						<Label htmlFor="orb-ignorarGaps" id="label-ignorarGaps">
+							{t("ignorarGaps")}
+						</Label>
 					</div>
 				</div>
 			</div>

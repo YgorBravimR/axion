@@ -120,7 +120,9 @@ const SizingExecutionSection = memo(
 				<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-3">
 					{sizingType === "monetary_risk" && (
 						<div className="space-y-s-200">
-							<Label id="label-risk-amount">{t("riskAmount")}</Label>
+							<Label htmlFor="risk-amount" id="label-risk-amount">
+								{t("riskAmount")}
+							</Label>
 							<div className="gap-s-100 flex items-center">
 								<span className="text-small text-txt-300 shrink-0">R$</span>
 								<Input
@@ -157,7 +159,9 @@ const SizingExecutionSection = memo(
 
 					{sizingType === "fixed_lots" && (
 						<div className="space-y-s-200">
-							<Label id="label-fixed-lots">{t("fixedLots")}</Label>
+							<Label htmlFor="fixed-lots" id="label-fixed-lots">
+								{t("fixedLots")}
+							</Label>
 							<Input
 								id="fixed-lots"
 								type="number"
@@ -176,7 +180,9 @@ const SizingExecutionSection = memo(
 					)}
 
 					<div className="space-y-s-200">
-						<Label id="label-slippage">{t("slippage")}</Label>
+						<Label htmlFor="slippage" id="label-slippage">
+							{t("slippage")}
+						</Label>
 						<div className="gap-s-100 flex items-center">
 							<Input
 								id="slippage"
