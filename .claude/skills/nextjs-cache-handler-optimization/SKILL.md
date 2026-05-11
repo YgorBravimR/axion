@@ -1,6 +1,9 @@
 ---
 name: nextjs-cache-handler-optimization
 description: Fortedigital Next.js cache handler configuration and optimization patterns. Use when setting up Redis caching, configuring composite handlers, optimizing TTL strategies, or migrating from default Next.js caching to external cache handlers in production applications.
+scope: next.config.*, src/lib/cache/**
+depends: []
+tokens: 715
 ---
 
 # Next.js Cache Handler Optimization

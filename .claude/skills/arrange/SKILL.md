@@ -6,6 +6,9 @@ args:
   - name: target
     description: The feature or component to improve layout for (optional)
     required: false
+scope: global
+depends: [frontend-design, teach-impeccable]
+tokens: 1480
 ---
 
 Assess and improve layout and spacing that feels monotonous, crowded, or structurally weak — turning generic arrangements into intentional, rhythmic compositions.
@@ -105,6 +108,7 @@ Create a systematic plan:
 - If an icon looks visually off-center despite being geometrically centered, nudge it — but only if you're confident it actually looks wrong. Don't adjust speculatively.
 
 **NEVER**:
+
 - Use arbitrary spacing values outside your scale
 - Make all spacing equal — variety creates hierarchy
 - Wrap everything in cards — not everything needs a container

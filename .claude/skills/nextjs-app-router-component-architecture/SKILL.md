@@ -1,6 +1,9 @@
 ---
 name: nextjs-app-router-component-architecture
 description: Next.js App Router component architecture patterns. Use when deciding between server and client components, implementing container-presentational patterns, or organizing component hierarchies. Covers server/client boundaries, data fetching strategies, and composition patterns for App Router applications.
+scope: src/app/**, src/components/**
+depends: []
+tokens: 775
 ---
 
 # Next.js App Router Component Architecture

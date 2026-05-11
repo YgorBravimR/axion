@@ -3,7 +3,7 @@
 **Date**: 2026-05-07
 **Branch**: `feat/yearly-tax-reporting`
 **Author**: Arch (Claude) + Ygor
-**Status**: plan; execution deferred — run after `docs/hardening-plan-2026-05-07.md`
+**Status**: plan; execution deferred — hardening-plan-2026-05-07.md (now landed, file removed)
 
 ## Why this doc
 
@@ -13,7 +13,7 @@ This plan defines **horizontal subject sweeps**. Each pass covers one concern ac
 
 ## Sequencing
 
-1. Land `docs/hardening-plan-2026-05-07.md` first (ESLint / TS / Tailwind rules). That layer kills the easiest class bugs at write-time.
+1. Hardening plan (landed, file removed) (ESLint / TS / Tailwind rules). That layer kills the easiest class bugs at write-time.
 2. Run subject sweeps below in **recommended order** (Section 5). Each sweep produces:
    - `docs/scans/YYYY-MM-DD-<subject>.md` (Phase 5a artifact)
    - New entries in `~/.claude/memory.md` Anti-Pattern Catalog
