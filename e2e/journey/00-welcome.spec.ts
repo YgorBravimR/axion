@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test"
 import { BRAVO } from "./fixtures/bravo-seed"
 import { annotate } from "./helpers/annotate"
+import { promoteBravoToAdmin } from "./helpers/promote-bravo-to-admin"
 import { screenshotIfDemo } from "./helpers/screenshot-if-demo"
 import { saveStageState } from "./helpers/storage-state"
 
@@ -41,6 +42,11 @@ test.describe("Journey Stage 0 — Welcome", () => {
 			timeout: 15000,
 		})
 		await screenshotIfDemo(page, "00-03-register-success")
+
+		// Promote Bravo to admin BEFORE login so the session cookie minted on
+		// sign-in carries her elevated role. Required to access admin-gated
+		// settings tabs (Assets, Timeframes) in Stage 1.
+		await promoteBravoToAdmin(BRAVO.email)
 
 		await annotate(page, "Account created — Bravo signs in for the first time")
 
