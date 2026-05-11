@@ -104,7 +104,7 @@ const SetupSummaryCard = ({
 
 				<dl className="mt-m-400 gap-m-400 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
 					<div>
-						<dt className="text-txt-300 text-xs">
+						<dt className="text-txt-300 text-tiny">
 							{t("fields.initialCapital")}
 						</dt>
 						<dd className="text-h3 text-txt-100 mt-1 font-mono tabular-nums">
@@ -112,7 +112,7 @@ const SetupSummaryCard = ({
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">{t("fields.irDayTrade")}</dt>
+						<dt className="text-txt-300 text-tiny">{t("fields.irDayTrade")}</dt>
 						<dd
 							className="text-h3 text-txt-100 mt-1 font-mono tabular-nums"
 							title={t("fields.irRateTitle", { source: irTaxRateSource })}
@@ -122,7 +122,7 @@ const SetupSummaryCard = ({
 						<p className="text-micro text-txt-300 mt-1">{irTaxRateSource}</p>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">
+						<dt className="text-txt-300 text-tiny">
 							{t("fields.monthlyWithdrawal")}
 						</dt>
 						<dd className="text-h3 text-guide mt-1 font-mono tabular-nums">
@@ -130,13 +130,15 @@ const SetupSummaryCard = ({
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">{t("fields.daysPerWeek")}</dt>
+						<dt className="text-txt-300 text-tiny">
+							{t("fields.daysPerWeek")}
+						</dt>
 						<dd className="text-h3 text-txt-100 mt-1 font-mono tabular-nums">
 							{tradingDaysPerWeek}
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">{t("fields.dailyCaps")}</dt>
+						<dt className="text-txt-300 text-tiny">{t("fields.dailyCaps")}</dt>
 						<dd className="text-small text-txt-200 mt-1 font-mono tabular-nums">
 							{formatR(defaultDailyLossR)} / {formatR(defaultDailyWinR)}
 						</dd>
@@ -144,7 +146,7 @@ const SetupSummaryCard = ({
 				</dl>
 
 				<div id="plan-year-ladder" className="mt-m-500">
-					<h3 className="text-txt-300 text-xs tracking-wide uppercase">
+					<h3 className="text-txt-300 text-tiny tracking-wide uppercase">
 						{t("ladder.title")}
 					</h3>
 					{ladderRules.length === 0 ? (
@@ -156,7 +158,7 @@ const SetupSummaryCard = ({
 							{ladderRules.map((rule, idx) => (
 								<li
 									key={`${rule.minCapitalCents}-${rule.maxCapitalCents}`}
-									className="border-bg-300 bg-bg-100 px-s-300 py-s-100 rounded-sm border font-mono text-xs"
+									className="border-bg-300 bg-bg-100 px-s-300 py-s-100 text-tiny rounded-sm border font-mono"
 								>
 									<span className="text-txt-300">T{idx + 1}</span>
 									<span className="mx-s-100 text-txt-300">·</span>
@@ -173,7 +175,7 @@ const SetupSummaryCard = ({
 					)}
 				</div>
 
-				<div className="mt-m-400 text-txt-300 text-xs">
+				<div className="mt-m-400 text-txt-300 text-tiny">
 					{t("monthlyCaps", {
 						lossR: formatR(defaultMonthlyLossR),
 						winR: formatR(defaultMonthlyWinR),
@@ -184,11 +186,11 @@ const SetupSummaryCard = ({
 					<summary className="gap-s-300 px-m-400 py-s-300 text-small text-txt-200 hover:text-txt-100 flex cursor-pointer list-none items-center justify-between">
 						<span>
 							<span className="text-txt-100 font-medium">What-if · sizing</span>
-							<span className="ml-s-200 text-txt-300 text-xs">
+							<span className="ml-s-200 text-txt-300 text-tiny">
 								{t("whatIfSummary")}
 							</span>
 						</span>
-						<span className="text-txt-300 text-xs transition-transform group-open:rotate-180">
+						<span className="text-txt-300 text-tiny transition-transform group-open:rotate-180">
 							▾
 						</span>
 					</summary>

@@ -44,7 +44,7 @@ const WeekStrip = ({ weeks }: WeekStripProps) => {
 							<span className="text-tiny text-txt-200">
 								{t("common.target")}
 							</span>
-							<span className="text-txt-100 font-mono text-sm">
+							<span className="text-txt-100 text-small font-mono">
 								{formatR(w.targetR)}
 							</span>
 						</div>
@@ -53,7 +53,7 @@ const WeekStrip = ({ weeks }: WeekStripProps) => {
 								{t("common.actual")}
 							</span>
 							<span
-								className={`font-mono text-sm ${
+								className={`text-small font-mono ${
 									positive
 										? "text-fb-success"
 										: negative

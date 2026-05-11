@@ -30,7 +30,7 @@ const CarryoverLedger = async ({
 	const t = await getTranslations("tax.carryoverLedger")
 
 	if (history.length === 0) {
-		return <p className="text-muted-foreground text-sm">{t("emptyState")}</p>
+		return <p className="text-muted-foreground text-small">{t("emptyState")}</p>
 	}
 
 	const fmt = (cents: number) => formatCurrency(cents / 100, locale, "BRL")

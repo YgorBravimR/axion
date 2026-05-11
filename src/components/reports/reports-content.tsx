@@ -123,7 +123,7 @@ export const ReportsContent = ({
 					<div className="border-acc-100 pl-s-300 flex items-center justify-between border-l-2">
 						<h2
 							id="annual-section-heading"
-							className="text-txt-200 text-xs tracking-wider uppercase"
+							className="text-txt-200 text-tiny tracking-wider uppercase"
 						>
 							Annual Report — {currentYear}
 						</h2>
@@ -131,7 +131,7 @@ export const ReportsContent = ({
 
 					{weeklyMetaData && (
 						<div className="space-y-s-200">
-							<h3 className="text-txt-300 text-xs font-medium tracking-wider uppercase">
+							<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
 								Weekly Meta vs Real
 							</h3>
 							<WeeklyMetaChart data={weeklyMetaData} />
@@ -140,7 +140,7 @@ export const ReportsContent = ({
 
 					{annualRollupData && (
 						<div className="space-y-s-200">
-							<h3 className="text-txt-300 text-xs font-medium tracking-wider uppercase">
+							<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
 								Annual Rollup
 							</h3>
 							<AnnualRollupTable data={annualRollupData} />
@@ -180,7 +180,7 @@ export const ReportsContent = ({
 					<div className="border-acc-100 pl-s-300 flex items-center justify-between border-l-2">
 						<h2
 							id="tax-section-heading"
-							className="text-txt-200 text-xs tracking-wider uppercase"
+							className="text-txt-200 text-tiny tracking-wider uppercase"
 						>
 							Impostos — {currentYear}
 						</h2>
@@ -219,7 +219,7 @@ export const ReportsContent = ({
 					</div>
 					{carryoverHistory.length > 0 && (
 						<div className="space-y-s-200">
-							<h3 className="text-txt-300 text-xs font-medium tracking-wider uppercase">
+							<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
 								Prejuízo a Compensar
 							</h3>
 							<CarryoverLedger history={carryoverHistory} />
@@ -236,7 +236,7 @@ export const ReportsContent = ({
 				<div className="border-acc-100 pl-s-300 border-l-2">
 					<h2
 						id="r-dist-section-heading"
-						className="text-txt-200 text-xs tracking-wider uppercase"
+						className="text-txt-200 text-tiny tracking-wider uppercase"
 					>
 						R Distribution — {currentYear}
 					</h2>

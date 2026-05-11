@@ -63,14 +63,14 @@ const CustomTooltip = ({
 
 	if (week?.disabled) {
 		return (
-			<div className="border-bg-300 bg-bg-200 text-txt-300 rounded-md border px-3 py-2 text-xs">
+			<div className="border-bg-300 bg-bg-200 text-txt-300 text-tiny rounded-md border px-3 py-2">
 				{t("beforeAccountStart")}
 			</div>
 		)
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-1 rounded-md border px-3 py-2 text-xs">
+		<div className="border-bg-300 bg-bg-200 text-tiny space-y-1 rounded-md border px-3 py-2">
 			<p className="text-txt-100 font-mono font-medium">W{weekNum}</p>
 			{week && (
 				<p className="text-txt-300">
@@ -104,7 +104,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 			aria-label={t("chartAriaLabel", { year: data.year })}
 		>
 			{!data.hasPlan && (
-				<p className="text-txt-300 border-bg-300 mb-3 rounded-sm border px-3 py-2 text-xs">
+				<p className="text-txt-300 border-bg-300 text-tiny mb-3 rounded-sm border px-3 py-2">
 					{t("noYearlyPlan")}
 				</p>
 			)}

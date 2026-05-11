@@ -36,7 +36,7 @@ const WeekRow = ({
 	return (
 		<div
 			className={cn(
-				"gap-x-s-300 py-s-100 grid grid-cols-[auto_1fr_auto] items-baseline font-mono text-xs",
+				"gap-x-s-300 py-s-100 text-tiny grid grid-cols-[auto_1fr_auto] items-baseline font-mono",
 				isCurrent && "bg-bg-stripe px-s-200 rounded-sm"
 			)}
 			data-testid={`week-row-${weekIndex}`}

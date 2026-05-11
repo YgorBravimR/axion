@@ -51,7 +51,7 @@ const AnnualTaxSummary = async ({
 
 	return (
 		<div className="space-y-4">
-			<h3 className="text-sm font-semibold">{t("title", { year })}</h3>
+			<h3 className="text-small font-semibold">{t("title", { year })}</h3>
 
 			<Table aria-label={t("tableAriaLabel", { year })}>
 				<TableBody>
@@ -78,7 +78,7 @@ const AnnualTaxSummary = async ({
 
 			{/* 30% heuristic gauge */}
 			<div className="space-y-1">
-				<div className="text-muted-foreground flex items-center justify-between text-xs">
+				<div className="text-muted-foreground text-tiny flex items-center justify-between">
 					<span>{t("burden.label")}</span>
 					<span
 						className={cn(
@@ -104,7 +104,9 @@ const AnnualTaxSummary = async ({
 						style={{ width: `${Math.min(summary.irBurdenPercent, 100)}%` }}
 					/>
 				</div>
-				<p className="text-muted-foreground text-xs">{t("burden.reference")}</p>
+				<p className="text-muted-foreground text-tiny">
+					{t("burden.reference")}
+				</p>
 			</div>
 		</div>
 	)

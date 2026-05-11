@@ -71,11 +71,11 @@ const CapitalEventLog = ({
 
 	return (
 		<details className="group">
-			<summary className="text-txt-200 hover:text-txt-100 flex cursor-pointer list-none items-center justify-between py-2 text-sm font-medium transition-colors">
+			<summary className="text-txt-200 hover:text-txt-100 text-small flex cursor-pointer list-none items-center justify-between py-2 font-medium transition-colors">
 				<span>
 					{t("capitalEvents")} ({yearEvents.length})
 				</span>
-				<span className="text-txt-300 text-xs transition-transform group-open:rotate-180">
+				<span className="text-txt-300 text-tiny transition-transform group-open:rotate-180">
 					▼
 				</span>
 			</summary>
@@ -90,7 +90,7 @@ const CapitalEventLog = ({
 						<button
 							type="button"
 							onClick={() => setFormType("deposit")}
-							className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
 								formType === "deposit"
 									? "bg-trade-buy text-bg-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
@@ -102,7 +102,7 @@ const CapitalEventLog = ({
 						<button
 							type="button"
 							onClick={() => setFormType("withdrawal")}
-							className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
 								formType === "withdrawal"
 									? "bg-acc-100 text-bg-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
@@ -119,7 +119,7 @@ const CapitalEventLog = ({
 						placeholder={t("amountPlaceholder")}
 						value={formAmount}
 						onChange={(e) => setFormAmount(e.target.value)}
-						className="border-bg-300 bg-bg-200 text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 rounded-md border px-3 py-2 text-xs focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-200 text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 text-tiny rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
 						aria-label={t("amountAriaLabel")}
 						required
 					/>
@@ -129,36 +129,38 @@ const CapitalEventLog = ({
 						value={formDate}
 						onChange={(e) => setFormDate(e.target.value)}
 						max={new Date().toISOString().slice(0, 10)}
-						className="border-bg-300 bg-bg-200 text-txt-100 focus:ring-acc-100 rounded-md border px-3 py-2 text-xs focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-200 text-txt-100 focus:ring-acc-100 text-tiny rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
 						aria-label={t("eventDateAriaLabel")}
 					/>
 
 					<button
 						type="submit"
 						disabled={isPending}
-						className="bg-acc-100 text-bg-100 rounded-md px-4 py-2 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+						className="bg-acc-100 text-bg-100 text-tiny rounded-md px-4 py-2 font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
 					>
 						{isPending ? t("saving") : t("log")}
 					</button>
 
 					{formError && (
-						<p className="text-trade-sell col-span-full text-xs">{formError}</p>
+						<p className="text-trade-sell text-tiny col-span-full">
+							{formError}
+						</p>
 					)}
 				</form>
 
 				{/* Event list */}
 				{yearEvents.length === 0 ? (
-					<p className="text-txt-300 text-xs">{t("noEvents", { year })}</p>
+					<p className="text-txt-300 text-tiny">{t("noEvents", { year })}</p>
 				) : (
 					<ul className="space-y-1" aria-label={t("listAriaLabel", { year })}>
 						{[...yearEvents].reverse().map((ev) => (
 							<li
 								key={ev.id}
-								className="bg-bg-300/30 flex items-center justify-between gap-3 rounded-md px-3 py-2 text-xs"
+								className="bg-bg-300/30 text-tiny flex items-center justify-between gap-3 rounded-md px-3 py-2"
 							>
 								<span className="text-txt-300 font-mono">{ev.eventDate}</span>
 								<span
-									className={`rounded-sm px-2 py-0.5 text-xs font-medium ${
+									className={`text-tiny rounded-sm px-2 py-0.5 font-medium ${
 										ev.eventType === "deposit"
 											? "bg-trade-buy/20 text-trade-buy"
 											: "bg-acc-100/20 text-acc-100"

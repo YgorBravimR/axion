@@ -114,7 +114,9 @@ const MonthlyDarfCard = ({
 	return (
 		<Card id={`darf-card-${ledgerRow.id}`}>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
-				<CardTitle className="text-sm font-medium">{t("cardTitle")}</CardTitle>
+				<CardTitle className="text-small font-medium">
+					{t("cardTitle")}
+				</CardTitle>
 				<Badge
 					id={`darf-status-${ledgerRow.id}`}
 					variant={isFinal ? STATUS_VARIANTS[ledgerRow.darfStatus] : "outline"}
@@ -124,7 +126,7 @@ const MonthlyDarfCard = ({
 			</CardHeader>
 			<CardContent className="space-y-2">
 				{isProp ? (
-					<p className="text-muted-foreground text-sm">
+					<p className="text-muted-foreground text-small">
 						{t("propAccountNote")}
 					</p>
 				) : (
@@ -152,7 +154,7 @@ const MonthlyDarfCard = ({
 						</Table>
 
 						<div className="border-border flex items-center justify-between border-t pt-3">
-							<span className="text-sm font-semibold">{t("darfDue")}</span>
+							<span className="text-small font-semibold">{t("darfDue")}</span>
 							<span
 								className={cn(
 									"text-acc-100 font-semibold tabular-nums",
@@ -164,7 +166,7 @@ const MonthlyDarfCard = ({
 						</div>
 
 						{ledgerRow.darfDueDate && (
-							<p className="text-muted-foreground text-xs">
+							<p className="text-muted-foreground text-tiny">
 								{t("dueDate")}{" "}
 								{new Intl.DateTimeFormat(locale, {
 									day: "2-digit",
@@ -175,7 +177,7 @@ const MonthlyDarfCard = ({
 						)}
 
 						{!isFinal && (
-							<p className="border-bg-300 bg-bg-100 px-m-400 py-s-200 text-txt-300 mt-2 rounded-sm border border-dashed text-xs">
+							<p className="border-bg-300 bg-bg-100 px-m-400 py-s-200 text-txt-300 text-tiny mt-2 rounded-sm border border-dashed">
 								{t("inCourseNotice")}
 							</p>
 						)}
@@ -202,7 +204,7 @@ const MonthlyDarfCard = ({
 									<Label
 										id={`darf-paid-label-${ledgerRow.id}`}
 										htmlFor={`darf-paid-input-${ledgerRow.id}`}
-										className="text-txt-200 text-xs"
+										className="text-txt-200 text-tiny"
 									>
 										{t("paidPrompt.label")}
 									</Label>
@@ -213,7 +215,7 @@ const MonthlyDarfCard = ({
 										unit="cents"
 										autoFocus
 									/>
-									<p className="text-txt-300 text-xs">
+									<p className="text-txt-300 text-tiny">
 										{t("paidPrompt.calculated")}{" "}
 										<span className="font-mono tabular-nums">
 											{fmt(ledgerRow.darfDueCents)}
@@ -251,7 +253,7 @@ const MonthlyDarfCard = ({
 
 						{ledgerRow.darfStatus === "paid" && ledgerRow.darfPaidAt && (
 							<div className="space-y-s-100">
-								<p className="text-trade-buy text-xs">
+								<p className="text-trade-buy text-tiny">
 									{t("paidAt")}{" "}
 									{new Intl.DateTimeFormat(locale, {
 										day: "2-digit",
@@ -262,7 +264,7 @@ const MonthlyDarfCard = ({
 										` — ${fmt(ledgerRow.darfPaidAmountCents)}`}
 								</p>
 								{paidDiffCents !== null && paidDiffCents !== 0 && (
-									<p className="text-txt-300 text-xs">
+									<p className="text-txt-300 text-tiny">
 										{t("paidDiff.calculated")}{" "}
 										<span className="font-mono tabular-nums">
 											{fmt(ledgerRow.darfDueCents)}
@@ -283,7 +285,7 @@ const MonthlyDarfCard = ({
 						)}
 
 						{ledgerRow.carryoverOutCents > 0 && (
-							<p className="text-muted-foreground border-border/40 border-t pt-2 text-xs">
+							<p className="text-muted-foreground border-border/40 text-tiny border-t pt-2">
 								{t("carryoverOut")} {fmt(ledgerRow.carryoverOutCents)}
 							</p>
 						)}

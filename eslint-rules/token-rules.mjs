@@ -181,6 +181,27 @@ const RULES = [
 		reason:
 			"Use design-system `text-small` instead of arbitrary `text-[12px]`.",
 	},
+	{
+		category: "typography",
+		from: wordBound("text-xs"),
+		to: "text-tiny",
+		reason:
+			"Axion typography ladder: use `text-tiny` (12px) instead of raw Tailwind `text-xs`.",
+	},
+	{
+		category: "typography",
+		from: wordBound("text-sm"),
+		to: "text-small",
+		reason:
+			"Axion typography ladder: use `text-small` (14px) instead of raw Tailwind `text-sm`.",
+	},
+	{
+		category: "typography",
+		from: wordBound("text-base"),
+		to: "text-body",
+		reason:
+			"Axion typography ladder: use `text-body` (16px) instead of raw Tailwind `text-base`.",
+	},
 
 	// Semantic colors — fb-error/warning/success.
 	{

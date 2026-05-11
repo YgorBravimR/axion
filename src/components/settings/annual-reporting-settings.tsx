@@ -79,7 +79,7 @@ const AnnualReportingSettings = () => {
 
 	return (
 		<fieldset className="space-y-m-400 border-bg-300 p-m-400 rounded-md border">
-			<legend className="text-txt-300 px-s-200 text-xs font-medium tracking-wider uppercase">
+			<legend className="text-txt-300 px-s-200 text-tiny font-medium tracking-wider uppercase">
 				{t("annualReporting")}
 			</legend>
 
@@ -87,7 +87,7 @@ const AnnualReportingSettings = () => {
 				<div>
 					<label
 						htmlFor="account-start-month"
-						className="mb-s-100 text-txt-300 block text-xs"
+						className="mb-s-100 text-txt-300 text-tiny block"
 					>
 						{t("accountStartMonth")}
 					</label>
@@ -97,7 +97,7 @@ const AnnualReportingSettings = () => {
 						onChange={(e) =>
 							setStartMonth(e.target.value ? parseInt(e.target.value) : null)
 						}
-						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 w-full rounded-md border text-sm focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border focus:ring-1 focus:outline-none"
 						aria-label={t("accountStartMonth")}
 					>
 						<option value="">{t("notSet")}</option>
@@ -112,7 +112,7 @@ const AnnualReportingSettings = () => {
 				<div>
 					<label
 						htmlFor="account-start-year"
-						className="mb-s-100 text-txt-300 block text-xs"
+						className="mb-s-100 text-txt-300 text-tiny block"
 					>
 						{t("accountStartYear")}
 					</label>
@@ -125,7 +125,7 @@ const AnnualReportingSettings = () => {
 						onChange={(e) =>
 							setStartYear(e.target.value ? parseInt(e.target.value) : null)
 						}
-						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 w-full rounded-md border font-mono text-sm focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border font-mono focus:ring-1 focus:outline-none"
 						aria-label={t("accountStartYear")}
 						placeholder={t("yearPlaceholder")}
 					/>
@@ -134,7 +134,7 @@ const AnnualReportingSettings = () => {
 				<div>
 					<label
 						htmlFor="starting-balance"
-						className="mb-s-100 text-txt-300 block text-xs"
+						className="mb-s-100 text-txt-300 text-tiny block"
 					>
 						{t("openingBalance")}
 					</label>
@@ -152,7 +152,7 @@ const AnnualReportingSettings = () => {
 				<div>
 					<label
 						htmlFor="withdrawal-target"
-						className="mb-s-100 text-txt-300 block text-xs"
+						className="mb-s-100 text-txt-300 text-tiny block"
 					>
 						{t("monthlyWithdrawalTarget")}
 					</label>
@@ -168,7 +168,7 @@ const AnnualReportingSettings = () => {
 								e.target.value ? parseFloat(e.target.value) : null
 							)
 						}
-						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 w-full rounded-md border font-mono text-sm focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border font-mono focus:ring-1 focus:outline-none"
 						aria-label={t("monthlyWithdrawalTarget")}
 						placeholder={t("monthlyWithdrawalTargetPlaceholder")}
 					/>
@@ -179,7 +179,7 @@ const AnnualReportingSettings = () => {
 				type="button"
 				onClick={handleSave}
 				disabled={isPending}
-				className="bg-acc-100 px-m-400 py-s-200 text-bg-100 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+				className="bg-acc-100 px-m-400 py-s-200 text-bg-100 text-small rounded-md font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
 			>
 				{isPending ? t("saving") : t("saveAnnualSettings")}
 			</button>

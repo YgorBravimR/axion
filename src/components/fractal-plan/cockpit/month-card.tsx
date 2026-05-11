@@ -256,7 +256,7 @@ const MonthCard = ({
 					>
 						{monthLabel}
 					</h3>
-					<span className="text-txt-300 font-mono text-xs">
+					<span className="text-txt-300 text-tiny font-mono">
 						T{tierIndex + 1}
 					</span>
 				</header>

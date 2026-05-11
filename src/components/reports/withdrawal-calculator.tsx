@@ -55,7 +55,7 @@ const WithdrawalCalculator = ({
 
 	if (success) {
 		return (
-			<div className="border-trade-buy/30 bg-trade-buy/10 text-trade-buy rounded-md border px-4 py-3 text-sm">
+			<div className="border-trade-buy/30 bg-trade-buy/10 text-trade-buy text-small rounded-md border px-4 py-3">
 				Withdrawal logged successfully.
 			</div>
 		)
@@ -63,7 +63,7 @@ const WithdrawalCalculator = ({
 
 	return (
 		<div className="border-acc-100/30 bg-bg-200 space-y-3 rounded-md border px-4 py-4">
-			<p className="text-txt-200 text-sm">
+			<p className="text-txt-200 text-small">
 				Based on your{" "}
 				<span className="text-acc-100 font-medium">
 					{withdrawalTargetPercent}%
@@ -85,7 +85,7 @@ const WithdrawalCalculator = ({
 				<div>
 					<label
 						htmlFor="wd-amount"
-						className="text-txt-300 mb-1 block text-xs"
+						className="text-txt-300 text-tiny mb-1 block"
 					>
 						Amount (R$)
 					</label>
@@ -95,12 +95,15 @@ const WithdrawalCalculator = ({
 						inputMode="decimal"
 						value={amount}
 						onChange={(e) => setAmount(e.target.value)}
-						className="border-bg-300 bg-bg-100 text-txt-100 focus:ring-acc-100 w-full rounded-md border px-3 py-2 font-mono text-sm focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-100 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border px-3 py-2 font-mono focus:ring-1 focus:outline-none"
 					/>
 				</div>
 
 				<div>
-					<label htmlFor="wd-date" className="text-txt-300 mb-1 block text-xs">
+					<label
+						htmlFor="wd-date"
+						className="text-txt-300 text-tiny mb-1 block"
+					>
 						Date
 					</label>
 					<input
@@ -109,20 +112,20 @@ const WithdrawalCalculator = ({
 						value={date}
 						onChange={(e) => setDate(e.target.value)}
 						max={new Date().toISOString().slice(0, 10)}
-						className="border-bg-300 bg-bg-100 text-txt-100 focus:ring-acc-100 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+						className="border-bg-300 bg-bg-100 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
 					/>
 				</div>
 
 				<button
 					type="submit"
 					disabled={isPending}
-					className="bg-acc-100 text-bg-100 rounded-md px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+					className="bg-acc-100 text-bg-100 text-small rounded-md px-4 py-2 font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
 				>
 					{isPending ? "Logging…" : "Log Withdrawal"}
 				</button>
 
 				{error && (
-					<p className="text-trade-sell col-span-full text-xs">{error}</p>
+					<p className="text-trade-sell text-tiny col-span-full">{error}</p>
 				)}
 			</form>
 		</div>

@@ -118,7 +118,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					{existing ? (
 						<dl className="gap-s-300 grid grid-cols-1 sm:grid-cols-2">
 							<div>
-								<dt className="text-txt-200 text-sm">
+								<dt className="text-txt-200 text-small">
 									{t("daily.defaultLossR")}
 								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
@@ -131,7 +131,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								</dd>
 							</div>
 							<div>
-								<dt className="text-txt-200 text-sm">
+								<dt className="text-txt-200 text-small">
 									{t("daily.defaultWinR")}
 								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
@@ -144,7 +144,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								</dd>
 							</div>
 							<div>
-								<dt className="text-txt-200 text-sm">
+								<dt className="text-txt-200 text-small">
 									{t("daily.defaultWeeklyLossWinR")}
 								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
@@ -158,7 +158,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								</dd>
 							</div>
 							<div>
-								<dt className="text-txt-200 text-sm">
+								<dt className="text-txt-200 text-small">
 									{t("daily.defaultMonthlyLossWinR")}
 								</dt>
 								<dd className="gap-s-200 mt-1 flex items-center">
