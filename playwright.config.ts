@@ -89,6 +89,10 @@ const journeyStages: readonly JourneyStage[] = [
 		name: "journey-05-weekly",
 		testMatch: /journey\/05-weekly\.spec\.ts/,
 	},
+	{
+		name: "journey-06-monthly",
+		testMatch: /journey\/06-monthly\.spec\.ts/,
+	},
 ]
 
 /**
