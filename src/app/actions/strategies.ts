@@ -23,7 +23,11 @@ import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
-import type { StrategyTradeStats } from "./strategies.types"
+import type {
+	StrategyTradeStats,
+	StrategyWithStats,
+	ComplianceOverview,
+} from "./strategies.types"
 
 /**
  * Checks whether a database error represents a unique constraint violation.
@@ -54,8 +58,6 @@ const isUniqueViolation = (error: unknown): boolean => {
 	}
 	return false
 }
-
-import type { StrategyWithStats, ComplianceOverview } from "./strategies.types"
 
 /**
  * Create a new strategy

@@ -18,6 +18,7 @@ import type {
 	BulkCreateResult,
 	CreateScaledTradeInput,
 	ExtendedTradeFilters,
+	TradeWithRelations,
 } from "./trades.types"
 import type {
 	ActionResponse,
@@ -104,8 +105,6 @@ const maybeTriggerDrawdown = async (
 		console.error("[fractal-plan] checkDrawdownTrigger failed silently:", err)
 	}
 }
-
-import type { TradeWithRelations } from "./trades.types"
 
 /**
  * Create a new trade
