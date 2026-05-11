@@ -6,21 +6,22 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
 /**
  * Stage 6 — Monthly Close
  *
- * End of month. Bravo reviews the month's aggregate performance and
+ * End of month. Bravo reviews the month's aggregate performance,
+ * inspects the DARF / tax section that lives inside /en/reports, and
  * revisits the corresponding month plan card in her fractal plan
- * cockpit. Two surfaces:
+ * cockpit. Three surfaces:
  *
  *   • /en/monthly                 — Monthly Performance page (navigator
  *                                   + profit summary + weekly bars).
+ *   • /en/reports (tax section)   — DARF ledger card for the trade
+ *                                   month (anchored on #tax-section-
+ *                                   heading). Renders only when a
+ *                                   monthly_darf row exists.
  *   • /en/plan/{YEAR}/{Q}/{M}     — Month plan card from the fractal
  *                                   tree (narrative + risk profile +
  *                                   month comparison).
  *
  * NOT exercised in this stage:
- *   • /en/reports DARF / tax sections — reports surface crashes its
- *     error boundary on fresh-account / sparse-data state (the same
- *     known bug deferred from Stage 5). Tax engine is reached through
- *     reports today; once the crash is fixed, Stage 6 can extend.
  *   • recompute-month trigger — no test-only endpoint exists, and a
  *     single-trade month does not exercise meaningful DARF carryover.
  *     Future iterations should seed a multi-month trade history before
@@ -69,7 +70,21 @@ test.describe("Journey Stage 6 — Monthly Close", () => {
 		})
 		await screenshotIfDemo(page, "06-01-monthly-performance")
 
-		// ── 6b — Month plan cockpit card (fractal tree leaf for the trade month)
+		// ── 6b — Tax section (DARF ledger) on /en/reports
+		await annotate(page, "Reports — DARF ledger for the trade month")
+		await page.goto("/en/reports", { waitUntil: "domcontentloaded" })
+
+		// Tax section renders #tax-section-heading only when a monthly_darf
+		// row exists for the current month. Bravo's trading account defaults
+		// to showTaxEstimates=true so getMonthlyDarf lazy-recomputes a row
+		// after Stage 4's trade. If this anchor disappears (e.g., account
+		// config changes default), demote to a soft check rather than failing.
+		await expect(page.locator("#tax-section-heading")).toBeVisible({
+			timeout: 30_000,
+		})
+		await screenshotIfDemo(page, "06-02-darf-section")
+
+		// ── 6c — Month plan cockpit card (fractal tree leaf for the trade month)
 		await annotate(page, "Plan — month cockpit card, recalibrate next month")
 
 		// Use today's month as the plan coord — Stage 4's trade was saved with
@@ -87,7 +102,7 @@ test.describe("Journey Stage 6 — Monthly Close", () => {
 		await expect(page.locator("#month-narrative")).toBeVisible({
 			timeout: 30_000,
 		})
-		await screenshotIfDemo(page, "06-02-month-plan")
+		await screenshotIfDemo(page, "06-03-month-plan")
 
 		await annotate(
 			page,

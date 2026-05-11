@@ -14,13 +14,14 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  *                                       plan-vs-reality card).
  *   • /en/plan/{YEAR}                — Year cockpit (setup card,
  *                                       capital ladder, EOY banner).
+ *   • /en/reports (annual section)   — Annual rollup + weekly meta-
+ *                                       vs-real (anchored on
+ *                                       #annual-section-heading).
  *   • /en/analytics/account-comparison — Multi-account benchmark
  *                                       (renders empty selector when
  *                                       Bravo has a single account).
  *
  * NOT exercised in this stage:
- *   • /en/annual-report — nested inside /en/reports, which crashes on
- *     sparse-data state (same product bug deferred from Stages 5+6).
  *   • /en/capital-events — no dedicated route exists; capital ladder
  *     lives inside the year cockpit and is reached transitively
  *     through #plan-year-ladder when the year has events.
@@ -82,7 +83,19 @@ test.describe("Journey Stage 7 — Quarter + Year", () => {
 		})
 		await screenshotIfDemo(page, "07-02-year-cockpit")
 
-		// ── 7c — Account comparison
+		// ── 7c — Annual report section on /en/reports
+		await annotate(page, "Annual report — yearly rollup + meta-vs-real")
+		await page.goto("/en/reports", { waitUntil: "domcontentloaded" })
+		// Annual section renders #annual-section-heading when either the
+		// annual rollup or the weekly meta-vs-real action returns data. With
+		// a single trade in the current year, the rollup is non-empty so
+		// the section mounts.
+		await expect(page.locator("#annual-section-heading")).toBeVisible({
+			timeout: 30_000,
+		})
+		await screenshotIfDemo(page, "07-03-annual-report")
+
+		// ── 7d — Account comparison
 		await annotate(page, "Accounts — compare one account against another")
 		await page.goto("/en/analytics/account-comparison", {
 			waitUntil: "domcontentloaded",
@@ -92,7 +105,7 @@ test.describe("Journey Stage 7 — Quarter + Year", () => {
 		await expect(page.locator("#comparison-selector")).toBeVisible({
 			timeout: 30_000,
 		})
-		await screenshotIfDemo(page, "07-03-account-comparison")
+		await screenshotIfDemo(page, "07-04-account-comparison")
 
 		await annotate(
 			page,

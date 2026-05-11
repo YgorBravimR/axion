@@ -1,4 +1,6 @@
-import { getTranslations } from "next-intl/server"
+"use client"
+
+import { useTranslations } from "next-intl"
 import {
 	Table,
 	TableBody,
@@ -37,12 +39,12 @@ interface FeeBreakdownTableProps {
 	locale?: Locale
 }
 
-const FeeBreakdownTable = async ({
+const FeeBreakdownTable = ({
 	rows,
 	totals,
 	locale = "pt-BR",
 }: FeeBreakdownTableProps) => {
-	const t = await getTranslations("tax.feeBreakdown")
+	const t = useTranslations("tax.feeBreakdown")
 	const fmt = (cents: number) => formatCurrency(cents / 100, locale, "BRL")
 	const fmtDate = (date: Date) =>
 		new Intl.DateTimeFormat(locale, {

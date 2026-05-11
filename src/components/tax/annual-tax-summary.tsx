@@ -1,4 +1,6 @@
-import { getTranslations } from "next-intl/server"
+"use client"
+
+import { useTranslations } from "next-intl"
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import { formatCurrency } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
@@ -11,12 +13,12 @@ interface AnnualTaxSummaryProps {
 	locale?: Locale
 }
 
-const AnnualTaxSummary = async ({
+const AnnualTaxSummary = ({
 	year,
 	summary,
 	locale = "pt-BR",
 }: AnnualTaxSummaryProps) => {
-	const t = await getTranslations("tax.annualSummary")
+	const t = useTranslations("tax.annualSummary")
 	const fmt = (cents: number) => formatCurrency(cents / 100, locale, "BRL")
 
 	const rows: Array<{

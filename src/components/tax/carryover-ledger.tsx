@@ -1,4 +1,6 @@
-import { getTranslations } from "next-intl/server"
+"use client"
+
+import { useTranslations } from "next-intl"
 import {
 	Table,
 	TableBody,
@@ -23,11 +25,11 @@ interface CarryoverLedgerProps {
 	locale?: Locale
 }
 
-const CarryoverLedger = async ({
+const CarryoverLedger = ({
 	history,
 	locale = "pt-BR",
 }: CarryoverLedgerProps) => {
-	const t = await getTranslations("tax.carryoverLedger")
+	const t = useTranslations("tax.carryoverLedger")
 
 	if (history.length === 0) {
 		return <p className="text-muted-foreground text-small">{t("emptyState")}</p>

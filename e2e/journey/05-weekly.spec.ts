@@ -6,23 +6,20 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
 /**
  * Stage 5 — Weekly Reflection
  *
- * End of week. Bravo reviews aggregate performance on the analytics
- * dashboard.
+ * End of week. Bravo reviews aggregate performance across two
+ * surfaces:
  *
+ *   • /en/reports   — Weekly Report card + Mistake Cost card +
+ *                     Commission & Fee Impact card (single page,
+ *                     not separate routes despite design-doc naming).
  *   • /en/analytics — Dashboard with R distribution, tag cloud,
  *                     time-based analysis (heatmap + session perf).
  *
  * Bravo logged exactly one trade in Stage 4, so aggregates are
- * single-data-point. The assertion strategy is "did the dashboard
- * mount past its Suspense fallback?" — not "do the numbers look
- * statistically meaningful?". A later journey iteration can extend
- * Stage 4 to seed more rows for stronger aggregate checks.
- *
- * NOTE: /en/reports is intentionally NOT exercised here. It crashes
- * its error boundary for fresh-account state (plan-year=current-year,
- * sparse trades) — a real product bug that's outside this journey's
- * scope to fix. Stage 6 (Monthly + Tax) re-visits the same surface
- * after more data accumulates; the bug should be tracked separately.
+ * single-data-point. The assertion strategy is "did each card mount
+ * and reach its labeled state?" — not "do the numbers look
+ * statistically meaningful?". Stage 4 can later seed denser data
+ * for stronger aggregate checks.
  *
  * Pre-condition: Stage 4 snapshot — Bravo authenticated, admin, with
  *                 her plan tree intact and one trade in the journal.
@@ -35,19 +32,36 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
 test.describe("Journey Stage 5 — Weekly Reflection", () => {
 	test.use(loadStageState(4))
 
-	// Analytics fans out into multiple server actions; give the page
-	// enough time to mount past Suspense on cold caches.
-	test.setTimeout(60_000)
+	// Reports + analytics each fan out into many server actions; give
+	// the page enough time to mount past Suspense on cold caches.
+	test.setTimeout(90_000)
 
-	test("Bravo reviews the week on the analytics dashboard", async ({
-		page,
-	}) => {
+	test("Bravo reviews the week — reports + analytics", async ({ page }) => {
 		await annotate(
 			page,
 			"Stage 5: End of week — review the data. What worked? What cost most?"
 		)
 
-		// ── 5a — Analytics dashboard
+		// ── 5a — Reports page hosts Weekly / Mistake-Cost / Commission cards
+		await annotate(page, "Reports — weekly card + mistake & fee diagnostics")
+		await page.goto("/en/reports", { waitUntil: "domcontentloaded" })
+
+		// Weekly Report card heading is the canonical anchor for this page.
+		await expect(
+			page.getByRole("heading", { name: /weekly report/i }).first()
+		).toBeVisible({ timeout: 30_000 })
+
+		// Mistake Cost + Commission & Fee Impact cards live below the weekly
+		// card in the same content shell. Anchor on their labels.
+		await expect(page.getByText(/mistake.*cost/i).first()).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(
+			page.getByText(/commission.*fee.*impact|fee impact/i).first()
+		).toBeVisible({ timeout: 15_000 })
+		await screenshotIfDemo(page, "05-01-reports")
+
+		// ── 5b — Analytics dashboard
 		await annotate(page, "Analytics — scan one pattern across the week")
 		await page.goto("/en/analytics", { waitUntil: "domcontentloaded" })
 
@@ -56,7 +70,7 @@ test.describe("Journey Stage 5 — Weekly Reflection", () => {
 		await expect(page.locator("#analytics-time-section")).toBeVisible({
 			timeout: 30_000,
 		})
-		await screenshotIfDemo(page, "05-01-analytics")
+		await screenshotIfDemo(page, "05-02-analytics")
 
 		await annotate(
 			page,
