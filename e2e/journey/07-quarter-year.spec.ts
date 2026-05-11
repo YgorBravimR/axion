@@ -64,13 +64,16 @@ test.describe("Journey Stage 7 — Quarter + Year", () => {
 		await page.goto(`/en/plan/${PLAN_YEAR}/${quarter}`, {
 			waitUntil: "domcontentloaded",
 		})
-		// The cockpit shows #quarter-narrative ONLY when a quarterlyPlan row
-		// exists in DB. Stage 2 seeds the yearly plan only, so this quarter
-		// renders its empty state ("no quarter plan yet"). The Quarter-nav
-		// landmark is always rendered and is the canonical mount proof.
+		// The cockpit shows #quarter-narrative when a quarterlyPlan row exists
+		// in DB with reflection or post-mortem notes (see quarter-report.tsx:
+		// 353). Stage 4b seeds that row, so we can assert the narrative
+		// section is mounted — not just the navigation landmark.
 		await expect(
 			page.getByRole("navigation", { name: /quarter navigation/i })
 		).toBeVisible({ timeout: 30_000 })
+		await expect(page.locator("#quarter-narrative")).toBeVisible({
+			timeout: 15_000,
+		})
 		await screenshotIfDemo(page, "07-01-quarter-cockpit")
 
 		// ── 7b — Year cockpit

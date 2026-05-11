@@ -1,7 +1,10 @@
 import { test, expect } from "@playwright/test"
 import { BRAVO } from "./fixtures/bravo-seed"
 import { seedBravoHistory } from "./helpers/seed-bravo-history"
+import { seedBravoQuarterlyPlan } from "./helpers/seed-bravo-quarterly-plan"
 import { loadStageState } from "./helpers/storage-state"
+
+const PLAN_YEAR = 2026
 
 /**
  * Stage 4b — Multi-month history seeder.
@@ -50,5 +53,13 @@ test.describe("Journey Stage 4b — Multi-month history seeder", () => {
 			(entry) => entry.carryoverOutCents > 0
 		)
 		expect(hasNonZeroCarryover).toBe(true)
+
+		// Seed a quarterly_plan row so Stage 7 can tighten the quarter cockpit
+		// assertion from "navigation landmark" to "#quarter-narrative visible".
+		// The gate (quarter-report.tsx:353) is reflectionNotes || postMortemNotes
+		// on the quarterlyPlan row, not anything trade-derived.
+		const quarterSeed = await seedBravoQuarterlyPlan(BRAVO.email, PLAN_YEAR)
+		expect(quarterSeed.quarterlyPlanId).toMatch(/.+/)
+		expect(quarterSeed.year).toBe(PLAN_YEAR)
 	})
 })

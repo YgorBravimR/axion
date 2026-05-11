@@ -21,12 +21,6 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ## Journey suite (`e2e/journey/`)
 
-### Quarterly plan row seeder
-
-- **What**: Insert a real `quarterlyPlan` DB row for Bravo so the `#quarter-narrative` surface in Stage 7 renders content (it's gated on row existence, not derived from trades).
-- **Why**: Stage 4b only seeds trades. The quarter-narrative gate is a separate fractal-plan concern that the trade seeder deliberately does not touch.
-- **Source**: `e2e/journey/helpers/seed-bravo-history.ts` header ("What this seeder does NOT cover"); `e2e/journey/07-quarter-year.spec.ts`.
-
 ### Fixed Bravo email + per-chain DB reset
 
 - **What**: Replace `bravo-${Date.now()}@axion-demo.com` with a fixed email backed by a globalSetup that cascade-deletes + reinserts the Bravo row at chain start.
