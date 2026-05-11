@@ -43,16 +43,6 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 - **Why**: Today the suite uses `--project=journey-NN-...` selection, which is explicit but verbose for partial-chain runs.
 - **Source**: `e2e/journey/README.md` "Tags".
 
-### Journey CI workflow
-
-- **What**: `.github/workflows/journey.yml` that runs the 9-stage chain against a Postgres service container, gated on the auth-reset preflight.
-- **Why**: Today the chain only runs locally. Without CI, regressions land silently.
-- **Pre-decisions** (carry over from `docs/design/zero-to-hero-e2e.md` §12):
-  - **Q3** — Dedicated test DB or shared with existing E2E suite? (Doc recommends dedicated.)
-  - **Q4** — Demo-mode video: checked into a known artifact location, or generated on demand only?
-  - **Q5** — SLA on a failing journey test in CI: block PR merge, or warn-only? (Doc recommends block-chain, warn-per-stage.)
-- **Source**: `docs/design/zero-to-hero-e2e.md` §12 Q3-Q5, §13 Phase 3.
-
 ### Edge-case separation pass
 
 - **What**: Audit existing `e2e/tests/*.spec.ts` for overlap with the journey suite — keep edge cases, deprecate happy-path duplication. Add new `e2e/<feature>-edge/` specs as needs surface.

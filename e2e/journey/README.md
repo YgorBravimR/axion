@@ -24,7 +24,11 @@ Known data gaps and follow-ups live in [`docs/backlog.md`](../../docs/backlog.md
 
 ## Running
 
-### CI mode (regression, headless, fast)
+### GitHub Actions (post-merge regression)
+
+The full 9-stage chain runs on every push to `main` via [`.github/workflows/journey.yml`](../../.github/workflows/journey.yml). Required GitHub secrets: `JOURNEY_DATABASE_URL` (staging Postgres), `JOURNEY_AUTH_SECRET` (NextAuth JWT signing), `JOURNEY_ENCRYPTION_KEY` (64-char hex). Pre/post cleanup is handled by `e2e/global.teardown.ts` — it wipes all rows owned by `bravo-%@axion-demo.com` before and after the run, so the shared staging DB stays clean across runs.
+
+### Local CI mode (regression, headless, fast)
 
 Run a single stage:
 
