@@ -173,3 +173,24 @@ export interface YearlyOverview {
 		hasTrades: boolean
 	}>
 }
+
+import type { UserSettingsData } from "./settings.types"
+
+interface ReportSummaryBase {
+	totalTrades: number
+	winCount: number
+	lossCount: number
+	breakevenCount: number
+	grossPnl: number
+	netPnl: number
+	totalFees: number
+	winRate: number
+	avgWin: number
+	avgLoss: number
+	profitFactor: number
+	avgR: number
+}
+
+type PropCalcSettings = UserSettingsData & { dayTradeTaxRate: number }
+
+export type { ReportSummaryBase, PropCalcSettings }

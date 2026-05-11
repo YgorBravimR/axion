@@ -23,6 +23,7 @@ import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
+import type { StrategyTradeStats } from "./strategies.types"
 
 /**
  * Checks whether a database error represents a unique constraint violation.
@@ -349,17 +350,6 @@ export const deleteStrategy = async (
  * Calculate stats from a list of trades for a strategy.
  * Shared between getStrategies and getStrategy to avoid duplication.
  */
-interface StrategyTradeStats {
-	tradeCount: number
-	winCount: number
-	lossCount: number
-	compliance: number
-	totalPnl: number
-	winRate: number
-	profitFactor: number
-	avgR: number
-}
-
 const calculateStrategyStats = (
 	strategyTrades: Array<{
 		pnl: number | string | null

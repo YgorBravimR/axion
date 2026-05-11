@@ -15,6 +15,11 @@ import {
 } from "@/db/schema"
 import type { Trade } from "@/db/schema"
 import type {
+	BulkCreateResult,
+	CreateScaledTradeInput,
+	ExtendedTradeFilters,
+} from "./trades.types"
+import type {
 	ActionResponse,
 	PaginatedResponse,
 	TradesByDay,
@@ -1040,15 +1045,6 @@ export const getUniqueAssets = async (): Promise<ActionResponse<string[]>> => {
 /**
  * Bulk create trades from CSV import
  */
-interface BulkCreateResult {
-	successCount: number
-	failedCount: number
-	errors: Array<{
-		index: number
-		message: string
-	}>
-}
-
 export const bulkCreateTrades = async (
 	inputs: CsvTradeInput[]
 ): Promise<ActionResponse<BulkCreateResult>> => {
@@ -1530,38 +1526,6 @@ export const bulkCreateTrades = async (
 }
 
 /**
- * Input type for scaled trade creation with executions
- */
-interface CreateScaledTradeInput {
-	asset: string
-	direction: "long" | "short"
-	timeframeId?: string
-	strategyId?: string
-	stopLoss?: number
-	takeProfit?: number
-	riskAmount?: number
-	preTradeThoughts?: string
-	postTradeReflection?: string
-	lessonLearned?: string
-	followedPlan?: boolean
-	disciplineNotes?: string
-	setupRank?: "A" | "AA" | "AAA" | null
-	rating?: "A" | "B" | "C" | "D" | "F" | null
-	screenshotUrl?: string
-	screenshotS3Key?: string
-	tagIds?: string[]
-	executions: Array<{
-		executionType: "entry" | "exit"
-		executionDate: Date
-		price: number
-		quantity: number
-		commission?: number
-		fees?: number
-		notes?: string
-	}>
-}
-
-/**
  * Create a scaled trade with multiple executions
  */
 export const createScaledTrade = async (
@@ -1874,20 +1838,6 @@ export const createScaledTrade = async (
  * Get trades grouped by day with summaries
  * Returns trades within date range, grouped by date with per-day statistics
  */
-interface ExtendedTradeFilters {
-	// SQL-filterable
-	rating?: Array<"A" | "B" | "C" | "D" | "F">
-	followedPlan?: boolean
-	outcomes?: Array<"win" | "loss" | "breakeven">
-	directions?: Array<"long" | "short">
-	assets?: string[]
-	// Post-query (require decrypted data or timezone)
-	hourFrom?: number
-	hourTo?: number
-	pnlMin?: number
-	pnlMax?: number
-}
-
 export const getTradesGroupedByDay = async (
 	dateFrom?: Date,
 	dateTo?: Date,

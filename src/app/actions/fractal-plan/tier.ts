@@ -9,16 +9,11 @@ import { evaluateMonthStart } from "@/lib/fractal-plan/tier-eval"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+import type { ForceTierReevalResult } from "./tier.types"
 
 const inputSchema = z.object({
 	asOf: z.coerce.date(),
 })
-
-interface ForceTierReevalResult {
-	newTierIndex: number
-	newOneRCents: number
-	wrote: boolean
-}
 
 export const forceTierReeval = async (
 	input: z.infer<typeof inputSchema>

@@ -47,13 +47,7 @@ import type {
 } from "@/types"
 import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm"
 import { getTranslations } from "next-intl/server"
-import type { EquityCurveMode } from "./analytics.types"
-
-interface AccountFilter {
-	accountId: string
-	showAllAccounts: boolean
-	allAccountIds: string[]
-}
+import type { EquityCurveMode, AccountFilter } from "./analytics.types"
 
 /**
  * Build filter conditions from TradeFilters

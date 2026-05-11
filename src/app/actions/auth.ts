@@ -18,7 +18,7 @@ import { firstIssueMessage } from "@/lib/zod-helpers"
 import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 import { seedUserData } from "@/db/seed-user-data"
 
-import type { SafeUser } from "./auth.types"
+import type { SafeUser, AccountPickerItem, AuthContext } from "./auth.types"
 import { auth, signIn, signOut } from "@/auth"
 import {
 	registerSchema,
@@ -121,14 +121,6 @@ export const registerUser = async (
 // ==========================================
 // LOGIN / LOGOUT
 // ==========================================
-
-/** Minimal account info returned to the client for account selection */
-interface AccountPickerItem {
-	id: string
-	name: string
-	accountType: string
-	isDefault: boolean
-}
 
 // ==========================================
 // ACCOUNT LOCKOUT (exponential backoff via DB rate limiter)
@@ -385,13 +377,6 @@ export const getUserAccounts = async (): Promise<TradingAccount[]> => {
 	}
 
 	return accounts
-}
-
-interface AuthContext {
-	userId: string
-	accountId: string
-	showAllAccounts: boolean
-	allAccountIds: string[]
 }
 
 /**
