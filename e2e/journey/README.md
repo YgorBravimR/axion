@@ -15,6 +15,7 @@ All 9 stages (0–8) are implemented and chain end-to-end via Playwright project
 | 2     | `02-fractal-plan.spec.ts`  | Yearly plan seeded; fractal tree mount proof                          |
 | 3     | `03-pressure-test.spec.ts` | Backtest + Monte Carlo + equity shield surfaces                       |
 | 4     | `04-daily-loop.spec.ts`    | Log one trade end-to-end; trade appears in journal                    |
+| 4b    | `04b-seed-history.spec.ts` | Seeds ~25 prior-month trades for DARF / annual / quarterly assertions |
 | 5     | `05-weekly.spec.ts`        | `/en/reports` weekly card + mistake-cost + fee-impact; analytics dash |
 | 6     | `06-monthly.spec.ts`       | Monthly perf; `/en/reports` DARF/tax section; month plan cockpit      |
 | 7     | `07-quarter-year.spec.ts`  | Quarter + year cockpits; annual rollup; account comparison            |
@@ -45,6 +46,7 @@ pnpm exec playwright test \
   --project=journey-02-fractal-plan-ci \
   --project=journey-03-pressure-test-ci \
   --project=journey-04-daily-loop-ci \
+  --project=journey-04b-seed-history-ci \
   --project=journey-05-weekly-ci \
   --project=journey-06-monthly-ci \
   --project=journey-07-quarter-year-ci \
@@ -88,6 +90,7 @@ e2e/journey/
 ├── 02-fractal-plan.spec.ts    Yearly plan seeded; fractal tree mounts
 ├── 03-pressure-test.spec.ts   Backtest + Monte Carlo + equity shield
 ├── 04-daily-loop.spec.ts      Log one trade end-to-end
+├── 04b-seed-history.spec.ts   Multi-month history seed (DARF / annual scaffolding)
 ├── 05-weekly.spec.ts          Weekly reports + analytics dashboard
 ├── 06-monthly.spec.ts         Monthly perf + DARF/tax + month cockpit
 ├── 07-quarter-year.spec.ts    Quarter + year cockpits + annual rollup
@@ -97,6 +100,7 @@ e2e/journey/
 ├── helpers/
 │   ├── annotate.ts            Demo-mode narration banner (no-op in CI)
 │   ├── screenshot-if-demo.ts  Demo-mode capture (no-op in CI)
+│   ├── seed-bravo-history.ts  Multi-month trade-history seeder (Stage 4b)
 │   └── storage-state.ts       Save / load between stages
 └── README.md                  (this file)
 ```

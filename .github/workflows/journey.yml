@@ -61,7 +61,7 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run journey chain (CI profile, all 9 stages)
+      - name: Run journey chain (CI profile, all stages)
         run: |
           pnpm exec playwright test \
             --project=journey-00-welcome-ci \
@@ -69,6 +69,7 @@ jobs:
             --project=journey-02-fractal-plan-ci \
             --project=journey-03-pressure-test-ci \
             --project=journey-04-daily-loop-ci \
+            --project=journey-04b-seed-history-ci \
             --project=journey-05-weekly-ci \
             --project=journey-06-monthly-ci \
             --project=journey-07-quarter-year-ci \

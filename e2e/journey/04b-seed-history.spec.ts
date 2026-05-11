@@ -1,0 +1,42 @@
+import { test, expect } from "@playwright/test"
+import { BRAVO } from "./fixtures/bravo-seed"
+import { seedBravoHistory } from "./helpers/seed-bravo-history"
+import { loadStageState } from "./helpers/storage-state"
+
+/**
+ * Stage 4b — Multi-month history seeder.
+ *
+ * Runs between Stage 4 (Bravo's first journaled trade) and Stage 5
+ * (Weekly Reflection). Inserts ~25 prior-month trades against Bravo's
+ * primary account so Stages 5/6/7 can assert on non-trivial aggregates:
+ * DARF carryover, annual rollup, multi-quarter cockpit.
+ *
+ * Why a spec, not a Playwright global hook: the chain depends on
+ * Stage 4's storageState being written first (so the user/account
+ * already exist in the DB). A spec lets us slot the seeder into the
+ * project-dependency graph after Stage 4 and before Stage 5 with the
+ * same `dependencies: [prev]` mechanism every other stage uses.
+ *
+ * The seeder is idempotent (re-runs delete prior `lesson_learned =
+ * "JOURNEY_SEED"` rows on the same account before inserting), so
+ * re-running the chain locally does not produce duplicates.
+ *
+ * This stage does NOT save its own storage state — Stage 5 continues
+ * to load Stage 4's snapshot. Auth state is unchanged.
+ *
+ * @journey @stage:seed-history
+ */
+
+test.describe("Journey Stage 4b — Multi-month history seeder", () => {
+	test.use(loadStageState(4))
+
+	test("Seeds Bravo's prior-month trade history for weekly/monthly/annual assertions", async () => {
+		const result = await seedBravoHistory(BRAVO.email)
+
+		expect(result.inserted).toBeGreaterThan(0)
+		expect(result.monthsSeeded.length).toBe(4)
+		for (const month of result.monthsSeeded) {
+			expect(month.count).toBeGreaterThan(0)
+		}
+	})
+})
