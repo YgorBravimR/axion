@@ -141,7 +141,7 @@ const IndicatorDefinitionTable = memo(
 										>
 											{definition.isActive ? (
 												<ToggleRight
-													className="text-trade-buy h-4 w-4"
+													className="text-fb-success h-4 w-4"
 													aria-hidden="true"
 												/>
 											) : (

@@ -112,41 +112,41 @@ export const SettingsContent = ({
 					className="scrollbar-none w-full overflow-x-auto scroll-smooth"
 				>
 					<TabsTrigger value="profile" className="gap-s-200 shrink-0">
-						<User className="h-4 w-4" />
+						<User className="h-4 w-4" aria-hidden="true" />
 						{t("profile")}
 					</TabsTrigger>
 					{isAdmin && (
 						<>
 							<TabsTrigger value="account" className="gap-s-200 shrink-0">
-								<Briefcase className="h-4 w-4" />
+								<Briefcase className="h-4 w-4" aria-hidden="true" />
 								{t("account")}
 							</TabsTrigger>
 							<TabsTrigger value="tags" className="gap-s-200 shrink-0">
-								<Tag className="h-4 w-4" />
+								<Tag className="h-4 w-4" aria-hidden="true" />
 								{t("tags")}
 							</TabsTrigger>
 							<TabsTrigger value="conditions" className="gap-s-200 shrink-0">
-								<Filter className="h-4 w-4" />
+								<Filter className="h-4 w-4" aria-hidden="true" />
 								{t("conditions")}
 							</TabsTrigger>
 							<TabsTrigger value="indicators" className="gap-s-200 shrink-0">
-								<BarChart3 className="h-4 w-4" />
+								<BarChart3 className="h-4 w-4" aria-hidden="true" />
 								{t("indicators")}
 							</TabsTrigger>
 							<TabsTrigger value="assets" className="gap-s-200 shrink-0">
-								<Coins className="h-4 w-4" />
+								<Coins className="h-4 w-4" aria-hidden="true" />
 								{t("assets")}
 							</TabsTrigger>
 							<TabsTrigger value="timeframes" className="gap-s-200 shrink-0">
-								<Clock className="h-4 w-4" />
+								<Clock className="h-4 w-4" aria-hidden="true" />
 								{t("timeframes")}
 							</TabsTrigger>
 							<TabsTrigger value="users" className="gap-s-200 shrink-0">
-								<Users className="h-4 w-4" />
+								<Users className="h-4 w-4" aria-hidden="true" />
 								{t("users")}
 							</TabsTrigger>
 							<TabsTrigger value="bugs" className="gap-s-200 shrink-0">
-								<Bug className="h-4 w-4" />
+								<Bug className="h-4 w-4" aria-hidden="true" />
 								{t("bugs")}
 							</TabsTrigger>
 						</>

@@ -268,9 +268,15 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 												}
 											>
 												{timeframe.isActive ? (
-													<ToggleRight className="text-trade-buy h-4 w-4" />
+													<ToggleRight
+														className="text-fb-success h-4 w-4"
+														aria-hidden="true"
+													/>
 												) : (
-													<ToggleLeft className="text-txt-300 h-4 w-4" />
+													<ToggleLeft
+														className="text-txt-300 h-4 w-4"
+														aria-hidden="true"
+													/>
 												)}
 											</Button>
 											<Button

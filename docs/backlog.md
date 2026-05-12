@@ -362,6 +362,24 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Without canonicalization, the question "should this be acc-100 or fb-success?" will recur on every new tab UI. Codify once.
 - **Source**: `docs/scans/2026-05-12-impeccable-form-editors-wave5.md` Phase 4 deferred.
 
+### Extract shared `<ToggleStateIcon isActive />` primitive
+
+- **What**: Four settings widgets now duplicate the same `isActive ? <ToggleRight className="text-fb-success" aria-hidden /> : <ToggleLeft className="text-txt-300" aria-hidden />` map: `src/components/settings/asset-list.tsx`, `src/components/settings/timeframe-list.tsx`, `src/components/settings/indicator-definition-table.tsx`, `src/components/settings/indicator-group-cards.tsx`. Pull into `@/components/ui/toggle-state-icon` so future "enabled / disabled" rows inherit the verdict-triad mapping by default.
+- **Why**: Four hand-aligned maps is the threshold where the next contributor copies the closest one and silently forks the vocabulary back to trade colors. The Wave 6 sweep just retoned all four; preventing the drift recurring is cheap now.
+- **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
+
+### Admin-widget decorative-icon a11y pass + `<TabsTrigger>` `aria-controls`
+
+- **What**: ~25 decorative lucide icons inside text-bearing `<Button>` triggers across `bug-reports-list.tsx`, `tag-list.tsx`, `condition-list.tsx`, `indicator-list.tsx`, `user-list.tsx`, `tag-form.tsx`, `condition-form.tsx`, `account-settings.tsx`, `trading-account-settings.tsx` lack `aria-hidden="true"`. Bundle with wiring explicit `aria-controls` from each `<TabsTrigger>` in `settings-content.tsx` (and the wider `<Tabs>` users: `new-trade-tabs.tsx`, profile tabs) to their `<TabsContent>` panels so screen-reader tab/tabpanel semantics are complete.
+- **Why**: Touching the tab strip and its widgets twice would be wasteful. One coordinated admin-a11y pass fixes both layers, and the Wave 6 sweep already canonicalized the icon usage so the next pass is purely additive.
+- **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
+
+### Document operation-outcome verdict mapping in DESIGN.md
+
+- **What**: Wave 6 fixed `recalculate-button.tsx` and `recalculate-pnl-button.tsx` from a `text-trade-buy / text-trade-sell` outcome banner to the verdict triad (`text-fb-success / text-fb-error`). The same shape will recur in every future async-action result banner (export job complete, recompute month complete, bulk import done, etc.). Document the "operation-outcome verdict palette" in DESIGN.md.
+- **Why**: Operation outcomes are the second-most-common verdict-as-P&L hijack site after rating scales. Codifying the mapping in DESIGN.md prevents the next async banner reaching for trade-buy on reflex.
+- **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
+
 ---
 
 ## Documentation drift watch
