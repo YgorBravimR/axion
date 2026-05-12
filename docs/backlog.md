@@ -235,6 +235,39 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Reports — deferred follow-ups
+
+### `capital-event-log.tsx` raw `<input>` migration
+
+- **What**: `src/components/reports/capital-event-log.tsx` uses raw `<input type="text">` and `<input type="date">` for the amount + date fields. The codebase has `@/components/ui/input` (the same primitive enforced by `axion/enforce-ui-primitives` for checkboxes). Migrate to the primitive for consistent border / focus-ring / placeholder treatment.
+- **Why**: This card predates the UI-primitive lock-in. The raw inputs work, but they bypass the design system's focus ring and density tokens, so they look subtly off next to the rest of the form chrome on `/reports`.
+- **Source**: `docs/scans/2026-05-12-impeccable-reports.md` Phase 1a critique P2.
+
+---
+
+### `withdrawal-calculator.tsx` hardcoded English copy
+
+- **What**: `src/components/reports/withdrawal-calculator.tsx` has ~10 hardcoded English strings (form labels, button copy, success/error messages). Wrap with `useTranslations("reports.withdrawalCalculator")` and add the keys to `messages/{en,pt-BR}.json`. The component is consumed by `reports-content.tsx` which is already fully translated, so the gap is jarring for `pt-BR` users.
+- **Why**: i18n parity gap. No structural change; pure copy migration.
+- **Source**: `docs/scans/2026-05-12-impeccable-reports.md` Phase 1a critique P2.
+
+---
+
+### Inline currency formatters → `useFormatting()`
+
+- **What**: Four spots redefine BRL formatting locally:
+  - `src/components/reports/weekly-meta-chart.tsx:36-42` (`formatBRL`)
+  - `src/components/reports/annual-rollup-table.tsx:24-34` (`formatBRL`)
+  - `src/components/reports/capital-event-log.tsx:174` (inline `Intl.NumberFormat("pt-BR", …)`)
+  - `src/components/reports/withdrawal-calculator.tsx:74` (inline `Intl.NumberFormat("pt-BR", …)`)
+
+  All hardcode `pt-BR` + R$, defeating the `useFormatting()` hook that's already used in 4 of the 9 widgets on this page.
+
+- **Why**: Locale-switching breaks for English users on `/reports`. Consolidate behind `useFormatting()`; the hook already exposes `formatCurrency` / `formatCurrencyWithSign` and respects the user's account currency preference.
+- **Source**: `docs/scans/2026-05-12-impeccable-reports.md` Phase 1a critique P2.
+
+---
+
 ## Documentation drift watch
 
 - **Design doc Phase 3 / §12 Open Questions**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship; Phase 3 is functionally done except for the multi-month seeder + CI wiring (both captured above). When those land, retire §13 Phase 3 in favour of a one-liner pointing here.

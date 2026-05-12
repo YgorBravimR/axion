@@ -92,7 +92,7 @@ const CapitalEventLog = ({
 							onClick={() => setFormType("deposit")}
 							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
 								formType === "deposit"
-									? "bg-trade-buy text-bg-100"
+									? "bg-bg-100 text-txt-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
 							}`}
 							aria-pressed={formType === "deposit"}
@@ -104,7 +104,7 @@ const CapitalEventLog = ({
 							onClick={() => setFormType("withdrawal")}
 							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
 								formType === "withdrawal"
-									? "bg-acc-100 text-bg-100"
+									? "bg-bg-100 text-txt-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
 							}`}
 							aria-pressed={formType === "withdrawal"}
@@ -142,9 +142,7 @@ const CapitalEventLog = ({
 					</button>
 
 					{formError && (
-						<p className="text-trade-sell text-tiny col-span-full">
-							{formError}
-						</p>
+						<p className="text-fb-error text-tiny col-span-full">{formError}</p>
 					)}
 				</form>
 
@@ -159,13 +157,7 @@ const CapitalEventLog = ({
 								className="bg-bg-300/30 text-tiny flex items-center justify-between gap-3 rounded-md px-3 py-2"
 							>
 								<span className="text-txt-300 font-mono">{ev.eventDate}</span>
-								<span
-									className={`text-tiny rounded-sm px-2 py-0.5 font-medium ${
-										ev.eventType === "deposit"
-											? "bg-trade-buy/20 text-trade-buy"
-											: "bg-acc-100/20 text-acc-100"
-									}`}
-								>
+								<span className="bg-bg-100 text-txt-200 text-tiny rounded-sm px-2 py-0.5 font-medium">
 									{ev.eventType === "deposit"
 										? t("depositLabel")
 										: t("withdrawalLabel")}

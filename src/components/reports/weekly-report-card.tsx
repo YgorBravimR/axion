@@ -109,8 +109,9 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						size="sm"
 						onClick={() => handleWeekChange(weekOffset + 1)}
 						disabled={isPending}
+						aria-label={tCommon("previous")}
 					>
-						<ChevronLeft className="h-4 w-4" />
+						<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 					</Button>
 					<span className="text-small text-txt-200">{weekLabel}</span>
 					<Button
@@ -119,11 +120,15 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						size="sm"
 						onClick={() => handleWeekChange(Math.max(0, weekOffset - 1))}
 						disabled={isPending || weekOffset === 0}
+						aria-label={tCommon("next")}
 					>
-						<ChevronRight className="h-4 w-4" />
+						<ChevronRight className="h-4 w-4" aria-hidden="true" />
 					</Button>
 					{isPending && (
-						<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
 					<Button
 						id="weekly-report-download-pdf"
@@ -137,7 +142,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						}}
 						aria-label={t("downloadPdf")}
 					>
-						<Download className="h-4 w-4" />
+						<Download className="h-4 w-4" aria-hidden="true" />
 					</Button>
 				</div>
 			</div>
@@ -287,7 +292,10 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 							{topWins.length > 0 && (
 								<div>
 									<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
-										<TrendingUp className="text-trade-buy h-4 w-4" />
+										<TrendingUp
+											className="text-trade-buy h-4 w-4"
+											aria-hidden="true"
+										/>
 										{t("topWins")}
 									</h3>
 									<div className="mt-s-300 space-y-s-200">
@@ -329,7 +337,10 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 							{topLosses.length > 0 && (
 								<div>
 									<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
-										<TrendingDown className="text-trade-sell h-4 w-4" />
+										<TrendingDown
+											className="text-trade-sell h-4 w-4"
+											aria-hidden="true"
+										/>
 										{t("topLosses")}
 									</h3>
 									<div className="mt-s-300 space-y-s-200">

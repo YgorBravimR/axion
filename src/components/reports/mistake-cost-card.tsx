@@ -31,7 +31,7 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 			>
 				<h2 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-					<AlertTriangle className="text-warning h-5 w-5" />
+					<AlertTriangle className="text-warning h-5 w-5" aria-hidden="true" />
 					{t("title")}
 				</h2>
 				<p className="mt-m-400 text-txt-300 text-center">{t("noData")}</p>
@@ -49,7 +49,7 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<h2 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-					<AlertTriangle className="text-warning h-5 w-5" />
+					<AlertTriangle className="text-warning h-5 w-5" aria-hidden="true" />
 					{t("title")}
 				</h2>
 			</div>

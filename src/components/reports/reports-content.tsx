@@ -120,7 +120,11 @@ export const ReportsContent = ({
 					aria-labelledby="annual-section-heading"
 					className="space-y-m-500"
 				>
-					<div className="border-acc-100 pl-s-300 flex items-center justify-between border-l-2">
+					<div className="gap-s-200 flex items-center">
+						<span
+							className="bg-acc-100 h-1.5 w-1.5 rounded-full"
+							aria-hidden="true"
+						/>
 						<h2
 							id="annual-section-heading"
 							className="text-txt-200 text-tiny tracking-wider uppercase"
@@ -177,7 +181,11 @@ export const ReportsContent = ({
 					aria-labelledby="tax-section-heading"
 					className="space-y-m-400 sm:space-y-m-500"
 				>
-					<div className="border-acc-100 pl-s-300 flex items-center justify-between border-l-2">
+					<div className="gap-s-200 flex items-center">
+						<span
+							className="bg-acc-100 h-1.5 w-1.5 rounded-full"
+							aria-hidden="true"
+						/>
 						<h2
 							id="tax-section-heading"
 							className="text-txt-200 text-tiny tracking-wider uppercase"
@@ -233,7 +241,11 @@ export const ReportsContent = ({
 				aria-labelledby="r-dist-section-heading"
 				className="space-y-m-400"
 			>
-				<div className="border-acc-100 pl-s-300 border-l-2">
+				<div className="gap-s-200 flex items-center">
+					<span
+						className="bg-acc-100 h-1.5 w-1.5 rounded-full"
+						aria-hidden="true"
+					/>
 					<h2
 						id="r-dist-section-heading"
 						className="text-txt-200 text-tiny tracking-wider uppercase"

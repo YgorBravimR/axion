@@ -125,7 +125,7 @@ const WithdrawalCalculator = ({
 				</button>
 
 				{error && (
-					<p className="text-trade-sell text-tiny col-span-full">{error}</p>
+					<p className="text-fb-error text-tiny col-span-full">{error}</p>
 				)}
 			</form>
 		</div>
