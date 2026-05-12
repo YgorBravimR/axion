@@ -12,6 +12,7 @@ import {
 	ImageIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getComplianceTone } from "@/lib/compliance"
 import { getStrategy } from "@/app/actions/strategies"
 import { getStrategyConditions } from "@/app/actions/strategy-conditions"
 import { ConditionTierDisplay } from "@/components/playbook/condition-tier-display"
@@ -61,12 +62,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 	const strategyConditions =
 		conditionsResult.status === "success" ? (conditionsResult.data ?? []) : []
 
-	const complianceColor =
-		strategy.compliance >= 80
-			? "text-trade-buy"
-			: strategy.compliance >= 50
-				? "text-warning"
-				: "text-trade-sell"
+	const complianceTone = getComplianceTone(strategy.compliance)
 
 	const pnlColor = strategy.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 
@@ -81,7 +77,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 						className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 					>
 						<div className="gap-s-200 flex items-center">
-							<BarChart3 className="text-acc-100 h-5 w-5" />
+							<BarChart3 className="text-acc-100 h-5 w-5" aria-hidden="true" />
 							<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 								{t("strategy.performance")}
 							</h2>
@@ -135,7 +131,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 								<p
 									className={cn(
 										"text-body mt-s-100 font-bold",
-										complianceColor
+										complianceTone.text
 									)}
 								>
 									{strategy.compliance.toFixed(0)}%
@@ -146,13 +142,19 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 						{/* Win/Loss breakdown */}
 						<div className="mt-s-300 sm:mt-m-400 gap-m-400 sm:gap-m-500 lg:gap-m-600 flex items-center justify-center">
 							<div className="gap-s-200 flex items-center">
-								<CheckCircle className="text-trade-buy h-4 w-4" />
+								<CheckCircle
+									className="text-trade-buy h-4 w-4"
+									aria-hidden="true"
+								/>
 								<span className="text-small text-txt-200">
 									{t("strategy.wins", { count: strategy.winCount })}
 								</span>
 							</div>
 							<div className="gap-s-200 flex items-center">
-								<XCircle className="text-trade-sell h-4 w-4" />
+								<XCircle
+									className="text-trade-sell h-4 w-4"
+									aria-hidden="true"
+								/>
 								<span className="text-small text-txt-200">
 									{t("strategy.losses", { count: strategy.lossCount })}
 								</span>
@@ -164,7 +166,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					{(strategy.finalR !== null || strategy.maxRiskPercent !== null) && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<Target className="text-txt-200 h-5 w-5" />
+								<Target className="text-txt-200 h-5 w-5" aria-hidden="true" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("strategy.riskSettings")}
 								</h2>
@@ -173,7 +175,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 								{strategy.finalR !== null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
-										<TrendingUp className="text-trade-buy h-6 w-6" />
+										<TrendingUp
+											className="text-txt-300 h-6 w-6"
+											aria-hidden="true"
+										/>
 										<div>
 											<p className="text-tiny text-txt-300">
 												{t("strategy.finalR")}
@@ -186,7 +191,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 								)}
 								{strategy.maxRiskPercent !== null && (
 									<div className="bg-bg-100 gap-s-300 p-m-400 flex items-center rounded-lg">
-										<TrendingDown className="text-trade-sell h-6 w-6" />
+										<TrendingDown
+											className="text-txt-300 h-6 w-6"
+											aria-hidden="true"
+										/>
 										<div>
 											<p className="text-tiny text-txt-300">
 												{t("strategy.maxRiskPerTrade")}
@@ -207,7 +215,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 						strategy.riskRules) && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<FileText className="text-txt-200 h-5 w-5" />
+								<FileText className="text-txt-200 h-5 w-5" aria-hidden="true" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("strategy.rulesCriteria")}
 								</h2>
@@ -257,7 +265,7 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 						>
 							<div className="gap-s-200 flex items-center">
-								<Filter className="text-txt-200 h-5 w-5" />
+								<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("conditions.title")}
 								</h2>
@@ -272,7 +280,10 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 					{strategy.scenarioCount > 0 && (
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<ImageIcon className="text-txt-200 h-5 w-5" />
+								<ImageIcon
+									className="text-txt-200 h-5 w-5"
+									aria-hidden="true"
+								/>
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{t("scenarios.title")}
 								</h2>

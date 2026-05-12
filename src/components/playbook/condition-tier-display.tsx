@@ -14,9 +14,9 @@ interface ConditionTierDisplayProps {
 const getCategoryColor = (category: string): string => {
 	switch (category) {
 		case "indicator":
-			return "border-acc-100/40 bg-acc-100/10 text-acc-100"
+			return "border-bg-300 bg-bg-300 text-txt-100"
 		case "price_action":
-			return "border-trade-buy/40 bg-trade-buy/10 text-trade-buy"
+			return "border-bg-300 bg-bg-200 text-txt-200"
 		case "market_context":
 			return "border-warning/40 bg-warning/10 text-warning"
 		case "custom":
@@ -86,21 +86,21 @@ export const ConditionTierDisplay = ({
 				<Badge
 					id="legend-rank-a"
 					variant="outline"
-					className="text-trade-buy border-trade-buy/40"
+					className="text-txt-200 border-bg-300"
 				>
 					A = {t("tierMandatory")}
 				</Badge>
 				<Badge
 					id="legend-rank-aa"
 					variant="outline"
-					className="text-acc-100 border-acc-100/40"
+					className="text-txt-100 border-txt-100/30"
 				>
 					AA = + {t("tierTwo")}
 				</Badge>
 				<Badge
 					id="legend-rank-aaa"
 					variant="outline"
-					className="border-warning/40 text-warning"
+					className="text-acc-100 border-acc-100/40"
 				>
 					AAA = + {t("tierThree")}
 				</Badge>
@@ -116,7 +116,7 @@ export const ConditionTierDisplay = ({
 				return (
 					<div key={tier.key}>
 						<div className="mb-s-200 gap-s-200 flex items-center">
-							<TierIcon className="text-txt-200 h-4 w-4" />
+							<TierIcon className="text-txt-200 h-4 w-4" aria-hidden="true" />
 							<span className="text-small text-txt-100 font-medium">
 								{tier.label}
 							</span>
