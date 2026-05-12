@@ -49,7 +49,7 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
 			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-				<Calendar className="text-acc-100 h-5 w-5" />
+				<Calendar className="text-acc-100 h-5 w-5" aria-hidden="true" />
 				{t("title")}
 			</h3>
 

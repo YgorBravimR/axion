@@ -23,12 +23,12 @@ interface MonthComparisonProps {
 
 const ChangeIndicator = ({ value }: { value: number }) => {
 	if (value > 0) {
-		return <ArrowUp className="text-trade-buy h-4 w-4" />
+		return <ArrowUp className="text-trade-buy h-4 w-4" aria-hidden="true" />
 	}
 	if (value < 0) {
-		return <ArrowDown className="text-trade-sell h-4 w-4" />
+		return <ArrowDown className="text-trade-sell h-4 w-4" aria-hidden="true" />
 	}
-	return <Minus className="text-txt-300 h-4 w-4" />
+	return <Minus className="text-txt-300 h-4 w-4" aria-hidden="true" />
 }
 
 export const MonthComparison = ({
@@ -106,7 +106,7 @@ export const MonthComparison = ({
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 			>
 				<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-					<GitCompare className="text-acc-100 h-5 w-5" />
+					<GitCompare className="text-acc-100 h-5 w-5" aria-hidden="true" />
 					{t("title")}
 				</h3>
 				<p className="mt-m-400 text-small text-txt-300 text-center">
@@ -122,7 +122,7 @@ export const MonthComparison = ({
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
 			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-				<GitCompare className="text-acc-100 h-5 w-5" />
+				<GitCompare className="text-acc-100 h-5 w-5" aria-hidden="true" />
 				{t("titleWithMonth", { month: previousMonthName })}
 			</h3>
 

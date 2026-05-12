@@ -25,7 +25,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
 			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-				<TrendingUp className="text-acc-100 h-5 w-5" />
+				<TrendingUp className="text-acc-100 h-5 w-5" aria-hidden="true" />
 				{t("title")}
 			</h3>
 
@@ -34,7 +34,7 @@ export const MonthlyProjection = ({ data }: MonthlyProjectionProps) => {
 				<div className="space-y-s-200">
 					<div className="text-small flex items-center justify-between">
 						<div className="gap-s-200 text-txt-200 flex items-center">
-							<CalendarDays className="h-4 w-4" />
+							<CalendarDays className="h-4 w-4" aria-hidden="true" />
 							<span>
 								{t("daysTraded", {
 									current: data.daysTraded,

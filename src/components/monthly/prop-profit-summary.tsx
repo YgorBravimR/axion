@@ -43,9 +43,15 @@ export const PropProfitSummary = ({
 				<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
 					<div className="gap-s-200 text-txt-300 flex items-center">
 						{isPositive ? (
-							<TrendingUp className="text-trade-buy h-4 w-4" />
+							<TrendingUp
+								className="text-trade-buy h-4 w-4"
+								aria-hidden="true"
+							/>
 						) : isNegative ? (
-							<TrendingDown className="text-trade-sell h-4 w-4" />
+							<TrendingDown
+								className="text-trade-sell h-4 w-4"
+								aria-hidden="true"
+							/>
 						) : null}
 						<span className="text-small">{t("grossProfit")}</span>
 					</div>
@@ -64,7 +70,7 @@ export const PropProfitSummary = ({
 				{/* Trader Share */}
 				<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
 					<div className="gap-s-200 text-txt-300 flex items-center">
-						<Wallet className="text-acc-100 h-4 w-4" />
+						<Wallet className="text-txt-300 h-4 w-4" aria-hidden="true" />
 						<span className="text-small">{t("traderShare")}</span>
 					</div>
 					<p
@@ -87,7 +93,7 @@ export const PropProfitSummary = ({
 				{/* Net Profit */}
 				<div className="border-acc-100/20 bg-acc-100/5 p-m-400 rounded-lg border">
 					<div className="gap-s-200 text-txt-300 flex items-center">
-						<Landmark className="text-acc-100 h-4 w-4" />
+						<Landmark className="text-txt-300 h-4 w-4" aria-hidden="true" />
 						<span className="text-small">{t("netProfit")}</span>
 					</div>
 					<p
@@ -112,7 +118,7 @@ export const PropProfitSummary = ({
 			{showBreakdown && isPositive && isPropAccount && (
 				<div className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border">
 					<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
-						<Building2 className="text-acc-100 h-4 w-4" />
+						<Building2 className="text-acc-100 h-4 w-4" aria-hidden="true" />
 						{t("breakdown")}
 					</h3>
 					<div className="mt-m-400 space-y-s-300">

@@ -57,11 +57,11 @@ export const MonthNavigator = ({
 				className="h-10 w-10 p-0"
 				aria-label={t("previousMonth")}
 			>
-				<ChevronLeft className="h-5 w-5" />
+				<ChevronLeft className="h-5 w-5" aria-hidden="true" />
 			</Button>
 
 			<div className="gap-s-200 flex min-w-0 flex-1 items-center justify-center">
-				<Calendar className="text-acc-100 h-5 w-5" />
+				<Calendar className="text-acc-100 h-5 w-5" aria-hidden="true" />
 				<span className="text-body sm:text-h3 text-txt-100 font-semibold capitalize">
 					{formattedMonth}
 				</span>
@@ -76,7 +76,7 @@ export const MonthNavigator = ({
 				className="h-10 w-10 p-0"
 				aria-label={t("nextMonth")}
 			>
-				<ChevronRight className="h-5 w-5" />
+				<ChevronRight className="h-5 w-5" aria-hidden="true" />
 			</Button>
 		</div>
 	)
