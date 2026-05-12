@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ColoredValue } from "@/components/shared"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
+import { getComplianceTone } from "@/lib/compliance"
 import type { StrategyWithStats } from "@/app/actions/strategies.types"
 
 interface StrategyCardProps {
@@ -70,20 +71,15 @@ const StrategyCardBase = ({
 		}
 	}, [showMenu])
 
-	const complianceColor =
-		strategy.compliance >= 80
-			? "text-trade-buy"
-			: strategy.compliance >= 50
-				? "text-warning"
-				: "text-trade-sell"
+	const complianceTone = getComplianceTone(strategy.compliance)
 
 	return (
 		<div className="group border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 hover:border-bg-300/80 relative rounded-lg border transition-shadow hover:shadow-md">
 			{/* Header */}
 			<div className="flex items-start justify-between">
 				<div className="gap-s-300 flex items-center">
-					<div className="bg-acc-100/20 text-acc-100 flex h-10 w-10 items-center justify-center rounded-lg">
-						<Target className="h-5 w-5" />
+					<div className="bg-bg-300 text-txt-200 flex h-10 w-10 items-center justify-center rounded-lg">
+						<Target className="h-5 w-5" aria-hidden="true" />
 					</div>
 					<div>
 						<div className="gap-s-200 flex items-center">
@@ -142,7 +138,7 @@ const StrategyCardBase = ({
 									tabIndex={-1}
 									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center text-left"
 								>
-									<Eye className="h-4 w-4" />
+									<Eye className="h-4 w-4" aria-hidden="true" />
 									{t("strategy.viewDetails")}
 								</Link>
 								<Button
@@ -157,7 +153,7 @@ const StrategyCardBase = ({
 									}}
 									className="gap-s-200 px-s-300 py-s-300 text-small text-txt-200 flex w-full items-center justify-start text-left"
 								>
-									<Edit className="h-4 w-4" />
+									<Edit className="h-4 w-4" aria-hidden="true" />
 									{tCommon("edit")}
 								</Button>
 								<Button
@@ -172,7 +168,7 @@ const StrategyCardBase = ({
 										onDelete(strategy.id)
 									}}
 								>
-									<Trash2 className="h-4 w-4" />
+									<Trash2 className="h-4 w-4" aria-hidden="true" />
 									{tCommon("delete")}
 								</Button>
 							</div>
@@ -221,7 +217,7 @@ const StrategyCardBase = ({
 					<span className="text-tiny text-txt-300">
 						{t("compliance.planCompliance")}
 					</span>
-					<span className={cn("text-small font-semibold", complianceColor)}>
+					<span className={cn("text-small font-semibold", complianceTone.text)}>
 						{strategy.compliance.toFixed(0)}%
 					</span>
 				</div>
@@ -236,11 +232,7 @@ const StrategyCardBase = ({
 					<div
 						className={cn(
 							"h-full rounded-full transition-[width]",
-							strategy.compliance >= 80
-								? "bg-trade-buy"
-								: strategy.compliance >= 50
-									? "bg-warning"
-									: "bg-trade-sell"
+							complianceTone.fill
 						)}
 						style={{ width: `${Math.min(strategy.compliance, 100)}%` }}
 					/>
@@ -252,7 +244,7 @@ const StrategyCardBase = ({
 				<div className="mt-m-400 gap-m-400 flex items-center">
 					{strategy.finalR && (
 						<div className="gap-s-100 flex items-center">
-							<TrendingUp className="text-trade-buy h-4 w-4" />
+							<TrendingUp className="text-txt-300 h-4 w-4" aria-hidden="true" />
 							<span className="text-tiny text-txt-300">
 								{t("strategy.target")}
 							</span>
@@ -263,7 +255,10 @@ const StrategyCardBase = ({
 					)}
 					{strategy.maxRiskPercent && (
 						<div className="gap-s-100 flex items-center">
-							<TrendingDown className="text-trade-sell h-4 w-4" />
+							<TrendingDown
+								className="text-txt-300 h-4 w-4"
+								aria-hidden="true"
+							/>
 							<span className="text-tiny text-txt-300">
 								{t("strategy.maxRisk")}
 							</span>
@@ -281,7 +276,7 @@ const StrategyCardBase = ({
 				<div className="mt-s-300 gap-m-400 flex items-center">
 					{isPremium && strategy.conditionCount > 0 && (
 						<div className="gap-s-100 flex items-center">
-							<Filter className="text-txt-300 h-3 w-3" />
+							<Filter className="text-txt-300 h-3 w-3" aria-hidden="true" />
 							<span className="text-tiny text-txt-300">
 								{strategy.conditionCount === 1
 									? t("strategy.condition", { count: strategy.conditionCount })
@@ -293,7 +288,7 @@ const StrategyCardBase = ({
 					)}
 					{strategy.scenarioCount > 0 && (
 						<div className="gap-s-100 flex items-center">
-							<ImageIcon className="text-txt-300 h-3 w-3" />
+							<ImageIcon className="text-txt-300 h-3 w-3" aria-hidden="true" />
 							<span className="text-tiny text-txt-300">
 								{strategy.scenarioCount === 1
 									? t("strategy.scenario", { count: strategy.scenarioCount })

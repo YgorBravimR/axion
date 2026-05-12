@@ -96,12 +96,12 @@ export const PlaybookContent = ({
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("yourStrategies")}
 					</h2>
-					<Link href="/playbook/new">
-						<Button id="playbook-new-strategy">
-							<Plus className="mr-s-200 h-4 w-4" />
+					<Button id="playbook-new-strategy" asChild>
+						<Link href="/playbook/new">
+							<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 							{t("newStrategy")}
-						</Button>
-					</Link>
+						</Link>
+					</Button>
 				</div>
 
 				{strategies.length === 0 ? (
@@ -116,12 +116,12 @@ export const PlaybookContent = ({
 						<p className="text-small text-txt-300 mt-s-200 max-w-xs">
 							{t("noStrategiesHint")}
 						</p>
-						<Link href="/playbook/new">
-							<Button id="playbook-add-strategy" className="mt-m-500">
-								<Plus className="mr-s-200 h-4 w-4" />
+						<Button id="playbook-add-strategy" className="mt-m-500" asChild>
+							<Link href="/playbook/new">
+								<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 								{t("addStrategy")}
-							</Button>
-						</Link>
+							</Link>
+						</Button>
 					</div>
 				) : (
 					<div className="mt-m-400 sm:mt-m-500 gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
