@@ -1,0 +1,590 @@
+{
+	"schemaVersion": 2,
+	"generatedAt": "2026-05-12T00:00:00Z",
+	"title": "Design System: Axion",
+	"extensions": {
+		"colorMeta": {
+			"bg-100": {
+				"role": "neutral",
+				"displayName": "Cool-Neutral Near-Black Canvas",
+				"canonical": "oklch(13% 0.003 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#363940",
+					"#525660",
+					"#787C84",
+					"#A8ADB5",
+					"#EEF0F2"
+				]
+			},
+			"bg-200": {
+				"role": "neutral",
+				"displayName": "Surface",
+				"canonical": "oklch(18% 0.003 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#363940",
+					"#525660",
+					"#787C84",
+					"#A8ADB5",
+					"#EEF0F2"
+				]
+			},
+			"bg-300": {
+				"role": "neutral",
+				"displayName": "Border / Muted",
+				"canonical": "oklch(25% 0.003 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#363940",
+					"#525660",
+					"#787C84",
+					"#A8ADB5",
+					"#EEF0F2"
+				]
+			},
+			"bg-400": {
+				"role": "neutral",
+				"displayName": "Elevated Surface",
+				"canonical": "oklch(31% 0.003 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#363940",
+					"#525660",
+					"#787C84",
+					"#A8ADB5",
+					"#EEF0F2"
+				]
+			},
+			"txt-100": {
+				"role": "neutral",
+				"displayName": "Silver-White Primary Text",
+				"canonical": "oklch(94% 0.003 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#444B58",
+					"#666D7A",
+					"#8C95A0",
+					"#B8BFC8",
+					"#EEF0F2"
+				]
+			},
+			"txt-200": {
+				"role": "neutral",
+				"displayName": "Silver-Blue Secondary Text",
+				"canonical": "oklch(73% 0.005 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#444B58",
+					"#666D7A",
+					"#8C95A0",
+					"#A8ADB5",
+					"#D8DEE5"
+				]
+			},
+			"txt-300": {
+				"role": "neutral",
+				"displayName": "Slate Tertiary Text",
+				"canonical": "oklch(54% 0.005 240)",
+				"tonalRamp": [
+					"#0F1014",
+					"#1A1C20",
+					"#272A2E",
+					"#444B58",
+					"#666D7A",
+					"#787C84",
+					"#A8ADB5",
+					"#D8DEE5"
+				]
+			},
+			"acc-100": {
+				"role": "primary",
+				"displayName": "Bronze",
+				"canonical": "oklch(70% 0.06 70)",
+				"tonalRamp": [
+					"#2E2614",
+					"#4F3F1F",
+					"#735B2E",
+					"#9C7C4F",
+					"#B08A55",
+					"#C29D6A",
+					"#D2AE7C",
+					"#E5CCA0"
+				]
+			},
+			"acc-100-hover": {
+				"role": "primary",
+				"displayName": "Bronze Hover",
+				"canonical": "oklch(75% 0.06 70)",
+				"tonalRamp": [
+					"#2E2614",
+					"#4F3F1F",
+					"#735B2E",
+					"#9C7C4F",
+					"#B08A55",
+					"#C29D6A",
+					"#D2AE7C",
+					"#E5CCA0"
+				]
+			},
+			"acc-200": {
+				"role": "secondary",
+				"displayName": "Slate Steel",
+				"canonical": "oklch(60% 0.02 210)",
+				"tonalRamp": [
+					"#161A1D",
+					"#252C30",
+					"#3A444A",
+					"#525E66",
+					"#6A7882",
+					"#7A8B96",
+					"#8C9DA8",
+					"#B0BDC6"
+				]
+			},
+			"acc-200-hover": {
+				"role": "secondary",
+				"displayName": "Slate Steel Hover",
+				"canonical": "oklch(66% 0.02 210)",
+				"tonalRamp": [
+					"#161A1D",
+					"#252C30",
+					"#3A444A",
+					"#525E66",
+					"#6A7882",
+					"#7A8B96",
+					"#8C9DA8",
+					"#B0BDC6"
+				]
+			},
+			"fb-error": {
+				"role": "feedback",
+				"displayName": "Error Red",
+				"canonical": "oklch(64% 0.21 25)",
+				"tonalRamp": [
+					"#2A0A0A",
+					"#4F1010",
+					"#7A1818",
+					"#A82424",
+					"#D43838",
+					"#EF4444",
+					"#F87171",
+					"#FCA5A5"
+				]
+			},
+			"fb-success": {
+				"role": "feedback",
+				"displayName": "Success Green",
+				"canonical": "oklch(72% 0.15 162)",
+				"tonalRamp": [
+					"#0A2A1F",
+					"#104530",
+					"#196B4A",
+					"#229363",
+					"#2DBA7E",
+					"#34D399",
+					"#6EE7B7",
+					"#A7F3D0"
+				]
+			},
+			"trade-buy": {
+				"role": "semantic-result",
+				"displayName": "Profit Green",
+				"canonical": "oklch(72% 0.15 162)",
+				"tonalRamp": [
+					"#0A2A1F",
+					"#104530",
+					"#196B4A",
+					"#229363",
+					"#2DBA7E",
+					"#34D399",
+					"#6EE7B7",
+					"#A7F3D0"
+				]
+			},
+			"trade-sell": {
+				"role": "semantic-result",
+				"displayName": "Loss Red",
+				"canonical": "oklch(68% 0.18 22)",
+				"tonalRamp": [
+					"#2D0A0A",
+					"#521414",
+					"#7A2020",
+					"#A83232",
+					"#D44848",
+					"#F87171",
+					"#FCA5A5",
+					"#FECACA"
+				]
+			},
+			"trade-warning": {
+				"role": "semantic-result",
+				"displayName": "Warning Amber",
+				"canonical": "oklch(82% 0.16 88)",
+				"tonalRamp": [
+					"#2D1F00",
+					"#4F3800",
+					"#735200",
+					"#996F00",
+					"#C08C00",
+					"#E5A800",
+					"#FBBF24",
+					"#FCD34D"
+				]
+			},
+			"action-buy": {
+				"role": "semantic-action",
+				"displayName": "Long Cyan-Blue",
+				"canonical": "oklch(73% 0.10 220)",
+				"tonalRamp": [
+					"#0A1E2D",
+					"#103752",
+					"#185578",
+					"#22769E",
+					"#3897C5",
+					"#5BB8D6",
+					"#8AD0E0",
+					"#C2E5EE"
+				]
+			},
+			"action-sell": {
+				"role": "semantic-action",
+				"displayName": "Short Orange",
+				"canonical": "oklch(72% 0.16 50)",
+				"tonalRamp": [
+					"#2D1A0A",
+					"#523014",
+					"#7A4820",
+					"#A86232",
+					"#D47C48",
+					"#FB923C",
+					"#FDBA74",
+					"#FED7AA"
+				]
+			},
+			"guide": {
+				"role": "utility",
+				"displayName": "Page Guide Violet",
+				"canonical": "oklch(72% 0.16 290)",
+				"tonalRamp": [
+					"#1A0E2D",
+					"#2D1852",
+					"#48267A",
+					"#5F32A8",
+					"#7E45D4",
+					"#A882FF",
+					"#C4A8FF",
+					"#DBC8FF"
+				]
+			}
+		},
+		"typographyMeta": {
+			"display": {
+				"displayName": "Display",
+				"purpose": "Page titles. Maximum one per page; usually omitted."
+			},
+			"headline": { "displayName": "Headline", "purpose": "Section headings." },
+			"title": {
+				"displayName": "Title",
+				"purpose": "Card titles, subsection headings."
+			},
+			"body": {
+				"displayName": "Body",
+				"purpose": "Default text. 65–75ch line length cap. Tabular numerals enabled globally."
+			},
+			"label": {
+				"displayName": "Label",
+				"purpose": "Button text, interactive elements, secondary values, stat labels."
+			},
+			"caption": {
+				"displayName": "Caption",
+				"purpose": "Tooltips, table metadata, chart axis labels."
+			},
+			"micro": {
+				"displayName": "Micro",
+				"purpose": "Badges, fine print. Use sparingly."
+			},
+			"mono": {
+				"displayName": "Mono",
+				"purpose": "Numerical data — P&L, prices, R-multiples, strategy codes, tickers."
+			}
+		},
+		"shadows": [
+			{
+				"name": "small",
+				"value": "0 1px 2px rgb(0 0 0 / 0.1)",
+				"purpose": "Subtle lift for tooltips and small popovers."
+			},
+			{
+				"name": "medium",
+				"value": "0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06)",
+				"purpose": "Cards on hover — interactive feedback without floating."
+			},
+			{
+				"name": "large",
+				"value": "0 10px 15px rgb(0 0 0 / 0.1), 0 4px 6px rgb(0 0 0 / 0.05)",
+				"purpose": "Dropdown menus, popovers, context menus. Clearly detached."
+			},
+			{
+				"name": "extra-large",
+				"value": "20px 25px rgb(0 0 0 / 0.1), 0 10px 10px rgb(0 0 0 / 0.04)",
+				"purpose": "Modals and elevated panels. Used sparingly."
+			},
+			{
+				"name": "inner",
+				"value": "inset 0 2px 4px 0 rgb(0 0 0 / 0.05)",
+				"purpose": "Recessed inputs. Rarely needed."
+			}
+		],
+		"motion": [
+			{
+				"name": "ease-out-default",
+				"value": "cubic-bezier(0.16, 1, 0.3, 1)",
+				"purpose": "Default exponential ease-out for state transitions. No bounce, no elastic."
+			},
+			{
+				"name": "duration-fast",
+				"value": "150ms",
+				"purpose": "Hover, focus, micro-interaction."
+			},
+			{
+				"name": "duration-base",
+				"value": "300ms",
+				"purpose": "Fade-in, content transitions, default UI motion."
+			},
+			{
+				"name": "duration-slow",
+				"value": "500ms",
+				"purpose": "Scale-in, video expand, deliberate orienting motion."
+			},
+			{
+				"name": "transition-scale-in",
+				"value": "transition-scale-in 500ms ease-out both",
+				"purpose": "Account transition overlay entrance."
+			},
+			{
+				"name": "overlay-fade-in",
+				"value": "overlay-fade-in 300ms ease-out both",
+				"purpose": "Loading overlay fade-in."
+			},
+			{
+				"name": "tab-fade-in",
+				"value": "tab-fade-in 200ms ease-out both",
+				"purpose": "Tab content transition."
+			}
+		],
+		"breakpoints": [
+			{
+				"name": "xs",
+				"value": "480px",
+				"purpose": "Small phones → slightly larger phones."
+			},
+			{
+				"name": "sm",
+				"value": "640px",
+				"purpose": "Phones → tablets. Most responsive changes start here."
+			},
+			{ "name": "md", "value": "768px", "purpose": "Tablets → small laptops." },
+			{
+				"name": "lg",
+				"value": "1024px",
+				"purpose": "Laptops → desktops. Full layout typically available."
+			},
+			{ "name": "xl", "value": "1280px", "purpose": "Large desktops." },
+			{
+				"name": "2xl",
+				"value": "1536px",
+				"purpose": "Ultra-wide monitors. Max content width."
+			}
+		]
+	},
+	"components": [
+		{
+			"name": "Primary Button (Bronze)",
+			"kind": "button",
+			"refersTo": "button-primary",
+			"description": "Single primary action per view. Bronze fill, white text. The one warm element against the cool-neutral chrome. Use for the one most important affordance on screen.",
+			"html": "<button class=\"ds-btn-primary\">Log Trade</button>",
+			"css": ".ds-btn-primary { background: #C29D6A; color: #FFFFFF; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary:hover { background: #D2AE7C; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(194, 157, 106, 0.4); } .ds-btn-primary:active { background: #9C7C4F; }"
+		},
+		{
+			"name": "Secondary Button (Neutral)",
+			"kind": "button",
+			"refersTo": "button-secondary",
+			"description": "Neutral chrome alternate for the rare case where outline reads too quiet but bronze would over-signal. Slate-steel acc-200 is NOT used as a button fill — it's reserved for focus rings on secondary controls and chart legends.",
+			"html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+			"css": ".ds-btn-secondary { background: #272A2E; color: #EEF0F2; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-secondary:hover { background: #363940; } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(122, 139, 150, 0.4); }"
+		},
+		{
+			"name": "Outline Button (Default Non-Primary)",
+			"kind": "button",
+			"refersTo": "button-outline",
+			"description": "Default non-primary action. Quiet neutral, plays well next to a single Primary.",
+			"html": "<button class=\"ds-btn-outline\">Cancel</button>",
+			"css": ".ds-btn-outline { background: #1A1C20; color: #EEF0F2; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 10px 16px; border: 1px solid #272A2E; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms; } .ds-btn-outline:hover { background: #272A2E; border-color: #363940; } .ds-btn-outline:focus-visible { outline: none; border-color: #C29D6A; box-shadow: 0 0 0 2px rgba(194, 157, 106, 0.3); }"
+		},
+		{
+			"name": "Ghost Button (Tertiary)",
+			"kind": "button",
+			"refersTo": "button-ghost",
+			"description": "Tertiary action, toolbar button, in-card affordance. The most-used non-Primary variant.",
+			"html": "<button class=\"ds-btn-ghost\">More options</button>",
+			"css": ".ds-btn-ghost { background: transparent; color: #A8ADB5; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 8px 12px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms; } .ds-btn-ghost:hover { background: #272A2E; color: #EEF0F2; } .ds-btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(194, 157, 106, 0.3); }"
+		},
+		{
+			"name": "Input (Text Field)",
+			"kind": "input",
+			"refersTo": "input",
+			"description": "Default text input with bronze focus ring. Tabular numerals inherited from body.",
+			"html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search trades…\" />",
+			"css": ".ds-input { background: #1A1C20; color: #EEF0F2; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; font-size: 1rem; font-weight: 400; line-height: 1.5; padding: 8px 12px; border: 1px solid #272A2E; border-radius: 10px; outline: none; transition: border-color 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms; width: 100%; font-variant-numeric: tabular-nums; } .ds-input::placeholder { color: #5D6168; } .ds-input:focus { border-color: #C29D6A; box-shadow: 0 0 0 3px rgba(194, 157, 106, 0.3); } .ds-input[aria-invalid=\"true\"] { border-color: #EF4444; }"
+		},
+		{
+			"name": "Stat Card (Signature)",
+			"kind": "card",
+			"refersTo": "card",
+			"description": "Axion's signature data card. Surface lift off the canvas with recessed stat blocks inside. Maximum one bronze-highlighted stat per card (the single hero metric).",
+			"html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Today's P&L</h3><div class=\"ds-stat-grid\"><div class=\"ds-stat\"><span class=\"ds-stat-label\">Net</span><span class=\"ds-stat-value ds-stat-profit\">+$1,247</span></div><div class=\"ds-stat\"><span class=\"ds-stat-label\">Trades</span><span class=\"ds-stat-value\">12</span></div><div class=\"ds-stat\"><span class=\"ds-stat-label\">Win Rate</span><span class=\"ds-stat-value\">67%</span></div><div class=\"ds-stat\"><span class=\"ds-stat-label\">Avg R</span><span class=\"ds-stat-value\">1.8R</span></div></div></div>",
+			"css": ".ds-card { background: #1A1C20; border: 1px solid #272A2E; border-radius: 10px; padding: 16px; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #EEF0F2; font-variant-numeric: tabular-nums; transition: border-color 150ms, box-shadow 150ms; } .ds-card:hover { border-color: rgba(54, 57, 64, 0.8); box-shadow: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06); } .ds-card-title { font-size: 0.875rem; font-weight: 600; color: #EEF0F2; margin: 0 0 12px 0; } .ds-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; } @media (min-width: 640px) { .ds-stat-grid { grid-template-columns: repeat(4, 1fr); } } .ds-stat { background: #0F1014; padding: 12px; border-radius: 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; } .ds-stat-label { font-size: 0.75rem; color: #787C84; } .ds-stat-value { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 1rem; font-weight: 700; color: #EEF0F2; } .ds-stat-profit { color: #34D399; }"
+		},
+		{
+			"name": "Mono Chip (Code Pill)",
+			"kind": "chip",
+			"refersTo": "chip-mono",
+			"description": "Numerical pill for strategy codes, R-multiples, ticker symbols. Geist Mono for digit-glance speed.",
+			"html": "<span class=\"ds-chip-mono\">+1.8R</span>",
+			"css": ".ds-chip-mono { display: inline-flex; align-items: center; background: #272A2E; color: #A8ADB5; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 2px 8px; border-radius: 6px; font-variant-numeric: tabular-nums; }"
+		},
+		{
+			"name": "Nav Item (Active)",
+			"kind": "nav",
+			"refersTo": "nav-item-active",
+			"description": "Navigation item in active state — primary text on bg-300 surface. No bronze: 'you are here' is chrome, not signal. Bronze active state was demoted on purpose so the one bronze element on screen can be the actual primary action, not the navigation breadcrumb.",
+			"html": "<a class=\"ds-nav-item ds-nav-item-active\" href=\"#\">Journal</a>",
+			"css": ".ds-nav-item { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: #A8ADB5; font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 8px 12px; border-radius: 10px; text-decoration: none; transition: background 150ms, color 150ms; } .ds-nav-item:hover { background: #272A2E; color: #EEF0F2; } .ds-nav-item-active { background: #272A2E; color: #EEF0F2; }"
+		}
+	],
+	"narrative": {
+		"northStar": "Bronze Signal on Cool-Neutral Chrome",
+		"overview": "Axion is dark-first, low-chroma, and instrumental — a workspace built for solo day traders and mentorship students who sit in front of multiple monitors for six hours a day with capital on the line. The aesthetic is the inside of a cockpit at first light: cool-neutral near-black surfaces with a faint blue undertone, crisp silver-white text, and a single warm bronze accent that appears only where significance is earned. Density is welcome; visual clutter is not. The interface speaks with the confidence of a trained operator's tool — not the friendliness of a consumer app.\n\nThe whole identity hinges on one move: the chrome is cool, the accent is warm. bg-100/bg-200/bg-300 sit at hue ~240° with chroma ~0.003 — perceptually neutral but with a faint cool undertone that pushes the canvas away from 'cozy' and toward 'instrument.' The bronze accent (#C29D6A) reads as a signal because every other surface around it is cool — temperature contrast is what makes a hero metric or a primary CTA actually pop. Tint the chrome warm and the bronze collapses into decoration. Tint a button cobalt and the cockpit becomes a bank app.\n\nThe system explicitly rejects the saturated category lanes around it. The AI-tool reflex (violet/purple primary on near-black canvas) is forbidden by name. The fintech reflex (cobalt/royal blue/navy as primary) is forbidden by name — bronze is precisely chosen because cobalt is the obvious move and obvious moves erase identity. The Vercel/Shadcn neutral-template aesthetic is broken by the warm bronze accent itself: nothing in the template lane runs warm-accent-on-cool-near-black with this restraint. Slate steel (acc-200 = #7A8B96) is the quiet secondary for non-compelling controls.\n\nMotion serves orientation, never entertainment. Spacing is rhythmic, not monotone. Bold is reserved for major emphasis. Numbers display in tabular-nums by default. Every accent is a signal that must justify itself; if you cannot articulate why a specific surface needs acc-100, it does not get it.",
+		"keyCharacteristics": [
+			"Dark-first with a cool-neutral near-black canvas (#0F1014, hue ~240°, chroma ~0.003) — escapes both warm-cozy and pure-template aesthetics.",
+			"Bronze accent (#C29D6A) for primary action, focus, key metric, lead chart series. Single warm note against cool chrome.",
+			"Slate steel secondary (#7A8B96) for focus rings on secondary controls, chart legends — same temperature family as the chrome, so it never competes with bronze.",
+			"Tonal layering (bg-100 → bg-200 → bg-300 → bg-400) carries depth; shadows are restraint-by-default. Each step ≥4% lightness for visible separation without borders.",
+			"Fluid typography via clamp(); headings scale, body fixed for legibility.",
+			"Token-only spacing (s-100 → l-900); raw Tailwind spacing is forbidden.",
+			"Result colors separated from action colors — green/red signal P&L; cyan/orange signal directional intent. They never share the same hue."
+		],
+		"rules": [
+			{
+				"name": "The Temperature-Contrast Rule",
+				"body": "Chrome is cool (hue ~240° on bg-* and txt-*); the primary accent is warm (hue ~70° bronze). That contrast is the system's signature. Tinting bg-100/bg-200/bg-300 warm — toward bronze, toward sepia, toward 'cozy' — destroys the signal. Tinting the accent cool — toward cobalt, toward navy — collapses identity into the fintech template lane. Both walls are load-bearing.",
+				"section": "colors"
+			},
+			{
+				"name": "The Result-vs-Action Wall",
+				"body": "Green and red are reserved for outcome (P&L, win/lose). Cyan and orange are reserved for intent (long/short, buy/sell action). Never paint a 'Buy' button green because 'buy is positive' — it conflates the trade with its result. The semantic walls are load-bearing.",
+				"section": "colors"
+			},
+			{
+				"name": "The Earned-Bronze Rule",
+				"body": "If you cannot articulate why a specific surface needs the one warm accent in the system, it gets neutral tokens (bg-300, txt-200) instead. Maximum one primary-bronze CTA visible per viewport. Navigation active state and tab active underline were demoted from bronze to neutral chrome precisely because 'you are here' is chrome, not signal. Bronze is reserved for: the one primary action on a view, focus rings, the lead chart series, occasional hero metrics, the brand mark.",
+				"section": "colors"
+			},
+			{
+				"name": "The Cool-Neutral-Chrome Rule",
+				"body": "The canvas is #0F1014, not #000000, not #0a0a0a, not warm-near-black #0E0C0A. The cool 240° undertone (chroma ~0.003) is what makes bronze register as a signal. Do not 'fix' it back to warm. Do not 'fix' it to pure-neutral.",
+				"section": "colors"
+			},
+			{
+				"name": "The Tabular-Nums Default",
+				"body": "Every numeric value renders in tabular numerals. Enforced globally on body and must never be overridden.",
+				"section": "typography"
+			},
+			{
+				"name": "The Bold-Is-Major-Emphasis Rule",
+				"body": "font-bold (700) is reserved for hero metrics, page titles, and major value callouts. Section headings use font-semibold (600). Body text and labels never bold.",
+				"section": "typography"
+			},
+			{
+				"name": "The Mono-for-Numbers Rule",
+				"body": "Numerical data displays in Geist Mono. Strategy codes, R-multiples, and price levels never display in Public Sans.",
+				"section": "typography"
+			},
+			{
+				"name": "The Flat-By-Default Rule",
+				"body": "Surfaces at rest carry no shadow. Borders define card edges. Shadows appear only as a response to state (hover, focus) or as the consequence of altitude (menus, modals).",
+				"section": "elevation"
+			},
+			{
+				"name": "The Tonal-Layer-First Rule",
+				"body": "When you need to convey 'this content sits inside that content,' reach for a tonal shift (bg-100 inside a bg-200 card) before reaching for an inset shadow or a border. The cool-neutral-near-black canvas was designed so tonal contrast does most depth work without ornament.",
+				"section": "elevation"
+			},
+			{
+				"name": "The One-Primary Rule",
+				"body": "Maximum one button-primary (bronze fill) per viewport. If you have two primary actions on a screen, one is not actually primary.",
+				"section": "components"
+			},
+			{
+				"name": "The Recharts-Motion-Lock Rule",
+				"body": "Every Recharts component receives isAnimationActive={false} without exception. The library ignores prefers-reduced-motion, so enforcement happens at the component prop layer.",
+				"section": "components"
+			},
+			{
+				"name": "The aria-invalid-String Rule",
+				"body": "aria-invalid only accepts the string 'true' or undefined. Passing a truthy JS value coerces to string 'true' or 'false' and breaks AT support unpredictably.",
+				"section": "components"
+			}
+		],
+		"dos": [
+			"Do use acc-100 (Bronze) only for: the single primary action on a view, focus rings, the lead chart series, occasional hero metrics, brand mark surfaces, inline links. Audit any view with more than 3–4 visible bronze elements.",
+			"Do use acc-200 (Slate Steel) only when neutral chrome is too quiet but bronze would over-signal — focus rings on secondary controls, chart axes, the second series in a paired comparison.",
+			"Do use design tokens for spacing — gap-s-300, p-m-400, mt-l-700. Pattern: p-s-300 sm:p-m-400 lg:p-m-500 for responsive card padding.",
+			"Do use bg-300 for borders and dividers. Never border-gray-700 or any raw Tailwind gray.",
+			"Do display numerical data in Geist Mono (font-mono) — P&L, prices, R-multiples, strategy codes, tickers.",
+			"Do reserve font-bold for hero metrics, card titles, and primary values.",
+			"Do set isAnimationActive={false} on every Recharts component.",
+			"Do use aria-invalid='true' (string) or undefined on form inputs — never truthy JS values.",
+			"Do confirm destructive actions via AlertDialog (src/components/ui/alert-dialog.tsx).",
+			"Do pair color signals with iconography, sign, or position so color-blind users get the same affordance.",
+			"Do keep the chrome cool-neutral — bg-100 is #0F1014 (hue ~240°, chroma ~0.003), the foundation the bronze stands on. Do not retune toward warm."
+		],
+		"donts": [
+			"Don't use violet, purple, lavender, or indigo as a primary brand color. The saturated AI-tool color palette is forbidden.",
+			"Don't use cobalt, royal blue, or navy as a primary brand color. The cobalt-fintech reflex — Bloomberg-template, every-bank-app, every-broker-dashboard — is forbidden by name. Bronze is the locked accent precisely because cobalt is the obvious move.",
+			"Don't tint bg-100/bg-200/bg-300 warm (toward bronze, toward sepia, toward 'cozy'). Warm chrome collapses the temperature contrast that makes bronze signal. The cool 240° undertone is load-bearing.",
+			"Don't ship the Vercel/Shadcn cool-neutral-without-an-accent template aesthetic. The bronze accent IS the differentiation — strip it and Axion becomes another template.",
+			"Don't use bright neon greens, cyans, or magentas as primary or chrome accents. Neon greens/cyans belong in trade-* semantic role only.",
+			"Don't halo every icon with bg-acc-100/10. Section icons default to text-txt-200 or text-txt-300. Bronze is signal, not chrome.",
+			"Don't paint a 'Buy' button green or a 'Sell' button red. Result colors and action colors live in different semantic worlds.",
+			"Don't paint navigation active state or tab active underline bronze. 'You are here' is chrome — bg-300 + txt-100 for nav, after:bg-txt-100 for tabs. Demotions are intentional.",
+			"Don't ship sparkle (✨) icons on 'AI' features, 'AI-powered, coming soon' placeholder cards, or copilot panels by reflex. If a feature is AI-driven, the work should speak for itself.",
+			"Don't ship confetti, achievement badges, streak counters, or emoji mood pickers. Trading is serious work. The app celebrates discipline and consistency, never individual wins.",
+			"Don't use raw Tailwind spacing values (gap-4, p-2, mt-6). Use the token scale.",
+			"Don't use arbitrary Tailwind values (text-[28px], rounded-[12px], max-w-[1600px]). Use the named scales.",
+			"Don't use side-stripe borders (border-l-4 colored stripes on cards/alerts). Universal slop signal.",
+			"Don't use background-clip: text gradient text. Universal slop signal.",
+			"Don't use glassmorphism (backdrop-blur + translucent fill) decoratively. Rare and purposeful, or nothing.",
+			"Don't use window.confirm(), window.alert(), or confirm(). Use the project's AlertDialog primitive.",
+			"Don't use raw <table>, <a href>, <input type='checkbox'>, or <img> in non-UI-primitive code.",
+			"Don't ship .forEach(). Use for...of, .map(), or .reduce().",
+			"Don't use default exports. Always export { Component } at end of file.",
+			"Don't bold every label and heading. font-bold is reserved for major emphasis.",
+			"Don't rely on color alone for any semantic state. Always pair color with iconography, sign, or position."
+		]
+	}
+}
