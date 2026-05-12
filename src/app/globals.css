@@ -35,8 +35,8 @@
 	--color-txt-300: #787c84;
 	--color-txt-placeholder: #5d6168;
 
-	/* Brand accents — Bronze primary, Slate Steel secondary */
-	--color-acc-100: #b08a55;
+	/* Brand accents — Bronze primary (lighter/luminous variant), Slate Steel secondary */
+	--color-acc-100: #c29d6a;
 	--color-acc-200: #7a8b96;
 	--color-fb-error: #ef4444;
 	--color-fb-success: #34d399;
@@ -58,10 +58,10 @@
 	/* Page Guide — distinctive violet that pops on the dark canvas */
 	--color-guide: rgb(168 130 255);
 
-	/* Brand Colors — Bronze scale */
-	--color-brand-400: #c29d6a;
-	--color-brand-500: #b08a55;
-	--color-brand-600: #8c6e40;
+	/* Brand Colors — Bronze scale (anchored on #C29D6A) */
+	--color-brand-400: #d2ae7c;
+	--color-brand-500: #c29d6a;
+	--color-brand-600: #9c7c4f;
 
 	--radius: 0.625rem;
 	--color-background: var(--color-bg-100);
