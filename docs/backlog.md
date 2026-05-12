@@ -199,6 +199,16 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Account comparison — deferred follow-ups
+
+### Chart-series palette overhaul (`comparison-colors.ts`)
+
+- **What**: `src/components/account-comparison/comparison-colors.ts` mixes two anti-patterns in one constant: (a) hardcoded hex literals (`#f59e0b`, `#ef4444`, `#14b8a6`, `#f97316`) bypass the token system; (b) it hijacks `var(--color-trade-buy)` and `var(--color-trade-sell)` to colour the 3rd and 4th account in selection order — so "account #3's equity line is green" is encoded as "account #3 made money," which is false.
+- **Why**: Series colors need their own semantic family (`--color-chart-1` … `--color-chart-N`) added to `src/app/globals.css`, decoupled from both trade colors and brand accents. Used by `comparison-equity-chart` line palette and the header-swatch dots in all three comparison tables (`comparison-stats-table`, `comparison-normalized-table`, `comparison-config-summary`). Scope this through `theme-designer` — the token spec needs OKLCH discipline (varied hue, tinted neutrals, no high-chroma at extremes) and dark/light variants.
+- **Source**: `docs/scans/2026-05-12-impeccable-account-comparison.md` Phase 1a critique P2.
+
+---
+
 ## Analytics — deferred follow-ups
 
 ### Delete `InsightCard` dead code

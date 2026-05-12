@@ -58,7 +58,7 @@ const AccountComparisonContent = ({
 						className="text-txt-300 hover:text-txt-100 transition-colors"
 						aria-label={t("backToAnalytics")}
 					>
-						<ArrowLeft className="h-5 w-5" />
+						<ArrowLeft className="h-5 w-5" aria-hidden="true" />
 					</Link>
 					<div>
 						<h1 className="text-body sm:text-h3 text-txt-100 font-semibold">
