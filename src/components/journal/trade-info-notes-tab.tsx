@@ -23,11 +23,11 @@ interface NotesFormData {
 const RATING_GRADES = ["A", "B", "C", "D", "F"] as const
 
 const GRADE_COLORS: Record<string, string> = {
-	A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
-	B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
-	C: "border-warning bg-warning/10 text-warning",
-	D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
-	F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
+	A: "border-acc-100/40 bg-bg-300 text-txt-100",
+	B: "border-bg-300 bg-bg-300 text-txt-100",
+	C: "border-warning/60 bg-warning/10 text-warning",
+	D: "border-warning bg-warning/15 text-warning",
+	F: "border-fb-error bg-fb-error/10 text-fb-error",
 }
 
 interface TradeInfoNotesTabProps {
@@ -191,7 +191,6 @@ const TradeInfoNotesTab = ({
 						<button
 							id="panel-followed-plan-yes"
 							type="button"
-							tabIndex={0}
 							onClick={() =>
 								handleFieldChange(
 									"followedPlan",
@@ -203,8 +202,8 @@ const TradeInfoNotesTab = ({
 							className={cn(
 								"p-s-300 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
 								formData.followedPlan === true
-									? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-									: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+									? "border-acc-100/40 bg-bg-300 text-txt-100"
+									: "border-bg-300 text-txt-200 hover:border-txt-300/50"
 							)}
 						>
 							{tCommon("yes")}
@@ -212,7 +211,6 @@ const TradeInfoNotesTab = ({
 						<button
 							id="panel-followed-plan-no"
 							type="button"
-							tabIndex={0}
 							onClick={() =>
 								handleFieldChange(
 									"followedPlan",
@@ -224,8 +222,8 @@ const TradeInfoNotesTab = ({
 							className={cn(
 								"p-s-300 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
 								formData.followedPlan === false
-									? "border-trade-sell bg-trade-sell/10 text-trade-sell"
-									: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
+									? "border-warning bg-warning/10 text-warning"
+									: "border-bg-300 text-txt-200 hover:border-warning/50"
 							)}
 						>
 							{tCommon("no")}
@@ -268,7 +266,7 @@ const TradeInfoNotesTab = ({
 					<div
 						className="gap-s-200 flex"
 						role="radiogroup"
-						tabIndex={0}
+						tabIndex={-1}
 						aria-labelledby="label-panel-rating"
 						onKeyDown={(e) => {
 							const currentIndex = formData.rating

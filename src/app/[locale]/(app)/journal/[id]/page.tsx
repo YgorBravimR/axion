@@ -8,7 +8,6 @@ import {
 	Edit,
 	Target,
 	TrendingUp,
-	AlertTriangle,
 	CheckCircle,
 	XCircle,
 } from "lucide-react"
@@ -26,6 +25,10 @@ import {
 	RMultipleBar,
 	TradeExecutionsSection,
 	TradeDetailLayout,
+	RatingBadge,
+	FollowedPlanBadge,
+	TradeTag,
+	type RatingGrade,
 } from "@/components/journal"
 import { getTrade } from "@/app/actions/trades"
 import { getAssetBySymbol } from "@/app/actions/assets"
@@ -170,8 +173,8 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 												variant="outline"
 												className={cn(
 													isLong
-														? "border-trade-buy/30 text-trade-buy"
-														: "border-trade-sell/30 text-trade-sell"
+														? "border-action-buy/30 text-action-buy"
+														: "border-action-sell/30 text-action-sell"
 												)}
 											>
 												{isLong
@@ -186,12 +189,12 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										</div>
 										<div className="mt-s-200 gap-m-400 text-small text-txt-300 flex items-center">
 											<div className="gap-s-200 flex items-center">
-												<Calendar className="h-4 w-4" />
+												<Calendar className="h-4 w-4" aria-hidden="true" />
 												<span>{formatDateTime(trade.entryDate)}</span>
 											</div>
 											{trade.exitDate && (
 												<>
-													<span>→</span>
+													<span aria-hidden="true">→</span>
 													<span>{formatDateTime(trade.exitDate)}</span>
 												</>
 											)}
@@ -200,17 +203,18 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								</div>
 
 								<div className="gap-s-300 flex items-center self-end sm:self-auto">
-									<Link href={`/journal/${trade.id}/edit`}>
-										<Button
-											id="trade-detail-edit"
-											variant="ghost"
-											size="icon"
-											className="h-9 w-9"
-											aria-label={tTrade("editTrade")}
-										>
-											<Edit className="h-4 w-4" />
-										</Button>
-									</Link>
+									<Button
+										id="trade-detail-edit"
+										asChild
+										variant="ghost"
+										size="icon"
+										className="h-9 w-9"
+										aria-label={tTrade("editTrade")}
+									>
+										<Link href={`/journal/${trade.id}/edit`}>
+											<Edit className="h-4 w-4" aria-hidden="true" />
+										</Link>
+									</Button>
 									<DeleteTradeButton tradeId={trade.id} />
 									<div className="text-right">
 										<PnLDisplay value={pnl} size="xl" />
@@ -235,7 +239,10 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										id="trade-detail-outcome-win"
 										className="bg-trade-buy/20 text-trade-buy"
 									>
-										<CheckCircle className="mr-s-100 h-3 w-3" />
+										<CheckCircle
+											className="mr-s-100 h-3 w-3"
+											aria-hidden="true"
+										/>
 										{tTrade("outcome.winner")}
 									</Badge>
 								)}
@@ -244,7 +251,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										id="trade-detail-outcome-loss"
 										className="bg-trade-sell/20 text-trade-sell"
 									>
-										<XCircle className="mr-s-100 h-3 w-3" />
+										<XCircle className="mr-s-100 h-3 w-3" aria-hidden="true" />
 										{tTrade("outcome.loser")}
 									</Badge>
 								)}
@@ -256,39 +263,22 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										{tTrade("outcome.breakeven")}
 									</Badge>
 								)}
-								{trade.followedPlan === true && (
-									<Badge
-										id="trade-detail-followed-plan"
-										className="bg-trade-buy/20 text-trade-buy"
-									>
-										<CheckCircle className="mr-s-100 h-3 w-3" />
-										{tTrade("followedPlan")}
-									</Badge>
-								)}
-								{trade.followedPlan === false && (
-									<Badge
-										id="trade-detail-discipline-breach"
-										className="bg-warning/20 text-warning"
-									>
-										<AlertTriangle className="mr-s-100 h-3 w-3" />
-										{tTrade("detail.disciplineBreach")}
-									</Badge>
+								{trade.followedPlan !== null && (
+									<FollowedPlanBadge
+										id={
+											trade.followedPlan
+												? "trade-detail-followed-plan"
+												: "trade-detail-discipline-breach"
+										}
+										followed={trade.followedPlan}
+									/>
 								)}
 								{trade.rating && (
-									<Badge
+									<RatingBadge
 										id="trade-detail-rating"
-										className={cn(
-											trade.rating === "A" && "bg-trade-buy/20 text-trade-buy",
-											trade.rating === "B" &&
-												"bg-trade-buy/10 text-trade-buy/70",
-											trade.rating === "C" && "bg-warning/20 text-warning",
-											trade.rating === "D" &&
-												"bg-trade-sell/10 text-trade-sell/70",
-											trade.rating === "F" && "bg-trade-sell/20 text-trade-sell"
-										)}
-									>
-										{tTrade("rating")}: {trade.rating}
-									</Badge>
+										grade={trade.rating as RatingGrade}
+										withLabel
+									/>
 								)}
 							</div>
 						</Card>
@@ -341,7 +331,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 									value={
 										trade.plannedRiskAmount
 											? formatCurrency(fromCents(trade.plannedRiskAmount))
-											: "—"
+											: "-"
 									}
 									size="lg"
 								/>
@@ -365,7 +355,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								className="p-m-400 sm:p-m-500 lg:p-m-600"
 							>
 								<h3 className="mb-s-300 sm:mb-m-500 gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-									<Target className="text-acc-100 h-5 w-5" />
+									<Target className="text-acc-100 h-5 w-5" aria-hidden="true" />
 									{tTrade("detail.riskRewardAnalysis")}
 								</h3>
 								<RMultipleBar
@@ -416,7 +406,10 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								className="p-m-400 sm:p-m-500 lg:p-m-600"
 							>
 								<h3 className="mb-s-300 sm:mb-m-500 gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-									<TrendingUp className="text-acc-100 h-5 w-5" />
+									<TrendingUp
+										className="text-txt-300 h-5 w-5"
+										aria-hidden="true"
+									/>
 									{tTrade("detail.classification")}
 								</h3>
 
@@ -434,31 +427,28 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								{tags.length > 0 && (
 									<div className="gap-s-200 flex flex-wrap">
 										{setupTags.map((tag) => (
-											<Badge
+											<TradeTag
 												id={`badge-setup-tag-${tag.id}`}
 												key={tag.id}
-												className="bg-trade-buy/10 text-trade-buy"
-											>
-												{tag.name}
-											</Badge>
+												kind="setup"
+												name={tag.name}
+											/>
 										))}
 										{mistakeTags.map((tag) => (
-											<Badge
+											<TradeTag
 												id={`badge-mistake-tag-${tag.id}`}
 												key={tag.id}
-												className="bg-warning/10 text-warning"
-											>
-												{tag.name}
-											</Badge>
+												kind="mistake"
+												name={tag.name}
+											/>
 										))}
 										{generalTags.map((tag) => (
-											<Badge
+											<TradeTag
 												id={`badge-general-tag-${tag.id}`}
 												key={tag.id}
-												className="bg-acc-100/10 text-acc-100"
-											>
-												{tag.name}
-											</Badge>
+												kind="general"
+												name={tag.name}
+											/>
 										))}
 									</div>
 								)}
