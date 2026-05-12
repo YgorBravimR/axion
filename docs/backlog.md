@@ -145,6 +145,32 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Journal detail — deferred follow-ups
+
+### Detail-page delete uses `window.confirm()`
+
+- **What**: The trade-detail action menu's delete handler still triggers native `window.confirm()` (`src/app/[locale]/(app)/journal/[id]/page.tsx` — delete affordance / client island). Swap to the project `AlertDialog` pattern the way `journal-content.tsx` already does for the list view (controlled `open` state, `AlertDialogAction variant="destructive"`).
+- **Why**: CLAUDE.md explicitly bans `window.confirm()` ("ugly, unthemed, inaccessible, brand-breaking"). The list page already migrated; the detail page is the last hold-out for trade deletion.
+- **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1b audit P1.
+
+---
+
+### Followed-plan yes/no should be a `radiogroup`, not two `aria-pressed` toggles
+
+- **What**: `TradeInfoNotesTab` renders the followed-plan choice as two `<button aria-pressed>` controls inside `role="group"`. The semantics are 1-of-N with a third "unset" state — closer to a `radiogroup` with arrow-key navigation and a clear "clear selection" affordance. Mirror the rating radiogroup pattern (roving tabindex, `onKeyDown` Left/Right) so both single-select controls in the same tab share one model.
+- **Why**: Two toggles with `aria-pressed` imply independent on/off state to assistive tech; a screen reader user can't tell that picking Yes implicitly unpicks No. The visual cue (one filled, one outlined) is misleading without the radio semantics.
+- **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1b audit P2.
+
+---
+
+### Card-rhythm distill pass on `/journal/[id]`
+
+- **What**: The detail page stacks ~10 sibling cards (header, P&L block, R-multiples, prices, risk, SL/TP, MFE/MAE, classification, rating+plan, tags, notes). Several adjacent groupings (prices ↔ SL/TP, MFE ↔ MAE, rating ↔ plan) read as one logical unit but render with identical visual weight. Distill into 4-5 grouped sections with deliberate spacing variance, or move the secondary metrics into a collapsible "Details" disclosure so the primary outcome (P&L, R, executions, notes) leads.
+- **Why**: Shared design law: "vary spacing for rhythm; same padding everywhere is monotony" + "cards are the lazy answer." The current page is a uniform card stack; nothing earns visual prominence over anything else.
+- **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1a critique P3 — distill deferred to keep this slice surgical.
+
+---
+
 ## Documentation drift watch
 
 - **Design doc Phase 3 / §12 Open Questions**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship; Phase 3 is functionally done except for the multi-month seeder + CI wiring (both captured above). When those land, retire §13 Phase 3 in favour of a one-liner pointing here.
