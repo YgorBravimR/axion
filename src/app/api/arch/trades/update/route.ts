@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server"
+import { z } from "zod"
 import { db } from "@/db/drizzle"
-import { trades, tradeTags } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import { trades, tradeTags, strategies, tags, timeframes } from "@/db/schema"
+import { eq, and, inArray } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError, formatTradeForArch } from "../../_lib/helpers"
 import { buildAccountCondition } from "../../_lib/filters"
@@ -29,35 +30,118 @@ import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 import { applyScaledExecutionOps, hasOps } from "../../_lib/scaled-update"
 import type { ScaledExecutionOps } from "../../_lib/scaled-update"
 
-interface ArchUpdateTradeBody {
-	id: string
-	asset?: string
-	direction?: "long" | "short"
-	entryDate?: string | Date | number
-	exitDate?: string | Date | number
-	entryPrice?: number | string
-	exitPrice?: number | string
-	positionSize?: number | string
-	stopLoss?: number | string
-	takeProfit?: number | string
-	riskAmount?: number | string
-	strategy?: string
-	timeframe?: string
-	tags?: string[]
-	preTradeThoughts?: string
-	postTradeReflection?: string
-	lessonLearned?: string
-	disciplineNotes?: string
-	followedPlan?: boolean
-	setupRank?: "A" | "AA" | "AAA" | null
-	rating?: "A" | "B" | "C" | "D" | "F" | null
-	screenshotUrl?: string | null
-	screenshotS3Key?: string | null
-	isArchived?: boolean
-	mfe?: number | string
-	mae?: number | string
-	contractsExecuted?: number | string
-	executions?: ScaledExecutionOps
+const numericLike = z.union([z.number(), z.string()])
+const dateLike = z.union([z.string(), z.number(), z.date()])
+
+const archUpdateTradeSchema = z.object({
+	id: z.string().uuid("id must be a UUID"),
+	asset: z.string().min(1).max(20).optional(),
+	direction: z.enum(["long", "short"]).optional(),
+	entryDate: dateLike.optional(),
+	exitDate: dateLike.optional(),
+	entryPrice: numericLike.optional(),
+	exitPrice: numericLike.optional(),
+	positionSize: numericLike.optional(),
+	stopLoss: numericLike.optional(),
+	takeProfit: numericLike.optional(),
+	riskAmount: numericLike.optional(),
+	strategy: z.string().optional(),
+	strategyId: z.string().uuid().nullable().optional(),
+	timeframe: z.string().optional(),
+	timeframeId: z.string().uuid().nullable().optional(),
+	tags: z.array(z.string()).optional(),
+	tagIds: z.array(z.string().uuid()).optional(),
+	preTradeThoughts: z.string().optional(),
+	postTradeReflection: z.string().optional(),
+	lessonLearned: z.string().optional(),
+	disciplineNotes: z.string().optional(),
+	followedPlan: z.boolean().optional(),
+	setupRank: z.enum(["A", "AA", "AAA"]).nullable().optional(),
+	rating: z.enum(["A", "B", "C", "D", "F"]).nullable().optional(),
+	screenshotUrl: z.string().nullable().optional(),
+	screenshotS3Key: z.string().nullable().optional(),
+	isArchived: z.boolean().optional(),
+	mfe: numericLike.optional(),
+	mae: numericLike.optional(),
+	mfeR: numericLike.optional(),
+	maeR: numericLike.optional(),
+	contractsExecuted: numericLike.optional(),
+	executions: z
+		.object({
+			add: z.array(z.unknown()).optional(),
+			update: z.array(z.unknown()).optional(),
+			delete: z.array(z.string()).optional(),
+		})
+		.passthrough()
+		.optional(),
+})
+
+/**
+ * Verifies a strategyId belongs to the calling user.
+ * Returns the id when valid, null when explicitly cleared, throws otherwise.
+ */
+const verifyStrategyOwnership = async (
+	strategyId: string | null | undefined,
+	userId: string
+): Promise<string | null> => {
+	if (strategyId === null) {
+		return null
+	}
+	if (!strategyId) {
+		return null
+	}
+	const row = await db.query.strategies.findFirst({
+		where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
+		columns: { id: true },
+	})
+	if (!row) {
+		throw new Error("STRATEGY_NOT_FOUND")
+	}
+	return row.id
+}
+
+/**
+ * Verifies a timeframeId exists (timeframes are global, not user-scoped).
+ */
+const verifyTimeframeExists = async (
+	timeframeId: string | null | undefined
+): Promise<string | null> => {
+	if (timeframeId === null) {
+		return null
+	}
+	if (!timeframeId) {
+		return null
+	}
+	const row = await db.query.timeframes.findFirst({
+		where: eq(timeframes.id, timeframeId),
+		columns: { id: true },
+	})
+	if (!row) {
+		throw new Error("TIMEFRAME_NOT_FOUND")
+	}
+	return row.id
+}
+
+/**
+ * Verifies every tagId in the array belongs to the calling user.
+ * Returns the (deduped) id list, throws if any id is unknown or cross-tenant.
+ */
+const verifyTagOwnership = async (
+	tagIds: string[],
+	userId: string
+): Promise<string[]> => {
+	if (tagIds.length === 0) {
+		return []
+	}
+	const unique = Array.from(new Set(tagIds))
+	const rows = await db
+		.select({ id: tags.id })
+		.from(tags)
+		.where(and(inArray(tags.id, unique), eq(tags.userId, userId)))
+	if (rows.length !== unique.length) {
+		throw new Error("TAG_NOT_FOUND")
+	}
+	return rows.map((row) => row.id)
 }
 
 /**
@@ -76,13 +160,7 @@ const POST = async (request: NextRequest) => {
 	const { auth } = authResult
 
 	try {
-		const body = (await request.json()) as ArchUpdateTradeBody
-
-		if (!body.id) {
-			return archError("Missing required field: id", [
-				{ code: "MISSING_FIELDS", detail: "Required: id (UUID)" },
-			])
-		}
+		const body = archUpdateTradeSchema.parse(await request.json())
 
 		const accountCondition = buildAccountCondition(auth)
 
@@ -110,19 +188,29 @@ const POST = async (request: NextRequest) => {
 			existing = decryptTradeFields(existing, dek)
 		}
 
-		// Resolve fuzzy names if provided
-		const strategyId =
-			body.strategy !== undefined
-				? await resolveStrategyName(body.strategy, auth.userId)
-				: undefined
-		const timeframeId =
-			body.timeframe !== undefined
-				? await resolveTimeframeName(body.timeframe)
-				: undefined
-		const tagIds =
-			body.tags !== undefined
-				? await resolveTagNames(body.tags, auth.userId)
-				: undefined
+		// Resolve strategy: direct id wins over fuzzy name. null explicitly clears.
+		let strategyId: string | null | undefined
+		if (body.strategyId !== undefined) {
+			strategyId = await verifyStrategyOwnership(body.strategyId, auth.userId)
+		} else if (body.strategy !== undefined) {
+			strategyId = await resolveStrategyName(body.strategy, auth.userId)
+		}
+
+		// Resolve timeframe: direct id wins. Timeframes are global.
+		let timeframeId: string | null | undefined
+		if (body.timeframeId !== undefined) {
+			timeframeId = await verifyTimeframeExists(body.timeframeId)
+		} else if (body.timeframe !== undefined) {
+			timeframeId = await resolveTimeframeName(body.timeframe)
+		}
+
+		// Resolve tags: direct ids win over fuzzy names. Verify ownership.
+		let tagIds: string[] | undefined
+		if (body.tagIds !== undefined) {
+			tagIds = await verifyTagOwnership(body.tagIds, auth.userId)
+		} else if (body.tags !== undefined) {
+			tagIds = await resolveTagNames(body.tags, auth.userId)
+		}
 
 		// Merge provided fields over existing values
 		const exitPrice =
@@ -299,6 +387,12 @@ const POST = async (request: NextRequest) => {
 		if (body.mae !== undefined) {
 			updateData.mae = toNumericString(Number(body.mae))
 		}
+		if (body.mfeR !== undefined) {
+			updateData.mfeR = toNumericString(Number(body.mfeR))
+		}
+		if (body.maeR !== undefined) {
+			updateData.maeR = toNumericString(Number(body.maeR))
+		}
 		if (body.contractsExecuted !== undefined) {
 			updateData.contractsExecuted = toNumericString(
 				Number(body.contractsExecuted)
@@ -417,13 +511,10 @@ const POST = async (request: NextRequest) => {
 		// Apply executions ops (add/update/delete) if provided. This will
 		// recompute aggregates from legs via updateTradeAggregates, overriding
 		// any prior trade-field updates that came from this same request body.
-		if (hasOps(body.executions)) {
+		const executionsOps = body.executions as ScaledExecutionOps | undefined
+		if (hasOps(executionsOps)) {
 			try {
-				await applyScaledExecutionOps(
-					body.id,
-					body.executions ?? {},
-					dek ?? null
-				)
+				await applyScaledExecutionOps(body.id, executionsOps ?? {}, dek ?? null)
 			} catch (opsError) {
 				const raw =
 					opsError instanceof Error ? opsError.message : String(opsError)
@@ -497,9 +588,76 @@ const POST = async (request: NextRequest) => {
 			formatTradeForArch(tradeWithRelations)
 		)
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return archError(
+				"Validation failed",
+				error.issues.map((issue) => ({
+					code: "VALIDATION_ERROR",
+					detail: `${issue.path.join(".") || "body"}: ${issue.message}`,
+				}))
+			)
+		}
+
+		if (error instanceof Error) {
+			if (error.message === "STRATEGY_NOT_FOUND") {
+				return archError(
+					"Strategy not found",
+					[
+						{
+							code: "STRATEGY_NOT_FOUND",
+							detail:
+								"strategyId does not exist or does not belong to this user",
+						},
+					],
+					404
+				)
+			}
+			if (error.message === "TIMEFRAME_NOT_FOUND") {
+				return archError(
+					"Timeframe not found",
+					[
+						{
+							code: "TIMEFRAME_NOT_FOUND",
+							detail: "timeframeId does not exist",
+						},
+					],
+					404
+				)
+			}
+			if (error.message === "TAG_NOT_FOUND") {
+				return archError(
+					"One or more tagIds not found",
+					[
+						{
+							code: "TAG_NOT_FOUND",
+							detail:
+								"At least one tagId does not exist or does not belong to this user",
+						},
+					],
+					404
+				)
+			}
+		}
+
+		// Map Postgres invalid_text_representation (e.g. enum mismatch) to 400
+		const raw = String(error)
+		if (raw.includes("22P02") || raw.includes("invalid input value for enum")) {
+			return archError(
+				"Invalid enum value",
+				[
+					{
+						code: "INVALID_ENUM",
+						detail:
+							"A field was sent with a value outside the allowed enum set. Check setupRank (A|AA|AAA), rating (A|B|C|D|F), direction (long|short).",
+					},
+				],
+				400
+			)
+		}
+
 		return archError(
 			"Failed to update trade",
-			[{ code: "UPDATE_FAILED", detail: String(error) }],
+			[{ code: "UPDATE_FAILED", detail: raw }],
 			500
 		)
 	}
