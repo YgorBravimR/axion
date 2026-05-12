@@ -569,7 +569,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 											: "border-bg-300 text-txt-200 hover:border-action-buy/50"
 									)}
 								>
-									<ArrowUpRight className="h-5 w-5" />
+									<ArrowUpRight className="h-5 w-5" aria-hidden="true" />
 									<span className="font-medium">{t("direction.long")}</span>
 								</button>
 								<button
@@ -584,7 +584,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 											: "border-bg-300 text-txt-200 hover:border-action-sell/50"
 									)}
 								>
-									<ArrowDownRight className="h-5 w-5" />
+									<ArrowDownRight className="h-5 w-5" aria-hidden="true" />
 									<span className="font-medium">{t("direction.short")}</span>
 								</button>
 							</div>
@@ -597,7 +597,10 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 								{selectedAsset && (
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<Info className="text-txt-300 h-4 w-4" />
+											<Info
+												className="text-txt-300 h-4 w-4"
+												aria-hidden="true"
+											/>
 										</TooltipTrigger>
 										<TooltipContent id="tooltip-scaled-asset-info">
 											<div className="text-tiny space-y-1">
@@ -658,7 +661,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									onClick={() => handleAddExecution("entry")}
 									className="text-tiny h-7"
 								>
-									<Plus className="mr-s-100 h-3 w-3" />
+									<Plus className="mr-s-100 h-3 w-3" aria-hidden="true" />
 									{tScaled("addEntry")}
 								</Button>
 							</div>
@@ -712,7 +715,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									onClick={() => handleAddExecution("exit")}
 									className="text-tiny h-7"
 								>
-									<Plus className="mr-s-100 h-3 w-3" />
+									<Plus className="mr-s-100 h-3 w-3" aria-hidden="true" />
 									{tScaled("addExit")}
 								</Button>
 							</div>
@@ -781,7 +784,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 													? "text-txt-100"
 													: positionSummary.status === "partial"
 														? "text-warning"
-														: "text-trade-buy"
+														: "text-acc-100"
 											)}
 										>
 											{positionSummary.status === "open"
@@ -1071,8 +1074,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									className={cn(
 										"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
 										followedPlan === true
-											? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-											: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+											? "border-fb-success bg-fb-success/10 text-fb-success"
+											: "border-bg-300 text-txt-200 hover:border-fb-success/50"
 									)}
 								>
 									{tCommon("yes")}
@@ -1085,8 +1088,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									className={cn(
 										"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
 										followedPlan === false
-											? "border-trade-sell bg-trade-sell/10 text-trade-sell"
-											: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
+											? "border-fb-error bg-fb-error/10 text-fb-error"
+											: "border-bg-300 text-txt-200 hover:border-fb-error/50"
 									)}
 								>
 									{tCommon("no")}
@@ -1132,8 +1135,8 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 											className={cn(
 												"px-m-400 py-s-200 text-small rounded-full border transition-colors",
 												selectedTagIds.includes(tag.id)
-													? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-													: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+													? "border-fb-success bg-fb-success/10 text-fb-success"
+													: "border-bg-300 text-txt-200 hover:border-fb-success/50"
 											)}
 										>
 											{tag.name}
@@ -1223,12 +1226,15 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					>
 						{isSubmitting ? (
 							<>
-								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								<Loader2
+									className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+									aria-hidden="true"
+								/>
 								{tScaled("creating")}
 							</>
 						) : (
 							<>
-								<Save className="mr-s-200 h-4 w-4" />
+								<Save className="mr-s-200 h-4 w-4" aria-hidden="true" />
 								{tScaled("createScaledTrade")}
 							</>
 						)}

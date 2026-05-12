@@ -132,11 +132,11 @@ type TradeWithTags = Trade & { tradeTags?: Array<{ tag: Tag }> }
 // Static grade constants — hoisted to avoid re-creation on every render
 const GRADES = ["A", "B", "C", "D", "F"] as const
 const GRADE_COLORS: Record<string, string> = {
-	A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
-	B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
+	A: "border-fb-success bg-fb-success/10 text-fb-success",
+	B: "border-fb-success/70 bg-fb-success/5 text-fb-success/70",
 	C: "border-warning bg-warning/10 text-warning",
-	D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
-	F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
+	D: "border-fb-error/70 bg-fb-error/5 text-fb-error/70",
+	F: "border-fb-error bg-fb-error/10 text-fb-error",
 }
 
 /** Build form values from an existing trade (used for both initial state and reset) */
@@ -729,7 +729,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												: "border-bg-300 text-txt-200 hover:border-action-buy/50"
 										)}
 									>
-										<ArrowUpRight className="h-5 w-5" />
+										<ArrowUpRight className="h-5 w-5" aria-hidden="true" />
 										<span className="font-medium">{t("direction.long")}</span>
 									</button>
 									<button
@@ -744,7 +744,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												: "border-bg-300 text-txt-200 hover:border-action-sell/50"
 										)}
 									>
-										<ArrowDownRight className="h-5 w-5" />
+										<ArrowDownRight className="h-5 w-5" aria-hidden="true" />
 										<span className="font-medium">{t("direction.short")}</span>
 									</button>
 								</div>
@@ -768,7 +768,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												{selectedAsset && (
 													<Tooltip>
 														<TooltipTrigger asChild>
-															<Info className="text-txt-300 h-4 w-4" />
+															<Info
+																className="text-txt-300 h-4 w-4"
+																aria-hidden="true"
+															/>
 														</TooltipTrigger>
 														<TooltipContent id="tooltip-trade-asset-info">
 															<div className="text-tiny space-y-1">
@@ -1200,7 +1203,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									</Label>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<Info className="text-txt-300 h-4 w-4 cursor-help" />
+											<Info
+												className="text-txt-300 h-4 w-4 cursor-help"
+												aria-hidden="true"
+											/>
 										</TooltipTrigger>
 										<TooltipContent id="tooltip-trade-auto-risk">
 											<p className="text-tiny max-w-[min(200px,calc(100vw-2rem))]">
@@ -1322,7 +1328,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												</FormLabel>
 												<Tooltip>
 													<TooltipTrigger asChild>
-														<Info className="text-txt-300 h-4 w-4" />
+														<Info
+															className="text-txt-300 h-4 w-4"
+															aria-hidden="true"
+														/>
 													</TooltipTrigger>
 													<TooltipContent id="tooltip-trade-contracts-executed">
 														<div className="text-tiny max-w-xs space-y-1">
@@ -1496,8 +1505,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										className={cn(
 											"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
 											followedPlan === true
-												? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-												: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+												? "border-fb-success bg-fb-success/10 text-fb-success"
+												: "border-bg-300 text-txt-200 hover:border-fb-success/50"
 										)}
 									>
 										{tCommon("yes")}
@@ -1510,8 +1519,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										className={cn(
 											"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
 											followedPlan === false
-												? "border-trade-sell bg-trade-sell/10 text-trade-sell"
-												: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
+												? "border-fb-error bg-fb-error/10 text-fb-error"
+												: "border-bg-300 text-txt-200 hover:border-fb-error/50"
 										)}
 									>
 										{tCommon("no")}
@@ -1610,7 +1619,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Trade Screenshot */}
 							<div className="space-y-s-200">
 								<div className="gap-s-200 flex items-center">
-									<ImageIcon className="text-txt-300 h-4 w-4" />
+									<ImageIcon
+										className="text-txt-300 h-4 w-4"
+										aria-hidden="true"
+									/>
 									<Label id="label-trade-screenshot">
 										{t("tradeScreenshot")}
 									</Label>
@@ -1649,8 +1661,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												className={cn(
 													"px-m-400 py-s-200 text-small rounded-full border transition-colors",
 													selectedTagIds.includes(tag.id)
-														? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-														: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+														? "border-fb-success bg-fb-success/10 text-fb-success"
+														: "border-bg-300 text-txt-200 hover:border-fb-success/50"
 												)}
 											>
 												{tag.name}
@@ -1723,7 +1735,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									size="sm"
 									onClick={() => setIsTagFormOpen(true)}
 								>
-									<Plus className="mr-s-100 h-4 w-4" />
+									<Plus className="mr-s-100 h-4 w-4" aria-hidden="true" />
 									{t("inlineCreateTag")}
 								</Button>
 							</div>
@@ -1769,7 +1781,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								</>
 							) : (
 								<>
-									<Save className="mr-s-200 h-4 w-4" />
+									<Save className="mr-s-200 h-4 w-4" aria-hidden="true" />
 									{isEditing ? t("updateTrade") : t("saveTrade")}
 								</>
 							)}

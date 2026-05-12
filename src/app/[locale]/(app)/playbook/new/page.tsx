@@ -347,7 +347,7 @@ const NewStrategyPage = () => {
 								className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 							>
 								<div className="gap-s-200 flex items-center">
-									<Filter className="text-txt-200 h-5 w-5" />
+									<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
 									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 										{t("tradingConditions")}
 									</h2>
@@ -362,7 +362,10 @@ const NewStrategyPage = () => {
 						{/* Scenarios hint */}
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<ImageIcon className="text-txt-200 h-5 w-5" />
+								<ImageIcon
+									className="text-txt-200 h-5 w-5"
+									aria-hidden="true"
+								/>
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{tScenarios("title")}
 								</h2>

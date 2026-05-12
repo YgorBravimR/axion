@@ -87,9 +87,9 @@ export const NewTradeTabs = ({
 					role="tab"
 				>
 					{tradeMode === "simple" ? (
-						<FileText className="h-4 w-4" />
+						<FileText className="h-4 w-4" aria-hidden="true" />
 					) : (
-						<Layers className="h-4 w-4" />
+						<Layers className="h-4 w-4" aria-hidden="true" />
 					)}
 					{tradeMode === "simple" ? t("singleEntry") : tTrade("mode.scaled")}
 				</button>
@@ -106,7 +106,7 @@ export const NewTradeTabs = ({
 						aria-selected={activeTab === "csv"}
 						role="tab"
 					>
-						<Upload className="h-4 w-4" />
+						<Upload className="h-4 w-4" aria-hidden="true" />
 						{t("csvImport")}
 					</button>
 				)}
@@ -123,7 +123,7 @@ export const NewTradeTabs = ({
 						aria-selected={activeTab === "nota"}
 						role="tab"
 					>
-						<FileStack className="h-4 w-4" />
+						<FileStack className="h-4 w-4" aria-hidden="true" />
 						{t("nota.title")}
 					</button>
 				)}
@@ -140,7 +140,7 @@ export const NewTradeTabs = ({
 						aria-selected={activeTab === "screenshot"}
 						role="tab"
 					>
-						<ImageIcon className="h-4 w-4" />
+						<ImageIcon className="h-4 w-4" aria-hidden="true" />
 						{t("ocr.title")}
 					</button>
 				)}
