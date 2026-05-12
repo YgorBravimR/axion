@@ -74,9 +74,9 @@ const QuickFilters = memo(
 						tabIndex={0}
 						onClick={() => handleClick(filter)}
 						className={cn(
-							"px-s-300 py-s-200 text-tiny rounded-full border font-medium transition-colors",
+							"px-s-300 py-s-200 text-tiny focus-visible:ring-acc-100 rounded-full border font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
 							activeFilterKey === filter.key
-								? "border-acc-100 bg-acc-100/10 text-acc-100"
+								? "border-txt-200 bg-bg-300 text-txt-100"
 								: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"
 						)}
 						aria-pressed={activeFilterKey === filter.key}

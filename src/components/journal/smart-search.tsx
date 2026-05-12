@@ -299,15 +299,15 @@ const SmartSearch = ({
 				tabIndex={0}
 				onClick={() => setIsOpen(!isOpen)}
 				className={cn(
-					"gap-s-200 px-s-300 py-s-100 text-tiny flex items-center rounded-md border font-medium transition-colors",
+					"gap-s-200 px-s-300 py-s-100 text-tiny focus-visible:ring-acc-100 flex items-center rounded-md border font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
 					isOpen || activeFilterCount > 0
-						? "border-acc-100/30 bg-acc-100/5 text-acc-100"
+						? "border-txt-300 text-txt-100"
 						: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"
 				)}
 				aria-expanded={isOpen}
 				aria-label={t("toggle")}
 			>
-				<Search className="h-3.5 w-3.5" />
+				<Search className="h-3.5 w-3.5" aria-hidden="true" />
 				{t("toggle")}
 				{activeFilterCount > 0 && (
 					<span className="bg-acc-100 text-micro text-bg-100 px-s-100 flex h-4 min-w-4 items-center justify-center rounded-full font-bold">
@@ -322,7 +322,7 @@ const SmartSearch = ({
 					{conditions.map((condition) => (
 						<span
 							key={condition.id}
-							className="gap-s-100 border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 flex items-center rounded-full border"
+							className="gap-s-100 border-bg-300 bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-100 flex items-center rounded-full border"
 						>
 							{t(`fields.${condition.field}`)}{" "}
 							{t(`operators.${condition.operator}`)} {condition.value}
@@ -369,7 +369,7 @@ const SmartSearch = ({
 							{conditions.map((condition) => (
 								<span
 									key={condition.id}
-									className="gap-s-100 border-acc-100/30 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 flex items-center rounded-full border"
+									className="gap-s-100 border-bg-300 bg-bg-300 px-s-200 py-s-100 text-tiny text-txt-100 flex items-center rounded-full border"
 								>
 									{t(`fields.${condition.field}`)}{" "}
 									{t(`operators.${condition.operator}`)} {condition.value}
@@ -377,7 +377,7 @@ const SmartSearch = ({
 										type="button"
 										tabIndex={0}
 										onClick={() => handleRemoveCondition(condition.id)}
-										className="hover:bg-acc-100/20 rounded-full p-0.5"
+										className="hover:bg-bg-200 focus-visible:ring-acc-100 rounded-full p-0.5 focus-visible:ring-2 focus-visible:outline-none"
 										aria-label={`${t("clearAll")} ${t(`fields.${condition.field}`)}`}
 									>
 										<X className="h-2.5 w-2.5" />
@@ -403,10 +403,14 @@ const SmartSearch = ({
 							</p>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Info
-										className="text-txt-300 hover:text-txt-200 h-3.5 w-3.5 cursor-help"
+									<button
+										type="button"
+										tabIndex={0}
 										aria-label={t("builderHint")}
-									/>
+										className="text-txt-300 hover:text-txt-200 focus-visible:ring-acc-100 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+									>
+										<Info className="h-3.5 w-3.5" aria-hidden="true" />
+									</button>
 								</TooltipTrigger>
 								<TooltipContent
 									id="smart-search-builder-hint"
@@ -520,7 +524,12 @@ const SmartSearch = ({
 													setNewValue(`${e.target.value}-${to}`)
 												}}
 											/>
-											<span className="text-tiny text-txt-300">—</span>
+											<span
+												className="text-tiny text-txt-300"
+												aria-hidden="true"
+											>
+												to
+											</span>
 											<Input
 												id="smart-search-hour-to"
 												aria-label={t("hourTo")}

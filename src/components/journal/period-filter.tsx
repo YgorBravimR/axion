@@ -90,25 +90,29 @@ export const PeriodFilter = ({
 	return (
 		<div className="gap-s-200 flex flex-col">
 			<div
-				role="group"
+				role="radiogroup"
 				aria-label={t("period.filterGroupLabel")}
-				className="gap-s-100 scrollbar-none flex items-center overflow-x-auto"
+				className="gap-s-100 flex items-center overflow-x-auto"
 			>
 				{periods.map((period) => (
 					<button
 						key={period.key}
 						type="button"
+						role="radio"
 						onClick={() => handlePeriodClick(period.key)}
 						className={cn(
-							"px-s-300 py-s-100 text-small rounded-md font-medium transition-colors",
+							"px-s-300 py-s-100 text-small focus-visible:ring-acc-100 rounded-md font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
 							value === period.key
-								? "bg-acc-100 text-bg-100"
-								: "bg-bg-300 text-txt-200 hover:bg-bg-200"
+								? "bg-bg-300 text-txt-100 ring-acc-100/60 ring-1 ring-inset"
+								: "bg-bg-300 text-txt-300 hover:text-txt-100"
 						)}
-						aria-pressed={value === period.key}
+						aria-checked={value === period.key}
 					>
 						{period.key === "custom" && (
-							<Calendar className="mr-s-100 inline h-3.5 w-3.5" />
+							<Calendar
+								className="mr-s-100 inline h-3.5 w-3.5"
+								aria-hidden="true"
+							/>
 						)}
 						{period.label}
 					</button>

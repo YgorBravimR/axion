@@ -10,7 +10,6 @@ import { TradeRow } from "./trade-row"
 
 interface TradeDayGroupProps {
 	dayData: TradesByDay
-	onTradeClick?: (_tradeId: string) => void
 	defaultExpanded?: boolean
 	deletingTradeId: string | null
 	onDeleteRequest: (_tradeId: string) => void
@@ -22,20 +21,10 @@ interface TradeDayGroupProps {
 /**
  * Displays a collapsible group of trades for a single day.
  * Shows day summary (P&L, win rate) in the header and individual trades when expanded.
- *
- * @param dayData - Trade data grouped by day including summary and individual trades
- * @param onTradeClick - Optional callback when a trade row is clicked
- * @param defaultExpanded - Whether the group should be expanded by default
- * @param deletingTradeId - ID of the trade in delete-confirmation state, or null
- * @param onDeleteRequest - Callback to show delete confirmation for a trade
- * @param onDeleteConfirm - Callback to confirm deletion
- * @param onDeleteCancel - Callback to cancel deletion
- * @param isDeleting - Whether a delete action is in flight
  */
 export const TradeDayGroup = memo(
 	({
 		dayData,
-		onTradeClick,
 		defaultExpanded = true,
 		deletingTradeId,
 		onDeleteRequest,
@@ -71,19 +60,30 @@ export const TradeDayGroup = memo(
 				>
 					{/* Expand/Collapse Icon */}
 					{isExpanded ? (
-						<ChevronDown className="text-txt-300 h-4 w-4 shrink-0" />
+						<ChevronDown
+							className="text-txt-300 h-4 w-4 shrink-0"
+							aria-hidden="true"
+						/>
 					) : (
-						<ChevronRight className="text-txt-300 h-4 w-4 shrink-0" />
+						<ChevronRight
+							className="text-txt-300 h-4 w-4 shrink-0"
+							aria-hidden="true"
+						/>
 					)}
 
 					{/* Date */}
-					<span className="text-small text-txt-100 flex-1 font-medium">
+					<span
+						className="text-small text-txt-100 flex-1 font-medium"
+						aria-hidden="true"
+					>
 						{dateFormatted}
 					</span>
 
-					{/* Summary Stats */}
-					<div className="gap-s-200 sm:gap-m-400 flex flex-wrap items-center">
-						{/* P&L */}
+					{/* Summary Stats — visual only; aria-label on the button restates them */}
+					<div
+						className="gap-s-200 sm:gap-m-400 flex flex-wrap items-center"
+						aria-hidden="true"
+					>
 						<ColoredValue
 							value={summary.netPnl}
 							showSign
@@ -92,7 +92,6 @@ export const TradeDayGroup = memo(
 							className="font-semibold"
 						/>
 
-						{/* Win/Loss/Breakeven */}
 						<span className="text-tiny text-txt-300 hidden sm:inline">
 							{summary.wins}
 							{tCommon("winAbbr")} {summary.losses}
@@ -102,7 +101,6 @@ export const TradeDayGroup = memo(
 								: ""}
 						</span>
 
-						{/* Win Rate */}
 						<WinRateBadge winRate={summary.winRate} size="sm" />
 					</div>
 				</button>
@@ -115,7 +113,6 @@ export const TradeDayGroup = memo(
 								<div key={trade.id} className="group/row">
 									<TradeRow
 										trade={trade}
-										onTradeClick={onTradeClick}
 										deletingTradeId={deletingTradeId}
 										onDeleteRequest={onDeleteRequest}
 										onDeleteConfirm={onDeleteConfirm}
