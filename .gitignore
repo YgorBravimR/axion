@@ -57,5 +57,9 @@ video/node_modules/
 
 # claude code
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/skills/
+.agents/skills/
 .design-audit/
 .playwright-mcp/
+docs/impeccable-page-runbook.md
