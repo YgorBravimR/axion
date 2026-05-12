@@ -2,6 +2,10 @@
 
 # Agent Conventions — Axion
 
+## MANDATORY RULE
+
+- NO DUPLICITY ON FEATURES, WE MUST COORDINATE ALL FEATURES TO WORK ALIGNED. IF SESSION TAKES INTO A NEW FEATURE CREATION AND SOMETHING RELATED ALREADY EXISTS, MAKE THIS EXPLICIT AND PROPOSE OVERRIDE OR MERGE. ALL NEW FEATURE MUST COME ONLY AFTER A REVIEW OF WHAT WE HAVE BUILT.
+
 ## Deferred work backlog
 
 Ideas, follow-ups, and "for later" items live in **[`docs/backlog.md`](docs/backlog.md)** — the single source of truth. Before scattering a new `// TODO` or "Phase 2 will…" note across the repo, add it there with a Source link. When you cherry-pick an item, delete it from the backlog in the same PR.
@@ -419,3 +423,22 @@ Skills live in `.claude/skills/`. Each has `scope`, `depends`, and `tokens` fron
 | `caveman-compress` | Compress CLAUDE.md/memory files to caveman format                     |
 | `caveman-review`   | Ultra-compressed PR code review comments                              |
 | `cavecrew`         | Delegate work to compressed subagents (investigator/builder/reviewer) |
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
+
+Key routing rules:
+
+- Product ideas/brainstorming → invoke /office-hours
+- Strategy/scope → invoke /plan-ceo-review
+- Architecture → invoke /plan-eng-review
+- Design system/plan review → invoke /design-consultation or /plan-design-review
+- Full review pipeline → invoke /autoplan
+- Bugs/errors → invoke /investigate
+- QA/testing site behavior → invoke /qa or /qa-only
+- Code review/diff check → invoke /review
+- Visual polish → invoke /design-review
+- Ship/deploy/PR → invoke /ship or /land-and-deploy
+- Save progress → invoke /context-save
+- Resume context → invoke /context-restore
