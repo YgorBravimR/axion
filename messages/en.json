@@ -1530,6 +1530,7 @@
 		"noTradesInPeriod": "No trades in this period",
 		"tryDifferentPeriod": "Try selecting a different time period",
 		"tradesCount": "trades",
+		"periodResultSummary": "{wins, plural, =0 {0W} other {#W}} {losses, plural, =0 {0L} other {#L}}{breakevens, plural, =0 {} other { #BE}} · {rate}%",
 		"period": {
 			"day": "Day",
 			"week": "Week",
