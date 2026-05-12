@@ -2,150 +2,98 @@
 
 ---
 
-> **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/error-utils.test.ts`
-> **Report:** 9 unit tests in `error-utils.test.ts` failing — `getUserMessage()` / `toSafeErrorMessage()` tests expected `"An unexpected error occurred"` but the function returns the i18n key `"common.unexpectedError"`.
-> **Fix:** Updated all 9 `expect(result).toBe(...)` assertions in the test file to match the actual return value `"common.unexpectedError"`. Source code (`src/lib/error-utils.ts`) was not changed — `GENERIC_MESSAGE` was intentionally set to the i18n key, not the English string.
+> **[FIX-2026-04-21]** `Severity: Low` — `src/__tests__/lib/error-utils.test.ts`
+> 9 failing: `getUserMessage()` expected `"An unexpected error occurred"` but fn returns i18n key `"common.unexpectedError"`. Fix: updated 9 `expect().toBe()` assertions to match actual return. Source unchanged.
 
 ---
 
-> **[FIX-2026-02-13]** `Severity: Medium` — **Affected:** `src/components/journal/trade-form.tsx`, `src/components/journal/scaled-trade-form.tsx`, `src/app/[locale]/(app)/journal/new/page.tsx`
-> **Report:** "The replay date is from January and on create a new trade it is from today, February 13th"
-> **Fix:** The trade form used `new Date()` for default entry/exit dates instead of the account's effective date. Added `getCurrentAccount()` fetch to the new trade page, computed effective date via `getEffectiveDate(account)`, and threaded it as `defaultDate` prop through `NewTradeTabs` → `TradeForm` / `ScaledTradeForm`. Also updated the `max` attribute on date inputs to use the effective date instead of real today.
+> **[FIX-2026-02-13]** `Severity: Medium` — `trade-form.tsx`, `scaled-trade-form.tsx`, `journal/new/page.tsx`
+> Trade form used `new Date()` for default dates instead of account's effective date. Fix: fetch `getCurrentAccount()` in new trade page, compute `getEffectiveDate(account)`, thread as `defaultDate` prop through `NewTradeTabs` → `TradeForm`/`ScaledTradeForm`. Updated `max` on date inputs to use effective date.
 
 ---
 
-> **[FIX-2026-02-15]** `Severity: Low` — **Affected:** `/src/components/journal/scaled-trade-form.tsx`
-> **Report:** "Exit table headers misaligned compared to entry headers in scaled position form"
-> **Fix:** The exits section header used `grid-cols-[1fr_80px_90px_90px_100px_40px]` (fixed pixel widths) while the entries header and `InlineExecutionRow` both used `grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]` (fractional widths). Changed exits header to match: `grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]`.
+> **[FIX-2026-02-15]** `Severity: Low` — `scaled-trade-form.tsx`
+> Exit table headers misaligned vs entry headers. Exits used `grid-cols-[1fr_80px_90px_90px_100px_40px]` (fixed px); entries used `grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]` (fractional). Fix: exits header → `grid-cols-[4fr_2fr_3fr_2fr_3fr_1fr]`.
 
 ---
 
-> **[FIX-2026-02-15]** `Severity: Low` — **Affected:** `/src/components/journal/inline-execution-row.tsx`
-> **Report:** "Commission currency placeholder 'BRL' overlaps with input value in the commission column"
-> **Fix:** The input had `pl-5` (20px left padding) which was insufficient for 3-character currency codes like "BRL" positioned at `left-2` (8px). Increased to `pl-10` (40px) for adequate clearance. Also added `pointer-events-none` to the currency prefix span to prevent it from blocking input clicks.
+> **[FIX-2026-02-15]** `Severity: Low` — `inline-execution-row.tsx`
+> Commission currency prefix "BRL" at `left-2` (8px) overlapped input with `pl-5` (20px) padding. Fix: `pl-5` → `pl-10` (40px). Added `pointer-events-none` to currency prefix span.
 
 ---
 
-> **[FIX-2026-03-07]** `Severity: Medium` — **Affected:** `src/components/risk-simulation/risk-params-form.tsx`
-> **Report:** "When typing any number in the 'Saldo da Conta' input field, the cursor drags to the end of ',00', blocking the user from typing"
-> **Fix:** Replaced all currency `Field` usages with a new `CurrencyField` component that maintains local string state while focused and only formats on blur. See `~/.claude/post-mortems/react.md` for the general pattern (controlled input cursor jump on reformat).
+> **[FIX-2026-03-07]** `Severity: Medium` — `risk-params-form.tsx`
+> Cursor jumped to end of `,00` on any input in "Saldo da Conta" field — controlled input reformatting each keystroke. Fix: replaced `Field` with `CurrencyField` that maintains local string state while focused, formats only on blur.
 
 ---
 
-> **[FIX-2026-03-18]** `Severity: Medium` — **Affected:** `src/components/reports/weekly-report-card.tsx`, `src/components/reports/monthly-report-card.tsx`, `src/components/reports/mistake-cost-card.tsx`
-> **Report:** "Reports page components display monetary values without currency formatting — raw numbers like +428.34 instead of R$ 428,34 or $428.34"
-> **Fix:** Replaced all `.toFixed(2)` calls on monetary values (netPnl, grossPnl, totalFees, avgWin, avgLoss, bestTrade, worstTrade, daily/weekly/asset pnl, trade pnl, mistake costs) with `formatCurrencyWithSign()` for P&L values and `formatCurrency()` for absolute values, using the `useFormatting` hook. Removed manual `+`/`-` prefixes since `formatCurrencyWithSign` handles sign display. Left non-monetary `.toFixed()` calls (win rate, profit factor, R-multiples) unchanged.
+> **[FIX-2026-03-18]** `Severity: Medium` — `weekly-report-card.tsx`, `monthly-report-card.tsx`, `mistake-cost-card.tsx`
+> Monetary values showing raw numbers (`+428.34`) instead of formatted currency (`R$ 428,34`). Fix: replaced `.toFixed(2)` on monetary values with `formatCurrencyWithSign()` / `formatCurrency()` from `useFormatting` hook. Non-monetary `.toFixed()` (win rate, R-multiples) unchanged.
 
 ---
 
-> **[FIX-2026-03-19]** `Severity: Low` — **Affected:** `src/components/command-center/live-trading-status-panel.tsx`
-> **Report:** "Raw i18n key `riskSimulation.reasons.t1BaseRisk` displayed as text in Live Trading Status panel instead of translated string"
-> **Fix:** Imported `translateRiskReason` from `@/lib/risk-reason-i18n` and added a `tRisk = useTranslations("riskSimulation")` hook. Applied `translateRiskReason(tRisk, status.riskReason)` in both the stop-trading and active-trading branches where `status.riskReason` was rendered raw as a `subLabel`.
+> **[FIX-2026-03-19]** `Severity: Low` — `live-trading-status-panel.tsx`
+> Raw i18n key `riskSimulation.reasons.t1BaseRisk` displayed as text. Fix: imported `translateRiskReason` from `@/lib/risk-reason-i18n`; added `tRisk = useTranslations("riskSimulation")`; applied `translateRiskReason(tRisk, status.riskReason)` in both stop/active branches.
 
 ---
 
-> **[FIX-2026-03-19]** `Severity: Low` — **Affected:** `src/components/command-center/circuit-breaker-panel.tsx`
-> **Report:** "Circuit Breaker card shows `$` prefix instead of `R$` for all monetary values (P&L Diario, P&L Mensal, Meta, Limite Mensal, Risco Diario Restante)"
-> **Fix:** Removed the local `formatCurrency(value, currency = "$")` function and `currency` prop. Replaced with `useFormatting` hook's locale-aware `formatCurrency` which correctly resolves to `R$` for pt-BR locale. Removed all `currency` parameter references from `formatCurrency` calls throughout the component.
+> **[FIX-2026-03-19]** `Severity: Low` — `circuit-breaker-panel.tsx`
+> Shows `$` prefix instead of `R$` for all monetary values. Fix: removed local `formatCurrency(value, currency = "$")` fn and `currency` prop; replaced with `useFormatting` hook's locale-aware `formatCurrency`.
 
 ---
 
-## [BUG-2026-03-23] Analytics page crashes when clicking date filter ("This Month")
+## [BUG-2026-03-23] Analytics page crashes on date filter click
 
-**Date:** 2026-03-23
-**Severity:** High
-**Affected Area:** `src/components/analytics/analytics-content.tsx`
+**Severity:** High | **Affected:** `src/components/analytics/analytics-content.tsx`
 
-### Cause
-The React state variable `const [performance, setPerformance] = useState(...)` shadowed the global `window.performance` Web API. Inside the filter-change `useEffect`, the code called `performance.now()` to measure fetch timing. JavaScript resolved `performance` to the React state array (`PerformanceByGroup[]`) instead of the global Performance API, causing `TypeError: performance.now is not a function`.
+**Cause:** React state `const [performance, setPerformance] = useState(...)` shadowed `window.performance` Web API. Inside filter-change `useEffect`, `performance.now()` resolved to React state array → `TypeError: performance.now is not a function`. Error propagated to `src/app/error.tsx` which called `useTranslations()` outside `NextIntlClientProvider` → double crash masking root cause.
 
-The error propagated up to `src/app/error.tsx`, which itself called `useTranslations()` from next-intl. Because the error boundary rendered outside the `NextIntlClientProvider` context during the error recovery path, the error boundary also crashed with "Failed to call `useTranslations` because the context from `NextIntlClientProvider` was not found."
+**Effect:** Clicking any date filter preset crashed entire analytics page with no recovery.
 
-### Effect
-Clicking any date filter preset (e.g., "This Month", "This Week") crashed the entire analytics page with no recovery possible. The error boundary's own crash masked the real root cause, making it appear to be an i18n provider issue.
+**Fix:**
 
-### Solution
-1. Renamed the state variable from `performance` to `performanceData` to eliminate the shadowing.
-2. Changed `performance.now()` calls to `globalThis.performance.now()` for explicit reference to the Web Performance API, preventing any future shadowing.
+1. Renamed state variable `performance` → `performanceData`.
+2. `performance.now()` → `globalThis.performance.now()` for explicit Web API reference.
 
-### Prevention
-- Avoid naming state variables after global browser APIs (`performance`, `location`, `history`, `navigator`, `screen`).
-- Use `globalThis.performance` instead of bare `performance` when accessing the Web Performance API in components that may have variable name collisions.
-- See `~/.claude/post-mortems/javascript.md` for the general variable shadowing rule.
+**Prevention:** Avoid naming state variables after global browser APIs (`performance`, `location`, `history`, `navigator`, `screen`). Use `globalThis.performance` when accessing Web Performance API in components with possible name collisions.
 
-### Related Files
-- `src/components/analytics/analytics-content.tsx`
-- `src/app/error.tsx`
+**Related:** `src/components/analytics/analytics-content.tsx`, `src/app/error.tsx`
 
 ---
 
-> **[FIX-2026-03-23]** `Severity: Medium` -- **Affected:** `src/components/analytics/analytics-content.tsx`, `src/lib/cache/analytics-cache.ts`
-> **Report:** "Analytics client cache resets on every page navigation -- switching from /analytics to /journal and back always re-fetches from DB"
-> **Fix:** Replaced `useRef(new Map())` in-component cache with a module-level singleton cache (`src/lib/cache/analytics-cache.ts`) that survives component unmount/mount cycles. The module cache has 5-minute TTL auto-expiry. Cache is cleared when SSR delivers fresh `initialDashboard` props (triggered by `revalidatePath` after trade/tag/strategy mutations). Server-side invalidation flow: mutation -> `invalidateTradeData()` -> `revalidatePath("/analytics")` -> next SSR is fresh -> reset effect fires -> `clearAnalyticsCache()`.
+> **[FIX-2026-03-23]** `Severity: Medium` — `analytics-content.tsx`, `src/lib/cache/analytics-cache.ts`
+> Analytics cache reset on every page navigation. Fix: replaced `useRef(new Map())` in-component cache with module-level singleton (`analytics-cache.ts`) with 5-min TTL auto-expiry. Cache cleared when SSR delivers fresh `initialDashboard` (via `revalidatePath` after trade/tag/strategy mutations). Flow: mutation → `invalidateTradeData()` → `revalidatePath("/analytics")` → next SSR fresh → reset effect → `clearAnalyticsCache()`.
 
 ---
 
-> **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/validations/auth-schemas.test.ts`
-> **Report:** Unit test "should reject a code shorter than 6 digits" was failing because the assertion regex `/6/i` expected the digit `6` in the Zod error message.
-> **Fix:** The schema uses an i18n key `"validation.auth.codeLength"` as the error message (not a human-readable string like "must be 6 characters"). Updated the regex to `/codelength/i` so it matches the actual i18n key produced by `z.string().length(6, "validation.auth.codeLength")`.
+> **[FIX-2026-04-21]** `Severity: Low` — `src/__tests__/lib/validations/auth-schemas.test.ts`
+> Test "should reject code shorter than 6 digits" failing — regex `/6/i` expected digit `6` in error message, but schema uses i18n key `"validation.auth.codeLength"`. Fix: regex `/6/i` → `/codelength/i`.
 
 ---
 
-> **[FIX-2026-04-21]** `Severity: Low` — **Affected:** `src/__tests__/lib/risk-simulation.test.ts`
-> **Report:** 6 unit tests failing — `riskReason` assertions used human-readable strings (`"Base risk"`, `"Reduced"`, `"Win bonus"`, `"T1 base risk"`, `"Recovery #1"`, `"Gain reinvest"`) but the simulation engine was updated to emit i18n keys (`"riskSimulation.reasons.baseRisk"`, `"riskSimulation.reasons.reducedLoss|..."`, etc.).
-> **Fix:** Updated all 6 `toContain(...)` assertions in the test file to match the actual i18n key prefixes the engine produces. Source code (`risk-simulation.ts`, `risk-simulation-advanced.ts`) unchanged.
+> **[FIX-2026-04-21]** `Severity: Low` — `src/__tests__/lib/risk-simulation.test.ts`
+> 6 tests failing — `riskReason` assertions used human-readable strings but engine emits i18n keys (`"riskSimulation.reasons.baseRisk"`, etc.). Fix: updated 6 `toContain()` assertions to match i18n key prefixes. Source unchanged.
 
 ---
 
 ## [BUG-2026-04-27] Playwright sidebar navigation tests fail — link clicks don't update URL
 
-**Date:** 2026-04-27
-**Severity:** High
-**Affected Area:** `e2e/tests/navigation.spec.ts` — sidebar navigation tests (Journal, Playbook, Reports, Monthly, Settings)
+**Severity:** High | **Affected:** `e2e/tests/navigation.spec.ts`
 
-### Cause
-Three compounding issues:
+**Cause (3 compounding issues):**
 
-**1. `"use server"` violation in `filter-presets.ts`:**
-`src/app/actions/filter-presets.ts` (a `"use server"` file) exported a Zod schema object (`savedFilterStateSchema`) alongside async server action functions. Next.js disallows non-async-function exports from `"use server"` files. Any route importing this file triggered a server error during RSC render.
+1. **`"use server"` violation:** `src/app/actions/filter-presets.ts` exported Zod schema object alongside async server actions → Next.js disallows non-async-function exports → any route importing it triggered RSC render error.
+2. **Playwright hydration timing:** `page.goto(url, { waitUntil: "load" })` fires before React hydration completes. App Router `<Link>` requires React hydrated before `onClick` intercepts → click fell through to native `<a>` or ignored → URL never updated.
+3. **`spawn EBADF` in dev server:** `DevServer.getStaticPathsWorker` fails in environments with closed file descriptors → RSC navigation requests return HTTP 500.
 
-**2. React hydration timing in Playwright tests:**
-`page.goto(url, { waitUntil: "load" })` fires when the browser `load` event fires, but React hydration (attaching event handlers, mounting client components) completes AFTER the `load` event in dev mode. Next.js App Router's Link component requires React to be hydrated before its `onClick` intercepts the click and calls `router.push()`. Clicking before hydration causes the click to either fall through to native `<a>` behavior or be ignored, leaving the URL unchanged. `POST /route` from the RSC fetch may return HTTP 200 but the URL never updates because the router's `history.pushState` was never called.
+**Effect:** 5–8 sidebar navigation tests fail consistently. `toHaveURL(/journal/)` times out. URL stays at source page.
 
-**3. `spawn EBADF` in dev server static path workers:**
-In environments where the parent shell has closed file descriptors (e.g., automation shells), `DevServer.getStaticPathsWorker` fails with `spawn EBADF` when forking child processes. This causes all RSC navigation requests to return HTTP 500, breaking navigation for all routes.
+**Fix:**
 
-### Effect
-- 5-8 sidebar navigation tests fail consistently: Journal, Playbook, Reports, Monthly, Settings
-- `toHaveURL(/journal/)` times out — URL stays at source page
-- Server logs show `spawn EBADF` errors OR `POST /en/journal 200` (success) but URL never updates
-- Dashboard and Analytics tests pass intermittently because they ran before the EBADF cascade or before hydration window
+1. Created `src/lib/filter-preset-schema.ts` (plain module, no directive) with Zod schema; removed from `filter-presets.ts`; updated consumers.
+2. Added `await page.waitForLoadState("networkidle")` after each `page.goto()` in 7 sidebar tests.
+3. Added `experimental.workerThreads: true` to `next.config.ts`.
 
-### Solution
-**Fix 1** — Move Zod schema out of `"use server"` file:
-- Created `src/lib/filter-preset-schema.ts` (plain module, no directive) with the Zod schema and derived types
-- Removed schema from `src/app/actions/filter-presets.ts` — now imports from the shared module
-- Updated `src/components/analytics/preset-selector.tsx` and `src/components/analytics/filter-panel.tsx` to import from the new shared module
+**Prevention:** Never export non-async values from `"use server"` files. Shared schemas → plain modules. In Playwright for App Router: always `waitForLoadState("networkidle")` before clicking `<Link>`. Set `experimental.workerThreads: true` in automated/shell-less environments.
 
-**Fix 2** — Wait for React hydration before clicking:
-- Added `await page.waitForLoadState("networkidle")` after each `page.goto()` in the 7 sidebar navigation tests
-- `networkidle` waits until no network requests are active for 500ms, which reliably indicates React hydration is complete
-
-**Fix 3** — Use worker threads instead of fork():
-- Added `experimental.workerThreads: true` to `next.config.ts`
-- Worker threads share the parent's file descriptors and bypass `spawn()`, avoiding EBADF
-
-### Prevention
-- Never export non-async values from `"use server"` files. Shared schemas go in plain modules.
-- In Playwright tests for Next.js App Router: always `waitForLoadState("networkidle")` before clicking `<Link>` elements.
-- Set `experimental.workerThreads: true` in projects that run in automated/shell-less environments.
-- See general lessons in `~/.claude/post-mortems/nextjs.md`.
-
-### Related Files
-- `src/app/actions/filter-presets.ts`
-- `src/lib/filter-preset-schema.ts` (created)
-- `src/components/analytics/preset-selector.tsx`
-- `src/components/analytics/filter-panel.tsx`
-- `src/__tests__/lib/filter-presets.test.ts`
-- `e2e/tests/navigation.spec.ts`
-- `next.config.ts`
+**Related:** `src/app/actions/filter-presets.ts`, `src/lib/filter-preset-schema.ts` (created), `src/components/analytics/preset-selector.tsx`, `src/components/analytics/filter-panel.tsx`, `e2e/tests/navigation.spec.ts`, `next.config.ts`

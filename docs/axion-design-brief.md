@@ -2,294 +2,149 @@
 
 ## 1. Brand Context
 
-**Product:** Axion — a premium trading journal platform for Brazilian and international traders.
-**Company:** Bravo (parent company, umbrella brand).
-**Tagline:** "Your trading source of truth"
-**Name origin:** From "axiom" (fundamental truth) + axion (theoretical physics particle — something invisible that explains everything). The first two letters "Ax" are central to the brand identity.
+**Product:** Axion — premium trading journal for Brazilian/international traders.
+**Company:** Bravo (parent). **Tagline:** "Your trading source of truth"
+**Name origin:** "axiom" (fundamental truth) + axion (physics particle). "Ax" is central to brand identity.
 
-**Brand personality:**
-- Scientific, precise, truth-seeking
-- Premium but not flashy — quiet confidence
-- Minimalist, geometric, modern
-- Cold and sharp (contrasts with Bravo's warm gold energy)
-- Think: Bloomberg terminal meets luxury Swiss watch
+**Personality:** Scientific, precise, truth-seeking | Premium, quiet confidence | Minimalist, geometric, modern | Cold/sharp (contrasts Bravo's warm gold). Think: Bloomberg terminal meets luxury Swiss watch.
 
-**What Axion is NOT:**
-- Not aggressive/warrior/military
-- Not playful/casual/startup-bubbly
-- Not crypto/Web3 aesthetic
-- Not a generic SaaS with rounded corners and gradients
+**NOT:** aggressive/military | playful/startup-bubbly | crypto/Web3 | generic SaaS rounded-corners
 
 ---
 
 ## 2. Color Palette
 
-All assets must use ONLY these colors. No gradients unless specified. Live token values live in `src/app/globals.css` under `[data-brand="axion"]` (dark) and `[data-brand="axion"][data-theme="light"]` (light); see `docs/theming.md` for the full token system.
+All assets: ONLY these colors. No gradients unless specified. Live tokens in `src/app/globals.css` under `[data-brand="axion"]` (dark) and `[data-brand="axion"][data-theme="light"]`; see `docs/theming.md`.
 
-| Role | Color | Hex | Usage |
-|------|-------|-----|-------|
-| Violet Plasma (primary) | Deep violet | #8B5CF6 | Primary mark color, interactive elements |
-| Violet Deep | Darker violet | #7C3AED | Hover states, depth |
-| Violet Glow | Light violet | #A78BFA | Highlights, glows, light accents |
-| Bravo Gold (heritage) | Metallic gold | #D4AF37 | Secondary accent, "by Bravo" elements, premium badges |
-| Background Dark | Near-black | #0C0E0F | Primary dark background (`--color-bg-100` axion) |
-| Surface Dark | Dark slate | #171A1D | Card/surface background (`--color-bg-200` axion) |
-| Border Dark | Navy edge | #252A33 | Subtle borders and structure |
-| Text Primary | Crisp white | #EFF1F4 | Primary text on dark (`--color-txt-100` axion) |
-| Text Muted | Silver gray | #A5AFBE | Secondary text (`--color-txt-200` axion); use #7A8592 for tertiary (`--color-txt-300`) |
-| Pure White | White | #FFFFFF | Wordmark on dark, primary-foreground |
-| Pure Black | Black | #000000 | Wordmark on light backgrounds |
+| Role                    | Color         | Hex     | Usage                                                    |
+| ----------------------- | ------------- | ------- | -------------------------------------------------------- |
+| Violet Plasma (primary) | Deep violet   | #8B5CF6 | Primary mark, interactive elements                       |
+| Violet Deep             | Darker violet | #7C3AED | Hover states, depth                                      |
+| Violet Glow             | Light violet  | #A78BFA | Highlights, glows, accents                               |
+| Bravo Gold (heritage)   | Metallic gold | #D4AF37 | Secondary accent, "by Bravo" elements                    |
+| Background Dark         | Near-black    | #0C0E0F | Primary dark bg (`--color-bg-100`)                       |
+| Surface Dark            | Dark slate    | #171A1D | Card/surface bg (`--color-bg-200`)                       |
+| Border Dark             | Navy edge     | #252A33 | Subtle borders                                           |
+| Text Primary            | Crisp white   | #EFF1F4 | Primary text on dark (`--color-txt-100`)                 |
+| Text Muted              | Silver gray   | #A5AFBE | Secondary text (`--color-txt-200`); #7A8592 for tertiary |
+| Pure White              | White         | #FFFFFF | Wordmark on dark                                         |
+| Pure Black              | Black         | #000000 | Wordmark on light                                        |
 
----
+### Light Mode
 
-### Light Mode (Axion brand)
-
-Stone-white paper with deeper violet ink — supported but secondary to dark mode.
-
-| Role | Hex | Token |
-|------|-----|-------|
-| Background | #F5F4F2 | `--color-bg-100` |
-| Surface | #E6E3DD | `--color-bg-200` |
-| Border / muted | #CFCBC4 | `--color-bg-300` |
+| Role         | Hex     | Token             |
+| ------------ | ------- | ----------------- |
+| Background   | #F5F4F2 | `--color-bg-100`  |
+| Surface      | #E6E3DD | `--color-bg-200`  |
+| Border       | #CFCBC4 | `--color-bg-300`  |
 | Text Primary | #1A1818 | `--color-txt-100` |
-| Text Muted | #4A4744 | `--color-txt-200` |
-| Violet (primary) | #7C3AED | `--color-acc-100` |
-| Gold (heritage) | #B8941F | `--color-acc-200` |
+| Text Muted   | #4A4744 | `--color-txt-200` |
+| Violet       | #7C3AED | `--color-acc-100` |
+| Gold         | #B8941F | `--color-acc-200` |
 
 ---
 
-## 3. Logo Mark Concept — "The Ax"
+## 3. Logo Mark — "The Ax"
 
-**IMPORTANT:** The logo mark is built around "Ax" — the first two letters of Axion. This is NOT a standalone "X" shape (which would conflict with Twitter/X's branding). The mark must clearly reference "Ax" through one of these approaches:
+Mark built around "Ax" (first two letters). NOT standalone "X" (conflicts with Twitter/X).
 
-### Primary Direction: A+X Ligature
-The letters A and X sharing a common stroke — the right leg of A becomes the left leg of X. A typographic monogram constructed with geometric precision. Not an illustration, not a drawing — an engineered letterform.
+**Primary:** A+X ligature — A and X share common stroke; right leg of A = left leg of X. Typographic monogram, geometric precision. Not an illustration — an engineered letterform.
 
-### Alternative Directions (explore alongside the primary):
+**Alternates:** (1) Abstract axe head — minimal geometric blade, no handle, tilted parallelogram with sharp vertex. (2) Minimal axe silhouette — ultra-simplified side profile, one continuous outline. (3) Angular A with strike — A with crossbar extending like axe blade. (4) AX negative space — blade formed by negative space between two forms.
 
-1. **Abstract Axe Head** — A minimal geometric blade shape. Angular, sharp, no handle. Just the cutting wedge as a single geometric form. An axe is a tool of precision — one clean strike. Think: a tilted parallelogram with one sharp vertex.
+**Requirements:** Flat vector, single color, no gradients/shadows/3D | Geometric/angular, no curves | Legible at 16×16px | Premium at 512×512px | Swiss design influence | Must NOT resemble Twitter/X
 
-2. **Minimal Axe Silhouette** — Ultra-simplified side profile of an axe. One continuous geometric outline. No detail, no texture, just the iconic shape reduced to its essence. Like a Scandinavian premium tool brand mark.
-
-3. **Angular A with Strike** — The letter A constructed with sharp geometric lines, where the crossbar extends outward like an axe blade or a decisive strike mark.
-
-4. **AX Negative Space** — The shape of an axe blade formed by negative space between two geometric forms. You see the blade in what's NOT there.
-
-### Mark Requirements:
-- Flat vector, single color, no gradients, no shadows, no 3D
-- Geometric and angular — no curves, no organic shapes
-- Must be legible and recognizable at 16x16px (favicon size)
-- Must look premium at 512x512px
-- Swiss design influence — engineered, not drawn
-- Must NOT look like Twitter/X's logo
-
-### Mark Variations Needed:
-1. Violet (#8B5CF6) mark on transparent background
-2. White (#FFFFFF) mark on transparent background
-3. Black (#000000) mark on transparent background
-4. Mark on near-black (#08090A) square background (for app icon)
-
-### Mark Sizes:
-SVG (vector), 512x512 PNG, 192x192 PNG, 64x64 PNG, 32x32 PNG, 16x16 PNG
+**Variations:** Violet (#8B5CF6) | White | Black | Mark on near-black (#08090A) square (app icon)
+**Sizes:** SVG, 512/192/64/32/16px PNG
 
 ---
 
 ## 4. Typography & Wordmark
 
-**Wordmark font characteristics:**
-- Clean geometric sans-serif (reference: Inter, Public Sans, DM Sans, or Eurostile)
-- Medium to semi-bold weight
-- Wide letter-spacing (tracking 0.15em–0.2em)
-- All uppercase: A X I O N
-- No decorative serifs, no rounded terminals
+**Font:** Clean geometric sans-serif (Inter/Public Sans/DM Sans/Eurostile) | Medium–semi-bold | Tracking 0.15–0.2em | All uppercase: A X I O N | No serifs, no rounded terminals.
 
-**The "AX" in the wordmark** must integrate with the mark:
-- If using the A+X ligature mark: the first two letters of the wordmark ARE the mark, seamlessly flowing into "ION"
-- If using an abstract/axe mark: the standalone mark sits to the left, and the wordmark spells "AXION" in full, with the X subtly echoing the mark's proportions
-- A viewer should read "AXION" naturally — never "A[logo]ION" or "[symbol] ION"
+**AX integration:** If A+X ligature: first two letters ARE the mark, flowing into "ION". If abstract mark: standalone mark left, wordmark spells "AXION" full.
 
-**Wordmark Variations Needed:**
-1. White wordmark on transparent (for dark backgrounds) — PRIMARY
-2. Black wordmark on transparent (for light backgrounds)
-3. Violet (#8B5CF6) wordmark on transparent
-4. Gold (#D4AF37) wordmark on transparent (for Bravo-context usage)
+**Variations needed:** White on transparent (PRIMARY) | Black on transparent | Violet (#8B5CF6) | Gold (#D4AF37)
 
 ---
 
-## 5. Full Lockup (Mark + Wordmark)
+## 5. Full Lockup
 
-**Layout:** Horizontal lockup — mark on the left, wordmark on the right, vertically centered.
-**Spacing:** Clear space between mark and wordmark = width of the letter "I" in AXION.
-**Note:** If the A+X ligature direction is chosen, the lockup may be the wordmark itself (where the AX portion IS the mark). In that case, no separate icon-left layout is needed — the wordmark is the lockup.
+Horizontal: mark left, wordmark right, vertically centered. Clear space between = width of "I" in AXION.
 
-**Variations Needed:**
-1. Violet (#8B5CF6) mark + white (#FFFFFF) wordmark on transparent — PRIMARY dark mode
-2. Violet (#8B5CF6) mark + black (#000000) wordmark on transparent — PRIMARY light mode
-3. All white on transparent — monochrome dark mode
-4. All black on transparent — monochrome light mode
+**Variations:** Violet mark + white wordmark on transparent (PRIMARY dark) | Violet + black (PRIMARY light) | All white | All black
 
-**Size Constraints:**
-- Sidebar collapsed: only the mark shows (32x32)
-- Sidebar expanded: full lockup at ~140x40
-- Hero/landing page: full lockup at ~300x80
-
-**Include:** A safe zone diagram showing minimum clear space around the lockup (equal to mark height on all sides).
+**Sizes:** Collapsed sidebar: mark only (32×32) | Expanded sidebar: ~140×40 | Hero: ~300×80
 
 ---
 
 ## 6. App Icon / Favicon
 
-**The Axion mark centered on a filled background.**
+Near-black (#08090A) rounded-square bg | Violet mark centered (~55–60% of icon area) | Optional: very subtle violet glow (max 8% opacity).
 
-**Specifications:**
-- Near-black (#08090A) rounded-square background (iOS app icon radius)
-- Violet (#8B5CF6) mark centered
-- Mark occupies approximately 55-60% of the icon area
-- Optional: very subtle violet ambient glow behind the mark (max 8% opacity) — only if it improves the look, skip if it makes it feel cheap
-- Must pass the "squint test" — recognizable when blurred or tiny
-
-**Variations:**
-1. Square with rounded corners — 1024x1024 (master), 512x512, 192x192
-2. Circle crop variant at 256x256 (for avatars, profile pictures)
-3. Favicon 32x32 (mark only, transparent background, white mark)
-4. Favicon 16x16 (mark only, transparent background, white mark — verify readability)
-5. PWA icons — 192x192, 512x512
+**Variations:** Square rounded — 1024/512/192px | Circle 256px | Favicon 32px (transparent, white mark) | Favicon 16px | PWA 192/512px
 
 ---
 
 ## 7. "Powered by Bravo" Badge
 
-**A small horizontal badge for footer usage.**
+Footer badge. **Options:** (A) "by" muted gray + "BRAVO" gold spaced uppercase | (B) Small 4-point diamond star gold + "BRAVO" gold.
 
-**Layout options (generate both):**
-- A. Text only: "by" in muted gray (#8C96A5) + "BRAVO" in gold (#D4AF37), spaced uppercase
-- B. Small 4-point diamond star in gold + "BRAVO" in gold, horizontally aligned
-
-**Requirements:**
-- This sits in the app footer — subtle maker's mark, not a co-brand
-- Display height: approximately 16-20px in actual usage
-- Must work on both dark (#08090A) and light (#F5F4F2) backgrounds
-
-**Variations:**
-1. Gold on transparent (for dark backgrounds)
-2. Dark gray on transparent (for light backgrounds)
-3. 50% opacity muted variant on transparent (unobtrusive footer)
+**Variations:** Gold on transparent (dark bgs) | Dark gray on transparent (light bgs) | 50% opacity muted variant
 
 ---
 
 ## 8. Social / OG Image
 
-**Open Graph preview image for link sharing (Twitter/X, LinkedIn, Slack, iMessage).**
-
-**Specifications:**
-- Exactly 1200x630 pixels
-- Near-black (#08090A) background
-- Very subtle geometric dot grid pattern at 5% opacity maximum (like faint graph paper)
-- Center: Axion full lockup (violet mark + white wordmark) at ~40% of image width
-- Below lockup (24px gap): "Your trading source of truth" in muted gray (#8C96A5), regular weight, smaller size
-- Bottom-right corner: "by Bravo" badge in gold (#D4AF37) at small size
-- Generous negative space on all sides — the image should breathe
-- No busy backgrounds, no illustrations, no stock photography
+1200×630px | Near-black (#08090A) bg | Subtle dot grid at max 5% opacity | Center: full lockup (~40% width) | Below: tagline in muted gray (#8C96A5) | Bottom-right: "by Bravo" badge gold | Generous negative space.
 
 ---
 
-## 9. Brand Pattern / Texture (Optional, Low Priority)
+## 9. Brand Pattern (Optional, Low Priority)
 
-**A subtle geometric pattern for backgrounds, loading screens, and marketing materials.**
+Thin intersecting lines referencing chart grids + Ax geometry, OR dot grid. White at 3–5% opacity on transparent. Seamless tile, ~40–60px grid spacing, 1px line weight.
 
-**Direction:**
-- Thin intersecting lines referencing chart grids and the Ax mark geometry
-- Or: subtle dot grid (like graph paper — scientific, precise)
-- Lines in white at 3-5% opacity on transparent background
-- Must tile seamlessly in both directions
-- Grid spacing: approximately 40-60px between intersections
-- Line weight: 1px or thinner
-
-**Deliver:**
-1. Single tile at 200x200px, PNG with transparency
-2. Tiled preview on near-black (#08090A) at 1200x800
-3. Tiled preview on light (#F5F4F2) (lines in black at 3-5% opacity)
+**Deliver:** 200×200px tile | Tiled preview on dark 1200×800 | Tiled preview on light
 
 ---
 
 ## 10. Style Rules
 
-### DO:
-- Keep everything geometric and angular
-- Use flat colors — no gradients except subtle ambient glows where specified
-- Maintain generous whitespace / negative space
-- Every element should feel precise and intentional
-- The mark should look like it was engineered, not drawn
-- Think Dieter Rams, Swiss design, Scandinavian tool brands
+**DO:** Geometric/angular | Flat colors | Generous negative space | Precise/intentional | Engineered look (Dieter Rams, Swiss, Scandinavian)
 
-### DON'T:
-- No 3D effects, drop shadows, or bevels on mark or wordmark
-- No rounded/bubbly shapes
-- No literal trading imagery (candles, charts, bulls, bears) in the logo
-- No gradients in the mark or wordmark
-- No more than 2 colors in any single asset
-- No textures or patterns ON the mark itself
-- No similarity to Twitter/X's logo — the mark is "Ax", not "X"
-- No cursive, script, or decorative typefaces
+**DON'T:** 3D/shadows/bevels | Rounded shapes | Literal trading imagery | Gradients in mark/wordmark | >2 colors per asset | Twitter/X resemblance | Cursive/script typefaces
 
 ---
 
-## 11. File Delivery Format
+## 11. File Delivery
 
-For each asset:
-- **SVG** (vector, scalable) — primary deliverable
-- **PNG** with transparent background — all specified sizes
-- **PNG** on solid backgrounds where specified
-- **ICO** for favicon (multi-resolution: 16, 32, 48)
+Per asset: SVG (primary) | PNG transparent (all specified sizes) | PNG on solid bgs where specified | ICO for favicon (16/32/48px)
 
 ---
 
-## 12. Relationship to Existing Bravo Brand
+## 12. Bravo Relationship
 
-The Bravo parent brand uses:
-- A geometric/low-poly golden lion as its mark
-- Metallic gold (#D4AF37) as primary color
-- Navy slate backgrounds
-- No secondary symbol or icon
-- Spaced uppercase wordmark "B R A V O" in gold
+**Bravo brand:** Geometric gold lion mark | Gold (#D4AF37) primary | Navy slate bgs | Uppercase "B R A V O" wordmark in gold.
 
-**How Axion connects to Bravo:**
-- Same construction language: geometric, angular, precision-engineered forms
-- Same letter-spacing philosophy in wordmarks (wide, uppercase)
-- Same premium tier and attention to negative space
-- Gold appears in Axion as heritage accent (never primary, always supporting)
+**Shared:** Same construction language (geometric, angular, precision) | Wide uppercase wordmarks | Premium tier, negative space | Gold appears as heritage accent (never primary) in Axion.
 
-**How Axion differs from Bravo:**
-- Bravo is warm (gold). Axion is cold (violet).
-- Bravo uses an illustrative mark (lion). Axion uses a typographic/abstract mark (Ax).
-- Bravo feels authoritative and established. Axion feels scientific and precise.
-- They share the same skeleton (geometry, spacing) but different skin.
+**Differs:** Bravo = warm (gold); Axion = cold (violet) | Bravo = illustrative mark; Axion = typographic/abstract | Bravo = authoritative; Axion = scientific/precise.
 
 ---
 
 ## 13. Evaluation Criteria
 
-A successful Axion visual identity will:
-
-1. Be instantly recognizable at favicon size (16x16)
-2. Read as "Ax" — not as Twitter's "X", not as a generic symbol
-3. Feel premium and scientific — not generic SaaS
-4. Work flawlessly on both near-black and white backgrounds
-5. Look like it belongs next to Bloomberg, Linear, or Vercel — not next to Canva templates
-6. Connect subtly to Bravo without depending on it
-7. Make a Brazilian trader think "this is serious software" within 2 seconds
-8. Make Tradezella, Trademetria, and Edgewonk look dated by comparison
+Successful identity: (1) Recognizable at 16×16px | (2) Reads as "Ax" not Twitter "X" | (3) Feels premium/scientific | (4) Works on near-black and white | (5) Belongs next to Bloomberg/Linear/Vercel | (6) Connects subtly to Bravo | (7) Brazilian trader thinks "serious software" in 2s | (8) Makes Tradezella/Trademetria/Edgewonk look dated.
 
 ---
 
 ## 14. Production Order
 
-Generate assets in this sequence — each step depends on the previous:
-
-1. **Mark first** — this is the foundation. Get 5 variations. Approve before proceeding.
-2. **Wordmark second** — integrates the chosen mark into "AXION" lettering.
-3. **Full lockup third** — combines mark + wordmark.
-4. **App icon / favicon fourth** — uses approved mark.
-5. **"Powered by Bravo" badge fifth** — standalone, quick.
-6. **OG social image sixth** — uses approved lockup.
-7. **Brand pattern last** — bonus, lowest priority.
+1. Mark → 5 variations, approve before proceeding
+2. Wordmark → integrates chosen mark into "AXION"
+3. Full lockup → mark + wordmark
+4. App icon / favicon → uses approved mark
+5. "Powered by Bravo" badge → standalone
+6. OG social image → uses approved lockup
+7. Brand pattern → bonus, lowest priority

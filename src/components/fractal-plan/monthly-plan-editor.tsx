@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CurrencyInput } from "@/components/ui/currency-input"
@@ -30,6 +31,7 @@ const MonthlyPlanEditor = ({
 }: MonthlyPlanEditorProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const t = useTranslations("plan")
 	const [isPending, startTransition] = useTransition()
 
 	const [goalCents, setGoalCents] = useState<number | null>(
@@ -50,7 +52,7 @@ const MonthlyPlanEditor = ({
 			monthlyGoalCents !== undefined &&
 			(!Number.isFinite(monthlyGoalCents) || monthlyGoalCents < 0)
 		) {
-			showToast("error", "Goal must be a non-negative number.")
+			showToast("error", t("editors.goalError"))
 			return
 		}
 
@@ -63,10 +65,10 @@ const MonthlyPlanEditor = ({
 				overrideRiskProfileId: riskProfileId,
 			})
 			if (result.status === "success") {
-				showToast("success", "Monthly plan updated")
+				showToast("success", t("editors.monthly.saveSuccess"))
 				router.refresh()
 			} else {
-				showToast("error", result.message || "Save failed")
+				showToast("error", result.message || t("editors.saveFailed"))
 			}
 		})
 	}
@@ -81,7 +83,7 @@ const MonthlyPlanEditor = ({
 		>
 			<div>
 				<Label id="lbl-month-risk-profile" htmlFor="month-risk-profile">
-					Risk profile (override · cascades from year if unset)
+					{t("editors.monthly.riskProfileLabel")}
 				</Label>
 				<RiskProfilePicker
 					id="month-risk-profile"
@@ -92,7 +94,7 @@ const MonthlyPlanEditor = ({
 			</div>
 			<div>
 				<Label id="lbl-month-goal" htmlFor="month-goal">
-					Monthly goal (BRL)
+					{t("editors.monthly.goalLabel")}
 				</Label>
 				<CurrencyInput
 					id="month-goal"
@@ -104,26 +106,26 @@ const MonthlyPlanEditor = ({
 			</div>
 			<div>
 				<Label id="lbl-month-intent" htmlFor="month-intent">
-					Intent / focus
+					{t("editors.monthly.intentLabel")}
 				</Label>
 				<Textarea
 					id="month-intent"
 					rows={3}
 					value={intentNotes}
 					onChange={(e) => setIntentNotes(e.target.value)}
-					placeholder="What's the theme of this month? Specific playbooks to pressure-test?"
+					placeholder={t("editors.monthly.intentPlaceholder")}
 				/>
 			</div>
 			<div>
 				<Label id="lbl-month-postmortem" htmlFor="month-postmortem">
-					Post-mortem
+					{t("editors.monthly.postMortemLabel")}
 				</Label>
 				<Textarea
 					id="month-postmortem"
 					rows={3}
 					value={postMortemNotes}
 					onChange={(e) => setPostMortemNotes(e.target.value)}
-					placeholder="End-of-month review: what worked, what to adjust next month..."
+					placeholder={t("editors.monthly.postMortemPlaceholder")}
 				/>
 			</div>
 			<div className="flex justify-end">
@@ -133,7 +135,7 @@ const MonthlyPlanEditor = ({
 					) : (
 						<Save className="mr-s-200 h-4 w-4" />
 					)}
-					Save
+					{t("editors.save")}
 				</Button>
 			</div>
 		</form>

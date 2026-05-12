@@ -83,13 +83,17 @@ const cellKey = (xVal: number, yVal: number): string => `${xVal}::${yVal}`
 const getMetricValue = (run: OptimizationRun, metric: HeatmapMetric): number =>
 	run.summary[metric]
 
-/** Get a string value at a dot-path (for enum params like stop.initial.type) */
+/** Get a string value at a dot-path (for enum params like stop.initial.type).
+ * Returns "" when the path doesn't resolve — callers treat empty strings as
+ * "no value" (a Set ignores it as a distinct value; dropdowns get a blank default).
+ * The previous sentinel was the literal word "undefined", which leaked into UI dropdowns.
+ */
 const getNestedStringValue = (obj: unknown, path: string): string => {
 	const keys = path.split(".")
 	let current: unknown = obj
 	for (const key of keys) {
 		if (current == null || typeof current !== "object") {
-			return "undefined"
+			return ""
 		}
 		current = (current as Record<string, unknown>)[key]
 	}

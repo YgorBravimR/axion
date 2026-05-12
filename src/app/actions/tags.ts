@@ -27,13 +27,11 @@ const createTagSchema = z.object({
 	description: z.string().max(500).optional(),
 })
 
-type CreateTagInput = z.infer<typeof createTagSchema>
-
 /**
  * Create a new tag (user-level, shared across all accounts)
  */
 export const createTag = async (
-	input: CreateTagInput
+	input: z.infer<typeof createTagSchema>
 ): Promise<ActionResponse<Tag>> => {
 	const t = await getTranslations("journal")
 	try {
@@ -94,7 +92,7 @@ export const createTag = async (
  */
 export const updateTag = async (
 	id: string,
-	input: Partial<CreateTagInput>
+	input: Partial<z.infer<typeof createTagSchema>>
 ): Promise<ActionResponse<Tag>> => {
 	const t = await getTranslations("journal")
 	try {

@@ -1,0 +1,92 @@
+name: Journey E2E
+
+# Post-merge regression catcher for the zero-to-hero journey suite.
+# Runs against the shared staging Postgres. Pre/post cleanup is handled
+# by `e2e/global.teardown.ts` (wired as both globalSetup and
+# globalTeardown in `playwright.config.ts`), which scrubs all rows
+# created by the Bravo persona before and after the chain.
+#
+# Triggers:
+#   - push to main (post-merge): the full chain runs, red workflow on
+#     failure signals a regression slipped through PR review.
+#   - workflow_dispatch: manual trigger for one-off staging-DB runs.
+#
+# Required GitHub secrets:
+#   - JOURNEY_DATABASE_URL    Staging Postgres (Neon) connection string.
+#   - JOURNEY_AUTH_SECRET     Random 32+ char string for NextAuth JWT signing.
+#   - JOURNEY_ENCRYPTION_KEY  64-char hex string (32 random bytes). Must match
+#                             the key used to encrypt any seed rows the chain
+#                             reads back; a fresh isolated key works because
+#                             the chain creates all its own data after the
+#                             pre-cleanup nukes prior Bravo rows.
+#
+# See docs/backlog.md for the rationale behind option A (shared staging
+# DB) over option B (per-PR Neon branch). Pre-cleanup makes A safe.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: journey-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      DATABASE_URL: ${{ secrets.JOURNEY_DATABASE_URL }}
+      AUTH_SECRET: ${{ secrets.JOURNEY_AUTH_SECRET }}
+      AUTH_TRUST_HOST: "true"
+      ENCRYPTION_MASTER_KEY: ${{ secrets.JOURNEY_ENCRYPTION_KEY }}
+      PLAYWRIGHT_BASE_URL: "http://localhost:3003"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run journey chain (CI profile, all stages)
+        run: |
+          pnpm exec playwright test \
+            --project=journey-00-welcome-ci \
+            --project=journey-01-foundation-ci \
+            --project=journey-02-fractal-plan-ci \
+            --project=journey-03-pressure-test-ci \
+            --project=journey-04-daily-loop-ci \
+            --project=journey-04b-seed-history-ci \
+            --project=journey-05-weekly-ci \
+            --project=journey-06-monthly-ci \
+            --project=journey-07-quarter-year-ci \
+            --project=journey-08-improvement-ci
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journey-playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journey-test-results
+          path: test-results/
+          retention-days: 14

@@ -138,7 +138,7 @@ const Sidebar = ({
 				className={cn(
 					"text-small gap-s-300 px-s-300 py-s-200 flex h-10 items-center rounded-md transition-colors",
 					isActive
-						? "bg-acc-100/10 text-acc-100"
+						? "bg-bg-300 text-txt-100"
 						: "text-txt-200 hover:bg-bg-300 hover:text-txt-100",
 					isCompact && "justify-center"
 				)}

@@ -1,6 +1,7 @@
 // src/components/reports/weekly-meta-chart.tsx
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
 	ComposedChart,
 	Bar,
@@ -53,6 +54,7 @@ const CustomTooltip = ({
 	label,
 	weeks,
 }: CustomTooltipProps) => {
+	const t = useTranslations("reports.weeklyMeta")
 	if (!active || !payload?.length) {
 		return null
 	}
@@ -61,14 +63,14 @@ const CustomTooltip = ({
 
 	if (week?.disabled) {
 		return (
-			<div className="border-bg-300 bg-bg-200 text-txt-300 rounded-md border px-3 py-2 text-xs">
-				Before account start
+			<div className="border-bg-300 bg-bg-200 text-txt-300 text-tiny rounded-md border px-3 py-2">
+				{t("beforeAccountStart")}
 			</div>
 		)
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 space-y-1 rounded-md border px-3 py-2 text-xs">
+		<div className="border-bg-300 bg-bg-200 text-tiny space-y-1 rounded-md border px-3 py-2">
 			<p className="text-txt-100 font-mono font-medium">W{weekNum}</p>
 			{week && (
 				<p className="text-txt-300">
@@ -85,6 +87,7 @@ const CustomTooltip = ({
 }
 
 const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
+	const t = useTranslations("reports.weeklyMeta")
 	const chartData = data.weeks.map((w) => ({
 		name: `W${w.isoWeek}`,
 		resultado: w.disabled ? 0 : w.resultado,
@@ -98,12 +101,11 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 		<div
 			className={className}
 			role="img"
-			aria-label={`Weekly Meta vs Real chart for ${data.year}`}
+			aria-label={t("chartAriaLabel", { year: data.year })}
 		>
 			{!data.hasPlan && (
-				<p className="text-txt-300 border-bg-300 mb-3 rounded-sm border px-3 py-2 text-xs">
-					No yearly plan found — target lines unavailable. Create a yearly plan
-					to see Meta Bruto and Meta Líquido targets.
+				<p className="text-txt-300 border-bg-300 text-tiny mb-3 rounded-sm border px-3 py-2">
+					{t("noYearlyPlan")}
 				</p>
 			)}
 
@@ -148,7 +150,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 
 					<Bar
 						dataKey="resultado"
-						name="Resultado"
+						name={t("seriesResultado")}
 						radius={[2, 2, 0, 0]}
 						maxBarSize={24}
 					>
@@ -170,7 +172,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 					{data.hasPlan && (
 						<Line
 							dataKey="metaBruto"
-							name="Meta Bruto"
+							name={t("seriesMetaBruto")}
 							stroke="var(--color-acc-100)"
 							strokeDasharray="6 3"
 							strokeWidth={1.5}
@@ -181,7 +183,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 					{data.hasPlan && (
 						<Line
 							dataKey="metaLiquido"
-							name="Meta Líquido"
+							name={t("seriesMetaLiquido")}
 							stroke="var(--color-acc-200)"
 							strokeDasharray="6 3"
 							strokeWidth={1.5}
@@ -192,7 +194,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 					{data.withdrawalTargetPercent && data.withdrawalTargetPercent > 0 && (
 						<Line
 							dataKey="autoRetirada"
-							name="Retirada Auto"
+							name={t("seriesRetiradaAuto")}
 							stroke="var(--color-acc-100)"
 							strokeDasharray="2 4"
 							strokeWidth={1}
@@ -206,16 +208,16 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 
 			{/* Accessible tabular fallback for screen readers */}
 			<details className="sr-only">
-				<summary>Weekly data table</summary>
+				<summary>{t("weeklyDataTable")}</summary>
 				<Table>
-					<TableCaption>Weekly Meta vs Real — {data.year}</TableCaption>
+					<TableCaption>{t("tableCaption", { year: data.year })}</TableCaption>
 					<TableHeader>
 						<TableRow>
-							<TableHead scope="col">Week</TableHead>
-							<TableHead scope="col">Period</TableHead>
-							<TableHead scope="col">Resultado</TableHead>
-							<TableHead scope="col">Meta Bruto</TableHead>
-							<TableHead scope="col">Meta Líquido</TableHead>
+							<TableHead scope="col">{t("colWeek")}</TableHead>
+							<TableHead scope="col">{t("colPeriod")}</TableHead>
+							<TableHead scope="col">{t("colResultado")}</TableHead>
+							<TableHead scope="col">{t("colMetaBruto")}</TableHead>
+							<TableHead scope="col">{t("colMetaLiquido")}</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -223,7 +225,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 							<TableRow key={w.isoWeek}>
 								<TableCell>W{w.isoWeek}</TableCell>
 								<TableCell>
-									{w.weekStart} to {w.weekEnd}
+									{t("periodSeparator", { start: w.weekStart, end: w.weekEnd })}
 								</TableCell>
 								<TableCell>
 									{w.disabled ? "—" : formatBRL(w.resultado)}

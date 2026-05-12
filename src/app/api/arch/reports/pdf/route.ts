@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server"
+import { getLocale, getTranslations } from "next-intl/server"
 import { requireAuth } from "@/app/actions/auth"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import {
@@ -16,6 +17,10 @@ import {
 	buildWeeklyPdfFilename,
 	buildMonthlyPdfFilename,
 } from "@/lib/pdf/report-pdf-helpers"
+import type {
+	WeeklyReportLabels,
+	MonthlyReportLabels,
+} from "@/lib/pdf/report-template"
 
 const pdfResponse = (data: Uint8Array, filename: string): NextResponse => {
 	// Uint8Array is valid BodyInit at runtime but TS strict mode requires the cast
@@ -50,6 +55,9 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 			)
 		}
 
+		// Resolve locale from next-intl context (falls back to pt-BR via routing config)
+		const locale = await getLocale()
+
 		// Fetch fee data (shared between both report types)
 		const feeResult = await getCommissionFeeImpact()
 		const feeData =
@@ -65,9 +73,41 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 				)
 			}
 
+			const tw = await getTranslations({
+				locale,
+				namespace: "reports.pdf.weekly",
+			})
+			const weeklyLabels: WeeklyReportLabels = {
+				headerTitle: tw("headerTitle"),
+				performanceSummary: tw("performanceSummary"),
+				netPnl: tw("netPnl"),
+				grossPnl: tw("grossPnl"),
+				winRate: tw("winRate"),
+				profitFactor: tw("profitFactor"),
+				avgR: tw("avgR"),
+				trades: tw("trades"),
+				dailyBreakdown: tw("dailyBreakdown"),
+				colDate: tw("colDate"),
+				colTrades: tw("colTrades"),
+				colWL: tw("colWL"),
+				colWinRate: tw("colWinRate"),
+				colPnl: tw("colPnl"),
+				topTrades: tw("topTrades"),
+				bestTrades: tw("bestTrades"),
+				worstTrades: tw("worstTrades"),
+				commissionFeeImpact: tw("commissionFeeImpact"),
+				totalFees: tw("totalFees"),
+				feesPercentGross: tw("feesPercentGross"),
+				avgFeePerTrade: tw("avgFeePerTrade"),
+				generatedBy: tw("generatedBy"),
+				colAsset: tw("colAsset"),
+				colWeek: tw("colWeek"),
+			}
+
 			const pdfBuffer = await generateWeeklyReportPdf({
 				report: result.data,
 				feeData,
+				labels: weeklyLabels,
 			})
 
 			return pdfResponse(
@@ -86,9 +126,40 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 			)
 		}
 
+		const tm = await getTranslations({
+			locale,
+			namespace: "reports.pdf.monthly",
+		})
+		const monthlyLabels: MonthlyReportLabels = {
+			headerTitle: tm("headerTitle"),
+			performanceSummary: tm("performanceSummary"),
+			netPnl: tm("netPnl"),
+			grossPnl: tm("grossPnl"),
+			winRate: tm("winRate"),
+			profitFactor: tm("profitFactor"),
+			avgR: tm("avgR"),
+			trades: tm("trades"),
+			weeklyBreakdown: tm("weeklyBreakdown"),
+			colWeek: tm("colWeek"),
+			colTrades: tm("colTrades"),
+			colWinRate: tm("colWinRate"),
+			colPnl: tm("colPnl"),
+			assetPerformance: tm("assetPerformance"),
+			colAsset: tm("colAsset"),
+			notableDays: tm("notableDays"),
+			bestDay: tm("bestDay"),
+			worstDay: tm("worstDay"),
+			commissionFeeImpact: tm("commissionFeeImpact"),
+			totalFees: tm("totalFees"),
+			feesPercentGross: tm("feesPercentGross"),
+			avgFeePerTrade: tm("avgFeePerTrade"),
+			generatedBy: tm("generatedBy"),
+		}
+
 		const pdfBuffer = await generateMonthlyReportPdf({
 			report: result.data,
 			feeData,
+			labels: monthlyLabels,
 		})
 
 		return pdfResponse(

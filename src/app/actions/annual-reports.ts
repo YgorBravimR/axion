@@ -20,19 +20,10 @@ import type {
 	AnnualRollupTotals,
 	AnnualRollupData,
 } from "@/lib/reports/annual-types"
-
-interface RecordCapitalEventParams {
-	eventType: "deposit" | "withdrawal"
-	amountCents: number
-	eventDate: string // ISO "YYYY-MM-DD"
-	notes?: string
-}
-
-interface ActionResult<T = void> {
-	status: "success" | "error"
-	data?: T
-	message?: string
-}
+import type {
+	RecordCapitalEventParams,
+	ActionResult,
+} from "./annual-reports.types"
 
 export const recordCapitalEvent = async (
 	params: RecordCapitalEventParams

@@ -164,7 +164,10 @@ const TargetsExitSection = memo(
 								className="border-bg-300 bg-bg-100/50 gap-m-400 p-s-300 flex items-end rounded-lg border"
 							>
 								<div className="space-y-s-100 flex-1">
-									<Label id={`label-level-value-${index}`}>
+									<Label
+										htmlFor={`level-value-${index}`}
+										id={`label-level-value-${index}`}
+									>
 										{t("targetValue")}
 									</Label>
 									<div className="gap-s-100 flex items-center">
@@ -188,7 +191,12 @@ const TargetsExitSection = memo(
 								</div>
 
 								<div className="space-y-s-100 w-28">
-									<Label id={`label-level-exit-${index}`}>{t("exitPct")}</Label>
+									<Label
+										htmlFor={`level-exit-${index}`}
+										id={`label-level-exit-${index}`}
+									>
+										{t("exitPct")}
+									</Label>
 									<div className="gap-s-100 flex items-center">
 										<Input
 											id={`level-exit-${index}`}

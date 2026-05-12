@@ -189,6 +189,8 @@ export default [
 			"video/*",
 			"eslint-rules/**",
 			"e2e/**",
+			".claude/**",
+			".agents/**",
 		],
 	},
 ]

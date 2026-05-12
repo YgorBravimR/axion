@@ -8,6 +8,7 @@ import { requireAuth, getCurrentAccount } from "@/app/actions/auth"
 import { autoSeedYearlyTree } from "@/lib/fractal-plan/auto-seed"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
+import type { CreateYearlyPlanResult } from "./yearly.types"
 
 const ladderRuleSchema = z.object({
 	minCapitalCents: z.number().int().nonnegative(),
@@ -30,16 +31,8 @@ const createYearlyPlanInputSchema = z.object({
 	annualGoalCents: z.number().int().nonnegative().optional(),
 })
 
-type CreateYearlyPlanInput = z.infer<typeof createYearlyPlanInputSchema>
-
-interface CreateYearlyPlanResult {
-	yearlyPlanId: string
-	quarterlyPlanIds: readonly string[]
-	monthlyPlanIds: readonly string[]
-}
-
 export const createYearlyPlanV2 = async (
-	input: CreateYearlyPlanInput
+	input: z.infer<typeof createYearlyPlanInputSchema>
 ): Promise<ActionResponse<CreateYearlyPlanResult>> => {
 	try {
 		const parsed = createYearlyPlanInputSchema.parse(input)
@@ -112,10 +105,8 @@ const updateYearlyPlanInputSchema = z.object({
 	notes: z.string().max(5000).optional(),
 })
 
-type UpdateYearlyPlanInput = z.infer<typeof updateYearlyPlanInputSchema>
-
 export const updateYearlyPlan = async (
-	input: UpdateYearlyPlanInput
+	input: z.infer<typeof updateYearlyPlanInputSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
 		const parsed = updateYearlyPlanInputSchema.parse(input)

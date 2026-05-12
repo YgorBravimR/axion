@@ -947,7 +947,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						{isLastAccount ? t("deleteLastAccountDesc") : t("dangerZoneDesc")}
 					</p>
 					{!canDeleteAccount && (
-						<p className="mt-s-100 text-tiny text-red-400">
+						<p className="mt-s-100 text-tiny text-fb-error">
 							{t("cannotDeleteDefaultAccount")}
 						</p>
 					)}

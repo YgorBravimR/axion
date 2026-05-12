@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 import { cn } from "@/lib/utils"
 import type { DarfStatus } from "./darf-strip"
 
@@ -34,17 +35,7 @@ const STATUS_DOT: Record<DarfStatus, string> = {
 	future: "bg-bg-400",
 }
 
-const STATUS_LABEL: Record<DarfStatus, string> = {
-	paid: "Pago",
-	pending: "Pendente",
-	overdue: "Vencido",
-	exempt: "Isento",
-	unknown: "Sem dado",
-	in_progress: "Em curso",
-	future: "Futuro",
-}
-
-const QuarterMonthCard = ({
+const QuarterMonthCard = async ({
 	href,
 	monthLabel,
 	state,
@@ -57,6 +48,7 @@ const QuarterMonthCard = ({
 	darfStatus,
 	darfDueCents,
 }: QuarterMonthCardProps) => {
+	const t = await getTranslations("plan.quarter.monthCard")
 	const realized = realizedNetCents ?? 0
 	const realizedTone =
 		realized > 0
@@ -82,7 +74,7 @@ const QuarterMonthCard = ({
 						? "border-bg-300 hover:border-acc-100/40"
 						: "border-bg-300/70 hover:border-guide/40 border-dashed"
 			)}
-			aria-label={`Abrir plano de ${monthLabel}`}
+			aria-label={t("openAriaLabel", { month: monthLabel })}
 		>
 			<header className="flex items-baseline justify-between">
 				<h3 className="text-h3 text-txt-100 font-semibold">{monthLabel}</h3>
@@ -94,7 +86,7 @@ const QuarterMonthCard = ({
 			<dl className="gap-s-300 text-tiny grid grid-cols-2">
 				<div>
 					<dt className="text-txt-300">
-						Meta
+						{t("meta")}
 						{planGoalSource !== "none" && planGoalSource !== "manual" && (
 							<span className="ml-s-100 bg-bg-100 px-s-100 text-micro text-txt-300 rounded-sm py-px uppercase">
 								auto
@@ -109,13 +101,11 @@ const QuarterMonthCard = ({
 								: "text-tiny text-txt-placeholder"
 						)}
 					>
-						{planSet ? formatBRL(planGoalCents!) : "Sem meta"}
+						{planSet ? formatBRL(planGoalCents!) : t("noGoal")}
 					</dd>
 				</div>
 				<div>
-					<dt className="text-txt-300">
-						{state === "future" ? "Realizado" : "Realizado"}
-					</dt>
+					<dt className="text-txt-300">{t("realized")}</dt>
 					<dd
 						className={cn(
 							"mt-s-100 font-mono tabular-nums",
@@ -129,7 +119,7 @@ const QuarterMonthCard = ({
 				</div>
 				{showProjection && (
 					<div className="col-span-2">
-						<dt className="text-txt-300">Projeção fim mês</dt>
+						<dt className="text-txt-300">{t("projectedEndMonth")}</dt>
 						<dd className="mt-s-100 text-small text-txt-100 font-mono tabular-nums">
 							{formatBRL(projectedNetCents!)}
 						</dd>
@@ -137,7 +127,7 @@ const QuarterMonthCard = ({
 				)}
 				{hitPct !== null && (
 					<div className="col-span-2">
-						<dt className="sr-only">Hit rate</dt>
+						<dt className="sr-only">{t("hitRateLabel")}</dt>
 						<dd>
 							<div className="bg-bg-100 h-1 w-full overflow-hidden rounded-full">
 								<div
@@ -147,7 +137,7 @@ const QuarterMonthCard = ({
 								/>
 							</div>
 							<p className="mt-s-100 text-micro text-txt-300">
-								{Math.round(hitPct)}% da meta
+								{t("hitRatePct", { pct: Math.round(hitPct) })}
 							</p>
 						</dd>
 					</div>
@@ -161,7 +151,7 @@ const QuarterMonthCard = ({
 						aria-hidden="true"
 					/>
 					<span>
-						DARF {STATUS_LABEL[darfStatus]}
+						{t("darfLabel", { status: t(`statusLabel.${darfStatus}`) })}
 						{darfStatus !== "future" &&
 							darfStatus !== "exempt" &&
 							darfStatus !== "unknown" && (

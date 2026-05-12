@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react"
 import type { ChangeEvent, FormEvent } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -71,40 +72,6 @@ interface PaneFields {
 	step: string
 }
 
-const FIELDS: PaneFields[] = [
-	{
-		key: "txCorretagem",
-		label: "Tx Corretagem (R$/contrato)",
-		hint: "Ex: 0.0500 = R$0,05 por contrato",
-		step: "0.0001",
-	},
-	{
-		key: "txRegistro",
-		label: "Tx Registro (R$/contrato)",
-		hint: "Ex: 0.7400 = R$0,74 por contrato",
-		step: "0.0001",
-	},
-	{
-		key: "emolumentos",
-		label: "Emolumentos (R$/contrato)",
-		hint: "Ex: 0.4000 = R$0,40 por contrato",
-		step: "0.0001",
-	},
-	{
-		key: "issRate",
-		label: "ISS (% sobre Corretagem)",
-		hint: "São Paulo: 5,00% (padrão)",
-		step: "0.01",
-	},
-	{ key: "irrfRate", label: "IRRF (%)", hint: "Padrão: 1,00%", step: "0.01" },
-	{
-		key: "irRate",
-		label: "IR Day-trade (%)",
-		hint: "Padrão: 20,00%",
-		step: "0.01",
-	},
-]
-
 const formatBRL = (value: number) =>
 	value.toLocaleString("pt-BR", {
 		style: "currency",
@@ -131,6 +98,7 @@ const computePerContractTotal = (values: DisplayValues) => {
 }
 
 const PerContractTotal = ({ values }: { values: DisplayValues }) => {
+	const t = useTranslations("tax.feeRateForm.perContractTotal")
 	const { iss, total } = useMemo(
 		() => computePerContractTotal(values),
 		[values]
@@ -139,16 +107,13 @@ const PerContractTotal = ({ values }: { values: DisplayValues }) => {
 	return (
 		<div className="border-txt-300/15 bg-bg-200/40 px-s-300 py-s-300 rounded-lg border">
 			<div className="gap-s-200 flex items-center justify-between">
-				<span className="text-small text-txt-200">
-					Total por contrato (B3 + ISS)
-				</span>
+				<span className="text-small text-txt-200">{t("label")}</span>
 				<span className="text-body text-txt-100 font-mono">
 					{formatBRL(total)}
 				</span>
 			</div>
 			<p className="mt-s-100 text-tiny text-txt-300">
-				Tx Corretagem + Tx Registro + Emolumentos + ISS ({formatBRL(iss)}). IRRF
-				e IR incidem sobre lucro, não por contrato.
+				{t("note", { iss: formatBRL(iss) })}
 			</p>
 		</div>
 	)
@@ -169,9 +134,49 @@ const FeeRatePane = ({
 	onSave,
 	onReset,
 }: PaneProps) => {
+	const t = useTranslations("tax.feeRateForm")
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [values, setValues] = useState<DisplayValues>(initial)
+
+	const fields: PaneFields[] = [
+		{
+			key: "txCorretagem",
+			label: t("fields.txCorretagem.label"),
+			hint: t("fields.txCorretagem.hint"),
+			step: "0.0001",
+		},
+		{
+			key: "txRegistro",
+			label: t("fields.txRegistro.label"),
+			hint: t("fields.txRegistro.hint"),
+			step: "0.0001",
+		},
+		{
+			key: "emolumentos",
+			label: t("fields.emolumentos.label"),
+			hint: t("fields.emolumentos.hint"),
+			step: "0.0001",
+		},
+		{
+			key: "issRate",
+			label: t("fields.issRate.label"),
+			hint: t("fields.issRate.hint"),
+			step: "0.01",
+		},
+		{
+			key: "irrfRate",
+			label: t("fields.irrfRate.label"),
+			hint: t("fields.irrfRate.hint"),
+			step: "0.01",
+		},
+		{
+			key: "irRate",
+			label: t("fields.irRate.label"),
+			hint: t("fields.irRate.hint"),
+			step: "0.01",
+		},
+	]
 
 	useEffect(() => {
 		setValues(initial)
@@ -195,10 +200,10 @@ const FeeRatePane = ({
 				...displayToPersist(values),
 			})
 			if (result.status === "success") {
-				showToast("success", "Taxas salvas")
+				showToast("success", t("toasts.saveSuccess"))
 				onSave()
 			} else {
-				showToast("error", result.message ?? "Erro ao salvar taxas")
+				showToast("error", result.message ?? t("toasts.saveError"))
 			}
 		})
 	}
@@ -210,10 +215,10 @@ const FeeRatePane = ({
 		startTransition(async () => {
 			const result = await deleteFeeRates(assetSymbol)
 			if (result.status === "success") {
-				showToast("success", "Override removido — usando padrão da conta")
+				showToast("success", t("toasts.resetSuccess"))
 				onReset()
 			} else {
-				showToast("error", result.message ?? "Erro ao remover override")
+				showToast("error", result.message ?? t("toasts.resetError"))
 			}
 		})
 	}
@@ -222,10 +227,12 @@ const FeeRatePane = ({
 		<form
 			onSubmit={handleSubmit}
 			className="space-y-m-400"
-			aria-label={`Configuração de taxas — ${assetSymbol ?? "padrão"}`}
+			aria-label={t("formAriaLabel", {
+				asset: assetSymbol ?? t("defaultAssetLabel"),
+			})}
 		>
 			<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
-				{FIELDS.map(({ key, label, hint, step }) => (
+				{fields.map(({ key, label, hint, step }) => (
 					<div key={key} className="space-y-s-100">
 						<Label
 							id={`fee-${assetSymbol ?? "default"}-${key}-label`}
@@ -262,9 +269,9 @@ const FeeRatePane = ({
 					id={`fee-${assetSymbol ?? "default"}-subjectToPersonalIr`}
 					checked={values.subjectToPersonalIr}
 					onCheckedChange={handleCheckedChange}
-					aria-label="Sujeito a IR pessoal (desmarcar para contas prop)"
+					aria-label={t("subjectToPersonalIr.ariaLabel")}
 				/>
-				Sujeito a IR pessoal (desmarcar para contas prop)
+				{t("subjectToPersonalIr.label")}
 			</label>
 
 			<PerContractTotal values={values} />
@@ -274,9 +281,9 @@ const FeeRatePane = ({
 					id={`fee-rate-form-submit-${assetSymbol ?? "default"}`}
 					type="submit"
 					disabled={isPending}
-					aria-label="Salvar taxas"
+					aria-label={t("saveButton.ariaLabel")}
 				>
-					{isPending ? "Salvando..." : "Salvar Taxas"}
+					{isPending ? t("saveButton.savingLabel") : t("saveButton.label")}
 				</Button>
 				{allowReset && (
 					<Button
@@ -285,9 +292,9 @@ const FeeRatePane = ({
 						variant="outline"
 						disabled={isPending}
 						onClick={handleReset}
-						aria-label="Reverter para taxas padrão da conta"
+						aria-label={t("resetButton.ariaLabel")}
 					>
-						Reverter ao padrão
+						{t("resetButton.label")}
 					</Button>
 				)}
 			</div>
@@ -302,6 +309,7 @@ interface AssetTab {
 }
 
 const FeeRateForm = () => {
+	const t = useTranslations("tax.feeRateForm")
 	const [isLoading, setIsLoading] = useState(true)
 	const [defaultDisplay, setDefaultDisplay] =
 		useState<DisplayValues>(DEFAULT_DISPLAY)
@@ -370,14 +378,14 @@ const FeeRateForm = () => {
 	}
 
 	if (isLoading) {
-		return <p className="text-small text-txt-300">Carregando taxas...</p>
+		return <p className="text-small text-txt-300">{t("loadingRates")}</p>
 	}
 
 	return (
 		<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 			<div className="gap-s-300 flex flex-wrap items-center justify-between">
 				<TabsList className="overflow-x-auto">
-					<TabsTrigger value="__default__">Padrão</TabsTrigger>
+					<TabsTrigger value="__default__">{t("defaultTab")}</TabsTrigger>
 					{assetTabs.map((tab) => (
 						<TabsTrigger key={tab.symbol} value={tab.symbol}>
 							{tab.symbol}
@@ -390,9 +398,9 @@ const FeeRateForm = () => {
 						<SelectTrigger
 							id="fee-rate-add-override"
 							className="w-auto min-w-[12rem]"
-							aria-label="Adicionar override de taxas por ativo"
+							aria-label={t("addOverrideAriaLabel")}
 						>
-							<SelectValue placeholder="+ Adicionar override por ativo" />
+							<SelectValue placeholder={t("addOverridePlaceholder")} />
 						</SelectTrigger>
 						<SelectContent>
 							{availableSymbols.map((symbol) => (
@@ -406,8 +414,7 @@ const FeeRateForm = () => {
 			</div>
 			<TabsContent value="__default__" className="pt-m-400">
 				<p className="text-tiny text-txt-300 mb-s-300">
-					Taxas padrão da conta. Aplicadas a qualquer ativo sem override
-					específico.
+					{t("defaultTabDescription")}
 				</p>
 				<FeeRatePane
 					assetSymbol={null}
@@ -421,8 +428,8 @@ const FeeRateForm = () => {
 				<TabsContent key={tab.symbol} value={tab.symbol} className="pt-m-400">
 					<p className="text-tiny text-txt-300 mb-s-300">
 						{tab.hasOverride
-							? `Taxas específicas para ${tab.symbol} (sobrescreve o padrão).`
-							: `Sem override ainda — valores pré-preenchidos com o padrão. Salve para criar override específico de ${tab.symbol}.`}
+							? t("assetTabDescription", { symbol: tab.symbol })
+							: t("assetTabNoOverrideDescription", { symbol: tab.symbol })}
 					</p>
 					<FeeRatePane
 						assetSymbol={tab.symbol}

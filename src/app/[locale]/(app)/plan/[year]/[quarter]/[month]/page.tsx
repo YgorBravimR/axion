@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server"
+import { setRequestLocale, getTranslations } from "next-intl/server"
 import { requireAuth } from "@/app/actions/auth"
 import { PlanSection } from "@/components/fractal-plan/plan-section"
 import { MonthReport } from "@/components/fractal-plan/cockpit/month-report"
@@ -13,9 +13,14 @@ interface PageProps {
 }
 
 const PlanMonthPage = async ({ params }: PageProps) => {
-	const { locale, year: yearStr, quarter: quarterStr, month: monthStr } =
-		await params
+	const {
+		locale,
+		year: yearStr,
+		quarter: quarterStr,
+		month: monthStr,
+	} = await params
 	setRequestLocale(locale)
+	const t = await getTranslations({ locale, namespace: "plan" })
 
 	const year = Number(yearStr)
 	const quarter = Number(quarterStr)
@@ -31,10 +36,8 @@ const PlanMonthPage = async ({ params }: PageProps) => {
 		quarter > 4
 	) {
 		return (
-			<PlanSection title="Invalid month">
-				<p className="text-txt-200">
-					Year/quarter/month must be valid integers.
-				</p>
+			<PlanSection title={t("errors.invalidMonth")}>
+				<p className="text-txt-200">{t("errors.invalidMonthBody")}</p>
 			</PlanSection>
 		)
 	}
@@ -42,9 +45,13 @@ const PlanMonthPage = async ({ params }: PageProps) => {
 	const expectedQuarter = Math.ceil(month / 3)
 	if (quarter !== expectedQuarter) {
 		return (
-			<PlanSection title="Invalid month">
+			<PlanSection title={t("errors.invalidMonth")}>
 				<p className="text-txt-200">
-					Month {month} belongs to Q{expectedQuarter}, not Q{quarter}.
+					{t("errors.invalidMonthQuarterMismatch", {
+						month,
+						quarter: expectedQuarter,
+						actualQuarter: quarter,
+					})}
 				</p>
 			</PlanSection>
 		)

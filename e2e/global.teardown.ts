@@ -104,24 +104,26 @@ const teardown = async () => {
 		console.log(`  Deleted ${deletedTags.rows.length} E2E tag(s)`)
 	}
 
-	// 6. Assets created by E2E (symbol = TSTE2E)
-	// First remove account_assets references
+	// 6. Assets created by E2E (TSTE2E from legacy regression tests, BRVE2E
+	// from the journey suite Stage 1). Symbol has a global UNIQUE index, so
+	// stale rows from prior runs would collide on the next insert.
+	// First remove account_assets references.
 	await db
 		.execute(
 			sql`
 		DELETE FROM account_assets
 		WHERE asset_id IN (
-			SELECT id FROM assets WHERE symbol = 'TSTE2E'
+			SELECT id FROM assets WHERE symbol IN ('TSTE2E', 'BRVE2E')
 		)
 	`
 		)
-		.catch(logError("account_assets for TSTE2E"))
+		.catch(logError("account_assets for E2E assets"))
 
 	const deletedAssets = await db
 		.execute(
 			sql`
 		DELETE FROM assets
-		WHERE symbol = 'TSTE2E'
+		WHERE symbol IN ('TSTE2E', 'BRVE2E')
 		RETURNING id
 	`
 		)
@@ -170,8 +172,11 @@ const teardown = async () => {
 	}
 
 	// 8. Users created by registration tests. All child rows cascade via FK
-	// onDelete: "cascade". Patterns cover: auth.spec NEW_USER (test-<ts>@example.com),
-	// auth-security.spec (e2e-reg-*, e2e-resend-*, e2e-unverified-*).
+	// onDelete: "cascade" — trading_accounts, yearly/quarterly/monthly/weekly
+	// plans, trades, sessions, etc. all drop with the user. Patterns cover:
+	//   - auth.spec NEW_USER:           test-<ts>@example.{com,org,net}
+	//   - auth-security.spec:           e2e-reg-*, e2e-resend-*, e2e-unverified-*
+	//   - journey suite Bravo persona:  bravo-<ts>@axion-demo.com
 	const deletedUsers = await db
 		.execute(
 			sql`
@@ -180,6 +185,7 @@ const teardown = async () => {
 		   OR email LIKE 'e2e-reg-%@example.com'
 		   OR email LIKE 'e2e-resend-%@example.com'
 		   OR email LIKE 'e2e-unverified-%@example.com'
+		   OR email LIKE 'bravo-%@axion-demo.com'
 		   OR email = 'existing-unverified@example.com'
 		   OR email = 'test-display@example.com'
 		RETURNING id

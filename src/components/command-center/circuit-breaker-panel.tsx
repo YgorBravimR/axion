@@ -287,7 +287,7 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 					{status.reduceRiskAfterLoss &&
 						status.consecutiveLosses > 0 &&
 						status.riskReductionFactor && (
-							<div className="gap-s-200 text-small text-acc-100 flex items-center">
+							<div className="gap-s-200 text-small text-warning flex items-center">
 								<TrendingDown className="h-4 w-4" />
 								<span>
 									{t("riskReduced", {
@@ -352,7 +352,7 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 					<MetricCell
 						label={t("remainingDailyRisk")}
 						value={formatCurrency(fromCents(status.remainingDailyRiskCents))}
-						valueClassName="text-acc-100"
+						valueClassName="text-txt-100"
 					/>
 				)}
 			</div>

@@ -5,11 +5,7 @@ import { trades } from "@/db/schema"
 import { and, eq, isNotNull, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import type { ActionResponse } from "@/types"
-
-interface RDistRow {
-	bucket: "lt_neg1" | "neg1_to_0" | "0_to_1" | "1_to_2" | "ge_2"
-	count: number
-}
+import type { RDistRow } from "./reports.types"
 
 const bucketize = (r: number): RDistRow["bucket"] => {
 	if (r < -1) {

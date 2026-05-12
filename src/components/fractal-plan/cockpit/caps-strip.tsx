@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { RCapOverridePopover } from "@/components/fractal-plan/r-cap-override-popover"
 import type { CascadeLevel } from "@/lib/fractal-plan/cascade-merge"
 
@@ -18,9 +19,13 @@ interface CapsStripProps {
 }
 
 const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+	(cents / 100).toLocaleString("pt-BR", {
+		style: "currency",
+		currency: "BRL",
+		maximumFractionDigits: 0,
+	})
 
-const CapsStrip = ({
+const CapsStrip = async ({
 	monthlyPlanId,
 	tierIndex,
 	oneRCents,
@@ -30,29 +35,44 @@ const CapsStrip = ({
 	weeklyLossR,
 	monthlyLossR,
 }: CapsStripProps) => {
+	const t = await getTranslations("plan.capsStrip")
 	return (
 		<section
 			id="month-caps-strip"
-			className="rounded-lg border border-bg-300 bg-bg-200 p-m-400"
-			aria-label="Tier e caps de risco"
+			className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border"
+			aria-label={t("ariaLabel")}
 		>
-			<div className="flex flex-wrap items-baseline gap-x-m-500 gap-y-s-300">
-				<div className="flex items-baseline gap-s-300">
-					<span className="text-tiny uppercase tracking-wide text-txt-300">Tier</span>
-					<span className="font-mono text-h3 font-semibold text-acc-100">T{tierIndex}</span>
+			<div className="gap-x-m-500 gap-y-s-300 flex flex-wrap items-baseline">
+				<div className="gap-s-300 flex items-baseline">
+					<span className="text-tiny text-txt-300 tracking-wide uppercase">
+						Tier
+					</span>
+					<span className="text-h3 text-acc-100 font-mono font-semibold">
+						T{tierIndex}
+					</span>
 				</div>
-				<div className="flex items-baseline gap-s-300">
-					<span className="text-tiny uppercase tracking-wide text-txt-300">1R</span>
-					<span className="font-mono text-h3 tabular-nums text-txt-100">{formatBRL(oneRCents)}</span>
+				<div className="gap-s-300 flex items-baseline">
+					<span className="text-tiny text-txt-300 tracking-wide uppercase">
+						1R
+					</span>
+					<span className="text-h3 text-txt-100 font-mono tabular-nums">
+						{formatBRL(oneRCents)}
+					</span>
 				</div>
-				<div className="flex items-baseline gap-s-300">
-					<span className="text-tiny uppercase tracking-wide text-txt-300">Capital</span>
-					<span className="font-mono text-h3 tabular-nums text-txt-100">{formatBRL(capitalCents)}</span>
+				<div className="gap-s-300 flex items-baseline">
+					<span className="text-tiny text-txt-300 tracking-wide uppercase">
+						Capital
+					</span>
+					<span className="text-h3 text-txt-100 font-mono tabular-nums">
+						{formatBRL(capitalCents)}
+					</span>
 				</div>
 
-				<div className="ml-auto flex flex-wrap items-center gap-x-m-400 gap-y-s-200">
-					<div className="flex items-center gap-s-200">
-						<span className="text-tiny uppercase tracking-wide text-txt-300">Diário L/T</span>
+				<div className="gap-x-m-400 gap-y-s-200 ml-auto flex flex-wrap items-center">
+					<div className="gap-s-200 flex items-center">
+						<span className="text-tiny text-txt-300 tracking-wide uppercase">
+							{t("dailyLT")}
+						</span>
 						<RCapOverridePopover
 							level="month"
 							planRowId={monthlyPlanId}
@@ -73,8 +93,10 @@ const CapsStrip = ({
 							idPrefix="m-cap-daily-target"
 						/>
 					</div>
-					<div className="flex items-center gap-s-200">
-						<span className="text-tiny uppercase tracking-wide text-txt-300">Semanal</span>
+					<div className="gap-s-200 flex items-center">
+						<span className="text-tiny text-txt-300 tracking-wide uppercase">
+							{t("weekly")}
+						</span>
 						<RCapOverridePopover
 							level="month"
 							planRowId={monthlyPlanId}
@@ -85,8 +107,10 @@ const CapsStrip = ({
 							idPrefix="m-cap-weekly-loss"
 						/>
 					</div>
-					<div className="flex items-center gap-s-200">
-						<span className="text-tiny uppercase tracking-wide text-txt-300">Mensal</span>
+					<div className="gap-s-200 flex items-center">
+						<span className="text-tiny text-txt-300 tracking-wide uppercase">
+							{t("monthly")}
+						</span>
 						<RCapOverridePopover
 							level="month"
 							planRowId={monthlyPlanId}

@@ -16,7 +16,6 @@ import {
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
 import { getUserSettings } from "./settings"
-import type { UserSettingsData } from "./settings.types"
 import type {
 	DailyBreakdown,
 	WeeklyReport,
@@ -28,6 +27,8 @@ import type {
 	MonthlyProjection,
 	MonthComparison,
 	YearlyOverview,
+	ReportSummaryBase,
+	PropCalcSettings,
 } from "./reports.types"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
@@ -39,21 +40,6 @@ import { isFrameworkSignal } from "@/lib/error-utils"
 // ============================================================================
 // SHARED SUMMARY CALCULATION
 // ============================================================================
-
-interface ReportSummaryBase {
-	totalTrades: number
-	winCount: number
-	lossCount: number
-	breakevenCount: number
-	grossPnl: number
-	netPnl: number
-	totalFees: number
-	winRate: number
-	avgWin: number
-	avgLoss: number
-	profitFactor: number
-	avgR: number
-}
 
 /**
  * Calculate summary stats from a list of trades.
@@ -546,8 +532,6 @@ export const getMistakeCostAnalysis = async (): Promise<{
 // ============================================================================
 
 // dayTradeTaxRate is transient (computed from legal-rates by year), not DB-backed.
-type PropCalcSettings = UserSettingsData & { dayTradeTaxRate: number }
-
 const calculatePropProfit = (
 	grossProfit: number,
 	settings: PropCalcSettings

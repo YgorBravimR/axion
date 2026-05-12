@@ -193,7 +193,9 @@ const StopProtectionSection = memo(
 					<div className="gap-m-400 pt-s-200 grid grid-cols-2 sm:grid-cols-3">
 						{initialType === "pct_range" && (
 							<div className="space-y-s-200">
-								<Label id="label-stop-pct">{t("stopPctLabel")}</Label>
+								<Label htmlFor="stop-pct" id="label-stop-pct">
+									{t("stopPctLabel")}
+								</Label>
 								<Input
 									id="stop-pct"
 									type="number"
@@ -210,7 +212,9 @@ const StopProtectionSection = memo(
 						)}
 						{initialType === "fixed_points" && (
 							<div className="space-y-s-200">
-								<Label id="label-stop-points">{t("stopPointsLabel")}</Label>
+								<Label htmlFor="stop-points" id="label-stop-points">
+									{t("stopPointsLabel")}
+								</Label>
 								<Input
 									id="stop-points"
 									type="number"
@@ -227,7 +231,9 @@ const StopProtectionSection = memo(
 						)}
 						{initialType === "full_range" && (
 							<div className="space-y-s-200">
-								<Label id="label-stop-buffer">{t("stopBufferLabel")}</Label>
+								<Label htmlFor="stop-buffer" id="label-stop-buffer">
+									{t("stopBufferLabel")}
+								</Label>
 								<Input
 									id="stop-buffer"
 									type="number"
@@ -264,7 +270,9 @@ const StopProtectionSection = memo(
 								/>
 								{breakevenType === "on_pct_risk" && hasBreakeven && (
 									<div className="space-y-s-200">
-										<Label id="label-be-pct">{t("beTriggerPct")}</Label>
+										<Label htmlFor="be-pct" id="label-be-pct">
+											{t("beTriggerPct")}
+										</Label>
 										<Input
 											id="be-pct"
 											type="number"
@@ -297,7 +305,9 @@ const StopProtectionSection = memo(
 							onToggle={handleTrailingToggle}
 						>
 							<div className="space-y-s-200">
-								<Label id="label-trail-dist">{t("trailDistance")}</Label>
+								<Label htmlFor="trail-dist" id="label-trail-dist">
+									{t("trailDistance")}
+								</Label>
 								<Input
 									id="trail-dist"
 									type="number"
@@ -329,7 +339,9 @@ const StopProtectionSection = memo(
 						>
 							<div className="gap-s-300 grid grid-cols-2">
 								<div className="space-y-s-200">
-									<Label id="label-max-reversals">{t("maxReversals")}</Label>
+									<Label htmlFor="max-reversals" id="label-max-reversals">
+										{t("maxReversals")}
+									</Label>
 									<Input
 										id="max-reversals"
 										type="number"

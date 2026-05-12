@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { QuarterPlanSlideover } from "./quarter-plan-slideover"
 
@@ -44,6 +45,7 @@ const QuarterHeader = ({
 	quarterlyPlanId,
 	existing,
 }: QuarterHeaderProps) => {
+	const t = useTranslations("plan.quarter.header")
 	const [editing, setEditing] = useState(false)
 	const prev = adjacentQuarter(year, quarter, -1)
 	const next = adjacentQuarter(year, quarter, 1)
@@ -53,12 +55,12 @@ const QuarterHeader = ({
 			<header className="gap-s-300 flex flex-wrap items-baseline justify-between">
 				<nav
 					className="gap-s-300 text-small text-txt-300 flex items-center"
-					aria-label="Navegação do trimestre"
+					aria-label={t("navAriaLabel")}
 				>
 					<Link
 						href={`/${locale}/plan/${prev.year}/${prev.quarter}`}
 						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
-						aria-label="Trimestre anterior"
+						aria-label={t("prevAriaLabel")}
 					>
 						<ChevronLeft className="size-4" />
 					</Link>
@@ -75,7 +77,7 @@ const QuarterHeader = ({
 					<Link
 						href={`/${locale}/plan/${next.year}/${next.quarter}`}
 						className="hover:bg-bg-200 hover:text-txt-100 rounded-sm p-1"
-						aria-label="Próximo trimestre"
+						aria-label={t("nextAriaLabel")}
 					>
 						<ChevronRight className="size-4" />
 					</Link>
@@ -85,10 +87,10 @@ const QuarterHeader = ({
 					variant="ghost"
 					size="sm"
 					onClick={() => setEditing(true)}
-					aria-label="Editar plano do trimestre"
+					aria-label={t("editAriaLabel")}
 				>
 					<Pencil className="size-3.5" />
-					Editar plano
+					{t("editButton")}
 				</Button>
 			</header>
 

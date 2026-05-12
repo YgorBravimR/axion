@@ -3,8 +3,12 @@
 import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { trades, tradeExecutions, assets } from "@/db/schema"
-import type { Trade, TradeExecution } from "@/db/schema"
 import type { ActionResponse } from "@/types"
+import type {
+	ProcessedOcrTrade,
+	OcrImportResult,
+	BulkOcrImportResult,
+} from "./ocr-import.types"
 import { eq } from "drizzle-orm"
 import { calculateAssetPnL, determineOutcome } from "@/lib/calculations"
 import { fromCents, toCents, toNumericString } from "@/lib/money"
@@ -39,8 +43,6 @@ const ocrImportSchema = z.object({
 	timeframeId: z.string().uuid().optional(),
 	preTradeThoughts: z.string().max(2000).optional(),
 })
-
-type OcrImportInput = z.input<typeof ocrImportSchema>
 
 // ==========================================
 // Helper Functions
@@ -112,12 +114,6 @@ const findAsset = async (
 // ==========================================
 // Shared Trade Processing
 // ==========================================
-
-interface ProcessedOcrTrade {
-	trade: Trade
-	executions: TradeExecution[]
-	assetFound: boolean
-}
 
 /**
  * Processes a single validated OCR trade: resolves asset, calculates P&L, inserts into DB.
@@ -279,17 +275,11 @@ const processOcrTrade = async (
 // Main Import Action
 // ==========================================
 
-interface OcrImportResult {
-	trade: Trade
-	executions: TradeExecution[]
-	assetFound: boolean
-}
-
 /**
  * Create a trade from OCR-extracted data with multiple executions
  */
 export const createTradeFromOcr = async (
-	input: OcrImportInput
+	input: z.input<typeof ocrImportSchema>
 ): Promise<ActionResponse<OcrImportResult>> => {
 	try {
 		const { accountId, userId } = await requireAuth()
@@ -339,26 +329,11 @@ export const createTradeFromOcr = async (
 // Bulk Import (Multiple Trades)
 // ==========================================
 
-interface BulkOcrImportResult {
-	successCount: number
-	failedCount: number
-	trades: Array<{
-		trade: Trade
-		executions: TradeExecution[]
-		assetFound: boolean
-	}>
-	errors: Array<{
-		index: number
-		asset: string
-		message: string
-	}>
-}
-
 /**
  * Create multiple trades from OCR-extracted data
  */
 export const bulkCreateTradesFromOcr = async (
-	inputs: OcrImportInput[]
+	inputs: z.input<typeof ocrImportSchema>[]
 ): Promise<ActionResponse<BulkOcrImportResult>> => {
 	try {
 		const { accountId, userId } = await requireAuth()

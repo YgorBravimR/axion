@@ -24,16 +24,7 @@ import type {
 	ConfirmedEnrichment,
 	NotaFill,
 } from "@/lib/nota-parser/types"
-
-// ==========================================
-// Types
-// ==========================================
-
-interface NotaImportResult {
-	tradesEnriched: number
-	executionsInserted: number
-	errors: string[]
-}
+import type { NotaImportResult } from "./nota-import.types"
 
 // ==========================================
 // Server Action: Parse Nota PDF

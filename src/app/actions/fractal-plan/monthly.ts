@@ -12,6 +12,7 @@ import {
 	type LadderRuleR,
 } from "@/lib/fractal-plan/capital-ladder"
 import type { ActionResponse } from "@/types"
+import type { SetMonthlyCapitalResult } from "./monthly.types"
 
 const upsertSchema = z.object({
 	monthlyPlanId: z.string().uuid(),
@@ -124,13 +125,6 @@ const setMonthlyCapitalSchema = z.object({
 	capitalCents: z.number().int().positive(),
 	propagateForward: z.boolean().default(true),
 })
-
-interface SetMonthlyCapitalResult {
-	readonly id: string
-	readonly tierIndex: number
-	readonly oneRCents: number
-	readonly forwardUpdated: number
-}
 
 export const setMonthlyCapital = async (
 	input: z.infer<typeof setMonthlyCapitalSchema>

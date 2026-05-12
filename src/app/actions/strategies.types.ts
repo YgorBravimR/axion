@@ -22,3 +22,16 @@ export interface ComplianceOverview {
 	topPerformingStrategy: { name: string; compliance: number } | null
 	needsAttentionStrategy: { name: string; compliance: number } | null
 }
+
+interface StrategyTradeStats {
+	tradeCount: number
+	winCount: number
+	lossCount: number
+	compliance: number
+	totalPnl: number
+	winRate: number
+	profitFactor: number
+	avgR: number
+}
+
+export type { StrategyTradeStats }

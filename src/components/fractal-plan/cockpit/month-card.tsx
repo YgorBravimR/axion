@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { MonthCapitalPopover } from "./month-capital-popover"
 import type { ProjectMonthResult } from "@/lib/fractal-plan/projection"
@@ -151,10 +152,11 @@ const MonthCard = ({
 	remainder,
 	guideAnchor = false,
 }: MonthCardProps) => {
+	const t = useTranslations("plan.month")
 	if (state === "muted") {
 		return (
 			<div
-				aria-label={`${monthLabel} — antes da abertura da conta`}
+				aria-label={`${monthLabel} — ${t("beforeAccountOpen")}`}
 				className="border-bg-300/50 bg-bg-200/40 p-m-400 flex h-full flex-col rounded-md border border-dashed opacity-60"
 				data-state="muted"
 				data-testid={`month-card-${monthLabel}`}
@@ -164,7 +166,7 @@ const MonthCard = ({
 					<span className="text-tiny text-txt-300">—</span>
 				</header>
 				<p className="mt-s-300 text-tiny text-txt-300">
-					Antes do início da conta
+					{t("beforeAccountOpen")}
 				</p>
 			</div>
 		)
@@ -254,14 +256,14 @@ const MonthCard = ({
 					>
 						{monthLabel}
 					</h3>
-					<span className="text-txt-300 font-mono text-xs">
+					<span className="text-txt-300 text-tiny font-mono">
 						T{tierIndex + 1}
 					</span>
 				</header>
 
 				<div className="gap-s-100 flex flex-col">
 					<p className="text-tiny text-txt-300 tracking-wide uppercase">
-						Saldo final
+						{t("finalBalance")}
 					</p>
 					<div className="gap-s-200 flex items-baseline justify-between">
 						<span
@@ -287,11 +289,15 @@ const MonthCard = ({
 						</span>
 					</div>
 					<p className="text-tiny text-txt-300 font-mono tabular-nums">
-						de {formatBRLCompact(startBalanceCents)}
+						{t("from", { balance: formatBRLCompact(startBalanceCents) })}
 					</p>
 					{hasRemainder && (
 						<p className="mt-s-100 gap-s-200 text-tiny text-guide flex items-center justify-between font-mono italic tabular-nums">
-							<span>+ proj fim mês: {formatBRLCompact(endBalanceCents)}</span>
+							<span>
+								{t("projectedEndMonth", {
+									balance: formatBRLCompact(endBalanceCents),
+								})}
+							</span>
 							<span>{formatPctSigned(projectedTotalDeltaPct)}</span>
 						</p>
 					)}
@@ -334,7 +340,7 @@ const MonthCard = ({
 
 				<dl className="gap-s-200 border-bg-300 pt-s-300 text-tiny grid grid-cols-3 border-t">
 					<div>
-						<dt className="text-txt-300">{real ? "R real" : "R alvo"}</dt>
+						<dt className="text-txt-300">{real ? t("rReal") : t("rTarget")}</dt>
 						<dd
 							className={cn(
 								"mt-px font-mono tabular-nums",
@@ -359,7 +365,9 @@ const MonthCard = ({
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300">{real ? "Líq real" : "Líq proj"}</dt>
+						<dt className="text-txt-300">
+							{real ? t("liqReal") : t("liqProj")}
+						</dt>
 						<dd
 							className={cn(
 								"mt-px font-mono tabular-nums",
@@ -374,7 +382,7 @@ const MonthCard = ({
 					</div>
 					{hasRemainder && (
 						<div className="mt-s-100 border-bg-300/50 pt-s-200 text-tiny text-guide col-span-3 flex items-center justify-between border-t font-mono italic tabular-nums">
-							<dt className="text-txt-300 not-italic">+ proj restante</dt>
+							<dt className="text-txt-300 not-italic">{t("projRemainder")}</dt>
 							<dd>
 								{(remainder?.addedRsum ?? 0) >= 0 ? "+" : ""}
 								{(remainder?.addedRsum ?? 0).toFixed(1)}R
@@ -385,7 +393,7 @@ const MonthCard = ({
 					)}
 					{withdrawalCents != null && (
 						<div className="border-bg-300/50 pt-s-200 col-span-3 flex items-center justify-between border-t">
-							<dt className="text-txt-300">Retirada projetada</dt>
+							<dt className="text-txt-300">{t("projectedWithdrawal")}</dt>
 							<dd className="text-guide font-mono tabular-nums">
 								{formatBRLCompact(withdrawalCents)}
 							</dd>

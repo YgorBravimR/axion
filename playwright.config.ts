@@ -52,6 +52,102 @@ const selfSeedingPhases = [
 	{ name: "auth-security", testMatch: /auth-security\.spec\.ts/ },
 ]
 
+/**
+ * Journey suite stages — ordered, each depends on the previous so that
+ * storageState handoff works in PR-mode (project dependencies guarantee
+ * Stage N completes before Stage N+1 starts).
+ *
+ * Tagged @journey in spec files so they can be filtered with --grep.
+ * All 9 stages (0-8) implemented. Each builds a `-ci` and `-demo` Playwright
+ * project via `buildJourneyProjects` below; add a new stage by appending to
+ * `journeyStages` and the project pair is generated automatically.
+ *
+ * @see docs/design/zero-to-hero-e2e.md
+ */
+interface JourneyStage {
+	name: string
+	testMatch: RegExp
+}
+
+const journeyStages: readonly JourneyStage[] = [
+	{ name: "journey-00-welcome", testMatch: /journey\/00-welcome\.spec\.ts/ },
+	{
+		name: "journey-01-foundation",
+		testMatch: /journey\/01-foundation\.spec\.ts/,
+	},
+	{
+		name: "journey-02-fractal-plan",
+		testMatch: /journey\/02-fractal-plan\.spec\.ts/,
+	},
+	{
+		name: "journey-03-pressure-test",
+		testMatch: /journey\/03-pressure-test\.spec\.ts/,
+	},
+	{
+		name: "journey-04-daily-loop",
+		testMatch: /journey\/04-daily-loop\.spec\.ts/,
+	},
+	{
+		name: "journey-04b-seed-history",
+		testMatch: /journey\/04b-seed-history\.spec\.ts/,
+	},
+	{
+		name: "journey-05-weekly",
+		testMatch: /journey\/05-weekly\.spec\.ts/,
+	},
+	{
+		name: "journey-06-monthly",
+		testMatch: /journey\/06-monthly\.spec\.ts/,
+	},
+	{
+		name: "journey-07-quarter-year",
+		testMatch: /journey\/07-quarter-year\.spec\.ts/,
+	},
+	{
+		name: "journey-08-improvement",
+		testMatch: /journey\/08-improvement\.spec\.ts/,
+	},
+]
+
+/**
+ * Build journey projects for a given profile (ci vs demo).
+ *
+ * CI profile: headless, default speed, no video, parallel where possible.
+ * Demo profile: headed, slowMo, video on, serial (workers:1 via top-level config).
+ */
+const buildJourneyProjects = (
+	profile: "ci" | "demo"
+): Array<{
+	name: string
+	testMatch: RegExp
+	use: Record<string, unknown>
+	dependencies?: string[]
+}> => {
+	const baseUse =
+		profile === "demo"
+			? {
+					...devices["Desktop Chrome"],
+					headless: false,
+					launchOptions: { slowMo: 400 },
+					video: "on" as const,
+					screenshot: "on" as const,
+				}
+			: { ...devices["Desktop Chrome"] }
+
+	let prev: string | undefined
+	return journeyStages.map((stage) => {
+		const name = `${stage.name}-${profile}`
+		const project = {
+			name,
+			testMatch: stage.testMatch,
+			use: baseUse,
+			...(prev ? { dependencies: [prev] } : {}),
+		}
+		prev = name
+		return project
+	})
+}
+
 interface DeviceConfig {
 	[key: string]: unknown
 }
@@ -125,6 +221,8 @@ export default defineConfig({
 		},
 		...buildDeviceProjects("chromium", devices["Desktop Chrome"]),
 		...buildDeviceProjects("mobile", devices["iPhone 14"]),
+		...buildJourneyProjects("ci"),
+		...buildJourneyProjects("demo"),
 	],
 	webServer: {
 		command: "pnpm dev",

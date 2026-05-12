@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Pencil } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { YearlyPlanSlideover } from "./yearly-plan-slideover"
 import { WhatIfCalculator, type AssetOption } from "./what-if-calculator"
@@ -63,6 +64,7 @@ const SetupSummaryCard = ({
 	currentOneRCents,
 	availableAssets,
 }: SetupSummaryCardProps) => {
+	const t = useTranslations("plan.setup")
 	const [editing, setEditing] = useState(false)
 
 	useEffect(() => {
@@ -85,54 +87,58 @@ const SetupSummaryCard = ({
 			>
 				<header className="flex items-baseline justify-between">
 					<div>
-						<h2 className="text-h3 text-txt-100">Setup {year}</h2>
-						<p className="text-small text-txt-300">
-							Capital ladder, IR e defaults — propaga para meses, semanas e dias
-						</p>
+						<h2 className="text-h3 text-txt-100">{t("title", { year })}</h2>
+						<p className="text-small text-txt-300">{t("subtitle")}</p>
 					</div>
 					<Button
 						id={`setup-edit-${year}`}
 						variant="ghost"
 						size="sm"
 						onClick={() => setEditing(true)}
-						aria-label="Editar plano anual"
+						aria-label={t("editAriaLabel")}
 					>
 						<Pencil className="size-3.5" />
-						Editar
+						{t("editButton")}
 					</Button>
 				</header>
 
 				<dl className="mt-m-400 gap-m-400 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
 					<div>
-						<dt className="text-txt-300 text-xs">Capital inicial</dt>
+						<dt className="text-txt-300 text-tiny">
+							{t("fields.initialCapital")}
+						</dt>
 						<dd className="text-h3 text-txt-100 mt-1 font-mono tabular-nums">
 							{formatBRL(initialCapitalCents)}
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">IR (day-trade)</dt>
+						<dt className="text-txt-300 text-tiny">{t("fields.irDayTrade")}</dt>
 						<dd
 							className="text-h3 text-txt-100 mt-1 font-mono tabular-nums"
-							title={`Alíquota legal · ${irTaxRateSource}`}
+							title={t("fields.irRateTitle", { source: irTaxRateSource })}
 						>
 							{(irTaxRate * 100).toFixed(1).replace(/\.0$/, "")}%
 						</dd>
 						<p className="text-micro text-txt-300 mt-1">{irTaxRateSource}</p>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">Retirada mensal</dt>
+						<dt className="text-txt-300 text-tiny">
+							{t("fields.monthlyWithdrawal")}
+						</dt>
 						<dd className="text-h3 text-guide mt-1 font-mono tabular-nums">
 							{(withdrawalPct * 100).toFixed(0)}%
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">Dias / semana</dt>
+						<dt className="text-txt-300 text-tiny">
+							{t("fields.daysPerWeek")}
+						</dt>
 						<dd className="text-h3 text-txt-100 mt-1 font-mono tabular-nums">
 							{tradingDaysPerWeek}
 						</dd>
 					</div>
 					<div>
-						<dt className="text-txt-300 text-xs">Caps diários (loss / win)</dt>
+						<dt className="text-txt-300 text-tiny">{t("fields.dailyCaps")}</dt>
 						<dd className="text-small text-txt-200 mt-1 font-mono tabular-nums">
 							{formatR(defaultDailyLossR)} / {formatR(defaultDailyWinR)}
 						</dd>
@@ -140,20 +146,19 @@ const SetupSummaryCard = ({
 				</dl>
 
 				<div id="plan-year-ladder" className="mt-m-500">
-					<h3 className="text-txt-300 text-xs tracking-wide uppercase">
-						Capital ladder
+					<h3 className="text-txt-300 text-tiny tracking-wide uppercase">
+						{t("ladder.title")}
 					</h3>
 					{ladderRules.length === 0 ? (
 						<p className="mt-s-200 text-small text-txt-300">
-							Sem tiers definidos. Use "Editar" para configurar a escada de
-							capital.
+							{t("ladder.noTiers")}
 						</p>
 					) : (
 						<ul className="mt-s-200 gap-s-200 flex flex-wrap">
 							{ladderRules.map((rule, idx) => (
 								<li
 									key={`${rule.minCapitalCents}-${rule.maxCapitalCents}`}
-									className="border-bg-300 bg-bg-100 px-s-300 py-s-100 rounded-sm border font-mono text-xs"
+									className="border-bg-300 bg-bg-100 px-s-300 py-s-100 text-tiny rounded-sm border font-mono"
 								>
 									<span className="text-txt-300">T{idx + 1}</span>
 									<span className="mx-s-100 text-txt-300">·</span>
@@ -170,21 +175,22 @@ const SetupSummaryCard = ({
 					)}
 				</div>
 
-				<div className="mt-m-400 text-txt-300 text-xs">
-					Caps mensais: loss {formatR(defaultMonthlyLossR)} · win{" "}
-					{formatR(defaultMonthlyWinR)}
+				<div className="mt-m-400 text-txt-300 text-tiny">
+					{t("monthlyCaps", {
+						lossR: formatR(defaultMonthlyLossR),
+						winR: formatR(defaultMonthlyWinR),
+					})}
 				</div>
 
 				<details className="group mt-m-500 border-bg-300 bg-bg-100 rounded-sm border">
 					<summary className="gap-s-300 px-m-400 py-s-300 text-small text-txt-200 hover:text-txt-100 flex cursor-pointer list-none items-center justify-between">
 						<span>
 							<span className="text-txt-100 font-medium">What-if · sizing</span>
-							<span className="ml-s-200 text-txt-300 text-xs">
-								traduz 1R em nº de contratos a partir do stop em ticks (consulta
-								opcional)
+							<span className="ml-s-200 text-txt-300 text-tiny">
+								{t("whatIfSummary")}
 							</span>
 						</span>
-						<span className="text-txt-300 text-xs transition-transform group-open:rotate-180">
+						<span className="text-txt-300 text-tiny transition-transform group-open:rotate-180">
 							▾
 						</span>
 					</summary>

@@ -115,26 +115,33 @@ export const StatsPreview = ({
 					<p className="mb-s-200 text-tiny text-txt-200 font-medium">
 						{t("strategiesBreakdown")}
 					</p>
-					<ScrollArea className="max-h-32"><div className="bg-bg-100 p-s-200 rounded-md">
-						{stats.strategiesBreakdown.map((s, i) => (
-							<div
-								key={i}
-								className="py-s-100 text-tiny flex items-center justify-between"
-							>
-								<span className="text-txt-200">{s.name}</span>
-								<span className="text-txt-300">
-									{s.tradesCount} {t("trades")} ({s.winRate.toFixed(0)}%{" "}
-									{t("win")})
-								</span>
-							</div>
-						))}
-					</div></ScrollArea>
+					<ScrollArea className="max-h-32">
+						<div className="bg-bg-100 p-s-200 rounded-md">
+							{stats.strategiesBreakdown.map((s) => (
+								<div
+									key={s.name}
+									className="py-s-100 text-tiny flex items-center justify-between"
+								>
+									<span className="text-txt-200">{s.name}</span>
+									<span className="text-txt-300">
+										{s.tradesCount} {t("trades")} ({s.winRate.toFixed(0)}%{" "}
+										{t("win")})
+									</span>
+								</div>
+							))}
+						</div>
+					</ScrollArea>
 				</div>
 			)}
 
 			{/* Actions */}
 			<div className="gap-s-200 flex">
-				<Button id="monte-carlo-use-stats" size="sm" onClick={onUseStats} className="flex-1">
+				<Button
+					id="monte-carlo-use-stats"
+					size="sm"
+					onClick={onUseStats}
+					className="flex-1"
+				>
 					{t("useStats")}
 				</Button>
 				<Button

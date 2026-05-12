@@ -323,7 +323,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																		id={`delete-account-${account.id}`}
 																		variant="ghost"
 																		size="icon"
-																		className="size-10 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+																		className="text-fb-error hover:bg-fb-error/10 hover:text-fb-error size-10"
 																		disabled={
 																			user.tradingAccounts.length <= 1 ||
 																			(account.isDefault &&

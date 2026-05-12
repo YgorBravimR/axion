@@ -82,7 +82,7 @@ const CommandCenterTabs = ({
 				{showCommandTab && (
 					<TabsTrigger
 						value="command-center"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
+						className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
 						aria-label={t("tabs.commandCenter")}
 					>
 						<Target className="h-4 w-4" />
@@ -92,7 +92,7 @@ const CommandCenterTabs = ({
 				{showMonitorTab && (
 					<TabsTrigger
 						value="monitor"
-						className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
+						className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
 						aria-label={t("tabs.monitor")}
 					>
 						<Activity className="h-4 w-4" />
@@ -101,7 +101,7 @@ const CommandCenterTabs = ({
 				)}
 				<TabsTrigger
 					value="calculator"
-					className="text-txt-200 data-[state=active]:text-acc-100 gap-s-100 sm:gap-s-200 snap-start"
+					className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
 					aria-label={t("tabs.calculator")}
 				>
 					<Calculator className="h-4 w-4" />

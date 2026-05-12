@@ -1,6 +1,7 @@
 "use client"
 
 import { Calendar } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface PlanWeek {
@@ -48,6 +49,7 @@ const MonthWeekTable = ({
 	actualWeeks,
 	oneRCents,
 }: MonthWeekTableProps) => {
+	const t = useTranslations("plan.month")
 	const sortedPlan = [...planWeeks].sort((a, b) => a.isoWeek - b.isoWeek)
 	const maxAbsActualCents = Math.max(
 		0,
@@ -60,15 +62,16 @@ const MonthWeekTable = ({
 			<section
 				id="month-week-table"
 				className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border"
-				aria-label="Semanas do mês"
+				aria-label={t("weeksAriaEmpty")}
 			>
 				<header className="gap-s-200 flex items-center">
 					<Calendar className="text-acc-100 size-4" />
-					<h2 className="text-body text-txt-100 font-semibold">Semanas</h2>
+					<h2 className="text-body text-txt-100 font-semibold">
+						{t("weeksHeading")}
+					</h2>
 				</header>
 				<p className="mt-m-400 text-small text-txt-300">
-					Sem semanas geradas para este mês ainda. As semanas são auto-geradas
-					ao criar o plano anual.
+					{t("noWeeksGenerated")}
 				</p>
 			</section>
 		)
@@ -78,16 +81,16 @@ const MonthWeekTable = ({
 		<section
 			id="month-week-table"
 			className="border-bg-300 bg-bg-200 p-m-500 rounded-lg border"
-			aria-label="Semanas do mês — alvo R vs realizado"
+			aria-label={t("weeksAriaFull")}
 		>
 			<header className="flex items-baseline justify-between">
 				<div className="gap-s-200 flex items-center">
 					<Calendar className="text-acc-100 size-4" />
-					<h2 className="text-body text-txt-100 font-semibold">Semanas</h2>
+					<h2 className="text-body text-txt-100 font-semibold">
+						{t("weeksHeading")}
+					</h2>
 				</div>
-				<span className="text-tiny text-txt-300">
-					alvo R · realizado · BRL · WR%
-				</span>
+				<span className="text-tiny text-txt-300">{t("weeksSubheading")}</span>
 			</header>
 
 			<ol className="mt-m-400 space-y-s-300">
@@ -117,7 +120,7 @@ const MonthWeekTable = ({
 							<div className="gap-x-m-400 gap-y-s-100 flex flex-wrap items-baseline justify-between">
 								<div className="gap-s-300 flex items-baseline">
 									<span className="text-small text-txt-100 font-medium">
-										Sem {idx + 1}
+										{t("weekLabel", { n: idx + 1 })}
 									</span>
 									{dateRange && (
 										<span className="text-tiny text-txt-300">
@@ -125,11 +128,11 @@ const MonthWeekTable = ({
 										</span>
 									)}
 									<span className="text-tiny text-txt-300 font-mono tabular-nums">
-										alvo{" "}
+										{t("target")}{" "}
 										<span className="text-txt-200">{targetR.toFixed(2)}R</span>
 									</span>
 									<span className="text-tiny text-txt-300 font-mono tabular-nums">
-										real{" "}
+										{t("realized")}{" "}
 										<span
 											className={cn(
 												actualR > 0 && "text-trade-buy",
@@ -178,14 +181,19 @@ const MonthWeekTable = ({
 								{targetCents !== 0 && (
 									<span className="text-micro text-txt-300 absolute top-1/2 right-2 -translate-y-1/2 font-medium">
 										{hitPct >= 0 ? "+" : ""}
-										{hitPct.toFixed(0)}% alvo
+										{hitPct.toFixed(0)}% {t("target")}
 									</span>
 								)}
 							</div>
 						</>
 					)
 
-					const ariaLabel = `Semana ${idx + 1} ${dateRange ? `(${dateRange})` : ""} — alvo ${targetR.toFixed(2)}R, realizado ${actualR.toFixed(2)}R`
+					const ariaLabel = t("weekAriaLabel", {
+						n: idx + 1,
+						range: dateRange ? `(${dateRange})` : "",
+						targetR: targetR.toFixed(2),
+						actualR: actualR.toFixed(2),
+					})
 
 					return (
 						<li

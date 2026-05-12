@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,13 +21,6 @@ interface MonthlyDarfCardProps {
 	isFinal?: boolean
 }
 
-const STATUS_LABELS: Record<MonthlyDarfRow["darfStatus"], string> = {
-	pending: "Pendente",
-	paid: "Pago",
-	exempt: "Isento",
-	overdue: "Vencido",
-}
-
 const STATUS_VARIANTS: Record<
 	MonthlyDarfRow["darfStatus"],
 	"default" | "secondary" | "destructive" | "outline"
@@ -44,6 +38,7 @@ const MonthlyDarfCard = ({
 	isProp = false,
 	isFinal = true,
 }: MonthlyDarfCardProps) => {
+	const t = useTranslations("tax.monthlyDarf")
 	const [isPending, setIsPending] = useState(false)
 	const [isPrompting, setIsPrompting] = useState(false)
 	const [paidInputCents, setPaidInputCents] = useState<number | null>(
@@ -81,56 +76,62 @@ const MonthlyDarfCard = ({
 			: null
 
 	const rows: Array<{ label: string; value: number; muted?: boolean }> = [
-		{ label: "Resultado Bruto", value: ledgerRow.grossGainCents },
+		{ label: t("rows.grossResult"), value: ledgerRow.grossGainCents },
 		{
-			label: "Tx Corretagem",
+			label: t("rows.txCorretagem"),
 			value: -ledgerRow.totalTxCorretagemCents,
 			muted: true,
 		},
 		{
-			label: "Tx Registro",
+			label: t("rows.txRegistro"),
 			value: -ledgerRow.totalTxRegistroCents,
 			muted: true,
 		},
 		{
-			label: "Emolumentos",
+			label: t("rows.emolumentos"),
 			value: -ledgerRow.totalEmolumentosCents,
 			muted: true,
 		},
-		{ label: "ISS (municipal)", value: -ledgerRow.totalIssCents, muted: true },
 		{
-			label: "Resultado Líquido",
+			label: t("rows.issMunicipal"),
+			value: -ledgerRow.totalIssCents,
+			muted: true,
+		},
+		{
+			label: t("rows.netResult"),
 			value: ledgerRow.netGainBeforeCarryoverCents,
 		},
 		{
-			label: "Prejuízo Compensado",
+			label: t("rows.carryoverConsumed"),
 			value: -ledgerRow.carryoverConsumedCents,
 			muted: true,
 		},
-		{ label: "Base de Cálculo IR", value: ledgerRow.taxableGainCents },
-		{ label: "IR Bruto (20%)", value: ledgerRow.irGrossCents },
-		{ label: "IRRF Retido (−)", value: -ledgerRow.irrfCents, muted: true },
+		{ label: t("rows.taxableBase"), value: ledgerRow.taxableGainCents },
+		{ label: t("rows.irGross"), value: ledgerRow.irGrossCents },
+		{ label: t("rows.irrfWithheld"), value: -ledgerRow.irrfCents, muted: true },
 	]
 
 	return (
 		<Card id={`darf-card-${ledgerRow.id}`}>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
-				<CardTitle className="text-sm font-medium">DARF do Mês</CardTitle>
+				<CardTitle className="text-small font-medium">
+					{t("cardTitle")}
+				</CardTitle>
 				<Badge
 					id={`darf-status-${ledgerRow.id}`}
 					variant={isFinal ? STATUS_VARIANTS[ledgerRow.darfStatus] : "outline"}
 				>
-					{isFinal ? STATUS_LABELS[ledgerRow.darfStatus] : "Em curso"}
+					{isFinal ? t(`status.${ledgerRow.darfStatus}`) : t("inCourseLabel")}
 				</Badge>
 			</CardHeader>
 			<CardContent className="space-y-2">
 				{isProp ? (
-					<p className="text-muted-foreground text-sm">
-						N/A — Conta Prop. O IR é responsabilidade da corretora/mesa.
+					<p className="text-muted-foreground text-small">
+						{t("propAccountNote")}
 					</p>
 				) : (
 					<>
-						<Table aria-label="Detalhamento DARF">
+						<Table aria-label={t("tableAriaLabel")}>
 							<TableBody>
 								{rows.map(({ label, value, muted }) => (
 									<TableRow key={label} className={cn(muted && "text-txt-300")}>
@@ -153,7 +154,7 @@ const MonthlyDarfCard = ({
 						</Table>
 
 						<div className="border-border flex items-center justify-between border-t pt-3">
-							<span className="text-sm font-semibold">DARF a Pagar</span>
+							<span className="text-small font-semibold">{t("darfDue")}</span>
 							<span
 								className={cn(
 									"text-acc-100 font-semibold tabular-nums",
@@ -165,8 +166,8 @@ const MonthlyDarfCard = ({
 						</div>
 
 						{ledgerRow.darfDueDate && (
-							<p className="text-muted-foreground text-xs">
-								Vencimento:{" "}
+							<p className="text-muted-foreground text-tiny">
+								{t("dueDate")}{" "}
 								{new Intl.DateTimeFormat(locale, {
 									day: "2-digit",
 									month: "2-digit",
@@ -176,9 +177,8 @@ const MonthlyDarfCard = ({
 						)}
 
 						{!isFinal && (
-							<p className="border-bg-300 bg-bg-100 px-m-400 py-s-200 text-txt-300 mt-2 rounded-sm border border-dashed text-xs">
-								Mês ainda em curso · prévia da DARF. Pagamento só é exigido após
-								o último dia útil do mês seguinte.
+							<p className="border-bg-300 bg-bg-100 px-m-400 py-s-200 text-txt-300 text-tiny mt-2 rounded-sm border border-dashed">
+								{t("inCourseNotice")}
 							</p>
 						)}
 
@@ -191,10 +191,10 @@ const MonthlyDarfCard = ({
 									size="sm"
 									variant="outline"
 									onClick={handleOpenPrompt}
-									aria-label="Marcar DARF como pago"
+									aria-label={t("markPaidButton.ariaLabel")}
 									className="mt-2 w-full"
 								>
-									Marcar como Pago
+									{t("markPaidButton.label")}
 								</Button>
 							)}
 
@@ -204,9 +204,9 @@ const MonthlyDarfCard = ({
 									<Label
 										id={`darf-paid-label-${ledgerRow.id}`}
 										htmlFor={`darf-paid-input-${ledgerRow.id}`}
-										className="text-txt-200 text-xs"
+										className="text-txt-200 text-tiny"
 									>
-										Valor efetivamente pago
+										{t("paidPrompt.label")}
 									</Label>
 									<CurrencyInput
 										id={`darf-paid-input-${ledgerRow.id}`}
@@ -215,13 +215,12 @@ const MonthlyDarfCard = ({
 										unit="cents"
 										autoFocus
 									/>
-									<p className="text-txt-300 text-xs">
-										Calculado:{" "}
+									<p className="text-txt-300 text-tiny">
+										{t("paidPrompt.calculated")}{" "}
 										<span className="font-mono tabular-nums">
 											{fmt(ledgerRow.darfDueCents)}
 										</span>
-										. Edite caso a guia paga tenha valor diferente — ambos serão
-										registrados.
+										. {t("paidPrompt.editNote")}
 									</p>
 								</div>
 								<div className="gap-s-200 flex">
@@ -235,7 +234,9 @@ const MonthlyDarfCard = ({
 										}
 										className="flex-1"
 									>
-										{isPending ? "Registrando..." : "Confirmar pagamento"}
+										{isPending
+											? t("paidPrompt.confirmButton.pendingLabel")
+											: t("paidPrompt.confirmButton.label")}
 									</Button>
 									<Button
 										id={`darf-paid-cancel-${ledgerRow.id}`}
@@ -244,7 +245,7 @@ const MonthlyDarfCard = ({
 										onClick={handleCancelPrompt}
 										disabled={isPending}
 									>
-										Cancelar
+										{t("paidPrompt.cancelButton")}
 									</Button>
 								</div>
 							</div>
@@ -252,8 +253,8 @@ const MonthlyDarfCard = ({
 
 						{ledgerRow.darfStatus === "paid" && ledgerRow.darfPaidAt && (
 							<div className="space-y-s-100">
-								<p className="text-trade-buy text-xs">
-									Pago em{" "}
+								<p className="text-trade-buy text-tiny">
+									{t("paidAt")}{" "}
 									{new Intl.DateTimeFormat(locale, {
 										day: "2-digit",
 										month: "2-digit",
@@ -263,12 +264,12 @@ const MonthlyDarfCard = ({
 										` — ${fmt(ledgerRow.darfPaidAmountCents)}`}
 								</p>
 								{paidDiffCents !== null && paidDiffCents !== 0 && (
-									<p className="text-txt-300 text-xs">
-										Calculado:{" "}
+									<p className="text-txt-300 text-tiny">
+										{t("paidDiff.calculated")}{" "}
 										<span className="font-mono tabular-nums">
 											{fmt(ledgerRow.darfDueCents)}
 										</span>{" "}
-										· Diferença:{" "}
+										· {t("paidDiff.diff")}{" "}
 										<span
 											className={cn(
 												"font-mono tabular-nums",
@@ -284,9 +285,8 @@ const MonthlyDarfCard = ({
 						)}
 
 						{ledgerRow.carryoverOutCents > 0 && (
-							<p className="text-muted-foreground border-border/40 border-t pt-2 text-xs">
-								Prejuízo a Compensar próximo mês:{" "}
-								{fmt(ledgerRow.carryoverOutCents)}
+							<p className="text-muted-foreground border-border/40 text-tiny border-t pt-2">
+								{t("carryoverOut")} {fmt(ledgerRow.carryoverOutCents)}
 							</p>
 						)}
 					</>

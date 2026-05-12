@@ -51,6 +51,7 @@ export const SimulationParamsForm = ({
 				{/* Win Rate */}
 				<div>
 					<Label
+						htmlFor="simulation-win-rate"
 						id="label-simulation-win-rate"
 						className="mb-s-200 text-small text-txt-200 block"
 						required
@@ -81,6 +82,7 @@ export const SimulationParamsForm = ({
 				{/* Reward/Risk Ratio */}
 				<div>
 					<Label
+						htmlFor="simulation-reward-risk-ratio"
 						id="label-simulation-reward-risk-ratio"
 						className="mb-s-200 text-small text-txt-200 block"
 						required
@@ -106,6 +108,7 @@ export const SimulationParamsForm = ({
 				{/* Number of Trades */}
 				<div>
 					<Label
+						htmlFor="simulation-number-of-trades"
 						id="label-simulation-number-of-trades"
 						className="mb-s-200 text-small text-txt-200 block"
 						required
@@ -131,6 +134,7 @@ export const SimulationParamsForm = ({
 				{/* Commission Impact (% of R) */}
 				<div>
 					<Label
+						htmlFor="simulation-commission-impact"
 						id="label-simulation-commission-impact"
 						className="mb-s-200 text-small text-txt-200 block"
 						required
@@ -164,6 +168,7 @@ export const SimulationParamsForm = ({
 				{/* Simulation Count */}
 				<div>
 					<Label
+						htmlFor="simulation-count"
 						id="label-simulation-count"
 						className="mb-s-200 text-small text-txt-200 block"
 						required
