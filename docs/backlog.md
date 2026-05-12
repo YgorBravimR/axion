@@ -380,6 +380,30 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Operation outcomes are the second-most-common verdict-as-P&L hijack site after rating scales. Codifying the mapping in DESIGN.md prevents the next async banner reaching for trade-buy on reflex.
 - **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
 
+### Consolidate `brand-*` and `acc-*` into a single bronze scale (HIGH PRIORITY)
+
+- **What**: `src/app/globals.css` declares both `--color-acc-100` and `--color-brand-500` and assigns them identical hex literals in both themes (`#c29d6a` dark, `#8c6e40` light). The auth surface (5 components + `select-account/page.tsx`) consistently reaches for `text-brand-500 hover:text-brand-400` and `bg-brand-500/10 border-brand-500`, while the rest of the app uses `text-acc-100`. Two journal call sites (`trade-mode-selector.tsx`, `scaled-trade-form.tsx` L1005) leaked from auth conventions. Pick one scale (recommend `acc-100`, which is the documented metallic-gold accent), migrate the other's 15 call sites, and delete the duplicate token declarations.
+- **Why**: Two names for the same color forces every new contributor to flip a coin. The discipline cost compounds — within a year the answer to "what bronze should this link use?" will have two equally-correct camps and a slowly diverging convention. Cheap to consolidate now, expensive once both palettes have shipped six more months of surfaces.
+- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred (high priority).
+
+### Extract shared `<Spinner aria-hidden />` and `<BackLink>` primitives
+
+- **What**: Wave 7 normalized 9 `<Loader2 className="animate-spin motion-reduce:animate-none" />` sites and 4 `<ArrowLeft />`+text "back" patterns across auth components. The same shapes recur in many product surfaces (dashboard, journal, plan). Pull into `@/components/ui/spinner` (encapsulates `animate-spin`, `motion-reduce:animate-none`, `aria-hidden="true"`) and `@/components/ui/back-link` (encapsulates the ArrowLeft+text pattern with proper a11y) so future callers inherit the defaults rather than drifting.
+- **Why**: Both patterns are universal enough that not having a primitive is the source of every "should I add aria-hidden?" question. Adding the primitive closes the question.
+- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
+
+### Delete or merge `src/components/auth/account-picker.tsx`
+
+- **What**: The standalone `<AccountPicker />` component (134L) is unused — `login-form.tsx` inlines its own account-selection step (L149-265) rather than importing it. Either replace the inline step with `<AccountPicker />` to consolidate the implementations, or delete the orphaned file.
+- **Why**: Two implementations of the same UX silently drift. The inline copy already differs slightly from the standalone (`p-m-400` vs `p-m-400 min-h-11`, different selected-state ring chrome). Pick one.
+- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
+
+### Document auth surface as canonical verdict-triad example in DESIGN.md
+
+- **What**: Wave 7's scan confirmed the auth surface has zero trade-color hijacks — every status state uses the verdict triad (`fb-success` for confirmed/verified, `fb-error` for invalid input, `warning` slot unused). This makes auth the canonical reference example for "how status colors should work" across the codebase. Document it in DESIGN.md with cross-links to the relevant files.
+- **Why**: The settings/dashboard surfaces still drift toward `trade-buy/sell` for non-monetary verdict states. Pointing at a known-good reference shortens future arguments.
+- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
+
 ---
 
 ## Documentation drift watch

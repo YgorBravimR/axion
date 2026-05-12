@@ -203,7 +203,10 @@ export const ForgotPasswordForm = () => {
 						disabled={isPending}
 					>
 						{isPending && (
-							<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							<Loader2
+								className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+								aria-hidden="true"
+							/>
 						)}
 						{t("sendCode")}
 					</Button>
@@ -214,7 +217,7 @@ export const ForgotPasswordForm = () => {
 						href="/login"
 						className="text-brand-500 hover:text-brand-400 gap-s-100 inline-flex items-center font-medium"
 					>
-						<ArrowLeft className="h-3.5 w-3.5" />
+						<ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
 						{t("backToLogin")}
 					</Link>
 				</p>
@@ -280,7 +283,10 @@ export const ForgotPasswordForm = () => {
 
 				{isPending && (
 					<div className="flex justify-center">
-						<Loader2 className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					</div>
 				)}
 
@@ -311,7 +317,7 @@ export const ForgotPasswordForm = () => {
 						}}
 						className="text-brand-500 hover:text-brand-400 gap-s-100 inline-flex items-center font-medium"
 					>
-						<ArrowLeft className="h-3.5 w-3.5" />
+						<ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
 						{t("backToEmail")}
 					</Button>
 				</p>
@@ -334,7 +340,10 @@ export const ForgotPasswordForm = () => {
 			</div>
 
 			<div className="text-center">
-				<CheckCircle2 className="mb-s-300 text-fb-success mx-auto h-10 w-10" />
+				<CheckCircle2
+					className="mb-s-300 text-fb-success mx-auto h-10 w-10"
+					aria-hidden="true"
+				/>
 				<h1 className="text-h2 text-txt-100 font-bold">
 					{t("newPasswordTitle")}
 				</h1>
@@ -447,7 +456,10 @@ export const ForgotPasswordForm = () => {
 					disabled={isPending}
 				>
 					{isPending && (
-						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
 					{t("resetButton")}
 				</Button>

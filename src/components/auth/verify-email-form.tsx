@@ -128,7 +128,10 @@ const VerifyEmailForm = () => {
 				</div>
 
 				<div className="space-y-m-400 flex flex-col items-center text-center">
-					<CheckCircle2 className="text-fb-success h-12 w-12" />
+					<CheckCircle2
+						className="text-fb-success h-12 w-12"
+						aria-hidden="true"
+					/>
 					<h1 className="text-h2 text-txt-100 font-bold">{t("success")}</h1>
 					<p className="text-small text-txt-300">{t("successMessage")}</p>
 				</div>
@@ -204,7 +207,10 @@ const VerifyEmailForm = () => {
 					disabled={isPending || code.length !== 6}
 				>
 					{isPending && (
-						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
 					{t("verify")}
 				</Button>
@@ -230,7 +236,7 @@ const VerifyEmailForm = () => {
 					href="/login"
 					className="text-small text-txt-300 hover:text-txt-200 gap-s-200 flex items-center justify-center"
 				>
-					<ArrowLeft className="h-4 w-4" />
+					<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 					{t("backToLogin")}
 				</Link>
 			</div>

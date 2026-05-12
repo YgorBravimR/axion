@@ -82,9 +82,9 @@ export const AccountPicker = ({
 							)}
 						>
 							{account.accountType === "prop" ? (
-								<Building2 className="h-5 w-5" />
+								<Building2 className="h-5 w-5" aria-hidden="true" />
 							) : (
-								<User className="h-5 w-5" />
+								<User className="h-5 w-5" aria-hidden="true" />
 							)}
 						</div>
 
@@ -125,7 +125,10 @@ export const AccountPicker = ({
 				disabled={!selectedId || isPending}
 			>
 				{isPending && (
-					<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+					<Loader2
+						className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+						aria-hidden="true"
+					/>
 				)}
 				{t("continue")}
 			</Button>

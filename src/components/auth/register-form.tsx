@@ -28,24 +28,48 @@ const RegisterForm = () => {
 		confirmPassword: "",
 	})
 
-	const handleChange = (field: "name" | "email" | "password" | "confirmPassword", value: string) => {
+	const handleChange = (
+		field: "name" | "email" | "password" | "confirmPassword",
+		value: string
+	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }))
 		setError(null)
 	}
 
 	// Password requirements — memoized so regex tests don't run on every keystroke
-	const passwordRequirements = useMemo(() => [
-		{ key: "length", test: formData.password.length >= 8, label: tReq("length") },
-		{ key: "uppercase", test: /[A-Z]/.test(formData.password), label: tReq("uppercase") },
-		{ key: "lowercase", test: /[a-z]/.test(formData.password), label: tReq("lowercase") },
-		{ key: "number", test: /[0-9]/.test(formData.password), label: tReq("number") },
-	], [formData.password, tReq])
+	const passwordRequirements = useMemo(
+		() => [
+			{
+				key: "length",
+				test: formData.password.length >= 8,
+				label: tReq("length"),
+			},
+			{
+				key: "uppercase",
+				test: /[A-Z]/.test(formData.password),
+				label: tReq("uppercase"),
+			},
+			{
+				key: "lowercase",
+				test: /[a-z]/.test(formData.password),
+				label: tReq("lowercase"),
+			},
+			{
+				key: "number",
+				test: /[0-9]/.test(formData.password),
+				label: tReq("number"),
+			},
+		],
+		[formData.password, tReq]
+	)
 
 	const allRequirementsMet = useMemo(
 		() => passwordRequirements.every((req) => req.test),
 		[passwordRequirements]
 	)
-	const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
+	const passwordsMatch =
+		formData.password === formData.confirmPassword &&
+		formData.confirmPassword.length > 0
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
@@ -179,7 +203,7 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -239,9 +263,11 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
 							aria-label={
-								showConfirmPassword ? t("hideConfirmPassword") : t("showConfirmPassword")
+								showConfirmPassword
+									? t("hideConfirmPassword")
+									: t("showConfirmPassword")
 							}
 						>
 							{showConfirmPassword ? (
@@ -265,7 +291,10 @@ const RegisterForm = () => {
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
 					{isPending && (
-						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
 					{t("submit")}
 				</Button>

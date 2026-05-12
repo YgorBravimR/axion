@@ -242,7 +242,10 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						disabled={!selectedAccountId || isPending}
 					>
 						{isPending && (
-							<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							<Loader2
+								className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+								aria-hidden="true"
+							/>
 						)}
 						{tSelect("continue")}
 					</Button>
@@ -256,7 +259,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						aria-label={tSelect("backToLogin")}
 						className="text-small text-txt-300 hover:text-txt-200 gap-s-200 flex w-full items-center justify-center"
 					>
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 						{tSelect("backToLogin")}
 					</Button>
 				</div>
@@ -299,7 +302,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				{emailNotVerified && (
 					<div className="border-brand-500/30 bg-brand-500/10 p-m-400 space-y-s-300 rounded-md border">
 						<div className="gap-s-200 flex items-center">
-							<Mail className="text-brand-500 h-4 w-4" />
+							<Mail className="text-brand-500 h-4 w-4" aria-hidden="true" />
 							<p className="text-small text-txt-100 font-medium">
 								{t("notVerifiedError")}
 							</p>
@@ -315,7 +318,10 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							className="w-full"
 						>
 							{resendingVerification && (
-								<Loader2 className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none" />
+								<Loader2
+									className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none"
+									aria-hidden="true"
+								/>
 							)}
 							{t("resendVerification")}
 						</Button>
@@ -398,7 +404,10 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					disabled={isPending}
 				>
 					{isPending && (
-						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
 					{t("submit")}
 				</Button>
