@@ -89,7 +89,7 @@ const PlanVsReality = ({
 			<div className="mt-m-400 gap-m-400 grid grid-cols-2 lg:grid-cols-4">
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Target className="size-3.5" /> {t("meta")}
+						<Target className="size-3.5" aria-hidden="true" /> {t("meta")}
 						{(planGoalSource === "weeks" || planGoalSource === "default") && (
 							<span
 								className="bg-bg-100 px-s-100 text-micro text-txt-300 rounded-sm py-px tracking-wider uppercase"
@@ -131,7 +131,7 @@ const PlanVsReality = ({
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Activity className="size-3.5" /> {t("realized")}
+						<Activity className="size-3.5" aria-hidden="true" /> {t("realized")}
 					</div>
 					<p
 						className={cn(
@@ -152,7 +152,8 @@ const PlanVsReality = ({
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<TrendingUp className="size-3.5" /> {t("projection")}
+						<TrendingUp className="size-3.5" aria-hidden="true" />{" "}
+						{t("projection")}
 					</div>
 					{projection === null ? (
 						<p className="mt-s-100 text-h3 text-txt-placeholder">
@@ -180,7 +181,7 @@ const PlanVsReality = ({
 
 				<div>
 					<div className="gap-s-100 text-tiny text-txt-300 flex items-center">
-						<Trophy className="size-3.5" /> {t("hitRate")}
+						<Trophy className="size-3.5" aria-hidden="true" /> {t("hitRate")}
 					</div>
 					{planSet ? (
 						<>

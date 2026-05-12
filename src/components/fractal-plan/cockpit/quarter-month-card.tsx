@@ -161,7 +161,10 @@ const QuarterMonthCard = async ({
 							)}
 					</span>
 				</div>
-				<ArrowRight className="text-txt-300 group-hover:text-acc-100 size-3.5 transition-colors" />
+				<ArrowRight
+					className="text-txt-300 group-hover:text-acc-100 size-3.5 transition-colors"
+					aria-hidden="true"
+				/>
 			</footer>
 		</Link>
 	)

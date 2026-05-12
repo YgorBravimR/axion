@@ -332,6 +332,18 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Today the aliasing works because `fb-error` semantically maps to "rule blocked" — but the moment design changes warning color (e.g. amber for non-critical-pause), the rule-paused state would silently drift. Decouple before the divergence.
 - **Source**: `docs/scans/2026-05-12-impeccable-risk-simulation.md` Phase 4 enhancement.
 
+### Gauge verdict palette — document canonical 4-zone mapping in DESIGN.md
+
+- **What**: `src/components/fractal-plan/target-actual-gauge.tsx` now applies a 4-zone verdict palette: `negative → fb-error`, `behind (≥0, <50% of target) → bg-bg-300/text-txt-100`, `onTrack (≥50%, <100% of target) → warning`, `ahead (≥100%) → fb-success`. Same shape will apply to any future target-vs-actual gauge (e.g. weekly cap consumption, daily R cap progress). Add the named "gauge verdict palette" to `DESIGN.md` so the next gauge widget inherits the vocabulary instead of re-inventing.
+- **Why**: Wave 4 picked the palette by analogy from Wave 3's rule-engine triad. Documenting it as the canonical gauge vocabulary keeps future gauges from reaching for `acc-100` again.
+- **Source**: `docs/scans/2026-05-12-impeccable-plan-wave4.md` Phase 4 reflection.
+
+### `STATUS_DOT` triad duplication across DARF widgets
+
+- **What**: The same DARF-status → color-token map (`paid → fb-success`, `pending → warning`, `overdue → fb-error`, `exempt/unknown → txt-300/bg-300`, `in_progress → action-buy`, `future → bg-400`) is duplicated in `src/components/fractal-plan/cockpit/quarter-month-card.tsx` and `src/components/fractal-plan/cockpit/month-darf-row.tsx`, and a sibling `STATUS_DOT` exists in `darf-strip.tsx`. Extract a shared `<DarfStatusDot status={…} />` (or just a colocated map) so the next DARF surface inherits the triad without copy-paste drift.
+- **Why**: Three callers with hand-aligned maps is the threshold where the next contributor will copy the closest one and silently fork the vocabulary. Cheap to consolidate while the maps still match.
+- **Source**: `docs/scans/2026-05-12-impeccable-plan-wave4.md` Phase 4 reflection.
+
 ---
 
 ## Documentation drift watch

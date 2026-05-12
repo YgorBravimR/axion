@@ -101,7 +101,7 @@ const MonthDarfRow = ({
 		>
 			<div className="gap-x-m-400 gap-y-s-200 flex flex-wrap items-center">
 				<div className="gap-s-200 flex items-center">
-					<Receipt className="text-acc-100 size-4" />
+					<Receipt className="text-acc-100 size-4" aria-hidden="true" />
 					<span className="text-small text-txt-100 font-medium">DARF</span>
 					<span
 						className={cn("size-2 rounded-full", STATUS_DOT[uiStatus])}
@@ -141,7 +141,7 @@ const MonthDarfRow = ({
 				{uiStatus === "paid" && darfPaidAmountCents !== null && (
 					<div className="gap-s-200 flex items-baseline">
 						<span className="text-tiny text-txt-300">{t("paidLabel")}</span>
-						<span className="text-small text-trade-buy font-mono tabular-nums">
+						<span className="text-small text-txt-100 font-mono tabular-nums">
 							{formatBRL(darfPaidAmountCents)}
 						</span>
 						{paidAtLabel && (

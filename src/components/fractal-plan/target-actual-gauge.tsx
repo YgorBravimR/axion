@@ -43,7 +43,7 @@ const TargetActualGauge = ({ targetR, actualR }: TargetActualGaugeProps) => {
 							ahead
 								? "text-fb-success"
 								: onTrack
-									? "text-acc-100"
+									? "text-warning"
 									: actual !== null && actual < 0
 										? "text-fb-error"
 										: "text-txt-100"
@@ -55,7 +55,7 @@ const TargetActualGauge = ({ targetR, actualR }: TargetActualGaugeProps) => {
 			</div>
 			<div className="mt-s-300 bg-bg-300 h-2 overflow-hidden rounded-full">
 				<div
-					className={`h-full ${ahead ? "bg-fb-success" : onTrack ? "bg-acc-100" : "bg-acc-200"}`}
+					className={`h-full ${ahead ? "bg-fb-success" : onTrack ? "bg-warning" : "bg-bg-300"}`}
 					style={{ width: `${pct}%` }}
 					aria-hidden="true"
 				/>
