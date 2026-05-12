@@ -292,6 +292,18 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
 
+### Categorical chart palette: extract literal hex array to tokens
+
+- **What**: `src/components/optimize/equity-overlay-chart.tsx` defines `LINE_COLORS = ["#2196F3", "#26a69a", "#FF9800", "#AB47BC", "#EC407A", "#66BB6A", "#78909C"]` — literal hex chain bypassing the token system. Promote to `--chart-1` … `--chart-7` in `globals.css` (dark + light values) so multi-line charts theme correctly.
+- **Why**: Token-discipline drift is the wedge — any future categorical chart will copy this pattern. One token rollout fixes the family.
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2.
+
+### Portuguese literal "(atual)" in sweep-config
+
+- **What**: `src/components/optimize/sweep-config-panel.tsx` line ~275 hardcodes `(atual)` as a JSX child. Rest of the surface goes through `useTranslations("optimize")`. Add `currentValueSuffix` key (or similar) to `messages/{en,pt}.json` and substitute.
+- **Why**: Locale-bleed; the EN build still ships "(atual)".
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2.
+
 ---
 
 ## Documentation drift watch

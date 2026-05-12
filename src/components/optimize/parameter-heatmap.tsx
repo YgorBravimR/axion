@@ -313,9 +313,9 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 
 			{/* Mixed strategy warning */}
 			{hasMixedStrategies && (
-				<div className="border-acc-100/30 bg-acc-100/5 gap-s-200 p-s-300 flex items-center rounded-md border">
+				<div className="border-warning/30 bg-warning/5 gap-s-200 p-s-300 flex items-center rounded-md border">
 					<AlertTriangle
-						className="text-acc-100 h-4 w-4 shrink-0"
+						className="text-warning h-4 w-4 shrink-0"
 						aria-hidden="true"
 					/>
 					<span className="text-small text-txt-200">
@@ -557,31 +557,33 @@ const HoveredCellDetail = ({ cell, metric, t }: HoveredCellDetailProps) => {
 				<MetricStat
 					label={t("heatmap.statPF")}
 					value={summary.profitFactor.toFixed(2)}
-					positive={summary.profitFactor >= 1}
 					highlight={metric === "profitFactor"}
 				/>
 				<MetricStat
 					label={t("heatmap.statWin")}
 					value={`${summary.winRate.toFixed(0)}%`}
-					positive={summary.winRate >= 50}
 					highlight={metric === "winRate"}
 				/>
 				<MetricStat
 					label={t("heatmap.statSharpe")}
 					value={summary.sharpeRatio.toFixed(2)}
-					positive={summary.sharpeRatio >= 0}
 					highlight={metric === "sharpeRatio"}
 				/>
 				<MetricStat
 					label={t("heatmap.statPnl")}
 					value={formatCentsAsCurrency(summary.totalPnlCents, "BRL")}
-					positive={summary.totalPnlCents >= 0}
+					moneySign={
+						summary.totalPnlCents > 0
+							? "pos"
+							: summary.totalPnlCents < 0
+								? "neg"
+								: "zero"
+					}
 					highlight={metric === "totalPnlCents"}
 				/>
 				<MetricStat
 					label={t("heatmap.statTrades")}
 					value={String(summary.totalTrades)}
-					positive={true}
 					highlight={false}
 				/>
 			</div>
@@ -592,24 +594,36 @@ const HoveredCellDetail = ({ cell, metric, t }: HoveredCellDetailProps) => {
 interface MetricStatProps {
 	label: string
 	value: string
-	positive: boolean
 	highlight: boolean
+	moneySign?: "pos" | "neg" | "zero"
 }
 
-const MetricStat = ({ label, value, positive, highlight }: MetricStatProps) => (
-	<div className="text-right">
-		<p className={cn("text-tiny", highlight ? "text-acc-100" : "text-txt-300")}>
-			{label}
-		</p>
-		<p
-			className={cn(
-				"text-small font-semibold tabular-nums",
-				positive ? "text-trade-buy" : "text-trade-sell"
-			)}
-		>
-			{value}
-		</p>
-	</div>
-)
+const MetricStat = ({
+	label,
+	value,
+	highlight,
+	moneySign,
+}: MetricStatProps) => {
+	const valueClass = moneySign
+		? moneySign === "pos"
+			? "text-trade-buy"
+			: moneySign === "neg"
+				? "text-trade-sell"
+				: "text-txt-100"
+		: "text-txt-100"
+
+	return (
+		<div className="text-right">
+			<p
+				className={cn("text-tiny", highlight ? "text-acc-100" : "text-txt-300")}
+			>
+				{label}
+			</p>
+			<p className={cn("text-small font-semibold tabular-nums", valueClass)}>
+				{value}
+			</p>
+		</div>
+	)
+}
 
 export { ParameterHeatmap }

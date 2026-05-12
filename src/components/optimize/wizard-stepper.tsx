@@ -65,7 +65,7 @@ const WizardStepper = ({
 									isActive
 										? "bg-acc-100 text-bg-100"
 										: isCompleted
-											? "bg-trade-buy/20 text-trade-buy"
+											? "bg-fb-success/20 text-fb-success"
 											: "bg-bg-300 text-txt-300"
 								} ${isClickable && !isActive ? "group-hover:ring-acc-100/40 group-hover:ring-2" : ""}`}
 							>
@@ -93,7 +93,7 @@ const WizardStepper = ({
 						{index < steps.length - 1 && (
 							<div
 								className={`mx-s-200 sm:mx-s-300 h-px w-10 transition-colors sm:w-16 ${
-									index < activeIndex ? "bg-trade-buy/40" : "bg-bg-300"
+									index < activeIndex ? "bg-fb-success/40" : "bg-bg-300"
 								}`}
 								aria-hidden="true"
 							/>

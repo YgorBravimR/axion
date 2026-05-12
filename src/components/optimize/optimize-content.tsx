@@ -629,7 +629,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							className="gap-s-200 w-full"
 							variant={hasData ? "outline" : "default"}
 						>
-							<Database className="h-4 w-4" />
+							<Database className="h-4 w-4" aria-hidden="true" />
 							{hasData
 								? t("candlesLoaded", { count: candleCount.toLocaleString() })
 								: t("loadData")}
@@ -663,7 +663,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								aria-controls="base-config-panel"
 							>
 								<span className="text-small gap-s-200 text-txt-200 flex items-center font-medium">
-									<Settings2 className="h-4 w-4" />
+									<Settings2 className="h-4 w-4" aria-hidden="true" />
 									{t("baseConfig")}
 								</span>
 								<ChevronDown
@@ -671,6 +671,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 										"text-txt-300 h-4 w-4 transition-transform",
 										baseConfigOpen && "rotate-180"
 									)}
+									aria-hidden="true"
 								/>
 							</button>
 							{baseConfigOpen && (
@@ -731,7 +732,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								size="lg"
 								className="gap-s-200 w-full"
 							>
-								<Play className="h-4 w-4" />
+								<Play className="h-4 w-4" aria-hidden="true" />
 								{t("runSweep")}
 							</Button>
 						)}
@@ -774,7 +775,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							</div>
 							<div className="flex justify-between">
 								<span
-									className={`font-semibold tabular-nums ${totalCombinations > MAX_COMBINATIONS ? "text-fb-error" : "text-acc-100"}`}
+									className={`font-semibold tabular-nums ${totalCombinations > MAX_COMBINATIONS ? "text-fb-error" : "text-txt-100"}`}
 								>
 									{t("summary.combinations", {
 										count: totalCombinations.toLocaleString(),
@@ -799,11 +800,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								<div className="flex items-center justify-between">
 									<TabsList variant="line">
 										<TabsTrigger value="chart" className="gap-s-200">
-											<BarChart3 className="h-4 w-4" />
+											<BarChart3 className="h-4 w-4" aria-hidden="true" />
 											{t("resultsTab.chart")}
 										</TabsTrigger>
 										<TabsTrigger value="table" className="gap-s-200">
-											<Table2 className="h-4 w-4" />
+											<Table2 className="h-4 w-4" aria-hidden="true" />
 											{t("resultsTab.table")}
 										</TabsTrigger>
 									</TabsList>
@@ -815,7 +816,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 										onClick={handleClearAll}
 										className="text-txt-300 hover:text-fb-error gap-s-200"
 									>
-										<Trash2 className="h-3.5 w-3.5" />
+										<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
 										{t("clearAll")}
 									</Button>
 								</div>
@@ -889,7 +890,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							onClick={handleBack}
 							className="gap-s-200"
 						>
-							<ArrowLeft className="h-4 w-4" />
+							<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 							{t("wizard.back")}
 						</Button>
 					)}
@@ -905,7 +906,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							className="gap-s-200"
 						>
 							{t("wizard.next")}
-							<ArrowRight className="h-4 w-4" />
+							<ArrowRight className="h-4 w-4" aria-hidden="true" />
 						</Button>
 					)}
 
@@ -916,7 +917,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							onClick={handleNewOptimization}
 							className="gap-s-200"
 						>
-							<RotateCcw className="h-4 w-4" />
+							<RotateCcw className="h-4 w-4" aria-hidden="true" />
 							{t("wizard.newOptimization")}
 						</Button>
 					)}
