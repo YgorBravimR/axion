@@ -1,941 +1,236 @@
-
-@import 'tailwindcss';
+@import "tailwindcss";
 @import "tw-animate-css";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   AXION THEME — Bronze Signal on Cool-Neutral Chrome
+   Single canonical theme. Dark is default; [data-theme="light"] overrides.
+   Strategy:
+     CHROME is cool-neutral (bg / txt / border in faint hue ~240°). Default
+            surfaces NEVER carry bronze. This is the Linear/Raycast lane —
+            chrome is invisible, accent is everything.
+     ACCENT is warm bronze (#B08A55, hue ~65°). Earned signal only:
+            primary CTAs, focus rings, the single hero metric per surface.
+            The temperature contrast between cool chrome and warm bronze
+            is what makes bronze read as a SIGNAL rather than as decoration.
+     SLATE STEEL (#7A8B96) is the quiet secondary — focus rings of secondary
+            controls, chart legends, never compelling attention.
+   See PRODUCT.md + DESIGN.md for the full design rationale.
+   ═══════════════════════════════════════════════════════════════════════════ */
 @theme {
-  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+	--font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+	--font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  /* Dark Theme (Default) */
-  --color-bg-100: rgb(11 14 17);
-  --color-bg-200: rgb(21 25 33);
-  --color-bg-300: rgb(43 47 54);
-  --color-bg-400: rgb(60 65 75);
-  --color-bg-stripe: rgb(26 31 38);
-  --color-txt-100: rgb(240 242 245);
-  --color-txt-200: rgb(170 180 195);
-  --color-txt-300: rgb(140 150 165);
-  --color-txt-placeholder: rgb(80 86 95);
-  --color-acc-100: rgb(204 162 72);
-  --color-acc-200: rgb(80 110 200);
-  --color-fb-error: rgb(204 85 85);
-  --color-fb-success: rgb(52 211 153);
+	/* Dark Theme (Default) — Cool-Neutral Chrome
+     Chrome stack carries a faint cool undertone (hue ~240°, chroma ~0.003)
+     so the warm bronze accent reads as a TEMPERATURE CONTRAST signal, not
+     as a default surface treatment. Lightness still steps ≥4% per layer
+     for tonal separation without borders. */
+	--color-bg-100: #0f1014;
+	--color-bg-200: #1a1c20;
+	--color-bg-300: #272a2e;
+	--color-bg-400: #363940;
+	--color-bg-stripe: #141519;
+	--color-txt-100: #eef0f2;
+	--color-txt-200: #a8adb5;
+	--color-txt-300: #787c84;
+	--color-txt-placeholder: #5d6168;
 
-  /* Trading Colors (for profit/loss visualization) */
-  --color-trade-buy: rgb(0 255 150);
-  --color-trade-sell: rgb(128 128 255);
-  --color-warning: rgb(252 213 53);
-  --color-trade-buy-muted: rgb(0 255 150 / 0.2);
-  --color-trade-sell-muted: rgb(128 128 255 / 0.2);
+	/* Brand accents — Bronze primary, Slate Steel secondary */
+	--color-acc-100: #b08a55;
+	--color-acc-200: #7a8b96;
+	--color-fb-error: #ef4444;
+	--color-fb-success: #34d399;
 
-  /* Action Colors (for buy/sell actions - distinct from profit/loss) */
-  --color-action-buy: rgb(100 180 255);
-  --color-action-sell: rgb(255 140 100);
-  --color-action-buy-muted: rgb(100 180 255 / 0.2);
-  --color-action-sell-muted: rgb(255 140 100 / 0.2);
+	/* Trading Colors — P&L semantics (result wall) */
+	--color-trade-buy: #34d399;
+	--color-trade-sell: #f87171;
+	--color-warning: #fbbf24;
+	--color-trade-buy-muted: rgba(52, 211, 153, 0.15);
+	--color-trade-sell-muted: rgba(248, 113, 113, 0.15);
 
-  /* Page Guide — distinctive violet that pops across all themes */
-  --color-guide: rgb(168 130 255);
+	/* Action Colors — intent semantics (action wall, cyan-shifted to avoid
+     muddle with cobalt acc-100 at hue 258°) */
+	--color-action-buy: #5bb8d6;
+	--color-action-sell: #fb923c;
+	--color-action-buy-muted: rgba(91, 184, 214, 0.2);
+	--color-action-sell-muted: rgba(251, 146, 60, 0.2);
 
-  /* Brand Colors */
-  --color-brand-400: rgb(224 182 92);
-  --color-brand-500: rgb(204 162 72);
-  --color-brand-600: rgb(184 142 52);
+	/* Page Guide — distinctive violet that pops on the dark canvas */
+	--color-guide: rgb(168 130 255);
 
-  --radius: 0.625rem;
-  --color-background: var(--color-bg-100);
-  --color-foreground: var(--color-txt-100);
-  --color-card: var(--color-bg-200);
-  --color-card-foreground: var(--color-txt-100);
-  --color-popover: var(--color-bg-200);
-  --color-popover-foreground: var(--color-txt-100);
-  --color-primary: var(--color-acc-100);
-  --color-primary-foreground: var(--color-txt-100);
-  --color-secondary: var(--color-acc-200);
-  --color-secondary-foreground: var(--color-txt-100);
-  --color-muted: var(--color-bg-300);
-  --color-muted-foreground: var(--color-txt-100);
-  --color-accent: var(--color-bg-300);
-  --color-accent-foreground: var(--color-txt-100);
-  --color-destructive: var(--color-fb-error);
-  --color-border: var(--color-bg-300);
-  --color-input: var(--color-bg-300);
-  --color-ring: var(--color-acc-100);
-  --color-chart-1: var(--color-acc-100);
-  --color-chart-2: var(--color-acc-200);
-  --color-chart-3: var(--color-bg-100);
-  --color-chart-4: var(--color-bg-200);
-  --color-chart-5: var(--color-bg-300);
-  --color-sidebar: var(--color-bg-100);
-  --color-sidebar-foreground: var(--color-txt-100);
-  --color-sidebar-primary: var(--color-acc-100);
-  --color-sidebar-primary-foreground: var(--color-bg-100);
-  --color-sidebar-accent: var(--color-acc-200);
-  --color-sidebar-accent-foreground: var(--color-txt-100);
-  --color-sidebar-border: var(--color-bg-300);
-  --color-sidebar-ring: var(--color-acc-100);
+	/* Brand Colors — Bronze scale */
+	--color-brand-400: #c29d6a;
+	--color-brand-500: #b08a55;
+	--color-brand-600: #8c6e40;
 
-  /* Trading semantic colors */
-  /* Result colors (profit/loss, win/lose) use trade colors */
-  --color-profit: var(--color-trade-buy);
-  --color-loss: var(--color-trade-sell);
-  --color-win: var(--color-trade-buy);
-  --color-lose: var(--color-trade-sell);
-  /* Direction colors (long/short, buy/sell action) use action colors */
-  --color-long: var(--color-action-buy);
-  --color-short: var(--color-action-sell);
+	--radius: 0.625rem;
+	--color-background: var(--color-bg-100);
+	--color-foreground: var(--color-txt-100);
+	--color-card: var(--color-bg-200);
+	--color-card-foreground: var(--color-txt-100);
+	--color-popover: var(--color-bg-200);
+	--color-popover-foreground: var(--color-txt-100);
+	--color-primary: var(--color-acc-100);
+	--color-primary-foreground: #ffffff;
+	--color-secondary: var(--color-acc-200);
+	--color-secondary-foreground: var(--color-bg-100);
+	--color-muted: var(--color-bg-300);
+	--color-muted-foreground: var(--color-txt-200);
+	--color-accent: var(--color-bg-300);
+	--color-accent-foreground: var(--color-txt-100);
+	--color-destructive: var(--color-fb-error);
+	--color-border: #272a2e;
+	--color-input: var(--color-bg-300);
+	--color-ring: var(--color-acc-100);
+	--color-chart-1: var(--color-acc-100);
+	--color-chart-2: var(--color-acc-200);
+	--color-chart-3: var(--color-bg-100);
+	--color-chart-4: var(--color-bg-200);
+	--color-chart-5: var(--color-bg-300);
+	--color-sidebar: var(--color-bg-100);
+	--color-sidebar-foreground: var(--color-txt-100);
+	--color-sidebar-primary: var(--color-acc-100);
+	--color-sidebar-primary-foreground: #ffffff;
+	--color-sidebar-accent: var(--color-bg-300);
+	--color-sidebar-accent-foreground: var(--color-txt-100);
+	--color-sidebar-border: #252a33;
+	--color-sidebar-ring: var(--color-acc-100);
 
-  --spacing-s-100: 4px;
-  --spacing-s-200: 8px;
-  --spacing-s-300: 12px;
-  --spacing-m-400: 16px;
-  --spacing-m-500: 20px;
-  --spacing-m-600: 24px;
-  --spacing-l-700: 32px;
-  --spacing-l-800: 48px;
-  --spacing-l-900: 64px;
+	/* Trading semantic colors */
+	/* Result colors (profit/loss, win/lose) use trade colors */
+	--color-profit: var(--color-trade-buy);
+	--color-loss: var(--color-trade-sell);
+	--color-win: var(--color-trade-buy);
+	--color-lose: var(--color-trade-sell);
+	/* Direction colors (long/short, buy/sell action) use action colors */
+	--color-long: var(--color-action-buy);
+	--color-short: var(--color-action-sell);
 
-  /* Fluid typography — scales smoothly between mobile and desktop.
+	--spacing-s-100: 4px;
+	--spacing-s-200: 8px;
+	--spacing-s-300: 12px;
+	--spacing-m-400: 16px;
+	--spacing-m-500: 20px;
+	--spacing-m-600: 24px;
+	--spacing-l-700: 32px;
+	--spacing-l-800: 48px;
+	--spacing-l-900: 64px;
+
+	/* Fluid typography — scales smoothly between mobile and desktop.
      Formula: clamp(mobile-min, base + vw-rate, desktop-max)
      Headings scale dramatically; body/small/tiny stay fixed for readability.
      Uses --text-* namespace so Tailwind v4 generates text-{name} utilities. */
-  --text-h1: clamp(1.75rem, 1.25rem + 1.5vw, 3rem);
-  --text-h2: clamp(1.375rem, 1rem + 1.25vw, 2.25rem);
-  --text-h3: clamp(1.125rem, 0.875rem + 0.75vw, 1.5rem);
-  --text-body: 1rem;
-  --text-small: 0.875rem;
-  --text-tiny: 0.75rem;
-  --text-micro: 0.625rem;
+	--text-h1: clamp(1.75rem, 1.25rem + 1.5vw, 3rem);
+	--text-h2: clamp(1.375rem, 1rem + 1.25vw, 2.25rem);
+	--text-h3: clamp(1.125rem, 0.875rem + 0.75vw, 1.5rem);
+	--text-body: 1rem;
+	--text-small: 0.875rem;
+	--text-tiny: 0.75rem;
+	--text-micro: 0.625rem;
 
-  --screen-xs: 480px;
-  --screen-sm: 640px;
-  --screen-md: 768px;
-  --screen-lg: 1024px;
-  --screen-xl: 1280px;
-  --screen-2xl: 1536px;
+	--screen-xs: 480px;
+	--screen-sm: 640px;
+	--screen-md: 768px;
+	--screen-lg: 1024px;
+	--screen-xl: 1280px;
+	--screen-2xl: 1536px;
 
-  --breakpoint-xs: 30rem;
+	--breakpoint-xs: 30rem;
 
-  --shadow-small: 0 1px 2px rgb(0 0 0 / 0.1);
-  --shadow-medium: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06);
-  --shadow-large: 0 10px 15px rgb(0 0 0 / 0.1), 0 4px 6px rgb(0 0 0 / 0.05);
-  --shadow-xl: 20px 25px rgb(0 0 0 / 0.1), 0 10px 10px rgb(0 0 0 / 0.04);
-  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+	--shadow-small: 0 1px 2px rgb(0 0 0 / 0.1);
+	--shadow-medium: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06);
+	--shadow-large: 0 10px 15px rgb(0 0 0 / 0.1), 0 4px 6px rgb(0 0 0 / 0.05);
+	--shadow-xl: 20px 25px rgb(0 0 0 / 0.1), 0 10px 10px rgb(0 0 0 / 0.04);
+	--shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 
-  --animate-overlay-pulse-line: overlay-pulse-line 2s ease-in-out infinite;
-  --animate-overlay-fade-in: overlay-fade-in 300ms ease-out both;
-  --animate-overlay-progress-shimmer: overlay-progress-shimmer 1.5s linear infinite;
+	--animate-overlay-pulse-line: overlay-pulse-line 2s ease-in-out infinite;
+	--animate-overlay-fade-in: overlay-fade-in 300ms ease-out both;
+	--animate-overlay-progress-shimmer: overlay-progress-shimmer 1.5s linear
+		infinite;
 
-  --animate-transition-scale-in: transition-scale-in 500ms ease-out both;
-  --animate-transition-text-up: transition-text-up 400ms ease-out both;
-  --animate-transition-ring-pulse: transition-ring-pulse 2s ease-in-out infinite;
-  --animate-transition-video-expand: transition-video-expand 500ms ease-in forwards;
-  --animate-transition-content-fade: transition-content-fade 300ms ease-in forwards;
-  --animate-overlay-fade-out: overlay-fade-out 500ms ease-in 300ms forwards;
+	--animate-transition-scale-in: transition-scale-in 500ms ease-out both;
+	--animate-transition-text-up: transition-text-up 400ms ease-out both;
+	--animate-transition-ring-pulse: transition-ring-pulse 2s ease-in-out infinite;
+	--animate-transition-video-expand: transition-video-expand 500ms ease-in
+		forwards;
+	--animate-transition-content-fade: transition-content-fade 300ms ease-in
+		forwards;
+	--animate-overlay-fade-out: overlay-fade-out 500ms ease-in 300ms forwards;
 }
 
-/* Light Theme Overrides */
+/* Light Theme Overrides — Warm Stone-White Paper with Deep Bronze Ink */
 [data-theme="light"] {
-  --color-guide: rgb(120 80 220);
-  --color-bg-100: rgb(250 250 249);
-  --color-bg-200: rgb(245 245 244);
-  --color-bg-300: rgb(231 229 228);
-  --color-bg-stripe: rgb(240 240 238);
-  --color-txt-100: rgb(41 37 36);
-  --color-txt-200: rgb(87 83 78);
-  --color-txt-300: rgb(120 113 108);
-  --color-acc-100: rgb(245 194 9);
-  --color-acc-200: rgb(59 130 246);
-  --color-fb-error: rgb(220 38 38);
-  --color-fb-success: rgb(5 150 105);
-
-  /* Trading Colors - adjusted for light mode */
-  --color-trade-buy: rgb(0 180 100);
-  --color-trade-sell: rgb(100 100 220);
-  --color-warning: rgb(220 180 20);
-  --color-trade-buy-muted: rgb(0 180 100 / 0.15);
-  --color-trade-sell-muted: rgb(100 100 220 / 0.15);
-
-  /* Action Colors - Light mode adjustments */
-  --color-action-buy: rgb(70 150 225);
-  --color-action-sell: rgb(225 110 70);
-  --color-action-buy-muted: rgb(70 150 225 / 0.15);
-  --color-action-sell-muted: rgb(225 110 70 / 0.15);
-
-  /* Brand Colors - Light mode */
-  --color-brand-400: rgb(255 214 122);
-  --color-brand-500: rgb(245 194 9);
-  --color-brand-600: rgb(168 130 255);
-
-  --color-background: var(--color-bg-100);
-  --color-foreground: var(--color-txt-100);
-  --color-card: var(--color-bg-200);
-  --color-card-foreground: var(--color-txt-100);
-  --color-popover: var(--color-bg-200);
-  --color-popover-foreground: var(--color-txt-100);
-  --color-primary: var(--color-acc-100);
-  --color-primary-foreground: var(--color-bg-100);
-  --color-secondary: var(--color-acc-200);
-  --color-secondary-foreground: var(--color-bg-100);
-  --color-muted: var(--color-bg-300);
-  --color-muted-foreground: var(--color-txt-300);
-  --color-accent: var(--color-bg-300);
-  --color-accent-foreground: var(--color-txt-100);
-  --color-destructive: var(--color-fb-error);
-  --color-border: var(--color-bg-300);
-  --color-input: var(--color-bg-300);
-  --color-ring: var(--color-acc-100);
-  --color-chart-1: var(--color-acc-100);
-  --color-chart-2: var(--color-acc-200);
-  --color-chart-3: var(--color-bg-300);
-  --color-chart-4: var(--color-bg-200);
-  --color-chart-5: var(--color-bg-100);
-  --color-sidebar: var(--color-bg-100);
-  --color-sidebar-foreground: var(--color-txt-100);
-  --color-sidebar-primary: var(--color-acc-100);
-  --color-sidebar-primary-foreground: var(--color-bg-100);
-  --color-sidebar-accent: var(--color-acc-200);
-  --color-sidebar-accent-foreground: var(--color-bg-100);
-  --color-sidebar-border: var(--color-bg-300);
-  --color-sidebar-ring: var(--color-acc-100);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   BRAVO BRAND THEME - Navy Slate + Metallic Gold
-   To activate: add data-brand="bravo" to the wrapper div in layout
-   Based on friendRecommendation.md design guidelines
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="bravo"] {
-  /* Deep Navy/Slate Backgrounds */
-  --color-bg-100: #0B0E14;
-  --color-bg-200: #151C2C;
-  --color-bg-300: #302A22;
-  --color-bg-stripe: #1C1A16;
-
-  /* Text - Crisp whites and slate grays */
-  --color-txt-100: #F8FAFC;
-  --color-txt-200: #94A3B8;
-  --color-txt-300: #64748B;
-  --color-txt-placeholder: #475569;
-
-  /* Metallic Gold Accent */
-  --color-acc-100: #D4AF37;
-  --color-acc-200: #3B82F6;
-  --color-fb-error: #EF4444;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Emerald + Coral */
-  --color-trade-buy: #10B981;
-  --color-trade-sell: #FF4E64;
-  --color-warning: #FBBF24;
-  --color-trade-buy-muted: rgba(16, 185, 129, 0.15);
-  --color-trade-sell-muted: rgba(255, 78, 100, 0.15);
-
-  /* Action Colors */
-  --color-action-buy: #38BDF8;
-  --color-action-sell: #FB923C;
-  --color-action-buy-muted: rgba(56, 189, 248, 0.2);
-  --color-action-sell-muted: rgba(251, 146, 60, 0.2);
-
-  /* Brand Colors */
-  --color-brand-400: #E5B84B;
-  --color-brand-500: #D4AF37;
-  --color-brand-600: #B8941F;
-}
-
-/* Bravo theme + Light mode combination */
-[data-brand="bravo"][data-theme="light"] {
-  /* Light slate backgrounds */
-  --color-bg-100: #F8FAFC;
-  --color-bg-200: #F1F5F9;
-  --color-bg-300: #E2E8F0;
-  --color-bg-stripe: #EDF2F7;
-
-  /* Dark text for light mode */
-  --color-txt-100: #0F172A;
-  --color-txt-200: #475569;
-  --color-txt-300: #64748B;
-  --color-txt-placeholder: #94A3B8;
-
-  /* Adjusted accents for light backgrounds */
-  --color-acc-100: #B8941F;
-  --color-acc-200: #2563EB;
-  --color-fb-error: #DC2626;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - darker for light mode */
-  --color-trade-buy: #059669;
-  --color-trade-sell: #DC2626;
-  --color-trade-buy-muted: rgba(5, 150, 105, 0.15);
-  --color-trade-sell-muted: rgba(220, 38, 38, 0.15);
-
-  /* Action Colors - darker for light mode */
-  --color-action-buy: #0284C7;
-  --color-action-sell: #EA580C;
-  --color-action-buy-muted: rgba(2, 132, 199, 0.15);
-  --color-action-sell-muted: rgba(234, 88, 12, 0.15);
-
-  /* Brand Colors - adjusted for light */
-  --color-brand-400: #D4AF37;
-  --color-brand-500: #B8941F;
-  --color-brand-600: #996F00;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MIDNIGHT GOLD THEME - Dark Reader-style warm darkness
-   To activate: add data-brand="midnight" to the body in layout
-   Ultra-dark warm backgrounds with cream text and gold accents
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="midnight"] {
-  /* Ultra-dark warm backgrounds */
-  --color-bg-100: #181a1b;
-  --color-bg-200: #1e2225;
-  --color-bg-300: #2a2e31;
-  --color-bg-stripe: #1a1e20;
-
-  /* Warm cream text */
-  --color-txt-100: #e8e6e3;
-  --color-txt-200: #a9a5a0;
-  --color-txt-300: #7a7672;
-  --color-txt-placeholder: #5a5654;
-
-  /* Gold accent (same as Bravo) + muted blue */
-  --color-acc-100: #D4AF37;
-  --color-acc-200: #4A90D9;
-  --color-fb-error: #E74C3C;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Emerald + Coral */
-  --color-trade-buy: #10B981;
-  --color-trade-sell: #FF4E64;
-  --color-warning: #FBBF24;
-  --color-trade-buy-muted: rgba(16, 185, 129, 0.12);
-  --color-trade-sell-muted: rgba(255, 78, 100, 0.12);
-
-  /* Action Colors */
-  --color-action-buy: #38BDF8;
-  --color-action-sell: #FB923C;
-  --color-action-buy-muted: rgba(56, 189, 248, 0.15);
-  --color-action-sell-muted: rgba(251, 146, 60, 0.15);
-
-  /* Brand Colors - Gold scale */
-  --color-brand-400: #E5B84B;
-  --color-brand-500: #D4AF37;
-  --color-brand-600: #B8941F;
-}
-
-/* Midnight theme + Light mode (warm earthy aesthetic) */
-[data-brand="midnight"][data-theme="light"] {
-  /* Warm parchment backgrounds */
-  --color-bg-100: #FAF8F5;
-  --color-bg-200: #F0EDE8;
-  --color-bg-300: #E0DCD5;
-  --color-bg-stripe: #F5F2ED;
-
-  /* Warm dark text */
-  --color-txt-100: #1a1816;
-  --color-txt-200: #5c5650;
-  --color-txt-300: #7a746e;
-  --color-txt-placeholder: #a09a94;
-
-  /* Adjusted accents for light backgrounds */
-  --color-acc-100: #B8941F;
-  --color-acc-200: #2563EB;
-  --color-fb-error: #DC2626;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - darker for light mode */
-  --color-trade-buy: #059669;
-  --color-trade-sell: #DC2626;
-  --color-trade-buy-muted: rgba(5, 150, 105, 0.15);
-  --color-trade-sell-muted: rgba(220, 38, 38, 0.15);
-
-  /* Action Colors - darker for light mode */
-  --color-action-buy: #0284C7;
-  --color-action-sell: #EA580C;
-  --color-action-buy-muted: rgba(2, 132, 199, 0.15);
-  --color-action-sell-muted: rgba(234, 88, 12, 0.15);
-
-  /* Brand Colors - adjusted for light */
-  --color-brand-400: #D4AF37;
-  --color-brand-500: #B8941F;
-  --color-brand-600: #996F00;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   RETRO THEME - Warm Metallic Gold, Silver & Rose Gold
-   To activate: add data-brand="retro" to the body in layout
-   Sophisticated, muted metallic tones with warm earth undertones
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="retro"] {
-  /* Rich Charcoal Backgrounds (warm undertone) */
-  --color-bg-100: #0C0B0A;
-  --color-bg-200: #171614;
-  --color-bg-300: #252321;
-  --color-bg-stripe: #1A1918;
-
-  /* Platinum/Silver Text */
-  --color-txt-100: #E8E6E3;
-  --color-txt-200: #A8A5A0;
-  --color-txt-300: #787572;
-  --color-txt-placeholder: #58554F;
-
-  /* Antique Gold Primary + Platinum Secondary */
-  --color-acc-100: #C9A227;
-  --color-acc-200: #9CA3A8;
-  --color-fb-error: #A85454;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Muted Metallic */
-  --color-trade-buy: #6B9E78;
-  --color-trade-sell: #B86B6B;
-  --color-warning: #C9A227;
-  --color-trade-buy-muted: rgba(107, 158, 120, 0.18);
-  --color-trade-sell-muted: rgba(184, 107, 107, 0.18);
-
-  /* Action Colors - Steel Blue & Rose Gold */
-  --color-action-buy: #7A9EB8;
-  --color-action-sell: #D4A574;
-  --color-action-buy-muted: rgba(122, 158, 184, 0.2);
-  --color-action-sell-muted: rgba(212, 165, 116, 0.2);
-
-  /* Brand Colors - Antique Gold scale */
-  --color-brand-400: #D4B445;
-  --color-brand-500: #C9A227;
-  --color-brand-600: #A6851E;
-}
-
-/* Retro theme + Light mode */
-[data-brand="retro"][data-theme="light"] {
-  /* Warm Ivory/Champagne Backgrounds */
-  --color-bg-100: #FAF8F5;
-  --color-bg-200: #F2EFE9;
-  --color-bg-300: #E0DCD4;
-  --color-bg-stripe: #EBE8E2;
-
-  /* Warm Charcoal Text */
-  --color-txt-100: #2C2825;
-  --color-txt-200: #5C5652;
-  --color-txt-300: #8A847E;
-  --color-txt-placeholder: #AAA49C;
-
-  /* Burnished Gold + Slate */
-  --color-acc-100: #A6851E;
-  --color-acc-200: #6B7278;
-  --color-fb-error: #8B4545;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Refined for light */
-  --color-trade-buy: #4A7A55;
-  --color-trade-sell: #8B4545;
-  --color-trade-buy-muted: rgba(74, 122, 85, 0.15);
-  --color-trade-sell-muted: rgba(139, 69, 69, 0.15);
-
-  /* Action Colors - Muted Steel & Terracotta */
-  --color-action-buy: #5A7A8C;
-  --color-action-sell: #B8866A;
-  --color-action-buy-muted: rgba(90, 122, 140, 0.15);
-  --color-action-sell-muted: rgba(184, 134, 106, 0.15);
-
-  /* Brand Colors - Burnished Gold */
-  --color-brand-400: #C9A227;
-  --color-brand-500: #A6851E;
-  --color-brand-600: #7A6215;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LUXURY THEME - Faded Black & White + Silver, Gold, Copper
-   To activate: add data-brand="luxury" to the body in layout
-   Monochromatic base with metallic accent highlights
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="luxury"] {
-  --color-guide: rgb(180 140 255);
-  /* Faded Black Backgrounds (cool gray undertone) */
-  --color-bg-100: #0A0A0B;
-  --color-bg-200: #141416;
-  --color-bg-300: #1F1F22;
-  --color-bg-stripe: #18181A;
-
-  /* Pure Silver/White Text */
-  --color-txt-100: #F5F5F5;
-  --color-txt-200: #A0A0A0;
-  --color-txt-300: #6E6E6E;
-  --color-txt-placeholder: #4A4A4A;
-
-  /* Silver Primary + Gold Secondary */
-  --color-acc-100: #C0C0C0;
-  --color-acc-200: #CFB53B;
-  --color-fb-error: #8B3A3A;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Luminous Metallic */
-  --color-trade-buy: #70C090;
-  --color-trade-sell: #D07070;
-  --color-warning: #CFB53B;
-  --color-trade-buy-muted: rgba(112, 192, 144, 0.18);
-  --color-trade-sell-muted: rgba(208, 112, 112, 0.18);
-
-  /* Action Colors - Steel Silver & Copper */
-  --color-action-buy: #7A8A98;
-  --color-action-sell: #B87333;
-  --color-action-buy-muted: rgba(122, 138, 152, 0.2);
-  --color-action-sell-muted: rgba(184, 115, 51, 0.2);
-
-  /* Brand Colors - Silver scale */
-  --color-brand-400: #D4D4D4;
-  --color-brand-500: #C0C0C0;
-  --color-brand-600: #A0A0A0;
-}
-
-/* Luxury theme + Light mode */
-[data-brand="luxury"][data-theme="light"] {
-  --color-guide: rgb(100 60 180);
-  /* Faded White Backgrounds (cool undertone) */
-  --color-bg-100: #FAFAFA;
-  --color-bg-200: #F0F0F0;
-  --color-bg-300: #E0E0E0;
-  --color-bg-stripe: #F5F5F5;
-
-  /* Dark Gray Text */
-  --color-txt-100: #1A1A1A;
-  --color-txt-200: #555555;
-  --color-txt-300: #808080;
-  --color-txt-placeholder: #A8A8A8;
-
-  /* Darker Silver + Antique Gold */
-  --color-acc-100: #808080;
-  --color-acc-200: #9A7B4F;
-  --color-fb-error: #7A3030;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Clear for light */
-  --color-trade-buy: #2A8A4A;
-  --color-trade-sell: #C04040;
-  --color-trade-buy-muted: rgba(42, 138, 74, 0.15);
-  --color-trade-sell-muted: rgba(192, 64, 64, 0.15);
-
-  /* Action Colors - Slate & Bronze */
-  --color-action-buy: #5A6A78;
-  --color-action-sell: #8A5A2A;
-  --color-action-buy-muted: rgba(90, 106, 120, 0.15);
-  --color-action-sell-muted: rgba(138, 90, 42, 0.15);
-
-  /* Brand Colors - Slate Silver */
-  --color-brand-400: #909090;
-  --color-brand-500: #707070;
-  --color-brand-600: #505050;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   TSR INVESTMENTS THEME - Electric Blue & Silver
-   To activate: add data-brand="tsr" to the body in layout
-   Based on TSR Investments branding: deep navy, electric blue, metallic silver
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="tsr"] {
-  --color-guide: rgb(168 130 255);
-  /* Deep Navy/Charcoal Backgrounds */
-  --color-bg-100: #0D1117;
-  --color-bg-200: #161B22;
-  --color-bg-300: #21262D;
-  --color-bg-stripe: #13171D;
-
-  /* Clean Silver-White Text */
-  --color-txt-100: #F0F6FC;
-  --color-txt-200: #8B949E;
-  --color-txt-300: #6E7681;
-  --color-txt-placeholder: #484F58;
-
-  /* Electric Blue Primary + Silver Secondary */
-  --color-acc-100: #2563EB;
-  --color-acc-200: #A8B2C1;
-  --color-fb-error: #F85149;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Blue-based scheme */
-  --color-trade-buy: #3FB950;
-  --color-trade-sell: #F85149;
-  --color-warning: #D29922;
-  --color-trade-buy-muted: rgba(63, 185, 80, 0.15);
-  --color-trade-sell-muted: rgba(248, 81, 73, 0.15);
-
-  /* Action Colors - Electric Blue for buy, Steel for sell */
-  --color-action-buy: #58A6FF;
-  --color-action-sell: #F78166;
-  --color-action-buy-muted: rgba(88, 166, 255, 0.2);
-  --color-action-sell-muted: rgba(247, 129, 102, 0.2);
-
-  /* Brand Colors - Blue scale */
-  --color-brand-400: #58A6FF;
-  --color-brand-500: #2563EB;
-  --color-brand-600: #1D4ED8;
-}
-
-/* TSR theme + Light mode */
-[data-brand="tsr"][data-theme="light"] {
-  --color-guide: rgb(120 80 220);
-  /* Light Gray-Blue Backgrounds */
-  --color-bg-100: #FFFFFF;
-  --color-bg-200: #F6F8FA;
-  --color-bg-300: #E1E4E8;
-  --color-bg-stripe: #F0F3F6;
-
-  /* Dark Text */
-  --color-txt-100: #24292F;
-  --color-txt-200: #57606A;
-  --color-txt-300: #6E7781;
-  --color-txt-placeholder: #8C959F;
-
-  /* Deeper Blue + Slate */
-  --color-acc-100: #1D4ED8;
-  --color-acc-200: #64748B;
-  --color-fb-error: #CF222E;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors */
-  --color-trade-buy: #1A7F37;
-  --color-trade-sell: #CF222E;
-  --color-trade-buy-muted: rgba(26, 127, 55, 0.15);
-  --color-trade-sell-muted: rgba(207, 34, 46, 0.15);
-
-  /* Action Colors */
-  --color-action-buy: #0969DA;
-  --color-action-sell: #BF5700;
-  --color-action-buy-muted: rgba(9, 105, 218, 0.15);
-  --color-action-sell-muted: rgba(191, 87, 0, 0.15);
-
-  /* Brand Colors */
-  --color-brand-400: #3B82F6;
-  --color-brand-500: #1D4ED8;
-  --color-brand-600: #1E40AF;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   NEON THEME - Cyberpunk Futuristic Glow
-   To activate: add data-brand="neon" to the body in layout
-   High-energy, vibrant neon colors with dark cyber backgrounds
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="neon"] {
-  --color-guide: rgb(255 200 60);
-  /* Deep Cyber Dark Backgrounds (purple/blue undertone) */
-  --color-bg-100: #0A0A12;
-  --color-bg-200: #12121C;
-  --color-bg-300: #1C1C2A;
-  --color-bg-stripe: #14141E;
-
-  /* Bright Neon White/Cyan Text */
-  --color-txt-100: #F0F8FF;
-  --color-txt-200: #A0C4E8;
-  --color-txt-300: #6A8CB0;
-  --color-txt-placeholder: #4A6080;
-
-  /* Neon Cyan Primary + Hot Magenta Secondary */
-  --color-acc-100: #00FFFF;
-  --color-acc-200: #FF00FF;
-  --color-fb-error: #FF3366;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Electric Neon */
-  --color-trade-buy: #00FF88;
-  --color-trade-sell: #FF4488;
-  --color-warning: #FFCC00;
-  --color-trade-buy-muted: rgba(0, 255, 136, 0.2);
-  --color-trade-sell-muted: rgba(255, 68, 136, 0.2);
-
-  /* Action Colors - Electric Blue & Neon Orange */
-  --color-action-buy: #00AAFF;
-  --color-action-sell: #FF8800;
-  --color-action-buy-muted: rgba(0, 170, 255, 0.25);
-  --color-action-sell-muted: rgba(255, 136, 0, 0.25);
-
-  /* Brand Colors - Neon Cyan scale */
-  --color-brand-400: #40FFFF;
-  --color-brand-500: #00FFFF;
-  --color-brand-600: #00CCCC;
-}
-
-/* Neon theme + Light mode (Vapor Wave aesthetic) */
-[data-brand="neon"][data-theme="light"] {
-  --color-guide: rgb(180 140 20);
-  /* Soft Pastel Backgrounds */
-  --color-bg-100: #FFF0F5;
-  --color-bg-200: #FFE4EC;
-  --color-bg-300: #E0D4F0;
-  --color-bg-stripe: #F5E8F0;
-
-  /* Deep Purple/Blue Text */
-  --color-txt-100: #2A1A40;
-  --color-txt-200: #5A4A70;
-  --color-txt-300: #8A7AA0;
-  --color-txt-placeholder: #A898B8;
-
-  /* Vivid Magenta + Cyan */
-  --color-acc-100: #CC00CC;
-  --color-acc-200: #00AAAA;
-  --color-fb-error: #CC2255;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors - Bright for light */
-  --color-trade-buy: #00AA66;
-  --color-trade-sell: #DD2266;
-  --color-trade-buy-muted: rgba(0, 170, 102, 0.2);
-  --color-trade-sell-muted: rgba(221, 34, 102, 0.2);
-
-  /* Action Colors - Vivid */
-  --color-action-buy: #0088DD;
-  --color-action-sell: #DD6600;
-  --color-action-buy-muted: rgba(0, 136, 221, 0.2);
-  --color-action-sell-muted: rgba(221, 102, 0, 0.2);
-
-  /* Brand Colors - Hot Magenta */
-  --color-brand-400: #DD44DD;
-  --color-brand-500: #CC00CC;
-  --color-brand-600: #990099;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LANNISTER THEME - Crimson & Gold, House Lannister of Casterly Rock
-   To activate: add data-brand="lannister" to the body in layout
-   Rich crimson field, burnished gold lion — luxurious, powerful, regal
-   "A Lannister always pays his debts."
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="lannister"] {
-  --color-guide: rgb(100 200 200);
-  /* Deep dark crimson — the blood-red field of House Lannister */
-  --color-bg-100: #1E0508;
-  --color-bg-200: #2D0A10;
-  --color-bg-300: #421218;
-  --color-bg-stripe: #170407;
-
-  /* Warm white/ivory text — parchment letters sealed in gold */
-  --color-txt-100: #FAF3E8;
-  --color-txt-200: #D4B896;
-  --color-txt-300: #9A8068;
-  --color-txt-placeholder: #6A5448;
-
-  /* Burnished gold primary (sigil lion) + deep wine secondary */
-  --color-acc-100: #D4A843;
-  --color-acc-200: #B8903A;
-  --color-fb-error: #FF6B35;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors — emerald profit on crimson bg; bright coral for loss (avoids crimson clash) */
-  --color-trade-buy: #4DC87A;
-  --color-trade-sell: #FF8C42;
-  --color-warning: #E8C547;
-  --color-trade-buy-muted: rgba(77, 200, 122, 0.18);
-  --color-trade-sell-muted: rgba(255, 140, 66, 0.2);
-
-  /* Action Colors — steel blue buy, amber-gold sell (both pop on crimson) */
-  --color-action-buy: #5B9BD5;
-  --color-action-sell: #E8A840;
-  --color-action-buy-muted: rgba(91, 155, 213, 0.2);
-  --color-action-sell-muted: rgba(232, 168, 64, 0.2);
-
-  /* Brand Colors — Lannister gold scale */
-  --color-brand-400: #E8C86A;
-  --color-brand-500: #D4A843;
-  --color-brand-600: #A8842E;
-}
-
-/* Lannister theme + Light mode (Crimson rose — Casterly Rock at dawn, warm rose-tinted marble) */
-[data-brand="lannister"][data-theme="light"] {
-  --color-guide: rgb(60 140 140);
-  /* Warm blush ivory backgrounds — rose-tinted marble halls in morning light */
-  --color-bg-100: #FEF5F5;
-  --color-bg-200: #F8E8E9;
-  --color-bg-300: #EDD2D4;
-  --color-bg-stripe: #FBF0F1;
-
-  /* Deep ink text — near-black with crimson undertone */
-  --color-txt-100: #1A0608;
-  --color-txt-200: #6B1C24;
-  --color-txt-300: #9A5860;
-  --color-txt-placeholder: #C49098;
-
-  /* Deep burnished gold primary + rich crimson secondary — powerful on pale rose */
-  --color-acc-100: #9A7020;
-  --color-acc-200: #8C1C28;
-  --color-fb-error: #C0390D;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors — forest green profit, rich crimson-red loss (dark enough on pale bg) */
-  --color-trade-buy: #1E7A48;
-  --color-trade-sell: #B53020;
-  --color-warning: #A06C00;
-  --color-trade-buy-muted: rgba(30, 122, 72, 0.15);
-  --color-trade-sell-muted: rgba(181, 48, 32, 0.15);
-
-  /* Action Colors — deeper tones for light mode readability */
-  --color-action-buy: #1A5EA8;
-  --color-action-sell: #A8640C;
-  --color-action-buy-muted: rgba(26, 94, 168, 0.15);
-  --color-action-sell-muted: rgba(168, 100, 12, 0.15);
-
-  /* Brand Colors — deeper gold scale for pale backgrounds */
-  --color-brand-400: #C8A840;
-  --color-brand-500: #9A7020;
-  --color-brand-600: #6E4E12;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   AXION THEME - Near-Black + Navy Structure + Violet Plasma + Gold Heritage
-   To activate: add data-brand="axion" to the html in layout
-   Scientific, precise, truth-seeking. The "X" glows violet in the dark.
-   Bravo DNA (gold) appears as heritage accent; Violet owns the interaction layer.
-   ═══════════════════════════════════════════════════════════════════════════ */
-[data-brand="axion"] {
-  --color-guide: rgb(251 191 36);
-
-  /* Near-Black Canvas — darker than Bravo, maximum contrast */
-  --color-bg-100: #0c0e0f;
-  --color-bg-200: #171a1d;
-  --color-bg-300: #282c34;
-  --color-bg-stripe: #131419;
-
-  /* Crisp Silver-White Text */
-  --color-txt-100: #eff1f4;
-  --color-txt-200: #a5afbe;
-  --color-txt-300: #7a8592;
-  --color-txt-placeholder: #6b747f;
-
-  /* Violet Plasma Primary + Bravo Gold Secondary */
-  --color-acc-100: #8B5CF6;
-  --color-acc-200: #D4AF37;
-  --color-fb-error: #EF4444;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors — clean, high-contrast on near-black */
-  --color-trade-buy: #34D399;
-  --color-trade-sell: #F87171;
-  --color-warning: #FBBF24;
-  --color-trade-buy-muted: rgba(52, 211, 153, 0.15);
-  --color-trade-sell-muted: rgba(248, 113, 113, 0.15);
-
-  /* Action Colors — Steel Blue buy, Warm Orange sell */
-  --color-action-buy: #60A5FA;
-  --color-action-sell: #FB923C;
-  --color-action-buy-muted: rgba(96, 165, 250, 0.2);
-  --color-action-sell-muted: rgba(251, 146, 60, 0.2);
-
-  /* Brand Colors — Violet Plasma scale (Axion signature) */
-  --color-brand-400: #A78BFA;
-  --color-brand-500: #8B5CF6;
-  --color-brand-600: #7C3AED;
-
-  /* Semantic mappings */
-  --color-background: var(--color-bg-100);
-  --color-foreground: var(--color-txt-100);
-  --color-card: var(--color-bg-200);
-  --color-card-foreground: var(--color-txt-100);
-  --color-popover: var(--color-bg-200);
-  --color-popover-foreground: var(--color-txt-100);
-  --color-primary: var(--color-acc-100);
-  --color-primary-foreground: #FFFFFF;
-  --color-secondary: var(--color-acc-200);
-  --color-secondary-foreground: var(--color-bg-100);
-  --color-muted: var(--color-bg-300);
-  --color-muted-foreground: var(--color-txt-200);
-  --color-accent: var(--color-bg-300);
-  --color-accent-foreground: var(--color-txt-100);
-  --color-destructive: var(--color-fb-error);
-  --color-border: #252A33;
-  --color-input: var(--color-bg-300);
-  --color-ring: var(--color-acc-100);
-  --color-chart-1: var(--color-acc-100);
-  --color-chart-2: var(--color-acc-200);
-  --color-chart-3: var(--color-bg-100);
-  --color-chart-4: var(--color-bg-200);
-  --color-chart-5: var(--color-bg-300);
-  --color-sidebar: var(--color-bg-100);
-  --color-sidebar-foreground: var(--color-txt-100);
-  --color-sidebar-primary: var(--color-acc-100);
-  --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-accent: var(--color-bg-300);
-  --color-sidebar-accent-foreground: var(--color-txt-100);
-  --color-sidebar-border: #252A33;
-  --color-sidebar-ring: var(--color-acc-100);
-
-  /* Trading semantic colors */
-  --color-profit: var(--color-trade-buy);
-  --color-loss: var(--color-trade-sell);
-  --color-win: var(--color-trade-buy);
-  --color-lose: var(--color-trade-sell);
-  --color-long: var(--color-action-buy);
-  --color-short: var(--color-action-sell);
-}
-
-/* Axion theme + Light mode — Slate paper with violet ink */
-[data-brand="axion"][data-theme="light"] {
-  --color-guide: rgb(217 119 6);
-
-  /* Warm Stone-White Backgrounds — wider tonal gap for sidebar/card separation */
-  --color-bg-100: #F5F4F2;
-  --color-bg-200: #E6E3DD;
-  --color-bg-300: #CFCBC4;
-  --color-bg-stripe: #EDEBE7;
-
-  /* Warm Dark Text */
-  --color-txt-100: #1A1818;
-  --color-txt-200: #4A4744;
-  --color-txt-300: #6E6A66;
-  --color-txt-placeholder: #9E9A96;
-
-  /* Deeper Violet for light backgrounds + Muted Gold */
-  --color-acc-100: #7C3AED;
-  --color-acc-200: #B8941F;
-  --color-fb-error: #DC2626;
-  --color-fb-success: #34D399;
-
-  /* Trading Colors — darker for light mode readability */
-  --color-trade-buy: #059669;
-  --color-trade-sell: #DC2626;
-  --color-warning: #D97706;
-  --color-trade-buy-muted: rgba(5, 150, 105, 0.12);
-  --color-trade-sell-muted: rgba(220, 38, 38, 0.12);
-
-  /* Action Colors — deeper for light */
-  --color-action-buy: #2563EB;
-  --color-action-sell: #EA580C;
-  --color-action-buy-muted: rgba(37, 99, 235, 0.12);
-  --color-action-sell-muted: rgba(234, 88, 12, 0.12);
-
-  /* Brand Colors — Deep Violet scale */
-  --color-brand-400: #8B5CF6;
-  --color-brand-500: #7C3AED;
-  --color-brand-600: #6D28D9;
-
-  /* Semantic mappings — light mode */
-  --color-background: var(--color-bg-100);
-  --color-foreground: var(--color-txt-100);
-  --color-card: var(--color-bg-200);
-  --color-card-foreground: var(--color-txt-100);
-  --color-popover: var(--color-bg-200);
-  --color-popover-foreground: var(--color-txt-100);
-  --color-primary: var(--color-acc-100);
-  --color-primary-foreground: #FFFFFF;
-  --color-secondary: var(--color-acc-200);
-  --color-secondary-foreground: var(--color-bg-100);
-  --color-muted: var(--color-bg-300);
-  --color-muted-foreground: var(--color-txt-300);
-  --color-accent: var(--color-bg-300);
-  --color-accent-foreground: var(--color-txt-100);
-  --color-destructive: var(--color-fb-error);
-  --color-border: var(--color-bg-300);
-  --color-input: var(--color-bg-300);
-  --color-ring: var(--color-acc-100);
-  --color-chart-1: var(--color-acc-100);
-  --color-chart-2: var(--color-acc-200);
-  --color-chart-3: var(--color-bg-300);
-  --color-chart-4: var(--color-bg-200);
-  --color-chart-5: var(--color-bg-100);
-  --color-sidebar: var(--color-bg-100);
-  --color-sidebar-foreground: var(--color-txt-100);
-  --color-sidebar-primary: var(--color-acc-100);
-  --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-accent: var(--color-bg-300);
-  --color-sidebar-accent-foreground: var(--color-txt-100);
-  --color-sidebar-border: var(--color-bg-300);
-  --color-sidebar-ring: var(--color-acc-100);
+	--color-guide: rgb(217 119 6);
+
+	/* Cool-Neutral Stone-White Backgrounds — slight cool undertone keeps
+     chrome from competing with the warm bronze accent. */
+	--color-bg-100: #f4f4f5;
+	--color-bg-200: #e7e8eb;
+	--color-bg-300: #cdced2;
+	--color-bg-stripe: #ececef;
+
+	/* Cool-Neutral Dark Text */
+	--color-txt-100: #15171b;
+	--color-txt-200: #454850;
+	--color-txt-300: #6a6e76;
+	--color-txt-placeholder: #9a9da4;
+
+	/* Deeper Bronze for light backgrounds + Deeper Slate Steel */
+	--color-acc-100: #8c6e40;
+	--color-acc-200: #5a6b76;
+	--color-fb-error: #dc2626;
+	--color-fb-success: #059669;
+
+	/* Trading Colors — darker for light mode readability */
+	--color-trade-buy: #059669;
+	--color-trade-sell: #dc2626;
+	--color-warning: #d97706;
+	--color-trade-buy-muted: rgba(5, 150, 105, 0.12);
+	--color-trade-sell-muted: rgba(220, 38, 38, 0.12);
+
+	/* Action Colors — deeper cyan + terracotta for light */
+	--color-action-buy: #1e7a99;
+	--color-action-sell: #ea580c;
+	--color-action-buy-muted: rgba(30, 122, 153, 0.12);
+	--color-action-sell-muted: rgba(234, 88, 12, 0.12);
+
+	/* Brand Colors — Deep Bronze scale */
+	--color-brand-400: #b08a55;
+	--color-brand-500: #8c6e40;
+	--color-brand-600: #6e5530;
+
+	/* Semantic mappings — light mode */
+	--color-background: var(--color-bg-100);
+	--color-foreground: var(--color-txt-100);
+	--color-card: var(--color-bg-200);
+	--color-card-foreground: var(--color-txt-100);
+	--color-popover: var(--color-bg-200);
+	--color-popover-foreground: var(--color-txt-100);
+	--color-primary: var(--color-acc-100);
+	--color-primary-foreground: #ffffff;
+	--color-secondary: var(--color-acc-200);
+	--color-secondary-foreground: var(--color-bg-100);
+	--color-muted: var(--color-bg-300);
+	--color-muted-foreground: var(--color-txt-300);
+	--color-accent: var(--color-bg-300);
+	--color-accent-foreground: var(--color-txt-100);
+	--color-destructive: var(--color-fb-error);
+	--color-border: var(--color-bg-300);
+	--color-input: var(--color-bg-300);
+	--color-ring: var(--color-acc-100);
+	--color-chart-1: var(--color-acc-100);
+	--color-chart-2: var(--color-acc-200);
+	--color-chart-3: var(--color-bg-300);
+	--color-chart-4: var(--color-bg-200);
+	--color-chart-5: var(--color-bg-100);
+	--color-sidebar: var(--color-bg-100);
+	--color-sidebar-foreground: var(--color-txt-100);
+	--color-sidebar-primary: var(--color-acc-100);
+	--color-sidebar-primary-foreground: #ffffff;
+	--color-sidebar-accent: var(--color-bg-300);
+	--color-sidebar-accent-foreground: var(--color-txt-100);
+	--color-sidebar-border: var(--color-bg-300);
+	--color-sidebar-ring: var(--color-acc-100);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -944,21 +239,21 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @utility bg-both-closed {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-fb-error) 25%, transparent) 50%,
-    color-mix(in srgb, var(--color-warning) 25%, transparent) 50%
-  );
+	background: linear-gradient(
+		135deg,
+		color-mix(in srgb, var(--color-fb-error) 25%, transparent) 50%,
+		color-mix(in srgb, var(--color-warning) 25%, transparent) 50%
+	);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    GLOBAL TYPOGRAPHY
-   Plus Jakarta Sans with tabular numbers enabled globally so numeric
+   Public Sans with tabular numbers enabled globally so numeric
    data aligns in columns without requiring font-mono overrides
    ═══════════════════════════════════════════════════════════════════════════ */
 
 body {
-  font-variant-numeric: tabular-nums;
+	font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -968,7 +263,7 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 [data-theme="light"] [data-axion-logo="invertable"] {
-  filter: invert(1);
+	filter: invert(1);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -976,32 +271,33 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes overlay-pulse-line {
-  0%, 100% {
-    transform: scaleX(1);
-    opacity: 0.4;
-  }
-  50% {
-    transform: scaleX(1.75);
-    opacity: 1;
-  }
+	0%,
+	100% {
+		transform: scaleX(1);
+		opacity: 0.4;
+	}
+	50% {
+		transform: scaleX(1.75);
+		opacity: 1;
+	}
 }
 
 @keyframes overlay-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 @keyframes overlay-progress-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1009,103 +305,105 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes transition-scale-in {
-  from {
-    transform: scale(0.85);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+	from {
+		transform: scale(0.85);
+		opacity: 0;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
 }
 
 @keyframes transition-text-up {
-  from {
-    transform: translateY(16px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+	from {
+		transform: translateY(16px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
 }
 
 @keyframes transition-ring-pulse {
-  0%, 100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
+	0%,
+	100% {
+		opacity: 0.5;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.04);
+	}
 }
 
 @keyframes transition-video-expand {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
+	from {
+		transform: scale(1);
+		opacity: 1;
+	}
+	to {
+		transform: scale(4);
+		opacity: 0;
+	}
 }
 
 @keyframes transition-content-fade {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
 }
 
 @keyframes overlay-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    pointer-events: none;
-  }
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+		pointer-events: none;
+	}
 }
-
 
 /* Staggered animation delay utilities */
 @utility animation-delay-100 {
-  animation-delay: 100ms;
+	animation-delay: 100ms;
 }
 @utility animation-delay-200 {
-  animation-delay: 200ms;
+	animation-delay: 200ms;
 }
 
 /* GPU layer promotion for the video expand (scale 1→4x) */
 @utility will-change-transform-opacity {
-  will-change: transform, opacity;
+	will-change: transform, opacity;
 }
 
 /* Accessibility: respect user preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .animate-transition-scale-in,
-  .animate-transition-text-up,
-  .animate-transition-ring-pulse,
-  .animate-transition-video-expand,
-  .animate-overlay-pulse-line,
-  .animate-overlay-fade-out {
-    animation: none !important;
-  }
+	.animate-transition-scale-in,
+	.animate-transition-text-up,
+	.animate-transition-ring-pulse,
+	.animate-transition-video-expand,
+	.animate-overlay-pulse-line,
+	.animate-overlay-fade-out {
+		animation: none !important;
+	}
 
-  /* Global guard: nuke all transitions + animations so any future utility
+	/* Global guard: nuke all transitions + animations so any future utility
      (transition-colors, transition-transform, transform/scale hover, etc.)
      respects the OS-level preference without per-component motion-reduce
      audits. WCAG 2.3.3 (Animations from Interactions). */
-  *, *::before, *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-  }
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1115,11 +413,11 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @utility scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1129,7 +427,7 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .page-padding {
-  padding: clamp(var(--spacing-m-400), 3vw, var(--spacing-m-600));
+	padding: clamp(var(--spacing-m-400), 3vw, var(--spacing-m-600));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
