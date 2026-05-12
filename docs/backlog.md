@@ -316,6 +316,18 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Same threshold-as-P&L vocabulary hijack that's been swept everywhere else in Wave 3 — last sliver.
 - **Source**: `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 4 enhancement.
 
+### `ComparisonRow` delta branch — retire or commit (risk-simulation summary-cards)
+
+- **What**: `src/components/risk-simulation/summary-cards.tsx` `ComparisonRow` carries an unused `delta`/`deltaPositive` prop branch. All four current callsites pass only `originalValue`/`simulatedValue`. The branch paints `text-trade-buy` / `text-trade-sell` — which is the wrong vocabulary for any of the comparison metrics shown (win-rate, profit-factor, avg-R, max-drawdown are not signed P&L). When the delta UI ships, rename the prop semantics to `signed`/`positive` and re-token the palette to fit the metric, OR delete the prop today since it's unreachable.
+- **Why**: Dead-code drift on a colorized branch is a pre-loaded foot-gun — the next person who hooks up delta will silently inherit the wrong vocabulary.
+- **Source**: `docs/scans/2026-05-12-impeccable-risk-simulation.md` Phase 1a P2 + Phase 4 enhancement.
+
+### Verdict-triad palette consolidation (`--color-rule-{blocked,paused,executed}`)
+
+- **What**: Wave 3 produced a consistent rule-engine verdict vocabulary: `fb-error` (blocked by loss/limit rule), `warning` (paused on purpose — target, gain-stop), `fb-success` (engine ran trade / recovery completed), `txt-300` (data N/A — no SL, max trades). Now used in three places: monte-carlo `kelly-criterion-card.conservative` + `strategy-analysis.Insight`, risk-simulation `trade-comparison-table.statusDotColors` + `day-trace-card` footer + `preview-banner` success twin. If a fourth surface needs it, promote to dedicated tokens (`--color-rule-blocked`, `--color-rule-paused`, `--color-rule-executed`, `--color-rule-na`) so the vocabulary is grep-able and themeable independently from `fb-*`/`warning`.
+- **Why**: Today the aliasing works because `fb-error` semantically maps to "rule blocked" — but the moment design changes warning color (e.g. amber for non-critical-pause), the rule-paused state would silently drift. Decouple before the divergence.
+- **Source**: `docs/scans/2026-05-12-impeccable-risk-simulation.md` Phase 4 enhancement.
+
 ---
 
 ## Documentation drift watch

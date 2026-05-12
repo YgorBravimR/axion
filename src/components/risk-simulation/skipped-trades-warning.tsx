@@ -61,9 +61,9 @@ const SkippedTradesWarning = ({ summary }: SkippedTradesWarningProps) => {
 					</span>
 				</div>
 				{isExpanded ? (
-					<ChevronUp className="text-txt-300 h-4 w-4" />
+					<ChevronUp className="text-txt-300 h-4 w-4" aria-hidden="true" />
 				) : (
-					<ChevronDown className="text-txt-300 h-4 w-4" />
+					<ChevronDown className="text-txt-300 h-4 w-4" aria-hidden="true" />
 				)}
 			</button>
 

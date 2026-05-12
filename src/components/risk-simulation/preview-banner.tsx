@@ -52,7 +52,7 @@ const PreviewBanner = ({
 						/>
 					) : (
 						<CheckCircle
-							className="text-trade-buy h-4 w-4 shrink-0"
+							className="text-fb-success h-4 w-4 shrink-0"
 							aria-hidden="true"
 						/>
 					)}

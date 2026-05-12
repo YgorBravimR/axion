@@ -44,16 +44,16 @@ const formatR = (r: number | null): string => {
 }
 
 const statusDotColors: Record<SimulatedTradeStatus, string> = {
-	executed: "bg-trade-buy",
+	executed: "bg-fb-success",
 	skipped_no_sl: "bg-txt-300",
-	skipped_daily_limit: "bg-trade-sell",
-	skipped_daily_target: "bg-action-buy",
+	skipped_daily_limit: "bg-fb-error",
+	skipped_daily_target: "bg-warning",
 	skipped_max_trades: "bg-txt-300",
-	skipped_consecutive_loss: "bg-trade-sell",
-	skipped_monthly_limit: "bg-trade-sell",
-	skipped_weekly_limit: "bg-trade-sell",
-	skipped_recovery_complete: "bg-trade-buy",
-	skipped_gain_stop: "bg-action-buy",
+	skipped_consecutive_loss: "bg-fb-error",
+	skipped_monthly_limit: "bg-fb-error",
+	skipped_weekly_limit: "bg-fb-error",
+	skipped_recovery_complete: "bg-fb-success",
+	skipped_gain_stop: "bg-warning",
 }
 
 const TradeComparisonTable = ({ trades }: TradeComparisonTableProps) => {

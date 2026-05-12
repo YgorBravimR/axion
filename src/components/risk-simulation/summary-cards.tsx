@@ -144,7 +144,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 					</div>
 					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("executed")}</span>
-						<span className="text-small text-trade-buy font-medium">
+						<span className="text-small text-txt-100 font-medium">
 							{summary.executedTrades}
 						</span>
 					</div>
