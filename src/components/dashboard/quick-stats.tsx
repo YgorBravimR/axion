@@ -5,7 +5,11 @@ import { Flame, TrendingUp, AlertTriangle, Activity } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import type { StreakData, OverallStats } from "@/types"
 import { cn } from "@/lib/utils"
-import { formatCompactCurrencyWithSign, formatDateLocale } from "@/lib/formatting"
+import {
+	formatCompactCurrencyWithSign,
+	formatDateLocale,
+} from "@/lib/formatting"
+import { Panel } from "@/components/ui/panel"
 import type { Locale } from "@/i18n/config"
 
 interface QuickStatsProps {
@@ -24,18 +28,31 @@ interface StatRowProps {
 /**
  * Displays a single stat row with icon, label, and value.
  */
-const StatRow = ({ icon, label, value, subValue, valueClass }: StatRowProps) => (
-	<div className="flex items-center justify-between border-b border-bg-300 pb-s-300 min-w-0">
-		<div className="flex items-center gap-s-200 min-w-0">
+const StatRow = ({
+	icon,
+	label,
+	value,
+	subValue,
+	valueClass,
+}: StatRowProps) => (
+	<div className="border-bg-300 pb-s-300 flex min-w-0 items-center justify-between border-b">
+		<div className="gap-s-200 flex min-w-0 items-center">
 			<span className="text-txt-300 shrink-0">{icon}</span>
 			<span className="text-small text-txt-200 truncate">{label}</span>
 		</div>
-		<div className="text-right min-w-0 shrink-0">
-			<span className={cn("text-small font-medium truncate", valueClass || "text-txt-100")}>
+		<div className="min-w-0 shrink-0 text-right">
+			<span
+				className={cn(
+					"text-small truncate font-medium",
+					valueClass || "text-txt-100"
+				)}
+			>
 				{value}
 			</span>
 			{subValue && (
-				<span className="ml-s-200 text-tiny text-txt-300 truncate">{subValue}</span>
+				<span className="ml-s-200 text-tiny text-txt-300 truncate">
+					{subValue}
+				</span>
 			)}
 		</div>
 	</div>
@@ -73,8 +90,10 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 	}, [streakData, t])
 
 	return (
-		<div className="rounded-lg border border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500">
-			<h2 className="text-small font-semibold text-txt-100 sm:text-body">{t("title")}</h2>
+		<Panel padding="lg">
+			<h2 className="text-small text-txt-100 sm:text-body font-semibold">
+				{t("title")}
+			</h2>
 			<div className="mt-s-300 space-y-s-300 sm:mt-m-400 sm:space-y-m-400">
 				<StatRow
 					icon={<Flame className="h-4 w-4" />}
@@ -91,7 +110,9 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 							: "--"
 					}
 					subValue={
-						streakData?.bestDay ? formatDate(streakData.bestDay.date) : undefined
+						streakData?.bestDay
+							? formatDate(streakData.bestDay.date)
+							: undefined
 					}
 					valueClass="text-trade-buy"
 				/>
@@ -119,21 +140,23 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("totalTrades")}
 					value={stats?.totalTrades.toString() || "--"}
 				/>
-				<div className="mt-m-500 grid grid-cols-2 gap-s-300 pt-m-400">
-					<div className="rounded-md bg-bg-100 p-s-300 text-center min-w-0">
+				<div className="mt-m-500 gap-s-300 pt-m-400 grid grid-cols-2">
+					<div className="bg-bg-100 p-s-300 min-w-0 rounded-md text-center">
 						<p className="text-tiny text-txt-300 truncate">{t("longestWin")}</p>
-						<p className="mt-s-100 text-body font-semibold text-trade-buy">
+						<p className="mt-s-100 text-body text-trade-buy font-semibold">
 							{streakData?.longestWinStreak || 0}
 						</p>
 					</div>
-					<div className="rounded-md bg-bg-100 p-s-300 text-center min-w-0">
-						<p className="text-tiny text-txt-300 truncate">{t("longestLoss")}</p>
-						<p className="mt-s-100 text-body font-semibold text-trade-sell">
+					<div className="bg-bg-100 p-s-300 min-w-0 rounded-md text-center">
+						<p className="text-tiny text-txt-300 truncate">
+							{t("longestLoss")}
+						</p>
+						<p className="mt-s-100 text-body text-trade-sell font-semibold">
 							{streakData?.longestLossStreak || 0}
 						</p>
 					</div>
 				</div>
 			</div>
-		</div>
+		</Panel>
 	)
 }

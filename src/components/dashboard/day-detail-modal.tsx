@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Panel } from "@/components/ui/panel"
 import { DaySummaryStats } from "./day-summary-stats"
 import { DayEquityCurve } from "./day-equity-curve"
 import { DayTradesList } from "./day-trades-list"
@@ -113,7 +114,7 @@ export const DayDetailModal = ({
 							<DaySummaryStats summary={summary} />
 
 							{/* Equity Curve */}
-							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+							<Panel padding="md">
 								<h4 className="mb-s-300 text-small text-txt-100 font-medium">
 									{t("dayDetail.equityCurve")}
 								</h4>
@@ -121,7 +122,7 @@ export const DayDetailModal = ({
 									data={equityCurve}
 									onPointClick={handleTradeClick}
 								/>
-							</div>
+							</Panel>
 
 							{/* Trades List */}
 							<div>

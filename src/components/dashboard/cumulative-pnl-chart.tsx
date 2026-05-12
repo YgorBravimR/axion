@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
+import { Panel } from "@/components/ui/panel"
 import { cn } from "@/lib/utils"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
@@ -100,14 +101,14 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<Panel padding="md">
 				<h3 className="mb-s-300 text-small sm:mb-m-400 sm:text-body text-txt-100 font-semibold">
 					{t("cumulativePnL.title")}
 				</h3>
 				<div className="text-txt-300 flex h-[150px] items-center justify-center sm:h-[200px]">
 					{t("noData")}
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
@@ -116,7 +117,7 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 		finalPnl >= 0 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+		<Panel padding="md">
 			<h3 className="mb-s-300 text-small sm:mb-m-400 sm:text-body text-txt-100 font-semibold">
 				{t("cumulativePnL.title")}
 			</h3>
@@ -168,6 +169,6 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 					/>
 				</LineChart>
 			</ChartContainer>
-		</div>
+		</Panel>
 	)
 }

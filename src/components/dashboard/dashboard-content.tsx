@@ -20,7 +20,7 @@ import {
 	getStreakData,
 	getRadarChartData,
 } from "@/app/actions/analytics"
-import { cn } from "@/lib/utils"
+import { SegmentedToggle } from "@/components/ui/segmented-toggle"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { dashboardGuide } from "@/components/ui/page-guide/guide-configs/dashboard"
@@ -94,30 +94,13 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	)
 
 	return (
-		<div
-			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
-			role="group"
+		<SegmentedToggle
+			value={period}
+			options={options}
+			onChange={onChange}
+			disabled={disabled}
 			aria-label={t("filterAriaLabel")}
-		>
-			{options.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					onClick={() => onChange(option.value)}
-					disabled={disabled}
-					className={cn(
-						"px-s-300 py-s-200 text-tiny sm:text-small min-h-11 rounded-md font-medium transition-colors",
-						period === option.value
-							? "bg-acc-100 text-bg-100"
-							: "text-txt-300 hover:text-txt-100",
-						disabled && "cursor-not-allowed opacity-50"
-					)}
-					aria-pressed={period === option.value}
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
+		/>
 	)
 }
 
@@ -153,7 +136,7 @@ export const DashboardContent = ({
 	)
 	const [radarData, setRadarData] = useState<RadarChartData[]>(initialRadarData)
 
-	const [, startTransition] = useTransition()
+	const [isCalendarLoading, startTransition] = useTransition()
 	const [isPeriodLoading, startPeriodTransition] = useTransition()
 
 	// Day detail modal state
@@ -283,6 +266,7 @@ export const DashboardContent = ({
 					month={currentMonth}
 					onMonthChange={handleMonthChange}
 					onDayClick={handleDayClick}
+					isLoading={isCalendarLoading}
 				/>
 			</div>
 
