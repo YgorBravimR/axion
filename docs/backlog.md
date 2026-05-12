@@ -99,6 +99,28 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Journal-list polish (deferred from sweep)
+
+### Mobile-detect via container queries instead of `matchMedia` effect
+
+- **What**: `period-filter.tsx:44-50` runs a `useEffect` on mount to read `window.matchMedia("(max-width: 419px)")` so it can pass `numberOfMonths={1|2}` to the `DateRangePicker`. Replace with a CSS-only approach (container query on the picker wrapper, or render one calendar and let CSS hide the second below the breakpoint).
+- **Why**: SSR-first the first paint always renders `isMobile=false`, then re-renders after hydration. The hydration flash is small but real, and the effect is the only state-setting code in PeriodFilter.
+- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1a P2.
+
+### Listbox-style arrow-nav within trade-day-group
+
+- **What**: After the TradeRow Link migration, focus moves row-by-row on Tab. For dense days (30+ trades) consider a listbox roving-tabindex pattern so ↑↓ navigates between rows without leaving the day group, and Tab leaves the group entirely.
+- **Why**: Power-user shortcut. Not blocking — Tab works fine — but the cockpit register favors keyboard density.
+- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1.
+
+### `h-50` Suspense-fallback height across page-level shells
+
+- **What**: 5 page.tsx files (`journal/page.tsx`, `settings/page.tsx`, `risk-simulation/page.tsx`, `backtest/page.tsx`, `backtest/optimize/page.tsx`) and `journal-content.tsx:457` use `className="h-50"` on the LoadingSpinner. Tailwind v4 resolves it to `12.5rem` (200px) via the implicit `n * 0.25rem` scale, but the project's named spacing scale tops at `l-900` (64px). Either codify `h-50` in `globals.css` (`--height-l-1000` or similar) so it's intentional, or swap all 6 sites to `min-h-48` / `min-h-52` / a named token.
+- **Why**: It works, but reads as a token escape hatch every time someone greps the spacing system.
+- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 3 out-of-scope.
+
+---
+
 ## Command Center polish (deferred from sweep)
 
 ### `useTransition` on refresh callbacks
