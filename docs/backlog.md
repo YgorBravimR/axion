@@ -145,6 +145,24 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Playbook list — deferred follow-ups
+
+### StrategyCard menu should adopt Radix `DropdownMenu`
+
+- **What**: `src/components/playbook/strategy-card.tsx:109-181` rolls a custom dropdown with manual focus management (`menuRef`, `menuButtonRef`, arrow-key `onKeyDown`, escape close, overlay click-out). The project already ships `@/components/ui/dropdown-menu` (Radix-based). Migrate so focus trapping, portal rendering, outside-click handling, and proper `aria-controls` wiring come for free.
+- **Why**: Hand-rolled focus machinery is a maintenance liability and tends to drift out of WAI-ARIA spec (e.g. roving tabindex vs single-tabbable composite, role="menu" focusability). Radix already solves this for every other dropdown in the app.
+- **Source**: `docs/scans/2026-05-12-impeccable-playbook-list.md` Phase 1b audit P3.
+
+---
+
+### Distill pass — `/playbook` reads as nested cards
+
+- **What**: The compliance overview and the strategy grid each live inside their own `border-bg-300 bg-bg-200 rounded-lg border` wrapper, and the strategy grid itself contains up to ~10 `StrategyCard` boxes — yielding a "cards inside a card" structure. Either drop the outer chrome on the strategy section (let the cards float on the page background and use a section heading instead), or remove the per-card border and let the section wrapper provide the boundary.
+- **Why**: Shared design law: "nested cards are always wrong." Two layers of borders compete for attention and consume horizontal whitespace.
+- **Source**: `docs/scans/2026-05-12-impeccable-playbook-list.md` Phase 1a P2.
+
+---
+
 ## Journal detail — deferred follow-ups
 
 ### Detail-page delete uses `window.confirm()`
