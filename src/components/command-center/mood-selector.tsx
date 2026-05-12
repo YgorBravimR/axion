@@ -24,9 +24,9 @@ const moods: MoodOption[] = [
 ]
 
 const TONE_INDICATOR: Record<MoodOption["tone"], string> = {
-	positive: "bg-trade-buy",
+	positive: "bg-acc-100",
 	neutral: "bg-txt-300",
-	negative: "bg-trade-sell",
+	negative: "bg-warning",
 }
 
 export const MoodSelector = ({

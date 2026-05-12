@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, memo, type ElementType } from "react"
+import { useMemo, type ElementType } from "react"
 import {
 	AlertTriangle,
 	CheckCircle,
@@ -11,9 +11,11 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { Panel } from "@/components/ui/panel"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import { fromCents } from "@/lib/money"
 import { useFormatting } from "@/hooks/use-formatting"
+import { MetricCell } from "./metric-cell"
 
 type CircuitBreakerState =
 	| "clear"
@@ -109,38 +111,6 @@ interface CircuitBreakerPanelProps {
 	status: CircuitBreakerStatus | null
 }
 
-export interface MetricCellProps {
-	label: string
-	value: string
-	subLabel?: string
-	valueClassName?: string
-}
-
-export const MetricCell = memo(
-	({
-		label,
-		value,
-		subLabel,
-		valueClassName = "text-txt-100",
-	}: MetricCellProps) => (
-		<dl className="space-y-s-100 min-w-0">
-			<dt className="text-tiny text-txt-300 truncate">{label}</dt>
-			<dd
-				className={cn(
-					"text-body block min-w-0 truncate font-semibold",
-					valueClassName
-				)}
-			>
-				{value}
-			</dd>
-			{subLabel && (
-				<dd className="text-tiny text-txt-300 truncate">{subLabel}</dd>
-			)}
-		</dl>
-	)
-)
-MetricCell.displayName = "CircuitBreakerMetricCell"
-
 export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 	const t = useTranslations("commandCenter.circuitBreaker")
 	const { formatCurrency } = useFormatting()
@@ -166,15 +136,12 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 
 	if (!status) {
 		return (
-			<div
-				id="cc-circuit-breaker"
-				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-			>
+			<Panel id="cc-circuit-breaker">
 				<div className="gap-s-200 flex items-center">
 					<AlertCircle className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
@@ -261,7 +228,7 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 						</div>
 					)}
 					{status.maxTradesHit && (
-						<div className="gap-s-200 text-small text-trade-sell flex items-center">
+						<div className="gap-s-200 text-small text-warning flex items-center">
 							<AlertTriangle className="h-4 w-4" />
 							<span>{t("maxTradesHit")}</span>
 						</div>
@@ -279,7 +246,7 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 						</div>
 					)}
 					{status.isSecondOpBlocked && (
-						<div className="gap-s-200 text-small text-trade-sell flex items-center">
+						<div className="gap-s-200 text-small text-warning flex items-center">
 							<AlertTriangle className="h-4 w-4" />
 							<span>{t("secondOpBlocked")}</span>
 						</div>

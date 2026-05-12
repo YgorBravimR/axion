@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Panel } from "@/components/ui/panel"
 import { useToast } from "@/components/ui/toast"
 import { toggleChecklistItem } from "@/app/actions/command-center"
 import type { ChecklistWithCompletion } from "@/app/actions/command-center.types"
@@ -86,7 +87,7 @@ export const DailyChecklist = ({
 
 	if (checklists.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<Panel>
 				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
@@ -104,7 +105,7 @@ export const DailyChecklist = ({
 					)}
 				</div>
 				<p className="text-small text-txt-300">{t("noItems")}</p>
-			</div>
+			</Panel>
 		)
 	}
 
@@ -121,11 +122,11 @@ export const DailyChecklist = ({
 				} = stats
 
 				return (
-					<div
+					<Panel
 						key={checklist.id}
 						className={cn(
-							"bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border transition-colors",
-							isComplete ? "border-trade-buy/50" : "border-bg-300"
+							"transition-colors",
+							isComplete && "border-acc-100/50"
 						)}
 					>
 						{/* Header */}
@@ -135,7 +136,7 @@ export const DailyChecklist = ({
 									{checklist.name}
 								</h3>
 								{isComplete && (
-									<span className="gap-s-100 text-tiny text-trade-buy flex items-center">
+									<span className="gap-s-100 text-tiny text-acc-100 flex items-center">
 										<Check className="h-3 w-3" />
 										{t("completed")}
 									</span>
@@ -169,12 +170,16 @@ export const DailyChecklist = ({
 								aria-valuenow={completedCount}
 								aria-valuemin={0}
 								aria-valuemax={totalCount}
+								aria-valuetext={t("progressValueText", {
+									done: completedCount,
+									total: totalCount,
+								})}
 								aria-label={t("progress")}
 							>
 								<div
 									className={cn(
 										"h-full transition-[width] duration-300 motion-reduce:transition-none",
-										isComplete ? "bg-trade-buy" : "bg-acc-100"
+										isComplete ? "bg-acc-100" : "bg-acc-100/40"
 									)}
 									style={{ width: `${progress}%` }}
 								/>
@@ -218,7 +223,7 @@ export const DailyChecklist = ({
 								)
 							})}
 						</div>
-					</div>
+					</Panel>
 				)
 			})}
 		</div>

@@ -5,6 +5,7 @@ import { Sun, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Panel } from "@/components/ui/panel"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
@@ -102,12 +103,9 @@ export const PreMarketNotes = ({
 
 	if (!dailyPlan) {
 		return (
-			<div
-				id="cc-pre-market-notes"
-				className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
-			>
+			<Panel id="cc-pre-market-notes" tone="muted">
 				<div className="gap-s-200 flex items-center">
-					<Sun className="text-trade-buy h-5 w-5" />
+					<Sun className="text-txt-300 h-5 w-5" aria-hidden="true" />
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("preMarket")}
 					</h3>
@@ -115,18 +113,15 @@ export const PreMarketNotes = ({
 				<p className="mt-s-200 text-tiny text-txt-300">
 					{tPlan(NO_PLAN_HINT_KEY)}
 				</p>
-			</div>
+			</Panel>
 		)
 	}
 
 	return (
-		<div
-			id="cc-pre-market-notes"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-		>
+		<Panel id="cc-pre-market-notes">
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
-					<Sun className="text-trade-buy h-5 w-5" />
+					<Sun className="text-txt-300 h-5 w-5" aria-hidden="true" />
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("preMarket")}
 					</h3>
@@ -216,6 +211,6 @@ export const PreMarketNotes = ({
 					disabled={isReadOnly}
 				/>
 			</div>
-		</div>
+		</Panel>
 	)
 }

@@ -10,7 +10,6 @@ import {
 } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { APP_TIMEZONE, formatDateKey } from "@/lib/dates"
 import { advanceReplayDate } from "@/app/actions/accounts"
 
@@ -82,11 +81,20 @@ export const DateNavigator = ({
 		}
 	}, [router])
 
-	const handleNavigatePrev = useCallback(() => handleNavigate(-1), [handleNavigate])
-	const handleNavigateNext = useCallback(() => handleNavigate(1), [handleNavigate])
+	const handleNavigatePrev = useCallback(
+		() => handleNavigate(-1),
+		[handleNavigate]
+	)
+	const handleNavigateNext = useCallback(
+		() => handleNavigate(1),
+		[handleNavigate]
+	)
 
 	return (
-		<div id="cc-date-navigator" className="gap-s-200 flex flex-wrap items-center">
+		<div
+			id="cc-date-navigator"
+			className="gap-s-200 flex flex-wrap items-center"
+		>
 			<Button
 				id="date-nav-previous"
 				variant="ghost"
@@ -94,19 +102,14 @@ export const DateNavigator = ({
 				onClick={handleNavigatePrev}
 				aria-label={t("previousDay")}
 				tabIndex={0}
-				className="size-10 sm:size-9 p-0"
+				className="size-10 p-0 sm:size-9"
 			>
 				<ChevronLeft className="h-4 w-4" />
 			</Button>
 
 			<div className="gap-s-200 flex items-center">
-				<CalendarDays className="text-txt-300 h-4 w-4" />
-				<span
-					className={cn(
-						"text-small font-medium",
-						isToday ? "text-txt-100" : "text-acc-100"
-					)}
-				>
+				<CalendarDays className="text-txt-300 h-4 w-4" aria-hidden="true" />
+				<span className="text-small text-txt-100 font-medium">
 					{isToday
 						? isReplayAccount
 							? formatDisplayDate(currentDate, locale)
@@ -123,7 +126,7 @@ export const DateNavigator = ({
 				disabled={isToday}
 				aria-label={t("nextDay")}
 				tabIndex={0}
-				className="size-10 sm:size-9 p-0"
+				className="size-10 p-0 sm:size-9"
 			>
 				<ChevronRight className="h-4 w-4" />
 			</Button>
@@ -134,7 +137,7 @@ export const DateNavigator = ({
 					variant="ghost"
 					size="sm"
 					onClick={handleGoToToday}
-					className="ml-s-200 text-tiny text-acc-100"
+					className="ml-s-200 text-tiny"
 				>
 					{t("today")}
 				</Button>
@@ -147,17 +150,21 @@ export const DateNavigator = ({
 					size="sm"
 					onClick={handleAdvanceReplayDate}
 					disabled={isAdvancing}
-					className="ml-s-200 gap-s-100 text-tiny text-acc-100"
+					className="ml-s-200 gap-s-100 text-tiny"
 					aria-label={t("nextReplayDay")}
 					tabIndex={0}
 				>
-					<SkipForward className="h-3.5 w-3.5" />
+					<SkipForward className="h-3.5 w-3.5" aria-hidden="true" />
 					<span>{t("nextReplayDay")}</span>
 				</Button>
 			)}
 
 			{!isToday && (
-				<span className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm" role="status" aria-live="polite">
+				<span
+					className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm"
+					role="status"
+					aria-live="polite"
+				>
 					{t("readOnlyNotice")}
 				</span>
 			)}

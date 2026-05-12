@@ -32,10 +32,7 @@ import type {
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
-import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
-
-import { CalendarDays } from "lucide-react"
 
 interface CommandCenterContentProps {
 	initialCompletions: ChecklistWithCompletion[]
@@ -63,7 +60,6 @@ const CommandCenterContent = ({
 	initialLiveTradingStatus = null,
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
-	const tPlan = useTranslations("commandCenter.plan")
 	const { isPremium } = useFeatureAccess()
 	useRegisterPageGuide(commandCenterGuide)
 
@@ -164,21 +160,6 @@ const CommandCenterContent = ({
 
 				{/* Right Column */}
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
-					{/* Phase 4b: legacy plan summary removed — fractal-plan UI (Phase 5) replaces this. */}
-					<div
-						id="cc-plan-summary"
-						className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
-						aria-label={tPlan("title")}
-					>
-						<div className="gap-s-300 flex flex-col items-center text-center">
-							<CalendarDays className="text-txt-300 h-8 w-8" />
-							<h3 className="text-small text-txt-100 font-semibold">
-								{tPlan("title")}
-							</h3>
-							<p className="text-tiny text-txt-300">{tPlan("noPlanPrompt")}</p>
-						</div>
-					</div>
-
 					{/* Post-Market Notes — premium+ only */}
 					{isPremium && (
 						<PostMarketNotes

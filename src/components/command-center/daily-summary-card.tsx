@@ -3,6 +3,7 @@
 import { BarChart3, Award, AlertTriangle } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { Panel } from "@/components/ui/panel"
 import { useFormatting } from "@/hooks/use-formatting"
 import type { DailySummary } from "@/app/actions/command-center.types"
 
@@ -17,25 +18,19 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 	if (!summary) {
 		return (
-			<div
-				id="cc-daily-summary"
-				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-			>
+			<Panel id="cc-daily-summary">
 				<div className="gap-s-200 flex items-center">
 					<BarChart3 className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
 	const hasNoTrades = summary.tradesCount === 0
 
 	return (
-		<div
-			id="cc-daily-summary"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-		>
+		<Panel id="cc-daily-summary">
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 gap-s-200 flex items-center">
 				<BarChart3 className="text-acc-100 h-5 w-5" />
@@ -128,9 +123,7 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 						<p
 							className={cn(
 								"mt-s-100 text-body font-semibold",
-								summary.consecutiveLosses >= 3
-									? "text-trade-sell"
-									: "text-txt-100"
+								summary.consecutiveLosses >= 3 ? "text-warning" : "text-txt-100"
 							)}
 						>
 							{summary.consecutiveLosses}
@@ -138,6 +131,6 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 					</div>
 				</div>
 			)}
-		</div>
+		</Panel>
 	)
 }

@@ -9,11 +9,13 @@ import {
 	Plus,
 	Trash2,
 	PlusCircle,
+	X,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Panel } from "@/components/ui/panel"
 import { useToast } from "@/components/ui/toast"
 import {
 	Table,
@@ -127,10 +129,10 @@ export const AssetRulesPanel = ({
 				assetId: editing.assetId,
 				bias: editing.bias,
 				maxDailyTrades: editing.maxDailyTrades
-					? parseInt(editing.maxDailyTrades)
+					? parseInt(editing.maxDailyTrades, 10)
 					: null,
 				maxPositionSize: editing.maxPositionSize
-					? parseInt(editing.maxPositionSize)
+					? parseInt(editing.maxPositionSize, 10)
 					: null,
 				notes: editing.notes || null,
 				isActive: true,
@@ -204,10 +206,7 @@ export const AssetRulesPanel = ({
 	)
 
 	return (
-		<div
-			id="cc-asset-rules"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-		>
+		<Panel id="cc-asset-rules">
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
@@ -425,7 +424,7 @@ export const AssetRulesPanel = ({
 														className="text-txt-300 h-8 w-8 p-0"
 														aria-label={t("cancel")}
 													>
-														&times;
+														<X className="h-4 w-4" aria-hidden="true" />
 													</Button>
 												</>
 											) : (
@@ -486,6 +485,6 @@ export const AssetRulesPanel = ({
 					</TableBody>
 				</Table>
 			)}
-		</div>
+		</Panel>
 	)
 }
