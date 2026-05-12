@@ -643,10 +643,10 @@
 				"shouldStop": "PARE DE OPERAR",
 				"dailyLossLimit": "Limite de perda diária atingido",
 				"dailyTargetReached": "Alvo diário atingido",
-				"recoverySequenceExhausted": "Sequência de recuperação esgotada — pare por hoje",
-				"singleTargetGainMode": "Modo alvo único — objetivo atingido",
-				"gainSequenceExhausted": "Sequência de ganho esgotada — sem mais trades",
-				"recoveryWinExit": "Ganho na recuperação — dia encerrado",
+				"recoverySequenceExhausted": "Sequência de recuperação esgotada. Pare por hoje.",
+				"singleTargetGainMode": "Modo alvo único. Objetivo atingido.",
+				"gainSequenceExhausted": "Sequência de ganho esgotada. Sem mais trades.",
+				"recoveryWinExit": "Ganho na recuperação. Dia encerrado.",
 				"maxTradesReached": "Máximo de trades atingido"
 			},
 			"gainMode": {
@@ -683,7 +683,8 @@
 			"noItems": "Nenhum item de checklist ainda. Clique em Gerenciar para criar.",
 			"completed": "Completo",
 			"toggleError": "Falha ao atualizar item da lista",
-			"progress": "Progresso da lista"
+			"progress": "Progresso da lista",
+			"progressValueText": "{done} de {total} itens concluídos"
 		},
 		"checklistManager": {
 			"createTitle": "Criar Checklist",

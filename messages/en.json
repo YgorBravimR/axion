@@ -643,10 +643,10 @@
 				"shouldStop": "STOP TRADING",
 				"dailyLossLimit": "Daily loss limit reached",
 				"dailyTargetReached": "Daily target reached",
-				"recoverySequenceExhausted": "Recovery sequence exhausted — stop for the day",
-				"singleTargetGainMode": "Single target gain mode — goal reached",
-				"gainSequenceExhausted": "Gain sequence exhausted — no more trades",
-				"recoveryWinExit": "Recovery win — day complete",
+				"recoverySequenceExhausted": "Recovery sequence exhausted. Stop for the day.",
+				"singleTargetGainMode": "Single target gain mode. Goal reached.",
+				"gainSequenceExhausted": "Gain sequence exhausted. No more trades.",
+				"recoveryWinExit": "Recovery win. Day complete.",
 				"maxTradesReached": "Maximum trades reached"
 			},
 			"gainMode": {
@@ -683,7 +683,8 @@
 			"noItems": "No checklist items yet. Click Manage to create one.",
 			"completed": "Complete",
 			"toggleError": "Failed to update checklist item",
-			"progress": "Checklist progress"
+			"progress": "Checklist progress",
+			"progressValueText": "{done} of {total} items complete"
 		},
 		"checklistManager": {
 			"createTitle": "Create Checklist",
