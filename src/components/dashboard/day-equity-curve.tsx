@@ -57,7 +57,7 @@ const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 				{formatCompactCurrencyWithSign(data.cumulativePnl, "R$")}
 			</p>
 			{data.tradeId && (
-				<p className="mt-s-100 text-tiny text-acc-100">
+				<p className="mt-s-100 text-tiny text-txt-300">
 					{t("dayDetail.clickToView")}
 				</p>
 			)}

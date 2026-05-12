@@ -1299,7 +1299,7 @@
 	"coaching": {
 		"title": "Trading Insights",
 		"subtitle": "Data-driven patterns from your recent trades",
-		"noInsights": "Not enough data to generate insights yet. Keep trading and journaling to unlock coaching.",
+		"noInsights": "Patterns appear once you have more journaled trades on file.",
 		"noTrades": "No trades found for the analysis period.",
 		"period": "Last {days} days",
 		"tradeCount": "{count} trades analyzed",

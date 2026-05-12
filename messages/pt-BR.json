@@ -1299,7 +1299,7 @@
 	"coaching": {
 		"title": "Insights de Trading",
 		"subtitle": "Padrões baseados em dados dos seus trades recentes",
-		"noInsights": "Dados insuficientes para gerar insights ainda. Continue operando e registrando para desbloquear o coaching.",
+		"noInsights": "Os padrões aparecem assim que você tiver mais trades registrados.",
 		"noTrades": "Nenhum trade encontrado para o período de análise.",
 		"period": "Últimos {days} dias",
 		"tradeCount": "{count} trades analisados",
