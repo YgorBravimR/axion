@@ -129,7 +129,7 @@ const CustomTooltip = memo(
 				)}
 				{!showComparison && variant !== "original" && (
 					<p
-						className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-trade-buy" : "text-txt-300"}`}
+						className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-txt-100" : "text-txt-300"}`}
 					>
 						{data.mode === "live" ? t("modeLive") : t("modeSim")}
 					</p>
@@ -277,7 +277,7 @@ const EquityShieldChart = ({
 				variant === "original"
 					? "var(--color-acc-100)"
 					: variant === "method1"
-						? "var(--color-trade-buy)"
+						? "var(--color-acc-100)"
 						: "var(--color-acc-200)",
 			gradientId: `shield-gradient-${variant}`,
 			originalGradientId: `shield-gradient-original-${variant}`,
@@ -368,8 +368,8 @@ const EquityShieldChart = ({
 									key={`sim-zone-${idx}`}
 									x1={band.x1}
 									x2={band.x2}
-									fill="var(--color-trade-sell)"
-									fillOpacity={0.06}
+									fill="var(--color-txt-300)"
+									fillOpacity={0.08}
 									strokeOpacity={0}
 								/>
 							))}
@@ -402,7 +402,7 @@ const EquityShieldChart = ({
 							<Line
 								type="monotone"
 								dataKey="ddLimitLine"
-								stroke="var(--color-trade-sell)"
+								stroke="var(--color-fb-error)"
 								strokeWidth={1.5}
 								strokeDasharray="6 4"
 								dot={false}
@@ -502,13 +502,13 @@ const EquityShieldChart = ({
 						</div>
 						{/* Sim zone */}
 						<div className="gap-s-200 flex items-center">
-							<div className="bg-trade-sell h-2.5 w-4 rounded-sm opacity-20" />
+							<div className="bg-txt-300 h-2.5 w-4 rounded-sm opacity-30" />
 							<span className="text-tiny text-txt-300">{t("legendSim")}</span>
 						</div>
 						{/* DD Limit */}
 						{drawdownLimitDollars > 0 && variant !== "method2" && (
 							<div className="gap-s-200 flex items-center">
-								<div className="border-trade-sell h-0 w-4 border-t border-dashed" />
+								<div className="border-fb-error h-0 w-4 border-t border-dashed" />
 								<span className="text-tiny text-txt-300">{t("ddLimit")}</span>
 							</div>
 						)}

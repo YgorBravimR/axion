@@ -74,9 +74,9 @@ const getV2Confidence = (riskOfRuinPercent: number): ConfidenceLevel => {
 }
 
 const confidenceColor: Record<ConfidenceLevel, string> = {
-	robust: "text-trade-buy",
-	moderate: "text-acc-100",
-	weak: "text-trade-sell",
+	robust: "text-fb-success",
+	moderate: "text-warning",
+	weak: "text-fb-error",
 }
 
 // ==========================================
@@ -206,7 +206,7 @@ const MCCalibrationBanner = ({
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
-					<Dices className="text-acc-100 h-5 w-5" />
+					<Dices className="text-acc-100 h-5 w-5" aria-hidden="true" />
 					<h3 className="text-small text-txt-100 font-semibold">
 						{t("title")}
 					</h3>
@@ -226,7 +226,7 @@ const MCCalibrationBanner = ({
 					aria-label={t("clear")}
 					tabIndex={0}
 				>
-					<X className="h-4 w-4" />
+					<X className="h-4 w-4" aria-hidden="true" />
 				</button>
 			</div>
 
@@ -275,7 +275,7 @@ const MCCalibrationBanner = ({
 							>
 								{isApplied ? (
 									<>
-										<Check className="h-3 w-3" />
+										<Check className="h-3 w-3" aria-hidden="true" />
 									</>
 								) : (
 									t("apply")

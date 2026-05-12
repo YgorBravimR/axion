@@ -292,11 +292,15 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
 
-### Categorical chart palette: extract literal hex array to tokens
+### Categorical chart palette: `--chart-1` … `--chart-N` tokens (3 callers waiting)
 
-- **What**: `src/components/optimize/equity-overlay-chart.tsx` defines `LINE_COLORS = ["#2196F3", "#26a69a", "#FF9800", "#AB47BC", "#EC407A", "#66BB6A", "#78909C"]` — literal hex chain bypassing the token system. Promote to `--chart-1` … `--chart-7` in `globals.css` (dark + light values) so multi-line charts theme correctly.
-- **Why**: Token-discipline drift is the wedge — any future categorical chart will copy this pattern. One token rollout fixes the family.
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2.
+- **What**: Three Wave 3 surfaces need a real categorical chart palette and currently each route through a different workaround:
+  - `src/components/optimize/equity-overlay-chart.tsx` ships literal hex (`["#2196F3", "#26a69a", "#FF9800", ...]`) bypassing the token system.
+  - `src/components/monte-carlo/v2/daily-pnl-chart.tsx` + `mode-distribution-chart.tsx` shoehorn engine modes through `trade-buy`/`trade-sell`/`acc-100`/`bg-300`.
+  - `src/components/equity-shield/equity-shield-chart.tsx` `strokeColor` map differentiates original/method1/method2 — post-sweep, method1 + original now both render at `acc-100` (no cross-chart hue differentiation) because we re-tokened off `trade-buy`.
+    Promote `--chart-1` … `--chart-7` in `globals.css` (dark + light values) and a `getChartColor(index)` helper. Wire all three surfaces.
+- **Why**: Token-discipline drift compounds across surfaces. With three callers waiting, the ROI per hour is now best-in-backlog for the whole "design surface tokens" cluster.
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2; `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 1a P3; `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
 
 ### Portuguese literal "(atual)" in sweep-config
 
@@ -304,11 +308,11 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Locale-bleed; the EN build still ships "(atual)".
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2.
 
-### Categorical mode palette for Monte Carlo v2 engine charts
+### `StatCard` variant API: split signed-money vs verdict (equity-shield-stats)
 
-- **What**: `src/components/monte-carlo/v2/daily-pnl-chart.tsx` and `mode-distribution-chart.tsx` paint engine modes (`lossRecovery`, `gainCompounding`, `mixed`, `skipped`) using `--color-trade-sell` / `--color-trade-buy` / `--color-acc-100` / `--color-bg-300`. In `daily-pnl-chart` the bar height already encodes P&L sign; the mode-color overlay double-encodes. Promote dedicated tokens (`--color-mode-recovery`, `--color-mode-compounding`, `--color-mode-mixed`, `--color-mode-skipped` — or reuse a categorical `--chart-N` family once that lands) so engine state ≠ P&L vocabulary.
-- **Why**: Trade colors leak into a categorical channel, which conflicts with the height encoding on the same chart and hijacks vocabulary that should remain reserved for signed money.
-- **Source**: `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 1a P3 (deferred).
+- **What**: `src/components/equity-shield/equity-shield-stats.tsx` `StatCard.variant: "default" | "positive" | "negative" | "pass" | "fail"` mixes two semantic families on one prop. `positive`/`negative` paint `trade-buy`/`trade-sell` (signed-money — correct). `pass`/`fail` paint `fb-success`/`fb-error` (verdict — correct after row #15 sweep). Two distinct semantics on a single discriminated union is a foot-gun: the next person who adds a "passing" StatCard might pick `positive` instead of `pass`. Split into `signedVariant: "positive" | "negative" | null` + `verdictVariant: "pass" | "fail" | null`, or extract a separate `VerdictBadge` component.
+- **Why**: Token vocabulary is correct now; the API still tempts future drift. Costs 15 minutes; removes a permanent foot-gun.
+- **Source**: `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
 
 ### Monte Carlo v1 distribution-histogram tooltip count is sign-colored
 

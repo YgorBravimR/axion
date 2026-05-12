@@ -20,29 +20,28 @@ interface StatCardProps {
 	variant?: "default" | "positive" | "negative" | "pass" | "fail"
 }
 
-const StatCard = memo(({
-	label,
-	value,
-	subValue,
-	variant = "default",
-}: StatCardProps) => {
-	const valueClass = cn(
-		"text-body sm:text-h3 font-semibold tabular-nums truncate",
-		variant === "positive" && "text-trade-buy",
-		variant === "negative" && "text-trade-sell",
-		variant === "pass" && "text-trade-buy",
-		variant === "fail" && "text-trade-sell",
-		variant === "default" && "text-txt-100"
-	)
+const StatCard = memo(
+	({ label, value, subValue, variant = "default" }: StatCardProps) => {
+		const valueClass = cn(
+			"text-body sm:text-h3 font-semibold tabular-nums truncate",
+			variant === "positive" && "text-trade-buy",
+			variant === "negative" && "text-trade-sell",
+			variant === "pass" && "text-fb-success",
+			variant === "fail" && "text-fb-error",
+			variant === "default" && "text-txt-100"
+		)
 
-	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
-			<p className="text-tiny text-txt-300 mb-s-100">{label}</p>
-			<p className={valueClass}>{value}</p>
-			{subValue && <p className="text-tiny text-txt-300 mt-s-100">{subValue}</p>}
-		</div>
-	)
-})
+		return (
+			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+				<p className="text-tiny text-txt-300 mb-s-100">{label}</p>
+				<p className={valueClass}>{value}</p>
+				{subValue && (
+					<p className="text-tiny text-txt-300 mt-s-100">{subValue}</p>
+				)}
+			</div>
+		)
+	}
+)
 StatCard.displayName = "EquityShieldStatCard"
 
 const formatCurrency = (value: number): string =>
@@ -54,51 +53,52 @@ interface PassFailBadgeProps {
 	drawdownLimit: number
 }
 
-const PassFailBadge = memo(({
-	wouldPass,
-	maxDrawdown,
-	drawdownLimit,
-}: PassFailBadgeProps) => {
-	const t = useTranslations("equityShield.stats")
+const PassFailBadge = memo(
+	({ wouldPass, maxDrawdown, drawdownLimit }: PassFailBadgeProps) => {
+		const t = useTranslations("equityShield.stats")
 
-	return (
-		<div
-			className={cn(
-				"border-bg-300 bg-bg-200 gap-s-200 p-s-300 sm:p-m-400 flex items-center rounded-lg border"
-			)}
-		>
-			<div className="flex flex-col">
-				<p className="text-tiny text-txt-300 mb-s-100">{t("wouldPass")}</p>
-				<div className="gap-s-200 flex items-center">
-					{wouldPass ? (
-						<ShieldCheck className="text-trade-buy h-5 w-5" />
-					) : (
-						<ShieldX className="text-trade-sell h-5 w-5" />
-					)}
-					<span
-						className={cn(
-							"text-body font-semibold truncate",
-							wouldPass ? "text-trade-buy" : "text-trade-sell"
+		return (
+			<div
+				className={cn(
+					"border-bg-300 bg-bg-200 gap-s-200 p-s-300 sm:p-m-400 flex items-center rounded-lg border"
+				)}
+			>
+				<div className="flex flex-col">
+					<p className="text-tiny text-txt-300 mb-s-100">{t("wouldPass")}</p>
+					<div className="gap-s-200 flex items-center">
+						{wouldPass ? (
+							<ShieldCheck
+								className="text-fb-success h-5 w-5"
+								aria-hidden="true"
+							/>
+						) : (
+							<ShieldX className="text-fb-error h-5 w-5" aria-hidden="true" />
 						)}
-					>
-						{wouldPass ? t("pass") : t("fail")}
-					</span>
+						<span
+							className={cn(
+								"text-body truncate font-semibold",
+								wouldPass ? "text-fb-success" : "text-fb-error"
+							)}
+						>
+							{wouldPass ? t("pass") : t("fail")}
+						</span>
+					</div>
+					<p className="text-tiny text-txt-300 mt-s-100">
+						{wouldPass
+							? t("passReason", {
+									maxDD: formatCurrency(maxDrawdown),
+									limit: formatCurrency(drawdownLimit),
+								})
+							: t("failReason", {
+									maxDD: formatCurrency(maxDrawdown),
+									limit: formatCurrency(drawdownLimit),
+								})}
+					</p>
 				</div>
-				<p className="text-tiny text-txt-300 mt-s-100">
-					{wouldPass
-						? t("passReason", {
-								maxDD: formatCurrency(maxDrawdown),
-								limit: formatCurrency(drawdownLimit),
-							})
-						: t("failReason", {
-								maxDD: formatCurrency(maxDrawdown),
-								limit: formatCurrency(drawdownLimit),
-							})}
-				</p>
 			</div>
-		</div>
-	)
-})
+		)
+	}
+)
 PassFailBadge.displayName = "EquityShieldPassFailBadge"
 
 const formatPercent = (value: number): string => `${value.toFixed(1)}%`
@@ -148,7 +148,7 @@ const EquityShieldStats = ({
 					<h3 className="text-small text-acc-100 font-semibold">
 						{t("original")}
 					</h3>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
 						<span
 							className={cn(
@@ -160,13 +160,13 @@ const EquityShieldStats = ({
 							{formatCurrency(originalPnl)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
 							{formatCurrency(stats.observedMDD)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("liveTrades")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{stats.totalTrades}
@@ -177,7 +177,7 @@ const EquityShieldStats = ({
 				{/* Method 1 */}
 				<div className="border-bg-300 bg-bg-200 space-y-s-200 p-m-400 rounded-lg border">
 					<div className="flex items-center justify-between">
-						<h3 className="text-small text-trade-buy font-semibold">
+						<h3 className="text-small text-txt-100 font-semibold">
 							{t("method1")}
 						</h3>
 						<PassFailBadge
@@ -186,7 +186,7 @@ const EquityShieldStats = ({
 							drawdownLimit={drawdownLimit}
 						/>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
 						<span
 							className={cn(
@@ -198,25 +198,25 @@ const EquityShieldStats = ({
 							{formatCurrency(method1Pnl)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
 							{formatCurrency(stats.method1.maxDrawdown)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("liveTrades")}</span>
-						<span className="text-small text-trade-buy font-medium">
+						<span className="text-small text-txt-100 font-medium">
 							{stats.method1.liveTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("simTrades")}</span>
 						<span className="text-small text-txt-300 font-medium">
 							{stats.method1.simTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("transitions")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{stats.method1.modeTransitions}
@@ -236,7 +236,7 @@ const EquityShieldStats = ({
 							drawdownLimit={drawdownLimit}
 						/>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("finalPnl")}</span>
 						<span
 							className={cn(
@@ -248,25 +248,25 @@ const EquityShieldStats = ({
 							{formatCurrency(method2Pnl)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("maxDD")}</span>
 						<span className="text-small text-trade-sell font-medium">
 							{formatCurrency(stats.method2.maxDrawdown)}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("liveTrades")}</span>
-						<span className="text-small text-trade-buy font-medium">
+						<span className="text-small text-txt-100 font-medium">
 							{stats.method2.liveTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("simTrades")}</span>
 						<span className="text-small text-txt-300 font-medium">
 							{stats.method2.simTrades}
 						</span>
 					</div>
-					<div className="flex items-center justify-between py-s-100">
+					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("transitions")}</span>
 						<span className="text-small text-txt-100 font-medium">
 							{stats.method2.modeTransitions}
