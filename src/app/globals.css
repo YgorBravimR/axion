@@ -258,11 +258,22 @@ body {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THEME-RESPONSIVE LOGO ASSETS
-   White-on-dark logos invert to black for light theme legibility.
-   Applied via [data-axion-logo] attribute on <Image>.
+   Source PNGs ship as white-on-transparent. The filter chain below recolors
+   them to the bronze accent in dark mode, and to near-black for light mode
+   (deeper bronze on warm paper falls under WCAG AA, so legibility wins).
+   Applied via [data-axion-logo="invertable"] on <Image>.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+[data-axion-logo="invertable"] {
+	/* Dark mode: tint white → bronze #C29D6A.
+	   Filter chain computed via sosuke's white-to-color recipe. Iterate if the
+	   visual reading drifts from the source hex. */
+	filter: brightness(0) saturate(100%) invert(73%) sepia(45%) saturate(400%)
+		hue-rotate(351deg) brightness(91%) contrast(81%);
+}
+
 [data-theme="light"] [data-axion-logo="invertable"] {
+	/* Light mode: invert to near-black for legibility on stone-white paper. */
 	filter: invert(1);
 }
 
