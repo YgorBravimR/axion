@@ -104,7 +104,6 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 	const strokeColor = isPositive
 		? "var(--color-trade-buy)"
 		: "var(--color-trade-sell)"
-	const gradientColor = isPositive ? "0, 255, 150" : "128, 128, 255"
 
 	return (
 		<div
@@ -124,16 +123,8 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 				>
 					<defs>
 						<linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
-							<stop
-								offset="5%"
-								stopColor={`rgb(${gradientColor})`}
-								stopOpacity={0.3}
-							/>
-							<stop
-								offset="95%"
-								stopColor={`rgb(${gradientColor})`}
-								stopOpacity={0}
-							/>
+							<stop offset="5%" stopColor={strokeColor} stopOpacity={0.3} />
+							<stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
 						</linearGradient>
 					</defs>
 					<CartesianGrid

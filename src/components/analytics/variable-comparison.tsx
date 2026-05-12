@@ -41,13 +41,13 @@ const HeaderWithTooltip = ({
 		<TooltipTrigger asChild>
 			<span className="gap-s-100 inline-flex cursor-help items-center">
 				{label}
-				<Info className="text-txt-300 h-3 w-3" />
+				<Info className="text-txt-300 h-3 w-3" aria-hidden="true" />
 			</span>
 		</TooltipTrigger>
 		<TooltipContent
 			id="tooltip-variable-comparison-header"
 			side="top"
-			className="border-bg-300 bg-bg-100 text-acc-100 p-s-300 max-w-xs border shadow-lg"
+			className="border-bg-300 bg-bg-100 text-txt-100 p-s-300 max-w-xs border shadow-lg"
 		>
 			{tooltip}
 		</TooltipContent>
@@ -234,7 +234,7 @@ export const VariableComparison = ({
 	const getBarColor = useCallback(
 		(value: number, metricArg: MetricType): string => {
 			if (metricArg === "tradeCount") {
-				return "var(--color-acc-100)"
+				return "var(--color-txt-200)"
 			}
 			if (metricArg === "profitFactor") {
 				return value >= 1 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"

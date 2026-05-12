@@ -339,14 +339,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 						<div className="gap-m-500 flex items-center">
 							<div className="text-right">
 								<p className="text-tiny text-txt-300">{t("time.winRate")}</p>
-								<p
-									className={cn(
-										"text-small font-semibold",
-										hoveredCell.winRate >= 50
-											? "text-trade-buy"
-											: "text-trade-sell"
-									)}
-								>
+								<p className="text-small text-txt-100 font-semibold">
 									{hoveredCell.winRate.toFixed(0)}%
 								</p>
 							</div>
@@ -504,7 +497,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									</TableCell>
 									{bestSlot && getMetricValue(bestSlot) >= 0 ? (
 										<>
-											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
+											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{getTranslatedDayShort(bestSlot.dayName)}{" "}
 												{bestSlot.hourLabel}
 											</TableCell>
@@ -525,7 +518,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									)}
 									{worstSlot && getMetricValue(worstSlot) < 0 ? (
 										<>
-											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
+											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{getTranslatedDayShort(worstSlot.dayName)}{" "}
 												{worstSlot.hourLabel}
 											</TableCell>
@@ -554,7 +547,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									</TableCell>
 									{bestHour ? (
 										<>
-											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
+											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{bestHour.label}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
@@ -574,7 +567,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									)}
 									{worstHour ? (
 										<>
-											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
+											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{worstHour.label}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
@@ -602,7 +595,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									</TableCell>
 									{bestDay ? (
 										<>
-											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
+											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{bestDay.dayLabel}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-buy text-center font-semibold whitespace-nowrap">
@@ -622,7 +615,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									)}
 									{worstDay ? (
 										<>
-											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">
+											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{worstDay.dayLabel}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-trade-sell text-center font-semibold whitespace-nowrap">

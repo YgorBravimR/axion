@@ -67,9 +67,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				</p>
 				<p className="text-tiny">
 					<span className="text-txt-300">{t("time.winRate")}:</span>{" "}
-					<span
-						className={`font-medium ${data.winRate >= 50 ? "text-trade-buy" : "text-trade-sell"}`}
-					>
+					<span className="text-txt-100 font-medium">
 						{data.winRate.toFixed(0)}%
 					</span>
 				</p>
@@ -85,9 +83,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				{data.bestHour !== undefined && (
 					<p className="text-tiny">
 						<span className="text-txt-300">{t("time.bestHourOnDay")}:</span>{" "}
-						<span className="text-trade-buy font-medium">
-							{data.bestHour}:00
-						</span>
+						<span className="text-txt-100 font-medium">{data.bestHour}:00</span>
 					</p>
 				)}
 			</div>
@@ -234,18 +230,24 @@ export const DayOfWeekChart = memo(
 				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
 					<div>
 						<p className="text-tiny text-txt-300">{t("time.bestDay")}</p>
-						<p className="text-small text-trade-buy font-medium">
+						<p className="text-small text-txt-100 font-medium">
 							{bestDay ? getTranslatedDayName(bestDay.dayName) : ""} (
 							{bestDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")},{" "}
-							{formatMetric(bestDay?.[metricKey] ?? 0)})
+							<span className="text-trade-buy">
+								{formatMetric(bestDay?.[metricKey] ?? 0)}
+							</span>
+							)
 						</p>
 					</div>
 					<div>
 						<p className="text-tiny text-txt-300">{t("time.worstDay")}</p>
-						<p className="text-small text-trade-sell font-medium">
+						<p className="text-small text-txt-100 font-medium">
 							{worstDay ? getTranslatedDayName(worstDay.dayName) : ""} (
 							{worstDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")},{" "}
-							{formatMetric(worstDay?.[metricKey] ?? 0)})
+							<span className="text-trade-sell">
+								{formatMetric(worstDay?.[metricKey] ?? 0)}
+							</span>
+							)
 						</p>
 					</div>
 				</div>

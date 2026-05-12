@@ -165,7 +165,7 @@ export const SessionAssetTable = ({
 									>
 										<div
 											className={`px-s-100 inline-flex flex-col items-center rounded-sm py-px ${
-												isBest ? "bg-acc-100/10" : ""
+												isBest ? "bg-bg-100" : ""
 											}`}
 										>
 											<span
@@ -189,7 +189,7 @@ export const SessionAssetTable = ({
 							<TableCell className="py-s-200 text-center">
 								{asset.bestSession ? (
 									<span className="gap-s-100 bg-acc-100/10 px-s-200 text-tiny text-acc-100 inline-flex items-center rounded-full py-px font-medium">
-										<Trophy className="h-3 w-3" />
+										<Trophy className="h-3 w-3" aria-hidden="true" />
 										{getSessionLabel(asset.bestSession)}
 									</span>
 								) : (

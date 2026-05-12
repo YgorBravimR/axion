@@ -26,7 +26,7 @@ const StatLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
 		<TooltipTrigger asChild>
 			<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center">
 				{label}
-				<Info className="h-3 w-3" />
+				<Info className="h-3 w-3" aria-hidden="true" />
 			</p>
 		</TooltipTrigger>
 		<TooltipContent
@@ -114,7 +114,7 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 			>
 				<div className="gap-s-200 flex items-center">
-					<BarChart3 className="text-txt-300 h-5 w-5" />
+					<BarChart3 className="text-txt-300 h-5 w-5" aria-hidden="true" />
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
 					</h3>
@@ -132,7 +132,7 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
 			<div className="gap-s-200 flex items-center">
-				<BarChart3 className="text-txt-300 h-5 w-5" />
+				<BarChart3 className="text-txt-300 h-5 w-5" aria-hidden="true" />
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("title")}
 				</h3>
@@ -162,7 +162,7 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 				</div>
 				<div className="bg-bg-100 p-s-200 sm:p-s-300 rounded-lg text-center">
 					<StatLabel label={t("mostCommon")} tooltip={t("mostCommonDesc")} />
-					<p className="mt-s-100 text-body text-acc-100 font-bold">
+					<p className="mt-s-100 text-body text-txt-100 font-bold">
 						{mode?.range}
 					</p>
 				</div>

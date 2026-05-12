@@ -199,6 +199,32 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Analytics — deferred follow-ups
+
+### Delete `InsightCard` dead code
+
+- **What**: `src/components/analytics/insight-card.tsx` is not exported via `src/components/analytics/index.ts` and grep finds no consumers across the repo. Best/worst summaries are inlined per chart (`day-of-week-chart`, `hourly-performance-chart`, `holding-period-chart`, `session-performance-chart`). Delete the file in a tidy-up PR.
+- **Why**: Dead code drifts and confuses future agents. Surgical delete; no behaviour change.
+- **Source**: `docs/scans/2026-05-12-impeccable-analytics.md` Phase 1a critique P2.
+
+---
+
+### `expectancy-mode-toggle.tsx` redundant `onKeyDown` handlers
+
+- **What**: The three `<button>` elements re-implement Enter/Space → click in `onKeyDown` handlers. Native `<button>` already does this via the user agent; the handlers are noise.
+- **Why**: Distill pass — code that duplicates browser behaviour rots when the underlying handler signature drifts. Drop the `onKeyDown` props; rely on `onClick`.
+- **Source**: `docs/scans/2026-05-12-impeccable-analytics.md` Phase 1b audit P1 footnote.
+
+---
+
+### Uniform card stack across `/analytics`
+
+- **What**: Eleven sibling cards (variable comparison, equity curve, EV, R-dist, tags, heatmap+session, session-asset table, hourly+day-of-week, holding period) all render with identical `border-bg-300 bg-bg-200 rounded-lg` chrome. Nothing earns visual prominence.
+- **Why**: Same shared-law violation as `/journal/[id]` — "vary spacing for rhythm; cards are the lazy answer." Group into 3-4 logical bands with deliberate spacing variance, or promote one anchor metric (EV or cumulative equity) above the card grid.
+- **Source**: `docs/scans/2026-05-12-impeccable-analytics.md` Phase 1a critique P2. Scope-extends the existing "Card-rhythm distill pass" item — handle as part of a unified analytics distill, not a separate slice.
+
+---
+
 ## Documentation drift watch
 
 - **Design doc Phase 3 / §12 Open Questions**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship; Phase 3 is functionally done except for the multi-month seeder + CI wiring (both captured above). When those land, retire §13 Phase 3 in favour of a one-liner pointing here.
