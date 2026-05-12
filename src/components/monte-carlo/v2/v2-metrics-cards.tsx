@@ -42,34 +42,36 @@ interface MetricRowProps {
 	tooltip?: string
 }
 
-const MetricRow = memo(({ label, value, valueClass, tooltip }: MetricRowProps) => (
-	<div className="flex min-w-0 items-center justify-between">
-		{tooltip ? (
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<span className="inline-flex cursor-help items-center gap-s-100 text-tiny text-txt-300">
-						{label}
-						<Info className="h-3 w-3" />
-					</span>
-				</TooltipTrigger>
-				<TooltipContent
-					id={`tooltip-metric-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-					side="top"
-					className="border-bg-300 bg-bg-100 text-txt-200 max-w-xs border p-s-300 shadow-lg"
-				>
-					<p className="text-tiny leading-relaxed">{tooltip}</p>
-				</TooltipContent>
-			</Tooltip>
-		) : (
-			<span className="text-tiny text-txt-300">{label}</span>
-		)}
-		<span
-			className={cn("text-small font-medium", valueClass || "text-txt-100")}
-		>
-			{value}
-		</span>
-	</div>
-))
+const MetricRow = memo(
+	({ label, value, valueClass, tooltip }: MetricRowProps) => (
+		<div className="flex min-w-0 items-center justify-between">
+			{tooltip ? (
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<span className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center">
+							{label}
+							<Info className="h-3 w-3" aria-hidden="true" />
+						</span>
+					</TooltipTrigger>
+					<TooltipContent
+						id={`tooltip-metric-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+						side="top"
+						className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
+					>
+						<p className="text-tiny leading-relaxed">{tooltip}</p>
+					</TooltipContent>
+				</Tooltip>
+			) : (
+				<span className="text-tiny text-txt-300">{label}</span>
+			)}
+			<span
+				className={cn("text-small font-medium", valueClass || "text-txt-100")}
+			>
+				{value}
+			</span>
+		</div>
+	)
+)
 
 const V2MetricsCards = ({
 	statistics,
@@ -88,7 +90,13 @@ const V2MetricsCards = ({
 	return (
 		<div className="gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 			{/* Monthly / Period P&L */}
-			<MetricCard title={isMultiMonth ? t("periodPnl", { months: monthsToTrade }) : t("monthlyPnl")}>
+			<MetricCard
+				title={
+					isMultiMonth
+						? t("periodPnl", { months: monthsToTrade })
+						: t("monthlyPnl")
+				}
+			>
 				<MetricRow
 					label={t("median")}
 					value={formatCompactCurrency(medianPnlFromCents, "R$")}
@@ -109,36 +117,34 @@ const V2MetricsCards = ({
 				/>
 				<MetricRow
 					label={t("bestCase")}
-					value={formatCompactCurrency(statistics.bestCaseMonthlyPnl / 100, "R$")}
+					value={formatCompactCurrency(
+						statistics.bestCaseMonthlyPnl / 100,
+						"R$"
+					)}
 					valueClass="text-trade-buy"
 				/>
 				<MetricRow
 					label={t("worstCase")}
-					value={formatCompactCurrency(statistics.worstCaseMonthlyPnl / 100, "R$")}
+					value={formatCompactCurrency(
+						statistics.worstCaseMonthlyPnl / 100,
+						"R$"
+					)}
 					valueClass="text-trade-sell"
 				/>
 			</MetricCard>
 
 			{/* Profitable Months/Periods & Limits */}
-			<MetricCard title={isMultiMonth ? t("profitablePeriods") : t("profitableMonths")}>
+			<MetricCard
+				title={isMultiMonth ? t("profitablePeriods") : t("profitableMonths")}
+			>
 				<MetricRow
 					label={t("profitableMonths")}
 					value={formatChartPercent(statistics.profitableMonthsPct, false)}
-					valueClass={
-						statistics.profitableMonthsPct >= 60
-							? "text-trade-buy"
-							: "text-trade-sell"
-					}
 					tooltip={tTooltips("profitableMonths")}
 				/>
 				<MetricRow
 					label={t("monthlyLimitHit")}
 					value={formatChartPercent(statistics.monthlyLimitHitPct, false)}
-					valueClass={
-						statistics.monthlyLimitHitPct <= 10
-							? "text-trade-buy"
-							: "text-trade-sell"
-					}
 					tooltip={tTooltips("monthlyLimitHit")}
 				/>
 				<MetricRow
@@ -164,7 +170,6 @@ const V2MetricsCards = ({
 				<MetricRow
 					label={t("targetHitDays")}
 					value={statistics.avgDaysTargetHit.toFixed(1)}
-					valueClass="text-trade-buy"
 				/>
 				<MetricRow
 					label={t("skippedWeekly")}
@@ -194,10 +199,10 @@ const V2MetricsCards = ({
 					value={formatChartPercent(statistics.riskOfRuinPercent, false)}
 					valueClass={
 						statistics.riskOfRuinPercent <= 5
-							? "text-trade-buy"
+							? "text-txt-100"
 							: statistics.riskOfRuinPercent <= 20
 								? "text-warning"
-								: "text-trade-sell"
+								: "text-fb-error"
 					}
 					tooltip={tTooltips("riskOfRuin")}
 				/>
@@ -206,10 +211,10 @@ const V2MetricsCards = ({
 					value={formatChartPercent(statistics.medianMinBalancePercent, false)}
 					valueClass={
 						statistics.medianMinBalancePercent >= 80
-							? "text-trade-buy"
+							? "text-txt-100"
 							: statistics.medianMinBalancePercent >= 60
 								? "text-warning"
-								: "text-trade-sell"
+								: "text-fb-error"
 					}
 				/>
 			</MetricCard>
@@ -219,17 +224,11 @@ const V2MetricsCards = ({
 				<MetricRow
 					label={t("sharpeRatio")}
 					value={formatRatio(statistics.sharpeRatio)}
-					valueClass={
-						statistics.sharpeRatio >= 1 ? "text-trade-buy" : "text-txt-100"
-					}
 					tooltip={tTooltips("sharpeRatio")}
 				/>
 				<MetricRow
 					label={t("sortinoRatio")}
 					value={formatRatio(statistics.sortinoRatio)}
-					valueClass={
-						statistics.sortinoRatio >= 1 ? "text-trade-buy" : "text-txt-100"
-					}
 					tooltip={tTooltips("sortinoRatio")}
 				/>
 				<MetricRow
@@ -245,7 +244,13 @@ const V2MetricsCards = ({
 			</MetricCard>
 
 			{/* Return */}
-			<MetricCard title={isMultiMonth ? t("periodReturn", { months: monthsToTrade }) : t("monthlyReturn")}>
+			<MetricCard
+				title={
+					isMultiMonth
+						? t("periodReturn", { months: monthsToTrade })
+						: t("monthlyReturn")
+				}
+			>
 				<MetricRow
 					label={t("median")}
 					value={formatChartPercent(statistics.medianReturnPercent)}

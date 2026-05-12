@@ -37,8 +37,8 @@ const levelConfig = {
 	},
 	conservative: {
 		Icon: CheckCircle,
-		color: "text-trade-buy",
-		bgColor: "bg-trade-buy/10 border-trade-buy/30",
+		color: "text-fb-success",
+		bgColor: "bg-fb-success/10 border-fb-success/30",
 	},
 }
 
@@ -80,7 +80,10 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 		recommendedKellyConfig[kellyLevel]
 
 	return (
-		<div id="monte-carlo-kelly" className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+		<div
+			id="monte-carlo-kelly"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		>
 			<div className="mb-m-400 flex items-start justify-between">
 				<div>
 					<div className="gap-s-200 flex items-center">
@@ -90,7 +93,10 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<span className="cursor-help">
-									<Info className="text-txt-300 h-3.5 w-3.5" />
+									<Info
+										className="text-txt-300 h-3.5 w-3.5"
+										aria-hidden="true"
+									/>
 								</span>
 							</TooltipTrigger>
 							<TooltipContent
@@ -124,7 +130,7 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 						<TooltipTrigger asChild>
 							<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center justify-center">
 								{t("quarterKelly")}
-								<Info className="h-3 w-3" />
+								<Info className="h-3 w-3" aria-hidden="true" />
 							</p>
 						</TooltipTrigger>
 						<TooltipContent
@@ -151,7 +157,7 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 						<TooltipTrigger asChild>
 							<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center justify-center">
 								{t("halfKelly")}
-								<Info className="h-3 w-3" />
+								<Info className="h-3 w-3" aria-hidden="true" />
 							</p>
 						</TooltipTrigger>
 						<TooltipContent
@@ -180,7 +186,7 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 						<TooltipTrigger asChild>
 							<p className="gap-s-100 text-tiny text-txt-300 inline-flex cursor-help items-center justify-center">
 								{t("fullKelly")}
-								<Info className="h-3 w-3" />
+								<Info className="h-3 w-3" aria-hidden="true" />
 							</p>
 						</TooltipTrigger>
 						<TooltipContent
@@ -204,6 +210,7 @@ export const KellyCriterionCard = ({ statistics }: KellyCriterionCardProps) => {
 				<div className="gap-s-200 flex items-start">
 					<LevelIcon
 						className={cn("mt-0.5 h-4 w-4 shrink-0", levelColor)}
+						aria-hidden="true"
 					/>
 					<p className="text-small text-txt-100">
 						{tKelly(kellyRecommendation.replace("monteCarlo.kelly.", ""))}

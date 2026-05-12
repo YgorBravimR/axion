@@ -616,7 +616,7 @@ const MonteCarloV2Content = ({
 								aria-label={tCommon("close")}
 								className="text-fb-error/70 hover:text-fb-error shrink-0 transition-colors"
 							>
-								<X className="h-4 w-4" />
+								<X className="h-4 w-4" aria-hidden="true" />
 							</button>
 						</div>
 					)}
@@ -634,7 +634,7 @@ const MonteCarloV2Content = ({
 								<LoadingSpinner size="sm" label={tMC("runningSimulation")} />
 							) : (
 								<>
-									<Dices className="mr-s-200 h-5 w-5" />
+									<Dices className="mr-s-200 h-5 w-5" aria-hidden="true" />
 									{t("params.calculate")}
 								</>
 							)}

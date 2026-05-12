@@ -304,6 +304,18 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Locale-bleed; the EN build still ships "(atual)".
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2.
 
+### Categorical mode palette for Monte Carlo v2 engine charts
+
+- **What**: `src/components/monte-carlo/v2/daily-pnl-chart.tsx` and `mode-distribution-chart.tsx` paint engine modes (`lossRecovery`, `gainCompounding`, `mixed`, `skipped`) using `--color-trade-sell` / `--color-trade-buy` / `--color-acc-100` / `--color-bg-300`. In `daily-pnl-chart` the bar height already encodes P&L sign; the mode-color overlay double-encodes. Promote dedicated tokens (`--color-mode-recovery`, `--color-mode-compounding`, `--color-mode-mixed`, `--color-mode-skipped` — or reuse a categorical `--chart-N` family once that lands) so engine state ≠ P&L vocabulary.
+- **Why**: Trade colors leak into a categorical channel, which conflicts with the height encoding on the same chart and hijacks vocabulary that should remain reserved for signed money.
+- **Source**: `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 1a P3 (deferred).
+
+### Monte Carlo v1 distribution-histogram tooltip count is sign-colored
+
+- **What**: `src/components/monte-carlo/distribution-histogram.tsx` `CustomTooltip` paints the simulation-count line with `text-trade-buy` / `text-trade-sell` based on `midPoint >= 0`. The number is a _count_ (e.g. "84 simulations (12.1%)"), not signed money. v2's tooltip is already fixed in row #13; v1 was kept hold-pattern to avoid touching shared bar-fill logic until the categorical palette decision lands.
+- **Why**: Same threshold-as-P&L vocabulary hijack that's been swept everywhere else in Wave 3 — last sliver.
+- **Source**: `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 4 enhancement.
+
 ---
 
 ## Documentation drift watch

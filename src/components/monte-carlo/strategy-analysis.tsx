@@ -29,7 +29,7 @@ interface SectionProps {
 const Section = ({ icon: Icon, title, children }: SectionProps) => (
 	<div className="border-bg-300 pb-m-400 border-b last:border-0 last:pb-0">
 		<div className="mb-s-300 gap-s-200 flex items-center">
-			<Icon className="text-acc-100 h-5 w-5" />
+			<Icon className="text-txt-300 h-5 w-5" aria-hidden="true" />
 			<h4 className="text-small text-txt-100 font-semibold">{title}</h4>
 		</div>
 		<div className="space-y-s-200 pl-m-400 sm:pl-7">{children}</div>
@@ -42,8 +42,8 @@ interface InsightProps {
 }
 
 const insightConfig = {
-	positive: { Icon: CheckCircle, color: "text-trade-buy" },
-	negative: { Icon: XCircle, color: "text-trade-sell" },
+	positive: { Icon: CheckCircle, color: "text-fb-success" },
+	negative: { Icon: XCircle, color: "text-fb-error" },
 	tip: { Icon: Zap, color: "text-warning" },
 	neutral: { Icon: Zap, color: "text-txt-200" },
 }
@@ -53,7 +53,10 @@ const Insight = ({ type, children }: InsightProps) => {
 
 	return (
 		<div className="gap-s-200 flex items-start">
-			<Icon className={cn("mt-0.5 h-4 w-4 shrink-0", color)} />
+			<Icon
+				className={cn("mt-0.5 h-4 w-4 shrink-0", color)}
+				aria-hidden="true"
+			/>
 			<p className="text-small text-txt-200">{children}</p>
 		</div>
 	)

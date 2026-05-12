@@ -115,9 +115,9 @@ const getPercentileZone = (
 }
 
 const ZONE_COLORS: Record<PercentileZone, string> = {
-	core: "color-mix(in srgb, var(--color-trade-sell) 20%, transparent)",
-	center: "color-mix(in srgb, var(--color-warning) 20%, transparent)",
-	middle: "color-mix(in srgb, var(--color-acc-100) 15%, transparent)",
+	core: "color-mix(in srgb, var(--color-txt-300) 18%, transparent)",
+	center: "color-mix(in srgb, var(--color-txt-300) 12%, transparent)",
+	middle: "color-mix(in srgb, var(--color-txt-300) 6%, transparent)",
 	outer: "transparent",
 }
 
@@ -237,7 +237,7 @@ export const DistributionHistogram = ({
 					</span>
 					<span className="text-tiny text-txt-300">
 						{t("profitable")}:{" "}
-						<span className="text-trade-buy font-medium">{profitablePct}%</span>
+						<span className="text-txt-100 font-medium">{profitablePct}%</span>
 					</span>
 				</div>
 			</div>
