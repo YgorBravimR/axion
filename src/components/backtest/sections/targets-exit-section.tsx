@@ -152,7 +152,7 @@ const TargetsExitSection = memo(
 							onClick={handleAddLevel}
 							className="gap-s-200"
 						>
-							<Plus className="h-3.5 w-3.5" />
+							<Plus className="h-3.5 w-3.5" aria-hidden="true" />
 							{t("addLevel")}
 						</Button>
 					</div>
@@ -225,7 +225,7 @@ const TargetsExitSection = memo(
 										className="text-txt-300 hover:text-fb-error shrink-0"
 										aria-label={`Remove exit level ${index + 1}`}
 									>
-										<Trash2 className="h-4 w-4" />
+										<Trash2 className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								)}
 							</div>

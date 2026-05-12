@@ -376,7 +376,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							disabled={isPending || !selectedSource || !dateFrom || !dateTo}
 							size="lg"
 						>
-							<Play className="mr-s-200 h-4 w-4" />
+							<Play className="mr-s-200 h-4 w-4" aria-hidden="true" />
 							{t("config.runBacktest")}
 						</Button>
 					</div>
@@ -393,7 +393,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							onClick={handleReset}
 							className="gap-s-200"
 						>
-							<RotateCcw className="h-4 w-4" />
+							<RotateCcw className="h-4 w-4" aria-hidden="true" />
 							{t("config.newBacktest")}
 						</Button>
 					</div>

@@ -150,7 +150,7 @@ const SizingExecutionSection = memo(
 								/>
 							</div>
 							{perTradeAmount !== null && (
-								<p className="text-tiny text-acc-100">
+								<p className="text-tiny text-txt-300">
 									= R${(perTradeAmount / 100).toFixed(2)} {t("perTradeCalc")}
 								</p>
 							)}

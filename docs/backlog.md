@@ -278,6 +278,22 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Backtest — deferred follow-ups
+
+### Hardcoded English aria-label on exit-level removal
+
+- **What**: `src/components/backtest/sections/targets-exit-section.tsx` line ~226 uses `aria-label={`Remove exit level ${index + 1}`}`. No `backtest.builder.removeLevel` translation key exists yet.
+- **Why**: Visible-text controls render fine in Portuguese; only the screen-reader-only aria-label leaks English. Fix is one key + one substitution but requires touching every `messages/*.json` locale file, which is a separate concern from the visual sweep.
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
+
+### Hardcoded BRL in `formatCentsAsCurrency` call sites
+
+- **What**: `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` pass `"BRL"` as a literal to `formatCentsAsCurrency(..., "BRL")` rather than reading the active account's currency. Backtests today are BRL-only because the data sources are BRL-denominated, but the formatter call site is wrong even so.
+- **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
+
+---
+
 ## Documentation drift watch
 
 - **Design doc Phase 3 / §12 Open Questions**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship; Phase 3 is functionally done except for the multi-month seeder + CI wiring (both captured above). When those land, retire §13 Phase 3 in favour of a one-liner pointing here.

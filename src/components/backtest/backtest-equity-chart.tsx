@@ -51,7 +51,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				{formatCompactCurrency(data.equity, "R$")}
 			</p>
 			{data.drawdown < 0 && (
-				<p className="text-tiny text-fb-error font-mono">
+				<p className="text-tiny text-trade-sell font-mono">
 					DD: {formatCompactCurrency(data.drawdown, "R$")}
 				</p>
 			)}
@@ -135,7 +135,7 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 					<Area
 						type="monotone"
 						dataKey="drawdown"
-						stroke="var(--color-fb-error)"
+						stroke="var(--color-trade-sell)"
 						strokeWidth={1}
 						fill="none"
 						dot={false}
