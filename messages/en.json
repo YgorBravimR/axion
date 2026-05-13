@@ -5293,6 +5293,28 @@
 		}
 	},
 	"hawks": {
+		"bias": {
+			"title": "Daily bias",
+			"description": "Confirm your bias for {day} after the triple-screen ritual.",
+			"directionLabel": "Bias direction",
+			"biasLong": "Long",
+			"biasNeutral": "Neutral",
+			"biasShort": "Short",
+			"screensLabel": "Triple-screen checks",
+			"screenRenko60": "Renko close above 60min",
+			"screenRenko60Hint": "Last 60-minute Renko brick closed above the trend baseline.",
+			"screenMacd": "MACD slope up",
+			"screenMacdHint": "MACD 27/117/55 histogram slope is positive on the higher timeframe.",
+			"screenEmaStack": "EMA stack bullish",
+			"screenEmaStackHint": "EMA 27 above EMA 55 with intact slope.",
+			"screenVwap": "Price above VWAP",
+			"screenVwapHint": "Session VWAP respected — price is trading above it.",
+			"screenAjuste": "Ajuste respected",
+			"screenAjusteHint": "Daily settlement price (ajuste) holds as support/resistance.",
+			"notesLabel": "Notes",
+			"notesPlaceholder": "Optional context: macro drivers, key levels, asymmetries…",
+			"confirmAction": "Confirm bias"
+		},
 		"settings": {
 			"title": "Hawks Mode",
 			"description": "Hawks Mode unlocks the Renko triple-screen workflow: daily bias, capped trade count, method-3 stop audit, and dedicated coaching insights.",

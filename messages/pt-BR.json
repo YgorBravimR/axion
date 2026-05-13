@@ -5293,6 +5293,28 @@
 		}
 	},
 	"hawks": {
+		"bias": {
+			"title": "Viés do dia",
+			"description": "Confirme seu viés para {day} após o ritual de triple-screen.",
+			"directionLabel": "Direção do viés",
+			"biasLong": "Comprado",
+			"biasNeutral": "Neutro",
+			"biasShort": "Vendido",
+			"screensLabel": "Checagens do triple-screen",
+			"screenRenko60": "Renko fechou acima do 60min",
+			"screenRenko60Hint": "Último brick Renko de 60 minutos fechou acima da linha de tendência.",
+			"screenMacd": "Inclinação do MACD positiva",
+			"screenMacdHint": "MACD 27/117/55 com histograma inclinado para cima no timeframe maior.",
+			"screenEmaStack": "Stack de EMAs bullish",
+			"screenEmaStackHint": "EMA 27 acima da EMA 55 com inclinação preservada.",
+			"screenVwap": "Preço acima da VWAP",
+			"screenVwapHint": "VWAP da sessão respeitada — preço opera acima dela.",
+			"screenAjuste": "Ajuste respeitado",
+			"screenAjusteHint": "Preço de ajuste do dia se mantém como suporte/resistência.",
+			"notesLabel": "Notas",
+			"notesPlaceholder": "Contexto opcional: drivers macro, níveis-chave, assimetrias…",
+			"confirmAction": "Confirmar viés"
+		},
 		"settings": {
 			"title": "Modo Hawks",
 			"description": "O Modo Hawks ativa o fluxo Renko triple-screen: viés diário, limite de trades, auditoria de stop pelo Método-3 e coaching dedicado.",
