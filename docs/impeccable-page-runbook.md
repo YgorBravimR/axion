@@ -1,6 +1,8 @@
-# Impeccable Page Runbook
+# Impeccable Page Runbook — ✅ Sweep complete (30 / 30)
 
 > **Per-page horizontal review blueprint.** Replace `<page>` with the target route (e.g. `dashboard`, `journal`, `playbooks`, `settings`). Run phases in order. Log every finding into the same shared scratchpad so cross-page patterns surface before per-page fixes begin.
+>
+> **Status (2026-05-13):** all 30 rows across 8 waves have a published findings log with Phase 3 applied. Outstanding cross-page work lives in [`docs/backlog.md`](backlog.md).
 
 ## How to use this doc
 
@@ -46,8 +48,8 @@ Pages are grouped into eight waves. Run waves sequentially; within a wave, run p
 | 26  | 7 — Auth          | forgot password      | `forgot-password`      | `/forgot-password`               | [scans/2026-05-12-impeccable-auth-wave7.md](scans/2026-05-12-impeccable-auth-wave7.md) — Phase 3 done                 |
 | 27  | 7 — Auth          | verify email         | `verify-email`         | `/verify-email`                  | [scans/2026-05-12-impeccable-auth-wave7.md](scans/2026-05-12-impeccable-auth-wave7.md) — Phase 3 done                 |
 | 28  | 7 — Auth          | select account       | `select-account`       | `/select-account`                | [scans/2026-05-12-impeccable-auth-wave7.md](scans/2026-05-12-impeccable-auth-wave7.md) — Phase 3 done                 |
-| 29  | 8 — Public        | monitor              | `monitor`              | `/monitor`                       | _pending_                                                                                                             |
-| 30  | 8 — Public        | painel               | `painel`               | `/painel`                        | _pending_                                                                                                             |
+| 29  | 8 — Public        | monitor              | `monitor`              | `/monitor`                       | [scans/2026-05-12-impeccable-public-wave8.md](scans/2026-05-12-impeccable-public-wave8.md) — Phase 3 done             |
+| 30  | 8 — Public        | painel               | `painel`               | `/painel`                        | [scans/2026-05-12-impeccable-public-wave8.md](scans/2026-05-12-impeccable-public-wave8.md) — Phase 3 done             |
 
 **Wave checkpoint:** at the end of every wave, pause to update `docs/backlog.md` with any system-wide patterns surfaced. Do not start the next wave until the backlog reflects what the previous wave learned. This is the mechanism that makes the sweep horizontal instead of thirty independent reviews.
 

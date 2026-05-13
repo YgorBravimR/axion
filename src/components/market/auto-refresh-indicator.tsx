@@ -90,7 +90,7 @@ export const AutoRefreshIndicator = ({
 						"inline-block h-2 w-2 rounded-full",
 						isLoading
 							? "bg-warning animate-pulse motion-reduce:animate-none"
-							: "bg-trade-buy"
+							: "bg-fb-success"
 					)}
 					aria-hidden="true"
 				/>
@@ -120,6 +120,7 @@ export const AutoRefreshIndicator = ({
 						"h-3.5 w-3.5",
 						isLoading && "animate-spin motion-reduce:animate-none"
 					)}
+					aria-hidden="true"
 				/>
 				<span>{t("refreshNow")}</span>
 			</Button>

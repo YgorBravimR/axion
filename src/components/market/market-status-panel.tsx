@@ -177,7 +177,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 										<span
 											className={cn(
 												"h-2 w-2 rounded-full",
-												market.state === "open" && "bg-trade-buy",
+												market.state === "open" && "bg-fb-success",
 												market.state === "opening" &&
 													"bg-warning animate-pulse motion-reduce:animate-none",
 												market.state === "closed" && "bg-txt-300/40"
@@ -193,7 +193,7 @@ export const MarketStatusPanel = ({ statuses }: MarketStatusPanelProps) => {
 											</span>
 										) : null}
 										{market.state === "open" ? (
-											<span className="text-tiny text-trade-buy font-medium">
+											<span className="text-tiny text-fb-success font-medium">
 												{t("status.open")}
 											</span>
 										) : null}

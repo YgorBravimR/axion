@@ -404,6 +404,30 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: The settings/dashboard surfaces still drift toward `trade-buy/sell` for non-monetary verdict states. Pointing at a known-good reference shortens future arguments.
 - **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
 
+### Catalogue temporal-state-as-P&L hijack in DESIGN.md
+
+- **What**: Wave 8 surfaced a third hijack flavor: market session state ("open") painted as trade-color green. Waves 1-7 documented verdict-as-P&L and category-as-P&L; this completes the trio. Add a short DESIGN.md paragraph: _"Any status indicator whose semantic domain is not signed monetary magnitude reaches for the verdict triad (`fb-success` / `fb-error` / `warning` / `txt-300`). `trade-buy` / `trade-sell` are reserved for the magnitude itself."_
+- **Why**: Pre-empts the next variant. Broker-connection status, data-feed health, session timers, and similar future surfaces will all face the same temptation.
+- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
+
+### Add "no side-stripe borders" rule to DESIGN.md with worked example
+
+- **What**: Side-stripe borders are now the highest-recidivism absolute ban — caught at Wave 4 (plan cards) and again at Wave 8 (`hero-quote-card.tsx`). Add a DESIGN.md note with the hero-card before/after showing how the colored `changePercent` already conveys direction, making the stripe redundant chrome.
+- **Why**: The pattern keeps recurring because it borrows from Linear/Raycast vocabulary — but those products use stripes for **selection**, not direction. Without an explicit anti-example in DESIGN.md, the next contributor will reach for it again.
+- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
+
+### Delete or wire `src/components/market/auto-refresh-indicator.tsx`
+
+- **What**: 128-line component, zero imports. `MarketMonitorContent` inlines its own refresh indicator in the header rather than mounting this one. Either restore it as the canonical refresh-indicator (replace the inline header version) or delete the file outright.
+- **Why**: Same drift risk as the `account-picker.tsx` orphan flagged in Wave 7. Two implementations of the same indicator UX will silently diverge. Wave 8 fixed the trade-color hijack here defensively; the next maintainer should not have to wonder which one to update.
+- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
+
+### Consolidate `/monitor` and `/painel` via locale routing
+
+- **What**: Two route files (`src/app/[locale]/(public)/{monitor,painel}/page.tsx`) mount the identical `<MarketMonitorContent />` widget. `/painel` is the PT-BR alias for `/monitor`. Replace the duplicate page file with a `next-intl` URL alias or pathname-routing config so the alias is a redirect/rewrite, not a copy.
+- **Why**: Today both files must be kept in sync by hand. With ~10 lines each it is cheap today; with localized routes growing, the pattern will scale poorly.
+- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
+
 ---
 
 ## Documentation drift watch

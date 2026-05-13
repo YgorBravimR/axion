@@ -115,11 +115,17 @@ export const B3TradingCalendar = () => {
 		[locale, year, month]
 	)
 
-	const handlePrevMonth = useCallback(() => setMonthOffset((prev) => prev - 1), [])
-	const handleNextMonth = useCallback(() => setMonthOffset((prev) => prev + 1), [])
+	const handlePrevMonth = useCallback(
+		() => setMonthOffset((prev) => prev - 1),
+		[]
+	)
+	const handleNextMonth = useCallback(
+		() => setMonthOffset((prev) => prev + 1),
+		[]
+	)
 
 	return (
-		<div className="flex flex-col gap-s-200 px-s-300 py-s-200">
+		<div className="gap-s-200 px-s-300 py-s-200 flex flex-col">
 			{/* Month navigation */}
 			<div className="flex items-center justify-between">
 				<Button
@@ -131,7 +137,7 @@ export const B3TradingCalendar = () => {
 					className="text-txt-300"
 					aria-label={t("prevMonth")}
 				>
-					<ChevronLeft className="h-4 w-4" />
+					<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 				</Button>
 				<span className="text-small text-txt-100 font-medium capitalize">
 					{monthName} {year}
@@ -145,12 +151,12 @@ export const B3TradingCalendar = () => {
 					className="text-txt-300"
 					aria-label={t("nextMonth")}
 				>
-					<ChevronRight className="h-4 w-4" />
+					<ChevronRight className="h-4 w-4" aria-hidden="true" />
 				</Button>
 			</div>
 
 			{/* Day-of-week headers */}
-			<div className="grid grid-cols-7 gap-0.5 text-center text-small">
+			<div className="text-small grid grid-cols-7 gap-0.5 text-center">
 				{weekdays.map((wd) => (
 					<span key={wd} className="text-tiny text-txt-300 pt-0.5 font-medium">
 						{wd}
@@ -168,7 +174,7 @@ export const B3TradingCalendar = () => {
 				{Array.from({ length: firstDayOffset }).map((_, i) => (
 					<div
 						key={`empty-${i}`}
-						className="flex items-center justify-center rounded-sm border-2 border-transparent py-s-100 text-center text-small text-transparent transition-colors"
+						className="py-s-100 text-small flex items-center justify-center rounded-sm border-2 border-transparent text-center text-transparent transition-colors"
 					>
 						-
 					</div>
@@ -197,7 +203,7 @@ export const B3TradingCalendar = () => {
 						<div
 							key={day.day}
 							className={cn(
-								"flex items-center justify-center rounded-sm border-2 border-transparent py-s-100 text-center text-small transition-colors",
+								"py-s-100 text-small flex items-center justify-center rounded-sm border-2 border-transparent text-center transition-colors",
 								// Default: weekend
 								day.isWeekend && "text-txt-300/30",
 								// Default: regular trading day
@@ -233,7 +239,7 @@ export const B3TradingCalendar = () => {
 				{Array.from({ length: trailingEmpty }).map((_, i) => (
 					<div
 						key={`trail-${i}`}
-						className="flex items-center justify-center rounded-sm border-2 border-transparent py-s-100 text-center text-small text-transparent transition-colors"
+						className="py-s-100 text-small flex items-center justify-center rounded-sm border-2 border-transparent text-center text-transparent transition-colors"
 					>
 						-
 					</div>
@@ -241,7 +247,7 @@ export const B3TradingCalendar = () => {
 			</div>
 
 			{/* Legend */}
-			<div className="flex flex-wrap justify-between gap-x-3 gap-y-1 pt-s-100 align-middle">
+			<div className="pt-s-100 flex flex-wrap justify-between gap-x-3 gap-y-1 align-middle">
 				<span className="text-tiny flex items-center gap-1.5">
 					<span
 						className="bg-txt-100/25 border-txt-100/80 h-3 w-3 rounded-sm border"
