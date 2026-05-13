@@ -2313,7 +2313,36 @@ export const tradesRelations = relations(trades, ({ one, many }) => ({
 	}),
 	tradeTags: many(tradeTags),
 	executions: many(tradeExecutions),
+	hawksMetadata: one(tradeHawksMetadata, {
+		fields: [trades.id],
+		references: [tradeHawksMetadata.tradeId],
+	}),
+	stopAuditEvents: many(tradeStopAuditEvents),
 }))
+
+export const tradeHawksMetadataRelations = relations(
+	tradeHawksMetadata,
+	({ one }) => ({
+		trade: one(trades, {
+			fields: [tradeHawksMetadata.tradeId],
+			references: [trades.id],
+		}),
+		scenario: one(hawksScenarios, {
+			fields: [tradeHawksMetadata.scenarioId],
+			references: [hawksScenarios.id],
+		}),
+	})
+)
+
+export const tradeStopAuditEventsRelations = relations(
+	tradeStopAuditEvents,
+	({ one }) => ({
+		trade: one(trades, {
+			fields: [tradeStopAuditEvents.tradeId],
+			references: [trades.id],
+		}),
+	})
+)
 
 export const tradeExecutionsRelations = relations(
 	tradeExecutions,

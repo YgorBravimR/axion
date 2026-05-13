@@ -1853,6 +1853,8 @@
 			"tradeRetrieved": "Operação obtida com sucesso",
 			"tradeFetchFailed": "Falha ao obter operação",
 			"tradeCreateFailed": "Falha ao criar operação",
+			"hawksPayloadRequired": "Modo Hawks ativo — preencha cenário e telas confirmadoras",
+			"hawksBiasMissing": "Confirme o viés diário Hawks antes de registrar a operação",
 			"tradeUpdateFailed": "Falha ao atualizar operação",
 			"tradeDeleteFailed": "Falha ao arquivar operação",
 			"tradesRetrieved": "Operações obtidas com sucesso",
@@ -5287,6 +5289,26 @@
 			"notCreatedBody": "Sem plano anual a grade mensal fica vazia. O editor abre como slideover.",
 			"tabPlan": "Plano",
 			"tabTax": "Impostos"
+		}
+	},
+	"hawks": {
+		"actions": {
+			"modeStarted": "Modo Hawks ativado",
+			"modeAlreadyActive": "Modo Hawks já está ativo",
+			"modeStopped": "Modo Hawks desativado",
+			"modeAlreadyInactive": "Modo Hawks já estava inativo",
+			"modeStartFailed": "Falha ao ativar modo Hawks",
+			"modeStopFailed": "Falha ao desativar modo Hawks",
+			"modeNotActive": "Conta não está em modo Hawks",
+			"biasConfirmed": "Viés diário registrado",
+			"biasFetched": "Viés diário carregado",
+			"biasConfirmFailed": "Falha ao registrar viés diário",
+			"biasFetchFailed": "Falha ao carregar viés diário",
+			"biasValidationFailed": "Dados de viés inválidos",
+			"stopAuditRecorded": "Auditoria de stop registrada",
+			"stopAuditFailed": "Falha ao registrar auditoria de stop",
+			"stopAuditValidationFailed": "Dados de stop inválidos",
+			"tradeNotFound": "Operação não encontrada na conta"
 		}
 	}
 }

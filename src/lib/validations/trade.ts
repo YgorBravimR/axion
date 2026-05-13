@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { BRT_OFFSET } from "@/lib/dates"
+import { hawksTradePayloadSchema } from "@/lib/validations/hawks"
 
 // Direction and outcome enums
 export const tradeDirectionSchema = z.enum(["long", "short"])
@@ -125,6 +126,9 @@ const tradeBaseFields = {
 	// Trade Screenshot
 	screenshotUrl: z.string().url().max(500).optional().or(z.literal("")),
 	screenshotS3Key: z.string().max(500).optional().or(z.literal("")),
+
+	// Hawks Mode sidecar (required when account is in Hawks mode)
+	hawks: hawksTradePayloadSchema.optional(),
 }
 
 // Base object schema (no refinements) — used for .partial() and server actions

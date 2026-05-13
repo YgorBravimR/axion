@@ -12,7 +12,10 @@ import {
 	strategies,
 	tradeExecutions,
 	monthlyPlan as monthlyPlanTable,
+	dailyHawksBias,
+	tradeHawksMetadata,
 } from "@/db/schema"
+import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 import type { Trade } from "@/db/schema"
 import type {
 	BulkCreateResult,
@@ -207,6 +210,67 @@ export const createTrade = async (
 			realizedR = calculateRMultiple(pnl, plannedRiskAmount)
 		}
 
+		// Hawks Mode: validate sidecar payload, look up bias, compute ordinal
+		const accountMode = await getActiveAccountModeForUser()
+		let hawksSidecar: typeof tradeHawksMetadata.$inferInsert | null = null
+		if (accountMode === "hawks") {
+			if (!tradeData.hawks) {
+				return {
+					status: "error",
+					message: t("actions.hawksPayloadRequired"),
+					errors: [
+						{
+							code: "HAWKS_PAYLOAD_REQUIRED",
+							detail:
+								"Hawks sidecar (scenario, screens) is required while account is in Hawks mode",
+						},
+					],
+				}
+			}
+			const tradingDay = formatDateKey(tradeData.entryDate)
+			const biasRow = await db.query.dailyHawksBias.findFirst({
+				where: and(
+					eq(dailyHawksBias.accountId, accountId),
+					eq(dailyHawksBias.tradingDay, tradingDay)
+				),
+				columns: { bias: true },
+			})
+			if (!biasRow) {
+				return {
+					status: "error",
+					message: t("actions.hawksBiasMissing"),
+					errors: [
+						{
+							code: "HAWKS_BIAS_MISSING",
+							detail: "Confirm the daily Hawks bias before logging trades",
+						},
+					],
+				}
+			}
+			const dayStart = getStartOfDay(tradeData.entryDate)
+			const dayEnd = getEndOfDay(tradeData.entryDate)
+			const [ordRow] = await db
+				.select({ n: count() })
+				.from(trades)
+				.where(
+					and(
+						eq(trades.accountId, accountId),
+						gte(trades.entryDate, dayStart),
+						lte(trades.entryDate, dayEnd)
+					)
+				)
+			hawksSidecar = {
+				tradeId: "", // populated inside tx after the trade insert
+				scenarioId: tradeData.hawks.scenarioId ?? null,
+				biasAtEntry: biasRow.bias,
+				vwapRespected: tradeData.hawks.vwapRespected,
+				ajusteRespected: tradeData.hawks.ajusteRespected,
+				tripleScreenConfirmed: tradeData.hawks.tripleScreenConfirmed,
+				dailyTradeOrdinal: (ordRow?.n ?? 0) + 1,
+				enteredAt: tradeData.entryDate,
+			}
+		}
+
 		// Compute dedup hash from plaintext values before encryption
 		const deduplicationHash = computeTradeHash({
 			accountId,
@@ -306,22 +370,32 @@ export const createTrade = async (
 			)
 		}
 
-		const inserted = await db
-			.insert(trades)
-			.values(insertValues as typeof trades.$inferInsert)
-			.returning()
+		const trade = await db.transaction(async (tx) => {
+			const [inserted] = await tx
+				.insert(trades)
+				.values(insertValues as typeof trades.$inferInsert)
+				.returning()
+			if (!inserted) {
+				throw new Error("Trade insert returned no row")
+			}
 
-		const trade = inserted[0]!
+			if (tagIds?.length) {
+				await tx.insert(tradeTags).values(
+					tagIds.map((tagId) => ({
+						tradeId: inserted.id,
+						tagId,
+					}))
+				)
+			}
 
-		// Insert tag associations
-		if (tagIds?.length) {
-			await db.insert(tradeTags).values(
-				tagIds.map((tagId) => ({
-					tradeId: trade.id,
-					tagId,
-				}))
-			)
-		}
+			if (hawksSidecar) {
+				await tx
+					.insert(tradeHawksMetadata)
+					.values({ ...hawksSidecar, tradeId: inserted.id })
+			}
+
+			return inserted
+		})
 
 		// Revalidate journal pages
 		invalidateTradeData(undefined, userId, accountId)

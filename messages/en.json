@@ -1853,6 +1853,8 @@
 			"tradeRetrieved": "Trade retrieved successfully",
 			"tradeFetchFailed": "Failed to retrieve trade",
 			"tradeCreateFailed": "Failed to create trade",
+			"hawksPayloadRequired": "Hawks mode active — fill scenario and confirmation screens",
+			"hawksBiasMissing": "Confirm the daily Hawks bias before logging the trade",
 			"tradeUpdateFailed": "Failed to update trade",
 			"tradeDeleteFailed": "Failed to archive trade",
 			"tradesRetrieved": "Trades retrieved successfully",
@@ -5287,6 +5289,26 @@
 			"notCreatedBody": "Without an annual plan the monthly grid is empty. The editor opens as a slideover.",
 			"tabPlan": "Plan",
 			"tabTax": "Tax"
+		}
+	},
+	"hawks": {
+		"actions": {
+			"modeStarted": "Hawks mode activated",
+			"modeAlreadyActive": "Hawks mode is already active",
+			"modeStopped": "Hawks mode deactivated",
+			"modeAlreadyInactive": "Hawks mode was already inactive",
+			"modeStartFailed": "Failed to activate Hawks mode",
+			"modeStopFailed": "Failed to deactivate Hawks mode",
+			"modeNotActive": "Account is not in Hawks mode",
+			"biasConfirmed": "Daily bias recorded",
+			"biasFetched": "Daily bias loaded",
+			"biasConfirmFailed": "Failed to record daily bias",
+			"biasFetchFailed": "Failed to load daily bias",
+			"biasValidationFailed": "Invalid bias payload",
+			"stopAuditRecorded": "Stop audit recorded",
+			"stopAuditFailed": "Failed to record stop audit",
+			"stopAuditValidationFailed": "Invalid stop audit payload",
+			"tradeNotFound": "Trade not found in this account"
 		}
 	}
 }
