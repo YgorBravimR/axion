@@ -1,6 +1,7 @@
 "use server"
 
 import { and, eq } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { dailyHawksBias } from "@/db/schema"
@@ -41,25 +42,25 @@ export const confirmDailyBias = async (
 			),
 		})
 
-		const row = await db.transaction(async (tx) => {
-			if (existing) {
-				const [updated] = await tx
-					.update(dailyHawksBias)
-					.set({
-						bias,
-						renkoCloseAbove60min: screens.renko60,
-						macdSlopeUp: screens.macd,
-						emaStackBullish: screens.emaStack,
-						vwapAbove: screens.vwap,
-						ajusteRespected: screens.ajuste,
-						notesPt: notesPt ?? null,
-						updatedAt: new Date(),
-					})
-					.where(eq(dailyHawksBias.id, existing.id))
-					.returning()
-				return updated!
-			}
-			const [created] = await tx
+		let row: DailyHawksBias
+		if (existing) {
+			const [updated] = await db
+				.update(dailyHawksBias)
+				.set({
+					bias,
+					renkoCloseAbove60min: screens.renko60,
+					macdSlopeUp: screens.macd,
+					emaStackBullish: screens.emaStack,
+					vwapAbove: screens.vwap,
+					ajusteRespected: screens.ajuste,
+					notesPt: notesPt ?? null,
+					updatedAt: new Date(),
+				})
+				.where(eq(dailyHawksBias.id, existing.id))
+				.returning()
+			row = updated!
+		} else {
+			const [created] = await db
 				.insert(dailyHawksBias)
 				.values({
 					accountId: hawks.accountId,
@@ -73,8 +74,10 @@ export const confirmDailyBias = async (
 					notesPt: notesPt ?? null,
 				})
 				.returning()
-			return created!
-		})
+			row = created!
+		}
+
+		revalidatePath("/journal", "layout")
 
 		return {
 			status: "success",

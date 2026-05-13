@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { setRequestLocale } from "next-intl/server"
 import { JournalContent } from "@/components/journal"
 import { LoadingSpinner } from "@/components/shared"
-import { DailyBiasPanel } from "@/components/hawks"
+import { DailyBiasPanel } from "@/components/hawks/daily-bias-panel"
 
 interface JournalPageProps {
 	params: Promise<{ locale: string }>

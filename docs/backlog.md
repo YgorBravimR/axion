@@ -437,6 +437,17 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Driver / DB hygiene
+
+### HAWKS `dailyTradeOrdinal` race condition
+
+- **What**: `src/app/actions/trades.ts` computes `dailyTradeOrdinal = COUNT(*) + 1` on the HAWKS sidecar before insert. Two HAWKS trades created concurrently from different tabs/clients can both observe `count=0` and insert `ordinal=1`. There is no unique constraint on `(accountId, tradingDay, dailyTradeOrdinal)` in `trade_hawks_metadata`.
+- **Why now**: discovered while bug-proofing HAWKS feature (2026-05-13). Practically very low-probability — requires concurrent submissions within milliseconds. But the trade-ordinal is an analytics signal that should be monotonic per day; a duplicate confuses detectors.
+- **Fix shape**: add `UNIQUE INDEX thm_account_day_ordinal_idx ON trade_hawks_metadata((computed accountId, tradingDay, dailyTradeOrdinal))` via migration, then on duplicate-key error retry the read-then-insert. Or compute the ordinal in a DB-side expression (`row_number() over (partition by account_id, date_trunc('day', entered_at) order by created_at)`) materialized via trigger or view.
+- **Source**: `src/app/actions/trades.ts` HAWKS ordinal section; bug-proof session 2026-05-13.
+
+---
+
 ## How to retire an item from this backlog
 
 1. Implement the work.

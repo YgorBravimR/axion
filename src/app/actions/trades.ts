@@ -370,17 +370,17 @@ export const createTrade = async (
 			)
 		}
 
-		const trade = await db.transaction(async (tx) => {
-			const [inserted] = await tx
-				.insert(trades)
-				.values(insertValues as typeof trades.$inferInsert)
-				.returning()
-			if (!inserted) {
-				throw new Error("Trade insert returned no row")
-			}
+		const [inserted] = await db
+			.insert(trades)
+			.values(insertValues as typeof trades.$inferInsert)
+			.returning()
+		if (!inserted) {
+			throw new Error("Trade insert returned no row")
+		}
 
+		try {
 			if (tagIds?.length) {
-				await tx.insert(tradeTags).values(
+				await db.insert(tradeTags).values(
 					tagIds.map((tagId) => ({
 						tradeId: inserted.id,
 						tagId,
@@ -389,13 +389,16 @@ export const createTrade = async (
 			}
 
 			if (hawksSidecar) {
-				await tx
+				await db
 					.insert(tradeHawksMetadata)
 					.values({ ...hawksSidecar, tradeId: inserted.id })
 			}
+		} catch (sidecarErr) {
+			await db.delete(trades).where(eq(trades.id, inserted.id))
+			throw sidecarErr
+		}
 
-			return inserted
-		})
+		const trade = inserted
 
 		// Revalidate journal pages
 		invalidateTradeData(undefined, userId, accountId)

@@ -1,6 +1,7 @@
 "use server"
 
 import { and, eq, isNull } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { accountModes } from "@/db/schema"
@@ -30,24 +31,23 @@ export const startHawksMode = async (): Promise<
 			}
 		}
 
-		const inserted = await db.transaction(async (tx) => {
-			if (existing) {
-				await tx
-					.update(accountModes)
-					.set({ deactivatedAt: new Date() })
-					.where(eq(accountModes.id, existing.id))
-			}
-			const [row] = await tx
-				.insert(accountModes)
-				.values({ accountId, userId, mode: "hawks" })
-				.returning({ id: accountModes.id })
-			return row!
-		})
+		if (existing) {
+			await db
+				.update(accountModes)
+				.set({ deactivatedAt: new Date() })
+				.where(eq(accountModes.id, existing.id))
+		}
+		const [inserted] = await db
+			.insert(accountModes)
+			.values({ accountId, userId, mode: "hawks" })
+			.returning({ id: accountModes.id })
+
+		revalidatePath("/", "layout")
 
 		return {
 			status: "success",
 			message: t("actions.modeStarted"),
-			data: { id: inserted.id },
+			data: { id: inserted!.id },
 		}
 	} catch (error) {
 		return {
@@ -84,17 +84,14 @@ export const stopHawksMode = async (): Promise<ActionResponse<null>> => {
 			}
 		}
 
-		await db.transaction(async (tx) => {
-			await tx
-				.update(accountModes)
-				.set({ deactivatedAt: new Date() })
-				.where(eq(accountModes.id, active.id))
-			await tx.insert(accountModes).values({
-				accountId,
-				userId: (await requireAuth()).userId,
-				mode: "default",
-			})
-		})
+		const { userId } = await requireAuth()
+		await db
+			.update(accountModes)
+			.set({ deactivatedAt: new Date() })
+			.where(eq(accountModes.id, active.id))
+		await db.insert(accountModes).values({ accountId, userId, mode: "default" })
+
+		revalidatePath("/", "layout")
 
 		return {
 			status: "success",
