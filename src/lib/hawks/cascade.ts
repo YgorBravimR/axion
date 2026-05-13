@@ -1,6 +1,7 @@
 import { and, eq, gte, lt, isNull, isNotNull } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { accountModes, trades, tradeHawksMetadata } from "@/db/schema"
+import { formatDateKey, BRT_OFFSET } from "@/lib/dates"
 
 type CascadeReason = "single-5r" | "cumulative-10r"
 
@@ -32,10 +33,10 @@ async function checkHawksCascade(
 		return null
 	}
 
-	const dayStart = new Date(tradingDay)
-	dayStart.setHours(0, 0, 0, 0)
-	const dayEnd = new Date(dayStart)
-	dayEnd.setDate(dayEnd.getDate() + 1)
+	const dayStart = new Date(
+		`${formatDateKey(tradingDay)}T00:00:00${BRT_OFFSET}`
+	)
+	const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
 
 	// tradeHawksMetadata has no accountId — must JOIN through trades
 	const rows = await db
@@ -59,17 +60,15 @@ async function checkHawksCascade(
 
 	const rValues = rows.map((r) => Number(r.rOutcome ?? 0))
 	const currentR = rValues.reduce((sum, r) => sum + r, 0)
-
 	const worstSingle = Math.min(...rValues)
-	if (worstSingle <= -5) {
-		return { triggered: true, reason: "single-5r", currentR }
-	}
 
-	if (currentR <= -10) {
-		return { triggered: true, reason: "cumulative-10r", currentR }
+	const triggered =
+		worstSingle <= -5 ? "single-5r" : currentR <= -10 ? "cumulative-10r" : null
+	return {
+		triggered: triggered !== null,
+		reason: triggered,
+		currentR,
 	}
-
-	return { triggered: false, reason: null, currentR }
 }
 
 export { checkHawksCascade }

@@ -83,7 +83,7 @@ const detectDailyTradeCapBreach = (
 		const day = formatDateKey(trade.entryDate)
 		dayCounts.set(day, (dayCounts.get(day) ?? 0) + 1)
 	}
-	const breachedDays = [...dayCounts.values()].filter(
+	const breachedDays = Array.from(dayCounts.values()).filter(
 		(n) => n > DAILY_TRADE_CAP
 	).length
 	if (breachedDays < MIN_OCCURRENCES) {

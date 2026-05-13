@@ -18,7 +18,12 @@ const hawksTradePayloadSchema = z.object({
 })
 
 const confirmDailyBiasSchema = z.object({
-	tradingDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	tradingDay: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.refine((v) => !isNaN(Date.parse(v + "T12:00:00Z")), {
+			message: "Invalid date",
+		}),
 	bias: hawksBiasSchema,
 	screens: hawksScreensSchema,
 	notesPt: z.string().max(1000).optional(),

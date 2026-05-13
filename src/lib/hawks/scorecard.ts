@@ -92,10 +92,7 @@ async function getHawksScorecardForMonth(
 		}
 	}
 
-	const biasMap = new Map<string, string>()
-	for (const row of biasRows) {
-		biasMap.set(row.tradingDay, row.bias)
-	}
+	const biasMap = new Map(biasRows.map((r) => [r.tradingDay, r.bias]))
 
 	let tripleScreenCount = 0
 	let biasAlignedCount = 0

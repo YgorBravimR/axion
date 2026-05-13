@@ -33,15 +33,16 @@ interface DailyBiasFormProps {
 	onSuccess?: () => void
 }
 
-const biasFromRow = (row: DailyHawksBias | null): Bias =>
-	(row?.bias as Bias | undefined) ?? "neutral"
-
-const screensFromRow = (row: DailyHawksBias | null): Screens => ({
-	renko60: row?.renkoCloseAbove60min ?? false,
-	macd: row?.macdSlopeUp ?? false,
-	emaStack: row?.emaStackBullish ?? false,
-	vwap: row?.vwapAbove ?? false,
-	ajuste: row?.ajusteRespected ?? false,
+const initializeFormState = (row: DailyHawksBias | null) => ({
+	bias: (row?.bias as Bias | undefined) ?? "neutral",
+	screens: {
+		renko60: row?.renkoCloseAbove60min ?? false,
+		macd: row?.macdSlopeUp ?? false,
+		emaStack: row?.emaStackBullish ?? false,
+		vwap: row?.vwapAbove ?? false,
+		ajuste: row?.ajusteRespected ?? false,
+	},
+	notes: row?.notesPt ?? "",
 })
 
 const DailyBiasForm = ({
@@ -56,9 +57,14 @@ const DailyBiasForm = ({
 	const router = useRouter()
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
-	const [bias, setBias] = useState<Bias>(biasFromRow(initialBias))
-	const [screens, setScreens] = useState<Screens>(screensFromRow(initialBias))
-	const [notes, setNotes] = useState<string>(initialBias?.notesPt ?? "")
+	const {
+		bias: initialBiasState,
+		screens: initialScreensState,
+		notes: initialNotesState,
+	} = initializeFormState(initialBias)
+	const [bias, setBias] = useState<Bias>(initialBiasState)
+	const [screens, setScreens] = useState<Screens>(initialScreensState)
+	const [notes, setNotes] = useState<string>(initialNotesState)
 
 	const handleScreenToggle = useCallback(
 		(key: keyof Screens) => (checked: boolean | "indeterminate") => {

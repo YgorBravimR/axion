@@ -39,24 +39,25 @@ interface SeverityStyle {
 	badge: string
 }
 
-const DEFAULT_SEVERITY_STYLE: SeverityStyle = {
-	border: "border-bg-300",
-	bg: "bg-bg-300/30",
-	badge: "bg-bg-300/60 text-txt-200",
-}
-
-const SEVERITY_STYLES: Record<string, SeverityStyle> = {
-	warning: {
-		border: "border-destructive/30",
-		bg: "bg-destructive/5",
-		badge: "bg-destructive/20 text-destructive",
-	},
-	attention: {
-		border: "border-warning/30",
-		bg: "bg-warning/5",
-		badge: "bg-warning/20 text-warning",
-	},
-	info: DEFAULT_SEVERITY_STYLE,
+const getSeverityStyle = (severity: string): SeverityStyle => {
+	const styles: Record<string, SeverityStyle> = {
+		warning: {
+			border: "border-destructive/30",
+			bg: "bg-destructive/5",
+			badge: "bg-destructive/20 text-destructive",
+		},
+		attention: {
+			border: "border-warning/30",
+			bg: "bg-warning/5",
+			badge: "bg-warning/20 text-warning",
+		},
+	}
+	const defaultStyle: SeverityStyle = {
+		border: "border-bg-300",
+		bg: "bg-bg-300/30",
+		badge: "bg-bg-300/60 text-txt-200",
+	}
+	return styles[severity] ?? defaultStyle
 }
 
 const stripCoachingPrefix = (key: string): string =>
@@ -67,7 +68,7 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 	const [isExpanded, setIsExpanded] = useState(false)
 
 	const Icon = CATEGORY_ICONS[insight.category] ?? Brain
-	const styles = SEVERITY_STYLES[insight.severity] ?? DEFAULT_SEVERITY_STYLE
+	const styles = getSeverityStyle(insight.severity)
 	const title = t(stripCoachingPrefix(insight.titleKey))
 	const description = t(
 		stripCoachingPrefix(insight.descriptionKey),

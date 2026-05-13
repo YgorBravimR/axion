@@ -3,7 +3,7 @@
 import { and, eq, isNull } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
-import { db } from "@/db/drizzle"
+import { dbWs } from "@/db/drizzle-ws"
 import { accountModes } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
 import type { ActionResponse } from "@/types"
@@ -16,7 +16,7 @@ export const startHawksMode = async (): Promise<
 	try {
 		const { accountId, userId } = await requireAuth()
 
-		const existing = await db.query.accountModes.findFirst({
+		const existing = await dbWs.query.accountModes.findFirst({
 			where: and(
 				eq(accountModes.accountId, accountId),
 				isNull(accountModes.deactivatedAt)
@@ -31,16 +31,18 @@ export const startHawksMode = async (): Promise<
 			}
 		}
 
-		if (existing) {
-			await db
-				.update(accountModes)
-				.set({ deactivatedAt: new Date() })
-				.where(eq(accountModes.id, existing.id))
-		}
-		const [inserted] = await db
-			.insert(accountModes)
-			.values({ accountId, userId, mode: "hawks" })
-			.returning({ id: accountModes.id })
+		const [inserted] = await dbWs.transaction(async (tx) => {
+			if (existing) {
+				await tx
+					.update(accountModes)
+					.set({ deactivatedAt: new Date() })
+					.where(eq(accountModes.id, existing.id))
+			}
+			return tx
+				.insert(accountModes)
+				.values({ accountId, userId, mode: "hawks" })
+				.returning({ id: accountModes.id })
+		})
 
 		revalidatePath("/", "layout")
 
@@ -66,9 +68,9 @@ export const startHawksMode = async (): Promise<
 export const stopHawksMode = async (): Promise<ActionResponse<null>> => {
 	const t = await getTranslations("hawks")
 	try {
-		const { accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 
-		const active = await db.query.accountModes.findFirst({
+		const active = await dbWs.query.accountModes.findFirst({
 			where: and(
 				eq(accountModes.accountId, accountId),
 				eq(accountModes.mode, "hawks"),
@@ -84,12 +86,15 @@ export const stopHawksMode = async (): Promise<ActionResponse<null>> => {
 			}
 		}
 
-		const { userId } = await requireAuth()
-		await db
-			.update(accountModes)
-			.set({ deactivatedAt: new Date() })
-			.where(eq(accountModes.id, active.id))
-		await db.insert(accountModes).values({ accountId, userId, mode: "default" })
+		await dbWs.transaction(async (tx) => {
+			await tx
+				.update(accountModes)
+				.set({ deactivatedAt: new Date() })
+				.where(eq(accountModes.id, active.id))
+			await tx
+				.insert(accountModes)
+				.values({ accountId, userId, mode: "default" })
+		})
 
 		revalidatePath("/", "layout")
 

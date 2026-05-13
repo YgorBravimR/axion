@@ -9,65 +9,62 @@ interface HawksScorecardPanelProps {
 	month: number
 }
 
-const getScoreColor = (rate: number): string => {
-	if (rate >= 0.8) {
-		return "text-profit"
+type ThresholdLevel = "profit" | "warning" | "destructive"
+
+const getThresholdLevel = (
+	value: number,
+	thresholds: { profit: number; warning: number },
+	higherIsBetter = true
+): ThresholdLevel => {
+	if (higherIsBetter) {
+		if (value >= thresholds.profit) {
+			return "profit"
+		}
+		if (value >= thresholds.warning) {
+			return "warning"
+		}
+		return "destructive"
 	}
-	if (rate >= 0.6) {
-		return "text-warning"
+	if (value <= thresholds.profit) {
+		return "profit"
 	}
-	return "text-destructive"
+	if (value <= thresholds.warning) {
+		return "warning"
+	}
+	return "destructive"
 }
 
-const getScoreBg = (rate: number): string => {
-	if (rate >= 0.8) {
-		return "bg-profit/10"
-	}
-	if (rate >= 0.6) {
-		return "bg-warning/10"
-	}
-	return "bg-destructive/10"
-}
+const getColor = (level: ThresholdLevel): string =>
+	level === "profit"
+		? "text-profit"
+		: level === "warning"
+			? "text-warning"
+			: "text-destructive"
 
-const getViolationColor = (count: number): string => {
-	if (count === 0) {
-		return "text-profit"
-	}
-	if (count <= 2) {
-		return "text-warning"
-	}
-	return "text-destructive"
-}
+const getBg = (level: ThresholdLevel): string =>
+	level === "profit"
+		? "bg-profit/10"
+		: level === "warning"
+			? "bg-warning/10"
+			: "bg-destructive/10"
 
-const getViolationBg = (count: number): string => {
-	if (count === 0) {
-		return "bg-profit/10"
-	}
-	if (count <= 2) {
-		return "bg-warning/10"
-	}
-	return "bg-destructive/10"
-}
+const getScoreColor = (rate: number): string =>
+	getColor(getThresholdLevel(rate, { profit: 0.8, warning: 0.6 }))
 
-const getOverTradeBg = (days: number): string => {
-	if (days === 0) {
-		return "bg-profit/10"
-	}
-	if (days <= 3) {
-		return "bg-warning/10"
-	}
-	return "bg-destructive/10"
-}
+const getScoreBg = (rate: number): string =>
+	getBg(getThresholdLevel(rate, { profit: 0.8, warning: 0.6 }))
 
-const getOverTradeColor = (days: number): string => {
-	if (days === 0) {
-		return "text-profit"
-	}
-	if (days <= 3) {
-		return "text-warning"
-	}
-	return "text-destructive"
-}
+const getViolationColor = (count: number): string =>
+	getColor(getThresholdLevel(count, { profit: 0, warning: 2 }, false))
+
+const getViolationBg = (count: number): string =>
+	getBg(getThresholdLevel(count, { profit: 0, warning: 2 }, false))
+
+const getOverTradeColor = (days: number): string =>
+	getColor(getThresholdLevel(days, { profit: 0, warning: 3 }, false))
+
+const getOverTradeBg = (days: number): string =>
+	getBg(getThresholdLevel(days, { profit: 0, warning: 3 }, false))
 
 const HawksScorecardPanel = async ({
 	accountId,

@@ -9,6 +9,7 @@ import {
 } from "@/db/schema"
 import type { AccountMode, DailyHawksBias } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
+import { BRT_OFFSET } from "@/lib/dates"
 
 interface ActiveHawksAccount {
 	accountId: string
@@ -65,6 +66,13 @@ const getDailyHawksBias = cache(
 	}
 )
 
+const getDayBounds = (tradingDay: string) => {
+	const dayStart = new Date(`${tradingDay}T00:00:00${BRT_OFFSET}`)
+	// dayEnd is next-day midnight BRT — used with lt() for exclusive upper bound
+	const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
+	return { dayStart, dayEnd }
+}
+
 const getHawksDailyOrdinal = cache(
 	async (tradingDay: string): Promise<number> => {
 		const hawks = await getActiveHawksAccount()
@@ -72,9 +80,7 @@ const getHawksDailyOrdinal = cache(
 			return 0
 		}
 
-		const dayStart = new Date(tradingDay + "T00:00:00")
-		const dayEnd = new Date(dayStart)
-		dayEnd.setDate(dayEnd.getDate() + 1)
+		const { dayStart, dayEnd } = getDayBounds(tradingDay)
 
 		const result = await db
 			.select({ maxOrdinal: max(tradeHawksMetadata.dailyTradeOrdinal) })
