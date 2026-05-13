@@ -4222,7 +4222,16 @@
 			"mistakeCost": "Mistake Cost Analysis",
 			"mistakeCostDesc": "Calculates the actual financial impact of each mistake tag in your trades. Shows total cost, most costly mistake type, and a ranked breakdown with percentage bars. Example: if 'Revenge Trade' tag appears on trades totaling -R$3,000, you know exactly how much that behavior costs you.",
 			"commissionFees": "Commission & Fee Impact",
-			"commissionFeesDesc": "All-time analysis of how much commissions and exchange fees cost you. Shows total fees, fees as a percentage of gross profit, breakdown by asset, and a 6-month trend. Helps identify if certain assets cost disproportionately more in fees."
+			"commissionFeesDesc": "All-time analysis of how much commissions and exchange fees cost you. Shows total fees, fees as a percentage of gross profit, breakdown by asset, and a 6-month trend. Helps identify if certain assets cost disproportionately more in fees.",
+			"annualReportTitle": "Annual Report — {year}",
+			"weeklyMetaTitle": "Weekly Meta vs Real",
+			"annualRollupTitle": "Annual Rollup",
+			"withdrawalLoggedSuccess": "Withdrawal logged successfully.",
+			"withdrawalMessage": "Based on your {percent}% withdrawal target, consider withdrawing {span}{amount}{/span}.",
+			"withdrawalAmountLabel": "Amount (R$)",
+			"withdrawalDateLabel": "Date",
+			"withdrawalLog": "Log Withdrawal",
+			"withdrawalLogging": "Logging…"
 		},
 		"tradeDetail": {
 			"metrics": "Trade Metrics",
@@ -4545,7 +4554,11 @@
 			"modeSuffixR": "R",
 			"modeSuffixPctRange": "% range",
 			"modeSuffixPctStop": "% stop",
-			"modeSuffixPts": "pts"
+			"modeSuffixPts": "pts",
+			"allocationUsed": "Allocation used: {total}%",
+			"allocationOver": "Over allocation: +{over}%",
+			"allocationExact": "Allocation exact",
+			"allocationRemaining": "Allocation remaining: {remaining}%"
 		},
 		"orb": {
 			"name": "Opening Range Breakout",
@@ -4566,6 +4579,9 @@
 			"sizingType": "Position Sizing",
 			"monetaryRisk": "Monetary Risk",
 			"eodTime": "EOD Exit Time"
+		},
+		"dezk": {
+			"name": "10K — MACD WMA Alignment"
 		},
 		"results": {
 			"title": "Results",
@@ -4954,7 +4970,8 @@
 			"paid": "Paid",
 			"weekly": "Weekly",
 			"monthly": "Monthly",
-			"editPlan": "Edit plan"
+			"editPlan": "Edit plan",
+			"actions": "Actions"
 		},
 		"setup": {
 			"title": "Setup {year}",
@@ -5225,6 +5242,9 @@
 				"ladderTierError": "Add at least one ladder tier.",
 				"ladderTierInvalid": "Tier {n}: From ≥ 0, 1R > 0.",
 				"ladderTierOrder": "Tier {cur} must start above tier {prev}.",
+				"initialCapital": "Initial capital",
+				"initialCapitalHint": "This value will be saved to your account profile.",
+				"capitalRequired": "Enter initial capital to continue.",
 				"noAccountBalance": "Set the account starting balance in Settings → Annual Reporting first.",
 				"tradingDaysError": "Trading days per week must be 1–7.",
 				"fieldPositiveError": "{field} must be positive number.",

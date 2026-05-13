@@ -4222,7 +4222,16 @@
 			"mistakeCost": "Análise de Custo de Erros",
 			"mistakeCostDesc": "Calcula o impacto financeiro real de cada tag de erro nos seus trades. Mostra custo total, tipo de erro mais custoso e ranking detalhado com barras percentuais. Exemplo: se a tag 'Trade de Vingança' aparece em trades totalizando -R$3.000, você sabe exatamente quanto esse comportamento custa.",
 			"commissionFees": "Impacto de Corretagem e Taxas",
-			"commissionFeesDesc": "Análise completa de quanto as corretagens e emolumentos custam para você. Mostra total de taxas, taxas como percentual do lucro bruto, detalhamento por ativo e tendência dos últimos 6 meses. Ajuda a identificar se certos ativos custam desproporcionalmente mais em taxas."
+			"commissionFeesDesc": "Análise completa de quanto as corretagens e emolumentos custam para você. Mostra total de taxas, taxas como percentual do lucro bruto, detalhamento por ativo e tendência dos últimos 6 meses. Ajuda a identificar se certos ativos custam desproporcionalmente mais em taxas.",
+			"annualReportTitle": "Relatório Anual — {year}",
+			"weeklyMetaTitle": "Meta Semanal vs Real",
+			"annualRollupTitle": "Consolidado Anual",
+			"withdrawalLoggedSuccess": "Retirada registrada com sucesso.",
+			"withdrawalMessage": "Com base na sua meta de retirada de {percent}%, considere retirar {span}{amount}{/span}.",
+			"withdrawalAmountLabel": "Valor (R$)",
+			"withdrawalDateLabel": "Data",
+			"withdrawalLog": "Registrar Retirada",
+			"withdrawalLogging": "Registrando…"
 		},
 		"tradeDetail": {
 			"metrics": "Métricas do Trade",
@@ -4545,7 +4554,11 @@
 			"modeSuffixR": "R",
 			"modeSuffixPctRange": "% do range",
 			"modeSuffixPctStop": "% do stop",
-			"modeSuffixPts": "pts"
+			"modeSuffixPts": "pts",
+			"allocationUsed": "Alocação usada: {total}%",
+			"allocationOver": "Excesso de alocação: +{over}%",
+			"allocationExact": "Alocação exata",
+			"allocationRemaining": "Alocação restante: {remaining}%"
 		},
 		"orb": {
 			"name": "Rompimento do Range de Abertura",
@@ -4566,6 +4579,9 @@
 			"sizingType": "Dimensionamento",
 			"monetaryRisk": "Risco Monetário",
 			"eodTime": "Saída Fim do Dia"
+		},
+		"dezk": {
+			"name": "10K — Alinhamento MACD WMA"
 		},
 		"results": {
 			"title": "Resultados",
@@ -4954,7 +4970,8 @@
 			"paid": "Pago",
 			"weekly": "Semanal",
 			"monthly": "Mensal",
-			"editPlan": "Editar plano"
+			"editPlan": "Editar plano",
+			"actions": "Ações"
 		},
 		"setup": {
 			"title": "Setup {year}",
@@ -5225,6 +5242,9 @@
 				"ladderTierError": "Adicione pelo menos um tier à ladder.",
 				"ladderTierInvalid": "Tier {n}: From ≥ 0, 1R > 0.",
 				"ladderTierOrder": "Tier {cur} deve começar acima do tier {prev}.",
+				"initialCapital": "Capital inicial",
+				"initialCapitalHint": "Este valor será salvo em seu perfil de conta.",
+				"capitalRequired": "Digite o capital inicial para continuar.",
 				"noAccountBalance": "Defina o saldo inicial da conta em Settings → Relatório Anual antes de continuar.",
 				"tradingDaysError": "Dias de trade por semana deve ser entre 1 e 7.",
 				"fieldPositiveError": "{field} deve ser um número positivo.",

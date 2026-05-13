@@ -2,6 +2,40 @@
 
 ---
 
+## [BUG-2026-05-13] New accounts cannot create annual plans — capital not initialized
+
+**Severity:** High | **Affected:** `src/components/fractal-plan/yearly-plan-editor.tsx`, `src/components/fractal-plan/cockpit/yearly-plan-slideover.tsx`, `src/components/fractal-plan/cockpit/setup-summary-card.tsx`, `src/app/actions/accounts.ts`
+
+**Cause:** The `trading_accounts` table has `startingBalanceCents` and `accountStartYear` columns, but these were never exposed in the yearly plan creation UI. The `YearlyPlanEditor.handleSubmit()` guard checked `accountCapitalAvailable` (derived from `defaultInitialCapitalCents`), which would be `null` for new accounts. The form then blocked plan creation with an off-screen toast: "Initial capital is required but not available."
+
+The account setup flow never gave users a chance to input their starting balance before attempting plan creation.
+
+**Effect:** New accounts hit an invisible blocker: create plan → guard fails → nothing happens except an unseen error toast. User cannot proceed without contacting support to manually set the starting balance.
+
+**Fix:**
+
+1. Created new server action `setAccountStartingBalance(accountId, startingBalanceCents, accountStartYear)` in `src/app/actions/accounts.ts` — persists the starting balance and account start year.
+2. Extended `YearlyPlanEditor` props to accept `accountId: string`.
+3. Added `initialCapitalReais` to form state, initialized to `""` (empty).
+4. Added conditional input in the capital section: `{!existing && !accountCapitalAvailable && (<Input ...>)}` — shown only when creating a NEW plan AND account has no capital set.
+5. Modified `handleSubmit()` to:
+   - Validate both withdrawal amount (if existing) AND initial capital (if new account)
+   - Call `setAccountStartingBalance()` before creating the plan
+   - Set `accountStartYear` to current year
+6. Threaded `accountId` through `SetupSummaryCard` → `YearlyPlanSlideover` → `YearlyPlanEditor`.
+
+**Prevention:** When a feature has a persistence layer (DB column), ensure there's a UI path to input that data. Don't assume initialization happens elsewhere. For new entity workflows, review the full initialization checklist.
+
+**Related Files:**
+
+- `src/app/actions/accounts.ts`
+- `src/components/fractal-plan/yearly-plan-editor.tsx`
+- `src/components/fractal-plan/cockpit/yearly-plan-slideover.tsx`
+- `src/components/fractal-plan/cockpit/setup-summary-card.tsx`
+- `src/app/[locale]/(app)/plan/[year]/page.tsx`
+
+---
+
 ## [BUG-2026-02-25] Encryption works in dev but returns null/zero in production
 
 **Severity:** Critical | **Affected:** `src/lib/crypto.ts`, `src/lib/user-crypto.ts`, `next.config.ts`, all server actions using encryption

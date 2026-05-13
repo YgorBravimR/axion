@@ -10,6 +10,7 @@ import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface SetupSummaryCardProps {
+	accountId: string
 	year: number
 	initialCapitalCents: number
 	ladderRules: LadderRuleR[]
@@ -47,6 +48,7 @@ const formatR = (r: number | null): string =>
 	r === null ? "—" : `${r.toFixed(2)}R`
 
 const SetupSummaryCard = ({
+	accountId,
 	year,
 	initialCapitalCents,
 	ladderRules,
@@ -204,6 +206,7 @@ const SetupSummaryCard = ({
 			</section>
 
 			<YearlyPlanSlideover
+				accountId={accountId}
 				open={editing}
 				onOpenChange={setEditing}
 				year={year}

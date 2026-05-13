@@ -2,6 +2,24 @@
 
 ---
 
+> **[FIX-2026-05-13]** `Severity: Low` — `src/components/reports/reports-content.tsx`, `src/components/reports/withdrawal-calculator.tsx`, `messages/pt-BR.json`, `messages/en.json`
+> **Report:** /reports Annual Report section displayed English hardcoded strings: "Annual Report — 2026", "Weekly Meta vs Real", "Annual Rollup", "Log Withdrawal", and withdrawal message text.
+> **Fix:** Replaced all hardcoded strings with `t()` i18n calls. Added 10 new translation keys to both locales: `annualReportTitle`, `weeklyMetaTitle`, `annualRollupTitle`, `withdrawalLoggedSuccess`, `withdrawalMessage`, `withdrawalAmountLabel`, `withdrawalDateLabel`, `withdrawalLog`, `withdrawalLogging`. All text now localized and translatable.
+
+---
+
+> **[FIX-2026-05-13]** `Severity: Low` — `src/components/journal/trade-form.tsx`
+> **Report:** React warning on `/journal/new` when filling Preço de Entrada and Preço de Saída fields: "Warning: A component is changing an uncontrolled input of type 'text' to be controlled."
+> **Fix:** Input fields were initialized with `value={undefined}` from spread `{...field}` where field was initially empty. Added explicit `value={field.value ?? ""}` to ensure inputs start as controlled components with defined state.
+
+---
+
+> **[FIX-2026-05-13]** `Severity: Low` — `messages/pt-BR.json`, `messages/en.json`
+> **Report:** Smoke test: 3 IntlError missing i18n keys — `plan.common.actions`, `backtest.dezk.name`, `backtest.builder.allocationUsed`, `backtest.builder.allocationOver`.
+> **Fix:** Added missing keys to both Portuguese and English messages. (1) `plan.common.actions: "Ações" / "Actions"` — yearly plan table header. (2) `backtest.dezk.name: "10K — Alinhamento MACD WMA" / "10K — MACD WMA Alignment"` — strategy selector. (3) `backtest.builder.allocationUsed/Over/Exact/Remaining` — allocation tracker display. All keys now present in both locales.
+
+---
+
 > **[FIX-2026-04-21]** `Severity: Low` — `src/__tests__/lib/error-utils.test.ts`
 > 9 failing: `getUserMessage()` expected `"An unexpected error occurred"` but fn returns i18n key `"common.unexpectedError"`. Fix: updated 9 `expect().toBe()` assertions to match actual return. Source unchanged.
 

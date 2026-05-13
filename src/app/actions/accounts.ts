@@ -771,3 +771,53 @@ export const getAssetFees = async (
 
 	return { commission: commissionCents, fees: feesCents }
 }
+
+/**
+ * Set the account's starting balance and account start year (for annual planning).
+ * Used when creating the first annual plan for an account without pre-configured capital.
+ */
+export const setAccountStartingBalance = async (
+	accountId: string,
+	startingBalanceCents: number,
+	accountStartYear: number
+): Promise<{
+	status: "success" | "error"
+	error?: string
+}> => {
+	const tAuth = await getTranslations("auth")
+	const tSettings = await getTranslations("settings")
+
+	try {
+		const session = await auth()
+		if (!session?.user?.id) {
+			return { status: "error", error: tAuth("errors.notAuthenticated") }
+		}
+
+		const account = await db.query.tradingAccounts.findFirst({
+			where: and(
+				eq(tradingAccounts.id, accountId),
+				eq(tradingAccounts.userId, session.user.id)
+			),
+		})
+
+		if (!account) {
+			return { status: "error", error: tSettings("errors.accountNotFound") }
+		}
+
+		await db
+			.update(tradingAccounts)
+			.set({
+				startingBalanceCents,
+				accountStartYear,
+				updatedAt: new Date(),
+			})
+			.where(eq(tradingAccounts.id, accountId))
+
+		invalidateAccountData()
+
+		return { status: "success" }
+	} catch (error) {
+		console.error("Set account starting balance error:", error)
+		return { status: "error", error: tAuth("register.genericError") }
+	}
+}

@@ -975,6 +975,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 													step="any"
 													placeholder="0.00"
 													{...field}
+													value={field.value ?? ""}
 													onChange={(e) =>
 														field.onChange(
 															e.target.value
@@ -1039,6 +1040,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												step="any"
 												placeholder={t("positionSizeHint")}
 												{...field}
+												value={field.value ?? ""}
 												onChange={(e) =>
 													field.onChange(
 														e.target.value ? Number(e.target.value) : undefined

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import { recordCapitalEvent } from "@/app/actions/annual-reports"
 
 interface WithdrawalCalculatorProps {
@@ -14,6 +15,7 @@ const WithdrawalCalculator = ({
 	withdrawalTargetPercent,
 	onLogged,
 }: WithdrawalCalculatorProps) => {
+	const t = useTranslations("reports")
 	const suggestedCents = Math.round(
 		currentMonthNetPnl * (withdrawalTargetPercent / 100)
 	)
@@ -56,7 +58,7 @@ const WithdrawalCalculator = ({
 	if (success) {
 		return (
 			<div className="border-trade-buy/30 bg-trade-buy/10 text-trade-buy text-small rounded-md border px-4 py-3">
-				Withdrawal logged successfully.
+				{t("withdrawalLoggedSuccess")}
 			</div>
 		)
 	}
@@ -64,18 +66,16 @@ const WithdrawalCalculator = ({
 	return (
 		<div className="border-acc-100/30 bg-bg-200 space-y-3 rounded-md border px-4 py-4">
 			<p className="text-txt-200 text-small">
-				Based on your{" "}
-				<span className="text-acc-100 font-medium">
-					{withdrawalTargetPercent}%
-				</span>{" "}
-				withdrawal target, consider withdrawing{" "}
-				<span className="text-txt-100 font-mono font-medium">
-					{new Intl.NumberFormat("pt-BR", {
+				{t.rich("withdrawalMessage", {
+					percent: withdrawalTargetPercent.toString(),
+					amount: new Intl.NumberFormat("pt-BR", {
 						style: "currency",
 						currency: "BRL",
-					}).format(suggestedBRL)}
-				</span>
-				.
+					}).format(suggestedBRL),
+					span: (chunks) => (
+						<span className="text-txt-100 font-mono font-medium">{chunks}</span>
+					),
+				})}
 			</p>
 
 			<form
@@ -87,7 +87,7 @@ const WithdrawalCalculator = ({
 						htmlFor="wd-amount"
 						className="text-txt-300 text-tiny mb-1 block"
 					>
-						Amount (R$)
+						{t("withdrawalAmountLabel")}
 					</label>
 					<input
 						id="wd-amount"
@@ -104,7 +104,7 @@ const WithdrawalCalculator = ({
 						htmlFor="wd-date"
 						className="text-txt-300 text-tiny mb-1 block"
 					>
-						Date
+						{t("withdrawalDateLabel")}
 					</label>
 					<input
 						id="wd-date"
@@ -121,7 +121,7 @@ const WithdrawalCalculator = ({
 					disabled={isPending}
 					className="bg-acc-100 text-bg-100 text-small rounded-md px-4 py-2 font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
 				>
-					{isPending ? "Logging…" : "Log Withdrawal"}
+					{isPending ? t("withdrawalLogging") : t("withdrawalLog")}
 				</button>
 
 				{error && (

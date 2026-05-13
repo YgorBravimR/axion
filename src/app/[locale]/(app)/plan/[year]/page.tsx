@@ -187,6 +187,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 				>
 					<YearlyPlanEditor
 						year={year}
+						accountId={accountId}
 						existing={existing}
 						riskProfiles={riskProfiles}
 						defaultInitialCapitalCents={defaultInitialCapitalCents}
@@ -447,6 +448,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		return (
 			<div className="space-y-m-500">
 				<SetupSummaryCard
+					accountId={accountId}
 					year={year}
 					initialCapitalCents={initialCapitalCents}
 					ladderRules={ladderRules}
@@ -479,6 +481,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	return (
 		<div className="space-y-m-500">
 			<SetupSummaryCard
+				accountId={accountId}
 				year={year}
 				initialCapitalCents={initialCapitalCents}
 				ladderRules={ladderRules}

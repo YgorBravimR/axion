@@ -129,14 +129,14 @@ export const ReportsContent = ({
 							id="annual-section-heading"
 							className="text-txt-200 text-tiny tracking-wider uppercase"
 						>
-							Annual Report — {currentYear}
+							{t("annualReportTitle", { year: currentYear })}
 						</h2>
 					</div>
 
 					{weeklyMetaData && (
 						<div className="space-y-s-200">
 							<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
-								Weekly Meta vs Real
+								{t("weeklyMetaTitle")}
 							</h3>
 							<WeeklyMetaChart data={weeklyMetaData} />
 						</div>
@@ -145,7 +145,7 @@ export const ReportsContent = ({
 					{annualRollupData && (
 						<div className="space-y-s-200">
 							<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
-								Annual Rollup
+								{t("annualRollupTitle")}
 							</h3>
 							<AnnualRollupTable data={annualRollupData} />
 						</div>
