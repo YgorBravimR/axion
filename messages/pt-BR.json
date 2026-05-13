@@ -1356,6 +1356,26 @@
 			"disciplineImpact": {
 				"title": "Disciplina Compensa",
 				"description": "Seguindo o plano: avg {followedAvgR}R vs {notFollowedAvgR}R quando não segue"
+			},
+			"hawksStopMethodViolation": {
+				"title": "Stop fora do Método 3",
+				"description": "{violatingTrades}/{totalTrades} trades ({violationRate}%) com stop violando o Método 3. Reveja antes de operar."
+			},
+			"hawksTripleScreenGap": {
+				"title": "Entrada sem tripla confirmação",
+				"description": "{unconfirmedTrades}/{totalTrades} trades entraram sem renko/MACD/EMA alinhados — taxa de perda nesses: {lossRate}%."
+			},
+			"hawksDailyCapBreach": {
+				"title": "Limite diário ultrapassado",
+				"description": "{breachedDays} de {totalDays} dias acima do limite Hawks de {cap} trades/dia."
+			},
+			"hawksBiasDirectionMismatch": {
+				"title": "Direção contra o viés",
+				"description": "{mismatches}/{totalTrades} trades contra o viés do dia (ou em dia neutro) — taxa de perda: {lossRate}%."
+			},
+			"hawksCascadeTrigger": {
+				"title": "Cascata −5R/−10R atingida",
+				"description": "{pauseDays} dia(s) com pausa ({pauseThresholdR}R) e {stopDays} dia(s) com parada ({stopThresholdR}R) em {totalDays} dias operados."
 			}
 		}
 	},

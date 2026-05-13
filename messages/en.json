@@ -1356,6 +1356,26 @@
 			"disciplineImpact": {
 				"title": "Discipline Pays Off",
 				"description": "Plan-following trades avg {followedAvgR}R vs {notFollowedAvgR}R when not following"
+			},
+			"hawksStopMethodViolation": {
+				"title": "Stop violates Method-3",
+				"description": "{violatingTrades}/{totalTrades} trades ({violationRate}%) placed a stop outside Method-3. Review before trading again."
+			},
+			"hawksTripleScreenGap": {
+				"title": "Entry without triple-screen",
+				"description": "{unconfirmedTrades}/{totalTrades} entries lacked renko/MACD/EMA alignment — loss rate on those: {lossRate}%."
+			},
+			"hawksDailyCapBreach": {
+				"title": "Daily trade cap breached",
+				"description": "{breachedDays} of {totalDays} days exceeded the Hawks cap of {cap} trades/day."
+			},
+			"hawksBiasDirectionMismatch": {
+				"title": "Direction against bias",
+				"description": "{mismatches}/{totalTrades} trades traded against the day's bias (or on a neutral day) — loss rate: {lossRate}%."
+			},
+			"hawksCascadeTrigger": {
+				"title": "Cascade −5R/−10R hit",
+				"description": "{pauseDays} day(s) hit the {pauseThresholdR}R pause and {stopDays} day(s) hit the {stopThresholdR}R stop across {totalDays} traded days."
 			}
 		}
 	},
