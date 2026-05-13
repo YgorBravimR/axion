@@ -2408,6 +2408,15 @@
 		"emptyState": "No trade data yet. Start logging trades to see your reports.",
 		"emptyStateHint": "Your reports will populate as you log trades in the journal.",
 		"goToJournal": "Log your first trade",
+		"annualReportTitle": "Annual Report — {year}",
+		"weeklyMetaTitle": "Weekly Meta vs Real",
+		"annualRollupTitle": "Annual Rollup",
+		"withdrawalLoggedSuccess": "Withdrawal logged successfully.",
+		"withdrawalMessage": "Based on your {percent}% withdrawal target, consider withdrawing <span>{amount}</span>.",
+		"withdrawalAmountLabel": "Amount (R$)",
+		"withdrawalDateLabel": "Date",
+		"withdrawalLog": "Log Withdrawal",
+		"withdrawalLogging": "Logging…",
 		"weekly": {
 			"title": "Weekly Report",
 			"week": "Week",
@@ -4222,16 +4231,7 @@
 			"mistakeCost": "Mistake Cost Analysis",
 			"mistakeCostDesc": "Calculates the actual financial impact of each mistake tag in your trades. Shows total cost, most costly mistake type, and a ranked breakdown with percentage bars. Example: if 'Revenge Trade' tag appears on trades totaling -R$3,000, you know exactly how much that behavior costs you.",
 			"commissionFees": "Commission & Fee Impact",
-			"commissionFeesDesc": "All-time analysis of how much commissions and exchange fees cost you. Shows total fees, fees as a percentage of gross profit, breakdown by asset, and a 6-month trend. Helps identify if certain assets cost disproportionately more in fees.",
-			"annualReportTitle": "Annual Report — {year}",
-			"weeklyMetaTitle": "Weekly Meta vs Real",
-			"annualRollupTitle": "Annual Rollup",
-			"withdrawalLoggedSuccess": "Withdrawal logged successfully.",
-			"withdrawalMessage": "Based on your {percent}% withdrawal target, consider withdrawing {span}{amount}{/span}.",
-			"withdrawalAmountLabel": "Amount (R$)",
-			"withdrawalDateLabel": "Date",
-			"withdrawalLog": "Log Withdrawal",
-			"withdrawalLogging": "Logging…"
+			"commissionFeesDesc": "All-time analysis of how much commissions and exchange fees cost you. Shows total fees, fees as a percentage of gross profit, breakdown by asset, and a 6-month trend. Helps identify if certain assets cost disproportionately more in fees."
 		},
 		"tradeDetail": {
 			"metrics": "Trade Metrics",

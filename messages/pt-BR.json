@@ -2408,6 +2408,15 @@
 		"emptyState": "Nenhum dado de trade ainda. Comece a registrar trades para ver seus relatórios.",
 		"emptyStateHint": "Seus relatórios serão preenchidos conforme você registra trades no diário.",
 		"goToJournal": "Registre seu primeiro trade",
+		"annualReportTitle": "Relatório Anual — {year}",
+		"weeklyMetaTitle": "Meta Semanal vs Real",
+		"annualRollupTitle": "Consolidado Anual",
+		"withdrawalLoggedSuccess": "Retirada registrada com sucesso.",
+		"withdrawalMessage": "Com base na sua meta de retirada de {percent}%, considere retirar <span>{amount}</span>.",
+		"withdrawalAmountLabel": "Valor (R$)",
+		"withdrawalDateLabel": "Data",
+		"withdrawalLog": "Registrar Retirada",
+		"withdrawalLogging": "Registrando…",
 		"weekly": {
 			"title": "Relatório Semanal",
 			"week": "Semana",
@@ -4222,16 +4231,7 @@
 			"mistakeCost": "Análise de Custo de Erros",
 			"mistakeCostDesc": "Calcula o impacto financeiro real de cada tag de erro nos seus trades. Mostra custo total, tipo de erro mais custoso e ranking detalhado com barras percentuais. Exemplo: se a tag 'Trade de Vingança' aparece em trades totalizando -R$3.000, você sabe exatamente quanto esse comportamento custa.",
 			"commissionFees": "Impacto de Corretagem e Taxas",
-			"commissionFeesDesc": "Análise completa de quanto as corretagens e emolumentos custam para você. Mostra total de taxas, taxas como percentual do lucro bruto, detalhamento por ativo e tendência dos últimos 6 meses. Ajuda a identificar se certos ativos custam desproporcionalmente mais em taxas.",
-			"annualReportTitle": "Relatório Anual — {year}",
-			"weeklyMetaTitle": "Meta Semanal vs Real",
-			"annualRollupTitle": "Consolidado Anual",
-			"withdrawalLoggedSuccess": "Retirada registrada com sucesso.",
-			"withdrawalMessage": "Com base na sua meta de retirada de {percent}%, considere retirar {span}{amount}{/span}.",
-			"withdrawalAmountLabel": "Valor (R$)",
-			"withdrawalDateLabel": "Data",
-			"withdrawalLog": "Registrar Retirada",
-			"withdrawalLogging": "Registrando…"
+			"commissionFeesDesc": "Análise completa de quanto as corretagens e emolumentos custam para você. Mostra total de taxas, taxas como percentual do lucro bruto, detalhamento por ativo e tendência dos últimos 6 meses. Ajuda a identificar se certos ativos custam desproporcionalmente mais em taxas."
 		},
 		"tradeDetail": {
 			"metrics": "Métricas do Trade",
