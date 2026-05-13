@@ -16,6 +16,8 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/toast"
+import { FeatureStamp } from "@/components/ui/feature-stamp"
+import { HelpText } from "@/components/ui/help-text"
 import { startHawksMode, stopHawksMode } from "@/app/actions/hawks-mode"
 
 interface HawksSettingsProps {
@@ -81,21 +83,23 @@ const HawksSettings = ({ initialActive }: HawksSettingsProps) => {
 			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 				<div className="gap-s-300 flex items-start justify-between">
 					<div className="gap-s-300 flex items-start">
-						<div className="bg-bg-300 text-acc-100 p-s-200 rounded-md">
-							<Crosshair className="h-5 w-5" aria-hidden="true" />
-						</div>
+						<FeatureStamp icon={Crosshair} />
 						<div>
 							<h2 className="text-body text-txt-100 font-semibold">
 								{t("title")}
 							</h2>
-							<p className="mt-s-100 text-tiny text-txt-300 max-w-prose">
+							<HelpText
+								id="hawks-mode-description"
+								className="mt-s-100 max-w-prose"
+							>
 								{t("description")}
-							</p>
+							</HelpText>
 							<p className="mt-s-200 text-small text-txt-200">
 								<span className="text-txt-300">{tCommon("status")}: </span>
 								<span
+									aria-live="polite"
 									className={
-										active ? "text-profit font-medium" : "text-txt-200"
+										active ? "text-fb-success font-medium" : "text-txt-200"
 									}
 								>
 									{active ? t("statusActive") : t("statusInactive")}
@@ -115,7 +119,8 @@ const HawksSettings = ({ initialActive }: HawksSettingsProps) => {
 							checked={active}
 							onCheckedChange={handleRequestToggle}
 							disabled={isPending}
-							aria-label={active ? t("deactivate") : t("activate")}
+							aria-label={t("title")}
+							aria-describedby="hawks-mode-description"
 						/>
 					</div>
 				</div>

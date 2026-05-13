@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { SegmentedToggle } from "@/components/ui/segmented-toggle"
 import { useToast } from "@/components/ui/toast"
+import { FeatureStamp } from "@/components/ui/feature-stamp"
+import { HelpText } from "@/components/ui/help-text"
 import { confirmDailyBias } from "@/app/actions/hawks-bias"
 import type { DailyHawksBias } from "@/db/schema"
 
@@ -111,9 +113,7 @@ const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
 		>
 			<header className="gap-s-200 flex flex-col sm:flex-row sm:items-start sm:justify-between">
 				<div className="gap-s-300 flex items-start">
-					<div className="bg-bg-300 text-acc-100 p-s-200 rounded-md">
-						<Compass className="h-5 w-5" aria-hidden="true" />
-					</div>
+					<FeatureStamp icon={Compass} />
 					<div>
 						<h2
 							id="hawks-daily-bias-title"
@@ -121,34 +121,45 @@ const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
 						>
 							{t("title")}
 						</h2>
-						<p className="mt-s-100 text-tiny text-txt-300 max-w-prose">
+						<HelpText
+							id="hawks-daily-bias-description"
+							className="mt-s-100 max-w-prose"
+						>
 							{t("description", { day: tradingDay })}
-						</p>
+						</HelpText>
 					</div>
 				</div>
 			</header>
 
 			<div className="mt-m-400 space-y-m-400">
-				<div className="space-y-s-200">
-					<Label id="hawks-bias-direction-label" htmlFor="hawks-bias-direction">
+				<div
+					role="group"
+					aria-labelledby="hawks-bias-direction-label"
+					className="space-y-s-200"
+				>
+					<span
+						id="hawks-bias-direction-label"
+						className="text-small text-txt-200 block font-medium"
+					>
 						{t("directionLabel")}
-					</Label>
+					</span>
 					<SegmentedToggle
 						value={bias}
 						options={biasOptions}
 						onChange={setBias}
 						disabled={isPending}
-						aria-label={t("directionLabel")}
+						aria-labelledby="hawks-bias-direction-label"
 					/>
 				</div>
 
-				<div className="space-y-s-200">
-					<Label id="hawks-bias-screens-label" htmlFor="hawks-bias-screens">
+				<fieldset className="space-y-s-200">
+					<legend className="text-small text-txt-100 font-medium">
 						{t("screensLabel")}
-					</Label>
-					<ul id="hawks-bias-screens" className="gap-s-200 flex flex-col">
+					</legend>
+					<ul className="gap-s-200 flex flex-col">
 						{screenRows.map((row) => {
 							const inputId = `hawks-screen-${row.key}`
+							const hintId = `${inputId}-hint`
 							return (
 								<li key={row.key} className="gap-s-300 flex items-start">
 									<Checkbox
@@ -156,6 +167,7 @@ const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
 										checked={screens[row.key]}
 										onCheckedChange={handleScreenToggle(row.key)}
 										disabled={isPending}
+										aria-describedby={hintId}
 										className="mt-s-100"
 									/>
 									<div className="flex-1">
@@ -165,13 +177,13 @@ const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
 										>
 											{row.label}
 										</label>
-										<p className="text-tiny text-txt-300">{row.hint}</p>
+										<HelpText id={hintId}>{row.hint}</HelpText>
 									</div>
 								</li>
 							)
 						})}
 					</ul>
-				</div>
+				</fieldset>
 
 				<div className="space-y-s-200">
 					<Label id="hawks-bias-notes-label" htmlFor="hawks-bias-notes">

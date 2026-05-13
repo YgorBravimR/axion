@@ -84,14 +84,12 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 		>
 			<button
 				type="button"
-				tabIndex={0}
 				className="gap-s-200 flex w-full items-center text-left"
 				onClick={() => setIsExpanded(!isExpanded)}
 				aria-expanded={isExpanded}
 				aria-controls={`hawks-insight-${insight.id}-content`}
-				aria-label={title}
 			>
-				<Icon className="text-txt-300 h-4 w-4 shrink-0" />
+				<Icon className="text-txt-300 h-4 w-4 shrink-0" aria-hidden="true" />
 				<div className="min-w-0 flex-1">
 					<div className="gap-s-200 flex items-center">
 						<span className="text-small text-txt-100 truncate font-medium">
@@ -108,28 +106,33 @@ const InsightRow = memo(({ insight }: { insight: CoachingInsight }) => {
 					</div>
 				</div>
 				{isExpanded ? (
-					<ChevronUp className="text-txt-300 h-3 w-3 shrink-0" />
+					<ChevronUp
+						className="text-txt-300 h-3 w-3 shrink-0"
+						aria-hidden="true"
+					/>
 				) : (
-					<ChevronDown className="text-txt-300 h-3 w-3 shrink-0" />
+					<ChevronDown
+						className="text-txt-300 h-3 w-3 shrink-0"
+						aria-hidden="true"
+					/>
 				)}
 			</button>
 
-			{isExpanded && (
-				<div
-					id={`hawks-insight-${insight.id}-content`}
-					className="mt-s-200 pl-m-400"
-				>
-					<p className="text-tiny text-txt-200">{description}</p>
-					<div className="mt-s-200 gap-s-200 flex items-center">
-						<span className="text-micro text-txt-300">
-							{t(`category.${insight.category}`)}
-						</span>
-						<span className="text-micro text-txt-300">
-							{Math.round(insight.confidence * 100)}%
-						</span>
-					</div>
+			<div
+				id={`hawks-insight-${insight.id}-content`}
+				hidden={!isExpanded}
+				className="mt-s-200 pl-m-400"
+			>
+				<p className="text-tiny text-txt-200">{description}</p>
+				<div className="mt-s-200 gap-s-200 flex items-center">
+					<span className="text-micro text-txt-300">
+						{t(`category.${insight.category}`)}
+					</span>
+					<span className="text-micro text-txt-300">
+						{Math.round(insight.confidence * 100)}%
+					</span>
 				</div>
-			)}
+			</div>
 		</div>
 	)
 })

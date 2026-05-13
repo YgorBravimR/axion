@@ -11,6 +11,8 @@ import {
 	FormMessage,
 } from "@/components/ui/form"
 import { Switch } from "@/components/ui/switch"
+import { FeatureStamp } from "@/components/ui/feature-stamp"
+import { HelpText } from "@/components/ui/help-text"
 import type { TradeFormInput } from "@/lib/validations/trade"
 
 interface HawksTradeFieldsProps {
@@ -40,12 +42,10 @@ const HawksTradeFields = ({ form }: HawksTradeFieldsProps) => {
 		<section
 			id="hawks-trade-fields"
 			aria-labelledby="hawks-trade-fields-title"
-			className="border-acc-100/30 bg-acc-100/5 p-s-300 sm:p-m-400 space-y-m-400 rounded-lg border"
+			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 space-y-m-400 rounded-lg border"
 		>
 			<header className="gap-s-300 flex items-start">
-				<div className="bg-bg-300 text-acc-100 p-s-200 rounded-md">
-					<Crosshair className="h-5 w-5" aria-hidden="true" />
-				</div>
+				<FeatureStamp icon={Crosshair} />
 				<div>
 					<h3
 						id="hawks-trade-fields-title"
@@ -53,39 +53,46 @@ const HawksTradeFields = ({ form }: HawksTradeFieldsProps) => {
 					>
 						{t("title")}
 					</h3>
-					<p className="mt-s-100 text-tiny text-txt-300 max-w-prose">
+					<HelpText
+						id="hawks-trade-fields-description"
+						className="mt-s-100 max-w-prose"
+					>
 						{t("description")}
-					</p>
+					</HelpText>
 				</div>
 			</header>
 
 			<div className="space-y-s-300">
-				{TOGGLES.map((row) => (
-					<FormField
-						key={row.key}
-						control={form.control}
-						name={`hawks.${row.key}` as const}
-						render={({ field }) => (
-							<FormItem className="gap-s-300 flex items-start justify-between">
-								<div className="flex-1">
-									<FormLabel id={`hawks-${row.key}-label`}>
-										{t(row.labelKey)}
-									</FormLabel>
-									<p className="text-tiny text-txt-300">{t(row.hintKey)}</p>
-									<FormMessage />
-								</div>
-								<FormControl>
-									<Switch
-										id={`hawks-${row.key}`}
-										checked={field.value === true}
-										onCheckedChange={field.onChange}
-										aria-label={t(row.labelKey)}
-									/>
-								</FormControl>
-							</FormItem>
-						)}
-					/>
-				))}
+				{TOGGLES.map((row) => {
+					const switchId = `hawks-${row.key}`
+					const hintId = `${switchId}-hint`
+					return (
+						<FormField
+							key={row.key}
+							control={form.control}
+							name={`hawks.${row.key}` as const}
+							render={({ field }) => (
+								<FormItem className="gap-s-300 flex items-start justify-between">
+									<div className="flex-1">
+										<FormLabel id={`${switchId}-label`}>
+											{t(row.labelKey)}
+										</FormLabel>
+										<HelpText id={hintId}>{t(row.hintKey)}</HelpText>
+										<FormMessage />
+									</div>
+									<FormControl>
+										<Switch
+											id={switchId}
+											checked={field.value === true}
+											onCheckedChange={field.onChange}
+											aria-describedby={hintId}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+					)
+				})}
 			</div>
 		</section>
 	)
