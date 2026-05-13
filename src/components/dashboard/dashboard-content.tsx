@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { KpiCards } from "./kpi-cards"
 import { CoachingInsightsCard } from "./coaching-insights-card"
+import { HawksCoachingInsightsCard } from "@/components/hawks"
 import { TradingCalendar } from "./trading-calendar"
 import { EquityCurve } from "./equity-curve"
 import { QuickStats } from "./quick-stats"
@@ -44,6 +45,7 @@ interface DashboardContentProps {
 	initialRadarData: RadarChartData[]
 	initialYear: number
 	initialMonthIndex: number
+	hawksModeActive?: boolean
 }
 
 /** Compute dateFrom/dateTo for a given dashboard period */
@@ -113,6 +115,7 @@ export const DashboardContent = ({
 	initialRadarData,
 	initialYear,
 	initialMonthIndex,
+	hawksModeActive = false,
 }: DashboardContentProps) => {
 	const effectiveDate = useEffectiveDate()
 	const { canAccess } = useFeatureAccess()
@@ -256,6 +259,16 @@ export const DashboardContent = ({
 			{canAccess("dashboard:coaching-insights") && (
 				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
 					<CoachingInsightsCard />
+				</div>
+			)}
+
+			{/* Hawks Coaching Insights — only when account is in Hawks mode */}
+			{hawksModeActive && canAccess("dashboard:coaching-insights") && (
+				<div
+					id="dashboard-hawks-coaching"
+					className="md:col-span-2 lg:col-span-3"
+				>
+					<HawksCoachingInsightsCard />
 				</div>
 			)}
 

@@ -5355,6 +5355,11 @@
 			"stopAuditFailed": "Failed to record stop audit",
 			"stopAuditValidationFailed": "Invalid stop audit payload",
 			"tradeNotFound": "Trade not found in this account"
+		},
+		"coaching": {
+			"title": "Hawks coaching insights",
+			"noTrades": "No Hawks trades in the last 90 days yet — log a few to unlock pattern detection.",
+			"noInsights": "No Hawks patterns surfaced in the last 90 days. Stay disciplined."
 		}
 	}
 }

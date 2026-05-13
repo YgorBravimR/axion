@@ -5355,6 +5355,11 @@
 			"stopAuditFailed": "Falha ao registrar auditoria de stop",
 			"stopAuditValidationFailed": "Dados de stop inválidos",
 			"tradeNotFound": "Operação não encontrada na conta"
+		},
+		"coaching": {
+			"title": "Coaching Hawks",
+			"noTrades": "Sem trades Hawks nos últimos 90 dias — registre alguns para liberar a detecção de padrões.",
+			"noInsights": "Nenhum padrão Hawks identificado nos últimos 90 dias. Mantenha a disciplina."
 		}
 	}
 }

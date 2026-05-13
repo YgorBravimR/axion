@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server"
 import { DashboardContent } from "@/components/dashboard"
 import { getDashboardBatch } from "@/app/actions/analytics"
 import { getServerEffectiveNow } from "@/lib/effective-date"
+import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -17,7 +18,10 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 	const initialMonthIndex = now.getMonth()
 
 	// Single batch query replaces 6 independent DB queries
-	const batchResult = await getDashboardBatch(initialYear, initialMonthIndex)
+	const [batchResult, accountMode] = await Promise.all([
+		getDashboardBatch(initialYear, initialMonthIndex),
+		getActiveAccountModeForUser(),
+	])
 	const batchData = batchResult.status === "success" ? batchResult.data : null
 
 	const stats = batchData?.stats ?? null
@@ -39,6 +43,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 					initialRadarData={radarData}
 					initialYear={initialYear}
 					initialMonthIndex={initialMonthIndex}
+					hawksModeActive={accountMode === "hawks"}
 				/>
 			</div>
 		</div>
