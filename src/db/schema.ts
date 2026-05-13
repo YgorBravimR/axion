@@ -24,7 +24,11 @@ import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 
 // Enums
 export const tradeDirectionEnum = pgEnum("trade_direction", ["long", "short"])
-export const tradeOutcomeEnum = pgEnum("trade_outcome", ["win", "loss", "breakeven"])
+export const tradeOutcomeEnum = pgEnum("trade_outcome", [
+	"win",
+	"loss",
+	"breakeven",
+])
 export const tagTypeEnum = pgEnum("tag_type", ["setup", "mistake", "general"])
 export const timeframeTypeEnum = pgEnum("timeframe_type", [
 	"time_based",
@@ -54,10 +58,19 @@ export const orderTypeEnum = pgEnum("order_type", [
 ])
 
 // Account Type Enum
-export const accountTypeEnum = pgEnum("account_type", ["personal", "prop", "replay"])
+export const accountTypeEnum = pgEnum("account_type", [
+	"personal",
+	"prop",
+	"replay",
+])
 
 // User Role Enum
-export const userRoleEnum = pgEnum("user_role", ["admin", "premium", "trader", "viewer"])
+export const userRoleEnum = pgEnum("user_role", [
+	"admin",
+	"premium",
+	"trader",
+	"viewer",
+])
 
 // Condition Category Enum
 export const conditionCategoryEnum = pgEnum("condition_category", [
@@ -68,7 +81,11 @@ export const conditionCategoryEnum = pgEnum("condition_category", [
 ])
 
 // Condition Tier Enum (cumulative ranking: mandatory → tier_2 → tier_3)
-export const conditionTierEnum = pgEnum("condition_tier", ["mandatory", "tier_2", "tier_3"])
+export const conditionTierEnum = pgEnum("condition_tier", [
+	"mandatory",
+	"tier_2",
+	"tier_3",
+])
 
 // Setup Rank Enum (A = mandatory only, AA = + tier_2, AAA = all tiers met)
 export const setupRankEnum = pgEnum("setup_rank", ["A", "AA", "AAA"])
@@ -85,7 +102,10 @@ export const bugReportStatusEnum = pgEnum("bug_report_status", [
 ])
 
 // Capital Event Type Enum (Annual Reporting Phase 1)
-export const capitalEventTypeEnum = pgEnum("capital_event_type", ["deposit", "withdrawal"])
+export const capitalEventTypeEnum = pgEnum("capital_event_type", [
+	"deposit",
+	"withdrawal",
+])
 
 // DARF Payment Status Enum (BR Tax Engine Phase 1)
 export const darfStatusEnum = pgEnum("darf_status", [
@@ -115,6 +135,33 @@ export const tierChangeReasonEnum = pgEnum("tier_change_reason", [
 	"manual",
 ])
 
+// Hawks Mode enums (mode-scoped sidecar; lib at src/lib/hawks/).
+export const accountModeEnum = pgEnum("account_mode", ["default", "hawks"])
+export const hawksScenarioDirectionEnum = pgEnum("hawks_scenario_direction", [
+	"long",
+	"short",
+	"either",
+])
+export const hawksScenarioTypeEnum = pgEnum("hawks_scenario_type", [
+	"setup",
+	"mistake",
+])
+export const hawksBiasEnum = pgEnum("hawks_bias", ["long", "short", "neutral"])
+export const hawksStopDirectionEnum = pgEnum("hawks_stop_direction", [
+	"with",
+	"against",
+	"same",
+])
+
+// Plan-immutability cadence on monthly_plan (windowed lock on writes).
+export const planLockCadenceEnum = pgEnum("plan_lock_cadence", [
+	"weekly",
+	"biweekly",
+	"monthly",
+	"quarterly",
+	"yearly",
+])
+
 // ==========================================
 // AUTH TABLES (Phase 10)
 // ==========================================
@@ -136,12 +183,20 @@ export const users = pgTable(
 		encryptedDek: text("encrypted_dek"),
 
 		// General user settings (not account-specific)
-		preferredLocale: varchar("preferred_locale", { length: 10 }).default("pt-BR").notNull(),
+		preferredLocale: varchar("preferred_locale", { length: 10 })
+			.default("pt-BR")
+			.notNull(),
 		theme: varchar("theme", { length: 20 }).default("dark").notNull(),
-		dateFormat: varchar("date_format", { length: 20 }).default("DD/MM/YYYY").notNull(),
+		dateFormat: varchar("date_format", { length: 20 })
+			.default("DD/MM/YYYY")
+			.notNull(),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [index("users_email_idx").on(table.email)]
 )
@@ -164,23 +219,31 @@ export const tradingAccounts = pgTable(
 		// Trading account type
 		accountType: accountTypeEnum("account_type").default("personal").notNull(),
 		propFirmName: text("prop_firm_name"), // encrypted
-		profitSharePercentage: text("profit_share_percentage").default("100.00").notNull(), // encrypted
+		profitSharePercentage: text("profit_share_percentage")
+			.default("100.00")
+			.notNull(), // encrypted
 
 		// Tax rates intentionally NOT stored — sourced from @/lib/tax/legal-rates by
 		// year (Lei 11.033/2004). Single source of truth across cockpit, reports,
 		// and recompute. Per-account override removed 2026-05-07.
 
-		defaultCurrency: varchar("default_currency", { length: 3 }).default("BRL").notNull(),
+		defaultCurrency: varchar("default_currency", { length: 3 })
+			.default("BRL")
+			.notNull(),
 
 		// Breakeven classification: trades within ±N ticks of entry are classified as breakeven
-		defaultBreakevenTicks: integer("default_breakeven_ticks").default(2).notNull(),
+		defaultBreakevenTicks: integer("default_breakeven_ticks")
+			.default(2)
+			.notNull(),
 
 		// Default asset: pre-selects this asset in trade forms, calculators, etc.
 		defaultAsset: varchar("default_asset", { length: 20 }),
 
 		// Display preferences
 		showTaxEstimates: boolean("show_tax_estimates").default(true).notNull(),
-		showPropCalculations: boolean("show_prop_calculations").default(true).notNull(),
+		showPropCalculations: boolean("show_prop_calculations")
+			.default(true)
+			.notNull(),
 		brand: varchar("brand", { length: 20 }).default("bravo").notNull(),
 
 		// Annual Reporting: account lifecycle anchor + withdrawal configuration
@@ -201,13 +264,20 @@ export const tradingAccounts = pgTable(
 		 * Percentage of net profit to target for withdrawal each month.
 		 * "30.00" = 30%. Null or "0" disables the withdrawal line entirely.
 		 */
-		withdrawalTargetPercent: numeric("withdrawal_target_percent", { precision: 5, scale: 2 }).default("30.00"),
+		withdrawalTargetPercent: numeric("withdrawal_target_percent", {
+			precision: 5,
+			scale: 2,
+		}).default("30.00"),
 
 		// Replay mode: the effective "today" for this account
 		replayCurrentDate: timestamp("replay_current_date", { withTimezone: true }),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("trading_accounts_user_idx").on(table.userId),
@@ -224,9 +294,12 @@ export const sessions = pgTable(
 		userId: uuid("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
-		currentAccountId: uuid("current_account_id").references(() => tradingAccounts.id, {
-			onDelete: "set null",
-		}),
+		currentAccountId: uuid("current_account_id").references(
+			() => tradingAccounts.id,
+			{
+				onDelete: "set null",
+			}
+		),
 		expires: timestamp("expires", { withTimezone: true }).notNull(),
 	},
 	(table) => [
@@ -245,7 +318,9 @@ export const oauthAccounts = pgTable(
 			.references(() => users.id, { onDelete: "cascade" }),
 		type: varchar("type", { length: 255 }).notNull(),
 		provider: varchar("provider", { length: 255 }).notNull(),
-		providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
+		providerAccountId: varchar("provider_account_id", {
+			length: 255,
+		}).notNull(),
 		refreshToken: text("refresh_token"),
 		accessToken: text("access_token"),
 		expiresAt: integer("expires_at"),
@@ -256,7 +331,10 @@ export const oauthAccounts = pgTable(
 	},
 	(table) => [
 		index("oauth_accounts_user_idx").on(table.userId),
-		uniqueIndex("oauth_accounts_provider_idx").on(table.provider, table.providerAccountId),
+		uniqueIndex("oauth_accounts_provider_idx").on(
+			table.provider,
+			table.providerAccountId
+		),
 	]
 )
 
@@ -268,7 +346,9 @@ export const verificationTokens = pgTable(
 		token: varchar("token", { length: 255 }).notNull().unique(),
 		expires: timestamp("expires", { withTimezone: true }).notNull(),
 	},
-	(table) => [uniqueIndex("verification_tokens_idx").on(table.identifier, table.token)]
+	(table) => [
+		uniqueIndex("verification_tokens_idx").on(table.identifier, table.token),
+	]
 )
 
 // Rate Limit Attempts (DB-backed, survives serverless cold starts)
@@ -277,9 +357,16 @@ export const rateLimitAttempts = pgTable(
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		identifier: varchar("identifier", { length: 255 }).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
-	(table) => [index("rate_limit_attempts_identifier_created_idx").on(table.identifier, table.createdAt)]
+	(table) => [
+		index("rate_limit_attempts_identifier_created_idx").on(
+			table.identifier,
+			table.createdAt
+		),
+	]
 )
 
 // Account Assets Table (per-account asset configuration)
@@ -302,8 +389,12 @@ export const accountAssets = pgTable(
 
 		notes: text("notes"),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("account_assets_account_idx").on(table.accountId),
@@ -325,11 +416,16 @@ export const accountTimeframes = pgTable(
 
 		isEnabled: boolean("is_enabled").default(true).notNull(),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("account_timeframes_account_idx").on(table.accountId),
-		uniqueIndex("account_timeframes_unique_idx").on(table.accountId, table.timeframeId),
+		uniqueIndex("account_timeframes_unique_idx").on(
+			table.accountId,
+			table.timeframeId
+		),
 	]
 )
 
@@ -412,10 +508,15 @@ export const strategies = pgTable(
 		// All nullable; populated via Phase 3 backfill (existing targetRMultiple → finalR).
 		stopR: decimal("stop_r", { precision: 8, scale: 2 }),
 		partialR: decimal("partial_r", { precision: 8, scale: 2 }),
-		partialProportion: decimal("partial_proportion", { precision: 4, scale: 3 }),
+		partialProportion: decimal("partial_proportion", {
+			precision: 4,
+			scale: 3,
+		}),
 		finalR: decimal("final_r", { precision: 8, scale: 2 }),
 		protectionR: decimal("protection_r", { precision: 8, scale: 2 }),
-		defaultInstrumentSymbol: varchar("default_instrument_symbol", { length: 20 }),
+		defaultInstrumentSymbol: varchar("default_instrument_symbol", {
+			length: 20,
+		}),
 		maxRiskPercent: decimal("max_risk_percent", { precision: 5, scale: 2 }),
 		screenshotUrl: varchar("screenshot_url", { length: 500 }),
 		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
@@ -495,7 +596,10 @@ export const trades = pgTable(
 		fees: text("fees"), // cents per contract (encrypted)
 		// Total contracts executed (entry + exit + any intra-trade scaling)
 		// Default is positionSize * 2 (1 entry + 1 exit per contract)
-		contractsExecuted: decimal("contracts_executed", { precision: 18, scale: 8 }),
+		contractsExecuted: decimal("contracts_executed", {
+			precision: 18,
+			scale: 8,
+		}),
 
 		// Narrative
 		preTradeThoughts: text("pre_trade_thoughts"),
@@ -521,14 +625,25 @@ export const trades = pgTable(
 		rating: tradeRatingEnum("rating"),
 
 		// Execution Mode (for position scaling support)
-		executionMode: executionModeEnum("execution_mode").default("simple").notNull(),
+		executionMode: executionModeEnum("execution_mode")
+			.default("simple")
+			.notNull(),
 
 		// Aggregated execution data (populated when executionMode = 'scaled')
-		totalEntryQuantity: decimal("total_entry_quantity", { precision: 20, scale: 8 }),
-		totalExitQuantity: decimal("total_exit_quantity", { precision: 20, scale: 8 }),
+		totalEntryQuantity: decimal("total_entry_quantity", {
+			precision: 20,
+			scale: 8,
+		}),
+		totalExitQuantity: decimal("total_exit_quantity", {
+			precision: 20,
+			scale: 8,
+		}),
 		avgEntryPrice: decimal("avg_entry_price", { precision: 20, scale: 8 }),
 		avgExitPrice: decimal("avg_exit_price", { precision: 20, scale: 8 }),
-		remainingQuantity: decimal("remaining_quantity", { precision: 20, scale: 8 }).default("0"),
+		remainingQuantity: decimal("remaining_quantity", {
+			precision: 20,
+			scale: 8,
+		}).default("0"),
 
 		// Deduplication (SHA-256 hash of accountId|asset|direction|entryDate|entryPrice|exitPrice|positionSize)
 		deduplicationHash: varchar("deduplication_hash", { length: 64 }),
@@ -584,7 +699,9 @@ export const tradeExecutions = pgTable(
 
 		// Execution details
 		executionType: executionTypeEnum("execution_type").notNull(),
-		executionDate: timestamp("execution_date", { withTimezone: true }).notNull(),
+		executionDate: timestamp("execution_date", {
+			withTimezone: true,
+		}).notNull(),
 		price: text("price").notNull(), // encrypted
 		quantity: text("quantity").notNull(), // encrypted
 
@@ -750,7 +867,10 @@ export const checklistCompletions = pgTable(
 		index("checklist_completions_checklist_idx").on(table.checklistId),
 		index("checklist_completions_user_idx").on(table.userId),
 		index("checklist_completions_date_idx").on(table.date),
-		uniqueIndex("checklist_completions_unique_idx").on(table.checklistId, table.date),
+		uniqueIndex("checklist_completions_unique_idx").on(
+			table.checklistId,
+			table.date
+		),
 	]
 )
 
@@ -784,7 +904,11 @@ export const dailyAssetSettings = pgTable(
 		index("daily_asset_settings_account_idx").on(table.accountId),
 		index("daily_asset_settings_asset_idx").on(table.assetId),
 		index("daily_asset_settings_date_idx").on(table.date),
-		uniqueIndex("daily_asset_settings_unique_idx").on(table.accountId, table.assetId, table.date),
+		uniqueIndex("daily_asset_settings_unique_idx").on(
+			table.accountId,
+			table.assetId,
+			table.date
+		),
 	]
 )
 
@@ -816,7 +940,10 @@ export const accountAssetSettings = pgTable(
 		index("account_asset_settings_user_idx").on(table.userId),
 		index("account_asset_settings_account_idx").on(table.accountId),
 		index("account_asset_settings_asset_idx").on(table.assetId),
-		uniqueIndex("account_asset_settings_unique_idx").on(table.accountId, table.assetId),
+		uniqueIndex("account_asset_settings_unique_idx").on(
+			table.accountId,
+			table.assetId
+		),
 	]
 )
 
@@ -839,8 +966,12 @@ export const riskManagementProfiles = pgTable(
 		// Decision tree config (JSON stored as text — matches dailyChecklists.items pattern)
 		decisionTree: text("decision_tree").notNull(), // JSON: DecisionTreeConfig
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("risk_profiles_created_by_idx").on(table.createdByUserId),
@@ -884,18 +1015,24 @@ export const accountFeeRates = pgTable(
 		irRateBps: integer("ir_rate_bps").default(2000).notNull(),
 
 		// false for prop accounts — firm handles IR, personal DARF skipped
-		subjectToPersonalIr: boolean("subject_to_personal_ir").default(true).notNull(),
+		subjectToPersonalIr: boolean("subject_to_personal_ir")
+			.default(true)
+			.notNull(),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("account_fee_rates_account_idx").on(table.accountId),
 		uniqueIndex("account_fee_rates_account_asset_idx").on(
 			table.accountId,
-			table.assetSymbol,
+			table.assetSymbol
 		),
-	],
+	]
 )
 
 // ─── Monthly Tax Ledger ───────────────────────────────────────────────────────
@@ -913,18 +1050,35 @@ export const monthlyTaxLedger = pgTable(
 
 		// ── Gross P&L ────────────────────────────────────────────────────────────
 		// Sum of day-trade pnl for all closes in this month, before fees/taxes
-		grossGainCents: bigint("gross_gain_cents", { mode: "number" }).default(0).notNull(),
+		grossGainCents: bigint("gross_gain_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 
 		// ── Fees ─────────────────────────────────────────────────────────────────
-		totalTxCorretagemCents: bigint("total_tx_corretagem_cents", { mode: "number" }).default(0).notNull(),
-		totalTxRegistroCents: bigint("total_tx_registro_cents", { mode: "number" }).default(0).notNull(),
-		totalEmolumentosCents: bigint("total_emolumentos_cents", { mode: "number" }).default(0).notNull(),
+		totalTxCorretagemCents: bigint("total_tx_corretagem_cents", {
+			mode: "number",
+		})
+			.default(0)
+			.notNull(),
+		totalTxRegistroCents: bigint("total_tx_registro_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
+		totalEmolumentosCents: bigint("total_emolumentos_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 		// ISS = totalTxCorretagem × issRatePercent/100. Municipal tax, informational deduction.
-		totalIssCents: bigint("total_iss_cents", { mode: "number" }).default(0).notNull(),
+		totalIssCents: bigint("total_iss_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 		// Sum of all four fee columns above
-		totalFeesCents: bigint("total_fees_cents", { mode: "number" }).default(0).notNull(),
+		totalFeesCents: bigint("total_fees_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 
-		totalContractsExecuted: decimal("total_contracts_executed", { precision: 20, scale: 4 })
+		totalContractsExecuted: decimal("total_contracts_executed", {
+			precision: 20,
+			scale: 4,
+		})
 			.default("0")
 			.notNull(),
 
@@ -934,22 +1088,40 @@ export const monthlyTaxLedger = pgTable(
 
 		// ── Net gain for IR base ──────────────────────────────────────────────────
 		// grossGainCents − totalFeesCents
-		netGainBeforeCarryoverCents: bigint("net_gain_before_carryover_cents", { mode: "number" }).default(0).notNull(),
+		netGainBeforeCarryoverCents: bigint("net_gain_before_carryover_cents", {
+			mode: "number",
+		})
+			.default(0)
+			.notNull(),
 
 		// ── Carryover ────────────────────────────────────────────────────────────
 		// Accumulated loss balance at START of this month (positive = loss owed)
-		carryoverInCents: bigint("carryover_in_cents", { mode: "number" }).default(0).notNull(),
-		carryoverConsumedCents: bigint("carryover_consumed_cents", { mode: "number" }).default(0).notNull(),
+		carryoverInCents: bigint("carryover_in_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
+		carryoverConsumedCents: bigint("carryover_consumed_cents", {
+			mode: "number",
+		})
+			.default(0)
+			.notNull(),
 		// Remaining carryover passed to next month
-		carryoverOutCents: bigint("carryover_out_cents", { mode: "number" }).default(0).notNull(),
+		carryoverOutCents: bigint("carryover_out_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 
 		// ── IR Calculation ────────────────────────────────────────────────────────
 		// max(0, netGainBeforeCarryover − carryoverConsumed)
-		taxableGainCents: bigint("taxable_gain_cents", { mode: "number" }).default(0).notNull(),
+		taxableGainCents: bigint("taxable_gain_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 		// taxableGain × irRateBps / 10000
-		irGrossCents: bigint("ir_gross_cents", { mode: "number" }).default(0).notNull(),
+		irGrossCents: bigint("ir_gross_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 		// max(0, irGross − irrfCents)
-		darfDueCents: bigint("darf_due_cents", { mode: "number" }).default(0).notNull(),
+		darfDueCents: bigint("darf_due_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 
 		// ── DARF status ───────────────────────────────────────────────────────────
 		darfStatus: darfStatusEnum("darf_status").default("pending").notNull(),
@@ -960,11 +1132,17 @@ export const monthlyTaxLedger = pgTable(
 
 		// ── Informational fields ──────────────────────────────────────────────────
 		// Previous month's unpaid DARF balance (display-only, not added to this DARF calc)
-		previousBalanceCents: bigint("previous_balance_cents", { mode: "number" }).default(0).notNull(),
+		previousBalanceCents: bigint("previous_balance_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 		// Operational expenses (VPS, data feeds, etc.) — informational, not tax-deductible
-		gastosGeraisCents: bigint("gastos_gerais_cents", { mode: "number" }).default(0).notNull(),
+		gastosGeraisCents: bigint("gastos_gerais_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 		// grossGain − totalFees − darfDue − gastosGerais
-		netLiquidCents: bigint("net_liquid_cents", { mode: "number" }).default(0).notNull(),
+		netLiquidCents: bigint("net_liquid_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
 
 		// ── Dirty flag ────────────────────────────────────────────────────────────
 		// true = stale, needs recompute before next read
@@ -976,19 +1154,29 @@ export const monthlyTaxLedger = pgTable(
 
 		// Fractal Planning Cascade — Phase 1.
 		// Bidirectional link to monthly_plan (auto-set on plan creation when year+month+account match).
-		monthlyPlanId: uuid("monthly_plan_id").references((): AnyPgColumn => monthlyPlan.id, {
-			onDelete: "set null",
-		}),
+		monthlyPlanId: uuid("monthly_plan_id").references(
+			(): AnyPgColumn => monthlyPlan.id,
+			{
+				onDelete: "set null",
+			}
+		),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("monthly_tax_ledger_account_idx").on(table.accountId),
-		uniqueIndex("monthly_tax_ledger_account_month_idx").on(table.accountId, table.month),
+		uniqueIndex("monthly_tax_ledger_account_month_idx").on(
+			table.accountId,
+			table.month
+		),
 		index("monthly_tax_ledger_darf_status_idx").on(table.darfStatus),
 		index("monthly_tax_ledger_dirty_idx").on(table.isDirty),
-	],
+	]
 )
 
 // ==========================================
@@ -1008,7 +1196,9 @@ export const yearlyPlans = pgTable(
 
 		// Capital settings
 		initialCapitalCents: integer("initial_capital_cents").notNull(),
-		irTaxRate: decimal("ir_tax_rate", { precision: 5, scale: 2 }).notNull().default("30.00"),
+		irTaxRate: decimal("ir_tax_rate", { precision: 5, scale: 2 })
+			.notNull()
+			.default("30.00"),
 		tradingDaysPerWeek: integer("trading_days_per_week").notNull().default(5),
 
 		// Capital ladder rules (JSONB array of LadderRuleR — money-based tiers)
@@ -1019,22 +1209,54 @@ export const yearlyPlans = pgTable(
 		// Fractal Planning Cascade — Phase 3 defaults.
 		// Year-level R targets that the cascade falls back to when no quarterly /
 		// monthly / weekly / daily override is set. Stored as decimal R-multiples.
-		defaultDailyLossR: decimal("default_daily_loss_r", { precision: 5, scale: 2 }),
-		defaultDailyWinR: decimal("default_daily_win_r", { precision: 5, scale: 2 }),
-		defaultWeeklyLossR: decimal("default_weekly_loss_r", { precision: 5, scale: 2 }),
-		defaultWeeklyWinR: decimal("default_weekly_win_r", { precision: 5, scale: 2 }),
-		defaultMonthlyLossR: decimal("default_monthly_loss_r", { precision: 5, scale: 2 }),
-		defaultMonthlyWinR: decimal("default_monthly_win_r", { precision: 5, scale: 2 }),
+		defaultDailyLossR: decimal("default_daily_loss_r", {
+			precision: 5,
+			scale: 2,
+		}),
+		defaultDailyWinR: decimal("default_daily_win_r", {
+			precision: 5,
+			scale: 2,
+		}),
+		defaultWeeklyLossR: decimal("default_weekly_loss_r", {
+			precision: 5,
+			scale: 2,
+		}),
+		defaultWeeklyWinR: decimal("default_weekly_win_r", {
+			precision: 5,
+			scale: 2,
+		}),
+		defaultMonthlyLossR: decimal("default_monthly_loss_r", {
+			precision: 5,
+			scale: 2,
+		}),
+		defaultMonthlyWinR: decimal("default_monthly_win_r", {
+			precision: 5,
+			scale: 2,
+		}),
 
 		// Phase 4b — adaptive behavior defaults (cascade fallback for live circuit breaker)
 		defaultRiskProfileId: uuid("default_risk_profile_id"),
 		defaultMaxConsecutiveLosses: integer("default_max_consecutive_losses"),
-		defaultAllowSecondOpAfterLoss: boolean("default_allow_second_op_after_loss").default(true),
-		defaultReduceRiskAfterLoss: boolean("default_reduce_risk_after_loss").default(false),
-		defaultRiskReductionFactor: decimal("default_risk_reduction_factor", { precision: 5, scale: 2 }),
-		defaultIncreaseRiskAfterWin: boolean("default_increase_risk_after_win").default(false),
-		defaultCapRiskAfterWin: boolean("default_cap_risk_after_win").default(false),
-		defaultProfitReinvestmentPercent: decimal("default_profit_reinvestment_percent", { precision: 5, scale: 2 }),
+		defaultAllowSecondOpAfterLoss: boolean(
+			"default_allow_second_op_after_loss"
+		).default(true),
+		defaultReduceRiskAfterLoss: boolean(
+			"default_reduce_risk_after_loss"
+		).default(false),
+		defaultRiskReductionFactor: decimal("default_risk_reduction_factor", {
+			precision: 5,
+			scale: 2,
+		}),
+		defaultIncreaseRiskAfterWin: boolean(
+			"default_increase_risk_after_win"
+		).default(false),
+		defaultCapRiskAfterWin: boolean("default_cap_risk_after_win").default(
+			false
+		),
+		defaultProfitReinvestmentPercent: decimal(
+			"default_profit_reinvestment_percent",
+			{ precision: 5, scale: 2 }
+		),
 
 		// Aggregate count targets (cascade Σ-aware projections)
 		targetMonthsToYearly: integer("target_months_to_yearly"),
@@ -1042,12 +1264,19 @@ export const yearlyPlans = pgTable(
 
 		notes: text("notes"),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("yearly_plans_account_idx").on(table.accountId),
-		uniqueIndex("yearly_plans_account_year_idx").on(table.accountId, table.year),
+		uniqueIndex("yearly_plans_account_year_idx").on(
+			table.accountId,
+			table.year
+		),
 		foreignKey({
 			name: "yearly_plans_default_risk_profile_fk",
 			columns: [table.defaultRiskProfileId],
@@ -1076,13 +1305,20 @@ export const quarterlyPlan = pgTable(
 		postMortemNotes: text("post_mortem_notes"),
 		activePlaybookIds: jsonb("active_playbook_ids").$type<string[]>(),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("quarterly_plan_year_idx").on(table.yearlyPlanId),
-		uniqueIndex("quarterly_plan_year_quarter_idx").on(table.yearlyPlanId, table.quarter),
-	],
+		uniqueIndex("quarterly_plan_year_quarter_idx").on(
+			table.yearlyPlanId,
+			table.quarter
+		),
+	]
 )
 
 // Monthly Plan — tier snapshot (1R + capital frozen at month start) + R-cap overrides.
@@ -1098,52 +1334,100 @@ export const monthlyPlan = pgTable(
 		month: integer("month").notNull(),
 
 		// Tier snapshot (frozen at month start; refreshed only on drawdown_trigger or manual).
-		snapshotCapitalCents: bigint("snapshot_capital_cents", { mode: "number" }).notNull(),
-		snapshotOneRCents: bigint("snapshot_one_r_cents", { mode: "number" }).notNull(),
+		snapshotCapitalCents: bigint("snapshot_capital_cents", {
+			mode: "number",
+		}).notNull(),
+		snapshotOneRCents: bigint("snapshot_one_r_cents", {
+			mode: "number",
+		}).notNull(),
 		snapshotTierIndex: integer("snapshot_tier_index").notNull(),
-		snapshotComputedAt: timestamp("snapshot_computed_at", { withTimezone: true }).notNull(),
+		snapshotComputedAt: timestamp("snapshot_computed_at", {
+			withTimezone: true,
+		}).notNull(),
 		snapshotReason: snapshotReasonEnum("snapshot_reason").notNull(),
 
 		// Override caps (null → fall back to year defaults via cascade resolver)
-		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
-		overrideWeeklyLossR: decimal("override_weekly_loss_r", { precision: 8, scale: 2 }),
-		overrideMonthlyLossR: decimal("override_monthly_loss_r", { precision: 8, scale: 2 }),
-		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+		overrideDailyLossR: decimal("override_daily_loss_r", {
+			precision: 8,
+			scale: 2,
+		}),
+		overrideWeeklyLossR: decimal("override_weekly_loss_r", {
+			precision: 8,
+			scale: 2,
+		}),
+		overrideMonthlyLossR: decimal("override_monthly_loss_r", {
+			precision: 8,
+			scale: 2,
+		}),
+		overrideDailyTargetR: decimal("override_daily_target_r", {
+			precision: 8,
+			scale: 2,
+		}),
 
-		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<
+			string[]
+		>(),
 
 		// Phase 4b — adaptive behavior overrides (cascade winner over yearly defaults)
 		overrideRiskProfileId: uuid("override_risk_profile_id"),
 		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
-		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+		overrideAllowSecondOpAfterLoss: boolean(
+			"override_allow_second_op_after_loss"
+		),
 		overrideReduceRiskAfterLoss: boolean("override_reduce_risk_after_loss"),
-		overrideRiskReductionFactor: decimal("override_risk_reduction_factor", { precision: 5, scale: 2 }),
+		overrideRiskReductionFactor: decimal("override_risk_reduction_factor", {
+			precision: 5,
+			scale: 2,
+		}),
 		overrideIncreaseRiskAfterWin: boolean("override_increase_risk_after_win"),
 		overrideCapRiskAfterWin: boolean("override_cap_risk_after_win"),
-		overrideProfitReinvestmentPercent: decimal("override_profit_reinvestment_percent", { precision: 5, scale: 2 }),
+		overrideProfitReinvestmentPercent: decimal(
+			"override_profit_reinvestment_percent",
+			{ precision: 5, scale: 2 }
+		),
 
 		// Set by auto-link rule when matching ledger row exists.
-		monthlyTaxLedgerId: uuid("monthly_tax_ledger_id").references(() => monthlyTaxLedger.id, {
-			onDelete: "set null",
-		}),
+		monthlyTaxLedgerId: uuid("monthly_tax_ledger_id").references(
+			() => monthlyTaxLedger.id,
+			{
+				onDelete: "set null",
+			}
+		),
 
 		monthlyGoalCents: bigint("monthly_goal_cents", { mode: "number" }),
 		intentNotes: text("intent_notes"),
 		postMortemNotes: text("post_mortem_notes"),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		// Plan-immutability (Hawks Mode design contribution): write-layer lock that
+		// prevents the trader from editing their plan inside the cadence window once
+		// committed. Break-glass requires recording a reason; default cadence is monthly.
+		lockCadence: planLockCadenceEnum("lock_cadence")
+			.default("monthly")
+			.notNull(),
+		lockedUntil: timestamp("locked_until", { withTimezone: true }),
+		breakGlassReason: text("break_glass_reason"),
+		breakGlassAt: timestamp("break_glass_at", { withTimezone: true }),
+
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("monthly_plan_quarter_idx").on(table.quarterlyPlanId),
-		uniqueIndex("monthly_plan_quarter_month_idx").on(table.quarterlyPlanId, table.month),
+		uniqueIndex("monthly_plan_quarter_month_idx").on(
+			table.quarterlyPlanId,
+			table.month
+		),
 		index("monthly_plan_year_month_idx").on(table.year, table.month),
 		foreignKey({
 			name: "monthly_plan_override_risk_profile_fk",
 			columns: [table.overrideRiskProfileId],
 			foreignColumns: [riskManagementProfiles.id],
 		}).onDelete("set null"),
-	],
+	]
 )
 
 // Weekly Plan — R-based target/actual + override caps (subset of monthly's).
@@ -1162,26 +1446,47 @@ export const weeklyPlan = pgTable(
 		actualR: decimal("actual_r", { precision: 8, scale: 2 }),
 		actualSyncedAt: timestamp("actual_synced_at", { withTimezone: true }),
 
-		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
-		overrideWeeklyLossR: decimal("override_weekly_loss_r", { precision: 8, scale: 2 }),
-		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+		overrideDailyLossR: decimal("override_daily_loss_r", {
+			precision: 8,
+			scale: 2,
+		}),
+		overrideWeeklyLossR: decimal("override_weekly_loss_r", {
+			precision: 8,
+			scale: 2,
+		}),
+		overrideDailyTargetR: decimal("override_daily_target_r", {
+			precision: 8,
+			scale: 2,
+		}),
 
-		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<
+			string[]
+		>(),
 
 		// Phase 4b — within-session behavior overrides (subset of monthly)
 		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
-		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+		overrideAllowSecondOpAfterLoss: boolean(
+			"override_allow_second_op_after_loss"
+		),
 
 		intentNotes: text("intent_notes"),
 		postMortemNotes: text("post_mortem_notes"),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("weekly_plan_month_idx").on(table.monthlyPlanId),
-		uniqueIndex("weekly_plan_month_week_idx").on(table.monthlyPlanId, table.isoWeek, table.isoYear),
-	],
+		uniqueIndex("weekly_plan_month_week_idx").on(
+			table.monthlyPlanId,
+			table.isoWeek,
+			table.isoYear
+		),
+	]
 )
 
 // Daily Plan — pre-market intent + post-market reflection. Lazy-seeded.
@@ -1200,14 +1505,24 @@ export const dailyPlan = pgTable(
 		preMarketNotes: text("pre_market_notes"),
 		mood: planMoodEnum("mood"),
 
-		overrideDailyLossR: decimal("override_daily_loss_r", { precision: 8, scale: 2 }),
-		overrideDailyTargetR: decimal("override_daily_target_r", { precision: 8, scale: 2 }),
+		overrideDailyLossR: decimal("override_daily_loss_r", {
+			precision: 8,
+			scale: 2,
+		}),
+		overrideDailyTargetR: decimal("override_daily_target_r", {
+			precision: 8,
+			scale: 2,
+		}),
 
-		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<string[]>(),
+		overrideActivePlaybookIds: jsonb("override_active_playbook_ids").$type<
+			string[]
+		>(),
 
 		// Phase 4b — within-session behavior overrides
 		overrideMaxConsecutiveLosses: integer("override_max_consecutive_losses"),
-		overrideAllowSecondOpAfterLoss: boolean("override_allow_second_op_after_loss"),
+		overrideAllowSecondOpAfterLoss: boolean(
+			"override_allow_second_op_after_loss"
+		),
 
 		// Post-market actuals (synced from trades)
 		actualR: decimal("actual_r", { precision: 8, scale: 2 }),
@@ -1215,13 +1530,17 @@ export const dailyPlan = pgTable(
 		actualSyncedAt: timestamp("actual_synced_at", { withTimezone: true }),
 		postMarketNotes: text("post_market_notes"),
 
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("daily_plan_week_idx").on(table.weeklyPlanId),
 		uniqueIndex("daily_plan_week_date_idx").on(table.weeklyPlanId, table.date),
-	],
+	]
 )
 
 // Tier Change Log — audit trail of every 1R/tier transition.
@@ -1247,7 +1566,7 @@ export const tierChangeLog = pgTable(
 		index("tier_change_log_account_idx").on(table.accountId),
 		index("tier_change_log_month_idx").on(table.monthlyPlanId),
 		index("tier_change_log_triggered_at_idx").on(table.triggeredAt),
-	],
+	]
 )
 
 // ==========================================
@@ -1266,12 +1585,19 @@ export const tradingConditions = pgTable(
 		description: text("description"),
 		category: conditionCategoryEnum("category").notNull(),
 		isActive: boolean("is_active").default(true).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("trading_conditions_user_idx").on(table.userId),
-		uniqueIndex("trading_conditions_user_name_idx").on(table.userId, table.name),
+		uniqueIndex("trading_conditions_user_name_idx").on(
+			table.userId,
+			table.name
+		),
 	]
 )
 
@@ -1288,12 +1614,17 @@ export const strategyConditions = pgTable(
 			.references(() => tradingConditions.id, { onDelete: "cascade" }),
 		tier: conditionTierEnum("tier").notNull(),
 		sortOrder: integer("sort_order").default(0).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("strategy_conditions_strategy_idx").on(table.strategyId),
 		index("strategy_conditions_condition_idx").on(table.conditionId),
-		uniqueIndex("strategy_conditions_unique_idx").on(table.strategyId, table.conditionId),
+		uniqueIndex("strategy_conditions_unique_idx").on(
+			table.strategyId,
+			table.conditionId
+		),
 	]
 )
 
@@ -1308,8 +1639,12 @@ export const strategyScenarios = pgTable(
 		name: varchar("name", { length: 200 }).notNull(),
 		description: text("description"),
 		sortOrder: integer("sort_order").default(0).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [index("strategy_scenarios_strategy_idx").on(table.strategyId)]
 )
@@ -1325,7 +1660,9 @@ export const scenarioImages = pgTable(
 		url: varchar("url", { length: 500 }).notNull(),
 		s3Key: varchar("s3_key", { length: 500 }).notNull(),
 		sortOrder: integer("sort_order").default(0).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [index("scenario_images_scenario_idx").on(table.scenarioId)]
 )
@@ -1358,7 +1695,9 @@ export const notaImports = pgTable(
 		unmatchedFills: integer("unmatched_fills").notNull().default(0),
 		tradesEnriched: integer("trades_enriched").notNull().default(0),
 		status: varchar("status", { length: 20 }).notNull().default("completed"),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("nota_imports_account_idx").on(table.accountId),
@@ -1370,7 +1709,10 @@ export const notaImports = pgTable(
 // User Settings Table (structured settings for trading account)
 export const userSettings = pgTable("user_settings", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	userId: varchar("user_id", { length: 50 }).notNull().unique().default("default"),
+	userId: varchar("user_id", { length: 50 })
+		.notNull()
+		.unique()
+		.default("default"),
 
 	// Prop Trading Settings
 	isPropAccount: boolean("is_prop_account").default(false).notNull(),
@@ -1390,7 +1732,9 @@ export const userSettings = pgTable("user_settings", {
 		.default("BRL")
 		.notNull(),
 	showTaxEstimates: boolean("show_tax_estimates").default(true).notNull(),
-	showPropCalculations: boolean("show_prop_calculations").default(true).notNull(),
+	showPropCalculations: boolean("show_prop_calculations")
+		.default(true)
+		.notNull(),
 
 	// Multi-Account Preferences
 	showAllAccounts: boolean("show_all_accounts").default(false).notNull(),
@@ -1432,13 +1776,17 @@ export const bugReports = pgTable(
 		status: bugReportStatusEnum("status").default("open").notNull(),
 
 		// Lifecycle timestamps
-		reportedAt: timestamp("reported_at", { withTimezone: true }).defaultNow().notNull(),
+		reportedAt: timestamp("reported_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		acceptedAt: timestamp("accepted_at", { withTimezone: true }),
 		rejectedAt: timestamp("rejected_at", { withTimezone: true }),
 		closedAt: timestamp("closed_at", { withTimezone: true }),
 
 		// Admin handling
-		handledBy: uuid("handled_by").references(() => users.id, { onDelete: "set null" }),
+		handledBy: uuid("handled_by").references(() => users.id, {
+			onDelete: "set null",
+		}),
 		rejectReason: text("reject_reason"),
 		adminNotes: text("admin_notes"),
 	},
@@ -1448,19 +1796,18 @@ export const bugReports = pgTable(
 	]
 )
 
-export const bugReportImages = pgTable(
-	"bug_report_images",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		bugReportId: uuid("bug_report_id")
-			.notNull()
-			.references(() => bugReports.id, { onDelete: "cascade" }),
-		imageUrl: varchar("image_url", { length: 500 }).notNull(),
-		s3Key: varchar("s3_key", { length: 500 }).notNull(),
-		isScreenshot: boolean("is_screenshot").default(false).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-	}
-)
+export const bugReportImages = pgTable("bug_report_images", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	bugReportId: uuid("bug_report_id")
+		.notNull()
+		.references(() => bugReports.id, { onDelete: "cascade" }),
+	imageUrl: varchar("image_url", { length: 500 }).notNull(),
+	s3Key: varchar("s3_key", { length: 500 }).notNull(),
+	isScreenshot: boolean("is_screenshot").default(false).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.defaultNow()
+		.notNull(),
+})
 
 // ==========================================
 // ANALYTICS FILTER PRESETS (Phase 19)
@@ -1542,28 +1889,25 @@ export const priceCandles = pgTable(
 	]
 )
 
-export const indicatorGroups = pgTable(
-	"indicator_groups",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
+export const indicatorGroups = pgTable("indicator_groups", {
+	id: uuid("id").primaryKey().defaultRandom(),
 
-		// Unique group key (e.g., "trava", "vwap", "percent")
-		key: varchar("key", { length: 50 }).notNull().unique(),
+	// Unique group key (e.g., "trava", "vwap", "percent")
+	key: varchar("key", { length: 50 }).notNull().unique(),
 
-		// Human-readable name (e.g., "Travas", "VWAPs")
-		displayName: varchar("display_name", { length: 100 }).notNull(),
+	// Human-readable name (e.g., "Travas", "VWAPs")
+	displayName: varchar("display_name", { length: 100 }).notNull(),
 
-		// Optional description of the indicator group
-		description: text("description"),
+	// Optional description of the indicator group
+	description: text("description"),
 
-		sortOrder: integer("sort_order").notNull().default(0),
-		isActive: boolean("is_active").default(true).notNull(),
+	sortOrder: integer("sort_order").notNull().default(0),
+	isActive: boolean("is_active").default(true).notNull(),
 
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-	}
-)
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.defaultNow()
+		.notNull(),
+})
 
 export const indicatorDefinitions = pgTable(
 	"indicator_definitions",
@@ -1595,9 +1939,7 @@ export const indicatorDefinitions = pgTable(
 			.defaultNow()
 			.notNull(),
 	},
-	(table) => [
-		index("indicator_definitions_group_idx").on(table.groupId),
-	]
+	(table) => [index("indicator_definitions_group_idx").on(table.groupId)]
 )
 
 export const priceDataVersions = pgTable(
@@ -1646,7 +1988,9 @@ export const accountMonthlyAggregate = pgTable(
 		month: smallint("month").notNull(),
 		grossCents: bigint("gross_cents", { mode: "number" }).notNull().default(0),
 		netCents: bigint("net_cents", { mode: "number" }).notNull().default(0),
-		points: numeric("points", { precision: 12, scale: 2 }).notNull().default("0"),
+		points: numeric("points", { precision: 12, scale: 2 })
+			.notNull()
+			.default("0"),
 		tradingDays: smallint("trading_days").notNull().default(0),
 		gainDays: smallint("gain_days").notNull().default(0),
 		lossDays: smallint("loss_days").notNull().default(0),
@@ -1668,7 +2012,9 @@ export const accountWeeklyAggregate = pgTable(
 		isoWeek: smallint("iso_week").notNull(),
 		grossCents: bigint("gross_cents", { mode: "number" }).notNull().default(0),
 		netCents: bigint("net_cents", { mode: "number" }).notNull().default(0),
-		points: numeric("points", { precision: 12, scale: 2 }).notNull().default("0"),
+		points: numeric("points", { precision: 12, scale: 2 })
+			.notNull()
+			.default("0"),
 		tradingDays: smallint("trading_days").notNull().default(0),
 		gainDays: smallint("gain_days").notNull().default(0),
 		lossDays: smallint("loss_days").notNull().default(0),
@@ -1695,13 +2041,173 @@ export const accountCapitalEvents = pgTable(
 		// Always positive; direction implied by eventType.
 		// Plain BIGINT (no encryption) — consistent with aggregate tables.
 		amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
-		eventDate: date("event_date").notNull(),  // actual transfer date, not log date
+		eventDate: date("event_date").notNull(), // actual transfer date, not log date
 		notes: text("notes"),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("ace_account_date_idx").on(table.accountId, table.eventDate),
+	]
+)
+
+// ==========================================
+// HAWKS MODE (mode-scoped sidecar tables)
+// ==========================================
+
+// One row per (activate / deactivate) cycle per account. Partial unique index
+// enforces "at most one active mode per account" at the DB layer — the server
+// action catches unique_violation on double-activate races and returns idempotent
+// success.
+export const accountModes = pgTable(
+	"account_modes",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		mode: accountModeEnum("mode").notNull(),
+		activatedAt: timestamp("activated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("account_modes_account_idx").on(table.accountId),
+		index("account_modes_user_idx").on(table.userId),
+		uniqueIndex("account_modes_active_per_account_idx")
+			.on(table.accountId)
+			.where(sql`deactivated_at IS NULL`),
+	]
+)
+
+// 24 seeded rows (HWK_S01..HWK_S24). screen_confirmation JSONB records which of
+// Renko-60 / MACD / EMA stack / VWAP / ajuste D-1 are required for the scenario
+// to "fire". scenarioType separates setup-named scenarios from mistake-named ones.
+export const hawksScenarios = pgTable(
+	"hawks_scenarios",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		code: varchar("code", { length: 16 }).notNull().unique(),
+		nameEn: text("name_en").notNull(),
+		namePt: text("name_pt").notNull(),
+		descriptionPt: text("description_pt").notNull(),
+		direction: hawksScenarioDirectionEnum("direction").notNull(),
+		screenConfirmation: jsonb("screen_confirmation")
+			.$type<{
+				renko60: boolean
+				macd: boolean
+				emaStack: boolean
+				vwap: boolean
+				ajuste: boolean
+			}>()
+			.notNull(),
+		scenarioType: hawksScenarioTypeEnum("scenario_type").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [index("hawks_scenarios_type_idx").on(table.scenarioType)]
+)
+
+// Sidecar on trades. tradeId PK enforces 1:1 with parent. scenarioId nullable
+// because v0 ships single-scenario tagging (Open Question 2 deferred). The detector
+// pipeline derives accountId + tradingDay from the parent trade row.
+export const tradeHawksMetadata = pgTable(
+	"trade_hawks_metadata",
+	{
+		tradeId: uuid("trade_id")
+			.primaryKey()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		scenarioId: uuid("scenario_id").references(() => hawksScenarios.id, {
+			onDelete: "set null",
+		}),
+		biasAtEntry: hawksBiasEnum("bias_at_entry").notNull(),
+		vwapRespected: boolean("vwap_respected").notNull(),
+		ajusteRespected: boolean("ajuste_respected").notNull(),
+		tripleScreenConfirmed: boolean("triple_screen_confirmed").notNull(),
+		dailyTradeOrdinal: smallint("daily_trade_ordinal").notNull(),
+		enteredAt: timestamp("entered_at", { withTimezone: true }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("thm_scenario_idx").on(table.scenarioId),
+		index("thm_entered_at_idx").on(table.enteredAt),
+	]
+)
+
+// One row per (accountId, tradingDay). expiresAt is set by activation logic to
+// BRT 17:30 of the same trading day; coaching reads use
+// `expiresAt IS NULL OR expiresAt > now()` to detect staleness without query-time
+// string math.
+export const dailyHawksBias = pgTable(
+	"daily_hawks_bias",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		tradingDay: date("trading_day").notNull(),
+		bias: hawksBiasEnum("bias").notNull(),
+		renkoCloseAbove60min: boolean("renko_close_above_60min").notNull(),
+		macdSlopeUp: boolean("macd_slope_up").notNull(),
+		emaStackBullish: boolean("ema_stack_bullish").notNull(),
+		vwapAbove: boolean("vwap_above").notNull(),
+		ajusteRespected: boolean("ajuste_respected").notNull(),
+		confirmedAt: timestamp("confirmed_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		expiresAt: timestamp("expires_at", { withTimezone: true }),
+		notesPt: text("notes_pt"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("dhb_account_day_idx").on(table.accountId, table.tradingDay),
+		index("dhb_expires_at_idx").on(table.expiresAt),
+	]
+)
+
+// Append-only. Every stop edit on a Hawks-mode trade writes one row. Method-3
+// violation flag = true when newStopR moves against position vs the previous
+// row for the same trade.
+export const tradeStopAuditEvents = pgTable(
+	"trade_stop_audit_events",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		tradeId: uuid("trade_id")
+			.notNull()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		stopPriceR: numeric("stop_price_r", { precision: 8, scale: 2 }).notNull(),
+		directionVsPosition: hawksStopDirectionEnum(
+			"direction_vs_position"
+		).notNull(),
+		methodViolation: boolean("method_violation").default(false).notNull(),
+		recordedAt: timestamp("recorded_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("tsae_trade_recorded_at_idx").on(table.tradeId, table.recordedAt),
 	]
 )
 
@@ -1723,23 +2229,26 @@ export const usersRelations = relations(users, ({ many }) => ({
 }))
 
 // Trading Account Relations
-export const tradingAccountsRelations = relations(tradingAccounts, ({ one, many }) => ({
-	user: one(users, {
-		fields: [tradingAccounts.userId],
-		references: [users.id],
-	}),
-	trades: many(trades),
-	strategies: many(strategies),
-	tags: many(tags),
-	accountAssets: many(accountAssets),
-	accountTimeframes: many(accountTimeframes),
-	dailyChecklists: many(dailyChecklists),
-	dailyAssetSettings: many(dailyAssetSettings),
-	accountAssetSettings: many(accountAssetSettings),
-	notaImports: many(notaImports),
-	accountFeeRates: many(accountFeeRates),
-	monthlyTaxLedger: many(monthlyTaxLedger),
-}))
+export const tradingAccountsRelations = relations(
+	tradingAccounts,
+	({ one, many }) => ({
+		user: one(users, {
+			fields: [tradingAccounts.userId],
+			references: [users.id],
+		}),
+		trades: many(trades),
+		strategies: many(strategies),
+		tags: many(tags),
+		accountAssets: many(accountAssets),
+		accountTimeframes: many(accountTimeframes),
+		dailyChecklists: many(dailyChecklists),
+		dailyAssetSettings: many(dailyAssetSettings),
+		accountAssetSettings: many(accountAssetSettings),
+		notaImports: many(notaImports),
+		accountFeeRates: many(accountFeeRates),
+		monthlyTaxLedger: many(monthlyTaxLedger),
+	})
+)
 
 // Session Relations
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -1774,16 +2283,19 @@ export const accountAssetsRelations = relations(accountAssets, ({ one }) => ({
 }))
 
 // Account Timeframes Relations
-export const accountTimeframesRelations = relations(accountTimeframes, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [accountTimeframes.accountId],
-		references: [tradingAccounts.id],
-	}),
-	timeframe: one(timeframes, {
-		fields: [accountTimeframes.timeframeId],
-		references: [timeframes.id],
-	}),
-}))
+export const accountTimeframesRelations = relations(
+	accountTimeframes,
+	({ one }) => ({
+		account: one(tradingAccounts, {
+			fields: [accountTimeframes.accountId],
+			references: [tradingAccounts.id],
+		}),
+		timeframe: one(timeframes, {
+			fields: [accountTimeframes.timeframeId],
+			references: [timeframes.id],
+		}),
+	})
+)
 
 // Trade Relations
 export const tradesRelations = relations(trades, ({ one, many }) => ({
@@ -1803,12 +2315,15 @@ export const tradesRelations = relations(trades, ({ one, many }) => ({
 	executions: many(tradeExecutions),
 }))
 
-export const tradeExecutionsRelations = relations(tradeExecutions, ({ one }) => ({
-	trade: one(trades, {
-		fields: [tradeExecutions.tradeId],
-		references: [trades.id],
-	}),
-}))
+export const tradeExecutionsRelations = relations(
+	tradeExecutions,
+	({ one }) => ({
+		trade: one(trades, {
+			fields: [tradeExecutions.tradeId],
+			references: [trades.id],
+		}),
+	})
+)
 
 export const timeframesRelations = relations(timeframes, ({ many }) => ({
 	trades: many(trades),
@@ -1871,50 +2386,65 @@ export const assetsRelations = relations(assets, ({ one, many }) => ({
 }))
 
 // Command Center Relations
-export const dailyChecklistsRelations = relations(dailyChecklists, ({ one, many }) => ({
-	account: one(tradingAccounts, {
-		fields: [dailyChecklists.accountId],
-		references: [tradingAccounts.id],
-	}),
-	completions: many(checklistCompletions),
-}))
+export const dailyChecklistsRelations = relations(
+	dailyChecklists,
+	({ one, many }) => ({
+		account: one(tradingAccounts, {
+			fields: [dailyChecklists.accountId],
+			references: [tradingAccounts.id],
+		}),
+		completions: many(checklistCompletions),
+	})
+)
 
-export const checklistCompletionsRelations = relations(checklistCompletions, ({ one }) => ({
-	checklist: one(dailyChecklists, {
-		fields: [checklistCompletions.checklistId],
-		references: [dailyChecklists.id],
-	}),
-}))
+export const checklistCompletionsRelations = relations(
+	checklistCompletions,
+	({ one }) => ({
+		checklist: one(dailyChecklists, {
+			fields: [checklistCompletions.checklistId],
+			references: [dailyChecklists.id],
+		}),
+	})
+)
 
-export const accountAssetSettingsRelations = relations(accountAssetSettings, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [accountAssetSettings.accountId],
-		references: [tradingAccounts.id],
-	}),
-	asset: one(assets, {
-		fields: [accountAssetSettings.assetId],
-		references: [assets.id],
-	}),
-}))
+export const accountAssetSettingsRelations = relations(
+	accountAssetSettings,
+	({ one }) => ({
+		account: one(tradingAccounts, {
+			fields: [accountAssetSettings.accountId],
+			references: [tradingAccounts.id],
+		}),
+		asset: one(assets, {
+			fields: [accountAssetSettings.assetId],
+			references: [assets.id],
+		}),
+	})
+)
 
-export const dailyAssetSettingsRelations = relations(dailyAssetSettings, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [dailyAssetSettings.accountId],
-		references: [tradingAccounts.id],
-	}),
-	asset: one(assets, {
-		fields: [dailyAssetSettings.assetId],
-		references: [assets.id],
-	}),
-}))
+export const dailyAssetSettingsRelations = relations(
+	dailyAssetSettings,
+	({ one }) => ({
+		account: one(tradingAccounts, {
+			fields: [dailyAssetSettings.accountId],
+			references: [tradingAccounts.id],
+		}),
+		asset: one(assets, {
+			fields: [dailyAssetSettings.assetId],
+			references: [assets.id],
+		}),
+	})
+)
 
 // Risk Management Profiles Relations
-export const riskManagementProfilesRelations = relations(riskManagementProfiles, ({ one }) => ({
-	createdBy: one(users, {
-		fields: [riskManagementProfiles.createdByUserId],
-		references: [users.id],
-	}),
-}))
+export const riskManagementProfilesRelations = relations(
+	riskManagementProfiles,
+	({ one }) => ({
+		createdBy: one(users, {
+			fields: [riskManagementProfiles.createdByUserId],
+			references: [users.id],
+		}),
+	})
+)
 
 // Nota Imports Relations
 export const notaImportsRelations = relations(notaImports, ({ one }) => ({
@@ -1925,20 +2455,26 @@ export const notaImportsRelations = relations(notaImports, ({ one }) => ({
 }))
 
 // Account Fee Rates Relations
-export const accountFeeRatesRelations = relations(accountFeeRates, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [accountFeeRates.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
+export const accountFeeRatesRelations = relations(
+	accountFeeRates,
+	({ one }) => ({
+		account: one(tradingAccounts, {
+			fields: [accountFeeRates.accountId],
+			references: [tradingAccounts.id],
+		}),
+	})
+)
 
 // Monthly Tax Ledger Relations
-export const monthlyTaxLedgerRelations = relations(monthlyTaxLedger, ({ one }) => ({
-	account: one(tradingAccounts, {
-		fields: [monthlyTaxLedger.accountId],
-		references: [tradingAccounts.id],
-	}),
-}))
+export const monthlyTaxLedgerRelations = relations(
+	monthlyTaxLedger,
+	({ one }) => ({
+		account: one(tradingAccounts, {
+			fields: [monthlyTaxLedger.accountId],
+			references: [tradingAccounts.id],
+		}),
+	})
+)
 
 // Yearly Plan Relations
 export const yearlyPlansRelations = relations(yearlyPlans, ({ one, many }) => ({
@@ -1950,32 +2486,41 @@ export const yearlyPlansRelations = relations(yearlyPlans, ({ one, many }) => ({
 }))
 
 // Playbook Enhancement Relations
-export const tradingConditionsRelations = relations(tradingConditions, ({ one, many }) => ({
-	user: one(users, {
-		fields: [tradingConditions.userId],
-		references: [users.id],
-	}),
-	strategyConditions: many(strategyConditions),
-}))
+export const tradingConditionsRelations = relations(
+	tradingConditions,
+	({ one, many }) => ({
+		user: one(users, {
+			fields: [tradingConditions.userId],
+			references: [users.id],
+		}),
+		strategyConditions: many(strategyConditions),
+	})
+)
 
-export const strategyConditionsRelations = relations(strategyConditions, ({ one }) => ({
-	strategy: one(strategies, {
-		fields: [strategyConditions.strategyId],
-		references: [strategies.id],
-	}),
-	condition: one(tradingConditions, {
-		fields: [strategyConditions.conditionId],
-		references: [tradingConditions.id],
-	}),
-}))
+export const strategyConditionsRelations = relations(
+	strategyConditions,
+	({ one }) => ({
+		strategy: one(strategies, {
+			fields: [strategyConditions.strategyId],
+			references: [strategies.id],
+		}),
+		condition: one(tradingConditions, {
+			fields: [strategyConditions.conditionId],
+			references: [tradingConditions.id],
+		}),
+	})
+)
 
-export const strategyScenariosRelations = relations(strategyScenarios, ({ one, many }) => ({
-	strategy: one(strategies, {
-		fields: [strategyScenarios.strategyId],
-		references: [strategies.id],
-	}),
-	images: many(scenarioImages),
-}))
+export const strategyScenariosRelations = relations(
+	strategyScenarios,
+	({ one, many }) => ({
+		strategy: one(strategies, {
+			fields: [strategyScenarios.strategyId],
+			references: [strategies.id],
+		}),
+		images: many(scenarioImages),
+	})
+)
 
 export const scenarioImagesRelations = relations(scenarioImages, ({ one }) => ({
 	scenario: one(strategyScenarios, {
@@ -1997,12 +2542,15 @@ export const bugReportsRelations = relations(bugReports, ({ one, many }) => ({
 	images: many(bugReportImages),
 }))
 
-export const bugReportImagesRelations = relations(bugReportImages, ({ one }) => ({
-	bugReport: one(bugReports, {
-		fields: [bugReportImages.bugReportId],
-		references: [bugReports.id],
-	}),
-}))
+export const bugReportImagesRelations = relations(
+	bugReportImages,
+	({ one }) => ({
+		bugReport: one(bugReports, {
+			fields: [bugReportImages.bugReportId],
+			references: [bugReports.id],
+		}),
+	})
+)
 
 // Filter Preset Relations
 export const filterPresetsRelations = relations(filterPresets, ({ one }) => ({
@@ -2028,40 +2576,52 @@ export const priceCandlesRelations = relations(priceCandles, ({ one }) => ({
 	}),
 }))
 
-export const priceDataVersionsRelations = relations(priceDataVersions, ({ one }) => ({
-	asset: one(assets, {
-		fields: [priceDataVersions.assetId],
-		references: [assets.id],
-	}),
-	timeframe: one(timeframes, {
-		fields: [priceDataVersions.timeframeId],
-		references: [timeframes.id],
-	}),
-}))
+export const priceDataVersionsRelations = relations(
+	priceDataVersions,
+	({ one }) => ({
+		asset: one(assets, {
+			fields: [priceDataVersions.assetId],
+			references: [assets.id],
+		}),
+		timeframe: one(timeframes, {
+			fields: [priceDataVersions.timeframeId],
+			references: [timeframes.id],
+		}),
+	})
+)
 
 // Indicator Group Relations
-export const indicatorGroupsRelations = relations(indicatorGroups, ({ many }) => ({
-	indicators: many(indicatorDefinitions),
-}))
+export const indicatorGroupsRelations = relations(
+	indicatorGroups,
+	({ many }) => ({
+		indicators: many(indicatorDefinitions),
+	})
+)
 
-export const indicatorDefinitionsRelations = relations(indicatorDefinitions, ({ one }) => ({
-	group: one(indicatorGroups, {
-		fields: [indicatorDefinitions.groupId],
-		references: [indicatorGroups.id],
-	}),
-}))
+export const indicatorDefinitionsRelations = relations(
+	indicatorDefinitions,
+	({ one }) => ({
+		group: one(indicatorGroups, {
+			fields: [indicatorDefinitions.groupId],
+			references: [indicatorGroups.id],
+		}),
+	})
+)
 
 // ==========================================
 // FRACTAL PLANNING CASCADE — Phase 1 relations
 // ==========================================
 
-export const quarterlyPlanRelations = relations(quarterlyPlan, ({ one, many }) => ({
-	yearlyPlan: one(yearlyPlans, {
-		fields: [quarterlyPlan.yearlyPlanId],
-		references: [yearlyPlans.id],
-	}),
-	months: many(monthlyPlan),
-}))
+export const quarterlyPlanRelations = relations(
+	quarterlyPlan,
+	({ one, many }) => ({
+		yearlyPlan: one(yearlyPlans, {
+			fields: [quarterlyPlan.yearlyPlanId],
+			references: [yearlyPlans.id],
+		}),
+		months: many(monthlyPlan),
+	})
+)
 
 export const monthlyPlanRelations = relations(monthlyPlan, ({ one, many }) => ({
 	quarterlyPlan: one(quarterlyPlan, {
@@ -2178,8 +2738,10 @@ export type NewAccountAssetSetting = typeof accountAssetSettings.$inferInsert
 export type YearlyPlan = typeof yearlyPlans.$inferSelect
 export type NewYearlyPlan = typeof yearlyPlans.$inferInsert
 
-export type RiskManagementProfileRow = typeof riskManagementProfiles.$inferSelect
-export type NewRiskManagementProfileRow = typeof riskManagementProfiles.$inferInsert
+export type RiskManagementProfileRow =
+	typeof riskManagementProfiles.$inferSelect
+export type NewRiskManagementProfileRow =
+	typeof riskManagementProfiles.$inferInsert
 
 export type NotaImport = typeof notaImports.$inferSelect
 export type NewNotaImport = typeof notaImports.$inferInsert
@@ -2241,3 +2803,22 @@ export type NewDailyPlan = typeof dailyPlan.$inferInsert
 
 export type TierChangeLog = typeof tierChangeLog.$inferSelect
 export type NewTierChangeLog = typeof tierChangeLog.$inferInsert
+
+// ==========================================
+// HAWKS MODE — inferred types
+// ==========================================
+
+export type AccountMode = typeof accountModes.$inferSelect
+export type NewAccountMode = typeof accountModes.$inferInsert
+
+export type HawksScenario = typeof hawksScenarios.$inferSelect
+export type NewHawksScenario = typeof hawksScenarios.$inferInsert
+
+export type TradeHawksMetadata = typeof tradeHawksMetadata.$inferSelect
+export type NewTradeHawksMetadata = typeof tradeHawksMetadata.$inferInsert
+
+export type DailyHawksBias = typeof dailyHawksBias.$inferSelect
+export type NewDailyHawksBias = typeof dailyHawksBias.$inferInsert
+
+export type TradeStopAuditEvent = typeof tradeStopAuditEvents.$inferSelect
+export type NewTradeStopAuditEvent = typeof tradeStopAuditEvents.$inferInsert
