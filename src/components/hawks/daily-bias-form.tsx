@@ -4,6 +4,7 @@ import { useCallback, useState, useTransition, type ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Loader2, Compass } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,8 @@ interface Screens {
 interface DailyBiasFormProps {
 	tradingDay: string
 	initialBias: DailyHawksBias | null
+	className?: string
+	onSuccess?: () => void
 }
 
 const biasFromRow = (row: DailyHawksBias | null): Bias =>
@@ -41,7 +44,12 @@ const screensFromRow = (row: DailyHawksBias | null): Screens => ({
 	ajuste: row?.ajusteRespected ?? false,
 })
 
-const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
+const DailyBiasForm = ({
+	tradingDay,
+	initialBias,
+	className,
+	onSuccess,
+}: DailyBiasFormProps) => {
 	const t = useTranslations("hawks.bias")
 	const tActions = useTranslations("hawks.actions")
 	const tCommon = useTranslations("common")
@@ -76,6 +84,7 @@ const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
 			})
 			if (result.status === "success") {
 				showToast("success", result.message || tActions("biasConfirmed"))
+				onSuccess?.()
 				router.refresh()
 				return
 			}
@@ -109,7 +118,10 @@ const DailyBiasForm = ({ tradingDay, initialBias }: DailyBiasFormProps) => {
 		<section
 			id="hawks-daily-bias"
 			aria-labelledby="hawks-daily-bias-title"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			className={cn(
+				"border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border",
+				className
+			)}
 		>
 			<header className="gap-s-200 flex flex-col sm:flex-row sm:items-start sm:justify-between">
 				<div className="gap-s-300 flex items-start">

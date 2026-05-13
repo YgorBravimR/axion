@@ -1,7 +1,12 @@
 import { cache } from "react"
-import { and, eq, isNull } from "drizzle-orm"
+import { and, eq, isNull, max, gte, lt } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { accountModes, dailyHawksBias } from "@/db/schema"
+import {
+	accountModes,
+	dailyHawksBias,
+	trades,
+	tradeHawksMetadata,
+} from "@/db/schema"
 import type { AccountMode, DailyHawksBias } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
 
@@ -60,5 +65,38 @@ const getDailyHawksBias = cache(
 	}
 )
 
-export { getActiveAccountModeForUser, getActiveHawksAccount, getDailyHawksBias }
+const getHawksDailyOrdinal = cache(
+	async (tradingDay: string): Promise<number> => {
+		const hawks = await getActiveHawksAccount()
+		if (!hawks) {
+			return 0
+		}
+
+		const dayStart = new Date(tradingDay + "T00:00:00")
+		const dayEnd = new Date(dayStart)
+		dayEnd.setDate(dayEnd.getDate() + 1)
+
+		const result = await db
+			.select({ maxOrdinal: max(tradeHawksMetadata.dailyTradeOrdinal) })
+			.from(tradeHawksMetadata)
+			.innerJoin(trades, eq(trades.id, tradeHawksMetadata.tradeId))
+			.where(
+				and(
+					eq(trades.accountId, hawks.accountId),
+					gte(trades.entryDate, dayStart),
+					lt(trades.entryDate, dayEnd),
+					eq(trades.isArchived, false)
+				)
+			)
+
+		return Number(result[0]?.maxOrdinal ?? 0)
+	}
+)
+
+export {
+	getActiveAccountModeForUser,
+	getActiveHawksAccount,
+	getDailyHawksBias,
+	getHawksDailyOrdinal,
+}
 export type { ActiveHawksAccount }

@@ -31,7 +31,7 @@ const PLAN_YEAR = 2026
  */
 
 test.describe("Journey Stage 4b — Multi-month history seeder", () => {
-	test.use(loadStageState(4))
+	test.use(loadStageState(2))
 
 	test("Seeds Bravo's prior-month trade history for weekly/monthly/annual assertions", async () => {
 		const result = await seedBravoHistory(BRAVO.email)

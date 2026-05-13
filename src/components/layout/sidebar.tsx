@@ -174,6 +174,7 @@ const Sidebar = ({
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
+					style={{ height: "auto" }}
 					priority
 				/>
 				<Image
@@ -186,6 +187,7 @@ const Sidebar = ({
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
+					style={{ height: "auto" }}
 					priority
 				/>
 			</div>

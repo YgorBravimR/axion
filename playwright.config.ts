@@ -80,16 +80,12 @@ const journeyStages: readonly JourneyStage[] = [
 		testMatch: /journey\/02-fractal-plan\.spec\.ts/,
 	},
 	{
-		name: "journey-03-pressure-test",
-		testMatch: /journey\/03-pressure-test\.spec\.ts/,
+		name: "journey-04b-seed-history",
+		testMatch: /journey\/04b-seed-history\.spec\.ts/,
 	},
 	{
 		name: "journey-04-daily-loop",
 		testMatch: /journey\/04-daily-loop\.spec\.ts/,
-	},
-	{
-		name: "journey-04b-seed-history",
-		testMatch: /journey\/04b-seed-history\.spec\.ts/,
 	},
 	{
 		name: "journey-05-weekly",
@@ -104,8 +100,20 @@ const journeyStages: readonly JourneyStage[] = [
 		testMatch: /journey\/07-quarter-year\.spec\.ts/,
 	},
 	{
+		name: "journey-03-pressure-test",
+		testMatch: /journey\/03-pressure-test\.spec\.ts/,
+	},
+	{
 		name: "journey-08-improvement",
 		testMatch: /journey\/08-improvement\.spec\.ts/,
+	},
+	{
+		name: "journey-09b-seed-hawks-history",
+		testMatch: /journey\/09b-seed-hawks-history\.spec\.ts/,
+	},
+	{
+		name: "journey-09-hawks-daily-loop",
+		testMatch: /journey\/09-hawks-daily-loop\.spec\.ts/,
 	},
 ]
 
@@ -128,6 +136,7 @@ const buildJourneyProjects = (
 			? {
 					...devices["Desktop Chrome"],
 					headless: false,
+					viewport: { width: 1600, height: 900 },
 					launchOptions: { slowMo: 400 },
 					video: "on" as const,
 					screenshot: "on" as const,

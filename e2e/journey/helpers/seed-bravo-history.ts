@@ -411,13 +411,35 @@ const buildPlan = (): PlannedTrade[] => {
 	return plan
 }
 
-const ONE_R_SNAPSHOT_CENTS = 50000 // matches BRAVO_PLAN.riskPerTradeCents pattern
+const ONE_R_SNAPSHOT_CENTS = 50000 // 5 mini-WIN contracts × 100 pts × R$1/pt = R$500
+const POSITION_SIZE_CONTRACTS = 5
+
+/**
+ * Approximate WIN futures (mini) index level for each prior month.
+ * WIN point value: R$1 per contract per point.
+ * Prices reflect a gradual uptrend toward the current ~190k level.
+ */
+const buildMonthPriceMap = (): Map<string, number> => {
+	const bases: Array<[monthOffset: number, basePrice: number]> = [
+		[4, 185500],
+		[3, 187000],
+		[2, 189000],
+		[1, 190500],
+	]
+	const map = new Map<string, number>()
+	for (const [offset, base] of bases) {
+		const { year, month } = priorMonth(offset)
+		map.set(`${year}-${month}`, base)
+	}
+	return map
+}
 
 const insertPlan = async (
 	accountId: string,
 	plan: ReadonlyArray<PlannedTrade>
 ): Promise<number> => {
 	const db = buildDb()
+	const monthPrices = buildMonthPriceMap()
 	let inserted = 0
 
 	for (const trade of plan) {
@@ -427,9 +449,12 @@ const insertPlan = async (
 		const exitDate = new Date(entryDate)
 		exitDate.setUTCMinutes(entryDate.getUTCMinutes() + 30)
 
-		const entryPrice = "130000"
-		const exitPrice = trade.pnlCents >= 0 ? "130200" : "129800"
-		const positionSize = "5"
+		const monthBase = monthPrices.get(`${trade.year}-${trade.month}`) ?? 190000
+		const entryPts = monthBase + (trade.day % 5) * 100
+		const pnlPoints = Math.round(trade.pnlCents / 100 / POSITION_SIZE_CONTRACTS)
+		const entryPrice = String(entryPts)
+		const exitPrice = String(entryPts + pnlPoints)
+		const positionSize = String(POSITION_SIZE_CONTRACTS)
 
 		await db.execute(sql`
 			INSERT INTO trades (

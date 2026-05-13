@@ -42,7 +42,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
 const PLAN_YEAR = 2026
 
 test.describe("Journey Stage 7 — Quarter + Year", () => {
-	test.use(loadStageState(6))
+	test.use(loadStageState(5))
 
 	test.setTimeout(60_000)
 
@@ -127,6 +127,6 @@ test.describe("Journey Stage 7 — Quarter + Year", () => {
 			page,
 			"Quarter + year reviewed — next stage: improvement flywheel"
 		)
-		await saveStageState(page, 7)
+		await saveStageState(page, 6)
 	})
 })

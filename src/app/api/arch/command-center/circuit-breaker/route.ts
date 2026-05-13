@@ -4,6 +4,7 @@ import { trades } from "@/db/schema"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { fromCents, toCents } from "@/lib/money"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import { checkHawksCascade } from "@/lib/hawks/cascade"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
@@ -212,13 +213,17 @@ const GET = async (request: NextRequest) => {
 			? currentConsecutiveLosses >= maxConsecutiveLossesValue
 			: false
 
+		const cascadeResult = await checkHawksCascade(accountId, today)
+		const hawksCascadeTriggered = cascadeResult?.triggered === true
+
 		const shouldStopTrading =
 			profitTargetHit ||
 			lossLimitHit ||
 			maxTradesHit ||
 			maxConsecutiveLossesHit ||
 			isMonthlyLimitHit ||
-			isSecondOpBlocked
+			isSecondOpBlocked ||
+			hawksCascadeTriggered
 
 		const alerts: string[] = []
 		if (profitTargetHit) {
@@ -238,6 +243,9 @@ const GET = async (request: NextRequest) => {
 		}
 		if (isSecondOpBlocked) {
 			alerts.push("secondOpBlocked")
+		}
+		if (hawksCascadeTriggered) {
+			alerts.push("hawksCascade")
 		}
 
 		return archSuccess("Circuit breaker status retrieved", {
@@ -268,6 +276,7 @@ const GET = async (request: NextRequest) => {
 				remainingMonthlyCents === Infinity ? 0 : remainingMonthlyCents,
 			isMonthlyLimitHit,
 			isSecondOpBlocked,
+			hawksCascade: cascadeResult,
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"

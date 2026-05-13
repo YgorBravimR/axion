@@ -14,8 +14,8 @@
  * tighten its assertion from "navigation landmark visible" to
  * "narrative section visible".
  *
- * Idempotent: deletes any existing quarterly_plan row for the same
- * (yearly_plan_id, quarter) before inserting. Safe to re-run.
+ * Idempotent: upserts into quarterly_plan on (yearly_plan_id, quarter),
+ * preserving the existing row id so cascade monthly/weekly rows survive re-runs.
  */
 
 import { drizzle } from "drizzle-orm/neon-http"
@@ -118,12 +118,6 @@ export const seedBravoQuarterlyPlan = async (
 
 	const targetQuarter = quarter ?? Math.ceil((new Date().getUTCMonth() + 1) / 3)
 
-	await db.execute(sql`
-		DELETE FROM quarterly_plan
-		WHERE yearly_plan_id = ${yearlyPlanId}
-		  AND quarter = ${targetQuarter}
-	`)
-
 	const inserted = await db.execute<IdRow>(sql`
 		INSERT INTO quarterly_plan (
 			yearly_plan_id,
@@ -138,6 +132,10 @@ export const seedBravoQuarterlyPlan = async (
 			${REFLECTION_NOTES},
 			${POST_MORTEM_NOTES}
 		)
+		ON CONFLICT (yearly_plan_id, quarter) DO UPDATE SET
+			goal_cents        = EXCLUDED.goal_cents,
+			reflection_notes  = EXCLUDED.reflection_notes,
+			post_mortem_notes = EXCLUDED.post_mortem_notes
 		RETURNING id
 	`)
 

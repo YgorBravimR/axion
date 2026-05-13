@@ -430,6 +430,18 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Design system docs
+
+### Consolidate axion-design-brief.md + design-context.md into DESIGN.md
+
+- **What**: Merge `docs/axion-design-brief.md` (visual identity / brand brief) and `docs/design-context.md` (user context + design principles) into a single `docs/DESIGN.md`. Update CLAUDE.md routing table to point to the new file.
+- **Why**: Any design review agent currently reads two files to calibrate. A single `DESIGN.md` reduces per-session overhead and is the expected convention for design system routing in gstack skills.
+- **Effort**: ~10 minutes, pure doc merge, zero code changes.
+- **Depends on**: none — can be done independently.
+- **Source**: `/plan-design-review` on `feat/hawks-mode-v0` (2026-05-13).
+
+---
+
 ## Documentation drift watch
 
 - **Design doc Phase 3 / §12 Open Questions**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship; Phase 3 is functionally done except for the multi-month seeder + CI wiring (both captured above). When those land, retire §13 Phase 3 in favour of a one-liner pointing here.

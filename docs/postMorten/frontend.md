@@ -2,6 +2,61 @@
 
 ---
 
+## [BUG-2026-05-13] AccountTransitionOverlayProvider hydration mismatch in ResumedOverlay
+
+**Severity:** High | **Affected:** `src/components/ui/account-transition-overlay.tsx`
+
+**Cause:** The `ResumedOverlay` component read from `sessionStorage` during initial state setup (`useState(() => checkResumedTransition())`). On the server, `sessionStorage` doesn't exist, so the check returned `false` (wrapped in try-catch). On the client, the flag could be `true` if set by a previous page reload. This mismatch caused Next.js hydration to fail because server rendered without overlay, but client rendered with it.
+
+**Effect:** Browser console error: `Uncaught Error: Hydration failed because the server rendered HTML didn't match the client.` The ResumedOverlay showed `aria-hidden="true"` and fade-out animation styles only on client, not on server.
+
+**Solution:**
+
+1. Removed `checkResumedTransition()` helper function (no longer needed).
+2. Changed `ResumedOverlay` to use `isMounted` state to defer sessionStorage check to `useEffect` (client-only).
+3. On mount, read sessionStorage in `useEffect`, set `isVisible` if flag exists, then set `isMounted = true`.
+4. Return `null` if not mounted yet (server-safe).
+5. Moved fade-out delay to second `useEffect` that only runs when `isVisible` changes.
+6. Updated provider to always render `<ResumedOverlay />` (component manages its own visibility internally).
+
+**Prevention:** Never read from `sessionStorage` / `localStorage` in `useState` initializer or at component top level. Always defer to `useEffect` to ensure client-only execution. Use `isMounted` state to suppress rendering until hydration-safe state is achieved.
+
+**Related Files:** `src/components/ui/account-transition-overlay.tsx`
+
+---
+
+## [BUG-2026-05-13] Script tag rendered inside React component
+
+**Severity:** Medium | **Affected:** `src/components/providers/brand-script.tsx`
+
+**Cause:** The `BrandScript` component rendered a native `<script>` tag with `dangerouslySetInnerHTML`. While the component itself is a server component, if ever wrapped in a "use client" parent or rendered in a client context, React throws a warning: "Encountered a script tag while rendering React component."
+
+**Effect:** Browser warning in console. The script still executes (Next.js handles it), but the warning indicates improper pattern usage.
+
+**Solution:** Replaced native `<script>` tag with `<Script>` from `next/script` and set `strategy="beforeInteractive"` to ensure it runs before React hydration starts, matching the original behavior of synchronous script execution in the `<head>`.
+
+**Prevention:** Use Next.js `<Script>` component from `next/script` instead of native `<script>` tags in React components. Strategies: `"beforeInteractive"` for blocking head scripts, `"afterInteractive"` for deferred execution, `"lazyOnload"` for background scripts.
+
+**Related Files:** `src/components/providers/brand-script.tsx`
+
+---
+
+## [BUG-2026-05-13] Image aspect ratio warnings for Axion wordmark and mark
+
+**Severity:** Low | **Affected:** `src/components/ui/account-transition-overlay.tsx`, `src/components/layout/sidebar.tsx`, `src/components/auth/register-form.tsx`, `src/components/auth/login-form.tsx`, `src/components/auth/forgot-password-form.tsx`, `src/components/auth/verify-email-form.tsx`, `src/components/layout/app-shell.tsx`
+
+**Cause:** Images with `height={N}` (explicit height) and `w-auto` (width auto) in className but no explicit height style. Next.js Image component warning: "Image has either width or height modified, but not the other. If you use CSS to change the size of your image, also include styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio."
+
+**Effect:** Browser warning in console for images: `/axion-mark-white.png` and `/axion-wordmark-white.png`. No functional impact, but indicates improper image sizing pattern.
+
+**Solution:** Added `style={{ height: "auto" }}` inline style to all `<Image>` components using these assets. This tells the browser to compute height from width while maintaining intrinsic aspect ratio (since Tailwind's `h-8`, `h-7`, `h-14` set fixed heights). Total 8 Image components updated across 7 files.
+
+**Prevention:** When using Next.js `<Image>` with CSS-driven sizing (e.g., Tailwind `h-X w-auto`), always add inline `style={{ height: "auto" }}` or `style={{ width: "auto" }}` to match the missing dimension. This prevents aspect ratio distortion warnings and browser warnings about inconsistent sizing.
+
+**Related Files:** `src/components/layout/sidebar.tsx`, `src/components/auth/register-form.tsx`, `src/components/auth/login-form.tsx`, `src/components/auth/forgot-password-form.tsx`, `src/components/auth/verify-email-form.tsx`, `src/components/layout/app-shell.tsx`
+
+---
+
 > **[FIX-2026-05-13]** `Severity: Low` — `src/components/reports/reports-content.tsx`, `src/components/reports/withdrawal-calculator.tsx`, `messages/pt-BR.json`, `messages/en.json`
 > **Report:** /reports Annual Report section displayed English hardcoded strings: "Annual Report — 2026", "Weekly Meta vs Real", "Annual Rollup", "Log Withdrawal", and withdrawal message text.
 > **Fix:** Replaced all hardcoded strings with `t()` i18n calls. Added 10 new translation keys to both locales: `annualReportTitle`, `weeklyMetaTitle`, `annualRollupTitle`, `withdrawalLoggedSuccess`, `withdrawalMessage`, `withdrawalAmountLabel`, `withdrawalDateLabel`, `withdrawalLog`, `withdrawalLogging`. All text now localized and translatable.

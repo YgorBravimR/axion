@@ -26,9 +26,15 @@ import { commandCenterGuide } from "@/components/ui/page-guide/guide-configs/com
 import type {
 	Asset,
 	DailyChecklist as DailyChecklistType,
+	DailyHawksBias,
 	DailyPlan,
 	TradingAccount,
 } from "@/db/schema"
+import { HawksMissingBiasAlert } from "@/components/hawks/hawks-missing-bias-alert"
+import { DailyBiasForm } from "@/components/hawks/daily-bias-form"
+import { Crosshair } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
@@ -45,6 +51,9 @@ interface CommandCenterContentProps {
 	viewDate: string
 	isToday: boolean
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
+	isHawksActive?: boolean
+	initialHawksBias?: DailyHawksBias | null
+	hawksDailyOrdinal?: number
 }
 
 const CommandCenterContent = ({
@@ -58,9 +67,13 @@ const CommandCenterContent = ({
 	viewDate,
 	isToday,
 	initialLiveTradingStatus = null,
+	isHawksActive = false,
+	initialHawksBias = null,
+	hawksDailyOrdinal = 0,
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
 	const { isPremium } = useFeatureAccess()
+	const tHawks = useTranslations("hawks.dailyCount")
 	useRegisterPageGuide(commandCenterGuide)
 
 	// State
@@ -124,6 +137,68 @@ const CommandCenterContent = ({
 				isToday={isToday}
 				isReplayAccount={account?.accountType === "replay"}
 			/>
+
+			{/* Hawks bias gate — shown only on today's view when bias not yet set */}
+			{isHawksActive && !initialHawksBias && isToday && (
+				<HawksMissingBiasAlert tradingDay={viewDate} initialBias={null} />
+			)}
+
+			{/* Hawks bias review panel — shown when bias is already set */}
+			{isHawksActive && initialHawksBias && (
+				<DailyBiasForm tradingDay={viewDate} initialBias={initialHawksBias} />
+			)}
+
+			{/* Hawks daily trade counter — compact badge visible when Hawks is active today */}
+			{isHawksActive && isToday && (
+				<div
+					className={cn(
+						"p-s-300 gap-s-300 flex items-center rounded-lg border",
+						hawksDailyOrdinal >= 3
+							? "border-destructive/30 bg-destructive/5"
+							: hawksDailyOrdinal >= 2
+								? "border-warning/30 bg-warning/5"
+								: "border-bg-300 bg-bg-200"
+					)}
+				>
+					<Crosshair
+						className={cn(
+							"h-4 w-4 shrink-0",
+							hawksDailyOrdinal >= 3
+								? "text-destructive"
+								: hawksDailyOrdinal >= 2
+									? "text-warning"
+									: "text-acc-100"
+						)}
+						aria-hidden="true"
+					/>
+					<span
+						className={cn(
+							"text-small font-medium",
+							hawksDailyOrdinal >= 3
+								? "text-destructive"
+								: hawksDailyOrdinal >= 2
+									? "text-warning"
+									: "text-txt-100"
+						)}
+					>
+						{hawksDailyOrdinal >= 3
+							? tHawks("atCap")
+							: tHawks("badge", { ordinal: hawksDailyOrdinal, cap: 3 })}
+					</span>
+					<span
+						className={cn(
+							"text-micro ml-auto shrink-0 rounded-sm px-1.5 py-0.5 font-medium tabular-nums",
+							hawksDailyOrdinal >= 3
+								? "bg-destructive/20 text-destructive"
+								: hawksDailyOrdinal >= 2
+									? "bg-warning/20 text-warning"
+									: "bg-acc-100/10 text-acc-100"
+						)}
+					>
+						{hawksDailyOrdinal}/3
+					</span>
+				</div>
+			)}
 
 			{/* Circuit Breaker Panel - Full Width */}
 			<CircuitBreakerPanel status={circuitBreaker} />

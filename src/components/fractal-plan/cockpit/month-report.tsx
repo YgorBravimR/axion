@@ -31,6 +31,7 @@ import { CapsStrip } from "./caps-strip"
 import { MonthWeekTable } from "./month-week-table"
 import { MonthDarfRow } from "./month-darf-row"
 import { MonthComparison } from "@/components/monthly/month-comparison"
+import { HawksScorecardPanel } from "@/components/hawks/hawks-scorecard-panel"
 
 interface MonthReportProps {
 	accountId: string
@@ -234,6 +235,8 @@ const MonthReport = async ({
 				dailyAverageCents={dailyAverageCents}
 				irTaxRate={irTaxRate}
 			/>
+
+			<HawksScorecardPanel accountId={accountId} year={year} month={month} />
 
 			{resolved && (
 				<CapsStrip

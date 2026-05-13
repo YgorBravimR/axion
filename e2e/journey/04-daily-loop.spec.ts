@@ -20,12 +20,13 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  * before navigation; product code is untouched. See
  * helpers/mock-market-monitor.ts for the fixture.
  *
- * Trade values (entry=100, position_size=10) are chosen to match the
- * teardown's E2E recogniser so the row drops cleanly after the run.
+ * Trade values use realistic WINFUT (mini-WIN) levels: entry ~190,200,
+ * exit ~190,500, 5 contracts. Bravo account is cleaned by user-level
+ * teardown (bravo-%@axion-demo.com cascade), not by the entry-price pattern.
  *
- * Pre-condition: Stage 3 snapshot — Bravo authenticated, admin, with
- *                 her fractal plan tree intact and pressure-test
- *                 surfaces verified.
+ * Pre-condition: Stage 2 snapshot — Bravo authenticated, admin, with
+ *                 her fractal plan tree intact and prior-month history
+ *                 seeded (Stage 4b).
  * Post-condition: One trade exists in Bravo's journal; storageState
  *                 saved as Stage 4.
  *
@@ -33,7 +34,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  */
 
 test.describe("Journey Stage 4 — Daily Loop", () => {
-	test.use(loadStageState(3))
+	test.use(loadStageState(2))
 
 	test("Bravo runs her first trading day: prep, monitor, calculate, log", async ({
 		page,
@@ -87,7 +88,7 @@ test.describe("Journey Stage 4 — Daily Loop", () => {
 		// ── 4d — Post-market: log the day's trade
 		await annotate(
 			page,
-			"Post-market — log the trade. Entry=100 size=10 (teardown-safe)"
+			"Post-market — log the trade. Entry=190200 exit=190500 size=5 (WINFUT)"
 		)
 		await page.goto("/en/journal/new")
 		await page.waitForLoadState("networkidle")
@@ -102,8 +103,9 @@ test.describe("Journey Stage 4 — Daily Loop", () => {
 		// Spinbuttons (no <label> association in the form). Order is stable:
 		// [0]=Entry, [1]=Exit, [2]=Position Size. See journal.spec.ts:222.
 		const spinbuttons = page.getByRole("spinbutton")
-		await spinbuttons.nth(0).fill("100")
-		await spinbuttons.nth(2).fill("10")
+		await spinbuttons.nth(0).fill("190200")
+		await spinbuttons.nth(1).fill("190500")
+		await spinbuttons.nth(2).fill("5")
 		await screenshotIfDemo(page, "04-04-trade-form-filled")
 
 		await annotate(page, "Trade — saving")
@@ -116,15 +118,15 @@ test.describe("Journey Stage 4 — Daily Loop", () => {
 		// ── 4e — Verify the trade lives in the journal list
 		await page.goto("/en/journal")
 		await page.waitForLoadState("networkidle")
-		// Trade rows render as buttons matching /^trade /i (see existing spec).
+		// Trade rows render as links in the journal list.
 		await expect(
-			page.getByRole("button", { name: /^trade /i }).first()
+			page.getByRole("link", { name: /^trade /i }).first()
 		).toBeVisible({
 			timeout: 10000,
 		})
 		await screenshotIfDemo(page, "04-06-journal-with-trade")
 
 		await annotate(page, "First trade logged — next stage: weekly reflection")
-		await saveStageState(page, 4)
+		await saveStageState(page, 3)
 	})
 })

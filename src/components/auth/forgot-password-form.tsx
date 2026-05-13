@@ -151,6 +151,7 @@ export const ForgotPasswordForm = () => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						style={{ height: "auto" }}
 						data-axion-logo="invertable"
 						priority
 					/>
@@ -236,6 +237,7 @@ export const ForgotPasswordForm = () => {
 						width={200}
 						height={57}
 						className="h-14 w-auto object-contain"
+						style={{ height: "auto" }}
 						data-axion-logo="invertable"
 						priority
 					/>
@@ -335,6 +337,7 @@ export const ForgotPasswordForm = () => {
 					width={200}
 					height={57}
 					className="h-14 w-auto object-contain"
+					style={{ height: "auto" }}
 					priority
 				/>
 			</div>

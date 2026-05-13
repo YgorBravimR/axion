@@ -34,6 +34,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import { checkHawksCascade } from "@/lib/hawks/cascade"
 import type {
 	ChecklistWithCompletion,
 	AssetSettingWithAsset,
@@ -920,13 +921,17 @@ export const getCircuitBreakerStatus = async (
 			? currentConsecutiveLosses >= maxConsecutiveLossesValue
 			: false
 
+		const cascadeResult = await checkHawksCascade(accountId, today)
+		const hawksCascadeTriggered = cascadeResult?.triggered === true
+
 		const shouldStopTrading =
 			profitTargetHit ||
 			lossLimitHit ||
 			maxTradesHit ||
 			maxConsecutiveLossesHit ||
 			isMonthlyLimitHit ||
-			isSecondOpBlocked
+			isSecondOpBlocked ||
+			hawksCascadeTriggered
 
 		// Build alerts
 		const alerts: string[] = []
@@ -947,6 +952,9 @@ export const getCircuitBreakerStatus = async (
 		}
 		if (isSecondOpBlocked) {
 			alerts.push("secondOpBlocked")
+		}
+		if (hawksCascadeTriggered) {
+			alerts.push("hawksCascade")
 		}
 
 		return {
@@ -980,6 +988,7 @@ export const getCircuitBreakerStatus = async (
 					remainingMonthlyCents === Infinity ? 0 : remainingMonthlyCents,
 				isMonthlyLimitHit,
 				isSecondOpBlocked,
+				hawksCascade: cascadeResult,
 			},
 		}
 	} catch (error) {

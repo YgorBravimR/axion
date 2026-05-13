@@ -29,7 +29,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  */
 
 test.describe("Journey Stage 3 — Pressure-Test", () => {
-	test.use(loadStageState(2))
+	test.use(loadStageState(6))
 
 	test("Bravo audits her plan across backtest, monte carlo, risk-sim, and equity shield", async ({
 		page,
@@ -100,6 +100,6 @@ test.describe("Journey Stage 3 — Pressure-Test", () => {
 			page,
 			"Plan survived pressure — next stage: daily loop, first real trades"
 		)
-		await saveStageState(page, 3)
+		await saveStageState(page, 7)
 	})
 })

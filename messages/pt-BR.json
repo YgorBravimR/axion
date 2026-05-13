@@ -5380,6 +5380,33 @@
 			"title": "Coaching Hawks",
 			"noTrades": "Sem trades Hawks nos últimos 90 dias — registre alguns para liberar a detecção de padrões.",
 			"noInsights": "Nenhum padrão Hawks identificado nos últimos 90 dias. Mantenha a disciplina."
+		},
+		"missingBias": {
+			"ariaLabel": "Definir bias de hoje",
+			"title": "Defina o bias do dia",
+			"description": "Confirme seu bias direcional antes de registrar um trade Hawks.",
+			"successMessage": "Bias confirmado — pronto para operar"
+		},
+		"dailyCap": {
+			"ariaLabel": "Limite diário de trades atingido",
+			"title": "Limite diário atingido",
+			"description": "Você realizou {ordinal} de {cap} trades hoje. Registre este como uma exceção.",
+			"acknowledge": "Entendo que este é um trade de exceção",
+			"acknowledgedBadge": "Exceção reconhecida ({ordinal}/{cap})"
+		},
+		"scorecard": {
+			"title": "Scorecard Hawks",
+			"methodologyScore": "Pontuação de Metodologia",
+			"tripleScreen": "Triple Screen",
+			"biasAlignment": "Aderência ao Bias",
+			"stopViolations": "Violações de Stop",
+			"overTradeDays": "Dias com Excesso",
+			"noTrades": "Nenhum trade Hawks registrado este mês ainda.",
+			"tradeCount": "{count, plural, one {# trade Hawks} other {# trades Hawks}}"
+		},
+		"dailyCount": {
+			"badge": "{ordinal} de {cap} trades hoje",
+			"atCap": "Limite diário atingido"
 		}
 	}
 }

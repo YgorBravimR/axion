@@ -62,3 +62,4 @@ video/node_modules/
 .agents/skills/
 .design-audit/
 .playwright-mcp/
+.gstack

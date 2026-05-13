@@ -5380,6 +5380,33 @@
 			"title": "Hawks coaching insights",
 			"noTrades": "No Hawks trades in the last 90 days yet — log a few to unlock pattern detection.",
 			"noInsights": "No Hawks patterns surfaced in the last 90 days. Stay disciplined."
+		},
+		"missingBias": {
+			"ariaLabel": "Set today's bias",
+			"title": "Set today's bias",
+			"description": "Confirm your directional bias before logging a Hawks trade.",
+			"successMessage": "Bias confirmed — ready to trade"
+		},
+		"dailyCap": {
+			"ariaLabel": "Daily trade cap reached",
+			"title": "Daily cap reached",
+			"description": "You've taken {ordinal} of {cap} trades today. Log this as an exception trade.",
+			"acknowledge": "I acknowledge this is an exception trade",
+			"acknowledgedBadge": "Exception trade acknowledged ({ordinal}/{cap})"
+		},
+		"scorecard": {
+			"title": "Hawks Scorecard",
+			"methodologyScore": "Methodology Score",
+			"tripleScreen": "Triple Screen",
+			"biasAlignment": "Bias Alignment",
+			"stopViolations": "Stop Violations",
+			"overTradeDays": "Over-trade Days",
+			"noTrades": "No Hawks trades logged this month yet.",
+			"tradeCount": "{count, plural, one {# Hawks trade} other {# Hawks trades}}"
+		},
+		"dailyCount": {
+			"badge": "{ordinal} of {cap} trades today",
+			"atCap": "Daily cap reached"
 		}
 	}
 }

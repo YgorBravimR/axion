@@ -30,7 +30,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  */
 
 test.describe("Journey Stage 5 — Weekly Reflection", () => {
-	test.use(loadStageState(4))
+	test.use(loadStageState(3))
 
 	// Reports + analytics each fan out into many server actions; give
 	// the page enough time to mount past Suspense on cold caches.
@@ -76,6 +76,6 @@ test.describe("Journey Stage 5 — Weekly Reflection", () => {
 			page,
 			"Week reviewed — next stage: monthly close + tax cycle"
 		)
-		await saveStageState(page, 5)
+		await saveStageState(page, 4)
 	})
 })

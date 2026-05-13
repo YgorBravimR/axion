@@ -14,8 +14,12 @@ import { getEffectiveDateWithOverride } from "@/lib/effective-date"
 import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
 import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
+import {
+	getActiveAccountModeForUser,
+	getDailyHawksBias,
+	getHawksDailyOrdinal,
+} from "@/lib/hawks/account-context"
 import type { DailyPlan } from "@/db/schema"
-
 
 interface CommandCenterPageProps {
 	params: Promise<{ locale: string }>
@@ -27,7 +31,10 @@ const isSameDay = (a: Date, b: Date): boolean =>
 	a.getMonth() === b.getMonth() &&
 	a.getDate() === b.getDate()
 
-const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProps) => {
+const CommandCenterPage = async ({
+	params,
+	searchParams,
+}: CommandCenterPageProps) => {
 	const { locale } = await params
 	const { date: dateParam } = await searchParams
 	setRequestLocale(locale)
@@ -39,17 +46,28 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 	const urlDate = dateParam ? new Date(dateParam + "T12:00:00") : undefined
 	const effectiveDate = getEffectiveDateWithOverride(account, urlDate)
 	const now = new Date()
-	const isToday = !dateParam || isSameDay(effectiveDate, account?.accountType === "replay" && account.replayCurrentDate ? new Date(account.replayCurrentDate) : now)
+	const isToday =
+		!dateParam ||
+		isSameDay(
+			effectiveDate,
+			account?.accountType === "replay" && account.replayCurrentDate
+				? new Date(account.replayCurrentDate)
+				: now
+		)
 	const viewDateStr = formatDateKey(effectiveDate)
 
 	// Pass date to date-sensitive actions (undefined = today's effective date)
-	const dateArg = isToday ? (account?.accountType === "replay" ? effectiveDate : undefined) : effectiveDate
+	const dateArg = isToday
+		? account?.accountType === "replay"
+			? effectiveDate
+			: undefined
+		: effectiveDate
 
 	// Fetch all initial data server-side in parallel
 	const dailyPlanPromise: Promise<DailyPlan | null> = account?.id
 		? ensureDailyPlanForAccountDate(account.id, effectiveDate).then((r) =>
-			r.status === "ok" ? r.dayRow : null,
-		)
+				r.status === "ok" ? r.dayRow : null
+			)
 		: Promise.resolve(null)
 
 	const [
@@ -61,6 +79,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		assetsResult,
 		strategiesResult,
 		liveTradingStatusResult,
+		accountMode,
+		initialHawksBias,
+		hawksDailyOrdinal,
 	] = await Promise.all([
 		getTodayCompletions(dateArg),
 		dailyPlanPromise,
@@ -70,6 +91,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 		getActiveAssets().catch(() => []),
 		getStrategies(),
 		getLiveTradingStatus(dateArg),
+		getActiveAccountModeForUser(),
+		getDailyHawksBias(viewDateStr),
+		getHawksDailyOrdinal(viewDateStr),
 	])
 
 	const initialCompletions =
@@ -81,7 +105,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 			? assetSettingsResult.data
 			: []
 	const initialCircuitBreaker =
-		circuitBreakerResult.status === "success" ? (circuitBreakerResult.data ?? null) : null
+		circuitBreakerResult.status === "success"
+			? (circuitBreakerResult.data ?? null)
+			: null
 	const initialSummary =
 		summaryResult.status === "success" ? (summaryResult.data ?? null) : null
 	const availableAssets = assetsResult || []
@@ -90,7 +116,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 			? strategiesResult.data
 			: []
 	const initialLiveTradingStatus =
-		liveTradingStatusResult.status === "success" ? (liveTradingStatusResult.data ?? null) : null
+		liveTradingStatusResult.status === "success"
+			? (liveTradingStatusResult.data ?? null)
+			: null
 
 	// Account settings: derived from circuit-breaker resolver output (Phase 4b)
 	const accountSettings = {
@@ -118,6 +146,9 @@ const CommandCenterPage = async ({ params, searchParams }: CommandCenterPageProp
 				isToday={isToday}
 				isReplayAccount={account?.accountType === "replay"}
 				initialLiveTradingStatus={initialLiveTradingStatus}
+				isHawksActive={accountMode === "hawks"}
+				initialHawksBias={initialHawksBias}
+				hawksDailyOrdinal={hawksDailyOrdinal}
 			/>
 		</div>
 	)
