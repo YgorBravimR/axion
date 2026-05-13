@@ -5293,6 +5293,16 @@
 		}
 	},
 	"hawks": {
+		"tradeFields": {
+			"title": "Hawks pre-flight",
+			"description": "Confirm the discretionary checks for this trade. These feed the Hawks coaching detectors.",
+			"tripleScreenLabel": "Triple-screen confirmed",
+			"tripleScreenHint": "All three Renko timeframes (5/15/60min) aligned with the bias before entry.",
+			"vwapLabel": "VWAP respected",
+			"vwapHint": "Entry occurred without violating the session VWAP context.",
+			"ajusteLabel": "Ajuste respected",
+			"ajusteHint": "Daily settlement price held as expected support/resistance."
+		},
 		"bias": {
 			"title": "Daily bias",
 			"description": "Confirm your bias for {day} after the triple-screen ritual.",

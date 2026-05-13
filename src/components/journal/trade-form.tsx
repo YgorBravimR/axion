@@ -69,6 +69,7 @@ import { TagForm } from "@/components/settings/tag-form"
 import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
 import type { PersistedImage, PendingImage } from "@/lib/validations/upload"
+import { HawksTradeFields } from "@/components/hawks"
 import {
 	Tooltip,
 	TooltipContent,
@@ -88,6 +89,7 @@ interface TradeFormProps {
 	defaultAssetId?: string
 	defaultDate?: string
 	initialSharedState?: SharedTradeFormState
+	hawksModeActive?: boolean
 }
 
 /**
@@ -187,6 +189,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			defaultAssetId,
 			defaultDate,
 			initialSharedState,
+			hawksModeActive = false,
 		},
 		ref
 	) => {
@@ -297,6 +300,13 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						disciplineNotes: initialSharedState.disciplineNotes,
 						setupRank: initialSharedState.setupRank,
 						rating: initialSharedState.rating,
+					}),
+					...(hawksModeActive && {
+						hawks: {
+							tripleScreenConfirmed: false,
+							vwapRespected: false,
+							ajusteRespected: false,
+						},
 					}),
 				}
 
@@ -1486,6 +1496,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									</FormItem>
 								)}
 							/>
+
+							{hawksModeActive && <HawksTradeFields form={form} />}
 
 							{/* Compliance */}
 							<div className="space-y-s-200">

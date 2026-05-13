@@ -209,6 +209,12 @@ export interface CreateTradeInput {
 	rating?: "A" | "B" | "C" | "D" | "F" | null
 	screenshotUrl?: string
 	screenshotS3Key?: string
+	hawks?: {
+		scenarioId?: string | null
+		tripleScreenConfirmed: boolean
+		vwapRespected: boolean
+		ajusteRespected: boolean
+	}
 }
 
 // Form input type alias

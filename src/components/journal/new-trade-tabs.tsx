@@ -28,6 +28,7 @@ interface NewTradeTabsProps {
 	redirectTo?: string
 	defaultAssetId?: string
 	defaultDate?: string
+	hawksModeActive?: boolean
 }
 
 type TabValue = "single" | "csv" | "nota" | "screenshot"
@@ -40,6 +41,7 @@ export const NewTradeTabs = ({
 	redirectTo,
 	defaultAssetId,
 	defaultDate,
+	hawksModeActive = false,
 }: NewTradeTabsProps) => {
 	const t = useTranslations("journal")
 	const tTrade = useTranslations("trade")
@@ -171,6 +173,7 @@ export const NewTradeTabs = ({
 								defaultAssetId={defaultAssetId}
 								defaultDate={defaultDate}
 								initialSharedState={sharedState}
+								hawksModeActive={hawksModeActive}
 							/>
 						) : (
 							<ScaledTradeForm

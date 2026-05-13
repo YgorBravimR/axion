@@ -5293,6 +5293,16 @@
 		}
 	},
 	"hawks": {
+		"tradeFields": {
+			"title": "Pré-voo Hawks",
+			"description": "Confirme as checagens discricionárias deste trade. Esses dados alimentam os detectores de coaching Hawks.",
+			"tripleScreenLabel": "Triple-screen confirmado",
+			"tripleScreenHint": "Os três timeframes Renko (5/15/60min) estavam alinhados com o viés antes da entrada.",
+			"vwapLabel": "VWAP respeitada",
+			"vwapHint": "A entrada aconteceu sem violar o contexto da VWAP da sessão.",
+			"ajusteLabel": "Ajuste respeitado",
+			"ajusteHint": "O preço de ajuste do dia segurou como suporte/resistência."
+		},
 		"bias": {
 			"title": "Viés do dia",
 			"description": "Confirme seu viés para {day} após o ritual de triple-screen.",

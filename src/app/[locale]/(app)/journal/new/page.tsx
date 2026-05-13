@@ -6,6 +6,7 @@ import { getActiveTimeframes } from "@/app/actions/timeframes"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { requireRole } from "@/lib/auth-utils"
+import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 
 interface NewTradePageProps {
 	searchParams: Promise<{ returnTo?: string; asset?: string }>
@@ -22,6 +23,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 		timeframes,
 		effectiveDate,
 		account,
+		accountMode,
 	] = await Promise.all([
 		getStrategies(),
 		getTags(),
@@ -29,6 +31,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 		getActiveTimeframes().catch(() => []),
 		getServerEffectiveNow(),
 		getCurrentAccount(),
+		getActiveAccountModeForUser(),
 	])
 
 	const strategies =
@@ -51,6 +54,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 							redirectTo={returnTo}
 							defaultAssetId={resolvedDefaultAsset}
 							defaultDate={effectiveDate.toISOString()}
+							hawksModeActive={accountMode === "hawks"}
 						/>
 					</div>
 				</div>
