@@ -437,6 +437,55 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
+## Wave 9 HAWKS deferred items
+
+Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-runbook.md), logs at `docs/scans/2026-05-13-impeccable-*-hawks.md`). Logged here because each requires either product/copy review, a wider primitive change, or another team's input — none are local code edits.
+
+### HAWKS pre-flight switch copy review (en + pt-BR)
+
+- **What**: Each switch in `HawksTradeFields` ships with a `*Label` + `*Hint` pair where the hint repeats the label (e.g. "Triple screen confirmed?" + "Did your 5-screen checklist hold at entry?"). The hint adds no information.
+- **Why now**: Phase 1a P1 finding in `docs/scans/2026-05-13-impeccable-trade-form-hawks.md`. Voice-gate review needed before edit; one of: drop hints, or rewrite as one-clause clarifiers.
+- **Source**: `src/messages/en.json` + `src/messages/pt-BR.json` under `hawks.tradeFields.*`. Component: `src/components/hawks/hawks-trade-fields.tsx`.
+
+### HAWKS daily bias "Save" vs "Confirm" verb tidy
+
+- **What**: `DailyBiasForm` save button switches between `common.save` (when a row exists) and `hawks.bias.confirmAction` (when fresh). Two verbs for the same action class. Settle on one — recommend "Save" everywhere, with a sub-line "Bias confirmed at HH:MM" after first write.
+- **Source**: `src/components/hawks/daily-bias-form.tsx:200`.
+
+### HAWKS settings tab copy voice gate
+
+- **What**: `t("statusActive") / t("statusInactive")` + `t("description")` not yet voice-checked in en + pt-BR. Reject cheerful filler ("You're on!", "Switched off") if present.
+- **Source**: `src/messages/{en,pt-BR}.json` under `hawks.settings.*`.
+
+### Trade-form draft-after-deactivation edge
+
+- **What**: If a draft trade is saved with HAWKS mode active and reloaded after the trader deactivates HAWKS, the persisted `hawks.*` payload is silently dropped (the `<HawksTradeFields>` block is not rendered, so its values never reach the submit). Either preserve the values invisibly or warn the user at draft-restore.
+- **Source**: `src/components/journal/trade-form.tsx` + `src/components/hawks/hawks-trade-fields.tsx`.
+
+### Coaching `tradeCount` pluralisation
+
+- **What**: `coaching.tradeCount` renders "1 trades analyzed". Needs ICU plural form or `t("tradeCount", { count })` with plural-aware messages.
+- **Why now**: P2 finding in dashboard-hawks Phase 1a. Same shape as any other plural string — backlog because the project may want a generalised plural-aware helper rather than per-string fixes.
+- **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:177`.
+
+### Coaching card title size on mobile
+
+- **What**: `text-small sm:text-body` makes the HAWKS coaching card title visibly smaller than sibling dashboard card titles at mobile widths. Either bump to `text-body` unconditionally or introduce a `<CardTitle>` primitive that enforces a consistent size across all dashboard cards.
+- **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:171`.
+
+### Coaching insight `useEffect` brittleness
+
+- **What**: `useEffect(() => { ... }, [])` with `hasLoadedRef` gating is a workaround for the absence of an initial server-side load. Cleaner: pass `initialContext` from a Server Component prop and drop the effect entirely.
+- **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:150`.
+
+### Pattern-B audit: `required-indicator.tsx` uses `text-trade-buy`
+
+- **What**: `src/components/ui/required-indicator.tsx:23` paints the "_" green via `text-trade-buy` when filled. That's the same Pattern-B (Category-as-P&L) hijack Wave 6 cleaned up in 4 settings widgets and Wave 9 cleaned up in `HawksSettings`. The `_`colour signals "category: filled", not "profit". Should be`text-fb-success`.
+- **Why now**: spotted while reading the file during Wave 9 Phase 2 extraction. Outside Wave 9 scope but a known regression family.
+- **Source**: `src/components/ui/required-indicator.tsx`.
+
+---
+
 ## Driver / DB hygiene
 
 ### HAWKS `dailyTradeOrdinal` race condition
