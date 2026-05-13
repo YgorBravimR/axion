@@ -7,8 +7,10 @@ interface RequiredIndicatorProps {
 
 /**
  * Renders a "*" indicator for required fields.
- * - Red (text-fb-error) when the field is empty
- * - Green (text-trade-buy) when the field is filled
+ * Uses the verdict triad — never trade-color tokens — because filled/empty
+ * is a verdict on form state, not signed money polarity.
+ * - text-fb-error when the field is empty (verdict-bad)
+ * - text-fb-success when the field is filled (verdict-good)
  *
  * Usage with Label:
  *   <Label required filled={!!value}>Field Name</Label>
@@ -19,9 +21,9 @@ interface RequiredIndicatorProps {
 const RequiredIndicator = ({ filled, className }: RequiredIndicatorProps) => (
 	<span
 		className={cn(
-			"ml-0.5 text-small font-bold transition-colors duration-200",
-			filled ? "text-trade-buy" : "text-fb-error",
-			className,
+			"text-small ml-0.5 font-bold transition-colors duration-200",
+			filled ? "text-fb-success" : "text-fb-error",
+			className
 		)}
 		aria-hidden="true"
 	>

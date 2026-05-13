@@ -478,12 +478,6 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 - **What**: `useEffect(() => { ... }, [])` with `hasLoadedRef` gating is a workaround for the absence of an initial server-side load. Cleaner: pass `initialContext` from a Server Component prop and drop the effect entirely.
 - **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:150`.
 
-### Pattern-B audit: `required-indicator.tsx` uses `text-trade-buy`
-
-- **What**: `src/components/ui/required-indicator.tsx:23` paints the "_" green via `text-trade-buy` when filled. That's the same Pattern-B (Category-as-P&L) hijack Wave 6 cleaned up in 4 settings widgets and Wave 9 cleaned up in `HawksSettings`. The `_`colour signals "category: filled", not "profit". Should be`text-fb-success`.
-- **Why now**: spotted while reading the file during Wave 9 Phase 2 extraction. Outside Wave 9 scope but a known regression family.
-- **Source**: `src/components/ui/required-indicator.tsx`.
-
 ---
 
 ## Driver / DB hygiene
