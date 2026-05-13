@@ -9,7 +9,7 @@ import { getAllUsersWithAccounts } from "@/app/actions/user-management"
 import { seedBuiltInRiskProfiles } from "@/app/actions/seed-risk-profiles"
 import { getIndicatorGroups } from "@/app/actions/indicators"
 import { requireRole } from "@/lib/auth-utils"
-
+import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 
 interface SettingsPageProps {
 	params: Promise<{ locale: string }>
@@ -20,13 +20,15 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 	setRequestLocale(locale)
 	await requireRole("trader")
 
-	const [assets, assetTypes, timeframes, user, indicatorGroups] = await Promise.all([
-		getAssets(),
-		getAssetTypes(),
-		getTimeframes(),
-		getCurrentUser(),
-		getIndicatorGroups(),
-	])
+	const [assets, assetTypes, timeframes, user, indicatorGroups, accountMode] =
+		await Promise.all([
+			getAssets(),
+			getAssetTypes(),
+			getTimeframes(),
+			getCurrentUser(),
+			getIndicatorGroups(),
+			getActiveAccountModeForUser(),
+		])
 
 	const isAdmin = user?.role === "admin"
 
@@ -34,12 +36,16 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 	// Run seed + user fetch in parallel to avoid serial waterfall
 	const [, usersWithAccounts] = await Promise.all([
 		isAdmin ? seedBuiltInRiskProfiles() : Promise.resolve(undefined),
-		isAdmin ? getAllUsersWithAccounts() : Promise.resolve([] as Awaited<ReturnType<typeof getAllUsersWithAccounts>>),
+		isAdmin
+			? getAllUsersWithAccounts()
+			: Promise.resolve(
+					[] as Awaited<ReturnType<typeof getAllUsersWithAccounts>>
+				),
 	])
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
 					<SettingsContent
 						assets={assets}
@@ -49,6 +55,7 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 						usersWithAccounts={usersWithAccounts}
 						currentUserId={user?.id ?? ""}
 						indicatorGroups={indicatorGroups}
+						hawksModeActive={accountMode === "hawks"}
 					/>
 				</Suspense>
 			</div>

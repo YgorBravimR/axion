@@ -2600,7 +2600,8 @@
 			"users": "Usuários",
 			"conditions": "Condições",
 			"indicators": "Indicadores",
-			"bugs": "Relatórios de Bugs"
+			"bugs": "Relatórios de Bugs",
+			"hawks": "Modo Hawks"
 		},
 		"profile": {
 			"profileInfo": "Informações do Perfil",
@@ -5292,6 +5293,19 @@
 		}
 	},
 	"hawks": {
+		"settings": {
+			"title": "Modo Hawks",
+			"description": "O Modo Hawks ativa o fluxo Renko triple-screen: viés diário, limite de trades, auditoria de stop pelo Método-3 e coaching dedicado.",
+			"statusActive": "Ativo",
+			"statusInactive": "Inativo",
+			"activate": "Ativar Modo Hawks",
+			"deactivate": "Desativar Modo Hawks",
+			"confirmActivateTitle": "Ativar o Modo Hawks?",
+			"confirmActivateDescription": "Com o Modo Hawks ligado, todo trade registrado precisa de viés diário e payload Hawks. Você pode desativar a qualquer momento.",
+			"confirmDeactivateTitle": "Desativar o Modo Hawks?",
+			"confirmDeactivateDescription": "Os trades e auditorias Hawks já registrados permanecem. Novos trades voltam ao fluxo padrão.",
+			"loading": "Carregando modo atual…"
+		},
 		"actions": {
 			"modeStarted": "Modo Hawks ativado",
 			"modeAlreadyActive": "Modo Hawks já está ativo",

@@ -2600,7 +2600,8 @@
 			"users": "Users",
 			"conditions": "Conditions",
 			"indicators": "Indicators",
-			"bugs": "Bug Reports"
+			"bugs": "Bug Reports",
+			"hawks": "Hawks Mode"
 		},
 		"profile": {
 			"profileInfo": "Profile Information",
@@ -5292,6 +5293,19 @@
 		}
 	},
 	"hawks": {
+		"settings": {
+			"title": "Hawks Mode",
+			"description": "Hawks Mode unlocks the Renko triple-screen workflow: daily bias, capped trade count, method-3 stop audit, and dedicated coaching insights.",
+			"statusActive": "Active",
+			"statusInactive": "Inactive",
+			"activate": "Activate Hawks Mode",
+			"deactivate": "Deactivate Hawks Mode",
+			"confirmActivateTitle": "Activate Hawks Mode?",
+			"confirmActivateDescription": "While Hawks Mode is on, every trade you log must include a daily bias and Hawks payload. You can deactivate anytime.",
+			"confirmDeactivateTitle": "Deactivate Hawks Mode?",
+			"confirmDeactivateDescription": "Existing Hawks trades and audit history remain. New trades will use the default workflow.",
+			"loading": "Loading current mode…"
+		},
 		"actions": {
 			"modeStarted": "Hawks mode activated",
 			"modeAlreadyActive": "Hawks mode is already active",

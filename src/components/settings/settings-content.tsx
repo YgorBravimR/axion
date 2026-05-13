@@ -18,6 +18,7 @@ import { UserList } from "./user-list"
 import { ConditionList } from "./condition-list"
 import { IndicatorList } from "./indicator-list"
 import { BugReportsList } from "./bug-reports-list"
+import { HawksSettings } from "./hawks-settings"
 import type { AssetWithType } from "@/app/actions/assets.types"
 import type { AssetType, Timeframe } from "@/db/schema"
 import type { UserWithAccounts } from "@/app/actions/user-management.types"
@@ -32,6 +33,7 @@ import {
 	Filter,
 	Bug,
 	BarChart3,
+	Crosshair,
 } from "lucide-react"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { settingsGuide } from "@/components/ui/page-guide/guide-configs/settings"
@@ -53,7 +55,7 @@ const CLEAR_TAB_PARAMS = Object.fromEntries(
 	TAB_SPECIFIC_PARAMS.map((param) => [param, null])
 ) as Record<string, null>
 
-const BASE_TABS = ["profile"] as const
+const BASE_TABS = ["profile", "hawks"] as const
 const ADMIN_TABS = [
 	"account",
 	"tags",
@@ -73,6 +75,7 @@ interface SettingsContentProps {
 	usersWithAccounts?: UserWithAccounts[]
 	currentUserId?: string
 	indicatorGroups?: IndicatorGroupWithDefinitions[]
+	hawksModeActive?: boolean
 }
 
 export const SettingsContent = ({
@@ -83,6 +86,7 @@ export const SettingsContent = ({
 	usersWithAccounts = [],
 	currentUserId = "",
 	indicatorGroups = [],
+	hawksModeActive = false,
 }: SettingsContentProps) => {
 	const t = useTranslations("settings.tabs")
 	const urlParams = useUrlParams()
@@ -114,6 +118,10 @@ export const SettingsContent = ({
 					<TabsTrigger value="profile" className="gap-s-200 shrink-0">
 						<User className="h-4 w-4" aria-hidden="true" />
 						{t("profile")}
+					</TabsTrigger>
+					<TabsTrigger value="hawks" className="gap-s-200 shrink-0">
+						<Crosshair className="h-4 w-4" aria-hidden="true" />
+						{t("hawks")}
 					</TabsTrigger>
 					{isAdmin && (
 						<>
@@ -164,6 +172,12 @@ export const SettingsContent = ({
 
 			<AnimatedTabsContent value="profile">
 				{activeTab === "profile" && <UserProfileSettings />}
+			</AnimatedTabsContent>
+
+			<AnimatedTabsContent value="hawks">
+				{activeTab === "hawks" && (
+					<HawksSettings initialActive={hawksModeActive} />
+				)}
 			</AnimatedTabsContent>
 
 			{isAdmin && (
