@@ -18,7 +18,6 @@ import {
 } from "@/lib/csv-parsers/candle-header-mappings"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
-import type { RawCandleRow } from "@/lib/csv-parsers/candle-parser"
 import type { ActionResponse } from "@/types"
 import type {
 	CandleValidationResult,
@@ -44,12 +43,20 @@ const uuidSchema = z.string().uuid("Invalid UUID format")
  * @returns Validation result with parsed candles and metadata
  */
 export const validateCandleImport = async (
-	fileContent: string,
-	assetSymbol: string,
-	timeframeCode: string
+	formData: FormData
 ): Promise<ActionResponse<CandleValidationResult>> => {
 	const t = await getTranslations("candleImport")
 	try {
+		const file = formData.get("csv") as File | null
+		const assetSymbol = (formData.get("assetSymbol") as string | null) ?? ""
+		const timeframeCode = (formData.get("timeframeCode") as string | null) ?? ""
+
+		if (!file) {
+			return { status: "error", message: t("errors.csvParseFailed") }
+		}
+
+		const fileContent = await file.text()
+
 		// Step 1: Parse the CSV
 		const parseResult = parseCandleCSV(fileContent)
 
@@ -110,7 +117,7 @@ export const validateCandleImport = async (
 			(i) => !allowedKeys.has(i.key)
 		)
 
-		// Step 5: Return validation result
+		// Step 5: Return validation result — only flat scalars to avoid RSC nesting limits
 		return {
 			status: "success",
 			message: t("actions.validated", {
@@ -124,13 +131,10 @@ export const validateCandleImport = async (
 				timeframeId: matchedTimeframe.id,
 				timeframeName: matchedTimeframe.name,
 				rowCount: parseResult.candles.length,
-				dateRange: parseResult.dateRange,
-				detectedIndicators: parseResult.detectedIndicators,
-				registeredIndicators,
-				skippedIndicators,
-				errors: parseResult.errors,
-				warnings: parseResult.warnings,
-				candles: parseResult.candles,
+				dateFrom: parseResult.dateRange?.from.toISOString() ?? null,
+				dateTo: parseResult.dateRange?.to.toISOString() ?? null,
+				registeredIndicatorCount: registeredIndicators.length,
+				skippedIndicatorCount: skippedIndicators.length,
 			},
 		}
 	} catch (error) {
@@ -146,22 +150,25 @@ export const validateCandleImport = async (
 // ==========================================
 
 /**
- * Commits parsed candles to the database using bulk upsert.
+ * Re-parses CSV content and commits candles to the database using bulk upsert.
  * Processes in chunks of 1,000 rows for memory efficiency.
  * Filters indicator values through an allowlist of registered definitions.
+ * Accepts raw CSV text to avoid RSC serialization limits on large candle arrays.
  *
  * @param assetId - UUID of the target asset
  * @param timeframeId - UUID of the target timeframe
- * @param candles - Parsed candle rows from validateCandleImport
+ * @param csvContent - Raw CSV file content (re-parsed server-side)
  * @returns Total rows imported, newly registered indicators, and skipped indicators
  */
 export const commitCandleImport = async (
-	assetId: string,
-	timeframeId: string,
-	candles: RawCandleRow[]
+	formData: FormData
 ): Promise<ActionResponse<CandleImportResult>> => {
 	const t = await getTranslations("candleImport")
 	try {
+		const assetId = (formData.get("assetId") as string | null) ?? ""
+		const timeframeId = (formData.get("timeframeId") as string | null) ?? ""
+		const file = formData.get("csv") as File | null
+
 		// Step 1: Validate UUIDs
 		const assetIdResult = uuidSchema.safeParse(assetId)
 		if (!assetIdResult.success) {
@@ -173,11 +180,32 @@ export const commitCandleImport = async (
 			return { status: "error", message: t("errors.invalidTimeframeId") }
 		}
 
+		if (!file) {
+			return { status: "error", message: t("errors.csvParseFailed") }
+		}
+
+		// Step 2: Re-parse the CSV server-side — FormData transfers file as raw bytes,
+		// bypassing the RSC binary encoding that fails on large strings.
+		const csvContent = await file.text()
+		const parseResult = parseCandleCSV(csvContent)
+		if (!parseResult.success) {
+			return {
+				status: "error",
+				message: t("errors.csvParseFailed"),
+				errors: parseResult.errors.map((error) => ({
+					code: "PARSE_ERROR",
+					detail: `Row ${error.row}: [${error.field}] ${error.message}`,
+				})),
+			}
+		}
+
+		const candles = parseResult.candles
+
 		if (candles.length === 0) {
 			return { status: "error", message: t("errors.noCandlesToImport") }
 		}
 
-		// Step 2: Fetch registered indicator keys (allowlist)
+		// Step 3: Fetch registered indicator keys (allowlist)
 		const registeredKeys = await db.query.indicatorDefinitions.findMany({
 			where: eq(indicatorDefinitions.isActive, true),
 			columns: { key: true },
@@ -187,7 +215,7 @@ export const commitCandleImport = async (
 		// Track skipped keys
 		const skippedKeys = new Set<string>()
 
-		// Step 3: Insert candles in chunks
+		// Step 4: Insert candles in chunks
 		const CHUNK_SIZE = 1000
 
 		for (let i = 0; i < candles.length; i += CHUNK_SIZE) {
@@ -247,7 +275,7 @@ export const commitCandleImport = async (
 				})
 		}
 
-		// Step 4: Auto-register new indicators
+		// Step 5: Auto-register new indicators
 		const indicatorKeysInImport = new Set<string>()
 		for (const candle of candles) {
 			for (const key of Object.keys(candle.indicators)) {
@@ -308,7 +336,7 @@ export const commitCandleImport = async (
 			}
 		}
 
-		// Step 5: Upsert price data version
+		// Step 6: Upsert price data version
 		const existingVersion = await db.query.priceDataVersions.findFirst({
 			where: sql`${priceDataVersions.assetId} = ${assetId} AND ${priceDataVersions.timeframeId} = ${timeframeId}`,
 		})

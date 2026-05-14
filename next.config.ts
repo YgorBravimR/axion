@@ -5,11 +5,17 @@ import createNextIntlPlugin from "next-intl/plugin"
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts")
 
 const securityHeaders = [
-	{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+	{
+		key: "Strict-Transport-Security",
+		value: "max-age=63072000; includeSubDomains; preload",
+	},
 	{ key: "X-Frame-Options", value: "SAMEORIGIN" },
 	{ key: "X-Content-Type-Options", value: "nosniff" },
 	{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-	{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+	{
+		key: "Permissions-Policy",
+		value: "camera=(), microphone=(), geolocation=()",
+	},
 	{
 		key: "Content-Security-Policy",
 		value: [
@@ -33,6 +39,10 @@ const nextConfig: NextConfig = {
 	// Enable "use cache" directive + cacheTag/cacheLife for server-side caching
 	cacheComponents: true,
 	experimental: {
+		// 5m Renko CSVs can exceed 1MB — raise limit for candle import uploads
+		serverActions: {
+			bodySizeLimit: "5mb",
+		},
 		// Optimize package imports for better tree-shaking and faster dev boot
 		// recharts: ~300KB, lucide-react: ~2.8s dev cost without optimization
 		optimizePackageImports: ["recharts", "lucide-react"],

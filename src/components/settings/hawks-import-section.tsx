@@ -227,20 +227,13 @@ const RenkoCandleCard = () => {
 		if (!csvText) {
 			return
 		}
+		const fd = new FormData()
+		fd.append("csv", new Blob([csvText], { type: "text/csv" }), "data.csv")
+		fd.append("assetSymbol", assetSymbol)
+		fd.append("timeframeCode", timeframeCode)
 		startTransition(async () => {
-			const result = await validateCandleImport(
-				csvText,
-				assetSymbol,
-				timeframeCode
-			)
+			const result = await validateCandleImport(fd)
 			if (result.status === "success" && result.data) {
-				if (result.data.errors.length > 0) {
-					showToast(
-						"error",
-						t("validationErrors", { count: result.data.errors.length })
-					)
-					return
-				}
 				setValidation(result.data)
 				setPhase("validated")
 			} else {
@@ -250,15 +243,15 @@ const RenkoCandleCard = () => {
 	}, [csvText, assetSymbol, timeframeCode, showToast, t])
 
 	const handleCommit = useCallback(() => {
-		if (!validation) {
+		if (!validation || !csvText) {
 			return
 		}
+		const fd = new FormData()
+		fd.append("csv", new Blob([csvText], { type: "text/csv" }), "data.csv")
+		fd.append("assetId", validation.assetId)
+		fd.append("timeframeId", validation.timeframeId)
 		startTransition(async () => {
-			const result = await commitCandleImport(
-				validation.assetId,
-				validation.timeframeId,
-				validation.candles
-			)
+			const result = await commitCandleImport(fd)
 			if (result.status === "success" && result.data) {
 				setImported(result.data.totalRows)
 				showToast("success", t("success", { count: result.data.totalRows }))
@@ -279,11 +272,11 @@ const RenkoCandleCard = () => {
 		setValidation(null)
 	}, [])
 
-	const dateFrom = validation?.dateRange?.from
-		? new Date(validation.dateRange.from).toLocaleDateString()
+	const dateFrom = validation?.dateFrom
+		? new Date(validation.dateFrom).toLocaleDateString()
 		: null
-	const dateTo = validation?.dateRange?.to
-		? new Date(validation.dateRange.to).toLocaleDateString()
+	const dateTo = validation?.dateTo
+		? new Date(validation.dateTo).toLocaleDateString()
 		: null
 
 	return (
@@ -348,12 +341,12 @@ const RenkoCandleCard = () => {
 					<div className="gap-s-200 flex flex-wrap">
 						<span className="text-small text-txt-200">
 							{t("indicators", {
-								count: validation.registeredIndicators.length,
+								count: validation.registeredIndicatorCount,
 							})}
 						</span>
-						{validation.skippedIndicators.length > 0 && (
+						{validation.skippedIndicatorCount > 0 && (
 							<span className="text-small text-txt-300">
-								· {t("skipped", { count: validation.skippedIndicators.length })}
+								· {t("skipped", { count: validation.skippedIndicatorCount })}
 							</span>
 						)}
 					</div>

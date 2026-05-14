@@ -212,6 +212,20 @@ const KNOWN_INDICATOR_MAPPINGS: IndicatorMapping[] = [
 		groupKey: "percent",
 	},
 
+	// Hawks Renko — generic EMA columns in standalone 60m/15m CSVs
+	{
+		key: "mme27",
+		displayName: "MME 27",
+		csvHeader: "MME 27",
+		groupKey: "ema",
+	},
+	{
+		key: "mme55",
+		displayName: "MME 55",
+		csvHeader: "MME 55",
+		groupKey: "ema",
+	},
+
 	// Hawks Renko — multi-timeframe EMAs projected onto 5m bars by ProfitChart
 	{
 		key: "mme27_60m",
