@@ -205,17 +205,69 @@ export const commitCandleImport = async (
 			return { status: "error", message: t("errors.noCandlesToImport") }
 		}
 
-		// Step 3: Fetch registered indicator keys (allowlist)
+		// Step 3: Auto-register indicator definitions first — must happen before the
+		// allowlist fetch so that first-time imports store all indicator values.
+		const indicatorKeysInImport = new Set<string>()
+		for (const candle of candles) {
+			for (const key of Object.keys(candle.indicators)) {
+				indicatorKeysInImport.add(key)
+			}
+		}
+
+		const newIndicators: string[] = []
+		const skippedKeys = new Set<string>()
+
+		if (indicatorKeysInImport.size > 0) {
+			const allGroups = await db.query.indicatorGroups.findMany()
+			const groupKeyToId = new Map<string, string>()
+			for (const group of allGroups) {
+				groupKeyToId.set(group.key, group.id)
+			}
+
+			const indicatorValues = Array.from(indicatorKeysInImport).map((key) => {
+				const knownMapping = KNOWN_INDICATOR_MAPPINGS.find((m) => m.key === key)
+				return {
+					key,
+					displayName: knownMapping?.displayName ?? key,
+					groupId: knownMapping
+						? (groupKeyToId.get(knownMapping.groupKey) ?? null)
+						: null,
+					csvHeader: knownMapping?.csvHeader ?? null,
+				}
+			})
+
+			for (const indicator of indicatorValues) {
+				if (!indicator.groupId) {
+					skippedKeys.add(indicator.key)
+					continue
+				}
+
+				// eslint-disable-next-line no-await-in-loop -- sequential to avoid duplicate key races
+				const existing = await db.query.indicatorDefinitions.findFirst({
+					where: eq(indicatorDefinitions.key, indicator.key),
+				})
+
+				if (!existing) {
+					// eslint-disable-next-line no-await-in-loop -- sequential insert after existence check
+					await db.insert(indicatorDefinitions).values({
+						key: indicator.key,
+						displayName: indicator.displayName,
+						groupId: indicator.groupId,
+						csvHeader: indicator.csvHeader,
+					})
+					newIndicators.push(indicator.key)
+				}
+			}
+		}
+
+		// Step 4: Fetch updated allowlist — now includes any newly registered indicators
 		const registeredKeys = await db.query.indicatorDefinitions.findMany({
 			where: eq(indicatorDefinitions.isActive, true),
 			columns: { key: true },
 		})
 		const allowedKeys = new Set(registeredKeys.map((r) => r.key))
 
-		// Track skipped keys
-		const skippedKeys = new Set<string>()
-
-		// Step 4: Insert candles in chunks
+		// Step 5: Insert candles in chunks
 		const CHUNK_SIZE = 1000
 
 		for (let i = 0; i < candles.length; i += CHUNK_SIZE) {
@@ -273,67 +325,6 @@ export const commitCandleImport = async (
 						updatedAt: sql`NOW()`,
 					},
 				})
-		}
-
-		// Step 5: Auto-register new indicators
-		const indicatorKeysInImport = new Set<string>()
-		for (const candle of candles) {
-			for (const key of Object.keys(candle.indicators)) {
-				indicatorKeysInImport.add(key)
-			}
-		}
-
-		const newIndicators: string[] = []
-
-		if (indicatorKeysInImport.size > 0) {
-			// Build indicator definitions for all keys found in this import
-			// First, fetch all groups to resolve groupKey → groupId
-			const allGroups = await db.query.indicatorGroups.findMany()
-			const groupKeyToId = new Map<string, string>()
-			for (const group of allGroups) {
-				groupKeyToId.set(group.key, group.id)
-			}
-
-			const indicatorValues = Array.from(indicatorKeysInImport).map((key) => {
-				// Check if it's a known indicator from KNOWN_INDICATOR_MAPPINGS
-				const knownMapping = KNOWN_INDICATOR_MAPPINGS.find(
-					(mapping) => mapping.key === key
-				)
-
-				return {
-					key,
-					displayName: knownMapping?.displayName ?? key,
-					groupId: knownMapping
-						? (groupKeyToId.get(knownMapping.groupKey) ?? null)
-						: null,
-					csvHeader: knownMapping?.csvHeader ?? null,
-				}
-			})
-
-			// Upsert indicator definitions — skip on conflict (key is unique)
-			// Only auto-register indicators that have a resolved groupId (groupId is required)
-			for (const indicator of indicatorValues) {
-				if (!indicator.groupId) {
-					skippedKeys.add(indicator.key)
-					continue
-				}
-
-				// eslint-disable-next-line no-await-in-loop -- indicator definitions must be checked/inserted sequentially to avoid duplicate key races
-				const existing = await db.query.indicatorDefinitions.findFirst({
-					where: eq(indicatorDefinitions.key, indicator.key),
-				})
-
-				if (!existing) {
-					// eslint-disable-next-line no-await-in-loop -- sequential insert after existence check; parallelising would require upsert
-					await db.insert(indicatorDefinitions).values({
-						key: indicator.key,
-						displayName: indicator.displayName,
-						groupId: indicator.groupId,
-						csvHeader: indicator.csvHeader,
-					})
-					newIndicators.push(indicator.key)
-				}
-			}
 		}
 
 		// Step 6: Upsert price data version
