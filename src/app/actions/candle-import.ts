@@ -218,6 +218,22 @@ export const commitCandleImport = async (
 		const skippedKeys = new Set<string>()
 
 		if (indicatorKeysInImport.size > 0) {
+			// Seed known groups first — indicators require a groupId and groups may not
+			// exist on first import (seedIndicatorDefinitions was never called separately).
+			if (KNOWN_INDICATOR_GROUPS.length > 0) {
+				await db
+					.insert(indicatorGroups)
+					.values(
+						KNOWN_INDICATOR_GROUPS.map((g, i) => ({
+							key: g.key,
+							displayName: g.displayName,
+							description: g.description,
+							sortOrder: i,
+						}))
+					)
+					.onConflictDoNothing({ target: indicatorGroups.key })
+			}
+
 			const allGroups = await db.query.indicatorGroups.findMany()
 			const groupKeyToId = new Map<string, string>()
 			for (const group of allGroups) {
