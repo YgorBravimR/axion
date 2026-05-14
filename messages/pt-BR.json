@@ -4639,6 +4639,17 @@
 		"empty": {
 			"title": "Sem resultados",
 			"description": "Selecione um preset e execute um backtest para ver resultados"
+		},
+		"hawks": {
+			"name": "Hawks — Tripla Tela Renko",
+			"startTime": "Início da Janela",
+			"endTime": "Fim da Janela",
+			"indicatorKeys": "Chaves de Indicadores",
+			"indicatorKeysDesc": "Chaves armazenadas no JSONB do candle — devem corresponder ao mapeamento de importação do CSV.",
+			"ema27_60m_key": "MME 27 (60m)",
+			"ema55_60m_key": "MME 55 (60m)",
+			"ema27_15m_key": "MME 27 (15m)",
+			"macd_key": "MACD"
 		}
 	},
 	"optimize": {

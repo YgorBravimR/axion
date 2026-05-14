@@ -18,8 +18,10 @@ import { Play, RotateCcw } from "lucide-react"
 import { runBacktestAction } from "@/app/actions/backtest"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
+import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
 import { OrbEntrySection } from "./sections/orb-entry-section"
 import { DezkEntrySection } from "./sections/dezk-entry-section"
+import { HawksEntrySection } from "./sections/hawks-entry-section"
 import { StopProtectionSection } from "./sections/stop-protection-section"
 import { TargetsExitSection } from "./sections/targets-exit-section"
 import { SizingExecutionSection } from "./sections/sizing-execution-section"
@@ -29,7 +31,7 @@ import { BacktestTradesTable } from "./backtest-trades-table"
 import type { DataSourceInfo } from "@/types/candle"
 import type { BacktestResult, StrategyRecipe } from "@/types/backtest"
 
-const ALL_PRESETS = [...orbPresets, ...dezkPresets]
+const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
 
 interface BacktestContentProps {
 	dataSources: DataSourceInfo[]
@@ -98,6 +100,8 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			setRecipe(orbPresets[0])
 		} else if (type === "macd_wma_alignment") {
 			setRecipe(dezkPresets[0])
+		} else if (type === "hawks_triple_screen") {
+			setRecipe(hawksPresets[0])
 		}
 	}, [])
 
@@ -246,6 +250,9 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 								<SelectItem value="macd_wma_alignment">
 									{t("dezk.name")}
 								</SelectItem>
+								<SelectItem value="hawks_triple_screen">
+									{t("hawks.name")}
+								</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
@@ -357,6 +364,9 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 					)}
 					{recipe.entry.type === "macd_wma_alignment" && (
 						<DezkEntrySection recipe={recipe} onRecipeChange={setRecipe} />
+					)}
+					{recipe.entry.type === "hawks_triple_screen" && (
+						<HawksEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}
 
 					{/* Section 3: Stop & Protection */}

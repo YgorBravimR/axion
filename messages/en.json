@@ -4639,6 +4639,17 @@
 		"empty": {
 			"title": "No results yet",
 			"description": "Select a preset and run a backtest to see results"
+		},
+		"hawks": {
+			"name": "Hawks — Triple Screen Renko",
+			"startTime": "Entry Window Start",
+			"endTime": "Entry Window End",
+			"indicatorKeys": "Indicator Keys",
+			"indicatorKeysDesc": "Keys stored in candle JSONB — must match the CSV import mappings.",
+			"ema27_60m_key": "MME 27 (60m)",
+			"ema55_60m_key": "MME 55 (60m)",
+			"ema27_15m_key": "MME 27 (15m)",
+			"macd_key": "MACD"
 		}
 	},
 	"optimize": {

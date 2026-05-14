@@ -1,0 +1,43 @@
+import type { StrategyRecipe } from "@/types/backtest"
+
+/**
+ * Hawks triple-screen v0 preset.
+ *
+ * Entry: 5m Renko brick closing in bias direction + 60m EMA stack aligned + 15m EMA aligned + MACD > 0.
+ * Stop: 1 brick back (signal.stopReference = candle.open — Renko geometry).
+ * Target: 2R single exit (simple R-multiple off the 1-brick stop distance).
+ *
+ * requiredIndicators must match the keys stored in candle JSONB by the CSV import pipeline.
+ */
+const hawksV0: StrategyRecipe = {
+	presetId: "hawks_v0",
+	displayName: "Hawks v0 — Triple Screen",
+	entry: {
+		type: "hawks_triple_screen",
+		config: {
+			ema27_60m_key: "mme27_60m",
+			ema55_60m_key: "mme55_60m",
+			ema27_15m_key: "mme27_15m",
+			macd_key: "macd",
+			startTime: 930,
+			endTime: 1730,
+		},
+	},
+	stop: {
+		// points=0 activates signal.stopReference escape hatch — stop = candle.open = 1 brick back
+		initial: { type: "fixed_points", points: 0 },
+	},
+	target: {
+		type: "fixed_levels",
+		levels: [{ value: 2, mode: "r_multiple", exitPct: 100, label: "target1" }],
+		eodTime: 1730,
+	},
+	sizing: { type: "fixed_lots", lots: 1 },
+	reversal: { type: "none" },
+	slippageTicks: 0,
+	requiredIndicators: ["mme27_60m", "mme55_60m", "mme27_15m", "macd"],
+}
+
+const hawksPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [hawksV0]
+
+export { hawksPresets, hawksV0 }
