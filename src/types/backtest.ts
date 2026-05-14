@@ -11,6 +11,7 @@ type StrategyPresetId =
 	| "orb_test_2"
 	| "orb_test_3"
 	| "orb_test_4"
+	| "hawks_v0"
 	| "custom"
 
 // ═══════════════════════════════════════════════════════════════════
@@ -75,9 +76,22 @@ interface MACDWMAConfig {
 	endTime: number // 1630
 }
 
+// Hawks triple-screen: 5m brick + 15m EMA aligned + 60m EMA aligned + MACD direction.
+// Stop = 1 brick back, handled via signal.stopReference = candle.open (Renko geometry).
+// Indicator keys must match candle-header-mappings.ts and the candle JSONB.
+interface HawksTripleScreenConfig {
+	ema27_60m_key: string // default: "mme27_60m"
+	ema55_60m_key: string // default: "mme55_60m"
+	ema27_15m_key: string // default: "mme27_15m"
+	macd_key: string // default: "macd"
+	startTime: number // 930
+	endTime: number // 1730
+}
+
 type EntryModuleConfig =
 	| { type: "orb_breakout"; config: OrbEntryConfig }
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
+	| { type: "hawks_triple_screen"; config: HawksTripleScreenConfig }
 
 interface EntryModule {
 	init: (_config: OrbEntryConfig) => EntryState
@@ -476,6 +490,7 @@ export type {
 	EntryModuleConfig,
 	OrbEntryConfig,
 	MACDWMAConfig,
+	HawksTripleScreenConfig,
 	EntryModule,
 	// Stop
 	StopPhase,

@@ -41,27 +41,112 @@ const OHLC_HEADERS = new Set([
  */
 const KNOWN_INDICATOR_MAPPINGS: IndicatorMapping[] = [
 	// VWAP indicators
-	{ key: "vwap_m", displayName: "VWAP M", csvHeader: "VWAP M", groupKey: "vwap" },
-	{ key: "vwap_s", displayName: "VWAP S", csvHeader: "VWAP S", groupKey: "vwap" },
-	{ key: "vwap_d", displayName: "VWAP D", csvHeader: "VWAP D", groupKey: "vwap" },
+	{
+		key: "vwap_m",
+		displayName: "VWAP M",
+		csvHeader: "VWAP M",
+		groupKey: "vwap",
+	},
+	{
+		key: "vwap_s",
+		displayName: "VWAP S",
+		csvHeader: "VWAP S",
+		groupKey: "vwap",
+	},
+	{
+		key: "vwap_d",
+		displayName: "VWAP D",
+		csvHeader: "VWAP D",
+		groupKey: "vwap",
+	},
 
 	// Trava levels
-	{ key: "trava_0", displayName: "TRAVA 0", csvHeader: "TRAVA 0", groupKey: "trava" },
-	{ key: "trava_1", displayName: "TRAVA 1", csvHeader: "TRAVA 1", groupKey: "trava" },
-	{ key: "trava_2", displayName: "TRAVA 2", csvHeader: "TRAVA 2", groupKey: "trava" },
-	{ key: "trava_3", displayName: "TRAVA 3", csvHeader: "TRAVA 3", groupKey: "trava" },
-	{ key: "trava_4", displayName: "TRAVA 4", csvHeader: "TRAVA 4", groupKey: "trava" },
-	{ key: "trava_5", displayName: "TRAVA 5", csvHeader: "TRAVA 5", groupKey: "trava" },
-	{ key: "trava_neg1", displayName: "TRAVA -1", csvHeader: "TRAVA -1", groupKey: "trava" },
-	{ key: "trava_neg2", displayName: "TRAVA -2", csvHeader: "TRAVA -2", groupKey: "trava" },
-	{ key: "trava_neg3", displayName: "TRAVA -3", csvHeader: "TRAVA -3", groupKey: "trava" },
-	{ key: "trava_neg4", displayName: "TRAVA -4", csvHeader: "TRAVA -4", groupKey: "trava" },
-	{ key: "trava_neg5", displayName: "TRAVA -5", csvHeader: "TRAVA -5", groupKey: "trava" },
+	{
+		key: "trava_0",
+		displayName: "TRAVA 0",
+		csvHeader: "TRAVA 0",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_1",
+		displayName: "TRAVA 1",
+		csvHeader: "TRAVA 1",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_2",
+		displayName: "TRAVA 2",
+		csvHeader: "TRAVA 2",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_3",
+		displayName: "TRAVA 3",
+		csvHeader: "TRAVA 3",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_4",
+		displayName: "TRAVA 4",
+		csvHeader: "TRAVA 4",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_5",
+		displayName: "TRAVA 5",
+		csvHeader: "TRAVA 5",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_neg1",
+		displayName: "TRAVA -1",
+		csvHeader: "TRAVA -1",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_neg2",
+		displayName: "TRAVA -2",
+		csvHeader: "TRAVA -2",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_neg3",
+		displayName: "TRAVA -3",
+		csvHeader: "TRAVA -3",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_neg4",
+		displayName: "TRAVA -4",
+		csvHeader: "TRAVA -4",
+		groupKey: "trava",
+	},
+	{
+		key: "trava_neg5",
+		displayName: "TRAVA -5",
+		csvHeader: "TRAVA -5",
+		groupKey: "trava",
+	},
 
 	// Strategy levels
-	{ key: "entrada", displayName: "ENTRADA", csvHeader: "ENTRADA", groupKey: "strategy_level" },
-	{ key: "stop", displayName: "STOP", csvHeader: "STOP", groupKey: "strategy_level" },
-	{ key: "alvo_final", displayName: "ALVO FINAL", csvHeader: "ALVO FINAL", groupKey: "strategy_level" },
+	{
+		key: "entrada",
+		displayName: "ENTRADA",
+		csvHeader: "ENTRADA",
+		groupKey: "strategy_level",
+	},
+	{
+		key: "stop",
+		displayName: "STOP",
+		csvHeader: "STOP",
+		groupKey: "strategy_level",
+	},
+	{
+		key: "alvo_final",
+		displayName: "ALVO FINAL",
+		csvHeader: "ALVO FINAL",
+		groupKey: "strategy_level",
+	},
 	{
 		key: "breakeven_trailing",
 		displayName: "BREAKEVEN + TRAILING STOP",
@@ -90,15 +175,83 @@ const KNOWN_INDICATOR_MAPPINGS: IndicatorMapping[] = [
 	},
 
 	// Percent levels
-	{ key: "percent_1", displayName: "Percent 1", csvHeader: "Percent 1", groupKey: "percent" },
-	{ key: "percent_neg1", displayName: "Percent -1", csvHeader: "Percent -1", groupKey: "percent" },
-	{ key: "percent_2", displayName: "Percent 2", csvHeader: "Percent 2", groupKey: "percent" },
-	{ key: "percent_3", displayName: "Percent 3", csvHeader: "Percent 3", groupKey: "percent" },
-	{ key: "percent_neg2", displayName: "Percent -2", csvHeader: "Percent -2", groupKey: "percent" },
-	{ key: "percent_neg3", displayName: "Percent -3", csvHeader: "Percent -3", groupKey: "percent" },
+	{
+		key: "percent_1",
+		displayName: "Percent 1",
+		csvHeader: "Percent 1",
+		groupKey: "percent",
+	},
+	{
+		key: "percent_neg1",
+		displayName: "Percent -1",
+		csvHeader: "Percent -1",
+		groupKey: "percent",
+	},
+	{
+		key: "percent_2",
+		displayName: "Percent 2",
+		csvHeader: "Percent 2",
+		groupKey: "percent",
+	},
+	{
+		key: "percent_3",
+		displayName: "Percent 3",
+		csvHeader: "Percent 3",
+		groupKey: "percent",
+	},
+	{
+		key: "percent_neg2",
+		displayName: "Percent -2",
+		csvHeader: "Percent -2",
+		groupKey: "percent",
+	},
+	{
+		key: "percent_neg3",
+		displayName: "Percent -3",
+		csvHeader: "Percent -3",
+		groupKey: "percent",
+	},
+
+	// Hawks Renko — multi-timeframe EMAs projected onto 5m bars by ProfitChart
+	{
+		key: "mme27_60m",
+		displayName: "MME 27 60m",
+		csvHeader: "MME27 60m",
+		groupKey: "ema",
+	},
+	{
+		key: "mme55_60m",
+		displayName: "MME 55 60m",
+		csvHeader: "MME55 60m",
+		groupKey: "ema",
+	},
+	{
+		key: "mme27_15m",
+		displayName: "MME 27 15m",
+		csvHeader: "MME27 15m",
+		groupKey: "ema",
+	},
+	{
+		key: "mme55_15m",
+		displayName: "MME 55 15m",
+		csvHeader: "MME55 15m",
+		groupKey: "ema",
+	},
+	{ key: "macd", displayName: "MACD", csvHeader: "MACD", groupKey: "macd" },
+	{
+		key: "macd_crescente",
+		displayName: "MACD Crescente",
+		csvHeader: "MACD CRESCENTE",
+		groupKey: "macd",
+	},
 
 	// Daily reference levels
-	{ key: "ajuste", displayName: "Ajuste", csvHeader: "Ajuste", groupKey: "daily_reference" },
+	{
+		key: "ajuste",
+		displayName: "Ajuste",
+		csvHeader: "Ajuste",
+		groupKey: "daily_reference",
+	},
 	{
 		key: "prev_day_close",
 		displayName: "Fechamento dia anterior",
@@ -124,8 +277,16 @@ const KNOWN_INDICATOR_MAPPINGS: IndicatorMapping[] = [
  * Each entry defines a logical grouping for indicator mappings.
  */
 const KNOWN_INDICATOR_GROUPS: IndicatorGroupMeta[] = [
-	{ key: "vwap", displayName: "VWAPs", description: "Volume-weighted average prices at different periods" },
-	{ key: "trava", displayName: "Travas", description: "Offset levels from settlement price" },
+	{
+		key: "vwap",
+		displayName: "VWAPs",
+		description: "Volume-weighted average prices at different periods",
+	},
+	{
+		key: "trava",
+		displayName: "Travas",
+		description: "Offset levels from settlement price",
+	},
 	{
 		key: "strategy_level",
 		displayName: "Niveis de Estrategia",
@@ -136,11 +297,26 @@ const KNOWN_INDICATOR_GROUPS: IndicatorGroupMeta[] = [
 		displayName: "Indicadores Tecnicos",
 		description: "Moving averages and other technical indicators",
 	},
-	{ key: "percent", displayName: "Percentuais", description: "Percentage offset levels from settlement" },
+	{
+		key: "percent",
+		displayName: "Percentuais",
+		description: "Percentage offset levels from settlement",
+	},
 	{
 		key: "daily_reference",
 		displayName: "Referencia Diaria",
 		description: "Previous day OHLC and settlement",
+	},
+	{
+		key: "ema",
+		displayName: "Medias Moveis",
+		description:
+			"Exponential moving averages (including multi-timeframe Hawks EMAs)",
+	},
+	{
+		key: "macd",
+		displayName: "MACD",
+		description: "MACD histogram and slope indicators",
 	},
 ]
 
@@ -192,4 +368,10 @@ const slugifyHeader = (header: string): string =>
 		.replace(/^_|_$/g, "")
 
 export type { IndicatorGroupMeta, IndicatorMapping }
-export { KNOWN_INDICATOR_GROUPS, KNOWN_INDICATOR_MAPPINGS, OHLC_HEADERS, resolveIndicatorKey, slugifyHeader }
+export {
+	KNOWN_INDICATOR_GROUPS,
+	KNOWN_INDICATOR_MAPPINGS,
+	OHLC_HEADERS,
+	resolveIndicatorKey,
+	slugifyHeader,
+}

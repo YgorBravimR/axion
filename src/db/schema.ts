@@ -2211,6 +2211,29 @@ export const tradeStopAuditEvents = pgTable(
 	]
 )
 
+// ═══════════════════════════════════════════════════════════════════
+// Hawks Backtesting — Renko weekly brick sizes
+// ═══════════════════════════════════════════════════════════════════
+
+// One row per ISO week. effectiveDate = Monday of that week (ISO-safe anchor;
+// avoids the ISO week-year edge case where week 1 can start in December).
+// Upserted from the master CSV (hawk-renkos(Renkos).csv) via importHawksRenkoSizes.
+export const hawksRenkoSizes = pgTable(
+	"hawks_renko_sizes",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		effectiveDate: date("effective_date").notNull().unique(),
+		weekNumber: smallint("week_number").notNull(),
+		size5m: smallint("size_5m").notNull(),
+		size15m: smallint("size_15m").notNull(),
+		size60m: smallint("size_60m").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [uniqueIndex("hawks_renko_sizes_date_idx").on(table.effectiveDate)]
+)
+
 // ==========================================
 // RELATIONS
 // ==========================================
@@ -2851,3 +2874,6 @@ export type NewDailyHawksBias = typeof dailyHawksBias.$inferInsert
 
 export type TradeStopAuditEvent = typeof tradeStopAuditEvents.$inferSelect
 export type NewTradeStopAuditEvent = typeof tradeStopAuditEvents.$inferInsert
+
+export type HawksRenkoSize = typeof hawksRenkoSizes.$inferSelect
+export type NewHawksRenkoSize = typeof hawksRenkoSizes.$inferInsert

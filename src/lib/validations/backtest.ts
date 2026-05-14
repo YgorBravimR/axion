@@ -29,18 +29,41 @@ const macdWmaConfigSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════════════════════
+// Hawks Triple-Screen Entry Config
+// ═══════════════════════════════════════════════════════════════════
+
+const hawksTripleScreenConfigSchema = z.object({
+	ema27_60m_key: z.string().min(1),
+	ema55_60m_key: z.string().min(1),
+	ema27_15m_key: z.string().min(1),
+	macd_key: z.string().min(1),
+	startTime: z.number().int().min(800).max(1200),
+	endTime: z.number().int().min(800).max(1800),
+})
+
+// ═══════════════════════════════════════════════════════════════════
 // Stop Config
 // ═══════════════════════════════════════════════════════════════════
 
 const initialStopConfigSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("pct_range"), pct: z.number().min(1).max(100) }),
-	z.object({ type: z.literal("fixed_points"), points: z.number().min(1).max(10000) }),
-	z.object({ type: z.literal("full_range"), ticksBuffer: z.number().int().min(0).max(50) }),
+	// min(0) allows points=0, activating the signal.stopReference escape hatch (used by Hawks)
+	z.object({
+		type: z.literal("fixed_points"),
+		points: z.number().min(0).max(10000),
+	}),
+	z.object({
+		type: z.literal("full_range"),
+		ticksBuffer: z.number().int().min(0).max(50),
+	}),
 ])
 
 const breakevenConfigSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("on_partial") }),
-	z.object({ type: z.literal("on_pct_risk"), triggerPct: z.number().min(1).max(100) }),
+	z.object({
+		type: z.literal("on_pct_risk"),
+		triggerPct: z.number().min(1).max(100),
+	}),
 ])
 
 const trailingConfigSchema = z.discriminatedUnion("type", [
@@ -116,11 +139,25 @@ const reversalConfigSchema = z.discriminatedUnion("type", [
 // ═══════════════════════════════════════════════════════════════════
 
 const strategyRecipeSchema = z.object({
-	presetId: z.enum(["orb_test_1", "orb_test_2", "orb_test_3", "orb_test_4", "custom"]),
+	presetId: z.enum([
+		"orb_test_1",
+		"orb_test_2",
+		"orb_test_3",
+		"orb_test_4",
+		"hawks_v0",
+		"custom",
+	]),
 	displayName: z.string().min(1),
 	entry: z.discriminatedUnion("type", [
 		z.object({ type: z.literal("orb_breakout"), config: orbEntryConfigSchema }),
-		z.object({ type: z.literal("macd_wma_alignment"), config: macdWmaConfigSchema }),
+		z.object({
+			type: z.literal("macd_wma_alignment"),
+			config: macdWmaConfigSchema,
+		}),
+		z.object({
+			type: z.literal("hawks_triple_screen"),
+			config: hawksTripleScreenConfigSchema,
+		}),
 	]),
 	stop: stopConfigSchema,
 	target: targetConfigSchema,
@@ -173,6 +210,7 @@ const defaultTargetConfig = {
 
 export {
 	orbEntryConfigSchema,
+	hawksTripleScreenConfigSchema,
 	stopConfigSchema,
 	targetConfigSchema,
 	sizingConfigSchema,
