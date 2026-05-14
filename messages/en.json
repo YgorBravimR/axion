@@ -5367,7 +5367,41 @@
 			"confirmActivateDescription": "While Hawks Mode is on, every trade you log must include a daily bias and Hawks payload. You can deactivate anytime.",
 			"confirmDeactivateTitle": "Deactivate Hawks Mode?",
 			"confirmDeactivateDescription": "Existing Hawks trades and audit history remain. New trades will use the default workflow.",
-			"loading": "Loading current mode…"
+			"loading": "Loading current mode…",
+			"import": {
+				"sectionTitle": "Import Data",
+				"sectionDescription": "Upload CSV files exported from ProfitChart to import Renko brick sizes and candle data.",
+				"sizes": {
+					"title": "Renko Brick Sizes",
+					"description": "Weekly Renko brick sizes used by the triple-screen strategy. CSV exported from ProfitChart.",
+					"dropHint": "Drop a CSV file here or click to browse",
+					"button": "Import Sizes",
+					"importing": "Importing…",
+					"success": "{count} sizes imported",
+					"invalidFile": "Please select a CSV file",
+					"errorFallback": "Import failed"
+				},
+				"candles": {
+					"title": "Renko Candle Data",
+					"description": "Renko candle CSV with indicators (MME 27, MME 55, MACD). Required for Hawks backtesting.",
+					"assetLabel": "Asset",
+					"assetPlaceholder": "e.g. WIN",
+					"timeframeLabel": "Timeframe",
+					"timeframePlaceholder": "e.g. 5m",
+					"dropHint": "Drop a CSV file here or click to browse",
+					"validateButton": "Validate",
+					"validating": "Validating…",
+					"validationErrors": "{count} validation errors found",
+					"rowCount": "{count} candles",
+					"indicators": "{count} indicators",
+					"skipped": "{count} skipped",
+					"importButton": "Import",
+					"importing": "Importing…",
+					"success": "{count} rows imported",
+					"invalidFile": "Please select a CSV file",
+					"errorFallback": "Import failed"
+				}
+			}
 		},
 		"actions": {
 			"modeStarted": "Hawks mode activated",

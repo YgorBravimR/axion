@@ -5367,7 +5367,41 @@
 			"confirmActivateDescription": "Com o Modo Hawks ligado, todo trade registrado precisa de viés diário e payload Hawks. Você pode desativar a qualquer momento.",
 			"confirmDeactivateTitle": "Desativar o Modo Hawks?",
 			"confirmDeactivateDescription": "Os trades e auditorias Hawks já registrados permanecem. Novos trades voltam ao fluxo padrão.",
-			"loading": "Carregando modo atual…"
+			"loading": "Carregando modo atual…",
+			"import": {
+				"sectionTitle": "Importar Dados",
+				"sectionDescription": "Faça upload de arquivos CSV exportados do ProfitChart para importar tamanhos de brick Renko e dados de candles.",
+				"sizes": {
+					"title": "Tamanhos de Brick Renko",
+					"description": "Tamanhos semanais de brick Renko usados pela estratégia triple-screen. CSV exportado do ProfitChart.",
+					"dropHint": "Arraste um arquivo CSV aqui ou clique para selecionar",
+					"button": "Importar Tamanhos",
+					"importing": "Importando…",
+					"success": "{count} tamanhos importados",
+					"invalidFile": "Selecione um arquivo CSV",
+					"errorFallback": "Falha na importação"
+				},
+				"candles": {
+					"title": "Dados de Candles Renko",
+					"description": "CSV de candles Renko com indicadores (MME 27, MME 55, MACD). Necessário para backtesting Hawks.",
+					"assetLabel": "Ativo",
+					"assetPlaceholder": "ex: WIN",
+					"timeframeLabel": "Timeframe",
+					"timeframePlaceholder": "ex: 5m",
+					"dropHint": "Arraste um arquivo CSV aqui ou clique para selecionar",
+					"validateButton": "Validar",
+					"validating": "Validando…",
+					"validationErrors": "{count} erros de validação encontrados",
+					"rowCount": "{count} candles",
+					"indicators": "{count} indicadores",
+					"skipped": "{count} ignorados",
+					"importButton": "Importar",
+					"importing": "Importando…",
+					"success": "{count} linhas importadas",
+					"invalidFile": "Selecione um arquivo CSV",
+					"errorFallback": "Falha na importação"
+				}
+			}
 		},
 		"actions": {
 			"modeStarted": "Modo Hawks ativado",
