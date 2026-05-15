@@ -37,7 +37,7 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 The items that earn priority over everything else in this file. Each is linked to its full entry below.
 
-1. **Strategy versioning v1** — make strategies immutable once a trade references them; fork-to-v2 UX preserves "what did I believe at execution time" (Manifesto follow-ups). Depends on the now-landed `trade_conditions` junction.
+1. **Strategy versioning v1 — UX surface (Phase D)** — expose the shipped versioning layer in the playbook UI: version dropdown, fork-to-v2 button, per-version scorecard, dashboard cohort-split (Manifesto follow-ups).
 2. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
 3. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
 4. **Encryption archive** — rip dormant field-level encryption stack threaded through ~50 files; touches PROTECTED paths so wants its own session (Test coverage section).
