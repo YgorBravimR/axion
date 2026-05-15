@@ -2,6 +2,38 @@
 
 ---
 
+## [BUG-2026-05-15] Hawks backtest stop reference was 1 brick back instead of 2 — R-multiples silently inflated 2×
+
+**Severity:** High (silent correctness) | **Affected:** `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/lib/backtest/engine.ts`, `src/lib/backtest/presets/hawks-presets.ts`, `src/types/backtest.ts`, `src/__tests__/lib/backtest/hawks-engine.test.ts`
+
+**Cause:** The Hawks v0 entry module set `signal.stopReference = candle.open` for both long and short signals. The author's mental model was "Renko geometry: open = previous brick's close = 1 brick back, no lookup needed." But the Hawks methodology defines 1R as **2 Renko boxes against** — geometrically the price distance to "one reversal Renko closing against" is two brick bodies (1 body to retrace the entry brick + 1 body to print the reversal brick). The implementation captured half the intended risk.
+
+**Effect:** Every Hawks backtest run since v0 shipped:
+
+- Reported R-multiples that were **2× inflated** (e.g. a "1.7R win" was actually 0.85R of true Hawks risk).
+- Sized positions **2× too large** under monetary-risk sizing — stop distance flows into `monetary-risk.ts:16` as `floor(riskAmountCents / (stopDistance × valuePerPointCents))`; doubling the stop halves the lots.
+- Hit-rate for `r_multiple` targets was unaffected (the multiplier scales with whatever stop we feed in), but the _interpretation_ was wrong: "2R target" was effectively 4 brick bodies, not the methodology's true 2R.
+
+Real-trade journal data was NOT corrupted: `tradeHawksMetadata` stores only categorical conditions (vwapRespected, ajusteRespected, scenarioId, biasAtEntry, etc.), and trade R-multiples on real trades come from user-entered entry/stop/exit on the `trades` table — methodology code never wrote there.
+
+**Solution:**
+
+1. Changed `signal.stopReference` in `hawks-triple-screen.ts` from `candle.open` to `2 * candle.open - candle.close` for both long and short (symmetric: long → bullish brick → formula yields stop below entry; short → bearish brick → formula yields stop above entry). One brick body below (or above) the entry brick's open = the 2-brick distance from the entry close.
+2. Added `engineVersion?: string` to `BacktestResult`. Engine stamps `"hawks-v0.2"` on every Hawks backtest result so cached screenshots/exports remain traceable to the math that produced them. No DB migration needed because backtest results are ephemeral (no `backtestResults` table).
+3. Updated all narrative comments: entry-module docstring, preset docstring + inline `points=0` comment, `HawksTripleScreenConfig` JSDoc in `types/backtest.ts`. All now describe "Stop = 2 bricks back, Hawks 1R = 2 Renko".
+4. Re-baselined the two `stopReference` assertions in `hawks-engine.test.ts` (long: `129950 = 2·130000 − 130050`; short: `130100 = 2·130050 − 130000`).
+
+**Prevention:**
+
+- **Methodology constants in entry modules, not in engine.** The bug lived in one place — the entry module's signal construction — exactly because we put Hawks-specific stop logic there. Resist the temptation to push it into shared engine code; the engine's `r_multiple` math correctly scales with whatever stop the entry module names.
+- **Doc the geometric derivation alongside the formula.** The original comment said "open = prev brick close = 1 brick back" — technically true but answered a different question. The corrected comment names the Hawks 1R = 2 Renko convention so a future reader sees what the formula is enforcing, not just what it computes.
+- **R vs Renko terminology is a footgun**: 1R = 1 risk unit (= the stop distance, methodology-dependent); 1 Renko = 1 brick (the chart primitive). In Hawks specifically, 1R = 2 Renko. Other methodologies may pick other ratios. The engine and shared types stay R-agnostic; only the methodology entry module knows the conversion.
+- **Engine version stamping is now available** for any future methodology revision: bump the stamped string and the UI can warn on stale exports without us needing a migration each time.
+
+**Related Files:** `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/lib/backtest/engine.ts`, `src/lib/backtest/presets/hawks-presets.ts`, `src/types/backtest.ts`, `src/__tests__/lib/backtest/hawks-engine.test.ts`
+
+---
+
 ## [BUG-2026-05-13] New accounts cannot create annual plans — capital not initialized
 
 **Severity:** High | **Affected:** `src/components/fractal-plan/yearly-plan-editor.tsx`, `src/components/fractal-plan/cockpit/yearly-plan-slideover.tsx`, `src/components/fractal-plan/cockpit/setup-summary-card.tsx`, `src/app/actions/accounts.ts`

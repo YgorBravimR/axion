@@ -142,3 +142,43 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Recognise it**: when you reach for `text-trade-buy`, ask: "am I painting an amount of money the user could have made or lost?". If no, you want the verdict triad.
 - **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` (Pattern A + B); `docs/scans/2026-05-13-impeccable-settings-hawks.md` (Phase 3d).
 - **Date logged**: 2026-05-13.
+
+---
+
+## CSV Import / Hawks Candle Data
+
+### ProfitChart 5m CSV uses `CANDLE` for candle index, not `Contador de Candles`
+
+- **What**: The Hawks 5m candle CSV exported from ProfitChart names the candle-index column `CANDLE`, not `Contador de Candles`. The parser only recognized the long Portuguese form. As a result `candleIndex` was always `null`. Because the DB upsert conflict key includes `candle_index`, and `NULL != NULL` in PostgreSQL, every re-import created duplicate rows instead of updating existing ones — producing 18,772 ghost rows for 4,957 unique candles.
+- **What to do**: The parser (`src/lib/csv-parsers/candle-parser.ts`) now recognizes `"candle"` (normalized lowercase) as a `candleIndex` synonym. If adding support for new ProfitChart CSV exports, always check the header names against the actual file — they vary by export template.
+- **Source**: `src/lib/csv-parsers/candle-parser.ts` (`classifyOhlcHeader`), `src/lib/csv-parsers/candle-header-mappings.ts` (`OHLC_HEADERS`).
+- **Date logged**: 2026-05-14.
+
+### Large CSV → Server Action fails with "Maximum array nesting exceeded"
+
+- **What**: Passing a large CSV string (>~200KB) directly as a Server Action argument triggers RSC binary encoding, which chunks the string into a deeply nested array structure that exceeds React's nesting limit. The error is `"Maximum array nesting exceeded"`.
+- **What to do**: Pass the CSV as a `File` inside `FormData` instead. `FormData` is sent as raw multipart HTTP, bypassing RSC encoding entirely. The server action receives it as `formData.get("csv") as File` and calls `.text()` to read the content. Also requires `experimental.serverActions.bodySizeLimit: "5mb"` in `next.config.ts` for files over the default 1MB limit.
+- **Source**: `src/app/actions/candle-import.ts`, `src/components/settings/hawks-import-section.tsx`.
+- **Date logged**: 2026-05-14.
+
+---
+
+## Backtest / Hawks methodology
+
+### Hawks 1R = 2 Renko boxes — don't conflate risk-units with brick-counts
+
+- **What**: In Hawks methodology, `1R` (one risk unit = the stop distance) equals **2 Renko brick bodies**, not 1. The stop fires when one Renko brick closes against entry; the price distance from entry (= entry brick close) to that level is `2·(R−1) + 1` ticks ≈ two brick bodies. The Hawks v0 engine originally set `stopReference = candle.open` (= 1 brick body), which silently halved the stop and inflated reported R-multiples 2×. Fixed 2026-05-15 to `2 * candle.open - candle.close`.
+- **What to do**: If you touch any Hawks engine module, target module, R-multiple display, or scorecard analytics, remember R is methodology-defined. The shared backtest engine's `r_multiple` target mode scales with whatever `stopReference` the entry module produces — keep methodology-specific stop logic inside the entry module, never in shared engine code. If a future methodology revises the R definition again, bump `BacktestResult.engineVersion` (currently `"hawks-v0.2"`) and let the UI surface the version on cached results.
+- **Source**: `src/lib/backtest/modules/entry/hawks-triple-screen.ts`; post-mortem `docs/postMorten/backend.md` [BUG-2026-05-15].
+- **Date logged**: 2026-05-15.
+
+---
+
+## UI Components / react-day-picker
+
+### react-day-picker v9: first click in range mode sets `to = from`, not `to = undefined`
+
+- **What**: In v8, clicking the first date in `mode="range"` called `onSelect({ from: date, to: undefined })`. In v9.x it calls `onSelect({ from: date, to: date })` — same date for both. Any guard like `if (range?.from && range?.to) { close() }` fires immediately on first click, making it impossible to pick a range.
+- **What to do**: Check for a _completed_ range by comparing timestamps: `range.from.getTime() !== range.to.getTime()`. Equal timestamps = first click / in-progress. Different timestamps = genuine range selected. Also combine with Radix `e.preventDefault()` in `onInteractOutside` to block outside-click dismissal during mid-selection.
+- **Source**: `src/components/ui/date-range-picker.tsx` (`handleSelect`). Post-mortem: `docs/postMorten/frontend.md` [BUG-2026-05-14].
+- **Date logged**: 2026-05-14.

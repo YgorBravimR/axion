@@ -1,11 +1,11 @@
 import type { StrategyRecipe } from "@/types/backtest"
 
 /**
- * Hawks triple-screen v0 preset.
+ * Hawks triple-screen v0 preset (engine math v0.2).
  *
  * Entry: 5m Renko brick closing in bias direction + 60m EMA stack aligned + 15m EMA aligned + MACD > 0.
- * Stop: 1 brick back (signal.stopReference = candle.open — Renko geometry).
- * Target: 2R single exit (simple R-multiple off the 1-brick stop distance).
+ * Stop: 2 bricks back, Hawks 1R = 2 Renko (signal.stopReference = 2·open − close).
+ * Target: 2R single exit (R-multiple off the corrected 2-brick stop distance).
  *
  * requiredIndicators must match the keys stored in candle JSONB by the CSV import pipeline.
  */
@@ -24,7 +24,7 @@ const hawksV0: StrategyRecipe = {
 		},
 	},
 	stop: {
-		// points=0 activates signal.stopReference escape hatch — stop = candle.open = 1 brick back
+		// points=0 activates signal.stopReference escape hatch — stop = 2·open − close = 2 bricks back
 		initial: { type: "fixed_points", points: 0 },
 	},
 	target: {

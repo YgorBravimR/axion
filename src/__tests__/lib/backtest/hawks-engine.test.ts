@@ -59,7 +59,7 @@ describe("Hawks triple-screen — long entry", () => {
 		expect(state.doneForDay).toBe(true)
 	})
 
-	it("sets stopReference to candle.open — Renko 1-brick-back geometry", () => {
+	it("sets stopReference 2 bricks back — Hawks 1R = 2 Renko (2·open − close)", () => {
 		const candle = makeCandle({ open: 130000, close: 130050 })
 		const { signal } = processHawksCandle(
 			candle,
@@ -69,7 +69,8 @@ describe("Hawks triple-screen — long entry", () => {
 			DEFAULT_CONFIG
 		)
 
-		expect(signal!.stopReference).toBe(130000) // == candle.open
+		// 2 * 130000 - 130050 = 129950 (one brick body below the entry brick's open)
+		expect(signal!.stopReference).toBe(129950)
 	})
 
 	it("entry price is candle.close", () => {
@@ -109,7 +110,8 @@ describe("Hawks triple-screen — short entry", () => {
 		)
 
 		expect(signal!.direction).toBe("short")
-		expect(signal!.stopReference).toBe(130050) // candle.open
+		// 2 * 130050 - 130000 = 130100 (one brick body above the entry brick's open)
+		expect(signal!.stopReference).toBe(130100)
 	})
 })
 

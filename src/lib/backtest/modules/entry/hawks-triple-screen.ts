@@ -6,7 +6,7 @@ import type {
 import type { CandleRow } from "@/types/candle"
 
 /**
- * Hawks triple-screen entry module (v0 foundation).
+ * Hawks triple-screen entry module (v0.2 — corrected stop geometry).
  *
  * Entry conditions (all must be true):
  *   1. Bullish/bearish Renko brick (close > open / close < open)
@@ -14,10 +14,13 @@ import type { CandleRow } from "@/types/candle"
  *   3. 15m trend aligned: price > MME27_15m (long) or price < MME27_15m (short)
  *   4. MACD > 0 (long) or MACD < 0 (short)
  *
- * Stop: signal.stopReference = candle.open
- *   Renko geometry: open = previous brick's close = exactly 1 brick back.
- *   The engine's stop module reads this via the fixed_points { points: 0 } escape hatch
- *   in initial-stops.ts:16.
+ * Stop: signal.stopReference = 2 * candle.open - candle.close
+ *   Hawks methodology: stop fires when one Renko brick closes against the entry direction.
+ *   Geometrically the distance from entry (= brick close) to that reversal-close level is
+ *   "2 brick bodies" (1 body retrace + 1 body reversal). That is the Hawks definition of 1R.
+ *   Formula: 1 brick body below the entry brick's open = candle.open - (candle.close - candle.open) = 2·open - close.
+ *   Symmetric for short (open > close, formula yields a price above entry).
+ *   The engine's stop module reads this via the fixed_points { points: 0 } escape hatch in initial-stops.ts:16.
  *
  * One entry per day maximum.
  */
@@ -95,8 +98,8 @@ const processHawksCandle = (
 			signal: {
 				direction: "long",
 				price: candle.close,
-				// Renko geometry: open = prev brick close = 1-brick-back stop (exact, no lookup needed)
-				stopReference: candle.open,
+				// Hawks 1R = 2 brick bodies: one body below the entry brick's open
+				stopReference: 2 * candle.open - candle.close,
 				label: `Hawks Long triple-screen @ ${ctx.brtHHMM}`,
 			},
 		}
@@ -114,7 +117,8 @@ const processHawksCandle = (
 			signal: {
 				direction: "short",
 				price: candle.close,
-				stopReference: candle.open,
+				// Symmetric for short: open > close, formula yields stop above entry
+				stopReference: 2 * candle.open - candle.close,
 				label: `Hawks Short triple-screen @ ${ctx.brtHHMM}`,
 			},
 		}

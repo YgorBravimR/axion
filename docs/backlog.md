@@ -292,6 +292,87 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
 
+### Renko-native data pipeline (P1 for Hawks — full architecture spec)
+
+- **What**: Replace ProfitChart-dependency for indicator computation with a self-contained pipeline: (1) import raw 1m OHLC bars from ProfitChart CSV (new import format, different from current Renko CSV), (2) generate three brick sets per week using `hawksRenkoSizes.size5m/size15m/size60m`, (3) compute indicators on generated bricks, (4) cross-TF join by opening timestamp.
+- **Why**: Currently the backtest reads pre-computed Renko bricks + indicators from ProfitChart's CSV export. The `hawksRenkoSizes` table stores weekly R calibration but is not connected to the backtest engine. Full Renko-native unlocks any historical period, any R configuration, and removes ProfitChart as a hard dependency for backtesting.
+- **Architecture** (full spec — confirmed with Ygor 2026-05-14):
+  ```
+  ProfitChart 1m OHLC export (new import format)
+    → rawBars table (asset, timestamp, OHLC)
+    → RenkoBrickGenerator (reads hawksRenkoSizes.size5m/15m/60m for the ISO week)
+      → three brick sets: size=size5m, size=size15m, size=size60m
+      → each brick stores open_timestamp (when it began forming) and close_timestamp
+    → IndicatorComputer
+      → MACD(21/89/42) on 5m bricks
+      → EMA27/55 on 60m bricks; MACD(27/117/55) on 60m bricks
+      → EMA27/55 on 15m bricks; MACD(27/117/55) on 15m bricks
+    → CrossTimeframeJoin (by opening timestamp)
+      → for each 5m brick with open_timestamp T:
+          find 15m brick where open_timestamp ≤ T < next_15m.open_timestamp → inject mme27_15m
+          find 60m brick where open_timestamp ≤ T < next_60m.open_timestamp → inject mme27_60m, mme55_60m
+      → DB index: (asset_id, brick_size_r, open_timestamp DESC), single seek per join
+    → assembled 5m bricks with all indicators → backtest engine
+  ```
+- **Key insights** (confirmed 2026-05-14):
+  - The "three timeframes" (5m/15m/60m) are three R values applied to the same price stream, not time windows. `hawksRenkoSizes` is the calibration source.
+  - Cross-TF join is by **opening timestamp** of each brick, not by "last completed brick". Every brick has an `open_timestamp`; at any moment T, exactly one brick of each size is active (the one whose open_timestamp ≤ T < next brick's open_timestamp). Clean range lookup, single index.
+  - MACD 5m parameters: **21/89/42** (confirmed correct). Vault Part 3's `21/49/82` line is incorrect; Section 13.3's `21/89/42` is authoritative.
+- **R-multiple terminology** (clarified 2026-05-14):
+  - 1R = 1 risk unit = the stop distance (universal, methodology-agnostic).
+  - 1 Renko = 1 box (the brick size).
+  - **In Hawks: 1R = 2 Renko boxes** (Hawks stop is 2 boxes from entry, not 1).
+  - So a "2R target" in Hawks = 4 Renko boxes; "3R target" = 6 boxes. R count is decoupled from Renko count.
+- **Complexity**: the brick generator must handle variable R per week (weekly calibration), and the indicator computer must run three independent EMA/MACD chains (one per brick size). The cross-TF join is straightforward once `open_timestamp` is indexed.
+- **Sequence**: build visual chart layer first (works with current pre-computed bricks), then: raw 1m import → brick generator → indicator computer → cross-TF join.
+- **Effort**: L (multi-sprint). New DB table (`rawBars`), new modules (brick generator, indicator computer, cross-TF join), new import action.
+- **Priority**: P1 for Hawks — current system is Renko-aware but ProfitChart-dependent for all indicator values.
+- **Depends on**: resolution of the "Hawks stop reference: 1 brick vs 2 bricks" investigation (see next backlog item) — affects how R-multiples are computed by the engine.
+- **Source**: CEO review + vault investigation session 2026-05-14; `src/lib/backtest/presets/hawks-presets.ts`, `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/db/schema.ts` (`hawksRenkoSizes`), `src/app/actions/hawks-renko.ts`.
+
+---
+
+### Hawks stop reference: 1-brick stop was incorrect — fixed to 2-brick (SHIPPED 2026-05-15)
+
+- **Status (2026-05-15)**: Fixed. Engine now stamps `engineVersion: "hawks-v0.2"` on every Hawks backtest result. No DB migration needed — backtest results are ephemeral (no `backtestResults` table exists), and journal `tradeHawksMetadata` stores only categorical conditions (no derived R/stop fields). Lint green, 12/12 hawks-engine vitest pass.
+- **What was changed**: `src/lib/backtest/modules/entry/hawks-triple-screen.ts` (formula + docstring), `src/lib/backtest/engine.ts` (engineVersion stamp), `src/lib/backtest/presets/hawks-presets.ts` (comments), `src/types/backtest.ts` (HawksTripleScreenConfig comment + `engineVersion?: string` on `BacktestResult`), `src/__tests__/lib/backtest/hawks-engine.test.ts` (long/short stop assertions re-baselined).
+- **Open follow-ups** (smaller, tracked here so they don't get lost):
+  - UI surface: the backtest result page does not yet read `result.engineVersion`. Add a small badge or footer line so cached screenshots/exports are traceable to v0.2. Effort: XS. Priority: P2.
+  - Tick-level fidelity: current formula omits the `+1 tick` from the "2 bricks + 1 tick" Renko geometry. Acceptable for points-level computation; revisit if/when we expose tick-precise stops to the engine. Priority: P3.
+- **The math** (per Ygor 2026-05-15): For a Hawks Renko of size `R` ticks (e.g., R=21), the brick body in ticks = `R - 1` (the 9+1 Profit Pro convention). The Hawks stop fires when **one Renko brick closes against the entry direction**; the price distance to that close is `2·(R−1) + 1` ticks (≈ 2 brick bodies). The shipped formula is `stopReference = 2·open − close` (one brick body below the entry brick's open), which captures the 2-body distance at points-level fidelity.
+- **Source**: Ygor correction 2026-05-14, math confirmation 2026-05-15; shipped in commit on `feat/hawks-mode-v0`.
+
+---
+
+### `trade_conditions` junction table — per-trade condition selection
+
+- **What**: Add a `trade_conditions` junction table recording which specific conditions were met for each trade. The `trades` table currently has only a `setupRank` (A/AA/AAA) — a lossy compression. The `strategyConditions` table defines conditions per strategy (with tiers mandatory/tier_2/tier_3); nothing connects individual trades to individual conditions.
+- **Why**: Without this, Hawks analytics can't answer "which conditions are associated with winning trades?" — the core hypothesis-testing loop for methodological improvement. The `setupRank` only tells you the aggregate; the junction tells you the decomposed signal.
+- **Schema shape**:
+  ```sql
+  CREATE TABLE trade_conditions (
+    trade_id UUID NOT NULL REFERENCES trades(id) ON DELETE CASCADE,
+    condition_id UUID NOT NULL REFERENCES trading_conditions(id),
+    met BOOLEAN NOT NULL DEFAULT true,
+    PRIMARY KEY (trade_id, condition_id)
+  );
+  ```
+- **UI surface**: trade form already has a `setupRank` selector (A/AA/AAA toggles). Add a multi-select condition picker (reuse `condition-picker.tsx` from playbook) to the form so traders can log which conditions were green on that specific trade.
+- **Effort**: M. Drizzle migration + server action update + trade form UI addition.
+- **Priority**: P1 for Hawks analytics — without this the "conditions" feature is data collection with no analytical payoff.
+- **Source**: CEO review session 2026-05-14; `src/db/schema.ts` (tradingConditions, strategyConditions, trades); `src/components/journal/trade-form.tsx:1089-1125`; `src/components/playbook/condition-picker.tsx`.
+
+---
+
+### Backtest visual layer + methodology-specific UX redesign
+
+- **What**: The current backtest page is form-based only — results show equity curve, summary cards, and a trades table but no candle chart replay. The redesign has two parts: (1) a visual layer showing trades overlaid on a price chart for each selected trade/day, and (2) methodology-specific result views — ORB, DEZK/Hawks each have distinct metrics and UX that shouldn't share the same generic sections. Hawks specifically needs scenario-level breakdown, B3 daily cap tracking, and session-aware reporting that ORB never will.
+- **Why**: Surfaced during CEO strategic review (2026-05-14). The visual layer is the delta between "a calculator" and "a simulation tool." The methodology-specific UX is the delta between "a generic platform" and Axion's core niche value proposition.
+- **Building blocks already exist**: `getTradeWithCandles` in `candle-query.ts` fetches candle data with trade overlay (already powers journal chart); `BacktestTrade[]` has entry/exit timestamps + prices + R-multiples; `DayBreakdown[]` captures range data per day (currently unused in UI); methodology entry sections are already split per strategy.
+- **Effort**: L for visual replay layer (new chart component + API query); M for methodology-specific result panels (layout refactor, no new data)
+- **Priority**: P2 — blocked on product strategy /office-hours first to confirm the mode-personalization framework before building UI
+- **Source**: CEO review session 2026-05-14; `src/components/backtest/`, `src/app/actions/candle-query.ts`, `src/types/backtest.ts`
+
 ### Categorical chart palette: `--chart-1` … `--chart-N` tokens (3 callers waiting)
 
 - **What**: Three Wave 3 surfaces need a real categorical chart palette and currently each route through a different workaround:
