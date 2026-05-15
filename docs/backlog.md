@@ -119,18 +119,6 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 - **User authorization (recorded 2026-05-15)**: "we're rebuilding if need to touch protected files, do it" + "There's no problem if a database reset is needed." → archive may break shape of existing rows; DB reset on staging/prod acceptable for this cutover.
 - **Why deferred**: full archive in a non-dedicated session has high risk on financial-recompute paths (`recompute-month.ts`, `period-queries.ts`). Better as one focused session with a clean lint + test pass between each commit. See discovery in current session for full file inventory.
 
-### Cluster C — Stats module (best unsupervised candidate)
-
-- **Priority:** P2 · **Effort:** M
-- **What**: Write tests for `monte-carlo`, `monte-carlo-v2`, `risk-simulation-advanced`.
-- **Why**: Pure functions, deterministic seeding, no protected paths, no fixture coordination cost. High coverage ROI per hour.
-
-### Cluster B — Tax module
-
-- **Priority:** P2 · **Effort:** M
-- **What**: Fill in tests for `asset-defaults`, `mark-dirty`, `month-status`.
-- **Why**: Extends the existing tax test pattern. Lower coordination cost.
-
 ### Cluster D — Parsers
 
 - **Priority:** P2 · **Effort:** M
@@ -395,13 +383,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
 
-### Monte Carlo v1/v2 semantic rename — "Expectativa de Edge" / "Expectativa de Capital"
-
-- **Priority:** P3 · **Effort:** S
-- **What**: The current Monte Carlo surface labels its two engines as `v1` and `v2`. Per Ygor (2026-05-15), the canonical names are **Expectativa de Edge** (v1, R-unit expectation — methodology hit-rate/distribution outcome) and **Expectativa de Capital** (v2, monetary expectation — translates the R outcome into money via account capital and sizing). Rename UI labels, tab copy, and route segments to make the distinction explicit; keep `v1`/`v2` only as engine identifiers in code.
-- **Why**: Today both engines look like "two ways of running the same thing" — they are actually answering two different questions and should be presented as such. Naming them by what they output makes the UX self-explanatory.
-- **Source**: CEO review session 2026-05-15; `src/components/monte-carlo/`, `src/messages/*.json` under `monteCarlo.*`.
-
 ### `engineVersion` UI badge on backtest results
 
 - **Priority:** P2 · **Effort:** XS
@@ -638,18 +619,6 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 
 ---
 
-## Driver / DB hygiene
-
-### HAWKS `dailyTradeOrdinal` race condition
-
-- **Priority:** P2 · **Effort:** M
-- **What**: `src/app/actions/trades.ts` computes `dailyTradeOrdinal = COUNT(*) + 1` on the HAWKS sidecar before insert. Two HAWKS trades created concurrently from different tabs/clients can both observe `count=0` and insert `ordinal=1`. There is no unique constraint on `(accountId, tradingDay, dailyTradeOrdinal)` in `trade_hawks_metadata`.
-- **Why now**: discovered while bug-proofing HAWKS feature (2026-05-13). Practically very low-probability — requires concurrent submissions within milliseconds. But the trade-ordinal is an analytics signal that should be monotonic per day; a duplicate confuses detectors.
-- **Fix shape**: add `UNIQUE INDEX thm_account_day_ordinal_idx ON trade_hawks_metadata((computed accountId, tradingDay, dailyTradeOrdinal))` via migration, then on duplicate-key error retry the read-then-insert. Or compute the ordinal in a DB-side expression (`row_number() over (partition by account_id, date_trunc('day', entered_at) order by created_at)`) materialized via trigger or view.
-- **Source**: `src/app/actions/trades.ts` HAWKS ordinal section; bug-proof session 2026-05-13.
-
----
-
 ## How to retire an item from this backlog
 
 1. Implement the work.
@@ -667,6 +636,10 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **HAWKS `dailyTradeOrdinal` race condition** — P2. Two concurrent HAWKS trade inserts could both compute `ordinal=1` (read-then-write race on `COUNT(*)`). Added `accountId` + `tradingDay` columns to `trade_hawks_metadata` and a unique index `thm_account_day_ordinal_idx` on `(accountId, tradingDay, dailyTradeOrdinal)`; action wraps the sidecar insert in a max-3 retry loop catching Postgres `23505` and recomputing the ordinal. Migration `0005_boring_wasp` backfills + drops orphans + enforces NOT NULL before the index. Race-condition test + post-mortem `[BUG-2026-05-15-1]`. Commit `48dacd5`.
+- **Cluster C — Stats module tests** — P2. 103 deterministic unit tests added for `monte-carlo` (Edge Expectancy, 36 tests), `monte-carlo-v2` (Capital Expectancy, 39 tests), and `risk-simulation-advanced` (28 tests). Covers seed-determinism, EV convergence, ruin probability vs expectancy sign, homogeneity under risk scaling, no NaN/Infinity safety. No production code touched. Commit `7225a9a`.
+- **Cluster B — Tax module tests** — P2. 58 unit tests added for `asset-defaults` (16), `mark-dirty` (12), `month-status` (30). Follows existing `__tests__/lib/tax/` vitest pattern; mocks DB layer like `fee-resolver.test.ts`. Protected `recompute-month.ts` untouched. 92 total tax-suite tests pass. Commit `3e90d31`.
+- **Monte Carlo v1/v2 → Edge/Capital Expectancy rename** — P3. User-facing labels renamed: "Monte Carlo v1" → "Edge Expectancy" / "Expectativa de Edge", "Monte Carlo v2" → "Capital Expectancy" / "Expectativa de Capital". Touches `messages/en.json`, `messages/pt-BR.json`, and `src/app/actions/monte-carlo.ts` (t-key references only). Internal identifiers, route paths, and file names preserved per manifesto §3.5. Commit `210fb5a`.
 - **Playbook detail page — methodology-aware redesign (v1)** — P1. Per-condition usage scorecard on `/playbook/[id]` powered by new `getStrategyConditionsRollup` action (two-query expected/stats merge + active-account-mode Hawks inference). New `<ConditionsScorecard />`, inline Hawks-methodology chip, `playbook.scorecard.*` i18n keys, 5 new tests. Commit `3563204`. _v2 follow-ups deferred under "Playbook detail — deferred follow-ups"._
 - **Cluster A — Security tests (split)** — P2. `auth-utils.ts` covered by `src/__tests__/lib/auth-utils.test.ts` (7 tests: Unauthorized/Forbidden gates, role hierarchy, `?? "trader"` fallback). `crypto.ts` + `user-crypto.ts` test work intentionally deferred — those modules are dormant; the work is the Encryption archive task (still active P1, see Test coverage section). Commit `787ba6f`.
 - **Cluster D — write actions zod-hardening** — P1. Zod schemas wired into all 4 write actions (`accounts.ts` create/update/delete, `strategy-conditions.ts` sync, `tax-engine.ts:recomputeLedger`); deprecated `syncCapitalBetweenPlans` no-op stub deleted. New `src/lib/validations/{account,tax-engine}.ts` + extended `trading-condition.ts`. `recompute-month.ts` (protected) untouched — zod sits at the action wrapper only. Commit `d34e9cf`.
