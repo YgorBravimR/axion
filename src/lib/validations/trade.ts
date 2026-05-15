@@ -129,6 +129,17 @@ const tradeBaseFields = {
 
 	// Hawks Mode sidecar (required when account is in Hawks mode)
 	hawks: hawksTradePayloadSchema.optional(),
+
+	// Per-trade condition snapshot — which conditions were evaluated at
+	// execution time and whether each was met. Frozen, never recomputed.
+	conditionsMet: z
+		.array(
+			z.object({
+				conditionId: z.string().uuid(),
+				met: z.boolean(),
+			})
+		)
+		.optional(),
 }
 
 // Base object schema (no refinements) — used for .partial() and server actions
@@ -215,6 +226,7 @@ export interface CreateTradeInput {
 		vwapRespected: boolean
 		ajusteRespected: boolean
 	}
+	conditionsMet?: { conditionId: string; met: boolean }[]
 }
 
 // Form input type alias
@@ -236,6 +248,7 @@ export interface SharedTradeFormState {
 	tagIds?: string[]
 	setupRank?: "A" | "AA" | "AAA" | null
 	rating?: "A" | "B" | "C" | "D" | "F" | null
+	conditionsMet?: { conditionId: string; met: boolean }[]
 }
 
 export interface TradeFormRef {

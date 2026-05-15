@@ -51,6 +51,7 @@ interface CreateScaledTradeInput {
 		fees?: number
 		notes?: string
 	}>
+	conditionsMet?: Array<{ conditionId: string; met: boolean }>
 }
 
 interface ExtendedTradeFilters {

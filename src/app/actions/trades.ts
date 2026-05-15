@@ -14,6 +14,7 @@ import {
 	monthlyPlan as monthlyPlanTable,
 	dailyHawksBias,
 	tradeHawksMetadata,
+	tradeConditions,
 } from "@/db/schema"
 import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 import type { Trade } from "@/db/schema"
@@ -392,6 +393,16 @@ export const createTrade = async (
 				await db
 					.insert(tradeHawksMetadata)
 					.values({ ...hawksSidecar, tradeId: inserted.id })
+			}
+
+			if (tradeData.conditionsMet?.length) {
+				await db.insert(tradeConditions).values(
+					tradeData.conditionsMet.map((item) => ({
+						tradeId: inserted.id,
+						conditionId: item.conditionId,
+						met: item.met,
+					}))
+				)
 			}
 		} catch (sidecarErr) {
 			await db.delete(trades).where(eq(trades.id, inserted.id))
@@ -1869,6 +1880,17 @@ export const createScaledTrade = async (
 				tagIds.map((tagId) => ({
 					tradeId: trade.id,
 					tagId,
+				}))
+			)
+		}
+
+		// Insert trade-condition snapshot
+		if (input.conditionsMet?.length) {
+			await db.insert(tradeConditions).values(
+				input.conditionsMet.map((item) => ({
+					tradeId: trade.id,
+					conditionId: item.conditionId,
+					met: item.met,
 				}))
 			)
 		}
