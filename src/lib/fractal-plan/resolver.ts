@@ -315,7 +315,7 @@ const resolveYear = async (
 	const tag = (
 		v: string | null | undefined
 	): { value: number | null; provenance: "year" | "none" } =>
-		v === null
+		v == null
 			? { value: null, provenance: "none" }
 			: { value: Number(v), provenance: "year" }
 
