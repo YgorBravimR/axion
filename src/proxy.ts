@@ -19,7 +19,13 @@ const intlMiddleware = createIntlMiddleware(routing)
 const { auth } = NextAuth(authConfig)
 
 // Public paths that don't require authentication
-const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/monitor", "/api/market"]
+const publicPaths = [
+	"/login",
+	"/register",
+	"/forgot-password",
+	"/api/auth",
+	"/api/market",
+]
 
 const isPublicPath = (pathname: string): boolean => {
 	const pathWithoutLocale = pathname.replace(/^\/(en|pt-BR)/, "") || "/"
@@ -36,7 +42,12 @@ export const proxy = auth((req) => {
 
 	// If authenticated and on auth page, redirect to dashboard
 	const pathWithoutLocale = pathname.replace(/^\/(en|pt-BR)/, "") || "/"
-	if (req.auth && (pathWithoutLocale === "/login" || pathWithoutLocale === "/register" || pathWithoutLocale === "/forgot-password")) {
+	if (
+		req.auth &&
+		(pathWithoutLocale === "/login" ||
+			pathWithoutLocale === "/register" ||
+			pathWithoutLocale === "/forgot-password")
+	) {
 		return NextResponse.redirect(new URL("/", req.url))
 	}
 
