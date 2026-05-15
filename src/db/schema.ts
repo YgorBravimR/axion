@@ -522,6 +522,13 @@ export const strategies = pgTable(
 		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
 		notes: text("notes"),
 		isActive: boolean("is_active").default(true),
+		// Strategy versioning v1 (manifesto §5 Q1 follow-up).
+		// `strategies` row always mirrors the latest published version's content;
+		// `strategy_versions` stores the immutable history. A strategy becomes
+		// edit-locked as soon as any trade references it — further changes must
+		// go through createStrategyVersion to bump to the next version number.
+		currentVersion: integer("current_version").default(1).notNull(),
+		nextVersionNumber: integer("next_version_number").default(2).notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),
@@ -533,6 +540,52 @@ export const strategies = pgTable(
 		index("strategies_user_idx").on(table.userId),
 		index("strategies_account_idx").on(table.accountId),
 		uniqueIndex("strategies_user_code_idx").on(table.userId, table.code),
+	]
+)
+
+// Strategy Versions Table — immutable snapshots of a strategy's content at
+// publish time. Trades pin to a version via `trades.strategyVersionId`;
+// the per-version condition list lives in `strategy_conditions` (filtered by
+// `strategyVersionId`), and per-version scenarios live in `strategy_scenarios`.
+export const strategyVersions = pgTable(
+	"strategy_versions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		strategyId: uuid("strategy_id")
+			.notNull()
+			.references(() => strategies.id, { onDelete: "cascade" }),
+		version: integer("version").notNull(),
+		// Snapshot of strategies fields at publish time
+		name: varchar("name", { length: 100 }).notNull(),
+		description: text("description"),
+		entryCriteria: text("entry_criteria"),
+		exitCriteria: text("exit_criteria"),
+		riskRules: text("risk_rules"),
+		stopR: decimal("stop_r", { precision: 8, scale: 2 }),
+		partialR: decimal("partial_r", { precision: 8, scale: 2 }),
+		partialProportion: decimal("partial_proportion", {
+			precision: 4,
+			scale: 3,
+		}),
+		finalR: decimal("final_r", { precision: 8, scale: 2 }),
+		protectionR: decimal("protection_r", { precision: 8, scale: 2 }),
+		defaultInstrumentSymbol: varchar("default_instrument_symbol", {
+			length: 20,
+		}),
+		maxRiskPercent: decimal("max_risk_percent", { precision: 5, scale: 2 }),
+		screenshotUrl: varchar("screenshot_url", { length: 500 }),
+		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("strategy_versions_strategy_idx").on(table.strategyId),
+		uniqueIndex("strategy_versions_strategy_version_idx").on(
+			table.strategyId,
+			table.version
+		),
 	]
 )
 
@@ -610,6 +663,13 @@ export const trades = pgTable(
 		strategyId: uuid("strategy_id").references(() => strategies.id, {
 			onDelete: "set null",
 		}),
+		// Strategy version pin — resolved at trade-write time to the strategy's
+		// currentVersion. Lets historical scoring use the rules that were active
+		// when this trade was logged, even after the strategy is forked to v2.
+		strategyVersionId: uuid("strategy_version_id").references(
+			() => strategyVersions.id,
+			{ onDelete: "set null" }
+		),
 
 		// Setup Quality Ranking (A/AA/AAA based on conditions met)
 		setupRank: setupRankEnum("setup_rank"),
@@ -666,6 +726,7 @@ export const trades = pgTable(
 		index("trades_entry_date_idx").on(table.entryDate),
 		index("trades_outcome_idx").on(table.outcome),
 		index("trades_strategy_idx").on(table.strategyId),
+		index("trades_strategy_version_idx").on(table.strategyVersionId),
 		index("trades_timeframe_idx").on(table.timeframeId),
 		index("trades_dedup_hash_idx").on(table.deduplicationHash),
 
@@ -1601,7 +1662,10 @@ export const tradingConditions = pgTable(
 	]
 )
 
-// Strategy Conditions Junction Table (links conditions to playbooks with tier)
+// Strategy Conditions Junction Table (links conditions to playbooks with tier).
+// Each row belongs to a specific strategy version (strategyVersionId);
+// strategyId is kept denormalized for "all conditions across all versions of
+// this strategy" lookups without joining strategy_versions.
 export const strategyConditions = pgTable(
 	"strategy_conditions",
 	{
@@ -1609,6 +1673,9 @@ export const strategyConditions = pgTable(
 		strategyId: uuid("strategy_id")
 			.notNull()
 			.references(() => strategies.id, { onDelete: "cascade" }),
+		strategyVersionId: uuid("strategy_version_id")
+			.notNull()
+			.references(() => strategyVersions.id, { onDelete: "cascade" }),
 		conditionId: uuid("condition_id")
 			.notNull()
 			.references(() => tradingConditions.id, { onDelete: "cascade" }),
@@ -1620,9 +1687,10 @@ export const strategyConditions = pgTable(
 	},
 	(table) => [
 		index("strategy_conditions_strategy_idx").on(table.strategyId),
+		index("strategy_conditions_version_idx").on(table.strategyVersionId),
 		index("strategy_conditions_condition_idx").on(table.conditionId),
 		uniqueIndex("strategy_conditions_unique_idx").on(
-			table.strategyId,
+			table.strategyVersionId,
 			table.conditionId
 		),
 	]
@@ -1652,7 +1720,9 @@ export const tradeConditions = pgTable(
 	]
 )
 
-// Strategy Scenarios Table (visual examples for a playbook)
+// Strategy Scenarios Table (visual examples for a playbook).
+// Each row belongs to a specific strategy version (strategyVersionId);
+// strategyId is kept denormalized for "all scenarios across all versions".
 export const strategyScenarios = pgTable(
 	"strategy_scenarios",
 	{
@@ -1660,6 +1730,9 @@ export const strategyScenarios = pgTable(
 		strategyId: uuid("strategy_id")
 			.notNull()
 			.references(() => strategies.id, { onDelete: "cascade" }),
+		strategyVersionId: uuid("strategy_version_id")
+			.notNull()
+			.references(() => strategyVersions.id, { onDelete: "cascade" }),
 		name: varchar("name", { length: 200 }).notNull(),
 		description: text("description"),
 		sortOrder: integer("sort_order").default(0).notNull(),
@@ -1670,7 +1743,10 @@ export const strategyScenarios = pgTable(
 			.defaultNow()
 			.notNull(),
 	},
-	(table) => [index("strategy_scenarios_strategy_idx").on(table.strategyId)]
+	(table) => [
+		index("strategy_scenarios_strategy_idx").on(table.strategyId),
+		index("strategy_scenarios_version_idx").on(table.strategyVersionId),
+	]
 )
 
 // Scenario Images Table (up to 3 images per scenario)
@@ -2364,6 +2440,10 @@ export const tradesRelations = relations(trades, ({ one, many }) => ({
 		fields: [trades.strategyId],
 		references: [strategies.id],
 	}),
+	strategyVersion: one(strategyVersions, {
+		fields: [trades.strategyVersionId],
+		references: [strategyVersions.id],
+	}),
 	timeframe: one(timeframes, {
 		fields: [trades.timeframeId],
 		references: [timeframes.id],
@@ -2429,9 +2509,23 @@ export const strategiesRelations = relations(strategies, ({ one, many }) => ({
 		references: [tradingAccounts.id],
 	}),
 	trades: many(trades),
+	versions: many(strategyVersions),
 	strategyConditions: many(strategyConditions),
 	scenarios: many(strategyScenarios),
 }))
+
+export const strategyVersionsRelations = relations(
+	strategyVersions,
+	({ one, many }) => ({
+		strategy: one(strategies, {
+			fields: [strategyVersions.strategyId],
+			references: [strategies.id],
+		}),
+		trades: many(trades),
+		conditions: many(strategyConditions),
+		scenarios: many(strategyScenarios),
+	})
+)
 
 export const tagsRelations = relations(tags, ({ one, many }) => ({
 	user: one(users, {
@@ -2592,6 +2686,10 @@ export const strategyConditionsRelations = relations(
 			fields: [strategyConditions.strategyId],
 			references: [strategies.id],
 		}),
+		strategyVersion: one(strategyVersions, {
+			fields: [strategyConditions.strategyVersionId],
+			references: [strategyVersions.id],
+		}),
 		condition: one(tradingConditions, {
 			fields: [strategyConditions.conditionId],
 			references: [tradingConditions.id],
@@ -2619,6 +2717,10 @@ export const strategyScenariosRelations = relations(
 		strategy: one(strategies, {
 			fields: [strategyScenarios.strategyId],
 			references: [strategies.id],
+		}),
+		strategyVersion: one(strategyVersions, {
+			fields: [strategyScenarios.strategyVersionId],
+			references: [strategyVersions.id],
 		}),
 		images: many(scenarioImages),
 	})
@@ -2796,6 +2898,9 @@ export type NewTrade = typeof trades.$inferInsert
 
 export type Strategy = typeof strategies.$inferSelect
 export type NewStrategy = typeof strategies.$inferInsert
+
+export type StrategyVersion = typeof strategyVersions.$inferSelect
+export type NewStrategyVersion = typeof strategyVersions.$inferInsert
 
 export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert

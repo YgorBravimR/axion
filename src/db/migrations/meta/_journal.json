@@ -36,6 +36,20 @@
 			"when": 1778846144494,
 			"tag": "0004_aromatic_stature",
 			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1778857320095,
+			"tag": "0005_boring_wasp",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1778857806143,
+			"tag": "0006_aromatic_stardust",
+			"breakpoints": true
 		}
 	]
 }
