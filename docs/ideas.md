@@ -21,21 +21,6 @@ If a backlog item turns out to be more speculative than it looked, demote it bac
 
 ---
 
-## Mode-personalization framework
-
-- **Status**: needs product / design conversation.
-- **Idea**: Each trading mode (Hawks, ORB, DEZK, "generic") should personalize the surfaces around it — not just the methodology surfaces. Today the dashboard, journal, analytics, plan pages render a single canonical layout regardless of the active mode. A trader using Hawks ought to see Hawks-shaped widgets (B3 cap, scenarios, Renko-aware day breakdown); a DEZK trader should see DEZK-shaped widgets; etc. The question is the **framework**: how much of the UI is methodology-aware, how mode-switching propagates through the app, and what the per-mode contract is (a registry? a context? per-component variants? a layout-level mode prop?). The Hawks v0 work shipped the methodology, but personalization stops at the dashboard's coaching card and the trade form's pre-flight switches.
-- **Open questions**:
-  - Is "mode" a per-account setting, a per-trade setting, or both?
-  - Does mode-personalization apply at the route level (whole pages swap) or at the widget level (cards within a page swap)?
-  - How does it interact with the generic ("any methodology") mode — is there a clean degenerate case, or do generic users always get the Hawks-flavored layout?
-  - What is the cost-to-add of a new methodology (e.g. wiring ORB or DEZK) — and does the framework reduce it?
-- **Why this is an idea, not a backlog item**: the right framework is downstream of the product decision about what personalization should look like in the first place. The framework's shape (registry vs. context vs. layout prop) is a code question; the product shape is not yet committed.
-- **Promotion path**: shape this in `/plan-ceo-review` feature-manifesto pass, then convert into one or more backlog entries (likely an L architectural spike plus per-surface follow-ups).
-- **Source**: CEO review session 2026-05-15.
-
----
-
 ## Onboarding integration with the zero-to-hero demo
 
 - **Status**: needs product decisioning before it has a concrete shape.
@@ -43,3 +28,15 @@ If a backlog item turns out to be more speculative than it looked, demote it bac
 - **Why this is an idea, not a backlog item**: today there's no concrete UI surface to add to. The work is gated on a product call about where and how the demo gets surfaced.
 - **Promotion path**: once product chooses a surface (in-app onboarding tour vs. external marketing asset vs. both), this fragments into 2-3 concrete backlog entries (artifact publishing pipeline, in-app embed, docs gallery integration).
 - **Source**: `docs/design/zero-to-hero-e2e.md` §13 Phase 5; moved from backlog 2026-05-15 because it lacked a concrete shape.
+
+## Assistant reviewer
+
+- **Status**: Needs product development and engeneering thinking
+- **Idea**: Implement more assisted reviews, maybe AI looking at numbers, comparing with benchmarks, preview of future, giving insights
+- **Source**: Ygor
+
+## Mentor role
+
+- **Status**: Needs product development and engeneering thinking
+- **Idea**: Specific user role with specific information about a group of other accounts, new pages, new tables, where user can monitor it's pupils.
+- **Source**: Ygor

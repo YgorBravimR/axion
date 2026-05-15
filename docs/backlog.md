@@ -30,6 +30,8 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ## P1 strategic shortlist (ship next)
 
+> **Strategic context**: see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) for the invest/merge/deprecate framing this shortlist sits inside.
+
 The six items that earn priority over everything else in this file. Each is linked to its full entry below.
 
 1. **Replay deprecation sweep** — remove all `/replay` references across UI, navigation, settings, docs (Backtest section).
@@ -38,6 +40,55 @@ The six items that earn priority over everything else in this file. Each is link
 4. **`window.confirm()` migration on `/journal/[id]` delete** — CLAUDE.md ban, last hold-out for trade deletion (Journal detail section).
 5. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
 6. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
+
+---
+
+## Manifesto follow-ups (2026-05-15)
+
+Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after Q1/Q2/Q3 resolution. Retire as a batch when shipped.
+
+### Delete orphan `/monitor` and `/painel` public routes
+
+- **Priority:** P2 · **Effort:** XS
+- **What**: remove `src/app/[locale]/(public)/monitor/page.tsx` and `…/painel/page.tsx`. The Monitor tab inside Command Center fully covers the use case; `grep` confirms zero internal `href` / `router.push` references to either.
+- **Why**: reclaims menu/route surface for free. Two routes shipping the same component that no one navigates to internally.
+- **Source**: feature-manifesto-2026-05.md §6 (1).
+
+### Account Comparison → Analytics filter mode
+
+- **Priority:** P2 · **Effort:** S
+- **What**: delete `src/app/[locale]/(app)/analytics/account-comparison/page.tsx`; surface the same multi-account view as a filter mode inside Analytics' existing filter panel (multi-select on account, side-by-side equity overlay).
+- **Why**: collapses dilutive overlap — two pages telling the cross-account story. Preserves multi-account as first-class (Q3) since the _concept_ survives in Analytics, only the dedicated route disappears.
+- **Source**: feature-manifesto-2026-05.md §3.4 + §6 (2).
+
+### Monthly Review → "Month Closing" affordance inside Reports
+
+- **Priority:** P2 · **Effort:** M
+- **What**: build a "Month Closing" card in Reports with two account-type variants — prop-firm accounts surface the withdraw value as the closing read, personal accounts surface the DARF + tax read. Once Reports owns the cycle-closing narrative, delete `/monthly` route.
+- **Why**: monthly review's real purpose is _cycle closing_, not a generic month view. The ritual is account-type-specific. Two surfaces telling the same monthly story is dilutive; one surface with account-aware variants is the right shape.
+- **Source**: feature-manifesto-2026-05.md §3.4 + §6 (3). User input: "the purpose of monthly review is to create a kind of cycle closing".
+
+### Playbook detail page — methodology-aware redesign
+
+- **Priority:** P1 · **Effort:** L
+- **What**: redesign `/playbook/[id]` to support structured methodologies (Hawks as canonical example), with a methodology header, rule list, scorecard view fed by `trade_conditions` junction, and conditions registry hookup.
+- **Why**: Q1 resolved — Playbook IS the home for methodology rules. The current free-form detail page can't express Hawks' structure (entry conditions, scorecard, hard rules). This is the surface that turns "we have Hawks" into "Hawks is documented on its own page with compliance scoring".
+- **Depends on**: P1 #2 (`trade_conditions` junction table).
+- **Source**: feature-manifesto-2026-05.md §3.1 + §6 (4).
+
+### Mode-personalization widget contract (framework spike)
+
+- **Priority:** P1 · **Effort:** M
+- **What**: per-component opt-in pattern for mode-aware variants. A widget declares "I have a Hawks variant"; a registry/context resolves which variant to render based on the active mode. Default = canonical layout; methodology variants opt in. Reserve route-level swap as escape hatch (currently zero consumers expected).
+- **Why**: Q2 resolved — mode-personalization is a _lens on top of the canonical surface_, not a distinct frame. First consumer: a Hawks-flavored dashboard card. Lower blast radius per new methodology than a layout-level mode prop.
+- **Source**: feature-manifesto-2026-05.md §5 (Q2 answer) + §6 (5); promoted from `ideas.md` § "Mode-personalization framework".
+
+### Page Guide System — per-feature reminder on PR template
+
+- **Priority:** P3 · **Effort:** XS
+- **What**: add a checklist line to `docs/pr-template.md` — "Page guide entry added/updated for new or significantly changed surfaces?". Foundations are already built; this is just the social mechanism to make it not get forgotten.
+- **Why**: feature is cheap, never urgent, never written without a nudge. The PR-template line surfaces it without becoming a blocker.
+- **Source**: feature-manifesto-2026-05.md §6 (6). User note: "very low priority, complexity is too low here, the foundations is already built. In every feature creation it could be deferred."
 
 ---
 
