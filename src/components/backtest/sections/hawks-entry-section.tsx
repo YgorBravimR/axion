@@ -53,7 +53,9 @@ const HawksEntrySection = memo(
 				{/* Time window */}
 				<div className="gap-m-400 grid grid-cols-2">
 					<div className="space-y-s-200">
-						<Label htmlFor="hawks-startTime">{t("startTime")}</Label>
+						<Label id="hawks-startTime-label" htmlFor="hawks-startTime">
+							{t("startTime")}
+						</Label>
 						<Input
 							id="hawks-startTime"
 							type="time"
@@ -65,7 +67,9 @@ const HawksEntrySection = memo(
 					</div>
 
 					<div className="space-y-s-200">
-						<Label htmlFor="hawks-endTime">{t("endTime")}</Label>
+						<Label id="hawks-endTime-label" htmlFor="hawks-endTime">
+							{t("endTime")}
+						</Label>
 						<Input
 							id="hawks-endTime"
 							type="time"
@@ -85,7 +89,9 @@ const HawksEntrySection = memo(
 					<p className="text-small text-txt-300">{t("indicatorKeysDesc")}</p>
 					<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-4">
 						<div className="space-y-s-200">
-							<Label htmlFor="hawks-ema27-60m">{t("ema27_60m_key")}</Label>
+							<Label id="hawks-ema27-60m-label" htmlFor="hawks-ema27-60m">
+								{t("ema27_60m_key")}
+							</Label>
 							<Input
 								id="hawks-ema27-60m"
 								value={config.ema27_60m_key}
@@ -94,7 +100,9 @@ const HawksEntrySection = memo(
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label htmlFor="hawks-ema55-60m">{t("ema55_60m_key")}</Label>
+							<Label id="hawks-ema55-60m-label" htmlFor="hawks-ema55-60m">
+								{t("ema55_60m_key")}
+							</Label>
 							<Input
 								id="hawks-ema55-60m"
 								value={config.ema55_60m_key}
@@ -103,7 +111,9 @@ const HawksEntrySection = memo(
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label htmlFor="hawks-ema27-15m">{t("ema27_15m_key")}</Label>
+							<Label id="hawks-ema27-15m-label" htmlFor="hawks-ema27-15m">
+								{t("ema27_15m_key")}
+							</Label>
 							<Input
 								id="hawks-ema27-15m"
 								value={config.ema27_15m_key}
@@ -112,7 +122,9 @@ const HawksEntrySection = memo(
 							/>
 						</div>
 						<div className="space-y-s-200">
-							<Label htmlFor="hawks-macd-key">{t("macd_key")}</Label>
+							<Label id="hawks-macd-key-label" htmlFor="hawks-macd-key">
+								{t("macd_key")}
+							</Label>
 							<Input
 								id="hawks-macd-key"
 								value={config.macd_key}

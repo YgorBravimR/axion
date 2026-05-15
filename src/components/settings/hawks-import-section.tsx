@@ -171,6 +171,7 @@ const RenkoSizesCard = () => {
 					)}
 				</div>
 				<Button
+					id="hawks-import-sizes-button"
 					onClick={handleImport}
 					disabled={!csvText || isPending}
 					size="sm"
@@ -294,7 +295,9 @@ const RenkoCandleCard = () => {
 			{/* Asset + Timeframe inputs */}
 			<div className="gap-m-400 grid grid-cols-2">
 				<div className="space-y-s-200">
-					<Label htmlFor="candle-import-asset">{t("assetLabel")}</Label>
+					<Label id="candle-import-asset-label" htmlFor="candle-import-asset">
+						{t("assetLabel")}
+					</Label>
 					<Input
 						id="candle-import-asset"
 						value={assetSymbol}
@@ -304,7 +307,12 @@ const RenkoCandleCard = () => {
 					/>
 				</div>
 				<div className="space-y-s-200">
-					<Label htmlFor="candle-import-timeframe">{t("timeframeLabel")}</Label>
+					<Label
+						id="candle-import-timeframe-label"
+						htmlFor="candle-import-timeframe"
+					>
+						{t("timeframeLabel")}
+					</Label>
 					<Input
 						id="candle-import-timeframe"
 						value={timeframeCode}
@@ -364,7 +372,12 @@ const RenkoCandleCard = () => {
 			{/* Actions */}
 			<div className="flex justify-end">
 				{phase === "ready" && (
-					<Button onClick={handleValidate} disabled={isPending} size="sm">
+					<Button
+						id="hawks-candle-validate-button"
+						onClick={handleValidate}
+						disabled={isPending}
+						size="sm"
+					>
 						{isPending && (
 							<Loader2
 								className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none"
@@ -377,6 +390,7 @@ const RenkoCandleCard = () => {
 				{phase === "validated" && (
 					<div className="gap-s-200 flex">
 						<Button
+							id="hawks-candle-cancel-button"
 							variant="outline"
 							size="sm"
 							onClick={handleReset}
@@ -384,7 +398,12 @@ const RenkoCandleCard = () => {
 						>
 							{tCommon("cancel")}
 						</Button>
-						<Button onClick={handleCommit} disabled={isPending} size="sm">
+						<Button
+							id="hawks-candle-commit-button"
+							onClick={handleCommit}
+							disabled={isPending}
+							size="sm"
+						>
 							{isPending && (
 								<Loader2
 									className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none"
