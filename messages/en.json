@@ -1833,6 +1833,8 @@
 		},
 		"delete": {
 			"confirmPrompt": "Delete?",
+			"title": "Delete trade?",
+			"description": "This will permanently delete this trade and all of its executions, conditions, and attachments. This action cannot be undone.",
 			"success": "Trade deleted successfully",
 			"failed": "Failed to delete trade",
 			"unexpectedError": "An unexpected error occurred"

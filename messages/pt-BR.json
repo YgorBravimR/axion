@@ -1833,6 +1833,8 @@
 		},
 		"delete": {
 			"confirmPrompt": "Excluir?",
+			"title": "Excluir trade?",
+			"description": "Isso excluirá permanentemente este trade e todas as suas execuções, condições e anexos. Esta ação não pode ser desfeita.",
 			"success": "Trade excluído com sucesso",
 			"failed": "Falha ao excluir trade",
 			"unexpectedError": "Ocorreu um erro inesperado"
