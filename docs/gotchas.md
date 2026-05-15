@@ -182,3 +182,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Check for a _completed_ range by comparing timestamps: `range.from.getTime() !== range.to.getTime()`. Equal timestamps = first click / in-progress. Different timestamps = genuine range selected. Also combine with Radix `e.preventDefault()` in `onInteractOutside` to block outside-click dismissal during mid-selection.
 - **Source**: `src/components/ui/date-range-picker.tsx` (`handleSelect`). Post-mortem: `docs/postMorten/frontend.md` [BUG-2026-05-14].
 - **Date logged**: 2026-05-14.
+
+---
+
+## Worktrees / Local Postgres
+
+### Worktrees each get an isolated Postgres db — never edit `DATABASE_URL` by hand
+
+- **What**: Both Superset workspaces (`.superset/config.json`) and Claude Code worktrees (`.claude/hooks/worktree-setup.sh`) call `scripts/worktree-db.sh setup` after copying `.env`. That helper creates `axion_wt_<workspace-basename>`, rewrites the worktree's `DATABASE_URL` to point at it, and runs `pnpm db:migrate && pnpm db:seed`. Teardown (`.superset/config.json` teardown array + `.claude/hooks/worktree-teardown.sh`) drops the db. If you hand-edit `DATABASE_URL` in a worktree's `.env` you'll silently desync it from the actual provisioned db, and teardown will fail to drop the right one.
+- **What to do**: Treat the worktree `.env` as derived state. If you need a different db, rerun `bash scripts/worktree-db.sh setup` — it's idempotent. Local Postgres is expected at `localhost:5438` (project's docker-compose); if it's down, setup logs a warning but doesn't block the worktree from being usable for non-db work. `DROP DATABASE ... WITH (FORCE)` requires Postgres ≥ 13 — fine for the bundled image, but watch out if you switch to an older one.
+- **Source**: `scripts/worktree-db.sh`, `.superset/config.json`, `.claude/hooks/worktree-setup.sh`, `.claude/hooks/worktree-teardown.sh`.
+- **Date logged**: 2026-05-15.
