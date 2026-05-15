@@ -88,12 +88,20 @@ export const proxy = auth((req) => {
 				308
 			)
 		}
-		// if (pathWithoutLocaleStripped === "/monthly") {
-		// 	return NextResponse.redirect(
-		// 		new URL(`${localePrefix}/plan/${year}/${quarter}/${month}`, req.url),
-		// 		308
-		// 	)
-		// }
+	}
+
+	// Permanent: /monthly was absorbed into /reports as the Month Closing section.
+	{
+		const pathWithoutLocaleStripped =
+			pathname.replace(/^\/(en|pt-BR)/, "") || "/"
+		const localeMatch = pathname.match(/^\/(en|pt-BR)/)
+		const localePrefix = localeMatch ? localeMatch[0] : "/en"
+		if (pathWithoutLocaleStripped === "/monthly") {
+			return NextResponse.redirect(
+				new URL(`${localePrefix}/reports`, req.url),
+				308
+			)
+		}
 	}
 
 	// Apply i18n middleware for locale routing

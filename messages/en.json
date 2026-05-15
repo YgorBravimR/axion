@@ -138,7 +138,6 @@
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
 		"reports": "Reports",
-		"monthlyResults": "Monthly Results",
 		"monthlyPlan": "Monthly Plan",
 		"quarterlyPlan": "Quarterly Plan",
 		"yearlyPlan": "Yearly Plan",
@@ -150,8 +149,7 @@
 		"backtestOptimize": "Optimize",
 		"newTrade": "New Trade",
 		"plans": "Plans",
-		"simulation": "Simulation",
-		"reportsGroup": "Reports"
+		"simulation": "Simulation"
 	},
 	"market": {
 		"title": "Market Monitor",
@@ -2411,6 +2409,12 @@
 		"annualReportTitle": "Annual Report — {year}",
 		"weeklyMetaTitle": "Weekly Meta vs Real",
 		"annualRollupTitle": "Annual Rollup",
+		"yearTaxTitle": "Year Tax & Carryover — {year}",
+		"carryoverTitle": "Loss Carryover",
+		"monthClosing": {
+			"title": "Month Closing — {month}",
+			"detailToggle": "Month detail"
+		},
 		"withdrawalLoggedSuccess": "Withdrawal logged successfully.",
 		"withdrawalMessage": "Based on your {percent}% withdrawal target, consider withdrawing <span>{amount}</span>.",
 		"withdrawalAmountLabel": "Amount (R$)",

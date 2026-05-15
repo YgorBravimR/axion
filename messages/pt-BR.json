@@ -138,7 +138,6 @@
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
 		"reports": "Relatórios",
-		"monthlyResults": "Resultados Mensais",
 		"monthlyPlan": "Plano Mensal",
 		"quarterlyPlan": "Plano Trimestral",
 		"yearlyPlan": "Plano Anual",
@@ -150,8 +149,7 @@
 		"backtestOptimize": "Otimizar",
 		"newTrade": "Novo Trade",
 		"plans": "Planos",
-		"simulation": "Simulação",
-		"reportsGroup": "Relatórios"
+		"simulation": "Simulação"
 	},
 	"market": {
 		"title": "Monitor de Mercado",
@@ -2411,6 +2409,12 @@
 		"annualReportTitle": "Relatório Anual — {year}",
 		"weeklyMetaTitle": "Meta Semanal vs Real",
 		"annualRollupTitle": "Consolidado Anual",
+		"yearTaxTitle": "Imposto e Prejuízo Acumulado — {year}",
+		"carryoverTitle": "Prejuízo a Compensar",
+		"monthClosing": {
+			"title": "Fechamento do Mês — {month}",
+			"detailToggle": "Detalhes do mês"
+		},
 		"withdrawalLoggedSuccess": "Retirada registrada com sucesso.",
 		"withdrawalMessage": "Com base na sua meta de retirada de {percent}%, considere retirar <span>{amount}</span>.",
 		"withdrawalAmountLabel": "Valor (R$)",

@@ -58,7 +58,6 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	},
 	"/playbook": { requiredRole: "viewer", description: "Playbook" },
 	"/reports": { requiredRole: "viewer", description: "Reports" },
-	"/monthly": { requiredRole: "trader", description: "Monthly Results" },
 	"/plan": { requiredRole: "trader", description: "Fractal Plan" },
 	"/settings": { requiredRole: "trader", description: "Settings" },
 

@@ -5,13 +5,16 @@ import {
 	getMonthlyReport,
 	getMistakeCostAnalysis,
 	getCommissionFeeImpact,
+	getMonthlyResultsWithProp,
+	getMonthlyProjection,
+	getMonthComparison,
 } from "@/app/actions/reports"
 import {
 	getAnnualRollup,
 	getWeeklyMetaVsReal,
 	getCapitalSnapshot,
 } from "@/app/actions/annual-reports"
-import { requireAuth } from "@/app/actions/auth"
+import { requireAuth, getCurrentAccount } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import {
 	getMonthlyDarf,
@@ -43,6 +46,10 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 		darfResult,
 		carryoverResult,
 		yearSummaryResult,
+		monthlyWithPropResult,
+		projectionResult,
+		comparisonResult,
+		currentAccount,
 	] = await Promise.all([
 		getWeeklyReport(0).catch(() => ({
 			status: "error" as const,
@@ -72,7 +79,11 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 			status: "error" as const,
 			data: null,
 		})),
-		getMonthlyDarf({ accountId: currentAccountId, year: currentYear, month: currentMonth }).catch(() => ({
+		getMonthlyDarf({
+			accountId: currentAccountId,
+			year: currentYear,
+			month: currentMonth,
+		}).catch(() => ({
 			status: "error" as const,
 			data: null,
 		})),
@@ -80,37 +91,75 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 			status: "error" as const,
 			data: null,
 		})),
-		getYearTaxSummary({ accountId: currentAccountId, year: currentYear }).catch(() => ({
+		getYearTaxSummary({ accountId: currentAccountId, year: currentYear }).catch(
+			() => ({
+				status: "error" as const,
+				data: null,
+			})
+		),
+		getMonthlyResultsWithProp(0).catch(() => ({
 			status: "error" as const,
 			data: null,
 		})),
+		getMonthlyProjection().catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getMonthComparison(0).catch(() => ({
+			status: "error" as const,
+			data: null,
+		})),
+		getCurrentAccount().catch(() => null),
 	])
 
 	const weeklyReport =
-		weeklyResult.status === "success" ? weeklyResult.data ?? null : null
+		weeklyResult.status === "success" ? (weeklyResult.data ?? null) : null
 	const monthlyReport =
-		monthlyResult.status === "success" ? monthlyResult.data ?? null : null
+		monthlyResult.status === "success" ? (monthlyResult.data ?? null) : null
 	const mistakeCostAnalysis =
-		mistakeResult.status === "success" ? mistakeResult.data ?? null : null
+		mistakeResult.status === "success" ? (mistakeResult.data ?? null) : null
 	const commissionFeeImpact =
-		feeResult.status === "success" ? feeResult.data ?? null : null
+		feeResult.status === "success" ? (feeResult.data ?? null) : null
 	const annualRollupData =
-		annualRollupResult.status === "success" ? annualRollupResult.data ?? null : null
+		annualRollupResult.status === "success"
+			? (annualRollupResult.data ?? null)
+			: null
 	const weeklyMetaData =
-		weeklyMetaResult.status === "success" ? weeklyMetaResult.data ?? null : null
+		weeklyMetaResult.status === "success"
+			? (weeklyMetaResult.data ?? null)
+			: null
 	const capitalEvents =
 		capitalSnapshotResult.status === "success"
-			? capitalSnapshotResult.data?.events ?? []
+			? (capitalSnapshotResult.data?.events ?? [])
 			: []
 
-	const darfRow = darfResult.status === "success" ? darfResult.data ?? null : null
+	const darfRow =
+		darfResult.status === "success" ? (darfResult.data ?? null) : null
 	const carryoverHistory =
-		carryoverResult.status === "success" ? carryoverResult.data?.history ?? [] : []
-	const yearSummary = yearSummaryResult.status === "success" ? yearSummaryResult.data ?? null : null
+		carryoverResult.status === "success"
+			? (carryoverResult.data?.history ?? [])
+			: []
+	const yearSummary =
+		yearSummaryResult.status === "success"
+			? (yearSummaryResult.data ?? null)
+			: null
+	const monthlyWithProp =
+		monthlyWithPropResult.status === "success"
+			? (monthlyWithPropResult.data ?? null)
+			: null
+	const projectionData =
+		projectionResult.status === "success"
+			? (projectionResult.data ?? null)
+			: null
+	const comparisonData =
+		comparisonResult.status === "success"
+			? (comparisonResult.data ?? null)
+			: null
+	const accountType = currentAccount?.accountType ?? "personal"
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<ReportsContent
 					weeklyReport={weeklyReport}
 					monthlyReport={monthlyReport}
@@ -120,10 +169,15 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 					weeklyMetaData={weeklyMetaData}
 					capitalEvents={capitalEvents}
 					currentYear={currentYear}
+					currentMonth={currentMonth}
 					darfRow={darfRow}
 					carryoverHistory={carryoverHistory}
 					yearSummary={yearSummary}
 					currentAccountId={currentAccountId}
+					accountType={accountType}
+					monthlyWithProp={monthlyWithProp}
+					projectionData={projectionData}
+					comparisonData={comparisonData}
 				/>
 			</div>
 		</div>

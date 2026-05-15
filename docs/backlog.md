@@ -61,11 +61,10 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 - **Why**: collapses dilutive overlap — two pages telling the cross-account story. Preserves multi-account as first-class (Q3) since the _concept_ survives in Analytics, only the dedicated route disappears.
 - **Source**: feature-manifesto-2026-05.md §3.4 + §6 (2).
 
-### Monthly Review → "Month Closing" affordance inside Reports
+### ~~Monthly Review → "Month Closing" affordance inside Reports~~ ✅ Landed 2026-05-15
 
 - **Priority:** P2 · **Effort:** M
-- **What**: build a "Month Closing" card in Reports with two account-type variants — prop-firm accounts surface the withdraw value as the closing read, personal accounts surface the DARF + tax read. Once Reports owns the cycle-closing narrative, delete `/monthly` route.
-- **Why**: monthly review's real purpose is _cycle closing_, not a generic month view. The ritual is account-type-specific. Two surfaces telling the same monthly story is dilutive; one surface with account-aware variants is the right shape.
+- **Status:** `/monthly` route deleted; replaced by `MonthClosingSection` in Reports. Branches by account type — personal → `MonthlyDarfCard`, prop → `PropProfitSummary`, replay → null. Existing weekly/projection/comparison content preserved via collapsible "Month Detail" `<details>`. `/monthly` → `/reports` 308 redirect in `src/proxy.ts`.
 - **Source**: feature-manifesto-2026-05.md §3.4 + §6 (3). User input: "the purpose of monthly review is to create a kind of cycle closing".
 
 ### Playbook detail page — methodology-aware redesign

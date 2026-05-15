@@ -25,7 +25,6 @@ type NavLabelKey =
 	| "analytics"
 	| "playbook"
 	| "reports"
-	| "monthlyResults"
 	| "monthlyPlan"
 	| "quarterlyPlan"
 	| "yearlyPlan"
@@ -102,22 +101,22 @@ const buildNavStructure = (now: Date): NavEntry[] => {
 			icon: Sparkles,
 			items: [
 				{ labelKey: "monteCarlo", href: "/monte-carlo", icon: Dices },
-				{ labelKey: "riskSimulation", href: "/risk-simulation", icon: FlaskConical },
+				{
+					labelKey: "riskSimulation",
+					href: "/risk-simulation",
+					icon: FlaskConical,
+				},
 				{ labelKey: "backtest", href: "/backtest", icon: FlaskRound },
-				{ labelKey: "backtestOptimize", href: "/backtest/optimize", icon: GitCompareArrows },
+				{
+					labelKey: "backtestOptimize",
+					href: "/backtest/optimize",
+					icon: GitCompareArrows,
+				},
 				{ labelKey: "equityShield", href: "/equity-shield", icon: Shield },
 			],
 		},
 		{ labelKey: "playbook", href: "/playbook", icon: FileText },
-		{
-			kind: "group",
-			groupKey: "reportsGroup",
-			icon: FileBarChart,
-			items: [
-				{ labelKey: "monthlyResults", href: "/monthly", icon: CalendarDays },
-				{ labelKey: "reports", href: "/reports", icon: FileBarChart },
-			],
-		},
+		{ labelKey: "reports", href: "/reports", icon: FileBarChart },
 		{ labelKey: "settings", href: "/settings", icon: Settings },
 	]
 }
