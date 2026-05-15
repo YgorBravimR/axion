@@ -2148,14 +2148,19 @@ export const hawksScenarios = pgTable(
 )
 
 // Sidecar on trades. tradeId PK enforces 1:1 with parent. scenarioId nullable
-// because v0 ships single-scenario tagging (Open Question 2 deferred). The detector
-// pipeline derives accountId + tradingDay from the parent trade row.
+// because v0 ships single-scenario tagging (Open Question 2 deferred).
+// accountId + tradingDay are denormalized here to enforce uniqueness on ordinal
+// and prevent race-condition duplicates when two trades are created concurrently.
 export const tradeHawksMetadata = pgTable(
 	"trade_hawks_metadata",
 	{
 		tradeId: uuid("trade_id")
 			.primaryKey()
 			.references(() => trades.id, { onDelete: "cascade" }),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		tradingDay: date("trading_day").notNull(),
 		scenarioId: uuid("scenario_id").references(() => hawksScenarios.id, {
 			onDelete: "set null",
 		}),
@@ -2170,6 +2175,11 @@ export const tradeHawksMetadata = pgTable(
 			.notNull(),
 	},
 	(table) => [
+		uniqueIndex("thm_account_day_ordinal_idx").on(
+			table.accountId,
+			table.tradingDay,
+			table.dailyTradeOrdinal
+		),
 		index("thm_scenario_idx").on(table.scenarioId),
 		index("thm_entered_at_idx").on(table.enteredAt),
 	]

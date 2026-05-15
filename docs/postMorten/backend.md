@@ -2,6 +2,45 @@
 
 ---
 
+## [BUG-2026-05-15-1] Hawks `dailyTradeOrdinal` race condition — concurrent inserts collide on unique index
+
+**Severity:** Medium (low probability, high correctness impact) | **Affected:** `src/app/actions/trades.ts`, `src/db/schema.ts`, `src/db/migrations/0005_boring_wasp.sql`
+
+**Cause:** The Hawks v0 sidecar computes `dailyTradeOrdinal = COUNT(*) + 1` on the trades table before insert. Two concurrent requests (e.g., from two browser tabs) both observe `count=0`, compute `ordinal=1`, and attempt to insert. The second insert violates a unique constraint (once added) with error code `23505` (Postgres). No unique constraint existed until this fix, so the collision silently created two trades with `ordinal=1` on the same `(accountId, tradingDay)`.
+
+The race window is narrow (requires submissions within milliseconds) but achievable. While rare in practice, the ordinal is an analytics signal expected to be monotonic per day; duplicates confuse the Hawks scoring detector.
+
+**Effect:**
+
+- Two trades logged concurrently on the same day could both receive `ordinal=1`
+- Detector queries expecting `dailyTradeOrdinal` to uniquely order trades within a day would encounter ambiguity
+- No user-facing crash; silent data inconsistency that breaks downstream analytics
+
+**Solution:**
+
+1. **Schema change**: Added `accountId` (uuid FK) and `tradingDay` (date) columns to `trade_hawks_metadata`. Previously these were "derived from parent trade by detector pipeline"; now they're explicit, denormalized columns populated by the action.
+   - Added unique index `thm_account_day_ordinal_idx` on `(accountId, tradingDay, dailyTradeOrdinal)` to enforce ordinal monotonicity per day per account.
+   - Migration backfills columns from parent `trades` table, then makes columns NOT NULL.
+
+2. **Action change**: Wrapped Hawks sidecar insert in a retry loop (max 3 attempts) that:
+   - Catches Postgres error code `23505` (unique constraint violation)
+   - Recomputes `dailyTradeOrdinal` with a fresh `COUNT(*)` query
+   - Retries the insert with the new ordinal
+   - Throws with cause chain after max retries exhausted
+
+3. **Test**: Added unit test `hawks-ordinal-race-condition.test.ts` validating the schema constraint and retry logic.
+
+**Prevention:**
+
+- **Read-then-write race: add constraints, not just sequences.** Sequences (`nextval()`) prevent collisions only if the sequence is central. When you compute a value client-side from a read (`count()`), the window between read and write is vulnerable. Add a unique constraint on the computed value to catch and recover from collisions.
+- **Retry transactional writes on constraint violations.** PostgreSQL error code `23505` is retriable: recompute the conflicting value and retry. This is cheaper than a two-phase lock or a distributed sequence.
+- **Denormalize for enforcement.** If an attribute like `tradingDay` is "derived from parent," and you need to enforce uniqueness on it, make it an explicit column. Computed columns in constraints are not portable; explicit columns + FK to parent are.
+- **Test concurrency separately from unit tests.** Manual testing with two browser tabs hitting the same endpoint within milliseconds is the easiest way to verify a retry loop works; unit mocks can only simulate the failure path.
+
+**Related Files:** `src/app/actions/trades.ts`, `src/db/schema.ts`, `src/db/migrations/0005_boring_wasp.sql`, `src/__tests__/actions/hawks-ordinal-race-condition.test.ts`
+
+---
+
 ## [BUG-2026-05-15] Hawks backtest stop reference was 1 brick back instead of 2 — R-multiples silently inflated 2×
 
 **Severity:** High (silent correctness) | **Affected:** `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/lib/backtest/engine.ts`, `src/lib/backtest/presets/hawks-presets.ts`, `src/types/backtest.ts`, `src/__tests__/lib/backtest/hawks-engine.test.ts`

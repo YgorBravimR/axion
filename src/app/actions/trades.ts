@@ -390,9 +390,56 @@ export const createTrade = async (
 			}
 
 			if (hawksSidecar) {
-				await db
-					.insert(tradeHawksMetadata)
-					.values({ ...hawksSidecar, tradeId: inserted.id })
+				let sidecarInserted = false
+				let retryCount = 0
+				const maxRetries = 3
+
+				while (!sidecarInserted && retryCount < maxRetries) {
+					try {
+						// eslint-disable-next-line no-await-in-loop
+						await db
+							.insert(tradeHawksMetadata)
+							.values({ ...hawksSidecar, tradeId: inserted.id })
+						sidecarInserted = true
+					} catch (err) {
+						const insertErr =
+							err instanceof Error ? err : new Error(String(err))
+						const pgErr = insertErr as { code?: string; detail?: string }
+						// Postgres unique violation error code: duplicate key on (accountId, tradingDay, dailyTradeOrdinal)
+						if (pgErr.code === "23505") {
+							retryCount++
+							if (retryCount >= maxRetries) {
+								// Max retries exhausted; clean up and surface error
+								// eslint-disable-next-line no-await-in-loop
+								await db.delete(trades).where(eq(trades.id, inserted.id))
+								throw new Error(
+									`Hawks ordinal race condition: failed after ${maxRetries} retries. ${pgErr.detail || ""}`,
+									{ cause: err }
+								)
+							}
+							// Recompute ordinal with fresh count and retry
+							const dayStart = getStartOfDay(tradeData.entryDate)
+							const dayEnd = getEndOfDay(tradeData.entryDate)
+							// eslint-disable-next-line no-await-in-loop
+							const [newOrdRow] = await db
+								.select({ n: count() })
+								.from(trades)
+								.where(
+									and(
+										eq(trades.accountId, accountId),
+										gte(trades.entryDate, dayStart),
+										lte(trades.entryDate, dayEnd)
+									)
+								)
+							hawksSidecar.dailyTradeOrdinal = (newOrdRow?.n ?? 0) + 1
+						} else {
+							// Not a unique constraint violation; clean up and re-throw
+							// eslint-disable-next-line no-await-in-loop
+							await db.delete(trades).where(eq(trades.id, inserted.id))
+							throw insertErr
+						}
+					}
+				}
 			}
 
 			if (tradeData.conditionsMet?.length) {
