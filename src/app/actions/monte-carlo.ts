@@ -443,7 +443,7 @@ export const runSimulation = async (
 
 		return {
 			status: "success",
-			message: t("actions.simulationCompleted"),
+			message: t("actions.edgeExpectancySimulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
@@ -460,7 +460,7 @@ export const runSimulation = async (
 
 		return {
 			status: "error",
-			message: t("actions.failedToRunSimulation"),
+			message: t("actions.failedToRunEdgeExpectancy"),
 			errors: [
 				{
 					code: "SIMULATION_ERROR",
@@ -614,7 +614,7 @@ export const runSimulationV2 = async (
 
 		return {
 			status: "success",
-			message: t("actions.v2SimulationCompleted"),
+			message: t("actions.capitalExpectancySimulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
@@ -631,7 +631,7 @@ export const runSimulationV2 = async (
 
 		return {
 			status: "error",
-			message: t("actions.failedToRunV2Simulation"),
+			message: t("actions.failedToRunCapitalExpectancy"),
 			errors: [
 				{
 					code: "SIMULATION_V2_ERROR",

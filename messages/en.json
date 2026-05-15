@@ -551,8 +551,10 @@
 			"failedToRunSimulation": "Failed to run simulation",
 			"comparisonCompleted": "Comparison completed",
 			"failedToRunComparison": "Failed to run comparison",
-			"v2SimulationCompleted": "V2 simulation completed",
-			"failedToRunV2Simulation": "Failed to run V2 simulation"
+			"edgeExpectancySimulationCompleted": "Edge Expectancy simulation completed",
+			"failedToRunEdgeExpectancy": "Failed to run Edge Expectancy simulation",
+			"capitalExpectancySimulationCompleted": "Capital Expectancy simulation completed",
+			"failedToRunCapitalExpectancy": "Failed to run Capital Expectancy simulation"
 		}
 	},
 	"commandCenter": {

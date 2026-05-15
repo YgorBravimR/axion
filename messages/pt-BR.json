@@ -551,8 +551,10 @@
 			"failedToRunSimulation": "Falha ao executar simulação",
 			"comparisonCompleted": "Comparação concluída",
 			"failedToRunComparison": "Falha ao executar comparação",
-			"v2SimulationCompleted": "Simulação V2 concluída",
-			"failedToRunV2Simulation": "Falha ao executar simulação V2"
+			"edgeExpectancySimulationCompleted": "Simulação de Expectativa de Edge concluída",
+			"failedToRunEdgeExpectancy": "Falha ao executar simulação de Expectativa de Edge",
+			"capitalExpectancySimulationCompleted": "Simulação de Expectativa de Capital concluída",
+			"failedToRunCapitalExpectancy": "Falha ao executar simulação de Expectativa de Capital"
 		}
 	},
 	"commandCenter": {
