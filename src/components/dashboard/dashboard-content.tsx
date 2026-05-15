@@ -33,6 +33,7 @@ import type {
 	DailyPnL,
 	RadarChartData,
 } from "@/types"
+import type { HawksCoachingResult } from "@/app/actions/hawks-coaching.types"
 
 type DashboardPeriod = "month" | "year" | "allTime"
 
@@ -45,6 +46,7 @@ interface DashboardContentProps {
 	initialRadarData: RadarChartData[]
 	initialYear: number
 	initialMonthIndex: number
+	initialHawksContext?: HawksCoachingResult | null
 }
 
 /** Compute dateFrom/dateTo for a given dashboard period */
@@ -114,6 +116,7 @@ export const DashboardContent = ({
 	initialRadarData,
 	initialYear,
 	initialMonthIndex,
+	initialHawksContext,
 }: DashboardContentProps) => {
 	const effectiveDate = useEffectiveDate()
 	const { canAccess } = useFeatureAccess()
@@ -258,7 +261,9 @@ export const DashboardContent = ({
 				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
 					<ModeVariant
 						default={<CoachingInsightsCard />}
-						hawks={<HawksCoachingInsightsCard />}
+						hawks={
+							<HawksCoachingInsightsCard initialContext={initialHawksContext} />
+						}
 					/>
 				</div>
 			)}

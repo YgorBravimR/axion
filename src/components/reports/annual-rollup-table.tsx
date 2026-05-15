@@ -1,6 +1,7 @@
 // src/components/reports/annual-rollup-table.tsx
 "use client"
 
+import { useFormatting } from "@/hooks/use-formatting"
 import type {
 	AnnualRollupData,
 	AnnualRollupRow,
@@ -21,24 +22,14 @@ interface AnnualRollupTableProps {
 	className?: string
 }
 
-const formatBRL = (cents: number | null): string => {
-	if (cents === null) {
-		return "—"
-	}
-	const value = cents / 100
-	return new Intl.NumberFormat("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-		maximumFractionDigits: 0,
-	}).format(value)
-}
-
 const CellBRL = ({
 	value,
 	highlight = false,
+	format,
 }: {
 	value: number | null
 	highlight?: boolean
+	format: (cents: number) => string
 }) => {
 	if (value === null) {
 		return (
@@ -57,7 +48,7 @@ const CellBRL = ({
 		<TableCell
 			className={`text-tiny px-3 py-2 text-right font-mono ${colorClass} tabular-nums`}
 		>
-			{formatBRL(value)}
+			{format(value)}
 		</TableCell>
 	)
 }
@@ -102,8 +93,8 @@ const RowData = ({ row }: { row: AnnualRollupRow }) => {
 			>
 				{row.monthName.slice(0, 3)}
 			</TableHead>
-			<CellBRL value={row.resultadoBruto} />
-			<CellBRL value={row.resultadoLiquido} highlight />
+			<CellBRL value={row.resultadoBruto} format={formatBRL} />
+			<CellBRL value={row.resultadoLiquido} highlight format={formatBRL} />
 			<CellNum value={row.pontos} />
 			<CellBRL value={row.taxas} />
 			<CellBRL value={row.imposto} />
@@ -121,6 +112,10 @@ const RowData = ({ row }: { row: AnnualRollupRow }) => {
 
 const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 	const { rows, totals, taxEstimated } = data
+	const { formatCurrency } = useFormatting()
+
+	const formatBRL = (cents: number): string =>
+		formatCurrency(cents / 100, "BRL")
 
 	return (
 		<div className={className}>

@@ -17,18 +17,25 @@ interface StatCardProps {
 	label: string
 	value: string
 	subValue?: string
-	variant?: "default" | "positive" | "negative" | "pass" | "fail"
+	signedVariant?: "positive" | "negative"
+	verdictVariant?: "pass" | "fail"
 }
 
 const StatCard = memo(
-	({ label, value, subValue, variant = "default" }: StatCardProps) => {
+	({
+		label,
+		value,
+		subValue,
+		signedVariant,
+		verdictVariant,
+	}: StatCardProps) => {
 		const valueClass = cn(
 			"text-body sm:text-h3 font-semibold tabular-nums truncate",
-			variant === "positive" && "text-trade-buy",
-			variant === "negative" && "text-trade-sell",
-			variant === "pass" && "text-fb-success",
-			variant === "fail" && "text-fb-error",
-			variant === "default" && "text-txt-100"
+			signedVariant === "positive" && "text-trade-buy",
+			signedVariant === "negative" && "text-trade-sell",
+			verdictVariant === "pass" && "text-fb-success",
+			verdictVariant === "fail" && "text-fb-error",
+			!signedVariant && !verdictVariant && "text-txt-100"
 		)
 
 		return (
@@ -127,7 +134,7 @@ const EquityShieldStats = ({
 					label={t("observedMDD")}
 					value={formatCurrency(stats.observedMDD)}
 					subValue={formatPercent(stats.observedMDDPercent)}
-					variant="negative"
+					signedVariant="negative"
 				/>
 				<StatCard
 					label={t("m1Threshold")}

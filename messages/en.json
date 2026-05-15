@@ -1305,7 +1305,7 @@
 		"noInsights": "Patterns appear once you have more journaled trades on file.",
 		"noTrades": "No trades found for the analysis period.",
 		"period": "Last {days} days",
-		"tradeCount": "{count} trades analyzed",
+		"tradeCount": "{count, plural, =0 {No trades analyzed} one {# trade analyzed} other {# trades analyzed}}",
 		"severity": {
 			"warning": "Warning",
 			"attention": "Attention",

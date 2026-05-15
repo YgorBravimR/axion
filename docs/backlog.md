@@ -385,13 +385,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: The pattern keeps recurring because it borrows from Linear/Raycast vocabulary — but those products use stripes for **selection**, not direction. Without an explicit anti-example in DESIGN.md, the next contributor will reach for it again.
 - **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
 
-### Consolidate `/monitor` and `/painel` via locale routing
-
-- **Priority:** P3 · **Effort:** S
-- **What**: Two route files (`src/app/[locale]/(public)/{monitor,painel}/page.tsx`) mount the identical `<MarketMonitorContent />` widget. `/painel` is the PT-BR alias for `/monitor`. Replace the duplicate page file with a `next-intl` URL alias or pathname-routing config so the alias is a redirect/rewrite, not a copy.
-- **Why**: Today both files must be kept in sync by hand. With ~10 lines each it is cheap today; with localized routes growing, the pattern will scale poorly.
-- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
-
 ---
 
 ## Design system docs

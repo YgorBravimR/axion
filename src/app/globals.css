@@ -48,6 +48,12 @@
 	--color-trade-buy-muted: rgba(52, 211, 153, 0.15);
 	--color-trade-sell-muted: rgba(248, 113, 113, 0.15);
 
+	/* Rule Engine Verdicts — independent from generic feedback tokens */
+	--color-rule-blocked: #ef4444;
+	--color-rule-paused: #fbbf24;
+	--color-rule-executed: #34d399;
+	--color-rule-na: #787c84;
+
 	/* Action Colors — intent semantics (action wall, cyan-shifted to avoid
      muddle with cobalt acc-100 at hue 258°) */
 	--color-action-buy: #5bb8d6;
@@ -182,6 +188,12 @@
 	--color-warning: #d97706;
 	--color-trade-buy-muted: rgba(5, 150, 105, 0.12);
 	--color-trade-sell-muted: rgba(220, 38, 38, 0.12);
+
+	/* Rule Engine Verdicts — light mode overrides */
+	--color-rule-blocked: #dc2626;
+	--color-rule-paused: #d97706;
+	--color-rule-executed: #059669;
+	--color-rule-na: #6a6e76;
 
 	/* Action Colors — deeper cyan + terracotta for light */
 	--color-action-buy: #1e7a99;

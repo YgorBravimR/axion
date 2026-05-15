@@ -37,8 +37,8 @@ const levelConfig = {
 	},
 	conservative: {
 		Icon: CheckCircle,
-		color: "text-fb-success",
-		bgColor: "bg-fb-success/10 border-fb-success/30",
+		color: "text-rule-executed",
+		bgColor: "bg-rule-executed/10 border-rule-executed/30",
 	},
 }
 

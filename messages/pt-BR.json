@@ -1305,7 +1305,7 @@
 		"noInsights": "Os padrões aparecem assim que você tiver mais trades registrados.",
 		"noTrades": "Nenhum trade encontrado para o período de análise.",
 		"period": "Últimos {days} dias",
-		"tradeCount": "{count} trades analisados",
+		"tradeCount": "{count, plural, =0 {Nenhum trade analisado} one {# trade analisado} other {# trades analisados}}",
 		"severity": {
 			"warning": "Alerta",
 			"attention": "Atenção",
