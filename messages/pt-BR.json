@@ -1271,7 +1271,9 @@
 			"mae": "MAE (Máx. Adverso)",
 			"classification": "Classificação",
 			"journalNotes": "Notas do Diário",
-			"disciplineNotes": "Notas de Disciplina"
+			"disciplineNotes": "Notas de Disciplina",
+			"conditions": "Condições",
+			"conditionsMetBadge": "{met} de {total} atendidas"
 		},
 		"chart": {
 			"executions": "Execuções",
@@ -1492,6 +1494,15 @@
 	"journal": {
 		"title": "Diário de Trades",
 		"description": "Registre e acompanhe seus trades",
+		"tradeConditions": {
+			"title": "Condições",
+			"metBadge": "{met} de {total} atendidas",
+			"tier": {
+				"mandatory": "Obrigatória",
+				"tier_2": "Nível 2",
+				"tier_3": "Nível 3"
+			}
+		},
 		"smartSearch": {
 			"title": "Busca Inteligente",
 			"toggle": "Buscar e Filtrar",

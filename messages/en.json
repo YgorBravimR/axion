@@ -1271,7 +1271,9 @@
 			"mae": "MAE (Max Adverse)",
 			"classification": "Classification",
 			"journalNotes": "Journal Notes",
-			"disciplineNotes": "Discipline Notes"
+			"disciplineNotes": "Discipline Notes",
+			"conditions": "Conditions",
+			"conditionsMetBadge": "{met} of {total} met"
 		},
 		"chart": {
 			"executions": "Executions",
@@ -1492,6 +1494,15 @@
 	"journal": {
 		"title": "Trade Journal",
 		"description": "Record and track your trades",
+		"tradeConditions": {
+			"title": "Conditions",
+			"metBadge": "{met} of {total} met",
+			"tier": {
+				"mandatory": "Mandatory",
+				"tier_2": "Tier 2",
+				"tier_3": "Tier 3"
+			}
+		},
 		"smartSearch": {
 			"title": "Smart Search",
 			"toggle": "Search & Filter",

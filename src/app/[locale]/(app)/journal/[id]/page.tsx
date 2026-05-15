@@ -31,6 +31,7 @@ import {
 	type RatingGrade,
 } from "@/components/journal"
 import { getTrade } from "@/app/actions/trades"
+import { getTradeConditions } from "@/app/actions/trade-conditions"
 import { getAssetBySymbol } from "@/app/actions/assets"
 import {
 	getCandleDataForAsset,
@@ -54,11 +55,19 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 
 	const trade = result.data
 
-	// Fetch asset data + check candle availability in parallel
-	const [asset, candleSource] = await Promise.all([
+	// Fetch asset data + candle availability + condition snapshot in parallel
+	const [asset, candleSource, conditionsResult] = await Promise.all([
 		getAssetBySymbol(trade.asset),
 		getCandleDataForAsset(trade.asset),
+		getTradeConditions(trade.id),
 	])
+
+	const conditions =
+		conditionsResult.status === "success" && conditionsResult.data
+			? conditionsResult.data
+			: []
+	const conditionsMetCount = conditions.filter((c) => c.met).length
+	const conditionsTotalCount = conditions.length
 
 	// If candle data exists, fetch candles for the trade's time range
 	const candleResult = candleSource
@@ -400,7 +409,9 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 						)}
 
 						{/* Strategy & Tags */}
-						{(trade.strategy || tags.length > 0) && (
+						{(trade.strategy ||
+							tags.length > 0 ||
+							conditionsTotalCount > 0) && (
 							<Card
 								id="trade-detail-classification"
 								className="p-m-400 sm:p-m-500 lg:p-m-600"
@@ -421,6 +432,53 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										<p className="mt-s-100 text-body text-txt-100">
 											{trade.strategy.name}
 										</p>
+									</div>
+								)}
+
+								{conditionsTotalCount > 0 && (
+									<div id="trade-detail-conditions" className="mb-m-400">
+										<div className="gap-s-300 mb-s-200 flex items-center">
+											<p className="text-tiny text-txt-300">
+												{tTrade("detail.conditions")}
+											</p>
+											<Badge
+												id="trade-detail-conditions-met-badge"
+												variant="outline"
+												className="text-txt-200"
+											>
+												{tTrade("detail.conditionsMetBadge", {
+													met: conditionsMetCount,
+													total: conditionsTotalCount,
+												})}
+											</Badge>
+										</div>
+										<ul className="gap-s-100 flex flex-col">
+											{conditions.map((c) => (
+												<li
+													key={c.conditionId}
+													className="gap-s-200 text-small text-txt-100 flex items-center"
+												>
+													{c.met ? (
+														<CheckCircle
+															className="text-trade-buy h-4 w-4 shrink-0"
+															aria-hidden="true"
+														/>
+													) : (
+														<XCircle
+															className="text-txt-300 h-4 w-4 shrink-0"
+															aria-hidden="true"
+														/>
+													)}
+													<span
+														className={cn(
+															!c.met && "text-txt-300 line-through"
+														)}
+													>
+														{c.name}
+													</span>
+												</li>
+											))}
+										</ul>
 									</div>
 								)}
 

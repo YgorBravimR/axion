@@ -70,6 +70,8 @@ import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
 import type { PersistedImage, PendingImage } from "@/lib/validations/upload"
 import { HawksTradeFields } from "@/components/hawks"
+import { TradeConditionsChecklist } from "@/components/journal/trade-conditions-checklist"
+import { getTradeConditions } from "@/app/actions/trade-conditions"
 import {
 	Tooltip,
 	TooltipContent,
@@ -300,6 +302,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						disciplineNotes: initialSharedState.disciplineNotes,
 						setupRank: initialSharedState.setupRank,
 						rating: initialSharedState.rating,
+						conditionsMet: initialSharedState.conditionsMet,
 					}),
 					...(hawksModeActive && {
 						hawks: {
@@ -357,6 +360,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 					setupRank: values.setupRank,
 					rating: values.rating,
 					tagIds: values.tagIds,
+					conditionsMet: values.conditionsMet,
 				}
 			},
 		}))
@@ -374,7 +378,28 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const followedPlan = watch("followedPlan")
 		const currentRating = watch("rating")
 		const strategyId = watch("strategyId")
+		const conditionsMet = watch("conditionsMet") ?? []
 		const tValidation = useTranslations("trade.validation")
+
+		// Edit mode: hydrate evaluated conditions from the trade_conditions junction.
+		useEffect(() => {
+			if (!trade?.id) {
+				return
+			}
+			let cancelled = false
+			void getTradeConditions(trade.id).then((r) => {
+				if (cancelled || r.status !== "success" || !r.data) {
+					return
+				}
+				setValue(
+					"conditionsMet",
+					r.data.map((c) => ({ conditionId: c.conditionId, met: c.met }))
+				)
+			})
+			return () => {
+				cancelled = true
+			}
+		}, [trade?.id, setValue])
 
 		// Real-time SL/TP cross-field validation indicators
 		const stopLossWarning = useMemo(() => {
@@ -1121,6 +1146,16 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										))}
 									</div>
 								</div>
+							)}
+
+							{strategyId && (
+								<TradeConditionsChecklist
+									strategyId={strategyId}
+									value={conditionsMet}
+									onChange={(next) =>
+										setValue("conditionsMet", next, { shouldDirty: true })
+									}
+								/>
 							)}
 						</AnimatedTabsContent>
 

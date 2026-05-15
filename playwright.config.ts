@@ -32,6 +32,7 @@ const orderedPhases: readonly [PhaseDef, ...PhaseDef[]] = [
 
 /** Data-dependent tests — run in parallel after journal completes */
 const dataPhases = [
+	{ name: "trade-conditions", testMatch: /trade-conditions\.spec\.ts/ },
 	{ name: "dashboard", testMatch: /dashboard\.spec\.ts/ },
 	{ name: "analytics", testMatch: /analytics\.spec\.ts/ },
 	{ name: "holding-period", testMatch: /holding-period\.spec\.ts/ },

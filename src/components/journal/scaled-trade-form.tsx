@@ -50,6 +50,7 @@ import type {
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
 import type { AssetWithType } from "@/app/actions/assets.types"
 import { formatDateKey, formatBrtTimeShort, BRT_OFFSET } from "@/lib/dates"
+import { TradeConditionsChecklist } from "@/components/journal/trade-conditions-checklist"
 
 interface ScaledTradeFormProps {
 	strategies?: Strategy[]
@@ -153,6 +154,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 		const [setupRank] = useState<"A" | "AA" | "AAA" | null | undefined>(
 			initialSharedState?.setupRank
 		)
+		const [conditionsMet, setConditionsMet] = useState<
+			{ conditionId: string; met: boolean }[]
+		>(initialSharedState?.conditionsMet ?? [])
 
 		// Tags
 		const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
@@ -358,6 +362,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 				disciplineNotes: disciplineNotes || undefined,
 				setupRank,
 				tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+				conditionsMet: conditionsMet.length > 0 ? conditionsMet : undefined,
 			}),
 		}))
 
@@ -468,6 +473,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					setupRank: setupRank || undefined,
 					tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
 					executions,
+					conditionsMet: conditionsMet.length > 0 ? conditionsMet : undefined,
 				})
 
 				if (result.status === "success") {
@@ -992,6 +998,14 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 										</SelectContent>
 									</Select>
 								</div>
+							)}
+
+							{strategyId && (
+								<TradeConditionsChecklist
+									strategyId={strategyId}
+									value={conditionsMet}
+									onChange={setConditionsMet}
+								/>
 							)}
 						</div>
 
