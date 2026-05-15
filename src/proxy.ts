@@ -104,6 +104,17 @@ export const proxy = auth((req) => {
 		}
 	}
 
+	// Permanent: /replay route is deprecated. Redirect to dashboard.
+	{
+		const pathWithoutLocaleStripped =
+			pathname.replace(/^\/(en|pt-BR)/, "") || "/"
+		const localeMatch = pathname.match(/^\/(en|pt-BR)/)
+		const localePrefix = localeMatch ? localeMatch[0] : "/en"
+		if (pathWithoutLocaleStripped === "/replay") {
+			return NextResponse.redirect(new URL(`${localePrefix}/`, req.url), 308)
+		}
+	}
+
 	// Apply i18n middleware for locale routing
 	return intlMiddleware(req)
 })

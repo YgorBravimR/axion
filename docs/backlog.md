@@ -32,14 +32,13 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 > **Strategic context**: see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) for the invest/merge/deprecate framing this shortlist sits inside.
 
-The six items that earn priority over everything else in this file. Each is linked to its full entry below.
+The five items that earn priority over everything else in this file. Each is linked to its full entry below.
 
-1. **Replay deprecation sweep** — remove all `/replay` references across UI, navigation, settings, docs (Backtest section).
-2. **`trade_conditions` junction table** — per-trade condition selection so Hawks analytics can decompose `setupRank` into its condition signals (Backtest section).
-3. **Consolidate `brand-*` and `acc-*` into a single bronze scale** — two tokens for the same colour silently fork on every new contributor (Design system section).
-4. **`window.confirm()` migration on `/journal/[id]` delete** — CLAUDE.md ban, last hold-out for trade deletion (Journal detail section).
-5. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
-6. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
+1. **`trade_conditions` junction table** — per-trade condition selection so Hawks analytics can decompose `setupRank` into its condition signals (Backtest section).
+2. **Consolidate `brand-*` and `acc-*` into a single bronze scale** — two tokens for the same colour silently fork on every new contributor (Design system section).
+3. **`window.confirm()` migration on `/journal/[id]` delete** — CLAUDE.md ban, last hold-out for trade deletion (Journal detail section).
+4. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
+5. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
 
 ---
 
@@ -364,14 +363,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 ---
 
 ## Backtest — deferred follow-ups
-
-### Replay deprecation sweep — **P1**
-
-- **Priority:** P1 · **Effort:** M
-- **What**: Remove all `/replay` references across the codebase. Decision (Ygor, 2026-05-15): replay is deprecated until further notice. Sweep: navigation entries, settings toggles, route file(s), any component imports, docs that mention it (incl. zero-to-hero and skill-index references), and any i18n keys under `replay.*`.
-- **Why**: Replay was never a load-bearing feature in the current methodology focus, and leaving the surface up while it gets no investment dilutes the product story. Easier to bring it back later than to maintain a feature nobody owns.
-- **Effort detail**: M because route removal must coordinate with navigation chrome and any deep-links from playbook/backtest pages; need to confirm there are no DB-side artifacts before removing the route handler.
-- **Source**: CEO review session 2026-05-15 (this triage); `src/app/[locale]/(app)/replay/*` if present; navigation chrome; `src/messages/*.json`.
 
 ### Hardcoded English aria-label on exit-level removal
 
