@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/toast"
 import { FeatureStamp } from "@/components/ui/feature-stamp"
 import { HelpText } from "@/components/ui/help-text"
 import { confirmDailyBias } from "@/app/actions/hawks-bias"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { DailyHawksBias } from "@/db/schema"
 
 type Bias = "long" | "short" | "neutral"
@@ -56,6 +57,7 @@ const DailyBiasForm = ({
 	const tCommon = useTranslations("common")
 	const router = useRouter()
 	const { showToast } = useToast()
+	const { formatTime } = useFormatting()
 	const [isPending, startTransition] = useTransition()
 	const {
 		bias: initialBiasState,
@@ -217,18 +219,27 @@ const DailyBiasForm = ({
 					/>
 				</div>
 
-				<div className="gap-s-300 flex items-center justify-end">
-					<Button
-						id="hawks-bias-save"
-						size="sm"
-						onClick={handleSave}
-						disabled={isPending}
-					>
-						{isPending ? (
-							<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
-						) : null}
-						{initialBias ? tCommon("save") : t("confirmAction")}
-					</Button>
+				<div className="gap-s-300 flex flex-col items-end">
+					<div className="gap-s-300 flex items-center">
+						<Button
+							id="hawks-bias-save"
+							size="sm"
+							onClick={handleSave}
+							disabled={isPending}
+						>
+							{isPending ? (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							) : null}
+							{tCommon("save")}
+						</Button>
+					</div>
+					{initialBias && initialBias.confirmedAt && (
+						<p className="text-tiny text-txt-300">
+							{t("confirmedAt", {
+								time: formatTime(new Date(initialBias.confirmedAt)),
+							})}
+						</p>
+					)}
 				</div>
 			</div>
 		</section>

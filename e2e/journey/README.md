@@ -143,7 +143,23 @@ Switching to a fixed Bravo email + per-chain DB reset is tracked in [`docs/backl
 
 ## Tags
 
-Spec files include `@journey` and `@stage:<name>` tags in their JSDoc headers. Filtering by tag is **not** wired yet — the suite uses Playwright project selection (`--project=journey-XX-...`) which is more explicit. Wiring tag-based filtering is tracked in [`docs/backlog.md`](../../docs/backlog.md).
+Spec files are tagged with `@journey` (all journey specs) and `@stage:<name>` (stage-specific) tags wired to Playwright's `--grep` filter. Filter by tag instead of `--project` when you want a flexible, short CLI:
+
+```bash
+# Run all journey specs
+pnpm exec playwright test --grep "@journey"
+
+# Run only weekly+ (weekly, monthly, quarterly, improvement, hawks stages)
+pnpm exec playwright test --grep "@stage:(weekly|monthly|quarterly|improvement|hawks-daily-loop|seed-hawks-history)"
+
+# Exclude daily loop
+pnpm exec playwright test --grep "@journey" --grep-invert "@stage:daily-loop"
+
+# Run a single stage
+pnpm exec playwright test --grep "@stage:welcome"
+```
+
+Alternatively, use explicit `--project=journey-XX-...-ci` selection (documented below) if you prefer verbosity or need strict ordering guarantees beyond what `--grep` provides.
 
 ## What's NOT covered
 

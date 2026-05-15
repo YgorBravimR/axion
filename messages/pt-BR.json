@@ -5420,7 +5420,7 @@
 			"screenAjusteHint": "Preço de ajuste do dia se mantém como suporte/resistência.",
 			"notesLabel": "Notas",
 			"notesPlaceholder": "Contexto opcional: drivers macro, níveis-chave, assimetrias…",
-			"confirmAction": "Confirmar viés"
+			"confirmedAt": "Bias confirmada às {time}"
 		},
 		"settings": {
 			"title": "Modo Hawks",

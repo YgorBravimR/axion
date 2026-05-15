@@ -5420,7 +5420,7 @@
 			"screenAjusteHint": "Daily settlement price (ajuste) holds as support/resistance.",
 			"notesLabel": "Notes",
 			"notesPlaceholder": "Optional context: macro drivers, key levels, asymmetries…",
-			"confirmAction": "Confirm bias"
+			"confirmedAt": "Bias confirmed at {time}"
 		},
 		"settings": {
 			"title": "Hawks Mode",

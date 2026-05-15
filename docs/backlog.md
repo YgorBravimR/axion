@@ -80,13 +80,6 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 - **Why**: Recognizable identity in the showcase video (sales/marketing pickup). Today the timestamped email is the cheapest workaround for the DB-backed login rate-limit (`login:<email>` in `src/app/actions/auth.ts`).
 - **Source**: `e2e/journey/fixtures/bravo-seed.ts` header; `e2e/journey/README.md` "Bravo persona".
 
-### Tag-based filtering
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Wire `@journey` / `@stage:<name>` JSDoc tags to Playwright's `--grep` so contributors can run "all weekly+ stages" with one flag.
-- **Why**: Today the suite uses `--project=journey-NN-...` selection, which is explicit but verbose for partial-chain runs.
-- **Source**: `e2e/journey/README.md` "Tags".
-
 ### Edge-case separation pass
 
 - **Priority:** P2 · **Effort:** M
@@ -246,69 +239,6 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 - **Why**: Cosmetic at current fidelity (one tick on a ~20-tick brick is ~5% of the brick body). Worth tracking so it's not silently rediscovered as a bug later.
 - **Source**: `docs/postMorten/backend.md` [BUG-2026-05-15] open follow-ups; Ygor math note 2026-05-15.
 
-### Gauge verdict palette — document canonical 4-zone mapping in DESIGN.md
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/fractal-plan/target-actual-gauge.tsx` now applies a 4-zone verdict palette: `negative → fb-error`, `behind (≥0, <50% of target) → bg-bg-300/text-txt-100`, `onTrack (≥50%, <100% of target) → warning`, `ahead (≥100%) → fb-success`. Same shape will apply to any future target-vs-actual gauge (e.g. weekly cap consumption, daily R cap progress). Add the named "gauge verdict palette" to `DESIGN.md` so the next gauge widget inherits the vocabulary instead of re-inventing.
-- **Why**: Wave 4 picked the palette by analogy from Wave 3's rule-engine triad. Documenting it as the canonical gauge vocabulary keeps future gauges from reaching for `acc-100` again.
-- **Source**: `docs/scans/2026-05-12-impeccable-plan-wave4.md` Phase 4 reflection.
-
-### Document verdict-triad mapping for 5-point rating scales in DESIGN.md
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Wave 5 fixed `trade-form.tsx GRADE_COLORS` from a trade-buy/sell hijack to the canonical verdict triad: `A → fb-success`, `B → fb-success/70`, `C → warning`, `D → fb-error/70`, `F → fb-error`. Same shape will recur in future 5-point rating UIs (discipline rating, setup-confidence rating, post-trade journal grade). Document the named "rating verdict palette" in DESIGN.md so the next 5-point scale inherits it.
-- **Why**: Rating scales are the highest-risk surface for verdict-as-P&L hijacks because A=good naturally invites green. Codifying the mapping in DESIGN.md keeps the next contributor from reaching for trade-buy on reflex.
-- **Source**: `docs/scans/2026-05-12-impeccable-form-editors-wave5.md` Phase 4 deferred.
-
-### Document tab-active treatment in DESIGN.md
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `border-acc-100 text-acc-100` is the conventional active-tab indicator across the app (`new-trade-tabs.tsx`, AnimatedTabs, journal tabs). It is **not** a bronze hijack — only one tab is active at a time and the pattern mirrors Linear/Raycast active-tab convention. Document this in DESIGN.md as the canonical tab-active treatment so the next tab UI doesn't reach for `fb-success` ("active = good") or other off-brand alternatives.
-- **Why**: Without canonicalization, the question "should this be acc-100 or fb-success?" will recur on every new tab UI. Codify once.
-- **Source**: `docs/scans/2026-05-12-impeccable-form-editors-wave5.md` Phase 4 deferred.
-
-### Document operation-outcome verdict mapping in DESIGN.md
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Wave 6 fixed `recalculate-button.tsx` and `recalculate-pnl-button.tsx` from a `text-trade-buy / text-trade-sell` outcome banner to the verdict triad (`text-fb-success / text-fb-error`). The same shape will recur in every future async-action result banner (export job complete, recompute month complete, bulk import done, etc.). Document the "operation-outcome verdict palette" in DESIGN.md.
-- **Why**: Operation outcomes are the second-most-common verdict-as-P&L hijack site after rating scales. Codifying the mapping in DESIGN.md prevents the next async banner reaching for trade-buy on reflex.
-- **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
-
-### Document auth surface as canonical verdict-triad example in DESIGN.md
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Wave 7's scan confirmed the auth surface has zero trade-color hijacks — every status state uses the verdict triad (`fb-success` for confirmed/verified, `fb-error` for invalid input, `warning` slot unused). This makes auth the canonical reference example for "how status colors should work" across the codebase. Document it in DESIGN.md with cross-links to the relevant files.
-- **Why**: The settings/dashboard surfaces still drift toward `trade-buy/sell` for non-monetary verdict states. Pointing at a known-good reference shortens future arguments.
-- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
-
-### Catalogue temporal-state-as-P&L hijack in DESIGN.md
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Wave 8 surfaced a third hijack flavor: market session state ("open") painted as trade-color green. Waves 1-7 documented verdict-as-P&L and category-as-P&L; this completes the trio. Add a short DESIGN.md paragraph: _"Any status indicator whose semantic domain is not signed monetary magnitude reaches for the verdict triad (`fb-success` / `fb-error` / `warning` / `txt-300`). `trade-buy` / `trade-sell` are reserved for the magnitude itself."_
-- **Why**: Pre-empts the next variant. Broker-connection status, data-feed health, session timers, and similar future surfaces will all face the same temptation.
-- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
-
-### Add "no side-stripe borders" rule to DESIGN.md with worked example
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Side-stripe borders are now the highest-recidivism absolute ban — caught at Wave 4 (plan cards) and again at Wave 8 (`hero-quote-card.tsx`). Add a DESIGN.md note with the hero-card before/after showing how the colored `changePercent` already conveys direction, making the stripe redundant chrome.
-- **Why**: The pattern keeps recurring because it borrows from Linear/Raycast vocabulary — but those products use stripes for **selection**, not direction. Without an explicit anti-example in DESIGN.md, the next contributor will reach for it again.
-- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
-
----
-
-## Design system docs
-
-### Consolidate axion-design-brief.md + design-context.md into DESIGN.md
-
-- **Priority:** P2 · **Effort:** XS
-- **What**: Merge `docs/axion-design-brief.md` (visual identity / brand brief) and `docs/design-context.md` (user context + design principles) into a single `docs/DESIGN.md`. Update CLAUDE.md routing table to point to the new file.
-- **Why**: Any design review agent currently reads two files to calibrate. A single `DESIGN.md` reduces per-session overhead and is the expected convention for design system routing in gstack skills.
-- **Depends on**: none — can be done independently.
-- **Source**: `/plan-design-review` on `feat/hawks-mode-v0` (2026-05-13).
-
----
-
 ## Documentation drift watch
 
 - **Priority:** P3 · **Effort:** XS
@@ -326,12 +256,6 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 - **What**: Each switch in `HawksTradeFields` ships with a `*Label` + `*Hint` pair where the hint repeats the label (e.g. "Triple screen confirmed?" + "Did your 5-screen checklist hold at entry?"). The hint adds no information.
 - **Why now**: Phase 1a P1 finding in `docs/scans/2026-05-13-impeccable-trade-form-hawks.md`. Voice-gate review needed before edit; one of: drop hints, or rewrite as one-clause clarifiers.
 - **Source**: `src/messages/en.json` + `src/messages/pt-BR.json` under `hawks.tradeFields.*`. Component: `src/components/hawks/hawks-trade-fields.tsx`.
-
-### HAWKS daily bias "Save" vs "Confirm" verb tidy
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `DailyBiasForm` save button switches between `common.save` (when a row exists) and `hawks.bias.confirmAction` (when fresh). Two verbs for the same action class. Settle on one — recommend "Save" everywhere, with a sub-line "Bias confirmed at HH:MM" after first write.
-- **Source**: `src/components/hawks/daily-bias-form.tsx:200`.
 
 ### HAWKS settings tab copy voice gate
 
@@ -364,6 +288,9 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **`docs/DESIGN.md` consolidation + 7 canonical pattern sections** — P2/P3. New 304-line `docs/DESIGN.md` (17KB) merges `axion-design-brief.md` (visual identity) + `design-context.md` (audience, principles) into one design-system reference. Source files deleted. CLAUDE.md routing table consolidates the two design-context rows into one pointing at DESIGN.md. Canonical patterns subsection populated with 7 entries (each rooted in a Wave 1-8 sweep finding): gauge verdict palette (4-zone target/actual mapping), rating verdict palette (5-point A-F scales), tab-active treatment (`border-acc-100 text-acc-100`), operation-outcome verdict mapping (async-action banners), auth surface as canonical verdict-triad example with cross-links, "status colors vs. magnitude colors" rule covering verdict-as-P&L + category-as-P&L + temporal-state-as-P&L hijack flavors, and the absolute "no side-stripe borders" ban with hero-card anti-example. Pending commit.
+- **Journey: Playwright tag-based filtering** — P3. All 12 specs under `e2e/journey/*.spec.ts` now carry `{ tag: ["@journey", "@stage:<name>"] }` on their `test.describe()` blocks (Playwright 1.59.1 supports the parameter natively). `e2e/journey/README.md` "Tags" section rewritten with CLI examples: `--grep "@journey"` for the full suite, `--grep "@stage:weekly"` for one stage, `--grep "@stage:(weekly|monthly)"` for multi-stage, `--grep-invert "@stage:daily-loop"` for exclusion. `--project=...` selection still works for users who prefer it. Pending commit.
+- **HAWKS daily bias "Save"/"Confirm" verb tidy** — P3. `src/components/hawks/daily-bias-form.tsx` save button now reads `common.save` ("Save"/"Salvar") in all states — removed the ternary that toggled to `hawks.bias.confirmAction` when fresh. After first write, a `text-tiny text-txt-300` sub-line renders below the button: "Bias confirmed at HH:MM" / "Bias confirmada às HH:MM", timestamp from `initialBias.confirmedAt` formatted via `useFormatting().formatTime`. Layout: button container changed from `justify-end` flex to `flex-col items-end` to stack action above status. `hawks.bias.confirmAction` removed from `messages/{en,pt-BR}.json` (no other consumers); new `hawks.bias.confirmedAt` key with `{time}` interpolation. Pending commit.
 - **Categorical chart palette `--chart-1..7` + `getChartColor()` helper** — P2. 7 OKLCH tokens added to `src/app/globals.css` (light + dark, hue ladder at 242/30/165/315/95/45/260, dark L ≈ 0.56-0.64 / C ≈ 0.09-0.14, light L ≈ 0.48-0.56 / C ≈ 0.12-0.18). New `src/lib/chart-colors.ts` exposes `getChartColor(index)` with wraparound. 4 chart surfaces migrated off workarounds: `optimize/equity-overlay-chart.tsx` (was hardcoded hex), `monte-carlo/v2/daily-pnl-chart.tsx` + `mode-distribution-chart.tsx` (were hijacking `trade-buy`/`trade-sell`/`acc-100`), `equity-shield/equity-shield-chart.tsx` (fixed silent `acc-100` collision between `original` + `method1`). Pending commit.
 - **`comparison-colors.ts` palette overhaul** — P2. `src/components/account-comparison/comparison-colors.ts` rewritten as pure `chart-1..7` list. Removed 4 hardcoded hex literals and the trade-color hijack that was encoding "account #3 made money" through selection-order positioning. Pending commit.
 - **Account-aware compact currency formatters** — P2. 4 compact formatters in `src/lib/formatting.ts` (`formatCompactCurrency`, `formatCompactCurrencyWithSign`, `formatBrlWithSign`, `formatBrlCompactWithSign`) accept optional `currency?: string` param matching their full-form siblings; default BRL preserves backwards compat. New `getAccountCurrency()` server action with React `cache()` for request-level memoization; `useFormatting()` hook extended to pre-bind compact formatters to active account currency. 10 dashboard files migrated off hardcoded `"R$"` (`cumulative-pnl-chart`, `daily-pnl-bar-chart`, `day-equity-curve`, `day-summary-stats`, `day-trades-list`, `equity-curve`, `kpi/pnl-card`, `kpi/profit-factor-card`, `quick-stats`, `trading-calendar`). A USD account now renders `$10K` instead of `R$10K`. Pending commit.

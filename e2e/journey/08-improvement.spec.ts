@@ -44,59 +44,67 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  * @journey @stage:improvement
  */
 
-test.describe("Journey Stage 8 — Improvement Flywheel", () => {
-	test.use(loadStageState(7))
+test.describe(
+	"Journey Stage 8 — Improvement Flywheel",
+	{ tag: ["@journey", "@stage:improvement"] },
+	() => {
+		test.use(loadStageState(7))
 
-	test.setTimeout(60_000)
+		test.setTimeout(60_000)
 
-	test("Bravo closes the loop: file friction, drill the data", async ({
-		page,
-	}) => {
-		await annotate(
+		test("Bravo closes the loop: file friction, drill the data", async ({
 			page,
-			"Stage 8: Flywheel — feed friction back, drill deeper into the data"
-		)
+		}) => {
+			await annotate(
+				page,
+				"Stage 8: Flywheel — feed friction back, drill deeper into the data"
+			)
 
-		// Land on the dashboard first so the chrome (user menu trigger) is
-		// reliably mounted before we drive it.
-		await page.goto("/en", { waitUntil: "domcontentloaded" })
+			// Land on the dashboard first so the chrome (user menu trigger) is
+			// reliably mounted before we drive it.
+			await page.goto("/en", { waitUntil: "domcontentloaded" })
 
-		// ── 8a — Open the bug-report panel (no submit, no DB write)
-		await annotate(page, "Bug report — file friction back to the product")
+			// ── 8a — Open the bug-report panel (no submit, no DB write)
+			await annotate(page, "Bug report — file friction back to the product")
 
-		// Two user-menu trigger variants render (collapsed vs expanded sidebar),
-		// both labelled "User Menu". Click the first visible one.
-		await page
-			.getByRole("button", { name: /user menu/i })
-			.first()
-			.click()
-		// Dropdown item — close-on-click triggers openBugReport() (no
-		// navigation), so we don't wait for a URL change.
-		await page.getByRole("menuitem", { name: /report a bug/i }).click()
+			// Two user-menu trigger variants render (collapsed vs expanded sidebar),
+			// both labelled "User Menu". Click the first visible one.
+			await page
+				.getByRole("button", { name: /user menu/i })
+				.first()
+				.click()
+			// Dropdown item — close-on-click triggers openBugReport() (no
+			// navigation), so we don't wait for a URL change.
+			await page.getByRole("menuitem", { name: /report a bug/i }).click()
 
-		// Bug-report panel renders an aria-labelled dialog with #bug-subject as
-		// the first form field — stable mount proof.
-		await expect(page.locator("#bug-subject")).toBeVisible({ timeout: 10_000 })
-		await screenshotIfDemo(page, "08-01-bug-report-panel")
+			// Bug-report panel renders an aria-labelled dialog with #bug-subject as
+			// the first form field — stable mount proof.
+			await expect(page.locator("#bug-subject")).toBeVisible({
+				timeout: 10_000,
+			})
+			await screenshotIfDemo(page, "08-01-bug-report-panel")
 
-		// Close without submitting to avoid leaving a bug_reports row behind
-		// (teardown only cleans users / trades / assets today).
-		await page.locator("#bug-report-close").click()
-		await expect(page.locator("#bug-subject")).toBeHidden({ timeout: 5_000 })
+			// Close without submitting to avoid leaving a bug_reports row behind
+			// (teardown only cleans users / trades / assets today).
+			await page.locator("#bug-report-close").click()
+			await expect(page.locator("#bug-subject")).toBeHidden({ timeout: 5_000 })
 
-		// ── 8b — Drill deeper into analytics (equity curve card)
-		await annotate(page, "Analytics — drill into the equity curve")
-		await page.goto("/en/analytics", { waitUntil: "domcontentloaded" })
+			// ── 8b — Drill deeper into analytics (equity curve card)
+			await annotate(page, "Analytics — drill into the equity curve")
+			await page.goto("/en/analytics", { waitUntil: "domcontentloaded" })
 
-		// Equity-curve card has its own stable id (cumulative-pnl-chart.tsx:89).
-		// Its presence past Suspense proves the dashboard surfaced a deeper card,
-		// not just the time-section landmark Stage 5 already covered.
-		await expect(page.locator("#analytics-equity-curve").first()).toBeVisible({
-			timeout: 30_000,
+			// Equity-curve card has its own stable id (cumulative-pnl-chart.tsx:89).
+			// Its presence past Suspense proves the dashboard surfaced a deeper card,
+			// not just the time-section landmark Stage 5 already covered.
+			await expect(page.locator("#analytics-equity-curve").first()).toBeVisible(
+				{
+					timeout: 30_000,
+				}
+			)
+			await screenshotIfDemo(page, "08-02-analytics-equity-curve")
+
+			await annotate(page, "Journey complete — flywheel turning")
+			await saveStageState(page, 8)
 		})
-		await screenshotIfDemo(page, "08-02-analytics-equity-curve")
-
-		await annotate(page, "Journey complete — flywheel turning")
-		await saveStageState(page, 8)
-	})
-})
+	}
+)

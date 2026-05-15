@@ -74,8 +74,7 @@ This file is a **router**. Read it fully every session. Only mandatory rules and
 | **Project gotchas, recurring footguns, version traps**               | **[`docs/gotchas.md`](docs/gotchas.md)**                           |
 | Past bug fixes (don't fail twice on the same thing)                  | [`docs/postMorten/`](docs/postMorten/)                             |
 | Code conventions (TS, React, comments, API shape, security baseline) | [`docs/code-conventions.md`](docs/code-conventions.md)             |
-| Design context (users, brand personality, principles, a11y baseline) | [`docs/design-context.md`](docs/design-context.md)                 |
-| Visual identity / brand brief                                        | [`docs/axion-design-brief.md`](docs/axion-design-brief.md)         |
+| Design system (audience, brand, principles, canonical patterns)      | [`docs/DESIGN.md`](docs/DESIGN.md)                                 |
 | Theming tokens (colors, spacing, typography)                         | [`docs/theming.md`](docs/theming.md) + `src/app/globals.css`       |
 | Component architecture (RSC boundaries, layering)                    | [`docs/component-architecture.md`](docs/component-architecture.md) |
 | Database schema reference                                            | [`docs/database-schema.md`](docs/database-schema.md)               |
