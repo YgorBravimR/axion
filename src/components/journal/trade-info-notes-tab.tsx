@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
+import { SegmentedToggle } from "@/components/ui/segmented-toggle"
 import { updateTrade } from "@/app/actions/trades"
 import type { TradeInfoPanelProps } from "./trade-info-panel"
 
@@ -177,58 +178,31 @@ const TradeInfoNotesTab = ({
 
 				{/* Followed Plan Toggle */}
 				<div className="space-y-s-200">
+					<SegmentedToggle
+						value={
+							formData.followedPlan === true
+								? "yes"
+								: formData.followedPlan === false
+									? "no"
+									: null
+						}
+						options={[
+							{ value: "yes", label: tCommon("yes") },
+							{ value: "no", label: tCommon("no") },
+						]}
+						onChange={(nextValue) => {
+							const newValue =
+								nextValue === "yes" ? true : nextValue === "no" ? false : null
+							handleFieldChange("followedPlan", newValue)
+						}}
+						aria-labelledby="label-panel-followed-plan"
+					/>
 					<span
 						id="label-panel-followed-plan"
 						className="text-tiny text-txt-300 font-medium"
 					>
 						{tTrade("didYouFollowPlan")}
 					</span>
-					<div
-						className="gap-m-400 flex"
-						role="group"
-						aria-labelledby="label-panel-followed-plan"
-					>
-						<button
-							id="panel-followed-plan-yes"
-							type="button"
-							onClick={() =>
-								handleFieldChange(
-									"followedPlan",
-									formData.followedPlan === true ? null : true
-								)
-							}
-							aria-label={`${tTrade("followedPlan")}: ${tCommon("yes")}`}
-							aria-pressed={formData.followedPlan === true}
-							className={cn(
-								"p-s-300 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
-								formData.followedPlan === true
-									? "border-acc-100/40 bg-bg-300 text-txt-100"
-									: "border-bg-300 text-txt-200 hover:border-txt-300/50"
-							)}
-						>
-							{tCommon("yes")}
-						</button>
-						<button
-							id="panel-followed-plan-no"
-							type="button"
-							onClick={() =>
-								handleFieldChange(
-									"followedPlan",
-									formData.followedPlan === false ? null : false
-								)
-							}
-							aria-label={`${tTrade("followedPlan")}: ${tCommon("no")}`}
-							aria-pressed={formData.followedPlan === false}
-							className={cn(
-								"p-s-300 text-small focus-visible:ring-acc-100/30 flex-1 rounded-lg border-2 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
-								formData.followedPlan === false
-									? "border-warning bg-warning/10 text-warning"
-									: "border-bg-300 text-txt-200 hover:border-warning/50"
-							)}
-						>
-							{tCommon("no")}
-						</button>
-					</div>
 				</div>
 
 				{/* Discipline Notes — shown when followedPlan is false */}

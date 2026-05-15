@@ -1,5 +1,8 @@
 "use client"
 
+// Select (not SegmentedToggle): renders inside compact table cells (h-8 w-28);
+// a 4-pill toggle would widen the column ~2-3× and break the mobile layout.
+
 import {
 	Select,
 	SelectContent,

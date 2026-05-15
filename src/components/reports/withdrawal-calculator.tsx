@@ -36,7 +36,7 @@ const WithdrawalCalculator = ({
 		setError(null)
 		const amountBRL = parseFloat(amount.replace(",", "."))
 		if (isNaN(amountBRL) || amountBRL <= 0) {
-			setError("Enter a valid amount greater than zero")
+			setError(t("withdrawalEnterValidAmount"))
 			return
 		}
 		const amountCents = Math.round(amountBRL * 100)
@@ -50,7 +50,7 @@ const WithdrawalCalculator = ({
 				setSuccess(true)
 				onLogged()
 			} else {
-				setError(result.message ?? "Failed to log withdrawal")
+				setError(result.message ?? t("withdrawalFailedToLog"))
 			}
 		})
 	}

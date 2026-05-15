@@ -8,6 +8,7 @@ import { Panel } from "@/components/ui/panel"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
+import { cn } from "@/lib/utils"
 import { upsertDailyPlan } from "@/app/actions/fractal-plan/daily"
 import type { DailyPlan } from "@/db/schema"
 
@@ -15,12 +16,14 @@ interface PostMarketNotesProps {
 	dailyPlan: DailyPlan | null
 	onRefresh: () => void
 	isReadOnly?: boolean
+	isRefreshing?: boolean
 }
 
 export const PostMarketNotes = ({
 	dailyPlan,
 	onRefresh,
 	isReadOnly = false,
+	isRefreshing = false,
 }: PostMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
 	const tPlan = useTranslations("commandCenter.plan")
@@ -77,7 +80,14 @@ export const PostMarketNotes = ({
 	}
 
 	return (
-		<Panel id="cc-post-market-notes">
+		<Panel
+			id="cc-post-market-notes"
+			aria-busy={isRefreshing || undefined}
+			className={cn(
+				"transition-opacity duration-200",
+				isRefreshing && "opacity-60"
+			)}
+		>
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
 					<Moon className="text-txt-300 h-5 w-5" aria-hidden="true" />

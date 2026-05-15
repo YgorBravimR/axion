@@ -2442,7 +2442,7 @@
 			"detailToggle": "Detalhes do mês"
 		},
 		"withdrawalLoggedSuccess": "Retirada registrada com sucesso.",
-		"withdrawalMessage": "Com base na sua meta de retirada de {percent}%, considere retirar <span>{amount}</span>.",
+		"withdrawalMessage": "Registre {percent}% dos lucros deste mês: {amount}",
 		"withdrawalAmountLabel": "Valor (R$)",
 		"withdrawalDateLabel": "Data",
 		"withdrawalLog": "Registrar Retirada",
@@ -2623,7 +2623,11 @@
 				"avgFeePerTrade": "Taxa Média/Trade",
 				"generatedBy": "Gerado pelo Axion"
 			}
-		}
+		},
+		"withdrawalAmountAriaLabel": "Valor em reais",
+		"withdrawalDateAriaLabel": "Data da retirada",
+		"withdrawalEnterValidAmount": "Digite um valor válido maior que zero",
+		"withdrawalFailedToLog": "Falha ao registrar retirada"
 	},
 	"settings": {
 		"title": "Configurações",
@@ -4617,7 +4621,8 @@
 			"allocationUsed": "Alocação usada: {total}%",
 			"allocationOver": "Excesso de alocação: +{over}%",
 			"allocationExact": "Alocação exata",
-			"allocationRemaining": "Alocação restante: {remaining}%"
+			"allocationRemaining": "Alocação restante: {remaining}%",
+			"removeLevel": "Remover nível de saída {level}"
 		},
 		"orb": {
 			"name": "Rompimento do Range de Abertura",
@@ -4663,7 +4668,8 @@
 			"equityCurve": "Curva de Equity",
 			"tradeList": "Lista de Trades",
 			"dayBreakdown": "Detalhamento Diário",
-			"completedTrades": "{count} trades concluídos"
+			"completedTrades": "{count} trades concluídos",
+			"engineVersion": "Versão do Motor"
 		},
 		"table": {
 			"trade": "#",
@@ -4861,7 +4867,8 @@
 			"unitPts": "pts",
 			"sizingLots": "{lots} lotes",
 			"sizingRisk": "R${amount} de risco"
-		}
+		},
+		"currentValueSuffix": "(atual)"
 	},
 	"candleImport": {
 		"errors": {

@@ -223,7 +223,7 @@ const TargetsExitSection = memo(
 										size="sm"
 										onClick={() => handleRemoveLevel(index)}
 										className="text-txt-300 hover:text-fb-error shrink-0"
-										aria-label={`Remove exit level ${index + 1}`}
+										aria-label={t("removeLevel", { level: index + 1 })}
 									>
 										<Trash2 className="h-4 w-4" aria-hidden="true" />
 									</Button>

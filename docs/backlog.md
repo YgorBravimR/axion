@@ -172,19 +172,7 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Command Center polish (deferred from sweep)
 
-### `useTransition` on refresh callbacks
-
-- **Priority:** P2 · **Effort:** S
-- **What**: Wrap `refreshCompletions` / `refreshDailyPlan` / `refreshAssetSettings` in `command-center-content.tsx` with `useTransition` and surface an `aria-busy` dim on the affected panel during the fetch.
-- **Why**: Today the save buttons inside each panel render their own `Loader2` spinner so the in-flight state is covered for sighted, mouse-driven users. AT users (and anyone whose focus has moved away from the save button) get no panel-level signal that data is being re-fetched. Dashboard sweep already adopted this pattern for its initial loads; command-center can match.
-- **Source**: `docs/scans/2026-05-12-impeccable-command-center.md` Phase 3c.
-
-### Mood/Bias primitive consolidation
-
-- **Priority:** P3 · **Effort:** M
-- **What**: `MoodSelector` renders an inline `role="radiogroup"` of pill buttons; `BiasSelector` wraps the Radix `Select` dropdown. Both are 4-option 1-of-N controls used adjacently inside `PreMarketNotes`. Unify on a shared `SegmentedToggle` primitive (or extract one from the dashboard sweep) so the visual + a11y model matches.
-- **Why**: Two controls with the same job and different keyboard models is a small but real friction every pre-market.
-- **Source**: `docs/scans/2026-05-12-impeccable-command-center.md` Phase 1a P2.
+- **BiasSelector auto-save toast** — P1. The non-edit row's BiasSelector auto-saves silently (spinner only). Add toast confirmation so AT users + anyone whose focus moved get a status signal. Flagged in `docs/scans/2026-05-12-impeccable-command-center.md` Phase 1a P1.
 
 ---
 
@@ -199,13 +187,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Playbook list — deferred follow-ups
 
-### StrategyCard menu should adopt Radix `DropdownMenu`
-
-- **Priority:** P2 · **Effort:** S
-- **What**: `src/components/playbook/strategy-card.tsx:109-181` rolls a custom dropdown with manual focus management (`menuRef`, `menuButtonRef`, arrow-key `onKeyDown`, escape close, overlay click-out). The project already ships `@/components/ui/dropdown-menu` (Radix-based). Migrate so focus trapping, portal rendering, outside-click handling, and proper `aria-controls` wiring come for free.
-- **Why**: Hand-rolled focus machinery is a maintenance liability and tends to drift out of WAI-ARIA spec (e.g. roving tabindex vs single-tabbable composite, role="menu" focusability). Radix already solves this for every other dropdown in the app.
-- **Source**: `docs/scans/2026-05-12-impeccable-playbook-list.md` Phase 1b audit P3.
-
 ### Distill pass — `/playbook` reads as nested cards
 
 - **Priority:** P3 · **Effort:** M
@@ -215,25 +196,7 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
-## Playbook detail — deferred follow-ups
-
-### `condition-picker` carries the same trade-color leaks
-
-- **Priority:** P2 · **Effort:** S
-- **What**: `src/components/playbook/condition-picker.tsx:41,163` still paints `text-trade-buy` / `border-trade-buy/40` on what are category / tier visual cues, not P&L magnitudes. The playbook-detail sweep retired the equivalent leaks in `condition-tier-display.tsx`; the picker (used by the edit form at `/playbook/[id]/edit`) was left because it's outside the read-only detail surface.
-- **Why**: Avoid creating a second drift moment. When the form-editor sweep (runbook row #20) lands, the same fix should be applied here — adopt the same category palette and tier-legend layout used by `condition-tier-display.tsx`.
-- **Source**: `docs/scans/2026-05-12-impeccable-playbook-detail.md` Phase 1b audit; deferred to row #20.
-
----
-
 ## Journal detail — deferred follow-ups
-
-### Followed-plan yes/no should be a `radiogroup`, not two `aria-pressed` toggles
-
-- **Priority:** P2 · **Effort:** S
-- **What**: `TradeInfoNotesTab` renders the followed-plan choice as two `<button aria-pressed>` controls inside `role="group"`. The semantics are 1-of-N with a third "unset" state — closer to a `radiogroup` with arrow-key navigation and a clear "clear selection" affordance. Mirror the rating radiogroup pattern (roving tabindex, `onKeyDown` Left/Right) so both single-select controls in the same tab share one model.
-- **Why**: Two toggles with `aria-pressed` imply independent on/off state to assistive tech; a screen reader user can't tell that picking Yes implicitly unpicks No. The visual cue (one filled, one outlined) is misleading without the radio semantics.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1b audit P2.
 
 ### Card-rhythm distill pass on `/journal/[id]`
 
@@ -257,20 +220,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Analytics — deferred follow-ups
 
-### Delete `InsightCard` dead code
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/analytics/insight-card.tsx` is not exported via `src/components/analytics/index.ts` and grep finds no consumers across the repo. Best/worst summaries are inlined per chart (`day-of-week-chart`, `hourly-performance-chart`, `holding-period-chart`, `session-performance-chart`). Delete the file in a tidy-up PR.
-- **Why**: Dead code drifts and confuses future agents. Surgical delete; no behaviour change.
-- **Source**: `docs/scans/2026-05-12-impeccable-analytics.md` Phase 1a critique P2.
-
-### `expectancy-mode-toggle.tsx` redundant `onKeyDown` handlers
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: The three `<button>` elements re-implement Enter/Space → click in `onKeyDown` handlers. Native `<button>` already does this via the user agent; the handlers are noise.
-- **Why**: Distill pass — code that duplicates browser behaviour rots when the underlying handler signature drifts. Drop the `onKeyDown` props; rely on `onClick`.
-- **Source**: `docs/scans/2026-05-12-impeccable-analytics.md` Phase 1b audit P1 footnote.
-
 ### Uniform card stack across `/analytics`
 
 - **Priority:** P3 · **Effort:** M
@@ -281,20 +230,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 ---
 
 ## Reports — deferred follow-ups
-
-### `capital-event-log.tsx` raw `<input>` migration
-
-- **Priority:** P2 · **Effort:** S
-- **What**: `src/components/reports/capital-event-log.tsx` uses raw `<input type="text">` and `<input type="date">` for the amount + date fields. The codebase has `@/components/ui/input` (the same primitive enforced by `axion/enforce-ui-primitives` for checkboxes). Migrate to the primitive for consistent border / focus-ring / placeholder treatment.
-- **Why**: This card predates the UI-primitive lock-in. The raw inputs work, but they bypass the design system's focus ring and density tokens, so they look subtly off next to the rest of the form chrome on `/reports`.
-- **Source**: `docs/scans/2026-05-12-impeccable-reports.md` Phase 1a critique P2.
-
-### `withdrawal-calculator.tsx` hardcoded English copy
-
-- **Priority:** P2 · **Effort:** XS
-- **What**: `src/components/reports/withdrawal-calculator.tsx` has ~10 hardcoded English strings (form labels, button copy, success/error messages). Wrap with `useTranslations("reports.withdrawalCalculator")` and add the keys to `messages/{en,pt-BR}.json`. The component is consumed by `reports-content.tsx` which is already fully translated, so the gap is jarring for `pt-BR` users.
-- **Why**: i18n parity gap. No structural change; pure copy migration.
-- **Source**: `docs/scans/2026-05-12-impeccable-reports.md` Phase 1a critique P2.
 
 ### Inline currency formatters → `useFormatting()`
 
@@ -369,26 +304,12 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Building blocks already exist**: `getTradeWithCandles` in `candle-query.ts` fetches candle data with trade overlay (already powers journal chart); `BacktestTrade[]` has entry/exit timestamps + prices + R-multiples; `DayBreakdown[]` captures range data per day (currently unused in UI); methodology entry sections are already split per strategy.
 - **Source**: CEO review session 2026-05-14; `src/components/backtest/`, `src/app/actions/candle-query.ts`, `src/types/backtest.ts`.
 
-### Hardcoded English aria-label on exit-level removal
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/backtest/sections/targets-exit-section.tsx` line ~226 uses `aria-label={`Remove exit level ${index + 1}`}`. No `backtest.builder.removeLevel` translation key exists yet.
-- **Why**: Visible-text controls render fine in Portuguese; only the screen-reader-only aria-label leaks English. Fix is one key + one substitution but requires touching every `messages/*.json` locale file, which is a separate concern from the visual sweep.
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
-
 ### Hardcoded BRL in `formatCentsAsCurrency` call sites
 
 - **Priority:** P3 · **Effort:** S
 - **What**: `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` pass `"BRL"` as a literal to `formatCentsAsCurrency(..., "BRL")` rather than reading the active account's currency. Backtests today are BRL-only because the data sources are BRL-denominated, but the formatter call site is wrong even so.
 - **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
-
-### `engineVersion` UI badge on backtest results
-
-- **Priority:** P2 · **Effort:** XS
-- **What**: After the 2026-05-15 Hawks stop-reference fix, the backtest engine now stamps `engineVersion: "hawks-v0.2"` on every Hawks result. The result page does not yet read `result.engineVersion`. Add a small badge or footer line so cached screenshots/exports are traceable to v0.2 (and any future engine revision).
-- **Why**: Without the badge, a teammate looking at a stale screenshot can't tell which engine math produced it. The stamp exists; just surface it.
-- **Source**: `docs/postMorten/backend.md` [BUG-2026-05-15] open follow-ups; `src/types/backtest.ts` (`BacktestResult.engineVersion`); `src/lib/backtest/engine.ts`.
 
 ### Hawks tick-level fidelity on stop reference
 
@@ -407,13 +328,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
     Promote `--chart-1` … `--chart-7` in `globals.css` (dark + light values) and a `getChartColor(index)` helper. Wire all three surfaces. Combines with the `comparison-colors.ts` overhaul under Account comparison.
 - **Why**: Token-discipline drift compounds across surfaces. With three callers waiting, the ROI per hour is now best-in-backlog for the whole "design surface tokens" cluster.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2; `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 1a P3; `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
-
-### Portuguese literal "(atual)" in sweep-config
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/optimize/sweep-config-panel.tsx` line ~275 hardcodes `(atual)` as a JSX child. Rest of the surface goes through `useTranslations("optimize")`. Add `currentValueSuffix` key (or similar) to `messages/{en,pt}.json` and substitute.
-- **Why**: Locale-bleed; the EN build still ships "(atual)".
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2.
 
 ### `StatCard` variant API: split signed-money vs verdict (equity-shield-stats)
 
@@ -636,6 +550,18 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **`useTransition` on Command Center refresh callbacks** — P2. `refreshCompletions` / `refreshDailyPlan` / `refreshAssetSettings` in `command-center-content.tsx` wrapped in `useTransition`; child panels (`daily-checklist`, `pre-market-notes`, `post-market-notes`, `asset-rules-panel`) receive `isRefreshing` prop and surface `aria-busy` + `opacity-60` dim during in-flight fetches. Pending commit.
+- **Mood/Bias primitive resolution — complementary, not overlapping** — P2. `MoodSelector` now wraps `SegmentedToggle` (tone dot moved into `label` ReactNode slot) so form-context controls share one a11y model with Hawks daily-bias. `SegmentedToggle` gained Left/Right/Up/Down/Home/End arrow-key navigation (completes the WAI-ARIA radiogroup pattern) and accepts `null | undefined` for the unset state with the first option staying tabbable. `BiasSelector` stays as Radix `Select` per table-cell density budget (`h-8 w-28` — a 4-pill toggle would widen the column ~2-3×); comment in source documents the call. Pending commit.
+- **StrategyCard menu → Radix `DropdownMenu`** — P2. `src/components/playbook/strategy-card.tsx` ~60 lines of hand-rolled focus management (`menuRef`, `menuButtonRef`, arrow-key `onKeyDown`, escape close, overlay click-out) replaced by Radix `DropdownMenu` (portal rendering, focus trap, outside-click, proper `aria-controls`). Pending commit.
+- **`condition-picker` trade-color leaks** — P2. `src/components/playbook/condition-picker.tsx:102` retoned from `text-trade-buy border-trade-buy/40` to `text-txt-200 border-bg-300` — P&L colors no longer hijacked for category/tier visual cues. Pending commit.
+- **Followed-plan yes/no → `radiogroup`** — P2. `TradeInfoNotesTab` converted from two `aria-pressed` toggles to `SegmentedToggle` with `boolean | null` ↔ `"yes" | "no" | null` mapping. Single-select semantics now correct for AT. Rating control intentionally left hand-rolled (different control shape). Pending commit.
+- **Delete `InsightCard` dead code** — P3. `src/components/analytics/insight-card.tsx` deleted; not exported via index, no consumers across the repo. Pending commit.
+- **`expectancy-mode-toggle.tsx` redundant `onKeyDown` handlers removed** — P3. Three `<button>` elements no longer re-implement Enter/Space → click; native button behaviour relied on. Pending commit.
+- **`capital-event-log.tsx` raw `<input>` migration** — P2. Two raw `<input>` (text + date) migrated to `@/components/ui/input` primitive; `axion/enforce-ui-primitives` now satisfied for this surface. Pending commit.
+- **`withdrawal-calculator.tsx` i18n migration** — P2. ~10 hardcoded English strings replaced with `useTranslations("reports.withdrawalCalculator")` keys; `messages/{en,pt-BR}.json` updated. pt-BR locale parity restored. Pending commit.
+- **Hardcoded English aria-label on exit-level removal** — P3. `src/components/backtest/sections/targets-exit-section.tsx` aria-label moved to `backtest.builder.removeLevel` i18n key; en + pt-BR added. Pending commit.
+- **`engineVersion` UI badge on backtest results** — P2. `backtest-summary-cards.tsx` reads `result.engineVersion` and renders a small badge; `backtest-content.tsx` passes the value through. New `engineVersion` i18n key added. Surfaces engine math provenance on cached screenshots/exports per [BUG-2026-05-15] open follow-ups. Pending commit.
+- **Portuguese literal "(atual)" in sweep-config** — P3. `src/components/optimize/sweep-config-panel.tsx` `(atual)` JSX child replaced with `useTranslations("optimize")` lookup; en + pt-BR keys added. Pending commit.
 - **HAWKS `dailyTradeOrdinal` race condition** — P2. Two concurrent HAWKS trade inserts could both compute `ordinal=1` (read-then-write race on `COUNT(*)`). Added `accountId` + `tradingDay` columns to `trade_hawks_metadata` and a unique index `thm_account_day_ordinal_idx` on `(accountId, tradingDay, dailyTradeOrdinal)`; action wraps the sidecar insert in a max-3 retry loop catching Postgres `23505` and recomputing the ordinal. Migration `0005_boring_wasp` backfills + drops orphans + enforces NOT NULL before the index. Race-condition test + post-mortem `[BUG-2026-05-15-1]`. Commit `48dacd5`.
 - **Cluster C — Stats module tests** — P2. 103 deterministic unit tests added for `monte-carlo` (Edge Expectancy, 36 tests), `monte-carlo-v2` (Capital Expectancy, 39 tests), and `risk-simulation-advanced` (28 tests). Covers seed-determinism, EV convergence, ruin probability vs expectancy sign, homogeneity under risk scaling, no NaN/Infinity safety. No production code touched. Commit `7225a9a`.
 - **Cluster B — Tax module tests** — P2. 58 unit tests added for `asset-defaults` (16), `mark-dirty` (12), `month-status` (30). Follows existing `__tests__/lib/tax/` vitest pattern; mocks DB layer like `fee-resolver.test.ts`. Protected `recompute-month.ts` untouched. 92 total tax-suite tests pass. Commit `3e90d31`.

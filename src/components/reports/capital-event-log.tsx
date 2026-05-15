@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import type { CapitalEvent } from "@/types/integration"
+import { Input } from "@/components/ui/input"
 import {
 	recordCapitalEvent,
 	deleteCapitalEvent,
@@ -113,23 +114,25 @@ const CapitalEventLog = ({
 						</button>
 					</div>
 
-					<input
+					<Input
+						id="capital-amount"
 						type="text"
 						inputMode="decimal"
 						placeholder={t("amountPlaceholder")}
 						value={formAmount}
 						onChange={(e) => setFormAmount(e.target.value)}
-						className="border-bg-300 bg-bg-200 text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 text-tiny rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
+						className="text-tiny"
 						aria-label={t("amountAriaLabel")}
 						required
 					/>
 
-					<input
+					<Input
+						id="capital-date"
 						type="date"
 						value={formDate}
 						onChange={(e) => setFormDate(e.target.value)}
 						max={new Date().toISOString().slice(0, 10)}
-						className="border-bg-300 bg-bg-200 text-txt-100 focus:ring-acc-100 text-tiny rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
+						className="text-tiny"
 						aria-label={t("eventDateAriaLabel")}
 					/>
 

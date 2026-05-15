@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState, useCallback, useEffect, useRef } from "react"
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -17,6 +17,13 @@ import {
 	ImageIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { ColoredValue } from "@/components/shared"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { getComplianceTone } from "@/lib/compliance"
@@ -35,41 +42,7 @@ const StrategyCardBase = ({
 }: StrategyCardProps) => {
 	const t = useTranslations("playbook")
 	const tCommon = useTranslations("common")
-	const [showMenu, setShowMenu] = useState(false)
 	const { isPremium } = useFeatureAccess()
-	const menuRef = useRef<HTMLDivElement>(null)
-	const menuButtonRef = useRef<HTMLButtonElement>(null)
-
-	const handleMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
-		if (e.key === "Escape") {
-			setShowMenu(false)
-			menuButtonRef.current?.focus()
-		}
-		if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-			e.preventDefault()
-			const items =
-				menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
-			if (!items?.length) {
-				return
-			}
-			const currentIndex = Array.from(items).findIndex(
-				(el) => el === document.activeElement
-			)
-			const nextIndex =
-				e.key === "ArrowDown"
-					? (currentIndex + 1) % items.length
-					: (currentIndex - 1 + items.length) % items.length
-			items[nextIndex]?.focus()
-		}
-	}, [])
-
-	useEffect(() => {
-		if (showMenu) {
-			const firstItem =
-				menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')
-			firstItem?.focus()
-		}
-	}, [showMenu])
 
 	const complianceTone = getComplianceTone(strategy.compliance)
 
@@ -102,79 +75,47 @@ const StrategyCardBase = ({
 				</div>
 
 				{/* Menu */}
-				<div className="relative">
-					<Button
-						ref={menuButtonRef}
-						id="playbook-strategy-menu"
-						variant="ghost"
-						size="sm"
-						className="h-11 w-11 p-0"
-						onClick={() => setShowMenu(!showMenu)}
-						aria-label={t("strategy.optionsMenu")}
-						aria-expanded={showMenu}
-						aria-haspopup="menu"
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							id="playbook-strategy-menu"
+							variant="ghost"
+							size="sm"
+							className="h-11 w-11 p-0"
+							aria-label={t("strategy.optionsMenu")}
+						>
+							<MoreVertical className="h-4 w-4" aria-hidden="true" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						id="strategy-menu-content"
+						align="end"
+						className="w-40"
 					>
-						<MoreVertical className="h-4 w-4" aria-hidden="true" />
-					</Button>
-					{showMenu && (
-						<>
-							<div
-								className="fixed inset-0 z-10"
-								onClick={() => setShowMenu(false)}
-								aria-hidden="true"
-							/>
-							{}
-							<div
-								ref={menuRef}
-								role="menu"
-								tabIndex={0}
-								aria-label={t("strategy.optionsMenu")}
-								className="border-bg-300 bg-bg-100 mt-s-100 py-s-100 absolute top-full right-0 z-20 w-40 max-w-[calc(100vw-2rem)] rounded-lg border shadow-lg"
-								onKeyDown={handleMenuKeyDown}
-							>
-								<Link
-									href={`/playbook/${strategy.id}`}
-									role="menuitem"
-									tabIndex={-1}
-									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center text-left"
-								>
-									<Eye className="h-4 w-4" aria-hidden="true" />
-									{t("strategy.viewDetails")}
-								</Link>
-								<Button
-									id={`strategy-edit-${strategy.id}`}
-									type="button"
-									variant="ghost"
-									role="menuitem"
-									tabIndex={-1}
-									onClick={() => {
-										setShowMenu(false)
-										onEdit(strategy)
-									}}
-									className="gap-s-200 px-s-300 py-s-300 text-small text-txt-200 flex w-full items-center justify-start text-left"
-								>
-									<Edit className="h-4 w-4" aria-hidden="true" />
-									{tCommon("edit")}
-								</Button>
-								<Button
-									id={`strategy-delete-${strategy.id}`}
-									type="button"
-									variant="ghost"
-									role="menuitem"
-									tabIndex={-1}
-									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center justify-start text-left"
-									onClick={() => {
-										setShowMenu(false)
-										onDelete(strategy.id)
-									}}
-								>
-									<Trash2 className="h-4 w-4" aria-hidden="true" />
-									{tCommon("delete")}
-								</Button>
-							</div>
-						</>
-					)}
-				</div>
+						<DropdownMenuItem asChild>
+							<Link href={`/playbook/${strategy.id}`}>
+								<Eye className="mr-s-200 h-4 w-4" aria-hidden="true" />
+								{t("strategy.viewDetails")}
+							</Link>
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							id={`strategy-edit-${strategy.id}`}
+							onSelect={() => onEdit(strategy)}
+						>
+							<Edit className="mr-s-200 h-4 w-4" aria-hidden="true" />
+							{tCommon("edit")}
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							id={`strategy-delete-${strategy.id}`}
+							onSelect={() => onDelete(strategy.id)}
+							className="text-fb-error focus:text-fb-error focus:bg-fb-error/10"
+						>
+							<Trash2 className="mr-s-200 h-4 w-4" aria-hidden="true" />
+							{tCommon("delete")}
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Stats Grid */}

@@ -115,6 +115,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Enforced by**: `axion/enforce-token-usage` (error). Catalog: `eslint-rules/token-rules.mjs`. Invalid-token reference: `docs/scans/2026-05-07-cockpit-tokens.md`.
 - **Date logged**: 2026-05-07.
 
+### `let x = null; switch { x = … }` trips `no-useless-assignment`
+
+- **What**: ESLint's `no-useless-assignment` rule (error in Tier 1) flags the classic accumulator pattern `let next = null; switch (key) { case "A": next = 1; break; ... } if (next === null) return; use(next)`. Every case-branch overwrites the initial `null` before any read, so the initial assignment is "useless" by the rule's analysis — even though it's load-bearing for the post-switch `null`-check. Hit during the `SegmentedToggle` arrow-key navigation in `src/components/ui/segmented-toggle.tsx`.
+- **What to do**: Extract the switch into a helper that returns the value: `const next = (() => { switch (key) { case "A": return 1; ... default: return null } })()`. The rule is happy because there's no reassignment, and the post-switch guard still works.
+- **Date logged**: 2026-05-15.
+- **Source**: `src/components/ui/segmented-toggle.tsx` — Command Center sweep follow-up.
+
 ---
 
 ## Accessibility

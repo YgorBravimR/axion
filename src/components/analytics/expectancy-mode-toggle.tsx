@@ -35,11 +35,6 @@ const ExpectancyModeToggle = ({
 							: "text-txt-300 hover:text-txt-100"
 					)}
 					onClick={() => onModeChange("edge")}
-					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ") {
-							onModeChange("edge")
-						}
-					}}
 				>
 					R
 				</button>
@@ -53,11 +48,6 @@ const ExpectancyModeToggle = ({
 							: "text-txt-300 hover:text-txt-100"
 					)}
 					onClick={() => onModeChange("capital")}
-					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ") {
-							onModeChange("capital")
-						}
-					}}
 				>
 					$
 				</button>

@@ -424,7 +424,10 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							{t("config.newBacktest")}
 						</Button>
 					</div>
-					<BacktestSummaryCards summary={result.summary} />
+					<BacktestSummaryCards
+						summary={result.summary}
+						engineVersion={result.engineVersion}
+					/>
 					<BacktestEquityChart equityCurve={result.equityCurve} />
 					<BacktestTradesTable trades={result.trades} />
 				</div>

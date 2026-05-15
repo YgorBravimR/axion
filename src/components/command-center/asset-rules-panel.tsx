@@ -45,6 +45,7 @@ interface AssetRulesPanelProps {
 	settings: AssetSettingWithAsset[]
 	availableAssets: Asset[]
 	onRefresh: () => void
+	isRefreshing?: boolean
 }
 
 interface EditingState {
@@ -59,6 +60,7 @@ export const AssetRulesPanel = ({
 	settings,
 	availableAssets,
 	onRefresh,
+	isRefreshing = false,
 }: AssetRulesPanelProps) => {
 	const t = useTranslations("commandCenter.assetRules")
 	const router = useRouter()
@@ -206,7 +208,14 @@ export const AssetRulesPanel = ({
 	)
 
 	return (
-		<Panel id="cc-asset-rules">
+		<Panel
+			id="cc-asset-rules"
+			aria-busy={isRefreshing || undefined}
+			className={cn(
+				"transition-opacity duration-200",
+				isRefreshing && "opacity-60"
+			)}
+		>
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
