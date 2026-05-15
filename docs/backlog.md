@@ -176,12 +176,11 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 
 ## Server-action zod-hardening
 
-### Cluster D — Write actions missing zod input validation
+### Cluster D — Write actions missing zod input validation — ✅ landed 2026-05-15
 
-- **Priority:** P1 · **Effort:** L
-- **What**: Add zod input schemas to the 4 write actions flagged in the scan. Specifically must coordinate with the user because one of them touches `src/lib/tax/recompute-month.ts` (protected path — single source of truth for tax recomputation).
-- **Why**: Known bug classes are config-enforced now; remaining gap is input validation at write boundaries. Bulk-fix is real refactor work — schema decisions (required vs optional defaults vs transforms) + ~6 client call-sites per action.
-- **Out of scope**: Cluster C (7 read-only typed-only actions). Auth gates the data; misshapen filter params yield empty results, not state corruption.
+- **Status:** Done. Zod schemas wired into all 4 write actions; deprecated `syncCapitalBetweenPlans` no-op stub deleted alongside its pin test.
+- **Files**: `src/lib/validations/account.ts` (new), `src/lib/validations/tax-engine.ts` (new), `src/lib/validations/trading-condition.ts` (extended with `syncStrategyConditionsSchema`). Action wiring in `accounts.ts` (create/update/delete), `strategy-conditions.ts` (sync), `tax-engine.ts:recomputeLedger`.
+- **Protected-path note**: `recomputeLedger` got zod at the action wrapper only. `src/lib/tax/recompute-month.ts` itself was not touched.
 - **Source**: `docs/scans/2026-05-11-server-actions.md` Phase 5b.
 
 ---

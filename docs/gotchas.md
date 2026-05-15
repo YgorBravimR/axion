@@ -88,6 +88,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## TypeScript / Lint
 
+### Zod v4 renamed `errorMap` to `error`
+
+- **What**: This repo runs zod v4. The v3 idiom `z.enum([...], { errorMap: () => ({ message: "validation.x.y" }) })` produces a TS error (`Object literal may only specify known properties, and 'errorMap' does not exist in type ...`). v4 uses `{ error: "validation.x.y" }` directly — no callback, just the i18n key as a string.
+- **What to do**: When copying zod patterns from external docs (most still document v3), translate `errorMap: () => ({ message: X })` → `error: X`. Also note: `z.enum()` in v4 accepts a tuple as the first arg, but the _second-arg_ `error` field replaces the v3 `errorMap` for enum-mismatch errors.
+- **Date logged**: 2026-05-15.
+
+---
+
 ### `!= null` is the idiomatic null+undefined check
 
 - **What**: `!== null` lets `undefined` slip through. The project lint is configured with `eqeqeq` rule `null: "ignore"`, so `!= null` is intentionally allowed and is the **preferred** form.

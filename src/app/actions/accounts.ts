@@ -26,6 +26,11 @@ import {
 import { hasAccess } from "@/lib/feature-access"
 import { resolveFeeSnapshot } from "@/lib/tax/fee-resolver"
 import { getTranslations } from "next-intl/server"
+import {
+	createAccountSchema,
+	updateAccountSchema,
+	accountIdSchema,
+} from "@/lib/validations/account"
 import type {
 	AccountInput,
 	AccountAssetInput,
@@ -46,6 +51,16 @@ export const createAccount = async (
 }> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
+
+	const parsed = createAccountSchema.safeParse(input)
+	if (!parsed.success) {
+		return {
+			status: "error",
+			error:
+				parsed.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {
@@ -125,6 +140,25 @@ export const updateAccount = async (
 }> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
+
+	const parsedId = accountIdSchema.safeParse(accountId)
+	if (!parsedId.success) {
+		return {
+			status: "error",
+			error:
+				parsedId.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
+	const parsed = updateAccountSchema.safeParse(input)
+	if (!parsed.success) {
+		return {
+			status: "error",
+			error:
+				parsed.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {
@@ -233,6 +267,16 @@ export const deleteAccount = async (
 }> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
+
+	const parsedId = accountIdSchema.safeParse(accountId)
+	if (!parsedId.success) {
+		return {
+			status: "error",
+			error:
+				parsedId.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {

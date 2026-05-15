@@ -10,6 +10,7 @@ import { eq, and, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
+import { syncStrategyConditionsSchema } from "@/lib/validations/trading-condition"
 import type { StrategyConditionWithDetail } from "./strategy-conditions.types"
 
 /**
@@ -21,6 +22,22 @@ export const syncStrategyConditions = async (
 	conditions: StrategyConditionInput[]
 ): Promise<ActionResponse<StrategyCondition[]>> => {
 	const t = await getTranslations("playbook")
+
+	const parsed = syncStrategyConditionsSchema.safeParse({
+		strategyId,
+		conditions,
+	})
+	if (!parsed.success) {
+		return {
+			status: "error",
+			message: t("actionErrors.invalidInput"),
+			errors: parsed.error.issues.map((issue) => ({
+				code: "INVALID_INPUT",
+				detail: issue.message,
+			})),
+		}
+	}
+
 	try {
 		const { userId } = await requireAuth()
 

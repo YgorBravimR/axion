@@ -2220,7 +2220,8 @@
 			"retrieveFailed": "Falha ao recuperar condições da estratégia",
 			"conditionsCleared": "Condições da estratégia removidas",
 			"conditionsSynced": "Condições da estratégia sincronizadas com sucesso",
-			"conditionsRetrieved": "Condições da estratégia recuperadas com sucesso"
+			"conditionsRetrieved": "Condições da estratégia recuperadas com sucesso",
+			"invalidInput": "Entrada inválida"
 		},
 		"yourStrategies": "Suas Estratégias",
 		"newStrategy": "Nova Estratégia",
@@ -3008,6 +3009,7 @@
 			"en": "EN"
 		},
 		"errors": {
+			"invalidInput": "Entrada inválida",
 			"accountNameExists": "Uma conta com este nome já existe",
 			"accountNotFound": "Conta não encontrada",
 			"cannotDeleteDefault": "Não é possível excluir a conta padrão enquanto outras contas existirem",
@@ -3399,7 +3401,36 @@
 		"tradingCondition": {
 			"nameRequired": "Nome é obrigatório",
 			"nameMax": "Nome deve ter 100 caracteres ou menos",
-			"descriptionMax": "Descrição deve ter 500 caracteres ou menos"
+			"descriptionMax": "Descrição deve ter 500 caracteres ou menos",
+			"invalidConditionId": "ID de condição inválido",
+			"invalidStrategyId": "ID de estratégia inválido",
+			"invalidTier": "Tier deve ser mandatory, tier_2 ou tier_3",
+			"sortOrderInteger": "Ordem deve ser um inteiro",
+			"sortOrderMin": "Ordem não pode ser negativa",
+			"tooManyConditions": "Muitas condições (máximo 100)"
+		},
+		"account": {
+			"nameRequired": "Nome da conta é obrigatório",
+			"nameMax": "Nome da conta deve ter 100 caracteres ou menos",
+			"descriptionMax": "Descrição deve ter 500 caracteres ou menos",
+			"propFirmNameMax": "Nome da prop firm deve ter 100 caracteres ou menos",
+			"profitShareMin": "Profit share deve ser no mínimo 0%",
+			"profitShareMax": "Profit share deve ser no máximo 100%",
+			"currencyMin": "Moeda deve ter ao menos 3 caracteres",
+			"currencyMax": "Moeda deve ter 10 caracteres ou menos",
+			"breakevenTicksInteger": "Ticks de breakeven devem ser um inteiro",
+			"breakevenTicksMin": "Ticks de breakeven não podem ser negativos",
+			"invalidAssetId": "ID de ativo inválido",
+			"invalidAccountId": "ID de conta inválido"
+		},
+		"taxEngine": {
+			"invalidAccountId": "ID de conta inválido",
+			"yearInteger": "Ano deve ser um inteiro",
+			"yearMin": "Ano deve ser 2000 ou posterior",
+			"yearMax": "Ano deve ser 2100 ou anterior",
+			"monthInteger": "Mês deve ser um inteiro",
+			"monthRange": "Mês deve ser entre 1 e 12",
+			"yearMonthPaired": "Ano e mês devem ser informados juntos"
 		},
 		"userManagement": {
 			"invalidUserId": "ID do usuário inválido",

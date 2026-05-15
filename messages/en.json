@@ -2220,7 +2220,8 @@
 			"retrieveFailed": "Failed to retrieve strategy conditions",
 			"conditionsCleared": "Strategy conditions cleared",
 			"conditionsSynced": "Strategy conditions synced successfully",
-			"conditionsRetrieved": "Strategy conditions retrieved successfully"
+			"conditionsRetrieved": "Strategy conditions retrieved successfully",
+			"invalidInput": "Invalid input"
 		},
 		"yourStrategies": "Your Strategies",
 		"newStrategy": "New Strategy",
@@ -3008,6 +3009,7 @@
 			"en": "EN"
 		},
 		"errors": {
+			"invalidInput": "Invalid input",
 			"accountNameExists": "An account with this name already exists",
 			"accountNotFound": "Account not found",
 			"cannotDeleteDefault": "Cannot delete the default account while other accounts exist",
@@ -3399,7 +3401,36 @@
 		"tradingCondition": {
 			"nameRequired": "Name is required",
 			"nameMax": "Name must be 100 characters or less",
-			"descriptionMax": "Description must be 500 characters or less"
+			"descriptionMax": "Description must be 500 characters or less",
+			"invalidConditionId": "Invalid condition ID",
+			"invalidStrategyId": "Invalid strategy ID",
+			"invalidTier": "Tier must be mandatory, tier_2, or tier_3",
+			"sortOrderInteger": "Sort order must be an integer",
+			"sortOrderMin": "Sort order cannot be negative",
+			"tooManyConditions": "Too many conditions (max 100)"
+		},
+		"account": {
+			"nameRequired": "Account name is required",
+			"nameMax": "Account name must be 100 characters or less",
+			"descriptionMax": "Description must be 500 characters or less",
+			"propFirmNameMax": "Prop firm name must be 100 characters or less",
+			"profitShareMin": "Profit share must be at least 0%",
+			"profitShareMax": "Profit share must be 100% or less",
+			"currencyMin": "Currency must be at least 3 characters",
+			"currencyMax": "Currency must be 10 characters or less",
+			"breakevenTicksInteger": "Breakeven ticks must be a whole number",
+			"breakevenTicksMin": "Breakeven ticks cannot be negative",
+			"invalidAssetId": "Invalid asset ID",
+			"invalidAccountId": "Invalid account ID"
+		},
+		"taxEngine": {
+			"invalidAccountId": "Invalid account ID",
+			"yearInteger": "Year must be a whole number",
+			"yearMin": "Year must be 2000 or later",
+			"yearMax": "Year must be 2100 or earlier",
+			"monthInteger": "Month must be a whole number",
+			"monthRange": "Month must be between 1 and 12",
+			"yearMonthPaired": "Year and month must be provided together"
 		},
 		"userManagement": {
 			"invalidUserId": "Invalid user ID",

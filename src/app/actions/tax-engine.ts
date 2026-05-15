@@ -12,6 +12,7 @@ import type {
 	YearTaxSummary,
 } from "@/lib/tax/types"
 import type { ActionResponse } from "@/types"
+import { recomputeLedgerSchema } from "@/lib/validations/tax-engine"
 import { and, asc, eq, gte, isNull, lte } from "drizzle-orm"
 
 // ─── Internal: verify account ownership ──────────────────────────────────────
@@ -255,8 +256,20 @@ export const recomputeLedger = async (params: {
 	fromYear?: number
 	fromMonth?: number
 }): Promise<ActionResponse<{ recomputedMonths: number }>> => {
+	const parsed = recomputeLedgerSchema.safeParse(params)
+	if (!parsed.success) {
+		return {
+			status: "error",
+			message: "Invalid input.",
+			errors: parsed.error.issues.map((issue) => ({
+				code: "INVALID_INPUT",
+				detail: issue.message,
+			})),
+		}
+	}
+
 	const { userId } = await requireAuth()
-	const { accountId } = params
+	const { accountId } = parsed.data
 
 	const account = await verifyAccountOwnership(accountId, userId)
 
@@ -268,8 +281,8 @@ export const recomputeLedger = async (params: {
 		}
 	}
 
-	let startYear = params.fromYear
-	let startMonth = params.fromMonth
+	let startYear = parsed.data.fromYear
+	let startMonth = parsed.data.fromMonth
 
 	if (!startYear || !startMonth) {
 		const earliest = await db
