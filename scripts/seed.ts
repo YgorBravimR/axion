@@ -1,6 +1,8 @@
 import "dotenv/config"
 import { neon } from "@neondatabase/serverless"
+import postgres from "postgres"
 import bcrypt from "bcryptjs"
+import { isNeonUrl } from "@/db/url"
 
 /**
  * Seed script for Axion
@@ -107,7 +109,10 @@ const runSeed = async () => {
 		process.exit(1)
 	}
 
-	const sql = neon(databaseUrl)
+	// Pick driver by URL: Neon HTTPS for prod/staging, postgres-js for local
+	// or any other wire-protocol Postgres (e.g. per-worktree dbs). Both expose
+	// the same tagged-template `sql\`…\`` API used throughout this seed.
+	const sql = isNeonUrl(databaseUrl) ? neon(databaseUrl) : postgres(databaseUrl)
 	console.log("🔗 Connected to database\n")
 
 	// ==========================================
@@ -1258,6 +1263,12 @@ const runSeed = async () => {
 	console.log("\n📝 Login credentials:")
 	console.log(`   Email:    ${ADMIN_EMAIL}`)
 	console.log(`   Password: ${ADMIN_PASSWORD}`)
+
+	// postgres-js holds a persistent connection; without an explicit close the
+	// node process won't exit. neon() is stateless HTTPS so it doesn't need this.
+	if (typeof (sql as { end?: () => Promise<void> }).end === "function") {
+		await (sql as { end: () => Promise<void> }).end()
+	}
 }
 
 runSeed().catch((error) => {
