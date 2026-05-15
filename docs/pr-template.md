@@ -21,6 +21,7 @@ Every agent-generated PR uses this template. Copy verbatim into the PR body.
 - [ ] `pnpm lint:strict` 0 errors
 - [ ] `pnpm exec tsc --noEmit` clean
 - [ ] Manual smoke on golden path
+- [ ] Page guide entry added/updated for new or significantly changed surfaces (or N/A)
 
 <details>
 <summary>Session prompts</summary>
