@@ -12,18 +12,21 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ## Backlog vs. ideas
 
-| File                          | What lives here                                                                                                                                                      | Promotion rule                                                                                                        |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `docs/ideas.md`               | Half-formed ideas, "we should think about X", strategic seeds, anything missing a clear shape or effort estimate. Cheap to file, cheap to delete.                    | Once an idea has a **Source**, a rough **Effort**, a **Priority**, and a one-paragraph "what + why", promote it here. |
-| `docs/backlog.md` (this file) | Concrete, commit-ready deferred work. Every entry has Priority, Effort, Source, and a `What + Why` clear enough that someone other than the author could pick it up. | When shipped, **delete** the entry in the same PR. Git is the audit trail.                                            |
+| File                          | What lives here                                                                                                                                                      | Promotion rule                                                                                                                                                               |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/ideas.md`               | Half-formed ideas, "we should think about X", strategic seeds, anything missing a clear shape or effort estimate. Cheap to file, cheap to delete.                    | Once an idea has a **Source**, a rough **Effort**, a **Priority**, and a one-paragraph "what + why", promote it here.                                                        |
+| `docs/backlog.md` (this file) | Concrete, commit-ready deferred work. Every entry has Priority, Effort, Source, and a `What + Why` clear enough that someone other than the author could pick it up. | When shipped, **move to the `## DONE` section at the bottom of this file** with a `completed_date` and the shipping commit hash. Do not delete — DONE is the shipped record. |
 
 ## Conventions
 
 - **Priority**: `P0` blocker / safety / data-correctness · `P1` strategic shortlist (highest ROI, ship next) · `P2` valuable but not blocking · `P3` nice-to-have / polish.
 - **Effort**: `XS` <1h · `S` half-day · `M` 1-2 days · `L` multi-day · `XL` multi-sprint.
 - Every entry has a **Source** line linking back to the doc/spec/file that surfaced it. Update the source when you cherry-pick.
-- Group by capability area, not by date. Within a group, ordered by ROI-per-hour descending where known.
-- Mark items shipped by **deleting** them, not striking through.
+- **Ordering — higher priority sits on top** so a top-to-bottom scan always surfaces "what's next" first. Two layers:
+  1. Capability sections themselves are ordered roughly by where the highest-priority work lives. The `## P1 strategic shortlist` always leads the file.
+  2. Within each capability section, entries are sorted by priority descending: `P1` first, then `P2`, then `P3`. When adding a new entry, slot it by priority — do not append blindly.
+- **When a feature lands, move it to the `## DONE` section at the bottom of this file** with a `completed_date` field. Do not strikethrough-and-leave-in-place. Do not delete the entry outright — the DONE log is the record of what shipped and why. The active backlog above DONE only contains work still in front of us.
+- Group by capability area, not by date. Within a group, follow the priority-sort rule above.
 - When in doubt, file new entries in `ideas.md` first — cheap to write, cheap to discard.
 
 ---
@@ -32,14 +35,12 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 > **Strategic context**: see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) for the invest/merge/deprecate framing this shortlist sits inside.
 
-The six items that earn priority over everything else in this file. Each is linked to its full entry below.
+The items that earn priority over everything else in this file. Each is linked to its full entry below.
 
-1. **`trade_conditions` junction table** — per-trade condition selection so Hawks analytics can decompose `setupRank` into its condition signals (Backtest section).
-2. **Strategy versioning v1** — make strategies immutable once a trade references them; fork-to-v2 UX preserves "what did I believe at execution time" (Manifesto follow-ups). Depends on #1.
-3. **Consolidate `brand-*` and `acc-*` into a single bronze scale** — two tokens for the same colour silently fork on every new contributor (Design system section).
-4. **`window.confirm()` migration on `/journal/[id]` delete** — CLAUDE.md ban, last hold-out for trade deletion (Journal detail section).
-5. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
-6. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
+1. **Strategy versioning v1** — make strategies immutable once a trade references them; fork-to-v2 UX preserves "what did I believe at execution time" (Manifesto follow-ups). Depends on the now-landed `trade_conditions` junction.
+2. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
+3. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
+4. **Encryption archive** — rip dormant field-level encryption stack threaded through ~50 files; touches PROTECTED paths so wants its own session (Test coverage section).
 
 ---
 
@@ -47,37 +48,10 @@ The six items that earn priority over everything else in this file. Each is link
 
 Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after Q1/Q2/Q3 resolution. Retire as a batch when shipped.
 
-### Delete orphan `/monitor` and `/painel` public routes
-
-- **Priority:** P2 · **Effort:** XS
-- **What**: remove `src/app/[locale]/(public)/monitor/page.tsx` and `…/painel/page.tsx`. The Monitor tab inside Command Center fully covers the use case; `grep` confirms zero internal `href` / `router.push` references to either.
-- **Why**: reclaims menu/route surface for free. Two routes shipping the same component that no one navigates to internally.
-- **Source**: feature-manifesto-2026-05.md §6 (1).
-
-### Account Comparison → Analytics filter mode
-
-- **Priority:** P2 · **Effort:** S
-- **What**: delete `src/app/[locale]/(app)/analytics/account-comparison/page.tsx`; surface the same multi-account view as a filter mode inside Analytics' existing filter panel (multi-select on account, side-by-side equity overlay).
-- **Why**: collapses dilutive overlap — two pages telling the cross-account story. Preserves multi-account as first-class (Q3) since the _concept_ survives in Analytics, only the dedicated route disappears.
-- **Source**: feature-manifesto-2026-05.md §3.4 + §6 (2).
-
-### ~~Monthly Review → "Month Closing" affordance inside Reports~~ ✅ Landed 2026-05-15
-
-- **Priority:** P2 · **Effort:** M
-- **Status:** `/monthly` route deleted; replaced by `MonthClosingSection` in Reports. Branches by account type — personal → `MonthlyDarfCard`, prop → `PropProfitSummary`, replay → null. Existing weekly/projection/comparison content preserved via collapsible "Month Detail" `<details>`. `/monthly` → `/reports` 308 redirect in `src/proxy.ts`.
-- **Source**: feature-manifesto-2026-05.md §3.4 + §6 (3). User input: "the purpose of monthly review is to create a kind of cycle closing".
-
-### ~~Playbook detail page — methodology-aware redesign (v1)~~ ✅ Landed 2026-05-15
-
-- **Priority:** P1 · **Effort:** L (v1 time-boxed)
-- **Status (v1)**: per-condition usage scorecard live on `/playbook/[id]`. New `getStrategyConditionsRollup` server action returns `{ totalTrades, conditions[], isHawksStrategy }` via a two-query pattern (expected conditions list + per-condition stats filtered to this strategy's trade ids, merged in code) plus a third query against `accountModes` to infer Hawks methodology from active account-mode rows. New `<ConditionsScorecard />` client component renders per-condition met-rate bars with tier badges, tone-coded thresholds, and an explicit empty state when `totalTrades === 0`. Inline "Hawks methodology" chip surfaces in the conditions card header when `isHawksStrategy` is true. i18n keys live under `playbook.scorecard.*` in en + pt-BR.
-- **Deferred (v2 follow-ups)**: methodology-aware page header redesign, replacing `strategy.compliance` (planFollowed-based) with a trade_conditions-derived compliance score, dedicated methodology rule list separate from the free-text `entryCriteria`/`exitCriteria`. Tracked under "Playbook detail — deferred follow-ups" further down.
-- **Source**: feature-manifesto-2026-05.md §3.1 + §6 (4). User picked v1 scope: "Infer from account-mode, no schema change" (D1) + "Per-condition usage table" (D2) + "Time-box to v1" (D3).
-
 ### Strategy versioning v1 — methodology immutability
 
 - **Priority:** P1 · **Effort:** L
-- **Problem**: strategies + their `strategyConditions` are mutable today. If a user edits a strategy after trades reference it, those trades' `setupRank` rationale silently rewrites — the journal loses its "what did I believe at execution time" record. Soft-delete on conditions (landed with #1) bridges the gap, but the real fix is immutability with explicit forks.
+- **Problem**: strategies + their `strategyConditions` are mutable today. If a user edits a strategy after trades reference it, those trades' `setupRank` rationale silently rewrites — the journal loses its "what did I believe at execution time" record. Soft-delete on conditions (landed alongside `trade_conditions` junction, 2026-05-15) bridges the gap, but the real fix is immutability with explicit forks.
 - **Schema (proposed, design-review first)**:
   - `strategies.parentStrategyId uuid null` self-FK
   - `strategies.version int default 1`
@@ -92,22 +66,8 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
   - Version dropdown on strategy detail (v1, v2, v3 — current bolded).
   - "Fork to v2" button on live strategies.
   - Dashboards: cohort-split by version so users can compare their refinements.
-- **Depends on**: P1 #1 (`trade_conditions` junction table) — versioning is the immutability story the junction makes meaningful.
+- **Depends on**: `trade_conditions` junction (landed 2026-05-15, see DONE) — versioning is the immutability story the junction makes meaningful.
 - **Source**: surfaced 2026-05-15 during `/plan-eng-review` of the `trade_conditions` design. User insight: _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_ Wants `/plan-design-review` before scoping the build.
-
-### ~~Mode-personalization widget contract (framework spike)~~ ✅ Landed 2026-05-15
-
-- **Priority:** P1 · **Effort:** M
-- **Status:** Spike landed on `feat/hawks-mode-v0`. Contract: `AccountModeProvider` + `useAccountMode()` hook + `<ModeVariant />` declarative swap. First consumer: dashboard Coaching Insights slot. See [`docs/mode-personalization-contract.md`](mode-personalization-contract.md).
-- **Promote to stable** once a second mode validates the shape without structural changes.
-- **Source**: feature-manifesto-2026-05.md §5 (Q2 answer) + §6 (5); promoted from `ideas.md` § "Mode-personalization framework".
-
-### Page Guide System — per-feature reminder on PR template
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: add a checklist line to `docs/pr-template.md` — "Page guide entry added/updated for new or significantly changed surfaces?". Foundations are already built; this is just the social mechanism to make it not get forgotten.
-- **Why**: feature is cheap, never urgent, never written without a nudge. The PR-template line surfaces it without becoming a blocker.
-- **Source**: feature-manifesto-2026-05.md §6 (6). User note: "very low priority, complexity is too low here, the foundations is already built. In every feature creation it could be deferred."
 
 ---
 
@@ -142,6 +102,23 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 
 Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. Best ROI ordering preserved.
 
+### Encryption archive — XL refactor (its own session) — P1
+
+- **Priority:** P1 · **Effort:** XL · **Owner**: needs its own dedicated session (like the Renko-native data pipeline P1)
+- **What**: Rip out the dormant field-level encryption stack. `getUserDek` always returns `null`; ~50 files thread `dek` through actions/routes/library queries with `dek ? encryptFields(...) : raw` ternaries that never take the wrapped branch. Schema columns marked `// encrypted` (pnl, entry_price, prop_firm_name, name, etc.) actually store plaintext.
+- **Scope:**
+  - Delete `src/lib/crypto.ts`, `src/lib/user-crypto.ts`, `src/app/api/arch/_lib/decrypt.ts`.
+  - Delete `scripts/migrate-encrypt-existing-data.ts`, `scripts/migrate-decrypt-existing-data.ts`.
+  - Strip `getUserDek` + `encryptTradeFields` / `decryptTradeFields` / `encryptAccountFields` / `decryptAccountFields` / etc. from all ~50 call sites. Remove the `dek ? wrapped : raw` ternaries.
+  - Drop `users.encrypted_dek` column via new Drizzle migration.
+  - Scrub 18 `// encrypted` comments from `src/db/schema.ts`.
+  - Trim `SafeUser` in `src/app/actions/auth.types.ts` (drop the `encryptedDek` from `Omit<>`).
+  - Clean dead commented block in `src/app/actions/auth.ts:77-89`.
+  - Update affected tests (`auth-actions.test.ts`, `commission-fee-impact.test.ts`, `period-queries.test.ts`, `recompute-month.test.ts`).
+- **Touches PROTECTED**: `src/lib/tax/recompute-month.ts`, `src/db/schema.ts`, `src/db/migrations/` (new migration).
+- **User authorization (recorded 2026-05-15)**: "we're rebuilding if need to touch protected files, do it" + "There's no problem if a database reset is needed." → archive may break shape of existing rows; DB reset on staging/prod acceptable for this cutover.
+- **Why deferred**: full archive in a non-dedicated session has high risk on financial-recompute paths (`recompute-month.ts`, `period-queries.ts`). Better as one focused session with a clean lint + test pass between each commit. See discovery in current session for full file inventory.
+
 ### Cluster C — Stats module (best unsupervised candidate)
 
 - **Priority:** P2 · **Effort:** M
@@ -159,44 +136,11 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 - **Priority:** P2 · **Effort:** M
 - **What**: Fixture-driven tests for `sinacor-parser`, `matching-engine`, `csv-parsers`. Sample broker outputs live at `e2e/fixtures/notas/`.
 
-### Cluster A — Security (split 2026-05-15)
-
-- **Status:** Partially landed. `auth-utils.ts` covered by `src/__tests__/lib/auth-utils.test.ts` (7 tests: Unauthorized/Forbidden gates, role hierarchy, `?? "trader"` fallback). `crypto.ts` + `user-crypto.ts` test work was deferred — see "Encryption archive" task below.
-- **Source**: original entry called for tests on all three. Scan revealed `crypto.ts` and `user-crypto.ts` are dead code in production (nothing imports them productively — `getUserDek` returns `null` by design and call sites take the `: raw` branch of `dek ? wrapped : raw`). Testing dead code is low value; the archive is the right move.
-
-### Encryption archive — XL refactor (its own session) — P1
-
-- **Priority:** P1 · **Effort:** XL · **Owner**: needs dedicated session like #14 Renko
-- **What**: Rip out the dormant field-level encryption stack. `getUserDek` always returns `null`; ~50 files thread `dek` through actions/routes/library queries with `dek ? encryptFields(...) : raw` ternaries that never take the wrapped branch. Schema columns marked `// encrypted` (pnl, entry_price, prop_firm_name, name, etc.) actually store plaintext.
-- **Scope:**
-  - Delete `src/lib/crypto.ts`, `src/lib/user-crypto.ts`, `src/app/api/arch/_lib/decrypt.ts`.
-  - Delete `scripts/migrate-encrypt-existing-data.ts`, `scripts/migrate-decrypt-existing-data.ts`.
-  - Strip `getUserDek` + `encryptTradeFields` / `decryptTradeFields` / `encryptAccountFields` / `decryptAccountFields` / etc. from all ~50 call sites. Remove the `dek ? wrapped : raw` ternaries.
-  - Drop `users.encrypted_dek` column via new Drizzle migration.
-  - Scrub 18 `// encrypted` comments from `src/db/schema.ts`.
-  - Trim `SafeUser` in `src/app/actions/auth.types.ts` (drop the `encryptedDek` from `Omit<>`).
-  - Clean dead commented block in `src/app/actions/auth.ts:77-89`.
-  - Update affected tests (`auth-actions.test.ts`, `commission-fee-impact.test.ts`, `period-queries.test.ts`, `recompute-month.test.ts`).
-- **Touches PROTECTED**: `src/lib/tax/recompute-month.ts`, `src/db/schema.ts`, `src/db/migrations/` (new migration).
-- **User authorization (recorded 2026-05-15)**: "we're rebuilding if need to touch protected files, do it" + "There's no problem if a database reset is needed." → archive may break shape of existing rows; DB reset on staging/prod acceptable for this cutover.
-- **Why deferred**: full archive in a non-dedicated session has high risk on financial-recompute paths (`recompute-month.ts`, `period-queries.ts`). Better as one focused session with a clean lint + test pass between each commit. See discovery in current session for full file inventory.
-
 ### Backtest / equity-shield / fractal-plan suites
 
 - **Priority:** P2 · **Effort:** L
 - **What**: `__tests__/lib/backtest/*` (entry, stop, target, sizing modules), `__tests__/lib/equity-shield/*` (smoothing + shield calc), `__tests__/lib/fractal-plan/*` (capital + week aggregation).
 - **Source**: same scan, "test files missing" list.
-
----
-
-## Server-action zod-hardening
-
-### Cluster D — Write actions missing zod input validation — ✅ landed 2026-05-15
-
-- **Status:** Done. Zod schemas wired into all 4 write actions; deprecated `syncCapitalBetweenPlans` no-op stub deleted alongside its pin test.
-- **Files**: `src/lib/validations/account.ts` (new), `src/lib/validations/tax-engine.ts` (new), `src/lib/validations/trading-condition.ts` (extended with `syncStrategyConditionsSchema`). Action wiring in `accounts.ts` (create/update/delete), `strategy-conditions.ts` (sync), `tax-engine.ts:recomputeLedger`.
-- **Protected-path note**: `recomputeLedger` got zod at the action wrapper only. `src/lib/tax/recompute-month.ts` itself was not touched.
-- **Source**: `docs/scans/2026-05-11-server-actions.md` Phase 5b.
 
 ---
 
@@ -296,13 +240,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Journal detail — deferred follow-ups
 
-### Detail-page delete uses `window.confirm()` — **P1**
-
-- **Priority:** P1 · **Effort:** XS
-- **What**: The trade-detail action menu's delete handler still triggers native `window.confirm()` (`src/app/[locale]/(app)/journal/[id]/page.tsx` — delete affordance / client island). Swap to the project `AlertDialog` pattern the way `journal-content.tsx` already does for the list view (controlled `open` state, `AlertDialogAction variant="destructive"`).
-- **Why**: CLAUDE.md explicitly bans `window.confirm()` ("ugly, unthemed, inaccessible, brand-breaking"). The list page already migrated; the detail page is the last hold-out for trade deletion. Promoted to P1 because the ban is a hard project rule and the fix is XS — leaving it open lets the ban silently rot.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1b audit P1.
-
 ### Followed-plan yes/no should be a `radiogroup`, not two `aria-pressed` toggles
 
 - **Priority:** P2 · **Effort:** S
@@ -400,20 +337,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Backtest — deferred follow-ups
 
-### Hardcoded English aria-label on exit-level removal
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/backtest/sections/targets-exit-section.tsx` line ~226 uses `aria-label={`Remove exit level ${index + 1}`}`. No `backtest.builder.removeLevel` translation key exists yet.
-- **Why**: Visible-text controls render fine in Portuguese; only the screen-reader-only aria-label leaks English. Fix is one key + one substitution but requires touching every `messages/*.json` locale file, which is a separate concern from the visual sweep.
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
-
-### Hardcoded BRL in `formatCentsAsCurrency` call sites
-
-- **Priority:** P3 · **Effort:** S
-- **What**: `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` pass `"BRL"` as a literal to `formatCentsAsCurrency(..., "BRL")` rather than reading the active account's currency. Backtests today are BRL-only because the data sources are BRL-denominated, but the formatter call site is wrong even so.
-- **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
-
 ### Renko-native data pipeline — **P1**
 
 - **Priority:** P1 · **Effort:** XL
@@ -450,23 +373,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Sequence**: build visual chart layer first (works with current pre-computed bricks), then: raw 1m import → brick generator → indicator computer → cross-TF join.
 - **Source**: CEO review + vault investigation session 2026-05-14; `src/lib/backtest/presets/hawks-presets.ts`, `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/db/schema.ts` (`hawksRenkoSizes`), `src/app/actions/hawks-renko.ts`.
 
-### `trade_conditions` junction table — per-trade condition selection — **P1**
-
-- **Priority:** P1 · **Effort:** M
-- **What**: Add a `trade_conditions` junction table recording which specific conditions were met for each trade. The `trades` table currently has only a `setupRank` (A/AA/AAA) — a lossy compression. The `strategyConditions` table defines conditions per strategy (with tiers mandatory/tier_2/tier_3); nothing connects individual trades to individual conditions.
-- **Why**: Without this, Hawks analytics can't answer "which conditions are associated with winning trades?" — the core hypothesis-testing loop for methodological improvement. The `setupRank` only tells you the aggregate; the junction tells you the decomposed signal. Today the conditions feature is data collection with no analytical payoff.
-- **Schema shape**:
-  ```sql
-  CREATE TABLE trade_conditions (
-    trade_id UUID NOT NULL REFERENCES trades(id) ON DELETE CASCADE,
-    condition_id UUID NOT NULL REFERENCES trading_conditions(id),
-    met BOOLEAN NOT NULL DEFAULT true,
-    PRIMARY KEY (trade_id, condition_id)
-  );
-  ```
-- **UI surface**: trade form already has a `setupRank` selector (A/AA/AAA toggles). Add a multi-select condition picker (reuse `condition-picker.tsx` from playbook) to the form so traders can log which conditions were green on that specific trade.
-- **Source**: CEO review session 2026-05-14; `src/db/schema.ts` (tradingConditions, strategyConditions, trades); `src/components/journal/trade-form.tsx:1089-1125`; `src/components/playbook/condition-picker.tsx`.
-
 ### Backtest visual layer + methodology-specific UX redesign — **P1**
 
 - **Priority:** P1 · **Effort:** L (visual replay) + M (per-methodology panels)
@@ -474,6 +380,20 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Surfaced during CEO strategic review (2026-05-14). The visual layer is the delta between "a calculator" and "a simulation tool." The methodology-specific UX is the delta between "a generic platform" and Axion's core niche value proposition. Promoted to P1 (from P2) because the methodology-personalization framework is now committed strategic direction; this is the most-visible expression of it.
 - **Building blocks already exist**: `getTradeWithCandles` in `candle-query.ts` fetches candle data with trade overlay (already powers journal chart); `BacktestTrade[]` has entry/exit timestamps + prices + R-multiples; `DayBreakdown[]` captures range data per day (currently unused in UI); methodology entry sections are already split per strategy.
 - **Source**: CEO review session 2026-05-14; `src/components/backtest/`, `src/app/actions/candle-query.ts`, `src/types/backtest.ts`.
+
+### Hardcoded English aria-label on exit-level removal
+
+- **Priority:** P3 · **Effort:** XS
+- **What**: `src/components/backtest/sections/targets-exit-section.tsx` line ~226 uses `aria-label={`Remove exit level ${index + 1}`}`. No `backtest.builder.removeLevel` translation key exists yet.
+- **Why**: Visible-text controls render fine in Portuguese; only the screen-reader-only aria-label leaks English. Fix is one key + one substitution but requires touching every `messages/*.json` locale file, which is a separate concern from the visual sweep.
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
+
+### Hardcoded BRL in `formatCentsAsCurrency` call sites
+
+- **Priority:** P3 · **Effort:** S
+- **What**: `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` pass `"BRL"` as a literal to `formatCentsAsCurrency(..., "BRL")` rather than reading the active account's currency. Backtests today are BRL-only because the data sources are BRL-denominated, but the formatter call site is wrong even so.
+- **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
+- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
 
 ### Monte Carlo v1/v2 semantic rename — "Expectativa de Edge" / "Expectativa de Capital"
 
@@ -597,13 +517,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **What**: Wave 6 fixed `recalculate-button.tsx` and `recalculate-pnl-button.tsx` from a `text-trade-buy / text-trade-sell` outcome banner to the verdict triad (`text-fb-success / text-fb-error`). The same shape will recur in every future async-action result banner (export job complete, recompute month complete, bulk import done, etc.). Document the "operation-outcome verdict palette" in DESIGN.md.
 - **Why**: Operation outcomes are the second-most-common verdict-as-P&L hijack site after rating scales. Codifying the mapping in DESIGN.md prevents the next async banner reaching for trade-buy on reflex.
 - **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
-
-### Consolidate `brand-*` and `acc-*` into a single bronze scale — **P1**
-
-- **Priority:** P1 · **Effort:** M
-- **What**: `src/app/globals.css` declares both `--color-acc-100` and `--color-brand-500` and assigns them identical hex literals in both themes (`#c29d6a` dark, `#8c6e40` light). The auth surface (5 components + `select-account/page.tsx`) consistently reaches for `text-brand-500 hover:text-brand-400` and `bg-brand-500/10 border-brand-500`, while the rest of the app uses `text-acc-100`. Two journal call sites (`trade-mode-selector.tsx`, `scaled-trade-form.tsx` L1005) leaked from auth conventions. Pick one scale (recommend `acc-100`, which is the documented metallic-gold accent), migrate the other's 15 call sites, and delete the duplicate token declarations.
-- **Why**: Two names for the same color forces every new contributor to flip a coin. The discipline cost compounds — within a year the answer to "what bronze should this link use?" will have two equally-correct camps and a slowly diverging convention. Cheap to consolidate now, expensive once both palettes have shipped six more months of surfaces.
-- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred (high priority).
 
 ### Extract shared `<Spinner aria-hidden />` and `<BackLink>` primitives
 
@@ -741,6 +654,28 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 
 1. Implement the work.
 2. Update the original `Source` if it still has the deferred prose ("Phase 2 will…", "future iteration may…") — replace with a concrete reference to the shipped commit/PR, or delete the prose entirely.
-3. Delete the item from this file in the same PR.
+3. Move the entry to the `## DONE` section below in the same PR. Strip the prose body, keep the title + the new `completed_date` line + a one-sentence "what shipped" + the shipping commit hash.
+4. Do not strikethrough-and-leave-in-place. Do not delete the entry outright — the DONE log is how we remember what shipped and why.
 
-Result: the backlog only ever lists work that's still in front of us.
+Result: the active backlog above DONE only contains work still in front of us, priority-descending. DONE is the shipped record.
+
+---
+
+## DONE
+
+Shipped items, newest first. Each entry: title · `completed_date` · one-line "what shipped" · commit hash.
+
+### 2026-05-15
+
+- **Playbook detail page — methodology-aware redesign (v1)** — P1. Per-condition usage scorecard on `/playbook/[id]` powered by new `getStrategyConditionsRollup` action (two-query expected/stats merge + active-account-mode Hawks inference). New `<ConditionsScorecard />`, inline Hawks-methodology chip, `playbook.scorecard.*` i18n keys, 5 new tests. Commit `3563204`. _v2 follow-ups deferred under "Playbook detail — deferred follow-ups"._
+- **Cluster A — Security tests (split)** — P2. `auth-utils.ts` covered by `src/__tests__/lib/auth-utils.test.ts` (7 tests: Unauthorized/Forbidden gates, role hierarchy, `?? "trader"` fallback). `crypto.ts` + `user-crypto.ts` test work intentionally deferred — those modules are dormant; the work is the Encryption archive task (still active P1, see Test coverage section). Commit `787ba6f`.
+- **Cluster D — write actions zod-hardening** — P1. Zod schemas wired into all 4 write actions (`accounts.ts` create/update/delete, `strategy-conditions.ts` sync, `tax-engine.ts:recomputeLedger`); deprecated `syncCapitalBetweenPlans` no-op stub deleted. New `src/lib/validations/{account,tax-engine}.ts` + extended `trading-condition.ts`. `recompute-month.ts` (protected) untouched — zod sits at the action wrapper only. Commit `d34e9cf`.
+- **Detail-page delete `window.confirm()` migration** — P1. Trade-detail action menu now uses canonical `AlertDialog` (`AlertDialogAction variant="destructive"`) matching the list view. Closes the last `window.confirm()` hold-out on trade deletion per CLAUDE.md ban. Commit `64c34ec`.
+- **`trade_conditions` junction table** — P1. Schema + migration + soft-delete on `deleteCondition`, `setTradeConditions`/`getTradeConditions` actions, `conditionsMet` validation extension, 3 trade-insert sites wired, extracted `ConditionList` primitive, new `TradeConditionsChecklist` component, count badge on trade-detail, `journal.tradeConditions.*` i18n keys, full test lake (unit + integration + 3 E2E + 2 regression). Unlocks per-condition analytics that decompose `setupRank` into its signal components. Commits `a138aa6`, `12c6483`, `636c8dc`, `b7371a8`.
+- **Consolidate `brand-*` and `acc-*` into single bronze scale** — P1. `--color-brand-500` retired in favour of `--color-acc-100` (15 call sites migrated across auth surface + 2 leaked journal sites). Two-name foot-gun closed; single bronze scale documented as canonical. Commit `7e1fa38`.
+- **`/replay` route deprecation sweep** — P1 (#4 on the prior P1 shortlist). Replay surface retired per manifesto §6. Commit `78760fc`.
+- **Monthly Review → Month Closing affordance inside Reports** — P2. `/monthly` route deleted; `MonthClosingSection` in Reports branches by account type (personal → `MonthlyDarfCard`, prop → `PropProfitSummary`, replay → null). Weekly/projection/comparison content preserved in collapsible "Month Detail" `<details>`. `/monthly` → `/reports` 308 redirect in `src/proxy.ts`. Commit `cc102fb`.
+- **Account Comparison → Analytics filter mode** — P2. `src/app/[locale]/(app)/analytics/account-comparison/page.tsx` deleted; multi-account view merged into Analytics' existing filter panel (multi-select on account, side-by-side equity overlay). Multi-account stays first-class; only the dedicated route disappears. Commit `ea06321`.
+- **Delete orphan `/monitor` and `/painel` public routes** — P2. Two public route files removed; Monitor tab inside Command Center fully covers the surface. Zero internal `href`/`router.push` references existed. Commit `16e79a3`.
+- **Mode-personalization widget contract (framework spike)** — P1. `AccountModeProvider` + `useAccountMode()` hook + `<ModeVariant />` declarative swap landed on `feat/hawks-mode-v0`. First consumer: dashboard Coaching Insights slot. Promote to stable once a second mode validates the shape without structural changes. See [`docs/mode-personalization-contract.md`](mode-personalization-contract.md). Commit `8e9d39f`.
+- **Page Guide System — per-feature PR-template checklist line** — P3. Added "Page guide entry added/updated for new or significantly changed surfaces?" to `docs/pr-template.md` so the existing page-guide foundations get a social nudge per PR. Commit `661c7a3`.
