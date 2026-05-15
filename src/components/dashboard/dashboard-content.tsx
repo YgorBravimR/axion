@@ -12,7 +12,7 @@ import { QuickStats } from "./quick-stats"
 import { DailyPnLBarChart } from "./daily-pnl-bar-chart"
 import { PerformanceRadarChart } from "./performance-radar-chart"
 import { DayDetailModal } from "./day-detail-modal"
-import { LoadingSpinner } from "@/components/shared"
+import { LoadingSpinner, ModeVariant } from "@/components/shared"
 import {
 	getDailyPnL,
 	getOverallStats,
@@ -45,7 +45,6 @@ interface DashboardContentProps {
 	initialRadarData: RadarChartData[]
 	initialYear: number
 	initialMonthIndex: number
-	hawksModeActive?: boolean
 }
 
 /** Compute dateFrom/dateTo for a given dashboard period */
@@ -115,7 +114,6 @@ export const DashboardContent = ({
 	initialRadarData,
 	initialYear,
 	initialMonthIndex,
-	hawksModeActive = false,
 }: DashboardContentProps) => {
 	const effectiveDate = useEffectiveDate()
 	const { canAccess } = useFeatureAccess()
@@ -255,20 +253,13 @@ export const DashboardContent = ({
 				<KpiCards stats={stats} discipline={discipline} />
 			</div>
 
-			{/* Coaching Insights — trader+ only */}
+			{/* Coaching Insights — trader+ only; Hawks mode swaps in its variant via ModeVariant */}
 			{canAccess("dashboard:coaching-insights") && (
 				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
-					<CoachingInsightsCard />
-				</div>
-			)}
-
-			{/* Hawks Coaching Insights — only when account is in Hawks mode */}
-			{hawksModeActive && canAccess("dashboard:coaching-insights") && (
-				<div
-					id="dashboard-hawks-coaching"
-					className="md:col-span-2 lg:col-span-3"
-				>
-					<HawksCoachingInsightsCard />
+					<ModeVariant
+						default={<CoachingInsightsCard />}
+						hawks={<HawksCoachingInsightsCard />}
+					/>
 				</div>
 			)}
 

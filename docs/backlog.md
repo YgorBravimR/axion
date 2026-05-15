@@ -76,11 +76,11 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 - **Depends on**: P1 #2 (`trade_conditions` junction table).
 - **Source**: feature-manifesto-2026-05.md §3.1 + §6 (4).
 
-### Mode-personalization widget contract (framework spike)
+### ~~Mode-personalization widget contract (framework spike)~~ ✅ Landed 2026-05-15
 
 - **Priority:** P1 · **Effort:** M
-- **What**: per-component opt-in pattern for mode-aware variants. A widget declares "I have a Hawks variant"; a registry/context resolves which variant to render based on the active mode. Default = canonical layout; methodology variants opt in. Reserve route-level swap as escape hatch (currently zero consumers expected).
-- **Why**: Q2 resolved — mode-personalization is a _lens on top of the canonical surface_, not a distinct frame. First consumer: a Hawks-flavored dashboard card. Lower blast radius per new methodology than a layout-level mode prop.
+- **Status:** Spike landed on `feat/hawks-mode-v0`. Contract: `AccountModeProvider` + `useAccountMode()` hook + `<ModeVariant />` declarative swap. First consumer: dashboard Coaching Insights slot. See [`docs/mode-personalization-contract.md`](mode-personalization-contract.md).
+- **Promote to stable** once a second mode validates the shape without structural changes.
 - **Source**: feature-manifesto-2026-05.md §5 (Q2 answer) + §6 (5); promoted from `ideas.md` § "Mode-personalization framework".
 
 ### Page Guide System — per-feature reminder on PR template
