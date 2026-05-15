@@ -2,7 +2,13 @@
 
 import { useState, useTransition, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
-import { Database, Upload, CheckCircle2, Loader2 } from "lucide-react"
+import {
+	Database,
+	Upload,
+	CheckCircle2,
+	Loader2,
+	RefreshCw,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +21,8 @@ import {
 	commitCandleImport,
 } from "@/app/actions/candle-import"
 import type { CandleValidationResult } from "@/app/actions/candle-import.types"
+import { regenerateRenkoBricks } from "@/app/actions/renko-pipeline"
+import type { RegenerateRenkoResult } from "@/app/actions/renko-pipeline.types"
 
 // ─── Shared utility ───────────────────────────────────────────────────────────
 
@@ -419,6 +427,118 @@ const RenkoCandleCard = () => {
 	)
 }
 
+// ─── Regenerate Renko card ────────────────────────────────────────────────────
+
+const RegenerateRenkoCard = () => {
+	const t = useTranslations("hawks.settings.import.regenerate")
+	const { showToast } = useToast()
+	const [isPending, startTransition] = useTransition()
+	const [assetSymbol, setAssetSymbol] = useState("WIN")
+	const [result, setResult] = useState<RegenerateRenkoResult | null>(null)
+
+	const handleRegenerate = useCallback(() => {
+		const fd = new FormData()
+		fd.append("assetSymbol", assetSymbol)
+		startTransition(async () => {
+			setResult(null)
+			const res = await regenerateRenkoBricks(fd)
+			if (res.status === "success" && res.data) {
+				setResult(res.data)
+				showToast("success", res.message)
+			} else {
+				showToast("error", res.message ?? t("errorFallback"))
+			}
+		})
+	}, [assetSymbol, showToast, t])
+
+	const totalWarnings = result
+		? result.perTimeframe.reduce((acc, tf) => acc + tf.warnings.length, 0)
+		: 0
+
+	return (
+		<div
+			id="hawks-renko-regenerate-card"
+			className="border-bg-300 bg-bg-200 space-y-m-400 p-s-300 sm:p-m-400 rounded-lg border"
+		>
+			<div className="gap-s-300 flex items-start">
+				<FeatureStamp icon={RefreshCw} />
+				<div>
+					<h3 className="text-body text-txt-100 font-semibold">{t("title")}</h3>
+					<HelpText id="hawks-regenerate-desc" className="mt-s-100">
+						{t("description")}
+					</HelpText>
+				</div>
+			</div>
+
+			<div className="space-y-s-200 max-w-xs">
+				<Label
+					id="renko-regenerate-asset-label"
+					htmlFor="renko-regenerate-asset"
+				>
+					{t("assetLabel")}
+				</Label>
+				<Input
+					id="renko-regenerate-asset"
+					value={assetSymbol}
+					onChange={(e) => setAssetSymbol(e.target.value.toUpperCase())}
+					placeholder={t("assetPlaceholder")}
+					disabled={isPending}
+				/>
+			</div>
+
+			{result && (
+				<div className="border-bg-300 bg-bg-100 space-y-s-200 p-m-400 rounded-md border">
+					<div className="text-body text-txt-100 font-medium">
+						{t("summary", {
+							barCount: result.rawBarsLoaded,
+							weekCount: result.weeksCovered,
+						})}
+					</div>
+					<ul className="space-y-s-100">
+						{result.perTimeframe.map((tf) => (
+							<li
+								key={tf.code}
+								className="text-small text-txt-200 gap-s-200 flex items-center"
+							>
+								<CheckCircle2
+									className="text-fb-success h-4 w-4"
+									aria-hidden="true"
+								/>
+								{t("perTimeframe", {
+									code: tf.code,
+									count: tf.bricksGenerated,
+								})}
+							</li>
+						))}
+					</ul>
+					{totalWarnings > 0 && (
+						<div className="text-small text-txt-300">
+							{t("warnings", { count: totalWarnings })}
+						</div>
+					)}
+				</div>
+			)}
+
+			<div className="flex justify-end">
+				<Button
+					id="hawks-renko-regenerate-button"
+					onClick={handleRegenerate}
+					disabled={isPending || assetSymbol.length === 0}
+					size="sm"
+				>
+					{isPending && (
+						<Loader2
+							className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
+					)}
+					{isPending ? t("running") : t("button")}
+				</Button>
+			</div>
+		</div>
+	)
+}
+
 // ─── Section ──────────────────────────────────────────────────────────────────
 
 const HawksImportSection = () => {
@@ -436,6 +556,7 @@ const HawksImportSection = () => {
 			</div>
 			<RenkoSizesCard />
 			<RenkoCandleCard />
+			<RegenerateRenkoCard />
 		</div>
 	)
 }
