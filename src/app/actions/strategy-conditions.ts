@@ -65,6 +65,30 @@ export const syncStrategyConditions = async (
 			}
 		}
 
+		// Strategy versioning v1: conditions are part of the version snapshot.
+		// If trades reference this strategy, mutating the condition list in-place
+		// would retroactively change historical scoring — callers must fork via
+		// createStrategyVersion instead.
+		const tradeCountRow = await db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(trades)
+			.where(eq(trades.strategyId, strategyId))
+		const tradeCount = tradeCountRow[0]?.count ?? 0
+
+		if (tradeCount > 0) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyLive"),
+				errors: [
+					{
+						code: "STRATEGY_LIVE",
+						detail:
+							"Strategy is locked because trades reference it. Create a new version instead.",
+					},
+				],
+			}
+		}
+
 		// Delete existing junction rows
 		await db
 			.delete(strategyConditions)
@@ -180,17 +204,20 @@ export const getStrategyConditions = async (
 }
 
 /**
- * Rollup of how often each linked condition was met across all trades
- * using this strategy. Feeds the playbook-detail scorecard.
+ * Rollup of how often each linked condition was met across trades pinned
+ * to a specific strategy version. Feeds the playbook-detail scorecard.
  *
- * Two-query shape: (1) expected conditions (strategyConditions + name/category),
- * (2) per-condition stats filtered to this strategy's trades. Merging in code
- * keeps the SQL flat and lets each leg hit a dedicated index. A single
- * LEFT JOIN through trade_conditions would over-count rows where the same
- * condition belongs to another strategy.
+ * Two-query shape: (1) expected conditions for the version (strategyConditions
+ * filtered by strategyVersionId + name/category), (2) per-condition stats from
+ * trade_conditions joined on trades pinned to that version. Both legs scope
+ * to a single version so v1 → v2 forks don't pollute historical scoring.
+ *
+ * `versionId` defaults to the strategy's currentVersion when omitted. Callers
+ * inspecting historical versions pass an explicit id.
  */
 export const getStrategyConditionsRollup = async (
-	strategyId: string
+	strategyId: string,
+	versionId?: string
 ): Promise<ActionResponse<StrategyConditionsRollup>> => {
 	const t = await getTranslations("playbook")
 	try {
@@ -198,13 +225,29 @@ export const getStrategyConditionsRollup = async (
 
 		const strategy = await db.query.strategies.findFirst({
 			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
-			columns: { id: true },
+			columns: { id: true, currentVersion: true },
 		})
 		if (!strategy) {
 			return {
 				status: "error",
 				message: t("actionErrors.strategyNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
+			}
+		}
+
+		const resolvedVersionId =
+			versionId ??
+			(await getCurrentVersionId(strategy.id, strategy.currentVersion))
+		if (!resolvedVersionId) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyNotFound"),
+				errors: [
+					{
+						code: "MISSING_VERSION",
+						detail: `Strategy ${strategyId} is missing a v${strategy.currentVersion} row`,
+					},
+				],
 			}
 		}
 
@@ -221,13 +264,13 @@ export const getStrategyConditionsRollup = async (
 				tradingConditions,
 				eq(tradingConditions.id, strategyConditions.conditionId)
 			)
-			.where(eq(strategyConditions.strategyId, strategyId))
+			.where(eq(strategyConditions.strategyVersionId, resolvedVersionId))
 			.orderBy(asc(strategyConditions.sortOrder))
 
 		const strategyTradeIds = await db
 			.select({ id: trades.id })
 			.from(trades)
-			.where(eq(trades.strategyId, strategyId))
+			.where(eq(trades.strategyVersionId, resolvedVersionId))
 
 		const tradeIds = strategyTradeIds.map((row) => row.id)
 		const totalTrades = tradeIds.length

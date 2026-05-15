@@ -18,8 +18,10 @@ import { z } from "zod"
 import {
 	createStrategySchema,
 	updateStrategySchema,
+	createStrategyVersionSchema,
 	type CreateStrategyInput,
 	type UpdateStrategyInput,
+	type CreateStrategyVersionInput,
 } from "@/lib/validations/strategy"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
@@ -29,6 +31,7 @@ import type {
 	StrategyTradeStats,
 	StrategyWithStats,
 	ComplianceOverview,
+	StrategyVersionDetail,
 } from "./strategies.types"
 
 /**
@@ -200,6 +203,45 @@ export const updateStrategy = async (
 
 		const validated = updateStrategySchema.parse(input)
 
+		// Strategy versioning v1: once a strategy has trades attached, its content
+		// is locked. Editing requires creating a new version via
+		// createStrategyVersion. `code` and `isActive` are NOT part of the version
+		// snapshot, so we still allow renaming/deactivating live strategies in place.
+		const touchesSnapshotFields =
+			validated.name !== undefined ||
+			validated.description !== undefined ||
+			validated.entryCriteria !== undefined ||
+			validated.exitCriteria !== undefined ||
+			validated.riskRules !== undefined ||
+			validated.finalR !== undefined ||
+			validated.maxRiskPercent !== undefined ||
+			validated.screenshotUrl !== undefined ||
+			validated.screenshotS3Key !== undefined ||
+			validated.notes !== undefined ||
+			validated.conditions !== undefined
+
+		if (touchesSnapshotFields) {
+			const tradeCountRow = await db
+				.select({ count: sql<number>`count(*)::int` })
+				.from(trades)
+				.where(eq(trades.strategyId, id))
+			const tradeCount = tradeCountRow[0]?.count ?? 0
+
+			if (tradeCount > 0) {
+				return {
+					status: "error",
+					message: t("actions.strategyLive"),
+					errors: [
+						{
+							code: "STRATEGY_LIVE",
+							detail:
+								"Strategy is locked because trades reference it. Create a new version instead.",
+						},
+					],
+				}
+			}
+		}
+
 		const [strategy] = await db
 			.update(strategies)
 			.set({
@@ -363,6 +405,203 @@ export const deleteStrategy = async (
 				{
 					code: "DELETE_FAILED",
 					detail: toSafeErrorMessage(error, "deleteStrategy"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Publish a new version of an existing strategy. Atomic:
+ *   1. Insert immutable strategyVersions row with input content.
+ *   2. Copy conditions to the new version (callers may also pass new conditions).
+ *   3. Dual-write all content fields back onto the strategies row (so existing
+ *      callers that read strategies.* keep seeing the latest content without joins).
+ *   4. Bump strategies.currentVersion and strategies.nextVersionNumber.
+ *
+ * Trades logged after this call will pin to the new version via
+ * trades.strategyVersionId; existing trades stay pinned to the prior version.
+ */
+export const createStrategyVersion = async (
+	strategyId: string,
+	input: CreateStrategyVersionInput
+): Promise<ActionResponse<Strategy>> => {
+	const t = await getTranslations("playbook")
+	try {
+		const { userId, accountId } = await requireAuth()
+		const validated = createStrategyVersionSchema.parse(input)
+
+		const existing = await db.query.strategies.findFirst({
+			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
+		})
+
+		if (!existing) {
+			return {
+				status: "error",
+				message: t("actions.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
+			}
+		}
+
+		const nextVersion = existing.nextVersionNumber
+
+		const updated = await db.transaction(async (tx) => {
+			const [version] = await tx
+				.insert(strategyVersions)
+				.values({
+					strategyId: existing.id,
+					version: nextVersion,
+					name: validated.name,
+					description: validated.description || null,
+					entryCriteria: validated.entryCriteria || null,
+					exitCriteria: validated.exitCriteria || null,
+					riskRules: validated.riskRules || null,
+					finalR: validated.finalR?.toString() || null,
+					maxRiskPercent: validated.maxRiskPercent?.toString() || null,
+					screenshotUrl: validated.screenshotUrl || null,
+					screenshotS3Key: validated.screenshotS3Key || null,
+					notes: validated.notes || null,
+				})
+				.returning({ id: strategyVersions.id })
+			if (!version) {
+				throw new Error("Failed to insert strategy version row")
+			}
+
+			if (validated.conditions && validated.conditions.length > 0) {
+				await tx.insert(strategyConditions).values(
+					validated.conditions.map((c) => ({
+						strategyId: existing.id,
+						strategyVersionId: version.id,
+						conditionId: c.conditionId,
+						tier: c.tier,
+						sortOrder: c.sortOrder,
+					}))
+				)
+			}
+
+			const [mirrored] = await tx
+				.update(strategies)
+				.set({
+					name: validated.name,
+					description: validated.description || null,
+					entryCriteria: validated.entryCriteria || null,
+					exitCriteria: validated.exitCriteria || null,
+					riskRules: validated.riskRules || null,
+					finalR: validated.finalR?.toString() || null,
+					maxRiskPercent: validated.maxRiskPercent?.toString() || null,
+					screenshotUrl: validated.screenshotUrl || null,
+					screenshotS3Key: validated.screenshotS3Key || null,
+					notes: validated.notes || null,
+					currentVersion: nextVersion,
+					nextVersionNumber: nextVersion + 1,
+					updatedAt: new Date(),
+				})
+				.where(eq(strategies.id, existing.id))
+				.returning()
+			if (!mirrored) {
+				throw new Error("Failed to dual-write strategies row")
+			}
+
+			return mirrored
+		})
+
+		invalidateStrategyData(userId, accountId)
+
+		return {
+			status: "success",
+			message: t("actions.strategyVersionPublished"),
+			data: updated,
+		}
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return {
+				status: "error",
+				message: t("actions.validationFailed"),
+				errors: error.issues.map((e) => ({
+					code: "VALIDATION_ERROR",
+					detail: `${e.path.join(".")}: ${e.message}`,
+				})),
+			}
+		}
+		return {
+			status: "error",
+			message: t("actions.strategyVersionFailed"),
+			errors: [
+				{
+					code: "VERSION_CREATE_FAILED",
+					detail: toSafeErrorMessage(error, "createStrategyVersion"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Fetch a strategy version snapshot by id, with ownership check via parent
+ * strategy. `tradeCount` reports how many trades pin to this exact version;
+ * `isLive` is true whenever `tradeCount > 0` (the version is locked because
+ * historical trades reference it and editing would retroactively change
+ * their scoring context).
+ */
+export const getStrategyVersion = async (
+	versionId: string
+): Promise<ActionResponse<StrategyVersionDetail>> => {
+	const t = await getTranslations("playbook")
+	try {
+		const { userId } = await requireAuth()
+
+		const version = await db.query.strategyVersions.findFirst({
+			where: eq(strategyVersions.id, versionId),
+		})
+
+		if (!version) {
+			return {
+				status: "error",
+				message: t("actions.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy version not found" }],
+			}
+		}
+
+		// Ownership check against parent strategy
+		const parent = await db.query.strategies.findFirst({
+			where: and(
+				eq(strategies.id, version.strategyId),
+				eq(strategies.userId, userId)
+			),
+			columns: { id: true },
+		})
+
+		if (!parent) {
+			return {
+				status: "error",
+				message: t("actions.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy version not found" }],
+			}
+		}
+
+		const countRow = await db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(trades)
+			.where(eq(trades.strategyVersionId, versionId))
+		const tradeCount = countRow[0]?.count ?? 0
+
+		return {
+			status: "success",
+			message: t("actions.strategyRetrieved"),
+			data: {
+				...version,
+				tradeCount,
+				isLive: tradeCount > 0,
+			},
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("actions.strategyFetchFailed"),
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getStrategyVersion"),
 				},
 			],
 		}

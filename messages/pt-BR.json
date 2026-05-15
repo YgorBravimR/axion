@@ -2223,6 +2223,7 @@
 			"conditionsCleared": "Condições da estratégia removidas",
 			"conditionsSynced": "Condições da estratégia sincronizadas com sucesso",
 			"conditionsRetrieved": "Condições da estratégia recuperadas com sucesso",
+			"strategyLive": "Estratégia possui trades vinculados — crie uma nova versão para alterar as condições",
 			"invalidInput": "Entrada inválida"
 		},
 		"yourStrategies": "Suas Estratégias",
@@ -2402,6 +2403,9 @@
 			"strategyCreateFailed": "Falha ao criar estratégia",
 			"strategyUpdateFailed": "Falha ao atualizar estratégia",
 			"strategyDeleteFailed": "Falha ao excluir estratégia",
+			"strategyLive": "Esta estratégia tem trades vinculados — crie uma nova versão para alterá-la",
+			"strategyVersionPublished": "Nova versão da estratégia publicada",
+			"strategyVersionFailed": "Falha ao publicar nova versão da estratégia",
 			"strategiesRetrieved": "Estratégias obtidas com sucesso",
 			"strategiesFetchFailed": "Falha ao obter estratégias",
 			"noStrategiesFound": "Nenhuma estratégia encontrada",

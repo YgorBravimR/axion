@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle"
-import { strategyVersions, type Strategy } from "@/db/schema"
+import { strategies, strategyVersions, type Strategy } from "@/db/schema"
 import { and, eq } from "drizzle-orm"
 
 type StrategySnapshotFields = Pick<
@@ -57,4 +57,25 @@ export const getCurrentVersionId = async (
 		columns: { id: true },
 	})
 	return row?.id ?? null
+}
+
+// Resolves the version pin for a trade insert. Returns null when the trade
+// has no strategy attached — callers should write null to strategyVersionId
+// in that case. If the strategy exists but its v{currentVersion} row is
+// missing the function returns null too; this should never happen post-Phase A
+// migration but the read is forgiving rather than throwing.
+export const resolveCurrentVersionIdForTrade = async (
+	strategyId: string | null | undefined
+): Promise<string | null> => {
+	if (!strategyId) {
+		return null
+	}
+	const strategy = await db.query.strategies.findFirst({
+		where: eq(strategies.id, strategyId),
+		columns: { currentVersion: true },
+	})
+	if (!strategy) {
+		return null
+	}
+	return getCurrentVersionId(strategyId, strategy.currentVersion)
 }

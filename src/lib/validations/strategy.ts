@@ -51,10 +51,7 @@ export const createStrategySchema = z.object({
 		.max(500)
 		.optional()
 		.or(z.literal("")),
-	notes: z
-		.string()
-		.max(5000, "validation.strategy.notesMax")
-		.optional(),
+	notes: z.string().max(5000, "validation.strategy.notesMax").optional(),
 	isActive: z.boolean().default(true),
 	screenshotS3Key: z.string().max(500).optional().or(z.literal("")),
 	conditions: z.array(strategyConditionSchema).optional(),
@@ -62,5 +59,17 @@ export const createStrategySchema = z.object({
 
 export const updateStrategySchema = createStrategySchema.partial()
 
+// Versioning input: omits `code` (strategy code stays stable across versions)
+// and `isActive` (a fork doesn't toggle activation — caller mutates that
+// independently via updateStrategy). Conditions become required so callers
+// commit to an explicit per-version checklist.
+export const createStrategyVersionSchema = createStrategySchema.omit({
+	code: true,
+	isActive: true,
+})
+
 export type CreateStrategyInput = z.infer<typeof createStrategySchema>
 export type UpdateStrategyInput = z.infer<typeof updateStrategySchema>
+export type CreateStrategyVersionInput = z.infer<
+	typeof createStrategyVersionSchema
+>

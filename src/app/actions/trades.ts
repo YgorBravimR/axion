@@ -17,6 +17,7 @@ import {
 	tradeConditions,
 } from "@/db/schema"
 import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
+import { resolveCurrentVersionIdForTrade } from "@/lib/strategy-versions"
 import type { Trade } from "@/db/schema"
 import type {
 	BulkCreateResult,
@@ -331,6 +332,9 @@ export const createTrade = async (
 			deduplicationHash,
 			followedPlan: tradeData.followedPlan,
 			strategyId: tradeData.strategyId || null,
+			strategyVersionId: await resolveCurrentVersionIdForTrade(
+				tradeData.strategyId
+			),
 			preTradeThoughts: tradeData.preTradeThoughts,
 			postTradeReflection: tradeData.postTradeReflection,
 			lessonLearned: tradeData.lessonLearned,
@@ -1497,6 +1501,13 @@ export const bulkCreateTrades = async (
 						positionSize: tradeData.positionSize,
 					})
 
+					// strategy version pin must be resolved per-row; each CSV row may map to a different strategy by code
+					// eslint-disable-next-line no-await-in-loop
+					const resolvedStrategyVersionId =
+						await resolveCurrentVersionIdForTrade(
+							strategyId || tradeData.strategyId
+						)
+
 					const tradeInsertValues: Record<string, unknown> = {
 						accountId,
 						asset: tradeData.asset,
@@ -1527,6 +1538,7 @@ export const bulkCreateTrades = async (
 						deduplicationHash,
 						followedPlan: tradeData.followedPlan,
 						strategyId: strategyId || tradeData.strategyId || null,
+						strategyVersionId: resolvedStrategyVersionId,
 						preTradeThoughts: tradeData.preTradeThoughts,
 						postTradeReflection: tradeData.postTradeReflection,
 						lessonLearned: tradeData.lessonLearned,
@@ -1841,6 +1853,9 @@ export const createScaledTrade = async (
 			executionMode: "scaled",
 			followedPlan: tradeData.followedPlan,
 			strategyId: tradeData.strategyId || null,
+			strategyVersionId: await resolveCurrentVersionIdForTrade(
+				tradeData.strategyId
+			),
 			preTradeThoughts: tradeData.preTradeThoughts,
 			postTradeReflection: tradeData.postTradeReflection,
 			lessonLearned: tradeData.lessonLearned,
