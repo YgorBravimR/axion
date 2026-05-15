@@ -1628,6 +1628,30 @@ export const strategyConditions = pgTable(
 	]
 )
 
+// Trade Conditions Junction Table (per-trade record of which conditions were
+// evaluated at execution time, with met=true/false snapshot). Frozen at
+// trade-write time — never recomputed. Enables setupRank rationale decomposition
+// for Hawks analytics and methodology-aware playbook scorecards.
+export const tradeConditions = pgTable(
+	"trade_conditions",
+	{
+		tradeId: uuid("trade_id")
+			.notNull()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		conditionId: uuid("condition_id")
+			.notNull()
+			.references(() => tradingConditions.id, { onDelete: "restrict" }),
+		met: boolean("met").default(true).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.tradeId, table.conditionId] }),
+		index("trade_conditions_condition_idx").on(table.conditionId),
+	]
+)
+
 // Strategy Scenarios Table (visual examples for a playbook)
 export const strategyScenarios = pgTable(
 	"strategy_scenarios",
@@ -2341,6 +2365,7 @@ export const tradesRelations = relations(trades, ({ one, many }) => ({
 		references: [tradeHawksMetadata.tradeId],
 	}),
 	stopAuditEvents: many(tradeStopAuditEvents),
+	conditions: many(tradeConditions),
 }))
 
 export const tradeHawksMetadataRelations = relations(
@@ -2546,6 +2571,7 @@ export const tradingConditionsRelations = relations(
 			references: [users.id],
 		}),
 		strategyConditions: many(strategyConditions),
+		tradeConditions: many(tradeConditions),
 	})
 )
 
@@ -2558,6 +2584,20 @@ export const strategyConditionsRelations = relations(
 		}),
 		condition: one(tradingConditions, {
 			fields: [strategyConditions.conditionId],
+			references: [tradingConditions.id],
+		}),
+	})
+)
+
+export const tradeConditionsRelations = relations(
+	tradeConditions,
+	({ one }) => ({
+		trade: one(trades, {
+			fields: [tradeConditions.tradeId],
+			references: [trades.id],
+		}),
+		condition: one(tradingConditions, {
+			fields: [tradeConditions.conditionId],
 			references: [tradingConditions.id],
 		}),
 	})
@@ -2804,6 +2844,9 @@ export type NewTradingCondition = typeof tradingConditions.$inferInsert
 
 export type StrategyCondition = typeof strategyConditions.$inferSelect
 export type NewStrategyCondition = typeof strategyConditions.$inferInsert
+
+export type TradeCondition = typeof tradeConditions.$inferSelect
+export type NewTradeCondition = typeof tradeConditions.$inferInsert
 
 export type StrategyScenario = typeof strategyScenarios.$inferSelect
 export type NewStrategyScenario = typeof strategyScenarios.$inferInsert
