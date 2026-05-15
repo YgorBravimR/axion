@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import { Loader2, Eye, EyeOff, Check, X } from "lucide-react"
+import { Eye, EyeOff, Check, X } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 import { registerUser } from "@/app/actions/auth"
 import { cn } from "@/lib/utils"
 
@@ -291,12 +292,7 @@ const RegisterForm = () => {
 					className="h-11 w-full"
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
-					{isPending && (
-						<Loader2
-							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
-							aria-hidden="true"
-						/>
-					)}
+					{isPending && <Spinner className="mr-s-200" size="md" />}
 					{t("submit")}
 				</Button>
 			</form>

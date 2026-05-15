@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -23,6 +23,9 @@ interface PeriodFilterProps {
  * Period filter component for selecting time ranges in the journal.
  * Supports predefined periods (day, week, month) and custom date ranges.
  *
+ * Mobile/desktop view is controlled via CSS container queries to avoid
+ * SSR hydration mismatch from useEffect media-query detection.
+ *
  * @param value - Currently selected period
  * @param onChange - Callback when period or date range changes
  * @param customDateRange - Current custom date range if selected
@@ -34,20 +37,11 @@ export const PeriodFilter = ({
 }: PeriodFilterProps) => {
 	const t = useTranslations("journal")
 	const [showCustomPicker, setShowCustomPicker] = useState(false)
-	const [isMobile, setIsMobile] = useState(false)
 	const [tempRange, setTempRange] = useState<DateRange | undefined>(
 		customDateRange
 			? { from: customDateRange.from, to: customDateRange.to }
 			: undefined
 	)
-
-	useEffect(() => {
-		const mq = window.matchMedia("(max-width: 419px)")
-		setIsMobile(mq.matches)
-		const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-		mq.addEventListener("change", handleChange)
-		return () => mq.removeEventListener("change", handleChange)
-	}, [])
 
 	const periods = useMemo<{ key: JournalPeriod; label: string }[]>(
 		() => [
@@ -88,7 +82,7 @@ export const PeriodFilter = ({
 	}
 
 	return (
-		<div className="gap-s-200 flex flex-col">
+		<div className="gap-s-200 @container flex flex-col">
 			<div
 				role="radiogroup"
 				aria-label={t("period.filterGroupLabel")}
@@ -122,12 +116,22 @@ export const PeriodFilter = ({
 			{/* Custom Date Range Picker */}
 			{showCustomPicker && (
 				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex max-w-[calc(100vw-2rem)] flex-wrap items-end rounded-lg border">
-					<div className="w-full sm:min-w-[260px] sm:flex-1">
+					{/* Mobile: 1-month picker (max-width: 419px) */}
+					<div className="hidden w-full sm:min-w-[260px] sm:flex-1 @max-[419px]:block">
 						<DateRangePicker
-							id="period-filter-range"
+							id="period-filter-range-mobile"
 							value={tempRange}
 							onChange={setTempRange}
-							numberOfMonths={isMobile ? 1 : 2}
+							numberOfMonths={1}
+						/>
+					</div>
+					{/* Desktop: 2-month picker (width > 419px) */}
+					<div className="w-full sm:min-w-[260px] sm:flex-1 @max-[419px]:hidden">
+						<DateRangePicker
+							id="period-filter-range-desktop"
+							value={tempRange}
+							onChange={setTempRange}
+							numberOfMonths={2}
 						/>
 					</div>
 					<div className="gap-s-100 flex">

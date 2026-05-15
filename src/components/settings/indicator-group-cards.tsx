@@ -4,14 +4,8 @@ import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-	Pencil,
-	Trash2,
-	ToggleLeft,
-	ToggleRight,
-	Loader2,
-	Layers,
-} from "lucide-react"
+import { ToggleStateIcon } from "@/components/ui/toggle-state-icon"
+import { Pencil, Trash2, Loader2, Layers } from "lucide-react"
 import type { IndicatorGroupWithDefinitions } from "@/types/indicator"
 
 interface IndicatorGroupCardsProps {
@@ -147,17 +141,7 @@ const IndicatorGroupCards = memo(
 															})
 												}
 											>
-												{group.isActive ? (
-													<ToggleRight
-														className="text-fb-success h-4 w-4"
-														aria-hidden="true"
-													/>
-												) : (
-													<ToggleLeft
-														className="text-txt-300 h-4 w-4"
-														aria-hidden="true"
-													/>
-												)}
+												<ToggleStateIcon isActive={group.isActive} />
 											</Button>
 											<Button
 												id={`group-delete-${group.id}`}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
+import { ToggleStateIcon } from "@/components/ui/toggle-state-icon"
 import { AssetForm } from "./asset-form"
 import { deleteAsset, toggleAssetActive } from "@/app/actions/assets"
 import type { AssetWithType } from "@/app/actions/assets.types"
@@ -23,15 +24,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-	Plus,
-	Search,
-	Pencil,
-	Trash2,
-	ToggleLeft,
-	ToggleRight,
-	Loader2,
-} from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react"
 import { fromCents } from "@/lib/money"
 
 interface AssetListProps {
@@ -236,17 +229,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 											asset.isActive ? t("deactivate") : t("activate")
 										}
 									>
-										{asset.isActive ? (
-											<ToggleRight
-												className="text-fb-success h-4 w-4"
-												aria-hidden="true"
-											/>
-										) : (
-											<ToggleLeft
-												className="text-txt-300 h-4 w-4"
-												aria-hidden="true"
-											/>
-										)}
+										<ToggleStateIcon isActive={asset.isActive} />
 									</Button>
 									<Button
 										id={`asset-delete-${asset.id}`}

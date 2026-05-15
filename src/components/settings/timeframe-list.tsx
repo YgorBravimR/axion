@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ToggleStateIcon } from "@/components/ui/toggle-state-icon"
 import { TimeframeForm } from "./timeframe-form"
 import {
 	deleteTimeframe,
@@ -20,16 +21,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-	Plus,
-	Pencil,
-	Trash2,
-	ToggleLeft,
-	ToggleRight,
-	Loader2,
-	Clock,
-	BarChart3,
-} from "lucide-react"
+import { Plus, Pencil, Trash2, Loader2, Clock, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUrlParams } from "@/hooks/use-url-params"
 
@@ -267,17 +259,7 @@ const TimeframeList = ({ timeframes }: TimeframeListProps) => {
 														: t("activate", { name: timeframe.name })
 												}
 											>
-												{timeframe.isActive ? (
-													<ToggleRight
-														className="text-fb-success h-4 w-4"
-														aria-hidden="true"
-													/>
-												) : (
-													<ToggleLeft
-														className="text-txt-300 h-4 w-4"
-														aria-hidden="true"
-													/>
-												)}
+												<ToggleStateIcon isActive={timeframe.isActive} />
 											</Button>
 											<Button
 												id={`timeframe-delete-${timeframe.id}`}

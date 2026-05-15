@@ -2,7 +2,8 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 import { cn } from "@/lib/utils"
-import type { DarfStatus } from "./darf-strip"
+import { DarfStatusDot } from "@/components/ui/darf-status-dot"
+import type { DarfStatus } from "@/components/ui/darf-status-dot"
 
 interface QuarterMonthCardProps {
 	href: string
@@ -24,16 +25,6 @@ const formatBRL = (cents: number): string =>
 		currency: "BRL",
 		maximumFractionDigits: 0,
 	})
-
-const STATUS_DOT: Record<DarfStatus, string> = {
-	paid: "bg-fb-success",
-	pending: "bg-warning",
-	overdue: "bg-fb-error",
-	exempt: "bg-txt-300",
-	unknown: "bg-bg-300",
-	in_progress: "bg-action-buy",
-	future: "bg-bg-400",
-}
 
 const QuarterMonthCard = async ({
 	href,
@@ -146,10 +137,7 @@ const QuarterMonthCard = async ({
 
 			<footer className="border-bg-300/60 pt-s-200 flex items-center justify-between border-t">
 				<div className="gap-s-200 text-micro text-txt-300 flex items-center">
-					<span
-						className={cn("size-2 rounded-full", STATUS_DOT[darfStatus])}
-						aria-hidden="true"
-					/>
+					<DarfStatusDot status={darfStatus} />
 					<span>
 						{t("darfLabel", { status: t(`statusLabel.${darfStatus}`) })}
 						{darfStatus !== "future" &&

@@ -18,7 +18,7 @@ const JournalPage = async ({ params }: JournalPageProps) => {
 				<Suspense fallback={null}>
 					<DailyBiasPanel />
 				</Suspense>
-				<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
+				<Suspense fallback={<LoadingSpinner size="md" className="min-h-48" />}>
 					<JournalContent />
 				</Suspense>
 			</div>

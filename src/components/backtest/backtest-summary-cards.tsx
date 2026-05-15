@@ -9,10 +9,11 @@ import type { BacktestSummary } from "@/types/backtest"
 interface BacktestSummaryCardsProps {
 	summary: BacktestSummary
 	engineVersion?: string
+	currency?: string
 }
 
 const BacktestSummaryCards = memo(
-	({ summary, engineVersion }: BacktestSummaryCardsProps) => {
+	({ summary, engineVersion, currency = "BRL" }: BacktestSummaryCardsProps) => {
 		const t = useTranslations("backtest.results")
 
 		const metrics = useMemo<
@@ -39,7 +40,7 @@ const BacktestSummaryCards = memo(
 				},
 				{
 					label: t("totalPnl"),
-					value: formatCentsAsCurrency(summary.totalPnlCents, "BRL"),
+					value: formatCentsAsCurrency(summary.totalPnlCents, currency),
 					tone:
 						summary.totalPnlCents > 0
 							? "money-pos"
@@ -49,7 +50,7 @@ const BacktestSummaryCards = memo(
 				},
 				{
 					label: t("maxDrawdown"),
-					value: formatCentsAsCurrency(summary.maxDrawdownCents, "BRL"),
+					value: formatCentsAsCurrency(summary.maxDrawdownCents, currency),
 					tone: "loss",
 				},
 				{
@@ -82,11 +83,11 @@ const BacktestSummaryCards = memo(
 				{ label: t("losses"), value: String(summary.losses) },
 				{
 					label: t("avgWin"),
-					value: formatCentsAsCurrency(summary.avgWinCents, "BRL"),
+					value: formatCentsAsCurrency(summary.avgWinCents, currency),
 				},
 				{
 					label: t("avgLoss"),
-					value: formatCentsAsCurrency(summary.avgLossCents, "BRL"),
+					value: formatCentsAsCurrency(summary.avgLossCents, currency),
 				},
 				{ label: t("maxConsecWin"), value: String(summary.maxConsecutiveWins) },
 				{

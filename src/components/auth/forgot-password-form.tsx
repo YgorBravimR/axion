@@ -3,7 +3,7 @@
 import type { FormEvent } from "react"
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
-import { Link, useRouter } from "@/i18n/routing"
+import { useRouter } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import Image from "next/image"
-import { Loader2, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
+import { BackLink } from "@/components/ui/back-link"
 import {
 	requestPasswordReset,
 	verifyResetCode,
@@ -203,24 +205,18 @@ export const ForgotPasswordForm = () => {
 						className="h-11 w-full"
 						disabled={isPending}
 					>
-						{isPending && (
-							<Loader2
-								className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
-								aria-hidden="true"
-							/>
-						)}
+						{isPending && <Spinner className="mr-s-200" size="md" />}
 						{t("sendCode")}
 					</Button>
 				</form>
 
 				<p className="text-small text-txt-300 text-center">
-					<Link
+					<BackLink
 						href="/login"
-						className="text-acc-100 hover:text-acc-100 gap-s-100 inline-flex items-center font-medium"
+						className="text-acc-100 hover:text-acc-100 gap-s-100 inline-flex items-center"
 					>
-						<ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
 						{t("backToLogin")}
-					</Link>
+					</BackLink>
 				</p>
 			</div>
 		)
@@ -285,10 +281,7 @@ export const ForgotPasswordForm = () => {
 
 				{isPending && (
 					<div className="flex justify-center">
-						<Loader2
-							className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none"
-							aria-hidden="true"
-						/>
+						<Spinner className="text-txt-300" size="lg" />
 					</div>
 				)}
 
@@ -458,12 +451,7 @@ export const ForgotPasswordForm = () => {
 					className="h-11 w-full"
 					disabled={isPending}
 				>
-					{isPending && (
-						<Loader2
-							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
-							aria-hidden="true"
-						/>
-					)}
+					{isPending && <Spinner className="mr-s-200" size="md" />}
 					{t("resetButton")}
 				</Button>
 			</form>

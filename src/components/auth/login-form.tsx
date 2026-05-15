@@ -9,15 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import {
-	Loader2,
-	Eye,
-	EyeOff,
-	Building2,
-	User,
-	ArrowLeft,
-	Mail,
-} from "lucide-react"
+import { Eye, EyeOff, Building2, User, ArrowLeft, Mail } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 import { loginUser } from "@/app/actions/auth"
 import { requestEmailVerification } from "@/app/actions/email-verification"
 import { cn } from "@/lib/utils"
@@ -241,12 +234,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 						className="w-full"
 						disabled={!selectedAccountId || isPending}
 					>
-						{isPending && (
-							<Loader2
-								className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
-								aria-hidden="true"
-							/>
-						)}
+						{isPending && <Spinner className="mr-s-200" size="md" />}
 						{tSelect("continue")}
 					</Button>
 
@@ -319,10 +307,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							className="w-full"
 						>
 							{resendingVerification && (
-								<Loader2
-									className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none"
-									aria-hidden="true"
-								/>
+								<Spinner className="mr-s-200" size="sm" />
 							)}
 							{t("resendVerification")}
 						</Button>
@@ -404,12 +389,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 					className="h-11 w-full"
 					disabled={isPending}
 				>
-					{isPending && (
-						<Loader2
-							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
-							aria-hidden="true"
-						/>
-					)}
+					{isPending && <Spinner className="mr-s-200" size="md" />}
 					{t("submit")}
 				</Button>
 			</form>

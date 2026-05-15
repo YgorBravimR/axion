@@ -147,26 +147,12 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Journal-list polish (deferred from sweep)
 
-### Mobile-detect via container queries instead of `matchMedia` effect
-
-- **Priority:** P3 · **Effort:** S
-- **What**: `period-filter.tsx:44-50` runs a `useEffect` on mount to read `window.matchMedia("(max-width: 419px)")` so it can pass `numberOfMonths={1|2}` to the `DateRangePicker`. Replace with a CSS-only approach (container query on the picker wrapper, or render one calendar and let CSS hide the second below the breakpoint).
-- **Why**: SSR-first the first paint always renders `isMobile=false`, then re-renders after hydration. The hydration flash is small but real, and the effect is the only state-setting code in PeriodFilter.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1a P2.
-
 ### Listbox-style arrow-nav within trade-day-group
 
 - **Priority:** P3 · **Effort:** M
 - **What**: After the TradeRow Link migration, focus moves row-by-row on Tab. For dense days (30+ trades) consider a listbox roving-tabindex pattern so ↑↓ navigates between rows without leaving the day group, and Tab leaves the group entirely.
 - **Why**: Power-user shortcut. Not blocking — Tab works fine — but the cockpit register favors keyboard density.
 - **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1.
-
-### `h-50` Suspense-fallback height across page-level shells
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: 5 page.tsx files (`journal/page.tsx`, `settings/page.tsx`, `risk-simulation/page.tsx`, `backtest/page.tsx`, `backtest/optimize/page.tsx`) and `journal-content.tsx:457` use `className="h-50"` on the LoadingSpinner. Tailwind v4 resolves it to `12.5rem` (200px) via the implicit `n * 0.25rem` scale, but the project's named spacing scale tops at `l-900` (64px). Either codify `h-50` in `globals.css` (`--height-l-1000` or similar) so it's intentional, or swap all 6 sites to `min-h-48` / `min-h-52` / a named token.
-- **Why**: It works, but reads as a token escape hatch every time someone greps the spacing system.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 3 out-of-scope.
 
 ---
 
@@ -304,13 +290,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Building blocks already exist**: `getTradeWithCandles` in `candle-query.ts` fetches candle data with trade overlay (already powers journal chart); `BacktestTrade[]` has entry/exit timestamps + prices + R-multiples; `DayBreakdown[]` captures range data per day (currently unused in UI); methodology entry sections are already split per strategy.
 - **Source**: CEO review session 2026-05-14; `src/components/backtest/`, `src/app/actions/candle-query.ts`, `src/types/backtest.ts`.
 
-### Hardcoded BRL in `formatCentsAsCurrency` call sites
-
-- **Priority:** P3 · **Effort:** S
-- **What**: `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` pass `"BRL"` as a literal to `formatCentsAsCurrency(..., "BRL")` rather than reading the active account's currency. Backtests today are BRL-only because the data sources are BRL-denominated, but the formatter call site is wrong even so.
-- **Why**: When multi-currency backtest data sources land (e.g. ES futures in USD), the renderer will mis-label the totals.
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest.md` Phase 1b audit P2.
-
 ### Hawks tick-level fidelity on stop reference
 
 - **Priority:** P3 · **Effort:** S
@@ -336,20 +315,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Token vocabulary is correct now; the API still tempts future drift. Costs 15 minutes; removes a permanent foot-gun.
 - **Source**: `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
 
-### Monte Carlo v1 distribution-histogram tooltip count is sign-colored
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/monte-carlo/distribution-histogram.tsx` `CustomTooltip` paints the simulation-count line with `text-trade-buy` / `text-trade-sell` based on `midPoint >= 0`. The number is a _count_ (e.g. "84 simulations (12.1%)"), not signed money. v2's tooltip is already fixed in row #13; v1 was kept hold-pattern to avoid touching shared bar-fill logic until the categorical palette decision lands.
-- **Why**: Same threshold-as-P&L vocabulary hijack that's been swept everywhere else in Wave 3 — last sliver.
-- **Source**: `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 4 enhancement.
-
-### `ComparisonRow` delta branch — retire or commit (risk-simulation summary-cards)
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/risk-simulation/summary-cards.tsx` `ComparisonRow` carries an unused `delta`/`deltaPositive` prop branch. All four current callsites pass only `originalValue`/`simulatedValue`. The branch paints `text-trade-buy` / `text-trade-sell` — which is the wrong vocabulary for any of the comparison metrics shown (win-rate, profit-factor, avg-R, max-drawdown are not signed P&L). When the delta UI ships, rename the prop semantics to `signed`/`positive` and re-token the palette to fit the metric, OR delete the prop today since it's unreachable.
-- **Why**: Dead-code drift on a colorized branch is a pre-loaded foot-gun — the next person who hooks up delta will silently inherit the wrong vocabulary.
-- **Source**: `docs/scans/2026-05-12-impeccable-risk-simulation.md` Phase 1a P2 + Phase 4 enhancement.
-
 ### Verdict-triad palette consolidation (`--color-rule-{blocked,paused,executed}`)
 
 - **Priority:** P3 · **Effort:** S
@@ -362,13 +327,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Priority:** P3 · **Effort:** XS
 - **What**: `src/components/fractal-plan/target-actual-gauge.tsx` now applies a 4-zone verdict palette: `negative → fb-error`, `behind (≥0, <50% of target) → bg-bg-300/text-txt-100`, `onTrack (≥50%, <100% of target) → warning`, `ahead (≥100%) → fb-success`. Same shape will apply to any future target-vs-actual gauge (e.g. weekly cap consumption, daily R cap progress). Add the named "gauge verdict palette" to `DESIGN.md` so the next gauge widget inherits the vocabulary instead of re-inventing.
 - **Why**: Wave 4 picked the palette by analogy from Wave 3's rule-engine triad. Documenting it as the canonical gauge vocabulary keeps future gauges from reaching for `acc-100` again.
-- **Source**: `docs/scans/2026-05-12-impeccable-plan-wave4.md` Phase 4 reflection.
-
-### `STATUS_DOT` triad duplication across DARF widgets
-
-- **Priority:** P3 · **Effort:** S
-- **What**: The same DARF-status → color-token map (`paid → fb-success`, `pending → warning`, `overdue → fb-error`, `exempt/unknown → txt-300/bg-300`, `in_progress → action-buy`, `future → bg-400`) is duplicated in `src/components/fractal-plan/cockpit/quarter-month-card.tsx` and `src/components/fractal-plan/cockpit/month-darf-row.tsx`, and a sibling `STATUS_DOT` exists in `darf-strip.tsx`. Extract a shared `<DarfStatusDot status={…} />` (or just a colocated map) so the next DARF surface inherits the triad without copy-paste drift.
-- **Why**: Three callers with hand-aligned maps is the threshold where the next contributor will copy the closest one and silently fork the vocabulary. Cheap to consolidate while the maps still match.
 - **Source**: `docs/scans/2026-05-12-impeccable-plan-wave4.md` Phase 4 reflection.
 
 ### Tab-panel `aria-controls` wiring in `new-trade-tabs.tsx`
@@ -392,13 +350,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Without canonicalization, the question "should this be acc-100 or fb-success?" will recur on every new tab UI. Codify once.
 - **Source**: `docs/scans/2026-05-12-impeccable-form-editors-wave5.md` Phase 4 deferred.
 
-### Extract shared `<ToggleStateIcon isActive />` primitive
-
-- **Priority:** P2 · **Effort:** S
-- **What**: Four settings widgets now duplicate the same `isActive ? <ToggleRight className="text-fb-success" aria-hidden /> : <ToggleLeft className="text-txt-300" aria-hidden />` map: `src/components/settings/asset-list.tsx`, `src/components/settings/timeframe-list.tsx`, `src/components/settings/indicator-definition-table.tsx`, `src/components/settings/indicator-group-cards.tsx`. Pull into `@/components/ui/toggle-state-icon` so future "enabled / disabled" rows inherit the verdict-triad mapping by default.
-- **Why**: Four hand-aligned maps is the threshold where the next contributor copies the closest one and silently forks the vocabulary back to trade colors. The Wave 6 sweep just retoned all four; preventing the drift recurring is cheap now.
-- **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
-
 ### Admin-widget decorative-icon a11y pass + `<TabsTrigger>` `aria-controls`
 
 - **Priority:** P2 · **Effort:** M
@@ -412,20 +363,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **What**: Wave 6 fixed `recalculate-button.tsx` and `recalculate-pnl-button.tsx` from a `text-trade-buy / text-trade-sell` outcome banner to the verdict triad (`text-fb-success / text-fb-error`). The same shape will recur in every future async-action result banner (export job complete, recompute month complete, bulk import done, etc.). Document the "operation-outcome verdict palette" in DESIGN.md.
 - **Why**: Operation outcomes are the second-most-common verdict-as-P&L hijack site after rating scales. Codifying the mapping in DESIGN.md prevents the next async banner reaching for trade-buy on reflex.
 - **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
-
-### Extract shared `<Spinner aria-hidden />` and `<BackLink>` primitives
-
-- **Priority:** P2 · **Effort:** S
-- **What**: Wave 7 normalized 9 `<Loader2 className="animate-spin motion-reduce:animate-none" />` sites and 4 `<ArrowLeft />`+text "back" patterns across auth components. The same shapes recur in many product surfaces (dashboard, journal, plan). Pull into `@/components/ui/spinner` (encapsulates `animate-spin`, `motion-reduce:animate-none`, `aria-hidden="true"`) and `@/components/ui/back-link` (encapsulates the ArrowLeft+text pattern with proper a11y) so future callers inherit the defaults rather than drifting.
-- **Why**: Both patterns are universal enough that not having a primitive is the source of every "should I add aria-hidden?" question. Adding the primitive closes the question.
-- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
-
-### Delete or merge `src/components/auth/account-picker.tsx`
-
-- **Priority:** P3 · **Effort:** S
-- **What**: The standalone `<AccountPicker />` component (134L) is unused — `login-form.tsx` inlines its own account-selection step (L149-265) rather than importing it. Either replace the inline step with `<AccountPicker />` to consolidate the implementations, or delete the orphaned file.
-- **Why**: Two implementations of the same UX silently drift. The inline copy already differs slightly from the standalone (`p-m-400` vs `p-m-400 min-h-11`, different selected-state ring chrome). Pick one.
-- **Source**: `docs/scans/2026-05-12-impeccable-auth-wave7.md` Phase 4 deferred.
 
 ### Document auth surface as canonical verdict-triad example in DESIGN.md
 
@@ -446,13 +383,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Priority:** P3 · **Effort:** XS
 - **What**: Side-stripe borders are now the highest-recidivism absolute ban — caught at Wave 4 (plan cards) and again at Wave 8 (`hero-quote-card.tsx`). Add a DESIGN.md note with the hero-card before/after showing how the colored `changePercent` already conveys direction, making the stripe redundant chrome.
 - **Why**: The pattern keeps recurring because it borrows from Linear/Raycast vocabulary — but those products use stripes for **selection**, not direction. Without an explicit anti-example in DESIGN.md, the next contributor will reach for it again.
-- **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
-
-### Delete or wire `src/components/market/auto-refresh-indicator.tsx`
-
-- **Priority:** P3 · **Effort:** S
-- **What**: 128-line component, zero imports. `MarketMonitorContent` inlines its own refresh indicator in the header rather than mounting this one. Either restore it as the canonical refresh-indicator (replace the inline header version) or delete the file outright.
-- **Why**: Same drift risk as the `account-picker.tsx` orphan flagged in Wave 7. Two implementations of the same indicator UX will silently diverge. Wave 8 fixed the trade-color hijack here defensively; the next maintainer should not have to wonder which one to update.
 - **Source**: `docs/scans/2026-05-12-impeccable-public-wave8.md` Phase 4 deferred.
 
 ### Consolidate `/monitor` and `/painel` via locale routing
@@ -550,6 +480,16 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **Mobile-detect via container query in `period-filter.tsx`** — P3. `useEffect` + `window.matchMedia("(max-width: 419px)")` replaced with Tailwind v4 container queries (`@container` on root + `@max-[419px]:block hidden` / `@max-[419px]:hidden`). Renders two `DateRangePicker` instances (1-month + 2-month) and CSS-toggles visibility — eliminates SSR hydration flash. Pending commit.
+- **`h-50` Suspense-fallback height rationalization** — P3. All 10 `className="h-50"` sites (7 page.tsx Suspense fallbacks + 2 analytics empty-state divs + journal-content.tsx loading state) swapped to `min-h-48` — 200px → 192px is imperceptible, no new tokens needed, spacing scale stays clean at `l-900` boundary. Scan listed 6 sites; rg pass found 10. Pending commit.
+- **Hardcoded BRL in `formatCentsAsCurrency` call sites** — P3. `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` now accept optional `currency?: string` prop (defaults to `"BRL"`); all 4 + 1 formatter calls read from the prop. Surgical fix — wiring through a `useAccountCurrency` hook would have rippled into every parent; the prop is the seam multi-currency callers will use. Pending commit.
+- **Monte Carlo v1 distribution-histogram tooltip count retoned** — P3. `src/components/monte-carlo/distribution-histogram.tsx` `CustomTooltip` count line moved from sign-based `text-trade-buy` / `text-trade-sell` to neutral `text-txt-100`. Bar fill untouched (separate concern). Last sliver of Wave 3 threshold-as-P&L hijack. Pending commit.
+- **`ComparisonRow` delta branch retired** — P3. `src/components/risk-simulation/summary-cards.tsx` `delta` / `deltaPositive` prop branch + JSX deleted; all 4 callsites already passed only `originalValue`/`simulatedValue`. Foot-gun removed; cleaner to re-add when delta UI actually ships. Pending commit.
+- **`<DarfStatusDot>` primitive extracted** — P3. Unified DARF-status → color-token map (`paid → fb-success`, `pending → warning`, `overdue → fb-error`, `exempt/unknown → txt-300/bg-300`, `in_progress → action-buy`, `future → bg-400`) into `src/components/ui/darf-status-dot.tsx`. Three callers migrated (`quarter-month-card.tsx`, `month-darf-row.tsx`, `darf-strip.tsx`). All three maps were byte-identical — extraction was overdue. Pending commit.
+- **`<ToggleStateIcon isActive />` primitive extracted** — P2. New `src/components/ui/toggle-state-icon.tsx` (props `{ isActive: boolean; className?: string }`, `aria-hidden="true"`, verdict-triad tokens `text-fb-success` / `text-txt-300`). Four settings widgets migrated (`asset-list.tsx`, `timeframe-list.tsx`, `indicator-definition-table.tsx`, `indicator-group-cards.tsx`). All four had identical `h-4 w-4` sizing — no variance to preserve. Pending commit.
+- **`<Spinner />` + `<BackLink />` primitives extracted** — P2. New `src/components/ui/spinner.tsx` (props `{ className?: string; size?: "sm" | "md" | "lg" }`, encapsulates `Loader2` + `animate-spin motion-reduce:animate-none` + `aria-hidden="true"`) and `src/components/ui/back-link.tsx` (props `{ href: string; children: ReactNode; className?: string }`, encapsulates `next/link` Link + `ArrowLeft` + `text-txt-300 hover:text-txt-200`). 8 spinner sites + 2 Link-based back-link sites migrated across `forgot-password-form.tsx`, `login-form.tsx`, `register-form.tsx`, `verify-email-form.tsx`. 2 Button-based "back" sites correctly left alone (different semantic — navigation vs onClick action). Pending commit.
+- **Orphan `account-picker.tsx` deleted** — P3. `src/components/auth/account-picker.tsx` (134 lines) removed; export stripped from `src/components/auth/index.ts`. Verified zero consumers via rg. Live version is the inlined step in `login-form.tsx` (L149-265) which had already diverged in details. Pending commit.
+- **Orphan `auto-refresh-indicator.tsx` deleted** — P3. `src/components/market/auto-refresh-indicator.tsx` (128 lines) removed. Verified zero consumers via rg. Live version is the inlined header refresh-indicator in `MarketMonitorContent`. Pending commit.
 - **`useTransition` on Command Center refresh callbacks** — P2. `refreshCompletions` / `refreshDailyPlan` / `refreshAssetSettings` in `command-center-content.tsx` wrapped in `useTransition`; child panels (`daily-checklist`, `pre-market-notes`, `post-market-notes`, `asset-rules-panel`) receive `isRefreshing` prop and surface `aria-busy` + `opacity-60` dim during in-flight fetches. Pending commit.
 - **Mood/Bias primitive resolution — complementary, not overlapping** — P2. `MoodSelector` now wraps `SegmentedToggle` (tone dot moved into `label` ReactNode slot) so form-context controls share one a11y model with Hawks daily-bias. `SegmentedToggle` gained Left/Right/Up/Down/Home/End arrow-key navigation (completes the WAI-ARIA radiogroup pattern) and accepts `null | undefined` for the unset state with the first option staying tabbable. `BiasSelector` stays as Radix `Select` per table-cell density budget (`h-8 w-28` — a 4-pill toggle would widen the column ~2-3×); comment in source documents the call. Pending commit.
 - **StrategyCard menu → Radix `DropdownMenu`** — P2. `src/components/playbook/strategy-card.tsx` ~60 lines of hand-rolled focus management (`menuRef`, `menuButtonRef`, arrow-key `onKeyDown`, escape close, overlay click-out) replaced by Radix `DropdownMenu` (portal rendering, focus trap, outside-click, proper `aria-controls`). Pending commit.
