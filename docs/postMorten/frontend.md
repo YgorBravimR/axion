@@ -170,3 +170,26 @@
 **Prevention:** Never export non-async values from `"use server"` files. Shared schemas → plain modules. In Playwright for App Router: always `waitForLoadState("networkidle")` before clicking `<Link>`. Set `experimental.workerThreads: true` in automated/shell-less environments.
 
 **Related:** `src/app/actions/filter-presets.ts`, `src/lib/filter-preset-schema.ts` (created), `src/components/analytics/preset-selector.tsx`, `src/components/analytics/filter-panel.tsx`, `e2e/tests/navigation.spec.ts`, `next.config.ts`
+
+---
+
+## [BUG-2026-05-14] DateRangePicker closes after first date click (react-day-picker v9 behavior change)
+
+**Severity:** High | **Affected:** `src/components/ui/date-range-picker.tsx`
+
+**Cause (2 compounding issues):**
+
+1. **react-day-picker v9 changed first-click behavior:** In v8, clicking the first date in `mode="range"` called `onSelect` with `{ from: date, to: undefined }`. In v9 it calls `onSelect` with `{ from: date, to: date }` — same date for both fields. The existing `handleSelect` check `range?.from && range?.to` was truthy on first click, immediately triggering `setOpen(false)`.
+
+2. **`onInteractOutside` ref race (pre-existing):** The original guard in `handleOpenChange` read `isSelectingRef.current` after Radix had already fired the close. The ref was cleared in `onInteractOutside` before `onOpenChange(false)` ran, so the guard always saw `false`. Fix: call `e.preventDefault()` inside `onInteractOutside` to cancel the Radix DismissableLayer dismissal inline, before the close propagates.
+
+**Effect:** Clicking any date in the DateRangePicker immediately closed the calendar popover. Users could not select a date range — only single-date selections were possible (from = to = clicked date). Affected backtest date range, and potentially any other DateRangePicker usage in the app.
+
+**Fix:**
+
+1. Changed the "selection complete" condition in `handleSelect` from `range?.from && range?.to` to check that `from` and `to` are actually different dates: `range.from.getTime() !== range.to.getTime()`. Same-date (first click) is now treated as mid-selection, keeping the picker open.
+2. Changed `onInteractOutside` to call `e.preventDefault()` when `isSelectingRef.current` is true, which cancels the Radix DismissableLayer dismissal at the source rather than trying to intercept it in `onOpenChange` after the fact.
+
+**Prevention:** When upgrading react-day-picker across major versions, test range selection UX end-to-end. The v8→v9 change in first-click `to` semantics is undocumented and easy to miss. Never guard popover-close behavior on the presence of `to` alone — always compare the actual date values.
+
+**Related Files:** `src/components/ui/date-range-picker.tsx`
