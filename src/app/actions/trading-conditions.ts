@@ -196,7 +196,11 @@ export const getConditions = async (
 }
 
 /**
- * Delete a trading condition (cascades to strategy_conditions junction)
+ * Soft-delete a trading condition by flipping isActive=false. Preserves the
+ * row so historical trade_conditions rows keep their referential anchor —
+ * deleting a condition that any trade evaluated would rewrite history.
+ * The read path (getConditions) already filters isActive=true, so users
+ * no longer see soft-deleted conditions in pickers.
  */
 export const deleteCondition = async (
 	id: string
@@ -219,9 +223,9 @@ export const deleteCondition = async (
 			}
 		}
 
-		// Delete will cascade to strategy_conditions due to onDelete: "cascade"
 		await db
-			.delete(tradingConditions)
+			.update(tradingConditions)
+			.set({ isActive: false, updatedAt: new Date() })
 			.where(
 				and(eq(tradingConditions.id, id), eq(tradingConditions.userId, userId))
 			)
