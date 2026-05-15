@@ -12,10 +12,10 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ## Backlog vs. ideas
 
-| File                          | What lives here                                                                                                                                                      | Promotion rule                                                                                                                                                               |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/ideas.md`               | Half-formed ideas, "we should think about X", strategic seeds, anything missing a clear shape or effort estimate. Cheap to file, cheap to delete.                    | Once an idea has a **Source**, a rough **Effort**, a **Priority**, and a one-paragraph "what + why", promote it here.                                                        |
-| `docs/backlog.md` (this file) | Concrete, commit-ready deferred work. Every entry has Priority, Effort, Source, and a `What + Why` clear enough that someone other than the author could pick it up. | When shipped, **move to the `## DONE` section at the bottom of this file** with a `completed_date` and the shipping commit hash. Do not delete — DONE is the shipped record. |
+| File                          | What lives here                                                                                                                                                      | Promotion rule                                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/ideas.md`               | Half-formed ideas, "we should think about X", strategic seeds, anything missing a clear shape or effort estimate. Cheap to file, cheap to delete.                    | Once an idea has a **Source**, a rough **Effort**, a **Priority**, and a one-paragraph "what + why", promote it here.                    |
+| `docs/backlog.md` (this file) | Concrete, commit-ready deferred work. Every entry has Priority, Effort, Source, and a `What + Why` clear enough that someone other than the author could pick it up. | When shipped, **delete the entry in the same PR that ships it**. The shipping commit + git history is the record — no separate DONE log. |
 
 ## Conventions
 
@@ -25,7 +25,7 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 - **Ordering — higher priority sits on top** so a top-to-bottom scan always surfaces "what's next" first. Two layers:
   1. Capability sections themselves are ordered roughly by where the highest-priority work lives. The `## P1 strategic shortlist` always leads the file.
   2. Within each capability section, entries are sorted by priority descending: `P1` first, then `P2`, then `P3`. When adding a new entry, slot it by priority — do not append blindly.
-- **When a feature lands, move it to the `## DONE` section at the bottom of this file** with a `completed_date` field. Do not strikethrough-and-leave-in-place. Do not delete the entry outright — the DONE log is the record of what shipped and why. The active backlog above DONE only contains work still in front of us.
+- **When a feature lands, delete its entry from this file in the same PR that ships it.** Git history + the shipping commit are the audit trail; no parallel DONE register is maintained. The active backlog is exactly what's still in front of us.
 - Group by capability area, not by date. Within a group, follow the priority-sort rule above.
 - When in doubt, file new entries in `ideas.md` first — cheap to write, cheap to discard.
 
@@ -68,19 +68,6 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
   - Dashboards: cohort-split by version so users can compare their refinements.
 - **Depends on**: `trade_conditions` junction (landed 2026-05-15, see DONE) — versioning is the immutability story the junction makes meaningful.
 - **Source**: surfaced 2026-05-15 during `/plan-eng-review` of the `trade_conditions` design. User insight: _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_ Wants `/plan-design-review` before scoping the build.
-
----
-
-## Journey suite (`e2e/journey/`)
-
-### Trim happy-path duplication in 7 legacy specs
-
-- **Priority:** P2 · **Effort:** M
-- **What**: Trim happy-path "element exists" assertions from the 7 legacy specs flagged in the audit — keep their unique edge-case coverage (validation, empty states, filtering logic). Candidates: `navigation`, `settings`, `playbook`, `command-center`, `monthly-plan`, `reports`, `monthly`. Do not delete any file outright — the audit found **0 deprecation candidates** because every legacy spec carries some edge-case value the journey suite explicitly excludes.
-- **Why**: Two suites covering the same happy path is wasted CI minutes and split maintenance. The audit confirmed there is no clean cut to make, but ~7 files have meaningful overlap to trim.
-- **Source**: [`docs/scans/2026-05-15-e2e-edge-case-audit.md`](scans/2026-05-15-e2e-edge-case-audit.md) — per-file recommendations; `docs/design/zero-to-hero-e2e.md` §13 Phase 4 (ongoing).
-
-> Onboarding integration (Product-owned) → moved to [`docs/ideas.md`](ideas.md) — still needs product decisioning before it has a concrete shape.
 
 ---
 
@@ -583,11 +570,10 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 ## How to retire an item from this backlog
 
 1. Implement the work.
-2. Update the original `Source` if it still has the deferred prose ("Phase 2 will…", "future iteration may…") — replace with a concrete reference to the shipped commit/PR, or delete the prose entirely.
-3. Move the entry to the `## DONE` section below in the same PR. Strip the prose body, keep the title + the new `completed_date` line + a one-sentence "what shipped" + the shipping commit hash.
-4. Do not strikethrough-and-leave-in-place. Do not delete the entry outright — the DONE log is how we remember what shipped and why.
+2. Update any other doc that still has deferred prose ("Phase 2 will…", "future iteration may…") pointing at this entry — replace with a concrete reference to the shipped commit/PR, or delete the prose entirely.
+3. **Delete the entry from this file in the same PR that ships the work.** Don't strikethrough; don't move it elsewhere; don't add a "Recently shipped" footnote. The shipping commit + git history are the audit trail.
 
-Result: the active backlog above DONE only contains work still in front of us, priority-descending. DONE is the shipped record.
+Result: the active backlog is exactly what's still in front of us, priority-descending. No separate "what shipped" register lives in this file.
 
 ---
 
@@ -597,8 +583,6 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
-- **Journey suite (`e2e/journey/`) — Bravo fixture + tag filtering** — P2. Bravo persona switched to a fixed email (`bravo@axion-demo.com`) with per-chain DB + `rate_limit_attempts` reset wired into `e2e/global.teardown.ts` (which `playwright.config.ts` runs as both `globalSetup` and `globalTeardown`, so cleanup happens on both boundaries — logged as a gotcha). Every `test.describe` now carries `{ tag: ["@journey", "@stage:<name>"] }`, so `--grep "@journey"` / `--grep "@stage:foundation"` filter the suite cleanly. Edge-case audit produced at `docs/scans/2026-05-15-e2e-edge-case-audit.md` — 0 outright deprecations, 7 happy-path trim candidates; backlog rescoped to the trim work only. Commit `c734cfb`.
-- **Journal-list polish — period-filter mobile breakpoint + `h-50` token cleanup** — P2. `period-filter.tsx` no longer runs a `matchMedia` `useEffect`; two `<DateRangePicker>` instances are toggled by `min-[420px]:` Tailwind variants, so the breakpoint is SSR-stable and the hydration flash is gone. `h-50` swapped to stock `min-h-48` across 8 Suspense fallbacks (`journal`, `settings`, `risk-simulation`, `backtest/optimize`, `backtest`, `equity-shield`, `analytics`, and `journal-content.tsx`), restoring the named spacing scale. Listbox-style arrow-nav (P3 · M-effort) **declined** — full WAI-ARIA listbox semantics would override the row's implicit `link` role and roll back screen-reader wins from the recent `<Link>` row migration; re-open if a power user with 30+ trades/day reports keyboard friction. Commit `c734cfb`.
 - **HAWKS `dailyTradeOrdinal` race condition** — P2. Two concurrent HAWKS trade inserts could both compute `ordinal=1` (read-then-write race on `COUNT(*)`). Added `accountId` + `tradingDay` columns to `trade_hawks_metadata` and a unique index `thm_account_day_ordinal_idx` on `(accountId, tradingDay, dailyTradeOrdinal)`; action wraps the sidecar insert in a max-3 retry loop catching Postgres `23505` and recomputing the ordinal. Migration `0005_boring_wasp` backfills + drops orphans + enforces NOT NULL before the index. Race-condition test + post-mortem `[BUG-2026-05-15-1]`. Commit `48dacd5`.
 - **Cluster C — Stats module tests** — P2. 103 deterministic unit tests added for `monte-carlo` (Edge Expectancy, 36 tests), `monte-carlo-v2` (Capital Expectancy, 39 tests), and `risk-simulation-advanced` (28 tests). Covers seed-determinism, EV convergence, ruin probability vs expectancy sign, homogeneity under risk scaling, no NaN/Infinity safety. No production code touched. Commit `7225a9a`.
 - **Cluster B — Tax module tests** — P2. 58 unit tests added for `asset-defaults` (16), `mark-dirty` (12), `month-status` (30). Follows existing `__tests__/lib/tax/` vitest pattern; mocks DB layer like `fee-resolver.test.ts`. Protected `recompute-month.ts` untouched. 92 total tax-suite tests pass. Commit `3e90d31`.
