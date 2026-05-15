@@ -81,8 +81,6 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 - **Source**: [`docs/scans/2026-05-15-e2e-edge-case-audit.md`](scans/2026-05-15-e2e-edge-case-audit.md) — per-file recommendations; `docs/design/zero-to-hero-e2e.md` §13 Phase 4 (ongoing).
 
 > Onboarding integration (Product-owned) → moved to [`docs/ideas.md`](ideas.md) — still needs product decisioning before it has a concrete shape.
->
-> **Recently shipped (2026-05-15):** Fixed Bravo email + per-chain DB reset (now `bravo@axion-demo.com`, rate-limit slot purged on chain start via `e2e/global.teardown.ts`); tag-based filtering wired via Playwright's `tag` option on `test.describe` (filter with `--grep "@journey"` / `@stage:<name>`). See `e2e/journey/README.md` for usage.
 
 ---
 
@@ -130,17 +128,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - `src/app/actions/*`, `src/lib/queries/*` — ~80 drizzle relational type errors (generator config issue, not in scope at the time of the scan). Bundle into one pass.
 
 **Source**: `docs/scans/2026-05-05-tax-yearly-reports.md` "Still Armed".
-
----
-
-## Journal-list polish (deferred from sweep)
-
-> **Recently shipped (2026-05-15):**
->
-> - Mobile-detect refactor — `period-filter.tsx` no longer runs a `matchMedia` `useEffect`; two `<DateRangePicker>` instances are now toggled by `min-[420px]:` Tailwind variants, so the breakpoint decision is SSR-stable and the hydration flash is gone.
-> - `h-50` token cleanup — all 8 sites (the original 5 in the backlog plus `equity-shield/page.tsx`, `analytics/page.tsx`, and `journal-content.tsx`) swapped from `h-50` to stock `min-h-48`. The named spacing scale (`s-100 … l-900`) is no longer escape-hatched on Suspense fallbacks.
->
-> **Considered and declined for the near future (2026-05-15):** Listbox-style arrow-nav within `trade-day-group`. P3 · M-effort from `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1. The pattern conflicts with the recent `<Link>` row migration: full WAI-ARIA listbox semantics (`role="listbox"` + `role="option"`) would override the implicit `link` role and roll back screen-reader wins; a lighter ↑/↓ key-handler variant is doable but the backlog item itself labels this "not blocking — Tab works fine." Re-open if a power-user with dense days (30+ trades / day) reports keyboard friction. Source preserved in the scan log.
 
 ---
 
@@ -610,6 +597,8 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **Journey suite (`e2e/journey/`) — Bravo fixture + tag filtering** — P2. Bravo persona switched to a fixed email (`bravo@axion-demo.com`) with per-chain DB + `rate_limit_attempts` reset wired into `e2e/global.teardown.ts` (which `playwright.config.ts` runs as both `globalSetup` and `globalTeardown`, so cleanup happens on both boundaries — logged as a gotcha). Every `test.describe` now carries `{ tag: ["@journey", "@stage:<name>"] }`, so `--grep "@journey"` / `--grep "@stage:foundation"` filter the suite cleanly. Edge-case audit produced at `docs/scans/2026-05-15-e2e-edge-case-audit.md` — 0 outright deprecations, 7 happy-path trim candidates; backlog rescoped to the trim work only. Commit `c734cfb`.
+- **Journal-list polish — period-filter mobile breakpoint + `h-50` token cleanup** — P2. `period-filter.tsx` no longer runs a `matchMedia` `useEffect`; two `<DateRangePicker>` instances are toggled by `min-[420px]:` Tailwind variants, so the breakpoint is SSR-stable and the hydration flash is gone. `h-50` swapped to stock `min-h-48` across 8 Suspense fallbacks (`journal`, `settings`, `risk-simulation`, `backtest/optimize`, `backtest`, `equity-shield`, `analytics`, and `journal-content.tsx`), restoring the named spacing scale. Listbox-style arrow-nav (P3 · M-effort) **declined** — full WAI-ARIA listbox semantics would override the row's implicit `link` role and roll back screen-reader wins from the recent `<Link>` row migration; re-open if a power user with 30+ trades/day reports keyboard friction. Commit `c734cfb`.
 - **HAWKS `dailyTradeOrdinal` race condition** — P2. Two concurrent HAWKS trade inserts could both compute `ordinal=1` (read-then-write race on `COUNT(*)`). Added `accountId` + `tradingDay` columns to `trade_hawks_metadata` and a unique index `thm_account_day_ordinal_idx` on `(accountId, tradingDay, dailyTradeOrdinal)`; action wraps the sidecar insert in a max-3 retry loop catching Postgres `23505` and recomputing the ordinal. Migration `0005_boring_wasp` backfills + drops orphans + enforces NOT NULL before the index. Race-condition test + post-mortem `[BUG-2026-05-15-1]`. Commit `48dacd5`.
 - **Cluster C — Stats module tests** — P2. 103 deterministic unit tests added for `monte-carlo` (Edge Expectancy, 36 tests), `monte-carlo-v2` (Capital Expectancy, 39 tests), and `risk-simulation-advanced` (28 tests). Covers seed-determinism, EV convergence, ruin probability vs expectancy sign, homogeneity under risk scaling, no NaN/Infinity safety. No production code touched. Commit `7225a9a`.
 - **Cluster B — Tax module tests** — P2. 58 unit tests added for `asset-defaults` (16), `mark-dirty` (12), `month-status` (30). Follows existing `__tests__/lib/tax/` vitest pattern; mocks DB layer like `fee-resolver.test.ts`. Protected `recompute-month.ts` untouched. 92 total tax-suite tests pass. Commit `3e90d31`.
