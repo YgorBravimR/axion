@@ -127,37 +127,44 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		[dataSources, recipe.sizing.type]
 	)
 
-	const handleQuickRange = useCallback((value: string) => {
-		setQuickRangeKey(value)
-		const now = new Date()
-		let from: Date
-		const to = now
+	const handleQuickRange = useCallback(
+		(value: string) => {
+			setQuickRangeKey(value)
+			const now = new Date()
+			let from: Date
+			const to = selectedSource?.candleDateTo
+				? new Date(selectedSource.candleDateTo)
+				: now
 
-		switch (value) {
-			case "all":
-				from = new Date("2020-01-01")
-				break
-			case "this_month":
-				from = new Date(now.getFullYear(), now.getMonth(), 1)
-				break
-			case "this_year":
-				from = new Date(now.getFullYear(), 0, 1)
-				break
-			case "3m":
-				from = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
-				break
-			case "6m":
-				from = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
-				break
-			case "1y":
-				from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
-				break
-			default:
-				return
-		}
+			switch (value) {
+				case "all":
+					from = selectedSource?.candleDateFrom
+						? new Date(selectedSource.candleDateFrom)
+						: new Date("2020-01-01")
+					break
+				case "this_month":
+					from = new Date(now.getFullYear(), now.getMonth(), 1)
+					break
+				case "this_year":
+					from = new Date(now.getFullYear(), 0, 1)
+					break
+				case "3m":
+					from = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+					break
+				case "6m":
+					from = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
+					break
+				case "1y":
+					from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+					break
+				default:
+					return
+			}
 
-		setDateRange({ from, to })
-	}, [])
+			setDateRange({ from, to })
+		},
+		[selectedSource]
+	)
 
 	const handleDateRangeManual = useCallback((range: DateRange | undefined) => {
 		setDateRange(range)
@@ -350,6 +357,16 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							id="backtest-date-range"
 							value={dateRange}
 							onChange={handleDateRangeManual}
+							minDate={
+								selectedSource?.candleDateFrom
+									? new Date(selectedSource.candleDateFrom)
+									: undefined
+							}
+							maxDate={
+								selectedSource?.candleDateTo
+									? new Date(selectedSource.candleDateTo)
+									: undefined
+							}
 						/>
 					</div>
 				</div>

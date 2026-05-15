@@ -114,7 +114,8 @@ const classifyOhlcHeader = (
 
 	if (
 		normalized === "contador de candles" ||
-		normalized === "contador_de_candles"
+		normalized === "contador_de_candles" ||
+		normalized === "candle"
 	) {
 		return "candleIndex"
 	}

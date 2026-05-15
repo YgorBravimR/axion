@@ -33,6 +33,8 @@ interface DataSourceInfo {
 	timeframeName: string
 	rowCount: number | null
 	lastImported: string | null
+	candleDateFrom: string | null
+	candleDateTo: string | null
 }
 
 interface TradeChartData {
@@ -60,4 +62,10 @@ interface TradeChartData {
 	indicatorGroups: IndicatorGroupWithKeys[]
 }
 
-export type { CandleQueryParams, CandleRow, IndicatorGroupWithKeys, DataSourceInfo, TradeChartData }
+export type {
+	CandleQueryParams,
+	CandleRow,
+	IndicatorGroupWithKeys,
+	DataSourceInfo,
+	TradeChartData,
+}

@@ -33,6 +33,7 @@ const OHLC_HEADERS = new Set([
 	"fechamento",
 	"contador de candles",
 	"contador_de_candles",
+	"candle",
 ])
 
 /**
