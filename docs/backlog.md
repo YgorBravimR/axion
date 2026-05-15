@@ -48,26 +48,16 @@ The items that earn priority over everything else in this file. Each is linked t
 
 Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after Q1/Q2/Q3 resolution. Retire as a batch when shipped.
 
-### Strategy versioning v1 — methodology immutability
+### Strategy versioning v1 — UX surface (Phase D)
 
-- **Priority:** P1 · **Effort:** L
-- **Problem**: strategies + their `strategyConditions` are mutable today. If a user edits a strategy after trades reference it, those trades' `setupRank` rationale silently rewrites — the journal loses its "what did I believe at execution time" record. Soft-delete on conditions (landed alongside `trade_conditions` junction, 2026-05-15) bridges the gap, but the real fix is immutability with explicit forks.
-- **Schema (proposed, design-review first)**:
-  - `strategies.parentStrategyId uuid null` self-FK
-  - `strategies.version int default 1`
-  - `unique(userId, slug, version)`
-  - `trades.strategyId` continues to point at a specific version row (no migration needed for existing trades — they pin to whichever version was current at write).
-  - `strategyConditions` stays per-version, never mutated after the first trade lands on its parent.
-- **Write rules (enforced in actions, not DB)**:
-  - A strategy becomes "live" once at least one trade references it.
-  - Live strategies are read-only. Edit attempts surface a "Create new version" CTA instead of saving in place.
-  - "Create new version" copies the parent + opens the edit form on the copy. Conditions copy too, then become editable on the draft.
-- **UX**:
-  - Version dropdown on strategy detail (v1, v2, v3 — current bolded).
-  - "Fork to v2" button on live strategies.
-  - Dashboards: cohort-split by version so users can compare their refinements.
-- **Depends on**: `trade_conditions` junction (landed 2026-05-15, see DONE) — versioning is the immutability story the junction makes meaningful.
-- **Source**: surfaced 2026-05-15 during `/plan-eng-review` of the `trade_conditions` design. User insight: _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_ Wants `/plan-design-review` before scoping the build.
+- **Priority:** P1 · **Effort:** M
+- **Problem**: data layer for strategy versioning is live (`createStrategyVersion`, `getStrategyVersion`, version-aware `getStrategyConditionsRollup`, STRATEGY_LIVE guards on edit paths), but the UI doesn't expose any of it — users can't see version history, can't fork live strategies, and the scorecard always reads the current version.
+- **Build**:
+  - Version dropdown on strategy detail (v1, v2, v3 — current bolded). Wire to `getStrategyVersion(versionId)` for snapshot read.
+  - "Fork to v2" button on live strategies wired to `createStrategyVersion`. Surface the edit-attempt CTA when `updateStrategy` / `syncStrategyConditions` return `STRATEGY_LIVE`.
+  - Per-version scorecard: pass `versionId` to `getStrategyConditionsRollup` so users compare met-rate across forks.
+  - Dashboards: cohort-split by `strategyVersionId` so users can compare refinements.
+- **Needs**: `/plan-design-review` before scoping the surface. User insight (2026-05-15): _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_
 
 ---
 
@@ -574,28 +564,3 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 3. **Delete the entry from this file in the same PR that ships the work.** Don't strikethrough; don't move it elsewhere; don't add a "Recently shipped" footnote. The shipping commit + git history are the audit trail.
 
 Result: the active backlog is exactly what's still in front of us, priority-descending. No separate "what shipped" register lives in this file.
-
----
-
-## DONE
-
-Shipped items, newest first. Each entry: title · `completed_date` · one-line "what shipped" · commit hash.
-
-### 2026-05-15
-
-- **HAWKS `dailyTradeOrdinal` race condition** — P2. Two concurrent HAWKS trade inserts could both compute `ordinal=1` (read-then-write race on `COUNT(*)`). Added `accountId` + `tradingDay` columns to `trade_hawks_metadata` and a unique index `thm_account_day_ordinal_idx` on `(accountId, tradingDay, dailyTradeOrdinal)`; action wraps the sidecar insert in a max-3 retry loop catching Postgres `23505` and recomputing the ordinal. Migration `0005_boring_wasp` backfills + drops orphans + enforces NOT NULL before the index. Race-condition test + post-mortem `[BUG-2026-05-15-1]`. Commit `48dacd5`.
-- **Cluster C — Stats module tests** — P2. 103 deterministic unit tests added for `monte-carlo` (Edge Expectancy, 36 tests), `monte-carlo-v2` (Capital Expectancy, 39 tests), and `risk-simulation-advanced` (28 tests). Covers seed-determinism, EV convergence, ruin probability vs expectancy sign, homogeneity under risk scaling, no NaN/Infinity safety. No production code touched. Commit `7225a9a`.
-- **Cluster B — Tax module tests** — P2. 58 unit tests added for `asset-defaults` (16), `mark-dirty` (12), `month-status` (30). Follows existing `__tests__/lib/tax/` vitest pattern; mocks DB layer like `fee-resolver.test.ts`. Protected `recompute-month.ts` untouched. 92 total tax-suite tests pass. Commit `3e90d31`.
-- **Monte Carlo v1/v2 → Edge/Capital Expectancy rename** — P3. User-facing labels renamed: "Monte Carlo v1" → "Edge Expectancy" / "Expectativa de Edge", "Monte Carlo v2" → "Capital Expectancy" / "Expectativa de Capital". Touches `messages/en.json`, `messages/pt-BR.json`, and `src/app/actions/monte-carlo.ts` (t-key references only). Internal identifiers, route paths, and file names preserved per manifesto §3.5. Commit `210fb5a`.
-- **Playbook detail page — methodology-aware redesign (v1)** — P1. Per-condition usage scorecard on `/playbook/[id]` powered by new `getStrategyConditionsRollup` action (two-query expected/stats merge + active-account-mode Hawks inference). New `<ConditionsScorecard />`, inline Hawks-methodology chip, `playbook.scorecard.*` i18n keys, 5 new tests. Commit `3563204`. _v2 follow-ups deferred under "Playbook detail — deferred follow-ups"._
-- **Cluster A — Security tests (split)** — P2. `auth-utils.ts` covered by `src/__tests__/lib/auth-utils.test.ts` (7 tests: Unauthorized/Forbidden gates, role hierarchy, `?? "trader"` fallback). `crypto.ts` + `user-crypto.ts` test work intentionally deferred — those modules are dormant; the work is the Encryption archive task (still active P1, see Test coverage section). Commit `787ba6f`.
-- **Cluster D — write actions zod-hardening** — P1. Zod schemas wired into all 4 write actions (`accounts.ts` create/update/delete, `strategy-conditions.ts` sync, `tax-engine.ts:recomputeLedger`); deprecated `syncCapitalBetweenPlans` no-op stub deleted. New `src/lib/validations/{account,tax-engine}.ts` + extended `trading-condition.ts`. `recompute-month.ts` (protected) untouched — zod sits at the action wrapper only. Commit `d34e9cf`.
-- **Detail-page delete `window.confirm()` migration** — P1. Trade-detail action menu now uses canonical `AlertDialog` (`AlertDialogAction variant="destructive"`) matching the list view. Closes the last `window.confirm()` hold-out on trade deletion per CLAUDE.md ban. Commit `64c34ec`.
-- **`trade_conditions` junction table** — P1. Schema + migration + soft-delete on `deleteCondition`, `setTradeConditions`/`getTradeConditions` actions, `conditionsMet` validation extension, 3 trade-insert sites wired, extracted `ConditionList` primitive, new `TradeConditionsChecklist` component, count badge on trade-detail, `journal.tradeConditions.*` i18n keys, full test lake (unit + integration + 3 E2E + 2 regression). Unlocks per-condition analytics that decompose `setupRank` into its signal components. Commits `a138aa6`, `12c6483`, `636c8dc`, `b7371a8`.
-- **Consolidate `brand-*` and `acc-*` into single bronze scale** — P1. `--color-brand-500` retired in favour of `--color-acc-100` (15 call sites migrated across auth surface + 2 leaked journal sites). Two-name foot-gun closed; single bronze scale documented as canonical. Commit `7e1fa38`.
-- **`/replay` route deprecation sweep** — P1 (#4 on the prior P1 shortlist). Replay surface retired per manifesto §6. Commit `78760fc`.
-- **Monthly Review → Month Closing affordance inside Reports** — P2. `/monthly` route deleted; `MonthClosingSection` in Reports branches by account type (personal → `MonthlyDarfCard`, prop → `PropProfitSummary`, replay → null). Weekly/projection/comparison content preserved in collapsible "Month Detail" `<details>`. `/monthly` → `/reports` 308 redirect in `src/proxy.ts`. Commit `cc102fb`.
-- **Account Comparison → Analytics filter mode** — P2. `src/app/[locale]/(app)/analytics/account-comparison/page.tsx` deleted; multi-account view merged into Analytics' existing filter panel (multi-select on account, side-by-side equity overlay). Multi-account stays first-class; only the dedicated route disappears. Commit `ea06321`.
-- **Delete orphan `/monitor` and `/painel` public routes** — P2. Two public route files removed; Monitor tab inside Command Center fully covers the surface. Zero internal `href`/`router.push` references existed. Commit `16e79a3`.
-- **Mode-personalization widget contract (framework spike)** — P1. `AccountModeProvider` + `useAccountMode()` hook + `<ModeVariant />` declarative swap landed on `feat/hawks-mode-v0`. First consumer: dashboard Coaching Insights slot. Promote to stable once a second mode validates the shape without structural changes. See [`docs/mode-personalization-contract.md`](mode-personalization-contract.md). Commit `8e9d39f`.
-- **Page Guide System — per-feature PR-template checklist line** — P3. Added "Page guide entry added/updated for new or significantly changed surfaces?" to `docs/pr-template.md` so the existing page-guide foundations get a social nudge per PR. Commit `661c7a3`.
