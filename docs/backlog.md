@@ -160,11 +160,27 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 - **Priority:** P2 · **Effort:** M
 - **What**: Fixture-driven tests for `sinacor-parser`, `matching-engine`, `csv-parsers`. Sample broker outputs live at `e2e/fixtures/notas/`.
 
-### Cluster A — Security (coordination required)
+### Cluster A — Security (split 2026-05-15)
 
-- **Priority:** P1 · **Effort:** L
-- **What**: Tests for `crypto.ts`, `user-crypto.ts`, `auth-utils.ts`.
-- **Coordination**: Protected paths per `CLAUDE.md`. Security review required on test fixtures + design. **Do not unilaterally tackle.**
+- **Status:** Partially landed. `auth-utils.ts` covered by `src/__tests__/lib/auth-utils.test.ts` (7 tests: Unauthorized/Forbidden gates, role hierarchy, `?? "trader"` fallback). `crypto.ts` + `user-crypto.ts` test work was deferred — see "Encryption archive" task below.
+- **Source**: original entry called for tests on all three. Scan revealed `crypto.ts` and `user-crypto.ts` are dead code in production (nothing imports them productively — `getUserDek` returns `null` by design and call sites take the `: raw` branch of `dek ? wrapped : raw`). Testing dead code is low value; the archive is the right move.
+
+### Encryption archive — XL refactor (its own session) — P1
+
+- **Priority:** P1 · **Effort:** XL · **Owner**: needs dedicated session like #14 Renko
+- **What**: Rip out the dormant field-level encryption stack. `getUserDek` always returns `null`; ~50 files thread `dek` through actions/routes/library queries with `dek ? encryptFields(...) : raw` ternaries that never take the wrapped branch. Schema columns marked `// encrypted` (pnl, entry_price, prop_firm_name, name, etc.) actually store plaintext.
+- **Scope:**
+  - Delete `src/lib/crypto.ts`, `src/lib/user-crypto.ts`, `src/app/api/arch/_lib/decrypt.ts`.
+  - Delete `scripts/migrate-encrypt-existing-data.ts`, `scripts/migrate-decrypt-existing-data.ts`.
+  - Strip `getUserDek` + `encryptTradeFields` / `decryptTradeFields` / `encryptAccountFields` / `decryptAccountFields` / etc. from all ~50 call sites. Remove the `dek ? wrapped : raw` ternaries.
+  - Drop `users.encrypted_dek` column via new Drizzle migration.
+  - Scrub 18 `// encrypted` comments from `src/db/schema.ts`.
+  - Trim `SafeUser` in `src/app/actions/auth.types.ts` (drop the `encryptedDek` from `Omit<>`).
+  - Clean dead commented block in `src/app/actions/auth.ts:77-89`.
+  - Update affected tests (`auth-actions.test.ts`, `commission-fee-impact.test.ts`, `period-queries.test.ts`, `recompute-month.test.ts`).
+- **Touches PROTECTED**: `src/lib/tax/recompute-month.ts`, `src/db/schema.ts`, `src/db/migrations/` (new migration).
+- **User authorization (recorded 2026-05-15)**: "we're rebuilding if need to touch protected files, do it" + "There's no problem if a database reset is needed." → archive may break shape of existing rows; DB reset on staging/prod acceptable for this cutover.
+- **Why deferred**: full archive in a non-dedicated session has high risk on financial-recompute paths (`recompute-month.ts`, `period-queries.ts`). Better as one focused session with a clean lint + test pass between each commit. See discovery in current session for full file inventory.
 
 ### Backtest / equity-shield / fractal-plan suites
 
