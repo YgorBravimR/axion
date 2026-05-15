@@ -26,8 +26,8 @@ import {
 	type FilterState,
 } from "@/components/analytics"
 import { LoadingSpinner } from "@/components/shared"
-import { Link } from "@/i18n/routing"
-import { GitCompareArrows } from "lucide-react"
+import { AccountComparisonContent } from "@/components/account-comparison"
+import type { AccountOption } from "@/components/account-comparison/account-selector"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { analyticsGuide } from "@/components/ui/page-guide/guide-configs/analytics"
@@ -63,7 +63,7 @@ interface AnalyticsContentProps {
 	initialTagStats: TagStats[]
 	availableAssets: string[]
 	availableTimeframes: TimeframeOption[]
-	accountCount?: number
+	accounts: AccountOption[]
 }
 
 /** Converts FilterState to the TradeFilters format expected by server actions */
@@ -130,13 +130,12 @@ const AnalyticsContent = ({
 	initialTagStats,
 	availableAssets,
 	availableTimeframes,
-	accountCount,
+	accounts,
 }: AnalyticsContentProps) => {
 	const t = useTranslations("analytics")
-	const tComparison = useTranslations("accountComparison")
 	const [isPending, startTransition] = useTransition()
 	const { isPremium } = useFeatureAccess()
-	const showComparisonLink = isPremium && (accountCount ?? 0) >= 2
+	const showAccountComparison = isPremium && accounts.length >= 2
 
 	useRegisterPageGuide(analyticsGuide)
 
@@ -262,20 +261,6 @@ const AnalyticsContent = ({
 
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
-			{/* Compare Accounts Link (admin + 2+ accounts) */}
-			{showComparisonLink && (
-				<div className="flex justify-end">
-					<Link
-						href="/analytics/account-comparison"
-						className="text-acc-100 hover:text-acc-100/80 gap-s-200 text-small focus-visible:ring-acc-100 flex items-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-						aria-label={tComparison("title")}
-					>
-						<GitCompareArrows className="h-4 w-4" />
-						{tComparison("title")}
-					</Link>
-				</div>
-			)}
-
 			{/* Filter Panel (includes ExpectancyModeToggle) */}
 			<FilterPanel
 				availableAssets={availableAssets}
@@ -356,6 +341,14 @@ const AnalyticsContent = ({
 					/>
 				</div>
 			</div>
+
+			{/* Account Comparison section — only when admin + 2+ accounts */}
+			{showAccountComparison && (
+				<>
+					<div className="border-bg-300 border-t" />
+					<AccountComparisonContent accounts={accounts} />
+				</>
+			)}
 		</div>
 	)
 }

@@ -4327,7 +4327,6 @@
 	"accountComparison": {
 		"title": "Comparação de Contas",
 		"subtitle": "Compare o desempenho entre contas com diferentes configurações de risco",
-		"backToAnalytics": "Voltar para Analytics",
 		"comparisonComplete": "Comparação concluída — {count} contas analisadas",
 		"selector": {
 			"selectAccounts": "Selecione as contas para comparar",
