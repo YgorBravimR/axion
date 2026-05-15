@@ -3,6 +3,7 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { CapitalEvent } from "@/types/integration"
 import { Input } from "@/components/ui/input"
 import {
@@ -68,6 +69,7 @@ const CapitalEventLog = ({
 		})
 	}
 
+	const { formatCurrency } = useFormatting()
 	const yearEvents = events.filter((e) => e.eventDate.startsWith(String(year)))
 
 	return (
@@ -166,10 +168,7 @@ const CapitalEventLog = ({
 										: t("withdrawalLabel")}
 								</span>
 								<span className="text-txt-100 ml-auto font-mono tabular-nums">
-									{new Intl.NumberFormat("pt-BR", {
-										style: "currency",
-										currency: "BRL",
-									}).format(ev.amountCents / 100)}
+									{formatCurrency(ev.amountCents / 100, "BRL")}
 								</span>
 								{ev.notes && (
 									<span className="text-txt-300 max-w-[120px] truncate">

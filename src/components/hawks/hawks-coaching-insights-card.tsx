@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState, useTransition } from "react"
+import { memo, useState } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Brain,
@@ -11,7 +11,6 @@ import {
 	Crosshair,
 	ChevronDown,
 	ChevronUp,
-	Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Panel } from "@/components/ui/panel"
@@ -21,8 +20,6 @@ import type { CoachingInsight } from "@/lib/coaching/types"
 interface HawksCoachingInsightsCardProps {
 	initialContext?: HawksCoachingResult | null
 }
-
-const HAWKS_ANALYSIS_DAYS = 90
 
 const CATEGORY_ICONS: Record<string, typeof Brain> = {
 	time: Clock,
@@ -144,10 +141,7 @@ const HawksCoachingInsightsCardBase = ({
 }: HawksCoachingInsightsCardProps) => {
 	const t = useTranslations("hawks.coaching")
 	const tBase = useTranslations("coaching")
-	const [context, setContext] = useState<HawksCoachingResult | null>(
-		initialContext ?? null
-	)
-	const [isPending, startTransition] = useTransition()
+	const [context] = useState<HawksCoachingResult | null>(initialContext ?? null)
 
 	const insights = context?.insights ?? []
 	const displayInsights = insights.slice(0, 5)
@@ -167,15 +161,11 @@ const HawksCoachingInsightsCardBase = ({
 			</div>
 
 			<div className="mt-s-300 sm:mt-m-400">
-				{isPending && !context ? (
+				{!context ? (
 					<div className="space-y-s-200 animate-pulse motion-reduce:animate-none">
 						<div className="bg-bg-300 h-10 rounded-lg" />
 						<div className="bg-bg-300 h-10 rounded-lg" />
 						<div className="bg-bg-300 h-10 rounded-lg" />
-					</div>
-				) : isPending ? (
-					<div className="py-m-500 flex items-center justify-center">
-						<Loader2 className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none" />
 					</div>
 				) : displayInsights.length === 0 ? (
 					<p className="py-m-400 text-tiny text-txt-300 text-center">

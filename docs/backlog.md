@@ -215,24 +215,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ---
 
-## Reports — deferred follow-ups
-
-### Inline currency formatters → `useFormatting()`
-
-- **Priority:** P2 · **Effort:** S
-- **What**: Four spots redefine BRL formatting locally:
-  - `src/components/reports/weekly-meta-chart.tsx:36-42` (`formatBRL`)
-  - `src/components/reports/annual-rollup-table.tsx:24-34` (`formatBRL`)
-  - `src/components/reports/capital-event-log.tsx:174` (inline `Intl.NumberFormat("pt-BR", …)`)
-  - `src/components/reports/withdrawal-calculator.tsx:74` (inline `Intl.NumberFormat("pt-BR", …)`)
-
-  All hardcode `pt-BR` + R$, defeating the `useFormatting()` hook that's already used in 4 of the 9 widgets on this page.
-
-- **Why**: Locale-switching breaks for English users on `/reports`. Consolidate behind `useFormatting()`; the hook already exposes `formatCurrency` / `formatCurrencyWithSign` and respects the user's account currency preference.
-- **Source**: `docs/scans/2026-05-12-impeccable-reports.md` Phase 1a critique P2.
-
----
-
 ## Monthly — deferred follow-ups
 
 ### `month-comparison.tsx` ChangeIndicator paints non-P&L deltas as P&L
@@ -307,20 +289,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
     Promote `--chart-1` … `--chart-7` in `globals.css` (dark + light values) and a `getChartColor(index)` helper. Wire all three surfaces. Combines with the `comparison-colors.ts` overhaul under Account comparison.
 - **Why**: Token-discipline drift compounds across surfaces. With three callers waiting, the ROI per hour is now best-in-backlog for the whole "design surface tokens" cluster.
 - **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2; `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 1a P3; `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
-
-### `StatCard` variant API: split signed-money vs verdict (equity-shield-stats)
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `src/components/equity-shield/equity-shield-stats.tsx` `StatCard.variant: "default" | "positive" | "negative" | "pass" | "fail"` mixes two semantic families on one prop. `positive`/`negative` paint `trade-buy`/`trade-sell` (signed-money — correct). `pass`/`fail` paint `fb-success`/`fb-error` (verdict — correct after row #15 sweep). Two distinct semantics on a single discriminated union is a foot-gun: the next person who adds a "passing" StatCard might pick `positive` instead of `pass`. Split into `signedVariant: "positive" | "negative" | null` + `verdictVariant: "pass" | "fail" | null`, or extract a separate `VerdictBadge` component.
-- **Why**: Token vocabulary is correct now; the API still tempts future drift. Costs 15 minutes; removes a permanent foot-gun.
-- **Source**: `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
-
-### Verdict-triad palette consolidation (`--color-rule-{blocked,paused,executed}`)
-
-- **Priority:** P3 · **Effort:** S
-- **What**: Wave 3 produced a consistent rule-engine verdict vocabulary: `fb-error` (blocked by loss/limit rule), `warning` (paused on purpose — target, gain-stop), `fb-success` (engine ran trade / recovery completed), `txt-300` (data N/A — no SL, max trades). Now used in three places: monte-carlo `kelly-criterion-card.conservative` + `strategy-analysis.Insight`, risk-simulation `trade-comparison-table.statusDotColors` + `day-trace-card` footer + `preview-banner` success twin. If a fourth surface needs it, promote to dedicated tokens (`--color-rule-blocked`, `--color-rule-paused`, `--color-rule-executed`, `--color-rule-na`) so the vocabulary is grep-able and themeable independently from `fb-*`/`warning`.
-- **Why**: Today the aliasing works because `fb-error` semantically maps to "rule blocked" — but the moment design changes warning color (e.g. amber for non-critical-pause), the rule-paused state would silently drift. Decouple before the divergence.
-- **Source**: `docs/scans/2026-05-12-impeccable-risk-simulation.md` Phase 4 enhancement.
 
 ### Gauge verdict palette — document canonical 4-zone mapping in DESIGN.md
 
@@ -435,25 +403,6 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 - **What**: If a draft trade is saved with HAWKS mode active and reloaded after the trader deactivates HAWKS, the persisted `hawks.*` payload is silently dropped (the `<HawksTradeFields>` block is not rendered, so its values never reach the submit). Either preserve the values invisibly or warn the user at draft-restore.
 - **Source**: `src/components/journal/trade-form.tsx` + `src/components/hawks/hawks-trade-fields.tsx`.
 
-### Coaching `tradeCount` pluralisation
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `coaching.tradeCount` renders "1 trades analyzed". Needs ICU plural form or `t("tradeCount", { count })` with plural-aware messages.
-- **Why now**: P2 finding in dashboard-hawks Phase 1a. Same shape as any other plural string — backlog because the project may want a generalised plural-aware helper rather than per-string fixes.
-- **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:177`.
-
-### Coaching card title size on mobile
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `text-small sm:text-body` makes the HAWKS coaching card title visibly smaller than sibling dashboard card titles at mobile widths. Either bump to `text-body` unconditionally or introduce a `<CardTitle>` primitive that enforces a consistent size across all dashboard cards.
-- **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:171`.
-
-### Coaching insight `useEffect` brittleness
-
-- **Priority:** P2 · **Effort:** S
-- **What**: `useEffect(() => { ... }, [])` with `hasLoadedRef` gating is a workaround for the absence of an initial server-side load. Cleaner: pass `initialContext` from a Server Component prop and drop the effect entirely.
-- **Source**: `src/components/hawks/hawks-coaching-insights-card.tsx:150`.
-
 ---
 
 ## How to retire an item from this backlog
@@ -473,6 +422,11 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **`StatCard` variant API split** — P3. `src/components/equity-shield/equity-shield-stats.tsx` `variant: "default" | "positive" | "negative" | "pass" | "fail"` split into two type-discriminated props: `signedVariant?: "positive" | "negative"` (paints `trade-buy`/`trade-sell` — signed-money) and `verdictVariant?: "pass" | "fail"` (paints `fb-success`/`fb-error` — verdict). Both undefined = neutral default. One internal callsite migrated. Eliminates the foot-gun where a contributor might pick `positive` for a success verdict. Pending commit.
+- **Verdict-triad rule palette tokens** — P3. Added `--color-rule-{blocked,paused,executed,na}` to `src/app/globals.css` (light + dark), mirroring `fb-error`/`warning`/`fb-success`/`txt-300` initial values but decoupled for future themeing. 22 classNames across 5 callers migrated: `kelly-criterion-card.tsx`, `trade-comparison-table.tsx`, `day-trace-card.tsx`, `preview-banner.tsx`. Rule-engine vocabulary is now grep-able and themeable independently from the generic feedback aliases. Pending commit.
+- **Inline currency formatters → `useFormatting()`** — P2. 4 reports widgets migrated off hardcoded `pt-BR` BRL formatters: `weekly-meta-chart.tsx`, `annual-rollup-table.tsx`, `capital-event-log.tsx`, `withdrawal-calculator.tsx`. Local `formatBRL` helpers and inline `Intl.NumberFormat("pt-BR", …)` calls replaced with `useFormatting()` hook, which respects the user's account currency preference. `annual-rollup-table.tsx` now also displays 2 decimal places (alignment with hook default). Pending commit.
+- **Coaching insights trio (i18n plural + title + Server Component prop)** — P2+P3. `src/components/hawks/hawks-coaching-insights-card.tsx` cleaned up: (a) `coaching.tradeCount` switched to ICU plural form (`{count, plural, =0 {…} one {…} other {…}}`) in both `messages/en.json` and `messages/pt-BR.json` — "1 trades analyzed" bug fixed; (b) title size `text-small sm:text-body` → `text-body` unconditional, matching sibling dashboard card titles; (c) `useEffect` + `hasLoadedRef` initial-load workaround replaced by `initialContext` prop passed from `src/app/[locale]/(app)/page.tsx` (Server Component) through `dashboard-content.tsx`. Removed unused `useTransition`, `useRef`, `useEffect`, `getHawksCoachingInsights`, `Loader2` imports. Pending commit.
+- **Consolidated `/monitor` + `/painel` routes** — P3. Verified routes already deleted (commit `16e79a3`) per 2026-05 Feature Manifesto §3.2/§6 decision to merge the Monitor widget into the Command Center tab. Backlog entry retired; routing implementation strategy superseded by product strategy. Commit `6a7e986`.
 - **Mobile-detect via container query in `period-filter.tsx`** — P3. `useEffect` + `window.matchMedia("(max-width: 419px)")` replaced with Tailwind v4 container queries (`@container` on root + `@max-[419px]:block hidden` / `@max-[419px]:hidden`). Renders two `DateRangePicker` instances (1-month + 2-month) and CSS-toggles visibility — eliminates SSR hydration flash. Pending commit.
 - **`h-50` Suspense-fallback height rationalization** — P3. All 10 `className="h-50"` sites (7 page.tsx Suspense fallbacks + 2 analytics empty-state divs + journal-content.tsx loading state) swapped to `min-h-48` — 200px → 192px is imperceptible, no new tokens needed, spacing scale stays clean at `l-900` boundary. Scan listed 6 sites; rg pass found 10. Pending commit.
 - **Hardcoded BRL in `formatCentsAsCurrency` call sites** — P3. `backtest-summary-cards.tsx` and `backtest-trades-table.tsx` now accept optional `currency?: string` prop (defaults to `"BRL"`); all 4 + 1 formatter calls read from the prop. Surgical fix — wiring through a `useAccountCurrency` hook would have rippled into every parent; the prop is the seam multi-currency callers will use. Pending commit.

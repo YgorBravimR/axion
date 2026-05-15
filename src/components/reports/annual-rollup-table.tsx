@@ -29,7 +29,7 @@ const CellBRL = ({
 }: {
 	value: number | null
 	highlight?: boolean
-	format: (cents: number) => string
+	format: (_cents: number) => string
 }) => {
 	if (value === null) {
 		return (
@@ -59,7 +59,13 @@ const CellNum = ({ value }: { value: number | null }) => (
 	</TableCell>
 )
 
-const RowData = ({ row }: { row: AnnualRollupRow }) => {
+const RowData = ({
+	row,
+	formatBRL,
+}: {
+	row: AnnualRollupRow
+	formatBRL: (_cents: number) => string
+}) => {
 	if (row.disabled) {
 		return (
 			<TableRow className="opacity-30">
@@ -96,14 +102,14 @@ const RowData = ({ row }: { row: AnnualRollupRow }) => {
 			<CellBRL value={row.resultadoBruto} format={formatBRL} />
 			<CellBRL value={row.resultadoLiquido} highlight format={formatBRL} />
 			<CellNum value={row.pontos} />
-			<CellBRL value={row.taxas} />
-			<CellBRL value={row.imposto} />
-			<CellBRL value={row.aporteInicial} />
-			<CellBRL value={row.mesAnterior} />
-			<CellBRL value={row.novoAporte} />
-			<CellBRL value={row.retirada} />
-			<CellBRL value={row.capitalInvestido} />
-			<CellBRL value={row.patrimonio} />
+			<CellBRL value={row.taxas} format={formatBRL} />
+			<CellBRL value={row.imposto} format={formatBRL} />
+			<CellBRL value={row.aporteInicial} format={formatBRL} />
+			<CellBRL value={row.mesAnterior} format={formatBRL} />
+			<CellBRL value={row.novoAporte} format={formatBRL} />
+			<CellBRL value={row.retirada} format={formatBRL} />
+			<CellBRL value={row.capitalInvestido} format={formatBRL} />
+			<CellBRL value={row.patrimonio} format={formatBRL} />
 			<CellNum value={row.diasGain} />
 			<CellNum value={row.diasLoss} />
 		</TableRow>
@@ -229,7 +235,7 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 					</TableHeader>
 					<TableBody>
 						{rows.map((row) => (
-							<RowData key={row.month} row={row} />
+							<RowData key={row.month} row={row} formatBRL={formatBRL} />
 						))}
 					</TableBody>
 					<TableFooter>
@@ -241,7 +247,11 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 								Total
 							</TableHead>
 							<CellBRL value={totals.resultadoBruto} />
-							<CellBRL value={totals.resultadoLiquido} highlight />
+							<CellBRL
+								value={totals.resultadoLiquido}
+								highlight
+								format={formatBRL}
+							/>
 							<CellNum value={totals.pontos} />
 							<CellBRL value={totals.taxas} />
 							<CellBRL value={totals.imposto} />
@@ -251,12 +261,12 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 							<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
 								—
 							</TableCell>
-							<CellBRL value={totals.novoAporte} />
-							<CellBRL value={totals.retirada} />
+							<CellBRL value={totals.novoAporte} format={formatBRL} />
+							<CellBRL value={totals.retirada} format={formatBRL} />
 							<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
 								—
 							</TableCell>
-							<CellBRL value={totals.patrimonio} />
+							<CellBRL value={totals.patrimonio} format={formatBRL} />
 							<CellNum value={totals.diasGain} />
 							<CellNum value={totals.diasLoss} />
 						</TableRow>
