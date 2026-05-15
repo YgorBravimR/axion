@@ -55,11 +55,13 @@ pnpm exec playwright test \
 
 Project dependencies guarantee Stage N runs before Stage N+1, and each stage picks up the storageState snapshot the previous stage wrote.
 
-Before re-running the full chain, clear stale auth so the DB-backed login rate-limit (`login:<email>`) doesn't fire on Stage 0:
+Before re-running the full chain, clear the stage storageState snapshots so Stage 0 starts fresh:
 
 ```bash
-rm -f e2e/.auth/bravo.json e2e/.auth/journey-stage-*.json
+rm -f e2e/.auth/journey-stage-*.json
 ```
+
+The Bravo persona itself is a fixed constant (`bravo@axion-demo.com`) — the global setup wipes its DB row and clears the login rate-limit slot (`login:<email>`) on every chain start, so no manual reset is needed for the user record.
 
 ### Demo mode (showcase, headed, slow, narrated, video)
 
@@ -96,7 +98,7 @@ e2e/journey/
 ├── 07-quarter-year.spec.ts    Quarter + year cockpits + annual rollup
 ├── 08-improvement.spec.ts     Bug-report panel + analytics drill
 ├── fixtures/
-│   └── bravo-seed.ts          Bravo persona constants (timestamped email)
+│   └── bravo-seed.ts          Bravo persona constants (fixed email; wiped + reseeded each chain)
 ├── helpers/
 │   ├── annotate.ts            Demo-mode narration banner (no-op in CI)
 │   ├── screenshot-if-demo.ts  Demo-mode capture (no-op in CI)
@@ -137,13 +139,32 @@ Hard assertions (`expect(...)`) run in **both** modes — demo mode must still f
 
 ## Bravo persona
 
-Each test run gets a fresh timestamped email (`bravo-${Date.now()}@axion-demo.com`) so journey runs don't collide with each other or with the admin user used by the rest of the E2E suite. Password and display name are stable for narrative coherence.
+The persona is a fixed constant defined in `fixtures/bravo-seed.ts`:
 
-Switching to a fixed Bravo email + per-chain DB reset is tracked in [`docs/backlog.md`](../../docs/backlog.md). Today the timestamped email is the cheapest way to guarantee a clean DB-backed login rate-limit slot for each run.
+- email `bravo@axion-demo.com`
+- name `Bravo Trader`
+- account `Bravo's Main Account`
+
+A clean slot for each chain run is guaranteed by `e2e/global.teardown.ts`, which is wired as **both** `globalSetup` and `globalTeardown` in `playwright.config.ts`. On start _and_ end it cascade-deletes the Bravo user (all child rows drop via FK `onDelete: "cascade"`) and purges the login rate-limit row (`identifier = 'login:bravo@axion-demo.com'`) from `rate_limit_attempts`. A recognizable, stable email also gives the showcase video a clean identity for sales / marketing pickup.
 
 ## Tags
 
-Spec files include `@journey` and `@stage:<name>` tags in their JSDoc headers. Filtering by tag is **not** wired yet — the suite uses Playwright project selection (`--project=journey-XX-...`) which is more explicit. Wiring tag-based filtering is tracked in [`docs/backlog.md`](../../docs/backlog.md).
+Spec files declare `@journey` plus a per-stage tag (e.g. `@stage:welcome`, `@stage:daily-loop`) via Playwright's `test.describe(..., { tag: [...] }, ...)` option. Both `--grep` and `--grep-invert` work:
+
+```bash
+# Run every journey stage
+pnpm exec playwright test --grep "@journey"
+
+# Run only the weekly + monthly stages
+pnpm exec playwright test --grep "@stage:weekly|@stage:monthly"
+
+# Run the chain except history seeders
+pnpm exec playwright test --grep "@journey" --grep-invert "@stage:seed-"
+```
+
+The full tag set: `@journey` + one of `@stage:welcome`, `@stage:foundation`, `@stage:fractal-plan`, `@stage:pressure-test`, `@stage:daily-loop`, `@stage:seed-history`, `@stage:weekly`, `@stage:monthly`, `@stage:quarter-year`, `@stage:improvement`, `@stage:hawks-daily-loop`, `@stage:seed-hawks-history`.
+
+For an explicit single-stage run, `--project=journey-NN-name-ci` still works and is the form used by `.github/workflows/journey.yml`.
 
 ## What's NOT covered
 

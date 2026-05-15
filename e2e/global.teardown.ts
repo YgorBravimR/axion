@@ -176,7 +176,9 @@ const teardown = async () => {
 	// plans, trades, sessions, etc. all drop with the user. Patterns cover:
 	//   - auth.spec NEW_USER:           test-<ts>@example.{com,org,net}
 	//   - auth-security.spec:           e2e-reg-*, e2e-resend-*, e2e-unverified-*
-	//   - journey suite Bravo persona:  bravo-<ts>@axion-demo.com
+	//   - journey suite Bravo persona:  bravo@axion-demo.com (fixed) +
+	//                                   bravo-<ts>@axion-demo.com (legacy rows
+	//                                   from before the fixed-email switch)
 	const deletedUsers = await db
 		.execute(
 			sql`
@@ -185,6 +187,7 @@ const teardown = async () => {
 		   OR email LIKE 'e2e-reg-%@example.com'
 		   OR email LIKE 'e2e-resend-%@example.com'
 		   OR email LIKE 'e2e-unverified-%@example.com'
+		   OR email = 'bravo@axion-demo.com'
 		   OR email LIKE 'bravo-%@axion-demo.com'
 		   OR email = 'existing-unverified@example.com'
 		   OR email = 'test-display@example.com'
@@ -195,6 +198,23 @@ const teardown = async () => {
 	if (deletedUsers?.rows?.length) {
 		console.log(`  Deleted ${deletedUsers.rows.length} E2E user(s)`)
 	}
+
+	// 9. Login rate-limit slots for E2E personas. The login limiter keys by
+	// `login:<lowerEmail>` (src/app/actions/auth.ts) against the
+	// `rate_limit_attempts` table. Cleared at chain start so a re-run never
+	// trips the limiter on Stage 0; cleared again at chain end to keep the
+	// staging DB empty between runs.
+	await db
+		.execute(
+			sql`
+		DELETE FROM rate_limit_attempts
+		WHERE identifier = 'login:bravo@axion-demo.com'
+		   OR identifier LIKE 'login:bravo-%@axion-demo.com'
+		   OR identifier LIKE 'login:test-%@example.com'
+		   OR identifier LIKE 'login:e2e-%@example.com'
+	`
+		)
+		.catch(logError("rate_limit_attempts"))
 
 	console.log("[E2E Teardown] Cleanup complete.")
 }

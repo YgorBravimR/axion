@@ -59,7 +59,7 @@ const AnalyticsPage = async ({ params }: AnalyticsPageProps) => {
 	return (
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
-				<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
+				<Suspense fallback={<LoadingSpinner size="md" className="min-h-48" />}>
 					<AnalyticsContent
 						initialDashboard={initialDashboard}
 						initialTagStats={initialTagStats}

@@ -4,7 +4,6 @@ import { EquityShieldContent } from "@/components/equity-shield"
 import { LoadingSpinner } from "@/components/shared"
 import { requireRole } from "@/lib/auth-utils"
 
-
 const EquityShieldPage = async () => {
 	await requireRole("premium")
 	const [yearsResponse] = await Promise.all([getTradeYears()])
@@ -15,10 +14,8 @@ const EquityShieldPage = async () => {
 
 	return (
 		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">
-			<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
-				<EquityShieldContent
-					tradeYears={tradeYears}
-				/>
+			<Suspense fallback={<LoadingSpinner size="md" className="min-h-48" />}>
+				<EquityShieldContent tradeYears={tradeYears} />
 			</Suspense>
 		</div>
 	)

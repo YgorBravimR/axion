@@ -208,3 +208,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Don't add a new top-level db client that imports `drizzle-orm/neon-http` directly — use the existing `db` / `dbWs` exports so worktree dev keeps working. If you write a new `scripts/*.ts` that talks to Postgres, branch on `isNeonUrl(process.env.DATABASE_URL!)` like `run-migrations.ts` does. Two runtime divergences to know: (a) postgres-js results don't have `result.rowCount` (it's `undefined` — current uses fall back to `?? 0`); (b) postgres-js opens a persistent connection, so long-running scripts must call `await sql.end()` before exiting or the process hangs (see the tail of `scripts/seed.ts`).
 - **Source**: `src/db/url.ts`, `src/db/drizzle.ts`, `src/db/drizzle-ws.ts`, `scripts/run-migrations.ts`, `scripts/seed.ts`.
 - **Date logged**: 2026-05-15.
+
+---
+
+## E2E / Playwright config
+
+### `globalSetup` and `globalTeardown` point at the same file — by design
+
+- **What**: `playwright.config.ts` wires both `globalSetup` and `globalTeardown` to `./e2e/global.teardown.ts`. The filename is misleading: the script runs at _both_ boundaries of a test session, so any cleanup it does also happens _before_ tests start. The journey suite relies on this: a fixed-email Bravo persona (`bravo@axion-demo.com`) gets its DB row and `rate_limit_attempts` slot wiped on chain start, so the login rate-limit (`login:<email>` in `src/app/actions/auth.ts`) never trips on Stage 0. There is also a separate `e2e/global.setup.ts`, but it is registered as a **named project** ("setup") via `test.setMatch`, not as a top-level globalSetup — it handles admin login + storageState for the legacy `e2e/tests/*` suites.
+- **What to do**: If you need a new "run before every Playwright session" hook, extend `e2e/global.teardown.ts` rather than wiring a second globalSetup. If you need to seed/auth a specific user, do it in a Playwright project named `setup` (see how `chromium-auth` and the journey stages depend on it). Renaming the file to `global.cleanup.ts` would be more honest, but the rename touches CI workflows — leave it unless you are already touching that area.
+- **Source**: `playwright.config.ts:213-214`, `e2e/global.teardown.ts`, `e2e/global.setup.ts`.
+- **Date logged**: 2026-05-15.

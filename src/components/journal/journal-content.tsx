@@ -459,7 +459,7 @@ const JournalContent = () => {
 			/>
 
 			{/* Loading State */}
-			{isLoading && <LoadingSpinner size="md" className="h-50" />}
+			{isLoading && <LoadingSpinner size="md" className="min-h-48" />}
 
 			{/* Empty State */}
 			{!isLoading && tradesByDay.length === 0 && (

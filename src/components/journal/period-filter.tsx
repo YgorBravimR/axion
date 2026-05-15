@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -34,20 +34,11 @@ export const PeriodFilter = ({
 }: PeriodFilterProps) => {
 	const t = useTranslations("journal")
 	const [showCustomPicker, setShowCustomPicker] = useState(false)
-	const [isMobile, setIsMobile] = useState(false)
 	const [tempRange, setTempRange] = useState<DateRange | undefined>(
 		customDateRange
 			? { from: customDateRange.from, to: customDateRange.to }
 			: undefined
 	)
-
-	useEffect(() => {
-		const mq = window.matchMedia("(max-width: 419px)")
-		setIsMobile(mq.matches)
-		const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-		mq.addEventListener("change", handleChange)
-		return () => mq.removeEventListener("change", handleChange)
-	}, [])
 
 	const periods = useMemo<{ key: JournalPeriod; label: string }[]>(
 		() => [
@@ -122,13 +113,26 @@ export const PeriodFilter = ({
 			{/* Custom Date Range Picker */}
 			{showCustomPicker && (
 				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex max-w-[calc(100vw-2rem)] flex-wrap items-end rounded-lg border">
+					{/* Two picker instances toggled by CSS. SSR-safe — no hydration
+					    flash from a post-mount matchMedia state update. Only one is
+					    visible (and interactive) at a time; both share tempRange. */}
 					<div className="w-full sm:min-w-[260px] sm:flex-1">
-						<DateRangePicker
-							id="period-filter-range"
-							value={tempRange}
-							onChange={setTempRange}
-							numberOfMonths={isMobile ? 1 : 2}
-						/>
+						<div className="min-[420px]:hidden">
+							<DateRangePicker
+								id="period-filter-range-mobile"
+								value={tempRange}
+								onChange={setTempRange}
+								numberOfMonths={1}
+							/>
+						</div>
+						<div className="hidden min-[420px]:block">
+							<DateRangePicker
+								id="period-filter-range-desktop"
+								value={tempRange}
+								onChange={setTempRange}
+								numberOfMonths={2}
+							/>
+						</div>
 					</div>
 					<div className="gap-s-100 flex">
 						<Button

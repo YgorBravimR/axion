@@ -73,28 +73,16 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 
 ## Journey suite (`e2e/journey/`)
 
-### Fixed Bravo email + per-chain DB reset
-
-- **Priority:** P3 · **Effort:** S
-- **What**: Replace `bravo-${Date.now()}@axion-demo.com` with a fixed email backed by a globalSetup that cascade-deletes + reinserts the Bravo row at chain start.
-- **Why**: Recognizable identity in the showcase video (sales/marketing pickup). Today the timestamped email is the cheapest workaround for the DB-backed login rate-limit (`login:<email>` in `src/app/actions/auth.ts`).
-- **Source**: `e2e/journey/fixtures/bravo-seed.ts` header; `e2e/journey/README.md` "Bravo persona".
-
-### Tag-based filtering
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Wire `@journey` / `@stage:<name>` JSDoc tags to Playwright's `--grep` so contributors can run "all weekly+ stages" with one flag.
-- **Why**: Today the suite uses `--project=journey-NN-...` selection, which is explicit but verbose for partial-chain runs.
-- **Source**: `e2e/journey/README.md` "Tags".
-
-### Edge-case separation pass
+### Trim happy-path duplication in 7 legacy specs
 
 - **Priority:** P2 · **Effort:** M
-- **What**: Audit existing `e2e/tests/*.spec.ts` for overlap with the journey suite — keep edge cases, deprecate happy-path duplication. Add new `e2e/<feature>-edge/` specs as needs surface.
-- **Why**: Two suites covering the same happy path is wasted CI minutes and split maintenance.
-- **Source**: `docs/design/zero-to-hero-e2e.md` §13 Phase 4 (ongoing).
+- **What**: Trim happy-path "element exists" assertions from the 7 legacy specs flagged in the audit — keep their unique edge-case coverage (validation, empty states, filtering logic). Candidates: `navigation`, `settings`, `playbook`, `command-center`, `monthly-plan`, `reports`, `monthly`. Do not delete any file outright — the audit found **0 deprecation candidates** because every legacy spec carries some edge-case value the journey suite explicitly excludes.
+- **Why**: Two suites covering the same happy path is wasted CI minutes and split maintenance. The audit confirmed there is no clean cut to make, but ~7 files have meaningful overlap to trim.
+- **Source**: [`docs/scans/2026-05-15-e2e-edge-case-audit.md`](scans/2026-05-15-e2e-edge-case-audit.md) — per-file recommendations; `docs/design/zero-to-hero-e2e.md` §13 Phase 4 (ongoing).
 
 > Onboarding integration (Product-owned) → moved to [`docs/ideas.md`](ideas.md) — still needs product decisioning before it has a concrete shape.
+>
+> **Recently shipped (2026-05-15):** Fixed Bravo email + per-chain DB reset (now `bravo@axion-demo.com`, rate-limit slot purged on chain start via `e2e/global.teardown.ts`); tag-based filtering wired via Playwright's `tag` option on `test.describe` (filter with `--grep "@journey"` / `@stage:<name>`). See `e2e/journey/README.md` for usage.
 
 ---
 
@@ -147,26 +135,12 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 
 ## Journal-list polish (deferred from sweep)
 
-### Mobile-detect via container queries instead of `matchMedia` effect
-
-- **Priority:** P3 · **Effort:** S
-- **What**: `period-filter.tsx:44-50` runs a `useEffect` on mount to read `window.matchMedia("(max-width: 419px)")` so it can pass `numberOfMonths={1|2}` to the `DateRangePicker`. Replace with a CSS-only approach (container query on the picker wrapper, or render one calendar and let CSS hide the second below the breakpoint).
-- **Why**: SSR-first the first paint always renders `isMobile=false`, then re-renders after hydration. The hydration flash is small but real, and the effect is the only state-setting code in PeriodFilter.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1a P2.
-
-### Listbox-style arrow-nav within trade-day-group
-
-- **Priority:** P3 · **Effort:** M
-- **What**: After the TradeRow Link migration, focus moves row-by-row on Tab. For dense days (30+ trades) consider a listbox roving-tabindex pattern so ↑↓ navigates between rows without leaving the day group, and Tab leaves the group entirely.
-- **Why**: Power-user shortcut. Not blocking — Tab works fine — but the cockpit register favors keyboard density.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1.
-
-### `h-50` Suspense-fallback height across page-level shells
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: 5 page.tsx files (`journal/page.tsx`, `settings/page.tsx`, `risk-simulation/page.tsx`, `backtest/page.tsx`, `backtest/optimize/page.tsx`) and `journal-content.tsx:457` use `className="h-50"` on the LoadingSpinner. Tailwind v4 resolves it to `12.5rem` (200px) via the implicit `n * 0.25rem` scale, but the project's named spacing scale tops at `l-900` (64px). Either codify `h-50` in `globals.css` (`--height-l-1000` or similar) so it's intentional, or swap all 6 sites to `min-h-48` / `min-h-52` / a named token.
-- **Why**: It works, but reads as a token escape hatch every time someone greps the spacing system.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 3 out-of-scope.
+> **Recently shipped (2026-05-15):**
+>
+> - Mobile-detect refactor — `period-filter.tsx` no longer runs a `matchMedia` `useEffect`; two `<DateRangePicker>` instances are now toggled by `min-[420px]:` Tailwind variants, so the breakpoint decision is SSR-stable and the hydration flash is gone.
+> - `h-50` token cleanup — all 8 sites (the original 5 in the backlog plus `equity-shield/page.tsx`, `analytics/page.tsx`, and `journal-content.tsx`) swapped from `h-50` to stock `min-h-48`. The named spacing scale (`s-100 … l-900`) is no longer escape-hatched on Suspense fallbacks.
+>
+> **Considered and declined for the near future (2026-05-15):** Listbox-style arrow-nav within `trade-day-group`. P3 · M-effort from `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1. The pattern conflicts with the recent `<Link>` row migration: full WAI-ARIA listbox semantics (`role="listbox"` + `role="option"`) would override the implicit `link` role and roll back screen-reader wins; a lighter ↑/↓ key-handler variant is doable but the backlog item itself labels this "not blocking — Tab works fine." Re-open if a power-user with dense days (30+ trades / day) reports keyboard friction. Source preserved in the scan log.
 
 ---
 
