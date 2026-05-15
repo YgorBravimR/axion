@@ -32,13 +32,14 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 > **Strategic context**: see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) for the invest/merge/deprecate framing this shortlist sits inside.
 
-The five items that earn priority over everything else in this file. Each is linked to its full entry below.
+The six items that earn priority over everything else in this file. Each is linked to its full entry below.
 
 1. **`trade_conditions` junction table** — per-trade condition selection so Hawks analytics can decompose `setupRank` into its condition signals (Backtest section).
-2. **Consolidate `brand-*` and `acc-*` into a single bronze scale** — two tokens for the same colour silently fork on every new contributor (Design system section).
-3. **`window.confirm()` migration on `/journal/[id]` delete** — CLAUDE.md ban, last hold-out for trade deletion (Journal detail section).
-4. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
-5. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
+2. **Strategy versioning v1** — make strategies immutable once a trade references them; fork-to-v2 UX preserves "what did I believe at execution time" (Manifesto follow-ups). Depends on #1.
+3. **Consolidate `brand-*` and `acc-*` into a single bronze scale** — two tokens for the same colour silently fork on every new contributor (Design system section).
+4. **`window.confirm()` migration on `/journal/[id]` delete** — CLAUDE.md ban, last hold-out for trade deletion (Journal detail section).
+5. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
+6. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
 
 ---
 
@@ -71,8 +72,29 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 - **Priority:** P1 · **Effort:** L
 - **What**: redesign `/playbook/[id]` to support structured methodologies (Hawks as canonical example), with a methodology header, rule list, scorecard view fed by `trade_conditions` junction, and conditions registry hookup.
 - **Why**: Q1 resolved — Playbook IS the home for methodology rules. The current free-form detail page can't express Hawks' structure (entry conditions, scorecard, hard rules). This is the surface that turns "we have Hawks" into "Hawks is documented on its own page with compliance scoring".
-- **Depends on**: P1 #2 (`trade_conditions` junction table).
+- **Depends on**: P1 #1 (`trade_conditions` junction table).
 - **Source**: feature-manifesto-2026-05.md §3.1 + §6 (4).
+
+### Strategy versioning v1 — methodology immutability
+
+- **Priority:** P1 · **Effort:** L
+- **Problem**: strategies + their `strategyConditions` are mutable today. If a user edits a strategy after trades reference it, those trades' `setupRank` rationale silently rewrites — the journal loses its "what did I believe at execution time" record. Soft-delete on conditions (landed with #1) bridges the gap, but the real fix is immutability with explicit forks.
+- **Schema (proposed, design-review first)**:
+  - `strategies.parentStrategyId uuid null` self-FK
+  - `strategies.version int default 1`
+  - `unique(userId, slug, version)`
+  - `trades.strategyId` continues to point at a specific version row (no migration needed for existing trades — they pin to whichever version was current at write).
+  - `strategyConditions` stays per-version, never mutated after the first trade lands on its parent.
+- **Write rules (enforced in actions, not DB)**:
+  - A strategy becomes "live" once at least one trade references it.
+  - Live strategies are read-only. Edit attempts surface a "Create new version" CTA instead of saving in place.
+  - "Create new version" copies the parent + opens the edit form on the copy. Conditions copy too, then become editable on the draft.
+- **UX**:
+  - Version dropdown on strategy detail (v1, v2, v3 — current bolded).
+  - "Fork to v2" button on live strategies.
+  - Dashboards: cohort-split by version so users can compare their refinements.
+- **Depends on**: P1 #1 (`trade_conditions` junction table) — versioning is the immutability story the junction makes meaningful.
+- **Source**: surfaced 2026-05-15 during `/plan-eng-review` of the `trade_conditions` design. User insight: _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_ Wants `/plan-design-review` before scoping the build.
 
 ### ~~Mode-personalization widget contract (framework spike)~~ ✅ Landed 2026-05-15
 
