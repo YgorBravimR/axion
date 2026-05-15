@@ -28,22 +28,23 @@ const buildMinimalProfile = (
 	overrides: Partial<RiskManagementProfileForSim> = {}
 ): RiskManagementProfileForSim => {
 	const defaults: RiskManagementProfileForSim = {
+		name: "test-profile",
 		riskSizingMode: "fixed",
 		baseRiskCents: 5000, // R$50
-		riskPercent: undefined,
-		fixedRatioDeltaCents: undefined,
-		fixedRatioBaseContractRiskCents: undefined,
-		kellyDivisor: undefined,
+		riskPercent: null,
+		fixedRatioDeltaCents: null,
+		fixedRatioBaseContractRiskCents: null,
+		kellyDivisor: null,
 		limitMode: "fixedCents",
 		dailyLossLimitCents: 50000, // R$500
 		weeklyLossLimitCents: 200000, // R$2000
 		monthlyLossLimitCents: 500000, // R$5000
-		dailyLossPercent: undefined,
-		weeklyLossPercent: undefined,
-		monthlyLossPercent: undefined,
-		dailyLossR: undefined,
-		weeklyLossR: undefined,
-		monthlyLossR: undefined,
+		dailyLossPercent: null,
+		weeklyLossPercent: null,
+		monthlyLossPercent: null,
+		dailyLossR: null,
+		weeklyLossR: null,
+		monthlyLossR: null,
 		tradingDaysPerMonth: 20,
 		tradingDaysPerWeek: 5,
 		winRate: 50,
@@ -53,13 +54,14 @@ const buildMinimalProfile = (
 		dailyTargetCents: 10000, // R$100
 		compoundingRiskPercent: 0, // Single target mode
 		executeAllRegardless: false,
+		stopAfterSequence: false,
 		drawdownTiers: [],
 		drawdownRecoveryPercent: 50,
 		consecutiveLossRules: [],
 		lossRecoverySteps: [
-			{ riskMultiplier: 1 },
-			{ riskMultiplier: 1.5 },
-			{ riskMultiplier: 2 },
+			{ riskCents: 0, riskMultiplier: 1 },
+			{ riskCents: 0, riskMultiplier: 1.5 },
+			{ riskCents: 0, riskMultiplier: 2 },
 		],
 		stopOnFirstLoss: false,
 	}
@@ -537,7 +539,10 @@ describe("runMonteCarloV2 — Loss Recovery & Gain Compounding", () => {
 			simulationCount: 20,
 			profile: buildMinimalProfile({
 				winRate: 40, // Frequent losses → recovery mode
-				lossRecoverySteps: [{ riskMultiplier: 1 }, { riskMultiplier: 1.5 }],
+				lossRecoverySteps: [
+					{ riskCents: 0, riskMultiplier: 1 },
+					{ riskCents: 0, riskMultiplier: 1.5 },
+				],
 			}),
 		})
 		const result = runMonteCarloV2(params)
@@ -566,7 +571,10 @@ describe("runMonteCarloV2 — Loss Recovery & Gain Compounding", () => {
 			simulationCount: 30,
 			profile: buildMinimalProfile({
 				winRate: 25,
-				lossRecoverySteps: [{ riskMultiplier: 1 }, { riskMultiplier: 1.5 }],
+				lossRecoverySteps: [
+					{ riskCents: 0, riskMultiplier: 1 },
+					{ riskCents: 0, riskMultiplier: 1.5 },
+				],
 			}),
 		})
 		const resultLow = runMonteCarloV2(paramsLow)
@@ -576,7 +584,10 @@ describe("runMonteCarloV2 — Loss Recovery & Gain Compounding", () => {
 			simulationCount: 30,
 			profile: buildMinimalProfile({
 				winRate: 75,
-				lossRecoverySteps: [{ riskMultiplier: 1 }, { riskMultiplier: 1.5 }],
+				lossRecoverySteps: [
+					{ riskCents: 0, riskMultiplier: 1 },
+					{ riskCents: 0, riskMultiplier: 1.5 },
+				],
 			}),
 		})
 		const resultHigh = runMonteCarloV2(paramsHigh)

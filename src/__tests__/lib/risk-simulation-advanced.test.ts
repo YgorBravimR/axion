@@ -42,6 +42,8 @@ const buildTrade = (
 		feesPerExecution: 15, // R$0.15 per execution
 		pnlCents: 20 * 10 * 100, // (102-100) * 10 contracts * 100 ticks per point * tickValue = 20,000 cents (R$200)
 		rMultiple: 10, // 20 points profit / 2 point stop = 10R
+		outcome: null,
+		contractsExecuted: 0,
 	}
 	return { ...defaults, ...overrides }
 }
@@ -50,21 +52,23 @@ const buildParams = (
 	overrides: Partial<AdvancedSimulationParams> = {}
 ): AdvancedSimulationParams => {
 	const defaults: AdvancedSimulationParams = {
+		mode: "advanced",
 		accountBalanceCents: 1000000, // R$10,000
 		decisionTree: {
 			baseTrade: {
 				riskCents: 5000, // R$50
 				maxContracts: 20,
+				minStopPoints: null,
 			},
 			lossRecovery: {
 				sequence: [
 					{
 						riskCalculation: { type: "percentOfBase", percent: 100 },
-						maxContractsOverride: undefined,
+						maxContractsOverride: null,
 					},
 					{
 						riskCalculation: { type: "percentOfBase", percent: 150 },
-						maxContractsOverride: undefined,
+						maxContractsOverride: null,
 					},
 				],
 				stopAfterSequence: false,
@@ -76,6 +80,19 @@ const buildParams = (
 			},
 			drawdownControl: {
 				tiers: [],
+				recoveryThresholdPercent: 50,
+			},
+			executionConstraints: {
+				minStopPoints: null,
+				maxContracts: null,
+				operatingHoursStart: null,
+				operatingHoursEnd: null,
+			},
+			cascadingLimits: {
+				weeklyLossCents: null,
+				weeklyAction: "stopTrading",
+				monthlyLossCents: 0,
+				monthlyAction: "stopTrading",
 			},
 		},
 		dailyLossCents: 100000, // R$1,000
@@ -157,6 +174,7 @@ describe("runAdvancedSimulation — Identity Transform (No Risk Change)", () => 
 				baseTrade: {
 					riskCents: 5000, // Base risk: R$50
 					maxContracts: 20,
+					minStopPoints: null,
 				},
 				// ... use defaults for recovery/gainMode
 				lossRecovery: {
@@ -165,7 +183,19 @@ describe("runAdvancedSimulation — Identity Transform (No Risk Change)", () => 
 					executeAllRegardless: false,
 				},
 				gainMode: { type: "singleTarget", dailyTargetCents: 50000 },
-				drawdownControl: { tiers: [] },
+				drawdownControl: { tiers: [], recoveryThresholdPercent: 50 },
+				executionConstraints: {
+					minStopPoints: null,
+					maxContracts: null,
+					operatingHoursStart: null,
+					operatingHoursEnd: null,
+				},
+				cascadingLimits: {
+					weeklyLossCents: null,
+					weeklyAction: "stopTrading",
+					monthlyLossCents: 0,
+					monthlyAction: "stopTrading",
+				},
 			},
 			dailyLossCents: 100000,
 			weeklyLossCents: 300000,
@@ -225,14 +255,26 @@ describe("runAdvancedSimulation — Position Scaling & Homogeneity", () => {
 
 		const baseParams = buildParams({
 			decisionTree: {
-				baseTrade: { riskCents: 5000, maxContracts: 20 },
+				baseTrade: { riskCents: 5000, maxContracts: 20, minStopPoints: null },
 				lossRecovery: {
 					sequence: [],
 					stopAfterSequence: false,
 					executeAllRegardless: false,
 				},
 				gainMode: { type: "singleTarget", dailyTargetCents: 50000 },
-				drawdownControl: { tiers: [] },
+				drawdownControl: { tiers: [], recoveryThresholdPercent: 50 },
+				executionConstraints: {
+					minStopPoints: null,
+					maxContracts: null,
+					operatingHoursStart: null,
+					operatingHoursEnd: null,
+				},
+				cascadingLimits: {
+					weeklyLossCents: null,
+					weeklyAction: "stopTrading",
+					monthlyLossCents: 0,
+					monthlyAction: "stopTrading",
+				},
 			},
 		})
 
@@ -240,14 +282,26 @@ describe("runAdvancedSimulation — Position Scaling & Homogeneity", () => {
 
 		const doubledParams = buildParams({
 			decisionTree: {
-				baseTrade: { riskCents: 10000, maxContracts: 20 }, // 2x risk
+				baseTrade: { riskCents: 10000, maxContracts: 20, minStopPoints: null }, // 2x risk
 				lossRecovery: {
 					sequence: [],
 					stopAfterSequence: false,
 					executeAllRegardless: false,
 				},
 				gainMode: { type: "singleTarget", dailyTargetCents: 50000 },
-				drawdownControl: { tiers: [] },
+				drawdownControl: { tiers: [], recoveryThresholdPercent: 50 },
+				executionConstraints: {
+					minStopPoints: null,
+					maxContracts: null,
+					operatingHoursStart: null,
+					operatingHoursEnd: null,
+				},
+				cascadingLimits: {
+					weeklyLossCents: null,
+					weeklyAction: "stopTrading",
+					monthlyLossCents: 0,
+					monthlyAction: "stopTrading",
+				},
 			},
 		})
 
@@ -404,19 +458,31 @@ describe("runAdvancedSimulation — T1 Branching (Base Trade)", () => {
 
 		const params = buildParams({
 			decisionTree: {
-				baseTrade: { riskCents: 5000, maxContracts: 20 },
+				baseTrade: { riskCents: 5000, maxContracts: 20, minStopPoints: null },
 				lossRecovery: {
 					sequence: [
 						{
 							riskCalculation: { type: "percentOfBase", percent: 100 },
-							maxContractsOverride: undefined,
+							maxContractsOverride: null,
 						},
 					],
 					stopAfterSequence: false,
 					executeAllRegardless: false,
 				},
 				gainMode: { type: "singleTarget", dailyTargetCents: 50000 },
-				drawdownControl: { tiers: [] },
+				drawdownControl: { tiers: [], recoveryThresholdPercent: 50 },
+				executionConstraints: {
+					minStopPoints: null,
+					maxContracts: null,
+					operatingHoursStart: null,
+					operatingHoursEnd: null,
+				},
+				cascadingLimits: {
+					weeklyLossCents: null,
+					weeklyAction: "stopTrading",
+					monthlyLossCents: 0,
+					monthlyAction: "stopTrading",
+				},
 			},
 			dailyLossCents: 100000,
 			dailyProfitTargetCents: undefined,
@@ -439,14 +505,26 @@ describe("runAdvancedSimulation — T1 Branching (Base Trade)", () => {
 
 		const params = buildParams({
 			decisionTree: {
-				baseTrade: { riskCents: 5000, maxContracts: 20 },
+				baseTrade: { riskCents: 5000, maxContracts: 20, minStopPoints: null },
 				lossRecovery: {
 					sequence: [],
 					stopAfterSequence: false,
 					executeAllRegardless: false,
 				},
 				gainMode: { type: "singleTarget", dailyTargetCents: 50000 },
-				drawdownControl: { tiers: [] },
+				drawdownControl: { tiers: [], recoveryThresholdPercent: 50 },
+				executionConstraints: {
+					minStopPoints: null,
+					maxContracts: null,
+					operatingHoursStart: null,
+					operatingHoursEnd: null,
+				},
+				cascadingLimits: {
+					weeklyLossCents: null,
+					weeklyAction: "stopTrading",
+					monthlyLossCents: 0,
+					monthlyAction: "stopTrading",
+				},
 			},
 		})
 
@@ -637,14 +715,26 @@ describe("runAdvancedSimulation — Edge Cases", () => {
 
 		const params = buildParams({
 			decisionTree: {
-				baseTrade: { riskCents: 50000, maxContracts: 5 }, // Limited max
+				baseTrade: { riskCents: 50000, maxContracts: 5, minStopPoints: null }, // Limited max
 				lossRecovery: {
 					sequence: [],
 					stopAfterSequence: false,
 					executeAllRegardless: false,
 				},
 				gainMode: { type: "singleTarget", dailyTargetCents: 50000 },
-				drawdownControl: { tiers: [] },
+				drawdownControl: { tiers: [], recoveryThresholdPercent: 50 },
+				executionConstraints: {
+					minStopPoints: null,
+					maxContracts: null,
+					operatingHoursStart: null,
+					operatingHoursEnd: null,
+				},
+				cascadingLimits: {
+					weeklyLossCents: null,
+					weeklyAction: "stopTrading",
+					monthlyLossCents: 0,
+					monthlyAction: "stopTrading",
+				},
 			},
 		})
 
