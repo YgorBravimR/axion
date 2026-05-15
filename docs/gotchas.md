@@ -84,6 +84,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `eslint-rules/enforce-server-action-async-only.mjs`.
 - **Date logged**: 2026-05-07.
 
+### Renko-native pipeline — multiple R per ISO week, hard reset at boundary
+
+- **What**: The Hawks v0 Renko pipeline (`src/lib/renko/`, `src/app/actions/renko-pipeline.ts`) generates 5m/15m/60m Renko bricks from raw 1m OHLC bars. Each ISO week has its **own** R (from `hawks_renko_sizes`), and we **hard-reset** the brick chain at every Monday — the next week anchors at the first bar's open, ignoring the previous week's last brick close.
+- **Why hard reset**: Carrying the anchor across weeks while changing R produces ambiguous bricks that don't match ProfitChart's per-week chart segments. Resetting costs a tiny number of bricks at boundaries and keeps each week's output independently reproducible.
+- **Engine contract**: The Hawks triple-screen engine (`src/lib/backtest/modules/entry/hawks-triple-screen.ts`) reads exactly four keys off the 5m brick: `mme27_60m`, `mme55_60m`, `mme27_15m`, `macd`. These are **projected** from higher-TF bricks via two-pointer walk in `cross-tf-join.ts`. The MACD key is the **MACD line** (fast EMA − slow EMA) on 60m brick closes — not the histogram. If QA shows the histogram is the actual ProfitChart export semantic, swap `macd60.line` → `macd60.histogram` in `renko-pipeline.ts`.
+- **Timeframes seeded on first run**: `renko-5m-cal`, `renko-15m-cal`, `renko-60m-cal` (`timeframe.type = 'renko'`, `unit = 'points'`). The action upserts them via `onConflictDoNothing` — no separate migration needed.
+- **Date logged**: 2026-05-15.
+
 ---
 
 ## TypeScript / Lint

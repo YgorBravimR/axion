@@ -32,6 +32,8 @@ import type {
 	StrategyWithStats,
 	ComplianceOverview,
 	StrategyVersionDetail,
+	StrategyVersionSummary,
+	StrategyFilterOption,
 } from "./strategies.types"
 
 /**
@@ -602,6 +604,164 @@ export const getStrategyVersion = async (
 				{
 					code: "FETCH_FAILED",
 					detail: toSafeErrorMessage(error, "getStrategyVersion"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * List every version that exists for a strategy, newest first. Each row
+ * includes the trade count pinned to that version so the chip dropdown
+ * can render compact metadata without a second roundtrip. Ownership
+ * enforced via the parent strategy's userId.
+ */
+export const listStrategyVersions = async (
+	strategyId: string
+): Promise<ActionResponse<StrategyVersionSummary[]>> => {
+	const t = await getTranslations("playbook")
+	try {
+		const { userId } = await requireAuth()
+
+		const parent = await db.query.strategies.findFirst({
+			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
+			columns: { id: true },
+		})
+		if (!parent) {
+			return {
+				status: "error",
+				message: t("actions.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy not found" }],
+			}
+		}
+
+		const rows = await db
+			.select({
+				id: strategyVersions.id,
+				version: strategyVersions.version,
+				createdAt: strategyVersions.createdAt,
+				tradeCount: sql<number>`count(${trades.id})::int`,
+			})
+			.from(strategyVersions)
+			.leftJoin(trades, eq(trades.strategyVersionId, strategyVersions.id))
+			.where(eq(strategyVersions.strategyId, strategyId))
+			.groupBy(
+				strategyVersions.id,
+				strategyVersions.version,
+				strategyVersions.createdAt
+			)
+			.orderBy(desc(strategyVersions.version))
+
+		return {
+			status: "success",
+			message: t("actions.strategyRetrieved"),
+			data: rows.map((row) => ({
+				id: row.id,
+				version: row.version,
+				tradeCount: row.tradeCount,
+				createdAt: row.createdAt,
+			})),
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("actions.strategyFetchFailed"),
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "listStrategyVersions"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Lightweight listing used by the dashboard cohort filter. Returns active
+ * strategies the user owns, each with its versions and per-version live trade
+ * counts. The dashboard renders one strategy selector + (when multi-version)
+ * a chip group per version, so we only need names + version numbers + trade
+ * counts — not full snapshots.
+ */
+export const listStrategyFilterOptions = async (): Promise<
+	ActionResponse<StrategyFilterOption[]>
+> => {
+	const t = await getTranslations("playbook")
+	try {
+		const authContext = await requireAuth()
+		const tradesAccountCondition = authContext.showAllAccounts
+			? inArray(trades.accountId, authContext.allAccountIds)
+			: eq(trades.accountId, authContext.accountId)
+
+		const rows = await db
+			.select({
+				strategyId: strategies.id,
+				strategyName: strategies.name,
+				strategyCurrentVersion: strategies.currentVersion,
+				versionId: strategyVersions.id,
+				versionNumber: strategyVersions.version,
+				tradeCount: sql<number>`count(${trades.id})::int`,
+			})
+			.from(strategies)
+			.innerJoin(
+				strategyVersions,
+				eq(strategyVersions.strategyId, strategies.id)
+			)
+			.leftJoin(
+				trades,
+				and(
+					eq(trades.strategyVersionId, strategyVersions.id),
+					tradesAccountCondition,
+					eq(trades.isArchived, false)
+				)
+			)
+			.where(
+				and(
+					eq(strategies.userId, authContext.userId),
+					eq(strategies.isActive, true)
+				)
+			)
+			.groupBy(
+				strategies.id,
+				strategies.name,
+				strategies.currentVersion,
+				strategyVersions.id,
+				strategyVersions.version
+			)
+			.orderBy(desc(strategies.createdAt), desc(strategyVersions.version))
+
+		const byStrategy = new Map<string, StrategyFilterOption>()
+		for (const row of rows) {
+			let entry = byStrategy.get(row.strategyId)
+			if (!entry) {
+				entry = {
+					id: row.strategyId,
+					name: row.strategyName,
+					currentVersion: row.strategyCurrentVersion,
+					versions: [],
+				}
+				byStrategy.set(row.strategyId, entry)
+			}
+			entry.versions.push({
+				id: row.versionId,
+				version: row.versionNumber,
+				tradeCount: row.tradeCount,
+			})
+		}
+
+		return {
+			status: "success",
+			message: t("actions.strategiesRetrieved"),
+			data: Array.from(byStrategy.values()),
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("actions.strategiesFetchFailed"),
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "listStrategyFilterOptions"),
 				},
 			],
 		}

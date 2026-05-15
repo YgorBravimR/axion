@@ -1391,6 +1391,16 @@
 			"allTime": "All Time",
 			"filterAriaLabel": "Period filter"
 		},
+		"strategyFilter": {
+			"strategyPlaceholder": "Filter by strategy",
+			"strategySelectAriaLabel": "Filter dashboard by strategy",
+			"allStrategies": "All strategies",
+			"allVersions": "All versions",
+			"versionLabel": "v{version}",
+			"versionSegmentAriaLabel": "Filter {name} by version",
+			"clear": "Clear",
+			"clearAriaLabel": "Clear strategy filter"
+		},
 		"trade": "trade",
 		"trades": "trades",
 		"kpi": {
@@ -2317,11 +2327,48 @@
 			"title": "Condition usage scorecard",
 			"subtitle": "How often each condition was actually met across this strategy's trades.",
 			"basedOnTrades": "Based on {count} trades",
+			"basedOnVersion": "Based on v{version} · {count} trades",
+			"basedOnVersionHistorical": "Based on v{version} (historical) · {count} trades",
 			"metRateHint": "Met rate",
 			"metOverRecorded": "{met}/{total}",
 			"emptyState": "No trades yet for this strategy.",
+			"emptyStateVersion": "No trades linked to v{version} yet.",
 			"emptyStateHint": "Log a trade with these conditions to start the scorecard.",
 			"hawksBadge": "Hawks methodology"
+		},
+		"versioning": {
+			"badge": {
+				"live": "Live",
+				"historical": "Historical"
+			},
+			"chip": {
+				"ariaSingle": "Strategy version v{version}",
+				"ariaMulti": "Switch strategy version, currently viewing v{version} {status}"
+			},
+			"dropdown": {
+				"tradeCount": "{count, plural, =0 {no trades} =1 {1 trade} other {# trades}}"
+			},
+			"editButton": {
+				"label": "Edit",
+				"disabledTooltip": "Historical versions are read-only. Switch to the live version to edit, or fork to a new version."
+			},
+			"fork": {
+				"headerButton": "Fork to v{nextVersion}",
+				"bannerTitle": "Conditions are frozen",
+				"bannerDescription": "v{version} has {count, plural, =1 {1 linked trade} other {# linked trades}}, so its conditions can no longer change. Fork to v{nextVersion} to keep iterating — your edits stay in this form.",
+				"bannerCta": "Fork to v{nextVersion}",
+				"bannerDismiss": "Dismiss",
+				"dialogTitle": "Fork to v{nextVersion}",
+				"dialogDescription": "We'll snapshot v{sourceVersion} as v{nextVersion}. Trades linked to v{sourceVersion} stay on v{sourceVersion}; new trades will use v{nextVersion} until you fork again.",
+				"previewLabel": "Will carry over",
+				"previewConditions": "{count, plural, =0 {no conditions} =1 {1 condition} other {# conditions}}",
+				"previewName": "Name: {name}",
+				"submit": "Fork to v{nextVersion}",
+				"submitting": "Forking…",
+				"cancel": "Cancel",
+				"successToast": "Forked to v{nextVersion}. You're now on the new version.",
+				"errorToast": "Could not fork the strategy. Please try again."
+			}
 		},
 		"scenarios": {
 			"title": "Scenarios",
@@ -5463,6 +5510,18 @@
 					"success": "{count} rows imported",
 					"invalidFile": "Please select a CSV file",
 					"errorFallback": "Import failed"
+				},
+				"regenerate": {
+					"title": "Regenerate Renko Bricks",
+					"description": "Rebuild 5m / 15m / 60m Renko bricks from imported 1m raw OHLC bars and the weekly brick sizes. Cross-timeframe indicators (MME 27/55, MACD) are computed and projected onto 5m host bricks for the Hawks engine.",
+					"assetLabel": "Asset",
+					"assetPlaceholder": "e.g. WIN",
+					"button": "Regenerate",
+					"running": "Regenerating…",
+					"summary": "{barCount} 1m bars across {weekCount} weeks",
+					"perTimeframe": "{code}: {count} bricks",
+					"warnings": "{count} warnings",
+					"errorFallback": "Regeneration failed"
 				}
 			}
 		},

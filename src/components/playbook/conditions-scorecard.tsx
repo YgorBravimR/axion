@@ -11,6 +11,15 @@ import type {
 
 interface ConditionsScorecardProps {
 	rollup: StrategyConditionsRollup
+	/**
+	 * Optional version label rendered above the scorecard so the user knows
+	 * which version's trades the rollup was computed from. Omit when there
+	 * is only one version (the chip in the page header is sufficient).
+	 */
+	versionLabel?: {
+		version: number
+		isHistorical: boolean
+	}
 }
 
 const tierMeta = {
@@ -110,17 +119,37 @@ const ScorecardRow = ({ row }: { row: ConditionRollup }) => {
 	)
 }
 
-export const ConditionsScorecard = ({ rollup }: ConditionsScorecardProps) => {
+export const ConditionsScorecard = ({
+	rollup,
+	versionLabel,
+}: ConditionsScorecardProps) => {
 	const t = useTranslations("playbook.scorecard")
 
 	if (rollup.conditions.length === 0) {
 		return null
 	}
 
+	const basedOnText =
+		versionLabel === undefined
+			? t("basedOnTrades", { count: rollup.totalTrades })
+			: versionLabel.isHistorical
+				? t("basedOnVersionHistorical", {
+						version: versionLabel.version,
+						count: rollup.totalTrades,
+					})
+				: t("basedOnVersion", {
+						version: versionLabel.version,
+						count: rollup.totalTrades,
+					})
+
 	if (rollup.totalTrades === 0) {
 		return (
 			<div className="border-bg-300 bg-bg-100 p-m-400 rounded-lg border text-center">
-				<p className="text-small text-txt-200">{t("emptyState")}</p>
+				<p className="text-small text-txt-200">
+					{versionLabel === undefined
+						? t("emptyState")
+						: t("emptyStateVersion", { version: versionLabel.version })}
+				</p>
 				<p className="text-tiny text-txt-300 mt-s-100">{t("emptyStateHint")}</p>
 			</div>
 		)
@@ -129,9 +158,7 @@ export const ConditionsScorecard = ({ rollup }: ConditionsScorecardProps) => {
 	return (
 		<div className="space-y-m-400">
 			<div className="gap-s-200 flex items-baseline justify-between">
-				<p className="text-tiny text-txt-300">
-					{t("basedOnTrades", { count: rollup.totalTrades })}
-				</p>
+				<p className="text-tiny text-txt-300">{basedOnText}</p>
 				<p className="text-tiny text-txt-300">{t("metRateHint")}</p>
 			</div>
 			<div className="gap-s-200 flex flex-col">

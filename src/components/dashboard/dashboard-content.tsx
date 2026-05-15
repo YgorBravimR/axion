@@ -22,6 +22,10 @@ import {
 	getRadarChartData,
 } from "@/app/actions/analytics"
 import { SegmentedToggle } from "@/components/ui/segmented-toggle"
+import {
+	DashboardStrategyFilter,
+	type DashboardStrategyFilterValue,
+} from "./dashboard-strategy-filter"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { dashboardGuide } from "@/components/ui/page-guide/guide-configs/dashboard"
@@ -32,6 +36,7 @@ import type {
 	StreakData,
 	DailyPnL,
 	RadarChartData,
+	TradeFilters,
 } from "@/types"
 
 type DashboardPeriod = "month" | "year" | "allTime"
@@ -126,6 +131,11 @@ export const DashboardContent = ({
 
 	// Period-filtered data
 	const [period, setPeriod] = useState<DashboardPeriod>("allTime")
+	const [strategyFilter, setStrategyFilter] =
+		useState<DashboardStrategyFilterValue>({
+			strategyId: null,
+			strategyVersionId: null,
+		})
 	const [stats, setStats] = useState<OverallStats | null>(initialStats)
 	const [discipline, setDiscipline] = useState<DisciplineData | null>(
 		initialDiscipline
@@ -153,6 +163,7 @@ export const DashboardContent = ({
 		setStreakData(initialStreakData)
 		setRadarData(initialRadarData)
 		setPeriod("allTime")
+		setStrategyFilter({ strategyId: null, strategyVersionId: null })
 	}, [
 		initialDailyPnL,
 		initialStats,
@@ -188,13 +199,24 @@ export const DashboardContent = ({
 		})
 	}, [])
 
-	const handlePeriodChange = useCallback(
-		(newPeriod: DashboardPeriod) => {
-			setPeriod(newPeriod)
+	const fetchFilteredData = useCallback(
+		(
+			nextPeriod: DashboardPeriod,
+			nextStrategyFilter: DashboardStrategyFilterValue
+		) => {
 			const { dateFrom, dateTo } = getDateRangeForPeriod(
-				newPeriod,
+				nextPeriod,
 				effectiveDate
 			)
+			const cohortFilters: TradeFilters | undefined =
+				nextStrategyFilter.strategyId
+					? {
+							strategyIds: [nextStrategyFilter.strategyId],
+							...(nextStrategyFilter.strategyVersionId
+								? { strategyVersionIds: [nextStrategyFilter.strategyVersionId] }
+								: {}),
+						}
+					: undefined
 
 			startPeriodTransition(async () => {
 				const [
@@ -204,12 +226,14 @@ export const DashboardContent = ({
 					streakResult,
 					radarResult,
 				] = await Promise.all([
-					getOverallStats(dateFrom, dateTo),
-					getDisciplineScore(dateFrom, dateTo),
-					getEquityCurve(dateFrom, dateTo),
-					getStreakData(dateFrom, dateTo),
+					getOverallStats(dateFrom, dateTo, cohortFilters),
+					getDisciplineScore(dateFrom, dateTo, cohortFilters),
+					getEquityCurve(dateFrom, dateTo, "daily", cohortFilters),
+					getStreakData(dateFrom, dateTo, cohortFilters),
 					getRadarChartData(
-						dateFrom || dateTo ? { dateFrom, dateTo } : undefined
+						dateFrom || dateTo || cohortFilters
+							? { dateFrom, dateTo, ...cohortFilters }
+							: undefined
 					),
 				])
 
@@ -233,16 +257,37 @@ export const DashboardContent = ({
 		[effectiveDate]
 	)
 
+	const handlePeriodChange = useCallback(
+		(newPeriod: DashboardPeriod) => {
+			setPeriod(newPeriod)
+			fetchFilteredData(newPeriod, strategyFilter)
+		},
+		[fetchFilteredData, strategyFilter]
+	)
+
+	const handleStrategyFilterChange = useCallback(
+		(next: DashboardStrategyFilterValue) => {
+			setStrategyFilter(next)
+			fetchFilteredData(period, next)
+		},
+		[fetchFilteredData, period]
+	)
+
 	return (
 		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-			{/* Period Toggle + Loading */}
+			{/* Period Toggle + Strategy Filter + Loading */}
 			<div
-				id="dashboard-period-toggle"
-				className="gap-m-400 flex items-center md:col-span-2 lg:col-span-3"
+				id="dashboard-toolbar"
+				className="gap-m-400 flex flex-wrap items-center md:col-span-2 lg:col-span-3"
 			>
 				<PeriodToggle
 					period={period}
 					onChange={handlePeriodChange}
+					disabled={isPeriodLoading}
+				/>
+				<DashboardStrategyFilter
+					value={strategyFilter}
+					onChange={handleStrategyFilterChange}
 					disabled={isPeriodLoading}
 				/>
 				{isPeriodLoading && <LoadingSpinner size="sm" />}

@@ -37,10 +37,9 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 The items that earn priority over everything else in this file. Each is linked to its full entry below.
 
-1. **Strategy versioning v1 — UX surface (Phase D)** — expose the shipped versioning layer in the playbook UI: version dropdown, fork-to-v2 button, per-version scorecard, dashboard cohort-split (Manifesto follow-ups).
-2. **Renko-native data pipeline** — own the brick + indicator generation; remove ProfitChart as a hard dependency for backtesting (Backtest section).
-3. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
-4. **Encryption archive** — rip dormant field-level encryption stack threaded through ~50 files; touches PROTECTED paths so wants its own session (Test coverage section).
+1. **Strategy versioning v1 — UX surface (Phase D)** — design plan landed 2026-05-15 (`/plan-design-review`, 4 surfaces, 4-phase build). Awaiting build authorization (Manifesto follow-ups).
+2. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool, and split the generic result panels into per-methodology views (Backtest section).
+3. **Encryption archive** — rip dormant field-level encryption stack threaded through ~50 files; touches PROTECTED paths so wants its own session (Test coverage section).
 
 ---
 
@@ -50,14 +49,23 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 
 ### Strategy versioning v1 — UX surface (Phase D)
 
-- **Priority:** P1 · **Effort:** M
+- **Priority:** P1 · **Effort:** M · **Status**: design plan landed 2026-05-15, awaiting build authorization
 - **Problem**: data layer for strategy versioning is live (`createStrategyVersion`, `getStrategyVersion`, version-aware `getStrategyConditionsRollup`, STRATEGY_LIVE guards on edit paths), but the UI doesn't expose any of it — users can't see version history, can't fork live strategies, and the scorecard always reads the current version.
-- **Build**:
-  - Version dropdown on strategy detail (v1, v2, v3 — current bolded). Wire to `getStrategyVersion(versionId)` for snapshot read.
-  - "Fork to v2" button on live strategies wired to `createStrategyVersion`. Surface the edit-attempt CTA when `updateStrategy` / `syncStrategyConditions` return `STRATEGY_LIVE`.
-  - Per-version scorecard: pass `versionId` to `getStrategyConditionsRollup` so users compare met-rate across forks.
-  - Dashboards: cohort-split by `strategyVersionId` so users can compare refinements.
-- **Needs**: `/plan-design-review` before scoping the surface. User insight (2026-05-15): _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_
+- **Design plan**: `~/.gstack/projects/YgorBravimR-profitJournal/designs/strategy-versioning-v1-20260515/PLAN.md` — 7-pass review, 4 surfaces locked (header chip + dropdown, fork modal, per-version scorecard, dashboard cohort filter), URL pattern `?v=<n>`, build broken into 4 phases (D.1 read-only awareness → D.2 fork flow → D.3 dashboard cohort → D.4 polish). Rating 3/10 → 9/10.
+- **Hardened rule** (user insight 2026-05-15): _"Conditions should not change after any trade is linked to the strategy. If condition changed it's not the same strategy anymore."_
+- **Deferred out of v1** (filed as separate entries below): version diff viewer, version naming/labels.
+
+### Strategy version diff viewer (v2 of versioning)
+
+- **Priority:** P2 · **Effort:** M
+- **What**: side-by-side condition diff between two versions of the same strategy. Entry point reserved as "Compare versions" link in scorecard header (currently hidden in v1).
+- **Why deferred**: numeric comparison via dashboard cohort split covers 80% of the analytical need; diff is for the qualitative "what changed between v1 and v2" question, which is lower-frequency.
+
+### Strategy version naming/labels (v2 of versioning)
+
+- **Priority:** P3 · **Effort:** S
+- **What**: free-text label per version (e.g. "v2 — after London session refinement"). v1 ships numeric-only.
+- **Why deferred**: numeric versions are sufficient for first launch; labels add discoverability once the user has 3+ versions.
 
 ---
 
@@ -67,7 +75,7 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 
 ### Encryption archive — XL refactor (its own session) — P1
 
-- **Priority:** P1 · **Effort:** XL · **Owner**: needs its own dedicated session (like the Renko-native data pipeline P1)
+- **Priority:** P1 · **Effort:** XL · **Owner**: needs its own dedicated session
 - **What**: Rip out the dormant field-level encryption stack. `getUserDek` always returns `null`; ~50 files thread `dek` through actions/routes/library queries with `dek ? encryptFields(...) : raw` ternaries that never take the wrapped branch. Schema columns marked `// encrypted` (pnl, entry_price, prop_firm_name, name, etc.) actually store plaintext.
 - **Scope:**
   - Delete `src/lib/crypto.ts`, `src/lib/user-crypto.ts`, `src/app/api/arch/_lib/decrypt.ts`.
@@ -262,42 +270,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 ---
 
 ## Backtest — deferred follow-ups
-
-### Renko-native data pipeline — **P1**
-
-- **Priority:** P1 · **Effort:** XL
-- **What**: Replace ProfitChart-dependency for indicator computation with a self-contained pipeline: (1) import raw 1m OHLC bars from ProfitChart CSV (new import format, different from current Renko CSV), (2) generate three brick sets per week using `hawksRenkoSizes.size5m/size15m/size60m`, (3) compute indicators on generated bricks, (4) cross-TF join by opening timestamp.
-- **Why**: Currently the backtest reads pre-computed Renko bricks + indicators from ProfitChart's CSV export. The `hawksRenkoSizes` table stores weekly R calibration but is not connected to the backtest engine. Full Renko-native unlocks any historical period, any R configuration, and removes ProfitChart as a hard dependency for backtesting.
-- **Architecture** (full spec — confirmed with Ygor 2026-05-14):
-  ```
-  ProfitChart 1m OHLC export (new import format)
-    → rawBars table (asset, timestamp, OHLC)
-    → RenkoBrickGenerator (reads hawksRenkoSizes.size5m/15m/60m for the ISO week)
-      → three brick sets: size=size5m, size=size15m, size=size60m
-      → each brick stores open_timestamp (when it began forming) and close_timestamp
-    → IndicatorComputer
-      → MACD(21/89/42) on 5m bricks
-      → EMA27/55 on 60m bricks; MACD(27/117/55) on 60m bricks
-      → EMA27/55 on 15m bricks; MACD(27/117/55) on 15m bricks
-    → CrossTimeframeJoin (by opening timestamp)
-      → for each 5m brick with open_timestamp T:
-          find 15m brick where open_timestamp ≤ T < next_15m.open_timestamp → inject mme27_15m
-          find 60m brick where open_timestamp ≤ T < next_60m.open_timestamp → inject mme27_60m, mme55_60m
-      → DB index: (asset_id, brick_size_r, open_timestamp DESC), single seek per join
-    → assembled 5m bricks with all indicators → backtest engine
-  ```
-- **Key insights** (confirmed 2026-05-14):
-  - The "three timeframes" (5m/15m/60m) are three R values applied to the same price stream, not time windows. `hawksRenkoSizes` is the calibration source.
-  - Cross-TF join is by **opening timestamp** of each brick, not by "last completed brick". Every brick has an `open_timestamp`; at any moment T, exactly one brick of each size is active (the one whose open_timestamp ≤ T < next brick's open_timestamp). Clean range lookup, single index.
-  - MACD 5m parameters: **21/89/42** (confirmed correct). Vault Part 3's `21/49/82` line is incorrect; Section 13.3's `21/89/42` is authoritative.
-- **R-multiple terminology** (clarified 2026-05-14, hardened 2026-05-15):
-  - 1R = 1 risk unit = the stop distance (universal, methodology-agnostic).
-  - 1 Renko = 1 box (the brick size).
-  - **In Hawks: 1R = 2 Renko boxes** (Hawks stop is 2 boxes from entry, not 1).
-  - So a "2R target" in Hawks = 4 Renko boxes; "3R target" = 6 boxes. R count is decoupled from Renko count.
-- **Complexity**: the brick generator must handle variable R per week (weekly calibration), and the indicator computer must run three independent EMA/MACD chains (one per brick size). The cross-TF join is straightforward once `open_timestamp` is indexed.
-- **Sequence**: build visual chart layer first (works with current pre-computed bricks), then: raw 1m import → brick generator → indicator computer → cross-TF join.
-- **Source**: CEO review + vault investigation session 2026-05-14; `src/lib/backtest/presets/hawks-presets.ts`, `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/db/schema.ts` (`hawksRenkoSizes`), `src/app/actions/hawks-renko.ts`.
 
 ### Backtest visual layer + methodology-specific UX redesign — **P1**
 

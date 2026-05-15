@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getComplianceTone } from "@/lib/compliance"
-import { getStrategy } from "@/app/actions/strategies"
+import { getStrategy, listStrategyVersions } from "@/app/actions/strategies"
 import {
 	getStrategyConditions,
 	getStrategyConditionsRollup,
@@ -24,9 +24,11 @@ import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { getCurrentUser } from "@/app/actions/auth"
 import { hasAccess } from "@/lib/feature-access"
 import { StrategyDetailGuide } from "@/components/playbook/strategy-detail-guide"
+import { StrategyDetailHeader } from "@/components/playbook/strategy-detail-header"
 
 interface StrategyDetailPageProps {
 	params: Promise<{ id: string }>
+	searchParams: Promise<{ v?: string }>
 }
 
 const formatCurrency = (value: number): string => {
@@ -47,27 +49,59 @@ const formatProfitFactor = (value: number): string => {
 	return value.toFixed(2)
 }
 
-const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
-	const { id } = await params
-	const [result, conditionsResult, rollupResult, user] = await Promise.all([
+const StrategyDetailPage = async ({
+	params,
+	searchParams,
+}: StrategyDetailPageProps) => {
+	const [{ id }, { v: vParam }] = await Promise.all([params, searchParams])
+	const [strategyResult, versionsResult, user] = await Promise.all([
 		getStrategy(id),
-		getStrategyConditions(id),
-		getStrategyConditionsRollup(id),
+		listStrategyVersions(id),
 		getCurrentUser(),
 	])
-	const isPremium = hasAccess(user?.role ?? "viewer", "premium")
 
-	if (result.status !== "success" || !result.data) {
+	if (strategyResult.status !== "success" || !strategyResult.data) {
 		notFound()
 	}
+	const isPremium = hasAccess(user?.role ?? "viewer", "premium")
+	const strategy = strategyResult.data
+	const versions =
+		versionsResult.status === "success" ? (versionsResult.data ?? []) : []
+	const liveVersionRow = versions.find(
+		(vv) => vv.version === strategy.currentVersion
+	)
+	const liveTradeCount = liveVersionRow?.tradeCount ?? 0
+
+	// Parse the version query param. We trust it cautiously: any value that
+	// can't be matched against an existing version row silently falls back
+	// to currentVersion (no notFound — a stale link should still land
+	// somewhere useful).
+	const parsedVersion = (() => {
+		if (vParam === undefined) {
+			return strategy.currentVersion
+		}
+		const n = Number.parseInt(vParam, 10)
+		if (Number.isNaN(n)) {
+			return strategy.currentVersion
+		}
+		return versions.some((vv) => vv.version === n) ? n : strategy.currentVersion
+	})()
+	const selectedVersionRow = versions.find((vv) => vv.version === parsedVersion)
+	const selectedVersionId = selectedVersionRow?.id
+
+	const [conditionsResult, rollupResult] = await Promise.all([
+		getStrategyConditions(id),
+		getStrategyConditionsRollup(id, selectedVersionId),
+	])
 
 	const t = await getTranslations("playbook")
 
-	const strategy = result.data
 	const strategyConditions =
 		conditionsResult.status === "success" ? (conditionsResult.data ?? []) : []
 	const rollup = rollupResult.status === "success" ? rollupResult.data : null
 	const isHawksStrategy = rollup?.isHawksStrategy ?? false
+	const isHistorical = parsedVersion !== strategy.currentVersion
+	const hasMultipleVersions = versions.length > 1
 
 	const complianceTone = getComplianceTone(strategy.compliance)
 
@@ -78,6 +112,40 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 			<StrategyDetailGuide />
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-4xl">
+					<StrategyDetailHeader
+						strategyId={strategy.id}
+						strategyName={strategy.name}
+						currentVersion={strategy.currentVersion}
+						selectedVersion={parsedVersion}
+						nextVersion={strategy.nextVersionNumber}
+						liveTradeCount={liveTradeCount}
+						versions={versions}
+						forkSource={{
+							name: strategy.name,
+							description: strategy.description ?? undefined,
+							entryCriteria: strategy.entryCriteria ?? undefined,
+							exitCriteria: strategy.exitCriteria ?? undefined,
+							riskRules: strategy.riskRules ?? undefined,
+							finalR:
+								strategy.finalR !== null && strategy.finalR !== undefined
+									? Number(strategy.finalR)
+									: undefined,
+							maxRiskPercent:
+								strategy.maxRiskPercent !== null &&
+								strategy.maxRiskPercent !== undefined
+									? Number(strategy.maxRiskPercent)
+									: undefined,
+							screenshotUrl: strategy.screenshotUrl ?? undefined,
+							screenshotS3Key: strategy.screenshotS3Key ?? undefined,
+							notes: strategy.notes ?? undefined,
+						}}
+						forkConditions={strategyConditions.map((sc) => ({
+							conditionId: sc.conditionId,
+							tier: sc.tier,
+							sortOrder: sc.sortOrder,
+						}))}
+					/>
+
 					{/* Performance Stats */}
 					<div
 						id="strategy-detail-performance"
@@ -296,7 +364,17 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 										{t("scorecard.subtitle")}
 									</p>
 									<div className="mt-m-400">
-										<ConditionsScorecard rollup={rollup} />
+										<ConditionsScorecard
+											rollup={rollup}
+											versionLabel={
+												hasMultipleVersions
+													? {
+															version: parsedVersion,
+															isHistorical,
+														}
+													: undefined
+											}
+										/>
 									</div>
 								</div>
 							)}

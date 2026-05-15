@@ -37,6 +37,7 @@ export interface TradeFilters {
 	directions?: TradeDirection[]
 	outcomes?: TradeOutcome[]
 	strategyIds?: string[]
+	strategyVersionIds?: string[]
 	tagIds?: string[]
 	timeframeIds?: string[]
 	groupBy?: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"

@@ -81,6 +81,14 @@ const buildFilterConditions = (
 	if (filters?.timeframeIds && filters.timeframeIds.length > 0) {
 		conditions.push(inArray(trades.timeframeId, filters.timeframeIds))
 	}
+	if (filters?.strategyIds && filters.strategyIds.length > 0) {
+		conditions.push(inArray(trades.strategyId, filters.strategyIds))
+	}
+	if (filters?.strategyVersionIds && filters.strategyVersionIds.length > 0) {
+		conditions.push(
+			inArray(trades.strategyVersionId, filters.strategyVersionIds)
+		)
+	}
 
 	return conditions
 }
@@ -90,12 +98,17 @@ const buildFilterConditions = (
  */
 export const getOverallStats = async (
 	dateFrom?: Date,
-	dateTo?: Date
+	dateTo?: Date,
+	extraFilters?: TradeFilters
 ): Promise<ActionResponse<OverallStats>> => {
 	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
-		const conditions = buildFilterConditions(authContext, { dateFrom, dateTo })
+		const conditions = buildFilterConditions(authContext, {
+			...extraFilters,
+			dateFrom,
+			dateTo,
+		})
 
 		const result = await db.query.trades.findMany({
 			where: and(...conditions),
@@ -211,12 +224,17 @@ export const getOverallStats = async (
  */
 export const getDisciplineScore = async (
 	dateFrom?: Date,
-	dateTo?: Date
+	dateTo?: Date,
+	extraFilters?: TradeFilters
 ): Promise<ActionResponse<DisciplineData>> => {
 	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
-		const conditions = buildFilterConditions(authContext, { dateFrom, dateTo })
+		const conditions = buildFilterConditions(authContext, {
+			...extraFilters,
+			dateFrom,
+			dateTo,
+		})
 
 		const result = await db.query.trades.findMany({
 			where: and(...conditions),
@@ -288,7 +306,8 @@ export const getDisciplineScore = async (
 export const getEquityCurve = async (
 	dateFrom?: Date,
 	dateTo?: Date,
-	mode: EquityCurveMode = "daily"
+	mode: EquityCurveMode = "daily",
+	extraFilters?: TradeFilters
 ): Promise<ActionResponse<EquityPoint[]>> => {
 	const t = await getTranslations("analytics")
 	try {
@@ -302,18 +321,11 @@ export const getEquityCurve = async (
 			? Number(accountBalanceSetting.value) || 10000
 			: 10000
 
-		const accountCondition = authContext.showAllAccounts
-			? inArray(trades.accountId, authContext.allAccountIds)
-			: eq(trades.accountId, authContext.accountId)
-
-		const conditions = [accountCondition, eq(trades.isArchived, false)]
-
-		if (dateFrom) {
-			conditions.push(gte(trades.entryDate, dateFrom))
-		}
-		if (dateTo) {
-			conditions.push(lte(trades.entryDate, dateTo))
-		}
+		const conditions = buildFilterConditions(authContext, {
+			...extraFilters,
+			dateFrom,
+			dateTo,
+		})
 
 		const result = await db.query.trades.findMany({
 			where: and(...conditions),
@@ -482,24 +494,18 @@ export const getDailyPnL = async (
  */
 export const getStreakData = async (
 	dateFrom?: Date,
-	dateTo?: Date
+	dateTo?: Date,
+	extraFilters?: TradeFilters
 ): Promise<ActionResponse<StreakData>> => {
 	const t = await getTranslations("analytics")
 	try {
 		const authContext = await requireAuth()
 
-		const accountCondition = authContext.showAllAccounts
-			? inArray(trades.accountId, authContext.allAccountIds)
-			: eq(trades.accountId, authContext.accountId)
-
-		const conditions = [accountCondition, eq(trades.isArchived, false)]
-
-		if (dateFrom) {
-			conditions.push(gte(trades.entryDate, dateFrom))
-		}
-		if (dateTo) {
-			conditions.push(lte(trades.entryDate, dateTo))
-		}
+		const conditions = buildFilterConditions(authContext, {
+			...extraFilters,
+			dateFrom,
+			dateTo,
+		})
 
 		const result = await db.query.trades.findMany({
 			where: and(...conditions),

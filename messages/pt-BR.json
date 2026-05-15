@@ -1391,6 +1391,16 @@
 			"allTime": "Geral",
 			"filterAriaLabel": "Filtro de período"
 		},
+		"strategyFilter": {
+			"strategyPlaceholder": "Filtrar por estratégia",
+			"strategySelectAriaLabel": "Filtrar dashboard por estratégia",
+			"allStrategies": "Todas as estratégias",
+			"allVersions": "Todas as versões",
+			"versionLabel": "v{version}",
+			"versionSegmentAriaLabel": "Filtrar {name} por versão",
+			"clear": "Limpar",
+			"clearAriaLabel": "Limpar filtro de estratégia"
+		},
 		"trade": "trade",
 		"trades": "trades",
 		"kpi": {
@@ -2317,11 +2327,48 @@
 			"title": "Placar de uso de condições",
 			"subtitle": "Com que frequência cada condição foi efetivamente atendida nas operações desta estratégia.",
 			"basedOnTrades": "Com base em {count} operações",
+			"basedOnVersion": "Com base na v{version} · {count} operações",
+			"basedOnVersionHistorical": "Com base na v{version} (histórica) · {count} operações",
 			"metRateHint": "Taxa de atendimento",
 			"metOverRecorded": "{met}/{total}",
 			"emptyState": "Nenhuma operação ainda para esta estratégia.",
+			"emptyStateVersion": "Nenhuma operação vinculada à v{version} ainda.",
 			"emptyStateHint": "Registre uma operação com estas condições para iniciar o placar.",
 			"hawksBadge": "Metodologia Hawks"
+		},
+		"versioning": {
+			"badge": {
+				"live": "Ativa",
+				"historical": "Histórica"
+			},
+			"chip": {
+				"ariaSingle": "Versão da estratégia v{version}",
+				"ariaMulti": "Trocar versão da estratégia, visualizando v{version} {status}"
+			},
+			"dropdown": {
+				"tradeCount": "{count, plural, =0 {sem operações} =1 {1 operação} other {# operações}}"
+			},
+			"editButton": {
+				"label": "Editar",
+				"disabledTooltip": "Versões históricas são somente leitura. Mude para a versão ativa para editar ou crie uma nova versão."
+			},
+			"fork": {
+				"headerButton": "Bifurcar para v{nextVersion}",
+				"bannerTitle": "Condições congeladas",
+				"bannerDescription": "v{version} tem {count, plural, =1 {1 operação vinculada} other {# operações vinculadas}}, então suas condições não podem mais mudar. Bifurque para v{nextVersion} para continuar iterando — suas edições permanecem neste formulário.",
+				"bannerCta": "Bifurcar para v{nextVersion}",
+				"bannerDismiss": "Dispensar",
+				"dialogTitle": "Bifurcar para v{nextVersion}",
+				"dialogDescription": "Vamos capturar v{sourceVersion} como v{nextVersion}. Operações vinculadas a v{sourceVersion} permanecem na v{sourceVersion}; novas operações usarão v{nextVersion} até a próxima bifurcação.",
+				"previewLabel": "Será transferido",
+				"previewConditions": "{count, plural, =0 {nenhuma condição} =1 {1 condição} other {# condições}}",
+				"previewName": "Nome: {name}",
+				"submit": "Bifurcar para v{nextVersion}",
+				"submitting": "Bifurcando…",
+				"cancel": "Cancelar",
+				"successToast": "Bifurcado para v{nextVersion}. Você está na nova versão.",
+				"errorToast": "Não foi possível bifurcar a estratégia. Tente novamente."
+			}
 		},
 		"scenarios": {
 			"title": "Cenários",
@@ -5463,6 +5510,18 @@
 					"success": "{count} linhas importadas",
 					"invalidFile": "Selecione um arquivo CSV",
 					"errorFallback": "Falha na importação"
+				},
+				"regenerate": {
+					"title": "Regenerar Bricks Renko",
+					"description": "Reconstrói os bricks Renko de 5m / 15m / 60m a partir das barras 1m OHLC importadas e dos tamanhos semanais. Os indicadores cruzados (MME 27/55, MACD) são calculados e projetados nos bricks de 5m para o engine Hawks.",
+					"assetLabel": "Ativo",
+					"assetPlaceholder": "ex: WIN",
+					"button": "Regenerar",
+					"running": "Regenerando…",
+					"summary": "{barCount} barras 1m em {weekCount} semanas",
+					"perTimeframe": "{code}: {count} bricks",
+					"warnings": "{count} avisos",
+					"errorFallback": "Falha na regeneração"
 				}
 			}
 		},
