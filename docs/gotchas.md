@@ -217,3 +217,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: After pulling a squash, the only safe local recovery is destructive: drop the database, recreate it, run `pnpm db:migrate` from scratch, then `pnpm db:seed`. For worktrees, rerun `bash scripts/worktree-db.sh setup` (it drops + recreates idempotently). **Production / Neon is unaffected** because the squash is designed to be hash-compatible with the prior live state — only dev environments that ran the pre-squash migrations carry stale bookkeeping. Never hand-edit `__drizzle_migrations` to "fix" hashes; that hides drift instead of resolving it. If you can't drop (e.g. shared dev data you need), restore from a dump after the reset.
 - **Source**: 2026-05-15 session implementing strategy versioning v1 — `pnpm db:migrate` failed against a worktree DB with 27 pre-squash entries vs 6 post-squash files; resolved by drop + recreate.
 - **Date logged**: 2026-05-15.
+
+---
+
+## E2E / Playwright config
+
+### `globalSetup` and `globalTeardown` point at the same file — by design
+
+- **What**: `playwright.config.ts` wires both `globalSetup` and `globalTeardown` to `./e2e/global.teardown.ts`. The filename is misleading: the script runs at _both_ boundaries of a test session, so any cleanup it does also happens _before_ tests start. The journey suite relies on this: a fixed-email Bravo persona (`bravo@axion-demo.com`) gets its DB row and `rate_limit_attempts` slot wiped on chain start, so the login rate-limit (`login:<email>` in `src/app/actions/auth.ts`) never trips on Stage 0. There is also a separate `e2e/global.setup.ts`, but it is registered as a **named project** ("setup") via `test.setMatch`, not as a top-level globalSetup — it handles admin login + storageState for the legacy `e2e/tests/*` suites.
+- **What to do**: If you need a new "run before every Playwright session" hook, extend `e2e/global.teardown.ts` rather than wiring a second globalSetup. If you need to seed/auth a specific user, do it in a Playwright project named `setup` (see how `chromium-auth` and the journey stages depend on it). Renaming the file to `global.cleanup.ts` would be more honest, but the rename touches CI workflows — leave it unless you are already touching that area.
+- **Source**: `playwright.config.ts:213-214`, `e2e/global.teardown.ts`, `e2e/global.setup.ts`.
+- **Date logged**: 2026-05-15.

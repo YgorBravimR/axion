@@ -20,13 +20,17 @@ import { loadStageState } from "./helpers/storage-state"
  * @journey @stage:seed-hawks-history
  */
 
-test.describe("Journey Stage 9b — Hawks history seeder", () => {
-	test.use(loadStageState(8))
+test.describe(
+	"Journey Stage 9b — Hawks history seeder",
+	{ tag: ["@journey", "@stage:seed-hawks-history"] },
+	() => {
+		test.use(loadStageState(8))
 
-	test("Seeds Bravo's Hawks history and activates Hawks mode", async () => {
-		const result = await seedHawksHistory(BRAVO.email)
+		test("Seeds Bravo's Hawks history and activates Hawks mode", async () => {
+			const result = await seedHawksHistory(BRAVO.email)
 
-		expect(result.tradesInserted).toBeGreaterThan(0)
-		expect(result.biasesInserted).toBeGreaterThan(0)
-	})
-})
+			expect(result.tradesInserted).toBeGreaterThan(0)
+			expect(result.biasesInserted).toBeGreaterThan(0)
+		})
+	}
+)
