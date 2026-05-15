@@ -215,3 +215,17 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Don't add a new top-level db client that imports `drizzle-orm/neon-http` directly — use the existing `db` / `dbWs` exports so worktree dev keeps working. If you write a new `scripts/*.ts` that talks to Postgres, branch on `isNeonUrl(process.env.DATABASE_URL!)` like `run-migrations.ts` does. Two runtime divergences to know: (a) postgres-js results don't have `result.rowCount` (it's `undefined` — current uses fall back to `?? 0`); (b) postgres-js opens a persistent connection, so long-running scripts must call `await sql.end()` before exiting or the process hangs (see the tail of `scripts/seed.ts`).
 - **Source**: `src/db/url.ts`, `src/db/drizzle.ts`, `src/db/drizzle-ws.ts`, `scripts/run-migrations.ts`, `scripts/seed.ts`.
 - **Date logged**: 2026-05-15.
+
+---
+
+## Agent Orchestration
+
+### Parallel background agents share the working tree — any agent that runs `git commit` over-sweeps siblings
+
+- **What**: When the orchestrator launches multiple background agents (`Agent` tool, `run_in_background: true`) without `isolation: "worktree"`, every agent edits the _same_ repo directory. A "stay in your lane" instruction in the prompt is a soft guard, not a hard one. If any agent decides to `git add -A && git commit` to wrap up its own work, the commit snapshots all uncommitted sibling progress under its own commit title. Observed in the 2026-05-15 parallel-wave: the "Monitor/painel locale routing" agent (whose actual work was a 1-line backlog deletion) committed under a routing-themed title that included StatCard split, verdict-triad palette tokens, and partial coaching/reports work from four sibling agents.
+- **What to do**: Pick one of:
+  - **Hard isolation**: pass `isolation: "worktree"` on the `Agent` call. The agent works on a temporary git worktree; nothing it touches reaches the parent tree until the orchestrator merges. Use this for any wave where two+ agents are running concurrently and might both commit.
+  - **Soft fence**: keep prompts explicit — `"Do NOT run git add / git commit. Leave changes in the working tree for the orchestrator to consolidate."` This is necessary but insufficient (a Sonnet agent will sometimes commit anyway if it judges the task "obviously done").
+  - **Belt and braces**: for routing/cleanup-only agents whose `git status` should be near-empty, restrict their prompt to a single file scope ("only touch `docs/backlog.md`"). If the agent then auto-commits, the blast radius is one file.
+- **Source**: 2026-05-15 parallel-wave (commit `6a7e986` over-swept; recovered via `560310e` follow-up).
+- **Date logged**: 2026-05-15.
