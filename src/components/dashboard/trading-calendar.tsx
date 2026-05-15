@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Panel } from "@/components/ui/panel"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { DailyPnL } from "@/types"
-import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 
 interface TradingCalendarProps {
@@ -43,6 +43,7 @@ export const TradingCalendar = memo(
 		const tDays = useTranslations("dayOfWeek")
 		const locale = useLocale()
 		const effectiveDate = useEffectiveDate()
+		const { formatCompactCurrencyWithSign } = useFormatting()
 
 		const year = month.getFullYear()
 		const monthIndex = month.getMonth()
@@ -217,7 +218,7 @@ export const TradingCalendar = memo(
 												<span
 													className={cn("text-tiny font-medium", textClass)}
 												>
-													{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
+													{formatCompactCurrencyWithSign(dailyData.pnl)}
 												</span>
 												<span className="text-tiny text-txt-300 block">
 													{dailyData.tradeCount}
@@ -250,10 +251,7 @@ export const TradingCalendar = memo(
 											dailyData
 												? t("dayAriaLabel", {
 														date: dateKey,
-														pnl: formatCompactCurrencyWithSign(
-															dailyData.pnl,
-															"R$"
-														),
+														pnl: formatCompactCurrencyWithSign(dailyData.pnl),
 														count: dailyData.tradeCount,
 													})
 												: undefined

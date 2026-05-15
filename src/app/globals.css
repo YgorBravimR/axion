@@ -83,11 +83,13 @@
 	--color-border: #272a2e;
 	--color-input: var(--color-bg-300);
 	--color-ring: var(--color-acc-100);
-	--color-chart-1: var(--color-acc-100);
-	--color-chart-2: var(--color-acc-200);
-	--color-chart-3: var(--color-bg-100);
-	--color-chart-4: var(--color-bg-200);
-	--color-chart-5: var(--color-bg-300);
+	--color-chart-1: oklch(0.58 0.14 242); /* Blue, cool secondary */
+	--color-chart-2: oklch(0.62 0.13 30); /* Warm orange/amber, tertiary */
+	--color-chart-3: oklch(0.55 0.12 165); /* Cyan/teal, quaternary */
+	--color-chart-4: oklch(0.61 0.11 315); /* Purple/magenta, quinary */
+	--color-chart-5: oklch(0.59 0.13 95); /* Yellow-green, senary */
+	--color-chart-6: oklch(0.56 0.1 45); /* Warm tan/rust, septenary */
+	--color-chart-7: oklch(0.64 0.09 260); /* Cool purple/lavender, endpoint */
 	--color-sidebar: var(--color-bg-100);
 	--color-sidebar-foreground: var(--color-txt-100);
 	--color-sidebar-primary: var(--color-acc-100);
@@ -220,11 +222,13 @@
 	--color-border: var(--color-bg-300);
 	--color-input: var(--color-bg-300);
 	--color-ring: var(--color-acc-100);
-	--color-chart-1: var(--color-acc-100);
-	--color-chart-2: var(--color-acc-200);
-	--color-chart-3: var(--color-bg-300);
-	--color-chart-4: var(--color-bg-200);
-	--color-chart-5: var(--color-bg-100);
+	--color-chart-1: oklch(0.5 0.18 242); /* Blue, deeper in light mode */
+	--color-chart-2: oklch(0.55 0.16 30); /* Warm orange, deeper */
+	--color-chart-3: oklch(0.48 0.15 165); /* Cyan/teal, deeper */
+	--color-chart-4: oklch(0.54 0.14 315); /* Purple/magenta, deeper */
+	--color-chart-5: oklch(0.52 0.15 95); /* Yellow-green, deeper */
+	--color-chart-6: oklch(0.5 0.13 45); /* Warm tan/rust, deeper */
+	--color-chart-7: oklch(0.56 0.12 260); /* Cool purple/lavender, endpoint */
 	--color-sidebar: var(--color-bg-100);
 	--color-sidebar-foreground: var(--color-txt-100);
 	--color-sidebar-primary: var(--color-acc-100);

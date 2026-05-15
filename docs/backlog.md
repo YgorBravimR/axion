@@ -132,19 +132,6 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 
 ---
 
-## Tax / yearly-reports pre-existing baseline (still armed)
-
-Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shipped but were out of scope at the time. They live on `main` today.
-
-- **Priority:** P2 · **Effort:** S each
-- `src/components/tax/fee-rate-form.tsx:332` — `<Select>` missing `id` attribute.
-- `src/lib/tax/tax-engine.ts:245,246,324` — type holes in `YearTaxSummary` return shape.
-- `src/app/actions/*`, `src/lib/queries/*` — ~80 drizzle relational type errors (generator config issue, not in scope at the time of the scan). Bundle into one pass.
-
-**Source**: `docs/scans/2026-05-05-tax-yearly-reports.md` "Still Armed".
-
----
-
 ## Journal-list polish (deferred from sweep)
 
 ### Listbox-style arrow-nav within trade-day-group
@@ -159,15 +146,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 ## Command Center polish (deferred from sweep)
 
 - **BiasSelector auto-save toast** — P1. The non-edit row's BiasSelector auto-saves silently (spinner only). Add toast confirmation so AT users + anyone whose focus moved get a status signal. Flagged in `docs/scans/2026-05-12-impeccable-command-center.md` Phase 1a P1.
-
----
-
-## Currency formatting — account-aware compact formatters
-
-- **Priority:** P2 · **Effort:** M
-- **What**: `formatCompactCurrency`, `formatCompactCurrencyWithSign`, `formatBrlWithSign`, `formatBrlCompactWithSign` in `src/lib/formatting.ts` take a raw `symbol` string (or hardwire `"R$"`). Wire them to read from the active account's `currency` (or fall back to `user.defaultCurrency`) so a USD account never renders `R$10K`. The full-form `formatCurrency`/`formatCurrencyWithSign` already accept an optional `currency` parameter — the compact siblings should match that shape, plus a hook (e.g. `useAccountCurrency`) that resolves the active account's symbol once.
-- **Why**: The schema already stores per-account `currency` (`schema.ts:361`) and per-user `defaultCurrency` (`schema.ts:173`, `:1389`), but the dashboard hardcodes `"R$"` at every call site (`pnl-card.tsx:34`, `quick-stats.tsx:90/103`, all `equity-curve.tsx` axes/tooltips, every chart tick formatter). The moment a non-BRL account exists, every compact display lies.
-- **Source**: `docs/scans/2026-05-12-impeccable-dashboard.md` Phase 2d.
 
 ---
 
@@ -190,17 +168,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **What**: The detail page stacks ~10 sibling cards (header, P&L block, R-multiples, prices, risk, SL/TP, MFE/MAE, classification, rating+plan, tags, notes). Several adjacent groupings (prices ↔ SL/TP, MFE ↔ MAE, rating ↔ plan) read as one logical unit but render with identical visual weight. Distill into 4-5 grouped sections with deliberate spacing variance, or move the secondary metrics into a collapsible "Details" disclosure so the primary outcome (P&L, R, executions, notes) leads.
 - **Why**: Shared design law: "vary spacing for rhythm; same padding everywhere is monotony" + "cards are the lazy answer." The current page is a uniform card stack; nothing earns visual prominence over anything else.
 - **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1a critique P3 — distill deferred to keep this slice surgical.
-
----
-
-## Account comparison — deferred follow-ups
-
-### Chart-series palette overhaul (`comparison-colors.ts`)
-
-- **Priority:** P2 · **Effort:** M
-- **What**: `src/components/account-comparison/comparison-colors.ts` mixes two anti-patterns in one constant: (a) hardcoded hex literals (`#f59e0b`, `#ef4444`, `#14b8a6`, `#f97316`) bypass the token system; (b) it hijacks `var(--color-trade-buy)` and `var(--color-trade-sell)` to colour the 3rd and 4th account in selection order — so "account #3's equity line is green" is encoded as "account #3 made money," which is false.
-- **Why**: Series colors need their own semantic family (`--color-chart-1` … `--color-chart-N`) added to `src/app/globals.css`, decoupled from both trade colors and brand accents. Used by `comparison-equity-chart` line palette and the header-swatch dots in all three comparison tables (`comparison-stats-table`, `comparison-normalized-table`, `comparison-config-summary`). Scope this through `theme-designer` — the token spec needs OKLCH discipline (varied hue, tinted neutrals, no high-chroma at extremes) and dark/light variants. Combines with the `--chart-1…N` palette entry in the Backtest section — ship as one token-spec pass.
-- **Source**: `docs/scans/2026-05-12-impeccable-account-comparison.md` Phase 1a critique P2.
 
 ---
 
@@ -279,30 +246,12 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **Why**: Cosmetic at current fidelity (one tick on a ~20-tick brick is ~5% of the brick body). Worth tracking so it's not silently rediscovered as a bug later.
 - **Source**: `docs/postMorten/backend.md` [BUG-2026-05-15] open follow-ups; Ygor math note 2026-05-15.
 
-### Categorical chart palette: `--chart-1` … `--chart-N` tokens (3 callers waiting)
-
-- **Priority:** P2 · **Effort:** S
-- **What**: Three Wave 3 surfaces need a real categorical chart palette and currently each route through a different workaround:
-  - `src/components/optimize/equity-overlay-chart.tsx` ships literal hex (`["#2196F3", "#26a69a", "#FF9800", ...]`) bypassing the token system.
-  - `src/components/monte-carlo/v2/daily-pnl-chart.tsx` + `mode-distribution-chart.tsx` shoehorn engine modes through `trade-buy`/`trade-sell`/`acc-100`/`bg-300`.
-  - `src/components/equity-shield/equity-shield-chart.tsx` `strokeColor` map differentiates original/method1/method2 — post-sweep, method1 + original now both render at `acc-100` (no cross-chart hue differentiation) because we re-tokened off `trade-buy`.
-    Promote `--chart-1` … `--chart-7` in `globals.css` (dark + light values) and a `getChartColor(index)` helper. Wire all three surfaces. Combines with the `comparison-colors.ts` overhaul under Account comparison.
-- **Why**: Token-discipline drift compounds across surfaces. With three callers waiting, the ROI per hour is now best-in-backlog for the whole "design surface tokens" cluster.
-- **Source**: `docs/scans/2026-05-12-impeccable-backtest-optimize.md` Phase 1b audit P2; `docs/scans/2026-05-12-impeccable-monte-carlo.md` Phase 1a P3; `docs/scans/2026-05-12-impeccable-equity-shield.md` Phase 4 enhancement.
-
 ### Gauge verdict palette — document canonical 4-zone mapping in DESIGN.md
 
 - **Priority:** P3 · **Effort:** XS
 - **What**: `src/components/fractal-plan/target-actual-gauge.tsx` now applies a 4-zone verdict palette: `negative → fb-error`, `behind (≥0, <50% of target) → bg-bg-300/text-txt-100`, `onTrack (≥50%, <100% of target) → warning`, `ahead (≥100%) → fb-success`. Same shape will apply to any future target-vs-actual gauge (e.g. weekly cap consumption, daily R cap progress). Add the named "gauge verdict palette" to `DESIGN.md` so the next gauge widget inherits the vocabulary instead of re-inventing.
 - **Why**: Wave 4 picked the palette by analogy from Wave 3's rule-engine triad. Documenting it as the canonical gauge vocabulary keeps future gauges from reaching for `acc-100` again.
 - **Source**: `docs/scans/2026-05-12-impeccable-plan-wave4.md` Phase 4 reflection.
-
-### Tab-panel `aria-controls` wiring in `new-trade-tabs.tsx`
-
-- **Priority:** P2 · **Effort:** S
-- **What**: `src/components/journal/new-trade-tabs.tsx` has four tab buttons (`single`, `csv`, `nota`, `screenshot`) with `role="tab"` and `aria-selected`, but no `aria-controls` mapping to a panel id. The four panels currently share one wrapper `<div role="tabpanel">` so the mapping isn't possible without a refactor: give each panel a stable id and toggle the rendered panel by id. WCAG ARIA-1.0 tab/tabpanel pattern requires the controls/labelledby pair.
-- **Why**: Screen reader users today land on a "tabpanel" with no announced relationship to the selected tab. Low-effort fix once the panels are split. Bundle with the admin a11y pass below.
-- **Source**: `docs/scans/2026-05-12-impeccable-form-editors-wave5.md` Phase 1b deferred.
 
 ### Document verdict-triad mapping for 5-point rating scales in DESIGN.md
 
@@ -317,13 +266,6 @@ Items below were known when `docs/scans/2026-05-05-tax-yearly-reports.md` shippe
 - **What**: `border-acc-100 text-acc-100` is the conventional active-tab indicator across the app (`new-trade-tabs.tsx`, AnimatedTabs, journal tabs). It is **not** a bronze hijack — only one tab is active at a time and the pattern mirrors Linear/Raycast active-tab convention. Document this in DESIGN.md as the canonical tab-active treatment so the next tab UI doesn't reach for `fb-success` ("active = good") or other off-brand alternatives.
 - **Why**: Without canonicalization, the question "should this be acc-100 or fb-success?" will recur on every new tab UI. Codify once.
 - **Source**: `docs/scans/2026-05-12-impeccable-form-editors-wave5.md` Phase 4 deferred.
-
-### Admin-widget decorative-icon a11y pass + `<TabsTrigger>` `aria-controls`
-
-- **Priority:** P2 · **Effort:** M
-- **What**: ~25 decorative lucide icons inside text-bearing `<Button>` triggers across `bug-reports-list.tsx`, `tag-list.tsx`, `condition-list.tsx`, `indicator-list.tsx`, `user-list.tsx`, `tag-form.tsx`, `condition-form.tsx`, `account-settings.tsx`, `trading-account-settings.tsx` lack `aria-hidden="true"`. Bundle with wiring explicit `aria-controls` from each `<TabsTrigger>` in `settings-content.tsx` (and the wider `<Tabs>` users: `new-trade-tabs.tsx`, profile tabs) to their `<TabsContent>` panels so screen-reader tab/tabpanel semantics are complete.
-- **Why**: Touching the tab strip and its widgets twice would be wasteful. One coordinated admin-a11y pass fixes both layers, and the Wave 6 sweep already canonicalized the icon usage so the next pass is purely additive.
-- **Source**: `docs/scans/2026-05-12-impeccable-settings-wave6.md` Phase 4 deferred.
 
 ### Document operation-outcome verdict mapping in DESIGN.md
 
@@ -422,6 +364,11 @@ Shipped items, newest first. Each entry: title · `completed_date` · one-line "
 
 ### 2026-05-15
 
+- **Categorical chart palette `--chart-1..7` + `getChartColor()` helper** — P2. 7 OKLCH tokens added to `src/app/globals.css` (light + dark, hue ladder at 242/30/165/315/95/45/260, dark L ≈ 0.56-0.64 / C ≈ 0.09-0.14, light L ≈ 0.48-0.56 / C ≈ 0.12-0.18). New `src/lib/chart-colors.ts` exposes `getChartColor(index)` with wraparound. 4 chart surfaces migrated off workarounds: `optimize/equity-overlay-chart.tsx` (was hardcoded hex), `monte-carlo/v2/daily-pnl-chart.tsx` + `mode-distribution-chart.tsx` (were hijacking `trade-buy`/`trade-sell`/`acc-100`), `equity-shield/equity-shield-chart.tsx` (fixed silent `acc-100` collision between `original` + `method1`). Pending commit.
+- **`comparison-colors.ts` palette overhaul** — P2. `src/components/account-comparison/comparison-colors.ts` rewritten as pure `chart-1..7` list. Removed 4 hardcoded hex literals and the trade-color hijack that was encoding "account #3 made money" through selection-order positioning. Pending commit.
+- **Account-aware compact currency formatters** — P2. 4 compact formatters in `src/lib/formatting.ts` (`formatCompactCurrency`, `formatCompactCurrencyWithSign`, `formatBrlWithSign`, `formatBrlCompactWithSign`) accept optional `currency?: string` param matching their full-form siblings; default BRL preserves backwards compat. New `getAccountCurrency()` server action with React `cache()` for request-level memoization; `useFormatting()` hook extended to pre-bind compact formatters to active account currency. 10 dashboard files migrated off hardcoded `"R$"` (`cumulative-pnl-chart`, `daily-pnl-bar-chart`, `day-equity-curve`, `day-summary-stats`, `day-trades-list`, `equity-curve`, `kpi/pnl-card`, `kpi/profit-factor-card`, `quick-stats`, `trading-calendar`). A USD account now renders `$10K` instead of `R$10K`. Pending commit.
+- **`new-trade-tabs.tsx` aria-controls + admin-widget decorative-icon a11y pass** — P2. WAI-ARIA tab/tabpanel pattern completed in `src/components/journal/new-trade-tabs.tsx`: stable tab/panel id pairs (`new-trade-tab-{single,csv,nota,screenshot}` ↔ `…-panel-…`), `aria-controls` + `aria-labelledby` wired on both sides. Confirmed Radix `<TabsTrigger>` + `<TabsContent>` in `settings-content.tsx` (and profile tabs) already manage these aria attrs internally — no manual wiring needed. 36 decorative lucide icons across 8 admin/settings widgets received `aria-hidden="true"` (scan estimate was ~25; actual surface bigger): `bug-reports-list.tsx` (6), `tag-list.tsx` (4), `condition-list.tsx` (3), `indicator-list.tsx` (3), `user-list.tsx` (3), `tag-form.tsx` (1), `account-settings.tsx` (2), `trading-account-settings.tsx` (2), plus 12 already-marked in `settings-content.tsx`. Pending commit.
+- **Tax / yearly-reports pre-existing baseline (verified resolved)** — P2. Investigation found all three armed items already shipped: `<Select>` id on `fee-rate-form.tsx:398` (now `id="fee-rate-add-override"` paired with aria-label); `YearTaxSummary` return type fully annotated in `tax-engine.ts:327` with no unsafe casts; `pnpm lint:strict` shows 0 errors (drizzle relational types healthy — 12 tables without `relations()` declarations remain but produce no current errors, future-proofing rather than active blocker). No code changes; entry retired as confirmed-shipped. Pending commit.
 - **`StatCard` variant API split** — P3. `src/components/equity-shield/equity-shield-stats.tsx` `variant: "default" | "positive" | "negative" | "pass" | "fail"` split into two type-discriminated props: `signedVariant?: "positive" | "negative"` (paints `trade-buy`/`trade-sell` — signed-money) and `verdictVariant?: "pass" | "fail"` (paints `fb-success`/`fb-error` — verdict). Both undefined = neutral default. One internal callsite migrated. Eliminates the foot-gun where a contributor might pick `positive` for a success verdict. Pending commit.
 - **Verdict-triad rule palette tokens** — P3. Added `--color-rule-{blocked,paused,executed,na}` to `src/app/globals.css` (light + dark), mirroring `fb-error`/`warning`/`fb-success`/`txt-300` initial values but decoupled for future themeing. 22 classNames across 5 callers migrated: `kelly-criterion-card.tsx`, `trade-comparison-table.tsx`, `day-trace-card.tsx`, `preview-banner.tsx`. Rule-engine vocabulary is now grep-able and themeable independently from the generic feedback aliases. Pending commit.
 - **Inline currency formatters → `useFormatting()`** — P2. 4 reports widgets migrated off hardcoded `pt-BR` BRL formatters: `weekly-meta-chart.tsx`, `annual-rollup-table.tsx`, `capital-event-log.tsx`, `withdrawal-calculator.tsx`. Local `formatBRL` helpers and inline `Intl.NumberFormat("pt-BR", …)` calls replaced with `useFormatting()` hook, which respects the user's account currency preference. `annual-rollup-table.tsx` now also displays 2 decimal places (alignment with hook default). Pending commit.

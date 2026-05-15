@@ -275,10 +275,10 @@ const EquityShieldChart = ({
 		() => ({
 			strokeColor:
 				variant === "original"
-					? "var(--color-acc-100)"
+					? "var(--color-chart-1)"
 					: variant === "method1"
-						? "var(--color-acc-100)"
-						: "var(--color-acc-200)",
+						? "var(--color-chart-2)"
+						: "var(--color-chart-3)",
 			gradientId: `shield-gradient-${variant}`,
 			originalGradientId: `shield-gradient-original-${variant}`,
 		}),
@@ -341,12 +341,12 @@ const EquityShieldChart = ({
 							>
 								<stop
 									offset="5%"
-									stopColor="var(--color-acc-100)"
+									stopColor="var(--color-chart-1)"
 									stopOpacity={0.15}
 								/>
 								<stop
 									offset="95%"
-									stopColor="var(--color-acc-100)"
+									stopColor="var(--color-chart-1)"
 									stopOpacity={0}
 								/>
 							</linearGradient>
@@ -468,11 +468,11 @@ const EquityShieldChart = ({
 			{/* Chart legend */}
 			{isComparisonMode ? (
 				<div className="mt-s-200 gap-m-400 flex flex-wrap items-center">
-					{/* Original curve (dashed gold) */}
+					{/* Original curve (dashed chart-1) */}
 					<div className="gap-s-200 flex items-center">
 						<div
 							className="h-0 w-4 border-t-2 border-dashed"
-							style={{ borderColor: "var(--color-acc-100)" }}
+							style={{ borderColor: "var(--color-chart-1)" }}
 						/>
 						<span className="text-tiny text-txt-300">
 							{t("legendOriginal")}

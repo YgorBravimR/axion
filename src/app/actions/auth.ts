@@ -591,3 +591,30 @@ export const changePassword = async (
 		return { status: "error", error: t("errors.loginFailed") }
 	}
 }
+
+// ==========================================
+// ACCOUNT CURRENCY
+// ==========================================
+
+/**
+ * Get the active account's currency from the session
+ * Cached at request level to avoid duplicate DB queries
+ */
+export const getAccountCurrency = cache(async (): Promise<string> => {
+	try {
+		const session = await auth()
+		if (!session?.user?.accountId) {
+			return "BRL" // Default to BRL if no account selected
+		}
+
+		const account = await db.query.tradingAccounts.findFirst({
+			where: eq(tradingAccounts.id, session.user.accountId),
+			columns: { currency: true },
+		})
+
+		return account?.currency ?? "BRL"
+	} catch (error) {
+		console.error("Get account currency error:", error)
+		return "BRL" // Fallback to BRL on error
+	}
+})

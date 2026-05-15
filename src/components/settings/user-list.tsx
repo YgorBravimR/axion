@@ -159,7 +159,10 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 			</div>
 
 			<div className="relative w-full sm:max-w-sm">
-				<Search className="text-txt-300 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+				<Search
+					className="text-txt-300 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+					aria-hidden="true"
+				/>
 				<Input
 					id="user-search"
 					placeholder={t("searchUsers")}
@@ -212,6 +215,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 											<TableCell className="px-s-200 w-10">
 												<ChevronRight
 													className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+													aria-hidden="true"
 												/>
 											</TableCell>
 											<TableCell className="font-medium">
@@ -347,7 +351,10 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
 																			})
 																		}}
 																	>
-																		<Trash2 className="h-3.5 w-3.5" />
+																		<Trash2
+																			className="h-3.5 w-3.5"
+																			aria-hidden="true"
+																		/>
 																	</Button>
 																</div>
 															))}

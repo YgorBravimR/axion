@@ -5,10 +5,8 @@ import { Flame, TrendingUp, AlertTriangle, Activity } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import type { StreakData, OverallStats } from "@/types"
 import { cn } from "@/lib/utils"
-import {
-	formatCompactCurrencyWithSign,
-	formatDateLocale,
-} from "@/lib/formatting"
+import { formatDateLocale } from "@/lib/formatting"
+import { useFormatting } from "@/hooks/use-formatting"
 import { Panel } from "@/components/ui/panel"
 import type { Locale } from "@/i18n/config"
 
@@ -67,6 +65,7 @@ const StatRow = ({
 export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 	const t = useTranslations("dashboard.quickStats")
 	const locale = useLocale() as Locale
+	const { formatCompactCurrencyWithSign } = useFormatting()
 
 	const formatDate = useCallback(
 		(dateStr: string): string => {
@@ -106,7 +105,7 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("bestDay")}
 					value={
 						streakData?.bestDay
-							? formatCompactCurrencyWithSign(streakData.bestDay.pnl, "R$")
+							? formatCompactCurrencyWithSign(streakData.bestDay.pnl)
 							: "--"
 					}
 					subValue={
@@ -121,7 +120,7 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("worstDay")}
 					value={
 						streakData?.worstDay
-							? formatCompactCurrencyWithSign(streakData.worstDay.pnl, "R$")
+							? formatCompactCurrencyWithSign(streakData.worstDay.pnl)
 							: "--"
 					}
 					subValue={

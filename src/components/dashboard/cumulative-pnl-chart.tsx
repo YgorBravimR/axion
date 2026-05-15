@@ -6,9 +6,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { Panel } from "@/components/ui/panel"
 import { cn } from "@/lib/utils"
-import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { EquityPoint } from "@/types"
 
 interface CumulativePnLChartProps {
@@ -27,6 +27,7 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
+	const { formatCompactCurrencyWithSign } = useFormatting()
 
 	const head = payload?.[0]
 	if (!active || !head) {
@@ -55,7 +56,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 							isProfit ? "text-trade-buy" : "text-trade-sell"
 						)}
 					>
-						{formatCompactCurrencyWithSign(data.equity, "R$")}
+						{formatCompactCurrencyWithSign(data.equity)}
 					</span>
 				</p>
 				{data.drawdown !== undefined && data.drawdown > 0 && (
@@ -75,6 +76,7 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
+	const { formatCompactCurrencyWithSign } = useFormatting()
 
 	const formatDate = useMemo(
 		() => (date: string) => {
@@ -144,7 +146,7 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 					/>
 					<YAxis
 						tickFormatter={(value: number) =>
-							formatCompactCurrencyWithSign(value, "R$")
+							formatCompactCurrencyWithSign(value)
 						}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 12 }}

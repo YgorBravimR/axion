@@ -1,16 +1,16 @@
 /**
  * Cyclic color palette for account comparison charts and tables.
- * Colors chosen to be visually distinct and accessible.
+ * Sourced from the categorical chart color system (--color-chart-N).
+ * Maps accounts in selection order to stable, distinct chart colors.
  */
 const COMPARISON_COLORS = [
-	"var(--color-acc-100)",     // gold
-	"var(--color-acc-200)",     // blue
-	"var(--color-trade-buy)",   // green
-	"var(--color-trade-sell)",  // purple
-	"#f59e0b",                  // amber
-	"#ef4444",                  // red
-	"#14b8a6",                  // teal
-	"#f97316",                  // orange
+	"var(--color-chart-1)", // account 1
+	"var(--color-chart-2)", // account 2
+	"var(--color-chart-3)", // account 3
+	"var(--color-chart-4)", // account 4
+	"var(--color-chart-5)", // account 5
+	"var(--color-chart-6)", // account 6
+	"var(--color-chart-7)", // account 7
 ] as const
 
 export { COMPARISON_COLORS }

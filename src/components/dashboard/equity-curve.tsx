@@ -7,11 +7,11 @@ import { Panel } from "@/components/ui/panel"
 import { SegmentedToggle } from "@/components/ui/segmented-toggle"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
-import { formatCompactCurrency } from "@/lib/formatting"
 import { getEquityCurve } from "@/app/actions/analytics"
 import type { EquityCurveMode } from "@/app/actions/analytics.types"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { useFormatting } from "@/hooks/use-formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 import type { EquityPoint } from "@/types"
 
@@ -106,6 +106,8 @@ const EquityTooltip = ({
 	drawdownLabel,
 	tradeNumberLabel,
 }: EquityTooltipProps) => {
+	const { formatCompactCurrency } = useFormatting()
+
 	const head = payload?.[0]
 	if (!active || !head) {
 		return null
@@ -140,11 +142,11 @@ const EquityTooltip = ({
 				<p className="text-tiny text-txt-300">{formatDateStr(data.date)}</p>
 			)}
 			<p className="text-small text-txt-100 font-semibold">
-				{formatCompactCurrency(data.accountEquity, "R$")}
+				{formatCompactCurrency(data.accountEquity)}
 			</p>
 			{data.drawdown > 0 && (
 				<p className="text-tiny text-trade-sell">
-					{drawdownLabel}: {formatCompactCurrency(drawdownValue, "R$")} (
+					{drawdownLabel}: {formatCompactCurrency(drawdownValue)} (
 					{data.drawdown.toFixed(1)}%)
 				</p>
 			)}
@@ -157,6 +159,7 @@ export const EquityCurve = ({
 	calendarMonth,
 }: EquityCurveProps) => {
 	const { yAxisWidth } = useChartConfig()
+	const { formatCompactCurrency } = useFormatting()
 	const t = useTranslations("dashboard.equity")
 	const tCharts = useTranslations("charts")
 	const locale = useLocale()
@@ -356,9 +359,7 @@ export const EquityCurve = ({
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={(value: number) =>
-							formatCompactCurrency(value, "R$")
-						}
+						tickFormatter={(value: number) => formatCompactCurrency(value)}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}
