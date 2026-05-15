@@ -884,7 +884,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									variant="destructive"
 									size="sm"
 								>
-									<DatabaseZap className="mr-s-200 h-4 w-4" />
+									<DatabaseZap
+										className="mr-s-200 h-4 w-4"
+										aria-hidden="true"
+									/>
 									{t("deleteAllData")}
 								</Button>
 							</AlertDialogTrigger>
@@ -968,7 +971,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 									size="sm"
 									disabled={!canDeleteAccount}
 								>
-									<Trash2 className="mr-s-200 h-4 w-4" />
+									<Trash2 className="mr-s-200 h-4 w-4" aria-hidden="true" />
 									{t("deleteAccount")}
 								</Button>
 							</AlertDialogTrigger>

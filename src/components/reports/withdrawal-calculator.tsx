@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import { recordCapitalEvent } from "@/app/actions/annual-reports"
 
 interface WithdrawalCalculatorProps {
@@ -16,6 +17,7 @@ const WithdrawalCalculator = ({
 	onLogged,
 }: WithdrawalCalculatorProps) => {
 	const t = useTranslations("reports")
+	const { formatCurrency } = useFormatting()
 	const suggestedCents = Math.round(
 		currentMonthNetPnl * (withdrawalTargetPercent / 100)
 	)
@@ -36,7 +38,7 @@ const WithdrawalCalculator = ({
 		setError(null)
 		const amountBRL = parseFloat(amount.replace(",", "."))
 		if (isNaN(amountBRL) || amountBRL <= 0) {
-			setError("Enter a valid amount greater than zero")
+			setError(t("withdrawalEnterValidAmount"))
 			return
 		}
 		const amountCents = Math.round(amountBRL * 100)
@@ -50,7 +52,7 @@ const WithdrawalCalculator = ({
 				setSuccess(true)
 				onLogged()
 			} else {
-				setError(result.message ?? "Failed to log withdrawal")
+				setError(result.message ?? t("withdrawalFailedToLog"))
 			}
 		})
 	}
@@ -68,10 +70,7 @@ const WithdrawalCalculator = ({
 			<p className="text-txt-200 text-small">
 				{t.rich("withdrawalMessage", {
 					percent: withdrawalTargetPercent.toString(),
-					amount: new Intl.NumberFormat("pt-BR", {
-						style: "currency",
-						currency: "BRL",
-					}).format(suggestedBRL),
+					amount: formatCurrency(suggestedBRL, "BRL"),
 					span: (chunks) => (
 						<span className="text-txt-100 font-mono font-medium">{chunks}</span>
 					),

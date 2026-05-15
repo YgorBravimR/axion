@@ -9,6 +9,7 @@ import { Panel } from "@/components/ui/panel"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
+import { cn } from "@/lib/utils"
 import { MoodSelector } from "./mood-selector"
 import { upsertDailyPlan } from "@/app/actions/fractal-plan/daily"
 import type { DailyPlan } from "@/db/schema"
@@ -18,6 +19,7 @@ interface PreMarketNotesProps {
 	dailyPlan: DailyPlan | null
 	onRefresh: () => void
 	isReadOnly?: boolean
+	isRefreshing?: boolean
 }
 
 const NO_PLAN_HINT_KEY = "noPlanPrompt"
@@ -26,6 +28,7 @@ export const PreMarketNotes = ({
 	dailyPlan,
 	onRefresh,
 	isReadOnly = false,
+	isRefreshing = false,
 }: PreMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
 	const tPlan = useTranslations("commandCenter.plan")
@@ -118,7 +121,14 @@ export const PreMarketNotes = ({
 	}
 
 	return (
-		<Panel id="cc-pre-market-notes">
+		<Panel
+			id="cc-pre-market-notes"
+			aria-busy={isRefreshing || undefined}
+			className={cn(
+				"transition-opacity duration-200",
+				isRefreshing && "opacity-60"
+			)}
+		>
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
 					<Sun className="text-txt-300 h-5 w-5" aria-hidden="true" />

@@ -160,6 +160,9 @@ pnpm exec playwright test --grep "@stage:weekly|@stage:monthly"
 
 # Run the chain except history seeders
 pnpm exec playwright test --grep "@journey" --grep-invert "@stage:seed-"
+
+# Run a single stage
+pnpm exec playwright test --grep "@stage:welcome"
 ```
 
 The full tag set: `@journey` + one of `@stage:welcome`, `@stage:foundation`, `@stage:fractal-plan`, `@stage:pressure-test`, `@stage:daily-loop`, `@stage:seed-history`, `@stage:weekly`, `@stage:monthly`, `@stage:quarter-year`, `@stage:improvement`, `@stage:hawks-daily-loop`, `@stage:seed-hawks-history`.

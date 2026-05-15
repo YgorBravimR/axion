@@ -77,6 +77,7 @@ export const NewTradeTabs = ({
 				role="tablist"
 			>
 				<button
+					id="new-trade-tab-single"
 					type="button"
 					onClick={() => setActiveTab("single")}
 					className={cn(
@@ -86,6 +87,7 @@ export const NewTradeTabs = ({
 							: "text-txt-300 hover:text-txt-100 border-transparent"
 					)}
 					aria-selected={activeTab === "single"}
+					aria-controls="new-trade-tab-panel-single"
 					role="tab"
 				>
 					{tradeMode === "simple" ? (
@@ -97,6 +99,7 @@ export const NewTradeTabs = ({
 				</button>
 				{canAccess("journal:csv-tab") && (
 					<button
+						id="new-trade-tab-csv"
 						type="button"
 						onClick={() => setActiveTab("csv")}
 						className={cn(
@@ -106,6 +109,7 @@ export const NewTradeTabs = ({
 								: "text-txt-300 hover:text-txt-100 border-transparent"
 						)}
 						aria-selected={activeTab === "csv"}
+						aria-controls="new-trade-tab-panel-csv"
 						role="tab"
 					>
 						<Upload className="h-4 w-4" aria-hidden="true" />
@@ -114,6 +118,7 @@ export const NewTradeTabs = ({
 				)}
 				{canAccess("journal:nota-tab") && (
 					<button
+						id="new-trade-tab-nota"
 						type="button"
 						onClick={() => setActiveTab("nota")}
 						className={cn(
@@ -123,6 +128,7 @@ export const NewTradeTabs = ({
 								: "text-txt-300 hover:text-txt-100 border-transparent"
 						)}
 						aria-selected={activeTab === "nota"}
+						aria-controls="new-trade-tab-panel-nota"
 						role="tab"
 					>
 						<FileStack className="h-4 w-4" aria-hidden="true" />
@@ -131,6 +137,7 @@ export const NewTradeTabs = ({
 				)}
 				{canAccess("journal:ocr-tab") && (
 					<button
+						id="new-trade-tab-screenshot"
 						type="button"
 						onClick={() => setActiveTab("screenshot")}
 						className={cn(
@@ -140,6 +147,7 @@ export const NewTradeTabs = ({
 								: "text-txt-300 hover:text-txt-100 border-transparent"
 						)}
 						aria-selected={activeTab === "screenshot"}
+						aria-controls="new-trade-tab-panel-screenshot"
 						role="tab"
 					>
 						<ImageIcon className="h-4 w-4" aria-hidden="true" />
@@ -149,56 +157,78 @@ export const NewTradeTabs = ({
 			</div>
 
 			{/* Tab Content */}
-			<div role="tabpanel">
-				{/* Trade form stays mounted (hidden when other tabs active) to preserve state */}
-				<div className={activeTab !== "single" ? "hidden" : ""}>
-					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
-						{/* Trade Mode Selector — premium+ only */}
-						{isPremium && (
-							<TradeModeSelector
-								value={tradeMode}
-								onChange={handleModeChange}
-							/>
-						)}
+			<div
+				id="new-trade-tab-panel-single"
+				role="tabpanel"
+				aria-labelledby="new-trade-tab-single"
+				className={activeTab !== "single" ? "hidden" : ""}
+			>
+				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+					{/* Trade Mode Selector — premium+ only */}
+					{isPremium && (
+						<TradeModeSelector value={tradeMode} onChange={handleModeChange} />
+					)}
 
-						{/* Form based on mode */}
-						{tradeMode === "simple" ? (
-							<TradeForm
-								ref={tradeFormRef}
-								strategies={strategies}
-								tags={tags}
-								assets={assets}
-								timeframes={timeframes}
-								redirectTo={redirectTo}
-								defaultAssetId={defaultAssetId}
-								defaultDate={defaultDate}
-								initialSharedState={sharedState}
-								hawksModeActive={hawksModeActive}
-							/>
-						) : (
-							<ScaledTradeForm
-								ref={scaledFormRef}
-								strategies={strategies}
-								tags={tags}
-								assets={assets}
-								timeframes={timeframes}
-								onModeChange={() => handleModeChange("simple")}
-								redirectTo={redirectTo}
-								defaultAssetId={defaultAssetId}
-								defaultDate={defaultDate}
-								initialSharedState={sharedState}
-							/>
-						)}
-					</div>
+					{/* Form based on mode */}
+					{tradeMode === "simple" ? (
+						<TradeForm
+							ref={tradeFormRef}
+							strategies={strategies}
+							tags={tags}
+							assets={assets}
+							timeframes={timeframes}
+							redirectTo={redirectTo}
+							defaultAssetId={defaultAssetId}
+							defaultDate={defaultDate}
+							initialSharedState={sharedState}
+							hawksModeActive={hawksModeActive}
+						/>
+					) : (
+						<ScaledTradeForm
+							ref={scaledFormRef}
+							strategies={strategies}
+							tags={tags}
+							assets={assets}
+							timeframes={timeframes}
+							onModeChange={() => handleModeChange("simple")}
+							redirectTo={redirectTo}
+							defaultAssetId={defaultAssetId}
+							defaultDate={defaultDate}
+							initialSharedState={sharedState}
+						/>
+					)}
 				</div>
-				{activeTab === "csv" && canAccess("journal:csv-tab") && <CsvImport />}
-				{activeTab === "nota" && canAccess("journal:nota-tab") && (
-					<NotaImport />
-				)}
-				{activeTab === "screenshot" && canAccess("journal:ocr-tab") && (
-					<OcrImport />
-				)}
 			</div>
+			{canAccess("journal:csv-tab") && (
+				<div
+					id="new-trade-tab-panel-csv"
+					role="tabpanel"
+					aria-labelledby="new-trade-tab-csv"
+					className={activeTab !== "csv" ? "hidden" : ""}
+				>
+					<CsvImport />
+				</div>
+			)}
+			{canAccess("journal:nota-tab") && (
+				<div
+					id="new-trade-tab-panel-nota"
+					role="tabpanel"
+					aria-labelledby="new-trade-tab-nota"
+					className={activeTab !== "nota" ? "hidden" : ""}
+				>
+					<NotaImport />
+				</div>
+			)}
+			{canAccess("journal:ocr-tab") && (
+				<div
+					id="new-trade-tab-panel-screenshot"
+					role="tabpanel"
+					aria-labelledby="new-trade-tab-screenshot"
+					className={activeTab !== "screenshot" ? "hidden" : ""}
+				>
+					<OcrImport />
+				</div>
+			)}
 		</div>
 	)
 }

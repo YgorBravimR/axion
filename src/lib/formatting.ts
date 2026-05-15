@@ -255,36 +255,44 @@ export const formatHourOfDay = (hour: number, locale: Locale): string => {
 
 /**
  * Format currency in compact form for charts (e.g., $10K, $1.5M)
+ * @param value - numeric value to format
+ * @param currency - currency code (e.g., "BRL", "USD"); defaults to "BRL"
  */
 export const formatCompactCurrency = (
 	value: number,
-	symbol: string
+	currency: string = "BRL"
 ): string => {
 	const absValue = Math.abs(value)
 	const sign = value < 0 ? "-" : ""
 
-	if (absValue >= 1_000_000) {
-		return `${sign}${symbol}${(absValue / 1_000_000).toFixed(1)}M`
-	}
-	if (absValue >= 1_000) {
-		return `${sign}${symbol}${(absValue / 1_000).toFixed(1)}K`
-	}
-	return `${sign}${symbol}${absValue.toFixed(0)}`
+	// Use Intl.NumberFormat for locale-aware compact formatting
+	const formatter = new Intl.NumberFormat("en-US", {
+		style: "currency",
+		currency,
+		notation: "compact",
+		maximumFractionDigits: 1,
+	})
+
+	// Format absolute value, then apply sign
+	const formatted = formatter.format(absValue)
+	return `${sign}${formatted}`.replace(/^--/, "-")
 }
 
 /**
  * Format currency with sign for charts (e.g., +$1.5K, -$500)
+ * @param value - numeric value to format
+ * @param currency - currency code (e.g., "BRL", "USD"); defaults to "BRL"
  */
 export const formatCompactCurrencyWithSign = (
 	value: number,
-	symbol: string
+	currency: string = "BRL"
 ): string => {
-	const formatted = formatCompactCurrency(Math.abs(value), symbol)
+	const formatted = formatCompactCurrency(Math.abs(value), currency)
 	if (value > 0) {
 		return `+${formatted}`
 	}
 	if (value < 0) {
-		return `-${formatted}`
+		return formatted // Already has minus from formatCompactCurrency
 	}
 	return formatted
 }
@@ -308,15 +316,23 @@ export const formatRatio = (value: number): string => {
 }
 
 /**
- * Format BRL currency with sign prefix (e.g., +R$ 1.234,56 or -R$ 500,00)
+ * Format currency with sign prefix (e.g., +R$ 1.234,56 or -$ 500,00)
  * Used in journal and analytics components for P&L display
+ * @param value - numeric value to format
+ * @param currency - currency code (e.g., "BRL", "USD"); defaults to "BRL"
  */
-export const formatBrlWithSign = (value: number): string => {
+export const formatBrlWithSign = (
+	value: number,
+	currency: string = "BRL"
+): string => {
 	const prefix = value >= 0 ? "+" : ""
-	return `${prefix}R$ ${value.toLocaleString("pt-BR", {
+	const locale = currency === "BRL" ? "pt-BR" : "en-US"
+	return `${prefix}${new Intl.NumberFormat(locale, {
+		style: "currency",
+		currency,
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
-	})}`
+	}).format(Math.abs(value))}`
 }
 
 /**
@@ -329,13 +345,15 @@ export const formatR = (value: number): string => {
 }
 
 /**
- * Format BRL currency in compact form with sign (e.g., +R$1.5K, -R$500)
+ * Format currency in compact form with sign (e.g., +R$1.5K, -$500)
  * Used in analytics components for chart tooltips and compact displays
+ * @param value - numeric value to format
+ * @param currency - currency code (e.g., "BRL", "USD"); defaults to "BRL"
  */
-export const formatBrlCompactWithSign = (value: number): string => {
-	const absValue = Math.abs(value)
-	if (absValue >= 1000) {
-		return `${value >= 0 ? "+" : "-"}R$${(absValue / 1000).toFixed(1)}K`
-	}
-	return `${value >= 0 ? "+" : ""}R$${value.toFixed(0)}`
+export const formatBrlCompactWithSign = (
+	value: number,
+	currency: string = "BRL"
+): string => {
+	const formatted = formatCompactCurrencyWithSign(value, currency)
+	return formatted
 }

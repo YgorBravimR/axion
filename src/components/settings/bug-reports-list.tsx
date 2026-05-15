@@ -286,7 +286,10 @@ const BugReportsList = () => {
 									)}
 								</div>
 							</div>
-							<ChevronRight className="text-txt-300 h-4 w-4 shrink-0" />
+							<ChevronRight
+								className="text-txt-300 h-4 w-4 shrink-0"
+								aria-hidden="true"
+							/>
 						</button>
 					))}
 				</div>
@@ -414,7 +417,10 @@ const BugReportsList = () => {
 											{t("detail.url")}
 										</p>
 										<p className="text-tiny text-acc-200 gap-s-100 flex items-center break-all">
-											<ExternalLink className="h-3 w-3 shrink-0" />
+											<ExternalLink
+												className="h-3 w-3 shrink-0"
+												aria-hidden="true"
+											/>
 											{selectedReport.currentUrl}
 										</p>
 									</div>
@@ -546,7 +552,10 @@ const BugReportsList = () => {
 											{isActionPending ? (
 												<Loader2 className="mr-s-100 h-4 w-4 animate-spin motion-reduce:animate-none" />
 											) : (
-												<CheckCircle className="mr-s-100 h-4 w-4" />
+												<CheckCircle
+													className="mr-s-100 h-4 w-4"
+													aria-hidden="true"
+												/>
 											)}
 											{t("actions.accept")}
 										</Button>
@@ -559,7 +568,10 @@ const BugReportsList = () => {
 											disabled={isActionPending}
 											className="flex-1"
 										>
-											<XCircle className="mr-s-100 h-4 w-4" />
+											<XCircle
+												className="mr-s-100 h-4 w-4"
+												aria-hidden="true"
+											/>
 											{t("actions.reject")}
 										</Button>
 									</div>
@@ -627,7 +639,10 @@ const BugReportsList = () => {
 										{isActionPending ? (
 											<Loader2 className="mr-s-100 h-4 w-4 animate-spin motion-reduce:animate-none" />
 										) : (
-											<Archive className="mr-s-100 h-4 w-4" />
+											<Archive
+												className="mr-s-100 h-4 w-4"
+												aria-hidden="true"
+											/>
 										)}
 										{t("actions.close")}
 									</Button>

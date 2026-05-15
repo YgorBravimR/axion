@@ -10,9 +10,13 @@ import type { BacktestTrade } from "@/types/backtest"
 
 interface BacktestTradesTableProps {
 	trades: BacktestTrade[]
+	currency?: string
 }
 
-const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
+const BacktestTradesTable = ({
+	trades,
+	currency = "BRL",
+}: BacktestTradesTableProps) => {
 	const t = useTranslations("backtest.table")
 	const tReasons = useTranslations("backtest.exitReasons")
 	const tResults = useTranslations("backtest.results")
@@ -24,7 +28,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				accessorKey: "id",
 				header: t("trade"),
 				cell: ({ row }) => (
-					<span className="font-mono text-txt-200">{row.original.id}</span>
+					<span className="text-txt-200 font-mono">{row.original.id}</span>
 				),
 				meta: {
 					headerClassName: "hidden sm:table-cell",
@@ -44,9 +48,13 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				cell: ({ row }) => {
 					const isLong = row.original.direction === "long"
 					return (
-						<span className={`inline-flex items-center rounded-full px-s-300 py-s-100 text-tiny font-medium ${
-							isLong ? "bg-action-buy/15 text-action-buy" : "bg-action-sell/15 text-action-sell"
-						}`}>
+						<span
+							className={`px-s-300 py-s-100 text-tiny inline-flex items-center rounded-full font-medium ${
+								isLong
+									? "bg-action-buy/15 text-action-buy"
+									: "bg-action-sell/15 text-action-sell"
+							}`}
+						>
 							{(isLong ? tCommon("long") : tCommon("short")).toUpperCase()}
 						</span>
 					)
@@ -57,7 +65,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				accessorKey: "entryPrice",
 				header: () => <span className="flex justify-end">{t("entry")}</span>,
 				cell: ({ row }) => (
-					<span className="flex justify-end font-mono text-txt-100">
+					<span className="text-txt-100 flex justify-end font-mono">
 						{row.original.entryPrice.toLocaleString()}
 					</span>
 				),
@@ -66,7 +74,7 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				accessorKey: "exitPrice",
 				header: () => <span className="flex justify-end">{t("exit")}</span>,
 				cell: ({ row }) => (
-					<span className="flex justify-end font-mono text-txt-100">
+					<span className="text-txt-100 flex justify-end font-mono">
 						{row.original.exitPrice.toLocaleString()}
 					</span>
 				),
@@ -91,9 +99,11 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 			},
 			{
 				accessorKey: "contracts",
-				header: () => <span className="flex justify-end">{t("contracts")}</span>,
+				header: () => (
+					<span className="flex justify-end">{t("contracts")}</span>
+				),
 				cell: ({ row }) => (
-					<span className="flex justify-end font-mono text-txt-200">
+					<span className="text-txt-200 flex justify-end font-mono">
 						{row.original.contracts}
 					</span>
 				),
@@ -108,24 +118,39 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 				cell: ({ row }) => {
 					const pnl = row.original.netPnlCents
 					return (
-						<span className={`flex justify-end font-mono font-medium ${
-							pnl > 0 ? "text-trade-buy" : pnl < 0 ? "text-trade-sell" : "text-txt-200"
-						}`}>
-							{formatCentsAsCurrency(pnl, "BRL")}
+						<span
+							className={`flex justify-end font-mono font-medium ${
+								pnl > 0
+									? "text-trade-buy"
+									: pnl < 0
+										? "text-trade-sell"
+										: "text-txt-200"
+							}`}
+						>
+							{formatCentsAsCurrency(pnl, currency)}
 						</span>
 					)
 				},
 			},
 			{
 				accessorKey: "rMultiple",
-				header: () => <span className="flex justify-end">{t("rMultiple")}</span>,
+				header: () => (
+					<span className="flex justify-end">{t("rMultiple")}</span>
+				),
 				cell: ({ row }) => {
 					const r = row.original.rMultiple
 					return (
-						<span className={`flex justify-end font-mono font-medium ${
-							r > 0 ? "text-trade-buy" : r < 0 ? "text-trade-sell" : "text-txt-200"
-						}`}>
-							{r > 0 ? "+" : ""}{r}R
+						<span
+							className={`flex justify-end font-mono font-medium ${
+								r > 0
+									? "text-trade-buy"
+									: r < 0
+										? "text-trade-sell"
+										: "text-txt-200"
+							}`}
+						>
+							{r > 0 ? "+" : ""}
+							{r}R
 						</span>
 					)
 				},
@@ -135,8 +160,8 @@ const BacktestTradesTable = ({ trades }: BacktestTradesTableProps) => {
 	)
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-m-400">
-			<h3 className="text-h3 font-semibold text-txt-100 mb-m-400">
+		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
+			<h3 className="text-h3 text-txt-100 mb-m-400 font-semibold">
 				{tResults("tradeList")}
 			</h3>
 			<div className="overflow-x-auto">

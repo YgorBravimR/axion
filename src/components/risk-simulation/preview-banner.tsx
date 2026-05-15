@@ -47,12 +47,12 @@ const PreviewBanner = ({
 				<div className="gap-s-200 flex items-center">
 					{allTradesLackSl ? (
 						<AlertTriangle
-							className="text-fb-error h-4 w-4 shrink-0"
+							className="text-rule-na h-4 w-4 shrink-0"
 							aria-hidden="true"
 						/>
 					) : (
 						<CheckCircle
-							className="text-fb-success h-4 w-4 shrink-0"
+							className="text-rule-executed h-4 w-4 shrink-0"
 							aria-hidden="true"
 						/>
 					)}
@@ -77,12 +77,12 @@ const PreviewBanner = ({
 				</span>
 			</div>
 			{allTradesLackSl && (
-				<p className="text-small text-fb-error mt-s-200">
+				<p className="text-small text-rule-na mt-s-200">
 					{t("allTradesLackSl")}
 				</p>
 			)}
 			{preview.tradesWithoutSl > 0 && !allTradesLackSl && (
-				<p className="text-tiny text-warning mt-s-200">
+				<p className="text-tiny text-rule-na mt-s-200">
 					{t("someTradesLackSl", { count: preview.tradesWithoutSl })}
 				</p>
 			)}

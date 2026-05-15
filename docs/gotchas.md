@@ -123,6 +123,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Enforced by**: `axion/enforce-token-usage` (error). Catalog: `eslint-rules/token-rules.mjs`. Invalid-token reference: `docs/scans/2026-05-07-cockpit-tokens.md`.
 - **Date logged**: 2026-05-07.
 
+### `let x = null; switch { x = … }` trips `no-useless-assignment`
+
+- **What**: ESLint's `no-useless-assignment` rule (error in Tier 1) flags the classic accumulator pattern `let next = null; switch (key) { case "A": next = 1; break; ... } if (next === null) return; use(next)`. Every case-branch overwrites the initial `null` before any read, so the initial assignment is "useless" by the rule's analysis — even though it's load-bearing for the post-switch `null`-check. Hit during the `SegmentedToggle` arrow-key navigation in `src/components/ui/segmented-toggle.tsx`.
+- **What to do**: Extract the switch into a helper that returns the value: `const next = (() => { switch (key) { case "A": return 1; ... default: return null } })()`. The rule is happy because there's no reassignment, and the post-switch guard still works.
+- **Date logged**: 2026-05-15.
+- **Source**: `src/components/ui/segmented-toggle.tsx` — Command Center sweep follow-up.
+
 ---
 
 ## Accessibility
@@ -228,6 +235,20 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ---
 
+## Agent Orchestration
+
+### Parallel background agents share the working tree — any agent that runs `git commit` over-sweeps siblings
+
+- **What**: When the orchestrator launches multiple background agents (`Agent` tool, `run_in_background: true`) without `isolation: "worktree"`, every agent edits the _same_ repo directory. A "stay in your lane" instruction in the prompt is a soft guard, not a hard one. If any agent decides to `git add -A && git commit` to wrap up its own work, the commit snapshots all uncommitted sibling progress under its own commit title. Observed in the 2026-05-15 parallel-wave: the "Monitor/painel locale routing" agent (whose actual work was a 1-line backlog deletion) committed under a routing-themed title that included StatCard split, verdict-triad palette tokens, and partial coaching/reports work from four sibling agents.
+- **What to do**: Pick one of:
+  - **Hard isolation**: pass `isolation: "worktree"` on the `Agent` call. The agent works on a temporary git worktree; nothing it touches reaches the parent tree until the orchestrator merges. Use this for any wave where two+ agents are running concurrently and might both commit.
+  - **Soft fence**: keep prompts explicit — `"Do NOT run git add / git commit. Leave changes in the working tree for the orchestrator to consolidate."` This is necessary but insufficient (a Sonnet agent will sometimes commit anyway if it judges the task "obviously done").
+  - **Belt and braces**: for routing/cleanup-only agents whose `git status` should be near-empty, restrict their prompt to a single file scope ("only touch `docs/backlog.md`"). If the agent then auto-commits, the blast radius is one file.
+- **Source**: 2026-05-15 parallel-wave (commit `6a7e986` over-swept; recovered via `560310e` follow-up).
+- **Date logged**: 2026-05-15.
+
+---
+
 ## E2E / Playwright config
 
 ### `globalSetup` and `globalTeardown` point at the same file — by design
@@ -235,4 +256,3 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What**: `playwright.config.ts` wires both `globalSetup` and `globalTeardown` to `./e2e/global.teardown.ts`. The filename is misleading: the script runs at _both_ boundaries of a test session, so any cleanup it does also happens _before_ tests start. The journey suite relies on this: a fixed-email Bravo persona (`bravo@axion-demo.com`) gets its DB row and `rate_limit_attempts` slot wiped on chain start, so the login rate-limit (`login:<email>` in `src/app/actions/auth.ts`) never trips on Stage 0. There is also a separate `e2e/global.setup.ts`, but it is registered as a **named project** ("setup") via `test.setMatch`, not as a top-level globalSetup — it handles admin login + storageState for the legacy `e2e/tests/*` suites.
 - **What to do**: If you need a new "run before every Playwright session" hook, extend `e2e/global.teardown.ts` rather than wiring a second globalSetup. If you need to seed/auth a specific user, do it in a Playwright project named `setup` (see how `chromium-auth` and the journey stages depend on it). Renaming the file to `global.cleanup.ts` would be more honest, but the rename touches CI workflows — leave it unless you are already touching that area.
 - **Source**: `playwright.config.ts:213-214`, `e2e/global.teardown.ts`, `e2e/global.setup.ts`.
-- **Date logged**: 2026-05-15.

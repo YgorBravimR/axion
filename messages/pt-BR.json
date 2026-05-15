@@ -1305,7 +1305,7 @@
 		"noInsights": "Os padrões aparecem assim que você tiver mais trades registrados.",
 		"noTrades": "Nenhum trade encontrado para o período de análise.",
 		"period": "Últimos {days} dias",
-		"tradeCount": "{count} trades analisados",
+		"tradeCount": "{count, plural, =0 {Nenhum trade analisado} one {# trade analisado} other {# trades analisados}}",
 		"severity": {
 			"warning": "Alerta",
 			"attention": "Atenção",
@@ -2493,7 +2493,7 @@
 			"detailToggle": "Detalhes do mês"
 		},
 		"withdrawalLoggedSuccess": "Retirada registrada com sucesso.",
-		"withdrawalMessage": "Com base na sua meta de retirada de {percent}%, considere retirar <span>{amount}</span>.",
+		"withdrawalMessage": "Registre {percent}% dos lucros deste mês: {amount}",
 		"withdrawalAmountLabel": "Valor (R$)",
 		"withdrawalDateLabel": "Data",
 		"withdrawalLog": "Registrar Retirada",
@@ -2674,7 +2674,11 @@
 				"avgFeePerTrade": "Taxa Média/Trade",
 				"generatedBy": "Gerado pelo Axion"
 			}
-		}
+		},
+		"withdrawalAmountAriaLabel": "Valor em reais",
+		"withdrawalDateAriaLabel": "Data da retirada",
+		"withdrawalEnterValidAmount": "Digite um valor válido maior que zero",
+		"withdrawalFailedToLog": "Falha ao registrar retirada"
 	},
 	"settings": {
 		"title": "Configurações",
@@ -4668,7 +4672,8 @@
 			"allocationUsed": "Alocação usada: {total}%",
 			"allocationOver": "Excesso de alocação: +{over}%",
 			"allocationExact": "Alocação exata",
-			"allocationRemaining": "Alocação restante: {remaining}%"
+			"allocationRemaining": "Alocação restante: {remaining}%",
+			"removeLevel": "Remover nível de saída {level}"
 		},
 		"orb": {
 			"name": "Rompimento do Range de Abertura",
@@ -4714,7 +4719,8 @@
 			"equityCurve": "Curva de Equity",
 			"tradeList": "Lista de Trades",
 			"dayBreakdown": "Detalhamento Diário",
-			"completedTrades": "{count} trades concluídos"
+			"completedTrades": "{count} trades concluídos",
+			"engineVersion": "Versão do Motor"
 		},
 		"table": {
 			"trade": "#",
@@ -4912,7 +4918,8 @@
 			"unitPts": "pts",
 			"sizingLots": "{lots} lotes",
 			"sizingRisk": "R${amount} de risco"
-		}
+		},
+		"currentValueSuffix": "(atual)"
 	},
 	"candleImport": {
 		"errors": {
@@ -5464,7 +5471,7 @@
 			"screenAjusteHint": "Preço de ajuste do dia se mantém como suporte/resistência.",
 			"notesLabel": "Notas",
 			"notesPlaceholder": "Contexto opcional: drivers macro, níveis-chave, assimetrias…",
-			"confirmAction": "Confirmar viés"
+			"confirmedAt": "Bias confirmada às {time}"
 		},
 		"settings": {
 			"title": "Modo Hawks",

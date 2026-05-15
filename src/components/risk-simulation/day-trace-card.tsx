@@ -151,10 +151,10 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 			{day.dayResult.hitDailyLimit && (
 				<div className="border-bg-300 mt-s-200 gap-s-200 pt-s-200 flex items-center border-t">
 					<StopCircle
-						className="text-fb-error h-3.5 w-3.5 shrink-0"
+						className="text-rule-blocked h-3.5 w-3.5 shrink-0"
 						aria-hidden="true"
 					/>
-					<span className="text-tiny text-fb-error font-medium">
+					<span className="text-tiny text-rule-blocked font-medium">
 						{t("dailyLimitHit")}
 					</span>
 				</div>
@@ -162,10 +162,10 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 			{day.dayResult.hitDailyTarget && !day.dayResult.hitDailyLimit && (
 				<div className="border-bg-300 mt-s-200 gap-s-200 pt-s-200 flex items-center border-t">
 					<StopCircle
-						className="text-warning h-3.5 w-3.5 shrink-0"
+						className="text-rule-paused h-3.5 w-3.5 shrink-0"
 						aria-hidden="true"
 					/>
-					<span className="text-tiny text-warning font-medium">
+					<span className="text-tiny text-rule-paused font-medium">
 						{t("dailyTargetHit")}
 					</span>
 				</div>

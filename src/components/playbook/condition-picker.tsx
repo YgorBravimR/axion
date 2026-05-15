@@ -100,7 +100,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 					<Badge
 						id="rank-a-badge"
 						variant="outline"
-						className="text-trade-buy border-trade-buy/40"
+						className="text-txt-200 border-bg-300"
 					>
 						A ({mandatoryCount})
 					</Badge>

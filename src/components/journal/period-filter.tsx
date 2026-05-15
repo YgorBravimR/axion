@@ -23,6 +23,9 @@ interface PeriodFilterProps {
  * Period filter component for selecting time ranges in the journal.
  * Supports predefined periods (day, week, month) and custom date ranges.
  *
+ * Mobile/desktop view is controlled via CSS container queries to avoid
+ * SSR hydration mismatch from useEffect media-query detection.
+ *
  * @param value - Currently selected period
  * @param onChange - Callback when period or date range changes
  * @param customDateRange - Current custom date range if selected
@@ -79,7 +82,7 @@ export const PeriodFilter = ({
 	}
 
 	return (
-		<div className="gap-s-200 flex flex-col">
+		<div className="gap-s-200 @container flex flex-col">
 			<div
 				role="radiogroup"
 				aria-label={t("period.filterGroupLabel")}
@@ -113,9 +116,6 @@ export const PeriodFilter = ({
 			{/* Custom Date Range Picker */}
 			{showCustomPicker && (
 				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex max-w-[calc(100vw-2rem)] flex-wrap items-end rounded-lg border">
-					{/* Two picker instances toggled by CSS. SSR-safe — no hydration
-					    flash from a post-mount matchMedia state update. Only one is
-					    visible (and interactive) at a time; both share tempRange. */}
 					<div className="w-full sm:min-w-[260px] sm:flex-1">
 						<div className="min-[420px]:hidden">
 							<DateRangePicker

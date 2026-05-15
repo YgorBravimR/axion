@@ -36,7 +36,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  *                 cockpit level.
  * Post-condition: storageState saved as Stage 7. No DB delta.
  *
- * @journey @stage:quarterly
+ * @journey @stage:quarter-year
  */
 
 const PLAN_YEAR = 2026

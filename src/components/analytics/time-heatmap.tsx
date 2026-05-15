@@ -206,7 +206,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 					{t("time.heatmapTitle")}
 				</h3>
-				<div className="text-txt-300 flex h-50 items-center justify-center">
+				<div className="text-txt-300 flex min-h-48 items-center justify-center">
 					{t("noData")}
 				</div>
 			</div>

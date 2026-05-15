@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState, useEffect, useTransition, useRef } from "react"
+import { memo, useState } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Brain,
@@ -11,19 +11,15 @@ import {
 	Crosshair,
 	ChevronDown,
 	ChevronUp,
-	Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Panel } from "@/components/ui/panel"
-import { getHawksCoachingInsights } from "@/app/actions/hawks-coaching"
 import type { HawksCoachingResult } from "@/app/actions/hawks-coaching.types"
 import type { CoachingInsight } from "@/lib/coaching/types"
 
 interface HawksCoachingInsightsCardProps {
 	initialContext?: HawksCoachingResult | null
 }
-
-const HAWKS_ANALYSIS_DAYS = 90
 
 const CATEGORY_ICONS: Record<string, typeof Brain> = {
 	time: Clock,
@@ -145,24 +141,7 @@ const HawksCoachingInsightsCardBase = ({
 }: HawksCoachingInsightsCardProps) => {
 	const t = useTranslations("hawks.coaching")
 	const tBase = useTranslations("coaching")
-	const [context, setContext] = useState<HawksCoachingResult | null>(
-		initialContext ?? null
-	)
-	const [isPending, startTransition] = useTransition()
-	const hasLoadedRef = useRef(!!initialContext)
-
-	useEffect(() => {
-		if (hasLoadedRef.current) {
-			return
-		}
-		hasLoadedRef.current = true
-		startTransition(async () => {
-			const result = await getHawksCoachingInsights(HAWKS_ANALYSIS_DAYS)
-			if (result.status === "success" && result.data) {
-				setContext(result.data)
-			}
-		})
-	}, [])
+	const [context] = useState<HawksCoachingResult | null>(initialContext ?? null)
 
 	const insights = context?.insights ?? []
 	const displayInsights = insights.slice(0, 5)
@@ -172,9 +151,7 @@ const HawksCoachingInsightsCardBase = ({
 			<div className="flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
 					<Crosshair className="text-acc-100 h-5 w-5" />
-					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-						{t("title")}
-					</h2>
+					<h2 className="text-body text-txt-100 font-semibold">{t("title")}</h2>
 				</div>
 				{context && (
 					<span className="text-micro text-txt-300">
@@ -184,15 +161,11 @@ const HawksCoachingInsightsCardBase = ({
 			</div>
 
 			<div className="mt-s-300 sm:mt-m-400">
-				{isPending && !context ? (
+				{!context ? (
 					<div className="space-y-s-200 animate-pulse motion-reduce:animate-none">
 						<div className="bg-bg-300 h-10 rounded-lg" />
 						<div className="bg-bg-300 h-10 rounded-lg" />
 						<div className="bg-bg-300 h-10 rounded-lg" />
-					</div>
-				) : isPending ? (
-					<div className="py-m-500 flex items-center justify-center">
-						<Loader2 className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none" />
 					</div>
 				) : displayInsights.length === 0 ? (
 					<p className="py-m-400 text-tiny text-txt-300 text-center">

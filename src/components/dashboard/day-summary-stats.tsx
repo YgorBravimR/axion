@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import type { DaySummary } from "@/types"
-import { formatBrlWithSign } from "@/lib/formatting"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface DaySummaryStatsProps {
 	summary: DaySummary
@@ -19,6 +19,7 @@ interface DaySummaryStatsProps {
 export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 	const t = useTranslations("dashboard")
 	const tCommon = useTranslations("common")
+	const { formatBrlWithSign, accountCurrency } = useFormatting()
 
 	const stats = useMemo(
 		() => [
@@ -31,7 +32,7 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 			{
 				label: t("dayDetail.grossPnl"),
 				value: formatBrlWithSign(summary.grossPnl),
-				subValue: `${t("dayDetail.fees")}: R$ ${summary.totalFees.toFixed(2)}`,
+				subValue: `${t("dayDetail.fees")}: ${accountCurrency} ${summary.totalFees.toFixed(2)}`,
 				isPositive: summary.grossPnl >= 0,
 			},
 			{
@@ -61,23 +62,24 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 			summary.losses,
 			summary.totalTrades,
 			summary.avgR,
-		],
+			accountCurrency,
+		]
 	)
 
 	return (
-		<div className="grid grid-cols-2 gap-s-300 md:grid-cols-4">
+		<div className="gap-s-300 grid grid-cols-2 md:grid-cols-4">
 			{stats.map((stat) => (
 				<div
 					key={stat.label}
-					className="rounded-lg border border-bg-300 bg-bg-100 p-s-300"
+					className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border"
 				>
 					<p className="text-tiny text-txt-300">{stat.label}</p>
-					<div className="mt-s-100 flex items-center gap-s-100">
+					<div className="mt-s-100 gap-s-100 flex items-center">
 						{stat.showIcon &&
 							(stat.isPositive ? (
-								<TrendingUp className="h-4 w-4 text-trade-buy" />
+								<TrendingUp className="text-trade-buy h-4 w-4" />
 							) : (
-								<TrendingDown className="h-4 w-4 text-trade-sell" />
+								<TrendingDown className="text-trade-sell h-4 w-4" />
 							))}
 						<p
 							className={`text-body font-semibold ${

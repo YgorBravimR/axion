@@ -16,6 +16,7 @@ interface DailyChecklistProps {
 	onManageClick: (_checklistId: string) => void
 	onRefresh: () => void
 	isReadOnly?: boolean
+	isRefreshing?: boolean
 }
 
 export const DailyChecklist = ({
@@ -23,6 +24,7 @@ export const DailyChecklist = ({
 	onManageClick,
 	onRefresh,
 	isReadOnly = false,
+	isRefreshing = false,
 }: DailyChecklistProps) => {
 	const t = useTranslations("commandCenter.checklist")
 	const { showToast } = useToast()
@@ -87,7 +89,13 @@ export const DailyChecklist = ({
 
 	if (checklists.length === 0) {
 		return (
-			<Panel>
+			<Panel
+				aria-busy={isRefreshing || undefined}
+				className={cn(
+					"transition-opacity duration-200",
+					isRefreshing && "opacity-60"
+				)}
+			>
 				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
@@ -110,7 +118,14 @@ export const DailyChecklist = ({
 	}
 
 	return (
-		<div id="cc-daily-checklist" className="space-y-s-300 sm:space-y-m-400">
+		<div
+			id="cc-daily-checklist"
+			aria-busy={isRefreshing || undefined}
+			className={cn(
+				"space-y-s-300 sm:space-y-m-400 transition-opacity duration-200",
+				isRefreshing && "opacity-60"
+			)}
+		>
 			{checklists.map((checklist) => {
 				const stats = checklistStats.get(checklist.id)!
 				const {

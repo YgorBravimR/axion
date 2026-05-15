@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
-import { Link, useRouter } from "@/i18n/routing"
+import { useRouter } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import {
 	InputOTP,
@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import Image from "next/image"
-import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
+import { BackLink } from "@/components/ui/back-link"
 import {
 	requestEmailVerification,
 	verifyEmail,
@@ -208,12 +210,7 @@ const VerifyEmailForm = () => {
 					className="w-full"
 					disabled={isPending || code.length !== 6}
 				>
-					{isPending && (
-						<Loader2
-							className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none"
-							aria-hidden="true"
-						/>
-					)}
+					{isPending && <Spinner className="mr-s-200" size="md" />}
 					{t("verify")}
 				</Button>
 
@@ -234,13 +231,9 @@ const VerifyEmailForm = () => {
 					</Button>
 				</div>
 
-				<Link
-					href="/login"
-					className="text-small text-txt-300 hover:text-txt-200 gap-s-200 flex items-center justify-center"
-				>
-					<ArrowLeft className="h-4 w-4" aria-hidden="true" />
+				<BackLink href="/login" className="text-small justify-center">
 					{t("backToLogin")}
-				</Link>
+				</BackLink>
 			</div>
 		</div>
 	)

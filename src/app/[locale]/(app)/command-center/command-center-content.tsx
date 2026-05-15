@@ -38,7 +38,7 @@ import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
-import { useCallback, useState } from "react"
+import { useCallback, useState, useTransition } from "react"
 
 interface CommandCenterContentProps {
 	initialCompletions: ChecklistWithCompletion[]
@@ -89,26 +89,41 @@ const CommandCenterContent = ({
 	const [editingChecklist, setEditingChecklist] =
 		useState<DailyChecklistType | null>(null)
 
+	// Refresh transitions — independent per panel so a save in one column does
+	// not dim an unrelated one. `isPending` flips true the moment startTransition
+	// runs and stays true until the setState commit lands, giving us a synchronous
+	// flag to forward as aria-busy + opacity dim while the action is in flight.
+	const [isCompletionsRefreshing, startCompletionsTransition] = useTransition()
+	const [isDailyPlanRefreshing, startDailyPlanTransition] = useTransition()
+	const [isAssetSettingsRefreshing, startAssetSettingsTransition] =
+		useTransition()
+
 	// Refresh functions — all pass the current viewDate to fetch correct day's data
-	const refreshCompletions = useCallback(async () => {
-		const result = await getTodayCompletions(new Date(viewDate))
-		if (result.status === "success" && result.data) {
-			setCompletions(result.data)
-		}
+	const refreshCompletions = useCallback(() => {
+		startCompletionsTransition(async () => {
+			const result = await getTodayCompletions(new Date(viewDate))
+			if (result.status === "success" && result.data) {
+				setCompletions(result.data)
+			}
+		})
 	}, [viewDate])
 
-	const refreshDailyPlan = useCallback(async () => {
-		const result = await getDailyPlanForCurrentAccount({ dateISO: viewDate })
-		if (result.status === "success" && result.data?.kind === "ok") {
-			setDailyPlan(result.data.dayRow)
-		}
+	const refreshDailyPlan = useCallback(() => {
+		startDailyPlanTransition(async () => {
+			const result = await getDailyPlanForCurrentAccount({ dateISO: viewDate })
+			if (result.status === "success" && result.data?.kind === "ok") {
+				setDailyPlan(result.data.dayRow)
+			}
+		})
 	}, [viewDate])
 
-	const refreshAssetSettings = useCallback(async () => {
-		const result = await getAssetSettings()
-		if (result.status === "success" && result.data) {
-			setAssetSettings(result.data)
-		}
+	const refreshAssetSettings = useCallback(() => {
+		startAssetSettingsTransition(async () => {
+			const result = await getAssetSettings()
+			if (result.status === "success" && result.data) {
+				setAssetSettings(result.data)
+			}
+		})
 	}, [])
 
 	const handleManageChecklist = useCallback(
@@ -220,6 +235,7 @@ const CommandCenterContent = ({
 							onManageClick={handleManageChecklist}
 							onRefresh={refreshCompletions}
 							isReadOnly={isReadOnly}
+							isRefreshing={isCompletionsRefreshing}
 						/>
 					)}
 
@@ -229,6 +245,7 @@ const CommandCenterContent = ({
 							dailyPlan={dailyPlan}
 							onRefresh={refreshDailyPlan}
 							isReadOnly={isReadOnly}
+							isRefreshing={isDailyPlanRefreshing}
 						/>
 					)}
 				</div>
@@ -241,6 +258,7 @@ const CommandCenterContent = ({
 							dailyPlan={dailyPlan}
 							onRefresh={refreshDailyPlan}
 							isReadOnly={isReadOnly}
+							isRefreshing={isDailyPlanRefreshing}
 						/>
 					)}
 				</div>
@@ -252,6 +270,7 @@ const CommandCenterContent = ({
 					settings={assetSettings}
 					availableAssets={availableAssets}
 					onRefresh={refreshAssetSettings}
+					isRefreshing={isAssetSettingsRefreshing}
 				/>
 			)}
 

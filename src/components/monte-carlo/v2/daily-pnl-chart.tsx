@@ -29,9 +29,9 @@ interface ChartDataPoint {
 }
 
 const MODE_COLORS: Record<string, string> = {
-	lossRecovery: "var(--color-trade-sell)",
-	gainCompounding: "var(--color-trade-buy)",
-	mixed: "var(--color-acc-100)",
+	lossRecovery: "var(--color-chart-1)",
+	gainCompounding: "var(--color-chart-2)",
+	mixed: "var(--color-chart-3)",
 	skipped: "var(--color-bg-300)",
 }
 

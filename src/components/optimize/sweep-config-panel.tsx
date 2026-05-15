@@ -272,7 +272,7 @@ const SweepConfigPanel = ({
 													{t(`sweepParam.${option.labelKey}`)}
 													{isCurrent && !isSelected && (
 														<span className="text-tiny text-txt-300 ml-s-100">
-															(atual)
+															{t("currentValueSuffix")}
 														</span>
 													)}
 												</span>

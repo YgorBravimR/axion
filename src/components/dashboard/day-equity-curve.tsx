@@ -12,8 +12,8 @@ import {
 	ReferenceLine,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
-import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { DayEquityPoint } from "@/types"
 
 // Static Recharts config objects — hoisted to avoid new object identity each render
@@ -36,6 +36,7 @@ interface CustomTooltipProps {
 
 const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
+	const { formatCompactCurrencyWithSign } = useFormatting()
 
 	const head = payload?.[0]
 	if (!active || !head) {
@@ -54,7 +55,7 @@ const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 					isProfit ? "text-trade-buy" : "text-trade-sell"
 				)}
 			>
-				{formatCompactCurrencyWithSign(data.cumulativePnl, "R$")}
+				{formatCompactCurrencyWithSign(data.cumulativePnl)}
 			</p>
 			{data.tradeId && (
 				<p className="mt-s-100 text-tiny text-txt-300">
@@ -66,12 +67,12 @@ const CustomTooltip = memo(({ active, payload }: CustomTooltipProps) => {
 })
 CustomTooltip.displayName = "DayEquityCurveTooltip"
 
-const tickFormatter = (value: number) =>
-	formatCompactCurrencyWithSign(value, "R$")
-
 export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
+	const { formatCompactCurrencyWithSign } = useFormatting()
+
+	const tickFormatter = (value: number) => formatCompactCurrencyWithSign(value)
 
 	// Derived chart values — recomputed only when data changes (must be before early return)
 	const { minPnl, maxPnl, padding, finalPnl, lineColor } = useMemo(() => {
