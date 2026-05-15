@@ -23,8 +23,8 @@ CREATE TABLE "strategy_versions" (
 DROP INDEX "strategy_conditions_unique_idx";--> statement-breakpoint
 ALTER TABLE "strategies" ADD COLUMN "current_version" integer DEFAULT 1 NOT NULL;--> statement-breakpoint
 ALTER TABLE "strategies" ADD COLUMN "next_version_number" integer DEFAULT 2 NOT NULL;--> statement-breakpoint
-ALTER TABLE "strategy_conditions" ADD COLUMN "strategy_version_id" uuid NOT NULL;--> statement-breakpoint
-ALTER TABLE "strategy_scenarios" ADD COLUMN "strategy_version_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "strategy_conditions" ADD COLUMN "strategy_version_id" uuid;--> statement-breakpoint
+ALTER TABLE "strategy_scenarios" ADD COLUMN "strategy_version_id" uuid;--> statement-breakpoint
 ALTER TABLE "trades" ADD COLUMN "strategy_version_id" uuid;--> statement-breakpoint
 ALTER TABLE "strategy_versions" ADD CONSTRAINT "strategy_versions_strategy_id_strategies_id_fk" FOREIGN KEY ("strategy_id") REFERENCES "public"."strategies"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "strategy_versions_strategy_idx" ON "strategy_versions" USING btree ("strategy_id");--> statement-breakpoint

@@ -67,6 +67,7 @@ const ScorecardRow = ({ row }: { row: ConditionRollup }) => {
 						{row.conditionName}
 					</span>
 					<Badge
+						id={`scorecard-rank-${row.conditionId}`}
 						variant="outline"
 						className="text-tiny text-txt-300 border-bg-300 shrink-0"
 					>

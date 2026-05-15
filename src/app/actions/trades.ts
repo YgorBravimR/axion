@@ -261,7 +261,9 @@ export const createTrade = async (
 					)
 				)
 			hawksSidecar = {
+				accountId,
 				tradeId: "", // populated inside tx after the trade insert
+				tradingDay,
 				scenarioId: tradeData.hawks.scenarioId ?? null,
 				biasAtEntry: biasRow.bias,
 				vwapRespected: tradeData.hawks.vwapRespected,

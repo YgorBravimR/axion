@@ -1,5 +1,5 @@
 {
-	"id": "2b99d028-6369-476c-ad4a-38a04ec9a3d7",
+	"id": "117bb783-a776-4396-8959-5965da5a833e",
 	"prevId": "527b9f22-c6fa-4792-975c-c1e4a46b9688",
 	"version": "7",
 	"dialect": "postgresql",
@@ -4618,7 +4618,7 @@
 					"name": "strategy_version_id",
 					"type": "uuid",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": false
 				},
 				"condition_id": {
 					"name": "condition_id",
@@ -4772,7 +4772,7 @@
 					"name": "strategy_version_id",
 					"type": "uuid",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": false
 				},
 				"name": {
 					"name": "name",
