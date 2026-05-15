@@ -189,7 +189,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 							className={cn(
 								"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
 								selectedAccountId === account.id
-									? "border-brand-500 bg-brand-500/10"
+									? "border-acc-100 bg-acc-100/10"
 									: "border-bg-300 bg-bg-200 hover:border-bg-400",
 								isPending && "cursor-not-allowed opacity-50"
 							)}
@@ -198,7 +198,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 								className={cn(
 									"flex h-10 w-10 items-center justify-center rounded-lg",
 									account.accountType === "prop"
-										? "bg-brand-500/20 text-brand-500"
+										? "bg-acc-100/20 text-acc-100"
 										: "bg-txt-300/20 text-txt-200"
 								)}
 							>
@@ -220,7 +220,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 								className={cn(
 									"h-5 w-5 rounded-full border-2 transition-colors",
 									selectedAccountId === account.id
-										? "border-brand-500 bg-brand-500"
+										? "border-acc-100 bg-acc-100"
 										: "border-bg-400"
 								)}
 							>
@@ -301,9 +301,9 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				)}
 
 				{emailNotVerified && (
-					<div className="border-brand-500/30 bg-brand-500/10 p-m-400 space-y-s-300 rounded-md border">
+					<div className="border-acc-100/30 bg-acc-100/10 p-m-400 space-y-s-300 rounded-md border">
 						<div className="gap-s-200 flex items-center">
-							<Mail className="text-brand-500 h-4 w-4" aria-hidden="true" />
+							<Mail className="text-acc-100 h-4 w-4" aria-hidden="true" />
 							<p className="text-small text-txt-100 font-medium">
 								{t("notVerifiedError")}
 							</p>
@@ -392,7 +392,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				<div className="flex justify-end">
 					<Link
 						href="/forgot-password"
-						className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
+						className="text-tiny text-acc-100 hover:text-acc-100 font-medium"
 					>
 						{t("forgotPassword")}
 					</Link>
@@ -418,7 +418,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				{t("noAccount")}{" "}
 				<Link
 					href="/register"
-					className="text-brand-500 hover:text-brand-400 font-medium"
+					className="text-acc-100 hover:text-acc-100 font-medium"
 				>
 					{t("register")}
 				</Link>

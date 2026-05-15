@@ -32,8 +32,8 @@ export const TradeModeSelector = ({
 					className={cn(
 						"gap-s-200 p-s-300 sm:p-m-400 flex flex-col items-center rounded-lg border-2 transition-colors",
 						value === "simple"
-							? "border-brand-500 bg-brand-500/10 text-brand-500"
-							: "border-bg-300 text-txt-200 hover:border-brand-500/50",
+							? "border-acc-100 bg-acc-100/10 text-acc-100"
+							: "border-bg-300 text-txt-200 hover:border-acc-100/50",
 						disabled && "cursor-not-allowed opacity-50"
 					)}
 				>
@@ -50,8 +50,8 @@ export const TradeModeSelector = ({
 					className={cn(
 						"gap-s-200 p-s-300 sm:p-m-400 flex flex-col items-center rounded-lg border-2 transition-colors",
 						value === "scaled"
-							? "border-brand-500 bg-brand-500/10 text-brand-500"
-							: "border-bg-300 text-txt-200 hover:border-brand-500/50",
+							? "border-acc-100 bg-acc-100/10 text-acc-100"
+							: "border-bg-300 text-txt-200 hover:border-acc-100/50",
 						disabled && "cursor-not-allowed opacity-50"
 					)}
 				>

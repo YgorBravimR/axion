@@ -69,7 +69,7 @@ export const AccountPicker = ({
 						className={cn(
 							"gap-m-400 p-m-400 flex min-h-11 w-full items-center rounded-lg border text-left transition-colors",
 							selectedId === account.id
-								? "border-brand-500 bg-brand-500/10"
+								? "border-acc-100 bg-acc-100/10"
 								: "border-bg-300 bg-bg-200 hover:border-bg-400"
 						)}
 					>
@@ -77,7 +77,7 @@ export const AccountPicker = ({
 							className={cn(
 								"flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
 								account.accountType === "prop"
-									? "bg-brand-500/20 text-brand-500"
+									? "bg-acc-100/20 text-acc-100"
 									: "bg-txt-300/20 text-txt-200"
 							)}
 						>
@@ -104,7 +104,7 @@ export const AccountPicker = ({
 							className={cn(
 								"h-5 w-5 rounded-full border-2 transition-colors",
 								selectedId === account.id
-									? "border-brand-500 bg-brand-500"
+									? "border-acc-100 bg-acc-100"
 									: "border-bg-400"
 							)}
 						>

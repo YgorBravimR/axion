@@ -161,7 +161,7 @@ const TransitionOverlay = ({
 				>
 					{/* Pulsing gold ring */}
 					<div
-						className="from-brand-400 via-acc-100 to-brand-600 animate-transition-ring-pulse absolute -inset-3 rounded-full bg-linear-to-br"
+						className="from-acc-100 via-acc-100 to-acc-100 animate-transition-ring-pulse absolute -inset-3 rounded-full bg-linear-to-br"
 						aria-hidden="true"
 					/>
 

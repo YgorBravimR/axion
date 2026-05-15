@@ -161,7 +161,7 @@ const VerifyEmailForm = () => {
 				{email && (
 					<p className="mt-s-200 text-small text-txt-200">
 						{t("codeSentTo")}{" "}
-						<span className="text-brand-500 font-medium">{email}</span>
+						<span className="text-acc-100 font-medium">{email}</span>
 					</p>
 				)}
 			</div>
@@ -226,7 +226,7 @@ const VerifyEmailForm = () => {
 						type="button"
 						onClick={handleResend}
 						disabled={resendCooldown > 0 || isPending}
-						className="text-tiny text-brand-500 hover:text-brand-400 font-medium"
+						className="text-tiny text-acc-100 hover:text-acc-100 font-medium"
 					>
 						{resendCooldown > 0
 							? t("resendIn", { seconds: resendCooldown })

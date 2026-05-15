@@ -305,7 +305,7 @@ const RegisterForm = () => {
 				{t("hasAccount")}{" "}
 				<Link
 					href="/login"
-					className="text-brand-500 hover:text-brand-400 font-medium"
+					className="text-acc-100 hover:text-acc-100 font-medium"
 				>
 					{t("login")}
 				</Link>

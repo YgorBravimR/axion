@@ -216,7 +216,7 @@ export const ForgotPasswordForm = () => {
 				<p className="text-small text-txt-300 text-center">
 					<Link
 						href="/login"
-						className="text-brand-500 hover:text-brand-400 gap-s-100 inline-flex items-center font-medium"
+						className="text-acc-100 hover:text-acc-100 gap-s-100 inline-flex items-center font-medium"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
 						{t("backToLogin")}
@@ -299,7 +299,7 @@ export const ForgotPasswordForm = () => {
 						type="button"
 						onClick={handleResend}
 						disabled={resendCooldown > 0 || isPending}
-						className="text-small text-brand-500 hover:text-brand-400"
+						className="text-small text-acc-100 hover:text-acc-100"
 					>
 						{resendCooldown > 0
 							? t("resendIn", { seconds: resendCooldown })
@@ -317,7 +317,7 @@ export const ForgotPasswordForm = () => {
 							setCode("")
 							setError(null)
 						}}
-						className="text-brand-500 hover:text-brand-400 gap-s-100 inline-flex items-center font-medium"
+						className="text-acc-100 hover:text-acc-100 gap-s-100 inline-flex items-center font-medium"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
 						{t("backToEmail")}

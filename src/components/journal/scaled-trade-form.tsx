@@ -1002,7 +1002,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 								id="scaled-trade-switch-mode"
 								type="button"
 								variant="link"
-								className="text-brand-500 h-auto p-0"
+								className="text-acc-100 h-auto p-0"
 								onClick={onModeChange}
 							>
 								{t("mode.switchToSimple")}

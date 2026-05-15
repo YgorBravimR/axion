@@ -58,11 +58,6 @@
 	/* Page Guide — distinctive violet that pops on the dark canvas */
 	--color-guide: rgb(168 130 255);
 
-	/* Brand Colors — Bronze scale (anchored on #C29D6A) */
-	--color-brand-400: #d2ae7c;
-	--color-brand-500: #c29d6a;
-	--color-brand-600: #9c7c4f;
-
 	--radius: 0.625rem;
 	--color-background: var(--color-bg-100);
 	--color-foreground: var(--color-txt-100);
@@ -193,11 +188,6 @@
 	--color-action-sell: #ea580c;
 	--color-action-buy-muted: rgba(30, 122, 153, 0.12);
 	--color-action-sell-muted: rgba(234, 88, 12, 0.12);
-
-	/* Brand Colors — Deep Bronze scale */
-	--color-brand-400: #b08a55;
-	--color-brand-500: #8c6e40;
-	--color-brand-600: #6e5530;
 
 	/* Semantic mappings — light mode */
 	--color-background: var(--color-bg-100);
