@@ -16,6 +16,7 @@ import type { StrategyConditionInput } from "@/types/trading-condition"
 import { eq, and, asc, sql, isNull, inArray } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
+import { getCurrentVersionId } from "@/lib/strategy-versions"
 import { getTranslations } from "next-intl/server"
 import { syncStrategyConditionsSchema } from "@/lib/validations/trading-condition"
 import type {
@@ -79,11 +80,29 @@ export const syncStrategyConditions = async (
 			}
 		}
 
+		const versionId = await getCurrentVersionId(
+			strategyId,
+			strategy.currentVersion
+		)
+		if (!versionId) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyNotFound"),
+				errors: [
+					{
+						code: "MISSING_VERSION",
+						detail: `Strategy ${strategyId} is missing a v${strategy.currentVersion} row`,
+					},
+				],
+			}
+		}
+
 		const inserted = await db
 			.insert(strategyConditions)
 			.values(
 				conditions.map((c) => ({
 					strategyId,
+					strategyVersionId: versionId,
 					conditionId: c.conditionId,
 					tier: c.tier,
 					sortOrder: c.sortOrder,

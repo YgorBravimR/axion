@@ -1673,10 +1673,9 @@ export const strategyConditions = pgTable(
 		strategyId: uuid("strategy_id")
 			.notNull()
 			.references(() => strategies.id, { onDelete: "cascade" }),
-		strategyVersionId: uuid("strategy_version_id").references(
-			() => strategyVersions.id,
-			{ onDelete: "cascade" }
-		),
+		strategyVersionId: uuid("strategy_version_id")
+			.notNull()
+			.references(() => strategyVersions.id, { onDelete: "cascade" }),
 		conditionId: uuid("condition_id")
 			.notNull()
 			.references(() => tradingConditions.id, { onDelete: "cascade" }),
@@ -1731,10 +1730,9 @@ export const strategyScenarios = pgTable(
 		strategyId: uuid("strategy_id")
 			.notNull()
 			.references(() => strategies.id, { onDelete: "cascade" }),
-		strategyVersionId: uuid("strategy_version_id").references(
-			() => strategyVersions.id,
-			{ onDelete: "cascade" }
-		),
+		strategyVersionId: uuid("strategy_version_id")
+			.notNull()
+			.references(() => strategyVersions.id, { onDelete: "cascade" }),
 		name: varchar("name", { length: 200 }).notNull(),
 		description: text("description"),
 		sortOrder: integer("sort_order").default(0).notNull(),

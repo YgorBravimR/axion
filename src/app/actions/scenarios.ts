@@ -11,6 +11,7 @@ import { z } from "zod"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { deleteFile } from "@/lib/storage"
+import { getCurrentVersionId } from "@/lib/strategy-versions"
 import {
 	createScenarioSchema,
 	updateScenarioSchema,
@@ -46,10 +47,28 @@ export const createScenario = async (
 			}
 		}
 
+		const versionId = await getCurrentVersionId(
+			validated.strategyId,
+			strategy.currentVersion
+		)
+		if (!versionId) {
+			return {
+				status: "error",
+				message: t("actions.strategyNotFound"),
+				errors: [
+					{
+						code: "MISSING_VERSION",
+						detail: `Strategy ${validated.strategyId} is missing a v${strategy.currentVersion} row`,
+					},
+				],
+			}
+		}
+
 		const [scenario] = await db
 			.insert(strategyScenarios)
 			.values({
 				strategyId: validated.strategyId,
+				strategyVersionId: versionId,
 				name: validated.name,
 				description: validated.description || null,
 				sortOrder: validated.sortOrder,

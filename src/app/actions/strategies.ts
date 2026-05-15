@@ -5,10 +5,12 @@ import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import {
 	strategies,
+	strategyVersions,
 	trades,
 	strategyConditions,
 	strategyScenarios,
 } from "@/db/schema"
+import { snapshotStrategy, getCurrentVersionId } from "@/lib/strategy-versions"
 import type { Strategy } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import { eq, and, desc, inArray, sql } from "drizzle-orm"
@@ -81,39 +83,51 @@ export const createStrategy = async (
 				)
 			)
 
-		const [strategy] = await db
-			.insert(strategies)
-			.values({
-				userId,
-				code: validated.code,
-				name: validated.name,
-				description: validated.description || null,
-				entryCriteria: validated.entryCriteria || null,
-				exitCriteria: validated.exitCriteria || null,
-				riskRules: validated.riskRules || null,
-				finalR: validated.finalR?.toString() || null,
-				maxRiskPercent: validated.maxRiskPercent?.toString() || null,
-				screenshotUrl: validated.screenshotUrl || null,
-				screenshotS3Key: validated.screenshotS3Key || null,
-				notes: validated.notes || null,
-				isActive: validated.isActive ?? true,
-			})
-			.returning()
-		if (!strategy) {
-			throw new Error("Failed to create strategy")
-		}
+		const strategy = await db.transaction(async (tx) => {
+			const [created] = await tx
+				.insert(strategies)
+				.values({
+					userId,
+					code: validated.code,
+					name: validated.name,
+					description: validated.description || null,
+					entryCriteria: validated.entryCriteria || null,
+					exitCriteria: validated.exitCriteria || null,
+					riskRules: validated.riskRules || null,
+					finalR: validated.finalR?.toString() || null,
+					maxRiskPercent: validated.maxRiskPercent?.toString() || null,
+					screenshotUrl: validated.screenshotUrl || null,
+					screenshotS3Key: validated.screenshotS3Key || null,
+					notes: validated.notes || null,
+					isActive: validated.isActive ?? true,
+				})
+				.returning()
+			if (!created) {
+				throw new Error("Failed to create strategy")
+			}
 
-		// Sync conditions if provided
-		if (validated.conditions && validated.conditions.length > 0) {
-			await db.insert(strategyConditions).values(
-				validated.conditions.map((c) => ({
-					strategyId: strategy.id,
-					conditionId: c.conditionId,
-					tier: c.tier,
-					sortOrder: c.sortOrder,
-				}))
-			)
-		}
+			const [version] = await tx
+				.insert(strategyVersions)
+				.values(snapshotStrategy(created.id, created.currentVersion, created))
+				.returning({ id: strategyVersions.id })
+			if (!version) {
+				throw new Error("Failed to create strategy version")
+			}
+
+			if (validated.conditions && validated.conditions.length > 0) {
+				await tx.insert(strategyConditions).values(
+					validated.conditions.map((c) => ({
+						strategyId: created.id,
+						strategyVersionId: version.id,
+						conditionId: c.conditionId,
+						tier: c.tier,
+						sortOrder: c.sortOrder,
+					}))
+				)
+			}
+
+			return created
+		})
 
 		invalidateStrategyData(userId, accountId)
 
@@ -233,9 +247,16 @@ export const updateStrategy = async (
 				.where(eq(strategyConditions.strategyId, id))
 
 			if (validated.conditions.length > 0) {
+				const versionId = await getCurrentVersionId(id, existing.currentVersion)
+				if (!versionId) {
+					throw new Error(
+						`Strategy ${id} is missing a v${existing.currentVersion} row`
+					)
+				}
 				await db.insert(strategyConditions).values(
 					validated.conditions.map((c) => ({
 						strategyId: id,
+						strategyVersionId: versionId,
 						conditionId: c.conditionId,
 						tier: c.tier,
 						sortOrder: c.sortOrder,
