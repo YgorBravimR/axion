@@ -67,13 +67,12 @@ Filed from [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) after 
 - **Status:** `/monthly` route deleted; replaced by `MonthClosingSection` in Reports. Branches by account type — personal → `MonthlyDarfCard`, prop → `PropProfitSummary`, replay → null. Existing weekly/projection/comparison content preserved via collapsible "Month Detail" `<details>`. `/monthly` → `/reports` 308 redirect in `src/proxy.ts`.
 - **Source**: feature-manifesto-2026-05.md §3.4 + §6 (3). User input: "the purpose of monthly review is to create a kind of cycle closing".
 
-### Playbook detail page — methodology-aware redesign
+### ~~Playbook detail page — methodology-aware redesign (v1)~~ ✅ Landed 2026-05-15
 
-- **Priority:** P1 · **Effort:** L
-- **What**: redesign `/playbook/[id]` to support structured methodologies (Hawks as canonical example), with a methodology header, rule list, scorecard view fed by `trade_conditions` junction, and conditions registry hookup.
-- **Why**: Q1 resolved — Playbook IS the home for methodology rules. The current free-form detail page can't express Hawks' structure (entry conditions, scorecard, hard rules). This is the surface that turns "we have Hawks" into "Hawks is documented on its own page with compliance scoring".
-- **Depends on**: P1 #1 (`trade_conditions` junction table).
-- **Source**: feature-manifesto-2026-05.md §3.1 + §6 (4).
+- **Priority:** P1 · **Effort:** L (v1 time-boxed)
+- **Status (v1)**: per-condition usage scorecard live on `/playbook/[id]`. New `getStrategyConditionsRollup` server action returns `{ totalTrades, conditions[], isHawksStrategy }` via a two-query pattern (expected conditions list + per-condition stats filtered to this strategy's trade ids, merged in code) plus a third query against `accountModes` to infer Hawks methodology from active account-mode rows. New `<ConditionsScorecard />` client component renders per-condition met-rate bars with tier badges, tone-coded thresholds, and an explicit empty state when `totalTrades === 0`. Inline "Hawks methodology" chip surfaces in the conditions card header when `isHawksStrategy` is true. i18n keys live under `playbook.scorecard.*` in en + pt-BR.
+- **Deferred (v2 follow-ups)**: methodology-aware page header redesign, replacing `strategy.compliance` (planFollowed-based) with a trade_conditions-derived compliance score, dedicated methodology rule list separate from the free-text `entryCriteria`/`exitCriteria`. Tracked under "Playbook detail — deferred follow-ups" further down.
+- **Source**: feature-manifesto-2026-05.md §3.1 + §6 (4). User picked v1 scope: "Infer from account-mode, no schema change" (D1) + "Per-condition usage table" (D2) + "Time-box to v1" (D3).
 
 ### Strategy versioning v1 — methodology immutability
 

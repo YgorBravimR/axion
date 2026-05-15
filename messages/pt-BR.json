@@ -2310,6 +2310,16 @@
 			"tierTier2": "Nível 2 (AA)",
 			"tierTier3": "Nível 3 (AAA)"
 		},
+		"scorecard": {
+			"title": "Placar de uso de condições",
+			"subtitle": "Com que frequência cada condição foi efetivamente atendida nas operações desta estratégia.",
+			"basedOnTrades": "Com base em {count} operações",
+			"metRateHint": "Taxa de atendimento",
+			"metOverRecorded": "{met}/{total}",
+			"emptyState": "Nenhuma operação ainda para esta estratégia.",
+			"emptyStateHint": "Registre uma operação com estas condições para iniciar o placar.",
+			"hawksBadge": "Metodologia Hawks"
+		},
 		"scenarios": {
 			"title": "Cenários",
 			"addScenario": "Adicionar Cenário",

@@ -14,8 +14,12 @@ import {
 import { cn } from "@/lib/utils"
 import { getComplianceTone } from "@/lib/compliance"
 import { getStrategy } from "@/app/actions/strategies"
-import { getStrategyConditions } from "@/app/actions/strategy-conditions"
+import {
+	getStrategyConditions,
+	getStrategyConditionsRollup,
+} from "@/app/actions/strategy-conditions"
 import { ConditionTierDisplay } from "@/components/playbook/condition-tier-display"
+import { ConditionsScorecard } from "@/components/playbook/conditions-scorecard"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { getCurrentUser } from "@/app/actions/auth"
 import { hasAccess } from "@/lib/feature-access"
@@ -45,9 +49,10 @@ const formatProfitFactor = (value: number): string => {
 
 const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 	const { id } = await params
-	const [result, conditionsResult, user] = await Promise.all([
+	const [result, conditionsResult, rollupResult, user] = await Promise.all([
 		getStrategy(id),
 		getStrategyConditions(id),
+		getStrategyConditionsRollup(id),
 		getCurrentUser(),
 	])
 	const isPremium = hasAccess(user?.role ?? "viewer", "premium")
@@ -61,6 +66,8 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 	const strategy = result.data
 	const strategyConditions =
 		conditionsResult.status === "success" ? (conditionsResult.data ?? []) : []
+	const rollup = rollupResult.status === "success" ? rollupResult.data : null
+	const isHawksStrategy = rollup?.isHawksStrategy ?? false
 
 	const complianceTone = getComplianceTone(strategy.compliance)
 
@@ -264,15 +271,35 @@ const StrategyDetailPage = async ({ params }: StrategyDetailPageProps) => {
 							id="strategy-detail-conditions"
 							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 						>
-							<div className="gap-s-200 flex items-center">
-								<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
-								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-									{t("conditions.title")}
-								</h2>
+							<div className="gap-s-200 flex items-center justify-between">
+								<div className="gap-s-200 flex items-center">
+									<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
+									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+										{t("conditions.title")}
+									</h2>
+								</div>
+								{isHawksStrategy && (
+									<span className="text-tiny text-acc-100 border-acc-100/40 bg-acc-100/10 px-s-200 py-s-100 rounded-full border">
+										{t("scorecard.hawksBadge")}
+									</span>
+								)}
 							</div>
 							<div className="mt-m-400">
 								<ConditionTierDisplay conditions={strategyConditions} />
 							</div>
+							{rollup && (
+								<div className="mt-m-400 pt-m-400 border-bg-300 border-t">
+									<h3 className="text-small text-txt-100 font-semibold">
+										{t("scorecard.title")}
+									</h3>
+									<p className="text-tiny text-txt-300 mt-s-100">
+										{t("scorecard.subtitle")}
+									</p>
+									<div className="mt-m-400">
+										<ConditionsScorecard rollup={rollup} />
+									</div>
+								</div>
+							)}
 						</div>
 					)}
 

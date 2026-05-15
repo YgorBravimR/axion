@@ -2310,6 +2310,16 @@
 			"tierTier2": "Tier 2 (AA)",
 			"tierTier3": "Tier 3 (AAA)"
 		},
+		"scorecard": {
+			"title": "Condition usage scorecard",
+			"subtitle": "How often each condition was actually met across this strategy's trades.",
+			"basedOnTrades": "Based on {count} trades",
+			"metRateHint": "Met rate",
+			"metOverRecorded": "{met}/{total}",
+			"emptyState": "No trades yet for this strategy.",
+			"emptyStateHint": "Log a trade with these conditions to start the scorecard.",
+			"hawksBadge": "Hawks methodology"
+		},
 		"scenarios": {
 			"title": "Scenarios",
 			"addScenario": "Add Scenario",
