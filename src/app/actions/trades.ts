@@ -1502,8 +1502,8 @@ export const bulkCreateTrades = async (
 					})
 
 					// strategy version pin must be resolved per-row; each CSV row may map to a different strategy by code
-					// eslint-disable-next-line no-await-in-loop
 					const resolvedStrategyVersionId =
+						// eslint-disable-next-line no-await-in-loop
 						await resolveCurrentVersionIdForTrade(
 							strategyId || tradeData.strategyId
 						)
