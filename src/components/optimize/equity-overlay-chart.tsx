@@ -59,7 +59,7 @@ const OverlayTooltip = ({ active, payload, runsMap }: OverlayTooltipProps) => {
 						className="text-small font-mono"
 						style={{ color: entry.color }}
 					>
-						{run.label}: {formatCompactCurrency(entry.value as number, "R$")}
+						{run.label}: {formatCompactCurrency(entry.value as number, "BRL")}
 					</p>
 				)
 			})}
@@ -124,7 +124,7 @@ const EquityOverlayChart = memo(({ runs }: EquityOverlayChartProps) => {
 				/>
 				<YAxis
 					width={yAxisWidth}
-					tickFormatter={(v: number) => formatCompactCurrency(v, "R$")}
+					tickFormatter={(v: number) => formatCompactCurrency(v, "BRL")}
 					tick={axisTick}
 					axisLine={false}
 					tickLine={false}

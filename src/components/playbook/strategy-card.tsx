@@ -131,7 +131,7 @@ const StrategyCardBase = ({
 					<ColoredValue
 						value={strategy.totalPnl}
 						showSign
-						formatFn={(v) => formatCompactCurrencyWithSign(v, "R$")}
+						formatFn={(v) => formatCompactCurrencyWithSign(v, "BRL")}
 						className="mt-s-100 text-body font-bold tabular-nums"
 					/>
 				</div>
