@@ -4712,6 +4712,37 @@
 			"completedTrades": "{count} trades concluídos",
 			"engineVersion": "Versão do Motor"
 		},
+		"hawksPanel": {
+			"title": "Insights HAWKS",
+			"subtitle": "Recorte por sessão derivado deste backtest",
+			"session": {
+				"heading": "Sessões de Pregão",
+				"morning": "Manhã",
+				"morningRange": "09:00 – 12:00",
+				"afternoon": "Tarde",
+				"afternoonRange": "12:00 – 15:30",
+				"close": "Fechamento",
+				"closeRange": "15:30 – 17:30",
+				"trades": "trades",
+				"avgR": "R médio",
+				"noTrades": "Sem trades"
+			},
+			"activity": {
+				"heading": "Atividade Diária",
+				"avgTradesPerDay": "Trades/dia (média)",
+				"maxTradesPerDay": "Trades/dia (máx)",
+				"oneTrade": "Dias com 1 trade",
+				"twoTrades": "Dias com 2 trades",
+				"threePlusTrades": "Dias com 3+ trades",
+				"days": "dias"
+			},
+			"bestWorst": {
+				"heading": "Melhor & Pior Dia",
+				"best": "Melhor dia",
+				"worst": "Pior dia",
+				"tradesSuffix": "trades"
+			}
+		},
 		"table": {
 			"trade": "#",
 			"day": "Dia",

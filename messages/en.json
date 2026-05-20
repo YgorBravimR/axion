@@ -4712,6 +4712,37 @@
 			"completedTrades": "{count} trades completed",
 			"engineVersion": "Engine Version"
 		},
+		"hawksPanel": {
+			"title": "Hawks Insights",
+			"subtitle": "Session-aware breakdown derived from this run",
+			"session": {
+				"heading": "Session Breakdown",
+				"morning": "Morning",
+				"morningRange": "09:00 – 12:00",
+				"afternoon": "Afternoon",
+				"afternoonRange": "12:00 – 15:30",
+				"close": "Close",
+				"closeRange": "15:30 – 17:30",
+				"trades": "trades",
+				"avgR": "avg R",
+				"noTrades": "No trades"
+			},
+			"activity": {
+				"heading": "Daily Activity",
+				"avgTradesPerDay": "Avg trades/day",
+				"maxTradesPerDay": "Max trades/day",
+				"oneTrade": "1-trade days",
+				"twoTrades": "2-trade days",
+				"threePlusTrades": "3+ trade days",
+				"days": "days"
+			},
+			"bestWorst": {
+				"heading": "Best & Worst Day",
+				"best": "Best day",
+				"worst": "Worst day",
+				"tradesSuffix": "trades"
+			}
+		},
 		"table": {
 			"trade": "#",
 			"day": "Day",

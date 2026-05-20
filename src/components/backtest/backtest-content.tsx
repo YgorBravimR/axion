@@ -29,6 +29,7 @@ import { BacktestSummaryCards } from "./backtest-summary-cards"
 import { BacktestEquityChart } from "./backtest-equity-chart"
 import { BacktestTradesTable } from "./backtest-trades-table"
 import { BacktestTradeChartModal } from "./backtest-trade-chart-modal"
+import { BacktestHawksResultsPanel } from "./backtest-hawks-results-panel"
 import type { DataSourceInfo } from "@/types/candle"
 import type {
 	BacktestResult,
@@ -435,6 +436,12 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						engineVersion={result.engineVersion}
 					/>
 					<BacktestEquityChart equityCurve={result.equityCurve} />
+					{recipe.entry.type === "hawks_triple_screen" && (
+						<BacktestHawksResultsPanel
+							trades={result.trades}
+							dayBreakdown={result.dayBreakdown}
+						/>
+					)}
 					<BacktestTradesTable
 						trades={result.trades}
 						onTradeView={setSelectedTrade}
