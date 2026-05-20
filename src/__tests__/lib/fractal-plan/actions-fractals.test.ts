@@ -36,6 +36,14 @@ vi.mock("@/db/drizzle", () => ({
 	},
 }))
 
+// monthly.ts transitively imports @/db/drizzle-ws. Without this mock the
+// test crashes at import when DATABASE_URL is unset.
+vi.mock("@/db/drizzle-ws", () => ({
+	dbWs: {
+		transaction: vi.fn(async (cb: (_tx: unknown) => unknown) => cb({})),
+	},
+}))
+
 import {
 	upsertMonthlyPlan,
 	resetMonthlyOverride,

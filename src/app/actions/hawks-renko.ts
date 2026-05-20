@@ -3,16 +3,7 @@
 import { dbWs } from "@/db/drizzle-ws"
 import { hawksRenkoSizes } from "@/db/schema"
 import { sql } from "drizzle-orm"
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface RenkoSizeRow {
-	effectiveDate: string // ISO "YYYY-MM-DD"
-	weekNumber: number
-	size5m: number
-	size15m: number
-	size60m: number
-}
+import type { RenkoSizeRow } from "./hawks-renko.types"
 
 // ─── CSV parser ───────────────────────────────────────────────────────────────
 
