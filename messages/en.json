@@ -4722,7 +4722,16 @@
 			"contracts": "Contracts",
 			"pnl": "P&L",
 			"rMultiple": "R",
-			"noTrades": "No trades"
+			"noTrades": "No trades",
+			"viewChart": "View chart"
+		},
+		"chartModal": {
+			"title": "Trade #{id} — {direction}",
+			"titleFallback": "Trade chart",
+			"subtitle": "{asset} · {timeframe} · {day}",
+			"loading": "Loading candles…",
+			"noData": "No candle data for this window",
+			"loadFailed": "Failed to load candle data"
 		},
 		"exitReasons": {
 			"target1": "Target 1",

@@ -28,8 +28,13 @@ import { SizingExecutionSection } from "./sections/sizing-execution-section"
 import { BacktestSummaryCards } from "./backtest-summary-cards"
 import { BacktestEquityChart } from "./backtest-equity-chart"
 import { BacktestTradesTable } from "./backtest-trades-table"
+import { BacktestTradeChartModal } from "./backtest-trade-chart-modal"
 import type { DataSourceInfo } from "@/types/candle"
-import type { BacktestResult, StrategyRecipe } from "@/types/backtest"
+import type {
+	BacktestResult,
+	BacktestTrade,
+	StrategyRecipe,
+} from "@/types/backtest"
 
 const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
 
@@ -61,6 +66,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	// Results state
 	const [result, setResult] = useState<BacktestResult | null>(null)
 	const [hasRun, setHasRun] = useState(false)
+	const [selectedTrade, setSelectedTrade] = useState<BacktestTrade | null>(null)
 
 	const selectedSource = dataSources[selectedSourceIndex]
 
@@ -429,9 +435,23 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						engineVersion={result.engineVersion}
 					/>
 					<BacktestEquityChart equityCurve={result.equityCurve} />
-					<BacktestTradesTable trades={result.trades} />
+					<BacktestTradesTable
+						trades={result.trades}
+						onTradeView={setSelectedTrade}
+					/>
 				</div>
 			)}
+
+			<BacktestTradeChartModal
+				open={selectedTrade !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setSelectedTrade(null)
+					}
+				}}
+				trade={selectedTrade}
+				source={selectedSource ?? null}
+			/>
 
 			{/* Empty state — only after a run completes with no results */}
 			{!result && !isPending && hasRun && (

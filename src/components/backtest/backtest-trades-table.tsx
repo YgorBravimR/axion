@@ -2,8 +2,10 @@
 
 import { useMemo } from "react"
 import { useTranslations } from "next-intl"
+import { LineChart } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { formatCentsAsCurrency } from "@/lib/money"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { BacktestTrade } from "@/types/backtest"
@@ -11,11 +13,13 @@ import type { BacktestTrade } from "@/types/backtest"
 interface BacktestTradesTableProps {
 	trades: BacktestTrade[]
 	currency?: string
+	onTradeView?: (_trade: BacktestTrade) => void
 }
 
 const BacktestTradesTable = ({
 	trades,
 	currency = "BRL",
+	onTradeView,
 }: BacktestTradesTableProps) => {
 	const t = useTranslations("backtest.table")
 	const tReasons = useTranslations("backtest.exitReasons")
@@ -155,8 +159,31 @@ const BacktestTradesTable = ({
 					)
 				},
 			},
+			...(onTradeView
+				? [
+						{
+							id: "view",
+							header: () => <span className="sr-only">{t("viewChart")}</span>,
+							cell: ({ row }) => (
+								<div className="flex justify-end">
+									<Button
+										id={`btn-view-trade-${row.original.id}`}
+										type="button"
+										variant="ghost"
+										size="sm"
+										aria-label={t("viewChart")}
+										onClick={() => onTradeView(row.original)}
+									>
+										<LineChart className="h-4 w-4" aria-hidden="true" />
+									</Button>
+								</div>
+							),
+							enableSorting: false,
+						} satisfies ColumnDef<BacktestTrade>,
+					]
+				: []),
 		],
-		[t, tReasons, tResults]
+		[t, tReasons, tResults, onTradeView]
 	)
 
 	return (

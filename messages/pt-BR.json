@@ -4722,7 +4722,16 @@
 			"contracts": "Contratos",
 			"pnl": "P&L",
 			"rMultiple": "R",
-			"noTrades": "Nenhum trade"
+			"noTrades": "Nenhum trade",
+			"viewChart": "Ver gráfico"
+		},
+		"chartModal": {
+			"title": "Trade #{id} — {direction}",
+			"titleFallback": "Gráfico do trade",
+			"subtitle": "{asset} · {timeframe} · {day}",
+			"loading": "Carregando candles…",
+			"noData": "Sem candles para essa janela",
+			"loadFailed": "Falha ao carregar candles"
 		},
 		"exitReasons": {
 			"target1": "Alvo 1",
