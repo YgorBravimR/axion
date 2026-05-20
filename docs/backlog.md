@@ -232,10 +232,10 @@ All four items below are P3 distill passes flagged by the 2026-05-12 "impeccable
 - **Why**: Demo-mode + the E2E journey suite now cover the use case better than a runtime replay branch ever did. Every conditional in Command Center pays a maintenance tax. Removing it _before_ the mode-personalization framework lands keeps that framework's blast radius smaller — it won't have to specialize over a branch we're already deleting.
 - **Source**: `feature-manifesto-2026-05.md` §3.8 + §4 INVEST list #73.
 
-### Monte Carlo v1/v2 → Edge Expectancy / Capital Expectancy rename — **P3**
+### ~~Monte Carlo v1/v2 → Edge Expectancy / Capital Expectancy rename~~ — **DONE 2026-05-20**
 
 - **Priority:** P3 · **Effort:** XS
-- **What**: Rename "Monte Carlo v1" to "Edge Expectancy" and "Monte Carlo v2" to "Capital Expectancy" across i18n (`src/messages/{en,pt-BR}.json`), route copy, nav labels, page headings. Same engine bucket — purely surface-name change.
+- **What**: Renamed "Monte Carlo v1" to "Edge Expectancy" and "Monte Carlo v2" to "Capital Expectancy" across i18n (`messages/{en,pt-BR}.json`). Audit at filing time showed the user-visible rename was already in flight from prior incremental work — tabs, tooltips, section titles, ARIA labels, event toasts, and calibration headings already used the new names. Only loose end was a pt-BR aria-label drift (`Expectância` → `Expectativa`) for consistency with the rest of the surface. Umbrella technique references ("Monte Carlo simulation", route slug, settings copy) intentionally kept — those describe the algorithm, not the modes.
 - **Why**: "v1/v2" is internal jargon that hides distinct cognitive purposes. The new names map to the question each answers: v1 → "is my edge real?" → **Edge Expectancy**; v2 → "will I survive a bad month?" → **Capital Expectancy**.
 - **Source**: `feature-manifesto-2026-05.md` §3.5 + §4 INVEST list #75.
 

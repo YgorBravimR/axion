@@ -2176,8 +2176,8 @@
 			"achievedPositiveR": "{percent}% dos seus trades tiveram R positivo. Seu resultado mais comum é {range} com {count} trades.",
 			"achievedNegativeR": "{percent}% dos seus trades resultaram em R negativo. Foque em cortar perdas mais cedo ou melhorar o timing de entrada."
 		},
-		"expectancyEdgeAriaLabel": "Expectância de Edge (R)",
-		"expectancyCapitalAriaLabel": "Expectância de Capital ($)",
+		"expectancyEdgeAriaLabel": "Expectativa de Edge (R)",
+		"expectancyCapitalAriaLabel": "Expectativa de Capital ($)",
 		"actions": {
 			"noTradesFound": "Nenhum trade encontrado",
 			"statsRetrieved": "Estatísticas recuperadas",
