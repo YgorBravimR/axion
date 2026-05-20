@@ -37,23 +37,9 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 The items that earn priority over everything else in this file. Each is linked to its full entry below.
 
-1. **Mode-personalization widget contract** — the chassis Hawks (and ORB / DezK after it) all consume; prerequisite for the methodology-axis investments below. See [Methodology framework](#methodology-framework) below.
-2. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool (candle replay), and split the generic result panels into per-methodology views (ORB vs Hawks). The most-visible expression of the methodology-personalization framework. See [Backtest](#backtest) below.
-3. **Encryption archive** — rip the dormant field-level encryption stack threaded through ~50 files. Touches PROTECTED paths; needs its own dedicated session. See [Test coverage](#test-coverage-unit--integration) below.
-4. **BiasSelector auto-save toast** — silent auto-save fails AT users + anyone whose focus moved by the time the spinner finishes. Add toast confirmation. See [Command Center](#command-center) below.
-
----
-
-## Methodology framework
-
-> Strategic context: [manifesto §6.5](feature-manifesto-2026-05.md) — the per-component opt-in framework that lets each widget say "I have a Hawks variant; render that when `mode=Hawks`, else canonical." Lower blast radius than a layout-level mode prop. First consumer = Hawks-flavored dashboard card.
-
-### Mode-personalization widget contract — **P1**
-
-- **Priority:** P1 · **Effort:** M
-- **What**: Build a per-component opt-in pattern (registry/context) that lets any widget declare a methodology variant and render it when the active mode matches. Default behavior is the canonical render — methodologies opt in widget-by-widget. Escape hatch reserved for route-level layout swaps if a methodology fundamentally reshapes a screen (rare; manifesto names none in the current 18-surface inventory).
-- **Why**: The methodology axis is the product's wedge (manifesto §2). Every new methodology after Hawks (ORB, DezK, …) re-implements widget swaps ad hoc without this contract. With it, the per-methodology delta is "register variant, write component" — no layout-level branching. Prerequisite for the Backtest visual-layer redesign (P1 below) since that work is the most-visible expression of the framework.
-- **Source**: `feature-manifesto-2026-05.md` §6.5 + Q2 resolution.
+1. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool (candle replay), and split the generic result panels into per-methodology views (ORB vs Hawks). The most-visible expression of the methodology-personalization framework. See [Backtest](#backtest) below.
+2. **Encryption archive** — rip the dormant field-level encryption stack threaded through ~50 files. Touches PROTECTED paths; needs its own dedicated session. See [Test coverage](#test-coverage-unit--integration) below.
+3. **BiasSelector auto-save toast** — silent auto-save fails AT users + anyone whose focus moved by the time the spinner finishes. Add toast confirmation. See [Command Center](#command-center) below.
 
 ---
 
@@ -84,11 +70,11 @@ The items that earn priority over everything else in this file. Each is linked t
 
 #### Why the budget dropped from L to M
 
-The compliance scoring layer (the L-shaped slice the manifesto worried about) is **done**. The remaining work is surface-area personalization on top of that layer, which is M-effort once the Mode-personalization widget contract (Methodology framework P1 entry) lands. Without that framework, this entry is blocked — the Hawks-specific KPI cards would each be a one-off hardcode otherwise.
+The compliance scoring layer (the L-shaped slice the manifesto worried about) is **done**. The remaining work is surface-area personalization on top of that layer — M-effort now that the Mode-personalization widget contract (`<ModeVariant />`, see [component-architecture §10](component-architecture.md)) has shipped. Hawks-specific KPI cards plug into that contract rather than each becoming a one-off hardcode.
 
-#### Dependency: Methodology framework
+#### Methodology framework: available
 
-This entry should ship **after** the Mode-personalization widget contract; otherwise we'd re-implement that dispatch ad-hoc in the playbook page and end up rewriting it.
+Use `<ModeVariant />` for any per-methodology widget swap on this page (account-mode axis). Use inline `recipe.entry.type === "hawks_triple_screen"` checks when the gate is the strategy's intrinsic methodology rather than the active account mode. See `docs/component-architecture.md` §10 for the distinction.
 
 - **Source**: `feature-manifesto-2026-05.md` §3.1, §6.4; verification pass 2026-05-20.
 - **Files inspected**: `src/app/[locale]/(app)/playbook/[id]/page.tsx`, `src/components/playbook/conditions-scorecard.tsx`, `src/components/playbook/condition-tier-display.tsx`, `src/app/actions/strategy-conditions.ts` (lines 295-336).

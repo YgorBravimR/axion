@@ -1,7 +1,7 @@
 # Axion — Component Architecture
 
-> **Single source of truth: `src/components/**` and `src/app/[locale]/**`.**
-> This doc describes the *patterns* — directory layout, server-vs-client rules, naming, data flow — not the inventory of every component.
+> **Single source of truth: `src/components/**`and`src/app/[locale]/**`.**
+> This doc describes the _patterns_ — directory layout, server-vs-client rules, naming, data flow — not the inventory of every component.
 > For the live tree, run `ls src/components` or open the route under `src/app/[locale]/(app)/`.
 
 ## 1. Layout Layer
@@ -21,30 +21,30 @@ src/components/
 
 Each top-level feature has its own directory under `src/components/`:
 
-| Directory | Feature |
-|---|---|
-| `command-center/` | Daily cockpit (checklists, mood/bias, live status, notes) |
-| `journal/` | Trade logging, executions, imports (CSV / nota / OCR), trade detail |
-| `dashboard/` | Performance overview (KPIs, calendar, equity curve, coaching) |
-| `analytics/` | Variable comparison, time analysis, R-distribution, filter panel |
-| `account-comparison/` | Cross-account performance |
-| `playbook/` | Strategy library + condition system |
-| `reports/` | Weekly / monthly / annual reports + R-distribution + capital events |
-| `tax/` | BR DARF cards, carryover ledger, fee config |
-| `monthly/` | Monthly review |
-| `fractal-plan/` | Year → quarter → month plan editors + `cockpit/` slot views |
-| `monte-carlo/` | Monte Carlo simulation v1 + `v2/` |
-| `equity-shield/` | Drawdown protection simulator |
-| `risk-simulation/` | What-if trade replay |
-| `backtest/` | Backtest engine UI + `sections/` for pluggable param panels |
-| `optimize/` | Backtest optimizer (parameter sweep + heatmap) |
-| `market/` | Quotes panel, B3 / economic calendars |
-| `auth/` | Login, register, verify email, forgot password |
-| `settings/` | All settings panels (typed, not key-value) |
-| `imports/` | Detailed trade importer |
-| `bug-report/` | In-app bug capture overlay |
-| `calculator/` | Position size calculator (modal) |
-| `shared/` | Cross-feature primitives (`empty-state`, `colored-value`, `direction-badge`, `stat-card`, etc.) |
+| Directory             | Feature                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| `command-center/`     | Daily cockpit (checklists, mood/bias, live status, notes)                                       |
+| `journal/`            | Trade logging, executions, imports (CSV / nota / OCR), trade detail                             |
+| `dashboard/`          | Performance overview (KPIs, calendar, equity curve, coaching)                                   |
+| `analytics/`          | Variable comparison, time analysis, R-distribution, filter panel                                |
+| `account-comparison/` | Cross-account performance                                                                       |
+| `playbook/`           | Strategy library + condition system                                                             |
+| `reports/`            | Weekly / monthly / annual reports + R-distribution + capital events                             |
+| `tax/`                | BR DARF cards, carryover ledger, fee config                                                     |
+| `monthly/`            | Monthly review                                                                                  |
+| `fractal-plan/`       | Year → quarter → month plan editors + `cockpit/` slot views                                     |
+| `monte-carlo/`        | Monte Carlo simulation v1 + `v2/`                                                               |
+| `equity-shield/`      | Drawdown protection simulator                                                                   |
+| `risk-simulation/`    | What-if trade replay                                                                            |
+| `backtest/`           | Backtest engine UI + `sections/` for pluggable param panels                                     |
+| `optimize/`           | Backtest optimizer (parameter sweep + heatmap)                                                  |
+| `market/`             | Quotes panel, B3 / economic calendars                                                           |
+| `auth/`               | Login, register, verify email, forgot password                                                  |
+| `settings/`           | All settings panels (typed, not key-value)                                                      |
+| `imports/`            | Detailed trade importer                                                                         |
+| `bug-report/`         | In-app bug capture overlay                                                                      |
+| `calculator/`         | Position size calculator (modal)                                                                |
+| `shared/`             | Cross-feature primitives (`empty-state`, `colored-value`, `direction-badge`, `stat-card`, etc.) |
 
 ## 3. Server vs Client Components
 
@@ -117,7 +117,47 @@ If a component has both a server wrapper and a client island, name them clearly:
 
 When adding a new cockpit slot, follow this pattern: type the prop bundle, render server-side, pop a small client island only where the user interacts.
 
-## 10. Things This Doc Deliberately Does NOT List
+## 10. Mode-Personalization Widget Contract
+
+The app has two **independent** axes that often get conflated. Pick the right one or future agents will fight you.
+
+### Axis A — Account mode (the user's active methodology)
+
+"What methodology is this account currently practising?" Resolved server-side once at `(app)/layout.tsx` via `getActiveAccountModeForUser()` and broadcast through `<AccountModeProvider />`. Client code reads it with `useAccountMode()`.
+
+For UI swaps driven by this axis, use `<ModeVariant />` from `src/components/shared/mode-variant.tsx`:
+
+```tsx
+<ModeVariant
+  default={<CoachingInsightsCard />}
+  variants={{ hawks: <HawksCoachingInsightsCard ... /> }}
+/>
+```
+
+- `default` is **required** — it's the fallback for `default` mode and for any methodology that has no variant entry.
+- `variants` is a `Partial<Record<MethodologyVariantKey, ReactNode>>` where `MethodologyVariantKey = Exclude<AccountModeValue, "default">`. Adding a new methodology (e.g. ORB) is **two edits**: extend `AccountModeValue` in the provider and the `accountModeEnum` in `db/schema.ts`. Every existing `<ModeVariant />` call site keeps compiling — the new key is simply optional.
+
+### Axis B — Strategy methodology (a property of the data, not the user)
+
+"This particular recipe/run/strategy was authored as Hawks-style — render its specialised panel." This is intrinsic to the row, not to the active account mode. A user on `default` account mode can still be viewing a Hawks-style recipe.
+
+For this axis, gate inline on the data field. Example from `backtest-content.tsx`:
+
+```tsx
+{recipe.entry.type === "hawks_triple_screen" && (
+  <BacktestHawksResultsPanel ... />
+)}
+```
+
+Do **not** force this through `<ModeVariant />` — the active account mode is irrelevant here.
+
+### Quick decision rule
+
+- Reading `useAccountMode()` (directly or via `<ModeVariant />`)? → Axis A.
+- Inspecting a row's `type`, `methodology`, or recipe shape? → Axis B.
+- Both happen to land in the same screen? Fine — they're orthogonal; compose them.
+
+## 11. Things This Doc Deliberately Does NOT List
 
 - Every component file.
 - Component prop types or interfaces.

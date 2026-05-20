@@ -306,9 +306,13 @@ export const DashboardContent = ({
 				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
 					<ModeVariant
 						default={<CoachingInsightsCard />}
-						hawks={
-							<HawksCoachingInsightsCard initialContext={initialHawksContext} />
-						}
+						variants={{
+							hawks: (
+								<HawksCoachingInsightsCard
+									initialContext={initialHawksContext}
+								/>
+							),
+						}}
 					/>
 				</div>
 			)}
