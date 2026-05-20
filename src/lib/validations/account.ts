@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-const accountTypeEnum = z.enum(["personal", "prop", "replay"])
+const accountTypeEnum = z.enum(["personal", "prop"])
 
 export const createAccountSchema = z.object({
 	name: z
@@ -33,7 +33,6 @@ export const createAccountSchema = z.object({
 		.optional(),
 	showTaxEstimates: z.boolean().optional(),
 	showPropCalculations: z.boolean().optional(),
-	replayStartDate: z.string().datetime().optional(),
 	defaultAsset: z
 		.string()
 		.uuid("validation.account.invalidAssetId")

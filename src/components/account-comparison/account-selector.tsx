@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 interface AccountOption {
 	id: string
 	name: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 }
 
 interface AccountSelectorProps {
@@ -22,7 +22,6 @@ interface AccountSelectorProps {
 const ACCOUNT_TYPE_COLORS: Record<string, string> = {
 	personal: "bg-acc-100",
 	prop: "bg-acc-200",
-	replay: "bg-txt-300",
 }
 
 const AccountSelector = ({

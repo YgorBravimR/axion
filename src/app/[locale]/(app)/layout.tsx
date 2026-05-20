@@ -2,7 +2,6 @@ import type { ReactNode } from "react"
 import { connection } from "next/server"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { getEffectiveDate } from "@/lib/effective-date"
-import { formatDateKey } from "@/lib/dates"
 import { getAccountTypeBrand } from "@/lib/account-brand"
 import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 import { AccountModeProvider } from "@/components/providers/account-mode-provider"
@@ -22,8 +21,6 @@ const AppLayout = async ({ children }: AppLayoutProps) => {
 		getActiveAccountModeForUser(),
 	])
 	const effectiveDate = getEffectiveDate(account)
-	const isReplayAccount = account?.accountType === "replay"
-	const replayDate = isReplayAccount ? formatDateKey(effectiveDate) : undefined
 	const serverBrand = account
 		? getAccountTypeBrand(account.accountType)
 		: undefined
@@ -33,12 +30,7 @@ const AppLayout = async ({ children }: AppLayoutProps) => {
 		<AccountModeProvider mode={accountMode}>
 			<EffectiveDateProvider date={effectiveDate.toISOString()}>
 				<MCCalibrationProvider>
-					<AppShell
-						isReplayAccount={isReplayAccount}
-						replayDate={replayDate}
-						serverBrand={serverBrand}
-						nowIso={nowIso}
-					>
+					<AppShell serverBrand={serverBrand} nowIso={nowIso}>
 						{children}
 					</AppShell>
 				</MCCalibrationProvider>

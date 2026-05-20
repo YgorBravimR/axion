@@ -28,7 +28,6 @@ import type {
 	DailyChecklist as DailyChecklistType,
 	DailyHawksBias,
 	DailyPlan,
-	TradingAccount,
 } from "@/db/schema"
 import { HawksMissingBiasAlert } from "@/components/hawks/hawks-missing-bias-alert"
 import { DailyBiasForm } from "@/components/hawks/daily-bias-form"
@@ -47,7 +46,6 @@ interface CommandCenterContentProps {
 	initialCircuitBreaker: CircuitBreakerStatus | null
 	initialSummary: DailySummary | null
 	availableAssets: Asset[]
-	account: TradingAccount | null
 	viewDate: string
 	isToday: boolean
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
@@ -63,7 +61,6 @@ const CommandCenterContent = ({
 	initialCircuitBreaker,
 	initialSummary,
 	availableAssets,
-	account,
 	viewDate,
 	isToday,
 	initialLiveTradingStatus = null,
@@ -147,11 +144,7 @@ const CommandCenterContent = ({
 	return (
 		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-7xl">
 			{/* Date Navigator */}
-			<DateNavigator
-				currentDate={viewDate}
-				isToday={isToday}
-				isReplayAccount={account?.accountType === "replay"}
-			/>
+			<DateNavigator currentDate={viewDate} isToday={isToday} />
 
 			{/* Hawks bias gate — shown only on today's view when bias not yet set */}
 			{isHawksActive && !initialHawksBias && isToday && (

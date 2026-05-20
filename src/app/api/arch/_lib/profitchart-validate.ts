@@ -54,7 +54,7 @@ interface ProfitChartValidationResult {
 	strategies: Strategy[]
 	timeframes: Timeframe[]
 	tags: Tag[]
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 }
 
 const findAssetBySymbol = (
@@ -97,8 +97,7 @@ const validateProfitChartTrades = async (
 		.where(eq(tradingAccounts.id, accountId))
 		.limit(1)
 
-	const accountType: "personal" | "prop" | "replay" =
-		account?.accountType ?? "personal"
+	const accountType: "personal" | "prop" = account?.accountType ?? "personal"
 
 	const symbolsToLookup = new Set<string>()
 	for (const trade of csvTrades) {

@@ -1,21 +1,20 @@
 import type { TradingAccount } from "@/db/schema"
-import { getCurrentAccount } from "@/app/actions/auth"
 
 /**
  * Returns the effective "now" date for a given account.
- * For replay accounts, this is the stored replayCurrentDate.
- * For all other accounts, this is the actual current date.
+ *
+ * Historically this branched on `accountType === "replay"` to read a stored
+ * replay date. Replay account mode was deprecated; the helper survives as the
+ * single chokepoint that any feature can swap to a stored/virtual clock if a
+ * similar mode is reintroduced. Callers don't need to change when that happens.
  */
-const getEffectiveDate = (account: TradingAccount | null): Date => {
-	if (account?.accountType === "replay" && account.replayCurrentDate) {
-		return new Date(account.replayCurrentDate)
-	}
+const getEffectiveDate = (_account: TradingAccount | null): Date => {
 	return new Date()
 }
 
 /**
  * Returns the effective date, with an optional override (e.g. from URL search params).
- * Priority: overrideDate > replay date > real now
+ * Priority: overrideDate > real now.
  */
 const getEffectiveDateWithOverride = (
 	account: TradingAccount | null,
@@ -28,13 +27,11 @@ const getEffectiveDateWithOverride = (
 }
 
 /**
- * Server-side convenience: fetches the current account and returns the effective date.
- * Use in server actions and server components that need business-logic "today".
- * getCurrentAccount() is cached per-request via NextAuth, so repeated calls are free.
+ * Server-side convenience: returns the effective date as a Promise to match
+ * the original async signature; callers already await it.
  */
 const getServerEffectiveNow = async (): Promise<Date> => {
-	const account = await getCurrentAccount()
-	return getEffectiveDate(account)
+	return getEffectiveDate(null)
 }
 
 export { getEffectiveDate, getEffectiveDateWithOverride, getServerEffectiveNow }

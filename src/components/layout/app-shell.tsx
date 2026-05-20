@@ -29,8 +29,6 @@ import { buildNavStructure } from "@/lib/navigation"
 
 interface AppShellProps {
 	children: ReactNode
-	isReplayAccount?: boolean
-	replayDate?: string
 	serverBrand?: Brand
 	nowIso: string
 }
@@ -46,8 +44,6 @@ interface AppShellProps {
  */
 const AppShell = ({
 	children,
-	isReplayAccount = false,
-	replayDate,
 	serverBrand: _serverBrand,
 	nowIso,
 }: AppShellProps) => {
@@ -126,8 +122,6 @@ const AppShell = ({
 										<Sidebar
 											isCollapsed={false}
 											onToggleCollapse={() => {}}
-											isReplayAccount={isReplayAccount}
-											replayDate={replayDate}
 											variant="sheet"
 											onNavigate={() => setIsMobileMenuOpen(false)}
 											navStructure={navStructure}
@@ -173,8 +167,6 @@ const AppShell = ({
 							<Sidebar
 								isCollapsed={effectiveCollapsed}
 								onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
-								isReplayAccount={isReplayAccount}
-								replayDate={replayDate}
 								hideCollapseToggle={isTablet}
 								navStructure={navStructure}
 							/>

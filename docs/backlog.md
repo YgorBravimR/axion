@@ -250,11 +250,12 @@ All four items below are P3 distill passes flagged by the 2026-05-12 "impeccable
 
 > Strategic context: [manifesto §3.5 + §3.8](feature-manifesto-2026-05.md) — sunset / rename work surfaced by the strategic audit. Cleanup tax that compounds with every adjacent edit; lower-risk to ship before piling more on top.
 
-### Replay account mode deprecation sweep — **P2**
+### ~~Replay account mode deprecation sweep~~ — **DONE 2026-05-20**
 
 - **Priority:** P2 · **Effort:** M
-- **What**: Rip out the feature-flagged replay-account variant. Touches `src/app/[locale]/(app)/command-center/command-center-content.tsx`, `command-center/page.tsx`, `(app)/layout.tsx`, `src/app/actions/accounts.ts`, `accounts.types.ts`, `csv-import.types.ts`, `command-center.ts`, `password-recovery.ts`, `api/arch/_lib/profitchart-validate.ts`, `api/arch/imports/profitchart/route.ts` (~10 files; reproducible list via `rg "replay" src/app -l`).
-- **Why**: Demo-mode + the E2E journey suite now cover the use case better than a runtime replay branch ever did. Every conditional in Command Center pays a maintenance tax. Removing it _before_ the mode-personalization framework lands keeps that framework's blast radius smaller — it won't have to specialize over a branch we're already deleting.
+- **What**: Removed the `replay` account variant end-to-end across three phases: (3a) ripped the `replay` branch out of every `.tsx`/`.ts` consumer — `accounts.ts` server action, `command-center/page.tsx`, `command-center-tabs.tsx`, `command-center-content.tsx`, `date-navigator.tsx`, `(app)/layout.tsx`, `app-shell.tsx`, `sidebar.tsx`, `account-switcher.tsx`, `account-settings.tsx`, `account-selector.tsx`, `account-transition-overlay.tsx`, `tax-tab.tsx`, `month-closing-section.tsx`, `profitchart-validate.ts`, `imports/profitchart/route.ts`, `brand-synchronizer.tsx`; (3b) Drizzle enum migration removing `"replay"` from `accountTypeEnum` via the 6-step text-cast → drop → recreate → recast pattern; (3c) CSV import policy decision — kept `[R]`-prefix alert (ProfitChart-level concept, distinct from account-mode replay) but removed the `accountType !== "replay"` bypass, so the alert now always surfaces and user retains accept/reject agency.
+- **Why**: Demo-mode + the E2E journey suite now cover the use case better than a runtime replay branch ever did. Every conditional in Command Center was paying a maintenance tax. Removing it _before_ the mode-personalization framework lands keeps that framework's blast radius smaller — it doesn't have to specialize over a branch we just deleted.
+- **Validation**: `pnpm lint` (0 errors), `pnpm lint:strict` (0 errors, 479 phase-in warnings), `pnpm exec tsc --noEmit` (clean). i18n keys (`auth.accountSwitcher.replay*`, `settings.account.replay*`, `settings.errors.onlyReplayAccounts`, `replayNoStartDate`, `commandCenter.dateNavigator.{nextReplayDay,replayMode}`) removed from both `messages/en.json` and `messages/pt-BR.json`.
 - **Source**: `feature-manifesto-2026-05.md` §3.8 + §4 INVEST list #73.
 
 ### ~~Monte Carlo v1/v2 → Edge Expectancy / Capital Expectancy rename~~ — **DONE 2026-05-20**

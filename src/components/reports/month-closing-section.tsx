@@ -18,7 +18,7 @@ import { MonthlyProjection } from "./monthly-projection"
 import { MonthComparison } from "./month-comparison"
 import { WeeklyBreakdown } from "./weekly-breakdown"
 
-type AccountType = "personal" | "prop" | "replay"
+type AccountType = "personal" | "prop"
 
 interface MonthClosingSectionProps {
 	accountType: AccountType
@@ -45,11 +45,6 @@ const MonthClosingSection = ({
 	const router = useRouter()
 	const locale = useLocale()
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
-
-	// Nothing meaningful to show for replay accounts; bail out.
-	if (accountType === "replay") {
-		return null
-	}
 
 	// If both data sources are empty we'd render an empty section — skip.
 	const hasPersonalClosing = accountType === "personal" && darfRow !== null

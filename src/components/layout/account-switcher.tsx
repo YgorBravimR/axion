@@ -10,7 +10,6 @@ import {
 	User,
 	Loader2,
 	Plus,
-	RotateCcw,
 } from "lucide-react"
 import {
 	DropdownMenu,
@@ -30,8 +29,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DatePicker } from "@/components/ui/date-picker"
-import { formatDateKey } from "@/lib/dates"
 import { getAccountIcon } from "@/lib/account-brand"
 import {
 	Select,
@@ -41,7 +38,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/toast"
-import { useFeatureAccess } from "@/hooks/use-feature-access"
 import {
 	getUserAccounts,
 	getCurrentAccount,
@@ -54,10 +50,9 @@ import type { TradingAccount } from "@/db/schema"
 
 interface CreateAccountForm {
 	name: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 	propFirmName: string
 	profitSharePercentage: string
-	replayStartDate: string
 }
 
 interface AccountSwitcherProps {
@@ -66,7 +61,6 @@ interface AccountSwitcherProps {
 
 export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 	const t = useTranslations("auth.accountSwitcher")
-	const { isPremium } = useFeatureAccess()
 	const { update } = useSession()
 	const { showToast } = useToast()
 	const { showAccountTransition } = useAccountTransition()
@@ -85,7 +79,6 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 		accountType: "personal",
 		propFirmName: "",
 		profitSharePercentage: "100",
-		replayStartDate: "",
 	})
 
 	useEffect(() => {
@@ -146,10 +139,6 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 						: undefined,
 				profitSharePercentage:
 					parseFloat(createForm.profitSharePercentage) || 100,
-				replayStartDate:
-					createForm.accountType === "replay"
-						? createForm.replayStartDate
-						: undefined,
 			})
 
 			if (result.status === "success" && result.data) {
@@ -246,7 +235,6 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 					onSubmit={handleCreateAccount}
 					isPending={isPending}
 					t={t}
-					isPremium={isPremium}
 				/>
 			</>
 		)
@@ -326,7 +314,6 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 				onSubmit={handleCreateAccount}
 				isPending={isPending}
 				t={t}
-				isPremium={isPremium}
 			/>
 		</>
 	)
@@ -345,7 +332,6 @@ interface CreateAccountDialogProps {
 	onSubmit: () => void
 	isPending: boolean
 	t: (_key: string) => string
-	isPremium: boolean
 }
 
 const CreateAccountDialog = ({
@@ -356,7 +342,6 @@ const CreateAccountDialog = ({
 	onSubmit,
 	isPending,
 	t,
-	isPremium,
 }: CreateAccountDialogProps) => {
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -388,14 +373,10 @@ const CreateAccountDialog = ({
 						</Label>
 						<Select
 							value={form.accountType}
-							onValueChange={(value: "personal" | "prop" | "replay") =>
+							onValueChange={(value: "personal" | "prop") =>
 								setForm((prev) => ({
 									...prev,
 									accountType: value,
-									replayStartDate:
-										value === "replay" && !prev.replayStartDate
-											? formatDateKey(new Date())
-											: prev.replayStartDate,
 								}))
 							}
 							disabled={isPending}
@@ -416,43 +397,9 @@ const CreateAccountDialog = ({
 										{t("propFirm")}
 									</div>
 								</SelectItem>
-								{isPremium && (
-									<SelectItem value="replay">
-										<div className="gap-s-200 flex items-center">
-											<RotateCcw className="h-4 w-4" />
-											{t("replay")}
-										</div>
-									</SelectItem>
-								)}
 							</SelectContent>
 						</Select>
 					</div>
-
-					{form.accountType === "replay" && (
-						<div className="space-y-s-200">
-							<Label id="label-replay-start-date" htmlFor="replayStartDate">
-								{t("replayStartDate")}
-							</Label>
-							<DatePicker
-								id="replayStartDate"
-								value={
-									form.replayStartDate
-										? new Date(form.replayStartDate + "T12:00:00")
-										: undefined
-								}
-								onChange={(date) =>
-									setForm((prev) => ({
-										...prev,
-										replayStartDate: date ? formatDateKey(date) : "",
-									}))
-								}
-								disabled={isPending}
-							/>
-							<p className="text-tiny text-txt-300">
-								{t("replayStartDateHelp")}
-							</p>
-						</div>
-					)}
 
 					{form.accountType === "prop" && (
 						<>

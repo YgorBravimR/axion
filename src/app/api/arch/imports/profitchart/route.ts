@@ -28,7 +28,7 @@ interface ProfitChartCacheEntry {
 	strategies: Strategy[]
 	timeframes: Timeframe[]
 	tags: Tag[]
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 	accountId: string
 	userId: string
 	timestamp: number

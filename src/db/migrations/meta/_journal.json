@@ -57,6 +57,13 @@
 			"when": 1778860574780,
 			"tag": "0007_parallel_exiles",
 			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "7",
+			"when": 1779291504441,
+			"tag": "0008_pale_colleen_wing",
+			"breakpoints": true
 		}
 	]
 }

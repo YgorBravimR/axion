@@ -47,8 +47,6 @@ import {
 import { Loader2, Trash2, DatabaseZap } from "lucide-react"
 import { FeeRateForm } from "@/components/tax"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
-import { formatDateKey } from "@/lib/dates"
-import { DatePicker } from "@/components/ui/date-picker"
 import type { TradingAccount, AccountAsset, Asset } from "@/db/schema"
 
 interface AccountSettingsProps {
@@ -79,11 +77,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const [isEditingAccount, setIsEditingAccount] = useState(false)
 	const [accountForm, setAccountForm] = useState({
 		name: "",
-		accountType: "personal" as "personal" | "prop" | "replay",
+		accountType: "personal" as "personal" | "prop",
 		propFirmName: "",
 		profitSharePercentage: "100",
 		defaultBreakevenTicks: "2",
-		replayStartDate: "",
 		defaultAsset: "" as string,
 	})
 
@@ -120,9 +117,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						propFirmName: accountData.propFirmName || "",
 						profitSharePercentage: accountData.profitSharePercentage,
 						defaultBreakevenTicks: accountData.defaultBreakevenTicks.toString(),
-						replayStartDate: accountData.replayCurrentDate
-							? formatDateKey(new Date(accountData.replayCurrentDate))
-							: "",
 						defaultAsset: accountData.defaultAsset || "",
 					})
 				}
@@ -154,10 +148,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				profitSharePercentage:
 					parseFloat(accountForm.profitSharePercentage) || 100,
 				defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
-				replayStartDate:
-					accountForm.accountType === "replay"
-						? accountForm.replayStartDate
-						: undefined,
 				defaultAsset: accountForm.defaultAsset || null,
 			})
 			if (result.status === "success" && result.data) {
@@ -374,14 +364,10 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						{isEditingAccount ? (
 							<Select
 								value={accountForm.accountType}
-								onValueChange={(value: "personal" | "prop" | "replay") =>
+								onValueChange={(value: "personal" | "prop") =>
 									setAccountForm((prev) => ({
 										...prev,
 										accountType: value,
-										replayStartDate:
-											value === "replay" && !prev.replayStartDate
-												? formatDateKey(new Date())
-												: prev.replayStartDate,
 									}))
 								}
 							>
@@ -391,57 +377,16 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 								<SelectContent>
 									<SelectItem value="personal">{t("personal")}</SelectItem>
 									<SelectItem value="prop">{t("propFirm")}</SelectItem>
-									{isAdmin && (
-										<SelectItem value="replay">{t("replay")}</SelectItem>
-									)}
 								</SelectContent>
 							</Select>
 						) : (
 							<span className="text-small text-txt-200">
-								{account?.accountType === "replay"
-									? t("replay")
-									: account?.accountType === "prop"
-										? t("propFirm")
-										: t("personal")}
+								{account?.accountType === "prop"
+									? t("propFirm")
+									: t("personal")}
 							</span>
 						)}
 					</div>
-					{(accountForm.accountType === "replay" ||
-						account?.accountType === "replay") && (
-						<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-							<div className="flex-1">
-								<p className="text-small text-txt-100">
-									{t("replayStartDate")}
-								</p>
-								<p className="text-tiny text-txt-300">
-									{t("replayStartDateHelp")}
-								</p>
-							</div>
-							{isEditingAccount ? (
-								<DatePicker
-									id="account-replay-start-date"
-									value={
-										accountForm.replayStartDate
-											? new Date(accountForm.replayStartDate + "T12:00:00")
-											: undefined
-									}
-									onChange={(date) =>
-										setAccountForm((prev) => ({
-											...prev,
-											replayStartDate: date ? formatDateKey(date) : "",
-										}))
-									}
-									className="w-full sm:w-48"
-								/>
-							) : (
-								<span className="text-small text-txt-200">
-									{account?.replayCurrentDate
-										? new Date(account.replayCurrentDate).toLocaleDateString()
-										: "-"}
-								</span>
-							)}
-						</div>
-					)}
 					{(accountForm.accountType === "prop" ||
 						account?.accountType === "prop") && (
 						<>
@@ -555,9 +500,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 										profitSharePercentage: account.profitSharePercentage,
 										defaultBreakevenTicks:
 											account.defaultBreakevenTicks.toString(),
-										replayStartDate: account.replayCurrentDate
-											? formatDateKey(new Date(account.replayCurrentDate))
-											: "",
 										defaultAsset: account.defaultAsset || "",
 									})
 								}

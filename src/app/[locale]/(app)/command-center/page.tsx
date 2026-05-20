@@ -39,29 +39,16 @@ const CommandCenterPage = async ({
 	const { date: dateParam } = await searchParams
 	setRequestLocale(locale)
 
-	// Fetch account first so we can resolve effective date for replay accounts
 	const account = await getCurrentAccount()
 
-	// Resolve view date: URL param → replay date → real now
+	// Resolve view date: URL param → real now
 	const urlDate = dateParam ? new Date(dateParam + "T12:00:00") : undefined
 	const effectiveDate = getEffectiveDateWithOverride(account, urlDate)
-	const now = new Date()
-	const isToday =
-		!dateParam ||
-		isSameDay(
-			effectiveDate,
-			account?.accountType === "replay" && account.replayCurrentDate
-				? new Date(account.replayCurrentDate)
-				: now
-		)
+	const isToday = !dateParam || isSameDay(effectiveDate, new Date())
 	const viewDateStr = formatDateKey(effectiveDate)
 
 	// Pass date to date-sensitive actions (undefined = today's effective date)
-	const dateArg = isToday
-		? account?.accountType === "replay"
-			? effectiveDate
-			: undefined
-		: effectiveDate
+	const dateArg = isToday ? undefined : effectiveDate
 
 	// Fetch all initial data server-side in parallel
 	const dailyPlanPromise: Promise<DailyPlan | null> = account?.id
@@ -144,7 +131,6 @@ const CommandCenterPage = async ({
 				assetSettings={initialAssetSettings}
 				viewDate={viewDateStr}
 				isToday={isToday}
-				isReplayAccount={account?.accountType === "replay"}
 				initialLiveTradingStatus={initialLiveTradingStatus}
 				isHawksActive={accountMode === "hawks"}
 				initialHawksBias={initialHawksBias}

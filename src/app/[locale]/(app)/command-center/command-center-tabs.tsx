@@ -14,7 +14,7 @@ import {
 	CommandCenterContent,
 	type CommandCenterContentProps,
 } from "./command-center-content"
-import type { Asset } from "@/db/schema"
+import type { Asset, TradingAccount } from "@/db/schema"
 import type { StrategyWithStats } from "@/app/actions/strategies.types"
 import type { AssetSettingWithAsset } from "@/app/actions/command-center.types"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
@@ -33,13 +33,13 @@ const PositionCalculator = lazy(() =>
 
 interface CommandCenterTabsProps extends CommandCenterContentProps {
 	calculatorAssets: Asset[]
+	account: TradingAccount | null
 	accountSettings: {
 		defaultRiskPerTrade: string | null
 		maxDailyLoss: number | null
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
-	isReplayAccount?: boolean
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
 }
 
@@ -51,20 +51,18 @@ const tabLoadingFallback = (
 
 const CommandCenterTabs = ({
 	calculatorAssets,
+	account,
 	accountSettings,
 	strategies,
 	assetSettings,
-	isReplayAccount = false,
 	initialLiveTradingStatus = null,
 	...commandCenterProps
 }: CommandCenterTabsProps) => {
-	const defaultAssetSymbol =
-		commandCenterProps.account?.defaultAsset ?? undefined
+	const defaultAssetSymbol = account?.defaultAsset ?? undefined
 	const t = useTranslations("commandCenter")
 	const { canAccess } = useFeatureAccess()
 	const showCommandTab = canAccess("command-center:command-tab")
-	const showMonitorTab =
-		!isReplayAccount && canAccess("command-center:monitor-tab")
+	const showMonitorTab = canAccess("command-center:monitor-tab")
 	const defaultTab = showCommandTab ? "command-center" : "calculator"
 	const [activeTab, setActiveTab] = useState(defaultTab)
 

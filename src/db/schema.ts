@@ -58,11 +58,7 @@ export const orderTypeEnum = pgEnum("order_type", [
 ])
 
 // Account Type Enum
-export const accountTypeEnum = pgEnum("account_type", [
-	"personal",
-	"prop",
-	"replay",
-])
+export const accountTypeEnum = pgEnum("account_type", ["personal", "prop"])
 
 // User Role Enum
 export const userRoleEnum = pgEnum("user_role", [
@@ -268,9 +264,6 @@ export const tradingAccounts = pgTable(
 			precision: 5,
 			scale: 2,
 		}).default("30.00"),
-
-		// Replay mode: the effective "today" for this account
-		replayCurrentDate: timestamp("replay_current_date", { withTimezone: true }),
 
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()

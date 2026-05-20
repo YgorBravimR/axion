@@ -62,8 +62,7 @@ export interface CsvValidationResult {
 	strategies: Strategy[]
 	timeframes: Timeframe[]
 	tags: Tag[]
-	// Account type for replay trade detection
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 }
 
 export interface CsvImportResult {

@@ -20,7 +20,7 @@ import { getAccountTypeBrand, getAccountIcon } from "@/lib/account-brand"
 
 interface AccountTransitionOptions {
 	accountName: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 }
 
 interface AccountTransitionContextType {
@@ -308,8 +308,6 @@ const AccountTransitionOverlayProvider = ({
 			switch (accountType) {
 				case "prop":
 					return t("propFirm")
-				case "replay":
-					return t("replay")
 				default:
 					return t("personal")
 			}

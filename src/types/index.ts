@@ -362,7 +362,7 @@ export type JournalPeriod = "day" | "week" | "month" | "all" | "custom"
 export interface AccountComparisonMetrics {
 	accountId: string
 	accountName: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 	stats: OverallStats
 	expectedValue: ExpectedValueData
 	equityCurve: EquityPoint[]
