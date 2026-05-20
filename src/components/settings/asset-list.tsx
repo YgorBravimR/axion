@@ -24,7 +24,15 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react"
+import {
+	Plus,
+	Search,
+	Pencil,
+	Trash2,
+	Loader2,
+	ToggleRight,
+	ToggleLeft,
+} from "lucide-react"
 import { fromCents } from "@/lib/money"
 
 interface AssetListProps {

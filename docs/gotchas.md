@@ -130,6 +130,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Date logged**: 2026-05-15.
 - **Source**: `src/components/ui/segmented-toggle.tsx` — Command Center sweep follow-up.
 
+### `pnpm exec tsc --noEmit` catches things `next dev` + `pnpm lint:strict` silently allow
+
+- **What**: Next dev mode strips types with SWC (no type-check), and `pnpm lint:strict` uses ESLint with type-aware rules but does **not** run a full `tsc` pass. The husky pre-push hook _does_ run `pnpm exec tsc --noEmit`. Net effect: a branch can look green in dev + look green in `lint:strict` and still fail pre-push. Hit during the manifesto-filing push on 2026-05-20 — ten TS errors had been on `feat/hawks-mode-v0` for ~3 commits (wrong Drizzle column name `currency` instead of `defaultCurrency`, missing lucide-react icon imports, missing component props) because no one ran `tsc --noEmit` between landing and pushing.
+- **What to do**: Treat "green lint:strict" as necessary but not sufficient. Run `pnpm exec tsc --noEmit` locally before assuming the branch is ready to push, especially after merging another branch in. If you're CI-only, the deploy workflow gate must include `tsc --noEmit` for parity with pre-push, or the failure mode is "push works for me but blocks the next contributor."
+- **Date logged**: 2026-05-20.
+- **Source**: feat/hawks-mode-v0 pre-push failure during manifesto §6 backlog filing.
+
 ---
 
 ## Accessibility

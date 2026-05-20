@@ -21,7 +21,16 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Plus, Pencil, Trash2, Loader2, Clock, BarChart3 } from "lucide-react"
+import {
+	Plus,
+	Pencil,
+	Trash2,
+	Loader2,
+	Clock,
+	BarChart3,
+	ToggleRight,
+	ToggleLeft,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUrlParams } from "@/hooks/use-url-params"
 

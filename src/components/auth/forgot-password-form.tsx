@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import Image from "next/image"
-import { Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { BackLink } from "@/components/ui/back-link"
 import {

@@ -246,15 +246,15 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 							>
 								Total
 							</TableHead>
-							<CellBRL value={totals.resultadoBruto} />
+							<CellBRL value={totals.resultadoBruto} format={formatBRL} />
 							<CellBRL
 								value={totals.resultadoLiquido}
 								highlight
 								format={formatBRL}
 							/>
 							<CellNum value={totals.pontos} />
-							<CellBRL value={totals.taxas} />
-							<CellBRL value={totals.imposto} />
+							<CellBRL value={totals.taxas} format={formatBRL} />
+							<CellBRL value={totals.imposto} format={formatBRL} />
 							<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
 								—
 							</TableCell>

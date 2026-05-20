@@ -609,10 +609,10 @@ export const getAccountCurrency = cache(async (): Promise<string> => {
 
 		const account = await db.query.tradingAccounts.findFirst({
 			where: eq(tradingAccounts.id, session.user.accountId),
-			columns: { currency: true },
+			columns: { defaultCurrency: true },
 		})
 
-		return account?.currency ?? "BRL"
+		return account?.defaultCurrency ?? "BRL"
 	} catch (error) {
 		console.error("Get account currency error:", error)
 		return "BRL" // Fallback to BRL on error
