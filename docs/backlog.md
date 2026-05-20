@@ -37,9 +37,7 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 The items that earn priority over everything else in this file. Each is linked to its full entry below.
 
-1. **Backtest visual layer + methodology-specific UX redesign** — turn the backtest page from a calculator into a simulation tool (candle replay), and split the generic result panels into per-methodology views (ORB vs Hawks). The most-visible expression of the methodology-personalization framework. See [Backtest](#backtest) below.
-2. **Encryption archive** — rip the dormant field-level encryption stack threaded through ~50 files. Touches PROTECTED paths; needs its own dedicated session. See [Test coverage](#test-coverage-unit--integration) below.
-3. **BiasSelector auto-save toast** — silent auto-save fails AT users + anyone whose focus moved by the time the spinner finishes. Add toast confirmation. See [Command Center](#command-center) below.
+1. **Encryption archive** — rip the dormant field-level encryption stack threaded through ~50 files. Touches PROTECTED paths; needs its own dedicated session. See [Test coverage](#test-coverage-unit--integration) below.
 
 ---
 
@@ -83,13 +81,16 @@ Use `<ModeVariant />` for any per-methodology widget swap on this page (account-
 
 ## Backtest
 
-### Backtest visual layer + methodology-specific UX redesign — **P1**
+### Backtest ORB & DezK methodology panels — **P2**
 
-- **Priority:** P1 · **Effort:** L (visual replay) + M (per-methodology panels)
-- **What**: The current backtest page is form-based only — results show equity curve, summary cards, and a trades table but no candle chart replay. The redesign has two parts: (1) a visual layer showing trades overlaid on a price chart for each selected trade/day, and (2) methodology-specific result views — ORB, DEZK/Hawks each have distinct metrics and UX that shouldn't share the same generic sections. Hawks specifically needs scenario-level breakdown, B3 daily cap tracking, and session-aware reporting that ORB never will.
-- **Why**: Surfaced during CEO strategic review (2026-05-14). The visual layer is the delta between "a calculator" and "a simulation tool." The methodology-specific UX is the delta between "a generic platform" and Axion's core niche value proposition. Promoted to P1 (from P2) because the methodology-personalization framework is now committed strategic direction; this is the most-visible expression of it.
-- **Building blocks already exist**: `getTradeWithCandles` in `candle-query.ts` fetches candle data with trade overlay (already powers journal chart); `BacktestTrade[]` has entry/exit timestamps + prices + R-multiples; `DayBreakdown[]` captures range data per day (currently unused in UI); methodology entry sections are already split per strategy.
-- **Source**: CEO review session 2026-05-14; `src/components/backtest/`, `src/app/actions/candle-query.ts`, `src/types/backtest.ts`.
+- **Priority:** P2 · **Effort:** M · **Status**: visual layer + Hawks panel **already shipped** (verified 2026-05-20); remaining work is the missing ORB and DezK result panels.
+- **Already done** (not in the original entry — discovered on 2026-05-20 read):
+  - **Visual replay**: `BacktestTradeChartModal` (`src/components/backtest/backtest-trade-chart-modal.tsx`) opens per-trade from `BacktestTradesTable`, loads candle window via `getCandlesForRange`, renders entry/exit markers via `lightweight-charts`.
+  - **Hawks panel**: `BacktestHawksResultsPanel` (`backtest-hawks-results-panel.tsx`) gated by `recipe.entry.type === "hawks_triple_screen"` in `backtest-content.tsx:439`, covering session split (BR-local), 1/2/3+ trade-day buckets (the B3 daily cap signal), and best/worst day.
+- **What remains**: build `BacktestOrbResultsPanel` and `BacktestDezkResultsPanel` and dispatch on `recipe.entry.type` alongside the Hawks gate. Per `component-architecture.md` §10, this is the strategy-methodology axis (intrinsic to the recipe), so use inline `recipe.entry.type` gates — **not** `<ModeVariant />`.
+- **Why P2, not P1**: the high-blast-radius pieces are live; the remaining gap only bites ORB and DezK users, and neither methodology has a written spec for which metrics matter. Promote back to P1 once a CEO/manifesto note names the ORB or DezK metric set.
+- **Open questions before building**: which metrics matter for ORB (opening-range hit rate? % continuation? gap-vs-no-gap split?) and DezK. Defer until specified.
+- **Source**: CEO review session 2026-05-14; verification pass 2026-05-20. `src/components/backtest/`, `src/types/backtest.ts`.
 
 ### Hawks tick-level fidelity on stop reference
 
@@ -131,16 +132,6 @@ Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. B
 - **Priority:** P2 · **Effort:** L
 - **What**: `__tests__/lib/backtest/*` (entry, stop, target, sizing modules), `__tests__/lib/equity-shield/*` (smoothing + shield calc), `__tests__/lib/fractal-plan/*` (capital + week aggregation).
 - **Source**: same scan, "test files missing" list.
-
----
-
-## Command Center
-
-### BiasSelector auto-save toast — **P1**
-
-- **Priority:** P1 · **Effort:** S
-- **What**: The non-edit row's BiasSelector auto-saves silently (spinner only). Add toast confirmation so AT users + anyone whose focus moved get a status signal.
-- **Source**: `docs/scans/2026-05-12-impeccable-command-center.md` Phase 1a P1.
 
 ---
 

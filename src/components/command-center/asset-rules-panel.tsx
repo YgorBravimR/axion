@@ -170,6 +170,7 @@ export const AssetRulesPanel = ({
 						showToast("error", result.message)
 						return
 					}
+					showToast("success", t("biasSaved"))
 					onRefresh()
 				}
 			} catch {

@@ -761,6 +761,7 @@
 			"addError": "Falha ao adicionar ativo",
 			"saveError": "Falha ao salvar configurações",
 			"biasError": "Falha ao atualizar viés",
+			"biasSaved": "Viés atualizado",
 			"deleteError": "Falha ao excluir configurações"
 		},
 		"summary": {
