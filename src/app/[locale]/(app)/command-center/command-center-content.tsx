@@ -35,6 +35,7 @@ import { Crosshair } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
+import { useAccountMode } from "@/components/providers/account-mode-provider"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 import { useCallback, useState, useTransition } from "react"
@@ -49,7 +50,6 @@ interface CommandCenterContentProps {
 	viewDate: string
 	isToday: boolean
 	initialLiveTradingStatus?: LiveTradingStatusResult | null
-	isHawksActive?: boolean
 	initialHawksBias?: DailyHawksBias | null
 	hawksDailyOrdinal?: number
 }
@@ -64,12 +64,12 @@ const CommandCenterContent = ({
 	viewDate,
 	isToday,
 	initialLiveTradingStatus = null,
-	isHawksActive = false,
 	initialHawksBias = null,
 	hawksDailyOrdinal = 0,
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
 	const { isPremium } = useFeatureAccess()
+	const { isHawks: isHawksActive } = useAccountMode()
 	const tHawks = useTranslations("hawks.dailyCount")
 	useRegisterPageGuide(commandCenterGuide)
 

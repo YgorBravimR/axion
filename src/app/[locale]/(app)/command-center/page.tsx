@@ -15,7 +15,6 @@ import { formatDateKey } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
 import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
 import {
-	getActiveAccountModeForUser,
 	getDailyHawksBias,
 	getHawksDailyOrdinal,
 } from "@/lib/hawks/account-context"
@@ -66,7 +65,6 @@ const CommandCenterPage = async ({
 		assetsResult,
 		strategiesResult,
 		liveTradingStatusResult,
-		accountMode,
 		initialHawksBias,
 		hawksDailyOrdinal,
 	] = await Promise.all([
@@ -78,7 +76,6 @@ const CommandCenterPage = async ({
 		getActiveAssets().catch(() => []),
 		getStrategies(),
 		getLiveTradingStatus(dateArg),
-		getActiveAccountModeForUser(),
 		getDailyHawksBias(viewDateStr),
 		getHawksDailyOrdinal(viewDateStr),
 	])
@@ -132,7 +129,6 @@ const CommandCenterPage = async ({
 				viewDate={viewDateStr}
 				isToday={isToday}
 				initialLiveTradingStatus={initialLiveTradingStatus}
-				isHawksActive={accountMode === "hawks"}
 				initialHawksBias={initialHawksBias}
 				hawksDailyOrdinal={hawksDailyOrdinal}
 			/>
