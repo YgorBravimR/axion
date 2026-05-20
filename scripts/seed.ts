@@ -138,8 +138,8 @@ const runSeed = async () => {
 	const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, SALT_ROUNDS)
 
 	const [adminUser] = await sql`
-		INSERT INTO users (id, name, email, password_hash, is_admin, preferred_locale, theme)
-		VALUES (gen_random_uuid(), 'Admin User', ${ADMIN_EMAIL}, ${passwordHash}, true, 'en', 'dark')
+		INSERT INTO users (id, name, email, password_hash, is_admin, role, preferred_locale, theme)
+		VALUES (gen_random_uuid(), 'Admin User', ${ADMIN_EMAIL}, ${passwordHash}, true, 'admin', 'en', 'dark')
 		RETURNING id
 	`
 	console.log(`✅ Admin user created: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`)
