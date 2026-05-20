@@ -13,11 +13,6 @@ vi.mock("@/db/drizzle", () => ({
 	},
 }))
 
-vi.mock("@/lib/user-crypto", () => ({
-	getUserDek: vi.fn().mockResolvedValue(null),
-	decryptTradeFields: vi.fn((val: unknown) => val),
-}))
-
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 
 describe("recomputeAccountMonth", () => {

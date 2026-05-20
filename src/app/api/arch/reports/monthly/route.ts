@@ -13,7 +13,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { calculateReportSummary } from "../../_lib/report-summary"
 
 const GET = async (request: NextRequest) => {
@@ -59,10 +58,7 @@ const GET = async (request: NextRequest) => {
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		const dek = await getUserDek(auth.userId)
-		const monthTrades = dek
-			? rawMonthTrades.map((t) => decryptTradeFields(t, dek))
-			: rawMonthTrades
+		const monthTrades = rawMonthTrades
 
 		if (monthTrades.length === 0) {
 			return archSuccess("Monthly report retrieved", {

@@ -25,7 +25,6 @@ import { runMonteCarloSimulation } from "@/lib/monte-carlo"
 import { runMonteCarloV2 } from "@/lib/monte-carlo-v2"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getTranslations } from "next-intl/server"
 
 export const getDataSourceOptions = async (): Promise<
@@ -152,9 +151,6 @@ export const getSimulationStats = async (
 		let strategiesCount = 0
 		let accountsCount = 1
 
-		// Get DEK for decryption
-		const dek = await getUserDek(userId)
-
 		if (validated.type === "strategy") {
 			const strategy = await db.query.strategies.findFirst({
 				where: and(
@@ -189,9 +185,7 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		} else if (validated.type === "all_strategies") {
 			sourceName = t("dataSources.allStrategies")
 
@@ -214,9 +208,7 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		} else if (validated.type === "universal") {
 			if (!showAllAccounts) {
 				return {
@@ -255,9 +247,7 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		}
 
 		if (tradesList.length === 0) {

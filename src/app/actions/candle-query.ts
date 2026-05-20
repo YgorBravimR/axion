@@ -18,7 +18,6 @@ import {
 } from "@/db/schema"
 import { and, eq, gte, lte, asc, min, max } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 
 // Fetch candles for a specific time range
@@ -182,7 +181,7 @@ export const getTradeWithCandles = async (
 		const { accountId, userId } = await requireAuth()
 
 		// 1. Fetch the trade by ID with executions
-		let trade = await db.query.trades.findFirst({
+		const trade = await db.query.trades.findFirst({
 			where: and(
 				eq(trades.id, tradeId),
 				eq(trades.accountId, accountId),
@@ -199,12 +198,6 @@ export const getTradeWithCandles = async (
 				status: "error",
 				message: "Trade not found",
 			}
-		}
-
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		if (dek) {
-			trade = decryptTradeFields(trade, dek)
 		}
 
 		// 2. Determine the asset — look up the asset record by symbol

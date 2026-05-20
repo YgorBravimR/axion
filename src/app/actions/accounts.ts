@@ -18,11 +18,6 @@ import {
 } from "@/db/schema"
 import { auth } from "@/auth"
 import { requireAuth } from "@/app/actions/auth"
-import {
-	getUserDek,
-	encryptAccountFields,
-	decryptAccountFields,
-} from "@/lib/user-crypto"
 import { hasAccess } from "@/lib/feature-access"
 import { resolveFeeSnapshot } from "@/lib/tax/fee-resolver"
 import { getTranslations } from "next-intl/server"
@@ -79,16 +74,7 @@ export const createAccount = async (
 			return { status: "error", error: tSettings("errors.accountNameExists") }
 		}
 
-		// Encrypt financial fields if DEK is available
-		const dek = await getUserDek(session.user.id)
-		const encryptableValues = {
-			propFirmName: input.propFirmName,
-			profitSharePercentage:
-				input.profitSharePercentage?.toString() ?? "100.00",
-		}
-		const encryptedFields = dek
-			? encryptAccountFields(encryptableValues, dek)
-			: {}
+		// Financial fields are plaintext
 
 		const [newAccount] = await db
 			.insert(tradingAccounts)
@@ -103,21 +89,12 @@ export const createAccount = async (
 				defaultCurrency: input.defaultCurrency ?? "BRL",
 				showTaxEstimates: input.showTaxEstimates ?? true,
 				showPropCalculations: input.showPropCalculations ?? true,
-				...encryptedFields,
 			})
 			.returning()
 
 		invalidateAccountData()
 
-		// Decrypt fields before returning
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					newAccount as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradingAccount)
-			: newAccount
-
-		return { status: "success", data: decryptedAccount }
+		return { status: "success", data: newAccount }
 	} catch (error) {
 		console.error("Create account error:", error)
 		return { status: "error", error: tAuth("register.genericError") }
@@ -220,29 +197,17 @@ export const updateAccount = async (
 			updateData.defaultAsset = input.defaultAsset
 		}
 
-		// Encrypt financial fields if DEK is available
-		const dek = await getUserDek(session.user.id)
-		const encryptedFields = dek
-			? encryptAccountFields(updateData as Record<string, unknown>, dek)
-			: {}
+		// Financial fields are plaintext
 
 		const [updated] = await db
 			.update(tradingAccounts)
-			.set({ ...updateData, ...encryptedFields })
+			.set(updateData)
 			.where(eq(tradingAccounts.id, accountId))
 			.returning()
 
 		invalidateAccountData()
 
-		// Decrypt fields before returning
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					updated as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradingAccount)
-			: updated
-
-		return { status: "success", data: decryptedAccount }
+		return { status: "success", data: updated }
 	} catch (error) {
 		console.error("Update account error:", error)
 		return { status: "error", error: tAuth("register.genericError") }

@@ -167,16 +167,13 @@ export const users = pgTable(
 	"users",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		name: text("name").notNull(), // encrypted
+		name: text("name").notNull(),
 		email: varchar("email", { length: 255 }).notNull().unique(),
 		emailVerified: timestamp("email_verified", { withTimezone: true }),
 		passwordHash: varchar("password_hash", { length: 255 }).notNull(),
 		image: varchar("image", { length: 255 }),
 		isAdmin: boolean("is_admin").default(false).notNull(),
 		role: userRoleEnum("role").default("trader").notNull(),
-
-		// Encrypted Data Encryption Key (envelope encryption)
-		encryptedDek: text("encrypted_dek"),
 
 		// General user settings (not account-specific)
 		preferredLocale: varchar("preferred_locale", { length: 10 })
@@ -214,10 +211,10 @@ export const tradingAccounts = pgTable(
 
 		// Trading account type
 		accountType: accountTypeEnum("account_type").default("personal").notNull(),
-		propFirmName: text("prop_firm_name"), // encrypted
+		propFirmName: text("prop_firm_name"),
 		profitSharePercentage: text("profit_share_percentage")
 			.default("100.00")
-			.notNull(), // encrypted
+			.notNull(),
 
 		// Tax rates intentionally NOT stored — sourced from @/lib/tax/legal-rates by
 		// year (Lei 11.033/2004). Single source of truth across cockpit, reports,
@@ -603,19 +600,19 @@ export const trades = pgTable(
 		entryDate: timestamp("entry_date", { withTimezone: true }).notNull(),
 		exitDate: timestamp("exit_date", { withTimezone: true }),
 
-		// Execution (encrypted: stores ciphertext when encryption is enabled)
+		// Execution
 		entryPrice: text("entry_price").notNull(),
 		exitPrice: text("exit_price"),
 		positionSize: text("position_size").notNull(),
 
-		// Risk Management (encrypted)
+		// Risk Management
 		stopLoss: text("stop_loss"),
 		takeProfit: text("take_profit"),
-		plannedRiskAmount: text("planned_risk_amount"), // cents (encrypted)
+		plannedRiskAmount: text("planned_risk_amount"), // cents
 		plannedRMultiple: text("planned_r_multiple"),
 
-		// Results (encrypted)
-		pnl: text("pnl"), // cents (encrypted)
+		// Results
+		pnl: text("pnl"), // cents
 		pnlPercent: decimal("pnl_percent", { precision: 8, scale: 4 }),
 		// Points P&L — computed at trade-save time via point-values resolver.
 		// NULL = not yet computed or asset has no known point-value mapping.
@@ -637,9 +634,9 @@ export const trades = pgTable(
 		mfeR: decimal("mfe_r", { precision: 8, scale: 2 }),
 		maeR: decimal("mae_r", { precision: 8, scale: 2 }),
 
-		// Fees (encrypted)
-		commission: text("commission"), // cents per contract (encrypted)
-		fees: text("fees"), // cents per contract (encrypted)
+		// Fees
+		commission: text("commission"), // cents per contract
+		fees: text("fees"), // cents per contract
 		// Total contracts executed (entry + exit + any intra-trade scaling)
 		// Default is positionSize * 2 (1 entry + 1 exit per contract)
 		contractsExecuted: decimal("contracts_executed", {
@@ -756,20 +753,17 @@ export const tradeExecutions = pgTable(
 		executionDate: timestamp("execution_date", {
 			withTimezone: true,
 		}).notNull(),
-		price: text("price").notNull(), // encrypted
-		quantity: text("quantity").notNull(), // encrypted
+		price: text("price").notNull(),
+		quantity: text("quantity").notNull(),
 
-		// Optional metadata
 		orderType: orderTypeEnum("order_type"),
 		notes: text("notes"),
 
-		// Costs for this specific execution (encrypted)
-		commission: text("commission"), // cents (encrypted)
-		fees: text("fees"), // cents (encrypted)
-		slippage: text("slippage"), // cents (encrypted)
+		commission: text("commission"), // cents
+		fees: text("fees"), // cents
+		slippage: text("slippage"), // cents
 
-		// Calculated field (encrypted) - quantity * price in cents
-		executionValue: text("execution_value").notNull(), // encrypted
+		executionValue: text("execution_value").notNull(),
 
 		// Timestamps
 		createdAt: timestamp("created_at", { withTimezone: true })

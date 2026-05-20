@@ -6,11 +6,6 @@ import { eq, and, gte, lte, inArray } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { requireRole } from "@/lib/auth-utils"
 import {
-	getUserDek,
-	decryptTradeFields,
-	decryptAccountFields,
-} from "@/lib/user-crypto"
-import {
 	computeOverallStats,
 	computeExpectedValue,
 	computeEquityCurve,
@@ -30,7 +25,6 @@ import { getTranslations } from "next-intl/server"
  *
  * Why a dedicated action instead of calling existing analytics N times:
  * - Single DB query with inArray is far more efficient than N separate queries
- * - Single getUserDek() call (encryption is per-user, not per-account)
  * - Avoids N auth round-trips
  * - Groups trades by accountId in application code
  */
@@ -70,18 +64,6 @@ export const getAccountComparisonData = async (
 			}
 		}
 
-		// Decrypt account fields for config display
-		const dek = await getUserDek(authContext.userId)
-		const decryptedAccounts = dek
-			? userAccounts.map(
-					(a) =>
-						decryptAccountFields(
-							a as unknown as Record<string, unknown>,
-							dek
-						) as unknown as typeof a
-				)
-			: userAccounts
-
 		// Single query: all trades across selected accounts
 		const conditions = [
 			inArray(trades.accountId, accountIds),
@@ -95,14 +77,9 @@ export const getAccountComparisonData = async (
 			conditions.push(lte(trades.entryDate, filters.dateTo))
 		}
 
-		const rawTrades = await db.query.trades.findMany({
+		const decryptedTrades = await db.query.trades.findMany({
 			where: and(...conditions),
 		})
-
-		// Decrypt all trades at once (single DEK)
-		const decryptedTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
 
 		// Group trades by accountId
 		const tradesByAccount = new Map<string, typeof decryptedTrades>()
@@ -122,7 +99,7 @@ export const getAccountComparisonData = async (
 		// Compute metrics per account
 		const accounts: AccountComparisonMetrics[] = []
 
-		for (const account of decryptedAccounts) {
+		for (const account of userAccounts) {
 			const accountTrades = tradesByAccount.get(account.id) ?? []
 
 			const stats = computeOverallStats(accountTrades)

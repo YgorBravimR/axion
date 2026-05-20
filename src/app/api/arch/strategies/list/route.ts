@@ -11,7 +11,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
 /**
  * GET /api/arch/strategies/list
@@ -43,21 +42,15 @@ const GET = async (request: NextRequest) => {
 			? inArray(trades.accountId, auth.allAccountIds)
 			: eq(trades.accountId, auth.accountId)
 
-		const dek = await getUserDek(auth.userId)
-
 		const strategyStats = await Promise.all(
 			userStrategies.map(async (strategy) => {
-				const rawTrades = await db.query.trades.findMany({
+				const strategyTrades = await db.query.trades.findMany({
 					where: and(
 						eq(trades.strategyId, strategy.id),
 						accountCondition,
 						eq(trades.isArchived, false)
 					),
 				})
-
-				const strategyTrades = dek
-					? rawTrades.map((trade) => decryptTradeFields(trade, dek))
-					: rawTrades
 
 				let totalPnl = 0
 				let winCount = 0

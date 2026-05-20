@@ -6,7 +6,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { calculateWinRate } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
 /**
  * GET /api/arch/tags/list
@@ -36,8 +35,6 @@ const GET = async (request: NextRequest) => {
 			? inArray(trades.accountId, auth.allAccountIds)
 			: eq(trades.accountId, auth.accountId)
 
-		const dek = await getUserDek(auth.userId)
-
 		const tagStats = await Promise.all(
 			userTags.map(async (tag) => {
 				const tagTradeLinks = await db
@@ -64,17 +61,13 @@ const GET = async (request: NextRequest) => {
 					}
 				}
 
-				const rawTrades = await db.query.trades.findMany({
+				const tagTrades = await db.query.trades.findMany({
 					where: and(
 						inArray(trades.id, tradeIds),
 						accountCondition,
 						eq(trades.isArchived, false)
 					),
 				})
-
-				const tagTrades = dek
-					? rawTrades.map((trade) => decryptTradeFields(trade, dek))
-					: rawTrades
 
 				let totalPnl = 0
 				let winCount = 0

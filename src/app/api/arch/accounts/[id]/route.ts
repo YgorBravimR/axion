@@ -4,7 +4,6 @@ import { tradingAccounts, accountAssets, accountTimeframes } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
-import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 
 const GET = async (
 	request: NextRequest,
@@ -34,16 +33,6 @@ const GET = async (
 			)
 		}
 
-		// Decrypt account fields
-		const dek = await getUserDek(auth.userId)
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					account as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof account)
-			: account
-
-		// Fetch asset and timeframe configurations
 		const [assetConfigs, timeframeConfigs] = await Promise.all([
 			db.query.accountAssets.findMany({
 				where: eq(accountAssets.accountId, id),
@@ -56,7 +45,7 @@ const GET = async (
 		])
 
 		return archSuccess("Account detail retrieved", {
-			...decryptedAccount,
+			...account,
 			assetConfigs: assetConfigs.map((config) => ({
 				assetId: config.assetId,
 				assetName: config.asset?.name ?? null,

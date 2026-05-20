@@ -4,7 +4,6 @@ import { trades, tradeExecutions } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
-import { getUserDek } from "@/lib/user-crypto"
 import { updateTradeAggregates } from "@/app/actions/executions"
 import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 
@@ -71,8 +70,7 @@ const POST = async (request: NextRequest) => {
 
 		await db.delete(tradeExecutions).where(eq(tradeExecutions.id, body.id))
 
-		const dek = await getUserDek(auth.userId)
-		await updateTradeAggregates(tradeId, dek)
+		await updateTradeAggregates(tradeId)
 
 		if (tradeEntryDate) {
 			await markTaxLedgerDirty(tradeAccountId, tradeEntryDate)

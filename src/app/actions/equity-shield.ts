@@ -4,7 +4,6 @@ import { db } from "@/db/drizzle"
 import { trades } from "@/db/schema"
 import { eq, and, asc, gte, lte, isNotNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { BRT_OFFSET } from "@/lib/dates"
 import { runEquityShield } from "@/lib/equity-shield"
 import { dateRangeSchema } from "@/lib/validations/risk-simulation"
@@ -46,10 +45,7 @@ export const runEquityShieldFromDb = async (
 			orderBy: [asc(trades.entryDate)],
 		})
 
-		const dek = await getUserDek(userId)
-		const decryptedTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
+		const decryptedTrades = rawTrades
 
 		if (decryptedTrades.length === 0) {
 			return {

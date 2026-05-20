@@ -10,11 +10,6 @@ import {
 	formatExecutionForArch,
 } from "../../_lib/helpers"
 import { buildAccountCondition } from "../../_lib/filters"
-import {
-	getUserDek,
-	encryptExecutionFields,
-	decryptExecutionFields,
-} from "@/lib/user-crypto"
 import { updateTradeAggregates } from "@/app/actions/executions"
 import { toCents } from "@/lib/money"
 import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
@@ -93,23 +88,11 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const dek = await getUserDek(auth.userId)
-
 		// Validate exit quantity does not exceed entry quantity
 		if (body.executionType === "exit") {
-			const rawExistingExecutions = await db.query.tradeExecutions.findMany({
+			const existingExecutions = await db.query.tradeExecutions.findMany({
 				where: eq(tradeExecutions.tradeId, body.tradeId),
 			})
-
-			const existingExecutions = dek
-				? rawExistingExecutions.map(
-						(ex) =>
-							decryptExecutionFields(
-								ex as unknown as Record<string, unknown>,
-								dek
-							) as unknown as TradeExecution
-					)
-				: rawExistingExecutions
 
 			const totalEntryQty = existingExecutions
 				.filter((e) => e.executionType === "entry")
@@ -140,20 +123,6 @@ const POST = async (request: NextRequest) => {
 
 		const executionValue = toCents(body.price * body.quantity)
 
-		const encryptedFields = dek
-			? encryptExecutionFields(
-					{
-						price: body.price,
-						quantity: body.quantity,
-						commission: body.commission ?? 0,
-						fees: body.fees ?? 0,
-						slippage: body.slippage ?? 0,
-						executionValue,
-					},
-					dek
-				)
-			: {}
-
 		const [execution] = await db
 			.insert(tradeExecutions)
 			.values({
@@ -168,11 +137,10 @@ const POST = async (request: NextRequest) => {
 				fees: String(body.fees ?? 0),
 				slippage: String(body.slippage ?? 0),
 				executionValue: String(executionValue),
-				...encryptedFields,
 			})
 			.returning()
 
-		await updateTradeAggregates(body.tradeId, dek)
+		await updateTradeAggregates(body.tradeId)
 
 		if (trade.entryDate) {
 			await markTaxLedgerDirty(
@@ -181,15 +149,8 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const decryptedExecution = dek
-			? (decryptExecutionFields(
-					execution as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradeExecution)
-			: execution
-
 		const formatted = formatExecutionForArch(
-			decryptedExecution as unknown as Record<string, unknown>
+			execution as unknown as Record<string, unknown>
 		)
 
 		return archSuccess("Execution created successfully", formatted)

@@ -1,10 +1,9 @@
 import type { NextRequest } from "next/server"
-import { eq, gte, lte, inArray } from "drizzle-orm"
+import { and, asc, eq, gte, lte, inArray } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { trades, settings } from "@/db/schema"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
-import { fetchAndDecryptTrades } from "../../_lib/decrypt"
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
 import type { SQL } from "drizzle-orm"
@@ -44,8 +43,9 @@ const GET = async (request: NextRequest) => {
 			conditions.push(lte(trades.entryDate, new Date(dateTo)))
 		}
 
-		const result = await fetchAndDecryptTrades(auth.userId, conditions, {
-			orderBy: "asc",
+		const result = await db.query.trades.findMany({
+			where: and(...conditions),
+			orderBy: [asc(trades.entryDate)],
 		})
 
 		if (result.length === 0) {

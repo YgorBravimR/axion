@@ -14,7 +14,6 @@ import {
 	determineOutcome,
 } from "@/lib/calculations"
 import { fromCents, toCents, toNumericString } from "@/lib/money"
-import { getUserDek, encryptTradeFields } from "@/lib/user-crypto"
 import { computeTradeHash } from "@/lib/deduplication"
 import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 import { createTradeSchema } from "@/lib/validations/trade"
@@ -290,33 +289,6 @@ const createArchTrade = async (
 		executionMode: isScaled ? "scaled" : "simple",
 	}
 
-	const dek = await getUserDek(auth.userId)
-	if (dek) {
-		Object.assign(
-			insertValues,
-			encryptTradeFields(
-				{
-					pnl: pnl !== undefined ? toCents(pnl) : null,
-					plannedRiskAmount:
-						plannedRiskAmount !== undefined ? toCents(plannedRiskAmount) : null,
-					commission: undefined,
-					fees: undefined,
-					entryPrice: toNumericString(tradeData.entryPrice),
-					exitPrice: toNumericString(tradeData.exitPrice),
-					positionSize: toNumericString(tradeData.positionSize),
-					stopLoss: toNumericString(tradeData.stopLoss),
-					takeProfit: toNumericString(tradeData.takeProfit),
-					plannedRMultiple: toNumericString(plannedRMultiple),
-					preTradeThoughts: tradeData.preTradeThoughts,
-					postTradeReflection: tradeData.postTradeReflection,
-					lessonLearned: tradeData.lessonLearned,
-					disciplineNotes: tradeData.disciplineNotes,
-				},
-				dek
-			)
-		)
-	}
-
 	const [trade] = await db
 		.insert(trades)
 		.values(insertValues as typeof trades.$inferInsert)
@@ -332,7 +304,7 @@ const createArchTrade = async (
 	}
 
 	if (isScaled && scaled) {
-		await persistScaledExecutions(trade.id, scaled.legs, dek)
+		await persistScaledExecutions(trade.id, scaled.legs)
 	}
 
 	if (validatedTagIds?.length) {

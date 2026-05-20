@@ -4,11 +4,6 @@ import { dailyPlan } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { dailyNotesSchema } from "@/lib/validations/command-center"
-import {
-	getUserDek,
-	encryptDailyNotesFields,
-	decryptDailyNotesFields,
-} from "@/lib/user-crypto"
 import { ensureDailyPlanForAccountDate } from "@/lib/fractal-plan/ensure-daily"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
@@ -55,15 +50,7 @@ const GET = async (request: NextRequest) => {
 			)
 		}
 
-		const dek = await getUserDek(userId)
-		const dayRow = dek
-			? (decryptDailyNotesFields(
-					cascade.dayRow as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof cascade.dayRow)
-			: cascade.dayRow
-
-		return archSuccess("Notes retrieved", dayRow)
+		return archSuccess("Notes retrieved", cascade.dayRow)
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"
 		return archError(
@@ -120,7 +107,6 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const dek = await getUserDek(userId)
 		const noteFields: Record<string, string | null> = {}
 		if (validated.preMarketNotes !== undefined) {
 			noteFields.preMarketNotes = validated.preMarketNotes ?? null
@@ -128,11 +114,10 @@ const POST = async (request: NextRequest) => {
 		if (validated.postMarketNotes !== undefined) {
 			noteFields.postMarketNotes = validated.postMarketNotes ?? null
 		}
-		const encryptedFields = dek ? encryptDailyNotesFields(noteFields, dek) : {}
 
 		const updates: Record<string, unknown> = {
 			updatedAt: new Date(),
-			...(dek ? encryptedFields : noteFields),
+			...noteFields,
 		}
 		if (validated.mood !== undefined) {
 			updates.mood = validated.mood ?? null
@@ -144,14 +129,7 @@ const POST = async (request: NextRequest) => {
 			.where(eq(dailyPlan.id, cascade.dayRow.id))
 			.returning()
 
-		const decrypted = dek
-			? (decryptDailyNotesFields(
-					updated as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof updated)
-			: updated
-
-		return archSuccess("Notes updated", decrypted)
+		return archSuccess("Notes updated", updated)
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return archError(

@@ -20,7 +20,6 @@ import {
 } from "@/lib/dates"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { fromCents } from "@/lib/money"
-import { decryptTradeFields, getUserDek } from "@/lib/user-crypto"
 import type {
 	ActionResponse,
 	AnalyticsDashboardData,
@@ -1453,11 +1452,7 @@ export const getDayTrades = async (
 			orderBy: [asc(trades.entryDate)],
 		})
 
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
+		const result = rawResult
 
 		const dayTrades: DayTrade[] = result.map((trade) => ({
 			id: trade.id,
@@ -1525,11 +1520,7 @@ export const getDayEquityCurve = async (
 			orderBy: [asc(trades.entryDate)],
 		})
 
-		// Decrypt trade fields
-		const dek = await getUserDek(authContext.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
+		const result = rawResult
 
 		if (result.length === 0) {
 			return {

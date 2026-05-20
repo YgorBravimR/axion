@@ -2,7 +2,6 @@
 import { db } from "@/db/drizzle"
 import { trades, accountFeeRates, monthlyTaxLedger } from "@/db/schema"
 import { eq, and, gte, lte, sql } from "drizzle-orm"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
 import { computeDarf } from "./darf-calculator"
@@ -108,13 +107,6 @@ const recomputeAccountMonth = async (
 		)
 		.orderBy(trades.exitDate)
 
-	// Encryption is currently disabled (getUserDek always returns null).
-	// When dek is null, pnl is already plaintext string-encoded cents.
-	const dek = await getUserDek(userId)
-	const decryptedTrades = dek
-		? rawTrades.map((t) => decryptTradeFields(t, dek))
-		: rawTrades
-
 	// Group trades by (exit day, asset). Same-day entry+exit only (day-trades).
 	// Per-asset bucketing is required because fee rates differ by contract type
 	// (e.g. WDO vs WIN have different B3 emolumentos and tx_registro).
@@ -123,7 +115,7 @@ const recomputeAccountMonth = async (
 	const dayPnlMap = new Map<string, number>()
 	let tradeCount = 0
 
-	for (const trade of decryptedTrades) {
+	for (const trade of rawTrades) {
 		// Skip trades with no exit date
 		if (!trade.exitDate) {
 			continue

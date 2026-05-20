@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server"
+import { and, desc } from "drizzle-orm"
+import { db } from "@/db/drizzle"
+import { trades } from "@/db/schema"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { parseArchFilters } from "../../_lib/filters"
-import { fetchAndDecryptTrades } from "../../_lib/decrypt"
 import { fromCents } from "@/lib/money"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 
@@ -16,7 +18,10 @@ const GET = async (request: NextRequest) => {
 	try {
 		const searchParams = request.nextUrl.searchParams
 		const conditions = await parseArchFilters(searchParams, auth)
-		const result = await fetchAndDecryptTrades(auth.userId, conditions)
+		const result = await db.query.trades.findMany({
+			where: and(...conditions),
+			orderBy: [desc(trades.entryDate)],
+		})
 
 		if (result.length === 0) {
 			return archSuccess("No trades found", {

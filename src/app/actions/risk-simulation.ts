@@ -11,7 +11,6 @@ import type {
 } from "@/types/risk-simulation"
 import { eq, and, gte, lte, asc, isNotNull, sql } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getAssetBySymbol } from "@/app/actions/assets"
 import { getAssetFees, getBreakevenTicks } from "@/app/actions/accounts"
 import { fromCents } from "@/lib/money"
@@ -61,11 +60,7 @@ export const getSimulationPreview = async (
 			orderBy: [asc(trades.entryDate)],
 		})
 
-		// Decrypt to read stopLoss values
-		const dek = await getUserDek(userId)
-		const decryptedTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
+		const decryptedTrades = rawTrades
 
 		const tradesWithSl = decryptedTrades.filter(
 			(t) => t.stopLoss !== null && Number(t.stopLoss) !== 0
@@ -138,11 +133,7 @@ export const runRiskSimulationFromDb = async (
 			orderBy: [asc(trades.entryDate)],
 		})
 
-		// Decrypt
-		const dek = await getUserDek(userId)
-		const decryptedTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
+		const decryptedTrades = rawTrades
 
 		if (decryptedTrades.length === 0) {
 			return {

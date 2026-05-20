@@ -62,11 +62,6 @@ import {
 } from "@/lib/dates"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
-import {
-	getUserDek,
-	encryptTradeFields,
-	decryptTradeFields,
-} from "@/lib/user-crypto"
 import { computeTradeHash } from "@/lib/deduplication"
 import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
 import { captureROnEntry } from "@/lib/fractal-plan/r-snapshot"
@@ -347,36 +342,6 @@ export const createTrade = async (
 			oneRSnapshotCents,
 		}
 
-		// Encrypt sensitive fields if user has a DEK
-		const dek = await getUserDek(userId)
-		if (dek) {
-			Object.assign(
-				insertValues,
-				encryptTradeFields(
-					{
-						pnl: pnl !== undefined ? toCents(pnl) : null,
-						plannedRiskAmount:
-							plannedRiskAmount !== undefined
-								? toCents(plannedRiskAmount)
-								: null,
-						commission: undefined,
-						fees: undefined,
-						entryPrice: toNumericString(tradeData.entryPrice),
-						exitPrice: toNumericString(tradeData.exitPrice),
-						positionSize: toNumericString(tradeData.positionSize),
-						stopLoss: toNumericString(tradeData.stopLoss),
-						takeProfit: toNumericString(tradeData.takeProfit),
-						plannedRMultiple: toNumericString(plannedRMultiple),
-						preTradeThoughts: tradeData.preTradeThoughts,
-						postTradeReflection: tradeData.postTradeReflection,
-						lessonLearned: tradeData.lessonLearned,
-						disciplineNotes: tradeData.disciplineNotes,
-					},
-					dek
-				)
-			)
-		}
-
 		const [inserted] = await db
 			.insert(trades)
 			.values(insertValues as typeof trades.$inferInsert)
@@ -519,7 +484,7 @@ export const updateTrade = async (
 		const { tagIds, ...tradeData } = validated
 
 		// Get existing trade to merge data (verify ownership)
-		let existing = await db.query.trades.findFirst({
+		const existing = await db.query.trades.findFirst({
 			where: and(eq(trades.id, id), eq(trades.accountId, accountId)),
 		})
 
@@ -529,12 +494,6 @@ export const updateTrade = async (
 				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
-		}
-
-		// Decrypt existing trade fields before merging
-		const dek = await getUserDek(userId)
-		if (dek) {
-			existing = decryptTradeFields(existing, dek)
 		}
 
 		// Merge existing data with updates
@@ -741,55 +700,6 @@ export const updateTrade = async (
 			updateData.plannedRiskAmount = toNumericString(toCents(plannedRiskAmount))
 		}
 
-		// Encrypt sensitive fields if user has a DEK
-		if (dek) {
-			const fieldsToEncrypt: Record<string, unknown> = {}
-			if (updateData.pnl !== undefined) {
-				fieldsToEncrypt.pnl = pnl !== undefined ? toCents(pnl) : null
-			}
-			if (updateData.plannedRiskAmount !== undefined) {
-				fieldsToEncrypt.plannedRiskAmount =
-					plannedRiskAmount !== undefined ? toCents(plannedRiskAmount) : null
-			}
-			if (updateData.entryPrice !== undefined) {
-				fieldsToEncrypt.entryPrice = updateData.entryPrice
-			}
-			if (updateData.exitPrice !== undefined) {
-				fieldsToEncrypt.exitPrice = updateData.exitPrice
-			}
-			if (updateData.positionSize !== undefined) {
-				fieldsToEncrypt.positionSize = updateData.positionSize
-			}
-			if (updateData.stopLoss !== undefined) {
-				fieldsToEncrypt.stopLoss = updateData.stopLoss
-			}
-			if (updateData.takeProfit !== undefined) {
-				fieldsToEncrypt.takeProfit = updateData.takeProfit
-			}
-			if (updateData.plannedRMultiple !== undefined) {
-				fieldsToEncrypt.plannedRMultiple = updateData.plannedRMultiple
-			}
-			if (updateData.preTradeThoughts !== undefined) {
-				fieldsToEncrypt.preTradeThoughts = updateData.preTradeThoughts
-			}
-			if (updateData.postTradeReflection !== undefined) {
-				fieldsToEncrypt.postTradeReflection = updateData.postTradeReflection
-			}
-			if (updateData.lessonLearned !== undefined) {
-				fieldsToEncrypt.lessonLearned = updateData.lessonLearned
-			}
-			if (updateData.disciplineNotes !== undefined) {
-				fieldsToEncrypt.disciplineNotes = updateData.disciplineNotes
-			}
-			Object.assign(
-				updateData,
-				encryptTradeFields(
-					fieldsToEncrypt as Parameters<typeof encryptTradeFields>[0],
-					dek
-				)
-			)
-		}
-
 		const [trade] = await db
 			.update(trades)
 			.set(updateData)
@@ -936,7 +846,7 @@ export const getTrade = async (
 	const t = await getTranslations("journal")
 	try {
 		const { accountId, userId } = await requireAuth()
-		let trade = await db.query.trades.findFirst({
+		const trade = await db.query.trades.findFirst({
 			where: and(
 				eq(trades.id, id),
 				eq(trades.accountId, accountId),
@@ -960,12 +870,6 @@ export const getTrade = async (
 				message: t("actions.tradeNotFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Trade does not exist" }],
 			}
-		}
-
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		if (dek) {
-			trade = decryptTradeFields(trade, dek)
 		}
 
 		return {
@@ -1070,11 +974,7 @@ export const getTrades = async (
 
 		const total = countResult[0]?.count ?? 0
 
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		const decryptedResult = dek
-			? result.map((t) => decryptTradeFields(t, dek))
-			: result
+		const decryptedResult = result
 
 		return {
 			status: "success",
@@ -1125,11 +1025,7 @@ export const getTradesForDate = async (
 			orderBy: [asc(trades.entryDate)],
 		})
 
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		const decryptedResult = dek
-			? result.map((t) => decryptTradeFields(t, dek))
-			: result
+		const decryptedResult = result
 
 		return {
 			status: "success",
@@ -1330,7 +1226,6 @@ export const bulkCreateTrades = async (
 		}
 
 		// Get DEK for encryption
-		const dek = await getUserDek(userId)
 
 		// Process trades in batches to avoid overwhelming the database
 		const BATCH_SIZE = 50
@@ -1565,35 +1460,6 @@ export const bulkCreateTrades = async (
 						}
 					}
 					tradeInsertValues.oneRSnapshotCents = oneRSnapshotCentsCsv
-
-					// Encrypt sensitive fields if user has a DEK
-					if (dek) {
-						Object.assign(
-							tradeInsertValues,
-							encryptTradeFields(
-								{
-									pnl: pnl !== undefined ? toCents(pnl) : null,
-									plannedRiskAmount:
-										plannedRiskAmount !== undefined
-											? toCents(plannedRiskAmount)
-											: null,
-									commission: totalCommission,
-									fees: totalFees,
-									entryPrice: toNumericString(tradeData.entryPrice),
-									exitPrice: toNumericString(tradeData.exitPrice),
-									positionSize: toNumericString(tradeData.positionSize),
-									stopLoss: toNumericString(tradeData.stopLoss),
-									takeProfit: toNumericString(tradeData.takeProfit),
-									plannedRMultiple: toNumericString(plannedRMultiple),
-									preTradeThoughts: tradeData.preTradeThoughts,
-									postTradeReflection: tradeData.postTradeReflection,
-									lessonLearned: tradeData.lessonLearned,
-									disciplineNotes: tradeData.disciplineNotes,
-								},
-								dek
-							)
-						)
-					}
 
 					tradeValues.push(tradeInsertValues as typeof trades.$inferInsert)
 					batchTagNames.push(inputTagNames)
@@ -1883,34 +1749,6 @@ export const createScaledTrade = async (
 		}
 		scaledInsertValues.oneRSnapshotCents = oneRSnapshotCentsScaled
 
-		// Encrypt sensitive fields if user has a DEK
-		const dek = await getUserDek(userId)
-		if (dek) {
-			Object.assign(
-				scaledInsertValues,
-				encryptTradeFields(
-					{
-						pnl: pnl !== undefined ? toCents(pnl) : null,
-						plannedRiskAmount:
-							plannedRiskAmount !== undefined
-								? toCents(plannedRiskAmount)
-								: null,
-						entryPrice: toNumericString(avgEntryPrice),
-						exitPrice: toNumericString(avgExitPrice),
-						positionSize: toNumericString(totalEntryQty),
-						stopLoss: toNumericString(tradeData.stopLoss),
-						takeProfit: toNumericString(tradeData.takeProfit),
-						plannedRMultiple: toNumericString(plannedRMultiple),
-						preTradeThoughts: tradeData.preTradeThoughts,
-						postTradeReflection: tradeData.postTradeReflection,
-						lessonLearned: tradeData.lessonLearned,
-						disciplineNotes: tradeData.disciplineNotes,
-					},
-					dek
-				)
-			)
-		}
-
 		const insertedTrades = await db
 			.insert(trades)
 			.values(scaledInsertValues as typeof trades.$inferInsert)
@@ -2051,15 +1889,9 @@ export const getTradesGroupedByDay = async (
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		const decryptedResult = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
-
 		// Post-query extended filters (require decrypted data or timezone extraction)
 		const result = extendedFilters
-			? decryptedResult.filter((t) => {
+			? rawResult.filter((t) => {
 					// Hour filter (BRT timezone)
 					if (
 						extendedFilters.hourFrom !== undefined ||
@@ -2105,7 +1937,7 @@ export const getTradesGroupedByDay = async (
 					}
 					return true
 				})
-			: decryptedResult
+			: rawResult
 
 		if (result.length === 0) {
 			return {
@@ -2218,8 +2050,11 @@ export const getTradesGroupedByDay = async (
 
 				// Map trades to compact format (using toSorted for immutability)
 				const compactTrades: DayTradeCompact[] = data.trades
-					.toSorted((a, b) => a.entryDate.getTime() - b.entryDate.getTime())
-					.map((trade) => ({
+					.toSorted(
+						(a: Trade, b: Trade) =>
+							a.entryDate.getTime() - b.entryDate.getTime()
+					)
+					.map((trade: Trade) => ({
 						id: trade.id,
 						time: new Intl.DateTimeFormat("en-GB", {
 							hour: "2-digit",
@@ -2229,8 +2064,8 @@ export const getTradesGroupedByDay = async (
 						}).format(trade.entryDate),
 						asset: trade.asset,
 						direction: trade.direction as "long" | "short",
-						timeframeName: trade.timeframe?.name || null,
-						strategyName: trade.strategy?.name || null,
+						timeframeName: null,
+						strategyName: null,
 						pnl: fromCents(trade.pnl),
 						rMultiple: trade.realizedRMultiple
 							? Number(trade.realizedRMultiple)
@@ -2245,7 +2080,9 @@ export const getTradesGroupedByDay = async (
 					trades: compactTrades,
 				}
 			})
-			.toSorted((a, b) => b.date.localeCompare(a.date)) // Most recent first
+			.toSorted((a: { date: string }, b: { date: string }) =>
+				b.date.localeCompare(a.date)
+			) // Most recent first
 
 		return {
 			status: "success",
@@ -2280,14 +2117,8 @@ export const recalculateRValues = async (): Promise<
 			where: and(eq(trades.accountId, accountId), eq(trades.isArchived, false)),
 		})
 
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		const allTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
-
 		// Build asset config map upfront to avoid per-trade DB queries
-		const uniqueAssets = [...new Set(allTrades.map((t) => t.asset))]
+		const uniqueAssets = [...new Set(rawTrades.map((t) => t.asset))]
 		const assetMap = new Map<string, { tickSize: number; tickValue: number }>()
 		for (const symbol of uniqueAssets) {
 			// eslint-disable-next-line no-await-in-loop -- asset config lookup per unique symbol; sequential to build map before recalculation loop
@@ -2302,7 +2133,7 @@ export const recalculateRValues = async (): Promise<
 
 		let updatedCount = 0
 
-		for (const trade of allTrades) {
+		for (const trade of rawTrades) {
 			const stopLoss = trade.stopLoss ? Number(trade.stopLoss) : null
 			const takeProfit = trade.takeProfit ? Number(trade.takeProfit) : null
 			const entryPrice = Number(trade.entryPrice)
@@ -2352,20 +2183,7 @@ export const recalculateRValues = async (): Promise<
 				realizedRMultiple: toNumericString(realizedR),
 			}
 
-			if (dek) {
-				Object.assign(
-					recalcUpdateData,
-					encryptTradeFields(
-						{
-							plannedRiskAmount: toCents(plannedRiskAmount),
-							plannedRMultiple: toNumericString(plannedRMultiple),
-						},
-						dek
-					)
-				)
-			}
-
-			// eslint-disable-next-line no-await-in-loop -- per-trade update with encrypted fields; sequential to avoid race on DEK/encryption context
+			// eslint-disable-next-line no-await-in-loop -- per-trade update; sequential for consistency
 			await db
 				.update(trades)
 				.set(recalcUpdateData)
@@ -2412,13 +2230,7 @@ export const recalculateAllTradesPnL = async (): Promise<
 			where: and(eq(trades.accountId, accountId), eq(trades.isArchived, false)),
 		})
 
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		const allTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
-
-		const closedTrades = allTrades.filter((t) => t.exitPrice !== null)
+		const closedTrades = rawTrades.filter((t) => t.exitPrice !== null)
 
 		// Build asset config map upfront to avoid per-trade DB queries
 		const uniqueAssets = [...new Set(closedTrades.map((t) => t.asset))]
@@ -2546,23 +2358,7 @@ export const recalculateAllTradesPnL = async (): Promise<
 				realizedRMultiple: toNumericString(realizedRMultiple),
 			}
 
-			if (dek) {
-				Object.assign(
-					pnlUpdateData,
-					encryptTradeFields(
-						{
-							pnl: toCents(pnl),
-							commission: toCents(tradeCommission),
-							fees: toCents(tradeFees),
-							plannedRiskAmount:
-								plannedRiskAmount !== null ? toCents(plannedRiskAmount) : null,
-						},
-						dek
-					)
-				)
-			}
-
-			// eslint-disable-next-line no-await-in-loop -- per-trade update with encrypted PnL fields; sequential to avoid race on DEK/encryption context
+			// eslint-disable-next-line no-await-in-loop -- per-trade update; sequential for consistency
 			await db.update(trades).set(pnlUpdateData).where(eq(trades.id, trade.id))
 
 			updatedCount++

@@ -135,11 +135,6 @@ vi.mock("@/lib/db-rate-limiter", () => ({
 	})),
 }))
 
-vi.mock("@/lib/user-crypto", () => ({
-	getUserDek: vi.fn().mockResolvedValue(null),
-	decryptAccountFields: vi.fn((account: unknown) => account),
-}))
-
 vi.mock("@/db/seed-user-data", () => ({
 	seedUserData: vi.fn().mockResolvedValue(undefined),
 }))
@@ -173,7 +168,6 @@ const createMockUser = (options: MockUserOptions = {}) => ({
 	emailVerified:
 		options.emailVerified !== undefined ? options.emailVerified : new Date(),
 	name: "Test Trader",
-	encryptedDek: null,
 	isAdmin: false,
 	role: "trader" as const,
 	preferredLocale: "pt-BR",

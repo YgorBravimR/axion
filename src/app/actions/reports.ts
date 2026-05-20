@@ -32,7 +32,6 @@ import type {
 } from "./reports.types"
 import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
-import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 import { getTranslations } from "next-intl/server"
 import { isFrameworkSignal } from "@/lib/error-utils"
@@ -625,14 +624,8 @@ export const getMonthlyResultsWithProp = async (
 		const userSettings = settingsResult.data
 		const report = reportResult.data
 
-		// Decrypt account fields before reading numeric values
-		const dek = await getUserDek(authContext.userId)
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					account as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof account)
-			: account
+		// Account fields are plaintext
+		const decryptedAccount = account
 
 		// Use account-specific settings (from tradingAccounts table)
 		// isPropAccount is determined by accountType, other settings come from account.
@@ -724,16 +717,8 @@ export const getMonthlyProjection = async (): Promise<{
 			return { status: "error", message: t("actions.settingsFetchFailed") }
 		}
 
-		// Decrypt account fields (personal account info may be encrypted)
-		const dek = await getUserDek(authContext.userId)
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					account as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof account)
-			: account
-
 		const userSettings = settingsResult.data
+		const decryptedAccount = account
 		const totalTradingDays = getBusinessDaysInMonth(now)
 		const daysTraded = getUniqueTradingDays(monthTrades)
 		const tradingDaysRemaining = Math.max(

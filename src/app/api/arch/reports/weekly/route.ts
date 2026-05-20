@@ -7,7 +7,6 @@ import { eq, and, gte, lte, inArray, desc } from "drizzle-orm"
 import { startOfWeek, endOfWeek, subWeeks, eachDayOfInterval } from "date-fns"
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { calculateReportSummary } from "../../_lib/report-summary"
 import type { WeeklyReport, DailyBreakdown } from "@/app/actions/reports.types"
 
@@ -50,10 +49,7 @@ const GET = async (request: NextRequest) => {
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		const dek = await getUserDek(auth.userId)
-		const weekTrades = dek
-			? rawWeekTrades.map((t) => decryptTradeFields(t, dek))
-			: rawWeekTrades
+		const weekTrades = rawWeekTrades
 
 		if (weekTrades.length === 0) {
 			const emptyReport: WeeklyReport = {

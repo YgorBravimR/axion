@@ -10,11 +10,6 @@ import {
 	formatExecutionForArch,
 } from "../../_lib/helpers"
 import { buildAccountCondition } from "../../_lib/filters"
-import {
-	getUserDek,
-	decryptTradeFields,
-	decryptExecutionFields,
-} from "@/lib/user-crypto"
 
 const GET = async (
 	request: NextRequest,
@@ -66,20 +61,11 @@ const GET = async (
 			)
 		}
 
-		// Decrypt fields
-		const dek = await getUserDek(auth.userId)
-		const decryptedTrade = dek ? decryptTradeFields(trade, dek) : trade
-
 		// Format trade
-		const formattedTrade = formatTradeForArch(decryptedTrade)
+		const formattedTrade = formatTradeForArch(trade)
 
-		// Format and decrypt executions
-		const decryptedExecutions = dek
-			? decryptedTrade.executions.map((execution) =>
-					decryptExecutionFields(execution, dek)
-				)
-			: decryptedTrade.executions
-		const formattedExecutions = decryptedExecutions.map((execution) =>
+		// Format executions
+		const formattedExecutions = trade.executions.map((execution) =>
 			formatExecutionForArch(execution)
 		)
 

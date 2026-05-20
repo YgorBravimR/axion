@@ -5,7 +5,6 @@ import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { buildAccountCondition } from "../../_lib/filters"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { formatDateKey, APP_TIMEZONE } from "@/lib/dates"
 import { fromCents } from "@/lib/money"
 
@@ -158,19 +157,13 @@ const GET = async (request: NextRequest) => {
 			orderBy: [desc(trades.entryDate)],
 		})
 
-		// Decrypt fields
-		const dek = await getUserDek(auth.userId)
-		const decryptedTrades = dek
-			? result.map((trade) => decryptTradeFields(trade, dek))
-			: result
-
 		// Group by BRT day
 		const dayMap = new Map<
 			string,
 			{ trades: DayTradeCompact[]; totalFees: number; sampleDate: Date }
 		>()
 
-		for (const trade of decryptedTrades) {
+		for (const trade of result) {
 			const dateKey = formatDateKey(trade.entryDate)
 
 			if (!dayMap.has(dateKey)) {

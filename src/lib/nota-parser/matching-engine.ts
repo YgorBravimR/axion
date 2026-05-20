@@ -15,7 +15,6 @@ import { trades } from "@/db/schema"
 import type { Trade } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { getStartOfDay, getEndOfDay } from "@/lib/dates"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import type {
 	NotaFill,
 	AssetFillGroup,
@@ -201,16 +200,13 @@ const matchNotaFillsToTrades = async (
 	// Group fills by asset
 	const groups = groupFillsByAsset(fills, notaDate)
 
-	// Get DEK for decryption
-	const dek = await getUserDek(userId)
-
 	for (const group of groups) {
 		// Query trades for this asset on this date
 		const startOfDay = getStartOfDay(notaDate)
 		const endOfDay = getEndOfDay(notaDate)
 
 		// eslint-disable-next-line no-await-in-loop -- per-asset trade query for nota matching; sequential because match results accumulate into confirmed/unmatched lists
-		const rawTrades = await db.query.trades.findMany({
+		const decryptedTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
 				eq(trades.asset, group.asset),
@@ -219,11 +215,6 @@ const matchNotaFillsToTrades = async (
 				eq(trades.isArchived, false)
 			),
 		})
-
-		// Decrypt trades
-		const decryptedTrades = dek
-			? rawTrades.map((t) => decryptTradeFields(t, dek))
-			: rawTrades
 
 		if (decryptedTrades.length === 0) {
 			// No trades found for this asset+date — all fills are unmatched

@@ -25,7 +25,6 @@ const {
 	mockValues,
 	mockOnConflictDoUpdate,
 	mockDbQuery,
-	mockGetUserDek,
 	mockRollupTrades,
 } = vi.hoisted(() => {
 	const mockLimit = vi.fn()
@@ -39,7 +38,6 @@ const {
 	const mockUpdate = vi.fn()
 	const mockDbQuery = { tradingAccounts: { findFirst: vi.fn() } }
 
-	const mockGetUserDek = vi.fn()
 	const mockRollupTrades = vi.fn()
 
 	mockLimit.mockResolvedValue([])
@@ -71,7 +69,6 @@ const {
 		mockValues,
 		mockOnConflictDoUpdate,
 		mockDbQuery,
-		mockGetUserDek,
 		mockRollupTrades,
 	}
 })
@@ -94,11 +91,6 @@ vi.mock("@/db/schema", () => ({
 	accountWeeklyAggregate: {},
 	tradingAccounts: {},
 	trades: {},
-}))
-
-vi.mock("@/lib/user-crypto", () => ({
-	getUserDek: mockGetUserDek,
-	decryptTradeFields: vi.fn((trade: Record<string, unknown>) => trade),
 }))
 
 vi.mock("@/lib/aggregation/period-rollup", () => ({
@@ -159,14 +151,10 @@ describe("period-queries stubs", () => {
 
 describe("getMonthAggregate", () => {
 	const ACCOUNT_ID = "acc-123"
-	const USER_ID = "user-456"
 
 	beforeEach(() => {
 		vi.clearAllMocks()
 		restoreChainDefaults()
-
-		mockDbQuery.tradingAccounts.findFirst.mockResolvedValue({ userId: USER_ID })
-		mockGetUserDek.mockResolvedValue(null)
 
 		mockRollupTrades.mockReturnValue({
 			grossCents: 0,
@@ -323,10 +311,6 @@ describe("getWeekAggregate", () => {
 		vi.clearAllMocks()
 		restoreChainDefaults()
 
-		mockDbQuery.tradingAccounts.findFirst.mockResolvedValue({
-			userId: "user-789",
-		})
-		mockGetUserDek.mockResolvedValue(null)
 		mockRollupTrades.mockReturnValue({
 			grossCents: 0,
 			netCents: 0,

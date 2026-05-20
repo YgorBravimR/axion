@@ -1,42 +1,21 @@
 // src/lib/queries/period-queries.ts
 
 import { db } from "@/db/drizzle"
-import { trades, tradingAccounts, accountMonthlyAggregate, accountWeeklyAggregate } from "@/db/schema"
+import {
+	trades,
+	accountMonthlyAggregate,
+	accountWeeklyAggregate,
+} from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { rollupTrades } from "@/lib/aggregation/period-rollup"
 import type { TradeFact } from "@/lib/aggregation/period-rollup"
 import { centsToPoints } from "@/lib/contracts/point-values"
 import type { PeriodResult } from "@/types/integration"
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Looks up the userId that owns a given trading account.
- * Required because getUserDek() takes a userId, not an accountId.
- */
-const getAccountUserId = async (accountId: string): Promise<string | null> => {
-	const row = await db.query.tradingAccounts.findFirst({
-		where: eq(tradingAccounts.id, accountId),
-		columns: { userId: true },
-	})
-	return row?.userId ?? null
-}
-
-/**
- * Loads raw trades for a date range and decrypts the monetary fields.
- * Returns TradeFact objects ready for rollupTrades.
- *
- * Encryption is currently disabled (getUserDek always returns null), so dek
- * will be null and pnl/commission/fees/positionSize are already plaintext
- * string-encoded integers. The fallback path parses them directly.
- */
 const loadTradesForRange = async (
 	accountId: string,
 	rangeStart: Date,
-	rangeEnd: Date,
+	rangeEnd: Date
 ): Promise<TradeFact[]> => {
 	// No row limit: a single account/period is bounded by trading frequency
 	// (heavy day-trader ≈ 1k/day → ≤30k/month). Silent truncation would corrupt
@@ -49,25 +28,22 @@ const loadTradesForRange = async (
 				eq(trades.accountId, accountId),
 				gte(trades.entryDate, rangeStart),
 				lte(trades.entryDate, rangeEnd),
-				eq(trades.isArchived, false),
-			),
+				eq(trades.isArchived, false)
+			)
 		)
 
-	const userId = await getAccountUserId(accountId)
-	const dek = userId ? await getUserDek(userId) : null
-
-	// Match the analytics.ts pattern: batch-decrypt once, then map
-	const decryptedRows = dek ? rawRows.map((t) => decryptTradeFields(t, dek)) : rawRows
-
-	return decryptedRows.map((t) => {
-		// dek non-null → decryptTradeFields returns numbers; dek null → raw strings.
-		// Fail loudly on NaN: a corrupted ciphertext silently propagating into the
-		// aggregate would poison every dependent reading in the system.
+	return rawRows.map((t) => {
 		const pnlCents = Number(t.pnl ?? 0)
 		const commissionCents = Number(t.commission ?? 0)
 		const feesCents = Number(t.fees ?? 0)
-		if (Number.isNaN(pnlCents) || Number.isNaN(commissionCents) || Number.isNaN(feesCents)) {
-			throw new Error(`period-queries: non-numeric monetary field on trade ${t.id}`)
+		if (
+			Number.isNaN(pnlCents) ||
+			Number.isNaN(commissionCents) ||
+			Number.isNaN(feesCents)
+		) {
+			throw new Error(
+				`period-queries: non-numeric monetary field on trade ${t.id}`
+			)
 		}
 
 		const contracts = Number(t.positionSize ?? 1) || 1
@@ -111,7 +87,7 @@ const upsertMonthAggregate = async (
 	accountId: string,
 	year: number,
 	month: number,
-	result: PeriodResult,
+	result: PeriodResult
 ): Promise<void> => {
 	await db
 		.insert(accountMonthlyAggregate)
@@ -129,7 +105,11 @@ const upsertMonthAggregate = async (
 			computedAt: new Date(),
 		})
 		.onConflictDoUpdate({
-			target: [accountMonthlyAggregate.accountId, accountMonthlyAggregate.year, accountMonthlyAggregate.month],
+			target: [
+				accountMonthlyAggregate.accountId,
+				accountMonthlyAggregate.year,
+				accountMonthlyAggregate.month,
+			],
 			set: {
 				grossCents: result.grossCents,
 				netCents: result.netCents,
@@ -150,7 +130,7 @@ const upsertWeekAggregate = async (
 	accountId: string,
 	isoYear: number,
 	isoWeek: number,
-	result: PeriodResult,
+	result: PeriodResult
 ): Promise<void> => {
 	await db
 		.insert(accountWeeklyAggregate)
@@ -168,7 +148,11 @@ const upsertWeekAggregate = async (
 			computedAt: new Date(),
 		})
 		.onConflictDoUpdate({
-			target: [accountWeeklyAggregate.accountId, accountWeeklyAggregate.isoYear, accountWeeklyAggregate.isoWeek],
+			target: [
+				accountWeeklyAggregate.accountId,
+				accountWeeklyAggregate.isoYear,
+				accountWeeklyAggregate.isoWeek,
+			],
 			set: {
 				grossCents: result.grossCents,
 				netCents: result.netCents,
@@ -196,7 +180,7 @@ const upsertWeekAggregate = async (
 const getMonthAggregate = async (
 	accountId: string,
 	year: number,
-	month: number,
+	month: number
 ): Promise<PeriodResult> => {
 	const rows = await db
 		.select()
@@ -205,8 +189,8 @@ const getMonthAggregate = async (
 			and(
 				eq(accountMonthlyAggregate.accountId, accountId),
 				eq(accountMonthlyAggregate.year, year),
-				eq(accountMonthlyAggregate.month, month),
-			),
+				eq(accountMonthlyAggregate.month, month)
+			)
 		)
 		.limit(1)
 
@@ -241,7 +225,7 @@ const getMonthAggregate = async (
 const getWeekAggregate = async (
 	accountId: string,
 	isoYear: number,
-	isoWeek: number,
+	isoWeek: number
 ): Promise<PeriodResult> => {
 	const rows = await db
 		.select()
@@ -250,8 +234,8 @@ const getWeekAggregate = async (
 			and(
 				eq(accountWeeklyAggregate.accountId, accountId),
 				eq(accountWeeklyAggregate.isoYear, isoYear),
-				eq(accountWeeklyAggregate.isoWeek, isoWeek),
-			),
+				eq(accountWeeklyAggregate.isoWeek, isoWeek)
+			)
 		)
 		.limit(1)
 
@@ -293,10 +277,13 @@ const getWeekAggregate = async (
  * Months run concurrently — this is safe because each month's upsert is
  * independent, and the yearly total is never persisted (always derived live).
  */
-const getYearAggregate = async (accountId: string, year: number): Promise<PeriodResult> => {
+const getYearAggregate = async (
+	accountId: string,
+	year: number
+): Promise<PeriodResult> => {
 	const monthNumbers = Array.from({ length: 12 }, (_, i) => i + 1)
 	const monthResults = await Promise.all(
-		monthNumbers.map((month) => getMonthAggregate(accountId, year, month)),
+		monthNumbers.map((month) => getMonthAggregate(accountId, year, month))
 	)
 
 	return monthResults.reduce<PeriodResult>(
@@ -308,7 +295,14 @@ const getYearAggregate = async (accountId: string, year: number): Promise<Period
 			gainDays: acc.gainDays + m.gainDays,
 			lossDays: acc.lossDays + m.lossDays,
 		}),
-		{ grossCents: 0, netCents: 0, points: 0, tradingDays: 0, gainDays: 0, lossDays: 0 },
+		{
+			grossCents: 0,
+			netCents: 0,
+			points: 0,
+			tradingDays: 0,
+			gainDays: 0,
+			lossDays: 0,
+		}
 	)
 }
 

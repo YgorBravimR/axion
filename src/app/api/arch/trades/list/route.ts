@@ -9,7 +9,6 @@ import {
 	parseArchPostDecryptFilters,
 	matchesPostDecryptFilters,
 } from "../../_lib/filters"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
 type SortByColumn =
 	| "entryDate"
@@ -138,12 +137,7 @@ const GET = async (request: NextRequest) => {
 			offset,
 		})
 
-		const dek = await getUserDek(auth.userId)
-		const decryptedTrades = dek
-			? result.map((trade) => decryptTradeFields(trade, dek))
-			: result
-
-		const filteredTrades = decryptedTrades.filter((trade) =>
+		const filteredTrades = result.filter((trade) =>
 			matchesPostDecryptFilters(
 				{
 					entryDate: trade.entryDate as Date | string,
