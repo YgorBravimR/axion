@@ -53,8 +53,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				token.accountId = session.accountId
 			}
 
-			// Refresh role from DB when missing (e.g. JWT minted before role system)
-			if (!token.role && token.userId) {
+			// Refresh role from DB on every JWT pass so role changes (promotions,
+			// demotions, drift fixes) propagate without forcing a re-login.
+			if (!user && token.userId) {
 				const dbUser = await db.query.users.findFirst({
 					where: eq(users.id, token.userId as string),
 					columns: { role: true },
