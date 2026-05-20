@@ -17,6 +17,7 @@ type SessionKey = "morning" | "afternoon" | "close"
 interface SessionBucket {
 	key: SessionKey
 	trades: number
+	wins: number
 	pnlCents: number
 	rMultipleSum: number
 }
@@ -51,19 +52,24 @@ const BacktestHawksResultsPanel = memo(
 		const t = useTranslations("backtest.hawksPanel")
 
 		const sessions = useMemo<SessionBucket[]>(() => {
+			const make = (key: SessionKey): SessionBucket => ({
+				key,
+				trades: 0,
+				wins: 0,
+				pnlCents: 0,
+				rMultipleSum: 0,
+			})
 			const buckets: Record<SessionKey, SessionBucket> = {
-				morning: { key: "morning", trades: 0, pnlCents: 0, rMultipleSum: 0 },
-				afternoon: {
-					key: "afternoon",
-					trades: 0,
-					pnlCents: 0,
-					rMultipleSum: 0,
-				},
-				close: { key: "close", trades: 0, pnlCents: 0, rMultipleSum: 0 },
+				morning: make("morning"),
+				afternoon: make("afternoon"),
+				close: make("close"),
 			}
 			for (const trade of trades) {
 				const bucket = buckets[classifySession(trade.entryTime)]
 				bucket.trades += 1
+				if (trade.netPnlCents > 0) {
+					bucket.wins += 1
+				}
 				bucket.pnlCents += trade.netPnlCents
 				bucket.rMultipleSum += trade.rMultiple
 			}
@@ -127,6 +133,7 @@ const BacktestHawksResultsPanel = memo(
 					<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-3">
 						{sessions.map((s) => {
 							const avgR = s.trades > 0 ? s.rMultipleSum / s.trades : 0
+							const winRate = s.trades > 0 ? (s.wins / s.trades) * 100 : 0
 							const pnlTone =
 								s.pnlCents > 0
 									? "text-trade-buy"
@@ -163,10 +170,15 @@ const BacktestHawksResultsPanel = memo(
 											>
 												{formatCentsAsCurrency(s.pnlCents, currency)}
 											</p>
-											<p className="text-tiny text-txt-300 font-mono">
-												{avgR > 0 ? "+" : ""}
-												{avgR.toFixed(2)}R {t("session.avgR")}
-											</p>
+											<div className="gap-s-200 flex items-baseline justify-between">
+												<p className="text-tiny text-txt-300 font-mono">
+													{avgR > 0 ? "+" : ""}
+													{avgR.toFixed(2)}R {t("session.avgR")}
+												</p>
+												<p className="text-tiny text-txt-300 font-mono">
+													{winRate.toFixed(0)}% {t("session.winRate")}
+												</p>
+											</div>
 										</div>
 									)}
 								</div>
@@ -179,7 +191,7 @@ const BacktestHawksResultsPanel = memo(
 					<h4 className="text-small text-txt-200 font-medium">
 						{t("activity.heading")}
 					</h4>
-					<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-4">
+					<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-5">
 						<div className="border-bg-300 bg-bg-100 p-s-300 space-y-s-100 rounded-lg border">
 							<p className="text-tiny text-txt-300">
 								{t("activity.avgTradesPerDay")}
@@ -200,6 +212,17 @@ const BacktestHawksResultsPanel = memo(
 							<p className="text-tiny text-txt-300">{t("activity.oneTrade")}</p>
 							<p className="text-h3 text-txt-100 font-mono font-semibold">
 								{activity.one}
+								<span className="text-small text-txt-300 ml-s-100 font-sans font-normal">
+									{t("activity.days")}
+								</span>
+							</p>
+						</div>
+						<div className="border-bg-300 bg-bg-100 p-s-300 space-y-s-100 rounded-lg border">
+							<p className="text-tiny text-txt-300">
+								{t("activity.twoTrades")}
+							</p>
+							<p className="text-h3 text-txt-100 font-mono font-semibold">
+								{activity.two}
 								<span className="text-small text-txt-300 ml-s-100 font-sans font-normal">
 									{t("activity.days")}
 								</span>

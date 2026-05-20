@@ -4725,6 +4725,7 @@
 				"closeRange": "15:30 – 17:30",
 				"trades": "trades",
 				"avgR": "R médio",
+				"winRate": "acerto",
 				"noTrades": "Sem trades"
 			},
 			"activity": {

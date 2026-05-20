@@ -191,6 +191,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `src/app/actions/candle-import.ts`, `src/components/settings/hawks-import-section.tsx`.
 - **Date logged**: 2026-05-14.
 
+### postgres-js + `jsonb`: never pre-stringify the value, pass the object
+
+- **What**: With `postgres-js`, binding `${JSON.stringify(obj)}` to a `jsonb` column does **not** insert a JSON object — it inserts a JSON **string scalar** (the literal `"{...}"` with the braces escaped). `->`/`->>`/`jsonb_typeof` then return `null` / `'string'` and every downstream consumer that expects keys breaks silently. Adding `::jsonb` does not help because the param is already a JSON-encoded string and the cast just parses it as a string scalar. The ingest script for Hawks indicators hit this and stored 300 candles' worth of indicators as opaque strings before we noticed.
+- **What to do**: Pass the JS object directly: `${obj as never}`. postgres-js encodes it as `jsonb` on the wire in one pass. The `as never` cast silences TS — the driver's tagged-template types don't model `jsonb` parameters. If a Neon `neon()` client is also in play, the same rule applies (the HTTP driver also auto-encodes objects). To verify after an insert: `SELECT jsonb_typeof(col) FROM …` should return `'object'`, not `'string'`.
+- **Source**: `scripts/load-hawks-candles.ts` (the `${r.indicators as never}` parameter).
+- **Date logged**: 2026-05-20.
+
 ---
 
 ## Backtest / Hawks methodology
