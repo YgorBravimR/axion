@@ -24,6 +24,7 @@ interface TradeRowProps {
 	onDeleteConfirm: (_tradeId: string) => void
 	onDeleteCancel: () => void
 	isDeleting: boolean
+	tabIndex?: number
 }
 
 /**
@@ -39,6 +40,7 @@ export const TradeRow = memo(
 		onDeleteConfirm,
 		onDeleteCancel,
 		isDeleting,
+		tabIndex = 0,
 	}: TradeRowProps) => {
 		const t = useTranslations("trade")
 		const tCommon = useTranslations("common")
@@ -256,6 +258,8 @@ export const TradeRow = memo(
 						direction: trade.direction,
 						time: trade.time,
 					})}
+					role="option"
+					tabIndex={tabIndex}
 				>
 					{rowContent}
 				</Link>

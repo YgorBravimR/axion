@@ -7,6 +7,7 @@ import type { TradesByDay } from "@/types"
 import { formatBrlWithSign } from "@/lib/formatting"
 import { ColoredValue, WinRateBadge } from "@/components/shared"
 import { TradeRow } from "./trade-row"
+import { useRovingTabindex } from "./use-roving-tabindex"
 
 interface TradeDayGroupProps {
 	dayData: TradesByDay
@@ -35,6 +36,7 @@ export const TradeDayGroup = memo(
 		const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 		const t = useTranslations("journal")
 		const tCommon = useTranslations("common")
+		const { containerRef, focusedIndex } = useRovingTabindex()
 
 		const { summary, trades, dateFormatted } = dayData
 
@@ -45,18 +47,22 @@ export const TradeDayGroup = memo(
 		const formatBrl = useCallback((v: number) => formatBrlWithSign(v), [])
 
 		return (
-			<div className="border-bg-300 bg-bg-200 overflow-hidden rounded-lg border">
+			<div
+				ref={containerRef}
+				className="border-bg-300 bg-bg-200 overflow-hidden rounded-lg border"
+				role="listbox"
+				aria-label={t("tradeDayGroupAriaLabel", {
+					date: dateFormatted,
+					count: summary.totalTrades,
+					pnl: formatBrlWithSign(summary.netPnl),
+				})}
+			>
 				{/* Header - Collapsible */}
 				<button
 					type="button"
 					className="gap-s-300 border-bg-300 bg-bg-100 px-s-300 py-s-200 hover:bg-bg-200 focus-visible:ring-acc-100 flex w-full cursor-pointer items-center border-b text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
 					onClick={handleToggle}
 					aria-expanded={isExpanded}
-					aria-label={t("tradeDayGroupAriaLabel", {
-						date: dateFormatted,
-						count: summary.totalTrades,
-						pnl: formatBrlWithSign(summary.netPnl),
-					})}
 				>
 					{/* Expand/Collapse Icon */}
 					{isExpanded ? (
@@ -109,7 +115,7 @@ export const TradeDayGroup = memo(
 				{isExpanded && (
 					<div className="divide-bg-300 divide-y">
 						{trades.length > 0 ? (
-							trades.map((trade) => (
+							trades.map((trade, index) => (
 								<div key={trade.id} className="group/row">
 									<TradeRow
 										trade={trade}
@@ -118,6 +124,7 @@ export const TradeDayGroup = memo(
 										onDeleteConfirm={onDeleteConfirm}
 										onDeleteCancel={onDeleteCancel}
 										isDeleting={isDeleting}
+										tabIndex={index === focusedIndex ? 0 : -1}
 									/>
 								</div>
 							))
