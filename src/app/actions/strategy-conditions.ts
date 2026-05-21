@@ -225,7 +225,7 @@ export const getStrategyConditionsRollup = async (
 
 		const strategy = await db.query.strategies.findFirst({
 			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
-			columns: { id: true, currentVersion: true },
+			columns: { id: true, currentVersion: true, methodology: true },
 		})
 		if (!strategy) {
 			return {
@@ -331,6 +331,7 @@ export const getStrategyConditionsRollup = async (
 			data: {
 				totalTrades,
 				conditions,
+				methodology: strategy.methodology,
 				isHawksStrategy: hawksAccountUsage.length > 0,
 			},
 		}

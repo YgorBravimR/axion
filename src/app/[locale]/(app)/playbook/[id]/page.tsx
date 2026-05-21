@@ -100,6 +100,7 @@ const StrategyDetailPage = async ({
 		conditionsResult.status === "success" ? (conditionsResult.data ?? []) : []
 	const rollup = rollupResult.status === "success" ? rollupResult.data : null
 	const isHawksStrategy = rollup?.isHawksStrategy ?? false
+	const isHawksMethodology = rollup?.methodology === "hawks"
 	const isHistorical = parsedVersion !== strategy.currentVersion
 	const hasMultipleVersions = versions.length > 1
 

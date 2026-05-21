@@ -2899,6 +2899,8 @@ export type NewTrade = typeof trades.$inferInsert
 
 export type Strategy = typeof strategies.$inferSelect
 export type NewStrategy = typeof strategies.$inferInsert
+export type StrategyMethodology =
+	(typeof strategyMethodologyEnum.enumValues)[number]
 
 export type StrategyVersion = typeof strategyVersions.$inferSelect
 export type NewStrategyVersion = typeof strategyVersions.$inferInsert

@@ -1,4 +1,8 @@
-import type { StrategyCondition, TradingCondition } from "@/db/schema"
+import type {
+	StrategyCondition,
+	StrategyMethodology,
+	TradingCondition,
+} from "@/db/schema"
 
 export interface StrategyConditionWithDetail extends StrategyCondition {
 	condition: TradingCondition
@@ -18,5 +22,11 @@ export interface ConditionRollup {
 export interface StrategyConditionsRollup {
 	totalTrades: number
 	conditions: ConditionRollup[]
+	// Intrinsic methodology persisted on the strategy. NULL = unstructured.
+	// Drives per-methodology UI dispatch (Hawks panel, KPI grid extensions, etc.).
+	methodology: StrategyMethodology | null
+	// Derived "is this strategy currently traded by any Hawks-mode account?" —
+	// retained for back-compat with code paths gated on the *runtime* answer.
+	// New code should prefer `methodology === "hawks"` for the intrinsic check.
 	isHawksStrategy: boolean
 }
