@@ -91,7 +91,7 @@ describe("projectMonth", () => {
 		expect(result.withdrawalCents).toBe(0)
 	})
 
-	it("withdrawalCents does not affect endBalance (display-only)", () => {
+	it("withdrawalCents is deducted from endBalance (retained capital only)", () => {
 		const noWithdraw = projectMonth({
 			startBalanceCents: 100_000,
 			weekTargetRs: [5],
@@ -107,8 +107,10 @@ describe("projectMonth", () => {
 			irTaxRate: 0,
 			withdrawalPct: 0.3,
 		})
-		expect(withWithdraw.endBalanceCents).toBe(noWithdraw.endBalanceCents)
 		expect(withWithdraw.withdrawalCents).toBeGreaterThan(0)
+		expect(withWithdraw.endBalanceCents).toBe(
+			noWithdraw.endBalanceCents - withWithdraw.withdrawalCents
+		)
 	})
 })
 
