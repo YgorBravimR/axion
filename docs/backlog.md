@@ -101,25 +101,6 @@ Use `<ModeVariant />` for any per-methodology widget swap on this page (account-
 
 ---
 
-## Test coverage (unit / integration)
-
-Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. Best ROI ordering preserved.
-
-### Cluster D — Parsers
-
-- **Priority:** P2 · **Effort:** M
-- **What**: Fixture-driven tests for `src/lib/nota-parser/sinacor-parser.ts`, `src/lib/nota-parser/matching-engine.ts`, and the per-broker CSV parsers in `src/lib/csv-parsers/` (`clear-parser`, `genial-parser`, `xp-parser`, `candle-parser`). No fixture directory exists yet — capture real broker output (PDFs + CSVs) into `e2e/fixtures/notas/` as part of the slice.
-- **Source**: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. Verified 2026-05-20 — no `*sinacor*` / `*matching-engine*` / `*csv-parser*` files exist under `src/__tests__/`.
-
-### Backtest + equity-shield test suites
-
-- **Priority:** P2 · **Effort:** M (was L — fractal-plan slice already shipped, see note)
-- **What**: `__tests__/lib/backtest/*` — currently only `hawks-engine.test.ts` is present. Missing: entry/stop/target/sizing modules. `__tests__/lib/equity-shield/*` — currently empty (0 files); needs smoothing + shield-calc coverage from scratch.
-- **Fractal-plan slice shipped**: `__tests__/lib/fractal-plan/` already holds 20 test files (resolver, projection, capital-ladder, drawdown-trigger, tier-eval, schema-shape, etc.). No remaining gap there.
-- **Source**: same scan; verified 2026-05-20 against `src/__tests__/lib/{backtest,equity-shield,fractal-plan}/`.
-
----
-
 ## Strategy versioning v2 follow-ups
 
 Both items below are deferred-out-of-v1 entries. v1 (read-only awareness + fork flow + dashboard cohort filter + scorecard polish) shipped at commits `99dabfa` + `7abe9b7`.
@@ -135,12 +116,6 @@ Both items below are deferred-out-of-v1 entries. v1 (read-only awareness + fork 
 - **Priority:** P3 · **Effort:** S
 - **What**: Free-text label per version (e.g. "v2 — after London session refinement"). v1 ships numeric-only.
 - **Why deferred**: Numeric versions are sufficient for first launch; labels add discoverability once the user has 3+ versions.
-
----
-
-## HAWKS deferred items
-
-Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-runbook.md), logs at `docs/scans/2026-05-13-impeccable-*-hawks.md`). Logged here because each requires either product/copy review, a wider primitive change, or another team's input — none are local code edits.
 
 ---
 
