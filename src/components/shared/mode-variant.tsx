@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, type ReactNode } from "react"
+import { Fragment, memo, type ReactNode } from "react"
 import {
 	useAccountMode,
 	type AccountModeValue,
@@ -29,7 +29,7 @@ interface ModeVariantProps {
  *     variants={{ hawks: <HawksCoachingCard /> }}
  *   />
  */
-const ModeVariant = ({
+const ModeVariantBase = ({
 	default: defaultVariant,
 	variants,
 }: ModeVariantProps) => {
@@ -42,5 +42,8 @@ const ModeVariant = ({
 	}
 	return <Fragment>{defaultVariant}</Fragment>
 }
+
+const ModeVariant = memo(ModeVariantBase)
+ModeVariant.displayName = "ModeVariant"
 
 export { ModeVariant, type ModeVariantProps, type MethodologyVariantKey }

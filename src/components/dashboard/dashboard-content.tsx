@@ -276,6 +276,14 @@ export const DashboardContent = ({
 		[fetchFilteredData, period]
 	)
 
+	// Memoize the coaching variants to prevent unnecessary re-renders of child components
+	const coachingVariants = useMemo(
+		() => ({
+			hawks: <HawksCoachingInsightsCard initialContext={initialHawksContext} />,
+		}),
+		[initialHawksContext]
+	)
+
 	return (
 		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 			{/* Period Toggle + Strategy Filter + Loading */}
@@ -306,13 +314,7 @@ export const DashboardContent = ({
 				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
 					<ModeVariant
 						default={<CoachingInsightsCard />}
-						variants={{
-							hawks: (
-								<HawksCoachingInsightsCard
-									initialContext={initialHawksContext}
-								/>
-							),
-						}}
+						variants={coachingVariants}
 					/>
 				</div>
 			)}

@@ -73,11 +73,12 @@ const DashboardStrategyFilter = ({
 	// When the picked strategy disappears from the option set (e.g. archived
 	// in another tab), drop the filter so the dashboard doesn't render with a
 	// stale strategy id that no longer matches any trade.
+
 	useEffect(() => {
 		if (value.strategyId && options.length > 0 && !selectedStrategy) {
 			onChange({ strategyId: null, strategyVersionId: null })
 		}
-	}, [options.length, selectedStrategy, value.strategyId, onChange])
+	}, [options.length, selectedStrategy, value.strategyId])
 
 	const handleStrategyChange = (strategyId: string): void => {
 		if (strategyId === NO_STRATEGY) {
