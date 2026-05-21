@@ -1263,6 +1263,10 @@ export const yearlyPlans = pgTable(
 			.notNull()
 			.default("30.00"),
 		tradingDaysPerWeek: integer("trading_days_per_week").notNull().default(5),
+		defaultAssertivityPercent: decimal("default_assertivity_percent", {
+			precision: 5,
+			scale: 2,
+		}).default("50.00"),
 
 		// Capital ladder rules (JSONB array of LadderRuleR — money-based tiers)
 		ladderRules: jsonb("ladder_rules").notNull().$type<LadderRuleR[]>(),

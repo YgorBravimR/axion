@@ -22,6 +22,7 @@ interface YearlyPlanSlideoverProps {
 		initialCapitalCents: number
 		ladderRules: LadderRuleR[]
 		tradingDaysPerWeek: number
+		defaultAssertivityPercent: string | null
 		defaultDailyLossR: string | null
 		defaultDailyWinR: string | null
 		defaultWeeklyLossR: string | null

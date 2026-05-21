@@ -10,6 +10,7 @@ import {
 } from "@/db/schema"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
+import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
 import {
 	monthLabelPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
@@ -119,6 +120,7 @@ const MonthReport = async ({
 		comparisonResult,
 		darfResult,
 		account,
+		assertivityData,
 	] = await Promise.all([
 		db.query.weeklyPlan.findMany({
 			where: eq(weeklyPlan.monthlyPlanId, monthRow.id),
@@ -140,6 +142,7 @@ const MonthReport = async ({
 			.from(tradingAccounts)
 			.where(eq(tradingAccounts.id, accountId))
 			.then((rows) => rows[0] ?? null),
+		getHistoricalAssertivity(accountId),
 	])
 
 	const riskProfiles =
@@ -191,12 +194,20 @@ const MonthReport = async ({
 		? Math.round(projectionData.projectedNetProfit * 100)
 		: null
 
+	const configuredAssertivityPct = yearRow.defaultAssertivityPercent
+		? Math.round(parseFloat(yearRow.defaultAssertivityPercent))
+		: 50
+	const assertivityPct = assertivityData.hasEnoughData
+		? assertivityData.assertivityPct
+		: configuredAssertivityPct
+
 	const { planGoalCents, planGoalSource } = deriveMonthGoal({
 		manualGoalCents: monthRow.monthlyGoalCents,
 		weekTargetRs: weeks.map((w) => w.targetR),
 		snapshotOneRCents: monthRow.snapshotOneRCents,
 		cascadeDailyTargetR: resolved?.dailyTargetR.value ?? null,
 		totalTradingDays,
+		assertivityPct,
 	})
 
 	const resolvedProfileId = behavior.riskProfileId

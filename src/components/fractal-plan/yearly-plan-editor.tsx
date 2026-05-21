@@ -71,6 +71,7 @@ interface YearlyPlanEditorProps {
 		initialCapitalCents: number
 		ladderRules: LadderRuleR[]
 		tradingDaysPerWeek: number
+		defaultAssertivityPercent: string | null
 		defaultDailyLossR: string | null
 		defaultDailyWinR: string | null
 		defaultWeeklyLossR: string | null
@@ -85,6 +86,7 @@ interface YearlyPlanEditorProps {
 
 interface FormState {
 	tradingDaysPerWeek: string
+	defaultAssertivityPercent: string
 	defaultDailyLossR: string
 	defaultDailyWinR: string
 	defaultWeeklyLossR: string
@@ -112,12 +114,13 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 	if (!existing) {
 		return {
 			tradingDaysPerWeek: "5",
+			defaultAssertivityPercent: "50",
 			defaultDailyLossR: "3.00",
-			defaultDailyWinR: "2.00",
-			defaultWeeklyLossR: "6.00",
-			defaultWeeklyWinR: "4.00",
-			defaultMonthlyLossR: "10.00",
-			defaultMonthlyWinR: "8.00",
+			defaultDailyWinR: "6.00",
+			defaultWeeklyLossR: "8.00",
+			defaultWeeklyWinR: "20.00",
+			defaultMonthlyLossR: "20.00",
+			defaultMonthlyWinR: "60.00",
 			ladderRows: DEFAULT_LADDER.map(ruleToDraft),
 			notes: "",
 			initialCapitalReais: "",
@@ -125,6 +128,9 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 	}
 	return {
 		tradingDaysPerWeek: String(existing.tradingDaysPerWeek),
+		defaultAssertivityPercent: existing.defaultAssertivityPercent
+			? String(Math.round(parseFloat(existing.defaultAssertivityPercent)))
+			: "50",
 		defaultDailyLossR: existing.defaultDailyLossR ?? "",
 		defaultDailyWinR: existing.defaultDailyWinR ?? "",
 		defaultWeeklyLossR: existing.defaultWeeklyLossR ?? "",
@@ -288,6 +294,19 @@ const YearlyPlanEditor = ({
 			}
 		}
 
+		const defaultAssertivityPercent = parseInt(
+			form.defaultAssertivityPercent,
+			10
+		)
+		if (
+			!Number.isInteger(defaultAssertivityPercent) ||
+			defaultAssertivityPercent < 1 ||
+			defaultAssertivityPercent > 100
+		) {
+			showToast("error", t("editors.yearly.assertivityError"))
+			return
+		}
+
 		const numericFields = {
 			defaultDailyLossR: parseFloat(form.defaultDailyLossR),
 			defaultDailyWinR: parseFloat(form.defaultDailyWinR),
@@ -338,6 +357,7 @@ const YearlyPlanEditor = ({
 						year,
 						ladderRules: ladder,
 						tradingDaysPerWeek,
+						defaultAssertivityPercent,
 						...numericFields,
 						defaultRiskProfileId: riskProfileId,
 						notes: form.notes || undefined,
@@ -346,6 +366,7 @@ const YearlyPlanEditor = ({
 						year,
 						ladderRules: ladder,
 						tradingDaysPerWeek,
+						defaultAssertivityPercent,
 						...numericFields,
 						drawdownTriggerThresholdR: 2,
 					})
@@ -483,6 +504,25 @@ const YearlyPlanEditor = ({
 							}
 							required
 						/>
+					</div>
+					<div>
+						<Label id="lbl-assertivity" htmlFor="assertivity">
+							{t("editors.yearly.assertivityLabel")}
+						</Label>
+						<Input
+							id="assertivity"
+							type="number"
+							min="1"
+							max="100"
+							value={form.defaultAssertivityPercent}
+							onChange={(e) =>
+								handleField("defaultAssertivityPercent", e.target.value)
+							}
+							required
+						/>
+						<p className="mt-s-100 text-micro text-txt-300">
+							{t("editors.yearly.assertivityHint")}
+						</p>
 					</div>
 					<div>
 						<Label id="lbl-daily-loss" htmlFor="daily-loss">

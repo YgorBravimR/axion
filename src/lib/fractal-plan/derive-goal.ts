@@ -9,6 +9,7 @@ interface DeriveMonthGoalInput {
 	snapshotOneRCents: number
 	cascadeDailyTargetR: string | null
 	totalTradingDays: number
+	assertivityPct?: number
 }
 
 interface DeriveMonthGoalResult {
@@ -34,7 +35,10 @@ const deriveMonthGoal = (
 		snapshotOneRCents,
 		cascadeDailyTargetR,
 		totalTradingDays,
+		assertivityPct = 100,
 	} = input
+
+	const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
 
 	if (manualGoalCents !== null && manualGoalCents > 0) {
 		return { planGoalCents: manualGoalCents, planGoalSource: "manual" }
@@ -56,7 +60,9 @@ const deriveMonthGoal = (
 		cascadeR > 0 &&
 		snapshotOneRCents > 0 &&
 		totalTradingDays > 0
-			? Math.round(cascadeR * totalTradingDays * snapshotOneRCents)
+			? Math.round(
+					cascadeR * totalTradingDays * assertivity * snapshotOneRCents
+				)
 			: 0
 	if (fromCascadeCents > 0) {
 		return { planGoalCents: fromCascadeCents, planGoalSource: "default" }

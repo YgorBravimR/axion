@@ -26,6 +26,7 @@ const createYearlyPlanInputSchema = z.object({
 	defaultWeeklyWinR: z.number().positive(),
 	defaultMonthlyLossR: z.number().positive(),
 	defaultMonthlyWinR: z.number().positive(),
+	defaultAssertivityPercent: z.number().int().min(1).max(100).optional(),
 	drawdownTriggerThresholdR: z.number().positive(),
 	tradingDaysPerWeek: z.number().int().min(1).max(7),
 	annualGoalCents: z.number().int().nonnegative().optional(),
@@ -68,6 +69,7 @@ export const createYearlyPlanV2 = async (
 			defaultWeeklyWinR: parsed.defaultWeeklyWinR,
 			defaultMonthlyLossR: parsed.defaultMonthlyLossR,
 			defaultMonthlyWinR: parsed.defaultMonthlyWinR,
+			defaultAssertivityPercent: parsed.defaultAssertivityPercent ?? 50,
 			drawdownTriggerThresholdR: parsed.drawdownTriggerThresholdR,
 			tradingDaysPerWeek: parsed.tradingDaysPerWeek,
 			annualGoalCents: parsed.annualGoalCents,
@@ -101,6 +103,7 @@ const updateYearlyPlanInputSchema = z.object({
 	defaultWeeklyWinR: z.number().positive().optional(),
 	defaultMonthlyLossR: z.number().positive().optional(),
 	defaultMonthlyWinR: z.number().positive().optional(),
+	defaultAssertivityPercent: z.number().int().min(1).max(100).optional(),
 	defaultRiskProfileId: z.union([z.string().uuid(), z.null()]).optional(),
 	notes: z.string().max(5000).optional(),
 })
@@ -153,6 +156,10 @@ export const updateYearlyPlan = async (
 		}
 		if (parsed.defaultMonthlyWinR !== undefined) {
 			updates.defaultMonthlyWinR = parsed.defaultMonthlyWinR.toFixed(2)
+		}
+		if (parsed.defaultAssertivityPercent !== undefined) {
+			updates.defaultAssertivityPercent =
+				parsed.defaultAssertivityPercent.toFixed(2)
 		}
 		if (parsed.defaultRiskProfileId !== undefined) {
 			updates.defaultRiskProfileId = parsed.defaultRiskProfileId

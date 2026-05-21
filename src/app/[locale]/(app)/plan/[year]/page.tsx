@@ -49,6 +49,7 @@ const buildExisting = (row: typeof yearlyPlans.$inferSelect | undefined) =>
 				initialCapitalCents: row.initialCapitalCents,
 				ladderRules: row.ladderRules as unknown as LadderRuleR[],
 				tradingDaysPerWeek: row.tradingDaysPerWeek,
+				defaultAssertivityPercent: row.defaultAssertivityPercent,
 				defaultDailyLossR: row.defaultDailyLossR,
 				defaultDailyWinR: row.defaultDailyWinR,
 				defaultWeeklyLossR: row.defaultWeeklyLossR,
