@@ -119,33 +119,6 @@ Both items below are deferred-out-of-v1 entries. v1 (read-only awareness + fork 
 
 ---
 
-## Page polish — deferred from sweep
-
-All four items below are P3 distill passes flagged by the 2026-05-12 "impeccable page" sweep. They share a root cause: monotonous card stacks where nothing earns visual prominence. Consider handling as a unified distill pass rather than four separate slices.
-
-### Journal-list — listbox arrow-nav within trade-day-group
-
-- **Priority:** P3 · **Effort:** M
-- **What**: After the TradeRow Link migration, focus moves row-by-row on Tab. For dense days (30+ trades) consider a listbox roving-tabindex pattern so ↑↓ navigates between rows without leaving the day group, and Tab leaves the group entirely.
-- **Why**: Power-user shortcut. Not blocking — Tab works fine — but the cockpit register favors keyboard density.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1.
-
-### Journal detail — card-rhythm distill on `/journal/[id]`
-
-- **Priority:** P3 · **Effort:** M
-- **What**: The detail page stacks ~10 sibling cards (header, P&L block, R-multiples, prices, risk, SL/TP, MFE/MAE, classification, rating+plan, tags, notes). Several adjacent groupings (prices ↔ SL/TP, MFE ↔ MAE, rating ↔ plan) read as one logical unit but render with identical visual weight. Distill into 4-5 grouped sections with deliberate spacing variance, or move the secondary metrics into a collapsible "Details" disclosure so the primary outcome (P&L, R, executions, notes) leads.
-- **Why**: Shared design law: "vary spacing for rhythm; same padding everywhere is monotony" + "cards are the lazy answer." The current page is a uniform card stack; nothing earns visual prominence over anything else.
-- **Source**: `docs/scans/2026-05-12-impeccable-journal-detail.md` Phase 1a critique P3 — distill deferred to keep this slice surgical.
-
-### Analytics — uniform card stack across `/analytics`
-
-- **Priority:** P3 · **Effort:** M
-- **What**: Eleven sibling cards (variable comparison, equity curve, EV, R-dist, tags, heatmap+session, session-asset table, hourly+day-of-week, holding period) all render with identical `border-bg-300 bg-bg-200 rounded-lg` chrome. Nothing earns visual prominence.
-- **Why**: Same shared-law violation as `/journal/[id]` — "vary spacing for rhythm; cards are the lazy answer." Group into 3-4 logical bands with deliberate spacing variance, or promote one anchor metric (EV or cumulative equity) above the card grid.
-- **Source**: `docs/scans/2026-05-12-impeccable-analytics.md` Phase 1a critique P2. Scope-extends the existing journal-detail distill — handle together.
-
----
-
 ## Monthly
 
 ### `month-comparison.tsx` ChangeIndicator paints non-P&L deltas as P&L
