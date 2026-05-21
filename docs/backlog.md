@@ -35,9 +35,9 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 > **Strategic context**: see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) for the invest/merge/deprecate framing this shortlist sits inside.
 
-The items that earn priority over everything else in this file. Each is linked to its full entry below.
+The items that earn priority over everything else in this file. Promote a P2 entry here when it earns enough strategic weight to lead.
 
-1. **Encryption archive** — rip the dormant field-level encryption stack threaded through ~50 files. Touches PROTECTED paths; needs its own dedicated session. See [Test coverage](#test-coverage-unit--integration) below.
+_Currently empty — last item (Encryption archive) shipped 2026-05-20 (commit `b8966f1`)._
 
 ---
 
@@ -105,33 +105,18 @@ Use `<ModeVariant />` for any per-methodology widget swap on this page (account-
 
 Source for all items below: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. Best ROI ordering preserved.
 
-### Encryption archive — XL refactor (its own session) — **P1**
-
-- **Priority:** P1 · **Effort:** XL · **Owner**: needs its own dedicated session
-- **What**: Rip out the dormant field-level encryption stack. `getUserDek` always returns `null`; ~50 files thread `dek` through actions/routes/library queries with `dek ? encryptFields(...) : raw` ternaries that never take the wrapped branch. Schema columns marked `// encrypted` (pnl, entry_price, prop_firm_name, name, etc.) actually store plaintext.
-- **Scope:**
-  - Delete `src/lib/crypto.ts`, `src/lib/user-crypto.ts`, `src/app/api/arch/_lib/decrypt.ts`.
-  - Delete `scripts/migrate-encrypt-existing-data.ts`, `scripts/migrate-decrypt-existing-data.ts`.
-  - Strip `getUserDek` + `encryptTradeFields` / `decryptTradeFields` / `encryptAccountFields` / `decryptAccountFields` / etc. from all ~50 call sites. Remove the `dek ? wrapped : raw` ternaries.
-  - Drop `users.encrypted_dek` column via new Drizzle migration.
-  - Scrub 18 `// encrypted` comments from `src/db/schema.ts`.
-  - Trim `SafeUser` in `src/app/actions/auth.types.ts` (drop the `encryptedDek` from `Omit<>`).
-  - Clean dead commented block in `src/app/actions/auth.ts:77-89`.
-  - Update affected tests (`auth-actions.test.ts`, `commission-fee-impact.test.ts`, `period-queries.test.ts`, `recompute-month.test.ts`).
-- **Touches PROTECTED**: `src/lib/tax/recompute-month.ts`, `src/db/schema.ts`, `src/db/migrations/` (new migration).
-- **User authorization (recorded 2026-05-15)**: "we're rebuilding if need to touch protected files, do it" + "There's no problem if a database reset is needed." → archive may break shape of existing rows; DB reset on staging/prod acceptable for this cutover.
-- **Why deferred**: full archive in a non-dedicated session has high risk on financial-recompute paths (`recompute-month.ts`, `period-queries.ts`). Better as one focused session with a clean lint + test pass between each commit.
-
 ### Cluster D — Parsers
 
 - **Priority:** P2 · **Effort:** M
-- **What**: Fixture-driven tests for `sinacor-parser`, `matching-engine`, `csv-parsers`. Sample broker outputs live at `e2e/fixtures/notas/`.
+- **What**: Fixture-driven tests for `src/lib/nota-parser/sinacor-parser.ts`, `src/lib/nota-parser/matching-engine.ts`, and the per-broker CSV parsers in `src/lib/csv-parsers/` (`clear-parser`, `genial-parser`, `xp-parser`, `candle-parser`). No fixture directory exists yet — capture real broker output (PDFs + CSVs) into `e2e/fixtures/notas/` as part of the slice.
+- **Source**: `docs/scans/2026-05-11-test-coverage.md` Phase 5b. Verified 2026-05-20 — no `*sinacor*` / `*matching-engine*` / `*csv-parser*` files exist under `src/__tests__/`.
 
-### Backtest / equity-shield / fractal-plan suites
+### Backtest + equity-shield test suites
 
-- **Priority:** P2 · **Effort:** L
-- **What**: `__tests__/lib/backtest/*` (entry, stop, target, sizing modules), `__tests__/lib/equity-shield/*` (smoothing + shield calc), `__tests__/lib/fractal-plan/*` (capital + week aggregation).
-- **Source**: same scan, "test files missing" list.
+- **Priority:** P2 · **Effort:** M (was L — fractal-plan slice already shipped, see note)
+- **What**: `__tests__/lib/backtest/*` — currently only `hawks-engine.test.ts` is present. Missing: entry/stop/target/sizing modules. `__tests__/lib/equity-shield/*` — currently empty (0 files); needs smoothing + shield-calc coverage from scratch.
+- **Fractal-plan slice shipped**: `__tests__/lib/fractal-plan/` already holds 20 test files (resolver, projection, capital-ladder, drawdown-trigger, tier-eval, schema-shape, etc.). No remaining gap there.
+- **Source**: same scan; verified 2026-05-20 against `src/__tests__/lib/{backtest,equity-shield,fractal-plan}/`.
 
 ---
 
@@ -157,13 +142,6 @@ Both items below are deferred-out-of-v1 entries. v1 (read-only awareness + fork 
 
 Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-runbook.md), logs at `docs/scans/2026-05-13-impeccable-*-hawks.md`). Logged here because each requires either product/copy review, a wider primitive change, or another team's input — none are local code edits.
 
-### HAWKS pre-flight switch copy review (en + pt-BR)
-
-- **Priority:** P2 · **Effort:** S
-- **What**: Each switch in `HawksTradeFields` ships with a `*Label` + `*Hint` pair where the hint repeats the label (e.g. "Triple screen confirmed?" + "Did your 5-screen checklist hold at entry?"). The hint adds no information.
-- **Why now**: Phase 1a P1 finding in `docs/scans/2026-05-13-impeccable-trade-form-hawks.md`. Voice-gate review needed before edit; one of: drop hints, or rewrite as one-clause clarifiers.
-- **Source**: `src/messages/en.json` + `src/messages/pt-BR.json` under `hawks.tradeFields.*`. Component: `src/components/hawks/hawks-trade-fields.tsx`.
-
 ### Trade-form draft-after-deactivation edge
 
 - **Priority:** P2 · **Effort:** S
@@ -174,7 +152,7 @@ Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-run
 
 - **Priority:** P3 · **Effort:** XS
 - **What**: `t("statusActive") / t("statusInactive")` + `t("description")` not yet voice-checked in en + pt-BR. Reject cheerful filler ("You're on!", "Switched off") if present.
-- **Source**: `src/messages/{en,pt-BR}.json` under `hawks.settings.*`.
+- **Source**: `messages/{en,pt-BR}.json` under `hawks.settings.*`.
 
 ---
 
