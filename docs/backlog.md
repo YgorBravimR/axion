@@ -38,3 +38,15 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 3. **Delete the entry from this file in the same PR that ships the work.** Don't strikethrough; don't move it elsewhere; don't add a "Recently shipped" footnote. The shipping commit + git history are the audit trail.
 
 Result: the active backlog is exactly what's still in front of us, priority-descending. No parallel DONE register lives in this file.
+
+---
+
+## E2E / Test Infrastructure
+
+### Add browser `console.error` listener to Playwright fixture to surface client-side errors
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-05-21 test audit on `feat/hawks-mode-v0` — no `page.on('console', ...)` handlers exist anywhere in the e2e suite; browser-side `console.error` calls (uncaught promise rejections, React hydration errors, failed fetch calls logged silently) are completely invisible to the test runner.
+- **What + Why**: Add a shared Playwright fixture (or `test.beforeEach` in `e2e/fixtures/`) that registers `page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })` and fails/warns after each test if unexpected errors were collected. This would have caught the `R$ → BRL` `Intl.NumberFormat` crash (which logged a `RangeError: Invalid currency code`) before it reached a smoke-test session. Avoid failing on known benign warnings (Next.js dev-mode verbose output) using an allowlist regex. Reference: Playwright docs on `ConsoleMessage`.
+- **Date filed**: 2026-05-21.

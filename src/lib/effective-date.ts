@@ -1,3 +1,4 @@
+import { connection } from "next/server"
 import type { TradingAccount } from "@/db/schema"
 
 /**
@@ -27,10 +28,12 @@ const getEffectiveDateWithOverride = (
 }
 
 /**
- * Server-side convenience: returns the effective date as a Promise to match
- * the original async signature; callers already await it.
+ * Server-side convenience: returns the effective date as a Promise.
+ * Calls connection() so Next.js 15 treats callers as dynamic — new Date()
+ * must not run at build time.
  */
 const getServerEffectiveNow = async (): Promise<Date> => {
+	await connection()
 	return getEffectiveDate(null)
 }
 
