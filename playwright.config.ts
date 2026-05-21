@@ -144,7 +144,15 @@ const buildJourneyProjects = (
 				}
 			: { ...devices["Desktop Chrome"] }
 
-	let prev: string | undefined
+	// Demo chain must not start until the entire ci chain completes.
+	// Both profiles share bravo@axion-demo.com and the same journey-stage-N.json
+	// files. If demo-00 runs while ci is still running, demo's cleanupBravo
+	// deletes the ci-registered user and corrupts ci's subsequent stages.
+	let prev: string | undefined =
+		profile === "demo"
+			? `${journeyStages[journeyStages.length - 1].name}-ci`
+			: undefined
+
 	return journeyStages.map((stage) => {
 		const name = `${stage.name}-${profile}`
 		const project = {
