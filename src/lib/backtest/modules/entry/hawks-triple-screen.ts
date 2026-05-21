@@ -14,11 +14,12 @@ import type { CandleRow } from "@/types/candle"
  *   3. 15m trend aligned: price > MME27_15m (long) or price < MME27_15m (short)
  *   4. MACD > 0 (long) or MACD < 0 (short)
  *
- * Stop: signal.stopReference = 2 * candle.open - candle.close
+ * Stop: signal.stopReference = 2 * candle.open - candle.close ± tickSize
  *   Hawks methodology: stop fires when one Renko brick closes against the entry direction.
  *   Geometrically the distance from entry (= brick close) to that reversal-close level is
  *   "2 brick bodies" (1 body retrace + 1 body reversal). That is the Hawks definition of 1R.
  *   Formula: 1 brick body below the entry brick's open = candle.open - (candle.close - candle.open) = 2·open - close.
+ *   The strict Profit Pro 9+1 geometry adds +1 tick inward (tighter stop): long adds tickSize, short subtracts tickSize.
  *   Symmetric for short (open > close, formula yields a price above entry).
  *   The engine's stop module reads this via the fixed_points { points: 0 } escape hatch in initial-stops.ts:16.
  *
@@ -61,7 +62,7 @@ const processHawksCandle = (
 	candle: CandleRow,
 	state: HawksState,
 	ctx: DayContext,
-	_tickSize: number,
+	tickSize: number,
 	config: HawksTripleScreenConfig
 ): { state: HawksState; signal: EntrySignal | null } => {
 	if (state.doneForDay) {
@@ -98,8 +99,8 @@ const processHawksCandle = (
 			signal: {
 				direction: "long",
 				price: candle.close,
-				// Hawks 1R = 2 brick bodies: one body below the entry brick's open
-				stopReference: 2 * candle.open - candle.close,
+				// Hawks 1R = 2 brick bodies + 1 tick inward (Profit Pro 9+1 geometry)
+				stopReference: 2 * candle.open - candle.close + tickSize,
 				label: `Hawks Long triple-screen @ ${ctx.brtHHMM}`,
 			},
 		}
@@ -117,8 +118,8 @@ const processHawksCandle = (
 			signal: {
 				direction: "short",
 				price: candle.close,
-				// Symmetric for short: open > close, formula yields stop above entry
-				stopReference: 2 * candle.open - candle.close,
+				// Symmetric for short: 1 tick inward means subtracting (tighter stop above entry)
+				stopReference: 2 * candle.open - candle.close - tickSize,
 				label: `Hawks Short triple-screen @ ${ctx.brtHHMM}`,
 			},
 		}

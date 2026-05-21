@@ -60,7 +60,9 @@ Real-trade journal data was NOT corrupted: `tradeHawksMetadata` stores only cate
 1. Changed `signal.stopReference` in `hawks-triple-screen.ts` from `candle.open` to `2 * candle.open - candle.close` for both long and short (symmetric: long → bullish brick → formula yields stop below entry; short → bearish brick → formula yields stop above entry). One brick body below (or above) the entry brick's open = the 2-brick distance from the entry close.
 2. Added `engineVersion?: string` to `BacktestResult`. Engine stamps `"hawks-v0.2"` on every Hawks backtest result so cached screenshots/exports remain traceable to the math that produced them. No DB migration needed because backtest results are ephemeral (no `backtestResults` table).
 3. Updated all narrative comments: entry-module docstring, preset docstring + inline `points=0` comment, `HawksTripleScreenConfig` JSDoc in `types/backtest.ts`. All now describe "Stop = 2 bricks back, Hawks 1R = 2 Renko".
-4. Re-baselined the two `stopReference` assertions in `hawks-engine.test.ts` (long: `129950 = 2·130000 − 130050`; short: `130100 = 2·130050 − 130000`).
+4. Re-baselined the two `stopReference` assertions in `hawks-engine.test.ts` (long: `129950 = 2·130000 − 130050`; short: `130100 = 2·130050 − 130000`). _(These were subsequently updated again — see open follow-up below.)_
+
+**Open follow-up (shipped 2026-05-21):** The strict Profit Pro 9+1 geometry adds `+1 tick` inward vs. the 2-brick-body formula — i.e. `2·open − close + tickSize` (long) and `2·open − close − tickSize` (short). Applied in the same entry module; `_tickSize` parameter (previously unused placeholder) renamed to `tickSize` and consumed. Assertions re-baselined: long `129955`, short `130095` (tickSize=5 in tests). Effect is cosmetic at points fidelity (~5% of brick body) but matches methodology spec exactly.
 
 **Prevention:**
 

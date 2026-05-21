@@ -31,17 +31,6 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ---
 
-## Backtest
-
-### Hawks tick-level fidelity on stop reference
-
-- **Priority:** P3 · **Effort:** S
-- **What**: The current Hawks stop formula `2·open − close` gives one brick body below the entry brick's open — a 2-brick-body distance at points-level fidelity. The strict Profit Pro 9+1 geometry is `2·(R−1) + 1` ticks (two brick bodies + 1 closer tick). The `+1 tick` is omitted today; this is acceptable for points-level computation but should be revisited if/when the engine exposes tick-precise stops.
-- **Why**: Cosmetic at current fidelity (one tick on a ~20-tick brick is ~5% of the brick body). Worth tracking so it's not silently rediscovered as a bug later.
-- **Source**: `docs/postMorten/backend.md` [BUG-2026-05-15] open follow-ups; Ygor math note 2026-05-15.
-
----
-
 ## How to retire an item from this backlog
 
 1. Implement the work.

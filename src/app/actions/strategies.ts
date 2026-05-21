@@ -718,7 +718,7 @@ export const updateStrategyVersionLabel = async (
 				)
 			)
 
-		await invalidateStrategyData(strategyId, userId)
+		invalidateStrategyData(userId)
 		return { status: "success", message: t("versioning.labelSaved") }
 	} catch (error) {
 		return {

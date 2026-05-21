@@ -59,7 +59,7 @@ describe("Hawks triple-screen — long entry", () => {
 		expect(state.doneForDay).toBe(true)
 	})
 
-	it("sets stopReference 2 bricks back — Hawks 1R = 2 Renko (2·open − close)", () => {
+	it("sets stopReference 2 bricks back + 1 tick inward — Hawks 1R + Profit Pro 9+1 tick", () => {
 		const candle = makeCandle({ open: 130000, close: 130050 })
 		const { signal } = processHawksCandle(
 			candle,
@@ -69,8 +69,8 @@ describe("Hawks triple-screen — long entry", () => {
 			DEFAULT_CONFIG
 		)
 
-		// 2 * 130000 - 130050 = 129950 (one brick body below the entry brick's open)
-		expect(signal!.stopReference).toBe(129950)
+		// 2 * 130000 - 130050 + 5 (tickSize) = 129955 (one tick tighter than 2 brick bodies)
+		expect(signal!.stopReference).toBe(129955)
 	})
 
 	it("entry price is candle.close", () => {
@@ -110,8 +110,8 @@ describe("Hawks triple-screen — short entry", () => {
 		)
 
 		expect(signal!.direction).toBe("short")
-		// 2 * 130050 - 130000 = 130100 (one brick body above the entry brick's open)
-		expect(signal!.stopReference).toBe(130100)
+		// 2 * 130050 - 130000 - 5 (tickSize) = 130095 (one tick tighter than 2 brick bodies)
+		expect(signal!.stopReference).toBe(130095)
 	})
 })
 
