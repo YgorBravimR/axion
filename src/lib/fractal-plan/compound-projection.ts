@@ -21,6 +21,8 @@ const computeProjectedOneRCents = (
 		dailyTargetR: number
 		assertivityPct: number
 		tradingDaysPerMonth?: number
+		/** Calendar month (1–12) where the plan starts. Defaults to 1 (January). */
+		planStartMonth?: number
 	}
 ): number => {
 	const {
@@ -29,6 +31,7 @@ const computeProjectedOneRCents = (
 		dailyTargetR,
 		assertivityPct,
 		tradingDaysPerMonth = DEFAULT_COMPOUND_DAYS_PER_MONTH,
+		planStartMonth = 1,
 	} = params
 
 	if (dailyTargetR <= 0 || ladderRules.length === 0) {
@@ -38,7 +41,8 @@ const computeProjectedOneRCents = (
 	const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
 	let capital = initialCapitalCents
 
-	for (let m = 1; m < targetMonth; m++) {
+	// Only compound months that are actually part of this plan
+	for (let m = planStartMonth; m < targetMonth; m++) {
 		const { oneRCents } = resolveTier(capital, ladderRules)
 		const monthGoal = Math.round(
 			dailyTargetR * tradingDaysPerMonth * assertivity * oneRCents

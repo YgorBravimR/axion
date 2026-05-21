@@ -21,6 +21,7 @@ import {
 	monthLabelPt,
 	monthAbbrPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
+	isoWeekToStartMonth,
 } from "@/lib/fractal-plan/month-labels"
 import {
 	getMonthlyResultsWithProp,
@@ -169,6 +170,7 @@ const QuarterReport = async ({
 		? parseFloat(yearRow.defaultDailyWinR)
 		: 0
 	const ladderRules = yearRow.ladderRules as unknown as LadderRuleR[]
+	const planStartMonth = isoWeekToStartMonth(year, yearRow.startWeek)
 
 	const perMonth = await Promise.all(
 		months.map(async (m) => {
@@ -209,6 +211,7 @@ const QuarterReport = async ({
 							ladderRules,
 							dailyTargetR: defaultDailyWinR,
 							assertivityPct,
+							planStartMonth,
 						})
 					: (row?.snapshotOneRCents ?? 0)
 
