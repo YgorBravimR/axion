@@ -208,7 +208,7 @@ export const EquityCurve = ({
 		if (period === "month") {
 			fetchData("month", viewMode)
 		}
-	}, [calendarMonth, fetchData, period, viewMode])
+	}, [calendarMonth, effectiveDate, period, viewMode])
 
 	const periodLabels = useMemo(
 		() => ({

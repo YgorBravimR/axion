@@ -2,6 +2,73 @@
 
 ---
 
+## [BUG-2026-05-21] React infinite loop in EquityCurve component (nested useCallback deps)
+
+**Date:** 2026-05-21 | **Severity:** High | **Affected Area:** `/src/components/dashboard/equity-curve.tsx`
+
+### Cause
+
+After the initial infinite loop fix (commit f28f70b5), the dashboard still failed the E2E navigation test with "Maximum update depth exceeded" error. The root cause was an unnecessary function dependency in the `useEffect` at line 207-211 of `equity-curve.tsx`:
+
+```typescript
+const fetchData = useCallback(
+	(newPeriod: Period, newMode: ViewMode) => { ... },
+	[calendarMonth, effectiveDate]
+)
+
+useEffect(() => {
+	if (period === "month") {
+		fetchData("month", viewMode)
+	}
+}, [calendarMonth, fetchData, period, viewMode])  // <-- fetchData in deps!
+```
+
+The problem: `fetchData` itself depends on `[calendarMonth, effectiveDate]`. By including `fetchData` as a dependency of the effect, we created a situation where:
+
+1. If `calendarMonth` or `effectiveDate` changes, `fetchData` is recreated (new identity)
+2. The effect sees `fetchData` changed, so it re-runs
+3. The effect calls `fetchData()`, which may trigger state updates
+4. The component re-renders
+5. Now `fetchData` is recreated again (because its deps changed)
+6. The effect re-runs again, creating a cascade of updates until React's depth limit is exceeded
+
+**Root principle:** When a function is included in a `useEffect` dependency array, that function's own dependencies become indirect dependencies of the effect. It's redundant and error-prone to include both the function AND its dependencies in the same effect's deps.
+
+### Effect
+
+Browser console error (caught in E2E test): `Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate.` The E2E test `should display all navigation items` failed because the dashboard page never fully rendered.
+
+### Solution
+
+Replaced the function reference with its actual dependencies in the `useEffect` dependency array:
+
+```typescript
+useEffect(() => {
+	if (period === "month") {
+		fetchData("month", viewMode)
+	}
+}, [calendarMonth, effectiveDate, period, viewMode]) // <-- dependencies instead of function
+```
+
+This way:
+
+- The effect still re-runs when the inputs change (same observable behavior)
+- We break the circular dependency where the function's identity affects the effect's re-run condition
+- The effect's dependencies are explicitly the values the effect actually depends on, not an intermediate function
+
+### Prevention
+
+- **Include function dependencies, not function references, in effect dependency arrays.** If you need `fetchData()` to re-run when its dependencies change, include those dependencies directly in the effect, not the function itself.
+- **Be suspicious of patterns like `[..., callbackFunction, ...]` in useEffect deps.** Ask: does the effect depend on the function's identity, or on the function's inputs?
+- **ESLint `react-hooks/exhaustive-deps` can be deceived by this pattern.** It sees `fetchData` used in the effect, suggests adding `fetchData` to deps, but doesn't catch that `fetchData`'s own deps are missing. Manual code review is essential.
+- **Test dashboard rendering with charts and date filters** to catch cascading re-render issues early.
+
+### Related Files
+
+- `src/components/dashboard/equity-curve.tsx`
+
+---
+
 ## [BUG-2026-05-21] React "Maximum update depth exceeded" infinite loop on dashboard with fresh accounts
 
 **Date:** 2026-05-21 | **Severity:** High | **Affected Area:** `/src/components/dashboard/dashboard-content.tsx`, `/src/components/dashboard/dashboard-strategy-filter.tsx`, `/src/components/shared/mode-variant.tsx`

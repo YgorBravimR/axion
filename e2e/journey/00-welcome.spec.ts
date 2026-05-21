@@ -1,6 +1,7 @@
 import { test, expect } from "../fixtures/base"
 import { BRAVO } from "./fixtures/bravo-seed"
 import { annotate } from "./helpers/annotate"
+import { cleanupBravo } from "./helpers/cleanup-bravo"
 import { promoteBravoToAdmin } from "./helpers/promote-bravo-to-admin"
 import { screenshotIfDemo } from "./helpers/screenshot-if-demo"
 import { saveStageState } from "./helpers/storage-state"
@@ -23,6 +24,14 @@ test.describe(
 	{ tag: ["@journey", "@stage:welcome"] },
 	() => {
 		test.use({ storageState: { cookies: [], origins: [] } })
+
+		// Guard against stale state from a failed previous run. globalSetup runs in
+		// the CLI launcher process where env vars may not be fully resolved, so its
+		// cleanup can silently fail. This beforeAll runs in the test-worker process
+		// where DATABASE_URL is always available, making Stage 0 self-healing.
+		test.beforeAll(async () => {
+			await cleanupBravo(BRAVO.email)
+		})
 
 		test("Bravo creates an account, logs in, and reaches the dashboard", async ({
 			page,
