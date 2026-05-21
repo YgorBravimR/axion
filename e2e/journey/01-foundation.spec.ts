@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { BRAVO } from "./fixtures/bravo-seed"
 import { annotate } from "./helpers/annotate"
 import { screenshotIfDemo } from "./helpers/screenshot-if-demo"

@@ -1,11 +1,13 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { NEW_USER, ROUTES } from "../fixtures/test-data"
 
 test.describe("Authentication", () => {
 	// Auth tests need a fresh context without stored authentication
 	test.use({ storageState: { cookies: [], origins: [] } })
 	test.describe("Registration", () => {
-		test("should display registration form with all fields", async ({ page }) => {
+		test("should display registration form with all fields", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.register)
 			await page.waitForLoadState("networkidle")
 
@@ -13,7 +15,9 @@ test.describe("Authentication", () => {
 			await expect(page.getByLabel("Email")).toBeVisible()
 			await expect(page.locator('input[type="password"]').first()).toBeVisible()
 			await expect(page.locator('input[type="password"]').nth(1)).toBeVisible()
-			await expect(page.getByRole("button", { name: "Create Account" })).toBeVisible()
+			await expect(
+				page.getByRole("button", { name: "Create Account" })
+			).toBeVisible()
 		})
 
 		test("should show password requirements indicator", async ({ page }) => {
@@ -33,8 +37,14 @@ test.describe("Authentication", () => {
 			await page.goto(ROUTES.register)
 			await page.waitForLoadState("networkidle")
 
-			await page.locator('input[type="password"]').first().fill("TestPassword123")
-			await page.locator('input[type="password"]').nth(1).fill("DifferentPassword123")
+			await page
+				.locator('input[type="password"]')
+				.first()
+				.fill("TestPassword123")
+			await page
+				.locator('input[type="password"]')
+				.nth(1)
+				.fill("DifferentPassword123")
 
 			await expect(page.getByText(/Passwords do not match/i)).toBeVisible()
 		})
@@ -59,14 +69,22 @@ test.describe("Authentication", () => {
 
 			await page.getByLabel("Full Name").fill(uniqueUser.name)
 			await page.getByLabel("Email").fill(uniqueUser.email)
-			await page.locator('input[type="password"]').first().fill(uniqueUser.password)
-			await page.locator('input[type="password"]').nth(1).fill(uniqueUser.password)
+			await page
+				.locator('input[type="password"]')
+				.first()
+				.fill(uniqueUser.password)
+			await page
+				.locator('input[type="password"]')
+				.nth(1)
+				.fill(uniqueUser.password)
 
 			await page.getByRole("button", { name: "Create Account" }).click()
 
 			// Email verification is currently disabled in registerUser (auto-verifies new users),
 			// so the form falls back to the post-register login redirect with `registered=true`.
-			await expect(page).toHaveURL(/\/(en|pt-BR)\/login\?registered=true$/, { timeout: 15000 })
+			await expect(page).toHaveURL(/\/(en|pt-BR)\/login\?registered=true$/, {
+				timeout: 15000,
+			})
 		})
 
 		test("should show error for duplicate email", async ({ page }) => {
@@ -75,12 +93,20 @@ test.describe("Authentication", () => {
 
 			await page.getByLabel("Full Name").fill("Test User")
 			await page.getByLabel("Email").fill("admin@axion.com") // Already exists from seed
-			await page.locator('input[type="password"]').first().fill("TestPassword123")
-			await page.locator('input[type="password"]').nth(1).fill("TestPassword123")
+			await page
+				.locator('input[type="password"]')
+				.first()
+				.fill("TestPassword123")
+			await page
+				.locator('input[type="password"]')
+				.nth(1)
+				.fill("TestPassword123")
 
 			await page.getByRole("button", { name: "Create Account" }).click()
 
-			await expect(page.getByText(/already exists|already registered/i)).toBeVisible({
+			await expect(
+				page.getByText(/already exists|already registered/i)
+			).toBeVisible({
 				timeout: 5000,
 			})
 		})
@@ -115,10 +141,14 @@ test.describe("Authentication", () => {
 			await page.locator("#password").fill("wrongpassword")
 			await page.getByRole("button", { name: "Sign In" }).click()
 
-			await expect(page.getByText(/Invalid email or password/i)).toBeVisible({ timeout: 5000 })
+			await expect(page.getByText(/Invalid email or password/i)).toBeVisible({
+				timeout: 5000,
+			})
 		})
 
-		test("should login successfully with valid credentials", async ({ page }) => {
+		test("should login successfully with valid credentials", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.login)
 			await page.waitForLoadState("networkidle")
 
@@ -128,14 +158,25 @@ test.describe("Authentication", () => {
 
 			// Wait for one of: rate limit message, account selection, or dashboard redirect
 			const result = await Promise.race([
-				page.getByText(/too many login attempts/i).waitFor({ timeout: 8000 }).then(() => "rate-limited"),
-				page.getByText("Select Account").waitFor({ timeout: 8000 }).then(() => "select-account"),
-				page.waitForURL(/\/(en|pt-BR)\/?$/, { timeout: 8000 }).then(() => "dashboard"),
+				page
+					.getByText(/too many login attempts/i)
+					.waitFor({ timeout: 8000 })
+					.then(() => "rate-limited"),
+				page
+					.getByText("Select Account")
+					.waitFor({ timeout: 8000 })
+					.then(() => "select-account"),
+				page
+					.waitForURL(/\/(en|pt-BR)\/?$/, { timeout: 8000 })
+					.then(() => "dashboard"),
 			]).catch(() => "timeout")
 
 			if (result === "rate-limited") {
 				// Rate limiter hit due to rapid test re-runs — skip rather than fail
-				test.skip(true, "Rate limit active for admin user — wait 15 minutes between full suite runs")
+				test.skip(
+					true,
+					"Rate limit active for admin user — wait 15 minutes between full suite runs"
+				)
 				return
 			}
 
@@ -180,15 +221,21 @@ test.describe("Authentication", () => {
 			await page.waitForLoadState("networkidle")
 
 			// Find and click user menu - look for avatar/user button
-			const userMenu = page.locator('.avatar, [data-testid="user-menu"], button:has(.avatar)').first()
+			const userMenu = page
+				.locator('.avatar, [data-testid="user-menu"], button:has(.avatar)')
+				.first()
 			if (await userMenu.isVisible()) {
 				await userMenu.click()
-				await page.getByRole("menuitem", { name: /logout|sign out|sair/i }).click()
+				await page
+					.getByRole("menuitem", { name: /logout|sign out|sair/i })
+					.click()
 				await expect(page).toHaveURL(/login/, { timeout: 5000 })
 			}
 		})
 
-		test("should not access protected routes after logout", async ({ page }) => {
+		test("should not access protected routes after logout", async ({
+			page,
+		}) => {
 			// Clear storage to simulate logged out state
 			await page.context().clearCookies()
 
@@ -200,12 +247,16 @@ test.describe("Authentication", () => {
 	})
 
 	test.describe("Account Selection", () => {
-		test("should display account selection when user has multiple accounts", async ({ page }) => {
+		test("should display account selection when user has multiple accounts", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.selectAccount)
 			await page.waitForLoadState("networkidle")
 
 			// If user has multiple accounts, should see selection UI
-			const accountCards = page.locator('[data-testid="account-card"], .account-card, button:has-text("account")')
+			const accountCards = page.locator(
+				'[data-testid="account-card"], .account-card, button:has-text("account")'
+			)
 			const count = await accountCards.count()
 
 			if (count > 1) {

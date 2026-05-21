@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 
 test.describe("Yearly Plan", () => {
@@ -32,7 +32,10 @@ test.describe("Yearly Plan", () => {
 
 		// Step 1: Capital
 		await page.getByLabel(/capital inicial/i).fill("3000")
-		await page.getByRole("button", { name: /próximo|next/i }).first().click()
+		await page
+			.getByRole("button", { name: /próximo|next/i })
+			.first()
+			.click()
 
 		// Step 2: Ladder (use defaults)
 		await page.waitForTimeout(300)
@@ -43,7 +46,9 @@ test.describe("Yearly Plan", () => {
 		await page.getByRole("button", { name: /criar plano/i }).click()
 
 		await page.waitForLoadState("networkidle")
-		await expect(page.getByRole("tab", { name: /grade semanal/i })).toBeVisible({ timeout: 10000 })
+		await expect(page.getByRole("tab", { name: /grade semanal/i })).toBeVisible(
+			{ timeout: 10000 }
+		)
 	})
 
 	test("52-week grid renders with month sections", async ({ page }) => {
@@ -55,15 +60,21 @@ test.describe("Yearly Plan", () => {
 	})
 
 	test("current week is highlighted in gold border", async ({ page }) => {
-		await expect(page.getByRole("tab", { name: /grade semanal/i })).toBeVisible()
+		await expect(
+			page.getByRole("tab", { name: /grade semanal/i })
+		).toBeVisible()
 		const currentWeekCell = page.locator(".border-acc-100").first()
 		await expect(currentWeekCell).toBeVisible()
 	})
 
 	test("edit a week cell and save Pts Feito", async ({ page }) => {
-		await expect(page.getByRole("tab", { name: /grade semanal/i })).toBeVisible()
+		await expect(
+			page.getByRole("tab", { name: /grade semanal/i })
+		).toBeVisible()
 
-		const firstCell = page.locator("[role=button][aria-label^='Semana']").first()
+		const firstCell = page
+			.locator("[role=button][aria-label^='Semana']")
+			.first()
 		await firstCell.click()
 
 		const ptsInput = page.getByPlaceholder(/pts feito/i)
@@ -76,7 +87,9 @@ test.describe("Yearly Plan", () => {
 		await expect(page.getByText("42.5")).toBeVisible({ timeout: 5000 })
 	})
 
-	test("payoff matrix tab renders with 10 rows and correct 3G value", async ({ page }) => {
+	test("payoff matrix tab renders with 10 rows and correct 3G value", async ({
+		page,
+	}) => {
 		const matrixTab = page.getByRole("tab", { name: /payoff|matriz/i })
 		await expect(matrixTab).toBeVisible()
 		await matrixTab.click()
@@ -89,7 +102,9 @@ test.describe("Yearly Plan", () => {
 		await expect(page.getByText("19.5")).toBeVisible()
 	})
 
-	test("exit convention change propagates to payoff matrix", async ({ page }) => {
+	test("exit convention change propagates to payoff matrix", async ({
+		page,
+	}) => {
 		const exitsTab = page.getByRole("tab", { name: /saída|convention/i })
 		await exitsTab.click()
 		await page.waitForTimeout(300)

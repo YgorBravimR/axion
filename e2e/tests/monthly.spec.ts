@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 
 /**
@@ -23,9 +23,13 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForLoadState("networkidle")
 		})
 
-		test("should load the monthly page and render core layout", async ({ page }) => {
+		test("should load the monthly page and render core layout", async ({
+			page,
+		}) => {
 			// The sidebar active link identifies this page (no h1 heading on the page)
-			const activeNav = page.locator('a[aria-current="page"]').filter({ hasText: /monthly/i })
+			const activeNav = page
+				.locator('a[aria-current="page"]')
+				.filter({ hasText: /monthly/i })
 			await expect(activeNav).toBeVisible()
 		})
 
@@ -34,14 +38,18 @@ test.describe("Monthly Performance Page", () => {
 			await expect(page.locator("#month-nav-next")).toBeVisible()
 		})
 
-		test("should display current month and year in the navigator label", async ({ page }) => {
+		test("should display current month and year in the navigator label", async ({
+			page,
+		}) => {
 			const monthPattern =
 				/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i
 			const monthLabel = page.getByText(monthPattern)
 			await expect(monthLabel.first()).toBeVisible()
 		})
 
-		test("should disable the next-month button when viewing current month", async ({ page }) => {
+		test("should disable the next-month button when viewing current month", async ({
+			page,
+		}) => {
 			// Current month is the maximum allowed date so the next button must be disabled
 			const nextButton = page.locator("#month-nav-next")
 			await expect(nextButton).toBeDisabled()
@@ -49,9 +57,11 @@ test.describe("Monthly Performance Page", () => {
 
 		test("should load without a page-level error state", async ({ page }) => {
 			// Hard error elements (red alert boxes)
-			const errorBoxes = page.locator('[class*="fb-error"], [class*="error"]').filter({
-				hasText: /.+/,
-			})
+			const errorBoxes = page
+				.locator('[class*="fb-error"], [class*="error"]')
+				.filter({
+					hasText: /.+/,
+				})
 			// A genuine error renders a single centered paragraph — multiple elements are normal UI
 			const count = await errorBoxes.count()
 			// Either no error at all, or only the one optional single-line error paragraph
@@ -65,7 +75,9 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForLoadState("networkidle")
 		})
 
-		test("should navigate to previous month when clicking the left arrow", async ({ page }) => {
+		test("should navigate to previous month when clicking the left arrow", async ({
+			page,
+		}) => {
 			const monthPattern =
 				/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i
 
@@ -162,7 +174,10 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForTimeout(800)
 
 			const weeklyBreakdown = page.getByText("Weekly Breakdown")
-			const hasWeekly = await weeklyBreakdown.first().isVisible().catch(() => false)
+			const hasWeekly = await weeklyBreakdown
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			if (hasWeekly) {
 				await expect(weeklyBreakdown.first()).toBeVisible()
@@ -176,14 +191,19 @@ test.describe("Monthly Performance Page", () => {
 		test("should display month comparison section", async ({ page }) => {
 			// The comparison section title uses "Comparison with {month}" pattern
 			const comparison = page.getByText(/comparison with/i)
-			const hasComparison = await comparison.first().isVisible().catch(() => false)
+			const hasComparison = await comparison
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			if (hasComparison) {
 				await expect(comparison.first()).toBeVisible()
 			}
 		})
 
-		test("should display monthly projection section for current month", async ({ page }) => {
+		test("should display monthly projection section for current month", async ({
+			page,
+		}) => {
 			// MonthlyProjection renders when isCurrentMonth is true — this is always the case
 			// for the initial page load (monthOffset === 0)
 			await expect(page.getByText("Month Projection").first()).toBeVisible()
@@ -213,17 +233,28 @@ test.describe("Monthly Performance Page", () => {
 			const grossProfit = page.getByText("Gross Profit")
 			const noData = page.getByText("No trades recorded for this month")
 
-			const hasSummary = await grossProfit.first().isVisible().catch(() => false)
-			const hasNoData = await noData.first().isVisible().catch(() => false)
+			const hasSummary = await grossProfit
+				.first()
+				.isVisible()
+				.catch(() => false)
+			const hasNoData = await noData
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			expect(hasSummary || hasNoData).toBeTruthy()
 		})
 
-		test("should not show the projection section for a historical month", async ({ page }) => {
+		test("should not show the projection section for a historical month", async ({
+			page,
+		}) => {
 			// The MonthlyProjection component only renders when isCurrentMonth is true.
 			// For a historical month it must not be visible.
 			const projection = page.getByText("Month Projection")
-			const hasProjection = await projection.first().isVisible().catch(() => false)
+			const hasProjection = await projection
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			// Should not render a forward projection for a past month
 			expect(hasProjection).toBeFalsy()
@@ -247,11 +278,17 @@ test.describe("Monthly Performance Page", () => {
 
 			// The exact no-data message from the "monthly.noData" translation key
 			const emptyState = page.getByText("No trades recorded for this month")
-			const hasEmpty = await emptyState.first().isVisible().catch(() => false)
+			const hasEmpty = await emptyState
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			// Weekly breakdown and projection should also be absent for months with zero trades
 			const weeklyBreakdown = page.getByText("Weekly Breakdown")
-			const hasWeekly = await weeklyBreakdown.first().isVisible().catch(() => false)
+			const hasWeekly = await weeklyBreakdown
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			// Either the empty state message appears, or at minimum there is no weekly breakdown
 			expect(hasEmpty || !hasWeekly).toBeTruthy()
@@ -272,7 +309,10 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForTimeout(800)
 
 			const weeklySection = page.getByText("Weekly Breakdown")
-			const hasWeekly = await weeklySection.first().isVisible().catch(() => false)
+			const hasWeekly = await weeklySection
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			if (hasWeekly) {
 				// Each week row shows a trade count like "N trades"
@@ -293,11 +333,16 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForTimeout(800)
 
 			const weeklySection = page.getByText("Weekly Breakdown")
-			const hasWeekly = await weeklySection.first().isVisible().catch(() => false)
+			const hasWeekly = await weeklySection
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			if (hasWeekly) {
 				// Progress bars are rendered as div children of the outer bar container
-				const bars = page.locator(".h-3.w-full.overflow-hidden.rounded-full > div")
+				const bars = page.locator(
+					".h-3.w-full.overflow-hidden.rounded-full > div"
+				)
 				const barCount = await bars.count()
 				expect(barCount).toBeGreaterThan(0)
 			}
@@ -310,12 +355,17 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForLoadState("networkidle")
 		})
 
-		test("should display comparison rows when prior month data exists", async ({ page }) => {
+		test("should display comparison rows when prior month data exists", async ({
+			page,
+		}) => {
 			// The comparison section heading uses "Comparison with {month}" from translation keys
 			const comparisonSection = page.locator("h3").filter({
 				hasText: /comparison with/i,
 			})
-			const hasComparison = await comparisonSection.first().isVisible().catch(() => false)
+			const hasComparison = await comparisonSection
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			if (hasComparison) {
 				// Comparison table renders four rows using the exact translation keys
@@ -337,8 +387,13 @@ test.describe("Monthly Performance Page", () => {
 			await page.waitForTimeout(600)
 
 			// Exact text from "monthly.comparison.noPreviousData" translation key
-			const noPreviousData = page.getByText("No data from previous month for comparison")
-			const hasNoPrevious = await noPreviousData.first().isVisible().catch(() => false)
+			const noPreviousData = page.getByText(
+				"No data from previous month for comparison"
+			)
+			const hasNoPrevious = await noPreviousData
+				.first()
+				.isVisible()
+				.catch(() => false)
 			// This message is optional — only shown if comparison section is visible but has no prior data
 			expect(typeof hasNoPrevious).toBe("boolean")
 		})
@@ -373,7 +428,9 @@ test.describe("Monthly Performance Page", () => {
 			await expect(page.getByText("Days Remaining").first()).toBeVisible()
 		})
 
-		test("should display projected net profit metric label", async ({ page }) => {
+		test("should display projected net profit metric label", async ({
+			page,
+		}) => {
 			await expect(page.getByText("Projected Net").first()).toBeVisible()
 		})
 	})
@@ -404,7 +461,9 @@ test.describe("Monthly Performance Page", () => {
 			await expect(page.getByText("Net Profit").first()).toBeVisible()
 		})
 
-		test("should allow scrolling to reach all content on mobile", async ({ page }) => {
+		test("should allow scrolling to reach all content on mobile", async ({
+			page,
+		}) => {
 			await page.setViewportSize({ width: 375, height: 812 })
 			await page.goto(ROUTES.monthly)
 			await page.waitForLoadState("networkidle")
@@ -425,7 +484,10 @@ test.describe("Monthly Performance Page", () => {
 	})
 
 	test.describe("Authenticated Access", () => {
-		test("should redirect to login when user is not authenticated", async ({ page, context }) => {
+		test("should redirect to login when user is not authenticated", async ({
+			page,
+			context,
+		}) => {
 			// Clear cookies to simulate unauthenticated state
 			await context.clearCookies()
 			await page.goto(ROUTES.monthly)

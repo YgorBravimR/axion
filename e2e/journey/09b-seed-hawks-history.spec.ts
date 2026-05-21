@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { BRAVO } from "./fixtures/bravo-seed"
 import { seedHawksHistory } from "./helpers/seed-hawks-history"
 import { loadStageState } from "./helpers/storage-state"

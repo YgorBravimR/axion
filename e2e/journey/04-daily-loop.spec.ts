@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { annotate } from "./helpers/annotate"
 import { installMarketMonitorMock } from "./helpers/mock-market-monitor"
 import { screenshotIfDemo } from "./helpers/screenshot-if-demo"

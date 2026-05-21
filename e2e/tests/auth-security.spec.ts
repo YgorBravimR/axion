@@ -26,7 +26,7 @@
  * so that re-running the suite does not hit stale counters.
  */
 
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 import { resetRateLimitsForEmail } from "../utils/reset-rate-limits"
 
@@ -65,7 +65,9 @@ const RATE_LIMIT_TARGET_EMAIL = "security-test-ratelimit@e2e.invalid"
 test.describe.skip("Flow 1: Registration → Email Verification Redirect", () => {
 	test.use({ storageState: { cookies: [], origins: [] } })
 
-	test("should redirect to /verify-email with email param after successful registration", async ({ page }) => {
+	test("should redirect to /verify-email with email param after successful registration", async ({
+		page,
+	}) => {
 		const uniqueEmail = `e2e-reg-${Date.now()}@example.com`
 
 		await page.goto(ROUTES.register)
@@ -88,7 +90,9 @@ test.describe.skip("Flow 1: Registration → Email Verification Redirect", () =>
 		)
 	})
 
-	test("should render the verify-email page with the correct email after redirect", async ({ page }) => {
+	test("should render the verify-email page with the correct email after redirect", async ({
+		page,
+	}) => {
 		const targetEmail = "existing-unverified@example.com"
 
 		// Navigate directly with the email search param (simulates the post-register redirect)
@@ -99,7 +103,9 @@ test.describe.skip("Flow 1: Registration → Email Verification Redirect", () =>
 		await expect(page.getByText(targetEmail)).toBeVisible()
 
 		// The verify heading should be present
-		await expect(page.getByRole("heading", { name: /verify your email/i })).toBeVisible()
+		await expect(
+			page.getByRole("heading", { name: /verify your email/i })
+		).toBeVisible()
 	})
 })
 
@@ -122,7 +128,9 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 	 * The clearest repeatable way to trigger this is to register a fresh user
 	 * (which starts unverified) and then immediately try to log in.
 	 */
-	test("should show email-not-verified UI with resend button when user is unverified", async ({ page }) => {
+	test("should show email-not-verified UI with resend button when user is unverified", async ({
+		page,
+	}) => {
 		const uniqueEmail = `e2e-unverified-${Date.now()}@example.com`
 		const password = "SecurePass1"
 
@@ -146,14 +154,18 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 		await page.locator("#login-submit").click()
 
 		// The "Email not verified" banner should appear (not a generic error)
-		await expect(page.getByText(/email not verified/i)).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/email not verified/i)).toBeVisible({
+			timeout: 8000,
+		})
 
 		// The resend verification button must be rendered within that banner
 		const resendButton = page.locator("#login-resend-verification")
 		await expect(resendButton).toBeVisible()
 	})
 
-	test("should redirect to /verify-email when resend button is clicked", async ({ page }) => {
+	test("should redirect to /verify-email when resend button is clicked", async ({
+		page,
+	}) => {
 		const uniqueEmail = `e2e-resend-${Date.now()}@example.com`
 		const password = "SecurePass1"
 
@@ -173,7 +185,9 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 		await page.locator("#email").fill(uniqueEmail)
 		await page.locator("#password").fill(password)
 		await page.locator("#login-submit").click()
-		await expect(page.getByText(/email not verified/i)).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/email not verified/i)).toBeVisible({
+			timeout: 8000,
+		})
 
 		// Click resend — should navigate to the verify-email page
 		await page.locator("#login-resend-verification").click()
@@ -198,7 +212,9 @@ test.describe.skip("Flow 3: Rate Limiting on Login", () => {
 		await resetRateLimitsForEmail(RATE_LIMIT_TARGET_EMAIL)
 	})
 
-	test("should show rate-limit error after 5 rapid failed login attempts", async ({ page }) => {
+	test("should show rate-limit error after 5 rapid failed login attempts", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -222,12 +238,14 @@ test.describe.skip("Flow 3: Rate Limiting on Login", () => {
 
 		// After exhausting the 5-attempt window the next attempt should return
 		// the "Too many login attempts" message
-		await expect(
-			page.getByText(/too many login attempts/i)
-		).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/too many login attempts/i)).toBeVisible({
+			timeout: 8000,
+		})
 	})
 
-	test("should display retry-after minutes in the rate-limit error", async ({ page }) => {
+	test("should display retry-after minutes in the rate-limit error", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -240,9 +258,7 @@ test.describe.skip("Flow 3: Rate Limiting on Login", () => {
 		}
 
 		// The error message should include a minute value (e.g. "1 minute(s)")
-		await expect(
-			page.getByText(/minute\(s\)/i)
-		).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/minute\(s\)/i)).toBeVisible({ timeout: 8000 })
 	})
 })
 
@@ -261,7 +277,9 @@ test.describe.skip("Flow 4: Account Lockout (Escalating Backoff)", () => {
 		await resetRateLimitsForEmail(RATE_LIMIT_TARGET_EMAIL)
 	})
 
-	test("should show lockout error after 5 failed attempts", async ({ page }) => {
+	test("should show lockout error after 5 failed attempts", async ({
+		page,
+	}) => {
 		// The lockout system is separate from the rate limiter — it stores failures
 		// under the "login-fail:" prefix and checks them independently.
 		// To trigger the first tier (5 failures → 15 min) we need exactly 5 wrong-
@@ -294,14 +312,18 @@ test.describe.skip("Flow 4: Account Lockout (Escalating Backoff)", () => {
 		await page.locator("#login-submit").click()
 
 		await expect(
-			page.getByText(/account temporarily locked|too many (failed|login) attempts/i)
+			page.getByText(
+				/account temporarily locked|too many (failed|login) attempts/i
+			)
 		).toBeVisible({ timeout: 8000 })
 
 		// Clean up admin counters so other tests are not affected
 		await resetRateLimitsForEmail(targetEmail)
 	})
 
-	test("should include duration information in the lockout error message", async ({ page }) => {
+	test("should include duration information in the lockout error message", async ({
+		page,
+	}) => {
 		const targetEmail = VERIFIED_USER.email
 		await resetRateLimitsForEmail(targetEmail)
 
@@ -317,9 +339,7 @@ test.describe.skip("Flow 4: Account Lockout (Escalating Backoff)", () => {
 		}
 
 		// The lockout message must mention minutes so the user knows how long to wait
-		await expect(
-			page.getByText(/minute\(s\)/i)
-		).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/minute\(s\)/i)).toBeVisible({ timeout: 8000 })
 
 		await resetRateLimitsForEmail(targetEmail)
 	})
@@ -337,7 +357,9 @@ test.describe.skip("Flow 5: Successful Login (Verified User)", () => {
 		await resetRateLimitsForEmail(VERIFIED_USER.email)
 	})
 
-	test("should redirect to dashboard after successful login with single account", async ({ page }) => {
+	test("should redirect to dashboard after successful login with single account", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -364,11 +386,15 @@ test.describe.skip("Flow 5: Successful Login (Verified User)", () => {
 			// Single-account path — already on dashboard
 			await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/)
 		} else {
-			throw new Error("Login did not reach either account selection or dashboard within the timeout")
+			throw new Error(
+				"Login did not reach either account selection or dashboard within the timeout"
+			)
 		}
 	})
 
-	test("should clear previous error state on successful credentials entry", async ({ page }) => {
+	test("should clear previous error state on successful credentials entry", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -376,7 +402,9 @@ test.describe.skip("Flow 5: Successful Login (Verified User)", () => {
 		await page.locator("#email").fill(VERIFIED_USER.email)
 		await page.locator("#password").fill("WrongPassword!")
 		await page.locator("#login-submit").click()
-		await expect(page.getByText(/invalid email or password/i)).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/invalid email or password/i)).toBeVisible({
+			timeout: 8000,
+		})
 
 		// Now type into the password field — the error should clear immediately
 		await page.locator("#password").fill(VERIFIED_USER.password)
@@ -395,7 +423,9 @@ test.describe.skip("Flow 6: JWT Session Cookie — 7-Day MaxAge", () => {
 		await resetRateLimitsForEmail(VERIFIED_USER.email)
 	})
 
-	test("should set session cookie with expiry approximately 7 days in the future", async ({ page }) => {
+	test("should set session cookie with expiry approximately 7 days in the future", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -422,7 +452,9 @@ test.describe.skip("Flow 6: JWT Session Cookie — 7-Day MaxAge", () => {
 		// Inspect cookies for the NextAuth session token
 		const cookies = await page.context().cookies()
 		const sessionCookie = cookies.find(
-			(c) => c.name.startsWith("authjs.session-token") || c.name.startsWith("next-auth.session-token")
+			(c) =>
+				c.name.startsWith("authjs.session-token") ||
+				c.name.startsWith("next-auth.session-token")
 		)
 
 		expect(sessionCookie).toBeDefined()
@@ -430,7 +462,8 @@ test.describe.skip("Flow 6: JWT Session Cookie — 7-Day MaxAge", () => {
 		if (sessionCookie?.expires && sessionCookie.expires > 0) {
 			const expiryDate = new Date(sessionCookie.expires * 1000)
 			const now = new Date()
-			const diffDays = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+			const diffDays =
+				(expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
 
 			// Expiry should be between 6 and 8 days from now (7 days ± 1 day tolerance)
 			expect(diffDays).toBeGreaterThan(6)
@@ -446,15 +479,21 @@ test.describe.skip("Flow 6: JWT Session Cookie — 7-Day MaxAge", () => {
 test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 	test.use({ storageState: { cookies: [], origins: [] } })
 
-	test("should render the verify-email page without email param", async ({ page }) => {
+	test("should render the verify-email page without email param", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email")
 		await page.waitForLoadState("networkidle")
 
 		// Page must render — no redirect to login
-		await expect(page.getByRole("heading", { name: /verify your email/i })).toBeVisible()
+		await expect(
+			page.getByRole("heading", { name: /verify your email/i })
+		).toBeVisible()
 	})
 
-	test("should display the target email when email search param is provided", async ({ page }) => {
+	test("should display the target email when email search param is provided", async ({
+		page,
+	}) => {
 		const email = "test-display@example.com"
 		await page.goto(`/en/verify-email?email=${encodeURIComponent(email)}`)
 		await page.waitForLoadState("networkidle")
@@ -462,16 +501,18 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		await expect(page.getByText(email)).toBeVisible()
 	})
 
-	test("should show descriptive subtitle instructing to enter 6-digit code", async ({ page }) => {
+	test("should show descriptive subtitle instructing to enter 6-digit code", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
 		await page.waitForLoadState("networkidle")
 
-		await expect(
-			page.getByText(/6.digit code/i)
-		).toBeVisible()
+		await expect(page.getByText(/6.digit code/i)).toBeVisible()
 	})
 
-	test("should keep verify button disabled until all 6 OTP digits are entered", async ({ page }) => {
+	test("should keep verify button disabled until all 6 OTP digits are entered", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
 		await page.waitForLoadState("networkidle")
 
@@ -485,7 +526,9 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		await expect(verifyButton).toBeDisabled()
 	})
 
-	test("should enable verify button only when all 6 digits are entered", async ({ page }) => {
+	test("should enable verify button only when all 6 digits are entered", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
 		await page.waitForLoadState("networkidle")
 
@@ -500,7 +543,9 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		await expect(verifyButton).toBeEnabled()
 	})
 
-	test("should reject non-digit characters in the OTP field", async ({ page }) => {
+	test("should reject non-digit characters in the OTP field", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
 		await page.waitForLoadState("networkidle")
 
@@ -512,7 +557,9 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		await expect(page.locator("#verify-email-submit")).toBeDisabled()
 	})
 
-	test("should show invalid-code error and clear OTP input after wrong code submission", async ({ page }) => {
+	test("should show invalid-code error and clear OTP input after wrong code submission", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
 		await page.waitForLoadState("networkidle")
 
@@ -522,9 +569,9 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		await page.keyboard.type("000000")
 
 		// The OTP component auto-submits on completion — wait for the error
-		await expect(
-			page.getByText(/invalid or expired code/i)
-		).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/invalid or expired code/i)).toBeVisible({
+			timeout: 8000,
+		})
 
 		// OTP input should be cleared after a wrong submission so the user can retry
 		const otpSlots = page.locator("[data-input-otp] input")
@@ -534,14 +581,14 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		}
 	})
 
-	test("should show a resend cooldown timer immediately after page load", async ({ page }) => {
+	test("should show a resend cooldown timer immediately after page load", async ({
+		page,
+	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
 		await page.waitForLoadState("networkidle")
 
 		// The initial cooldown (60s) should be displayed right away
-		await expect(
-			page.getByText(/resend code in \d+s/i)
-		).toBeVisible()
+		await expect(page.getByText(/resend code in \d+s/i)).toBeVisible()
 	})
 
 	test("should have a back-to-login link", async ({ page }) => {
@@ -560,7 +607,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 // Flow 8: Public path accessibility without authentication
 // ---------------------------------------------------------------------------
 
-test.describe.skip("Flow 8: Public Path Accessibility Without Authentication", () => {
+test.describe
+	.skip("Flow 8: Public Path Accessibility Without Authentication", () => {
 	// Explicitly clear all auth state for every test in this group
 	test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -572,7 +620,9 @@ test.describe.skip("Flow 8: Public Path Accessibility Without Authentication", (
 	]
 
 	for (const { name, path } of publicPaths) {
-		test(`should render ${name} without redirecting to login`, async ({ page }) => {
+		test(`should render ${name} without redirecting to login`, async ({
+			page,
+		}) => {
 			await page.goto(path)
 			await page.waitForLoadState("networkidle")
 
@@ -587,28 +637,36 @@ test.describe.skip("Flow 8: Public Path Accessibility Without Authentication", (
 		})
 	}
 
-	test("should redirect unauthenticated requests to /journal toward /login", async ({ page }) => {
+	test("should redirect unauthenticated requests to /journal toward /login", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.journal)
 		await page.waitForLoadState("networkidle")
 
 		await expect(page).toHaveURL(/login/, { timeout: 8000 })
 	})
 
-	test("should redirect unauthenticated requests to /analytics toward /login", async ({ page }) => {
+	test("should redirect unauthenticated requests to /analytics toward /login", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.analytics)
 		await page.waitForLoadState("networkidle")
 
 		await expect(page).toHaveURL(/login/, { timeout: 8000 })
 	})
 
-	test("should redirect unauthenticated requests to /settings toward /login", async ({ page }) => {
+	test("should redirect unauthenticated requests to /settings toward /login", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.settings)
 		await page.waitForLoadState("networkidle")
 
 		await expect(page).toHaveURL(/login/, { timeout: 8000 })
 	})
 
-	test("should preserve callbackUrl query param when redirecting to login", async ({ page }) => {
+	test("should preserve callbackUrl query param when redirecting to login", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.journal)
 		await page.waitForLoadState("networkidle")
 
@@ -624,7 +682,9 @@ test.describe.skip("Flow 8: Public Path Accessibility Without Authentication", (
 test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 	test.use({ storageState: { cookies: [], origins: [] } })
 
-	test("should toggle password visibility when the eye icon is clicked", async ({ page }) => {
+	test("should toggle password visibility when the eye icon is clicked", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -648,7 +708,9 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await expect(forgotLink).toBeVisible()
 	})
 
-	test("should clear the error message when the user modifies the email field", async ({ page }) => {
+	test("should clear the error message when the user modifies the email field", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.login)
 		await page.waitForLoadState("networkidle")
 
@@ -656,7 +718,9 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await page.locator("#email").fill("wrong@example.com")
 		await page.locator("#password").fill("WrongPassword1")
 		await page.locator("#login-submit").click()
-		await expect(page.getByText(/invalid email or password/i)).toBeVisible({ timeout: 8000 })
+		await expect(page.getByText(/invalid email or password/i)).toBeVisible({
+			timeout: 8000,
+		})
 
 		// Modify the email field — error should clear
 		await page.locator("#email").fill("different@example.com")
@@ -666,7 +730,9 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await resetRateLimitsForEmail("wrong@example.com")
 	})
 
-	test("should show account-selection UI after successful credentials entry for multi-account user", async ({ page }) => {
+	test("should show account-selection UI after successful credentials entry for multi-account user", async ({
+		page,
+	}) => {
 		await resetRateLimitsForEmail(VERIFIED_USER.email)
 
 		await page.goto(ROUTES.login)
@@ -677,13 +743,17 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await page.locator("#login-submit").click()
 
 		// Admin user has multiple accounts so the picker should appear
-		await expect(page.getByText("Select Account")).toBeVisible({ timeout: 10000 })
+		await expect(page.getByText("Select Account")).toBeVisible({
+			timeout: 10000,
+		})
 
 		// The "Continue" button should be present
 		await expect(page.getByRole("button", { name: /continue/i })).toBeVisible()
 	})
 
-	test("should navigate back to credentials step from account selection", async ({ page }) => {
+	test("should navigate back to credentials step from account selection", async ({
+		page,
+	}) => {
 		await resetRateLimitsForEmail(VERIFIED_USER.email)
 
 		await page.goto(ROUTES.login)
@@ -692,7 +762,9 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await page.locator("#email").fill(VERIFIED_USER.email)
 		await page.locator("#password").fill(VERIFIED_USER.password)
 		await page.locator("#login-submit").click()
-		await expect(page.getByText("Select Account")).toBeVisible({ timeout: 10000 })
+		await expect(page.getByText("Select Account")).toBeVisible({
+			timeout: 10000,
+		})
 
 		// Click the back link
 		await page.getByRole("button", { name: /back to login/i }).click()
@@ -710,7 +782,9 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 	test.use({ storageState: { cookies: [], origins: [] } })
 
-	test("should show all four requirement indicators after typing in the password field", async ({ page }) => {
+	test("should show all four requirement indicators after typing in the password field", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.register)
 		await page.waitForLoadState("networkidle")
 
@@ -723,7 +797,9 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		await expect(page.getByText(/one number/i)).toBeVisible()
 	})
 
-	test("should mark length requirement as met after entering 8+ characters", async ({ page }) => {
+	test("should mark length requirement as met after entering 8+ characters", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.register)
 		await page.waitForLoadState("networkidle")
 
@@ -732,11 +808,16 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		// The length indicator should now show a check (success colour class)
 		// We verify this by checking the parent element — in the component the
 		// met state adds the `text-fb-success` class while unmet adds `text-txt-300`.
-		const lengthRow = page.locator("div").filter({ hasText: /at least 8 characters/i }).first()
+		const lengthRow = page
+			.locator("div")
+			.filter({ hasText: /at least 8 characters/i })
+			.first()
 		await expect(lengthRow).toHaveClass(/text-fb-success/)
 	})
 
-	test("should keep submit button disabled when passwords do not match", async ({ page }) => {
+	test("should keep submit button disabled when passwords do not match", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.register)
 		await page.waitForLoadState("networkidle")
 
@@ -746,7 +827,9 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		await expect(page.locator("#register-submit")).toBeDisabled()
 	})
 
-	test("should show mismatch error text when confirm password differs", async ({ page }) => {
+	test("should show mismatch error text when confirm password differs", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.register)
 		await page.waitForLoadState("networkidle")
 
@@ -756,7 +839,9 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		await expect(page.getByText(/passwords do not match/i)).toBeVisible()
 	})
 
-	test("should enable submit button only when all requirements are met and passwords match", async ({ page }) => {
+	test("should enable submit button only when all requirements are met and passwords match", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.register)
 		await page.waitForLoadState("networkidle")
 

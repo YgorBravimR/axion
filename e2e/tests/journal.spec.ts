@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES, TEST_TRADE, TEST_TRADE_LOSS } from "../fixtures/test-data"
 
 test.describe("Journal", () => {

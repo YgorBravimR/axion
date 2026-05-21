@@ -1,6 +1,11 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES, TEST_MONTHLY_PLAN } from "../fixtures/test-data"
-import { clickTab, waitForSuspenseLoad, fillNumberInput, clickIfEnabled } from "../utils/helpers"
+import {
+	clickTab,
+	waitForSuspenseLoad,
+	fillNumberInput,
+	clickIfEnabled,
+} from "../utils/helpers"
 
 test.describe("Monthly Plan", () => {
 	test.describe("Plan Tab Layout", () => {
@@ -9,7 +14,9 @@ test.describe("Monthly Plan", () => {
 			await page.waitForLoadState("networkidle")
 		})
 
-		test("should click Plan tab and load content after Suspense", async ({ page }) => {
+		test("should click Plan tab and load content after Suspense", async ({
+			page,
+		}) => {
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 
@@ -17,11 +24,15 @@ test.describe("Monthly Plan", () => {
 			await expect(planTab).toHaveAttribute("aria-selected", "true")
 
 			// Plan content should be visible
-			const planContent = page.locator("#plan-previous-month, #plan-next-month, #plan-create, #plan-edit, #plan-save")
+			const planContent = page.locator(
+				"#plan-previous-month, #plan-next-month, #plan-create, #plan-edit, #plan-save"
+			)
 			await expect(planContent.first()).toBeVisible({ timeout: 10000 })
 		})
 
-		test("should display month navigation arrows and month/year label", async ({ page }) => {
+		test("should display month navigation arrows and month/year label", async ({
+			page,
+		}) => {
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 
@@ -29,7 +40,9 @@ test.describe("Monthly Plan", () => {
 			await expect(page.locator("#plan-next-month")).toBeVisible()
 
 			// Month/year label should be visible (e.g., "February 2026" or "Fevereiro 2026")
-			const monthLabel = page.getByText(/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i)
+			const monthLabel = page.getByText(
+				/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i
+			)
 			await expect(monthLabel.first()).toBeVisible()
 		})
 
@@ -38,7 +51,11 @@ test.describe("Monthly Plan", () => {
 			await waitForSuspenseLoad(page)
 
 			// Capture current month text
-			const monthLabel = page.getByText(/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i).first()
+			const monthLabel = page
+				.getByText(
+					/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i
+				)
+				.first()
 			const initialMonth = await monthLabel.textContent()
 
 			await page.locator("#plan-previous-month").click()
@@ -56,7 +73,11 @@ test.describe("Monthly Plan", () => {
 			await page.locator("#plan-previous-month").click()
 			await page.waitForTimeout(500)
 
-			const monthLabel = page.getByText(/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i).first()
+			const monthLabel = page
+				.getByText(
+					/\b(january|february|march|april|may|june|july|august|september|october|november|december|janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b.*\d{4}/i
+				)
+				.first()
 			const prevMonth = await monthLabel.textContent()
 
 			await clickIfEnabled(page, "#plan-next-month")
@@ -75,7 +96,9 @@ test.describe("Monthly Plan", () => {
 			await waitForSuspenseLoad(page)
 		})
 
-		test("should show form or banner when no plan exists for month", async ({ page }) => {
+		test("should show form or banner when no plan exists for month", async ({
+			page,
+		}) => {
 			// Navigate to a future month that likely has no plan
 			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
@@ -83,7 +106,9 @@ test.describe("Monthly Plan", () => {
 			await waitForSuspenseLoad(page)
 
 			// When no plan exists, the form auto-shows with "No plan configured" banner
-			const noPlanBanner = page.getByText(/no plan configured|nenhum plano configurado/i)
+			const noPlanBanner = page.getByText(
+				/no plan configured|nenhum plano configurado/i
+			)
 			const formField = page.locator("#plan-account-balance")
 			const editButton = page.locator("#plan-edit")
 
@@ -93,7 +118,9 @@ test.describe("Monthly Plan", () => {
 			expect(hasBanner || hasForm || hasEdit).toBeTruthy()
 		})
 
-		test("should display plan form with account balance field", async ({ page }) => {
+		test("should display plan form with account balance field", async ({
+			page,
+		}) => {
 			// Navigate to a future month and try to create
 			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
@@ -136,12 +163,16 @@ test.describe("Monthly Plan", () => {
 			}
 
 			// Risk per trade, daily loss, monthly loss fields
-			await expect(page.locator("#plan-risk-per-trade")).toBeVisible({ timeout: 5000 })
+			await expect(page.locator("#plan-risk-per-trade")).toBeVisible({
+				timeout: 5000,
+			})
 			await expect(page.locator("#plan-daily-loss")).toBeVisible()
 			await expect(page.locator("#plan-monthly-loss")).toBeVisible()
 		})
 
-		test("should show live preview panel when values are entered", async ({ page }) => {
+		test("should show live preview panel when values are entered", async ({
+			page,
+		}) => {
 			// Navigate far forward to avoid saved plans from prior test runs
 			for (let i = 0; i < 4; i++) {
 				await clickIfEnabled(page, "#plan-next-month")
@@ -172,7 +203,9 @@ test.describe("Monthly Plan", () => {
 			await expect(preview.first()).toBeVisible({ timeout: 5000 })
 		})
 
-		test("should show Live Preview panel alongside the form", async ({ page }) => {
+		test("should show Live Preview panel alongside the form", async ({
+			page,
+		}) => {
 			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 			await clickIfEnabled(page, "#plan-next-month")
@@ -195,7 +228,9 @@ test.describe("Monthly Plan", () => {
 			await expect(preview.first()).toBeVisible({ timeout: 5000 })
 		})
 
-		test("should save plan successfully and show summary view", async ({ page }) => {
+		test("should save plan successfully and show summary view", async ({
+			page,
+		}) => {
 			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 			await clickIfEnabled(page, "#plan-next-month")
@@ -213,10 +248,26 @@ test.describe("Monthly Plan", () => {
 				await page.waitForTimeout(500)
 			}
 
-			await fillNumberInput(page, "#plan-account-balance", TEST_MONTHLY_PLAN.accountBalance)
-			await fillNumberInput(page, "#plan-risk-per-trade", TEST_MONTHLY_PLAN.riskPerTrade)
-			await fillNumberInput(page, "#plan-daily-loss", TEST_MONTHLY_PLAN.dailyLoss)
-			await fillNumberInput(page, "#plan-monthly-loss", TEST_MONTHLY_PLAN.monthlyLoss)
+			await fillNumberInput(
+				page,
+				"#plan-account-balance",
+				TEST_MONTHLY_PLAN.accountBalance
+			)
+			await fillNumberInput(
+				page,
+				"#plan-risk-per-trade",
+				TEST_MONTHLY_PLAN.riskPerTrade
+			)
+			await fillNumberInput(
+				page,
+				"#plan-daily-loss",
+				TEST_MONTHLY_PLAN.dailyLoss
+			)
+			await fillNumberInput(
+				page,
+				"#plan-monthly-loss",
+				TEST_MONTHLY_PLAN.monthlyLoss
+			)
 
 			const saveButton = page.locator("#plan-save")
 			if (await saveButton.isVisible().catch(() => false)) {
@@ -226,8 +277,9 @@ test.describe("Monthly Plan", () => {
 				// After save, should show summary view or edit button
 				const editAfterSave = page.locator("#plan-edit")
 				const summaryCard = page.getByText(/account balance|saldo da conta/i)
-				const hasSummary = await editAfterSave.isVisible().catch(() => false) ||
-					await summaryCard.isVisible().catch(() => false)
+				const hasSummary =
+					(await editAfterSave.isVisible().catch(() => false)) ||
+					(await summaryCard.isVisible().catch(() => false))
 				expect(hasSummary).toBeTruthy()
 			}
 		})
@@ -294,7 +346,9 @@ test.describe("Monthly Plan", () => {
 			}
 		})
 
-		test("should display risk profile dropdown with built-in profiles", async ({ page }) => {
+		test("should display risk profile dropdown with built-in profiles", async ({
+			page,
+		}) => {
 			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 			await clickIfEnabled(page, "#plan-next-month")
@@ -321,14 +375,17 @@ test.describe("Monthly Plan", () => {
 				await page.waitForTimeout(300)
 
 				// Risk profile dropdown should be visible
-				const profileDropdown = page.getByRole("combobox", { name: /profile|perfil/i })
+				const profileDropdown = page
+					.getByRole("combobox", { name: /profile|perfil/i })
 					.or(page.locator('button:has-text("Select profile")'))
 					.or(page.locator('button:has-text("risk profile")'))
 				await expect(profileDropdown.first()).toBeVisible({ timeout: 3000 })
 			}
 		})
 
-		test("should show locked/derived values from selected profile", async ({ page }) => {
+		test("should show locked/derived values from selected profile", async ({
+			page,
+		}) => {
 			await clickIfEnabled(page, "#plan-next-month")
 			await waitForSuspenseLoad(page)
 			await clickIfEnabled(page, "#plan-next-month")
@@ -355,7 +412,8 @@ test.describe("Monthly Plan", () => {
 				await page.waitForTimeout(300)
 
 				// Open profile dropdown and select first profile
-				const profileDropdown = page.getByRole("combobox", { name: /profile|perfil/i })
+				const profileDropdown = page
+					.getByRole("combobox", { name: /profile|perfil/i })
 					.or(page.locator('button:has-text("Select profile")'))
 					.or(page.locator('button:has-text("risk profile")'))
 					.first()
@@ -382,11 +440,16 @@ test.describe("Monthly Plan", () => {
 
 		test("should display summary cards when plan exists", async ({ page }) => {
 			// Current month might have a plan from seeded data
-			const summaryCard = page.getByText(/account balance|saldo|risk per trade|risco por trade/i)
+			const summaryCard = page.getByText(
+				/account balance|saldo|risk per trade|risco por trade/i
+			)
 			const editButton = page.locator("#plan-edit")
 			const createButton = page.locator("#plan-create")
 
-			const hasSummary = await summaryCard.first().isVisible().catch(() => false)
+			const hasSummary = await summaryCard
+				.first()
+				.isVisible()
+				.catch(() => false)
 			const hasEdit = await editButton.isVisible().catch(() => false)
 			const hasCreate = await createButton.isVisible().catch(() => false)
 
@@ -404,11 +467,18 @@ test.describe("Monthly Plan", () => {
 			expect(hasEdit || hasCreate).toBeTruthy()
 		})
 
-		test("should show risk profile badge when profile mode was used", async ({ page }) => {
+		test("should show risk profile badge when profile mode was used", async ({
+			page,
+		}) => {
 			// If a plan was created with a profile, a badge should appear
-			const profileBadge = page.getByText(/conservative|moderate|aggressive|conservador|moderado|agressivo/i)
+			const profileBadge = page.getByText(
+				/conservative|moderate|aggressive|conservador|moderado|agressivo/i
+			)
 			// This is optional — only shown when profile mode was used
-			const hasBadge = await profileBadge.first().isVisible().catch(() => false)
+			const hasBadge = await profileBadge
+				.first()
+				.isVisible()
+				.catch(() => false)
 			expect(typeof hasBadge).toBe("boolean") // Just verify the check completed
 		})
 	})
@@ -440,7 +510,9 @@ test.describe("Monthly Plan", () => {
 			}
 		})
 
-		test("should display extra fields in advanced settings", async ({ page }) => {
+		test("should display extra fields in advanced settings", async ({
+			page,
+		}) => {
 			const editButton = page.locator("#plan-edit")
 			const createButton = page.locator("#plan-create")
 			if (await editButton.isVisible().catch(() => false)) {
@@ -461,11 +533,17 @@ test.describe("Monthly Plan", () => {
 				const maxTrades = page.locator("#plan-max-daily-trades")
 				const consecutiveLosses = page.locator("#plan-max-consecutive-losses")
 
-				const hasProfitTarget = await profitTarget.isVisible().catch(() => false)
+				const hasProfitTarget = await profitTarget
+					.isVisible()
+					.catch(() => false)
 				const hasMaxTrades = await maxTrades.isVisible().catch(() => false)
-				const hasConsecutiveLosses = await consecutiveLosses.isVisible().catch(() => false)
+				const hasConsecutiveLosses = await consecutiveLosses
+					.isVisible()
+					.catch(() => false)
 
-				expect(hasProfitTarget || hasMaxTrades || hasConsecutiveLosses).toBeTruthy()
+				expect(
+					hasProfitTarget || hasMaxTrades || hasConsecutiveLosses
+				).toBeTruthy()
 			}
 		})
 
@@ -486,8 +564,13 @@ test.describe("Monthly Plan", () => {
 				await page.waitForTimeout(300)
 
 				// Look for behavioral switches
-				const switches = page.getByText(/allow 2nd|reduce risk|permitir 2|reduzir risco/i)
-				const hasSwitches = await switches.first().isVisible().catch(() => false)
+				const switches = page.getByText(
+					/allow 2nd|reduce risk|permitir 2|reduzir risco/i
+				)
+				const hasSwitches = await switches
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasSwitches).toBe("boolean")
 			}
 		})

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 
 test.describe("BR Tax Engine", () => {
@@ -28,25 +28,38 @@ test.describe("BR Tax Engine", () => {
 
 			// Status badge text should be one of the known labels
 			const validStatuses = /(pendente|pago|isento|vencido)/i
-			const badgeText = page.locator("[data-slot='badge']").filter({ hasText: validStatuses })
+			const badgeText = page
+				.locator("[data-slot='badge']")
+				.filter({ hasText: validStatuses })
 			await expect(badgeText.first()).toBeVisible()
 		})
 
-		test("mark-paid button updates status to Pago when clicked", async ({ page }) => {
-			const markPaidBtn = page.getByRole("button", { name: /marcar como pago/i })
+		test("mark-paid button updates status to Pago when clicked", async ({
+			page,
+		}) => {
+			const markPaidBtn = page.getByRole("button", {
+				name: /marcar como pago/i,
+			})
 			if (!(await markPaidBtn.isVisible().catch(() => false))) {
-				test.skip(true, "No pending DARF in current month — nothing to mark paid")
+				test.skip(
+					true,
+					"No pending DARF in current month — nothing to mark paid"
+				)
 				return
 			}
 			await markPaidBtn.click()
 			await page.waitForLoadState("networkidle")
 
-			const paidBadge = page.locator("[data-slot='badge']").filter({ hasText: /^pago$/i })
+			const paidBadge = page
+				.locator("[data-slot='badge']")
+				.filter({ hasText: /^pago$/i })
 			await expect(paidBadge.first()).toBeVisible()
 		})
 
 		test("carryover ledger renders when history exists", async ({ page }) => {
-			const carryoverTable = page.getByRole("table", { name: /histórico de prejuízo a compensar/i })
+			const carryoverTable = page.getByRole("table", {
+				name: /histórico de prejuízo a compensar/i,
+			})
 			if ((await carryoverTable.count()) === 0) {
 				test.skip(true, "No carryover history — table not rendered")
 				return
@@ -56,7 +69,9 @@ test.describe("BR Tax Engine", () => {
 			await expect(carryoverTable.first().locator("thead tr")).toHaveCount(1)
 		})
 
-		test("prop account shows N/A banner without DARF amounts", async ({ page }) => {
+		test("prop account shows N/A banner without DARF amounts", async ({
+			page,
+		}) => {
 			const propBanner = page.getByText(/n\/a — conta prop/i)
 			if (!(await propBanner.isVisible().catch(() => false))) {
 				test.skip(true, "Active account is not prop — N/A banner not shown")
@@ -76,23 +91,37 @@ test.describe("BR Tax Engine", () => {
 		})
 
 		test("fee rate form is visible", async ({ page }) => {
-			const feeForm = page.getByRole("form", { name: /configuração de taxas e corretagem/i })
+			const feeForm = page.getByRole("form", {
+				name: /configuração de taxas e corretagem/i,
+			})
 			if ((await feeForm.count()) === 0) {
-				test.skip(true, "Fee rate form not rendered — settings layout may differ")
+				test.skip(
+					true,
+					"Fee rate form not rendered — settings layout may differ"
+				)
 				return
 			}
 			await expect(feeForm.first()).toBeVisible()
 		})
 
 		test("fee rate value persists after save and reload", async ({ page }) => {
-			const feeForm = page.getByRole("form", { name: /configuração de taxas e corretagem/i })
-			if (!(await feeForm.first().isVisible().catch(() => false))) {
+			const feeForm = page.getByRole("form", {
+				name: /configuração de taxas e corretagem/i,
+			})
+			if (
+				!(await feeForm
+					.first()
+					.isVisible()
+					.catch(() => false))
+			) {
 				test.skip(true, "Fee rate form not visible")
 				return
 			}
 
 			const corretagemInput = feeForm.first().getByLabel(/tx corretagem/i)
-			const saveBtn = feeForm.first().getByRole("button", { name: /salvar taxas/i })
+			const saveBtn = feeForm
+				.first()
+				.getByRole("button", { name: /salvar taxas/i })
 
 			// Update value
 			await corretagemInput.fill("0.0600")

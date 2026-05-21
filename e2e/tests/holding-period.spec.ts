@@ -15,7 +15,7 @@
  *   matching the render order in analytics-content.tsx.
  */
 
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 
 test.describe("Holding Period Analysis — Analytics Page", () => {
@@ -29,12 +29,16 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 	// =========================================================================
 
 	test.describe("section presence", () => {
-		test("should render the holding period section with the correct id", async ({ page }) => {
+		test("should render the holding period section with the correct id", async ({
+			page,
+		}) => {
 			const section = page.locator("#analytics-holding-period")
 			await expect(section).toBeVisible({ timeout: 10_000 })
 		})
 
-		test("should render a heading for the holding period chart", async ({ page }) => {
+		test("should render a heading for the holding period chart", async ({
+			page,
+		}) => {
 			// The chart heading is driven by the i18n key analytics.holdingPeriod.title
 			// Check for the element itself; exact text varies by locale
 			const section = page.locator("#analytics-holding-period")
@@ -53,12 +57,16 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 	// =========================================================================
 
 	test.describe("position in the page layout", () => {
-		test("should appear after the hourly performance and day-of-week charts", async ({ page }) => {
+		test("should appear after the hourly performance and day-of-week charts", async ({
+			page,
+		}) => {
 			// We verify that #analytics-holding-period comes after the charts that
 			// precede it in analytics-content.tsx by checking document order.
 			// Playwright's `evaluate` lets us inspect the DOM directly.
 
-			const holdingPeriodExists = await page.locator("#analytics-holding-period").isVisible()
+			const holdingPeriodExists = await page
+				.locator("#analytics-holding-period")
+				.isVisible()
 			expect(holdingPeriodExists).toBe(true)
 
 			// Check that holding period section is not the first chart on the page.
@@ -84,16 +92,24 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 	// =========================================================================
 
 	test.describe("content state", () => {
-		test("should show either chart bars or the no-data empty state", async ({ page }) => {
+		test("should show either chart bars or the no-data empty state", async ({
+			page,
+		}) => {
 			const section = page.locator("#analytics-holding-period")
 			await expect(section).toBeVisible()
 
 			// The section contains either:
 			//   (a) a ChartContainer with recharts bars (when closed trades exist), or
 			//   (b) an empty-state div with a no-data message
-			const hasChart = await section.locator(".recharts-wrapper").first().isVisible().catch(() => false)
+			const hasChart = await section
+				.locator(".recharts-wrapper")
+				.first()
+				.isVisible()
+				.catch(() => false)
 			const hasEmptyState = await section
-				.locator("div:has(> .recharts-wrapper), div:not(:has(.recharts-wrapper))")
+				.locator(
+					"div:has(> .recharts-wrapper), div:not(:has(.recharts-wrapper))"
+				)
 				.first()
 				.isVisible()
 				.catch(() => false)
@@ -102,7 +118,9 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 			expect(hasChart || hasEmptyState).toBe(true)
 		})
 
-		test("should render the chart container with a unique id when data is present", async ({ page }) => {
+		test("should render the chart container with a unique id when data is present", async ({
+			page,
+		}) => {
 			const section = page.locator("#analytics-holding-period")
 			await expect(section).toBeVisible()
 
@@ -111,18 +129,24 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 
 			if (chartExists > 0) {
 				// Chart container is in the DOM — verify it's inside the section
-				await expect(section.locator("#chart-analytics-holding-period")).toBeVisible()
+				await expect(
+					section.locator("#chart-analytics-holding-period")
+				).toBeVisible()
 			}
 			// If 0, the empty state is displayed — which is tested separately
 		})
 
-		test("should display the no-data message when the chart has no data to render", async ({ page }) => {
+		test("should display the no-data message when the chart has no data to render", async ({
+			page,
+		}) => {
 			// The empty state is present when #analytics-holding-period exists
 			// but #chart-analytics-holding-period does not (empty activeBuckets).
 			const section = page.locator("#analytics-holding-period")
 			await expect(section).toBeVisible()
 
-			const chartContainer = await page.locator("#chart-analytics-holding-period").count()
+			const chartContainer = await page
+				.locator("#chart-analytics-holding-period")
+				.count()
 			if (chartContainer === 0) {
 				// Confirm the section still has some content (the no-data message)
 				const sectionContent = await section.innerText()
@@ -130,11 +154,15 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 			}
 		})
 
-		test("should show best and worst bucket summaries when the chart has data", async ({ page }) => {
+		test("should show best and worst bucket summaries when the chart has data", async ({
+			page,
+		}) => {
 			const section = page.locator("#analytics-holding-period")
 			await expect(section).toBeVisible()
 
-			const chartContainer = await page.locator("#chart-analytics-holding-period").count()
+			const chartContainer = await page
+				.locator("#chart-analytics-holding-period")
+				.count()
 			if (chartContainer > 0) {
 				// Summary grid should contain two labels: best bucket and worst bucket
 				// The component renders these below the chart in a 2-column grid
@@ -151,7 +179,9 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 	// =========================================================================
 
 	test.describe("expectancy mode toggle", () => {
-		test("should still show the holding period section after switching expectancy mode", async ({ page }) => {
+		test("should still show the holding period section after switching expectancy mode", async ({
+			page,
+		}) => {
 			// The expectancy mode toggle is rendered in analytics-content.tsx above the charts.
 			// Clicking it switches between "capital" ($) and "edge" (R) modes.
 			// The holding period section should remain visible in both modes.
@@ -159,7 +189,10 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 			await expect(section).toBeVisible()
 
 			// Find the expectancy mode toggle (radiogroup or labeled button group)
-			const toggleButtons = page.getByRole("radiogroup").first().getByRole("radio")
+			const toggleButtons = page
+				.getByRole("radiogroup")
+				.first()
+				.getByRole("radio")
 			const toggleCount = await toggleButtons.count().catch(() => 0)
 
 			if (toggleCount >= 2) {
@@ -198,7 +231,9 @@ test.describe("Holding Period Analysis — Analytics Page", () => {
 			await expect(section).toBeVisible()
 		})
 
-		test("should remain visible at desktop viewport width", async ({ page }) => {
+		test("should remain visible at desktop viewport width", async ({
+			page,
+		}) => {
 			await page.setViewportSize({ width: 1440, height: 900 })
 			await page.waitForTimeout(300)
 

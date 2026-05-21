@@ -1,5 +1,5 @@
 // e2e/tests/annual-reporting.spec.ts
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 
 test.describe("Annual Reporting", () => {
@@ -14,13 +14,17 @@ test.describe("Annual Reporting", () => {
 	})
 
 	test("WeeklyMetaChart renders SVG with bar elements", async ({ page }) => {
-		const chartContainer = page.locator('[role="img"][aria-label*="Weekly Meta vs Real"]')
+		const chartContainer = page.locator(
+			'[role="img"][aria-label*="Weekly Meta vs Real"]'
+		)
 		await expect(chartContainer).toBeVisible()
 		const bars = chartContainer.locator("rect")
 		await expect(bars.first()).toBeVisible()
 	})
 
-	test("AnnualRollupTable renders 12 month rows plus totals", async ({ page }) => {
+	test("AnnualRollupTable renders 12 month rows plus totals", async ({
+		page,
+	}) => {
 		const table = page.locator('table[aria-label*="Annual rollup"]')
 		await expect(table).toBeVisible()
 		const bodyRows = table.locator("tbody tr")
@@ -29,7 +33,9 @@ test.describe("Annual Reporting", () => {
 		await expect(footerRows).toHaveCount(1)
 	})
 
-	test("CapitalEventLog summary is visible and expandable", async ({ page }) => {
+	test("CapitalEventLog summary is visible and expandable", async ({
+		page,
+	}) => {
 		const summary = page.getByText(/Capital Events/)
 		await expect(summary).toBeVisible()
 		await summary.click()
@@ -42,7 +48,9 @@ test.describe("Annual Reporting", () => {
 		await summary.click()
 		await page.waitForLoadState("networkidle")
 
-		const withdrawalBtn = page.getByRole("button", { name: /Withdrawal/ }).first()
+		const withdrawalBtn = page
+			.getByRole("button", { name: /Withdrawal/ })
+			.first()
 		await withdrawalBtn.click()
 
 		await page.getByLabel("Amount in BRL").fill("500")
@@ -74,13 +82,19 @@ test.describe("Annual Reporting", () => {
 		await expect(page.locator("body")).not.toContainText("Error")
 	})
 
-	test("WithdrawalCalculator suggestion text is well-formed when present", async ({ page }) => {
+	test("WithdrawalCalculator suggestion text is well-formed when present", async ({
+		page,
+	}) => {
 		// The calculator only renders when current month's resultadoLiquido > 0 AND withdrawalTargetPercent > 0.
 		// We do NOT assert visibility — only assert that, if it renders, the text is well-formed (no "undefined").
-		await expect(page.locator("body")).not.toContainText("Based on your undefined% withdrawal target")
+		await expect(page.locator("body")).not.toContainText(
+			"Based on your undefined% withdrawal target"
+		)
 	})
 
-	test("settings page loads with annual reporting fieldset", async ({ page }) => {
+	test("settings page loads with annual reporting fieldset", async ({
+		page,
+	}) => {
 		await page.goto(ROUTES.settings)
 		await page.waitForLoadState("networkidle")
 

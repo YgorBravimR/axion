@@ -29,7 +29,7 @@
  *   (created by global.setup.ts).
  */
 
-import { test, expect, type Page, type Locator } from "@playwright/test"
+import { test, expect, type Page, type Locator } from "../fixtures/base"
 import {
 	seedScenario,
 	teardownScenario,
@@ -156,9 +156,7 @@ const expectTradesCompleted = async (
 ): Promise<void> => {
 	const label = panel.getByText(/trades today/i)
 	const metricCell = label.locator("..")
-	await expect(metricCell.locator("dd.font-semibold")).toHaveText(
-		String(count)
-	)
+	await expect(metricCell.locator("dd.font-semibold")).toHaveText(String(count))
 }
 
 /** Assert the daily P&L value is visible (scoped to panel). */

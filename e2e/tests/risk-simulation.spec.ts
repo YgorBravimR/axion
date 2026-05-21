@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES } from "../fixtures/test-data"
 import { waitForSuspenseLoad } from "../utils/helpers"
 
@@ -13,7 +13,9 @@ test.describe("Risk Simulation", () => {
 
 		test("should display page title", async ({ page }) => {
 			await expect(
-				page.getByRole("heading", { name: /risk simulation|simulador de risco/i })
+				page.getByRole("heading", {
+					name: /risk simulation|simulador de risco/i,
+				})
 			).toBeVisible()
 		})
 
@@ -34,23 +36,37 @@ test.describe("Risk Simulation", () => {
 			await page.waitForLoadState("networkidle")
 		})
 
-		test("should show preview banner after selecting date range", async ({ page }) => {
+		test("should show preview banner after selecting date range", async ({
+			page,
+		}) => {
 			// The config panel should have a date range section
 			const dateSection = page.getByText(/date range|período/i).first()
 			await expect(dateSection).toBeVisible({ timeout: 5000 })
 
 			// If there's a date range already selected, preview should be visible
-			const previewOrEmpty = page.getByText(/trades|operações|no trades|nenhuma/i)
-			const hasContent = await previewOrEmpty.first().isVisible().catch(() => false)
+			const previewOrEmpty = page.getByText(
+				/trades|operações|no trades|nenhuma/i
+			)
+			const hasContent = await previewOrEmpty
+				.first()
+				.isVisible()
+				.catch(() => false)
 			expect(typeof hasContent).toBe("boolean")
 		})
 
-		test("should display prefill selector when trades are available", async ({ page }) => {
+		test("should display prefill selector when trades are available", async ({
+			page,
+		}) => {
 			await waitForSuspenseLoad(page)
 
 			// The prefill section appears after preview loads with trades
-			const prefillSection = page.getByText(/prefill|preencher|monthly plan|plano mensal|manual/i)
-			const hasSection = await prefillSection.first().isVisible().catch(() => false)
+			const prefillSection = page.getByText(
+				/prefill|preencher|monthly plan|plano mensal|manual/i
+			)
+			const hasSection = await prefillSection
+				.first()
+				.isVisible()
+				.catch(() => false)
 			expect(typeof hasSection).toBe("boolean")
 		})
 
@@ -62,7 +78,9 @@ test.describe("Risk Simulation", () => {
 			expect(typeof hasManual).toBe("boolean")
 		})
 
-		test("should show risk profile buttons in prefill selector", async ({ page }) => {
+		test("should show risk profile buttons in prefill selector", async ({
+			page,
+		}) => {
 			await waitForSuspenseLoad(page)
 
 			// Risk profile names from the DB should appear as buttons
@@ -79,7 +97,9 @@ test.describe("Risk Simulation", () => {
 			await waitForSuspenseLoad(page)
 		})
 
-		test("should show parameter form after selecting a prefill source", async ({ page }) => {
+		test("should show parameter form after selecting a prefill source", async ({
+			page,
+		}) => {
 			// Try clicking Manual button
 			const manualBtn = page.getByRole("button", { name: /manual/i })
 			if (await manualBtn.isVisible().catch(() => false)) {
@@ -87,8 +107,13 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 
 				// Params form should appear with fields
-				const paramField = page.getByText(/account balance|saldo|risk per trade|risco por/i)
-				const hasField = await paramField.first().isVisible().catch(() => false)
+				const paramField = page.getByText(
+					/account balance|saldo|risk per trade|risco por/i
+				)
+				const hasField = await paramField
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasField).toBe("boolean")
 			}
 		})
@@ -104,7 +129,9 @@ test.describe("Risk Simulation", () => {
 			}
 		})
 
-		test("should lock fields when risk profile is selected (not manual)", async ({ page }) => {
+		test("should lock fields when risk profile is selected (not manual)", async ({
+			page,
+		}) => {
 			// Find a risk profile button (not Manual, not Monthly Plan)
 			const buttons = page.getByRole("button")
 			const btnCount = await buttons.count()
@@ -112,7 +139,12 @@ test.describe("Risk Simulation", () => {
 			for (let i = 0; i < btnCount; i++) {
 				const btn = buttons.nth(i)
 				const text = await btn.textContent()
-				if (text && !text.match(/manual/i) && !text.match(/monthly/i) && !text.match(/run|executar/i)) {
+				if (
+					text &&
+					!text.match(/manual/i) &&
+					!text.match(/monthly/i) &&
+					!text.match(/run|executar/i)
+				) {
 					await btn.click()
 					await page.waitForTimeout(300)
 
@@ -125,20 +157,29 @@ test.describe("Risk Simulation", () => {
 			}
 		})
 
-		test("should show simple mode fields when monthly plan is selected", async ({ page }) => {
-			const monthlyPlanBtn = page.getByRole("button", { name: /monthly plan|plano mensal/i })
+		test("should show simple mode fields when monthly plan is selected", async ({
+			page,
+		}) => {
+			const monthlyPlanBtn = page.getByRole("button", {
+				name: /monthly plan|plano mensal/i,
+			})
 			if (await monthlyPlanBtn.isVisible().catch(() => false)) {
 				await monthlyPlanBtn.click()
 				await page.waitForTimeout(300)
 
 				// Simple mode fields: risk per trade %, daily loss %, etc.
 				const simpleLabel = page.getByText(/simple mode|modo simples/i)
-				const hasSimple = await simpleLabel.first().isVisible().catch(() => false)
+				const hasSimple = await simpleLabel
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasSimple).toBe("boolean")
 			}
 		})
 
-		test("should show advanced mode fields when risk profile is selected", async ({ page }) => {
+		test("should show advanced mode fields when risk profile is selected", async ({
+			page,
+		}) => {
 			// Find any risk profile button
 			const buttons = page.getByRole("button")
 			const btnCount = await buttons.count()
@@ -146,12 +187,19 @@ test.describe("Risk Simulation", () => {
 			for (let i = 0; i < btnCount; i++) {
 				const btn = buttons.nth(i)
 				const text = await btn.textContent()
-				if (text && !text.match(/manual|monthly|run|executar/i) && text.length > 3) {
+				if (
+					text &&
+					!text.match(/manual|monthly|run|executar/i) &&
+					text.length > 3
+				) {
 					await btn.click()
 					await page.waitForTimeout(300)
 
 					const advancedLabel = page.getByText(/advanced mode|modo avançado/i)
-					const hasAdvanced = await advancedLabel.first().isVisible().catch(() => false)
+					const hasAdvanced = await advancedLabel
+						.first()
+						.isVisible()
+						.catch(() => false)
 					expect(typeof hasAdvanced).toBe("boolean")
 					break
 				}
@@ -166,14 +214,18 @@ test.describe("Risk Simulation", () => {
 			await waitForSuspenseLoad(page)
 		})
 
-		test("should display Run Simulation button when params are configured", async ({ page }) => {
+		test("should display Run Simulation button when params are configured", async ({
+			page,
+		}) => {
 			const manualBtn = page.getByRole("button", { name: /manual/i })
 			if (await manualBtn.isVisible().catch(() => false)) {
 				await manualBtn.click()
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			const hasRun = await runButton.isVisible().catch(() => false)
 			expect(typeof hasRun).toBe("boolean")
 		})
@@ -187,21 +239,30 @@ test.describe("Risk Simulation", () => {
 			}
 
 			// Click Run
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000) // Wait for server action
 
 				// Results should appear: summary cards, equity chart, or table
-				const results = page.getByText(/original|simulated|simulado|executed|executado/i)
-				const hasResults = await results.first().isVisible().catch(() => false)
+				const results = page.getByText(
+					/original|simulated|simulado|executed|executado/i
+				)
+				const hasResults = await results
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasResults).toBe("boolean")
 			}
 		})
 	})
 
 	test.describe("Results Display", () => {
-		test("should display summary cards with original vs simulated stats", async ({ page }) => {
+		test("should display summary cards with original vs simulated stats", async ({
+			page,
+		}) => {
 			await page.goto(RISK_SIM_ROUTE)
 			await page.waitForLoadState("networkidle")
 			await waitForSuspenseLoad(page)
@@ -213,7 +274,9 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
@@ -222,8 +285,14 @@ test.describe("Risk Simulation", () => {
 				const winRate = page.getByText(/win rate|taxa de acerto/i)
 				const profitFactor = page.getByText(/profit factor|fator de lucro/i)
 
-				const hasWinRate = await winRate.first().isVisible().catch(() => false)
-				const hasPF = await profitFactor.first().isVisible().catch(() => false)
+				const hasWinRate = await winRate
+					.first()
+					.isVisible()
+					.catch(() => false)
+				const hasPF = await profitFactor
+					.first()
+					.isVisible()
+					.catch(() => false)
 
 				expect(typeof hasWinRate).toBe("boolean")
 				expect(typeof hasPF).toBe("boolean")
@@ -241,14 +310,21 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
 
 				// Chart renders as SVG via recharts
-				const chart = page.locator(".recharts-wrapper, .recharts-responsive-container, svg")
-				const hasChart = await chart.first().isVisible().catch(() => false)
+				const chart = page.locator(
+					".recharts-wrapper, .recharts-responsive-container, svg"
+				)
+				const hasChart = await chart
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasChart).toBe("boolean")
 			}
 		})
@@ -264,14 +340,19 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
 
 				// Table with trade rows
 				const table = page.locator("table")
-				const hasTable = await table.first().isVisible().catch(() => false)
+				const hasTable = await table
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasTable).toBe("boolean")
 			}
 		})
@@ -289,12 +370,16 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
 
-				const traceButton = page.getByRole("button", { name: /decision trace|trace|rastreamento/i })
+				const traceButton = page.getByRole("button", {
+					name: /decision trace|trace|rastreamento/i,
+				})
 				const hasTraceBtn = await traceButton.isVisible().catch(() => false)
 				expect(typeof hasTraceBtn).toBe("boolean")
 			}
@@ -311,19 +396,26 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
 
-				const traceButton = page.getByRole("button", { name: /decision trace|trace|rastreamento/i })
+				const traceButton = page.getByRole("button", {
+					name: /decision trace|trace|rastreamento/i,
+				})
 				if (await traceButton.isVisible().catch(() => false)) {
 					await traceButton.click()
 					await page.waitForTimeout(500)
 
 					// Modal should show week labels and day cards
 					const weekLabel = page.getByText(/week of|semana de/i)
-					const hasWeek = await weekLabel.first().isVisible().catch(() => false)
+					const hasWeek = await weekLabel
+						.first()
+						.isVisible()
+						.catch(() => false)
 					expect(typeof hasWeek).toBe("boolean")
 				}
 			}
@@ -340,12 +432,16 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
 
-				const traceButton = page.getByRole("button", { name: /decision trace|trace|rastreamento/i })
+				const traceButton = page.getByRole("button", {
+					name: /decision trace|trace|rastreamento/i,
+				})
 				if (await traceButton.isVisible().catch(() => false)) {
 					await traceButton.click()
 					await page.waitForTimeout(500)
@@ -364,7 +460,9 @@ test.describe("Risk Simulation", () => {
 	})
 
 	test.describe("Skipped Trades Warning", () => {
-		test("should show skipped trades warning when trades are skipped", async ({ page }) => {
+		test("should show skipped trades warning when trades are skipped", async ({
+			page,
+		}) => {
 			await page.goto(RISK_SIM_ROUTE)
 			await page.waitForLoadState("networkidle")
 			await waitForSuspenseLoad(page)
@@ -375,14 +473,19 @@ test.describe("Risk Simulation", () => {
 				await page.waitForTimeout(300)
 			}
 
-			const runButton = page.getByRole("button", { name: /run simulation|executar simulação/i })
+			const runButton = page.getByRole("button", {
+				name: /run simulation|executar simulação/i,
+			})
 			if (await runButton.isVisible().catch(() => false)) {
 				await runButton.click()
 				await page.waitForTimeout(10000)
 
 				// If any trades were skipped, a warning section should appear
 				const skippedSection = page.getByText(/skipped|pulad|ignorad/i)
-				const hasSkipped = await skippedSection.first().isVisible().catch(() => false)
+				const hasSkipped = await skippedSection
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasSkipped).toBe("boolean")
 			}
 		})
