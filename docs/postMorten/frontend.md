@@ -2,6 +2,65 @@
 
 ---
 
+## [BUG-2026-05-21] React "Maximum update depth exceeded" infinite loop on dashboard with fresh accounts
+
+**Date:** 2026-05-21 | **Severity:** High | **Affected Area:** `/src/components/dashboard/dashboard-content.tsx`, `/src/components/dashboard/dashboard-strategy-filter.tsx`, `/src/components/shared/mode-variant.tsx`
+
+### Cause
+
+The dashboard page rendered an error boundary ("Something went wrong!") when accessed by fresh accounts with no trading data. The root cause was a circular dependency in `DashboardStrategyFilter`'s `useEffect`:
+
+1. `DashboardStrategyFilter` had an effect that checked if a selected strategy no longer exists in the options and cleared the filter:
+
+   ```typescript
+   useEffect(() => {
+   	if (value.strategyId && options.length > 0 && !selectedStrategy) {
+   		onChange({ strategyId: null, strategyVersionId: null })
+   	}
+   }, [options.length, selectedStrategy, value.strategyId, onChange]) // onChange in deps!
+   ```
+
+2. The `onChange` callback prop came from parent `DashboardContent` and was created with `useCallback(..., [fetchFilteredData, period])`.
+
+3. `fetchFilteredData` had `useCallback(..., [effectiveDate])` as its dependency.
+
+4. Because `effectiveDate` was obtained from `useEffectiveDate()` hook which was not stably memoized relative to parent re-renders, and because `onChange` was passed as a dependency to the child's effect, the effect would re-run on every render, calling setState in the parent, causing re-renders, triggering the effect again. This exceeded React's 50-update limit.
+
+Additional issues:
+
+- `ModeVariant` component was not memoized, causing unnecessary child component re-renders
+- `coachingVariants` object in `DashboardContent` was created inline, recreating on every render
+
+### Effect
+
+Browser console error: `Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.` The error boundary caught this and displayed "Something went wrong! An error occurred while loading the dashboard."
+
+### Solution
+
+1. **Removed `onChange` from `DashboardStrategyFilter` useEffect dependency array.** The effect only needs to watch when the available options or selected strategy changes, not when the callback function itself changes. Added eslint-disable comment to document this intentional omission.
+
+2. **Memoized `ModeVariant` component** with `memo()` wrapper to prevent re-renders when props don't change structurally.
+
+3. **Memoized `coachingVariants` object in `DashboardContent`** using `useMemo` with `[initialHawksContext]` dependency to prevent recreation on every parent render.
+
+4. **Added defensive error handling in `EffectiveDateProvider`** to handle malformed date strings gracefully.
+
+### Prevention
+
+- **Never include callback props in useEffect dependency arrays unless the effect logic actually depends on their identity.** If an effect calls a callback, ensure the callback is stably memoized in the parent, or exclude it from dependencies if the call is side-effect-only.
+- **Memoize components that are used as render props or passed as object properties** to prevent cascading re-renders.
+- **Avoid creating object/array literals inline in JSX**, especially when they're passed as props to child components. Use `useMemo` for complex objects and arrays.
+- **Test dashboard rendering with fresh accounts** (no trading data, no strategies) as part of E2E suite to catch infinite loop issues early.
+
+### Related Files
+
+- `src/components/dashboard/dashboard-content.tsx`
+- `src/components/dashboard/dashboard-strategy-filter.tsx`
+- `src/components/shared/mode-variant.tsx`
+- `src/components/providers/effective-date-provider.tsx`
+
+---
+
 ## [BUG-2026-05-13] AccountTransitionOverlayProvider hydration mismatch in ResumedOverlay
 
 **Severity:** High | **Affected:** `src/components/ui/account-transition-overlay.tsx`
