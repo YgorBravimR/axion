@@ -48,9 +48,16 @@ test.describe("Journal", () => {
 		})
 
 		test("should display trade list or empty state", async ({ page }) => {
-			// Trade cards render as <Link><Card id="trade-card-{id}"> — match by id prefix
+			// JournalContent starts in isLoading=true and fetches on mount, so networkidle
+			// can resolve before the client useEffect fetch starts. Wait explicitly for
+			// either trade cards or the empty state to appear before asserting.
 			const tradeItems = page.locator('[id^="trade-card-"]')
 			const emptyState = page.getByText(/no trades/i)
+
+			await Promise.race([
+				tradeItems.first().waitFor({ state: "visible", timeout: 10000 }),
+				emptyState.waitFor({ state: "visible", timeout: 10000 }),
+			]).catch(() => {})
 
 			const hasTradeItems = (await tradeItems.count()) > 0
 			const hasEmptyState = await emptyState.isVisible().catch(() => false)

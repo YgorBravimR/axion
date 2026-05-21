@@ -30,7 +30,7 @@ export const promoteBravoToAdmin = async (email: string): Promise<void> => {
     RETURNING id
   `)
 
-	if (result.rows.length === 0) {
+	if (!result.rows.length) {
 		throw new Error(
 			`[promoteBravoToAdmin] No user found with email ${email}. Registration may have failed.`
 		)
