@@ -2335,6 +2335,31 @@
 			"emptyStateHint": "Log a trade with these conditions to start the scorecard.",
 			"hawksBadge": "Hawks methodology"
 		},
+		"hawksPanel": {
+			"title": "Hawks discipline",
+			"subtitle": "How well this strategy's trades respected the Hawks methodology.",
+			"basedOnTrades": "Based on {count, plural, =1 {# Hawks trade} other {# Hawks trades}}",
+			"emptyState": "No Hawks trades for this strategy version yet.",
+			"emptyStateHint": "Log a Hawks-mode trade with bias and scenario to populate this panel.",
+			"kpi": {
+				"vwap": "VWAP respected",
+				"ajuste": "Ajuste respected",
+				"tripleScreen": "Triple screen confirmed",
+				"biasRespected": "Daily bias respected"
+			},
+			"biasNoData": "No days had a confirmed bias",
+			"dailyCap": {
+				"title": "B3 daily-cap (6/asset)",
+				"within": "{count} within cap",
+				"over": "{count} over cap",
+				"allWithin": "All trades within cap",
+				"overShare": "{pct}% over cap"
+			},
+			"scenarios": {
+				"title": "Scenario distribution",
+				"untagged": "Untagged"
+			}
+		},
 		"versioning": {
 			"badge": {
 				"live": "Live",

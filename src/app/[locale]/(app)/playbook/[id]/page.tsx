@@ -17,9 +17,11 @@ import { getStrategy, listStrategyVersions } from "@/app/actions/strategies"
 import {
 	getStrategyConditions,
 	getStrategyConditionsRollup,
+	getStrategyHawksRollup,
 } from "@/app/actions/strategy-conditions"
 import { ConditionTierDisplay } from "@/components/playbook/condition-tier-display"
 import { ConditionsScorecard } from "@/components/playbook/conditions-scorecard"
+import { HawksPlaybookPanel } from "@/components/playbook/hawks-playbook-panel"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { getCurrentUser } from "@/app/actions/auth"
 import { hasAccess } from "@/lib/feature-access"
@@ -89,16 +91,21 @@ const StrategyDetailPage = async ({
 	const selectedVersionRow = versions.find((vv) => vv.version === parsedVersion)
 	const selectedVersionId = selectedVersionRow?.id
 
-	const [conditionsResult, rollupResult] = await Promise.all([
-		getStrategyConditions(id),
-		getStrategyConditionsRollup(id, selectedVersionId),
-	])
+	const [conditionsResult, rollupResult, hawksRollupResult] = await Promise.all(
+		[
+			getStrategyConditions(id),
+			getStrategyConditionsRollup(id, selectedVersionId),
+			getStrategyHawksRollup(id, selectedVersionId),
+		]
+	)
 
 	const t = await getTranslations("playbook")
 
 	const strategyConditions =
 		conditionsResult.status === "success" ? (conditionsResult.data ?? []) : []
 	const rollup = rollupResult.status === "success" ? rollupResult.data : null
+	const hawksRollup =
+		hawksRollupResult.status === "success" ? hawksRollupResult.data : null
 	const isHawksStrategy = rollup?.isHawksStrategy ?? false
 	const isHawksMethodology = rollup?.methodology === "hawks"
 	const isHistorical = parsedVersion !== strategy.currentVersion
@@ -379,6 +386,27 @@ const StrategyDetailPage = async ({
 									</div>
 								</div>
 							)}
+						</div>
+					)}
+
+					{/* Hawks discipline (methodology-gated) */}
+					{isPremium && isHawksMethodology && hawksRollup && (
+						<div
+							id="strategy-detail-hawks-panel"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+						>
+							<div className="gap-s-200 flex items-center">
+								<Target className="text-acc-100 h-5 w-5" aria-hidden="true" />
+								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+									{t("hawksPanel.title")}
+								</h2>
+							</div>
+							<p className="text-tiny text-txt-300 mt-s-100">
+								{t("hawksPanel.subtitle")}
+							</p>
+							<div className="mt-m-400">
+								<HawksPlaybookPanel rollup={hawksRollup} />
+							</div>
 						</div>
 					)}
 

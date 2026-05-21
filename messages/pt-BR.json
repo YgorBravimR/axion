@@ -2335,6 +2335,31 @@
 			"emptyStateHint": "Registre uma operação com estas condições para iniciar o placar.",
 			"hawksBadge": "Metodologia Hawks"
 		},
+		"hawksPanel": {
+			"title": "Disciplina Hawks",
+			"subtitle": "O quanto os trades desta estratégia respeitaram a metodologia Hawks.",
+			"basedOnTrades": "Com base em {count, plural, =1 {# trade Hawks} other {# trades Hawks}}",
+			"emptyState": "Ainda não há trades Hawks nesta versão da estratégia.",
+			"emptyStateHint": "Registre um trade em modo Hawks com viés e cenário para popular este painel.",
+			"kpi": {
+				"vwap": "VWAP respeitada",
+				"ajuste": "Ajuste respeitado",
+				"tripleScreen": "Triple screen confirmado",
+				"biasRespected": "Viés diário respeitado"
+			},
+			"biasNoData": "Nenhum dia teve viés confirmado",
+			"dailyCap": {
+				"title": "Limite diário B3 (6/ativo)",
+				"within": "{count} dentro do limite",
+				"over": "{count} acima do limite",
+				"allWithin": "Todos dentro do limite",
+				"overShare": "{pct}% acima do limite"
+			},
+			"scenarios": {
+				"title": "Distribuição de cenários",
+				"untagged": "Sem cenário"
+			}
+		},
 		"versioning": {
 			"badge": {
 				"live": "Ativa",
