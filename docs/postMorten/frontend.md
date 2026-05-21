@@ -193,3 +193,46 @@
 **Prevention:** When upgrading react-day-picker across major versions, test range selection UX end-to-end. The v8→v9 change in first-click `to` semantics is undocumented and easy to miss. Never guard popover-close behavior on the presence of `to` alone — always compare the actual date values.
 
 **Related Files:** `src/components/ui/date-range-picker.tsx`
+
+---
+
+## [BUG-2026-05-21] Trade form silently drops Hawks payload when mode is deactivated
+
+**Severity:** High | **Affected:** `src/components/journal/trade-form.tsx`, `src/app/actions/trades.ts`, `src/app/actions/trades.types.ts`
+
+**Cause:**
+
+When editing a trade that was originally saved with Hawks mode active (so `trade_hawks_metadata` row exists), the form's `buildTradeFormValues()` function did not extract the Hawks payload from the loaded trade. The defaultValues logic only added Hawks when `hawksModeActive` was true.
+
+Flow:
+
+1. User creates trade with Hawks mode ON → `hawks: { tripleScreenConfirmed: true, vwapRespected: true, ajusteRespected: true }` stored in `trade_hawks_metadata`.
+2. User deactivates Hawks mode in settings.
+3. User reloads the draft to edit it.
+4. Trade loads via `getTrade(id)` which fetched `trades` but **not** `tradeHawksMetadata` relation.
+5. Form calls `buildTradeFormValues(trade)` — trade has no hawks field, so Hawks data is omitted from defaultValues.
+6. Since `hawksModeActive = false`, the defaultValues logic doesn't add an empty hawks object either.
+7. Form submits without hawks field → `createTrade` / `updateTrade` receives no hawks payload → Hawks metadata is lost on save.
+
+**Effect:** Silent data loss. The trade's Hawks pre-flight confirmations (`tripleScreenConfirmed`, `vwapRespected`, `ajusteRespected`) were permanently dropped when the user deactivated Hawks mode, with no warning to the user.
+
+**Solution:**
+
+1. **Updated `getTrade` action** to fetch `hawksMetadata` relation alongside existing relations.
+2. **Updated `TradeWithRelations` type** to include optional `hawksMetadata` field.
+3. **Updated `buildTradeFormValues` helper** to extract Hawks data from `trade.hawksMetadata` and include it in the returned form values.
+4. **Updated trade form type** to include Hawks metadata in the `TradeWithTags` type definition.
+
+The fix preserves Hawks payload across all scenarios: edit mode (loaded trade always includes hawks if present), new trade with Hawks active (form includes empty hawks object), and mode deactivation (form now preserves hawks from loaded trade regardless of current mode status).
+
+**Prevention:**
+
+- When loading relational data for editing, always fetch **all** relations that may be needed in the form, even if the current mode/setting would hide them. Relations should be loaded comprehensively, not conditionally based on feature flags.
+- For optional payload fields, extract them in the `buildFormValues` function **once** (for edit mode) so the data flows through the form's normal state management. Don't rely on defaultValues logic to re-create them, as that doesn't account for loaded data.
+
+**Related Files:**
+
+- `src/app/actions/trades.ts` (getTrade query)
+- `src/app/actions/trades.types.ts` (TradeWithRelations type)
+- `src/components/journal/trade-form.tsx` (buildTradeFormValues, TradeWithTags type)
+- `src/__tests__/components/trade-form-hawks-preservation.test.ts` (new test)

@@ -861,6 +861,7 @@ export const getTrade = async (
 					},
 				},
 				executions: true,
+				hawksMetadata: true,
 			},
 		})
 

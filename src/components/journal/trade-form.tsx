@@ -131,7 +131,15 @@ const getEndOfDayLocal = (referenceDate?: Date): string => {
 	return `${year}-${month}-${day}T23:59`
 }
 
-type TradeWithTags = Trade & { tradeTags?: Array<{ tag: Tag }> }
+type TradeWithTags = Trade & {
+	tradeTags?: Array<{ tag: Tag }>
+	hawksMetadata?: {
+		scenarioId?: string | null
+		tripleScreenConfirmed: boolean
+		vwapRespected: boolean
+		ajusteRespected: boolean
+	} | null
+}
 
 // Static grade constants — hoisted to avoid re-creation on every render
 const GRADES = ["A", "B", "C", "D", "F"] as const
@@ -176,6 +184,14 @@ const buildTradeFormValues = (
 	screenshotUrl: trade.screenshotUrl ?? undefined,
 	screenshotS3Key: trade.screenshotS3Key ?? undefined,
 	tagIds: trade.tradeTags?.map((tt) => tt.tag.id) ?? [],
+	...(trade.hawksMetadata && {
+		hawks: {
+			scenarioId: trade.hawksMetadata.scenarioId ?? undefined,
+			tripleScreenConfirmed: trade.hawksMetadata.tripleScreenConfirmed,
+			vwapRespected: trade.hawksMetadata.vwapRespected,
+			ajusteRespected: trade.hawksMetadata.ajusteRespected,
+		},
+	}),
 })
 
 const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(

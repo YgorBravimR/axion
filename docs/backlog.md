@@ -142,18 +142,6 @@ Both items below are deferred-out-of-v1 entries. v1 (read-only awareness + fork 
 
 Surfaced during the 2026-05-13 Wave 9 HAWKS sweep ([runbook](impeccable-page-runbook.md), logs at `docs/scans/2026-05-13-impeccable-*-hawks.md`). Logged here because each requires either product/copy review, a wider primitive change, or another team's input — none are local code edits.
 
-### Trade-form draft-after-deactivation edge
-
-- **Priority:** P2 · **Effort:** S
-- **What**: If a draft trade is saved with HAWKS mode active and reloaded after the trader deactivates HAWKS, the persisted `hawks.*` payload is silently dropped (the `<HawksTradeFields>` block is not rendered, so its values never reach the submit). Either preserve the values invisibly or warn the user at draft-restore.
-- **Source**: `src/components/journal/trade-form.tsx` + `src/components/hawks/hawks-trade-fields.tsx`.
-
-### HAWKS settings tab copy voice gate
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `t("statusActive") / t("statusInactive")` + `t("description")` not yet voice-checked in en + pt-BR. Reject cheerful filler ("You're on!", "Switched off") if present.
-- **Source**: `messages/{en,pt-BR}.json` under `hawks.settings.*`.
-
 ---
 
 ## Page polish — deferred from sweep
@@ -201,33 +189,13 @@ All four items below are P3 distill passes flagged by the 2026-05-12 "impeccable
 
 ---
 
-## Deprecations
-
-> Strategic context: [manifesto §3.5 + §3.8](feature-manifesto-2026-05.md) — sunset / rename work surfaced by the strategic audit. Cleanup tax that compounds with every adjacent edit; lower-risk to ship before piling more on top.
-
-### ~~Replay account mode deprecation sweep~~ — **DONE 2026-05-20**
-
-- **Priority:** P2 · **Effort:** M
-- **What**: Removed the `replay` account variant end-to-end across three phases: (3a) ripped the `replay` branch out of every `.tsx`/`.ts` consumer — `accounts.ts` server action, `command-center/page.tsx`, `command-center-tabs.tsx`, `command-center-content.tsx`, `date-navigator.tsx`, `(app)/layout.tsx`, `app-shell.tsx`, `sidebar.tsx`, `account-switcher.tsx`, `account-settings.tsx`, `account-selector.tsx`, `account-transition-overlay.tsx`, `tax-tab.tsx`, `month-closing-section.tsx`, `profitchart-validate.ts`, `imports/profitchart/route.ts`, `brand-synchronizer.tsx`; (3b) Drizzle enum migration removing `"replay"` from `accountTypeEnum` via the 6-step text-cast → drop → recreate → recast pattern; (3c) CSV import policy decision — kept `[R]`-prefix alert (ProfitChart-level concept, distinct from account-mode replay) but removed the `accountType !== "replay"` bypass, so the alert now always surfaces and user retains accept/reject agency.
-- **Why**: Demo-mode + the E2E journey suite now cover the use case better than a runtime replay branch ever did. Every conditional in Command Center was paying a maintenance tax. Removing it _before_ the mode-personalization framework lands keeps that framework's blast radius smaller — it doesn't have to specialize over a branch we just deleted.
-- **Validation**: `pnpm lint` (0 errors), `pnpm lint:strict` (0 errors, 479 phase-in warnings), `pnpm exec tsc --noEmit` (clean). i18n keys (`auth.accountSwitcher.replay*`, `settings.account.replay*`, `settings.errors.onlyReplayAccounts`, `replayNoStartDate`, `commandCenter.dateNavigator.{nextReplayDay,replayMode}`) removed from both `messages/en.json` and `messages/pt-BR.json`.
-- **Source**: `feature-manifesto-2026-05.md` §3.8 + §4 INVEST list #73.
-
-### ~~Monte Carlo v1/v2 → Edge Expectancy / Capital Expectancy rename~~ — **DONE 2026-05-20**
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: Renamed "Monte Carlo v1" to "Edge Expectancy" and "Monte Carlo v2" to "Capital Expectancy" across i18n (`messages/{en,pt-BR}.json`). Audit at filing time showed the user-visible rename was already in flight from prior incremental work — tabs, tooltips, section titles, ARIA labels, event toasts, and calibration headings already used the new names. Only loose end was a pt-BR aria-label drift (`Expectância` → `Expectativa`) for consistency with the rest of the surface. Umbrella technique references ("Monte Carlo simulation", route slug, settings copy) intentionally kept — those describe the algorithm, not the modes.
-- **Why**: "v1/v2" is internal jargon that hides distinct cognitive purposes. The new names map to the question each answers: v1 → "is my edge real?" → **Edge Expectancy**; v2 → "will I survive a bad month?" → **Capital Expectancy**.
-- **Source**: `feature-manifesto-2026-05.md` §3.5 + §4 INVEST list #75.
-
----
-
 ## Documentation drift watch
 
 ### Retire `zero-to-hero-e2e.md` §13 Phase 3
 
 - **Priority:** P3 · **Effort:** XS
-- **What**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship; Phase 3 is functionally done except for the multi-month seeder + CI wiring. When those land, retire §13 Phase 3 in favour of a one-liner pointing back to this file.
+- **What**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship, plus Hawks add-ons (`09-hawks-daily-loop`, `09b-seed-hawks-history`), and the multi-month seeder shipped as `04b-seed-history.spec.ts` + `helpers/seed-bravo-history.ts`. Only CI wiring remains — no `journey-ci` / `@journey` reference in `.github/workflows/`. When CI wiring lands, retire §13 Phase 3 in favour of a one-liner pointing back to this file.
+- **Source**: verified 2026-05-21 against `e2e/journey/` (12 spec files + 8 helpers) and `.github/workflows/`.
 
 ---
 
