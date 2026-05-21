@@ -131,6 +131,16 @@ export const tierChangeReasonEnum = pgEnum("tier_change_reason", [
 	"manual",
 ])
 
+// Strategy methodology (intrinsic to the strategy, not the account running it).
+// Distinct from `accountModeEnum`: a Hawks-methodology strategy is *always* a
+// Hawks strategy, regardless of which account/mode it's currently traded by.
+// NULL methodology means "unstructured / free-form strategy" (the legacy default).
+export const strategyMethodologyEnum = pgEnum("strategy_methodology", [
+	"hawks",
+	"orb",
+	"dezk",
+])
+
 // Hawks Mode enums (mode-scoped sidecar; lib at src/lib/hawks/).
 export const accountModeEnum = pgEnum("account_mode", ["default", "hawks"])
 export const hawksScenarioDirectionEnum = pgEnum("hawks_scenario_direction", [
@@ -491,6 +501,10 @@ export const strategies = pgTable(
 		code: varchar("code").notNull(),
 		name: varchar("name", { length: 100 }).notNull(),
 		description: text("description"),
+		// Intrinsic methodology axis (see `strategyMethodologyEnum`). NULL = unstructured.
+		// Drives per-methodology UI dispatch (e.g. Hawks-specific panels on /playbook/[id]).
+		// Orthogonal to `account_modes.mode` which is the per-account runtime mode.
+		methodology: strategyMethodologyEnum("methodology"),
 		entryCriteria: text("entry_criteria"),
 		exitCriteria: text("exit_criteria"),
 		riskRules: text("risk_rules"),

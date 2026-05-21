@@ -71,6 +71,13 @@
 			"when": 1779305268648,
 			"tag": "0009_calm_madripoor",
 			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "7",
+			"when": 1779345928220,
+			"tag": "0010_adorable_pride",
+			"breakpoints": true
 		}
 	]
 }
