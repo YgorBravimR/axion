@@ -52,7 +52,7 @@ export const cleanupBravo = async (email: string): Promise<void> => {
 			return { rows: [] as unknown[] }
 		})
 
-	if (result.rows.length > 0) {
+	if (result?.rows?.length) {
 		console.log(
 			`[cleanupBravo] Removed ${result.rows.length} prior bravo user(s) — clean slate for Stage 0.`
 		)

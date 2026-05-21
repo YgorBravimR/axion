@@ -48,9 +48,9 @@ test.describe("Journal", () => {
 		})
 
 		test("should display trade list or empty state", async ({ page }) => {
-			// Trade items are rendered as buttons (e.g., "Trade WDO long at 05:34")
-			const tradeItems = page.getByRole("button", { name: /^trade /i })
-			const emptyState = page.getByText(/no trades|start by adding/i)
+			// Trade cards render as <Link><Card id="trade-card-{id}"> — match by id prefix
+			const tradeItems = page.locator('[id^="trade-card-"]')
+			const emptyState = page.getByText(/no trades/i)
 
 			const hasTradeItems = (await tradeItems.count()) > 0
 			const hasEmptyState = await emptyState.isVisible().catch(() => false)
