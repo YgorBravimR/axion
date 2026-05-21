@@ -64,15 +64,21 @@ test.describe("Navigation", () => {
 
 		test("should display all navigation items", async ({ page }) => {
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("networkidle")
 
-			// Check all navigation items are visible
+			// Check top-level nav items
 			await expect(page.getByRole("link", { name: /dashboard/i })).toBeVisible()
 			await expect(page.getByRole("link", { name: /journal/i })).toBeVisible()
 			await expect(page.getByRole("link", { name: /analytics/i })).toBeVisible()
 			await expect(page.getByRole("link", { name: /playbook/i })).toBeVisible()
 			await expect(page.getByRole("link", { name: /reports/i })).toBeVisible()
-			await expect(page.getByRole("link", { name: /monthly/i })).toBeVisible()
 			await expect(page.getByRole("link", { name: /settings/i })).toBeVisible()
+
+			// Plans group is collapsed by default — expand it then check sub-items
+			await page.getByRole("button", { name: /plans/i }).click()
+			await expect(
+				page.getByRole("link", { name: /monthly plan/i })
+			).toBeVisible()
 		})
 
 		test("should navigate to Dashboard", async ({ page }) => {
@@ -117,8 +123,11 @@ test.describe("Navigation", () => {
 		test("should navigate to Monthly", async ({ page }) => {
 			await page.goto(ROUTES.home)
 			await page.waitForLoadState("networkidle")
-			await page.getByRole("link", { name: /monthly/i }).click()
-			await expect(page).toHaveURL(/monthly/, { timeout: 30_000 })
+			// Plans group is collapsed — expand it first
+			await page.getByRole("button", { name: /plans/i }).click()
+			await page.getByRole("link", { name: /monthly plan/i }).click()
+			// Monthly plan URL is /plan/{year}/{quarter}/{month}
+			await expect(page).toHaveURL(/\/plan\/\d+\/\d+\/\d+/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Settings", async ({ page }) => {
