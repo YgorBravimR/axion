@@ -63,7 +63,7 @@
 
 	/* Page Guide — distinctive violet that pops on the dark canvas */
 	--color-guide: rgb(168 130 255);
-	--color-proj: oklch(0.76 0.055 213);
+	--color-proj: #aed2da;
 
 	--radius: 0.625rem;
 	--color-background: var(--color-bg-100);

@@ -235,11 +235,11 @@ const MonthCard = ({
 					"gap-s-300 bg-bg-200 p-m-400 flex h-full flex-col rounded-md border transition-colors",
 					"focus-visible:ring-acc-100 focus-visible:ring-offset-bg-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					state === "current" &&
-						"border-l-guide border-y-bg-300 border-r-bg-300 hover:border-r-guide/40 border-l-4",
+						"border-l-acc-100 border-y-bg-300 border-r-bg-300 hover:border-r-acc-100/40 border-l-4",
 					state === "past" && "border-bg-300 hover:border-acc-100/40",
 					state === "future" && "border-bg-300 hover:border-acc-100/30",
 					state === "projection" &&
-						"border-bg-300/70 hover:border-guide/30 border-dashed"
+						"border-bg-300/70 hover:border-acc-100/30 border-dashed"
 				)}
 				data-state={state}
 			>
