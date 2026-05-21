@@ -1274,7 +1274,8 @@
 			"journalNotes": "Journal Notes",
 			"disciplineNotes": "Discipline Notes",
 			"conditions": "Conditions",
-			"conditionsMetBadge": "{met} of {total} met"
+			"conditionsMetBadge": "{met} of {total} met",
+			"executionDetails": "Execution Details"
 		},
 		"chart": {
 			"executions": "Executions",

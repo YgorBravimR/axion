@@ -1274,7 +1274,8 @@
 			"journalNotes": "Notas do Diário",
 			"disciplineNotes": "Notas de Disciplina",
 			"conditions": "Condições",
-			"conditionsMetBadge": "{met} de {total} atendidas"
+			"conditionsMetBadge": "{met} de {total} atendidas",
+			"executionDetails": "Detalhes de Execução"
 		},
 		"chart": {
 			"executions": "Execuções",
