@@ -63,6 +63,7 @@
 
 	/* Page Guide — distinctive violet that pops on the dark canvas */
 	--color-guide: rgb(168 130 255);
+	--color-proj: oklch(0.76 0.055 213);
 
 	--radius: 0.625rem;
 	--color-background: var(--color-bg-100);
@@ -164,6 +165,7 @@
 /* Light Theme Overrides — Warm Stone-White Paper with Deep Bronze Ink */
 [data-theme="light"] {
 	--color-guide: rgb(217 119 6);
+	--color-proj: oklch(0.42 0.1 215);
 
 	/* Cool-Neutral Stone-White Backgrounds — slight cool undertone keeps
      chrome from competing with the warm bronze accent. */

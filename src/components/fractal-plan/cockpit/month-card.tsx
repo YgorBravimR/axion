@@ -269,7 +269,7 @@ const MonthCard = ({
 						<span
 							className={cn(
 								"text-h2 font-mono tabular-nums",
-								isProjection ? "text-guide italic" : "text-txt-100"
+								isProjection ? "text-proj italic" : "text-txt-100"
 							)}
 						>
 							{formatBRL(heroEndCents)}
@@ -279,7 +279,7 @@ const MonthCard = ({
 								"px-s-200 text-tiny rounded-sm py-px font-mono tabular-nums",
 								deltaCents > 0 &&
 									(isProjection
-										? "bg-guide/10 text-guide italic"
+										? "bg-proj/10 text-proj italic"
 										: "bg-profit/10 text-profit"),
 								deltaCents < 0 && "bg-loss/10 text-loss",
 								deltaCents === 0 && "bg-bg-300 text-txt-300"
@@ -292,7 +292,7 @@ const MonthCard = ({
 						{t("from", { balance: formatBRLCompact(startBalanceCents) })}
 					</p>
 					{hasRemainder && (
-						<p className="mt-s-100 gap-s-200 text-tiny text-guide flex items-center justify-between font-mono italic tabular-nums">
+						<p className="mt-s-100 gap-s-200 text-tiny text-proj flex items-center justify-between font-mono italic tabular-nums">
 							<span>
 								{t("projectedEndMonth", {
 									balance: formatBRLCompact(endBalanceCents),
@@ -325,7 +325,7 @@ const MonthCard = ({
 												!isReal && "border border-dashed",
 												isReal && isPositive && "bg-profit/70",
 												isReal && !isPositive && "bg-loss/70",
-												!isReal && isPositive && "border-guide/60 bg-guide/15",
+												!isReal && isPositive && "border-proj/60 bg-proj/15",
 												!isReal && !isPositive && "border-loss/60 bg-loss/10"
 											)}
 											style={{ height: `${heightPct / 2}%` }}
@@ -348,7 +348,7 @@ const MonthCard = ({
 									(real
 										? "text-profit"
 										: isProjection
-											? "text-guide italic"
+											? "text-proj italic"
 											: "text-txt-200"),
 								monthlyR < 0 && "text-loss",
 								monthlyR === 0 && "text-txt-200"
@@ -371,7 +371,7 @@ const MonthCard = ({
 						<dd
 							className={cn(
 								"mt-px font-mono tabular-nums",
-								isProjection && "text-guide italic",
+								isProjection && "text-proj italic",
 								!isProjection && monthlyNetCents > 0 && "text-profit",
 								!isProjection && monthlyNetCents < 0 && "text-loss",
 								!isProjection && monthlyNetCents === 0 && "text-txt-200"
@@ -381,7 +381,7 @@ const MonthCard = ({
 						</dd>
 					</div>
 					{hasRemainder && (
-						<div className="mt-s-100 border-bg-300/50 pt-s-200 text-tiny text-guide col-span-3 flex items-center justify-between border-t font-mono italic tabular-nums">
+						<div className="mt-s-100 border-bg-300/50 pt-s-200 text-tiny text-proj col-span-3 flex items-center justify-between border-t font-mono italic tabular-nums">
 							<dt className="text-txt-300 not-italic">{t("projRemainder")}</dt>
 							<dd>
 								{(remainder?.addedRsum ?? 0) >= 0 ? "+" : ""}
@@ -394,7 +394,7 @@ const MonthCard = ({
 					{withdrawalCents != null && (
 						<div className="border-bg-300/50 pt-s-200 col-span-3 flex items-center justify-between border-t">
 							<dt className="text-txt-300">{t("projectedWithdrawal")}</dt>
-							<dd className="text-guide font-mono tabular-nums">
+							<dd className="text-proj font-mono tabular-nums">
 								{formatBRLCompact(withdrawalCents)}
 							</dd>
 						</div>
