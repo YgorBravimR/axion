@@ -41,44 +41,6 @@ _Currently empty — last item (Encryption archive) shipped 2026-05-20 (commit `
 
 ---
 
-## Playbook
-
-> Strategic context: [manifesto §6.4](feature-manifesto-2026-05.md) — Playbook detail page is the canonical home for methodology rules + scorecard. Hawks badge + `ConditionsScorecard` are already wired; the remaining depth is what this entry verifies.
-
-### Playbook detail methodology-aware redesign — **P2** (verification done 2026-05-20)
-
-- **Priority:** P2 · **Effort:** M (Hawks-first surface specialization) — _not L as originally budgeted_
-- **Status**: Verification pass complete. The redesign is **partially shipped** — the compliance/scoring half is solid; the surface-area-personalization half hasn't started.
-
-#### What's already in place
-
-- **`trade_conditions` junction** (P1 #2) — shipped.
-- **Tier model** — `mandatory` / `tier_2` / `tier_3` mapped to A / AA / AAA ranks via `ConditionTierDisplay` and `ScorecardRow`.
-- **Compliance scorecard** — `ConditionsScorecard` reads `getStrategyConditionsRollup`, renders per-condition met-rate progress bars with traffic-light tones (≥75% buy / ≥40% warning / <40% sell). Empty-state copy is distinct.
-- **Version-aware rollup** — current vs historical version label, dedicated i18n keys (`basedOnVersion`, `basedOnVersionHistorical`).
-- **Hawks badge** — `isHawksStrategy` is computed from `accountModes.mode === "hawks"` join; surfaces a single pill on the Conditions section header.
-
-#### What's still missing (the M-effort gap)
-
-1. **Methodology-axis page sections.** The page renders identically for Hawks / ORB / DezK / unstructured strategies — only the badge changes. There's no Hawks-specific surface: no session/boundary KPIs, no morning-bias adherence card, no B3 daily-cap chip, no scenario-by-methodology grouping.
-2. **Per-methodology KPI grid.** Performance grid (line 161) shows the same six metrics for every strategy. Hawks-shaped strategies should expose extra cells (e.g. "boundaries used", "morning-bias respected %", "session-end exits").
-3. **`isHawksStrategy` is binary and coarse.** Derived from "any account using this strategy is in Hawks mode" — fine for the badge but won't scale to ORB/DezK. Needs a proper `methodology` enum on strategies (or a tag), with widget-level dispatch matching the §6.5 Mode-personalization widget contract.
-4. **Scorecard depth is shallow per condition.** No drill-down on a condition row → trades where it was met vs missed. The data exists; the UI doesn't expose it.
-5. **No "playbook health" trend.** Compliance is a single point-in-time number; the dashboard has a sparkline for it elsewhere — playbook detail should too.
-
-#### Why the budget dropped from L to M
-
-The compliance scoring layer (the L-shaped slice the manifesto worried about) is **done**. The remaining work is surface-area personalization on top of that layer — M-effort now that the Mode-personalization widget contract (`<ModeVariant />`, see [component-architecture §10](component-architecture.md)) has shipped. Hawks-specific KPI cards plug into that contract rather than each becoming a one-off hardcode.
-
-#### Methodology framework: available
-
-Use `<ModeVariant />` for any per-methodology widget swap on this page (account-mode axis). Use inline `recipe.entry.type === "hawks_triple_screen"` checks when the gate is the strategy's intrinsic methodology rather than the active account mode. See `docs/component-architecture.md` §10 for the distinction.
-
-- **Source**: `feature-manifesto-2026-05.md` §3.1, §6.4; verification pass 2026-05-20.
-- **Files inspected**: `src/app/[locale]/(app)/playbook/[id]/page.tsx`, `src/components/playbook/conditions-scorecard.tsx`, `src/components/playbook/condition-tier-display.tsx`, `src/app/actions/strategy-conditions.ts` (lines 295-336).
-
----
-
 ## Backtest
 
 ### Backtest ORB & DezK methodology panels — **P2**
