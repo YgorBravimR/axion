@@ -494,3 +494,95 @@ export const getStrategyHawksRollup = async (
 		}
 	}
 }
+
+/**
+ * Get recent trades for a specific condition, showing which ones met the condition.
+ * Fetches up to 50 most recent trades linked to a strategy version that recorded
+ * this condition. Each entry includes tradingDay, ticker, P&L, direction, and met status.
+ */
+export const getConditionTradeBreakdown = async (
+	strategyId: string,
+	conditionId: string,
+	versionId?: string
+): Promise<
+	ActionResponse<
+		Array<{
+			tradeId: string
+			tradingDay: Date
+			ticker: string
+			pnl: number
+			direction: string
+			met: boolean
+		}>
+	>
+> => {
+	const t = await getTranslations("playbook")
+	try {
+		const { userId } = await requireAuth()
+
+		const strategy = await db.query.strategies.findFirst({
+			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
+			columns: { id: true, currentVersion: true },
+		})
+		if (!strategy) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
+			}
+		}
+
+		const resolvedVersionId =
+			versionId ??
+			(await getCurrentVersionId(strategy.id, strategy.currentVersion))
+		if (!resolvedVersionId) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyNotFound"),
+				errors: [
+					{
+						code: "MISSING_VERSION",
+						detail: `Strategy ${strategyId} is missing a v${strategy.currentVersion} row`,
+					},
+				],
+			}
+		}
+
+		const breakdown = await db
+			.select({
+				tradeId: trades.id,
+				tradingDay: trades.entryDate,
+				ticker: trades.asset,
+				pnl: sql<number>`COALESCE(${trades.pnl}::int, 0)`,
+				direction: trades.direction,
+				met: tradeConditions.met,
+			})
+			.from(tradeConditions)
+			.innerJoin(trades, eq(trades.id, tradeConditions.tradeId))
+			.where(
+				and(
+					eq(tradeConditions.conditionId, conditionId),
+					eq(trades.strategyVersionId, resolvedVersionId)
+				)
+			)
+			.orderBy(desc(trades.entryDate))
+			.limit(50)
+
+		return {
+			status: "success",
+			message: t("actionErrors.conditionsRetrieved"),
+			data: breakdown,
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("actionErrors.retrieveFailed"),
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getConditionTradeBreakdown"),
+				},
+			],
+		}
+	}
+}

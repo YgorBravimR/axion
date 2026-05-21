@@ -437,6 +437,8 @@ const StrategyDetailPage = async ({
 														}
 													: undefined
 											}
+											strategyId={strategy.id}
+											versionId={selectedVersionId}
 										/>
 									</div>
 								</div>

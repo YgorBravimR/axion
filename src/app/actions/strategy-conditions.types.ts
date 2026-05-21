@@ -60,3 +60,12 @@ export interface StrategyHawksRollup {
 	// can appear with scenarioId = null.
 	scenarioDistribution: ScenarioCount[]
 }
+
+export interface TradeBreakdownEntry {
+	tradeId: string
+	tradingDay: Date
+	ticker: string
+	pnl: number
+	direction: string
+	met: boolean
+}

@@ -2334,7 +2334,17 @@
 			"emptyState": "Nenhuma operação ainda para esta estratégia.",
 			"emptyStateVersion": "Nenhuma operação vinculada à v{version} ainda.",
 			"emptyStateHint": "Registre uma operação com estas condições para iniciar o placar.",
-			"hawksBadge": "Metodologia Hawks"
+			"hawksBadge": "Metodologia Hawks",
+			"drillDown": {
+				"title": "{condition} — detalhamento de operações",
+				"subtitle": "Últimas 50 operações que registraram esta condição",
+				"metBadge": "Atendida",
+				"notMetBadge": "Não atendida",
+				"loading": "Carregando…",
+				"emptyState": "Nenhuma operação registrada para esta condição ainda.",
+				"errorState": "Não foi possível carregar o detalhamento.",
+				"tradeCountSummary": "{met}/{total} atendidas"
+			}
 		},
 		"hawksPanel": {
 			"title": "Disciplina Hawks",

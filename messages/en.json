@@ -2334,7 +2334,17 @@
 			"emptyState": "No trades yet for this strategy.",
 			"emptyStateVersion": "No trades linked to v{version} yet.",
 			"emptyStateHint": "Log a trade with these conditions to start the scorecard.",
-			"hawksBadge": "Hawks methodology"
+			"hawksBadge": "Hawks methodology",
+			"drillDown": {
+				"title": "{condition} — trade breakdown",
+				"subtitle": "Last 50 trades that recorded this condition",
+				"metBadge": "Met",
+				"notMetBadge": "Not met",
+				"loading": "Loading…",
+				"emptyState": "No trades recorded for this condition yet.",
+				"errorState": "Could not load breakdown.",
+				"tradeCountSummary": "{met}/{total} met"
+			}
 		},
 		"hawksPanel": {
 			"title": "Hawks discipline",
