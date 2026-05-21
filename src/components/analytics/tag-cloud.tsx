@@ -106,7 +106,7 @@ const TagSection = memo(
 												}
 											>
 												{tHeaders("pnl")}:{" "}
-												{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+												{formatCompactCurrencyWithSign(tag.totalPnl, "BRL")}
 											</p>
 										</>
 									) : (
@@ -119,7 +119,7 @@ const TagSection = memo(
 												}
 											>
 												{tHeaders("pnl")}:{" "}
-												{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+												{formatCompactCurrencyWithSign(tag.totalPnl, "BRL")}
 											</p>
 											<p className="text-txt-200">
 												{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%
@@ -153,7 +153,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 	const isRMode = expectancyMode === "edge"
 	const formatMetric = (value: number): string =>
-		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
+		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "BRL")
 	const getMetric = (tag: TagStats): number =>
 		isRMode ? tag.avgR : tag.totalPnl
 
@@ -333,7 +333,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 												tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 											}`}
 										>
-											{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+											{formatCompactCurrencyWithSign(tag.totalPnl, "BRL")}
 										</TableCell>
 										<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 											{tag.winRate.toFixed(1)}%

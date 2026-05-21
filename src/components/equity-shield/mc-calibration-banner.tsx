@@ -146,7 +146,7 @@ const MCCalibrationBanner = ({
 						pct: snapshot.worstMaxDrawdownPercent.toFixed(1),
 					}),
 					suggestedValue: suggested,
-					displayValue: formatCompactCurrency(fromCents(suggested), "R$"),
+					displayValue: formatCompactCurrency(fromCents(suggested), "BRL"),
 					paramField: "drawdownLimitCents",
 				})
 			}

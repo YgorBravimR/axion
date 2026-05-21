@@ -107,7 +107,7 @@ const HoldingPeriodChart = memo(
 		const { yAxisWidth } = useChartConfig()
 		const t = useTranslations("analytics.holdingPeriod")
 		const locale = useLocale()
-		const currencySymbol = locale === "pt-BR" ? "R$" : "$"
+		const currencySymbol = locale === "pt-BR" ? "BRL" : "$"
 
 		const isRMode = expectancyMode === "edge"
 		const metricKey = isRMode ? "avgR" : "totalPnl"

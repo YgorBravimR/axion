@@ -90,12 +90,12 @@ const CustomTooltip = memo(
 					<>
 						<p className="text-small text-acc-100 font-medium">
 							{t("tooltipOriginal", {
-								value: formatCompactCurrency(data.originalAccountEquity, "R$"),
+								value: formatCompactCurrency(data.originalAccountEquity, "BRL"),
 							})}
 						</p>
 						<p className="text-small text-txt-100 font-medium">
 							{t("tooltipManaged", {
-								value: formatCompactCurrency(data.accountEquity, "R$"),
+								value: formatCompactCurrency(data.accountEquity, "BRL"),
 							})}
 						</p>
 					</>
@@ -107,7 +107,7 @@ const CustomTooltip = memo(
 									variant === "method2"
 										? data.originalAccountEquity
 										: data.accountEquity,
-									"R$"
+									"BRL"
 								),
 							})}
 						</p>
@@ -117,13 +117,13 @@ const CustomTooltip = memo(
 					className={`text-tiny ${data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
 				>
 					{t("tooltipPnl", {
-						value: `${pnlSign}${formatCompactCurrency(data.pnl, "R$")}`,
+						value: `${pnlSign}${formatCompactCurrency(data.pnl, "BRL")}`,
 					})}
 				</p>
 				{!showComparison && data.drawdownFromPeak > 0 && (
 					<p className="text-tiny text-trade-sell">
 						{t("tooltipDrawdown", {
-							value: formatCompactCurrency(data.drawdownFromPeak, "R$"),
+							value: formatCompactCurrency(data.drawdownFromPeak, "BRL"),
 						})}
 					</p>
 				)}
@@ -137,7 +137,7 @@ const CustomTooltip = memo(
 				{!showComparison && data.smaValue !== null && (
 					<p className="text-tiny text-acc-200">
 						{t("tooltipSMA", {
-							value: formatCompactCurrency(data.smaValue, "R$"),
+							value: formatCompactCurrency(data.smaValue, "BRL"),
 						})}
 					</p>
 				)}
@@ -387,7 +387,7 @@ const EquityShieldChart = ({
 					<YAxis
 						domain={[minValue - padding, maxValue + padding]}
 						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
-						tickFormatter={(val: number) => formatCompactCurrency(val, "R$")}
+						tickFormatter={(val: number) => formatCompactCurrency(val, "BRL")}
 						width={yAxisWidth}
 						tickLine={false}
 						axisLine={false}

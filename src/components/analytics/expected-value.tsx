@@ -189,7 +189,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 								isPositiveEV ? "text-trade-buy" : "text-trade-sell"
 							}`}
 						>
-							{formatCompactCurrencyWithSign(data.expectedValue, "R$")}
+							{formatCompactCurrencyWithSign(data.expectedValue, "BRL")}
 						</span>
 					</div>
 				</div>
@@ -206,13 +206,13 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 				<div className="bg-bg-100 p-s-200 sm:p-s-300 rounded-lg text-center">
 					<StatLabel label={t("avgWinLabel")} tooltip={t("avgWinDesc")} />
 					<p className="mt-s-100 text-small sm:text-body text-trade-buy font-bold">
-						{formatCompactCurrencyWithSign(data.avgWin, "R$")}
+						{formatCompactCurrencyWithSign(data.avgWin, "BRL")}
 					</p>
 				</div>
 				<div className="bg-bg-100 p-s-200 sm:p-s-300 rounded-lg text-center">
 					<StatLabel label={t("avgLossLabel")} tooltip={t("avgLossDesc")} />
 					<p className="mt-s-100 text-small sm:text-body text-trade-sell font-bold">
-						{formatCompactCurrencyWithSign(-data.avgLoss, "R$")}
+						{formatCompactCurrencyWithSign(-data.avgLoss, "BRL")}
 					</p>
 				</div>
 				<div className="bg-bg-100 p-s-200 sm:p-s-300 rounded-lg text-center">
@@ -222,7 +222,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 							data.projectedPnl100 >= 0 ? "text-trade-buy" : "text-trade-sell"
 						}`}
 					>
-						{formatCompactCurrencyWithSign(data.projectedPnl100, "R$")}
+						{formatCompactCurrencyWithSign(data.projectedPnl100, "BRL")}
 					</p>
 				</div>
 			</div>
@@ -247,7 +247,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 							<span
 								className={isPositiveEV ? "text-trade-buy" : "text-trade-sell"}
 							>
-								{formatCompactCurrencyWithSign(data.expectedValue, "R$")}
+								{formatCompactCurrencyWithSign(data.expectedValue, "BRL")}
 							</span>
 						</p>
 					</div>
@@ -264,7 +264,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 								),
 								amount: () => (
 									<span className="text-trade-buy font-semibold">
-										{formatCompactCurrencyWithSign(data.expectedValue, "R$")}
+										{formatCompactCurrencyWithSign(data.expectedValue, "BRL")}
 									</span>
 								),
 							})
@@ -278,7 +278,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 									<span className="text-trade-sell font-semibold">
 										{formatCompactCurrencyWithSign(
 											Math.abs(data.expectedValue),
-											"R$"
+											"BRL"
 										)}
 									</span>
 								),

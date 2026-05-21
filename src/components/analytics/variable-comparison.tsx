@@ -78,7 +78,7 @@ const formatProfitFactor = (value: number): string => {
 const formatMetricValue = (value: number, metric: MetricType): string => {
 	switch (metric) {
 		case "pnl":
-			return formatCompactCurrency(value, "R$")
+			return formatCompactCurrency(value, "BRL")
 		case "winRate":
 			return `${value.toFixed(1)}%`
 		case "avgR":
@@ -134,7 +134,7 @@ const CustomTooltip = ({
 				</p>
 				<div className="mt-s-200 space-y-s-100 text-tiny">
 					<p className={data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-						{t("pnl")}: {formatCompactCurrency(data.pnl, "R$")}
+						{t("pnl")}: {formatCompactCurrency(data.pnl, "BRL")}
 					</p>
 					<p className="text-txt-200">
 						{t("winRate")}: {data.winRate.toFixed(1)}%
@@ -455,7 +455,7 @@ export const VariableComparison = ({
 											row.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
-										{formatCompactCurrency(row.pnl, "R$")}
+										{formatCompactCurrency(row.pnl, "BRL")}
 									</TableCell>
 									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.winRate.toFixed(1)}%

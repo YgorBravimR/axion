@@ -99,7 +99,7 @@ const V2MetricsCards = ({
 			>
 				<MetricRow
 					label={t("median")}
-					value={formatCompactCurrency(medianPnlFromCents, "R$")}
+					value={formatCompactCurrency(medianPnlFromCents, "BRL")}
 					valueClass={
 						statistics.medianMonthlyPnl >= 0
 							? "text-trade-buy"
@@ -108,7 +108,7 @@ const V2MetricsCards = ({
 				/>
 				<MetricRow
 					label={t("mean")}
-					value={formatCompactCurrency(statistics.meanMonthlyPnl / 100, "R$")}
+					value={formatCompactCurrency(statistics.meanMonthlyPnl / 100, "BRL")}
 					valueClass={
 						statistics.meanMonthlyPnl >= 0
 							? "text-trade-buy"
@@ -119,7 +119,7 @@ const V2MetricsCards = ({
 					label={t("bestCase")}
 					value={formatCompactCurrency(
 						statistics.bestCaseMonthlyPnl / 100,
-						"R$"
+						"BRL"
 					)}
 					valueClass="text-trade-buy"
 				/>
@@ -127,7 +127,7 @@ const V2MetricsCards = ({
 					label={t("worstCase")}
 					value={formatCompactCurrency(
 						statistics.worstCaseMonthlyPnl / 100,
-						"R$"
+						"BRL"
 					)}
 					valueClass="text-trade-sell"
 				/>
@@ -233,7 +233,10 @@ const V2MetricsCards = ({
 				/>
 				<MetricRow
 					label={t("expectedDailyPnl")}
-					value={formatCompactCurrency(statistics.expectedDailyPnl / 100, "R$")}
+					value={formatCompactCurrency(
+						statistics.expectedDailyPnl / 100,
+						"BRL"
+					)}
 					valueClass={
 						statistics.expectedDailyPnl >= 0
 							? "text-trade-buy"

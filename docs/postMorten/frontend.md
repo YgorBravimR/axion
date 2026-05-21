@@ -236,3 +236,63 @@ The fix preserves Hawks payload across all scenarios: edit mode (loaded trade al
 - `src/app/actions/trades.types.ts` (TradeWithRelations type)
 - `src/components/journal/trade-form.tsx` (buildTradeFormValues, TradeWithTags type)
 - `src/__tests__/components/trade-form-hawks-preservation.test.ts` (new test)
+
+---
+
+## [BUG-2026-05-21] Invalid currency code "R$" passed to Intl.NumberFormat in 43 call sites
+
+**Severity:** Critical | **Affected:** 43 files across Analytics, Reports, and other feature modules
+
+**Cause:** The `formatCompactCurrency` and `formatCompactCurrencyWithSign` functions accept a `currency` parameter that is passed directly to `Intl.NumberFormat`. The ISO 4217 standard requires currency codes like `"BRL"` (Brazilian Real), not display symbols like `"R$"`.
+
+Every call site in the codebase was passing the display symbol `"R$"` instead of the currency code `"BRL"`:
+
+- `formatCompactCurrency(value, "R$")` → throws `RangeError: Invalid currency code : R$`
+- `formatCompactCurrencyWithSign(value, "R$")` → throws same error
+
+The error occurred at runtime in:
+
+- Analytics dashboard (variable-comparison.tsx, day-of-week-chart.tsx, session-performance-chart.tsx, etc.)
+- Reports section (weekly-meta-chart.tsx)
+- Equity Shield (equity-shield-chart.tsx)
+- Monte Carlo simulator (daily-pnl-chart.tsx, v2-metrics-cards.tsx)
+- Account Comparison (comparison-equity-chart.tsx)
+
+**Effect:** `RangeError` caught by ErrorBoundaryHandler at component level, rendering full-page error screens. Users could not view Analytics or Reports sections. Browser console: `RangeError: Invalid currency code : R$`.
+
+**Solution:** Replaced all 43 occurrences of `"R$"` with `"BRL"` across the entire codebase:
+
+- Used `sed` to globally replace `"R\$"` → `"BRL"` in all `.ts` and `.tsx` files under `src/`
+- Verified no remaining `"R$"` strings in formatCompact calls (grep returned 0 results)
+- Verified 49 total uses of `"BRL"` (43 fixed + 6 that were already correct)
+- `pnpm exec tsc --noEmit` passed with no type errors
+
+Fixed files (43 total):
+
+- `src/components/equity-shield/equity-shield-chart.tsx` (6 occurrences)
+- `src/components/equity-shield/equity-shield-stats.tsx` (1)
+- `src/components/equity-shield/mc-calibration-banner.tsx` (1)
+- `src/components/account-comparison/comparison-equity-chart.tsx` (2)
+- `src/components/monte-carlo/v2/risk-profile-selector.tsx` (1)
+- `src/components/monte-carlo/v2/v2-metrics-cards.tsx` (3)
+- `src/components/monte-carlo/v2/daily-pnl-chart.tsx` (2)
+- `src/components/analytics/day-of-week-chart.tsx` (3)
+- `src/components/analytics/r-distribution.tsx` (1)
+- `src/components/analytics/session-performance-chart.tsx` (3)
+- `src/components/analytics/tag-cloud.tsx` (4)
+- `src/components/analytics/hourly-performance-chart.tsx` (3)
+- `src/components/analytics/expected-value.tsx` (5)
+- `src/components/analytics/cumulative-pnl-chart.tsx` (2)
+- `src/components/analytics/variable-comparison.tsx` (3)
+- `src/components/reports/weekly-meta-chart.tsx` (2)
+
+**Prevention:**
+
+1. **Type safety for currency codes:** The `formatCompactCurrency` function signature should enforce `currency: "BRL"` as a literal type or accept a strict enum, not a free string. This would have caught the error at compile time.
+2. **Linting rule:** Add an ESLint rule to forbid passing `"R$"` to `formatCompact*` functions, with auto-fix to replace with `"BRL"`.
+3. **Code review checklist:** Currency formatting calls are a common mistake point when supporting multiple locales. Flag during review if a currency code is unfamiliar (e.g., "R$" looks like a symbol, not a code).
+
+**Related Files:**
+
+- `src/lib/formatting.ts` (function definitions — no changes needed, they are correct)
+- 43 files listed above (call sites fixed)

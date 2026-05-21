@@ -65,7 +65,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 						{t("tooltipTrades")}: {data.count}
 					</p>
 					<p className={data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-						{t("tooltipPnl")}: {formatCompactCurrencyWithSign(data.pnl, "R$")}
+						{t("tooltipPnl")}: {formatCompactCurrencyWithSign(data.pnl, "BRL")}
 					</p>
 				</div>
 			</div>

@@ -52,7 +52,7 @@ const StatCard = memo(
 StatCard.displayName = "EquityShieldStatCard"
 
 const formatCurrency = (value: number): string =>
-	formatCompactCurrency(value, "R$")
+	formatCompactCurrency(value, "BRL")
 
 interface PassFailBadgeProps {
 	wouldPass: boolean

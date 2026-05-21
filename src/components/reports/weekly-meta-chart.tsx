@@ -73,7 +73,7 @@ const CustomTooltip = ({
 			)}
 			{payload.map((entry) => (
 				<p key={entry.name} style={{ color: entry.color }}>
-					{entry.name}: {formatCompactCurrency(entry.value / 100, "R$")}
+					{entry.name}: {formatCompactCurrency(entry.value / 100, "BRL")}
 				</p>
 			))}
 		</div>
@@ -126,7 +126,7 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 					/>
 					<YAxis
 						tickFormatter={(cents: number) =>
-							formatCompactCurrency(cents / 100, "R$")
+							formatCompactCurrency(cents / 100, "BRL")
 						}
 						tick={{
 							fontSize: 11,

@@ -58,7 +58,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 					<span
 						className={`font-medium ${isProfit ? "text-trade-buy" : "text-trade-sell"}`}
 					>
-						{formatCompactCurrencyWithSign(data.totalPnl, "R$")}
+						{formatCompactCurrencyWithSign(data.totalPnl, "BRL")}
 					</span>
 				</p>
 				<p className="text-tiny">
@@ -123,7 +123,7 @@ export const DayOfWeekChart = memo(
 		}, [data, metricKey, isRMode])
 
 		const formatMetric = (value: number): string =>
-			isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
+			isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "BRL")
 
 		if (tradingDays.length === 0) {
 			return (
@@ -202,7 +202,7 @@ export const DayOfWeekChart = memo(
 							tickFormatter={(value: number) =>
 								isRMode
 									? formatR(value)
-									: formatCompactCurrencyWithSign(value, "R$")
+									: formatCompactCurrencyWithSign(value, "BRL")
 							}
 							stroke="var(--color-txt-300)"
 							tick={AXIS_TICK}
