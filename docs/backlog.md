@@ -130,13 +130,6 @@ All four items below are P3 distill passes flagged by the 2026-05-12 "impeccable
 - **Why**: Power-user shortcut. Not blocking — Tab works fine — but the cockpit register favors keyboard density.
 - **Source**: `docs/scans/2026-05-12-impeccable-journal-list.md` Phase 1b P1.
 
-### Playbook list — `/playbook` reads as nested cards
-
-- **Priority:** P3 · **Effort:** M
-- **What**: The compliance overview and the strategy grid each live inside their own `border-bg-300 bg-bg-200 rounded-lg border` wrapper, and the strategy grid itself contains up to ~10 `StrategyCard` boxes — yielding a "cards inside a card" structure. Either drop the outer chrome on the strategy section (let the cards float on the page background and use a section heading instead), or remove the per-card border and let the section wrapper provide the boundary.
-- **Why**: Shared design law: "nested cards are always wrong." Two layers of borders compete for attention and consume horizontal whitespace.
-- **Source**: `docs/scans/2026-05-12-impeccable-playbook-list.md` Phase 1a P2.
-
 ### Journal detail — card-rhythm distill on `/journal/[id]`
 
 - **Priority:** P3 · **Effort:** M
