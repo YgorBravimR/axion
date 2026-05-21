@@ -284,3 +284,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: When mocking the data layer for a unit test, always check whether the module-under-test (and its transitive imports) reach `@/db/drizzle-ws` as well. If yes, add a parallel `vi.mock("@/db/drizzle-ws", () => ({ dbWs: { transaction: vi.fn(...) } }))`. Standard targets that need both mocks: anything under `src/app/actions/fractal-plan/`, anything that touches `src/lib/fractal-plan/auto-seed.ts`, anything Hawks-mode (server actions in `src/app/actions/hawks-renko.ts` and friends). The `drizzle-ws` client surface used in production is mostly `dbWs.transaction(...)` — a 1-line mock that invokes the callback with `{}` is sufficient for most tests.
 - **Source**: 2026-05-20 Hawks branch ship verification — three fractal-plan unit tests (`actions-fractals`, `actions-yearly`, `auto-seed`) failed at import after the driver-aware refactor made `drizzle-ws.ts` eager-throw.
 - **Date logged**: 2026-05-20.
+
+---
+
+## Seed Scripts / Dev Data
+
+### `pnpm db:seed` sets `strategies.current_version = 1` but inserts zero `strategy_versions` rows
+
+- **What**: Auto-seeded strategies (created by `scripts/seed.ts` or any equivalent fixture) have `strategies.current_version = 1` set at insert time, but no corresponding row is inserted into `strategy_versions`. Any code path that calls `getCurrentVersionId(strategyId, currentVersion)` returns `null` for these strategies — which causes `getStrategyConditionsRollup` (and any future action that resolves a specific version) to return `NOT_FOUND`. The symptom in the Playbook page is a blank render with no error: `rollup=null` falls through every conditional silently. Hit during Hawks-mode QA (2026-05-21) — the Hawks gate fired correctly but the panel didn't render because the rollup was null.
+- **What to do**: After seeding strategies in dev, manually insert a seed version row: `INSERT INTO strategy_versions (id, strategy_id, version_number, created_at) VALUES (gen_random_uuid(), '<strategy_id>', 1, now())` (adjust columns to match current schema). The long-term fix is to update `scripts/seed.ts` to insert the version row alongside each strategy insert. For production, new strategies created via the UI go through the `createStrategy` server action which already inserts the version row correctly.
+- **Source**: `src/app/actions/strategy-conditions.ts` (`getCurrentVersionId`); QA session 2026-05-21 on `feat/hawks-mode-v0`.
+- **Date logged**: 2026-05-21.

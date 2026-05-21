@@ -1,0 +1,1 @@
+ALTER TABLE "strategy_versions" ADD COLUMN "label" varchar(100);

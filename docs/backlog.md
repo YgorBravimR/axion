@@ -31,28 +31,7 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ---
 
-## P1 strategic shortlist (ship next)
-
-> **Strategic context**: see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) for the invest/merge/deprecate framing this shortlist sits inside.
-
-The items that earn priority over everything else in this file. Promote a P2 entry here when it earns enough strategic weight to lead.
-
-_Currently empty — last item (Encryption archive) shipped 2026-05-20 (commit `b8966f1`)._
-
----
-
 ## Backtest
-
-### Backtest ORB & DezK methodology panels — **P2**
-
-- **Priority:** P2 · **Effort:** M · **Status**: visual layer + Hawks panel **already shipped** (verified 2026-05-20); remaining work is the missing ORB and DezK result panels.
-- **Already done** (not in the original entry — discovered on 2026-05-20 read):
-  - **Visual replay**: `BacktestTradeChartModal` (`src/components/backtest/backtest-trade-chart-modal.tsx`) opens per-trade from `BacktestTradesTable`, loads candle window via `getCandlesForRange`, renders entry/exit markers via `lightweight-charts`.
-  - **Hawks panel**: `BacktestHawksResultsPanel` (`backtest-hawks-results-panel.tsx`) gated by `recipe.entry.type === "hawks_triple_screen"` in `backtest-content.tsx:439`, covering session split (BR-local), 1/2/3+ trade-day buckets (the B3 daily cap signal), and best/worst day.
-- **What remains**: build `BacktestOrbResultsPanel` and `BacktestDezkResultsPanel` and dispatch on `recipe.entry.type` alongside the Hawks gate. Per `component-architecture.md` §10, this is the strategy-methodology axis (intrinsic to the recipe), so use inline `recipe.entry.type` gates — **not** `<ModeVariant />`.
-- **Why P2, not P1**: the high-blast-radius pieces are live; the remaining gap only bites ORB and DezK users, and neither methodology has a written spec for which metrics matter. Promote back to P1 once a CEO/manifesto note names the ORB or DezK metric set.
-- **Open questions before building**: which metrics matter for ORB (opening-range hit rate? % continuation? gap-vs-no-gap split?) and DezK. Defer until specified.
-- **Source**: CEO review session 2026-05-14; verification pass 2026-05-20. `src/components/backtest/`, `src/types/backtest.ts`.
 
 ### Hawks tick-level fidelity on stop reference
 
@@ -60,24 +39,6 @@ _Currently empty — last item (Encryption archive) shipped 2026-05-20 (commit `
 - **What**: The current Hawks stop formula `2·open − close` gives one brick body below the entry brick's open — a 2-brick-body distance at points-level fidelity. The strict Profit Pro 9+1 geometry is `2·(R−1) + 1` ticks (two brick bodies + 1 closer tick). The `+1 tick` is omitted today; this is acceptable for points-level computation but should be revisited if/when the engine exposes tick-precise stops.
 - **Why**: Cosmetic at current fidelity (one tick on a ~20-tick brick is ~5% of the brick body). Worth tracking so it's not silently rediscovered as a bug later.
 - **Source**: `docs/postMorten/backend.md` [BUG-2026-05-15] open follow-ups; Ygor math note 2026-05-15.
-
----
-
-## Strategy versioning v2 follow-ups
-
-Both items below are deferred-out-of-v1 entries. v1 (read-only awareness + fork flow + dashboard cohort filter + scorecard polish) shipped at commits `99dabfa` + `7abe9b7`.
-
-### Strategy version diff viewer
-
-- **Priority:** P2 · **Effort:** M
-- **What**: Side-by-side condition diff between two versions of the same strategy. Entry point reserved as "Compare versions" link in scorecard header (currently hidden in v1).
-- **Why deferred**: Numeric comparison via dashboard cohort split covers 80% of the analytical need; diff is for the qualitative "what changed between v1 and v2" question, which is lower-frequency.
-
-### Strategy version naming/labels
-
-- **Priority:** P3 · **Effort:** S
-- **What**: Free-text label per version (e.g. "v2 — after London session refinement"). v1 ships numeric-only.
-- **Why deferred**: Numeric versions are sufficient for first launch; labels add discoverability once the user has 3+ versions.
 
 ---
 

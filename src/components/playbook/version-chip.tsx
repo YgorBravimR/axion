@@ -136,12 +136,19 @@ const VersionChip = ({
 									</span>
 								) : null}
 							</div>
-							<div className="text-tiny text-txt-300 gap-s-200 flex items-center">
-								<span className="tabular-nums">
-									{t("dropdown.tradeCount", { count: v.tradeCount })}
-								</span>
-								<span aria-hidden="true">·</span>
-								<span>{dateFormatter.format(new Date(v.createdAt))}</span>
+							<div className="flex flex-col items-end gap-0">
+								<div className="text-tiny text-txt-300 gap-s-200 flex items-center">
+									<span className="tabular-nums">
+										{t("dropdown.tradeCount", { count: v.tradeCount })}
+									</span>
+									<span aria-hidden="true">·</span>
+									<span>{dateFormatter.format(new Date(v.createdAt))}</span>
+								</div>
+								{v.label ? (
+									<span className="text-tiny text-txt-200 italic">
+										{v.label}
+									</span>
+								) : null}
 							</div>
 						</DropdownMenuItem>
 					)

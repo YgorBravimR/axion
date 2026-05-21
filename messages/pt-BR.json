@@ -2403,6 +2403,40 @@
 				"cancel": "Cancelar",
 				"successToast": "Bifurcado para v{nextVersion}. Você está na nova versão.",
 				"errorToast": "Não foi possível bifurcar a estratégia. Tente novamente."
+			},
+			"labelSaved": "Rótulo da versão salvo.",
+			"diff": {
+				"headerButton": "Comparar",
+				"headerTooltip": "Comparar condições entre versões",
+				"title": "Diferença de Versões",
+				"description": "Compare condições entre duas versões desta estratégia.",
+				"versionALabel": "Versão base",
+				"versionBLabel": "Comparar com",
+				"sameVersion": "Selecione duas versões diferentes para comparar.",
+				"loading": "Carregando diferenças…",
+				"noChanges": "As condições são idênticas nas duas versões.",
+				"colCondition": "Condição",
+				"colStatus": "Status",
+				"colTierA": "Tier (A)",
+				"colTierB": "Tier (B)",
+				"statusAdded": "Adicionada",
+				"statusRemoved": "Removida",
+				"statusTierChanged": "Tier alterado",
+				"statusUnchanged": "Sem alteração",
+				"summaryAdded": "{count, plural, =1 {1 adicionada} other {# adicionadas}}",
+				"summaryRemoved": "{count, plural, =1 {1 removida} other {# removidas}}",
+				"summaryModified": "{count, plural, =1 {1 alteração de tier} other {# alterações de tier}}"
+			},
+			"label": {
+				"buttonAriaLabel": "Definir rótulo para v{version}",
+				"buttonTooltip": "Rotular esta versão",
+				"dialogTitle": "Rotular v{version}",
+				"dialogDescription": "Adicione um nome curto para identificar esta versão.",
+				"inputPlaceholder": "ex.: Foco na abertura de Londres",
+				"cancel": "Cancelar",
+				"save": "Salvar",
+				"saving": "Salvando…",
+				"savedToast": "Rótulo da versão salvo."
 			}
 		},
 		"scenarios": {

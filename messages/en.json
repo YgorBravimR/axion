@@ -2403,6 +2403,40 @@
 				"cancel": "Cancel",
 				"successToast": "Forked to v{nextVersion}. You're now on the new version.",
 				"errorToast": "Could not fork the strategy. Please try again."
+			},
+			"labelSaved": "Version label saved.",
+			"diff": {
+				"headerButton": "Compare",
+				"headerTooltip": "Compare conditions across versions",
+				"title": "Version Diff",
+				"description": "Compare conditions between two versions of this strategy.",
+				"versionALabel": "Base version",
+				"versionBLabel": "Compare to",
+				"sameVersion": "Select two different versions to compare.",
+				"loading": "Loading diff…",
+				"noChanges": "Conditions are identical in both versions.",
+				"colCondition": "Condition",
+				"colStatus": "Status",
+				"colTierA": "Tier (A)",
+				"colTierB": "Tier (B)",
+				"statusAdded": "Added",
+				"statusRemoved": "Removed",
+				"statusTierChanged": "Tier changed",
+				"statusUnchanged": "Unchanged",
+				"summaryAdded": "{count, plural, =1 {1 added} other {# added}}",
+				"summaryRemoved": "{count, plural, =1 {1 removed} other {# removed}}",
+				"summaryModified": "{count, plural, =1 {1 tier change} other {# tier changes}}"
+			},
+			"label": {
+				"buttonAriaLabel": "Set label for v{version}",
+				"buttonTooltip": "Label this version",
+				"dialogTitle": "Label v{version}",
+				"dialogDescription": "Add a short name to help identify this version.",
+				"inputPlaceholder": "e.g., London open focus",
+				"cancel": "Cancel",
+				"save": "Save",
+				"saving": "Saving…",
+				"savedToast": "Version label saved."
 			}
 		},
 		"scenarios": {

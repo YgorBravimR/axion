@@ -640,6 +640,7 @@ export const listStrategyVersions = async (
 				id: strategyVersions.id,
 				version: strategyVersions.version,
 				createdAt: strategyVersions.createdAt,
+				label: strategyVersions.label,
 				tradeCount: sql<number>`count(${trades.id})::int`,
 			})
 			.from(strategyVersions)
@@ -648,7 +649,8 @@ export const listStrategyVersions = async (
 			.groupBy(
 				strategyVersions.id,
 				strategyVersions.version,
-				strategyVersions.createdAt
+				strategyVersions.createdAt,
+				strategyVersions.label
 			)
 			.orderBy(desc(strategyVersions.version))
 
@@ -660,6 +662,7 @@ export const listStrategyVersions = async (
 				version: row.version,
 				tradeCount: row.tradeCount,
 				createdAt: row.createdAt,
+				label: row.label ?? null,
 			})),
 		}
 	} catch (error) {
@@ -670,6 +673,61 @@ export const listStrategyVersions = async (
 				{
 					code: "FETCH_FAILED",
 					detail: toSafeErrorMessage(error, "listStrategyVersions"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Set or clear the human-readable label on a strategy version. Labels are
+ * optional — they let traders annotate versions with a short name like
+ * "London open focus" without changing the version number.
+ */
+export const updateStrategyVersionLabel = async (
+	strategyId: string,
+	versionId: string,
+	label: string | null
+): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("playbook")
+	try {
+		const { userId } = await requireAuth()
+
+		const parent = await db.query.strategies.findFirst({
+			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
+			columns: { id: true },
+		})
+		if (!parent) {
+			return {
+				status: "error",
+				message: t("actions.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy not found" }],
+			}
+		}
+
+		const trimmed = label?.trim() ?? null
+		const finalLabel = trimmed === "" ? null : trimmed
+
+		await db
+			.update(strategyVersions)
+			.set({ label: finalLabel })
+			.where(
+				and(
+					eq(strategyVersions.id, versionId),
+					eq(strategyVersions.strategyId, strategyId)
+				)
+			)
+
+		await invalidateStrategyData(strategyId, userId)
+		return { status: "success", message: t("versioning.labelSaved") }
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("actions.strategyFetchFailed"),
+			errors: [
+				{
+					code: "UPDATE_FAILED",
+					detail: toSafeErrorMessage(error, "updateStrategyVersionLabel"),
 				},
 			],
 		}

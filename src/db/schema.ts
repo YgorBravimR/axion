@@ -580,6 +580,7 @@ export const strategyVersions = pgTable(
 		screenshotUrl: varchar("screenshot_url", { length: 500 }),
 		screenshotS3Key: varchar("screenshot_s3_key", { length: 500 }),
 		notes: text("notes"),
+		label: varchar("label", { length: 100 }),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),

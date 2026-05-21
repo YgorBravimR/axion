@@ -1,10 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { Pencil, GitFork } from "lucide-react"
+import { Pencil, GitFork, GitCompare, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog"
 import {
 	Tooltip,
 	TooltipContent,
@@ -13,7 +22,10 @@ import {
 } from "@/components/ui/tooltip"
 import { VersionChip } from "@/components/playbook/version-chip"
 import { ForkVersionDialog } from "@/components/playbook/fork-version-dialog"
+import { StrategyVersionDiffDialog } from "@/components/playbook/strategy-version-diff-dialog"
 import { cn } from "@/lib/utils"
+import { updateStrategyVersionLabel } from "@/app/actions/strategies"
+import { useToast } from "@/components/ui/toast"
 import type {
 	StrategyVersionSnapshot,
 	StrategyVersionSummary,
@@ -55,9 +67,43 @@ const StrategyDetailHeader = ({
 	forkConditions,
 }: StrategyDetailHeaderProps) => {
 	const t = useTranslations("playbook.versioning")
+	const { showToast } = useToast()
 	const [forkOpen, setForkOpen] = useState(false)
+	const [compareOpen, setCompareOpen] = useState(false)
+	const [renameOpen, setRenameOpen] = useState(false)
+	const [renameValue, setRenameValue] = useState("")
+	const [isPendingRename, startRenameTransition] = useTransition()
 	const isHistorical = selectedVersion !== currentVersion
 	const canFork = !isHistorical && liveTradeCount > 0
+	const canCompare = versions.length > 1
+	const selectedVersionId =
+		versions.find((v) => v.version === selectedVersion)?.id ?? ""
+	const selectedVersionLabel =
+		versions.find((v) => v.version === selectedVersion)?.label ?? null
+
+	const handleRenameOpen = (): void => {
+		setRenameValue(selectedVersionLabel ?? "")
+		setRenameOpen(true)
+	}
+
+	const handleRenameSave = (): void => {
+		if (!selectedVersionId) {
+			return
+		}
+		startRenameTransition(async () => {
+			const result = await updateStrategyVersionLabel(
+				strategyId,
+				selectedVersionId,
+				renameValue || null
+			)
+			if (result.status === "success") {
+				showToast("success", t("label.savedToast"))
+				setRenameOpen(false)
+			} else {
+				showToast("error", result.message)
+			}
+		})
+	}
 
 	return (
 		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
@@ -73,6 +119,56 @@ const StrategyDetailHeader = ({
 					/>
 				</div>
 				<div className="gap-s-200 flex items-center">
+					{canCompare ? (
+						<TooltipProvider delayDuration={150}>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										id="strategy-compare-button"
+										variant="outline"
+										size="sm"
+										onClick={() => setCompareOpen(true)}
+										className="gap-s-200 inline-flex items-center"
+									>
+										<GitCompare className="h-3.5 w-3.5" aria-hidden="true" />
+										{t("diff.headerButton")}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent
+									id="strategy-compare-button-tooltip"
+									side="bottom"
+								>
+									{t("diff.headerTooltip")}
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
+					) : null}
+
+					<TooltipProvider delayDuration={150}>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									id="strategy-rename-version-button"
+									variant="ghost"
+									size="sm"
+									onClick={handleRenameOpen}
+									className="gap-s-200 px-s-200 inline-flex items-center"
+									aria-label={t("label.buttonAriaLabel", {
+										version: selectedVersion,
+									})}
+								>
+									<Tag className="h-3.5 w-3.5" aria-hidden="true" />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent
+								id="strategy-rename-version-tooltip"
+								side="bottom"
+							>
+								{t("label.buttonTooltip")}
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+
 					<TooltipProvider delayDuration={150}>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -139,6 +235,58 @@ const StrategyDetailHeader = ({
 					onOpenChange={setForkOpen}
 				/>
 			) : null}
+
+			{canCompare ? (
+				<StrategyVersionDiffDialog
+					strategyId={strategyId}
+					versions={versions}
+					open={compareOpen}
+					onOpenChange={setCompareOpen}
+				/>
+			) : null}
+
+			<Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+				<DialogContent id="strategy-version-rename-dialog" className="max-w-sm">
+					<DialogHeader>
+						<DialogTitle>
+							{t("label.dialogTitle", { version: selectedVersion })}
+						</DialogTitle>
+						<DialogDescription>
+							{t("label.dialogDescription")}
+						</DialogDescription>
+					</DialogHeader>
+					<Input
+						id="strategy-version-label-input"
+						value={renameValue}
+						onChange={(e) => setRenameValue(e.target.value)}
+						placeholder={t("label.inputPlaceholder")}
+						maxLength={100}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								handleRenameSave()
+							}
+						}}
+					/>
+					<DialogFooter>
+						<Button
+							id="strategy-version-rename-cancel"
+							variant="ghost"
+							size="sm"
+							onClick={() => setRenameOpen(false)}
+						>
+							{t("label.cancel")}
+						</Button>
+						<Button
+							id="strategy-version-rename-save"
+							size="sm"
+							onClick={handleRenameSave}
+							disabled={isPendingRename}
+						>
+							{isPendingRename ? t("label.saving") : t("label.save")}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 }

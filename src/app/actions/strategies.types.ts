@@ -55,6 +55,7 @@ export interface StrategyVersionSummary {
 	version: number
 	tradeCount: number
 	createdAt: Date
+	label: string | null
 }
 
 // Lightweight strategy + versions row used by the dashboard cohort-split

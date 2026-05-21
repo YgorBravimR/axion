@@ -78,6 +78,13 @@
 			"when": 1779345928220,
 			"tag": "0010_adorable_pride",
 			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "7",
+			"when": 1779349805156,
+			"tag": "0011_happy_maximus",
+			"breakpoints": true
 		}
 	]
 }
