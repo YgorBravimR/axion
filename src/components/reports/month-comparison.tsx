@@ -21,12 +21,28 @@ interface MonthComparisonProps {
 	}
 }
 
-const ChangeIndicator = ({ value }: { value: number }) => {
+const ChangeIndicator = ({
+	value,
+	isMoney,
+}: {
+	value: number
+	isMoney: boolean
+}) => {
 	if (value > 0) {
-		return <ArrowUp className="text-trade-buy h-4 w-4" aria-hidden="true" />
+		return (
+			<ArrowUp
+				className={cn("h-4 w-4", isMoney ? "text-trade-buy" : "text-txt-200")}
+				aria-hidden="true"
+			/>
+		)
 	}
 	if (value < 0) {
-		return <ArrowDown className="text-trade-sell h-4 w-4" aria-hidden="true" />
+		return (
+			<ArrowDown
+				className={cn("h-4 w-4", isMoney ? "text-trade-sell" : "text-txt-300")}
+				aria-hidden="true"
+			/>
+		)
 	}
 	return <Minus className="text-txt-300 h-4 w-4" aria-hidden="true" />
 }
@@ -74,6 +90,7 @@ export const MonthComparison = ({
 				change: changes.profitChange,
 				changeFormatted: formatChange(changes.profitChange, "currency"),
 				percentChange: changes.profitChangePercent,
+				isMoney: true,
 			},
 			{
 				label: t("winRate"),
@@ -81,6 +98,7 @@ export const MonthComparison = ({
 				previous: previous.report.winRate.toFixed(1) + "%",
 				change: changes.winRateChange,
 				changeFormatted: formatChange(changes.winRateChange, "percent"),
+				isMoney: false,
 			},
 			{
 				label: t("avgR"),
@@ -88,6 +106,7 @@ export const MonthComparison = ({
 				previous: previous.report.avgR.toFixed(2) + "R",
 				change: changes.avgRChange,
 				changeFormatted: formatChange(changes.avgRChange, "r"),
+				isMoney: false,
 			},
 			{
 				label: t("trades"),
@@ -95,6 +114,7 @@ export const MonthComparison = ({
 				previous: previous.report.totalTrades.toString(),
 				change: changes.tradeCountChange,
 				changeFormatted: formatChange(changes.tradeCountChange, "number"),
+				isMoney: false,
 			},
 		]
 	}, [previous, current, changes, formatCurrency, formatChange, t])
@@ -146,18 +166,18 @@ export const MonthComparison = ({
 							<div
 								className={cn(
 									"gap-s-100 px-s-200 py-s-100 flex items-center rounded-sm whitespace-nowrap",
-									row.change > 0 && "bg-trade-buy/10",
-									row.change < 0 && "bg-trade-sell/10",
-									row.change === 0 && "bg-bg-300"
+									row.isMoney && row.change > 0 && "bg-trade-buy/10",
+									row.isMoney && row.change < 0 && "bg-trade-sell/10",
+									(!row.isMoney || row.change === 0) && "bg-bg-300"
 								)}
 							>
-								<ChangeIndicator value={row.change} />
+								<ChangeIndicator value={row.change} isMoney={row.isMoney} />
 								<span
 									className={cn(
 										"text-tiny font-medium",
-										row.change > 0 && "text-trade-buy",
-										row.change < 0 && "text-trade-sell",
-										row.change === 0 && "text-txt-300"
+										row.isMoney && row.change > 0 && "text-trade-buy",
+										row.isMoney && row.change < 0 && "text-trade-sell",
+										(!row.isMoney || row.change === 0) && "text-txt-300"
 									)}
 								>
 									{row.changeFormatted}

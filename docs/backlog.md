@@ -42,27 +42,6 @@ Inline `// TODO`, "Phase 2 will…", and "future iteration may…" notes scatter
 
 ---
 
-## Monthly
-
-### `month-comparison.tsx` ChangeIndicator paints non-P&L deltas as P&L
-
-- **Priority:** P3 · **Effort:** S
-- **What**: `src/components/monthly/month-comparison.tsx` lines 146-164 paint all 4 comparison-row deltas (profit, winRate, avgR, trades) with `bg-trade-buy/10 text-trade-buy` / `bg-trade-sell/10 text-trade-sell` based on improvement direction. Only the profit row is canonical signed-P&L; the other three are non-money deltas recoded as "made money / lost money."
-- **Why**: Same family as the rank-as-P&L pattern retired in `comparison-stats-table.tsx`, milder here because the colors mark a directional delta rather than a category rank. The fix needs a per-row `isMoney` flag in `comparisonRows` (so profit keeps trade colors and the others demote to neutral with `ArrowUp`/`ArrowDown` carrying direction). Defer until a second "improvement-direction" comparison widget surfaces and the abstraction earns its weight.
-- **Source**: `docs/scans/2026-05-12-impeccable-monthly.md` Phase 1a critique P2.
-
----
-
-## Documentation drift watch
-
-### Retire `zero-to-hero-e2e.md` §13 Phase 3
-
-- **Priority:** P3 · **Effort:** XS
-- **What**: `docs/design/zero-to-hero-e2e.md` §12-13 was the original rollout spec. Stages 0-8 ship, plus Hawks add-ons (`09-hawks-daily-loop`, `09b-seed-hawks-history`), and the multi-month seeder shipped as `04b-seed-history.spec.ts` + `helpers/seed-bravo-history.ts`. Only CI wiring remains — no `journey-ci` / `@journey` reference in `.github/workflows/`. When CI wiring lands, retire §13 Phase 3 in favour of a one-liner pointing back to this file.
-- **Source**: verified 2026-05-21 against `e2e/journey/` (12 spec files + 8 helpers) and `.github/workflows/`.
-
----
-
 ## How to retire an item from this backlog
 
 1. Implement the work.
