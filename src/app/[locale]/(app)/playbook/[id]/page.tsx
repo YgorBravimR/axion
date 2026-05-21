@@ -19,9 +19,11 @@ import {
 	getStrategyConditionsRollup,
 	getStrategyHawksRollup,
 } from "@/app/actions/strategy-conditions"
+import { getStrategyComplianceTrend } from "@/app/actions/strategy-compliance-trend"
 import { ConditionTierDisplay } from "@/components/playbook/condition-tier-display"
 import { ConditionsScorecard } from "@/components/playbook/conditions-scorecard"
 import { HawksPlaybookPanel } from "@/components/playbook/hawks-playbook-panel"
+import { ComplianceTrendSparkline } from "@/components/playbook/compliance-trend-sparkline"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { getCurrentUser } from "@/app/actions/auth"
 import { hasAccess } from "@/lib/feature-access"
@@ -91,13 +93,17 @@ const StrategyDetailPage = async ({
 	const selectedVersionRow = versions.find((vv) => vv.version === parsedVersion)
 	const selectedVersionId = selectedVersionRow?.id
 
-	const [conditionsResult, rollupResult, hawksRollupResult] = await Promise.all(
-		[
-			getStrategyConditions(id),
-			getStrategyConditionsRollup(id, selectedVersionId),
-			getStrategyHawksRollup(id, selectedVersionId),
-		]
-	)
+	const [
+		conditionsResult,
+		rollupResult,
+		hawksRollupResult,
+		complianceTrendResult,
+	] = await Promise.all([
+		getStrategyConditions(id),
+		getStrategyConditionsRollup(id, selectedVersionId),
+		getStrategyHawksRollup(id, selectedVersionId),
+		getStrategyComplianceTrend(id, selectedVersionId),
+	])
 
 	const t = await getTranslations("playbook")
 
@@ -298,6 +304,26 @@ const StrategyDetailPage = async ({
 								</span>
 							</div>
 						</div>
+
+						{/* Compliance trend sparkline (premium gate) */}
+						{isPremium &&
+							complianceTrendResult.status === "success" &&
+							complianceTrendResult.data &&
+							complianceTrendResult.data.length > 0 && (
+								<div className="mt-s-300 sm:mt-m-400 border-bg-300 pt-s-300 sm:pt-m-400 border-t">
+									<h3 className="text-small text-txt-100 font-semibold">
+										{t("complianceTrend.title")}
+									</h3>
+									<p className="text-tiny text-txt-300 mt-s-100">
+										{t("complianceTrend.subtitle")}
+									</p>
+									<div className="mt-m-400">
+										<ComplianceTrendSparkline
+											points={complianceTrendResult.data}
+										/>
+									</div>
+								</div>
+							)}
 					</div>
 
 					{/* Risk Settings */}

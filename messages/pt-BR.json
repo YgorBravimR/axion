@@ -2510,6 +2510,13 @@
 			"scenarioImageLimitExceeded": "Máximo de 3 imagens por cenário",
 			"scenarioImageAddFailed": "Falha ao adicionar imagem",
 			"scenarioImageRemoveFailed": "Falha ao remover imagem"
+		},
+		"complianceTrend": {
+			"title": "Tendência de aderência",
+			"subtitle": "Taxa semanal de aderência ao plano nos últimos 26 semanas.",
+			"last4WeeksAvg": "Média últimas 4 semanas: {pct}%",
+			"emptyState": "Trades insuficientes para traçar a tendência.",
+			"tooltipFormat": "Semana de {week}: {compliance}% ({followed}/{tracked} trades)"
 		}
 	},
 	"reports": {

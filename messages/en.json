@@ -2510,6 +2510,13 @@
 			"scenarioImageLimitExceeded": "Maximum 3 images per scenario",
 			"scenarioImageAddFailed": "Failed to add image",
 			"scenarioImageRemoveFailed": "Failed to remove image"
+		},
+		"complianceTrend": {
+			"title": "Compliance trend",
+			"subtitle": "Weekly followed-plan rate over the last 26 weeks.",
+			"last4WeeksAvg": "Last 4 weeks avg: {pct}%",
+			"emptyState": "Not enough trades to draw a trend yet.",
+			"tooltipFormat": "Week of {week}: {compliance}% ({followed}/{tracked} trades)"
 		}
 	},
 	"reports": {
