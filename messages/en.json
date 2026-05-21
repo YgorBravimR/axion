@@ -2293,7 +2293,8 @@
 			"riskManagement": "Risk Management",
 			"notes": "Notes",
 			"referenceChart": "Reference Chart",
-			"compliance": "Compliance"
+			"compliance": "Compliance",
+			"discipline": "Discipline"
 		},
 		"conditions": {
 			"title": "Trading Conditions",

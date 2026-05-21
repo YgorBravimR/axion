@@ -2293,7 +2293,8 @@
 			"riskManagement": "Gerenciamento de Risco",
 			"notes": "Notas",
 			"referenceChart": "Gráfico de Referência",
-			"compliance": "Aderência"
+			"compliance": "Aderência",
+			"discipline": "Disciplina"
 		},
 		"conditions": {
 			"title": "Condições de Trading",

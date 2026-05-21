@@ -115,6 +115,30 @@ const StrategyDetailPage = async ({
 
 	const pnlColor = strategy.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 
+	// Hawks composite discipline score = unweighted mean of the axis rates,
+	// skipping bias when its denominator is zero (no confirmed-bias days). Null
+	// when no Hawks trades exist so the cell renders as "—" rather than 0%.
+	const hawksDisciplineScore = (() => {
+		if (
+			!isHawksMethodology ||
+			!hawksRollup ||
+			hawksRollup.totalHawksTrades === 0
+		) {
+			return null
+		}
+		const rates: number[] = [
+			hawksRollup.vwapRespectedCount / hawksRollup.totalHawksTrades,
+			hawksRollup.ajusteRespectedCount / hawksRollup.totalHawksTrades,
+			hawksRollup.tripleScreenConfirmedCount / hawksRollup.totalHawksTrades,
+		]
+		if (hawksRollup.biasRespectedDenom > 0) {
+			rates.push(
+				hawksRollup.biasRespectedCount / hawksRollup.biasRespectedDenom
+			)
+		}
+		return rates.reduce((sum, r) => sum + r, 0) / rates.length
+	})()
+
 	return (
 		<div className="flex h-full flex-col">
 			<StrategyDetailGuide />
@@ -166,7 +190,12 @@ const StrategyDetailPage = async ({
 							</h2>
 						</div>
 
-						<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6">
+						<div
+							className={cn(
+								"mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4",
+								isHawksMethodology ? "lg:grid-cols-7" : "lg:grid-cols-6"
+							)}
+						>
 							<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 								<p className="text-tiny text-txt-300">{t("strategy.trades")}</p>
 								<p className="text-body text-txt-100 mt-s-100 font-bold">
@@ -220,6 +249,32 @@ const StrategyDetailPage = async ({
 									{strategy.compliance.toFixed(0)}%
 								</p>
 							</div>
+							{isHawksMethodology && (
+								<a
+									href="#strategy-detail-hawks-panel"
+									className="bg-bg-100 hover:bg-bg-300/40 p-s-300 focus-visible:ring-acc-100 block rounded-lg text-center transition-colors focus-visible:ring-2 focus-visible:outline-none"
+								>
+									<p className="text-tiny text-txt-300">
+										{t("strategy.discipline")}
+									</p>
+									<p
+										className={cn(
+											"text-body mt-s-100 font-bold",
+											hawksDisciplineScore === null
+												? "text-txt-300"
+												: hawksDisciplineScore >= 0.75
+													? "text-trade-buy"
+													: hawksDisciplineScore >= 0.4
+														? "text-warning"
+														: "text-trade-sell"
+										)}
+									>
+										{hawksDisciplineScore === null
+											? "—"
+											: `${Math.round(hawksDisciplineScore * 100)}%`}
+									</p>
+								</a>
+							)}
 						</div>
 
 						{/* Win/Loss breakdown */}
