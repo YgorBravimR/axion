@@ -534,6 +534,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 						lastActualMonthIdx={lastActualMonthIdx}
 						paceByMonthIdx={Object.fromEntries(paceByMonthIdx)}
 						currentMonthRemainder={currentMonthRemainder}
+						defaultDailyWinR={parseDecimal(row.defaultDailyWinR)}
+						assertivityPct={parseDecimal(row.defaultAssertivityPercent) ?? 50}
 					/>
 				</TabsContent>
 				<TabsContent value="impostos">
