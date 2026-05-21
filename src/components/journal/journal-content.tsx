@@ -1,13 +1,6 @@
 "use client"
 
-import {
-	useState,
-	useEffect,
-	useTransition,
-	useCallback,
-	useMemo,
-	useRef,
-} from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Search } from "lucide-react"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
@@ -104,7 +97,6 @@ const JournalContent = () => {
 	const tTrade = useTranslations("trade")
 	const { showToast } = useToast()
 	const effectiveDate = useEffectiveDate()
-	const [, startTransition] = useTransition()
 	const urlParams = useUrlParams()
 	const latestRequestRef = useRef(0)
 
@@ -303,9 +295,7 @@ const JournalContent = () => {
 			}
 		}
 
-		startTransition(() => {
-			void fetchTrades()
-		})
+		void fetchTrades()
 	}, [
 		period,
 		customDateRange?.from?.getTime(),

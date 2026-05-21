@@ -37,6 +37,9 @@ test.describe(
 	"Journey Stage 4 — Daily Loop",
 	{ tag: ["@journey", "@stage:daily-loop"] },
 	() => {
+		// This stage visits 4 pages and fills 2 forms — wall-clock cost easily
+		// exceeds the 30 s default. 120 s gives comfortable headroom.
+		test.describe.configure({ timeout: 120_000 })
 		test.use(loadStageState(2))
 
 		test("Bravo runs her first trading day: prep, monitor, calculate, log", async ({
