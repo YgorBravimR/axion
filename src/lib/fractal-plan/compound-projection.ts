@@ -23,6 +23,8 @@ const computeProjectedOneRCents = (
 		tradingDaysPerMonth?: number
 		/** Calendar month (1–12) where the plan starts. Defaults to 1 (January). */
 		planStartMonth?: number
+		/** IR tax rate (0–1). Deducted from each month's gross goal before compounding, matching the annual grid's net compounding. Defaults to 0. */
+		irTaxRate?: number
 	}
 ): number => {
 	const {
@@ -32,6 +34,7 @@ const computeProjectedOneRCents = (
 		assertivityPct,
 		tradingDaysPerMonth = DEFAULT_COMPOUND_DAYS_PER_MONTH,
 		planStartMonth = 1,
+		irTaxRate = 0,
 	} = params
 
 	if (dailyTargetR <= 0 || ladderRules.length === 0) {
@@ -41,13 +44,15 @@ const computeProjectedOneRCents = (
 	const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
 	let capital = initialCapitalCents
 
-	// Only compound months that are actually part of this plan
+	// Only compound months that are actually part of this plan.
+	// Compound NET (gross − IR tax) to match the annual grid's endBalanceCents formula.
 	for (let m = planStartMonth; m < targetMonth; m++) {
 		const { oneRCents } = resolveTier(capital, ladderRules)
-		const monthGoal = Math.round(
+		const grossGoal = Math.round(
 			dailyTargetR * tradingDaysPerMonth * assertivity * oneRCents
 		)
-		capital += monthGoal
+		const taxCents = grossGoal > 0 ? Math.round(grossGoal * irTaxRate) : 0
+		capital += grossGoal - taxCents
 	}
 
 	return resolveTier(capital, ladderRules).oneRCents

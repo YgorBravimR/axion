@@ -220,6 +220,7 @@ const MonthReport = async ({
 					dailyTargetR: defaultDailyWinR,
 					assertivityPct,
 					planStartMonth,
+					irTaxRate,
 				})
 			: monthRow.snapshotOneRCents
 

@@ -216,6 +216,7 @@ const QuarterReport = async ({
 							dailyTargetR: defaultDailyWinR,
 							assertivityPct,
 							planStartMonth,
+							irTaxRate,
 						})
 					: (row?.snapshotOneRCents ?? 0)
 
