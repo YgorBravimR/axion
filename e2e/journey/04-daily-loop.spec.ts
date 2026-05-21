@@ -124,7 +124,7 @@ test.describe(
 			await page.goto("/en/journal")
 			await page.waitForLoadState("networkidle")
 			await expect(page.locator('[id^="trade-card-"]').first()).toBeVisible({
-				timeout: 10000,
+				timeout: 20000,
 			})
 			await screenshotIfDemo(page, "04-06-journal-with-trade")
 

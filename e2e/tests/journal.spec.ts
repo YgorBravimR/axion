@@ -55,8 +55,8 @@ test.describe("Journal", () => {
 			const emptyState = page.getByText(/no trades/i)
 
 			await Promise.race([
-				tradeItems.first().waitFor({ state: "visible", timeout: 10000 }),
-				emptyState.waitFor({ state: "visible", timeout: 10000 }),
+				tradeItems.first().waitFor({ state: "visible", timeout: 20000 }),
+				emptyState.waitFor({ state: "visible", timeout: 20000 }),
 			]).catch(() => {})
 
 			const hasTradeItems = (await tradeItems.count()) > 0

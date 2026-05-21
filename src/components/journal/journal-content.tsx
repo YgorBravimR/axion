@@ -272,25 +272,35 @@ const JournalContent = () => {
 						}
 					: undefined
 
-			const result = await getTradesGroupedByDay(from, to, ext)
+			try {
+				const result = await getTradesGroupedByDay(from, to, ext)
 
-			if (requestId !== latestRequestRef.current) {
-				return
-			}
+				if (requestId !== latestRequestRef.current) {
+					return
+				}
 
-			if (result.status === "success" && result.data) {
-				setTradesByDay(result.data)
-				const total = result.data.reduce(
-					(sum, day) => sum + day.trades.length,
-					0
-				)
-				setTotalTrades(total)
-			} else {
+				if (result.status === "success" && result.data) {
+					setTradesByDay(result.data)
+					const total = result.data.reduce(
+						(sum, day) => sum + day.trades.length,
+						0
+					)
+					setTotalTrades(total)
+				} else {
+					setTradesByDay([])
+					setTotalTrades(0)
+				}
+			} catch {
+				if (requestId !== latestRequestRef.current) {
+					return
+				}
 				setTradesByDay([])
 				setTotalTrades(0)
+			} finally {
+				if (requestId === latestRequestRef.current) {
+					setIsLoading(false)
+				}
 			}
-
-			setIsLoading(false)
 		}
 
 		startTransition(() => {
