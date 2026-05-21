@@ -21,7 +21,6 @@ import {
 	monthLabelPt,
 	monthAbbrPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
-	isoWeekToStartMonth,
 } from "@/lib/fractal-plan/month-labels"
 import {
 	getMonthlyResultsWithProp,
@@ -128,6 +127,8 @@ const QuarterReport = async ({
 			accountType: tradingAccounts.accountType,
 			profitSharePercentage: tradingAccounts.profitSharePercentage,
 			showTaxEstimates: tradingAccounts.showTaxEstimates,
+			accountStartYear: tradingAccounts.accountStartYear,
+			accountStartMonth: tradingAccounts.accountStartMonth,
 		})
 		.from(tradingAccounts)
 		.where(eq(tradingAccounts.id, accountId))
@@ -170,7 +171,10 @@ const QuarterReport = async ({
 		? parseFloat(yearRow.defaultDailyWinR)
 		: 0
 	const ladderRules = yearRow.ladderRules as unknown as LadderRuleR[]
-	const planStartMonth = isoWeekToStartMonth(year, yearRow.startWeek)
+	const planStartMonth =
+		account?.accountStartYear === year && account?.accountStartMonth != null
+			? account.accountStartMonth
+			: 1
 
 	const perMonth = await Promise.all(
 		months.map(async (m) => {

@@ -16,7 +16,6 @@ import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import {
 	monthLabelPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
-	isoWeekToStartMonth,
 } from "@/lib/fractal-plan/month-labels"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import {
@@ -141,6 +140,8 @@ const MonthReport = async ({
 				profitSharePercentage: tradingAccounts.profitSharePercentage,
 				propFirmName: tradingAccounts.propFirmName,
 				showTaxEstimates: tradingAccounts.showTaxEstimates,
+				accountStartYear: tradingAccounts.accountStartYear,
+				accountStartMonth: tradingAccounts.accountStartMonth,
 			})
 			.from(tradingAccounts)
 			.where(eq(tradingAccounts.id, accountId))
@@ -207,7 +208,10 @@ const MonthReport = async ({
 	const defaultDailyWinR = yearRow.defaultDailyWinR
 		? parseFloat(yearRow.defaultDailyWinR)
 		: 0
-	const planStartMonth = isoWeekToStartMonth(year, yearRow.startWeek)
+	const planStartMonth =
+		account?.accountStartYear === year && account?.accountStartMonth != null
+			? account.accountStartMonth
+			: 1
 	const compoundOneRCents =
 		defaultDailyWinR > 0
 			? computeProjectedOneRCents(month, {

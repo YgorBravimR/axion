@@ -144,7 +144,7 @@ const AnnualCockpitGrid = ({
 		const effectiveWeekTargetRs: readonly (number | null)[] =
 			weekRSum > 0
 				? weeks.map((w) => w.targetR)
-				: defaultFallbackTotalR > 0
+				: !isMuted && defaultFallbackTotalR > 0
 					? [defaultFallbackTotalR]
 					: []
 		const projection = projectMonth({
