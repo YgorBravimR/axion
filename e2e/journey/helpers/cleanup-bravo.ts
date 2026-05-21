@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "../../utils/create-db"
 
 /**
  * Pre-run guard: idempotently removes bravo@axion-demo.com and all associated
@@ -21,7 +21,7 @@ export const cleanupBravo = async (email: string): Promise<void> => {
 		return
 	}
 
-	const db = drizzle(dbUrl)
+	const db = createDb(dbUrl)
 
 	// 1. Remove rate-limit slots so the login step never trips the limiter.
 	await db

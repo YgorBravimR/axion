@@ -13,8 +13,8 @@
  * @see src/app/actions/live-trading-status.ts — reads pnl via Number(trade.pnl)
  */
 
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "./create-db"
 
 // ---------------------------------------------------------------------------
 // Inline schema constants — avoids importing from src/ which pulls in
@@ -153,13 +153,13 @@ const requireDatabaseUrl = (): string => {
 }
 
 /**
- * Build a raw Drizzle client using the same neon-http driver as the app.
- * We call this per-seeder invocation rather than at module level so the
- * connection is only opened when tests actually need it.
+ * Build a raw Drizzle client. Driver is selected automatically: neon-http for
+ * Neon URLs (production/staging), postgres-js for local postgres (dev worktrees).
+ * Called per-seeder invocation so the connection is only opened when needed.
  */
 const buildDb = () => {
 	const dbUrl = requireDatabaseUrl()
-	return drizzle(dbUrl)
+	return createDb(dbUrl)
 }
 
 // ---------------------------------------------------------------------------

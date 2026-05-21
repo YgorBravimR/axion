@@ -15,8 +15,8 @@
  * NOTHING so activation is safe to re-run.
  */
 
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "../../utils/create-db"
 
 const SEED_MARKER = "HAWKS_JOURNEY_SEED"
 const HAWKS_ASSET_SYMBOL = "BRVE2E"
@@ -44,7 +44,7 @@ const requireDatabaseUrl = (): string => {
 	return url
 }
 
-const buildDb = () => drizzle(requireDatabaseUrl())
+const buildDb = () => createDb(requireDatabaseUrl())
 
 const resolveHawksIds = async (email: string): Promise<HawksIds> => {
 	const db = buildDb()

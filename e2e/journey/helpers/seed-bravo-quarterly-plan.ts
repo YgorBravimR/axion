@@ -18,8 +18,8 @@
  * preserving the existing row id so cascade monthly/weekly rows survive re-runs.
  */
 
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "../../utils/create-db"
 
 interface QuarterlyIds {
 	userId: string
@@ -46,7 +46,7 @@ const requireDatabaseUrl = (): string => {
 	return url
 }
 
-const buildDb = () => drizzle(requireDatabaseUrl())
+const buildDb = () => createDb(requireDatabaseUrl())
 
 const resolveIds = async (
 	email: string,

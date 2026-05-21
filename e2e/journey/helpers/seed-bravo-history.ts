@@ -27,8 +27,8 @@
  * inserting. Safe to re-run within a chain without producing duplicates.
  */
 
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "../../utils/create-db"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 
 const SEED_MARKER = "JOURNEY_SEED"
@@ -68,7 +68,7 @@ const requireDatabaseUrl = (): string => {
 	return url
 }
 
-const buildDb = () => drizzle(requireDatabaseUrl())
+const buildDb = () => createDb(requireDatabaseUrl())
 
 const resolveBravoIds = async (email: string): Promise<BravoIds> => {
 	const db = buildDb()

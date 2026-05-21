@@ -16,7 +16,7 @@
  */
 
 import { sql } from "drizzle-orm"
-import { drizzle } from "drizzle-orm/neon-http"
+import { createDb } from "./utils/create-db"
 
 const teardown = async () => {
 	const dbUrl = process.env.DATABASE_URL
@@ -25,7 +25,7 @@ const teardown = async () => {
 		return
 	}
 
-	const db = drizzle(dbUrl)
+	const db = createDb(dbUrl)
 
 	console.log("[E2E Teardown] Cleaning up E2E test data...")
 
