@@ -123,10 +123,7 @@ test.describe(
 			// ── 4e — Verify the trade lives in the journal list
 			await page.goto("/en/journal")
 			await page.waitForLoadState("networkidle")
-			// Trade rows render as links in the journal list.
-			await expect(
-				page.getByRole("link", { name: /^trade /i }).first()
-			).toBeVisible({
+			await expect(page.locator('[id^="trade-card-"]').first()).toBeVisible({
 				timeout: 10000,
 			})
 			await screenshotIfDemo(page, "04-06-journal-with-trade")
