@@ -9,11 +9,14 @@ import {
 	tradeConditions,
 	trades,
 	accountModes,
+	tradeHawksMetadata,
+	dailyHawksBias,
+	hawksScenarios,
 } from "@/db/schema"
 import type { StrategyCondition } from "@/db/schema"
 import type { ActionResponse } from "@/types"
 import type { StrategyConditionInput } from "@/types/trading-condition"
-import { eq, and, asc, sql, isNull, inArray } from "drizzle-orm"
+import { eq, and, asc, desc, sql, isNull, inArray } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getCurrentVersionId } from "@/lib/strategy-versions"
@@ -22,6 +25,7 @@ import { syncStrategyConditionsSchema } from "@/lib/validations/trading-conditio
 import type {
 	StrategyConditionWithDetail,
 	StrategyConditionsRollup,
+	StrategyHawksRollup,
 } from "./strategy-conditions.types"
 
 /**
@@ -343,6 +347,148 @@ export const getStrategyConditionsRollup = async (
 				{
 					code: "FETCH_FAILED",
 					detail: toSafeErrorMessage(error, "getStrategyConditionsRollup"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Per-strategy-version rollup of Hawks discipline KPIs. Only meaningful for
+ * strategies with `methodology = 'hawks'` (caller gates the call); returns an
+ * all-zero rollup for non-Hawks strategies rather than erroring, so the UI can
+ * stay branchless on the fetch layer.
+ *
+ * Counts come from `trade_hawks_metadata` joined to `trades` pinned to the
+ * resolved version. Bias-respected uses a LEFT JOIN to `daily_hawks_bias` so
+ * the denominator excludes trades on days that never had a confirmed bias —
+ * we don't want to ding the trader for "not respecting" a bias that didn't
+ * exist. Daily-cap split keys off `dailyTradeOrdinal` vs B3's 6/day regulatory
+ * cap (1-indexed).
+ */
+export const getStrategyHawksRollup = async (
+	strategyId: string,
+	versionId?: string
+): Promise<ActionResponse<StrategyHawksRollup>> => {
+	const t = await getTranslations("playbook")
+	const EMPTY_HAWKS_ROLLUP: StrategyHawksRollup = {
+		totalHawksTrades: 0,
+		vwapRespectedCount: 0,
+		ajusteRespectedCount: 0,
+		tripleScreenConfirmedCount: 0,
+		biasRespectedCount: 0,
+		biasRespectedDenom: 0,
+		withinDailyCapCount: 0,
+		overDailyCapCount: 0,
+		scenarioDistribution: [],
+	}
+
+	try {
+		const { userId } = await requireAuth()
+
+		const strategy = await db.query.strategies.findFirst({
+			where: and(eq(strategies.id, strategyId), eq(strategies.userId, userId)),
+			columns: { id: true, currentVersion: true },
+		})
+		if (!strategy) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyNotFound"),
+				errors: [{ code: "NOT_FOUND", detail: "Strategy does not exist" }],
+			}
+		}
+
+		const resolvedVersionId =
+			versionId ??
+			(await getCurrentVersionId(strategy.id, strategy.currentVersion))
+		if (!resolvedVersionId) {
+			return {
+				status: "error",
+				message: t("actionErrors.strategyNotFound"),
+				errors: [
+					{
+						code: "MISSING_VERSION",
+						detail: `Strategy ${strategyId} is missing a v${strategy.currentVersion} row`,
+					},
+				],
+			}
+		}
+
+		const aggregateRows = await db
+			.select({
+				totalHawksTrades: sql<number>`count(*)::int`,
+				vwapRespectedCount: sql<number>`count(*) filter (where ${tradeHawksMetadata.vwapRespected} = true)::int`,
+				ajusteRespectedCount: sql<number>`count(*) filter (where ${tradeHawksMetadata.ajusteRespected} = true)::int`,
+				tripleScreenConfirmedCount: sql<number>`count(*) filter (where ${tradeHawksMetadata.tripleScreenConfirmed} = true)::int`,
+				biasRespectedDenom: sql<number>`count(*) filter (where ${dailyHawksBias.bias} is not null)::int`,
+				biasRespectedCount: sql<number>`count(*) filter (where ${dailyHawksBias.bias} is not null and ${tradeHawksMetadata.biasAtEntry} = ${dailyHawksBias.bias})::int`,
+				withinDailyCapCount: sql<number>`count(*) filter (where ${tradeHawksMetadata.dailyTradeOrdinal} <= 6)::int`,
+				overDailyCapCount: sql<number>`count(*) filter (where ${tradeHawksMetadata.dailyTradeOrdinal} > 6)::int`,
+			})
+			.from(tradeHawksMetadata)
+			.innerJoin(trades, eq(trades.id, tradeHawksMetadata.tradeId))
+			.leftJoin(
+				dailyHawksBias,
+				and(
+					eq(dailyHawksBias.accountId, tradeHawksMetadata.accountId),
+					eq(dailyHawksBias.tradingDay, tradeHawksMetadata.tradingDay)
+				)
+			)
+			.where(eq(trades.strategyVersionId, resolvedVersionId))
+
+		const agg = aggregateRows[0]
+		if (!agg || agg.totalHawksTrades === 0) {
+			return {
+				status: "success",
+				message: t("actionErrors.conditionsRetrieved"),
+				data: EMPTY_HAWKS_ROLLUP,
+			}
+		}
+
+		const scenarioRows = await db
+			.select({
+				scenarioId: tradeHawksMetadata.scenarioId,
+				code: hawksScenarios.code,
+				name: hawksScenarios.nameEn,
+				count: sql<number>`count(*)::int`,
+			})
+			.from(tradeHawksMetadata)
+			.innerJoin(trades, eq(trades.id, tradeHawksMetadata.tradeId))
+			.leftJoin(
+				hawksScenarios,
+				eq(hawksScenarios.id, tradeHawksMetadata.scenarioId)
+			)
+			.where(eq(trades.strategyVersionId, resolvedVersionId))
+			.groupBy(
+				tradeHawksMetadata.scenarioId,
+				hawksScenarios.code,
+				hawksScenarios.nameEn
+			)
+			.orderBy(desc(sql`count(*)`))
+
+		return {
+			status: "success",
+			message: t("actionErrors.conditionsRetrieved"),
+			data: {
+				totalHawksTrades: agg.totalHawksTrades,
+				vwapRespectedCount: agg.vwapRespectedCount,
+				ajusteRespectedCount: agg.ajusteRespectedCount,
+				tripleScreenConfirmedCount: agg.tripleScreenConfirmedCount,
+				biasRespectedCount: agg.biasRespectedCount,
+				biasRespectedDenom: agg.biasRespectedDenom,
+				withinDailyCapCount: agg.withinDailyCapCount,
+				overDailyCapCount: agg.overDailyCapCount,
+				scenarioDistribution: scenarioRows,
+			},
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("actionErrors.retrieveFailed"),
+			errors: [
+				{
+					code: "FETCH_FAILED",
+					detail: toSafeErrorMessage(error, "getStrategyHawksRollup"),
 				},
 			],
 		}
