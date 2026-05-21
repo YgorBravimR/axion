@@ -11,6 +11,8 @@ import {
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
+import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
+import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import {
 	monthLabelPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
@@ -201,10 +203,23 @@ const MonthReport = async ({
 		? assertivityData.assertivityPct
 		: configuredAssertivityPct
 
+	const defaultDailyWinR = yearRow.defaultDailyWinR
+		? parseFloat(yearRow.defaultDailyWinR)
+		: 0
+	const compoundOneRCents =
+		defaultDailyWinR > 0
+			? computeProjectedOneRCents(month, {
+					initialCapitalCents: yearRow.initialCapitalCents,
+					ladderRules: yearRow.ladderRules as unknown as LadderRuleR[],
+					dailyTargetR: defaultDailyWinR,
+					assertivityPct,
+				})
+			: monthRow.snapshotOneRCents
+
 	const { planGoalCents, planGoalSource } = deriveMonthGoal({
 		manualGoalCents: monthRow.monthlyGoalCents,
 		weekTargetRs: weeks.map((w) => w.targetR),
-		snapshotOneRCents: monthRow.snapshotOneRCents,
+		snapshotOneRCents: compoundOneRCents,
 		cascadeDailyTargetR: resolved?.dailyTargetR.value ?? null,
 		totalTradingDays,
 		assertivityPct,
