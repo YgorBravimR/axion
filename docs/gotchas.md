@@ -271,6 +271,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: If you need a new "run before every Playwright session" hook, extend `e2e/global.teardown.ts` rather than wiring a second globalSetup. If you need to seed/auth a specific user, do it in a Playwright project named `setup` (see how `chromium-auth` and the journey stages depend on it). Renaming the file to `global.cleanup.ts` would be more honest, but the rename touches CI workflows — leave it unless you are already touching that area.
 - **Source**: `playwright.config.ts:213-214`, `e2e/global.teardown.ts`, `e2e/global.setup.ts`.
 
+### Re-running the E2E suite back-to-back trips the login rate limiter
+
+- **What**: Running the full Playwright suite twice in rapid succession causes the `setup` project to fail with "Login timed out" — but the real error (hidden in the page snapshot) is `"Too many login attempts. Please try again in N minute(s)."`. The auth spec (`auth.spec.ts`) fires many login/register calls against `admin@axion.com`, exhausting the per-email rate limit bucket. Subsequent `setup` runs try to log in as the same user and silently hit the rate-limit UI instead of an error the test catches — the `Promise.race` in `global.setup.ts` only matches `text=/Invalid|Error/i`, not the rate-limit banner, so it falls through to `timeout` after 30 s.
+- **What to do**: Wait 7–10 minutes between full suite runs. If you need to run only the data phases (settings/playbook/journal) after a clean auth run, they reuse the stored `e2e/.auth/user.json` and do not need to re-authenticate — but they still run `globalSetup` (= `global.teardown.ts`) which is fine. The fastest workaround for rapid iteration is to skip auth: `pnpm exec playwright test --project=chromium-settings --project=chromium-playbook --project=chromium-journal` will reuse the existing `.auth/user.json` without re-running the `setup` project (just make sure the JSON exists from a prior run).
+- **Source**: `e2e/global.setup.ts:26`, `src/app/actions/auth.ts` (rate-limit logic); 2026-05-21 test session.
+- **Date logged**: 2026-05-21.
+
 ### `pnpm test` runs Playwright E2E, **not** Vitest — unit tests live under `pnpm test:unit`
 
 - **What**: `package.json` has `"test": "playwright test"` and `"test:unit": "vitest run"`. Reaching for `pnpm test src/__tests__/lib/foo.test.ts` will launch the full E2E suite (and ignore the path because Playwright doesn't take a vitest-style positional). The visible symptom is a wall of `[E2E Teardown]` cleanup logs followed by an `ELIFECYCLE Test failed`, with no actual test summary in the tail — the real unit test results never ran.

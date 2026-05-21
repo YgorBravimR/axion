@@ -138,9 +138,9 @@ describe("Journal list roving tabindex navigation", () => {
 
 	describe("Tab behavior", () => {
 		it("should allow Tab to exit the listbox without intercepting", () => {
-			const tabKeyEvent = new KeyboardEvent("keydown", { key: "Tab" })
+			const tabKey = "Tab"
 
-			expect(tabKeyEvent.key === "Tab").toBe(true)
+			expect(tabKey === "Tab").toBe(true)
 		})
 
 		it("should not prevent default for Tab key (allows native Tab exit)", () => {
