@@ -107,6 +107,12 @@ const {
 	runComparisonSimulation,
 	runSimulationV2,
 } = await import("@/app/actions/monte-carlo")
+const { rankComparisonResults, buildComparisonRecommendations } =
+	await import("@/lib/monte-carlo/comparison-orchestration")
+const { validateV2SimulationSetup } =
+	await import("@/lib/monte-carlo/v2-validation")
+const { annotateStrategyEligibility } =
+	await import("@/lib/monte-carlo/strategy-eligibility")
 
 // ============================================
 // MOCK DATA FACTORIES
@@ -229,46 +235,45 @@ describe("getDataSourceOptions", () => {
 		expect(result.data?.some((opt) => opt.type === "all_strategies")).toBe(true)
 	})
 
-	it.skip("should disable strategies with fewer than 10 trades", async () => {
-		// NOTE: Disabled due to complex select/from/where mock chain interactions
-		// Real integration tests cover this scenario
-		const strategy = createMockStrategy({
-			id: "33333333-3333-4333-8333-333333333333",
-		})
+	it("should mark strategies with fewer than 10 trades as disabled", () => {
+		// Test pure orchestration function without action layer
+		const strategies = [
+			{
+				id: "s1",
+				name: "Trend Following",
+				isActive: true,
+				tradesCount: 5,
+			},
+			{
+				id: "s2",
+				name: "Mean Reversion",
+				isActive: true,
+				tradesCount: 15,
+			},
+			{
+				id: "s3",
+				name: "Low Trades",
+				isActive: true,
+				tradesCount: 0,
+			},
+		]
 
-		vi.mocked(requireAuth).mockResolvedValue({
-			userId: mockUserId,
-			accountId: mockAccountId,
-			showAllAccounts: false,
-			allAccountIds: [mockAccountId],
-		} as never)
+		const annotated = annotateStrategyEligibility(strategies, 10)
 
-		vi.mocked(db.query.strategies).findMany.mockResolvedValueOnce([
-			strategy,
-		] as never)
+		// s1: 5 trades < 10 → disabled
+		const s1 = annotated.find((s) => s.id === "s1")
+		expect(s1?.disabled).toBe(true)
+		expect(s1?.disabledReason).toContain("at least 10")
 
-		// Mock 5 trades for strategy query, then 5 for all-strategies query
-		const tradesChain = {
-			where: vi.fn().mockReturnValue({
-				then: vi
-					.fn()
-					.mockResolvedValueOnce(Array(5).fill(null))
-					.mockResolvedValueOnce(Array(5).fill(null)),
-			}),
-		}
+		// s2: 15 trades >= 10 → enabled
+		const s2 = annotated.find((s) => s.id === "s2")
+		expect(s2?.disabled).toBe(false)
+		expect(s2?.disabledReason).toBeUndefined()
 
-		vi.mocked(db.select).mockReturnValue({
-			from: vi.fn().mockReturnValue(tradesChain),
-		} as never)
-
-		const result = (await getDataSourceOptions()) as ActionResponse<
-			DataSourceOption[]
-		>
-
-		expect(result.status).toBe("success")
-		const strategyOption = result.data?.find((opt) => opt.type === "strategy")
-		expect(strategyOption?.disabled).toBe(true)
-		expect(strategyOption?.disabledReason).toContain("at least 10")
+		// s3: 0 trades < 10 → disabled
+		const s3 = annotated.find((s) => s.id === "s3")
+		expect(s3?.disabled).toBe(true)
+		expect(s3?.disabledReason).toContain("at least 10")
 	})
 
 	it("should include universal option when show all accounts enabled", async () => {
@@ -673,68 +678,72 @@ describe("runComparisonSimulation", () => {
 		vi.clearAllMocks()
 	})
 
-	it.skip("should run comparison across all active strategies", async () => {
-		const strategy1 = createMockStrategy({
-			id: "11111111-1111-4111-8111-111111111111",
-			name: "Trend",
-		})
-		const strategy2 = createMockStrategy({
-			id: "22222222-2222-4222-8222-222222222222",
-			name: "Mean Reversion",
-		})
+	it("should orchestrate comparison ranking and recommendations", () => {
+		// Test pure orchestration functions without action layer
+		const mockResults: StrategyComparisonResult[] = [
+			{
+				strategyId: "s1",
+				strategyName: "Trend",
+				tradesCount: 15,
+				winRate: 52,
+				rewardRiskRatio: 1.3,
+				medianFinalR: 20.5,
+				profitablePct: 65,
+				maxRDrawdown: -6.2,
+				sharpeRatio: 1.5,
+				rank: 0,
+				result: {
+					statistics: {
+						medianFinalR: 20.5,
+						profitablePct: 65,
+						medianMaxRDrawdown: -6.2,
+						sharpeRatio: 1.5,
+						winRate: 52,
+						rewardRiskRatio: 1.3,
+					},
+					paths: [[100, 102, 101]],
+				},
+			},
+			{
+				strategyId: "s2",
+				strategyName: "Mean Reversion",
+				tradesCount: 12,
+				winRate: 58,
+				rewardRiskRatio: 1.6,
+				medianFinalR: 28.2,
+				profitablePct: 72,
+				maxRDrawdown: -4.1,
+				sharpeRatio: 1.9,
+				rank: 0,
+				result: {
+					statistics: {
+						medianFinalR: 28.2,
+						profitablePct: 72,
+						medianMaxRDrawdown: -4.1,
+						sharpeRatio: 1.9,
+						winRate: 58,
+						rewardRiskRatio: 1.6,
+					},
+					paths: [[100, 103, 105]],
+				},
+			},
+		]
 
-		const trades1 = Array(15)
-			.fill(null)
-			.map((_, i) =>
-				createMockTrade({
-					id: `t${i}`,
-					strategyId: "11111111-1111-4111-8111-111111111111",
-					outcome: i % 2 === 0 ? "win" : "loss",
-				})
-			)
+		// Test ranking function
+		const ranked = rankComparisonResults(mockResults)
 
-		const trades2 = Array(12)
-			.fill(null)
-			.map((_, i) =>
-				createMockTrade({
-					id: `t${100 + i}`,
-					strategyId: "22222222-2222-4222-8222-222222222222",
-					outcome: i % 3 === 0 ? "win" : "loss",
-				})
-			)
+		expect(ranked).toHaveLength(2)
+		expect(ranked[0]?.strategyName).toBe("Mean Reversion")
+		expect(ranked[0]?.rank).toBe(1)
+		expect(ranked[1]?.strategyName).toBe("Trend")
+		expect(ranked[1]?.rank).toBe(2)
 
-		vi.mocked(requireAuth).mockResolvedValue({
-			userId: mockUserId,
-			accountId: mockAccountId,
-			showAllAccounts: false,
-			allAccountIds: [mockAccountId],
-		} as never)
+		// Test recommendation building function
+		const recommendations = buildComparisonRecommendations(ranked)
 
-		// First findMany gets all active strategies for comparison loop
-		// Then for each strategy, getSimulationStats calls findFirst to get the strategy, then findMany for trades
-		vi.mocked(db.query.strategies).findMany.mockResolvedValueOnce([
-			strategy1,
-			strategy2,
-		] as never)
-		vi.mocked(db.query.strategies).findFirst.mockResolvedValueOnce(
-			strategy1 as never
-		)
-		vi.mocked(db.query.trades).findMany.mockResolvedValueOnce(trades1 as never)
-		vi.mocked(db.query.strategies).findFirst.mockResolvedValueOnce(
-			strategy2 as never
-		)
-		vi.mocked(db.query.trades).findMany.mockResolvedValueOnce(trades2 as never)
-
-		const result = await runComparisonSimulation({
-			numberOfTrades: 100,
-			commissionImpactR: 0.5,
-			simulationCount: 1000,
-		})
-
-		expect(result.status).toBe("success")
-		expect(result.data?.results).toHaveLength(2)
-		expect(result.data?.recommendations.topPerformers).toBeDefined()
-		expect(result.data?.recommendations.suggestedAllocations).toBeDefined()
+		expect(recommendations.topPerformers).toContain("Mean Reversion")
+		expect(recommendations.needsImprovement).toHaveLength(0)
+		expect(recommendations.suggestedAllocations).toHaveLength(2)
 	})
 
 	it("should rank strategies by profitable percentage", async () => {
@@ -827,16 +836,9 @@ describe("runSimulationV2", () => {
 		vi.clearAllMocks()
 	})
 
-	it.skip("should run V2 day-aware simulation with risk profile", async () => {
-		// NOTE: Disabled due to complex V2 schema validation. runMonteCarloV2 is mocked correctly.
-		vi.mocked(requireAuth).mockResolvedValue({
-			userId: mockUserId,
-			accountId: mockAccountId,
-			showAllAccounts: false,
-			allAccountIds: [mockAccountId],
-		} as never)
-
-		const result = (await runSimulationV2({
+	it("should validate V2 simulation parameters", () => {
+		// Test pure orchestration validation without action layer
+		const validParams: SimulationParamsV2 = {
 			profile: {
 				name: "Balanced",
 				baseRiskCents: 100000,
@@ -874,11 +876,24 @@ describe("runSimulationV2", () => {
 			simulationCount: 1000,
 			initialBalance: 100000,
 			monthsToTrade: 12,
-		})) as ActionResponse<MonteCarloResultV2>
+		}
 
-		expect(result.status).toBe("success")
-		expect(result.data?.statistics.medianEndingBalance).toBe(12500)
-		expect(result.data?.statistics.percentProfitable).toBe(68)
+		// Test validation passes for good params
+		const validation = validateV2SimulationSetup(validParams)
+		expect(validation.valid).toBe(true)
+		expect(validation.errors).toHaveLength(0)
+
+		// Test validation rejects low simulation count
+		const lowSimParams = { ...validParams, simulationCount: 50 }
+		const lowValidation = validateV2SimulationSetup(lowSimParams)
+		expect(lowValidation.valid).toBe(false)
+		expect(lowValidation.errors.length).toBeGreaterThan(0)
+
+		// Test validation rejects high simulation count
+		const highSimParams = { ...validParams, simulationCount: 60000 }
+		const highValidation = validateV2SimulationSetup(highSimParams)
+		expect(highValidation.valid).toBe(false)
+		expect(highValidation.errors.length).toBeGreaterThan(0)
 	})
 
 	it("should reject invalid simulation count", async () => {
