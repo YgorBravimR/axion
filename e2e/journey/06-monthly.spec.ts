@@ -9,7 +9,7 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  * End of month. Bravo reviews the month's aggregate performance,
  * inspects the DARF / tax section that lives inside /en/reports, and
  * revisits the corresponding month plan card in her fractal plan
- * cockpit. Three surfaces:
+ * cockpit. Two surfaces (note: /en/monthly 308-redirects to /en/reports):
  *
  *   • /en/monthly                 — Monthly Performance page (navigator
  *                                   + profit summary + weekly bars).
@@ -58,16 +58,17 @@ test.describe(
 				"Stage 6: Month close — review performance, revisit the plan card"
 			)
 
-			// ── 6a — Monthly Performance page
-			await annotate(page, "Monthly — navigator + profit summary for the month")
-			await page.goto("/en/monthly", { waitUntil: "domcontentloaded" })
+			// ── 6a — Monthly Performance section (lives inside /en/reports)
+			// /en/monthly 308-redirects to /en/reports; monthly content is the
+			// MonthlyReportCard rendered in reports-content.tsx.
+			await annotate(page, "Reports — monthly card navigator + profit summary")
+			await page.goto("/en/reports", { waitUntil: "domcontentloaded" })
 
-			// Stable month navigator anchor (see monthly.spec.ts:33). The page has
-			// no h1, so the navigator is the canonical mount proof.
-			await expect(page.locator("#month-nav-previous")).toBeVisible({
+			// MonthlyReportCard navigator anchors (monthly-report-card.tsx:114,125).
+			await expect(page.locator("#monthly-report-previous-month")).toBeVisible({
 				timeout: 30_000,
 			})
-			await expect(page.locator("#month-nav-next")).toBeVisible({
+			await expect(page.locator("#monthly-report-next-month")).toBeVisible({
 				timeout: 15_000,
 			})
 			await screenshotIfDemo(page, "06-01-monthly-performance")
