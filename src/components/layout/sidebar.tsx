@@ -17,7 +17,6 @@ import {
 } from "@/lib/navigation"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { getFilteredNavStructure } from "@/lib/feature-access"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { AccountSwitcher } from "./account-switcher"
 
 interface SidebarProps {
@@ -234,7 +233,7 @@ const Sidebar = ({
 			)}
 
 			{/* Navigation */}
-			<ScrollArea className="flex-1">
+			<div className="flex-1 overflow-y-auto">
 				<nav className="space-y-s-100 p-s-200">
 					{filteredStructure.map((entry) => {
 						if (!isGroup(entry)) {
@@ -290,7 +289,7 @@ const Sidebar = ({
 						)
 					})}
 				</nav>
-			</ScrollArea>
+			</div>
 
 			{/* Account Switcher */}
 			<div

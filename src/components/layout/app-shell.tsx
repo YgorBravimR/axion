@@ -20,7 +20,6 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useBreakpoint } from "@/hooks/use-is-mobile"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
@@ -220,9 +219,9 @@ const AppShell = ({
 								</div>
 
 								{/* Scrollable main area */}
-								<ScrollArea className="h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3rem)]">
+								<div className="h-[calc(100dvh-3.5rem)] overflow-y-auto md:h-[calc(100dvh-3rem)]">
 									<main id="main-content">{children}</main>
-								</ScrollArea>
+								</div>
 							</div>
 						</>
 					)}
