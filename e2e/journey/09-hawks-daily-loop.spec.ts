@@ -49,7 +49,8 @@ test.describe(
 				"Pre-market — command center should show missing-bias alert"
 			)
 			await page.goto("/en/command-center")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// The Hawks missing-bias alert is rendered with role="alert".
 			// It only shows on today's view when Hawks mode is active and bias is unset.
@@ -99,7 +100,8 @@ test.describe(
 				"Ordinal badge — should show 0/3 trades today after bias set"
 			)
 			await page.goto("/en/command-center")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// The ordinal badge shows "{ordinal} of {cap} trades today" or "Daily cap reached".
 			// With 0 trades seeded for today it should show "0 of 3 trades today".
@@ -115,7 +117,8 @@ test.describe(
 				"Journal /new — no cap banner expected when ordinal = 0"
 			)
 			await page.goto("/en/journal/new")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// HawksDailyCapBanner has role="alert" and aria-label "Daily cap reached".
 			// With 0 trades today the banner should NOT appear.

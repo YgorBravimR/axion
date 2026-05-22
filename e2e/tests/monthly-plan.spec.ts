@@ -11,7 +11,8 @@ test.describe("Monthly Plan", () => {
 	test.describe("Plan Tab Layout", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should click Plan tab and load content after Suspense", async ({
@@ -91,7 +92,8 @@ test.describe("Monthly Plan", () => {
 	test.describe("Create New Plan - Custom Mode", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
@@ -288,7 +290,8 @@ test.describe("Monthly Plan", () => {
 	test.describe("Create New Plan - Profile Mode", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
@@ -433,7 +436,8 @@ test.describe("Monthly Plan", () => {
 	test.describe("Plan Summary View", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
@@ -486,7 +490,8 @@ test.describe("Monthly Plan", () => {
 	test.describe("Advanced Settings", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
@@ -579,7 +584,8 @@ test.describe("Monthly Plan", () => {
 	test.describe("Copy from Previous Month", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})

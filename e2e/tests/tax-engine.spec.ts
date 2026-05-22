@@ -5,7 +5,8 @@ test.describe("BR Tax Engine", () => {
 	test.describe("Reports — Tax section", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("renders Impostos section when DARF data exists", async ({ page }) => {
@@ -48,7 +49,8 @@ test.describe("BR Tax Engine", () => {
 				return
 			}
 			await markPaidBtn.click()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const paidBadge = page
 				.locator("[data-slot='badge']")
@@ -87,7 +89,8 @@ test.describe("BR Tax Engine", () => {
 	test.describe("Settings — Fee rate form", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("fee rate form is visible", async ({ page }) => {
@@ -126,17 +129,20 @@ test.describe("BR Tax Engine", () => {
 			// Update value
 			await corretagemInput.fill("0.0600")
 			await saveBtn.click()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Reload and verify persistence
 			await page.reload()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await expect(corretagemInput).toHaveValue("0.0600")
 
 			// Reset to default
 			await corretagemInput.fill("0.0500")
 			await saveBtn.click()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 	})
 })

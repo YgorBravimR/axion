@@ -5,7 +5,8 @@ test.describe("Settings", () => {
 	test.describe("Settings Page Layout", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page }) => {
@@ -48,7 +49,8 @@ test.describe("Settings", () => {
 	test.describe("Profile Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			// Profile tab is the default, wait for content to load
 			await page.waitForTimeout(1000)
 		})
@@ -104,7 +106,8 @@ test.describe("Settings", () => {
 	test.describe("Account Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("tab", { name: "Account" }).click()
 			await page.waitForTimeout(500) // Wait for content to load
 		})
@@ -174,7 +177,8 @@ test.describe("Settings", () => {
 	test.describe("Assets Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Assets tab is only visible to admin users
 			const assetsTab = page.getByRole("tab", { name: "Assets" })
@@ -345,7 +349,8 @@ test.describe("Settings", () => {
 	test.describe("Timeframes Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Timeframes tab is only visible to admin users
 			const timeframesTab = page.getByRole("tab", { name: "Timeframes" })
@@ -502,7 +507,8 @@ test.describe("Settings", () => {
 	test.describe("Tags Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Tags tab may be named "Tags" or may be a sub-section
 			const tagsTab = page.getByRole("tab", { name: /tags/i })
@@ -592,7 +598,8 @@ test.describe("Settings", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Find language selector
 			const languageSelector = page
@@ -637,7 +644,8 @@ test.describe("Settings", () => {
 	test.describe("Account Creation", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("tab", { name: /account|conta/i }).click()
 			await page.waitForTimeout(500)
 		})
@@ -686,7 +694,8 @@ test.describe("Settings", () => {
 	test.describe("Data Management", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display export data button", async ({ page }) => {
@@ -736,7 +745,8 @@ test.describe("Settings", () => {
 	test.describe("Form Validation", () => {
 		test("should validate account name on edit", async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("tab", { name: "Account" }).click()
 			await page.waitForTimeout(500)
 
@@ -764,7 +774,8 @@ test.describe("Settings", () => {
 
 		test("should validate required fields on asset form", async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Assets tab is only visible to admin users
 			const assetsTab = page.getByRole("tab", { name: "Assets" })
@@ -799,7 +810,8 @@ test.describe("Settings", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Timeframes tab is only visible to admin users
 			const timeframesTab = page.getByRole("tab", { name: "Timeframes" })
@@ -834,7 +846,8 @@ test.describe("Settings", () => {
 		test("should adapt layout on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Settings has no heading — verify via Profile tab visibility
 			await expect(
@@ -845,7 +858,8 @@ test.describe("Settings", () => {
 		test("should show scrollable tabs on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const tabList = page.locator('[role="tablist"]')
 			await expect(tabList).toBeVisible()

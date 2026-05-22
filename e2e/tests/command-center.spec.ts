@@ -6,7 +6,8 @@ test.describe("Command Center", () => {
 	test.describe("Page Layout & Tabs", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display all 4 tab triggers", async ({ page }) => {
@@ -67,7 +68,8 @@ test.describe("Command Center", () => {
 	test.describe("Date Navigator", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display current date with Today label", async ({ page }) => {
@@ -123,7 +125,8 @@ test.describe("Command Center", () => {
 	test.describe("Circuit Breaker Panel", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display circuit breaker section heading", async ({ page }) => {
@@ -155,7 +158,8 @@ test.describe("Command Center", () => {
 	test.describe("Daily Checklist", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display checklist section", async ({ page }) => {
@@ -310,7 +314,8 @@ test.describe("Command Center", () => {
 	test.describe("Pre-Market / Post-Market Notes", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display pre-market notes section", async ({ page }) => {
@@ -374,7 +379,8 @@ test.describe("Command Center", () => {
 	test.describe("Asset Rules", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display asset rules section", async ({ page }) => {
@@ -435,7 +441,8 @@ test.describe("Command Center", () => {
 	test.describe("Daily Summary", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display daily summary section", async ({ page }) => {
@@ -476,7 +483,8 @@ test.describe("Command Center", () => {
 		test("should adapt layout on mobile viewport", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Core content should still be visible
 			await expect(
@@ -487,7 +495,8 @@ test.describe("Command Center", () => {
 		test("should stack content vertically on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Circuit breaker should be visible at top
 			await expect(page.getByText(/circuit breaker/i).first()).toBeVisible()

@@ -4,7 +4,8 @@ test.describe("Trade Conditions", () => {
 	test.beforeEach(async ({ page }) => {
 		// Navigate to login if not authenticated
 		await page.goto("/")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Check if login page is shown; if so, log in
 		const loginButton = page.getByRole("button", { name: /sign in|login/i })
@@ -21,18 +22,21 @@ test.describe("Trade Conditions", () => {
 	}) => {
 		// Navigate to journal new trade page
 		await page.goto("/journal/new")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Select a strategy that has bound conditions
 		// Note: This assumes a test strategy exists. The test data setup should ensure this.
 		const strategyDropdown = page.getByRole("combobox", { name: /strategy/i })
 		await strategyDropdown.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Pick the first strategy option (assuming test data has strategies with conditions)
 		const strategyOption = page.getByRole("option").first()
 		await strategyOption.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Wait for conditions checklist to appear
 		const conditionsSection = page.locator(
@@ -84,7 +88,8 @@ test.describe("Trade Conditions", () => {
 			name: /save|submit|create/i,
 		})
 		await submitButton.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Should navigate to trade detail page
 		await expect(page).toHaveURL(/\/journal\/[a-f0-9\-]{36}/)
@@ -127,7 +132,8 @@ test.describe("Trade Conditions", () => {
 	}) => {
 		// Navigate to journal list
 		await page.goto("/journal")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Find a trade to edit (click the first trade)
 		const tradeCard = page
@@ -140,13 +146,15 @@ test.describe("Trade Conditions", () => {
 			})
 
 		await tradeCard.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Click edit button to enter edit mode
 		const editButton = page.getByRole("button", { name: /edit/i })
 		await expect(editButton).toBeVisible({ timeout: 5000 })
 		await editButton.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// URL should now include /edit
 		await expect(page).toHaveURL(/\/journal\/[a-f0-9\-]{36}\/edit/)
@@ -164,7 +172,8 @@ test.describe("Trade Conditions", () => {
 
 			// Toggle it
 			await firstCheckbox.click()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Verify the state changed
 			const newState = await firstCheckbox.isChecked()
@@ -173,7 +182,8 @@ test.describe("Trade Conditions", () => {
 			// Save the form
 			const saveButton = page.getByRole("button", { name: /save|submit/i })
 			await saveButton.click()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Should navigate back to trade detail
 			await expect(page).toHaveURL(/\/journal\/[a-f0-9\-]{36}$/)
@@ -196,7 +206,8 @@ test.describe("Trade Conditions", () => {
 	}) => {
 		// Navigate to journal list
 		await page.goto("/journal")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Find and click a trade
 		const tradeCard = page
@@ -209,7 +220,8 @@ test.describe("Trade Conditions", () => {
 			})
 
 		await tradeCard.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Check if conditions section is visible
 		const conditionsBadge = page.locator(
@@ -241,7 +253,8 @@ test.describe("Trade Conditions", () => {
 
 		// Navigate to new trade page
 		await page.goto("/journal/new")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Skip the strategy dropdown (leave it unselected)
 		// Fill in only the required trade fields
@@ -273,7 +286,8 @@ test.describe("Trade Conditions", () => {
 
 		if (canSubmit) {
 			await submitButton.click()
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Verify no conditions section appears
 			const conditionsList = page.locator(

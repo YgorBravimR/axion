@@ -45,7 +45,8 @@ test.describe(
 			// ── 3a — Backtest surface (empty-state: no strategies yet)
 			await annotate(page, "Backtest — strategy vs. historical data")
 			await page.goto("/en/backtest")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await expect(
 				page.getByRole("heading", { level: 1, name: /backtest/i })
 			).toBeVisible({ timeout: 10000 })
@@ -57,7 +58,8 @@ test.describe(
 				"Monte Carlo — 1000 trial edge expectancy in manual mode"
 			)
 			await page.goto("/en/monte-carlo")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await expect(
 				page.getByRole("heading", { name: /monte carlo/i }).first()
 			).toBeVisible({ timeout: 10000 })
@@ -87,7 +89,8 @@ test.describe(
 				"Risk Simulation — replay history under tighter rules"
 			)
 			await page.goto("/en/risk-simulation")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await expect(
 				page.getByRole("heading", { name: /risk simulation/i })
 			).toBeVisible({ timeout: 10000 })
@@ -96,7 +99,8 @@ test.describe(
 			// ── 3d — Equity Shield surface (empty-state: no equity curve yet)
 			await annotate(page, "Equity Shield — drawdown firewall calibration")
 			await page.goto("/en/equity-shield")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await expect(
 				page.getByRole("heading", { name: /equity shield/i })
 			).toBeVisible({ timeout: 10000 })

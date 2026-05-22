@@ -5,7 +5,8 @@ test.describe("Reports", () => {
 	test.describe("Weekly Reports Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page }) => {
@@ -139,7 +140,8 @@ test.describe("Reports", () => {
 	test.describe("Monthly Reports Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.monthly)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page }) => {
@@ -273,7 +275,8 @@ test.describe("Reports", () => {
 	test.describe("Mistake Analysis", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display mistakes section", async ({ page }) => {
@@ -316,7 +319,8 @@ test.describe("Reports", () => {
 	test.describe("Report Export", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display export button", async ({ page }) => {
@@ -349,7 +353,8 @@ test.describe("Reports", () => {
 	test.describe("Report Filters", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should have account filter", async ({ page }) => {
@@ -387,7 +392,8 @@ test.describe("Reports", () => {
 		test("should adapt layout on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// On mobile, the sidebar is hidden behind a sheet menu; verify page-specific content is visible
 			// The Weekly Report card heading should be present
@@ -399,7 +405,8 @@ test.describe("Reports", () => {
 		test("should stack cards vertically on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Charts should still be visible
 			const charts = page.locator(".recharts-wrapper")
@@ -411,7 +418,8 @@ test.describe("Reports", () => {
 	test.describe("Commission & Fee Impact Card", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should render the commission fee impact card on the reports page", async ({
@@ -599,7 +607,8 @@ test.describe("Reports", () => {
 		}) => {
 			await page.setViewportSize({ width: 375, height: 812 })
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const card = page.locator("#reports-commission-fees")
 			await expect(card).toBeVisible()
@@ -617,7 +626,8 @@ test.describe("Reports", () => {
 		}) => {
 			await page.setViewportSize({ width: 768, height: 1024 })
 			await page.goto(ROUTES.reports)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const card = page.locator("#reports-commission-fees")
 			await expect(card).toBeVisible()

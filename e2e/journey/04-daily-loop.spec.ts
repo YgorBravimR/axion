@@ -59,7 +59,8 @@ test.describe(
 				"Pre-market — open the cockpit, check plan and discipline"
 			)
 			await page.goto("/en/command-center")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			// Command Center tab is the default; its tablist is the stable anchor.
 			await expect(
 				page.getByRole("tab", { name: /command center/i })
@@ -97,7 +98,8 @@ test.describe(
 				"Post-market — log the trade. Entry=190200 exit=190500 size=5 (WINFUT)"
 			)
 			await page.goto("/en/journal/new")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await expect(
 				page.getByRole("tab", { name: /single entry/i })
 			).toBeVisible({
@@ -125,7 +127,8 @@ test.describe(
 
 			// ── 4e — Verify the trade lives in the journal list
 			await page.goto("/en/journal")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			// Trades render as role="option" inside role="listbox" day-groups (TradeDayGroup → TradeRow).
 			await expect(
 				page.locator('[role="listbox"] [role="option"]').first()

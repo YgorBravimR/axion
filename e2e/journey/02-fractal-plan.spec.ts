@@ -50,7 +50,8 @@ test.describe(
 
 			// ── 2a — Account lifecycle (Settings → Profile, annual reporting fieldset)
 			await page.goto("/en/settings")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await screenshotIfDemo(page, "02-01-settings-profile")
 
 			const startMonth = page.locator("#account-start-month")
@@ -76,7 +77,8 @@ test.describe(
 				`Bravo opens the planner for ${PLAN_YEAR} — empty slate, full intent`
 			)
 			await page.goto(`/en/plan/${PLAN_YEAR}`)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await screenshotIfDemo(page, "02-04-plan-year-empty")
 
 			const editButton = page.locator(`#setup-edit-${PLAN_YEAR}`)

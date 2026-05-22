@@ -5,7 +5,8 @@ test.describe("Journal", () => {
 	test.describe("Journal List Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page }) => {
@@ -153,7 +154,8 @@ test.describe("Journal", () => {
 	test.describe("New Trade Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header with back button", async ({ page }) => {
@@ -352,9 +354,11 @@ test.describe("Journal", () => {
 		}) => {
 			// Navigate from journal list first so browser history has a valid entry
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const cancelButton = page.getByRole("button", {
 				name: /cancel|cancelar/i,
@@ -369,7 +373,8 @@ test.describe("Journal", () => {
 		test("should display trade information", async ({ page }) => {
 			// First, go to journal and click on a trade
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const tradeCard = page
 				.locator('[data-testid="trade-card"], .trade-card, .trade-item')
@@ -377,7 +382,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Should show trade details
 				await expect(page.getByText(/entry|entrada/i).first()).toBeVisible()
@@ -393,7 +399,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Edit button
 				await expect(
@@ -424,7 +431,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Outcome badge (win/loss/breakeven)
 				const outcomeBadge = page
@@ -444,7 +452,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const editButton = page
 					.getByRole("button", { name: /edit|editar/i })
@@ -463,7 +472,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const deleteButton = page.getByRole("button", {
 					name: /delete|excluir|remover/i,
@@ -484,7 +494,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const deleteButton = page.getByRole("button", {
 					name: /delete|excluir|remover/i,
@@ -512,13 +523,15 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const editButton = page
 					.getByRole("button", { name: /edit|editar/i })
 					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Entry price should be pre-filled
 				const entryPrice = page
@@ -537,13 +550,15 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const editButton = page
 					.getByRole("button", { name: /edit|editar/i })
 					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Update a field
 				const notesField = page.getByLabel(/notes|notas|reflection/i).first()
@@ -568,7 +583,8 @@ test.describe("Journal", () => {
 	test.describe("CSV Import", () => {
 		test("should display CSV import tab", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await expect(csvTab).toBeVisible()
@@ -581,7 +597,8 @@ test.describe("Journal", () => {
 
 		test("should display file upload input", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await csvTab.click()
@@ -598,7 +615,8 @@ test.describe("Journal", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await csvTab.click()
@@ -640,7 +658,8 @@ test.describe("Journal", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await csvTab.click()
@@ -676,7 +695,8 @@ test.describe("Journal", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const ocrTab = page.getByRole("tab", { name: /ocr|screenshot|imagem/i })
 			if (await ocrTab.isVisible().catch(() => false)) {
@@ -695,7 +715,8 @@ test.describe("Journal", () => {
 	test.describe("Scaled Position Mode", () => {
 		test("should switch to scaled mode", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const scaledOption = page.getByRole("button", {
 				name: /scaled position/i,
@@ -725,7 +746,8 @@ test.describe("Journal", () => {
 
 		test("should display execution rows in scaled mode", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Click Scaled Position button (visible as a mode card)
 			const scaledOption = page.getByRole("button", {
@@ -758,7 +780,8 @@ test.describe("Journal", () => {
 
 		test("should add execution entry fields", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const scaledOption = page.locator(
 				'[data-testid="mode-scaled"], [value="scaled"], :has-text("Scaled")'
@@ -794,7 +817,8 @@ test.describe("Journal", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const tradeCard = page
 				.locator('[data-testid="trade-card"], .trade-card, .trade-item')
@@ -802,7 +826,8 @@ test.describe("Journal", () => {
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const deleteButton = page.getByRole("button", {
 					name: /delete|excluir|remover/i,
@@ -829,7 +854,8 @@ test.describe("Journal", () => {
 			page,
 		}, testInfo) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Switch to Tags tab
 			await page.getByRole("tab", { name: /tags/i }).click()
@@ -856,7 +882,8 @@ test.describe("Journal", () => {
 
 		test("should display tags selector in trade form", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const tagsSelector = page.getByText(/tags/i)
 			const hasTagsSelector = await tagsSelector
@@ -868,7 +895,8 @@ test.describe("Journal", () => {
 
 		test("should create trade with tags applied", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Select asset
 			const assetCombobox = page.getByRole("combobox").first()

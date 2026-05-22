@@ -91,7 +91,8 @@ const DISPLAY = {
  */
 const gotoCommandCenter = async (page: Page): Promise<void> => {
 	await page.goto(COMMAND_CENTER_URL)
-	await page.waitForLoadState("networkidle")
+	await page.waitForLoadState("load")
+	await page.waitForTimeout(1000)
 }
 
 /**

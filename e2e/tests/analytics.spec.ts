@@ -4,7 +4,8 @@ import { ROUTES } from "../fixtures/test-data"
 test.describe("Analytics", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto(ROUTES.analytics)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 	})
 
 	test.describe("Page Layout", () => {

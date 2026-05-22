@@ -5,7 +5,8 @@ import { ROUTES } from "../fixtures/test-data"
 test.describe("Annual Reporting", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto(ROUTES.reports)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 	})
 
 	test("annual section heading renders on /reports", async ({ page }) => {
@@ -46,7 +47,8 @@ test.describe("Annual Reporting", () => {
 	test("log a withdrawal via CapitalEventLog form", async ({ page }) => {
 		const summary = page.getByText(/Capital Events/)
 		await summary.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const withdrawalBtn = page
 			.getByRole("button", { name: /Withdrawal/ })
@@ -57,7 +59,8 @@ test.describe("Annual Reporting", () => {
 
 		const logBtn = page.getByRole("button", { name: /^Log$/ })
 		await logBtn.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const eventList = page.getByRole("list", { name: /Capital events/ })
 		await expect(eventList).toBeVisible()
@@ -67,17 +70,20 @@ test.describe("Annual Reporting", () => {
 	test("delete a capital event shows updated list", async ({ page }) => {
 		const summary = page.getByText(/Capital Events/)
 		await summary.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.getByLabel("Amount in BRL").fill("100")
 		const logBtn = page.getByRole("button", { name: /^Log$/ })
 		await logBtn.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const eventList = page.getByRole("list", { name: /Capital events/ })
 		const deleteBtn = eventList.getByRole("button", { name: /Delete/ }).first()
 		await deleteBtn.click()
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await expect(page.locator("body")).not.toContainText("Error")
 	})
@@ -96,7 +102,8 @@ test.describe("Annual Reporting", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.settings)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const startMonthSelect = page.getByLabel("Account start month")
 		await expect(startMonthSelect).toBeVisible()

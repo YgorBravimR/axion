@@ -5,7 +5,8 @@ test.describe("Playbook", () => {
 	test.describe("Playbook List Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.playbook)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page, isMobile }) => {
@@ -100,7 +101,8 @@ test.describe("Playbook", () => {
 	test.describe("New Strategy Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.playbookNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header with back button", async ({ page }) => {
@@ -268,7 +270,8 @@ test.describe("Playbook", () => {
 	test.describe("Strategy Detail Page", () => {
 		test("should display strategy information", async ({ page }) => {
 			await page.goto(ROUTES.playbook)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const strategyCard = page
 				.locator('[data-testid="strategy-card"], .strategy-card')
@@ -276,7 +279,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Should show strategy name
 				await expect(page.getByRole("heading")).toBeVisible()
@@ -291,7 +295,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Performance stats
 				const stats = page.locator(
@@ -311,7 +316,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Edit button
 				await expect(
@@ -335,7 +341,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Rules section (may or may not exist based on strategy)
 				const rulesSection = page.locator(
@@ -353,7 +360,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const editButton = page
 					.getByRole("button", { name: /edit|editar/i })
@@ -372,7 +380,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const deleteButton = page.getByRole("button", {
 					name: /delete|excluir/i,
@@ -394,13 +403,15 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const editButton = page
 					.getByRole("button", { name: /edit|editar/i })
 					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Name should be pre-filled
 				const nameField = page
@@ -419,13 +430,15 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const editButton = page
 					.getByRole("button", { name: /edit|editar/i })
 					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Update description
 				const descField = page
@@ -458,7 +471,8 @@ test.describe("Playbook", () => {
 
 			if (await strategyCard.isVisible()) {
 				await strategyCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				const deleteButton = page.getByRole("button", {
 					name: /delete|excluir/i,

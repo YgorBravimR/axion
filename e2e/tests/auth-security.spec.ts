@@ -71,7 +71,8 @@ test.describe.skip("Flow 1: Registration → Email Verification Redirect", () =>
 		const uniqueEmail = `e2e-reg-${Date.now()}@example.com`
 
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.getByLabel("Full Name").fill("E2E Security User")
 		await page.getByLabel("Email").fill(uniqueEmail)
@@ -97,7 +98,8 @@ test.describe.skip("Flow 1: Registration → Email Verification Redirect", () =>
 
 		// Navigate directly with the email search param (simulates the post-register redirect)
 		await page.goto(`/en/verify-email?email=${encodeURIComponent(targetEmail)}`)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// The page should display the email address to the user
 		await expect(page.getByText(targetEmail)).toBeVisible()
@@ -136,7 +138,8 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 
 		// Step 1: register (creates unverified user)
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 		await page.getByLabel("Full Name").fill("E2E Unverified")
 		await page.getByLabel("Email").fill(uniqueEmail)
 		await page.locator("#password").fill(password)
@@ -148,7 +151,8 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 
 		// Step 2: navigate directly to login and attempt sign-in
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 		await page.locator("#email").fill(uniqueEmail)
 		await page.locator("#password").fill(password)
 		await page.locator("#login-submit").click()
@@ -171,7 +175,8 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 
 		// Register to create unverified user
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 		await page.getByLabel("Full Name").fill("E2E Resend User")
 		await page.getByLabel("Email").fill(uniqueEmail)
 		await page.locator("#password").fill(password)
@@ -181,7 +186,8 @@ test.describe.skip("Flow 2: Login Blocked for Unverified Users", () => {
 
 		// Attempt login to surface the unverified-email UI
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 		await page.locator("#email").fill(uniqueEmail)
 		await page.locator("#password").fill(password)
 		await page.locator("#login-submit").click()
@@ -216,7 +222,8 @@ test.describe.skip("Flow 3: Rate Limiting on Login", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Submit 5 failed attempts — the 5th triggers the limiter on the NEXT check,
 		// so we submit a 6th to reliably surface the error message.
@@ -247,7 +254,8 @@ test.describe.skip("Flow 3: Rate Limiting on Login", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Exhaust the rate-limit window
 		for (let attempt = 1; attempt <= 6; attempt++) {
@@ -293,7 +301,8 @@ test.describe.skip("Flow 4: Account Lockout (Escalating Backoff)", () => {
 		await resetRateLimitsForEmail(targetEmail)
 
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Submit 5 wrong-password attempts — each one calls recordLoginFailure()
 		for (let attempt = 1; attempt <= 5; attempt++) {
@@ -328,7 +337,8 @@ test.describe.skip("Flow 4: Account Lockout (Escalating Backoff)", () => {
 		await resetRateLimitsForEmail(targetEmail)
 
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Trigger 5 failures + 1 lockout-check submission
 		for (let attempt = 1; attempt <= 6; attempt++) {
@@ -361,7 +371,8 @@ test.describe.skip("Flow 5: Successful Login (Verified User)", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#email").fill(VERIFIED_USER.email)
 		await page.locator("#password").fill(VERIFIED_USER.password)
@@ -396,7 +407,8 @@ test.describe.skip("Flow 5: Successful Login (Verified User)", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// First: trigger a credential error
 		await page.locator("#email").fill(VERIFIED_USER.email)
@@ -427,7 +439,8 @@ test.describe.skip("Flow 6: JWT Session Cookie — 7-Day MaxAge", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#email").fill(VERIFIED_USER.email)
 		await page.locator("#password").fill(VERIFIED_USER.password)
@@ -483,7 +496,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Page must render — no redirect to login
 		await expect(
@@ -496,7 +510,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 	}) => {
 		const email = "test-display@example.com"
 		await page.goto(`/en/verify-email?email=${encodeURIComponent(email)}`)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await expect(page.getByText(email)).toBeVisible()
 	})
@@ -505,7 +520,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await expect(page.getByText(/6.digit code/i)).toBeVisible()
 	})
@@ -514,7 +530,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const verifyButton = page.locator("#verify-email-submit")
 		await expect(verifyButton).toBeDisabled()
@@ -530,7 +547,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const verifyButton = page.locator("#verify-email-submit")
 		await expect(verifyButton).toBeDisabled()
@@ -547,7 +565,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const firstSlot = page.locator("[data-input-otp] input").first()
 		await firstSlot.focus()
@@ -561,7 +580,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Enter a 6-digit code that will definitely be wrong
 		const firstSlot = page.locator("[data-input-otp] input").first()
@@ -585,7 +605,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 		page,
 	}) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// The initial cooldown (60s) should be displayed right away
 		await expect(page.getByText(/resend code in \d+s/i)).toBeVisible()
@@ -593,7 +614,8 @@ test.describe.skip("Flow 7: Verify-Email Page UI", () => {
 
 	test("should have a back-to-login link", async ({ page }) => {
 		await page.goto("/en/verify-email?email=any@example.com")
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const backLink = page.getByRole("link", { name: /back to login/i })
 		await expect(backLink).toBeVisible()
@@ -624,7 +646,8 @@ test.describe
 			page,
 		}) => {
 			await page.goto(path)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Must NOT be redirected to login (it is login or another public page)
 			const currentUrl = page.url()
@@ -641,7 +664,8 @@ test.describe
 		page,
 	}) => {
 		await page.goto(ROUTES.journal)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await expect(page).toHaveURL(/login/, { timeout: 8000 })
 	})
@@ -650,7 +674,8 @@ test.describe
 		page,
 	}) => {
 		await page.goto(ROUTES.analytics)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await expect(page).toHaveURL(/login/, { timeout: 8000 })
 	})
@@ -659,7 +684,8 @@ test.describe
 		page,
 	}) => {
 		await page.goto(ROUTES.settings)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await expect(page).toHaveURL(/login/, { timeout: 8000 })
 	})
@@ -668,7 +694,8 @@ test.describe
 		page,
 	}) => {
 		await page.goto(ROUTES.journal)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// After redirect the URL should include the callbackUrl pointing back to /journal
 		await expect(page).toHaveURL(/callbackUrl/, { timeout: 8000 })
@@ -686,7 +713,8 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const passwordInput = page.locator("#password")
 		await expect(passwordInput).toHaveAttribute("type", "password")
@@ -702,7 +730,8 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 
 	test("should show the forgot-password link", async ({ page }) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		const forgotLink = page.getByRole("link", { name: /forgot your password/i })
 		await expect(forgotLink).toBeVisible()
@@ -712,7 +741,8 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Trigger an error
 		await page.locator("#email").fill("wrong@example.com")
@@ -736,7 +766,8 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await resetRateLimitsForEmail(VERIFIED_USER.email)
 
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#email").fill(VERIFIED_USER.email)
 		await page.locator("#password").fill(VERIFIED_USER.password)
@@ -757,7 +788,8 @@ test.describe.skip("Flow 9: Login Form — UI Behaviour", () => {
 		await resetRateLimitsForEmail(VERIFIED_USER.email)
 
 		await page.goto(ROUTES.login)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#email").fill(VERIFIED_USER.email)
 		await page.locator("#password").fill(VERIFIED_USER.password)
@@ -786,7 +818,8 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Type a single character to reveal the requirements list
 		await page.locator("#password").fill("a")
@@ -801,7 +834,8 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#password").fill("abcdefgh")
 
@@ -819,7 +853,8 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#password").fill("SecurePass1")
 		await page.locator("#confirmPassword").fill("DifferentPass1")
@@ -831,7 +866,8 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		await page.locator("#password").fill("SecurePass1")
 		await page.locator("#confirmPassword").fill("DoesNotMatch1")
@@ -843,7 +879,8 @@ test.describe.skip("Flow 10: Register Form — Password Requirements", () => {
 		page,
 	}) => {
 		await page.goto(ROUTES.register)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 
 		// Meet all four requirements AND match confirm password
 		await page.locator("#name").fill("Test Name")

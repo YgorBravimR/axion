@@ -64,7 +64,8 @@ test.describe("Navigation", () => {
 
 		test("should display all navigation items", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Check top-level nav items
 			await expect(page.getByRole("link", { name: /dashboard/i })).toBeVisible()
@@ -87,42 +88,48 @@ test.describe("Navigation", () => {
 			// App Router may not be ready to handle navigation and the URL will
 			// not update even when the RSC response succeeds. networkidle ensures
 			// React has finished its post-load XHR calls (useSession, etc.).
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("link", { name: /dashboard/i }).click()
 			await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Journal", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("link", { name: /journal/i }).click()
 			await expect(page).toHaveURL(/journal/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Analytics", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("link", { name: /analytics/i }).click()
 			await expect(page).toHaveURL(/analytics/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Playbook", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("link", { name: /playbook/i }).click()
 			await expect(page).toHaveURL(/playbook/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Reports", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("link", { name: /reports/i }).click()
 			await expect(page).toHaveURL(/reports/, { timeout: 30_000 })
 		})
 
 		test("should navigate to Monthly", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			// Plans group is collapsed — expand it first
 			await page.getByRole("button", { name: /plans/i }).click()
 			await page.getByRole("link", { name: /monthly plan/i }).click()
@@ -132,7 +139,8 @@ test.describe("Navigation", () => {
 
 		test("should navigate to Settings", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("link", { name: /settings/i }).click()
 			await expect(page).toHaveURL(/settings/, { timeout: 30_000 })
 		})
@@ -220,7 +228,8 @@ test.describe("Navigation", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const accountSwitcher = page
 				.locator('[data-testid="account-switcher"], [aria-label*="account"]')
@@ -242,7 +251,8 @@ test.describe("Navigation", () => {
 					// Click a different account than current (try second option)
 					if (optionCount > 1) {
 						await options.nth(1).click()
-						await page.waitForLoadState("networkidle")
+						await page.waitForLoadState("load")
+						await page.waitForTimeout(1000)
 						await page.waitForTimeout(1000)
 
 						// Page should have reloaded with new account context
@@ -260,7 +270,8 @@ test.describe("Navigation", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const accountSwitcher = page
 				.locator('[data-testid="account-switcher"], [aria-label*="account"]')
@@ -280,7 +291,8 @@ test.describe("Navigation", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const ccLink = page.getByRole("link", {
 				name: /command center|centro de comando/i,
@@ -326,7 +338,8 @@ test.describe("Navigation", () => {
 	test.describe("User Menu", () => {
 		test("should display user avatar/initials", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// The user menu shows initials (AU for Admin User)
 			const userMenu = page
@@ -374,7 +387,8 @@ test.describe("Navigation", () => {
 	test.describe("Breadcrumbs / Back Navigation", () => {
 		test("should show cancel button on sub-pages", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// New Trade page uses Cancel button instead of a back link
 			const cancelButton = page.getByRole("button", {
@@ -388,9 +402,11 @@ test.describe("Navigation", () => {
 		}) => {
 			// Navigate from journal list first so browser history has a valid entry
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const cancelButton = page.getByRole("button", {
 				name: /cancel|cancelar/i,

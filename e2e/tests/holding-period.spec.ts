@@ -21,7 +21,8 @@ import { ROUTES } from "../fixtures/test-data"
 test.describe("Holding Period Analysis — Analytics Page", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto(ROUTES.analytics)
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("load")
+		await page.waitForTimeout(1000)
 	})
 
 	// =========================================================================

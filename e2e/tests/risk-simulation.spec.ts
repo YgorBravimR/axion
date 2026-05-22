@@ -8,7 +8,8 @@ test.describe("Risk Simulation", () => {
 	test.describe("Page Layout", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page title", async ({ page }) => {
@@ -33,7 +34,8 @@ test.describe("Risk Simulation", () => {
 	test.describe("Configuration Panel", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should show preview banner after selecting date range", async ({
@@ -93,7 +95,8 @@ test.describe("Risk Simulation", () => {
 	test.describe("Prefill & Params Form", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 		})
 
@@ -210,7 +213,8 @@ test.describe("Risk Simulation", () => {
 	test.describe("Running Simulation", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 		})
 
@@ -264,7 +268,8 @@ test.describe("Risk Simulation", () => {
 			page,
 		}) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			// Select prefill and run
@@ -301,7 +306,8 @@ test.describe("Risk Simulation", () => {
 
 		test("should display equity curve chart", async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			const manualBtn = page.getByRole("button", { name: /manual/i })
@@ -331,7 +337,8 @@ test.describe("Risk Simulation", () => {
 
 		test("should display trade comparison table", async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			const manualBtn = page.getByRole("button", { name: /manual/i })
@@ -361,7 +368,8 @@ test.describe("Risk Simulation", () => {
 	test.describe("Decision Trace Modal", () => {
 		test("should have a button to open decision trace", async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			const manualBtn = page.getByRole("button", { name: /manual/i })
@@ -387,7 +395,8 @@ test.describe("Risk Simulation", () => {
 
 		test("should open modal showing week/day structure", async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			const manualBtn = page.getByRole("button", { name: /manual/i })
@@ -423,7 +432,8 @@ test.describe("Risk Simulation", () => {
 
 		test("should close modal on dismiss", async ({ page }) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			const manualBtn = page.getByRole("button", { name: /manual/i })
@@ -464,7 +474,8 @@ test.describe("Risk Simulation", () => {
 			page,
 		}) => {
 			await page.goto(RISK_SIM_ROUTE)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await waitForSuspenseLoad(page)
 
 			const manualBtn = page.getByRole("button", { name: /manual/i })

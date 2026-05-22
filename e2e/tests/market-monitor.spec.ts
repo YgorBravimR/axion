@@ -36,7 +36,8 @@ test.describe("Market Monitor", () => {
 	test.describe("Authenticated Page - Layout", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.monitor)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.waitForTimeout(3000)
 		})
 
@@ -96,7 +97,8 @@ test.describe("Market Monitor", () => {
 	test.describe("Authenticated Page - Content", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.monitor)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.waitForTimeout(3000)
 		})
 
@@ -170,7 +172,8 @@ test.describe("Market Monitor", () => {
 	test.describe("Embedded in Command Center", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.commandCenter)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should load Monitor tab content within command center", async ({
@@ -221,7 +224,8 @@ test.describe("Market Monitor", () => {
 		test("should adapt layout on mobile viewport", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.monitor)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.waitForTimeout(3000)
 
 			// Page should show content or error state on mobile
@@ -232,7 +236,8 @@ test.describe("Market Monitor", () => {
 		test("should stack content on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.monitor)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.waitForTimeout(3000)
 
 			const body = page.locator("body")

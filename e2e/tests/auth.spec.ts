@@ -9,7 +9,8 @@ test.describe("Authentication", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await expect(page.getByLabel("Full Name")).toBeVisible()
 			await expect(page.getByLabel("Email")).toBeVisible()
@@ -22,7 +23,8 @@ test.describe("Authentication", () => {
 
 		test("should show password requirements indicator", async ({ page }) => {
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page.locator('input[type="password"]').first().fill("a")
 
@@ -35,7 +37,8 @@ test.describe("Authentication", () => {
 
 		test("should validate password confirmation match", async ({ page }) => {
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page
 				.locator('input[type="password"]')
@@ -51,7 +54,8 @@ test.describe("Authentication", () => {
 
 		test("should validate required fields", async ({ page }) => {
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// The button should be disabled when requirements aren't met
 			const submitButton = page.getByRole("button", { name: "Create Account" })
@@ -65,7 +69,8 @@ test.describe("Authentication", () => {
 			}
 
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page.getByLabel("Full Name").fill(uniqueUser.name)
 			await page.getByLabel("Email").fill(uniqueUser.email)
@@ -89,7 +94,8 @@ test.describe("Authentication", () => {
 
 		test("should show error for duplicate email", async ({ page }) => {
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page.getByLabel("Full Name").fill("Test User")
 			await page.getByLabel("Email").fill("admin@axion.com") // Already exists from seed
@@ -113,7 +119,8 @@ test.describe("Authentication", () => {
 
 		test("should have link to login page", async ({ page }) => {
 			await page.goto(ROUTES.register)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const loginLink = page.getByRole("link", { name: "Sign in" })
 			await expect(loginLink).toBeVisible()
@@ -126,7 +133,8 @@ test.describe("Authentication", () => {
 	test.describe("Login", () => {
 		test("should display login form with all fields", async ({ page }) => {
 			await page.goto(ROUTES.login)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await expect(page.locator("#email")).toBeVisible()
 			await expect(page.locator("#password")).toBeVisible()
@@ -135,7 +143,8 @@ test.describe("Authentication", () => {
 
 		test("should show error for invalid credentials", async ({ page }) => {
 			await page.goto(ROUTES.login)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page.locator("#email").fill("invalid@example.com")
 			await page.locator("#password").fill("wrongpassword")
@@ -150,7 +159,8 @@ test.describe("Authentication", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.login)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page.locator("#email").fill("admin@axion.com")
 			await page.locator("#password").fill("Admin123!")
@@ -192,7 +202,8 @@ test.describe("Authentication", () => {
 
 		test("should have link to registration page", async ({ page }) => {
 			await page.goto(ROUTES.login)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const registerLink = page.getByRole("link", { name: "Create account" })
 			await expect(registerLink).toBeVisible()
@@ -203,7 +214,8 @@ test.describe("Authentication", () => {
 
 		test("should convert email to lowercase", async ({ page }) => {
 			await page.goto(ROUTES.login)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const emailField = page.getByLabel("Email")
 			await emailField.fill("TEST@EXAMPLE.COM")
@@ -218,7 +230,8 @@ test.describe("Authentication", () => {
 	test.describe("Logout", () => {
 		test("should logout and redirect to login", async ({ page }) => {
 			await page.goto(ROUTES.home)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Find and click user menu - look for avatar/user button
 			const userMenu = page
@@ -251,7 +264,8 @@ test.describe("Authentication", () => {
 			page,
 		}) => {
 			await page.goto(ROUTES.selectAccount)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// If user has multiple accounts, should see selection UI
 			const accountCards = page.locator(
@@ -266,7 +280,8 @@ test.describe("Authentication", () => {
 
 		test("should show account type badges", async ({ page }) => {
 			await page.goto(ROUTES.selectAccount)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Check for account type indicators (Personal/Prop icons)
 			const typeIndicators = page.locator('[data-testid="account-type"], svg')

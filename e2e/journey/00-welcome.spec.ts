@@ -39,7 +39,8 @@ test.describe(
 			await annotate(page, "Bravo discovers Axion and creates her account")
 
 			await page.goto("/en/register")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await screenshotIfDemo(page, "00-01-register-form")
 
 			await page.getByLabel("Full Name").fill(BRAVO.name)
@@ -69,7 +70,8 @@ test.describe(
 			// DOM before we interact with the login inputs (otherwise #email and
 			// #password resolve to two elements during the transition).
 			await page.goto("/en/login")
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			await page.locator("#email").fill(BRAVO.email)
 			await page.locator("#password").fill(BRAVO.password)
@@ -94,7 +96,8 @@ test.describe(
 				await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/, { timeout: 15000 })
 			}
 
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await screenshotIfDemo(page, "00-05-dashboard-first-view")
 
 			await annotate(
