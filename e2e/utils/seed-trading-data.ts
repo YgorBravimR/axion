@@ -543,6 +543,90 @@ const insertTestTrades = async (
 }
 
 // ---------------------------------------------------------------------------
+// TAX LEDGER (DARF)
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensure a monthlyTaxLedger row exists for the current month.
+ * Seeds minimal DARF data (darfDueCents, darfStatus) to make tax-engine tests pass.
+ *
+ * This function is idempotent: if a row exists for this month, it updates the
+ * DARF fields. If not, it creates a new row.
+ *
+ * Returns: { ledgerId, created }
+ */
+const ensureMonthlyDarfLedger = async (
+	accountId: string,
+	year: number,
+	month: number,
+	darfDueCents: number = 150000 // R$1,500 default tax amount
+): Promise<{ ledgerId: string; created: boolean }> => {
+	const db = buildDb()
+
+	// UTC first-of-month marker for timestamptz column
+	const monthDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
+
+	const existing = await db.execute<IdRow>(sql`
+    SELECT id FROM monthly_tax_ledger
+    WHERE account_id = ${accountId} AND month = ${monthDate.toISOString()}
+    LIMIT 1
+  `)
+
+	if (existing.rows.length) {
+		const ledgerId = existing.rows[0].id
+		// Update existing row with DARF data
+		await db.execute(sql`
+      UPDATE monthly_tax_ledger SET
+        darf_due_cents = ${darfDueCents},
+        darf_status = 'pending',
+        updated_at = NOW()
+      WHERE id = ${ledgerId}
+    `)
+		return { ledgerId, created: false }
+	}
+
+	// Create new ledger row with minimal required fields
+	const inserted = await db.execute<IdRow>(sql`
+    INSERT INTO monthly_tax_ledger (
+      account_id,
+      month,
+      gross_gain_cents,
+      gross_loss_cents,
+      darf_due_cents,
+      darf_status,
+      carryover_in_cents,
+      carryover_out_cents
+    ) VALUES (
+      ${accountId},
+      ${monthDate.toISOString()},
+      1000000,
+      0,
+      ${darfDueCents},
+      'pending',
+      0,
+      0
+    )
+    RETURNING id
+  `)
+
+	return { ledgerId: inserted.rows[0].id, created: true }
+}
+
+/**
+ * Delete all yearly plans for a given account.
+ * Cascades to quarterly_plan, monthly_plan, weekly_plan, daily_plan.
+ */
+const deleteYearlyPlansForAccount = async (
+	accountId: string
+): Promise<void> => {
+	const db = buildDb()
+	await db.execute(sql`
+    DELETE FROM yearly_plans
+    WHERE account_id = ${accountId}
+  `)
+}
+
+// ---------------------------------------------------------------------------
 // CLEANUP
 // ---------------------------------------------------------------------------
 
@@ -712,6 +796,8 @@ export {
 	cleanupTodayTrades,
 	cleanupMonthlyPlan,
 	cleanupRiskProfile,
+	ensureMonthlyDarfLedger,
+	deleteYearlyPlansForAccount,
 	BRAVO_DECISION_TREE,
 	BRAVO_PLAN,
 }
