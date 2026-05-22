@@ -43,6 +43,17 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## E2E / Test Infrastructure
 
+### Replace remaining `ScrollArea` usages inside modals (React 19 crash risk)
+
+- **Priority**: P2
+- **Effort**: XS
+- **Source**: 2026-05-22 — ScrollArea crash post-mortem (`docs/postMorten/frontend.md`). Sidebar and app-shell were fixed; two modal-hosted `ScrollArea` instances remain and will crash if their E2E tests ever exercise open/close cycles.
+- **What + Why**: Replace `<ScrollArea>` with `<div className="overflow-y-auto">` in:
+  - `src/components/dashboard/day-detail-modal.tsx:105`
+  - `src/components/monte-carlo/stats-preview.tsx:118`
+    Both live inside Radix dialogs/sheets — same crash path as the sidebar fix.
+- **Date filed**: 2026-05-22.
+
 ### Add browser `console.error` listener to Playwright fixture to surface client-side errors
 
 - **Priority**: P3

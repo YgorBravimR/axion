@@ -72,6 +72,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Always `import { useState, forwardRef } from "react"`. Same for types: `import type { ComponentProps, HTMLAttributes } from "react"`.
 - **Date logged**: 2026-05-07.
 
+### `@radix-ui/react-scroll-area` crashes React 19 inside any mount/unmount boundary
+
+- **What**: `ScrollArea` v1.2.10 uses `useComposedRefs` internally, which calls `setState` during React 19's `disappearLayoutEffects` phase (triggered on unmount and on Suspense "disappear"). React 19 rejects this as "Maximum update depth exceeded", caught by the app's `ErrorBoundaryHandler`. Affects any `ScrollArea` that lives inside a Radix `Sheet`/`Dialog`/`AlertDialog` (open/close cycles), a lazy-mounted tab panel, or a layout component that participates in RSC Suspense streaming (even fixed-position sidebars disappear temporarily during route transitions in Next.js App Router).
+- **What to do**: Replace `<ScrollArea>` with `<div className="overflow-y-auto">` for any scrollable container that can mount or unmount. Reserve `ScrollArea` only for permanently-mounted, never-Suspense-wrapped surfaces — and even then, prefer the native `overflow-y-auto` div unless custom scrollbar styling is a hard requirement.
+- **Known risky survivors**: `dashboard/day-detail-modal.tsx:105`, `monte-carlo/stats-preview.tsx:118` — both live inside modals and carry this risk if their E2E tests exercise open/close cycles.
+- **Source**: `src/components/layout/sidebar.tsx`, `src/components/layout/app-shell.tsx`, `src/components/journal/new-trade-tabs.tsx` — all three removed or lazy-guarded their `ScrollArea` usages.
+- **Date logged**: 2026-05-22.
+
 ---
 
 ## Server Actions

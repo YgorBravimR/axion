@@ -422,3 +422,77 @@ Fixed files (43 total):
 
 - `src/lib/formatting.ts` (function definitions — no changes needed, they are correct)
 - 43 files listed above (call sites fixed)
+
+---
+
+## [BUG-2026-05-22] React 19 + Radix ScrollArea crash in navigation (sidebar, app-shell, new-trade-tabs)
+
+**Date:** 2026-05-22 | **Severity:** High | **Affected Area:** `src/components/layout/sidebar.tsx`, `src/components/layout/app-shell.tsx`, `src/components/journal/new-trade-tabs.tsx`
+
+### Cause
+
+`@radix-ui/react-scroll-area` v1.2.10 uses `useComposedRefs` internally. `useComposedRefs` calls `setState` during React 19's `disappearLayoutEffects` phase — the internal teardown step that runs on unmount and on Suspense "disappear" (when a component is temporarily removed from the tree while streaming). React 19 added a stricter invariant: `setState` is illegal during this phase. The result is an unhandled "Maximum update depth exceeded" error that propagates up to the nearest error boundary.
+
+Three independent crash paths existed:
+
+1. **Mobile sidebar in Sheet**: `Sidebar` renders `<ScrollArea>` for its nav section. On mobile, `Sidebar` lives inside a Radix `Sheet`. Opening/closing the sheet unmounts/remounts the sidebar → crash.
+2. **Desktop sidebar during RSC route transition**: Next.js App Router streams RSC responses through a Suspense boundary that wraps the entire layout. During route transitions the layout participates in a brief "disappear" cycle → `disappearLayoutEffects` fires on the sidebar's `ScrollArea` → crash.
+3. **New-trade tab panels (CSV / Nota / Screenshot)**: All three panels were eagerly mounted (CSS `hidden` class) so their `ScrollArea` refs were live even when invisible. Navigating to `/journal/new` triggered the same crash pattern.
+
+The error boundary caught all three and left "Something went wrong!" on the page. Because navigation tests share browser context across test cases within the same Playwright project, the first crash poisoned subsequent tests in `chromium-navigation` and `mobile-navigation`.
+
+### Effect
+
+E2E failures:
+
+- `[chromium-navigation] Navigation › Sidebar Navigation › should navigate to Reports` (1.5m timeout — error boundary rendered instead of Reports page)
+- `[mobile-navigation] Navigation › User Menu › should display user avatar/initials` (error boundary from prior Sheet cycle)
+- `[mobile-navigation] Navigation › Breadcrumbs / Back Navigation › should show cancel button on sub-pages` (same)
+
+### Solution
+
+1. **`sidebar.tsx`**: Replaced `<ScrollArea className="flex-1">` wrapping the `<nav>` with `<div className="flex-1 overflow-y-auto">`. Removed `ScrollArea` import.
+2. **`app-shell.tsx`**: Replaced `<ScrollArea className="h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3rem)]">` wrapping `<main>` with an equivalent `<div>`. Removed `ScrollArea` import.
+3. **`new-trade-tabs.tsx`**: Changed CSV, Nota, and Screenshot tab panels from CSS `hidden` toggling (eager mount) to conditional rendering (`activeTab === "csv"`, etc.). The `ScrollArea` inside `CsvImport` / `DetailedTradeImporter` is now only mounted when its tab is active.
+
+### Prevention
+
+- **Never use `<ScrollArea>` in a component that can unmount** (modal, sheet, dialog, lazy tab). Use `<div className="overflow-y-auto">` instead. The only safe context is a permanently-mounted, never-Suspense-wrapped surface.
+- **Known risky survivors** (not yet failing in E2E but carry the same risk): `dashboard/day-detail-modal.tsx:105`, `monte-carlo/stats-preview.tsx:118`. Tracked in `docs/backlog.md`.
+- **Eager tab panel mounting is a hidden mount risk.** Prefer conditional rendering (`activeTab === X`) over CSS-hiding for panels that contain complex components with ref callbacks.
+
+### Related Files
+
+- `src/components/layout/sidebar.tsx`
+- `src/components/layout/app-shell.tsx`
+- `src/components/journal/new-trade-tabs.tsx`
+
+---
+
+## [BUG-2026-05-22] Journey-07 E2E spec navigating to non-existent `/en/analytics/account-comparison` route
+
+**Date:** 2026-05-22 | **Severity:** Low (test-only) | **Affected Area:** `e2e/journey/07-quarter-year.spec.ts`
+
+### Cause
+
+Stage 7 step 7d navigated to `/en/analytics/account-comparison` and asserted `#comparison-selector`. Neither the route nor the selector exist:
+
+- The analytics pages are all under `/en/analytics` (one route). There is no sub-route for account comparison.
+- `#comparison-selector` is gated behind `isPremium && accounts.length >= 2`. Bravo's seed account is a single account, so the selector never renders.
+
+### Effect
+
+`[chromium-journey] Journey Stage 7 — Quarter + Year` failed with a 404 page or timeout on `#comparison-selector`.
+
+### Solution
+
+Changed step 7d to navigate to `/en/analytics` and assert `#analytics-anchor-equity` (the "Cumulative P&L" heading anchor, always rendered regardless of account count or premium status).
+
+### Prevention
+
+- **Route assertions must match the actual Next.js App Router file tree.** Before adding a `goto()` to a new URL in an E2E spec, verify the route exists in `src/app/`.
+- **Feature-gated selectors need a fallback assertion.** When the feature (account comparison) requires conditions Bravo's seed data doesn't satisfy, assert the surrounding page load instead of the gated element.
+
+### Related Files
+
+- `e2e/journey/07-quarter-year.spec.ts`
