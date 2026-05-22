@@ -3,13 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { Link, usePathname } from "@/i18n/routing"
-import {
-	ChevronRight,
-	PanelLeftClose,
-	PanelLeftOpen,
-	Plus,
-	RotateCcw,
-} from "lucide-react"
+import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -23,14 +17,11 @@ import {
 } from "@/lib/navigation"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { getFilteredNavStructure } from "@/lib/feature-access"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { AccountSwitcher } from "./account-switcher"
 
 interface SidebarProps {
 	isCollapsed: boolean
 	onToggleCollapse: () => void
-	isReplayAccount?: boolean
-	replayDate?: string
 	variant?: "default" | "sheet"
 	onNavigate?: () => void
 	hideCollapseToggle?: boolean
@@ -61,15 +52,12 @@ const isItemActive = (
 const Sidebar = ({
 	isCollapsed,
 	onToggleCollapse,
-	isReplayAccount = false,
-	replayDate,
 	variant = "default",
 	onNavigate,
 	hideCollapseToggle = false,
 	navStructure,
 }: SidebarProps) => {
 	const t = useTranslations("nav")
-	const tReplay = useTranslations("commandCenter.dateNavigator")
 	const tCommon = useTranslations("common")
 	const pathname = usePathname()
 	const { role, canAccess } = useFeatureAccess()
@@ -174,6 +162,7 @@ const Sidebar = ({
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
+					style={{ height: "auto" }}
 					priority
 				/>
 				<Image
@@ -186,6 +175,7 @@ const Sidebar = ({
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
+					style={{ height: "auto" }}
 					priority
 				/>
 			</div>
@@ -243,7 +233,7 @@ const Sidebar = ({
 			)}
 
 			{/* Navigation */}
-			<ScrollArea className="flex-1">
+			<div className="flex-1 overflow-y-auto">
 				<nav className="space-y-s-100 p-s-200">
 					{filteredStructure.map((entry) => {
 						if (!isGroup(entry)) {
@@ -299,40 +289,7 @@ const Sidebar = ({
 						)
 					})}
 				</nav>
-			</ScrollArea>
-
-			{/* Replay Mode Badge */}
-			{isReplayAccount && replayDate && (
-				<div
-					className={cn(
-						"border-bg-300 px-s-300 py-s-200 border-t",
-						isCompact && "flex justify-center px-0"
-					)}
-				>
-					{isCompact ? (
-						<div
-							className="bg-acc-100/10 flex h-8 w-8 items-center justify-center rounded-md"
-							aria-label={tReplay("replayMode")}
-							title={`${tReplay("replayMode")} — ${replayDate}`}
-						>
-							<RotateCcw className="text-acc-100 h-4 w-4" />
-						</div>
-					) : (
-						<div className="gap-s-200 bg-acc-100/10 px-s-300 py-s-200 flex flex-col rounded-md">
-							<div className="gap-s-200 flex items-center">
-								<RotateCcw
-									className="text-acc-100 h-3.5 w-3.5 shrink-0"
-									aria-hidden="true"
-								/>
-								<span className="text-tiny text-acc-100 font-medium">
-									{tReplay("replayMode")}
-								</span>
-							</div>
-							<span className="text-tiny text-txt-300">{replayDate}</span>
-						</div>
-					)}
-				</div>
-			)}
+			</div>
 
 			{/* Account Switcher */}
 			<div

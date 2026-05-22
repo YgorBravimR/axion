@@ -7,7 +7,7 @@ import { ROUTES } from "../fixtures/test-data"
  */
 export const navigateTo = async (page: Page, route: string) => {
 	await page.goto(route)
-	await page.waitForLoadState("networkidle")
+	await page.waitForLoadState("load")
 }
 
 /**
@@ -214,7 +214,10 @@ export const waitForSuspenseLoad = async (page: Page, timeout = 15000) => {
 	if (await spinner.isVisible().catch(() => false)) {
 		await expect(spinner).toBeHidden({ timeout })
 	}
-	await page.waitForLoadState("networkidle")
+	// Fixed buffer instead of networkidle: RSC streaming keeps network active
+	// indefinitely (mobile especially), causing networkidle to always time out.
+	// 1.5s covers streaming settle time without blocking indefinitely.
+	await page.waitForTimeout(1500)
 }
 
 /**

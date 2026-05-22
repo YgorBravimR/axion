@@ -1,14 +1,10 @@
 import { getTranslations } from "next-intl/server"
 import { cn } from "@/lib/utils"
+import { DarfStatusDot } from "@/components/ui/darf-status-dot"
+import type { DarfStatus } from "@/components/ui/darf-status-dot"
 
-type DarfStatus =
-	| "pending"
-	| "paid"
-	| "exempt"
-	| "overdue"
-	| "unknown"
-	| "in_progress"
-	| "future"
+// Re-export DarfStatus for backward compatibility
+export type { DarfStatus }
 
 interface DarfStripChip {
 	monthIndex: number // 0-11
@@ -35,16 +31,6 @@ const MONTH_ABBR_PT = [
 	"nov",
 	"dez",
 ]
-
-const STATUS_DOT: Record<DarfStatus, string> = {
-	paid: "bg-fb-success",
-	pending: "bg-warning",
-	overdue: "bg-fb-error",
-	exempt: "bg-txt-300",
-	unknown: "bg-bg-300",
-	in_progress: "bg-action-buy",
-	future: "bg-bg-400",
-}
 
 const formatBRL = (cents: number): string =>
 	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
@@ -82,10 +68,7 @@ const DarfStrip = async ({ chips, onChipClick }: DarfStripProps) => {
 						<span className="text-micro text-txt-300 tracking-wide uppercase">
 							{monthAbbr}
 						</span>
-						<span
-							className={cn("size-2 rounded-full", STATUS_DOT[chip.status])}
-							aria-hidden="true"
-						/>
+						<DarfStatusDot status={chip.status} />
 						<span className="text-micro text-txt-200 font-mono tabular-nums">
 							{showAmount ? formatBRL(chip.dueCents) : "—"}
 						</span>
@@ -123,4 +106,4 @@ const DarfStrip = async ({ chips, onChipClick }: DarfStripProps) => {
 }
 
 export { DarfStrip }
-export type { DarfStripChip, DarfStatus, DarfStripProps }
+export type { DarfStripChip, DarfStripProps }

@@ -249,9 +249,9 @@ const ComparisonNormalizedTable = ({
 										<TableCell
 											key={account.accountId}
 											className={cn(
-												"py-s-200 px-s-300 text-right font-semibold whitespace-nowrap",
-												isBest && "text-trade-buy",
-												isWorst && "text-trade-sell",
+												"py-s-200 px-s-300 text-right whitespace-nowrap",
+												isBest && "text-txt-100 font-semibold",
+												isWorst && "text-txt-300 font-normal",
 												!isBest && !isWorst && "text-txt-100 font-normal"
 											)}
 										>

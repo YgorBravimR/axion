@@ -11,7 +11,6 @@ interface StatCardProps {
 	subValue?: string | ReactNode
 	trend?: TrendType
 	valueColorClass?: string
-	accentColorClass?: string
 	indicator?: ReactNode
 	size?: "sm" | "md" | "lg"
 	className?: string
@@ -45,11 +44,11 @@ interface TrendIconProps {
 const TrendIcon = ({ trend }: TrendIconProps) => {
 	switch (trend) {
 		case "up":
-			return <TrendingUp className="h-4 w-4 text-trade-buy" />
+			return <TrendingUp className="text-trade-buy h-4 w-4" />
 		case "down":
-			return <TrendingDown className="h-4 w-4 text-trade-sell" />
+			return <TrendingDown className="text-trade-sell h-4 w-4" />
 		case "stable":
-			return <Minus className="h-4 w-4 text-txt-300" />
+			return <Minus className="text-txt-300 h-4 w-4" />
 	}
 }
 
@@ -64,86 +63,90 @@ const TrendIcon = ({ trend }: TrendIconProps) => {
  * @param subValue - Optional secondary value or description (string or ReactNode)
  * @param trend - Optional trend indicator (up, down, stable)
  * @param valueColorClass - Optional color class for the value
- * @param accentColorClass - Optional left border color class (e.g. "border-l-trade-buy")
  * @param indicator - Optional element rendered top-right alongside label+value block
  * @param size - Size variant (sm, md, lg)
  * @param className - Additional CSS classes
  */
-const StatCard = memo(({
-	label,
-	value,
-	subValue,
-	trend,
-	valueColorClass,
-	accentColorClass,
-	indicator,
-	size = "md",
-	className,
-}: StatCardProps) => {
-	const sizes = sizeClasses[size]
+const StatCard = memo(
+	({
+		label,
+		value,
+		subValue,
+		trend,
+		valueColorClass,
+		indicator,
+		size = "md",
+		className,
+	}: StatCardProps) => {
+		const sizes = sizeClasses[size]
 
-	const { labelId, valueId } = useMemo(() => {
-		const slug = label.toLowerCase().replace(/\s+/g, "-")
-		return {
-			labelId: `stat-label-${slug}`,
-			valueId: `stat-value-${slug}`,
-		}
-	}, [label])
+		const { labelId, valueId } = useMemo(() => {
+			const slug = label.toLowerCase().replace(/\s+/g, "-")
+			return {
+				labelId: `stat-label-${slug}`,
+				valueId: `stat-value-${slug}`,
+			}
+		}, [label])
 
-	const labelAndValue = (
-		<dl className="min-w-0">
-			<dt
-				id={labelId}
-				className={cn("font-medium uppercase tracking-wide text-txt-300", sizes.label)}
-			>
-				{label}
-			</dt>
-			<div className="mt-s-100 flex items-baseline gap-s-200">
-				{typeof value === "string" ? (
-					<dd
-						id={valueId}
-						className={cn("font-semibold", sizes.value, valueColorClass || "text-txt-100")}
-					>
-						{value}
-					</dd>
-				) : (
-					<dd id={valueId}>{value}</dd>
-				)}
-				{trend && <TrendIcon trend={trend} />}
-			</div>
-		</dl>
-	)
-
-	return (
-		<div
-			className={cn(
-				"rounded-xl border border-bg-300 bg-bg-200 min-w-0 flex flex-col justify-between",
-				accentColorClass && "border-l-[3px]",
-				accentColorClass,
-				sizes.container,
-				className
-			)}
-			role="region"
-			aria-labelledby={`${labelId} ${valueId}`}
-		>
-			{indicator ? (
-				<div className="flex justify-between items-start gap-s-200">
-					{labelAndValue}
-					<div className="shrink-0">{indicator}</div>
+		const labelAndValue = (
+			<dl className="min-w-0">
+				<dt
+					id={labelId}
+					className={cn(
+						"text-txt-300 font-medium tracking-wide uppercase",
+						sizes.label
+					)}
+				>
+					{label}
+				</dt>
+				<div className="mt-s-100 gap-s-200 flex items-baseline">
+					{typeof value === "string" ? (
+						<dd
+							id={valueId}
+							className={cn(
+								"font-semibold",
+								sizes.value,
+								valueColorClass || "text-txt-100"
+							)}
+						>
+							{value}
+						</dd>
+					) : (
+						<dd id={valueId}>{value}</dd>
+					)}
+					{trend && <TrendIcon trend={trend} />}
 				</div>
-			) : (
-				labelAndValue
-			)}
-			{subValue && (
-				typeof subValue === "string" ? (
-					<p className={cn("text-txt-300", sizes.subValue)}>{subValue}</p>
+			</dl>
+		)
+
+		return (
+			<div
+				className={cn(
+					"border-bg-300 bg-bg-200 flex min-w-0 flex-col justify-between rounded-xl border",
+					sizes.container,
+					className
+				)}
+				role="region"
+				aria-labelledby={`${labelId} ${valueId}`}
+			>
+				{indicator ? (
+					<div className="gap-s-200 flex items-start justify-between">
+						{labelAndValue}
+						<div className="shrink-0">{indicator}</div>
+					</div>
 				) : (
-					<div className={cn("text-txt-300", sizes.subValue)}>{subValue}</div>
-				)
-			)}
-		</div>
-	)
-})
+					labelAndValue
+				)}
+				{subValue &&
+					(typeof subValue === "string" ? (
+						<p className={cn("text-txt-300", sizes.subValue)}>{subValue}</p>
+					) : (
+						<div className={cn("text-txt-300", sizes.subValue)}>{subValue}</div>
+					))}
+			</div>
+		)
+	}
+)
 
 StatCard.displayName = "StatCard"
 

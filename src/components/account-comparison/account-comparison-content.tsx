@@ -2,8 +2,6 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
-import { ArrowLeft } from "lucide-react"
-import { Link } from "@/i18n/routing"
 import { AccountSelector, type AccountOption } from "./account-selector"
 import { ComparisonStatsTable } from "./comparison-stats-table"
 import { ComparisonEquityChart } from "./comparison-equity-chart"
@@ -49,25 +47,22 @@ const AccountComparisonContent = ({
 	}
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500">
-			{/* Header */}
+		<section
+			className="space-y-m-400 sm:space-y-m-500"
+			aria-labelledby="account-comparison-heading"
+		>
+			{/* Section header — renders inline inside Analytics, no back-link */}
 			<div className="gap-s-300 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-				<div className="gap-s-300 flex items-center">
-					<Link
-						href="/analytics"
-						className="text-txt-300 hover:text-txt-100 transition-colors"
-						aria-label={t("backToAnalytics")}
+				<div>
+					<h2
+						id="account-comparison-heading"
+						className="text-body sm:text-h3 text-txt-100 font-semibold"
 					>
-						<ArrowLeft className="h-5 w-5" />
-					</Link>
-					<div>
-						<h1 className="text-body sm:text-h3 text-txt-100 font-semibold">
-							{t("title")}
-						</h1>
-						<p className="text-tiny sm:text-small text-txt-300">
-							{t("subtitle")}
-						</p>
-					</div>
+						{t("title")}
+					</h2>
+					<p className="text-tiny sm:text-small text-txt-300">
+						{t("subtitle")}
+					</p>
 				</div>
 
 				{comparisonData && (
@@ -111,7 +106,7 @@ const AccountComparisonContent = ({
 					<ComparisonConfigSummary accounts={comparisonData.accounts} />
 				</div>
 			)}
-		</div>
+		</section>
 	)
 }
 

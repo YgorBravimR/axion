@@ -10,8 +10,6 @@ import { auth } from "@/auth"
 import { db } from "@/db/drizzle"
 import { trades as tradesTable } from "@/db/schema"
 import { previewCache } from "../route"
-import { encryptField } from "@/lib/crypto"
-import { getUserDek } from "@/lib/user-crypto"
 import { toNumericString } from "@/lib/money"
 import type { GroupedTrade } from "@/lib/csv-parsers"
 
@@ -25,18 +23,6 @@ const requireNumericString = (
 	const result = toNumericString(value)
 	if (result === null) {
 		throw new Error("Required numeric value is null")
-	}
-	return result
-}
-
-/**
- * Encrypts a guaranteed non-null value. Returns string (never null).
- * Wraps encryptField which accepts nullable input but we pre-validate.
- */
-const encryptRequired = (value: string, dek: string): string => {
-	const result = encryptField(value, dek)
-	if (result === null) {
-		throw new Error("Encryption produced null for non-null input")
 	}
 	return result
 }
@@ -84,10 +70,7 @@ export const POST = async (req: NextRequest) => {
 
 		const { preview } = cached
 
-		// Get user's DEK for encryption (null when encryption is disabled)
-		const dek = await getUserDek(userId)
-
-		// Convert trades to database format (plaintext when dek is null)
+		// Convert trades to database format (plaintext)
 		type TradeInsert = typeof tradesTable.$inferInsert
 		const tradesToInsert: TradeInsert[] = preview.trades.map(
 			(trade: GroupedTrade) => {
@@ -106,20 +89,12 @@ export const POST = async (req: NextRequest) => {
 					direction: trade.direction,
 					entryDate,
 					exitDate,
-					entryPrice: dek ? encryptRequired(entryPriceStr, dek) : entryPriceStr,
+					entryPrice: entryPriceStr,
 					exitPrice: trade.exitPrice
-						? dek
-							? encryptRequired(requireNumericString(trade.exitPrice), dek)
-							: requireNumericString(trade.exitPrice)
+						? requireNumericString(trade.exitPrice)
 						: null,
-					positionSize: dek
-						? encryptRequired(positionSizeStr, dek)
-						: positionSizeStr,
-					pnl: trade.netPnl
-						? dek
-							? encryptRequired(requireNumericString(trade.netPnl), dek)
-							: requireNumericString(trade.netPnl)
-						: null,
+					positionSize: positionSizeStr,
+					pnl: trade.netPnl ? requireNumericString(trade.netPnl) : null,
 					stopLoss: null,
 					takeProfit: null,
 					mfe: null,
@@ -133,7 +108,7 @@ export const POST = async (req: NextRequest) => {
 					importedAt: new Date(),
 					importSource: `${preview.brokerName}_DETAILED_CSV`,
 					source: "csv",
-					isEncrypted: !!dek,
+					isEncrypted: false,
 				}
 			}
 		)

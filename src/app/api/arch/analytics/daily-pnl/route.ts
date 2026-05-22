@@ -6,7 +6,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { fromCents } from "@/lib/money"
 import { getStartOfMonth, getEndOfMonth, formatDateKey } from "@/lib/dates"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
@@ -66,10 +65,7 @@ const GET = async (request: NextRequest) => {
 		})
 
 		// Decrypt trade fields
-		const dek = await getUserDek(auth.userId)
-		const result = dek
-			? rawResult.map((t) => decryptTradeFields(t, dek))
-			: rawResult
+		const result = rawResult
 
 		// Group by date using local timezone
 		const dailyMap = new Map<string, { pnl: number; count: number }>()

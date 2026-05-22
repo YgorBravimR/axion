@@ -65,7 +65,7 @@ const MonthWeekTable = ({
 				aria-label={t("weeksAriaEmpty")}
 			>
 				<header className="gap-s-200 flex items-center">
-					<Calendar className="text-acc-100 size-4" />
+					<Calendar className="text-acc-100 size-4" aria-hidden="true" />
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("weeksHeading")}
 					</h2>
@@ -85,7 +85,7 @@ const MonthWeekTable = ({
 		>
 			<header className="flex items-baseline justify-between">
 				<div className="gap-s-200 flex items-center">
-					<Calendar className="text-acc-100 size-4" />
+					<Calendar className="text-acc-100 size-4" aria-hidden="true" />
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("weeksHeading")}
 					</h2>

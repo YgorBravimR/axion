@@ -90,12 +90,12 @@ const CustomTooltip = memo(
 					<>
 						<p className="text-small text-acc-100 font-medium">
 							{t("tooltipOriginal", {
-								value: formatCompactCurrency(data.originalAccountEquity, "R$"),
+								value: formatCompactCurrency(data.originalAccountEquity, "BRL"),
 							})}
 						</p>
 						<p className="text-small text-txt-100 font-medium">
 							{t("tooltipManaged", {
-								value: formatCompactCurrency(data.accountEquity, "R$"),
+								value: formatCompactCurrency(data.accountEquity, "BRL"),
 							})}
 						</p>
 					</>
@@ -107,7 +107,7 @@ const CustomTooltip = memo(
 									variant === "method2"
 										? data.originalAccountEquity
 										: data.accountEquity,
-									"R$"
+									"BRL"
 								),
 							})}
 						</p>
@@ -117,19 +117,19 @@ const CustomTooltip = memo(
 					className={`text-tiny ${data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
 				>
 					{t("tooltipPnl", {
-						value: `${pnlSign}${formatCompactCurrency(data.pnl, "R$")}`,
+						value: `${pnlSign}${formatCompactCurrency(data.pnl, "BRL")}`,
 					})}
 				</p>
 				{!showComparison && data.drawdownFromPeak > 0 && (
 					<p className="text-tiny text-trade-sell">
 						{t("tooltipDrawdown", {
-							value: formatCompactCurrency(data.drawdownFromPeak, "R$"),
+							value: formatCompactCurrency(data.drawdownFromPeak, "BRL"),
 						})}
 					</p>
 				)}
 				{!showComparison && variant !== "original" && (
 					<p
-						className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-trade-buy" : "text-txt-300"}`}
+						className={`text-tiny mt-s-100 ${data.mode === "live" ? "text-txt-100" : "text-txt-300"}`}
 					>
 						{data.mode === "live" ? t("modeLive") : t("modeSim")}
 					</p>
@@ -137,7 +137,7 @@ const CustomTooltip = memo(
 				{!showComparison && data.smaValue !== null && (
 					<p className="text-tiny text-acc-200">
 						{t("tooltipSMA", {
-							value: formatCompactCurrency(data.smaValue, "R$"),
+							value: formatCompactCurrency(data.smaValue, "BRL"),
 						})}
 					</p>
 				)}
@@ -275,10 +275,10 @@ const EquityShieldChart = ({
 		() => ({
 			strokeColor:
 				variant === "original"
-					? "var(--color-acc-100)"
+					? "var(--color-chart-1)"
 					: variant === "method1"
-						? "var(--color-trade-buy)"
-						: "var(--color-acc-200)",
+						? "var(--color-chart-2)"
+						: "var(--color-chart-3)",
 			gradientId: `shield-gradient-${variant}`,
 			originalGradientId: `shield-gradient-original-${variant}`,
 		}),
@@ -341,12 +341,12 @@ const EquityShieldChart = ({
 							>
 								<stop
 									offset="5%"
-									stopColor="var(--color-acc-100)"
+									stopColor="var(--color-chart-1)"
 									stopOpacity={0.15}
 								/>
 								<stop
 									offset="95%"
-									stopColor="var(--color-acc-100)"
+									stopColor="var(--color-chart-1)"
 									stopOpacity={0}
 								/>
 							</linearGradient>
@@ -368,8 +368,8 @@ const EquityShieldChart = ({
 									key={`sim-zone-${idx}`}
 									x1={band.x1}
 									x2={band.x2}
-									fill="var(--color-trade-sell)"
-									fillOpacity={0.06}
+									fill="var(--color-txt-300)"
+									fillOpacity={0.08}
 									strokeOpacity={0}
 								/>
 							))}
@@ -387,7 +387,7 @@ const EquityShieldChart = ({
 					<YAxis
 						domain={[minValue - padding, maxValue + padding]}
 						tick={{ fontSize: 11, fill: "var(--color-txt-300)" }}
-						tickFormatter={(val: number) => formatCompactCurrency(val, "R$")}
+						tickFormatter={(val: number) => formatCompactCurrency(val, "BRL")}
 						width={yAxisWidth}
 						tickLine={false}
 						axisLine={false}
@@ -402,7 +402,7 @@ const EquityShieldChart = ({
 							<Line
 								type="monotone"
 								dataKey="ddLimitLine"
-								stroke="var(--color-trade-sell)"
+								stroke="var(--color-fb-error)"
 								strokeWidth={1.5}
 								strokeDasharray="6 4"
 								dot={false}
@@ -468,11 +468,11 @@ const EquityShieldChart = ({
 			{/* Chart legend */}
 			{isComparisonMode ? (
 				<div className="mt-s-200 gap-m-400 flex flex-wrap items-center">
-					{/* Original curve (dashed gold) */}
+					{/* Original curve (dashed chart-1) */}
 					<div className="gap-s-200 flex items-center">
 						<div
 							className="h-0 w-4 border-t-2 border-dashed"
-							style={{ borderColor: "var(--color-acc-100)" }}
+							style={{ borderColor: "var(--color-chart-1)" }}
 						/>
 						<span className="text-tiny text-txt-300">
 							{t("legendOriginal")}
@@ -502,13 +502,13 @@ const EquityShieldChart = ({
 						</div>
 						{/* Sim zone */}
 						<div className="gap-s-200 flex items-center">
-							<div className="bg-trade-sell h-2.5 w-4 rounded-sm opacity-20" />
+							<div className="bg-txt-300 h-2.5 w-4 rounded-sm opacity-30" />
 							<span className="text-tiny text-txt-300">{t("legendSim")}</span>
 						</div>
 						{/* DD Limit */}
 						{drawdownLimitDollars > 0 && variant !== "method2" && (
 							<div className="gap-s-200 flex items-center">
-								<div className="border-trade-sell h-0 w-4 border-t border-dashed" />
+								<div className="border-fb-error h-0 w-4 border-t border-dashed" />
 								<span className="text-tiny text-txt-300">{t("ddLimit")}</span>
 							</div>
 						)}

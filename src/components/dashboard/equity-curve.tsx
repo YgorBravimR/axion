@@ -3,13 +3,15 @@
 import { useState, useTransition, useEffect, useCallback, useMemo } from "react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
+import { Panel } from "@/components/ui/panel"
+import { SegmentedToggle } from "@/components/ui/segmented-toggle"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
-import { formatCompactCurrency } from "@/lib/formatting"
 import { getEquityCurve } from "@/app/actions/analytics"
 import type { EquityCurveMode } from "@/app/actions/analytics.types"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { useFormatting } from "@/hooks/use-formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 import type { EquityPoint } from "@/types"
 
@@ -51,29 +53,12 @@ const PeriodToggle = ({
 	]
 
 	return (
-		<div
-			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
-			role="group"
-		>
-			{options.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					onClick={() => onChange(option.value)}
-					disabled={disabled}
-					aria-pressed={period === option.value}
-					className={cn(
-						"px-s-300 py-s-200 text-tiny min-h-11 rounded-md font-medium transition-colors",
-						period === option.value
-							? "bg-acc-100 text-bg-100"
-							: "text-txt-300 hover:text-txt-100",
-						disabled && "cursor-not-allowed opacity-50"
-					)}
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
+		<SegmentedToggle
+			value={period}
+			options={options}
+			onChange={onChange}
+			disabled={disabled}
+		/>
 	)
 }
 
@@ -96,29 +81,12 @@ const ViewModeToggle = ({
 	]
 
 	return (
-		<div
-			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
-			role="group"
-		>
-			{options.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					onClick={() => onChange(option.value)}
-					disabled={disabled}
-					aria-pressed={mode === option.value}
-					className={cn(
-						"px-s-300 py-s-200 text-tiny min-h-11 rounded-md font-medium transition-colors",
-						mode === option.value
-							? "bg-acc-100 text-bg-100"
-							: "text-txt-300 hover:text-txt-100",
-						disabled && "cursor-not-allowed opacity-50"
-					)}
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
+		<SegmentedToggle
+			value={mode}
+			options={options}
+			onChange={onChange}
+			disabled={disabled}
+		/>
 	)
 }
 
@@ -138,6 +106,8 @@ const EquityTooltip = ({
 	drawdownLabel,
 	tradeNumberLabel,
 }: EquityTooltipProps) => {
+	const { formatCompactCurrency } = useFormatting()
+
 	const head = payload?.[0]
 	if (!active || !head) {
 		return null
@@ -172,11 +142,11 @@ const EquityTooltip = ({
 				<p className="text-tiny text-txt-300">{formatDateStr(data.date)}</p>
 			)}
 			<p className="text-small text-txt-100 font-semibold">
-				{formatCompactCurrency(data.accountEquity, "R$")}
+				{formatCompactCurrency(data.accountEquity)}
 			</p>
 			{data.drawdown > 0 && (
 				<p className="text-tiny text-trade-sell">
-					{drawdownLabel}: {formatCompactCurrency(drawdownValue, "R$")} (
+					{drawdownLabel}: {formatCompactCurrency(drawdownValue)} (
 					{data.drawdown.toFixed(1)}%)
 				</p>
 			)}
@@ -189,6 +159,7 @@ export const EquityCurve = ({
 	calendarMonth,
 }: EquityCurveProps) => {
 	const { yAxisWidth } = useChartConfig()
+	const { formatCompactCurrency } = useFormatting()
 	const t = useTranslations("dashboard.equity")
 	const tCharts = useTranslations("charts")
 	const locale = useLocale()
@@ -237,7 +208,7 @@ export const EquityCurve = ({
 		if (period === "month") {
 			fetchData("month", viewMode)
 		}
-	}, [calendarMonth, fetchData, period, viewMode])
+	}, [calendarMonth, effectiveDate, period, viewMode])
 
 	const periodLabels = useMemo(
 		() => ({
@@ -301,7 +272,7 @@ export const EquityCurve = ({
 
 	if (data.length === 0 && !isPending) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<Panel padding="lg">
 				<div className="gap-s-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 					<h2 className="text-small text-txt-100 sm:text-body font-semibold">
 						{t("title")}
@@ -322,16 +293,12 @@ export const EquityCurve = ({
 				<div className="mt-s-300 text-txt-300 sm:mt-m-400 flex h-48 items-center justify-center sm:h-64">
 					{t("noData")}
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
 	return (
-		<div
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-			role="region"
-			aria-label={t("title")}
-		>
+		<Panel padding="lg" role="region" aria-label={t("title")}>
 			<div className="gap-s-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 				<h2 className="text-small text-txt-100 sm:text-body font-semibold">
 					{t("title")}
@@ -392,9 +359,7 @@ export const EquityCurve = ({
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={(value: number) =>
-							formatCompactCurrency(value, "R$")
-						}
+						tickFormatter={(value: number) => formatCompactCurrency(value)}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}
@@ -429,6 +394,6 @@ export const EquityCurve = ({
 					/>
 				</AreaChart>
 			</ChartContainer>
-		</div>
+		</Panel>
 	)
 }

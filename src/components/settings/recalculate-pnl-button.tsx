@@ -38,7 +38,7 @@ export const RecalculatePnLButton = () => {
 				onClick={handleRecalculate}
 				disabled={isPending}
 				aria-label={t("recalculatePnLButton")}
-				className="bg-acc-100 px-m-400 py-s-200 text-small font-medium text-bg-100"
+				className="bg-acc-100 px-m-400 py-s-200 text-small text-bg-100 font-medium"
 			>
 				{isPending ? t("recalculatingPnL") : t("recalculatePnLButton")}
 			</Button>
@@ -46,7 +46,7 @@ export const RecalculatePnLButton = () => {
 				<p
 					className={cn(
 						"text-small",
-						result.status === "success" ? "text-trade-buy" : "text-trade-sell"
+						result.status === "success" ? "text-fb-success" : "text-fb-error"
 					)}
 				>
 					{result.message}

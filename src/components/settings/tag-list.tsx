@@ -204,7 +204,7 @@ export const TagList = () => {
 					</Badge>
 				</div>
 				<Button id="tag-add-new" onClick={handleAddNew}>
-					<Plus className="mr-s-200 h-4 w-4" />
+					<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 					{t("addTag")}
 				</Button>
 			</div>
@@ -250,7 +250,7 @@ export const TagList = () => {
 												className="h-8 w-8 p-0"
 												aria-label={`${tCommon("edit")} ${tag.name}`}
 											>
-												<Pencil className="h-4 w-4" />
+												<Pencil className="h-4 w-4" aria-hidden="true" />
 											</Button>
 											<AlertDialog>
 												<AlertDialogTrigger asChild>
@@ -261,7 +261,7 @@ export const TagList = () => {
 														className="text-fb-error hover:text-fb-error h-8 w-8 p-0"
 														aria-label={`${tCommon("delete")} ${tag.name}`}
 													>
-														<Trash2 className="h-4 w-4" />
+														<Trash2 className="h-4 w-4" aria-hidden="true" />
 													</Button>
 												</AlertDialogTrigger>
 												<AlertDialogContent>

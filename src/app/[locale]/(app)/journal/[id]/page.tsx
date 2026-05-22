@@ -8,7 +8,6 @@ import {
 	Edit,
 	Target,
 	TrendingUp,
-	AlertTriangle,
 	CheckCircle,
 	XCircle,
 } from "lucide-react"
@@ -26,8 +25,13 @@ import {
 	RMultipleBar,
 	TradeExecutionsSection,
 	TradeDetailLayout,
+	RatingBadge,
+	FollowedPlanBadge,
+	TradeTag,
+	type RatingGrade,
 } from "@/components/journal"
 import { getTrade } from "@/app/actions/trades"
+import { getTradeConditions } from "@/app/actions/trade-conditions"
 import { getAssetBySymbol } from "@/app/actions/assets"
 import {
 	getCandleDataForAsset,
@@ -51,11 +55,19 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 
 	const trade = result.data
 
-	// Fetch asset data + check candle availability in parallel
-	const [asset, candleSource] = await Promise.all([
+	// Fetch asset data + candle availability + condition snapshot in parallel
+	const [asset, candleSource, conditionsResult] = await Promise.all([
 		getAssetBySymbol(trade.asset),
 		getCandleDataForAsset(trade.asset),
+		getTradeConditions(trade.id),
 	])
+
+	const conditions =
+		conditionsResult.status === "success" && conditionsResult.data
+			? conditionsResult.data
+			: []
+	const conditionsMetCount = conditions.filter((c) => c.met).length
+	const conditionsTotalCount = conditions.length
 
 	// If candle data exists, fetch candles for the trade's time range
 	const candleResult = candleSource
@@ -140,8 +152,8 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 			<div className="flex h-full flex-col">
 				<TradeDetailGuide />
 				<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
-					<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-4xl">
-						{/* Header Card */}
+					<div className="space-y-l-800 mx-auto max-w-4xl">
+						{/* ========== ANCHOR ROW: P&L + R + Outcome ========== */}
 						<Card
 							id="trade-detail-header"
 							className="p-m-400 sm:p-m-500 lg:p-m-600"
@@ -170,8 +182,8 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 												variant="outline"
 												className={cn(
 													isLong
-														? "border-trade-buy/30 text-trade-buy"
-														: "border-trade-sell/30 text-trade-sell"
+														? "border-action-buy/30 text-action-buy"
+														: "border-action-sell/30 text-action-sell"
 												)}
 											>
 												{isLong
@@ -186,12 +198,12 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										</div>
 										<div className="mt-s-200 gap-m-400 text-small text-txt-300 flex items-center">
 											<div className="gap-s-200 flex items-center">
-												<Calendar className="h-4 w-4" />
+												<Calendar className="h-4 w-4" aria-hidden="true" />
 												<span>{formatDateTime(trade.entryDate)}</span>
 											</div>
 											{trade.exitDate && (
 												<>
-													<span>→</span>
+													<span aria-hidden="true">→</span>
 													<span>{formatDateTime(trade.exitDate)}</span>
 												</>
 											)}
@@ -200,17 +212,18 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								</div>
 
 								<div className="gap-s-300 flex items-center self-end sm:self-auto">
-									<Link href={`/journal/${trade.id}/edit`}>
-										<Button
-											id="trade-detail-edit"
-											variant="ghost"
-											size="icon"
-											className="h-9 w-9"
-											aria-label={tTrade("editTrade")}
-										>
-											<Edit className="h-4 w-4" />
-										</Button>
-									</Link>
+									<Button
+										id="trade-detail-edit"
+										asChild
+										variant="ghost"
+										size="icon"
+										className="h-9 w-9"
+										aria-label={tTrade("editTrade")}
+									>
+										<Link href={`/journal/${trade.id}/edit`}>
+											<Edit className="h-4 w-4" aria-hidden="true" />
+										</Link>
+									</Button>
 									<DeleteTradeButton tradeId={trade.id} />
 									<div className="text-right">
 										<PnLDisplay value={pnl} size="xl" />
@@ -228,14 +241,17 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								</div>
 							</div>
 
-							{/* Outcome Badge */}
-							<div className="mt-m-500 gap-s-300 flex items-center">
+							{/* Outcome Badges */}
+							<div className="mt-m-500 gap-s-300 flex flex-wrap items-center">
 								{isWin && (
 									<Badge
 										id="trade-detail-outcome-win"
 										className="bg-trade-buy/20 text-trade-buy"
 									>
-										<CheckCircle className="mr-s-100 h-3 w-3" />
+										<CheckCircle
+											className="mr-s-100 h-3 w-3"
+											aria-hidden="true"
+										/>
 										{tTrade("outcome.winner")}
 									</Badge>
 								)}
@@ -244,7 +260,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										id="trade-detail-outcome-loss"
 										className="bg-trade-sell/20 text-trade-sell"
 									>
-										<XCircle className="mr-s-100 h-3 w-3" />
+										<XCircle className="mr-s-100 h-3 w-3" aria-hidden="true" />
 										{tTrade("outcome.loser")}
 									</Badge>
 								)}
@@ -256,216 +272,251 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										{tTrade("outcome.breakeven")}
 									</Badge>
 								)}
-								{trade.followedPlan === true && (
-									<Badge
-										id="trade-detail-followed-plan"
-										className="bg-trade-buy/20 text-trade-buy"
-									>
-										<CheckCircle className="mr-s-100 h-3 w-3" />
-										{tTrade("followedPlan")}
-									</Badge>
-								)}
-								{trade.followedPlan === false && (
-									<Badge
-										id="trade-detail-discipline-breach"
-										className="bg-warning/20 text-warning"
-									>
-										<AlertTriangle className="mr-s-100 h-3 w-3" />
-										{tTrade("detail.disciplineBreach")}
-									</Badge>
+								{trade.followedPlan !== null && (
+									<FollowedPlanBadge
+										id={
+											trade.followedPlan
+												? "trade-detail-followed-plan"
+												: "trade-detail-discipline-breach"
+										}
+										followed={trade.followedPlan}
+									/>
 								)}
 								{trade.rating && (
-									<Badge
+									<RatingBadge
 										id="trade-detail-rating"
-										className={cn(
-											trade.rating === "A" && "bg-trade-buy/20 text-trade-buy",
-											trade.rating === "B" &&
-												"bg-trade-buy/10 text-trade-buy/70",
-											trade.rating === "C" && "bg-warning/20 text-warning",
-											trade.rating === "D" &&
-												"bg-trade-sell/10 text-trade-sell/70",
-											trade.rating === "F" && "bg-trade-sell/20 text-trade-sell"
-										)}
-									>
-										{tTrade("rating")}: {trade.rating}
-									</Badge>
+										grade={trade.rating as RatingGrade}
+										withLabel
+									/>
 								)}
 							</div>
 						</Card>
 
-						{/* Metrics Grid */}
-						<div
-							id="trade-detail-metrics"
-							className="gap-s-300 sm:gap-m-400 lg:gap-m-500 grid grid-cols-2 md:grid-cols-4"
-						>
-							<Card
-								id="trade-detail-entry-price"
-								className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
-							>
-								<TradeMetric
-									label={tTrade("entryPrice")}
-									value={`$${Number(trade.entryPrice).toFixed(2)}`}
-									size="lg"
-								/>
-							</Card>
-							<Card
-								id="trade-detail-exit-price"
-								className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
-							>
-								<TradeMetric
-									label={tTrade("exitPrice")}
-									value={
-										trade.exitPrice
-											? `$${Number(trade.exitPrice).toFixed(2)}`
-											: tTrade("outcome.open")
-									}
-									size="lg"
-								/>
-							</Card>
-							<Card
-								id="trade-detail-position-size"
-								className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
-							>
-								<TradeMetric
-									label={tTrade("positionSize")}
-									value={Number(trade.positionSize).toLocaleString()}
-									size="lg"
-								/>
-							</Card>
-							<Card
-								id="trade-detail-risk-amount"
-								className="p-s-300 sm:p-m-400 lg:p-m-500 min-w-0"
-							>
-								<TradeMetric
-									label={tTrade("riskAmount")}
-									value={
-										trade.plannedRiskAmount
-											? formatCurrency(fromCents(trade.plannedRiskAmount))
-											: "—"
-									}
-									size="lg"
-								/>
-							</Card>
-						</div>
-
-						{/* Executions Section (for scaled mode) */}
-						<TradeExecutionsSection
-							tradeId={trade.id}
-							executionMode={trade.executionMode}
-							direction={trade.direction}
-							executions={trade.executions ?? []}
-							tickSize={asset ? Number(asset.tickSize) : undefined}
-							tickValue={asset ? Number(asset.tickValue) / 100 : undefined}
-						/>
-
-						{/* R-Multiple Visualization */}
-						{(plannedR > 0 || realizedR !== 0) && (
-							<Card
-								id="trade-detail-risk-analysis"
-								className="p-m-400 sm:p-m-500 lg:p-m-600"
-							>
-								<h3 className="mb-s-300 sm:mb-m-500 gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-									<Target className="text-acc-100 h-5 w-5" />
-									{tTrade("detail.riskRewardAnalysis")}
+						{/* ========== EXECUTION BAND: Prices, SL/TP, MFE/MAE ========== */}
+						<div id="trade-execution-band" className="space-y-m-400">
+							<div className="px-m-400 sm:px-m-500 lg:px-m-600">
+								<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+									{tTrade("detail.executionDetails") ?? "Execution Details"}
 								</h3>
-								<RMultipleBar
-									planned={plannedR || undefined}
-									actual={realizedR}
-								/>
-							</Card>
-						)}
+							</div>
 
-						{/* MFE/MAE */}
-						{(trade.mfe || trade.mae) && (
-							<Card
-								id="trade-detail-excursion"
-								className="p-m-400 sm:p-m-500 lg:p-m-600"
+							{/* Prices & Risk Grid (no per-item card chrome) */}
+							<div
+								id="trade-detail-metrics"
+								className="gap-s-300 sm:gap-m-400 lg:gap-m-500 px-m-400 sm:px-m-500 lg:px-m-600 grid grid-cols-2 md:grid-cols-4"
 							>
-								<h3 className="mb-s-300 sm:mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
-									{tTrade("detail.tradeExcursion")}
-								</h3>
-								<div className="gap-s-300 sm:gap-m-500 grid grid-cols-1 sm:grid-cols-2">
-									{trade.mfe && (
-										<div className="bg-trade-buy/10 p-s-300 sm:p-m-400 rounded-lg">
-											<p className="text-tiny text-txt-300">
-												{tTrade("detail.mfe")}
-											</p>
-											<p className="mt-s-100 text-body text-trade-buy font-semibold">
-												${Number(trade.mfe).toFixed(2)}
-											</p>
+								<div className="min-w-0">
+									<TradeMetric
+										label={tTrade("entryPrice")}
+										value={`$${Number(trade.entryPrice).toFixed(2)}`}
+										size="lg"
+									/>
+								</div>
+								<div className="min-w-0">
+									<TradeMetric
+										label={tTrade("exitPrice")}
+										value={
+											trade.exitPrice
+												? `$${Number(trade.exitPrice).toFixed(2)}`
+												: tTrade("outcome.open")
+										}
+										size="lg"
+									/>
+								</div>
+								<div className="min-w-0">
+									<TradeMetric
+										label={tTrade("positionSize")}
+										value={Number(trade.positionSize).toLocaleString()}
+										size="lg"
+									/>
+								</div>
+								<div className="min-w-0">
+									<TradeMetric
+										label={tTrade("riskAmount")}
+										value={
+											trade.plannedRiskAmount
+												? formatCurrency(fromCents(trade.plannedRiskAmount))
+												: "-"
+										}
+										size="lg"
+									/>
+								</div>
+							</div>
+
+							{/* Executions Section (for scaled mode) */}
+							<div className="px-m-400 sm:px-m-500 lg:px-m-600">
+								<TradeExecutionsSection
+									tradeId={trade.id}
+									executionMode={trade.executionMode}
+									direction={trade.direction}
+									executions={trade.executions ?? []}
+									tickSize={asset ? Number(asset.tickSize) : undefined}
+									tickValue={asset ? Number(asset.tickValue) / 100 : undefined}
+								/>
+							</div>
+
+							{/* R-Multiple + MFE/MAE (no card wrapper, contained in band) */}
+							{(plannedR > 0 || realizedR !== 0 || trade.mfe || trade.mae) && (
+								<div
+									id="trade-detail-risk-and-excursion"
+									className="gap-m-400 sm:gap-m-500 px-m-400 sm:px-m-500 lg:px-m-600 grid grid-cols-1 md:grid-cols-2"
+								>
+									{(plannedR > 0 || realizedR !== 0) && (
+										<div>
+											<h4 className="mb-m-400 gap-s-200 text-small text-txt-100 flex items-center font-semibold">
+												<Target
+													className="text-acc-100 h-4 w-4"
+													aria-hidden="true"
+												/>
+												{tTrade("detail.riskRewardAnalysis")}
+											</h4>
+											<RMultipleBar
+												planned={plannedR || undefined}
+												actual={realizedR}
+											/>
 										</div>
 									)}
-									{trade.mae && (
-										<div className="bg-trade-sell/10 p-s-300 sm:p-m-400 rounded-lg">
-											<p className="text-tiny text-txt-300">
-												{tTrade("detail.mae")}
-											</p>
-											<p className="mt-s-100 text-body text-trade-sell font-semibold">
-												${Number(trade.mae).toFixed(2)}
-											</p>
+
+									{(trade.mfe || trade.mae) && (
+										<div>
+											<h4 className="mb-m-400 text-small text-txt-100 font-semibold">
+												{tTrade("detail.tradeExcursion")}
+											</h4>
+											<div className="gap-s-300 sm:gap-m-400 flex flex-col">
+												{trade.mfe && (
+													<div className="bg-trade-buy/10 p-s-300 sm:p-m-400 rounded-lg">
+														<p className="text-tiny text-txt-300">
+															{tTrade("detail.mfe")}
+														</p>
+														<p className="mt-s-100 text-body text-trade-buy font-semibold">
+															${Number(trade.mfe).toFixed(2)}
+														</p>
+													</div>
+												)}
+												{trade.mae && (
+													<div className="bg-trade-sell/10 p-s-300 sm:p-m-400 rounded-lg">
+														<p className="text-tiny text-txt-300">
+															{tTrade("detail.mae")}
+														</p>
+														<p className="mt-s-100 text-body text-trade-sell font-semibold">
+															${Number(trade.mae).toFixed(2)}
+														</p>
+													</div>
+												)}
+											</div>
 										</div>
 									)}
 								</div>
-							</Card>
+							)}
+						</div>
+
+						{/* ========== PROCESS BAND: Strategy, Conditions, Tags ========== */}
+						{(trade.strategy ||
+							tags.length > 0 ||
+							conditionsTotalCount > 0) && (
+							<div id="trade-process-band" className="space-y-m-400">
+								<div className="px-m-400 sm:px-m-500 lg:px-m-600">
+									<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
+										<TrendingUp
+											className="text-txt-300 h-4 w-4"
+											aria-hidden="true"
+										/>
+										{tTrade("detail.classification")}
+									</h3>
+								</div>
+
+								<div className="space-y-m-400 px-m-400 sm:px-m-500 lg:px-m-600">
+									{trade.strategy && (
+										<div>
+											<p className="text-tiny text-txt-300">
+												{tTrade("strategy")}
+											</p>
+											<p className="mt-s-100 text-body text-txt-100">
+												{trade.strategy.name}
+											</p>
+										</div>
+									)}
+
+									{conditionsTotalCount > 0 && (
+										<div id="trade-detail-conditions">
+											<div className="gap-s-300 mb-s-200 flex items-center">
+												<p className="text-tiny text-txt-300">
+													{tTrade("detail.conditions")}
+												</p>
+												<Badge
+													id="trade-detail-conditions-met-badge"
+													variant="outline"
+													className="text-txt-200"
+												>
+													{tTrade("detail.conditionsMetBadge", {
+														met: conditionsMetCount,
+														total: conditionsTotalCount,
+													})}
+												</Badge>
+											</div>
+											<ul className="gap-s-100 flex flex-col">
+												{conditions.map((c) => (
+													<li
+														key={c.conditionId}
+														className="gap-s-200 text-small text-txt-100 flex items-center"
+													>
+														{c.met ? (
+															<CheckCircle
+																className="text-trade-buy h-4 w-4 shrink-0"
+																aria-hidden="true"
+															/>
+														) : (
+															<XCircle
+																className="text-txt-300 h-4 w-4 shrink-0"
+																aria-hidden="true"
+															/>
+														)}
+														<span
+															className={cn(
+																!c.met && "text-txt-300 line-through"
+															)}
+														>
+															{c.name}
+														</span>
+													</li>
+												))}
+											</ul>
+										</div>
+									)}
+
+									{tags.length > 0 && (
+										<div className="gap-s-200 flex flex-wrap">
+											{setupTags.map((tag) => (
+												<TradeTag
+													id={`badge-setup-tag-${tag.id}`}
+													key={tag.id}
+													kind="setup"
+													name={tag.name}
+												/>
+											))}
+											{mistakeTags.map((tag) => (
+												<TradeTag
+													id={`badge-mistake-tag-${tag.id}`}
+													key={tag.id}
+													kind="mistake"
+													name={tag.name}
+												/>
+											))}
+											{generalTags.map((tag) => (
+												<TradeTag
+													id={`badge-general-tag-${tag.id}`}
+													key={tag.id}
+													kind="general"
+													name={tag.name}
+												/>
+											))}
+										</div>
+									)}
+								</div>
+							</div>
 						)}
 
-						{/* Strategy & Tags */}
-						{(trade.strategy || tags.length > 0) && (
-							<Card
-								id="trade-detail-classification"
-								className="p-m-400 sm:p-m-500 lg:p-m-600"
-							>
-								<h3 className="mb-s-300 sm:mb-m-500 gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-									<TrendingUp className="text-acc-100 h-5 w-5" />
-									{tTrade("detail.classification")}
-								</h3>
-
-								{trade.strategy && (
-									<div className="mb-m-400">
-										<p className="text-tiny text-txt-300">
-											{tTrade("strategy")}
-										</p>
-										<p className="mt-s-100 text-body text-txt-100">
-											{trade.strategy.name}
-										</p>
-									</div>
-								)}
-
-								{tags.length > 0 && (
-									<div className="gap-s-200 flex flex-wrap">
-										{setupTags.map((tag) => (
-											<Badge
-												id={`badge-setup-tag-${tag.id}`}
-												key={tag.id}
-												className="bg-trade-buy/10 text-trade-buy"
-											>
-												{tag.name}
-											</Badge>
-										))}
-										{mistakeTags.map((tag) => (
-											<Badge
-												id={`badge-mistake-tag-${tag.id}`}
-												key={tag.id}
-												className="bg-warning/10 text-warning"
-											>
-												{tag.name}
-											</Badge>
-										))}
-										{generalTags.map((tag) => (
-											<Badge
-												id={`badge-general-tag-${tag.id}`}
-												key={tag.id}
-												className="bg-acc-100/10 text-acc-100"
-											>
-												{tag.name}
-											</Badge>
-										))}
-									</div>
-								)}
-							</Card>
-						)}
-
-						{/* Journal Notes */}
+						{/* ========== REFLECTION BAND: Journal Notes (retains card chrome) ========== */}
 						{(trade.preTradeThoughts ||
 							trade.postTradeReflection ||
 							trade.lessonLearned ||
@@ -474,7 +525,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								id="trade-detail-journal-notes"
 								className="p-m-400 sm:p-m-500 lg:p-m-600"
 							>
-								<h3 className="mb-s-300 sm:mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
+								<h3 className="mb-m-500 text-small sm:text-body text-txt-100 font-semibold">
 									{tTrade("detail.journalNotes")}
 								</h3>
 

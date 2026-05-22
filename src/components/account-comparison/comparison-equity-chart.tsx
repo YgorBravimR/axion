@@ -99,7 +99,7 @@ const CustomTooltip = ({
 							}
 						>
 							{sign}
-							{formatCompactCurrency(entry.value, "R$")}
+							{formatCompactCurrency(entry.value, "BRL")}
 						</span>
 					</div>
 				)
@@ -185,7 +185,7 @@ const ComparisonEquityChart = ({ accounts }: ComparisonEquityChartProps) => {
 					/>
 					<YAxis
 						tickFormatter={(value: number) =>
-							formatCompactCurrency(value, "R$")
+							formatCompactCurrency(value, "BRL")
 						}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}

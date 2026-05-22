@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server"
 import { DashboardContent } from "@/components/dashboard"
 import { getDashboardBatch } from "@/app/actions/analytics"
 import { getServerEffectiveNow } from "@/lib/effective-date"
+import { getHawksCoachingInsights } from "@/app/actions/hawks-coaching"
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -27,6 +28,10 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 	const dailyPnL = batchData?.dailyPnL ?? []
 	const radarData = batchData?.radarData ?? []
 
+	const hawksCoachingResult = await getHawksCoachingInsights(90)
+	const initialHawksContext =
+		hawksCoachingResult.status === "success" ? hawksCoachingResult.data : null
+
 	return (
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1">
@@ -39,6 +44,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 					initialRadarData={radarData}
 					initialYear={initialYear}
 					initialMonthIndex={initialMonthIndex}
+					initialHawksContext={initialHawksContext}
 				/>
 			</div>
 		</div>

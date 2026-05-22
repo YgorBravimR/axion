@@ -214,7 +214,7 @@ const EquityShieldParamsForm = ({
 						{t("preview.totalTrades", { count: preview.totalTrades })}
 					</p>
 					{!preview.hasEnoughTrades && preview.totalTrades > 0 && (
-						<p className="text-tiny text-trade-sell mt-s-100">
+						<p className="text-tiny text-warning mt-s-100">
 							{t("preview.notEnoughTrades")}
 						</p>
 					)}
@@ -228,7 +228,10 @@ const EquityShieldParamsForm = ({
 
 			{/* Tip about sample size */}
 			<div className="bg-bg-100 border-bg-300 gap-s-200 p-s-300 flex items-start rounded-md border">
-				<Info className="text-txt-300 mt-0.5 h-4 w-4 shrink-0" />
+				<Info
+					className="text-txt-300 mt-0.5 h-4 w-4 shrink-0"
+					aria-hidden="true"
+				/>
 				<p className="text-tiny text-txt-300">{t("sampleSizeTip")}</p>
 			</div>
 
@@ -378,7 +381,7 @@ const EquityShieldParamsForm = ({
 					className="gap-s-200"
 					aria-label={t("runAnalysis")}
 				>
-					<Play className="h-4 w-4" />
+					<Play className="h-4 w-4" aria-hidden="true" />
 					{isLoading ? t("running") : t("runAnalysis")}
 				</Button>
 			</div>

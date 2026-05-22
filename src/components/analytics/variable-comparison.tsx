@@ -41,13 +41,13 @@ const HeaderWithTooltip = ({
 		<TooltipTrigger asChild>
 			<span className="gap-s-100 inline-flex cursor-help items-center">
 				{label}
-				<Info className="text-txt-300 h-3 w-3" />
+				<Info className="text-txt-300 h-3 w-3" aria-hidden="true" />
 			</span>
 		</TooltipTrigger>
 		<TooltipContent
 			id="tooltip-variable-comparison-header"
 			side="top"
-			className="border-bg-300 bg-bg-100 text-acc-100 p-s-300 max-w-xs border shadow-lg"
+			className="border-bg-300 bg-bg-100 text-txt-100 p-s-300 max-w-xs border shadow-lg"
 		>
 			{tooltip}
 		</TooltipContent>
@@ -78,7 +78,7 @@ const formatProfitFactor = (value: number): string => {
 const formatMetricValue = (value: number, metric: MetricType): string => {
 	switch (metric) {
 		case "pnl":
-			return formatCompactCurrency(value, "R$")
+			return formatCompactCurrency(value, "BRL")
 		case "winRate":
 			return `${value.toFixed(1)}%`
 		case "avgR":
@@ -134,7 +134,7 @@ const CustomTooltip = ({
 				</p>
 				<div className="mt-s-200 space-y-s-100 text-tiny">
 					<p className={data.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"}>
-						{t("pnl")}: {formatCompactCurrency(data.pnl, "R$")}
+						{t("pnl")}: {formatCompactCurrency(data.pnl, "BRL")}
 					</p>
 					<p className="text-txt-200">
 						{t("winRate")}: {data.winRate.toFixed(1)}%
@@ -234,7 +234,7 @@ export const VariableComparison = ({
 	const getBarColor = useCallback(
 		(value: number, metricArg: MetricType): string => {
 			if (metricArg === "tradeCount") {
-				return "var(--color-acc-100)"
+				return "var(--color-txt-200)"
 			}
 			if (metricArg === "profitFactor") {
 				return value >= 1 ? "var(--color-trade-buy)" : "var(--color-trade-sell)"
@@ -455,7 +455,7 @@ export const VariableComparison = ({
 											row.pnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 										}`}
 									>
-										{formatCompactCurrency(row.pnl, "R$")}
+										{formatCompactCurrency(row.pnl, "BRL")}
 									</TableCell>
 									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.winRate.toFixed(1)}%

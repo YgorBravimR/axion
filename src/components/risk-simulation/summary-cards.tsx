@@ -1,7 +1,6 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { cn } from "@/lib/utils"
 import { ColoredValue } from "@/components/shared/colored-value"
 import { fromCents } from "@/lib/money"
 import type { SimulationSummary } from "@/types/risk-simulation"
@@ -22,16 +21,12 @@ interface ComparisonRowProps {
 	label: string
 	originalValue: string
 	simulatedValue: string
-	delta?: string
-	deltaPositive?: boolean
 }
 
 const ComparisonRow = ({
 	label,
 	originalValue,
 	simulatedValue,
-	delta,
-	deltaPositive,
 }: ComparisonRowProps) => (
 	<div className="py-s-100 flex items-center justify-between">
 		<span className="text-tiny text-txt-300">{label}</span>
@@ -43,16 +38,6 @@ const ComparisonRow = ({
 			<span className="text-tiny sm:text-small text-txt-100 font-medium whitespace-nowrap">
 				{simulatedValue}
 			</span>
-			{delta && (
-				<span
-					className={cn(
-						"text-tiny font-medium whitespace-nowrap",
-						deltaPositive ? "text-trade-buy" : "text-trade-sell"
-					)}
-				>
-					{delta}
-				</span>
-			)}
 		</div>
 	</div>
 )
@@ -144,7 +129,7 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 					</div>
 					<div className="py-s-100 flex items-center justify-between">
 						<span className="text-tiny text-txt-300">{t("executed")}</span>
-						<span className="text-small text-trade-buy font-medium">
+						<span className="text-small text-txt-100 font-medium">
 							{summary.executedTrades}
 						</span>
 					</div>

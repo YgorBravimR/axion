@@ -9,7 +9,7 @@ interface ProjectMonthInput {
 	readonly oneRCents: number
 	readonly tradingDaysPerWeek: number
 	readonly irTaxRate: number
-	/** 0–1 fraction of net (post-IR) profit earmarked as withdrawal. Display-only. */
+	/** 0–1 fraction of net (post-IR) profit earmarked as withdrawal. Deducted from endBalanceCents so compounding carries forward retained capital only. */
 	readonly withdrawalPct?: number
 }
 
@@ -49,7 +49,8 @@ const projectMonth = (input: ProjectMonthInput): ProjectMonthResult => {
 		projectedNetLiquidCents > 0 && withdrawalPct > 0
 			? Math.round(projectedNetLiquidCents * withdrawalPct)
 			: 0
-	const endBalanceCents = startBalanceCents + projectedNetLiquidCents
+	const endBalanceCents =
+		startBalanceCents + projectedNetLiquidCents - withdrawalCents
 
 	const weeks = weekTargetRs.length || 1
 	const avgRPerWeek = totalTargetR / weeks

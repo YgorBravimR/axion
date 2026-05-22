@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 interface AccountOption {
 	id: string
 	name: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 }
 
 interface AccountSelectorProps {
@@ -22,7 +22,6 @@ interface AccountSelectorProps {
 const ACCOUNT_TYPE_COLORS: Record<string, string> = {
 	personal: "bg-acc-100",
 	prop: "bg-acc-200",
-	replay: "bg-txt-300",
 }
 
 const AccountSelector = ({
@@ -73,22 +72,15 @@ const AccountSelector = ({
 						<button
 							key={account.id}
 							type="button"
-							tabIndex={0}
 							aria-label={`${isSelected ? tCommon("deselect") : tCommon("select")} ${account.name}`}
 							aria-pressed={isSelected}
 							className={cn(
 								"gap-s-200 px-s-300 py-s-200 text-small flex items-center rounded-md border transition-colors",
 								isSelected
-									? "border-acc-100 bg-acc-100/10 text-txt-100"
+									? "border-txt-300 bg-bg-100 text-txt-100"
 									: "border-bg-300 bg-bg-100 text-txt-300 hover:border-txt-300 hover:text-txt-200"
 							)}
 							onClick={() => handleToggle(account.id)}
-							onKeyDown={(event) => {
-								if (event.key === "Enter" || event.key === " ") {
-									event.preventDefault()
-									handleToggle(account.id)
-								}
-							}}
 						>
 							<span
 								className={cn(
@@ -110,7 +102,6 @@ const AccountSelector = ({
 					id="compare-accounts"
 					type="button"
 					variant="default"
-					tabIndex={0}
 					aria-label={t("compare")}
 					disabled={!canCompare || isPending}
 					className="px-m-400 py-s-200 text-small font-medium"

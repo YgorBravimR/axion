@@ -30,6 +30,7 @@ import {
 	createYearlyPlanV2,
 	updateYearlyPlan,
 } from "@/app/actions/fractal-plan/yearly"
+import { setAccountStartingBalance } from "@/app/actions/accounts"
 import { RiskProfilePicker } from "@/components/fractal-plan/risk-profile-picker"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
@@ -65,10 +66,12 @@ const newRowDraft = (prev: LadderRowDraft | undefined): LadderRowDraft => {
 interface YearlyPlanEditorProps {
 	year: number
 	riskProfiles: RiskManagementProfile[]
+	accountId: string
 	existing: {
 		initialCapitalCents: number
 		ladderRules: LadderRuleR[]
 		tradingDaysPerWeek: number
+		defaultAssertivityPercent: string | null
 		defaultDailyLossR: string | null
 		defaultDailyWinR: string | null
 		defaultWeeklyLossR: string | null
@@ -83,6 +86,7 @@ interface YearlyPlanEditorProps {
 
 interface FormState {
 	tradingDaysPerWeek: string
+	defaultAssertivityPercent: string
 	defaultDailyLossR: string
 	defaultDailyWinR: string
 	defaultWeeklyLossR: string
@@ -91,6 +95,7 @@ interface FormState {
 	defaultMonthlyWinR: string
 	ladderRows: LadderRowDraft[]
 	notes: string
+	initialCapitalReais: string
 }
 
 const DEFAULT_LADDER: LadderRuleR[] = [
@@ -109,18 +114,23 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 	if (!existing) {
 		return {
 			tradingDaysPerWeek: "5",
+			defaultAssertivityPercent: "50",
 			defaultDailyLossR: "3.00",
-			defaultDailyWinR: "2.00",
-			defaultWeeklyLossR: "6.00",
-			defaultWeeklyWinR: "4.00",
-			defaultMonthlyLossR: "10.00",
-			defaultMonthlyWinR: "8.00",
+			defaultDailyWinR: "6.00",
+			defaultWeeklyLossR: "8.00",
+			defaultWeeklyWinR: "20.00",
+			defaultMonthlyLossR: "20.00",
+			defaultMonthlyWinR: "60.00",
 			ladderRows: DEFAULT_LADDER.map(ruleToDraft),
 			notes: "",
+			initialCapitalReais: "",
 		}
 	}
 	return {
 		tradingDaysPerWeek: String(existing.tradingDaysPerWeek),
+		defaultAssertivityPercent: existing.defaultAssertivityPercent
+			? String(Math.round(parseFloat(existing.defaultAssertivityPercent)))
+			: "50",
 		defaultDailyLossR: existing.defaultDailyLossR ?? "",
 		defaultDailyWinR: existing.defaultDailyWinR ?? "",
 		defaultWeeklyLossR: existing.defaultWeeklyLossR ?? "",
@@ -132,12 +142,14 @@ const seedForm = (existing: YearlyPlanEditorProps["existing"]): FormState => {
 			: DEFAULT_LADDER
 		).map(ruleToDraft),
 		notes: existing.notes ?? "",
+		initialCapitalReais: "",
 	}
 }
 
 const YearlyPlanEditor = ({
 	year,
 	riskProfiles,
+	accountId,
 	existing,
 	defaultInitialCapitalCents = null,
 }: YearlyPlanEditorProps) => {
@@ -275,7 +287,23 @@ const YearlyPlanEditor = ({
 		const ladder = ladderResult.rules
 
 		if (!existing && !accountCapitalAvailable) {
-			showToast("error", t("editors.yearly.noAccountBalance"))
+			const initialCapitalReais = parseFloat(form.initialCapitalReais)
+			if (!Number.isFinite(initialCapitalReais) || initialCapitalReais <= 0) {
+				showToast("error", t("editors.yearly.capitalRequired"))
+				return
+			}
+		}
+
+		const defaultAssertivityPercent = parseInt(
+			form.defaultAssertivityPercent,
+			10
+		)
+		if (
+			!Number.isInteger(defaultAssertivityPercent) ||
+			defaultAssertivityPercent < 1 ||
+			defaultAssertivityPercent > 100
+		) {
+			showToast("error", t("editors.yearly.assertivityError"))
 			return
 		}
 
@@ -308,11 +336,28 @@ const YearlyPlanEditor = ({
 		}
 
 		startTransition(async () => {
+			if (!existing && !accountCapitalAvailable) {
+				const initialCapitalReais = parseFloat(form.initialCapitalReais)
+				const initialCapitalCents = Math.round(initialCapitalReais * 100)
+
+				const accountResult = await setAccountStartingBalance(
+					accountId,
+					initialCapitalCents,
+					year
+				)
+
+				if (accountResult.status === "error") {
+					showToast("error", accountResult.error || t("editors.saveFailed"))
+					return
+				}
+			}
+
 			const result = existing
 				? await updateYearlyPlan({
 						year,
 						ladderRules: ladder,
 						tradingDaysPerWeek,
+						defaultAssertivityPercent,
 						...numericFields,
 						defaultRiskProfileId: riskProfileId,
 						notes: form.notes || undefined,
@@ -321,6 +366,7 @@ const YearlyPlanEditor = ({
 						year,
 						ladderRules: ladder,
 						tradingDaysPerWeek,
+						defaultAssertivityPercent,
 						...numericFields,
 						drawdownTriggerThresholdR: 2,
 					})
@@ -384,6 +430,28 @@ const YearlyPlanEditor = ({
 						{accountCapitalLabel ?? "—"}
 					</p>
 				</div>
+				{!existing && !accountCapitalAvailable && (
+					<div className="mt-m-400">
+						<Label id="initial-capital-reais" htmlFor="initial-capital-reais">
+							{t("editors.yearly.initialCapital")}
+						</Label>
+						<Input
+							id="initial-capital-reais"
+							type="number"
+							step="0.01"
+							min="0.01"
+							placeholder="0.00"
+							value={form.initialCapitalReais}
+							onChange={(e) =>
+								handleField("initialCapitalReais", e.target.value)
+							}
+							required
+						/>
+						<p className="mt-s-100 text-tiny text-txt-300">
+							{t("editors.yearly.initialCapitalHint")}
+						</p>
+					</div>
+				)}
 				{capitalBelowMin && (
 					<div
 						role="alert"
@@ -436,6 +504,25 @@ const YearlyPlanEditor = ({
 							}
 							required
 						/>
+					</div>
+					<div>
+						<Label id="lbl-assertivity" htmlFor="assertivity">
+							{t("editors.yearly.assertivityLabel")}
+						</Label>
+						<Input
+							id="assertivity"
+							type="number"
+							min="1"
+							max="100"
+							value={form.defaultAssertivityPercent}
+							onChange={(e) =>
+								handleField("defaultAssertivityPercent", e.target.value)
+							}
+							required
+						/>
+						<p className="mt-s-100 text-micro text-txt-300">
+							{t("editors.yearly.assertivityHint")}
+						</p>
 					</div>
 					<div>
 						<Label id="lbl-daily-loss" htmlFor="daily-loss">

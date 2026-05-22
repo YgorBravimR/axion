@@ -3,14 +3,13 @@ import type { AccountAsset, AccountTimeframe } from "@/db/schema"
 interface AccountInput {
 	name: string
 	description?: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 	propFirmName?: string
 	profitSharePercentage?: number
 	defaultCurrency?: string
 	defaultBreakevenTicks?: number
 	showTaxEstimates?: boolean
 	showPropCalculations?: boolean
-	replayStartDate?: string
 	defaultAsset?: string | null
 }
 

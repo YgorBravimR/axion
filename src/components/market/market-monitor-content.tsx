@@ -223,7 +223,10 @@ export const MarketMonitorContent = () => {
 	if (isLoading && groups.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-20">
-				<Activity className="text-acc-100 mb-m-400 h-8 w-8 animate-pulse motion-reduce:animate-none" />
+				<Activity
+					className="text-acc-100 mb-m-400 h-8 w-8 animate-pulse motion-reduce:animate-none"
+					aria-hidden="true"
+				/>
 				<p className="text-small text-txt-200">{t("quote.loading")}</p>
 			</div>
 		)
@@ -243,7 +246,7 @@ export const MarketMonitorContent = () => {
 					className="text-acc-100 inline-flex items-center gap-1.5"
 					aria-label={t("refreshNow")}
 				>
-					<RefreshCw className="h-3.5 w-3.5" />
+					<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
 					{t("refreshNow")}
 				</Button>
 			</div>
@@ -275,7 +278,7 @@ export const MarketMonitorContent = () => {
 											<span
 												className={cn(
 													"h-1.5 w-1.5 rounded-full",
-													status.state === "open" && "bg-trade-buy",
+													status.state === "open" && "bg-fb-success",
 													status.state === "opening" &&
 														"bg-warning animate-pulse motion-reduce:animate-none",
 													status.state === "closed" && "bg-txt-300/40"
@@ -287,7 +290,7 @@ export const MarketMonitorContent = () => {
 												<span
 													className={cn(
 														"font-medium",
-														status.state === "open" && "text-trade-buy",
+														status.state === "open" && "text-fb-success",
 														status.state === "opening" && "text-warning",
 														status.state === "closed" && "text-txt-300"
 													)}
@@ -316,7 +319,7 @@ export const MarketMonitorContent = () => {
 									className="text-txt-300"
 									aria-label={t("refreshNow")}
 								>
-									<RefreshCw className="h-3.5 w-3.5" />
+									<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
 								</Button>
 							</div>
 						) : null}
@@ -421,7 +424,10 @@ export const MarketMonitorContent = () => {
 						</div>
 					) : (
 						<div className="flex flex-col items-center justify-center py-10">
-							<Activity className="text-txt-300 mb-s-300 h-5 w-5" />
+							<Activity
+								className="text-txt-300 mb-s-300 h-5 w-5"
+								aria-hidden="true"
+							/>
 							<p className="text-small text-txt-300">{t("quote.emptyGroup")}</p>
 							<Button
 								id="market-refresh-empty"
@@ -432,7 +438,7 @@ export const MarketMonitorContent = () => {
 								className="text-tiny text-acc-100 mt-s-200 gap-s-100 inline-flex items-center"
 								aria-label={t("refreshNow")}
 							>
-								<RefreshCw className="h-3 w-3" />
+								<RefreshCw className="h-3 w-3" aria-hidden="true" />
 								{t("refreshNow")}
 							</Button>
 						</div>

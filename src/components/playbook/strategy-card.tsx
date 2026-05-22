@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState, useCallback, useEffect, useRef } from "react"
+import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -17,8 +17,16 @@ import {
 	ImageIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { ColoredValue } from "@/components/shared"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
+import { getComplianceTone } from "@/lib/compliance"
 import type { StrategyWithStats } from "@/app/actions/strategies.types"
 
 interface StrategyCardProps {
@@ -34,56 +42,17 @@ const StrategyCardBase = ({
 }: StrategyCardProps) => {
 	const t = useTranslations("playbook")
 	const tCommon = useTranslations("common")
-	const [showMenu, setShowMenu] = useState(false)
 	const { isPremium } = useFeatureAccess()
-	const menuRef = useRef<HTMLDivElement>(null)
-	const menuButtonRef = useRef<HTMLButtonElement>(null)
 
-	const handleMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
-		if (e.key === "Escape") {
-			setShowMenu(false)
-			menuButtonRef.current?.focus()
-		}
-		if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-			e.preventDefault()
-			const items =
-				menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
-			if (!items?.length) {
-				return
-			}
-			const currentIndex = Array.from(items).findIndex(
-				(el) => el === document.activeElement
-			)
-			const nextIndex =
-				e.key === "ArrowDown"
-					? (currentIndex + 1) % items.length
-					: (currentIndex - 1 + items.length) % items.length
-			items[nextIndex]?.focus()
-		}
-	}, [])
-
-	useEffect(() => {
-		if (showMenu) {
-			const firstItem =
-				menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')
-			firstItem?.focus()
-		}
-	}, [showMenu])
-
-	const complianceColor =
-		strategy.compliance >= 80
-			? "text-trade-buy"
-			: strategy.compliance >= 50
-				? "text-warning"
-				: "text-trade-sell"
+	const complianceTone = getComplianceTone(strategy.compliance)
 
 	return (
 		<div className="group border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 hover:border-bg-300/80 relative rounded-lg border transition-shadow hover:shadow-md">
 			{/* Header */}
 			<div className="flex items-start justify-between">
 				<div className="gap-s-300 flex items-center">
-					<div className="bg-acc-100/20 text-acc-100 flex h-10 w-10 items-center justify-center rounded-lg">
-						<Target className="h-5 w-5" />
+					<div className="bg-bg-300 text-txt-200 flex h-10 w-10 items-center justify-center rounded-lg">
+						<Target className="h-5 w-5" aria-hidden="true" />
 					</div>
 					<div>
 						<div className="gap-s-200 flex items-center">
@@ -106,79 +75,47 @@ const StrategyCardBase = ({
 				</div>
 
 				{/* Menu */}
-				<div className="relative">
-					<Button
-						ref={menuButtonRef}
-						id="playbook-strategy-menu"
-						variant="ghost"
-						size="sm"
-						className="h-11 w-11 p-0"
-						onClick={() => setShowMenu(!showMenu)}
-						aria-label={t("strategy.optionsMenu")}
-						aria-expanded={showMenu}
-						aria-haspopup="menu"
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							id="playbook-strategy-menu"
+							variant="ghost"
+							size="sm"
+							className="h-11 w-11 p-0"
+							aria-label={t("strategy.optionsMenu")}
+						>
+							<MoreVertical className="h-4 w-4" aria-hidden="true" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						id="strategy-menu-content"
+						align="end"
+						className="w-40"
 					>
-						<MoreVertical className="h-4 w-4" aria-hidden="true" />
-					</Button>
-					{showMenu && (
-						<>
-							<div
-								className="fixed inset-0 z-10"
-								onClick={() => setShowMenu(false)}
-								aria-hidden="true"
-							/>
-							{}
-							<div
-								ref={menuRef}
-								role="menu"
-								tabIndex={0}
-								aria-label={t("strategy.optionsMenu")}
-								className="border-bg-300 bg-bg-100 mt-s-100 py-s-100 absolute top-full right-0 z-20 w-40 max-w-[calc(100vw-2rem)] rounded-lg border shadow-lg"
-								onKeyDown={handleMenuKeyDown}
-							>
-								<Link
-									href={`/playbook/${strategy.id}`}
-									role="menuitem"
-									tabIndex={-1}
-									className="text-txt-200 hover:bg-bg-200 gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center text-left"
-								>
-									<Eye className="h-4 w-4" />
-									{t("strategy.viewDetails")}
-								</Link>
-								<Button
-									id={`strategy-edit-${strategy.id}`}
-									type="button"
-									variant="ghost"
-									role="menuitem"
-									tabIndex={-1}
-									onClick={() => {
-										setShowMenu(false)
-										onEdit(strategy)
-									}}
-									className="gap-s-200 px-s-300 py-s-300 text-small text-txt-200 flex w-full items-center justify-start text-left"
-								>
-									<Edit className="h-4 w-4" />
-									{tCommon("edit")}
-								</Button>
-								<Button
-									id={`strategy-delete-${strategy.id}`}
-									type="button"
-									variant="ghost"
-									role="menuitem"
-									tabIndex={-1}
-									className="text-fb-error hover:text-fb-error gap-s-200 px-s-300 py-s-300 text-small flex w-full items-center justify-start text-left"
-									onClick={() => {
-										setShowMenu(false)
-										onDelete(strategy.id)
-									}}
-								>
-									<Trash2 className="h-4 w-4" />
-									{tCommon("delete")}
-								</Button>
-							</div>
-						</>
-					)}
-				</div>
+						<DropdownMenuItem asChild>
+							<Link href={`/playbook/${strategy.id}`}>
+								<Eye className="mr-s-200 h-4 w-4" aria-hidden="true" />
+								{t("strategy.viewDetails")}
+							</Link>
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							id={`strategy-edit-${strategy.id}`}
+							onSelect={() => onEdit(strategy)}
+						>
+							<Edit className="mr-s-200 h-4 w-4" aria-hidden="true" />
+							{tCommon("edit")}
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							id={`strategy-delete-${strategy.id}`}
+							onSelect={() => onDelete(strategy.id)}
+							className="text-fb-error focus:text-fb-error focus:bg-fb-error/10"
+						>
+							<Trash2 className="mr-s-200 h-4 w-4" aria-hidden="true" />
+							{tCommon("delete")}
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Stats Grid */}
@@ -194,7 +131,7 @@ const StrategyCardBase = ({
 					<ColoredValue
 						value={strategy.totalPnl}
 						showSign
-						formatFn={(v) => formatCompactCurrencyWithSign(v, "R$")}
+						formatFn={(v) => formatCompactCurrencyWithSign(v, "BRL")}
 						className="mt-s-100 text-body font-bold tabular-nums"
 					/>
 				</div>
@@ -221,7 +158,7 @@ const StrategyCardBase = ({
 					<span className="text-tiny text-txt-300">
 						{t("compliance.planCompliance")}
 					</span>
-					<span className={cn("text-small font-semibold", complianceColor)}>
+					<span className={cn("text-small font-semibold", complianceTone.text)}>
 						{strategy.compliance.toFixed(0)}%
 					</span>
 				</div>
@@ -236,11 +173,7 @@ const StrategyCardBase = ({
 					<div
 						className={cn(
 							"h-full rounded-full transition-[width]",
-							strategy.compliance >= 80
-								? "bg-trade-buy"
-								: strategy.compliance >= 50
-									? "bg-warning"
-									: "bg-trade-sell"
+							complianceTone.fill
 						)}
 						style={{ width: `${Math.min(strategy.compliance, 100)}%` }}
 					/>
@@ -252,7 +185,7 @@ const StrategyCardBase = ({
 				<div className="mt-m-400 gap-m-400 flex items-center">
 					{strategy.finalR && (
 						<div className="gap-s-100 flex items-center">
-							<TrendingUp className="text-trade-buy h-4 w-4" />
+							<TrendingUp className="text-txt-300 h-4 w-4" aria-hidden="true" />
 							<span className="text-tiny text-txt-300">
 								{t("strategy.target")}
 							</span>
@@ -263,7 +196,10 @@ const StrategyCardBase = ({
 					)}
 					{strategy.maxRiskPercent && (
 						<div className="gap-s-100 flex items-center">
-							<TrendingDown className="text-trade-sell h-4 w-4" />
+							<TrendingDown
+								className="text-txt-300 h-4 w-4"
+								aria-hidden="true"
+							/>
 							<span className="text-tiny text-txt-300">
 								{t("strategy.maxRisk")}
 							</span>
@@ -281,7 +217,7 @@ const StrategyCardBase = ({
 				<div className="mt-s-300 gap-m-400 flex items-center">
 					{isPremium && strategy.conditionCount > 0 && (
 						<div className="gap-s-100 flex items-center">
-							<Filter className="text-txt-300 h-3 w-3" />
+							<Filter className="text-txt-300 h-3 w-3" aria-hidden="true" />
 							<span className="text-tiny text-txt-300">
 								{strategy.conditionCount === 1
 									? t("strategy.condition", { count: strategy.conditionCount })
@@ -293,7 +229,7 @@ const StrategyCardBase = ({
 					)}
 					{strategy.scenarioCount > 0 && (
 						<div className="gap-s-100 flex items-center">
-							<ImageIcon className="text-txt-300 h-3 w-3" />
+							<ImageIcon className="text-txt-300 h-3 w-3" aria-hidden="true" />
 							<span className="text-tiny text-txt-300">
 								{strategy.scenarioCount === 1
 									? t("strategy.scenario", { count: strategy.scenarioCount })

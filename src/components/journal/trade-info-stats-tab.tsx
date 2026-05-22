@@ -7,7 +7,6 @@ import {
 	ArrowDownRight,
 	CheckCircle,
 	XCircle,
-	AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fromCents } from "@/lib/money"
@@ -15,6 +14,12 @@ import { formatCurrency, formatRMultiple } from "@/lib/calculations"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { PnLDisplay } from "@/components/journal/pnl-display"
+import {
+	RatingBadge,
+	FollowedPlanBadge,
+	TradeTag,
+	type RatingGrade,
+} from "@/components/journal/trade-badges"
 import type { TradeChartData } from "@/types/candle"
 import type { TradeInfoPanelProps } from "./trade-info-panel"
 
@@ -51,7 +56,6 @@ interface TradeInfoStatsTabProps {
 
 const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 	const tTrade = useTranslations("trade")
-	const tCommon = useTranslations("common")
 
 	const isLong = trade.direction === "long"
 	const pnl = trade.pnl !== null ? fromCents(trade.pnl) : null
@@ -97,9 +101,9 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 					)}
 				>
 					{isLong ? (
-						<ArrowUpRight className="mr-s-100 h-3 w-3" />
+						<ArrowUpRight className="mr-s-100 h-3 w-3" aria-hidden="true" />
 					) : (
-						<ArrowDownRight className="mr-s-100 h-3 w-3" />
+						<ArrowDownRight className="mr-s-100 h-3 w-3" aria-hidden="true" />
 					)}
 					{isLong
 						? tTrade("direction.long").toUpperCase()
@@ -111,7 +115,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						id="panel-outcome-badge"
 						className="bg-trade-buy/20 text-trade-buy"
 					>
-						<CheckCircle className="mr-s-100 h-3 w-3" />
+						<CheckCircle className="mr-s-100 h-3 w-3" aria-hidden="true" />
 						{tTrade("outcome.winner")}
 					</Badge>
 				)}
@@ -120,7 +124,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 						id="panel-outcome-badge"
 						className="bg-trade-sell/20 text-trade-sell"
 					>
-						<XCircle className="mr-s-100 h-3 w-3" />
+						<XCircle className="mr-s-100 h-3 w-3" aria-hidden="true" />
 						{tTrade("outcome.loser")}
 					</Badge>
 				)}
@@ -247,51 +251,30 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 					{fullTrade.rating && (
 						<div className="py-s-100 flex items-center justify-between">
 							<span className="text-tiny text-txt-300">{tTrade("rating")}</span>
-							<Badge
+							<RatingBadge
 								id="panel-rating-badge"
-								className={cn(
-									"text-tiny",
-									fullTrade.rating === "A" && "bg-trade-buy/20 text-trade-buy",
-									fullTrade.rating === "B" &&
-										"bg-trade-buy/10 text-trade-buy/70",
-									fullTrade.rating === "C" && "bg-warning/20 text-warning",
-									fullTrade.rating === "D" &&
-										"bg-trade-sell/10 text-trade-sell/70",
-									fullTrade.rating === "F" && "bg-trade-sell/20 text-trade-sell"
-								)}
-							>
-								{fullTrade.rating}
-							</Badge>
+								grade={fullTrade.rating as RatingGrade}
+								className="text-tiny"
+							/>
 						</div>
 					)}
-					{fullTrade.followedPlan === true && (
-						<div className="py-s-100 flex items-center justify-between">
-							<span className="text-tiny text-txt-300">
-								{tTrade("followedPlan")}
-							</span>
-							<Badge
-								id="panel-followed-plan-badge"
-								className="bg-trade-buy/20 text-trade-buy text-tiny"
-							>
-								<CheckCircle className="mr-s-100 h-3 w-3" />
-								{tCommon("yes")}
-							</Badge>
-						</div>
-					)}
-					{fullTrade.followedPlan === false && (
-						<div className="py-s-100 flex items-center justify-between">
-							<span className="text-tiny text-txt-300">
-								{tTrade("followedPlan")}
-							</span>
-							<Badge
-								id="panel-discipline-breach-badge"
-								className="bg-warning/20 text-warning text-tiny"
-							>
-								<AlertTriangle className="mr-s-100 h-3 w-3" />
-								{tCommon("no")}
-							</Badge>
-						</div>
-					)}
+					{fullTrade.followedPlan !== null &&
+						fullTrade.followedPlan !== undefined && (
+							<div className="py-s-100 flex items-center justify-between">
+								<span className="text-tiny text-txt-300">
+									{tTrade("followedPlan")}
+								</span>
+								<FollowedPlanBadge
+									id={
+										fullTrade.followedPlan
+											? "panel-followed-plan-badge"
+											: "panel-discipline-breach-badge"
+									}
+									followed={fullTrade.followedPlan}
+									className="text-tiny"
+								/>
+							</div>
+						)}
 				</>
 			)}
 
@@ -301,31 +284,31 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 					<Separator id="panel-separator-tags" />
 					<div className="gap-s-200 pt-s-100 flex flex-wrap">
 						{setupTags.map((tag) => (
-							<Badge
+							<TradeTag
 								id={`panel-setup-tag-${tag.id}`}
 								key={tag.id}
-								className="bg-trade-buy/10 text-trade-buy text-tiny"
-							>
-								{tag.name}
-							</Badge>
+								kind="setup"
+								name={tag.name}
+								className="text-tiny"
+							/>
 						))}
 						{mistakeTags.map((tag) => (
-							<Badge
+							<TradeTag
 								id={`panel-mistake-tag-${tag.id}`}
 								key={tag.id}
-								className="bg-warning/10 text-warning text-tiny"
-							>
-								{tag.name}
-							</Badge>
+								kind="mistake"
+								name={tag.name}
+								className="text-tiny"
+							/>
 						))}
 						{generalTags.map((tag) => (
-							<Badge
+							<TradeTag
 								id={`panel-general-tag-${tag.id}`}
 								key={tag.id}
-								className="bg-acc-100/10 text-acc-100 text-tiny"
-							>
-								{tag.name}
-							</Badge>
+								kind="general"
+								name={tag.name}
+								className="text-tiny"
+							/>
 						))}
 					</div>
 				</>

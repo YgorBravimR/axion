@@ -1,13 +1,6 @@
 "use client"
 
-import {
-	useState,
-	useEffect,
-	useTransition,
-	useRef,
-	useCallback,
-	useMemo,
-} from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -26,8 +19,8 @@ import {
 	type FilterState,
 } from "@/components/analytics"
 import { LoadingSpinner } from "@/components/shared"
-import { Link } from "@/i18n/routing"
-import { GitCompareArrows } from "lucide-react"
+import { AccountComparisonContent } from "@/components/account-comparison"
+import type { AccountOption } from "@/components/account-comparison/account-selector"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { analyticsGuide } from "@/components/ui/page-guide/guide-configs/analytics"
@@ -63,7 +56,7 @@ interface AnalyticsContentProps {
 	initialTagStats: TagStats[]
 	availableAssets: string[]
 	availableTimeframes: TimeframeOption[]
-	accountCount?: number
+	accounts: AccountOption[]
 }
 
 /** Converts FilterState to the TradeFilters format expected by server actions */
@@ -130,13 +123,12 @@ const AnalyticsContent = ({
 	initialTagStats,
 	availableAssets,
 	availableTimeframes,
-	accountCount,
+	accounts,
 }: AnalyticsContentProps) => {
 	const t = useTranslations("analytics")
-	const tComparison = useTranslations("accountComparison")
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const { isPremium } = useFeatureAccess()
-	const showComparisonLink = isPremium && (accountCount ?? 0) >= 2
+	const showAccountComparison = isPremium && accounts.length >= 2
 
 	useRegisterPageGuide(analyticsGuide)
 
@@ -232,7 +224,9 @@ const AnalyticsContent = ({
 			return
 		}
 
-		startTransition(async () => {
+		setIsPending(true)
+		const capturedKey = filterKey
+		void (async () => {
 			const tradeFilters = toTradeFilters(filters, groupBy)
 
 			const [dashResult, tagResult] = await Promise.all([
@@ -249,10 +243,11 @@ const AnalyticsContent = ({
 
 			if (dashData) {
 				// Store in module cache — persists across navigations
-				setAnalyticsCacheEntry(filterKey, dashData, tagData)
+				setAnalyticsCacheEntry(capturedKey, dashData, tagData)
 				applyDashboard(dashData, tagData)
 			}
-		})
+			setIsPending(false)
+		})()
 		// filterKey is the stable serialized representation of all filter state.
 		// When it changes, filters/groupBy have changed — re-fetch is correct.
 		// applyDashboard is stable (useCallback with no deps).
@@ -261,21 +256,7 @@ const AnalyticsContent = ({
 	}, [filterKey, applyDashboard])
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
-			{/* Compare Accounts Link (admin + 2+ accounts) */}
-			{showComparisonLink && (
-				<div className="flex justify-end">
-					<Link
-						href="/analytics/account-comparison"
-						className="text-acc-100 hover:text-acc-100/80 gap-s-200 text-small focus-visible:ring-acc-100 flex items-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-						aria-label={tComparison("title")}
-					>
-						<GitCompareArrows className="h-4 w-4" />
-						{tComparison("title")}
-					</Link>
-				</div>
-			)}
-
+		<div className="space-y-l-800">
 			{/* Filter Panel (includes ExpectancyModeToggle) */}
 			<FilterPanel
 				availableAssets={availableAssets}
@@ -287,36 +268,56 @@ const AnalyticsContent = ({
 				<LoadingSpinner size="sm" label={t("updating")} className="py-s-200" />
 			)}
 
-			{/* Variable Comparison - Full Width */}
-			<VariableComparison
-				data={performanceData}
-				groupBy={groupBy}
-				onGroupByChange={setGroupBy}
-			/>
-
-			{/* Cumulative P&L Chart - Full Width */}
-			<CumulativePnlChart data={equityCurve} />
-
-			{/* Two Column Grid */}
-			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 lg:grid-cols-2">
-				{/* Expected Value */}
-				<ExpectedValue data={expectedValue} mode={expectancyMode} />
-
-				{/* R Distribution */}
-				<RDistribution data={rDistribution} />
+			{/* ═══════════════════════════════════════════════════════════════
+			    ANCHOR: Cumulative P&L Chart (Promoted)
+			    ═══════════════════════════════════════════════════════════════ */}
+			<div
+				id="analytics-anchor-equity"
+				className="border-bg-300 bg-bg-200 p-m-500 sm:p-l-700 lg:p-l-800 rounded-lg border"
+			>
+				<h2 className="text-h2 sm:text-h1 text-txt-100 font-semibold">
+					Cumulative P&L
+				</h2>
+				<div className="mt-m-500 sm:mt-l-700">
+					<CumulativePnlChart data={equityCurve} />
+				</div>
 			</div>
 
-			{/* Tag Cloud - Full Width */}
-			<TagCloud data={tagStats} expectancyMode={expectancyMode} />
+			{/* ═══════════════════════════════════════════════════════════════
+			    BAND 1: EDGE — Is my edge real?
+			    (Variable Comparison, Expected Value, R-Distribution)
+			    ═══════════════════════════════════════════════════════════════ */}
+			<section
+				id="analytics-edge-band"
+				className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+			>
+				{/* Variable Comparison - Full Width */}
+				<VariableComparison
+					data={performanceData}
+					groupBy={groupBy}
+					onGroupByChange={setGroupBy}
+				/>
 
-			{/* Time-Based Analysis Section */}
-			<div className="border-bg-300 border-t" />
-			<div id="analytics-time-section">
-				<h2 className="mb-s-300 sm:mb-m-400 text-body sm:text-h3 text-txt-100 font-semibold">
-					{t("time.title")}
-				</h2>
+				{/* Two Column Grid: EV + R-Distribution */}
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 lg:grid-cols-2">
+					<ExpectedValue data={expectedValue} mode={expectancyMode} />
+					<RDistribution data={rDistribution} />
+				</div>
+			</section>
 
-				{/* Heatmap + Session: stacked on small/medium, side-by-side on xl+ */}
+			{/* ═══════════════════════════════════════════════════════════════
+			    BAND 2: PATTERN — Where do I make/lose money?
+			    (Tags, Heatmap, Session Performance, Session Asset Table,
+			     Hourly Performance, Day-of-Week)
+			    ═══════════════════════════════════════════════════════════════ */}
+			<section
+				id="analytics-pattern-band"
+				className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+			>
+				{/* Tag Cloud - Full Width */}
+				<TagCloud data={tagStats} expectancyMode={expectancyMode} />
+
+				{/* Heatmap + Session Performance: stacked on small/medium, side-by-side on xl+ */}
 				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 xl:grid-cols-2">
 					<TimeHeatmap data={timeHeatmap} expectancyMode={expectancyMode} />
 					<SessionPerformanceChart
@@ -326,36 +327,45 @@ const AnalyticsContent = ({
 				</div>
 
 				{/* Session Asset Table - Full Width */}
-				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
-					<SessionAssetTable
-						data={sessionAssetPerformance}
-						expectancyMode={expectancyMode}
-					/>
-				</div>
+				<SessionAssetTable
+					data={sessionAssetPerformance}
+					expectancyMode={expectancyMode}
+				/>
 
-				{/* Two Column Grid for Charts */}
-				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600 gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2">
-					{/* Hourly Performance */}
+				{/* Hourly Performance + Day-of-Week: Two Column Grid */}
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2">
 					<HourlyPerformanceChart
 						data={hourlyPerformance}
 						expectancyMode={expectancyMode}
 					/>
-
-					{/* Day of Week Performance */}
 					<DayOfWeekChart
 						data={dayOfWeekPerformance}
 						expectancyMode={expectancyMode}
 					/>
 				</div>
+			</section>
 
-				{/* Holding Period Analysis - Full Width */}
-				<div className="mt-m-400 sm:mt-m-500 lg:mt-m-600">
-					<HoldingPeriodChart
-						data={holdingPeriodAnalysis}
-						expectancyMode={expectancyMode}
-					/>
-				</div>
-			</div>
+			{/* ═══════════════════════════════════════════════════════════════
+			    BAND 3: BEHAVIOR — How do I trade?
+			    (Holding Period)
+			    ═══════════════════════════════════════════════════════════════ */}
+			<section
+				id="analytics-behavior-band"
+				className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+			>
+				<HoldingPeriodChart
+					data={holdingPeriodAnalysis}
+					expectancyMode={expectancyMode}
+				/>
+			</section>
+
+			{/* Account Comparison section — only when admin + 2+ accounts */}
+			{showAccountComparison && (
+				<>
+					<div className="border-bg-300 border-t" />
+					<AccountComparisonContent accounts={accounts} />
+				</>
+			)}
 		</div>
 	)
 }

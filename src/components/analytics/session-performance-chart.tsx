@@ -74,7 +74,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 							isProfit ? "text-trade-buy" : "text-trade-sell"
 						)}
 					>
-						{formatCompactCurrencyWithSign(data.totalPnl, "R$")}
+						{formatCompactCurrencyWithSign(data.totalPnl, "BRL")}
 					</span>
 				</p>
 				<p className="text-tiny">
@@ -83,12 +83,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				</p>
 				<p className="text-tiny">
 					<span className="text-txt-300">{t("session.winRate")}:</span>{" "}
-					<span
-						className={cn(
-							"font-medium",
-							data.winRate >= 50 ? "text-trade-buy" : "text-trade-sell"
-						)}
-					>
+					<span className="text-txt-100 font-medium">
 						{data.winRate.toFixed(0)}%
 					</span>
 				</p>
@@ -149,7 +144,7 @@ export const SessionPerformanceChart = memo(
 			isMobile ? tAbbr(sessionKey) : tLabels(sessionKey)
 
 		const formatMetric = (value: number): string =>
-			isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
+			isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "BRL")
 
 		const {
 			sessionsWithTrades,
@@ -195,7 +190,7 @@ export const SessionPerformanceChart = memo(
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("session.title")}
 					</h3>
-					<div className="text-txt-300 flex h-50 items-center justify-center">
+					<div className="text-txt-300 flex min-h-48 items-center justify-center">
 						{t("noData")}
 					</div>
 				</div>
@@ -261,7 +256,7 @@ export const SessionPerformanceChart = memo(
 							tickFormatter={(value: number) =>
 								isRMode
 									? formatR(value)
-									: formatCompactCurrencyWithSign(value, "R$")
+									: formatCompactCurrencyWithSign(value, "BRL")
 							}
 							stroke="var(--color-txt-300)"
 							tick={AXIS_TICK}
@@ -401,7 +396,7 @@ export const SessionPerformanceChart = memo(
 											<TableRow>
 												{showBest ? (
 													<>
-														<TableCell className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
+														<TableCell className="px-s-300 py-s-200 text-txt-100 text-center font-semibold whitespace-nowrap">
 															{tLabels(bestSession.session)}
 														</TableCell>
 														<TableCell className="px-s-300 py-s-200 text-trade-buy text-center font-semibold whitespace-nowrap">
@@ -422,7 +417,7 @@ export const SessionPerformanceChart = memo(
 												)}
 												{showWorst ? (
 													<>
-														<TableCell className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">
+														<TableCell className="px-s-300 py-s-200 text-txt-100 text-center font-semibold whitespace-nowrap">
 															{tLabels(worstSession.session)}
 														</TableCell>
 														<TableCell className="px-s-300 py-s-200 text-trade-sell text-center font-semibold whitespace-nowrap">

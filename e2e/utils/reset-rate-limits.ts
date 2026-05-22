@@ -11,8 +11,8 @@
  * within any describe block that submits failed login attempts.
  */
 
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "./create-db"
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -20,10 +20,7 @@ dotenv.config()
 /** Keys used by the application's rate limiter and lockout system */
 const buildRateLimitKeys = (email: string): string[] => {
 	const lower = email.toLowerCase()
-	return [
-		`login:${lower}`,
-		`login-fail:${lower}`,
-	]
+	return [`login:${lower}`, `login-fail:${lower}`]
 }
 
 /**
@@ -39,7 +36,7 @@ const resetRateLimitsForEmail = async (email: string): Promise<void> => {
 		return
 	}
 
-	const db = drizzle(dbUrl)
+	const db = createDb(dbUrl)
 	const keys = buildRateLimitKeys(email)
 
 	for (const key of keys) {
@@ -47,7 +44,9 @@ const resetRateLimitsForEmail = async (email: string): Promise<void> => {
 			.execute(sql`DELETE FROM rate_limit_attempts WHERE identifier = ${key}`)
 			.catch((err: unknown) => {
 				const message = err instanceof Error ? err.message : String(err)
-				console.warn(`[E2E RateLimit Reset] Failed to clear key "${key}": ${message}`)
+				console.warn(
+					`[E2E RateLimit Reset] Failed to clear key "${key}": ${message}`
+				)
 			})
 	}
 }
@@ -65,14 +64,18 @@ const resetRateLimitsByPrefix = async (prefix: string): Promise<void> => {
 		return
 	}
 
-	const db = drizzle(dbUrl)
+	const db = createDb(dbUrl)
 	const pattern = `${prefix}%`
 
 	await db
-		.execute(sql`DELETE FROM rate_limit_attempts WHERE identifier LIKE ${pattern}`)
+		.execute(
+			sql`DELETE FROM rate_limit_attempts WHERE identifier LIKE ${pattern}`
+		)
 		.catch((err: unknown) => {
 			const message = err instanceof Error ? err.message : String(err)
-			console.warn(`[E2E RateLimit Reset] Failed to clear prefix "${prefix}": ${message}`)
+			console.warn(
+				`[E2E RateLimit Reset] Failed to clear prefix "${prefix}": ${message}`
+			)
 		})
 }
 

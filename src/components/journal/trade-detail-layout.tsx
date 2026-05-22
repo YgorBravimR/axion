@@ -142,10 +142,10 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 									setChartKey((k) => k + 1)
 									setView("chart")
 								}}
-								className="border-acc-100/40 text-acc-100 hover:bg-acc-100/10 gap-s-200"
+								className="gap-s-200"
 								aria-label={tChart("switchToChartView")}
 							>
-								<BarChart3 className="h-4 w-4" />
+								<BarChart3 className="h-4 w-4" aria-hidden="true" />
 								{tChart("chartButton")}
 							</Button>
 						</div>

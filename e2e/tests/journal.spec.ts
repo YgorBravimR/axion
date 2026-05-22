@@ -1,16 +1,19 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES, TEST_TRADE, TEST_TRADE_LOSS } from "../fixtures/test-data"
 
 test.describe("Journal", () => {
 	test.describe("Journal List Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page }) => {
-			// Journal page has no heading — verify via sidebar active state or filter tabs
-			const filterTabs = page.getByRole("button", { name: /day|week|month|all/i })
+			// Journal page has no heading — verify via the period filter radiogroup
+			const filterTabs = page.getByRole("radio", {
+				name: /day|week|month|all/i,
+			})
 			await expect(filterTabs.first()).toBeVisible()
 		})
 
@@ -29,22 +32,34 @@ test.describe("Journal", () => {
 
 		test("should display filter options", async ({ page }) => {
 			// Asset filter
-			const assetFilter = page.locator('[data-testid="asset-filter"], select[name="asset"], button:has-text("asset")')
+			const assetFilter = page.locator(
+				'[data-testid="asset-filter"], select[name="asset"], button:has-text("asset")'
+			)
 			if ((await assetFilter.count()) > 0) {
 				await expect(assetFilter.first()).toBeVisible()
 			}
 
 			// Outcome filter
-			const outcomeFilter = page.locator('[data-testid="outcome-filter"], select[name="outcome"], button:has-text("outcome")')
+			const outcomeFilter = page.locator(
+				'[data-testid="outcome-filter"], select[name="outcome"], button:has-text("outcome")'
+			)
 			if ((await outcomeFilter.count()) > 0) {
 				await expect(outcomeFilter.first()).toBeVisible()
 			}
 		})
 
 		test("should display trade list or empty state", async ({ page }) => {
-			// Trade items are rendered as buttons (e.g., "Trade WDO long at 05:34")
-			const tradeItems = page.getByRole("button", { name: /^trade /i })
-			const emptyState = page.getByText(/no trades|start by adding/i)
+			// JournalContent starts in isLoading=true and fetches on mount, so networkidle
+			// can resolve before the client useEffect fetch starts. Wait explicitly for
+			// either trade cards or the empty state to appear before asserting.
+			// Trades render as role="option" inside role="listbox" day-groups (TradeDayGroup → TradeRow).
+			const tradeItems = page.locator('[role="listbox"] [role="option"]')
+			const emptyState = page.getByText(/no trades/i)
+
+			await Promise.race([
+				tradeItems.first().waitFor({ state: "visible", timeout: 20000 }),
+				emptyState.waitFor({ state: "visible", timeout: 20000 }),
+			]).catch(() => {})
 
 			const hasTradeItems = (await tradeItems.count()) > 0
 			const hasEmptyState = await emptyState.isVisible().catch(() => false)
@@ -52,40 +67,58 @@ test.describe("Journal", () => {
 			expect(hasTradeItems || hasEmptyState).toBeTruthy()
 		})
 
-		test("should display trade cards with required information", async ({ page }) => {
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card, .trade-item').first()
+		test("should display trade cards with required information", async ({
+			page,
+		}) => {
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card, .trade-item')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				// Should show asset
-				await expect(tradeCard.locator('text=/WIN|WDO|ES|NQ|[A-Z]{2,5}/i')).toBeVisible()
+				await expect(
+					tradeCard.locator("text=/WIN|WDO|ES|NQ|[A-Z]{2,5}/i")
+				).toBeVisible()
 
 				// Should show direction badge
-				await expect(tradeCard.locator('text=/long|short|compra|venda/i')).toBeVisible()
+				await expect(
+					tradeCard.locator("text=/long|short|compra|venda/i")
+				).toBeVisible()
 
 				// Should show P&L
-				await expect(tradeCard.locator('text=/R\\$|\\$/i')).toBeVisible()
+				await expect(tradeCard.locator("text=/R\\$|\\$/i")).toBeVisible()
 			}
 		})
 
 		test("should display pagination when many trades", async ({ page }) => {
-			const pagination = page.locator('[data-testid="pagination"], .pagination, nav[aria-label*="pagination"]')
+			const pagination = page.locator(
+				'[data-testid="pagination"], .pagination, nav[aria-label*="pagination"]'
+			)
 
 			// Pagination may not be visible if few trades
 			const count = await pagination.count()
 			expect(count).toBeGreaterThanOrEqual(0)
 		})
 
-		test("should navigate to trade detail when clicking trade", async ({ page }) => {
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card, .trade-item').first()
+		test("should navigate to trade detail when clicking trade", async ({
+			page,
+		}) => {
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card, .trade-item')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await expect(page).toHaveURL(/journal\/[a-zA-Z0-9-]+(?!\/new)/, { timeout: 5000 })
+				await expect(page).toHaveURL(/journal\/[a-zA-Z0-9-]+(?!\/new)/, {
+					timeout: 5000,
+				})
 			}
 		})
 
 		test("should filter trades by asset", async ({ page }) => {
-			const assetFilter = page.locator('[data-testid="asset-filter"], select[name="asset"]').first()
+			const assetFilter = page
+				.locator('[data-testid="asset-filter"], select[name="asset"]')
+				.first()
 
 			if (await assetFilter.isVisible()) {
 				await assetFilter.selectOption({ index: 1 })
@@ -96,7 +129,9 @@ test.describe("Journal", () => {
 		})
 
 		test("should filter trades by outcome", async ({ page }) => {
-			const outcomeFilter = page.locator('[data-testid="outcome-filter"], select[name="outcome"]').first()
+			const outcomeFilter = page
+				.locator('[data-testid="outcome-filter"], select[name="outcome"]')
+				.first()
 
 			if (await outcomeFilter.isVisible()) {
 				await outcomeFilter.selectOption("win")
@@ -119,19 +154,30 @@ test.describe("Journal", () => {
 	test.describe("New Trade Page", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header with back button", async ({ page }) => {
 			// New Trade page has no heading or back link — verify via tabs
-			await expect(page.getByRole("tab", { name: /single entry/i })).toBeVisible()
+			await expect(
+				page.getByRole("tab", { name: /single entry/i })
+			).toBeVisible()
 			// Cancel button serves as "back" navigation
-			await expect(page.getByRole("button", { name: /cancel|cancelar/i })).toBeVisible()
+			await expect(
+				page.getByRole("button", { name: /cancel|cancelar/i })
+			).toBeVisible()
 		})
 
-		test("should display tabs for Single Entry and CSV Import", async ({ page }) => {
-			const singleTab = page.locator('button[role="tab"]:has-text("Single"), button[role="tab"]:has-text("Manual")')
-			const csvTab = page.locator('button[role="tab"]:has-text("CSV"), button[role="tab"]:has-text("Import")')
+		test("should display tabs for Single Entry and CSV Import", async ({
+			page,
+		}) => {
+			const singleTab = page.locator(
+				'button[role="tab"]:has-text("Single"), button[role="tab"]:has-text("Manual")'
+			)
+			const csvTab = page.locator(
+				'button[role="tab"]:has-text("CSV"), button[role="tab"]:has-text("Import")'
+			)
 
 			if ((await singleTab.count()) > 0) {
 				await expect(singleTab.first()).toBeVisible()
@@ -142,7 +188,9 @@ test.describe("Journal", () => {
 		})
 
 		test("should display trade mode selector", async ({ page }) => {
-			const modeSelector = page.locator('[data-testid="trade-mode"], [name="tradeMode"], :has-text("Simple"):has-text("Scaled")')
+			const modeSelector = page.locator(
+				'[data-testid="trade-mode"], [name="tradeMode"], :has-text("Simple"):has-text("Scaled")'
+			)
 			if ((await modeSelector.count()) > 0) {
 				await expect(modeSelector.first()).toBeVisible()
 			}
@@ -178,9 +226,8 @@ test.describe("Journal", () => {
 		})
 
 		test("should display classification fields", async ({ page }) => {
-			// Classification fields are on Basic tab — labels use text siblings, not <label>
-			await expect(page.getByText(/^asset/i).first()).toBeVisible()
-			await expect(page.getByText(/^timeframe/i).first()).toBeVisible()
+			await expect(page.locator("#form-label-asset")).toBeVisible()
+			await expect(page.locator("#form-label-timeframe")).toBeVisible()
 		})
 
 		test("should display journal notes fields", async ({ page }) => {
@@ -189,11 +236,21 @@ test.describe("Journal", () => {
 			await page.waitForTimeout(300)
 
 			// Pre-Trade and Post-Trade fields should be on this tab
-			const preTrade = page.getByText(/pre-trade|antes do trade|setup|thoughts/i)
-			const postTrade = page.getByText(/post-trade|após o trade|reflection|notes/i)
+			const preTrade = page.getByText(
+				/pre-trade|antes do trade|setup|thoughts/i
+			)
+			const postTrade = page.getByText(
+				/post-trade|após o trade|reflection|notes/i
+			)
 
-			const hasPreTrade = await preTrade.first().isVisible().catch(() => false)
-			const hasPostTrade = await postTrade.first().isVisible().catch(() => false)
+			const hasPreTrade = await preTrade
+				.first()
+				.isVisible()
+				.catch(() => false)
+			const hasPostTrade = await postTrade
+				.first()
+				.isVisible()
+				.catch(() => false)
 
 			expect(hasPreTrade || hasPostTrade).toBeTruthy()
 		})
@@ -204,8 +261,13 @@ test.describe("Journal", () => {
 			await page.waitForTimeout(300)
 
 			// Discipline fields: followed plan, setup quality, etc.
-			const disciplineField = page.getByText(/followed plan|seguiu o plano|discipline|disciplina|setup quality|setup/i)
-			const hasDiscipline = await disciplineField.first().isVisible().catch(() => false)
+			const disciplineField = page.getByText(
+				/followed plan|seguiu o plano|discipline|disciplina|setup quality|setup/i
+			)
+			const hasDiscipline = await disciplineField
+				.first()
+				.isVisible()
+				.catch(() => false)
 			expect(typeof hasDiscipline).toBe("boolean")
 		})
 
@@ -222,7 +284,7 @@ test.describe("Journal", () => {
 			const spinbuttons = page.getByRole("spinbutton")
 			await spinbuttons.nth(0).fill("100") // Entry Price
 			await spinbuttons.nth(1).fill("105") // Exit Price
-			await spinbuttons.nth(2).fill("10")  // Position Size
+			await spinbuttons.nth(2).fill("10") // Position Size
 
 			await page.waitForTimeout(500)
 
@@ -241,7 +303,7 @@ test.describe("Journal", () => {
 			const spinbuttons = page.getByRole("spinbutton")
 			await spinbuttons.nth(0).fill("100") // Entry Price
 			await spinbuttons.nth(1).fill("105") // Exit Price
-			await spinbuttons.nth(2).fill("10")  // Position Size
+			await spinbuttons.nth(2).fill("10") // Position Size
 
 			await page.waitForTimeout(500)
 
@@ -252,11 +314,15 @@ test.describe("Journal", () => {
 
 		test("should validate required fields on submit", async ({ page }) => {
 			// Try to submit without filling required fields
-			const submitButton = page.getByRole("button", { name: /save|salvar|create|criar/i })
+			const submitButton = page.getByRole("button", {
+				name: /save|salvar|create|criar/i,
+			})
 			await submitButton.click()
 
 			// Should show validation errors
-			const errorMessages = page.locator('[data-invalid="true"], .error, [aria-invalid="true"]')
+			const errorMessages = page.locator(
+				'[data-invalid="true"], .error, [aria-invalid="true"]'
+			)
 			await expect(errorMessages.first()).toBeVisible({ timeout: 2000 })
 		})
 
@@ -271,7 +337,7 @@ test.describe("Journal", () => {
 			// Fill required prices using spinbuttons
 			const spinbuttons = page.getByRole("spinbutton")
 			await spinbuttons.nth(0).fill("100") // Entry Price
-			await spinbuttons.nth(2).fill("10")  // Position Size
+			await spinbuttons.nth(2).fill("10") // Position Size
 
 			// Entry date should be pre-filled with current date/time
 
@@ -283,14 +349,20 @@ test.describe("Journal", () => {
 			await expect(page).toHaveURL(/journal(?!\/new)/, { timeout: 15000 })
 		})
 
-		test("should navigate back when clicking cancel button", async ({ page }) => {
+		test("should navigate back when clicking cancel button", async ({
+			page,
+		}) => {
 			// Navigate from journal list first so browser history has a valid entry
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
-			const cancelButton = page.getByRole("button", { name: /cancel|cancelar/i })
+			const cancelButton = page.getByRole("button", {
+				name: /cancel|cancelar/i,
+			})
 			await cancelButton.click()
 
 			await expect(page).toHaveURL(/journal(?!\/new)/, { timeout: 10000 })
@@ -301,13 +373,17 @@ test.describe("Journal", () => {
 		test("should display trade information", async ({ page }) => {
 			// First, go to journal and click on a trade
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card, .trade-item').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card, .trade-item')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Should show trade details
 				await expect(page.getByText(/entry|entrada/i).first()).toBeVisible()
@@ -317,33 +393,51 @@ test.describe("Journal", () => {
 
 		test("should display action buttons", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Edit button
-				await expect(page.getByRole("button", { name: /edit|editar/i }).or(page.getByRole("link", { name: /edit|editar/i }))).toBeVisible()
+				await expect(
+					page
+						.getByRole("button", { name: /edit|editar/i })
+						.or(page.getByRole("link", { name: /edit|editar/i }))
+				).toBeVisible()
 
 				// Delete button
-				await expect(page.getByRole("button", { name: /delete|excluir|remover/i })).toBeVisible()
+				await expect(
+					page.getByRole("button", { name: /delete|excluir|remover/i })
+				).toBeVisible()
 
 				// Back button
-				await expect(page.getByRole("button", { name: /back|voltar/i }).or(page.getByRole("link", { name: /back|voltar/i }))).toBeVisible()
+				await expect(
+					page
+						.getByRole("button", { name: /back|voltar/i })
+						.or(page.getByRole("link", { name: /back|voltar/i }))
+				).toBeVisible()
 			}
 		})
 
 		test("should display outcome badges", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Outcome badge (win/loss/breakeven)
-				const outcomeBadge = page.locator('.badge, [data-testid="outcome-badge"]').first()
+				const outcomeBadge = page
+					.locator('.badge, [data-testid="outcome-badge"]')
+					.first()
 				if ((await outcomeBadge.count()) > 0) {
 					await expect(outcomeBadge).toBeVisible()
 				}
@@ -352,13 +446,18 @@ test.describe("Journal", () => {
 
 		test("should navigate to edit page", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
-				const editButton = page.getByRole("button", { name: /edit|editar/i }).or(page.getByRole("link", { name: /edit|editar/i }))
+				const editButton = page
+					.getByRole("button", { name: /edit|editar/i })
+					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
 
 				await expect(page).toHaveURL(/journal\/[a-zA-Z0-9-]+\/edit/)
@@ -367,13 +466,18 @@ test.describe("Journal", () => {
 
 		test("should show delete confirmation dialog", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
-				const deleteButton = page.getByRole("button", { name: /delete|excluir|remover/i })
+				const deleteButton = page.getByRole("button", {
+					name: /delete|excluir|remover/i,
+				})
 				await deleteButton.click()
 
 				// Should show confirmation dialog
@@ -384,16 +488,23 @@ test.describe("Journal", () => {
 
 		test("should cancel delete when clicking cancel", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
-				const deleteButton = page.getByRole("button", { name: /delete|excluir|remover/i })
+				const deleteButton = page.getByRole("button", {
+					name: /delete|excluir|remover/i,
+				})
 				await deleteButton.click()
 
-				const cancelButton = page.getByRole("button", { name: /cancel|cancelar/i })
+				const cancelButton = page.getByRole("button", {
+					name: /cancel|cancelar/i,
+				})
 				await cancelButton.click()
 
 				// Dialog should close
@@ -406,18 +517,26 @@ test.describe("Journal", () => {
 	test.describe("Edit Trade Page", () => {
 		test("should pre-fill form with trade data", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
-				const editButton = page.getByRole("button", { name: /edit|editar/i }).or(page.getByRole("link", { name: /edit|editar/i }))
+				const editButton = page
+					.getByRole("button", { name: /edit|editar/i })
+					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Entry price should be pre-filled
-				const entryPrice = page.getByLabel(/entry price|preço de entrada/i).or(page.locator('[name="entryPrice"]'))
+				const entryPrice = page
+					.getByLabel(/entry price|preço de entrada/i)
+					.or(page.locator('[name="entryPrice"]'))
 				const value = await entryPrice.inputValue()
 				expect(value).not.toBe("")
 			}
@@ -425,15 +544,21 @@ test.describe("Journal", () => {
 
 		test("should update trade successfully", async ({ page }) => {
 			await page.goto(ROUTES.journal)
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
-				const editButton = page.getByRole("button", { name: /edit|editar/i }).or(page.getByRole("link", { name: /edit|editar/i }))
+				const editButton = page
+					.getByRole("button", { name: /edit|editar/i })
+					.or(page.getByRole("link", { name: /edit|editar/i }))
 				await editButton.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
 				// Update a field
 				const notesField = page.getByLabel(/notes|notas|reflection/i).first()
@@ -442,11 +567,15 @@ test.describe("Journal", () => {
 				}
 
 				// Submit
-				const submitButton = page.getByRole("button", { name: /save|salvar|update|atualizar/i })
+				const submitButton = page.getByRole("button", {
+					name: /save|salvar|update|atualizar/i,
+				})
 				await submitButton.click()
 
 				// Should redirect back to detail
-				await expect(page).toHaveURL(/journal\/[a-zA-Z0-9-]+(?!\/edit)/, { timeout: 10000 })
+				await expect(page).toHaveURL(/journal\/[a-zA-Z0-9-]+(?!\/edit)/, {
+					timeout: 10000,
+				})
 			}
 		})
 	})
@@ -454,41 +583,51 @@ test.describe("Journal", () => {
 	test.describe("CSV Import", () => {
 		test("should display CSV import tab", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await expect(csvTab).toBeVisible()
 			await csvTab.click()
 
-			await expect(page.getByText(/upload|drag|drop|arquivo|csv/i).first()).toBeVisible()
+			await expect(
+				page.getByText(/upload|drag|drop|arquivo|csv/i).first()
+			).toBeVisible()
 		})
 
 		test("should display file upload input", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await csvTab.click()
 			await page.waitForTimeout(500)
 
 			// Look for any indication of file upload: hidden input, dropzone text, or upload button
-			const uploadIndicators = page.getByText(/csv|upload|import|drop|select.*file|choose.*file/i)
+			const uploadIndicators = page.getByText(
+				/csv|upload|import|drop|select.*file|choose.*file/i
+			)
 			await expect(uploadIndicators.first()).toBeVisible()
 		})
 
-		test("should upload a CSV file and display preview table", async ({ page }) => {
+		test("should upload a CSV file and display preview table", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await csvTab.click()
 			await page.waitForTimeout(500)
 
 			// Find hidden file input and upload a minimal CSV
-			const fileInput = page.locator('#csv-file-input')
-			if (await fileInput.count() > 0) {
+			const fileInput = page.locator("#csv-file-input")
+			if ((await fileInput.count()) > 0) {
 				// Create a minimal CSV content as a buffer
-				const csvContent = "Date,Asset,Direction,Entry Price,Exit Price,Position Size\n2025-12-01,WIN,Long,100,105,10"
+				const csvContent =
+					"Date,Asset,Direction,Entry Price,Exit Price,Position Size\n2025-12-01,WIN,Long,100,105,10"
 				const buffer = Buffer.from(csvContent)
 				await fileInput.setInputFiles({
 					name: "test-trades.csv",
@@ -499,23 +638,35 @@ test.describe("Journal", () => {
 
 				// Preview table or parsed data should appear
 				const previewTable = page.locator("table, [data-testid='csv-preview']")
-				const previewText = page.getByText(/preview|pré-visualização|parsed|importar/i)
-				const hasPreview = await previewTable.first().isVisible().catch(() => false) ||
-					await previewText.first().isVisible().catch(() => false)
+				const previewText = page.getByText(
+					/preview|pré-visualização|parsed|importar/i
+				)
+				const hasPreview =
+					(await previewTable
+						.first()
+						.isVisible()
+						.catch(() => false)) ||
+					(await previewText
+						.first()
+						.isVisible()
+						.catch(() => false))
 				expect(typeof hasPreview).toBe("boolean")
 			}
 		})
 
-		test("should show validation errors/warnings in preview", async ({ page }) => {
+		test("should show validation errors/warnings in preview", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const csvTab = page.getByRole("tab", { name: "Import CSV" })
 			await csvTab.click()
 			await page.waitForTimeout(500)
 
-			const fileInput = page.locator('#csv-file-input')
-			if (await fileInput.count() > 0) {
+			const fileInput = page.locator("#csv-file-input")
+			if ((await fileInput.count()) > 0) {
 				// Upload a CSV with intentionally bad data
 				const badCsv = "Date,Asset\n,\ninvalid-date,MISSING"
 				const buffer = Buffer.from(badCsv)
@@ -527,17 +678,25 @@ test.describe("Journal", () => {
 				await page.waitForTimeout(2000)
 
 				// Validation errors or warnings should show
-				const validation = page.getByText(/error|warning|aviso|erro|invalid|inválido/i)
-				const hasValidation = await validation.first().isVisible().catch(() => false)
+				const validation = page.getByText(
+					/error|warning|aviso|erro|invalid|inválido/i
+				)
+				const hasValidation = await validation
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(typeof hasValidation).toBe("boolean")
 			}
 		})
 	})
 
 	test.describe("OCR Import Tab", () => {
-		test("should display OCR/Screenshot import tab and its content", async ({ page }) => {
+		test("should display OCR/Screenshot import tab and its content", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const ocrTab = page.getByRole("tab", { name: /ocr|screenshot|imagem/i })
 			if (await ocrTab.isVisible().catch(() => false)) {
@@ -545,7 +704,9 @@ test.describe("Journal", () => {
 				await page.waitForTimeout(500)
 
 				// OCR content should show upload area or instructions
-				const ocrContent = page.getByText(/screenshot|ocr|upload|image|imagem|foto/i)
+				const ocrContent = page.getByText(
+					/screenshot|ocr|upload|image|imagem|foto/i
+				)
 				await expect(ocrContent.first()).toBeVisible()
 			}
 		})
@@ -554,38 +715,64 @@ test.describe("Journal", () => {
 	test.describe("Scaled Position Mode", () => {
 		test("should switch to scaled mode", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
-			const scaledOption = page.getByRole("button", { name: /scaled position/i })
+			const scaledOption = page.getByRole("button", {
+				name: /scaled position/i,
+			})
 			if (await scaledOption.isVisible().catch(() => false)) {
 				await scaledOption.click()
 				await page.waitForTimeout(500)
 
 				// Scaled mode adds execution rows / add-execution button
-				const executionSection = page.getByText(/execution|execução|entries|exits/i)
-				const addExecutionButton = page.getByRole("button", { name: /add|adicionar/i })
-				const hasExecution = await executionSection.first().isVisible().catch(() => false)
-				const hasAddButton = await addExecutionButton.first().isVisible().catch(() => false)
+				const executionSection = page.getByText(
+					/execution|execução|entries|exits/i
+				)
+				const addExecutionButton = page.getByRole("button", {
+					name: /add|adicionar/i,
+				})
+				const hasExecution = await executionSection
+					.first()
+					.isVisible()
+					.catch(() => false)
+				const hasAddButton = await addExecutionButton
+					.first()
+					.isVisible()
+					.catch(() => false)
 				expect(hasExecution || hasAddButton).toBeTruthy()
 			}
 		})
 
 		test("should display execution rows in scaled mode", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Click Scaled Position button (visible as a mode card)
-			const scaledOption = page.getByRole("button", { name: /scaled position/i })
+			const scaledOption = page.getByRole("button", {
+				name: /scaled position/i,
+			})
 			if (await scaledOption.isVisible().catch(() => false)) {
 				await scaledOption.click()
 				await page.waitForTimeout(500)
 
 				// Execution rows or add execution button should be visible
-				const executionSection = page.getByText(/execution|execução|entries|exits/i)
-				const addExecutionButton = page.getByRole("button", { name: /add|adicionar/i })
+				const executionSection = page.getByText(
+					/execution|execução|entries|exits/i
+				)
+				const addExecutionButton = page.getByRole("button", {
+					name: /add|adicionar/i,
+				})
 
-				const hasExecution = await executionSection.first().isVisible().catch(() => false)
-				const hasAddButton = await addExecutionButton.first().isVisible().catch(() => false)
+				const hasExecution = await executionSection
+					.first()
+					.isVisible()
+					.catch(() => false)
+				const hasAddButton = await addExecutionButton
+					.first()
+					.isVisible()
+					.catch(() => false)
 
 				expect(hasExecution || hasAddButton).toBeTruthy()
 			}
@@ -593,22 +780,32 @@ test.describe("Journal", () => {
 
 		test("should add execution entry fields", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
-			const scaledOption = page.locator('[data-testid="mode-scaled"], [value="scaled"], :has-text("Scaled")')
+			const scaledOption = page.locator(
+				'[data-testid="mode-scaled"], [value="scaled"], :has-text("Scaled")'
+			)
 			if ((await scaledOption.count()) > 0) {
 				await scaledOption.first().click()
 				await page.waitForTimeout(500)
 
 				// Click add execution button
-				const addButton = page.getByRole("button", { name: /add execution|adicionar execução|add entry/i })
+				const addButton = page.getByRole("button", {
+					name: /add execution|adicionar execução|add entry/i,
+				})
 				if (await addButton.isVisible().catch(() => false)) {
 					await addButton.click()
 					await page.waitForTimeout(300)
 
 					// New execution row should appear with price/size fields
-					const executionFields = page.getByLabel(/price|preço|size|tamanho|quantity|quantidade/i)
-					const hasFields = await executionFields.first().isVisible().catch(() => false)
+					const executionFields = page.getByLabel(
+						/price|preço|size|tamanho|quantity|quantidade/i
+					)
+					const hasFields = await executionFields
+						.first()
+						.isVisible()
+						.catch(() => false)
 					expect(typeof hasFields).toBe("boolean")
 				}
 			}
@@ -616,24 +813,34 @@ test.describe("Journal", () => {
 	})
 
 	test.describe("Trade Deletion - Complete Flow", () => {
-		test("should confirm delete and verify redirect to journal list", async ({ page }) => {
+		test("should confirm delete and verify redirect to journal list", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.journal)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
-			const tradeCard = page.locator('[data-testid="trade-card"], .trade-card, .trade-item').first()
+			const tradeCard = page
+				.locator('[data-testid="trade-card"], .trade-card, .trade-item')
+				.first()
 
 			if (await tradeCard.isVisible()) {
 				await tradeCard.click()
-				await page.waitForLoadState("networkidle")
+				await page.waitForLoadState("load")
+				await page.waitForTimeout(1000)
 
-				const deleteButton = page.getByRole("button", { name: /delete|excluir|remover/i })
+				const deleteButton = page.getByRole("button", {
+					name: /delete|excluir|remover/i,
+				})
 				await deleteButton.click()
 
 				// Confirm delete in dialog
 				const dialog = page.locator('[role="alertdialog"], [role="dialog"]')
 				await expect(dialog).toBeVisible({ timeout: 2000 })
 
-				const confirmButton = dialog.getByRole("button", { name: /confirm|confirmar|delete|excluir|yes|sim/i })
+				const confirmButton = dialog.getByRole("button", {
+					name: /confirm|confirmar|delete|excluir|yes|sim/i,
+				})
 				await confirmButton.click()
 
 				// Should redirect to journal list
@@ -643,9 +850,12 @@ test.describe("Journal", () => {
 	})
 
 	test.describe("Trade with Tags", () => {
-		test("creating a tag from trade form should not auto-submit the trade", async ({ page }, testInfo) => {
+		test("creating a tag from trade form should not auto-submit the trade", async ({
+			page,
+		}, testInfo) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Switch to Tags tab
 			await page.getByRole("tab", { name: /tags/i }).click()
@@ -672,16 +882,21 @@ test.describe("Journal", () => {
 
 		test("should display tags selector in trade form", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const tagsSelector = page.getByText(/tags/i)
-			const hasTagsSelector = await tagsSelector.first().isVisible().catch(() => false)
+			const hasTagsSelector = await tagsSelector
+				.first()
+				.isVisible()
+				.catch(() => false)
 			expect(typeof hasTagsSelector).toBe("boolean")
 		})
 
 		test("should create trade with tags applied", async ({ page }) => {
 			await page.goto(ROUTES.journalNew)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Select asset
 			const assetCombobox = page.getByRole("combobox").first()
@@ -691,11 +906,18 @@ test.describe("Journal", () => {
 			// Fill required fields using spinbuttons
 			const spinbuttons = page.getByRole("spinbutton")
 			await spinbuttons.nth(0).fill("100") // Entry Price
-			await spinbuttons.nth(2).fill("10")  // Position Size
+			await spinbuttons.nth(2).fill("10") // Position Size
 
 			// Look for tags field and add a tag
-			const tagsInput = page.getByLabel(/tags/i).or(page.locator('[name="tags"]'))
-			if (await tagsInput.first().isVisible().catch(() => false)) {
+			const tagsInput = page
+				.getByLabel(/tags/i)
+				.or(page.locator('[name="tags"]'))
+			if (
+				await tagsInput
+					.first()
+					.isVisible()
+					.catch(() => false)
+			) {
 				await tagsInput.first().click()
 				await page.waitForTimeout(300)
 

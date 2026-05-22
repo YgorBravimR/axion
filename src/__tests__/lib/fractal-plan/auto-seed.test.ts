@@ -14,6 +14,17 @@ vi.mock("@/db/drizzle", () => ({
 	},
 }))
 
+// auto-seed.ts uses dbWs (the transactional client) — without this mock the
+// test crashes at import time when DATABASE_URL is unset, and even with one
+// set it would hit a real Neon pool inside the transaction callback.
+vi.mock("@/db/drizzle-ws", () => ({
+	dbWs: {
+		transaction: vi.fn(async (cb: (_tx: typeof mockTx) => unknown) =>
+			cb(mockTx)
+		),
+	},
+}))
+
 import { autoSeedYearlyTree } from "@/lib/fractal-plan/auto-seed"
 
 describe("autoSeedYearlyTree", () => {

@@ -11,7 +11,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { fromCents } from "@/lib/money"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 
 interface RouteParams {
 	params: Promise<{ id: string }>
@@ -69,10 +68,7 @@ const GET = async (request: NextRequest, { params }: RouteParams) => {
 			),
 		})
 
-		const dek = await getUserDek(auth.userId)
-		const strategyTrades = dek
-			? rawTrades.map((trade) => decryptTradeFields(trade, dek))
-			: rawTrades
+		const strategyTrades = rawTrades
 
 		let totalPnl = 0
 		let winCount = 0

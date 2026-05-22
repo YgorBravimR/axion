@@ -20,7 +20,6 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useBreakpoint } from "@/hooks/use-is-mobile"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
@@ -29,8 +28,6 @@ import { buildNavStructure } from "@/lib/navigation"
 
 interface AppShellProps {
 	children: ReactNode
-	isReplayAccount?: boolean
-	replayDate?: string
 	serverBrand?: Brand
 	nowIso: string
 }
@@ -46,8 +43,6 @@ interface AppShellProps {
  */
 const AppShell = ({
 	children,
-	isReplayAccount = false,
-	replayDate,
 	serverBrand: _serverBrand,
 	nowIso,
 }: AppShellProps) => {
@@ -126,8 +121,6 @@ const AppShell = ({
 										<Sidebar
 											isCollapsed={false}
 											onToggleCollapse={() => {}}
-											isReplayAccount={isReplayAccount}
-											replayDate={replayDate}
 											variant="sheet"
 											onNavigate={() => setIsMobileMenuOpen(false)}
 											navStructure={navStructure}
@@ -141,6 +134,7 @@ const AppShell = ({
 									width={100}
 									height={28}
 									className="ml-s-200 h-7 w-auto object-contain"
+									style={{ height: "auto" }}
 									priority
 								/>
 
@@ -172,8 +166,6 @@ const AppShell = ({
 							<Sidebar
 								isCollapsed={effectiveCollapsed}
 								onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
-								isReplayAccount={isReplayAccount}
-								replayDate={replayDate}
 								hideCollapseToggle={isTablet}
 								navStructure={navStructure}
 							/>
@@ -227,9 +219,9 @@ const AppShell = ({
 								</div>
 
 								{/* Scrollable main area */}
-								<ScrollArea className="h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3rem)]">
+								<div className="h-[calc(100dvh-3.5rem)] overflow-y-auto md:h-[calc(100dvh-3rem)]">
 									<main id="main-content">{children}</main>
-								</ScrollArea>
+								</div>
 							</div>
 						</>
 					)}

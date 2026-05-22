@@ -2,6 +2,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import {
 	ComposedChart,
 	Bar,
@@ -14,6 +15,7 @@ import {
 	ResponsiveContainer,
 	Cell,
 } from "recharts"
+import { formatCompactCurrency } from "@/lib/formatting"
 import type {
 	WeeklyMetaVsRealData,
 	WeeklyMetaRow,
@@ -31,14 +33,6 @@ import {
 interface WeeklyMetaChartProps {
 	data: WeeklyMetaVsRealData
 	className?: string
-}
-
-const formatBRL = (cents: number): string => {
-	const value = cents / 100
-	if (Math.abs(value) >= 1000) {
-		return `R$${(value / 1000).toFixed(1)}k`
-	}
-	return `R$${value.toFixed(0)}`
 }
 
 interface CustomTooltipProps {
@@ -79,7 +73,7 @@ const CustomTooltip = ({
 			)}
 			{payload.map((entry) => (
 				<p key={entry.name} style={{ color: entry.color }}>
-					{entry.name}: {formatBRL(entry.value)}
+					{entry.name}: {formatCompactCurrency(entry.value / 100, "BRL")}
 				</p>
 			))}
 		</div>
@@ -88,6 +82,7 @@ const CustomTooltip = ({
 
 const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 	const t = useTranslations("reports.weeklyMeta")
+	const { formatCurrency } = useFormatting()
 	const chartData = data.weeks.map((w) => ({
 		name: `W${w.isoWeek}`,
 		resultado: w.disabled ? 0 : w.resultado,
@@ -130,7 +125,9 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 						axisLine={false}
 					/>
 					<YAxis
-						tickFormatter={formatBRL}
+						tickFormatter={(cents: number) =>
+							formatCompactCurrency(cents / 100, "BRL")
+						}
 						tick={{
 							fontSize: 11,
 							fill: "var(--color-txt-300)",
@@ -228,13 +225,17 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 									{t("periodSeparator", { start: w.weekStart, end: w.weekEnd })}
 								</TableCell>
 								<TableCell>
-									{w.disabled ? "—" : formatBRL(w.resultado)}
+									{w.disabled ? "—" : formatCurrency(w.resultado / 100, "BRL")}
 								</TableCell>
 								<TableCell>
-									{w.metaBruto !== null ? formatBRL(w.metaBruto) : "—"}
+									{w.metaBruto !== null
+										? formatCurrency(w.metaBruto / 100, "BRL")
+										: "—"}
 								</TableCell>
 								<TableCell>
-									{w.metaLiquido !== null ? formatBRL(w.metaLiquido) : "—"}
+									{w.metaLiquido !== null
+										? formatCurrency(w.metaLiquido / 100, "BRL")
+										: "—"}
 								</TableCell>
 							</TableRow>
 						))}

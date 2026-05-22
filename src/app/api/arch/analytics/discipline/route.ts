@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server"
+import { and, desc } from "drizzle-orm"
+import { db } from "@/db/drizzle"
+import { trades } from "@/db/schema"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { parseArchFilters } from "../../_lib/filters"
-import { fetchAndDecryptTrades } from "../../_lib/decrypt"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
@@ -14,8 +16,9 @@ const GET = async (request: NextRequest) => {
 	try {
 		const searchParams = request.nextUrl.searchParams
 		const conditions = await parseArchFilters(searchParams, auth)
-		const result = await fetchAndDecryptTrades(auth.userId, conditions, {
-			orderBy: "desc",
+		const result = await db.query.trades.findMany({
+			where: and(...conditions),
+			orderBy: [desc(trades.entryDate)],
 		})
 
 		const tradesWithPlanData = result.filter((t) => t.followedPlan !== null)

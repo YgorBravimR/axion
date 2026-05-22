@@ -13,11 +13,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
-import {
-	getUserDek,
-	decryptTradeFields,
-	decryptAccountFields,
-} from "@/lib/user-crypto"
 import { calculateReportSummary } from "../../_lib/report-summary"
 import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 
@@ -106,23 +101,12 @@ const GET = async (request: NextRequest) => {
 			)
 		}
 
-		const dek = await getUserDek(auth.userId)
-		const monthTrades = dek
-			? rawMonthTrades.map((t) => decryptTradeFields(t, dek))
-			: rawMonthTrades
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					account as unknown as Record<string, unknown>,
-					dek
-				) as unknown as typeof account)
-			: account
-
 		// Calculate report summary
-		const summary = calculateReportSummary(monthTrades)
+		const summary = calculateReportSummary(rawMonthTrades)
 
 		// Best/worst day
 		const dailyPnl = new Map<string, number>()
-		for (const trade of monthTrades) {
+		for (const trade of rawMonthTrades) {
 			const day = formatDateKey(new Date(trade.entryDate))
 			dailyPnl.set(day, (dailyPnl.get(day) || 0) + fromCents(trade.pnl))
 		}
@@ -150,7 +134,7 @@ const GET = async (request: NextRequest) => {
 
 		while (currentWeekStart <= monthEnd) {
 			const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 })
-			const weekTrades = monthTrades.filter((t) => {
+			const weekTrades = rawMonthTrades.filter((t) => {
 				const entryDate = new Date(t.entryDate)
 				return entryDate >= currentWeekStart && entryDate <= currentWeekEnd
 			})
@@ -176,11 +160,10 @@ const GET = async (request: NextRequest) => {
 
 		// Prop profit calculation. IR rate sourced from legal-rates by month year —
 		// matches cockpit + recompute. Account override column ignored.
-		const isPropAccount = decryptedAccount.accountType === "prop"
-		const profitSharePercentage =
-			Number(decryptedAccount.profitSharePercentage) || 100
+		const isPropAccount = account.accountType === "prop"
+		const profitSharePercentage = Number(account.profitSharePercentage) || 100
 		const dayTradeTaxRate = getDayTradeIrRate(monthStart.getUTCFullYear()) * 100
-		const showTaxEstimates = decryptedAccount.showTaxEstimates ?? false
+		const showTaxEstimates = account.showTaxEstimates ?? false
 
 		const prop = calculatePropProfit(
 			summary.netPnl,
@@ -197,7 +180,7 @@ const GET = async (request: NextRequest) => {
 			prop,
 			settings: {
 				isPropAccount,
-				propFirmName: decryptedAccount.propFirmName,
+				propFirmName: account.propFirmName,
 				profitSharePercentage,
 				dayTradeTaxRate,
 			},

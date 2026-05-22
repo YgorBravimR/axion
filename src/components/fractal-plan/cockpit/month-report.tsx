@@ -10,6 +10,9 @@ import {
 } from "@/db/schema"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
+import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
+import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
+import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import {
 	monthLabelPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
@@ -30,7 +33,8 @@ import { PlanVsReality } from "./plan-vs-reality"
 import { CapsStrip } from "./caps-strip"
 import { MonthWeekTable } from "./month-week-table"
 import { MonthDarfRow } from "./month-darf-row"
-import { MonthComparison } from "@/components/monthly/month-comparison"
+import { MonthComparison } from "@/components/reports/month-comparison"
+import { HawksScorecardPanel } from "@/components/hawks/hawks-scorecard-panel"
 
 interface MonthReportProps {
 	accountId: string
@@ -118,6 +122,7 @@ const MonthReport = async ({
 		comparisonResult,
 		darfResult,
 		account,
+		assertivityData,
 	] = await Promise.all([
 		db.query.weeklyPlan.findMany({
 			where: eq(weeklyPlan.monthlyPlanId, monthRow.id),
@@ -135,10 +140,13 @@ const MonthReport = async ({
 				profitSharePercentage: tradingAccounts.profitSharePercentage,
 				propFirmName: tradingAccounts.propFirmName,
 				showTaxEstimates: tradingAccounts.showTaxEstimates,
+				accountStartYear: tradingAccounts.accountStartYear,
+				accountStartMonth: tradingAccounts.accountStartMonth,
 			})
 			.from(tradingAccounts)
 			.where(eq(tradingAccounts.id, accountId))
 			.then((rows) => rows[0] ?? null),
+		getHistoricalAssertivity(accountId),
 	])
 
 	const riskProfiles =
@@ -190,12 +198,39 @@ const MonthReport = async ({
 		? Math.round(projectionData.projectedNetProfit * 100)
 		: null
 
+	const configuredAssertivityPct = yearRow.defaultAssertivityPercent
+		? Math.round(parseFloat(yearRow.defaultAssertivityPercent))
+		: 50
+	const assertivityPct = assertivityData.hasEnoughData
+		? assertivityData.assertivityPct
+		: configuredAssertivityPct
+
+	const defaultDailyWinR = yearRow.defaultDailyWinR
+		? parseFloat(yearRow.defaultDailyWinR)
+		: 0
+	const planStartMonth =
+		account?.accountStartYear === year && account?.accountStartMonth != null
+			? account.accountStartMonth
+			: 1
+	const compoundOneRCents =
+		defaultDailyWinR > 0
+			? computeProjectedOneRCents(month, {
+					initialCapitalCents: yearRow.initialCapitalCents,
+					ladderRules: yearRow.ladderRules as unknown as LadderRuleR[],
+					dailyTargetR: defaultDailyWinR,
+					assertivityPct,
+					planStartMonth,
+					irTaxRate,
+				})
+			: monthRow.snapshotOneRCents
+
 	const { planGoalCents, planGoalSource } = deriveMonthGoal({
 		manualGoalCents: monthRow.monthlyGoalCents,
 		weekTargetRs: weeks.map((w) => w.targetR),
-		snapshotOneRCents: monthRow.snapshotOneRCents,
+		snapshotOneRCents: compoundOneRCents,
 		cascadeDailyTargetR: resolved?.dailyTargetR.value ?? null,
 		totalTradingDays,
+		assertivityPct,
 	})
 
 	const resolvedProfileId = behavior.riskProfileId
@@ -234,6 +269,8 @@ const MonthReport = async ({
 				dailyAverageCents={dailyAverageCents}
 				irTaxRate={irTaxRate}
 			/>
+
+			<HawksScorecardPanel accountId={accountId} year={year} month={month} />
 
 			{resolved && (
 				<CapsStrip

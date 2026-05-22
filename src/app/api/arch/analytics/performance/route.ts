@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server"
+import { and, desc } from "drizzle-orm"
+import { db } from "@/db/drizzle"
+import { trades } from "@/db/schema"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { parseArchFilters } from "../../_lib/filters"
-import { fetchAndDecryptTrades } from "../../_lib/decrypt"
 import { fromCents } from "@/lib/money"
 import { calculateWinRate, calculateProfitFactor } from "@/lib/calculations"
 import { getBrtTimeParts } from "@/lib/dates"
@@ -63,7 +65,9 @@ const GET = async (request: NextRequest) => {
 		// Fetch trades with relations for strategy/timeframe grouping
 		const needsRelations =
 			groupByParam === "strategy" || groupByParam === "timeframe"
-		const result = await fetchAndDecryptTrades(auth.userId, conditions, {
+		const result = await db.query.trades.findMany({
+			where: and(...conditions),
+			orderBy: [desc(trades.entryDate)],
 			...(needsRelations && { with: { strategy: true, timeframe: true } }),
 		})
 

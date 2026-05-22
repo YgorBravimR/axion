@@ -21,11 +21,6 @@ import {
 	determineOutcome,
 } from "@/lib/calculations"
 import { fromCents, toCents, toNumericString } from "@/lib/money"
-import {
-	getUserDek,
-	encryptTradeFields,
-	decryptTradeFields,
-} from "@/lib/user-crypto"
 import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
 import { applyScaledExecutionOps, hasOps } from "../../_lib/scaled-update"
 import type { ScaledExecutionOps } from "../../_lib/scaled-update"
@@ -165,7 +160,7 @@ const POST = async (request: NextRequest) => {
 		const accountCondition = buildAccountCondition(auth)
 
 		// Fetch existing trade and verify ownership
-		let existing = await db.query.trades.findFirst({
+		const existing = await db.query.trades.findFirst({
 			where: and(eq(trades.id, body.id), accountCondition),
 		})
 
@@ -180,12 +175,6 @@ const POST = async (request: NextRequest) => {
 				],
 				404
 			)
-		}
-
-		// Decrypt existing trade fields before merging
-		const dek = await getUserDek(auth.userId)
-		if (dek) {
-			existing = decryptTradeFields(existing, dek)
 		}
 
 		// Resolve strategy: direct id wins over fuzzy name. null explicitly clears.
@@ -439,55 +428,6 @@ const POST = async (request: NextRequest) => {
 			updateData.plannedRiskAmount = toNumericString(toCents(plannedRiskAmount))
 		}
 
-		// Encrypt sensitive fields if DEK is available
-		if (dek) {
-			const fieldsToEncrypt: Record<string, unknown> = {}
-			if (updateData.pnl !== undefined) {
-				fieldsToEncrypt.pnl = pnl !== undefined ? toCents(pnl) : null
-			}
-			if (updateData.plannedRiskAmount !== undefined) {
-				fieldsToEncrypt.plannedRiskAmount =
-					plannedRiskAmount !== undefined ? toCents(plannedRiskAmount) : null
-			}
-			if (updateData.entryPrice !== undefined) {
-				fieldsToEncrypt.entryPrice = updateData.entryPrice
-			}
-			if (updateData.exitPrice !== undefined) {
-				fieldsToEncrypt.exitPrice = updateData.exitPrice
-			}
-			if (updateData.positionSize !== undefined) {
-				fieldsToEncrypt.positionSize = updateData.positionSize
-			}
-			if (updateData.stopLoss !== undefined) {
-				fieldsToEncrypt.stopLoss = updateData.stopLoss
-			}
-			if (updateData.takeProfit !== undefined) {
-				fieldsToEncrypt.takeProfit = updateData.takeProfit
-			}
-			if (updateData.plannedRMultiple !== undefined) {
-				fieldsToEncrypt.plannedRMultiple = updateData.plannedRMultiple
-			}
-			if (updateData.preTradeThoughts !== undefined) {
-				fieldsToEncrypt.preTradeThoughts = updateData.preTradeThoughts
-			}
-			if (updateData.postTradeReflection !== undefined) {
-				fieldsToEncrypt.postTradeReflection = updateData.postTradeReflection
-			}
-			if (updateData.lessonLearned !== undefined) {
-				fieldsToEncrypt.lessonLearned = updateData.lessonLearned
-			}
-			if (updateData.disciplineNotes !== undefined) {
-				fieldsToEncrypt.disciplineNotes = updateData.disciplineNotes
-			}
-			Object.assign(
-				updateData,
-				encryptTradeFields(
-					fieldsToEncrypt as Parameters<typeof encryptTradeFields>[0],
-					dek
-				)
-			)
-		}
-
 		// Update the trade
 		const [updatedTrade] = await db
 			.update(trades)
@@ -514,7 +454,7 @@ const POST = async (request: NextRequest) => {
 		const executionsOps = body.executions as ScaledExecutionOps | undefined
 		if (hasOps(executionsOps)) {
 			try {
-				await applyScaledExecutionOps(body.id, executionsOps ?? {}, dek ?? null)
+				await applyScaledExecutionOps(body.id, executionsOps ?? {})
 			} catch (opsError) {
 				const raw =
 					opsError instanceof Error ? opsError.message : String(opsError)

@@ -138,7 +138,6 @@
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
 		"reports": "Reports",
-		"monthlyResults": "Monthly Results",
 		"monthlyPlan": "Monthly Plan",
 		"quarterlyPlan": "Quarterly Plan",
 		"yearlyPlan": "Yearly Plan",
@@ -150,8 +149,7 @@
 		"backtestOptimize": "Optimize",
 		"newTrade": "New Trade",
 		"plans": "Plans",
-		"simulation": "Simulation",
-		"reportsGroup": "Reports"
+		"simulation": "Simulation"
 	},
 	"market": {
 		"title": "Market Monitor",
@@ -553,8 +551,10 @@
 			"failedToRunSimulation": "Failed to run simulation",
 			"comparisonCompleted": "Comparison completed",
 			"failedToRunComparison": "Failed to run comparison",
-			"v2SimulationCompleted": "V2 simulation completed",
-			"failedToRunV2Simulation": "Failed to run V2 simulation"
+			"edgeExpectancySimulationCompleted": "Edge Expectancy simulation completed",
+			"failedToRunEdgeExpectancy": "Failed to run Edge Expectancy simulation",
+			"capitalExpectancySimulationCompleted": "Capital Expectancy simulation completed",
+			"failedToRunCapitalExpectancy": "Failed to run Capital Expectancy simulation"
 		}
 	},
 	"commandCenter": {
@@ -581,9 +581,7 @@
 			"today": "Today",
 			"previousDay": "Previous day",
 			"nextDay": "Next day",
-			"readOnlyNotice": "Viewing historical data (read-only)",
-			"nextReplayDay": "Advance Day",
-			"replayMode": "Replay Mode"
+			"readOnlyNotice": "Viewing historical data (read-only)"
 		},
 		"circuitBreaker": {
 			"title": "Circuit Breaker",
@@ -643,10 +641,10 @@
 				"shouldStop": "STOP TRADING",
 				"dailyLossLimit": "Daily loss limit reached",
 				"dailyTargetReached": "Daily target reached",
-				"recoverySequenceExhausted": "Recovery sequence exhausted — stop for the day",
-				"singleTargetGainMode": "Single target gain mode — goal reached",
-				"gainSequenceExhausted": "Gain sequence exhausted — no more trades",
-				"recoveryWinExit": "Recovery win — day complete",
+				"recoverySequenceExhausted": "Recovery sequence exhausted. Stop for the day.",
+				"singleTargetGainMode": "Single target gain mode. Goal reached.",
+				"gainSequenceExhausted": "Gain sequence exhausted. No more trades.",
+				"recoveryWinExit": "Recovery win. Day complete.",
 				"maxTradesReached": "Maximum trades reached"
 			},
 			"gainMode": {
@@ -683,7 +681,8 @@
 			"noItems": "No checklist items yet. Click Manage to create one.",
 			"completed": "Complete",
 			"toggleError": "Failed to update checklist item",
-			"progress": "Checklist progress"
+			"progress": "Checklist progress",
+			"progressValueText": "{done} of {total} items complete"
 		},
 		"checklistManager": {
 			"createTitle": "Create Checklist",
@@ -762,6 +761,7 @@
 			"addError": "Failed to add asset",
 			"saveError": "Failed to save settings",
 			"biasError": "Failed to update bias",
+			"biasSaved": "Bias updated",
 			"deleteError": "Failed to delete settings"
 		},
 		"summary": {
@@ -1272,7 +1272,10 @@
 			"mae": "MAE (Max Adverse)",
 			"classification": "Classification",
 			"journalNotes": "Journal Notes",
-			"disciplineNotes": "Discipline Notes"
+			"disciplineNotes": "Discipline Notes",
+			"conditions": "Conditions",
+			"conditionsMetBadge": "{met} of {total} met",
+			"executionDetails": "Execution Details"
 		},
 		"chart": {
 			"executions": "Executions",
@@ -1299,10 +1302,10 @@
 	"coaching": {
 		"title": "Trading Insights",
 		"subtitle": "Data-driven patterns from your recent trades",
-		"noInsights": "Not enough data to generate insights yet. Keep trading and journaling to unlock coaching.",
+		"noInsights": "Patterns appear once you have more journaled trades on file.",
 		"noTrades": "No trades found for the analysis period.",
 		"period": "Last {days} days",
-		"tradeCount": "{count} trades analyzed",
+		"tradeCount": "{count, plural, =0 {No trades analyzed} one {# trade analyzed} other {# trades analyzed}}",
 		"severity": {
 			"warning": "Warning",
 			"attention": "Attention",
@@ -1355,6 +1358,26 @@
 			"disciplineImpact": {
 				"title": "Discipline Pays Off",
 				"description": "Plan-following trades avg {followedAvgR}R vs {notFollowedAvgR}R when not following"
+			},
+			"hawksStopMethodViolation": {
+				"title": "Stop violates Method-3",
+				"description": "{violatingTrades}/{totalTrades} trades ({violationRate}%) placed a stop outside Method-3. Review before trading again."
+			},
+			"hawksTripleScreenGap": {
+				"title": "Entry without triple-screen",
+				"description": "{unconfirmedTrades}/{totalTrades} entries lacked renko/MACD/EMA alignment — loss rate on those: {lossRate}%."
+			},
+			"hawksDailyCapBreach": {
+				"title": "Daily trade cap breached",
+				"description": "{breachedDays} of {totalDays} days exceeded the Hawks cap of {cap} trades/day."
+			},
+			"hawksBiasDirectionMismatch": {
+				"title": "Direction against bias",
+				"description": "{mismatches}/{totalTrades} trades traded against the day's bias (or on a neutral day) — loss rate: {lossRate}%."
+			},
+			"hawksCascadeTrigger": {
+				"title": "Cascade −5R/−10R hit",
+				"description": "{pauseDays} day(s) hit the {pauseThresholdR}R pause and {stopDays} day(s) hit the {stopThresholdR}R stop across {totalDays} traded days."
 			}
 		}
 	},
@@ -1367,6 +1390,16 @@
 			"year": "Year",
 			"allTime": "All Time",
 			"filterAriaLabel": "Period filter"
+		},
+		"strategyFilter": {
+			"strategyPlaceholder": "Filter by strategy",
+			"strategySelectAriaLabel": "Filter dashboard by strategy",
+			"allStrategies": "All strategies",
+			"allVersions": "All versions",
+			"versionLabel": "v{version}",
+			"versionSegmentAriaLabel": "Filter {name} by version",
+			"clear": "Clear",
+			"clearAriaLabel": "Clear strategy filter"
 		},
 		"trade": "trade",
 		"trades": "trades",
@@ -1473,6 +1506,15 @@
 	"journal": {
 		"title": "Trade Journal",
 		"description": "Record and track your trades",
+		"tradeConditions": {
+			"title": "Conditions",
+			"metBadge": "{met} of {total} met",
+			"tier": {
+				"mandatory": "Mandatory",
+				"tier_2": "Tier 2",
+				"tier_3": "Tier 3"
+			}
+		},
 		"smartSearch": {
 			"title": "Smart Search",
 			"toggle": "Search & Filter",
@@ -1529,6 +1571,7 @@
 		"noTradesInPeriod": "No trades in this period",
 		"tryDifferentPeriod": "Try selecting a different time period",
 		"tradesCount": "trades",
+		"periodResultSummary": "{wins, plural, =0 {0W} other {#W}} {losses, plural, =0 {0L} other {#L}}{breakevens, plural, =0 {} other { #BE}} · {rate}%",
 		"period": {
 			"day": "Day",
 			"week": "Week",
@@ -1802,6 +1845,8 @@
 		},
 		"delete": {
 			"confirmPrompt": "Delete?",
+			"title": "Delete trade?",
+			"description": "This will permanently delete this trade and all of its executions, conditions, and attachments. This action cannot be undone.",
 			"success": "Trade deleted successfully",
 			"failed": "Failed to delete trade",
 			"unexpectedError": "An unexpected error occurred"
@@ -1831,6 +1876,8 @@
 			"tradeRetrieved": "Trade retrieved successfully",
 			"tradeFetchFailed": "Failed to retrieve trade",
 			"tradeCreateFailed": "Failed to create trade",
+			"hawksPayloadRequired": "Hawks mode active — fill scenario and confirmation screens",
+			"hawksBiasMissing": "Confirm the daily Hawks bias before logging the trade",
 			"tradeUpdateFailed": "Failed to update trade",
 			"tradeDeleteFailed": "Failed to archive trade",
 			"tradesRetrieved": "Trades retrieved successfully",
@@ -2185,7 +2232,9 @@
 			"retrieveFailed": "Failed to retrieve strategy conditions",
 			"conditionsCleared": "Strategy conditions cleared",
 			"conditionsSynced": "Strategy conditions synced successfully",
-			"conditionsRetrieved": "Strategy conditions retrieved successfully"
+			"conditionsRetrieved": "Strategy conditions retrieved successfully",
+			"strategyLive": "Strategy has trades attached — create a new version to change its conditions",
+			"invalidInput": "Invalid input"
 		},
 		"yourStrategies": "Your Strategies",
 		"newStrategy": "New Strategy",
@@ -2245,7 +2294,8 @@
 			"riskManagement": "Risk Management",
 			"notes": "Notes",
 			"referenceChart": "Reference Chart",
-			"compliance": "Compliance"
+			"compliance": "Compliance",
+			"discipline": "Discipline"
 		},
 		"conditions": {
 			"title": "Trading Conditions",
@@ -2273,6 +2323,122 @@
 			"tierNone": "Not included",
 			"tierTier2": "Tier 2 (AA)",
 			"tierTier3": "Tier 3 (AAA)"
+		},
+		"scorecard": {
+			"title": "Condition usage scorecard",
+			"subtitle": "How often each condition was actually met across this strategy's trades.",
+			"basedOnTrades": "Based on {count} trades",
+			"basedOnVersion": "Based on v{version} · {count} trades",
+			"basedOnVersionHistorical": "Based on v{version} (historical) · {count} trades",
+			"metRateHint": "Met rate",
+			"metOverRecorded": "{met}/{total}",
+			"emptyState": "No trades yet for this strategy.",
+			"emptyStateVersion": "No trades linked to v{version} yet.",
+			"emptyStateHint": "Log a trade with these conditions to start the scorecard.",
+			"hawksBadge": "Hawks methodology",
+			"drillDown": {
+				"title": "{condition} — trade breakdown",
+				"subtitle": "Last 50 trades that recorded this condition",
+				"metBadge": "Met",
+				"notMetBadge": "Not met",
+				"loading": "Loading…",
+				"emptyState": "No trades recorded for this condition yet.",
+				"errorState": "Could not load breakdown.",
+				"tradeCountSummary": "{met}/{total} met"
+			}
+		},
+		"hawksPanel": {
+			"title": "Hawks discipline",
+			"subtitle": "How well this strategy's trades respected the Hawks methodology.",
+			"basedOnTrades": "Based on {count, plural, =1 {# Hawks trade} other {# Hawks trades}}",
+			"emptyState": "No Hawks trades for this strategy version yet.",
+			"emptyStateHint": "Log a Hawks-mode trade with bias and scenario to populate this panel.",
+			"kpi": {
+				"vwap": "VWAP respected",
+				"ajuste": "Ajuste respected",
+				"tripleScreen": "Triple screen confirmed",
+				"biasRespected": "Daily bias respected"
+			},
+			"biasNoData": "No days had a confirmed bias",
+			"dailyCap": {
+				"title": "B3 daily-cap (6/asset)",
+				"within": "{count} within cap",
+				"over": "{count} over cap",
+				"allWithin": "All trades within cap",
+				"overShare": "{pct}% over cap"
+			},
+			"scenarios": {
+				"title": "Scenario distribution",
+				"untagged": "Untagged"
+			}
+		},
+		"versioning": {
+			"badge": {
+				"live": "Live",
+				"historical": "Historical"
+			},
+			"chip": {
+				"ariaSingle": "Strategy version v{version}",
+				"ariaMulti": "Switch strategy version, currently viewing v{version} {status}"
+			},
+			"dropdown": {
+				"tradeCount": "{count, plural, =0 {no trades} =1 {1 trade} other {# trades}}"
+			},
+			"editButton": {
+				"label": "Edit",
+				"disabledTooltip": "Historical versions are read-only. Switch to the live version to edit, or fork to a new version."
+			},
+			"fork": {
+				"headerButton": "Fork to v{nextVersion}",
+				"bannerTitle": "Conditions are frozen",
+				"bannerDescription": "v{version} has {count, plural, =1 {1 linked trade} other {# linked trades}}, so its conditions can no longer change. Fork to v{nextVersion} to keep iterating — your edits stay in this form.",
+				"bannerCta": "Fork to v{nextVersion}",
+				"bannerDismiss": "Dismiss",
+				"dialogTitle": "Fork to v{nextVersion}",
+				"dialogDescription": "We'll snapshot v{sourceVersion} as v{nextVersion}. Trades linked to v{sourceVersion} stay on v{sourceVersion}; new trades will use v{nextVersion} until you fork again.",
+				"previewLabel": "Will carry over",
+				"previewConditions": "{count, plural, =0 {no conditions} =1 {1 condition} other {# conditions}}",
+				"previewName": "Name: {name}",
+				"submit": "Fork to v{nextVersion}",
+				"submitting": "Forking…",
+				"cancel": "Cancel",
+				"successToast": "Forked to v{nextVersion}. You're now on the new version.",
+				"errorToast": "Could not fork the strategy. Please try again."
+			},
+			"labelSaved": "Version label saved.",
+			"diff": {
+				"headerButton": "Compare",
+				"headerTooltip": "Compare conditions across versions",
+				"title": "Version Diff",
+				"description": "Compare conditions between two versions of this strategy.",
+				"versionALabel": "Base version",
+				"versionBLabel": "Compare to",
+				"sameVersion": "Select two different versions to compare.",
+				"loading": "Loading diff…",
+				"noChanges": "Conditions are identical in both versions.",
+				"colCondition": "Condition",
+				"colStatus": "Status",
+				"colTierA": "Tier (A)",
+				"colTierB": "Tier (B)",
+				"statusAdded": "Added",
+				"statusRemoved": "Removed",
+				"statusTierChanged": "Tier changed",
+				"statusUnchanged": "Unchanged",
+				"summaryAdded": "{count, plural, =1 {1 added} other {# added}}",
+				"summaryRemoved": "{count, plural, =1 {1 removed} other {# removed}}",
+				"summaryModified": "{count, plural, =1 {1 tier change} other {# tier changes}}"
+			},
+			"label": {
+				"buttonAriaLabel": "Set label for v{version}",
+				"buttonTooltip": "Label this version",
+				"dialogTitle": "Label v{version}",
+				"dialogDescription": "Add a short name to help identify this version.",
+				"inputPlaceholder": "e.g., London open focus",
+				"cancel": "Cancel",
+				"save": "Save",
+				"saving": "Saving…",
+				"savedToast": "Version label saved."
+			}
 		},
 		"scenarios": {
 			"title": "Scenarios",
@@ -2354,6 +2520,9 @@
 			"strategyCreateFailed": "Failed to create strategy",
 			"strategyUpdateFailed": "Failed to update strategy",
 			"strategyDeleteFailed": "Failed to delete strategy",
+			"strategyLive": "This strategy has trades attached — create a new version to change it",
+			"strategyVersionPublished": "New strategy version published",
+			"strategyVersionFailed": "Failed to publish new strategy version",
 			"strategiesRetrieved": "Strategies retrieved successfully",
 			"strategiesFetchFailed": "Failed to retrieve strategies",
 			"noStrategiesFound": "No strategies found",
@@ -2376,6 +2545,13 @@
 			"scenarioImageLimitExceeded": "Maximum 3 images per scenario",
 			"scenarioImageAddFailed": "Failed to add image",
 			"scenarioImageRemoveFailed": "Failed to remove image"
+		},
+		"complianceTrend": {
+			"title": "Compliance trend",
+			"subtitle": "Weekly followed-plan rate over the last 26 weeks.",
+			"last4WeeksAvg": "Last 4 weeks avg: {pct}%",
+			"emptyState": "Not enough trades to draw a trend yet.",
+			"tooltipFormat": "Week of {week}: {compliance}% ({followed}/{tracked} trades)"
 		}
 	},
 	"reports": {
@@ -2384,6 +2560,21 @@
 		"emptyState": "No trade data yet. Start logging trades to see your reports.",
 		"emptyStateHint": "Your reports will populate as you log trades in the journal.",
 		"goToJournal": "Log your first trade",
+		"annualReportTitle": "Annual Report — {year}",
+		"weeklyMetaTitle": "Weekly Meta vs Real",
+		"annualRollupTitle": "Annual Rollup",
+		"yearTaxTitle": "Year Tax & Carryover — {year}",
+		"carryoverTitle": "Loss Carryover",
+		"monthClosing": {
+			"title": "Month Closing — {month}",
+			"detailToggle": "Month detail"
+		},
+		"withdrawalLoggedSuccess": "Withdrawal logged successfully.",
+		"withdrawalMessage": "Log {percent}% of this month's profits: {amount}",
+		"withdrawalAmountLabel": "Amount (R$)",
+		"withdrawalDateLabel": "Date",
+		"withdrawalLog": "Log Withdrawal",
+		"withdrawalLogging": "Logging…",
 		"weekly": {
 			"title": "Weekly Report",
 			"week": "Week",
@@ -2560,7 +2751,11 @@
 				"avgFeePerTrade": "Avg Fee/Trade",
 				"generatedBy": "Generated by Axion"
 			}
-		}
+		},
+		"withdrawalAmountAriaLabel": "Amount in BRL",
+		"withdrawalDateAriaLabel": "Withdrawal date",
+		"withdrawalEnterValidAmount": "Enter a valid amount greater than zero",
+		"withdrawalFailedToLog": "Failed to log withdrawal"
 	},
 	"settings": {
 		"title": "Settings",
@@ -2576,7 +2771,8 @@
 			"users": "Users",
 			"conditions": "Conditions",
 			"indicators": "Indicators",
-			"bugs": "Bug Reports"
+			"bugs": "Bug Reports",
+			"hawks": "Hawks Mode"
 		},
 		"profile": {
 			"profileInfo": "Profile Information",
@@ -2637,9 +2833,6 @@
 			"accountType": "Account Type",
 			"personal": "Personal",
 			"propFirm": "Prop Firm",
-			"replay": "Replay",
-			"replayStartDate": "Start Date",
-			"replayStartDateHelp": "The date where your replay session begins",
 			"propFirmName": "Prop Firm Name",
 			"propFirmNamePlaceholder": "e.g., FTMO, MyForexFunds",
 			"profitShare": "Profit Share",
@@ -2957,11 +3150,10 @@
 			"en": "EN"
 		},
 		"errors": {
+			"invalidInput": "Invalid input",
 			"accountNameExists": "An account with this name already exists",
 			"accountNotFound": "Account not found",
 			"cannotDeleteDefault": "Cannot delete the default account while other accounts exist",
-			"onlyReplayAccounts": "Only replay accounts can advance date",
-			"replayNoStartDate": "Replay account has no start date",
 			"noAccountSelected": "No account selected",
 			"assetTypeNotFound": "Asset type not found",
 			"cannotDeleteAssetType": "Cannot delete asset type with existing assets",
@@ -3348,7 +3540,36 @@
 		"tradingCondition": {
 			"nameRequired": "Name is required",
 			"nameMax": "Name must be 100 characters or less",
-			"descriptionMax": "Description must be 500 characters or less"
+			"descriptionMax": "Description must be 500 characters or less",
+			"invalidConditionId": "Invalid condition ID",
+			"invalidStrategyId": "Invalid strategy ID",
+			"invalidTier": "Tier must be mandatory, tier_2, or tier_3",
+			"sortOrderInteger": "Sort order must be an integer",
+			"sortOrderMin": "Sort order cannot be negative",
+			"tooManyConditions": "Too many conditions (max 100)"
+		},
+		"account": {
+			"nameRequired": "Account name is required",
+			"nameMax": "Account name must be 100 characters or less",
+			"descriptionMax": "Description must be 500 characters or less",
+			"propFirmNameMax": "Prop firm name must be 100 characters or less",
+			"profitShareMin": "Profit share must be at least 0%",
+			"profitShareMax": "Profit share must be 100% or less",
+			"currencyMin": "Currency must be at least 3 characters",
+			"currencyMax": "Currency must be 10 characters or less",
+			"breakevenTicksInteger": "Breakeven ticks must be a whole number",
+			"breakevenTicksMin": "Breakeven ticks cannot be negative",
+			"invalidAssetId": "Invalid asset ID",
+			"invalidAccountId": "Invalid account ID"
+		},
+		"taxEngine": {
+			"invalidAccountId": "Invalid account ID",
+			"yearInteger": "Year must be a whole number",
+			"yearMin": "Year must be 2000 or later",
+			"yearMax": "Year must be 2100 or earlier",
+			"monthInteger": "Month must be a whole number",
+			"monthRange": "Month must be between 1 and 12",
+			"yearMonthPaired": "Year and month must be provided together"
 		},
 		"userManagement": {
 			"invalidUserId": "Invalid user ID",
@@ -3520,9 +3741,6 @@
 			"accountType": "Account Type",
 			"personal": "Personal",
 			"propFirm": "Prop Firm",
-			"replay": "Replay",
-			"replayStartDate": "Start Date",
-			"replayStartDateHelp": "The date where your replay session begins",
 			"propFirmName": "Prop Firm Name",
 			"propFirmNamePlaceholder": "e.g., Atom, FTMO",
 			"profitShare": "Profit Share",
@@ -4293,7 +4511,6 @@
 	"accountComparison": {
 		"title": "Account Comparison",
 		"subtitle": "Compare performance across accounts with different risk configurations",
-		"backToAnalytics": "Back to Analytics",
 		"comparisonComplete": "Comparison complete — {count} accounts analyzed",
 		"selector": {
 			"selectAccounts": "Select accounts to compare",
@@ -4520,7 +4737,12 @@
 			"modeSuffixR": "R",
 			"modeSuffixPctRange": "% range",
 			"modeSuffixPctStop": "% stop",
-			"modeSuffixPts": "pts"
+			"modeSuffixPts": "pts",
+			"allocationUsed": "Allocation used: {total}%",
+			"allocationOver": "Over allocation: +{over}%",
+			"allocationExact": "Allocation exact",
+			"allocationRemaining": "Allocation remaining: {remaining}%",
+			"removeLevel": "Remove exit level {level}"
 		},
 		"orb": {
 			"name": "Opening Range Breakout",
@@ -4541,6 +4763,9 @@
 			"sizingType": "Position Sizing",
 			"monetaryRisk": "Monetary Risk",
 			"eodTime": "EOD Exit Time"
+		},
+		"dezk": {
+			"name": "10K — MACD WMA Alignment"
 		},
 		"results": {
 			"title": "Results",
@@ -4563,7 +4788,40 @@
 			"equityCurve": "Equity Curve",
 			"tradeList": "Trade List",
 			"dayBreakdown": "Day Breakdown",
-			"completedTrades": "{count} trades completed"
+			"completedTrades": "{count} trades completed",
+			"engineVersion": "Engine Version"
+		},
+		"hawksPanel": {
+			"title": "Hawks Insights",
+			"subtitle": "Session-aware breakdown derived from this run",
+			"session": {
+				"heading": "Session Breakdown",
+				"morning": "Morning",
+				"morningRange": "09:00 – 12:00",
+				"afternoon": "Afternoon",
+				"afternoonRange": "12:00 – 15:30",
+				"close": "Close",
+				"closeRange": "15:30 – 17:30",
+				"trades": "trades",
+				"avgR": "avg R",
+				"winRate": "win",
+				"noTrades": "No trades"
+			},
+			"activity": {
+				"heading": "Daily Activity",
+				"avgTradesPerDay": "Avg trades/day",
+				"maxTradesPerDay": "Max trades/day",
+				"oneTrade": "1-trade days",
+				"twoTrades": "2-trade days",
+				"threePlusTrades": "3+ trade days",
+				"days": "days"
+			},
+			"bestWorst": {
+				"heading": "Best & Worst Day",
+				"best": "Best day",
+				"worst": "Worst day",
+				"tradesSuffix": "trades"
+			}
 		},
 		"table": {
 			"trade": "#",
@@ -4575,7 +4833,16 @@
 			"contracts": "Contracts",
 			"pnl": "P&L",
 			"rMultiple": "R",
-			"noTrades": "No trades"
+			"noTrades": "No trades",
+			"viewChart": "View chart"
+		},
+		"chartModal": {
+			"title": "Trade #{id} — {direction}",
+			"titleFallback": "Trade chart",
+			"subtitle": "{asset} · {timeframe} · {day}",
+			"loading": "Loading candles…",
+			"noData": "No candle data for this window",
+			"loadFailed": "Failed to load candle data"
 		},
 		"exitReasons": {
 			"target1": "Target 1",
@@ -4598,6 +4865,17 @@
 		"empty": {
 			"title": "No results yet",
 			"description": "Select a preset and run a backtest to see results"
+		},
+		"hawks": {
+			"name": "Hawks — Triple Screen Renko",
+			"startTime": "Entry Window Start",
+			"endTime": "Entry Window End",
+			"indicatorKeys": "Indicator Keys",
+			"indicatorKeysDesc": "Keys stored in candle JSONB — must match the CSV import mappings.",
+			"ema27_60m_key": "MME 27 (60m)",
+			"ema55_60m_key": "MME 55 (60m)",
+			"ema27_15m_key": "MME 27 (15m)",
+			"macd_key": "MACD"
 		}
 	},
 	"optimize": {
@@ -4750,7 +5028,8 @@
 			"unitPts": "pts",
 			"sizingLots": "{lots} lots",
 			"sizingRisk": "R${amount} risk"
-		}
+		},
+		"currentValueSuffix": "(current)"
 	},
 	"candleImport": {
 		"errors": {
@@ -4929,7 +5208,8 @@
 			"paid": "Paid",
 			"weekly": "Weekly",
 			"monthly": "Monthly",
-			"editPlan": "Edit plan"
+			"editPlan": "Edit plan",
+			"actions": "Actions"
 		},
 		"setup": {
 			"title": "Setup {year}",
@@ -5175,14 +5455,16 @@
 			},
 			"yearly": {
 				"capitalSection": "Initial capital",
-				"capitalConfigured": "Configured in {link}. Capital per month is editable in the grid.",
-				"capitalSetFirst": "Set the starting balance in {link} before creating the plan.",
+				"capitalConfigured": "Configured in <link>Settings</link>. Capital per month is editable in the grid.",
+				"capitalSetFirst": "Set the starting balance in <link>Settings</link> before creating the plan.",
 				"settingsLink": "Settings → Annual Report",
 				"capitalBelowMinTitle": "Do not trade — minimum capital R$ {amount}",
 				"capitalBelowMinBody": "Current capital is below the first tier of the ladder. Increase capital or adjust the ladder.",
 				"defaultsSection": "Defaults",
 				"defaultsSubtitle": "Cascade fallback applied when a month has no override.",
 				"daysPerWeekLabel": "Days / week",
+				"assertivityLabel": "Assertivity %",
+				"assertivityHint": "% of days expected to hit the daily gain gate",
 				"dailyLossLabel": "Daily loss R",
 				"dailyWinLabel": "Daily win R",
 				"weeklyLossLabel": "Weekly loss R",
@@ -5190,7 +5472,7 @@
 				"monthlyLossLabel": "Monthly loss R",
 				"monthlyWinLabel": "Monthly win R",
 				"ladderSection": "Capital ladder",
-				"ladderSubtitle": "Defines how much 1R is worth as capital grows. Each tier starts at {strong} and ends where the next begins. The last tier is unlimited.",
+				"ladderSubtitle": "Defines how much 1R is worth as capital grows. Each tier starts at <strong>From (R$)</strong> and ends where the next begins. The last tier is unlimited.",
 				"ladderFromStrong": "From",
 				"tierFromBrl": "Tier {n} from BRL",
 				"tierOneRBrl": "Tier {n} one-R BRL",
@@ -5200,8 +5482,12 @@
 				"ladderTierError": "Add at least one ladder tier.",
 				"ladderTierInvalid": "Tier {n}: From ≥ 0, 1R > 0.",
 				"ladderTierOrder": "Tier {cur} must start above tier {prev}.",
+				"initialCapital": "Initial capital",
+				"initialCapitalHint": "This value will be saved to your account profile.",
+				"capitalRequired": "Enter initial capital to continue.",
 				"noAccountBalance": "Set the account starting balance in Settings → Annual Reporting first.",
 				"tradingDaysError": "Trading days per week must be 1–7.",
+				"assertivityError": "Assertivity must be between 1 and 100.",
 				"fieldPositiveError": "{field} must be positive number.",
 				"riskProfileSection": "Risk profile",
 				"riskProfileSubtitle": "Picked when no monthly override is set. Drives adaptive sizing rules (consecutive losses, post-loss reduction, etc.).",
@@ -5265,6 +5551,149 @@
 			"notCreatedBody": "Without an annual plan the monthly grid is empty. The editor opens as a slideover.",
 			"tabPlan": "Plan",
 			"tabTax": "Tax"
+		}
+	},
+	"hawks": {
+		"tradeFields": {
+			"title": "Hawks pre-flight",
+			"description": "Confirm the discretionary checks for this trade. These feed the Hawks coaching detectors.",
+			"tripleScreenLabel": "Triple-screen confirmed",
+			"tripleScreenHint": "All three Renko timeframes (5/15/60min) aligned with the bias before entry.",
+			"vwapLabel": "VWAP respected",
+			"vwapHint": "Entry occurred without violating the session VWAP context.",
+			"ajusteLabel": "Ajuste respected",
+			"ajusteHint": "Daily settlement price held as expected support/resistance."
+		},
+		"bias": {
+			"title": "Daily bias",
+			"description": "Confirm your bias for {day} after the triple-screen ritual.",
+			"directionLabel": "Bias direction",
+			"biasLong": "Long",
+			"biasNeutral": "Neutral",
+			"biasShort": "Short",
+			"screensLabel": "Triple-screen checks",
+			"screenRenko60": "Renko close above 60min",
+			"screenRenko60Hint": "Last 60-minute Renko brick closed above the trend baseline.",
+			"screenMacd": "MACD slope up",
+			"screenMacdHint": "MACD 27/117/55 histogram slope is positive on the higher timeframe.",
+			"screenEmaStack": "EMA stack bullish",
+			"screenEmaStackHint": "EMA 27 above EMA 55 with intact slope.",
+			"screenVwap": "Price above VWAP",
+			"screenVwapHint": "Session VWAP respected — price is trading above it.",
+			"screenAjuste": "Ajuste respected",
+			"screenAjusteHint": "Daily settlement price (ajuste) holds as support/resistance.",
+			"notesLabel": "Notes",
+			"notesPlaceholder": "Optional context: macro drivers, key levels, asymmetries…",
+			"confirmedAt": "Bias confirmed at {time}"
+		},
+		"settings": {
+			"title": "Hawks Mode",
+			"description": "Hawks Mode unlocks the Renko triple-screen workflow: daily bias, capped trade count, method-3 stop audit, and dedicated coaching insights.",
+			"statusActive": "Active",
+			"statusInactive": "Inactive",
+			"activate": "Activate Hawks Mode",
+			"deactivate": "Deactivate Hawks Mode",
+			"confirmActivateTitle": "Activate Hawks Mode?",
+			"confirmActivateDescription": "While Hawks Mode is on, every trade you log must include a daily bias and Hawks payload. You can deactivate anytime.",
+			"confirmDeactivateTitle": "Deactivate Hawks Mode?",
+			"confirmDeactivateDescription": "Existing Hawks trades and audit history remain. New trades will use the default workflow.",
+			"loading": "Loading current mode…",
+			"import": {
+				"sectionTitle": "Import Data",
+				"sectionDescription": "Upload CSV files exported from ProfitChart to import Renko brick sizes and candle data.",
+				"sizes": {
+					"title": "Renko Brick Sizes",
+					"description": "Weekly Renko brick sizes used by the triple-screen strategy. CSV exported from ProfitChart.",
+					"dropHint": "Drop a CSV file here or click to browse",
+					"button": "Import Sizes",
+					"importing": "Importing…",
+					"success": "{count} sizes imported",
+					"invalidFile": "Please select a CSV file",
+					"errorFallback": "Import failed"
+				},
+				"candles": {
+					"title": "Renko Candle Data",
+					"description": "Renko candle CSV with indicators (MME 27, MME 55, MACD). Required for Hawks backtesting.",
+					"assetLabel": "Asset",
+					"assetPlaceholder": "e.g. WIN",
+					"timeframeLabel": "Timeframe",
+					"timeframePlaceholder": "e.g. 5m",
+					"dropHint": "Drop a CSV file here or click to browse",
+					"validateButton": "Validate",
+					"validating": "Validating…",
+					"validationErrors": "{count} validation errors found",
+					"rowCount": "{count} candles",
+					"indicators": "{count} indicators",
+					"skipped": "{count} skipped",
+					"importButton": "Import",
+					"importing": "Importing…",
+					"success": "{count} rows imported",
+					"invalidFile": "Please select a CSV file",
+					"errorFallback": "Import failed"
+				},
+				"regenerate": {
+					"title": "Regenerate Renko Bricks",
+					"description": "Rebuild 5m / 15m / 60m Renko bricks from imported 1m raw OHLC bars and the weekly brick sizes. Cross-timeframe indicators (MME 27/55, MACD) are computed and projected onto 5m host bricks for the Hawks engine.",
+					"assetLabel": "Asset",
+					"assetPlaceholder": "e.g. WIN",
+					"button": "Regenerate",
+					"running": "Regenerating…",
+					"summary": "{barCount} 1m bars across {weekCount} weeks",
+					"perTimeframe": "{code}: {count} bricks",
+					"warnings": "{count} warnings",
+					"errorFallback": "Regeneration failed"
+				}
+			}
+		},
+		"actions": {
+			"modeStarted": "Hawks mode activated",
+			"modeAlreadyActive": "Hawks mode is already active",
+			"modeStopped": "Hawks mode deactivated",
+			"modeAlreadyInactive": "Hawks mode was already inactive",
+			"modeStartFailed": "Failed to activate Hawks mode",
+			"modeStopFailed": "Failed to deactivate Hawks mode",
+			"modeNotActive": "Account is not in Hawks mode",
+			"biasConfirmed": "Daily bias recorded",
+			"biasFetched": "Daily bias loaded",
+			"biasConfirmFailed": "Failed to record daily bias",
+			"biasFetchFailed": "Failed to load daily bias",
+			"biasValidationFailed": "Invalid bias payload",
+			"stopAuditRecorded": "Stop audit recorded",
+			"stopAuditFailed": "Failed to record stop audit",
+			"stopAuditValidationFailed": "Invalid stop audit payload",
+			"tradeNotFound": "Trade not found in this account"
+		},
+		"coaching": {
+			"title": "Hawks coaching insights",
+			"noTrades": "No Hawks trades in the last 90 days yet — log a few to unlock pattern detection.",
+			"noInsights": "No Hawks patterns surfaced in the last 90 days. Stay disciplined."
+		},
+		"missingBias": {
+			"ariaLabel": "Set today's bias",
+			"title": "Set today's bias",
+			"description": "Confirm your directional bias before logging a Hawks trade.",
+			"successMessage": "Bias confirmed — ready to trade"
+		},
+		"dailyCap": {
+			"ariaLabel": "Daily trade cap reached",
+			"title": "Daily cap reached",
+			"description": "You've taken {ordinal} of {cap} trades today. Log this as an exception trade.",
+			"acknowledge": "I acknowledge this is an exception trade",
+			"acknowledgedBadge": "Exception trade acknowledged ({ordinal}/{cap})"
+		},
+		"scorecard": {
+			"title": "Hawks Scorecard",
+			"methodologyScore": "Methodology Score",
+			"tripleScreen": "Triple Screen",
+			"biasAlignment": "Bias Alignment",
+			"stopViolations": "Stop Violations",
+			"overTradeDays": "Over-trade Days",
+			"noTrades": "No Hawks trades logged this month yet.",
+			"tradeCount": "{count, plural, one {# Hawks trade} other {# Hawks trades}}"
+		},
+		"dailyCount": {
+			"badge": "{ordinal} of {cap} trades today",
+			"atCap": "Daily cap reached"
 		}
 	}
 }

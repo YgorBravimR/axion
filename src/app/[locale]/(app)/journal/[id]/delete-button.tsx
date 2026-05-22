@@ -5,6 +5,17 @@ import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/toast"
 import { deleteTrade } from "@/app/actions/trades"
 
@@ -18,7 +29,6 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 	const t = useTranslations("journal.delete")
 	const tCommon = useTranslations("common")
 	const [isDeleting, setIsDeleting] = useState(false)
-	const [showConfirm, setShowConfirm] = useState(false)
 
 	const handleDelete = async () => {
 		setIsDeleting(true)
@@ -35,49 +45,47 @@ export const DeleteTradeButton = ({ tradeId }: DeleteTradeButtonProps) => {
 			showToast("error", t("unexpectedError"))
 		} finally {
 			setIsDeleting(false)
-			setShowConfirm(false)
 		}
 	}
 
-	if (showConfirm) {
-		return (
-			<div className="flex items-center gap-s-200">
-				<span className="text-small text-txt-200">{t("confirmPrompt")}</span>
-				<Button
-				id="delete-trade-confirm-yes"
-					variant="destructive"
-					size="sm"
-					onClick={handleDelete}
-					disabled={isDeleting}
-				>
-					{isDeleting ? (
-						<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
-					) : (
-						tCommon("yes")
-					)}
-				</Button>
-				<Button
-				id="delete-trade-confirm-no"
-					variant="outline"
-					size="sm"
-					onClick={() => setShowConfirm(false)}
-					disabled={isDeleting}
-				>
-					{tCommon("no")}
-				</Button>
-			</div>
-		)
-	}
-
 	return (
-		<Button
-			id="delete-trade-button"
-			variant="outline"
-			onClick={() => setShowConfirm(true)}
-			className="text-fb-error hover:bg-fb-error/10 hover:text-fb-error"
-		>
-			<Trash2 className="mr-s-200 h-4 w-4" />
-			{tCommon("delete")}
-		</Button>
+		<AlertDialog>
+			<AlertDialogTrigger asChild>
+				<Button
+					id="delete-trade-button"
+					variant="outline"
+					className="text-fb-error hover:bg-fb-error/10 hover:text-fb-error"
+				>
+					<Trash2 className="mr-s-200 h-4 w-4" />
+					{tCommon("delete")}
+				</Button>
+			</AlertDialogTrigger>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>{t("title")}</AlertDialogTitle>
+					<AlertDialogDescription>{t("description")}</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel id="delete-trade-cancel" disabled={isDeleting}>
+						{tCommon("cancel")}
+					</AlertDialogCancel>
+					<AlertDialogAction
+						id="delete-trade-confirm"
+						className="bg-fb-error hover:bg-fb-error/90"
+						onClick={(e) => {
+							e.preventDefault()
+							void handleDelete()
+						}}
+						disabled={isDeleting}
+					>
+						{isDeleting ? (
+							<Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+						) : (
+							tCommon("delete")
+						)}
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
 	)
 }

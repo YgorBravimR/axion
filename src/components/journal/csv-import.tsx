@@ -167,11 +167,12 @@ export const CsvImport = () => {
 
 				setValidationResult(validation.data!)
 
-				// Check for replay trades on non-replay accounts
+				// ProfitChart marks simulated rows with [R]. Always surface them so
+				// the user can confirm or strip — they're not real fills.
 				const replayCount = result.trades.filter(
 					(trade) => trade.isReplayTrade
 				).length
-				if (validation.data!.accountType !== "replay" && replayCount > 0) {
+				if (replayCount > 0) {
 					setReplayTradeCount(replayCount)
 					setShowReplayAlert(true)
 					setIsValidating(false)

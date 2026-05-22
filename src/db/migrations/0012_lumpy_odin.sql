@@ -1,0 +1,1 @@
+ALTER TABLE "yearly_plans" ADD COLUMN "default_assertivity_percent" numeric(5, 2) DEFAULT '50.00';

@@ -62,12 +62,7 @@ const CustomTooltip = ({ active, payload, labels }: CustomTooltipProps) => {
 				</p>
 				<p className="text-tiny">
 					<span className="text-txt-300">{labels.winRate}:</span>{" "}
-					<span
-						className={cn(
-							"font-medium",
-							data.winRate >= 50 ? "text-trade-buy" : "text-trade-sell"
-						)}
-					>
+					<span className="text-txt-100 font-medium">
 						{data.winRate.toFixed(0)}%
 					</span>
 				</p>
@@ -112,7 +107,7 @@ const HoldingPeriodChart = memo(
 		const { yAxisWidth } = useChartConfig()
 		const t = useTranslations("analytics.holdingPeriod")
 		const locale = useLocale()
-		const currencySymbol = locale === "pt-BR" ? "R$" : "$"
+		const currencySymbol = locale === "pt-BR" ? "BRL" : "$"
 
 		const isRMode = expectancyMode === "edge"
 		const metricKey = isRMode ? "avgR" : "totalPnl"
@@ -241,17 +236,23 @@ const HoldingPeriodChart = memo(
 				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
 					<div>
 						<p className="text-tiny text-txt-300">{t("bestBucket")}</p>
-						<p className="text-small text-trade-buy font-medium">
+						<p className="text-small text-txt-100 font-medium">
 							{bestBucket.bucket} ({bestBucket.winRate.toFixed(0)}% WR,{" "}
-							{formatMetric(bestBucket[metricKey])})
+							<span className="text-trade-buy">
+								{formatMetric(bestBucket[metricKey])}
+							</span>
+							)
 						</p>
 					</div>
 					{worstBucket && (
 						<div>
 							<p className="text-tiny text-txt-300">{t("worstBucket")}</p>
-							<p className="text-small text-trade-sell font-medium">
+							<p className="text-small text-txt-100 font-medium">
 								{worstBucket.bucket} ({worstBucket.winRate.toFixed(0)}% WR,{" "}
-								{formatMetric(worstBucket[metricKey])})
+								<span className="text-trade-sell">
+									{formatMetric(worstBucket[metricKey])}
+								</span>
+								)
 							</p>
 						</div>
 					)}

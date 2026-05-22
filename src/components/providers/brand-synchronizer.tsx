@@ -12,7 +12,7 @@ interface BrandSynchronizerProps {
 
 /**
  * Synchronizes the brand theme based on the current account's type.
- * personal → "bravo", prop → "tsr", replay → "retro"
+ * personal → "bravo", prop → "tsr".
  *
  * When serverBrand is provided (from server layout), it uses that directly
  * instead of making a redundant getCurrentAccount() call.

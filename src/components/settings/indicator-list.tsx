@@ -297,7 +297,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 						{tInd("groups")}
 					</h3>
 					<Button id="indicator-group-add-new" onClick={handleAddGroup}>
-						<Plus className="mr-s-200 h-4 w-4" />
+						<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 						{tInd("addGroup")}
 					</Button>
 				</div>
@@ -343,7 +343,10 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 					</div>
 					<div className="gap-s-300 flex items-center">
 						<div className="relative">
-							<Search className="text-txt-300 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+							<Search
+								className="text-txt-300 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+								aria-hidden="true"
+							/>
 							<Input
 								id="indicator-search"
 								placeholder={tInd("searchPlaceholder")}
@@ -356,7 +359,7 @@ const IndicatorList = ({ groups }: IndicatorListProps) => {
 							id="indicator-definition-add-new"
 							onClick={handleAddDefinition}
 						>
-							<Plus className="mr-s-200 h-4 w-4" />
+							<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 							{tInd("addIndicator")}
 						</Button>
 					</div>

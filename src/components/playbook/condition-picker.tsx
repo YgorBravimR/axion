@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,45 +11,23 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { getConditions } from "@/app/actions/trading-conditions"
 import { ConditionForm } from "@/components/settings/condition-form"
-import type { TradingCondition } from "@/db/schema"
+import { ConditionList } from "@/components/playbook/condition-list"
 import type {
 	ConditionTier,
 	StrategyConditionInput,
 } from "@/types/trading-condition"
-import { Plus, Loader2, Shield, ShieldCheck, ShieldPlus } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Plus, Shield, ShieldCheck, ShieldPlus } from "lucide-react"
 
 interface ConditionPickerProps {
 	value: StrategyConditionInput[]
 	onChange: (_conditions: StrategyConditionInput[]) => void
 }
 
-const CATEGORY_ORDER = [
-	"indicator",
-	"price_action",
-	"market_context",
-	"custom",
-] as const
-
-const getCategoryColor = (category: string): string => {
-	switch (category) {
-		case "indicator":
-			return "text-acc-100"
-		case "price_action":
-			return "text-trade-buy"
-		case "market_context":
-			return "text-warning"
-		case "custom":
-			return "text-txt-200"
-		default:
-			return "text-txt-300"
-	}
-}
-
 export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 	const t = useTranslations("playbook.conditions")
+	const [showCreateForm, setShowCreateForm] = useState(false)
+	const [reloadKey, setReloadKey] = useState(0)
 
 	const TIER_OPTIONS: {
 		value: ConditionTier | "none"
@@ -61,23 +39,6 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 		{ value: "tier_2", label: t("tierTier2"), icon: ShieldCheck },
 		{ value: "tier_3", label: t("tierTier3"), icon: ShieldPlus },
 	]
-	const tSettings = useTranslations("settings.conditions")
-	const [conditions, setConditions] = useState<TradingCondition[]>([])
-	const [isLoading, setIsLoading] = useState(true)
-	const [showCreateForm, setShowCreateForm] = useState(false)
-
-	const loadConditions = useCallback(async () => {
-		setIsLoading(true)
-		const result = await getConditions()
-		if (result.status === "success" && result.data) {
-			setConditions(result.data)
-		}
-		setIsLoading(false)
-	}, [])
-
-	useEffect(() => {
-		void loadConditions()
-	}, [loadConditions])
 
 	const getConditionTier = (conditionId: string): ConditionTier | "none" => {
 		const found = value.find((c) => c.conditionId === conditionId)
@@ -89,7 +50,6 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 			onChange(value.filter((c) => c.conditionId !== conditionId))
 			return
 		}
-
 		const existing = value.find((c) => c.conditionId === conditionId)
 		if (existing) {
 			onChange(
@@ -111,13 +71,7 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 		}
 	}
 
-	const handleCreateSuccess = () => {
-		setShowCreateForm(false)
-		void loadConditions()
-	}
-
-	// Group conditions by category and compute tier counts in one memoized pass
-	const { grouped, mandatoryCount, tier2Count, tier3Count } = useMemo(() => {
+	const { mandatoryCount, tier2Count, tier3Count } = useMemo(() => {
 		let mandatory = 0
 		let t2 = 0
 		let t3 = 0
@@ -130,157 +84,115 @@ export const ConditionPicker = ({ value, onChange }: ConditionPickerProps) => {
 				t3++
 			}
 		}
-		const groups = CATEGORY_ORDER.map((cat) => ({
-			category: cat,
-			items: conditions.filter((c) => c.category === cat),
-		})).filter((g) => g.items.length > 0)
-		return {
-			grouped: groups,
-			mandatoryCount: mandatory,
-			tier2Count: t2,
-			tier3Count: t3,
-		}
-	}, [conditions, value])
+		return { mandatoryCount: mandatory, tier2Count: t2, tier3Count: t3 }
+	}, [value])
 
-	if (isLoading) {
-		return (
-			<div className="p-s-300 sm:p-m-400 lg:p-m-500 flex items-center justify-center">
-				<Loader2 className="text-txt-300 h-5 w-5 animate-spin motion-reduce:animate-none" />
-			</div>
-		)
+	const handleCreateSuccess = () => {
+		setShowCreateForm(false)
+		setReloadKey((k) => k + 1)
 	}
 
+	const rankPreview =
+		value.length > 0 ? (
+			<div className="gap-s-300 flex items-center">
+				<span className="text-small text-txt-200">{t("rankPreview")}:</span>
+				{mandatoryCount > 0 && (
+					<Badge
+						id="rank-a-badge"
+						variant="outline"
+						className="text-txt-200 border-bg-300"
+					>
+						A ({mandatoryCount})
+					</Badge>
+				)}
+				{tier2Count > 0 && (
+					<Badge
+						id="rank-aa-badge"
+						variant="outline"
+						className="text-acc-100 border-acc-100/40"
+					>
+						AA ({tier2Count})
+					</Badge>
+				)}
+				{tier3Count > 0 && (
+					<Badge
+						id="rank-aaa-badge"
+						variant="outline"
+						className="border-warning/40 text-warning"
+					>
+						AAA ({tier3Count})
+					</Badge>
+				)}
+			</div>
+		) : null
+
+	const createNewButton = (
+		<Button
+			id="condition-picker-create-new"
+			type="button"
+			variant="outline"
+			size="sm"
+			onClick={() => setShowCreateForm(true)}
+		>
+			<Plus className="mr-s-200 h-4 w-4" />
+			{t("createNew")}
+		</Button>
+	)
+
+	const emptyState = (
+		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border text-center">
+			<p className="text-small text-txt-300">{t("noConditionsYet")}</p>
+			<Button
+				id="condition-picker-create-first"
+				type="button"
+				variant="outline"
+				size="sm"
+				className="mt-s-300"
+				onClick={() => setShowCreateForm(true)}
+			>
+				<Plus className="mr-s-200 h-4 w-4" />
+				{t("createFirst")}
+			</Button>
+		</div>
+	)
+
 	return (
-		<div className="space-y-m-400">
-			{/* Rank preview */}
-			{value.length > 0 && (
-				<div className="gap-s-300 flex items-center">
-					<span className="text-small text-txt-200">{t("rankPreview")}:</span>
-					{mandatoryCount > 0 && (
-						<Badge
-							id="rank-a-badge"
-							variant="outline"
-							className="text-trade-buy border-trade-buy/40"
+		<>
+			<ConditionList
+				key={reloadKey}
+				header={rankPreview}
+				emptyState={emptyState}
+				footer={createNewButton}
+				renderRowControl={(condition) => {
+					const currentTier = getConditionTier(condition.id)
+					return (
+						<Select
+							value={currentTier}
+							onValueChange={(v) => handleTierChange(condition.id, v)}
 						>
-							A ({mandatoryCount})
-						</Badge>
-					)}
-					{tier2Count > 0 && (
-						<Badge
-							id="rank-aa-badge"
-							variant="outline"
-							className="text-acc-100 border-acc-100/40"
-						>
-							AA ({tier2Count})
-						</Badge>
-					)}
-					{tier3Count > 0 && (
-						<Badge
-							id="rank-aaa-badge"
-							variant="outline"
-							className="border-warning/40 text-warning"
-						>
-							AAA ({tier3Count})
-						</Badge>
-					)}
-				</div>
-			)}
-
-			{/* Conditions by category */}
-			{conditions.length === 0 ? (
-				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border text-center">
-					<p className="text-small text-txt-300">{t("noConditionsYet")}</p>
-					<Button
-						id="condition-picker-create-first"
-						type="button"
-						variant="outline"
-						size="sm"
-						className="mt-s-300"
-						onClick={() => setShowCreateForm(true)}
-					>
-						<Plus className="mr-s-200 h-4 w-4" />
-						{t("createFirst")}
-					</Button>
-				</div>
-			) : (
-				<>
-					{grouped.map((group) => (
-						<div key={group.category}>
-							<h4
-								className={cn(
-									"text-small mb-s-200 font-medium",
-									getCategoryColor(group.category)
-								)}
+							<SelectTrigger
+								id={`condition-tier-${condition.id}`}
+								className="w-full min-w-0 sm:w-[160px]"
 							>
-								{tSettings(
-									`category${group.category.charAt(0).toUpperCase()}${group.category.slice(1).replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())}`
-								)}
-							</h4>
-							<div className="space-y-s-200">
-								{group.items.map((condition) => {
-									const currentTier = getConditionTier(condition.id)
-									return (
-										<div
-											key={condition.id}
-											className={cn(
-												"border-bg-300 bg-bg-200 gap-s-200 sm:gap-m-400 p-s-200 sm:p-s-300 flex flex-col rounded-lg border transition-colors sm:flex-row sm:items-center sm:justify-between",
-												currentTier !== "none" &&
-													"border-acc-100/30 bg-acc-100/5"
-											)}
-										>
-											<div className="min-w-0 flex-1">
-												<p className="text-small text-txt-100 font-medium">
-													{condition.name}
-												</p>
-												{condition.description && (
-													<p className="text-tiny text-txt-300 line-clamp-1">
-														{condition.description}
-													</p>
-												)}
-											</div>
-											<Select
-												value={currentTier}
-												onValueChange={(v) => handleTierChange(condition.id, v)}
-											>
-												<SelectTrigger
-													id={`condition-tier-${condition.id}`}
-													className="w-full min-w-0 sm:w-[160px]"
-												>
-													<SelectValue />
-												</SelectTrigger>
-												<SelectContent>
-													{TIER_OPTIONS.map((option) => (
-														<SelectItem key={option.value} value={option.value}>
-															{option.label}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-										</div>
-									)
-								})}
-							</div>
-						</div>
-					))}
-
-					<Button
-						id="condition-picker-create-new"
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => setShowCreateForm(true)}
-					>
-						<Plus className="mr-s-200 h-4 w-4" />
-						{t("createNew")}
-					</Button>
-				</>
-			)}
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{TIER_OPTIONS.map((option) => (
+									<SelectItem key={option.value} value={option.value}>
+										{option.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					)
+				}}
+			/>
 
 			<ConditionForm
 				open={showCreateForm}
 				onOpenChange={setShowCreateForm}
 				onSuccess={handleCreateSuccess}
 			/>
-		</div>
+		</>
 	)
 }

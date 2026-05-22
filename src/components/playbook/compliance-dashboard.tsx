@@ -8,6 +8,8 @@ import {
 	TrendingUp,
 	AlertTriangle,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { getComplianceTone } from "@/lib/compliance"
 import type { ComplianceOverview } from "@/app/actions/strategies.types"
 
 interface ComplianceDashboardProps {
@@ -33,12 +35,18 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 		)
 	}
 
-	const complianceColor =
-		data.overallCompliance >= 80
-			? "text-trade-buy"
-			: data.overallCompliance >= 50
-				? "text-warning"
-				: "text-trade-sell"
+	const tone = getComplianceTone(data.overallCompliance)
+	const followedPct =
+		data.totalTrackedTrades > 0
+			? (data.followedPlanCount / data.totalTrackedTrades) * 100
+			: 0
+	const deviatedPct =
+		data.totalTrackedTrades > 0
+			? (data.notFollowedCount / data.totalTrackedTrades) * 100
+			: 0
+	const topTone = data.topPerformingStrategy
+		? getComplianceTone(data.topPerformingStrategy.compliance)
+		: null
 
 	return (
 		<div
@@ -82,20 +90,14 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 									cy="50"
 									r="40"
 									fill="none"
-									stroke={
-										data.overallCompliance >= 80
-											? "var(--color-trade-buy)"
-											: data.overallCompliance >= 50
-												? "var(--color-warning)"
-												: "var(--color-trade-sell)"
-									}
+									stroke={tone.stroke}
 									strokeWidth="8"
 									strokeLinecap="round"
 									strokeDasharray={`${(data.overallCompliance / 100) * 251.2} 251.2`}
 								/>
 							</svg>
 							<div className="absolute inset-0 flex items-center justify-center">
-								<span className={`text-h3 font-bold ${complianceColor}`}>
+								<span className={cn("text-h3 font-bold", tone.text)}>
 									{data.overallCompliance.toFixed(0)}%
 								</span>
 							</div>
@@ -123,25 +125,21 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 									})}
 								>
 									<div
-										className="bg-trade-buy flex items-center justify-center transition-[width]"
-										style={{
-											width: `${(data.followedPlanCount / data.totalTrackedTrades) * 100}%`,
-										}}
+										className="bg-txt-100 flex items-center justify-center transition-[width]"
+										style={{ width: `${followedPct}%` }}
 									/>
 									<div
-										className="bg-trade-sell flex items-center justify-center transition-[width]"
-										style={{
-											width: `${(data.notFollowedCount / data.totalTrackedTrades) * 100}%`,
-										}}
+										className="bg-warning flex items-center justify-center transition-[width]"
+										style={{ width: `${deviatedPct}%` }}
 									/>
 								</div>
 								<div className="mt-s-200 text-tiny sm:text-small flex justify-between">
-									<span className="text-trade-buy gap-s-100 flex items-center">
-										<CheckCircle className="h-3 w-3" />
+									<span className="text-txt-100 gap-s-100 flex items-center">
+										<CheckCircle className="h-3 w-3" aria-hidden="true" />
 										{t("followedCount", { count: data.followedPlanCount })}
 									</span>
-									<span className="text-trade-sell gap-s-100 flex items-center">
-										<XCircle className="h-3 w-3" />
+									<span className="text-warning gap-s-100 flex items-center">
+										<XCircle className="h-3 w-3" aria-hidden="true" />
 										{t("deviatedCount", { count: data.notFollowedCount })}
 									</span>
 								</div>
@@ -152,9 +150,18 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					{/* Strategy Highlights */}
 					{(data.topPerformingStrategy || data.needsAttentionStrategy) && (
 						<div className="mt-m-500 gap-s-300 grid grid-cols-1 sm:grid-cols-2">
-							{data.topPerformingStrategy && (
-								<div className="bg-trade-buy/10 border-trade-buy/30 gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border">
-									<TrendingUp className="text-trade-buy h-5 w-5 shrink-0" />
+							{data.topPerformingStrategy && topTone && (
+								<div
+									className={cn(
+										"gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border",
+										topTone.bg,
+										topTone.border
+									)}
+								>
+									<TrendingUp
+										className={cn("h-5 w-5 shrink-0", topTone.text)}
+										aria-hidden="true"
+									/>
 									<div>
 										<p className="text-tiny text-txt-300">
 											{t("bestCompliance")}
@@ -162,7 +169,7 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 										<p className="text-small text-txt-100 font-semibold">
 											{data.topPerformingStrategy.name}
 										</p>
-										<p className="text-tiny text-trade-buy">
+										<p className={cn("text-tiny", topTone.text)}>
 											{t("compliancePercent", {
 												percent:
 													data.topPerformingStrategy.compliance.toFixed(0),
@@ -174,7 +181,10 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 
 							{data.needsAttentionStrategy && (
 								<div className="bg-warning/10 border-warning/30 gap-s-300 p-s-300 sm:p-m-400 flex items-center rounded-lg border">
-									<AlertTriangle className="text-warning h-5 w-5 shrink-0" />
+									<AlertTriangle
+										className="text-warning h-5 w-5 shrink-0"
+										aria-hidden="true"
+									/>
 									<div>
 										<p className="text-tiny text-txt-300">
 											{t("needsAttention")}
@@ -197,7 +207,7 @@ const ComplianceDashboard = ({ data }: ComplianceDashboardProps) => {
 					{/* Quick Stats */}
 					<div className="border-bg-300 mt-m-400 sm:mt-m-500 gap-m-400 sm:gap-m-500 lg:gap-m-600 pt-s-300 sm:pt-m-400 flex items-center justify-center border-t">
 						<div className="gap-s-200 flex items-center">
-							<Target className="text-txt-200 h-4 w-4" />
+							<Target className="text-txt-200 h-4 w-4" aria-hidden="true" />
 							<span className="text-small text-txt-200">
 								{data.strategiesCount === 1
 									? t("strategiesCount", { count: data.strategiesCount })

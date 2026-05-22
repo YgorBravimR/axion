@@ -5,6 +5,7 @@ import { Tag } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { TagStats, TagType } from "@/types"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
+import { TradeTag } from "@/components/journal/trade-badges"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 import {
 	Table,
@@ -23,11 +24,11 @@ interface TagCloudProps {
 const getTagTypeColor = (type: TagType): string => {
 	switch (type) {
 		case "setup":
-			return "border-trade-buy/50 bg-trade-buy/10"
+			return "border-bg-300 bg-bg-300/40"
 		case "mistake":
-			return "border-trade-sell/50 bg-trade-sell/10"
+			return "border-warning/40 bg-warning/10"
 		case "general":
-			return "border-acc-100/50 bg-acc-100/10"
+			return "border-bg-300 bg-bg-200"
 		default:
 			return "border-bg-300 bg-bg-100"
 	}
@@ -69,7 +70,7 @@ const TagSection = memo(
 							className={`group p-s-300 relative rounded-lg border transition-transform hover:scale-105 ${getTagTypeColor(type)}`}
 						>
 							<div className="gap-s-200 flex items-center">
-								<Tag className="text-txt-300 h-3 w-3" />
+								<Tag className="text-txt-300 h-3 w-3" aria-hidden="true" />
 								<span
 									className={`text-txt-100 font-medium ${getTagSize(tag.tradeCount)}`}
 								>
@@ -105,7 +106,7 @@ const TagSection = memo(
 												}
 											>
 												{tHeaders("pnl")}:{" "}
-												{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+												{formatCompactCurrencyWithSign(tag.totalPnl, "BRL")}
 											</p>
 										</>
 									) : (
@@ -118,7 +119,7 @@ const TagSection = memo(
 												}
 											>
 												{tHeaders("pnl")}:{" "}
-												{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+												{formatCompactCurrencyWithSign(tag.totalPnl, "BRL")}
 											</p>
 											<p className="text-txt-200">
 												{tHeaders("winRate")}: {tag.winRate.toFixed(1)}%
@@ -152,7 +153,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 
 	const isRMode = expectancyMode === "edge"
 	const formatMetric = (value: number): string =>
-		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
+		isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "BRL")
 	const getMetric = (tag: TagStats): number =>
 		isRMode ? tag.avgR : tag.totalPnl
 
@@ -318,17 +319,11 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 											{tag.tagName}
 										</TableCell>
 										<TableCell className="px-s-300 py-s-200">
-											<span
-												className={`px-s-200 py-s-100 text-tiny rounded-sm ${
-													tag.tagType === "setup"
-														? "bg-trade-buy/20 text-trade-buy"
-														: tag.tagType === "mistake"
-															? "bg-trade-sell/20 text-trade-sell"
-															: "bg-acc-100/20 text-acc-100"
-												}`}
-											>
-												{getTagTypeLabel(tag.tagType)}
-											</span>
+											<TradeTag
+												id={`tag-cloud-tag-type-${tag.tagId}`}
+												kind={tag.tagType}
+												name={getTagTypeLabel(tag.tagType)}
+											/>
 										</TableCell>
 										<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 											{tag.tradeCount}
@@ -338,7 +333,7 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 												tag.totalPnl >= 0 ? "text-trade-buy" : "text-trade-sell"
 											}`}
 										>
-											{formatCompactCurrencyWithSign(tag.totalPnl, "R$")}
+											{formatCompactCurrencyWithSign(tag.totalPnl, "BRL")}
 										</TableCell>
 										<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 											{tag.winRate.toFixed(1)}%

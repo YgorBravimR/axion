@@ -29,9 +29,9 @@ interface ChartDataPoint {
 }
 
 const MODE_COLORS: Record<string, string> = {
-	lossRecovery: "var(--color-trade-sell)",
-	gainCompounding: "var(--color-trade-buy)",
-	mixed: "var(--color-acc-100)",
+	lossRecovery: "var(--color-chart-1)",
+	gainCompounding: "var(--color-chart-2)",
+	mixed: "var(--color-chart-3)",
 	skipped: "var(--color-bg-300)",
 }
 
@@ -64,7 +64,7 @@ const CustomTooltip = ({ active, payload, tCharts }: CustomTooltipProps) => {
 			<p
 				className={`text-small font-semibold ${isPositive ? "text-trade-buy" : "text-trade-sell"}`}
 			>
-				{formatCompactCurrency(data.pnl, "R$")}
+				{formatCompactCurrency(data.pnl, "BRL")}
 			</p>
 			<p className="text-tiny text-txt-300 capitalize">
 				{data.mode === "skipped"
@@ -133,7 +133,7 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => formatCompactCurrency(value, "R$")}
+						tickFormatter={(value) => formatCompactCurrency(value, "BRL")}
 						domain={[minPnl - padding, maxPnl + padding]}
 						width={yAxisWidth}
 						tick={AXIS_TICK}

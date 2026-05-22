@@ -15,7 +15,7 @@ interface CalculatorResultsProps {
 	currency?: string
 }
 
-const formatCurrency = (cents: number, currency = "R$"): string => {
+const formatCurrency = (cents: number, currency = "BRL"): string => {
 	const value = fromCents(cents)
 	const absValue = Math.abs(value)
 	const prefix = value < 0 ? "-" : ""
@@ -45,7 +45,7 @@ const CalculatorResults = ({
 	hasAssetSelected,
 	hasPrices,
 	isMaxRiskFromSettings = true,
-	currency = "R$",
+	currency = "BRL",
 }: CalculatorResultsProps) => {
 	const t = useTranslations("commandCenter.calculator")
 

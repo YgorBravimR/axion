@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import { Loader2, Eye, EyeOff, Check, X } from "lucide-react"
+import { Eye, EyeOff, Check, X } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 import { registerUser } from "@/app/actions/auth"
 import { cn } from "@/lib/utils"
 
@@ -28,24 +29,48 @@ const RegisterForm = () => {
 		confirmPassword: "",
 	})
 
-	const handleChange = (field: "name" | "email" | "password" | "confirmPassword", value: string) => {
+	const handleChange = (
+		field: "name" | "email" | "password" | "confirmPassword",
+		value: string
+	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }))
 		setError(null)
 	}
 
 	// Password requirements — memoized so regex tests don't run on every keystroke
-	const passwordRequirements = useMemo(() => [
-		{ key: "length", test: formData.password.length >= 8, label: tReq("length") },
-		{ key: "uppercase", test: /[A-Z]/.test(formData.password), label: tReq("uppercase") },
-		{ key: "lowercase", test: /[a-z]/.test(formData.password), label: tReq("lowercase") },
-		{ key: "number", test: /[0-9]/.test(formData.password), label: tReq("number") },
-	], [formData.password, tReq])
+	const passwordRequirements = useMemo(
+		() => [
+			{
+				key: "length",
+				test: formData.password.length >= 8,
+				label: tReq("length"),
+			},
+			{
+				key: "uppercase",
+				test: /[A-Z]/.test(formData.password),
+				label: tReq("uppercase"),
+			},
+			{
+				key: "lowercase",
+				test: /[a-z]/.test(formData.password),
+				label: tReq("lowercase"),
+			},
+			{
+				key: "number",
+				test: /[0-9]/.test(formData.password),
+				label: tReq("number"),
+			},
+		],
+		[formData.password, tReq]
+	)
 
 	const allRequirementsMet = useMemo(
 		() => passwordRequirements.every((req) => req.test),
 		[passwordRequirements]
 	)
-	const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
+	const passwordsMatch =
+		formData.password === formData.confirmPassword &&
+		formData.confirmPassword.length > 0
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
@@ -90,6 +115,7 @@ const RegisterForm = () => {
 					width={200}
 					height={57}
 					className="h-14 w-auto object-contain"
+					style={{ height: "auto" }}
 					data-axion-logo="invertable"
 					priority
 				/>
@@ -179,7 +205,7 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowPassword(!showPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
 							aria-label={showPassword ? t("hidePassword") : t("showPassword")}
 						>
 							{showPassword ? (
@@ -239,9 +265,11 @@ const RegisterForm = () => {
 							size="icon"
 							type="button"
 							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 -translate-y-1/2 h-11 w-11 min-h-11 min-w-11"
+							className="text-txt-300 hover:text-txt-200 absolute top-1/2 right-1 h-11 min-h-11 w-11 min-w-11 -translate-y-1/2"
 							aria-label={
-								showConfirmPassword ? t("hideConfirmPassword") : t("showConfirmPassword")
+								showConfirmPassword
+									? t("hideConfirmPassword")
+									: t("showConfirmPassword")
 							}
 						>
 							{showConfirmPassword ? (
@@ -264,9 +292,7 @@ const RegisterForm = () => {
 					className="h-11 w-full"
 					disabled={isPending || !allRequirementsMet || !passwordsMatch}
 				>
-					{isPending && (
-						<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
-					)}
+					{isPending && <Spinner className="mr-s-200" size="md" />}
 					{t("submit")}
 				</Button>
 			</form>
@@ -275,7 +301,7 @@ const RegisterForm = () => {
 				{t("hasAccount")}{" "}
 				<Link
 					href="/login"
-					className="text-brand-500 hover:text-brand-400 font-medium"
+					className="text-acc-100 hover:text-acc-100 font-medium"
 				>
 					{t("login")}
 				</Link>

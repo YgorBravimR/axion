@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Search } from "lucide-react"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
@@ -93,15 +92,13 @@ const VALID_PERIODS: JournalPeriod[] = ["day", "week", "month", "all", "custom"]
  * Period and custom date range are persisted in URL params.
  */
 const JournalContent = () => {
-	const router = useRouter()
 	useRegisterPageGuide(journalGuide)
 	const t = useTranslations("journal")
 	const tTrade = useTranslations("trade")
-	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
 	const effectiveDate = useEffectiveDate()
-	const [, startTransition] = useTransition()
 	const urlParams = useUrlParams()
+	const latestRequestRef = useRef(0)
 
 	// Read period from URL, default to "week"
 	const periodParam = urlParams.get("period") ?? "week"
@@ -222,9 +219,13 @@ const JournalContent = () => {
 	const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null)
 	const [isDeleting, setIsDeleting] = useState(false)
 
-	// Fetch trades when period or custom range changes
+	// Fetch trades when period or custom range changes.
+	// Uses a request-id sentinel so a slow response from an outdated period (e.g.
+	// "all" fired right before user switched to "day") cannot overwrite the
+	// current period's data.
 	useEffect(() => {
 		const fetchTrades = async () => {
+			const requestId = ++latestRequestRef.current
 			setIsLoading(true)
 			const { from, to } = getDateRange(period, effectiveDate, customDateRange)
 
@@ -263,26 +264,38 @@ const JournalContent = () => {
 						}
 					: undefined
 
-			const result = await getTradesGroupedByDay(from, to, ext)
+			try {
+				const result = await getTradesGroupedByDay(from, to, ext)
 
-			if (result.status === "success" && result.data) {
-				setTradesByDay(result.data)
-				const total = result.data.reduce(
-					(sum, day) => sum + day.trades.length,
-					0
-				)
-				setTotalTrades(total)
-			} else {
+				if (requestId !== latestRequestRef.current) {
+					return
+				}
+
+				if (result.status === "success" && result.data) {
+					setTradesByDay(result.data)
+					const total = result.data.reduce(
+						(sum, day) => sum + day.trades.length,
+						0
+					)
+					setTotalTrades(total)
+				} else {
+					setTradesByDay([])
+					setTotalTrades(0)
+				}
+			} catch {
+				if (requestId !== latestRequestRef.current) {
+					return
+				}
 				setTradesByDay([])
 				setTotalTrades(0)
+			} finally {
+				if (requestId === latestRequestRef.current) {
+					setIsLoading(false)
+				}
 			}
-
-			setIsLoading(false)
 		}
 
-		startTransition(() => {
-			void fetchTrades()
-		})
+		void fetchTrades()
 	}, [
 		period,
 		customDateRange?.from?.getTime(),
@@ -309,13 +322,6 @@ const JournalContent = () => {
 			}
 		},
 		[urlParams]
-	)
-
-	const handleTradeClick = useCallback(
-		(tradeId: string) => {
-			router.push(`/journal/${tradeId}`)
-		},
-		[router]
 	)
 
 	// Delete handlers
@@ -431,13 +437,12 @@ const JournalContent = () => {
 							className="font-medium"
 						/>
 						<span className="text-txt-300">
-							{periodSummary.wins}
-							{tCommon("winAbbr")} {periodSummary.losses}
-							{tCommon("lossAbbr")}
-							{periodSummary.breakevens > 0
-								? ` ${periodSummary.breakevens}${tCommon("breakevenAbbr")}`
-								: ""}{" "}
-							({periodWinRate.toFixed(0)}%)
+							{t("periodResultSummary", {
+								wins: periodSummary.wins,
+								losses: periodSummary.losses,
+								breakevens: periodSummary.breakevens,
+								rate: periodWinRate.toFixed(0),
+							})}
 						</span>
 					</div>
 				)}
@@ -454,7 +459,7 @@ const JournalContent = () => {
 			/>
 
 			{/* Loading State */}
-			{isLoading && <LoadingSpinner size="md" className="h-50" />}
+			{isLoading && <LoadingSpinner size="md" className="min-h-48" />}
 
 			{/* Empty State */}
 			{!isLoading && tradesByDay.length === 0 && (
@@ -477,7 +482,6 @@ const JournalContent = () => {
 						<TradeDayGroup
 							key={dayData.date}
 							dayData={dayData}
-							onTradeClick={handleTradeClick}
 							deletingTradeId={deletingTradeId}
 							onDeleteRequest={handleDeleteRequest}
 							onDeleteConfirm={handleDeleteConfirm}

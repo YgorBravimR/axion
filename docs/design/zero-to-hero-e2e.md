@@ -461,6 +461,8 @@ open playwright-report/index.html
 
 ### 9.2 CI
 
+> **Status (2026-05-21):** The `journey-ci` and `journey-demo` Playwright projects are defined in `playwright.config.ts` but are **not yet wired into `.github/workflows/`**. The table below is the intended integration — tracked in `docs/backlog.md`.
+
 | Trigger               | Mode         | Tags       | Workers      | Estimate   |
 | --------------------- | ------------ | ---------- | ------------ | ---------- |
 | **PR (`lint.yml`)**   | journey-ci   | `@journey` | parallel (4) | ~3-4 min   |
@@ -554,12 +556,9 @@ TBD. Suggest: whoever owns onboarding metrics owns the journey suite (skin in th
 - Run full PR-mode chain.
 - **Done criteria**: Stages 0-4 green in CI; demo mode video covers account-to-daily-loop story.
 
-### Phase 3 — Full chain (target: 2-3 days, 1 PR)
+### Phase 3 — Full chain ✓ (stages shipped; CI wiring deferred)
 
-- Implement Stages 5 (Weekly), 6 (Monthly+Tax), 7 (Quarter+Year), 8 (Improvement).
-- Add multi-month history seeder for Stage 7.
-- Run full nightly chain (serial mode).
-- **Done criteria**: all 9 stages green; demo run produces ~25-min watchable end-to-end video.
+Stages 5-8 (Weekly, Monthly+Tax, Quarter+Year, Improvement) plus Hawks add-ons (`09-hawks-daily-loop.spec.ts`, `09b-seed-hawks-history.spec.ts`) and the multi-month seeder (`04b-seed-history.spec.ts` + `helpers/seed-bravo-history.ts`) are all shipped — 12 spec files + 8 helpers exist in `e2e/journey/`. The remaining gap is CI wiring (§9.2) — no `journey-ci` / `@journey` reference in `.github/workflows/` as of 2026-05-21. Tracked in `docs/backlog.md`.
 
 ### Phase 4 — Edge case separation (ongoing)
 

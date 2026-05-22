@@ -116,8 +116,9 @@ export const MonthlyReportCard = ({
 						size="sm"
 						onClick={() => handleMonthChange(monthOffset + 1)}
 						disabled={isPending}
+						aria-label={tCommon("previous")}
 					>
-						<ChevronLeft className="h-4 w-4" />
+						<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 					</Button>
 					<span className="text-small text-txt-200">{monthLabel}</span>
 					<Button
@@ -126,11 +127,15 @@ export const MonthlyReportCard = ({
 						size="sm"
 						onClick={() => handleMonthChange(Math.max(0, monthOffset - 1))}
 						disabled={isPending || monthOffset === 0}
+						aria-label={tCommon("next")}
 					>
-						<ChevronRight className="h-4 w-4" />
+						<ChevronRight className="h-4 w-4" aria-hidden="true" />
 					</Button>
 					{isPending && (
-						<Loader2 className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						<Loader2
+							className="text-txt-300 h-4 w-4 animate-spin motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
 					<Button
 						id="monthly-report-download-pdf"
@@ -144,7 +149,7 @@ export const MonthlyReportCard = ({
 						}}
 						aria-label={t("downloadPdf")}
 					>
-						<Download className="h-4 w-4" />
+						<Download className="h-4 w-4" aria-hidden="true" />
 					</Button>
 				</div>
 			</div>
@@ -212,7 +217,10 @@ export const MonthlyReportCard = ({
 					<div className="mt-m-400 gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 						{summary.bestDay && (
 							<div className="gap-s-200 bg-trade-buy-muted px-s-300 py-s-200 flex items-center rounded-sm">
-								<TrendingUp className="text-trade-buy h-4 w-4" />
+								<TrendingUp
+									className="text-trade-buy h-4 w-4"
+									aria-hidden="true"
+								/>
 								<div>
 									<p className="text-tiny text-txt-200">{t("bestDay")}</p>
 									<p className="text-small">
@@ -231,7 +239,10 @@ export const MonthlyReportCard = ({
 						)}
 						{summary.worstDay && (
 							<div className="gap-s-200 bg-trade-sell-muted px-s-300 py-s-200 flex items-center rounded-sm">
-								<TrendingDown className="text-trade-sell h-4 w-4" />
+								<TrendingDown
+									className="text-trade-sell h-4 w-4"
+									aria-hidden="true"
+								/>
 								<div>
 									<p className="text-tiny text-txt-200">{t("worstDay")}</p>
 									<p className="text-small">
@@ -267,7 +278,7 @@ export const MonthlyReportCard = ({
 							{formattedWeeklyBreakdown.length > 0 && (
 								<div>
 									<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
-										<Calendar className="h-4 w-4" />
+										<Calendar className="h-4 w-4" aria-hidden="true" />
 										{t("weeklyBreakdown")}
 									</h3>
 									<div className="mt-s-300 space-y-s-200">

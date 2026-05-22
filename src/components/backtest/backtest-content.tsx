@@ -18,18 +18,26 @@ import { Play, RotateCcw } from "lucide-react"
 import { runBacktestAction } from "@/app/actions/backtest"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
+import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
 import { OrbEntrySection } from "./sections/orb-entry-section"
 import { DezkEntrySection } from "./sections/dezk-entry-section"
+import { HawksEntrySection } from "./sections/hawks-entry-section"
 import { StopProtectionSection } from "./sections/stop-protection-section"
 import { TargetsExitSection } from "./sections/targets-exit-section"
 import { SizingExecutionSection } from "./sections/sizing-execution-section"
 import { BacktestSummaryCards } from "./backtest-summary-cards"
 import { BacktestEquityChart } from "./backtest-equity-chart"
 import { BacktestTradesTable } from "./backtest-trades-table"
+import { BacktestTradeChartModal } from "./backtest-trade-chart-modal"
+import { BacktestHawksResultsPanel } from "./backtest-hawks-results-panel"
 import type { DataSourceInfo } from "@/types/candle"
-import type { BacktestResult, StrategyRecipe } from "@/types/backtest"
+import type {
+	BacktestResult,
+	BacktestTrade,
+	StrategyRecipe,
+} from "@/types/backtest"
 
-const ALL_PRESETS = [...orbPresets, ...dezkPresets]
+const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
 
 interface BacktestContentProps {
 	dataSources: DataSourceInfo[]
@@ -59,6 +67,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	// Results state
 	const [result, setResult] = useState<BacktestResult | null>(null)
 	const [hasRun, setHasRun] = useState(false)
+	const [selectedTrade, setSelectedTrade] = useState<BacktestTrade | null>(null)
 
 	const selectedSource = dataSources[selectedSourceIndex]
 
@@ -98,6 +107,8 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			setRecipe(orbPresets[0])
 		} else if (type === "macd_wma_alignment") {
 			setRecipe(dezkPresets[0])
+		} else if (type === "hawks_triple_screen") {
+			setRecipe(hawksPresets[0])
 		}
 	}, [])
 
@@ -123,37 +134,44 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 		[dataSources, recipe.sizing.type]
 	)
 
-	const handleQuickRange = useCallback((value: string) => {
-		setQuickRangeKey(value)
-		const now = new Date()
-		let from: Date
-		const to = now
+	const handleQuickRange = useCallback(
+		(value: string) => {
+			setQuickRangeKey(value)
+			const now = new Date()
+			let from: Date
+			const to = selectedSource?.candleDateTo
+				? new Date(selectedSource.candleDateTo)
+				: now
 
-		switch (value) {
-			case "all":
-				from = new Date("2020-01-01")
-				break
-			case "this_month":
-				from = new Date(now.getFullYear(), now.getMonth(), 1)
-				break
-			case "this_year":
-				from = new Date(now.getFullYear(), 0, 1)
-				break
-			case "3m":
-				from = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
-				break
-			case "6m":
-				from = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
-				break
-			case "1y":
-				from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
-				break
-			default:
-				return
-		}
+			switch (value) {
+				case "all":
+					from = selectedSource?.candleDateFrom
+						? new Date(selectedSource.candleDateFrom)
+						: new Date("2020-01-01")
+					break
+				case "this_month":
+					from = new Date(now.getFullYear(), now.getMonth(), 1)
+					break
+				case "this_year":
+					from = new Date(now.getFullYear(), 0, 1)
+					break
+				case "3m":
+					from = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+					break
+				case "6m":
+					from = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
+					break
+				case "1y":
+					from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+					break
+				default:
+					return
+			}
 
-		setDateRange({ from, to })
-	}, [])
+			setDateRange({ from, to })
+		},
+		[selectedSource]
+	)
 
 	const handleDateRangeManual = useCallback((range: DateRange | undefined) => {
 		setDateRange(range)
@@ -245,6 +263,9 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
 								<SelectItem value="macd_wma_alignment">
 									{t("dezk.name")}
+								</SelectItem>
+								<SelectItem value="hawks_triple_screen">
+									{t("hawks.name")}
 								</SelectItem>
 							</SelectContent>
 						</Select>
@@ -343,6 +364,16 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							id="backtest-date-range"
 							value={dateRange}
 							onChange={handleDateRangeManual}
+							minDate={
+								selectedSource?.candleDateFrom
+									? new Date(selectedSource.candleDateFrom)
+									: undefined
+							}
+							maxDate={
+								selectedSource?.candleDateTo
+									? new Date(selectedSource.candleDateTo)
+									: undefined
+							}
 						/>
 					</div>
 				</div>
@@ -357,6 +388,9 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 					)}
 					{recipe.entry.type === "macd_wma_alignment" && (
 						<DezkEntrySection recipe={recipe} onRecipeChange={setRecipe} />
+					)}
+					{recipe.entry.type === "hawks_triple_screen" && (
+						<HawksEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}
 
 					{/* Section 3: Stop & Protection */}
@@ -376,7 +410,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							disabled={isPending || !selectedSource || !dateFrom || !dateTo}
 							size="lg"
 						>
-							<Play className="mr-s-200 h-4 w-4" />
+							<Play className="mr-s-200 h-4 w-4" aria-hidden="true" />
 							{t("config.runBacktest")}
 						</Button>
 					</div>
@@ -393,15 +427,38 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							onClick={handleReset}
 							className="gap-s-200"
 						>
-							<RotateCcw className="h-4 w-4" />
+							<RotateCcw className="h-4 w-4" aria-hidden="true" />
 							{t("config.newBacktest")}
 						</Button>
 					</div>
-					<BacktestSummaryCards summary={result.summary} />
+					<BacktestSummaryCards
+						summary={result.summary}
+						engineVersion={result.engineVersion}
+					/>
 					<BacktestEquityChart equityCurve={result.equityCurve} />
-					<BacktestTradesTable trades={result.trades} />
+					{recipe.entry.type === "hawks_triple_screen" && (
+						<BacktestHawksResultsPanel
+							trades={result.trades}
+							dayBreakdown={result.dayBreakdown}
+						/>
+					)}
+					<BacktestTradesTable
+						trades={result.trades}
+						onTradeView={setSelectedTrade}
+					/>
 				</div>
 			)}
+
+			<BacktestTradeChartModal
+				open={selectedTrade !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setSelectedTrade(null)
+					}
+				}}
+				trade={selectedTrade}
+				source={selectedSource ?? null}
+			/>
 
 			{/* Empty state — only after a run completes with no results */}
 			{!result && !isPending && hasRun && (

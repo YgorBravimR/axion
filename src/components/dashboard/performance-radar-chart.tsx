@@ -10,6 +10,7 @@ import {
 	PolarRadiusAxis,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
+import { Panel } from "@/components/ui/panel"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 import type { RadarChartData } from "@/types"
 
@@ -95,23 +96,19 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<Panel padding="md">
 				<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 					{t("radar.title")}
 				</h3>
 				<div className="text-txt-300 flex h-[200px] items-center justify-center sm:h-[250px]">
 					{t("noData")}
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
 	return (
-		<div
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
-			role="region"
-			aria-label={t("radar.title")}
-		>
+		<Panel padding="md" role="region" aria-label={t("radar.title")}>
 			<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 				{t("radar.title")}
 			</h3>
@@ -145,6 +142,6 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 					/>
 				</RadarChart>
 			</ChartContainer>
-		</div>
+		</Panel>
 	)
 }

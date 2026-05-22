@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { updateStrategySchema } from "@/lib/validations/strategy"
+import { getCurrentVersionId } from "@/lib/strategy-versions"
 
 interface ArchUpdateStrategyBody {
 	id: string
@@ -126,9 +127,23 @@ const POST = async (request: NextRequest) => {
 				.where(eq(strategyConditions.strategyId, id))
 
 			if (conditionsToInsert.length) {
+				const versionId = await getCurrentVersionId(id, existing.currentVersion)
+				if (!versionId) {
+					return archError(
+						"Strategy version missing",
+						[
+							{
+								code: "MISSING_VERSION",
+								detail: `Strategy ${id} is missing a v${existing.currentVersion} row`,
+							},
+						],
+						500
+					)
+				}
 				await db.insert(strategyConditions).values(
 					conditionsToInsert.map((condition) => ({
 						strategyId: id,
+						strategyVersionId: versionId,
 						conditionId: condition.conditionId,
 						tier: condition.tier,
 						sortOrder: condition.sortOrder ?? 0,

@@ -11,6 +11,7 @@ type StrategyPresetId =
 	| "orb_test_2"
 	| "orb_test_3"
 	| "orb_test_4"
+	| "hawks_v0"
 	| "custom"
 
 // ═══════════════════════════════════════════════════════════════════
@@ -75,9 +76,22 @@ interface MACDWMAConfig {
 	endTime: number // 1630
 }
 
+// Hawks triple-screen: 5m brick + 15m EMA aligned + 60m EMA aligned + MACD direction.
+// Stop = 2 bricks back (Hawks 1R = 2 Renko boxes), via signal.stopReference = 2·open − close.
+// Indicator keys must match candle-header-mappings.ts and the candle JSONB.
+interface HawksTripleScreenConfig {
+	ema27_60m_key: string // default: "mme27_60m"
+	ema55_60m_key: string // default: "mme55_60m"
+	ema27_15m_key: string // default: "mme27_15m"
+	macd_key: string // default: "macd"
+	startTime: number // 930
+	endTime: number // 1730
+}
+
 type EntryModuleConfig =
 	| { type: "orb_breakout"; config: OrbEntryConfig }
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
+	| { type: "hawks_triple_screen"; config: HawksTripleScreenConfig }
 
 interface EntryModule {
 	init: (_config: OrbEntryConfig) => EntryState
@@ -442,6 +456,10 @@ interface BacktestResult {
 	equityCurve: EquityCurvePoint[]
 	summary: BacktestSummary
 	dayBreakdown: DayBreakdown[]
+	// Methodology-engine version stamp. Set when a strategy's engine math has revisions
+	// users should be aware of (e.g. Hawks v0.2 corrected the 2-brick stop). Surface in
+	// the UI so cached exports/screenshots are traceable to the engine that produced them.
+	engineVersion?: string
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -476,6 +494,7 @@ export type {
 	EntryModuleConfig,
 	OrbEntryConfig,
 	MACDWMAConfig,
+	HawksTripleScreenConfig,
 	EntryModule,
 	// Stop
 	StopPhase,

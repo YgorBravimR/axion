@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import { Moon, Save, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { Panel } from "@/components/ui/panel"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
+import { cn } from "@/lib/utils"
 import { upsertDailyPlan } from "@/app/actions/fractal-plan/daily"
 import type { DailyPlan } from "@/db/schema"
 
@@ -14,12 +16,14 @@ interface PostMarketNotesProps {
 	dailyPlan: DailyPlan | null
 	onRefresh: () => void
 	isReadOnly?: boolean
+	isRefreshing?: boolean
 }
 
 export const PostMarketNotes = ({
 	dailyPlan,
 	onRefresh,
 	isReadOnly = false,
+	isRefreshing = false,
 }: PostMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
 	const tPlan = useTranslations("commandCenter.plan")
@@ -61,12 +65,9 @@ export const PostMarketNotes = ({
 
 	if (!dailyPlan) {
 		return (
-			<div
-				id="cc-post-market-notes"
-				className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
-			>
+			<Panel id="cc-post-market-notes" tone="muted">
 				<div className="gap-s-200 flex items-center">
-					<Moon className="text-acc-100 h-5 w-5" />
+					<Moon className="text-txt-300 h-5 w-5" aria-hidden="true" />
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("postMarket")}
 					</h3>
@@ -74,18 +75,22 @@ export const PostMarketNotes = ({
 				<p className="mt-s-200 text-tiny text-txt-300">
 					{tPlan("noPlanPrompt")}
 				</p>
-			</div>
+			</Panel>
 		)
 	}
 
 	return (
-		<div
+		<Panel
 			id="cc-post-market-notes"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			aria-busy={isRefreshing || undefined}
+			className={cn(
+				"transition-opacity duration-200",
+				isRefreshing && "opacity-60"
+			)}
 		>
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
-					<Moon className="text-acc-100 h-5 w-5" />
+					<Moon className="text-txt-300 h-5 w-5" aria-hidden="true" />
 					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("postMarket")}
 					</h3>
@@ -124,6 +129,6 @@ export const PostMarketNotes = ({
 					disabled={isReadOnly}
 				/>
 			</div>
-		</div>
+		</Panel>
 	)
 }

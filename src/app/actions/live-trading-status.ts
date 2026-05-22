@@ -4,7 +4,6 @@ import { db } from "@/db/drizzle"
 import { trades, riskManagementProfiles } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
@@ -76,7 +75,6 @@ export const getLiveTradingStatus = async (
 			Number(day.dailyTargetR.value) * oneRCents
 		)
 
-		const dek = await getUserDek(userId)
 		const rawTodaysTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
@@ -86,15 +84,7 @@ export const getLiveTradingStatus = async (
 			),
 			orderBy: (t, { asc }) => [asc(t.entryDate)],
 		})
-		const todaysTrades = dek
-			? rawTodaysTrades.map(
-					(t) =>
-						decryptTradeFields(
-							t as unknown as Record<string, unknown>,
-							dek
-						) as unknown as typeof t
-				)
-			: rawTodaysTrades
+		const todaysTrades = rawTodaysTrades
 
 		const tradeInputs = todaysTrades.map((trade) => ({
 			pnlCents: Number(trade.pnl) || 0,

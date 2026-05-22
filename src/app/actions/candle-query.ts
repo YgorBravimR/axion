@@ -16,9 +16,8 @@ import {
 	assets,
 	priceDataVersions,
 } from "@/db/schema"
-import { and, eq, gte, lte, asc } from "drizzle-orm"
+import { and, eq, gte, lte, asc, min, max } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 
 // Fetch candles for a specific time range
@@ -102,37 +101,60 @@ export const getCandlesForRange = async (
 // Fetch available assets with price data
 export const getAssetsWithPriceData = async () => {
 	try {
-		const versions = await db.query.priceDataVersions.findMany({
-			with: {
-				asset: {
-					columns: {
-						id: true,
-						symbol: true,
-						name: true,
-						tickSize: true,
-						tickValue: true,
-						currency: true,
+		const [versions, dateRangeRows] = await Promise.all([
+			db.query.priceDataVersions.findMany({
+				with: {
+					asset: {
+						columns: {
+							id: true,
+							symbol: true,
+							name: true,
+							tickSize: true,
+							tickValue: true,
+							currency: true,
+						},
 					},
+					timeframe: { columns: { id: true, code: true, name: true } },
 				},
-				timeframe: { columns: { id: true, code: true, name: true } },
-			},
-		})
+			}),
+			db
+				.select({
+					assetId: priceCandles.assetId,
+					timeframeId: priceCandles.timeframeId,
+					dateFrom: min(priceCandles.timestamp),
+					dateTo: max(priceCandles.timestamp),
+				})
+				.from(priceCandles)
+				.groupBy(priceCandles.assetId, priceCandles.timeframeId),
+		])
+
+		const dateRangeMap = new Map(
+			dateRangeRows.map((r) => [
+				`${r.assetId}-${r.timeframeId}`,
+				{ dateFrom: r.dateFrom, dateTo: r.dateTo },
+			])
+		)
 
 		return {
 			status: "success" as const,
-			data: versions.map((v) => ({
-				assetId: v.asset.id,
-				assetSymbol: v.asset.symbol,
-				assetName: v.asset.name,
-				assetTickSize: Number(v.asset.tickSize),
-				assetTickValueCents: v.asset.tickValue,
-				assetCurrency: v.asset.currency,
-				timeframeId: v.timeframe.id,
-				timeframeCode: v.timeframe.code,
-				timeframeName: v.timeframe.name,
-				rowCount: v.rowCount,
-				lastImported: v.lastImportedAt?.toISOString() ?? null,
-			})),
+			data: versions.map((v) => {
+				const dr = dateRangeMap.get(`${v.asset.id}-${v.timeframe.id}`)
+				return {
+					assetId: v.asset.id,
+					assetSymbol: v.asset.symbol,
+					assetName: v.asset.name,
+					assetTickSize: Number(v.asset.tickSize),
+					assetTickValueCents: v.asset.tickValue,
+					assetCurrency: v.asset.currency,
+					timeframeId: v.timeframe.id,
+					timeframeCode: v.timeframe.code,
+					timeframeName: v.timeframe.name,
+					rowCount: v.rowCount,
+					lastImported: v.lastImportedAt?.toISOString() ?? null,
+					candleDateFrom: dr?.dateFrom?.toISOString().slice(0, 10) ?? null,
+					candleDateTo: dr?.dateTo?.toISOString().slice(0, 10) ?? null,
+				}
+			}),
 		}
 	} catch {
 		return { status: "error" as const, data: [] }
@@ -159,7 +181,7 @@ export const getTradeWithCandles = async (
 		const { accountId, userId } = await requireAuth()
 
 		// 1. Fetch the trade by ID with executions
-		let trade = await db.query.trades.findFirst({
+		const trade = await db.query.trades.findFirst({
 			where: and(
 				eq(trades.id, tradeId),
 				eq(trades.accountId, accountId),
@@ -176,12 +198,6 @@ export const getTradeWithCandles = async (
 				status: "error",
 				message: "Trade not found",
 			}
-		}
-
-		// Decrypt trade fields
-		const dek = await getUserDek(userId)
-		if (dek) {
-			trade = decryptTradeFields(trade, dek)
 		}
 
 		// 2. Determine the asset — look up the asset record by symbol

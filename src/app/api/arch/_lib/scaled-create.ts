@@ -1,6 +1,5 @@
 import { db } from "@/db/drizzle"
 import { tradeExecutions } from "@/db/schema"
-import { encryptExecutionFields } from "@/lib/user-crypto"
 import { toCents } from "@/lib/money"
 import { updateTradeAggregates } from "@/app/actions/executions"
 
@@ -156,24 +155,10 @@ const validateScaledExecutions = (
  */
 const persistScaledExecutions = async (
 	tradeId: string,
-	legs: ValidatedScaledExecution[],
-	dek: string | null
+	legs: ValidatedScaledExecution[]
 ): Promise<void> => {
 	const insertValues = legs.map((leg) => {
 		const executionValue = toCents(leg.price * leg.quantity)
-		const encrypted = dek
-			? encryptExecutionFields(
-					{
-						price: leg.price,
-						quantity: leg.quantity,
-						commission: leg.commission,
-						fees: leg.fees,
-						slippage: leg.slippage,
-						executionValue,
-					},
-					dek
-				)
-			: {}
 
 		return {
 			tradeId,
@@ -187,12 +172,11 @@ const persistScaledExecutions = async (
 			fees: String(leg.fees),
 			slippage: String(leg.slippage),
 			executionValue: String(executionValue),
-			...encrypted,
 		}
 	})
 
 	await db.insert(tradeExecutions).values(insertValues)
-	await updateTradeAggregates(tradeId, dek)
+	await updateTradeAggregates(tradeId)
 }
 
 export { validateScaledExecutions, persistScaledExecutions }

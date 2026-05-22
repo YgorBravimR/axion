@@ -5,7 +5,7 @@ import type { KeyboardEvent } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react"
 import type { DayTrade } from "@/types"
-import { formatBrlWithSign } from "@/lib/formatting"
+import { useFormatting } from "@/hooks/use-formatting"
 import { ColoredValue } from "@/components/shared"
 import {
 	Table,
@@ -43,6 +43,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 	const t = useTranslations("dashboard")
 	const tCommon = useTranslations("common")
 	const locale = useLocale()
+	const { formatBrlWithSign } = useFormatting()
 
 	// H9: Stable formatter reference derived from locale, not recreated on every render
 	const formatPrice = getFormatPrice(locale)

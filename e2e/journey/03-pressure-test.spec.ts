@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { annotate } from "./helpers/annotate"
 import { screenshotIfDemo } from "./helpers/screenshot-if-demo"
 import { loadStageState, saveStageState } from "./helpers/storage-state"
@@ -28,78 +28,89 @@ import { loadStageState, saveStageState } from "./helpers/storage-state"
  * @journey @stage:pressure-test
  */
 
-test.describe("Journey Stage 3 — Pressure-Test", () => {
-	test.use(loadStageState(2))
+test.describe(
+	"Journey Stage 3 — Pressure-Test",
+	{ tag: ["@journey", "@stage:pressure-test"] },
+	() => {
+		test.use(loadStageState(6))
 
-	test("Bravo audits her plan across backtest, monte carlo, risk-sim, and equity shield", async ({
-		page,
-	}) => {
-		await annotate(
+		test("Bravo audits her plan across backtest, monte carlo, risk-sim, and equity shield", async ({
 			page,
-			"Stage 3: Before risking real money — stress-test the plan"
-		)
+		}) => {
+			await annotate(
+				page,
+				"Stage 3: Before risking real money — stress-test the plan"
+			)
 
-		// ── 3a — Backtest surface (empty-state: no strategies yet)
-		await annotate(page, "Backtest — strategy vs. historical data")
-		await page.goto("/en/backtest")
-		await page.waitForLoadState("networkidle")
-		await expect(
-			page.getByRole("heading", { level: 1, name: /backtest/i })
-		).toBeVisible({ timeout: 10000 })
-		await screenshotIfDemo(page, "03-01-backtest")
+			// ── 3a — Backtest surface (empty-state: no strategies yet)
+			await annotate(page, "Backtest — strategy vs. historical data")
+			await page.goto("/en/backtest")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
+			await expect(
+				page.getByRole("heading", { level: 1, name: /backtest/i })
+			).toBeVisible({ timeout: 10000 })
+			await screenshotIfDemo(page, "03-01-backtest")
 
-		// ── 3b — Monte Carlo V1 (Edge Expectancy) — Manual mode produces a result
-		await annotate(
-			page,
-			"Monte Carlo — 1000 trial edge expectancy in manual mode"
-		)
-		await page.goto("/en/monte-carlo")
-		await page.waitForLoadState("networkidle")
-		await expect(
-			page.getByRole("heading", { name: /monte carlo/i }).first()
-		).toBeVisible({ timeout: 10000 })
+			// ── 3b — Monte Carlo V1 (Edge Expectancy) — Manual mode produces a result
+			await annotate(
+				page,
+				"Monte Carlo — 1000 trial edge expectancy in manual mode"
+			)
+			await page.goto("/en/monte-carlo")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
+			await expect(
+				page.getByRole("heading", { name: /monte carlo/i }).first()
+			).toBeVisible({ timeout: 10000 })
 
-		// Switch to Manual to bypass the "needs trades" data-source path.
-		const manualSwitch = page.getByText(/manual/i).first()
-		if (await manualSwitch.isVisible().catch(() => false)) {
-			await manualSwitch.click()
-		}
+			// Switch to Manual to bypass the "needs trades" data-source path.
+			const manualSwitch = page.getByText(/manual/i).first()
+			if (await manualSwitch.isVisible().catch(() => false)) {
+				await manualSwitch.click()
+			}
 
-		// Inputs use stable form IDs (see simulation-params-form.tsx:64/94/180).
-		await page.locator("#simulation-win-rate").fill("55")
-		await page.locator("#simulation-reward-risk-ratio").fill("2")
-		await page.locator("#simulation-count").fill("1000")
-		await screenshotIfDemo(page, "03-02-monte-carlo-params")
+			// Inputs use stable form IDs (see simulation-params-form.tsx:64/94/180).
+			await page.locator("#simulation-win-rate").fill("55")
+			await page.locator("#simulation-reward-risk-ratio").fill("2")
+			await page.locator("#simulation-count").fill("1000")
+			await screenshotIfDemo(page, "03-02-monte-carlo-params")
 
-		await page.locator("#monte-carlo-run-simulation").click()
-		// Run-again button is the deterministic post-result control.
-		await expect(page.locator("#monte-carlo-run-again")).toBeVisible({
-			timeout: 30000,
+			await page.locator("#monte-carlo-run-simulation").click()
+			// Run-again button is the deterministic post-result control.
+			await expect(page.locator("#monte-carlo-run-again")).toBeVisible({
+				timeout: 30000,
+			})
+			await screenshotIfDemo(page, "03-03-monte-carlo-results")
+
+			// ── 3c — Risk Simulation surface (empty-state: no trades to replay)
+			await annotate(
+				page,
+				"Risk Simulation — replay history under tighter rules"
+			)
+			await page.goto("/en/risk-simulation")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
+			await expect(
+				page.getByRole("heading", { name: /risk simulation/i })
+			).toBeVisible({ timeout: 10000 })
+			await screenshotIfDemo(page, "03-04-risk-simulation")
+
+			// ── 3d — Equity Shield surface (empty-state: no equity curve yet)
+			await annotate(page, "Equity Shield — drawdown firewall calibration")
+			await page.goto("/en/equity-shield")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
+			await expect(
+				page.getByRole("heading", { name: /equity shield/i })
+			).toBeVisible({ timeout: 10000 })
+			await screenshotIfDemo(page, "03-05-equity-shield")
+
+			await annotate(
+				page,
+				"Plan survived pressure — next stage: daily loop, first real trades"
+			)
+			await saveStageState(page, 7)
 		})
-		await screenshotIfDemo(page, "03-03-monte-carlo-results")
-
-		// ── 3c — Risk Simulation surface (empty-state: no trades to replay)
-		await annotate(page, "Risk Simulation — replay history under tighter rules")
-		await page.goto("/en/risk-simulation")
-		await page.waitForLoadState("networkidle")
-		await expect(
-			page.getByRole("heading", { name: /risk simulation/i })
-		).toBeVisible({ timeout: 10000 })
-		await screenshotIfDemo(page, "03-04-risk-simulation")
-
-		// ── 3d — Equity Shield surface (empty-state: no equity curve yet)
-		await annotate(page, "Equity Shield — drawdown firewall calibration")
-		await page.goto("/en/equity-shield")
-		await page.waitForLoadState("networkidle")
-		await expect(
-			page.getByRole("heading", { name: /equity shield/i })
-		).toBeVisible({ timeout: 10000 })
-		await screenshotIfDemo(page, "03-05-equity-shield")
-
-		await annotate(
-			page,
-			"Plan survived pressure — next stage: daily loop, first real trades"
-		)
-		await saveStageState(page, 3)
-	})
-})
+	}
+)

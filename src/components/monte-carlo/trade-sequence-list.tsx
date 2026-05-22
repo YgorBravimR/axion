@@ -122,12 +122,12 @@ export const TradeSequenceList = ({
 					>
 						{showAll ? (
 							<>
-								<ChevronUp className="mr-s-100 h-4 w-4" />
+								<ChevronUp className="mr-s-100 h-4 w-4" aria-hidden="true" />
 								{t("hideAll")}
 							</>
 						) : (
 							<>
-								<ChevronDown className="mr-s-100 h-4 w-4" />
+								<ChevronDown className="mr-s-100 h-4 w-4" aria-hidden="true" />
 								{t("showAll")} ({trades.length - maxVisible} {t("more")})
 							</>
 						)}

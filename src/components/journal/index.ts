@@ -14,7 +14,10 @@ export { PositionSummary } from "./position-summary"
 export { TradeExecutionsSection } from "./trade-executions-section"
 export { TradeModeSelector, type TradeMode } from "./trade-mode-selector"
 export { ScaledTradeForm } from "./scaled-trade-form"
-export { InlineExecutionRow, type ExecutionRowData } from "./inline-execution-row"
+export {
+	InlineExecutionRow,
+	type ExecutionRowData,
+} from "./inline-execution-row"
 export { TradeRow } from "./trade-row"
 export { TradeDayGroup } from "./trade-day-group"
 export { PeriodFilter } from "./period-filter"
@@ -24,3 +27,10 @@ export { QuickFilters } from "./quick-filters"
 export { TradeInfoPanel, type TradeInfoPanelProps } from "./trade-info-panel"
 export { TradeChartView, type TradeChartViewProps } from "./trade-chart-view"
 export { TradeDetailLayout } from "./trade-detail-layout"
+export {
+	RatingBadge,
+	FollowedPlanBadge,
+	TradeTag,
+	type RatingGrade,
+	type TradeTagKind,
+} from "./trade-badges"

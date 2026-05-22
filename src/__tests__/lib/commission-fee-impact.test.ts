@@ -69,11 +69,6 @@ vi.mock("@/lib/effective-date", () => ({
 	getServerEffectiveNow: getServerEffectiveNowMock,
 }))
 
-vi.mock("@/lib/user-crypto", () => ({
-	getUserDek: vi.fn().mockResolvedValue(null),
-	decryptAccountFields: vi.fn((account: unknown) => account),
-}))
-
 vi.mock("@/app/actions/settings", () => ({
 	getUserSettings: vi.fn(),
 }))

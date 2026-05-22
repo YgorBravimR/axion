@@ -9,11 +9,13 @@ import {
 	Plus,
 	Trash2,
 	PlusCircle,
+	X,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Panel } from "@/components/ui/panel"
 import { useToast } from "@/components/ui/toast"
 import {
 	Table,
@@ -43,6 +45,7 @@ interface AssetRulesPanelProps {
 	settings: AssetSettingWithAsset[]
 	availableAssets: Asset[]
 	onRefresh: () => void
+	isRefreshing?: boolean
 }
 
 interface EditingState {
@@ -57,6 +60,7 @@ export const AssetRulesPanel = ({
 	settings,
 	availableAssets,
 	onRefresh,
+	isRefreshing = false,
 }: AssetRulesPanelProps) => {
 	const t = useTranslations("commandCenter.assetRules")
 	const router = useRouter()
@@ -127,10 +131,10 @@ export const AssetRulesPanel = ({
 				assetId: editing.assetId,
 				bias: editing.bias,
 				maxDailyTrades: editing.maxDailyTrades
-					? parseInt(editing.maxDailyTrades)
+					? parseInt(editing.maxDailyTrades, 10)
 					: null,
 				maxPositionSize: editing.maxPositionSize
-					? parseInt(editing.maxPositionSize)
+					? parseInt(editing.maxPositionSize, 10)
 					: null,
 				notes: editing.notes || null,
 				isActive: true,
@@ -166,6 +170,7 @@ export const AssetRulesPanel = ({
 						showToast("error", result.message)
 						return
 					}
+					showToast("success", t("biasSaved"))
 					onRefresh()
 				}
 			} catch {
@@ -204,9 +209,13 @@ export const AssetRulesPanel = ({
 	)
 
 	return (
-		<div
+		<Panel
 			id="cc-asset-rules"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			aria-busy={isRefreshing || undefined}
+			className={cn(
+				"transition-opacity duration-200",
+				isRefreshing && "opacity-60"
+			)}
 		>
 			{/* Header */}
 			<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
@@ -425,7 +434,7 @@ export const AssetRulesPanel = ({
 														className="text-txt-300 h-8 w-8 p-0"
 														aria-label={t("cancel")}
 													>
-														&times;
+														<X className="h-4 w-4" aria-hidden="true" />
 													</Button>
 												</>
 											) : (
@@ -486,6 +495,6 @@ export const AssetRulesPanel = ({
 					</TableBody>
 				</Table>
 			)}
-		</div>
+		</Panel>
 	)
 }

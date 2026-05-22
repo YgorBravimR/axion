@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { db } from "@/db/drizzle"
 import { trades, riskManagementProfiles } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
@@ -26,7 +25,7 @@ const GET = async (request: NextRequest) => {
 		return authResult.response
 	}
 
-	const { userId, accountId } = authResult.auth
+	const { accountId } = authResult.auth
 
 	try {
 		const dateParam = request.nextUrl.searchParams.get("date")
@@ -73,8 +72,7 @@ const GET = async (request: NextRequest) => {
 			Number(day.dailyTargetR.value) * oneRCents
 		)
 
-		const dek = await getUserDek(userId)
-		const rawTodaysTrades = await db.query.trades.findMany({
+		const todaysTrades = await db.query.trades.findMany({
 			where: and(
 				eq(trades.accountId, accountId),
 				gte(trades.entryDate, today),
@@ -83,15 +81,6 @@ const GET = async (request: NextRequest) => {
 			),
 			orderBy: (t, { asc }) => [asc(t.entryDate)],
 		})
-		const todaysTrades = dek
-			? rawTodaysTrades.map(
-					(t) =>
-						decryptTradeFields(
-							t as unknown as Record<string, unknown>,
-							dek
-						) as unknown as typeof t
-				)
-			: rawTodaysTrades
 
 		const tradeInputs = todaysTrades.map((trade) => ({
 			pnlCents: Number(trade.pnl) || 0,

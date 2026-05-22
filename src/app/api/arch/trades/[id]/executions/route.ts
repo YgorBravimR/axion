@@ -10,7 +10,6 @@ import {
 	formatExecutionForArch,
 } from "../../../_lib/helpers"
 import { buildAccountCondition } from "../../../_lib/filters"
-import { getUserDek, decryptExecutionFields } from "@/lib/user-crypto"
 import { calculateExecutionSummary } from "@/lib/calculations"
 
 /**
@@ -52,31 +51,19 @@ const GET = async (
 			)
 		}
 
-		const rawExecutions = await db.query.tradeExecutions.findMany({
+		const executions = await db.query.tradeExecutions.findMany({
 			where: eq(tradeExecutions.tradeId, tradeId),
 			orderBy: [asc(tradeExecutions.executionDate)],
 		})
 
-		const dek = await getUserDek(auth.userId)
-
-		const decryptedExecutions = dek
-			? rawExecutions.map(
-					(ex) =>
-						decryptExecutionFields(
-							ex as unknown as Record<string, unknown>,
-							dek
-						) as unknown as TradeExecution
-				)
-			: rawExecutions
-
-		const executions = decryptedExecutions.map((ex) =>
+		const formattedExecutions = executions.map((ex) =>
 			formatExecutionForArch(ex as unknown as Record<string, unknown>)
 		)
 
-		const summary = calculateExecutionSummary(decryptedExecutions)
+		const summary = calculateExecutionSummary(executions)
 
 		return archSuccess("Executions retrieved successfully", {
-			executions,
+			executions: formattedExecutions,
 			summary,
 		})
 	} catch (error) {

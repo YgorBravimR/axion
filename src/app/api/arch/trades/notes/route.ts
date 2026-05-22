@@ -5,7 +5,6 @@ import { eq, and } from "drizzle-orm"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { buildAccountCondition } from "../../_lib/filters"
-import { getUserDek, encryptTradeFields } from "@/lib/user-crypto"
 
 interface UpdateNotesBody {
 	id: string
@@ -89,11 +88,6 @@ const POST = async (request: NextRequest) => {
 		}
 		if (noteFields.disciplineNotes !== undefined) {
 			updateData.disciplineNotes = noteFields.disciplineNotes
-		}
-
-		const dek = await getUserDek(auth.userId)
-		if (dek) {
-			Object.assign(updateData, encryptTradeFields(noteFields, dek))
 		}
 
 		await db.update(trades).set(updateData).where(eq(trades.id, id))

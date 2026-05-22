@@ -49,6 +49,7 @@ const buildExisting = (row: typeof yearlyPlans.$inferSelect | undefined) =>
 				initialCapitalCents: row.initialCapitalCents,
 				ladderRules: row.ladderRules as unknown as LadderRuleR[],
 				tradingDaysPerWeek: row.tradingDaysPerWeek,
+				defaultAssertivityPercent: row.defaultAssertivityPercent,
 				defaultDailyLossR: row.defaultDailyLossR,
 				defaultDailyWinR: row.defaultDailyWinR,
 				defaultWeeklyLossR: row.defaultWeeklyLossR,
@@ -187,6 +188,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 				>
 					<YearlyPlanEditor
 						year={year}
+						accountId={accountId}
 						existing={existing}
 						riskProfiles={riskProfiles}
 						defaultInitialCapitalCents={defaultInitialCapitalCents}
@@ -447,6 +449,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		return (
 			<div className="space-y-m-500">
 				<SetupSummaryCard
+					accountId={accountId}
 					year={year}
 					initialCapitalCents={initialCapitalCents}
 					ladderRules={ladderRules}
@@ -479,6 +482,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	return (
 		<div className="space-y-m-500">
 			<SetupSummaryCard
+				accountId={accountId}
 				year={year}
 				initialCapitalCents={initialCapitalCents}
 				ladderRules={ladderRules}
@@ -530,6 +534,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 						lastActualMonthIdx={lastActualMonthIdx}
 						paceByMonthIdx={Object.fromEntries(paceByMonthIdx)}
 						currentMonthRemainder={currentMonthRemainder}
+						defaultDailyWinR={parseDecimal(row.defaultDailyWinR)}
+						assertivityPct={parseDecimal(row.defaultAssertivityPercent) ?? 50}
 					/>
 				</TabsContent>
 				<TabsContent value="impostos">

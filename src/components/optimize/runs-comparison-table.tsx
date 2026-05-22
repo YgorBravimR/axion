@@ -64,9 +64,12 @@ const RunsComparisonTable = ({
 							aria-label={run.pinned ? t("unpinFromChart") : t("pinToChart")}
 						>
 							{run.pinned ? (
-								<Pin className="text-acc-100 h-3.5 w-3.5" />
+								<Pin className="text-acc-100 h-3.5 w-3.5" aria-hidden="true" />
 							) : (
-								<PinOff className="text-txt-300 h-3.5 w-3.5" />
+								<PinOff
+									className="text-txt-300 h-3.5 w-3.5"
+									aria-hidden="true"
+								/>
 							)}
 						</Button>
 					)
@@ -99,7 +102,7 @@ const RunsComparisonTable = ({
 							)}
 							{run.summary.totalTrades < MIN_TRADES_THRESHOLD && (
 								<AlertTriangle
-									className="text-acc-100 h-3 w-3 shrink-0"
+									className="text-warning h-3 w-3 shrink-0"
 									aria-label={t("lowTradeWarning")}
 								/>
 							)}
@@ -123,39 +126,21 @@ const RunsComparisonTable = ({
 				accessorFn: (row) => row.summary.winRate,
 				id: "winRate",
 				header: t("winRate"),
-				cell: ({ getValue }) => {
-					const value = getValue<number>()
-					const color =
-						value >= 50
-							? "text-fb-success"
-							: value < 40
-								? "text-fb-error"
-								: "text-txt-100"
-					return (
-						<span className={`text-small tabular-nums ${color}`}>
-							{value.toFixed(1)}%
-						</span>
-					)
-				},
+				cell: ({ getValue }) => (
+					<span className="text-small text-txt-100 tabular-nums">
+						{getValue<number>().toFixed(1)}%
+					</span>
+				),
 			},
 			{
 				accessorFn: (row) => row.summary.profitFactor,
 				id: "profitFactor",
 				header: t("profitFactor"),
-				cell: ({ getValue }) => {
-					const value = getValue<number>()
-					const color =
-						value >= 1.5
-							? "text-fb-success"
-							: value < 1
-								? "text-fb-error"
-								: "text-txt-100"
-					return (
-						<span className={`text-small font-medium tabular-nums ${color}`}>
-							{value.toFixed(2)}
-						</span>
-					)
-				},
+				cell: ({ getValue }) => (
+					<span className="text-small text-txt-100 font-medium tabular-nums">
+						{getValue<number>().toFixed(2)}
+					</span>
+				),
 			},
 			{
 				accessorFn: (row) => row.summary.totalPnlCents,
@@ -165,9 +150,9 @@ const RunsComparisonTable = ({
 					const cents = getValue<number>()
 					const color =
 						cents > 0
-							? "text-fb-success"
+							? "text-trade-buy"
 							: cents < 0
-								? "text-fb-error"
+								? "text-trade-sell"
 								: "text-txt-100"
 					return (
 						<span className={`text-small tabular-nums ${color}`}>
@@ -181,7 +166,7 @@ const RunsComparisonTable = ({
 				id: "maxDrawdown",
 				header: t("maxDD"),
 				cell: ({ getValue }) => (
-					<span className="text-small text-fb-error tabular-nums">
+					<span className="text-small text-trade-sell tabular-nums">
 						{formatCentsAsCurrency(getValue<number>(), "BRL")}
 					</span>
 				),
@@ -190,15 +175,11 @@ const RunsComparisonTable = ({
 				accessorFn: (row) => row.summary.sharpeRatio,
 				id: "sharpe",
 				header: t("sharpe"),
-				cell: ({ getValue }) => {
-					const value = getValue<number>()
-					const color = value >= 1 ? "text-fb-success" : "text-txt-100"
-					return (
-						<span className={`text-small tabular-nums ${color}`}>
-							{value.toFixed(2)}
-						</span>
-					)
-				},
+				cell: ({ getValue }) => (
+					<span className="text-small text-txt-100 tabular-nums">
+						{getValue<number>().toFixed(2)}
+					</span>
+				),
 			},
 			{
 				accessorFn: (row) => row.summary.avgRMultiple,
@@ -208,9 +189,9 @@ const RunsComparisonTable = ({
 					const value = getValue<number>()
 					const color =
 						value > 0
-							? "text-fb-success"
+							? "text-trade-buy"
 							: value < 0
-								? "text-fb-error"
+								? "text-trade-sell"
 								: "text-txt-100"
 					return (
 						<span className={`text-small tabular-nums ${color}`}>
@@ -237,6 +218,7 @@ const RunsComparisonTable = ({
 							>
 								<ChevronRight
 									className={`text-txt-300 h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+									aria-hidden="true"
 								/>
 							</Button>
 							<Button
@@ -247,7 +229,7 @@ const RunsComparisonTable = ({
 								className="text-txt-300 hover:text-fb-error h-7 w-7 p-0"
 								aria-label={t("deleteRun")}
 							>
-								<Trash2 className="h-3.5 w-3.5" />
+								<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
 							</Button>
 						</div>
 					)

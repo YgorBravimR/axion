@@ -13,8 +13,8 @@
  * @see src/app/actions/live-trading-status.ts — reads pnl via Number(trade.pnl)
  */
 
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "./create-db"
 
 // ---------------------------------------------------------------------------
 // Inline schema constants — avoids importing from src/ which pulls in
@@ -54,10 +54,11 @@ interface SeedResult {
 	createdProfile: boolean
 }
 
-// Bravo Risk Management decision tree — matches seed-risk-profiles.ts exactly
+// Bravo Risk Management decision tree — R-multiples format, matches src/db/seed-risk-profiles.ts
+// adaptDecisionTree() multiplies riskR × oneRCents at runtime; never use riskCents/lossCents here.
 const BRAVO_DECISION_TREE = {
 	baseTrade: {
-		riskCents: 50000,
+		riskR: 1,
 		maxContracts: 20,
 		minStopPoints: 100,
 	},
@@ -97,12 +98,12 @@ const BRAVO_DECISION_TREE = {
 		],
 		repeatLastStep: true,
 		stopOnFirstLoss: true,
-		dailyTargetCents: 150000,
+		dailyTargetR: 3,
 	},
 	cascadingLimits: {
-		weeklyLossCents: 200000,
+		weeklyLossR: 4,
 		weeklyAction: "stopTrading",
-		monthlyLossCents: 750000,
+		monthlyLossR: 15,
 		monthlyAction: "stopTrading",
 	},
 	executionConstraints: {
@@ -153,13 +154,13 @@ const requireDatabaseUrl = (): string => {
 }
 
 /**
- * Build a raw Drizzle client using the same neon-http driver as the app.
- * We call this per-seeder invocation rather than at module level so the
- * connection is only opened when tests actually need it.
+ * Build a raw Drizzle client. Driver is selected automatically: neon-http for
+ * Neon URLs (production/staging), postgres-js for local postgres (dev worktrees).
+ * Called per-seeder invocation so the connection is only opened when needed.
  */
 const buildDb = () => {
 	const dbUrl = requireDatabaseUrl()
-	return drizzle(dbUrl)
+	return createDb(dbUrl)
 }
 
 // ---------------------------------------------------------------------------
@@ -231,46 +232,32 @@ const ensureBravoRiskProfile = async (
   `)
 
 	if (existing.rows.length) {
-		// Update the decision tree + limits to match E2E expectations exactly.
-		// The production seed may use a different gain mode (e.g., compounding),
-		// so we enforce the test's gainSequence config on every run.
+		// Update the decision tree to match E2E expectations exactly.
+		// Phase 4b: risk limits are now managed by the fractal cascade (yearlyPlans),
+		// so we only update the decision_tree JSON.
 		await db.execute(sql`
       UPDATE risk_management_profiles SET
-        decision_tree            = ${JSON.stringify(BRAVO_DECISION_TREE)},
-        base_risk_cents          = 50000,
-        daily_loss_cents         = 100000,
-        weekly_loss_cents        = 200000,
-        monthly_loss_cents       = 750000,
-        daily_profit_target_cents = 150000,
-        updated_at               = NOW()
+        decision_tree = ${JSON.stringify(BRAVO_DECISION_TREE)},
+        updated_at    = NOW()
       WHERE id = ${existing.rows[0].id}
     `)
 		return { profileId: existing.rows[0].id, created: false }
 	}
 
 	// Insert the Bravo profile — mirrors seed-risk-profiles.ts
+	// Phase 4b: only name, description, user, active status, and decision_tree.
 	const inserted = await db.execute<InsertedTradeId>(sql`
     INSERT INTO risk_management_profiles (
       name,
       description,
       created_by_user_id,
       is_active,
-      base_risk_cents,
-      daily_loss_cents,
-      weekly_loss_cents,
-      monthly_loss_cents,
-      daily_profit_target_cents,
       decision_tree
     ) VALUES (
       'Bravo Risk Management',
       'E2E test: Percentage-based risk 1.25% per trade, anti-martingale recovery, gain sequence.',
       ${userId},
       true,
-      50000,
-      100000,
-      200000,
-      750000,
-      150000,
       ${JSON.stringify(BRAVO_DECISION_TREE)}
     )
     RETURNING id
@@ -280,17 +267,24 @@ const ensureBravoRiskProfile = async (
 }
 
 // ---------------------------------------------------------------------------
-// MONTHLY PLAN
+// FRACTAL CASCADE (YEARLY, QUARTERLY, MONTHLY PLANS)
 // ---------------------------------------------------------------------------
 
 /**
- * Ensure a monthly plan exists for the current month that links to the Bravo
- * risk profile. If a plan already exists for this account/year/month, it will
- * be updated to link the Bravo profile and set the correct limits.
+ * Ensure a fractal cascade exists for the given account/year.
  *
- * Returns the plan ID and whether it was newly created.
+ * Phase 4b: `resolveDay` in the live-trading-status action requires:
+ *   1. A yearly_plan row for the account + year
+ *   2. A quarterly_plan row for that year + quarter
+ *   3. A monthly_plan row for that quarter + month
+ *
+ * This function idempotently creates (or updates) the full cascade.
+ * Returns the monthly plan ID and whether it was newly created at the top level.
+ *
+ * Capital ladder: single tier with oneRCents = 50000 (matching Bravo base risk).
+ * R defaults: dailyLoss=3, dailyTarget=2, weeklyLoss=6, monthlyLoss=10 (fallback values).
  */
-const ensureBravoMonthlyPlan = async (
+const ensureBravoFractalCascade = async (
 	accountId: string,
 	profileId: string,
 	year: number,
@@ -298,68 +292,170 @@ const ensureBravoMonthlyPlan = async (
 ): Promise<{ planId: string; created: boolean }> => {
 	const db = buildDb()
 
-	const existing = await db.execute<IdRow>(sql`
-    SELECT id FROM monthly_plans
-    WHERE account_id = ${accountId}
-      AND year = ${year}
-      AND month = ${month}
+	const quarter = Math.ceil(month / 3)
+	const accountBalance = parseInt(BRAVO_PLAN.accountBalance) // 4,000,000 cents
+
+	// Ladder: single tier (40k+) with oneRCents = 50,000 (base risk)
+	const ladderRules = JSON.stringify([
+		{ minCapitalCents: 0, maxCapitalCents: 9999999999, oneRCents: 50000 },
+	])
+
+	// ─────────────────────────────────────────────────────────────────────────────
+	// YEARLY PLAN
+	// ─────────────────────────────────────────────────────────────────────────────
+
+	const yearlyCheck = await db.execute<IdRow>(sql`
+    SELECT id FROM yearly_plans
+    WHERE account_id = ${accountId} AND year = ${year}
     LIMIT 1
   `)
 
-	if (existing.rows.length) {
-		// Update the existing plan to link Bravo and set correct limits.
-		// Explicitly NULL out both max-trade columns so the decision tree
-		// controls trade progression without a circuit-breaker override.
+	let yearlyPlanId: string
+	if (yearlyCheck.rows.length) {
+		yearlyPlanId = yearlyCheck.rows[0].id
+		// Update to link Bravo profile and re-seed R defaults in case they were wrong.
+		// Both thresholds are 3R (3 × $500 = $1500):
+		//   daily_loss_r = 3 → maxTrades = floor(150000/50000) = 3 (allows full recovery sequence)
+		//   daily_win_r  = 3 → dailyTargetCents = 150000 (= gain sequence target)
 		await db.execute(sql`
-      UPDATE monthly_plans SET
-        risk_profile_id             = ${profileId},
-        risk_per_trade_cents        = ${BRAVO_PLAN.riskPerTradeCents},
-        daily_loss_cents            = ${BRAVO_PLAN.dailyLossCents},
-        monthly_loss_cents          = ${BRAVO_PLAN.monthlyLossCents},
-        daily_profit_target_cents   = ${BRAVO_PLAN.dailyProfitTargetCents},
-        max_daily_trades            = NULL,
-        derived_max_daily_trades    = NULL,
-        updated_at                  = NOW()
-      WHERE id = ${existing.rows[0].id}
+      UPDATE yearly_plans SET
+        default_risk_profile_id = ${profileId},
+        default_daily_loss_r    = 3.00,
+        default_daily_win_r     = 3.00,
+        updated_at = NOW()
+      WHERE id = ${yearlyPlanId}
     `)
-		return { planId: existing.rows[0].id, created: false }
+	} else {
+		// Create yearly plan with standard defaults
+		const yearlyInsert = await db.execute<IdRow>(sql`
+      INSERT INTO yearly_plans (
+        account_id,
+        year,
+        initial_capital_cents,
+        ir_tax_rate,
+        trading_days_per_week,
+        ladder_rules,
+        start_week,
+        default_daily_loss_r,
+        default_daily_win_r,
+        default_weekly_loss_r,
+        default_weekly_win_r,
+        default_monthly_loss_r,
+        default_monthly_win_r,
+        default_risk_profile_id,
+        notes
+      ) VALUES (
+        ${accountId},
+        ${year},
+        ${accountBalance},
+        30.00,
+        5,
+        ${ladderRules}::jsonb,
+        1,
+        3.00,
+        3.00,
+        6.00,
+        4.00,
+        10.00,
+        8.00,
+        ${profileId},
+        'E2E: Bravo automated fractal cascade for live-trading-status tests'
+      )
+      RETURNING id
+    `)
+		yearlyPlanId = yearlyInsert.rows[0].id
 	}
 
-	// Insert a new plan for this month
-	const inserted = await db.execute<InsertedTradeId>(sql`
-    INSERT INTO monthly_plans (
-      account_id,
-      year,
-      month,
-      account_balance,
-      risk_per_trade_percent,
-      daily_loss_percent,
-      monthly_loss_percent,
-      risk_profile_id,
-      risk_per_trade_cents,
-      daily_loss_cents,
-      monthly_loss_cents,
-      daily_profit_target_cents,
-      derived_max_daily_trades
-    ) VALUES (
-      ${accountId},
-      ${year},
-      ${month},
-      ${BRAVO_PLAN.accountBalance},
-      ${BRAVO_PLAN.riskPerTradePercent},
-      ${BRAVO_PLAN.dailyLossPercent},
-      ${BRAVO_PLAN.monthlyLossPercent},
-      ${profileId},
-      ${BRAVO_PLAN.riskPerTradeCents},
-      ${BRAVO_PLAN.dailyLossCents},
-      ${BRAVO_PLAN.monthlyLossCents},
-      ${BRAVO_PLAN.dailyProfitTargetCents},
-      ${BRAVO_PLAN.derivedMaxDailyTrades}
-    )
-    RETURNING id
+	// ─────────────────────────────────────────────────────────────────────────────
+	// QUARTERLY PLAN
+	// ─────────────────────────────────────────────────────────────────────────────
+
+	const quarterlyCheck = await db.execute<IdRow>(sql`
+    SELECT id FROM quarterly_plan
+    WHERE yearly_plan_id = ${yearlyPlanId} AND quarter = ${quarter}
+    LIMIT 1
   `)
 
-	return { planId: inserted.rows[0].id, created: true }
+	let quarterlyPlanId: string
+	if (quarterlyCheck.rows.length) {
+		quarterlyPlanId = quarterlyCheck.rows[0].id
+	} else {
+		const quarterlyInsert = await db.execute<IdRow>(sql`
+      INSERT INTO quarterly_plan (
+        yearly_plan_id,
+        quarter,
+        goal_cents
+      ) VALUES (
+        ${yearlyPlanId},
+        ${quarter},
+        1500000
+      )
+      RETURNING id
+    `)
+		quarterlyPlanId = quarterlyInsert.rows[0].id
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────────
+	// MONTHLY PLAN
+	// ─────────────────────────────────────────────────────────────────────────────
+
+	const monthlyCheck = await db.execute<IdRow>(sql`
+    SELECT id FROM monthly_plan
+    WHERE quarterly_plan_id = ${quarterlyPlanId} AND month = ${month}
+    LIMIT 1
+  `)
+
+	let monthlyPlanId: string
+	let createdMonthly = false
+
+	if (monthlyCheck.rows.length) {
+		monthlyPlanId = monthlyCheck.rows[0].id
+		// Update profile AND re-seed snapshot fields — without this the resolver
+		// returns oneRCents = 0 because snapshotOneRCents is NULL on existing rows.
+		await db.execute(sql`
+      UPDATE monthly_plan SET
+        snapshot_capital_cents = ${accountBalance},
+        snapshot_one_r_cents = 50000,
+        snapshot_tier_index = 0,
+        snapshot_computed_at = NOW(),
+        snapshot_reason = 'manual',
+        override_risk_profile_id = ${profileId},
+        updated_at = NOW()
+      WHERE id = ${monthlyPlanId}
+    `)
+	} else {
+		// Create monthly plan with snapshot (required fields)
+		const monthlyInsert = await db.execute<IdRow>(sql`
+      INSERT INTO monthly_plan (
+        quarterly_plan_id,
+        year,
+        month,
+        snapshot_capital_cents,
+        snapshot_one_r_cents,
+        snapshot_tier_index,
+        snapshot_computed_at,
+        snapshot_reason,
+        override_risk_profile_id,
+        monthly_goal_cents
+      ) VALUES (
+        ${quarterlyPlanId},
+        ${year},
+        ${month},
+        ${accountBalance},
+        50000,
+        0,
+        NOW(),
+        'manual',
+        ${profileId},
+        500000
+      )
+      RETURNING id
+    `)
+		monthlyPlanId = monthlyInsert.rows[0].id
+		createdMonthly = true
+	}
+
+	return { planId: monthlyPlanId, created: createdMonthly }
 }
 
 // ---------------------------------------------------------------------------
@@ -447,6 +543,90 @@ const insertTestTrades = async (
 }
 
 // ---------------------------------------------------------------------------
+// TAX LEDGER (DARF)
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensure a monthlyTaxLedger row exists for the current month.
+ * Seeds minimal DARF data (darfDueCents, darfStatus) to make tax-engine tests pass.
+ *
+ * This function is idempotent: if a row exists for this month, it updates the
+ * DARF fields. If not, it creates a new row.
+ *
+ * Returns: { ledgerId, created }
+ */
+const ensureMonthlyDarfLedger = async (
+	accountId: string,
+	year: number,
+	month: number,
+	darfDueCents: number = 150000 // R$1,500 default tax amount
+): Promise<{ ledgerId: string; created: boolean }> => {
+	const db = buildDb()
+
+	// UTC first-of-month marker for timestamptz column
+	const monthDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
+
+	const existing = await db.execute<IdRow>(sql`
+    SELECT id FROM monthly_tax_ledger
+    WHERE account_id = ${accountId} AND month = ${monthDate.toISOString()}
+    LIMIT 1
+  `)
+
+	if (existing.rows.length) {
+		const ledgerId = existing.rows[0].id
+		// Update existing row with DARF data
+		await db.execute(sql`
+      UPDATE monthly_tax_ledger SET
+        darf_due_cents = ${darfDueCents},
+        darf_status = 'pending',
+        updated_at = NOW()
+      WHERE id = ${ledgerId}
+    `)
+		return { ledgerId, created: false }
+	}
+
+	// Create new ledger row with minimal required fields
+	const inserted = await db.execute<IdRow>(sql`
+    INSERT INTO monthly_tax_ledger (
+      account_id,
+      month,
+      gross_gain_cents,
+      gross_loss_cents,
+      darf_due_cents,
+      darf_status,
+      carryover_in_cents,
+      carryover_out_cents
+    ) VALUES (
+      ${accountId},
+      ${monthDate.toISOString()},
+      1000000,
+      0,
+      ${darfDueCents},
+      'pending',
+      0,
+      0
+    )
+    RETURNING id
+  `)
+
+	return { ledgerId: inserted.rows[0].id, created: true }
+}
+
+/**
+ * Delete all yearly plans for a given account.
+ * Cascades to quarterly_plan, monthly_plan, weekly_plan, daily_plan.
+ */
+const deleteYearlyPlansForAccount = async (
+	accountId: string
+): Promise<void> => {
+	const db = buildDb()
+	await db.execute(sql`
+    DELETE FROM yearly_plans
+    WHERE account_id = ${accountId}
+  `)
+}
+
+// ---------------------------------------------------------------------------
 // CLEANUP
 // ---------------------------------------------------------------------------
 
@@ -469,9 +649,11 @@ const cleanupTrades = async (tradeIds: string[]): Promise<void> => {
 }
 
 /**
- * Revert a monthly plan back to its pre-test state (remove risk_profile_id link
- * and reset the amounts that were written by the seeder).
- * Only removes the plan entirely when `deletePlan` is true.
+ * Clean up a monthly plan created by the fractal cascade seeder.
+ *
+ * Phase 4b: monthly plans are part of the fractal cascade (quarterly_plan → monthly_plan).
+ * When `deletePlan` is true, delete the plan entirely (cascade will handle child rows).
+ * When false, detach the Bravo profile override and clear custom values.
  */
 const cleanupMonthlyPlan = async (
 	planId: string,
@@ -480,20 +662,20 @@ const cleanupMonthlyPlan = async (
 	const db = buildDb()
 
 	if (deletePlan) {
-		await db.execute(sql`DELETE FROM monthly_plans WHERE id = ${planId}`)
+		// Delete the monthly plan (cascade will handle any child rows like weekly/daily plans)
+		await db.execute(sql`DELETE FROM monthly_plan WHERE id = ${planId}`)
 		return
 	}
 
-	// Detach the risk profile link and nullify the seeder-injected values
+	// Detach the risk profile override and reset custom caps
 	await db.execute(sql`
-    UPDATE monthly_plans SET
-      risk_profile_id           = NULL,
-      risk_per_trade_cents      = '0',
-      daily_loss_cents          = '0',
-      monthly_loss_cents        = '0',
-      daily_profit_target_cents = NULL,
-      derived_max_daily_trades  = NULL,
-      updated_at                = NOW()
+    UPDATE monthly_plan SET
+      override_risk_profile_id = NULL,
+      override_daily_loss_r = NULL,
+      override_weekly_loss_r = NULL,
+      override_monthly_loss_r = NULL,
+      override_daily_target_r = NULL,
+      updated_at = NOW()
     WHERE id = ${planId}
   `)
 }
@@ -545,7 +727,7 @@ const seedScenario = async (
 
 	const { profileId, created: createdProfile } =
 		await ensureBravoRiskProfile(userId)
-	const { planId, created: createdPlan } = await ensureBravoMonthlyPlan(
+	const { planId, created: createdPlan } = await ensureBravoFractalCascade(
 		accountId,
 		profileId,
 		year,
@@ -606,7 +788,7 @@ export type { TradeInput, SeedResult, AdminContext }
 export {
 	getAdminContext,
 	ensureBravoRiskProfile,
-	ensureBravoMonthlyPlan,
+	ensureBravoFractalCascade,
 	insertTestTrades,
 	seedScenario,
 	teardownScenario,
@@ -614,6 +796,8 @@ export {
 	cleanupTodayTrades,
 	cleanupMonthlyPlan,
 	cleanupRiskProfile,
+	ensureMonthlyDarfLedger,
+	deleteYearlyPlansForAccount,
 	BRAVO_DECISION_TREE,
 	BRAVO_PLAN,
 }

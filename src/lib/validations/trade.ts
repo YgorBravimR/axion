@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { BRT_OFFSET } from "@/lib/dates"
+import { hawksTradePayloadSchema } from "@/lib/validations/hawks"
 
 // Direction and outcome enums
 export const tradeDirectionSchema = z.enum(["long", "short"])
@@ -125,6 +126,20 @@ const tradeBaseFields = {
 	// Trade Screenshot
 	screenshotUrl: z.string().url().max(500).optional().or(z.literal("")),
 	screenshotS3Key: z.string().max(500).optional().or(z.literal("")),
+
+	// Hawks Mode sidecar (required when account is in Hawks mode)
+	hawks: hawksTradePayloadSchema.optional(),
+
+	// Per-trade condition snapshot — which conditions were evaluated at
+	// execution time and whether each was met. Frozen, never recomputed.
+	conditionsMet: z
+		.array(
+			z.object({
+				conditionId: z.string().uuid(),
+				met: z.boolean(),
+			})
+		)
+		.optional(),
 }
 
 // Base object schema (no refinements) — used for .partial() and server actions
@@ -205,6 +220,13 @@ export interface CreateTradeInput {
 	rating?: "A" | "B" | "C" | "D" | "F" | null
 	screenshotUrl?: string
 	screenshotS3Key?: string
+	hawks?: {
+		scenarioId?: string | null
+		tripleScreenConfirmed: boolean
+		vwapRespected: boolean
+		ajusteRespected: boolean
+	}
+	conditionsMet?: { conditionId: string; met: boolean }[]
 }
 
 // Form input type alias
@@ -226,6 +248,7 @@ export interface SharedTradeFormState {
 	tagIds?: string[]
 	setupRank?: "A" | "AA" | "AAA" | null
 	rating?: "A" | "B" | "C" | "D" | "F" | null
+	conditionsMet?: { conditionId: string; met: boolean }[]
 }
 
 export interface TradeFormRef {

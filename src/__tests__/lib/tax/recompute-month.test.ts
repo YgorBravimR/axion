@@ -13,11 +13,6 @@ vi.mock("@/db/drizzle", () => ({
 	},
 }))
 
-vi.mock("@/lib/user-crypto", () => ({
-	getUserDek: vi.fn().mockResolvedValue(null),
-	decryptTradeFields: vi.fn((val: unknown) => val),
-}))
-
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 
 describe("recomputeAccountMonth", () => {
@@ -91,12 +86,7 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 		const mockSelect = db.select as Mock
 		const mockInsert = db.insert as Mock
 
-		// 1st select: tradingAccounts row (.then on .where)
-		const accountWhere = {
-			then: (resolve: (_v: unknown[]) => unknown) =>
-				Promise.resolve([{ accountType: "personal" }]).then(resolve),
-		}
-		// 2nd select: all accountFeeRates rows (awaited on .where directly)
+		// 1st select: all accountFeeRates rows (awaited on .where directly)
 		const feeRatesWhere = Promise.resolve([
 			{
 				assetSymbol: null,
@@ -129,7 +119,7 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 				subjectToPersonalIr: true,
 			},
 		])
-		// 3rd select: trades — 2 day-trades same calendar day, distinct assets.
+		// 2nd select: trades — 2 day-trades same calendar day, distinct assets.
 		const sameDay = new Date(2026, 0, 15, 14, 30, 0)
 		const tradesOrderBy = Promise.resolve([
 			{
@@ -151,11 +141,6 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 		])
 
 		mockSelect
-			.mockReturnValueOnce({
-				from: vi.fn().mockReturnValue({
-					where: vi.fn().mockReturnValue(accountWhere),
-				}),
-			})
 			.mockReturnValueOnce({
 				from: vi.fn().mockReturnValue({
 					where: vi.fn().mockReturnValue(feeRatesWhere),

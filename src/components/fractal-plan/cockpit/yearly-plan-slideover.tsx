@@ -13,6 +13,7 @@ import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface YearlyPlanSlideoverProps {
+	accountId: string
 	open: boolean
 	onOpenChange: (_next: boolean) => void
 	year: number
@@ -21,6 +22,7 @@ interface YearlyPlanSlideoverProps {
 		initialCapitalCents: number
 		ladderRules: LadderRuleR[]
 		tradingDaysPerWeek: number
+		defaultAssertivityPercent: string | null
 		defaultDailyLossR: string | null
 		defaultDailyWinR: string | null
 		defaultWeeklyLossR: string | null
@@ -34,6 +36,7 @@ interface YearlyPlanSlideoverProps {
 }
 
 const YearlyPlanSlideover = ({
+	accountId,
 	open,
 	onOpenChange,
 	year,
@@ -80,6 +83,7 @@ const YearlyPlanSlideover = ({
 				</SheetHeader>
 				<div className="px-m-400 py-m-400 flex-1 overflow-y-auto">
 					<YearlyPlanEditor
+						accountId={accountId}
 						year={year}
 						existing={existing}
 						riskProfiles={riskProfiles}

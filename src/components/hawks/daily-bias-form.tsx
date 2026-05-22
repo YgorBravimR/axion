@@ -1,0 +1,249 @@
+"use client"
+
+import { useCallback, useState, useTransition, type ChangeEvent } from "react"
+import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { Loader2, Compass } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { SegmentedToggle } from "@/components/ui/segmented-toggle"
+import { useToast } from "@/components/ui/toast"
+import { FeatureStamp } from "@/components/ui/feature-stamp"
+import { HelpText } from "@/components/ui/help-text"
+import { confirmDailyBias } from "@/app/actions/hawks-bias"
+import { useFormatting } from "@/hooks/use-formatting"
+import type { DailyHawksBias } from "@/db/schema"
+
+type Bias = "long" | "short" | "neutral"
+
+interface Screens {
+	renko60: boolean
+	macd: boolean
+	emaStack: boolean
+	vwap: boolean
+	ajuste: boolean
+}
+
+interface DailyBiasFormProps {
+	tradingDay: string
+	initialBias: DailyHawksBias | null
+	className?: string
+	onSuccess?: () => void
+}
+
+const initializeFormState = (row: DailyHawksBias | null) => ({
+	bias: (row?.bias as Bias | undefined) ?? "neutral",
+	screens: {
+		renko60: row?.renkoCloseAbove60min ?? false,
+		macd: row?.macdSlopeUp ?? false,
+		emaStack: row?.emaStackBullish ?? false,
+		vwap: row?.vwapAbove ?? false,
+		ajuste: row?.ajusteRespected ?? false,
+	},
+	notes: row?.notesPt ?? "",
+})
+
+const DailyBiasForm = ({
+	tradingDay,
+	initialBias,
+	className,
+	onSuccess,
+}: DailyBiasFormProps) => {
+	const t = useTranslations("hawks.bias")
+	const tActions = useTranslations("hawks.actions")
+	const tCommon = useTranslations("common")
+	const router = useRouter()
+	const { showToast } = useToast()
+	const { formatTime } = useFormatting()
+	const [isPending, startTransition] = useTransition()
+	const {
+		bias: initialBiasState,
+		screens: initialScreensState,
+		notes: initialNotesState,
+	} = initializeFormState(initialBias)
+	const [bias, setBias] = useState<Bias>(initialBiasState)
+	const [screens, setScreens] = useState<Screens>(initialScreensState)
+	const [notes, setNotes] = useState<string>(initialNotesState)
+
+	const handleScreenToggle = useCallback(
+		(key: keyof Screens) => (checked: boolean | "indeterminate") => {
+			setScreens((prev) => ({ ...prev, [key]: checked === true }))
+		},
+		[]
+	)
+
+	const handleNotesChange = useCallback(
+		(event: ChangeEvent<HTMLTextAreaElement>) => {
+			setNotes(event.target.value)
+		},
+		[]
+	)
+
+	const handleSave = useCallback(() => {
+		startTransition(async () => {
+			const result = await confirmDailyBias({
+				tradingDay,
+				bias,
+				screens,
+				notesPt: notes.trim().length > 0 ? notes.trim() : undefined,
+			})
+			if (result.status === "success") {
+				showToast("success", result.message || tActions("biasConfirmed"))
+				onSuccess?.()
+				router.refresh()
+				return
+			}
+			showToast("error", result.message || tActions("biasConfirmFailed"))
+		})
+	}, [bias, notes, router, screens, showToast, tActions, tradingDay])
+
+	const biasOptions = [
+		{ value: "long" as const, label: t("biasLong") },
+		{ value: "neutral" as const, label: t("biasNeutral") },
+		{ value: "short" as const, label: t("biasShort") },
+	]
+
+	const screenRows: ReadonlyArray<{
+		key: keyof Screens
+		label: string
+		hint: string
+	}> = [
+		{ key: "renko60", label: t("screenRenko60"), hint: t("screenRenko60Hint") },
+		{ key: "macd", label: t("screenMacd"), hint: t("screenMacdHint") },
+		{
+			key: "emaStack",
+			label: t("screenEmaStack"),
+			hint: t("screenEmaStackHint"),
+		},
+		{ key: "vwap", label: t("screenVwap"), hint: t("screenVwapHint") },
+		{ key: "ajuste", label: t("screenAjuste"), hint: t("screenAjusteHint") },
+	]
+
+	return (
+		<section
+			id="hawks-daily-bias"
+			aria-labelledby="hawks-daily-bias-title"
+			className={cn(
+				"border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border",
+				className
+			)}
+		>
+			<header className="gap-s-200 flex flex-col sm:flex-row sm:items-start sm:justify-between">
+				<div className="gap-s-300 flex items-start">
+					<FeatureStamp icon={Compass} />
+					<div>
+						<h2
+							id="hawks-daily-bias-title"
+							className="text-body text-txt-100 font-semibold"
+						>
+							{t("title")}
+						</h2>
+						<HelpText
+							id="hawks-daily-bias-description"
+							className="mt-s-100 max-w-prose"
+						>
+							{t("description", { day: tradingDay })}
+						</HelpText>
+					</div>
+				</div>
+			</header>
+
+			<div className="mt-m-400 space-y-m-400">
+				<div
+					role="group"
+					aria-labelledby="hawks-bias-direction-label"
+					className="space-y-s-200"
+				>
+					<span
+						id="hawks-bias-direction-label"
+						className="text-small text-txt-200 block font-medium"
+					>
+						{t("directionLabel")}
+					</span>
+					<SegmentedToggle
+						value={bias}
+						options={biasOptions}
+						onChange={setBias}
+						disabled={isPending}
+						aria-labelledby="hawks-bias-direction-label"
+					/>
+				</div>
+
+				<fieldset className="space-y-s-200">
+					<legend className="text-small text-txt-100 font-medium">
+						{t("screensLabel")}
+					</legend>
+					<ul className="gap-s-200 flex flex-col">
+						{screenRows.map((row) => {
+							const inputId = `hawks-screen-${row.key}`
+							const hintId = `${inputId}-hint`
+							return (
+								<li key={row.key} className="gap-s-300 flex items-start">
+									<Checkbox
+										id={inputId}
+										checked={screens[row.key]}
+										onCheckedChange={handleScreenToggle(row.key)}
+										disabled={isPending}
+										aria-describedby={hintId}
+										className="mt-s-100"
+									/>
+									<div className="flex-1">
+										<label
+											htmlFor={inputId}
+											className="text-small text-txt-100 cursor-pointer font-medium"
+										>
+											{row.label}
+										</label>
+										<HelpText id={hintId}>{row.hint}</HelpText>
+									</div>
+								</li>
+							)
+						})}
+					</ul>
+				</fieldset>
+
+				<div className="space-y-s-200">
+					<Label id="hawks-bias-notes-label" htmlFor="hawks-bias-notes">
+						{t("notesLabel")}
+					</Label>
+					<Textarea
+						id="hawks-bias-notes"
+						value={notes}
+						onChange={handleNotesChange}
+						placeholder={t("notesPlaceholder")}
+						maxLength={1000}
+						disabled={isPending}
+					/>
+				</div>
+
+				<div className="gap-s-300 flex flex-col items-end">
+					<div className="gap-s-300 flex items-center">
+						<Button
+							id="hawks-bias-save"
+							size="sm"
+							onClick={handleSave}
+							disabled={isPending}
+						>
+							{isPending ? (
+								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+							) : null}
+							{tCommon("save")}
+						</Button>
+					</div>
+					{initialBias && initialBias.confirmedAt && (
+						<p className="text-tiny text-txt-300">
+							{t("confirmedAt", {
+								time: formatTime(new Date(initialBias.confirmedAt)),
+							})}
+						</p>
+					)}
+				</div>
+			</div>
+		</section>
+	)
+}
+
+export { DailyBiasForm }

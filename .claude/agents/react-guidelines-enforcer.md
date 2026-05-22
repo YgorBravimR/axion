@@ -1,7 +1,7 @@
 ---
 name: react-guidelines-enforcer
 description: "Use this agent when the user explicitly requests a comprehensive review and fix of React code against the project guidelines stored in .claude/skills folder. This agent performs an extensive, file-by-file analysis and correction task. Examples:\n\n<example>\nContext: User explicitly calls for a full codebase review against React guidelines.\nuser: \"Run the react guidelines enforcer on my codebase\"\nassistant: \"I'm going to use the Task tool to launch the react-guidelines-enforcer agent to perform a comprehensive file-by-file review and fix of your React code against the guidelines.\"\n</example>\n\n<example>\nContext: User wants to ensure all React files comply with established coding standards.\nuser: \"Please apply the react guidelines from skills folder to all my components\"\nassistant: \"I'm going to use the Task tool to launch the react-guidelines-enforcer agent to analyze each file against the guidelines and apply the necessary fixes.\"\n</example>"
-model: opus
+model: sonnet
 color: green
 ---
 
@@ -33,6 +33,7 @@ Follow these three sources as your enforcement checklist. Every fix must cite wh
 ## Agent-Specific Behavior
 
 When spawned as a sub-agent:
+
 - Focus on guideline compliance — don't refactor business logic or change behavior
 - Only fix files that have actual violations — don't touch clean files
 - If a violation is ambiguous, skip it rather than making a wrong fix

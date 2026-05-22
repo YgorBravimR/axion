@@ -52,28 +52,28 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 			slices.push({
 				name: t("lossRecovery"),
 				value: statistics.avgDaysInLossRecovery,
-				color: "var(--color-trade-sell)",
+				color: "var(--color-chart-1)",
 			})
 		}
 		if (statistics.avgDaysInGainCompounding > 0) {
 			slices.push({
 				name: t("gainCompounding"),
 				value: statistics.avgDaysInGainCompounding,
-				color: "var(--color-trade-buy)",
+				color: "var(--color-chart-2)",
 			})
 		}
 		if (statistics.avgDaysSkippedWeeklyLimit > 0) {
 			slices.push({
 				name: t("skipped") + " (Weekly)",
 				value: statistics.avgDaysSkippedWeeklyLimit,
-				color: "var(--color-warning)",
+				color: "var(--color-chart-4)",
 			})
 		}
 		if (statistics.avgDaysSkippedMonthlyLimit > 0) {
 			slices.push({
 				name: t("skipped") + " (Monthly)",
 				value: statistics.avgDaysSkippedMonthlyLimit,
-				color: "var(--color-fb-error)",
+				color: "var(--color-chart-5)",
 			})
 		}
 

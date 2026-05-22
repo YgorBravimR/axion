@@ -5,13 +5,14 @@ import { useTranslations } from "next-intl"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
 import { KpiCards } from "./kpi-cards"
 import { CoachingInsightsCard } from "./coaching-insights-card"
+import { HawksCoachingInsightsCard } from "@/components/hawks"
 import { TradingCalendar } from "./trading-calendar"
 import { EquityCurve } from "./equity-curve"
 import { QuickStats } from "./quick-stats"
 import { DailyPnLBarChart } from "./daily-pnl-bar-chart"
 import { PerformanceRadarChart } from "./performance-radar-chart"
 import { DayDetailModal } from "./day-detail-modal"
-import { LoadingSpinner } from "@/components/shared"
+import { LoadingSpinner, ModeVariant } from "@/components/shared"
 import {
 	getDailyPnL,
 	getOverallStats,
@@ -20,7 +21,11 @@ import {
 	getStreakData,
 	getRadarChartData,
 } from "@/app/actions/analytics"
-import { cn } from "@/lib/utils"
+import { SegmentedToggle } from "@/components/ui/segmented-toggle"
+import {
+	DashboardStrategyFilter,
+	type DashboardStrategyFilterValue,
+} from "./dashboard-strategy-filter"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { dashboardGuide } from "@/components/ui/page-guide/guide-configs/dashboard"
@@ -31,7 +36,9 @@ import type {
 	StreakData,
 	DailyPnL,
 	RadarChartData,
+	TradeFilters,
 } from "@/types"
+import type { HawksCoachingResult } from "@/app/actions/hawks-coaching.types"
 
 type DashboardPeriod = "month" | "year" | "allTime"
 
@@ -44,6 +51,7 @@ interface DashboardContentProps {
 	initialRadarData: RadarChartData[]
 	initialYear: number
 	initialMonthIndex: number
+	initialHawksContext?: HawksCoachingResult | null
 }
 
 /** Compute dateFrom/dateTo for a given dashboard period */
@@ -94,30 +102,13 @@ const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	)
 
 	return (
-		<div
-			className="border-bg-300 bg-bg-100 p-s-100 flex rounded-lg border"
-			role="group"
+		<SegmentedToggle
+			value={period}
+			options={options}
+			onChange={onChange}
+			disabled={disabled}
 			aria-label={t("filterAriaLabel")}
-		>
-			{options.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					onClick={() => onChange(option.value)}
-					disabled={disabled}
-					className={cn(
-						"px-s-300 py-s-200 text-tiny sm:text-small min-h-11 rounded-md font-medium transition-colors",
-						period === option.value
-							? "bg-acc-100 text-bg-100"
-							: "text-txt-300 hover:text-txt-100",
-						disabled && "cursor-not-allowed opacity-50"
-					)}
-					aria-pressed={period === option.value}
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
+		/>
 	)
 }
 
@@ -130,6 +121,7 @@ export const DashboardContent = ({
 	initialRadarData,
 	initialYear,
 	initialMonthIndex,
+	initialHawksContext,
 }: DashboardContentProps) => {
 	const effectiveDate = useEffectiveDate()
 	const { canAccess } = useFeatureAccess()
@@ -142,6 +134,11 @@ export const DashboardContent = ({
 
 	// Period-filtered data
 	const [period, setPeriod] = useState<DashboardPeriod>("allTime")
+	const [strategyFilter, setStrategyFilter] =
+		useState<DashboardStrategyFilterValue>({
+			strategyId: null,
+			strategyVersionId: null,
+		})
 	const [stats, setStats] = useState<OverallStats | null>(initialStats)
 	const [discipline, setDiscipline] = useState<DisciplineData | null>(
 		initialDiscipline
@@ -153,7 +150,7 @@ export const DashboardContent = ({
 	)
 	const [radarData, setRadarData] = useState<RadarChartData[]>(initialRadarData)
 
-	const [, startTransition] = useTransition()
+	const [isCalendarLoading, startTransition] = useTransition()
 	const [isPeriodLoading, startPeriodTransition] = useTransition()
 
 	// Day detail modal state
@@ -169,6 +166,7 @@ export const DashboardContent = ({
 		setStreakData(initialStreakData)
 		setRadarData(initialRadarData)
 		setPeriod("allTime")
+		setStrategyFilter({ strategyId: null, strategyVersionId: null })
 	}, [
 		initialDailyPnL,
 		initialStats,
@@ -204,13 +202,24 @@ export const DashboardContent = ({
 		})
 	}, [])
 
-	const handlePeriodChange = useCallback(
-		(newPeriod: DashboardPeriod) => {
-			setPeriod(newPeriod)
+	const fetchFilteredData = useCallback(
+		(
+			nextPeriod: DashboardPeriod,
+			nextStrategyFilter: DashboardStrategyFilterValue
+		) => {
 			const { dateFrom, dateTo } = getDateRangeForPeriod(
-				newPeriod,
+				nextPeriod,
 				effectiveDate
 			)
+			const cohortFilters: TradeFilters | undefined =
+				nextStrategyFilter.strategyId
+					? {
+							strategyIds: [nextStrategyFilter.strategyId],
+							...(nextStrategyFilter.strategyVersionId
+								? { strategyVersionIds: [nextStrategyFilter.strategyVersionId] }
+								: {}),
+						}
+					: undefined
 
 			startPeriodTransition(async () => {
 				const [
@@ -220,12 +229,14 @@ export const DashboardContent = ({
 					streakResult,
 					radarResult,
 				] = await Promise.all([
-					getOverallStats(dateFrom, dateTo),
-					getDisciplineScore(dateFrom, dateTo),
-					getEquityCurve(dateFrom, dateTo),
-					getStreakData(dateFrom, dateTo),
+					getOverallStats(dateFrom, dateTo, cohortFilters),
+					getDisciplineScore(dateFrom, dateTo, cohortFilters),
+					getEquityCurve(dateFrom, dateTo, "daily", cohortFilters),
+					getStreakData(dateFrom, dateTo, cohortFilters),
 					getRadarChartData(
-						dateFrom || dateTo ? { dateFrom, dateTo } : undefined
+						dateFrom || dateTo || cohortFilters
+							? { dateFrom, dateTo, ...cohortFilters }
+							: undefined
 					),
 				])
 
@@ -249,16 +260,45 @@ export const DashboardContent = ({
 		[effectiveDate]
 	)
 
+	const handlePeriodChange = useCallback(
+		(newPeriod: DashboardPeriod) => {
+			setPeriod(newPeriod)
+			fetchFilteredData(newPeriod, strategyFilter)
+		},
+		[fetchFilteredData, strategyFilter]
+	)
+
+	const handleStrategyFilterChange = useCallback(
+		(next: DashboardStrategyFilterValue) => {
+			setStrategyFilter(next)
+			fetchFilteredData(period, next)
+		},
+		[fetchFilteredData, period]
+	)
+
+	// Memoize the coaching variants to prevent unnecessary re-renders of child components
+	const coachingVariants = useMemo(
+		() => ({
+			hawks: <HawksCoachingInsightsCard initialContext={initialHawksContext} />,
+		}),
+		[initialHawksContext]
+	)
+
 	return (
 		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-			{/* Period Toggle + Loading */}
+			{/* Period Toggle + Strategy Filter + Loading */}
 			<div
-				id="dashboard-period-toggle"
-				className="gap-m-400 flex items-center md:col-span-2 lg:col-span-3"
+				id="dashboard-toolbar"
+				className="gap-m-400 flex flex-wrap items-center md:col-span-2 lg:col-span-3"
 			>
 				<PeriodToggle
 					period={period}
 					onChange={handlePeriodChange}
+					disabled={isPeriodLoading}
+				/>
+				<DashboardStrategyFilter
+					value={strategyFilter}
+					onChange={handleStrategyFilterChange}
 					disabled={isPeriodLoading}
 				/>
 				{isPeriodLoading && <LoadingSpinner size="sm" />}
@@ -269,10 +309,13 @@ export const DashboardContent = ({
 				<KpiCards stats={stats} discipline={discipline} />
 			</div>
 
-			{/* Coaching Insights — trader+ only */}
+			{/* Coaching Insights — trader+ only; Hawks mode swaps in its variant via ModeVariant */}
 			{canAccess("dashboard:coaching-insights") && (
 				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
-					<CoachingInsightsCard />
+					<ModeVariant
+						default={<CoachingInsightsCard />}
+						variants={coachingVariants}
+					/>
 				</div>
 			)}
 
@@ -283,6 +326,7 @@ export const DashboardContent = ({
 					month={currentMonth}
 					onMonthChange={handleMonthChange}
 					onDayClick={handleDayClick}
+					isLoading={isCalendarLoading}
 				/>
 			</div>
 

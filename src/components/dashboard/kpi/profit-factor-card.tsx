@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useTranslations } from "next-intl"
-import { formatCompactCurrency } from "@/lib/formatting"
+import { useFormatting } from "@/hooks/use-formatting"
 import { StatCard } from "@/components/shared"
 import { getThresholdColorClass } from "./helpers"
 
@@ -18,23 +18,24 @@ const ProfitFactorCard = ({
 	avgLoss,
 }: ProfitFactorCardProps) => {
 	const t = useTranslations("dashboard.kpi")
+	const { formatCompactCurrency } = useFormatting()
 	const colorClass = getThresholdColorClass(profitFactor, 1)
 	const hasData = profitFactor !== null
 
 	const subValue = useMemo(
 		() =>
 			hasData ? (
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<span className="text-trade-buy">
-						{t("avg")}: {formatCompactCurrency(avgWin ?? 0, "R$")}
+						{t("avg")}: {formatCompactCurrency(avgWin ?? 0)}
 					</span>
 					|
 					<span className="text-trade-sell">
-						{formatCompactCurrency(avgLoss ?? 0, "R$")}
+						{formatCompactCurrency(avgLoss ?? 0)}
 					</span>
 				</div>
 			) : undefined,
-		[hasData, avgWin, avgLoss, t]
+		[hasData, avgWin, avgLoss, t, formatCompactCurrency]
 	)
 
 	return (

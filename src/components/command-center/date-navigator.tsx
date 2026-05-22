@@ -1,23 +1,15 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import {
-	ChevronLeft,
-	ChevronRight,
-	CalendarDays,
-	SkipForward,
-} from "lucide-react"
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { APP_TIMEZONE, formatDateKey } from "@/lib/dates"
-import { advanceReplayDate } from "@/app/actions/accounts"
 
 interface DateNavigatorProps {
 	currentDate: string // ISO date string YYYY-MM-DD
 	isToday: boolean
-	isReplayAccount?: boolean
 }
 
 const formatDisplayDate = (dateStr: string, locale: string): string => {
@@ -31,16 +23,11 @@ const formatDisplayDate = (dateStr: string, locale: string): string => {
 	})
 }
 
-export const DateNavigator = ({
-	currentDate,
-	isToday,
-	isReplayAccount = false,
-}: DateNavigatorProps) => {
+export const DateNavigator = ({ currentDate, isToday }: DateNavigatorProps) => {
 	const t = useTranslations("commandCenter.dateNavigator")
 	const router = useRouter()
 	const pathname = usePathname()
 	const locale = useLocale()
-	const [isAdvancing, setIsAdvancing] = useState(false)
 
 	const handleNavigate = useCallback(
 		(offset: number) => {
@@ -48,14 +35,6 @@ export const DateNavigator = ({
 			date.setDate(date.getDate() + offset)
 			const newDateStr = formatDateKey(date)
 
-			// For replay accounts, "today" is the replay date — just remove the param
-			if (isReplayAccount) {
-				// Can't navigate forward past replay date
-				router.push(`${pathname}?date=${newDateStr}`)
-				return
-			}
-
-			// For normal accounts, check if navigating to actual today
 			const today = new Date()
 			const todayStr = formatDateKey(today)
 
@@ -65,28 +44,27 @@ export const DateNavigator = ({
 				router.push(`${pathname}?date=${newDateStr}`)
 			}
 		},
-		[currentDate, isReplayAccount, router, pathname]
+		[currentDate, router, pathname]
 	)
 
 	const handleGoToToday = useCallback(() => {
 		router.push(pathname)
 	}, [router, pathname])
 
-	const handleAdvanceReplayDate = useCallback(async () => {
-		setIsAdvancing(true)
-		const result = await advanceReplayDate()
-		setIsAdvancing(false)
-
-		if (result.status === "success") {
-			router.refresh()
-		}
-	}, [router])
-
-	const handleNavigatePrev = useCallback(() => handleNavigate(-1), [handleNavigate])
-	const handleNavigateNext = useCallback(() => handleNavigate(1), [handleNavigate])
+	const handleNavigatePrev = useCallback(
+		() => handleNavigate(-1),
+		[handleNavigate]
+	)
+	const handleNavigateNext = useCallback(
+		() => handleNavigate(1),
+		[handleNavigate]
+	)
 
 	return (
-		<div id="cc-date-navigator" className="gap-s-200 flex flex-wrap items-center">
+		<div
+			id="cc-date-navigator"
+			className="gap-s-200 flex flex-wrap items-center"
+		>
 			<Button
 				id="date-nav-previous"
 				variant="ghost"
@@ -94,24 +72,15 @@ export const DateNavigator = ({
 				onClick={handleNavigatePrev}
 				aria-label={t("previousDay")}
 				tabIndex={0}
-				className="size-10 sm:size-9 p-0"
+				className="size-10 p-0 sm:size-9"
 			>
 				<ChevronLeft className="h-4 w-4" />
 			</Button>
 
 			<div className="gap-s-200 flex items-center">
-				<CalendarDays className="text-txt-300 h-4 w-4" />
-				<span
-					className={cn(
-						"text-small font-medium",
-						isToday ? "text-txt-100" : "text-acc-100"
-					)}
-				>
-					{isToday
-						? isReplayAccount
-							? formatDisplayDate(currentDate, locale)
-							: t("today")
-						: formatDisplayDate(currentDate, locale)}
+				<CalendarDays className="text-txt-300 h-4 w-4" aria-hidden="true" />
+				<span className="text-small text-txt-100 font-medium">
+					{isToday ? t("today") : formatDisplayDate(currentDate, locale)}
 				</span>
 			</div>
 
@@ -123,7 +92,7 @@ export const DateNavigator = ({
 				disabled={isToday}
 				aria-label={t("nextDay")}
 				tabIndex={0}
-				className="size-10 sm:size-9 p-0"
+				className="size-10 p-0 sm:size-9"
 			>
 				<ChevronRight className="h-4 w-4" />
 			</Button>
@@ -134,30 +103,18 @@ export const DateNavigator = ({
 					variant="ghost"
 					size="sm"
 					onClick={handleGoToToday}
-					className="ml-s-200 text-tiny text-acc-100"
+					className="ml-s-200 text-tiny"
 				>
 					{t("today")}
 				</Button>
 			)}
 
-			{isReplayAccount && isToday && (
-				<Button
-					id="date-nav-advance-replay"
-					variant="ghost"
-					size="sm"
-					onClick={handleAdvanceReplayDate}
-					disabled={isAdvancing}
-					className="ml-s-200 gap-s-100 text-tiny text-acc-100"
-					aria-label={t("nextReplayDay")}
-					tabIndex={0}
-				>
-					<SkipForward className="h-3.5 w-3.5" />
-					<span>{t("nextReplayDay")}</span>
-				</Button>
-			)}
-
 			{!isToday && (
-				<span className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm" role="status" aria-live="polite">
+				<span
+					className="ml-s-200 bg-acc-100/10 px-s-200 py-s-100 text-tiny text-acc-100 rounded-sm"
+					role="status"
+					aria-live="polite"
+				>
 					{t("readOnlyNotice")}
 				</span>
 			)}

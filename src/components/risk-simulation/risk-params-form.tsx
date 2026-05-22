@@ -376,7 +376,7 @@ const RiskParamsForm = ({
 											),
 										})
 						}
-						prefix="R$"
+						prefix="BRL"
 					/>
 					<CurrencyField
 						label={t("dailyLoss")}
@@ -387,7 +387,7 @@ const RiskParamsForm = ({
 								dailyLossCents: Math.round(parseFloat(val || "0") * 100),
 							})
 						}
-						prefix="R$"
+						prefix="BRL"
 						locked={isLocked}
 					/>
 					<CurrencyField
@@ -399,7 +399,7 @@ const RiskParamsForm = ({
 								monthlyLossCents: Math.round(parseFloat(val || "0") * 100),
 							})
 						}
-						prefix="R$"
+						prefix="BRL"
 						locked={isLocked}
 					/>
 					<CurrencyField
@@ -407,7 +407,7 @@ const RiskParamsForm = ({
 						valueCents={params.decisionTree.baseTrade.riskCents}
 						onChange={() => {}}
 						disabled
-						prefix="R$"
+						prefix="BRL"
 						locked={isLocked}
 					/>
 				</div>
@@ -429,7 +429,7 @@ const RiskParamsForm = ({
 							accountBalanceCents: Math.round(parseFloat(val || "0") * 100),
 						})
 					}
-					prefix="R$"
+					prefix="BRL"
 				/>
 				<Field
 					label={t("riskPerTrade")}

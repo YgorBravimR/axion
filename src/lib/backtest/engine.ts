@@ -24,6 +24,9 @@ import {
 	createInitialDezkState,
 	resetDezkForNewDay,
 	type DezkState,
+	processHawksCandle,
+	createInitialHawksState,
+	type HawksState,
 } from "./modules/entry"
 import { createStopModule } from "./modules/stop"
 import { createTargetModule } from "./modules/target"
@@ -77,10 +80,12 @@ const runBacktest = (
 		const dayCandlesArr = days.get(dayKey)!
 		let position: Position | null = null
 		let reversalState = reversalModule.init()
-		let entryState: OrbState | DezkState =
+		let entryState: OrbState | DezkState | HawksState =
 			recipe.entry.type === "orb_breakout"
 				? createInitialOrbState()
-				: resetDezkForNewDay(persistentEntryState!)
+				: recipe.entry.type === "hawks_triple_screen"
+					? createInitialHawksState()
+					: resetDezkForNewDay(persistentEntryState!)
 		let dayRangeHigh: number | null = null
 		let dayRangeLow: number | null = null
 		const dayTrades: BacktestTrade[] = []
@@ -269,6 +274,16 @@ const runBacktest = (
 				)
 				entryState = result.state
 				entrySignal = result.signal
+			} else if (recipe.entry.type === "hawks_triple_screen") {
+				const result = processHawksCandle(
+					candle,
+					entryState as HawksState,
+					ctx,
+					assetConfig.tickSize,
+					recipe.entry.config
+				)
+				entryState = result.state
+				entrySignal = result.signal
 			}
 
 			if (entrySignal) {
@@ -329,6 +344,8 @@ const runBacktest = (
 		equityCurve: buildEquityCurve(trades),
 		summary: computeMetrics(trades, sortedDayKeys.length),
 		dayBreakdown: dayBreakdowns,
+		engineVersion:
+			recipe.entry.type === "hawks_triple_screen" ? "hawks-v0.2" : undefined,
 	}
 }
 

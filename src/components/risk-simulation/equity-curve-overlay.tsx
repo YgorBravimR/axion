@@ -44,7 +44,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 			<p className="text-small text-txt-200">
 				{t("tooltipOriginal", { value: data.original.toFixed(2) })}
 			</p>
-			<p className="text-small text-trade-buy">
+			<p className="text-small text-txt-100">
 				{t("tooltipSimulated", { value: data.simulated.toFixed(2) })}
 			</p>
 		</div>
@@ -135,8 +135,8 @@ const EquityCurveOverlay = ({ equityCurve }: EquityCurveOverlayProps) => {
 						type="monotone"
 						dataKey="simulated"
 						name={t("simulated")}
-						stroke="var(--color-trade-buy)"
-						fill="var(--color-trade-buy)"
+						stroke="var(--color-acc-100)"
+						fill="var(--color-acc-100)"
 						fillOpacity={0.1}
 						strokeWidth={2}
 					/>

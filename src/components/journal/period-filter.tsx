@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -23,6 +23,9 @@ interface PeriodFilterProps {
  * Period filter component for selecting time ranges in the journal.
  * Supports predefined periods (day, week, month) and custom date ranges.
  *
+ * Mobile/desktop view is controlled via CSS container queries to avoid
+ * SSR hydration mismatch from useEffect media-query detection.
+ *
  * @param value - Currently selected period
  * @param onChange - Callback when period or date range changes
  * @param customDateRange - Current custom date range if selected
@@ -34,20 +37,11 @@ export const PeriodFilter = ({
 }: PeriodFilterProps) => {
 	const t = useTranslations("journal")
 	const [showCustomPicker, setShowCustomPicker] = useState(false)
-	const [isMobile, setIsMobile] = useState(false)
 	const [tempRange, setTempRange] = useState<DateRange | undefined>(
 		customDateRange
 			? { from: customDateRange.from, to: customDateRange.to }
 			: undefined
 	)
-
-	useEffect(() => {
-		const mq = window.matchMedia("(max-width: 419px)")
-		setIsMobile(mq.matches)
-		const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-		mq.addEventListener("change", handleChange)
-		return () => mq.removeEventListener("change", handleChange)
-	}, [])
 
 	const periods = useMemo<{ key: JournalPeriod; label: string }[]>(
 		() => [
@@ -88,27 +82,31 @@ export const PeriodFilter = ({
 	}
 
 	return (
-		<div className="gap-s-200 flex flex-col">
+		<div className="gap-s-200 @container flex flex-col">
 			<div
-				role="group"
+				role="radiogroup"
 				aria-label={t("period.filterGroupLabel")}
-				className="gap-s-100 scrollbar-none flex items-center overflow-x-auto"
+				className="gap-s-100 flex items-center overflow-x-auto"
 			>
 				{periods.map((period) => (
 					<button
 						key={period.key}
 						type="button"
+						role="radio"
 						onClick={() => handlePeriodClick(period.key)}
 						className={cn(
-							"px-s-300 py-s-100 text-small rounded-md font-medium transition-colors",
+							"px-s-300 py-s-100 text-small focus-visible:ring-acc-100 rounded-md font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
 							value === period.key
-								? "bg-acc-100 text-bg-100"
-								: "bg-bg-300 text-txt-200 hover:bg-bg-200"
+								? "bg-bg-300 text-txt-100 ring-acc-100/60 ring-1 ring-inset"
+								: "bg-bg-300 text-txt-300 hover:text-txt-100"
 						)}
-						aria-pressed={value === period.key}
+						aria-checked={value === period.key}
 					>
 						{period.key === "custom" && (
-							<Calendar className="mr-s-100 inline h-3.5 w-3.5" />
+							<Calendar
+								className="mr-s-100 inline h-3.5 w-3.5"
+								aria-hidden="true"
+							/>
 						)}
 						{period.label}
 					</button>
@@ -119,12 +117,22 @@ export const PeriodFilter = ({
 			{showCustomPicker && (
 				<div className="gap-s-200 border-bg-300 bg-bg-100 p-s-300 flex max-w-[calc(100vw-2rem)] flex-wrap items-end rounded-lg border">
 					<div className="w-full sm:min-w-[260px] sm:flex-1">
-						<DateRangePicker
-							id="period-filter-range"
-							value={tempRange}
-							onChange={setTempRange}
-							numberOfMonths={isMobile ? 1 : 2}
-						/>
+						<div className="min-[420px]:hidden">
+							<DateRangePicker
+								id="period-filter-range-mobile"
+								value={tempRange}
+								onChange={setTempRange}
+								numberOfMonths={1}
+							/>
+						</div>
+						<div className="hidden min-[420px]:block">
+							<DateRangePicker
+								id="period-filter-range-desktop"
+								value={tempRange}
+								onChange={setTempRange}
+								numberOfMonths={2}
+							/>
+						</div>
 					</div>
 					<div className="gap-s-100 flex">
 						<Button

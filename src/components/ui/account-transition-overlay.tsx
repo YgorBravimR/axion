@@ -20,7 +20,7 @@ import { getAccountTypeBrand, getAccountIcon } from "@/lib/account-brand"
 
 interface AccountTransitionOptions {
 	accountName: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 }
 
 interface AccountTransitionContextType {
@@ -65,23 +65,6 @@ const useAccountTransition = (): AccountTransitionContextType => {
 const sleep = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms))
 
-/**
- * Checks if we're resuming from a cross-reload account transition.
- * Reads and clears the sessionStorage flag in one pass.
- */
-const checkResumedTransition = (): boolean => {
-	try {
-		const flag = sessionStorage.getItem(TRANSITION_SESSION_KEY)
-		if (flag) {
-			sessionStorage.removeItem(TRANSITION_SESSION_KEY)
-			return true
-		}
-	} catch {
-		// sessionStorage unavailable
-	}
-	return false
-}
-
 // ==========================================
 // Resumed Overlay (post-reload)
 // ==========================================
@@ -91,15 +74,33 @@ const checkResumedTransition = (): boolean => {
  * Hides the skeleton/loading state while the new page hydrates, then fades out.
  */
 const ResumedOverlay = () => {
-	const [isVisible, setIsVisible] = useState(true)
+	const [isVisible, setIsVisible] = useState(false)
+	const [isMounted, setIsMounted] = useState(false)
 
 	useEffect(() => {
+		// Check for resumed transition on client only
+		try {
+			const flag = sessionStorage.getItem(TRANSITION_SESSION_KEY)
+			if (flag) {
+				sessionStorage.removeItem(TRANSITION_SESSION_KEY)
+				setIsVisible(true)
+			}
+		} catch {
+			// sessionStorage unavailable
+		}
+		setIsMounted(true)
+	}, [])
+
+	useEffect(() => {
+		if (!isVisible) {
+			return
+		}
 		// Allow content to load under the overlay, then fade out
 		const fadeTimer = setTimeout(() => setIsVisible(false), 800)
 		return () => clearTimeout(fadeTimer)
-	}, [])
+	}, [isVisible])
 
-	if (!isVisible) {
+	if (!isMounted || !isVisible) {
 		return null
 	}
 
@@ -160,7 +161,7 @@ const TransitionOverlay = ({
 				>
 					{/* Pulsing gold ring */}
 					<div
-						className="from-brand-400 via-acc-100 to-brand-600 animate-transition-ring-pulse absolute -inset-3 rounded-full bg-linear-to-br"
+						className="from-acc-100 via-acc-100 to-acc-100 animate-transition-ring-pulse absolute -inset-3 rounded-full bg-linear-to-br"
 						aria-hidden="true"
 					/>
 
@@ -216,7 +217,6 @@ const AccountTransitionOverlayProvider = ({
 	const t = useTranslations("auth.accountSwitcher")
 	const [phase, setPhase] = useState<TransitionPhase>("idle")
 	const [options, setOptions] = useState<AccountTransitionOptions | null>(null)
-	const [showResumedOverlay] = useState(() => checkResumedTransition())
 	const overlayRef = useRef<HTMLDivElement>(null)
 	const previousFocusRef = useRef<HTMLElement | null>(null)
 
@@ -308,8 +308,6 @@ const AccountTransitionOverlayProvider = ({
 			switch (accountType) {
 				case "prop":
 					return t("propFirm")
-				case "replay":
-					return t("replay")
 				default:
 					return t("personal")
 			}
@@ -327,7 +325,7 @@ const AccountTransitionOverlayProvider = ({
 			{children}
 
 			{/* Resumed overlay: solid bg that fades out after reload */}
-			{showResumedOverlay && <ResumedOverlay />}
+			<ResumedOverlay />
 
 			{/* Transition Overlay */}
 			{isTransitioning && options ? (

@@ -36,41 +36,49 @@ interface MetricRowProps {
 	tooltip?: string
 }
 
-const MetricRow = memo(({ label, value, valueClass, tooltip }: MetricRowProps) => (
-	<div className="flex min-w-0 items-center justify-between">
-		{tooltip ? (
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<span className="gap-s-100 text-tiny sm:text-small text-txt-300 inline-flex cursor-help items-center">
-						{label}
-						<Info className="h-3 w-3" />
-					</span>
-				</TooltipTrigger>
-				<TooltipContent
-					id={`tooltip-metric-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-					side="top"
-					className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
-				>
-					<p className="text-tiny leading-relaxed">{tooltip}</p>
-				</TooltipContent>
-			</Tooltip>
-		) : (
-			<span className="text-tiny sm:text-small text-txt-300">{label}</span>
-		)}
-		<span
-			className={cn("text-small sm:text-body font-medium", valueClass || "text-txt-100")}
-		>
-			{value}
-		</span>
-	</div>
-))
+const MetricRow = memo(
+	({ label, value, valueClass, tooltip }: MetricRowProps) => (
+		<div className="flex min-w-0 items-center justify-between">
+			{tooltip ? (
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<span className="gap-s-100 text-tiny sm:text-small text-txt-300 inline-flex cursor-help items-center">
+							{label}
+							<Info className="h-3 w-3" aria-hidden="true" />
+						</span>
+					</TooltipTrigger>
+					<TooltipContent
+						id={`tooltip-metric-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+						side="top"
+						className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
+					>
+						<p className="text-tiny leading-relaxed">{tooltip}</p>
+					</TooltipContent>
+				</Tooltip>
+			) : (
+				<span className="text-tiny sm:text-small text-txt-300">{label}</span>
+			)}
+			<span
+				className={cn(
+					"text-small sm:text-body font-medium",
+					valueClass || "text-txt-100"
+				)}
+			>
+				{value}
+			</span>
+		</div>
+	)
+)
 
 export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 	const t = useTranslations("monteCarlo.metrics")
 	const tTooltips = useTranslations("monteCarlo.tooltips")
 
 	return (
-		<div id="monte-carlo-metrics" className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 [&>:nth-child(5)]:sm:col-span-2 [&>:nth-child(5)]:lg:col-span-1">
+		<div
+			id="monte-carlo-metrics"
+			className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 [&>:nth-child(5)]:sm:col-span-2 [&>:nth-child(5)]:lg:col-span-1"
+		>
 			{/* Edge Summary */}
 			<MetricCard title={t("edgeSummary")}>
 				<MetricRow
@@ -104,9 +112,6 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 							? "∞"
 							: formatRatio(statistics.profitFactor)
 					}
-					valueClass={
-						statistics.profitFactor >= 1 ? "text-trade-buy" : "text-trade-sell"
-					}
 					tooltip={tTooltips("profitFactor")}
 				/>
 			</MetricCard>
@@ -116,17 +121,11 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 				<MetricRow
 					label={t("sharpeRatio")}
 					value={formatRatio(statistics.sharpeRatio)}
-					valueClass={
-						statistics.sharpeRatio >= 1 ? "text-trade-buy" : "text-txt-100"
-					}
 					tooltip={tTooltips("sharpeRatio")}
 				/>
 				<MetricRow
 					label={t("sortinoRatio")}
 					value={formatRatio(statistics.sortinoRatio)}
-					valueClass={
-						statistics.sortinoRatio >= 1 ? "text-trade-buy" : "text-txt-100"
-					}
 					tooltip={tTooltips("sortinoRatio")}
 				/>
 			</MetricCard>
@@ -155,12 +154,10 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 				<MetricRow
 					label={t("maxWinsInRow")}
 					value={Math.round(statistics.expectedMaxWinStreak).toString()}
-					valueClass="text-trade-buy"
 				/>
 				<MetricRow
 					label={t("maxLossesInRow")}
 					value={Math.round(statistics.expectedMaxLossStreak).toString()}
-					valueClass="text-trade-sell"
 				/>
 				<MetricRow
 					label={t("avgWinStreak")}
@@ -194,9 +191,6 @@ export const MetricsCards = ({ statistics }: MetricsCardsProps) => {
 				<MetricRow
 					label={t("profitableSimulations")}
 					value={`${statistics.profitablePct.toFixed(0)}%`}
-					valueClass={
-						statistics.profitablePct >= 70 ? "text-trade-buy" : "text-txt-100"
-					}
 					tooltip={tTooltips("profitableSimulations")}
 				/>
 			</MetricCard>

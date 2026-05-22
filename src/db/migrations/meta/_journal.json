@@ -1,20 +1,97 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1778053297518,
-      "tag": "0000_clean_tag",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1778171120947,
-      "tag": "0001_marvelous_clea",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1778053297518,
+			"tag": "0000_clean_tag",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1778171120947,
+			"tag": "0001_marvelous_clea",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1778656447574,
+			"tag": "0002_gigantic_masked_marvel",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1778753892743,
+			"tag": "0003_wise_franklin_richards",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1778846144494,
+			"tag": "0004_aromatic_stature",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1778857320095,
+			"tag": "0005_boring_wasp",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1778858658955,
+			"tag": "0006_modern_blob",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "7",
+			"when": 1778860574780,
+			"tag": "0007_parallel_exiles",
+			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "7",
+			"when": 1779291504441,
+			"tag": "0008_pale_colleen_wing",
+			"breakpoints": true
+		},
+		{
+			"idx": 9,
+			"version": "7",
+			"when": 1779305268648,
+			"tag": "0009_calm_madripoor",
+			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "7",
+			"when": 1779345928220,
+			"tag": "0010_adorable_pride",
+			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "7",
+			"when": 1779349805156,
+			"tag": "0011_happy_maximus",
+			"breakpoints": true
+		},
+		{
+			"idx": 12,
+			"version": "7",
+			"when": 1779356029366,
+			"tag": "0012_lumpy_odin",
+			"breakpoints": true
+		}
+	]
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState, useEffect, useTransition, useRef } from "react"
+import { memo, useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Brain,
@@ -13,6 +13,7 @@ import {
 	Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Panel } from "@/components/ui/panel"
 import { getCoachingContext } from "@/app/actions/coaching"
 import type { CoachingContext } from "@/app/actions/coaching.types"
 import type { CoachingInsight } from "@/lib/coaching/pattern-detector"
@@ -43,9 +44,9 @@ const DEFAULT_SEVERITY_STYLE: SeverityStyle = {
 
 const SEVERITY_STYLES: Record<string, SeverityStyle> = {
 	warning: {
-		border: "border-trade-sell/30",
-		bg: "bg-trade-sell/5",
-		badge: "bg-trade-sell/20 text-trade-sell",
+		border: "border-destructive/30",
+		bg: "bg-destructive/5",
+		badge: "bg-destructive/20 text-destructive",
 	},
 	attention: {
 		border: "border-warning/30",
@@ -135,7 +136,7 @@ const CoachingInsightsCardBase = ({
 	const [context, setContext] = useState<CoachingContext | null>(
 		initialContext ?? null
 	)
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const hasLoadedRef = useRef(!!initialContext)
 
 	// Load coaching context on mount if not provided
@@ -146,11 +147,12 @@ const CoachingInsightsCardBase = ({
 		hasLoadedRef.current = true
 
 		const COACHING_ANALYSIS_DAYS = 90
-		startTransition(async () => {
-			const result = await getCoachingContext(COACHING_ANALYSIS_DAYS)
+		setIsPending(true)
+		void getCoachingContext(COACHING_ANALYSIS_DAYS).then((result) => {
 			if (result.status === "success" && result.data) {
 				setContext(result.data)
 			}
+			setIsPending(false)
 		})
 	}, [])
 
@@ -158,10 +160,7 @@ const CoachingInsightsCardBase = ({
 	const displayInsights = insights.slice(0, 5)
 
 	return (
-		<div
-			id="dashboard-coaching-insights"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border"
-		>
+		<Panel id="dashboard-coaching-insights" padding="md">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
@@ -176,8 +175,6 @@ const CoachingInsightsCardBase = ({
 					</span>
 				)}
 			</div>
-
-			<p className="mt-s-100 text-tiny text-txt-300">{t("subtitle")}</p>
 
 			{/* Content */}
 			<div className="mt-s-300 sm:mt-m-400">
@@ -203,7 +200,7 @@ const CoachingInsightsCardBase = ({
 					</div>
 				)}
 			</div>
-		</div>
+		</Panel>
 	)
 }
 

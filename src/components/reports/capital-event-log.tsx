@@ -3,7 +3,9 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { CapitalEvent } from "@/types/integration"
+import { Input } from "@/components/ui/input"
 import {
 	recordCapitalEvent,
 	deleteCapitalEvent,
@@ -67,6 +69,7 @@ const CapitalEventLog = ({
 		})
 	}
 
+	const { formatCurrency } = useFormatting()
 	const yearEvents = events.filter((e) => e.eventDate.startsWith(String(year)))
 
 	return (
@@ -92,7 +95,7 @@ const CapitalEventLog = ({
 							onClick={() => setFormType("deposit")}
 							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
 								formType === "deposit"
-									? "bg-trade-buy text-bg-100"
+									? "bg-bg-100 text-txt-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
 							}`}
 							aria-pressed={formType === "deposit"}
@@ -104,7 +107,7 @@ const CapitalEventLog = ({
 							onClick={() => setFormType("withdrawal")}
 							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
 								formType === "withdrawal"
-									? "bg-acc-100 text-bg-100"
+									? "bg-bg-100 text-txt-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
 							}`}
 							aria-pressed={formType === "withdrawal"}
@@ -113,23 +116,25 @@ const CapitalEventLog = ({
 						</button>
 					</div>
 
-					<input
+					<Input
+						id="capital-amount"
 						type="text"
 						inputMode="decimal"
 						placeholder={t("amountPlaceholder")}
 						value={formAmount}
 						onChange={(e) => setFormAmount(e.target.value)}
-						className="border-bg-300 bg-bg-200 text-txt-100 placeholder:text-txt-300 focus:ring-acc-100 text-tiny rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
+						className="text-tiny"
 						aria-label={t("amountAriaLabel")}
 						required
 					/>
 
-					<input
+					<Input
+						id="capital-date"
 						type="date"
 						value={formDate}
 						onChange={(e) => setFormDate(e.target.value)}
 						max={new Date().toISOString().slice(0, 10)}
-						className="border-bg-300 bg-bg-200 text-txt-100 focus:ring-acc-100 text-tiny rounded-md border px-3 py-2 focus:ring-1 focus:outline-none"
+						className="text-tiny"
 						aria-label={t("eventDateAriaLabel")}
 					/>
 
@@ -142,9 +147,7 @@ const CapitalEventLog = ({
 					</button>
 
 					{formError && (
-						<p className="text-trade-sell text-tiny col-span-full">
-							{formError}
-						</p>
+						<p className="text-fb-error text-tiny col-span-full">{formError}</p>
 					)}
 				</form>
 
@@ -159,22 +162,13 @@ const CapitalEventLog = ({
 								className="bg-bg-300/30 text-tiny flex items-center justify-between gap-3 rounded-md px-3 py-2"
 							>
 								<span className="text-txt-300 font-mono">{ev.eventDate}</span>
-								<span
-									className={`text-tiny rounded-sm px-2 py-0.5 font-medium ${
-										ev.eventType === "deposit"
-											? "bg-trade-buy/20 text-trade-buy"
-											: "bg-acc-100/20 text-acc-100"
-									}`}
-								>
+								<span className="bg-bg-100 text-txt-200 text-tiny rounded-sm px-2 py-0.5 font-medium">
 									{ev.eventType === "deposit"
 										? t("depositLabel")
 										: t("withdrawalLabel")}
 								</span>
 								<span className="text-txt-100 ml-auto font-mono tabular-nums">
-									{new Intl.NumberFormat("pt-BR", {
-										style: "currency",
-										currency: "BRL",
-									}).format(ev.amountCents / 100)}
+									{formatCurrency(ev.amountCents / 100, "BRL")}
 								</span>
 								{ev.notes && (
 									<span className="text-txt-300 max-w-[120px] truncate">

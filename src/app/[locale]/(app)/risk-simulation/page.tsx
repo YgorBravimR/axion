@@ -4,7 +4,6 @@ import { getTradeYears } from "@/app/actions/risk-simulation"
 import { RiskSimulationContent } from "@/components/risk-simulation"
 import { LoadingSpinner } from "@/components/shared"
 
-
 const RiskSimulationPage = async () => {
 	const [profilesResponse, yearsResponse] = await Promise.all([
 		listActiveRiskProfiles(),
@@ -19,7 +18,7 @@ const RiskSimulationPage = async () => {
 
 	return (
 		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">
-			<Suspense fallback={<LoadingSpinner size="md" className="h-50" />}>
+			<Suspense fallback={<LoadingSpinner size="md" className="min-h-48" />}>
 				<RiskSimulationContent
 					riskProfiles={riskProfiles}
 					tradeYears={tradeYears}

@@ -18,14 +18,14 @@ import {
 } from "@/db/schema"
 import { auth } from "@/auth"
 import { requireAuth } from "@/app/actions/auth"
-import {
-	getUserDek,
-	encryptAccountFields,
-	decryptAccountFields,
-} from "@/lib/user-crypto"
 import { hasAccess } from "@/lib/feature-access"
 import { resolveFeeSnapshot } from "@/lib/tax/fee-resolver"
 import { getTranslations } from "next-intl/server"
+import {
+	createAccountSchema,
+	updateAccountSchema,
+	accountIdSchema,
+} from "@/lib/validations/account"
 import type {
 	AccountInput,
 	AccountAssetInput,
@@ -46,6 +46,16 @@ export const createAccount = async (
 }> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
+
+	const parsed = createAccountSchema.safeParse(input)
+	if (!parsed.success) {
+		return {
+			status: "error",
+			error:
+				parsed.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {
@@ -64,21 +74,7 @@ export const createAccount = async (
 			return { status: "error", error: tSettings("errors.accountNameExists") }
 		}
 
-		const replayCurrentDate =
-			input.accountType === "replay" && input.replayStartDate
-				? new Date(input.replayStartDate)
-				: null
-
-		// Encrypt financial fields if DEK is available
-		const dek = await getUserDek(session.user.id)
-		const encryptableValues = {
-			propFirmName: input.propFirmName,
-			profitSharePercentage:
-				input.profitSharePercentage?.toString() ?? "100.00",
-		}
-		const encryptedFields = dek
-			? encryptAccountFields(encryptableValues, dek)
-			: {}
+		// Financial fields are plaintext
 
 		const [newAccount] = await db
 			.insert(tradingAccounts)
@@ -93,22 +89,12 @@ export const createAccount = async (
 				defaultCurrency: input.defaultCurrency ?? "BRL",
 				showTaxEstimates: input.showTaxEstimates ?? true,
 				showPropCalculations: input.showPropCalculations ?? true,
-				...(replayCurrentDate && { replayCurrentDate }),
-				...encryptedFields,
 			})
 			.returning()
 
 		invalidateAccountData()
 
-		// Decrypt fields before returning
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					newAccount as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradingAccount)
-			: newAccount
-
-		return { status: "success", data: decryptedAccount }
+		return { status: "success", data: newAccount }
 	} catch (error) {
 		console.error("Create account error:", error)
 		return { status: "error", error: tAuth("register.genericError") }
@@ -125,6 +111,25 @@ export const updateAccount = async (
 }> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
+
+	const parsedId = accountIdSchema.safeParse(accountId)
+	if (!parsedId.success) {
+		return {
+			status: "error",
+			error:
+				parsedId.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
+	const parsed = updateAccountSchema.safeParse(input)
+	if (!parsed.success) {
+		return {
+			status: "error",
+			error:
+				parsed.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {
@@ -188,36 +193,21 @@ export const updateAccount = async (
 		if (input.showPropCalculations !== undefined) {
 			updateData.showPropCalculations = input.showPropCalculations
 		}
-		if (input.replayStartDate !== undefined && input.accountType === "replay") {
-			updateData.replayCurrentDate = new Date(input.replayStartDate)
-		}
 		if (input.defaultAsset !== undefined) {
 			updateData.defaultAsset = input.defaultAsset
 		}
 
-		// Encrypt financial fields if DEK is available
-		const dek = await getUserDek(session.user.id)
-		const encryptedFields = dek
-			? encryptAccountFields(updateData as Record<string, unknown>, dek)
-			: {}
+		// Financial fields are plaintext
 
 		const [updated] = await db
 			.update(tradingAccounts)
-			.set({ ...updateData, ...encryptedFields })
+			.set(updateData)
 			.where(eq(tradingAccounts.id, accountId))
 			.returning()
 
 		invalidateAccountData()
 
-		// Decrypt fields before returning
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					updated as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradingAccount)
-			: updated
-
-		return { status: "success", data: decryptedAccount }
+		return { status: "success", data: updated }
 	} catch (error) {
 		console.error("Update account error:", error)
 		return { status: "error", error: tAuth("register.genericError") }
@@ -233,6 +223,16 @@ export const deleteAccount = async (
 }> => {
 	const tAuth = await getTranslations("auth")
 	const tSettings = await getTranslations("settings")
+
+	const parsedId = accountIdSchema.safeParse(accountId)
+	if (!parsedId.success) {
+		return {
+			status: "error",
+			error:
+				parsedId.error.issues[0]?.message ?? tSettings("errors.invalidInput"),
+		}
+	}
+
 	try {
 		const session = await auth()
 		if (!session?.user?.id) {
@@ -356,73 +356,6 @@ export const setDefaultAccount = async (
 		return { status: "success" }
 	} catch (error) {
 		console.error("Set default account error:", error)
-		return { status: "error", error: tAuth("register.genericError") }
-	}
-}
-
-// ==========================================
-// REPLAY DATE
-// ==========================================
-
-/**
- * Advances the replay account's current date by one day.
- * Only valid for accounts with accountType === "replay".
- */
-export const advanceReplayDate = async (): Promise<{
-	status: "success" | "error"
-	data?: TradingAccount
-	error?: string
-}> => {
-	const tAuth = await getTranslations("auth")
-	const tSettings = await getTranslations("settings")
-	try {
-		const session = await auth()
-		if (!session?.user?.id || !session?.user?.accountId) {
-			return { status: "error", error: tAuth("errors.notAuthenticated") }
-		}
-
-		const account = await db.query.tradingAccounts.findFirst({
-			where: and(
-				eq(tradingAccounts.id, session.user.accountId),
-				eq(tradingAccounts.userId, session.user.id)
-			),
-		})
-
-		if (!account) {
-			return { status: "error", error: tSettings("errors.accountNotFound") }
-		}
-
-		if (account.accountType !== "replay") {
-			return { status: "error", error: tSettings("errors.onlyReplayAccounts") }
-		}
-
-		if (!account.replayCurrentDate) {
-			return { status: "error", error: tSettings("errors.replayNoStartDate") }
-		}
-
-		const currentDate = new Date(account.replayCurrentDate)
-		currentDate.setDate(currentDate.getDate() + 1)
-
-		const [updated] = await db
-			.update(tradingAccounts)
-			.set({ replayCurrentDate: currentDate, updatedAt: new Date() })
-			.where(eq(tradingAccounts.id, account.id))
-			.returning()
-
-		invalidateAccountData()
-
-		// Decrypt fields before returning
-		const dek = await getUserDek(session.user.id)
-		const decryptedAccount = dek
-			? (decryptAccountFields(
-					updated as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradingAccount)
-			: updated
-
-		return { status: "success", data: decryptedAccount }
-	} catch (error) {
-		console.error("Advance replay date error:", error)
 		return { status: "error", error: tAuth("register.genericError") }
 	}
 }
@@ -770,4 +703,54 @@ export const getAssetFees = async (
 	})
 
 	return { commission: commissionCents, fees: feesCents }
+}
+
+/**
+ * Set the account's starting balance and account start year (for annual planning).
+ * Used when creating the first annual plan for an account without pre-configured capital.
+ */
+export const setAccountStartingBalance = async (
+	accountId: string,
+	startingBalanceCents: number,
+	accountStartYear: number
+): Promise<{
+	status: "success" | "error"
+	error?: string
+}> => {
+	const tAuth = await getTranslations("auth")
+	const tSettings = await getTranslations("settings")
+
+	try {
+		const session = await auth()
+		if (!session?.user?.id) {
+			return { status: "error", error: tAuth("errors.notAuthenticated") }
+		}
+
+		const account = await db.query.tradingAccounts.findFirst({
+			where: and(
+				eq(tradingAccounts.id, accountId),
+				eq(tradingAccounts.userId, session.user.id)
+			),
+		})
+
+		if (!account) {
+			return { status: "error", error: tSettings("errors.accountNotFound") }
+		}
+
+		await db
+			.update(tradingAccounts)
+			.set({
+				startingBalanceCents,
+				accountStartYear,
+				updatedAt: new Date(),
+			})
+			.where(eq(tradingAccounts.id, accountId))
+
+		invalidateAccountData()
+
+		return { status: "success" }
+	} catch (error) {
+		console.error("Set account starting balance error:", error)
+		return { status: "error", error: tAuth("register.genericError") }
+	}
 }

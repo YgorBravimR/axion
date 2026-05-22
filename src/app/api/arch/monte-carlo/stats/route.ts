@@ -6,7 +6,6 @@ import { trades, strategies } from "@/db/schema"
 import { eq, and, inArray, isNotNull, desc } from "drizzle-orm"
 import { z } from "zod"
 import { dataSourceSchema } from "@/lib/validations/monte-carlo"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import type { SourceStats } from "@/types/monte-carlo"
 
 const POST = async (request: NextRequest) => {
@@ -33,8 +32,6 @@ const POST = async (request: NextRequest) => {
 		let sourceName = ""
 		let strategiesCount = 0
 		let accountsCount = 1
-
-		const dek = await getUserDek(auth.userId)
 
 		const tradeColumns = {
 			outcome: true,
@@ -72,9 +69,7 @@ const POST = async (request: NextRequest) => {
 				orderBy: [desc(trades.entryDate)],
 				columns: tradeColumns,
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		} else if (validated.type === "all_strategies") {
 			sourceName = "All Strategies"
 
@@ -91,9 +86,7 @@ const POST = async (request: NextRequest) => {
 				orderBy: [desc(trades.entryDate)],
 				columns: tradeColumns,
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		} else if (validated.type === "universal") {
 			if (!auth.showAllAccounts) {
 				return archError(
@@ -123,9 +116,7 @@ const POST = async (request: NextRequest) => {
 				orderBy: [desc(trades.entryDate)],
 				columns: tradeColumns,
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		}
 
 		if (tradesList.length === 0) {

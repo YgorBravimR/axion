@@ -13,9 +13,6 @@ import { db } from "@/db/drizzle"
 import { users, tradingAccounts, type TradingAccount } from "@/db/schema"
 import { createDbRateLimiter } from "@/lib/db-rate-limiter"
 import { firstIssueMessage } from "@/lib/zod-helpers"
-// Field-level encryption disabled — imports preserved for re-activation:
-// import { generateKey, encryptDek, encryptField } from "@/lib/crypto"
-import { getUserDek, decryptAccountFields } from "@/lib/user-crypto"
 import { seedUserData } from "@/db/seed-user-data"
 
 import type { SafeUser, AccountPickerItem, AuthContext } from "./auth.types"
@@ -68,25 +65,17 @@ export const registerUser = async (
 			return { status: "error", error: t("errors.emailExists") }
 		}
 
-		// Hash password
 		const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
 
-		// Field-level encryption disabled — skip DEK generation
-		// To re-enable: uncomment the lines below and remove the plaintext insert
-		// const dek = generateKey()
-		// const encryptedDekValue = encryptDek(dek)
-		// const encryptedName = encryptField(name, dek) ?? name
-
-		// Create user + default account sequentially
-		// neon-http driver doesn't support transactions; if account insert fails,
-		// the orphaned user is caught by the unique email constraint on re-registration
+		// neon-http driver doesn't support transactions; if the account insert
+		// fails, the orphaned user is caught by the unique email constraint on
+		// re-registration.
 		const [newUser] = await db
 			.insert(users)
 			.values({
 				name,
 				email: email.toLowerCase(),
 				passwordHash,
-				encryptedDek: null,
 			})
 			.returning()
 		if (!newUser) {
@@ -311,14 +300,6 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 		redirect("/api/auth/force-signout")
 	}
 
-	// Decrypt name if user has a DEK
-	const dek = await getUserDek(session.user.id)
-	if (dek) {
-		const { decryptField } = await import("@/lib/crypto")
-		const decryptedName = decryptField(user.name, dek)
-		return { ...user, name: decryptedName ?? user.name }
-	}
-
 	return user
 }
 
@@ -341,15 +322,6 @@ export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
 		redirect("/api/auth/force-signout")
 	}
 
-	// Decrypt financial fields if DEK is available
-	const dek = await getUserDek(session.user.id)
-	if (dek) {
-		return decryptAccountFields(
-			account as unknown as Record<string, unknown>,
-			dek
-		) as unknown as TradingAccount
-	}
-
 	return account
 }
 
@@ -363,18 +335,6 @@ export const getUserAccounts = async (): Promise<TradingAccount[]> => {
 		where: eq(tradingAccounts.userId, session.user.id),
 		orderBy: (accounts, { desc }) => [desc(accounts.isDefault)],
 	})
-
-	// Decrypt financial fields if DEK is available
-	const dek = await getUserDek(session.user.id)
-	if (dek) {
-		return accounts.map(
-			(account) =>
-				decryptAccountFields(
-					account as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradingAccount
-		)
-	}
 
 	return accounts
 }
@@ -513,12 +473,6 @@ export const updateUserProfile = async (
 		}
 
 		const updateData = { ...validated.data } as Record<string, unknown>
-		// Field-level encryption disabled — name stored as plaintext
-		// To re-enable:
-		// const dek = await getUserDek(session.user.id)
-		// if (dek && updateData.name) {
-		// 	updateData.name = encryptField(updateData.name as string, dek) ?? updateData.name
-		// }
 
 		await db
 			.update(users)
@@ -591,3 +545,30 @@ export const changePassword = async (
 		return { status: "error", error: t("errors.loginFailed") }
 	}
 }
+
+// ==========================================
+// ACCOUNT CURRENCY
+// ==========================================
+
+/**
+ * Get the active account's currency from the session
+ * Cached at request level to avoid duplicate DB queries
+ */
+export const getAccountCurrency = cache(async (): Promise<string> => {
+	try {
+		const session = await auth()
+		if (!session?.user?.accountId) {
+			return "BRL" // Default to BRL if no account selected
+		}
+
+		const account = await db.query.tradingAccounts.findFirst({
+			where: eq(tradingAccounts.id, session.user.accountId),
+			columns: { defaultCurrency: true },
+		})
+
+		return account?.defaultCurrency ?? "BRL"
+	} catch (error) {
+		console.error("Get account currency error:", error)
+		return "BRL" // Fallback to BRL on error
+	}
+})

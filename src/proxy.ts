@@ -19,7 +19,13 @@ const intlMiddleware = createIntlMiddleware(routing)
 const { auth } = NextAuth(authConfig)
 
 // Public paths that don't require authentication
-const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/monitor", "/api/market"]
+const publicPaths = [
+	"/login",
+	"/register",
+	"/forgot-password",
+	"/api/auth",
+	"/api/market",
+]
 
 const isPublicPath = (pathname: string): boolean => {
 	const pathWithoutLocale = pathname.replace(/^\/(en|pt-BR)/, "") || "/"
@@ -36,7 +42,12 @@ export const proxy = auth((req) => {
 
 	// If authenticated and on auth page, redirect to dashboard
 	const pathWithoutLocale = pathname.replace(/^\/(en|pt-BR)/, "") || "/"
-	if (req.auth && (pathWithoutLocale === "/login" || pathWithoutLocale === "/register" || pathWithoutLocale === "/forgot-password")) {
+	if (
+		req.auth &&
+		(pathWithoutLocale === "/login" ||
+			pathWithoutLocale === "/register" ||
+			pathWithoutLocale === "/forgot-password")
+	) {
 		return NextResponse.redirect(new URL("/", req.url))
 	}
 
@@ -77,12 +88,31 @@ export const proxy = auth((req) => {
 				308
 			)
 		}
-		// if (pathWithoutLocaleStripped === "/monthly") {
-		// 	return NextResponse.redirect(
-		// 		new URL(`${localePrefix}/plan/${year}/${quarter}/${month}`, req.url),
-		// 		308
-		// 	)
-		// }
+	}
+
+	// Permanent: /monthly was absorbed into /reports as the Month Closing section.
+	{
+		const pathWithoutLocaleStripped =
+			pathname.replace(/^\/(en|pt-BR)/, "") || "/"
+		const localeMatch = pathname.match(/^\/(en|pt-BR)/)
+		const localePrefix = localeMatch ? localeMatch[0] : "/en"
+		if (pathWithoutLocaleStripped === "/monthly") {
+			return NextResponse.redirect(
+				new URL(`${localePrefix}/reports`, req.url),
+				308
+			)
+		}
+	}
+
+	// Permanent: /replay route is deprecated. Redirect to dashboard.
+	{
+		const pathWithoutLocaleStripped =
+			pathname.replace(/^\/(en|pt-BR)/, "") || "/"
+		const localeMatch = pathname.match(/^\/(en|pt-BR)/)
+		const localePrefix = localeMatch ? localeMatch[0] : "/en"
+		if (pathWithoutLocaleStripped === "/replay") {
+			return NextResponse.redirect(new URL(`${localePrefix}/`, req.url), 308)
+		}
 	}
 
 	// Apply i18n middleware for locale routing

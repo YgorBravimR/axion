@@ -48,6 +48,12 @@
 	--color-trade-buy-muted: rgba(52, 211, 153, 0.15);
 	--color-trade-sell-muted: rgba(248, 113, 113, 0.15);
 
+	/* Rule Engine Verdicts — independent from generic feedback tokens */
+	--color-rule-blocked: #ef4444;
+	--color-rule-paused: #fbbf24;
+	--color-rule-executed: #34d399;
+	--color-rule-na: #787c84;
+
 	/* Action Colors — intent semantics (action wall, cyan-shifted to avoid
      muddle with cobalt acc-100 at hue 258°) */
 	--color-action-buy: #5bb8d6;
@@ -57,11 +63,7 @@
 
 	/* Page Guide — distinctive violet that pops on the dark canvas */
 	--color-guide: rgb(168 130 255);
-
-	/* Brand Colors — Bronze scale (anchored on #C29D6A) */
-	--color-brand-400: #d2ae7c;
-	--color-brand-500: #c29d6a;
-	--color-brand-600: #9c7c4f;
+	--color-proj: #aed2da;
 
 	--radius: 0.625rem;
 	--color-background: var(--color-bg-100);
@@ -82,11 +84,13 @@
 	--color-border: #272a2e;
 	--color-input: var(--color-bg-300);
 	--color-ring: var(--color-acc-100);
-	--color-chart-1: var(--color-acc-100);
-	--color-chart-2: var(--color-acc-200);
-	--color-chart-3: var(--color-bg-100);
-	--color-chart-4: var(--color-bg-200);
-	--color-chart-5: var(--color-bg-300);
+	--color-chart-1: oklch(0.58 0.14 242); /* Blue, cool secondary */
+	--color-chart-2: oklch(0.62 0.13 30); /* Warm orange/amber, tertiary */
+	--color-chart-3: oklch(0.55 0.12 165); /* Cyan/teal, quaternary */
+	--color-chart-4: oklch(0.61 0.11 315); /* Purple/magenta, quinary */
+	--color-chart-5: oklch(0.59 0.13 95); /* Yellow-green, senary */
+	--color-chart-6: oklch(0.56 0.1 45); /* Warm tan/rust, septenary */
+	--color-chart-7: oklch(0.64 0.09 260); /* Cool purple/lavender, endpoint */
 	--color-sidebar: var(--color-bg-100);
 	--color-sidebar-foreground: var(--color-txt-100);
 	--color-sidebar-primary: var(--color-acc-100);
@@ -161,6 +165,7 @@
 /* Light Theme Overrides — Warm Stone-White Paper with Deep Bronze Ink */
 [data-theme="light"] {
 	--color-guide: rgb(217 119 6);
+	--color-proj: oklch(0.42 0.1 215);
 
 	/* Cool-Neutral Stone-White Backgrounds — slight cool undertone keeps
      chrome from competing with the warm bronze accent. */
@@ -188,16 +193,17 @@
 	--color-trade-buy-muted: rgba(5, 150, 105, 0.12);
 	--color-trade-sell-muted: rgba(220, 38, 38, 0.12);
 
+	/* Rule Engine Verdicts — light mode overrides */
+	--color-rule-blocked: #dc2626;
+	--color-rule-paused: #d97706;
+	--color-rule-executed: #059669;
+	--color-rule-na: #6a6e76;
+
 	/* Action Colors — deeper cyan + terracotta for light */
 	--color-action-buy: #1e7a99;
 	--color-action-sell: #ea580c;
 	--color-action-buy-muted: rgba(30, 122, 153, 0.12);
 	--color-action-sell-muted: rgba(234, 88, 12, 0.12);
-
-	/* Brand Colors — Deep Bronze scale */
-	--color-brand-400: #b08a55;
-	--color-brand-500: #8c6e40;
-	--color-brand-600: #6e5530;
 
 	/* Semantic mappings — light mode */
 	--color-background: var(--color-bg-100);
@@ -218,11 +224,13 @@
 	--color-border: var(--color-bg-300);
 	--color-input: var(--color-bg-300);
 	--color-ring: var(--color-acc-100);
-	--color-chart-1: var(--color-acc-100);
-	--color-chart-2: var(--color-acc-200);
-	--color-chart-3: var(--color-bg-300);
-	--color-chart-4: var(--color-bg-200);
-	--color-chart-5: var(--color-bg-100);
+	--color-chart-1: oklch(0.5 0.18 242); /* Blue, deeper in light mode */
+	--color-chart-2: oklch(0.55 0.16 30); /* Warm orange, deeper */
+	--color-chart-3: oklch(0.48 0.15 165); /* Cyan/teal, deeper */
+	--color-chart-4: oklch(0.54 0.14 315); /* Purple/magenta, deeper */
+	--color-chart-5: oklch(0.52 0.15 95); /* Yellow-green, deeper */
+	--color-chart-6: oklch(0.5 0.13 45); /* Warm tan/rust, deeper */
+	--color-chart-7: oklch(0.56 0.12 260); /* Cool purple/lavender, endpoint */
 	--color-sidebar: var(--color-bg-100);
 	--color-sidebar-foreground: var(--color-txt-100);
 	--color-sidebar-primary: var(--color-acc-100);

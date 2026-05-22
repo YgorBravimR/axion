@@ -27,7 +27,6 @@ const ExpectancyModeToggle = ({
 			<div className="border-bg-300 bg-bg-100 flex rounded-md border">
 				<button
 					type="button"
-					tabIndex={0}
 					aria-label={t("expectancyEdgeAriaLabel")}
 					className={cn(
 						"px-s-300 py-s-100 text-tiny rounded-l-md transition-colors",
@@ -36,17 +35,11 @@ const ExpectancyModeToggle = ({
 							: "text-txt-300 hover:text-txt-100"
 					)}
 					onClick={() => onModeChange("edge")}
-					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ") {
-							onModeChange("edge")
-						}
-					}}
 				>
 					R
 				</button>
 				<button
 					type="button"
-					tabIndex={0}
 					aria-label={t("expectancyCapitalAriaLabel")}
 					className={cn(
 						"px-s-300 py-s-100 text-tiny rounded-r-md transition-colors",
@@ -55,11 +48,6 @@ const ExpectancyModeToggle = ({
 							: "text-txt-300 hover:text-txt-100"
 					)}
 					onClick={() => onModeChange("capital")}
-					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ") {
-							onModeChange("capital")
-						}
-					}}
 				>
 					$
 				</button>
@@ -68,11 +56,10 @@ const ExpectancyModeToggle = ({
 				<TooltipTrigger asChild>
 					<button
 						type="button"
-						tabIndex={0}
 						aria-label={t("expectancyTooltipTitle")}
 						className="text-txt-300 hover:text-txt-100 transition-colors"
 					>
-						<Info className="h-3.5 w-3.5" />
+						<Info className="h-3.5 w-3.5" aria-hidden="true" />
 					</button>
 				</TooltipTrigger>
 				<TooltipContent

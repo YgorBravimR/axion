@@ -5,8 +5,6 @@ import { and, eq, inArray } from "drizzle-orm"
 import { archAuth } from "../../../_lib/auth"
 import { archSuccess, archError } from "../../../_lib/helpers"
 import { ARCH_PREVIEW_CACHE } from "../route"
-import { encryptField } from "@/lib/crypto"
-import { getUserDek } from "@/lib/user-crypto"
 import { toNumericString } from "@/lib/money"
 import { computeTradeHash } from "@/lib/deduplication"
 import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
@@ -23,14 +21,6 @@ const requireNumericString = (
 	const result = toNumericString(value)
 	if (result === null) {
 		throw new Error("Required numeric value is null")
-	}
-	return result
-}
-
-const encryptRequired = (value: string, dek: string): string => {
-	const result = encryptField(value, dek)
-	if (result === null) {
-		throw new Error("Encryption produced null for non-null input")
 	}
 	return result
 }
@@ -96,7 +86,6 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const dek = await getUserDek(auth.userId)
 		const previewTrades = cached.preview.trades as GroupedTrade[]
 
 		// Build candidate inserts with dedup hashes.
@@ -128,20 +117,12 @@ const POST = async (request: NextRequest) => {
 				direction: trade.direction,
 				entryDate,
 				exitDate,
-				entryPrice: dek ? encryptRequired(entryPriceStr, dek) : entryPriceStr,
+				entryPrice: entryPriceStr,
 				exitPrice: trade.exitPrice
-					? dek
-						? encryptRequired(requireNumericString(trade.exitPrice), dek)
-						: requireNumericString(trade.exitPrice)
+					? requireNumericString(trade.exitPrice)
 					: null,
-				positionSize: dek
-					? encryptRequired(positionSizeStr, dek)
-					: positionSizeStr,
-				pnl: trade.netPnl
-					? dek
-						? encryptRequired(requireNumericString(trade.netPnl), dek)
-						: requireNumericString(trade.netPnl)
-					: null,
+				positionSize: positionSizeStr,
+				pnl: trade.netPnl ? requireNumericString(trade.netPnl) : null,
 				stopLoss: null,
 				takeProfit: null,
 				mfe: null,

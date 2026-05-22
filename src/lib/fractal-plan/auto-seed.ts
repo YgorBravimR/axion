@@ -22,6 +22,7 @@ interface AutoSeedInput {
 	readonly defaultMonthlyWinR: number
 	readonly drawdownTriggerThresholdR: number
 	readonly tradingDaysPerWeek: number
+	readonly defaultAssertivityPercent?: number
 	readonly annualGoalCents?: number
 	readonly now: Date
 }
@@ -49,6 +50,9 @@ const autoSeedYearlyTree = async (
 				initialCapitalCents: input.initialCapitalCents,
 				ladderRules: input.ladderRules as never,
 				tradingDaysPerWeek: input.tradingDaysPerWeek,
+				defaultAssertivityPercent: (
+					input.defaultAssertivityPercent ?? 50
+				).toFixed(2),
 				defaultDailyLossR: input.defaultDailyLossR.toFixed(2),
 				defaultDailyWinR: input.defaultDailyWinR.toFixed(2),
 				defaultWeeklyLossR: input.defaultWeeklyLossR.toFixed(2),

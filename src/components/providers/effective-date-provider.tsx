@@ -6,7 +6,9 @@ interface EffectiveDateContextValue {
 	effectiveDate: Date
 }
 
-const EffectiveDateContext = createContext<EffectiveDateContextValue | null>(null)
+const EffectiveDateContext = createContext<EffectiveDateContextValue | null>(
+	null
+)
 
 interface EffectiveDateProviderProps {
 	date: string
@@ -18,11 +20,17 @@ interface EffectiveDateProviderProps {
  * For replay accounts this is the simulated date; for normal accounts it's the real date.
  * The date is resolved on the server and passed as an ISO string to avoid hydration mismatches.
  */
-const EffectiveDateProvider = ({ date, children }: EffectiveDateProviderProps) => {
-	const value = useMemo<EffectiveDateContextValue>(
-		() => ({ effectiveDate: new Date(date) }),
-		[date]
-	)
+const EffectiveDateProvider = ({
+	date,
+	children,
+}: EffectiveDateProviderProps) => {
+	const value = useMemo<EffectiveDateContextValue>(() => {
+		try {
+			return { effectiveDate: new Date(date) }
+		} catch {
+			return { effectiveDate: new Date() }
+		}
+	}, [date])
 
 	return (
 		<EffectiveDateContext.Provider value={value}>
@@ -38,7 +46,9 @@ const EffectiveDateProvider = ({ date, children }: EffectiveDateProviderProps) =
 const useEffectiveDate = (): Date => {
 	const context = useContext(EffectiveDateContext)
 	if (!context) {
-		throw new Error("useEffectiveDate must be used within an EffectiveDateProvider")
+		throw new Error(
+			"useEffectiveDate must be used within an EffectiveDateProvider"
+		)
 	}
 	return context.effectiveDate
 }

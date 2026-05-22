@@ -18,7 +18,6 @@ import {
 } from "@/lib/csv-parsers/candle-header-mappings"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
-import type { RawCandleRow } from "@/lib/csv-parsers/candle-parser"
 import type { ActionResponse } from "@/types"
 import type {
 	CandleValidationResult,
@@ -44,12 +43,20 @@ const uuidSchema = z.string().uuid("Invalid UUID format")
  * @returns Validation result with parsed candles and metadata
  */
 export const validateCandleImport = async (
-	fileContent: string,
-	assetSymbol: string,
-	timeframeCode: string
+	formData: FormData
 ): Promise<ActionResponse<CandleValidationResult>> => {
 	const t = await getTranslations("candleImport")
 	try {
+		const file = formData.get("csv") as File | null
+		const assetSymbol = (formData.get("assetSymbol") as string | null) ?? ""
+		const timeframeCode = (formData.get("timeframeCode") as string | null) ?? ""
+
+		if (!file) {
+			return { status: "error", message: t("errors.csvParseFailed") }
+		}
+
+		const fileContent = await file.text()
+
 		// Step 1: Parse the CSV
 		const parseResult = parseCandleCSV(fileContent)
 
@@ -110,7 +117,7 @@ export const validateCandleImport = async (
 			(i) => !allowedKeys.has(i.key)
 		)
 
-		// Step 5: Return validation result
+		// Step 5: Return validation result — only flat scalars to avoid RSC nesting limits
 		return {
 			status: "success",
 			message: t("actions.validated", {
@@ -124,13 +131,10 @@ export const validateCandleImport = async (
 				timeframeId: matchedTimeframe.id,
 				timeframeName: matchedTimeframe.name,
 				rowCount: parseResult.candles.length,
-				dateRange: parseResult.dateRange,
-				detectedIndicators: parseResult.detectedIndicators,
-				registeredIndicators,
-				skippedIndicators,
-				errors: parseResult.errors,
-				warnings: parseResult.warnings,
-				candles: parseResult.candles,
+				dateFrom: parseResult.dateRange?.from.toISOString() ?? null,
+				dateTo: parseResult.dateRange?.to.toISOString() ?? null,
+				registeredIndicatorCount: registeredIndicators.length,
+				skippedIndicatorCount: skippedIndicators.length,
 			},
 		}
 	} catch (error) {
@@ -146,22 +150,25 @@ export const validateCandleImport = async (
 // ==========================================
 
 /**
- * Commits parsed candles to the database using bulk upsert.
+ * Re-parses CSV content and commits candles to the database using bulk upsert.
  * Processes in chunks of 1,000 rows for memory efficiency.
  * Filters indicator values through an allowlist of registered definitions.
+ * Accepts raw CSV text to avoid RSC serialization limits on large candle arrays.
  *
  * @param assetId - UUID of the target asset
  * @param timeframeId - UUID of the target timeframe
- * @param candles - Parsed candle rows from validateCandleImport
+ * @param csvContent - Raw CSV file content (re-parsed server-side)
  * @returns Total rows imported, newly registered indicators, and skipped indicators
  */
 export const commitCandleImport = async (
-	assetId: string,
-	timeframeId: string,
-	candles: RawCandleRow[]
+	formData: FormData
 ): Promise<ActionResponse<CandleImportResult>> => {
 	const t = await getTranslations("candleImport")
 	try {
+		const assetId = (formData.get("assetId") as string | null) ?? ""
+		const timeframeId = (formData.get("timeframeId") as string | null) ?? ""
+		const file = formData.get("csv") as File | null
+
 		// Step 1: Validate UUIDs
 		const assetIdResult = uuidSchema.safeParse(assetId)
 		if (!assetIdResult.success) {
@@ -173,21 +180,110 @@ export const commitCandleImport = async (
 			return { status: "error", message: t("errors.invalidTimeframeId") }
 		}
 
+		if (!file) {
+			return { status: "error", message: t("errors.csvParseFailed") }
+		}
+
+		// Step 2: Re-parse the CSV server-side — FormData transfers file as raw bytes,
+		// bypassing the RSC binary encoding that fails on large strings.
+		const csvContent = await file.text()
+		const parseResult = parseCandleCSV(csvContent)
+		if (!parseResult.success) {
+			return {
+				status: "error",
+				message: t("errors.csvParseFailed"),
+				errors: parseResult.errors.map((error) => ({
+					code: "PARSE_ERROR",
+					detail: `Row ${error.row}: [${error.field}] ${error.message}`,
+				})),
+			}
+		}
+
+		const candles = parseResult.candles
+
 		if (candles.length === 0) {
 			return { status: "error", message: t("errors.noCandlesToImport") }
 		}
 
-		// Step 2: Fetch registered indicator keys (allowlist)
+		// Step 3: Auto-register indicator definitions first — must happen before the
+		// allowlist fetch so that first-time imports store all indicator values.
+		const indicatorKeysInImport = new Set<string>()
+		for (const candle of candles) {
+			for (const key of Object.keys(candle.indicators)) {
+				indicatorKeysInImport.add(key)
+			}
+		}
+
+		const newIndicators: string[] = []
+		const skippedKeys = new Set<string>()
+
+		if (indicatorKeysInImport.size > 0) {
+			// Seed known groups first — indicators require a groupId and groups may not
+			// exist on first import (seedIndicatorDefinitions was never called separately).
+			if (KNOWN_INDICATOR_GROUPS.length > 0) {
+				await db
+					.insert(indicatorGroups)
+					.values(
+						KNOWN_INDICATOR_GROUPS.map((g, i) => ({
+							key: g.key,
+							displayName: g.displayName,
+							description: g.description,
+							sortOrder: i,
+						}))
+					)
+					.onConflictDoNothing({ target: indicatorGroups.key })
+			}
+
+			const allGroups = await db.query.indicatorGroups.findMany()
+			const groupKeyToId = new Map<string, string>()
+			for (const group of allGroups) {
+				groupKeyToId.set(group.key, group.id)
+			}
+
+			const indicatorValues = Array.from(indicatorKeysInImport).map((key) => {
+				const knownMapping = KNOWN_INDICATOR_MAPPINGS.find((m) => m.key === key)
+				return {
+					key,
+					displayName: knownMapping?.displayName ?? key,
+					groupId: knownMapping
+						? (groupKeyToId.get(knownMapping.groupKey) ?? null)
+						: null,
+					csvHeader: knownMapping?.csvHeader ?? null,
+				}
+			})
+
+			for (const indicator of indicatorValues) {
+				if (!indicator.groupId) {
+					skippedKeys.add(indicator.key)
+					continue
+				}
+
+				// eslint-disable-next-line no-await-in-loop -- sequential to avoid duplicate key races
+				const existing = await db.query.indicatorDefinitions.findFirst({
+					where: eq(indicatorDefinitions.key, indicator.key),
+				})
+
+				if (!existing) {
+					// eslint-disable-next-line no-await-in-loop -- sequential insert after existence check
+					await db.insert(indicatorDefinitions).values({
+						key: indicator.key,
+						displayName: indicator.displayName,
+						groupId: indicator.groupId,
+						csvHeader: indicator.csvHeader,
+					})
+					newIndicators.push(indicator.key)
+				}
+			}
+		}
+
+		// Step 4: Fetch updated allowlist — now includes any newly registered indicators
 		const registeredKeys = await db.query.indicatorDefinitions.findMany({
 			where: eq(indicatorDefinitions.isActive, true),
 			columns: { key: true },
 		})
 		const allowedKeys = new Set(registeredKeys.map((r) => r.key))
 
-		// Track skipped keys
-		const skippedKeys = new Set<string>()
-
-		// Step 3: Insert candles in chunks
+		// Step 5: Insert candles in chunks
 		const CHUNK_SIZE = 1000
 
 		for (let i = 0; i < candles.length; i += CHUNK_SIZE) {
@@ -247,68 +343,7 @@ export const commitCandleImport = async (
 				})
 		}
 
-		// Step 4: Auto-register new indicators
-		const indicatorKeysInImport = new Set<string>()
-		for (const candle of candles) {
-			for (const key of Object.keys(candle.indicators)) {
-				indicatorKeysInImport.add(key)
-			}
-		}
-
-		const newIndicators: string[] = []
-
-		if (indicatorKeysInImport.size > 0) {
-			// Build indicator definitions for all keys found in this import
-			// First, fetch all groups to resolve groupKey → groupId
-			const allGroups = await db.query.indicatorGroups.findMany()
-			const groupKeyToId = new Map<string, string>()
-			for (const group of allGroups) {
-				groupKeyToId.set(group.key, group.id)
-			}
-
-			const indicatorValues = Array.from(indicatorKeysInImport).map((key) => {
-				// Check if it's a known indicator from KNOWN_INDICATOR_MAPPINGS
-				const knownMapping = KNOWN_INDICATOR_MAPPINGS.find(
-					(mapping) => mapping.key === key
-				)
-
-				return {
-					key,
-					displayName: knownMapping?.displayName ?? key,
-					groupId: knownMapping
-						? (groupKeyToId.get(knownMapping.groupKey) ?? null)
-						: null,
-					csvHeader: knownMapping?.csvHeader ?? null,
-				}
-			})
-
-			// Upsert indicator definitions — skip on conflict (key is unique)
-			// Only auto-register indicators that have a resolved groupId (groupId is required)
-			for (const indicator of indicatorValues) {
-				if (!indicator.groupId) {
-					skippedKeys.add(indicator.key)
-					continue
-				}
-
-				// eslint-disable-next-line no-await-in-loop -- indicator definitions must be checked/inserted sequentially to avoid duplicate key races
-				const existing = await db.query.indicatorDefinitions.findFirst({
-					where: eq(indicatorDefinitions.key, indicator.key),
-				})
-
-				if (!existing) {
-					// eslint-disable-next-line no-await-in-loop -- sequential insert after existence check; parallelising would require upsert
-					await db.insert(indicatorDefinitions).values({
-						key: indicator.key,
-						displayName: indicator.displayName,
-						groupId: indicator.groupId,
-						csvHeader: indicator.csvHeader,
-					})
-					newIndicators.push(indicator.key)
-				}
-			}
-		}
-
-		// Step 5: Upsert price data version
+		// Step 6: Upsert price data version
 		const existingVersion = await db.query.priceDataVersions.findFirst({
 			where: sql`${priceDataVersions.assetId} = ${assetId} AND ${priceDataVersions.timeframeId} = ${timeframeId}`,
 		})

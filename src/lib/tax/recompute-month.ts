@@ -1,13 +1,7 @@
 // src/lib/tax/recompute-month.ts
 import { db } from "@/db/drizzle"
-import {
-	trades,
-	accountFeeRates,
-	monthlyTaxLedger,
-	tradingAccounts,
-} from "@/db/schema"
+import { trades, accountFeeRates, monthlyTaxLedger } from "@/db/schema"
 import { eq, and, gte, lte, sql } from "drizzle-orm"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
 import { computeDarf } from "./darf-calculator"
@@ -58,38 +52,6 @@ const recomputeAccountMonth = async (
 	// timestamptz columns: build UTC range bounds, never local-tz date-fns helpers
 	const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
 	const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
-
-	// Replay accounts: tax engine disabled entirely. Replay trades are simulated
-	// against historical data and have no real-world tax obligation.
-	const accountRow = await db
-		.select({ accountType: tradingAccounts.accountType })
-		.from(tradingAccounts)
-		.where(eq(tradingAccounts.id, accountId))
-		.then((rows) => rows[0])
-
-	if (accountRow?.accountType === "replay") {
-		return {
-			grossGainCents: 0,
-			totalTxCorretagemCents: 0,
-			totalTxRegistroCents: 0,
-			totalEmolumentosCents: 0,
-			totalIssCents: 0,
-			totalFeesCents: 0,
-			totalContractsExecuted: 0,
-			irrfCents: 0,
-			netGainBeforeCarryoverCents: 0,
-			carryoverInCents: 0,
-			carryoverConsumedCents: 0,
-			carryoverOutCents: 0,
-			taxableGainCents: 0,
-			irGrossCents: 0,
-			darfDueCents: 0,
-			netLiquidCents: 0,
-			tradeCount: 0,
-			isDirty: false,
-			computedAt: new Date(),
-		}
-	}
 
 	// Fetch all fee rate rows for this account.
 	// One row may have NULL assetSymbol (catch-all default); zero or more rows
@@ -145,13 +107,6 @@ const recomputeAccountMonth = async (
 		)
 		.orderBy(trades.exitDate)
 
-	// Encryption is currently disabled (getUserDek always returns null).
-	// When dek is null, pnl is already plaintext string-encoded cents.
-	const dek = await getUserDek(userId)
-	const decryptedTrades = dek
-		? rawTrades.map((t) => decryptTradeFields(t, dek))
-		: rawTrades
-
 	// Group trades by (exit day, asset). Same-day entry+exit only (day-trades).
 	// Per-asset bucketing is required because fee rates differ by contract type
 	// (e.g. WDO vs WIN have different B3 emolumentos and tx_registro).
@@ -160,7 +115,7 @@ const recomputeAccountMonth = async (
 	const dayPnlMap = new Map<string, number>()
 	let tradeCount = 0
 
-	for (const trade of decryptedTrades) {
+	for (const trade of rawTrades) {
 		// Skip trades with no exit date
 		if (!trade.exitDate) {
 			continue

@@ -47,12 +47,12 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 		{
 			label: t("summary.bestPF"),
 			value: stats.bestPF.toFixed(2),
-			colorClass: "text-acc-100",
+			colorClass: "text-txt-100",
 		},
 		{
 			label: t("summary.bestSharpe"),
 			value: stats.bestSharpe.toFixed(2),
-			colorClass: "text-acc-100",
+			colorClass: "text-txt-100",
 		},
 	]
 

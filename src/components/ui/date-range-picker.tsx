@@ -50,7 +50,13 @@ const DateRangePicker = ({
 
 	const handleSelect = (range: DateRange | undefined) => {
 		onChange(range)
-		if (range?.from && range?.to) {
+		// react-day-picker v9 sets to=from on first click (not to=undefined as v8 did).
+		// A genuine completed range requires from and to to be different dates.
+		const isComplete =
+			range?.from != null &&
+			range?.to != null &&
+			range.from.getTime() !== range.to.getTime()
+		if (isComplete) {
 			isSelectingRef.current = false
 			setOpen(false)
 		} else if (range?.from) {
@@ -122,7 +128,13 @@ const DateRangePicker = ({
 				onEscapeKeyDown={() => {
 					isSelectingRef.current = false
 				}}
-				onInteractOutside={() => {
+				onInteractOutside={(e) => {
+					// Mid-selection (from picked, to not yet): block Radix from closing.
+					// Calling preventDefault() cancels the DismissableLayer dismissal.
+					if (isSelectingRef.current) {
+						e.preventDefault()
+						return
+					}
 					isSelectingRef.current = false
 				}}
 			>

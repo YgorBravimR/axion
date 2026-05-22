@@ -31,7 +31,9 @@ const dateFormatterEnUS = new Intl.DateTimeFormat("en-US", {
 
 const formatDate = (dayKey: string, locale: string): string => {
 	const date = new Date(`${dayKey}T12:00:00-03:00`)
-	return (locale === "pt-BR" ? dateFormatterPtBR : dateFormatterEnUS).format(date)
+	return (locale === "pt-BR" ? dateFormatterPtBR : dateFormatterEnUS).format(
+		date
+	)
 }
 
 interface TradeFlowItemProps {
@@ -62,36 +64,35 @@ const TradeFlowItem = ({ trade, isLast }: TradeFlowItemProps) => {
 				: "bg-bg-300 text-txt-300"
 
 	return (
-		<div className="flex items-start gap-s-300">
+		<div className="gap-s-300 flex items-start">
 			{/* Trade number */}
 			<div className="flex flex-col items-center">
 				<div
 					className={cn(
-						"flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-tiny font-semibold",
-						isSkipped
-							? "bg-bg-300 text-txt-300"
-							: "bg-acc-100/20 text-acc-100"
+						"text-tiny flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-semibold",
+						isSkipped ? "bg-bg-300 text-txt-300" : "bg-acc-100/20 text-acc-100"
 					)}
 				>
 					T{trade.dayTradeNumber}
 				</div>
-				{!isLast && (
-					<div className="bg-bg-300 my-s-100 h-4 w-px" />
-				)}
+				{!isLast && <div className="bg-bg-300 my-s-100 h-4 w-px" />}
 			</div>
 
 			{/* Trade details */}
-			<div className="flex-1 pb-s-200">
-				<div className="flex flex-wrap items-center gap-s-200">
+			<div className="pb-s-200 flex-1">
+				<div className="gap-s-200 flex flex-wrap items-center">
 					{!isSkipped && (
 						<span className="text-tiny text-txt-200">
 							{t("risk")} {formatCurrency(trade.riskAmountCents ?? 0)}
 						</span>
 					)}
-					<ArrowRight className="text-txt-300 h-3 w-3 shrink-0" aria-hidden="true" />
+					<ArrowRight
+						className="text-txt-300 h-3 w-3 shrink-0"
+						aria-hidden="true"
+					/>
 					<span
 						className={cn(
-							"text-tiny whitespace-nowrap rounded-full px-s-200 py-0.5 font-medium",
+							"text-tiny px-s-200 rounded-full py-0.5 font-medium whitespace-nowrap",
 							badgeClass
 						)}
 					>
@@ -113,16 +114,16 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 	const dayPnl = day.dayResult.totalPnlCents
 
 	return (
-		<div className="border-bg-300 bg-bg-200 rounded-lg border p-s-300">
+		<div className="border-bg-300 bg-bg-200 p-s-300 rounded-lg border">
 			{/* Day header */}
 			<div className="mb-s-300 flex items-center justify-between">
 				<span className="text-small text-txt-100 font-medium">
 					{formatDate(day.dayKey, locale)}
 				</span>
-				<div className="flex items-center gap-s-200">
+				<div className="gap-s-200 flex items-center">
 					<span
 						className={cn(
-							"text-tiny sm:text-small whitespace-nowrap font-semibold",
+							"text-tiny sm:text-small font-semibold whitespace-nowrap",
 							dayPnl > 0
 								? "text-trade-buy"
 								: dayPnl < 0
@@ -148,17 +149,23 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 
 			{/* Stop reasons */}
 			{day.dayResult.hitDailyLimit && (
-				<div className="border-bg-300 mt-s-200 flex items-center gap-s-200 border-t pt-s-200">
-					<StopCircle className="text-trade-sell h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-					<span className="text-tiny text-trade-sell font-medium">
+				<div className="border-bg-300 mt-s-200 gap-s-200 pt-s-200 flex items-center border-t">
+					<StopCircle
+						className="text-rule-blocked h-3.5 w-3.5 shrink-0"
+						aria-hidden="true"
+					/>
+					<span className="text-tiny text-rule-blocked font-medium">
 						{t("dailyLimitHit")}
 					</span>
 				</div>
 			)}
 			{day.dayResult.hitDailyTarget && !day.dayResult.hitDailyLimit && (
-				<div className="border-bg-300 mt-s-200 flex items-center gap-s-200 border-t pt-s-200">
-					<StopCircle className="text-acc-100 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-					<span className="text-tiny text-acc-100 font-medium">
+				<div className="border-bg-300 mt-s-200 gap-s-200 pt-s-200 flex items-center border-t">
+					<StopCircle
+						className="text-rule-paused h-3.5 w-3.5 shrink-0"
+						aria-hidden="true"
+					/>
+					<span className="text-tiny text-rule-paused font-medium">
 						{t("dailyTargetHit")}
 					</span>
 				</div>

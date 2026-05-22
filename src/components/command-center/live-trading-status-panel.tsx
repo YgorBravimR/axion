@@ -23,8 +23,9 @@ import {
 import { fromCents } from "@/lib/money"
 import { calculateTickBasedPositionSize } from "@/lib/calculations"
 import { translateRiskReason } from "@/lib/risk-reason-i18n"
+import { Panel } from "@/components/ui/panel"
 import { useFormatting } from "@/hooks/use-formatting"
-import { MetricCell } from "./circuit-breaker-panel"
+import { MetricCell } from "./metric-cell"
 import type {
 	LiveTradingStatusResult,
 	TradeSummary,
@@ -444,30 +445,24 @@ const LiveTradingStatusPanel = ({
 	// Loading state
 	if (!data) {
 		return (
-			<div
-				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-				data-testid="live-trading-status-panel"
-			>
+			<Panel data-testid="live-trading-status-panel">
 				<div className="gap-s-200 flex items-center">
 					<AlertCircle className="text-txt-300 h-5 w-5" />
 					<p className="text-small text-txt-300">{t("loading")}</p>
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
 	// No profile linked
 	if (!data.hasProfile) {
 		return (
-			<div
-				className="border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border border-dashed"
-				data-testid="live-trading-status-panel"
-			>
+			<Panel tone="muted" data-testid="live-trading-status-panel">
 				<div className="gap-s-300 flex items-center">
 					<ShieldAlert className="text-txt-300 h-6 w-6 shrink-0" />
 					<p className="text-small text-txt-200">{t("noProfile")}</p>
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
@@ -476,8 +471,9 @@ const LiveTradingStatusPanel = ({
 	// When trading is done (target hit or loss limit), show summary with stop reason.
 	if (status.shouldStopTrading) {
 		return (
-			<div
-				className="border-trade-sell/30 bg-trade-sell/5 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+			<Panel
+				tone="default"
+				className="border-trade-sell/30 bg-trade-sell/5"
 				data-testid="live-trading-status-panel"
 			>
 				<div className="mb-s-300 sm:mb-m-400 flex items-center justify-between">
@@ -529,16 +525,16 @@ const LiveTradingStatusPanel = ({
 					maxContracts={status.nextTradeMaxContracts}
 					availableAssets={availableAssets}
 				/>
-			</div>
+			</Panel>
 		)
 	}
 
 	// Active trading — full interactive panel
 	return (
-		<div
+		<Panel
 			id="cc-live-trading"
 			className={cn(
-				"p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border transition-colors",
+				"transition-colors",
 				phaseStyles.borderClass,
 				phaseStyles.bgClass
 			)}
@@ -629,7 +625,7 @@ const LiveTradingStatusPanel = ({
 				maxContracts={status.nextTradeMaxContracts}
 				availableAssets={availableAssets}
 			/>
-		</div>
+		</Panel>
 	)
 }
 

@@ -23,9 +23,13 @@ import {
 } from "@/lib/validations/monte-carlo"
 import { runMonteCarloSimulation } from "@/lib/monte-carlo"
 import { runMonteCarloV2 } from "@/lib/monte-carlo-v2"
+import {
+	rankComparisonResults,
+	buildComparisonRecommendations,
+} from "@/lib/monte-carlo/comparison-orchestration"
+import { validateV2SimulationBudget } from "@/lib/monte-carlo/v2-validation"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
-import { getUserDek, decryptTradeFields } from "@/lib/user-crypto"
 import { getTranslations } from "next-intl/server"
 
 export const getDataSourceOptions = async (): Promise<
@@ -152,9 +156,6 @@ export const getSimulationStats = async (
 		let strategiesCount = 0
 		let accountsCount = 1
 
-		// Get DEK for decryption
-		const dek = await getUserDek(userId)
-
 		if (validated.type === "strategy") {
 			const strategy = await db.query.strategies.findFirst({
 				where: and(
@@ -189,9 +190,7 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		} else if (validated.type === "all_strategies") {
 			sourceName = t("dataSources.allStrategies")
 
@@ -214,9 +213,7 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		} else if (validated.type === "universal") {
 			if (!showAllAccounts) {
 				return {
@@ -255,9 +252,7 @@ export const getSimulationStats = async (
 					entryDate: true,
 				},
 			})
-			tradesList = dek
-				? rawTrades.map((t) => decryptTradeFields(t, dek))
-				: rawTrades
+			tradesList = rawTrades
 		}
 
 		if (tradesList.length === 0) {
@@ -443,7 +438,7 @@ export const runSimulation = async (
 
 		return {
 			status: "success",
-			message: t("actions.simulationCompleted"),
+			message: t("actions.edgeExpectancySimulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
@@ -460,7 +455,7 @@ export const runSimulation = async (
 
 		return {
 			status: "error",
-			message: t("actions.failedToRunSimulation"),
+			message: t("actions.failedToRunEdgeExpectancy"),
 			errors: [
 				{
 					code: "SIMULATION_ERROR",
@@ -523,51 +518,26 @@ export const runComparisonSimulation = async (
 			})
 		}
 
-		const sortedResults = results.toSorted(
-			(a, b) => b.profitablePct - a.profitablePct
-		)
-		for (const [i, result] of sortedResults.entries()) {
-			result.rank = i + 1
-		}
+		// Apply pure orchestration to rank and build recommendations
+		const sortedResults = rankComparisonResults(results)
+		const recommendations = buildComparisonRecommendations(sortedResults)
 
-		const topPerformers = sortedResults
-			.filter((r) => r.profitablePct >= 70)
-			.map((r) => r.strategyName)
-		const needsImprovement = sortedResults
-			.filter((r) => r.profitablePct < 50)
-			.map((r) => r.strategyName)
-		const totalScore = sortedResults.reduce(
-			(sum, r) => sum + Math.max(0, r.profitablePct - 30),
-			0
-		)
-		const getAllocationReason = (pct: number): string => {
-			if (pct >= 80) {
-				return t("allocation.excellent")
-			}
-			if (pct >= 70) {
-				return t("allocation.good")
-			}
-			return t("allocation.moderate")
-		}
-
-		const suggestedAllocations = sortedResults
-			.filter((r) => r.profitablePct >= 50)
-			.map((r) => {
-				const score = Math.max(0, r.profitablePct - 30)
-				return {
-					strategyName: r.strategyName,
-					allocationPct:
-						totalScore > 0 ? Math.round((score / totalScore) * 100) : 0,
-					reason: getAllocationReason(r.profitablePct),
-				}
-			})
-
-		for (const strategyName of needsImprovement) {
-			suggestedAllocations.push({
-				strategyName,
-				allocationPct: 0,
-				reason: t("allocation.pause"),
-			})
+		// Translate allocation reasons to user language
+		const translatedRecommendations = {
+			...recommendations,
+			suggestedAllocations: recommendations.suggestedAllocations.map(
+				(alloc) => ({
+					...alloc,
+					reason:
+						alloc.reason === "Excellent"
+							? t("allocation.excellent")
+							: alloc.reason === "Good"
+								? t("allocation.good")
+								: alloc.reason === "Moderate"
+									? t("allocation.moderate")
+									: t("allocation.pause"),
+				})
+			),
 		}
 
 		return {
@@ -575,11 +545,7 @@ export const runComparisonSimulation = async (
 			message: t("actions.comparisonCompleted"),
 			data: {
 				results: sortedResults,
-				recommendations: {
-					topPerformers,
-					needsImprovement,
-					suggestedAllocations,
-				},
+				recommendations: translatedRecommendations,
 			},
 		}
 	} catch (error) {
@@ -610,11 +576,15 @@ export const runSimulationV2 = async (
 	try {
 		await requireAuth()
 		const validated = simulationParamsV2Schema.parse(params)
+
+		// Apply pure orchestration to validate simulation budget
+		validateV2SimulationBudget(validated)
+
 		const result = runMonteCarloV2(validated)
 
 		return {
 			status: "success",
-			message: t("actions.v2SimulationCompleted"),
+			message: t("actions.capitalExpectancySimulationCompleted"),
 			data: result,
 		}
 	} catch (error) {
@@ -631,7 +601,7 @@ export const runSimulationV2 = async (
 
 		return {
 			status: "error",
-			message: t("actions.failedToRunV2Simulation"),
+			message: t("actions.failedToRunCapitalExpectancy"),
 			errors: [
 				{
 					code: "SIMULATION_V2_ERROR",

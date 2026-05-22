@@ -6,6 +6,12 @@ import { getActiveTimeframes } from "@/app/actions/timeframes"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { getCurrentAccount } from "@/app/actions/auth"
 import { requireRole } from "@/lib/auth-utils"
+import {
+	getActiveAccountModeForUser,
+	getHawksDailyOrdinal,
+} from "@/lib/hawks/account-context"
+import { HawksDailyCapBanner } from "@/components/hawks/hawks-daily-cap-banner"
+import { formatDateKey } from "@/lib/dates"
 
 interface NewTradePageProps {
 	searchParams: Promise<{ returnTo?: string; asset?: string }>
@@ -15,20 +21,25 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	await requireRole("trader")
 	const { returnTo, asset } = await searchParams
 
+	const effectiveDate = await getServerEffectiveNow()
+	const viewDateStr = formatDateKey(effectiveDate)
+
 	const [
 		strategiesResult,
 		tagsResult,
 		assets,
 		timeframes,
-		effectiveDate,
 		account,
+		accountMode,
+		dailyOrdinal,
 	] = await Promise.all([
 		getStrategies(),
 		getTags(),
 		getActiveAssets().catch(() => []),
 		getActiveTimeframes().catch(() => []),
-		getServerEffectiveNow(),
 		getCurrentAccount(),
+		getActiveAccountModeForUser(),
+		getHawksDailyOrdinal(viewDateStr),
 	])
 
 	const strategies =
@@ -38,10 +49,13 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	// URL query param takes priority, then account's default asset
 	const resolvedDefaultAsset = asset || account?.defaultAsset || undefined
 
+	const isHawksAtCap = accountMode === "hawks" && dailyOrdinal >= 3
+
 	return (
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
-				<div className="mx-auto max-w-5xl">
+				<div className="space-y-m-400 mx-auto max-w-5xl">
+					{isHawksAtCap && <HawksDailyCapBanner ordinal={dailyOrdinal} />}
 					<div className="border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600 rounded-lg border">
 						<NewTradeTabs
 							strategies={strategies}
@@ -51,6 +65,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 							redirectTo={returnTo}
 							defaultAssetId={resolvedDefaultAsset}
 							defaultDate={effectiveDate.toISOString()}
+							hawksModeActive={accountMode === "hawks"}
 						/>
 					</div>
 				</div>

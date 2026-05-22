@@ -3,6 +3,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 vi.mock("@/app/actions/auth", () => ({
 	requireAuth: vi.fn().mockResolvedValue({ accountId: "acc-1", userId: "u-1" }),
 }))
+// yearly.ts imports @/db/drizzle at module load; intercept it so the test
+// suite doesn't crash when DATABASE_URL is absent in the test environment.
+vi.mock("@/db/drizzle", () => ({
+	db: {
+		select: vi.fn().mockReturnValue({
+			from: vi.fn().mockReturnValue({
+				where: vi.fn().mockResolvedValue([]),
+			}),
+		}),
+	},
+}))
 vi.mock("@/lib/fractal-plan/auto-seed", () => ({
 	autoSeedYearlyTree: vi.fn().mockResolvedValue({
 		yearlyPlanId: "y-1",

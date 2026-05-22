@@ -48,11 +48,11 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 		<div className="bg-bg-200 border-bg-300 p-s-300 rounded-lg border shadow-lg">
 			<p className="text-tiny text-txt-300">{data.label}</p>
 			<p className="text-small text-acc-100 font-mono font-medium">
-				{formatCompactCurrency(data.equity, "R$")}
+				{formatCompactCurrency(data.equity, "BRL")}
 			</p>
 			{data.drawdown < 0 && (
-				<p className="text-tiny text-fb-error font-mono">
-					DD: {formatCompactCurrency(data.drawdown, "R$")}
+				<p className="text-tiny text-trade-sell font-mono">
+					DD: {formatCompactCurrency(data.drawdown, "BRL")}
 				</p>
 			)}
 		</div>
@@ -111,7 +111,7 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 					/>
 					<YAxis
 						width={yAxisWidth}
-						tickFormatter={(v: number) => formatCompactCurrency(v, "R$")}
+						tickFormatter={(v: number) => formatCompactCurrency(v, "BRL")}
 						tick={{ fontSize: tickFontSize, fill: "var(--color-txt-300)" }}
 						axisLine={false}
 						tickLine={false}
@@ -135,7 +135,7 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 					<Area
 						type="monotone"
 						dataKey="drawdown"
-						stroke="var(--color-fb-error)"
+						stroke="var(--color-trade-sell)"
 						strokeWidth={1}
 						fill="none"
 						dot={false}

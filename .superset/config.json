@@ -1,7 +1,8 @@
 {
-  "setup": [
-    "pnpm install --frozen-lockfile",
-    "cp \"$SUPERSET_ROOT_PATH/.env\" .env"
-  ],
-  "teardown": []
+	"setup": [
+		"pnpm install --frozen-lockfile",
+		"cp \"$SUPERSET_ROOT_PATH/.env\" .env",
+		"bash ./scripts/worktree-db.sh setup"
+	],
+	"teardown": ["bash ./scripts/worktree-db.sh teardown"]
 }

@@ -4,6 +4,7 @@ import {
 	resolveTier,
 	type LadderRuleR,
 } from "@/lib/fractal-plan/capital-ladder"
+import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
 
 interface MonthInputRow {
 	monthIndex: number
@@ -54,6 +55,10 @@ interface AnnualCockpitGridProps {
 	lastActualMonthIdx: number
 	paceByMonthIdx: Record<string, PaceMonthData>
 	currentMonthRemainder: CurrentMonthRemainder | null
+	/** Daily R target from the yearly plan; used to compute plan goal when no week targets are set. */
+	defaultDailyWinR?: number | null
+	/** Assertivity % (1–100) — fraction of days expected to hit the gain gate. */
+	assertivityPct?: number
 }
 
 const MONTH_LABELS_PT = [
@@ -87,7 +92,14 @@ const AnnualCockpitGrid = ({
 	lastActualMonthIdx,
 	paceByMonthIdx,
 	currentMonthRemainder,
+	defaultDailyWinR,
+	assertivityPct = 50,
 }: AnnualCockpitGridProps) => {
+	const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
+	const defaultFallbackTotalR =
+		defaultDailyWinR && defaultDailyWinR > 0
+			? defaultDailyWinR * DEFAULT_TRADING_DAYS_PER_MONTH * assertivity
+			: 0
 	const byIndex = new Map(months.map((m) => [m.monthIndex, m]))
 
 	let runningCapitalCents = initialCapitalCents
@@ -128,9 +140,16 @@ const AnnualCockpitGrid = ({
 				: (tier?.tierIndex ?? row?.snapshotTierIndex ?? 0)
 		const weeks: WeekData[] = row?.weeks ?? []
 
+		const weekRSum = weeks.reduce((s, w) => s + (w.targetR ?? 0), 0)
+		const effectiveWeekTargetRs: readonly (number | null)[] =
+			weekRSum > 0
+				? weeks.map((w) => w.targetR)
+				: !isMuted && defaultFallbackTotalR > 0
+					? [defaultFallbackTotalR]
+					: []
 		const projection = projectMonth({
 			startBalanceCents,
-			weekTargetRs: weeks.map((w) => w.targetR),
+			weekTargetRs: effectiveWeekTargetRs,
 			oneRCents,
 			tradingDaysPerWeek,
 			irTaxRate,

@@ -13,23 +13,12 @@ import {
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import { formatCompactCurrency } from "@/lib/formatting"
+import { getChartColor } from "@/lib/chart-colors"
 import type { OptimizationRun } from "@/types/backtest"
 
 interface EquityOverlayChartProps {
 	runs: OptimizationRun[]
 }
-
-/** Rotating palette — gold first (best run), then distinct hues */
-const LINE_COLORS = [
-	"var(--color-acc-100)", // gold — first/best
-	"#2196F3", // blue
-	"#26a69a", // teal
-	"#FF9800", // orange
-	"#AB47BC", // purple
-	"#EC407A", // pink
-	"#66BB6A", // green
-	"#78909C", // slate
-]
 
 const CHART_MARGIN = { top: 5, right: 5, left: 0, bottom: 0 }
 
@@ -70,7 +59,7 @@ const OverlayTooltip = ({ active, payload, runsMap }: OverlayTooltipProps) => {
 						className="text-small font-mono"
 						style={{ color: entry.color }}
 					>
-						{run.label}: {formatCompactCurrency(entry.value as number, "R$")}
+						{run.label}: {formatCompactCurrency(entry.value as number, "BRL")}
 					</p>
 				)
 			})}
@@ -135,7 +124,7 @@ const EquityOverlayChart = memo(({ runs }: EquityOverlayChartProps) => {
 				/>
 				<YAxis
 					width={yAxisWidth}
-					tickFormatter={(v: number) => formatCompactCurrency(v, "R$")}
+					tickFormatter={(v: number) => formatCompactCurrency(v, "BRL")}
 					tick={axisTick}
 					axisLine={false}
 					tickLine={false}
@@ -163,7 +152,7 @@ const EquityOverlayChart = memo(({ runs }: EquityOverlayChartProps) => {
 						type="monotone"
 						dataKey={run.id}
 						name={run.label}
-						stroke={LINE_COLORS[i % LINE_COLORS.length]}
+						stroke={getChartColor(i + 1)}
 						strokeWidth={i === 0 ? 2 : 1.5}
 						dot={false}
 						animationDuration={300}

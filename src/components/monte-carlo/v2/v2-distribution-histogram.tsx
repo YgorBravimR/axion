@@ -39,7 +39,6 @@ const CustomTooltip = ({ active, payload, currency }: CustomTooltipProps) => {
 	}
 
 	const data = head.payload
-	const isProfit = data.midPoint >= 0
 
 	return (
 		<div className="border-bg-300 bg-bg-100 p-s-300 rounded-lg border shadow-lg">
@@ -47,9 +46,7 @@ const CustomTooltip = ({ active, payload, currency }: CustomTooltipProps) => {
 				{formatCompactCurrency(data.rangeStart, currency)} –{" "}
 				{formatCompactCurrency(data.rangeEnd, currency)}
 			</p>
-			<p
-				className={`text-small font-semibold ${isProfit ? "text-trade-buy" : "text-trade-sell"}`}
-			>
+			<p className="text-small text-txt-100 font-semibold">
 				{data.count} simulations ({data.percentage.toFixed(1)}%)
 			</p>
 		</div>

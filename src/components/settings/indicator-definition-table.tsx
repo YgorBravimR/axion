@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
-import { Pencil, Trash2, ToggleLeft, ToggleRight, Loader2 } from "lucide-react"
+import { ToggleStateIcon } from "@/components/ui/toggle-state-icon"
+import { Pencil, Trash2, Loader2 } from "lucide-react"
 import type { IndicatorDefinition } from "@/db/schema"
 import type { ColumnDef } from "@tanstack/react-table"
 
@@ -139,17 +140,7 @@ const IndicatorDefinitionTable = memo(
 														})
 											}
 										>
-											{definition.isActive ? (
-												<ToggleRight
-													className="text-trade-buy h-4 w-4"
-													aria-hidden="true"
-												/>
-											) : (
-												<ToggleLeft
-													className="text-txt-300 h-4 w-4"
-													aria-hidden="true"
-												/>
-											)}
+											<ToggleStateIcon isActive={definition.isActive} />
 										</Button>
 										<Button
 											id={`indicator-delete-${definition.id}`}

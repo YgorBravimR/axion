@@ -121,7 +121,7 @@ export const TradingAccountSettings = () => {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="gap-s-200 flex items-center">
-					<Building2 className="text-acc-100 h-5 w-5" />
+					<Building2 className="text-acc-100 h-5 w-5" aria-hidden="true" />
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
 					</h2>
@@ -161,7 +161,7 @@ export const TradingAccountSettings = () => {
 				{editValues.isPropAccount && (
 					<div className="space-y-m-400 border-acc-100/20 bg-acc-100/5 p-m-400 rounded-md border">
 						<h3 className="gap-s-200 text-small text-txt-100 flex items-center font-medium">
-							<Percent className="text-acc-100 h-4 w-4" />
+							<Percent className="text-acc-100 h-4 w-4" aria-hidden="true" />
 							{t("propSettings")}
 						</h3>
 

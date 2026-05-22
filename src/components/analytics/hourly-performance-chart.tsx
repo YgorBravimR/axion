@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 					<span
 						className={`font-medium ${isProfit ? "text-trade-buy" : "text-trade-sell"}`}
 					>
-						{formatCompactCurrencyWithSign(data.totalPnl, "R$")}
+						{formatCompactCurrencyWithSign(data.totalPnl, "BRL")}
 					</span>
 				</p>
 				<p className="text-tiny">
@@ -52,9 +52,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 				</p>
 				<p className="text-tiny">
 					<span className="text-txt-300">{t("time.winRate")}:</span>{" "}
-					<span
-						className={`font-medium ${data.winRate >= 50 ? "text-trade-buy" : "text-trade-sell"}`}
-					>
+					<span className="text-txt-100 font-medium">
 						{data.winRate.toFixed(0)}%
 					</span>
 				</p>
@@ -100,7 +98,7 @@ export const HourlyPerformanceChart = memo(
 		}, [data, metricKey, isRMode])
 
 		const formatMetric = (value: number): string =>
-			isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "R$")
+			isRMode ? formatR(value) : formatCompactCurrencyWithSign(value, "BRL")
 
 		if (data.length === 0) {
 			return (
@@ -151,7 +149,7 @@ export const HourlyPerformanceChart = memo(
 							tickFormatter={(value: number) =>
 								isRMode
 									? formatR(value)
-									: formatCompactCurrencyWithSign(value, "R$")
+									: formatCompactCurrencyWithSign(value, "BRL")
 							}
 							stroke="var(--color-txt-300)"
 							tick={AXIS_TICK}
@@ -179,20 +177,24 @@ export const HourlyPerformanceChart = memo(
 				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
 					<div>
 						<p className="text-tiny text-txt-300">{t("time.bestHour")}</p>
-						<p className="text-small text-trade-buy font-medium">
+						<p className="text-small text-txt-100 font-medium">
 							{bestHour?.hourLabel} ({bestHour?.winRate.toFixed(0)}%{" "}
 							{tCommon("winRateAbbr")},{" "}
-							{formatMetric(bestHour?.[metricKey] ?? 0)},{" "}
-							{bestHour?.totalTrades} {t("time.trades").toLowerCase()})
+							<span className="text-trade-buy">
+								{formatMetric(bestHour?.[metricKey] ?? 0)}
+							</span>
+							, {bestHour?.totalTrades} {t("time.trades").toLowerCase()})
 						</p>
 					</div>
 					<div>
 						<p className="text-tiny text-txt-300">{t("time.worstHour")}</p>
-						<p className="text-small text-trade-sell font-medium">
+						<p className="text-small text-txt-100 font-medium">
 							{worstHour?.hourLabel} ({worstHour?.winRate.toFixed(0)}%{" "}
 							{tCommon("winRateAbbr")},{" "}
-							{formatMetric(worstHour?.[metricKey] ?? 0)},{" "}
-							{worstHour?.totalTrades} {t("time.trades").toLowerCase()})
+							<span className="text-trade-sell">
+								{formatMetric(worstHour?.[metricKey] ?? 0)}
+							</span>
+							, {worstHour?.totalTrades} {t("time.trades").toLowerCase()})
 						</p>
 					</div>
 				</div>

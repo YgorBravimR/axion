@@ -8,37 +8,7 @@ import { fromCents } from "@/lib/money"
 import { calculateWinRate } from "@/lib/calculations"
 import { getBrtTimeParts, formatDateKey } from "@/lib/dates"
 import { dayNameKey } from "@/lib/calendar/day-names"
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface CoachingInsight {
-	id: string
-	category: "time" | "strategy" | "risk" | "psychology" | "fees"
-	severity: "info" | "attention" | "warning"
-	titleKey: string
-	descriptionKey: string
-	params: Record<string, string | number>
-	confidence: number
-}
-
-/** Superset trade shape for all pattern detectors */
-interface TradeForCoaching {
-	entryDate: Date
-	exitDate: Date | null
-	pnl: number | string | null
-	outcome: "win" | "loss" | "breakeven" | null
-	realizedRMultiple: string | null
-	asset: string
-	direction: "long" | "short"
-	strategyName: string | null
-	setupRank: "A" | "AA" | "AAA" | null
-	rating: "A" | "B" | "C" | "D" | "F" | null
-	followedPlan: boolean | null
-	commission: number | string | null
-	fees: number | string | null
-}
+import type { CoachingInsight, TradeForCoaching } from "@/lib/coaching/types"
 
 /** Minimum decided trades overall to run a detector */
 const MIN_SAMPLE_SIZE = 10

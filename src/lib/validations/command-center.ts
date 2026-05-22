@@ -3,7 +3,10 @@ import { z } from "zod"
 // Checklist item schema
 export const checklistItemSchema = z.object({
 	id: z.string().min(1),
-	label: z.string().min(1, "validation.commandCenter.itemLabelRequired").max(200, "validation.commandCenter.itemLabelMax"),
+	label: z
+		.string()
+		.min(1, "validation.commandCenter.itemLabelRequired")
+		.max(200, "validation.commandCenter.itemLabelMax"),
 	order: z.number().int().min(0),
 })
 
@@ -33,7 +36,12 @@ export const updateCompletionSchema = z.object({
 // Legacy varchar values (great/good/neutral/bad/terrible) are migrated by
 // Task 4 of the fractal-plan consolidation:
 //   great|good -> focused, neutral -> neutral, bad -> distracted, terrible -> risk_off
-export const moodOptions = ["focused", "neutral", "distracted", "risk_off"] as const
+export const moodOptions = [
+	"focused",
+	"neutral",
+	"distracted",
+	"risk_off",
+] as const
 export type MoodType = (typeof moodOptions)[number]
 
 // Bias options
@@ -120,4 +128,9 @@ export interface CircuitBreakerStatus {
 	remainingMonthlyCents: number
 	isMonthlyLimitHit: boolean
 	isSecondOpBlocked: boolean
+	hawksCascade?: {
+		triggered: boolean
+		reason: string | null
+		currentR: number
+	} | null
 }

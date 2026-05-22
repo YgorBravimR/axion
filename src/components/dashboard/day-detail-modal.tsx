@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
 import {
@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Panel } from "@/components/ui/panel"
 import { DaySummaryStats } from "./day-summary-stats"
 import { DayEquityCurve } from "./day-equity-curve"
 import { DayTradesList } from "./day-trades-list"
@@ -36,36 +37,33 @@ export const DayDetailModal = ({
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
 	const router = useRouter()
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const [summary, setSummary] = useState<DaySummary | null>(null)
 	const [trades, setTrades] = useState<DayTrade[]>([])
 	const [equityCurve, setEquityCurve] = useState<DayEquityPoint[]>([])
 
 	useEffect(() => {
-		if (!open) {
+		if (!open || !date) {
 			return
 		}
-		if (date) {
-			startTransition(async () => {
-				const dateObj = new Date(date)
-
-				const [summaryResult, tradesResult, equityResult] = await Promise.all([
-					getDaySummary(dateObj),
-					getDayTrades(dateObj),
-					getDayEquityCurve(dateObj),
-				])
-
-				if (summaryResult.status === "success" && summaryResult.data) {
-					setSummary(summaryResult.data)
-				}
-				if (tradesResult.status === "success" && tradesResult.data) {
-					setTrades(tradesResult.data)
-				}
-				if (equityResult.status === "success" && equityResult.data) {
-					setEquityCurve(equityResult.data)
-				}
-			})
-		}
+		const dateObj = new Date(date)
+		setIsPending(true)
+		void Promise.all([
+			getDaySummary(dateObj),
+			getDayTrades(dateObj),
+			getDayEquityCurve(dateObj),
+		]).then(([summaryResult, tradesResult, equityResult]) => {
+			if (summaryResult.status === "success" && summaryResult.data) {
+				setSummary(summaryResult.data)
+			}
+			if (tradesResult.status === "success" && tradesResult.data) {
+				setTrades(tradesResult.data)
+			}
+			if (equityResult.status === "success" && equityResult.data) {
+				setEquityCurve(equityResult.data)
+			}
+			setIsPending(false)
+		})
 	}, [date, open])
 
 	const handleTradeClick = useCallback(
@@ -113,7 +111,7 @@ export const DayDetailModal = ({
 							<DaySummaryStats summary={summary} />
 
 							{/* Equity Curve */}
-							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+							<Panel padding="md">
 								<h4 className="mb-s-300 text-small text-txt-100 font-medium">
 									{t("dayDetail.equityCurve")}
 								</h4>
@@ -121,7 +119,7 @@ export const DayDetailModal = ({
 									data={equityCurve}
 									onPointClick={handleTradeClick}
 								/>
-							</div>
+							</Panel>
 
 							{/* Trades List */}
 							<div>

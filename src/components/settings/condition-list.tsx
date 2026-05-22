@@ -190,7 +190,7 @@ export const ConditionList = () => {
 					))}
 				</div>
 				<Button id="condition-add-new" onClick={handleAddNew}>
-					<Plus className="mr-s-200 h-4 w-4" />
+					<Plus className="mr-s-200 h-4 w-4" aria-hidden="true" />
 					{t("addCondition")}
 				</Button>
 			</div>
@@ -236,7 +236,7 @@ export const ConditionList = () => {
 												className="h-8 w-8 p-0"
 												aria-label={`${tCommon("edit")} ${condition.name}`}
 											>
-												<Pencil className="h-4 w-4" />
+												<Pencil className="h-4 w-4" aria-hidden="true" />
 											</Button>
 											<AlertDialog>
 												<AlertDialogTrigger asChild>
@@ -247,7 +247,7 @@ export const ConditionList = () => {
 														className="text-fb-error hover:text-fb-error h-8 w-8 p-0"
 														aria-label={`${tCommon("delete")} ${condition.name}`}
 													>
-														<Trash2 className="h-4 w-4" />
+														<Trash2 className="h-4 w-4" aria-hidden="true" />
 													</Button>
 												</AlertDialogTrigger>
 												<AlertDialogContent>

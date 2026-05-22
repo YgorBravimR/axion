@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { CurrencyInput } from "@/components/ui/currency-input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
+import { DarfStatusDot } from "@/components/ui/darf-status-dot"
 import { markDarfPaid } from "@/app/actions/tax-engine"
-import { cn } from "@/lib/utils"
 
 type DarfStatus = "pending" | "paid" | "exempt" | "overdue"
 type UiDarfStatus = DarfStatus | "in_progress"
@@ -24,14 +24,6 @@ interface MonthDarfRowProps {
 	darfPaidAmountCents: number | null
 	darfPaidAt: Date | null
 	isFinal: boolean
-}
-
-const STATUS_DOT: Record<UiDarfStatus, string> = {
-	paid: "bg-fb-success",
-	pending: "bg-warning",
-	overdue: "bg-fb-error",
-	exempt: "bg-txt-300",
-	in_progress: "bg-action-buy",
 }
 
 const formatBRL = (cents: number): string =>
@@ -101,12 +93,9 @@ const MonthDarfRow = ({
 		>
 			<div className="gap-x-m-400 gap-y-s-200 flex flex-wrap items-center">
 				<div className="gap-s-200 flex items-center">
-					<Receipt className="text-acc-100 size-4" />
+					<Receipt className="text-acc-100 size-4" aria-hidden="true" />
 					<span className="text-small text-txt-100 font-medium">DARF</span>
-					<span
-						className={cn("size-2 rounded-full", STATUS_DOT[uiStatus])}
-						aria-hidden="true"
-					/>
+					<DarfStatusDot status={uiStatus} />
 					<span className="text-small text-txt-200">
 						{t(`statusLabel.${uiStatus}`)}
 					</span>
@@ -141,7 +130,7 @@ const MonthDarfRow = ({
 				{uiStatus === "paid" && darfPaidAmountCents !== null && (
 					<div className="gap-s-200 flex items-baseline">
 						<span className="text-tiny text-txt-300">{t("paidLabel")}</span>
-						<span className="text-small text-trade-buy font-mono tabular-nums">
+						<span className="text-small text-txt-100 font-mono tabular-nums">
 							{formatBRL(darfPaidAmountCents)}
 						</span>
 						{paidAtLabel && (

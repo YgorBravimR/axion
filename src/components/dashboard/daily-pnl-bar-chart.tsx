@@ -4,10 +4,11 @@ import { useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
+import { Panel } from "@/components/ui/panel"
 import { cn } from "@/lib/utils"
-import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { DailyPnL } from "@/types"
 
 const formatDay = (date: string): string => new Date(date).getDate().toString()
@@ -29,6 +30,7 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
+	const { formatCompactCurrencyWithSign } = useFormatting()
 
 	const head = payload?.[0]
 	if (!active || !head) {
@@ -54,7 +56,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 					isProfit ? "text-trade-buy" : "text-trade-sell"
 				)}
 			>
-				{formatCompactCurrencyWithSign(data.pnl, "R$")}
+				{formatCompactCurrencyWithSign(data.pnl)}
 			</p>
 			<p className="text-tiny text-txt-300">
 				{data.tradeCount} {data.tradeCount === 1 ? t("trade") : t("trades")}
@@ -69,6 +71,7 @@ export const DailyPnLBarChart = ({
 }: DailyPnLBarChartProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("dashboard")
+	const { formatCompactCurrencyWithSign } = useFormatting()
 
 	const sortedData = useMemo(
 		() =>
@@ -94,19 +97,19 @@ export const DailyPnLBarChart = ({
 
 	if (data.length === 0) {
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+			<Panel padding="md">
 				<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 					{t("dailyPnL.title")}
 				</h3>
 				<div className="text-txt-300 flex h-[160px] items-center justify-center sm:h-[200px]">
 					{t("noData")}
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 
 	return (
-		<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 rounded-lg border">
+		<Panel padding="md">
 			<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 				{t("dailyPnL.title")}
 			</h3>
@@ -133,7 +136,7 @@ export const DailyPnLBarChart = ({
 					/>
 					<YAxis
 						tickFormatter={(value: number) =>
-							formatCompactCurrencyWithSign(value, "R$")
+							formatCompactCurrencyWithSign(value)
 						}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 12 }}
@@ -164,6 +167,6 @@ export const DailyPnLBarChart = ({
 					</Bar>
 				</BarChart>
 			</ChartContainer>
-		</div>
+		</Panel>
 	)
 }

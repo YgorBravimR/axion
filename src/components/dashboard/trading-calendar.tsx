@@ -5,9 +5,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Panel } from "@/components/ui/panel"
 import { useEffectiveDate } from "@/components/providers/effective-date-provider"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { DailyPnL } from "@/types"
-import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import { APP_TIMEZONE } from "@/lib/dates"
 
 interface TradingCalendarProps {
@@ -15,6 +16,7 @@ interface TradingCalendarProps {
 	month: Date
 	onMonthChange: (_month: Date) => void
 	onDayClick?: (_date: string) => void
+	isLoading?: boolean
 }
 
 const formatDateKey = (date: Date): string => {
@@ -29,12 +31,19 @@ const formatDateKey = (date: Date): string => {
  * Wrapped with memo to prevent unnecessary re-renders.
  */
 export const TradingCalendar = memo(
-	({ data, month, onMonthChange, onDayClick }: TradingCalendarProps) => {
+	({
+		data,
+		month,
+		onMonthChange,
+		onDayClick,
+		isLoading,
+	}: TradingCalendarProps) => {
 		const t = useTranslations("dashboard.calendar")
 		const tCommon = useTranslations("common")
 		const tDays = useTranslations("dayOfWeek")
 		const locale = useLocale()
 		const effectiveDate = useEffectiveDate()
+		const { formatCompactCurrencyWithSign } = useFormatting()
 
 		const year = month.getFullYear()
 		const monthIndex = month.getMonth()
@@ -111,7 +120,7 @@ export const TradingCalendar = memo(
 		)
 
 		return (
-			<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+			<Panel padding="lg">
 				<div className="flex items-center justify-between">
 					<h2 className="text-small text-txt-100 sm:text-body font-semibold">
 						{t("title")}
@@ -143,7 +152,13 @@ export const TradingCalendar = memo(
 					</div>
 				</div>
 
-				<div className="mt-s-300 sm:mt-m-400">
+				<div
+					className={cn(
+						"mt-s-300 sm:mt-m-400 transition-opacity duration-200",
+						isLoading && "opacity-50"
+					)}
+					aria-busy={isLoading || undefined}
+				>
 					{/* Days of week header */}
 					<div className="sm:gap-s-100 grid grid-cols-7 gap-px">
 						{daysOfWeek.map((day) => (
@@ -203,7 +218,7 @@ export const TradingCalendar = memo(
 												<span
 													className={cn("text-tiny font-medium", textClass)}
 												>
-													{formatCompactCurrencyWithSign(dailyData.pnl, "R$")}
+													{formatCompactCurrencyWithSign(dailyData.pnl)}
 												</span>
 												<span className="text-tiny text-txt-300 block">
 													{dailyData.tradeCount}
@@ -236,10 +251,7 @@ export const TradingCalendar = memo(
 											dailyData
 												? t("dayAriaLabel", {
 														date: dateKey,
-														pnl: formatCompactCurrencyWithSign(
-															dailyData.pnl,
-															"R$"
-														),
+														pnl: formatCompactCurrencyWithSign(dailyData.pnl),
 														count: dailyData.tradeCount,
 													})
 												: undefined
@@ -264,7 +276,7 @@ export const TradingCalendar = memo(
 						})}
 					</div>
 				</div>
-			</div>
+			</Panel>
 		)
 	}
 )

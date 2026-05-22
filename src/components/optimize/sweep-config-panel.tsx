@@ -272,7 +272,7 @@ const SweepConfigPanel = ({
 													{t(`sweepParam.${option.labelKey}`)}
 													{isCurrent && !isSelected && (
 														<span className="text-tiny text-txt-300 ml-s-100">
-															(atual)
+															{t("currentValueSuffix")}
 														</span>
 													)}
 												</span>
@@ -401,17 +401,15 @@ const SweepConfigPanel = ({
 						isOverLimit
 							? "border-fb-error/30 bg-fb-error/5"
 							: isWarning
-								? "border-acc-100/30 bg-acc-100/5"
+								? "border-warning/30 bg-warning/5"
 								: "border-bg-300 bg-bg-100/30"
 					}`}
 				>
 					<div className="gap-s-200 flex items-center">
 						{(isOverLimit || isWarning) && (
 							<AlertTriangle
-								className={`h-4 w-4 shrink-0 ${isOverLimit ? "text-fb-error" : "text-acc-100"}`}
-								aria-label={
-									isOverLimit ? t("sweepOverLimit") : t("sweepWarning")
-								}
+								className={`h-4 w-4 shrink-0 ${isOverLimit ? "text-fb-error" : "text-warning"}`}
+								aria-hidden="true"
 							/>
 						)}
 						<span className="text-small text-txt-100 tabular-nums">
@@ -424,7 +422,7 @@ const SweepConfigPanel = ({
 						</span>
 					)}
 					{isWarning && (
-						<span className="text-tiny text-acc-100">{t("sweepWarning")}</span>
+						<span className="text-tiny text-warning">{t("sweepWarning")}</span>
 					)}
 				</div>
 			)}

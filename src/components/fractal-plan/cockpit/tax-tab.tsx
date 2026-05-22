@@ -17,7 +17,7 @@ import type { MonthlyDarfRow } from "@/lib/tax/types"
 
 interface TaxTabProps {
 	accountId: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 	year: number
 	rows: readonly MonthlyDarfRow[]
 }

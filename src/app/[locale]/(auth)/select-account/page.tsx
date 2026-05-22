@@ -26,9 +26,9 @@ const SelectAccountPage = async () => {
 			<p className="text-small text-txt-300">{t("signInAgain")}</p>
 			<Link
 				href="/login"
-				className="text-brand-500 hover:text-brand-400 inline-flex items-center gap-s-200"
+				className="text-acc-100 hover:text-acc-100 gap-s-200 inline-flex items-center"
 			>
-				<ArrowLeft className="h-4 w-4" />
+				<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 				{t("backToLoginButton")}
 			</Link>
 		</div>

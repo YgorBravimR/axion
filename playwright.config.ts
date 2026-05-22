@@ -32,6 +32,7 @@ const orderedPhases: readonly [PhaseDef, ...PhaseDef[]] = [
 
 /** Data-dependent tests — run in parallel after journal completes */
 const dataPhases = [
+	{ name: "trade-conditions", testMatch: /trade-conditions\.spec\.ts/ },
 	{ name: "dashboard", testMatch: /dashboard\.spec\.ts/ },
 	{ name: "analytics", testMatch: /analytics\.spec\.ts/ },
 	{ name: "holding-period", testMatch: /holding-period\.spec\.ts/ },
@@ -80,16 +81,12 @@ const journeyStages: readonly JourneyStage[] = [
 		testMatch: /journey\/02-fractal-plan\.spec\.ts/,
 	},
 	{
-		name: "journey-03-pressure-test",
-		testMatch: /journey\/03-pressure-test\.spec\.ts/,
+		name: "journey-04b-seed-history",
+		testMatch: /journey\/04b-seed-history\.spec\.ts/,
 	},
 	{
 		name: "journey-04-daily-loop",
 		testMatch: /journey\/04-daily-loop\.spec\.ts/,
-	},
-	{
-		name: "journey-04b-seed-history",
-		testMatch: /journey\/04b-seed-history\.spec\.ts/,
 	},
 	{
 		name: "journey-05-weekly",
@@ -104,8 +101,20 @@ const journeyStages: readonly JourneyStage[] = [
 		testMatch: /journey\/07-quarter-year\.spec\.ts/,
 	},
 	{
+		name: "journey-03-pressure-test",
+		testMatch: /journey\/03-pressure-test\.spec\.ts/,
+	},
+	{
 		name: "journey-08-improvement",
 		testMatch: /journey\/08-improvement\.spec\.ts/,
+	},
+	{
+		name: "journey-09b-seed-hawks-history",
+		testMatch: /journey\/09b-seed-hawks-history\.spec\.ts/,
+	},
+	{
+		name: "journey-09-hawks-daily-loop",
+		testMatch: /journey\/09-hawks-daily-loop\.spec\.ts/,
 	},
 ]
 
@@ -128,13 +137,22 @@ const buildJourneyProjects = (
 			? {
 					...devices["Desktop Chrome"],
 					headless: false,
+					viewport: { width: 1600, height: 900 },
 					launchOptions: { slowMo: 400 },
 					video: "on" as const,
 					screenshot: "on" as const,
 				}
 			: { ...devices["Desktop Chrome"] }
 
-	let prev: string | undefined
+	// Demo chain must not start until the entire ci chain completes.
+	// Both profiles share bravo@axion-demo.com and the same journey-stage-N.json
+	// files. If demo-00 runs while ci is still running, demo's cleanupBravo
+	// deletes the ci-registered user and corrupts ci's subsequent stages.
+	let prev: string | undefined =
+		profile === "demo"
+			? `${journeyStages[journeyStages.length - 1]!.name}-ci`
+			: undefined
+
 	return journeyStages.map((stage) => {
 		const name = `${stage.name}-${profile}`
 		const project = {

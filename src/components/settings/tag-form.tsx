@@ -221,7 +221,10 @@ export const TagForm = ({
 									aria-label={t("selectColor", { color: "custom" })}
 								>
 									{TAG_COLORS.includes(formData.color) && (
-										<Pipette className="text-txt-300 h-4 w-4" />
+										<Pipette
+											className="text-txt-300 h-4 w-4"
+											aria-hidden="true"
+										/>
 									)}
 								</button>
 							</ColorPicker>

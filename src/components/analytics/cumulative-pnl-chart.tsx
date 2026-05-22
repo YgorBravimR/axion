@@ -60,7 +60,7 @@ const CustomTooltip = ({
 					className={`text-small font-semibold ${data.equity >= 0 ? "text-trade-buy" : "text-trade-sell"}`}
 				>
 					{sign}
-					{formatCompactCurrency(data.equity, "R$")}
+					{formatCompactCurrency(data.equity, "BRL")}
 				</p>
 			</div>
 		)
@@ -87,14 +87,9 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 		return (
 			<div
 				id="analytics-equity-curve"
-				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+				className="text-txt-300 flex h-64 items-center justify-center"
 			>
-				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-					{t("cumulative")}
-				</h2>
-				<div className="mt-s-300 sm:mt-m-400 text-txt-300 flex h-64 items-center justify-center">
-					{t("noData")}
-				</div>
+				{t("noData")}
 			</div>
 		)
 	}
@@ -104,84 +99,65 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 	const strokeColor = isPositive
 		? "var(--color-trade-buy)"
 		: "var(--color-trade-sell)"
-	const gradientColor = isPositive ? "0, 255, 150" : "128, 128, 255"
 
 	return (
-		<div
-			id="analytics-equity-curve"
-			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+		<ChartContainer
+			id="chart-analytics-cumulative-pnl"
+			className="h-48 min-w-0 sm:h-64"
 		>
-			<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-				{t("cumulative")}
-			</h2>
-			<ChartContainer
-				id="chart-analytics-cumulative-pnl"
-				className="mt-s-300 sm:mt-m-400 h-48 min-w-0 sm:h-64"
+			<AreaChart
+				data={data}
+				margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
 			>
-				<AreaChart
-					data={data}
-					margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-				>
-					<defs>
-						<linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
-							<stop
-								offset="5%"
-								stopColor={`rgb(${gradientColor})`}
-								stopOpacity={0.3}
-							/>
-							<stop
-								offset="95%"
-								stopColor={`rgb(${gradientColor})`}
-								stopOpacity={0}
-							/>
-						</linearGradient>
-					</defs>
-					<CartesianGrid
-						strokeDasharray="3 3"
-						stroke="var(--color-bg-300)"
-						vertical={false}
-					/>
-					<XAxis
-						dataKey="date"
-						tickFormatter={(dateStr) => formatDate(dateStr, locale)}
-						stroke="var(--color-txt-300)"
-						tick={AXIS_TICK}
-						tickLine={false}
-						axisLine={false}
-					/>
-					<YAxis
-						tickFormatter={(value: number) =>
-							formatCompactCurrency(value, "R$")
-						}
-						stroke="var(--color-txt-300)"
-						tick={AXIS_TICK}
-						tickLine={false}
-						axisLine={false}
-						domain={[minEquity - padding, maxEquity + padding]}
-						width={yAxisWidth}
-					/>
-					<ChartTooltip
-						variant="line"
-						content={<CustomTooltip locale={locale} />}
-					/>
-					<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeWidth={2} />
-					<Area
-						type="monotone"
-						dataKey="equity"
-						stroke={strokeColor}
-						strokeWidth={2}
-						fill="url(#pnlGradient)"
-						dot={false}
-						activeDot={{
-							r: 4,
-							fill: strokeColor,
-							stroke: "var(--color-bg-200)",
-							strokeWidth: 2,
-						}}
-					/>
-				</AreaChart>
-			</ChartContainer>
-		</div>
+				<defs>
+					<linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+						<stop offset="5%" stopColor={strokeColor} stopOpacity={0.3} />
+						<stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
+					</linearGradient>
+				</defs>
+				<CartesianGrid
+					strokeDasharray="3 3"
+					stroke="var(--color-bg-300)"
+					vertical={false}
+				/>
+				<XAxis
+					dataKey="date"
+					tickFormatter={(dateStr) => formatDate(dateStr, locale)}
+					stroke="var(--color-txt-300)"
+					tick={AXIS_TICK}
+					tickLine={false}
+					axisLine={false}
+				/>
+				<YAxis
+					tickFormatter={(value: number) => formatCompactCurrency(value, "BRL")}
+					stroke="var(--color-txt-300)"
+					tick={AXIS_TICK}
+					tickLine={false}
+					axisLine={false}
+					domain={[minEquity - padding, maxEquity + padding]}
+					width={yAxisWidth}
+				/>
+				<ChartTooltip
+					variant="line"
+					content={<CustomTooltip locale={locale} />}
+				/>
+				<ReferenceLine y={0} stroke="var(--color-bg-300)" strokeWidth={2} />
+				<Area
+					type="monotone"
+					dataKey="equity"
+					stroke={strokeColor}
+					strokeWidth={2}
+					fill="url(#pnlGradient)"
+					dot={false}
+					activeDot={{
+						r: 4,
+						fill: strokeColor,
+						stroke: "var(--color-bg-200)",
+						strokeWidth: 2,
+					}}
+				/>
+			</AreaChart>
+		</ChartContainer>
 	)
 })
 

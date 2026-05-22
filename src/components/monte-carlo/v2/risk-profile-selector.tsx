@@ -47,7 +47,7 @@ const getRiskSizingLabel = (
 				divisor: profile.kellyDivisor ?? 4,
 			})
 		default:
-			return formatCompactCurrency(fromCents(profile.baseRiskCents), "R$")
+			return formatCompactCurrency(fromCents(profile.baseRiskCents), "BRL")
 	}
 }
 
@@ -138,7 +138,7 @@ const RiskProfileSelector = ({
 						<span className="text-txt-100 font-medium">
 							{formatCompactCurrency(
 								fromCents(simProfile.dailyLossLimitCents),
-								"R$"
+								"BRL"
 							)}
 						</span>
 						{simProfile.weeklyLossLimitCents && (
@@ -149,7 +149,7 @@ const RiskProfileSelector = ({
 								<span className="text-txt-100 font-medium">
 									{formatCompactCurrency(
 										fromCents(simProfile.weeklyLossLimitCents),
-										"R$"
+										"BRL"
 									)}
 								</span>
 							</>
@@ -160,7 +160,7 @@ const RiskProfileSelector = ({
 						<span className="text-txt-100 font-medium">
 							{formatCompactCurrency(
 								fromCents(simProfile.monthlyLossLimitCents),
-								"R$"
+								"BRL"
 							)}
 						</span>
 						{simProfile.dailyTargetCents && (
@@ -171,7 +171,7 @@ const RiskProfileSelector = ({
 								<span className="text-txt-100 font-medium">
 									{formatCompactCurrency(
 										fromCents(simProfile.dailyTargetCents),
-										"R$"
+										"BRL"
 									)}
 								</span>
 							</>

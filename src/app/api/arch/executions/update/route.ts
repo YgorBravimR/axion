@@ -9,11 +9,6 @@ import {
 	archError,
 	formatExecutionForArch,
 } from "../../_lib/helpers"
-import {
-	getUserDek,
-	encryptExecutionFields,
-	decryptExecutionFields,
-} from "@/lib/user-crypto"
 import { updateTradeAggregates } from "@/app/actions/executions"
 import { toCents } from "@/lib/money"
 import { markTaxLedgerDirty } from "@/lib/tax/mark-dirty"
@@ -83,36 +78,16 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const dek = await getUserDek(auth.userId)
-
-		const existing = dek
-			? {
-					...(decryptExecutionFields(
-						rawExisting as unknown as Record<string, unknown>,
-						dek
-					) as unknown as typeof rawExisting),
-					trade: rawExisting.trade,
-				}
-			: rawExisting
+		const existing = rawExisting
 
 		// Validate exit quantity if type or quantity is changing
 		const resultType = body.executionType ?? existing.executionType
 		const resultQuantity = body.quantity ?? Number(existing.quantity)
 
 		if (resultType === "exit") {
-			const rawAllExecutions = await db.query.tradeExecutions.findMany({
+			const allExecutions = await db.query.tradeExecutions.findMany({
 				where: eq(tradeExecutions.tradeId, existing.tradeId),
 			})
-
-			const allExecutions = dek
-				? rawAllExecutions.map(
-						(ex) =>
-							decryptExecutionFields(
-								ex as unknown as Record<string, unknown>,
-								dek
-							) as unknown as TradeExecution
-					)
-				: rawAllExecutions
 
 			const totalEntryQty = allExecutions
 				.filter((e) => e.executionType === "entry")
@@ -172,28 +147,13 @@ const POST = async (request: NextRequest) => {
 			updateData.slippage = String(body.slippage ?? 0)
 		}
 
-		// Encrypt financial fields if DEK is available
-		const encryptedFields = dek
-			? encryptExecutionFields(
-					{
-						price: body.price,
-						quantity: body.quantity,
-						commission: body.commission,
-						fees: body.fees,
-						slippage: body.slippage,
-						executionValue,
-					},
-					dek
-				)
-			: {}
-
 		const [execution] = await db
 			.update(tradeExecutions)
-			.set({ ...updateData, ...encryptedFields })
+			.set(updateData)
 			.where(eq(tradeExecutions.id, body.id))
 			.returning()
 
-		await updateTradeAggregates(existing.tradeId, dek)
+		await updateTradeAggregates(existing.tradeId)
 
 		if (existing.trade.entryDate) {
 			await markTaxLedgerDirty(
@@ -202,15 +162,8 @@ const POST = async (request: NextRequest) => {
 			)
 		}
 
-		const decryptedExecution = dek
-			? (decryptExecutionFields(
-					execution as unknown as Record<string, unknown>,
-					dek
-				) as unknown as TradeExecution)
-			: execution
-
 		const formatted = formatExecutionForArch(
-			decryptedExecution as unknown as Record<string, unknown>
+			execution as unknown as Record<string, unknown>
 		)
 
 		return archSuccess("Execution updated successfully", formatted)

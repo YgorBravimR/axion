@@ -1,16 +1,19 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "../fixtures/base"
 import { ROUTES, TEST_ASSET, TEST_TIMEFRAME } from "../fixtures/test-data"
 
 test.describe("Settings", () => {
 	test.describe("Settings Page Layout", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display page header", async ({ page }) => {
 			// Settings page has no heading — verify via tab navigation
-			await expect(page.getByRole("tab", { name: /profile|perfil/i })).toBeVisible()
+			await expect(
+				page.getByRole("tab", { name: /profile|perfil/i })
+			).toBeVisible()
 		})
 
 		test("should display tab navigation", async ({ page }) => {
@@ -29,7 +32,9 @@ test.describe("Settings", () => {
 
 			// These may or may not be visible depending on admin status
 			const assetsVisible = await assetsTab.isVisible().catch(() => false)
-			const timeframesVisible = await timeframesTab.isVisible().catch(() => false)
+			const timeframesVisible = await timeframesTab
+				.isVisible()
+				.catch(() => false)
 			// Both should have same visibility (both admin-only)
 			expect(assetsVisible).toBe(timeframesVisible)
 		})
@@ -44,14 +49,15 @@ test.describe("Settings", () => {
 	test.describe("Profile Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
-			// Profile tab is the default, wait for content to load
+			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
 		})
 
 		test("should display profile information section", async ({ page }) => {
 			// Look for Profile Information section
-			const profileSection = page.locator(':has-text("Profile Information"), :has-text("Profile")')
+			const profileSection = page.locator(
+				':has-text("Profile Information"), :has-text("Profile")'
+			)
 			await expect(profileSection.first()).toBeVisible()
 		})
 
@@ -75,16 +81,22 @@ test.describe("Settings", () => {
 		})
 
 		test("should display Edit button for profile", async ({ page }) => {
-			const editButton = page.getByRole("button", { name: /edit|editar/i }).first()
+			const editButton = page
+				.getByRole("button", { name: /edit|editar/i })
+				.first()
 			await expect(editButton).toBeVisible()
 		})
 
 		test("should enable editing profile on Edit click", async ({ page }) => {
-			const editButton = page.getByRole("button", { name: /edit|editar/i }).first()
+			const editButton = page
+				.getByRole("button", { name: /edit|editar/i })
+				.first()
 			await editButton.click()
 
 			// Save and Cancel buttons should appear
-			const saveButton = page.getByRole("button", { name: /save|salvar/i }).first()
+			const saveButton = page
+				.getByRole("button", { name: /save|salvar/i })
+				.first()
 			await expect(saveButton).toBeVisible()
 		})
 	})
@@ -92,27 +104,34 @@ test.describe("Settings", () => {
 	test.describe("Account Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("tab", { name: "Account" }).click()
-			await page.waitForTimeout(500) // Wait for content to load
+			await page.waitForSelector("#settings-account-info", { timeout: 15_000 })
 		})
 
 		test("should display current account info", async ({ page }) => {
 			// Account settings shows current account name
-			const accountName = page.locator(':has-text("Account Name"), :has-text("Name")')
+			const accountName = page.locator(
+				':has-text("Account Name"), :has-text("Name")'
+			)
 			await expect(accountName.first()).toBeVisible()
 		})
 
 		test("should display account type selector", async ({ page }) => {
 			// Account type (Personal/Prop)
-			const accountType = page.locator(':has-text("Account Type"), :has-text("Type")')
+			const accountType = page.locator(
+				':has-text("Account Type"), :has-text("Type")'
+			)
 			if ((await accountType.count()) > 0) {
 				await expect(accountType.first()).toBeVisible()
 			}
 		})
 
 		test("should display Edit button", async ({ page }) => {
-			const editButton = page.getByRole("button", { name: /edit|editar/i }).first()
+			const editButton = page
+				.getByRole("button", { name: /edit|editar/i })
+				.first()
 			await expect(editButton).toBeVisible()
 		})
 
@@ -127,7 +146,9 @@ test.describe("Settings", () => {
 
 		test("should display asset fees section", async ({ page }) => {
 			// Asset-specific fees section
-			const assetSection = page.locator(':has-text("Asset"), :has-text("Commission"), :has-text("Fees")')
+			const assetSection = page.locator(
+				':has-text("Asset"), :has-text("Commission"), :has-text("Fees")'
+			)
 			if ((await assetSection.count()) > 0) {
 				await expect(assetSection.first()).toBeVisible()
 			}
@@ -137,10 +158,16 @@ test.describe("Settings", () => {
 			// Wait for async account data to load (3 parallel API calls)
 			await page.waitForSelector("#settings-account-info", { timeout: 10000 })
 			// Recalculate button may not exist — test is conditional
-			const recalculateButton = page.getByRole("button", { name: /recalculate|recalcular/i })
+			const recalculateButton = page.getByRole("button", {
+				name: /recalculate|recalcular/i,
+			})
 			const hasButton = await recalculateButton.isVisible().catch(() => false)
 			// Account tab shows info cards (Account Name, Type, Commission & Fees)
-			const hasAccountInfo = await page.getByText(/account name|commission|fees/i).first().isVisible().catch(() => false)
+			const hasAccountInfo = await page
+				.getByText(/account name|commission|fees/i)
+				.first()
+				.isVisible()
+				.catch(() => false)
 			expect(hasButton || hasAccountInfo).toBeTruthy()
 		})
 	})
@@ -148,7 +175,8 @@ test.describe("Settings", () => {
 	test.describe("Assets Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Assets tab is only visible to admin users
 			const assetsTab = page.getByRole("tab", { name: "Assets" })
@@ -160,20 +188,28 @@ test.describe("Settings", () => {
 		})
 
 		test("should display assets list", async ({ page }) => {
-			const assetsList = page.locator('[data-testid="assets-list"], .assets-list, table')
+			const assetsList = page.locator(
+				'[data-testid="assets-list"], .assets-list, table'
+			)
 			await expect(assetsList.first()).toBeVisible()
 		})
 
 		test("should display Add Asset button", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add asset|novo ativo|new asset/i })
+			const addButton = page.getByRole("button", {
+				name: /add asset|novo ativo|new asset/i,
+			})
 			await expect(addButton).toBeVisible()
 		})
 
 		test("should open asset form when clicking Add", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add asset|novo ativo|new asset/i })
+			const addButton = page.getByRole("button", {
+				name: /add asset|novo ativo|new asset/i,
+			})
 			await addButton.click()
 
-			const form = page.locator('[data-testid="asset-form"], [role="dialog"], form')
+			const form = page.locator(
+				'[data-testid="asset-form"], [role="dialog"], form'
+			)
 			await expect(form.first()).toBeVisible({ timeout: 2000 })
 		})
 
@@ -212,20 +248,28 @@ test.describe("Settings", () => {
 		})
 
 		test("should display tick size field", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add asset|novo ativo|new asset/i })
+			const addButton = page.getByRole("button", {
+				name: /add asset|novo ativo|new asset/i,
+			})
 			await addButton.click()
 
-			const tickSizeField = page.getByLabel(/tick size|tamanho do tick/i).or(page.locator('[name="tickSize"]'))
+			const tickSizeField = page
+				.getByLabel(/tick size|tamanho do tick/i)
+				.or(page.locator('[name="tickSize"]'))
 			if ((await tickSizeField.count()) > 0) {
 				await expect(tickSizeField.first()).toBeVisible()
 			}
 		})
 
 		test("should display tick value field", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add asset|novo ativo|new asset/i })
+			const addButton = page.getByRole("button", {
+				name: /add asset|novo ativo|new asset/i,
+			})
 			await addButton.click()
 
-			const tickValueField = page.getByLabel(/tick value|valor do tick/i).or(page.locator('[name="tickValue"]'))
+			const tickValueField = page
+				.getByLabel(/tick value|valor do tick/i)
+				.or(page.locator('[name="tickValue"]'))
 			if ((await tickValueField.count()) > 0) {
 				await expect(tickValueField.first()).toBeVisible()
 			}
@@ -261,7 +305,9 @@ test.describe("Settings", () => {
 		test("should edit existing asset", async ({ page }) => {
 			// Edit buttons have aria-label="Edit {SYMBOL}" (e.g. "Edit WIN")
 			// Use aria-label prefix match to avoid clicking unrelated Edit buttons
-			const editButton = page.getByRole("button", { name: /^edit\s+\w/i }).first()
+			const editButton = page
+				.getByRole("button", { name: /^edit\s+\w/i })
+				.first()
 
 			if (await editButton.isVisible()) {
 				await editButton.click()
@@ -273,7 +319,7 @@ test.describe("Settings", () => {
 
 		test("should show delete confirmation for asset", async ({ page }) => {
 			// Find the assets table
-			const rows = page.locator('table tbody tr')
+			const rows = page.locator("table tbody tr")
 			const initialRowCount = await rows.count()
 
 			if (initialRowCount === 0) {
@@ -282,7 +328,7 @@ test.describe("Settings", () => {
 			}
 
 			// The delete button is the last button in each row (trash icon)
-			const deleteButton = rows.first().locator('button').last()
+			const deleteButton = rows.first().locator("button").last()
 			await deleteButton.click()
 			await page.waitForTimeout(500)
 
@@ -292,14 +338,17 @@ test.describe("Settings", () => {
 			const newRowCount = await rows.count()
 
 			// Either dialog appeared or an action occurred
-			expect(dialogVisible || newRowCount !== initialRowCount || true).toBeTruthy()
+			expect(
+				dialogVisible || newRowCount !== initialRowCount || true
+			).toBeTruthy()
 		})
 	})
 
 	test.describe("Timeframes Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Timeframes tab is only visible to admin users
 			const timeframesTab = page.getByRole("tab", { name: "Timeframes" })
@@ -312,43 +361,68 @@ test.describe("Settings", () => {
 
 		test("should display timeframes list", async ({ page }) => {
 			// Timeframes are displayed as cards with code like "1m", "5m", "15m", etc.
-			const timeframeCards = page.getByText(/1 minute|5 minutes|15 minutes|1 hour|daily/i)
+			const timeframeCards = page.getByText(
+				/1 minute|5 minutes|15 minutes|1 hour|daily/i
+			)
 			await expect(timeframeCards.first()).toBeVisible()
 		})
 
 		test("should display Add Timeframe button", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add timeframe|novo timeframe|new timeframe/i })
+			const addButton = page.getByRole("button", {
+				name: /add timeframe|novo timeframe|new timeframe/i,
+			})
 			await expect(addButton).toBeVisible()
 		})
 
 		test("should open timeframe form when clicking Add", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add timeframe|novo timeframe|new timeframe/i })
+			const addButton = page.getByRole("button", {
+				name: /add timeframe|novo timeframe|new timeframe/i,
+			})
 			await addButton.click()
 
-			const form = page.locator('[data-testid="timeframe-form"], [role="dialog"], form')
+			const form = page.locator(
+				'[data-testid="timeframe-form"], [role="dialog"], form'
+			)
 			await expect(form.first()).toBeVisible({ timeout: 2000 })
 		})
 
 		test("should display timeframe form fields", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add timeframe|novo timeframe|new timeframe/i })
+			const addButton = page.getByRole("button", {
+				name: /add timeframe|novo timeframe|new timeframe/i,
+			})
 			await addButton.click()
 
 			// Code field
-			await expect(page.getByLabel(/code|código/i).or(page.locator('[name="code"]')).first()).toBeVisible()
+			await expect(
+				page
+					.getByLabel(/code|código/i)
+					.or(page.locator('[name="code"]'))
+					.first()
+			).toBeVisible()
 
 			// Name field
-			await expect(page.getByLabel(/name|nome/i).or(page.locator('[name="name"]')).first()).toBeVisible()
+			await expect(
+				page
+					.getByLabel(/name|nome/i)
+					.or(page.locator('[name="name"]'))
+					.first()
+			).toBeVisible()
 		})
 
 		test("should auto-uppercase timeframe code", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add timeframe|novo timeframe|new timeframe/i })
+			const addButton = page.getByRole("button", {
+				name: /add timeframe|novo timeframe|new timeframe/i,
+			})
 			await addButton.click()
 
 			// Wait for the dialog to open fully before interacting
 			const dialog = page.getByRole("dialog")
 			await expect(dialog).toBeVisible({ timeout: 5000 })
 
-			const codeField = page.getByLabel(/code|código/i).or(page.locator('[name="code"]')).first()
+			const codeField = page
+				.getByLabel(/code|código/i)
+				.or(page.locator('[name="code"]'))
+				.first()
 			await codeField.fill("test")
 
 			const value = await codeField.inputValue()
@@ -356,10 +430,14 @@ test.describe("Settings", () => {
 		})
 
 		test("should display minutes field", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add timeframe|novo timeframe|new timeframe/i })
+			const addButton = page.getByRole("button", {
+				name: /add timeframe|novo timeframe|new timeframe/i,
+			})
 			await addButton.click()
 
-			const minutesField = page.getByLabel(/minutes|minutos/i).or(page.locator('[name="minutes"]'))
+			const minutesField = page
+				.getByLabel(/minutes|minutos/i)
+				.or(page.locator('[name="minutes"]'))
 			if ((await minutesField.count()) > 0) {
 				await expect(minutesField.first()).toBeVisible()
 			}
@@ -383,9 +461,10 @@ test.describe("Settings", () => {
 			await nameField.fill(TEST_TIMEFRAME.name)
 
 			// Submit - button text is "Add Timeframe"
-			const submitButton = dialog.getByRole("button", { name: /^add timeframe$/i }).or(
-				dialog.getByRole("button", { name: /save|create/i })
-			).first()
+			const submitButton = dialog
+				.getByRole("button", { name: /^add timeframe$/i })
+				.or(dialog.getByRole("button", { name: /save|create/i }))
+				.first()
 			await submitButton.click()
 
 			await page.waitForTimeout(1000)
@@ -393,7 +472,9 @@ test.describe("Settings", () => {
 
 		test("should edit existing timeframe", async ({ page }) => {
 			// Timeframe edit buttons have aria-label="Edit Timeframe"
-			const editButton = page.getByRole("button", { name: /edit timeframe/i }).first()
+			const editButton = page
+				.getByRole("button", { name: /edit timeframe/i })
+				.first()
 
 			if (await editButton.isVisible()) {
 				await editButton.click()
@@ -407,7 +488,7 @@ test.describe("Settings", () => {
 			// Find the delete button (red trash icon) in the timeframe cards
 			// In card layout, action buttons are in each card
 			const cards = page.locator('[class*="card"], [class*="Card"]')
-			const deleteButton = cards.first().locator('button').last()
+			const deleteButton = cards.first().locator("button").last()
 
 			if (await deleteButton.isVisible().catch(() => false)) {
 				await deleteButton.click()
@@ -424,7 +505,8 @@ test.describe("Settings", () => {
 	test.describe("Tags Tab", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Tags tab may be named "Tags" or may be a sub-section
 			const tagsTab = page.getByRole("tab", { name: /tags/i })
@@ -441,8 +523,12 @@ test.describe("Settings", () => {
 			await expect(tagsContent.first()).toBeVisible()
 		})
 
-		test("should create a new tag with name, type, and color", async ({ page }) => {
-			const addButton = page.getByRole("button", { name: /add tag|new tag|novo tag|criar tag/i })
+		test("should create a new tag with name, type, and color", async ({
+			page,
+		}) => {
+			const addButton = page.getByRole("button", {
+				name: /add tag|new tag|novo tag|criar tag/i,
+			})
 			if (await addButton.isVisible().catch(() => false)) {
 				await addButton.click()
 				await page.waitForTimeout(500)
@@ -461,13 +547,19 @@ test.describe("Settings", () => {
 				}
 
 				// Select color if available
-				const colorOption = page.locator('button[aria-label*="color"], input[type="color"], [data-testid*="color"]').first()
+				const colorOption = page
+					.locator(
+						'button[aria-label*="color"], input[type="color"], [data-testid*="color"]'
+					)
+					.first()
 				if (await colorOption.isVisible().catch(() => false)) {
 					await colorOption.click()
 				}
 
 				// Save
-				const saveButton = page.getByRole("button", { name: /save|salvar|add tag|criar/i }).first()
+				const saveButton = page
+					.getByRole("button", { name: /save|salvar|add tag|criar/i })
+					.first()
 				if (await saveButton.isVisible().catch(() => false)) {
 					await saveButton.click()
 					await page.waitForTimeout(1000)
@@ -477,7 +569,8 @@ test.describe("Settings", () => {
 
 		test("should delete a tag", async ({ page }) => {
 			// Find a tag delete button
-			const deleteButton = page.locator('button[aria-label*="delete"], button[aria-label*="excluir"]')
+			const deleteButton = page
+				.locator('button[aria-label*="delete"], button[aria-label*="excluir"]')
 				.or(page.locator('[data-testid*="delete-tag"]'))
 				.first()
 
@@ -488,7 +581,9 @@ test.describe("Settings", () => {
 				// Confirm deletion if dialog appears
 				const dialog = page.locator('[role="alertdialog"], [role="dialog"]')
 				if (await dialog.isVisible().catch(() => false)) {
-					const confirmButton = dialog.getByRole("button", { name: /confirm|confirmar|delete|excluir|yes|sim/i })
+					const confirmButton = dialog.getByRole("button", {
+						name: /confirm|confirmar|delete|excluir|yes|sim/i,
+					})
 					await confirmButton.click()
 					await page.waitForTimeout(1000)
 				}
@@ -497,29 +592,47 @@ test.describe("Settings", () => {
 	})
 
 	test.describe("Language Switching", () => {
-		test("should switch language from English to Portuguese", async ({ page }) => {
+		test("should switch language from English to Portuguese", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Find language selector
-			const languageSelector = page.getByRole("combobox", { name: /language|idioma/i })
+			const languageSelector = page
+				.getByRole("combobox", { name: /language|idioma/i })
 				.or(page.locator('button:has-text("English")'))
 				.or(page.locator('button:has-text("Português")'))
 
-			if (await languageSelector.first().isVisible().catch(() => false)) {
+			if (
+				await languageSelector
+					.first()
+					.isVisible()
+					.catch(() => false)
+			) {
 				await languageSelector.first().click()
 				await page.waitForTimeout(300)
 
 				// Select Portuguese
-				const ptOption = page.getByRole("option", { name: /português|portuguese|pt-br/i })
+				const ptOption = page
+					.getByRole("option", { name: /português|portuguese|pt-br/i })
 					.or(page.getByText(/português|portuguese|pt-br/i))
-				if (await ptOption.first().isVisible().catch(() => false)) {
+				if (
+					await ptOption
+						.first()
+						.isVisible()
+						.catch(() => false)
+				) {
 					await ptOption.first().click()
 					await page.waitForTimeout(2000)
 
 					// UI should now show Portuguese text
 					const ptText = page.getByText(/configurações|perfil|conta/i)
-					const hasPtText = await ptText.first().isVisible().catch(() => false)
+					const hasPtText = await ptText
+						.first()
+						.isVisible()
+						.catch(() => false)
 					expect(typeof hasPtText).toBe("boolean")
 				}
 			}
@@ -529,19 +642,24 @@ test.describe("Settings", () => {
 	test.describe("Account Creation", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("tab", { name: /account|conta/i }).click()
 			await page.waitForTimeout(500)
 		})
 
 		test("should display New Account button", async ({ page }) => {
-			const newAccountButton = page.getByRole("button", { name: /new account|nova conta|create account|criar conta/i })
+			const newAccountButton = page.getByRole("button", {
+				name: /new account|nova conta|create account|criar conta/i,
+			})
 			const hasButton = await newAccountButton.isVisible().catch(() => false)
 			expect(typeof hasButton).toBe("boolean")
 		})
 
 		test("should create new account with name and type", async ({ page }) => {
-			const newAccountButton = page.getByRole("button", { name: /new account|nova conta|create account|criar conta/i })
+			const newAccountButton = page.getByRole("button", {
+				name: /new account|nova conta|create account|criar conta/i,
+			})
 			if (await newAccountButton.isVisible().catch(() => false)) {
 				await newAccountButton.click()
 				await page.waitForTimeout(500)
@@ -560,7 +678,9 @@ test.describe("Settings", () => {
 				}
 
 				// Save
-				const saveButton = page.getByRole("button", { name: /save|salvar|create|criar/i }).first()
+				const saveButton = page
+					.getByRole("button", { name: /save|salvar|create|criar/i })
+					.first()
 				if (await saveButton.isVisible().catch(() => false)) {
 					await saveButton.click()
 					await page.waitForTimeout(2000)
@@ -572,32 +692,43 @@ test.describe("Settings", () => {
 	test.describe("Data Management", () => {
 		test.beforeEach(async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 		})
 
 		test("should display export data button", async ({ page }) => {
-			const exportButton = page.getByRole("button", { name: /export data|exportar dados/i })
+			const exportButton = page.getByRole("button", {
+				name: /export data|exportar dados/i,
+			})
 			if ((await exportButton.count()) > 0) {
 				await expect(exportButton).toBeVisible()
 			}
 		})
 
 		test("should display import data button", async ({ page }) => {
-			const importButton = page.getByRole("button", { name: /import data|importar dados/i })
+			const importButton = page.getByRole("button", {
+				name: /import data|importar dados/i,
+			})
 			if ((await importButton.count()) > 0) {
 				await expect(importButton).toBeVisible()
 			}
 		})
 
 		test("should display danger zone section", async ({ page }) => {
-			const dangerZone = page.locator('[data-testid="danger-zone"], :has-text("Danger"), :has-text("Perigo")')
+			const dangerZone = page.locator(
+				'[data-testid="danger-zone"], :has-text("Danger"), :has-text("Perigo")'
+			)
 			if ((await dangerZone.count()) > 0) {
 				await expect(dangerZone.first()).toBeVisible()
 			}
 		})
 
-		test("should display delete account button with confirmation", async ({ page }) => {
-			const deleteAccountButton = page.getByRole("button", { name: /delete account|excluir conta/i })
+		test("should display delete account button with confirmation", async ({
+			page,
+		}) => {
+			const deleteAccountButton = page.getByRole("button", {
+				name: /delete account|excluir conta/i,
+			})
 			if ((await deleteAccountButton.count()) > 0) {
 				await expect(deleteAccountButton).toBeVisible()
 
@@ -612,20 +743,28 @@ test.describe("Settings", () => {
 	test.describe("Form Validation", () => {
 		test("should validate account name on edit", async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 			await page.getByRole("tab", { name: "Account" }).click()
 			await page.waitForTimeout(500)
 
-			const editButton = page.getByRole("button", { name: /edit|editar/i }).first()
+			const editButton = page
+				.getByRole("button", { name: /edit|editar/i })
+				.first()
 			if (await editButton.isVisible()) {
 				await editButton.click()
 
 				// Clear the name field and try to save
-				const nameInput = page.locator('input[name="name"]').or(page.getByLabel(/name|nome/i)).first()
+				const nameInput = page
+					.locator('input[name="name"]')
+					.or(page.getByLabel(/name|nome/i))
+					.first()
 				if (await nameInput.isVisible()) {
 					await nameInput.clear()
 					// Try to save - should fail validation
-					const saveButton = page.getByRole("button", { name: /save|salvar/i }).first()
+					const saveButton = page
+						.getByRole("button", { name: /save|salvar/i })
+						.first()
 					await saveButton.click()
 				}
 			}
@@ -633,7 +772,8 @@ test.describe("Settings", () => {
 
 		test("should validate required fields on asset form", async ({ page }) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Assets tab is only visible to admin users
 			const assetsTab = page.getByRole("tab", { name: "Assets" })
@@ -664,9 +804,12 @@ test.describe("Settings", () => {
 			expect(dialogStillOpen).toBe(true)
 		})
 
-		test("should validate required fields on timeframe form", async ({ page }) => {
+		test("should validate required fields on timeframe form", async ({
+			page,
+		}) => {
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Timeframes tab is only visible to admin users
 			const timeframesTab = page.getByRole("tab", { name: "Timeframes" })
@@ -685,7 +828,9 @@ test.describe("Settings", () => {
 			await codeField.clear()
 
 			// Submit button in the dialog
-			const submitButton = page.getByRole("dialog").getByRole("button", { name: /add timeframe/i })
+			const submitButton = page
+				.getByRole("dialog")
+				.getByRole("button", { name: /add timeframe/i })
 			await submitButton.click()
 			await page.waitForTimeout(300)
 
@@ -699,16 +844,20 @@ test.describe("Settings", () => {
 		test("should adapt layout on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// Settings has no heading — verify via Profile tab visibility
-			await expect(page.getByRole("tab", { name: /profile|perfil/i })).toBeVisible()
+			await expect(
+				page.getByRole("tab", { name: /profile|perfil/i })
+			).toBeVisible()
 		})
 
 		test("should show scrollable tabs on mobile", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.settings)
-			await page.waitForLoadState("networkidle")
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			const tabList = page.locator('[role="tablist"]')
 			await expect(tabList).toBeVisible()

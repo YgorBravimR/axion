@@ -145,7 +145,7 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 			{/* Header */}
 			<div>
 				<div className="gap-s-300 flex items-center">
-					<Shield className="text-acc-100 h-6 w-6" />
+					<Shield className="text-acc-100 h-6 w-6" aria-hidden="true" />
 					<h1 className="text-h3 sm:text-h2 text-txt-100 font-semibold">
 						{t("title")}
 					</h1>

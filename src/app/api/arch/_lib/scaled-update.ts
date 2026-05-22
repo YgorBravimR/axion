@@ -1,13 +1,8 @@
 import { db } from "@/db/drizzle"
 import { tradeExecutions, trades } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import {
-	encryptExecutionFields,
-	decryptExecutionFields,
-} from "@/lib/user-crypto"
 import { toCents } from "@/lib/money"
 import { updateTradeAggregates } from "@/app/actions/executions"
-import type { TradeExecution } from "@/db/schema"
 import type { ScaledExecutionInput } from "./scaled-create"
 import { validateScaledExecutions } from "./scaled-create"
 
@@ -63,8 +58,7 @@ const toFiniteNumber = (
  */
 const applyScaledExecutionOps = async (
 	tradeId: string,
-	ops: ScaledExecutionOps,
-	dek: string | null
+	ops: ScaledExecutionOps
 ): Promise<void> => {
 	const deleteIds = ops.delete ?? []
 	const updates = ops.update ?? []
@@ -173,70 +167,36 @@ const applyScaledExecutionOps = async (
 				where: eq(tradeExecutions.id, patch.id),
 			})
 			if (existing) {
-				const decrypted = dek
-					? (decryptExecutionFields(
-							existing as unknown as Record<string, unknown>,
-							dek
-						) as unknown as TradeExecution)
-					: (existing as unknown as TradeExecution)
 				if (valueRebuildPrice === null) {
-					valueRebuildPrice = Number(decrypted.price)
+					valueRebuildPrice = Number(existing.price)
 				}
 				if (valueRebuildQuantity === null) {
-					valueRebuildQuantity = Number(decrypted.quantity)
+					valueRebuildQuantity = Number(existing.quantity)
 				}
 			}
 		}
 
-		let executionValue: number | null = null
 		if (
 			(patch.price !== undefined || patch.quantity !== undefined) &&
 			valueRebuildPrice !== null &&
 			valueRebuildQuantity !== null
 		) {
-			executionValue = toCents(valueRebuildPrice * valueRebuildQuantity)
+			const executionValue = toCents(valueRebuildPrice * valueRebuildQuantity)
 			updateData.executionValue = String(executionValue)
 		}
 
-		const encryptedFields = dek
-			? encryptExecutionFields(
-					{
-						price: priceNum ?? undefined,
-						quantity: quantityNum ?? undefined,
-						commission: commissionNum ?? undefined,
-						fees: feesNum ?? undefined,
-						slippage: slippageNum ?? undefined,
-						executionValue: executionValue ?? undefined,
-					},
-					dek
-				)
-			: {}
-
-		// eslint-disable-next-line no-await-in-loop -- per-leg update with patch-specific encrypted payload built above
+		// eslint-disable-next-line no-await-in-loop -- per-leg update with patch-specific payload built above
 		await db
 			.update(tradeExecutions)
-			.set({ ...updateData, ...encryptedFields })
+			.set(updateData)
 			.where(eq(tradeExecutions.id, patch.id))
 	}
 
-	// Apply adds last, encrypted via the same path as create.
+	// Apply adds last.
 	if (adds.length) {
 		const validated = validateScaledExecutions(adds)
 		const insertValues = validated.legs.map((leg) => {
 			const executionValue = toCents(leg.price * leg.quantity)
-			const encrypted = dek
-				? encryptExecutionFields(
-						{
-							price: leg.price,
-							quantity: leg.quantity,
-							commission: leg.commission,
-							fees: leg.fees,
-							slippage: leg.slippage,
-							executionValue,
-						},
-						dek
-					)
-				: {}
 			return {
 				tradeId,
 				executionType: leg.executionType,
@@ -249,25 +209,15 @@ const applyScaledExecutionOps = async (
 				fees: String(leg.fees),
 				slippage: String(leg.slippage),
 				executionValue: String(executionValue),
-				...encrypted,
 			}
 		})
 		await db.insert(tradeExecutions).values(insertValues)
 	}
 
 	// Final consistency check: total exits ≤ total entries
-	const finalRaw = await db.query.tradeExecutions.findMany({
+	const finalLegs = await db.query.tradeExecutions.findMany({
 		where: eq(tradeExecutions.tradeId, tradeId),
 	})
-	const finalLegs = dek
-		? finalRaw.map(
-				(row) =>
-					decryptExecutionFields(
-						row as unknown as Record<string, unknown>,
-						dek
-					) as unknown as TradeExecution
-			)
-		: (finalRaw as unknown as TradeExecution[])
 	const finalEntryQty = finalLegs
 		.filter((leg) => leg.executionType === "entry")
 		.reduce((sum, leg) => sum + Number(leg.quantity), 0)
@@ -293,7 +243,7 @@ const applyScaledExecutionOps = async (
 			.where(eq(trades.id, tradeId))
 	}
 
-	await updateTradeAggregates(tradeId, dek)
+	await updateTradeAggregates(tradeId)
 }
 
 export { applyScaledExecutionOps, hasOps }

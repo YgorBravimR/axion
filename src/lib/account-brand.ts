@@ -1,4 +1,4 @@
-import { User, Building2, RotateCcw, type LucideIcon } from "lucide-react"
+import { User, Building2, type LucideIcon } from "lucide-react"
 import type { Brand } from "@/lib/brands"
 
 /**
@@ -10,8 +10,6 @@ const getAccountTypeBrand = (accountType: string): Brand => {
 	switch (accountType) {
 		case "prop":
 			return "tsr"
-		case "replay":
-			return "retro"
 		default:
 			return "bravo"
 	}
@@ -24,8 +22,6 @@ const getAccountIcon = (accountType: string): LucideIcon => {
 	switch (accountType) {
 		case "prop":
 			return Building2
-		case "replay":
-			return RotateCcw
 		default:
 			return User
 	}

@@ -4,6 +4,7 @@ import type {
 	strategies,
 	timeframes,
 	tags,
+	tradeHawksMetadata,
 } from "@/db/schema"
 
 export interface TradeWithRelations extends Trade {
@@ -13,6 +14,7 @@ export interface TradeWithRelations extends Trade {
 		tag: typeof tags.$inferSelect
 	}>
 	executions?: TradeExecution[]
+	hawksMetadata?: typeof tradeHawksMetadata.$inferSelect | null
 }
 
 interface BulkCreateResult {
@@ -51,6 +53,7 @@ interface CreateScaledTradeInput {
 		fees?: number
 		notes?: string
 	}>
+	conditionsMet?: Array<{ conditionId: string; met: boolean }>
 }
 
 interface ExtendedTradeFilters {

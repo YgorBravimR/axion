@@ -69,6 +69,9 @@ import { TagForm } from "@/components/settings/tag-form"
 import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
 import type { PersistedImage, PendingImage } from "@/lib/validations/upload"
+import { HawksTradeFields } from "@/components/hawks"
+import { TradeConditionsChecklist } from "@/components/journal/trade-conditions-checklist"
+import { getTradeConditions } from "@/app/actions/trade-conditions"
 import {
 	Tooltip,
 	TooltipContent,
@@ -88,6 +91,7 @@ interface TradeFormProps {
 	defaultAssetId?: string
 	defaultDate?: string
 	initialSharedState?: SharedTradeFormState
+	hawksModeActive?: boolean
 }
 
 /**
@@ -127,16 +131,24 @@ const getEndOfDayLocal = (referenceDate?: Date): string => {
 	return `${year}-${month}-${day}T23:59`
 }
 
-type TradeWithTags = Trade & { tradeTags?: Array<{ tag: Tag }> }
+type TradeWithTags = Trade & {
+	tradeTags?: Array<{ tag: Tag }>
+	hawksMetadata?: {
+		scenarioId?: string | null
+		tripleScreenConfirmed: boolean
+		vwapRespected: boolean
+		ajusteRespected: boolean
+	} | null
+}
 
 // Static grade constants — hoisted to avoid re-creation on every render
 const GRADES = ["A", "B", "C", "D", "F"] as const
 const GRADE_COLORS: Record<string, string> = {
-	A: "border-trade-buy bg-trade-buy/10 text-trade-buy",
-	B: "border-trade-buy/70 bg-trade-buy/5 text-trade-buy/70",
+	A: "border-fb-success bg-fb-success/10 text-fb-success",
+	B: "border-fb-success/70 bg-fb-success/5 text-fb-success/70",
 	C: "border-warning bg-warning/10 text-warning",
-	D: "border-trade-sell/70 bg-trade-sell/5 text-trade-sell/70",
-	F: "border-trade-sell bg-trade-sell/10 text-trade-sell",
+	D: "border-fb-error/70 bg-fb-error/5 text-fb-error/70",
+	F: "border-fb-error bg-fb-error/10 text-fb-error",
 }
 
 /** Build form values from an existing trade (used for both initial state and reset) */
@@ -172,6 +184,14 @@ const buildTradeFormValues = (
 	screenshotUrl: trade.screenshotUrl ?? undefined,
 	screenshotS3Key: trade.screenshotS3Key ?? undefined,
 	tagIds: trade.tradeTags?.map((tt) => tt.tag.id) ?? [],
+	...(trade.hawksMetadata && {
+		hawks: {
+			scenarioId: trade.hawksMetadata.scenarioId ?? undefined,
+			tripleScreenConfirmed: trade.hawksMetadata.tripleScreenConfirmed,
+			vwapRespected: trade.hawksMetadata.vwapRespected,
+			ajusteRespected: trade.hawksMetadata.ajusteRespected,
+		},
+	}),
 })
 
 const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
@@ -187,6 +207,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			defaultAssetId,
 			defaultDate,
 			initialSharedState,
+			hawksModeActive = false,
 		},
 		ref
 	) => {
@@ -297,6 +318,14 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 						disciplineNotes: initialSharedState.disciplineNotes,
 						setupRank: initialSharedState.setupRank,
 						rating: initialSharedState.rating,
+						conditionsMet: initialSharedState.conditionsMet,
+					}),
+					...(hawksModeActive && {
+						hawks: {
+							tripleScreenConfirmed: false,
+							vwapRespected: false,
+							ajusteRespected: false,
+						},
 					}),
 				}
 
@@ -347,6 +376,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 					setupRank: values.setupRank,
 					rating: values.rating,
 					tagIds: values.tagIds,
+					conditionsMet: values.conditionsMet,
 				}
 			},
 		}))
@@ -364,7 +394,28 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const followedPlan = watch("followedPlan")
 		const currentRating = watch("rating")
 		const strategyId = watch("strategyId")
+		const conditionsMet = watch("conditionsMet") ?? []
 		const tValidation = useTranslations("trade.validation")
+
+		// Edit mode: hydrate evaluated conditions from the trade_conditions junction.
+		useEffect(() => {
+			if (!trade?.id) {
+				return
+			}
+			let cancelled = false
+			void getTradeConditions(trade.id).then((r) => {
+				if (cancelled || r.status !== "success" || !r.data) {
+					return
+				}
+				setValue(
+					"conditionsMet",
+					r.data.map((c) => ({ conditionId: c.conditionId, met: c.met }))
+				)
+			})
+			return () => {
+				cancelled = true
+			}
+		}, [trade?.id, setValue])
 
 		// Real-time SL/TP cross-field validation indicators
 		const stopLossWarning = useMemo(() => {
@@ -729,7 +780,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												: "border-bg-300 text-txt-200 hover:border-action-buy/50"
 										)}
 									>
-										<ArrowUpRight className="h-5 w-5" />
+										<ArrowUpRight className="h-5 w-5" aria-hidden="true" />
 										<span className="font-medium">{t("direction.long")}</span>
 									</button>
 									<button
@@ -744,7 +795,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												: "border-bg-300 text-txt-200 hover:border-action-sell/50"
 										)}
 									>
-										<ArrowDownRight className="h-5 w-5" />
+										<ArrowDownRight className="h-5 w-5" aria-hidden="true" />
 										<span className="font-medium">{t("direction.short")}</span>
 									</button>
 								</div>
@@ -768,7 +819,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												{selectedAsset && (
 													<Tooltip>
 														<TooltipTrigger asChild>
-															<Info className="text-txt-300 h-4 w-4" />
+															<Info
+																className="text-txt-300 h-4 w-4"
+																aria-hidden="true"
+															/>
 														</TooltipTrigger>
 														<TooltipContent id="tooltip-trade-asset-info">
 															<div className="text-tiny space-y-1">
@@ -962,6 +1016,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 													step="any"
 													placeholder="0.00"
 													{...field}
+													value={field.value ?? ""}
 													onChange={(e) =>
 														field.onChange(
 															e.target.value
@@ -1026,6 +1081,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												step="any"
 												placeholder={t("positionSizeHint")}
 												{...field}
+												value={field.value ?? ""}
 												onChange={(e) =>
 													field.onChange(
 														e.target.value ? Number(e.target.value) : undefined
@@ -1106,6 +1162,16 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										))}
 									</div>
 								</div>
+							)}
+
+							{strategyId && (
+								<TradeConditionsChecklist
+									strategyId={strategyId}
+									value={conditionsMet}
+									onChange={(next) =>
+										setValue("conditionsMet", next, { shouldDirty: true })
+									}
+								/>
 							)}
 						</AnimatedTabsContent>
 
@@ -1200,7 +1266,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									</Label>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<Info className="text-txt-300 h-4 w-4 cursor-help" />
+											<Info
+												className="text-txt-300 h-4 w-4 cursor-help"
+												aria-hidden="true"
+											/>
 										</TooltipTrigger>
 										<TooltipContent id="tooltip-trade-auto-risk">
 											<p className="text-tiny max-w-[min(200px,calc(100vw-2rem))]">
@@ -1322,7 +1391,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												</FormLabel>
 												<Tooltip>
 													<TooltipTrigger asChild>
-														<Info className="text-txt-300 h-4 w-4" />
+														<Info
+															className="text-txt-300 h-4 w-4"
+															aria-hidden="true"
+														/>
 													</TooltipTrigger>
 													<TooltipContent id="tooltip-trade-contracts-executed">
 														<div className="text-tiny max-w-xs space-y-1">
@@ -1478,6 +1550,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								)}
 							/>
 
+							{hawksModeActive && <HawksTradeFields form={form} />}
+
 							{/* Compliance */}
 							<div className="space-y-s-200">
 								<Label id="label-trade-followed-plan">
@@ -1496,8 +1570,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										className={cn(
 											"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
 											followedPlan === true
-												? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-												: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+												? "border-fb-success bg-fb-success/10 text-fb-success"
+												: "border-bg-300 text-txt-200 hover:border-fb-success/50"
 										)}
 									>
 										{tCommon("yes")}
@@ -1510,8 +1584,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										className={cn(
 											"p-m-400 flex-1 rounded-lg border-2 text-center transition-colors",
 											followedPlan === false
-												? "border-trade-sell bg-trade-sell/10 text-trade-sell"
-												: "border-bg-300 text-txt-200 hover:border-trade-sell/50"
+												? "border-fb-error bg-fb-error/10 text-fb-error"
+												: "border-bg-300 text-txt-200 hover:border-fb-error/50"
 										)}
 									>
 										{tCommon("no")}
@@ -1610,7 +1684,10 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Trade Screenshot */}
 							<div className="space-y-s-200">
 								<div className="gap-s-200 flex items-center">
-									<ImageIcon className="text-txt-300 h-4 w-4" />
+									<ImageIcon
+										className="text-txt-300 h-4 w-4"
+										aria-hidden="true"
+									/>
 									<Label id="label-trade-screenshot">
 										{t("tradeScreenshot")}
 									</Label>
@@ -1649,8 +1726,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 												className={cn(
 													"px-m-400 py-s-200 text-small rounded-full border transition-colors",
 													selectedTagIds.includes(tag.id)
-														? "border-trade-buy bg-trade-buy/10 text-trade-buy"
-														: "border-bg-300 text-txt-200 hover:border-trade-buy/50"
+														? "border-fb-success bg-fb-success/10 text-fb-success"
+														: "border-bg-300 text-txt-200 hover:border-fb-success/50"
 												)}
 											>
 												{tag.name}
@@ -1723,7 +1800,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 									size="sm"
 									onClick={() => setIsTagFormOpen(true)}
 								>
-									<Plus className="mr-s-100 h-4 w-4" />
+									<Plus className="mr-s-100 h-4 w-4" aria-hidden="true" />
 									{t("inlineCreateTag")}
 								</Button>
 							</div>
@@ -1769,7 +1846,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 								</>
 							) : (
 								<>
-									<Save className="mr-s-200 h-4 w-4" />
+									<Save className="mr-s-200 h-4 w-4" aria-hidden="true" />
 									{isEditing ? t("updateTrade") : t("saveTrade")}
 								</>
 							)}

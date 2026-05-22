@@ -1,11 +1,12 @@
+import Script from "next/script"
 import { BRANDS } from "@/lib/brands"
 
 /**
  * Blocking inline script that applies the persisted brand from localStorage
  * before the first paint. Mirrors the pattern `next-themes` uses for `data-theme`.
  *
- * Runs synchronously in <head> — no React hydration involved.
- * This is a server component (no "use client") — it only renders static HTML.
+ * Uses next/script with strategy="beforeInteractive" to run synchronously in <head>
+ * before the first paint. This is a server component (no "use client").
  */
 const BrandScript = () => {
 	const brandList = JSON.stringify(BRANDS)
@@ -24,9 +25,10 @@ const BrandScript = () => {
 `
 
 	return (
-		<script
+		<Script
+			id="brand-script"
+			strategy="beforeInteractive"
 			dangerouslySetInnerHTML={{ __html: script }}
-			data-brand-script=""
 		/>
 	)
 }

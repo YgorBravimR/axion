@@ -14,6 +14,9 @@ import {
 	deriveMonthGoal,
 	type PlanGoalSource,
 } from "@/lib/fractal-plan/derive-goal"
+import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
+import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
+import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
 import {
 	monthLabelPt,
 	monthAbbrPt,
@@ -124,6 +127,8 @@ const QuarterReport = async ({
 			accountType: tradingAccounts.accountType,
 			profitSharePercentage: tradingAccounts.profitSharePercentage,
 			showTaxEstimates: tradingAccounts.showTaxEstimates,
+			accountStartYear: tradingAccounts.accountStartYear,
+			accountStartMonth: tradingAccounts.accountStartMonth,
 		})
 		.from(tradingAccounts)
 		.where(eq(tradingAccounts.id, accountId))
@@ -147,10 +152,29 @@ const QuarterReport = async ({
 			: traderCents
 	}
 
-	const monthRowsRaw = await db.query.monthlyPlan.findMany({
-		where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id)),
-	})
+	const [monthRowsRaw, assertivityData] = await Promise.all([
+		db.query.monthlyPlan.findMany({
+			where: and(eq(monthlyPlan.quarterlyPlanId, quarterRow.id)),
+		}),
+		getHistoricalAssertivity(accountId),
+	])
 	const monthRowByMonth = new Map(monthRowsRaw.map((m) => [m.month, m]))
+
+	const configuredAssertivityPct = yearRow.defaultAssertivityPercent
+		? Math.round(parseFloat(yearRow.defaultAssertivityPercent))
+		: 50
+	const assertivityPct = assertivityData.hasEnoughData
+		? assertivityData.assertivityPct
+		: configuredAssertivityPct
+
+	const defaultDailyWinR = yearRow.defaultDailyWinR
+		? parseFloat(yearRow.defaultDailyWinR)
+		: 0
+	const ladderRules = yearRow.ladderRules as unknown as LadderRuleR[]
+	const planStartMonth =
+		account?.accountStartYear === year && account?.accountStartMonth != null
+			? account.accountStartMonth
+			: 1
 
 	const perMonth = await Promise.all(
 		months.map(async (m) => {
@@ -184,13 +208,26 @@ const QuarterReport = async ({
 			const totalTradingDays =
 				projectionData?.totalTradingDays ?? DEFAULT_TRADING_DAYS_PER_MONTH
 
+			const compoundOneRCents =
+				defaultDailyWinR > 0
+					? computeProjectedOneRCents(m, {
+							initialCapitalCents: yearRow.initialCapitalCents,
+							ladderRules,
+							dailyTargetR: defaultDailyWinR,
+							assertivityPct,
+							planStartMonth,
+							irTaxRate,
+						})
+					: (row?.snapshotOneRCents ?? 0)
+
 			const goal = row
 				? deriveMonthGoal({
 						manualGoalCents: row.monthlyGoalCents,
 						weekTargetRs: weeks.map((w) => w.targetR),
-						snapshotOneRCents: row.snapshotOneRCents,
+						snapshotOneRCents: compoundOneRCents,
 						cascadeDailyTargetR: resolved?.dailyTargetR.value ?? null,
 						totalTradingDays,
+						assertivityPct,
 					})
 				: { planGoalCents: null, planGoalSource: "none" as PlanGoalSource }
 

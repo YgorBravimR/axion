@@ -5,7 +5,7 @@ import type { FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { Filter, ImageIcon } from "lucide-react"
+import { Filter, ImageIcon, GitFork, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/toast"
 import { updateStrategy } from "@/app/actions/strategies"
 import type { StrategyWithStats } from "@/app/actions/strategies.types"
 import { ConditionPicker } from "@/components/playbook/condition-picker"
+import { ForkVersionDialog } from "@/components/playbook/fork-version-dialog"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { ImageUpload } from "@/components/shared/image-upload"
 import { uploadFiles } from "@/lib/upload-files"
@@ -34,12 +35,58 @@ const EditStrategyForm = ({
 	const router = useRouter()
 	const t = useTranslations("playbook.form")
 	const tScenarios = useTranslations("playbook.scenarios")
+	const tFork = useTranslations("playbook.versioning.fork")
 	const { isPremium } = useFeatureAccess()
 	const tCommon = useTranslations("common")
 	const { showToast } = useToast()
 	const [isPending, startTransition] = useTransition()
 	const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({})
 	const codeInputRef = useRef<HTMLInputElement>(null)
+	const formRef = useRef<HTMLFormElement>(null)
+	const [forkBlocked, setForkBlocked] = useState(false)
+	const [forkDialogOpen, setForkDialogOpen] = useState(false)
+
+	// Read the user's in-flight form values to feed the fork dialog. Called only
+	// when the user opens the fork dialog — never on every keystroke — so the
+	// uncontrolled inputs (description, criteria, notes, riskRules, finalR,
+	// maxRiskPercent) are picked up fresh at confirm time. `name` is controlled
+	// state already; conditions are too.
+	const buildForkSnapshot = () => {
+		const formEl = formRef.current
+		const fd = formEl ? new FormData(formEl) : null
+		const readString = (key: string): string | undefined => {
+			if (!fd) {
+				return undefined
+			}
+			const v = fd.get(key)
+			if (typeof v !== "string" || v.length === 0) {
+				return undefined
+			}
+			return v
+		}
+		const readNumber = (key: string): number | undefined => {
+			const s = readString(key)
+			if (s === undefined) {
+				return undefined
+			}
+			const n = Number(s)
+			return Number.isFinite(n) ? n : undefined
+		}
+		return {
+			name: name.trim() || strategy.name,
+			description: readString("description"),
+			entryCriteria: readString("entryCriteria"),
+			exitCriteria: readString("exitCriteria"),
+			riskRules: readString("riskRules"),
+			finalR: readNumber("finalR"),
+			maxRiskPercent: readNumber("maxRiskPercent"),
+			screenshotUrl:
+				persistedScreenshot?.url ?? strategy.screenshotUrl ?? undefined,
+			screenshotS3Key:
+				persistedScreenshot?.s3Key ?? strategy.screenshotS3Key ?? undefined,
+			notes: readString("notes"),
+		}
+	}
 
 	const [conditions, setConditions] = useState<StrategyConditionInput[]>(
 		initialConditions.map((sc) => ({
@@ -120,6 +167,19 @@ const EditStrategyForm = ({
 			if (result.status === "success") {
 				router.push("/playbook")
 			} else {
+				const isStrategyLive = result.errors?.some(
+					(err) => err.code === "STRATEGY_LIVE"
+				)
+				if (isStrategyLive) {
+					setForkBlocked(true)
+					// Scroll the form to the top so the banner is visible — important
+					// because the user just clicked Save at the bottom of a long form.
+					if (typeof window !== "undefined") {
+						window.scrollTo({ top: 0, behavior: "smooth" })
+					}
+					return
+				}
+
 				showToast("error", result.message)
 
 				const isDuplicate = result.errors?.some(
@@ -138,9 +198,61 @@ const EditStrategyForm = ({
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
 				<div className="mx-auto max-w-3xl">
 					<form
+						ref={formRef}
 						onSubmit={handleSubmit}
 						className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
 					>
+						{forkBlocked ? (
+							<div
+								id="strategy-fork-banner"
+								role="alert"
+								className="border-warning/40 bg-warning/10 p-m-400 gap-s-300 flex flex-col rounded-lg border sm:flex-row sm:items-center sm:justify-between"
+							>
+								<div className="gap-s-300 flex items-start">
+									<AlertTriangle
+										className="text-warning mt-s-100 h-4 w-4 shrink-0"
+										aria-hidden="true"
+									/>
+									<div className="gap-s-100 flex flex-col">
+										<p className="text-small text-txt-100 font-semibold">
+											{tFork("bannerTitle")}
+										</p>
+										<p className="text-small text-txt-200">
+											{tFork("bannerDescription", {
+												version: strategy.currentVersion,
+												nextVersion: strategy.nextVersionNumber,
+												count: strategy.tradeCount,
+											})}
+										</p>
+									</div>
+								</div>
+								<div className="gap-s-200 flex shrink-0 items-center">
+									<Button
+										id="strategy-fork-banner-dismiss"
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => setForkBlocked(false)}
+										disabled={isPending}
+									>
+										{tFork("bannerDismiss")}
+									</Button>
+									<Button
+										id="strategy-fork-banner-cta"
+										type="button"
+										size="sm"
+										onClick={() => setForkDialogOpen(true)}
+										disabled={isPending}
+										className="gap-s-200 inline-flex items-center"
+									>
+										<GitFork className="h-3.5 w-3.5" aria-hidden="true" />
+										{tFork("bannerCta", {
+											nextVersion: strategy.nextVersionNumber,
+										})}
+									</Button>
+								</div>
+							</div>
+						) : null}
 						{/* Basic Info Section */}
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
@@ -359,7 +471,7 @@ const EditStrategyForm = ({
 						{isPremium && (
 							<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 								<div className="gap-s-200 flex items-center">
-									<Filter className="text-txt-200 h-5 w-5" />
+									<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
 									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 										{t("tradingConditions")}
 									</h2>
@@ -374,7 +486,10 @@ const EditStrategyForm = ({
 						{/* Scenarios Section */}
 						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 							<div className="gap-s-200 flex items-center">
-								<ImageIcon className="text-txt-200 h-5 w-5" />
+								<ImageIcon
+									className="text-txt-200 h-5 w-5"
+									aria-hidden="true"
+								/>
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
 									{tScenarios("title")}
 								</h2>
@@ -408,6 +523,22 @@ const EditStrategyForm = ({
 					</form>
 				</div>
 			</div>
+			{forkDialogOpen ? (
+				<ForkVersionDialog
+					strategyId={strategy.id}
+					sourceVersion={strategy.currentVersion}
+					nextVersion={strategy.nextVersionNumber}
+					source={buildForkSnapshot()}
+					conditions={conditions}
+					open={forkDialogOpen}
+					onOpenChange={setForkDialogOpen}
+					onSuccess={() => {
+						setForkBlocked(false)
+						setForkDialogOpen(false)
+						router.refresh()
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }

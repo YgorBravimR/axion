@@ -74,4 +74,15 @@ cd "$WORKTREE_DIR" || { echo "Failed to cd to worktree" >&2; exit 1; }
 echo "Running pnpm install..." >&2
 pnpm install --frozen-lockfile >&2 2>&1 || echo "Warning: pnpm install failed" >&2
 
+# Provision an isolated Postgres db for this worktree, rewrite DATABASE_URL,
+# then migrate + seed. Non-fatal so a missing/unreachable local Postgres
+# doesn't block the worktree from being usable for non-db work.
+if [ -x "$WORKTREE_DIR/scripts/worktree-db.sh" ]; then
+  echo "Provisioning worktree database..." >&2
+  bash "$WORKTREE_DIR/scripts/worktree-db.sh" setup "$WORKTREE_DIR" >&2 2>&1 \
+    || echo "Warning: worktree db setup failed (continuing)" >&2
+else
+  echo "Skipping db provisioning (scripts/worktree-db.sh not found)" >&2
+fi
+
 echo "Worktree setup complete." >&2

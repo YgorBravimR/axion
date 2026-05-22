@@ -1,12 +1,12 @@
-import { drizzle } from "drizzle-orm/neon-http"
 import { sql } from "drizzle-orm"
+import { createDb } from "../../utils/create-db"
 
 /**
  * Promote the just-registered Bravo user to admin so the journey suite can
  * exercise admin-gated surfaces (Assets, Timeframes, Risk Profiles, Fee Rates).
  *
- * Bypasses Next.js modules and writes via raw SQL — same neon-http pattern as
- * e2e/utils/seed-trading-data.ts. We update BOTH the `is_admin` boolean and
+ * Bypasses Next.js modules and writes via raw SQL — same driver-agnostic
+ * pattern as e2e/utils/create-db.ts. We update BOTH the `is_admin` boolean and
  * the `role` enum because admin-gated UI checks vary across the codebase.
  *
  * Called at the end of Stage 0 (after registration, before saving storageState).
@@ -20,7 +20,7 @@ export const promoteBravoToAdmin = async (email: string): Promise<void> => {
 			"[promoteBravoToAdmin] DATABASE_URL is not set. Ensure .env.local loads before Playwright runs."
 		)
 	}
-	const db = drizzle(dbUrl)
+	const db = createDb(dbUrl)
 
 	const result = await db.execute(sql`
     UPDATE users
@@ -30,7 +30,7 @@ export const promoteBravoToAdmin = async (email: string): Promise<void> => {
     RETURNING id
   `)
 
-	if (result.rows.length === 0) {
+	if (!result.rows.length) {
 		throw new Error(
 			`[promoteBravoToAdmin] No user found with email ${email}. Registration may have failed.`
 		)

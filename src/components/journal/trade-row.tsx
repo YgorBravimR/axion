@@ -1,6 +1,7 @@
 "use client"
 
-import { memo, useCallback, type KeyboardEvent, type MouseEvent } from "react"
+import { memo, useCallback, type MouseEvent } from "react"
+import Link from "next/link"
 import {
 	ChevronRight,
 	Trash2,
@@ -18,35 +19,28 @@ import { cn } from "@/lib/utils"
 
 interface TradeRowProps {
 	trade: DayTradeCompact
-	onTradeClick?: (_tradeId: string) => void
 	deletingTradeId: string | null
 	onDeleteRequest: (_tradeId: string) => void
 	onDeleteConfirm: (_tradeId: string) => void
 	onDeleteCancel: () => void
 	isDeleting: boolean
+	tabIndex?: number
 }
 
 /**
  * Displays a single trade row with asset, direction, time, P&L, R multiple,
- * and an inline delete action with two-step confirmation.
- *
- * @param trade - The compact trade data to display
- * @param onTradeClick - Optional callback when the trade row is clicked
- * @param deletingTradeId - ID of the trade currently being confirmed/deleted, or null
- * @param onDeleteRequest - Callback to initiate delete confirmation for a trade
- * @param onDeleteConfirm - Callback to confirm deletion
- * @param onDeleteCancel - Callback to cancel deletion
- * @param isDeleting - Whether a delete server action is in progress
+ * and an inline delete action with two-step confirmation. Wraps in a Link so
+ * cmd/ctrl-click opens the trade detail in a new tab.
  */
 export const TradeRow = memo(
 	({
 		trade,
-		onTradeClick,
 		deletingTradeId,
 		onDeleteRequest,
 		onDeleteConfirm,
 		onDeleteCancel,
 		isDeleting,
+		tabIndex = 0,
 	}: TradeRowProps) => {
 		const t = useTranslations("trade")
 		const tCommon = useTranslations("common")
@@ -55,24 +49,13 @@ export const TradeRow = memo(
 		const isAnyDeleting = deletingTradeId !== null
 		const isDisabled = isAnyDeleting && !isThisDeleting
 
-		const handleClick = useCallback(() => {
-			if (isAnyDeleting) {
-				return
-			}
-			onTradeClick?.(trade.id)
-		}, [onTradeClick, trade.id, isAnyDeleting])
-
-		const handleKeyDown = useCallback(
-			(e: KeyboardEvent<HTMLDivElement>) => {
+		const handleLinkClick = useCallback(
+			(e: MouseEvent<HTMLAnchorElement>) => {
 				if (isAnyDeleting) {
-					return
-				}
-				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault()
-					onTradeClick?.(trade.id)
 				}
 			},
-			[onTradeClick, trade.id, isAnyDeleting]
+			[isAnyDeleting]
 		)
 
 		const handleDeleteClick = useCallback(
@@ -102,11 +85,7 @@ export const TradeRow = memo(
 		const formatBrl = useCallback((v: number) => formatBrlWithSign(v), [])
 
 		const baseRowClass = cn(
-			"group/row gap-s-200 px-s-300 py-s-200 flex min-w-0 items-center border-l-2 transition-colors",
-			trade.outcome === "win" && "border-l-trade-buy",
-			trade.outcome === "loss" && "border-l-trade-sell",
-			trade.outcome === "breakeven" && "border-l-txt-300",
-			!trade.outcome && "border-l-transparent",
+			"group/row gap-s-200 px-s-300 py-s-200 flex min-w-0 items-center transition-colors",
 			isThisDeleting && "bg-fb-error/8",
 			isDisabled && "pointer-events-none opacity-40"
 		)
@@ -247,37 +226,43 @@ export const TradeRow = memo(
 								variant="ghost"
 								size="icon"
 								onClick={handleDeleteClick}
-								className="text-txt-300 hover:text-fb-error hover:bg-fb-error/10 shrink-0 opacity-0 transition-all group-hover/row:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+								className="text-txt-300 hover:text-fb-error hover:bg-fb-error/10 shrink-0 opacity-0 transition-all group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
 								aria-label={t("deleteTrade")}
 								tabIndex={0}
 							>
 								<Trash2 className="h-4 w-4" />
 							</Button>
 						)}
-						{onTradeClick && !isAnyDeleting && (
-							<ChevronRight className="text-txt-300 h-4 w-4 shrink-0" />
+						{!isAnyDeleting && (
+							<ChevronRight
+								className="text-txt-300 h-4 w-4 shrink-0"
+								aria-hidden="true"
+							/>
 						)}
 					</>
 				)}
 			</>
 		)
 
-		if (!isAnyDeleting && onTradeClick) {
+		if (!isAnyDeleting) {
 			return (
-				<div
-					role="button"
-					tabIndex={0}
-					className={cn(baseRowClass, "hover:bg-bg-100 cursor-pointer")}
-					onClick={handleClick}
-					onKeyDown={handleKeyDown}
+				<Link
+					href={`/journal/${trade.id}`}
+					onClick={handleLinkClick}
+					className={cn(
+						baseRowClass,
+						"hover:bg-bg-100 focus-visible:ring-acc-100 cursor-pointer focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none"
+					)}
 					aria-label={t("tradeRowAriaLabel", {
 						asset: trade.asset,
 						direction: trade.direction,
 						time: trade.time,
 					})}
+					role="option"
+					tabIndex={tabIndex}
 				>
 					{rowContent}
-				</div>
+				</Link>
 			)
 		}
 

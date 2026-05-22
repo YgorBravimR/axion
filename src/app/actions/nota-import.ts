@@ -10,11 +10,6 @@ import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
 import { toCents, toNumericString } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
-import {
-	getUserDek,
-	encryptTradeFields,
-	encryptExecutionFields,
-} from "@/lib/user-crypto"
 import { computeFileHash } from "@/lib/deduplication"
 import { parseSinacorNota } from "@/lib/nota-parser/sinacor-parser"
 import { matchNotaFillsToTrades } from "@/lib/nota-parser/matching-engine"
@@ -208,7 +203,6 @@ export const enrichTradesFromNota = async (
 			}
 		}
 
-		const dek = await getUserDek(userId)
 		let tradesEnriched = 0
 		let executionsInserted = 0
 		const errors: string[] = []
@@ -263,22 +257,6 @@ export const enrichTradesFromNota = async (
 					tradeUpdateData.exitPrice = toNumericString(avgExitPrice)
 				}
 
-				// Encrypt updated fields
-				if (dek) {
-					Object.assign(
-						tradeUpdateData,
-						encryptTradeFields(
-							{
-								entryPrice: toNumericString(avgEntryPrice),
-								exitPrice:
-									totalExitQty > 0 ? toNumericString(avgExitPrice) : undefined,
-								positionSize: toNumericString(totalEntryQty),
-							},
-							dek
-						)
-					)
-				}
-
 				// eslint-disable-next-line no-await-in-loop -- per-match trade update; sequential to preserve per-trade error isolation in try/catch
 				await db
 					.update(trades)
@@ -307,21 +285,6 @@ export const enrichTradesFromNota = async (
 						),
 					}
 
-					if (dek) {
-						Object.assign(
-							execInsert,
-							encryptExecutionFields(
-								{
-									price: toNumericString(fill.price),
-									quantity: toNumericString(fill.quantity),
-									fees: toCents(fill.operationalFee),
-									executionValue: toCents(fill.price * fill.quantity),
-								},
-								dek
-							)
-						)
-					}
-
 					executionValues.push(
 						execInsert as typeof tradeExecutions.$inferInsert
 					)
@@ -339,21 +302,6 @@ export const enrichTradesFromNota = async (
 						executionValue: toNumericString(
 							toCents(fill.price * fill.quantity)
 						),
-					}
-
-					if (dek) {
-						Object.assign(
-							execInsert,
-							encryptExecutionFields(
-								{
-									price: toNumericString(fill.price),
-									quantity: toNumericString(fill.quantity),
-									fees: toCents(fill.operationalFee),
-									executionValue: toCents(fill.price * fill.quantity),
-								},
-								dek
-							)
-						)
 					}
 
 					executionValues.push(

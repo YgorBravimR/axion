@@ -37,6 +37,7 @@ export interface TradeFilters {
 	directions?: TradeDirection[]
 	outcomes?: TradeOutcome[]
 	strategyIds?: string[]
+	strategyVersionIds?: string[]
 	tagIds?: string[]
 	timeframeIds?: string[]
 	groupBy?: "asset" | "timeframe" | "hour" | "dayOfWeek" | "strategy"
@@ -361,7 +362,7 @@ export type JournalPeriod = "day" | "week" | "month" | "all" | "custom"
 export interface AccountComparisonMetrics {
 	accountId: string
 	accountName: string
-	accountType: "personal" | "prop" | "replay"
+	accountType: "personal" | "prop"
 	stats: OverallStats
 	expectedValue: ExpectedValueData
 	equityCurve: EquityPoint[]
