@@ -96,11 +96,12 @@ test.describe(
 			// Equity-curve card has its own stable id (cumulative-pnl-chart.tsx:89).
 			// Its presence past Suspense proves the dashboard surfaced a deeper card,
 			// not just the time-section landmark Stage 5 already covered.
-			await expect(page.locator("#analytics-equity-curve").first()).toBeVisible(
-				{
-					timeout: 30_000,
-				}
-			)
+			const equityCurve = page.locator("#analytics-equity-curve").first()
+			// Scroll into view in case the card is below the fold
+			await equityCurve.scrollIntoViewIfNeeded()
+			await expect(equityCurve).toBeVisible({
+				timeout: 30_000,
+			})
 			await screenshotIfDemo(page, "08-02-analytics-equity-curve")
 
 			await annotate(page, "Journey complete — flywheel turning")

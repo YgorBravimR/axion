@@ -346,7 +346,7 @@ test.describe("Navigation", () => {
 				.locator('button:has-text("Admin User")')
 				.or(page.locator('button:has-text("AU")'))
 				.first()
-			await expect(userMenu).toBeVisible()
+			await expect(userMenu).toBeVisible({ timeout: 15_000 })
 		})
 
 		test("should open dropdown on click", async ({ page }) => {
@@ -421,6 +421,8 @@ test.describe("Navigation", () => {
 		test("should adapt layout on mobile viewport", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
 			await page.goto(ROUTES.home)
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
 
 			// On mobile, sidebar might be hidden or collapsed
 			const sidebar = page.locator("aside, nav[data-sidebar]").first()

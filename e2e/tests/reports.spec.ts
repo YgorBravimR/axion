@@ -62,7 +62,13 @@ test.describe("Reports", () => {
 
 		test("should display trade count", async ({ page }) => {
 			// The Trades metric is in the Monthly Report section
-			await expect(page.getByText(/trades/i).first()).toBeVisible()
+			// Use .filter({ visible: true }) to skip hidden elements
+			await expect(
+				page
+					.getByText(/trades/i)
+					.filter({ visible: true })
+					.first()
+			).toBeVisible()
 		})
 
 		test("should display win rate", async ({ page }) => {
@@ -139,7 +145,8 @@ test.describe("Reports", () => {
 
 	test.describe("Monthly Reports Page", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.monthly)
+			// Phase 4b: Monthly reports are now embedded in the /reports page
+			await page.goto(ROUTES.reports)
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
 		})

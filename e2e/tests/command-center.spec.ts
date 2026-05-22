@@ -10,8 +10,9 @@ test.describe("Command Center", () => {
 			await page.waitForTimeout(1000)
 		})
 
-		test("should display all 4 tab triggers", async ({ page }) => {
-			await expect(page.getByRole("tab", { name: /plan|plano/i })).toBeVisible()
+		test("should display all 3 tab triggers", async ({ page }) => {
+			// Plan tab was promoted to a standalone route (/en/plan/...) in Phase 4b.
+			// Command Center now has: Command Center, Monitor, Calculator.
 			await expect(
 				page.getByRole("tab", { name: /command center|centro de comando/i })
 			).toBeVisible()
@@ -26,22 +27,6 @@ test.describe("Command Center", () => {
 				name: /command center|centro de comando/i,
 			})
 			await expect(ccTab).toHaveAttribute("aria-selected", "true")
-		})
-
-		test("should switch to Plan tab and load content via Suspense", async ({
-			page,
-		}) => {
-			await clickTab(page, /plan|plano/i)
-			await waitForSuspenseLoad(page)
-
-			const planTab = page.getByRole("tab", { name: /plan|plano/i })
-			await expect(planTab).toHaveAttribute("aria-selected", "true")
-
-			// Plan content should be visible (month navigation or create plan button)
-			const planContent = page.locator(
-				"#plan-previous-month, #plan-next-month, #plan-create"
-			)
-			await expect(planContent.first()).toBeVisible({ timeout: 10000 })
 		})
 
 		test("should switch to Monitor tab and load content via Suspense", async ({

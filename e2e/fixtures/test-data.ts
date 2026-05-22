@@ -88,6 +88,14 @@ export const ROUTES = {
 	monitor: "/en/monitor",
 	painel: "/en/painel",
 	riskSimulation: "/en/risk-simulation",
+	// Phase 4b: Monthly plan moved to standalone route (year/quarter/month parameters)
+	monthlyPlan: (): string => {
+		const now = new Date()
+		const year = now.getFullYear()
+		const month = now.getMonth() + 1
+		const quarter = Math.ceil(month / 3)
+		return `/en/plan/${year}/${quarter}/${month}`
+	},
 }
 
 export const TEST_CHECKLIST = {

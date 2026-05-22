@@ -1,7 +1,6 @@
 import { test, expect } from "../fixtures/base"
 import { ROUTES, TEST_MONTHLY_PLAN } from "../fixtures/test-data"
 import {
-	clickTab,
 	waitForSuspenseLoad,
 	fillNumberInput,
 	clickIfEnabled,
@@ -10,7 +9,7 @@ import {
 test.describe("Monthly Plan", () => {
 	test.describe("Plan Tab Layout", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.commandCenter)
+			await page.goto(ROUTES.monthlyPlan())
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
 		})
@@ -18,7 +17,6 @@ test.describe("Monthly Plan", () => {
 		test("should click Plan tab and load content after Suspense", async ({
 			page,
 		}) => {
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 
 			const planTab = page.getByRole("tab", { name: /plan|plano/i })
@@ -34,7 +32,6 @@ test.describe("Monthly Plan", () => {
 		test("should display month navigation arrows and month/year label", async ({
 			page,
 		}) => {
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 
 			await expect(page.locator("#plan-previous-month")).toBeVisible()
@@ -48,7 +45,6 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should navigate to previous month", async ({ page }) => {
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 
 			// Capture current month text
@@ -67,7 +63,6 @@ test.describe("Monthly Plan", () => {
 		})
 
 		test("should navigate to next month", async ({ page }) => {
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 
 			// Go to previous month first so we can go forward
@@ -91,10 +86,9 @@ test.describe("Monthly Plan", () => {
 
 	test.describe("Create New Plan - Custom Mode", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.commandCenter)
+			await page.goto(ROUTES.monthlyPlan())
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
 
@@ -289,10 +283,9 @@ test.describe("Monthly Plan", () => {
 
 	test.describe("Create New Plan - Profile Mode", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.commandCenter)
+			await page.goto(ROUTES.monthlyPlan())
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
 
@@ -435,10 +428,9 @@ test.describe("Monthly Plan", () => {
 
 	test.describe("Plan Summary View", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.commandCenter)
+			await page.goto(ROUTES.monthlyPlan())
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
 
@@ -489,10 +481,9 @@ test.describe("Monthly Plan", () => {
 
 	test.describe("Advanced Settings", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.commandCenter)
+			await page.goto(ROUTES.monthlyPlan())
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
 
@@ -583,10 +574,9 @@ test.describe("Monthly Plan", () => {
 
 	test.describe("Copy from Previous Month", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.goto(ROUTES.commandCenter)
+			await page.goto(ROUTES.monthlyPlan())
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
-			await clickTab(page, /plan|plano/i)
 			await waitForSuspenseLoad(page)
 		})
 

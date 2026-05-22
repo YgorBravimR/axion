@@ -20,6 +20,8 @@ test.describe("Annual Reporting", () => {
 		)
 		await expect(chartContainer).toBeVisible()
 		const bars = chartContainer.locator("rect")
+		// Ensure the bar is scrolled into view if needed before checking visibility
+		await bars.first().scrollIntoViewIfNeeded()
 		await expect(bars.first()).toBeVisible()
 	})
 

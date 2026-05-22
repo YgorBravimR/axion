@@ -106,7 +106,7 @@ test.describe("Settings", () => {
 			await page.goto(ROUTES.settings)
 			await page.waitForLoadState("networkidle")
 			await page.getByRole("tab", { name: "Account" }).click()
-			await page.waitForTimeout(500) // Wait for content to load
+			await page.waitForSelector("#settings-account-info", { timeout: 15_000 })
 		})
 
 		test("should display current account info", async ({ page }) => {

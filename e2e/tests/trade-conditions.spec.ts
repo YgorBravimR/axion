@@ -20,8 +20,8 @@ test.describe("Trade Conditions", () => {
 	test("should capture and display conditions when creating a simple trade with conditions", async ({
 		page,
 	}) => {
-		// Navigate to journal new trade page
-		await page.goto("/journal/new")
+		// Navigate to journal new trade page (use locale prefix)
+		await page.goto("/en/journal/new")
 		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
 
@@ -130,8 +130,8 @@ test.describe("Trade Conditions", () => {
 	test("should persist condition changes when editing an existing trade", async ({
 		page,
 	}) => {
-		// Navigate to journal list
-		await page.goto("/journal")
+		// Navigate to journal list (use locale prefix)
+		await page.goto("/en/journal")
 		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
 
@@ -204,8 +204,8 @@ test.describe("Trade Conditions", () => {
 	test("should not show conditions section when trade has no conditions", async ({
 		page,
 	}) => {
-		// Navigate to journal list
-		await page.goto("/journal")
+		// Navigate to journal list (use locale prefix)
+		await page.goto("/en/journal")
 		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
 
@@ -251,8 +251,8 @@ test.describe("Trade Conditions", () => {
 		// This test creates a trade without a strategy (if the form allows it)
 		// and verifies the conditions section doesn't render.
 
-		// Navigate to new trade page
-		await page.goto("/journal/new")
+		// Navigate to new trade page (use locale prefix)
+		await page.goto("/en/journal/new")
 		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
 
