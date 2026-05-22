@@ -340,3 +340,10 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Replace with `await page.waitForLoadState("load"); await page.waitForTimeout(1000)`. BUT: (a) settings page is safe with `networkidle` because it has no continuous background fetches; (b) the `waitForSuspenseLoad()` helper in `e2e/utils/helpers.ts` also used `networkidle` internally and needed the same fix; (c) journey-00's `saveStageState` call MUST use `networkidle` to ensure the JWT Set-Cookie from account selection has arrived before the state is persisted — using `load+1s` there saves sessions missing `accountId`, causing all downstream journey stages to hit the proxy's login redirect.
 - **Source**: Bulk E2E session 2026-05-22 — 59 mobile tests fixed then 18 regressions found. Final pattern: `networkidle` is correct for login/session boundaries and static pages; `load` for live-data pages on mobile.
 - **Date logged**: 2026-05-22.
+
+### Phase 4b Fractal Cascade Required for resolveDay()
+
+- **What**: After Phase 4b schema migration, the trading system's `resolveDay()` and `resolveBehavior()` functions require a **full hierarchy** of `yearly_plans` → `quarterly_plan` → `monthly_plan` rows. E2E seed functions that try to create only a `monthly_plans` row (or create the new `monthly_plan` without parent rows) will fail silently in the DB but cause hidden query failures downstream. Tests pass initial mount but fail when the trading logic tries to `resolveDay()`, manifesting as "element not found" or "timeout waiting for visible" errors after user interactions.
+- **What to do**: When seeding for E2E tests, always call the full cascade builder: create/link `yearly_plans` (with ladder_rules, default_daily_loss_r, etc.), then `quarterly_plan`, then `monthly_plan` with override columns. See `ensureBravoFractalCascade()` in `e2e/utils/seed-trading-data.ts` as the canonical pattern.
+- **Risk**: The error manifests as a Playwright timeout or missing DOM element, not as a DB error. If you see "expected element not found" in a test that used to pass, check if seed data is creating the full cascade.
+- **Date logged**: 2026-05-22.
