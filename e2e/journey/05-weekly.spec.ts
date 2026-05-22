@@ -68,9 +68,9 @@ test.describe(
 			await annotate(page, "Analytics — scan one pattern across the week")
 			await page.goto("/en/analytics", { waitUntil: "domcontentloaded" })
 
-			// Time-based analysis section has a stable id; its presence proves the
-			// dashboard mounted past its Suspense fallback.
-			await expect(page.locator("#analytics-time-section")).toBeVisible({
+			// Equity curve section is the first rendered band in AnalyticsContent;
+			// its presence proves the component mounted past its Suspense fallback.
+			await expect(page.locator("#analytics-anchor-equity")).toBeVisible({
 				timeout: 30_000,
 			})
 			await screenshotIfDemo(page, "05-02-analytics")
