@@ -1,13 +1,6 @@
 "use client"
 
-import {
-	useState,
-	useEffect,
-	useTransition,
-	useRef,
-	useCallback,
-	useMemo,
-} from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	FilterPanel,
@@ -133,7 +126,7 @@ const AnalyticsContent = ({
 	accounts,
 }: AnalyticsContentProps) => {
 	const t = useTranslations("analytics")
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const { isPremium } = useFeatureAccess()
 	const showAccountComparison = isPremium && accounts.length >= 2
 
@@ -231,7 +224,9 @@ const AnalyticsContent = ({
 			return
 		}
 
-		startTransition(async () => {
+		setIsPending(true)
+		const capturedKey = filterKey
+		void (async () => {
 			const tradeFilters = toTradeFilters(filters, groupBy)
 
 			const [dashResult, tagResult] = await Promise.all([
@@ -248,10 +243,11 @@ const AnalyticsContent = ({
 
 			if (dashData) {
 				// Store in module cache — persists across navigations
-				setAnalyticsCacheEntry(filterKey, dashData, tagData)
+				setAnalyticsCacheEntry(capturedKey, dashData, tagData)
 				applyDashboard(dashData, tagData)
 			}
-		})
+			setIsPending(false)
+		})()
 		// filterKey is the stable serialized representation of all filter state.
 		// When it changes, filters/groupBy have changed — re-fetch is correct.
 		// applyDashboard is stable (useCallback with no deps).

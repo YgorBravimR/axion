@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState, useEffect, useTransition, useRef } from "react"
+import { memo, useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import {
 	Brain,
@@ -136,7 +136,7 @@ const CoachingInsightsCardBase = ({
 	const [context, setContext] = useState<CoachingContext | null>(
 		initialContext ?? null
 	)
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const hasLoadedRef = useRef(!!initialContext)
 
 	// Load coaching context on mount if not provided
@@ -147,11 +147,12 @@ const CoachingInsightsCardBase = ({
 		hasLoadedRef.current = true
 
 		const COACHING_ANALYSIS_DAYS = 90
-		startTransition(async () => {
-			const result = await getCoachingContext(COACHING_ANALYSIS_DAYS)
+		setIsPending(true)
+		void getCoachingContext(COACHING_ANALYSIS_DAYS).then((result) => {
 			if (result.status === "success" && result.data) {
 				setContext(result.data)
 			}
+			setIsPending(false)
 		})
 	}, [])
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Minus, Plus, RefreshCw } from "lucide-react"
 import {
@@ -134,7 +134,7 @@ const StrategyVersionDiffDialog = ({
 }: StrategyVersionDiffDialogProps) => {
 	const t = useTranslations("playbook.versioning")
 	const locale = useLocale()
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const [diffData, setDiffData] = useState<StrategyVersionDiffData | null>(null)
 	const [error, setError] = useState<string | null>(null)
 
@@ -168,19 +168,18 @@ const StrategyVersionDiffDialog = ({
 			return
 		}
 		setError(null)
-		startTransition(async () => {
-			const result = await getStrategyVersionDiff(
-				strategyId,
-				versionAId,
-				versionBId
-			)
-			if (result.status === "success") {
-				setDiffData(result.data ?? null)
-			} else {
-				setError(result.message)
-				setDiffData(null)
+		setIsPending(true)
+		void getStrategyVersionDiff(strategyId, versionAId, versionBId).then(
+			(result) => {
+				if (result.status === "success") {
+					setDiffData(result.data ?? null)
+				} else {
+					setError(result.message)
+					setDiffData(null)
+				}
+				setIsPending(false)
 			}
-		})
+		)
 	}, [strategyId, versionAId, versionBId, open])
 
 	const grouped = useMemo(

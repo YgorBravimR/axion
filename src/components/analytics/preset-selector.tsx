@@ -48,8 +48,7 @@ const PresetSelector = ({
 			return
 		}
 
-		startTransition(async () => {
-			const result = await listFilterPresets()
+		void listFilterPresets().then((result) => {
 			if (result.status === "success" && result.data) {
 				setPresets(result.data)
 			}

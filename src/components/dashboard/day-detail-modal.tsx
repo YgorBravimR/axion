@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
 import {
@@ -37,36 +37,33 @@ export const DayDetailModal = ({
 	const t = useTranslations("dashboard")
 	const locale = useLocale()
 	const router = useRouter()
-	const [isPending, startTransition] = useTransition()
+	const [isPending, setIsPending] = useState(false)
 	const [summary, setSummary] = useState<DaySummary | null>(null)
 	const [trades, setTrades] = useState<DayTrade[]>([])
 	const [equityCurve, setEquityCurve] = useState<DayEquityPoint[]>([])
 
 	useEffect(() => {
-		if (!open) {
+		if (!open || !date) {
 			return
 		}
-		if (date) {
-			startTransition(async () => {
-				const dateObj = new Date(date)
-
-				const [summaryResult, tradesResult, equityResult] = await Promise.all([
-					getDaySummary(dateObj),
-					getDayTrades(dateObj),
-					getDayEquityCurve(dateObj),
-				])
-
-				if (summaryResult.status === "success" && summaryResult.data) {
-					setSummary(summaryResult.data)
-				}
-				if (tradesResult.status === "success" && tradesResult.data) {
-					setTrades(tradesResult.data)
-				}
-				if (equityResult.status === "success" && equityResult.data) {
-					setEquityCurve(equityResult.data)
-				}
-			})
-		}
+		const dateObj = new Date(date)
+		setIsPending(true)
+		void Promise.all([
+			getDaySummary(dateObj),
+			getDayTrades(dateObj),
+			getDayEquityCurve(dateObj),
+		]).then(([summaryResult, tradesResult, equityResult]) => {
+			if (summaryResult.status === "success" && summaryResult.data) {
+				setSummary(summaryResult.data)
+			}
+			if (tradesResult.status === "success" && tradesResult.data) {
+				setTrades(tradesResult.data)
+			}
+			if (equityResult.status === "success" && equityResult.data) {
+				setEquityCurve(equityResult.data)
+			}
+			setIsPending(false)
+		})
 	}, [date, open])
 
 	const handleTradeClick = useCallback(
