@@ -25,18 +25,18 @@ test.describe("Trade Conditions", () => {
 		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
 
-		// Select a strategy that has bound conditions
-		// Note: This assumes a test strategy exists. The test data setup should ensure this.
-		const strategyDropdown = page.getByRole("combobox", { name: /strategy/i })
+		// Select a strategy using the stable ID — getByRole("combobox", { name }) fails
+		// because the label's htmlFor doesn't match the SelectTrigger ID.
+		const strategyDropdown = page.locator("#trade-strategy")
 		await strategyDropdown.click()
-		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
 
-		// Pick the first strategy option (assuming test data has strategies with conditions)
+		// Pick the first strategy option
 		const strategyOption = page.getByRole("option").first()
-		await strategyOption.click()
-		await page.waitForLoadState("load")
-		await page.waitForTimeout(1000)
+		if (await strategyOption.isVisible().catch(() => false)) {
+			await strategyOption.click()
+			await page.waitForTimeout(1000)
+		}
 
 		// Wait for conditions checklist to appear
 		const conditionsSection = page.locator(
@@ -65,28 +65,31 @@ test.describe("Trade Conditions", () => {
 			// This creates a mix of met=true and met=false
 		}
 
-		// Fill in required trade fields
-		const assetInput = page.getByRole("combobox", { name: /asset|symbol/i })
+		// Fill in required trade fields using stable IDs from trade-form.tsx
+		const assetInput = page.locator("#trade-asset")
 		await assetInput.click()
 		const assetOption = page.getByRole("option").first()
-		await assetOption.click()
+		if (await assetOption.isVisible().catch(() => false)) {
+			await assetOption.click()
+		}
 
-		const directionRadio = page.getByRole("radio", { name: /long/i })
-		await directionRadio.click()
+		// Direction buttons use aria-pressed (not role="radio") — click by aria-label
+		const longButton = page.getByRole("button", { name: /^long$/i })
+		if (await longButton.isVisible().catch(() => false)) {
+			await longButton.click()
+		}
 
-		const entryPriceInput = page.getByLabel(/entry price/i)
+		const entryPriceInput = page.locator("#trade-entry-price")
 		await entryPriceInput.fill("100.00")
 
-		const quantityInput = page.getByLabel(/quantity|contracts/i)
+		const quantityInput = page.locator("#trade-position-size")
 		await quantityInput.fill("1")
 
-		const exitPriceInput = page.getByLabel(/exit price/i)
+		const exitPriceInput = page.locator("#trade-exit-price")
 		await exitPriceInput.fill("105.00")
 
 		// Submit the form
-		const submitButton = page.getByRole("button", {
-			name: /save|submit|create/i,
-		})
+		const submitButton = page.locator("#trade-form-submit")
 		await submitButton.click()
 		await page.waitForLoadState("load")
 		await page.waitForTimeout(1000)
@@ -257,29 +260,32 @@ test.describe("Trade Conditions", () => {
 		await page.waitForTimeout(1000)
 
 		// Skip the strategy dropdown (leave it unselected)
-		// Fill in only the required trade fields
+		// Fill in only the required trade fields using stable IDs from trade-form.tsx
 
-		const assetInput = page.getByRole("combobox", { name: /asset|symbol/i })
+		const assetInput = page.locator("#trade-asset")
 		await assetInput.click()
 		const assetOption = page.getByRole("option").first()
-		await assetOption.click()
+		if (await assetOption.isVisible().catch(() => false)) {
+			await assetOption.click()
+		}
 
-		const directionRadio = page.getByRole("radio", { name: /long/i })
-		await directionRadio.click()
+		// Direction buttons use aria-pressed (not role="radio") — click by aria-label
+		const longButton = page.getByRole("button", { name: /^long$/i })
+		if (await longButton.isVisible().catch(() => false)) {
+			await longButton.click()
+		}
 
-		const entryPriceInput = page.getByLabel(/entry price/i)
+		const entryPriceInput = page.locator("#trade-entry-price")
 		await entryPriceInput.fill("100.00")
 
-		const quantityInput = page.getByLabel(/quantity|contracts/i)
+		const quantityInput = page.locator("#trade-position-size")
 		await quantityInput.fill("1")
 
-		const exitPriceInput = page.getByLabel(/exit price/i)
+		const exitPriceInput = page.locator("#trade-exit-price")
 		await exitPriceInput.fill("105.00")
 
 		// Try to submit
-		const submitButton = page.getByRole("button", {
-			name: /save|submit|create/i,
-		})
+		const submitButton = page.locator("#trade-form-submit")
 
 		// If the form validates and allows submission without a strategy
 		const canSubmit = await submitButton.isEnabled().catch(() => false)

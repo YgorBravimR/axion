@@ -93,11 +93,13 @@ test.describe(
 			await annotate(page, "Analytics — drill into the equity curve")
 			await page.goto("/en/analytics", { waitUntil: "domcontentloaded" })
 
-			// Equity-curve card has its own stable id (cumulative-pnl-chart.tsx:89).
-			// Its presence past Suspense proves the dashboard surfaced a deeper card,
-			// not just the time-section landmark Stage 5 already covered.
-			const equityCurve = page.locator("#analytics-equity-curve").first()
-			// Scroll into view in case the card is below the fold
+			// cumulative-pnl-chart.tsx renders two possible IDs:
+			//   #analytics-equity-curve   — empty-state div (no data)
+			//   #chart-analytics-cumulative-pnl — ChartContainer (has data)
+			// At stage 8 the journey has trades, so the chart path renders.
+			const equityCurve = page
+				.locator("#analytics-equity-curve, #chart-analytics-cumulative-pnl")
+				.first()
 			await equityCurve.scrollIntoViewIfNeeded()
 			await expect(equityCurve).toBeVisible({
 				timeout: 30_000,
