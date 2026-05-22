@@ -9,8 +9,8 @@
  *
  * The Bravo Risk Management profile governs all scenarios:
  *   baseRisk      = R$500   (50_000 cents)
- *   dailyLoss     = R$1,000 (100_000 cents)
- *   dailyTarget   = R$1,500 (150_000 cents)
+ *   dailyLoss     = R$1,500 (150_000 cents, 3R)
+ *   dailyTarget   = R$1,500 (150_000 cents, 3R)
  *   lossRecovery  = [50%, 25%, 25%] of base, stopAfterSequence=true
  *   gainSequence  = [100%, 50%, 25%] of base, repeatLastStep=true, stopOnFirstLoss=true
  *
@@ -49,14 +49,14 @@ const COMMAND_CENTER_URL = "/en/command-center"
  * All amounts converted to BRL via `fromCents(x)` → Intl.NumberFormat pt-BR.
  */
 const BRAVO = {
-	baseRiskCents: 50_000, // R$500
+	baseRiskCents: 50_000, // R$500 (1R)
 	recoveryStep1Cents: 25_000, // 50% of R$500 = R$250
 	recoveryStep2Cents: 12_500, // 25% of R$500 = R$125
 	gainStep1Cents: 50_000, // 100% of base = R$500
 	gainStep2Cents: 25_000, // 50%  of base = R$250
 	gainStep3Cents: 12_500, // 25%  of base = R$125
-	dailyLossCents: 100_000, // R$1,000
-	dailyTargetCents: 150_000, // R$1,500
+	dailyLossCents: 150_000, // R$1,500 (3R — allows full 3-step recovery sequence)
+	dailyTargetCents: 150_000, // R$1,500 (3R)
 } as const
 
 /**
@@ -77,7 +77,7 @@ const DISPLAY = {
 	gainStep1: fmtCurrency(BRAVO.gainStep1Cents), // "$500.00" (same as base for T2)
 	gainStep2: fmtCurrency(BRAVO.gainStep2Cents), // "$250.00"
 	gainStep3: fmtCurrency(BRAVO.gainStep3Cents), // "$125.00"
-	dailyLoss: fmtCurrency(BRAVO.dailyLossCents), // "$1,000.00"
+	dailyLoss: fmtCurrency(BRAVO.dailyLossCents), // "$1,500.00"
 	dailyTarget: fmtCurrency(BRAVO.dailyTargetCents), // "$1,500.00"
 } as const
 
@@ -620,12 +620,13 @@ test.describe("Live Trading Status — Recovery sequence exhausted (L-L-L-L)", (
 
 test.describe("Live Trading Status — Daily loss limit hit (off-plan: loss exceeds risk)", () => {
 	/**
-	 * Off-plan scenario: the trader's planned risk was R$500 but they lost R$700
-	 * (slippage / gap). The actual daily P&L hits the R$1,000 loss limit.
+	 * Off-plan scenario: severe slippage on two trades pushes the daily P&L past
+	 * the 3R daily loss limit ($1,500).
 	 *
 	 * Scenario:
-	 *   T1: loss  -70000  (planned R$500, actual loss R$700 — off plan)
-	 *   T2: loss  -40000  (total dailyPnl = -110000 ≤ -100000 → dailyLimitHit)
+	 *   T1: loss  -90000  (planned R$500, actual loss R$900 — severe slippage)
+	 *   T2: loss  -70000  (planned R$250, actual loss R$700 — severe slippage)
+	 *   total dailyPnl = -160000 ≤ -150000 → dailyLimitHit (3R = $1500)
 	 *
 	 * Expected:
 	 *   shouldStopTrading = true
@@ -635,8 +636,8 @@ test.describe("Live Trading Status — Daily loss limit hit (off-plan: loss exce
 
 	test.beforeAll(async () => {
 		seedResult = await seedScenario([
-			{ outcome: "loss", pnlCents: -70_000, plannedRiskAmountCents: 50_000 },
-			{ outcome: "loss", pnlCents: -40_000, plannedRiskAmountCents: 25_000 },
+			{ outcome: "loss", pnlCents: -90_000, plannedRiskAmountCents: 50_000 },
+			{ outcome: "loss", pnlCents: -70_000, plannedRiskAmountCents: 25_000 },
 		])
 	})
 
@@ -654,14 +655,14 @@ test.describe("Live Trading Status — Daily loss limit hit (off-plan: loss exce
 		await expectStopReason(panel, /daily loss limit reached/i)
 	})
 
-	test("should show a negative daily P&L exceeding R$1000", async ({
+	test("should show a negative daily P&L exceeding R$1500", async ({
 		page,
 	}) => {
 		await gotoCommandCenter(page)
 		const panel = await getLiveTradingPanel(page)
 
-		// Net P&L = -70000 + -40000 = -110000 cents = -$1,100
-		await expectDailyPnl(panel, fmtCurrency(-110_000))
+		// Net P&L = -90000 + -70000 = -160000 cents = -$1,600
+		await expectDailyPnl(panel, fmtCurrency(-160_000))
 	})
 })
 
@@ -675,7 +676,7 @@ test.describe("Live Trading Status — Off-plan: actual loss smaller than planne
 	 * T1: loss  -15000  (planned R$500, actual -R$150 — exits early)
 	 *
 	 * Outcome classification is still "loss", so the phase machine enters loss_recovery.
-	 * The daily P&L is only -R$150, well within the R$1,000 daily limit.
+	 * The daily P&L is only -R$150, well within the R$1,500 daily limit (3R).
 	 *
 	 * Expected state after T1:
 	 *   dayPhase           = "loss_recovery"
@@ -790,14 +791,14 @@ test.describe("Live Trading Status — Daily limit recovery (loss then win bring
 	 * If a recovery win brings the P&L above the loss limit threshold, trading continues.
 	 *
 	 * Scenario:
-	 *   T1: loss  -90000  → loss_recovery, dailyPnl=-90000 (not yet at -100000)
+	 *   T1: loss  -90000  → loss_recovery, dailyPnl=-90000 (not yet at -150000)
 	 *   T2: win   +80000  → recovery win → recoveryWinExit=true
-	 *                       dailyPnl = -90000 + 80000 = -10000 (well above -100000)
+	 *                       dailyPnl = -90000 + 80000 = -10000 (well above -150000)
 	 *
 	 * Expected:
 	 *   shouldStopTrading = true
 	 *   stopReason        = "recoveryWinExit"  (not "dailyLossLimit")
-	 *   dailyLimitHit     = false (final P&L = -10000 > -100000)
+	 *   dailyLimitHit     = false (final P&L = -10000 > -150000)
 	 */
 	let seedResult: SeedResult
 
@@ -1142,7 +1143,7 @@ test.describe("Live Trading Status — Off-plan scenario: single trade with slip
 	 *   dayPhase           = "loss_recovery"
 	 *   nextTradeRiskCents = 25_000 (always 50% of base for recovery step 1)
 	 *   dailyPnlCents      = -70000 (actual P&L)
-	 *   shouldStopTrading  = false  (-70000 > -100000 limit)
+	 *   shouldStopTrading  = false  (-70000 > -150000 limit)
 	 */
 	let seedResult: SeedResult
 

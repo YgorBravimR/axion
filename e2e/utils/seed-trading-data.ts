@@ -54,10 +54,11 @@ interface SeedResult {
 	createdProfile: boolean
 }
 
-// Bravo Risk Management decision tree — matches seed-risk-profiles.ts exactly
+// Bravo Risk Management decision tree — R-multiples format, matches src/db/seed-risk-profiles.ts
+// adaptDecisionTree() multiplies riskR × oneRCents at runtime; never use riskCents/lossCents here.
 const BRAVO_DECISION_TREE = {
 	baseTrade: {
-		riskCents: 50000,
+		riskR: 1,
 		maxContracts: 20,
 		minStopPoints: 100,
 	},
@@ -97,12 +98,12 @@ const BRAVO_DECISION_TREE = {
 		],
 		repeatLastStep: true,
 		stopOnFirstLoss: true,
-		dailyTargetCents: 150000,
+		dailyTargetR: 3,
 	},
 	cascadingLimits: {
-		weeklyLossCents: 200000,
+		weeklyLossR: 4,
 		weeklyAction: "stopTrading",
-		monthlyLossCents: 750000,
+		monthlyLossR: 15,
 		monthlyAction: "stopTrading",
 	},
 	executionConstraints: {
@@ -312,10 +313,15 @@ const ensureBravoFractalCascade = async (
 	let yearlyPlanId: string
 	if (yearlyCheck.rows.length) {
 		yearlyPlanId = yearlyCheck.rows[0].id
-		// Update to link Bravo profile (in case it changed)
+		// Update to link Bravo profile and re-seed R defaults in case they were wrong.
+		// Both thresholds are 3R (3 × $500 = $1500):
+		//   daily_loss_r = 3 → maxTrades = floor(150000/50000) = 3 (allows full recovery sequence)
+		//   daily_win_r  = 3 → dailyTargetCents = 150000 (= gain sequence target)
 		await db.execute(sql`
       UPDATE yearly_plans SET
         default_risk_profile_id = ${profileId},
+        default_daily_loss_r    = 3.00,
+        default_daily_win_r     = 3.00,
         updated_at = NOW()
       WHERE id = ${yearlyPlanId}
     `)
@@ -347,7 +353,7 @@ const ensureBravoFractalCascade = async (
         ${ladderRules}::jsonb,
         1,
         3.00,
-        2.00,
+        3.00,
         6.00,
         4.00,
         10.00,
@@ -404,16 +410,21 @@ const ensureBravoFractalCascade = async (
 
 	if (monthlyCheck.rows.length) {
 		monthlyPlanId = monthlyCheck.rows[0].id
-		// Update to link Bravo profile if needed
+		// Update profile AND re-seed snapshot fields — without this the resolver
+		// returns oneRCents = 0 because snapshotOneRCents is NULL on existing rows.
 		await db.execute(sql`
       UPDATE monthly_plan SET
+        snapshot_capital_cents = ${accountBalance},
+        snapshot_one_r_cents = 50000,
+        snapshot_tier_index = 0,
+        snapshot_computed_at = NOW(),
+        snapshot_reason = 'manual',
         override_risk_profile_id = ${profileId},
         updated_at = NOW()
       WHERE id = ${monthlyPlanId}
     `)
 	} else {
 		// Create monthly plan with snapshot (required fields)
-		// Snapshot reason: "e2e_test_setup" (custom enum value for testing)
 		const monthlyInsert = await db.execute<IdRow>(sql`
       INSERT INTO monthly_plan (
         quarterly_plan_id,
@@ -434,7 +445,7 @@ const ensureBravoFractalCascade = async (
         50000,
         0,
         NOW(),
-        'e2e_test_setup',
+        'manual',
         ${profileId},
         500000
       )

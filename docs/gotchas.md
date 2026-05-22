@@ -347,3 +347,69 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: When seeding for E2E tests, always call the full cascade builder: create/link `yearly_plans` (with ladder_rules, default_daily_loss_r, etc.), then `quarterly_plan`, then `monthly_plan` with override columns. See `ensureBravoFractalCascade()` in `e2e/utils/seed-trading-data.ts` as the canonical pattern.
 - **Risk**: The error manifests as a Playwright timeout or missing DOM element, not as a DB error. If you see "expected element not found" in a test that used to pass, check if seed data is creating the full cascade.
 - **Date logged**: 2026-05-22.
+
+### Fractal cascade seed UPDATE must re-seed snapshot fields — otherwise resolveDay() returns oneRCents=0
+
+- **What**: `ensureBravoFractalCascade()` has two paths: INSERT (new row) and UPDATE (existing row). The original UPDATE only set `override_risk_profile_id` and `updated_at`. When an existing `monthly_plan` row had `snapshot_one_r_cents = NULL`, `resolveDay()` returned `monthRow?.snapshotOneRCents ?? 0` → 0. This made all "Next Risk" displays show `$0.00` in live-trading-status tests.
+- **What to do**: The UPDATE path MUST also re-seed `snapshot_capital_cents`, `snapshot_one_r_cents = 50000`, `snapshot_tier_index = 0`, `snapshot_computed_at`, `snapshot_reason`. Fixed in `e2e/utils/seed-trading-data.ts:408–418` (2026-05-22).
+- **Date logged**: 2026-05-22.
+
+### `snapshot_reason` is a PostgreSQL enum — only 3 valid values
+
+- **What**: `snapshotReasonEnum` at `src/db/schema.ts:115` allows only `"month_start"`, `"drawdown_trigger"`, `"manual"`. Using `"e2e_test_setup"` in a raw SQL INSERT/UPDATE causes a runtime Postgres enum constraint error.
+- **What to do**: Always use `'manual'` when seeding `snapshot_reason` in E2E utilities.
+- **Date logged**: 2026-05-22.
+
+### Playwright `toBeVisible()` on SVG `<rect>` inside Recharts always fails
+
+- **What**: Recharts `<Bar>` elements render `<rect>` SVG children inside a `ResponsiveContainer`. Playwright treats SVG elements without a meaningful viewport box (positioned/clipped inside the SVG viewBox) as "hidden" even when the chart container itself is fully visible. `scrollIntoViewIfNeeded()` on a `<rect>` is a no-op (SVG elements don't scroll).
+- **What to do**: Use `toBeAttached()` to verify the rect is in the DOM, or check the chart container visibility (`[role="img"]`) instead of individual bar rects. Avoid `toBeVisible()` on SVG child elements inside Recharts.
+- **Source**: `e2e/tests/annual-reporting.spec.ts`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### Trade form `getByRole("combobox", { name: /strategy/i })` fails due to broken label association
+
+- **What**: `FormLabel` in shadcn/ui sets `htmlFor` to an internal FormField context ID, NOT the `SelectTrigger` element's `id`. So `getByRole("combobox", { name: /strategy/i })` can't find the combobox by its label — Playwright times out at 30s.
+- **What to do**: Use stable IDs directly: `#trade-strategy`, `#trade-asset`, `#trade-entry-price`, `#trade-exit-price`, `#trade-position-size`, `#trade-form-submit`. Direction buttons use `aria-pressed` (not `role="radio"`) — use `getByRole("button", { name: /^long$/i })`.
+- **Source**: `src/components/journal/trade-form.tsx`; `e2e/tests/trade-conditions.spec.ts`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### Phase 4b Plan Architecture: monthly plan page no longer has `#plan-*` IDs
+
+- **What**: The `#plan-previous-month`, `#plan-next-month`, `#plan-create`, `#plan-edit`, `#plan-save`, `#plan-account-balance` IDs were all dropped in Phase 4b. Monthly plan is now at `/en/plan/[year]/[quarter]/[month]` via `MonthReport` + `MonthHeader`. Navigation is via `<Link>` elements (clicking them changes the URL). The edit button opens a slideover with `#month-goal`, `#month-intent`, `#month-postmortem`, `#month-risk-profile`, `#btn-month-save`.
+- **What to do**: For prev/next navigation: `getByRole("link", { name: /previous month/i })`. For edit: `getByRole("button", { name: /edit plan/i })`. For save: `#btn-month-save`.
+- **Source**: `src/components/fractal-plan/cockpit/month-header.tsx`, `monthly-plan-editor.tsx`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### `CumulativePnlChart` renders different IDs depending on data state
+
+- **What**: `src/components/analytics/cumulative-pnl-chart.tsx` renders `id="analytics-equity-curve"` only for the empty-state div (no data). When data exists, it renders `id="chart-analytics-cumulative-pnl"`. E2E tests that hardcode `#analytics-equity-curve` fail at journey stage 8 because trades exist.
+- **What to do**: Locate with a combined selector: `#analytics-equity-curve, #chart-analytics-cumulative-pnl`.
+- **Source**: `src/components/analytics/cumulative-pnl-chart.tsx:89,105`; `e2e/journey/08-improvement.spec.ts`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### MoodSelector only renders when a `daily_plan` row exists for today
+
+- **What**: `PreMarketNotes` returns early without rendering `MoodSelector` when no `daily_plan` exists for the current date. E2E tests that use `getByRole("radiogroup", { name: /mood/i })` will find 0 elements — not because the selector is wrong but because the component is never mounted.
+- **What to do**: Seed a `daily_plan` row (linked to the fractal cascade) before testing mood selector, OR make the test conditional: check `isVisible()` first and skip if false.
+- **Source**: `src/components/command-center/pre-market-notes.tsx`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### E2E seeder `BRAVO_DECISION_TREE` must use R-multiples — `adaptDecisionTree` reads `riskR`, not `riskCents`
+
+- **What**: `adaptDecisionTree(tree, oneRCents)` in `src/lib/risk-profiles/cents-shape.ts` reads `tree.baseTrade.riskR`, `tree.cascadingLimits.weeklyLossR`, `tree.gainMode.dailyTargetR`, etc. The E2E seeder's `BRAVO_DECISION_TREE` constant was written in the old cents format (`riskCents: 50000`, `weeklyLossCents: 200000`). Because `adaptDecisionTree` reads R-multiple fields that were `undefined`, every multiplication produced `NaN`, and `fromCents(NaN) = 0` (explicit guard in `src/lib/money.ts`). All "Next Risk" values displayed as `$0.00`.
+- **What to do**: The decision tree constant in `e2e/utils/seed-trading-data.ts` must use R-multiples (`riskR: 1`, `dailyTargetR: 3`, `weeklyLossR: 4`, `monthlyLossR: 15`). The canonical reference is `bravoTree` in `src/db/seed-risk-profiles.ts`. The UPDATE path in `ensureBravoRiskProfile` always overwrites the DB profile with the seeder constant — so fixing the constant self-heals stale DB rows.
+- **Date logged**: 2026-05-22.
+
+### `createDb` in E2E must be a singleton — calling it per-query exhausts `max_connections`
+
+- **What**: `createDb(url)` in `e2e/utils/create-db.ts` creates a new `postgres(url, {prepare:false})` connection pool on every call. `buildDb()` in `seed-trading-data.ts` calls `createDb` per helper function (8 call sites). Over a 25+ describe-block test suite, this creates 175–200 connection pools, hitting PostgreSQL's `max_connections` (default 100 locally). Symptom: `PostgresError: sorry, too many clients already` in the middle of the test run, manifesting as a `seedScenario` failure → `seedResult` left undefined → `teardownScenario(undefined)` throws `TypeError` in `afterAll`.
+- **What to do**: `createDb` must cache its result by URL (module-level `Map<string, E2eDb>`). Also set `max: 1` on the `postgres()` pool — the seeder is serial, so 1 wire connection per process is enough and guarantees the pool never grows. Fixed in `e2e/utils/create-db.ts` (2026-05-22).
+- **Source**: `e2e/utils/create-db.ts`, `e2e/utils/seed-trading-data.ts`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### E2E seeder yearly plan: `default_daily_loss_r` and `default_daily_win_r` must both be `3.00`
+
+- **What**: `default_daily_loss_r = 3.0` gives `dailyLossCents = 3 × 50000 = 150000`. `Math.floor(150000/50000) = 3` → `maxTrades = 3`, allowing the full 3-step Bravo recovery sequence (T1 + 3 recovery trades) before hitting the maxTrades stop. Using `2.0` gives `maxTrades = 2`, which stops trading after the 2nd non-breakeven trade — breaking all recovery-in-progress and "breakeven didn't change phase" tests. `default_daily_win_r = 3.0` gives `dailyTargetCents = 150000`, matching the Bravo gain sequence's cumulative target (3 wins × $500). Previously the INSERT had the two values swapped AND neither was re-seeded in the UPDATE path for existing rows.
+- **What to do**: The UPDATE path in `ensureBravoFractalCascade` must explicitly set `default_daily_loss_r = 3.00` and `default_daily_win_r = 3.00` so existing yearly plan rows get corrected. Fixed in `e2e/utils/seed-trading-data.ts` (2026-05-22). The "daily loss limit hit" test scenario must use total losses > 150000 (currently −90000 + −70000 = −160000).
+- **Date logged**: 2026-05-22.
