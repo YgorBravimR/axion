@@ -328,7 +328,7 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ### `page.waitForLoadState("networkidle")` reliably times out in React 19 / Next.js 16 (mobile especially)
 
-- **What**: `networkidle` requires 500ms of zero network activity. React 19 streaming RSC, server actions, and Next.js telemetry/DevTools keep dripping small fetches indefinitely. On iPhone 14 emulation the 30s test timeout is routinely exceeded even on simple pages.
-- **What to do**: Replace `await page.waitForLoadState("networkidle")` with `await page.waitForLoadState("load"); await page.waitForTimeout(1000)`. The `load` event fires after HTML is parsed and subresources fetched; the 1s buffer covers React hydration. For critical assertions, add explicit `{ timeout: 15_000 }` on the `expect()`.
-- **Source**: Bulk E2E session 2026-05-22 — 59 mobile tests timing out in `beforeEach`; all fixed by this swap.
+- **What**: `networkidle` requires 500ms of zero network activity. React 19 streaming RSC, server actions, and Next.js telemetry/DevTools keep dripping small fetches indefinitely. On iPhone 14 emulation the 30s test timeout is routinely exceeded for pages with active server data fetching (command center, analytics, reports, monthly-plan).
+- **What to do**: Replace with `await page.waitForLoadState("load"); await page.waitForTimeout(1000)`. BUT: (a) settings page is safe with `networkidle` because it has no continuous background fetches; (b) the `waitForSuspenseLoad()` helper in `e2e/utils/helpers.ts` also used `networkidle` internally and needed the same fix; (c) journey-00's `saveStageState` call MUST use `networkidle` to ensure the JWT Set-Cookie from account selection has arrived before the state is persisted — using `load+1s` there saves sessions missing `accountId`, causing all downstream journey stages to hit the proxy's login redirect.
+- **Source**: Bulk E2E session 2026-05-22 — 59 mobile tests fixed then 18 regressions found. Final pattern: `networkidle` is correct for login/session boundaries and static pages; `load` for live-data pages on mobile.
 - **Date logged**: 2026-05-22.
