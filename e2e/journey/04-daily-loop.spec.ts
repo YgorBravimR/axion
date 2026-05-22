@@ -126,7 +126,10 @@ test.describe(
 			// ── 4e — Verify the trade lives in the journal list
 			await page.goto("/en/journal")
 			await page.waitForLoadState("networkidle")
-			await expect(page.locator('[id^="trade-card-"]').first()).toBeVisible({
+			// Trades render as role="option" inside role="listbox" day-groups (TradeDayGroup → TradeRow).
+			await expect(
+				page.locator('[role="listbox"] [role="option"]').first()
+			).toBeVisible({
 				timeout: 20000,
 			})
 			await screenshotIfDemo(page, "04-06-journal-with-trade")

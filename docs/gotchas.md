@@ -302,3 +302,26 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: After seeding strategies in dev, manually insert a seed version row: `INSERT INTO strategy_versions (id, strategy_id, version_number, created_at) VALUES (gen_random_uuid(), '<strategy_id>', 1, now())` (adjust columns to match current schema). The long-term fix is to update `scripts/seed.ts` to insert the version row alongside each strategy insert. For production, new strategies created via the UI go through the `createStrategy` server action which already inserts the version row correctly.
 - **Source**: `src/app/actions/strategy-conditions.ts` (`getCurrentVersionId`); QA session 2026-05-21 on `feat/hawks-mode-v0`.
 - **Date logged**: 2026-05-21.
+
+---
+
+## React
+
+### React 19: `startTransition(() => { void asyncFn() })` inside `useEffect` causes infinite re-renders
+
+- **What**: In React 18, wrapping `void asyncFn()` in `startTransition` inside a `useEffect` worked harmlessly — only the synchronous portion before the first `await` was treated as a transition. In **React 19**, the async transition semantics changed: ALL state updates inside an async function passed to `startTransition` are deferred transition updates, including every `setState` call in the async function body (even after `await`). When this pattern runs inside a `useEffect`, the deferred updates trigger the effect again, which queues more transition updates, cascading into "Maximum update depth exceeded" (React's 25-re-render guard). Next.js App Router catches the render error, rolls back the URL via `pushState`, and shows the `[locale]/error.tsx` boundary — making it look like a navigation error, not a data-fetch error.
+- **What to do**: Never use `startTransition` inside `useEffect`. `startTransition` is for **user-initiated actions** (button clicks, input events) where you want to deprioritize the update. For effect-driven data fetching, use `void asyncFn()` directly — no `startTransition` wrapper. The fix in `src/components/journal/journal-content.tsx`: replaced `startTransition(() => { void fetchTrades() })` with `void fetchTrades()` and removed the `useTransition` import.
+- **Symptoms**: "Maximum update depth exceeded" in the browser console + `[locale]/error.tsx` boundary triggered on page navigation + Next.js rolls back the URL.
+- **Source**: `src/components/journal/journal-content.tsx`; E2E session 2026-05-21 — `chromium-navigation` 90 s timeout + `mobile-journal` empty state never resolved.
+- **Date logged**: 2026-05-21.
+
+---
+
+## E2E / Playwright config
+
+### Journal list renders `role="option"` rows (TradeDayGroup → TradeRow), not `id^="trade-card-"` cards
+
+- **What**: `TradeCard` (`id="trade-card-{id}"`) is a separate component used for card-grid contexts (e.g. trade detail). The journal **list** page renders `TradeDayGroup` → `TradeRow` — each trade row is a `<Link role="option">` inside a `<div role="listbox">` day-group accordion. E2E tests that used `[id^="trade-card-"]` to assert "a trade is visible in the journal list" never matched anything.
+- **What to do**: Use `[role="listbox"] [role="option"]` (or `page.getByRole("option")`) when asserting trades in the journal list. Updated in `e2e/journey/04-daily-loop.spec.ts:129` and `e2e/tests/journal.spec.ts:54`.
+- **Source**: `src/components/journal/trade-day-group.tsx`, `src/components/journal/trade-row.tsx`; E2E session 2026-05-21.
+- **Date logged**: 2026-05-21.

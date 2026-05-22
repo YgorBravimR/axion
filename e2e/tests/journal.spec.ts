@@ -51,7 +51,8 @@ test.describe("Journal", () => {
 			// JournalContent starts in isLoading=true and fetches on mount, so networkidle
 			// can resolve before the client useEffect fetch starts. Wait explicitly for
 			// either trade cards or the empty state to appear before asserting.
-			const tradeItems = page.locator('[id^="trade-card-"]')
+			// Trades render as role="option" inside role="listbox" day-groups (TradeDayGroup → TradeRow).
+			const tradeItems = page.locator('[role="listbox"] [role="option"]')
 			const emptyState = page.getByText(/no trades/i)
 
 			await Promise.race([
