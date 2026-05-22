@@ -413,3 +413,28 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What**: `default_daily_loss_r = 3.0` gives `dailyLossCents = 3 × 50000 = 150000`. `Math.floor(150000/50000) = 3` → `maxTrades = 3`, allowing the full 3-step Bravo recovery sequence (T1 + 3 recovery trades) before hitting the maxTrades stop. Using `2.0` gives `maxTrades = 2`, which stops trading after the 2nd non-breakeven trade — breaking all recovery-in-progress and "breakeven didn't change phase" tests. `default_daily_win_r = 3.0` gives `dailyTargetCents = 150000`, matching the Bravo gain sequence's cumulative target (3 wins × $500). Previously the INSERT had the two values swapped AND neither was re-seeded in the UPDATE path for existing rows.
 - **What to do**: The UPDATE path in `ensureBravoFractalCascade` must explicitly set `default_daily_loss_r = 3.00` and `default_daily_win_r = 3.00` so existing yearly plan rows get corrected. Fixed in `e2e/utils/seed-trading-data.ts` (2026-05-22). The "daily loss limit hit" test scenario must use total losses > 150000 (currently −90000 + −70000 = −160000).
 - **Date logged**: 2026-05-22.
+
+### Vitest unit tests for server actions: mock upstream actions, not just shared deps
+
+- **What**: `src/app/actions/<X>.ts` typically imports both `@/app/actions/auth` (for `requireAuth`) and **other server actions** (e.g., `executions.ts` imports `getBreakevenTicks` from `@/app/actions/accounts`). Mocking only `@/app/actions/auth` is not enough — importing the upstream action triggers its top-level `@/auth` import, which loads `next-auth`, which fails to resolve `next/server` under Vitest. The whole file then fails to load with: `Cannot find module '.../next-auth/.../node_modules/next/server'`.
+- **What to do**: In the test file, mock every server-action module the action-under-test imports from. Pattern: `vi.mock("@/app/actions/accounts", () => ({ getBreakevenTicks: vi.fn().mockResolvedValue(2) }))`. Also mock `@/auth` defensively (`vi.mock("@/auth", () => ({ auth: vi.fn() }))`). See `src/__tests__/actions/executions.test.ts` for the canonical pattern after the 2026-05-22 fix.
+- **Source**: `src/__tests__/actions/executions.test.ts`; session 2026-05-22.
+- **Date logged**: 2026-05-22.
+
+### Server-action test Zod validation: all UUID fields must be valid v4 UUIDs in mock data
+
+- **What**: Server actions use Zod schemas that include `z.string().uuid()`. Mock data with placeholder IDs like `"trade-123"`, `"account-456"`, or `"nonexistent"` fails Zod validation before any DB code runs — the action returns `{ status: "error", code: "VALIDATION_ERROR" }`, and the test sees `expected 'success' but received 'error'` with no clue why.
+- **What to do**: Use real v4 UUIDs in all mock data. The canonical pattern (per `src/__tests__/actions/accounts.test.ts` and `executions.test.ts`): declare module-level constants like `const mockUserId = "550e8400-e29b-41d4-a716-446655440000"` and reuse them.
+- **Date logged**: 2026-05-22.
+
+### Drizzle `db.update().set().where().returning()` mocks: `.where()` must return a chainable, not a resolved value
+
+- **What**: When mocking `db.update(table).set(...).where(...).returning()`, a common mistake is `.where: vi.fn().mockResolvedValue({ returning: ... })`. This breaks because `.where()` is called synchronously by Drizzle and must return a chainable object — not a Promise. The mock evaluates to `undefined.returning is not a function`.
+- **What to do**: `where: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([row]) })`. `mockReturnValue` (sync), not `mockResolvedValue` (async). See `src/__tests__/actions/executions.test.ts:161-165` for the canonical chain.
+- **Date logged**: 2026-05-22.
+
+### Agent isolation: `isolation: "worktree"` does not always isolate commits to the worktree branch
+
+- **What**: Spawning parallel agents with `isolation: "worktree"` is supposed to give each agent its own git worktree on a dedicated `worktree-agent-*` branch. In practice (session 2026-05-22, six parallel agents on `feat/hawks-mode-v0`), all six agents' commits landed directly on the parent branch (`feat/hawks-mode-v0`), and the worktree branches stayed at the baseline. The commits ended up linearized cleanly because file ownership was strictly disjoint, but if two agents had touched the same file, the second commit would have failed or surprised the orchestrator with an unexpected merge.
+- **What to do**: When dispatching multiple agents in parallel with `isolation: "worktree"`, treat the parent branch as the actual write target — assume isolation may not hold. Always assign **strictly disjoint file ownership** per agent in the brief. After agents complete, verify with `git worktree list` AND `git log --oneline <parent-branch>` to see what actually landed where.
+- **Date logged**: 2026-05-22.
