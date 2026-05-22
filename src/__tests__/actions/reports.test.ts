@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import type { ActionResponse } from "@/types"
 
 // Mock dependencies
 vi.mock("@/db/drizzle", () => ({
@@ -111,18 +110,6 @@ const createMockTrade = (overrides = {}) => ({
 	timeframeId: "1h",
 	strategyId: "strategy-1",
 	strategyVersionId: "v1",
-	createdAt: new Date(),
-	...overrides,
-})
-
-const createMockJournalEntry = (overrides = {}) => ({
-	id: "journal-1",
-	userId: mockUserId,
-	accountId: mockAccountId,
-	date: new Date("2026-05-15"),
-	type: "deposit" as const,
-	amount: 100000, // R$1000.00
-	description: "Initial deposit",
 	createdAt: new Date(),
 	...overrides,
 })
