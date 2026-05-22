@@ -96,8 +96,12 @@ test.describe(
 				await expect(page).toHaveURL(/\/(en|pt-BR)\/?$/, { timeout: 15000 })
 			}
 
-			await page.waitForLoadState("load")
-			await page.waitForTimeout(1000)
+			// networkidle (not load) here — the "Continue" account-selection server
+			// action sends a Set-Cookie with the updated JWT (accountId). networkidle
+			// ensures that cookie arrives before saveStageState captures the context.
+			// Saving with load+1s races against the Set-Cookie and produces sessions
+			// missing accountId, which the proxy redirects to login.
+			await page.waitForLoadState("networkidle")
 			await screenshotIfDemo(page, "00-05-dashboard-first-view")
 
 			await annotate(

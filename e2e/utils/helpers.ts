@@ -7,7 +7,7 @@ import { ROUTES } from "../fixtures/test-data"
  */
 export const navigateTo = async (page: Page, route: string) => {
 	await page.goto(route)
-	await page.waitForLoadState("networkidle")
+	await page.waitForLoadState("load")
 }
 
 /**
@@ -214,7 +214,10 @@ export const waitForSuspenseLoad = async (page: Page, timeout = 15000) => {
 	if (await spinner.isVisible().catch(() => false)) {
 		await expect(spinner).toBeHidden({ timeout })
 	}
-	await page.waitForLoadState("networkidle")
+	// load (not networkidle): RSC streaming keeps network active indefinitely on
+	// mobile, causing networkidle to time out. Content visible after spinner
+	// hides is sufficient proof that Suspense resolved.
+	await page.waitForLoadState("load")
 }
 
 /**

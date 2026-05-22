@@ -325,3 +325,10 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Use `[role="listbox"] [role="option"]` (or `page.getByRole("option")`) when asserting trades in the journal list. Updated in `e2e/journey/04-daily-loop.spec.ts:129` and `e2e/tests/journal.spec.ts:54`.
 - **Source**: `src/components/journal/trade-day-group.tsx`, `src/components/journal/trade-row.tsx`; E2E session 2026-05-21.
 - **Date logged**: 2026-05-21.
+
+### `page.waitForLoadState("networkidle")` reliably times out in React 19 / Next.js 16 (mobile especially)
+
+- **What**: `networkidle` requires 500ms of zero network activity. React 19 streaming RSC, server actions, and Next.js telemetry/DevTools keep dripping small fetches indefinitely. On iPhone 14 emulation the 30s test timeout is routinely exceeded even on simple pages.
+- **What to do**: Replace `await page.waitForLoadState("networkidle")` with `await page.waitForLoadState("load"); await page.waitForTimeout(1000)`. The `load` event fires after HTML is parsed and subresources fetched; the 1s buffer covers React hydration. For critical assertions, add explicit `{ timeout: 15_000 }` on the `expect()`.
+- **Source**: Bulk E2E session 2026-05-22 — 59 mobile tests timing out in `beforeEach`; all fixed by this swap.
+- **Date logged**: 2026-05-22.
