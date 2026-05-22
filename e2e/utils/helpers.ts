@@ -214,10 +214,10 @@ export const waitForSuspenseLoad = async (page: Page, timeout = 15000) => {
 	if (await spinner.isVisible().catch(() => false)) {
 		await expect(spinner).toBeHidden({ timeout })
 	}
-	// load (not networkidle): RSC streaming keeps network active indefinitely on
-	// mobile, causing networkidle to time out. Content visible after spinner
-	// hides is sufficient proof that Suspense resolved.
-	await page.waitForLoadState("load")
+	// Fixed buffer instead of networkidle: RSC streaming keeps network active
+	// indefinitely (mobile especially), causing networkidle to always time out.
+	// 1.5s covers streaming settle time without blocking indefinitely.
+	await page.waitForTimeout(1500)
 }
 
 /**
