@@ -61,3 +61,49 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: 2026-05-21 test audit on `feat/hawks-mode-v0` — no `page.on('console', ...)` handlers exist anywhere in the e2e suite; browser-side `console.error` calls (uncaught promise rejections, React hydration errors, failed fetch calls logged silently) are completely invisible to the test runner.
 - **What + Why**: Add a shared Playwright fixture (or `test.beforeEach` in `e2e/fixtures/`) that registers `page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })` and fails/warns after each test if unexpected errors were collected. This would have caught the `R$ → BRL` `Intl.NumberFormat` crash (which logged a `RangeError: Invalid currency code`) before it reached a smoke-test session. Avoid failing on known benign warnings (Next.js dev-mode verbose output) using an allowlist regex. Reference: Playwright docs on `ConsoleMessage`.
 - **Date filed**: 2026-05-21.
+
+### Implement yearly-plan UI: 52-week grid view
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-05-22 — Stream A removed test coverage from `e2e/tests/yearly-plan.spec.ts` (commit `74f18f9d`) because the underlying feature never shipped. The deleted test stub asserted a grid presenting all 52 ISO weeks of the year with per-week progress markers.
+- **What + Why**: Add a 52-week grid view to the yearly plan page (`src/app/[locale]/(app)/plan/[year]/page.tsx`). Each cell should reflect the week's planned vs. actual P&L, color-coded against the weekly_plan target. When shipping, re-add the deleted E2E test.
+- **Date filed**: 2026-05-22.
+
+### Implement yearly-plan UI: payoff matrix view
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-05-22 — Stream A removed test coverage (commit `74f18f9d`). The deleted test asserted a tabular payoff matrix relating win-rate buckets to risk-reward ratios with cell-level annotations.
+- **What + Why**: Add a payoff-matrix component to the yearly plan or playbook page. Rows = win-rate buckets (40% / 50% / 60% etc.), columns = R-multiples (1R / 2R / 3R), cells = projected annual return. Useful as a "what if my hit-rate improves" exploration tool. When shipping, re-add the deleted E2E test.
+- **Date filed**: 2026-05-22.
+
+### Implement yearly-plan UI: exit convention tabs (3 tabs)
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-05-22 — Stream A removed 3 test stubs covering the exit-convention tab UI on yearly-plan (commit `74f18f9d`). Each tab represented a different exit-rule preset (likely Conservative / Balanced / Aggressive — confirm with PM).
+- **What + Why**: Add a tabbed exit-convention selector to the yearly plan page. Each tab applies a different default exit rule (stop-loss multiple, trailing-stop trigger, profit-target ratio) to all child plans in the cascade. Currently the cascade uses a single hardcoded convention. When shipping, re-add the deleted E2E tests.
+- **Date filed**: 2026-05-22.
+
+### Triage 5 pre-existing flaky tests in `e2e/tests/settings.spec.ts` exposed by networkidle migration
+
+- **Priority**: P2
+- **Effort**: S
+- **Source**: 2026-05-22 — Item 1 verification run after Stream B's networkidle migration. 5 tests fail with timeouts, all using fragile selectors that depended on the implicit timing buffer that `networkidle` provided.
+- **What + Why**: Five tests fail when the dev server returns slightly slower than the assertion budget:
+  - `settings.spec.ts:113 should display current account info` (mobile) — uses `:has-text("Name")` (matches anything)
+  - `settings.spec.ts:121 should display account type selector` (mobile) — uses `:has-text("Type")` (matches anything)
+  - `settings.spec.ts:190 should display assets list` (chromium) — falls back to `table` selector if no test-id; depends on seeder providing assets for the test user
+  - `settings.spec.ts:362 should display timeframes list` (chromium) — `getByText(/1 minute|5 minutes|...)`; depends on seeded default timeframes
+  - `settings.spec.ts:377 should open timeframe form when clicking Add` (chromium) — falls back to `form` selector
+- Pre-existing fragility — not a regression from Stream B's migration; the migration just exposed it. Fix by (a) adding stable `data-testid`s in the UI components, (b) seeding default assets/timeframes for the test admin user, or (c) tightening selectors to specific text patterns rather than substring matches.
+- **Date filed**: 2026-05-22.
+
+### Move monte-carlo orchestration integration tests to a real DB harness
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-05-22 — Item 3 extracted pure orchestration logic (commits `e0a5e790`, `e60d32e4`) into `src/lib/monte-carlo/` so the orchestration is unit-testable. The DB-touching path of `src/app/actions/monte-carlo.ts` still has no integration test.
+- **What + Why**: Add integration tests for `runComparisonSimulation` and `runSimulationV2` end-to-end against the test DB. Verify the action correctly composes the auth check → DB query → orchestration → response wrapping. Skipped from the unit suite intentionally (per the same gotcha rationale documented in `docs/gotchas.md`). Suggested home: `e2e/tests/monte-carlo.spec.ts` (currently UI-focused) — add a server-action subgroup, or create `src/__tests__/integration/monte-carlo.test.ts` with a real test DB connection.
+- **Date filed**: 2026-05-22.
