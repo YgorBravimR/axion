@@ -150,7 +150,7 @@ const buildJourneyProjects = (
 	// deletes the ci-registered user and corrupts ci's subsequent stages.
 	let prev: string | undefined =
 		profile === "demo"
-			? `${journeyStages[journeyStages.length - 1].name}-ci`
+			? `${journeyStages[journeyStages.length - 1]!.name}-ci`
 			: undefined
 
 	return journeyStages.map((stage) => {
