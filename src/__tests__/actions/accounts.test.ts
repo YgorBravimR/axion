@@ -721,7 +721,6 @@ describe("updateAccountAsset", () => {
 			assetId: "asset-123",
 			isEnabled: true,
 			breakevenTicksOverride: null,
-			notes: null,
 		})
 
 		expect(result.status).toBe("success")

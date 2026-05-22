@@ -693,15 +693,71 @@ describe("runComparisonSimulation", () => {
 				sharpeRatio: 1.5,
 				rank: 0,
 				result: {
-					statistics: {
-						medianFinalR: 20.5,
-						profitablePct: 65,
-						medianMaxRDrawdown: -6.2,
-						sharpeRatio: 1.5,
+					params: {
 						winRate: 52,
 						rewardRiskRatio: 1.3,
+						numberOfTrades: 15,
+						commissionImpactR: 2,
+						simulationCount: 1000,
 					},
-					paths: [[100, 102, 101]],
+					statistics: {
+						medianFinalR: 20.5,
+						meanFinalR: 21,
+						bestCaseFinalR: 35,
+						worstCaseFinalR: -5,
+						medianMaxRDrawdown: -6.2,
+						meanMaxRDrawdown: -6.5,
+						worstMaxRDrawdown: -14,
+						profitablePct: 65,
+						sharpeRatio: 1.5,
+						sortinoRatio: 1.7,
+						expectedRPerTrade: 0.2,
+						expectedMaxWinStreak: 6,
+						expectedMaxLossStreak: 3,
+						avgWinStreak: 2,
+						avgLossStreak: 1.5,
+						kellyFull: 0.12,
+						kellyHalf: 0.06,
+						kellyQuarter: 0.03,
+						kellyRecommendation: "Half Kelly",
+						kellyLevel: "conservative",
+						profitFactor: 2,
+						avgRecoveryTrades: 2,
+					},
+					distributionBuckets: [
+						{ rangeStart: 0, rangeEnd: 10, count: 100, percentage: 10 },
+						{ rangeStart: 10, rangeEnd: 20, count: 300, percentage: 30 },
+						{ rangeStart: 20, rangeEnd: 30, count: 400, percentage: 40 },
+						{ rangeStart: 30, rangeEnd: 100, count: 200, percentage: 20 },
+					],
+					sampleRun: {
+						runId: 1,
+						trades: [
+							{
+								tradeNumber: 1,
+								isWin: true,
+								rResult: 1.3,
+								commission: 0.02,
+								cumulativeR: 1.28,
+								rDrawdown: 0,
+							},
+							{
+								tradeNumber: 2,
+								isWin: false,
+								rResult: -1,
+								commission: 0.02,
+								cumulativeR: 0.26,
+								rDrawdown: -1.28,
+							},
+						],
+						finalCumulativeR: 20.5,
+						maxRDrawdown: -6.2,
+						winCount: 8,
+						lossCount: 7,
+						maxWinStreak: 3,
+						maxLossStreak: 2,
+						peakR: 25,
+					},
 				},
 			},
 			{
@@ -716,15 +772,71 @@ describe("runComparisonSimulation", () => {
 				sharpeRatio: 1.9,
 				rank: 0,
 				result: {
-					statistics: {
-						medianFinalR: 28.2,
-						profitablePct: 72,
-						medianMaxRDrawdown: -4.1,
-						sharpeRatio: 1.9,
+					params: {
 						winRate: 58,
 						rewardRiskRatio: 1.6,
+						numberOfTrades: 12,
+						commissionImpactR: 2,
+						simulationCount: 1000,
 					},
-					paths: [[100, 103, 105]],
+					statistics: {
+						medianFinalR: 28.2,
+						meanFinalR: 29,
+						bestCaseFinalR: 45,
+						worstCaseFinalR: -8,
+						medianMaxRDrawdown: -4.1,
+						meanMaxRDrawdown: -4.5,
+						worstMaxRDrawdown: -11,
+						profitablePct: 72,
+						sharpeRatio: 1.9,
+						sortinoRatio: 2.2,
+						expectedRPerTrade: 0.28,
+						expectedMaxWinStreak: 7,
+						expectedMaxLossStreak: 4,
+						avgWinStreak: 2.3,
+						avgLossStreak: 1.6,
+						kellyFull: 0.14,
+						kellyHalf: 0.07,
+						kellyQuarter: 0.035,
+						kellyRecommendation: "Half Kelly",
+						kellyLevel: "balanced",
+						profitFactor: 2.4,
+						avgRecoveryTrades: 3,
+					},
+					distributionBuckets: [
+						{ rangeStart: 0, rangeEnd: 15, count: 80, percentage: 8 },
+						{ rangeStart: 15, rangeEnd: 25, count: 320, percentage: 32 },
+						{ rangeStart: 25, rangeEnd: 35, count: 450, percentage: 45 },
+						{ rangeStart: 35, rangeEnd: 100, count: 150, percentage: 15 },
+					],
+					sampleRun: {
+						runId: 1,
+						trades: [
+							{
+								tradeNumber: 1,
+								isWin: true,
+								rResult: 1.6,
+								commission: 0.02,
+								cumulativeR: 1.58,
+								rDrawdown: 0,
+							},
+							{
+								tradeNumber: 2,
+								isWin: true,
+								rResult: 1.6,
+								commission: 0.02,
+								cumulativeR: 3.16,
+								rDrawdown: 0,
+							},
+						],
+						finalCumulativeR: 28.2,
+						maxRDrawdown: -4.1,
+						winCount: 7,
+						lossCount: 5,
+						maxWinStreak: 4,
+						maxLossStreak: 2,
+						peakR: 32,
+					},
 				},
 			},
 		]
@@ -876,6 +988,7 @@ describe("runSimulationV2", () => {
 			simulationCount: 1000,
 			initialBalance: 100000,
 			monthsToTrade: 12,
+			ruinThresholdPercent: 50,
 		}
 
 		// Test validation passes for good params
@@ -942,6 +1055,7 @@ describe("runSimulationV2", () => {
 			simulationCount: 1, // Below minimum of 100
 			initialBalance: 100000,
 			monthsToTrade: 12,
+			ruinThresholdPercent: 50,
 		})) as ActionResponse<MonteCarloResultV2>
 
 		expect(result.status).toBe("error")
@@ -994,6 +1108,7 @@ describe("runSimulationV2", () => {
 			simulationCount: 50000,
 			initialBalance: 100000,
 			monthsToTrade: 48, // 50 trades/day * 20 days/month * 48 months * 50k simulations exceeds cap
+			ruinThresholdPercent: 50,
 		})) as ActionResponse<MonteCarloResultV2>
 
 		expect(result.status).toBe("error")

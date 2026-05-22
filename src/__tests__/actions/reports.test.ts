@@ -7,9 +7,6 @@ vi.mock("@/db/drizzle", () => ({
 			trades: {
 				findMany: vi.fn(),
 			},
-			journalEntries: {
-				findMany: vi.fn(),
-			},
 			tradingAccounts: {
 				findFirst: vi.fn(),
 			},
@@ -129,21 +126,17 @@ describe("Reports Server Actions", () => {
 			propMode: "classic",
 			initialCapital: 50000,
 		} as never)
-		// Mock journalEntries for all tests
-		vi.mocked(db.query.journalEntries).findMany.mockImplementation(
-			async () => [] as never
-		)
 		// Mock trades.findMany to return empty by default (overridden in tests)
 		vi.mocked(db.query.trades).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		// Mock tags.findMany for mistake cost analysis
 		vi.mocked(db.query.tags).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		// Mock tradeTags.findMany for mistake cost analysis
 		vi.mocked(db.query.tradeTags).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		// Mock tradingAccounts for prop calculation tests
 		vi.mocked(db.query.tradingAccounts).findFirst.mockResolvedValue({
@@ -179,9 +172,10 @@ describe("Reports Server Actions", () => {
 				outcome: "loss",
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade1, trade2] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade1,
+				trade2,
+			]) as never)
 
 			const result = await getWeeklyReport(0)
 
@@ -199,9 +193,9 @@ describe("Reports Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Database error")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Database error")) as never
+			)
 
 			const result = await getWeeklyReport(0)
 
@@ -236,7 +230,7 @@ describe("Reports Server Actions", () => {
 			]
 
 			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => trades as never
+				(async () => trades) as never
 			)
 
 			const result = await getMonthlyReport(0)
@@ -260,9 +254,10 @@ describe("Reports Server Actions", () => {
 				pnl: 5000,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade1, trade2] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade1,
+				trade2,
+			]) as never)
 
 			const result = await getMonthlyReport(0)
 
@@ -280,9 +275,10 @@ describe("Reports Server Actions", () => {
 				outcome: "loss",
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [winTrade, lossTrade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				winTrade,
+				lossTrade,
+			]) as never)
 
 			const result = await getMonthlyReport(0)
 
@@ -292,9 +288,9 @@ describe("Reports Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query failed")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query failed")) as never
+			)
 
 			const result = await getMonthlyReport(0)
 
@@ -305,9 +301,9 @@ describe("Reports Server Actions", () => {
 	describe("getMistakeCostAnalysis", () => {
 		it("should return zero cost when all trades followed plan", async () => {
 			const trade = createMockTrade({ followedPlan: true })
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade,
+			]) as never)
 
 			const result = await getMistakeCostAnalysis()
 
@@ -325,9 +321,9 @@ describe("Reports Server Actions", () => {
 
 		it("should identify trades without plan data", async () => {
 			const trade = createMockTrade({ followedPlan: null })
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade,
+			]) as never)
 
 			const result = await getMistakeCostAnalysis()
 
@@ -364,9 +360,9 @@ describe("Reports Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query error")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query error")) as never
+			)
 
 			const result = await getMonthlyProjection()
 
@@ -383,9 +379,9 @@ describe("Reports Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query error")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query error")) as never
+			)
 
 			const result = await getMonthComparison()
 
@@ -405,7 +401,7 @@ describe("Reports Server Actions", () => {
 			]
 
 			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => trades as never
+				(async () => trades) as never
 			)
 
 			const result = await getYearlyOverview()
@@ -426,7 +422,7 @@ describe("Reports Server Actions", () => {
 			]
 
 			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => trades as never
+				(async () => trades) as never
 			)
 
 			const result = await getYearlyOverview()
@@ -446,9 +442,9 @@ describe("Reports Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query error")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query error")) as never
+			)
 
 			const result = await getYearlyOverview()
 
@@ -464,9 +460,9 @@ describe("Reports Server Actions", () => {
 				fees: 200,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade,
+			]) as never)
 
 			const result = await getCommissionFeeImpact()
 
@@ -483,9 +479,9 @@ describe("Reports Server Actions", () => {
 				fees: 200,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade,
+			]) as never)
 
 			const result = await getCommissionFeeImpact()
 
@@ -502,9 +498,9 @@ describe("Reports Server Actions", () => {
 				fees: 0,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade,
+			]) as never)
 
 			const result = await getCommissionFeeImpact()
 
@@ -531,7 +527,7 @@ describe("Reports Server Actions", () => {
 			]
 
 			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => trades as never
+				(async () => trades) as never
 			)
 
 			const result = await getCommissionFeeImpact()
@@ -546,9 +542,9 @@ describe("Reports Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query error")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query error")) as never
+			)
 
 			const result = await getCommissionFeeImpact()
 

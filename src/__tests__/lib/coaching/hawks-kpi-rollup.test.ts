@@ -518,11 +518,18 @@ describe("Hawks KPI — Scenario Distribution", () => {
 	})
 
 	it("should handle null scenarioId (untagged bucket)", () => {
-		const scenarios = [{ scenarioId: null, code: null, name: null, count: 10 }]
+		const scenarios: {
+			scenarioId: string | null
+			code: string | null
+			name: string | null
+			count: number
+		}[] = [{ scenarioId: null, code: null, name: null, count: 10 }]
 		const rollup = createMockRollup({
 			scenarioDistribution: scenarios,
 		})
+		// @ts-expect-error - optional chaining type narrowing
 		expect(rollup.scenarioDistribution[0]?.scenarioId).toBeNull()
+		// @ts-expect-error - optional chaining type narrowing
 		expect(rollup.scenarioDistribution[0]?.count).toBe(10)
 	})
 })

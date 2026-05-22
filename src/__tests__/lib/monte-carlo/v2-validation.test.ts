@@ -48,6 +48,7 @@ const createMockV2Params = (
 	simulationCount: 1000,
 	initialBalance: 100000,
 	monthsToTrade: 12,
+	ruinThresholdPercent: 50,
 	...overrides,
 })
 

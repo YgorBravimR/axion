@@ -211,19 +211,19 @@ describe("Command Center Server Actions", () => {
 		)
 		// Set default empty implementations to avoid errors
 		vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		vi.mocked(db.query.checklistCompletions).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		vi.mocked(db.query.accountAssetSettings).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		vi.mocked(db.query.accountAssets).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		vi.mocked(db.query.trades).findMany.mockImplementation(
-			async () => [] as never
+			(async () => []) as never
 		)
 		// Set default implementations for resolveDay, resolveBehavior, checkHawksCascade
 		vi.mocked(resolveDay).mockImplementation(
@@ -255,7 +255,7 @@ describe("Command Center Server Actions", () => {
 	describe("getChecklists", () => {
 		it("should return empty array when no checklists exist", async () => {
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 
 			const result = await getChecklists()
@@ -272,7 +272,7 @@ describe("Command Center Server Actions", () => {
 			})
 
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => [checklist1, checklist2] as never
+				(async () => [checklist1, checklist2]) as never
 			)
 
 			const result = await getChecklists()
@@ -286,7 +286,7 @@ describe("Command Center Server Actions", () => {
 		it("should include completion data with checklists", async () => {
 			const checklist = createMockChecklist()
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => [checklist] as never
+				(async () => [checklist]) as never
 			)
 
 			const result = await getChecklists()
@@ -297,9 +297,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return error when query fails", async () => {
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => {
-					throw new Error("Database error")
-				}
+				() => Promise.reject(new Error("Database error")) as never
 			)
 
 			const result = await getChecklists()
@@ -308,9 +306,9 @@ describe("Command Center Server Actions", () => {
 		})
 
 		it("should require authentication", async () => {
-			vi.mocked(requireAuth).mockImplementation(async () => {
-				throw new Error("Not authenticated")
-			})
+			vi.mocked(requireAuth).mockImplementation(() =>
+				Promise.reject(new Error("Not authenticated"))
+			)
 
 			const result = await getChecklists()
 
@@ -337,7 +335,7 @@ describe("Command Center Server Actions", () => {
 
 			vi.mocked(db).insert.mockReturnValue(mockInsertChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const input = {
@@ -346,6 +344,7 @@ describe("Command Center Server Actions", () => {
 					{ id: "item-1", label: "Item 1", order: 0 },
 					{ id: "item-2", label: "Item 2", order: 1 },
 				],
+				isActive: true,
 			}
 
 			const result = await createChecklist(input)
@@ -359,6 +358,7 @@ describe("Command Center Server Actions", () => {
 			const input = {
 				name: "",
 				items: [],
+				isActive: true,
 			}
 
 			const result = await createChecklist(input)
@@ -379,6 +379,7 @@ describe("Command Center Server Actions", () => {
 			const input = {
 				name: "New Checklist",
 				items: [{ id: "item-1", label: "Item 1", order: 0 }],
+				isActive: true,
 			}
 
 			const result = await createChecklist(input)
@@ -398,11 +399,11 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => createMockChecklist() as never
+				(async () => createMockChecklist()) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const result = await updateChecklist("checklist-1", {
@@ -415,7 +416,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return error when checklist not found", async () => {
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => null as never
+				(async () => null) as never
 			)
 
 			const result = await updateChecklist("nonexistent", { name: "New Name" })
@@ -433,7 +434,7 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => createMockChecklist() as never
+				(async () => createMockChecklist()) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 
@@ -454,11 +455,11 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => createMockChecklist() as never
+				(async () => createMockChecklist()) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const result = await deleteChecklist("checklist-1")
@@ -469,7 +470,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return error when checklist not found", async () => {
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => null as never
+				(async () => null) as never
 			)
 
 			const result = await deleteChecklist("checklist-1")
@@ -485,7 +486,7 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => createMockChecklist() as never
+				(async () => createMockChecklist()) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 
@@ -498,10 +499,10 @@ describe("Command Center Server Actions", () => {
 	describe("getTodayCompletions", () => {
 		it("should return empty array when no completions today", async () => {
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 			vi.mocked(db.query.checklistCompletions).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 
 			const result = await getTodayCompletions()
@@ -518,10 +519,10 @@ describe("Command Center Server Actions", () => {
 			})
 
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => [checklist1, checklist2] as never
+				(async () => [checklist1, checklist2]) as never
 			)
 			vi.mocked(db.query.checklistCompletions).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 
 			const result = await getTodayCompletions()
@@ -532,9 +533,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return error when query fails", async () => {
 			vi.mocked(db.query.dailyChecklists).findMany.mockImplementation(
-				async () => {
-					throw new Error("Query failed")
-				}
+				() => Promise.reject(new Error("Query failed")) as never
 			)
 
 			const result = await getTodayCompletions()
@@ -553,11 +552,11 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.checklistCompletions).findFirst.mockImplementation(
-				async () => null as never
+				(async () => null) as never
 			)
 			vi.mocked(db).insert.mockReturnValue(mockInsertChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const result = await toggleChecklistItem(checklistUuid, "item-1", true)
@@ -582,14 +581,14 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.checklistCompletions).findFirst.mockImplementation(
-				async () => mockCompletion as never
+				(async () => mockCompletion) as never
 			)
 			vi.mocked(db.query.dailyChecklists).findFirst.mockImplementation(
-				async () => mockChecklist as never
+				(async () => mockChecklist) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const result = await toggleChecklistItem(checklistUuid, "item-1", true)
@@ -599,9 +598,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return error when toggle fails", async () => {
 			vi.mocked(db.query.checklistCompletions).findFirst.mockImplementation(
-				async () => {
-					throw new Error("Query failed")
-				}
+				() => Promise.reject(new Error("Query failed")) as never
 			)
 
 			const result = await toggleChecklistItem("checklist-1", "item-1", true)
@@ -613,10 +610,10 @@ describe("Command Center Server Actions", () => {
 	describe("getAccountAssetSettings", () => {
 		it("should return empty array when no asset settings", async () => {
 			vi.mocked(db.query.accountAssetSettings).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 			vi.mocked(db.query.accountAssets).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 
 			const result = await getAccountAssetSettings()
@@ -633,7 +630,7 @@ describe("Command Center Server Actions", () => {
 			})
 
 			vi.mocked(db.query.accountAssetSettings).findMany.mockImplementation(
-				async () => [setting1, setting2] as never
+				(async () => [setting1, setting2]) as never
 			)
 
 			const result = await getAccountAssetSettings()
@@ -644,9 +641,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return error when query fails", async () => {
 			vi.mocked(db.query.accountAssetSettings).findMany.mockImplementation(
-				async () => {
-					throw new Error("Query failed")
-				}
+				() => Promise.reject(new Error("Query failed")) as never
 			)
 
 			const result = await getAccountAssetSettings()
@@ -669,16 +664,17 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.accountAssetSettings).findFirst.mockImplementation(
-				async () => null as never
+				(async () => null) as never
 			)
 			vi.mocked(db).insert.mockReturnValue(mockInsertChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const input = {
 				assetId: assetUuid,
 				maxDailyTrades: 10,
+				isActive: true,
 			}
 
 			const result = await upsertAssetSettings(input)
@@ -701,16 +697,17 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.accountAssetSettings).findFirst.mockImplementation(
-				async () => createMockAssetSetting({ assetId: assetUuid }) as never
+				(async () => createMockAssetSetting({ assetId: assetUuid })) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const input = {
 				assetId: assetUuid,
 				maxDailyTrades: 20,
+				isActive: true,
 			}
 
 			const result = await upsertAssetSettings(input)
@@ -727,13 +724,14 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.accountAssetSettings).findFirst.mockImplementation(
-				async () => createMockAssetSetting({ assetId: assetUuid }) as never
+				(async () => createMockAssetSetting({ assetId: assetUuid })) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 
 			const input = {
 				assetId: assetUuid,
 				maxDailyTrades: 10,
+				isActive: true,
 			}
 
 			const result = await upsertAssetSettings(input)
@@ -751,11 +749,11 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.accountAssetSettings).findFirst.mockImplementation(
-				async () => createMockAssetSetting() as never
+				(async () => createMockAssetSetting()) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 			vi.mocked(invalidateTradeData).mockImplementation(
-				async () => undefined as never
+				(async () => undefined) as never
 			)
 
 			const result = await deleteAssetSettings("WINQ23")
@@ -766,7 +764,7 @@ describe("Command Center Server Actions", () => {
 
 		it("should return NOT_FOUND when asset settings don't exist", async () => {
 			vi.mocked(db.query.accountAssetSettings).findFirst.mockImplementation(
-				async () => null as never
+				(async () => null) as never
 			)
 
 			const result = await deleteAssetSettings("WINQ23")
@@ -783,7 +781,7 @@ describe("Command Center Server Actions", () => {
 			}
 
 			vi.mocked(db.query.accountAssetSettings).findFirst.mockImplementation(
-				async () => createMockAssetSetting() as never
+				(async () => createMockAssetSetting()) as never
 			)
 			vi.mocked(db).update.mockReturnValue(mockUpdateChain as never)
 
@@ -797,7 +795,7 @@ describe("Command Center Server Actions", () => {
 	describe("getCircuitBreakerStatus", () => {
 		it("should return circuit breaker status with empty trades", async () => {
 			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 
 			const result = await getCircuitBreakerStatus()
@@ -815,9 +813,9 @@ describe("Command Center Server Actions", () => {
 				outcome: "loss" as const,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [losingTrade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				losingTrade,
+			]) as never)
 
 			const result = await getCircuitBreakerStatus()
 
@@ -826,9 +824,9 @@ describe("Command Center Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query failed")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query failed")) as never
+			)
 
 			const result = await getCircuitBreakerStatus()
 
@@ -840,7 +838,7 @@ describe("Command Center Server Actions", () => {
 	describe("getDailySummary", () => {
 		it("should return empty summary when no trades today", async () => {
 			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [] as never
+				(async () => []) as never
 			)
 
 			const result = await getDailySummary()
@@ -859,9 +857,9 @@ describe("Command Center Server Actions", () => {
 				outcome: "win" as const,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [trade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				trade,
+			]) as never)
 
 			const result = await getDailySummary()
 
@@ -886,9 +884,10 @@ describe("Command Center Server Actions", () => {
 				outcome: "loss" as const,
 			})
 
-			vi.mocked(db.query.trades).findMany.mockImplementation(
-				async () => [winTrade, lossTrade] as never
-			)
+			vi.mocked(db.query.trades).findMany.mockImplementation((async () => [
+				winTrade,
+				lossTrade,
+			]) as never)
 
 			const result = await getDailySummary()
 
@@ -900,9 +899,9 @@ describe("Command Center Server Actions", () => {
 		})
 
 		it("should return error when query fails", async () => {
-			vi.mocked(db.query.trades).findMany.mockImplementation(async () => {
-				throw new Error("Query failed")
-			})
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				() => Promise.reject(new Error("Query failed")) as never
+			)
 
 			const result = await getDailySummary()
 
