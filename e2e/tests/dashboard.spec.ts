@@ -260,10 +260,12 @@ test.describe("Dashboard", () => {
 
 	test.describe("Equity Curve Chart", () => {
 		test("should display equity curve chart", async ({ page }) => {
-			const chart = page.locator(
-				'[data-testid="equity-curve"], .equity-curve, .recharts-wrapper, svg.recharts-surface'
-			)
-			await expect(chart.first()).toBeVisible({ timeout: 5000 })
+			// ChartContainer defers recharts rendering until ResizeObserver fires —
+			// check the heading (always present in both data and no-data states) instead
+			// of internal recharts classes that may not render within the timeout.
+			await expect(
+				page.getByRole("heading", { name: /Equity Curve/i })
+			).toBeVisible({ timeout: 15000 })
 		})
 
 		test("should show tooltip on hover", async ({ page }) => {

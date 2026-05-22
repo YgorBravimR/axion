@@ -92,7 +92,9 @@ test.describe(
 			// recompute-month.ts changed carryover semantics, or reports-content
 			// stopped surfacing the ledger. All three are real signals.
 			await expect(
-				page.getByRole("heading", { name: /Prejuízo a Compensar/i })
+				page.getByRole("heading", {
+					name: /Prejuízo a Compensar|Loss Carryover/i,
+				})
 			).toBeVisible({ timeout: 15_000 })
 			await screenshotIfDemo(page, "06-02-darf-section")
 

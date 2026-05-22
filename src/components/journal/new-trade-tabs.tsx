@@ -199,32 +199,29 @@ export const NewTradeTabs = ({
 					)}
 				</div>
 			</div>
-			{canAccess("journal:csv-tab") && (
+			{canAccess("journal:csv-tab") && activeTab === "csv" && (
 				<div
 					id="new-trade-tab-panel-csv"
 					role="tabpanel"
 					aria-labelledby="new-trade-tab-csv"
-					className={activeTab !== "csv" ? "hidden" : ""}
 				>
 					<CsvImport />
 				</div>
 			)}
-			{canAccess("journal:nota-tab") && (
+			{canAccess("journal:nota-tab") && activeTab === "nota" && (
 				<div
 					id="new-trade-tab-panel-nota"
 					role="tabpanel"
 					aria-labelledby="new-trade-tab-nota"
-					className={activeTab !== "nota" ? "hidden" : ""}
 				>
 					<NotaImport />
 				</div>
 			)}
-			{canAccess("journal:ocr-tab") && (
+			{canAccess("journal:ocr-tab") && activeTab === "screenshot" && (
 				<div
 					id="new-trade-tab-panel-screenshot"
 					role="tabpanel"
 					aria-labelledby="new-trade-tab-screenshot"
-					className={activeTab !== "screenshot" ? "hidden" : ""}
 				>
 					<OcrImport />
 				</div>
