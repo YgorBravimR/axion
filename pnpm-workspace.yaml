@@ -1,8 +1,9 @@
 packages:
-  - "video"
+  - video
 
 ignoredBuiltDependencies:
   - '@sentry/cli'
+  - core-js
   - protobufjs
   - sharp
   - tesseract.js
