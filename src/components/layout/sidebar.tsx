@@ -309,7 +309,7 @@ const Sidebar = ({
 				)}
 			>
 				<span className="text-tiny text-txt-placeholder tracking-wide">by</span>
-				<span className="text-tiny text-acc-200 font-medium tracking-[0.15em]">
+				<span className="text-tiny text-heritage-gold font-medium tracking-[0.15em]">
 					BRAVO
 				</span>
 			</div>

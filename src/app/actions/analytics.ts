@@ -2,7 +2,7 @@
 
 import { requireAuth } from "@/app/actions/auth"
 import { db } from "@/db/drizzle"
-import { settings, trades } from "@/db/schema"
+import { settings, trades, tradingAccounts } from "@/db/schema"
 import {
 	getCachedAnalyticsDashboard,
 	getCachedDashboardData,
@@ -1574,10 +1574,28 @@ export const getRadarChartData = async (
 	try {
 		const authContext = await requireAuth()
 		const conditions = buildFilterConditions(authContext, filters)
+		const accountIdsInScope = authContext.showAllAccounts
+			? authContext.allAccountIds
+			: [authContext.accountId]
 
-		const result = await db.query.trades.findMany({
-			where: and(...conditions),
-		})
+		// Trades MUST come back ascending by entry date — drawdown is path-dependent.
+		// In parallel, sum the starting balances across in-scope accounts so the
+		// drawdown axis anchors against true starting equity (matches Brazilian
+		// prop-firm grading semantics).
+		const [result, accountRows] = await Promise.all([
+			db.query.trades.findMany({
+				where: and(...conditions),
+				orderBy: [asc(trades.entryDate)],
+			}),
+			accountIdsInScope.length > 0
+				? db
+						.select({
+							startingBalanceCents: tradingAccounts.startingBalanceCents,
+						})
+						.from(tradingAccounts)
+						.where(inArray(tradingAccounts.id, accountIdsInScope))
+				: Promise.resolve([] as { startingBalanceCents: number | null }[]),
+		])
 
 		if (result.length === 0) {
 			return {
@@ -1586,6 +1604,11 @@ export const getRadarChartData = async (
 				data: [],
 			}
 		}
+
+		const initialCapitalCents = accountRows.reduce(
+			(sum, r) => sum + (r.startingBalanceCents ?? 0),
+			0
+		)
 
 		// Calculate metrics
 		let wins = 0
@@ -1597,6 +1620,13 @@ export const getRadarChartData = async (
 		let followedPlanCount = 0
 		let planTradesCount = 0
 		const pnls: number[] = []
+
+		// Running-equity peak-to-trough drawdown scan (path-dependent — trades
+		// must be in ascending date order, enforced by the query above).
+		const initialCapital = initialCapitalCents / 100
+		let equity = initialCapital
+		let peakEquity = initialCapital
+		let maxDrawdownPct = 0
 
 		for (const trade of result) {
 			const pnl = fromCents(trade.pnl)
@@ -1619,6 +1649,17 @@ export const getRadarChartData = async (
 				planTradesCount++
 				if (trade.followedPlan === true) {
 					followedPlanCount++
+				}
+			}
+
+			equity += pnl
+			if (equity > peakEquity) {
+				peakEquity = equity
+			}
+			if (peakEquity > 0) {
+				const dd = ((peakEquity - equity) / peakEquity) * 100
+				if (dd > maxDrawdownPct) {
+					maxDrawdownPct = dd
 				}
 			}
 		}
@@ -1648,6 +1689,10 @@ export const getRadarChartData = async (
 		// Higher consistency = lower CV, normalize to 0-100
 		const consistency = Math.max(0, Math.min(100, 100 - cv * 50))
 
+		// Drawdown score: lower DD = higher score. 2.5x slope matches Brazilian
+		// prop-firm thresholds (alert at 20%, urgent at 30%).
+		const drawdownScore = Math.max(0, 100 - maxDrawdownPct * 2.5)
+
 		const radarData: RadarChartData[] = [
 			{
 				metric: "Win Rate",
@@ -1668,6 +1713,12 @@ export const getRadarChartData = async (
 				value: profitFactor,
 				// Normalize profit factor: 0-5 mapped to 0-100
 				normalized: (profitFactor / 5) * 100,
+			},
+			{
+				metric: "Drawdown",
+				metricKey: "drawdown",
+				value: maxDrawdownPct,
+				normalized: drawdownScore,
 			},
 			{
 				metric: "Discipline",

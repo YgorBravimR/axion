@@ -128,7 +128,7 @@ const SetupSummaryCard = ({
 						<dt className="text-txt-300 text-tiny">
 							{t("fields.monthlyWithdrawal")}
 						</dt>
-						<dd className="text-h3 text-guide mt-1 font-mono tabular-nums">
+						<dd className="text-h3 text-proj mt-1 font-mono tabular-nums">
 							{(withdrawalPct * 100).toFixed(0)}%
 						</dd>
 					</div>

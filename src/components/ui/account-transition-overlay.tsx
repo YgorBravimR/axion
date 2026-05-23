@@ -70,44 +70,43 @@ const sleep = (ms: number): Promise<void> =>
 // ==========================================
 
 /**
- * Solid overlay that persists across the hard reload during account switch.
- * Hides the skeleton/loading state while the new page hydrates, then fades out.
+ * Solid overlay that covers the new page right after the hard account-switch
+ * reload, then fades out once content has settled.
+ *
+ * Visibility is driven by the data-account-transitioning attribute on <html>,
+ * which is set BEFORE first paint by AccountTransitionScript (an inline
+ * pre-paint script in the root layout). This div is rendered in the SSR React
+ * tree so it exists in the very first HTML frame — no post-hydration flash of
+ * the underlying page between the pre-reload overlay and the fade-out.
  */
 const ResumedOverlay = () => {
-	const [isVisible, setIsVisible] = useState(false)
-	const [isMounted, setIsMounted] = useState(false)
-
 	useEffect(() => {
-		// Check for resumed transition on client only
-		try {
-			const flag = sessionStorage.getItem(TRANSITION_SESSION_KEY)
-			if (flag) {
-				sessionStorage.removeItem(TRANSITION_SESSION_KEY)
-				setIsVisible(true)
-			}
-		} catch {
-			// sessionStorage unavailable
-		}
-		setIsMounted(true)
-	}, [])
-
-	useEffect(() => {
-		if (!isVisible) {
+		const html = document.documentElement
+		if (html.getAttribute("data-account-transitioning") !== "visible") {
 			return
 		}
-		// Allow content to load under the overlay, then fade out
-		const fadeTimer = setTimeout(() => setIsVisible(false), 800)
-		return () => clearTimeout(fadeTimer)
-	}, [isVisible])
 
-	if (!isMounted || !isVisible) {
-		return null
-	}
+		// Brief hold so SSR content paints under the cover, then start fade-out.
+		const fadeTimer = setTimeout(() => {
+			html.setAttribute("data-account-transitioning", "fading")
+		}, 300)
+
+		// 300ms hold + 500ms fade animation
+		const removeTimer = setTimeout(() => {
+			html.removeAttribute("data-account-transitioning")
+		}, 800)
+
+		return () => {
+			clearTimeout(fadeTimer)
+			clearTimeout(removeTimer)
+		}
+	}, [])
 
 	return (
 		<div
+			data-resumed-overlay=""
 			aria-hidden="true"
-			className="bg-bg-100 animate-overlay-fade-out fixed inset-0 z-50"
+			className="bg-bg-100 pointer-events-none fixed inset-0 z-50 opacity-0"
 		/>
 	)
 }

@@ -48,19 +48,6 @@ export const TradingCalendar = memo(
 		const year = month.getFullYear()
 		const monthIndex = month.getMonth()
 
-		const daysOfWeek = useMemo(
-			() => [
-				tDays("sunShort"),
-				tDays("monShort"),
-				tDays("tueShort"),
-				tDays("wedShort"),
-				tDays("thuShort"),
-				tDays("friShort"),
-				tDays("satShort"),
-			],
-			[tDays]
-		)
-
 		const dailyPnLMap = useMemo(() => {
 			const map = new Map<string, DailyPnL>()
 			for (const day of data) {
@@ -69,29 +56,85 @@ export const TradingCalendar = memo(
 			return map
 		}, [data])
 
-		const calendarDays = useMemo(() => {
-			const firstDayOfMonth = new Date(year, monthIndex, 1)
-			const lastDayOfMonth = new Date(year, monthIndex + 1, 0)
-			const startingDayOfWeek = firstDayOfMonth.getDay()
-			const daysInMonth = lastDayOfMonth.getDate()
+		// B3 is closed on Saturday and Sunday, so the calendar collapses to a
+		// 5-column Mon–Fri view by default. The hidden columns reappear the moment
+		// a trade is recorded on a weekend (e.g. crypto, FX, manual entry), so the
+		// affected day stays addressable.
+		const hasWeekendTrades = useMemo(() => {
+			for (const day of data) {
+				const parts = day.date.split("-")
+				if (parts.length !== 3) {
+					continue
+				}
+				const y = Number(parts[0])
+				const m = Number(parts[1])
+				const d = Number(parts[2])
+				if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+					continue
+				}
+				const dow = new Date(y, m - 1, d).getDay()
+				if (dow === 0 || dow === 6) {
+					return true
+				}
+			}
+			return false
+		}, [data])
 
+		const daysOfWeek = useMemo(() => {
+			const all = [
+				tDays("sunShort"),
+				tDays("monShort"),
+				tDays("tueShort"),
+				tDays("wedShort"),
+				tDays("thuShort"),
+				tDays("friShort"),
+				tDays("satShort"),
+			]
+			return hasWeekendTrades ? all : all.slice(1, 6)
+		}, [tDays, hasWeekendTrades])
+
+		const calendarDays = useMemo(() => {
+			const lastDayOfMonth = new Date(year, monthIndex + 1, 0)
+			const daysInMonth = lastDayOfMonth.getDate()
 			const days: Array<{ date: Date; isCurrentMonth: boolean } | null> = []
 
-			// Add empty slots for days before the first of the month
-			for (let i = 0; i < startingDayOfWeek; i++) {
-				days.push(null)
+			if (hasWeekendTrades) {
+				// 7-column Sun–Sat layout
+				const firstDayOfMonth = new Date(year, monthIndex, 1)
+				const startingDayOfWeek = firstDayOfMonth.getDay()
+				for (let i = 0; i < startingDayOfWeek; i++) {
+					days.push(null)
+				}
+				for (let day = 1; day <= daysInMonth; day++) {
+					days.push({
+						date: new Date(year, monthIndex, day),
+						isCurrentMonth: true,
+					})
+				}
+				return days
 			}
 
-			// Add days of the current month
+			// 5-column Mon–Fri layout: skip weekend dates, pad leading empties so
+			// the first weekday aligns with its column (Mon = col 0 … Fri = col 4).
+			let started = false
 			for (let day = 1; day <= daysInMonth; day++) {
-				days.push({
-					date: new Date(year, monthIndex, day),
-					isCurrentMonth: true,
-				})
+				const date = new Date(year, monthIndex, day)
+				const dow = date.getDay()
+				if (dow === 0 || dow === 6) {
+					continue
+				}
+				if (!started) {
+					const leading = dow - 1 // 1 (Mon) → 0, 5 (Fri) → 4
+					for (let i = 0; i < leading; i++) {
+						days.push(null)
+					}
+					started = true
+				}
+				days.push({ date, isCurrentMonth: true })
 			}
 
 			return days
-		}, [year, monthIndex])
+		}, [year, monthIndex, hasWeekendTrades])
 
 		// Memoized handlers for stable references
 		const handlePreviousMonth = useCallback(() => {
@@ -160,7 +203,12 @@ export const TradingCalendar = memo(
 					aria-busy={isLoading || undefined}
 				>
 					{/* Days of week header */}
-					<div className="sm:gap-s-100 grid grid-cols-7 gap-px">
+					<div
+						className={cn(
+							"sm:gap-s-100 grid gap-px",
+							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
+						)}
+					>
 						{daysOfWeek.map((day) => (
 							<div
 								key={day}
@@ -172,7 +220,12 @@ export const TradingCalendar = memo(
 					</div>
 
 					{/* Calendar grid */}
-					<div className="sm:gap-s-100 grid grid-cols-7 gap-px">
+					<div
+						className={cn(
+							"sm:gap-s-100 grid gap-px",
+							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
+						)}
+					>
 						{calendarDays.map((dayData, index) => {
 							if (!dayData) {
 								return <div key={`empty-${index}`} className="aspect-square" />

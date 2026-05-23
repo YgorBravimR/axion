@@ -36,7 +36,7 @@
 	--color-txt-placeholder: #5d6168;
 
 	/* Brand accents — Bronze primary (lighter/luminous variant), Slate Steel secondary */
-	--color-acc-100: #c29d6a;
+	--color-acc-100: #d8b365;
 	--color-acc-200: #7a8b96;
 	--color-fb-error: #ef4444;
 	--color-fb-success: #34d399;
@@ -61,9 +61,9 @@
 	--color-action-buy-muted: rgba(91, 184, 214, 0.2);
 	--color-action-sell-muted: rgba(251, 146, 60, 0.2);
 
-	/* Page Guide — distinctive violet that pops on the dark canvas */
-	--color-guide: rgb(168 130 255);
-	--color-proj: #aed2da;
+	--color-guide: #aed2da;
+	--color-proj: #a98bee;
+	--color-heritage-gold: #b8941f;
 
 	--radius: 0.625rem;
 	--color-background: var(--color-bg-100);
@@ -164,8 +164,9 @@
 
 /* Light Theme Overrides — Warm Stone-White Paper with Deep Bronze Ink */
 [data-theme="light"] {
-	--color-guide: rgb(217 119 6);
-	--color-proj: oklch(0.42 0.1 215);
+	--color-guide: #00596f;
+	--color-proj: #926de7;
+	--color-heritage-gold: #b8941f;
 
 	/* Cool-Neutral Stone-White Backgrounds — slight cool undertone keeps
      chrome from competing with the warm bronze accent. */
@@ -385,6 +386,21 @@ body {
 		opacity: 0;
 		pointer-events: none;
 	}
+}
+
+/* Resumed account-transition overlay (post-reload).
+   The overlay div is rendered in the SSR React tree with Tailwind classes
+   (bg-bg-100 fixed inset-0 z-50 opacity-0). Visibility is then driven by the
+   data-account-transitioning attribute on <html>, which an inline pre-paint
+   script sets BEFORE body parses — eliminating the post-hydration flash of
+   the underlying page between the pre-reload overlay and the fade-in. */
+html[data-account-transitioning="visible"] [data-resumed-overlay] {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+html[data-account-transitioning="fading"] [data-resumed-overlay] {
+	animation: overlay-fade-out 500ms ease-in forwards;
 }
 
 /* Staggered animation delay utilities */

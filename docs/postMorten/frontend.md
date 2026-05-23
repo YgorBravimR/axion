@@ -2,6 +2,137 @@
 
 ---
 
+## [BUG-2026-05-23] Dark flash between account-switch overlay and page (ResumedOverlay hydration race)
+
+**Date:** 2026-05-23 | **Severity:** Medium | **Affected Area:** `src/components/ui/account-transition-overlay.tsx`, `src/app/layout.tsx`, `src/app/globals.css`
+
+### Symptom
+
+When switching accounts (e.g. from Pessoal to Stop Loss Lab), the sequence visible to the user was:
+
+1. Pre-reload overlay (dark, gold ring, "Alternando para Stop Loss Lab") — looks correct.
+2. Hard reload — new page paints, **including the underlying app UI**, briefly visible.
+3. A short dark flash snaps in over the now-visible page.
+4. That dark flash fades out, revealing the page again.
+
+So instead of one smooth fade from the gold overlay to the new page, the user saw page-flicker-dark-fade — jarring.
+
+### Cause
+
+`ResumedOverlay` (the post-reload cover) was only mounted _after_ hydration:
+
+```tsx
+useEffect(() => {
+	const flag = sessionStorage.getItem(TRANSITION_SESSION_KEY)
+	if (flag) {
+		sessionStorage.removeItem(TRANSITION_SESSION_KEY)
+		setIsVisible(true)
+	}
+	setIsMounted(true)
+}, [])
+```
+
+`useEffect` only runs _after_ the browser has already done its first paint of the new page. Concretely:
+
+1. Browser unloads old page → new HTML arrives.
+2. New page paints with `bg-bg-100` body **and the entire SSR'd app UI** — the user sees the destination already.
+3. React hydrates.
+4. Provider's `useEffect` finally runs, sees the sessionStorage flag, calls `setIsVisible(true)`.
+5. React renders the cover div with `opacity: 1` — _snap_, dark flash appears over the already-visible page.
+6. `animate-overlay-fade-out` runs (300ms delay + 500ms fade) → page revealed again.
+
+The cover was solving the right problem (mask the post-reload paint) but doing it one paint too late. Anything you set inside `useEffect` is by definition post-first-paint.
+
+### Fix
+
+Move the visibility signal **before** first paint via an inline pre-paint script (same pattern `next-themes` uses for `data-theme`, and that the repo's orphaned `BrandScript` was written for):
+
+1. **New `AccountTransitionScript`** (`src/components/providers/account-transition-script.tsx`) — `next/script` with `strategy="beforeInteractive"`, inlined into `<head>`. Synchronously reads `sessionStorage.account-transition` and, if present, sets `data-account-transitioning="visible"` on `<html>` before body parses.
+
+2. **Cover div is always SSR-rendered** inside `AccountTransitionOverlayProvider` (no `isVisible` state). It has Tailwind base classes `bg-bg-100 fixed inset-0 z-50 opacity-0 pointer-events-none` and a `data-resumed-overlay` attribute.
+
+3. **CSS in `globals.css`** keys visibility off the `<html>` attribute:
+
+   ```css
+   html[data-account-transitioning="visible"] [data-resumed-overlay] {
+   	opacity: 1;
+   	pointer-events: auto;
+   }
+   html[data-account-transitioning="fading"] [data-resumed-overlay] {
+   	animation: overlay-fade-out 500ms ease-in forwards;
+   }
+   ```
+
+4. **`ResumedOverlay`'s `useEffect`** now just orchestrates the fade-out: reads the attribute, schedules `setAttribute("fading")` after a 300ms hold, then `removeAttribute` after a further 500ms fade.
+
+End state: the cover is opaque from the very first paint of the new page (CSS rule matches before any pixel hits the screen), so the user never sees the underlying app between the gold overlay and the fade-out.
+
+### Files touched
+
+- `src/components/providers/account-transition-script.tsx` (new)
+- `src/app/layout.tsx` — import and mount `<AccountTransitionScript />`
+- `src/components/ui/account-transition-overlay.tsx` — rewrote `ResumedOverlay`
+- `src/app/globals.css` — added `data-account-transitioning` selector rules
+
+### Lessons
+
+- **`useEffect` is always too late for "cover the first paint" UX.** If a UI element needs to be visible on the very first frame after navigation/reload, its visibility must be encoded in something the renderer can resolve synchronously: a server-rendered class, an inline pre-paint script setting an attribute, a `data-` flag from a cookie. Client effects run _after_ the browser has already shown the user something.
+- **Hard reload + post-paint mask is a recurring trap.** Any future flow that uses `window.location.reload()` to refresh state should follow this pattern (pre-paint signal → SSR'd cover) instead of mounting the cover in an effect.
+- **The orphaned `BrandScript` was a hint.** Someone wrote the exact pattern for `data-brand` but never wired it up; that script is the canonical reference for "set an html attribute before paint" in this repo.
+
+---
+
+## [BUG-2026-05-23] `getTranslations` in async Server Component rendered from Client Component (DarfStrip / TaxTab)
+
+**Date:** 2026-05-23 | **Severity:** High | **Affected Area:** `src/components/fractal-plan/cockpit/darf-strip.tsx`, `src/components/fractal-plan/cockpit/tax-tab.tsx`
+
+### Symptom
+
+On `/plan/2026` the **Impostos** tab rendered the global error boundary ("Algo deu errado! Ocorreu um erro ao carregar o painel. Isso pode ser um problema temporário."). Console showed:
+
+```
+<DarfStrip> is an async Client Component. Only Server Components can be
+async at the moment. This error is often caused by accidentally adding
+"use client" to a module that was originally written for the server.
+
+Uncaught (in promise) Error: `getTranslations` is not supported in Client Components.
+  at DarfStrip (darf-strip.tsx:39:33)
+
+A component was suspended by an uncached promise. Creating promises inside
+a Client Component or hook is not yet supported, except via a Suspense-compatible
+library or framework.
+```
+
+### Cause
+
+`DarfStrip` was declared as `async` and called `getTranslations` from `next-intl/server`. It has two callers:
+
+1. `quarter-report.tsx` — Server Component (works fine).
+2. `tax-tab.tsx` — `"use client"` Client Component (broken).
+
+Next.js App Router rule: a Client Component cannot render an `async` child, and `next-intl/server` APIs only run during server rendering. Rendering `<DarfStrip>` from `<TaxTab>` therefore threw on first render of the Impostos tab and the boundary caught it. The dev console error message even names the suspected cause: "accidentally adding 'use client' to a module that was originally written for the server" — except in our case it was the **parent** that was client, not the child.
+
+### Fix
+
+Converted `DarfStrip` to a Client Component:
+
+- Added `"use client"` directive.
+- Replaced `import { getTranslations } from "next-intl/server"` with `import { useTranslations } from "next-intl"`.
+- Removed `async` from the function signature and `await` from the `t` initialization.
+
+The other caller (`quarter-report.tsx`, Server Component) keeps working because Server Components can freely render Client Components.
+
+### Why it slipped through
+
+The Tier-2 type check did not catch this — `async` + JSX is structurally valid TypeScript. There is no lint rule yet that bans `getTranslations` (server) in modules that are reachable from `"use client"` parents. Reachability is a graph property the linter doesn't track.
+
+### Prevention
+
+- Logged the pattern as a gotcha (`docs/gotchas.md` → Next.js / App Router section) so future agents recognize the symptom on sight.
+- **Heuristic**: if a leaf component might ever be rendered from a Client Component (anything in `cockpit/`, `journal/`, `dashboard/`, `command-center/` tends to be client-heavy), prefer `useTranslations` + `"use client"` over `getTranslations` + `async`. Reserve the server variant for components that are only ever rendered from a `page.tsx` / `layout.tsx` directly.
+
+---
+
 ## [BUG-2026-05-21] React infinite loop in EquityCurve component (nested useCallback deps)
 
 **Date:** 2026-05-21 | **Severity:** High | **Affected Area:** `/src/components/dashboard/equity-curve.tsx`

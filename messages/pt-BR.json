@@ -1416,7 +1416,11 @@
 			"w": "G",
 			"l": "L",
 			"be": "BE",
-			"avg": "Média"
+			"avg": "Média",
+			"capitalInicial": "Capital Inicial",
+			"capitalAtual": "Capital Atual",
+			"capital": "Capital",
+			"capitalInicialShort": "Inicial"
 		},
 		"calendar": {
 			"title": "Calendário de Trades",
@@ -1476,9 +1480,21 @@
 			"winRate": "Taxa de Acerto",
 			"avgR": "R Médio",
 			"profitFactor": "Fator de Lucro",
+			"drawdown": "Drawdown",
 			"discipline": "Disciplina",
 			"consistency": "Consistência",
 			"normalized": "Normalizado"
+		},
+		"axionScore": {
+			"title": "Axion Score",
+			"subtitle": "Análise de Performance",
+			"tier": {
+				"elite": "Elite",
+				"forte": "Forte",
+				"solido": "Sólido",
+				"building": "Em Construção",
+				"attention": "Atenção"
+			}
 		},
 		"dayDetail": {
 			"netPnl": "P&L Líquido",

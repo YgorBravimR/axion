@@ -55,6 +55,18 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `eslint-rules/enforce-ui-primitives.mjs`.
 - **Date logged**: 2026-05-07.
 
+### `getTranslations` (next-intl/server) inside a Client Component tree throws at render
+
+- **What**: An `async` component that calls `getTranslations` from `next-intl/server` cannot be rendered from a `"use client"` parent. Symptom: `Error: getTranslations is not supported in Client Components` + `<X> is an async Client Component. Only Server Components can be async at the moment.` followed by the error boundary swallowing the tab. We hit this on `<DarfStrip>` rendered inside the client `<TaxTab>` on the plan year page.
+- **What to do**: If the component is reachable from any client subtree, make it a Client Component (`"use client"`) and use the `useTranslations(...)` hook from `next-intl` (no `/server`). Server-Component callers can still render Client Components without changes. Reserve `getTranslations`/`async` components for components that are _only_ rendered from Server Components.
+- **Date logged**: 2026-05-23.
+
+### `useEffect` is too late to cover the first paint after a hard reload
+
+- **What**: Anything you decide inside `useEffect` runs _after_ the browser's first paint of the new page. If your goal is to cover the new page (e.g. after `window.location.reload()` during an account switch) so the user never sees the underlying UI, an `isVisible` boolean set inside `useEffect` will visibly snap in one frame late — the user sees the page, then the cover appears, then it fades out. We hit this on `ResumedOverlay` in the account-switch flow.
+- **What to do**: Move the visibility signal _before_ first paint. The repo's pattern is an inline `next/script` with `strategy="beforeInteractive"` (see `src/components/providers/account-transition-script.tsx` and the orphaned `BrandScript`) that synchronously reads `sessionStorage`/`localStorage` and sets a `data-*` attribute on `<html>` _before_ body parses. Render the cover in the SSR tree with `opacity:0` Tailwind classes, and use a CSS rule keyed to the `<html>` attribute to flip it to `opacity:1`. The cover then exists on the very first frame, no hydration race.
+- **Date logged**: 2026-05-23.
+
 ---
 
 ## React
@@ -310,6 +322,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: After seeding strategies in dev, manually insert a seed version row: `INSERT INTO strategy_versions (id, strategy_id, version_number, created_at) VALUES (gen_random_uuid(), '<strategy_id>', 1, now())` (adjust columns to match current schema). The long-term fix is to update `scripts/seed.ts` to insert the version row alongside each strategy insert. For production, new strategies created via the UI go through the `createStrategy` server action which already inserts the version row correctly.
 - **Source**: `src/app/actions/strategy-conditions.ts` (`getCurrentVersionId`); QA session 2026-05-21 on `feat/hawks-mode-v0`.
 - **Date logged**: 2026-05-21.
+
+### Passing explicit `NULL` in a Drizzle/postgres-js template insert defeats `DEFAULT` clauses
+
+- **What**: In `INSERT INTO trading_accounts (..., profit_share_percentage, ...) VALUES (..., ${spec.profitSharePercentage ?? null}, ...)`, the `?? null` falls back to `NULL` when the spec doesn't set the field. PostgreSQL treats this explicit NULL as **the value you want to insert**, NOT as "use the column default" — so the schema's `.default("100.00").notNull()` never fires and the insert blows up with `23502 not_null_violation`. This came up reseeding the dev DB after the 7-account expansion: Personal/Greenline/Beginner all triggered it because only Atom Funded (prop) sets `profitSharePercentage`.
+- **What to do**: When a column has a NOT NULL + DEFAULT in the schema, either (a) omit the column entirely from the INSERT column list (cleanest — lets the default apply), or (b) substitute the literal default in JS instead of `null` (e.g. `?? 100`). Don't rely on `?? null` as a "safe" pass-through; it actively overrides defaults.
+- **Source**: `scripts/seed/accounts.ts:123`; reseed session 2026-05-23.
+- **Date logged**: 2026-05-23.
 
 ---
 

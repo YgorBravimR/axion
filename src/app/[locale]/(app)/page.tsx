@@ -27,6 +27,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 	const streakData = batchData?.streakData ?? null
 	const dailyPnL = batchData?.dailyPnL ?? []
 	const radarData = batchData?.radarData ?? []
+	const initialCapitalCents = batchData?.initialCapitalCents ?? 0
 
 	const hawksCoachingResult = await getHawksCoachingInsights(90)
 	const initialHawksContext =
@@ -45,6 +46,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 					initialYear={initialYear}
 					initialMonthIndex={initialMonthIndex}
 					initialHawksContext={initialHawksContext}
+					initialCapitalCents={initialCapitalCents}
 				/>
 			</div>
 		</div>

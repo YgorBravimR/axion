@@ -6,6 +6,8 @@ export { DashboardContent } from "./dashboard-content"
 export { DailyPnLBarChart } from "./daily-pnl-bar-chart"
 export { CumulativePnLChart } from "./cumulative-pnl-chart"
 export { PerformanceRadarChart } from "./performance-radar-chart"
+export { AxionScoreCard } from "./axion-score-card"
+
 export { DayDetailModal } from "./day-detail-modal"
 export { DaySummaryStats } from "./day-summary-stats"
 export { DayEquityCurve } from "./day-equity-curve"
