@@ -120,7 +120,7 @@ const insertAccount = async (
 		) VALUES (
 			gen_random_uuid(), ${adminUserId}, ${spec.name}, ${spec.description},
 			${spec.isDefault}, ${spec.accountType},
-			${spec.propFirmName ?? null}, ${spec.profitSharePercentage ?? null},
+			${spec.propFirmName ?? null}, ${spec.profitSharePercentage ?? 100},
 			${spec.defaultCurrency}, ${spec.showPropCalculations ?? false}
 		)
 		RETURNING id, name
