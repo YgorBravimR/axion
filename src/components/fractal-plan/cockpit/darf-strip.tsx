@@ -1,4 +1,6 @@
-import { getTranslations } from "next-intl/server"
+"use client"
+
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { DarfStatusDot } from "@/components/ui/darf-status-dot"
 import type { DarfStatus } from "@/components/ui/darf-status-dot"
@@ -35,8 +37,8 @@ const MONTH_ABBR_PT = [
 const formatBRL = (cents: number): string =>
 	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 
-const DarfStrip = async ({ chips, onChipClick }: DarfStripProps) => {
-	const t = await getTranslations("plan.darfStrip")
+const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
+	const t = useTranslations("plan.darfStrip")
 	const byIndex = new Map(chips.map((c) => [c.monthIndex, c]))
 	const interactive = typeof onChipClick === "function"
 	return (

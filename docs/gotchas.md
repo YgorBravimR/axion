@@ -55,6 +55,18 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `eslint-rules/enforce-ui-primitives.mjs`.
 - **Date logged**: 2026-05-07.
 
+### `getTranslations` (next-intl/server) inside a Client Component tree throws at render
+
+- **What**: An `async` component that calls `getTranslations` from `next-intl/server` cannot be rendered from a `"use client"` parent. Symptom: `Error: getTranslations is not supported in Client Components` + `<X> is an async Client Component. Only Server Components can be async at the moment.` followed by the error boundary swallowing the tab. We hit this on `<DarfStrip>` rendered inside the client `<TaxTab>` on the plan year page.
+- **What to do**: If the component is reachable from any client subtree, make it a Client Component (`"use client"`) and use the `useTranslations(...)` hook from `next-intl` (no `/server`). Server-Component callers can still render Client Components without changes. Reserve `getTranslations`/`async` components for components that are _only_ rendered from Server Components.
+- **Date logged**: 2026-05-23.
+
+### `useEffect` is too late to cover the first paint after a hard reload
+
+- **What**: Anything you decide inside `useEffect` runs _after_ the browser's first paint of the new page. If your goal is to cover the new page (e.g. after `window.location.reload()` during an account switch) so the user never sees the underlying UI, an `isVisible` boolean set inside `useEffect` will visibly snap in one frame late — the user sees the page, then the cover appears, then it fades out. We hit this on `ResumedOverlay` in the account-switch flow.
+- **What to do**: Move the visibility signal _before_ first paint. The repo's pattern is an inline `next/script` with `strategy="beforeInteractive"` (see `src/components/providers/account-transition-script.tsx` and the orphaned `BrandScript`) that synchronously reads `sessionStorage`/`localStorage` and sets a `data-*` attribute on `<html>` _before_ body parses. Render the cover in the SSR tree with `opacity:0` Tailwind classes, and use a CSS rule keyed to the `<html>` attribute to flip it to `opacity:1`. The cover then exists on the very first frame, no hydration race.
+- **Date logged**: 2026-05-23.
+
 ---
 
 ## React
