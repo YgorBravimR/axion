@@ -50,14 +50,14 @@ export const seedAssets = async (
 	}
 
 	console.log("\n📦 Seeding account assets...")
-	for (const account of [accounts.personal, accounts.prop, accounts.demo]) {
+	for (const account of accounts.all) {
 		await sql`
 			INSERT INTO account_assets (id, account_id, asset_id, is_enabled) VALUES
 				(gen_random_uuid(), ${account.id}, ${assetMap.WIN}, true),
 				(gen_random_uuid(), ${account.id}, ${assetMap.WDO}, true)
 		`
 	}
-	console.log("✅ Account assets seeded")
+	console.log(`✅ Account assets seeded (${accounts.all.length} accounts)`)
 
 	return { assetMap }
 }
