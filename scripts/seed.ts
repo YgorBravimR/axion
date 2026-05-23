@@ -6,6 +6,7 @@ import { cleanup } from "./seed/cleanup"
 import { seedTradingConditions } from "./seed/conditions"
 import { seedHawksScenarios } from "./seed/hawks-scenarios"
 import { seedHawksPlaybooks } from "./seed/playbooks-hawks"
+import { seedPlanCascades, type MonthMeta } from "./seed/plans"
 import { calculatePnl, WIN_PER_POINT, WDO_PER_POINT } from "./seed/helpers/pnl"
 import { createPrng, pickFrom } from "./seed/helpers/prng"
 import { closeSeedSql, createSeedSql, type SeedSql } from "./seed/helpers/sql"
@@ -65,14 +66,19 @@ const runSeed = async (): Promise<void> => {
 	// Hawks methodology: global scenarios + user-scoped conditions + playbooks.
 	await seedHawksScenarios(sql)
 	const conditionMap = await seedTradingConditions(sql, admin.id)
-	await seedHawksPlaybooks(sql, admin.id, conditionMap)
+	const hawksPlaybooks = await seedHawksPlaybooks(sql, admin.id, conditionMap)
 
-	const { monthlyPlanByMonth } = await seedPlanCascade2026(sql, accounts)
+	const cascades = await seedPlanCascades(sql, accounts, hawksPlaybooks)
+	const personalCascades = cascades.get(accounts.personal.id)
+	const personalMonthly = personalCascades?.[0]?.monthlyByMonth
+	if (!personalMonthly) {
+		throw new Error("Missing Personal cascade after seedPlanCascades")
+	}
 	await seedPersonalProceduralTrades(
 		sql,
 		accounts,
 		strategyMap,
-		monthlyPlanByMonth
+		personalMonthly
 	)
 	await seedPropTradesPlaceholder(sql, accounts, strategyMap)
 
@@ -89,155 +95,8 @@ const runSeed = async (): Promise<void> => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inline sections — to be modularized in upcoming commits.
-// 10.5 Plan cascade · 10.6 Personal procedural trades · 11. Prop trades.
+// 10.6 Personal procedural trades · 11. Prop trades.
 // ─────────────────────────────────────────────────────────────────────────────
-
-interface MonthMeta {
-	id: string
-	oneRCents: number
-	tierIndex: number
-	startCents: number
-}
-
-interface LadderTier {
-	minCapitalCents: number
-	maxCapitalCents: number
-	oneRCents: number
-}
-
-const LADDER: LadderTier[] = [
-	{ minCapitalCents: 300_000, maxCapitalCents: 749_999, oneRCents: 10_000 },
-	{ minCapitalCents: 750_000, maxCapitalCents: 1_499_999, oneRCents: 20_000 },
-	{
-		minCapitalCents: 1_500_000,
-		maxCapitalCents: 2_999_999,
-		oneRCents: 30_000,
-	},
-	{
-		minCapitalCents: 3_000_000,
-		maxCapitalCents: 9_999_999,
-		oneRCents: 50_000,
-	},
-	{
-		minCapitalCents: 10_000_000,
-		maxCapitalCents: 99_999_999_999,
-		oneRCents: 100_000,
-	},
-]
-
-const resolveOneR = (
-	capCents: number
-): { tierIndex: number; oneRCents: number } => {
-	for (let i = 0; i < LADDER.length; i++) {
-		const tier = LADDER[i]
-		if (
-			tier &&
-			capCents >= tier.minCapitalCents &&
-			capCents <= tier.maxCapitalCents
-		) {
-			return { tierIndex: i, oneRCents: tier.oneRCents }
-		}
-	}
-	const top = LADDER[LADDER.length - 1]
-	if (!top) {
-		throw new Error("LADDER is empty")
-	}
-	return { tierIndex: LADDER.length - 1, oneRCents: top.oneRCents }
-}
-
-const seedPlanCascade2026 = async (
-	sql: SeedSql,
-	accounts: SeededAccounts
-): Promise<{ monthlyPlanByMonth: Map<number, MonthMeta> }> => {
-	console.log("\n📦 Seeding fractal plan cascade for 2026...")
-
-	// Anchor account lifecycle so reporting + balance chain start Jan 2026.
-	await sql`
-		UPDATE trading_accounts
-		SET starting_balance_cents = 300000,
-		    account_start_year = 2026,
-		    account_start_month = 1,
-		    withdrawal_target_percent = 0
-		WHERE id = ${accounts.personal.id}
-	`
-
-	// Compound start-balance per month (cents). Jan→May ladders R$3k → R$30k.
-	const MONTHLY_START_CENTS = [
-		300_000, 750_000, 1_200_000, 1_800_000, 2_400_000, 3_000_000, 3_000_000,
-		3_000_000, 3_000_000, 3_000_000, 3_000_000, 3_000_000,
-	]
-
-	const [yearlyPlan2026] = (await sql`
-		INSERT INTO yearly_plans (
-			id, account_id, year, initial_capital_cents, ir_tax_rate, trading_days_per_week,
-			ladder_rules, start_week,
-			default_daily_loss_r, default_daily_win_r,
-			default_weekly_loss_r, default_weekly_win_r,
-			default_monthly_loss_r, default_monthly_win_r,
-			notes
-		) VALUES (
-			gen_random_uuid(), ${accounts.personal.id}, 2026, 300000, 30.00, 5,
-			${JSON.stringify(LADDER)}::jsonb, 1,
-			2.0, 4.0, 5.0, 8.0, 10.0, 20.0,
-			'Seeded ladder progression — R$3k Jan → R$30k May 2026'
-		)
-		RETURNING id
-	`) as { id: string }[]
-	if (!yearlyPlan2026) {
-		throw new Error("Failed to seed yearly_plan 2026")
-	}
-
-	const quarterlyIds: string[] = []
-	for (let q = 1; q <= 4; q++) {
-		const [row] = (await sql`
-			INSERT INTO quarterly_plan (id, yearly_plan_id, quarter)
-			VALUES (gen_random_uuid(), ${yearlyPlan2026.id}, ${q})
-			RETURNING id
-		`) as { id: string }[]
-		if (!row) {
-			throw new Error(`Failed to seed quarterly_plan Q${q}`)
-		}
-		quarterlyIds.push(row.id)
-	}
-
-	const monthlyPlanByMonth = new Map<number, MonthMeta>()
-	for (let m = 1; m <= 12; m++) {
-		const startCents = MONTHLY_START_CENTS[m - 1] ?? 300_000
-		const { tierIndex, oneRCents } = resolveOneR(startCents)
-		const qIndex = Math.floor((m - 1) / 3)
-		const quarterlyId = quarterlyIds[qIndex]
-		if (!quarterlyId) {
-			throw new Error(`Missing quarterly_plan for month ${m}`)
-		}
-		const computedAt = new Date(
-			Date.UTC(2026, m - 1, 1, 12, 0, 0)
-		).toISOString()
-		const [row] = (await sql`
-			INSERT INTO monthly_plan (
-				id, quarterly_plan_id, year, month,
-				snapshot_capital_cents, snapshot_one_r_cents, snapshot_tier_index,
-				snapshot_computed_at, snapshot_reason
-			) VALUES (
-				gen_random_uuid(), ${quarterlyId}, 2026, ${m},
-				${startCents}, ${oneRCents}, ${tierIndex},
-				${computedAt}, 'month_start'
-			)
-			RETURNING id
-		`) as { id: string }[]
-		if (!row) {
-			throw new Error(`Failed to seed monthly_plan ${m}`)
-		}
-		monthlyPlanByMonth.set(m, {
-			id: row.id,
-			oneRCents,
-			tierIndex,
-			startCents,
-		})
-	}
-	console.log("✅ Yearly + 4 quarterly + 12 monthly plans seeded")
-
-	return { monthlyPlanByMonth }
-}
 
 interface SeedTrade {
 	asset: "WIN" | "WDO"
