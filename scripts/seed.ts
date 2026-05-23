@@ -3,6 +3,9 @@ import { ADMIN_EMAIL, seedAdminUser } from "./seed/admin-user"
 import { seedAccounts, type SeededAccounts } from "./seed/accounts"
 import { seedAssets } from "./seed/assets"
 import { cleanup } from "./seed/cleanup"
+import { seedTradingConditions } from "./seed/conditions"
+import { seedHawksScenarios } from "./seed/hawks-scenarios"
+import { seedHawksPlaybooks } from "./seed/playbooks-hawks"
 import { calculatePnl, WIN_PER_POINT, WDO_PER_POINT } from "./seed/helpers/pnl"
 import { createPrng, pickFrom } from "./seed/helpers/prng"
 import { closeSeedSql, createSeedSql, type SeedSql } from "./seed/helpers/sql"
@@ -58,6 +61,11 @@ const runSeed = async (): Promise<void> => {
 	const strategyMap = await seedStrategies(sql, accounts)
 	await seedTags(sql, accounts)
 	await seedSettings(sql)
+
+	// Hawks methodology: global scenarios + user-scoped conditions + playbooks.
+	await seedHawksScenarios(sql)
+	const conditionMap = await seedTradingConditions(sql, admin.id)
+	await seedHawksPlaybooks(sql, admin.id, conditionMap)
 
 	const { monthlyPlanByMonth } = await seedPlanCascade2026(sql, accounts)
 	await seedPersonalProceduralTrades(
