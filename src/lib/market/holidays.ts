@@ -1,11 +1,19 @@
 /**
  * B3 and NYSE Holiday Data
  *
- * B3 publishes its annual trading calendar every December/January.
- * NYSE holidays follow a fixed federal schedule.
+ * B3 publishes its annual trading calendar every December/January via a numbered
+ * "OC" circular (e.g. OC 054-2025 covers 2026). Since 2022 B3 trades NORMALLY on
+ * São Paulo state/municipal holidays (Revolução Constitucionalista 09/07,
+ * Aniversário de São Paulo 25/01) — do not add them.
  *
- * Data covers 2025–2026. Update annually when B3 publishes its new calendar.
+ * NYSE holidays follow a fixed federal schedule. 2025-01-09 (National Day of
+ * Mourning for President Carter) is a legitimate one-off closure — keep it.
+ *
+ * Data covers 2025–2026. Update annually when B3 publishes its new OC.
+ * Half-day sessions (Ash Wednesday for B3, day-before-Independence-Day for NYSE)
+ * are intentionally excluded — this module tracks full closures only.
  * @see https://www.b3.com.br/pt_br/solucoes/plataformas/puma-trading-system/para-participantes-e-traders/calendario-de-negociacao/
+ * @see https://www.nyse.com/markets/hours-calendars
  */
 
 interface Holiday {
@@ -29,13 +37,8 @@ const B3_HOLIDAYS: Holiday[] = [
 	{ date: "2025-05-01", name: "Dia do Trabalho", nameEn: "Labour Day" },
 	{ date: "2025-06-19", name: "Corpus Christi", nameEn: "Corpus Christi" },
 	{
-		date: "2025-07-09",
-		name: "Revolução Constitucionalista",
-		nameEn: "Constitutionalist Revolution",
-	},
-	{
 		date: "2025-11-20",
-		name: "Consciência Negra",
+		name: "Dia Nacional de Zumbi e Consciência Negra",
 		nameEn: "Black Awareness Day",
 	},
 	{ date: "2025-12-24", name: "Véspera de Natal", nameEn: "Christmas Eve" },
@@ -54,19 +57,19 @@ const B3_HOLIDAYS: Holiday[] = [
 	{ date: "2026-05-01", name: "Dia do Trabalho", nameEn: "Labour Day" },
 	{ date: "2026-06-04", name: "Corpus Christi", nameEn: "Corpus Christi" },
 	{
-		date: "2026-07-09",
-		name: "Revolução Constitucionalista",
-		nameEn: "Constitutionalist Revolution",
-	},
-	{
 		date: "2026-09-07",
 		name: "Independência do Brasil",
 		nameEn: "Independence Day",
 	},
+	{
+		date: "2026-10-12",
+		name: "Nossa Senhora Aparecida",
+		nameEn: "Our Lady of Aparecida",
+	},
 	{ date: "2026-11-02", name: "Finados", nameEn: "All Souls' Day" },
 	{
 		date: "2026-11-20",
-		name: "Consciência Negra",
+		name: "Dia Nacional de Zumbi e Consciência Negra",
 		nameEn: "Black Awareness Day",
 	},
 	{ date: "2026-12-24", name: "Véspera de Natal", nameEn: "Christmas Eve" },
