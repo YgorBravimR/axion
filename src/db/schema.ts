@@ -2350,6 +2350,52 @@ export const hawksRenkoSizes = pgTable(
 	(table) => [uniqueIndex("hawks_renko_sizes_date_idx").on(table.effectiveDate)]
 )
 
+// ═══════════════════════════════════════════════════════════════════
+// Hawks Weekly OCO — One-Cancels-Other order config per (account, week, asset)
+// ═══════════════════════════════════════════════════════════════════
+
+// One row per (account, ISO week, asset). Derived from hawksRenkoSizes +
+// per-account R/R preferences. effectiveDate = Monday of the ISO week (same
+// anchor as hawksRenkoSizes, so the two tables join cleanly).
+// The trader sets stop_ticks / target_ticks / breakeven_trigger_ticks at the
+// start of each week; trail_config captures box-trail rules (Pedro pattern:
+// trail 2 boxes behind after +3R).
+export const hawksWeeklyOco = pgTable(
+	"hawks_weekly_oco",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		effectiveDate: date("effective_date").notNull(),
+		weekNumber: smallint("week_number").notNull(),
+		asset: varchar("asset", { length: 8 }).notNull(),
+		stopTicks: smallint("stop_ticks").notNull(),
+		targetTicks: smallint("target_ticks").notNull(),
+		breakevenTriggerTicks: smallint("breakeven_trigger_ticks").notNull(),
+		trailConfig: jsonb("trail_config").$type<{
+			mode: "fixed" | "box_trail" | "none"
+			boxesBehind?: number
+			triggerAtR?: number
+		} | null>(),
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("hawks_weekly_oco_account_week_asset_idx").on(
+			table.accountId,
+			table.effectiveDate,
+			table.asset
+		),
+		index("hawks_weekly_oco_effective_date_idx").on(table.effectiveDate),
+	]
+)
+
 // ==========================================
 // RELATIONS
 // ==========================================
@@ -3043,3 +3089,6 @@ export type NewTradeStopAuditEvent = typeof tradeStopAuditEvents.$inferInsert
 
 export type HawksRenkoSize = typeof hawksRenkoSizes.$inferSelect
 export type NewHawksRenkoSize = typeof hawksRenkoSizes.$inferInsert
+
+export type HawksWeeklyOco = typeof hawksWeeklyOco.$inferSelect
+export type NewHawksWeeklyOco = typeof hawksWeeklyOco.$inferInsert
