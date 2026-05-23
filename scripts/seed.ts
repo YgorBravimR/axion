@@ -14,6 +14,7 @@ import { seedStrategies } from "./seed/strategies"
 import { seedTags } from "./seed/tags"
 import { seedTimeframes } from "./seed/timeframes"
 import { seedAtomFundedTrades } from "./seed/trades/atom-funded"
+import { seedBeginnerTrades } from "./seed/trades/beginner"
 import { seedGreenlineTrades } from "./seed/trades/greenline"
 import { seedHawksProTrades } from "./seed/trades/hawks-pro"
 import { seedPersonalTrades } from "./seed/trades/personal"
@@ -38,12 +39,12 @@ import { verify } from "./seed/verify"
  *  12. Hawks playbooks   → scripts/seed/playbooks-hawks.ts (4 strategies + tiered conditions)
  *  13. Plan cascades     → scripts/seed/plans.ts           (6 accounts, 2025+2026)
  *  14. Renko + OCO       → scripts/seed/hawks-renko-oco.ts (Hawks Pro 22 weeks)
- *  15. Personal trades   → scripts/seed/trades/personal.ts (Jan–May 2026)
- *  16. Atom Funded trades→ scripts/seed/trades/atom-funded.ts (Jan 2025 – Mar 2026)
- *  17. Hawks Pro trades  → upcoming commit #7b
- *  18. Greenline trades  → upcoming commit #7c
- *  19. Stop Loss Lab     → upcoming commit #7d
- *  20. Beginner trades   → upcoming commit #7e
+ *  15. Personal trades   → scripts/seed/trades/personal.ts        (Jan–May 2026)
+ *  16. Atom Funded trades→ scripts/seed/trades/atom-funded.ts     (Jan 2025 – Mar 2026)
+ *  17. Hawks Pro trades  → scripts/seed/trades/hawks-pro.ts       (Jan–May 2026 + per-trade Hawks metadata + daily bias)
+ *  18. Greenline trades  → scripts/seed/trades/greenline.ts       (Jan–May 2026, good arc)
+ *  19. Stop Loss Lab     → scripts/seed/trades/stop-loss-lab.ts   (Jan–May 2026, drawdown arc)
+ *  20. Beginner trades   → scripts/seed/trades/beginner.ts        (Jan–Mar 2026, conservative)
  *  21. Verify            → scripts/seed/verify.ts
  *
  * B3 trading hours: 09:00–17:55 São Paulo (12:00–20:55 UTC).
@@ -83,7 +84,7 @@ const runSeed = async (): Promise<void> => {
 	await seedHawksProTrades(sql, accounts, cascades, hawksPlaybooks)
 	await seedGreenlineTrades(sql, accounts, cascades, strategyMap)
 	await seedStopLossLabTrades(sql, accounts, cascades, strategyMap)
-	// Beginner — upcoming commit.
+	await seedBeginnerTrades(sql, accounts, cascades, strategyMap)
 
 	await verify(sql)
 
