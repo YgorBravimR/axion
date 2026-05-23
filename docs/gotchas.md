@@ -311,6 +311,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `src/app/actions/strategy-conditions.ts` (`getCurrentVersionId`); QA session 2026-05-21 on `feat/hawks-mode-v0`.
 - **Date logged**: 2026-05-21.
 
+### Passing explicit `NULL` in a Drizzle/postgres-js template insert defeats `DEFAULT` clauses
+
+- **What**: In `INSERT INTO trading_accounts (..., profit_share_percentage, ...) VALUES (..., ${spec.profitSharePercentage ?? null}, ...)`, the `?? null` falls back to `NULL` when the spec doesn't set the field. PostgreSQL treats this explicit NULL as **the value you want to insert**, NOT as "use the column default" — so the schema's `.default("100.00").notNull()` never fires and the insert blows up with `23502 not_null_violation`. This came up reseeding the dev DB after the 7-account expansion: Personal/Greenline/Beginner all triggered it because only Atom Funded (prop) sets `profitSharePercentage`.
+- **What to do**: When a column has a NOT NULL + DEFAULT in the schema, either (a) omit the column entirely from the INSERT column list (cleanest — lets the default apply), or (b) substitute the literal default in JS instead of `null` (e.g. `?? 100`). Don't rely on `?? null` as a "safe" pass-through; it actively overrides defaults.
+- **Source**: `scripts/seed/accounts.ts:123`; reseed session 2026-05-23.
+- **Date logged**: 2026-05-23.
+
 ---
 
 ## React
