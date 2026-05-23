@@ -6,6 +6,7 @@ import { cleanup } from "./seed/cleanup"
 import { seedTradingConditions } from "./seed/conditions"
 import { seedHawksScenarios } from "./seed/hawks-scenarios"
 import { seedHawksPlaybooks } from "./seed/playbooks-hawks"
+import { seedHawksRenkoAndOco } from "./seed/hawks-renko-oco"
 import { seedPlanCascades, type MonthMeta } from "./seed/plans"
 import { calculatePnl, WIN_PER_POINT, WDO_PER_POINT } from "./seed/helpers/pnl"
 import { createPrng, pickFrom } from "./seed/helpers/prng"
@@ -69,6 +70,7 @@ const runSeed = async (): Promise<void> => {
 	const hawksPlaybooks = await seedHawksPlaybooks(sql, admin.id, conditionMap)
 
 	const cascades = await seedPlanCascades(sql, accounts, hawksPlaybooks)
+	await seedHawksRenkoAndOco(sql, accounts)
 	const personalCascades = cascades.get(accounts.personal.id)
 	const personalMonthly = personalCascades?.[0]?.monthlyByMonth
 	if (!personalMonthly) {
