@@ -294,6 +294,8 @@ export interface DashboardBatchData {
 	streakData: StreakData
 	dailyPnL: DailyPnL[]
 	radarData: RadarChartData[]
+	/** Sum of starting balances across the accounts in scope, in cents. */
+	initialCapitalCents: number
 }
 
 // B3 Trading Session Types

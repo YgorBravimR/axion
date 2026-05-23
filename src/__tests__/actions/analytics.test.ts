@@ -2,18 +2,31 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import type { ActionResponse, OverallStats, DisciplineData } from "@/types"
 
 // Mock dependencies before importing the server action
-vi.mock("@/db/drizzle", () => ({
-	db: {
-		query: {
-			trades: {
-				findMany: vi.fn(),
+vi.mock("@/db/drizzle", () => {
+	// Chainable stub for `db.select(...).from(...).where(...)` — getRadarChartData
+	// now reads starting balances from `tradingAccounts` to anchor the drawdown
+	// axis. Default to an empty result so tests that don't care about capital
+	// continue to pass; tests that exercise drawdown can override the
+	// .where() resolution per-spec.
+	const emptySelectChain = {
+		from: () => ({
+			where: async () => [] as Array<{ startingBalanceCents: number | null }>,
+		}),
+	}
+	return {
+		db: {
+			query: {
+				trades: {
+					findMany: vi.fn(),
+				},
+				settings: {
+					findFirst: vi.fn(),
+				},
 			},
-			settings: {
-				findFirst: vi.fn(),
-			},
+			select: vi.fn(() => emptySelectChain),
 		},
-	},
-}))
+	}
+})
 
 vi.mock("@/app/actions/auth", () => ({
 	requireAuth: vi.fn(),

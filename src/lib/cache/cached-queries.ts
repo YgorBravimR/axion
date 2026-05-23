@@ -15,7 +15,7 @@
 
 import { cacheTag, cacheLife } from "next/cache"
 import { db } from "@/db/drizzle"
-import { trades, settings } from "@/db/schema"
+import { trades, settings, tradingAccounts } from "@/db/schema"
 import { and, asc, desc, eq, gte, lte, inArray } from "drizzle-orm"
 import type {
 	TradeFilters,
@@ -360,16 +360,25 @@ const computeDailyPnLFromTrades = (
 
 /**
  * Compute radar chart data from trades (pure function).
+ *
+ * The trades array MUST be sorted ascending by entry date — drawdown is
+ * path-dependent and the running-equity peak-to-trough scan only makes sense
+ * in chronological order.
+ *
+ * initialCapitalCents anchors the drawdown calculation against the account's
+ * actual starting equity (matches how prop firms in Brazil — Apex, LVL — gate
+ * traders). Pass the sum of starting balances across the accounts in scope.
  */
 const computeRadar = (
-	allTrades: Array<{
+	allTradesAsc: Array<{
 		outcome: string | null
 		pnl: number | string | null
 		realizedRMultiple: string | null
 		followedPlan: boolean | null
-	}>
+	}>,
+	initialCapitalCents: number
 ): RadarChartData[] => {
-	if (allTrades.length === 0) {
+	if (allTradesAsc.length === 0) {
 		return []
 	}
 
@@ -383,7 +392,12 @@ const computeRadar = (
 	let planTradesCount = 0
 	const pnls: number[] = []
 
-	for (const trade of allTrades) {
+	const initialCapital = initialCapitalCents / 100
+	let equity = initialCapital
+	let peakEquity = initialCapital
+	let maxDrawdownPct = 0
+
+	for (const trade of allTradesAsc) {
 		const pnl = fromCents(trade.pnl)
 		pnls.push(pnl)
 
@@ -405,6 +419,18 @@ const computeRadar = (
 				followedPlanCount++
 			}
 		}
+
+		// Peak-to-trough drawdown on the running equity series.
+		equity += pnl
+		if (equity > peakEquity) {
+			peakEquity = equity
+		}
+		if (peakEquity > 0) {
+			const dd = ((peakEquity - equity) / peakEquity) * 100
+			if (dd > maxDrawdownPct) {
+				maxDrawdownPct = dd
+			}
+		}
 	}
 
 	const winRate = calculateWinRate(wins, wins + losses)
@@ -422,6 +448,11 @@ const computeRadar = (
 	const stdDev = Math.sqrt(variance)
 	const cv = mean !== 0 ? stdDev / Math.abs(mean) : 0
 	const consistency = Math.max(0, Math.min(100, 100 - cv * 50))
+
+	// Drawdown is a "lower is better" axis: 0% DD → 100, 10% → 75, 20% → 50,
+	// 30% → 25, 40%+ → 0. The 2.5x slope matches Brazilian prop-firm thresholds
+	// (alert at 20%, urgent at 30%) and keeps the curve linear enough to read.
+	const drawdownScore = Math.max(0, 100 - maxDrawdownPct * 2.5)
 
 	return [
 		{
@@ -441,6 +472,12 @@ const computeRadar = (
 			metricKey: "profitFactor",
 			value: profitFactor,
 			normalized: (profitFactor / 5) * 100,
+		},
+		{
+			metric: "Drawdown",
+			metricKey: "drawdown",
+			value: maxDrawdownPct,
+			normalized: drawdownScore,
 		},
 		{
 			metric: "Discipline",
@@ -478,9 +515,13 @@ const getCachedDashboardData = async (
 	cacheLife("minutes")
 
 	const accountCondition = buildAccountCondition(ctx)
+	const accountIdsInScope = ctx.showAllAccounts
+		? ctx.allAccountIds
+		: [ctx.accountId]
 
-	// 1 DB query: all non-archived trades + 1 for initial balance
-	const [allTrades, accountBalanceSetting] = await Promise.all([
+	// 1 DB query: all non-archived trades + 1 for legacy initial balance setting +
+	// 1 for starting balances of the accounts in scope (used by Capital cards).
+	const [allTrades, accountBalanceSetting, accountRows] = await Promise.all([
 		db.query.trades.findMany({
 			where: and(accountCondition, eq(trades.isArchived, false)),
 			orderBy: [desc(trades.entryDate)],
@@ -488,11 +529,24 @@ const getCachedDashboardData = async (
 		db.query.settings.findFirst({
 			where: eq(settings.key, "account_balance"),
 		}),
+		accountIdsInScope.length > 0
+			? db
+					.select({
+						startingBalanceCents: tradingAccounts.startingBalanceCents,
+					})
+					.from(tradingAccounts)
+					.where(inArray(tradingAccounts.id, accountIdsInScope))
+			: Promise.resolve([] as { startingBalanceCents: number | null }[]),
 	])
 
 	const initialBalance = accountBalanceSetting
 		? Number(accountBalanceSetting.value) || 10000
 		: 10000
+
+	const initialCapitalCents = accountRows.reduce(
+		(sum, r) => sum + (r.startingBalanceCents ?? 0),
+		0
+	)
 
 	// allTrades is sorted desc (newest first) — needed for discipline + streaks
 	const sortedDesc = allTrades
@@ -504,9 +558,17 @@ const getCachedDashboardData = async (
 	const equityCurve = computeEquityCurveFromTrades(sortedAsc, initialBalance)
 	const streakData = computeStreaks(sortedDesc)
 	const dailyPnL = computeDailyPnLFromTrades(sortedAsc, year, monthIndex)
-	const radarData = computeRadar(sortedAsc)
+	const radarData = computeRadar(sortedAsc, initialCapitalCents)
 
-	return { stats, discipline, equityCurve, streakData, dailyPnL, radarData }
+	return {
+		stats,
+		discipline,
+		equityCurve,
+		streakData,
+		dailyPnL,
+		radarData,
+		initialCapitalCents,
+	}
 }
 
 export {
