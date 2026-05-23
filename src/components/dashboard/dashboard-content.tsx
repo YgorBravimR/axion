@@ -10,7 +10,7 @@ import { TradingCalendar } from "./trading-calendar"
 import { EquityCurve } from "./equity-curve"
 import { QuickStats } from "./quick-stats"
 import { DailyPnLBarChart } from "./daily-pnl-bar-chart"
-import { PerformanceRadarChart } from "./performance-radar-chart"
+import { AxionScoreCard } from "./axion-score-card"
 import { DayDetailModal } from "./day-detail-modal"
 import { LoadingSpinner, ModeVariant } from "@/components/shared"
 import {
@@ -52,6 +52,12 @@ interface DashboardContentProps {
 	initialYear: number
 	initialMonthIndex: number
 	initialHawksContext?: HawksCoachingResult | null
+	/**
+	 * Sum of starting balances across the accounts in scope, in cents.
+	 * Stays bound to the initial all-time view — does NOT follow the
+	 * period toggle, so the Capital cards stay stable across Month/Year/AllTime.
+	 */
+	initialCapitalCents: number
 }
 
 /** Compute dateFrom/dateTo for a given dashboard period */
@@ -122,6 +128,7 @@ export const DashboardContent = ({
 	initialYear,
 	initialMonthIndex,
 	initialHawksContext,
+	initialCapitalCents,
 }: DashboardContentProps) => {
 	const effectiveDate = useEffectiveDate()
 	const { canAccess } = useFeatureAccess()
@@ -285,11 +292,11 @@ export const DashboardContent = ({
 	)
 
 	return (
-		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 flex flex-col">
 			{/* Period Toggle + Strategy Filter + Loading */}
 			<div
 				id="dashboard-toolbar"
-				className="gap-m-400 flex flex-wrap items-center md:col-span-2 lg:col-span-3"
+				className="gap-m-400 flex flex-wrap items-center"
 			>
 				<PeriodToggle
 					period={period}
@@ -304,50 +311,57 @@ export const DashboardContent = ({
 				{isPeriodLoading && <LoadingSpinner size="sm" />}
 			</div>
 
-			{/* KPI Cards */}
-			<div id="dashboard-kpi-cards" className="md:col-span-2 lg:col-span-3">
-				<KpiCards stats={stats} discipline={discipline} />
-			</div>
-
-			{/* Coaching Insights — trader+ only; Hawks mode swaps in its variant via ModeVariant */}
-			{canAccess("dashboard:coaching-insights") && (
-				<div id="dashboard-coaching" className="md:col-span-2 lg:col-span-3">
-					<ModeVariant
-						default={<CoachingInsightsCard />}
-						variants={coachingVariants}
-					/>
-				</div>
-			)}
-
-			{/* Calendar */}
-			<div id="dashboard-calendar" className="md:col-span-1 lg:col-span-2">
-				<TradingCalendar
-					data={dailyPnL}
-					month={currentMonth}
-					onMonthChange={handleMonthChange}
-					onDayClick={handleDayClick}
-					isLoading={isCalendarLoading}
+			{/* KPI Cards — dense single-row strip */}
+			<div id="dashboard-kpi-cards">
+				<KpiCards
+					stats={stats}
+					discipline={discipline}
+					initialCapitalCents={initialCapitalCents}
+					allTimeNetPnl={initialStats?.netPnl ?? 0}
+					equityCurve={initialEquityCurve}
 				/>
 			</div>
 
-			{/* Quick Stats */}
-			<div id="dashboard-quick-stats" className="md:col-span-1 lg:col-span-1">
-				<QuickStats streakData={streakData} stats={stats} />
-			</div>
+			{/* Two-column masonry: left column stacks the big visuals, right column
+			    stacks coaching + performance + quick stats. Each column flows
+			    independently so item heights don't have to align row-by-row. */}
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 lg:grid-cols-3">
+				{/* Left column (col-span-2) */}
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 flex flex-col lg:col-span-2">
+					<div id="dashboard-calendar">
+						<TradingCalendar
+							data={dailyPnL}
+							month={currentMonth}
+							onMonthChange={handleMonthChange}
+							onDayClick={handleDayClick}
+							isLoading={isCalendarLoading}
+						/>
+					</div>
+					<div id="dashboard-equity-curve">
+						<EquityCurve data={equityCurve} calendarMonth={currentMonth} />
+					</div>
+					<div id="dashboard-daily-pnl">
+						<DailyPnLBarChart data={dailyPnL} onDayClick={handleDayClick} />
+					</div>
+				</div>
 
-			{/* Daily P&L Bar Chart */}
-			<div id="dashboard-daily-pnl" className="md:col-span-2 lg:col-span-2">
-				<DailyPnLBarChart data={dailyPnL} onDayClick={handleDayClick} />
-			</div>
-
-			{/* Performance Radar */}
-			<div id="dashboard-radar" className="md:col-span-2 lg:col-span-1">
-				<PerformanceRadarChart data={radarData} />
-			</div>
-
-			{/* Equity Curve */}
-			<div id="dashboard-equity-curve" className="md:col-span-2 lg:col-span-3">
-				<EquityCurve data={equityCurve} calendarMonth={currentMonth} />
+				{/* Right column (col-span-1) */}
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 flex flex-col lg:col-span-1">
+					{canAccess("dashboard:coaching-insights") && (
+						<div id="dashboard-coaching">
+							<ModeVariant
+								default={<CoachingInsightsCard />}
+								variants={coachingVariants}
+							/>
+						</div>
+					)}
+					<div id="dashboard-axion-score">
+						<AxionScoreCard data={radarData} />
+					</div>
+					<div id="dashboard-quick-stats">
+						<QuickStats streakData={streakData} stats={stats} />
+					</div>
+				</div>
 			</div>
 
 			{/* Day Detail Modal */}
