@@ -14,6 +14,7 @@ import { seedStrategies } from "./seed/strategies"
 import { seedTags } from "./seed/tags"
 import { seedTimeframes } from "./seed/timeframes"
 import { seedAtomFundedTrades } from "./seed/trades/atom-funded"
+import { seedGreenlineTrades } from "./seed/trades/greenline"
 import { seedHawksProTrades } from "./seed/trades/hawks-pro"
 import { seedPersonalTrades } from "./seed/trades/personal"
 import { verify } from "./seed/verify"
@@ -79,7 +80,8 @@ const runSeed = async (): Promise<void> => {
 	await seedPersonalTrades(sql, accounts, cascades, strategyMap)
 	await seedAtomFundedTrades(sql, accounts, cascades, strategyMap)
 	await seedHawksProTrades(sql, accounts, cascades, hawksPlaybooks)
-	// Greenline / Stop Loss Lab / Beginner — upcoming commits.
+	await seedGreenlineTrades(sql, accounts, cascades, strategyMap)
+	// Stop Loss Lab / Beginner — upcoming commits.
 
 	await verify(sql)
 
