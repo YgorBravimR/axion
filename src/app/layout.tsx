@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import type { Metadata } from "next"
 import { Public_Sans, Geist_Mono } from "next/font/google"
+import { AccountTransitionScript } from "@/components/providers/account-transition-script"
 import "./globals.css"
 
 const publicSans = Public_Sans({
@@ -34,6 +35,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 			<body
 				className={`${publicSans.variable} ${geistMono.variable} font-sans antialiased`}
 			>
+				<AccountTransitionScript />
 				{children}
 			</body>
 		</html>

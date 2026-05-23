@@ -122,7 +122,7 @@ const QuarterMonthCard = async ({
 						<dd>
 							<div className="bg-bg-100 h-1 w-full overflow-hidden rounded-full">
 								<div
-									className="bg-guide h-full rounded-full"
+									className="bg-proj h-full rounded-full"
 									style={{ width: `${Math.min(100, Math.max(0, hitPct))}%` }}
 									aria-hidden="true"
 								/>

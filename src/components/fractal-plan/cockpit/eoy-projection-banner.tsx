@@ -86,17 +86,17 @@ const EoyProjectionBanner = async ({
 			</div>
 
 			<div className="gap-s-300 flex items-start">
-				<div className="bg-guide/15 p-s-200 rounded-md">
-					<Sparkles className="text-guide h-4 w-4" aria-hidden="true" />
+				<div className="bg-proj/15 p-s-200 rounded-md">
+					<Sparkles className="text-proj h-4 w-4" aria-hidden="true" />
 				</div>
 				<div>
 					<p className="text-tiny text-txt-300 tracking-wide uppercase">
 						{t("eoyProjectionLabel")}
 					</p>
-					<p className="text-h3 text-guide font-mono italic tabular-nums">
+					<p className="text-h3 text-proj font-mono italic tabular-nums">
 						{formatBRL(projectedEoyBalanceCents)}
 					</p>
-					<p className="text-tiny text-guide/80 font-mono italic tabular-nums">
+					<p className="text-tiny text-proj/80 font-mono italic tabular-nums">
 						{t("eoyRentNote", { pct: totalRentFromCapital.toFixed(1) })}
 					</p>
 				</div>

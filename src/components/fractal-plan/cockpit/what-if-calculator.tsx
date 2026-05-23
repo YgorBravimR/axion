@@ -71,7 +71,7 @@ const WhatIfCalculator = ({ oneRCents, assets }: WhatIfCalculatorProps) => {
 			className="border-bg-300 bg-bg-100 p-m-400 rounded-md border"
 		>
 			<header className="gap-s-200 flex items-center">
-				<Calculator className="text-guide size-3.5" />
+				<Calculator className="text-proj size-3.5" />
 				<h3 className="text-small text-txt-100 font-medium">{t("heading")}</h3>
 				<span className="text-tiny text-txt-300 ml-auto font-mono">
 					1R = {formatBRL(oneRCents)}

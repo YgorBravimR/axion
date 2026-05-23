@@ -1416,7 +1416,11 @@
 			"w": "W",
 			"l": "L",
 			"be": "BE",
-			"avg": "Avg"
+			"avg": "Avg",
+			"capitalInicial": "Starting Capital",
+			"capitalAtual": "Current Capital",
+			"capital": "Capital",
+			"capitalInicialShort": "Start"
 		},
 		"calendar": {
 			"title": "Trading Calendar",
@@ -1476,9 +1480,21 @@
 			"winRate": "Win Rate",
 			"avgR": "Avg R",
 			"profitFactor": "Profit Factor",
+			"drawdown": "Drawdown",
 			"discipline": "Discipline",
 			"consistency": "Consistency",
 			"normalized": "Normalized"
+		},
+		"axionScore": {
+			"title": "Axion Score",
+			"subtitle": "Performance Analysis",
+			"tier": {
+				"elite": "Elite",
+				"forte": "Strong",
+				"solido": "Solid",
+				"building": "Building",
+				"attention": "Attention"
+			}
 		},
 		"dayDetail": {
 			"netPnl": "Net P&L",
