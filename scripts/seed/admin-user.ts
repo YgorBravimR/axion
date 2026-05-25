@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs"
 import type { SeedSql } from "./helpers/sql"
 
-export const ADMIN_EMAIL = "admin@axion.com"
+export const ADMIN_EMAIL = "admin@bravo.com"
 const SALT_ROUNDS = 12
 
 const requireAdminPassword = (): string => {

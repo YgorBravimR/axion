@@ -4,7 +4,7 @@ import { neon } from "@neondatabase/serverless"
 import postgres from "postgres"
 import { isNeonUrl } from "@/db/url"
 
-const ADMIN_EMAIL = "admin@axion.com"
+const ADMIN_EMAIL = "admin@bravo.com"
 const ASSET_SYMBOL = "WIN"
 
 // Per-file mapping from CSV column index → JSONB indicator key. The 60m file

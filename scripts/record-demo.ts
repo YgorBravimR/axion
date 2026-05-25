@@ -17,7 +17,7 @@ const CONFIG = {
 	baseUrl: "http://localhost:3003",
 	locale: "pt-BR",
 	credentials: {
-		email: "admin@axion.com",
+		email: "admin@bravo.com",
 		password: "Admin123!",
 	},
 	accountName: "T100",

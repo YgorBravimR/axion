@@ -18,7 +18,7 @@
  * Prerequisites:
  *   - The dev server must be running on localhost:3003 (managed by Playwright)
  *   - DATABASE_URL must be set in the environment (used by reset helpers)
- *   - The seed user "admin@axion.com" / "Admin123!" must exist and be
+ *   - The seed user "admin@bravo.com" / "Admin123!" must exist and be
  *     email-verified (created by scripts/seed.ts)
  *
  * Note on rate-limit isolation: each describe block that triggers failed logins
@@ -36,7 +36,7 @@ import { resetRateLimitsForEmail } from "../utils/reset-rate-limits"
 
 /** Verified seed user — can always log in successfully */
 const VERIFIED_USER = {
-	email: "admin@axion.com",
+	email: "admin@bravo.com",
 	password: "Admin123!",
 }
 

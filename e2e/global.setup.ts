@@ -2,7 +2,7 @@ import { test as setup, expect } from "@playwright/test"
 
 // Use the admin user from seed.ts for full access to all features
 const TEST_USER = {
-	email: "admin@axion.com",
+	email: "admin@bravo.com",
 	password: "Admin123!",
 }
 
@@ -21,13 +21,24 @@ setup("authenticate", async ({ page }) => {
 	// 2. Account selection UI appears (multi-account) - this stays on /login page
 	// 3. Error message
 	const result = await Promise.race([
-		page.waitForURL(/\/(en|pt-BR)\/?$/, { timeout: 30000 }).then(() => "dashboard"),
-		page.getByText("Select Account").waitFor({ timeout: 30000 }).then(() => "select-account"),
-		page.locator("text=/Invalid|Error/i").waitFor({ timeout: 30000 }).then(() => "error"),
+		page
+			.waitForURL(/\/(en|pt-BR)\/?$/, { timeout: 30000 })
+			.then(() => "dashboard"),
+		page
+			.getByText("Select Account")
+			.waitFor({ timeout: 30000 })
+			.then(() => "select-account"),
+		page
+			.locator("text=/Invalid|Error/i")
+			.waitFor({ timeout: 30000 })
+			.then(() => "error"),
 	]).catch(() => "timeout")
 
 	if (result === "error") {
-		const errorText = await page.locator("text=/Invalid|Error/i").textContent().catch(() => "Unknown error")
+		const errorText = await page
+			.locator("text=/Invalid|Error/i")
+			.textContent()
+			.catch(() => "Unknown error")
 		throw new Error(`Login failed: ${errorText}`)
 	}
 
@@ -47,7 +58,9 @@ setup("authenticate", async ({ page }) => {
 	}
 
 	// Verify we're on the dashboard (no heading — verify via sidebar active link or metric cards)
-	await expect(page.getByText(/Gross P&L|Net P&L|Trading Calendar/i).first()).toBeVisible({ timeout: 30000 })
+	await expect(
+		page.getByText(/Gross P&L|Net P&L|Trading Calendar/i).first()
+	).toBeVisible({ timeout: 30000 })
 
 	// Save authentication state
 	await page.context().storageState({ path: "e2e/.auth/user.json" })
