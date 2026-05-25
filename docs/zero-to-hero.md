@@ -22,6 +22,22 @@ A trader who completes Stages 0–3 once and then runs Stages 4–7 on cadence i
 
 ---
 
+## Running example — Hawks methodology
+
+Wherever this guide references "your strategy", "a playbook", or "a preset", we use **Hawks** as the running example. Hawks is Axion's first structured methodology — the proof-of-concept for the methodology-aware operating system (see [`feature-manifesto-2026-05.md`](feature-manifesto-2026-05.md) §5). The shape of every step is the same for ORB, DezK, or any methodology that lands later — substitute the name when the time comes.
+
+If you trade your own undocumented setups (no mentor, no curriculum), substitute "Your Setup" wherever you read "Hawks". The Playbook + scorecard + compliance model still applies — Hawks is just the first one with a name.
+
+Shipped Hawks-specific surfaces (verified in the feature manifesto):
+
+- **Command Center**: Hawks pre-flight switches, Hawks scorecard, B3 cap card.
+- **Journal**: Hawks sidecar fields on trade entry.
+- **Backtest**: Hawks preset (`hawks_v0`, engine v0.2+).
+- **Settings**: Hawks CSV import for back-loading prior trades.
+- **Dashboard**: Hawks-flavored coaching insights card.
+
+---
+
 ## Stage 0 — Welcome (Day 1, ~5 minutes)
 
 ### Why this stage exists
@@ -97,17 +113,17 @@ For accurate tax math, configure broker fees per account and per asset class —
 
 Set display name, brand/theme, and any preference toggles.
 
-### Build at least one Strategy in the Playbook
+### Build the Hawks playbook
 
-Now switch from Settings to the **Strategy Playbook** and create your first strategy:
+Now switch from Settings to the **Strategy Playbook** and create the Hawks playbook:
 
-1. Click **New Strategy**.
-2. Write down the entry criteria, exit criteria, and any contextual conditions (which timeframes, which assets, which market sessions).
-3. Add screenshots of the setup.
-4. Tag conditions as **mandatory** (must be present to take the trade) or **optional** (improves the setup but not required).
-5. (Optional) Add **scenarios** — variations of the strategy for different market regimes (trending, ranging, news days).
+1. Click **New Strategy**. Name it **Hawks**.
+2. Enter the Hawks entry criteria, exit criteria, and contextual conditions — the timeframes Hawks operates on, the assets it's valid for, the market sessions it's active in. Pull these from your Hawks curriculum / mentor spec.
+3. Add Hawks setup screenshots — the canonical "what this setup looks like" reference images from the curriculum.
+4. Tag each condition as **mandatory** (must be present to take a Hawks trade) or **optional** (improves the setup but not required). This is what powers per-trade compliance scoring later.
+5. (Optional) Add **scenarios** — Hawks variants for different market regimes (trending day, ranging day, news/event day).
 
-You'll need at least one documented strategy before you can link trades to it, before compliance tracking has anything to compare against, and before backtests have anything to validate.
+You'll need this playbook in place before you can link trades to it, before compliance tracking has anything to compare against, and before backtests have anything to validate. Hawks is the first methodology Axion treats as first-class — the Playbook detail page is being redesigned (per the manifesto) to make this gravity explicit.
 
 ### What you have at the end
 
@@ -176,9 +192,9 @@ A trader who skips this stage will discover their plan's flaws with real money. 
 
 ### What to do
 
-#### 1. Backtest your playbook strategies
+#### 1. Backtest the Hawks playbook
 
-Open **Backtest** and load your strategy as a preset (or assemble it from the entry, stop, target, and sizing modules — ORB breakout, MACD/WMA alignment for DezK, trailing stop, fixed targets, etc.). Run it on historical candle data.
+Open **Backtest** and load the **Hawks preset** (`hawks_v0` — engine v0.2 or later; see backlog P1 #76 for the engine-version badge that surfaces version provenance in the UI). For methodologies without a preset yet, assemble from the entry, stop, target, and sizing modules — e.g., ORB breakout, MACD/WMA alignment for DezK, trailing stop, fixed targets. Run on historical candle data.
 
 The backtest produces:
 
@@ -255,28 +271,31 @@ This is what you actually do every day. It's the loop the rest of the platform w
 2. Set today's **bias** — bullish, bearish, or neutral. Commit before the market opens, then check at end of day whether the bias was right.
 3. Set your **mood** — honest emotional check-in.
 4. Run through your **daily checklist** — chart prep, news scan, calendar check, anything else you've defined as your pre-market routine.
-5. Write **pre-market notes** — context, key levels, news catalysts, "today I want to focus on X strategy."
-6. Open the **Strategy Playbook** in another tab and re-read the setups you plan to trade.
-7. Check the **Market Monitor** for real-time quotes, B3 calendar status (is today a partial-session day?), and high-impact economic events.
+5. Write **pre-market notes** — context, key levels, news catalysts, today's Hawks focus (which mandatory conditions you expect to see).
+6. Run the **Hawks pre-flight switches** in the Command Center (the methodology-specific panel). These are the day-start gates Hawks requires — daily bias aligned, volatility regime acceptable, B3 cap card status. If any pre-flight gate fails, today is a no-trade day. Honor it.
+7. Open the **Strategy Playbook** in another tab and re-read the Hawks mandatory conditions list — this is the gate on whether any intraday setup qualifies.
+8. Check the **Market Monitor** for real-time quotes, B3 calendar status (is today a partial-session day?), and high-impact economic events.
 
 #### During the live session (continuous)
 
-8. Use the **Live Trading Status Panel** in the Command Center to see market open/closed status, your current position state, and live session P&L.
-9. Watch the **Asset Rules Panel** for per-asset constraints you defined (e.g., "no overnight in WIN", "max 3 contracts on WDO").
-10. Before every trade, use the **Position Calculator** (accessible from any page) to confirm your lot size against your active risk profile.
-11. As trades fill, **log them to the Journal** — either immediately (manual entry with executions) or in batch at end of day via CSV/nota import.
-12. If you hit your daily loss limit, the **Circuit Breaker Panel** automatically locks new trade entry. Honor the lock; don't override it.
+9. Use the **Live Trading Status Panel** in the Command Center to see market open/closed status, your current position state, and live session P&L.
+10. Watch the **Asset Rules Panel** for per-asset constraints you defined (e.g., "no overnight in WIN", "max 3 contracts on WDO").
+11. Watch the **Hawks scorecard** in the Command Center — it surfaces how the current session is grading against the playbook in real time. Use it to decide whether the next setup qualifies.
+12. Before every trade, use the **Position Calculator** (accessible from any page) to confirm your lot size against your active risk profile.
+13. As trades fill, **log them to the Journal** — either immediately (manual entry with executions) or in batch at end of day via CSV/nota import. Tag the trade against Hawks with its mandatory-conditions-met state.
+14. If you hit your daily loss limit, the **Circuit Breaker Panel** automatically locks new trade entry. Honor the lock; don't override it.
 
 #### Post-market (after market close, ~20 minutes)
 
-13. Finish logging any trades you didn't log live. Three import paths if you didn't enter manually:
+15. Finish logging any trades you didn't log live. Import paths if you didn't enter manually:
     - **CSV import** for broker statements (Clear, XP, Genial).
     - **Brokerage nota import** for Sinacor-format Brazilian notas.
+    - **Hawks CSV import** (Settings → Hawks CSV) for back-loading prior Hawks-tagged trades.
     - **OCR import** for screenshots — Tesseract for offline, OpenAI Vision for richer extraction.
-14. For each trade, **tag setups and mistakes** honestly. Link the trade to a strategy from the playbook.
-15. Open each trade's **detail view** for the full autopsy: planned vs realized R, MFE (max favorable excursion), MAE (max adverse excursion). Write a narrative log entry — what happened, what you thought, what you'd do differently.
-16. Write **post-market notes** in the Command Center — one or two sentences on the session.
-17. Check the **Daily Summary Card** — end-of-day snapshot.
+16. For each trade, **tag setups and mistakes** honestly. Link the trade to the Hawks playbook (or whichever playbook applied). Fill in any **Hawks sidecar fields** the journal entry exposes — methodology-specific data the analytics layer reads later.
+17. Open each trade's **detail view** for the full autopsy: planned vs realized R, MFE (max favorable excursion), MAE (max adverse excursion), and the **Hawks compliance score** (how many mandatory conditions were actually present at entry). Write a narrative log entry — what happened, what you thought, what you'd do differently.
+18. Write **post-market notes** in the Command Center — one or two sentences on the session.
+19. Check the **Daily Summary Card** — end-of-day snapshot. Pay attention to the **Hawks coaching insights** card on the Dashboard — it surfaces methodology-aware patterns the canonical analytics view doesn't make obvious.
 
 ### What you have at the end of each day
 

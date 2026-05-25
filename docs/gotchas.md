@@ -38,6 +38,41 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ---
 
+## Drizzle ORM / Database Drivers
+
+### Neon HTTP driver lacks transaction support; postgres-js fallback masks the limitation
+
+- **What**: `drizzle-orm/neon-http` is the Neon driver for stateless HTTPS clients. It does NOT support `db.transaction(async (tx) => { /* multi-statement ops */ })`. Any call to `db.transaction()` throws `Error: No transactions support in neon-http driver`. The postgres-js driver (used for local worktrees) _does_ support transactions, so the bug never surfaces during development.
+- **Symptom**: A feature works perfectly in local dev and CI (postgres-js), but breaks silently in production (neon-http). The error is caught and swallowed internally (e.g., in a try-catch that returns a structured error response), so users see no crash — just a dead feature. Example: strategy creation fails with no visible error.
+- **Call sites**: Any server action or route handler that uses `await db.transaction(...)`. Audit these before deploying a `neon-http`-backed application.
+- **What to do**: Swap to `drizzle-orm/neon-serverless` (WebSocket-backed, stateful, full transaction support). Both drivers point to the same Neon URL. See `src/db/drizzle.ts` for the pattern: configure `neonConfig.webSocketConstructor = ws` for Node runtime, then use `drizzle(..., { schema })` as usual.
+- **Root issue**: Neon's HTTP client is designed for edge functions (low latency, no connection state). Transactions require a persistent connection; use the serverless driver instead.
+- **Source**: `[BUG-2026-05-25-3]` in `docs/postMorten/backend.md`.
+
+---
+
+## NextAuth / JWT Sessions
+
+### Parallel `auth()` calls corrupt JWT cookie under `strategy: "jwt"`
+
+- **What**: With NextAuth `strategy: "jwt"` and default `maxAge`, multiple concurrent server actions that each call `auth()` (e.g., via `requireAuth()`) can prepare overlapping `Set-Cookie` headers. The browser writes the last one, potentially corrupting the JWT (missing fields, bad signature). On the next request, the Edge middleware tries to decode the corrupted JWT, gets `auth.user = null`, and redirects to login.
+- **Symptom**: User performs an action that triggers N concurrent server actions (e.g., a settings save with `Promise.allSettled`). Within 20–30 seconds (after page navigation), they're redirected to `/login?callbackUrl=...` even though the session cookie is still in DevTools.
+- **Why it's late**: The browser doesn't validate JWT locally. The corruption isn't detected until the Edge middleware tries to decode the cookie on the next request.
+- **What to do**: Serialize actions that call `auth()` — use a `for-of` loop instead of `Promise.allSettled`. The UX cost (slightly longer save) is negligible; the correctness cost (session corruption) is high. See `src/components/settings/settings-save-bar.tsx` for the pattern.
+- **Root issue**: NextAuth does not make concurrent `Set-Cookie` writes idempotent. Overlapping headers can corrupt the payload.
+- **Source**: `[BUG-2026-05-25-2]` in `docs/postMorten/backend.md`.
+- **Date logged**: 2026-05-25.
+
+### `requireAuth()` + `cache()` in parallel server actions: session state isolation
+
+- **What**: `src/app/actions/auth.ts:349` defines `requireAuth = cache(async () => auth()...)`. React's `cache()` is request-scoped. If you call `requireAuth()` from two parallel server actions in the same request, both hits use the **same cached result**. If one action mutates session state (e.g., via `auth.user.accountId = X`), the mutation leaks to the other.
+- **Symptom**: Rarely hit in practice (requires mutation of `auth` object, which is not expected), but the gotcha is: cached result !== race-safe result.
+- **What to do**: Don't mutate the result of `requireAuth()`. If you need to mutate session state, use `updateSession()` from `next-auth/react` (client-only) or set a session cookie explicitly (server-only, complex). Safe parallel access to read-only `userId` / `accountId` is fine.
+- **Source**: React `cache()` docs + NextAuth session architecture.
+- **Date logged**: 2026-05-25.
+
+---
+
 ## Next.js / App Router
 
 ### `cookies()` / `headers()` / `draftMode()` are banned in pages

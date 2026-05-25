@@ -440,10 +440,12 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		})
 	}
 
-	const currentOneRCents =
+	const currentTierResolution =
 		ladderRules.length > 0
-			? resolveTier(initialCapitalCents, ladderRules).oneRCents
-			: 0
+			? resolveTier(initialCapitalCents, ladderRules)
+			: null
+	const currentOneRCents = currentTierResolution?.oneRCents ?? 0
+	const currentTierIndex = currentTierResolution?.tierIndex ?? null
 
 	if (!row) {
 		return (
@@ -466,6 +468,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					defaultInitialCapitalCents={defaultInitialCapitalCents}
 					currentOneRCents={currentOneRCents}
 					availableAssets={availableAssets}
+					activeTierIndex={currentTierIndex}
 				/>
 				<PlanSection
 					title={t("yearPage.notCreatedTitle", { year })}

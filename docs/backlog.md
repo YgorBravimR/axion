@@ -41,6 +41,16 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
+## Schema / Data Model
+
+### Migrate `tradingAccounts.defaultAsset` from symbol string to FK on `assets.id`
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-05-25 — backend post-mortem `[BUG-2026-05-25-1]` (`docs/postMorten/backend.md`). Saving Settings → Conta blew up with `validation.account.invalidAssetId` because the validator required a UUID but the column is `varchar(20)` storing a symbol; symptom fixed in the validator, root model debt remains.
+- **What + Why**: Replace `defaultAsset varchar(20)` with `defaultAssetId uuid references assets(id)`. Symbols can collide across markets (BR `WIN` vs. a hypothetical US `WIN`), are mutable, and force every consumer to do `assets.find((a) => a.symbol === ...)` instead of a typed join. Migration plan: add new nullable column, backfill from the symbol via `assets.symbol` lookup scoped to user account, swap consumers, drop the old column. Update `account.defaultAsset` validator back to `.uuid(...)` afterwards and bring back the `invalidAssetId` i18n key.
+- **Date filed**: 2026-05-25.
+
 ## E2E / Test Infrastructure
 
 ### Replace remaining `ScrollArea` usages inside modals (React 19 crash risk)

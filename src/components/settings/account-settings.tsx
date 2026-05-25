@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, useMemo } from "react"
+import { useState, useTransition, useEffect, useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -44,14 +44,51 @@ import {
 	deleteAccount,
 	deleteAllTradingData,
 } from "@/app/actions/accounts"
-import { Loader2, Trash2, DatabaseZap } from "lucide-react"
+import { Loader2, Trash2, DatabaseZap, RotateCcw } from "lucide-react"
 import { FeeRateForm } from "@/components/tax"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
-import type { TradingAccount, AccountAsset, Asset } from "@/db/schema"
+import type { TradingAccount, Asset } from "@/db/schema"
+import { useRegisterSettingsSection } from "./settings-save-bar"
+import { SettingsField } from "./settings-field"
 
 interface AccountSettingsProps {
 	assets: Array<Asset & { assetType?: { code: string; name: string } | null }>
 }
+
+interface AccountForm {
+	name: string
+	accountType: "personal" | "prop"
+	propFirmName: string
+	profitSharePercentage: string
+	defaultBreakevenTicks: string
+	defaultAsset: string
+}
+
+const EMPTY_FORM: AccountForm = {
+	name: "",
+	accountType: "personal",
+	propFirmName: "",
+	profitSharePercentage: "100",
+	defaultBreakevenTicks: "2",
+	defaultAsset: "",
+}
+
+const accountToForm = (account: TradingAccount): AccountForm => ({
+	name: account.name,
+	accountType: account.accountType,
+	propFirmName: account.propFirmName || "",
+	profitSharePercentage: account.profitSharePercentage,
+	defaultBreakevenTicks: account.defaultBreakevenTicks.toString(),
+	defaultAsset: account.defaultAsset || "",
+})
+
+const formsEqual = (a: AccountForm, b: AccountForm) =>
+	a.name === b.name &&
+	a.accountType === b.accountType &&
+	a.propFirmName === b.propFirmName &&
+	a.profitSharePercentage === b.profitSharePercentage &&
+	a.defaultBreakevenTicks === b.defaultBreakevenTicks &&
+	a.defaultAsset === b.defaultAsset
 
 const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const t = useTranslations("settings.account")
@@ -66,29 +103,22 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const [isPending, startTransition] = useTransition()
 	const [isLoading, setIsLoading] = useState(true)
 	const [account, setAccount] = useState<TradingAccount | null>(null)
-	const [accountAssets, setAccountAssets] = useState<AccountAsset[]>([])
 	const [userAccounts, setUserAccounts] = useState<TradingAccount[]>([])
 	const [deleteConfirmName, setDeleteConfirmName] = useState("")
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 	const [deleteDataConfirmName, setDeleteDataConfirmName] = useState("")
 	const [isDeleteDataDialogOpen, setIsDeleteDataDialogOpen] = useState(false)
 
-	// Account editing
-	const [isEditingAccount, setIsEditingAccount] = useState(false)
-	const [accountForm, setAccountForm] = useState({
-		name: "",
-		accountType: "personal" as "personal" | "prop",
-		propFirmName: "",
-		profitSharePercentage: "100",
-		defaultBreakevenTicks: "2",
-		defaultAsset: "" as string,
-	})
+	// Account form — saved snapshot vs current draft (no edit-mode toggle)
+	const [savedForm, setSavedForm] = useState<AccountForm>(EMPTY_FORM)
+	const [accountForm, setAccountForm] = useState<AccountForm>(EMPTY_FORM)
 
-	// Asset breakeven ticks editing
-	const [editingAssetId, setEditingAssetId] = useState<string | null>(null)
-	const [assetBreakevenForm, setAssetBreakevenForm] = useState({
-		breakevenTicks: "",
-	})
+	// Per-asset breakeven overrides — string form values keyed by assetId.
+	// Empty string = inherit account default; non-empty = override.
+	const [savedAssetForms, setSavedAssetForms] = useState<
+		Record<string, string>
+	>({})
+	const [assetForms, setAssetForms] = useState<Record<string, string>>({})
 
 	useEffect(() => {
 		let mounted = true
@@ -104,21 +134,26 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				}
 				setAccount(accountData)
 				setUserAccounts(allAccounts)
-				if (assetsResult.status === "success" && assetsResult.data) {
-					// Extract the base AccountAsset data from AccountAssetWithDetails
-					setAccountAssets(
-						assetsResult.data.map(({ asset: _asset, ...rest }) => rest)
-					)
+
+				const baseAssets =
+					assetsResult.status === "success" && assetsResult.data
+						? assetsResult.data
+						: []
+
+				const initialAssetForms: Record<string, string> = {}
+				for (const aa of baseAssets) {
+					initialAssetForms[aa.assetId] =
+						aa.breakevenTicksOverride != null
+							? aa.breakevenTicksOverride.toString()
+							: ""
 				}
+				setSavedAssetForms(initialAssetForms)
+				setAssetForms(initialAssetForms)
+
 				if (accountData) {
-					setAccountForm({
-						name: accountData.name,
-						accountType: accountData.accountType,
-						propFirmName: accountData.propFirmName || "",
-						profitSharePercentage: accountData.profitSharePercentage,
-						defaultBreakevenTicks: accountData.defaultBreakevenTicks.toString(),
-						defaultAsset: accountData.defaultAsset || "",
-					})
+					const form = accountToForm(accountData)
+					setSavedForm(form)
+					setAccountForm(form)
 				}
 			} finally {
 				if (mounted) {
@@ -132,132 +167,108 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		}
 	}, [])
 
-	const handleSaveAccount = () => {
+	// --- Account info section --------------------------------------------------
+
+	const accountInfoDirty = !formsEqual(accountForm, savedForm)
+
+	const saveAccountInfo = useCallback(async () => {
 		if (!account) {
 			return
 		}
-
-		startTransition(async () => {
-			const result = await updateAccount(account.id, {
-				name: accountForm.name,
-				accountType: accountForm.accountType,
-				propFirmName:
-					accountForm.accountType === "prop"
-						? accountForm.propFirmName
-						: undefined,
-				profitSharePercentage:
-					parseFloat(accountForm.profitSharePercentage) || 100,
-				defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
-				defaultAsset: accountForm.defaultAsset || null,
-			})
-			if (result.status === "success" && result.data) {
-				setAccount(result.data)
-				setIsEditingAccount(false)
-				showToast("success", t("accountUpdated"))
-			} else {
-				showToast("error", result.error || t("accountUpdateError"))
-			}
+		const result = await updateAccount(account.id, {
+			name: accountForm.name,
+			accountType: accountForm.accountType,
+			propFirmName:
+				accountForm.accountType === "prop"
+					? accountForm.propFirmName
+					: undefined,
+			profitSharePercentage:
+				parseFloat(accountForm.profitSharePercentage) || 100,
+			defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
+			defaultAsset: accountForm.defaultAsset || null,
 		})
-	}
-
-	const handleEditAssetBreakeven = (assetId: string) => {
-		const existing = accountAssets.find((aa) => aa.assetId === assetId)
-		setAssetBreakevenForm({
-			breakevenTicks:
-				existing?.breakevenTicksOverride != null
-					? existing.breakevenTicksOverride.toString()
-					: "",
-		})
-		setEditingAssetId(assetId)
-	}
-
-	const handleSaveAssetBreakeven = () => {
-		if (!editingAssetId) {
+		if (result.status === "success" && result.data) {
+			setAccount(result.data)
+			const newForm = accountToForm(result.data)
+			setSavedForm(newForm)
+			setAccountForm(newForm)
 			return
 		}
+		throw new Error(result.error || t("accountUpdateError"))
+	}, [account, accountForm, t])
 
-		startTransition(async () => {
-			const breakevenTicksValue =
-				assetBreakevenForm.breakevenTicks.trim() === ""
-					? null
-					: parseInt(assetBreakevenForm.breakevenTicks) || null
-			const result = await updateAccountAsset({
-				assetId: editingAssetId,
-				isEnabled: true,
-				breakevenTicksOverride: breakevenTicksValue,
-			})
-			if (result.status === "success") {
-				// Update local state
-				setAccountAssets((prev) => {
-					const existing = prev.find((aa) => aa.assetId === editingAssetId)
-					const newData = {
-						id: existing?.id || "",
-						accountId: account?.id || "",
-						assetId: editingAssetId,
-						isEnabled: true,
-						breakevenTicksOverride: breakevenTicksValue,
-						notes: null,
-						createdAt: existing?.createdAt || new Date(),
-						updatedAt: new Date(),
-					}
-					if (existing) {
-						return prev.map((aa) =>
-							aa.assetId === editingAssetId ? newData : aa
-						)
-					}
-					return [...prev, newData]
-				})
-				setEditingAssetId(null)
-				showToast("success", t("assetBreakevenUpdated"))
-			} else {
-				showToast("error", result.error || t("assetBreakevenUpdateError"))
-			}
-		})
-	}
+	const resetAccountInfo = useCallback(() => {
+		setAccountForm(savedForm)
+	}, [savedForm])
 
-	const handleResetAssetBreakeven = () => {
-		if (!editingAssetId) {
-			return
-		}
+	useRegisterSettingsSection({
+		id: "account-info",
+		label: t("accountInfo"),
+		isDirty: accountInfoDirty,
+		onSave: saveAccountInfo,
+		onReset: resetAccountInfo,
+	})
 
-		startTransition(async () => {
-			const result = await updateAccountAsset({
-				assetId: editingAssetId,
-				isEnabled: true,
-				breakevenTicksOverride: null,
-			})
-			if (result.status === "success") {
-				setAccountAssets((prev) =>
-					prev.map((aa) =>
-						aa.assetId === editingAssetId
-							? {
-									...aa,
-									breakevenTicksOverride: null,
-									updatedAt: new Date(),
-								}
-							: aa
-					)
-				)
-				setEditingAssetId(null)
-				showToast("success", t("assetBreakevenReset"))
-			} else {
-				showToast("error", result.error || t("assetBreakevenUpdateError"))
-			}
-		})
-	}
+	// --- Per-asset breakeven overrides ----------------------------------------
 
-	/** O(1) lookup map — rebuilt only when accountAssets changes */
-	const accountAssetsMap = useMemo(
-		() => new Map(accountAssets.map((aa) => [aa.assetId, aa])),
-		[accountAssets]
+	const dirtyAssetIds = useMemo(
+		() =>
+			assets
+				.map((a) => a.id)
+				.filter((id) => (assetForms[id] ?? "") !== (savedAssetForms[id] ?? "")),
+		[assets, assetForms, savedAssetForms]
 	)
+
+	const saveAssetOverrides = useCallback(async () => {
+		if (dirtyAssetIds.length === 0) {
+			return
+		}
+		await Promise.all(
+			dirtyAssetIds.map(async (assetId) => {
+				const raw = assetForms[assetId] ?? ""
+				const breakevenTicksValue =
+					raw.trim() === "" ? null : parseInt(raw) || null
+				const result = await updateAccountAsset({
+					assetId,
+					isEnabled: true,
+					breakevenTicksOverride: breakevenTicksValue,
+				})
+				if (result.status !== "success") {
+					throw new Error(result.error || t("assetBreakevenUpdateError"))
+				}
+			})
+		)
+		setSavedAssetForms((prev) => {
+			const next = { ...prev }
+			for (const id of dirtyAssetIds) {
+				next[id] = assetForms[id] ?? ""
+			}
+			return next
+		})
+	}, [assetForms, dirtyAssetIds, t])
+
+	const resetAssetOverrides = useCallback(() => {
+		setAssetForms(savedAssetForms)
+	}, [savedAssetForms])
+
+	useRegisterSettingsSection({
+		id: "account-asset-overrides",
+		label: t("assetOverrides"),
+		isDirty: dirtyAssetIds.length > 0,
+		onSave: saveAssetOverrides,
+		onReset: resetAssetOverrides,
+	})
+
+	const handleResetSingleAssetOverride = useCallback((assetId: string) => {
+		setAssetForms((prev) => ({ ...prev, [assetId]: "" }))
+	}, [])
+
+	// --- Destructive actions (kept independent — not part of master Save) ----
 
 	const handleDeleteAccount = () => {
 		if (!account) {
 			return
 		}
-
-		// Resolve the switch target before deletion
 		const switchTarget =
 			userAccounts.find((a) => a.isDefault && a.id !== account.id) ??
 			userAccounts.find((a) => a.id !== account.id)
@@ -288,15 +299,11 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 		if (!account) {
 			return
 		}
-
 		setIsDeleteDataDialogOpen(false)
 		setDeleteDataConfirmName("")
 		showLoading({ message: tOverlay("deletingTradingData") })
-
 		const result = await deleteAllTradingData()
-
 		hideLoading()
-
 		if (result.status === "success") {
 			showToast("success", t("deleteAllDataSuccess"))
 			router.refresh()
@@ -308,6 +315,8 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const isDefaultAccount = account?.isDefault ?? false
 	const isLastAccount = userAccounts.length <= 1
 	const canDeleteAccount = !isDefaultAccount || isLastAccount
+	const showPropFields =
+		accountForm.accountType === "prop" || account?.accountType === "prop"
 
 	if (isLoading) {
 		return (
@@ -318,209 +327,142 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	}
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 pb-l-800 mx-auto max-w-2xl">
 			{/* Account Information */}
 			<div
 				id="settings-account-info"
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 			>
-				<div className="flex items-center justify-between">
-					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-						{t("accountInfo")}
-					</h2>
-					{!isEditingAccount && (
-						<Button
-							id="account-edit-info"
-							variant="ghost"
-							size="sm"
-							onClick={() => setIsEditingAccount(true)}
-						>
-							{tCommon("edit")}
-						</Button>
-					)}
-				</div>
+				<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+					{t("accountInfo")}
+				</h2>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("accountName")}</p>
-						</div>
-						{isEditingAccount ? (
-							<Input
-								id="account-name"
-								value={accountForm.name}
-								onChange={(e) =>
-									setAccountForm((prev) => ({ ...prev, name: e.target.value }))
-								}
-								className="w-full sm:w-64"
-							/>
-						) : (
-							<span className="text-small text-txt-200">{account?.name}</span>
-						)}
-					</div>
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("accountType")}</p>
-						</div>
-						{isEditingAccount ? (
-							<Select
-								value={accountForm.accountType}
-								onValueChange={(value: "personal" | "prop") =>
-									setAccountForm((prev) => ({
-										...prev,
-										accountType: value,
-									}))
-								}
-							>
-								<SelectTrigger id="account-type" className="w-full sm:w-48">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="personal">{t("personal")}</SelectItem>
-									<SelectItem value="prop">{t("propFirm")}</SelectItem>
-								</SelectContent>
-							</Select>
-						) : (
-							<span className="text-small text-txt-200">
-								{account?.accountType === "prop"
-									? t("propFirm")
-									: t("personal")}
-							</span>
-						)}
-					</div>
-					{(accountForm.accountType === "prop" ||
-						account?.accountType === "prop") && (
+					<SettingsField htmlFor="account-name" label={t("accountName")}>
+						<Input
+							id="account-name"
+							value={accountForm.name}
+							onChange={(e) =>
+								setAccountForm((prev) => ({ ...prev, name: e.target.value }))
+							}
+							className="w-full"
+						/>
+					</SettingsField>
+					<SettingsField htmlFor="account-type" label={t("accountType")}>
+						<Select
+							value={accountForm.accountType}
+							onValueChange={(value: "personal" | "prop") =>
+								setAccountForm((prev) => ({ ...prev, accountType: value }))
+							}
+						>
+							<SelectTrigger id="account-type" className="w-full">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="personal">{t("personal")}</SelectItem>
+								<SelectItem value="prop">{t("propFirm")}</SelectItem>
+							</SelectContent>
+						</Select>
+					</SettingsField>
+					{showPropFields && (
 						<>
-							<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-								<div className="flex-1">
-									<p className="text-small text-txt-100">{t("propFirmName")}</p>
-								</div>
-								{isEditingAccount ? (
+							<SettingsField
+								htmlFor="account-prop-firm-name"
+								label={t("propFirmName")}
+							>
+								<Input
+									id="account-prop-firm-name"
+									value={accountForm.propFirmName}
+									onChange={(e) =>
+										setAccountForm((prev) => ({
+											...prev,
+											propFirmName: e.target.value,
+										}))
+									}
+									className="w-full"
+									placeholder={t("propFirmNamePlaceholder")}
+								/>
+							</SettingsField>
+							<SettingsField
+								htmlFor="account-profit-share-percentage"
+								label={t("profitShare")}
+							>
+								<div className="gap-s-200 flex items-center">
 									<Input
-										id="account-prop-firm-name"
-										value={accountForm.propFirmName}
+										id="account-profit-share-percentage"
+										type="number"
+										min="0"
+										max="100"
+										step="0.01"
+										value={accountForm.profitSharePercentage}
 										onChange={(e) =>
 											setAccountForm((prev) => ({
 												...prev,
-												propFirmName: e.target.value,
+												profitSharePercentage: e.target.value,
 											}))
 										}
-										className="w-full sm:w-64"
-										placeholder={t("propFirmNamePlaceholder")}
+										className="flex-1 text-right"
 									/>
-								) : (
-									<span className="text-small text-txt-200">
-										{account?.propFirmName || "-"}
+									<span className="text-small text-txt-300 w-6 text-left">
+										%
 									</span>
-								)}
-							</div>
-							<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-								<div className="flex-1">
-									<p className="text-small text-txt-100">{t("profitShare")}</p>
 								</div>
-								{isEditingAccount ? (
-									<div className="gap-s-200 flex items-center">
-										<Input
-											id="account-profit-share-percentage"
-											type="number"
-											min="0"
-											max="100"
-											step="0.01"
-											value={accountForm.profitSharePercentage}
-											onChange={(e) =>
-												setAccountForm((prev) => ({
-													...prev,
-													profitSharePercentage: e.target.value,
-												}))
-											}
-											className="w-full text-right sm:w-24"
-										/>
-										<span className="text-small text-txt-300">%</span>
-									</div>
-								) : (
-									<span className="text-small text-txt-200">
-										{account?.profitSharePercentage}%
-									</span>
-								)}
-							</div>
+							</SettingsField>
 						</>
 					)}
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("defaultAsset")}</p>
-							<p className="text-tiny text-txt-300">{t("defaultAssetHelp")}</p>
-						</div>
-						{isEditingAccount ? (
-							<Select
-								value={accountForm.defaultAsset || "none"}
-								onValueChange={(value) =>
+					<SettingsField
+						htmlFor="account-default-asset"
+						label={t("defaultAsset")}
+						help={t("defaultAssetHelp")}
+					>
+						<Select
+							value={accountForm.defaultAsset || "none"}
+							onValueChange={(value) =>
+								setAccountForm((prev) => ({
+									...prev,
+									defaultAsset: value === "none" ? "" : value,
+								}))
+							}
+						>
+							<SelectTrigger id="account-default-asset" className="w-full">
+								<SelectValue placeholder={t("defaultAssetPlaceholder")} />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="none">{t("defaultAssetNone")}</SelectItem>
+								{assets.map((asset) => (
+									<SelectItem key={asset.id} value={asset.symbol}>
+										<span className="font-mono">{asset.symbol}</span>
+										<span className="text-txt-300 ml-s-200">{asset.name}</span>
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</SettingsField>
+					<SettingsField
+						htmlFor="account-default-breakeven-ticks"
+						label={t("breakevenTicks")}
+						help={t("breakevenTicksDesc")}
+					>
+						<div className="gap-s-200 flex items-center">
+							<Input
+								id="account-default-breakeven-ticks"
+								type="number"
+								step="1"
+								min="0"
+								value={accountForm.defaultBreakevenTicks}
+								onChange={(e) =>
 									setAccountForm((prev) => ({
 										...prev,
-										defaultAsset: value === "none" ? "" : value,
+										defaultBreakevenTicks: e.target.value,
 									}))
 								}
-							>
-								<SelectTrigger
-									id="account-default-asset"
-									className="w-full sm:w-64"
-								>
-									<SelectValue placeholder={t("defaultAssetPlaceholder")} />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="none">{t("defaultAssetNone")}</SelectItem>
-									{assets.map((asset) => (
-										<SelectItem key={asset.id} value={asset.symbol}>
-											<span className="font-mono">{asset.symbol}</span>
-											<span className="text-txt-300 ml-s-200">
-												{asset.name}
-											</span>
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						) : (
-							<span className="text-small text-txt-200">
-								{account?.defaultAsset || t("defaultAssetNone")}
+								className="flex-1 text-right"
+							/>
+							<span className="text-small text-txt-300 w-10 text-left">
+								{t("ticks")}
 							</span>
-						)}
-					</div>
+						</div>
+					</SettingsField>
 				</div>
-				{isEditingAccount && (
-					<div className="mt-m-500 gap-s-300 flex justify-end">
-						<Button
-							id="account-cancel-info"
-							variant="ghost"
-							size="sm"
-							onClick={() => {
-								setIsEditingAccount(false)
-								if (account) {
-									setAccountForm({
-										name: account.name,
-										accountType: account.accountType,
-										propFirmName: account.propFirmName || "",
-										profitSharePercentage: account.profitSharePercentage,
-										defaultBreakevenTicks:
-											account.defaultBreakevenTicks.toString(),
-										defaultAsset: account.defaultAsset || "",
-									})
-								}
-							}}
-							disabled={isPending}
-						>
-							{tCommon("cancel")}
-						</Button>
-						<Button
-							id="account-save-info"
-							size="sm"
-							onClick={handleSaveAccount}
-							disabled={isPending}
-						>
-							{isPending && (
-								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
-							)}
-							{tCommon("save")}
-						</Button>
-					</div>
-				)}
 			</div>
 
 			{/* Trading Costs (BR) */}
@@ -534,61 +476,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				<FeeRateForm />
 			</div>
 
-			{/* Default Breakeven Ticks */}
-			<div
-				id="settings-default-breakeven"
-				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-			>
-				<div className="flex items-center justify-between">
-					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-						{t("breakevenTicks")}
-					</h2>
-					{!isEditingAccount && (
-						<Button
-							id="account-edit-breakeven"
-							variant="ghost"
-							size="sm"
-							onClick={() => setIsEditingAccount(true)}
-						>
-							{tCommon("edit")}
-						</Button>
-					)}
-				</div>
-				<p className="mt-s-200 text-tiny text-txt-300">
-					{t("breakevenTicksDesc")}
-				</p>
-				<div className="mt-m-400">
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("breakevenTicks")}</p>
-						</div>
-						{isEditingAccount ? (
-							<div className="gap-s-200 flex items-center">
-								<Input
-									id="account-default-breakeven-ticks"
-									type="number"
-									step="1"
-									min="0"
-									value={accountForm.defaultBreakevenTicks}
-									onChange={(e) =>
-										setAccountForm((prev) => ({
-											...prev,
-											defaultBreakevenTicks: e.target.value,
-										}))
-									}
-									className="w-full text-right sm:w-24"
-								/>
-								<span className="text-small text-txt-300">{t("ticks")}</span>
-							</div>
-						) : (
-							<span className="text-small text-txt-200">
-								{account?.defaultBreakevenTicks ?? 2} {t("ticks")}
-							</span>
-						)}
-					</div>
-				</div>
-			</div>
-
 			{/* Per-Asset Breakeven Ticks Overrides */}
 			<div
 				id="settings-asset-overrides"
@@ -600,127 +487,58 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				<p className="mt-s-200 text-tiny text-txt-300">
 					{t("assetOverridesDesc")}
 				</p>
-				<div className="mt-m-400 space-y-s-300">
+				<div className="mt-m-400 space-y-m-400">
 					{assets.map((asset) => {
-						const assetData = accountAssetsMap.get(asset.id)
-						const hasBreakevenOverride =
-							assetData?.breakevenTicksOverride !== null
-						const isEditing = editingAssetId === asset.id
+						const draft = assetForms[asset.id] ?? ""
+						const hasOverride = draft.trim() !== ""
 						return (
-							<div
+							<SettingsField
 								key={asset.id}
-								className="border-bg-300 p-s-300 rounded-md border"
+								htmlFor={`account-asset-breakeven-ticks-${asset.id}`}
+								label={
+									<div>
+										<p className="text-small text-txt-100 font-medium">
+											{asset.symbol}
+										</p>
+										<p className="text-tiny text-txt-300">{asset.name}</p>
+									</div>
+								}
 							>
-								{isEditing ? (
-									<div className="space-y-s-300">
-										<div className="flex items-center justify-between">
-											<div>
-												<p className="text-small text-txt-100 font-medium">
-													{asset.symbol}
-												</p>
-												<p className="text-tiny text-txt-300">{asset.name}</p>
-											</div>
-										</div>
-										<div className="gap-s-300 grid grid-cols-1 sm:grid-cols-2">
-											<div className="space-y-s-100">
-												<Label
-													id="label-asset-breakeven-ticks"
-													className="text-tiny text-txt-300"
-												>
-													{t("breakevenTicks")}
-												</Label>
-												<Input
-													id="account-asset-breakeven-ticks"
-													type="number"
-													step="1"
-													min="0"
-													value={assetBreakevenForm.breakevenTicks}
-													onChange={(e) =>
-														setAssetBreakevenForm((prev) => ({
-															...prev,
-															breakevenTicks: e.target.value,
-														}))
-													}
-													className="text-small h-8 text-right"
-													placeholder={
-														account?.defaultBreakevenTicks?.toString() ?? "2"
-													}
-												/>
-											</div>
-										</div>
-										<div className="flex items-center justify-between">
-											<div>
-												{hasBreakevenOverride && (
-													<Button
-														id={`account-reset-asset-${asset.id}`}
-														variant="ghost"
-														size="sm"
-														onClick={handleResetAssetBreakeven}
-														disabled={isPending}
-														className="text-txt-300 hover:text-fb-error"
-													>
-														{t("resetToDefault")}
-													</Button>
-												)}
-											</div>
-											<div className="gap-s-200 flex">
-												<Button
-													id={`account-cancel-asset-${asset.id}`}
-													variant="ghost"
-													size="sm"
-													onClick={() => setEditingAssetId(null)}
-													disabled={isPending}
-												>
-													{tCommon("cancel")}
-												</Button>
-												<Button
-													id={`account-save-asset-${asset.id}`}
-													size="sm"
-													onClick={handleSaveAssetBreakeven}
-													disabled={isPending}
-												>
-													{isPending && (
-														<Loader2 className="mr-s-200 h-3 w-3 animate-spin motion-reduce:animate-none" />
-													)}
-													{tCommon("save")}
-												</Button>
-											</div>
-										</div>
-									</div>
-								) : (
-									<div className="flex items-center justify-between">
-										<div className="flex-1">
-											<p className="text-small text-txt-100 font-medium">
-												{asset.symbol}
-											</p>
-											<p className="text-tiny text-txt-300">{asset.name}</p>
-										</div>
-										<div className="gap-m-400 flex items-center">
-											<div className="text-right">
-												<p className="text-small text-txt-200">
-													{assetData?.breakevenTicksOverride ??
-														account?.defaultBreakevenTicks ??
-														2}{" "}
-													{t("ticks")}
-												</p>
-												{hasBreakevenOverride && (
-													<p className="text-tiny text-acc-100">
-														{t("override")}
-													</p>
-												)}
-											</div>
-											<Button
-												id={`account-edit-asset-${asset.id}`}
-												variant="ghost"
-												size="sm"
-												onClick={() => handleEditAssetBreakeven(asset.id)}
-											>
-												{tCommon("edit")}
-											</Button>
-										</div>
-									</div>
-								)}
-							</div>
+								<div className="gap-s-200 flex items-center">
+									<Input
+										id={`account-asset-breakeven-ticks-${asset.id}`}
+										type="number"
+										step="1"
+										min="0"
+										value={draft}
+										onChange={(e) =>
+											setAssetForms((prev) => ({
+												...prev,
+												[asset.id]: e.target.value,
+											}))
+										}
+										className="text-small h-8 flex-1 text-right"
+										placeholder={
+											account?.defaultBreakevenTicks?.toString() ?? "2"
+										}
+										aria-label={`${asset.symbol} ${t("breakevenTicks")}`}
+									/>
+									<span className="text-tiny text-txt-300 w-10 text-left">
+										{t("ticks")}
+									</span>
+									<Button
+										id={`account-reset-asset-${asset.id}`}
+										variant="ghost"
+										size="sm"
+										onClick={() => handleResetSingleAssetOverride(asset.id)}
+										disabled={isPending || !hasOverride}
+										className="text-txt-300 hover:text-fb-error h-8 w-8 p-0 disabled:opacity-0"
+										aria-label={t("resetToDefault")}
+									>
+										<RotateCcw className="h-3 w-3" aria-hidden="true" />
+									</Button>
+								</div>
+							</SettingsField>
 						)
 					})}
 				</div>
@@ -756,7 +574,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</div>
 			</div>
 
-			{/* Data Import — admin only */}
 			{isAdmin && (
 				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -780,7 +597,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 				</div>
 			)}
 
-			{/* Data Export — admin only */}
 			{isAdmin && (
 				<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
 					<h2 className="text-small sm:text-body text-txt-100 font-semibold">
@@ -804,7 +620,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					{t("dangerZone")}
 				</h2>
 
-				{/* Delete All Trading Data */}
 				<div className="mt-m-400">
 					<p className="text-small text-txt-100">{t("deleteAllData")}</p>
 					<p className="mt-s-100 text-tiny text-txt-300">
@@ -885,7 +700,6 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 					</div>
 				</div>
 
-				{/* Delete Account */}
 				<div className="border-bg-300 mt-m-400 pt-m-400 border-t">
 					<p className="text-small text-txt-100">{t("deleteAccount")}</p>
 					<p className="mt-s-100 text-tiny text-txt-300">

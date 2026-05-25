@@ -6,7 +6,10 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { YearlyPlanSlideover } from "./yearly-plan-slideover"
 import { WhatIfCalculator, type AssetOption } from "./what-if-calculator"
-import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+import {
+	computeLadderRunway,
+	type LadderRuleR,
+} from "@/lib/fractal-plan/capital-ladder"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 
 interface SetupSummaryCardProps {
@@ -40,6 +43,10 @@ interface SetupSummaryCardProps {
 	defaultInitialCapitalCents: number | null
 	currentOneRCents: number
 	availableAssets: readonly AssetOption[]
+	/** R-multiples below current tier's floor that trigger an intra-month downgrade. */
+	drawdownTriggerThresholdR?: number
+	/** Active snapshot tier index, used to highlight where the trader currently sits. */
+	activeTierIndex?: number | null
 }
 
 const formatBRL = (cents: number): string =>
@@ -66,6 +73,8 @@ const SetupSummaryCard = ({
 	defaultInitialCapitalCents,
 	currentOneRCents,
 	availableAssets,
+	drawdownTriggerThresholdR = 2,
+	activeTierIndex = null,
 }: SetupSummaryCardProps) => {
 	const t = useTranslations("plan.setup")
 	const [editing, setEditing] = useState(false)
@@ -149,31 +158,76 @@ const SetupSummaryCard = ({
 				</dl>
 
 				<div id="plan-year-ladder" className="mt-m-500">
-					<h3 className="text-txt-300 text-tiny tracking-wide uppercase">
-						{t("ladder.title")}
-					</h3>
+					<div className="gap-s-200 flex flex-wrap items-baseline justify-between">
+						<h3 className="text-txt-300 text-tiny tracking-wide uppercase">
+							{t("ladder.title")}
+						</h3>
+						<p className="text-tiny text-txt-300">
+							{t("ladder.runwayHint", {
+								threshold: drawdownTriggerThresholdR.toFixed(1),
+							})}
+						</p>
+					</div>
 					{ladderRules.length === 0 ? (
 						<p className="mt-s-200 text-small text-txt-300">
 							{t("ladder.noTiers")}
 						</p>
 					) : (
-						<ul className="mt-s-200 gap-s-200 flex flex-wrap">
-							{ladderRules.map((rule, idx) => (
-								<li
-									key={`${rule.minCapitalCents}-${rule.maxCapitalCents}`}
-									className="border-bg-300 bg-bg-100 px-s-300 py-s-100 text-tiny rounded-sm border font-mono"
-								>
-									<span className="text-txt-300">T{idx + 1}</span>
-									<span className="mx-s-100 text-txt-300">·</span>
-									<span className="text-txt-200">
-										{formatBRL(rule.minCapitalCents)}+
-									</span>
-									<span className="mx-s-100 text-txt-300">·</span>
-									<span className="text-acc-100">
-										1R = {formatBRL(rule.oneRCents)}
-									</span>
-								</li>
-							))}
+						<ul className="mt-s-300 gap-s-300 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]">
+							{computeLadderRunway(ladderRules, drawdownTriggerThresholdR).map(
+								(step) => {
+									const isActive = activeTierIndex === step.tierIndex
+									const isFloor = step.tierIndex === 0
+									return (
+										<li
+											key={`${step.rule.minCapitalCents}-${step.rule.maxCapitalCents}`}
+											aria-current={isActive ? "true" : undefined}
+											className={`border-bg-300 bg-bg-100 p-s-300 rounded-md border ${
+												isActive ? "border-acc-100 ring-acc-100/30 ring-1" : ""
+											}`}
+										>
+											<div className="flex items-baseline justify-between">
+												<span className="text-tiny text-txt-100 font-mono font-semibold">
+													T{step.tierIndex + 1}
+												</span>
+												{isFloor ? (
+													<span className="text-micro text-warning tracking-wide uppercase">
+														{t("ladder.floorBadge")}
+													</span>
+												) : null}
+											</div>
+											<p className="mt-s-100 text-small text-txt-100 font-mono tabular-nums">
+												{formatBRL(step.rule.minCapitalCents)}+
+											</p>
+											<p className="mt-s-100 text-tiny text-acc-100 font-mono tabular-nums">
+												1R = {formatBRL(step.rule.oneRCents)}
+											</p>
+											<div className="border-bg-300 mt-s-300 pt-s-200 border-t">
+												<p className="text-micro text-txt-300 tracking-wide uppercase">
+													{t("ladder.runwayLabel")}
+												</p>
+												<p
+													className="text-small text-txt-100 font-mono tabular-nums"
+													title={t("ladder.runwayTitle", {
+														r: step.rUntilRuin.toFixed(1),
+													})}
+												>
+													{t("ladder.rUntilRuin", {
+														r: step.rUntilRuin.toFixed(1),
+													})}
+												</p>
+												<p className="text-micro text-txt-300 mt-s-100">
+													{isFloor
+														? t("ladder.noFurtherDowngrade")
+														: t("ladder.toDowngrade", {
+																r: step.rToNextDowngrade.toFixed(1),
+															})}
+												</p>
+											</div>
+										</li>
+									)
+								}
+							)}
 						</ul>
 					)}
 				</div>

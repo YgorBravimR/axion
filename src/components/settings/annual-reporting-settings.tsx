@@ -1,20 +1,40 @@
 "use client"
 
-import { useState, useEffect, useTransition, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { CurrencyInput } from "@/components/ui/currency-input"
-import { useToast } from "@/components/ui/toast"
 import {
 	getAccountLifecycle,
 	updateAccountLifecycle,
 } from "@/app/actions/settings"
+import { useRegisterSettingsSection } from "./settings-save-bar"
+
+interface AnnualForm {
+	startMonth: number | null
+	startYear: number | null
+	startingBalanceCents: number | null
+	withdrawalTarget: number | null
+}
+
+const EMPTY: AnnualForm = {
+	startMonth: null,
+	startYear: null,
+	startingBalanceCents: null,
+	withdrawalTarget: null,
+}
+
+const equal = (a: AnnualForm, b: AnnualForm) =>
+	a.startMonth === b.startMonth &&
+	a.startYear === b.startYear &&
+	a.startingBalanceCents === b.startingBalanceCents &&
+	a.withdrawalTarget === b.withdrawalTarget
 
 const AnnualReportingSettings = () => {
 	const t = useTranslations("settings.profile")
 	const locale = useLocale()
-	const { showToast } = useToast()
 	const [isLoading, setIsLoading] = useState(true)
-	const [isPending, startTransition] = useTransition()
+	const [saved, setSaved] = useState<AnnualForm>(EMPTY)
+	const [draft, setDraft] = useState<AnnualForm>(EMPTY)
 
 	const monthNames = useMemo(() => {
 		const formatter = new Intl.DateTimeFormat(locale, { month: "long" })
@@ -24,13 +44,6 @@ const AnnualReportingSettings = () => {
 		})
 	}, [locale])
 
-	const [startMonth, setStartMonth] = useState<number | null>(null)
-	const [startYear, setStartYear] = useState<number | null>(null)
-	const [startingBalanceCents, setStartingBalanceCents] = useState<
-		number | null
-	>(null)
-	const [withdrawalTarget, setWithdrawalTarget] = useState<number | null>(null)
-
 	useEffect(() => {
 		let mounted = true
 		const load = async () => {
@@ -39,10 +52,14 @@ const AnnualReportingSettings = () => {
 				return
 			}
 			if (result.status === "success" && result.data) {
-				setStartMonth(result.data.accountStartMonth)
-				setStartYear(result.data.accountStartYear)
-				setStartingBalanceCents(result.data.startingBalanceCents)
-				setWithdrawalTarget(result.data.withdrawalTargetPercent)
+				const next: AnnualForm = {
+					startMonth: result.data.accountStartMonth,
+					startYear: result.data.accountStartYear,
+					startingBalanceCents: result.data.startingBalanceCents,
+					withdrawalTarget: result.data.withdrawalTargetPercent,
+				}
+				setSaved(next)
+				setDraft(next)
 			}
 			setIsLoading(false)
 		}
@@ -52,24 +69,37 @@ const AnnualReportingSettings = () => {
 		}
 	}, [])
 
-	const handleSave = () => {
-		const cents =
-			startingBalanceCents !== null ? Math.round(startingBalanceCents) : null
+	const isDirty = !equal(draft, saved)
 
-		startTransition(async () => {
-			const result = await updateAccountLifecycle({
-				accountStartMonth: startMonth,
-				accountStartYear: startYear,
-				startingBalanceCents: cents,
-				withdrawalTargetPercent: withdrawalTarget,
-			})
-			if (result.status === "success") {
-				showToast("success", t("annualSettingsSaved"))
-			} else {
-				showToast("error", result.message ?? t("annualSettingsSaveError"))
-			}
+	const handleSave = useCallback(async () => {
+		const cents =
+			draft.startingBalanceCents !== null
+				? Math.round(draft.startingBalanceCents)
+				: null
+		const result = await updateAccountLifecycle({
+			accountStartMonth: draft.startMonth,
+			accountStartYear: draft.startYear,
+			startingBalanceCents: cents,
+			withdrawalTargetPercent: draft.withdrawalTarget,
 		})
-	}
+		if (result.status === "success") {
+			setSaved(draft)
+			return
+		}
+		throw new Error(result.message ?? t("annualSettingsSaveError"))
+	}, [draft, t])
+
+	const handleReset = useCallback(() => {
+		setDraft(saved)
+	}, [saved])
+
+	useRegisterSettingsSection({
+		id: "annual-reporting",
+		label: t("annualReporting"),
+		isDirty,
+		onSave: handleSave,
+		onReset: handleReset,
+	})
 
 	if (isLoading) {
 		return null
@@ -93,9 +123,12 @@ const AnnualReportingSettings = () => {
 					</label>
 					<select
 						id="account-start-month"
-						value={startMonth ?? ""}
+						value={draft.startMonth ?? ""}
 						onChange={(e) =>
-							setStartMonth(e.target.value ? parseInt(e.target.value) : null)
+							setDraft((prev) => ({
+								...prev,
+								startMonth: e.target.value ? parseInt(e.target.value) : null,
+							}))
 						}
 						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border focus:ring-1 focus:outline-none"
 						aria-label={t("accountStartMonth")}
@@ -121,9 +154,12 @@ const AnnualReportingSettings = () => {
 						type="number"
 						min={2000}
 						max={currentYear}
-						value={startYear ?? ""}
+						value={draft.startYear ?? ""}
 						onChange={(e) =>
-							setStartYear(e.target.value ? parseInt(e.target.value) : null)
+							setDraft((prev) => ({
+								...prev,
+								startYear: e.target.value ? parseInt(e.target.value) : null,
+							}))
 						}
 						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border font-mono focus:ring-1 focus:outline-none"
 						aria-label={t("accountStartYear")}
@@ -140,8 +176,10 @@ const AnnualReportingSettings = () => {
 					</label>
 					<CurrencyInput
 						id="starting-balance"
-						value={startingBalanceCents}
-						onValueChange={setStartingBalanceCents}
+						value={draft.startingBalanceCents}
+						onValueChange={(v) =>
+							setDraft((prev) => ({ ...prev, startingBalanceCents: v }))
+						}
 						decimals={2}
 						unit="cents"
 						aria-label={t("openingBalance")}
@@ -162,11 +200,14 @@ const AnnualReportingSettings = () => {
 						min={0}
 						max={100}
 						step={0.01}
-						value={withdrawalTarget ?? ""}
+						value={draft.withdrawalTarget ?? ""}
 						onChange={(e) =>
-							setWithdrawalTarget(
-								e.target.value ? parseFloat(e.target.value) : null
-							)
+							setDraft((prev) => ({
+								...prev,
+								withdrawalTarget: e.target.value
+									? parseFloat(e.target.value)
+									: null,
+							}))
 						}
 						className="border-bg-300 bg-bg-200 px-s-300 py-s-200 text-txt-100 focus:ring-acc-100 text-small w-full rounded-md border font-mono focus:ring-1 focus:outline-none"
 						aria-label={t("monthlyWithdrawalTarget")}
@@ -174,15 +215,6 @@ const AnnualReportingSettings = () => {
 					/>
 				</div>
 			</div>
-
-			<button
-				type="button"
-				onClick={handleSave}
-				disabled={isPending}
-				className="bg-acc-100 px-m-400 py-s-200 text-bg-100 text-small rounded-md font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-			>
-				{isPending ? t("saving") : t("saveAnnualSettings")}
-			</button>
 		</fieldset>
 	)
 }

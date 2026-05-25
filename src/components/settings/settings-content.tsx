@@ -37,6 +37,7 @@ import {
 } from "lucide-react"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { settingsGuide } from "@/components/ui/page-guide/guide-configs/settings"
+import { SettingsSaveBarProvider } from "./settings-save-bar"
 
 /** Params that belong to specific tabs — cleared on tab switch to prevent leaking */
 const TAB_SPECIFIC_PARAMS = [
@@ -113,7 +114,7 @@ export const SettingsContent = ({
 			<div id="settings-tabs" className="mb-m-400 sm:mb-m-500 relative">
 				<TabsList
 					variant="line"
-					className="scrollbar-none w-full overflow-x-auto scroll-smooth"
+					className="w-full scrollbar-none overflow-x-auto scroll-smooth"
 				>
 					<TabsTrigger value="profile" className="gap-s-200 shrink-0">
 						<User className="h-4 w-4" aria-hidden="true" />
@@ -171,7 +172,11 @@ export const SettingsContent = ({
 			</div>
 
 			<AnimatedTabsContent value="profile">
-				{activeTab === "profile" && <UserProfileSettings />}
+				{activeTab === "profile" && (
+					<SettingsSaveBarProvider>
+						<UserProfileSettings />
+					</SettingsSaveBarProvider>
+				)}
 			</AnimatedTabsContent>
 
 			<AnimatedTabsContent value="hawks">
@@ -183,7 +188,11 @@ export const SettingsContent = ({
 			{isAdmin && (
 				<>
 					<AnimatedTabsContent value="account">
-						{activeTab === "account" && <AccountSettings assets={assets} />}
+						{activeTab === "account" && (
+							<SettingsSaveBarProvider>
+								<AccountSettings assets={assets} />
+							</SettingsSaveBarProvider>
+						)}
 					</AnimatedTabsContent>
 
 					<AnimatedTabsContent value="tags">

@@ -35,7 +35,7 @@ export const createAccountSchema = z.object({
 	showPropCalculations: z.boolean().optional(),
 	defaultAsset: z
 		.string()
-		.uuid("validation.account.invalidAssetId")
+		.max(20, "validation.account.defaultAssetMax")
 		.nullable()
 		.optional(),
 })
