@@ -61,7 +61,7 @@ interface AccountForm {
 	propFirmName: string
 	profitSharePercentage: string
 	defaultBreakevenTicks: string
-	defaultAsset: string
+	defaultAssetId: string
 }
 
 const EMPTY_FORM: AccountForm = {
@@ -70,7 +70,7 @@ const EMPTY_FORM: AccountForm = {
 	propFirmName: "",
 	profitSharePercentage: "100",
 	defaultBreakevenTicks: "2",
-	defaultAsset: "",
+	defaultAssetId: "",
 }
 
 const accountToForm = (account: TradingAccount): AccountForm => ({
@@ -79,7 +79,7 @@ const accountToForm = (account: TradingAccount): AccountForm => ({
 	propFirmName: account.propFirmName || "",
 	profitSharePercentage: account.profitSharePercentage,
 	defaultBreakevenTicks: account.defaultBreakevenTicks.toString(),
-	defaultAsset: account.defaultAsset || "",
+	defaultAssetId: account.defaultAssetId || "",
 })
 
 const formsEqual = (a: AccountForm, b: AccountForm) =>
@@ -88,7 +88,7 @@ const formsEqual = (a: AccountForm, b: AccountForm) =>
 	a.propFirmName === b.propFirmName &&
 	a.profitSharePercentage === b.profitSharePercentage &&
 	a.defaultBreakevenTicks === b.defaultBreakevenTicks &&
-	a.defaultAsset === b.defaultAsset
+	a.defaultAssetId === b.defaultAssetId
 
 const AccountSettings = ({ assets }: AccountSettingsProps) => {
 	const t = useTranslations("settings.account")
@@ -185,7 +185,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 			profitSharePercentage:
 				parseFloat(accountForm.profitSharePercentage) || 100,
 			defaultBreakevenTicks: parseInt(accountForm.defaultBreakevenTicks) || 0,
-			defaultAsset: accountForm.defaultAsset || null,
+			defaultAssetId: accountForm.defaultAssetId || null,
 		})
 		if (result.status === "success" && result.data) {
 			setAccount(result.data)
@@ -415,11 +415,11 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 						help={t("defaultAssetHelp")}
 					>
 						<Select
-							value={accountForm.defaultAsset || "none"}
+							value={accountForm.defaultAssetId || "none"}
 							onValueChange={(value) =>
 								setAccountForm((prev) => ({
 									...prev,
-									defaultAsset: value === "none" ? "" : value,
+									defaultAssetId: value === "none" ? "" : value,
 								}))
 							}
 						>
@@ -429,7 +429,7 @@ const AccountSettings = ({ assets }: AccountSettingsProps) => {
 							<SelectContent>
 								<SelectItem value="none">{t("defaultAssetNone")}</SelectItem>
 								{assets.map((asset) => (
-									<SelectItem key={asset.id} value={asset.symbol}>
+									<SelectItem key={asset.id} value={asset.id}>
 										<span className="font-mono">{asset.symbol}</span>
 										<span className="text-txt-300 ml-s-200">{asset.name}</span>
 									</SelectItem>

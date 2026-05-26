@@ -10,7 +10,7 @@ interface AccountInput {
 	defaultBreakevenTicks?: number
 	showTaxEstimates?: boolean
 	showPropCalculations?: boolean
-	defaultAsset?: string | null
+	defaultAssetId?: string | null
 }
 
 interface AccountAssetInput {

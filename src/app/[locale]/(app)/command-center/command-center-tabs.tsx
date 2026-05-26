@@ -58,7 +58,7 @@ const CommandCenterTabs = ({
 	initialLiveTradingStatus = null,
 	...commandCenterProps
 }: CommandCenterTabsProps) => {
-	const defaultAssetSymbol = account?.defaultAsset ?? undefined
+	const defaultAssetId = account?.defaultAssetId ?? undefined
 	const t = useTranslations("commandCenter")
 	const { canAccess } = useFeatureAccess()
 	const showCommandTab = canAccess("command-center:command-tab")
@@ -141,7 +141,7 @@ const CommandCenterTabs = ({
 						accountSettings={accountSettings}
 						strategies={strategies}
 						assetSettings={assetSettings}
-						defaultAssetSymbol={defaultAssetSymbol}
+						defaultAssetId={defaultAssetId}
 					/>
 				</Suspense>
 			</AnimatedTabsContent>

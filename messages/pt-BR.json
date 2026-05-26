@@ -3584,8 +3584,8 @@
 			"currencyMax": "Moeda deve ter 10 caracteres ou menos",
 			"breakevenTicksInteger": "Ticks de breakeven devem ser um inteiro",
 			"breakevenTicksMin": "Ticks de breakeven não podem ser negativos",
-			"defaultAssetMax": "Símbolo do ativo padrão deve ter 20 caracteres ou menos",
-			"invalidAccountId": "ID de conta inválido"
+			"invalidAccountId": "ID de conta inválido",
+			"invalidAssetId": "ID do ativo inválido"
 		},
 		"taxEngine": {
 			"invalidAccountId": "ID de conta inválido",

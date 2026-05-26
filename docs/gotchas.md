@@ -40,6 +40,20 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Drizzle ORM / Database Drivers
 
+### `pnpm db:generate` crashes on column rename without a TTY — and for backfill migrations you don't want the rename anyway
+
+- **What**: `drizzle-kit generate` interactively asks "Is column `X` -> `Y` a rename?" any time it detects a column being removed and a new one added in the same diff. In a non-TTY context (Claude, CI) it crashes with `Error: Interactive prompts require a TTY terminal`. Piping `\n` or wrapping in `script -q /dev/null` doesn't help — the `process.stdin.isTTY` check fires before any input is read.
+- **What to do**: For column-rename-with-backfill (the common case — you're renaming because the column's _semantics_ are changing, e.g. `default_asset varchar(20)` → `default_asset_id uuid`), you actually want the **drop + create** path, not the rename — that way the migration SQL has a moment to backfill from the old column before it's dropped. So hand-author the migration instead of fighting drizzle-kit:
+  1. Edit `src/db/schema.ts` to the desired end state.
+  2. `cp src/db/migrations/meta/{N-1,N}_snapshot.json` and edit only the changed column entry + `foreignKeys` block. Bump the snapshot's `id` (new uuid) and set `prevId` to the previous snapshot's id.
+  3. Write `src/db/migrations/NNNN_<name>.sql` with the 3-step transition: `ALTER TABLE … ADD COLUMN new_col …;` → `UPDATE … SET new_col = … FROM old_source …;` → `ALTER TABLE … DROP COLUMN old_col;`.
+  4. Append an entry to `src/db/migrations/meta/_journal.json` (next `idx`, `tag` = `NNNN_<name>`, `when` = ms timestamp, `breakpoints: true`).
+  5. Re-run `pnpm db:generate` — it should print `No schema changes, nothing to migrate 😴`, which confirms the new snapshot is the canonical end state.
+- **Don't**: Don't edit historical snapshot files (`0000_*`–`(N-1)_*`) or past SQL migrations — they document past schema states and a fresh DB replays them in order. They must stay frozen.
+- **Source**: 2026-05-26 session executing the `defaultAsset → defaultAssetId` backlog item; resulting migration is `0014_lush_devos.sql`.
+
+---
+
 ### Neon HTTP driver lacks transaction support; postgres-js fallback masks the limitation
 
 - **What**: `drizzle-orm/neon-http` is the Neon driver for stateless HTTPS clients. It does NOT support `db.transaction(async (tx) => { /* multi-statement ops */ })`. Any call to `db.transaction()` throws `Error: No transactions support in neon-http driver`. The postgres-js driver (used for local worktrees) _does_ support transactions, so the bug never surfaces during development.
@@ -48,6 +62,17 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Swap to `drizzle-orm/neon-serverless` (WebSocket-backed, stateful, full transaction support). Both drivers point to the same Neon URL. See `src/db/drizzle.ts` for the pattern: configure `neonConfig.webSocketConstructor = ws` for Node runtime, then use `drizzle(..., { schema })` as usual.
 - **Root issue**: Neon's HTTP client is designed for edge functions (low latency, no connection state). Transactions require a persistent connection; use the serverless driver instead.
 - **Source**: `[BUG-2026-05-25-3]` in `docs/postMorten/backend.md`.
+
+---
+
+### Migrations run pre-deploy in CI — use expand-contract for non-additive changes
+
+- **What**: `.github/workflows/deploy.yml` runs `pnpm db:migrate` **before** `vercel build` + `vercel deploy`. If the migration fails the workflow stops and the previous deploy stays live. `DATABASE_URL` is sourced from `.vercel/.env.production.local` (written by `vercel pull`) so it stays in one place — don't add a separate GH `DATABASE_URL` secret.
+- **Expand-contract caveat**: Migrations that **drop or rename** columns (or change types incompatibly) create a brief window between "ALTER TABLE finishes" and "Vercel deploy goes live" where the _previous_ deployed code reads against the _new_ schema and 500s. For Axion-scale traffic this window is typically <60s, but the safe pattern for non-additive schema changes is two PRs:
+  1. **Expand** — add the new column + backfill, leave the old column in place. Code tolerates both shapes (e.g. `a.id === defaultAssetId || a.symbol === defaultAssetId`). Ship.
+  2. **Contract** — once the new code is fully deployed and read-traffic confirms the old column is unused, drop the old column in a second migration. Ship.
+- **When to skip expand-contract**: Strictly-additive migrations (new tables, new nullable columns, new indexes) are safe single-shot. Drops/renames/type-narrowings are not.
+- **Source**: 2026-05-26 session adding `pnpm db:migrate` to the deploy workflow alongside the `defaultAsset → defaultAssetId` rename. The rename itself shipped single-shot (acceptable given low traffic + handful-of-rows blast radius), but future renames should follow expand-contract.
 
 ---
 

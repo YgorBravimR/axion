@@ -20,7 +20,7 @@ interface PositionCalculatorProps {
 	}
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
-	defaultAssetSymbol?: string
+	defaultAssetId?: string
 }
 
 const PositionCalculator = ({
@@ -28,14 +28,14 @@ const PositionCalculator = ({
 	accountSettings,
 	strategies,
 	assetSettings,
-	defaultAssetSymbol,
+	defaultAssetId,
 }: PositionCalculatorProps) => {
 	const t = useTranslations("commandCenter.calculator")
 
 	// Form state — pre-select from account's default asset if available
 	const [selectedAssetId, setSelectedAssetId] = useState(() => {
-		if (defaultAssetSymbol) {
-			const match = assets.find((a) => a.symbol === defaultAssetSymbol)
+		if (defaultAssetId) {
+			const match = assets.find((a) => a.id === defaultAssetId)
 			if (match) {
 				return match.id
 			}

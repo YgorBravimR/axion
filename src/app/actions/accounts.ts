@@ -193,8 +193,8 @@ export const updateAccount = async (
 		if (input.showPropCalculations !== undefined) {
 			updateData.showPropCalculations = input.showPropCalculations
 		}
-		if (input.defaultAsset !== undefined) {
-			updateData.defaultAsset = input.defaultAsset
+		if (input.defaultAssetId !== undefined) {
+			updateData.defaultAssetId = input.defaultAssetId
 		}
 
 		// Financial fields are plaintext

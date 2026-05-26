@@ -9,12 +9,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      # Export DATABASE_URL from the env file `vercel pull` just wrote, so the
+      # migrate step below can talk to the production Neon DB. Vercel is the
+      # source of truth for prod env — keeping the secret in one place.
+      - name: Export DATABASE_URL from Vercel env
+        run: |
+          set -a
+          . .vercel/.env.production.local
+          set +a
+          echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
+
+      # Migrate BEFORE deploy: if migration fails, the workflow stops here and
+      # the previous deploy stays live. Never ship code expecting a schema
+      # the DB doesn't have yet.
+      - name: Run database migrations
+        run: pnpm db:migrate
+
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:

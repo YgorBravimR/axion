@@ -3584,8 +3584,8 @@
 			"currencyMax": "Currency must be 10 characters or less",
 			"breakevenTicksInteger": "Breakeven ticks must be a whole number",
 			"breakevenTicksMin": "Breakeven ticks cannot be negative",
-			"defaultAssetMax": "Default asset symbol must be 20 characters or less",
-			"invalidAccountId": "Invalid account ID"
+			"invalidAccountId": "Invalid account ID",
+			"invalidAssetId": "Invalid asset ID"
 		},
 		"taxEngine": {
 			"invalidAccountId": "Invalid account ID",

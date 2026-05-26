@@ -240,7 +240,9 @@ export const tradingAccounts = pgTable(
 			.notNull(),
 
 		// Default asset: pre-selects this asset in trade forms, calculators, etc.
-		defaultAsset: varchar("default_asset", { length: 20 }),
+		defaultAssetId: uuid("default_asset_id").references(() => assets.id, {
+			onDelete: "set null",
+		}),
 
 		// Display preferences
 		showTaxEstimates: boolean("show_tax_estimates").default(true).notNull(),

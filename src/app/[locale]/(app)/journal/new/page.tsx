@@ -47,7 +47,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	const tags = tagsResult.status === "success" ? tagsResult.data || [] : []
 
 	// URL query param takes priority, then account's default asset
-	const resolvedDefaultAsset = asset || account?.defaultAsset || undefined
+	const resolvedDefaultAsset = asset || account?.defaultAssetId || undefined
 
 	const isHawksAtCap = accountMode === "hawks" && dailyOrdinal >= 3
 
