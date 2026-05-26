@@ -10,18 +10,17 @@ import { isNeonUrl } from "./url"
 
 // Configure WebSocket for Node runtime (production uses serverless with transaction support).
 // Edge runtime (if ever used) has built-in WebSocket via global.
-const initializeWebSocket = async () => {
-	if (typeof window === "undefined" && typeof WebSocket === "undefined") {
-		try {
-			const ws = await import("ws")
-			neonConfig.webSocketConstructor = ws.default
-		} catch {
-			// ws optional if running in Edge runtime with global WebSocket
-		}
+// Top-level await: blocks module init until the polyfill is attached, so no query
+// can race the dynamic import on a cold start. Cost is paid once per process —
+// subsequent imports of this module hit the resolved module cache.
+if (typeof window === "undefined" && typeof WebSocket === "undefined") {
+	try {
+		const ws = await import("ws")
+		neonConfig.webSocketConstructor = ws.default
+	} catch {
+		// ws optional if running in Edge runtime with global WebSocket
 	}
 }
-
-void initializeWebSocket()
 
 // Driver-agnostic db client.
 //
