@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
-import type { ChangeEvent, FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
+import type { ChangeEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -24,6 +24,7 @@ import {
 import { getActiveAssets } from "@/app/actions/assets"
 import type { FeeRatesEntry } from "@/lib/tax/types"
 import { ASSET_FEE_DEFAULTS } from "@/lib/tax/asset-defaults"
+import { useRegisterSettingsSection } from "@/components/settings/settings-save-bar"
 
 interface DisplayValues {
 	txCorretagem: string
@@ -64,6 +65,15 @@ const displayToPersist = (display: DisplayValues) => ({
 	irRateBps: Math.round(parseFloat(display.irRate) * 100),
 	subjectToPersonalIr: display.subjectToPersonalIr,
 })
+
+const displaysEqual = (a: DisplayValues, b: DisplayValues) =>
+	a.txCorretagem === b.txCorretagem &&
+	a.txRegistro === b.txRegistro &&
+	a.emolumentos === b.emolumentos &&
+	a.issRate === b.issRate &&
+	a.irrfRate === b.irrfRate &&
+	a.irRate === b.irRate &&
+	a.subjectToPersonalIr === b.subjectToPersonalIr
 
 interface PaneFields {
 	key: keyof Omit<DisplayValues, "subjectToPersonalIr">
@@ -123,7 +133,7 @@ interface PaneProps {
 	assetSymbol: string | null
 	initial: DisplayValues
 	allowReset: boolean
-	onSave: () => void
+	onSaved: (_values: DisplayValues) => void
 	onReset: () => void
 }
 
@@ -131,12 +141,12 @@ const FeeRatePane = ({
 	assetSymbol,
 	initial,
 	allowReset,
-	onSave,
+	onSaved,
 	onReset,
 }: PaneProps) => {
 	const t = useTranslations("tax.feeRateForm")
 	const { showToast } = useToast()
-	const [isPending, startTransition] = useTransition()
+	const [isResetting, startResetTransition] = useTransition()
 	const [values, setValues] = useState<DisplayValues>(initial)
 
 	const fields: PaneFields[] = [
@@ -192,40 +202,49 @@ const FeeRatePane = ({
 		setValues((prev) => ({ ...prev, subjectToPersonalIr: checked === true }))
 	}
 
-	const handleSubmit = (e: FormEvent) => {
-		e.preventDefault()
-		startTransition(async () => {
-			const result = await upsertFeeRates({
-				assetSymbol,
-				...displayToPersist(values),
-			})
-			if (result.status === "success") {
-				showToast("success", t("toasts.saveSuccess"))
-				onSave()
-			} else {
-				showToast("error", result.message ?? t("toasts.saveError"))
-			}
-		})
-	}
+	const isDirty = !displaysEqual(values, initial)
 
-	const handleReset = () => {
+	const handleSave = useCallback(async () => {
+		const result = await upsertFeeRates({
+			assetSymbol,
+			...displayToPersist(values),
+		})
+		if (result.status === "success") {
+			onSaved(values)
+			return
+		}
+		throw new Error(result.message ?? t("toasts.saveError"))
+	}, [assetSymbol, onSaved, t, values])
+
+	const handleResetField = useCallback(() => {
+		setValues(initial)
+	}, [initial])
+
+	useRegisterSettingsSection({
+		id: `fee-rate-${assetSymbol ?? "default"}`,
+		label: assetSymbol ?? t("defaultAssetLabel"),
+		isDirty,
+		onSave: handleSave,
+		onReset: handleResetField,
+	})
+
+	const handleDeleteOverride = () => {
 		if (!assetSymbol) {
 			return
 		}
-		startTransition(async () => {
+		startResetTransition(async () => {
 			const result = await deleteFeeRates(assetSymbol)
 			if (result.status === "success") {
 				showToast("success", t("toasts.resetSuccess"))
 				onReset()
-			} else {
-				showToast("error", result.message ?? t("toasts.resetError"))
+				return
 			}
+			showToast("error", result.message ?? t("toasts.resetError"))
 		})
 	}
 
 	return (
-		<form
-			onSubmit={handleSubmit}
+		<div
 			className="space-y-m-400"
 			aria-label={t("formAriaLabel", {
 				asset: assetSymbol ?? t("defaultAssetLabel"),
@@ -276,29 +295,22 @@ const FeeRatePane = ({
 
 			<PerContractTotal values={values} />
 
-			<div className="gap-s-300 flex items-center">
-				<Button
-					id={`fee-rate-form-submit-${assetSymbol ?? "default"}`}
-					type="submit"
-					disabled={isPending}
-					aria-label={t("saveButton.ariaLabel")}
-				>
-					{isPending ? t("saveButton.savingLabel") : t("saveButton.label")}
-				</Button>
-				{allowReset && (
+			{allowReset && (
+				<div className="flex justify-end">
 					<Button
 						id={`fee-rate-form-reset-${assetSymbol ?? "default"}`}
 						type="button"
 						variant="outline"
-						disabled={isPending}
-						onClick={handleReset}
+						size="sm"
+						disabled={isResetting}
+						onClick={handleDeleteOverride}
 						aria-label={t("resetButton.ariaLabel")}
 					>
 						{t("resetButton.label")}
 					</Button>
-				)}
-			</div>
-		</form>
+				</div>
+			)}
+		</div>
 	)
 }
 
@@ -343,7 +355,6 @@ const FeeRateForm = () => {
 				.map((e) => e.assetSymbol)
 				.filter((s): s is string => typeof s === "string")
 
-			// Tabs surface every asset that already has an override row.
 			const tabs: AssetTab[] = overrideSymbols.map((symbol) => {
 				const override = entries.find((e) => e.assetSymbol === symbol)!
 				return {
@@ -376,6 +387,23 @@ const FeeRateForm = () => {
 		setAvailableSymbols((prev) => prev.filter((s) => s !== symbol))
 		setActiveTab(symbol)
 	}
+
+	const handlePaneSavedDefault = useCallback((next: DisplayValues) => {
+		setDefaultDisplay(next)
+	}, [])
+
+	const handlePaneSavedOverride = useCallback(
+		(symbol: string) => (next: DisplayValues) => {
+			setAssetTabs((prev) =>
+				prev.map((tab) =>
+					tab.symbol === symbol
+						? { ...tab, display: next, hasOverride: true }
+						: tab
+				)
+			)
+		},
+		[]
+	)
 
 	if (isLoading) {
 		return <p className="text-small text-txt-300">{t("loadingRates")}</p>
@@ -412,7 +440,11 @@ const FeeRateForm = () => {
 					</Select>
 				)}
 			</div>
-			<TabsContent value="__default__" className="pt-m-400">
+			<TabsContent
+				value="__default__"
+				className="pt-m-400 data-[state=inactive]:hidden"
+				forceMount
+			>
 				<p className="text-tiny text-txt-300 mb-s-300">
 					{t("defaultTabDescription")}
 				</p>
@@ -420,12 +452,17 @@ const FeeRateForm = () => {
 					assetSymbol={null}
 					initial={defaultDisplay}
 					allowReset={false}
-					onSave={triggerReload}
+					onSaved={handlePaneSavedDefault}
 					onReset={triggerReload}
 				/>
 			</TabsContent>
 			{assetTabs.map((tab) => (
-				<TabsContent key={tab.symbol} value={tab.symbol} className="pt-m-400">
+				<TabsContent
+					key={tab.symbol}
+					value={tab.symbol}
+					className="pt-m-400 data-[state=inactive]:hidden"
+					forceMount
+				>
 					<p className="text-tiny text-txt-300 mb-s-300">
 						{tab.hasOverride
 							? t("assetTabDescription", { symbol: tab.symbol })
@@ -435,7 +472,7 @@ const FeeRateForm = () => {
 						assetSymbol={tab.symbol}
 						initial={tab.display}
 						allowReset={tab.hasOverride}
-						onSave={triggerReload}
+						onSaved={handlePaneSavedOverride(tab.symbol)}
 						onReset={triggerReload}
 					/>
 				</TabsContent>

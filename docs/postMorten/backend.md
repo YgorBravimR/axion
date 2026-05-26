@@ -2,6 +2,164 @@
 
 ---
 
+## [BUG-2026-05-25-3] Strategy creation fails silently — Neon HTTP driver lacks transaction support
+
+**Date:** 2026-05-25
+**Severity:** Critical (breaks core feature in production, works in dev)
+**Affected Area:** `src/db/drizzle.ts`, `src/app/actions/strategies.ts:91`, `src/app/actions/strategies.ts:450`, `src/app/actions/renko-pipeline.ts:325`, `src/app/api/arch/strategies/create/route.ts:29`
+
+### Cause
+
+The Neon HTTP driver (`drizzle-orm/neon-http`) does not support `db.transaction()`. The HTTP protocol has no notion of multi-statement transactional semantics; each query is independent. The codebase relied on four transaction call sites to atomically insert related records (strategy + version + conditions in a single hit) and read intermediate results to construct subsequent inserts.
+
+In production, the driver is `neon-http` (chosen for low latency / stateless HTTPS). In local worktrees and CI, the driver falls back to `postgres-js` (which supports transactions), so the bug never surfaced during development or testing.
+
+All four call sites caught the error internally and returned a structured error response (status 200 with `{ status: "error" }`), so the API didn't crash — but the records were never inserted, and the user saw no visible error (the action returned a success toast that didn't trigger).
+
+### Effect
+
+- User navigates to `/en/playbook/new`, fills in strategy details, submits the form
+- `createStrategy` server action runs, calls `db.transaction()`, which throws `Error: No transactions support in neon-http driver`
+- The error is caught and logged internally; the action returns `{ status: "error" }`
+- Browser receives HTTP 200 with a structured error, but the form doesn't display the error (it was swallowed by the action's error handler)
+- Strategy is never created
+- User sees no feedback and clicks submit again, repeating the cycle
+
+Three other endpoints are affected:
+
+- `/en/playbook/:id/edit` — `updateStrategy` with versioning
+- Bulk Renko candle import — `renko-pipeline.ts`
+- Admin/automation API — `POST /api/arch/strategies/create`
+
+### Solution
+
+Swapped the Neon driver from `neon-http` (HTTPS-based, stateless, no transactions) to `neon-serverless` (WebSocket-based, stateful, full transaction support).
+
+**Changes:**
+
+1. `pnpm add @neondatabase/serverless ws && pnpm add -D @types/ws`
+2. Updated `src/db/drizzle.ts`:
+   - Replaced `import { drizzle as drizzleNeon, type NeonHttpDatabase } from "drizzle-orm/neon-http"` with `import { drizzle as drizzleNeon, type NeonDatabase } from "drizzle-orm/neon-serverless"`
+   - Added `import { neonConfig } from "@neondatabase/serverless"` and configured `neonConfig.webSocketConstructor = ws` for Node runtime (production uses Node; Edge runtime has built-in WebSocket)
+   - Updated exported type from `NeonHttpDatabase<typeof schema>` to `NeonDatabase<typeof schema>` (maintains compatibility with all ~13 call sites)
+   - Updated comment block to document transaction support now available
+3. No changes to the four transaction call sites — they just work now
+
+**Rationale:** Both drivers point to the same Neon URL (via `DATABASE_URL`). The serverless driver uses a long-lived WebSocket instead of per-query HTTP, enabling transactional semantics. Performance impact is negligible (WebSocket connection is established once per server lifecycle, not per query).
+
+### Prevention
+
+- **Driver choice cascades to feature availability.** The `neon-http` driver is marketed as "low latency" but silently lacks transactions. Always check the driver's capability matrix before committing to one in production.
+- **Test transaction call sites in CI.** The local fallback (`postgres-js`) masks driver-specific limitations. Spin up a Neon test database in CI and test with the production driver profile, or at minimum add a unit test that exercises `db.transaction()` with mocked delay.
+- **Audit error handlers.** All four transaction sites were silently catching errors instead of propagating them. In hindsight, a test that intentionally breaks `db.transaction()` would have caught this before production.
+
+### Related Files
+
+- `src/db/drizzle.ts` — driver initialization and configuration
+- `src/app/actions/strategies.ts:91, 450` — `createStrategy`, `updateStrategy`
+- `src/app/actions/renko-pipeline.ts:325` — bulk Renko insert
+- `src/app/api/arch/strategies/create/route.ts:29` — admin API
+- `package.json` — added `@neondatabase/serverless`, `ws`, `@types/ws`
+
+---
+
+## [BUG-2026-05-25-2] Settings save redirects to login — JWT cookie corrupted by concurrent auth() calls
+
+**Date:** 2026-05-25
+**Severity:** High (randomly blocks settings save + forces re-login, breaks user workflow)
+**Affected Area:** `src/components/settings/settings-save-bar.tsx`, session/cookie handling (NextAuth + proxy.ts)
+
+### Cause
+
+The master save bar runs `Promise.allSettled(dirty.map((s) => s.save()))` — multiple concurrent server actions fire in parallel. Each server action calls `requireAuth()` at its start, which calls `auth()` (from NextAuth). With `strategy: "jwt"` and `maxAge: 7 days`, NextAuth may refresh the session cookie on every `auth()` call. When two or more server actions execute concurrently:
+
+1. Both read the current JWT cookie from the request
+2. Both decode and validate the JWT (via `auth()`)
+3. Both prepare `Set-Cookie` response headers with the refreshed JWT
+4. Browser receives overlapping headers; the last one wins, potentially writing a corrupted/partial JWT
+
+The corrupted JWT payload may be missing `userId` or have a bad signature. On the next request to the Edge runtime (middleware in `proxy.ts`), the `authorized()` callback tries to decode the JWT, gets an empty/falsy `auth.user`, and redirects to `/login?callbackUrl=...`.
+
+This manifests 20-30 seconds after the settings save (after page navigation), because the browser doesn't send the cookie to the Edge on every request — only the next navigation triggers the decode, and by then the cookie is stale.
+
+### Effect
+
+User saves account settings via the master Save bar. Immediately after (or within seconds of navigating to a new route like `/plan/2026/2`), they are redirected to login with the original path as callbackUrl. The session cookie is still present in DevTools (browser hasn't cleared it), but the JWT inside is corrupted. User must log in again.
+
+### Solution
+
+Serialize the saves in the save bar using a sequential `for-of` loop instead of `Promise.allSettled`. Each server action now runs to completion before the next one starts, ensuring:
+
+- Only one `auth()` call is in flight at a time
+- Only one `Set-Cookie` header is written per save cycle
+- No overlapping cookie writes
+
+Error collection and reporting remain the same: all errors are gathered and surfaced in a single toast at the end.
+
+**File changed:** `src/components/settings/settings-save-bar.tsx`
+
+- Replaced `Promise.allSettled(dirty.map((s) => s.save()))` with a `for-of` loop that awaits each section's save sequentially
+- Maintained error aggregation: results array collects `{ status, value/reason }` for each section
+- Added ESLint disable comment on the `await` inside the loop with explanation
+
+### Prevention
+
+- **Avoid concurrent server actions that call `auth()`.** Refreshing a JWT is not idempotent in the presence of overlapping `Set-Cookie` headers. If multiple sections save in parallel and each calls `requireAuth()`, you risk cookie corruption.
+- **Batch mutations by scope.** If a UI pattern allows multiple independent saves, serialize them rather than parallelizing. The UX cost (slightly slower save) is negligible; the correctness cost is high.
+- **Document JWT refresh timing.** The 20-30 second delay before the redirect happens because the browser doesn't validate cookies locally; it only fails when the Edge tries to decode a corrupted JWT on the next request. This lag made the bug hard to trace back to the save.
+
+### Related Files
+
+- `src/components/settings/settings-save-bar.tsx` — the fix
+- `src/components/settings/account-settings.tsx`, `src/components/settings/user-profile-settings.tsx`, `src/components/settings/annual-reporting-settings.tsx` — registered sections that save via this bar
+- `src/app/actions/settings.ts`, `src/app/actions/accounts.ts` — server actions that call `requireAuth()`
+- `src/auth.ts`, `src/auth.config.ts` — NextAuth JWT refresh logic
+- `src/proxy.ts` — Edge runtime auth check where the redirect fires
+
+---
+
+## [BUG-2026-05-25-1] Account default asset save fails with `validation.account.invalidAssetId`
+
+**Date:** 2026-05-25
+**Severity:** High (blocks any save in Settings → Conta whenever a default asset is selected)
+**Affected Area:** `src/lib/validations/account.ts`, `messages/en.json`, `messages/pt-BR.json`
+
+### Cause
+
+Schema mismatch between the storage layer and the input validator.
+
+- DB column `tradingAccounts.defaultAsset` is `varchar("default_asset", { length: 20 })` (`src/db/schema.ts:243`) — designed to store the asset **symbol** (e.g. `"WIN"`).
+- All read paths treat it as a symbol: `command-center-tabs.tsx:61` reads `account.defaultAsset` into a variable literally named `defaultAssetSymbol`, and `scaled-trade-form.tsx:115` does `assets.find((a) => a.id === defaultAssetId || a.symbol === defaultAssetId)`.
+- The Settings form (`account-settings.tsx:471`) populates `<SelectItem value={asset.symbol}>`, so the form submits the symbol on save.
+- But `createAccountSchema.defaultAsset` in `src/lib/validations/account.ts` required `.uuid("validation.account.invalidAssetId")`. Any symbol-shaped value (3–6 chars, not a UUID) failed validation, surfacing the toast "validation.account.invalidAssetId".
+
+The bug was latent: it only fired when the user actually picked an asset. Saving with "Nenhum" (which sends `""` / `null`) bypassed the UUID check via `.optional()`/`.nullable()`.
+
+### Effect
+
+Account settings could not be saved whenever the user selected a default asset. The error toast displayed the raw i18n key (`validation.account.invalidAssetId`) because the server action returns the Zod issue message verbatim and no client formatter resolves nested validation keys here. Users hit a dead end on a core preference.
+
+### Solution
+
+1. Replaced the `.uuid()` validator with `.max(20)` to match the DB column width and the actual data shape (symbol string).
+2. Removed the now-unused `invalidAssetId` key from the `validation.account` block in both locales and added `defaultAssetMax` for the new constraint.
+
+No DB migration needed — storage was already correct; only the validator was wrong.
+
+### Prevention
+
+- When the Zod error key contains "Id" but the column is a `varchar`, that's a smell: the validator name has drifted from the schema. Audit other `*.uuid(...)` calls against actual column types.
+- Long-term: store the asset by FK (`asset_id uuid references assets(id)`) instead of by symbol — symbols can collide across markets and are mutable. Logged in `docs/backlog.md` as a follow-up rather than retrofitted here, to keep the bug fix surgical.
+
+### Related Files
+
+- `src/lib/validations/account.ts`
+- `src/db/schema.ts` (reference)
+- `src/components/settings/account-settings.tsx` (reference)
+- `messages/en.json`, `messages/pt-BR.json`
+
+---
+
 ## [BUG-2026-05-15-1] Hawks `dailyTradeOrdinal` race condition — concurrent inserts collide on unique index
 
 **Severity:** Medium (low probability, high correctness impact) | **Affected:** `src/app/actions/trades.ts`, `src/db/schema.ts`, `src/db/migrations/0005_boring_wasp.sql`

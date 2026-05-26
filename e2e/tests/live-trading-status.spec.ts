@@ -25,7 +25,7 @@
  * ------------
  * - The Next.js dev server must be running (handled by playwright.config.ts webServer).
  * - DATABASE_URL must point to the same database the app uses.
- * - Auth state for admin@axion.com must exist at e2e/.auth/user.json
+ * - Auth state for admin@bravo.com must exist at e2e/.auth/user.json
  *   (created by global.setup.ts).
  */
 

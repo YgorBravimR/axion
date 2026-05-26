@@ -2776,6 +2776,15 @@
 	"settings": {
 		"title": "Configurações",
 		"description": "Gerencie ativos, timeframes e preferências",
+		"saveBar": {
+			"regionLabel": "Barra de salvamento de configurações",
+			"pendingChanges": "{count, plural, one {1 alteração pendente} other {# alterações pendentes}}",
+			"save": "Salvar",
+			"saving": "Salvando…",
+			"cancel": "Cancelar",
+			"saveSuccess": "{count, plural, one {Alteração salva} other {# alterações salvas}}",
+			"saveErrorWithCount": "{failed} de {total} alterações falharam"
+		},
 		"tabs": {
 			"profile": "Perfil",
 			"account": "Conta",
@@ -3575,7 +3584,7 @@
 			"currencyMax": "Moeda deve ter 10 caracteres ou menos",
 			"breakevenTicksInteger": "Ticks de breakeven devem ser um inteiro",
 			"breakevenTicksMin": "Ticks de breakeven não podem ser negativos",
-			"invalidAssetId": "ID de ativo inválido",
+			"defaultAssetMax": "Símbolo do ativo padrão deve ter 20 caracteres ou menos",
 			"invalidAccountId": "ID de conta inválido"
 		},
 		"taxEngine": {
@@ -5242,7 +5251,14 @@
 			},
 			"ladder": {
 				"title": "Capital ladder",
-				"noTiers": "Sem tiers definidos. Use \"Editar\" para configurar a escada de capital."
+				"noTiers": "Sem tiers definidos. Use \"Editar\" para configurar a escada de capital.",
+				"runwayHint": "Runway = R que dá para perder até zerar (downgrade automático a {threshold}R abaixo do piso de cada tier)",
+				"runwayLabel": "Runway",
+				"rUntilRuin": "{r}R até zerar",
+				"runwayTitle": "Caminhando pelos downgrades automáticos, {r}R cabem entre o piso deste tier e o capital zerado.",
+				"toDowngrade": "{r}R até cair para o tier abaixo",
+				"noFurtherDowngrade": "Piso da escada · sem novo downgrade",
+				"floorBadge": "Piso"
 			},
 			"monthlyCaps": "Caps mensais: loss {lossR} · win {winR}",
 			"whatIfSummary": "traduz 1R em nº de contratos a partir do stop em ticks (consulta opcional)",

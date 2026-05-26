@@ -2776,6 +2776,15 @@
 	"settings": {
 		"title": "Settings",
 		"description": "Manage assets, timeframes, and preferences",
+		"saveBar": {
+			"regionLabel": "Settings save bar",
+			"pendingChanges": "{count, plural, one {1 pending change} other {# pending changes}}",
+			"save": "Save",
+			"saving": "Saving…",
+			"cancel": "Cancel",
+			"saveSuccess": "{count, plural, one {Change saved} other {# changes saved}}",
+			"saveErrorWithCount": "{failed} of {total} changes failed"
+		},
 		"tabs": {
 			"profile": "Profile",
 			"account": "Account",
@@ -3575,7 +3584,7 @@
 			"currencyMax": "Currency must be 10 characters or less",
 			"breakevenTicksInteger": "Breakeven ticks must be a whole number",
 			"breakevenTicksMin": "Breakeven ticks cannot be negative",
-			"invalidAssetId": "Invalid asset ID",
+			"defaultAssetMax": "Default asset symbol must be 20 characters or less",
 			"invalidAccountId": "Invalid account ID"
 		},
 		"taxEngine": {
@@ -5242,7 +5251,14 @@
 			},
 			"ladder": {
 				"title": "Capital ladder",
-				"noTiers": "No tiers defined. Use \"Edit\" to configure the capital ladder."
+				"noTiers": "No tiers defined. Use \"Edit\" to configure the capital ladder.",
+				"runwayHint": "Runway = R you could lose down to zero (auto-downgrade fires {threshold}R below each tier floor)",
+				"runwayLabel": "Runway",
+				"rUntilRuin": "{r}R to zero",
+				"runwayTitle": "Walking the auto-downgrade chain, {r}R fit between this tier floor and a zero balance.",
+				"toDowngrade": "{r}R until next tier downgrade",
+				"noFurtherDowngrade": "Ladder floor · no further downgrade",
+				"floorBadge": "Floor"
 			},
 			"monthlyCaps": "Monthly caps: loss {lossR} · win {winR}",
 			"whatIfSummary": "translates 1R into number of contracts from stop in ticks (optional query)",

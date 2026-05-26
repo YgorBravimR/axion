@@ -98,7 +98,7 @@ test.describe("Authentication", () => {
 			await page.waitForTimeout(1000)
 
 			await page.getByLabel("Full Name").fill("Test User")
-			await page.getByLabel("Email").fill("admin@axion.com") // Already exists from seed
+			await page.getByLabel("Email").fill("admin@bravo.com") // Already exists from seed
 			await page
 				.locator('input[type="password"]')
 				.first()
@@ -162,7 +162,7 @@ test.describe("Authentication", () => {
 			await page.waitForLoadState("load")
 			await page.waitForTimeout(1000)
 
-			await page.locator("#email").fill("admin@axion.com")
+			await page.locator("#email").fill("admin@bravo.com")
 			await page.locator("#password").fill("Admin123!")
 			await page.getByRole("button", { name: "Sign In" }).click()
 

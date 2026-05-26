@@ -26,10 +26,14 @@ import type { SafeUser } from "@/app/actions/auth.types"
 import { getUserSettings, updateUserSettings } from "@/app/actions/settings"
 import { Loader2 } from "lucide-react"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
+import { useRegisterSettingsSection } from "./settings-save-bar"
+import { SettingsField } from "./settings-field"
 
 /**
  * User profile settings component.
- * Allows users to manage their profile, password, display settings, and appearance.
+ * Profile name is part of the page master Save bar; password change keeps
+ * its own explicit flow because it's a security-sensitive action that should
+ * never be bundled into a generic "save preferences" gesture.
  */
 const UserProfileSettings = () => {
 	const t = useTranslations("settings.profile")
@@ -43,13 +47,11 @@ const UserProfileSettings = () => {
 	const [user, setUser] = useState<SafeUser | null>(null)
 	const [showAllAccounts, setShowAllAccounts] = useState(false)
 
-	// Profile editing
-	const [isEditingProfile, setIsEditingProfile] = useState(false)
-	const [profileForm, setProfileForm] = useState({
-		name: "",
-	})
+	// Profile name — saved snapshot vs draft (no edit-mode toggle)
+	const [savedName, setSavedName] = useState("")
+	const [draftName, setDraftName] = useState("")
 
-	// Password change
+	// Password change keeps its own toggle — security action stays explicit
 	const [isChangingPassword, setIsChangingPassword] = useState(false)
 	const [passwordForm, setPasswordForm] = useState({
 		currentPassword: "",
@@ -72,7 +74,8 @@ const UserProfileSettings = () => {
 				}
 				setUser(userData)
 				if (userData) {
-					setProfileForm({ name: userData.name })
+					setSavedName(userData.name)
+					setDraftName(userData.name)
 				}
 				if (settingsResult.status === "success" && settingsResult.data) {
 					setShowAllAccounts(settingsResult.data.showAllAccounts)
@@ -97,11 +100,9 @@ const UserProfileSettings = () => {
 				const result = await updateUserSettings({ showAllAccounts: checked })
 				if (result.status === "success") {
 					showToast("success", t("settingsUpdated"))
-					// Refresh the page to apply the new setting
 					router.refresh()
 					return
 				}
-				// Revert on error
 				setShowAllAccounts(!checked)
 				showToast("error", result.message || t("settingsUpdateError"))
 			})
@@ -109,18 +110,29 @@ const UserProfileSettings = () => {
 		[router, showToast, t]
 	)
 
-	const handleSaveProfile = useCallback(() => {
-		startTransition(async () => {
-			const result = await updateUserProfile(profileForm)
-			if (result.status === "success") {
-				setUser((prev) => (prev ? { ...prev, name: profileForm.name } : null))
-				setIsEditingProfile(false)
-				showToast("success", t("profileUpdated"))
-				return
-			}
-			showToast("error", result.error || t("profileUpdateError"))
-		})
-	}, [profileForm, showToast, t])
+	const profileDirty = draftName !== savedName
+
+	const handleSaveProfile = useCallback(async () => {
+		const result = await updateUserProfile({ name: draftName })
+		if (result.status === "success") {
+			setUser((prev) => (prev ? { ...prev, name: draftName } : null))
+			setSavedName(draftName)
+			return
+		}
+		throw new Error(result.error || t("profileUpdateError"))
+	}, [draftName, t])
+
+	const handleResetProfile = useCallback(() => {
+		setDraftName(savedName)
+	}, [savedName])
+
+	useRegisterSettingsSection({
+		id: "profile-info",
+		label: t("profileInfo"),
+		isDirty: profileDirty,
+		onSave: handleSaveProfile,
+		onReset: handleResetProfile,
+	})
 
 	const handleChangePassword = useCallback(() => {
 		if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -150,7 +162,7 @@ const UserProfileSettings = () => {
 
 	const handleProfileNameChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
-			setProfileForm((prev) => ({ ...prev, name: e.target.value }))
+			setDraftName(e.target.value)
 		},
 		[]
 	)
@@ -176,11 +188,6 @@ const UserProfileSettings = () => {
 		[]
 	)
 
-	const handleCancelEditProfile = useCallback(() => {
-		setIsEditingProfile(false)
-		setProfileForm({ name: user?.name || "" })
-	}, [user?.name])
-
 	const handleCancelChangePassword = useCallback(() => {
 		setIsChangingPassword(false)
 		setPasswordForm({
@@ -188,10 +195,6 @@ const UserProfileSettings = () => {
 			newPassword: "",
 			confirmPassword: "",
 		})
-	}, [])
-
-	const handleStartEditProfile = useCallback(() => {
-		setIsEditingProfile(true)
 	}, [])
 
 	const handleStartChangePassword = useCallback(() => {
@@ -207,78 +210,37 @@ const UserProfileSettings = () => {
 	}
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-2xl">
+		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 pb-l-800 mx-auto max-w-2xl">
 			{/* Profile Information */}
 			<div
 				id="settings-profile-info"
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 			>
-				<div className="flex items-center justify-between">
-					<h2 className="text-body text-txt-100 font-semibold">
-						{t("profileInfo")}
-					</h2>
-					{!isEditingProfile ? (
-						<Button
-							id="profile-edit-info"
-							variant="ghost"
-							size="sm"
-							onClick={handleStartEditProfile}
-						>
-							{tCommon("edit")}
-						</Button>
-					) : null}
-				</div>
+				<h2 className="text-body text-txt-100 font-semibold">
+					{t("profileInfo")}
+				</h2>
 				<div className="mt-m-400 space-y-m-400">
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("name")}</p>
-						</div>
-						{isEditingProfile ? (
-							<Input
-								id="profile-name"
-								value={profileForm.name}
-								onChange={handleProfileNameChange}
-								className="w-full sm:w-64"
-							/>
-						) : (
-							<span className="text-small text-txt-200">{user?.name}</span>
-						)}
-					</div>
-					<div className="gap-s-200 sm:gap-m-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-						<div className="flex-1">
-							<p className="text-small text-txt-100">{t("email")}</p>
-							<p className="text-tiny text-txt-300">{t("emailCannotChange")}</p>
-						</div>
-						<span className="text-small text-txt-200">{user?.email}</span>
-					</div>
+					<SettingsField htmlFor="profile-name" label={t("name")}>
+						<Input
+							id="profile-name"
+							value={draftName}
+							onChange={handleProfileNameChange}
+							className="w-full"
+						/>
+					</SettingsField>
+					<SettingsField
+						label={t("email")}
+						help={t("emailCannotChange")}
+						controlAlign="end"
+					>
+						<span className="text-small text-txt-200 truncate">
+							{user?.email}
+						</span>
+					</SettingsField>
 				</div>
-				{isEditingProfile ? (
-					<div className="mt-m-500 gap-s-300 flex justify-end">
-						<Button
-							id="profile-cancel-info"
-							variant="ghost"
-							size="sm"
-							onClick={handleCancelEditProfile}
-							disabled={isPending}
-						>
-							{tCommon("cancel")}
-						</Button>
-						<Button
-							id="profile-save-info"
-							size="sm"
-							onClick={handleSaveProfile}
-							disabled={isPending}
-						>
-							{isPending ? (
-								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
-							) : null}
-							{tCommon("save")}
-						</Button>
-					</div>
-				) : null}
 			</div>
 
-			{/* Change Password */}
+			{/* Change Password — explicit, separate flow */}
 			<div
 				id="settings-password"
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
@@ -378,7 +340,6 @@ const UserProfileSettings = () => {
 				)}
 			</div>
 
-			{/* Data Display — admin only */}
 			{isAdmin && (
 				<div
 					id="settings-data-display"
@@ -387,29 +348,24 @@ const UserProfileSettings = () => {
 					<h2 className="text-body text-txt-100 font-semibold">
 						{t("dataDisplay")}
 					</h2>
-					<div className="mt-m-400 space-y-m-500">
-						{/* Show All Accounts Toggle */}
-						<div className="flex items-center justify-between">
-							<div>
-								<p className="text-small text-txt-100">
-									{t("showAllAccounts")}
-								</p>
-								<p className="text-tiny text-txt-300">
-									{t("showAllAccountsDescription")}
-								</p>
-							</div>
+					<div className="mt-m-400 space-y-m-400">
+						<SettingsField
+							htmlFor="show-all-accounts"
+							label={t("showAllAccounts")}
+							help={t("showAllAccountsDescription")}
+							controlAlign="end"
+						>
 							<Switch
 								id="show-all-accounts"
 								checked={showAllAccounts}
 								onCheckedChange={handleToggleShowAllAccounts}
 								disabled={isPending}
 							/>
-						</div>
+						</SettingsField>
 					</div>
 				</div>
 			)}
 
-			{/* Appearance */}
 			<div
 				id="settings-appearance"
 				className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
@@ -417,41 +373,24 @@ const UserProfileSettings = () => {
 				<h2 className="text-body text-txt-100 font-semibold">
 					{t("appearance")}
 				</h2>
-				<div className="mt-m-400 space-y-m-500">
-					{/* Theme */}
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-small text-txt-100">{t("theme")}</p>
-							<p className="text-tiny text-txt-300">
-								{t("themeLight")} / {t("themeDark")}
-							</p>
-						</div>
+				<div className="mt-m-400 space-y-m-400">
+					<SettingsField
+						label={t("theme")}
+						help={`${t("themeLight")} / ${t("themeDark")}`}
+						controlAlign="end"
+					>
 						<ThemeToggle />
-					</div>
-					{/* Color Scheme / Brand */}
-					{/* <div className="flex items-center justify-between">
-						<div>
-							<p className="text-small text-txt-100">{t("colorScheme")}</p>
-							<p className="text-tiny text-txt-300">
-								{t("colorSchemeDescription")}
-							</p>
-						</div>
-						<BrandSwitcher />
-					</div> */}
-					{/* Language */}
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-small text-txt-100">{t("language")}</p>
-							<p className="text-tiny text-txt-300">
-								Português (Brasil) / English
-							</p>
-						</div>
+					</SettingsField>
+					<SettingsField
+						label={t("language")}
+						help="Português (Brasil) / English"
+						controlAlign="end"
+					>
 						<LanguageSwitcher />
-					</div>
+					</SettingsField>
 				</div>
 			</div>
 
-			{/* Annual Reporting */}
 			<AnnualReportingSettings />
 		</div>
 	)

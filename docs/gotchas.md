@@ -38,6 +38,41 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ---
 
+## Drizzle ORM / Database Drivers
+
+### Neon HTTP driver lacks transaction support; postgres-js fallback masks the limitation
+
+- **What**: `drizzle-orm/neon-http` is the Neon driver for stateless HTTPS clients. It does NOT support `db.transaction(async (tx) => { /* multi-statement ops */ })`. Any call to `db.transaction()` throws `Error: No transactions support in neon-http driver`. The postgres-js driver (used for local worktrees) _does_ support transactions, so the bug never surfaces during development.
+- **Symptom**: A feature works perfectly in local dev and CI (postgres-js), but breaks silently in production (neon-http). The error is caught and swallowed internally (e.g., in a try-catch that returns a structured error response), so users see no crash — just a dead feature. Example: strategy creation fails with no visible error.
+- **Call sites**: Any server action or route handler that uses `await db.transaction(...)`. Audit these before deploying a `neon-http`-backed application.
+- **What to do**: Swap to `drizzle-orm/neon-serverless` (WebSocket-backed, stateful, full transaction support). Both drivers point to the same Neon URL. See `src/db/drizzle.ts` for the pattern: configure `neonConfig.webSocketConstructor = ws` for Node runtime, then use `drizzle(..., { schema })` as usual.
+- **Root issue**: Neon's HTTP client is designed for edge functions (low latency, no connection state). Transactions require a persistent connection; use the serverless driver instead.
+- **Source**: `[BUG-2026-05-25-3]` in `docs/postMorten/backend.md`.
+
+---
+
+## NextAuth / JWT Sessions
+
+### Parallel `auth()` calls corrupt JWT cookie under `strategy: "jwt"`
+
+- **What**: With NextAuth `strategy: "jwt"` and default `maxAge`, multiple concurrent server actions that each call `auth()` (e.g., via `requireAuth()`) can prepare overlapping `Set-Cookie` headers. The browser writes the last one, potentially corrupting the JWT (missing fields, bad signature). On the next request, the Edge middleware tries to decode the corrupted JWT, gets `auth.user = null`, and redirects to login.
+- **Symptom**: User performs an action that triggers N concurrent server actions (e.g., a settings save with `Promise.allSettled`). Within 20–30 seconds (after page navigation), they're redirected to `/login?callbackUrl=...` even though the session cookie is still in DevTools.
+- **Why it's late**: The browser doesn't validate JWT locally. The corruption isn't detected until the Edge middleware tries to decode the cookie on the next request.
+- **What to do**: Serialize actions that call `auth()` — use a `for-of` loop instead of `Promise.allSettled`. The UX cost (slightly longer save) is negligible; the correctness cost (session corruption) is high. See `src/components/settings/settings-save-bar.tsx` for the pattern.
+- **Root issue**: NextAuth does not make concurrent `Set-Cookie` writes idempotent. Overlapping headers can corrupt the payload.
+- **Source**: `[BUG-2026-05-25-2]` in `docs/postMorten/backend.md`.
+- **Date logged**: 2026-05-25.
+
+### `requireAuth()` + `cache()` in parallel server actions: session state isolation
+
+- **What**: `src/app/actions/auth.ts:349` defines `requireAuth = cache(async () => auth()...)`. React's `cache()` is request-scoped. If you call `requireAuth()` from two parallel server actions in the same request, both hits use the **same cached result**. If one action mutates session state (e.g., via `auth.user.accountId = X`), the mutation leaks to the other.
+- **Symptom**: Rarely hit in practice (requires mutation of `auth` object, which is not expected), but the gotcha is: cached result !== race-safe result.
+- **What to do**: Don't mutate the result of `requireAuth()`. If you need to mutate session state, use `updateSession()` from `next-auth/react` (client-only) or set a session cookie explicitly (server-only, complex). Safe parallel access to read-only `userId` / `accountId` is fine.
+- **Source**: React `cache()` docs + NextAuth session architecture.
+- **Date logged**: 2026-05-25.
+
+---
+
 ## Next.js / App Router
 
 ### `cookies()` / `headers()` / `draftMode()` are banned in pages
@@ -251,6 +286,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `scripts/worktree-db.sh`, `.superset/config.json`, `.claude/hooks/worktree-setup.sh`, `.claude/hooks/worktree-teardown.sh`.
 - **Date logged**: 2026-05-15.
 
+### `.env`'s default `DATABASE_URL` points at Neon production — local dev writes hit prod data
+
+- **What**: `.env` line 1 sets `DATABASE_URL` to the Neon production branch (`ep-quiet-glade-ahk8537u`); line 2 (the localhost Docker URL) is commented out. So unless you explicitly switch lines or run inside a worktree (which provisions its own DB via `scripts/worktree-db.sh`), every `pnpm dev`, `pnpm db:seed`, and one-off `tsx scripts/*` connects to the shared Neon DB. The "local" and "production" DB are the same Postgres branch for the primary checkout. Tasks like "update admin credentials in the local DB" are in fact production writes.
+- **What to do**: Before running any mutation script outside a worktree, check which `DATABASE_URL` is active (`grep -n "^DATABASE_URL" .env`). For destructive or rewriting work, prefer (a) switching to a worktree (auto-isolated DB), (b) running against `DATABASE_URL_STAGING` explicitly via `DATABASE_URL=$DATABASE_URL_STAGING pnpm tsx …`, or (c) uncommenting the localhost line for a dockerized local Postgres. The Neon prod URL has no separate "dev write protection" — there's no safety net beyond reading `.env` first.
+- **Source**: 2026-05-25 admin-credential rotation (`admin@axion.com` → `admin@bravo.com`) — UPDATE applied to Neon prod via `scripts/update-admin-credentials.ts` because the active `DATABASE_URL` is the prod branch.
+- **Date logged**: 2026-05-25.
+
 ### Drizzle data layer is driver-aware — Neon over HTTPS, local PG over wire protocol
 
 - **What**: `src/db/drizzle.ts` and `src/db/drizzle-ws.ts` pick their driver by URL via `isNeonUrl()` in `src/db/url.ts`. Neon URLs (anything matching `@…neon.tech`) use `drizzle-orm/neon-http` (and `neon-serverless` for the transactional `dbWs`). Anything else uses `drizzle-orm/postgres-js` over `postgres` (postgres-js). `scripts/run-migrations.ts` and `scripts/seed.ts` do the same. The exposed type is always `NeonHttpDatabase<typeof schema>` / `NeonDatabase<typeof schema>` (cast through `unknown`) so call sites don't need to be driver-aware — both implementations satisfy the Drizzle query-builder API structurally.
@@ -266,6 +308,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: After pulling a squash, the only safe local recovery is destructive: drop the database, recreate it, run `pnpm db:migrate` from scratch, then `pnpm db:seed`. For worktrees, rerun `bash scripts/worktree-db.sh setup` (it drops + recreates idempotently). **Production / Neon is unaffected** because the squash is designed to be hash-compatible with the prior live state — only dev environments that ran the pre-squash migrations carry stale bookkeeping. Never hand-edit `__drizzle_migrations` to "fix" hashes; that hides drift instead of resolving it. If you can't drop (e.g. shared dev data you need), restore from a dump after the reset.
 - **Source**: 2026-05-15 session implementing strategy versioning v1 — `pnpm db:migrate` failed against a worktree DB with 27 pre-squash entries vs 6 post-squash files; resolved by drop + recreate.
 - **Date logged**: 2026-05-15.
+
+### After "drop + recreate database" via Neon console, `pnpm db:migrate` may silently no-op — `pnpm db:push --force` is the recovery
+
+- **What**: When you drop + recreate a Neon database via the web console and then run `pnpm db:migrate`, the migrator (Drizzle's Neon HTTP `migrate()` in `scripts/run-migrations.ts`) prints `migrations applied` with zero per-migration log lines and exits 0 — but **no tables get created**. The next step (`pnpm db:seed`) then fails with `relation "trade_tags" does not exist` (PG `42P01`) at the cleanup phase. Suspected cause: the Neon HTTP migrator is silent by design (no per-file logging), and some interaction with the Neon console's drop+recreate path leaves it convinced there's nothing to apply — possibly the recreated DB's catalog state or a cached connection. Either way, the symptom is "migrate looks successful, schema is empty."
+- **What to do**: Recover with `pnpm db:push --force` — `drizzle-kit push` introspects the live DB and reconciles it against `src/db/schema.ts` directly, ignoring the migrations journal. On a truly-empty DB it just `CREATE`s everything in one pass. Then `ADMIN_PASSWORD=… pnpm db:seed` works normally. **Important**: `db:push` is only safe here because the DB is empty — running it on a populated DB can drop columns the live schema declares but the file doesn't. After the recovery, the DB schema matches `schema.ts` but the migrations journal stays empty; subsequent `pnpm db:migrate` runs will still no-op (now correctly, because everything's already there per the push). For multi-step migrations going forward, prefer "drop schemas via `psql` (`DROP SCHEMA public CASCADE; DROP SCHEMA drizzle CASCADE; CREATE SCHEMA public;`) + `pnpm db:migrate`" over "drop database via console" — the SQL path keeps both schema state and journal state consistently empty, so migrate sees zero records and applies all 14 files.
+- **Source**: 2026-05-23 session resetting prod (`ep-quiet-glade-ahk8537u`) for W1 Axion usability audit. User dropped + recreated DB via Neon console; `pnpm db:migrate` reported "applied" with empty schema; `pnpm db:push --force` recovered; `ADMIN_PASSWORD=… pnpm db:seed` completed (1,123 trades, 7 accounts).
+- **Date logged**: 2026-05-23.
 
 ---
 
@@ -293,7 +342,7 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ### Re-running the E2E suite back-to-back trips the login rate limiter
 
-- **What**: Running the full Playwright suite twice in rapid succession causes the `setup` project to fail with "Login timed out" — but the real error (hidden in the page snapshot) is `"Too many login attempts. Please try again in N minute(s)."`. The auth spec (`auth.spec.ts`) fires many login/register calls against `admin@axion.com`, exhausting the per-email rate limit bucket. Subsequent `setup` runs try to log in as the same user and silently hit the rate-limit UI instead of an error the test catches — the `Promise.race` in `global.setup.ts` only matches `text=/Invalid|Error/i`, not the rate-limit banner, so it falls through to `timeout` after 30 s.
+- **What**: Running the full Playwright suite twice in rapid succession causes the `setup` project to fail with "Login timed out" — but the real error (hidden in the page snapshot) is `"Too many login attempts. Please try again in N minute(s)."`. The auth spec (`auth.spec.ts`) fires many login/register calls against `admin@bravo.com`, exhausting the per-email rate limit bucket. Subsequent `setup` runs try to log in as the same user and silently hit the rate-limit UI instead of an error the test catches — the `Promise.race` in `global.setup.ts` only matches `text=/Invalid|Error/i`, not the rate-limit banner, so it falls through to `timeout` after 30 s.
 - **What to do**: Wait 7–10 minutes between full suite runs. If you need to run only the data phases (settings/playbook/journal) after a clean auth run, they reuse the stored `e2e/.auth/user.json` and do not need to re-authenticate — but they still run `globalSetup` (= `global.teardown.ts`) which is fine. The fastest workaround for rapid iteration is to skip auth: `pnpm exec playwright test --project=chromium-settings --project=chromium-playbook --project=chromium-journal` will reuse the existing `.auth/user.json` without re-running the `setup` project (just make sure the JSON exists from a prior run).
 - **Source**: `e2e/global.setup.ts:26`, `src/app/actions/auth.ts` (rate-limit logic); 2026-05-21 test session.
 - **Date logged**: 2026-05-21.

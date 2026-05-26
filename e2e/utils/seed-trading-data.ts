@@ -169,20 +169,20 @@ const buildDb = () => {
 
 /**
  * Fetch the admin user's ID and their default trading account ID.
- * The admin user is seeded via `src/db/seed.ts` with email `admin@axion.com`.
+ * The admin user is seeded via `src/db/seed.ts` with email `admin@bravo.com`.
  */
 const getAdminContext = async (): Promise<AdminContext> => {
 	const db = buildDb()
 
 	const userRows = await db.execute<IdRow>(sql`
     SELECT id FROM users
-    WHERE email = 'admin@axion.com'
+    WHERE email = 'admin@bravo.com'
     LIMIT 1
   `)
 
 	if (!userRows.rows.length) {
 		throw new Error(
-			"[seed-trading-data] Admin user (admin@axion.com) not found. " +
+			"[seed-trading-data] Admin user (admin@bravo.com) not found. " +
 				"Run the database seed first."
 		)
 	}

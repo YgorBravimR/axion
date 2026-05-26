@@ -130,7 +130,7 @@ importers:
         version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       openai:
         specifier: 6.39.0
-        version: 6.39.0(ws@8.20.1)(zod@4.4.3)
+        version: 6.39.0(ws@8.21.0)(zod@4.4.3)
       pdf-parse:
         specifier: 2.4.5
         version: 2.4.5
@@ -201,6 +201,9 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.15)
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vitest/coverage-v8':
         specifier: 4.1.7
         version: 4.1.7(vitest@4.1.7)
@@ -258,6 +261,9 @@ importers:
       vitest:
         specifier: 4.1.7
         version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@25.9.1)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.3)(yaml@2.9.0))
+      ws:
+        specifier: ^8.21.0
+        version: 8.21.0
 
   video:
     dependencies:
@@ -3691,6 +3697,9 @@ packages:
   '@types/use-sync-external-store@0.0.6':
     resolution: {integrity: sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==}
 
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@typescript-eslint/eslint-plugin@8.59.4':
     resolution: {integrity: sha512-PegsU+XfyJJNjd4+u/k6f9yTyp0lEXXiPopUNobZcIAUJFGICFLN+sP0Rb3JehVmiij1Ph0dFGYqODoRo/2+6A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -7011,6 +7020,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xml-naming@0.1.0:
     resolution: {integrity: sha512-k8KO9hrMyNk6tUWqUfkTEZbezRRpONVOzUTnc97VnCvyj6Tf9lyUR9EDAIeiVLv56jsMcoXEwjW8Kv5yPY52lw==}
     engines: {node: '>=16.0.0'}
@@ -9478,7 +9499,7 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       react-refresh: 0.18.0
       remotion: 4.0.465(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.0)(postcss@8.5.10))
+      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.0))
       webpack: 5.105.0(esbuild@0.28.0)(postcss@8.5.10)
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -10066,7 +10087,7 @@ snapshots:
   '@sentry/webpack-plugin@5.3.0(webpack@5.105.0(esbuild@0.28.0))':
     dependencies:
       '@sentry/bundler-plugin-core': 5.3.0
-      webpack: 5.105.0(esbuild@0.28.0)
+      webpack: 5.105.0(esbuild@0.28.0)(postcss@8.5.10)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -10375,6 +10396,10 @@ snapshots:
     optional: true
 
   '@types/use-sync-external-store@0.0.6': {}
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 25.9.1
 
   '@typescript-eslint/eslint-plugin@8.59.4(@typescript-eslint/parser@8.59.4(eslint@10.4.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.4.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
@@ -12612,9 +12637,9 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@6.39.0(ws@8.20.1)(zod@4.4.3):
+  openai@6.39.0(ws@8.21.0)(zod@4.4.3):
     optionalDependencies:
-      ws: 8.20.1
+      ws: 8.21.0
       zod: 4.4.3
 
   opencollective-postinstall@2.0.3: {}
@@ -13385,7 +13410,7 @@ snapshots:
 
   stubs@3.0.0: {}
 
-  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.0)(postcss@8.5.10)):
+  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.0)):
     dependencies:
       webpack: 5.105.0(esbuild@0.28.0)(postcss@8.5.10)
 
@@ -13441,16 +13466,6 @@ snapshots:
     optionalDependencies:
       esbuild: 0.28.0
       postcss: 8.5.10
-
-  terser-webpack-plugin@5.6.0(esbuild@0.28.0)(webpack@5.105.0(esbuild@0.28.0)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.48.0
-      webpack: 5.105.0(esbuild@0.28.0)
-    optionalDependencies:
-      esbuild: 0.28.0
 
   terser@5.48.0:
     dependencies:
@@ -13779,47 +13794,6 @@ snapshots:
 
   webpack-sources@3.5.0: {}
 
-  webpack@5.105.0(esbuild@0.28.0):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.16.0
-      acorn-import-phases: 1.0.4(acorn@8.16.0)
-      browserslist: 4.28.2
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.22.0
-      es-module-lexer: 2.1.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.2
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.3
-      terser-webpack-plugin: 5.6.0(esbuild@0.28.0)(webpack@5.105.0(esbuild@0.28.0))
-      watchpack: 2.5.1
-      webpack-sources: 3.5.0
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - lightningcss
-      - postcss
-      - uglify-js
-
   webpack@5.105.0(esbuild@0.28.0)(postcss@8.5.10):
     dependencies:
       '@types/eslint-scope': 3.7.7
@@ -13951,6 +13925,8 @@ snapshots:
   wrappy@1.0.2: {}
 
   ws@8.20.1: {}
+
+  ws@8.21.0: {}
 
   xml-naming@0.1.0: {}
 
