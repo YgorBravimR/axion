@@ -361,7 +361,7 @@ const runBacktest = (
 		summary: computeMetrics(trades, sortedDayKeys.length),
 		dayBreakdown: dayBreakdowns,
 		engineVersion:
-			recipe.entry.type === "hawks_triple_screen" ? "hawks-v0.2" : undefined,
+			recipe.entry.type === "hawks_triple_screen" ? "hawks-v0.6" : undefined,
 	}
 }
 

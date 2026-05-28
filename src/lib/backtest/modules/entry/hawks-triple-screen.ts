@@ -55,6 +55,9 @@ interface HawksState {
 	minLowSinceTopo: number | null
 	// Wave-1 invalidator (no 2 consecutive against-trend bricks within wave 1).
 	consecutiveAgainstInWave1: number
+	// Re-arm cooldown: brickIndex of the last fire. Used to require N bricks
+	// between fires. null = no fire yet today.
+	lastFireBrickIndex: number | null
 }
 
 const createInitialHawksState = (): HawksState => ({
@@ -68,7 +71,12 @@ const createInitialHawksState = (): HawksState => ({
 	topoPrice: null,
 	minLowSinceTopo: null,
 	consecutiveAgainstInWave1: 0,
+	lastFireBrickIndex: null,
 })
+
+// Minimum bricks between fires. Prevents back-to-back micro-retrace re-fires
+// when the engine stays armed after a fire (W2_UP / W2_DN).
+const FIRE_COOLDOWN_BRICKS = 5
 
 const higherTfGateShort = (
 	candle: CandleRow,
@@ -167,6 +175,7 @@ const processHawksCandle = (
 				topoPrice: null,
 				minLowSinceTopo: null,
 				consecutiveAgainstInWave1: 0,
+				lastFireBrickIndex: null,
 			}
 		: state
 
@@ -203,6 +212,21 @@ const processHawksCandle = (
 		next.topoMaiorPrice !== null &&
 		next.fundoPrice !== null
 	) {
+		// New-lower-low handling for stay-armed re-arm: after a previous
+		// fire, the engine stays in WAVE_2_UP but won't re-fire until price
+		// makes a NEW lower low extending wave 1 (a bearish close below the
+		// current fundoPrice). When that happens, slide fundoPrice down to
+		// the new low and reset the retracement tracker — this is "wave 1
+		// extension" without needing the indicator's 2-brick lag.
+		if (
+			next.lastFireBrickIndex !== null &&
+			isBearish &&
+			candle.close < next.fundoPrice
+		) {
+			next.fundoPrice = candle.close
+			next.maxHighSinceFundo = candle.close
+		}
+
 		// Track retracement peak using brick CLOSE, not high. Renko brick
 		// closes paint discrete levels — wicks are intra-brick noise. The
 		// "2-brick bounce" rule means 2 brick CLOSES moved up from fundo,
@@ -223,21 +247,33 @@ const processHawksCandle = (
 		const wave1Ok = wave1Pts >= 4 * brickSize
 		const retraceOk = retracePts >= 2 * brickSize
 
+		// Cooldown: enforce minimum bricks between fires.
+		const cooldownOk =
+			next.lastFireBrickIndex === null ||
+			ctx.candleIndexInDay - next.lastFireBrickIndex >= FIRE_COOLDOWN_BRICKS
+
 		if (
 			isBearish &&
 			descendingHigh &&
 			wave1Ok &&
 			retraceOk &&
+			cooldownOk &&
 			higherTfGateShort(candle, config)
 		) {
-			// Fire. Keep TOPO MAIOR; clear FUNDO + retracement so we wait for
-			// the next indicator-marked FUNDO before re-arming.
+			// Fire. Stay armed (WAVE_2_UP) for the next setup. Anchor
+			// fundoPrice + maxHighSinceFundo at the fire brick's close,
+			// effectively starting a NEW wave 1 from here. Re-fire then
+			// requires either: (a) price slides fundoPrice further down via
+			// the new-lower-low handler above, then bounces 2 bricks, OR
+			// (b) price simply bounces 2 bricks back up from this close.
+			// Plus the cooldown guard. Keep TOPO MAIOR for wave1 continuity.
 			const reset: HawksState = {
 				...next,
-				phase: "WAVE_1_DOWN",
-				fundoPrice: null,
-				maxHighSinceFundo: null,
+				phase: "WAVE_2_UP",
+				fundoPrice: candle.close,
+				maxHighSinceFundo: candle.close,
 				consecutiveAgainstInWave1: 0,
+				lastFireBrickIndex: ctx.candleIndexInDay,
 			}
 			return {
 				state: reset,
@@ -259,6 +295,18 @@ const processHawksCandle = (
 		next.fundoMaiorPrice !== null &&
 		next.topoPrice !== null
 	) {
+		// New-higher-high handling for stay-armed LONG re-arm (mirror of
+		// SHORT slide-fundoPrice). After a previous fire, if a bullish close
+		// exceeds topoPrice, slide topoPrice up and reset the trough tracker.
+		if (
+			next.lastFireBrickIndex !== null &&
+			isBullish &&
+			candle.close > next.topoPrice
+		) {
+			next.topoPrice = candle.close
+			next.minLowSinceTopo = candle.close
+		}
+
 		// Mirror of SHORT: track retracement trough using brick CLOSE, not low.
 		if (next.minLowSinceTopo === null || candle.close < next.minLowSinceTopo) {
 			next.minLowSinceTopo = candle.close
@@ -273,19 +321,28 @@ const processHawksCandle = (
 		const wave1Ok = wave1Pts >= 4 * brickSize
 		const retraceOk = retracePts >= 2 * brickSize
 
+		const cooldownOk =
+			next.lastFireBrickIndex === null ||
+			ctx.candleIndexInDay - next.lastFireBrickIndex >= FIRE_COOLDOWN_BRICKS
+
 		if (
 			isBullish &&
 			ascendingLow &&
 			wave1Ok &&
 			retraceOk &&
+			cooldownOk &&
 			higherTfGateLong(candle, config)
 		) {
+			// Mirror of SHORT: anchor topoPrice + minLowSinceTopo at the
+			// fire brick's close. Re-fire requires a new lower trough (via
+			// slide-topoPrice when a higher high appears) plus the cooldown.
 			const reset: HawksState = {
 				...next,
-				phase: "WAVE_1_UP",
-				topoPrice: null,
-				minLowSinceTopo: null,
+				phase: "WAVE_2_DOWN",
+				topoPrice: candle.close,
+				minLowSinceTopo: candle.close,
 				consecutiveAgainstInWave1: 0,
+				lastFireBrickIndex: ctx.candleIndexInDay,
 			}
 			return {
 				state: reset,
