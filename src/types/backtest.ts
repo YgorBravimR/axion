@@ -12,6 +12,7 @@ type StrategyPresetId =
 	| "orb_test_3"
 	| "orb_test_4"
 	| "hawks_v0"
+	| "hawks_user_catalog"
 	| "custom"
 
 // ═══════════════════════════════════════════════════════════════════
@@ -44,6 +45,7 @@ interface EntrySignal {
 	direction: Direction
 	price: number // entry price (before slippage)
 	stopReference?: number // pre-computed stop price (entry module can suggest)
+	breakevenReference?: number // absolute price at which BE should activate (overrides triggerPct)
 	rangeHigh?: number // optional — only for range-based strategies
 	rangeLow?: number // optional
 	rangeWidth?: number // optional
@@ -83,15 +85,52 @@ interface HawksTripleScreenConfig {
 	ema27_60m_key: string // default: "mme27_60m"
 	ema55_60m_key: string // default: "mme55_60m"
 	ema27_15m_key: string // default: "mme27_15m"
+	ema55_15m_key: string // default: "mme55_15m"
 	macd_key: string // default: "macd"
+	// ProfitChart "TOPOS E FUNDOS" pivot column. Sparse — a value (the pivot
+	// price) appears only on bars that are confirmed pivots; the rest are
+	// empty. Alternation TOPO↔FUNDO is implicit; the engine classifies by
+	// comparing each pivot value to the previous one.
+	topos_fundos_key: string // default: "topos_fundos"
+	// Previous-closed-candle OHLC projected from 15m / 60m at ingest time.
+	// Used by the higher-TF gate: the brick BEFORE the current one must have
+	// opened AND closed below both EMAs (for SHORT) / above both (for LONG).
+	prev_15m_open_key: string // default: "prev_15m_open"
+	prev_15m_close_key: string // default: "prev_15m_close"
+	prev_60m_open_key: string // default: "prev_60m_open"
+	prev_60m_close_key: string // default: "prev_60m_close"
+	// Renko box size in points for the 5m chart. Used as the unit for the
+	// "wave-1 ≥ 4 boxes" and "retracement ≥ 2 boxes" structural checks.
+	// Currently a constant per recipe; future revision can swap to a
+	// per-week lookup via hawks_renko_sizes.
+	brickSize5mPoints: number // default: 100 (= 20 ticks × 5 points/tick on WIN)
 	startTime: number // 930
 	endTime: number // 1730
+}
+
+// User-served entry catalog: the user manually specifies which brick on which
+// day fires an entry. No structural gates — outcome simulation uses the same
+// stop/target recipe as any other strategy. Brick index is 1-indexed, matching
+// ProfitChart's per-day "CANDLE" counter (= DB candle_index).
+interface UserEntry {
+	date: string // BRT day "YYYY-MM-DD"
+	brickIndex: number // 1-indexed (ProfitChart box number = DB candle_index)
+	direction: Direction
+	label?: string // "T1", "T2", etc.
+	notes?: string
+}
+
+interface UserCatalogConfig {
+	catalog: UserEntry[]
+	startTime?: number // HHMM — optional: skip bricks before this time
+	endTime?: number // HHMM — optional: skip bricks after this time
 }
 
 type EntryModuleConfig =
 	| { type: "orb_breakout"; config: OrbEntryConfig }
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
 	| { type: "hawks_triple_screen"; config: HawksTripleScreenConfig }
+	| { type: "user_catalog"; config: UserCatalogConfig }
 
 interface EntryModule {
 	init: (_config: OrbEntryConfig) => EntryState
@@ -166,10 +205,16 @@ type TrailingConfig = PriceDistanceTrailingConfig | IndicatorTrailingConfig
 
 // --- Combined stop config ---
 
+// "intrabar" (default): stop fires when candle.low/high crosses the level
+// "brick_close": stop fires only when a Renko brick CLOSES against the trade
+// (used by Renko strategies where wicks don't close bricks)
+type StopTriggerMode = "intrabar" | "brick_close"
+
 interface StopConfig {
 	initial: InitialStopConfig
 	breakeven?: BreakevenConfig
 	trailing?: TrailingConfig
+	triggerMode?: StopTriggerMode
 }
 
 interface StopState {
@@ -181,6 +226,7 @@ interface StopState {
 	bestPrice: number // best favorable price seen (for trailing)
 	breakevenTriggered: boolean
 	partialExitOccurred: boolean // set by engine when partial TP fills
+	breakevenReference?: number // absolute price at which BE should activate (signal-supplied override)
 }
 
 interface StopResult {
@@ -264,7 +310,8 @@ interface TargetModule {
 		_state: TargetState,
 		_config: TargetConfig,
 		_direction: Direction,
-		_ctx: DayContext
+		_ctx: DayContext,
+		_triggerMode?: StopTriggerMode
 	) => TargetResult
 }
 
@@ -495,6 +542,8 @@ export type {
 	OrbEntryConfig,
 	MACDWMAConfig,
 	HawksTripleScreenConfig,
+	UserEntry,
+	UserCatalogConfig,
 	EntryModule,
 	// Stop
 	StopPhase,
@@ -509,6 +558,7 @@ export type {
 	PriceDistanceTrailingConfig,
 	IndicatorTrailingConfig,
 	StopConfig,
+	StopTriggerMode,
 	StopState,
 	StopResult,
 	StopModule,

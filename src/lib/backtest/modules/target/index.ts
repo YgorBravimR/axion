@@ -1,6 +1,7 @@
 import type {
 	Direction,
 	EntrySignal,
+	StopTriggerMode,
 	TargetConfig,
 	TargetState,
 	TargetResult,
@@ -20,7 +21,13 @@ const createTargetModule = (): TargetModule => ({
 	): TargetState => {
 		switch (config.type) {
 			case "fixed_levels":
-				return initFixedLevels(entryPrice, direction, signal, config, stopDistance ?? 0)
+				return initFixedLevels(
+					entryPrice,
+					direction,
+					signal,
+					config,
+					stopDistance ?? 0
+				)
 		}
 	},
 
@@ -29,11 +36,19 @@ const createTargetModule = (): TargetModule => ({
 		state: TargetState,
 		config: TargetConfig,
 		direction: Direction,
-		ctx: DayContext
+		ctx: DayContext,
+		triggerMode?: StopTriggerMode
 	): TargetResult => {
 		switch (config.type) {
 			case "fixed_levels":
-				return onCandleFixedLevels(candle, state, config, direction, ctx)
+				return onCandleFixedLevels(
+					candle,
+					state,
+					config,
+					direction,
+					ctx,
+					triggerMode
+				)
 		}
 	},
 })

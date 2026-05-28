@@ -27,14 +27,15 @@ import {
 	processHawksCandle,
 	createInitialHawksState,
 	type HawksState,
+	processUserCatalogCandle,
+	createInitialUserCatalogState,
+	type UserCatalogState,
 } from "./modules/entry"
 import { createStopModule } from "./modules/stop"
 import { createTargetModule } from "./modules/target"
 import { createSizingModule } from "./modules/sizing"
 import { createReversalModule } from "./modules/reversal"
 import { computeMetrics, buildEquityCurve } from "./metrics"
-
-const EOD_TIME = 1730
 
 /**
  * Run a complete backtest over a candle dataset using the given strategy recipe.
@@ -76,16 +77,27 @@ const runBacktest = (
 			? createInitialDezkState(recipe.entry.config)
 			: null
 
+	// Hawks carries the full structural state (pivots, anchors, phase) across
+	// days. The user's "TOPO ANTERIOR" for the morning's first setup is
+	// yesterday's last indicator-marked TOPO, so the engine must not reset
+	// on day boundary.
+	let persistentHawksState: HawksState | null =
+		recipe.entry.type === "hawks_triple_screen"
+			? createInitialHawksState()
+			: null
+
 	for (const dayKey of sortedDayKeys) {
 		const dayCandlesArr = days.get(dayKey)!
 		let position: Position | null = null
 		let reversalState = reversalModule.init()
-		let entryState: OrbState | DezkState | HawksState =
+		let entryState: OrbState | DezkState | HawksState | UserCatalogState =
 			recipe.entry.type === "orb_breakout"
 				? createInitialOrbState()
 				: recipe.entry.type === "hawks_triple_screen"
-					? createInitialHawksState()
-					: resetDezkForNewDay(persistentEntryState!)
+					? persistentHawksState!
+					: recipe.entry.type === "user_catalog"
+						? createInitialUserCatalogState()
+						: resetDezkForNewDay(persistentEntryState!)
 		let dayRangeHigh: number | null = null
 		let dayRangeLow: number | null = null
 		const dayTrades: BacktestTrade[] = []
@@ -97,30 +109,6 @@ const runBacktest = (
 			// ═══ Position exists: check stop/target hits ═══
 			if (position) {
 				const pos = position
-
-				// EOD forced close
-				if (ctx.brtHHMM >= EOD_TIME) {
-					const exitPrice = applySlippage(
-						candle.close,
-						pos.direction,
-						false,
-						recipe.slippageTicks,
-						assetConfig.tickSize
-					)
-					const trade = closeTrade(
-						pos,
-						exitPrice,
-						candle.timestamp,
-						"eod",
-						valuePerPointCents,
-						recipe.slippageTicks,
-						assetConfig.tickSize
-					)
-					trade.id = ++tradeCounter
-					dayTrades.push(trade)
-					position = null
-					continue
-				}
 
 				// Check stop
 				const stopResult = stopModule.onCandle(
@@ -136,7 +124,8 @@ const runBacktest = (
 					pos.targetState,
 					recipe.target,
 					pos.direction,
-					ctx
+					ctx,
+					recipe.stop.triggerMode
 				)
 				const currentPos: Position = {
 					...updatedPos,
@@ -150,7 +139,8 @@ const runBacktest = (
 					candle,
 					stopResult.currentStopPrice,
 					nextTargetPrice,
-					currentPos.direction
+					currentPos.direction,
+					recipe.stop.triggerMode
 				)
 
 				if (hitResult.stopHit && hitResult.targetHit) {
@@ -242,7 +232,18 @@ const runBacktest = (
 							: tradeCounter
 				}
 
-				continue
+				// Same-brick re-entry: when a user-catalog position closes on
+				// this brick, the catalog may have ANOTHER entry indexed to
+				// the same brick (in reality the close + new entry happen at
+				// different ticks within the OHLC bar; with OHLC-only data we
+				// approximate by allowing the entry pipeline to run on the
+				// same brick). For autonomous strategies (Hawks, ORB, dezK),
+				// the entry state machine doesn't see bricks while a position
+				// is open, so a same-brick re-entry would fire off stale
+				// state — keep them on next-brick semantics.
+				if (position || recipe.entry.type !== "user_catalog") {
+					continue
+				}
 			}
 
 			// ═══ No position: check for entry signal ═══
@@ -278,6 +279,16 @@ const runBacktest = (
 				const result = processHawksCandle(
 					candle,
 					entryState as HawksState,
+					ctx,
+					assetConfig.tickSize,
+					recipe.entry.config
+				)
+				entryState = result.state
+				entrySignal = result.signal
+			} else if (recipe.entry.type === "user_catalog") {
+				const result = processUserCatalogCandle(
+					candle,
+					entryState as UserCatalogState,
 					ctx,
 					assetConfig.tickSize,
 					recipe.entry.config
@@ -327,6 +338,11 @@ const runBacktest = (
 		// Carry indicator state to next day for MACD/WMA strategies
 		if (recipe.entry.type === "macd_wma_alignment") {
 			persistentEntryState = entryState as DezkState
+		}
+		// Carry structural state across days for Hawks — yesterday's last
+		// TOPO/FUNDO anchors today's first setup ("TOPO ANTERIOR").
+		if (recipe.entry.type === "hawks_triple_screen") {
+			persistentHawksState = entryState as HawksState
 		}
 
 		trades.push(...dayTrades)

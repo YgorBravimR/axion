@@ -1,14 +1,15 @@
-import type { BreakevenConfig, StopState } from "@/types/backtest"
+import type {
+	BreakevenConfig,
+	StopState,
+	StopTriggerMode,
+} from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 
-/**
- * Check if breakeven should trigger based on config.
- * Returns true if the stop should move to entry price.
- */
 const shouldTriggerBreakeven = (
 	candle: CandleRow,
 	state: StopState,
-	config: BreakevenConfig
+	config: BreakevenConfig,
+	triggerMode: StopTriggerMode = "intrabar"
 ): boolean => {
 	if (state.breakevenTriggered) {
 		return false
@@ -19,12 +20,32 @@ const shouldTriggerBreakeven = (
 			return state.partialExitOccurred
 
 		case "on_pct_risk": {
-			// Trigger when price reaches X% of risk in favorable direction
-			const threshold = state.initialStopDistance * (config.triggerPct / 100)
-			if (state.direction === "long") {
-				return candle.high >= state.entryPrice + threshold
+			// If the entry signal supplied an absolute BE reference, use it
+			// directly. Otherwise fall back to a multiple of initial stop distance.
+			const triggerPrice =
+				state.breakevenReference !== undefined
+					? state.breakevenReference
+					: state.direction === "long"
+						? state.entryPrice +
+							state.initialStopDistance * (config.triggerPct / 100)
+						: state.entryPrice -
+							state.initialStopDistance * (config.triggerPct / 100)
+
+			if (triggerMode === "brick_close") {
+				const favorableClose =
+					state.direction === "long"
+						? candle.close > candle.open
+						: candle.close < candle.open
+				if (!favorableClose) {
+					return false
+				}
+				return state.direction === "long"
+					? candle.close >= triggerPrice
+					: candle.close <= triggerPrice
 			}
-			return candle.low <= state.entryPrice - threshold
+			return state.direction === "long"
+				? candle.high >= triggerPrice
+				: candle.low <= triggerPrice
 		}
 	}
 }

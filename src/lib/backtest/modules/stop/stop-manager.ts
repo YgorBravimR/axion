@@ -1,8 +1,19 @@
-import type { Direction, EntrySignal, StopConfig, StopState, StopResult, StopModule } from "@/types/backtest"
+import type {
+	Direction,
+	EntrySignal,
+	StopConfig,
+	StopState,
+	StopResult,
+	StopModule,
+} from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 import { computeInitialStop, computeStopDistance } from "./initial-stops"
 import { shouldTriggerBreakeven } from "./breakeven"
-import { updateTrailingStop, createTrailingModuleState, type TrailingModuleState } from "./trailing"
+import {
+	updateTrailingStop,
+	createTrailingModuleState,
+	type TrailingModuleState,
+} from "./trailing"
 
 /**
  * Stop module state machine.
@@ -25,7 +36,13 @@ const createStopModule = () => {
 			config: StopConfig,
 			tickSize: number
 		): StopState => {
-			const stopPrice = computeInitialStop(entryPrice, direction, signal, config.initial, tickSize)
+			const stopPrice = computeInitialStop(
+				entryPrice,
+				direction,
+				signal,
+				config.initial,
+				tickSize
+			)
 			const initialStopDistance = computeStopDistance(entryPrice, stopPrice)
 
 			// Initialize trailing module state for this position
@@ -40,26 +57,44 @@ const createStopModule = () => {
 				bestPrice: entryPrice,
 				breakevenTriggered: false,
 				partialExitOccurred: false,
+				breakevenReference: signal.breakevenReference,
 			}
 		},
 
-		onCandle: (candle: CandleRow, state: StopState, config: StopConfig): StopResult => {
+		onCandle: (
+			candle: CandleRow,
+			state: StopState,
+			config: StopConfig
+		): StopResult => {
 			let updatedState = { ...state }
 
 			// Update best price for trailing calculation
-			updatedState.bestPrice = state.direction === "long"
-				? Math.max(state.bestPrice, candle.high)
-				: Math.min(state.bestPrice, candle.low)
+			updatedState.bestPrice =
+				state.direction === "long"
+					? Math.max(state.bestPrice, candle.high)
+					: Math.min(state.bestPrice, candle.low)
 
 			// Always feed candle to trailing WMA even before BE (warmup)
 			if (config.trailing?.type === "indicator" && trailingModState.wma) {
-				const warmup = updateTrailingStop(candle, updatedState, config.trailing, trailingModState)
+				const warmup = updateTrailingStop(
+					candle,
+					updatedState,
+					config.trailing,
+					trailingModState
+				)
 				trailingModState = warmup.trailingState
 			}
 
 			// Phase transitions: check breakeven
 			if (!updatedState.breakevenTriggered && config.breakeven) {
-				if (shouldTriggerBreakeven(candle, updatedState, config.breakeven)) {
+				if (
+					shouldTriggerBreakeven(
+						candle,
+						updatedState,
+						config.breakeven,
+						config.triggerMode
+					)
+				) {
 					updatedState = {
 						...updatedState,
 						breakevenTriggered: true,
@@ -71,7 +106,12 @@ const createStopModule = () => {
 
 			// Phase: trailing (only after breakeven)
 			if (config.trailing && updatedState.breakevenTriggered) {
-				const trailResult = updateTrailingStop(candle, updatedState, config.trailing, trailingModState)
+				const trailResult = updateTrailingStop(
+					candle,
+					updatedState,
+					config.trailing,
+					trailingModState
+				)
 				trailingModState = trailResult.trailingState
 				updatedState = {
 					...updatedState,
@@ -80,10 +120,29 @@ const createStopModule = () => {
 				}
 			}
 
-			// Check if stop is hit
-			const isHit = state.direction === "long"
-				? candle.low <= updatedState.currentStopPrice
-				: candle.high >= updatedState.currentStopPrice
+			// Check if stop is hit.
+			// In "brick_close" mode (Renko strategies), the stop only fires when a
+			// brick CLOSES against the trade (close < open for LONG, close > open
+			// for SHORT) AND the close crosses the stop level. Wicks alone don't
+			// close Renko bricks, so they cannot trigger the stop.
+			const useBrickClose = config.triggerMode === "brick_close"
+			let isHit: boolean
+			if (useBrickClose) {
+				const againstClose =
+					state.direction === "long"
+						? candle.close < candle.open
+						: candle.close > candle.open
+				const stopCrossed =
+					state.direction === "long"
+						? candle.close <= updatedState.currentStopPrice
+						: candle.close >= updatedState.currentStopPrice
+				isHit = againstClose && stopCrossed
+			} else {
+				isHit =
+					state.direction === "long"
+						? candle.low <= updatedState.currentStopPrice
+						: candle.high >= updatedState.currentStopPrice
+			}
 
 			return {
 				state: updatedState,
@@ -96,7 +155,10 @@ const createStopModule = () => {
 		notifyPartialExit: (state: StopState, config: StopConfig): StopState => {
 			const updated = { ...state, partialExitOccurred: true }
 
-			if (!updated.breakevenTriggered && config.breakeven?.type === "on_partial") {
+			if (
+				!updated.breakevenTriggered &&
+				config.breakeven?.type === "on_partial"
+			) {
 				return {
 					...updated,
 					breakevenTriggered: true,

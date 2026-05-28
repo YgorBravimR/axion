@@ -1,4 +1,4 @@
-import type { Direction, Position } from "@/types/backtest"
+import type { Direction, Position, StopTriggerMode } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 
 /**
@@ -46,8 +46,33 @@ const checkHits = (
 	candle: CandleRow,
 	stopPrice: number,
 	targetPrice: number | null,
-	direction: Direction
+	direction: Direction,
+	triggerMode: StopTriggerMode = "intrabar"
 ): HitCheckResult => {
+	// brick_close: a Renko brick only "closes" on the same side it opened, so
+	// stop / target only fire on a CLOSE past the level in the correct
+	// direction (against-close for stop, favorable-close for target). Wicks
+	// alone never trigger — they'd correspond to intra-brick prices that
+	// didn't move enough to close a new brick.
+	if (triggerMode === "brick_close") {
+		const isBull = candle.close > candle.open
+		const isBear = candle.close < candle.open
+		const stopHit =
+			direction === "long"
+				? isBear && candle.close <= stopPrice
+				: isBull && candle.close >= stopPrice
+		const targetHit =
+			targetPrice !== null &&
+			(direction === "long"
+				? isBull && candle.close >= targetPrice
+				: isBear && candle.close <= targetPrice)
+		// In brick_close mode stop and target are mutually exclusive on any
+		// single brick (one requires against-close, the other favorable-close,
+		// and a brick can be only one of BULL/BEAR). So stopHitFirst falls
+		// through to the natural value.
+		return { stopHit, targetHit, stopHitFirst: stopHit }
+	}
+
 	const stopHit =
 		direction === "long" ? candle.low <= stopPrice : candle.high >= stopPrice
 
