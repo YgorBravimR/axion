@@ -43,6 +43,35 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### Hawks engine: fine-tune for better backtest outcomes (parameter sweep + walk-forward)
+
+- **Priority**: P1
+- **Effort**: L (multi-session)
+- **Source**: 2026-05-29 — Ygor request after shipping the user-catalog mode + quality UI (PR #9). With the audit oracle now in place across 20 catalogued days, the next leverage point is _trading-outcome quality_, not just reproduction fidelity.
+- **What + Why**: The user-catalog mode validates that engine _outcomes_ (BE/ST/GA/EOD) match the catalog on the trades the engine fires. But raw engine output across the 20-day catalog still has weak headline metrics — profit factor, win rate, max drawdown, and Risk:Return are all sub-optimal because we've been tuning the _entry detector_ against a fixed parameter set, not the _whole engine_ against outcome metrics. This entry is the optimization counterpart to the reproduction-focused entry below: instead of "match more catalog trades", the goal is "produce a better equity curve from the trades the engine does fire."
+- **Fix shape**:
+  1. **Parameter-sweep harness.** New `scripts/sweep-hawks.ts` that runs the engine across a grid of params and emits a CSV of `(param-combo, totalTrades, winRate, profitFactor, avgR, maxDrawdown, sharpe, riskReturn)`. Parameters worth sweeping:
+     - `retracementMin` (1, 2, 3 bricks)
+     - `cooldown` (3, 5, 7 bricks) — already partially explored
+     - BE `triggerPct` (75, 100, 150, 200 % of risk)
+     - Stop distance multiplier (1×, 2×, dynamic-by-favorability — see related entry below on the 14 label mismatches)
+     - Target multiplier (2R, 3R, trailing)
+     - Quality gates level (off/lite/standard/strict)
+  2. **Walk-forward validation.** Don't optimize on all 20 days then ship — split into in-sample (first 14 days) and out-of-sample (last 6). Pick the param combo that maximizes a chosen objective on in-sample, then _report_ the same combo's metrics on out-of-sample. If they diverge badly the combo is overfit.
+  3. **Multi-objective.** Don't collapse to a single scalar. Plot a Pareto frontier of `profitFactor vs maxDrawdown` — let Ygor choose his risk preference rather than baking it in.
+  4. **Per-tier optimization.** Re-use the tier-analytics module (already shipped) — sweep parameters _within_ AAA / AA / A buckets separately. Maybe AAA wants tighter BE, A wants looser, etc.
+  5. **Surface the chosen config.** Add a preset variant `hawks_v0_tuned` once a winner emerges, with a comment block recording the sweep date, objective, in-sample/out-of-sample numbers, and seed. Treat presets as immutable once shipped; future tunes spawn `hawks_v1_tuned` etc.
+- **Out of scope**:
+  - Live optimization / online learning. This is offline parameter selection only.
+  - Cross-asset generalization. WINFUT-only for now; other indices come later.
+  - Genetic / Bayesian optimizers. Start with a coarse grid; only invest in smarter search if the grid surfaces a clear ridge.
+- **Done when**:
+  - Sweep harness exists and runs in <5 min for a ~200-combo grid.
+  - In-sample winner reported with out-of-sample confirmation (no >30% drop in profit factor).
+  - `hawks_v0_tuned` preset shipped with provenance comment.
+  - One-page summary added to `docs/` showing the Pareto frontier and the chosen point.
+- **Date filed**: 2026-05-29.
+
 ### Hawks autonomous engine: reproduction stuck at 51% — quality gates next
 
 - **Priority**: P1
@@ -138,17 +167,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## E2E / Test Infrastructure
 
-### Replace remaining `ScrollArea` usages inside modals (React 19 crash risk)
-
-- **Priority**: P2
-- **Effort**: XS
-- **Source**: 2026-05-22 — ScrollArea crash post-mortem (`docs/postMorten/frontend.md`). Sidebar and app-shell were fixed; two modal-hosted `ScrollArea` instances remain and will crash if their E2E tests ever exercise open/close cycles.
-- **What + Why**: Replace `<ScrollArea>` with `<div className="overflow-y-auto">` in:
-  - `src/components/dashboard/day-detail-modal.tsx:105`
-  - `src/components/monte-carlo/stats-preview.tsx:118`
-    Both live inside Radix dialogs/sheets — same crash path as the sidebar fix.
-- **Date filed**: 2026-05-22.
-
 ### Add browser `console.error` listener to Playwright fixture to surface client-side errors
 
 - **Priority**: P3
@@ -156,30 +174,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: 2026-05-21 test audit on `feat/hawks-mode-v0` — no `page.on('console', ...)` handlers exist anywhere in the e2e suite; browser-side `console.error` calls (uncaught promise rejections, React hydration errors, failed fetch calls logged silently) are completely invisible to the test runner.
 - **What + Why**: Add a shared Playwright fixture (or `test.beforeEach` in `e2e/fixtures/`) that registers `page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })` and fails/warns after each test if unexpected errors were collected. This would have caught the `R$ → BRL` `Intl.NumberFormat` crash (which logged a `RangeError: Invalid currency code`) before it reached a smoke-test session. Avoid failing on known benign warnings (Next.js dev-mode verbose output) using an allowlist regex. Reference: Playwright docs on `ConsoleMessage`.
 - **Date filed**: 2026-05-21.
-
-### Implement yearly-plan UI: 52-week grid view
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: 2026-05-22 — Stream A removed test coverage from `e2e/tests/yearly-plan.spec.ts` (commit `74f18f9d`) because the underlying feature never shipped. The deleted test stub asserted a grid presenting all 52 ISO weeks of the year with per-week progress markers.
-- **What + Why**: Add a 52-week grid view to the yearly plan page (`src/app/[locale]/(app)/plan/[year]/page.tsx`). Each cell should reflect the week's planned vs. actual P&L, color-coded against the weekly_plan target. When shipping, re-add the deleted E2E test.
-- **Date filed**: 2026-05-22.
-
-### Implement yearly-plan UI: payoff matrix view
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: 2026-05-22 — Stream A removed test coverage (commit `74f18f9d`). The deleted test asserted a tabular payoff matrix relating win-rate buckets to risk-reward ratios with cell-level annotations.
-- **What + Why**: Add a payoff-matrix component to the yearly plan or playbook page. Rows = win-rate buckets (40% / 50% / 60% etc.), columns = R-multiples (1R / 2R / 3R), cells = projected annual return. Useful as a "what if my hit-rate improves" exploration tool. When shipping, re-add the deleted E2E test.
-- **Date filed**: 2026-05-22.
-
-### Implement yearly-plan UI: exit convention tabs (3 tabs)
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: 2026-05-22 — Stream A removed 3 test stubs covering the exit-convention tab UI on yearly-plan (commit `74f18f9d`). Each tab represented a different exit-rule preset (likely Conservative / Balanced / Aggressive — confirm with PM).
-- **What + Why**: Add a tabbed exit-convention selector to the yearly plan page. Each tab applies a different default exit rule (stop-loss multiple, trailing-stop trigger, profit-target ratio) to all child plans in the cascade. Currently the cascade uses a single hardcoded convention. When shipping, re-add the deleted E2E tests.
-- **Date filed**: 2026-05-22.
 
 ### Triage 5 pre-existing flaky tests in `e2e/tests/settings.spec.ts` exposed by networkidle migration
 
