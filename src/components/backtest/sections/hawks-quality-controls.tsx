@@ -12,7 +12,30 @@ import {
 	normalizeQualityGates,
 	type QualityPresetLevel,
 } from "@/lib/backtest/presets/hawks-quality-presets"
+import {
+	useIsSwept,
+	useAllSwept,
+} from "@/components/optimize/swept-paths-context"
 import type { QualityGatesConfig } from "@/types/backtest"
+
+const BUNDLE_PATH = "entry.config.qualityGates.__bundle__"
+const SR_BLOCK_PATH = "entry.config.qualityGates.srLevelBlock"
+const SR_FAVOR_PATH = "entry.config.qualityGates.srLevelFavor"
+const SR_BLOCK_BUFFER_PATH = "entry.config.qualityGates.srBlockBufferBricks"
+const SR_FAVOR_RANGE_PATH = "entry.config.qualityGates.srFavorRangeBricks"
+const KELTNER_OUTER_BLOCK_PATH = "entry.config.qualityGates.keltnerOuterBlock"
+const KELTNER_INNER_PENALTY_PATH =
+	"entry.config.qualityGates.keltnerInnerPenalty"
+const KELTNER_NEAR_PATH = "entry.config.qualityGates.keltnerNearBricks"
+const MACD_ALIGNMENT_PATH = "entry.config.qualityGates.macdAlignmentScore"
+const MACD_SLOPE_PATH = "entry.config.qualityGates.macdSlopeWindow"
+const AGGRESSION_MODE_PATH = "entry.config.qualityGates.aggressionMode"
+const AGGRESSION_THRESHOLD_PATH =
+	"entry.config.qualityGates.aggressionThreshold"
+const VOLUME_SCORE_PATH = "entry.config.qualityGates.volumeScore"
+const VOLUME_EMA_PATH = "entry.config.qualityGates.volumeEmaPeriod"
+// Note: htfMaBlock is sweepable via OPTIMIZE but has no surface in this
+// recipe UI today, so no hide-logic is needed for it here.
 
 interface HawksQualityControlsProps {
 	qualityGates: QualityGatesConfig | undefined
@@ -94,6 +117,49 @@ const HawksQualityControls = memo(
 	({ qualityGates, onChange }: HawksQualityControlsProps) => {
 		const t = useTranslations("backtest.hawks.quality")
 
+		// Hide each control independently when its sweep axis is active.
+		// The bundle preset hides too because picking a bundle in the sweep
+		// drives every gate at once — the preset selector is meaningless
+		// under that condition.
+		const isBundleSwept = useIsSwept(BUNDLE_PATH)
+		const isSrBlockSwept = useIsSwept(SR_BLOCK_PATH)
+		const isSrFavorSwept = useIsSwept(SR_FAVOR_PATH)
+		const isSrBlockBufferSwept = useIsSwept(SR_BLOCK_BUFFER_PATH)
+		const isSrFavorRangeSwept = useIsSwept(SR_FAVOR_RANGE_PATH)
+		const isKeltnerOuterBlockSwept = useIsSwept(KELTNER_OUTER_BLOCK_PATH)
+		const isKeltnerInnerPenaltySwept = useIsSwept(KELTNER_INNER_PENALTY_PATH)
+		const isKeltnerNearSwept = useIsSwept(KELTNER_NEAR_PATH)
+		const isMacdAlignmentSwept = useIsSwept(MACD_ALIGNMENT_PATH)
+		const isMacdSlopeSwept = useIsSwept(MACD_SLOPE_PATH)
+		const isAggressionModeSwept = useIsSwept(AGGRESSION_MODE_PATH)
+		const isAggressionThresholdSwept = useIsSwept(AGGRESSION_THRESHOLD_PATH)
+		const isVolumeScoreSwept = useIsSwept(VOLUME_SCORE_PATH)
+		const isVolumeEmaSwept = useIsSwept(VOLUME_EMA_PATH)
+
+		const isSrGroupAllSwept = useAllSwept([
+			SR_BLOCK_PATH,
+			SR_FAVOR_PATH,
+			SR_BLOCK_BUFFER_PATH,
+			SR_FAVOR_RANGE_PATH,
+		])
+		const isKeltnerGroupAllSwept = useAllSwept([
+			KELTNER_OUTER_BLOCK_PATH,
+			KELTNER_INNER_PENALTY_PATH,
+			KELTNER_NEAR_PATH,
+		])
+		const isMacdGroupAllSwept = useAllSwept([
+			MACD_ALIGNMENT_PATH,
+			MACD_SLOPE_PATH,
+		])
+		const isAggressionGroupAllSwept = useAllSwept([
+			AGGRESSION_MODE_PATH,
+			AGGRESSION_THRESHOLD_PATH,
+		])
+		const isVolumeGroupAllSwept = useAllSwept([
+			VOLUME_SCORE_PATH,
+			VOLUME_EMA_PATH,
+		])
+
 		// Normalized view: every field has a concrete value, so the UI never
 		// renders an "undefined" toggle. Writes go through `patch` which
 		// merges into the *current* (possibly partial) gates so we don't
@@ -132,18 +198,20 @@ const HawksQualityControls = memo(
 
 		return (
 			<div className="space-y-s-300">
-				<div className="space-y-s-200">
-					<Label id="hawks-quality-preset-label">{t("presetLabel")}</Label>
-					<SegmentedToggle
-						value={currentLevel}
-						options={presetOptions}
-						onChange={handlePresetChange}
-						aria-labelledby="hawks-quality-preset-label"
-					/>
-					<p className="text-tiny text-txt-300">
-						{t(`preset.${currentLevel}.description`)}
-					</p>
-				</div>
+				{!isBundleSwept && (
+					<div className="space-y-s-200">
+						<Label id="hawks-quality-preset-label">{t("presetLabel")}</Label>
+						<SegmentedToggle
+							value={currentLevel}
+							options={presetOptions}
+							onChange={handlePresetChange}
+							aria-labelledby="hawks-quality-preset-label"
+						/>
+						<p className="text-tiny text-txt-300">
+							{t(`preset.${currentLevel}.description`)}
+						</p>
+					</div>
+				)}
 
 				<details className="group border-bg-300 bg-bg-100 rounded-sm border">
 					<summary className="gap-s-300 px-s-300 py-s-300 text-small text-txt-200 hover:text-txt-100 flex cursor-pointer list-none items-center justify-between">
@@ -157,157 +225,199 @@ const HawksQualityControls = memo(
 
 					<div className="border-bg-300 space-y-m-400 p-s-300 border-t">
 						{/* Group A — S/R levels */}
-						<fieldset className="space-y-s-300">
-							<legend className="text-small text-txt-100 font-medium">
-								{t("groups.sr")}
-							</legend>
-							<ToggleRow
-								id="quality-srLevelBlock"
-								label={t("srLevelBlock.label")}
-								hint={t("srLevelBlock.hint")}
-								checked={view.srLevelBlock}
-								onCheckedChange={(v) => patch({ srLevelBlock: v })}
-							/>
-							<ToggleRow
-								id="quality-srLevelFavor"
-								label={t("srLevelFavor.label")}
-								hint={t("srLevelFavor.hint")}
-								checked={view.srLevelFavor}
-								onCheckedChange={(v) => patch({ srLevelFavor: v })}
-							/>
-							<NumberRow
-								id="quality-srBlockBufferBricks"
-								label={t("srBlockBufferBricks.label")}
-								hint={t("srBlockBufferBricks.hint")}
-								value={view.srBlockBufferBricks}
-								min={0}
-								step={1}
-								onChange={(v) => patch({ srBlockBufferBricks: v })}
-							/>
-							<NumberRow
-								id="quality-srFavorRangeBricks"
-								label={t("srFavorRangeBricks.label")}
-								hint={t("srFavorRangeBricks.hint")}
-								value={view.srFavorRangeBricks}
-								min={0}
-								step={1}
-								onChange={(v) => patch({ srFavorRangeBricks: v })}
-							/>
-						</fieldset>
+						{!isSrGroupAllSwept && (
+							<fieldset className="space-y-s-300">
+								<legend className="text-small text-txt-100 font-medium">
+									{t("groups.sr")}
+								</legend>
+								{!isSrBlockSwept && (
+									<ToggleRow
+										id="quality-srLevelBlock"
+										label={t("srLevelBlock.label")}
+										hint={t("srLevelBlock.hint")}
+										checked={view.srLevelBlock}
+										onCheckedChange={(v) => patch({ srLevelBlock: v })}
+									/>
+								)}
+								{!isSrFavorSwept && (
+									<ToggleRow
+										id="quality-srLevelFavor"
+										label={t("srLevelFavor.label")}
+										hint={t("srLevelFavor.hint")}
+										checked={view.srLevelFavor}
+										onCheckedChange={(v) => patch({ srLevelFavor: v })}
+									/>
+								)}
+								{!isSrBlockBufferSwept && (
+									<NumberRow
+										id="quality-srBlockBufferBricks"
+										label={t("srBlockBufferBricks.label")}
+										hint={t("srBlockBufferBricks.hint")}
+										value={view.srBlockBufferBricks}
+										min={0}
+										step={1}
+										onChange={(v) => patch({ srBlockBufferBricks: v })}
+									/>
+								)}
+								{!isSrFavorRangeSwept && (
+									<NumberRow
+										id="quality-srFavorRangeBricks"
+										label={t("srFavorRangeBricks.label")}
+										hint={t("srFavorRangeBricks.hint")}
+										value={view.srFavorRangeBricks}
+										min={0}
+										step={1}
+										onChange={(v) => patch({ srFavorRangeBricks: v })}
+									/>
+								)}
+							</fieldset>
+						)}
 
 						{/* Group B — Keltner */}
-						<fieldset className="space-y-s-300">
-							<legend className="text-small text-txt-100 font-medium">
-								{t("groups.keltner")}
-							</legend>
-							<ToggleRow
-								id="quality-keltnerOuterBlock"
-								label={t("keltnerOuterBlock.label")}
-								hint={t("keltnerOuterBlock.hint")}
-								checked={view.keltnerOuterBlock}
-								onCheckedChange={(v) => patch({ keltnerOuterBlock: v })}
-							/>
-							<ToggleRow
-								id="quality-keltnerInnerPenalty"
-								label={t("keltnerInnerPenalty.label")}
-								hint={t("keltnerInnerPenalty.hint")}
-								checked={view.keltnerInnerPenalty}
-								onCheckedChange={(v) => patch({ keltnerInnerPenalty: v })}
-							/>
-							<NumberRow
-								id="quality-keltnerNearBricks"
-								label={t("keltnerNearBricks.label")}
-								hint={t("keltnerNearBricks.hint")}
-								value={view.keltnerNearBricks}
-								min={0}
-								step={1}
-								onChange={(v) => patch({ keltnerNearBricks: v })}
-							/>
-						</fieldset>
+						{!isKeltnerGroupAllSwept && (
+							<fieldset className="space-y-s-300">
+								<legend className="text-small text-txt-100 font-medium">
+									{t("groups.keltner")}
+								</legend>
+								{!isKeltnerOuterBlockSwept && (
+									<ToggleRow
+										id="quality-keltnerOuterBlock"
+										label={t("keltnerOuterBlock.label")}
+										hint={t("keltnerOuterBlock.hint")}
+										checked={view.keltnerOuterBlock}
+										onCheckedChange={(v) => patch({ keltnerOuterBlock: v })}
+									/>
+								)}
+								{!isKeltnerInnerPenaltySwept && (
+									<ToggleRow
+										id="quality-keltnerInnerPenalty"
+										label={t("keltnerInnerPenalty.label")}
+										hint={t("keltnerInnerPenalty.hint")}
+										checked={view.keltnerInnerPenalty}
+										onCheckedChange={(v) => patch({ keltnerInnerPenalty: v })}
+									/>
+								)}
+								{!isKeltnerNearSwept && (
+									<NumberRow
+										id="quality-keltnerNearBricks"
+										label={t("keltnerNearBricks.label")}
+										hint={t("keltnerNearBricks.hint")}
+										value={view.keltnerNearBricks}
+										min={0}
+										step={1}
+										onChange={(v) => patch({ keltnerNearBricks: v })}
+									/>
+								)}
+							</fieldset>
+						)}
 
 						{/* Group C — MACD */}
-						<fieldset className="space-y-s-300">
-							<legend className="text-small text-txt-100 font-medium">
-								{t("groups.macd")}
-							</legend>
-							<ToggleRow
-								id="quality-macdAlignmentScore"
-								label={t("macdAlignmentScore.label")}
-								hint={t("macdAlignmentScore.hint")}
-								checked={view.macdAlignmentScore}
-								onCheckedChange={(v) => patch({ macdAlignmentScore: v })}
-							/>
-							<NumberRow
-								id="quality-macdSlopeWindow"
-								label={t("macdSlopeWindow.label")}
-								hint={t("macdSlopeWindow.hint")}
-								value={view.macdSlopeWindow}
-								min={1}
-								step={1}
-								onChange={(v) => patch({ macdSlopeWindow: v })}
-							/>
-						</fieldset>
+						{!isMacdGroupAllSwept && (
+							<fieldset className="space-y-s-300">
+								<legend className="text-small text-txt-100 font-medium">
+									{t("groups.macd")}
+								</legend>
+								{!isMacdAlignmentSwept && (
+									<ToggleRow
+										id="quality-macdAlignmentScore"
+										label={t("macdAlignmentScore.label")}
+										hint={t("macdAlignmentScore.hint")}
+										checked={view.macdAlignmentScore}
+										onCheckedChange={(v) => patch({ macdAlignmentScore: v })}
+									/>
+								)}
+								{!isMacdSlopeSwept && (
+									<NumberRow
+										id="quality-macdSlopeWindow"
+										label={t("macdSlopeWindow.label")}
+										hint={t("macdSlopeWindow.hint")}
+										value={view.macdSlopeWindow}
+										min={1}
+										step={1}
+										onChange={(v) => patch({ macdSlopeWindow: v })}
+									/>
+								)}
+							</fieldset>
+						)}
 
 						{/* Group D — aggression */}
-						<fieldset className="space-y-s-300">
-							<legend className="text-small text-txt-100 font-medium">
-								{t("groups.aggression")}
-							</legend>
-							<div className="space-y-s-200">
-								<Label id="hawks-quality-aggression-label">
-									{t("aggressionMode.label")}
-								</Label>
-								<SegmentedToggle
-									value={view.aggressionMode}
-									options={[
-										{ value: "off", label: t("aggressionMode.off") },
-										{ value: "original", label: t("aggressionMode.original") },
-										{ value: "reversed", label: t("aggressionMode.reversed") },
-									]}
-									onChange={(v) =>
-										patch({
-											aggressionMode: v as "off" | "original" | "reversed",
-										})
-									}
-									aria-labelledby="hawks-quality-aggression-label"
-								/>
-								<p className="text-tiny text-txt-300">
-									{t("aggressionMode.hint")}
-								</p>
-							</div>
-							<NumberRow
-								id="quality-aggressionThreshold"
-								label={t("aggressionThreshold.label")}
-								hint={t("aggressionThreshold.hint")}
-								value={view.aggressionThreshold}
-								min={0}
-								step={1000}
-								onChange={(v) => patch({ aggressionThreshold: v })}
-							/>
-						</fieldset>
+						{!isAggressionGroupAllSwept && (
+							<fieldset className="space-y-s-300">
+								<legend className="text-small text-txt-100 font-medium">
+									{t("groups.aggression")}
+								</legend>
+								{!isAggressionModeSwept && (
+									<div className="space-y-s-200">
+										<Label id="hawks-quality-aggression-label">
+											{t("aggressionMode.label")}
+										</Label>
+										<SegmentedToggle
+											value={view.aggressionMode}
+											options={[
+												{ value: "off", label: t("aggressionMode.off") },
+												{
+													value: "original",
+													label: t("aggressionMode.original"),
+												},
+												{
+													value: "reversed",
+													label: t("aggressionMode.reversed"),
+												},
+											]}
+											onChange={(v) =>
+												patch({
+													aggressionMode: v as "off" | "original" | "reversed",
+												})
+											}
+											aria-labelledby="hawks-quality-aggression-label"
+										/>
+										<p className="text-tiny text-txt-300">
+											{t("aggressionMode.hint")}
+										</p>
+									</div>
+								)}
+								{!isAggressionThresholdSwept && (
+									<NumberRow
+										id="quality-aggressionThreshold"
+										label={t("aggressionThreshold.label")}
+										hint={t("aggressionThreshold.hint")}
+										value={view.aggressionThreshold}
+										min={0}
+										step={1000}
+										onChange={(v) => patch({ aggressionThreshold: v })}
+									/>
+								)}
+							</fieldset>
+						)}
 
 						{/* Group E — volume */}
-						<fieldset className="space-y-s-300">
-							<legend className="text-small text-txt-100 font-medium">
-								{t("groups.volume")}
-							</legend>
-							<ToggleRow
-								id="quality-volumeScore"
-								label={t("volumeScore.label")}
-								hint={t("volumeScore.hint")}
-								checked={view.volumeScore}
-								onCheckedChange={(v) => patch({ volumeScore: v })}
-							/>
-							<NumberRow
-								id="quality-volumeEmaPeriod"
-								label={t("volumeEmaPeriod.label")}
-								hint={t("volumeEmaPeriod.hint")}
-								value={view.volumeEmaPeriod}
-								min={1}
-								step={50}
-								onChange={(v) => patch({ volumeEmaPeriod: v })}
-							/>
-						</fieldset>
+						{!isVolumeGroupAllSwept && (
+							<fieldset className="space-y-s-300">
+								<legend className="text-small text-txt-100 font-medium">
+									{t("groups.volume")}
+								</legend>
+								{!isVolumeScoreSwept && (
+									<ToggleRow
+										id="quality-volumeScore"
+										label={t("volumeScore.label")}
+										hint={t("volumeScore.hint")}
+										checked={view.volumeScore}
+										onCheckedChange={(v) => patch({ volumeScore: v })}
+									/>
+								)}
+								{!isVolumeEmaSwept && (
+									<NumberRow
+										id="quality-volumeEmaPeriod"
+										label={t("volumeEmaPeriod.label")}
+										hint={t("volumeEmaPeriod.hint")}
+										value={view.volumeEmaPeriod}
+										min={1}
+										step={50}
+										onChange={(v) => patch({ volumeEmaPeriod: v })}
+									/>
+								)}
+							</fieldset>
+						)}
 
 						{/* Tier thresholds */}
 						<fieldset className="space-y-s-300">

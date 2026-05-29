@@ -223,7 +223,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 		options: [
 			{
 				value: "off",
-				labelKey: "hawksQualityBundle.off",
+				labelKey: "hawksQualityBundle_off",
 				applyOption: (r) =>
 					mutateHawksConfig(r, (cfg) => ({
 						...cfg,
@@ -232,7 +232,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 			{
 				value: "lite",
-				labelKey: "hawksQualityBundle.lite",
+				labelKey: "hawksQualityBundle_lite",
 				applyOption: (r) =>
 					mutateHawksConfig(r, (cfg) => ({
 						...cfg,
@@ -241,7 +241,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 			{
 				value: "standard",
-				labelKey: "hawksQualityBundle.standard",
+				labelKey: "hawksQualityBundle_standard",
 				applyOption: (r) =>
 					mutateHawksConfig(r, (cfg) => ({
 						...cfg,
@@ -250,7 +250,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 			{
 				value: "strict",
-				labelKey: "hawksQualityBundle.strict",
+				labelKey: "hawksQualityBundle_strict",
 				applyOption: (r) =>
 					mutateHawksConfig(r, (cfg) => ({
 						...cfg,
@@ -336,13 +336,13 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 		options: [
 			{
 				value: "off",
-				labelKey: "hawksToggle.off",
+				labelKey: "hawksToggle_off",
 				applyOption: (r) =>
 					mutateQualityGates(r, (qg) => ({ ...qg, [gateKey]: false })),
 			},
 			{
 				value: "on",
-				labelKey: "hawksToggle.on",
+				labelKey: "hawksToggle_on",
 				applyOption: (r) =>
 					mutateQualityGates(r, (qg) => ({ ...qg, [gateKey]: true })),
 			},
@@ -364,13 +364,13 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 		options: [
 			{
 				value: "off",
-				labelKey: "hawksAggressionMode.off",
+				labelKey: "hawksAggressionMode_off",
 				applyOption: (r) =>
 					mutateQualityGates(r, (qg) => ({ ...qg, aggressionMode: "off" })),
 			},
 			{
 				value: "original",
-				labelKey: "hawksAggressionMode.original",
+				labelKey: "hawksAggressionMode_original",
 				applyOption: (r) =>
 					mutateQualityGates(r, (qg) => ({
 						...qg,
@@ -379,7 +379,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 			{
 				value: "reversed",
-				labelKey: "hawksAggressionMode.reversed",
+				labelKey: "hawksAggressionMode_reversed",
 				applyOption: (r) =>
 					mutateQualityGates(r, (qg) => ({
 						...qg,

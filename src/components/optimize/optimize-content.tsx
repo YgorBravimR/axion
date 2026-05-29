@@ -57,6 +57,7 @@ import { RunsComparisonTable } from "./runs-comparison-table"
 import { EquityOverlayChart } from "./equity-overlay-chart"
 import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
+import { SweptPathsProvider } from "./swept-paths-context"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
@@ -818,44 +819,46 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<p className="text-tiny text-txt-300">
 										{t("baseConfigHint")}
 									</p>
-									<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
-										{recipe.entry.type === "orb_breakout" && (
-											<OrbEntrySection
+									<SweptPathsProvider activeRanges={activeRanges}>
+										<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
+											{recipe.entry.type === "orb_breakout" && (
+												<OrbEntrySection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+											)}
+											{recipe.entry.type === "macd_wma_alignment" && (
+												<DezkEntrySection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+											)}
+											{recipe.entry.type === "hawks_triple_screen" && (
+												<HawksEntrySection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+											)}
+											{recipe.entry.type === "user_catalog" && (
+												<UserCatalogEntrySection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+											)}
+											<StopProtectionSection
 												recipe={recipe}
 												onRecipeChange={setRecipe}
 											/>
-										)}
-										{recipe.entry.type === "macd_wma_alignment" && (
-											<DezkEntrySection
+											<TargetsExitSection
 												recipe={recipe}
 												onRecipeChange={setRecipe}
 											/>
-										)}
-										{recipe.entry.type === "hawks_triple_screen" && (
-											<HawksEntrySection
+											<SizingExecutionSection
 												recipe={recipe}
 												onRecipeChange={setRecipe}
 											/>
-										)}
-										{recipe.entry.type === "user_catalog" && (
-											<UserCatalogEntrySection
-												recipe={recipe}
-												onRecipeChange={setRecipe}
-											/>
-										)}
-										<StopProtectionSection
-											recipe={recipe}
-											onRecipeChange={setRecipe}
-										/>
-										<TargetsExitSection
-											recipe={recipe}
-											onRecipeChange={setRecipe}
-										/>
-										<SizingExecutionSection
-											recipe={recipe}
-											onRecipeChange={setRecipe}
-										/>
-									</div>
+										</div>
+									</SweptPathsProvider>
 								</div>
 							)}
 						</div>

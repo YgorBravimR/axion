@@ -107,6 +107,53 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: ORB and dezK still work, registry is the single source of truth, adding a strategy requires only exporting `sweepableParams` from its preset module.
 - **Date filed**: 2026-05-29.
 
+### OPTIMIZE — broad-to-specific sweep tailoring ("HERO WIN" / "PERFECT SETUP" funnel)
+
+- **Priority**: P2
+- **Effort**: M
+- **Source**: 2026-05-29 — feedback during Tier 2 + 3 review on PR #10. User asked why 2000 was the combination cap and how users go from broad exploration to specific winners.
+- **What + Why**: OPTIMIZE today is a one-shot grid: pick params, set ranges, run, compare. There is no guided **funnel** from "I have no idea which knobs matter" → "I have a frozen `hawks_v0_tuned` preset". Users have to manually pick Pareto points, then re-run a tighter sweep, then re-run again, with no breadcrumbs and no schema to lock in the journey. This is where the 2000-combo cap actually bites — not because compute can't handle more, but because cognitively a flat-grid run of 2000 is the wrong shape for the _first_ exploration. A funnel architecture lets users start broad (small N of bundles + big ranges) and progressively refine (within one bundle, narrow ranges, more steps) without re-typing the whole config.
+- **Fix shape (research entry — investigate first, then design)**:
+  1. **Stage tracking on the run.** Every `OptimizationRun` carries a `stage` field: `"broad"`, `"refine"`, or `"freeze"`. Today everything is one bucket.
+  2. **Stage-aware sweep config UX.** "Broad" stage UI nudges fewer-knobs-more-options (enum-heavy: bundle, mode, target tier); "refine" stage UI nudges within-bundle numerics with tight step sizes; "freeze" stage is N=1, snapshot only.
+  3. **Carry-forward.** "Refine from this run" button on a Pareto winner: opens Sweep Config pre-populated with the winner's settings as baseline + suggests narrower ranges (±1 step around the winner's value) for the swept axes.
+  4. **HERO WIN / PERFECT SETUP semantics.** Define what a "hero win" looks like (PF ≥ X _and_ matchRate ≥ Y _and_ OOS robust _and_ trades ≥ 30, plus user-confirmed) and let users tag a run as such. Tagging creates a frozen preset entry with provenance.
+  5. **Cap implications.** With the funnel, the broad stage _should_ be capped lower (~500) and refine should be capped higher (~5000). The current flat 2000 is a compromise. Treat the cap as stage-aware.
+- **Open questions to investigate**:
+  - Should the "refine from this run" button be one-click or open a config editor first? (One-click = momentum; editor = trust.)
+  - Do we want a visible stage indicator on the runs table, or is it implicit from the sweep config that produced the run?
+  - When a hero-win run is tagged and frozen as a preset, does it replace or shadow `hawks_v0`? (Probably shadow + label, so the journey is auditable.)
+  - 2000 cap is **not benchmarked** — should be empirically measured (cf. companion P3 entry "OPTIMIZE — benchmark MAX_COMBINATIONS cap").
+- **Done when**: A user can start with zero knowledge of which params matter, run a broad sweep, click "refine on winner" twice, and end with a frozen preset that has full provenance back to the original broad exploration. Each stage's UI matches its cognitive load.
+- **Date filed**: 2026-05-29.
+
+### OPTIMIZE — benchmark MAX_COMBINATIONS cap
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-05-29 — Tier 2 review. The 2000 cap in `src/lib/optimize/parameter-grid.ts:303` was sized from first principles (~80–150ms per Hawks backtest × 2000 = 3–5min wall time, ~10MB run-object memory) but never benchmarked end-to-end. Companion to "broad-to-specific sweep tailoring".
+- **What + Why**: Need empirical data before raising/lowering the cap. Today it could be 1000 or 10000 — we wouldn't know which is right until we measure.
+- **Fix shape**:
+  1. Build `scripts/benchmark-optimize.ts` that queues N runs against fixed date range + asset, measures p50/p99 per-run wall time and peak heap (via `performance.memory.usedJSHeapSize` in a browser harness or `process.memoryUsage()` in Node).
+  2. Run with N ∈ {500, 1000, 2000, 5000, 10000}. Capture (a) total wall-time, (b) p99 single-run time, (c) peak heap.
+  3. Define the cap as the largest N where: total wall-time ≤ 5 min AND peak heap ≤ 100 MB AND comparison-table cognitive load is still manageable.
+  4. If stage-aware caps are introduced (see broad-to-specific entry), benchmark each stage independently.
+- **Done when**: `MAX_COMBINATIONS` is set from data, not vibes. Benchmark script lives in `scripts/` for future re-runs when engine performance changes.
+- **Date filed**: 2026-05-29.
+
+### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-05-29 — observed `fetchBacktestData(...)` taking 2.9 s on optimize page load (dev log). Every sweep config tweak re-fetches the candle history when the user hits Run, even though range + asset + indicators are unchanged.
+- **What + Why**: Optimize sweeps execute N backtests against the same candle history. The candle pull happens once per _sweep_ today (good), but every time the user changes a sweep param and re-runs they pay 2.9 s again. For iterative refinement (cf. broad-to-specific funnel), this is the dominant interactive latency. A simple session-scoped cache keyed on `(assetId, dateRange, indicatorSet)` would make the second-and-onward sweep feel instant.
+- **Fix shape**:
+  1. Add a `Map<string, CandleHistory>` in `src/lib/optimize/sweep-runner.ts` (or wherever the runner orchestrates the fetch), keyed on a hash of `(assetId, from, to, indicators)`.
+  2. Invalidate when any of those inputs changes.
+  3. Stay in-memory — no IndexedDB / localStorage; user reload pays the cost again, which is fine.
+- **Done when**: Two consecutive sweep runs against the same range/asset/indicators show the second one starting backtest execution within 50 ms of clicking Run.
+- **Date filed**: 2026-05-29.
+
 ### Hawks engine: fine-tune for better backtest outcomes (via OPTIMIZE)
 
 - **Priority**: P1
