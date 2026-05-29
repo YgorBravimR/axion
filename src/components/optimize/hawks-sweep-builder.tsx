@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
@@ -25,15 +26,6 @@ interface HawksSweepBuilderProps {
 	selections: Map<string, LeafSelection>
 	/** Emitted when the user changes any leaf's selection. */
 	onSelectionsChange: (_next: Map<string, LeafSelection>) => void
-}
-
-// Human-readable copy per validator reasonKey. Stays inline until the
-// Phase B i18n pass lands keys under `optimize.invariants.<reasonKey>`.
-const INVARIANT_LABELS: Record<string, string> = {
-	tierMonotonic: "Tier order",
-	sessionWindow: "Session window",
-	wave1OverRetracement: "Wave-1 vs retracement",
-	breakevenBeforeFirstTarget: "BE before TP1",
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -116,14 +108,14 @@ const isLeafLockedByBundle = (
 
 interface Section {
 	id: string
-	title: string
+	titleKey: string
 	pathPrefixes: string[]
 }
 
 const SECTIONS: Section[] = [
 	{
 		id: "entry",
-		title: "Entry",
+		titleKey: "sectionEntry",
 		pathPrefixes: [
 			"entry.config.startTime",
 			"entry.config.endTime",
@@ -134,27 +126,27 @@ const SECTIONS: Section[] = [
 	},
 	{
 		id: "quality",
-		title: "Quality (Hawks)",
+		titleKey: "sectionQuality",
 		pathPrefixes: ["entry.config.qualityGates"],
 	},
 	{
 		id: "stop",
-		title: "Stop & Protection",
+		titleKey: "sectionStop",
 		pathPrefixes: ["stop."],
 	},
 	{
 		id: "reversal",
-		title: "Reversal",
+		titleKey: "sectionReversal",
 		pathPrefixes: ["reversal."],
 	},
 	{
 		id: "target",
-		title: "Target",
+		titleKey: "sectionTarget",
 		pathPrefixes: ["target."],
 	},
 	{
 		id: "execution",
-		title: "Execution",
+		titleKey: "sectionExecution",
 		pathPrefixes: ["slippageTicks"],
 	},
 ]
@@ -168,6 +160,10 @@ const HawksSweepBuilder = ({
 	selections,
 	onSelectionsChange,
 }: HawksSweepBuilderProps) => {
+	const tBuilder = useTranslations("optimize.sweepBuilder")
+	const tLeaf = useTranslations("optimize.sweepLeaf")
+	const tInvariant = useTranslations("optimize.invariants")
+
 	// Live cardinality breakdown — recomputed when selections change.
 	// Reports `raw` (before validator filtering), `valid` (after), and
 	// per-validator drop counts so the user can see WHY combos are filtered.
@@ -234,15 +230,14 @@ const HawksSweepBuilder = ({
 				<div className="flex items-center justify-between">
 					<div>
 						<h2 className="text-h3 text-txt-100 font-semibold">
-							Hawks Sweep Builder
+							{tBuilder("title")}
 						</h2>
 						<p className="text-tiny text-txt-300 mt-s-100">
-							Every recipe field is fix-or-sweep. Tap the Sweep pill on any
-							field to add it to the grid.
+							{tBuilder("description")}
 						</p>
 					</div>
 					<div className="text-right">
-						<p className="text-tiny text-txt-300">Combinations</p>
+						<p className="text-tiny text-txt-300">{tBuilder("combinations")}</p>
 						<p
 							className={`text-h2 font-semibold tabular-nums ${cardinality.valid === 0 ? "text-fb-error" : "text-txt-100"}`}
 						>
@@ -250,12 +245,16 @@ const HawksSweepBuilder = ({
 						</p>
 						{cardinality.raw !== cardinality.valid && (
 							<p className="text-tiny text-txt-300">
-								{cardinality.raw.toLocaleString()} raw —{" "}
-								{(cardinality.raw - cardinality.valid).toLocaleString()} dropped
+								{tBuilder("rawDroppedSummary", {
+									raw: cardinality.raw.toLocaleString(),
+									dropped: (
+										cardinality.raw - cardinality.valid
+									).toLocaleString(),
+								})}
 							</p>
 						)}
 						<p className="text-tiny text-txt-300">
-							{sweepAxisCount} sweep {sweepAxisCount === 1 ? "axis" : "axes"}
+							{tBuilder("sweepAxisCount", { count: sweepAxisCount })}
 						</p>
 					</div>
 				</div>
@@ -266,10 +265,11 @@ const HawksSweepBuilder = ({
 								<span
 									key={reason}
 									className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded-full"
-									title={`${count.toLocaleString()} combos dropped`}
+									title={tBuilder("dropChipTooltip", {
+										count: count.toLocaleString(),
+									})}
 								>
-									{INVARIANT_LABELS[reason] ?? reason}: −
-									{count.toLocaleString()}
+									{tInvariant(reason)}: −{count.toLocaleString()}
 								</span>
 							)
 						)}
@@ -289,7 +289,7 @@ const HawksSweepBuilder = ({
 						className="border-bg-300 bg-bg-200 space-y-m-400 p-m-400 rounded-lg border"
 					>
 						<h3 className="text-body text-txt-100 font-semibold">
-							{section.title}
+							{tBuilder(section.titleKey)}
 						</h3>
 						<div className="space-y-m-400">
 							{leaves.map((leaf) => (
@@ -317,10 +317,8 @@ interface LeafControlProps {
 }
 
 const LeafControl = ({ leaf, selection, onChange }: LeafControlProps) => {
-	// `leaf.labelKey` is an i18n key under `optimize.sweepLeaf`; until
-	// Phase B.3 ships those translations, we fall back to the labelKey
-	// itself so the UI renders something readable.
-	const label = leaf.labelKey
+	const tLeaf = useTranslations("optimize.sweepLeaf")
+	const label = tLeaf(leaf.labelKey)
 
 	if (leaf.kind === "number") {
 		const sel: NumberSelection =
@@ -389,7 +387,7 @@ const LeafControl = ({ leaf, selection, onChange }: LeafControlProps) => {
 				label={label}
 				options={leaf.options.map((o) => ({
 					value: o.value,
-					label: o.labelKey,
+					label: tLeaf(o.labelKey),
 				}))}
 				selection={sel}
 				onSelectionChange={onChange}
