@@ -208,6 +208,11 @@ const processHawksCandle = (
 	const bodySize = Math.abs(candle.close - candle.open)
 	const brickSize = bodySize > 0 ? bodySize : config.brickSize5mPoints
 
+	// State-machine knobs — config overrides win, otherwise hardcoded defaults.
+	const fireCooldown = config.fireCooldownBricks ?? FIRE_COOLDOWN_BRICKS
+	const wave1Min = config.wave1MinBricks ?? 4
+	const retracementMin = config.retracementMinBricks ?? 2
+
 	// Update quality context (running MACD/vol EMA history) BEFORE any
 	// fire check — so a fire's quality reflects pre-fire history.
 	const next: HawksState = {
@@ -263,13 +268,13 @@ const processHawksCandle = (
 		const wave1Pts = topoMaior - fundo
 		const retracePts = peak - fundo
 		const descendingHigh = candle.high < topoMaior
-		const wave1Ok = wave1Pts >= 4 * brickSize
-		const retraceOk = retracePts >= 2 * brickSize
+		const wave1Ok = wave1Pts >= wave1Min * brickSize
+		const retraceOk = retracePts >= retracementMin * brickSize
 
 		// Cooldown: enforce minimum bricks between fires.
 		const cooldownOk =
 			next.lastFireBrickIndex === null ||
-			ctx.candleIndexInDay - next.lastFireBrickIndex >= FIRE_COOLDOWN_BRICKS
+			ctx.candleIndexInDay - next.lastFireBrickIndex >= fireCooldown
 
 		const qShort = evaluateQuality(
 			candle,
@@ -347,12 +352,12 @@ const processHawksCandle = (
 		const wave1Pts = topo - fundoMaior
 		const retracePts = topo - trough
 		const ascendingLow = candle.low > fundoMaior
-		const wave1Ok = wave1Pts >= 4 * brickSize
-		const retraceOk = retracePts >= 2 * brickSize
+		const wave1Ok = wave1Pts >= wave1Min * brickSize
+		const retraceOk = retracePts >= retracementMin * brickSize
 
 		const cooldownOk =
 			next.lastFireBrickIndex === null ||
-			ctx.candleIndexInDay - next.lastFireBrickIndex >= FIRE_COOLDOWN_BRICKS
+			ctx.candleIndexInDay - next.lastFireBrickIndex >= fireCooldown
 
 		const qLong = evaluateQuality(
 			candle,

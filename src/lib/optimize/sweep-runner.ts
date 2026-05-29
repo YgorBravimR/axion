@@ -3,6 +3,7 @@ import type {
 	StrategyRecipe,
 	AssetConfig,
 	OptimizationRun,
+	UserEntry,
 } from "@/types/backtest"
 import type { WorkerOutMessage } from "./backtest-worker"
 import {
@@ -26,6 +27,7 @@ interface SweepContext {
 	dateTo: string
 	engineVersion: string
 	walkForward?: { inSamplePct: number }
+	referenceCatalog?: UserEntry[]
 }
 
 const runSweep = (
@@ -76,6 +78,9 @@ const runSweep = (
 				equityCurveIS: msg.equityCurveIS,
 				equityCurveOOS: msg.equityCurveOOS,
 				oosRobust: msg.oosRobust,
+				matchRate: msg.matchRate,
+				matchRateIS: msg.matchRateIS,
+				matchRateOOS: msg.matchRateOOS,
 			}
 			callbacks.onProgress(run, msg.index, msg.total)
 		} else if (msg.type === "complete") {
@@ -98,6 +103,7 @@ const runSweep = (
 		assetConfig,
 		recipes,
 		walkForward: context.walkForward,
+		referenceCatalog: context.referenceCatalog,
 	})
 
 	return {

@@ -110,28 +110,45 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 ### Hawks engine: fine-tune for better backtest outcomes (via OPTIMIZE)
 
 - **Priority**: P1
-- **Effort**: M (down from L now that OPTIMIZE absorbs the harness work)
-- **Source**: 2026-05-29 — original ask was a one-off `scripts/sweep-hawks.ts`; re-shaped to depend on OPTIMIZE Phases 1 + 3a + 3b after the OPTIMIZE roadmap brainstorm (`docs/design/optimize-roadmap.md`).
-- **What + Why**: The user-catalog mode validates engine _outcomes_ (BE/ST/GA/EOD) match the catalog on trades the engine fires. Headline metrics (PF, win rate, max drawdown, Risk:Return) are still sub-optimal because we've been tuning the entry detector against a fixed parameter set, not the whole engine against outcome metrics. Once OPTIMIZE Phase 1 (walk-forward + provenance + Pareto) and Phase 3a/3b (strategy registry + Hawks params) ship, this entry becomes: run OPTIMIZE on `hawks_v0`, pick the winning combo from the Pareto frontier that passes OOS robustness, freeze it as `hawks_v0_tuned`.
-- **Fix shape**:
-  1. **Use OPTIMIZE** (no separate script). Sweep these params via the Hawks registry (Phase 3b):
-     - `retracementMin` (1, 2, 3 bricks)
-     - `cooldown` (3, 5, 7 bricks)
-     - BE `triggerPct` (75, 100, 150, 200 % of risk)
-     - Stop distance multiplier (1×, 2×, dynamic-by-favorability — connects to the 14-label-mismatches entry)
-     - Target multiplier (2R, 3R, trailing)
-     - Quality gates level (off/lite/standard/strict)
-  2. **Walk-forward** comes from Phase 1a (14-train / 6-test default).
-  3. **Pareto reading** comes from Phase 1c (PF vs maxDrawdown scatter).
-  4. **Per-tier breakdown**: re-use `tier-analytics.ts` (shipped in PR #9) — sweep params within AAA / AA / A buckets separately. Cross-coordinate with the "quality multiplier tier-tagging" P2 entry.
-  5. **Freeze the winner**: add a preset variant `hawks_v0_tuned` once OPTIMIZE surfaces a robust combo. Provenance comment records sweep date, objective, IS/OOS numbers. Presets are immutable once shipped; future tunes spawn `hawks_v1_tuned`.
-- **Out of scope**: Live / online optimization. Cross-asset generalization (WINFUT-only). Bayesian / genetic search.
+- **Effort**: M (engine work) + L (sweep execution + freeze)
+- **Source**: 2026-05-29 — original ask was a one-off `scripts/sweep-hawks.ts`; re-shaped to depend on OPTIMIZE Phases 1 + 3a + 3b after the OPTIMIZE roadmap brainstorm (`docs/design/optimize-roadmap.md`). Tier 2 + 3 plan added 2026-05-29 after MVP approval on PR #10.
+- **What + Why**: The user-catalog mode validates engine _outcomes_ (BE/ST/GA/EOD) match the catalog on trades the engine fires. Headline metrics (PF, win rate, max drawdown, Risk:Return) are still sub-optimal because we've been tuning the entry detector against a fixed parameter set, not the whole engine against outcome metrics. With OPTIMIZE Phase 1 + 3a + 3b shipped and the Tier-1 MVP approved, this entry becomes the staged execution that produces `hawks_v0_tuned`.
+- **Fix shape — staged sweep plan**:
+
+  **Tier 1 (shipped on PR #10)** — high-leverage outcome knobs:
+  - `stop.breakeven.triggerPct` (50–200 step 25)
+  - `target.levels[0].value` (R-multiple 2–4 step 0.5)
+  - `slippageTicks` (0–3 step 1)
+
+  **Tier 2 — quality-gates layer** (this PR scope):
+  - **Stage 2A — Bundle enum**: `qualityGates` bundle as one 4-way enum (off/lite/standard/strict). Each option mutates `recipe.entry.config.qualityGates` to the bundle from `getQualityPresetBundle(level)` in `hawks-quality-presets.ts`. Fastest signal — 4 × Tier-1 = 96 combos.
+  - **Stage 2B — Within-bundle numeric drilldown**: srBlockBufferBricks, srFavorRangeBricks, keltnerNearBricks, aggressionThreshold, volumeEmaPeriod, macdSlopeWindow. Run after 2A picks a winner. ~970 combos.
+  - **Stage 2C — Boolean micro-sweep (research mode)**: 7 quality-gate toggles + aggression polarity 3-way. User picks which to sweep via the existing sweep-config panel checkboxes; existing `WARN_COMBINATIONS` guards combinatorial explosion. For when "which specific gate matters" is the question.
+  - **Stage 2D — Tier-threshold playground**: AAA/AA/A thresholds don't affect trade decisions, only labeling. Post-hoc UI in run-detail with 3 sliders that re-tier the breakdown without re-running the engine. Not a sweep axis; a UI affordance.
+
+  **Tier 3 — structural engine params** (this PR scope):
+  - **Stage 3A — Engine config exposure**: extend `HawksTripleScreenConfig` with optional `fireCooldownBricks`, `wave1MinBricks`, `retracementMinBricks` overrides; engine reads from config with fallback to current hardcoded constants. Then sweep via HAWKS_SWEEPABLE_PARAMS.
+  - **Stage 3B — `match_rate` metric**: extend the worker's stats payload to compute "trades that match the user-catalog by `(date, brickIndex)`" for `hawks_triple_screen` runs when a reference catalog is available. Adds catalog-fidelity ranking to OPTIMIZE — a sweep can finally distinguish "high PF on the right trades" from "high PF on different trades."
+
+  **Tier 3 — deferred (out of scope, needs new code paths)**:
+  - Per-day volatility regime (NR4/NR7 vs expansion) — needs a pre-classifier.
+  - Fibonacci retracement bands `[0.382, 0.618]` — needs the Fib code path in the wave detector.
+  - `stayArmed` flag — engine ships anchored (v0.6); making this sweepable requires extracting the behavior to a config flag.
+
+  **Sweep sequencing (the killer joint sweep)**:
+  1. Run Stage 2A alone (4 × Tier-1 = 96 combos, fastest).
+  2. Run Stage 3A alone (18 × Tier-1 = 432 combos, independent of 2A).
+  3. **Joint Stage 2A × 3A × Tier-1**: 4 × 18 × Tier-1 expanded = ~1700 combos with walk-forward. ~1-2 hours wall-clock. Pick the winner that maximizes objective AND passes OOS robustness AND has acceptable match_rate.
+  4. Optional Stage 2B drilldown anchored to that winner.
+  5. Freeze winner as `hawks_v0_tuned` preset with provenance comment recording sweep date, IS/OOS numbers, match_rate.
+
+- **Out of scope**: Live / online optimization. Cross-asset generalization (WINFUT-only). Bayesian / genetic search. The 3 Tier-3-deferred items above.
 - **Done when**:
-  - A Hawks sweep runs via OPTIMIZE with walk-forward and Pareto enabled.
-  - A robust combo (OOS PF ≥ 0.7 × IS PF) is picked from the Pareto frontier.
+  - Tiers 2A/2B/2C, 2D playground, and 3A/3B shipped in HAWKS_SWEEPABLE_PARAMS + engine + worker.
+  - The joint sweep has been run; a robust combo (OOS PF ≥ 0.7 × IS PF, match_rate ≥ baseline) is picked from the Pareto frontier.
   - `hawks_v0_tuned` preset shipped with provenance comment.
-  - One-page summary in `docs/` of the Pareto frontier + chosen point.
-- **Depends on**: OPTIMIZE Phase 1a + 1b + 1c + 3a + 3b shipped.
+  - One-page summary in `docs/` of the Pareto frontier + chosen point + match_rate.
+- **Depends on**: OPTIMIZE Phase 1a + 1b + 1c + 3a + 3b shipped ✅ (PR #10).
 - **Date filed**: 2026-05-29.
 
 ### Hawks autonomous engine: reproduction stuck at 51% — quality gates next
@@ -301,6 +318,33 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Effort**: S
 - **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #3.
 - **What + Why**: Empty-state divs in chart components use `flex h-[180px]` / `flex h-[120px]` / `flex h-[200px]` for the "no data" placeholder. Different pattern from `ChartContainer` heights (which were migrated), but same drift class. Either reuse `h-chart-*` tokens or add a dedicated `--height-empty-state-*` family. Files: `dashboard/{cumulative-pnl-chart,daily-pnl-bar-chart,day-equity-curve,day-detail-modal,day-trades-list,performance-radar-chart}.tsx` and `analytics/{day-of-week-chart,holding-period-chart,hourly-performance-chart,session-asset-table}.tsx`. Detector: `rg -n 'flex h-\[[0-9]+px\] items-center' src/components/{dashboard,analytics}/`.
+- **Date filed**: 2026-05-29.
+
+### QA pass: review calculations across features (feature-by-feature audit)
+
+- **Priority**: P3
+- **Effort**: L (multi-session — one feature per slot)
+- **Source**: 2026-05-29 — Ygor request after seeing OPTIMIZE deliver useful insights on PR #10. Quote: "I'm just trusting the calculations, but they show very important insights." Flagging for an explicit verification pass since the tool's value depends on the numbers being right and they've grown organically without a unified audit.
+- **What + Why**: Across the app, several features compute non-trivial financial / statistical metrics where a math bug silently distorts every downstream decision. No central audit exists today. Worth a deliberate feature-by-feature pass to verify each calculation against a paper-traced expected value. Suspects in order of consequence:
+  1. **Backtest engine** (`src/lib/backtest/engine.ts`, `computeMetrics`) — profit factor, win rate, max drawdown, Sharpe, avg R, equity curve, day breakdown. Verify against a 5–10 hand-computed trade fixture.
+  2. **Hawks user-catalog outcome math** (`src/lib/backtest/modules/entry/user-catalog.ts` + stop/target modules) — BE activation, 1R/3R brick math, EOD force-close. Already partially verified by the 86% catalog match (per the existing P1 backlog entry) but the 14 mismatches are still open.
+  3. **Tier analytics** (`src/lib/backtest/tier-analytics.ts`) — per-tier PF, drawdown, win rate. Re-uses engine math but slices by tier; verify the slicing.
+  4. **Breakeven filter** (`src/lib/backtest/breakeven-filter.ts`) — re-uses `computeMetrics` / `buildEquityCurve` after removing BE trades; verify the "drop and recompute" produces the same numbers as "compute then subtract."
+  5. **OPTIMIZE Pareto frontier** (`src/lib/optimize/pareto.ts`) — O(n log n) sweep is correct in theory; verify edge cases (ties, single point, all-equal PF).
+  6. **OPTIMIZE robustness rule** (`src/lib/optimize/robustness.ts`) — the `OOS PF ≥ 0.7 × IS PF` thresholding; verify Infinity / NaN handling.
+  7. **Monte Carlo orchestration** (`src/lib/monte-carlo/`) — geometric vs arithmetic Sharpe, percentile estimators, equity-curve overlays. High-consequence numbers.
+  8. **Tax recompute** (`src/lib/tax/recompute-month.ts` — PROTECTED PATH, do not modify) — already documented as single source of truth; verify against a known monthly fixture before any future change.
+  9. **Risk simulation + equity-shield** — drawdown projections, ruin probability. Verify against analytical bounds (Kelly, half-Kelly).
+  10. **Journal P&L aggregation** — date-bucketed pnl, week/month rollups; verify against a hand-traced 30-day fixture.
+- **Fix shape per feature**:
+  1. Pick a small known-good fixture (10 trades, hand-traced).
+  2. Run the feature's calc on the fixture.
+  3. Diff field-by-field against the paper-traced expected values.
+  4. Document discrepancies in `docs/scans/calculations-audit/{feature}.md`.
+  5. Fix or open a bug entry; tag with `BUG-{date}-{slug}` and write a post-mortem.
+- **Out of scope**: Performance / numerical-stability audits (these are about CORRECTNESS only — "is the formula right" not "is it fast"). Cross-feature consistency (separate concern: "do two features show the same number for the same trade").
+- **Done when**: Each of the 10 features above has a written audit + green-light or a filed bug. Audit docs sit in `docs/scans/calculations-audit/`.
+- **Why P3**: Nothing is currently known to be broken. This is preventive due diligence, not a fix. Move up to P1 the moment any specific calculation is suspected of being wrong.
 - **Date filed**: 2026-05-29.
 
 ### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers

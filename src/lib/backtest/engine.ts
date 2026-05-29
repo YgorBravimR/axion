@@ -38,6 +38,26 @@ import { createReversalModule } from "./modules/reversal"
 import { computeMetrics, buildEquityCurve } from "./metrics"
 
 /**
+ * Compute the 1-indexed brick index (candle_index) where the entry occurred.
+ * Searches the entry day's candles for a matching timestamp.
+ */
+const getEntryBrickIndex = (
+	entryTimestamp: string,
+	entryDayKey: string,
+	days: Map<string, CandleRow[]>
+): number | undefined => {
+	const dayCandlesArr = days.get(entryDayKey)
+	if (!dayCandlesArr) {
+		return undefined
+	}
+	const candle = dayCandlesArr.find((c) => c.timestamp === entryTimestamp)
+	if (!candle || candle.candleIndex === null) {
+		return undefined
+	}
+	return candle.candleIndex + 1 // Convert 0-indexed DB to 1-indexed catalog
+}
+
+/**
  * Run a complete backtest over a candle dataset using the given strategy recipe.
  *
  * This is a pure function — no DB, no React, no side effects.
@@ -167,7 +187,8 @@ const runBacktest = (
 							entryState,
 							dayRangeHigh,
 							dayRangeLow,
-							tradeCounter
+							tradeCounter,
+							days
 						)
 						tradeCounter =
 							dayTrades.length > 0
@@ -183,7 +204,8 @@ const runBacktest = (
 							valuePerPointCents,
 							dayTrades,
 							tradeCounter,
-							stopModule
+							stopModule,
+							days
 						)
 						tradeCounter =
 							dayTrades.length > 0
@@ -208,7 +230,8 @@ const runBacktest = (
 						targetModule,
 						sizingModule,
 						entryState,
-						tradeCounter
+						tradeCounter,
+						days
 					)
 					dayTrades.push(result.trade)
 					tradeCounter = result.trade.id
@@ -224,7 +247,8 @@ const runBacktest = (
 						valuePerPointCents,
 						dayTrades,
 						tradeCounter,
-						stopModule
+						stopModule,
+						days
 					)
 					tradeCounter =
 						dayTrades.length > 0
@@ -329,7 +353,8 @@ const runBacktest = (
 				"eod",
 				valuePerPointCents,
 				recipe.slippageTicks,
-				assetConfig.tickSize
+				assetConfig.tickSize,
+				days
 			)
 			trade.id = ++tradeCounter
 			dayTrades.push(trade)
@@ -448,7 +473,8 @@ const closeTrade = (
 	exitReason: BacktestTrade["exitReason"],
 	valuePerPointCents: number,
 	slippageTicks: number,
-	tickSize: number
+	tickSize: number,
+	days: Map<string, CandleRow[]>
 ): BacktestTrade => {
 	const contracts = position.contractsRemaining
 	const grossPnlCents = calculatePnlCents(
@@ -483,6 +509,11 @@ const closeTrade = (
 		rMultiple,
 		label: position.label,
 		quality: position.quality,
+		entryBrickIndex: getEntryBrickIndex(
+			position.entryTimestamp,
+			position.entryDayKey,
+			days
+		),
 	}
 }
 
@@ -504,7 +535,8 @@ const processStopHit = (
 	targetMod: ReturnType<typeof createTargetModule>,
 	sizingMod: ReturnType<typeof createSizingModule>,
 	entryState: unknown,
-	tradeCounter: number
+	tradeCounter: number,
+	days: Map<string, CandleRow[]>
 ): {
 	trade: BacktestTrade
 	newPosition: Position | null
@@ -524,7 +556,8 @@ const processStopHit = (
 		exitReason,
 		valuePerPointCents,
 		recipe.slippageTicks,
-		assetConfig.tickSize
+		assetConfig.tickSize,
+		days
 	)
 	trade.id = tradeCounter + 1
 
@@ -600,7 +633,8 @@ const handleStopHit = (
 	_entryState: unknown,
 	_dayRangeHigh: number | null,
 	_dayRangeLow: number | null,
-	tradeCounter: number
+	tradeCounter: number,
+	days: Map<string, CandleRow[]>
 ): Position | null => {
 	const result = processStopHit(
 		position,
@@ -616,7 +650,8 @@ const handleStopHit = (
 		targetMod,
 		sizingMod,
 		_entryState,
-		tradeCounter
+		tradeCounter,
+		days
 	)
 	dayTrades.push(result.trade)
 	return result.newPosition
@@ -634,7 +669,8 @@ const handleTargetHit = (
 	valuePerPointCents: number,
 	dayTrades: BacktestTrade[],
 	tradeCounter: number,
-	stopMod: ReturnType<typeof createStopModule>
+	stopMod: ReturnType<typeof createStopModule>,
+	days: Map<string, CandleRow[]>
 ): Position | null => {
 	let updatedPosition = { ...position, targetState: targetResult.state }
 
@@ -699,6 +735,11 @@ const handleTargetHit = (
 					: 0,
 			label: updatedPosition.label,
 			quality: updatedPosition.quality,
+			entryBrickIndex: getEntryBrickIndex(
+				updatedPosition.entryTimestamp,
+				updatedPosition.entryDayKey,
+				days
+			),
 		}
 
 		dayTrades.push(trade)

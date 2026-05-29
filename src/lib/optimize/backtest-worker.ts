@@ -8,6 +8,7 @@ import type {
 	AssetConfig,
 	BacktestSummary,
 	EquityCurvePoint,
+	UserEntry,
 } from "@/types/backtest"
 
 // ── Message types ────────────────────────────────────────────────
@@ -18,6 +19,7 @@ interface StartMessage {
 	assetConfig: AssetConfig
 	recipes: StrategyRecipe[]
 	walkForward?: { inSamplePct: number }
+	referenceCatalog?: UserEntry[]
 }
 
 interface ProgressMessage {
@@ -33,6 +35,10 @@ interface ProgressMessage {
 	equityCurveIS?: EquityCurvePoint[]
 	equityCurveOOS?: EquityCurvePoint[]
 	oosRobust?: boolean
+	// Phase 3B match rate — fraction of trades matching catalog by (date, brickIndex)
+	matchRate?: number
+	matchRateIS?: number
+	matchRateOOS?: number
 }
 
 interface CompleteMessage {
@@ -47,13 +53,61 @@ interface ErrorMessage {
 
 type WorkerOutMessage = ProgressMessage | CompleteMessage | ErrorMessage
 
+// ── Helper: compute match rate ───────────────────────────────────
+
+const computeMatchRate = (
+	trades: ReturnType<typeof runBacktest>["trades"],
+	referenceCatalog: UserEntry[],
+	dateRange?: { from: string; to: string }
+): number | undefined => {
+	if (!referenceCatalog.length) {
+		return undefined
+	}
+	if (!trades.length) {
+		return undefined
+	}
+
+	// Filter catalog to date range if provided (for IS/OOS split)
+	let relevantCatalog = referenceCatalog
+	if (dateRange) {
+		relevantCatalog = referenceCatalog.filter(
+			(entry) => entry.date >= dateRange.from && entry.date <= dateRange.to
+		)
+	}
+
+	if (!relevantCatalog.length) {
+		return undefined
+	}
+
+	// Count trades matching catalog by (date, brickIndex)
+	let matches = 0
+	for (const trade of trades) {
+		if (trade.entryBrickIndex !== undefined) {
+			const hasMatch = relevantCatalog.some(
+				(entry) =>
+					entry.date === trade.dayKey &&
+					entry.brickIndex === trade.entryBrickIndex
+			)
+			if (hasMatch) {
+				matches++
+			}
+		}
+	}
+
+	// Match rate = matches / max(catalog.length, trades.length)
+	// This penalizes both missed catalog entries AND false-positive fires
+	const denominator = Math.max(relevantCatalog.length, trades.length)
+	return matches / denominator
+}
+
 // ── Worker logic ─────────────────────────────────────────────────
 
 declare const self: DedicatedWorkerGlobalScope
 
 self.onmessage = (event: MessageEvent<StartMessage>) => {
 	try {
-		const { candles, assetConfig, recipes, walkForward } = event.data
+		const { candles, assetConfig, recipes, walkForward, referenceCatalog } =
+			event.data
 		const startTime = performance.now()
 
 		for (let i = 0; i < recipes.length; i++) {
@@ -61,10 +115,8 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 
 			if (walkForward) {
 				// Walk-forward mode: split candles, run both, compute robustness
-				const { isCandles, oosCandles } = splitCandles(
-					candles,
-					walkForward.inSamplePct
-				)
+				const { isCandles, oosCandles, isDateRange, oosDateRange } =
+					splitCandles(candles, walkForward.inSamplePct)
 
 				const isResult = runBacktest(isCandles, recipe, assetConfig)
 				const oosResult = runBacktest(oosCandles, recipe, assetConfig)
@@ -83,6 +135,20 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					equityCurveIS: isResult.equityCurve,
 					equityCurveOOS: oosResult.equityCurve,
 					oosRobust: isOosRobust(isResult.summary, oosResult.summary),
+					// Phase 3B match rate (if catalog provided and Hawks strategy)
+					...(referenceCatalog &&
+						recipe.entry.type === "hawks_triple_screen" && {
+							matchRateIS: computeMatchRate(
+								isResult.trades,
+								referenceCatalog,
+								isDateRange
+							),
+							matchRateOOS: computeMatchRate(
+								oosResult.trades,
+								referenceCatalog,
+								oosDateRange
+							),
+						}),
 				}
 				self.postMessage(msg)
 			} else {
@@ -96,6 +162,11 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					recipe,
 					summary: result.summary,
 					equityCurve: result.equityCurve,
+					// Phase 3B match rate (if catalog provided and Hawks strategy)
+					...(referenceCatalog &&
+						recipe.entry.type === "hawks_triple_screen" && {
+							matchRate: computeMatchRate(result.trades, referenceCatalog),
+						}),
 				}
 				self.postMessage(msg)
 			}

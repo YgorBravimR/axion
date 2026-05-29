@@ -69,6 +69,7 @@ import type {
 	StrategyRecipe,
 	AssetConfig,
 	OptimizationRun,
+	UserEntry,
 } from "@/types/backtest"
 import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
@@ -94,6 +95,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Data state (fetched once, reused for all runs) ────────────
 	const candlesRef = useRef<CandleRow[]>([])
 	const assetConfigRef = useRef<AssetConfig | null>(null)
+	const catalogRef = useRef<UserEntry[] | undefined>(undefined)
 	const [candleCount, setCandleCount] = useState(0)
 	const [isLoadingData, setIsLoadingData] = useState(false)
 
@@ -405,7 +407,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	// ── Sweep mode: batch run via Web Worker ──────────────────────
 
-	const handleRunSweep = useCallback(() => {
+	const handleRunSweep = useCallback(async () => {
 		if (!hasData || !assetConfigRef.current) {
 			showToast("error", t("dataRequired"))
 			return
@@ -422,6 +424,15 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				t("sweepOverLimit", { max: MAX_COMBINATIONS.toLocaleString() })
 			)
 			return
+		}
+
+		// Load catalog for Hawks strategy
+		if (recipe.entry.type === "hawks_triple_screen" && !catalogRef.current) {
+			const bundles = await listBundledCatalogs()
+			const allBundle = bundles.find((b) => b.key === "all")
+			if (allBundle) {
+				catalogRef.current = allBundle.catalog
+			}
 		}
 
 		const recipes = generateRecipeGrid(recipe, activeRanges)
@@ -441,6 +452,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				walkForward: walkForwardConfig?.enabled
 					? { inSamplePct: walkForwardConfig.inSamplePct / 100 }
 					: undefined,
+				referenceCatalog:
+					recipe.entry.type === "hawks_triple_screen"
+						? catalogRef.current
+						: undefined,
 			},
 			{
 				onProgress: (run, index, total) => {

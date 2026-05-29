@@ -206,6 +206,22 @@ const RunsComparisonTable = ({
 				},
 			},
 			{
+				accessorFn: (row) => row.matchRate,
+				id: "matchRate",
+				header: t("matchRate"),
+				cell: ({ getValue }) => {
+					const rate = getValue<number | undefined>()
+					if (rate === undefined) {
+						return <span className="text-tiny text-txt-300">-</span>
+					}
+					return (
+						<span className="text-small text-txt-100 tabular-nums">
+							{(rate * 100).toFixed(0)}%
+						</span>
+					)
+				},
+			},
+			{
 				accessorFn: (row) => row.summary.totalPnlCents,
 				id: "totalPnl",
 				header: t("totalPnl"),

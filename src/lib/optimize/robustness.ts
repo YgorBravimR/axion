@@ -47,12 +47,17 @@ export function isOosRobust(
  *
  * @param candles - All available candles (must be in order).
  * @param inSamplePct - Percentage to use for in-sample (0.5–0.9), as a decimal (0.5 = 50%).
- * @returns Object with `isCandles` (in-sample) and `oosCandles` (out-of-sample).
+ * @returns Object with `isCandles` (in-sample), `oosCandles` (out-of-sample), and date ranges.
  */
 export function splitCandles(
 	candles: CandleRow[],
 	inSamplePct: number
-): { isCandles: CandleRow[]; oosCandles: CandleRow[] } {
+): {
+	isCandles: CandleRow[]
+	oosCandles: CandleRow[]
+	isDateRange: { from: string; to: string }
+	oosDateRange: { from: string; to: string }
+} {
 	if (inSamplePct < 0.5 || inSamplePct > 0.9) {
 		throw new Error(
 			`inSamplePct must be between 0.5 and 0.9, got ${inSamplePct}`
@@ -60,9 +65,19 @@ export function splitCandles(
 	}
 
 	const splitIndex = Math.floor(candles.length * inSamplePct)
+	const isCandles = candles.slice(0, splitIndex)
+	const oosCandles = candles.slice(splitIndex)
 
 	return {
-		isCandles: candles.slice(0, splitIndex),
-		oosCandles: candles.slice(splitIndex),
+		isCandles,
+		oosCandles,
+		isDateRange: {
+			from: isCandles[0]!.timestamp.split("T")[0]!,
+			to: isCandles[isCandles.length - 1]!.timestamp.split("T")[0]!,
+		},
+		oosDateRange: {
+			from: oosCandles[0]!.timestamp.split("T")[0]!,
+			to: oosCandles[oosCandles.length - 1]!.timestamp.split("T")[0]!,
+		},
 	}
 }

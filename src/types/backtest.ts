@@ -133,6 +133,11 @@ interface HawksTripleScreenConfig {
 	brickSize5mPoints: number // default: 100 (= 20 ticks × 5 points/tick on WIN)
 	startTime: number // 930
 	endTime: number // 1730
+	// State-machine overrides (optional — engine falls back to hardcoded
+	// defaults when undefined). Exposed for OPTIMIZE Tier-3 sweeps.
+	fireCooldownBricks?: number // default 5 (post-fire 5m brick cooldown)
+	wave1MinBricks?: number // default 4 (wave-1 minimum bricks)
+	retracementMinBricks?: number // default 2 (wave-2 retracement minimum bricks)
 	// Optional user-toggleable quality gates. Each flag is independent and
 	// additive: when true, the engine refuses an otherwise-valid fire if the
 	// gate's condition holds. Default off ⇒ baseline engine behavior preserved.
@@ -539,6 +544,7 @@ interface BacktestTrade {
 	rMultiple: number
 	label: string
 	quality?: TradeQuality
+	entryBrickIndex?: number // 1-indexed candle index matching the entry time
 }
 
 interface EquityCurvePoint {
@@ -624,6 +630,10 @@ interface OptimizationRun {
 	equityCurveIS?: EquityCurvePoint[]
 	equityCurveOOS?: EquityCurvePoint[]
 	oosRobust?: boolean
+	// Phase 3B — match rate. Fraction of trades matching catalog by (date, brickIndex).
+	matchRate?: number // 0..1
+	matchRateIS?: number // in-sample match rate (walk-forward mode)
+	matchRateOOS?: number // out-of-sample match rate (walk-forward mode)
 }
 
 // ═══════════════════════════════════════════════════════════════════

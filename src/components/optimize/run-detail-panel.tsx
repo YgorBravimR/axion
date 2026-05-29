@@ -6,6 +6,8 @@ import { BacktestSummaryCards } from "@/components/backtest/backtest-summary-car
 import { BacktestTradesTable } from "@/components/backtest/backtest-trades-table"
 import { BacktestEquityChart } from "@/components/backtest/backtest-equity-chart"
 import { LoadingSpinner } from "@/components/shared"
+import { TierThresholdPlayground } from "@/components/optimize/tier-threshold-playground"
+import { hasAnyTierData } from "@/lib/backtest/tier-analytics"
 import type { OptimizationRun } from "@/types/backtest"
 
 interface RunDetailPanelProps {
@@ -55,6 +57,18 @@ const RunDetailPanel = ({ run, onRecomputeTrades }: RunDetailPanelProps) => {
 
 			<BacktestSummaryCards summary={run.summary} />
 			<BacktestEquityChart equityCurve={run.equityCurve} />
+
+			{/* Tier threshold playground — only show if trades carry quality data */}
+			{!needsRecompute && hasAnyTierData(run.trades) && (
+				<details className="bg-bg-100/50 p-s-300 rounded-lg">
+					<summary className="text-small text-txt-300 cursor-pointer font-medium">
+						{t("tierPlayground.title")}
+					</summary>
+					<div className="mt-s-300">
+						<TierThresholdPlayground trades={run.trades} />
+					</div>
+				</details>
+			)}
 
 			<ProvenanceSection run={run} t={t} />
 
