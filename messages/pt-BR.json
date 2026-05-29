@@ -5376,7 +5376,9 @@
 			"sectionReversal": "Reversão",
 			"sectionTarget": "Alvo",
 			"sectionExecution": "Execução",
-			"bundleLockHint": "Pacote {bundle} possui {count} gates abaixo — alterne para Personalizado para sobrescrever individualmente."
+			"bundleLockHint": "Pacote {bundle} possui {count} gates abaixo — alterne para Personalizado para sobrescrever individualmente.",
+			"sectionLeafCount": "{total} campos · {swept} sweep",
+			"resetToBaseline": "Restaurar padrão"
 		}
 	},
 	"candleImport": {

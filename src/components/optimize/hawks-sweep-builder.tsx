@@ -1,9 +1,12 @@
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
+import { ChevronDown, RotateCcw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
@@ -41,7 +44,14 @@ interface HawksSweepBuilderProps {
 	walkForwardConfig: WalkForwardConfig | null
 	/** Emitted when the user toggles or adjusts walk-forward. */
 	onWalkForwardChange: (_config: WalkForwardConfig | null) => void
+	/** Reset selections to recipe baseline. Parent re-derives via deriveInitialSelections. */
+	onReset: () => void
 }
+
+// Cardinality warning thresholds. ≤ WARN_SOFT_THRESHOLD: neutral.
+// Between thresholds: amber (soft warning). > MAX_CARDINALITY: red.
+const WARN_SOFT_THRESHOLD = 500
+const MAX_CARDINALITY = 2000
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -176,11 +186,29 @@ const HawksSweepBuilder = ({
 	onSelectionsChange,
 	walkForwardConfig,
 	onWalkForwardChange,
+	onReset,
 }: HawksSweepBuilderProps) => {
 	const tBuilder = useTranslations("optimize.sweepBuilder")
 	const tInvariant = useTranslations("optimize.invariants")
 	const tWf = useTranslations("optimize.walkForward")
 	const tLeaf = useTranslations("optimize.sweepLeaf")
+
+	// Sections start with only the first one (Entry) expanded so users see
+	// less vertical scroll on first load. They can expand others as needed.
+	const [expandedSections, setExpandedSections] = useState<Set<string>>(
+		() => new Set(["entry"])
+	)
+	const toggleSection = useCallback((id: string) => {
+		setExpandedSections((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) {
+				next.delete(id)
+			} else {
+				next.add(id)
+			}
+			return next
+		})
+	}, [])
 
 	// When the quality bundle is fixed to a non-custom value, it owns
 	// (locks + hides) every gate listed in BUNDLE_OWNED_PATHS. Surfacing
@@ -259,7 +287,7 @@ const HawksSweepBuilder = ({
 		<div className="space-y-m-500">
 			{/* Header — sweep summary at top of builder. */}
 			<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-				<div className="flex items-center justify-between">
+				<div className="flex items-start justify-between">
 					<div>
 						<h2 className="text-h3 text-txt-100 font-semibold">
 							{tBuilder("title")}
@@ -267,11 +295,28 @@ const HawksSweepBuilder = ({
 						<p className="text-tiny text-txt-300 mt-s-100">
 							{tBuilder("description")}
 						</p>
+						<Button
+							id="builder-reset"
+							size="sm"
+							variant="outline"
+							onClick={onReset}
+							className="gap-s-100 mt-s-200"
+						>
+							<RotateCcw className="h-3 w-3" aria-hidden="true" />
+							{tBuilder("resetToBaseline")}
+						</Button>
 					</div>
 					<div className="text-right">
 						<p className="text-tiny text-txt-300">{tBuilder("combinations")}</p>
 						<p
-							className={`text-h2 font-semibold tabular-nums ${cardinality.valid === 0 ? "text-fb-error" : "text-txt-100"}`}
+							className={cn(
+								"text-h2 font-semibold tabular-nums",
+								cardinality.valid === 0 || cardinality.valid > MAX_CARDINALITY
+									? "text-fb-error"
+									: cardinality.valid >= WARN_SOFT_THRESHOLD
+										? "text-warning"
+										: "text-txt-100"
+							)}
 						>
 							{cardinality.valid.toLocaleString()}
 						</p>
@@ -385,7 +430,7 @@ const HawksSweepBuilder = ({
 				)}
 			</div>
 
-			{/* Sections */}
+			{/* Sections — collapsible, Entry open by default. */}
 			{SECTIONS.map((section) => {
 				const leaves = visibleBySection.get(section.id) ?? []
 				if (leaves.length === 0) {
@@ -393,32 +438,66 @@ const HawksSweepBuilder = ({
 				}
 				const showBundleHint =
 					section.id === "quality" && lockingBundleValue !== null
+				const isOpen = expandedSections.has(section.id)
+				const sweptInSection = leaves.filter(
+					(leaf) => selections.get(leaf.path)?.kind !== "fixed"
+				).length
 				return (
 					<section
 						key={section.id}
-						className="border-bg-300 bg-bg-200 space-y-m-400 p-m-400 rounded-lg border"
+						className="border-bg-300 bg-bg-200 rounded-lg border"
 					>
-						<h3 className="text-body text-txt-100 font-semibold">
-							{tBuilder(section.titleKey)}
-						</h3>
-						{showBundleHint && (
-							<div className="border-bg-400 bg-bg-300 p-s-300 text-tiny text-txt-200 rounded-md border">
-								{tBuilder("bundleLockHint", {
-									bundle: tLeaf(`hawksQualityBundle_${lockingBundleValue}`),
-									count: BUNDLE_OWNED_PATHS.length,
-								})}
+						<button
+							type="button"
+							onClick={() => toggleSection(section.id)}
+							aria-expanded={isOpen}
+							aria-controls={`section-panel-${section.id}`}
+							className="hover:bg-bg-300/50 p-m-400 flex w-full items-center justify-between transition-colors"
+						>
+							<span className="gap-s-200 flex items-center">
+								<h3 className="text-body text-txt-100 font-semibold">
+									{tBuilder(section.titleKey)}
+								</h3>
+								<span className="text-tiny text-txt-300 tabular-nums">
+									{tBuilder("sectionLeafCount", {
+										total: leaves.length,
+										swept: sweptInSection,
+									})}
+								</span>
+							</span>
+							<ChevronDown
+								className={cn(
+									"text-txt-300 h-4 w-4 transition-transform",
+									isOpen && "rotate-180"
+								)}
+								aria-hidden="true"
+							/>
+						</button>
+						{isOpen && (
+							<div
+								id={`section-panel-${section.id}`}
+								className="border-bg-300 p-m-400 space-y-m-400 border-t"
+							>
+								{showBundleHint && (
+									<div className="border-bg-400 bg-bg-300 p-s-300 text-tiny text-txt-200 rounded-md border">
+										{tBuilder("bundleLockHint", {
+											bundle: tLeaf(`hawksQualityBundle_${lockingBundleValue}`),
+											count: BUNDLE_OWNED_PATHS.length,
+										})}
+									</div>
+								)}
+								<div className="space-y-m-400">
+									{leaves.map((leaf) => (
+										<LeafControl
+											key={leaf.path}
+											leaf={leaf}
+											selection={selections.get(leaf.path)}
+											onChange={(next) => handleLeafChange(leaf.path, next)}
+										/>
+									))}
+								</div>
 							</div>
 						)}
-						<div className="space-y-m-400">
-							{leaves.map((leaf) => (
-								<LeafControl
-									key={leaf.path}
-									leaf={leaf}
-									selection={selections.get(leaf.path)}
-									onChange={(next) => handleLeafChange(leaf.path, next)}
-								/>
-							))}
-						</div>
 					</section>
 				)
 			})}

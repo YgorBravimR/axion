@@ -884,6 +884,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								onSelectionsChange={setLeafSelections}
 								walkForwardConfig={walkForwardConfig}
 								onWalkForwardChange={setWalkForwardConfig}
+								onReset={() =>
+									setLeafSelections(
+										deriveInitialSelections(HAWKS_LEAVES, recipe)
+									)
+								}
 							/>
 						) : (
 							<SweepConfigPanel
