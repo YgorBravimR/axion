@@ -394,6 +394,22 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Why P3**: Nothing is currently known to be broken. This is preventive due diligence, not a fix. Move up to P1 the moment any specific calculation is suspected of being wrong.
 - **Date filed**: 2026-05-29.
 
+### Remove legacy `SweepConfigPanel` once ORB / DEZK / user_catalog get sweep-leaf catalogs
+
+- **Priority**: P3
+- **Effort**: L
+- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. The new `HawksSweepBuilder` fully replaces `SweepConfigPanel` for Hawks (flag `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` is true). The legacy panel + `HAWKS_SWEEPABLE_PARAMS` are now dead code for Hawks but still alive for ORB, DEZK, and `user_catalog` (which reuses the Hawks sweepables via the strategy registry).
+- **What + Why**: To remove `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`, every remaining caller needs to migrate to the sweep-leaf model:
+  1. Build `ORB_LEAVES` + `ORB_VALIDATORS` (mirror `HAWKS_LEAVES`).
+  2. Build `DEZK_LEAVES` + `DEZK_VALIDATORS`.
+  3. Decide user_catalog: either share the Hawks catalog or get its own.
+  4. Generalize `HawksSweepBuilder` → `StrategySweepBuilder` (parametrize the section grouping, leaves, validators) OR keep per-strategy builders.
+  5. Delete `SweepConfigPanel`, `sweepable-params.ts` per-strategy entries, the `_LEGACY` exports.
+  6. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag and the conditional in `optimize-content.tsx`.
+- **Out of scope** (until then): Touching `SweepConfigPanel` itself, removing `HAWKS_SWEEPABLE_PARAMS`, removing the feature flag.
+- **Done when**: ORB, DEZK, and user_catalog all sweep through their own builder; `SweepConfigPanel` deleted; flag deleted; `pnpm lint`, `tsc`, tests, e2e green.
+- **Date filed**: 2026-05-29.
+
 ### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers
 
 - **Priority**: P3
