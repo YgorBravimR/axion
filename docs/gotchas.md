@@ -619,6 +619,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `scripts/diff-projection.ts`; Hawks Step-3 verification session 2026-05-27.
 - **Date logged**: 2026-05-27.
 
+### Recipe paths: `recipeFromCombo` produces "addon-as-undefined" — every nested-path reader must guard intermediates
+
+- **What**: When the optimize sweep generates recipes via `recipeFromCombo`, it builds addon configs (`stop.breakeven`, `stop.trailing`, `reversal`) atomically: enabled → fully-populated object; disabled → `undefined`. Any helper that walks a dot-path on a recipe (`getNestedValue` in `parameter-grid.ts`, future readers in heatmap/Pareto/etc.) must tolerate intermediate `undefined`, NOT cast through it.
+- **What to do**: Use a defensive walk that returns `NaN` (for numeric paths) or `undefined` (for any-type paths) when an intermediate is missing. Downstream callers filter with `Number.isFinite()` for numerics, or skip the run for the heatmap. NEVER cast `current = current[k] as Record<...>` without a null/object guard first.
+- **Source**: `src/lib/optimize/parameter-grid.ts`, `src/lib/optimize/heatmap-utils.ts`; bug fix session 2026-05-29.
+- **Date logged**: 2026-05-29.
+
 ### Agent isolation: `isolation: "worktree"` does not always isolate commits to the worktree branch
 
 - **What**: Spawning parallel agents with `isolation: "worktree"` is supposed to give each agent its own git worktree on a dedicated `worktree-agent-*` branch. In practice (session 2026-05-22, six parallel agents on `feat/hawks-mode-v0`), all six agents' commits landed directly on the parent branch (`feat/hawks-mode-v0`), and the worktree branches stayed at the baseline. The commits ended up linearized cleanly because file ownership was strictly disjoint, but if two agents had touched the same file, the second commit would have failed or surprised the orchestrator with an unexpected merge.

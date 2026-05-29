@@ -689,3 +689,46 @@ Changed step 7d to navigate to `/en/analytics` and assert `#analytics-anchor-equ
 ### Related Files
 
 - `e2e/journey/07-quarter-year.spec.ts`
+
+---
+
+## 2026-05-29 — ParameterHeatmap crashes after inline-Hawks sweep
+
+### Symptom
+
+After running an inline-Hawks sweep that varied an addon sub-path (e.g. `stop.breakeven.triggerPct`), the Results step crashed:
+
+```
+TypeError: Cannot read properties of undefined (reading 'triggerPct')
+  at getNestedValue (parameter-grid.ts:142)
+  at getVaryingParams (heatmap-utils.ts:151)
+  at ParameterHeatmap.useMemo[varyingParams] (parameter-heatmap.tsx:139)
+```
+
+Caught by `ErrorBoundaryHandler`, but the heatmap tab was empty.
+
+### Root cause
+
+`getNestedValue` was written when every recipe path was guaranteed populated — it cast each intermediate segment to a `Record<string, unknown>` without a null check. The new inline-Hawks sweep produces recipes where addon sub-trees are intentionally `undefined` (e.g. `stop.breakeven === undefined` in combos where BE is disabled). Reading the next key off `undefined` crashed.
+
+Contract mismatch: `recipeFromCombo` produces "addon-as-undefined" representations, but `parameter-grid.ts` pre-dated that representation.
+
+### Effect
+
+Heatmap tab unusable any time the sweep varied a parameter inside an optional addon (breakeven, trailing, reversal — anything that can be `undefined` on the recipe).
+
+### Solution
+
+1. `getNestedValue` now walks each segment with a null/object guard and returns `NaN` when any intermediate is missing or the final value isn't numeric.
+2. `heatmap-utils.getVaryingParams` filters NaN out of the values-set — a parameter that's _present-vs-absent_ across runs isn't a numeric sweep axis.
+3. `buildHeatmapData` grouping loop skips runs where either axis path is `NaN` so structurally-different runs don't anchor a cell.
+
+### Prevention
+
+- **Defensive reads at integration seams.** When two modules use slightly different shape assumptions, the read-side must tolerate the union of both shapes.
+- **NaN as the "missing" signal for numeric paths.** Sets dedupe NaN to one entry, and `Number.isFinite()` is the right downstream check — cleaner than `number | undefined` since it avoids a return-type ripple through every caller.
+
+### Related Files
+
+- `src/lib/optimize/parameter-grid.ts` (`getNestedValue`)
+- `src/lib/optimize/heatmap-utils.ts` (`getVaryingParams`, `buildHeatmapData`)

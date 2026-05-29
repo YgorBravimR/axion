@@ -130,16 +130,29 @@ const setNestedValue = (obj: unknown, path: string, value: number): void => {
 	current[keys[keys.length - 1]!] = value
 }
 
-/** Get a value at a dot-path from a deeply nested object */
+/**
+ * Get a numeric value at a dot-path from a deeply nested object.
+ * Returns `NaN` when ANY intermediate segment is null/undefined or when the
+ * final value isn't a number — Hawks recipes legitimately carry
+ * `stop.breakeven = undefined` (BE disabled), and the legacy non-defensive
+ * walk used to crash on the first missing intermediate.
+ *
+ * Callers compare with `Number.isFinite(...)` or filter NaN out of Sets.
+ */
 const getNestedValue = (obj: unknown, path: string): number => {
 	const keys = path.split(".")
-	let current = obj as Record<string, unknown>
-
-	for (let i = 0; i < keys.length - 1; i++) {
-		current = current[keys[i]!] as Record<string, unknown>
+	let current: unknown = obj
+	for (const key of keys) {
+		if (
+			current === null ||
+			current === undefined ||
+			typeof current !== "object"
+		) {
+			return Number.NaN
+		}
+		current = (current as Record<string, unknown>)[key]
 	}
-
-	return current[keys[keys.length - 1]!] as number
+	return typeof current === "number" ? current : Number.NaN
 }
 
 // ── Combination counting ────────────────────────────────────────

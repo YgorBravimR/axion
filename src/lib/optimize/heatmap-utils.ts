@@ -145,10 +145,17 @@ const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
 				})
 			}
 		} else {
-			// Existing numeric detection
+			// Existing numeric detection. We tolerate runs where the path is
+			// absent (recipe has `stop.breakeven = undefined`, etc.) by
+			// filtering NaN out — a parameter that's *present-vs-absent* across
+			// runs isn't a numeric sweep axis, it's a structural difference and
+			// shouldn't appear in the heatmap.
 			const valuesSet = new Set<number>()
 			for (const run of sameStrategyRuns) {
-				valuesSet.add(getNestedValue(run.recipe, param.path))
+				const v = getNestedValue(run.recipe, param.path)
+				if (Number.isFinite(v)) {
+					valuesSet.add(v)
+				}
 			}
 			if (valuesSet.size > 1) {
 				varying.push({
@@ -206,6 +213,11 @@ const buildHeatmapData = (
 	for (const run of filtered) {
 		const xVal = getNestedValue(run.recipe, xPath)
 		const yVal = getNestedValue(run.recipe, yPath)
+		// Skip runs where either axis path is absent — they're structurally
+		// different (e.g. BE disabled) and shouldn't anchor a cell.
+		if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) {
+			continue
+		}
 		xValuesSet.add(xVal)
 		yValuesSet.add(yVal)
 
