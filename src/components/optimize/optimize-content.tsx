@@ -33,7 +33,11 @@ import { fetchBacktestData } from "@/app/actions/backtest"
 import { runBacktest, getEngineVersionForRecipe } from "@/lib/backtest/engine"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
-import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
+import {
+	hawksPresets,
+	hawksV0,
+	hawksUserCatalog,
+} from "@/lib/backtest/presets/hawks-presets"
 import {
 	generateRecipeGrid,
 	countCombinations,
@@ -42,6 +46,8 @@ import {
 import { runSweep } from "@/lib/optimize/sweep-runner"
 import { OrbEntrySection } from "@/components/backtest/sections/orb-entry-section"
 import { DezkEntrySection } from "@/components/backtest/sections/dezk-entry-section"
+import { HawksEntrySection } from "@/components/backtest/sections/hawks-entry-section"
+import { UserCatalogEntrySection } from "@/components/backtest/sections/user-catalog-entry-section"
 import { StopProtectionSection } from "@/components/backtest/sections/stop-protection-section"
 import { TargetsExitSection } from "@/components/backtest/sections/targets-exit-section"
 import { SizingExecutionSection } from "@/components/backtest/sections/sizing-execution-section"
@@ -220,6 +226,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			setRecipe(orbPresets[0])
 		} else if (type === "macd_wma_alignment") {
 			setRecipe(dezkPresets[0])
+		} else if (type === "hawks_triple_screen") {
+			setRecipe(hawksV0)
+		} else if (type === "user_catalog") {
+			setRecipe(hawksUserCatalog)
 		}
 		setActiveRanges([])
 	}
@@ -534,6 +544,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<SelectItem value="macd_wma_alignment">
 										{tBacktest("dezk.name")}
 									</SelectItem>
+									<SelectItem value="hawks_triple_screen">
+										{tBacktest("hawks.name")}
+									</SelectItem>
+									<SelectItem value="user_catalog">
+										{tBacktest("userCatalog.name")}
+									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -711,6 +727,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 										)}
 										{recipe.entry.type === "macd_wma_alignment" && (
 											<DezkEntrySection
+												recipe={recipe}
+												onRecipeChange={setRecipe}
+											/>
+										)}
+										{recipe.entry.type === "hawks_triple_screen" && (
+											<HawksEntrySection
+												recipe={recipe}
+												onRecipeChange={setRecipe}
+											/>
+										)}
+										{recipe.entry.type === "user_catalog" && (
+											<UserCatalogEntrySection
 												recipe={recipe}
 												onRecipeChange={setRecipe}
 											/>
