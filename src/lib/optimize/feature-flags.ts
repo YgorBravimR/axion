@@ -17,6 +17,6 @@
  * Default: `false` until Phase B.2–B.4 wire the controls through every
  * Hawks recipe section and the summary panel ships.
  */
-const OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED = false
+const OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED = true
 
 export { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED }

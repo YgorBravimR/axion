@@ -84,6 +84,32 @@ type LeafSelection =
 	| { kind: "sweep_set"; values: PrimitiveValue[] }
 	| { kind: "sweep_range"; min: number; max: number; step: number }
 
+// ── Cross-leaf invariants ────────────────────────────────────────────
+
+/**
+ * A cross-leaf invariant — a constraint that spans multiple leaves and
+ * cannot be expressed via per-leaf `condition` (which only reads ONE
+ * parent's value).
+ *
+ * Example: tier thresholds must be strictly monotonic
+ *   `hawksTierAAA > hawksTierAA > hawksTierA`
+ *
+ * The generator filters out combos for which any validator returns false.
+ * The cardinality breakdown reports drops per-validator so the UI can
+ * tell the user `64 raw → 32 valid (32 dropped by tierMonotonic)`.
+ *
+ * `paths` lists every leaf path this validator reads. The generator only
+ * runs the validator after every listed path is populated in the combo.
+ *
+ * `reasonKey` is an i18n key under `optimize.invariants.<reasonKey>` —
+ * the user-facing copy explaining why a combo was rejected.
+ */
+interface LeafGroupValidator {
+	paths: string[]
+	validate: (_combo: Record<string, PrimitiveValue>) => boolean
+	reasonKey: string
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -138,4 +164,5 @@ export type {
 	EnumLeaf,
 	SweepableLeaf,
 	LeafSelection,
+	LeafGroupValidator,
 }

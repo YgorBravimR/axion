@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
 	HAWKS_LEAVES,
+	HAWKS_VALIDATORS,
 	BUNDLE_PATH,
 	BUNDLE_OWNED_PATHS,
 } from "@/lib/backtest/presets/hawks-leaves"
@@ -154,5 +155,139 @@ describe("HAWKS_LEAVES catalog — Phase A smoke tests", () => {
 		expect(
 			fixedPointsCombos.every((c) => c["stop.initial.pct"] === undefined)
 		).toBe(true)
+	})
+})
+
+describe("HAWKS_VALIDATORS catalog", () => {
+	const findValidator = (reasonKey: string) => {
+		const v = HAWKS_VALIDATORS.find((x) => x.reasonKey === reasonKey)
+		if (!v) {
+			throw new Error(`validator ${reasonKey} not found`)
+		}
+		return v
+	}
+
+	describe("tierMonotonic", () => {
+		const v = findValidator("tierMonotonic")
+		const make = (aaa: number, aa: number, a: number) => ({
+			"entry.config.qualityGates.tierThresholds.AAA": aaa,
+			"entry.config.qualityGates.tierThresholds.AA": aa,
+			"entry.config.qualityGates.tierThresholds.A": a,
+		})
+
+		it("accepts strict descending", () => {
+			expect(v.validate(make(6, 5, 4))).toBe(true)
+		})
+		it("rejects equal AAA == AA", () => {
+			expect(v.validate(make(5, 5, 4))).toBe(false)
+		})
+		it("rejects inverted AA > AAA", () => {
+			expect(v.validate(make(3, 5, 4))).toBe(false)
+		})
+		it("rejects equal AA == A", () => {
+			expect(v.validate(make(6, 4, 4))).toBe(false)
+		})
+	})
+
+	describe("sessionWindow", () => {
+		const v = findValidator("sessionWindow")
+		it("accepts 09:10 < 12:00", () => {
+			expect(
+				v.validate({
+					"entry.config.startTime": 910,
+					"entry.config.endTime": 1200,
+				})
+			).toBe(true)
+		})
+		it("rejects equal start == end", () => {
+			expect(
+				v.validate({
+					"entry.config.startTime": 910,
+					"entry.config.endTime": 910,
+				})
+			).toBe(false)
+		})
+		it("rejects start > end", () => {
+			expect(
+				v.validate({
+					"entry.config.startTime": 1500,
+					"entry.config.endTime": 910,
+				})
+			).toBe(false)
+		})
+	})
+
+	describe("wave1OverRetracement", () => {
+		const v = findValidator("wave1OverRetracement")
+		it("accepts wave1 > retracement", () => {
+			expect(
+				v.validate({
+					"entry.config.wave1MinBricks": 4,
+					"entry.config.retracementMinBricks": 2,
+				})
+			).toBe(true)
+		})
+		it("rejects retracement >= wave1", () => {
+			expect(
+				v.validate({
+					"entry.config.wave1MinBricks": 3,
+					"entry.config.retracementMinBricks": 3,
+				})
+			).toBe(false)
+			expect(
+				v.validate({
+					"entry.config.wave1MinBricks": 2,
+					"entry.config.retracementMinBricks": 5,
+				})
+			).toBe(false)
+		})
+	})
+
+	describe("breakevenBeforeFirstTarget", () => {
+		const v = findValidator("breakevenBeforeFirstTarget")
+		it("inactive when BE disabled — passes vacuously", () => {
+			expect(
+				v.validate({
+					"stop.breakeven.enabled": false,
+					"stop.breakeven.type": "on_pct_risk",
+					"stop.breakeven.triggerPct": 999,
+					"target.levels.0.mode": "r_multiple",
+					"target.levels.0.value": 1,
+				})
+			).toBe(true)
+		})
+		it("inactive when target mode isn't r_multiple — passes vacuously", () => {
+			expect(
+				v.validate({
+					"stop.breakeven.enabled": true,
+					"stop.breakeven.type": "on_pct_risk",
+					"stop.breakeven.triggerPct": 999,
+					"target.levels.0.mode": "fixed_points",
+					"target.levels.0.value": 1,
+				})
+			).toBe(true)
+		})
+		it("accepts BE trigger 100% (=1R) below target 2R", () => {
+			expect(
+				v.validate({
+					"stop.breakeven.enabled": true,
+					"stop.breakeven.type": "on_pct_risk",
+					"stop.breakeven.triggerPct": 100,
+					"target.levels.0.mode": "r_multiple",
+					"target.levels.0.value": 2,
+				})
+			).toBe(true)
+		})
+		it("rejects BE trigger 250% above target 2R", () => {
+			expect(
+				v.validate({
+					"stop.breakeven.enabled": true,
+					"stop.breakeven.type": "on_pct_risk",
+					"stop.breakeven.triggerPct": 250,
+					"target.levels.0.mode": "r_multiple",
+					"target.levels.0.value": 2,
+				})
+			).toBe(false)
+		})
 	})
 })

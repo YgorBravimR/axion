@@ -24,12 +24,38 @@
 
 import {
 	expandRange,
+	type LeafGroupValidator,
 	type LeafSelection,
 	type PrimitiveValue,
 	type SweepableLeaf,
 } from "./sweep-leaf"
 
 type Combination = Record<string, PrimitiveValue>
+
+/**
+ * Apply every validator whose paths are fully populated. Returns `null`
+ * when the combo passes, or the failing validator's `reasonKey` on the
+ * FIRST failure (one-reason-per-combo so the breakdown is unambiguous).
+ *
+ * A validator with paths the combo doesn't carry is treated as inactive
+ * — e.g. tier-monotonicity is dormant when tier thresholds aren't part
+ * of the recipe shape yet.
+ */
+const findFirstViolatedValidator = (
+	combo: Combination,
+	validators: LeafGroupValidator[]
+): string | null => {
+	for (const v of validators) {
+		const allPathsPopulated = v.paths.every((p) => combo[p] !== undefined)
+		if (!allPathsPopulated) {
+			continue
+		}
+		if (!v.validate(combo)) {
+			return v.reasonKey
+		}
+	}
+	return null
+}
 
 /**
  * Resolve the lock value the owner enum forces on `ownedLeaf` when the
@@ -99,7 +125,8 @@ const iterateSelectionValues = (selection: LeafSelection): PrimitiveValue[] => {
 const generateConditionalGrid = (
 	leaves: SweepableLeaf[],
 	selections: Map<string, LeafSelection>,
-	fallbackFixedValues: Map<string, PrimitiveValue>
+	fallbackFixedValues: Map<string, PrimitiveValue>,
+	validators: LeafGroupValidator[] = []
 ): Combination[] => {
 	let combinations: Combination[] = [{}]
 
@@ -149,7 +176,12 @@ const generateConditionalGrid = (
 		combinations = nextCombinations
 	}
 
-	return combinations
+	if (validators.length === 0) {
+		return combinations
+	}
+	return combinations.filter(
+		(c) => findFirstViolatedValidator(c, validators) === null
+	)
 }
 
 /**
@@ -164,10 +196,59 @@ const generateConditionalGrid = (
 const countConditionalGrid = (
 	leaves: SweepableLeaf[],
 	selections: Map<string, LeafSelection>,
-	fallbackFixedValues: Map<string, PrimitiveValue>
+	fallbackFixedValues: Map<string, PrimitiveValue>,
+	validators: LeafGroupValidator[] = []
 ): number => {
-	return generateConditionalGrid(leaves, selections, fallbackFixedValues).length
+	return generateConditionalGrid(
+		leaves,
+		selections,
+		fallbackFixedValues,
+		validators
+	).length
 }
 
-export { generateConditionalGrid, countConditionalGrid }
-export type { Combination }
+/**
+ * Detailed cardinality breakdown for the UI. Separates `raw` (before
+ * validator filtering) from `valid` (after) and reports per-reason drop
+ * counts so the user can see WHY combos are being filtered out.
+ */
+interface GridCountBreakdown {
+	raw: number
+	valid: number
+	droppedByReason: Map<string, number>
+}
+
+const countConditionalGridBreakdown = (
+	leaves: SweepableLeaf[],
+	selections: Map<string, LeafSelection>,
+	fallbackFixedValues: Map<string, PrimitiveValue>,
+	validators: LeafGroupValidator[] = []
+): GridCountBreakdown => {
+	// Always generate without validators first to get the raw count, then
+	// classify each combo. This is exactly N walks instead of 2N — we
+	// reuse the same combination array.
+	const raw = generateConditionalGrid(
+		leaves,
+		selections,
+		fallbackFixedValues,
+		[]
+	)
+	const droppedByReason = new Map<string, number>()
+	let validCount = 0
+	for (const combo of raw) {
+		const reason = findFirstViolatedValidator(combo, validators)
+		if (reason === null) {
+			validCount++
+		} else {
+			droppedByReason.set(reason, (droppedByReason.get(reason) ?? 0) + 1)
+		}
+	}
+	return { raw: raw.length, valid: validCount, droppedByReason }
+}
+
+export {
+	generateConditionalGrid,
+	countConditionalGrid,
+	countConditionalGridBreakdown,
+}
+export type { Combination, GridCountBreakdown }

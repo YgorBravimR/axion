@@ -60,7 +60,10 @@ import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweptPathsProvider } from "./swept-paths-context"
 import { HawksSweepBuilder } from "./hawks-sweep-builder"
 import { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED } from "@/lib/optimize/feature-flags"
-import { HAWKS_LEAVES } from "@/lib/backtest/presets/hawks-leaves"
+import {
+	HAWKS_LEAVES,
+	HAWKS_VALIDATORS,
+} from "@/lib/backtest/presets/hawks-leaves"
 import {
 	generateConditionalGrid,
 	countConditionalGrid,
@@ -481,7 +484,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			? countConditionalGrid(
 					HAWKS_LEAVES,
 					leafSelections!,
-					buildLeafFallback(leafSelections!)
+					buildLeafFallback(leafSelections!),
+					HAWKS_VALIDATORS
 				)
 			: countCombinations(activeRanges, recipe)
 		if (totalCombos > MAX_COMBINATIONS) {
@@ -505,7 +509,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			? generateConditionalGrid(
 					HAWKS_LEAVES,
 					leafSelections!,
-					buildLeafFallback(leafSelections!)
+					buildLeafFallback(leafSelections!),
+					HAWKS_VALIDATORS
 				).map((combo) => recipeFromCombo(recipe, combo))
 			: generateRecipeGrid(recipe, activeRanges)
 		setIsSweeping(true)
@@ -670,7 +675,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			return countConditionalGrid(
 				HAWKS_LEAVES,
 				leafSelections,
-				buildLeafFallback(leafSelections)
+				buildLeafFallback(leafSelections),
+				HAWKS_VALIDATORS
 			)
 		}
 		return activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
@@ -984,8 +990,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								onClick={handleRunSweep}
 								disabled={
 									!hasData ||
-									(!(isInlineHawksMode && leafSelections !== null) &&
-										activeRanges.length === 0)
+									(isInlineHawksMode && leafSelections !== null
+										? totalCombinations === 0
+										: activeRanges.length === 0)
 								}
 								size="lg"
 								className="gap-s-200 w-full"

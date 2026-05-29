@@ -15,7 +15,11 @@
  */
 
 import { getQualityPresetBundle } from "./hawks-quality-presets"
-import type { PrimitiveValue, SweepableLeaf } from "@/lib/optimize/sweep-leaf"
+import type {
+	LeafGroupValidator,
+	PrimitiveValue,
+	SweepableLeaf,
+} from "@/lib/optimize/sweep-leaf"
 import type { QualityGatesConfig } from "@/types/backtest"
 
 // ── Bundle owner resolver ────────────────────────────────────────────
@@ -459,4 +463,87 @@ const HAWKS_LEAVES: SweepableLeaf[] = [
 	},
 ]
 
-export { HAWKS_LEAVES, BUNDLE_PATH, BUNDLE_OWNED_PATHS }
+// ── Cross-leaf invariants ────────────────────────────────────────────
+
+/**
+ * Cross-leaf invariants for Hawks. The conditional-grid generator drops
+ * any combination that fails one of these — the cardinality breakdown
+ * reports drops per `reasonKey` so the UI can explain WHY combos are
+ * being filtered out.
+ *
+ * Each validator is a pure function on a `combo: Record<path, value>` map.
+ * Validators with unpopulated paths stay dormant (no false positives when
+ * a path isn't in the current recipe shape).
+ *
+ * `reasonKey` is an i18n key under `optimize.invariants.<reasonKey>`.
+ */
+
+const PATH_TIER_AAA = `${QUALITY_GATES_PREFIX}tierThresholds.AAA`
+const PATH_TIER_AA = `${QUALITY_GATES_PREFIX}tierThresholds.AA`
+const PATH_TIER_A = `${QUALITY_GATES_PREFIX}tierThresholds.A`
+const PATH_START_TIME = "entry.config.startTime"
+const PATH_END_TIME = "entry.config.endTime"
+const PATH_WAVE1_MIN = "entry.config.wave1MinBricks"
+const PATH_RETRACEMENT_MIN = "entry.config.retracementMinBricks"
+const PATH_BE_ENABLED = "stop.breakeven.enabled"
+const PATH_BE_TYPE = "stop.breakeven.type"
+const PATH_BE_TRIGGER_PCT = "stop.breakeven.triggerPct"
+const PATH_TARGET_MODE = "target.levels.0.mode"
+const PATH_TARGET_VALUE = "target.levels.0.value"
+
+const HAWKS_VALIDATORS: LeafGroupValidator[] = [
+	{
+		// Tier thresholds form a strict hierarchy. If a combo lands at
+		// AAA=6, AA cannot exceed 5 and A cannot exceed 4. Equal or
+		// inverted values collapse the tier system into nonsense.
+		paths: [PATH_TIER_AAA, PATH_TIER_AA, PATH_TIER_A],
+		validate: (c) =>
+			Number(c[PATH_TIER_AAA]) > Number(c[PATH_TIER_AA]) &&
+			Number(c[PATH_TIER_AA]) > Number(c[PATH_TIER_A]),
+		reasonKey: "tierMonotonic",
+	},
+	{
+		// Entry window must start before it ends. Encoded as HHMM ints
+		// (e.g. 910 = 09:10), so integer comparison is correct.
+		paths: [PATH_START_TIME, PATH_END_TIME],
+		validate: (c) => Number(c[PATH_START_TIME]) < Number(c[PATH_END_TIME]),
+		reasonKey: "sessionWindow",
+	},
+	{
+		// Retracement is by definition a partial pullback of wave 1. A
+		// retracement longer than the impulse isn't a retracement — the
+		// engine would never fire.
+		paths: [PATH_WAVE1_MIN, PATH_RETRACEMENT_MIN],
+		validate: (c) =>
+			Number(c[PATH_WAVE1_MIN]) > Number(c[PATH_RETRACEMENT_MIN]),
+		reasonKey: "wave1OverRetracement",
+	},
+	{
+		// When breakeven uses `on_pct_risk` AND target is `r_multiple`:
+		// triggerPct (e.g. 125 = 1.25R) must be < first TP's R-multiple,
+		// otherwise TP1 closes the position before BE arms.
+		paths: [
+			PATH_BE_ENABLED,
+			PATH_BE_TYPE,
+			PATH_BE_TRIGGER_PCT,
+			PATH_TARGET_MODE,
+			PATH_TARGET_VALUE,
+		],
+		validate: (c) => {
+			if (c[PATH_BE_ENABLED] !== true) {
+				return true
+			}
+			if (c[PATH_BE_TYPE] !== "on_pct_risk") {
+				return true
+			}
+			if (c[PATH_TARGET_MODE] !== "r_multiple") {
+				return true
+			}
+			const triggerR = Number(c[PATH_BE_TRIGGER_PCT]) / 100
+			return triggerR < Number(c[PATH_TARGET_VALUE])
+		},
+		reasonKey: "breakevenBeforeFirstTarget",
+	},
+]
+
+export { HAWKS_LEAVES, HAWKS_VALIDATORS, BUNDLE_PATH, BUNDLE_OWNED_PATHS }

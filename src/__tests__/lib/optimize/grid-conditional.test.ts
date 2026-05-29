@@ -2,10 +2,12 @@ import { describe, it, expect } from "vitest"
 import {
 	generateConditionalGrid,
 	countConditionalGrid,
+	countConditionalGridBreakdown,
 } from "@/lib/optimize/grid-conditional"
 import {
 	expandRange,
 	countSelectionValues,
+	type LeafGroupValidator,
 	type LeafSelection,
 	type PrimitiveValue,
 	type SweepableLeaf,
@@ -352,5 +354,199 @@ describe("countConditionalGrid", () => {
 		const combos = generateConditionalGrid(leaves, selections, new Map())
 		expect(count).toBe(combos.length)
 		expect(count).toBe(10)
+	})
+})
+
+// ── validators ──────────────────────────────────────────────────────
+
+describe("generateConditionalGrid with validators", () => {
+	const tierLeaves: SweepableLeaf[] = [
+		{
+			kind: "number",
+			path: "aaa",
+			labelKey: "aaa",
+			defaultMin: 3,
+			defaultMax: 6,
+			defaultStep: 1,
+		},
+		{
+			kind: "number",
+			path: "aa",
+			labelKey: "aa",
+			defaultMin: 2,
+			defaultMax: 5,
+			defaultStep: 1,
+		},
+		{
+			kind: "number",
+			path: "a",
+			labelKey: "a",
+			defaultMin: 1,
+			defaultMax: 4,
+			defaultStep: 1,
+		},
+	]
+
+	const tierMonotonic: LeafGroupValidator = {
+		paths: ["aaa", "aa", "a"],
+		validate: (c) => Number(c.aaa) > Number(c.aa) && Number(c.aa) > Number(c.a),
+		reasonKey: "tierMonotonic",
+	}
+
+	it("filters out combos that violate the tier monotonic invariant", () => {
+		const selections = new Map<string, LeafSelection>([
+			["aaa", { kind: "sweep_range", min: 3, max: 6, step: 1 }],
+			["aa", { kind: "sweep_range", min: 2, max: 5, step: 1 }],
+			["a", { kind: "sweep_range", min: 1, max: 4, step: 1 }],
+		])
+		// Raw: 4 × 4 × 4 = 64 combinations.
+		const raw = generateConditionalGrid(tierLeaves, selections, new Map(), [])
+		expect(raw).toHaveLength(64)
+
+		const valid = generateConditionalGrid(tierLeaves, selections, new Map(), [
+			tierMonotonic,
+		])
+		// Every retained combo must satisfy aaa > aa > a.
+		expect(valid.every((c) => Number(c.aaa) > Number(c.aa))).toBe(true)
+		expect(valid.every((c) => Number(c.aa) > Number(c.a))).toBe(true)
+		expect(valid.length).toBeLessThan(raw.length)
+		// Strict ordering with aaa∈[3..6], aa∈[2..5], a∈[1..4]:
+		//   aaa=3 → 1, aaa=4 → 3, aaa=5 → 6, aaa=6 → 10. Total 20.
+		expect(valid).toHaveLength(20)
+	})
+
+	it("validator with unpopulated paths is dormant — no false positives", () => {
+		const validatorReadingUnknownPath: LeafGroupValidator = {
+			paths: ["does.not.exist"],
+			validate: () => false, // would reject if it fired
+			reasonKey: "neverFires",
+		}
+		const leaves: SweepableLeaf[] = [{ kind: "bool", path: "x", labelKey: "x" }]
+		const selections = new Map<string, LeafSelection>([
+			["x", { kind: "sweep_set", values: [true, false] }],
+		])
+		const combos = generateConditionalGrid(leaves, selections, new Map(), [
+			validatorReadingUnknownPath,
+		])
+		// Neither combo carries `does.not.exist`, so the validator stays dormant.
+		expect(combos).toHaveLength(2)
+	})
+
+	it("no validators array = same behavior as the legacy generator", () => {
+		const selections = new Map<string, LeafSelection>([
+			["aaa", { kind: "fixed", value: 5 }],
+			["aa", { kind: "fixed", value: 5 }],
+			["a", { kind: "fixed", value: 5 }],
+		])
+		const withoutValidators = generateConditionalGrid(
+			tierLeaves,
+			selections,
+			new Map()
+		)
+		const withEmptyArray = generateConditionalGrid(
+			tierLeaves,
+			selections,
+			new Map(),
+			[]
+		)
+		expect(withEmptyArray).toStrictEqual(withoutValidators)
+	})
+
+	it("fix-mode invalid combo is filtered (valid count drops to 0)", () => {
+		// Fix all tiers to equal values — violates strict monotonicity.
+		const selections = new Map<string, LeafSelection>([
+			["aaa", { kind: "fixed", value: 5 }],
+			["aa", { kind: "fixed", value: 5 }],
+			["a", { kind: "fixed", value: 5 }],
+		])
+		const combos = generateConditionalGrid(tierLeaves, selections, new Map(), [
+			tierMonotonic,
+		])
+		expect(combos).toHaveLength(0)
+	})
+})
+
+describe("countConditionalGridBreakdown", () => {
+	it("reports raw, valid, and per-reason drop counts", () => {
+		const leaves: SweepableLeaf[] = [
+			{
+				kind: "number",
+				path: "aaa",
+				labelKey: "aaa",
+				defaultMin: 3,
+				defaultMax: 6,
+				defaultStep: 1,
+			},
+			{
+				kind: "number",
+				path: "aa",
+				labelKey: "aa",
+				defaultMin: 2,
+				defaultMax: 5,
+				defaultStep: 1,
+			},
+		]
+		const selections = new Map<string, LeafSelection>([
+			["aaa", { kind: "sweep_range", min: 3, max: 6, step: 1 }],
+			["aa", { kind: "sweep_range", min: 2, max: 5, step: 1 }],
+		])
+		const validator: LeafGroupValidator = {
+			paths: ["aaa", "aa"],
+			validate: (c) => Number(c.aaa) > Number(c.aa),
+			reasonKey: "aaaGtAa",
+		}
+		const breakdown = countConditionalGridBreakdown(
+			leaves,
+			selections,
+			new Map(),
+			[validator]
+		)
+		// 4 × 4 = 16 raw; valid pairs where aaa > aa: (3,2)(4,2)(4,3)(5,2)(5,3)(5,4)(6,2)(6,3)(6,4)(6,5) = 10
+		expect(breakdown.raw).toBe(16)
+		expect(breakdown.valid).toBe(10)
+		expect(breakdown.droppedByReason.get("aaaGtAa")).toBe(6)
+	})
+
+	it("empty validators array — breakdown reports raw == valid, no drops", () => {
+		const leaves: SweepableLeaf[] = [{ kind: "bool", path: "x", labelKey: "x" }]
+		const selections = new Map<string, LeafSelection>([
+			["x", { kind: "sweep_set", values: [true, false] }],
+		])
+		const breakdown = countConditionalGridBreakdown(
+			leaves,
+			selections,
+			new Map(),
+			[]
+		)
+		expect(breakdown.raw).toBe(2)
+		expect(breakdown.valid).toBe(2)
+		expect(breakdown.droppedByReason.size).toBe(0)
+	})
+
+	it("first-violation-only: a combo failing two validators is counted under the first", () => {
+		const leaves: SweepableLeaf[] = [{ kind: "bool", path: "x", labelKey: "x" }]
+		const selections = new Map<string, LeafSelection>([
+			["x", { kind: "fixed", value: true }],
+		])
+		const v1: LeafGroupValidator = {
+			paths: ["x"],
+			validate: () => false,
+			reasonKey: "first",
+		}
+		const v2: LeafGroupValidator = {
+			paths: ["x"],
+			validate: () => false,
+			reasonKey: "second",
+		}
+		const breakdown = countConditionalGridBreakdown(
+			leaves,
+			selections,
+			new Map(),
+			[v1, v2]
+		)
+		expect(breakdown.raw).toBe(1)
+		expect(breakdown.valid).toBe(0)
+		expect(breakdown.droppedByReason.get("first")).toBe(1)
+		expect(breakdown.droppedByReason.get("second")).toBeUndefined()
 	})
 })

@@ -1,8 +1,11 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import { HAWKS_LEAVES } from "@/lib/backtest/presets/hawks-leaves"
-import { countConditionalGrid } from "@/lib/optimize/grid-conditional"
+import {
+	HAWKS_LEAVES,
+	HAWKS_VALIDATORS,
+} from "@/lib/backtest/presets/hawks-leaves"
+import { countConditionalGridBreakdown } from "@/lib/optimize/grid-conditional"
 import type {
 	LeafSelection,
 	PrimitiveValue,
@@ -22,6 +25,15 @@ interface HawksSweepBuilderProps {
 	selections: Map<string, LeafSelection>
 	/** Emitted when the user changes any leaf's selection. */
 	onSelectionsChange: (_next: Map<string, LeafSelection>) => void
+}
+
+// Human-readable copy per validator reasonKey. Stays inline until the
+// Phase B i18n pass lands keys under `optimize.invariants.<reasonKey>`.
+const INVARIANT_LABELS: Record<string, string> = {
+	tierMonotonic: "Tier order",
+	sessionWindow: "Session window",
+	wave1OverRetracement: "Wave-1 vs retracement",
+	breakevenBeforeFirstTarget: "BE before TP1",
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -156,17 +168,22 @@ const HawksSweepBuilder = ({
 	selections,
 	onSelectionsChange,
 }: HawksSweepBuilderProps) => {
-	// Live cardinality count — recomputed when selections change.
-	const totalCombinations = useMemo(() => {
-		// Build a fallback Map from the current selections (every leaf already
-		// has a fixed-mode default in `selections`, so the second arg is empty).
+	// Live cardinality breakdown — recomputed when selections change.
+	// Reports `raw` (before validator filtering), `valid` (after), and
+	// per-validator drop counts so the user can see WHY combos are filtered.
+	const cardinality = useMemo(() => {
 		const fallback = new Map<string, PrimitiveValue>()
 		for (const [path, sel] of selections) {
 			if (sel.kind === "fixed") {
 				fallback.set(path, sel.value)
 			}
 		}
-		return countConditionalGrid(HAWKS_LEAVES, selections, fallback)
+		return countConditionalGridBreakdown(
+			HAWKS_LEAVES,
+			selections,
+			fallback,
+			HAWKS_VALIDATORS
+		)
 	}, [selections])
 
 	const sweepAxisCount = useMemo(() => {
@@ -226,14 +243,38 @@ const HawksSweepBuilder = ({
 					</div>
 					<div className="text-right">
 						<p className="text-tiny text-txt-300">Combinations</p>
-						<p className="text-h2 text-txt-100 font-semibold tabular-nums">
-							{totalCombinations.toLocaleString()}
+						<p
+							className={`text-h2 font-semibold tabular-nums ${cardinality.valid === 0 ? "text-fb-error" : "text-txt-100"}`}
+						>
+							{cardinality.valid.toLocaleString()}
 						</p>
+						{cardinality.raw !== cardinality.valid && (
+							<p className="text-tiny text-txt-300">
+								{cardinality.raw.toLocaleString()} raw —{" "}
+								{(cardinality.raw - cardinality.valid).toLocaleString()} dropped
+							</p>
+						)}
 						<p className="text-tiny text-txt-300">
 							{sweepAxisCount} sweep {sweepAxisCount === 1 ? "axis" : "axes"}
 						</p>
 					</div>
 				</div>
+				{cardinality.droppedByReason.size > 0 && (
+					<div className="gap-s-200 mt-s-300 flex flex-wrap">
+						{Array.from(cardinality.droppedByReason.entries()).map(
+							([reason, count]) => (
+								<span
+									key={reason}
+									className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded-full"
+									title={`${count.toLocaleString()} combos dropped`}
+								>
+									{INVARIANT_LABELS[reason] ?? reason}: −
+									{count.toLocaleString()}
+								</span>
+							)
+						)}
+					</div>
+				)}
 			</div>
 
 			{/* Sections */}
