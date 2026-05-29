@@ -26,12 +26,14 @@ import {
 	RotateCcw,
 	BarChart3,
 	Table2,
+	Scatter as ScatterIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchBacktestData } from "@/app/actions/backtest"
-import { runBacktest } from "@/lib/backtest/engine"
+import { runBacktest, getEngineVersionForRecipe } from "@/lib/backtest/engine"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
+import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
 import {
 	generateRecipeGrid,
 	countCombinations,
@@ -49,6 +51,7 @@ import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
+import { ParetoScatter } from "./pareto-scatter"
 import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
 import { loadRuns, saveRuns, clearRuns } from "@/lib/optimize/storage"
@@ -63,7 +66,7 @@ import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
 
-const ALL_PRESETS = [...orbPresets, ...dezkPresets]
+const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
 
 interface OptimizeContentProps {
 	dataSources: DataSourceInfo[]
@@ -95,6 +98,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Base config disclosure ────────────────────────────────────
 	const [baseConfigOpen, setBaseConfigOpen] = useState(false)
 
+	// ── Walk-forward config ────────────────────────────────────────
+	const [walkForwardConfig, setWalkForwardConfig] = useState<{
+		enabled: boolean
+		inSamplePct: number
+	} | null>(null)
+
 	// ── Sweep state ───────────────────────────────────────────────
 	const [activeRanges, setActiveRanges] = useState<ParameterRange[]>([])
 	const [isSweeping, setIsSweeping] = useState(false)
@@ -106,6 +115,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Runs state ────────────────────────────────────────────────
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
+	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
 	const runCounterRef = useRef(0)
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined
@@ -341,6 +351,14 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			assetConfigRef.current,
 			recipes,
 			{
+				dateFrom,
+				dateTo,
+				engineVersion: getEngineVersionForRecipe(recipe) ?? "unknown",
+				walkForward: walkForwardConfig?.enabled
+					? { inSamplePct: walkForwardConfig.inSamplePct / 100 }
+					: undefined,
+			},
+			{
 				onProgress: (run, index, total) => {
 					sweepRuns.push(run)
 					setSweepProgress({ current: index + 1, total })
@@ -471,7 +489,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Render ────────────────────────────────────────────────────
 
 	return (
-		<div className="space-y-m-500">
+		<div className="p-m-400 sm:p-m-500 lg:p-m-600 space-y-m-500 container mx-auto max-w-screen-2xl">
 			{/* Header */}
 			<div>
 				<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
@@ -651,6 +669,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							recipe={recipe}
 							activeRanges={activeRanges}
 							onRangesChange={setActiveRanges}
+							walkForwardConfig={walkForwardConfig}
+							onWalkForwardChange={setWalkForwardConfig}
 						/>
 
 						{/* Collapsible base configuration for non-sweepable params */}
@@ -807,6 +827,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											<Table2 className="h-4 w-4" aria-hidden="true" />
 											{t("resultsTab.table")}
 										</TabsTrigger>
+										<TabsTrigger value="pareto" className="gap-s-200">
+											<ScatterIcon className="h-4 w-4" aria-hidden="true" />
+											{t("pareto.tabLabel")}
+										</TabsTrigger>
 									</TabsList>
 
 									<Button
@@ -840,6 +864,14 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									)}
 								</TabsContent>
 
+								{/* Pareto tab: PF × Drawdown frontier */}
+								<TabsContent value="pareto" className="mt-m-400">
+									<ParetoScatter
+										runs={runs}
+										onPointClick={handleToggleExpand}
+									/>
+								</TabsContent>
+
 								{/* Table tab: comparison table */}
 								<TabsContent value="table" className="mt-m-400">
 									<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
@@ -858,6 +890,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											onToggleExpand={handleToggleExpand}
 											onDelete={handleDeleteRun}
 											onUpdateLabel={handleUpdateLabel}
+											robustFilterEnabled={robustFilterEnabled}
+											onRobustFilterChange={setRobustFilterEnabled}
 										/>
 									</div>
 								</TabsContent>

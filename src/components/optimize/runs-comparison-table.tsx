@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { formatCentsAsCurrency } from "@/lib/money"
 import { Pin, PinOff, ChevronRight, Trash2, AlertTriangle } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -17,6 +18,8 @@ interface RunsComparisonTableProps {
 	onToggleExpand: (_runId: string) => void
 	onDelete: (_runId: string) => void
 	onUpdateLabel: (_runId: string, _label: string) => void
+	robustFilterEnabled?: boolean
+	onRobustFilterChange?: (_enabled: boolean) => void
 }
 
 const MIN_TRADES_THRESHOLD = 30
@@ -28,8 +31,19 @@ const RunsComparisonTable = ({
 	onToggleExpand,
 	onDelete,
 	onUpdateLabel: _onUpdateLabel,
+	robustFilterEnabled = false,
+	onRobustFilterChange,
 }: RunsComparisonTableProps) => {
 	const t = useTranslations("optimize")
+
+	// Filter runs based on robustness setting
+	const filteredRuns = useMemo(() => {
+		if (!robustFilterEnabled) {
+			return runs
+		}
+		// Keep runs with OOS data + robust flag true, OR runs without OOS data (legacy)
+		return runs.filter((r) => r.oosRobust === true || r.summaryIS === undefined)
+	}, [runs, robustFilterEnabled])
 
 	const expandedRunIdRef = useRef(expandedRunId)
 	expandedRunIdRef.current = expandedRunId
@@ -143,6 +157,55 @@ const RunsComparisonTable = ({
 				),
 			},
 			{
+				accessorFn: (row) => row.summaryIS?.profitFactor,
+				id: "isPF",
+				header: t("walkForward.isPF"),
+				cell: ({ getValue }) => {
+					const isPF = getValue<number | undefined>()
+					if (isPF === undefined) {
+						return <span className="text-tiny text-txt-300">-</span>
+					}
+					return (
+						<span className="text-small text-txt-100 tabular-nums">
+							{isPF.toFixed(2)}
+						</span>
+					)
+				},
+			},
+			{
+				accessorFn: (row) => row.summaryOOS?.profitFactor,
+				id: "oosPF",
+				header: t("walkForward.oosPF"),
+				cell: ({ getValue, row }) => {
+					const oosPF = getValue<number | undefined>()
+					if (oosPF === undefined) {
+						return <span className="text-tiny text-txt-300">-</span>
+					}
+					const isRobust = row.original.oosRobust
+					const color = isRobust ? "text-trade-buy" : "text-warning"
+					return (
+						<div className="gap-s-100 flex items-center">
+							<span className={`text-small tabular-nums ${color}`}>
+								{oosPF.toFixed(2)}
+							</span>
+							{isRobust !== undefined && (
+								<Badge
+									id={`robust-${row.original.id}`}
+									variant="outline"
+									className={`text-micro px-s-100 py-0 ${
+										isRobust
+											? "border-trade-buy text-trade-buy"
+											: "border-warning text-warning"
+									}`}
+								>
+									{isRobust ? "✓" : "✗"}
+								</Badge>
+							)}
+						</div>
+					)
+				},
+			},
+			{
 				accessorFn: (row) => row.summary.totalPnlCents,
 				id: "totalPnl",
 				header: t("totalPnl"),
@@ -241,7 +304,34 @@ const RunsComparisonTable = ({
 		[bestRunId, onTogglePin, onToggleExpand, onDelete, t]
 	)
 
-	return <DataTable columns={columns} data={runs} pageSize={20} striped />
+	// Check if any runs have walk-forward data
+	const hasWalkForwardData = useMemo(
+		() => runs.some((r) => r.summaryIS !== undefined),
+		[runs]
+	)
+
+	return (
+		<div className="space-y-s-300">
+			{/* Robust filter toggle (only show if there's walk-forward data) */}
+			{hasWalkForwardData && (
+				<div className="gap-s-200 flex items-center">
+					<label className="gap-s-200 flex cursor-pointer items-center">
+						<Checkbox
+							id="robust-filter"
+							checked={robustFilterEnabled}
+							onCheckedChange={(checked) => {
+								onRobustFilterChange?.(checked === true)
+							}}
+						/>
+						<span className="text-small text-txt-200">
+							{t("walkForward.robustFilter")}
+						</span>
+					</label>
+				</div>
+			)}
+			<DataTable columns={columns} data={filteredRuns} pageSize={20} striped />
+		</div>
+	)
 }
 
 export { RunsComparisonTable }

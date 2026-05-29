@@ -1,4 +1,5 @@
 import type { StrategyRecipe } from "@/types/backtest"
+import type { SweepableParam } from "@/lib/optimize/sweepable-params"
 
 /**
  * Hawks triple-screen v0.3 preset.
@@ -140,4 +141,43 @@ const hawksPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
 	hawksUserCatalog,
 ]
 
-export { hawksPresets, hawksV0, hawksUserCatalog }
+// ── Hawks sweepable params (OPTIMIZE Phase 3b) ─────────────────────
+// Tier-1: high-leverage knobs we sweep first.
+// Tier-2: structural toggles (gate level, retracement) — sweep next.
+// Tier-3 (deferred): per-day regime, Fib bands — until those code paths exist.
+const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
+	// BE trigger as % of risk (0–500 since the Zod cap was bumped in PR #9).
+	{
+		kind: "numeric",
+		path: "stop.breakeven.triggerPct",
+		labelKey: "hawksBreakevenTrigger",
+		defaultMin: 50,
+		defaultMax: 200,
+		defaultStep: 25,
+		condition: (r) => r.stop.breakeven.type === "on_pct_risk",
+	},
+	// R-multiple target. Engine math is bricks-per-R; the value here is an R count.
+	{
+		kind: "numeric",
+		path: "target.levels.0.value",
+		labelKey: "hawksTargetR",
+		defaultMin: 2,
+		defaultMax: 4,
+		defaultStep: 0.5,
+		condition: (r) =>
+			r.target.type === "fixed_levels" &&
+			r.target.levels[0]?.mode === "r_multiple",
+	},
+	// Slippage ticks — generic but useful for stress-testing Hawks specifically
+	// because Renko bricks already absorb some intra-brick noise.
+	{
+		kind: "numeric",
+		path: "slippageTicks",
+		labelKey: "slippage",
+		defaultMin: 0,
+		defaultMax: 3,
+		defaultStep: 1,
+	},
+]
+
+export { hawksPresets, hawksV0, hawksUserCatalog, HAWKS_SWEEPABLE_PARAMS }

@@ -5196,6 +5196,8 @@
 			"dezkWmaFast": "WMA Rápida",
 			"dezkTrailingWma": "WMA Trailing",
 			"trailingDistance": "Distância Trailing",
+			"hawksBreakevenTrigger": "Gatilho BE (% do risco)",
+			"hawksTargetR": "Alvo (múltiplo de R)",
 			"stopType": {
 				"pctRange": "% Range",
 				"fullRange": "Range Completo",
@@ -5221,6 +5223,39 @@
 			"unitPts": "pts",
 			"sizingLots": "{lots} lotes",
 			"sizingRisk": "R${amount} de risco"
+		},
+		"provenance": {
+			"title": "Procedência",
+			"legacy": "Execução antiga, anterior ao rastreio de metadados. Rodar novamente esta combinação gera um carimbo fresco.",
+			"sweepId": "Varredura",
+			"dataset": "Dataset",
+			"candles": "Candles",
+			"dateRange": "Período",
+			"engine": "Motor",
+			"recipe": "Receita"
+		},
+		"walkForward": {
+			"sectionTitle": "Walk-forward (in-sample / out-of-sample)",
+			"hint": "Otimize nos primeiros N% do período e relate no restante mantido fora da amostra. Uma combinação boa in-sample e ruim out-of-sample está superajustada.",
+			"splitLabel": "Divisão in-sample",
+			"splitValue": "{pct}% in-sample / {oos}% out-of-sample",
+			"enableLabel": "Ativar walk-forward",
+			"isPF": "PF IS",
+			"oosPF": "PF OOS",
+			"robust": "Robusta",
+			"notRobust": "Superajuste?",
+			"robustFilter": "Mostrar apenas combinações robustas",
+			"robustnessRule": "Robusta quando PF OOS ≥ 70% do PF IS"
+		},
+		"pareto": {
+			"tabLabel": "Pareto",
+			"title": "Fronteira PF × Drawdown",
+			"subtitle": "Cada ponto é uma combinação. A fronteira de Pareto (destacada) marca combinações que nenhuma outra domina estritamente — em um ponto da fronteira não dá para melhorar PF e drawdown ao mesmo tempo.",
+			"axisX": "Drawdown máximo (R$)",
+			"axisY": "Fator de lucro",
+			"frontierBadge": "Fronteira",
+			"robustBadge": "Robusta",
+			"emptyState": "Rode uma varredura com pelo menos 10 combinações para ver a fronteira."
 		},
 		"currentValueSuffix": "(atual)"
 	},

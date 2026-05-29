@@ -360,10 +360,23 @@ const runBacktest = (
 		equityCurve: buildEquityCurve(trades),
 		summary: computeMetrics(trades, sortedDayKeys.length),
 		dayBreakdown: dayBreakdowns,
-		engineVersion:
-			recipe.entry.type === "hawks_triple_screen" ? "hawks-v0.6" : undefined,
+		engineVersion: getEngineVersionForRecipe(recipe),
 	}
 }
+
+const getEngineVersionForRecipe = (
+	recipe: StrategyRecipe
+): string | undefined => {
+	if (recipe.entry.type === "hawks_triple_screen") {
+		return "hawks-v0.6"
+	}
+	if (recipe.entry.type === "user_catalog") {
+		return "user-catalog-v1"
+	}
+	return undefined
+}
+
+export { getEngineVersionForRecipe }
 
 // ═══════════════════════════════════════════════════════════════════
 // Helpers

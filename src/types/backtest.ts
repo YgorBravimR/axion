@@ -592,6 +592,18 @@ interface BacktestResult {
 // Optimization — compare multiple runs
 // ═══════════════════════════════════════════════════════════════════
 
+interface OptimizationRunProvenance {
+	sweepId: string
+	datasetHash: string
+	candleCount: number
+	dateRangeHash: string
+	dateFrom: string
+	dateTo: string
+	engineVersion: string
+	recipeHash: string
+	schemaVersion: number
+}
+
 interface OptimizationRun {
 	id: string
 	label: string
@@ -602,6 +614,16 @@ interface OptimizationRun {
 	dayBreakdown: DayBreakdown[]
 	pinned: boolean
 	createdAt: string
+	// Phase 1b — provenance. Optional for back-compat with legacy localStorage entries.
+	provenance?: OptimizationRunProvenance
+	// Phase 1a — walk-forward / OOS split. Optional until Phase 1a ships and the user
+	// enables the split in the sweep config. When present, summary still reflects
+	// the in-sample result (the optimization target); summaryOOS is the held-out report.
+	summaryIS?: BacktestSummary
+	summaryOOS?: BacktestSummary
+	equityCurveIS?: EquityCurvePoint[]
+	equityCurveOOS?: EquityCurvePoint[]
+	oosRobust?: boolean
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -682,4 +704,5 @@ export type {
 	BacktestResult,
 	// Optimization
 	OptimizationRun,
+	OptimizationRunProvenance,
 }

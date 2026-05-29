@@ -5,6 +5,11 @@ import type {
 	OptimizationRun,
 } from "@/types/backtest"
 import type { WorkerOutMessage } from "./backtest-worker"
+import {
+	STORAGE_SCHEMA_VERSION,
+	buildSweepProvenance,
+	hashRecipeConfig,
+} from "./provenance"
 
 interface SweepCallbacks {
 	onProgress: (_run: OptimizationRun, _index: number, _total: number) => void
@@ -16,20 +21,27 @@ interface SweepHandle {
 	cancel: () => void
 }
 
-/**
- * Run a batch of backtest recipes in a Web Worker.
- * Returns a handle with a cancel() method to abort mid-sweep.
- *
- * Candles are sent once to the worker via structured clone.
- * Results stream back one-by-one as ProgressMessages.
- */
+interface SweepContext {
+	dateFrom: string
+	dateTo: string
+	engineVersion: string
+	walkForward?: { inSamplePct: number }
+}
+
 const runSweep = (
 	candles: CandleRow[],
 	assetConfig: AssetConfig,
 	recipes: StrategyRecipe[],
+	context: SweepContext,
 	callbacks: SweepCallbacks
 ): SweepHandle => {
 	const worker = new Worker(new URL("./backtest-worker.ts", import.meta.url))
+	const provenance = buildSweepProvenance(
+		candles,
+		context.dateFrom,
+		context.dateTo,
+		context.engineVersion
+	)
 
 	let runCounter = 0
 
@@ -44,10 +56,26 @@ const runSweep = (
 				recipe: msg.recipe,
 				summary: msg.summary,
 				equityCurve: msg.equityCurve,
-				trades: [], // lightweight — re-computed on expand
+				trades: [],
 				dayBreakdown: [],
 				pinned: false,
 				createdAt: new Date().toISOString(),
+				provenance: {
+					sweepId: provenance.sweepId,
+					datasetHash: provenance.datasetHash,
+					candleCount: provenance.candleCount,
+					dateRangeHash: provenance.dateRangeHash,
+					dateFrom: provenance.dateFrom,
+					dateTo: provenance.dateTo,
+					engineVersion: provenance.engineVersion,
+					recipeHash: hashRecipeConfig(msg.recipe),
+					schemaVersion: STORAGE_SCHEMA_VERSION,
+				},
+				summaryIS: msg.summaryIS,
+				summaryOOS: msg.summaryOOS,
+				equityCurveIS: msg.equityCurveIS,
+				equityCurveOOS: msg.equityCurveOOS,
+				oosRobust: msg.oosRobust,
 			}
 			callbacks.onProgress(run, msg.index, msg.total)
 		} else if (msg.type === "complete") {
@@ -64,12 +92,12 @@ const runSweep = (
 		callbacks.onError(error.message || "Worker crashed")
 	}
 
-	// Send candles + all recipes to the worker
 	worker.postMessage({
 		type: "start",
 		candles,
 		assetConfig,
 		recipes,
+		walkForward: context.walkForward,
 	})
 
 	return {
@@ -80,4 +108,4 @@ const runSweep = (
 }
 
 export { runSweep }
-export type { SweepCallbacks, SweepHandle }
+export type { SweepCallbacks, SweepHandle, SweepContext }

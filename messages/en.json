@@ -5196,6 +5196,8 @@
 			"dezkWmaFast": "WMA Fast",
 			"dezkTrailingWma": "Trailing WMA",
 			"trailingDistance": "Trailing Distance",
+			"hawksBreakevenTrigger": "BE Trigger (% of risk)",
+			"hawksTargetR": "Target (R-multiple)",
 			"stopType": {
 				"pctRange": "% Range",
 				"fullRange": "Full Range",
@@ -5221,6 +5223,39 @@
 			"unitPts": "pts",
 			"sizingLots": "{lots} lots",
 			"sizingRisk": "R${amount} risk"
+		},
+		"provenance": {
+			"title": "Provenance",
+			"legacy": "Legacy run from before run metadata was tracked. Re-running this combo will produce a fresh provenance stamp.",
+			"sweepId": "Sweep",
+			"dataset": "Dataset",
+			"candles": "Candles",
+			"dateRange": "Range",
+			"engine": "Engine",
+			"recipe": "Recipe"
+		},
+		"walkForward": {
+			"sectionTitle": "Walk-forward (in-sample / out-of-sample)",
+			"hint": "Optimize on the first N% of the date range; report on the remaining held-out tail. A combo that performs well in-sample but poorly out-of-sample is overfit.",
+			"splitLabel": "In-sample split",
+			"splitValue": "{pct}% in-sample / {oos}% out-of-sample",
+			"enableLabel": "Enable walk-forward",
+			"isPF": "IS PF",
+			"oosPF": "OOS PF",
+			"robust": "Robust",
+			"notRobust": "Overfit?",
+			"robustFilter": "Show only robust combos",
+			"robustnessRule": "Robust when OOS PF ≥ 70% of IS PF"
+		},
+		"pareto": {
+			"tabLabel": "Pareto",
+			"title": "PF × Drawdown frontier",
+			"subtitle": "Each dot is one combo. The Pareto frontier (highlighted) marks the combos no other combo strictly dominates — you cannot improve both PF and drawdown at the same time on a frontier point.",
+			"axisX": "Max drawdown (R$)",
+			"axisY": "Profit factor",
+			"frontierBadge": "Frontier",
+			"robustBadge": "Robust",
+			"emptyState": "Run a sweep with at least 10 combos to see the frontier."
 		},
 		"currentValueSuffix": "(current)"
 	},

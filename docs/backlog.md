@@ -43,33 +43,95 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### Hawks engine: fine-tune for better backtest outcomes (parameter sweep + walk-forward)
+### OPTIMIZE Phase 1b — Run metadata + provenance stamping
 
 - **Priority**: P1
-- **Effort**: L (multi-session)
-- **Source**: 2026-05-29 — Ygor request after shipping the user-catalog mode + quality UI (PR #9). With the audit oracle now in place across 20 catalogued days, the next leverage point is _trading-outcome quality_, not just reproduction fidelity.
-- **What + Why**: The user-catalog mode validates that engine _outcomes_ (BE/ST/GA/EOD) match the catalog on the trades the engine fires. But raw engine output across the 20-day catalog still has weak headline metrics — profit factor, win rate, max drawdown, and Risk:Return are all sub-optimal because we've been tuning the _entry detector_ against a fixed parameter set, not the _whole engine_ against outcome metrics. This entry is the optimization counterpart to the reproduction-focused entry below: instead of "match more catalog trades", the goal is "produce a better equity curve from the trades the engine does fire."
+- **Effort**: S
+- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 1b. Brainstorm session post-PR #9.
+- **What + Why**: Every `OptimizationRun` should carry: dataset hash (candle subset), candle count, date range hash, engine version, recipe-config hash, seed, sweep-id. Today `storage.ts` (42 lines) writes runs to localStorage with no provenance — re-running later doesn't reproduce, and there's no way to tell which dataset/engine a run came from. Land this **before** Phase 1a so walk-forward results carry provenance from day one. Cheap now, painful to retrofit.
 - **Fix shape**:
-  1. **Parameter-sweep harness.** New `scripts/sweep-hawks.ts` that runs the engine across a grid of params and emits a CSV of `(param-combo, totalTrades, winRate, profitFactor, avgR, maxDrawdown, sharpe, riskReturn)`. Parameters worth sweeping:
+  1. Extend `OptimizationRun` (in `src/types/backtest.ts`) with the metadata fields above. All optional for back-compat.
+  2. Bump `schemaVersion` in storage. Legacy runs (no version field) are read-only and flagged in UI.
+  3. Stamp metadata in `sweep-runner.ts` `onmessage` handler (`runs become richer here`).
+  4. Surface metadata in `run-detail-panel.tsx` — a "Provenance" collapsible section.
+- **Out of scope**: Migration UI for legacy runs (just flag them). DB-backed storage (Phase 4).
+- **Done when**: Every new run has all 7 metadata fields. Legacy runs render with a "legacy, no provenance" tag. Re-running the same recipe on the same candle subset produces identical hashes.
+- **Date filed**: 2026-05-29.
+
+### OPTIMIZE Phase 1a — Walk-forward / out-of-sample split
+
+- **Priority**: P1
+- **Effort**: M
+- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 1a. The single feature that turns OPTIMIZE from a curiosity into a trustworthy tool.
+- **What + Why**: Today OPTIMIZE runs grid search and reports best-on-known-data. No held-out validation = users get overfit recommendations. Add a date-split slider (default 70/30) that runs each combo twice in the worker: in-sample to optimize, out-of-sample to report. Every result carries both metric sets and a derived `oosRobust` flag (default rule: "OOS PF ≥ 0.7 × IS PF"). Comparison table gets OOS columns + a "robust only" filter.
+- **Fix shape**:
+  1. Sweep config panel (`src/components/optimize/sweep-config-panel.tsx`): add a `<Slider>` for the IS/OOS split, default 70/30.
+  2. `OptimizationRun` (in `src/types/backtest.ts`): extend with `summaryIS`, `summaryOOS`, `equityCurveIS`, `equityCurveOOS`, derived `oosRobust: boolean`.
+  3. `backtest-worker.ts`: run each combo twice with different date slices. Stream both results in one `ProgressMessage`.
+  4. `runs-comparison-table.tsx`: add OOS columns. Add a "Robust only" filter chip.
+  5. Robustness rule: extract into `src/lib/optimize/robustness.ts` so it's tunable in one place. Document the 0.7 threshold there.
+- **Out of scope**: K-fold (file as Phase 1a follow-up if single-split feels too noisy on 20-day catalogs). Custom robustness rules in the UI.
+- **Done when**: A Hawks sweep across 20 days runs as 14-train + 6-test. Every result row shows both PFs. "Robust ✓" filter works. The robustness threshold is documented in code and surfaced in a tooltip.
+- **Depends on**: Phase 1b shipped first.
+- **Date filed**: 2026-05-29.
+
+### OPTIMIZE Phase 1c — Pareto frontier view
+
+- **Priority**: P1
+- **Effort**: S
+- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 1c.
+- **What + Why**: Today users sort by one metric at a time. Profit factor and max drawdown trade off — you can't read that trade-off in a sorted table. A `(PF, maxDrawdown)` scatter with the Pareto frontier highlighted lets users see the shape of the trade-off and pick a point on the curve that matches their risk preference. Generic (works for every strategy), small (~200 lines), high-value.
+- **Fix shape**:
+  1. New tab in `optimize-content.tsx` results panel: "Pareto".
+  2. New component `src/components/optimize/pareto-scatter.tsx` (~200 lines). Use the existing chart primitive (TradingView lightweight-charts or whatever the equity-overlay already uses) for consistency.
+  3. Frontier computation in `src/lib/optimize/pareto.ts`: classic O(n log n) scan. Highlight frontier points; dim dominated points.
+  4. Hover / click on a point → opens run-detail-panel.
+  5. When walk-forward is active (Phase 1a shipped), color points by OOS-robust status.
+- **Out of scope**: 3D Pareto (PF × drawdown × trade count). Constraint mode (Phase 3d).
+- **Done when**: Scatter renders for any sweep with ≥10 runs, frontier highlighted, hover/click round-trips to run detail. With Phase 1a active, robust points visually distinguished.
+- **Depends on**: Phase 1a shipped (so OOS data exists to color by).
+- **Date filed**: 2026-05-29.
+
+### OPTIMIZE Phase 3a — Strategy registry refactor (kills the ORB-vs-else binary)
+
+- **Priority**: P2
+- **Effort**: S
+- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 3a. Surfaced when shipping PR #9 (Hawks user-catalog mode falls through to dezK params today).
+- **What + Why**: `parameter-grid.ts:474,585,657` has `recipe.entry.type === "orb_breakout" ? ORB_PARAMS : DEZK_PARAMS`. Any new strategy (Hawks, future strategies) silently falls through to dezK and the sweep panel renders meaningless knobs. Refactor to a registry: each preset module exports its own `sweepableParams`; `getSweepableParams` looks up by `recipe.entry.type` from a `Map`.
+- **Fix shape**:
+  1. Define a `SweepableParam[]` export contract in `src/types/backtest.ts` (re-using the existing types from `parameter-grid.ts`).
+  2. Move `ORB_PARAMS` and `DEZK_PARAMS` into their respective preset modules (`orb-presets.ts`, `dezk-presets.ts`).
+  3. Replace the binary switch in `parameter-grid.ts` with a registry: `STRATEGY_PARAMS_REGISTRY: Map<EntryType, SweepableParam[]>`.
+  4. `getSweepableParams` becomes a registry lookup with a fall-through "unsupported strategy" empty array (sweep panel shows "no params available for this strategy").
+- **Out of scope**: Adding Hawks params (Phase 3b is the entry that does that).
+- **Done when**: ORB and dezK still work, registry is the single source of truth, adding a strategy requires only exporting `sweepableParams` from its preset module.
+- **Date filed**: 2026-05-29.
+
+### Hawks engine: fine-tune for better backtest outcomes (via OPTIMIZE)
+
+- **Priority**: P1
+- **Effort**: M (down from L now that OPTIMIZE absorbs the harness work)
+- **Source**: 2026-05-29 — original ask was a one-off `scripts/sweep-hawks.ts`; re-shaped to depend on OPTIMIZE Phases 1 + 3a + 3b after the OPTIMIZE roadmap brainstorm (`docs/design/optimize-roadmap.md`).
+- **What + Why**: The user-catalog mode validates engine _outcomes_ (BE/ST/GA/EOD) match the catalog on trades the engine fires. Headline metrics (PF, win rate, max drawdown, Risk:Return) are still sub-optimal because we've been tuning the entry detector against a fixed parameter set, not the whole engine against outcome metrics. Once OPTIMIZE Phase 1 (walk-forward + provenance + Pareto) and Phase 3a/3b (strategy registry + Hawks params) ship, this entry becomes: run OPTIMIZE on `hawks_v0`, pick the winning combo from the Pareto frontier that passes OOS robustness, freeze it as `hawks_v0_tuned`.
+- **Fix shape**:
+  1. **Use OPTIMIZE** (no separate script). Sweep these params via the Hawks registry (Phase 3b):
      - `retracementMin` (1, 2, 3 bricks)
-     - `cooldown` (3, 5, 7 bricks) — already partially explored
+     - `cooldown` (3, 5, 7 bricks)
      - BE `triggerPct` (75, 100, 150, 200 % of risk)
-     - Stop distance multiplier (1×, 2×, dynamic-by-favorability — see related entry below on the 14 label mismatches)
+     - Stop distance multiplier (1×, 2×, dynamic-by-favorability — connects to the 14-label-mismatches entry)
      - Target multiplier (2R, 3R, trailing)
      - Quality gates level (off/lite/standard/strict)
-  2. **Walk-forward validation.** Don't optimize on all 20 days then ship — split into in-sample (first 14 days) and out-of-sample (last 6). Pick the param combo that maximizes a chosen objective on in-sample, then _report_ the same combo's metrics on out-of-sample. If they diverge badly the combo is overfit.
-  3. **Multi-objective.** Don't collapse to a single scalar. Plot a Pareto frontier of `profitFactor vs maxDrawdown` — let Ygor choose his risk preference rather than baking it in.
-  4. **Per-tier optimization.** Re-use the tier-analytics module (already shipped) — sweep parameters _within_ AAA / AA / A buckets separately. Maybe AAA wants tighter BE, A wants looser, etc.
-  5. **Surface the chosen config.** Add a preset variant `hawks_v0_tuned` once a winner emerges, with a comment block recording the sweep date, objective, in-sample/out-of-sample numbers, and seed. Treat presets as immutable once shipped; future tunes spawn `hawks_v1_tuned` etc.
-- **Out of scope**:
-  - Live optimization / online learning. This is offline parameter selection only.
-  - Cross-asset generalization. WINFUT-only for now; other indices come later.
-  - Genetic / Bayesian optimizers. Start with a coarse grid; only invest in smarter search if the grid surfaces a clear ridge.
+  2. **Walk-forward** comes from Phase 1a (14-train / 6-test default).
+  3. **Pareto reading** comes from Phase 1c (PF vs maxDrawdown scatter).
+  4. **Per-tier breakdown**: re-use `tier-analytics.ts` (shipped in PR #9) — sweep params within AAA / AA / A buckets separately. Cross-coordinate with the "quality multiplier tier-tagging" P2 entry.
+  5. **Freeze the winner**: add a preset variant `hawks_v0_tuned` once OPTIMIZE surfaces a robust combo. Provenance comment records sweep date, objective, IS/OOS numbers. Presets are immutable once shipped; future tunes spawn `hawks_v1_tuned`.
+- **Out of scope**: Live / online optimization. Cross-asset generalization (WINFUT-only). Bayesian / genetic search.
 - **Done when**:
-  - Sweep harness exists and runs in <5 min for a ~200-combo grid.
-  - In-sample winner reported with out-of-sample confirmation (no >30% drop in profit factor).
+  - A Hawks sweep runs via OPTIMIZE with walk-forward and Pareto enabled.
+  - A robust combo (OOS PF ≥ 0.7 × IS PF) is picked from the Pareto frontier.
   - `hawks_v0_tuned` preset shipped with provenance comment.
-  - One-page summary added to `docs/` showing the Pareto frontier and the chosen point.
+  - One-page summary in `docs/` of the Pareto frontier + chosen point.
+- **Depends on**: OPTIMIZE Phase 1a + 1b + 1c + 3a + 3b shipped.
 - **Date filed**: 2026-05-29.
 
 ### Hawks autonomous engine: reproduction stuck at 51% — quality gates next

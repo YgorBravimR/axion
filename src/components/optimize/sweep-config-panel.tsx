@@ -20,16 +20,25 @@ import type {
 } from "@/lib/optimize/parameter-grid"
 import type { StrategyRecipe } from "@/types/backtest"
 
+interface WalkForwardConfig {
+	enabled: boolean
+	inSamplePct: number
+}
+
 interface SweepConfigPanelProps {
 	recipe: StrategyRecipe
 	activeRanges: ParameterRange[]
 	onRangesChange: (_ranges: ParameterRange[]) => void
+	walkForwardConfig: WalkForwardConfig | null
+	onWalkForwardChange: (_config: WalkForwardConfig | null) => void
 }
 
 const SweepConfigPanel = ({
 	recipe,
 	activeRanges,
 	onRangesChange,
+	walkForwardConfig,
+	onWalkForwardChange,
 }: SweepConfigPanelProps) => {
 	const t = useTranslations("optimize")
 
@@ -208,6 +217,93 @@ const SweepConfigPanel = ({
 				{t("sweepParameters")}
 			</h3>
 			<p className="text-tiny text-txt-300">{t("sweepParametersHint")}</p>
+
+			{/* Walk-forward section */}
+			<div className="space-y-s-200 p-s-300 border-bg-300 bg-bg-100/30 rounded-md border">
+				<div className="space-y-s-200">
+					<div className="flex items-start justify-between">
+						<div className="space-y-s-100 flex-1">
+							<label className="gap-s-200 flex cursor-pointer items-center">
+								<Checkbox
+									id="walk-forward-enable"
+									checked={walkForwardConfig?.enabled ?? false}
+									onCheckedChange={(checked) => {
+										if (checked === true) {
+											onWalkForwardChange({
+												enabled: true,
+												inSamplePct: 70,
+											})
+										} else {
+											onWalkForwardChange(null)
+										}
+									}}
+								/>
+								<span className="text-small text-txt-100 font-medium">
+									{t("walkForward.enableLabel")}
+								</span>
+							</label>
+							<p className="text-tiny text-txt-300 pl-s-300">
+								{t("walkForward.hint")}
+							</p>
+						</div>
+					</div>
+
+					{/* In-sample % slider (only when enabled) */}
+					{walkForwardConfig?.enabled && (
+						<div className="pl-s-300 space-y-s-200">
+							<div className="flex items-center justify-between">
+								<span className="text-tiny text-txt-300">
+									{t("walkForward.splitLabel")}
+								</span>
+								<span className="text-small text-txt-100 font-medium tabular-nums">
+									{t("walkForward.splitValue", {
+										pct: walkForwardConfig.inSamplePct,
+										oos: 100 - walkForwardConfig.inSamplePct,
+									})}
+								</span>
+							</div>
+							<div className="gap-s-200 flex items-center">
+								<input
+									id="walk-forward-pct"
+									type="range"
+									min="50"
+									max="90"
+									step="5"
+									value={walkForwardConfig.inSamplePct}
+									onChange={(e) => {
+										const pct = parseInt(e.target.value, 10)
+										onWalkForwardChange({
+											enabled: true,
+											inSamplePct: pct,
+										})
+									}}
+									className="flex-1"
+									aria-label={t("walkForward.splitLabel")}
+								/>
+								<Input
+									id="walk-forward-pct-input"
+									type="number"
+									min="50"
+									max="90"
+									step="5"
+									value={walkForwardConfig.inSamplePct}
+									onChange={(e) => {
+										const pct = Math.max(
+											50,
+											Math.min(90, parseInt(e.target.value, 10) || 50)
+										)
+										onWalkForwardChange({
+											enabled: true,
+											inSamplePct: pct,
+										})
+									}}
+									className="text-small h-8 w-14 tabular-nums"
+								/>
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
 
 			{/* Enum parameter rows */}
 			{enumParams.length > 0 && (
