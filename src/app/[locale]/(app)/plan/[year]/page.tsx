@@ -19,6 +19,9 @@ import {
 } from "@/components/fractal-plan/cockpit/annual-cockpit-grid"
 import type { WeekData } from "@/components/fractal-plan/cockpit/month-card"
 import { TaxTab } from "@/components/fractal-plan/cockpit/tax-tab"
+import { WeeklyGridTab } from "@/components/fractal-plan/cockpit/weekly-grid-tab"
+import { PayoffMatrixTab } from "@/components/fractal-plan/cockpit/payoff-matrix-tab"
+import { ExitConventionTab } from "@/components/fractal-plan/cockpit/exit-convention-tab"
 import type { MonthlyDarfRow } from "@/lib/tax/types"
 import { getDayTradeIrRate, getDayTradeRateSource } from "@/lib/tax/legal-rates"
 import { getActiveAssets } from "@/app/actions/assets"
@@ -508,6 +511,11 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			<Tabs defaultValue="plan">
 				<TabsList id="plan-year-tabs" variant="line">
 					<TabsTrigger value="plan">{t("yearPage.tabPlan")}</TabsTrigger>
+					<TabsTrigger value="weekly-grid">
+						{t("yearPage.tabWeeklyGrid")}
+					</TabsTrigger>
+					<TabsTrigger value="payoff">{t("yearPage.tabPayoff")}</TabsTrigger>
+					<TabsTrigger value="exits">{t("yearPage.tabExits")}</TabsTrigger>
 					<TabsTrigger value="impostos">{t("yearPage.tabTax")}</TabsTrigger>
 				</TabsList>
 				<TabsContent value="plan">
@@ -540,6 +548,23 @@ const PlanYearPage = async ({ params }: PageProps) => {
 						defaultDailyWinR={parseDecimal(row.defaultDailyWinR)}
 						assertivityPct={parseDecimal(row.defaultAssertivityPercent) ?? 50}
 					/>
+				</TabsContent>
+				<TabsContent value="weekly-grid">
+					<WeeklyGridTab
+						year={year}
+						months={monthRows}
+						currentMonthIndex={currentMonthIndex}
+					/>
+				</TabsContent>
+				<TabsContent value="payoff">
+					<PayoffMatrixTab
+						initialCapitalCents={initialCapitalCents}
+						tradingDaysPerWeek={tradingDaysPerWeek}
+						currentOneRCents={currentOneRCents}
+					/>
+				</TabsContent>
+				<TabsContent value="exits">
+					<ExitConventionTab />
 				</TabsContent>
 				<TabsContent value="impostos">
 					<TaxTab

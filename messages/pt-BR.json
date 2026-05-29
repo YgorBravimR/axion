@@ -5751,7 +5751,90 @@
 			"notCreatedSubtitle": "Clique em \"Editar\" no card acima para semear o plano anual e gerar a grade.",
 			"notCreatedBody": "Sem plano anual a grade mensal fica vazia. O editor abre como slideover.",
 			"tabPlan": "Plano",
+			"tabWeeklyGrid": "Grade semanal",
+			"tabPayoff": "Payoff",
+			"tabExits": "Saídas",
 			"tabTax": "Impostos"
+		},
+		"weeklyGrid": {
+			"title": "Grade semanal · {year}",
+			"subtitle": "Todas as semanas ISO do ano, alvo planejado vs realizado.",
+			"empty": "Nenhum plano semanal semeado ainda. Crie o plano anual para gerar as semanas automaticamente.",
+			"ariaLabel": "Grade semanal de {year}",
+			"cellTitle": "Semana {week} ({month}) — alvo {target}, real {actual}",
+			"totalTarget": "Alvo total",
+			"totalActual": "Real total",
+			"weeksTracked": "Semanas rastreadas",
+			"legendHit": "Alvo batido",
+			"legendPositive": "Positivo",
+			"legendNegative": "Negativo",
+			"legendPending": "Pendente",
+			"months": {
+				"jan": "Jan",
+				"feb": "Fev",
+				"mar": "Mar",
+				"apr": "Abr",
+				"may": "Mai",
+				"jun": "Jun",
+				"jul": "Jul",
+				"aug": "Ago",
+				"sep": "Set",
+				"oct": "Out",
+				"nov": "Nov",
+				"dec": "Dez"
+			}
+		},
+		"payoff": {
+			"title": "Matriz de payoff",
+			"subtitle": "Retorno anual projetado a {tradesPerYear} trades/ano, 1R = {oneR}.",
+			"tradesPerDayLabel": "Trades / dia",
+			"winRateHeader": "Assertividade",
+			"cellTitle": "WR {wr}% × {rMul}R → expectativa {expR}R/trade → +{annualR}R/ano ({rentPct}% rent.)",
+			"disclaimer": "Projeção pura por expectativa — não inclui custos, slippage ou capitalização dentro do ano."
+		},
+		"exits": {
+			"title": "Convenções de saída",
+			"subtitle": "Escolha o estilo de saída que combina com sua convicção. Presets são regras de referência — ainda não aplicadas pelo motor.",
+			"stopMultiple": "Múltiplo de stop",
+			"profitTarget": "Alvo de lucro",
+			"trailingTrigger": "Disparo do trailing",
+			"trailingDistance": "Distância do trailing",
+			"maxHold": "Tempo máximo",
+			"rrRatio": "Razão R:R",
+			"rulebookTitle": "Regras",
+			"disclaimer": "Estes presets são informativos. A execução ao vivo continua seguindo seu perfil de risco ativo e o stop/alvo por trade.",
+			"conventions": {
+				"conservative": {
+					"name": "Conservador",
+					"description": "Trava lucro parcial cedo. Stops mais curtos, alvos menores, trailing mais rápido — bom para dias travados ou de notícias.",
+					"rules": {
+						"entry": "Entrar apenas com alinhamento completo do triple-screen.",
+						"stop": "Stop fixo em 1R da entrada — sem stop discricionário.",
+						"profit": "Sair com a posição inteira a 1.5R.",
+						"trail": "Mover para break-even a 1R; trailing 0.5R de distância depois."
+					}
+				},
+				"balanced": {
+					"name": "Equilibrado",
+					"description": "Convenção de referência. Alvo de 2.5R com trailing de 1.5R — desenhado para capturar dias de tendência sem devolver demais.",
+					"rules": {
+						"entry": "Entrar com triple-screen alinhado OU forte contexto VWAP.",
+						"stop": "Stop fixo em 1R.",
+						"profit": "Reduzir 50% a 1.5R, runner mira 2.5R.",
+						"trail": "Mover para break-even a 1.5R; trailing 0.75R de distância no runner."
+					}
+				},
+				"aggressive": {
+					"name": "Agressivo",
+					"description": "Segura o movimento completo. Stops mais largos, alvos mais altos, hold mais longo — para setups de tendência de alta convicção.",
+					"rules": {
+						"entry": "Entrar em wave-2 confirmada com alvo de extensão visível.",
+						"stop": "Stop mais largo em 1.5R para absorver ruído.",
+						"profit": "Reduzir 33% a 2R, 33% a 3R, runner até 4R.",
+						"trail": "Mover para break-even a 2R; trailing 1R no runner."
+					}
+				}
+			}
 		}
 	},
 	"hawks": {

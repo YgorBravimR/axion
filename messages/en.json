@@ -5751,7 +5751,90 @@
 			"notCreatedSubtitle": "Click \"Edit\" on the card above to seed the annual plan and generate the grid.",
 			"notCreatedBody": "Without an annual plan the monthly grid is empty. The editor opens as a slideover.",
 			"tabPlan": "Plan",
+			"tabWeeklyGrid": "Weekly grid",
+			"tabPayoff": "Payoff",
+			"tabExits": "Exits",
 			"tabTax": "Tax"
+		},
+		"weeklyGrid": {
+			"title": "Weekly grid · {year}",
+			"subtitle": "All ISO weeks of the year, planned target vs realized.",
+			"empty": "No weekly plans seeded yet. Create the annual plan to auto-generate weeks.",
+			"ariaLabel": "Weekly grid for {year}",
+			"cellTitle": "Week {week} ({month}) — target {target}, actual {actual}",
+			"totalTarget": "Total target",
+			"totalActual": "Total actual",
+			"weeksTracked": "Weeks tracked",
+			"legendHit": "Target hit",
+			"legendPositive": "Positive",
+			"legendNegative": "Negative",
+			"legendPending": "Pending",
+			"months": {
+				"jan": "Jan",
+				"feb": "Feb",
+				"mar": "Mar",
+				"apr": "Apr",
+				"may": "May",
+				"jun": "Jun",
+				"jul": "Jul",
+				"aug": "Aug",
+				"sep": "Sep",
+				"oct": "Oct",
+				"nov": "Nov",
+				"dec": "Dec"
+			}
+		},
+		"payoff": {
+			"title": "Payoff matrix",
+			"subtitle": "Projected annual return at {tradesPerYear} trades/year, 1R = {oneR}.",
+			"tradesPerDayLabel": "Trades / day",
+			"winRateHeader": "Win rate",
+			"cellTitle": "WR {wr}% × {rMul}R → expectancy {expR}R/trade → +{annualR}R/yr ({rentPct}% return)",
+			"disclaimer": "Pure expectancy projection — does not include commissions, slippage, or compounding inside the year."
+		},
+		"exits": {
+			"title": "Exit conventions",
+			"subtitle": "Pick the exit style that matches your conviction. Presets are reference rules — not enforced by the engine yet.",
+			"stopMultiple": "Stop multiple",
+			"profitTarget": "Profit target",
+			"trailingTrigger": "Trail trigger",
+			"trailingDistance": "Trail distance",
+			"maxHold": "Max hold",
+			"rrRatio": "R:R ratio",
+			"rulebookTitle": "Rulebook",
+			"disclaimer": "These presets are informational. Live execution still follows your active risk profile and per-trade stop/target.",
+			"conventions": {
+				"conservative": {
+					"name": "Conservative",
+					"description": "Lock partial profit early. Tighter stops, lower targets, faster trailing — good for choppy or news-heavy days.",
+					"rules": {
+						"entry": "Enter only with full triple-screen alignment.",
+						"stop": "Hard stop at 1R from entry — no soft-stop discretion.",
+						"profit": "Take full size off at 1.5R.",
+						"trail": "Trail to break-even at 1R; trail 0.5R wide after."
+					}
+				},
+				"balanced": {
+					"name": "Balanced",
+					"description": "Reference convention. 2.5R target with a 1.5R trailing arm — designed for trend-day capture without giving back too much.",
+					"rules": {
+						"entry": "Enter with triple-screen alignment OR strong VWAP context.",
+						"stop": "Hard stop at 1R.",
+						"profit": "Scale 50% at 1.5R, runner targets 2.5R.",
+						"trail": "Move to break-even at 1.5R; trail 0.75R wide on runner."
+					}
+				},
+				"aggressive": {
+					"name": "Aggressive",
+					"description": "Hold for the full move. Wider stops, deeper profit targets, longer hold — meant for high-conviction trend setups.",
+					"rules": {
+						"entry": "Enter on confirmed wave-2 with extension target visible.",
+						"stop": "Wider stop at 1.5R to absorb noise.",
+						"profit": "Scale 33% at 2R, 33% at 3R, runner to 4R.",
+						"trail": "Move to break-even at 2R; trail 1R wide on runner."
+					}
+				}
+			}
 		}
 	},
 	"hawks": {
