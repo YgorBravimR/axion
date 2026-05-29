@@ -136,7 +136,7 @@ const UserProfileSettings = () => {
 
 	const handleChangePassword = useCallback(() => {
 		if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-			showToast("error", tAuth("register.passwordMismatch"))
+			showToast("error", tAuth("register.passwordsDoNotMatch"))
 			return
 		}
 

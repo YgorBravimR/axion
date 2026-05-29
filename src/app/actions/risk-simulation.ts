@@ -43,7 +43,7 @@ export const getSimulationPreview = async (
 ): Promise<ActionResponse<SimulationPreview>> => {
 	const t = await getTranslations("riskSimulation")
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
 		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
 
 		const startDate = new Date(`${validated.dateFrom}T00:00:00${BRT_OFFSET}`)
@@ -110,7 +110,7 @@ export const runRiskSimulationFromDb = async (
 ): Promise<ActionResponse<RiskSimulationResult>> => {
 	const t = await getTranslations("riskSimulation")
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
 		const validatedDates = dateRangeSchema.parse({ dateFrom, dateTo })
 		const validatedParams = riskSimulationParamsSchema.parse(params)
 

@@ -4,6 +4,12 @@ import type {
 	DayContext,
 } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
+import {
+	createQualityContext,
+	updateQualityContext,
+	evaluateQuality,
+	type QualityContext,
+} from "./hawks-quality-rules"
 
 /**
  * Hawks triple-screen entry module (engine v0.4 — real-time TOPO MENOR).
@@ -58,6 +64,8 @@ interface HawksState {
 	// Re-arm cooldown: brickIndex of the last fire. Used to require N bricks
 	// between fires. null = no fire yet today.
 	lastFireBrickIndex: number | null
+	// Carried across bricks for stateful quality rules (MACD slope, vol EMA).
+	qualityContext: QualityContext
 }
 
 const createInitialHawksState = (): HawksState => ({
@@ -72,11 +80,17 @@ const createInitialHawksState = (): HawksState => ({
 	minLowSinceTopo: null,
 	consecutiveAgainstInWave1: 0,
 	lastFireBrickIndex: null,
+	qualityContext: createQualityContext(),
 })
 
 // Minimum bricks between fires. Prevents back-to-back micro-retrace re-fires
 // when the engine stays armed after a fire (W2_UP / W2_DN).
 const FIRE_COOLDOWN_BRICKS = 5
+
+// Quality gates + tier scoring moved into ./hawks-quality-rules.ts. The
+// evaluator returns { blocked, quality } given the current brick + state.
+// Adding a new indicator means registering a rule there, not editing this
+// state machine.
 
 const higherTfGateShort = (
 	candle: CandleRow,
@@ -194,7 +208,12 @@ const processHawksCandle = (
 	const bodySize = Math.abs(candle.close - candle.open)
 	const brickSize = bodySize > 0 ? bodySize : config.brickSize5mPoints
 
-	const next: HawksState = { ...base }
+	// Update quality context (running MACD/vol EMA history) BEFORE any
+	// fire check — so a fire's quality reflects pre-fire history.
+	const next: HawksState = {
+		...base,
+		qualityContext: updateQualityContext(candle, base.qualityContext, config),
+	}
 
 	// ────────────────────────────────────────────────────────────────────
 	// Fire check runs FIRST, using the state inherited from prior bricks.
@@ -252,12 +271,21 @@ const processHawksCandle = (
 			next.lastFireBrickIndex === null ||
 			ctx.candleIndexInDay - next.lastFireBrickIndex >= FIRE_COOLDOWN_BRICKS
 
+		const qShort = evaluateQuality(
+			candle,
+			"short",
+			brickSize,
+			config,
+			next.qualityContext
+		)
+
 		if (
 			isBearish &&
 			descendingHigh &&
 			wave1Ok &&
 			retraceOk &&
 			cooldownOk &&
+			!qShort.blocked &&
 			higherTfGateShort(candle, config)
 		) {
 			// Fire. Stay armed (WAVE_2_UP) for the next setup. Anchor
@@ -282,6 +310,7 @@ const processHawksCandle = (
 					price: candle.close,
 					stopReference: 2 * candle.open - candle.close + tickSize,
 					label: `Hawks SHORT structural @ ${ctx.brtHHMM}`,
+					quality: qShort.quality,
 				},
 			}
 		}
@@ -325,12 +354,21 @@ const processHawksCandle = (
 			next.lastFireBrickIndex === null ||
 			ctx.candleIndexInDay - next.lastFireBrickIndex >= FIRE_COOLDOWN_BRICKS
 
+		const qLong = evaluateQuality(
+			candle,
+			"long",
+			brickSize,
+			config,
+			next.qualityContext
+		)
+
 		if (
 			isBullish &&
 			ascendingLow &&
 			wave1Ok &&
 			retraceOk &&
 			cooldownOk &&
+			!qLong.blocked &&
 			higherTfGateLong(candle, config)
 		) {
 			// Mirror of SHORT: anchor topoPrice + minLowSinceTopo at the
@@ -351,6 +389,7 @@ const processHawksCandle = (
 					price: candle.close,
 					stopReference: 2 * candle.open - candle.close - tickSize,
 					label: `Hawks LONG structural @ ${ctx.brtHHMM}`,
+					quality: qLong.quality,
 				},
 			}
 		}

@@ -156,8 +156,52 @@ const run = async () => {
 		process.exit(0)
 	}
 
-	// Run the AUTONOMOUS engine
-	const result = runBacktest(candles, hawksV0, ASSET_CONFIG)
+	// Run the AUTONOMOUS engine. CLI flags toggle quality gates without
+	// editing the preset (so we can A/B compare in one script):
+	//   --htf-ma-block    legacy: BLOCK on 4 HTF MAs only
+	//   --sr-block        Group A: BLOCK on 4 MAs + vwap_d + ajuste
+	//   --sr-favor        Group A: SCORE +1 per S/R level FAVOR
+	// Aggression is tri-state. --aggression alone defaults to reversed
+	// polarity (data-supported). --aggression-original flips to user's
+	// original heuristic.
+	const aggMode: "off" | "original" | "reversed" = argv.includes(
+		"--aggression-original"
+	)
+		? "original"
+		: argv.includes("--aggression")
+			? "reversed"
+			: "off"
+	const flags = {
+		htfMaBlock: argv.includes("--htf-ma-block"),
+		srLevelBlock: argv.includes("--sr-block"),
+		srLevelFavor: argv.includes("--sr-favor"),
+		keltnerOuterBlock: argv.includes("--keltner-block"),
+		keltnerInnerPenalty: argv.includes("--keltner-penalty"),
+		volumeScore: argv.includes("--volume"),
+		...(aggMode !== "off" ? { aggressionMode: aggMode } : {}),
+	}
+	const anyFlag = Object.values(flags).some((v) => v && v !== "off")
+	const recipe = anyFlag
+		? ({
+				...hawksV0,
+				entry: {
+					...hawksV0.entry,
+					config: {
+						...(hawksV0.entry as { config: Record<string, unknown> }).config,
+						qualityGates: flags,
+					},
+				},
+			} as typeof hawksV0)
+		: hawksV0
+	if (anyFlag) {
+		console.log(
+			`[audit] gates ENABLED: ${Object.entries(flags)
+				.filter(([, v]) => v)
+				.map(([k]) => k)
+				.join(", ")}`
+		)
+	}
+	const result = runBacktest(candles, recipe, ASSET_CONFIG)
 
 	// Build timestamp → candleIndex lookup so we can compare engine trades
 	// (timestamp-keyed) to catalog entries (brickIndex-keyed).
@@ -265,7 +309,51 @@ const run = async () => {
 		}
 	}
 
+	// ── Tier breakdown — FAVOR-as-tier evaluation ──────────────────────────
+	const matchedTrades: DecoratedTrade[] = []
+	for (const trades of tradesByDay.values()) {
+		for (const t of trades) {
+			if (claimed.has(t.id)) {
+				matchedTrades.push(t)
+			}
+		}
+	}
+
+	const tierCounts = (rows: DecoratedTrade[]) => {
+		const counts: Record<string, number> = {
+			"AAA": 0,
+			"AA": 0,
+			"A": 0,
+			"B": 0,
+			"—": 0,
+		}
+		for (const r of rows) {
+			const t = r.quality?.tier ?? "—"
+			counts[t] = (counts[t] ?? 0) + 1
+		}
+		return counts
+	}
+
+	const matchedTiers = tierCounts(matchedTrades)
+	const extraTiers = tierCounts(extras.map((e) => e.trade))
+	const pct = (n: number, total: number) =>
+		total ? `${((n / total) * 100).toFixed(1)}%` : "—"
+
 	console.log("─".repeat(70))
+	console.log()
+	console.log(
+		"Quality tier breakdown (FAVOR multipliers behind trade ≤ 3 bricks)"
+	)
+	console.log("  Tier   matched (good)            extras (noise)")
+	for (const tier of ["AAA", "AA", "A", "B"] as const) {
+		const m = matchedTiers[tier] ?? 0
+		const x = extraTiers[tier] ?? 0
+		console.log(
+			`  ${tier.padEnd(5)}  ${String(m).padStart(3)} (${pct(m, matchedTrades.length).padStart(6)})        ` +
+				`${String(x).padStart(3)} (${pct(x, extras.length).padStart(6)})`
+		)
+	}
+
 	console.log()
 	console.log("Catalog reproduction summary")
 	console.log(`  Catalog entries audited:   ${catalog.length}`)

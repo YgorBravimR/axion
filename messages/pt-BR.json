@@ -3256,6 +3256,11 @@
 			"deleteDefinition": {
 				"title": "Excluir \"{name}\"?",
 				"description": "Esta ação não pode ser desfeita."
+			},
+			"errors": {
+				"groupNotFound": "Grupo de indicadores não encontrado.",
+				"groupHasDefinitions": "Não é possível excluir um grupo que ainda possui indicadores ativos.",
+				"definitionNotFound": "Definição de indicador não encontrada."
 			}
 		},
 		"actions": {
@@ -4122,6 +4127,11 @@
 		"title": "Importar Extrato da Corretora",
 		"description": "Envie um extrato de operações da sua corretora para importar com preços e quantidades exatas",
 		"broker": "Corretora",
+		"brokers": {
+			"clear": "Clear",
+			"xp": "XP",
+			"genial": "Genial"
+		},
 		"csvFile": "Arquivo CSV",
 		"selected": "Selecionado: {name} ({size} KB)",
 		"selectBroker": "Selecione sua corretora",
@@ -4690,6 +4700,7 @@
 			"strategy": "Estratégia",
 			"loadPreset": "Carregar Preset",
 			"entryDescription": "Configure quando e como a estratégia entra em posição",
+			"entryDescriptionDezk": "Entrada por histograma MACD + alinhamento WMA 9/21 no gráfico de 10K",
 			"stopProtection": "Stop & Proteção",
 			"initialStop": "Stop Inicial",
 			"stopPctRange": "% do Range",
@@ -4790,13 +4801,25 @@
 			"eodTime": "Saída Fim do Dia"
 		},
 		"dezk": {
-			"name": "10K — Alinhamento MACD WMA"
+			"name": "10K — Alinhamento MACD WMA",
+			"macdLabel": "MACD",
+			"macdFast": "MACD Rápida",
+			"macdSlow": "MACD Lenta",
+			"macdSignal": "Sinal MACD",
+			"wmaFast": "WMA Rápida",
+			"wmaSlow": "WMA Lenta",
+			"candlesAfter": "Candles Após Alinhamento",
+			"stopBuffer": "Buffer do Stop",
+			"startTime": "Início da Janela de Entrada",
+			"endTime": "Fim da Janela de Entrada",
+			"requireZeroCross": "Exigir Cruzamento de Zero do MACD"
 		},
 		"results": {
 			"title": "Resultados",
 			"totalTrades": "Total de Trades",
 			"winRate": "Taxa de Acerto",
 			"profitFactor": "Fator de Lucro",
+			"riskReturn": "Risco : Retorno",
 			"totalPnl": "P&L Total",
 			"maxDrawdown": "Drawdown Máximo",
 			"avgR": "R Médio",
@@ -4805,6 +4828,7 @@
 			"wins": "Ganhos",
 			"losses": "Perdas",
 			"breakevens": "Empates",
+			"breakevenRate": "Taxa de BE",
 			"tradingDays": "Dias Operados",
 			"maxConsecLoss": "Máx. Perdas Consec.",
 			"maxConsecWin": "Máx. Ganhos Consec.",
@@ -4814,7 +4838,9 @@
 			"tradeList": "Lista de Trades",
 			"dayBreakdown": "Detalhamento Diário",
 			"completedTrades": "{count} trades concluídos",
-			"engineVersion": "Versão do Motor"
+			"engineVersion": "Versão do Motor",
+			"excludeBreakevens": "Excluir trades em BE",
+			"breakevenSummary": "{count} BE · {rate}% dos fires"
 		},
 		"hawksPanel": {
 			"title": "Insights HAWKS",
@@ -4858,8 +4884,37 @@
 			"contracts": "Contratos",
 			"pnl": "P&L",
 			"rMultiple": "R",
+			"tier": "Tier",
+			"score": "Score",
+			"openQualityDrawer": "Abrir detalhamento de qualidade do trade #{id}",
 			"noTrades": "Nenhum trade",
 			"viewChart": "Ver gráfico"
+		},
+		"tierBreakdown": {
+			"title": "Desempenho por tier",
+			"hint": "Métricas condicionais — \"se você só pegasse trades deste tier\". O drawdown é calculado sobre a sequência de trades do próprio tier.",
+			"tier": "Tier",
+			"count": "Trades",
+			"winRate": "% acerto",
+			"avgR": "R médio",
+			"pnl": "P&L",
+			"maxDrawdown": "DD máx",
+			"untiered": "Sem tier"
+		},
+		"qualityDrawer": {
+			"title": "Trade #{id} — Detalhamento de qualidade",
+			"titleEmpty": "Detalhamento de qualidade",
+			"descriptionEmpty": "Selecione um trade para inspecionar suas contribuições de qualidade.",
+			"tier": "Tier",
+			"score": "Score",
+			"contributions": "Contribuições dos indicadores",
+			"noRules": "Nenhuma regra de qualidade estava ativa neste fire.",
+			"noQuality": "Esse trade foi emitido antes do score de qualidade ser anexado.",
+			"signal": {
+				"favor": "favor",
+				"penalty": "penalidade",
+				"neutral": "neutro"
+			}
 		},
 		"chartModal": {
 			"title": "Trade #{id} — {direction}",
@@ -4900,7 +4955,120 @@
 			"ema27_60m_key": "MME 27 (60m)",
 			"ema55_60m_key": "MME 55 (60m)",
 			"ema27_15m_key": "MME 27 (15m)",
-			"macd_key": "MACD"
+			"macd_key": "MACD",
+			"quality": {
+				"presetLabel": "Preset de qualidade",
+				"preset": {
+					"off": {
+						"label": "Off",
+						"description": "Engine padrão. A qualidade ainda é pontuada, mas nenhuma regra a modifica."
+					},
+					"lite": {
+						"label": "Lite",
+						"description": "Um sinal de favor — nível de S/R atrás do trade soma qualidade. Sem bloqueios."
+					},
+					"standard": {
+						"label": "Padrão",
+						"description": "Todos os sinais de favor/penalidade/score ligados (S/R favor, Keltner penalidade, MACD alinhado, volume, agressão revertida). Sem bloqueios."
+					},
+					"strict": {
+						"label": "Strict",
+						"description": "Padrão + as duas regras de bloqueio (S/R à frente, banda externa do Keltner). Reduz a frequência de fires."
+					},
+					"custom": {
+						"label": "Custom",
+						"description": "Suas configurações divergem dos presets nomeados."
+					}
+				},
+				"advanced": {
+					"title": "Avançado — regras individuais e parâmetros"
+				},
+				"groups": {
+					"sr": "Níveis S/R (4 MMEs HTF + VWAP + ajuste)",
+					"keltner": "Bandas Keltner",
+					"macd": "MACD",
+					"aggression": "Agressão",
+					"volume": "Volume",
+					"tiers": "Limiares de Tier"
+				},
+				"srLevelBlock": {
+					"label": "Bloqueio: nível S/R à frente dentro do buffer",
+					"hint": "Recusa a entrada quando qualquer nível S/R está à frente do trade dentro da distância de buffer."
+				},
+				"srLevelFavor": {
+					"label": "Favor: nível S/R atrás dentro do range",
+					"hint": "+1 qualidade por nível S/R protegendo o trade (dentro do range, do lado favorável)."
+				},
+				"srBlockBufferBricks": {
+					"label": "Buffer de bloqueio (bricks)",
+					"hint": "Quão perto (em bricks) um nível à frente precisa estar para bloquear."
+				},
+				"srFavorRangeBricks": {
+					"label": "Range de favor (bricks)",
+					"hint": "Quão perto (em bricks) um nível atrás precisa estar para contar como proteção."
+				},
+				"keltnerOuterBlock": {
+					"label": "Bloqueio: perto da banda 165 do Keltner",
+					"hint": "Recusa a entrada quando o preço está na banda externa atuando como teto/piso."
+				},
+				"keltnerInnerPenalty": {
+					"label": "Penalidade: perto da banda 125 do Keltner",
+					"hint": "−1 qualidade quando o preço está na banda interna do lado do trade."
+				},
+				"keltnerNearBricks": {
+					"label": "Distância \"perto\" da banda (bricks)",
+					"hint": "Distância considerada \"perto\" da banda."
+				},
+				"macdAlignmentScore": {
+					"label": "Score: alinhamento do MACD",
+					"hint": "±1 pelo sinal do histograma + streak de inclinação."
+				},
+				"macdSlopeWindow": {
+					"label": "Janela de inclinação (bricks)",
+					"hint": "Quantidade de bricks usada para detectar uma streak de inclinação."
+				},
+				"aggressionMode": {
+					"label": "Polaridade da agressão",
+					"hint": "Polaridade do sinal de agressão vs. direção do trade. Probe (20d, threshold 15K) suporta \"revertido\" com seletividade 1.67×.",
+					"off": "Off",
+					"original": "Original (alinhado = favor)",
+					"reversed": "Revertido (alinhado = penalidade)"
+				},
+				"aggressionThreshold": {
+					"label": "Threshold da agressão",
+					"hint": "Imbalance mínimo para contar como sinal."
+				},
+				"volumeScore": {
+					"label": "Score: volume acima da EMA",
+					"hint": "+1 qualidade quando o volume do brick supera a EMA corrente."
+				},
+				"volumeEmaPeriod": {
+					"label": "Período EMA de volume (bricks)",
+					"hint": "Período de suavização da EMA corrente de volume."
+				},
+				"tierHint": "Limiares de score para AAA/AA/A. Qualquer valor abaixo de A é considerado B."
+			}
+		},
+		"userCatalog": {
+			"name": "Hawks — Catálogo do Usuário",
+			"description": "Catálogo de entradas fornecido pelo usuário. A engine dispara nos índices de brick informados, com as direções informadas; stop / BE / alvo vêm do mesmo arcabouço Hawks. Use para validar o cálculo de resultado ou para fazer backtest de setups subjetivos.",
+			"startTime": "Início da Janela de Entrada",
+			"endTime": "Fim da Janela de Entrada",
+			"catalogJson": "Catálogo (JSON)",
+			"catalogJsonHint": "Array de objetos com date, brickIndex, direction, label (opcional). brickIndex começa em 1 — corresponde ao número da caixa na planilha.",
+			"catalogLoaded": "{count} entradas carregadas",
+			"bundlePickerLabel": "Carregar um catálogo embutido",
+			"bundlePickerPlaceholder": "— Escolha um catálogo —",
+			"bundlePickerHint": "Os catálogos embutidos vêm das fixtures do dev/test. Selecione um para preencher o textarea — você ainda pode editar o JSON depois."
+		},
+		"inspector": {
+			"title": "Trade #{id} — {direction}",
+			"emptyState": "Selecione um trade para inspecionar",
+			"loading": "Carregando tripla tela…",
+			"noBricks": "Dados insuficientes para gerar bricks nesta janela",
+			"overviewTitle": "Visão Geral dos Trades",
+			"overviewHint": "{count} trades — clique em um marcador para inspecionar",
+			"failedToLoad": "Falha ao carregar"
 		}
 	},
 	"optimize": {
@@ -5220,7 +5388,8 @@
 				"paid": "Pago",
 				"exempt": "Isento",
 				"overdue": "Vencido"
-			}
+			},
+			"noDarfLines": "Nenhuma linha de DARF para {year}. Clique em \"Recalcular ano\" após registrar trades."
 		}
 	},
 	"plan": {

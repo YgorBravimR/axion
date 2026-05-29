@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo, useCallback } from "react"
+import { useState, useTransition, useMemo, useCallback, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,16 +19,28 @@ import { runBacktestAction } from "@/app/actions/backtest"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
 import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
+import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
 import { OrbEntrySection } from "./sections/orb-entry-section"
 import { DezkEntrySection } from "./sections/dezk-entry-section"
 import { HawksEntrySection } from "./sections/hawks-entry-section"
+import { UserCatalogEntrySection } from "./sections/user-catalog-entry-section"
 import { StopProtectionSection } from "./sections/stop-protection-section"
 import { TargetsExitSection } from "./sections/targets-exit-section"
 import { SizingExecutionSection } from "./sections/sizing-execution-section"
+import {
+	computeBreakevenRate,
+	countBreakevens,
+	recomputeWithoutBreakevens,
+} from "@/lib/backtest/breakeven-filter"
+import { listBundledCatalogs } from "@/app/actions/user-catalog-bundles"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { BacktestSummaryCards } from "./backtest-summary-cards"
+import { BacktestTierBreakdown } from "./backtest-tier-breakdown"
 import { BacktestEquityChart } from "./backtest-equity-chart"
 import { BacktestTradesTable } from "./backtest-trades-table"
-import { BacktestTradeChartModal } from "./backtest-trade-chart-modal"
+import { HawksTripleScreenInspector } from "./inspector/triple-screen-inspector"
+import { BacktestOverviewChart } from "./inspector/backtest-overview-chart"
 import { BacktestHawksResultsPanel } from "./backtest-hawks-results-panel"
 import type { DataSourceInfo } from "@/types/candle"
 import type {
@@ -56,10 +68,8 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const [quickRangeKey, setQuickRangeKey] = useState<string>("")
 	const { dateFrom, dateTo } = useMemo(
 		() => ({
-			dateFrom: dateRange?.from
-				? dateRange.from.toISOString().slice(0, 10)
-				: "",
-			dateTo: dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : "",
+			dateFrom: dateRange?.from ? formatLocalYMD(dateRange.from) : "",
+			dateTo: dateRange?.to ? formatLocalYMD(dateRange.to) : "",
 		}),
 		[dateRange]
 	)
@@ -68,8 +78,144 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const [result, setResult] = useState<BacktestResult | null>(null)
 	const [hasRun, setHasRun] = useState(false)
 	const [selectedTrade, setSelectedTrade] = useState<BacktestTrade | null>(null)
+	// Toggle to hide BE-stopped trades across every results surface. Default
+	// OFF: the engine output is the source of truth; users opt in to filter.
+	const [excludeBreakevens, setExcludeBreakevens] = useState(false)
+
+	// Strategy-family flags. Declared first because subsequent useMemos
+	// (displayedSummary, the catalog effects) depend on them — moving them
+	// below would put their references inside the temporal dead zone.
+	const isHawksFamily =
+		recipe.entry.type === "hawks_triple_screen" ||
+		recipe.entry.type === "user_catalog"
+	const isUserCatalog = recipe.entry.type === "user_catalog"
+
+	// Distinct catalog day count — used to (a) auto-set the date range to
+	// span the catalog and (b) override the "Trading Days" denominator so it
+	// reads "N / N" (100% of catalogued days) instead of calendar-span.
+	const catalogDayCount = useMemo(() => {
+		if (recipe.entry.type !== "user_catalog") {
+			return 0
+		}
+		const days = new Set<string>()
+		for (const entry of recipe.entry.config.catalog) {
+			days.add(entry.date)
+		}
+		return days.size
+	}, [recipe.entry])
+
+	// BE-derived stats + filtered view. Always computed (cheap) so the
+	// "{n} excluded" hint stays accurate even with the toggle off.
+	const breakevenCount = useMemo(
+		() => (result ? countBreakevens(result.trades) : 0),
+		[result]
+	)
+	const breakevenRate = useMemo(
+		() => (result ? computeBreakevenRate(result.trades) : 0),
+		[result]
+	)
+	const filteredResult = useMemo(
+		() =>
+			result && excludeBreakevens ? recomputeWithoutBreakevens(result) : null,
+		[result, excludeBreakevens]
+	)
+	const displayedTrades = filteredResult?.trades ?? result?.trades ?? []
+	const baseSummary = filteredResult?.summary ?? result?.summary
+	// In user_catalog mode, "Trading Days" denominator should be the count of
+	// distinct catalogued days, not the calendar span between first and last
+	// catalog date. The engine doesn't know about catalogs, so we override
+	// the field at the UI boundary.
+	const displayedSummary = useMemo(() => {
+		if (!baseSummary) {
+			return baseSummary
+		}
+		if (!isUserCatalog || catalogDayCount === 0) {
+			return baseSummary
+		}
+		return { ...baseSummary, totalDays: catalogDayCount }
+	}, [baseSummary, isUserCatalog, catalogDayCount])
+	const displayedEquity =
+		filteredResult?.equityCurve ?? result?.equityCurve ?? []
+	const displayedDayBreakdown =
+		filteredResult?.dayBreakdown ?? result?.dayBreakdown ?? []
 
 	const selectedSource = dataSources[selectedSourceIndex]
+
+	// In user_catalog mode the catalog IS the source of truth. Auto-load the
+	// merged "all days" bundle on enter, then auto-pin the date range to
+	// catalog's min/max — the date picker is hidden, so the user has no other
+	// way to set it. If the user edits the JSON afterwards (excluding days),
+	// the dateRange + totalDays follow.
+	useEffect(() => {
+		if (!isUserCatalog || recipe.entry.type !== "user_catalog") {
+			return
+		}
+		const currentCatalog = recipe.entry.config.catalog
+		if (currentCatalog.length > 0) {
+			return
+		}
+		let cancelled = false
+		void listBundledCatalogs().then((bundles) => {
+			if (cancelled || bundles.length === 0) {
+				return
+			}
+			const allBundle = bundles.find((b) => b.key === "all") ?? bundles[0]
+			if (!allBundle) {
+				return
+			}
+			setRecipe((prev) => {
+				if (prev.entry.type !== "user_catalog") {
+					return prev
+				}
+				if (prev.entry.config.catalog.length > 0) {
+					return prev
+				}
+				return {
+					...prev,
+					entry: {
+						type: "user_catalog",
+						config: { ...prev.entry.config, catalog: allBundle.catalog },
+					},
+				}
+			})
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [isUserCatalog, recipe.entry])
+
+	// Auto-pin dateRange to the catalog span whenever the catalog changes
+	// (initial load, JSON edits). Without this the engine wouldn't know to
+	// query bricks for the catalog's date range — the picker is hidden.
+	useEffect(() => {
+		if (recipe.entry.type !== "user_catalog") {
+			return
+		}
+		const catalog = recipe.entry.config.catalog
+		if (catalog.length === 0) {
+			return
+		}
+		const sortedDates = catalog
+			.map((e) => e.date)
+			.sort((a, b) => a.localeCompare(b))
+		const firstDate = sortedDates[0]
+		const lastDate = sortedDates[sortedDates.length - 1]
+		if (!firstDate || !lastDate) {
+			return
+		}
+		// Compare against current range to avoid setState loops.
+		const fromMatches =
+			dateRange?.from && formatLocalYMD(dateRange.from) === firstDate
+		const toMatches = dateRange?.to && formatLocalYMD(dateRange.to) === lastDate
+		if (fromMatches && toMatches) {
+			return
+		}
+		setDateRange({
+			from: parseLocalYMD(firstDate),
+			to: parseLocalYMD(lastDate),
+		})
+		setQuickRangeKey("custom")
+	}, [recipe.entry, dateRange])
 
 	// Compute valuePerPoint from selected asset: tickValue / tickSize
 	const assetValuePerPointCents = useMemo(
@@ -109,6 +255,10 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			setRecipe(dezkPresets[0])
 		} else if (type === "hawks_triple_screen") {
 			setRecipe(hawksPresets[0])
+		} else if (type === "user_catalog") {
+			// hawksUserCatalog is hawksPresets[1] — wraps Hawks stop/target math
+			// around user-supplied entries instead of the autonomous engine.
+			setRecipe(hawksPresets[1] ?? hawksPresets[0])
 		}
 	}, [])
 
@@ -242,66 +392,14 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 				<h2 className="text-h3 text-txt-100 font-semibold">
 					{t("builder.strategyAndData")}
 				</h2>
-				{/* Row 1: Strategy, Asset, Preset */}
-				<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-					{/* Strategy */}
-					<div className="space-y-s-200">
-						<label
-							htmlFor="backtest-strategy"
-							className="text-small text-txt-200 font-medium"
-						>
-							{t("builder.strategy")}
-						</label>
-						<Select
-							value={recipe.entry.type}
-							onValueChange={handleStrategyChange}
-						>
-							<SelectTrigger id="backtest-strategy">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
-								<SelectItem value="macd_wma_alignment">
-									{t("dezk.name")}
-								</SelectItem>
-								<SelectItem value="hawks_triple_screen">
-									{t("hawks.name")}
-								</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-
-					{/* Asset + Timeframe */}
-					<div className="space-y-s-200">
-						<label
-							htmlFor="backtest-source"
-							className="text-small text-txt-200 font-medium"
-						>
-							{t("config.asset")} / {t("config.timeframe")}
-						</label>
-						<Select
-							value={String(selectedSourceIndex)}
-							onValueChange={handleSourceChange}
-						>
-							<SelectTrigger id="backtest-source">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{dataSources.map((source, i) => (
-									<SelectItem
-										key={`${source.assetId}-${source.timeframeId}`}
-										value={String(i)}
-									>
-										{source.assetSymbol} — {source.timeframeCode}
-										{source.rowCount
-											? ` (${source.rowCount.toLocaleString()})`
-											: ""}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-
+				{/* Row 1: Preset (first — preset selection is the starting point;
+				    placing it after Strategy/Asset led to "I configured stuff,
+				    then picked a preset, then lost my work" footgun), Strategy,
+				    Asset. Asset is hidden in user_catalog mode (the catalog
+				    implies the asset/timeframe). */}
+				<div
+					className={`gap-m-400 grid grid-cols-1 ${isUserCatalog ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}
+				>
 					{/* Load Preset */}
 					<div className="space-y-s-200">
 						<label
@@ -326,57 +424,124 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							</SelectContent>
 						</Select>
 					</div>
-				</div>
 
-				{/* Row 2: Date Range (quick select + picker) */}
-				<div className="space-y-s-200">
-					<label
-						htmlFor="backtest-quick-range"
-						className="text-small text-txt-200 font-medium"
-					>
-						{t("config.dateRange")}
-					</label>
-					<div className="gap-s-200 flex flex-wrap items-center">
-						<Select value={quickRangeKey} onValueChange={handleQuickRange}>
-							<SelectTrigger
-								id="backtest-quick-range"
-								className="max-w-[128px] min-w-[80px]"
-							>
-								<SelectValue placeholder={t("builder.quickRange")} />
+					{/* Strategy */}
+					<div className="space-y-s-200">
+						<label
+							htmlFor="backtest-strategy"
+							className="text-small text-txt-200 font-medium"
+						>
+							{t("builder.strategy")}
+						</label>
+						<Select
+							value={recipe.entry.type}
+							onValueChange={handleStrategyChange}
+						>
+							<SelectTrigger id="backtest-strategy">
+								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="all">{t("builder.rangeAll")}</SelectItem>
-								<SelectItem value="this_month">
-									{t("builder.rangeThisMonth")}
+								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
+								<SelectItem value="macd_wma_alignment">
+									{t("dezk.name")}
 								</SelectItem>
-								<SelectItem value="this_year">
-									{t("builder.rangeThisYear")}
+								<SelectItem value="hawks_triple_screen">
+									{t("hawks.name")}
 								</SelectItem>
-								<SelectItem value="3m">{t("builder.range3m")}</SelectItem>
-								<SelectItem value="6m">{t("builder.range6m")}</SelectItem>
-								<SelectItem value="1y">{t("builder.range1y")}</SelectItem>
-								<SelectItem value="custom">
-									{t("builder.rangeCustom")}
+								<SelectItem value="user_catalog">
+									{t("userCatalog.name")}
 								</SelectItem>
 							</SelectContent>
 						</Select>
-						<DateRangePicker
-							id="backtest-date-range"
-							value={dateRange}
-							onChange={handleDateRangeManual}
-							minDate={
-								selectedSource?.candleDateFrom
-									? new Date(selectedSource.candleDateFrom)
-									: undefined
-							}
-							maxDate={
-								selectedSource?.candleDateTo
-									? new Date(selectedSource.candleDateTo)
-									: undefined
-							}
-						/>
 					</div>
+
+					{/* Asset + Timeframe — hidden when running a user_catalog: the
+					    asset/timeframe is implied by the catalog's brick indices. */}
+					{!isUserCatalog && (
+						<div className="space-y-s-200">
+							<label
+								htmlFor="backtest-source"
+								className="text-small text-txt-200 font-medium"
+							>
+								{t("config.asset")} / {t("config.timeframe")}
+							</label>
+							<Select
+								value={String(selectedSourceIndex)}
+								onValueChange={handleSourceChange}
+							>
+								<SelectTrigger id="backtest-source">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{dataSources.map((source, i) => (
+										<SelectItem
+											key={`${source.assetId}-${source.timeframeId}`}
+											value={String(i)}
+										>
+											{source.assetSymbol} — {source.timeframeCode}
+											{source.rowCount
+												? ` (${source.rowCount.toLocaleString()})`
+												: ""}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					)}
 				</div>
+
+				{/* Row 2: Date Range — hidden in user_catalog mode (the catalog's
+				    own date list IS the range; to exclude dates, edit the JSON). */}
+				{!isUserCatalog && (
+					<div className="space-y-s-200">
+						<label
+							htmlFor="backtest-quick-range"
+							className="text-small text-txt-200 font-medium"
+						>
+							{t("config.dateRange")}
+						</label>
+						<div className="gap-s-200 flex flex-wrap items-center">
+							<Select value={quickRangeKey} onValueChange={handleQuickRange}>
+								<SelectTrigger
+									id="backtest-quick-range"
+									className="max-w-[128px] min-w-[80px]"
+								>
+									<SelectValue placeholder={t("builder.quickRange")} />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">{t("builder.rangeAll")}</SelectItem>
+									<SelectItem value="this_month">
+										{t("builder.rangeThisMonth")}
+									</SelectItem>
+									<SelectItem value="this_year">
+										{t("builder.rangeThisYear")}
+									</SelectItem>
+									<SelectItem value="3m">{t("builder.range3m")}</SelectItem>
+									<SelectItem value="6m">{t("builder.range6m")}</SelectItem>
+									<SelectItem value="1y">{t("builder.range1y")}</SelectItem>
+									<SelectItem value="custom">
+										{t("builder.rangeCustom")}
+									</SelectItem>
+								</SelectContent>
+							</Select>
+							<DateRangePicker
+								id="backtest-date-range"
+								value={dateRange}
+								onChange={handleDateRangeManual}
+								minDate={
+									selectedSource?.candleDateFrom
+										? new Date(selectedSource.candleDateFrom)
+										: undefined
+								}
+								maxDate={
+									selectedSource?.candleDateTo
+										? new Date(selectedSource.candleDateTo)
+										: undefined
+								}
+							/>
+						</div>
+					</div>
+				)}
 			</div>
 
 			{/* Config sections — hidden when results are showing */}
@@ -391,6 +556,12 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 					)}
 					{recipe.entry.type === "hawks_triple_screen" && (
 						<HawksEntrySection recipe={recipe} onRecipeChange={setRecipe} />
+					)}
+					{recipe.entry.type === "user_catalog" && (
+						<UserCatalogEntrySection
+							recipe={recipe}
+							onRecipeChange={setRecipe}
+						/>
 					)}
 
 					{/* Section 3: Stop & Protection */}
@@ -418,9 +589,30 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 			)}
 
 			{/* Results — shown after backtest completes */}
-			{result && (
+			{result && displayedSummary && (
 				<div className="space-y-m-500 [&>div]:min-w-0">
-					<div className="flex justify-end">
+					<div className="gap-s-300 flex flex-wrap items-center justify-between">
+						<div className="gap-s-300 flex flex-wrap items-center">
+							<div className="gap-s-200 flex items-center">
+								<Switch
+									id="backtest-exclude-breakevens"
+									checked={excludeBreakevens}
+									onCheckedChange={setExcludeBreakevens}
+								/>
+								<Label
+									htmlFor="backtest-exclude-breakevens"
+									className="cursor-pointer"
+								>
+									{t("results.excludeBreakevens")}
+								</Label>
+							</div>
+							<span className="text-tiny text-txt-300 font-mono">
+								{t("results.breakevenSummary", {
+									count: breakevenCount,
+									rate: breakevenRate,
+								})}
+							</span>
+						</div>
 						<Button
 							id="backtest-new"
 							variant="outline"
@@ -432,33 +624,41 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						</Button>
 					</div>
 					<BacktestSummaryCards
-						summary={result.summary}
+						summary={displayedSummary}
 						engineVersion={result.engineVersion}
+						breakevenCount={breakevenCount}
+						breakevenRate={breakevenRate}
 					/>
-					<BacktestEquityChart equityCurve={result.equityCurve} />
-					{recipe.entry.type === "hawks_triple_screen" && (
+					{isHawksFamily && <BacktestTierBreakdown trades={displayedTrades} />}
+					<BacktestEquityChart equityCurve={displayedEquity} />
+					{isHawksFamily && selectedSource && dateFrom && dateTo ? (
+						<BacktestOverviewChart
+							trades={displayedTrades}
+							assetSymbol={selectedSource.assetSymbol}
+							dateFrom={dateFrom}
+							dateTo={dateTo}
+							selectedTradeId={selectedTrade?.id ?? null}
+							onTradeSelect={setSelectedTrade}
+						/>
+					) : null}
+					{isHawksFamily && (
 						<BacktestHawksResultsPanel
-							trades={result.trades}
-							dayBreakdown={result.dayBreakdown}
+							trades={displayedTrades}
+							dayBreakdown={displayedDayBreakdown}
 						/>
 					)}
 					<BacktestTradesTable
-						trades={result.trades}
+						trades={displayedTrades}
 						onTradeView={setSelectedTrade}
 					/>
+					{isHawksFamily && selectedSource && selectedTrade ? (
+						<HawksTripleScreenInspector
+							trade={selectedTrade}
+							assetSymbol={selectedSource.assetSymbol}
+						/>
+					) : null}
 				</div>
 			)}
-
-			<BacktestTradeChartModal
-				open={selectedTrade !== null}
-				onOpenChange={(open) => {
-					if (!open) {
-						setSelectedTrade(null)
-					}
-				}}
-				trade={selectedTrade}
-				source={selectedSource ?? null}
-			/>
 
 			{/* Empty state — only after a run completes with no results */}
 			{!result && !isPending && hasRun && (

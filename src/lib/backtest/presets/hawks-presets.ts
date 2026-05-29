@@ -65,6 +65,12 @@ const hawksV0: StrategyRecipe = {
 			// from the previous session.
 			startTime: 900,
 			endTime: 1730,
+			// Quality gates default OFF — the audit toggles them on per run.
+			// Enable per audit via `hawksV0WithHtfMaBlock` (see below) or via
+			// runtime override before calling runBacktest.
+			qualityGates: {
+				htfMaBlock: false,
+			},
 		},
 	},
 	stop: {

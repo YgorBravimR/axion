@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -24,6 +25,7 @@ interface TaxTabProps {
 
 const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 	const router = useRouter()
+	const t = useTranslations("tax.monthlyDarf")
 	const { showToast } = useToast()
 	const [isRecomputing, startRecompute] = useTransition()
 	const [activeMonth, setActiveMonth] = useState<number | null>(null)
@@ -170,8 +172,7 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 				})}
 				{rows.length === 0 && (
 					<p className="border-bg-300 bg-bg-200 px-m-400 py-m-500 text-txt-300 rounded-md border border-dashed text-center">
-						Nenhuma linha de DARF para {year}. Clique em "Recalcular ano" após
-						registrar trades.
+						{t("noDarfLines", { year })}
 					</p>
 				)}
 			</div>

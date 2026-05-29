@@ -424,6 +424,7 @@ const openPosition = (
 		entryTimestamp: candle.timestamp,
 		entryDayKey: dayKey,
 		label: signal.label,
+		quality: signal.quality,
 	}
 }
 
@@ -468,6 +469,7 @@ const closeTrade = (
 		netPnlCents,
 		rMultiple,
 		label: position.label,
+		quality: position.quality,
 	}
 }
 
@@ -683,6 +685,7 @@ const handleTargetHit = (
 					? Math.round((grossPnlCents / updatedPosition.riskCents) * 100) / 100
 					: 0,
 			label: updatedPosition.label,
+			quality: updatedPosition.quality,
 		}
 
 		dayTrades.push(trade)

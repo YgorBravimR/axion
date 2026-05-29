@@ -29,6 +29,36 @@ const macdWmaConfigSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════════════════════
+// Hawks Quality Gates (all fields optional — engine fills defaults via
+// normalizeQualityGates). Must be listed here or Zod silently strips the
+// whole `qualityGates` object before the engine ever sees it.
+// ═══════════════════════════════════════════════════════════════════
+
+const tierThresholdsSchema = z.object({
+	AAA: z.number(),
+	AA: z.number(),
+	A: z.number(),
+})
+
+const qualityGatesConfigSchema = z.object({
+	srLevelBlock: z.boolean().optional(),
+	srLevelFavor: z.boolean().optional(),
+	keltnerOuterBlock: z.boolean().optional(),
+	keltnerInnerPenalty: z.boolean().optional(),
+	macdAlignmentScore: z.boolean().optional(),
+	aggressionMode: z.enum(["off", "original", "reversed"]).optional(),
+	volumeScore: z.boolean().optional(),
+	srBlockBufferBricks: z.number().int().min(0).max(50).optional(),
+	srFavorRangeBricks: z.number().int().min(0).max(50).optional(),
+	keltnerNearBricks: z.number().int().min(0).max(50).optional(),
+	aggressionThreshold: z.number().min(0).optional(),
+	volumeEmaPeriod: z.number().int().min(1).max(10000).optional(),
+	macdSlopeWindow: z.number().int().min(1).max(100).optional(),
+	tierThresholds: tierThresholdsSchema.optional(),
+	htfMaBlock: z.boolean().optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════
 // Hawks Triple-Screen Entry Config
 // ═══════════════════════════════════════════════════════════════════
 
@@ -36,9 +66,39 @@ const hawksTripleScreenConfigSchema = z.object({
 	ema27_60m_key: z.string().min(1),
 	ema55_60m_key: z.string().min(1),
 	ema27_15m_key: z.string().min(1),
+	ema55_15m_key: z.string().min(1),
 	macd_key: z.string().min(1),
+	topos_fundos_key: z.string().min(1),
+	prev_15m_open_key: z.string().min(1),
+	prev_15m_close_key: z.string().min(1),
+	prev_60m_open_key: z.string().min(1),
+	prev_60m_close_key: z.string().min(1),
+	brickSize5mPoints: z.number().positive().max(10000),
 	startTime: z.number().int().min(800).max(1200),
 	endTime: z.number().int().min(800).max(1800),
+	qualityGates: qualityGatesConfigSchema.optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════
+// User-served Entry Catalog (manual entries supplied by the trader)
+// ═══════════════════════════════════════════════════════════════════
+
+const userEntrySchema = z.object({
+	date: z.string().min(1),
+	brickIndex: z.number().int(),
+	direction: z.enum(["long", "short"]),
+	label: z.string().optional(),
+	notes: z.string().optional(),
+	// Dev/test catalog files carry these for the audit pipeline; pass-through
+	// so the engine/UI can read them without Zod stripping them.
+	expectedResult: z.string().nullable().optional(),
+	closingBrickPrice: z.number().nullable().optional(),
+})
+
+const userCatalogConfigSchema = z.object({
+	catalog: z.array(userEntrySchema),
+	startTime: z.number().int().min(0).max(2359).optional(),
+	endTime: z.number().int().min(0).max(2359).optional(),
 })
 
 // ═══════════════════════════════════════════════════════════════════
@@ -62,7 +122,7 @@ const breakevenConfigSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("on_partial") }),
 	z.object({
 		type: z.literal("on_pct_risk"),
-		triggerPct: z.number().min(1).max(100),
+		triggerPct: z.number().min(1).max(500),
 	}),
 ])
 
@@ -145,6 +205,7 @@ const strategyRecipeSchema = z.object({
 		"orb_test_3",
 		"orb_test_4",
 		"hawks_v0",
+		"hawks_user_catalog",
 		"custom",
 	]),
 	displayName: z.string().min(1),
@@ -157,6 +218,10 @@ const strategyRecipeSchema = z.object({
 		z.object({
 			type: z.literal("hawks_triple_screen"),
 			config: hawksTripleScreenConfigSchema,
+		}),
+		z.object({
+			type: z.literal("user_catalog"),
+			config: userCatalogConfigSchema,
 		}),
 	]),
 	stop: stopConfigSchema,

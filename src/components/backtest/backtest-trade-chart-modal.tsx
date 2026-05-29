@@ -113,17 +113,28 @@ const BacktestTradeChartContent = ({
 			timeframeId: source.timeframeId,
 			from,
 			to,
-		}).then((result) => {
-			if (cancelled) {
-				return
-			}
-			if (result.status === "success" && result.data) {
-				setCandles(result.data.candles)
-			} else {
-				setError(result.message || t("loadFailed"))
-			}
-			setLoading(false)
 		})
+			.then((result) => {
+				if (cancelled) {
+					return
+				}
+				if (result.status === "success" && result.data) {
+					setCandles(result.data.candles)
+				} else {
+					setError(result.message || t("loadFailed"))
+				}
+				setLoading(false)
+			})
+			.catch((err: unknown) => {
+				if (cancelled) {
+					return
+				}
+				// Defensive: server-action throws (auth redirect → HTML response)
+				// land here so the modal renders an error state instead of
+				// staying stuck in loading.
+				setError(err instanceof Error ? err.message : t("loadFailed"))
+				setLoading(false)
+			})
 
 		return () => {
 			cancelled = true

@@ -1,11 +1,16 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { hhmmToTimeString, timeStringToHhmm } from "@/lib/backtest/time-utils"
-import type { StrategyRecipe, HawksTripleScreenConfig } from "@/types/backtest"
+import type {
+	StrategyRecipe,
+	HawksTripleScreenConfig,
+	QualityGatesConfig,
+} from "@/types/backtest"
+import { HawksQualityControls } from "./hawks-quality-controls"
 
 interface HawksEntrySectionProps {
 	recipe: StrategyRecipe
@@ -17,17 +22,26 @@ const HawksEntrySection = memo(
 		const t = useTranslations("backtest.hawks")
 		const tBuilder = useTranslations("backtest.builder")
 
-		if (recipe.entry.type !== "hawks_triple_screen") {
-			return null
-		}
-		const config = recipe.entry.config as HawksTripleScreenConfig
+		// Narrow defensively so hooks below run unconditionally. Parent guards
+		// on entry.type already, but Rules of Hooks requires a stable hook
+		// call order regardless of an early return.
+		const config: HawksTripleScreenConfig | null =
+			recipe.entry.type === "hawks_triple_screen"
+				? (recipe.entry.config as HawksTripleScreenConfig)
+				: null
 
+		// Indicator JSONB key names are a stable contract between the candle
+		// importer and the engine — defaults are set by the preset and are not
+		// user-editable. We still mirror them onto `requiredIndicators` so the
+		// engine receives the same shape it always has.
 		const update = (
 			field: keyof HawksTripleScreenConfig,
 			value: string | number
 		) => {
+			if (!config) {
+				return
+			}
 			const newConfig = { ...config, [field]: value }
-			// Sync requiredIndicators — Hawks reads pre-computed EMAs from JSONB
 			const requiredIndicators = [
 				newConfig.ema27_60m_key,
 				newConfig.ema55_60m_key,
@@ -39,6 +53,27 @@ const HawksEntrySection = memo(
 				entry: { type: "hawks_triple_screen", config: newConfig },
 				requiredIndicators,
 			})
+		}
+
+		const handleQualityChange = useCallback(
+			(nextGates: QualityGatesConfig) => {
+				if (recipe.entry.type !== "hawks_triple_screen") {
+					return
+				}
+				const currentConfig = recipe.entry.config as HawksTripleScreenConfig
+				onRecipeChange({
+					...recipe,
+					entry: {
+						type: "hawks_triple_screen",
+						config: { ...currentConfig, qualityGates: nextGates },
+					},
+				})
+			},
+			[recipe, onRecipeChange]
+		)
+
+		if (!config) {
+			return null
 		}
 
 		return (
@@ -81,59 +116,10 @@ const HawksEntrySection = memo(
 					</div>
 				</div>
 
-				{/* Indicator keys */}
-				<div className="space-y-s-200">
-					<p className="text-small text-txt-200 font-medium">
-						{t("indicatorKeys")}
-					</p>
-					<p className="text-small text-txt-300">{t("indicatorKeysDesc")}</p>
-					<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-4">
-						<div className="space-y-s-200">
-							<Label id="hawks-ema27-60m-label" htmlFor="hawks-ema27-60m">
-								{t("ema27_60m_key")}
-							</Label>
-							<Input
-								id="hawks-ema27-60m"
-								value={config.ema27_60m_key}
-								onChange={(e) => update("ema27_60m_key", e.target.value)}
-								className="text-tiny font-mono"
-							/>
-						</div>
-						<div className="space-y-s-200">
-							<Label id="hawks-ema55-60m-label" htmlFor="hawks-ema55-60m">
-								{t("ema55_60m_key")}
-							</Label>
-							<Input
-								id="hawks-ema55-60m"
-								value={config.ema55_60m_key}
-								onChange={(e) => update("ema55_60m_key", e.target.value)}
-								className="text-tiny font-mono"
-							/>
-						</div>
-						<div className="space-y-s-200">
-							<Label id="hawks-ema27-15m-label" htmlFor="hawks-ema27-15m">
-								{t("ema27_15m_key")}
-							</Label>
-							<Input
-								id="hawks-ema27-15m"
-								value={config.ema27_15m_key}
-								onChange={(e) => update("ema27_15m_key", e.target.value)}
-								className="text-tiny font-mono"
-							/>
-						</div>
-						<div className="space-y-s-200">
-							<Label id="hawks-macd-key-label" htmlFor="hawks-macd-key">
-								{t("macd_key")}
-							</Label>
-							<Input
-								id="hawks-macd-key"
-								value={config.macd_key}
-								onChange={(e) => update("macd_key", e.target.value)}
-								className="text-tiny font-mono"
-							/>
-						</div>
-					</div>
-				</div>
+				<HawksQualityControls
+					qualityGates={config.qualityGates}
+					onChange={handleQualityChange}
+				/>
 			</div>
 		)
 	}

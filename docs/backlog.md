@@ -53,7 +53,8 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
   2. **15m/60m gate transition windows.** `gateS` / `gateL` flip binary on EMA crossovers. Trades catalogged in transition zones (e.g., 2026-03-19 16:00 area, 2026-03-25 11:00 area) miss because the gate isn't on at the catalog brick.
   3. **Per-day volatility calibration.** Tight days (NR4/NR7) may need a different retracement threshold than expansion days.
   4. **Synthetic test fixtures need rebuild.** `src/__tests__/lib/backtest/hawks-engine.test.ts` has 3 `describe.skip` tests (re-arm pair + LONG smoke) that were written against pre-stay-armed semantics. Rebuild with brick close + cooldown awareness.
-- **Done when**: Reproduction rate >75% with extras <60 across the 20-day catalog. Skipped test fixtures rebuilt.
+  5. **Fibonacci-based retracement & extension layer.** Current wave detector uses a single `retracementMin` brick threshold for wave-2. Try replacing the binary threshold with a Fibonacci band: accept wave-2 entries whose retracement falls within `[0.382, 0.618]` of wave-1's range, and tag projected targets at `1.272 / 1.618 / 2.618` extensions. Hypothesis: per-day volatility calibration (#3 above) may collapse into "the right Fib ratio for this day's brick size" rather than a per-day-tuned constant. Plumb the Fib levels through the engine + the inspector overlay so audit traces can show where the catalog entry lands on the Fib grid.
+- **Done when**: Reproduction rate >75% with extras <60 across the 20-day catalog. Skipped test fixtures rebuilt. Fib-band experiment has been tried and either kept (with measured lift) or recorded as ruled-out with the audit numbers.
 
 ### Hawks engine: 10-day verification and multi-trade open questions
 
@@ -104,6 +105,20 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: 2026-05-27 — Hawks 7-step plan Steps 4 & 5 decision: MACD, VWAP, HTF pivots are quality multipliers, not gates.
 - **What + Why**: Three indicator layers are verified correct in DB but not yet used by the engine: (a) 5m MACD (col 17); (b) VWAP D/M/S (cols 9/10/11); (c) 15m/60m TOPOS E FUNDOS pivots (not loaded into DB). When all three align with entry direction the trade is AAA. Two: AA. One: A. This classification should be stored on `BacktestTrade` and surfaced in the trade-chart modal and day breakdown. Loader also needs to project 15m/60m pivot values onto 5m bricks (currently TOPOS E FUNDOS columns in 15m/60m CSVs are read by the pivot probe but not ingested).
 - **Date filed**: 2026-05-27.
+
+### User-created saved catalogs for `hawks_user_catalog` (DB-backed)
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-05-29 — Ygor request after shipping the bundled-catalog dropdown (`src/app/actions/user-catalog-bundles.ts`). "User can create catalogs and they keep saved."
+- **What + Why**: The user-catalog backtest mode now lets traders pick from the 20 dev/test fixtures in `data/hawks/user-entries/*.json`. Next step: let the user **save their own catalogs** so they survive across sessions and aren't lost the moment they refresh the page. Each catalog = `{ name, description?, entries: UserEntry[] }` keyed to the logged-in user.
+- **Fix shape**:
+  1. New table `user_catalogs` (id, userId, name, description, entries jsonb, createdAt, updatedAt). Drizzle migration via `pnpm db:generate`.
+  2. Server actions in `src/app/actions/user-catalog-bundles.ts`: `listUserCatalogs()`, `saveUserCatalog(name, entries)`, `deleteUserCatalog(id)`. Merge user catalogs into the same `CatalogBundle[]` response so the UI dropdown picks them up automatically — current shape was designed for this extension.
+  3. In `user-catalog-entry-section.tsx`: add a "Save current catalog as…" button (input + save). Group bundled vs. user-saved in the dropdown via `SelectGroup`.
+  4. Optional: import/export — let traders dump a saved catalog back to JSON and re-import on another machine.
+- **Out of scope**: Catalog sharing across users; per-catalog versioning; conflict resolution for concurrent edits.
+- **Date filed**: 2026-05-29.
 
 ### Emit `entryBrickIndex` / `exitBrickIndex` from the backtest engine — drop lossy time→brick reconstruction in the inspector
 

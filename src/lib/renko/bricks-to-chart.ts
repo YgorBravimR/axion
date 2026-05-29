@@ -1,0 +1,224 @@
+import type { CandlestickData, UTCTimestamp } from "lightweight-charts"
+import type { RenkoBrick } from "./brick-generator"
+
+// Minimal shape needed to render DB rows as bricks. Both `InspectorCandleRow`
+// (typed in src/types/inspector.ts) and the overview-window rows satisfy this.
+interface CandleRowLike {
+	readonly timestamp: string | Date
+	readonly open: number
+	readonly high: number
+	readonly low: number
+	readonly close: number
+}
+
+interface BrickChartSeries {
+	readonly data: CandlestickData<UTCTimestamp>[]
+	readonly times: number[]
+}
+
+/**
+ * Convert a Renko brick stream into the candlestick-series shape Lightweight
+ * Charts expects. Each brick becomes a synthetic OHLC where the body fills
+ * the full brick range and the wicks collapse to zero (`high = max(open,
+ * close)`, `low = min(open, close)`). The chart's `time` axis is the brick
+ * index, not the brick close timestamp — that lets us render a non-uniform
+ * Renko stream as if it were uniformly-spaced bars while still preserving
+ * the chronological order. The parallel `times[]` array maps each index
+ * back to the brick's `closeTimestamp` epoch so cross-TF sync can compute
+ * containing-brick relationships.
+ */
+const bricksToCandleSeries = (
+	bricks: readonly RenkoBrick[]
+): BrickChartSeries => {
+	const data: CandlestickData<UTCTimestamp>[] = []
+	const times: number[] = []
+	for (let i = 0; i < bricks.length; i++) {
+		const b = bricks[i]!
+		const high = Math.max(b.open, b.close)
+		const low = Math.min(b.open, b.close)
+		data.push({
+			time: i as UTCTimestamp,
+			open: b.open,
+			high,
+			low,
+			close: b.close,
+		})
+		times.push(b.closeTimestamp.getTime())
+	}
+	return { data, times }
+}
+
+/**
+ * DB rows in `price_candles` ARE Renko bricks already (the loader persists
+ * one row per ProfitChart-painted brick with real intra-brick O/H/L/C). When
+ * we want to render those rows on a chart, do NOT pipe them through
+ * `generateRenkoBricks` + `bricksToCandleSeries` — that synthesizer collapses
+ * the high/low to `max(open,close)` / `min(open,close)` (wickless bricks) and
+ * may produce a different brick count if `sizeR` ≠ the brick size on disk.
+ *
+ * This native conversion preserves the real wicks and emits exactly one chart
+ * candle per DB row, with the brick index as the x-axis time.
+ */
+const candlesToBrickSeriesNative = (
+	candles: readonly CandleRowLike[]
+): BrickChartSeries => {
+	const data: CandlestickData<UTCTimestamp>[] = []
+	const times: number[] = []
+	for (let i = 0; i < candles.length; i++) {
+		const c = candles[i]!
+		data.push({
+			time: i as UTCTimestamp,
+			open: c.open,
+			high: c.high,
+			low: c.low,
+			close: c.close,
+		})
+		times.push(
+			c.timestamp instanceof Date
+				? c.timestamp.getTime()
+				: new Date(c.timestamp).getTime()
+		)
+	}
+	return { data, times }
+}
+
+interface SyncMapEntry {
+	readonly idx15m: number | null
+	readonly idx60m: number | null
+}
+
+/**
+ * Build a `5mBrickIndex → { 15mBrickIndex, 60mBrickIndex }` lookup so the
+ * orchestrator can drive 15m/60m crosshairs from the 5m crosshair without
+ * a search at every move event. For each 5m brick's `closeTimestamp`, find
+ * the 15m/60m brick whose `[openTs, closeTs)` contains that moment — in
+ * practice: the smallest index whose `closeTimestamp >= 5m.closeTimestamp`,
+ * via binary search on the parallel `times[]` array. Returns `null` for a
+ * target chart when the 5m brick falls before its first brick or after its
+ * last (boundary case, handled by the caller as "don't move crosshair").
+ */
+const buildCrosshairSyncMap = (
+	bricks5mTimes: readonly number[],
+	bricks15mTimes: readonly number[],
+	bricks60mTimes: readonly number[]
+): Map<number, SyncMapEntry> => {
+	const findContaining = (
+		targetMs: number,
+		arr: readonly number[]
+	): number | null => {
+		let lo = 0
+		let hi = arr.length - 1
+		let result: number | null = null
+		while (lo <= hi) {
+			const mid = (lo + hi) >>> 1
+			if (arr[mid]! >= targetMs) {
+				result = mid
+				hi = mid - 1
+			} else {
+				lo = mid + 1
+			}
+		}
+		return result
+	}
+
+	const map = new Map<number, SyncMapEntry>()
+	for (let i = 0; i < bricks5mTimes.length; i++) {
+		const t = bricks5mTimes[i]!
+		map.set(i, {
+			idx15m: findContaining(t, bricks15mTimes),
+			idx60m: findContaining(t, bricks60mTimes),
+		})
+	}
+	return map
+}
+
+/**
+ * Find the brick index whose `closeTimestamp` is closest to (or equal to)
+ * the given target epoch. Used to map trade entry/exit wall-clock times
+ * onto brick indices for marker placement and price-line endpoints.
+ */
+const findBrickIndexForTime = (
+	bricksTimes: readonly number[],
+	targetMs: number
+): number => {
+	if (bricksTimes.length === 0) {
+		return 0
+	}
+	let bestIdx = 0
+	let bestDelta = Number.POSITIVE_INFINITY
+	for (let i = 0; i < bricksTimes.length; i++) {
+		const delta = Math.abs(bricksTimes[i]! - targetMs)
+		if (delta < bestDelta) {
+			bestDelta = delta
+			bestIdx = i
+		}
+	}
+	return bestIdx
+}
+
+/**
+ * Look up an indicator value series aligned to brick indices. For each
+ * brick, finds the candle whose timestamp matches the brick's
+ * `closeTimestamp` and returns its `indicators[key]` value. Returns `null`
+ * for bricks whose candle is missing the key (the chart skips `null`s).
+ *
+ * Used to overlay precomputed EMAs / VWAP / MACD line series on top of the
+ * Renko bricks. Indicator values come from the candle JSONB populated by
+ * the CSV ingest pipeline — no client-side TA math.
+ */
+const indicatorValuesByBrickIndex = (
+	bricksTimes: readonly number[],
+	candles: readonly {
+		readonly timestamp: string
+		readonly indicators: Record<string, number>
+	}[],
+	key: string
+): Array<{ time: UTCTimestamp; value: number }> => {
+	if (candles.length === 0 || bricksTimes.length === 0) {
+		return []
+	}
+	const candleByMs = new Map<number, Record<string, number>>()
+	for (const c of candles) {
+		candleByMs.set(new Date(c.timestamp).getTime(), c.indicators)
+	}
+	const sortedCandleTimes = Array.from(candleByMs.keys()).sort((a, b) => a - b)
+
+	const findFloor = (target: number): number | null => {
+		let lo = 0
+		let hi = sortedCandleTimes.length - 1
+		let result: number | null = null
+		while (lo <= hi) {
+			const mid = (lo + hi) >>> 1
+			if (sortedCandleTimes[mid]! <= target) {
+				result = sortedCandleTimes[mid]!
+				lo = mid + 1
+			} else {
+				hi = mid - 1
+			}
+		}
+		return result
+	}
+
+	const out: Array<{ time: UTCTimestamp; value: number }> = []
+	for (let i = 0; i < bricksTimes.length; i++) {
+		const candleMs = findFloor(bricksTimes[i]!)
+		if (candleMs === null) {
+			continue
+		}
+		const indicators = candleByMs.get(candleMs)
+		const v = indicators?.[key]
+		if (typeof v === "number" && Number.isFinite(v)) {
+			out.push({ time: i as UTCTimestamp, value: v })
+		}
+	}
+	return out
+}
+
+export type { BrickChartSeries, CandleRowLike, SyncMapEntry }
+export {
+	bricksToCandleSeries,
+	buildCrosshairSyncMap,
+	candlesToBrickSeriesNative,
+	findBrickIndexForTime,
+	indicatorValuesByBrickIndex,
+}

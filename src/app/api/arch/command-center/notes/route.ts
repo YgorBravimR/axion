@@ -23,7 +23,7 @@ const GET = async (request: NextRequest) => {
 		return authResult.response
 	}
 
-	const { userId, accountId } = authResult.auth
+	const { accountId } = authResult.auth
 
 	try {
 		const dateParam = request.nextUrl.searchParams.get("date")
@@ -75,7 +75,7 @@ const POST = async (request: NextRequest) => {
 		return authResult.response
 	}
 
-	const { userId, accountId } = authResult.auth
+	const { accountId } = authResult.auth
 
 	try {
 		const body = await request.json()

@@ -11,6 +11,7 @@ const publicPaths = [
 	"/verify-email",
 	"/api/auth",
 	"/api/arch",
+	"/api/dev",
 ]
 
 // Supported locales

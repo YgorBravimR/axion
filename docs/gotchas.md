@@ -158,11 +158,12 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ### `"use server"` files can only export async functions or values
 
-- **What**: Re-exporting types from a `"use server"` file rewrites them as **runtime refs** at build time — the types vanish and you get cryptic build errors. Type aliases, interfaces, enums, classes, sync functions, barrel re-exports, and sync defaults are all forbidden.
-- **What to do**: Move type re-exports to a sibling `*.types.ts` file. Server action files contain async functions only.
-- **Enforced by**: `axion/enforce-server-action-async-only` (error).
+- **What**: Re-exporting types from a `"use server"` file rewrites them as **runtime refs** at build time — the types vanish and you get cryptic build errors. Type aliases, interfaces, enums, classes, sync functions, barrel re-exports, and sync defaults are all forbidden. Specifically: `export type { Foo }` (no `from` clause) on a locally-declared interface crashes at runtime as `ReferenceError: Foo is not defined` inside the Next.js server-actions loader — page returns 500.
+- **What to do**: Move all types to a sibling file (e.g., `inspector-data.ts` → `src/types/inspector.ts`) and `import type` them in the action file. **Never declare an interface or type alias in a `"use server"` file**, even if you don't export it — keep server-action files purely as async function declarations.
+- **Safe form for re-exports**: `export type { Foo } from "./bar"` (with `from`) is the only typed export the rule accepts, because the `from` clause guarantees full TS erasure.
+- **Enforced by**: `axion/enforce-server-action-async-only` (error). Rule was widened on 2026-05-26 to also reject `export type { Foo }` without a `from` clause, after that exact pattern blew up `/backtest` in dev (see `docs/postMorten/backend.md` BUG-2026-05-26-1).
 - **Source**: `eslint-rules/enforce-server-action-async-only.mjs`.
-- **Date logged**: 2026-05-07.
+- **Date logged**: 2026-05-07. Updated 2026-05-26.
 
 ### Renko-native pipeline — multiple R per ISO week, hard reset at boundary
 
@@ -271,12 +272,53 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `src/app/actions/candle-import.ts`, `src/components/settings/hawks-import-section.tsx`.
 - **Date logged**: 2026-05-14.
 
+### Hawks loader needs bidirectional cross-TF forward-fill — not just 15m → 60m
+
+- **What**: The Hawks engine reads required indicators from a _single_ candle row's JSONB regardless of which timeframe the user selected in the backtest UI. If you run a 15m backtest, the 15m row must already carry `mme27_60m` / `mme55_60m`; if you run a 60m backtest, the 60m row must already carry `mme27_15m` / `mme55_15m`. The loader originally only forward-filled 15m → 60m, on the assumption that Hawks v0 always ran on 60m. When the asset/timeframe dropdown started exposing 15m as a runnable option (2026-05-26), every 15m backtest blew up with `indicator "mme27_60m" not found in candle data`. The 3 earliest 15m rows that precede the first 60m candle are unfixable by forward-fill — the engine will still throw if those bars fall inside the selected range.
+- **What to do**: `scripts/load-hawks-candles.ts` now does both directions (15m → 60m **and** 60m → 15m). Any new strategy that adds another timeframe to the dropdown has to extend the forward-fill matrix accordingly. The 5m CSV is pre-joined by ProfitChart so it ships complete — only the per-timeframe CSVs need projection.
+- **Source**: `scripts/load-hawks-candles.ts` (the two `findFloorIndex` passes after parsing).
+- **Date logged**: 2026-05-26.
+
+### Indicator keys must use the same naked slug across timeframes (`macd`, not `macd_15m`)
+
+- **What**: The engine config has a single `macd_key: "macd"` field. It reads `candle.indicators.macd` on whichever timeframe it iterates, treating that as "the local timeframe's MACD." Initially the loader stored 5m and 60m under `"macd"` but 15m under `"macd_15m"` — so 15m backtests failed with `indicator "macd" not found in candle data`. There's a real product question lurking: which MACD does Pedro's HAWKS method actually use? On a 60m run, `candle.indicators.macd` resolves to the 60m MACD; if Pedro's gate specifically requires the 15m MACD even on a 60m run, the engine config should be `macd_key: "macd_15m"` and _all_ rows should also forward-fill that key. Defer that decision to the engine review — for now keys are consistent.
+- **What to do**: All loader entries write the local MACD under the naked key `"macd"`. If you ever introduce a TF-specific MACD requirement (e.g. "always read the 15m MACD regardless of run TF"), update the engine config to a TF-qualified slug and add it to the forward-fill matrix on every timeframe that might be iterated.
+- **Source**: `scripts/load-hawks-candles.ts` (the 15m FILES entry now writes `key: "macd"`); backfill ran 2026-05-26 to copy `macd_15m` → `macd` on existing rows.
+- **Date logged**: 2026-05-26.
+
+### Importing `price_candles` without upserting `price_data_versions` hides the data from the UI
+
+- **What**: The backtest page's asset/timeframe dropdown reads from `price_data_versions` (the catalog table), not from `price_candles` directly. If a script bulk-inserts candles but skips the catalog upsert, the dropdown stays empty even though `price_candles` is fully populated — the data is silently invisible to the UI. `scripts/load-hawks-candles.ts` had this gap until 2026-05-26: it wrote 6,467 candle rows but `price_data_versions` stayed empty, so `getAssetsWithPriceData()` in `src/app/actions/candle-query.ts` returned `[]`.
+- **What to do**: Any code path that bulk-inserts into `price_candles` must also upsert `price_data_versions` (unique on `(asset_id, timeframe_id)`) with the row count, incremented `version`, and `last_imported_at = NOW()`. The catalog row is the contract between data layer and UI. If you ever see "I imported data but the dropdown is empty," check this table first.
+- **Source**: `scripts/load-hawks-candles.ts` (upsert at end of per-timeframe loop), `src/app/actions/candle-query.ts:102` (`getAssetsWithPriceData`).
+- **Date logged**: 2026-05-26.
+
+### ProfitChart 15m/60m CSV exports contain literal duplicate brick rows
+
+- **What**: The 15m and 60m Renko CSVs exported from ProfitChart (2026-05-28 batch onward) emit the same brick row twice in ~3.7% (15m) / ~1.3% (60m) of cases, concentrated around session opens in the April window. Duplicates are byte-identical: same `Data` timestamp, same `INDEX DO CANDLE`, same OHLC, same indicator values. The 5m export is clean. Naive insert hits `price_candles_unique_idx` (`asset_id, timeframe_id, timestamp, candle_index`).
+- **What to do**: `scripts/load-hawks-candles.ts` dedupes by `(timestamp, candle_index)` first-wins after sorting. Do **not** drop the unique index — it protects against real corruption. Do **not** dedupe at the CSV level (the source-of-truth file should match what ProfitChart exported). The loader logs e.g. `15m: dropped 202 duplicate (timestamp, candle_index) rows` so the count is visible per ingest.
+- **Source**: `scripts/load-hawks-candles.ts` (the `seen` set after the per-file sort).
+- **Date logged**: 2026-05-28.
+
 ### postgres-js + `jsonb`: never pre-stringify the value, pass the object
 
 - **What**: With `postgres-js`, binding `${JSON.stringify(obj)}` to a `jsonb` column does **not** insert a JSON object — it inserts a JSON **string scalar** (the literal `"{...}"` with the braces escaped). `->`/`->>`/`jsonb_typeof` then return `null` / `'string'` and every downstream consumer that expects keys breaks silently. Adding `::jsonb` does not help because the param is already a JSON-encoded string and the cast just parses it as a string scalar. The ingest script for Hawks indicators hit this and stored 300 candles' worth of indicators as opaque strings before we noticed.
 - **What to do**: Pass the JS object directly: `${obj as never}`. postgres-js encodes it as `jsonb` on the wire in one pass. The `as never` cast silences TS — the driver's tagged-template types don't model `jsonb` parameters. If a Neon `neon()` client is also in play, the same rule applies (the HTTP driver also auto-encodes objects). To verify after an insert: `SELECT jsonb_typeof(col) FROM …` should return `'object'`, not `'string'`.
 - **Source**: `scripts/load-hawks-candles.ts` (the `${r.indicators as never}` parameter).
 - **Date logged**: 2026-05-20.
+
+---
+
+## Lightweight Charts
+
+### `setData` asserts strictly ascending times — same-time consecutive points crash with "data must be asc ordered by time"
+
+- **What**: Lightweight Charts v5's `series.setData(points)` checks `points[i].time > points[i-1].time` and throws `Assertion failed: data must be asc ordered by time, index=N, time=T, prev time=T` when two adjacent points share a time. The error boundary catches it but the affected chart fails to mount.
+- **Why it triggered for backtest trades**: The inspector reconstructs `entryBrickIndex`/`exitBrickIndex` from `BacktestTrade.entryTime`/`exitTime` (candle timestamps) via `findBrickIndexForTime` — a nearest-time lookup on `bricks.closeTimestamp[]`. Many 5m candles produce **zero** Renko bricks, so two distinct trade timestamps can nearest-collapse onto the same brick index. **Methodologically this never happens** in Hawks (entry brick ≠ exit brick is guaranteed by the strategy rules) — the collapse is a lossy timestamp→brick reconstruction artifact, not a real same-brick trade.
+- **What to do (immediate)**: Whenever you push a multi-point segment to a `LineSeries`, guard with `if (b > a)` and skip the series entirely if `a === b` — the entry/exit markers still pinpoint the trade. Same logic applies to candle/area data: dedupe or aggregate input so each `time` is unique.
+- **What to do (proper)**: Have the engine emit `entryBrickIndex` / `exitBrickIndex` directly on `BacktestTrade` so consumers don't reconstruct from timestamps. Tracked in `docs/backlog.md` → "Backtest / Inspector".
+- **Where it bit us**: `src/components/backtest/inspector/backtest-overview-chart.tsx` (per-trade overlay lines), `src/components/backtest/inspector/renko-pane.tsx` (per-trade entry-price segment). Defensive guard added 2026-05-26. Post-mortem: BUG-2026-05-26-2 in `docs/postMorten/frontend.md`.
+- **Date logged**: 2026-05-26.
 
 ---
 
@@ -525,6 +567,57 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What**: When mocking `db.update(table).set(...).where(...).returning()`, a common mistake is `.where: vi.fn().mockResolvedValue({ returning: ... })`. This breaks because `.where()` is called synchronously by Drizzle and must return a chainable object — not a Promise. The mock evaluates to `undefined.returning is not a function`.
 - **What to do**: `where: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([row]) })`. `mockReturnValue` (sync), not `mockResolvedValue` (async). See `src/__tests__/actions/executions.test.ts:161-165` for the canonical chain.
 - **Date logged**: 2026-05-22.
+
+## Hawks Backtest Engine
+
+### Hawks: TOPOS E FUNDOS indicator confirmation lag (5m vs. higher-TF differ)
+
+- **What**: The ProfitChart TOPOS E FUNDOS indicator does **not** paint a pivot on the brick where the reversal begins. On the **5m chart**, it waits for **2 confirming bricks** in the opposite direction before painting the pivot. The painted pivot's _value_ is the prior extreme — `brick.high` for a TOPO, `brick.low` for a FUNDO — not the value of the confirming brick. On the **15m and 60m charts**, only **1 confirming brick** is required.
+- **What to do**: In the entry engine, never gate a real-time SHORT entry on the 5m indicator marking a TOPO MENOR — by the time it paints, the trigger brick has already formed 2 bricks ago. Instead, use the indicator for the structural anchors (TOPO MAIOR, FUNDO) and detect TOPO MENOR in real time via `brick.high < topoMaior`. The engine v0.4+ already does this. Classification rule: `pivot[N] > pivot[N-1] ⇒ TOPO`, else `FUNDO`.
+- **Source**: `src/lib/backtest/modules/entry/hawks-triple-screen.ts`; Hawks improvement plan session 2026-05-27.
+- **Date logged**: 2026-05-27.
+
+### Hawks: `price_candles` loader used `Number()` instead of `parseBrNumber()` for OHLC columns
+
+- **What**: `scripts/load-hawks-candles.ts` parsed OHLC columns with bare `Number()`, which returns `NaN` for BR-format numbers like `"202378,06"` (comma as decimal separator). `parseRow` correctly returns `null` for `NaN` rows, so they are silently dropped — no error, no warning, just missing bricks. Affected April 13 and April 14 2026 (213 rows), which happened to be weeks where WIN prices had sub-integer Renko brick prices.
+- **What to do**: Always use `parseBrNumber()` for any column in the 5m/15m/60m CSVs, including OHLC. Fixed 2026-05-27 — the four `Number(cols[1..4])` calls were replaced with `parseBrNumber()`.
+- **Source**: `scripts/load-hawks-candles.ts`; Hawks Step-1 verification session 2026-05-27.
+- **Date logged**: 2026-05-27.
+
+### Hawks: `candle_index = NULL` disabled the unique constraint and made same-millisecond ordering non-deterministic
+
+- **What**: The `price_candles` unique index is on `(asset_id, timeframe_id, timestamp, candle_index)`. With `candle_index = NULL` for all rows (the pre-fix loader didn't set it), PostgreSQL treats every NULL as distinct — so the unique constraint was effectively inert. At high-velocity session openings, multiple Renko bricks form within the same millisecond. Without a stable secondary sort key, `ORDER BY timestamp` returned those bricks in non-deterministic heap order, causing the diff probe to report spurious OHLC mismatches on the same-millisecond cluster.
+- **What to do**: The CSV column `CANDLE` (index 12) is ProfitChart's per-day 1-indexed brick counter and maps directly to `candle_index`. The loader now writes it on every INSERT. Fixed 2026-05-27 — all queries use `ORDER BY timestamp, candle_index NULLS LAST`.
+- **Source**: `scripts/load-hawks-candles.ts`; Hawks Step-1 verification session 2026-05-27.
+- **Date logged**: 2026-05-27.
+
+### Hawks: 5m CSV has no PREV_15M/PREV_60M projection columns — verification is algorithmic
+
+- **What**: The ProfitChart 5m CSV export does **not** include `PREV_15M_OPEN`, `PREV_15M_CLOSE`, `PREV_60M_OPEN`, `PREV_60M_CLOSE` columns. The projection (what brick was most-recently closed on the higher TF when each 5m brick formed) is computed entirely inside `scripts/load-hawks-candles.ts` using a binary-search floor over the sorted 15m/60m brick arrays. There is no ground-truth column in the exported CSV to diff against.
+- **What to do**: Verify projection correctness by re-running the same algorithm from the 15m/60m CSV source in `scripts/diff-projection.ts` and comparing against what's stored in `price_candles.indicators`. If the two independent runs of the same algorithm agree, the DB values are correct. The engine only reads `prev_15m_open/close` and `prev_60m_open/close` (not H/L) — projecting H/L is not needed.
+- **Source**: `scripts/diff-projection.ts`; Hawks Step-3 verification session 2026-05-27.
+- **Date logged**: 2026-05-27.
+
+### Hawks: 15m/60m TOPOS E FUNDOS pivots are quality multipliers, not gates (Step 5 decision)
+
+- **What**: The Hawks triple-screen EMA gate (`prev_15m_open/close` + `mme27/55_15m`, same for 60m) already provides HTF trend confirmation. Adding 15m/60m pivot alignment as an additional gate would require: (a) adding `{ index: 8, key: "topos_fundos" }` to the 15m/60m `indicatorColumns` in the loader, (b) projecting the most-recent HTF pivot value onto each 5m brick. This is NOT done currently and is NOT needed for the base engine to fire T1–T4.
+- **What to do**: Reserve HTF pivot alignment for AAA/AA/A tier-tagging in a future revision (Step 8+). Do NOT add `topos_fundos` to `requiredIndicators`. If you want to add it as a quality signal, load it by adding col 8 to 15m/60m `indicatorColumns` and project it similarly to `prev_15m_open`.
+- **Source**: `scripts/check-htf-pivots.ts`; Hawks Step-5 verification session 2026-05-27.
+- **Date logged**: 2026-05-27.
+
+### Hawks: ProfitChart TOPOS E FUNDOS can paint consecutive same-direction pivots (not a data error)
+
+- **What**: The indicator does NOT require strict TOPO → FUNDO → TOPO alternation. When the market makes a new higher high (or lower low) confirmed by 1 brick on 15m/60m (2 bricks on 5m), the indicator paints a new pivot in the same direction, superseding the previous one. Example: 2026-04-15 15m shows TOPO at 201860 followed immediately by TOPO at 203495 — valid, price made a higher high.
+- **What to do**: When tracking structural anchors in the engine, always use the **most recently painted** pivot value as the current anchor, not just the first one after a direction change. Strict alternation checks in verification probes should log these as "same-dir updates" (info), not failures.
+- **Source**: `scripts/check-htf-pivots.ts`; Hawks Step-5 verification session 2026-05-27.
+- **Date logged**: 2026-05-27.
+
+### Neon: `DATE()` in a SELECT returns a JS Date object — use `::text` cast to get `YYYY-MM-DD`
+
+- **What**: When the Neon HTTP driver returns a PostgreSQL `date` column value, it materializes it as a JavaScript `Date` object (midnight UTC). Calling `String(row.brt_day).slice(0, 10)` yields a locale-formatted string like `"Sun Mar 22"` instead of `"2026-03-22"`, silently breaking any downstream `new Date("${brtDay}T03:00:00.000Z")` call (resulting in `Invalid time value` at `Date.toISOString()`).
+- **What to do**: Always add `::text` when selecting a `date` expression: `DATE(ts AT TIME ZONE 'America/Sao_Paulo')::text AS brt_day`. The returned value is then a plain `"YYYY-MM-DD"` string.
+- **Source**: `scripts/diff-projection.ts`; Hawks Step-3 verification session 2026-05-27.
+- **Date logged**: 2026-05-27.
 
 ### Agent isolation: `isolation: "worktree"` does not always isolate commits to the worktree branch
 

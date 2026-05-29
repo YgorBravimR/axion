@@ -87,8 +87,19 @@ const rule = {
 				// Re-export form (no declaration): `export { ... }` /
 				// `export type { ... }` / `export { ... } from "./x"`.
 				if (!node.declaration) {
-					// `export type { Foo } from "./bar"` — typed re-export, safe.
 					if (node.exportKind === "type") {
+						// `export type { Foo } from "./bar"` — re-export from another
+						// module, fully erased by TS, safe.
+						if (node.source) {
+							return
+						}
+						// `export type { Foo }` (no `from`) — local typed re-export
+						// of an in-file interface/alias. The Next.js server-action
+						// transform still references the identifier at runtime and
+						// crashes with `ReferenceError: Foo is not defined` when the
+						// actions loader evaluates the manifest. Move the type to a
+						// sibling `*.types.ts` and re-export with `from`.
+						context.report({ node, messageId: "typeExport" })
 						return
 					}
 					// `export { foo, bar }` — filter type-only specifiers
