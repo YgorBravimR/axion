@@ -596,63 +596,61 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					</p>
 
 					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
-						{/* Strategy */}
+						{/* Load Preset — lead selector. Picking a user_catalog preset
+						    blocks every other Setup field; catalog is canonical. */}
 						<div className="space-y-s-200">
 							<label
-								htmlFor="optimize-strategy"
+								htmlFor="optimize-preset"
 								className="text-small text-txt-200 font-medium"
 							>
-								{tBacktest("builder.strategy")}
+								{tBacktest("builder.loadPreset")}
 							</label>
-							<Select
-								value={recipe.entry.type}
-								onValueChange={handleStrategyChange}
-							>
-								<SelectTrigger id="optimize-strategy">
-									<SelectValue />
+							<Select onValueChange={handlePresetChange}>
+								<SelectTrigger id="optimize-preset">
+									<SelectValue placeholder={tBacktest("config.selectPreset")} />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="orb_breakout">
-										{tBacktest("orb.name")}
-									</SelectItem>
-									<SelectItem value="macd_wma_alignment">
-										{tBacktest("dezk.name")}
-									</SelectItem>
-									<SelectItem value="hawks_triple_screen">
-										{tBacktest("hawks.name")}
-									</SelectItem>
-									<SelectItem value="user_catalog">
-										{tBacktest("userCatalog.name")}
-									</SelectItem>
+									{ALL_PRESETS.map((preset, i) => (
+										<SelectItem
+											key={`${preset.entry.type}-${i}`}
+											value={String(i)}
+										>
+											{preset.displayName}
+										</SelectItem>
+									))}
 								</SelectContent>
 							</Select>
 						</div>
 
-						{/* Preset — hidden in user_catalog mode (single variant; the
-						    catalog itself is the configuration). */}
+						{/* Strategy — hidden in user_catalog mode (catalog implies it). */}
 						{!isUserCatalog && (
 							<div className="space-y-s-200">
 								<label
-									htmlFor="optimize-preset"
+									htmlFor="optimize-strategy"
 									className="text-small text-txt-200 font-medium"
 								>
-									{tBacktest("builder.loadPreset")}
+									{tBacktest("builder.strategy")}
 								</label>
-								<Select onValueChange={handlePresetChange}>
-									<SelectTrigger id="optimize-preset">
-										<SelectValue
-											placeholder={tBacktest("config.selectPreset")}
-										/>
+								<Select
+									value={recipe.entry.type}
+									onValueChange={handleStrategyChange}
+								>
+									<SelectTrigger id="optimize-strategy">
+										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										{ALL_PRESETS.map((preset, i) => (
-											<SelectItem
-												key={`${preset.entry.type}-${i}`}
-												value={String(i)}
-											>
-												{preset.displayName}
-											</SelectItem>
-										))}
+										<SelectItem value="orb_breakout">
+											{tBacktest("orb.name")}
+										</SelectItem>
+										<SelectItem value="macd_wma_alignment">
+											{tBacktest("dezk.name")}
+										</SelectItem>
+										<SelectItem value="hawks_triple_screen">
+											{tBacktest("hawks.name")}
+										</SelectItem>
+										<SelectItem value="user_catalog">
+											{tBacktest("userCatalog.name")}
+										</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
