@@ -20,9 +20,11 @@ import {
 	NumberOrSweep,
 	BoolOrSweep,
 	EnumOrSweep,
+	TimeOrSweep,
 	type NumberSelection,
 	type BoolSelection,
 	type EnumSelection,
+	type TimeSelection,
 } from "./leaf-controls"
 
 interface WalkForwardConfig {
@@ -511,7 +513,33 @@ const LeafControl = ({ leaf, selection, onChange }: LeafControlProps) => {
 		)
 	}
 
-	// time leaves — Phase B punts on these (per design doc §11 open question).
+	if (leaf.kind === "time") {
+		const baseline =
+			leaf.defaultValues && leaf.defaultValues.length > 0
+				? leaf.defaultValues[0]!
+				: 910 // 09:10 — Hawks session start default
+
+		const sel: TimeSelection =
+			selection?.kind === "sweep_set" &&
+			selection.values.every((v) => typeof v === "number")
+				? { kind: "sweep_set", values: selection.values as number[] }
+				: {
+						kind: "fixed",
+						value:
+							selection?.kind === "fixed" && typeof selection.value === "number"
+								? selection.value
+								: baseline,
+					}
+		return (
+			<TimeOrSweep
+				id={`leaf-${leaf.path}`}
+				label={label}
+				selection={sel}
+				onSelectionChange={onChange}
+			/>
+		)
+	}
+
 	return null
 }
 

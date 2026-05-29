@@ -135,6 +135,50 @@ const enumSweepToFixed = (
 	value: current.values[0] ?? fallbackValue,
 })
 
+// ── Time leaf ────────────────────────────────────────────────────────
+// Times are HHMM-encoded integers (e.g. 910 = 09:10, 1530 = 15:30) so
+// integer comparison and existing number-axis sweep code paths work
+// unchanged. Sweep mode is a discrete SET of times — ranges across times
+// would explode cardinality (every minute = 60 axes per hour).
+
+interface TimeFixed {
+	kind: "fixed"
+	value: number
+}
+
+interface TimeSweep {
+	kind: "sweep_set"
+	values: number[]
+}
+
+type TimeSelection = TimeFixed | TimeSweep
+
+/**
+ * fix → sweep for times. Seed with the current fix value so the user's
+ * choice carries over. They add more times via the picker; if they pare
+ * back to 1 we collapse to fix on the next render.
+ */
+const timeFixedToSweep = (current: TimeFixed): TimeSweep => ({
+	kind: "sweep_set",
+	values: [current.value],
+})
+
+/**
+ * sweep → fix for times. Collapse to the first value; default to 09:10
+ * (HHMM 910) if the set is empty (defensive).
+ */
+const timeSweepToFixed = (current: TimeSweep): TimeFixed => ({
+	kind: "fixed",
+	value: current.values[0] ?? 910,
+})
+
+const toggleTimeMode = (current: TimeSelection): TimeSelection => {
+	if (current.kind === "fixed") {
+		return timeFixedToSweep(current)
+	}
+	return timeSweepToFixed(current)
+}
+
 // ── Toggle helpers (the user clicked the "Sweep" pill) ───────────────
 
 const toggleNumberMode = (
@@ -176,6 +220,9 @@ export {
 	enumFixedToSweep,
 	enumSweepToFixed,
 	toggleEnumMode,
+	timeFixedToSweep,
+	timeSweepToFixed,
+	toggleTimeMode,
 }
 
 export type {
@@ -189,4 +236,7 @@ export type {
 	EnumFixed,
 	EnumSweep,
 	EnumSelection,
+	TimeFixed,
+	TimeSweep,
+	TimeSelection,
 }
