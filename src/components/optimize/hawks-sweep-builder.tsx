@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo } from "react"
 import { useTranslations } from "next-intl"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
@@ -21,11 +23,20 @@ import {
 	type EnumSelection,
 } from "./leaf-controls"
 
+interface WalkForwardConfig {
+	enabled: boolean
+	inSamplePct: number
+}
+
 interface HawksSweepBuilderProps {
 	/** Per-leaf selection map. Builder is fully controlled — parent owns state. */
 	selections: Map<string, LeafSelection>
 	/** Emitted when the user changes any leaf's selection. */
 	onSelectionsChange: (_next: Map<string, LeafSelection>) => void
+	/** Walk-forward optimization config. `null` = disabled. */
+	walkForwardConfig: WalkForwardConfig | null
+	/** Emitted when the user toggles or adjusts walk-forward. */
+	onWalkForwardChange: (_config: WalkForwardConfig | null) => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -159,10 +170,12 @@ const sectionForLeaf = (leaf: SweepableLeaf): Section | undefined =>
 const HawksSweepBuilder = ({
 	selections,
 	onSelectionsChange,
+	walkForwardConfig,
+	onWalkForwardChange,
 }: HawksSweepBuilderProps) => {
 	const tBuilder = useTranslations("optimize.sweepBuilder")
-	const tLeaf = useTranslations("optimize.sweepLeaf")
 	const tInvariant = useTranslations("optimize.invariants")
+	const tWf = useTranslations("optimize.walkForward")
 
 	// Live cardinality breakdown — recomputed when selections change.
 	// Reports `raw` (before validator filtering), `valid` (after), and
@@ -273,6 +286,82 @@ const HawksSweepBuilder = ({
 								</span>
 							)
 						)}
+					</div>
+				)}
+			</div>
+
+			{/* Walk-forward toggle + in-sample slider. Lives outside the
+			    sections so users see it before scrolling through leaves. */}
+			<div className="border-bg-300 bg-bg-200 p-m-400 space-y-s-300 rounded-lg border">
+				<label
+					htmlFor="builder-walk-forward-enable"
+					className="gap-s-200 flex cursor-pointer items-start"
+				>
+					<Checkbox
+						id="builder-walk-forward-enable"
+						checked={walkForwardConfig?.enabled ?? false}
+						onCheckedChange={(checked) => {
+							if (checked === true) {
+								onWalkForwardChange({ enabled: true, inSamplePct: 70 })
+							} else {
+								onWalkForwardChange(null)
+							}
+						}}
+						className="mt-s-100"
+					/>
+					<div className="space-y-s-100 flex-1">
+						<span className="text-small text-txt-100 font-medium">
+							{tWf("enableLabel")}
+						</span>
+						<p className="text-tiny text-txt-300">{tWf("hint")}</p>
+					</div>
+				</label>
+
+				{walkForwardConfig?.enabled && (
+					<div className="pl-s-300 space-y-s-200">
+						<div className="flex items-center justify-between">
+							<span className="text-tiny text-txt-300">
+								{tWf("splitLabel")}
+							</span>
+							<span className="text-small text-txt-100 font-medium tabular-nums">
+								{tWf("splitValue", {
+									pct: walkForwardConfig.inSamplePct,
+									oos: 100 - walkForwardConfig.inSamplePct,
+								})}
+							</span>
+						</div>
+						<div className="gap-s-200 flex items-center">
+							<input
+								id="builder-walk-forward-pct"
+								type="range"
+								min="50"
+								max="90"
+								step="5"
+								value={walkForwardConfig.inSamplePct}
+								onChange={(e) => {
+									const pct = parseInt(e.target.value, 10)
+									onWalkForwardChange({ enabled: true, inSamplePct: pct })
+								}}
+								className="flex-1"
+								aria-label={tWf("splitLabel")}
+							/>
+							<Input
+								id="builder-walk-forward-pct-input"
+								type="number"
+								min="50"
+								max="90"
+								step="5"
+								value={walkForwardConfig.inSamplePct}
+								onChange={(e) => {
+									const pct = Math.max(
+										50,
+										Math.min(90, parseInt(e.target.value, 10) || 50)
+									)
+									onWalkForwardChange({ enabled: true, inSamplePct: pct })
+								}}
+								className="text-small h-8 w-14 tabular-nums"
+							/>
+						</div>
 					</div>
 				)}
 			</div>

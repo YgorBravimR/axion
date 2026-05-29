@@ -882,6 +882,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							<HawksSweepBuilder
 								selections={leafSelections}
 								onSelectionsChange={setLeafSelections}
+								walkForwardConfig={walkForwardConfig}
+								onWalkForwardChange={setWalkForwardConfig}
 							/>
 						) : (
 							<SweepConfigPanel
