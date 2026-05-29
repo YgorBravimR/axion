@@ -81,7 +81,7 @@ const ParetoScatter = memo(
 					<p className="text-small text-txt-300 mt-s-100">{t("subtitle")}</p>
 				</div>
 
-				<ChartContainer config={{}} className="aspect-[16/9] w-full">
+				<ChartContainer id="pareto-scatter" className="aspect-[16/9] w-full">
 					<ScatterChart margin={CHART_MARGIN}>
 						<CartesianGrid strokeDasharray="3 3" opacity={0.2} />
 						<XAxis

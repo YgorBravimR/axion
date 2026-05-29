@@ -154,7 +154,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 		defaultMin: 50,
 		defaultMax: 200,
 		defaultStep: 25,
-		condition: (r) => r.stop.breakeven.type === "on_pct_risk",
+		condition: (r) => r.stop.breakeven?.type === "on_pct_risk",
 	},
 	// R-multiple target. Engine math is bricks-per-R; the value here is an R count.
 	{

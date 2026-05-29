@@ -36,7 +36,7 @@ const ToggleRow = ({
 }) => (
 	<div className="gap-s-300 flex items-start justify-between">
 		<div className="min-w-0">
-			<Label htmlFor={id} className="cursor-pointer">
+			<Label id={`${id}-label`} htmlFor={id} className="cursor-pointer">
 				{label}
 			</Label>
 			{hint && <p className="text-tiny text-txt-300 mt-s-100">{hint}</p>}
@@ -68,7 +68,9 @@ const NumberRow = ({
 }) => (
 	<div className="gap-s-300 grid grid-cols-[1fr_120px] items-start">
 		<div className="min-w-0">
-			<Label htmlFor={id}>{label}</Label>
+			<Label id={`${id}-label`} htmlFor={id}>
+				{label}
+			</Label>
 			{hint && <p className="text-tiny text-txt-300 mt-s-100">{hint}</p>}
 		</div>
 		<Input
@@ -315,7 +317,9 @@ const HawksQualityControls = memo(
 							<p className="text-tiny text-txt-300">{t("tierHint")}</p>
 							<div className="gap-s-300 grid grid-cols-3">
 								<div className="space-y-s-100">
-									<Label htmlFor="quality-tier-aaa">AAA ≥</Label>
+									<Label id="quality-tier-aaa-label" htmlFor="quality-tier-aaa">
+										AAA ≥
+									</Label>
 									<Input
 										id="quality-tier-aaa"
 										type="number"
@@ -332,7 +336,9 @@ const HawksQualityControls = memo(
 									/>
 								</div>
 								<div className="space-y-s-100">
-									<Label htmlFor="quality-tier-aa">AA ≥</Label>
+									<Label id="quality-tier-aa-label" htmlFor="quality-tier-aa">
+										AA ≥
+									</Label>
 									<Input
 										id="quality-tier-aa"
 										type="number"
@@ -349,7 +355,9 @@ const HawksQualityControls = memo(
 									/>
 								</div>
 								<div className="space-y-s-100">
-									<Label htmlFor="quality-tier-a">A ≥</Label>
+									<Label id="quality-tier-a-label" htmlFor="quality-tier-a">
+										A ≥
+									</Label>
 									<Input
 										id="quality-tier-a"
 										type="number"

@@ -380,7 +380,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	])
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+		<div className="p-m-400 sm:p-m-500 lg:p-m-600 space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 container mx-auto max-w-7xl">
 			{/* Header */}
 			<div>
 				<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
@@ -600,6 +600,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 									onCheckedChange={setExcludeBreakevens}
 								/>
 								<Label
+									id="backtest-exclude-breakevens-label"
 									htmlFor="backtest-exclude-breakevens"
 									className="cursor-pointer"
 								>

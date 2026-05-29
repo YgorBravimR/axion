@@ -138,7 +138,12 @@ const UserCatalogEntrySection = memo(
 				{/* Time window — kept in sync with autonomous Hawks for parity */}
 				<div className="gap-m-400 grid grid-cols-2">
 					<div className="space-y-s-200">
-						<Label htmlFor="user-catalog-startTime">{t("startTime")}</Label>
+						<Label
+							id="user-catalog-startTime-label"
+							htmlFor="user-catalog-startTime"
+						>
+							{t("startTime")}
+						</Label>
 						<Input
 							id="user-catalog-startTime"
 							type="time"
@@ -149,7 +154,12 @@ const UserCatalogEntrySection = memo(
 						/>
 					</div>
 					<div className="space-y-s-200">
-						<Label htmlFor="user-catalog-endTime">{t("endTime")}</Label>
+						<Label
+							id="user-catalog-endTime-label"
+							htmlFor="user-catalog-endTime"
+						>
+							{t("endTime")}
+						</Label>
 						<Input
 							id="user-catalog-endTime"
 							type="time"
@@ -165,7 +175,9 @@ const UserCatalogEntrySection = memo(
 				    merged "all days" bundle on entering this strategy; user can
 				    edit (e.g. to exclude specific dates) before running. */}
 				<div className="space-y-s-200">
-					<Label htmlFor="user-catalog-json">{t("catalogJson")}</Label>
+					<Label id="user-catalog-json-label" htmlFor="user-catalog-json">
+						{t("catalogJson")}
+					</Label>
 					<p className="text-small text-txt-300">{t("catalogJsonHint")}</p>
 					<Textarea
 						id="user-catalog-json"

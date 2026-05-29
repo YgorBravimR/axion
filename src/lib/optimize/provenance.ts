@@ -21,7 +21,7 @@ const hashCandles = (candles: CandleRow[]): string => {
 	const sample =
 		candles.length > 4 ? [candles[Math.floor(candles.length / 2)]!] : []
 	const payload = [first, ...sample, last]
-		.map((c) => `${c.timestamp.toISOString()}|${c.open}|${c.close}`)
+		.map((c) => `${c.timestamp}|${c.open}|${c.close}`)
 		.join(";")
 	return `${candles.length}-${hashString(payload)}`
 }

@@ -26,7 +26,7 @@ import {
 	RotateCcw,
 	BarChart3,
 	Table2,
-	Scatter as ScatterIcon,
+	GitCompare as ScatterIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchBacktestData } from "@/app/actions/backtest"
