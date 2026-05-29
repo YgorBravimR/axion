@@ -83,17 +83,17 @@ const CapitalEventLog = ({
 				</span>
 			</summary>
 
-			<div className="mt-3 space-y-4">
+			<div className="mt-s-300 space-y-m-400">
 				{/* Add event form */}
 				<form
 					onSubmit={handleSubmit}
-					className="grid grid-cols-2 items-end gap-3 sm:grid-cols-4"
+					className="gap-s-300 grid grid-cols-2 items-end sm:grid-cols-4"
 				>
 					<div className="border-bg-300 col-span-1 flex overflow-hidden rounded-md border">
 						<button
 							type="button"
 							onClick={() => setFormType("deposit")}
-							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
+							className={`text-tiny px-s-300 py-s-200 flex-1 font-medium transition-colors ${
 								formType === "deposit"
 									? "bg-bg-100 text-txt-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
@@ -105,7 +105,7 @@ const CapitalEventLog = ({
 						<button
 							type="button"
 							onClick={() => setFormType("withdrawal")}
-							className={`text-tiny flex-1 px-3 py-2 font-medium transition-colors ${
+							className={`text-tiny px-s-300 py-s-200 flex-1 font-medium transition-colors ${
 								formType === "withdrawal"
 									? "bg-bg-100 text-txt-100"
 									: "bg-bg-200 text-txt-300 hover:text-txt-100"
@@ -155,14 +155,17 @@ const CapitalEventLog = ({
 				{yearEvents.length === 0 ? (
 					<p className="text-txt-300 text-tiny">{t("noEvents", { year })}</p>
 				) : (
-					<ul className="space-y-1" aria-label={t("listAriaLabel", { year })}>
+					<ul
+						className="space-y-s-100"
+						aria-label={t("listAriaLabel", { year })}
+					>
 						{[...yearEvents].reverse().map((ev) => (
 							<li
 								key={ev.id}
-								className="bg-bg-300/30 text-tiny flex items-center justify-between gap-3 rounded-md px-3 py-2"
+								className="bg-bg-300/30 text-tiny gap-s-300 px-s-300 py-s-200 flex items-center justify-between rounded-md"
 							>
 								<span className="text-txt-300 font-mono">{ev.eventDate}</span>
-								<span className="bg-bg-100 text-txt-200 text-tiny rounded-sm px-2 py-0.5 font-medium">
+								<span className="bg-bg-100 text-txt-200 text-tiny px-s-200 py-s-100 rounded-sm font-medium">
 									{ev.eventType === "deposit"
 										? t("depositLabel")
 										: t("withdrawalLabel")}

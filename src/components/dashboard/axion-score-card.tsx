@@ -23,11 +23,11 @@ interface AxionScoreCardProps {
 const RADIUS_AXIS_TICK = false as const
 
 const tierToneClass: Record<AxionScoreTier, string> = {
-	elite: "text-[#d8b365]",
-	forte: "text-[#d8b365]",
-	solido: "text-[#c19a5b]",
-	building: "text-[#b08148]",
-	attention: "text-[#a05a30]",
+	elite: "text-tier-elite",
+	forte: "text-tier-forte",
+	solido: "text-tier-solido",
+	building: "text-tier-building",
+	attention: "text-tier-attention",
 }
 
 const formatAxisValue = (key: string, value: number): string => {
@@ -59,12 +59,9 @@ interface ElegantPillProps {
 }
 
 const ElegantPill = ({ label, value }: ElegantPillProps) => (
-	<div className="gap-s-200 border-bg-300 bg-bg-100 flex items-center justify-between rounded-md border px-3 py-2.5">
+	<div className="gap-s-200 border-bg-300 bg-bg-100 px-s-300 py-s-200 flex items-center justify-between rounded-md border">
 		<span className="text-tiny text-txt-200 leading-tight">{label}</span>
-		<span
-			className="text-small font-mono font-semibold"
-			style={{ color: "#d8b365" }}
-		>
+		<span className="text-small text-tier-elite font-mono font-semibold">
 			{value}
 		</span>
 	</div>
@@ -79,7 +76,7 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 
 	const angleAxisTick = useMemo(
 		() => ({
-			fill: "#8c8478",
+			fill: "var(--color-txt-300)",
 			fontSize: isMobile ? 9 : 10,
 			fontFamily: "var(--font-public-sans), ui-sans-serif, system-ui",
 		}),
@@ -111,7 +108,7 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 					<h3 className="text-body text-txt-100 font-semibold tracking-tight">
 						{tScore("title")}
 					</h3>
-					<p className="text-micro text-txt-300 mt-0.5 font-medium tracking-[0.18em] uppercase">
+					<p className="text-micro text-txt-300 mt-s-100 font-medium tracking-[0.18em] uppercase">
 						{tScore("subtitle")}
 					</p>
 				</div>
@@ -120,8 +117,7 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 						<span
 							className="text-h1 leading-none font-semibold"
 							style={{
-								background:
-									"linear-gradient(180deg, #f3d990 0%, #d8b365 45%, #8c6e40 100%)",
+								background: "var(--gradient-axion-score)",
 								WebkitBackgroundClip: "text",
 								WebkitTextFillColor: "transparent",
 								backgroundClip: "text",
@@ -129,11 +125,11 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 						>
 							{Math.round(score)}
 						</span>
-						<span className="text-tiny text-[#8c6e40]">/ 100</span>
+						<span className="text-tiny text-bronze-deep">/ 100</span>
 					</div>
 					<p
 						className={cn(
-							"text-tiny mt-1 font-bold tracking-[0.22em] uppercase",
+							"text-tiny mt-s-100 font-bold tracking-[0.22em] uppercase",
 							tierToneClass[tier]
 						)}
 					>
@@ -147,7 +143,7 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 			<div className="mt-s-300 sm:mt-m-400">
 				<ChartContainer
 					id="chart-axion-elegant"
-					className="h-[200px] w-full sm:h-[220px]"
+					className="h-chart-md w-full sm:h-[220px]"
 					suppressHydrationWarning
 				>
 					<RadarChart
@@ -157,7 +153,7 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 						outerRadius={isMobile ? "62%" : "72%"}
 					>
 						<PolarGrid
-							stroke="rgba(193,154,91,0.18)"
+							stroke="color-mix(in srgb, var(--color-tier-solido) 18%, transparent)"
 							strokeOpacity={1}
 							gridType="polygon"
 						/>
@@ -171,16 +167,28 @@ const AxionScoreCardBase = ({ data }: AxionScoreCardProps) => {
 						<Radar
 							name="performance"
 							dataKey="normalized"
-							stroke="#d8b365"
+							stroke="var(--color-tier-elite)"
 							fill="url(#elegantGoldFill)"
 							fillOpacity={0.9}
 							strokeWidth={1.5}
 						/>
 						<defs>
 							<radialGradient id="elegantGoldFill" cx="50%" cy="50%" r="50%">
-								<stop offset="0%" stopColor="#f3d990" stopOpacity={0.9} />
-								<stop offset="70%" stopColor="#c19a5b" stopOpacity={0.8} />
-								<stop offset="100%" stopColor="#8c6e40" stopOpacity={0.7} />
+								<stop
+									offset="0%"
+									stopColor="var(--color-bronze-highlight)"
+									stopOpacity={0.9}
+								/>
+								<stop
+									offset="70%"
+									stopColor="var(--color-tier-solido)"
+									stopOpacity={0.8}
+								/>
+								<stop
+									offset="100%"
+									stopColor="var(--color-bronze-deep)"
+									stopOpacity={0.7}
+								/>
 							</radialGradient>
 						</defs>
 					</RadarChart>

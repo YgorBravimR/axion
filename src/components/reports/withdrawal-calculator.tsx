@@ -79,7 +79,7 @@ const WithdrawalCalculator = ({
 
 			<form
 				onSubmit={handleLog}
-				className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-end"
+				className="gap-s-200 grid grid-cols-1 sm:grid-cols-3 sm:items-end"
 			>
 				<div>
 					<label

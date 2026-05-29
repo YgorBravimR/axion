@@ -125,8 +125,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultLossR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultDailyLossR)}
 									</span>
 									<ProvenanceBadge
@@ -138,8 +138,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultWinR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultDailyWinR)}
 									</span>
 									<ProvenanceBadge
@@ -151,8 +151,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultWeeklyLossWinR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultWeeklyLossR)} /{" "}
 										{formatR(resolved.defaultWeeklyWinR)}
 									</span>
@@ -165,8 +165,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultMonthlyLossWinR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultMonthlyLossR)} /{" "}
 										{formatR(resolved.defaultMonthlyWinR)}
 									</span>

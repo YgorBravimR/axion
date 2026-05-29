@@ -32,14 +32,14 @@ const TargetActualGauge = ({ targetR, actualR }: TargetActualGaugeProps) => {
 			<div className="gap-m-400 grid grid-cols-2">
 				<div>
 					<dt className="text-tiny text-txt-300">{t("common.target")}</dt>
-					<dd className="text-txt-100 mt-1 font-mono text-2xl">
+					<dd className="text-txt-100 text-h2 mt-1 font-mono">
 						{formatR(target)}
 					</dd>
 				</div>
 				<div>
 					<dt className="text-tiny text-txt-300">{t("common.actual")}</dt>
 					<dd
-						className={`mt-1 font-mono text-2xl ${
+						className={`text-h2 mt-1 font-mono ${
 							ahead
 								? "text-fb-success"
 								: onTrack

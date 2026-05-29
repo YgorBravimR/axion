@@ -114,7 +114,7 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 			</h3>
 			<ChartContainer
 				id="chart-dashboard-performance-radar"
-				className="h-[180px] w-full sm:h-[200px]"
+				className="h-chart-sm sm:h-chart-md w-full"
 				suppressHydrationWarning
 			>
 				<RadarChart

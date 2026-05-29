@@ -258,3 +258,55 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: 2026-05-22 — Item 3 extracted pure orchestration logic (commits `e0a5e790`, `e60d32e4`) into `src/lib/monte-carlo/` so the orchestration is unit-testable. The DB-touching path of `src/app/actions/monte-carlo.ts` still has no integration test.
 - **What + Why**: Add integration tests for `runComparisonSimulation` and `runSimulationV2` end-to-end against the test DB. Verify the action correctly composes the auth check → DB query → orchestration → response wrapping. Skipped from the unit suite intentionally (per the same gotcha rationale documented in `docs/gotchas.md`). Suggested home: `e2e/tests/monte-carlo.spec.ts` (currently UI-focused) — add a server-action subgroup, or create `src/__tests__/integration/monte-carlo.test.ts` with a real test DB connection.
 - **Date filed**: 2026-05-22.
+
+---
+
+## Layout & Theming (from 2026-05-29 scan)
+
+### Resolve 13 pre-existing TS errors on `feat/optimize-phase-1-trust-foundations`
+
+- **Priority**: P0
+- **Effort**: S
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — Phase 4 verification confirmed 13 baseline TS errors exist on this branch independent of the scan's edits.
+- **What + Why**: Branch cannot ship until these resolve. Errors: `<Label>` missing required `id` prop (9 sites — `backtest-content.tsx:602`, `hawks-quality-controls.tsx` lines 39/71/318/335/352, `user-catalog-entry-section.tsx` lines 141/152/168); `Scatter` removed from lucide-react (`optimize-content.tsx:29`); `ChartContainer` `config` prop mismatch (`pareto-scatter.tsx:84`); `r.stop.breakeven` possibly undefined (`hawks-presets.ts:157`); `toISOString` called on string (`provenance.ts:24`).
+- **Date filed**: 2026-05-29.
+
+### Verify HAWKS `DailyBiasPanel` uses `FeatureStamp` for band header (Wave 9 convention)
+
+- **Priority**: P2
+- **Effort**: XS
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — finding #14.
+- **What + Why**: The 2026-05-29 scan flagged that `src/app/[locale]/(app)/journal/page.tsx:19` renders `<DailyBiasPanel />` but the scan didn't read the panel internals to verify `FeatureStamp` is wired at the band title row per Wave 9 convention. 5-minute read; either confirm it's already correct, or wire `FeatureStamp` in if missing.
+- **Date filed**: 2026-05-29.
+
+### Refine light-theme Axion Score tier-tone hexes
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — RC-4 follow-up.
+- **What + Why**: The 2026-05-29 scan added 5 tier-tone tokens (`--color-tier-{elite,forte,solido,building,attention}`) plus `--color-bronze-highlight` and `--color-bronze-deep` to both theme blocks. The dark-theme values match the original designed bronzes; the light-theme values were approximated as progressively darker shades without a designer pass. Worth a designer review for legibility on the stone-white paper background and contrast against the cool-neutral bg-100/200/300 stack.
+- **Date filed**: 2026-05-29.
+
+### Pull `fractal-plan/plan-section.tsx` card chrome through `<Panel>`
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #4.
+- **What + Why**: `src/components/fractal-plan/plan-section.tsx:24` still has hand-rolled chrome (`rounded-lg border border-bg-300 bg-bg-200 p-m-400`). Same RC-1 pattern but in a section primitive. Migrate to `<Panel padding="md">` (matches the `p-m-400` exactly per panelVariants.md).
+- **Date filed**: 2026-05-29.
+
+### Migrate chart empty-state placeholder heights
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #3.
+- **What + Why**: Empty-state divs in chart components use `flex h-[180px]` / `flex h-[120px]` / `flex h-[200px]` for the "no data" placeholder. Different pattern from `ChartContainer` heights (which were migrated), but same drift class. Either reuse `h-chart-*` tokens or add a dedicated `--height-empty-state-*` family. Files: `dashboard/{cumulative-pnl-chart,daily-pnl-bar-chart,day-equity-curve,day-detail-modal,day-trades-list,performance-radar-chart}.tsx` and `analytics/{day-of-week-chart,holding-period-chart,hourly-performance-chart,session-asset-table}.tsx`. Detector: `rg -n 'flex h-\[[0-9]+px\] items-center' src/components/{dashboard,analytics}/`.
+- **Date filed**: 2026-05-29.
+
+### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #5.
+- **What + Why**: The scan moved width constraints from 5 page routes to their feature components. Several other pages still have `mx-auto max-w-*` at the page level: `journal/[id]/page.tsx:155`, `journal/new/page.tsx:57`, `journal/[id]/edit/page.tsx:37`, `playbook/[id]/page.tsx:152`, `playbook/new/page.tsx:129`, `plan/layout.tsx:15`, `edit-strategy-form.tsx:199`, `command-center-content.tsx:145`. The scan deliberately did not touch them because their respective Wave 1/4/5 sweep logs documented the page-level wrapper as canonical at the time. Worth a pass to either propagate the new rule, or formally exempt these pages with a docs note.
+- **Date filed**: 2026-05-29.

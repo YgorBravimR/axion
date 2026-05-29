@@ -33,7 +33,7 @@ const CellBRL = ({
 }) => {
 	if (value === null) {
 		return (
-			<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
+			<TableCell className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono">
 				—
 			</TableCell>
 		)
@@ -46,7 +46,7 @@ const CellBRL = ({
 		: "text-txt-100"
 	return (
 		<TableCell
-			className={`text-tiny px-3 py-2 text-right font-mono ${colorClass} tabular-nums`}
+			className={`text-tiny px-s-300 py-s-200 text-right font-mono ${colorClass} tabular-nums`}
 		>
 			{format(value)}
 		</TableCell>
@@ -54,7 +54,7 @@ const CellBRL = ({
 }
 
 const CellNum = ({ value }: { value: number | null }) => (
-	<TableCell className="text-txt-100 text-tiny px-3 py-2 text-right font-mono tabular-nums">
+	<TableCell className="text-txt-100 text-tiny px-s-300 py-s-200 text-right font-mono tabular-nums">
 		{value === null ? "—" : value}
 	</TableCell>
 )
@@ -71,14 +71,14 @@ const RowData = ({
 			<TableRow className="opacity-30">
 				<TableHead
 					scope="row"
-					className="bg-bg-200 text-txt-200 text-tiny sticky left-0 min-w-[80px] px-3 py-2 text-left font-medium"
+					className="bg-bg-200 text-txt-200 text-tiny px-s-300 py-s-200 sticky left-0 min-w-[80px] text-left font-medium"
 				>
 					{row.monthName.slice(0, 3)}
 				</TableHead>
 				{Array.from({ length: 13 }).map((_, i) => (
 					<TableCell
 						key={i}
-						className="text-txt-300 text-tiny px-3 py-2 text-right font-mono"
+						className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono"
 					>
 						—
 					</TableCell>
@@ -95,7 +95,7 @@ const RowData = ({
 		>
 			<TableHead
 				scope="row"
-				className="bg-bg-200 text-txt-100 text-tiny sticky left-0 min-w-[80px] px-3 py-2 text-left font-medium"
+				className="bg-bg-200 text-txt-100 text-tiny px-s-300 py-s-200 sticky left-0 min-w-[80px] text-left font-medium"
 			>
 				{row.monthName.slice(0, 3)}
 			</TableHead>
@@ -144,35 +144,35 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 						<TableRow className="bg-bg-300/50">
 							<TableHead
 								scope="col"
-								className="bg-bg-300/50 text-txt-300 text-tiny sticky left-0 px-3 py-2 text-left font-medium tracking-wider uppercase"
+								className="bg-bg-300/50 text-txt-300 text-tiny px-s-300 py-s-200 sticky left-0 text-left font-medium tracking-wider uppercase"
 							>
 								Mês
 							</TableHead>
 							<TableHead
 								scope="colgroup"
 								colSpan={3}
-								className="text-txt-300 border-acc-100/20 text-tiny border-b px-3 py-1 text-center font-medium tracking-wider uppercase"
+								className="text-txt-300 border-acc-100/20 text-tiny px-s-300 py-s-100 border-b text-center font-medium tracking-wider uppercase"
 							>
 								Resultado
 							</TableHead>
 							<TableHead
 								scope="colgroup"
 								colSpan={2}
-								className="text-txt-300 border-acc-100/20 text-tiny border-b px-3 py-1 text-center font-medium tracking-wider uppercase"
+								className="text-txt-300 border-acc-100/20 text-tiny px-s-300 py-s-100 border-b text-center font-medium tracking-wider uppercase"
 							>
 								Despesas
 							</TableHead>
 							<TableHead
 								scope="colgroup"
 								colSpan={6}
-								className="text-txt-300 border-acc-100/20 text-tiny border-b px-3 py-1 text-center font-medium tracking-wider uppercase"
+								className="text-txt-300 border-acc-100/20 text-tiny px-s-300 py-s-100 border-b text-center font-medium tracking-wider uppercase"
 							>
 								Capital
 							</TableHead>
 							<TableHead
 								scope="colgroup"
 								colSpan={2}
-								className="text-txt-300 border-acc-100/20 text-tiny border-b px-3 py-1 text-center font-medium tracking-wider uppercase"
+								className="text-txt-300 border-acc-100/20 text-tiny px-s-300 py-s-100 border-b text-center font-medium tracking-wider uppercase"
 							>
 								Dias
 							</TableHead>
@@ -180,26 +180,26 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 						<TableRow className="bg-bg-300/30">
 							<TableHead
 								scope="col"
-								className="bg-bg-300/30 sticky left-0 px-3 py-2"
+								className="bg-bg-300/30 px-s-300 py-s-200 sticky left-0"
 							/>
 							{["Bruto", "Líquido", "Pontos"].map((h) => (
 								<TableHead
 									key={h}
 									scope="col"
-									className="text-txt-300 text-tiny px-3 py-2 text-right font-mono font-medium"
+									className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium"
 								>
 									{h}
 								</TableHead>
 							))}
 							<TableHead
 								scope="col"
-								className="text-txt-300 text-tiny px-3 py-2 text-right font-mono font-medium"
+								className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium"
 							>
 								Taxas
 							</TableHead>
 							<TableHead
 								scope="col"
-								className="text-txt-300 text-tiny px-3 py-2 text-right font-mono font-medium"
+								className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium"
 							>
 								Imposto{taxEstimated ? "*" : ""}
 							</TableHead>
@@ -214,20 +214,20 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 								<TableHead
 									key={h}
 									scope="col"
-									className="text-txt-300 text-tiny px-3 py-2 text-right font-mono font-medium whitespace-nowrap"
+									className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium whitespace-nowrap"
 								>
 									{h}
 								</TableHead>
 							))}
 							<TableHead
 								scope="col"
-								className="text-txt-300 text-tiny px-3 py-2 text-right font-mono font-medium"
+								className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium"
 							>
 								G
 							</TableHead>
 							<TableHead
 								scope="col"
-								className="text-txt-300 text-tiny px-3 py-2 text-right font-mono font-medium"
+								className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium"
 							>
 								L
 							</TableHead>
@@ -242,7 +242,7 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 						<TableRow className="bg-bg-300 border-bg-300 border-t-2 font-semibold">
 							<TableHead
 								scope="row"
-								className="bg-bg-300 text-txt-100 text-tiny sticky left-0 px-3 py-2 text-left"
+								className="bg-bg-300 text-txt-100 text-tiny px-s-300 py-s-200 sticky left-0 text-left"
 							>
 								Total
 							</TableHead>
@@ -255,15 +255,15 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 							<CellNum value={totals.pontos} />
 							<CellBRL value={totals.taxas} format={formatBRL} />
 							<CellBRL value={totals.imposto} format={formatBRL} />
-							<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
+							<TableCell className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono">
 								—
 							</TableCell>
-							<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
+							<TableCell className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono">
 								—
 							</TableCell>
 							<CellBRL value={totals.novoAporte} format={formatBRL} />
 							<CellBRL value={totals.retirada} format={formatBRL} />
-							<TableCell className="text-txt-300 text-tiny px-3 py-2 text-right font-mono">
+							<TableCell className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono">
 								—
 							</TableCell>
 							<CellBRL value={totals.patrimonio} format={formatBRL} />
