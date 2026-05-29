@@ -58,6 +58,16 @@ import { EquityOverlayChart } from "./equity-overlay-chart"
 import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweptPathsProvider } from "./swept-paths-context"
+import { HawksSweepBuilder } from "./hawks-sweep-builder"
+import { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED } from "@/lib/optimize/feature-flags"
+import { HAWKS_LEAVES } from "@/lib/backtest/presets/hawks-leaves"
+import {
+	generateConditionalGrid,
+	countConditionalGrid,
+} from "@/lib/optimize/grid-conditional"
+import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
+import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
+import type { LeafSelection, PrimitiveValue } from "@/lib/optimize/sweep-leaf"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
@@ -77,6 +87,24 @@ import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
 
 const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
+
+/**
+ * Build the per-path fallback map the conditional-grid generator needs when
+ * a leaf isn't actively sweepable under the current selections (its parent's
+ * condition is unmet). We use each leaf's own fixed value as the fallback —
+ * the conditional grid will only consult the fallback for inactive branches.
+ */
+const buildLeafFallback = (
+	selections: Map<string, LeafSelection>
+): Map<string, PrimitiveValue> => {
+	const fallback = new Map<string, PrimitiveValue>()
+	for (const [path, sel] of selections) {
+		if (sel.kind === "fixed") {
+			fallback.set(path, sel.value)
+		}
+	}
+	return fallback
+}
 
 interface OptimizeContentProps {
 	dataSources: DataSourceInfo[]
@@ -117,6 +145,16 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	// ── Sweep state ───────────────────────────────────────────────
 	const [activeRanges, setActiveRanges] = useState<ParameterRange[]>([])
+	// Phase B inline-sweep state (Hawks only, behind feature flag).
+	// `null` until the user lands on the parameters step with Hawks selected;
+	// derived from recipe baseline on first show.
+	const [leafSelections, setLeafSelections] = useState<Map<
+		string,
+		LeafSelection
+	> | null>(null)
+	const isInlineHawksMode =
+		OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED &&
+		recipe.entry.type === "hawks_triple_screen"
 	const [isSweeping, setIsSweeping] = useState(false)
 	const [sweepProgress, setSweepProgress] = useState({ current: 0, total: 0 })
 	const sweepHandleRef = useRef<SweepHandle | null>(null)
@@ -149,6 +187,21 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		}
 		return () => clearTimeout(saveTimeoutRef.current)
 	}, [runs])
+
+	// Seed leaf selections from the recipe baseline the first time the
+	// user lands on the inline-Hawks flow. Re-derive when the recipe
+	// preset itself changes (entry type swap, preset reload).
+	useEffect(() => {
+		if (!isInlineHawksMode) {
+			if (leafSelections !== null) {
+				setLeafSelections(null)
+			}
+			return
+		}
+		if (leafSelections === null) {
+			setLeafSelections(deriveInitialSelections(HAWKS_LEAVES, recipe))
+		}
+	}, [isInlineHawksMode, recipe, leafSelections])
 
 	const selectedSource = dataSources[selectedSourceIndex]
 	const dateFrom = dateRange?.from
@@ -413,12 +466,24 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			showToast("error", t("dataRequired"))
 			return
 		}
-		if (activeRanges.length === 0) {
+
+		// Branch: inline Hawks mode uses conditional-grid generation; legacy
+		// mode uses the flat parameter-range grid. They produce the same
+		// downstream shape — `StrategyRecipe[]` — so `runSweep(...)` is shared.
+		const useInlineGrid = isInlineHawksMode && leafSelections !== null
+
+		if (!useInlineGrid && activeRanges.length === 0) {
 			showToast("error", t("noParamsSelected"))
 			return
 		}
 
-		const totalCombos = countCombinations(activeRanges, recipe)
+		const totalCombos = useInlineGrid
+			? countConditionalGrid(
+					HAWKS_LEAVES,
+					leafSelections!,
+					buildLeafFallback(leafSelections!)
+				)
+			: countCombinations(activeRanges, recipe)
 		if (totalCombos > MAX_COMBINATIONS) {
 			showToast(
 				"error",
@@ -436,7 +501,13 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			}
 		}
 
-		const recipes = generateRecipeGrid(recipe, activeRanges)
+		const recipes = useInlineGrid
+			? generateConditionalGrid(
+					HAWKS_LEAVES,
+					leafSelections!,
+					buildLeafFallback(leafSelections!)
+				).map((combo) => recipeFromCombo(recipe, combo))
+			: generateRecipeGrid(recipe, activeRanges)
 		setIsSweeping(true)
 		setSweepProgress({ current: 0, total: recipes.length })
 
@@ -498,7 +569,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		)
 
 		sweepHandleRef.current = handle
-	}, [hasData, recipe, activeRanges, showToast, t])
+	}, [
+		hasData,
+		recipe,
+		activeRanges,
+		isInlineHawksMode,
+		leafSelections,
+		dateFrom,
+		dateTo,
+		walkForwardConfig,
+		showToast,
+		t,
+	])
 
 	const handleCancelSweep = useCallback(() => {
 		sweepHandleRef.current?.cancel()
@@ -583,8 +665,16 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const expandedRun = expandedRunId
 		? runs.find((r) => r.id === expandedRunId)
 		: null
-	const totalCombinations =
-		activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
+	const totalCombinations = useMemo(() => {
+		if (isInlineHawksMode && leafSelections !== null) {
+			return countConditionalGrid(
+				HAWKS_LEAVES,
+				leafSelections,
+				buildLeafFallback(leafSelections)
+			)
+		}
+		return activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
+	}, [isInlineHawksMode, leafSelections, activeRanges, recipe])
 
 	// ── Render ────────────────────────────────────────────────────
 
@@ -782,86 +872,97 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{t("wizard.parametersDesc")}
 						</p>
 
-						<SweepConfigPanel
-							recipe={recipe}
-							activeRanges={activeRanges}
-							onRangesChange={setActiveRanges}
-							walkForwardConfig={walkForwardConfig}
-							onWalkForwardChange={setWalkForwardConfig}
-						/>
+						{isInlineHawksMode && leafSelections !== null ? (
+							<HawksSweepBuilder
+								selections={leafSelections}
+								onSelectionsChange={setLeafSelections}
+							/>
+						) : (
+							<SweepConfigPanel
+								recipe={recipe}
+								activeRanges={activeRanges}
+								onRangesChange={setActiveRanges}
+								walkForwardConfig={walkForwardConfig}
+								onWalkForwardChange={setWalkForwardConfig}
+							/>
+						)}
 
-						{/* Collapsible base configuration for non-sweepable params */}
-						<div className="border-bg-300 rounded-lg border">
-							<button
-								type="button"
-								onClick={() => setBaseConfigOpen((prev) => !prev)}
-								className="hover:bg-bg-300/50 px-m-400 py-s-300 flex w-full items-center justify-between transition-colors"
-								aria-expanded={baseConfigOpen}
-								aria-controls="base-config-panel"
-							>
-								<span className="text-small gap-s-200 text-txt-200 flex items-center font-medium">
-									<Settings2 className="h-4 w-4" aria-hidden="true" />
-									{t("baseConfig")}
-								</span>
-								<ChevronDown
-									className={cn(
-										"text-txt-300 h-4 w-4 transition-transform",
-										baseConfigOpen && "rotate-180"
-									)}
-									aria-hidden="true"
-								/>
-							</button>
-							{baseConfigOpen && (
-								<div
-									id="base-config-panel"
-									className="border-bg-300 space-y-m-400 p-m-400 border-t"
+						{/* Collapsible base configuration for non-sweepable params. */}
+						{/* Inline-Hawks mode hides this entirely — the sweep builder is */}
+						{/* the single source of truth for every recipe field. */}
+						{!(isInlineHawksMode && leafSelections !== null) && (
+							<div className="border-bg-300 rounded-lg border">
+								<button
+									type="button"
+									onClick={() => setBaseConfigOpen((prev) => !prev)}
+									className="hover:bg-bg-300/50 px-m-400 py-s-300 flex w-full items-center justify-between transition-colors"
+									aria-expanded={baseConfigOpen}
+									aria-controls="base-config-panel"
 								>
-									<p className="text-tiny text-txt-300">
-										{t("baseConfigHint")}
-									</p>
-									<SweptPathsProvider activeRanges={activeRanges}>
-										<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
-											{recipe.entry.type === "orb_breakout" && (
-												<OrbEntrySection
+									<span className="text-small gap-s-200 text-txt-200 flex items-center font-medium">
+										<Settings2 className="h-4 w-4" aria-hidden="true" />
+										{t("baseConfig")}
+									</span>
+									<ChevronDown
+										className={cn(
+											"text-txt-300 h-4 w-4 transition-transform",
+											baseConfigOpen && "rotate-180"
+										)}
+										aria-hidden="true"
+									/>
+								</button>
+								{baseConfigOpen && (
+									<div
+										id="base-config-panel"
+										className="border-bg-300 space-y-m-400 p-m-400 border-t"
+									>
+										<p className="text-tiny text-txt-300">
+											{t("baseConfigHint")}
+										</p>
+										<SweptPathsProvider activeRanges={activeRanges}>
+											<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
+												{recipe.entry.type === "orb_breakout" && (
+													<OrbEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												{recipe.entry.type === "macd_wma_alignment" && (
+													<DezkEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												{recipe.entry.type === "hawks_triple_screen" && (
+													<HawksEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												{recipe.entry.type === "user_catalog" && (
+													<UserCatalogEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												<StopProtectionSection
 													recipe={recipe}
 													onRecipeChange={setRecipe}
 												/>
-											)}
-											{recipe.entry.type === "macd_wma_alignment" && (
-												<DezkEntrySection
+												<TargetsExitSection
 													recipe={recipe}
 													onRecipeChange={setRecipe}
 												/>
-											)}
-											{recipe.entry.type === "hawks_triple_screen" && (
-												<HawksEntrySection
+												<SizingExecutionSection
 													recipe={recipe}
 													onRecipeChange={setRecipe}
 												/>
-											)}
-											{recipe.entry.type === "user_catalog" && (
-												<UserCatalogEntrySection
-													recipe={recipe}
-													onRecipeChange={setRecipe}
-												/>
-											)}
-											<StopProtectionSection
-												recipe={recipe}
-												onRecipeChange={setRecipe}
-											/>
-											<TargetsExitSection
-												recipe={recipe}
-												onRecipeChange={setRecipe}
-											/>
-											<SizingExecutionSection
-												recipe={recipe}
-												onRecipeChange={setRecipe}
-											/>
-										</div>
-									</SweptPathsProvider>
-								</div>
-							)}
-						</div>
+											</div>
+										</SweptPathsProvider>
+									</div>
+								)}
+							</div>
+						)}
 
 						{/* Sweep progress bar */}
 						<div aria-live="polite" aria-atomic="false">
@@ -874,12 +975,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							)}
 						</div>
 
-						{/* Run Sweep button */}
+						{/* Run Sweep button. In inline-Hawks mode the builder always
+						    yields at least 1 combination (every leaf has a fixed default),
+						    so we don't gate on activeRanges. */}
 						{!isSweeping && (
 							<Button
 								id="optimize-sweep"
 								onClick={handleRunSweep}
-								disabled={!hasData || activeRanges.length === 0}
+								disabled={
+									!hasData ||
+									(!(isInlineHawksMode && leafSelections !== null) &&
+										activeRanges.length === 0)
+								}
 								size="lg"
 								className="gap-s-200 w-full"
 							>
@@ -921,7 +1028,14 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							<div className="border-bg-300 my-s-200 border-t" />
 							<div className="flex justify-between">
 								<span className="text-txt-300">
-									{t("summary.paramsSelected", { count: activeRanges.length })}
+									{t("summary.paramsSelected", {
+										count:
+											isInlineHawksMode && leafSelections !== null
+												? Array.from(leafSelections.values()).filter(
+														(s) => s.kind !== "fixed"
+													).length
+												: activeRanges.length,
+									})}
 								</span>
 							</div>
 							<div className="flex justify-between">
