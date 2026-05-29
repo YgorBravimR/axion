@@ -5375,7 +5375,8 @@
 			"sectionStop": "Stop & Protection",
 			"sectionReversal": "Reversal",
 			"sectionTarget": "Target",
-			"sectionExecution": "Execution"
+			"sectionExecution": "Execution",
+			"bundleLockHint": "{bundle} bundle owns {count} gates below — switch to Custom to override individually."
 		}
 	},
 	"candleImport": {

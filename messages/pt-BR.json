@@ -5375,7 +5375,8 @@
 			"sectionStop": "Stop & Proteção",
 			"sectionReversal": "Reversão",
 			"sectionTarget": "Alvo",
-			"sectionExecution": "Execução"
+			"sectionExecution": "Execução",
+			"bundleLockHint": "Pacote {bundle} possui {count} gates abaixo — alterne para Personalizado para sobrescrever individualmente."
 		}
 	},
 	"candleImport": {

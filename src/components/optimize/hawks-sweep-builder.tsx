@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
+	BUNDLE_PATH,
+	BUNDLE_OWNED_PATHS,
 } from "@/lib/backtest/presets/hawks-leaves"
 import { countConditionalGridBreakdown } from "@/lib/optimize/grid-conditional"
 import type {
@@ -176,6 +178,21 @@ const HawksSweepBuilder = ({
 	const tBuilder = useTranslations("optimize.sweepBuilder")
 	const tInvariant = useTranslations("optimize.invariants")
 	const tWf = useTranslations("optimize.walkForward")
+	const tLeaf = useTranslations("optimize.sweepLeaf")
+
+	// When the quality bundle is fixed to a non-custom value, it owns
+	// (locks + hides) every gate listed in BUNDLE_OWNED_PATHS. Surfacing
+	// this prevents the "where did my checkbox go?" confusion.
+	const lockingBundleValue = useMemo<string | null>(() => {
+		const bundleSel = selections.get(BUNDLE_PATH)
+		if (!bundleSel || bundleSel.kind !== "fixed") {
+			return null
+		}
+		if (typeof bundleSel.value !== "string" || bundleSel.value === "custom") {
+			return null
+		}
+		return bundleSel.value
+	}, [selections])
 
 	// Live cardinality breakdown — recomputed when selections change.
 	// Reports `raw` (before validator filtering), `valid` (after), and
@@ -372,6 +389,8 @@ const HawksSweepBuilder = ({
 				if (leaves.length === 0) {
 					return null
 				}
+				const showBundleHint =
+					section.id === "quality" && lockingBundleValue !== null
 				return (
 					<section
 						key={section.id}
@@ -380,6 +399,14 @@ const HawksSweepBuilder = ({
 						<h3 className="text-body text-txt-100 font-semibold">
 							{tBuilder(section.titleKey)}
 						</h3>
+						{showBundleHint && (
+							<div className="border-bg-400 bg-bg-300 p-s-300 text-tiny text-txt-200 rounded-md border">
+								{tBuilder("bundleLockHint", {
+									bundle: tLeaf(`hawksQualityBundle_${lockingBundleValue}`),
+									count: BUNDLE_OWNED_PATHS.length,
+								})}
+							</div>
+						)}
 						<div className="space-y-m-400">
 							{leaves.map((leaf) => (
 								<LeafControl
