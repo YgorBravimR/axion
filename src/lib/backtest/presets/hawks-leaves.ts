@@ -451,11 +451,11 @@ const HAWKS_LEAVES: SweepableLeaf[] = [
 	// ── Execution ───────────────────────────────────────────────────
 	{
 		kind: "number",
-		path: "execution.slippagePoints",
+		path: "slippageTicks",
 		labelKey: "slippage",
 		defaultMin: 0,
-		defaultMax: 50,
-		defaultStep: 5,
+		defaultMax: 5,
+		defaultStep: 1,
 	},
 ]
 
