@@ -44,6 +44,8 @@ import {
 	MAX_COMBINATIONS,
 } from "@/lib/optimize/parameter-grid"
 import { runSweep } from "@/lib/optimize/sweep-runner"
+import { listBundledCatalogs } from "@/app/actions/user-catalog-bundles"
+import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
 import { OrbEntrySection } from "@/components/backtest/sections/orb-entry-section"
 import { DezkEntrySection } from "@/components/backtest/sections/dezk-entry-section"
 import { HawksEntrySection } from "@/components/backtest/sections/hawks-entry-section"
@@ -151,6 +153,78 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		: ""
 	const dateTo = dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : ""
 	const hasData = candleCount > 0
+
+	// In user_catalog mode the catalog IS canonical: range, asset, and the
+	// preset (only one variant) are derived from the catalog itself. Mirror
+	// the backtest page's UX — auto-load the all-days bundle on entry, pin
+	// the date range to the catalog span, and hide the manual selectors.
+	const isUserCatalog = recipe.entry.type === "user_catalog"
+
+	useEffect(() => {
+		if (!isUserCatalog || recipe.entry.type !== "user_catalog") {
+			return
+		}
+		const currentCatalog = recipe.entry.config.catalog
+		if (currentCatalog.length > 0) {
+			return
+		}
+		let cancelled = false
+		void listBundledCatalogs().then((bundles) => {
+			if (cancelled || bundles.length === 0) {
+				return
+			}
+			const allBundle = bundles.find((b) => b.key === "all") ?? bundles[0]
+			if (!allBundle) {
+				return
+			}
+			setRecipe((prev) => {
+				if (prev.entry.type !== "user_catalog") {
+					return prev
+				}
+				if (prev.entry.config.catalog.length > 0) {
+					return prev
+				}
+				return {
+					...prev,
+					entry: {
+						type: "user_catalog",
+						config: { ...prev.entry.config, catalog: allBundle.catalog },
+					},
+				}
+			})
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [isUserCatalog, recipe.entry])
+
+	useEffect(() => {
+		if (recipe.entry.type !== "user_catalog") {
+			return
+		}
+		const catalog = recipe.entry.config.catalog
+		if (catalog.length === 0) {
+			return
+		}
+		const sortedDates = catalog
+			.map((e) => e.date)
+			.sort((a, b) => a.localeCompare(b))
+		const firstDate = sortedDates[0]
+		const lastDate = sortedDates[sortedDates.length - 1]
+		if (!firstDate || !lastDate) {
+			return
+		}
+		const fromMatches =
+			dateRange?.from && formatLocalYMD(dateRange.from) === firstDate
+		const toMatches = dateRange?.to && formatLocalYMD(dateRange.to) === lastDate
+		if (fromMatches && toMatches) {
+			return
+		}
+		setDateRange({
+			from: parseLocalYMD(firstDate),
+			to: parseLocalYMD(lastDate),
+		})
+	}, [recipe.entry, dateRange?.from, dateRange?.to])
 
 	const assetValuePerPointCents = selectedSource
 		? Math.round(
@@ -554,104 +628,117 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							</Select>
 						</div>
 
-						{/* Preset */}
-						<div className="space-y-s-200">
-							<label
-								htmlFor="optimize-preset"
-								className="text-small text-txt-200 font-medium"
-							>
-								{tBacktest("builder.loadPreset")}
-							</label>
-							<Select onValueChange={handlePresetChange}>
-								<SelectTrigger id="optimize-preset">
-									<SelectValue placeholder={tBacktest("config.selectPreset")} />
-								</SelectTrigger>
-								<SelectContent>
-									{ALL_PRESETS.map((preset, i) => (
-										<SelectItem
-											key={`${preset.entry.type}-${i}`}
-											value={String(i)}
-										>
-											{preset.displayName}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+						{/* Preset — hidden in user_catalog mode (single variant; the
+						    catalog itself is the configuration). */}
+						{!isUserCatalog && (
+							<div className="space-y-s-200">
+								<label
+									htmlFor="optimize-preset"
+									className="text-small text-txt-200 font-medium"
+								>
+									{tBacktest("builder.loadPreset")}
+								</label>
+								<Select onValueChange={handlePresetChange}>
+									<SelectTrigger id="optimize-preset">
+										<SelectValue
+											placeholder={tBacktest("config.selectPreset")}
+										/>
+									</SelectTrigger>
+									<SelectContent>
+										{ALL_PRESETS.map((preset, i) => (
+											<SelectItem
+												key={`${preset.entry.type}-${i}`}
+												value={String(i)}
+											>
+												{preset.displayName}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						)}
 
-						{/* Asset + Timeframe */}
-						<div className="space-y-s-200">
-							<label
-								htmlFor="optimize-source"
-								className="text-small text-txt-200 font-medium"
-							>
-								{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
-							</label>
-							<Select
-								value={String(selectedSourceIndex)}
-								onValueChange={handleSourceChange}
-							>
-								<SelectTrigger id="optimize-source">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{dataSources.map((source, i) => (
-										<SelectItem
-											key={`${source.assetId}-${source.timeframeId}`}
-											value={String(i)}
-										>
-											{source.assetSymbol} — {source.timeframeCode}
-											{source.rowCount
-												? ` (${source.rowCount.toLocaleString()})`
-												: ""}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+						{/* Asset + Timeframe — hidden in user_catalog mode (the
+						    asset/timeframe is implied by the catalog's brick indices). */}
+						{!isUserCatalog && (
+							<div className="space-y-s-200">
+								<label
+									htmlFor="optimize-source"
+									className="text-small text-txt-200 font-medium"
+								>
+									{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
+								</label>
+								<Select
+									value={String(selectedSourceIndex)}
+									onValueChange={handleSourceChange}
+								>
+									<SelectTrigger id="optimize-source">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{dataSources.map((source, i) => (
+											<SelectItem
+												key={`${source.assetId}-${source.timeframeId}`}
+												value={String(i)}
+											>
+												{source.assetSymbol} — {source.timeframeCode}
+												{source.rowCount
+													? ` (${source.rowCount.toLocaleString()})`
+													: ""}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						)}
 
-						{/* Date Range */}
-						<div className="space-y-s-200">
-							<label
-								htmlFor="optimize-quick-range"
-								className="text-small text-txt-200 font-medium"
-							>
-								{tBacktest("config.dateRange")}
-							</label>
-							<Select value={quickRangeKey} onValueChange={handleQuickRange}>
-								<SelectTrigger id="optimize-quick-range">
-									<SelectValue placeholder={tBacktest("builder.quickRange")} />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">
-										{tBacktest("builder.rangeAll")}
-									</SelectItem>
-									<SelectItem value="this_month">
-										{tBacktest("builder.rangeThisMonth")}
-									</SelectItem>
-									<SelectItem value="this_year">
-										{tBacktest("builder.rangeThisYear")}
-									</SelectItem>
-									<SelectItem value="3m">
-										{tBacktest("builder.range3m")}
-									</SelectItem>
-									<SelectItem value="6m">
-										{tBacktest("builder.range6m")}
-									</SelectItem>
-									<SelectItem value="1y">
-										{tBacktest("builder.range1y")}
-									</SelectItem>
-									<SelectItem value="custom">
-										{tBacktest("builder.rangeCustom")}
-									</SelectItem>
-								</SelectContent>
-							</Select>
-							<DateRangePicker
-								id="optimize-date-range"
-								value={dateRange}
-								onChange={handleDateRangeManual}
-							/>
-						</div>
+						{/* Date Range — hidden in user_catalog mode (the catalog's own
+						    date list IS the range; to exclude dates, edit the JSON). */}
+						{!isUserCatalog && (
+							<div className="space-y-s-200">
+								<label
+									htmlFor="optimize-quick-range"
+									className="text-small text-txt-200 font-medium"
+								>
+									{tBacktest("config.dateRange")}
+								</label>
+								<Select value={quickRangeKey} onValueChange={handleQuickRange}>
+									<SelectTrigger id="optimize-quick-range">
+										<SelectValue
+											placeholder={tBacktest("builder.quickRange")}
+										/>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">
+											{tBacktest("builder.rangeAll")}
+										</SelectItem>
+										<SelectItem value="this_month">
+											{tBacktest("builder.rangeThisMonth")}
+										</SelectItem>
+										<SelectItem value="this_year">
+											{tBacktest("builder.rangeThisYear")}
+										</SelectItem>
+										<SelectItem value="3m">
+											{tBacktest("builder.range3m")}
+										</SelectItem>
+										<SelectItem value="6m">
+											{tBacktest("builder.range6m")}
+										</SelectItem>
+										<SelectItem value="1y">
+											{tBacktest("builder.range1y")}
+										</SelectItem>
+										<SelectItem value="custom">
+											{tBacktest("builder.rangeCustom")}
+										</SelectItem>
+									</SelectContent>
+								</Select>
+								<DateRangePicker
+									id="optimize-date-range"
+									value={dateRange}
+									onChange={handleDateRangeManual}
+								/>
+							</div>
+						)}
 
 						{/* Load Data */}
 						<Button
