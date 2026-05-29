@@ -152,7 +152,7 @@ export const MonteCarloContent = ({
 	const { limits } = useFeatureAccess()
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500">
+		<div className="p-m-400 sm:p-m-500 lg:p-m-600 space-y-m-400 sm:space-y-m-500 container mx-auto max-w-7xl">
 			{/* Header */}
 			<div>
 				<h1 className="text-h3 text-txt-100 font-bold">{t("title")}</h1>
