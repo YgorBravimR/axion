@@ -147,7 +147,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const [isLoadingData, setIsLoadingData] = useState(false)
 
 	// ── Config state ──────────────────────────────────────────────
-	const [recipe, setRecipe] = useState<StrategyRecipe>(orbPresets[0])
+	// Default to Hawks v0 — it's the active strategy focus and matches the
+	// backtest page's typical entry point. Users can still switch to ORB or
+	// user_catalog via the Strategy selector in Setup.
+	const [recipe, setRecipe] = useState<StrategyRecipe>(hawksV0)
 	const [selectedSourceIndex, setSelectedSourceIndex] = useState(0)
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState("")
@@ -407,6 +410,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			}
 		}
 		setRecipe(preset)
+		// Force the inline sweep builder to re-derive its selections from the
+		// new recipe. Without this, the builder keeps showing the previous
+		// preset's leaf values (e.g. ORB stop/target after switching to Hawks).
+		setLeafSelections(null)
 	}
 
 	const handleStrategyChange = (type: string) => {
@@ -419,6 +426,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		}
 		// `macd_wma_alignment` (DEZK) is archived — not selectable from UI.
 		setActiveRanges([])
+		// Same reason as handlePresetChange — re-derive selections from the
+		// new strategy's recipe so the inline builder reflects the swap.
+		setLeafSelections(null)
 	}
 
 	const handleSourceChange = (value: string) => {
