@@ -2,6 +2,65 @@
 
 ---
 
+## [BUG-2026-05-30-1] Optimize inline sweep builder shows previous strategy's leaf values after Strategy/Preset swap
+
+**Date:** 2026-05-30
+**Severity:** Medium (visible misalignment with the backtest page; users can manually edit each field to recover, but the discrepancy looks like the optimize engine is configured wrong)
+**Affected Area:** `src/components/optimize/optimize-content.tsx:147,247-259,396-422`
+
+### What happened
+
+User on `/backtest/optimize` reported that the Stop & Proteção section showed `Tipo de stop = % do range` with `Stop % do range = 30`, and the Alvo section showed `Alvo (R) = 1000` with `Modo do alvo = % do range`. Those are the verbatim values of `orbPresets[0].stop.initial` and `orbPresets[0].target.levels[0]`. The user had selected Hawks v0 from the Strategy dropdown but the inline sweep builder kept rendering ORB values. The legacy form sections (which read `recipe` directly) did update correctly — only the inline builder showed stale data.
+
+### Root cause
+
+Two issues stacked on top of each other:
+
+1. **Pre-existing default.** `optimize-content.tsx:147` initialized `recipe` to `orbPresets[0]`, a leftover from when ORB was the only strategy.
+2. **Stale `leafSelections` after `setRecipe`.** The seed effect for the inline sweep builder only ran when `leafSelections === null`:
+
+```ts
+useEffect(() => {
+	if (!inlineSweepBundle) {
+		if (leafSelections !== null) setLeafSelections(null)
+		return
+	}
+	if (leafSelections === null) {
+		setLeafSelections(deriveInitialSelections(inlineSweepBundle.leaves, recipe))
+	}
+}, [inlineSweepBundle, recipe, leafSelections])
+```
+
+On mount the effect populated `leafSelections` from the (then-ORB) recipe. When the user later picked Hawks via the Strategy dropdown, `handleStrategyChange("hawks_triple_screen")` ran `setRecipe(hawksV0)` and `setActiveRanges([])` — but left `leafSelections` untouched. The effect re-ran (dependencies `inlineSweepBundle` and `recipe` had changed) but the `leafSelections === null` gate skipped the re-derive. Shared leaf paths between ORB and Hawks (`stop.initial.type`, `stop.initial.pct`, `target.levels.0.value`, `target.levels.0.mode`) kept their ORB-seeded values, so the inline builder rendered ORB-shape inputs.
+
+### Fix
+
+`feat/op` commit fixed at this entry's date. Two-line change in two handlers (`handlePresetChange`, `handleStrategyChange`) to clear `leafSelections` after the recipe swap, plus changing the initial state to `hawksV0`:
+
+```ts
+const handleStrategyChange = (type: string) => {
+	if (type === "orb_breakout") setRecipe(orbPresets[0])
+	else if (type === "hawks_triple_screen") setRecipe(hawksV0)
+	else if (type === "user_catalog") setRecipe(hawksUserCatalog)
+	setActiveRanges([])
+	setLeafSelections(null) // ← forces seed effect to re-derive
+}
+```
+
+Same `setLeafSelections(null)` added inside `handlePresetChange`. The existing seed effect now picks up the change and re-derives `leafSelections` from the new recipe + the new strategy's leaf catalog (`HAWKS_LEAVES` vs `ORB_LEAVES`).
+
+### Why we didn't fail twice
+
+`docs/gotchas.md` doesn't have an existing entry that would have caught this — it's the first time a controlled state mirrors another controlled state through an effect with a `null` reset gate. The gate pattern is fine for "seed once" — but it traps any caller that mutates the upstream state without nulling the mirror. Logging this here for next time:
+
+> **Mirror state with a `=== null` seed gate must be nulled explicitly when the upstream changes**. If you have `useEffect(() => { if (mirror === null) deriveMirror(upstream) }, [upstream, mirror])`, the gate prevents re-derives on upstream changes. Either drop the gate (always re-derive) or null the mirror at every upstream mutation site. Don't rely on the dependency array alone — the gate makes the effect silently no-op.
+
+### Files
+
+- `src/components/optimize/optimize-content.tsx` (lines 147, 396-422)
+
+---
+
 ## [BUG-2026-05-26-2] Lightweight Charts assertion: "data must be asc ordered by time" on same-brick trades
 
 **Date:** 2026-05-26

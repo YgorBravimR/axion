@@ -144,6 +144,21 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Always `import { useState, forwardRef } from "react"`. Same for types: `import type { ComponentProps, HTMLAttributes } from "react"`.
 - **Date logged**: 2026-05-07.
 
+### Mirror state with a `=== null` seed gate silently goes stale when the upstream mutates
+
+- **What**: A pattern that looks fine at first glance:
+  ```ts
+  useEffect(() => {
+  	if (mirror === null) {
+  		setMirror(deriveFromUpstream(upstream))
+  	}
+  }, [upstream, mirror])
+  ```
+  This seeds `mirror` once when null, then never again — even if `upstream` changes. The `[upstream, mirror]` dependency array re-runs the effect, but the `=== null` gate immediately no-ops. The mirror keeps showing data derived from the FIRST upstream value, forever.
+- **What to do**: At every site that mutates `upstream`, also call `setMirror(null)` so the next effect run re-seeds. Don't rely on the dependency array alone — the gate breaks it.
+- **Where this bit us**: `src/components/optimize/optimize-content.tsx` — `leafSelections` was a mirror of `recipe` via a seed effect with a `=== null` gate. When the user switched strategy or preset, `setRecipe` updated but `leafSelections` kept the OLD strategy's values; the inline sweep builder rendered stale ORB fields after the user picked Hawks. Fix: `setLeafSelections(null)` inside `handleStrategyChange` and `handlePresetChange`. See `docs/postMorten/frontend.md` BUG-2026-05-30-1.
+- **Date logged**: 2026-05-30.
+
 ### `@radix-ui/react-scroll-area` crashes React 19 inside any mount/unmount boundary
 
 - **What**: `ScrollArea` v1.2.10 uses `useComposedRefs` internally, which calls `setState` during React 19's `disappearLayoutEffects` phase (triggered on unmount and on Suspense "disappear"). React 19 rejects this as "Maximum update depth exceeded", caught by the app's `ErrorBoundaryHandler`. Affects any `ScrollArea` that lives inside a Radix `Sheet`/`Dialog`/`AlertDialog` (open/close cycles), a lazy-mounted tab panel, or a layout component that participates in RSC Suspense streaming (even fixed-position sidebars disappear temporarily during route transitions in Next.js App Router).
