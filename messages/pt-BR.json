@@ -5355,13 +5355,21 @@
 			"hawksTargetR": "Alvo (R)",
 			"target1ExitPct": "TP1 saída %",
 			"targetEodTime": "Saída fim-do-dia",
-			"slippage": "Slippage (ticks)"
+			"slippage": "Slippage (ticks)",
+			"orbStartTime": "Abertura do range",
+			"orbEndTime": "Fechamento do range",
+			"orbTicksBuffer": "Buffer de rompimento (ticks)",
+			"orbIgnoreGaps": "Ignorar gaps (apenas corpo)",
+			"orbBreakevenTrigger": "Gatilho de BE (% risco)",
+			"orbTarget1": "Alvo 1",
+			"orbTarget2": "Alvo 2"
 		},
 		"invariants": {
 			"tierMonotonic": "Ordem dos tiers",
 			"sessionWindow": "Janela da sessão",
 			"wave1OverRetracement": "Onda 1 vs retração",
-			"breakevenBeforeFirstTarget": "BE antes do TP1"
+			"breakevenBeforeFirstTarget": "BE antes do TP1",
+			"target2OverTarget1": "Alvo 2 vs Alvo 1"
 		},
 		"sweepBuilder": {
 			"title": "Construtor de Sweep — Hawks",

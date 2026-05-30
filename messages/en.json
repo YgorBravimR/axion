@@ -5355,13 +5355,21 @@
 			"hawksTargetR": "Target (R)",
 			"target1ExitPct": "TP1 exit %",
 			"targetEodTime": "EOD exit",
-			"slippage": "Slippage (ticks)"
+			"slippage": "Slippage (ticks)",
+			"orbStartTime": "Range open",
+			"orbEndTime": "Range close",
+			"orbTicksBuffer": "Breakout buffer (ticks)",
+			"orbIgnoreGaps": "Ignore gaps (body-only)",
+			"orbBreakevenTrigger": "BE trigger (% risk)",
+			"orbTarget1": "Target 1",
+			"orbTarget2": "Target 2"
 		},
 		"invariants": {
 			"tierMonotonic": "Tier order",
 			"sessionWindow": "Session window",
 			"wave1OverRetracement": "Wave-1 vs retracement",
-			"breakevenBeforeFirstTarget": "BE before TP1"
+			"breakevenBeforeFirstTarget": "BE before TP1",
+			"target2OverTarget1": "Target 2 vs Target 1"
 		},
 		"sweepBuilder": {
 			"title": "Hawks Sweep Builder",

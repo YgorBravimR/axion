@@ -59,18 +59,25 @@ import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweptPathsProvider } from "./swept-paths-context"
 import { HawksSweepBuilder } from "./hawks-sweep-builder"
+import { OrbSweepBuilder } from "./orb-sweep-builder"
 import { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED } from "@/lib/optimize/feature-flags"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
 } from "@/lib/backtest/presets/hawks-leaves"
+import { ORB_LEAVES, ORB_VALIDATORS } from "@/lib/backtest/presets/orb-leaves"
+import type {
+	LeafGroupValidator,
+	LeafSelection,
+	PrimitiveValue,
+	SweepableLeaf,
+} from "@/lib/optimize/sweep-leaf"
 import {
 	generateConditionalGrid,
 	countConditionalGrid,
 } from "@/lib/optimize/grid-conditional"
 import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
 import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
-import type { LeafSelection, PrimitiveValue } from "@/lib/optimize/sweep-leaf"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
@@ -155,9 +162,34 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		string,
 		LeafSelection
 	> | null>(null)
-	const isInlineHawksMode =
-		OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED &&
-		recipe.entry.type === "hawks_triple_screen"
+	// Strategy-aware inline-sweep config. Returns the leaves + validators
+	// the new sweep-builder system should use for the current recipe, or
+	// `null` when the strategy still routes through the legacy panel.
+	const inlineSweepBundle = useMemo<{
+		leaves: SweepableLeaf[]
+		validators: LeafGroupValidator[]
+		strategyKey: "hawks" | "orb"
+	} | null>(() => {
+		if (
+			OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED &&
+			recipe.entry.type === "hawks_triple_screen"
+		) {
+			return {
+				leaves: HAWKS_LEAVES,
+				validators: HAWKS_VALIDATORS,
+				strategyKey: "hawks",
+			}
+		}
+		if (recipe.entry.type === "orb_breakout") {
+			return {
+				leaves: ORB_LEAVES,
+				validators: ORB_VALIDATORS,
+				strategyKey: "orb",
+			}
+		}
+		return null
+	}, [recipe.entry.type])
+	const isInlineSweepMode = inlineSweepBundle !== null
 	const [isSweeping, setIsSweeping] = useState(false)
 	const [sweepProgress, setSweepProgress] = useState({ current: 0, total: 0 })
 	const sweepHandleRef = useRef<SweepHandle | null>(null)
@@ -195,16 +227,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// user lands on the inline-Hawks flow. Re-derive when the recipe
 	// preset itself changes (entry type swap, preset reload).
 	useEffect(() => {
-		if (!isInlineHawksMode) {
+		if (!inlineSweepBundle) {
 			if (leafSelections !== null) {
 				setLeafSelections(null)
 			}
 			return
 		}
 		if (leafSelections === null) {
-			setLeafSelections(deriveInitialSelections(HAWKS_LEAVES, recipe))
+			setLeafSelections(
+				deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+			)
 		}
-	}, [isInlineHawksMode, recipe, leafSelections])
+	}, [inlineSweepBundle, recipe, leafSelections])
 
 	const selectedSource = dataSources[selectedSourceIndex]
 	const dateFrom = dateRange?.from
@@ -472,7 +506,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		// Branch: inline Hawks mode uses conditional-grid generation; legacy
 		// mode uses the flat parameter-range grid. They produce the same
 		// downstream shape — `StrategyRecipe[]` — so `runSweep(...)` is shared.
-		const useInlineGrid = isInlineHawksMode && leafSelections !== null
+		const useInlineGrid = inlineSweepBundle !== null && leafSelections !== null
 
 		if (!useInlineGrid && activeRanges.length === 0) {
 			showToast("error", t("noParamsSelected"))
@@ -481,10 +515,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		const totalCombos = useInlineGrid
 			? countConditionalGrid(
-					HAWKS_LEAVES,
+					inlineSweepBundle!.leaves,
 					leafSelections!,
 					buildLeafFallback(leafSelections!),
-					HAWKS_VALIDATORS
+					inlineSweepBundle!.validators
 				)
 			: countCombinations(activeRanges, recipe)
 		if (totalCombos > MAX_COMBINATIONS) {
@@ -506,10 +540,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		const recipes = useInlineGrid
 			? generateConditionalGrid(
-					HAWKS_LEAVES,
+					inlineSweepBundle!.leaves,
 					leafSelections!,
 					buildLeafFallback(leafSelections!),
-					HAWKS_VALIDATORS
+					inlineSweepBundle!.validators
 				).map((combo) => recipeFromCombo(recipe, combo))
 			: generateRecipeGrid(recipe, activeRanges)
 		setIsSweeping(true)
@@ -577,7 +611,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		hasData,
 		recipe,
 		activeRanges,
-		isInlineHawksMode,
+		inlineSweepBundle,
 		leafSelections,
 		dateFrom,
 		dateTo,
@@ -670,16 +704,16 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		? runs.find((r) => r.id === expandedRunId)
 		: null
 	const totalCombinations = useMemo(() => {
-		if (isInlineHawksMode && leafSelections !== null) {
+		if (inlineSweepBundle && leafSelections !== null) {
 			return countConditionalGrid(
-				HAWKS_LEAVES,
+				inlineSweepBundle.leaves,
 				leafSelections,
 				buildLeafFallback(leafSelections),
-				HAWKS_VALIDATORS
+				inlineSweepBundle.validators
 			)
 		}
 		return activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
-	}, [isInlineHawksMode, leafSelections, activeRanges, recipe])
+	}, [inlineSweepBundle, leafSelections, activeRanges, recipe])
 
 	// ── Render ────────────────────────────────────────────────────
 
@@ -875,18 +909,32 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{t("wizard.parametersDesc")}
 						</p>
 
-						{isInlineHawksMode && leafSelections !== null ? (
-							<HawksSweepBuilder
-								selections={leafSelections}
-								onSelectionsChange={setLeafSelections}
-								walkForwardConfig={walkForwardConfig}
-								onWalkForwardChange={setWalkForwardConfig}
-								onReset={() =>
-									setLeafSelections(
-										deriveInitialSelections(HAWKS_LEAVES, recipe)
-									)
-								}
-							/>
+						{inlineSweepBundle && leafSelections !== null ? (
+							inlineSweepBundle.strategyKey === "hawks" ? (
+								<HawksSweepBuilder
+									selections={leafSelections}
+									onSelectionsChange={setLeafSelections}
+									walkForwardConfig={walkForwardConfig}
+									onWalkForwardChange={setWalkForwardConfig}
+									onReset={() =>
+										setLeafSelections(
+											deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+										)
+									}
+								/>
+							) : (
+								<OrbSweepBuilder
+									selections={leafSelections}
+									onSelectionsChange={setLeafSelections}
+									walkForwardConfig={walkForwardConfig}
+									onWalkForwardChange={setWalkForwardConfig}
+									onReset={() =>
+										setLeafSelections(
+											deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+										)
+									}
+								/>
+							)
 						) : (
 							<SweepConfigPanel
 								recipe={recipe}
@@ -900,7 +948,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						{/* Collapsible base configuration for non-sweepable params. */}
 						{/* Inline-Hawks mode hides this entirely — the sweep builder is */}
 						{/* the single source of truth for every recipe field. */}
-						{!(isInlineHawksMode && leafSelections !== null) && (
+						{!(isInlineSweepMode && leafSelections !== null) && (
 							<div className="border-bg-300 rounded-lg border">
 								<button
 									type="button"
@@ -989,7 +1037,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								onClick={handleRunSweep}
 								disabled={
 									!hasData ||
-									(isInlineHawksMode && leafSelections !== null
+									(isInlineSweepMode && leafSelections !== null
 										? totalCombinations === 0
 										: activeRanges.length === 0)
 								}
@@ -1036,7 +1084,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								<span className="text-txt-300">
 									{t("summary.paramsSelected", {
 										count:
-											isInlineHawksMode && leafSelections !== null
+											isInlineSweepMode && leafSelections !== null
 												? Array.from(leafSelections.values()).filter(
 														(s) => s.kind !== "fixed"
 													).length
