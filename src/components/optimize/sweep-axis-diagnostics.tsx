@@ -12,9 +12,21 @@ import {
 } from "@/lib/optimize/sweep-diagnosis"
 import type { LeafSelection, SweepableLeaf } from "@/lib/optimize/sweep-leaf"
 
+interface ValidatorBreakdown {
+	raw: number
+	valid: number
+	droppedByReason: Map<string, number>
+}
+
 interface SweepAxisDiagnosticsProps {
 	leaves: SweepableLeaf[]
 	selections: Map<string, LeafSelection>
+	/**
+	 * Cardinality breakdown from the grid generator. When present and
+	 * `valid < raw`, the component surfaces per-validator drop counts so
+	 * the user understands WHY combos vanished after the per-axis math.
+	 */
+	breakdown?: ValidatorBreakdown
 	/** Optional remediation hook — when provided, locked-owner CTAs render. */
 	onSelectionsChange?: (_next: Map<string, LeafSelection>) => void
 }
@@ -37,10 +49,12 @@ const UNLOCK_OWNER_VALUE = "custom"
 const SweepAxisDiagnostics = ({
 	leaves,
 	selections,
+	breakdown,
 	onSelectionsChange,
 }: SweepAxisDiagnosticsProps) => {
 	const t = useTranslations("optimize.sweepDiagnosis")
 	const tLeaf = useTranslations("optimize.sweepLeaf")
+	const tInvariant = useTranslations("optimize.invariants")
 
 	const diagnoses = diagnoseSweepAxes(leaves, selections)
 	if (diagnoses.length === 0) {
@@ -102,6 +116,33 @@ const SweepAxisDiagnostics = ({
 					)
 				})}
 			</ul>
+			{breakdown && breakdown.raw > 0 && breakdown.valid < breakdown.raw && (
+				<div className="border-warning/40 bg-warning/5 space-y-s-100 mt-s-200 p-s-200 rounded-md border">
+					<div className="text-tiny text-warning font-medium">
+						{t("dropsHeader", {
+							dropped: (breakdown.raw - breakdown.valid).toLocaleString(),
+							raw: breakdown.raw.toLocaleString(),
+						})}
+					</div>
+					<ul className="space-y-s-100 text-tiny">
+						{Array.from(breakdown.droppedByReason.entries()).map(
+							([reason, count]) => (
+								<li
+									key={reason}
+									className="gap-s-200 flex items-baseline justify-between"
+								>
+									<span className="text-txt-200 truncate">
+										{tInvariant(reason)}
+									</span>
+									<span className="text-warning shrink-0 font-medium tabular-nums">
+										−{count.toLocaleString()}
+									</span>
+								</li>
+							)
+						)}
+					</ul>
+				</div>
+			)}
 			{onSelectionsChange &&
 				lockedGroups.map((group) => {
 					const ownerLeaf = leafByPath.get(group.ownerPath)

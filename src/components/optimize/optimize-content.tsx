@@ -75,6 +75,8 @@ import type {
 import {
 	generateConditionalGrid,
 	countConditionalGrid,
+	countConditionalGridBreakdown,
+	type GridCountBreakdown,
 } from "@/lib/optimize/grid-conditional"
 import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
 import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
@@ -753,17 +755,24 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const expandedRun = expandedRunId
 		? runs.find((r) => r.id === expandedRunId)
 		: null
+	const cardinalityBreakdown = useMemo<GridCountBreakdown | null>(() => {
+		if (!inlineSweepBundle || leafSelections === null) {
+			return null
+		}
+		return countConditionalGridBreakdown(
+			inlineSweepBundle.leaves,
+			leafSelections,
+			buildLeafFallback(leafSelections),
+			inlineSweepBundle.validators
+		)
+	}, [inlineSweepBundle, leafSelections])
+
 	const totalCombinations = useMemo(() => {
-		if (inlineSweepBundle && leafSelections !== null) {
-			return countConditionalGrid(
-				inlineSweepBundle.leaves,
-				leafSelections,
-				buildLeafFallback(leafSelections),
-				inlineSweepBundle.validators
-			)
+		if (cardinalityBreakdown !== null) {
+			return cardinalityBreakdown.valid
 		}
 		return activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
-	}, [inlineSweepBundle, leafSelections, activeRanges, recipe])
+	}, [cardinalityBreakdown, activeRanges, recipe])
 
 	// ── Render ────────────────────────────────────────────────────
 
@@ -1188,6 +1197,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<SweepAxisDiagnostics
 										leaves={inlineSweepBundle.leaves}
 										selections={leafSelections}
+										breakdown={cardinalityBreakdown ?? undefined}
 										onSelectionsChange={setLeafSelections}
 									/>
 								)}

@@ -5470,7 +5470,8 @@
 			"active": "× {count}",
 			"locked": "locked by {ownerValue}",
 			"gated": "gated by {parent}",
-			"unlockCta": "Unlock {count, plural, one {# axis} other {# axes}} — switch {owner} to Custom"
+			"unlockCta": "Unlock {count, plural, one {# axis} other {# axes}} — switch {owner} to Custom",
+			"dropsHeader": "{dropped} of {raw} combos dropped by validators:"
 		}
 	},
 	"candleImport": {
