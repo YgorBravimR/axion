@@ -1198,6 +1198,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 										leaves={inlineSweepBundle.leaves}
 										selections={leafSelections}
 										breakdown={cardinalityBreakdown ?? undefined}
+										validators={inlineSweepBundle.validators}
 										onSelectionsChange={setLeafSelections}
 									/>
 								)}

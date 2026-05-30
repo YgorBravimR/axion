@@ -5471,7 +5471,10 @@
 			"locked": "travado por {ownerValue}",
 			"gated": "bloqueado por {parent}",
 			"unlockCta": "Destravar {count, plural, one {# eixo} other {# eixos}} — alterne {owner} para Personalizado",
-			"dropsHeader": "{dropped} de {raw} combinações descartadas pelos validadores:"
+			"dropsHeader": "{dropped} de {raw} combinações descartadas pelos validadores:",
+			"flagTooltip": "Sinalizado por: {reasons}",
+			"fixReasonCta": "Corrigir {reason}",
+			"fixAllCta": "Corrigir todos os {count} bloqueios"
 		}
 	},
 	"candleImport": {
