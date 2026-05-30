@@ -5469,7 +5469,8 @@
 			"title": "Sweep axes ({active}/{total} active)",
 			"active": "× {count}",
 			"locked": "locked by {ownerValue}",
-			"gated": "gated by {parent}"
+			"gated": "gated by {parent}",
+			"unlockCta": "Unlock {count, plural, one {# axis} other {# axes}} — switch {owner} to Custom"
 		}
 	},
 	"candleImport": {

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
 	diagnoseSweepAxes,
 	countByStatus,
+	groupLockedByOwner,
 } from "@/lib/optimize/sweep-diagnosis"
 import type { LeafSelection, SweepableLeaf } from "@/lib/optimize/sweep-leaf"
 
@@ -153,6 +154,50 @@ describe("diagnoseSweepAxes", () => {
 		])
 		const out = diagnoseSweepAxes([owner, child], sel)
 		expect(out[0]?.status).toBe("locked")
+	})
+})
+
+describe("groupLockedByOwner", () => {
+	it("groups multiple locked leaves under the same owner", () => {
+		const owner = enumLeaf("bundle", ["off", "custom"])
+		const a = numLeaf("a", { managedBy: "bundle" })
+		const b = numLeaf("b", { managedBy: "bundle" })
+		const sel = new Map<string, LeafSelection>([
+			["bundle", { kind: "fixed", value: "off" }],
+			["a", { kind: "sweep_range", min: 1, max: 3, step: 1 }],
+			["b", { kind: "sweep_range", min: 1, max: 3, step: 1 }],
+		])
+		const groups = groupLockedByOwner(diagnoseSweepAxes([owner, a, b], sel))
+		expect(groups).toHaveLength(1)
+		expect(groups[0]?.ownerPath).toBe("bundle")
+		expect(groups[0]?.ownerValue).toBe("off")
+		expect(groups[0]?.leafPaths.sort()).toEqual(["a", "b"])
+	})
+
+	it("returns an empty array when no axes are locked", () => {
+		const owner = enumLeaf("bundle", ["custom"])
+		const a = numLeaf("a", { managedBy: "bundle" })
+		const sel = new Map<string, LeafSelection>([
+			["bundle", { kind: "fixed", value: "custom" }],
+			["a", { kind: "sweep_range", min: 1, max: 3, step: 1 }],
+		])
+		expect(groupLockedByOwner(diagnoseSweepAxes([owner, a], sel))).toEqual([])
+	})
+
+	it("creates separate groups per owner when multiple owners lock", () => {
+		const o1 = enumLeaf("b1", ["off", "custom"])
+		const o2 = enumLeaf("b2", ["off", "custom"])
+		const a = numLeaf("a", { managedBy: "b1" })
+		const b = numLeaf("b", { managedBy: "b2" })
+		const sel = new Map<string, LeafSelection>([
+			["b1", { kind: "fixed", value: "off" }],
+			["b2", { kind: "fixed", value: "off" }],
+			["a", { kind: "sweep_range", min: 1, max: 3, step: 1 }],
+			["b", { kind: "sweep_range", min: 1, max: 3, step: 1 }],
+		])
+		const groups = groupLockedByOwner(diagnoseSweepAxes([o1, o2, a, b], sel))
+		expect(groups).toHaveLength(2)
+		expect(groups.map((g) => g.ownerPath).sort()).toEqual(["b1", "b2"])
 	})
 })
 

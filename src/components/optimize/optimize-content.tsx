@@ -1188,6 +1188,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<SweepAxisDiagnostics
 										leaves={inlineSweepBundle.leaves}
 										selections={leafSelections}
+										onSelectionsChange={setLeafSelections}
 									/>
 								)}
 						</div>

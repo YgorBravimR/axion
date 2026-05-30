@@ -5469,7 +5469,8 @@
 			"title": "Eixos de sweep ({active}/{total} ativos)",
 			"active": "× {count}",
 			"locked": "travado por {ownerValue}",
-			"gated": "bloqueado por {parent}"
+			"gated": "bloqueado por {parent}",
+			"unlockCta": "Destravar {count, plural, one {# eixo} other {# eixos}} — alterne {owner} para Personalizado"
 		}
 	},
 	"candleImport": {

@@ -147,5 +147,41 @@ const countByStatus = (
 	return { active, locked, gated }
 }
 
-export { diagnoseSweepAxes, countByStatus }
-export type { SweepAxisDiagnosis, SweepAxisStatus }
+/**
+ * Group `locked` diagnoses by their owner path. The UI uses this to render
+ * one remediation CTA per owner — "Unlock N axes — switch {owner} to Custom"
+ * — instead of N buttons (one per axis), which would be noisy when the
+ * Hawks `qualityBundle` is locking 10+ leaves at once.
+ *
+ * Returns an array (not a Map) in insertion order so the UI list is stable.
+ */
+interface LockedOwnerGroup {
+	ownerPath: string
+	ownerValue: PrimitiveValue
+	leafPaths: string[]
+}
+
+const groupLockedByOwner = (
+	diagnoses: SweepAxisDiagnosis[]
+): LockedOwnerGroup[] => {
+	const byOwner = new Map<string, LockedOwnerGroup>()
+	for (const d of diagnoses) {
+		if (d.status !== "locked" || !d.ownerPath || d.ownerValue === undefined) {
+			continue
+		}
+		const existing = byOwner.get(d.ownerPath)
+		if (existing) {
+			existing.leafPaths.push(d.leafPath)
+			continue
+		}
+		byOwner.set(d.ownerPath, {
+			ownerPath: d.ownerPath,
+			ownerValue: d.ownerValue,
+			leafPaths: [d.leafPath],
+		})
+	}
+	return Array.from(byOwner.values())
+}
+
+export { diagnoseSweepAxes, countByStatus, groupLockedByOwner }
+export type { SweepAxisDiagnosis, SweepAxisStatus, LockedOwnerGroup }
