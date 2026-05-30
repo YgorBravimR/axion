@@ -154,6 +154,23 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: Two consecutive sweep runs against the same range/asset/indicators show the second one starting backtest execution within 50 ms of clicking Run.
 - **Date filed**: 2026-05-29.
 
+### OPTIMIZE — ORB sweep-leaf catalog migration
+
+- **Priority**: P2
+- **Effort**: M
+- **Source**: 2026-05-29 — companion to the DEZK archival pass (`feat/optimize-phase-1-trust-foundations`). DEZK got archived (no migration); ORB stayed in the UI but still ships through the legacy `SweepConfigPanel` because it has no `orb-leaves.ts` catalog yet.
+- **What + Why**: Hawks already has a sweep-leaf catalog (`src/lib/backtest/presets/hawks-leaves.ts`) feeding `HawksSweepBuilder` with discriminated-union leaf definitions, cross-leaf invariants, and conditional grid expansion. ORB still uses the legacy panel which (a) lacks invariant validation, (b) cannot express conditional ranges (e.g., "if `breakeven.mode = fixed_r` then `triggerR` is sweepable; otherwise locked"), and (c) blocks removal of `SweepConfigPanel`. Migrating ORB is the last blocker for retiring the legacy panel entirely.
+- **Fix shape**:
+  1. Create `src/lib/backtest/presets/orb-leaves.ts` mirroring `hawks-leaves.ts` — `ORB_LEAVES: SweepableLeaf[]` covering ORB entry params (range minutes, breakout threshold, retest tolerance, side filter), stop, target, breakeven, sizing.
+  2. Add ORB-specific `ORB_VALIDATORS: LeafGroupValidator[]` — at minimum (a) `rangeMinutes < session window`, (b) breakeven-before-first-target (mirror the Hawks invariant), (c) any ORB-specific monotonicity.
+  3. Build `src/components/optimize/orb-sweep-builder.tsx` analogous to `hawks-sweep-builder.tsx` — bundle-lock hints, collapsible sections, soft-cardinality warnings.
+  4. Wire selector in `optimize-content.tsx`: when `recipe.entry.type === "opening_range_breakout"`, render `<OrbSweepBuilder>` instead of `<SweepConfigPanel>`.
+  5. i18n: add `optimize.orbSweepBuilder.*` namespace (en + pt-BR).
+  6. Delete legacy `SweepConfigPanel` once Hawks + ORB + user_catalog all have sweep-leaf builders (see related entry below at line ~397).
+- **Out of scope**: New ORB entry params. ORB engine refactor. Sweep-leaf catalog for `hawks_user_catalog` (separate entry — user-catalog mode has minimal sweepable surface anyway).
+- **Done when**: ORB strategy selected on `/optimize` renders the new sweep builder; legacy `SweepConfigPanel` import removed from `optimize-content.tsx`; `pnpm lint:strict` clean; one round-trip test (configure a small ORB sweep, run it, runs appear in comparison table) passes manually.
+- **Date filed**: 2026-05-29.
+
 ### Hawks engine: fine-tune for better backtest outcomes (via OPTIMIZE)
 
 - **Priority**: P1

@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils"
 import { fetchBacktestData } from "@/app/actions/backtest"
 import { runBacktest, getEngineVersionForRecipe } from "@/lib/backtest/engine"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
-import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
+// DEZK strategy archived 2026-05-29 — see dezk-presets.ts header. Not in UI.
 import {
 	hawksPresets,
 	hawksV0,
@@ -47,7 +47,7 @@ import { runSweep } from "@/lib/optimize/sweep-runner"
 import { listBundledCatalogs } from "@/app/actions/user-catalog-bundles"
 import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
 import { OrbEntrySection } from "@/components/backtest/sections/orb-entry-section"
-import { DezkEntrySection } from "@/components/backtest/sections/dezk-entry-section"
+// DEZK archived: DezkEntrySection import removed from UI (strategy hidden from selectors)
 import { HawksEntrySection } from "@/components/backtest/sections/hawks-entry-section"
 import { UserCatalogEntrySection } from "@/components/backtest/sections/user-catalog-entry-section"
 import { StopProtectionSection } from "@/components/backtest/sections/stop-protection-section"
@@ -89,7 +89,7 @@ import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
 
-const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
+const ALL_PRESETS = [...orbPresets, ...hawksPresets]
 
 /**
  * Build the per-path fallback map the conditional-grid generator needs when
@@ -357,13 +357,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const handleStrategyChange = (type: string) => {
 		if (type === "orb_breakout") {
 			setRecipe(orbPresets[0])
-		} else if (type === "macd_wma_alignment") {
-			setRecipe(dezkPresets[0])
 		} else if (type === "hawks_triple_screen") {
 			setRecipe(hawksV0)
 		} else if (type === "user_catalog") {
 			setRecipe(hawksUserCatalog)
 		}
+		// `macd_wma_alignment` (DEZK) is archived — not selectable from UI.
 		setActiveRanges([])
 	}
 
@@ -754,9 +753,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 										<SelectItem value="orb_breakout">
 											{tBacktest("orb.name")}
 										</SelectItem>
-										<SelectItem value="macd_wma_alignment">
-											{tBacktest("dezk.name")}
-										</SelectItem>
+										{/* DEZK (macd_wma_alignment) archived 2026-05-29 — hidden from UI. */}
 										<SelectItem value="hawks_triple_screen">
 											{tBacktest("hawks.name")}
 										</SelectItem>
@@ -940,12 +937,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 														onRecipeChange={setRecipe}
 													/>
 												)}
-												{recipe.entry.type === "macd_wma_alignment" && (
-													<DezkEntrySection
-														recipe={recipe}
-														onRecipeChange={setRecipe}
-													/>
-												)}
+												{/* DEZK archived: macd_wma_alignment branch removed (strategy hidden from UI) */}
 												{recipe.entry.type === "hawks_triple_screen" && (
 													<HawksEntrySection
 														recipe={recipe}

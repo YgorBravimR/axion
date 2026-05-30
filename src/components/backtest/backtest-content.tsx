@@ -17,11 +17,11 @@ import { useLoadingOverlay } from "@/components/ui/loading-overlay"
 import { Play, RotateCcw } from "lucide-react"
 import { runBacktestAction } from "@/app/actions/backtest"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
-import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
+// DEZK strategy archived 2026-05-29 — see dezk-presets.ts header. Not in UI.
 import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
 import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
 import { OrbEntrySection } from "./sections/orb-entry-section"
-import { DezkEntrySection } from "./sections/dezk-entry-section"
+// DEZK entry section archived 2026-05-29 — see dezk-entry-section.tsx header.
 import { HawksEntrySection } from "./sections/hawks-entry-section"
 import { UserCatalogEntrySection } from "./sections/user-catalog-entry-section"
 import { StopProtectionSection } from "./sections/stop-protection-section"
@@ -49,7 +49,7 @@ import type {
 	StrategyRecipe,
 } from "@/types/backtest"
 
-const ALL_PRESETS = [...orbPresets, ...dezkPresets, ...hawksPresets]
+const ALL_PRESETS = [...orbPresets, ...hawksPresets]
 
 interface BacktestContentProps {
 	dataSources: DataSourceInfo[]
@@ -251,9 +251,8 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const handleStrategyChange = useCallback((type: string) => {
 		if (type === "orb_breakout") {
 			setRecipe(orbPresets[0])
-		} else if (type === "macd_wma_alignment") {
-			setRecipe(dezkPresets[0])
 		} else if (type === "hawks_triple_screen") {
+			// `macd_wma_alignment` (DEZK) archived 2026-05-29 — not selectable.
 			setRecipe(hawksPresets[0])
 		} else if (type === "user_catalog") {
 			// hawksUserCatalog is hawksPresets[1] — wraps Hawks stop/target math
@@ -442,9 +441,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
-								<SelectItem value="macd_wma_alignment">
-									{t("dezk.name")}
-								</SelectItem>
+								{/* DEZK (macd_wma_alignment) archived 2026-05-29 — hidden from UI. */}
 								<SelectItem value="hawks_triple_screen">
 									{t("hawks.name")}
 								</SelectItem>
@@ -551,9 +548,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 					{recipe.entry.type === "orb_breakout" && (
 						<OrbEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}
-					{recipe.entry.type === "macd_wma_alignment" && (
-						<DezkEntrySection recipe={recipe} onRecipeChange={setRecipe} />
-					)}
+					{/* DEZK entry section removed 2026-05-29 — strategy archived. */}
 					{recipe.entry.type === "hawks_triple_screen" && (
 						<HawksEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}

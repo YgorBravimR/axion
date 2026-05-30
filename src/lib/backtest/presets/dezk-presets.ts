@@ -1,3 +1,13 @@
+/**
+ * @archived 2026-05 — DEZK strategy archived.
+ *
+ * AGENTS: do not extend, refactor, or wire new sections to this preset.
+ * DEZK is hidden from the UI (backtest + optimize selectors) and is not
+ * a candidate for sweep-leaf migration. To revive, restore the
+ * `dezkPresets` entry in ALL_PRESETS and the strategy SelectItem in
+ * backtest-content.tsx + optimize-content.tsx, plus the JSX render branch.
+ * The file is preserved for git history and engine-side reference only.
+ */
 import type { StrategyRecipe } from "@/types/backtest"
 import type { SweepableParam } from "@/lib/optimize/sweepable-params"
 import {
