@@ -127,6 +127,48 @@ const RunsComparisonTable = ({
 				meta: { cellClassName: "min-w-[140px]" },
 			},
 			{
+				accessorFn: (row) => row.provenance?.stage,
+				id: "stage",
+				header: t("funnel.stageColumn"),
+				cell: ({ getValue, row }) => {
+					const stage = getValue<string | undefined>()
+					if (!stage) {
+						return (
+							<span className="text-tiny text-txt-300">
+								{t("funnel.stageAdHoc")}
+							</span>
+						)
+					}
+					const parents = row.original.provenance?.parentRunIds?.length ?? 0
+					const label = t(`funnel.stage_${stage}` as const)
+					const colorClass =
+						stage === "broad"
+							? "border-acc-100 text-acc-100"
+							: stage === "refine"
+								? "border-trade-buy text-trade-buy"
+								: "border-warning text-warning"
+					return (
+						<div className="gap-s-100 flex items-center">
+							<Badge
+								id={`stage-${row.original.id}`}
+								variant="outline"
+								className={`text-micro px-s-100 py-0 ${colorClass}`}
+							>
+								{label}
+							</Badge>
+							{parents > 0 && (
+								<span
+									className="text-tiny text-txt-300"
+									title={row.original.provenance?.parentRunIds?.join(", ")}
+								>
+									{t("funnel.parentsCount", { count: parents })}
+								</span>
+							)}
+						</div>
+					)
+				},
+			},
+			{
 				accessorFn: (row) => row.summary.totalTrades,
 				id: "totalTrades",
 				header: t("trades"),

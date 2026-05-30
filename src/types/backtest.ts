@@ -598,6 +598,8 @@ interface BacktestResult {
 // Optimization — compare multiple runs
 // ═══════════════════════════════════════════════════════════════════
 
+type FunnelStage = "broad" | "refine" | "freeze"
+
 interface OptimizationRunProvenance {
 	sweepId: string
 	datasetHash: string
@@ -608,6 +610,9 @@ interface OptimizationRunProvenance {
 	engineVersion: string
 	recipeHash: string
 	schemaVersion: number
+	stage?: FunnelStage
+	parentRunIds?: string[]
+	journeyId?: string
 }
 
 interface OptimizationRun {
@@ -715,4 +720,5 @@ export type {
 	// Optimization
 	OptimizationRun,
 	OptimizationRunProvenance,
+	FunnelStage,
 }

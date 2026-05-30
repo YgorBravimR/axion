@@ -1,7 +1,12 @@
 import type { CandleRow } from "@/types/candle"
 import type { StrategyRecipe } from "@/types/backtest"
 
-const STORAGE_SCHEMA_VERSION = 2
+// v2 → v3 (2026-05-30): adds funnel fields (stage, parentRunIds, journeyId) to
+// OptimizationRunProvenance. All three are optional; v2 entries deserialize as
+// `stage=undefined`, which the UI renders as "ad-hoc" (non-funnel run). No data
+// rewrite needed on migration — bumped to keep version-to-shape mapping explicit
+// per the locked PR2 decision.
+const STORAGE_SCHEMA_VERSION = 3
 
 const hashString = (input: string): string => {
 	let h = 0x811c9dc5

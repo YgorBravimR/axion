@@ -5325,6 +5325,21 @@
 		},
 		"matchRate": "Aderência",
 		"matchRateHint": "Fração de sinais do engine que correspondem ao catálogo do usuário por (data, indexTijolos)",
+		"funnel": {
+			"stageColumn": "Estágio",
+			"stageAdHoc": "ad-hoc",
+			"stage_broad": "amplo",
+			"stage_refine": "refinar",
+			"stage_freeze": "congelar",
+			"parentsCount": "{count, plural, one {1 pai} other {# pais}}",
+			"breedTitle": "Cruzando K pais em uma varredura de refinamento",
+			"breedSubtitle": "Edite qualquer leaf abaixo para sobrescrever a união de vizinhanças dos K pais antes de rodar o refinamento.",
+			"breedRunCount": "{count, plural, one {1 pai} other {# pais}}",
+			"breedJourneyId": "Jornada: {id}",
+			"capWarnBroad": "Cap = 500 (amplo)",
+			"capWarnRefine": "Cap = 3000 (refinar)",
+			"capWarnFreeze": "Estágio congelar: apenas snapshot"
+		},
 		"sweepLeaf": {
 			"hawksStartTime": "Início da sessão",
 			"hawksEndTime": "Fim da sessão",

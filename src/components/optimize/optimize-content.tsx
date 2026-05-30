@@ -78,6 +78,8 @@ import {
 } from "@/lib/optimize/grid-conditional"
 import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
 import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
+import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
+import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
@@ -200,6 +202,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
 	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
+	// Funnel state — set when the user clicks "Breed selected" on the Pareto scatter.
+	// `null` = ad-hoc sweep (no journey). Cleared on sweep completion.
+	const [refineState, setRefineState] = useState<{
+		journeyId: string
+		parentRunIds: string[]
+	} | null>(null)
 	const runCounterRef = useRef(0)
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined
@@ -566,6 +574,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					recipe.entry.type === "hawks_triple_screen"
 						? catalogRef.current
 						: undefined,
+				funnelStage: refineState ? "refine" : undefined,
+				parentRunIds: refineState?.parentRunIds,
+				journeyId: refineState?.journeyId,
 			},
 			{
 				onProgress: (run, index, total) => {
@@ -586,6 +597,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					runCounterRef.current += sweepRuns.length
 					setIsSweeping(false)
 					sweepHandleRef.current = null
+					setRefineState(null)
 					const seconds = (totalMs / 1000).toFixed(1)
 					showToast(
 						"success",
@@ -653,6 +665,33 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const handleToggleExpand = useCallback((runId: string) => {
 		setExpandedRunId((prev) => (prev === runId ? null : runId))
 	}, [])
+
+	const handleBreedSelected = useCallback(
+		(parentRunIds: string[]) => {
+			if (!inlineSweepBundle || parentRunIds.length === 0) {
+				return
+			}
+			const parents = runs.filter((r) => parentRunIds.includes(r.id))
+			if (parents.length === 0) {
+				return
+			}
+			const existingJourneyId = parents.find((p) => p.provenance?.journeyId)
+				?.provenance?.journeyId
+			const journeyId = existingJourneyId ?? mintJourneyId()
+			if (!existingJourneyId) {
+				setRuns((prev) => backfillJourneyId(prev, parentRunIds, journeyId))
+			}
+			const neighborhood = buildKParentNeighborhood(
+				inlineSweepBundle.leaves,
+				parents.map((p) => p.recipe)
+			)
+			setLeafSelections(neighborhood)
+			setRefineState({ journeyId, parentRunIds })
+			setStep("parameters")
+			showToast("success", t("funnel.breedRunCount", { count: parents.length }))
+		},
+		[inlineSweepBundle, runs, showToast, t]
+	)
 
 	const handleClearAll = useCallback(() => {
 		setRuns([])
@@ -1168,6 +1207,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<ParetoScatter
 										runs={runs}
 										onPointClick={handleToggleExpand}
+										onBreedSelected={
+											inlineSweepBundle ? handleBreedSelected : undefined
+										}
 									/>
 								</TabsContent>
 

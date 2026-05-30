@@ -5325,6 +5325,21 @@
 		},
 		"matchRate": "Match",
 		"matchRateHint": "Fraction of engine fires matching the user-catalog by (date, brickIndex)",
+		"funnel": {
+			"stageColumn": "Stage",
+			"stageAdHoc": "ad-hoc",
+			"stage_broad": "broad",
+			"stage_refine": "refine",
+			"stage_freeze": "freeze",
+			"parentsCount": "{count, plural, one {1 parent} other {# parents}}",
+			"breedTitle": "Breeding K parents into a refine sweep",
+			"breedSubtitle": "Edit any leaf below to override the K-parent neighborhood union before running the refine.",
+			"breedRunCount": "{count, plural, one {1 parent} other {# parents}}",
+			"breedJourneyId": "Journey: {id}",
+			"capWarnBroad": "Cap = 500 (broad)",
+			"capWarnRefine": "Cap = 3000 (refine)",
+			"capWarnFreeze": "Freeze stage: snapshot only"
+		},
 		"sweepLeaf": {
 			"hawksStartTime": "Session start",
 			"hawksEndTime": "Session end",

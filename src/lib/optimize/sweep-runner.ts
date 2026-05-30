@@ -4,6 +4,7 @@ import type {
 	AssetConfig,
 	OptimizationRun,
 	UserEntry,
+	FunnelStage,
 } from "@/types/backtest"
 import type { WorkerOutMessage } from "./backtest-worker"
 import {
@@ -28,6 +29,12 @@ interface SweepContext {
 	engineVersion: string
 	walkForward?: { inSamplePct: number }
 	referenceCatalog?: UserEntry[]
+	/** Hero-hunt funnel stage tag. Stamped onto every emitted run's provenance. */
+	funnelStage?: FunnelStage
+	/** Parent run IDs whose Pareto multi-select produced this sweep. Empty for broad. */
+	parentRunIds?: string[]
+	/** Journey grouping. Set by the orchestrator when entering refine/freeze. */
+	journeyId?: string
 }
 
 const runSweep = (
@@ -72,6 +79,11 @@ const runSweep = (
 					engineVersion: provenance.engineVersion,
 					recipeHash: hashRecipeConfig(msg.recipe),
 					schemaVersion: STORAGE_SCHEMA_VERSION,
+					...(context.funnelStage ? { stage: context.funnelStage } : {}),
+					...(context.parentRunIds && context.parentRunIds.length > 0
+						? { parentRunIds: context.parentRunIds }
+						: {}),
+					...(context.journeyId ? { journeyId: context.journeyId } : {}),
 				},
 				summaryIS: msg.summaryIS,
 				summaryOOS: msg.summaryOOS,
