@@ -5340,6 +5340,19 @@
 			"capWarnRefine": "Cap = 3000 (refine)",
 			"capWarnFreeze": "Freeze stage: snapshot only"
 		},
+		"loserPattern": {
+			"tabLabel": "Drivers",
+			"title": "Causal driver mining",
+			"subtitle": "Leaves that flip outcomes — values overrepresented in winners (lock these in refine) or in losers (avoid). Δ = loser frequency minus winner frequency.",
+			"winnerThresh": "Winner PF ≥",
+			"loserThresh": "Loser PF ≤",
+			"minDelta": "Min |Δ|",
+			"poolStats": "{winners} winners / {losers} losers",
+			"emptyState": "Run at least 10 combos to surface drivers.",
+			"noDrivers": "No drivers cleared the |Δ| threshold. Lower the threshold or run a wider sweep.",
+			"recommendLock": "Recommend locking {leaf} = {value} in refine (winner-leaning).",
+			"recommendAvoid": "Avoid {leaf} = {value} in refine (loser-leaning)."
+		},
 		"freezeHero": {
 			"title": "Freeze as hero preset",
 			"subtitle": "Promote this run's recipe to a shadow preset. It will appear in the strategy dropdown and persist across sessions.",

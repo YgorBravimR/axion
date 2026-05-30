@@ -82,6 +82,7 @@ import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
 import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
 import { useHeroPresets } from "@/lib/optimize/use-hero-presets"
 import { FreezeHeroModal } from "./freeze-hero-modal"
+import { LoserPatternInspector } from "./loser-pattern-inspector"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
@@ -1205,6 +1206,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											<ScatterIcon className="h-4 w-4" aria-hidden="true" />
 											{t("pareto.tabLabel")}
 										</TabsTrigger>
+										<TabsTrigger value="drivers" className="gap-s-200">
+											<ScatterIcon className="h-4 w-4" aria-hidden="true" />
+											{t("loserPattern.tabLabel")}
+										</TabsTrigger>
 									</TabsList>
 
 									<Button
@@ -1247,6 +1252,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											inlineSweepBundle ? handleBreedSelected : undefined
 										}
 									/>
+								</TabsContent>
+
+								{/* Drivers tab: loser pattern mining */}
+								<TabsContent value="drivers" className="mt-m-400">
+									<LoserPatternInspector runs={runs} />
 								</TabsContent>
 
 								{/* Table tab: comparison table */}

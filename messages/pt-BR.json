@@ -5340,6 +5340,19 @@
 			"capWarnRefine": "Cap = 3000 (refinar)",
 			"capWarnFreeze": "Estágio congelar: apenas snapshot"
 		},
+		"loserPattern": {
+			"tabLabel": "Drivers",
+			"title": "Mineração de drivers causais",
+			"subtitle": "Leaves que viram resultados — valores super-representados em vencedores (travar no refino) ou em perdedores (evitar). Δ = frequência em perdedores menos frequência em vencedores.",
+			"winnerThresh": "PF vencedor ≥",
+			"loserThresh": "PF perdedor ≤",
+			"minDelta": "Mín |Δ|",
+			"poolStats": "{winners} vencedores / {losers} perdedores",
+			"emptyState": "Rode pelo menos 10 combinações para revelar drivers.",
+			"noDrivers": "Nenhum driver passou no limiar de |Δ|. Baixe o limiar ou rode uma varredura mais ampla.",
+			"recommendLock": "Recomendado travar {leaf} = {value} no refino (lado vencedor).",
+			"recommendAvoid": "Evitar {leaf} = {value} no refino (lado perdedor)."
+		},
 		"freezeHero": {
 			"title": "Congelar como preset hero",
 			"subtitle": "Promova a receita desta execução para um preset shadow. Aparecerá no seletor de estratégias e persistirá entre sessões.",
