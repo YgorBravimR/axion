@@ -43,70 +43,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### OPTIMIZE Phase 1b — Run metadata + provenance stamping
-
-- **Priority**: P1
-- **Effort**: S
-- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 1b. Brainstorm session post-PR #9.
-- **What + Why**: Every `OptimizationRun` should carry: dataset hash (candle subset), candle count, date range hash, engine version, recipe-config hash, seed, sweep-id. Today `storage.ts` (42 lines) writes runs to localStorage with no provenance — re-running later doesn't reproduce, and there's no way to tell which dataset/engine a run came from. Land this **before** Phase 1a so walk-forward results carry provenance from day one. Cheap now, painful to retrofit.
-- **Fix shape**:
-  1. Extend `OptimizationRun` (in `src/types/backtest.ts`) with the metadata fields above. All optional for back-compat.
-  2. Bump `schemaVersion` in storage. Legacy runs (no version field) are read-only and flagged in UI.
-  3. Stamp metadata in `sweep-runner.ts` `onmessage` handler (`runs become richer here`).
-  4. Surface metadata in `run-detail-panel.tsx` — a "Provenance" collapsible section.
-- **Out of scope**: Migration UI for legacy runs (just flag them). DB-backed storage (Phase 4).
-- **Done when**: Every new run has all 7 metadata fields. Legacy runs render with a "legacy, no provenance" tag. Re-running the same recipe on the same candle subset produces identical hashes.
-- **Date filed**: 2026-05-29.
-
-### OPTIMIZE Phase 1a — Walk-forward / out-of-sample split
-
-- **Priority**: P1
-- **Effort**: M
-- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 1a. The single feature that turns OPTIMIZE from a curiosity into a trustworthy tool.
-- **What + Why**: Today OPTIMIZE runs grid search and reports best-on-known-data. No held-out validation = users get overfit recommendations. Add a date-split slider (default 70/30) that runs each combo twice in the worker: in-sample to optimize, out-of-sample to report. Every result carries both metric sets and a derived `oosRobust` flag (default rule: "OOS PF ≥ 0.7 × IS PF"). Comparison table gets OOS columns + a "robust only" filter.
-- **Fix shape**:
-  1. Sweep config panel (`src/components/optimize/sweep-config-panel.tsx`): add a `<Slider>` for the IS/OOS split, default 70/30.
-  2. `OptimizationRun` (in `src/types/backtest.ts`): extend with `summaryIS`, `summaryOOS`, `equityCurveIS`, `equityCurveOOS`, derived `oosRobust: boolean`.
-  3. `backtest-worker.ts`: run each combo twice with different date slices. Stream both results in one `ProgressMessage`.
-  4. `runs-comparison-table.tsx`: add OOS columns. Add a "Robust only" filter chip.
-  5. Robustness rule: extract into `src/lib/optimize/robustness.ts` so it's tunable in one place. Document the 0.7 threshold there.
-- **Out of scope**: K-fold (file as Phase 1a follow-up if single-split feels too noisy on 20-day catalogs). Custom robustness rules in the UI.
-- **Done when**: A Hawks sweep across 20 days runs as 14-train + 6-test. Every result row shows both PFs. "Robust ✓" filter works. The robustness threshold is documented in code and surfaced in a tooltip.
-- **Depends on**: Phase 1b shipped first.
-- **Date filed**: 2026-05-29.
-
-### OPTIMIZE Phase 1c — Pareto frontier view
-
-- **Priority**: P1
-- **Effort**: S
-- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 1c.
-- **What + Why**: Today users sort by one metric at a time. Profit factor and max drawdown trade off — you can't read that trade-off in a sorted table. A `(PF, maxDrawdown)` scatter with the Pareto frontier highlighted lets users see the shape of the trade-off and pick a point on the curve that matches their risk preference. Generic (works for every strategy), small (~200 lines), high-value.
-- **Fix shape**:
-  1. New tab in `optimize-content.tsx` results panel: "Pareto".
-  2. New component `src/components/optimize/pareto-scatter.tsx` (~200 lines). Use the existing chart primitive (TradingView lightweight-charts or whatever the equity-overlay already uses) for consistency.
-  3. Frontier computation in `src/lib/optimize/pareto.ts`: classic O(n log n) scan. Highlight frontier points; dim dominated points.
-  4. Hover / click on a point → opens run-detail-panel.
-  5. When walk-forward is active (Phase 1a shipped), color points by OOS-robust status.
-- **Out of scope**: 3D Pareto (PF × drawdown × trade count). Constraint mode (Phase 3d).
-- **Done when**: Scatter renders for any sweep with ≥10 runs, frontier highlighted, hover/click round-trips to run detail. With Phase 1a active, robust points visually distinguished.
-- **Depends on**: Phase 1a shipped (so OOS data exists to color by).
-- **Date filed**: 2026-05-29.
-
-### OPTIMIZE Phase 3a — Strategy registry refactor (kills the ORB-vs-else binary)
-
-- **Priority**: P2
-- **Effort**: S
-- **Source**: 2026-05-29 — `docs/design/optimize-roadmap.md` Phase 3a. Surfaced when shipping PR #9 (Hawks user-catalog mode falls through to dezK params today).
-- **What + Why**: `parameter-grid.ts:474,585,657` has `recipe.entry.type === "orb_breakout" ? ORB_PARAMS : DEZK_PARAMS`. Any new strategy (Hawks, future strategies) silently falls through to dezK and the sweep panel renders meaningless knobs. Refactor to a registry: each preset module exports its own `sweepableParams`; `getSweepableParams` looks up by `recipe.entry.type` from a `Map`.
-- **Fix shape**:
-  1. Define a `SweepableParam[]` export contract in `src/types/backtest.ts` (re-using the existing types from `parameter-grid.ts`).
-  2. Move `ORB_PARAMS` and `DEZK_PARAMS` into their respective preset modules (`orb-presets.ts`, `dezk-presets.ts`).
-  3. Replace the binary switch in `parameter-grid.ts` with a registry: `STRATEGY_PARAMS_REGISTRY: Map<EntryType, SweepableParam[]>`.
-  4. `getSweepableParams` becomes a registry lookup with a fall-through "unsupported strategy" empty array (sweep panel shows "no params available for this strategy").
-- **Out of scope**: Adding Hawks params (Phase 3b is the entry that does that).
-- **Done when**: ORB and dezK still work, registry is the single source of truth, adding a strategy requires only exporting `sweepableParams` from its preset module.
-- **Date filed**: 2026-05-29.
-
 ### OPTIMIZE — broad-to-specific sweep tailoring ("HERO WIN" / "PERFECT SETUP" funnel)
 
 - **Priority**: P2
@@ -411,20 +347,20 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Why P3**: Nothing is currently known to be broken. This is preventive due diligence, not a fix. Move up to P1 the moment any specific calculation is suspected of being wrong.
 - **Date filed**: 2026-05-29.
 
-### Remove legacy `SweepConfigPanel` once ORB / DEZK / user_catalog get sweep-leaf catalogs
+### Remove legacy `SweepConfigPanel` once ORB / user_catalog get sweep-leaf catalogs
 
 - **Priority**: P3
 - **Effort**: L
-- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. The new `HawksSweepBuilder` fully replaces `SweepConfigPanel` for Hawks (flag `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` is true). The legacy panel + `HAWKS_SWEEPABLE_PARAMS` are now dead code for Hawks but still alive for ORB, DEZK, and `user_catalog` (which reuses the Hawks sweepables via the strategy registry).
+- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. The new `HawksSweepBuilder` fully replaces `SweepConfigPanel` for Hawks (flag `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` is true). The legacy panel + `HAWKS_SWEEPABLE_PARAMS` are now dead code for Hawks but still alive for ORB and `user_catalog`. DEZK was archived 2026-05-29 (no migration needed; strategy hidden from UI).
 - **What + Why**: To remove `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`, every remaining caller needs to migrate to the sweep-leaf model:
-  1. Build `ORB_LEAVES` + `ORB_VALIDATORS` (mirror `HAWKS_LEAVES`).
-  2. Build `DEZK_LEAVES` + `DEZK_VALIDATORS`.
-  3. Decide user_catalog: either share the Hawks catalog or get its own.
-  4. Generalize `HawksSweepBuilder` → `StrategySweepBuilder` (parametrize the section grouping, leaves, validators) OR keep per-strategy builders.
-  5. Delete `SweepConfigPanel`, `sweepable-params.ts` per-strategy entries, the `_LEGACY` exports.
-  6. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag and the conditional in `optimize-content.tsx`.
+  1. Build `ORB_LEAVES` + `ORB_VALIDATORS` (companion entry in the OPTIMIZE cluster).
+  2. Decide user_catalog: either share the Hawks catalog or get its own.
+  3. Generalize `HawksSweepBuilder` → `StrategySweepBuilder` (parametrize the section grouping, leaves, validators) OR keep per-strategy builders.
+  4. Delete `SweepConfigPanel`, `sweepable-params.ts` per-strategy entries, the `_LEGACY` exports.
+  5. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag and the conditional in `optimize-content.tsx`.
+  6. Drop the archived `dezk-presets.ts` `sweepableParams` export from the registry if still wired.
 - **Out of scope** (until then): Touching `SweepConfigPanel` itself, removing `HAWKS_SWEEPABLE_PARAMS`, removing the feature flag.
-- **Done when**: ORB, DEZK, and user_catalog all sweep through their own builder; `SweepConfigPanel` deleted; flag deleted; `pnpm lint`, `tsc`, tests, e2e green.
+- **Done when**: ORB and user_catalog sweep through their own builder; `SweepConfigPanel` deleted; flag deleted; `pnpm lint`, `tsc`, tests, e2e green.
 - **Date filed**: 2026-05-29.
 
 ### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers
