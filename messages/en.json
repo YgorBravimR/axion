@@ -5276,13 +5276,39 @@
 		},
 		"pareto": {
 			"tabLabel": "Pareto",
-			"title": "PF × Drawdown frontier",
-			"subtitle": "Each dot is one combo. The Pareto frontier (highlighted) marks the combos no other combo strictly dominates — you cannot improve both PF and drawdown at the same time on a frontier point.",
+			"title": "Survivor frontier",
+			"subtitle": "Each dot is one combo. The Pareto frontier (highlighted) marks the combos no other combo strictly dominates on the chosen axes. Profit-losers are structurally excluded.",
 			"axisX": "Max drawdown (R$)",
 			"axisY": "Profit factor",
+			"axisXLabel": "X axis",
+			"axisYLabel": "Y axis",
+			"sourceLabel": "Source",
 			"frontierBadge": "Frontier",
 			"robustBadge": "Robust",
 			"emptyState": "Run a sweep with at least 10 combos to see the frontier."
+		},
+		"metricKeys": {
+			"profitFactor": "Profit factor (IS)",
+			"maxDrawdown": "Max drawdown",
+			"numTrades": "Number of trades",
+			"assertivity": "Assertivity (win rate)",
+			"avgR": "Avg R multiple",
+			"matchRate": "Match rate",
+			"profitFactorOOS": "Profit factor (OOS)",
+			"maxDrawdownOOS": "Max drawdown (OOS)",
+			"recommended": "Recommended — profit first"
+		},
+		"paretoFilters": {
+			"filtersLabel": "Filters",
+			"profitOnlyLocked": "Profit only (always on)",
+			"minTrades30": "Trades ≥ 30",
+			"minMatchRate50": "Match rate ≥ 50%",
+			"robustOnly": "OOS robust only",
+			"selectedBadge": "Selected",
+			"selectedCount": "{count, plural, one {1 selected} other {# selected}}",
+			"breedSelected": "Breed selected (K={count})",
+			"shiftClickHint": "Shift-click a point to toggle selection. Click without Shift opens the run.",
+			"noPointsAfterFilters": "No runs match the active filters."
 		},
 		"currentValueSuffix": "(current)",
 		"tierPlayground": {
