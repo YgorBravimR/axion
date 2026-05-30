@@ -88,6 +88,7 @@ import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
 import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
+import { SweepAxisDiagnostics } from "./sweep-axis-diagnostics"
 import { loadRuns, saveRuns, clearRuns } from "@/lib/optimize/storage"
 import type { DateRange } from "react-day-picker"
 import type { DataSourceInfo, CandleRow } from "@/types/candle"
@@ -1126,8 +1127,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						)}
 					</div>
 
-					{/* Summary sidebar */}
-					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 h-fit rounded-lg border">
+					{/* Summary sidebar — sticky on lg+ so the combinations counter stays
+					    visible while the user scrolls the long sweep builder. `self-start`
+					    overrides the grid's default `align-items: stretch` which would
+					    otherwise grow the card to the full column height and defeat
+					    `position: sticky`. */}
+					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 lg:top-m-400 h-fit rounded-lg border lg:sticky lg:self-start">
 						<h4 className="text-small text-txt-100 font-semibold">
 							{t("summary.strategy")}
 						</h4>
@@ -1177,6 +1182,14 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									})}
 								</span>
 							</div>
+							{isInlineSweepMode &&
+								inlineSweepBundle &&
+								leafSelections !== null && (
+									<SweepAxisDiagnostics
+										leaves={inlineSweepBundle.leaves}
+										selections={leafSelections}
+									/>
+								)}
 						</div>
 					</div>
 				</div>

@@ -5464,6 +5464,12 @@
 			"bundleLockHint": "{bundle} bundle owns {count} gates below — switch to Custom to override individually.",
 			"sectionLeafCount": "{total} fields · {swept} swept",
 			"resetToBaseline": "Reset to baseline"
+		},
+		"sweepDiagnosis": {
+			"title": "Sweep axes ({active}/{total} active)",
+			"active": "× {count}",
+			"locked": "locked by {ownerValue}",
+			"gated": "gated by {parent}"
 		}
 	},
 	"candleImport": {

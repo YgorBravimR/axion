@@ -5464,6 +5464,12 @@
 			"bundleLockHint": "Pacote {bundle} possui {count} gates abaixo — alterne para Personalizado para sobrescrever individualmente.",
 			"sectionLeafCount": "{total} campos · {swept} sweep",
 			"resetToBaseline": "Restaurar padrão"
+		},
+		"sweepDiagnosis": {
+			"title": "Eixos de sweep ({active}/{total} ativos)",
+			"active": "× {count}",
+			"locked": "travado por {ownerValue}",
+			"gated": "bloqueado por {parent}"
 		}
 	},
 	"candleImport": {
