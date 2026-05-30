@@ -19,7 +19,7 @@
  * profile, so wall-clock here is a reasonable proxy.
  */
 import { runBacktest } from "@/lib/backtest/engine"
-import { hawksTripleScreen } from "@/lib/backtest/presets/hawks-presets"
+import { hawksV0 } from "@/lib/backtest/presets/hawks-presets"
 import type { CandleRow } from "@/types/candle"
 import type { AssetConfig, StrategyRecipe } from "@/types/backtest"
 
@@ -38,35 +38,53 @@ const fakeCandles = (count: number): CandleRow[] => {
 			low: price - 100,
 			close: price + 25,
 			volume: 1000,
-			indicators: {},
+			indicators: {
+				mme27_60m: price,
+				mme55_60m: price - 50,
+				mme27_15m: price + 20,
+				mme55_15m: price - 30,
+				macd: 0,
+				topos_fundos: null,
+				prev_15m_open: price - 50,
+				prev_15m_close: price + 50,
+				prev_60m_open: price - 100,
+				prev_60m_close: price + 100,
+			},
 		} as unknown as CandleRow)
 	}
 	return out
 }
 
 const generateRecipes = (count: number): StrategyRecipe[] => {
-	const base = hawksTripleScreen
+	const base = hawksV0
 	const recipes: StrategyRecipe[] = []
-	const stopPointsValues = [80, 100, 120, 140, 160, 180]
-	const target1Values = [120, 160, 200, 240, 280]
-	const target2Values = [200, 280, 360, 440, 520]
+	const stopPoints = [0, 60, 80, 100, 120, 140, 160]
+	const targetRs = [2, 2.5, 3, 3.5, 4]
+	const slippageVals = [0, 1, 2]
 	let i = 0
-	outer: for (const sp of stopPointsValues) {
-		for (const t1 of target1Values) {
-			for (const t2 of target2Values) {
-				for (let k = 0; k < 20 && i < count; k++) {
+	outer: for (const sp of stopPoints) {
+		for (const r of targetRs) {
+			for (const slip of slippageVals) {
+				for (let k = 0; k < 30 && i < count; k++) {
 					recipes.push({
 						...base,
 						displayName: `bench-${i}`,
 						stop: {
 							...base.stop,
-							initial: { ...base.stop.initial, points: sp },
+							initial: { type: "fixed_points", points: sp + k },
 						},
 						target: {
 							...base.target,
-							first: { ...base.target.first, points: t1 + k * 5 },
-							second: { ...base.target.second, points: t2 + k * 5 },
+							levels: [
+								{
+									value: r + k * 0.01,
+									mode: "r_multiple",
+									exitPct: 100,
+									label: "target1",
+								},
+							],
 						},
+						slippageTicks: slip,
 					} as StrategyRecipe)
 					i++
 					if (i >= count) {
@@ -92,7 +110,7 @@ const main = async (): Promise<void> => {
 	const start = performance.now()
 	let trades = 0
 	for (const recipe of recipes) {
-		const result = runBacktest(candles, asset, recipe)
+		const result = runBacktest(candles, recipe, asset)
 		trades += result.trades.length
 	}
 	const elapsedMs = performance.now() - start
@@ -109,6 +127,7 @@ const main = async (): Promise<void> => {
 		totalTrades: trades,
 		elapsedMs: Math.round(elapsedMs),
 		elapsedMin: Number(elapsedMin.toFixed(2)),
+		msPerCombo: Number((elapsedMs / recipes.length).toFixed(2)),
 		verdict,
 	}
 	process.stderr.write(
@@ -118,6 +137,9 @@ const main = async (): Promise<void> => {
 }
 
 main().catch((err: unknown) => {
-	process.stderr.write(`bench-refine-cap failed: ${String(err)}\n`)
+	const e = err as { message?: string; stack?: string }
+	process.stderr.write(
+		`bench-refine-cap failed: ${e.message ?? String(err)}\n${e.stack ?? ""}\n`
+	)
 	process.exit(1)
 })

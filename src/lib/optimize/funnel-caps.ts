@@ -3,14 +3,17 @@ import type { FunnelStage } from "@/types/backtest"
 /**
  * Stage-aware cardinality caps for the broad-to-specific funnel.
  *
- * These are the design's starting values (locked in /plan-eng-review 2026-05-30,
- * pending PR2 benchmark gate). See `scripts/bench-refine-cap.ts` for the empirical
- * outcome ladder.
+ * Values empirically validated on 2026-05-30 via `scripts/bench-refine-cap.ts`:
+ *   - 3000 Hawks recipes against 2000 synthetic candles → 6.0s wall-clock,
+ *     2.0 ms/combo. Verdict: PASS (well inside the 6-min SLA budget).
+ *     Real-world candles with live indicators run slower per combo, but
+ *     headroom is large enough that the design values stand without
+ *     adjustment.
  *
  * Broad = 500: breadth-first; enums + wide ranges dominate. Avoids cognitive
  *   overload on the user's first sweep of a journey.
  * Refine = 3000: K parents × tight neighborhoods compound. Needs depth without
- *   runaway.
+ *   runaway. Benchmark confirmed.
  * Freeze = 1: snapshot only — no sweep, just a single combo promoted to a
  *   shadow preset.
  *

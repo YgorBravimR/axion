@@ -43,22 +43,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### OPTIMIZE — execute the refine-cap benchmark + decide broad/freeze caps
-
-- **Priority**: P3
-- **Effort**: XS (run the script + record)
-- **Source**: 2026-05-30 — `scripts/bench-refine-cap.ts` shipped with PR 2 of the broad-to-specific funnel (commit `c4511883`). The script encodes the 6/15-min outcome ladder for `refine.cap=3000` but has not been executed yet. Broad/freeze caps are unchanged because their values (500/1) are well inside today's known-good envelope (broad ≤ WARN_COMBINATIONS=500 today; freeze=1 doesn't need benchmarking).
-- **What + Why**: Now that the funnel-caps infrastructure is shipped, run the benchmark to empirically verify the 6/15-min SLA envelope is met. Current `refine.cap=3000` may be too aggressive (> 15 min wall-clock) or can be kept. Broad/freeze values are structurally safe and need no tuning.
-- **Fix shape**:
-  1. Run `pnpm tsx scripts/bench-refine-cap.ts` against a representative candle slice.
-  2. Record the wall-clock + verdict in a follow-up commit:
-     - `< 6 min` → keep `refine.cap=3000` as-is.
-     - `6–15 min` → drop `refine.warn` to 1500 and surface a yellow advisory.
-     - `> 15 min` → reduce `refine.cap` to the largest 500-multiple fitting 6 min, update `docs/design/optimize-funnel.md`.
-  3. Optional: extend the script to also benchmark `broad=500` for confidence; freeze=1 needs no run.
-- **Done when**: Verdict committed; `funnel-caps.ts` either confirmed or adjusted with the empirical number cited.
-- **Date filed**: 2026-05-30.
-
 ### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
 
 - **Priority**: P3
