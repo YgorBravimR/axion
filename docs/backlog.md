@@ -43,46 +43,28 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### OPTIMIZE — broad-to-specific sweep tailoring ("HERO WIN" / "PERFECT SETUP" funnel)
-
-- **Priority**: P2
-- **Effort**: M
-- **Source**: 2026-05-29 — feedback during Tier 2 + 3 review on PR #10. User asked why 2000 was the combination cap and how users go from broad exploration to specific winners.
-- **What + Why**: OPTIMIZE today is a one-shot grid: pick params, set ranges, run, compare. There is no guided **funnel** from "I have no idea which knobs matter" → "I have a frozen `hawks_v0_tuned` preset". Users have to manually pick Pareto points, then re-run a tighter sweep, then re-run again, with no breadcrumbs and no schema to lock in the journey. This is where the 2000-combo cap actually bites — not because compute can't handle more, but because cognitively a flat-grid run of 2000 is the wrong shape for the _first_ exploration. A funnel architecture lets users start broad (small N of bundles + big ranges) and progressively refine (within one bundle, narrow ranges, more steps) without re-typing the whole config.
-- **Fix shape (research entry — investigate first, then design)**:
-  1. **Stage tracking on the run.** Every `OptimizationRun` carries a `stage` field: `"broad"`, `"refine"`, or `"freeze"`. Today everything is one bucket.
-  2. **Stage-aware sweep config UX.** "Broad" stage UI nudges fewer-knobs-more-options (enum-heavy: bundle, mode, target tier); "refine" stage UI nudges within-bundle numerics with tight step sizes; "freeze" stage is N=1, snapshot only.
-  3. **Carry-forward.** "Refine from this run" button on a Pareto winner: opens Sweep Config pre-populated with the winner's settings as baseline + suggests narrower ranges (±1 step around the winner's value) for the swept axes.
-  4. **HERO WIN / PERFECT SETUP semantics.** Define what a "hero win" looks like (PF ≥ X _and_ matchRate ≥ Y _and_ OOS robust _and_ trades ≥ 30, plus user-confirmed) and let users tag a run as such. Tagging creates a frozen preset entry with provenance.
-  5. **Cap implications.** With the funnel, the broad stage _should_ be capped lower (~500) and refine should be capped higher (~5000). The current flat 2000 is a compromise. Treat the cap as stage-aware.
-- **Open questions to investigate**:
-  - Should the "refine from this run" button be one-click or open a config editor first? (One-click = momentum; editor = trust.)
-  - Do we want a visible stage indicator on the runs table, or is it implicit from the sweep config that produced the run?
-  - When a hero-win run is tagged and frozen as a preset, does it replace or shadow `hawks_v0`? (Probably shadow + label, so the journey is auditable.)
-  - 2000 cap is **not benchmarked** — should be empirically measured (cf. companion P3 entry "OPTIMIZE — benchmark MAX_COMBINATIONS cap").
-- **Done when**: A user can start with zero knowledge of which params matter, run a broad sweep, click "refine on winner" twice, and end with a frozen preset that has full provenance back to the original broad exploration. Each stage's UI matches its cognitive load.
-- **Date filed**: 2026-05-29.
-
-### OPTIMIZE — benchmark MAX_COMBINATIONS cap
+### OPTIMIZE — execute the refine-cap benchmark + decide broad/freeze caps
 
 - **Priority**: P3
-- **Effort**: S
-- **Source**: 2026-05-29 — Tier 2 review. The 2000 cap in `src/lib/optimize/parameter-grid.ts:303` was sized from first principles (~80–150ms per Hawks backtest × 2000 = 3–5min wall time, ~10MB run-object memory) but never benchmarked end-to-end. Companion to "broad-to-specific sweep tailoring".
-- **What + Why**: Need empirical data before raising/lowering the cap. Today it could be 1000 or 10000 — we wouldn't know which is right until we measure.
+- **Effort**: XS (run the script + record)
+- **Source**: 2026-05-30 — `scripts/bench-refine-cap.ts` shipped with PR 2 of the broad-to-specific funnel (commit `c4511883`). The script encodes the 6/15-min outcome ladder for `refine.cap=3000` but has not been executed yet. Broad/freeze caps are unchanged because their values (500/1) are well inside today's known-good envelope (broad ≤ WARN_COMBINATIONS=500 today; freeze=1 doesn't need benchmarking).
+- **What + Why**: Now that the funnel-caps infrastructure is shipped, run the benchmark to empirically verify the 6/15-min SLA envelope is met. Current `refine.cap=3000` may be too aggressive (> 15 min wall-clock) or can be kept. Broad/freeze values are structurally safe and need no tuning.
 - **Fix shape**:
-  1. Build `scripts/benchmark-optimize.ts` that queues N runs against fixed date range + asset, measures p50/p99 per-run wall time and peak heap (via `performance.memory.usedJSHeapSize` in a browser harness or `process.memoryUsage()` in Node).
-  2. Run with N ∈ {500, 1000, 2000, 5000, 10000}. Capture (a) total wall-time, (b) p99 single-run time, (c) peak heap.
-  3. Define the cap as the largest N where: total wall-time ≤ 5 min AND peak heap ≤ 100 MB AND comparison-table cognitive load is still manageable.
-  4. If stage-aware caps are introduced (see broad-to-specific entry), benchmark each stage independently.
-- **Done when**: `MAX_COMBINATIONS` is set from data, not vibes. Benchmark script lives in `scripts/` for future re-runs when engine performance changes.
-- **Date filed**: 2026-05-29.
+  1. Run `pnpm tsx scripts/bench-refine-cap.ts` against a representative candle slice.
+  2. Record the wall-clock + verdict in a follow-up commit:
+     - `< 6 min` → keep `refine.cap=3000` as-is.
+     - `6–15 min` → drop `refine.warn` to 1500 and surface a yellow advisory.
+     - `> 15 min` → reduce `refine.cap` to the largest 500-multiple fitting 6 min, update `docs/design/optimize-funnel.md`.
+  3. Optional: extend the script to also benchmark `broad=500` for confidence; freeze=1 needs no run.
+- **Done when**: Verdict committed; `funnel-caps.ts` either confirmed or adjusted with the empirical number cited.
+- **Date filed**: 2026-05-30.
 
 ### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
 
 - **Priority**: P3
 - **Effort**: S
 - **Source**: 2026-05-29 — observed `fetchBacktestData(...)` taking 2.9 s on optimize page load (dev log). Every sweep config tweak re-fetches the candle history when the user hits Run, even though range + asset + indicators are unchanged.
-- **What + Why**: Optimize sweeps execute N backtests against the same candle history. The candle pull happens once per _sweep_ today (good), but every time the user changes a sweep param and re-runs they pay 2.9 s again. For iterative refinement (cf. broad-to-specific funnel), this is the dominant interactive latency. A simple session-scoped cache keyed on `(assetId, dateRange, indicatorSet)` would make the second-and-onward sweep feel instant.
+- **What + Why**: Optimize sweeps execute N backtests against the same candle history. The candle pull happens once per _sweep_ today (good), but every time the user changes a sweep param and re-runs they pay 2.9 s again. For iterative refinement, this is the dominant interactive latency. A simple session-scoped cache keyed on `(assetId, dateRange, indicatorSet)` would make the second-and-onward sweep feel instant.
 - **Fix shape**:
   1. Add a `Map<string, CandleHistory>` in `src/lib/optimize/sweep-runner.ts` (or wherever the runner orchestrates the fetch), keyed on a hash of `(assetId, from, to, indicators)`.
   2. Invalidate when any of those inputs changes.
@@ -90,68 +72,7 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: Two consecutive sweep runs against the same range/asset/indicators show the second one starting backtest execution within 50 ms of clicking Run.
 - **Date filed**: 2026-05-29.
 
-### OPTIMIZE — ORB sweep-leaf catalog migration
-
-- **Priority**: P2
-- **Effort**: M
-- **Source**: 2026-05-29 — companion to the DEZK archival pass (`feat/optimize-phase-1-trust-foundations`). DEZK got archived (no migration); ORB stayed in the UI but still ships through the legacy `SweepConfigPanel` because it has no `orb-leaves.ts` catalog yet.
-- **What + Why**: Hawks already has a sweep-leaf catalog (`src/lib/backtest/presets/hawks-leaves.ts`) feeding `HawksSweepBuilder` with discriminated-union leaf definitions, cross-leaf invariants, and conditional grid expansion. ORB still uses the legacy panel which (a) lacks invariant validation, (b) cannot express conditional ranges (e.g., "if `breakeven.mode = fixed_r` then `triggerR` is sweepable; otherwise locked"), and (c) blocks removal of `SweepConfigPanel`. Migrating ORB is the last blocker for retiring the legacy panel entirely.
-- **Fix shape**:
-  1. Create `src/lib/backtest/presets/orb-leaves.ts` mirroring `hawks-leaves.ts` — `ORB_LEAVES: SweepableLeaf[]` covering ORB entry params (range minutes, breakout threshold, retest tolerance, side filter), stop, target, breakeven, sizing.
-  2. Add ORB-specific `ORB_VALIDATORS: LeafGroupValidator[]` — at minimum (a) `rangeMinutes < session window`, (b) breakeven-before-first-target (mirror the Hawks invariant), (c) any ORB-specific monotonicity.
-  3. Build `src/components/optimize/orb-sweep-builder.tsx` analogous to `hawks-sweep-builder.tsx` — bundle-lock hints, collapsible sections, soft-cardinality warnings.
-  4. Wire selector in `optimize-content.tsx`: when `recipe.entry.type === "opening_range_breakout"`, render `<OrbSweepBuilder>` instead of `<SweepConfigPanel>`.
-  5. i18n: add `optimize.orbSweepBuilder.*` namespace (en + pt-BR).
-  6. Delete legacy `SweepConfigPanel` once Hawks + ORB + user_catalog all have sweep-leaf builders (see related entry below at line ~397).
-- **Out of scope**: New ORB entry params. ORB engine refactor. Sweep-leaf catalog for `hawks_user_catalog` (separate entry — user-catalog mode has minimal sweepable surface anyway).
-- **Done when**: ORB strategy selected on `/optimize` renders the new sweep builder; legacy `SweepConfigPanel` import removed from `optimize-content.tsx`; `pnpm lint:strict` clean; one round-trip test (configure a small ORB sweep, run it, runs appear in comparison table) passes manually.
-- **Date filed**: 2026-05-29.
-
-### Hawks engine: fine-tune for better backtest outcomes (via OPTIMIZE)
-
-- **Priority**: P1
-- **Effort**: M (engine work) + L (sweep execution + freeze)
-- **Source**: 2026-05-29 — original ask was a one-off `scripts/sweep-hawks.ts`; re-shaped to depend on OPTIMIZE Phases 1 + 3a + 3b after the OPTIMIZE roadmap brainstorm (`docs/design/optimize-roadmap.md`). Tier 2 + 3 plan added 2026-05-29 after MVP approval on PR #10.
-- **What + Why**: The user-catalog mode validates engine _outcomes_ (BE/ST/GA/EOD) match the catalog on trades the engine fires. Headline metrics (PF, win rate, max drawdown, Risk:Return) are still sub-optimal because we've been tuning the entry detector against a fixed parameter set, not the whole engine against outcome metrics. With OPTIMIZE Phase 1 + 3a + 3b shipped and the Tier-1 MVP approved, this entry becomes the staged execution that produces `hawks_v0_tuned`.
-- **Fix shape — staged sweep plan**:
-
-  **Tier 1 (shipped on PR #10)** — high-leverage outcome knobs:
-  - `stop.breakeven.triggerPct` (50–200 step 25)
-  - `target.levels[0].value` (R-multiple 2–4 step 0.5)
-  - `slippageTicks` (0–3 step 1)
-
-  **Tier 2 — quality-gates layer** (this PR scope):
-  - **Stage 2A — Bundle enum**: `qualityGates` bundle as one 4-way enum (off/lite/standard/strict). Each option mutates `recipe.entry.config.qualityGates` to the bundle from `getQualityPresetBundle(level)` in `hawks-quality-presets.ts`. Fastest signal — 4 × Tier-1 = 96 combos.
-  - **Stage 2B — Within-bundle numeric drilldown**: srBlockBufferBricks, srFavorRangeBricks, keltnerNearBricks, aggressionThreshold, volumeEmaPeriod, macdSlopeWindow. Run after 2A picks a winner. ~970 combos.
-  - **Stage 2C — Boolean micro-sweep (research mode)**: 7 quality-gate toggles + aggression polarity 3-way. User picks which to sweep via the existing sweep-config panel checkboxes; existing `WARN_COMBINATIONS` guards combinatorial explosion. For when "which specific gate matters" is the question.
-  - **Stage 2D — Tier-threshold playground**: AAA/AA/A thresholds don't affect trade decisions, only labeling. Post-hoc UI in run-detail with 3 sliders that re-tier the breakdown without re-running the engine. Not a sweep axis; a UI affordance.
-
-  **Tier 3 — structural engine params** (this PR scope):
-  - **Stage 3A — Engine config exposure**: extend `HawksTripleScreenConfig` with optional `fireCooldownBricks`, `wave1MinBricks`, `retracementMinBricks` overrides; engine reads from config with fallback to current hardcoded constants. Then sweep via HAWKS_SWEEPABLE_PARAMS.
-  - **Stage 3B — `match_rate` metric**: extend the worker's stats payload to compute "trades that match the user-catalog by `(date, brickIndex)`" for `hawks_triple_screen` runs when a reference catalog is available. Adds catalog-fidelity ranking to OPTIMIZE — a sweep can finally distinguish "high PF on the right trades" from "high PF on different trades."
-
-  **Tier 3 — deferred (out of scope, needs new code paths)**:
-  - Per-day volatility regime (NR4/NR7 vs expansion) — needs a pre-classifier.
-  - Fibonacci retracement bands `[0.382, 0.618]` — needs the Fib code path in the wave detector.
-  - `stayArmed` flag — engine ships anchored (v0.6); making this sweepable requires extracting the behavior to a config flag.
-
-  **Sweep sequencing (the killer joint sweep)**:
-  1. Run Stage 2A alone (4 × Tier-1 = 96 combos, fastest).
-  2. Run Stage 3A alone (18 × Tier-1 = 432 combos, independent of 2A).
-  3. **Joint Stage 2A × 3A × Tier-1**: 4 × 18 × Tier-1 expanded = ~1700 combos with walk-forward. ~1-2 hours wall-clock. Pick the winner that maximizes objective AND passes OOS robustness AND has acceptable match_rate.
-  4. Optional Stage 2B drilldown anchored to that winner.
-  5. Freeze winner as `hawks_v0_tuned` preset with provenance comment recording sweep date, IS/OOS numbers, match_rate.
-
-- **Out of scope**: Live / online optimization. Cross-asset generalization (WINFUT-only). Bayesian / genetic search. The 3 Tier-3-deferred items above.
-- **Done when**:
-  - Tiers 2A/2B/2C, 2D playground, and 3A/3B shipped in HAWKS_SWEEPABLE_PARAMS + engine + worker.
-  - The joint sweep has been run; a robust combo (OOS PF ≥ 0.7 × IS PF, match_rate ≥ baseline) is picked from the Pareto frontier.
-  - `hawks_v0_tuned` preset shipped with provenance comment.
-  - One-page summary in `docs/` of the Pareto frontier + chosen point + match_rate.
-- **Depends on**: OPTIMIZE Phase 1a + 1b + 1c + 3a + 3b shipped ✅ (PR #10).
-- **Date filed**: 2026-05-29.
-
-### Hawks autonomous engine: reproduction stuck at 51% — quality gates next
+### Hawks autonomous engine: reproduction 51% → improve via quality gates
 
 - **Priority**: P1
 - **Effort**: L (multi-session)
@@ -280,14 +201,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Layout & Theming (from 2026-05-29 scan)
 
-### Resolve 13 pre-existing TS errors on `feat/optimize-phase-1-trust-foundations`
-
-- **Priority**: P0
-- **Effort**: S
-- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — Phase 4 verification confirmed 13 baseline TS errors exist on this branch independent of the scan's edits.
-- **What + Why**: Branch cannot ship until these resolve. Errors: `<Label>` missing required `id` prop (9 sites — `backtest-content.tsx:602`, `hawks-quality-controls.tsx` lines 39/71/318/335/352, `user-catalog-entry-section.tsx` lines 141/152/168); `Scatter` removed from lucide-react (`optimize-content.tsx:29`); `ChartContainer` `config` prop mismatch (`pareto-scatter.tsx:84`); `r.stop.breakeven` possibly undefined (`hawks-presets.ts:157`); `toISOString` called on string (`provenance.ts:24`).
-- **Date filed**: 2026-05-29.
-
 ### Verify HAWKS `DailyBiasPanel` uses `FeatureStamp` for band header (Wave 9 convention)
 
 - **Priority**: P2
@@ -347,18 +260,18 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Why P3**: Nothing is currently known to be broken. This is preventive due diligence, not a fix. Move up to P1 the moment any specific calculation is suspected of being wrong.
 - **Date filed**: 2026-05-29.
 
-### Remove legacy `SweepConfigPanel` once `user_catalog` gets a sweep-leaf catalog
+### Remove legacy `SweepConfigPanel` — user_catalog migration to StrategySweepBuilder
 
 - **Priority**: P3
 - **Effort**: M
-- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. `HawksSweepBuilder` and `OrbSweepBuilder` both route through the generalized `StrategySweepBuilder` (committed d856fd73). The legacy panel is dead code for Hawks (flag-gated) and ORB (unconditional). Only `user_catalog` still routes through `SweepConfigPanel`. DEZK was archived 2026-05-29 (no migration needed).
-- **What + Why**: To remove `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `ORB_SWEEPABLE_PARAMS`, `DEZK_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`, the last caller (`user_catalog`) needs to migrate:
-  1. Decide user_catalog: either share `HAWKS_LEAVES` (today's behavior, falls through `STRATEGY_PARAMS_REGISTRY`) or define `USER_CATALOG_LEAVES` of its own. Recommendation: share Hawks leaves — user_catalog's sweepable surface is the post-entry recipe (stop / target / sizing), identical shape to Hawks.
-  2. Extend `inlineSweepBundle` in `optimize-content.tsx` to return `{ leaves: HAWKS_LEAVES, validators: HAWKS_VALIDATORS, strategyKey: "userCatalog" }` for `recipe.entry.type === "user_catalog"`, and render a `UserCatalogSweepBuilder` wrapper (or reuse `HawksSweepBuilder` with a different label namespace if the catalog UX is identical).
-  3. Delete `SweepConfigPanel`, all `*_SWEEPABLE_PARAMS` exports, the `STRATEGY_PARAMS_REGISTRY` (no longer needed once every strategy is inline), `generateRecipeGrid`, `countCombinations`, and `activeRanges` state.
-  4. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag and the conditional in `optimize-content.tsx` — every strategy is unconditionally inline.
-- **Out of scope** (until then): Touching `SweepConfigPanel` itself or removing the feature flag.
-- **Done when**: `user_catalog` sweep selects through `StrategySweepBuilder`; `SweepConfigPanel` deleted; flag deleted; `pnpm lint`, `tsc`, tests, e2e green.
+- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. `HawksSweepBuilder` and `OrbSweepBuilder` both route through the generalized `StrategySweepBuilder` (committed d856fd73). The legacy panel is dead code for Hawks (flag-gated) and ORB routes through inline sweep (shipped). Only `user_catalog` still routes through `SweepConfigPanel`.
+- **What + Why**: Once `user_catalog` entry type routes through `StrategySweepBuilder` instead of the legacy panel, the legacy surface can be deleted. This unblocks deletion of `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `ORB_SWEEPABLE_PARAMS`, `DEZK_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`.
+- **Fix shape**:
+  1. Decide user_catalog: either share `HAWKS_LEAVES` or define `USER_CATALOG_LEAVES`. Recommendation: share Hawks leaves — user_catalog's sweepable surface is the post-entry recipe (stop / target / sizing), identical shape.
+  2. Extend `inlineSweepBundle` in `optimize-content.tsx` to handle `recipe.entry.type === "user_catalog"` and render `UserCatalogSweepBuilder` (or reuse `HawksSweepBuilder` with aliased labels).
+  3. Delete `SweepConfigPanel`, legacy sweepable params exports, `STRATEGY_PARAMS_REGISTRY`, and `activeRanges` state.
+  4. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag.
+- **Done when**: `user_catalog` sweep selects through `StrategySweepBuilder`; `SweepConfigPanel` deleted; `pnpm lint`, `tsc`, tests, e2e green.
 - **Date filed**: 2026-05-29.
 
 ### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers
