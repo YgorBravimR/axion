@@ -347,20 +347,18 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Why P3**: Nothing is currently known to be broken. This is preventive due diligence, not a fix. Move up to P1 the moment any specific calculation is suspected of being wrong.
 - **Date filed**: 2026-05-29.
 
-### Remove legacy `SweepConfigPanel` once ORB / user_catalog get sweep-leaf catalogs
+### Remove legacy `SweepConfigPanel` once `user_catalog` gets a sweep-leaf catalog
 
 - **Priority**: P3
-- **Effort**: L
-- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. The new `HawksSweepBuilder` fully replaces `SweepConfigPanel` for Hawks (flag `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` is true). The legacy panel + `HAWKS_SWEEPABLE_PARAMS` are now dead code for Hawks but still alive for ORB and `user_catalog`. DEZK was archived 2026-05-29 (no migration needed; strategy hidden from UI).
-- **What + Why**: To remove `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`, every remaining caller needs to migrate to the sweep-leaf model:
-  1. Build `ORB_LEAVES` + `ORB_VALIDATORS` (companion entry in the OPTIMIZE cluster).
-  2. Decide user_catalog: either share the Hawks catalog or get its own.
-  3. Generalize `HawksSweepBuilder` → `StrategySweepBuilder` (parametrize the section grouping, leaves, validators) OR keep per-strategy builders.
-  4. Delete `SweepConfigPanel`, `sweepable-params.ts` per-strategy entries, the `_LEGACY` exports.
-  5. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag and the conditional in `optimize-content.tsx`.
-  6. Drop the archived `dezk-presets.ts` `sweepableParams` export from the registry if still wired.
-- **Out of scope** (until then): Touching `SweepConfigPanel` itself, removing `HAWKS_SWEEPABLE_PARAMS`, removing the feature flag.
-- **Done when**: ORB and user_catalog sweep through their own builder; `SweepConfigPanel` deleted; flag deleted; `pnpm lint`, `tsc`, tests, e2e green.
+- **Effort**: M
+- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. `HawksSweepBuilder` and `OrbSweepBuilder` both route through the generalized `StrategySweepBuilder` (committed d856fd73). The legacy panel is dead code for Hawks (flag-gated) and ORB (unconditional). Only `user_catalog` still routes through `SweepConfigPanel`. DEZK was archived 2026-05-29 (no migration needed).
+- **What + Why**: To remove `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `ORB_SWEEPABLE_PARAMS`, `DEZK_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`, the last caller (`user_catalog`) needs to migrate:
+  1. Decide user_catalog: either share `HAWKS_LEAVES` (today's behavior, falls through `STRATEGY_PARAMS_REGISTRY`) or define `USER_CATALOG_LEAVES` of its own. Recommendation: share Hawks leaves — user_catalog's sweepable surface is the post-entry recipe (stop / target / sizing), identical shape to Hawks.
+  2. Extend `inlineSweepBundle` in `optimize-content.tsx` to return `{ leaves: HAWKS_LEAVES, validators: HAWKS_VALIDATORS, strategyKey: "userCatalog" }` for `recipe.entry.type === "user_catalog"`, and render a `UserCatalogSweepBuilder` wrapper (or reuse `HawksSweepBuilder` with a different label namespace if the catalog UX is identical).
+  3. Delete `SweepConfigPanel`, all `*_SWEEPABLE_PARAMS` exports, the `STRATEGY_PARAMS_REGISTRY` (no longer needed once every strategy is inline), `generateRecipeGrid`, `countCombinations`, and `activeRanges` state.
+  4. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag and the conditional in `optimize-content.tsx` — every strategy is unconditionally inline.
+- **Out of scope** (until then): Touching `SweepConfigPanel` itself or removing the feature flag.
+- **Done when**: `user_catalog` sweep selects through `StrategySweepBuilder`; `SweepConfigPanel` deleted; flag deleted; `pnpm lint`, `tsc`, tests, e2e green.
 - **Date filed**: 2026-05-29.
 
 ### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers
