@@ -80,6 +80,8 @@ import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
 import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
 import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
 import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
+import { useHeroPresets } from "@/lib/optimize/use-hero-presets"
+import { FreezeHeroModal } from "./freeze-hero-modal"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
 import { ParetoScatter } from "./pareto-scatter"
@@ -208,6 +210,13 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		journeyId: string
 		parentRunIds: string[]
 	} | null>(null)
+	// Hero-freeze modal — set to a run id when the user clicks "Freeze as hero preset".
+	const [freezeRunId, setFreezeRunId] = useState<string | null>(null)
+	const heroPresets = useHeroPresets()
+	const mergedPresets = useMemo<StrategyRecipe[]>(
+		() => [...ALL_PRESETS, ...heroPresets.map((h) => h.recipe)],
+		[heroPresets]
+	)
 	const runCounterRef = useRef(0)
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined
@@ -382,7 +391,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const source = ALL_PRESETS[index]
+		const source = mergedPresets[index]
 		if (!source) {
 			return
 		}
@@ -794,14 +803,41 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<SelectValue placeholder={tBacktest("config.selectPreset")} />
 								</SelectTrigger>
 								<SelectContent>
-									{ALL_PRESETS.map((preset, i) => (
-										<SelectItem
-											key={`${preset.entry.type}-${i}`}
-											value={String(i)}
-										>
-											{preset.displayName}
-										</SelectItem>
-									))}
+									{mergedPresets.map((preset, i) => {
+										const isHero = i >= ALL_PRESETS.length
+										const heroIdx = i - ALL_PRESETS.length
+										const heroPreset = isHero ? heroPresets[heroIdx] : null
+										const currentEngine =
+											heroPreset && getEngineVersionForRecipe(heroPreset.recipe)
+										const isStale =
+											heroPreset &&
+											currentEngine &&
+											currentEngine !== heroPreset.engineVersion
+										return (
+											<SelectItem
+												key={`${preset.entry.type}-${i}`}
+												value={String(i)}
+											>
+												<span className="gap-s-200 flex items-center">
+													<span>{preset.displayName}</span>
+													{heroPreset && (
+														<span className="text-tiny text-trade-buy">★</span>
+													)}
+													{isStale && (
+														<span
+															className="text-tiny text-warning border-warning rounded-sm border px-1"
+															title={t("freezeHero.staleTooltip", {
+																frozen: heroPreset.engineVersion,
+																current: currentEngine ?? "unknown",
+															})}
+														>
+															{t("freezeHero.staleChip")}
+														</span>
+													)}
+												</span>
+											</SelectItem>
+										)
+									})}
 								</SelectContent>
 							</Select>
 						</div>
@@ -1240,10 +1276,22 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 							{/* Expanded run detail */}
 							{expandedRun && (
-								<RunDetailPanel
-									run={expandedRun}
-									onRecomputeTrades={handleRecomputeTrades}
-								/>
+								<>
+									<div className="gap-s-200 mt-s-200 flex items-center justify-end">
+										<Button
+											id={`freeze-cta-${expandedRun.id}`}
+											variant="outline"
+											size="sm"
+											onClick={() => setFreezeRunId(expandedRun.id)}
+										>
+											{t("freezeHero.openCta")}
+										</Button>
+									</div>
+									<RunDetailPanel
+										run={expandedRun}
+										onRecomputeTrades={handleRecomputeTrades}
+									/>
+								</>
 							)}
 						</>
 					) : (
@@ -1298,6 +1346,31 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					)}
 				</div>
 			</div>
+
+			<FreezeHeroModal
+				open={freezeRunId !== null}
+				onOpenChange={(o) => {
+					if (!o) {
+						setFreezeRunId(null)
+					}
+				}}
+				run={runs.find((r) => r.id === freezeRunId) ?? null}
+				sourcePresetId={
+					(runs.find((r) => r.id === freezeRunId)?.recipe.entry.type ===
+					"hawks_triple_screen"
+						? "hawks_v0"
+						: runs.find((r) => r.id === freezeRunId)?.recipe.entry.type ===
+							  "orb_breakout"
+							? "orb_v0"
+							: "custom") as string
+				}
+				onFrozen={(preset) => {
+					showToast(
+						"success",
+						t("freezeHero.frozenToast", { id: preset.presetId })
+					)
+				}}
+			/>
 		</div>
 	)
 }

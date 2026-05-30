@@ -600,6 +600,33 @@ interface BacktestResult {
 
 type FunnelStage = "broad" | "refine" | "freeze"
 
+/**
+ * A frozen offspring of the hero-hunt funnel — a recipe captured at freeze
+ * time, persisted to localStorage, and surfaced in the strategy dropdown as a
+ * shadow of its source preset (e.g. `hawks_v0_tuned_2026-05-30` shadows
+ * `hawks_v0`). The `metrics` snapshot is what the freeze modal saw at freeze
+ * time — it does NOT auto-recompute. `engineVersion` lets us flag stale presets
+ * when the engine math changes between freeze and now.
+ */
+interface HeroWinPreset {
+	presetId: string
+	sourcePresetId: string
+	recipe: StrategyRecipe
+	frozenAt: string
+	journeyId: string
+	engineVersion: string
+	metrics: {
+		profitFactor: number
+		profitFactorOOS?: number
+		matchRate?: number
+		trades: number
+		oosRobust: boolean
+		maxDrawdownCents: number
+		winRate: number
+	}
+	notes?: string
+}
+
 interface OptimizationRunProvenance {
 	sweepId: string
 	datasetHash: string
@@ -721,4 +748,5 @@ export type {
 	OptimizationRun,
 	OptimizationRunProvenance,
 	FunnelStage,
+	HeroWinPreset,
 }
