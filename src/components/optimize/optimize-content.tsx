@@ -251,7 +251,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		() => [...ALL_PRESETS, ...heroPresets.map((h) => h.recipe)],
 		[heroPresets]
 	)
-	const runCounterRef = useRef(0)
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined
 	)
@@ -264,7 +263,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		void loadRuns().then((stored) => {
 			if (!cancelled && stored.length > 0) {
 				setRuns(stored)
-				runCounterRef.current = stored.length
 				setStep("results")
 			}
 		})
@@ -674,7 +672,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					}))
 
 					setRuns((prev) => [...finalRuns, ...prev])
-					runCounterRef.current += sweepRuns.length
 					setIsSweeping(false)
 					sweepHandleRef.current = null
 					setRefineState(null)
@@ -689,7 +686,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				onError: (message) => {
 					if (sweepRuns.length > 0) {
 						setRuns((prev) => [...sweepRuns, ...prev])
-						runCounterRef.current += sweepRuns.length
 					}
 					setIsSweeping(false)
 					sweepHandleRef.current = null
@@ -796,7 +792,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		setRuns([])
 		void clearRuns()
 		setExpandedRunId(null)
-		runCounterRef.current = 0
 	}, [])
 
 	const handleUpdateLabel = useCallback((runId: string, label: string) => {
