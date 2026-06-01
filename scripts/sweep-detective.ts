@@ -368,9 +368,9 @@ const axes: AxisProbe[] = [
 			apply: (r) => withGate(r, "keltnerNearBricks", v),
 		})),
 		dependsOnBundle: true,
-		expectedRole: "GATES",
+		expectedRole: "LABEL-ONLY",
 		notes:
-			"Used in keltnerOuterBlockRule (BLOCK) and keltnerInnerPenaltyRule (score)",
+			"Tunes the inner-penalty band on keltnerInnerDualRule (score path). Block path is governed by keltnerOuterBlockRule which does not consume this. Sweeping shifts tier mix only.",
 	},
 	{
 		id: "qualityGates.macdSlopeWindow",
@@ -542,9 +542,9 @@ const axes: AxisProbe[] = [
 			apply: (r) => withAggressionScoreMode(r, v),
 		})),
 		dependsOnBundle: true,
-		expectedRole: "GATES",
+		expectedRole: "LABEL-ONLY",
 		notes:
-			"Split-mode rule; can score with different signal interpretation; sweeping changes tier score and PnL",
+			"Feeds the tier-score path only; never the block path. Trades/PnL stay identical across off|original|reversed; only tier counts move.",
 	},
 	{
 		id: "entry.config.qualityGates.aggression.blockMode",

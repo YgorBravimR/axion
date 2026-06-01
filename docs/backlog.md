@@ -43,18 +43,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### Detective: stale `expectedRole` on `keltnerNearBricks` and `aggression.scoreMode`
-
-- **Priority**: P3
-- **Effort**: XS
-- **Source**: 2026-06-01 — full `pnpm tsx scripts/sweep-detective.ts` run after fixing the `aggressionThreshold` LABEL-ONLY probe (gotcha logged 2026-06-01). Two pre-existing axes still disagree with their annotated `expectedRole`:
-  - `qualityGates.keltnerNearBricks` — annotated `GATES` but observed `LABEL-ONLY` across `[1,2,3]`. Fingerprints: identical trades/PnL, only tier mix changes.
-  - `entry.config.qualityGates.aggression.scoreMode` — annotated `GATES` but observed `LABEL-ONLY` across `[off, original, reversed]`. Same trades/PnL, only tier counts move (e.g. AAA 8 → 11 → 4).
-- **What + Why**: These are not behavior regressions — the rules work as designed. The annotations are stale assertions from when the rules were authored. Today scoreMode only feeds the tier-score path, never the block path, so it cannot move trade count or PnL by construction. `keltnerNearBricks` likewise only tunes the inner-penalty band, which is score-only. Leaving the annotations stale weakens the detective's signal: future regressions in these axes won't be flagged because the harness already prints `expected GATES`. Correct annotation makes the disagreement column meaningful.
-- **Fix shape**: In `scripts/sweep-detective.ts`, change `expectedRole` to `"LABEL-ONLY"` for both axes (lines ~344-350 for `keltnerNearBricks`, ~498-507 for `aggression.scoreMode`). Update `notes` to reflect that score-band tuning is the only effect. Re-run detective; both should land in the LABEL-ONLY cluster with `agree? ✓`.
-- **Done when**: `pnpm tsx scripts/sweep-detective.ts` shows 0 disagreements and 0 DEAD axes; both axes appear in the LABEL-ONLY classification section.
-- **Date filed**: 2026-06-01.
-
 ### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
 
 - **Priority**: P3
