@@ -71,3 +71,4 @@ data/hawks/renko-sizes.csv
 .arch/
 tmp/
 results-snapshot.md
+*.png

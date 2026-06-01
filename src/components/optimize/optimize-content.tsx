@@ -240,13 +240,16 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		undefined
 	)
 
-	// Hydrate from IndexedDB on mount
+	// Hydrate from IndexedDB on mount. When stored runs exist, jump straight
+	// to the results step — landing on "setup" with prior runs hidden behind
+	// two nav clicks felt like fresh-app every reload.
 	useEffect(() => {
 		let cancelled = false
 		void loadRuns().then((stored) => {
 			if (!cancelled && stored.length > 0) {
 				setRuns(stored)
 				runCounterRef.current = stored.length
+				setStep("results")
 			}
 		})
 		return () => {
@@ -600,6 +603,20 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		const sweepRuns: OptimizationRun[] = []
 
+		// Seed the per-stage label counter from the highest existing #N for
+		// this stage so the new sweep continues the numbering instead of
+		// restarting at #1 and producing dupes.
+		const stagePrefix = refineState ? "Refine" : "Broad"
+		const labelPattern = new RegExp(`^${stagePrefix} #(\\d+)$`)
+		const initialRunCounter = runs.reduce((max, r) => {
+			const match = labelPattern.exec(r.label)
+			if (!match) {
+				return max
+			}
+			const n = Number(match[1])
+			return n > max ? n : max
+		}, 0)
+
 		const handle = runSweep(
 			candlesRef.current,
 			assetConfigRef.current,
@@ -623,6 +640,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				funnelStage: refineState ? "refine" : "broad",
 				parentRunIds: refineState?.parentRunIds,
 				journeyId: refineState?.journeyId,
+				initialRunCounter,
 			},
 			{
 				onProgress: (run, index, total) => {
