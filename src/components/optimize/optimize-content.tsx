@@ -240,20 +240,27 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		undefined
 	)
 
-	// Hydrate from localStorage on mount
+	// Hydrate from IndexedDB on mount
 	useEffect(() => {
-		const stored = loadRuns()
-		if (stored.length > 0) {
-			setRuns(stored)
-			runCounterRef.current = stored.length
+		let cancelled = false
+		void loadRuns().then((stored) => {
+			if (!cancelled && stored.length > 0) {
+				setRuns(stored)
+				runCounterRef.current = stored.length
+			}
+		})
+		return () => {
+			cancelled = true
 		}
 	}, [])
 
-	// Persist to localStorage on change — debounced 1s
+	// Persist to IndexedDB on change — debounced 1s
 	useEffect(() => {
 		if (runs.length > 0) {
 			clearTimeout(saveTimeoutRef.current)
-			saveTimeoutRef.current = setTimeout(() => saveRuns(runs), 1000)
+			saveTimeoutRef.current = setTimeout(() => {
+				void saveRuns(runs)
+			}, 1000)
 		}
 		return () => clearTimeout(saveTimeoutRef.current)
 	}, [runs])
@@ -746,7 +753,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handleClearAll = useCallback(() => {
 		setRuns([])
-		clearRuns()
+		void clearRuns()
 		setExpandedRunId(null)
 		runCounterRef.current = 0
 	}, [])
