@@ -225,6 +225,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Runs state ────────────────────────────────────────────────
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
+	// Single-row delete confirmation. Holds the id of the run pending
+	// deletion; the AlertDialog opens whenever this is non-null.
+	const [pendingDeleteRunId, setPendingDeleteRunId] = useState<string | null>(
+		null
+	)
 	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
 	// Funnel state — set when the user clicks "Breed selected" on the Pareto scatter.
 	// `null` = ad-hoc sweep (no journey). Cleared on sweep completion.
@@ -727,15 +732,22 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		)
 	}, [])
 
-	const handleDeleteRun = useCallback(
-		(runId: string) => {
-			setRuns((prev) => prev.filter((run) => run.id !== runId))
-			if (expandedRunId === runId) {
-				setExpandedRunId(null)
-			}
-		},
-		[expandedRunId]
-	)
+	// Row trash button only *requests* deletion; the AlertDialog wired in
+	// the results view confirms before we actually mutate runs / IDB.
+	const handleRequestDeleteRun = useCallback((runId: string) => {
+		setPendingDeleteRunId(runId)
+	}, [])
+
+	const handleConfirmDeleteRun = useCallback(() => {
+		if (pendingDeleteRunId === null) {
+			return
+		}
+		setRuns((prev) => prev.filter((run) => run.id !== pendingDeleteRunId))
+		if (expandedRunId === pendingDeleteRunId) {
+			setExpandedRunId(null)
+		}
+		setPendingDeleteRunId(null)
+	}, [pendingDeleteRunId, expandedRunId])
 
 	const handleToggleExpand = useCallback((runId: string) => {
 		setExpandedRunId((prev) => (prev === runId ? null : runId))
@@ -1540,7 +1552,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											expandedRunId={expandedRunId}
 											onTogglePin={handleTogglePin}
 											onToggleExpand={handleToggleExpand}
-											onDelete={handleDeleteRun}
+											onDelete={handleRequestDeleteRun}
 											onUpdateLabel={handleUpdateLabel}
 											robustFilterEnabled={robustFilterEnabled}
 											onRobustFilterChange={setRobustFilterEnabled}
@@ -1621,6 +1633,39 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					)}
 				</div>
 			</div>
+
+			<AlertDialog
+				open={pendingDeleteRunId !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setPendingDeleteRunId(null)
+					}
+				}}
+			>
+				<AlertDialogContent size="sm">
+					<AlertDialogHeader>
+						<AlertDialogTitle>{t("deleteRunConfirmTitle")}</AlertDialogTitle>
+						<AlertDialogDescription>
+							{t("deleteRunConfirmDescription", {
+								label:
+									runs.find((r) => r.id === pendingDeleteRunId)?.label ?? "—",
+							})}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel id="cancel-delete-run">
+							{t("deleteRunConfirmCancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="confirm-delete-run"
+							onClick={handleConfirmDeleteRun}
+							variant="destructive"
+						>
+							{t("deleteRunConfirmAction")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 
 			<FreezeHeroModal
 				open={freezeRunId !== null}
