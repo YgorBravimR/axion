@@ -230,6 +230,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const [pendingDeleteRunId, setPendingDeleteRunId] = useState<string | null>(
 		null
 	)
+	// Bulk multi-select state for the runs comparison table. The dialog flag
+	// is separate so the count badge stays visible after dismiss-without-action.
+	const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(
+		() => new Set()
+	)
+	const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
 	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
 	// Funnel state — set when the user clicks "Breed selected" on the Pareto scatter.
 	// `null` = ad-hoc sweep (no journey). Cleared on sweep completion.
@@ -744,6 +750,51 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		}
 		setPendingDeleteRunId(null)
 	}, [pendingDeleteRunId, expandedRunId])
+
+	// Multi-select handlers for the runs table.
+	const handleToggleSelect = useCallback((runId: string) => {
+		setSelectedRunIds((prev) => {
+			const next = new Set(prev)
+			if (next.has(runId)) {
+				next.delete(runId)
+			} else {
+				next.add(runId)
+			}
+			return next
+		})
+	}, [])
+
+	// "Select all" target = the ids the table currently shows (post robust
+	// filter). If all visible are already selected, deselect them; otherwise
+	// select them. Other-page selections (visible-vs-stored) survive — the
+	// set is the union of selections across operations.
+	const handleSelectAll = useCallback((visibleRunIds: string[]) => {
+		setSelectedRunIds((prev) => {
+			const allChecked = visibleRunIds.every((id) => prev.has(id))
+			const next = new Set(prev)
+			for (const id of visibleRunIds) {
+				if (allChecked) {
+					next.delete(id)
+				} else {
+					next.add(id)
+				}
+			}
+			return next
+		})
+	}, [])
+
+	const handleClearSelection = useCallback(() => {
+		setSelectedRunIds(new Set())
+	}, [])
+
+	const handleConfirmBulkDelete = useCallback(() => {
+		setRuns((prev) => prev.filter((r) => !selectedRunIds.has(r.id)))
+		if (expandedRunId !== null && selectedRunIds.has(expandedRunId)) {
+			setExpandedRunId(null)
+		}
+		setSelectedRunIds(new Set())
+		setBulkDeleteDialogOpen(false)
+	}, [selectedRunIds, expandedRunId])
 
 	const handleToggleExpand = useCallback((runId: string) => {
 		setExpandedRunId((prev) => (prev === runId ? null : runId))
@@ -1545,6 +1596,43 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 												{t("runsCount", { count: runs.length })}
 											</Badge>
 										</div>
+										{selectedRunIds.size > 0 && (
+											<div
+												id="bulk-action-bar"
+												className="border-acc-100/40 bg-acc-100/5 gap-s-300 p-s-300 flex items-center justify-between rounded-md border"
+											>
+												<span className="text-small text-txt-100">
+													{t("bulkSelectionCount", {
+														count: selectedRunIds.size,
+													})}
+												</span>
+												<div className="gap-s-200 flex items-center">
+													<Button
+														id="bulk-clear-selection"
+														variant="ghost"
+														size="sm"
+														onClick={handleClearSelection}
+													>
+														{t("bulkClearSelection")}
+													</Button>
+													<Button
+														id="bulk-delete-trigger"
+														variant="ghost"
+														size="sm"
+														onClick={() => setBulkDeleteDialogOpen(true)}
+														className="text-fb-error gap-s-200"
+													>
+														<Trash2
+															className="h-3.5 w-3.5"
+															aria-hidden="true"
+														/>
+														{t("bulkDeleteSelected", {
+															count: selectedRunIds.size,
+														})}
+													</Button>
+												</div>
+											</div>
+										)}
 										<RunsComparisonTable
 											runs={runs}
 											expandedRunId={expandedRunId}
@@ -1554,6 +1642,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											onUpdateLabel={handleUpdateLabel}
 											robustFilterEnabled={robustFilterEnabled}
 											onRobustFilterChange={setRobustFilterEnabled}
+											selectedRunIds={selectedRunIds}
+											onToggleSelect={handleToggleSelect}
+											onSelectAll={handleSelectAll}
 										/>
 									</div>
 								</TabsContent>
@@ -1631,6 +1722,36 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					)}
 				</div>
 			</div>
+
+			<AlertDialog
+				open={bulkDeleteDialogOpen}
+				onOpenChange={setBulkDeleteDialogOpen}
+			>
+				<AlertDialogContent size="sm">
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{t("bulkDeleteConfirmTitle", { count: selectedRunIds.size })}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							{t("bulkDeleteConfirmDescription", {
+								count: selectedRunIds.size,
+							})}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel id="cancel-bulk-delete">
+							{t("bulkDeleteConfirmCancel", { count: selectedRunIds.size })}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="confirm-bulk-delete"
+							onClick={handleConfirmBulkDelete}
+							variant="destructive"
+						>
+							{t("bulkDeleteConfirmAction", { count: selectedRunIds.size })}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 
 			<AlertDialog
 				open={pendingDeleteRunId !== null}
