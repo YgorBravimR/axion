@@ -18,7 +18,7 @@ const PlanSection = ({
 			<div className="text-small text-txt-200">{breadcrumb}</div>
 		) : null}
 		<header className="space-y-s-100">
-			<h1 className="text-txt-100 text-2xl font-medium">{title}</h1>
+			<h1 className="text-txt-100 text-h2 font-medium">{title}</h1>
 			{subtitle ? <p className="text-txt-200">{subtitle}</p> : null}
 		</header>
 		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">

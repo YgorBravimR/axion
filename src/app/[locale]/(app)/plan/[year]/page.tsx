@@ -19,6 +19,9 @@ import {
 } from "@/components/fractal-plan/cockpit/annual-cockpit-grid"
 import type { WeekData } from "@/components/fractal-plan/cockpit/month-card"
 import { TaxTab } from "@/components/fractal-plan/cockpit/tax-tab"
+import { WeeklyGridTab } from "@/components/fractal-plan/cockpit/weekly-grid-tab"
+import { PayoffMatrixTab } from "@/components/fractal-plan/cockpit/payoff-matrix-tab"
+import { ExitConventionTab } from "@/components/fractal-plan/cockpit/exit-convention-tab"
 import type { MonthlyDarfRow } from "@/lib/tax/types"
 import { getDayTradeIrRate, getDayTradeRateSource } from "@/lib/tax/legal-rates"
 import { getActiveAssets } from "@/app/actions/assets"
@@ -122,8 +125,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultLossR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultDailyLossR)}
 									</span>
 									<ProvenanceBadge
@@ -135,8 +138,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultWinR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultDailyWinR)}
 									</span>
 									<ProvenanceBadge
@@ -148,8 +151,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultWeeklyLossWinR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultWeeklyLossR)} /{" "}
 										{formatR(resolved.defaultWeeklyWinR)}
 									</span>
@@ -162,8 +165,8 @@ const PlanYearPage = async ({ params }: PageProps) => {
 								<dt className="text-txt-200 text-small">
 									{t("daily.defaultMonthlyLossWinR")}
 								</dt>
-								<dd className="gap-s-200 mt-1 flex items-center">
-									<span className="text-txt-100 font-mono text-lg">
+								<dd className="gap-s-200 mt-s-100 flex items-center">
+									<span className="text-txt-100 text-h3 font-mono">
 										{formatR(resolved.defaultMonthlyLossR)} /{" "}
 										{formatR(resolved.defaultMonthlyWinR)}
 									</span>
@@ -508,6 +511,11 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			<Tabs defaultValue="plan">
 				<TabsList id="plan-year-tabs" variant="line">
 					<TabsTrigger value="plan">{t("yearPage.tabPlan")}</TabsTrigger>
+					<TabsTrigger value="weekly-grid">
+						{t("yearPage.tabWeeklyGrid")}
+					</TabsTrigger>
+					<TabsTrigger value="payoff">{t("yearPage.tabPayoff")}</TabsTrigger>
+					<TabsTrigger value="exits">{t("yearPage.tabExits")}</TabsTrigger>
 					<TabsTrigger value="impostos">{t("yearPage.tabTax")}</TabsTrigger>
 				</TabsList>
 				<TabsContent value="plan">
@@ -540,6 +548,23 @@ const PlanYearPage = async ({ params }: PageProps) => {
 						defaultDailyWinR={parseDecimal(row.defaultDailyWinR)}
 						assertivityPct={parseDecimal(row.defaultAssertivityPercent) ?? 50}
 					/>
+				</TabsContent>
+				<TabsContent value="weekly-grid">
+					<WeeklyGridTab
+						year={year}
+						months={monthRows}
+						currentMonthIndex={currentMonthIndex}
+					/>
+				</TabsContent>
+				<TabsContent value="payoff">
+					<PayoffMatrixTab
+						initialCapitalCents={initialCapitalCents}
+						tradingDaysPerWeek={tradingDaysPerWeek}
+						currentOneRCents={currentOneRCents}
+					/>
+				</TabsContent>
+				<TabsContent value="exits">
+					<ExitConventionTab />
 				</TabsContent>
 				<TabsContent value="impostos">
 					<TaxTab

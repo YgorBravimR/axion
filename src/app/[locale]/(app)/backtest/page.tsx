@@ -11,11 +11,9 @@ const BacktestPage = async () => {
 		sourcesResponse.status === "success" ? (sourcesResponse.data ?? []) : []
 
 	return (
-		<div className="p-m-400 sm:p-m-500 lg:p-m-600 container mx-auto max-w-7xl">
-			<Suspense fallback={<LoadingSpinner size="md" className="min-h-48" />}>
-				<BacktestContent dataSources={dataSources} />
-			</Suspense>
-		</div>
+		<Suspense fallback={<LoadingSpinner size="md" className="min-h-48" />}>
+			<BacktestContent dataSources={dataSources} />
+		</Suspense>
 	)
 }
 

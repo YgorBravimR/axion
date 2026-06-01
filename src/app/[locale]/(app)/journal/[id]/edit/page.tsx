@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { TradeForm } from "@/components/journal"
+import { Panel } from "@/components/ui/panel"
 import { getTrade } from "@/app/actions/trades"
 import { getStrategies } from "@/app/actions/strategies"
 import { getTags } from "@/app/actions/tags"
@@ -33,9 +34,9 @@ const EditTradePage = async ({ params }: EditTradePageProps) => {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto p-m-400 sm:p-m-500 lg:p-m-600">
+			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<div className="mx-auto max-w-5xl">
-					<div className="rounded-lg border border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600">
+					<Panel padding="lg">
 						<TradeForm
 							trade={trade}
 							strategies={strategies}
@@ -43,7 +44,7 @@ const EditTradePage = async ({ params }: EditTradePageProps) => {
 							assets={assets}
 							timeframes={timeframes}
 						/>
-					</div>
+					</Panel>
 				</div>
 			</div>
 		</div>

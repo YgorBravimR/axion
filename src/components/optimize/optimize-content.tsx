@@ -26,20 +26,33 @@ import {
 	RotateCcw,
 	BarChart3,
 	Table2,
+	GitCompare as ScatterIcon,
+	Sparkles,
+	X,
+	Download,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchBacktestData } from "@/app/actions/backtest"
-import { runBacktest } from "@/lib/backtest/engine"
+import { runBacktest, getEngineVersionForRecipe } from "@/lib/backtest/engine"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
-import { dezkPresets } from "@/lib/backtest/presets/dezk-presets"
+// DEZK strategy archived 2026-05-29 — see dezk-presets.ts header. Not in UI.
+import {
+	hawksPresets,
+	hawksV0,
+	hawksUserCatalog,
+} from "@/lib/backtest/presets/hawks-presets"
 import {
 	generateRecipeGrid,
 	countCombinations,
 	MAX_COMBINATIONS,
 } from "@/lib/optimize/parameter-grid"
 import { runSweep } from "@/lib/optimize/sweep-runner"
+import { listBundledCatalogs } from "@/app/actions/user-catalog-bundles"
+import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
 import { OrbEntrySection } from "@/components/backtest/sections/orb-entry-section"
-import { DezkEntrySection } from "@/components/backtest/sections/dezk-entry-section"
+// DEZK archived: DezkEntrySection import removed from UI (strategy hidden from selectors)
+import { HawksEntrySection } from "@/components/backtest/sections/hawks-entry-section"
+import { UserCatalogEntrySection } from "@/components/backtest/sections/user-catalog-entry-section"
 import { StopProtectionSection } from "@/components/backtest/sections/stop-protection-section"
 import { TargetsExitSection } from "@/components/backtest/sections/targets-exit-section"
 import { SizingExecutionSection } from "@/components/backtest/sections/sizing-execution-section"
@@ -47,23 +60,73 @@ import { RunsComparisonTable } from "./runs-comparison-table"
 import { EquityOverlayChart } from "./equity-overlay-chart"
 import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
+import { SweptPathsProvider } from "./swept-paths-context"
+import { HawksSweepBuilder } from "./hawks-sweep-builder"
+import { OrbSweepBuilder } from "./orb-sweep-builder"
+import { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED } from "@/lib/optimize/feature-flags"
+import {
+	HAWKS_LEAVES,
+	HAWKS_VALIDATORS,
+} from "@/lib/backtest/presets/hawks-leaves"
+import { ORB_LEAVES, ORB_VALIDATORS } from "@/lib/backtest/presets/orb-leaves"
+import type {
+	LeafGroupValidator,
+	LeafSelection,
+	PrimitiveValue,
+	SweepableLeaf,
+} from "@/lib/optimize/sweep-leaf"
+import {
+	generateConditionalGrid,
+	countConditionalGrid,
+	countConditionalGridBreakdown,
+	type GridCountBreakdown,
+} from "@/lib/optimize/grid-conditional"
+import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
+import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
+import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
+import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
+import { useHeroPresets } from "@/lib/optimize/use-hero-presets"
+import { FreezeHeroModal } from "./freeze-hero-modal"
+import { LoserPatternInspector } from "./loser-pattern-inspector"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
+import { ParetoScatter } from "./pareto-scatter"
 import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
+import { SweepAxisDiagnostics } from "./sweep-axis-diagnostics"
 import { loadRuns, saveRuns, clearRuns } from "@/lib/optimize/storage"
+import { exportRunsAsJson, exportRunsAsCsv } from "@/lib/optimize/export-runs"
 import type { DateRange } from "react-day-picker"
 import type { DataSourceInfo, CandleRow } from "@/types/candle"
 import type {
 	StrategyRecipe,
 	AssetConfig,
 	OptimizationRun,
+	UserEntry,
 } from "@/types/backtest"
 import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
 
-const ALL_PRESETS = [...orbPresets, ...dezkPresets]
+const ALL_PRESETS = [...orbPresets, ...hawksPresets]
+
+/**
+ * Build the per-path fallback map the conditional-grid generator needs when
+ * a leaf isn't actively sweepable under the current selections (its parent's
+ * condition is unmet). We use each leaf's own fixed value as the fallback —
+ * the conditional grid will only consult the fallback for inactive branches.
+ */
+const buildLeafFallback = (
+	selections: Map<string, LeafSelection>
+): Map<string, PrimitiveValue> => {
+	const fallback = new Map<string, PrimitiveValue>()
+	for (const [path, sel] of selections) {
+		if (sel.kind === "fixed") {
+			fallback.set(path, sel.value)
+		}
+	}
+	return fallback
+}
 
 interface OptimizeContentProps {
 	dataSources: DataSourceInfo[]
@@ -83,11 +146,15 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Data state (fetched once, reused for all runs) ────────────
 	const candlesRef = useRef<CandleRow[]>([])
 	const assetConfigRef = useRef<AssetConfig | null>(null)
+	const catalogRef = useRef<UserEntry[] | undefined>(undefined)
 	const [candleCount, setCandleCount] = useState(0)
 	const [isLoadingData, setIsLoadingData] = useState(false)
 
 	// ── Config state ──────────────────────────────────────────────
-	const [recipe, setRecipe] = useState<StrategyRecipe>(orbPresets[0])
+	// Default to Hawks v0 — it's the active strategy focus and matches the
+	// backtest page's typical entry point. Users can still switch to ORB or
+	// user_catalog via the Strategy selector in Setup.
+	const [recipe, setRecipe] = useState<StrategyRecipe>(hawksV0)
 	const [selectedSourceIndex, setSelectedSourceIndex] = useState(0)
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState("")
@@ -95,8 +162,49 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Base config disclosure ────────────────────────────────────
 	const [baseConfigOpen, setBaseConfigOpen] = useState(false)
 
+	// ── Walk-forward config ────────────────────────────────────────
+	const [walkForwardConfig, setWalkForwardConfig] = useState<{
+		enabled: boolean
+		inSamplePct: number
+	} | null>(null)
+
 	// ── Sweep state ───────────────────────────────────────────────
 	const [activeRanges, setActiveRanges] = useState<ParameterRange[]>([])
+	// Phase B inline-sweep state (Hawks only, behind feature flag).
+	// `null` until the user lands on the parameters step with Hawks selected;
+	// derived from recipe baseline on first show.
+	const [leafSelections, setLeafSelections] = useState<Map<
+		string,
+		LeafSelection
+	> | null>(null)
+	// Strategy-aware inline-sweep config. Returns the leaves + validators
+	// the new sweep-builder system should use for the current recipe, or
+	// `null` when the strategy still routes through the legacy panel.
+	const inlineSweepBundle = useMemo<{
+		leaves: SweepableLeaf[]
+		validators: LeafGroupValidator[]
+		strategyKey: "hawks" | "orb"
+	} | null>(() => {
+		if (
+			OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED &&
+			recipe.entry.type === "hawks_triple_screen"
+		) {
+			return {
+				leaves: HAWKS_LEAVES,
+				validators: HAWKS_VALIDATORS,
+				strategyKey: "hawks",
+			}
+		}
+		if (recipe.entry.type === "orb_breakout") {
+			return {
+				leaves: ORB_LEAVES,
+				validators: ORB_VALIDATORS,
+				strategyKey: "orb",
+			}
+		}
+		return null
+	}, [recipe.entry.type])
+	const isInlineSweepMode = inlineSweepBundle !== null
 	const [isSweeping, setIsSweeping] = useState(false)
 	const [sweepProgress, setSweepProgress] = useState({ current: 0, total: 0 })
 	const sweepHandleRef = useRef<SweepHandle | null>(null)
@@ -106,6 +214,27 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Runs state ────────────────────────────────────────────────
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
+	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
+	// Funnel state — set when the user clicks "Breed selected" on the Pareto scatter.
+	// `null` = ad-hoc sweep (no journey). Cleared on sweep completion.
+	const [refineState, setRefineState] = useState<{
+		journeyId: string
+		parentRunIds: string[]
+	} | null>(null)
+	// Hero-freeze modal — set to a run id when the user clicks "Freeze as hero preset".
+	const [freezeRunId, setFreezeRunId] = useState<string | null>(null)
+	// Results-step tab selection. Controlled so the post-refine hint can
+	// navigate to the Pareto tab when the user clicks "Iterate".
+	const [resultsTab, setResultsTab] = useState<string>("chart")
+	// Dismissible hint shown when refine runs exist. Session-scoped — comes
+	// back on reload by design, since each refine wave should re-prompt the
+	// "what's next?" decision.
+	const [postRefineHintHidden, setPostRefineHintHidden] = useState(false)
+	const heroPresets = useHeroPresets()
+	const mergedPresets = useMemo<StrategyRecipe[]>(
+		() => [...ALL_PRESETS, ...heroPresets.map((h) => h.recipe)],
+		[heroPresets]
+	)
 	const runCounterRef = useRef(0)
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined
@@ -129,12 +258,101 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		return () => clearTimeout(saveTimeoutRef.current)
 	}, [runs])
 
+	// Seed leaf selections from the recipe baseline the first time the
+	// user lands on the inline-Hawks flow. Re-derive when the recipe
+	// preset itself changes (entry type swap, preset reload).
+	useEffect(() => {
+		if (!inlineSweepBundle) {
+			if (leafSelections !== null) {
+				setLeafSelections(null)
+			}
+			return
+		}
+		if (leafSelections === null) {
+			setLeafSelections(
+				deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+			)
+		}
+	}, [inlineSweepBundle, recipe, leafSelections])
+
 	const selectedSource = dataSources[selectedSourceIndex]
 	const dateFrom = dateRange?.from
 		? dateRange.from.toISOString().slice(0, 10)
 		: ""
 	const dateTo = dateRange?.to ? dateRange.to.toISOString().slice(0, 10) : ""
 	const hasData = candleCount > 0
+
+	// In user_catalog mode the catalog IS canonical: range, asset, and the
+	// preset (only one variant) are derived from the catalog itself. Mirror
+	// the backtest page's UX — auto-load the all-days bundle on entry, pin
+	// the date range to the catalog span, and hide the manual selectors.
+	const isUserCatalog = recipe.entry.type === "user_catalog"
+
+	useEffect(() => {
+		if (!isUserCatalog || recipe.entry.type !== "user_catalog") {
+			return
+		}
+		const currentCatalog = recipe.entry.config.catalog
+		if (currentCatalog.length > 0) {
+			return
+		}
+		let cancelled = false
+		void listBundledCatalogs().then((bundles) => {
+			if (cancelled || bundles.length === 0) {
+				return
+			}
+			const allBundle = bundles.find((b) => b.key === "all") ?? bundles[0]
+			if (!allBundle) {
+				return
+			}
+			setRecipe((prev) => {
+				if (prev.entry.type !== "user_catalog") {
+					return prev
+				}
+				if (prev.entry.config.catalog.length > 0) {
+					return prev
+				}
+				return {
+					...prev,
+					entry: {
+						type: "user_catalog",
+						config: { ...prev.entry.config, catalog: allBundle.catalog },
+					},
+				}
+			})
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [isUserCatalog, recipe.entry])
+
+	useEffect(() => {
+		if (recipe.entry.type !== "user_catalog") {
+			return
+		}
+		const catalog = recipe.entry.config.catalog
+		if (catalog.length === 0) {
+			return
+		}
+		const sortedDates = catalog
+			.map((e) => e.date)
+			.sort((a, b) => a.localeCompare(b))
+		const firstDate = sortedDates[0]
+		const lastDate = sortedDates[sortedDates.length - 1]
+		if (!firstDate || !lastDate) {
+			return
+		}
+		const fromMatches =
+			dateRange?.from && formatLocalYMD(dateRange.from) === firstDate
+		const toMatches = dateRange?.to && formatLocalYMD(dateRange.to) === lastDate
+		if (fromMatches && toMatches) {
+			return
+		}
+		setDateRange({
+			from: parseLocalYMD(firstDate),
+			to: parseLocalYMD(lastDate),
+		})
+	}, [recipe.entry, dateRange?.from, dateRange?.to])
 
 	const assetValuePerPointCents = selectedSource
 		? Math.round(
@@ -191,7 +409,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handlePresetChange = (value: string) => {
 		const index = parseInt(value, 10)
-		const source = ALL_PRESETS[index]
+		const source = mergedPresets[index]
 		if (!source) {
 			return
 		}
@@ -203,15 +421,25 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			}
 		}
 		setRecipe(preset)
+		// Force the inline sweep builder to re-derive its selections from the
+		// new recipe. Without this, the builder keeps showing the previous
+		// preset's leaf values (e.g. ORB stop/target after switching to Hawks).
+		setLeafSelections(null)
 	}
 
 	const handleStrategyChange = (type: string) => {
 		if (type === "orb_breakout") {
 			setRecipe(orbPresets[0])
-		} else if (type === "macd_wma_alignment") {
-			setRecipe(dezkPresets[0])
+		} else if (type === "hawks_triple_screen") {
+			setRecipe(hawksV0)
+		} else if (type === "user_catalog") {
+			setRecipe(hawksUserCatalog)
 		}
+		// `macd_wma_alignment` (DEZK) is archived — not selectable from UI.
 		setActiveRanges([])
+		// Same reason as handlePresetChange — re-derive selections from the
+		// new strategy's recipe so the inline builder reflects the swap.
+		setLeafSelections(null)
 	}
 
 	const handleSourceChange = (value: string) => {
@@ -311,17 +539,30 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	// ── Sweep mode: batch run via Web Worker ──────────────────────
 
-	const handleRunSweep = useCallback(() => {
+	const handleRunSweep = useCallback(async () => {
 		if (!hasData || !assetConfigRef.current) {
 			showToast("error", t("dataRequired"))
 			return
 		}
-		if (activeRanges.length === 0) {
+
+		// Branch: inline Hawks mode uses conditional-grid generation; legacy
+		// mode uses the flat parameter-range grid. They produce the same
+		// downstream shape — `StrategyRecipe[]` — so `runSweep(...)` is shared.
+		const useInlineGrid = inlineSweepBundle !== null && leafSelections !== null
+
+		if (!useInlineGrid && activeRanges.length === 0) {
 			showToast("error", t("noParamsSelected"))
 			return
 		}
 
-		const totalCombos = countCombinations(activeRanges, recipe)
+		const totalCombos = useInlineGrid
+			? countConditionalGrid(
+					inlineSweepBundle!.leaves,
+					leafSelections!,
+					buildLeafFallback(leafSelections!),
+					inlineSweepBundle!.validators
+				)
+			: countCombinations(activeRanges, recipe)
 		if (totalCombos > MAX_COMBINATIONS) {
 			showToast(
 				"error",
@@ -330,7 +571,23 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			return
 		}
 
-		const recipes = generateRecipeGrid(recipe, activeRanges)
+		// Load catalog for Hawks strategy
+		if (recipe.entry.type === "hawks_triple_screen" && !catalogRef.current) {
+			const bundles = await listBundledCatalogs()
+			const allBundle = bundles.find((b) => b.key === "all")
+			if (allBundle) {
+				catalogRef.current = allBundle.catalog
+			}
+		}
+
+		const recipes = useInlineGrid
+			? generateConditionalGrid(
+					inlineSweepBundle!.leaves,
+					leafSelections!,
+					buildLeafFallback(leafSelections!),
+					inlineSweepBundle!.validators
+				).map((combo) => recipeFromCombo(recipe, combo))
+			: generateRecipeGrid(recipe, activeRanges)
 		setIsSweeping(true)
 		setSweepProgress({ current: 0, total: recipes.length })
 
@@ -340,6 +597,26 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			candlesRef.current,
 			assetConfigRef.current,
 			recipes,
+			{
+				dateFrom,
+				dateTo,
+				engineVersion: getEngineVersionForRecipe(recipe) ?? "unknown",
+				walkForward: walkForwardConfig?.enabled
+					? { inSamplePct: walkForwardConfig.inSamplePct / 100 }
+					: undefined,
+				referenceCatalog:
+					recipe.entry.type === "hawks_triple_screen"
+						? catalogRef.current
+						: undefined,
+				// Always stamp a stage — `undefined` would render as "ad-hoc"
+				// in the table, which the user reads as "untagged noise" and
+				// fails to distinguish from refined runs. Broad is the
+				// explicit default; refine fires only when a Pareto multi-
+				// select breeds new selections.
+				funnelStage: refineState ? "refine" : "broad",
+				parentRunIds: refineState?.parentRunIds,
+				journeyId: refineState?.journeyId,
+			},
 			{
 				onProgress: (run, index, total) => {
 					sweepRuns.push(run)
@@ -359,6 +636,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					runCounterRef.current += sweepRuns.length
 					setIsSweeping(false)
 					sweepHandleRef.current = null
+					setRefineState(null)
 					const seconds = (totalMs / 1000).toFixed(1)
 					showToast(
 						"success",
@@ -380,7 +658,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		)
 
 		sweepHandleRef.current = handle
-	}, [hasData, recipe, activeRanges, showToast, t])
+	}, [
+		hasData,
+		recipe,
+		activeRanges,
+		inlineSweepBundle,
+		leafSelections,
+		dateFrom,
+		dateTo,
+		walkForwardConfig,
+		showToast,
+		t,
+	])
 
 	const handleCancelSweep = useCallback(() => {
 		sweepHandleRef.current?.cancel()
@@ -415,6 +704,45 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const handleToggleExpand = useCallback((runId: string) => {
 		setExpandedRunId((prev) => (prev === runId ? null : runId))
 	}, [])
+
+	const handleBreedSelected = useCallback(
+		(parentRunIds: string[]) => {
+			if (!inlineSweepBundle || parentRunIds.length === 0) {
+				return
+			}
+			const parents = runs.filter((r) => parentRunIds.includes(r.id))
+			if (parents.length === 0) {
+				return
+			}
+			const existingJourneyId = parents.find((p) => p.provenance?.journeyId)
+				?.provenance?.journeyId
+			const journeyId = existingJourneyId ?? mintJourneyId()
+			if (!existingJourneyId) {
+				setRuns((prev) => backfillJourneyId(prev, parentRunIds, journeyId))
+			}
+			const neighborhood = buildKParentNeighborhood(
+				inlineSweepBundle.leaves,
+				parents.map((p) => p.recipe)
+			)
+			setLeafSelections(neighborhood)
+			setRefineState({ journeyId, parentRunIds })
+			setStep("parameters")
+			showToast("success", t("funnel.breedRunCount", { count: parents.length }))
+		},
+		[inlineSweepBundle, runs, showToast, t]
+	)
+
+	const handleApplyDriverRecommendation = useCallback(
+		(leafPath: string, value: unknown) => {
+			if (!inlineSweepBundle || !leafSelections) {
+				return
+			}
+			const next = new Map(leafSelections)
+			next.set(leafPath, { kind: "fixed", value: value as never })
+			setLeafSelections(next)
+		},
+		[inlineSweepBundle, leafSelections]
+	)
 
 	const handleClearAll = useCallback(() => {
 		setRuns([])
@@ -465,13 +793,45 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const expandedRun = expandedRunId
 		? runs.find((r) => r.id === expandedRunId)
 		: null
-	const totalCombinations =
-		activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
+	const cardinalityBreakdown = useMemo<GridCountBreakdown | null>(() => {
+		if (!inlineSweepBundle || leafSelections === null) {
+			return null
+		}
+		return countConditionalGridBreakdown(
+			inlineSweepBundle.leaves,
+			leafSelections,
+			buildLeafFallback(leafSelections),
+			inlineSweepBundle.validators
+		)
+	}, [inlineSweepBundle, leafSelections])
+
+	/**
+	 * Post-refine hint state — derive the best refine-stage run (highest
+	 * profitFactor) so the hint's "Freeze winner" CTA can target it. The
+	 * hint surfaces whenever any refine run exists; it's dismissible per
+	 * session via `postRefineHintHidden`.
+	 */
+	const bestRefineRun = useMemo<OptimizationRun | null>(() => {
+		const refineRuns = runs.filter((r) => r.provenance?.stage === "refine")
+		if (refineRuns.length === 0) {
+			return null
+		}
+		return refineRuns.reduce((best, r) =>
+			r.summary.profitFactor > best.summary.profitFactor ? r : best
+		)
+	}, [runs])
+
+	const totalCombinations = useMemo(() => {
+		if (cardinalityBreakdown !== null) {
+			return cardinalityBreakdown.valid
+		}
+		return activeRanges.length > 0 ? countCombinations(activeRanges, recipe) : 0
+	}, [cardinalityBreakdown, activeRanges, recipe])
 
 	// ── Render ────────────────────────────────────────────────────
 
 	return (
-		<div className="space-y-m-500">
+		<div className="p-m-400 sm:p-m-500 lg:p-m-600 space-y-m-500 container mx-auto max-w-screen-2xl">
 			{/* Header */}
 			<div>
 				<h1 className="text-h2 text-txt-100 font-semibold">{t("title")}</h1>
@@ -494,33 +854,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					</p>
 
 					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
-						{/* Strategy */}
-						<div className="space-y-s-200">
-							<label
-								htmlFor="optimize-strategy"
-								className="text-small text-txt-200 font-medium"
-							>
-								{tBacktest("builder.strategy")}
-							</label>
-							<Select
-								value={recipe.entry.type}
-								onValueChange={handleStrategyChange}
-							>
-								<SelectTrigger id="optimize-strategy">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="orb_breakout">
-										{tBacktest("orb.name")}
-									</SelectItem>
-									<SelectItem value="macd_wma_alignment">
-										{tBacktest("dezk.name")}
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-
-						{/* Preset */}
+						{/* Load Preset — lead selector. Picking a user_catalog preset
+						    blocks every other Setup field; catalog is canonical. */}
 						<div className="space-y-s-200">
 							<label
 								htmlFor="optimize-preset"
@@ -533,91 +868,158 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									<SelectValue placeholder={tBacktest("config.selectPreset")} />
 								</SelectTrigger>
 								<SelectContent>
-									{ALL_PRESETS.map((preset, i) => (
-										<SelectItem
-											key={`${preset.entry.type}-${i}`}
-											value={String(i)}
-										>
-											{preset.displayName}
-										</SelectItem>
-									))}
+									{mergedPresets.map((preset, i) => {
+										const isHero = i >= ALL_PRESETS.length
+										const heroIdx = i - ALL_PRESETS.length
+										const heroPreset = isHero ? heroPresets[heroIdx] : null
+										const currentEngine =
+											heroPreset && getEngineVersionForRecipe(heroPreset.recipe)
+										const isStale =
+											heroPreset &&
+											currentEngine &&
+											currentEngine !== heroPreset.engineVersion
+										return (
+											<SelectItem
+												key={`${preset.entry.type}-${i}`}
+												value={String(i)}
+											>
+												<span className="gap-s-200 flex items-center">
+													<span>{preset.displayName}</span>
+													{heroPreset && (
+														<span className="text-tiny text-trade-buy">★</span>
+													)}
+													{isStale && (
+														<span
+															className="text-tiny text-warning border-warning rounded-sm border px-1"
+															title={t("freezeHero.staleTooltip", {
+																frozen: heroPreset.engineVersion,
+																current: currentEngine ?? "unknown",
+															})}
+														>
+															{t("freezeHero.staleChip")}
+														</span>
+													)}
+												</span>
+											</SelectItem>
+										)
+									})}
 								</SelectContent>
 							</Select>
 						</div>
 
-						{/* Asset + Timeframe */}
-						<div className="space-y-s-200">
-							<label
-								htmlFor="optimize-source"
-								className="text-small text-txt-200 font-medium"
-							>
-								{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
-							</label>
-							<Select
-								value={String(selectedSourceIndex)}
-								onValueChange={handleSourceChange}
-							>
-								<SelectTrigger id="optimize-source">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{dataSources.map((source, i) => (
-										<SelectItem
-											key={`${source.assetId}-${source.timeframeId}`}
-											value={String(i)}
-										>
-											{source.assetSymbol} — {source.timeframeCode}
-											{source.rowCount
-												? ` (${source.rowCount.toLocaleString()})`
-												: ""}
+						{/* Strategy — hidden in user_catalog mode (catalog implies it). */}
+						{!isUserCatalog && (
+							<div className="space-y-s-200">
+								<label
+									htmlFor="optimize-strategy"
+									className="text-small text-txt-200 font-medium"
+								>
+									{tBacktest("builder.strategy")}
+								</label>
+								<Select
+									value={recipe.entry.type}
+									onValueChange={handleStrategyChange}
+								>
+									<SelectTrigger id="optimize-strategy">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="orb_breakout">
+											{tBacktest("orb.name")}
 										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+										{/* DEZK (macd_wma_alignment) archived 2026-05-29 — hidden from UI. */}
+										<SelectItem value="hawks_triple_screen">
+											{tBacktest("hawks.name")}
+										</SelectItem>
+										<SelectItem value="user_catalog">
+											{tBacktest("userCatalog.name")}
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+						)}
 
-						{/* Date Range */}
-						<div className="space-y-s-200">
-							<label
-								htmlFor="optimize-quick-range"
-								className="text-small text-txt-200 font-medium"
-							>
-								{tBacktest("config.dateRange")}
-							</label>
-							<Select value={quickRangeKey} onValueChange={handleQuickRange}>
-								<SelectTrigger id="optimize-quick-range">
-									<SelectValue placeholder={tBacktest("builder.quickRange")} />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">
-										{tBacktest("builder.rangeAll")}
-									</SelectItem>
-									<SelectItem value="this_month">
-										{tBacktest("builder.rangeThisMonth")}
-									</SelectItem>
-									<SelectItem value="this_year">
-										{tBacktest("builder.rangeThisYear")}
-									</SelectItem>
-									<SelectItem value="3m">
-										{tBacktest("builder.range3m")}
-									</SelectItem>
-									<SelectItem value="6m">
-										{tBacktest("builder.range6m")}
-									</SelectItem>
-									<SelectItem value="1y">
-										{tBacktest("builder.range1y")}
-									</SelectItem>
-									<SelectItem value="custom">
-										{tBacktest("builder.rangeCustom")}
-									</SelectItem>
-								</SelectContent>
-							</Select>
-							<DateRangePicker
-								id="optimize-date-range"
-								value={dateRange}
-								onChange={handleDateRangeManual}
-							/>
-						</div>
+						{/* Asset + Timeframe — hidden in user_catalog mode (the
+						    asset/timeframe is implied by the catalog's brick indices). */}
+						{!isUserCatalog && (
+							<div className="space-y-s-200">
+								<label
+									htmlFor="optimize-source"
+									className="text-small text-txt-200 font-medium"
+								>
+									{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
+								</label>
+								<Select
+									value={String(selectedSourceIndex)}
+									onValueChange={handleSourceChange}
+								>
+									<SelectTrigger id="optimize-source">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{dataSources.map((source, i) => (
+											<SelectItem
+												key={`${source.assetId}-${source.timeframeId}`}
+												value={String(i)}
+											>
+												{source.assetSymbol} — {source.timeframeCode}
+												{source.rowCount
+													? ` (${source.rowCount.toLocaleString()})`
+													: ""}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						)}
+
+						{/* Date Range — hidden in user_catalog mode (the catalog's own
+						    date list IS the range; to exclude dates, edit the JSON). */}
+						{!isUserCatalog && (
+							<div className="space-y-s-200">
+								<label
+									htmlFor="optimize-quick-range"
+									className="text-small text-txt-200 font-medium"
+								>
+									{tBacktest("config.dateRange")}
+								</label>
+								<Select value={quickRangeKey} onValueChange={handleQuickRange}>
+									<SelectTrigger id="optimize-quick-range">
+										<SelectValue
+											placeholder={tBacktest("builder.quickRange")}
+										/>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">
+											{tBacktest("builder.rangeAll")}
+										</SelectItem>
+										<SelectItem value="this_month">
+											{tBacktest("builder.rangeThisMonth")}
+										</SelectItem>
+										<SelectItem value="this_year">
+											{tBacktest("builder.rangeThisYear")}
+										</SelectItem>
+										<SelectItem value="3m">
+											{tBacktest("builder.range3m")}
+										</SelectItem>
+										<SelectItem value="6m">
+											{tBacktest("builder.range6m")}
+										</SelectItem>
+										<SelectItem value="1y">
+											{tBacktest("builder.range1y")}
+										</SelectItem>
+										<SelectItem value="custom">
+											{tBacktest("builder.rangeCustom")}
+										</SelectItem>
+									</SelectContent>
+								</Select>
+								<DateRangePicker
+									id="optimize-date-range"
+									value={dateRange}
+									onChange={handleDateRangeManual}
+								/>
+							</div>
+						)}
 
 						{/* Load Data */}
 						<Button
@@ -647,70 +1049,151 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{t("wizard.parametersDesc")}
 						</p>
 
-						<SweepConfigPanel
-							recipe={recipe}
-							activeRanges={activeRanges}
-							onRangesChange={setActiveRanges}
-						/>
-
-						{/* Collapsible base configuration for non-sweepable params */}
-						<div className="border-bg-300 rounded-lg border">
-							<button
-								type="button"
-								onClick={() => setBaseConfigOpen((prev) => !prev)}
-								className="hover:bg-bg-300/50 px-m-400 py-s-300 flex w-full items-center justify-between transition-colors"
-								aria-expanded={baseConfigOpen}
-								aria-controls="base-config-panel"
+						{refineState && inlineSweepBundle && (
+							<div
+								id="refine-banner"
+								className="border-trade-buy/40 bg-trade-buy/5 gap-s-300 p-s-300 flex items-start rounded-md border"
 							>
-								<span className="text-small gap-s-200 text-txt-200 flex items-center font-medium">
-									<Settings2 className="h-4 w-4" aria-hidden="true" />
-									{t("baseConfig")}
-								</span>
-								<ChevronDown
-									className={cn(
-										"text-txt-300 h-4 w-4 transition-transform",
-										baseConfigOpen && "rotate-180"
-									)}
+								<Sparkles
+									className="text-trade-buy mt-s-100 h-4 w-4 shrink-0"
 									aria-hidden="true"
 								/>
-							</button>
-							{baseConfigOpen && (
-								<div
-									id="base-config-panel"
-									className="border-bg-300 space-y-m-400 p-m-400 border-t"
-								>
-									<p className="text-tiny text-txt-300">
-										{t("baseConfigHint")}
+								<div className="space-y-s-100 flex-1">
+									<p className="text-small text-txt-100 font-medium">
+										{t("funnel.refineBannerTitle", {
+											parents: refineState.parentRunIds.length,
+											combos: cardinalityBreakdown?.valid ?? 0,
+										})}
 									</p>
-									<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
-										{recipe.entry.type === "orb_breakout" && (
-											<OrbEntrySection
-												recipe={recipe}
-												onRecipeChange={setRecipe}
-											/>
-										)}
-										{recipe.entry.type === "macd_wma_alignment" && (
-											<DezkEntrySection
-												recipe={recipe}
-												onRecipeChange={setRecipe}
-											/>
-										)}
-										<StopProtectionSection
-											recipe={recipe}
-											onRecipeChange={setRecipe}
-										/>
-										<TargetsExitSection
-											recipe={recipe}
-											onRecipeChange={setRecipe}
-										/>
-										<SizingExecutionSection
-											recipe={recipe}
-											onRecipeChange={setRecipe}
-										/>
-									</div>
+									<p className="text-tiny text-txt-300">
+										{t("funnel.refineBannerHint")}
+									</p>
 								</div>
-							)}
-						</div>
+								<button
+									id="refine-banner-clear"
+									type="button"
+									onClick={() => {
+										setRefineState(null)
+										setLeafSelections(
+											deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+										)
+									}}
+									className="text-txt-300 hover:text-txt-100 gap-s-100 text-tiny flex shrink-0 items-center transition-colors"
+									aria-label={t("funnel.refineBannerExitAria")}
+								>
+									<X className="h-3 w-3" aria-hidden="true" />
+									{t("funnel.refineBannerExit")}
+								</button>
+							</div>
+						)}
+
+						{inlineSweepBundle && leafSelections !== null ? (
+							inlineSweepBundle.strategyKey === "hawks" ? (
+								<HawksSweepBuilder
+									selections={leafSelections}
+									onSelectionsChange={setLeafSelections}
+									walkForwardConfig={walkForwardConfig}
+									onWalkForwardChange={setWalkForwardConfig}
+									onReset={() =>
+										setLeafSelections(
+											deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+										)
+									}
+								/>
+							) : (
+								<OrbSweepBuilder
+									selections={leafSelections}
+									onSelectionsChange={setLeafSelections}
+									walkForwardConfig={walkForwardConfig}
+									onWalkForwardChange={setWalkForwardConfig}
+									onReset={() =>
+										setLeafSelections(
+											deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+										)
+									}
+								/>
+							)
+						) : (
+							<SweepConfigPanel
+								recipe={recipe}
+								activeRanges={activeRanges}
+								onRangesChange={setActiveRanges}
+								walkForwardConfig={walkForwardConfig}
+								onWalkForwardChange={setWalkForwardConfig}
+							/>
+						)}
+
+						{/* Collapsible base configuration for non-sweepable params. */}
+						{/* Inline-Hawks mode hides this entirely — the sweep builder is */}
+						{/* the single source of truth for every recipe field. */}
+						{!(isInlineSweepMode && leafSelections !== null) && (
+							<div className="border-bg-300 rounded-lg border">
+								<button
+									type="button"
+									onClick={() => setBaseConfigOpen((prev) => !prev)}
+									className="hover:bg-bg-300/50 px-m-400 py-s-300 flex w-full items-center justify-between transition-colors"
+									aria-expanded={baseConfigOpen}
+									aria-controls="base-config-panel"
+								>
+									<span className="text-small gap-s-200 text-txt-200 flex items-center font-medium">
+										<Settings2 className="h-4 w-4" aria-hidden="true" />
+										{t("baseConfig")}
+									</span>
+									<ChevronDown
+										className={cn(
+											"text-txt-300 h-4 w-4 transition-transform",
+											baseConfigOpen && "rotate-180"
+										)}
+										aria-hidden="true"
+									/>
+								</button>
+								{baseConfigOpen && (
+									<div
+										id="base-config-panel"
+										className="border-bg-300 space-y-m-400 p-m-400 border-t"
+									>
+										<p className="text-tiny text-txt-300">
+											{t("baseConfigHint")}
+										</p>
+										<SweptPathsProvider activeRanges={activeRanges}>
+											<div className="gap-m-400 grid grid-cols-1 lg:grid-cols-2">
+												{recipe.entry.type === "orb_breakout" && (
+													<OrbEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												{/* DEZK archived: macd_wma_alignment branch removed (strategy hidden from UI) */}
+												{recipe.entry.type === "hawks_triple_screen" && (
+													<HawksEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												{recipe.entry.type === "user_catalog" && (
+													<UserCatalogEntrySection
+														recipe={recipe}
+														onRecipeChange={setRecipe}
+													/>
+												)}
+												<StopProtectionSection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+												<TargetsExitSection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+												<SizingExecutionSection
+													recipe={recipe}
+													onRecipeChange={setRecipe}
+												/>
+											</div>
+										</SweptPathsProvider>
+									</div>
+								)}
+							</div>
+						)}
 
 						{/* Sweep progress bar */}
 						<div aria-live="polite" aria-atomic="false">
@@ -723,12 +1206,19 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							)}
 						</div>
 
-						{/* Run Sweep button */}
+						{/* Run Sweep button. In inline-Hawks mode the builder always
+						    yields at least 1 combination (every leaf has a fixed default),
+						    so we don't gate on activeRanges. */}
 						{!isSweeping && (
 							<Button
 								id="optimize-sweep"
 								onClick={handleRunSweep}
-								disabled={!hasData || activeRanges.length === 0}
+								disabled={
+									!hasData ||
+									(isInlineSweepMode && leafSelections !== null
+										? totalCombinations === 0
+										: activeRanges.length === 0)
+								}
 								size="lg"
 								className="gap-s-200 w-full"
 							>
@@ -738,8 +1228,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						)}
 					</div>
 
-					{/* Summary sidebar */}
-					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 h-fit rounded-lg border">
+					{/* Summary sidebar — sticky on lg+ so the combinations counter stays
+					    visible while the user scrolls the long sweep builder. `self-start`
+					    overrides the grid's default `align-items: stretch` which would
+					    otherwise grow the card to the full column height and defeat
+					    `position: sticky`. */}
+					<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 lg:top-m-400 h-fit rounded-lg border lg:sticky lg:self-start">
 						<h4 className="text-small text-txt-100 font-semibold">
 							{t("summary.strategy")}
 						</h4>
@@ -770,7 +1264,14 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							<div className="border-bg-300 my-s-200 border-t" />
 							<div className="flex justify-between">
 								<span className="text-txt-300">
-									{t("summary.paramsSelected", { count: activeRanges.length })}
+									{t("summary.paramsSelected", {
+										count:
+											isInlineSweepMode && leafSelections !== null
+												? Array.from(leafSelections.values()).filter(
+														(s) => s.kind !== "fixed"
+													).length
+												: activeRanges.length,
+									})}
 								</span>
 							</div>
 							<div className="flex justify-between">
@@ -782,6 +1283,17 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									})}
 								</span>
 							</div>
+							{isInlineSweepMode &&
+								inlineSweepBundle &&
+								leafSelections !== null && (
+									<SweepAxisDiagnostics
+										leaves={inlineSweepBundle.leaves}
+										selections={leafSelections}
+										breakdown={cardinalityBreakdown ?? undefined}
+										validators={inlineSweepBundle.validators}
+										onSelectionsChange={setLeafSelections}
+									/>
+								)}
 						</div>
 					</div>
 				</div>
@@ -795,8 +1307,64 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{/* Summary stat cards */}
 							<SummaryCards runs={runs} />
 
+							{bestRefineRun && !postRefineHintHidden && (
+								<div
+									id="post-refine-hint"
+									className="border-acc-100/40 bg-acc-100/5 gap-s-300 p-s-300 flex items-start rounded-md border"
+								>
+									<Sparkles
+										className="text-acc-100 mt-s-100 h-4 w-4 shrink-0"
+										aria-hidden="true"
+									/>
+									<div className="space-y-s-200 flex-1">
+										<div className="space-y-s-100">
+											<p className="text-small text-txt-100 font-medium">
+												{t("postRefineHint.title")}
+											</p>
+											<p className="text-tiny text-txt-300">
+												{t("postRefineHint.body", {
+													best: bestRefineRun.label,
+													pf: bestRefineRun.summary.profitFactor.toFixed(2),
+												})}
+											</p>
+										</div>
+										<div className="gap-s-200 flex flex-wrap">
+											<Button
+												id="post-refine-iterate"
+												size="sm"
+												variant="outline"
+												onClick={() => setResultsTab("pareto")}
+												className="gap-s-100"
+											>
+												<ScatterIcon className="h-3 w-3" aria-hidden="true" />
+												{t("postRefineHint.iterateCta")}
+											</Button>
+											<Button
+												id="post-refine-freeze"
+												size="sm"
+												variant="default"
+												onClick={() => setFreezeRunId(bestRefineRun.id)}
+												className="gap-s-100"
+											>
+												<Sparkles className="h-3 w-3" aria-hidden="true" />
+												{t("postRefineHint.freezeCta")}
+											</Button>
+										</div>
+									</div>
+									<button
+										id="post-refine-hint-dismiss"
+										type="button"
+										onClick={() => setPostRefineHintHidden(true)}
+										className="text-txt-300 hover:text-txt-100 shrink-0 transition-colors"
+										aria-label={t("postRefineHint.dismissAria")}
+									>
+										<X className="h-3 w-3" aria-hidden="true" />
+									</button>
+								</div>
+							)}
+
 							{/* Chart / Table tabs */}
-							<Tabs defaultValue="chart">
+							<Tabs value={resultsTab} onValueChange={setResultsTab}>
 								<div className="flex items-center justify-between">
 									<TabsList variant="line">
 										<TabsTrigger value="chart" className="gap-s-200">
@@ -807,18 +1375,52 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											<Table2 className="h-4 w-4" aria-hidden="true" />
 											{t("resultsTab.table")}
 										</TabsTrigger>
+										<TabsTrigger value="pareto" className="gap-s-200">
+											<ScatterIcon className="h-4 w-4" aria-hidden="true" />
+											{t("pareto.tabLabel")}
+										</TabsTrigger>
+										<TabsTrigger value="drivers" className="gap-s-200">
+											<ScatterIcon className="h-4 w-4" aria-hidden="true" />
+											{t("loserPattern.tabLabel")}
+										</TabsTrigger>
 									</TabsList>
 
-									<Button
-										id="optimize-clear-all"
-										variant="ghost"
-										size="sm"
-										onClick={handleClearAll}
-										className="text-txt-300 hover:text-fb-error gap-s-200"
-									>
-										<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-										{t("clearAll")}
-									</Button>
+									<div className="gap-s-200 flex items-center">
+										<Button
+											id="optimize-export-json"
+											variant="ghost"
+											size="sm"
+											onClick={() => exportRunsAsJson(runs)}
+											disabled={runs.length === 0}
+											className="text-txt-300 hover:text-txt-100 gap-s-200"
+											title={t("exportJsonTitle")}
+										>
+											<Download className="h-3.5 w-3.5" aria-hidden="true" />
+											{t("exportJson")}
+										</Button>
+										<Button
+											id="optimize-export-csv"
+											variant="ghost"
+											size="sm"
+											onClick={() => exportRunsAsCsv(runs)}
+											disabled={runs.length === 0}
+											className="text-txt-300 hover:text-txt-100 gap-s-200"
+											title={t("exportCsvTitle")}
+										>
+											<Download className="h-3.5 w-3.5" aria-hidden="true" />
+											{t("exportCsv")}
+										</Button>
+										<Button
+											id="optimize-clear-all"
+											variant="ghost"
+											size="sm"
+											onClick={handleClearAll}
+											className="text-txt-300 hover:text-fb-error gap-s-200"
+										>
+											<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+											{t("clearAll")}
+										</Button>
+									</div>
 								</div>
 
 								{/* Chart tab: equity overlay + heatmap */}
@@ -840,6 +1442,25 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									)}
 								</TabsContent>
 
+								{/* Pareto tab: PF × Drawdown frontier */}
+								<TabsContent value="pareto" className="mt-m-400">
+									<ParetoScatter
+										runs={runs}
+										onPointClick={handleToggleExpand}
+										onBreedSelected={
+											inlineSweepBundle ? handleBreedSelected : undefined
+										}
+									/>
+								</TabsContent>
+
+								{/* Drivers tab: loser pattern mining */}
+								<TabsContent value="drivers" className="mt-m-400">
+									<LoserPatternInspector
+										runs={runs}
+										onApplyRecommendation={handleApplyDriverRecommendation}
+									/>
+								</TabsContent>
+
 								{/* Table tab: comparison table */}
 								<TabsContent value="table" className="mt-m-400">
 									<div className="border-bg-300 bg-bg-200 space-y-s-300 p-m-400 rounded-lg border">
@@ -858,6 +1479,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											onToggleExpand={handleToggleExpand}
 											onDelete={handleDeleteRun}
 											onUpdateLabel={handleUpdateLabel}
+											robustFilterEnabled={robustFilterEnabled}
+											onRobustFilterChange={setRobustFilterEnabled}
 										/>
 									</div>
 								</TabsContent>
@@ -865,10 +1488,22 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 							{/* Expanded run detail */}
 							{expandedRun && (
-								<RunDetailPanel
-									run={expandedRun}
-									onRecomputeTrades={handleRecomputeTrades}
-								/>
+								<>
+									<div className="gap-s-200 mt-s-200 flex items-center justify-end">
+										<Button
+											id={`freeze-cta-${expandedRun.id}`}
+											variant="outline"
+											size="sm"
+											onClick={() => setFreezeRunId(expandedRun.id)}
+										>
+											{t("freezeHero.openCta")}
+										</Button>
+									</div>
+									<RunDetailPanel
+										run={expandedRun}
+										onRecomputeTrades={handleRecomputeTrades}
+									/>
+								</>
 							)}
 						</>
 					) : (
@@ -923,6 +1558,31 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					)}
 				</div>
 			</div>
+
+			<FreezeHeroModal
+				open={freezeRunId !== null}
+				onOpenChange={(o) => {
+					if (!o) {
+						setFreezeRunId(null)
+					}
+				}}
+				run={runs.find((r) => r.id === freezeRunId) ?? null}
+				sourcePresetId={
+					(runs.find((r) => r.id === freezeRunId)?.recipe.entry.type ===
+					"hawks_triple_screen"
+						? "hawks_v0"
+						: runs.find((r) => r.id === freezeRunId)?.recipe.entry.type ===
+							  "orb_breakout"
+							? "orb_v0"
+							: "custom") as string
+				}
+				onFrozen={(preset) => {
+					showToast(
+						"success",
+						t("freezeHero.frozenToast", { id: preset.presetId })
+					)
+				}}
+			/>
 		</div>
 	)
 }

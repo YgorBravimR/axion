@@ -133,6 +133,11 @@ interface HawksTripleScreenConfig {
 	brickSize5mPoints: number // default: 100 (= 20 ticks × 5 points/tick on WIN)
 	startTime: number // 930
 	endTime: number // 1730
+	// State-machine overrides (optional — engine falls back to hardcoded
+	// defaults when undefined). Exposed for OPTIMIZE Tier-3 sweeps.
+	fireCooldownBricks?: number // default 5 (post-fire 5m brick cooldown)
+	wave1MinBricks?: number // default 4 (wave-1 minimum bricks)
+	retracementMinBricks?: number // default 2 (wave-2 retracement minimum bricks)
 	// Optional user-toggleable quality gates. Each flag is independent and
 	// additive: when true, the engine refuses an otherwise-valid fire if the
 	// gate's condition holds. Default off ⇒ baseline engine behavior preserved.
@@ -151,9 +156,9 @@ interface QualityGatesConfig {
 	srLevelFavor?: boolean
 	// ── Group B: Keltner (planned, not yet wired) ─────────────────────────
 	keltnerOuterBlock?: boolean // hard reject when 165 band acts as floor/ceiling
-	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side
+	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side (legacy, see keltnerInner)
 	// ── Group C: MACD (planned) ───────────────────────────────────────────
-	macdAlignmentScore?: boolean // ±weight by sign + slope streak
+	macdAlignmentScore?: boolean // ±weight by sign + slope streak (legacy, see macd)
 	// ── Group D: aggression ───────────────────────────────────────────────
 	// Tri-state polarity switch. "off" = rule disabled (default, baseline
 	// behavior). "original" = aggression aligned with trade direction is
@@ -161,9 +166,9 @@ interface QualityGatesConfig {
 	// ("late to the move"); probe data on 20 days supports this polarity
 	// at threshold 15K with 1.67× selectivity. Recommended setting when
 	// enabling the rule is "reversed".
-	aggressionMode?: "off" | "original" | "reversed"
+	aggressionMode?: "off" | "original" | "reversed" // legacy, see aggression
 	// ── Group E: volume (planned) ─────────────────────────────────────────
-	volumeScore?: boolean // +weight if brick volume > running EMA
+	volumeScore?: boolean // +weight if brick volume > running EMA (legacy, see volume)
 	// ── Tunable parameters (defaults preserve current behavior) ───────────
 	srBlockBufferBricks?: number // default 2
 	srFavorRangeBricks?: number // default 3
@@ -176,6 +181,28 @@ interface QualityGatesConfig {
 	// ── Legacy alias for backwards-compat. Equivalent to srLevelBlock on
 	// just the 4 HTF MAs (no vwap_d / ajuste). Prefer srLevelBlock. ───────
 	htfMaBlock?: boolean
+
+	// ── NEW (v5→v6): Dual-mode quality gates ─────────────────────────────
+	// Each mode is independently toggleable:
+	//   off:   rule does nothing
+	//   score: adds favor/penalty to tier-label score only (legacy behavior)
+	//   block: gates entry (returns blocked:true on the rule's trigger)
+	//   both:  same trigger blocks AND emits score
+	keltnerInner?: { mode: "off" | "score" | "block" | "both" }
+	macd?: {
+		mode: "off" | "score" | "block" | "both"
+		slopeWindow?: number // reused for both score and block; defaults to macdSlopeWindow (3)
+	}
+	volume?: {
+		mode: "off" | "score" | "block" | "both"
+		emaPeriod?: number // reused; defaults to volumeEmaPeriod (500)
+	}
+	aggression?: {
+		// Split per spec — score and block modes are independent.
+		scoreMode?: "off" | "original" | "reversed"
+		blockMode?: "off" | "blockOnAligned" | "blockOnAnti"
+		threshold?: number // reused; defaults to aggressionThreshold (15000)
+	}
 }
 
 interface TierThresholds {
@@ -539,6 +566,7 @@ interface BacktestTrade {
 	rMultiple: number
 	label: string
 	quality?: TradeQuality
+	entryBrickIndex?: number // 1-indexed candle index matching the entry time
 }
 
 interface EquityCurvePoint {
@@ -592,6 +620,50 @@ interface BacktestResult {
 // Optimization — compare multiple runs
 // ═══════════════════════════════════════════════════════════════════
 
+type FunnelStage = "broad" | "refine" | "freeze"
+
+/**
+ * A frozen offspring of the hero-hunt funnel — a recipe captured at freeze
+ * time, persisted to localStorage, and surfaced in the strategy dropdown as a
+ * shadow of its source preset (e.g. `hawks_v0_tuned_2026-05-30` shadows
+ * `hawks_v0`). The `metrics` snapshot is what the freeze modal saw at freeze
+ * time — it does NOT auto-recompute. `engineVersion` lets us flag stale presets
+ * when the engine math changes between freeze and now.
+ */
+interface HeroWinPreset {
+	presetId: string
+	sourcePresetId: string
+	recipe: StrategyRecipe
+	frozenAt: string
+	journeyId: string
+	engineVersion: string
+	metrics: {
+		profitFactor: number
+		profitFactorOOS?: number
+		matchRate?: number
+		trades: number
+		oosRobust: boolean
+		maxDrawdownCents: number
+		winRate: number
+	}
+	notes?: string
+}
+
+interface OptimizationRunProvenance {
+	sweepId: string
+	datasetHash: string
+	candleCount: number
+	dateRangeHash: string
+	dateFrom: string
+	dateTo: string
+	engineVersion: string
+	recipeHash: string
+	schemaVersion: number
+	stage?: FunnelStage
+	parentRunIds?: string[]
+	journeyId?: string
+}
+
 interface OptimizationRun {
 	id: string
 	label: string
@@ -602,6 +674,25 @@ interface OptimizationRun {
 	dayBreakdown: DayBreakdown[]
 	pinned: boolean
 	createdAt: string
+	// Phase 1b — provenance. Optional for back-compat with legacy localStorage entries.
+	provenance?: OptimizationRunProvenance
+	// Phase 1a — walk-forward / OOS split. Optional until Phase 1a ships and the user
+	// enables the split in the sweep config. When present, summary still reflects
+	// the in-sample result (the optimization target); summaryOOS is the held-out report.
+	summaryIS?: BacktestSummary
+	summaryOOS?: BacktestSummary
+	equityCurveIS?: EquityCurvePoint[]
+	equityCurveOOS?: EquityCurvePoint[]
+	oosRobust?: boolean
+	// Phase 3B — match rate. Fraction of trades matching catalog by (date, brickIndex).
+	matchRate?: number // 0..1
+	matchRateIS?: number // in-sample match rate (walk-forward mode)
+	matchRateOOS?: number // out-of-sample match rate (walk-forward mode)
+	// Phase 5B — localStorage compaction. True if full trades array is retained
+	// (run on Pareto front or single-metric extreme). False if trades were stripped
+	// for storage quota relief — the summary survives but trade detail is not available.
+	// Default true for back-compat (legacy runs assume trades were always retained).
+	tradesRetained?: boolean
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -682,4 +773,7 @@ export type {
 	BacktestResult,
 	// Optimization
 	OptimizationRun,
+	OptimizationRunProvenance,
+	FunnelStage,
+	HeroWinPreset,
 }

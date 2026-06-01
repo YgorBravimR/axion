@@ -158,6 +158,6 @@
     "deny": [],
     "ask": []
   },
-  "outputStyle": "Explanatory",
-  "model": "opus"
+  "model": "opus",
+  "outputStyle": "Explanatory"
 }

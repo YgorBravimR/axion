@@ -5,8 +5,21 @@ import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { formatCentsAsCurrency } from "@/lib/money"
-import { Pin, PinOff, ChevronRight, Trash2, AlertTriangle } from "lucide-react"
+import {
+	Pin,
+	PinOff,
+	ChevronRight,
+	Trash2,
+	AlertTriangle,
+	Info,
+} from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { OptimizationRun } from "@/types/backtest"
 
@@ -17,6 +30,8 @@ interface RunsComparisonTableProps {
 	onToggleExpand: (_runId: string) => void
 	onDelete: (_runId: string) => void
 	onUpdateLabel: (_runId: string, _label: string) => void
+	robustFilterEnabled?: boolean
+	onRobustFilterChange?: (_enabled: boolean) => void
 }
 
 const MIN_TRADES_THRESHOLD = 30
@@ -28,8 +43,19 @@ const RunsComparisonTable = ({
 	onToggleExpand,
 	onDelete,
 	onUpdateLabel: _onUpdateLabel,
+	robustFilterEnabled = false,
+	onRobustFilterChange,
 }: RunsComparisonTableProps) => {
 	const t = useTranslations("optimize")
+
+	// Filter runs based on robustness setting
+	const filteredRuns = useMemo(() => {
+		if (!robustFilterEnabled) {
+			return runs
+		}
+		// Keep runs with OOS data + robust flag true, OR runs without OOS data (legacy)
+		return runs.filter((r) => r.oosRobust === true || r.summaryIS === undefined)
+	}, [runs, robustFilterEnabled])
 
 	const expandedRunIdRef = useRef(expandedRunId)
 	expandedRunIdRef.current = expandedRunId
@@ -113,6 +139,48 @@ const RunsComparisonTable = ({
 				meta: { cellClassName: "min-w-[140px]" },
 			},
 			{
+				accessorFn: (row) => row.provenance?.stage,
+				id: "stage",
+				header: t("funnel.stageColumn"),
+				cell: ({ getValue, row }) => {
+					const stage = getValue<string | undefined>()
+					if (!stage) {
+						return (
+							<span className="text-tiny text-txt-300">
+								{t("funnel.stageAdHoc")}
+							</span>
+						)
+					}
+					const parents = row.original.provenance?.parentRunIds?.length ?? 0
+					const label = t(`funnel.stage_${stage}` as const)
+					const colorClass =
+						stage === "broad"
+							? "border-acc-100 text-acc-100"
+							: stage === "refine"
+								? "border-trade-buy text-trade-buy"
+								: "border-warning text-warning"
+					return (
+						<div className="gap-s-100 flex items-center">
+							<Badge
+								id={`stage-${row.original.id}`}
+								variant="outline"
+								className={`text-micro px-s-100 py-0 ${colorClass}`}
+							>
+								{label}
+							</Badge>
+							{parents > 0 && (
+								<span
+									className="text-tiny text-txt-300"
+									title={row.original.provenance?.parentRunIds?.join(", ")}
+								>
+									{t("funnel.parentsCount", { count: parents })}
+								</span>
+							)}
+						</div>
+					)
+				},
+			},
+			{
 				accessorFn: (row) => row.summary.totalTrades,
 				id: "totalTrades",
 				header: t("trades"),
@@ -141,6 +209,97 @@ const RunsComparisonTable = ({
 						{getValue<number>().toFixed(2)}
 					</span>
 				),
+			},
+			{
+				accessorFn: (row) => row.summaryIS?.profitFactor,
+				id: "isPF",
+				meta: { ariaLabel: t("walkForward.isPF") },
+				header: () => (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="gap-s-100 inline-flex cursor-help items-center">
+								{t("walkForward.isPF")}
+								<Info className="size-3" />
+							</span>
+						</TooltipTrigger>
+						<TooltipContent id="table-is-pf-tooltip" className="max-w-xs">
+							{t("walkForward.inSampleTooltip")}
+						</TooltipContent>
+					</Tooltip>
+				),
+				cell: ({ getValue }) => {
+					const isPF = getValue<number | undefined>()
+					if (isPF === undefined) {
+						return <span className="text-tiny text-txt-300">-</span>
+					}
+					return (
+						<span className="text-small text-txt-100 tabular-nums">
+							{isPF.toFixed(2)}
+						</span>
+					)
+				},
+			},
+			{
+				accessorFn: (row) => row.summaryOOS?.profitFactor,
+				id: "oosPF",
+				meta: { ariaLabel: t("walkForward.oosPF") },
+				header: () => (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="gap-s-100 inline-flex cursor-help items-center">
+								{t("walkForward.oosPF")}
+								<Info className="size-3" />
+							</span>
+						</TooltipTrigger>
+						<TooltipContent id="table-oos-pf-tooltip" className="max-w-xs">
+							{t("walkForward.outOfSampleTooltip")}
+						</TooltipContent>
+					</Tooltip>
+				),
+				cell: ({ getValue, row }) => {
+					const oosPF = getValue<number | undefined>()
+					if (oosPF === undefined) {
+						return <span className="text-tiny text-txt-300">-</span>
+					}
+					const isRobust = row.original.oosRobust
+					const color = isRobust ? "text-trade-buy" : "text-warning"
+					return (
+						<div className="gap-s-100 flex items-center">
+							<span className={`text-small tabular-nums ${color}`}>
+								{oosPF.toFixed(2)}
+							</span>
+							{isRobust !== undefined && (
+								<Badge
+									id={`robust-${row.original.id}`}
+									variant="outline"
+									className={`text-micro px-s-100 py-0 ${
+										isRobust
+											? "border-trade-buy text-trade-buy"
+											: "border-warning text-warning"
+									}`}
+								>
+									{isRobust ? "✓" : "✗"}
+								</Badge>
+							)}
+						</div>
+					)
+				},
+			},
+			{
+				accessorFn: (row) => row.matchRate,
+				id: "matchRate",
+				header: t("matchRate"),
+				cell: ({ getValue }) => {
+					const rate = getValue<number | undefined>()
+					if (rate === undefined) {
+						return <span className="text-tiny text-txt-300">-</span>
+					}
+					return (
+						<span className="text-small text-txt-100 tabular-nums">
+							{(rate * 100).toFixed(0)}%
+						</span>
+					)
+				},
 			},
 			{
 				accessorFn: (row) => row.summary.totalPnlCents,
@@ -241,7 +400,34 @@ const RunsComparisonTable = ({
 		[bestRunId, onTogglePin, onToggleExpand, onDelete, t]
 	)
 
-	return <DataTable columns={columns} data={runs} pageSize={20} striped />
+	// Check if any runs have walk-forward data
+	const hasWalkForwardData = useMemo(
+		() => runs.some((r) => r.summaryIS !== undefined),
+		[runs]
+	)
+
+	return (
+		<div className="space-y-s-300">
+			{/* Robust filter toggle (only show if there's walk-forward data) */}
+			{hasWalkForwardData && (
+				<div className="gap-s-200 flex items-center">
+					<label className="gap-s-200 flex cursor-pointer items-center">
+						<Checkbox
+							id="robust-filter"
+							checked={robustFilterEnabled}
+							onCheckedChange={(checked) => {
+								onRobustFilterChange?.(checked === true)
+							}}
+						/>
+						<span className="text-small text-txt-200">
+							{t("walkForward.robustFilter")}
+						</span>
+					</label>
+				</div>
+			)}
+			<DataTable columns={columns} data={filteredRuns} pageSize={20} striped />
+		</div>
+	)
 }
 
 export { RunsComparisonTable }

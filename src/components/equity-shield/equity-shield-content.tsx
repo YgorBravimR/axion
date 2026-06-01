@@ -141,7 +141,7 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 	const drawdownLimit = fromCents(params.drawdownLimitCents)
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500">
+		<div className="p-m-400 sm:p-m-500 lg:p-m-600 space-y-m-400 sm:space-y-m-500 container mx-auto max-w-7xl">
 			{/* Header */}
 			<div>
 				<div className="gap-s-300 flex items-center">

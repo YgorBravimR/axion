@@ -125,7 +125,7 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 			</h3>
 			<ChartContainer
 				id="chart-dashboard-cumulative-pnl"
-				className="h-[150px] w-full sm:h-[200px]"
+				className="h-chart-xs sm:h-chart-md w-full"
 			>
 				<LineChart
 					data={data}

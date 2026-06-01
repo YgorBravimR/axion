@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { PluginPicker } from "./plugin-picker"
 import { Plus, Trash2 } from "lucide-react"
 import { hhmmToTimeString, timeStringToHhmm } from "@/lib/backtest/time-utils"
+import { useIsSwept } from "@/components/optimize/swept-paths-context"
 import type { StrategyRecipe, TargetLevel, TargetMode } from "@/types/backtest"
 
 interface TargetsExitSectionProps {
@@ -42,6 +43,7 @@ const TARGET_MODE_OPTIONS: { value: TargetMode; labelKey: string }[] = [
 const TargetsExitSection = memo(
 	({ recipe, onRecipeChange }: TargetsExitSectionProps) => {
 		const t = useTranslations("backtest.builder")
+		const isFirstTargetValueSwept = useIsSwept("target.levels.0.value")
 
 		// ── Shared target mode — must be before any early return ────────────────────────────────────
 		const targetModeOptionsPrecomputed = useMemo(
@@ -158,78 +160,85 @@ const TargetsExitSection = memo(
 					</div>
 
 					<div className="space-y-s-200">
-						{targetConfig.levels.map((level, index) => (
-							<div
-								key={index}
-								className="border-bg-300 bg-bg-100/50 gap-m-400 p-s-300 flex items-end rounded-lg border"
-							>
-								<div className="space-y-s-100 flex-1">
-									<Label
-										htmlFor={`level-value-${index}`}
-										id={`label-level-value-${index}`}
-									>
-										{t("targetValue")}
-									</Label>
-									<div className="gap-s-100 flex items-center">
-										<Input
-											id={`level-value-${index}`}
-											type="number"
-											step="any"
-											value={level.value}
-											onChange={(e) =>
-												handleLevelChange(
-													index,
-													"value",
-													parseFloat(e.target.value) || 1
-												)
-											}
-										/>
-										<span className="text-small text-txt-300 shrink-0">
-											{getModeSuffix(currentMode, t)}
-										</span>
-									</div>
-								</div>
+						{targetConfig.levels.map((level, index) => {
+							const hideValueInput = index === 0 && isFirstTargetValueSwept
+							return (
+								<div
+									key={index}
+									className="border-bg-300 bg-bg-100/50 gap-m-400 p-s-300 flex items-end rounded-lg border"
+								>
+									{!hideValueInput && (
+										<div className="space-y-s-100 flex-1">
+											<Label
+												htmlFor={`level-value-${index}`}
+												id={`label-level-value-${index}`}
+											>
+												{t("targetValue")}
+											</Label>
+											<div className="gap-s-100 flex items-center">
+												<Input
+													id={`level-value-${index}`}
+													type="number"
+													step="any"
+													value={level.value}
+													onChange={(e) =>
+														handleLevelChange(
+															index,
+															"value",
+															parseFloat(e.target.value) || 1
+														)
+													}
+												/>
+												<span className="text-small text-txt-300 shrink-0">
+													{getModeSuffix(currentMode, t)}
+												</span>
+											</div>
+										</div>
+									)}
 
-								<div className="space-y-s-100 w-28">
-									<Label
-										htmlFor={`level-exit-${index}`}
-										id={`label-level-exit-${index}`}
-									>
-										{t("exitPct")}
-									</Label>
-									<div className="gap-s-100 flex items-center">
-										<Input
-											id={`level-exit-${index}`}
-											type="number"
-											min={1}
-											max={100}
-											value={level.exitPct}
-											onChange={(e) =>
-												handleLevelChange(
-													index,
-													"exitPct",
-													parseInt(e.target.value) || 50
-												)
-											}
-										/>
-										<span className="text-small text-txt-300 shrink-0">%</span>
+									<div className="space-y-s-100 w-28">
+										<Label
+											htmlFor={`level-exit-${index}`}
+											id={`label-level-exit-${index}`}
+										>
+											{t("exitPct")}
+										</Label>
+										<div className="gap-s-100 flex items-center">
+											<Input
+												id={`level-exit-${index}`}
+												type="number"
+												min={1}
+												max={100}
+												value={level.exitPct}
+												onChange={(e) =>
+													handleLevelChange(
+														index,
+														"exitPct",
+														parseInt(e.target.value) || 50
+													)
+												}
+											/>
+											<span className="text-small text-txt-300 shrink-0">
+												%
+											</span>
+										</div>
 									</div>
-								</div>
 
-								{targetConfig.levels.length > 1 && (
-									<Button
-										id={`remove-level-${index}`}
-										variant="ghost"
-										size="sm"
-										onClick={() => handleRemoveLevel(index)}
-										className="text-txt-300 hover:text-fb-error shrink-0"
-										aria-label={t("removeLevel", { level: index + 1 })}
-									>
-										<Trash2 className="h-4 w-4" aria-hidden="true" />
-									</Button>
-								)}
-							</div>
-						))}
+									{targetConfig.levels.length > 1 && (
+										<Button
+											id={`remove-level-${index}`}
+											variant="ghost"
+											size="sm"
+											onClick={() => handleRemoveLevel(index)}
+											className="text-txt-300 hover:text-fb-error shrink-0"
+											aria-label={t("removeLevel", { level: index + 1 })}
+										>
+											<Trash2 className="h-4 w-4" aria-hidden="true" />
+										</Button>
+									)}
+								</div>
+							)
+						})}
 					</div>
 
 					{/* Allocation tracker */}

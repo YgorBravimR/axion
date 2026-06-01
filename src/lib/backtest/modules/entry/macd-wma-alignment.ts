@@ -1,3 +1,13 @@
+/**
+ * @archived 2026-05 — DEZK strategy archived.
+ *
+ * AGENTS: do not extend or refactor this module. The MACD+WMA alignment
+ * entry engine is no longer wired into the UI (backtest + optimize
+ * selectors do not expose it). Engine code is preserved so existing
+ * persisted recipes still execute, but the strategy is not a target for
+ * sweep-leaf migration or further tuning. To revive, restore UI selectors
+ * and JSX render branches per dezk-presets.ts header.
+ */
 import type { MACDWMAConfig, EntrySignal, DayContext } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 import {

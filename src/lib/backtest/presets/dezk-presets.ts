@@ -1,4 +1,21 @@
+/**
+ * @archived 2026-05 — DEZK strategy archived.
+ *
+ * AGENTS: do not extend, refactor, or wire new sections to this preset.
+ * DEZK is hidden from the UI (backtest + optimize selectors) and is not
+ * a candidate for sweep-leaf migration. To revive, restore the
+ * `dezkPresets` entry in ALL_PRESETS and the strategy SelectItem in
+ * backtest-content.tsx + optimize-content.tsx, plus the JSX render branch.
+ * The file is preserved for git history and engine-side reference only.
+ */
 import type { StrategyRecipe } from "@/types/backtest"
+import type { SweepableParam } from "@/lib/optimize/sweepable-params"
+import {
+	applyTargetMode,
+	applyTrailingType,
+	getTargetUnitSuffix,
+	getTargetDefaults,
+} from "@/lib/optimize/sweepable-params"
 
 /**
  * Pre-built 10K (dezK) strategy recipes.
@@ -85,4 +102,139 @@ const dezkPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
 	dezk10kV3,
 ]
 
-export { dezkPresets, dezk10kV4, dezk10kV3 }
+// ── Sweepable parameters for dezK (MACD+WMA) strategy ────────
+
+const DEZK_SWEEPABLE_PARAMS: SweepableParam[] = [
+	// -- Enum: Target Mode --
+	{
+		kind: "enum",
+		path: "target.levels.0.mode",
+		labelKey: "targetModeLabel",
+		condition: (r) =>
+			r.target.type === "fixed_levels" && r.target.levels.length > 0,
+		getCurrentValue: (r) =>
+			r.target.type === "fixed_levels"
+				? r.target.levels[0]!.mode
+				: "fixed_points",
+		options: [
+			{
+				value: "r_multiple",
+				labelKey: "targetMode.rMultiple",
+				applyOption: (r) => applyTargetMode(r, "r_multiple"),
+			},
+			{
+				value: "pct_range",
+				labelKey: "targetMode.pctRange",
+				applyOption: (r) => applyTargetMode(r, "pct_range"),
+			},
+			{
+				value: "pct_stop",
+				labelKey: "targetMode.pctStop",
+				applyOption: (r) => applyTargetMode(r, "pct_stop"),
+			},
+			{
+				value: "fixed_points",
+				labelKey: "targetMode.fixedPoints",
+				applyOption: (r) => applyTargetMode(r, "fixed_points"),
+			},
+		],
+	},
+	// -- Enum: Trailing Type --
+	{
+		kind: "enum",
+		path: "stop.trailing.type",
+		labelKey: "trailingTypeLabel",
+		condition: (r) => !!r.stop.trailing,
+		getCurrentValue: (r) => r.stop.trailing?.type ?? "indicator",
+		options: [
+			{
+				value: "indicator",
+				labelKey: "trailingType.indicator",
+				applyOption: (r) => applyTrailingType(r, "indicator"),
+			},
+			{
+				value: "price_distance",
+				labelKey: "trailingType.priceDistance",
+				applyOption: (r) => applyTrailingType(r, "price_distance"),
+			},
+		],
+	},
+	// -- Numeric: dezK entry params --
+	{
+		kind: "numeric",
+		path: "entry.config.stopBufferPoints",
+		labelKey: "dezkStopBuffer",
+		defaultMin: 5,
+		defaultMax: 50,
+		defaultStep: 5,
+		condition: (r) => r.entry.type === "macd_wma_alignment",
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.candlesAfterAlignment",
+		labelKey: "dezkCandlesAfter",
+		defaultMin: 0,
+		defaultMax: 3,
+		defaultStep: 1,
+		condition: (r) => r.entry.type === "macd_wma_alignment",
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.macdSignal",
+		labelKey: "dezkMacdSignal",
+		defaultMin: 9,
+		defaultMax: 21,
+		defaultStep: 3,
+		condition: (r) => r.entry.type === "macd_wma_alignment",
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.wmaFast",
+		labelKey: "dezkWmaFast",
+		defaultMin: 5,
+		defaultMax: 14,
+		defaultStep: 3,
+		condition: (r) => r.entry.type === "macd_wma_alignment",
+	},
+	// -- Numeric: Target value --
+	{
+		kind: "numeric",
+		path: "target.levels.0.value",
+		labelKey: "target1Value",
+		defaultMin: 40,
+		defaultMax: 150,
+		defaultStep: 20,
+		unitSuffix: getTargetUnitSuffix,
+		dynamicDefaults: getTargetDefaults,
+	},
+	// -- Numeric: Trailing sub-params (conditional on trailing type) --
+	{
+		kind: "numeric",
+		path: "stop.trailing.wmaPeriod",
+		labelKey: "dezkTrailingWma",
+		defaultMin: 5,
+		defaultMax: 14,
+		defaultStep: 3,
+		condition: (r) => r.stop.trailing?.type === "indicator",
+	},
+	{
+		kind: "numeric",
+		path: "stop.trailing.distance",
+		labelKey: "trailingDistance",
+		defaultMin: 50,
+		defaultMax: 300,
+		defaultStep: 50,
+		condition: (r) => r.stop.trailing?.type === "price_distance",
+	},
+	// -- Numeric: Slippage --
+	{
+		kind: "numeric",
+		path: "slippageTicks",
+		labelKey: "slippage",
+		defaultMin: 0,
+		defaultMax: 3,
+		defaultStep: 1,
+	},
+]
+
+export { dezkPresets, dezk10kV4, dezk10kV3, DEZK_SWEEPABLE_PARAMS }

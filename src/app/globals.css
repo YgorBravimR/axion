@@ -41,6 +41,23 @@
 	--color-fb-error: #ef4444;
 	--color-fb-success: #34d399;
 
+	/* Axion Score tier tones — progressive bronze gradient, elite (brightest)
+	   through attention (darkest, red-shifted). Light-theme variants in
+	   [data-theme="light"] below. See docs/backlog.md for a light-theme tune. */
+	--color-tier-elite: #d8b365;
+	--color-tier-forte: #d8b365;
+	--color-tier-solido: #c19a5b;
+	--color-tier-building: #b08148;
+	--color-tier-attention: #a05a30;
+	--color-bronze-highlight: #f3d990;
+	--color-bronze-deep: #8c6e40;
+	--gradient-axion-score: linear-gradient(
+		180deg,
+		var(--color-bronze-highlight) 0%,
+		var(--color-tier-elite) 45%,
+		var(--color-bronze-deep) 100%
+	);
+
 	/* Trading Colors — P&L semantics (result wall) */
 	--color-trade-buy: #34d399;
 	--color-trade-sell: #f87171;
@@ -132,6 +149,15 @@
 	--text-tiny: 0.75rem;
 	--text-micro: 0.625rem;
 
+	/* Chart heights — physical pixel sizes that recharts needs. Use as
+	   h-chart-xs / h-chart-sm / h-chart-md / h-chart-lg; pair with sm: variants
+	   for responsive growth (e.g. h-chart-sm sm:h-chart-md). */
+	--height-chart-xs: 120px;
+	--height-chart-sm: 160px;
+	--height-chart-md: 200px;
+	--height-chart-lg: 250px;
+	--height-chart-xl: 300px;
+
 	--screen-xs: 480px;
 	--screen-sm: 640px;
 	--screen-md: 768px;
@@ -186,6 +212,15 @@
 	--color-acc-200: #5a6b76;
 	--color-fb-error: #dc2626;
 	--color-fb-success: #059669;
+
+	/* Axion Score tier tones — light-theme variants. */
+	--color-tier-elite: #8c6e40;
+	--color-tier-forte: #8c6e40;
+	--color-tier-solido: #745a35;
+	--color-tier-building: #5e4828;
+	--color-tier-attention: #4a3520;
+	--color-bronze-highlight: #b08148;
+	--color-bronze-deep: #5e4828;
 
 	/* Trading Colors — darker for light mode readability */
 	--color-trade-buy: #059669;

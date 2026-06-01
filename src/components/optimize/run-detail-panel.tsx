@@ -6,6 +6,8 @@ import { BacktestSummaryCards } from "@/components/backtest/backtest-summary-car
 import { BacktestTradesTable } from "@/components/backtest/backtest-trades-table"
 import { BacktestEquityChart } from "@/components/backtest/backtest-equity-chart"
 import { LoadingSpinner } from "@/components/shared"
+import { TierThresholdPlayground } from "@/components/optimize/tier-threshold-playground"
+import { hasAnyTierData } from "@/lib/backtest/tier-analytics"
 import type { OptimizationRun } from "@/types/backtest"
 
 interface RunDetailPanelProps {
@@ -55,6 +57,20 @@ const RunDetailPanel = ({ run, onRecomputeTrades }: RunDetailPanelProps) => {
 
 			<BacktestSummaryCards summary={run.summary} />
 			<BacktestEquityChart equityCurve={run.equityCurve} />
+
+			{/* Tier threshold playground — only show if trades carry quality data */}
+			{!needsRecompute && hasAnyTierData(run.trades) && (
+				<details className="bg-bg-100/50 p-s-300 rounded-lg">
+					<summary className="text-small text-txt-300 cursor-pointer font-medium">
+						{t("tierPlayground.title")}
+					</summary>
+					<div className="mt-s-300">
+						<TierThresholdPlayground trades={run.trades} />
+					</div>
+				</details>
+			)}
+
+			<ProvenanceSection run={run} t={t} />
 
 			{/* Show trades table or loading state while recomputing */}
 			{needsRecompute ? (
@@ -122,5 +138,60 @@ const formatSizingConfig = (run: OptimizationRun, t: TranslateFn): string => {
 		amount: (sizing.riskAmountCents / 100).toFixed(0),
 	})
 }
+
+interface ProvenanceSectionProps {
+	run: OptimizationRun
+	t: TranslateFn
+}
+
+const ProvenanceSection = ({ run, t }: ProvenanceSectionProps) => {
+	if (!run.provenance) {
+		return (
+			<details className="bg-bg-100/50 p-s-300 rounded-lg">
+				<summary className="text-small text-txt-300 cursor-pointer">
+					{t("provenance.title")}
+				</summary>
+				<p className="text-tiny text-txt-300 mt-s-200">
+					{t("provenance.legacy")}
+				</p>
+			</details>
+		)
+	}
+	const p = run.provenance
+	return (
+		<details className="bg-bg-100/50 p-s-300 rounded-lg">
+			<summary className="text-small text-txt-300 cursor-pointer">
+				{t("provenance.title")}
+			</summary>
+			<div className="gap-s-200 mt-s-300 grid grid-cols-2 sm:grid-cols-3">
+				<ProvenanceItem
+					label={t("provenance.sweepId")}
+					value={p.sweepId.slice(0, 8)}
+				/>
+				<ProvenanceItem label={t("provenance.dataset")} value={p.datasetHash} />
+				<ProvenanceItem
+					label={t("provenance.candles")}
+					value={String(p.candleCount)}
+				/>
+				<ProvenanceItem
+					label={t("provenance.dateRange")}
+					value={`${p.dateFrom} → ${p.dateTo}`}
+				/>
+				<ProvenanceItem
+					label={t("provenance.engine")}
+					value={p.engineVersion}
+				/>
+				<ProvenanceItem label={t("provenance.recipe")} value={p.recipeHash} />
+			</div>
+		</details>
+	)
+}
+
+const ProvenanceItem = ({ label, value }: ConfigItemProps) => (
+	<div>
+		<p className="text-tiny text-txt-300">{label}</p>
+		<p className="text-tiny text-txt-100 font-mono">{value}</p>
+	</div>
+)
 
 export { RunDetailPanel }

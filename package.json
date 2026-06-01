@@ -10,6 +10,7 @@
 		"lint": "eslint",
 		"lint:strict": "eslint --config eslint.config.strict.mjs && pnpm i18n:check",
 		"i18n:check": "tsx scripts/check-i18n-keys.ts",
+		"check:dead-axes": "tsx scripts/check-dead-axes.ts",
 		"db:generate": "drizzle-kit generate --config ./drizzle.config.ts",
 		"db:migrate": "tsx scripts/run-migrations.ts",
 		"db:push": "drizzle-kit push --config ./drizzle.config.ts",

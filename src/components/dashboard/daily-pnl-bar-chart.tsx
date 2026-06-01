@@ -115,7 +115,7 @@ export const DailyPnLBarChart = ({
 			</h3>
 			<ChartContainer
 				id="chart-dashboard-daily-pnl"
-				className="h-[160px] w-full sm:h-[200px]"
+				className="h-chart-sm sm:h-chart-md w-full"
 			>
 				<BarChart
 					data={sortedData}

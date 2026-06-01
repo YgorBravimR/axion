@@ -42,13 +42,17 @@ const BacktestSummaryCards = memo(
 					value: String(summary.totalTrades),
 					tone: "neutral",
 				},
-				{ label: t("winRate"), value: `${summary.winRate}%`, tone: "neutral" },
+				{
+					label: t("winRate"),
+					value: `${summary.winRate.toFixed(1)}%`,
+					tone: "neutral",
+				},
 				{
 					label: t("profitFactor"),
 					value:
 						summary.profitFactor === Infinity
 							? "∞"
-							: String(summary.profitFactor),
+							: summary.profitFactor.toFixed(2),
 					tone: "neutral",
 				},
 				{
@@ -81,7 +85,7 @@ const BacktestSummaryCards = memo(
 				},
 				{
 					label: t("avgR"),
-					value: `${summary.avgRMultiple}R`,
+					value: `${summary.avgRMultiple.toFixed(2)}R`,
 					tone:
 						summary.avgRMultiple > 0
 							? "money-pos"
@@ -91,7 +95,7 @@ const BacktestSummaryCards = memo(
 				},
 				{
 					label: t("sharpe"),
-					value: String(summary.sharpeRatio),
+					value: summary.sharpeRatio.toFixed(2),
 					tone: "neutral",
 				},
 				{

@@ -179,7 +179,7 @@ export const DayOfWeekChart = memo(
 				</h3>
 				<ChartContainer
 					id="chart-analytics-day-of-week"
-					className="h-[200px] w-full min-w-0 sm:h-[250px]"
+					className="h-chart-md sm:h-chart-lg w-full min-w-0"
 				>
 					<BarChart
 						data={tradingDays}

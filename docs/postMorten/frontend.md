@@ -2,6 +2,162 @@
 
 ---
 
+## [BUG-2026-05-31-01] Parameter heatmap grid disappears when sweep has optional params
+
+**Date:** 2026-05-31
+**Severity:** High (completely breaks heatmap visualization for affected sweeps; users see control UI but no data grid)
+**Affected Area:** `src/components/optimize/parameter-heatmap.tsx:206-213`, `src/lib/optimize/heatmap-utils.ts:220-236`
+
+### Symptom
+
+On `/backtest/optimize` after a 1631-run sweep completes, the "Heatmap de Parâmetros" card renders all chrome correctly: title, subtitle, X/Y/Metric selectors, slice pickers, axis-label footer, hover-detail strip, and legend. But the actual colored-cell grid (lines 446–506) is invisible — no header row, no Y-labels, no data cells. The grid div renders with `gridTemplateColumns: auto repeat(N, ...)` but `N = 0`.
+
+### Root Cause
+
+The heatmap component seeds `slices` (constraints for filtering runs to display) from a "best run" via `getNestedValue(seedRun.recipe, paramPath)`. When a param is disabled/missing in the seed run (e.g., `stop.breakeven = undefined`), `getNestedValue` returns `NaN`. This `NaN` value gets stored in `slices`.
+
+Inside `buildHeatmapData` (line 231), the filter checks `if (actual !== value)` to match runs against slice constraints. When `value = NaN`:
+
+- `5 !== NaN` evaluates to `true` (NaN never equals anything)
+- Every run is filtered out, leaving `filtered = []`
+- Downstream `xValuesSet` and `yValuesSet` stay empty
+- Grid renders with zero columns/rows → invisible
+
+The footer labels (X: param name, Y: param name) still render because they depend on `heatmapData && xParam && yParam` being truthy, and `heatmapData` IS created (with empty arrays) — the condition doesn't guard on non-empty arrays.
+
+### Why it Surfaced
+
+The inline-sweep refactor changed how recipes are structured during strategy/preset swaps. A sweep that had been created with full param values later loads into the heatmap with a different seed run (the "best" run might not have all params enabled). The bug was latent before because sweeps rarely mixed "all params present" and "some params disabled" runs in the same set — but Phase 1 trust-foundations introduced this mixing pattern.
+
+### Fix
+
+Only seed slice values if they're finite numbers (line 207):
+
+```ts
+for (const param of sliceParams) {
+	const val = getNestedValue(seedRun.recipe, param.path)
+	// Only add numeric slices if they resolve to finite values.
+	// A missing param (returns NaN) should not become a slice —
+	// it would reject all runs in the filter.
+	if (Number.isFinite(val)) {
+		defaultSlices[param.path] = val
+	}
+}
+```
+
+Now optional params that are missing in the seed run simply don't become a slice constraint. The grid includes all runs regardless of whether they have the optional param.
+
+### Verification
+
+- Unit test probe: seeded slice with NaN → heatmap builds empty grid. After fix: non-empty grid with all 4 runs.
+- Edge case: runA has `breakeven`, runB doesn't. Seed from runB → old code filtered runA out; new code includes it. ✓
+- `pnpm lint` clean, `pnpm exec tsc --noEmit` clean.
+
+### Prevention
+
+1. **Distinguish between "not in sweep" and "missing in this run".** When seeding slice defaults from one run, only use params that have finite values in that run. Optional/conditional params should only become slices if they vary across the sweep — use `getVaryingParams` output, not raw recipe inspection.
+2. **Guard heatmap grid render on non-empty arrays.** Add `heatmapData.xValues.length > 0 && heatmapData.yValues.length > 0` to the grid render condition so degenerate cases (no varying params) fail gracefully with a "No data" message instead of invisible grid.
+
+---
+
+## [BUG-2026-05-31-2] `useHeroPresets` tripped React's `getServerSnapshot` infinite-loop warning
+
+**Date:** 2026-05-31
+**Severity:** Low-Medium (no functional regression, but every render of `/backtest/optimize` logged a `console.error` and the warning is the kind that triggers actual infinite-loops under React 19 concurrent rendering paths)
+**Affected Area:** `src/lib/optimize/use-hero-presets.ts:21`
+
+### Symptom
+
+Dev console on every `/backtest/optimize` navigation:
+
+```
+[browser] The result of getServerSnapshot should be cached to avoid an infinite loop
+    at useHeroPresets (src/lib/optimize/use-hero-presets.ts:15:29)
+    at OptimizeContent (src/components/optimize/optimize-content.tsx:224:36)
+```
+
+Discovered while validating engine accuracy via `scripts/sweep-validate.ts` — the warning came up in `/tmp/axion-dev.log` while the page sat idle behind Playwright.
+
+### Root Cause
+
+`useSyncExternalStore`'s third argument (`getServerSnapshot`) was an arrow returning a fresh array literal `() => []`. React calls this function during SSR/hydration and on every re-render path that needs the server-time value. Because `[] !== []` identity-wise, React's invariant check fires the warning. The same anti-pattern in `getSnapshot` (second argument) is what actually causes the infinite-loop crash; here it was only the SSR variant, so impact was log-noise — but same family of bug.
+
+### Fix
+
+Hoisted a module-level `SERVER_SNAPSHOT` constant and a named `getServerSnapshot` function. Also passed `listHeroPresets` directly (no-arg function) instead of wrapping in an arrow, so the snapshot reader's identity is stable across renders too.
+
+### Verification
+
+- Page reloaded on `localhost:3003/backtest/optimize` — Playwright console reports 0 errors (previously: 1 error per render).
+- `pnpm exec tsc --noEmit` clean.
+- `pnpm lint` clean.
+
+### Lessons
+
+1. **`useSyncExternalStore` snapshot functions must return stable references for empty/sentinel values.** Hoist them to module scope; never inline `() => []`, `() => null`, `() => {}`.
+2. **Dev-log noise is signal.** This warning sat in `/tmp/axion-dev.log` long enough to feel like background hum. Validation-pass discovered it incidentally — worth grepping dev logs for `console.error` patterns after any meaningful feature work.
+
+---
+
+## [BUG-2026-05-30-1] Optimize inline sweep builder shows previous strategy's leaf values after Strategy/Preset swap
+
+**Date:** 2026-05-30
+**Severity:** Medium (visible misalignment with the backtest page; users can manually edit each field to recover, but the discrepancy looks like the optimize engine is configured wrong)
+**Affected Area:** `src/components/optimize/optimize-content.tsx:147,247-259,396-422`
+
+### What happened
+
+User on `/backtest/optimize` reported that the Stop & Proteção section showed `Tipo de stop = % do range` with `Stop % do range = 30`, and the Alvo section showed `Alvo (R) = 1000` with `Modo do alvo = % do range`. Those are the verbatim values of `orbPresets[0].stop.initial` and `orbPresets[0].target.levels[0]`. The user had selected Hawks v0 from the Strategy dropdown but the inline sweep builder kept rendering ORB values. The legacy form sections (which read `recipe` directly) did update correctly — only the inline builder showed stale data.
+
+### Root cause
+
+Two issues stacked on top of each other:
+
+1. **Pre-existing default.** `optimize-content.tsx:147` initialized `recipe` to `orbPresets[0]`, a leftover from when ORB was the only strategy.
+2. **Stale `leafSelections` after `setRecipe`.** The seed effect for the inline sweep builder only ran when `leafSelections === null`:
+
+```ts
+useEffect(() => {
+	if (!inlineSweepBundle) {
+		if (leafSelections !== null) setLeafSelections(null)
+		return
+	}
+	if (leafSelections === null) {
+		setLeafSelections(deriveInitialSelections(inlineSweepBundle.leaves, recipe))
+	}
+}, [inlineSweepBundle, recipe, leafSelections])
+```
+
+On mount the effect populated `leafSelections` from the (then-ORB) recipe. When the user later picked Hawks via the Strategy dropdown, `handleStrategyChange("hawks_triple_screen")` ran `setRecipe(hawksV0)` and `setActiveRanges([])` — but left `leafSelections` untouched. The effect re-ran (dependencies `inlineSweepBundle` and `recipe` had changed) but the `leafSelections === null` gate skipped the re-derive. Shared leaf paths between ORB and Hawks (`stop.initial.type`, `stop.initial.pct`, `target.levels.0.value`, `target.levels.0.mode`) kept their ORB-seeded values, so the inline builder rendered ORB-shape inputs.
+
+### Fix
+
+`feat/op` commit fixed at this entry's date. Two-line change in two handlers (`handlePresetChange`, `handleStrategyChange`) to clear `leafSelections` after the recipe swap, plus changing the initial state to `hawksV0`:
+
+```ts
+const handleStrategyChange = (type: string) => {
+	if (type === "orb_breakout") setRecipe(orbPresets[0])
+	else if (type === "hawks_triple_screen") setRecipe(hawksV0)
+	else if (type === "user_catalog") setRecipe(hawksUserCatalog)
+	setActiveRanges([])
+	setLeafSelections(null) // ← forces seed effect to re-derive
+}
+```
+
+Same `setLeafSelections(null)` added inside `handlePresetChange`. The existing seed effect now picks up the change and re-derives `leafSelections` from the new recipe + the new strategy's leaf catalog (`HAWKS_LEAVES` vs `ORB_LEAVES`).
+
+### Why we didn't fail twice
+
+`docs/gotchas.md` doesn't have an existing entry that would have caught this — it's the first time a controlled state mirrors another controlled state through an effect with a `null` reset gate. The gate pattern is fine for "seed once" — but it traps any caller that mutates the upstream state without nulling the mirror. Logging this here for next time:
+
+> **Mirror state with a `=== null` seed gate must be nulled explicitly when the upstream changes**. If you have `useEffect(() => { if (mirror === null) deriveMirror(upstream) }, [upstream, mirror])`, the gate prevents re-derives on upstream changes. Either drop the gate (always re-derive) or null the mirror at every upstream mutation site. Don't rely on the dependency array alone — the gate makes the effect silently no-op.
+
+### Files
+
+- `src/components/optimize/optimize-content.tsx` (lines 147, 396-422)
+
+---
+
 ## [BUG-2026-05-26-2] Lightweight Charts assertion: "data must be asc ordered by time" on same-brick trades
 
 **Date:** 2026-05-26
@@ -689,3 +845,46 @@ Changed step 7d to navigate to `/en/analytics` and assert `#analytics-anchor-equ
 ### Related Files
 
 - `e2e/journey/07-quarter-year.spec.ts`
+
+---
+
+## 2026-05-29 — ParameterHeatmap crashes after inline-Hawks sweep
+
+### Symptom
+
+After running an inline-Hawks sweep that varied an addon sub-path (e.g. `stop.breakeven.triggerPct`), the Results step crashed:
+
+```
+TypeError: Cannot read properties of undefined (reading 'triggerPct')
+  at getNestedValue (parameter-grid.ts:142)
+  at getVaryingParams (heatmap-utils.ts:151)
+  at ParameterHeatmap.useMemo[varyingParams] (parameter-heatmap.tsx:139)
+```
+
+Caught by `ErrorBoundaryHandler`, but the heatmap tab was empty.
+
+### Root cause
+
+`getNestedValue` was written when every recipe path was guaranteed populated — it cast each intermediate segment to a `Record<string, unknown>` without a null check. The new inline-Hawks sweep produces recipes where addon sub-trees are intentionally `undefined` (e.g. `stop.breakeven === undefined` in combos where BE is disabled). Reading the next key off `undefined` crashed.
+
+Contract mismatch: `recipeFromCombo` produces "addon-as-undefined" representations, but `parameter-grid.ts` pre-dated that representation.
+
+### Effect
+
+Heatmap tab unusable any time the sweep varied a parameter inside an optional addon (breakeven, trailing, reversal — anything that can be `undefined` on the recipe).
+
+### Solution
+
+1. `getNestedValue` now walks each segment with a null/object guard and returns `NaN` when any intermediate is missing or the final value isn't numeric.
+2. `heatmap-utils.getVaryingParams` filters NaN out of the values-set — a parameter that's _present-vs-absent_ across runs isn't a numeric sweep axis.
+3. `buildHeatmapData` grouping loop skips runs where either axis path is `NaN` so structurally-different runs don't anchor a cell.
+
+### Prevention
+
+- **Defensive reads at integration seams.** When two modules use slightly different shape assumptions, the read-side must tolerate the union of both shapes.
+- **NaN as the "missing" signal for numeric paths.** Sets dedupe NaN to one entry, and `Number.isFinite()` is the right downstream check — cleaner than `number | undefined` since it avoids a return-type ripple through every caller.
+
+### Related Files
+
+- `src/lib/optimize/parameter-grid.ts` (`getNestedValue`)
+- `src/lib/optimize/heatmap-utils.ts` (`getVaryingParams`, `buildHeatmapData`)

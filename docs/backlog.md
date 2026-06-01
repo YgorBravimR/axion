@@ -43,7 +43,32 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### Hawks autonomous engine: reproduction stuck at 51% — quality gates next
+### Detective: stale `expectedRole` on `keltnerNearBricks` and `aggression.scoreMode`
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: 2026-06-01 — full `pnpm tsx scripts/sweep-detective.ts` run after fixing the `aggressionThreshold` LABEL-ONLY probe (gotcha logged 2026-06-01). Two pre-existing axes still disagree with their annotated `expectedRole`:
+  - `qualityGates.keltnerNearBricks` — annotated `GATES` but observed `LABEL-ONLY` across `[1,2,3]`. Fingerprints: identical trades/PnL, only tier mix changes.
+  - `entry.config.qualityGates.aggression.scoreMode` — annotated `GATES` but observed `LABEL-ONLY` across `[off, original, reversed]`. Same trades/PnL, only tier counts move (e.g. AAA 8 → 11 → 4).
+- **What + Why**: These are not behavior regressions — the rules work as designed. The annotations are stale assertions from when the rules were authored. Today scoreMode only feeds the tier-score path, never the block path, so it cannot move trade count or PnL by construction. `keltnerNearBricks` likewise only tunes the inner-penalty band, which is score-only. Leaving the annotations stale weakens the detective's signal: future regressions in these axes won't be flagged because the harness already prints `expected GATES`. Correct annotation makes the disagreement column meaningful.
+- **Fix shape**: In `scripts/sweep-detective.ts`, change `expectedRole` to `"LABEL-ONLY"` for both axes (lines ~344-350 for `keltnerNearBricks`, ~498-507 for `aggression.scoreMode`). Update `notes` to reflect that score-band tuning is the only effect. Re-run detective; both should land in the LABEL-ONLY cluster with `agree? ✓`.
+- **Done when**: `pnpm tsx scripts/sweep-detective.ts` shows 0 disagreements and 0 DEAD axes; both axes appear in the LABEL-ONLY classification section.
+- **Date filed**: 2026-06-01.
+
+### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-05-29 — observed `fetchBacktestData(...)` taking 2.9 s on optimize page load (dev log). Every sweep config tweak re-fetches the candle history when the user hits Run, even though range + asset + indicators are unchanged.
+- **What + Why**: Optimize sweeps execute N backtests against the same candle history. The candle pull happens once per _sweep_ today (good), but every time the user changes a sweep param and re-runs they pay 2.9 s again. For iterative refinement, this is the dominant interactive latency. A simple session-scoped cache keyed on `(assetId, dateRange, indicatorSet)` would make the second-and-onward sweep feel instant.
+- **Fix shape**:
+  1. Add a `Map<string, CandleHistory>` in `src/lib/optimize/sweep-runner.ts` (or wherever the runner orchestrates the fetch), keyed on a hash of `(assetId, from, to, indicators)`.
+  2. Invalidate when any of those inputs changes.
+  3. Stay in-memory — no IndexedDB / localStorage; user reload pays the cost again, which is fine.
+- **Done when**: Two consecutive sweep runs against the same range/asset/indicators show the second one starting backtest execution within 50 ms of clicking Run.
+- **Date filed**: 2026-05-29.
+
+### Hawks autonomous engine: reproduction 51% → improve via quality gates
 
 - **Priority**: P1
 - **Effort**: L (multi-session)
@@ -138,17 +163,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## E2E / Test Infrastructure
 
-### Replace remaining `ScrollArea` usages inside modals (React 19 crash risk)
-
-- **Priority**: P2
-- **Effort**: XS
-- **Source**: 2026-05-22 — ScrollArea crash post-mortem (`docs/postMorten/frontend.md`). Sidebar and app-shell were fixed; two modal-hosted `ScrollArea` instances remain and will crash if their E2E tests ever exercise open/close cycles.
-- **What + Why**: Replace `<ScrollArea>` with `<div className="overflow-y-auto">` in:
-  - `src/components/dashboard/day-detail-modal.tsx:105`
-  - `src/components/monte-carlo/stats-preview.tsx:118`
-    Both live inside Radix dialogs/sheets — same crash path as the sidebar fix.
-- **Date filed**: 2026-05-22.
-
 ### Add browser `console.error` listener to Playwright fixture to surface client-side errors
 
 - **Priority**: P3
@@ -156,30 +170,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: 2026-05-21 test audit on `feat/hawks-mode-v0` — no `page.on('console', ...)` handlers exist anywhere in the e2e suite; browser-side `console.error` calls (uncaught promise rejections, React hydration errors, failed fetch calls logged silently) are completely invisible to the test runner.
 - **What + Why**: Add a shared Playwright fixture (or `test.beforeEach` in `e2e/fixtures/`) that registers `page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })` and fails/warns after each test if unexpected errors were collected. This would have caught the `R$ → BRL` `Intl.NumberFormat` crash (which logged a `RangeError: Invalid currency code`) before it reached a smoke-test session. Avoid failing on known benign warnings (Next.js dev-mode verbose output) using an allowlist regex. Reference: Playwright docs on `ConsoleMessage`.
 - **Date filed**: 2026-05-21.
-
-### Implement yearly-plan UI: 52-week grid view
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: 2026-05-22 — Stream A removed test coverage from `e2e/tests/yearly-plan.spec.ts` (commit `74f18f9d`) because the underlying feature never shipped. The deleted test stub asserted a grid presenting all 52 ISO weeks of the year with per-week progress markers.
-- **What + Why**: Add a 52-week grid view to the yearly plan page (`src/app/[locale]/(app)/plan/[year]/page.tsx`). Each cell should reflect the week's planned vs. actual P&L, color-coded against the weekly_plan target. When shipping, re-add the deleted E2E test.
-- **Date filed**: 2026-05-22.
-
-### Implement yearly-plan UI: payoff matrix view
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: 2026-05-22 — Stream A removed test coverage (commit `74f18f9d`). The deleted test asserted a tabular payoff matrix relating win-rate buckets to risk-reward ratios with cell-level annotations.
-- **What + Why**: Add a payoff-matrix component to the yearly plan or playbook page. Rows = win-rate buckets (40% / 50% / 60% etc.), columns = R-multiples (1R / 2R / 3R), cells = projected annual return. Useful as a "what if my hit-rate improves" exploration tool. When shipping, re-add the deleted E2E test.
-- **Date filed**: 2026-05-22.
-
-### Implement yearly-plan UI: exit convention tabs (3 tabs)
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: 2026-05-22 — Stream A removed 3 test stubs covering the exit-convention tab UI on yearly-plan (commit `74f18f9d`). Each tab represented a different exit-rule preset (likely Conservative / Balanced / Aggressive — confirm with PM).
-- **What + Why**: Add a tabbed exit-convention selector to the yearly plan page. Each tab applies a different default exit rule (stop-loss multiple, trailing-stop trigger, profit-target ratio) to all child plans in the cascade. Currently the cascade uses a single hardcoded convention. When shipping, re-add the deleted E2E tests.
-- **Date filed**: 2026-05-22.
 
 ### Triage 5 pre-existing flaky tests in `e2e/tests/settings.spec.ts` exposed by networkidle migration
 
@@ -202,3 +192,88 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: 2026-05-22 — Item 3 extracted pure orchestration logic (commits `e0a5e790`, `e60d32e4`) into `src/lib/monte-carlo/` so the orchestration is unit-testable. The DB-touching path of `src/app/actions/monte-carlo.ts` still has no integration test.
 - **What + Why**: Add integration tests for `runComparisonSimulation` and `runSimulationV2` end-to-end against the test DB. Verify the action correctly composes the auth check → DB query → orchestration → response wrapping. Skipped from the unit suite intentionally (per the same gotcha rationale documented in `docs/gotchas.md`). Suggested home: `e2e/tests/monte-carlo.spec.ts` (currently UI-focused) — add a server-action subgroup, or create `src/__tests__/integration/monte-carlo.test.ts` with a real test DB connection.
 - **Date filed**: 2026-05-22.
+
+---
+
+## Layout & Theming (from 2026-05-29 scan)
+
+### Verify HAWKS `DailyBiasPanel` uses `FeatureStamp` for band header (Wave 9 convention)
+
+- **Priority**: P2
+- **Effort**: XS
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — finding #14.
+- **What + Why**: The 2026-05-29 scan flagged that `src/app/[locale]/(app)/journal/page.tsx:19` renders `<DailyBiasPanel />` but the scan didn't read the panel internals to verify `FeatureStamp` is wired at the band title row per Wave 9 convention. 5-minute read; either confirm it's already correct, or wire `FeatureStamp` in if missing.
+- **Date filed**: 2026-05-29.
+
+### Refine light-theme Axion Score tier-tone hexes
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — RC-4 follow-up.
+- **What + Why**: The 2026-05-29 scan added 5 tier-tone tokens (`--color-tier-{elite,forte,solido,building,attention}`) plus `--color-bronze-highlight` and `--color-bronze-deep` to both theme blocks. The dark-theme values match the original designed bronzes; the light-theme values were approximated as progressively darker shades without a designer pass. Worth a designer review for legibility on the stone-white paper background and contrast against the cool-neutral bg-100/200/300 stack.
+- **Date filed**: 2026-05-29.
+
+### Pull `fractal-plan/plan-section.tsx` card chrome through `<Panel>`
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #4.
+- **What + Why**: `src/components/fractal-plan/plan-section.tsx:24` still has hand-rolled chrome (`rounded-lg border border-bg-300 bg-bg-200 p-m-400`). Same RC-1 pattern but in a section primitive. Migrate to `<Panel padding="md">` (matches the `p-m-400` exactly per panelVariants.md).
+- **Date filed**: 2026-05-29.
+
+### Migrate chart empty-state placeholder heights
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #3.
+- **What + Why**: Empty-state divs in chart components use `flex h-[180px]` / `flex h-[120px]` / `flex h-[200px]` for the "no data" placeholder. Different pattern from `ChartContainer` heights (which were migrated), but same drift class. Either reuse `h-chart-*` tokens or add a dedicated `--height-empty-state-*` family. Files: `dashboard/{cumulative-pnl-chart,daily-pnl-bar-chart,day-equity-curve,day-detail-modal,day-trades-list,performance-radar-chart}.tsx` and `analytics/{day-of-week-chart,holding-period-chart,hourly-performance-chart,session-asset-table}.tsx`. Detector: `rg -n 'flex h-\[[0-9]+px\] items-center' src/components/{dashboard,analytics}/`.
+- **Date filed**: 2026-05-29.
+
+### QA pass: review calculations across features (feature-by-feature audit)
+
+- **Priority**: P3
+- **Effort**: L (multi-session — one feature per slot)
+- **Source**: 2026-05-29 — Ygor request after seeing OPTIMIZE deliver useful insights on PR #10. Quote: "I'm just trusting the calculations, but they show very important insights." Flagging for an explicit verification pass since the tool's value depends on the numbers being right and they've grown organically without a unified audit.
+- **What + Why**: Across the app, several features compute non-trivial financial / statistical metrics where a math bug silently distorts every downstream decision. No central audit exists today. Worth a deliberate feature-by-feature pass to verify each calculation against a paper-traced expected value. Suspects in order of consequence:
+  1. **Backtest engine** (`src/lib/backtest/engine.ts`, `computeMetrics`) — profit factor, win rate, max drawdown, Sharpe, avg R, equity curve, day breakdown. Verify against a 5–10 hand-computed trade fixture.
+  2. **Hawks user-catalog outcome math** (`src/lib/backtest/modules/entry/user-catalog.ts` + stop/target modules) — BE activation, 1R/3R brick math, EOD force-close. Already partially verified by the 86% catalog match (per the existing P1 backlog entry) but the 14 mismatches are still open.
+  3. **Tier analytics** (`src/lib/backtest/tier-analytics.ts`) — per-tier PF, drawdown, win rate. Re-uses engine math but slices by tier; verify the slicing.
+  4. **Breakeven filter** (`src/lib/backtest/breakeven-filter.ts`) — re-uses `computeMetrics` / `buildEquityCurve` after removing BE trades; verify the "drop and recompute" produces the same numbers as "compute then subtract."
+  5. **OPTIMIZE Pareto frontier** (`src/lib/optimize/pareto.ts`) — O(n log n) sweep is correct in theory; verify edge cases (ties, single point, all-equal PF).
+  6. **OPTIMIZE robustness rule** (`src/lib/optimize/robustness.ts`) — the `OOS PF ≥ 0.7 × IS PF` thresholding; verify Infinity / NaN handling.
+  7. **Monte Carlo orchestration** (`src/lib/monte-carlo/`) — geometric vs arithmetic Sharpe, percentile estimators, equity-curve overlays. High-consequence numbers.
+  8. **Tax recompute** (`src/lib/tax/recompute-month.ts` — PROTECTED PATH, do not modify) — already documented as single source of truth; verify against a known monthly fixture before any future change.
+  9. **Risk simulation + equity-shield** — drawdown projections, ruin probability. Verify against analytical bounds (Kelly, half-Kelly).
+  10. **Journal P&L aggregation** — date-bucketed pnl, week/month rollups; verify against a hand-traced 30-day fixture.
+- **Fix shape per feature**:
+  1. Pick a small known-good fixture (10 trades, hand-traced).
+  2. Run the feature's calc on the fixture.
+  3. Diff field-by-field against the paper-traced expected values.
+  4. Document discrepancies in `docs/scans/calculations-audit/{feature}.md`.
+  5. Fix or open a bug entry; tag with `BUG-{date}-{slug}` and write a post-mortem.
+- **Out of scope**: Performance / numerical-stability audits (these are about CORRECTNESS only — "is the formula right" not "is it fast"). Cross-feature consistency (separate concern: "do two features show the same number for the same trade").
+- **Done when**: Each of the 10 features above has a written audit + green-light or a filed bug. Audit docs sit in `docs/scans/calculations-audit/`.
+- **Why P3**: Nothing is currently known to be broken. This is preventive due diligence, not a fix. Move up to P1 the moment any specific calculation is suspected of being wrong.
+- **Date filed**: 2026-05-29.
+
+### Remove legacy `SweepConfigPanel` — user_catalog migration to StrategySweepBuilder
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-05-29 — Phase C.6 of the OPTIMIZE sweep-tree refactor. `HawksSweepBuilder` and `OrbSweepBuilder` both route through the generalized `StrategySweepBuilder` (committed d856fd73). The legacy panel is dead code for Hawks (flag-gated) and ORB routes through inline sweep (shipped). Only `user_catalog` still routes through `SweepConfigPanel`.
+- **What + Why**: Once `user_catalog` entry type routes through `StrategySweepBuilder` instead of the legacy panel, the legacy surface can be deleted. This unblocks deletion of `SweepConfigPanel`, `HAWKS_SWEEPABLE_PARAMS`, `ORB_SWEEPABLE_PARAMS`, `DEZK_SWEEPABLE_PARAMS`, `generateRecipeGrid`, `countCombinations`, and the `activeRanges` state from `optimize-content.tsx`.
+- **Fix shape**:
+  1. Decide user_catalog: either share `HAWKS_LEAVES` or define `USER_CATALOG_LEAVES`. Recommendation: share Hawks leaves — user_catalog's sweepable surface is the post-entry recipe (stop / target / sizing), identical shape.
+  2. Extend `inlineSweepBundle` in `optimize-content.tsx` to handle `recipe.entry.type === "user_catalog"` and render `UserCatalogSweepBuilder` (or reuse `HawksSweepBuilder` with aliased labels).
+  3. Delete `SweepConfigPanel`, legacy sweepable params exports, `STRATEGY_PARAMS_REGISTRY`, and `activeRanges` state.
+  4. Delete the `OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED` feature flag.
+- **Done when**: `user_catalog` sweep selects through `StrategySweepBuilder`; `SweepConfigPanel` deleted; `pnpm lint`, `tsc`, tests, e2e green.
+- **Date filed**: 2026-05-29.
+
+### Propagate "feature component owns width" rule to remaining `mx-auto max-w-*` callers
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #5.
+- **What + Why**: The scan moved width constraints from 5 page routes to their feature components. Several other pages still have `mx-auto max-w-*` at the page level: `journal/[id]/page.tsx:155`, `journal/new/page.tsx:57`, `journal/[id]/edit/page.tsx:37`, `playbook/[id]/page.tsx:152`, `playbook/new/page.tsx:129`, `plan/layout.tsx:15`, `edit-strategy-form.tsx:199`, `command-center-content.tsx:145`. The scan deliberately did not touch them because their respective Wave 1/4/5 sweep logs documented the page-level wrapper as canonical at the time. Worth a pass to either propagate the new rule, or formally exempt these pages with a docs note.
+- **Date filed**: 2026-05-29.

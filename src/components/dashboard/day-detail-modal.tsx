@@ -9,7 +9,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Panel } from "@/components/ui/panel"
 import { DaySummaryStats } from "./day-summary-stats"
 import { DayEquityCurve } from "./day-equity-curve"
@@ -102,7 +101,7 @@ export const DayDetailModal = ({
 				<DialogHeader>
 					<DialogTitle className="capitalize">{dayName}</DialogTitle>
 				</DialogHeader>
-				<ScrollArea className="max-h-[calc(90dvh-6rem)] overflow-y-auto">
+				<div className="max-h-[calc(90dvh-6rem)] overflow-y-auto">
 					{isPending ? (
 						<LoadingSpinner size="lg" className="h-[300px]" />
 					) : summary ? (
@@ -140,7 +139,7 @@ export const DayDetailModal = ({
 							{t("dayDetail.noData")}
 						</div>
 					)}
-				</ScrollArea>
+				</div>
 			</DialogContent>
 		</Dialog>
 	)

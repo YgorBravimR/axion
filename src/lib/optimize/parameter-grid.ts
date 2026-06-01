@@ -1,4 +1,13 @@
-import type { StrategyRecipe, TargetMode } from "@/types/backtest"
+import type { StrategyRecipe } from "@/types/backtest"
+import type {
+	SweepableParam,
+	NumericSweepableParam,
+	EnumSweepableParam,
+	EnumOption,
+} from "@/lib/optimize/sweepable-params"
+import { ORB_SWEEPABLE_PARAMS } from "@/lib/backtest/presets/orb-presets"
+import { DEZK_SWEEPABLE_PARAMS } from "@/lib/backtest/presets/dezk-presets"
+import { HAWKS_SWEEPABLE_PARAMS } from "@/lib/backtest/presets/hawks-presets"
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -24,440 +33,14 @@ interface EnumParameterRange {
 
 type ParameterRange = NumericParameterRange | EnumParameterRange
 
-// --- Sweepable param definitions (catalog, build-time) ---
+// ── Strategy params registry ──────────────────────────────────────
 
-interface NumericSweepableParam {
-	kind: "numeric"
-	path: string
-	labelKey: string
-	defaultMin: number
-	defaultMax: number
-	defaultStep: number
-	condition?: (_recipe: StrategyRecipe) => boolean
-	unitSuffix?: (_recipe: StrategyRecipe) => string
-	dynamicDefaults?: (_recipe: StrategyRecipe) => {
-		min: number
-		max: number
-		step: number
-	}
+const STRATEGY_PARAMS_REGISTRY: Partial<Record<string, SweepableParam[]>> = {
+	orb_breakout: ORB_SWEEPABLE_PARAMS,
+	macd_wma_alignment: DEZK_SWEEPABLE_PARAMS,
+	hawks_triple_screen: HAWKS_SWEEPABLE_PARAMS,
+	user_catalog: HAWKS_SWEEPABLE_PARAMS,
 }
-
-interface EnumOption {
-	value: string
-	labelKey: string
-	/** Apply this option's structural mutation to a recipe (mutates and returns) */
-	applyOption: (_recipe: StrategyRecipe) => StrategyRecipe
-}
-
-interface EnumSweepableParam {
-	kind: "enum"
-	path: string
-	labelKey: string
-	options: EnumOption[]
-	condition?: (_recipe: StrategyRecipe) => boolean
-	/** Read the current value from a recipe (for UI pre-selection) */
-	getCurrentValue: (_recipe: StrategyRecipe) => string
-}
-
-type SweepableParam = NumericSweepableParam | EnumSweepableParam
-
-// ── Enum option factories ───────────────────────────────────────
-
-const applyStopType = (
-	recipe: StrategyRecipe,
-	type: string
-): StrategyRecipe => {
-	const base = { ...recipe, stop: { ...recipe.stop } }
-	switch (type) {
-		case "pct_range":
-			base.stop.initial = { type: "pct_range", pct: 30 }
-			break
-		case "full_range":
-			base.stop.initial = { type: "full_range", ticksBuffer: 2 }
-			break
-		case "fixed_points":
-			base.stop.initial = { type: "fixed_points", points: 200 }
-			break
-	}
-	return base
-}
-
-const applyTargetMode = (
-	recipe: StrategyRecipe,
-	mode: string
-): StrategyRecipe => {
-	if (recipe.target.type !== "fixed_levels") {
-		return recipe
-	}
-	return {
-		...recipe,
-		target: {
-			...recipe.target,
-			levels: recipe.target.levels.map((l) => ({
-				...l,
-				mode: mode as TargetMode,
-			})),
-		},
-	}
-}
-
-const applyTrailingType = (
-	recipe: StrategyRecipe,
-	type: string
-): StrategyRecipe => {
-	const base = { ...recipe, stop: { ...recipe.stop } }
-	switch (type) {
-		case "indicator":
-			base.stop.trailing = { type: "indicator", wmaPeriod: 9, offset: 1 }
-			break
-		case "price_distance":
-			base.stop.trailing = { type: "price_distance", distance: 100 }
-			break
-	}
-	return base
-}
-
-// ── Target mode helpers ─────────────────────────────────────────
-
-const getTargetUnitSuffix = (recipe: StrategyRecipe): string => {
-	if (
-		recipe.target.type !== "fixed_levels" ||
-		recipe.target.levels.length === 0
-	) {
-		return ""
-	}
-	const mode = recipe.target.levels[0]!.mode
-	switch (mode) {
-		case "r_multiple":
-			return "R"
-		case "pct_range":
-			return "% range"
-		case "pct_stop":
-			return "% stop"
-		case "fixed_points":
-			return "pts"
-	}
-}
-
-const getTargetDefaults = (
-	recipe: StrategyRecipe
-): { min: number; max: number; step: number } => {
-	if (
-		recipe.target.type !== "fixed_levels" ||
-		recipe.target.levels.length === 0
-	) {
-		return { min: 1, max: 3, step: 0.5 }
-	}
-	const mode = recipe.target.levels[0]!.mode
-	switch (mode) {
-		case "r_multiple":
-			return { min: 0.5, max: 3, step: 0.5 }
-		case "pct_range":
-			return { min: 500, max: 2000, step: 250 }
-		case "pct_stop":
-			return { min: 50, max: 200, step: 25 }
-		case "fixed_points":
-			return { min: 50, max: 500, step: 50 }
-	}
-}
-
-const getTarget2Defaults = (
-	recipe: StrategyRecipe
-): { min: number; max: number; step: number } => {
-	if (
-		recipe.target.type !== "fixed_levels" ||
-		recipe.target.levels.length === 0
-	) {
-		return { min: 1, max: 4, step: 0.5 }
-	}
-	const mode = recipe.target.levels[0]!.mode
-	switch (mode) {
-		case "r_multiple":
-			return { min: 1, max: 4, step: 0.5 }
-		case "pct_range":
-			return { min: 1000, max: 3000, step: 500 }
-		case "pct_stop":
-			return { min: 100, max: 300, step: 50 }
-		case "fixed_points":
-			return { min: 100, max: 800, step: 100 }
-	}
-}
-
-// ── Sweepable parameter catalogs ────────────────────────────────
-
-const ORB_PARAMS: SweepableParam[] = [
-	// -- Enum: Stop Type --
-	{
-		kind: "enum",
-		path: "stop.initial.type",
-		labelKey: "stopInitialType",
-		condition: (r) => r.entry.type === "orb_breakout",
-		getCurrentValue: (r) => r.stop.initial.type,
-		options: [
-			{
-				value: "pct_range",
-				labelKey: "stopType.pctRange",
-				applyOption: (r) => applyStopType(r, "pct_range"),
-			},
-			{
-				value: "full_range",
-				labelKey: "stopType.fullRange",
-				applyOption: (r) => applyStopType(r, "full_range"),
-			},
-			{
-				value: "fixed_points",
-				labelKey: "stopType.fixedPoints",
-				applyOption: (r) => applyStopType(r, "fixed_points"),
-			},
-		],
-	},
-	// -- Enum: Target Mode --
-	{
-		kind: "enum",
-		path: "target.levels.0.mode",
-		labelKey: "targetModeLabel",
-		condition: (r) =>
-			r.target.type === "fixed_levels" && r.target.levels.length > 0,
-		getCurrentValue: (r) =>
-			r.target.type === "fixed_levels"
-				? r.target.levels[0]!.mode
-				: "r_multiple",
-		options: [
-			{
-				value: "r_multiple",
-				labelKey: "targetMode.rMultiple",
-				applyOption: (r) => applyTargetMode(r, "r_multiple"),
-			},
-			{
-				value: "pct_range",
-				labelKey: "targetMode.pctRange",
-				applyOption: (r) => applyTargetMode(r, "pct_range"),
-			},
-			{
-				value: "pct_stop",
-				labelKey: "targetMode.pctStop",
-				applyOption: (r) => applyTargetMode(r, "pct_stop"),
-			},
-			{
-				value: "fixed_points",
-				labelKey: "targetMode.fixedPoints",
-				applyOption: (r) => applyTargetMode(r, "fixed_points"),
-			},
-		],
-	},
-	// -- Numeric: ORB entry params --
-	{
-		kind: "numeric",
-		path: "entry.config.endTime",
-		labelKey: "orbEndTime",
-		defaultMin: 903,
-		defaultMax: 915,
-		defaultStep: 2,
-		condition: (r) => r.entry.type === "orb_breakout",
-	},
-	{
-		kind: "numeric",
-		path: "entry.config.ticksBuffer",
-		labelKey: "orbTicksBuffer",
-		defaultMin: 0,
-		defaultMax: 6,
-		defaultStep: 1,
-		condition: (r) => r.entry.type === "orb_breakout",
-	},
-	// -- Numeric: Stop sub-params (conditional on stop type) --
-	{
-		kind: "numeric",
-		path: "stop.initial.pct",
-		labelKey: "stopPctRange",
-		defaultMin: 20,
-		defaultMax: 70,
-		defaultStep: 10,
-		condition: (r) => r.stop.initial.type === "pct_range",
-	},
-	{
-		kind: "numeric",
-		path: "stop.initial.ticksBuffer",
-		labelKey: "stopTicksBuffer",
-		defaultMin: 1,
-		defaultMax: 5,
-		defaultStep: 1,
-		condition: (r) => r.stop.initial.type === "full_range",
-	},
-	{
-		kind: "numeric",
-		path: "stop.initial.points",
-		labelKey: "stopFixedPointsValue",
-		defaultMin: 50,
-		defaultMax: 500,
-		defaultStep: 50,
-		condition: (r) => r.stop.initial.type === "fixed_points",
-	},
-	// -- Numeric: Target values --
-	{
-		kind: "numeric",
-		path: "target.levels.0.value",
-		labelKey: "target1Value",
-		defaultMin: 1,
-		defaultMax: 3,
-		defaultStep: 0.5,
-		unitSuffix: getTargetUnitSuffix,
-		dynamicDefaults: getTargetDefaults,
-	},
-	{
-		kind: "numeric",
-		path: "target.levels.1.value",
-		labelKey: "target2Value",
-		defaultMin: 1,
-		defaultMax: 4,
-		defaultStep: 0.5,
-		condition: (r) =>
-			r.target.type === "fixed_levels" && r.target.levels.length >= 2,
-		unitSuffix: getTargetUnitSuffix,
-		dynamicDefaults: getTarget2Defaults,
-	},
-	// -- Numeric: Slippage --
-	{
-		kind: "numeric",
-		path: "slippageTicks",
-		labelKey: "slippage",
-		defaultMin: 0,
-		defaultMax: 3,
-		defaultStep: 1,
-	},
-]
-
-const DEZK_PARAMS: SweepableParam[] = [
-	// -- Enum: Target Mode --
-	{
-		kind: "enum",
-		path: "target.levels.0.mode",
-		labelKey: "targetModeLabel",
-		condition: (r) =>
-			r.target.type === "fixed_levels" && r.target.levels.length > 0,
-		getCurrentValue: (r) =>
-			r.target.type === "fixed_levels"
-				? r.target.levels[0]!.mode
-				: "fixed_points",
-		options: [
-			{
-				value: "r_multiple",
-				labelKey: "targetMode.rMultiple",
-				applyOption: (r) => applyTargetMode(r, "r_multiple"),
-			},
-			{
-				value: "pct_range",
-				labelKey: "targetMode.pctRange",
-				applyOption: (r) => applyTargetMode(r, "pct_range"),
-			},
-			{
-				value: "pct_stop",
-				labelKey: "targetMode.pctStop",
-				applyOption: (r) => applyTargetMode(r, "pct_stop"),
-			},
-			{
-				value: "fixed_points",
-				labelKey: "targetMode.fixedPoints",
-				applyOption: (r) => applyTargetMode(r, "fixed_points"),
-			},
-		],
-	},
-	// -- Enum: Trailing Type --
-	{
-		kind: "enum",
-		path: "stop.trailing.type",
-		labelKey: "trailingTypeLabel",
-		condition: (r) => !!r.stop.trailing,
-		getCurrentValue: (r) => r.stop.trailing?.type ?? "indicator",
-		options: [
-			{
-				value: "indicator",
-				labelKey: "trailingType.indicator",
-				applyOption: (r) => applyTrailingType(r, "indicator"),
-			},
-			{
-				value: "price_distance",
-				labelKey: "trailingType.priceDistance",
-				applyOption: (r) => applyTrailingType(r, "price_distance"),
-			},
-		],
-	},
-	// -- Numeric: dezK entry params --
-	{
-		kind: "numeric",
-		path: "entry.config.stopBufferPoints",
-		labelKey: "dezkStopBuffer",
-		defaultMin: 5,
-		defaultMax: 50,
-		defaultStep: 5,
-		condition: (r) => r.entry.type === "macd_wma_alignment",
-	},
-	{
-		kind: "numeric",
-		path: "entry.config.candlesAfterAlignment",
-		labelKey: "dezkCandlesAfter",
-		defaultMin: 0,
-		defaultMax: 3,
-		defaultStep: 1,
-		condition: (r) => r.entry.type === "macd_wma_alignment",
-	},
-	{
-		kind: "numeric",
-		path: "entry.config.macdSignal",
-		labelKey: "dezkMacdSignal",
-		defaultMin: 9,
-		defaultMax: 21,
-		defaultStep: 3,
-		condition: (r) => r.entry.type === "macd_wma_alignment",
-	},
-	{
-		kind: "numeric",
-		path: "entry.config.wmaFast",
-		labelKey: "dezkWmaFast",
-		defaultMin: 5,
-		defaultMax: 14,
-		defaultStep: 3,
-		condition: (r) => r.entry.type === "macd_wma_alignment",
-	},
-	// -- Numeric: Target value --
-	{
-		kind: "numeric",
-		path: "target.levels.0.value",
-		labelKey: "target1Value",
-		defaultMin: 40,
-		defaultMax: 150,
-		defaultStep: 20,
-		unitSuffix: getTargetUnitSuffix,
-		dynamicDefaults: getTargetDefaults,
-	},
-	// -- Numeric: Trailing sub-params (conditional on trailing type) --
-	{
-		kind: "numeric",
-		path: "stop.trailing.wmaPeriod",
-		labelKey: "dezkTrailingWma",
-		defaultMin: 5,
-		defaultMax: 14,
-		defaultStep: 3,
-		condition: (r) => r.stop.trailing?.type === "indicator",
-	},
-	{
-		kind: "numeric",
-		path: "stop.trailing.distance",
-		labelKey: "trailingDistance",
-		defaultMin: 50,
-		defaultMax: 300,
-		defaultStep: 50,
-		condition: (r) => r.stop.trailing?.type === "price_distance",
-	},
-	// -- Numeric: Slippage --
-	{
-		kind: "numeric",
-		path: "slippageTicks",
-		labelKey: "slippage",
-		defaultMin: 0,
-		defaultMax: 3,
-		defaultStep: 1,
-	},
-]
 
 // ── Param resolution ────────────────────────────────────────────
 
@@ -470,8 +53,7 @@ const getSweepableParams = (
 	recipe: StrategyRecipe,
 	activeEnumValues?: Record<string, string[]>
 ): SweepableParam[] => {
-	const catalog =
-		recipe.entry.type === "orb_breakout" ? ORB_PARAMS : DEZK_PARAMS
+	const catalog = STRATEGY_PARAMS_REGISTRY[recipe.entry.type] ?? []
 
 	return catalog.filter((param) => {
 		if (!param.condition) {
@@ -548,16 +130,29 @@ const setNestedValue = (obj: unknown, path: string, value: number): void => {
 	current[keys[keys.length - 1]!] = value
 }
 
-/** Get a value at a dot-path from a deeply nested object */
+/**
+ * Get a numeric value at a dot-path from a deeply nested object.
+ * Returns `NaN` when ANY intermediate segment is null/undefined or when the
+ * final value isn't a number — Hawks recipes legitimately carry
+ * `stop.breakeven = undefined` (BE disabled), and the legacy non-defensive
+ * walk used to crash on the first missing intermediate.
+ *
+ * Callers compare with `Number.isFinite(...)` or filter NaN out of Sets.
+ */
 const getNestedValue = (obj: unknown, path: string): number => {
 	const keys = path.split(".")
-	let current = obj as Record<string, unknown>
-
-	for (let i = 0; i < keys.length - 1; i++) {
-		current = current[keys[i]!] as Record<string, unknown>
+	let current: unknown = obj
+	for (const key of keys) {
+		if (
+			current === null ||
+			current === undefined ||
+			typeof current !== "object"
+		) {
+			return Number.NaN
+		}
+		current = (current as Record<string, unknown>)[key]
 	}
-
-	return current[keys[keys.length - 1]!] as number
+	return typeof current === "number" ? current : Number.NaN
 }
 
 // ── Combination counting ────────────────────────────────────────
@@ -581,8 +176,7 @@ const countCombinations = (
 		return 0
 	}
 
-	const catalog =
-		baseRecipe.entry.type === "orb_breakout" ? ORB_PARAMS : DEZK_PARAMS
+	const catalog = STRATEGY_PARAMS_REGISTRY[baseRecipe.entry.type] ?? []
 
 	// Helper: count numeric combos for applicable ranges on a given recipe variant
 	const countNumericsForVariant = (variant: StrategyRecipe): number => {
@@ -653,8 +247,7 @@ const generateRecipeGrid = (
 		return [structuredClone(baseRecipe)]
 	}
 
-	const catalog =
-		baseRecipe.entry.type === "orb_breakout" ? ORB_PARAMS : DEZK_PARAMS
+	const catalog = STRATEGY_PARAMS_REGISTRY[baseRecipe.entry.type] ?? []
 
 	// Phase 1: build enum combos (or a single "identity" combo if no enums)
 	const enumValueArrays = enumRanges.map((er) => er.selectedValues)
@@ -720,7 +313,7 @@ const generateRecipeGrid = (
 
 // ── Constants ───────────────────────────────────────────────────
 
-const MAX_COMBINATIONS = 2000
+const MAX_COMBINATIONS = 5000
 const WARN_COMBINATIONS = 500
 
 // ── Exports ─────────────────────────────────────────────────────

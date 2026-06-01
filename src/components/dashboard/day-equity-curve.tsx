@@ -148,7 +148,7 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 	return (
 		<ChartContainer
 			id="chart-dashboard-day-equity-curve"
-			className="h-[120px] w-full sm:h-[150px]"
+			className="h-chart-xs sm:h-chart-xs w-full"
 		>
 			<LineChart
 				data={data}

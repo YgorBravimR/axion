@@ -38,19 +38,19 @@ const SnapshotHero = ({
 			<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 				<div>
 					<dt className="text-tiny text-txt-300">{t("common.tier")}</dt>
-					<dd className="text-acc-100 mt-1 font-mono text-2xl font-semibold">
+					<dd className="text-acc-100 text-h2 mt-1 font-mono font-semibold">
 						T{tierIndex}
 					</dd>
 				</div>
 				<div>
 					<dt className="text-tiny text-txt-300">{t("snapshotHero.oneR")}</dt>
-					<dd className="text-txt-100 mt-1 font-mono text-2xl font-semibold">
+					<dd className="text-txt-100 text-h2 mt-1 font-mono font-semibold">
 						{formatBRL(oneRCents)}
 					</dd>
 				</div>
 				<div>
 					<dt className="text-tiny text-txt-300">{t("common.capital")}</dt>
-					<dd className="text-txt-100 mt-1 font-mono text-2xl font-semibold">
+					<dd className="text-txt-100 text-h2 mt-1 font-mono font-semibold">
 						{formatBRL(capitalCents)}
 					</dd>
 				</div>

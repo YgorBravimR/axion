@@ -1,5 +1,5 @@
 /**
- * Hawks quality rule registry.
+ * Hawks quality rule registry with dual-mode support.
  *
  * Decouples per-indicator rules from the entry state machine. Each rule is
  * a small pure function (or stateful, via QualityContext) gated by a config
@@ -9,22 +9,18 @@
  *   1. Is the fire BLOCKED (hard disqualifier)?
  *   2. What's the trade's quality score + per-indicator contributions?
  *
- * Adding a new indicator = adding one entry to blockRules or scoreRules.
- *
- * Scoring model (signed-score-with-weights):
- *   Each ScoreRule returns "favor" | "penalty" | "neutral".
- *     favor   ⇒ +rule.weight
- *     penalty ⇒ -rule.weight
- *     neutral ⇒ 0
- *   Score = sum of contributions. Tier = bucketed score per tierThresholds.
- *   Weights are 1.0 everywhere today — will tune later when data is richer.
+ * Dual-mode architecture (4 indicators: keltnerInner, macd, volume, aggression):
+ *   - Each rule emits a signal: "favor" | "penalty" | "neutral" | "block"
+ *   - Mode resolves new nested shape OR legacy flat flags, with fallback order
+ *   - "block" signal fires when mode is "block" or "both"
+ *   - Score-side fires when mode is "score" or "both" (block→penalty for score)
  *
  * Group ownership of rules:
- *   A — S/R levels (4 HTF MAs + vwap_d + ajuste)   [wired]
- *   B — Keltner exhaustion penalty + outer block   [planned]
- *   C — MACD sign + slope                          [planned]
- *   D — aggression_balance threshold               [planned]
- *   E — volume vs running EMA                      [planned]
+ *   A — S/R levels (4 HTF MAs + vwap_d + ajuste)   [wired, score-only]
+ *   B — Keltner outer block + inner dual-mode     [wired, outer=block only, inner=dual]
+ *   C — MACD sign + slope, dual-mode              [wired]
+ *   D — aggression, split scoreMode + blockMode   [wired, independent]
+ *   E — volume, dual-mode                          [wired]
  */
 import type {
 	HawksTripleScreenConfig,
@@ -58,7 +54,49 @@ const DEFAULT_SR_BLOCK_BUFFER_BRICKS = 2
 const DEFAULT_SR_FAVOR_RANGE_BRICKS = 3
 const DEFAULT_KELTNER_NEAR_BRICKS = 2
 const DEFAULT_AGGRESSION_THRESHOLD = 15000
+const DEFAULT_MACD_SLOPE_WINDOW = 3
+const DEFAULT_VOLUME_EMA_PERIOD = 500
 const DEFAULT_TIER_THRESHOLDS: TierThresholds = { AAA: 3, AA: 2, A: 1 }
+
+// Dual-mode rule interface: evaluates both scoring and blocking signals independently.
+interface DualModeRule {
+	key: string
+	weight: number
+	// Resolve the current mode: new nested shape takes precedence, fallback to legacy flag.
+	resolveMode: (
+		_config: HawksTripleScreenConfig
+	) => "off" | "score" | "block" | "both"
+	// Evaluate the rule's signal: "favor" | "penalty" | "neutral" | "block".
+	// The caller interprets "block" only when resolveMode returns "block" or "both".
+	evaluateSignal: (
+		_candle: CandleRow,
+		_direction: "short" | "long",
+		_brickSize: number,
+		_config: HawksTripleScreenConfig,
+		_ctx: QualityContext
+	) => IndicatorSignal | "block"
+}
+
+// Aggression has split modes: scoreMode and blockMode are independent.
+interface AggressionDualModeRule extends DualModeRule {
+	resolveScoreMode: (
+		_config: HawksTripleScreenConfig
+	) => "off" | "original" | "reversed"
+	resolveBlockMode: (
+		_config: HawksTripleScreenConfig
+	) => "off" | "blockOnAligned" | "blockOnAnti"
+	// For aggression, we return both a score signal and a block signal.
+	evaluateScoreSignal: (
+		_candle: CandleRow,
+		_direction: "short" | "long",
+		_config: HawksTripleScreenConfig
+	) => IndicatorSignal
+	evaluateBlockSignal: (
+		_candle: CandleRow,
+		_direction: "short" | "long",
+		_config: HawksTripleScreenConfig
+	) => "block" | "neutral"
+}
 
 // ════════════════════════════════════════════════════════════════════
 // S/R level set — shared between BLOCK and FAVOR rules
@@ -212,16 +250,20 @@ const buildSrFavorRule = (levelKey: string): ScoreRule => ({
 	},
 })
 
-// Group B PENALTY: Keltner inner band (125) approached but NOT crossed yet.
-// Probe finding: NEAR_125 selectivity = 4.45× (extras hit it 4× more than
-// catalog). PAST_125 is anti-selective and INTENTIONALLY excluded — once
-// price punches through the inner band, the move is confirmed and the
-// catalog actually fires more often than EXTRAS in that zone.
-const keltnerInnerPenaltyRule: ScoreRule = {
-	key: "keltner_inner_penalty",
+// Group B DUAL-MODE: Keltner inner band (125).
+// Trigger: within N bricks of the 125 band (same threshold for both score and block).
+// Score signal: penalty (legacy behavior).
+// Block signal: block when trigger fires.
+const keltnerInnerDualRule: DualModeRule = {
+	key: "keltner_inner",
 	weight: 1.0,
-	configFlag: (c) => c.qualityGates?.keltnerInnerPenalty === true,
-	evaluate: (candle, direction, brickSize, config) => {
+	resolveMode: (c) => {
+		if (c.qualityGates?.keltnerInner?.mode !== undefined) {
+			return c.qualityGates.keltnerInner.mode
+		}
+		return c.qualityGates?.keltnerInnerPenalty === true ? "score" : "off"
+	},
+	evaluateSignal: (candle, direction, brickSize, config) => {
 		const d = keltnerDistance(candle, direction, "125")
 		if (d === null) {
 			return "neutral"
@@ -229,79 +271,182 @@ const keltnerInnerPenaltyRule: ScoreRule = {
 		const window =
 			(config.qualityGates?.keltnerNearBricks ?? DEFAULT_KELTNER_NEAR_BRICKS) *
 			brickSize
-		// NEAR_125 = 0 < d ≤ window; PAST_125 (d ≤ 0) does NOT penalize.
+		// Trigger: within the window, favorable side only (0 < d ≤ window).
 		if (d > 0 && d <= window) {
-			return "penalty"
+			return "block"
 		}
 		return "neutral"
 	},
 }
 
-// Group D: aggression_balance with tri-state polarity switch.
-// Probe (scripts/probe-aggression-balance.ts) at threshold 15K showed:
-//   ALIGNED catalog 18.1% / extras 30.3% — 1.67× selectivity for PENALTY.
-//   ANTI never fires (EMA gate pre-filters).
-// User's discretionary read: catalog entries land BEFORE aggression piles
-// in, so "high aligned aggression = late entry = lower quality" = PENALTY.
-// Original-polarity stays available behind the same flag for A/B.
-const aggressionRule: ScoreRule = {
-	key: "aggression_balance",
+// Group D SPLIT DUAL-MODE: aggression with independent score + block modes.
+// The rule has independent scoreMode and blockMode, both controlled by separate
+// config knobs and both optional. Threshold is shared.
+const aggressionSplitRule: AggressionDualModeRule = {
+	key: "aggression",
 	weight: 1.0,
-	configFlag: (c) => {
-		const mode = c.qualityGates?.aggressionMode
-		return mode === "original" || mode === "reversed"
+	resolveMode: (c) => {
+		const scoreMode = c.qualityGates?.aggression?.scoreMode ?? "off"
+		const blockMode = c.qualityGates?.aggression?.blockMode ?? "off"
+		if (scoreMode === "off" && blockMode === "off") {
+			return "off"
+		}
+		if (scoreMode !== "off" && blockMode === "off") {
+			return "score"
+		}
+		if (scoreMode === "off" && blockMode !== "off") {
+			return "block"
+		}
+		return "both"
 	},
-	evaluate: (candle, direction, _brickSize, config) => {
+	resolveScoreMode: (c) =>
+		c.qualityGates?.aggression?.scoreMode ??
+		c.qualityGates?.aggressionMode ??
+		"off",
+	resolveBlockMode: (c) => c.qualityGates?.aggression?.blockMode ?? "off",
+	evaluateSignal: (candle, direction, brickSize, config, ctx) => {
+		const scoreMode = config.qualityGates?.aggression?.scoreMode ?? "off"
+		const blockMode = config.qualityGates?.aggression?.blockMode ?? "off"
+		const scoreSignal =
+			scoreMode === "off"
+				? "neutral"
+				: aggressionSplitRule.evaluateScoreSignal(candle, direction, config)
+		const blockSignal =
+			blockMode === "off"
+				? "neutral"
+				: aggressionSplitRule.evaluateBlockSignal(candle, direction, config)
+		// Return the "stronger" signal for the caller to dispatch on mode.
+		if (blockSignal === "block") {
+			return "block"
+		}
+		return scoreSignal
+	},
+	evaluateScoreSignal: (candle, direction, config) => {
 		const agg = candle.indicators["aggression_balance"]
 		if (typeof agg !== "number") {
 			return "neutral"
 		}
 		const threshold =
-			config.qualityGates?.aggressionThreshold ?? DEFAULT_AGGRESSION_THRESHOLD
+			config.qualityGates?.aggression?.threshold ??
+			config.qualityGates?.aggressionThreshold ??
+			DEFAULT_AGGRESSION_THRESHOLD
 		if (Math.abs(agg) < threshold) {
 			return "neutral"
 		}
 		const aligned =
 			(direction === "long" && agg >= threshold) ||
 			(direction === "short" && agg <= -threshold)
-		const mode = config.qualityGates?.aggressionMode ?? "off"
-		if (mode === "original") {
+		const scoreMode = config.qualityGates?.aggression?.scoreMode ?? "off"
+		if (scoreMode === "original") {
 			return aligned ? "favor" : "penalty"
 		}
-		if (mode === "reversed") {
+		if (scoreMode === "reversed") {
 			return aligned ? "penalty" : "favor"
+		}
+		return "neutral"
+	},
+	evaluateBlockSignal: (candle, direction, config) => {
+		const agg = candle.indicators["aggression_balance"]
+		if (typeof agg !== "number") {
+			return "neutral"
+		}
+		const threshold =
+			config.qualityGates?.aggression?.threshold ??
+			config.qualityGates?.aggressionThreshold ??
+			DEFAULT_AGGRESSION_THRESHOLD
+		if (Math.abs(agg) < threshold) {
+			return "neutral"
+		}
+		const aligned =
+			(direction === "long" && agg >= threshold) ||
+			(direction === "short" && agg <= -threshold)
+		const blockMode = config.qualityGates?.aggression?.blockMode ?? "off"
+		if (blockMode === "blockOnAligned" && aligned) {
+			return "block"
+		}
+		if (blockMode === "blockOnAnti" && !aligned) {
+			return "block"
 		}
 		return "neutral"
 	},
 }
 
-// Group E: volume on the fire brick vs running EMA.
-// Probe (scripts/probe-volume-vs-ema.ts) at EMA-500 showed catalog 54.3% /
-// extras 40.0% ABOVE — selectivity 0.74× (strongest single signal across
-// all five groups). Direction-agnostic; high volume = "something interesting
-// is happening here" regardless of LONG/SHORT.
-// Note: ctx.volumeEma is the POST-update EMA (current brick folded in). For
-// EMA-500 the single-brick contribution is α ≈ 0.4%, so the bias vs
-// pre-update EMA is negligible.
-const volumeAboveEmaRule: ScoreRule = {
+// Group C DUAL-MODE: MACD sign + slope.
+// Score signal: favor when sign aligned + slope aligned; penalty when opposed; neutral mixed.
+// Block signal: block on anything other than pure favor (sign opposed OR mixed).
+const macdDualRule: DualModeRule = {
+	key: "macd",
+	weight: 1.0,
+	resolveMode: (c) => {
+		if (c.qualityGates?.macd?.mode !== undefined) {
+			return c.qualityGates.macd.mode
+		}
+		return c.qualityGates?.macdAlignmentScore === true ? "score" : "off"
+	},
+	evaluateSignal: (candle, direction, _brickSize, config, ctx) => {
+		const macd = candle.indicators[config.macd_key]
+		if (typeof macd !== "number") {
+			return "neutral"
+		}
+		const signAligned =
+			(direction === "long" && macd > 0) || (direction === "short" && macd < 0)
+		const signOpposed =
+			(direction === "long" && macd < 0) || (direction === "short" && macd > 0)
+		if (signOpposed) {
+			return "block"
+		}
+		if (!signAligned) {
+			return "neutral"
+		}
+		const buf = ctx.recentMacd
+		if (buf.length < 2) {
+			return "favor"
+		}
+		const slope = buf[buf.length - 1]! - buf[0]!
+		const slopeAligned =
+			(direction === "long" && slope > 0) ||
+			(direction === "short" && slope < 0)
+		if (slopeAligned) {
+			return "favor"
+		}
+		return "block"
+	},
+}
+
+// Group E DUAL-MODE: volume vs running EMA.
+// Score signal: favor when volume > EMA (legacy behavior).
+// Block signal: block when volume < EMA (complement of score trigger).
+const volumeDualRule: DualModeRule = {
 	key: "volume",
 	weight: 1.0,
-	configFlag: (c) => c.qualityGates?.volumeScore === true,
-	evaluate: (candle, _direction, _brickSize, _config, ctx) => {
+	resolveMode: (c) => {
+		if (c.qualityGates?.volume?.mode !== undefined) {
+			return c.qualityGates.volume.mode
+		}
+		return c.qualityGates?.volumeScore === true ? "score" : "off"
+	},
+	evaluateSignal: (candle, _direction, _brickSize, config, ctx) => {
 		const vol = candle.indicators["volume"]
 		if (typeof vol !== "number" || ctx.volumeEma === null) {
 			return "neutral"
 		}
-		return vol > ctx.volumeEma ? "favor" : "neutral"
+		if (vol > ctx.volumeEma) {
+			return "favor"
+		}
+		return "block"
 	},
 }
 
-const scoreRules: ScoreRule[] = [
-	...ACTIVE_SR_LEVEL_KEYS.map(buildSrFavorRule),
-	keltnerInnerPenaltyRule,
-	aggressionRule,
-	volumeAboveEmaRule,
+const scoreRules: ScoreRule[] = [...ACTIVE_SR_LEVEL_KEYS.map(buildSrFavorRule)]
+
+const dualModeRules: DualModeRule[] = [
+	keltnerInnerDualRule,
+	macdDualRule,
+	volumeDualRule,
 ]
+
+// Aggression is treated separately due to split scoreMode/blockMode architecture.
+const aggressionRule = aggressionSplitRule
 
 // ════════════════════════════════════════════════════════════════════
 // Tier mapping
@@ -370,6 +515,7 @@ const evaluateQuality = (
 	config: HawksTripleScreenConfig,
 	ctx: QualityContext
 ): EvaluateQualityResult => {
+	// Check legacy block rules (S/R, Keltner outer).
 	for (const rule of blockRules) {
 		if (!rule.configFlag(config)) {
 			continue
@@ -378,8 +524,45 @@ const evaluateQuality = (
 			return { blocked: true, quality: emptyQuality(config) }
 		}
 	}
+
+	// Process dual-mode rules (keltner inner, MACD, volume).
+	for (const rule of dualModeRules) {
+		const mode = rule.resolveMode(config)
+		if (mode === "off") {
+			continue
+		}
+		const signal = rule.evaluateSignal(
+			candle,
+			direction,
+			brickSize,
+			config,
+			ctx
+		)
+		if ((mode === "block" || mode === "both") && signal === "block") {
+			return { blocked: true, quality: emptyQuality(config) }
+		}
+	}
+
+	// Process aggression's split modes (scoreMode and blockMode independent).
+	{
+		const blockMode = aggressionRule.resolveBlockMode(config)
+		if (blockMode !== "off") {
+			const blockSignal = aggressionRule.evaluateBlockSignal(
+				candle,
+				direction,
+				config
+			)
+			if (blockSignal === "block") {
+				return { blocked: true, quality: emptyQuality(config) }
+			}
+		}
+	}
+
+	// Compute quality score from legacy score rules + dual-mode rules.
 	const contributions: IndicatorContribution[] = []
 	let score = 0
+
+	// Legacy score rules (S/R favor).
 	for (const rule of scoreRules) {
 		if (!rule.configFlag(config)) {
 			continue
@@ -395,6 +578,64 @@ const evaluateQuality = (
 		})
 		score += contribution
 	}
+
+	// Dual-mode rules (score side only, or score side when in "both" mode).
+	for (const rule of dualModeRules) {
+		const mode = rule.resolveMode(config)
+		if (mode === "off" || mode === "block") {
+			continue
+		}
+		// mode is "score" or "both": emit a score signal.
+		const signal = rule.evaluateSignal(
+			candle,
+			direction,
+			brickSize,
+			config,
+			ctx
+		)
+		// Map "block" signal to "penalty" for score side.
+		const scoreSignal: IndicatorSignal =
+			signal === "block" ? "penalty" : (signal as IndicatorSignal)
+		const contribution =
+			scoreSignal === "favor"
+				? rule.weight
+				: scoreSignal === "penalty"
+					? -rule.weight
+					: 0
+		contributions.push({
+			key: rule.key,
+			signal: scoreSignal,
+			weight: rule.weight,
+			contribution,
+		})
+		score += contribution
+	}
+
+	// Aggression's scoreMode contribution.
+	{
+		const scoreMode = aggressionRule.resolveScoreMode(config)
+		if (scoreMode !== "off") {
+			const scoreSignal = aggressionRule.evaluateScoreSignal(
+				candle,
+				direction,
+				config
+			)
+			const contribution =
+				scoreSignal === "favor"
+					? aggressionRule.weight
+					: scoreSignal === "penalty"
+						? -aggressionRule.weight
+						: 0
+			contributions.push({
+				key: aggressionRule.key,
+				signal: scoreSignal,
+				weight: aggressionRule.weight,
+				contribution,
+			})
+			score += contribution
+		}
+	}
+
 	const thresholds =
 		config.qualityGates?.tierThresholds ?? DEFAULT_TIER_THRESHOLDS
 	return {
@@ -414,5 +655,14 @@ export {
 	updateQualityContext,
 	evaluateQuality,
 	ACTIVE_SR_LEVEL_KEYS,
+	keltnerInnerDualRule,
+	macdDualRule,
+	volumeDualRule,
+	aggressionSplitRule,
 }
-export type { QualityContext, EvaluateQualityResult }
+export type {
+	QualityContext,
+	EvaluateQualityResult,
+	DualModeRule,
+	AggressionDualModeRule,
+}

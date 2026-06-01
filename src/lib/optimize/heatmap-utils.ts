@@ -2,7 +2,7 @@ import {
 	getSweepableParams,
 	getNestedValue,
 } from "@/lib/optimize/parameter-grid"
-import type { OptimizationRun } from "@/types/backtest"
+import type { OptimizationRun, StrategyRecipe } from "@/types/backtest"
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -28,6 +28,14 @@ interface EnumVaryingParam {
 	values: string[]
 	/** Maps raw value → i18n label key (e.g. "pct_range" → "stopType.pctRange") */
 	optionLabelKeys: Record<string, string>
+	/**
+	 * Canonical reader for this enum's value on a recipe — the catalog's
+	 * `getCurrentValue`. The recipe may store the value in a different
+	 * representation than the catalog's `opt.value` (e.g. booleans stored
+	 * at the path, with options keyed by "on"/"off"). Use this anywhere we
+	 * need to compare a recipe's value to `optionLabelKeys` or `values`.
+	 */
+	getCurrentValue: (_recipe: StrategyRecipe) => string
 }
 
 type VaryingParam = NumericVaryingParam | EnumVaryingParam
@@ -125,10 +133,14 @@ const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
 	const varying: VaryingParam[] = []
 	for (const param of catalog) {
 		if (param.kind === "enum") {
-			// Detect categorical variation using string comparison
+			// Canonical reader — the catalog knows how to project the recipe's
+			// internal representation (boolean, string, enum) onto its
+			// `opt.value` domain ("on"/"off", "pct_range"/"full_range", ...).
+			// Using `getNestedStringValue` here would yield `"true"`/`"false"`
+			// for boolean-backed toggles and mismatch `opt.value = "on"|"off"`.
 			const valuesSet = new Set<string>()
 			for (const run of sameStrategyRuns) {
-				valuesSet.add(getNestedStringValue(run.recipe, param.path))
+				valuesSet.add(param.getCurrentValue(run.recipe))
 			}
 			if (valuesSet.size > 1) {
 				// Build value → labelKey map from the catalog options
@@ -142,13 +154,21 @@ const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
 					labelKey: param.labelKey,
 					values: [...valuesSet].sort(),
 					optionLabelKeys,
+					getCurrentValue: param.getCurrentValue,
 				})
 			}
 		} else {
-			// Existing numeric detection
+			// Existing numeric detection. We tolerate runs where the path is
+			// absent (recipe has `stop.breakeven = undefined`, etc.) by
+			// filtering NaN out — a parameter that's *present-vs-absent* across
+			// runs isn't a numeric sweep axis, it's a structural difference and
+			// shouldn't appear in the heatmap.
 			const valuesSet = new Set<number>()
 			for (const run of sameStrategyRuns) {
-				valuesSet.add(getNestedValue(run.recipe, param.path))
+				const v = getNestedValue(run.recipe, param.path)
+				if (Number.isFinite(v)) {
+					valuesSet.add(v)
+				}
 			}
 			if (valuesSet.size > 1) {
 				varying.push({
@@ -175,11 +195,26 @@ const buildHeatmapData = (
 	xPath: string,
 	yPath: string,
 	metric: HeatmapMetric,
-	slices: Record<string, number | string>
+	slices: Record<string, number | string>,
+	varyingParams: VaryingParam[]
 ): HeatmapData => {
 	const [firstRun] = runs
 	const strategyType = firstRun?.recipe.entry.type
 	const higherIsBetter = METRIC_HIGHER_IS_BETTER[metric]
+
+	// Build a path→canonical-reader index for enum slices. For non-enum
+	// (numeric) slices we use `getNestedValue` directly. For enum slices we
+	// MUST use `getCurrentValue` because the recipe's storage may differ
+	// from the catalog's option domain (booleans vs "on"/"off").
+	const enumReaderByPath = new Map<
+		string,
+		(_recipe: StrategyRecipe) => string
+	>()
+	for (const p of varyingParams) {
+		if (p.kind === "enum") {
+			enumReaderByPath.set(p.path, p.getCurrentValue)
+		}
+	}
 
 	// Filter to same strategy + matching slice values (supports both numeric and string)
 	const filtered = runs.filter((r) => {
@@ -187,8 +222,10 @@ const buildHeatmapData = (
 			return false
 		}
 		for (const [path, value] of Object.entries(slices)) {
-			const actual =
-				typeof value === "string"
+			const enumReader = enumReaderByPath.get(path)
+			const actual = enumReader
+				? enumReader(r.recipe)
+				: typeof value === "string"
 					? getNestedStringValue(r.recipe, path)
 					: getNestedValue(r.recipe, path)
 			if (actual !== value) {
@@ -206,6 +243,11 @@ const buildHeatmapData = (
 	for (const run of filtered) {
 		const xVal = getNestedValue(run.recipe, xPath)
 		const yVal = getNestedValue(run.recipe, yPath)
+		// Skip runs where either axis path is absent — they're structurally
+		// different (e.g. BE disabled) and shouldn't anchor a cell.
+		if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) {
+			continue
+		}
 		xValuesSet.add(xVal)
 		yValuesSet.add(yVal)
 

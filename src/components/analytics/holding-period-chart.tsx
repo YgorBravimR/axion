@@ -177,7 +177,7 @@ const HoldingPeriodChart = memo(
 				</h3>
 				<ChartContainer
 					id="chart-analytics-holding-period"
-					className="h-[200px] w-full min-w-0 sm:h-[250px]"
+					className="h-chart-md sm:h-chart-lg w-full min-w-0"
 				>
 					<BarChart
 						data={activeBuckets}

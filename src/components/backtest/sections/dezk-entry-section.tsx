@@ -1,5 +1,14 @@
 "use client"
 
+/**
+ * @archived 2026-05 — DEZK strategy archived.
+ *
+ * AGENTS: this section is not rendered anywhere — both backtest-content.tsx
+ * and optimize-content.tsx removed the `macd_wma_alignment` JSX branches.
+ * Do not import from this file in new code. Preserved for git history and
+ * potential revival per dezk-presets.ts header.
+ */
+
 import { memo } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"

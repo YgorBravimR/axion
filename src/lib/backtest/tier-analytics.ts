@@ -1,4 +1,8 @@
-import type { BacktestTrade, QualityTier } from "@/types/backtest"
+import type {
+	BacktestTrade,
+	QualityTier,
+	TierThresholds,
+} from "@/types/backtest"
 
 interface TierBreakdownRow {
 	tier: QualityTier | "untiered"
@@ -7,6 +11,13 @@ interface TierBreakdownRow {
 	avgRMultiple: number // mean of rMultiple
 	totalPnlCents: number
 	maxDrawdownCents: number // running drawdown across this tier's trade sequence
+}
+
+// Default tier thresholds: AAA ≥ 3, AA ≥ 2, A ≥ 1, B < 1
+const DEFAULT_TIER_THRESHOLDS: TierThresholds = {
+	AAA: 3,
+	AA: 2,
+	A: 1,
 }
 
 // Order tiers from strongest to weakest. "untiered" sinks to the bottom so the
@@ -42,12 +53,38 @@ const computeRunningMaxDrawdown = (pnlSeq: number[]): number => {
 // Bucket trades by tier and compute per-tier summary metrics. Excludes
 // breakeven trades from win/loss counts (mirrors the engine's wins/losses
 // definitions). Trades without `quality` are bucketed as "untiered".
+// When thresholds are provided, re-tier trades based on their score.
+// Otherwise, use the tier from trade.quality.
 const computeTierBreakdown = (
-	trades: readonly BacktestTrade[]
+	trades: readonly BacktestTrade[],
+	thresholds?: TierThresholds
 ): TierBreakdownRow[] => {
+	const tierThresholds = thresholds ?? DEFAULT_TIER_THRESHOLDS
+
+	// Helper to compute tier from score using the given thresholds.
+	const scoreTier = (score: number): QualityTier => {
+		if (score >= tierThresholds.AAA) {
+			return "AAA"
+		}
+		if (score >= tierThresholds.AA) {
+			return "AA"
+		}
+		if (score >= tierThresholds.A) {
+			return "A"
+		}
+		return "B"
+	}
+
 	const buckets = new Map<QualityTier | "untiered", BacktestTrade[]>()
 	for (const trade of trades) {
-		const key: QualityTier | "untiered" = trade.quality?.tier ?? "untiered"
+		// When thresholds are provided, recompute tier from the score.
+		// Otherwise, use the stored tier (or "untiered" if no quality data).
+		const key: QualityTier | "untiered" = (() => {
+			if (thresholds && trade.quality) {
+				return scoreTier(trade.quality.score)
+			}
+			return trade.quality?.tier ?? "untiered"
+		})()
 		const bucket = buckets.get(key) ?? []
 		bucket.push(trade)
 		buckets.set(key, bucket)
@@ -87,6 +124,7 @@ const hasAnyTierData = (trades: readonly BacktestTrade[]): boolean =>
 
 export {
 	TIER_ORDER,
+	DEFAULT_TIER_THRESHOLDS,
 	computeTierBreakdown,
 	hasAnyTierData,
 	type TierBreakdownRow,

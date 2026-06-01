@@ -76,6 +76,15 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ---
 
+### Dual-mode rule fallback chain must be single-line — scatter it and missed fallbacks hide from code review
+
+- **What**: When implementing a dual-mode rule with both nested shape and legacy flat field fallbacks (e.g. `qualityGates?.aggression?.scoreMode ?? aggressionMode ?? "off"`), the entire chain must live on one line or in a single ternary. If you scatter the fallback across multiple conditionals, code review misses the point where you accidentally forgot to chain.
+- **Symptom**: Test passes (you tested against a config that happened to have the nested shape), but then the legacy flat field is silently ignored. The first dead-axis static check catches it immediately, but only because the checker scans source code for substring references — integration testing wouldn't find it until the feature runs.
+- **What to do**: Always write fallback chains inline. Bad: `const m = c.qualityGates?.aggression?.scoreMode; if (!m) { … read c.qualityGates?.aggressionMode … }`. Good: `const m = c.qualityGates?.aggression?.scoreMode ?? c.qualityGates?.aggressionMode ?? "off"`. Use the nullish-coalescing operator (`??`), not logical-OR (`||`), so falsy values (e.g. `0`, `false`) don't trigger fallback by mistake.
+- **Source**: 2026-06-01 session during hawks-quality-rules dual-mode refactor. The `resolveScoreMode` and `resolveBlockMode` methods initially only read the nested shape; the `pnpm check:dead-axes` gate caught that `aggressionMode` was unreferenced. Fix was one-liner: add `?? c.qualityGates?.aggressionMode` to the chain.
+
+---
+
 ## NextAuth / JWT Sessions
 
 ### Parallel `auth()` calls corrupt JWT cookie under `strategy: "jwt"`
@@ -143,6 +152,21 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What**: `React.useState` / `React.forwardRef` clutters bundles and breaks tree-shaking in some setups.
 - **What to do**: Always `import { useState, forwardRef } from "react"`. Same for types: `import type { ComponentProps, HTMLAttributes } from "react"`.
 - **Date logged**: 2026-05-07.
+
+### Mirror state with a `=== null` seed gate silently goes stale when the upstream mutates
+
+- **What**: A pattern that looks fine at first glance:
+  ```ts
+  useEffect(() => {
+  	if (mirror === null) {
+  		setMirror(deriveFromUpstream(upstream))
+  	}
+  }, [upstream, mirror])
+  ```
+  This seeds `mirror` once when null, then never again — even if `upstream` changes. The `[upstream, mirror]` dependency array re-runs the effect, but the `=== null` gate immediately no-ops. The mirror keeps showing data derived from the FIRST upstream value, forever.
+- **What to do**: At every site that mutates `upstream`, also call `setMirror(null)` so the next effect run re-seeds. Don't rely on the dependency array alone — the gate breaks it.
+- **Where this bit us**: `src/components/optimize/optimize-content.tsx` — `leafSelections` was a mirror of `recipe` via a seed effect with a `=== null` gate. When the user switched strategy or preset, `setRecipe` updated but `leafSelections` kept the OLD strategy's values; the inline sweep builder rendered stale ORB fields after the user picked Hawks. Fix: `setLeafSelections(null)` inside `handleStrategyChange` and `handlePresetChange`. See `docs/postMorten/frontend.md` BUG-2026-05-30-1.
+- **Date logged**: 2026-05-30.
 
 ### `@radix-ui/react-scroll-area` crashes React 19 inside any mount/unmount boundary
 
@@ -330,6 +354,23 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: If you touch any Hawks engine module, target module, R-multiple display, or scorecard analytics, remember R is methodology-defined. The shared backtest engine's `r_multiple` target mode scales with whatever `stopReference` the entry module produces — keep methodology-specific stop logic inside the entry module, never in shared engine code. If a future methodology revises the R definition again, bump `BacktestResult.engineVersion` (currently `"hawks-v0.2"`) and let the UI surface the version on cached results.
 - **Source**: `src/lib/backtest/modules/entry/hawks-triple-screen.ts`; post-mortem `docs/postMorten/backend.md` [BUG-2026-05-15].
 - **Date logged**: 2026-05-15.
+
+### `optimize.sweepLeaf` ≠ `optimize.sweepParam` — i18n labels must live in both namespaces
+
+- **What**: Two parallel registries describe the same sweep axes for different consumers, and each reads its labels from a different i18n namespace:
+  - `HAWKS_LEAVES` / `ORB_LEAVES` (inline sweep builder, advanced toggles) read labels via `t(\`sweepLeaf.${labelKey}\`)`.
+  - `HAWKS_SWEEPABLE_PARAMS` / `ORB_SWEEPABLE_PARAMS` (heatmap, Pareto, axis diagnostics, validator) read labels via `t(\`sweepParam.${labelKey}\`)`.
+  When you add a new enum/numeric axis and only translate it in one namespace, the UI shows the raw key path in the surfaces backed by the other registry. Worse — `pnpm i18n:check` passes because the key *does exist* somewhere, and the dynamic `t(\`sweepParam.${var}\`)`call is in its "78 dynamic refs (skipped)" bucket. The breakage is invisible to static tooling. Symptom: heatmap renders strings like`sweepParam.hawksTierAAA`or`sweepParam.stopType_pctRange`literally. Fixed 2026-06-01 by mirroring 28 catalog labelKeys from`sweepLeaf`→`sweepParam`and normalising`orb-presets.ts` option labelKeys from dotted (`stopType.pctRange`) to underscore (`stopType_pctRange`) to match the leaves/messages convention. Per-strategy IS/OOS tooltips in `pareto-scatter.tsx`had the same family of bug: keys live under`optimize.walkForward.\*`, but the component bound only `useTranslations("optimize.pareto")`— fix was a second`tWalkForward`binding (mirrors what`freeze-hero-modal.tsx` already does).
+- **What to do**: When you add a sweep axis, add the labelKey under **both** `optimize.sweepLeaf` and `optimize.sweepParam` in every locale, even if the value string is identical. When you add a new dynamic-key consumer (`t(\`<namespace>.${var}\`)`), audit every catalog-driven labelKey against the chosen namespace — `node -e`walking the JSON is the cheapest probe. When you bind`useTranslations(...)`in a new component, list every key the component consumes and confirm each lives directly under that namespace; if some live elsewhere (e.g.`walkForward.\*`), bind a second translator alongside the primary instead of half-qualifying paths in calls.
+- **Source**: `messages/{en,pt-BR}.json` (sweepParam vs sweepLeaf blocks); catalog sources at `src/lib/backtest/presets/{hawks,orb}-presets.ts` and `{hawks,orb}-leaves.ts`; consumers at `src/components/optimize/parameter-heatmap.tsx`, `pareto-scatter.tsx`, `sweep-config-panel.tsx`.
+- **Date logged**: 2026-06-01.
+
+### Detective probe of a LABEL-ONLY axis returns "DEAD" unless the consumer mode is enabled
+
+- **What**: `scripts/sweep-detective.ts` probes axes by varying one parameter and fingerprinting the resulting trades/tiers. For `aggressionThreshold`, the consumer is `aggressionRule.evaluateScoreSignal` — which short-circuits to `"neutral"` when `aggression.scoreMode === "off"` _before_ it ever reads the threshold (see `hawks-quality-rules.ts:336-343`). The detective's default baseline uses `hawksV0`, which has `scoreMode = "off"`, so sweeping the threshold over any range produces identical fingerprints → false "DEAD" verdict. Widening the value range does **not** fix this; the rule's dead-branch is the problem, not the data distribution. Fixed 2026-06-01 by composing `withAggressionScoreMode(r, "original")` into the axis's `apply` so the rule actually consults the threshold while we measure it. The pattern generalises: any LABEL-ONLY axis whose consumer can be disabled by a sibling mode flag must enable that consumer in its probe.
+- **What to do**: When adding a new LABEL-ONLY axis to `sweep-detective.ts`, trace from the axis to its consumer and check whether a mode flag can short-circuit the read. If yes, the axis's `apply` must force that flag to an "enabled" value before setting the param being measured. Use `peek-aggression-sign.ts`-style distribution probes to pick value ranges that span the real data (min/p10/p90/max), not arbitrary round numbers — for WIN 5m the observed `aggression_balance` band is roughly `[−35K, +44K]`, so a `[2.5K, 40K]` threshold sweep covers the full effect surface.
+- **Source**: `scripts/sweep-detective.ts:364-385`; consumer at `src/lib/backtest/modules/entry/hawks-quality-rules.ts:321-344`; distribution at `scripts/peek-aggression-sign.ts`.
+- **Date logged**: 2026-06-01.
 
 ---
 
@@ -619,8 +660,91 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `scripts/diff-projection.ts`; Hawks Step-3 verification session 2026-05-27.
 - **Date logged**: 2026-05-27.
 
+### Recipe paths: `recipeFromCombo` produces "addon-as-undefined" — every nested-path reader must guard intermediates
+
+- **What**: When the optimize sweep generates recipes via `recipeFromCombo`, it builds addon configs (`stop.breakeven`, `stop.trailing`, `reversal`) atomically: enabled → fully-populated object; disabled → `undefined`. Any helper that walks a dot-path on a recipe (`getNestedValue` in `parameter-grid.ts`, future readers in heatmap/Pareto/etc.) must tolerate intermediate `undefined`, NOT cast through it.
+- **What to do**: Use a defensive walk that returns `NaN` (for numeric paths) or `undefined` (for any-type paths) when an intermediate is missing. Downstream callers filter with `Number.isFinite()` for numerics, or skip the run for the heatmap. NEVER cast `current = current[k] as Record<...>` without a null/object guard first.
+- **Source**: `src/lib/optimize/parameter-grid.ts`, `src/lib/optimize/heatmap-utils.ts`; bug fix session 2026-05-29.
+- **Date logged**: 2026-05-29.
+
 ### Agent isolation: `isolation: "worktree"` does not always isolate commits to the worktree branch
 
 - **What**: Spawning parallel agents with `isolation: "worktree"` is supposed to give each agent its own git worktree on a dedicated `worktree-agent-*` branch. In practice (session 2026-05-22, six parallel agents on `feat/hawks-mode-v0`), all six agents' commits landed directly on the parent branch (`feat/hawks-mode-v0`), and the worktree branches stayed at the baseline. The commits ended up linearized cleanly because file ownership was strictly disjoint, but if two agents had touched the same file, the second commit would have failed or surprised the orchestrator with an unexpected merge.
 - **What to do**: When dispatching multiple agents in parallel with `isolation: "worktree"`, treat the parent branch as the actual write target — assume isolation may not hold. Always assign **strictly disjoint file ownership** per agent in the brief. After agents complete, verify with `git worktree list` AND `git log --oneline <parent-branch>` to see what actually landed where.
 - **Date logged**: 2026-05-22.
+
+## Backtest Metrics / Precision
+
+### Never round metrics at compute time — only at display
+
+- **What**: `src/lib/backtest/metrics.ts` historically called `Math.round(x * 100) / 100` on `winRate`, `profitFactor`, `avgRMultiple`, `sharpeRatio`, and `expectancy` inside `computeMetrics`. This collapsed any PF in `(0.995, 1.005)` to `1.00` in storage. Pareto frontier comparisons, quality gradients, and heatmap z-axis sorts all read the lossy values and produced false ties. The user spotted it because the exported CSV had 14 Broad sweep runs with identical PF=1.00 but visibly different PnL — a mathematical impossibility.
+- **What to do**: For any field that is both **ranked** and **displayed**, store the raw float. Display sites (table cells, tooltips, legends, axis labels) already format with `.toFixed(2)` on render. If you see `Math.round(x * 100) / 100` in a compute path that feeds a sort/compare, treat it as a bug, not a formatting nicety.
+- **Smoke signal**: PF=1.00 with non-zero `totalPnlCents` in any persisted run is a precision-loss artifact and should never occur with raw-float storage.
+- **Date logged**: 2026-05-31.
+
+## React / useSyncExternalStore
+
+### `getServerSnapshot` (and `getSnapshot`) must return a cached reference
+
+- **What**: Inlining `() => []` (or `() => null`, `() => {}`) as the third argument to `useSyncExternalStore` trips React's `"The result of getServerSnapshot should be cached to avoid an infinite loop"` warning every render. Each call creates a fresh empty array whose identity differs from the previous one, defeating React's bailout check. The same mistake on the second argument (`getSnapshot`) causes an actual infinite re-render loop under concurrent rendering, not just a warning.
+- **What to do**: Hoist any sentinel value (empty array, null, empty object) to a module-level constant and return it from a named function. Example:
+  ```ts
+  const SERVER_SNAPSHOT: T[] = []
+  const getServerSnapshot = (): T[] => SERVER_SNAPSHOT
+  useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  ```
+- **Date logged**: 2026-05-31.
+
+## Hawks / sweep catalog hygiene
+
+### Every sweepable axis must trace to at least one rule that reads it
+
+- **What**: Two axes were exposed in `HAWKS_SWEEPABLE_PARAMS` for months —
+  `macdSlopeWindow` (numeric) and `macdAlignmentScore` (boolean toggle) — but
+  no rule in `hawks-quality-rules.ts` actually read either value. The optimizer
+  faithfully swept across their value range and the resulting OptimizationRuns
+  were bit-for-bit identical, wasting refine-budget cells and confusing users
+  who toggled the UI control and saw no effect.
+- **What to do**: Before adding a sweepable-axis entry to
+  `HAWKS_SWEEPABLE_PARAMS`, verify the engine actually consumes the field.
+  After adding one, run `pnpm tsx scripts/sweep-detective.ts` — if the axis
+  shows up under "DEAD" or under "LABEL-ONLY" when you expected it to gate,
+  either implement the consumer rule or move the entry to a manual-only
+  surface (leaf registry) until the rule lands. Use the same harness as a
+  pre-merge gate any time you touch the quality-rule registry.
+- **Smoke signal**: A sweep axis whose every value produces identical
+  `summary.totalPnlCents` and identical `summary.profitFactor` is either dead
+  code or label-only. Both deserve a UI marker so users know to skip them
+  during outcome optimization.
+- **Date logged**: 2026-05-31.
+
+## Hawks / score-rule vs block-rule taxonomy
+
+### Score rules tag tiers, block rules gate entry — sweeping the wrong category is a trap
+
+- **What**: `evaluateQuality` in `hawks-quality-rules.ts` runs two categories
+  of rule. `blockRules` (`srLevelBlockRule`, `keltnerOuterBlockRule`,
+  `htfMaBlock`) hard-disqualify entries — they change trade count and PnL.
+  `scoreRules` (everything else — SR favors, Keltner inner penalty, MACD
+  sign+slope, aggression, volume) only compute `trade.quality.tier`
+  (AAA/AA/A/B). Sweeping a score-only axis changes the tier label
+  distribution but produces identical PnL/PF/Sharpe across every value.
+- **What to do**: Before adding a sweepable axis, classify the underlying
+  rule: GATES (block rule), LABEL-ONLY (score rule), or DEAD (no rule).
+  Update `src/lib/backtest/presets/hawks-axis-roles.ts` to keep the UI
+  badge accurate. The CI gate (`pnpm check:dead-axes`) catches DEAD;
+  the detective harness (`scripts/sweep-detective.ts`) catches misclassified
+  LABEL-ONLY vs GATES.
+- **Date logged**: 2026-05-31.
+
+---
+
+## Optimize / localStorage compaction
+
+### Data emitted by the worker must be explicitly threaded to the OptimizationRun — hardcoded defaults are a data-loss vector
+
+- **What**: The backtest worker (`backtest-worker.ts`) computes complete trades arrays (400+ trades per run, ~50-100 runs per sweep). But the `ProgressMessage` interface never included a trades field — the data was computed, emitted, and discarded at the message boundary. Meanwhile, the sweep runner hardcoded `trades: []` on line 80, silently creating OptimizationRun objects with empty trades arrays. For 2+ months, 100% of optimization runs stored to localStorage had full summary metrics but `trades: []`, making equity curve rendering impossible and counters inflated.
+- **Why it's easy to miss**: The worker is correct. The runner collects all the other fields (equityCurve, summaryIS, summaryOOS, equityCurveOOS, etc.) and threads them through correctly. Trades were just forgotten. No type error because ProgressMessage is a narrowly-typed interface, not an object spread.
+- **What to do**: When a worker computes a new data structure, update the ProgressMessage interface explicitly and thread it into the OptimizationRun in the runner's message handler. Use a checklist: summary✓, equityCurve✓, trades✓, OOS variants✓. Don't rely on "I'll add it later" or shape inference.
+- **Related**: `[BUG-2026-06-01]` in `docs/postMorten/backend.md`.
+- **Date logged**: 2026-06-01.

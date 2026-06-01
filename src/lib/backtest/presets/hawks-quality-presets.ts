@@ -11,11 +11,15 @@ type QualityPresetLevel = "off" | "lite" | "standard" | "strict" | "custom"
 // hawks-quality-rules.ts. Keep in sync if either side changes.
 const DEFAULT_TIER_THRESHOLDS: TierThresholds = { AAA: 3, AA: 2, A: 1 }
 
-// "Filled" = every field present, no undefineds. Required for stable equality
-// checks: a partially-set config (e.g. only htfMaBlock: false) is normalized
-// to this shape before matching.
+// "Filled" = every legacy field present, no undefineds. Required for stable
+// equality checks: a partially-set config (e.g. only htfMaBlock: false) is
+// normalized to this shape before matching. New dual-mode fields (v5→v6) are
+// NOT included here — they're optional and handled separately by Piece B.
 type FilledQualityGates = Required<
-	Omit<QualityGatesConfig, "tierThresholds">
+	Omit<
+		QualityGatesConfig,
+		"tierThresholds" | "keltnerInner" | "macd" | "volume" | "aggression"
+	>
 > & {
 	tierThresholds: TierThresholds
 }

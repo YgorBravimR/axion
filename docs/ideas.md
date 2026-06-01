@@ -40,3 +40,15 @@ If a backlog item turns out to be more speculative than it looked, demote it bac
 - **Status**: Needs product development and engeneering thinking
 - **Idea**: Specific user role with specific information about a group of other accounts, new pages, new tables, where user can monitor it's pupils.
 - **Source**: Ygor
+
+## Connect Backtest ↔ Optimize (carry recipe + range across surfaces)
+
+- **Status**: Shape clear, awaiting product call on which direction is primary.
+- **Idea**: Today the two surfaces share code (presets, sections, engine, types) but the user has no programmatic handoff — a recipe tuned on `/backtest` cannot be carried to `/backtest/optimize` for sweep refinement, and a specific run from `/backtest/optimize` cannot be reopened on `/backtest` for trade-level / brick-level inspection. The path is manual re-entry: pick preset again, retype every field.
+  Two complementary bridges, both reuse the same URL-param contract (one serializer, two consumers):
+  - **Bridge A — "Optimize this" on `/backtest`.** Serialize current `recipe` + `dateRange` + `selectedSourceIndex` into URL params, navigate to `/backtest/optimize?seed=…&from=…&to=…&asset=…`. OPTIMIZE hydrates on mount, auto-derives `leafSelections` from the recipe baseline (the existing `deriveInitialSelections(HAWKS_LEAVES, recipe)` already does this), lands on the parameters step.
+  - **Bridge C — "Open in Backtest" on each OPTIMIZE run row.** Each `OptimizationRun` already carries its full recipe. Reverse of A: pop `/backtest?seed=…` so the user can inspect the run's full trades table, equity, and brick-level chart that OPTIMIZE doesn't surface.
+  - **Bonus — Bridge D — hero presets visible in Backtest.** Today frozen hero presets (`axion:optimize:heroPresets`) only appear in OPTIMIZE's preset dropdown. Backtest reads `[...orbPresets, ...hawksPresets]` directly. Have Backtest call the same `useHeroPresets()` hook and merge in for parity.
+- **Why an idea, not a backlog item**: needs product call on which bridge is primary (forward / backward / both at once), and whether the param payload should be base64-encoded JSON or a tighter schema. Schema-versioning convention matches the localStorage stores (bump on shape change).
+- **Promotion path**: once primary direction is picked, this becomes 1–2 backlog entries (the URL-contract module + the two button placements).
+- **Source**: 2026-05-30 session — identified after completing the OPTIMIZE funnel (PRs 1–4). User asked "what connects Backtest and Optimize now?" and the honest answer was: shared code, zero programmatic handoff.

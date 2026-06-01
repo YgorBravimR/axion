@@ -1,4 +1,10 @@
-import type { StrategyRecipe } from "@/types/backtest"
+import type {
+	StrategyRecipe,
+	QualityGatesConfig,
+	HawksTripleScreenConfig,
+} from "@/types/backtest"
+import type { SweepableParam } from "@/lib/optimize/sweepable-params"
+import { getQualityPresetBundle } from "@/lib/backtest/presets/hawks-quality-presets"
 
 /**
  * Hawks triple-screen v0.3 preset.
@@ -140,4 +146,519 @@ const hawksPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
 	hawksUserCatalog,
 ]
 
-export { hawksPresets, hawksV0, hawksUserCatalog }
+// ── Hawks sweepable params (OPTIMIZE Tier 1 + 2 + 3A) ─────────────────
+// Tier 1: high-leverage outcome knobs (BE, R, slippage).
+// Tier 2A: quality bundle (off/lite/standard/strict) — fastest signal.
+// Tier 2B: within-bundle numeric drilldown.
+// Tier 2C: individual boolean toggles — research mode (user opts in).
+// Tier 3A: engine state-machine knobs (cooldown, wave1, retracement).
+// Tier 3B (match_rate metric): added on the worker side, not as a sweep axis.
+// Tier 3C (deferred): per-day regime, Fib bands, stayArmed flag.
+
+const isHawksTriple = (r: StrategyRecipe): boolean =>
+	r.entry.type === "hawks_triple_screen"
+
+const mutateHawksConfig = (
+	recipe: StrategyRecipe,
+	mutator: (_cfg: HawksTripleScreenConfig) => HawksTripleScreenConfig
+): StrategyRecipe => {
+	if (recipe.entry.type !== "hawks_triple_screen") {
+		return recipe
+	}
+	return {
+		...recipe,
+		entry: {
+			type: "hawks_triple_screen",
+			config: mutator(recipe.entry.config),
+		},
+	}
+}
+
+const mutateQualityGates = (
+	recipe: StrategyRecipe,
+	mutator: (_qg: QualityGatesConfig) => QualityGatesConfig
+): StrategyRecipe =>
+	mutateHawksConfig(recipe, (cfg) => ({
+		...cfg,
+		qualityGates: mutator(cfg.qualityGates ?? {}),
+	}))
+
+const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
+	// ── Tier 1 — outcome knobs ─────────────────────────────────────
+	{
+		kind: "numeric",
+		path: "stop.breakeven.triggerPct",
+		labelKey: "hawksBreakevenTrigger",
+		defaultMin: 50,
+		defaultMax: 200,
+		defaultStep: 25,
+		condition: (r) => r.stop.breakeven?.type === "on_pct_risk",
+	},
+	{
+		kind: "numeric",
+		path: "target.levels.0.value",
+		labelKey: "hawksTargetR",
+		defaultMin: 2,
+		defaultMax: 4,
+		defaultStep: 0.5,
+		condition: (r) =>
+			r.target.type === "fixed_levels" &&
+			r.target.levels[0]?.mode === "r_multiple",
+	},
+	{
+		kind: "numeric",
+		path: "slippageTicks",
+		labelKey: "slippage",
+		defaultMin: 0,
+		defaultMax: 3,
+		defaultStep: 1,
+	},
+
+	// ── Tier 2A — quality bundle (4-way enum, fastest signal) ──────
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.__bundle__",
+		labelKey: "hawksQualityBundle",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksQualityBundle_off",
+				applyOption: (r) =>
+					mutateHawksConfig(r, (cfg) => ({
+						...cfg,
+						qualityGates: getQualityPresetBundle("off"),
+					})),
+			},
+			{
+				value: "lite",
+				labelKey: "hawksQualityBundle_lite",
+				applyOption: (r) =>
+					mutateHawksConfig(r, (cfg) => ({
+						...cfg,
+						qualityGates: getQualityPresetBundle("lite"),
+					})),
+			},
+			{
+				value: "standard",
+				labelKey: "hawksQualityBundle_standard",
+				applyOption: (r) =>
+					mutateHawksConfig(r, (cfg) => ({
+						...cfg,
+						qualityGates: getQualityPresetBundle("standard"),
+					})),
+			},
+			{
+				value: "strict",
+				labelKey: "hawksQualityBundle_strict",
+				applyOption: (r) =>
+					mutateHawksConfig(r, (cfg) => ({
+						...cfg,
+						qualityGates: getQualityPresetBundle("strict"),
+					})),
+			},
+		],
+		getCurrentValue: () => "standard",
+	},
+
+	// ── Tier 2B — within-bundle numeric drilldown ──────────────────
+	{
+		kind: "numeric",
+		path: "entry.config.qualityGates.srBlockBufferBricks",
+		labelKey: "hawksSrBlockBuffer",
+		defaultMin: 1,
+		defaultMax: 4,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.qualityGates.srFavorRangeBricks",
+		labelKey: "hawksSrFavorRange",
+		defaultMin: 2,
+		defaultMax: 5,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.qualityGates.keltnerNearBricks",
+		labelKey: "hawksKeltnerNear",
+		defaultMin: 1,
+		defaultMax: 3,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.qualityGates.macdSlopeWindow",
+		labelKey: "hawksMacdSlope",
+		defaultMin: 2,
+		defaultMax: 5,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.qualityGates.aggressionThreshold",
+		labelKey: "hawksAggressionThreshold",
+		defaultMin: 10000,
+		defaultMax: 25000,
+		defaultStep: 5000,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.qualityGates.volumeEmaPeriod",
+		labelKey: "hawksVolumeEma",
+		defaultMin: 300,
+		defaultMax: 700,
+		defaultStep: 100,
+		condition: isHawksTriple,
+	},
+
+	// ── Tier 2C — boolean toggles (research mode, user opts in) ────
+	...(
+		[
+			["srLevelBlock", "hawksSrBlockToggle"],
+			["srLevelFavor", "hawksSrFavorToggle"],
+			["keltnerOuterBlock", "hawksKeltnerBlockToggle"],
+			["keltnerInnerPenalty", "hawksKeltnerPenaltyToggle"],
+			["macdAlignmentScore", "hawksMacdToggle"],
+			["volumeScore", "hawksVolumeToggle"],
+			["htfMaBlock", "hawksHtfMaBlockToggle"],
+		] as const
+	).map<SweepableParam>(([gateKey, labelKey]) => ({
+		kind: "enum",
+		path: `entry.config.qualityGates.${gateKey}`,
+		labelKey,
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksToggle_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({ ...qg, [gateKey]: false })),
+			},
+			{
+				value: "on",
+				labelKey: "hawksToggle_on",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({ ...qg, [gateKey]: true })),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.[gateKey] ? "on" : "off"
+		},
+	})),
+
+	// Aggression polarity is a 3-way enum (not a boolean toggle).
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.aggressionMode",
+		labelKey: "hawksAggressionMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksAggressionMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({ ...qg, aggressionMode: "off" })),
+			},
+			{
+				value: "original",
+				labelKey: "hawksAggressionMode_original",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggressionMode: "original",
+					})),
+			},
+			{
+				value: "reversed",
+				labelKey: "hawksAggressionMode_reversed",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggressionMode: "reversed",
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.aggressionMode ?? "off"
+		},
+	},
+
+	// ── Tier 2D — new dual-mode axes (added in Piece B) ───────────────
+	// Each of these controls the new nested shape (keltnerInner, macd, volume, aggression).
+	// These are GATES axes (block/both modes change PnL) except when mode="score".
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.keltnerInner.mode",
+		labelKey: "hawksKeltnerInnerMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "off" },
+					})),
+			},
+			{
+				value: "score",
+				labelKey: "hawksMode_score",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "score" },
+					})),
+			},
+			{
+				value: "block",
+				labelKey: "hawksMode_block",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "block" },
+					})),
+			},
+			{
+				value: "both",
+				labelKey: "hawksMode_both",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "both" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.keltnerInner?.mode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.macd.mode",
+		labelKey: "hawksMacdMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "off" },
+					})),
+			},
+			{
+				value: "score",
+				labelKey: "hawksMode_score",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "score" },
+					})),
+			},
+			{
+				value: "block",
+				labelKey: "hawksMode_block",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "block" },
+					})),
+			},
+			{
+				value: "both",
+				labelKey: "hawksMode_both",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "both" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.macd?.mode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.volume.mode",
+		labelKey: "hawksVolumeMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "off" },
+					})),
+			},
+			{
+				value: "score",
+				labelKey: "hawksMode_score",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "score" },
+					})),
+			},
+			{
+				value: "block",
+				labelKey: "hawksMode_block",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "block" },
+					})),
+			},
+			{
+				value: "both",
+				labelKey: "hawksMode_both",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "both" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.volume?.mode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.aggression.scoreMode",
+		labelKey: "hawksAggressionScoreMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, scoreMode: "off" },
+					})),
+			},
+			{
+				value: "original",
+				labelKey: "hawksAggressionMode_original",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, scoreMode: "original" },
+					})),
+			},
+			{
+				value: "reversed",
+				labelKey: "hawksAggressionMode_reversed",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, scoreMode: "reversed" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.aggression?.scoreMode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.aggression.blockMode",
+		labelKey: "hawksAggressionBlockMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, blockMode: "off" },
+					})),
+			},
+			{
+				value: "blockOnAligned",
+				labelKey: "hawksAggressionBlockOnAligned",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, blockMode: "blockOnAligned" },
+					})),
+			},
+			{
+				value: "blockOnAnti",
+				labelKey: "hawksAggressionBlockOnAnti",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, blockMode: "blockOnAnti" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.aggression?.blockMode ?? "off"
+		},
+	},
+
+	// ── Tier 3A — engine state-machine knobs ───────────────────────
+	{
+		kind: "numeric",
+		path: "entry.config.fireCooldownBricks",
+		labelKey: "hawksFireCooldown",
+		defaultMin: 3,
+		defaultMax: 7,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.wave1MinBricks",
+		labelKey: "hawksWave1Min",
+		defaultMin: 3,
+		defaultMax: 6,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+	{
+		kind: "numeric",
+		path: "entry.config.retracementMinBricks",
+		labelKey: "hawksRetracementMin",
+		defaultMin: 1,
+		defaultMax: 3,
+		defaultStep: 1,
+		condition: isHawksTriple,
+	},
+]
+
+export { hawksPresets, hawksV0, hawksUserCatalog, HAWKS_SWEEPABLE_PARAMS }

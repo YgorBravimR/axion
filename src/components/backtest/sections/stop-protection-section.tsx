@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PluginPicker, TogglePlugin } from "./plugin-picker"
+import { useIsSwept } from "@/components/optimize/swept-paths-context"
 import type {
 	StrategyRecipe,
 	InitialStopConfig,
@@ -20,6 +21,7 @@ interface StopProtectionSectionProps {
 const StopProtectionSection = memo(
 	({ recipe, onRecipeChange }: StopProtectionSectionProps) => {
 		const t = useTranslations("backtest.builder")
+		const isBeTriggerSwept = useIsSwept("stop.breakeven.triggerPct")
 
 		const stopConfig = recipe.stop
 		const initialType = stopConfig.initial.type
@@ -268,32 +270,37 @@ const StopProtectionSection = memo(
 									selected={breakevenType}
 									onSelect={handleBreakevenTypeChange}
 								/>
-								{breakevenType === "on_pct_risk" && hasBreakeven && (
-									<div className="space-y-s-200">
-										<Label htmlFor="be-pct" id="label-be-pct">
-											{t("beTriggerPct")}
-										</Label>
-										<Input
-											id="be-pct"
-											type="number"
-											value={
-												stopConfig.breakeven?.type === "on_pct_risk"
-													? stopConfig.breakeven.triggerPct
-													: 50
-											}
-											onChange={(e) => {
-												const pct = parseInt(e.target.value) || 50
-												onRecipeChange({
-													...recipe,
-													stop: {
-														...stopConfig,
-														breakeven: { type: "on_pct_risk", triggerPct: pct },
-													},
-												})
-											}}
-										/>
-									</div>
-								)}
+								{breakevenType === "on_pct_risk" &&
+									hasBreakeven &&
+									!isBeTriggerSwept && (
+										<div className="space-y-s-200">
+											<Label htmlFor="be-pct" id="label-be-pct">
+												{t("beTriggerPct")}
+											</Label>
+											<Input
+												id="be-pct"
+												type="number"
+												value={
+													stopConfig.breakeven?.type === "on_pct_risk"
+														? stopConfig.breakeven.triggerPct
+														: 50
+												}
+												onChange={(e) => {
+													const pct = parseInt(e.target.value) || 50
+													onRecipeChange({
+														...recipe,
+														stop: {
+															...stopConfig,
+															breakeven: {
+																type: "on_pct_risk",
+																triggerPct: pct,
+															},
+														},
+													})
+												}}
+											/>
+										</div>
+									)}
 							</div>
 						</TogglePlugin>
 

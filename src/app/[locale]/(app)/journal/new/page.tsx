@@ -1,4 +1,5 @@
 import { NewTradeTabs } from "@/components/journal"
+import { Panel } from "@/components/ui/panel"
 import { getStrategies } from "@/app/actions/strategies"
 import { getTags } from "@/app/actions/tags"
 import { getActiveAssets } from "@/app/actions/assets"
@@ -56,7 +57,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<div className="space-y-m-400 mx-auto max-w-5xl">
 					{isHawksAtCap && <HawksDailyCapBanner ordinal={dailyOrdinal} />}
-					<div className="border-bg-300 bg-bg-200 p-m-400 sm:p-m-500 lg:p-m-600 rounded-lg border">
+					<Panel padding="lg">
 						<NewTradeTabs
 							strategies={strategies}
 							tags={tags}
@@ -67,7 +68,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 							defaultDate={effectiveDate.toISOString()}
 							hawksModeActive={accountMode === "hawks"}
 						/>
-					</div>
+					</Panel>
 				</div>
 			</div>
 		</div>
