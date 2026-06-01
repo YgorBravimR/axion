@@ -792,6 +792,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		setRuns([])
 		void clearRuns()
 		setExpandedRunId(null)
+		// Mirror the hydrate-to-results symmetry: zero runs → land back on
+		// setup so the user isn't stranded staring at an empty results card.
+		setStep("setup")
 	}, [])
 
 	const handleUpdateLabel = useCallback((runId: string, label: string) => {
