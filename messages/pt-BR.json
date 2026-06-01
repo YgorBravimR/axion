@@ -5081,6 +5081,10 @@
 		"noParamsSelected": "Selecione ao menos um parâmetro para varrer",
 		"runSweep": "Executar Varredura",
 		"clearAll": "Limpar Tudo",
+		"clearAllConfirmTitle": "Apagar todas as execuções de otimização?",
+		"clearAllConfirmDescription": "Isso remove {count} execuções salvas e o histórico de trades deste navegador. A ação não pode ser desfeita — rode as varreduras novamente para gerar os dados.",
+		"clearAllConfirmCancel": "Manter execuções",
+		"clearAllConfirmAction": "Apagar tudo",
 		"postRefineHint": {
 			"title": "Refine concluído — escolha o próximo passo",
 			"body": "Melhor run do refine: {best} (PF {pf}). Itere para estreitar mais ou congele o vencedor como preset hero.",

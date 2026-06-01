@@ -5081,6 +5081,10 @@
 		"noParamsSelected": "Select at least one parameter to sweep",
 		"runSweep": "Run Sweep",
 		"clearAll": "Clear All",
+		"clearAllConfirmTitle": "Delete all optimization runs?",
+		"clearAllConfirmDescription": "This removes {count} stored runs and their trade history from this browser. The action cannot be undone — re-run the sweeps to regenerate the data.",
+		"clearAllConfirmCancel": "Keep runs",
+		"clearAllConfirmAction": "Delete all",
 		"postRefineHint": {
 			"title": "Refine wave complete — pick your next move",
 			"body": "Best refine run so far: {best} (PF {pf}). Iterate to narrow further or freeze the winner as a hero preset.",

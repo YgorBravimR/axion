@@ -3,6 +3,17 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import {
+	AlertDialog,
+	AlertDialogTrigger,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogAction,
+	AlertDialogCancel,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
@@ -1435,16 +1446,43 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											<Download className="h-3.5 w-3.5" aria-hidden="true" />
 											{t("exportCsv")}
 										</Button>
-										<Button
-											id="optimize-clear-all"
-											variant="ghost"
-											size="sm"
-											onClick={handleClearAll}
-											className="text-txt-300 hover:text-fb-error gap-s-200"
-										>
-											<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-											{t("clearAll")}
-										</Button>
+										<AlertDialog>
+											<AlertDialogTrigger asChild>
+												<Button
+													id="optimize-clear-all"
+													variant="ghost"
+													size="sm"
+													className="text-txt-300 hover:text-fb-error gap-s-200"
+												>
+													<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+													{t("clearAll")}
+												</Button>
+											</AlertDialogTrigger>
+											<AlertDialogContent size="sm">
+												<AlertDialogHeader>
+													<AlertDialogTitle>
+														{t("clearAllConfirmTitle")}
+													</AlertDialogTitle>
+													<AlertDialogDescription>
+														{t("clearAllConfirmDescription", {
+															count: runs.length,
+														})}
+													</AlertDialogDescription>
+												</AlertDialogHeader>
+												<AlertDialogFooter>
+													<AlertDialogCancel id="cancel-clear-all">
+														{t("clearAllConfirmCancel")}
+													</AlertDialogCancel>
+													<AlertDialogAction
+														id="confirm-clear-all"
+														onClick={handleClearAll}
+														variant="destructive"
+													>
+														{t("clearAllConfirmAction")}
+													</AlertDialogAction>
+												</AlertDialogFooter>
+											</AlertDialogContent>
+										</AlertDialog>
 									</div>
 								</div>
 
