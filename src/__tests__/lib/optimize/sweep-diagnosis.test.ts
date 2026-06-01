@@ -142,6 +142,32 @@ describe("diagnoseSweepAxes", () => {
 		expect(childRow?.status).toBe("active")
 	})
 
+	it("locks when owner is in sweep mode without the custom escape value", () => {
+		const owner = enumLeaf("bundle", ["off", "balanced", "custom"])
+		const owned = numLeaf("child", { managedBy: "bundle" })
+		const sel = new Map<string, LeafSelection>([
+			["bundle", { kind: "sweep_set", values: ["off", "balanced"] }],
+			["child", { kind: "sweep_range", min: 1, max: 5, step: 1 }],
+		])
+		const out = diagnoseSweepAxes([owner, owned], sel)
+		const childRow = out.find((d) => d.leafPath === "child")
+		expect(childRow?.status).toBe("locked")
+		expect(childRow?.ownerPath).toBe("bundle")
+	})
+
+	it("locks when owner is in sweep mode with a single non-custom value", () => {
+		const owner = enumLeaf("bundle", ["off", "custom"])
+		const owned = numLeaf("child", { managedBy: "bundle" })
+		const sel = new Map<string, LeafSelection>([
+			["bundle", { kind: "sweep_set", values: ["off"] }],
+			["child", { kind: "sweep_range", min: 1, max: 5, step: 1 }],
+		])
+		const out = diagnoseSweepAxes([owner, owned], sel)
+		const childRow = out.find((d) => d.leafPath === "child")
+		expect(childRow?.status).toBe("locked")
+		expect(childRow?.ownerValue).toBe("off")
+	})
+
 	it("owner-lock takes precedence over conditional gate", () => {
 		const owner = enumLeaf("bundle", ["off", "custom"])
 		const child = numLeaf("g", {

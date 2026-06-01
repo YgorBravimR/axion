@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { SegmentedToggle } from "@/components/ui/segmented-toggle"
@@ -17,6 +18,8 @@ interface EnumOrSweepProps {
 	id: string
 	/** Human-readable label (already i18n-resolved by the parent). */
 	label: string
+	/** Optional badge/icon rendered to the right of the label text. */
+	labelSuffix?: ReactNode
 	/** Optional hint shown beneath the label. */
 	hint?: string
 	/** Available enum values and their labels. Order matters (top → bottom). */
@@ -30,6 +33,7 @@ interface EnumOrSweepProps {
 const EnumOrSweep = ({
 	id,
 	label,
+	labelSuffix,
 	hint,
 	options,
 	selection,
@@ -75,7 +79,13 @@ const EnumOrSweep = ({
 		<div className="space-y-s-200">
 			<div className="gap-s-200 flex items-center justify-between">
 				<div className="min-w-0">
-					<Label id={`${id}-label`}>{label}</Label>
+					<Label
+						id={`${id}-label`}
+						className="gap-s-200 inline-flex items-center"
+					>
+						<span>{label}</span>
+						{labelSuffix}
+					</Label>
 					{hint && <p className="text-tiny text-txt-300 mt-s-100">{hint}</p>}
 				</div>
 				<div className="gap-s-200 flex shrink-0 items-center">

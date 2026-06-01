@@ -59,13 +59,25 @@ const runSweep = (
 
 		if (msg.type === "progress") {
 			runCounter++
+			// Label prefix mirrors the funnel stage so the runs table makes
+			// the broad → refine → freeze progression unmistakable at a
+			// glance. Falls back to "Sweep" when no stage is supplied
+			// (legacy callers and ad-hoc utilities).
+			const stagePrefix =
+				context.funnelStage === "refine"
+					? "Refine"
+					: context.funnelStage === "freeze"
+						? "Freeze"
+						: context.funnelStage === "broad"
+							? "Broad"
+							: "Sweep"
 			const run: OptimizationRun = {
 				id: crypto.randomUUID(),
-				label: `Sweep #${runCounter}`,
+				label: `${stagePrefix} #${runCounter}`,
 				recipe: msg.recipe,
 				summary: msg.summary,
 				equityCurve: msg.equityCurve,
-				trades: [],
+				trades: msg.trades,
 				dayBreakdown: [],
 				pinned: false,
 				createdAt: new Date().toISOString(),

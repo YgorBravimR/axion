@@ -1,6 +1,11 @@
-import type { BacktestTrade } from "@/types/backtest"
+import type { BacktestTrade, UserEntry } from "@/types/backtest"
 
 export type ResultCode = "GA" | "BE" | "ST" | "EOD" | "???"
+
+export interface CatalogEntry extends UserEntry {
+	expectedResult?: string | null
+	closingBrickPrice?: number | null
+}
 
 export interface AuditRow {
 	readonly date: string

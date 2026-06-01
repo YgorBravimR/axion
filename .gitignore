@@ -68,3 +68,6 @@ data/hawks/renko-sizes.csv
 .design-audit/
 .playwright-mcp/
 .gstack
+.arch/
+tmp/
+results-snapshot.md

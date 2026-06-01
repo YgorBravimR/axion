@@ -12,6 +12,7 @@ import type { CandleRow } from "@/types/candle"
 import type { BacktestTrade, StrategyRecipe, UserEntry } from "@/types/backtest"
 import type {
 	AuditRow,
+	CatalogEntry,
 	HawksAuditDebugResult,
 	ResultCode,
 } from "./hawks-audit-debug.types"
@@ -23,11 +24,6 @@ const ASSET_CONFIG = {
 	tickValueCents: 100,
 	currency: "BRL",
 } as const
-
-interface CatalogEntry extends UserEntry {
-	expectedResult?: string | null
-	closingBrickPrice?: number | null
-}
 
 const classifyResult = (reason: string, pnlCents: number): ResultCode => {
 	if (reason === "target1") {

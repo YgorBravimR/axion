@@ -156,9 +156,9 @@ interface QualityGatesConfig {
 	srLevelFavor?: boolean
 	// ── Group B: Keltner (planned, not yet wired) ─────────────────────────
 	keltnerOuterBlock?: boolean // hard reject when 165 band acts as floor/ceiling
-	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side
+	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side (legacy, see keltnerInner)
 	// ── Group C: MACD (planned) ───────────────────────────────────────────
-	macdAlignmentScore?: boolean // ±weight by sign + slope streak
+	macdAlignmentScore?: boolean // ±weight by sign + slope streak (legacy, see macd)
 	// ── Group D: aggression ───────────────────────────────────────────────
 	// Tri-state polarity switch. "off" = rule disabled (default, baseline
 	// behavior). "original" = aggression aligned with trade direction is
@@ -166,9 +166,9 @@ interface QualityGatesConfig {
 	// ("late to the move"); probe data on 20 days supports this polarity
 	// at threshold 15K with 1.67× selectivity. Recommended setting when
 	// enabling the rule is "reversed".
-	aggressionMode?: "off" | "original" | "reversed"
+	aggressionMode?: "off" | "original" | "reversed" // legacy, see aggression
 	// ── Group E: volume (planned) ─────────────────────────────────────────
-	volumeScore?: boolean // +weight if brick volume > running EMA
+	volumeScore?: boolean // +weight if brick volume > running EMA (legacy, see volume)
 	// ── Tunable parameters (defaults preserve current behavior) ───────────
 	srBlockBufferBricks?: number // default 2
 	srFavorRangeBricks?: number // default 3
@@ -181,6 +181,28 @@ interface QualityGatesConfig {
 	// ── Legacy alias for backwards-compat. Equivalent to srLevelBlock on
 	// just the 4 HTF MAs (no vwap_d / ajuste). Prefer srLevelBlock. ───────
 	htfMaBlock?: boolean
+
+	// ── NEW (v5→v6): Dual-mode quality gates ─────────────────────────────
+	// Each mode is independently toggleable:
+	//   off:   rule does nothing
+	//   score: adds favor/penalty to tier-label score only (legacy behavior)
+	//   block: gates entry (returns blocked:true on the rule's trigger)
+	//   both:  same trigger blocks AND emits score
+	keltnerInner?: { mode: "off" | "score" | "block" | "both" }
+	macd?: {
+		mode: "off" | "score" | "block" | "both"
+		slopeWindow?: number // reused for both score and block; defaults to macdSlopeWindow (3)
+	}
+	volume?: {
+		mode: "off" | "score" | "block" | "both"
+		emaPeriod?: number // reused; defaults to volumeEmaPeriod (500)
+	}
+	aggression?: {
+		// Split per spec — score and block modes are independent.
+		scoreMode?: "off" | "original" | "reversed"
+		blockMode?: "off" | "blockOnAligned" | "blockOnAnti"
+		threshold?: number // reused; defaults to aggressionThreshold (15000)
+	}
 }
 
 interface TierThresholds {
@@ -666,6 +688,11 @@ interface OptimizationRun {
 	matchRate?: number // 0..1
 	matchRateIS?: number // in-sample match rate (walk-forward mode)
 	matchRateOOS?: number // out-of-sample match rate (walk-forward mode)
+	// Phase 5B — localStorage compaction. True if full trades array is retained
+	// (run on Pareto front or single-metric extreme). False if trades were stripped
+	// for storage quota relief — the summary survives but trade detail is not available.
+	// Default true for back-compat (legacy runs assume trades were always retained).
+	tradesRetained?: boolean
 }
 
 // ═══════════════════════════════════════════════════════════════════

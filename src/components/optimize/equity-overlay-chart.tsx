@@ -70,20 +70,29 @@ const OverlayTooltip = ({ active, payload, runsMap }: OverlayTooltipProps) => {
 const EquityOverlayChart = memo(({ runs }: EquityOverlayChartProps) => {
 	const { yAxisWidth, tickFontSize } = useChartConfig()
 
-	const runsMap = useMemo(() => new Map(runs.map((r) => [r.id, r])), [runs])
+	// Filter out runs where trades were compacted (tradesRetained === false)
+	const filteredRuns = useMemo(
+		() => runs.filter((r) => r.tradesRetained !== false),
+		[runs]
+	)
+
+	const runsMap = useMemo(
+		() => new Map(filteredRuns.map((r) => [r.id, r])),
+		[filteredRuns]
+	)
 
 	// Build merged data: one row per trade index, one column per run
 	const { chartData } = useMemo(() => {
-		if (runs.length === 0) {
+		if (filteredRuns.length === 0) {
 			return { chartData: [] }
 		}
 
-		const maxIdx = Math.max(...runs.map((r) => r.equityCurve.length))
+		const maxIdx = Math.max(...filteredRuns.map((r) => r.equityCurve.length))
 		const data: OverlayDataPoint[] = []
 
 		for (let i = 0; i < maxIdx; i++) {
 			const point: OverlayDataPoint = { tradeIndex: i + 1 }
-			for (const run of runs) {
+			for (const run of filteredRuns) {
 				const curvePoint = run.equityCurve[i]
 				if (curvePoint) {
 					point[run.id] = curvePoint.cumulativePnlCents / 100
@@ -93,13 +102,15 @@ const EquityOverlayChart = memo(({ runs }: EquityOverlayChartProps) => {
 		}
 
 		return { chartData: data }
-	}, [runs])
+	}, [filteredRuns])
 
 	// Sort runs by profit factor descending so best gets gold
 	const sortedRuns = useMemo(
 		() =>
-			[...runs].sort((a, b) => b.summary.profitFactor - a.summary.profitFactor),
-		[runs]
+			[...filteredRuns].sort(
+				(a, b) => b.summary.profitFactor - a.summary.profitFactor
+			),
+		[filteredRuns]
 	)
 
 	if (chartData.length === 0) {

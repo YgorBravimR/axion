@@ -27,6 +27,9 @@ import {
 	BarChart3,
 	Table2,
 	GitCompare as ScatterIcon,
+	Sparkles,
+	X,
+	Download,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchBacktestData } from "@/app/actions/backtest"
@@ -92,6 +95,7 @@ import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
 import { SweepAxisDiagnostics } from "./sweep-axis-diagnostics"
 import { loadRuns, saveRuns, clearRuns } from "@/lib/optimize/storage"
+import { exportRunsAsJson, exportRunsAsCsv } from "@/lib/optimize/export-runs"
 import type { DateRange } from "react-day-picker"
 import type { DataSourceInfo, CandleRow } from "@/types/candle"
 import type {
@@ -219,6 +223,13 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	} | null>(null)
 	// Hero-freeze modal — set to a run id when the user clicks "Freeze as hero preset".
 	const [freezeRunId, setFreezeRunId] = useState<string | null>(null)
+	// Results-step tab selection. Controlled so the post-refine hint can
+	// navigate to the Pareto tab when the user clicks "Iterate".
+	const [resultsTab, setResultsTab] = useState<string>("chart")
+	// Dismissible hint shown when refine runs exist. Session-scoped — comes
+	// back on reload by design, since each refine wave should re-prompt the
+	// "what's next?" decision.
+	const [postRefineHintHidden, setPostRefineHintHidden] = useState(false)
 	const heroPresets = useHeroPresets()
 	const mergedPresets = useMemo<StrategyRecipe[]>(
 		() => [...ALL_PRESETS, ...heroPresets.map((h) => h.recipe)],
@@ -597,7 +608,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					recipe.entry.type === "hawks_triple_screen"
 						? catalogRef.current
 						: undefined,
-				funnelStage: refineState ? "refine" : undefined,
+				// Always stamp a stage — `undefined` would render as "ad-hoc"
+				// in the table, which the user reads as "untagged noise" and
+				// fails to distinguish from refined runs. Broad is the
+				// explicit default; refine fires only when a Pareto multi-
+				// select breeds new selections.
+				funnelStage: refineState ? "refine" : "broad",
 				parentRunIds: refineState?.parentRunIds,
 				journeyId: refineState?.journeyId,
 			},
@@ -716,6 +732,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		[inlineSweepBundle, runs, showToast, t]
 	)
 
+	const handleApplyDriverRecommendation = useCallback(
+		(leafPath: string, value: unknown) => {
+			if (!inlineSweepBundle || !leafSelections) {
+				return
+			}
+			const next = new Map(leafSelections)
+			next.set(leafPath, { kind: "fixed", value: value as never })
+			setLeafSelections(next)
+		},
+		[inlineSweepBundle, leafSelections]
+	)
+
 	const handleClearAll = useCallback(() => {
 		setRuns([])
 		clearRuns()
@@ -776,6 +804,22 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			inlineSweepBundle.validators
 		)
 	}, [inlineSweepBundle, leafSelections])
+
+	/**
+	 * Post-refine hint state — derive the best refine-stage run (highest
+	 * profitFactor) so the hint's "Freeze winner" CTA can target it. The
+	 * hint surfaces whenever any refine run exists; it's dismissible per
+	 * session via `postRefineHintHidden`.
+	 */
+	const bestRefineRun = useMemo<OptimizationRun | null>(() => {
+		const refineRuns = runs.filter((r) => r.provenance?.stage === "refine")
+		if (refineRuns.length === 0) {
+			return null
+		}
+		return refineRuns.reduce((best, r) =>
+			r.summary.profitFactor > best.summary.profitFactor ? r : best
+		)
+	}, [runs])
 
 	const totalCombinations = useMemo(() => {
 		if (cardinalityBreakdown !== null) {
@@ -1005,6 +1049,44 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{t("wizard.parametersDesc")}
 						</p>
 
+						{refineState && inlineSweepBundle && (
+							<div
+								id="refine-banner"
+								className="border-trade-buy/40 bg-trade-buy/5 gap-s-300 p-s-300 flex items-start rounded-md border"
+							>
+								<Sparkles
+									className="text-trade-buy mt-s-100 h-4 w-4 shrink-0"
+									aria-hidden="true"
+								/>
+								<div className="space-y-s-100 flex-1">
+									<p className="text-small text-txt-100 font-medium">
+										{t("funnel.refineBannerTitle", {
+											parents: refineState.parentRunIds.length,
+											combos: cardinalityBreakdown?.valid ?? 0,
+										})}
+									</p>
+									<p className="text-tiny text-txt-300">
+										{t("funnel.refineBannerHint")}
+									</p>
+								</div>
+								<button
+									id="refine-banner-clear"
+									type="button"
+									onClick={() => {
+										setRefineState(null)
+										setLeafSelections(
+											deriveInitialSelections(inlineSweepBundle.leaves, recipe)
+										)
+									}}
+									className="text-txt-300 hover:text-txt-100 gap-s-100 text-tiny flex shrink-0 items-center transition-colors"
+									aria-label={t("funnel.refineBannerExitAria")}
+								>
+									<X className="h-3 w-3" aria-hidden="true" />
+									{t("funnel.refineBannerExit")}
+								</button>
+							</div>
+						)}
+
 						{inlineSweepBundle && leafSelections !== null ? (
 							inlineSweepBundle.strategyKey === "hawks" ? (
 								<HawksSweepBuilder
@@ -1225,8 +1307,64 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							{/* Summary stat cards */}
 							<SummaryCards runs={runs} />
 
+							{bestRefineRun && !postRefineHintHidden && (
+								<div
+									id="post-refine-hint"
+									className="border-acc-100/40 bg-acc-100/5 gap-s-300 p-s-300 flex items-start rounded-md border"
+								>
+									<Sparkles
+										className="text-acc-100 mt-s-100 h-4 w-4 shrink-0"
+										aria-hidden="true"
+									/>
+									<div className="space-y-s-200 flex-1">
+										<div className="space-y-s-100">
+											<p className="text-small text-txt-100 font-medium">
+												{t("postRefineHint.title")}
+											</p>
+											<p className="text-tiny text-txt-300">
+												{t("postRefineHint.body", {
+													best: bestRefineRun.label,
+													pf: bestRefineRun.summary.profitFactor.toFixed(2),
+												})}
+											</p>
+										</div>
+										<div className="gap-s-200 flex flex-wrap">
+											<Button
+												id="post-refine-iterate"
+												size="sm"
+												variant="outline"
+												onClick={() => setResultsTab("pareto")}
+												className="gap-s-100"
+											>
+												<ScatterIcon className="h-3 w-3" aria-hidden="true" />
+												{t("postRefineHint.iterateCta")}
+											</Button>
+											<Button
+												id="post-refine-freeze"
+												size="sm"
+												variant="default"
+												onClick={() => setFreezeRunId(bestRefineRun.id)}
+												className="gap-s-100"
+											>
+												<Sparkles className="h-3 w-3" aria-hidden="true" />
+												{t("postRefineHint.freezeCta")}
+											</Button>
+										</div>
+									</div>
+									<button
+										id="post-refine-hint-dismiss"
+										type="button"
+										onClick={() => setPostRefineHintHidden(true)}
+										className="text-txt-300 hover:text-txt-100 shrink-0 transition-colors"
+										aria-label={t("postRefineHint.dismissAria")}
+									>
+										<X className="h-3 w-3" aria-hidden="true" />
+									</button>
+								</div>
+							)}
+
 							{/* Chart / Table tabs */}
-							<Tabs defaultValue="chart">
+							<Tabs value={resultsTab} onValueChange={setResultsTab}>
 								<div className="flex items-center justify-between">
 									<TabsList variant="line">
 										<TabsTrigger value="chart" className="gap-s-200">
@@ -1247,16 +1385,42 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 										</TabsTrigger>
 									</TabsList>
 
-									<Button
-										id="optimize-clear-all"
-										variant="ghost"
-										size="sm"
-										onClick={handleClearAll}
-										className="text-txt-300 hover:text-fb-error gap-s-200"
-									>
-										<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-										{t("clearAll")}
-									</Button>
+									<div className="gap-s-200 flex items-center">
+										<Button
+											id="optimize-export-json"
+											variant="ghost"
+											size="sm"
+											onClick={() => exportRunsAsJson(runs)}
+											disabled={runs.length === 0}
+											className="text-txt-300 hover:text-txt-100 gap-s-200"
+											title={t("exportJsonTitle")}
+										>
+											<Download className="h-3.5 w-3.5" aria-hidden="true" />
+											{t("exportJson")}
+										</Button>
+										<Button
+											id="optimize-export-csv"
+											variant="ghost"
+											size="sm"
+											onClick={() => exportRunsAsCsv(runs)}
+											disabled={runs.length === 0}
+											className="text-txt-300 hover:text-txt-100 gap-s-200"
+											title={t("exportCsvTitle")}
+										>
+											<Download className="h-3.5 w-3.5" aria-hidden="true" />
+											{t("exportCsv")}
+										</Button>
+										<Button
+											id="optimize-clear-all"
+											variant="ghost"
+											size="sm"
+											onClick={handleClearAll}
+											className="text-txt-300 hover:text-fb-error gap-s-200"
+										>
+											<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+											{t("clearAll")}
+										</Button>
+									</div>
 								</div>
 
 								{/* Chart tab: equity overlay + heatmap */}
@@ -1291,7 +1455,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 								{/* Drivers tab: loser pattern mining */}
 								<TabsContent value="drivers" className="mt-m-400">
-									<LoserPatternInspector runs={runs} />
+									<LoserPatternInspector
+										runs={runs}
+										onApplyRecommendation={handleApplyDriverRecommendation}
+									/>
 								</TabsContent>
 
 								{/* Table tab: comparison table */}

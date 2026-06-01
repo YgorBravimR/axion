@@ -29,11 +29,14 @@ interface ProgressMessage {
 	recipe: StrategyRecipe
 	summary: BacktestSummary
 	equityCurve: EquityCurvePoint[]
+	trades: ReturnType<typeof runBacktest>["trades"]
 	// Phase 1a walk-forward — populated only when the sweep is in IS/OOS mode.
 	summaryIS?: BacktestSummary
 	summaryOOS?: BacktestSummary
 	equityCurveIS?: EquityCurvePoint[]
 	equityCurveOOS?: EquityCurvePoint[]
+	tradesIS?: ReturnType<typeof runBacktest>["trades"]
+	tradesOOS?: ReturnType<typeof runBacktest>["trades"]
 	oosRobust?: boolean
 	// Phase 3B match rate — fraction of trades matching catalog by (date, brickIndex)
 	matchRate?: number
@@ -129,11 +132,14 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					// summary and equityCurve reflect IS (the optimization target)
 					summary: isResult.summary,
 					equityCurve: isResult.equityCurve,
+					trades: isResult.trades,
 					// Phase 1a fields
 					summaryIS: isResult.summary,
 					summaryOOS: oosResult.summary,
 					equityCurveIS: isResult.equityCurve,
 					equityCurveOOS: oosResult.equityCurve,
+					tradesIS: isResult.trades,
+					tradesOOS: oosResult.trades,
 					oosRobust: isOosRobust(isResult.summary, oosResult.summary),
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
@@ -162,6 +168,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					recipe,
 					summary: result.summary,
 					equityCurve: result.equityCurve,
+					trades: result.trades,
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
 						recipe.entry.type === "hawks_triple_screen" && {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, type ReactNode } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { expandRange } from "@/lib/optimize/sweep-leaf"
@@ -16,6 +16,8 @@ interface NumberOrSweepProps {
 	id: string
 	/** Human-readable label (already i18n-resolved by the parent). */
 	label: string
+	/** Optional badge/icon rendered to the right of the label text. */
+	labelSuffix?: ReactNode
 	/** Optional hint shown beneath the label. */
 	hint?: string
 	/** Current selection — fix value or sweep range. */
@@ -29,6 +31,7 @@ interface NumberOrSweepProps {
 const NumberOrSweep = ({
 	id,
 	label,
+	labelSuffix,
 	hint,
 	selection,
 	onSelectionChange,
@@ -74,8 +77,13 @@ const NumberOrSweep = ({
 		<div className="space-y-s-200">
 			<div className="gap-s-200 flex items-center justify-between">
 				<div className="min-w-0">
-					<Label id={`${id}-label`} htmlFor={id}>
-						{label}
+					<Label
+						id={`${id}-label`}
+						htmlFor={id}
+						className="gap-s-200 inline-flex items-center"
+					>
+						<span>{label}</span>
+						{labelSuffix}
 					</Label>
 					{hint && <p className="text-tiny text-txt-300 mt-s-100">{hint}</p>}
 				</div>

@@ -16,8 +16,12 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 			return null
 		}
 
-		const profitable = runs.filter((r) => r.summary.totalPnlCents > 0).length
-		const losing = runs.length - profitable
+		// Only count runs with actual trades (tradesRetained !== false)
+		const runsWithTrades = runs.filter((r) => r.tradesRetained !== false)
+		const profitable = runsWithTrades.filter(
+			(r) => r.summary.totalPnlCents > 0
+		).length
+		const losing = runsWithTrades.length - profitable
 		const bestPF = Math.max(...runs.map((r) => r.summary.profitFactor))
 		const bestSharpe = Math.max(...runs.map((r) => r.summary.sharpeRatio))
 

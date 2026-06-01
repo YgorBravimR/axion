@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
+import { Info } from "lucide-react"
 import {
 	Dialog,
 	DialogContent,
@@ -12,6 +13,11 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
 	evaluateHeroGates,
 	suggestPresetId,
@@ -39,6 +45,7 @@ const FreezeHeroModal = ({
 	onFrozen,
 }: FreezeHeroModalProps) => {
 	const t = useTranslations("optimize.freezeHero")
+	const tWalkForward = useTranslations("optimize.walkForward")
 
 	const [notes, setNotes] = useState("")
 	const [presetIdOverride, setPresetIdOverride] = useState<string | null>(null)
@@ -172,9 +179,27 @@ const FreezeHeroModal = ({
 							<dt className="text-txt-300">{t("metricPF")}</dt>
 							<dd className="text-txt-100 font-mono">
 								{run.summary.profitFactor.toFixed(2)}
-								{run.summaryOOS
-									? ` / ${run.summaryOOS.profitFactor.toFixed(2)} ${t("oosSuffix")}`
-									: ""}
+								{run.summaryOOS && (
+									<>
+										{" / "}
+										<span className="gap-s-100 inline-flex items-center">
+											{run.summaryOOS.profitFactor.toFixed(2)}
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-txt-300 hover:text-txt-200 border-bg-300 px-s-100 text-micro inline-flex cursor-help items-center rounded-full border py-[1px] font-medium">
+														<Info className="size-3" aria-hidden />
+													</span>
+												</TooltipTrigger>
+												<TooltipContent
+													id="freeze-oos-metric-tooltip"
+													className="max-w-xs"
+												>
+													{tWalkForward("outOfSampleTooltip")}
+												</TooltipContent>
+											</Tooltip>
+										</span>
+									</>
+								)}
 							</dd>
 							<dt className="text-txt-300">{t("metricDD")}</dt>
 							<dd className="text-trade-sell font-mono">

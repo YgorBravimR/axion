@@ -2,12 +2,18 @@
 
 import { useCallback, useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
-import { ChevronDown, RotateCcw } from "lucide-react"
+import { ChevronDown, RotateCcw, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { countConditionalGridBreakdown } from "@/lib/optimize/grid-conditional"
+import { isLabelOnlyAxis } from "@/lib/backtest/presets/hawks-axis-roles"
 import type {
 	LeafGroupValidator,
 	LeafSelection,
@@ -113,6 +119,29 @@ const isLeafActive = (
 	)
 }
 
+/**
+ * The "escape hatch" value an owner takes to release its managed leaves
+ * back to user control. Today only `qualityBundle = "custom"` qualifies;
+ * lift this if another owner ships with a different unlock value.
+ */
+const UNLOCK_OWNER_VALUE: PrimitiveValue = "custom"
+
+/**
+ * True when every possible value of the owner forces a lock — i.e. the
+ * user's sweep on the managed leaf cannot affect ANY combo in the grid.
+ *
+ * Cases:
+ *   - owner missing / undefined: not locked (owner free to take any value)
+ *   - owner fixed = "custom": not locked (escape hatch active)
+ *   - owner fixed ≠ "custom": locked (every combo uses preset)
+ *   - owner sweep_set including "custom": NOT locked (some combos unlock)
+ *   - owner sweep_set excluding "custom": LOCKED (every combo forces preset)
+ *   - owner sweep_range: not locked (numeric owners don't manage bundles)
+ *
+ * Mirrors the runtime behaviour of `generateConditionalGrid` — there the
+ * lock is decided per-combo by the owner's value in that row. We aggregate
+ * across combos: a leaf is "fully" locked only when no row escapes.
+ */
 const isLeafLockedByBundle = (
 	leaf: SweepableLeaf,
 	selections: Map<string, LeafSelection>
@@ -121,10 +150,16 @@ const isLeafLockedByBundle = (
 		return false
 	}
 	const ownerSelection = selections.get(leaf.managedBy)
-	if (!ownerSelection || ownerSelection.kind !== "fixed") {
+	if (!ownerSelection) {
 		return false
 	}
-	return ownerSelection.value !== "custom"
+	if (ownerSelection.kind === "fixed") {
+		return ownerSelection.value !== UNLOCK_OWNER_VALUE
+	}
+	if (ownerSelection.kind === "sweep_set") {
+		return !ownerSelection.values.includes(UNLOCK_OWNER_VALUE)
+	}
+	return false
 }
 
 const sectionForLeaf = (
@@ -166,18 +201,57 @@ const StrategySweepBuilder = ({
 		})
 	}, [])
 
-	const lockingBundleValue = useMemo<string | null>(() => {
+	/**
+	 * The bundle "lock identity" used to render the section hint. When the
+	 * bundle is fixed to a named preset, we show that name (e.g. "Balanced").
+	 * When the bundle is a sweep_set of presets with no "custom", we still
+	 * need a hint — render the set joined for readability. Returns `null`
+	 * when the bundle is unset, fixed to "custom", or includes "custom" in
+	 * a sweep (escape hatch present ⇒ owned axes contribute on some combos
+	 * ⇒ no lock to advertise).
+	 */
+	/**
+	 * The bundle's current "locking identity" used to render the section
+	 * hint. Two shapes:
+	 *   - `{ mode: "fixed", value }`: bundle is fixed to a single named
+	 *     preset (e.g. "balanced"). The hint resolves that key via tLeaf
+	 *     so the localized label appears.
+	 *   - `{ mode: "sweep", values }`: bundle is a sweep_set of presets
+	 *     with no "custom". The hint joins localized labels for each.
+	 * Returns `null` when the bundle is unset, fixed to "custom", or the
+	 * sweep includes "custom" — in those cases there's no lock to advertise.
+	 */
+	const lockingBundleValue = useMemo<
+		| { mode: "fixed"; value: string }
+		| { mode: "sweep"; values: string[] }
+		| null
+	>(() => {
 		if (!bundle) {
 			return null
 		}
 		const bundleSel = selections.get(bundle.path)
-		if (!bundleSel || bundleSel.kind !== "fixed") {
+		if (!bundleSel) {
 			return null
 		}
-		if (typeof bundleSel.value !== "string" || bundleSel.value === "custom") {
-			return null
+		if (bundleSel.kind === "fixed") {
+			if (typeof bundleSel.value !== "string" || bundleSel.value === "custom") {
+				return null
+			}
+			return { mode: "fixed", value: bundleSel.value }
 		}
-		return bundleSel.value
+		if (bundleSel.kind === "sweep_set") {
+			if (bundleSel.values.includes("custom")) {
+				return null
+			}
+			const stringValues = bundleSel.values.filter(
+				(v): v is string => typeof v === "string"
+			)
+			if (stringValues.length === 0) {
+				return null
+			}
+			return { mode: "sweep", values: stringValues }
+		}
+		return null
 	}, [selections, bundle])
 
 	const cardinality = useMemo(() => {
@@ -430,12 +504,17 @@ const StrategySweepBuilder = ({
 								id={`section-panel-${section.id}`}
 								className="border-bg-300 p-m-400 space-y-m-400 border-t"
 							>
-								{showBundleHint && bundle && (
+								{showBundleHint && bundle && lockingBundleValue && (
 									<div className="border-bg-400 bg-bg-300 p-s-300 text-tiny text-txt-200 rounded-md border">
 										{tBuilder("bundleLockHint", {
-											bundle: tLeaf(
-												`${bundle.labelKeyPrefix}${lockingBundleValue}`
-											),
+											bundle:
+												lockingBundleValue.mode === "fixed"
+													? tLeaf(
+															`${bundle.labelKeyPrefix}${lockingBundleValue.value}`
+														)
+													: lockingBundleValue.values
+															.map((v) => tLeaf(`${bundle.labelKeyPrefix}${v}`))
+															.join(", "),
 											count: bundle.ownedPaths.length,
 										})}
 									</div>
@@ -476,7 +555,32 @@ const LeafControl = ({
 	onChange,
 }: LeafControlProps) => {
 	const tLeaf = useTranslations("optimize.sweepLeaf")
+	const tAxisRole = useTranslations("optimize.sweepAxisRole")
 	const label = tLeaf(leaf.labelKey)
+	// Axes that only feed `trade.quality.tier` (AAA/AA/A/B) without affecting
+	// PnL/PF/Sharpe. Render a tiny info badge so the user doesn't waste
+	// optimizer budget sweeping a score-only knob when they expect PnL impact.
+	// Source of truth: src/lib/backtest/presets/hawks-axis-roles.ts
+	const labelOnly = isLabelOnlyAxis(leaf.path)
+	const labelSuffix = labelOnly ? (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<span
+					className="text-txt-300 hover:text-txt-200 gap-s-100 border-bg-300 px-s-200 text-micro inline-flex cursor-help items-center rounded-full border py-[1px] font-medium"
+					aria-label={tAxisRole("labelOnlyAria")}
+				>
+					<Info className="size-3" aria-hidden />
+					{tAxisRole("labelOnlyTag")}
+				</span>
+			</TooltipTrigger>
+			<TooltipContent
+				id={`${leaf.path}-label-only-tooltip`}
+				className="max-w-xs"
+			>
+				{tAxisRole("labelOnlyTooltip")}
+			</TooltipContent>
+		</Tooltip>
+	) : undefined
 
 	if (leaf.kind === "number") {
 		const sel: NumberSelection =
@@ -493,6 +597,7 @@ const LeafControl = ({
 			<NumberOrSweep
 				id={`leaf-${leaf.path}`}
 				label={label}
+				labelSuffix={labelSuffix}
 				selection={sel}
 				onSelectionChange={onChange}
 				defaults={{
@@ -521,6 +626,7 @@ const LeafControl = ({
 			<BoolOrSweep
 				id={`leaf-${leaf.path}`}
 				label={label}
+				labelSuffix={labelSuffix}
 				selection={sel}
 				onSelectionChange={onChange}
 			/>
@@ -543,6 +649,7 @@ const LeafControl = ({
 			<EnumOrSweep
 				id={`leaf-${leaf.path}`}
 				label={label}
+				labelSuffix={labelSuffix}
 				options={leaf.options.map((o) => ({
 					value: o.value,
 					label: tLeaf(o.labelKey),
@@ -574,6 +681,7 @@ const LeafControl = ({
 			<TimeOrSweep
 				id={`leaf-${leaf.path}`}
 				label={label}
+				labelSuffix={labelSuffix}
 				selection={sel}
 				onSelectionChange={onChange}
 			/>

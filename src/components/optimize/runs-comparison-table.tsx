@@ -6,8 +6,20 @@ import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { formatCentsAsCurrency } from "@/lib/money"
-import { Pin, PinOff, ChevronRight, Trash2, AlertTriangle } from "lucide-react"
+import {
+	Pin,
+	PinOff,
+	ChevronRight,
+	Trash2,
+	AlertTriangle,
+	Info,
+} from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { OptimizationRun } from "@/types/backtest"
 
@@ -201,7 +213,20 @@ const RunsComparisonTable = ({
 			{
 				accessorFn: (row) => row.summaryIS?.profitFactor,
 				id: "isPF",
-				header: t("walkForward.isPF"),
+				meta: { ariaLabel: t("walkForward.isPF") },
+				header: () => (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="gap-s-100 inline-flex cursor-help items-center">
+								{t("walkForward.isPF")}
+								<Info className="size-3" />
+							</span>
+						</TooltipTrigger>
+						<TooltipContent id="table-is-pf-tooltip" className="max-w-xs">
+							{t("walkForward.inSampleTooltip")}
+						</TooltipContent>
+					</Tooltip>
+				),
 				cell: ({ getValue }) => {
 					const isPF = getValue<number | undefined>()
 					if (isPF === undefined) {
@@ -217,7 +242,20 @@ const RunsComparisonTable = ({
 			{
 				accessorFn: (row) => row.summaryOOS?.profitFactor,
 				id: "oosPF",
-				header: t("walkForward.oosPF"),
+				meta: { ariaLabel: t("walkForward.oosPF") },
+				header: () => (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="gap-s-100 inline-flex cursor-help items-center">
+								{t("walkForward.oosPF")}
+								<Info className="size-3" />
+							</span>
+						</TooltipTrigger>
+						<TooltipContent id="table-oos-pf-tooltip" className="max-w-xs">
+							{t("walkForward.outOfSampleTooltip")}
+						</TooltipContent>
+					</Tooltip>
+				),
 				cell: ({ getValue, row }) => {
 					const oosPF = getValue<number | undefined>()
 					if (oosPF === undefined) {

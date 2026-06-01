@@ -58,23 +58,38 @@ const DataTable = <TData, TValue>({
 
 	return (
 		<div className="space-y-4">
-			<div className="rounded-lg border border-bg-300 overflow-hidden">
+			<div className="border-bg-300 overflow-hidden rounded-lg border">
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow key={headerGroup.id} className="bg-bg-300 hover:bg-bg-300">
+							<TableRow
+								key={headerGroup.id}
+								className="bg-bg-300 hover:bg-bg-300"
+							>
 								{headerGroup.headers.map((header) => {
 									const isSortable = header.column.getCanSort()
 									const sorted = header.column.getIsSorted()
+									const headerMeta = header.column.columnDef.meta as
+										| { headerClassName?: string; ariaLabel?: string }
+										| undefined
+									const headerDef = header.column.columnDef.header
+									const columnLabel =
+										headerMeta?.ariaLabel ??
+										(typeof headerDef === "string"
+											? headerDef
+											: header.column.id)
 
 									return (
-										<TableHead key={header.id} className={(header.column.columnDef.meta as Record<string, string> | undefined)?.headerClassName}>
+										<TableHead
+											key={header.id}
+											className={headerMeta?.headerClassName}
+										>
 											{header.isPlaceholder ? null : isSortable ? (
 												<button
 													type="button"
-													className="flex items-center gap-s-100 hover:text-txt-100 transition-colors"
+													className="gap-s-100 hover:text-txt-100 flex items-center transition-colors"
 													onClick={header.column.getToggleSortingHandler()}
-													aria-label={t("sortBy", { column: header.column.id })}
+													aria-label={t("sortBy", { column: columnLabel })}
 												>
 													{flexRender(
 														header.column.columnDef.header,
@@ -106,12 +121,19 @@ const DataTable = <TData, TValue>({
 								<TableRow
 									key={row.id}
 									data-state={row.getIsSelected() && "selected"}
-									className={cn(
-										striped && index % 2 === 1 && "bg-bg-stripe"
-									)}
+									className={cn(striped && index % 2 === 1 && "bg-bg-stripe")}
 								>
 									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id} className={(cell.column.columnDef.meta as Record<string, string> | undefined)?.cellClassName}>
+										<TableCell
+											key={cell.id}
+											className={
+												(
+													cell.column.columnDef.meta as
+														| Record<string, string>
+														| undefined
+												)?.cellClassName
+											}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext()
@@ -124,7 +146,7 @@ const DataTable = <TData, TValue>({
 							<TableRow>
 								<TableCell
 									colSpan={columns.length}
-									className="h-24 text-center text-txt-300"
+									className="text-txt-300 h-24 text-center"
 								>
 									{emptyMessage ?? t("noResultsSimple")}
 								</TableCell>
@@ -136,14 +158,14 @@ const DataTable = <TData, TValue>({
 
 			{/* Pagination */}
 			{table.getPageCount() > 1 && (
-				<div className="flex items-center justify-between px-s-200">
+				<div className="px-s-200 flex items-center justify-between">
 					<p className="text-small text-txt-300">
 						{t("pagination.pageOf", {
 							current: table.getState().pagination.pageIndex + 1,
 							total: table.getPageCount(),
 						})}
 					</p>
-					<div className="flex items-center gap-s-200">
+					<div className="gap-s-200 flex items-center">
 						<Button
 							id="data-table-prev"
 							variant="outline"

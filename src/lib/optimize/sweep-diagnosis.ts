@@ -41,15 +41,46 @@ interface SweepAxisDiagnosis {
 	conditionParentValue?: PrimitiveValue | undefined
 }
 
-const readFixedValue = (
+/**
+ * Owner value that releases its managed leaves to user control. Today
+ * only `qualityBundle = "custom"` qualifies — kept as a constant so it
+ * matches `strategy-sweep-builder.tsx` and `validator-remediation.ts`.
+ */
+const UNLOCK_OWNER_VALUE: PrimitiveValue = "custom"
+
+/**
+ * Per-owner lock summary: whether the owner's current selection forces
+ * a lock for ALL grid combos, and a single representative value to show
+ * the user. Mirrors `isLeafLockedByBundle` in `strategy-sweep-builder.tsx`.
+ *
+ *   - fixed = "custom"           → not locked
+ *   - fixed ≠ "custom"           → locked, label = the value
+ *   - sweep_set includes "custom" → not locked (some combos escape)
+ *   - sweep_set excludes "custom" → locked, label = first value (UI hint)
+ *   - sweep_range                 → not locked (numeric owners don't bundle)
+ *   - missing                    → not locked
+ */
+const resolveOwnerLock = (
 	selections: Map<string, LeafSelection>,
-	path: string
-): PrimitiveValue | undefined => {
-	const sel = selections.get(path)
-	if (!sel || sel.kind !== "fixed") {
-		return undefined
+	ownerPath: string
+): { locked: boolean; representativeValue?: PrimitiveValue } => {
+	const sel = selections.get(ownerPath)
+	if (!sel) {
+		return { locked: false }
 	}
-	return sel.value
+	if (sel.kind === "fixed") {
+		if (sel.value === UNLOCK_OWNER_VALUE) {
+			return { locked: false }
+		}
+		return { locked: true, representativeValue: sel.value }
+	}
+	if (sel.kind === "sweep_set") {
+		if (sel.values.includes(UNLOCK_OWNER_VALUE)) {
+			return { locked: false }
+		}
+		return { locked: true, representativeValue: sel.values[0] }
+	}
+	return { locked: false }
 }
 
 /**
@@ -58,8 +89,8 @@ const readFixedValue = (
  *
  * Locked detection (matches `generateConditionalGrid`):
  *   - leaf has `managedBy` (owner path)
- *   - owner is fixed
- *   - owner's fixed value is NOT `"custom"`
+ *   - EVERY possible owner value (across the owner's selection) forces
+ *     a lock — i.e. none of the values is the `"custom"` escape hatch
  *
  * Gated detection: simplified — we only flag gates the user can SEE in
  * the current selection map. If the parent is in sweep mode (multiple
@@ -78,16 +109,17 @@ const diagnoseSweepAxes = (
 			continue
 		}
 
-		// 1. Owner-lock check — only when owner is fixed AND not "custom".
+		// 1. Owner-lock check — locked when every possible owner value
+		//    forces a lock (no "custom" escape across the selection).
 		if (leaf.managedBy) {
-			const ownerValue = readFixedValue(selections, leaf.managedBy)
-			if (ownerValue !== undefined && ownerValue !== "custom") {
+			const ownerLock = resolveOwnerLock(selections, leaf.managedBy)
+			if (ownerLock.locked) {
 				out.push({
 					leafPath: leaf.path,
 					labelKey: leaf.labelKey,
 					status: "locked",
 					ownerPath: leaf.managedBy,
-					ownerValue,
+					ownerValue: ownerLock.representativeValue ?? "",
 				})
 				continue
 			}

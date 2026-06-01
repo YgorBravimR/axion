@@ -5081,6 +5081,17 @@
 		"noParamsSelected": "Selecione ao menos um parâmetro para varrer",
 		"runSweep": "Executar Varredura",
 		"clearAll": "Limpar Tudo",
+		"postRefineHint": {
+			"title": "Refine concluído — escolha o próximo passo",
+			"body": "Melhor run do refine: {best} (PF {pf}). Itere para estreitar mais ou congele o vencedor como preset hero.",
+			"iterateCta": "Iterar — selecionar nova fronteira no Pareto",
+			"freezeCta": "Congelar vencedor como preset hero",
+			"dismissAria": "Dispensar dica de próximo passo"
+		},
+		"exportJson": "Exportar JSON",
+		"exportJsonTitle": "Baixar todas as execuções como JSON (sem perdas, inclui lineage)",
+		"exportCsv": "Exportar CSV",
+		"exportCsvTitle": "Baixar métricas resumidas por execução em CSV (amigável ao Excel)",
 		"noRuns": "Nenhuma execução ainda",
 		"sweepOverLimit": "Combinações demais (máx {max})",
 		"sweepComplete": "{total} execuções concluídas em {seconds}s",
@@ -5131,7 +5142,14 @@
 			"profitable": "Lucrativas",
 			"losing": "Perdedoras",
 			"bestPF": "Melhor PF",
-			"bestSharpe": "Melhor Sharpe"
+			"bestSharpe": "Melhor Sharpe",
+			"withDetail": "Variações lucrativas (com detalhes completos)"
+		},
+		"runs": {
+			"tradesNotRetained": {
+				"label": "Detalhes das operações não retidos",
+				"tooltip": "Os detalhes das operações desta execução foram compactados para economizar armazenamento. Execute novamente a varredura para inspecionar os dados completos das operações."
+			}
 		},
 		"pinToChart": "Fixar no gráfico",
 		"unpinFromChart": "Remover do gráfico",
@@ -5225,6 +5243,17 @@
 			"hawksAggressionMode_off": "Desligado",
 			"hawksAggressionMode_original": "Original",
 			"hawksAggressionMode_reversed": "Invertido",
+			"hawksKeltnerInnerMode": "Modo Keltner interno",
+			"hawksMacdMode": "Modo MACD",
+			"hawksVolumeMode": "Modo volume",
+			"hawksAggressionScoreMode": "Modo score de agressão",
+			"hawksAggressionBlockMode": "Modo bloqueio de agressão",
+			"hawksMode_off": "Desligado",
+			"hawksMode_score": "Score apenas",
+			"hawksMode_block": "Bloqueio apenas",
+			"hawksMode_both": "Score + bloqueio",
+			"hawksAggressionBlockOnAligned": "Bloquear alinhado",
+			"hawksAggressionBlockOnAnti": "Bloquear anti-alinhado",
 			"stopType": {
 				"pctRange": "% Range",
 				"fullRange": "Range Completo",
@@ -5239,7 +5268,35 @@
 			"trailingType": {
 				"indicator": "Indicador WMA",
 				"priceDistance": "Distância de Preço"
-			}
+			},
+			"breakevenEnabled": "Breakeven",
+			"breakevenType": "Gatilho do breakeven",
+			"breakevenType_onPartial": "Parcial executada",
+			"breakevenType_onPctRisk": "% do risco atingida",
+			"hawksEndTime": "Fim da sessão",
+			"hawksQualityBundle_custom": "Personalizado",
+			"hawksStartTime": "Início da sessão",
+			"hawksTierA": "Limite do tier A",
+			"hawksTierAA": "Limite do tier AA",
+			"hawksTierAAA": "Limite do tier AAA",
+			"orbBreakevenTrigger": "Gatilho de BE (% risco)",
+			"orbIgnoreGaps": "Ignorar gaps (apenas corpo)",
+			"orbStartTime": "Abertura do range",
+			"orbTarget1": "Alvo 1",
+			"orbTarget2": "Alvo 2",
+			"reversalEnabled": "Reversão no stop",
+			"reversalMaxReversals": "Reversões máximas",
+			"stopPct": "Stop % do range",
+			"stopType_fixedPoints": "Pontos fixos",
+			"stopType_fullRange": "Range total",
+			"stopType_pctRange": "% do range",
+			"target1ExitPct": "TP1 saída %",
+			"targetEodTime": "Saída fim-do-dia",
+			"targetMode_fixedPoints": "Pontos fixos",
+			"targetMode_pctRange": "% do range",
+			"targetMode_pctStop": "% do stop",
+			"targetMode_rMultiple": "Múltiplo de R",
+			"trailingEnabled": "Stop móvel"
 		},
 		"runDetail": {
 			"stopPctRange": "{pct}% do range",
@@ -5269,6 +5326,12 @@
 			"enableLabel": "Ativar walk-forward",
 			"isPF": "PF IS",
 			"oosPF": "PF OOS",
+			"inSampleLabel": "IS",
+			"inSampleTooltip": "In-Sample — período de treino que o otimizador usou para escolher parâmetros. Métricas altas aqui são esperadas; não provam que a estratégia generaliza.",
+			"inSampleAria": "In-Sample: período de treino",
+			"outOfSampleLabel": "OOS",
+			"outOfSampleTooltip": "Out-of-Sample — período de validação que o otimizador nunca viu. Receitas com bom desempenho OOS são as confiáveis.",
+			"outOfSampleAria": "Out-of-Sample: período de validação",
 			"robust": "Robusta",
 			"notRobust": "Superajuste?",
 			"robustFilter": "Mostrar apenas combinações robustas",
@@ -5285,7 +5348,10 @@
 			"sourceLabel": "Origem",
 			"frontierBadge": "Fronteira",
 			"robustBadge": "Robusta",
-			"emptyState": "Rode uma varredura com pelo menos 10 combinações para ver a fronteira."
+			"emptyState": "Rode uma varredura com pelo menos 10 combinações para ver a fronteira.",
+			"legendFrontier": "Fronteira (robusta)",
+			"legendFrontierRisky": "Fronteira (baixa robustez OOS)",
+			"legendQuality": "PF menor → PF maior"
 		},
 		"metricKeys": {
 			"profitFactor": "Fator de lucro (IS)",
@@ -5338,7 +5404,11 @@
 			"breedJourneyId": "Jornada: {id}",
 			"capWarnBroad": "Cap = 500 (amplo)",
 			"capWarnRefine": "Cap = 3000 (refinar)",
-			"capWarnFreeze": "Estágio congelar: apenas snapshot"
+			"capWarnFreeze": "Estágio congelar: apenas snapshot",
+			"refineBannerTitle": "Refinando de {parents, plural, one {1 parente} other {# parentes}} → {combos, plural, one {1 nova combinação} other {# novas combinações}} para testar",
+			"refineBannerHint": "As faixas do sweep foram estreitadas para a vizinhança dos parentes. Rodar este sweep gera runs no estágio refine com essa linhagem.",
+			"refineBannerExit": "Voltar ao broad",
+			"refineBannerExitAria": "Sair do modo refine e voltar ao baseline broad"
 		},
 		"loserPattern": {
 			"tabLabel": "Drivers",
@@ -5351,7 +5421,16 @@
 			"emptyState": "Rode pelo menos 10 combinações para revelar drivers.",
 			"noDrivers": "Nenhum driver passou no limiar de |Δ|. Baixe o limiar ou rode uma varredura mais ampla.",
 			"recommendLock": "Recomendado travar {leaf} = {value} no refino (lado vencedor).",
-			"recommendAvoid": "Evitar {leaf} = {value} no refino (lado perdedor)."
+			"recommendAvoid": "Evitar {leaf} = {value} no refino (lado perdedor).",
+			"applyButton": "Aplicar no refino",
+			"applyApplied": "Aplicado",
+			"applySuccess": "Recomendação aplicada.",
+			"applyAllButton": "Aplicar todos",
+			"applyAllTitle": "Aplicar todas as recomendações",
+			"applyAllDescription": "Isto irá travar {count} leaves em valores específicos no seu próximo refino. Continuar?",
+			"applyAllCancel": "Cancelar",
+			"applyAllConfirm": "Aplicar todos",
+			"applyAllSuccess": "Aplicadas {count} recomendações."
 		},
 		"freezeHero": {
 			"title": "Congelar como preset hero",
@@ -5402,8 +5481,19 @@
 			"hawksAggressionMode_original": "Original",
 			"hawksAggressionMode_reversed": "Invertido",
 			"hawksAggressionThreshold": "Limite de agressão",
+			"hawksAggressionScoreMode": "Modo score de agressão",
+			"hawksAggressionBlockMode": "Modo bloqueio de agressão",
+			"hawksAggressionBlockOnAligned": "Bloquear alinhado",
+			"hawksAggressionBlockOnAnti": "Bloquear anti-alinhado",
 			"hawksVolumeToggle": "Score de volume",
 			"hawksVolumeEma": "Período EMA do volume",
+			"hawksKeltnerInnerMode": "Modo Keltner interno",
+			"hawksMacdMode": "Modo MACD",
+			"hawksVolumeMode": "Modo volume",
+			"hawksMode_off": "Desligado",
+			"hawksMode_score": "Score apenas",
+			"hawksMode_block": "Bloqueio apenas",
+			"hawksMode_both": "Score + bloqueio",
 			"hawksHtfMaBlockToggle": "Bloqueio MA de TF maior",
 			"hawksTierAAA": "Limite do tier AAA",
 			"hawksTierAA": "Limite do tier AA",
@@ -5440,6 +5530,11 @@
 			"orbBreakevenTrigger": "Gatilho de BE (% risco)",
 			"orbTarget1": "Alvo 1",
 			"orbTarget2": "Alvo 2"
+		},
+		"sweepAxisRole": {
+			"labelOnlyTag": "só rótulo de tier",
+			"labelOnlyAria": "Este eixo afeta apenas o rótulo de tier do trade",
+			"labelOnlyTooltip": "Variar este eixo altera o rótulo de tier (AAA/AA/A/B) anexado a cada trade, mas não muda o PnL, fator de lucro, Sharpe ou contagem de trades. Útil se você quiser filtrar trades por tier depois; não é útil para otimizar resultados."
 		},
 		"invariants": {
 			"tierMonotonic": "Ordem dos tiers",

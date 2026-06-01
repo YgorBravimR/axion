@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback, useEffect, memo } from "react"
 import { useTranslations } from "next-intl"
+import { Info } from "lucide-react"
 import {
 	ScatterChart,
 	Scatter,
@@ -9,9 +10,13 @@ import {
 	YAxis,
 	CartesianGrid,
 	ZAxis,
-	Cell,
 } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
 	computeParetoFrontier,
 	type ParetoPoint,
@@ -37,6 +42,52 @@ const CHART_MARGIN = { top: 12, right: 24, left: 12, bottom: 24 }
 const MIN_POINTS_FOR_FRONTIER = 10
 
 type FrontierSource = "IS" | "OOS"
+
+/**
+ * Color encoding for the scatter:
+ *   - frontier + robust       → bright green
+ *   - frontier + non-robust   → amber (warning)
+ *   - frontier (robust=null)  → green (no OOS data to gate on)
+ *   - selected (any role)     → keeps its quality fill, plus accent stroke ring
+ *   - non-frontier            → quality gradient by profitFactor
+ *
+ * Gradient: low PF → muted gray-blue, high PF → green. Computed in HSL with
+ * a single hue (135 ≈ trade-buy green) and a saturation ramp; lightness sits
+ * mid-band to keep dots legible on the dark surface.
+ */
+const FRONTIER_FILL_ROBUST = "var(--color-trade-buy, #34d399)"
+const FRONTIER_FILL_RISKY = "var(--color-warning, #fbbf24)"
+const FRONTIER_STROKE = "var(--color-trade-buy, #34d399)"
+const SELECTED_STROKE = "var(--color-accent, #6366f1)"
+
+/**
+ * Map a normalized quality `t` in [0..1] to an RGB color gradient.
+ * Low t (worst runs) → trade-sell (red) via neutral gray.
+ * High t (best runs) → trade-buy (green).
+ * Uses linear interpolation in RGB space between three anchor points.
+ */
+const qualityFill = (t: number): string => {
+	const clamped = Math.max(0, Math.min(1, t))
+
+	// Trade-sell (loss): rgb(248, 113, 113) ≈ #f87171
+	// Neutral mid: rgb(120, 124, 132) ≈ #787c84
+	// Trade-buy (win): rgb(52, 211, 153) ≈ #34d399
+	if (clamped < 0.5) {
+		// Low range [0..0.5] → red → gray
+		const alpha = clamped * 2 // [0..1] in the red→gray segment
+		const r = Math.round(248 - alpha * 128) // 248 → 120
+		const g = Math.round(113 + alpha * 11) // 113 → 124
+		const b = Math.round(113 + alpha * 19) // 113 → 132
+		return `rgb(${r} ${g} ${b})`
+	} else {
+		// High range [0.5..1] → gray → green
+		const alpha = (clamped - 0.5) * 2 // [0..1] in the gray→green segment
+		const r = Math.round(120 - alpha * 68) // 120 → 52
+		const g = Math.round(124 + alpha * 87) // 124 → 211
+		const b = Math.round(132 + alpha * 21) // 132 → 153
+		return `rgb(${r} ${g} ${b})`
+	}
+}
 
 const isCentsMetric = (key: MetricKey): boolean =>
 	key === "maxDrawdown" || key === "maxDrawdownOOS"
@@ -122,6 +173,7 @@ const ParetoScatter = memo(
 		const t = useTranslations("optimize.pareto")
 		const tAxes = useTranslations("optimize.metricKeys")
 		const tFilters = useTranslations("optimize.paretoFilters")
+		const tWalkForward = useTranslations("optimize.walkForward")
 
 		const [xKey, setXKey] = useState<MetricKey>(DEFAULT_PARETO_AXES.x)
 		const [yKey, setYKey] = useState<MetricKey>(DEFAULT_PARETO_AXES.y)
@@ -161,6 +213,65 @@ const ParetoScatter = memo(
 			() => computeParetoFrontier(effectiveRuns, xKey, yKey, constraints),
 			[effectiveRuns, xKey, yKey, constraints]
 		)
+
+		/**
+		 * Per-point profitFactor lookup for the quality-shade gradient. We
+		 * deliberately read from the *effective* runs (IS/OOS-swapped) so the
+		 * shade tracks the same source the points are drawn from.
+		 */
+		const pfByRunId = useMemo(() => {
+			const map = new Map<string, number>()
+			for (const r of effectiveRuns) {
+				map.set(r.id, r.summary.profitFactor)
+			}
+			return map
+		}, [effectiveRuns])
+
+		/**
+		 * Decorated data fed to recharts. Pre-computing `fill` and `stroke`
+		 * on each row sidesteps `<Cell>` issues in recharts v3 and gives
+		 * native per-point coloring. The math:
+		 *   - quality = (pf - pfMin) / (pfMax - pfMin), clamped
+		 *   - frontier overrides quality with the solid frontier fill
+		 *   - selected adds the accent stroke ring (fill unchanged)
+		 */
+		const decoratedPoints = useMemo(() => {
+			let pfMin = Infinity
+			let pfMax = -Infinity
+			for (const p of points) {
+				const pf = pfByRunId.get(p.runId) ?? 0
+				if (pf < pfMin) {
+					pfMin = pf
+				}
+				if (pf > pfMax) {
+					pfMax = pf
+				}
+			}
+			const pfRange = pfMax - pfMin
+			return points.map((p) => {
+				const pf = pfByRunId.get(p.runId) ?? pfMin
+				const t = pfRange > 0 ? (pf - pfMin) / pfRange : 0.5
+				const isSelected = selectedIds.has(p.runId)
+				let fill: string
+				if (p.isFrontier) {
+					fill =
+						p.isRobust === false ? FRONTIER_FILL_RISKY : FRONTIER_FILL_ROBUST
+				} else {
+					fill = qualityFill(t)
+				}
+				const stroke = isSelected
+					? SELECTED_STROKE
+					: p.isFrontier
+						? FRONTIER_STROKE
+						: undefined
+				return {
+					...p,
+					fill,
+					stroke,
+					strokeWidth: isSelected ? 2 : p.isFrontier ? 1.5 : 0,
+				}
+			})
+		}, [points, pfByRunId, selectedIds])
 
 		const frontierPoints = useMemo(
 			() => points.filter((p) => p.isFrontier),
@@ -266,21 +377,39 @@ const ParetoScatter = memo(
 					<div className="space-y-s-100 flex flex-col">
 						<span className="text-tiny text-txt-300">{t("sourceLabel")}</span>
 						<div className="gap-s-200 flex">
-							{(["IS", "OOS"] as const).map((s) => (
-								<button
-									key={s}
-									type="button"
-									onClick={() => setSource(s)}
-									disabled={s === "OOS" && !oosAvailable}
-									className={`text-tiny px-s-200 py-s-100 rounded-sm border ${
-										source === s
-											? "bg-accent border-accent text-white"
-											: "border-bg-300 text-txt-300"
-									} disabled:opacity-40`}
-								>
-									{s}
-								</button>
-							))}
+							{(["IS", "OOS"] as const).map((s) => {
+								const isIS = s === "IS"
+								const tooltipKey = isIS
+									? "inSampleTooltip"
+									: "outOfSampleTooltip"
+								const ariaKey = isIS ? "inSampleAria" : "outOfSampleAria"
+								return (
+									<Tooltip key={s}>
+										<TooltipTrigger asChild>
+											<button
+												type="button"
+												onClick={() => setSource(s)}
+												disabled={s === "OOS" && !oosAvailable}
+												className={`text-tiny px-s-200 py-s-100 gap-s-100 inline-flex items-center rounded-sm border ${
+													source === s
+														? "bg-accent border-accent text-white"
+														: "border-bg-300 text-txt-300 hover:text-txt-200"
+												} disabled:opacity-40`}
+												aria-label={tWalkForward(ariaKey)}
+											>
+												{s}
+												<Info className="size-3" aria-hidden />
+											</button>
+										</TooltipTrigger>
+										<TooltipContent
+											id={`pareto-source-${s}-tooltip`}
+											className="max-w-xs"
+										>
+											{tWalkForward(tooltipKey)}
+										</TooltipContent>
+									</Tooltip>
+								)
+							})}
 						</div>
 					</div>
 				</div>
@@ -365,36 +494,48 @@ const ParetoScatter = memo(
 								cursor={{ strokeDasharray: "3 3" }}
 							/>
 							<Scatter
-								data={points}
+								data={decoratedPoints}
 								onClick={(p, _idx, ev) => {
 									const point = p as unknown as ParetoPoint
 									handlePointClick(point, ev as { shiftKey?: boolean })
 								}}
-							>
-								{points.map((p) => {
-									const isSelected = selectedIds.has(p.runId)
-									const fill = isSelected
-										? "var(--color-accent, #6366f1)"
-										: p.isFrontier
-											? p.isRobust === false
-												? "var(--color-warning, #f59e0b)"
-												: "var(--color-trade-buy, #22c55e)"
-											: "var(--color-txt-300, #94a3b8)"
-									return (
-										<Cell
-											key={p.runId}
-											fill={fill}
-											stroke={
-												isSelected ? "var(--color-accent, #6366f1)" : undefined
-											}
-											strokeWidth={isSelected ? 2 : 0}
-											opacity={p.isFrontier || isSelected ? 1 : 0.4}
-										/>
-									)
-								})}
-							</Scatter>
+							/>
 						</ScatterChart>
 					</ChartContainer>
+				)}
+
+				{points.length > 0 && (
+					<div className="gap-m-400 text-tiny text-txt-300 flex flex-wrap items-center justify-center">
+						<div className="gap-s-100 flex items-center">
+							<span
+								aria-hidden="true"
+								className="inline-block h-3 w-3 rounded-full"
+								style={{
+									backgroundColor: FRONTIER_FILL_ROBUST,
+									border: `1.5px solid ${FRONTIER_STROKE}`,
+								}}
+							/>
+							<span>{t("legendFrontier")}</span>
+						</div>
+						<div className="gap-s-100 flex items-center">
+							<span
+								aria-hidden="true"
+								className="inline-block h-3 w-3 rounded-full"
+								style={{ backgroundColor: FRONTIER_FILL_RISKY }}
+							/>
+							<span>{t("legendFrontierRisky")}</span>
+						</div>
+						<div className="gap-s-100 flex items-center">
+							<span
+								aria-hidden="true"
+								className="inline-block h-3 w-12 rounded-full"
+								style={{
+									background: `linear-gradient(90deg, ${qualityFill(0)}, ${qualityFill(1)})`,
+								}}
+							/>
+							<span>{t("legendQuality")}</span>
+						</div>
+					</div>
 				)}
 
 				{onBreedSelected && selectedCount > 0 && (

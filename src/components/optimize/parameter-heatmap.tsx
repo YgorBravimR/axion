@@ -22,7 +22,6 @@ import { formatCentsAsCurrency } from "@/lib/money"
 import { getNestedValue } from "@/lib/optimize/parameter-grid"
 import {
 	getVaryingParams,
-	getNestedStringValue,
 	buildHeatmapData,
 	getCellIntensityClass,
 	cellKey,
@@ -177,34 +176,62 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 		setXParamPath(xParam.path)
 		setYParamPath(yParam.path)
 
-		// Default slices: all enum params + numeric params beyond the first 2
-		if (bestRun) {
+		// Seed slice defaults from the best run that *also* has finite values
+		// at both axis paths. The global best run may have e.g. BE disabled
+		// (triggerPct missing) — using it as the slice anchor would lock the
+		// filter onto an enum combo no run with BE enabled shares, and the
+		// grid renders empty even though plenty of cells exist.
+		// Enum slices MUST use the catalog's canonical reader (getCurrentValue)
+		// — `getNestedStringValue` would give "true"/"false" for boolean-backed
+		// toggles while the catalog's `opt.value` domain is "on"/"off". A
+		// mismatch here cascades into the filter rejecting every run.
+		const runsOnAxes = runs.filter(
+			(r) =>
+				Number.isFinite(getNestedValue(r.recipe, xParam.path)) &&
+				Number.isFinite(getNestedValue(r.recipe, yParam.path))
+		)
+		const seedRun =
+			runsOnAxes.length > 0
+				? runsOnAxes.reduce((best, r) =>
+						r.summary.profitFactor > best.summary.profitFactor ? r : best
+					)
+				: bestRun
+		if (seedRun) {
 			const defaultSlices: Record<string, number | string> = {}
-			// All enum params always go to slices
 			for (const param of varyingParams) {
 				if (param.kind === "enum") {
-					defaultSlices[param.path] = getNestedStringValue(
-						bestRun.recipe,
-						param.path
-					)
+					defaultSlices[param.path] = param.getCurrentValue(seedRun.recipe)
 				}
 			}
-			// Numeric params beyond the first 2 also go to slices
 			for (const param of sliceParams) {
-				defaultSlices[param.path] = getNestedValue(bestRun.recipe, param.path)
+				const val = getNestedValue(seedRun.recipe, param.path)
+				// Only add numeric slices if they resolve to finite values.
+				// A missing param (returns NaN) should not become a slice —
+				// it would reject all runs in the filter. This can happen when
+				// the seed run doesn't have the param enabled (e.g., BE disabled).
+				if (Number.isFinite(val)) {
+					defaultSlices[param.path] = val
+				}
 			}
 			setSlices(defaultSlices)
 		} else {
 			setSlices({})
 		}
-	}, [varyingParams, numericVaryingParams, bestRun])
+	}, [varyingParams, numericVaryingParams, bestRun, runs])
 
 	// Build heatmap data with pre-computed color classes
 	const heatmapData = useMemo(() => {
 		if (!xParamPath || !yParamPath || xParamPath === yParamPath) {
 			return null
 		}
-		const data = buildHeatmapData(runs, xParamPath, yParamPath, metric, slices)
+		const data = buildHeatmapData(
+			runs,
+			xParamPath,
+			yParamPath,
+			metric,
+			slices,
+			varyingParams
+		)
 		const colorMap = new Map<string, string>()
 		for (const [key, cell] of data.cells) {
 			colorMap.set(
@@ -218,7 +245,7 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 			)
 		}
 		return { ...data, colorMap }
-	}, [runs, xParamPath, yParamPath, metric, slices])
+	}, [runs, xParamPath, yParamPath, metric, slices, varyingParams])
 
 	// Params not on axes: all enum params (always sliced) + numeric params not assigned to X/Y
 	const sliceParams = useMemo(

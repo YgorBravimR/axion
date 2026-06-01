@@ -313,7 +313,7 @@ const generateRecipeGrid = (
 
 // ── Constants ───────────────────────────────────────────────────
 
-const MAX_COMBINATIONS = 2000
+const MAX_COMBINATIONS = 5000
 const WARN_COMBINATIONS = 500
 
 // ── Exports ─────────────────────────────────────────────────────

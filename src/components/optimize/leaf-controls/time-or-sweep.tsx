@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,7 @@ const timeStringToHHmm = (s: string): number | null => {
 interface TimeOrSweepProps {
 	id: string
 	label: string
+	labelSuffix?: ReactNode
 	hint?: string
 	selection: TimeSelection
 	onSelectionChange: (_next: TimeSelection) => void
@@ -44,6 +45,7 @@ interface TimeOrSweepProps {
 const TimeOrSweep = ({
 	id,
 	label,
+	labelSuffix,
 	hint,
 	selection,
 	onSelectionChange,
@@ -100,8 +102,13 @@ const TimeOrSweep = ({
 		<div className="space-y-s-200">
 			<div className="gap-s-200 flex items-center justify-between">
 				<div className="min-w-0">
-					<Label id={`${id}-label`} htmlFor={id}>
-						{label}
+					<Label
+						id={`${id}-label`}
+						htmlFor={id}
+						className="gap-s-200 inline-flex items-center"
+					>
+						<span>{label}</span>
+						{labelSuffix}
 					</Label>
 					{hint && <p className="text-tiny text-txt-300 mt-s-100">{hint}</p>}
 				</div>

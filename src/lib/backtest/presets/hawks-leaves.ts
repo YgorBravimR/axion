@@ -98,6 +98,14 @@ const BUNDLE_OWNED_PATHS = [
 	`${QUALITY_GATES_PREFIX}tierThresholds.AAA`,
 	`${QUALITY_GATES_PREFIX}tierThresholds.AA`,
 	`${QUALITY_GATES_PREFIX}tierThresholds.A`,
+	// Dual-mode rule axes (Piece B). Bundle presets don't define these yet —
+	// they're independent user-controlled enums whose runtime fallback to the
+	// legacy flat fields lives in `hawks-quality-rules.ts`.
+	`${QUALITY_GATES_PREFIX}keltnerInner.mode`,
+	`${QUALITY_GATES_PREFIX}macd.mode`,
+	`${QUALITY_GATES_PREFIX}volume.mode`,
+	`${QUALITY_GATES_PREFIX}aggression.scoreMode`,
+	`${QUALITY_GATES_PREFIX}aggression.blockMode`,
 ]
 
 // ── HAWKS_LEAVES (topological order) ─────────────────────────────────
@@ -270,6 +278,68 @@ const HAWKS_LEAVES: SweepableLeaf[] = [
 		kind: "bool",
 		path: `${QUALITY_GATES_PREFIX}htfMaBlock`,
 		labelKey: "hawksHtfMaBlockToggle",
+		managedBy: BUNDLE_PATH,
+	},
+	// ── Dual-mode rule axes (Piece B) ─────────────────────────────────
+	// Score/block/both promotion of the existing score-only quality rules.
+	// `mode: "block"` or `"both"` actually gates entry (affects PnL); `"score"`
+	// keeps the legacy tier-label-only behavior. See docs/postMorten/backend.md.
+	{
+		kind: "enum",
+		path: `${QUALITY_GATES_PREFIX}keltnerInner.mode`,
+		labelKey: "hawksKeltnerInnerMode",
+		options: [
+			{ value: "off", labelKey: "hawksMode_off" },
+			{ value: "score", labelKey: "hawksMode_score" },
+			{ value: "block", labelKey: "hawksMode_block" },
+			{ value: "both", labelKey: "hawksMode_both" },
+		],
+		managedBy: BUNDLE_PATH,
+	},
+	{
+		kind: "enum",
+		path: `${QUALITY_GATES_PREFIX}macd.mode`,
+		labelKey: "hawksMacdMode",
+		options: [
+			{ value: "off", labelKey: "hawksMode_off" },
+			{ value: "score", labelKey: "hawksMode_score" },
+			{ value: "block", labelKey: "hawksMode_block" },
+			{ value: "both", labelKey: "hawksMode_both" },
+		],
+		managedBy: BUNDLE_PATH,
+	},
+	{
+		kind: "enum",
+		path: `${QUALITY_GATES_PREFIX}volume.mode`,
+		labelKey: "hawksVolumeMode",
+		options: [
+			{ value: "off", labelKey: "hawksMode_off" },
+			{ value: "score", labelKey: "hawksMode_score" },
+			{ value: "block", labelKey: "hawksMode_block" },
+			{ value: "both", labelKey: "hawksMode_both" },
+		],
+		managedBy: BUNDLE_PATH,
+	},
+	{
+		kind: "enum",
+		path: `${QUALITY_GATES_PREFIX}aggression.scoreMode`,
+		labelKey: "hawksAggressionScoreMode",
+		options: [
+			{ value: "off", labelKey: "hawksAggressionMode_off" },
+			{ value: "original", labelKey: "hawksAggressionMode_original" },
+			{ value: "reversed", labelKey: "hawksAggressionMode_reversed" },
+		],
+		managedBy: BUNDLE_PATH,
+	},
+	{
+		kind: "enum",
+		path: `${QUALITY_GATES_PREFIX}aggression.blockMode`,
+		labelKey: "hawksAggressionBlockMode",
+		options: [
+			{ value: "off", labelKey: "hawksAggressionMode_off" },
+			{ value: "blockOnAligned", labelKey: "hawksAggressionBlockOnAligned" },
+			{ value: "blockOnAnti", labelKey: "hawksAggressionBlockOnAnti" },
+		],
 		managedBy: BUNDLE_PATH,
 	},
 	{

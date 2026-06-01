@@ -2,6 +2,351 @@
 
 ---
 
+## [SHIP-2026-06-01] Hawks dual-mode quality gates refactor (Piece B)
+
+**Date:** 2026-06-01
+**Type:** Feature release (refactor + new capability)
+**Severity:** N/A (feature, not a bug)
+**Affected Area:** `src/lib/backtest/modules/entry/hawks-quality-rules.ts`, sweep catalog, test suite, i18n
+
+### Overview
+
+Successfully implemented Piece B of the Hawks dual-mode quality gates refactor. Each of the four indicator rules (keltner_inner, macd, volume, aggression) now independently control both scoring (tier labels) and blocking (hard stop on entry). Previously, each rule could only gate tier labels; blocking was not available.
+
+### Architecture
+
+**Dual-mode rule abstraction:**
+
+- `DualModeRule`: rules with symmetric score/block paths (keltner_inner, macd, volume). Single `resolveMode()` method returns "off" | "score" | "block" | "both", and `evaluateSignal()` dispatches on that mode.
+- `AggressionDualModeRule`: asymmetric score/block modes with different enum values (scoreMode: "off" | "original" | "reversed", blockMode: "off" | "blockOnAligned" | "blockOnAnti"). Separate `resolveScoreMode()` and `resolveBlockMode()` methods.
+
+**Mode resolution pattern:**
+
+- Nested shape takes priority: `qualityGates?.aggression?.scoreMode ?? qualityGates?.aggressionMode ?? "off"`
+- Fallback to legacy flat boolean flag ensures backward compatibility for configs stored with old schema.
+
+**Block thresholds reuse scoring thresholds:**
+
+- No separate knob: block uses the same numeric threshold as score (e.g., keltnerNearBricks, macdSlopeWindow, volumeEmaPeriod, aggressionThreshold).
+- Block trigger semantics differ by rule:
+  - **Keltner inner**: block on any non-score event (penalty when mode was "score").
+  - **MACD**: block when sign-opposed or sign-aligned with slope mismatch (complement of favor when score was "score").
+  - **Volume**: block when vol < ema (complement of favor when score was "score").
+  - **Aggression**: blockOnAligned blocks long/short-aligned entries; blockOnAnti blocks against-direction entries.
+
+### Changes
+
+1. **Refactored hawks-quality-rules.ts** (primary file):
+   - Exported `DualModeRule` and `AggressionDualModeRule` type definitions.
+   - Implemented and exported: `keltnerInnerDualRule`, `macdDualRule`, `volumeDualRule`, `aggressionSplitRule`.
+   - Removed legacy rule implementations (keltnerInnerRule, macdRule, volumeRule, aggressionRule).
+   - All four rules now available for use by the backtest engine.
+
+2. **Message keys** (`messages/en.json`, `messages/pt-BR.json`):
+   - Added 9 new keys: hawksAggressionScoreMode, hawksAggressionBlockMode, hawksAggressionBlockOnAligned, hawksAggressionBlockOnAnti, hawksKeltnerInnerMode, hawksMacdMode, hawksVolumeMode, hawksMode_off, hawksMode_score, hawksMode_block, hawksMode_both.
+   - All keys present and translated in both locales.
+
+3. **Test coverage** (new file: `src/__tests__/lib/backtest/hawks-quality-rules.test.ts`):
+   - 18 tests covering export verification, method signatures, mode resolution fallback behavior, and mode resolution priority (nested over legacy).
+   - Tests verify correct behavior of `resolveMode()` / `resolveScoreMode()` / `resolveBlockMode()` with both nested and legacy config paths.
+
+4. **Backward compatibility:**
+   - Legacy flat boolean flags (`keltnerInnerPenalty`, `macdAlignmentScore`, `volumeScore`, `aggressionMode`) remain sweepable in the catalog.
+   - New nested shape takes precedence; fallback to legacy flag ensures old configs still work.
+
+### Verification Gates
+
+All gates passed:
+
+1. **`pnpm lint`**: 0 new errors (3 pre-existing unused-vars in interface defs are intentional).
+2. **`pnpm lint:strict`**: Passed (0 errors, ~900 no-unsafe-\* warnings are intentional phase-in).
+3. **`pnpm exec tsc --noEmit`**: No type errors.
+4. **`pnpm vitest src/__tests__/lib/backtest/hawks-quality-rules.test.ts`**: 18 tests pass.
+5. **`pnpm check:dead-axes`**: All 19 quality-gate axes referenced by at least one rule. (Fixed by adding fallback to `aggressionMode` in `resolveScoreMode()`.)
+6. **`pnpm tsx scripts/sweep-detective.ts`**: Axis role classification verified. Aggression mode correctly classified as LABEL-ONLY.
+7. **`pnpm i18n:check`**: 0 missing key references, full locale parity (en.json and pt-BR.json both have 5207 keys).
+
+### Prevention
+
+1. **Dual-mode signature contracts:** When implementing a new DualModeRule, ensure the TypeScript interface enforces `resolveMode()` and `evaluateSignal()` methods. For asymmetric rules (like aggression), subtype with AggressionDualModeRule to enforce separate resolve/evaluate methods per side.
+
+2. **Mode resolution fallback pattern:** Always thread the fallback chain in a single line — don't scatter fallback logic across multiple checks. This ensures missed fallbacks are obvious in code review.
+
+3. **Test mode resolution early:** Export verification tests should spot method name mismatches and signature misalignments before integration tests. The test file serves as a contract verifier.
+
+### Related Files
+
+- `src/lib/backtest/modules/entry/hawks-quality-rules.ts`
+- `src/__tests__/lib/backtest/hawks-quality-rules.test.ts` (new)
+- `messages/en.json`
+- `messages/pt-BR.json`
+- `docs/postMorten/frontend.md` (see companion Piece A frontend refactor)
+
+---
+
+## [BUG-2026-06-01] 59 of 63 stored optimization runs had empty trades arrays while retaining full summary metrics
+
+**Date:** 2026-06-01
+**Severity:** Critical (data loss + silent corruption — backtest runs appeared complete but couldn't be inspected, equity curve couldn't render, UI counters were inflated by stripped runs)
+**Affected Area:** `src/lib/optimize/backtest-worker.ts`, `src/lib/optimize/sweep-runner.ts`, `src/lib/optimize/storage.ts`
+
+### Symptom
+
+During investigation of a user's optimization runs stored in localStorage, 59 of 63 runs had `trades: []` despite having populated summary metrics (profitFactor, totalPnlCents, sharpeRatio, etc.). The equity overlay refused to render (no data to plot), and any attempt to inspect individual run details showed "no trades" despite the summary showing 400+ trades executed. Two runs had `undefined` trades arrays (schema mismatch), and only 4 retained the full trades array.
+
+### Root Cause
+
+**Triple failure in the trades propagation pipeline:**
+
+1. **Worker emits trades, but message doesn't carry them** (`backtest-worker.ts`): The `runBacktest()` function computes a complete `trades` array (line 203 in the backtest engine). The worker's progress message emitted summary metrics, equity curve, and in-sample/OOS variants, but **never included the trades array** — it was discarded at the message boundary.
+
+2. **Runner hardcodes empty array** (`sweep-runner.ts`, line 80): When the worker message arrived, the runner constructed each OptimizationRun with `trades: []`, a hardcoded sentinel that overwrote any incoming trade data (which didn't exist because of #1).
+
+3. **No retention policy enforced** (`storage.ts`): Before this fix, there was no logic to apply Pareto retention to decide which runs should keep full trades. All runs went into localStorage with empty arrays, and there was no flag to distinguish "we intentionally stripped this" from "the pipeline lost the data."
+
+**Secondary issue:** When localStorage quota was exhausted, failures silently caught with no console warning. Users had no way to diagnose quota issues.
+
+### Effect
+
+- Equity overlay couldn't plot individual run curves (no trades → no equity curve).
+- Variation counters inflated: profitable/losing included stripped runs (skewed the headcount).
+- Pareto/heatmap visualization relied on curve data, so visual ranking diverged from CSV export (CSV still had summary stats, but curves were missing).
+- User experience: "I ran a sweep, the CSV looks good, but I can't inspect the runs or replay them. Did something go wrong?"
+
+### Solution
+
+**Complete pipeline restoration + localStorage quota management:**
+
+1. **Worker now emits trades** (`backtest-worker.ts`): Updated the ProgressMessage interface to include `trades` array. For walk-forward mode, also emit `tradesIS` and `tradesOOS` (though not currently stored — reserved for future tracking).
+
+2. **Runner passes trades through** (`sweep-runner.ts`): Changed line 80 from `trades: []` to `trades: msg.trades`, so the trades data flows into the OptimizationRun object.
+
+3. **Storage layer enforces Pareto retention** (`storage.ts`):
+   - Implemented `paretoRetain()` helper function (new file) that identifies the 3-axis Pareto front (profitFactor × totalPnlCents × sharpeRatio) plus single-metric extremes.
+   - Only runs on the Pareto front or a metric extreme retain their full trades array.
+   - All other runs have trades stripped to `[]` and marked with `tradesRetained: false`.
+   - Applied at the persistence choke point (saveRuns), not during sweep execution, so the UI and replay logic always see the unmangled runs.
+
+4. **Added tradesRetained flag** (`src/types/backtest.ts`): New optional boolean field on OptimizationRun to explicitly distinguish "trades were stripped by policy" from "pipeline lost the data."
+
+5. **Surface quota errors** (`storage.ts`): Replaced silent `catch {}` with `console.warn()` so users can see quota failures in DevTools.
+
+6. **Updated equity overlay** (`src/components/optimize/equity-overlay-chart.tsx`): Filter out runs where `tradesRetained === false` before rendering.
+
+7. **Updated counters** (`src/components/optimize/summary-cards.tsx`): Count profitable/losing only among runs with trades (`tradesRetained !== false`), not the full list.
+
+8. **Storage schema v4 → v5** (`src/lib/optimize/provenance.ts`, `src/lib/optimize/storage.ts`):
+   - Bumped schema version.
+   - Migration ensures legacy v4 runs inherit `tradesRetained: true` (safe assumption: if trades exist in localStorage, we kept them).
+
+9. **Added i18n copy** (`messages/en.json`, `messages/pt-BR.json`):
+   - New optimize.runs section with "tradesNotRetained" label and tooltip.
+   - New summary.withDetail for the "Profitable variations (with full detail)" affordance.
+
+### Verification
+
+- `pnpm run test:unit src/__tests__/lib/optimize/pareto-retain.test.ts` — 7 tests pass (Pareto front logic, single-metric extremes, trade stripping, summary preservation, edge cases).
+- `pnpm lint` — 0 errors in pareto-retain.ts, pareto-retain.test.ts, storage.ts, sweep-runner.ts, equity-overlay-chart.tsx, summary-cards.tsx.
+- `pnpm exec tsc --noEmit` — no type errors.
+- Manual smoke: 100-run sweep, check localStorage schema version incremented, verify 3 runs on Pareto front retain full trades, 97 others have empty trades arrays, equity overlay renders only the 3, counters show only 3 in profitable/losing base.
+
+### Prevention
+
+1. **Worker/runner contract:** Every data structure emitted by the worker must be explicitly threaded through the message boundary and swept into the OptimizationRun. Use a checklist: summary✓, equityCurve✓, trades✓, OOS variants✓.
+2. **Storage policy enforcement:** Retention policies (Pareto, quota, etc.) should live at the persistence layer, not scattered across UI. This ensures the in-memory state and stored state don't diverge.
+3. **Explicit data flags:** When data is intentionally modified (trades stripped, fields omitted, etc.), add a flag to the data structure so the UI can render an affordance ("Trade detail not retained — re-run to inspect").
+4. **Surface quota errors:** Never silently catch quota failures. At minimum, console.warn so users can debug.
+
+### Related Files
+
+- `src/lib/optimize/pareto-retain.ts` (new)
+- `src/__tests__/lib/optimize/pareto-retain.test.ts` (new)
+- `src/lib/optimize/backtest-worker.ts`
+- `src/lib/optimize/sweep-runner.ts`
+- `src/lib/optimize/storage.ts`
+- `src/types/backtest.ts`
+- `src/components/optimize/equity-overlay-chart.tsx`
+- `src/components/optimize/summary-cards.tsx`
+- `src/lib/optimize/provenance.ts`
+- `messages/en.json`
+- `messages/pt-BR.json`
+
+---
+
+## [BUG-2026-05-31-3] Two Hawks sweep axes exposed in the optimization catalog had zero observable effect
+
+**Date:** 2026-05-31
+**Severity:** Medium (no incorrect numbers produced — every "swept" cell was identical — but the optimizer wasted refine budget on knobs that physically cannot affect outcomes, and users tweaking them in the UI saw no response and reasonably wondered if the engine was broken)
+**Affected Area:** `src/lib/backtest/presets/hawks-presets.ts` (HAWKS_SWEEPABLE_PARAMS catalog)
+
+### Symptom
+
+Running a per-axis isolated sweep (`scripts/sweep-detective.ts`) under both `bundle=off` AND `bundle=strict` baselines, two axes produced **identical fingerprints** across every value: identical PnL, identical PF, identical trade count, identical tier histogram, identical per-rule contribution counts, identical totalScore.
+
+- `entry.config.qualityGates.macdSlopeWindow` (numeric, 2–5 step 1)
+- `entry.config.qualityGates.macdAlignmentScore` (boolean toggle)
+
+A third axis `qualityGates.keltnerInnerPenalty` was initially classified DEAD but is actually LABEL-ONLY — the rule fires and emits penalty contributions but the tier still bucketed to "B" because the score lands below the A threshold with no offsetting favor contributions in this dataset. Not a bug — confirmed via richer fingerprint that includes per-rule contribution counts.
+
+### Root Cause
+
+The Hawks quality-rule registry (`src/lib/backtest/modules/entry/hawks-quality-rules.ts`) defines two categories of rules: `blockRules` (gate entry, drive PnL) and `scoreRules` (compute tier label, no PnL effect). For each of the two confirmed DEAD axes:
+
+- **`macdSlopeWindow`** — `updateQualityContext` writes the MACD value to a `recentMacd` ring buffer sized by this parameter. But there is no rule (block or score) anywhere in the registry that reads `recentMacd`. The buffer is updated, sliced to the right length, then never inspected. Dead state.
+- **`macdAlignmentScore`** — boolean toggle exposed in `HAWKS_SWEEPABLE_PARAMS`, present in the strict/standard bundle defaults, and rendered in the manual leaf UI. Zero rules reference it: no `configFlag` checks it, no evaluator reads it. Dead gate.
+
+Both relate to a "Group C — MACD sign + slope" rule that is documented in the registry header as "planned" but never implemented. The sweepable-axis entries were added in anticipation of the rule landing — and then forgotten about when the rule didn't ship.
+
+### Fix
+
+Surgically removed both entries from `HAWKS_SWEEPABLE_PARAMS` only:
+
+- `entry.config.qualityGates.macdSlopeWindow` numeric SweepableParam — removed.
+- `macdAlignmentScore` boolean toggle pair — removed from the `TOGGLE_GATES` array.
+
+Replaced with a JSDoc block explaining why and pointing to `scripts/sweep-detective.ts` for empirical reproduction.
+
+**Intentionally NOT touched:**
+
+- `src/types/backtest.ts` (`QualityGatesConfig` schema) — keeps shape.
+- `src/lib/backtest/presets/hawks-quality-presets.ts` (bundle defaults, equality) — bundles still set these values for future rule consumption.
+- `src/lib/validations/backtest.ts` (Zod) — recipes carrying these fields still validate.
+- `src/lib/backtest/presets/hawks-leaves.ts` — the leaf registry, used by the manual sweep builder, keeps these entries so the bundle-ownership invariant test continues to pass.
+- `src/components/backtest/sections/hawks-quality-controls.tsx` — UI controls stay (users can still set values manually toward the planned future rule).
+
+The blast radius of the fix is exactly: **the optimizer's auto-grid generator no longer wastes broad-sweep slots on these two axes.** Everything else continues to work as before.
+
+### Verification
+
+- `scripts/sweep-detective.ts` — DEAD set reduced from 3 axes to 2 (the remaining 2 are intentional placeholders flagged in catalog comments).
+- `scripts/sweep-validate.ts` (9 756 runs, 24 variations) — 0 FAIL, 0 WARN.
+- `scripts/sweep-monotonicity.ts` (6 physical-expectation checks across 5 gating axes) — 0 violations.
+- `pnpm exec tsc --noEmit` — clean.
+- `pnpm exec vitest run src/__tests__/lib/optimize/ src/__tests__/lib/backtest/` — 213 pass, 3 intentional skips, 0 fail.
+- `pnpm lint` — 0 errors.
+
+### Lessons
+
+1. **Every sweepable axis must trace to at least one rule that reads it.** When adding a sweep axis, write a single-day differential test that asserts at least _one_ value of the axis produces a different fingerprint than another. Catch this at PR time.
+2. **"Planned" placeholders rot.** Exposing config in the schema before the consuming code lands is a common pattern — but every such placeholder needs a TODO + dead-code detector. The `sweep-detective.ts` harness should be reused as a CI gate against this regression.
+3. **DEAD vs LABEL-ONLY vs GATES is a useful taxonomy.** The optimizer UI should surface it: if an axis is LABEL-ONLY, mark it "tier label only — won't change PnL." Power users may still want it; default users will skip.
+
+### Detective findings table (all axes)
+
+| Axis path                           | Role         | Effect on PnL |
+| ----------------------------------- | ------------ | ------------- |
+| `stop.breakeven.triggerPct`         | GATES        | ✓             |
+| `target.levels.0.value`             | GATES        | ✓             |
+| `slippageTicks`                     | GATES        | ✓             |
+| `qualityGates.__bundle__`           | GATES        | ✓             |
+| `qualityGates.srBlockBufferBricks`  | GATES        | ✓             |
+| `qualityGates.srLevelBlock`         | GATES        | ✓             |
+| `qualityGates.keltnerOuterBlock`    | GATES        | ✓             |
+| `qualityGates.htfMaBlock`           | GATES        | ✓             |
+| `entry.config.fireCooldownBricks`   | GATES        | ✓             |
+| `entry.config.wave1MinBricks`       | GATES        | ✓             |
+| `entry.config.retracementMinBricks` | GATES        | ✓             |
+| `qualityGates.srFavorRangeBricks`   | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.keltnerNearBricks`    | LABEL-ONLY\* | ✗ (tier only) |
+| `qualityGates.aggressionThreshold`  | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.volumeEmaPeriod`      | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.srLevelFavor`         | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.keltnerInnerPenalty`  | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.volumeScore`          | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.aggressionMode`       | LABEL-ONLY   | ✗ (tier only) |
+| `qualityGates.macdSlopeWindow`      | DEAD — fixed | ✗ (never)     |
+| `qualityGates.macdAlignmentScore`   | DEAD — fixed | ✗ (never)     |
+
+\*`keltnerNearBricks` is structurally GATES (used inside the keltner outer block rule) but in the 2-month dataset the block decision never flipped on band-near distance variation 1→3 bricks. Wider sweeps or different datasets will likely see PnL change.
+
+---
+
+## [BUG-2026-05-31-1] Backtest metrics rounded at compute time destroyed Pareto/heatmap ranking precision
+
+**Date:** 2026-05-31
+**Severity:** High (silently collapsed distinct sweep results into ties; affected every backtest summary written since the metrics module shipped — Pareto frontier, quality shading, heatmap legend, runs-comparison table all read the lossy values)
+**Affected Area:** `src/lib/backtest/metrics.ts:118-129`
+
+### Symptom
+
+User exported `axion-optimize-runs-*.csv` from a Hawks sweep (2763 runs) and noticed **14 consecutive Broad runs (#1061–#1074) with identical headline metrics — 413 trades, 64.41% WR, PF=1.00, AvgR=0.00, Sharpe=0.00 — but visibly different `totalPnlCents` (915, 2365, 1765×11)**. PF=1.00 with non-zero PnL is mathematically impossible. One legacy "Sweep #2" row had PF=1.00 with `totalPnlCents=-1422`.
+
+### Root Cause
+
+`computeMetrics` was applying `Math.round(x * 100) / 100` to five fields **at the source of truth**: `winRate`, `profitFactor`, `avgRMultiple`, `sharpeRatio`, `expectancy`. Any real value in `(0.995, 1.005)` collapsed to `1.00` in storage. Pareto frontier comparisons, quality gradient shading, and heatmap z-axis sorting then saw ties where the real distribution had a gradient — so the GA could not rank close-but-distinct sweeps. The CSV export reflected the lossy storage, not the underlying numbers.
+
+The intent of the original rounding was display formatting, but **every render site already calls `.toFixed(2)` on read** (`runs-comparison-table.tsx`, `pareto-scatter.tsx` tooltip, `parameter-heatmap.tsx` legend, etc.), making the source-side rounding redundant _and_ destructive.
+
+### Fix
+
+Removed the `Math.round(... * 100) / 100` wrappers from the five offending fields in the `computeMetrics` return shape (`src/lib/backtest/metrics.ts:118-129`). Raw float precision is now preserved through to the persisted run; display sites continue to format with `.toFixed(2)` as before.
+
+### Verification
+
+- `pnpm exec tsc --noEmit` clean
+- `pnpm exec vitest run src/__tests__/lib/backtest/` — 37 pass, 0 fail
+- `pnpm exec vitest run src/__tests__/lib/optimize/` — 176 pass, 0 fail
+- `pnpm lint` clean (3 pre-existing unrelated warnings)
+
+### Lessons
+
+1. **Round at the display boundary, never at the source of truth.** If a metric is used both for ranking and for display, only the display layer should lose precision. Otherwise ranking degrades to whatever the display rounding chose.
+2. **PF=1.00 with non-zero PnL is a smoke signal.** Any future export-validation pass should flag this combination as a precision bug rather than treating PF=1.00 as a real value.
+3. **Look for `Math.round(... * 100) / 100` in any compute path.** That idiom is a code smell — almost always a misplaced display concern.
+
+### Affected (historical) data
+
+Runs persisted in `localStorage` (key: `axion:optimization-runs:v4`) before this fix retain lossy values. Re-running the sweep regenerates clean metrics. No DB-side persistence was affected (these runs live in browser storage only).
+
+---
+
+## [BUG-2026-05-31-4] Hawks MACD score rule implemented + CI gate against dead-axis regressions
+
+**Date:** 2026-05-31
+**Severity:** Follow-up to `[BUG-2026-05-31-3]`. Completes the catalog cleanup by giving the two reserved MACD axes (`macdAlignmentScore`, `macdSlopeWindow`) an actual rule consumer and adding a static CI check so the dead-axis class of bug can never silently reappear.
+
+### What landed
+
+1. **`macdSignSlopeRule`** in `src/lib/backtest/modules/entry/hawks-quality-rules.ts`. New `ScoreRule` gated by `qualityGates.macdAlignmentScore`. Reads the current MACD value (sign vs trade direction) and the slope across the `recentMacd` ring buffer (sized by `qualityGates.macdSlopeWindow`). Emits `favor` when sign + slope both align with the trade, `penalty` when sign opposes, `neutral` for mixed signals. The buffer was already being maintained by `updateQualityContext` — now there's a consumer.
+
+2. **Re-added the two MACD axes to `HAWKS_SWEEPABLE_PARAMS`** in `src/lib/backtest/presets/hawks-presets.ts`. Detective verifies both as LABEL-ONLY (they fire the new rule, change tier contributions, don't gate entry — same architectural role as the other 7 score rules).
+
+3. **`scripts/check-dead-axes.ts`** — static CI gate. Reads `HAWKS_SWEEPABLE_PARAMS`, extracts every `qualityGates.*` path, and asserts each gate key is referenced by at least one qualified config access (`qualityGates?.X` or `qualityGates.X`) in `hawks-quality-rules.ts`. Pure source scan, no DB, runs in <1 s. Exits non-zero if any axis is dead.
+
+4. **Wired into `.github/workflows/lint.yml`** as a new step `Hawks sweep-catalog dead-axis check`, alongside existing `pnpm lint` and `pnpm exec tsc --noEmit`. Runs on every PR to `main`.
+
+5. **UI badge for LABEL-ONLY axes.** New module `src/lib/backtest/presets/hawks-axis-roles.ts` lists the 9 paths that are score-only. `<LeafControl>` in the strategy sweep builder reads from this set and renders a tiny "tier label only" badge + tooltip next to the leaf label. Future agents and users can see at a glance which knobs change PnL vs only the tier label. i18n strings in en + pt-BR.
+
+### Detective fingerprint, post-rule
+
+Under strict quality bundle:
+
+- `macdAlignmentScore: off` → tier `[AAA=0, AA=0, A=0, B=150]`
+- `macdAlignmentScore: on` → tier `[AAA=0, AA=0, A=24, B=126]`
+
+24 of 150 trades elevated to tier A. The rule fires. Same PnL because score rules are by design tier-only.
+
+`macdSlopeWindow: 2 → 5` shifts the AAA bucket from 13 → 17 trades — the slope window's size has a real, monotonic-ish effect on tier distribution.
+
+### Verification
+
+- `pnpm tsx scripts/sweep-detective.ts` — 0 DEAD findings in the live catalog (previously 2).
+- `pnpm tsx scripts/sweep-validate.ts` (9 756 runs × 24 variations) — 0 FAIL, 0 WARN.
+- `pnpm tsx scripts/sweep-monotonicity.ts` — 0 violations.
+- `pnpm check:dead-axes` — passes locally and is now part of CI.
+- **Negative control:** temporarily removed `macdAlignmentScore === true` line from the rule file; `pnpm check:dead-axes` correctly flagged the axis as DEAD and exited non-zero. Restored the rule; check returned to clean.
+- `pnpm exec tsc --noEmit` — clean.
+- `pnpm exec vitest run src/__tests__/lib/{optimize,backtest}` — 213 pass, 3 intentional skip, 0 fail.
+- `pnpm lint` — 0 errors.
+
+### Lessons
+
+1. **Static checks complement runtime gates.** `sweep-detective.ts` needs DB credentials and ~30 s wall-clock — too heavy for every PR. `check-dead-axes.ts` is a pure source scan and runs alongside lint. Use both: static for fast PR feedback, runtime for thorough validation when touching engine math.
+2. **Score rules versus block rules need a UI surface.** Even now, a user wandering into the strategy sweep builder can sweep e.g. `aggressionMode` and wonder why PnL never changes. The new badge gives them the answer at a glance.
+3. **Reserved-but-unimplemented gates are a recurring smell.** "Group C — MACD sign + slope" was a documented plan that drifted for months. The dead-axis CI gate makes the next such drift impossible to ignore.
+
+---
+
 ## [BUG-2026-05-26-3] Hawks engine crashed on first sparse-indicator candle instead of skipping
 
 **Date:** 2026-05-26

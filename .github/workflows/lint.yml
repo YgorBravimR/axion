@@ -43,3 +43,6 @@ jobs:
 
       - name: Tailwind token drift check
         run: pnpm exec tsx scripts/token-fix.ts --dry
+
+      - name: Hawks sweep-catalog dead-axis check
+        run: pnpm check:dead-axes

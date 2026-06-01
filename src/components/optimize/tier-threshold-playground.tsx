@@ -145,7 +145,7 @@ const TierThresholdPlayground = ({
 									{row.count}
 								</TableCell>
 								<TableCell className="text-right font-mono">
-									{row.winRate}%
+									{row.winRate.toFixed(1)}%
 								</TableCell>
 								<TableCell
 									className={`text-right font-mono ${

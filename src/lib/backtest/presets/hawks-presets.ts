@@ -395,6 +395,242 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 		},
 	},
 
+	// ── Tier 2D — new dual-mode axes (added in Piece B) ───────────────
+	// Each of these controls the new nested shape (keltnerInner, macd, volume, aggression).
+	// These are GATES axes (block/both modes change PnL) except when mode="score".
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.keltnerInner.mode",
+		labelKey: "hawksKeltnerInnerMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "off" },
+					})),
+			},
+			{
+				value: "score",
+				labelKey: "hawksMode_score",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "score" },
+					})),
+			},
+			{
+				value: "block",
+				labelKey: "hawksMode_block",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "block" },
+					})),
+			},
+			{
+				value: "both",
+				labelKey: "hawksMode_both",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						keltnerInner: { mode: "both" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.keltnerInner?.mode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.macd.mode",
+		labelKey: "hawksMacdMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "off" },
+					})),
+			},
+			{
+				value: "score",
+				labelKey: "hawksMode_score",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "score" },
+					})),
+			},
+			{
+				value: "block",
+				labelKey: "hawksMode_block",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "block" },
+					})),
+			},
+			{
+				value: "both",
+				labelKey: "hawksMode_both",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						macd: { ...qg.macd, mode: "both" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.macd?.mode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.volume.mode",
+		labelKey: "hawksVolumeMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "off" },
+					})),
+			},
+			{
+				value: "score",
+				labelKey: "hawksMode_score",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "score" },
+					})),
+			},
+			{
+				value: "block",
+				labelKey: "hawksMode_block",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "block" },
+					})),
+			},
+			{
+				value: "both",
+				labelKey: "hawksMode_both",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						volume: { ...qg.volume, mode: "both" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.volume?.mode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.aggression.scoreMode",
+		labelKey: "hawksAggressionScoreMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, scoreMode: "off" },
+					})),
+			},
+			{
+				value: "original",
+				labelKey: "hawksAggressionMode_original",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, scoreMode: "original" },
+					})),
+			},
+			{
+				value: "reversed",
+				labelKey: "hawksAggressionMode_reversed",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, scoreMode: "reversed" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.aggression?.scoreMode ?? "off"
+		},
+	},
+	{
+		kind: "enum",
+		path: "entry.config.qualityGates.aggression.blockMode",
+		labelKey: "hawksAggressionBlockMode",
+		condition: isHawksTriple,
+		options: [
+			{
+				value: "off",
+				labelKey: "hawksMode_off",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, blockMode: "off" },
+					})),
+			},
+			{
+				value: "blockOnAligned",
+				labelKey: "hawksAggressionBlockOnAligned",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, blockMode: "blockOnAligned" },
+					})),
+			},
+			{
+				value: "blockOnAnti",
+				labelKey: "hawksAggressionBlockOnAnti",
+				applyOption: (r) =>
+					mutateQualityGates(r, (qg) => ({
+						...qg,
+						aggression: { ...qg.aggression, blockMode: "blockOnAnti" },
+					})),
+			},
+		],
+		getCurrentValue: (r) => {
+			if (r.entry.type !== "hawks_triple_screen") {
+				return "off"
+			}
+			return r.entry.config.qualityGates?.aggression?.blockMode ?? "off"
+		},
+	},
+
 	// ── Tier 3A — engine state-machine knobs ───────────────────────
 	{
 		kind: "numeric",

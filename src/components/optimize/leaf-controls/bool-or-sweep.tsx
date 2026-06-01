@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { SweepModeToggle } from "./sweep-mode-toggle"
@@ -10,6 +11,8 @@ interface BoolOrSweepProps {
 	id: string
 	/** Human-readable label (already i18n-resolved by the parent). */
 	label: string
+	/** Optional badge/icon rendered to the right of the label text. */
+	labelSuffix?: ReactNode
 	/** Optional hint shown beneath the label. */
 	hint?: string
 	/** Current selection — fix bool or sweep over {true, false}. */
@@ -21,6 +24,7 @@ interface BoolOrSweepProps {
 const BoolOrSweep = ({
 	id,
 	label,
+	labelSuffix,
 	hint,
 	selection,
 	onSelectionChange,
@@ -38,8 +42,13 @@ const BoolOrSweep = ({
 	return (
 		<div className="gap-s-300 flex items-start justify-between">
 			<div className="min-w-0">
-				<Label id={`${id}-label`} htmlFor={id} className="cursor-pointer">
-					{label}
+				<Label
+					id={`${id}-label`}
+					htmlFor={id}
+					className="gap-s-200 inline-flex cursor-pointer items-center"
+				>
+					<span>{label}</span>
+					{labelSuffix}
 				</Label>
 				{hint && <p className="text-tiny text-txt-300 mt-s-100">{hint}</p>}
 			</div>

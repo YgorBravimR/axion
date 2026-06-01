@@ -155,17 +155,17 @@ const ORB_SWEEPABLE_PARAMS: SweepableParam[] = [
 		options: [
 			{
 				value: "pct_range",
-				labelKey: "stopType.pctRange",
+				labelKey: "stopType_pctRange",
 				applyOption: (r) => applyStopType(r, "pct_range"),
 			},
 			{
 				value: "full_range",
-				labelKey: "stopType.fullRange",
+				labelKey: "stopType_fullRange",
 				applyOption: (r) => applyStopType(r, "full_range"),
 			},
 			{
 				value: "fixed_points",
-				labelKey: "stopType.fixedPoints",
+				labelKey: "stopType_fixedPoints",
 				applyOption: (r) => applyStopType(r, "fixed_points"),
 			},
 		],
@@ -184,22 +184,22 @@ const ORB_SWEEPABLE_PARAMS: SweepableParam[] = [
 		options: [
 			{
 				value: "r_multiple",
-				labelKey: "targetMode.rMultiple",
+				labelKey: "targetMode_rMultiple",
 				applyOption: (r) => applyTargetMode(r, "r_multiple"),
 			},
 			{
 				value: "pct_range",
-				labelKey: "targetMode.pctRange",
+				labelKey: "targetMode_pctRange",
 				applyOption: (r) => applyTargetMode(r, "pct_range"),
 			},
 			{
 				value: "pct_stop",
-				labelKey: "targetMode.pctStop",
+				labelKey: "targetMode_pctStop",
 				applyOption: (r) => applyTargetMode(r, "pct_stop"),
 			},
 			{
 				value: "fixed_points",
-				labelKey: "targetMode.fixedPoints",
+				labelKey: "targetMode_fixedPoints",
 				applyOption: (r) => applyTargetMode(r, "fixed_points"),
 			},
 		],

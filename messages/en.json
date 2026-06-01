@@ -5081,6 +5081,17 @@
 		"noParamsSelected": "Select at least one parameter to sweep",
 		"runSweep": "Run Sweep",
 		"clearAll": "Clear All",
+		"postRefineHint": {
+			"title": "Refine wave complete — pick your next move",
+			"body": "Best refine run so far: {best} (PF {pf}). Iterate to narrow further or freeze the winner as a hero preset.",
+			"iterateCta": "Iterate — pick new Pareto frontier",
+			"freezeCta": "Freeze winner as hero preset",
+			"dismissAria": "Dismiss next-step hint"
+		},
+		"exportJson": "Export JSON",
+		"exportJsonTitle": "Download all runs as JSON (lossless, includes provenance)",
+		"exportCsv": "Export CSV",
+		"exportCsvTitle": "Download summary metrics per run as CSV (Excel-friendly)",
 		"noRuns": "No runs yet",
 		"sweepOverLimit": "Too many combinations (max {max})",
 		"sweepComplete": "{total} runs completed in {seconds}s",
@@ -5131,7 +5142,14 @@
 			"profitable": "Profitable",
 			"losing": "Losing",
 			"bestPF": "Best PF",
-			"bestSharpe": "Best Sharpe"
+			"bestSharpe": "Best Sharpe",
+			"withDetail": "Profitable variations (with full detail)"
+		},
+		"runs": {
+			"tradesNotRetained": {
+				"label": "Trade detail not retained",
+				"tooltip": "This run's trade details were compacted to save storage. Re-run the sweep to inspect full trade data."
+			}
 		},
 		"pinToChart": "Pin to chart",
 		"unpinFromChart": "Unpin from chart",
@@ -5225,6 +5243,17 @@
 			"hawksAggressionMode_off": "Off",
 			"hawksAggressionMode_original": "Original",
 			"hawksAggressionMode_reversed": "Reversed",
+			"hawksKeltnerInnerMode": "Keltner inner mode",
+			"hawksMacdMode": "MACD mode",
+			"hawksVolumeMode": "Volume mode",
+			"hawksAggressionScoreMode": "Aggression score mode",
+			"hawksAggressionBlockMode": "Aggression block mode",
+			"hawksMode_off": "Off",
+			"hawksMode_score": "Score only",
+			"hawksMode_block": "Block only",
+			"hawksMode_both": "Score + block",
+			"hawksAggressionBlockOnAligned": "Block on aligned",
+			"hawksAggressionBlockOnAnti": "Block on anti-aligned",
 			"stopType": {
 				"pctRange": "% Range",
 				"fullRange": "Full Range",
@@ -5239,7 +5268,35 @@
 			"trailingType": {
 				"indicator": "WMA Indicator",
 				"priceDistance": "Price Distance"
-			}
+			},
+			"breakevenEnabled": "Breakeven",
+			"breakevenType": "Breakeven trigger",
+			"breakevenType_onPartial": "Partial filled",
+			"breakevenType_onPctRisk": "% of risk reached",
+			"hawksEndTime": "Session end",
+			"hawksQualityBundle_custom": "Custom",
+			"hawksStartTime": "Session start",
+			"hawksTierA": "Tier A threshold",
+			"hawksTierAA": "Tier AA threshold",
+			"hawksTierAAA": "Tier AAA threshold",
+			"orbBreakevenTrigger": "BE trigger (% risk)",
+			"orbIgnoreGaps": "Ignore gaps (body-only)",
+			"orbStartTime": "Range open",
+			"orbTarget1": "Target 1",
+			"orbTarget2": "Target 2",
+			"reversalEnabled": "Reversal on stop",
+			"reversalMaxReversals": "Max reversals",
+			"stopPct": "Stop % of range",
+			"stopType_fixedPoints": "Fixed points",
+			"stopType_fullRange": "Full range",
+			"stopType_pctRange": "% of range",
+			"target1ExitPct": "TP1 exit %",
+			"targetEodTime": "EOD exit",
+			"targetMode_fixedPoints": "Fixed points",
+			"targetMode_pctRange": "% of range",
+			"targetMode_pctStop": "% of stop",
+			"targetMode_rMultiple": "R multiple",
+			"trailingEnabled": "Trailing stop"
 		},
 		"runDetail": {
 			"stopPctRange": "{pct}% range",
@@ -5269,6 +5326,12 @@
 			"enableLabel": "Enable walk-forward",
 			"isPF": "IS PF",
 			"oosPF": "OOS PF",
+			"inSampleLabel": "IS",
+			"inSampleTooltip": "In-Sample — the training period the optimizer used to pick parameters. High IS metrics here are expected; they don't prove the strategy generalizes.",
+			"inSampleAria": "In-Sample: training period",
+			"outOfSampleLabel": "OOS",
+			"outOfSampleTooltip": "Out-of-Sample — a validation period the optimizer never saw. Recipes with strong OOS results are the ones to trust.",
+			"outOfSampleAria": "Out-of-Sample: validation period",
 			"robust": "Robust",
 			"notRobust": "Overfit?",
 			"robustFilter": "Show only robust combos",
@@ -5285,7 +5348,10 @@
 			"sourceLabel": "Source",
 			"frontierBadge": "Frontier",
 			"robustBadge": "Robust",
-			"emptyState": "Run a sweep with at least 10 combos to see the frontier."
+			"emptyState": "Run a sweep with at least 10 combos to see the frontier.",
+			"legendFrontier": "Frontier (robust)",
+			"legendFrontierRisky": "Frontier (low OOS robustness)",
+			"legendQuality": "Lower PF → higher PF"
 		},
 		"metricKeys": {
 			"profitFactor": "Profit factor (IS)",
@@ -5338,7 +5404,11 @@
 			"breedJourneyId": "Journey: {id}",
 			"capWarnBroad": "Cap = 500 (broad)",
 			"capWarnRefine": "Cap = 3000 (refine)",
-			"capWarnFreeze": "Freeze stage: snapshot only"
+			"capWarnFreeze": "Freeze stage: snapshot only",
+			"refineBannerTitle": "Refining from {parents, plural, one {1 parent} other {# parents}} → {combos, plural, one {1 new combo} other {# new combos}} to test",
+			"refineBannerHint": "Sweep ranges are narrowed to the parents' neighborhood. Running the sweep produces refine-stage runs tagged with this lineage.",
+			"refineBannerExit": "Reset to broad",
+			"refineBannerExitAria": "Exit refine mode and reset sweep to broad baseline"
 		},
 		"loserPattern": {
 			"tabLabel": "Drivers",
@@ -5351,7 +5421,16 @@
 			"emptyState": "Run at least 10 combos to surface drivers.",
 			"noDrivers": "No drivers cleared the |Δ| threshold. Lower the threshold or run a wider sweep.",
 			"recommendLock": "Recommend locking {leaf} = {value} in refine (winner-leaning).",
-			"recommendAvoid": "Avoid {leaf} = {value} in refine (loser-leaning)."
+			"recommendAvoid": "Avoid {leaf} = {value} in refine (loser-leaning).",
+			"applyButton": "Apply to refine",
+			"applyApplied": "Applied",
+			"applySuccess": "Recommendation applied.",
+			"applyAllButton": "Apply all",
+			"applyAllTitle": "Apply all recommendations",
+			"applyAllDescription": "This will lock {count} leaves to specific values in your next refine sweep. Proceed?",
+			"applyAllCancel": "Cancel",
+			"applyAllConfirm": "Apply all",
+			"applyAllSuccess": "Applied {count} recommendations."
 		},
 		"freezeHero": {
 			"title": "Freeze as hero preset",
@@ -5402,8 +5481,19 @@
 			"hawksAggressionMode_original": "Original",
 			"hawksAggressionMode_reversed": "Reversed",
 			"hawksAggressionThreshold": "Aggression threshold",
+			"hawksAggressionScoreMode": "Aggression score mode",
+			"hawksAggressionBlockMode": "Aggression block mode",
+			"hawksAggressionBlockOnAligned": "Block on aligned",
+			"hawksAggressionBlockOnAnti": "Block on anti-aligned",
 			"hawksVolumeToggle": "Volume score",
 			"hawksVolumeEma": "Volume EMA period",
+			"hawksKeltnerInnerMode": "Keltner inner mode",
+			"hawksMacdMode": "MACD mode",
+			"hawksVolumeMode": "Volume mode",
+			"hawksMode_off": "Off",
+			"hawksMode_score": "Score only",
+			"hawksMode_block": "Block only",
+			"hawksMode_both": "Score + block",
 			"hawksHtfMaBlockToggle": "Higher-TF MA block",
 			"hawksTierAAA": "Tier AAA threshold",
 			"hawksTierAA": "Tier AA threshold",
@@ -5440,6 +5530,11 @@
 			"orbBreakevenTrigger": "BE trigger (% risk)",
 			"orbTarget1": "Target 1",
 			"orbTarget2": "Target 2"
+		},
+		"sweepAxisRole": {
+			"labelOnlyTag": "tier label only",
+			"labelOnlyAria": "This axis affects only the trade tier label",
+			"labelOnlyTooltip": "Sweeping this axis changes the AAA/AA/A/B tier label attached to each trade but does not change PnL, profit factor, Sharpe, or trade count. Useful if you want to filter trades by tier later; not useful for outcome optimization."
 		},
 		"invariants": {
 			"tierMonotonic": "Tier order",

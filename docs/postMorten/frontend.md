@@ -2,6 +2,103 @@
 
 ---
 
+## [BUG-2026-05-31-01] Parameter heatmap grid disappears when sweep has optional params
+
+**Date:** 2026-05-31
+**Severity:** High (completely breaks heatmap visualization for affected sweeps; users see control UI but no data grid)
+**Affected Area:** `src/components/optimize/parameter-heatmap.tsx:206-213`, `src/lib/optimize/heatmap-utils.ts:220-236`
+
+### Symptom
+
+On `/backtest/optimize` after a 1631-run sweep completes, the "Heatmap de Parâmetros" card renders all chrome correctly: title, subtitle, X/Y/Metric selectors, slice pickers, axis-label footer, hover-detail strip, and legend. But the actual colored-cell grid (lines 446–506) is invisible — no header row, no Y-labels, no data cells. The grid div renders with `gridTemplateColumns: auto repeat(N, ...)` but `N = 0`.
+
+### Root Cause
+
+The heatmap component seeds `slices` (constraints for filtering runs to display) from a "best run" via `getNestedValue(seedRun.recipe, paramPath)`. When a param is disabled/missing in the seed run (e.g., `stop.breakeven = undefined`), `getNestedValue` returns `NaN`. This `NaN` value gets stored in `slices`.
+
+Inside `buildHeatmapData` (line 231), the filter checks `if (actual !== value)` to match runs against slice constraints. When `value = NaN`:
+
+- `5 !== NaN` evaluates to `true` (NaN never equals anything)
+- Every run is filtered out, leaving `filtered = []`
+- Downstream `xValuesSet` and `yValuesSet` stay empty
+- Grid renders with zero columns/rows → invisible
+
+The footer labels (X: param name, Y: param name) still render because they depend on `heatmapData && xParam && yParam` being truthy, and `heatmapData` IS created (with empty arrays) — the condition doesn't guard on non-empty arrays.
+
+### Why it Surfaced
+
+The inline-sweep refactor changed how recipes are structured during strategy/preset swaps. A sweep that had been created with full param values later loads into the heatmap with a different seed run (the "best" run might not have all params enabled). The bug was latent before because sweeps rarely mixed "all params present" and "some params disabled" runs in the same set — but Phase 1 trust-foundations introduced this mixing pattern.
+
+### Fix
+
+Only seed slice values if they're finite numbers (line 207):
+
+```ts
+for (const param of sliceParams) {
+	const val = getNestedValue(seedRun.recipe, param.path)
+	// Only add numeric slices if they resolve to finite values.
+	// A missing param (returns NaN) should not become a slice —
+	// it would reject all runs in the filter.
+	if (Number.isFinite(val)) {
+		defaultSlices[param.path] = val
+	}
+}
+```
+
+Now optional params that are missing in the seed run simply don't become a slice constraint. The grid includes all runs regardless of whether they have the optional param.
+
+### Verification
+
+- Unit test probe: seeded slice with NaN → heatmap builds empty grid. After fix: non-empty grid with all 4 runs.
+- Edge case: runA has `breakeven`, runB doesn't. Seed from runB → old code filtered runA out; new code includes it. ✓
+- `pnpm lint` clean, `pnpm exec tsc --noEmit` clean.
+
+### Prevention
+
+1. **Distinguish between "not in sweep" and "missing in this run".** When seeding slice defaults from one run, only use params that have finite values in that run. Optional/conditional params should only become slices if they vary across the sweep — use `getVaryingParams` output, not raw recipe inspection.
+2. **Guard heatmap grid render on non-empty arrays.** Add `heatmapData.xValues.length > 0 && heatmapData.yValues.length > 0` to the grid render condition so degenerate cases (no varying params) fail gracefully with a "No data" message instead of invisible grid.
+
+---
+
+## [BUG-2026-05-31-2] `useHeroPresets` tripped React's `getServerSnapshot` infinite-loop warning
+
+**Date:** 2026-05-31
+**Severity:** Low-Medium (no functional regression, but every render of `/backtest/optimize` logged a `console.error` and the warning is the kind that triggers actual infinite-loops under React 19 concurrent rendering paths)
+**Affected Area:** `src/lib/optimize/use-hero-presets.ts:21`
+
+### Symptom
+
+Dev console on every `/backtest/optimize` navigation:
+
+```
+[browser] The result of getServerSnapshot should be cached to avoid an infinite loop
+    at useHeroPresets (src/lib/optimize/use-hero-presets.ts:15:29)
+    at OptimizeContent (src/components/optimize/optimize-content.tsx:224:36)
+```
+
+Discovered while validating engine accuracy via `scripts/sweep-validate.ts` — the warning came up in `/tmp/axion-dev.log` while the page sat idle behind Playwright.
+
+### Root Cause
+
+`useSyncExternalStore`'s third argument (`getServerSnapshot`) was an arrow returning a fresh array literal `() => []`. React calls this function during SSR/hydration and on every re-render path that needs the server-time value. Because `[] !== []` identity-wise, React's invariant check fires the warning. The same anti-pattern in `getSnapshot` (second argument) is what actually causes the infinite-loop crash; here it was only the SSR variant, so impact was log-noise — but same family of bug.
+
+### Fix
+
+Hoisted a module-level `SERVER_SNAPSHOT` constant and a named `getServerSnapshot` function. Also passed `listHeroPresets` directly (no-arg function) instead of wrapping in an arrow, so the snapshot reader's identity is stable across renders too.
+
+### Verification
+
+- Page reloaded on `localhost:3003/backtest/optimize` — Playwright console reports 0 errors (previously: 1 error per render).
+- `pnpm exec tsc --noEmit` clean.
+- `pnpm lint` clean.
+
+### Lessons
+
+1. **`useSyncExternalStore` snapshot functions must return stable references for empty/sentinel values.** Hoist them to module scope; never inline `() => []`, `() => null`, `() => {}`.
+2. **Dev-log noise is signal.** This warning sat in `/tmp/axion-dev.log` long enough to feel like background hum. Validation-pass discovered it incidentally — worth grepping dev logs for `console.error` patterns after any meaningful feature work.
+
+---
+
 ## [BUG-2026-05-30-1] Optimize inline sweep builder shows previous strategy's leaf values after Strategy/Preset swap
 
 **Date:** 2026-05-30
