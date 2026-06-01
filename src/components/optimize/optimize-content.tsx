@@ -225,11 +225,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Runs state ────────────────────────────────────────────────
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
-	// Single-row delete confirmation. Holds the id of the run pending
-	// deletion; the AlertDialog opens whenever this is non-null.
-	const [pendingDeleteRunId, setPendingDeleteRunId] = useState<string | null>(
-		null
-	)
 	// Bulk multi-select state for the runs comparison table. The dialog flag
 	// is separate so the count badge stays visible after dismiss-without-action.
 	const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(
@@ -734,22 +729,36 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		)
 	}, [])
 
-	// Row trash button only *requests* deletion; the AlertDialog wired in
-	// the results view confirms before we actually mutate runs / IDB.
-	const handleRequestDeleteRun = useCallback((runId: string) => {
-		setPendingDeleteRunId(runId)
-	}, [])
-
-	const handleConfirmDeleteRun = useCallback(() => {
-		if (pendingDeleteRunId === null) {
-			return
-		}
-		setRuns((prev) => prev.filter((run) => run.id !== pendingDeleteRunId))
-		if (expandedRunId === pendingDeleteRunId) {
-			setExpandedRunId(null)
-		}
-		setPendingDeleteRunId(null)
-	}, [pendingDeleteRunId, expandedRunId])
+	// Row trash button: delete immediately and surface an undo toast.
+	// The toast's 5s window is the recovery window; on Undo we splice the
+	// run back at its original index so order is preserved.
+	const handleDeleteRun = useCallback(
+		(runId: string) => {
+			const index = runs.findIndex((run) => run.id === runId)
+			if (index === -1) {
+				return
+			}
+			const removedRun = runs[index]
+			if (removedRun === undefined) {
+				return
+			}
+			setRuns((prev) => prev.filter((run) => run.id !== runId))
+			if (expandedRunId === runId) {
+				setExpandedRunId(null)
+			}
+			showToast("info", t("runDeletedToast", { label: removedRun.label }), {
+				label: t("undo"),
+				onClick: () => {
+					setRuns((prev) => {
+						const next = [...prev]
+						next.splice(index, 0, removedRun)
+						return next
+					})
+				},
+			})
+		},
+		[runs, expandedRunId, showToast, t]
+	)
 
 	// Multi-select handlers for the runs table.
 	const handleToggleSelect = useCallback((runId: string) => {
@@ -1638,7 +1647,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											expandedRunId={expandedRunId}
 											onTogglePin={handleTogglePin}
 											onToggleExpand={handleToggleExpand}
-											onDelete={handleRequestDeleteRun}
+											onDelete={handleDeleteRun}
 											onUpdateLabel={handleUpdateLabel}
 											robustFilterEnabled={robustFilterEnabled}
 											onRobustFilterChange={setRobustFilterEnabled}
@@ -1748,39 +1757,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 							variant="destructive"
 						>
 							{t("bulkDeleteConfirmAction", { count: selectedRunIds.size })}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-
-			<AlertDialog
-				open={pendingDeleteRunId !== null}
-				onOpenChange={(open) => {
-					if (!open) {
-						setPendingDeleteRunId(null)
-					}
-				}}
-			>
-				<AlertDialogContent size="sm">
-					<AlertDialogHeader>
-						<AlertDialogTitle>{t("deleteRunConfirmTitle")}</AlertDialogTitle>
-						<AlertDialogDescription>
-							{t("deleteRunConfirmDescription", {
-								label:
-									runs.find((r) => r.id === pendingDeleteRunId)?.label ?? "—",
-							})}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel id="cancel-delete-run">
-							{t("deleteRunConfirmCancel")}
-						</AlertDialogCancel>
-						<AlertDialogAction
-							id="confirm-delete-run"
-							onClick={handleConfirmDeleteRun}
-							variant="destructive"
-						>
-							{t("deleteRunConfirmAction")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

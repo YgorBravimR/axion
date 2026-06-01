@@ -14,14 +14,20 @@ import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react"
 
 type ToastType = "success" | "error" | "info" | "warning"
 
+interface ToastAction {
+	label: string
+	onClick: () => void
+}
+
 interface Toast {
 	id: string
 	type: ToastType
 	message: string
+	action?: ToastAction
 }
 
 interface ToastContextType {
-	showToast: (_type: ToastType, _message: string) => void
+	showToast: (_type: ToastType, _message: string, _action?: ToastAction) => void
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
@@ -89,16 +95,19 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
 		setToasts((prev) => prev.filter((toast) => toast.id !== id))
 	}, [])
 
-	const showToast = useCallback((type: ToastType, message: string) => {
-		const id = Date.now().toString()
-		setToasts((prev) => [...prev, { id, type, message }])
+	const showToast = useCallback(
+		(type: ToastType, message: string, action?: ToastAction) => {
+			const id = Date.now().toString()
+			setToasts((prev) => [...prev, { id, type, message, action }])
 
-		const timer = setTimeout(() => {
-			timerRefs.current.delete(id)
-			setToasts((prev) => prev.filter((toast) => toast.id !== id))
-		}, 5000)
-		timerRefs.current.set(id, timer)
-	}, [])
+			const timer = setTimeout(() => {
+				timerRefs.current.delete(id)
+				setToasts((prev) => prev.filter((toast) => toast.id !== id))
+			}, 5000)
+			timerRefs.current.set(id, timer)
+		},
+		[]
+	)
 
 	return (
 		<ToastContext.Provider value={{ showToast }}>
@@ -113,6 +122,18 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
 					>
 						{getIcon(toast.type)}
 						<span className="text-body font-medium">{toast.message}</span>
+						{toast.action !== undefined && (
+							<button
+								type="button"
+								onClick={() => {
+									toast.action?.onClick()
+									dismissToast(toast.id)
+								}}
+								className="ml-m-400 text-body font-semibold underline-offset-2 hover:underline"
+							>
+								{toast.action.label}
+							</button>
+						)}
 						<button
 							type="button"
 							onClick={() => dismissToast(toast.id)}
