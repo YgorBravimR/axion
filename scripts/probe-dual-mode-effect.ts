@@ -162,8 +162,8 @@ interface ProbeResult {
 const probeRule = (
 	candles: CandleRow[],
 	name: string,
-	applyOff: (r: StrategyRecipe) => StrategyRecipe,
-	applyBlock: (r: StrategyRecipe) => StrategyRecipe
+	applyOff: (_r: StrategyRecipe) => StrategyRecipe,
+	applyBlock: (_r: StrategyRecipe) => StrategyRecipe
 ): ProbeResult => {
 	// Baseline = hawksV0 recipe with quality bundle = "strict". Use mutateGates
 	// so we swap qualityGates *inside* the entry config, not rebuild the recipe.

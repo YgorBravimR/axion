@@ -30,8 +30,6 @@ const run = async () => {
 		LIMIT 5000
 	`) as { timestamp: string; open: string; close: string; agg: string }[]
 
-	let bullishBricks = 0
-	let bearishBricks = 0
 	let aggPosCloseUp = 0
 	let aggPosCloseDn = 0
 	let aggNegCloseUp = 0
@@ -48,12 +46,6 @@ const run = async () => {
 		aggs.push(a)
 		const up = c > o
 		const dn = c < o
-		if (up) {
-			bullishBricks++
-		}
-		if (dn) {
-			bearishBricks++
-		}
 		if (a > 0 && up) {
 			aggPosCloseUp++
 		}

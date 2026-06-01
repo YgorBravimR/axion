@@ -109,18 +109,6 @@ const withGate = <K extends keyof QualityGatesConfig>(
 	key: K,
 	value: QualityGatesConfig[K]
 ): StrategyRecipe => mutateGates(recipe, (qg) => ({ ...qg, [key]: value }))
-const withBe = (r: StrategyRecipe, pct: number): StrategyRecipe => ({
-	...r,
-	stop: { ...r.stop, breakeven: { type: "on_pct_risk", triggerPct: pct } },
-})
-const withR = (r: StrategyRecipe, v: number): StrategyRecipe => ({
-	...r,
-	target: {
-		...r.target,
-		type: "fixed_levels",
-		levels: [{ value: v, mode: "r_multiple", exitPct: 100, label: "target1" }],
-	} as StrategyRecipe["target"],
-})
 const withSlip = (r: StrategyRecipe, t: number): StrategyRecipe => ({
 	...r,
 	slippageTicks: t,
