@@ -579,8 +579,6 @@ describe("setDefaultAccount", () => {
 			id: mockAccountId,
 			isDefault: false,
 		})
-		const otherDefault = createMockAccount({ id: "other-id", isDefault: true })
-
 		const mockUpdateChain = {
 			set: vi.fn().mockReturnValue({
 				where: vi.fn().mockResolvedValue(undefined),

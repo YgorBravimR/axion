@@ -3256,6 +3256,11 @@
 			"deleteDefinition": {
 				"title": "Delete \"{name}\"?",
 				"description": "This action cannot be undone."
+			},
+			"errors": {
+				"groupNotFound": "Indicator group not found.",
+				"groupHasDefinitions": "Cannot delete a group that still has active indicator definitions.",
+				"definitionNotFound": "Indicator definition not found."
 			}
 		},
 		"actions": {
@@ -4122,6 +4127,11 @@
 		"title": "Import Broker Statement",
 		"description": "Upload a trade statement from your broker to import with exact execution prices and quantities",
 		"broker": "Broker",
+		"brokers": {
+			"clear": "Clear",
+			"xp": "XP",
+			"genial": "Genial"
+		},
 		"csvFile": "CSV File",
 		"selected": "Selected: {name} ({size} KB)",
 		"selectBroker": "Select your broker",
@@ -4690,6 +4700,7 @@
 			"strategy": "Strategy",
 			"loadPreset": "Load Preset",
 			"entryDescription": "Configure when and how the strategy enters a position",
+			"entryDescriptionDezk": "MACD histogram + WMA 9/21 alignment entry on the 10K timeframe",
 			"stopProtection": "Stop & Protection",
 			"initialStop": "Initial Stop",
 			"stopPctRange": "% of Range",
@@ -4790,13 +4801,25 @@
 			"eodTime": "EOD Exit Time"
 		},
 		"dezk": {
-			"name": "10K — MACD WMA Alignment"
+			"name": "10K — MACD WMA Alignment",
+			"macdLabel": "MACD",
+			"macdFast": "MACD Fast",
+			"macdSlow": "MACD Slow",
+			"macdSignal": "MACD Signal",
+			"wmaFast": "WMA Fast",
+			"wmaSlow": "WMA Slow",
+			"candlesAfter": "Candles After Alignment",
+			"stopBuffer": "Stop Buffer",
+			"startTime": "Entry Window Start",
+			"endTime": "Entry Window End",
+			"requireZeroCross": "Require MACD Zero Cross"
 		},
 		"results": {
 			"title": "Results",
 			"totalTrades": "Total Trades",
 			"winRate": "Win Rate",
 			"profitFactor": "Profit Factor",
+			"riskReturn": "Risk : Return",
 			"totalPnl": "Total P&L",
 			"maxDrawdown": "Max Drawdown",
 			"avgR": "Avg R-Multiple",
@@ -4805,6 +4828,7 @@
 			"wins": "Wins",
 			"losses": "Losses",
 			"breakevens": "Breakevens",
+			"breakevenRate": "BE take rate",
 			"tradingDays": "Trading Days",
 			"maxConsecLoss": "Max Consec. Losses",
 			"maxConsecWin": "Max Consec. Wins",
@@ -4814,7 +4838,9 @@
 			"tradeList": "Trade List",
 			"dayBreakdown": "Day Breakdown",
 			"completedTrades": "{count} trades completed",
-			"engineVersion": "Engine Version"
+			"engineVersion": "Engine Version",
+			"excludeBreakevens": "Exclude breakeven trades",
+			"breakevenSummary": "{count} BE · {rate}% of fires"
 		},
 		"hawksPanel": {
 			"title": "Hawks Insights",
@@ -4858,8 +4884,37 @@
 			"contracts": "Contracts",
 			"pnl": "P&L",
 			"rMultiple": "R",
+			"tier": "Tier",
+			"score": "Score",
+			"openQualityDrawer": "Open quality breakdown for trade #{id}",
 			"noTrades": "No trades",
 			"viewChart": "View chart"
+		},
+		"tierBreakdown": {
+			"title": "Per-tier breakdown",
+			"hint": "Conditional metrics — \"if you only took trades of this tier\". Drawdown is computed over the tier's own trade sequence.",
+			"tier": "Tier",
+			"count": "Trades",
+			"winRate": "Win %",
+			"avgR": "Avg R",
+			"pnl": "P&L",
+			"maxDrawdown": "Max DD",
+			"untiered": "Untiered"
+		},
+		"qualityDrawer": {
+			"title": "Trade #{id} — Quality breakdown",
+			"titleEmpty": "Quality breakdown",
+			"descriptionEmpty": "Pick a trade to inspect its quality contributions.",
+			"tier": "Tier",
+			"score": "Score",
+			"contributions": "Indicator contributions",
+			"noRules": "No quality rules were active for this fire.",
+			"noQuality": "This trade was emitted before quality scoring was attached.",
+			"signal": {
+				"favor": "favor",
+				"penalty": "penalty",
+				"neutral": "neutral"
+			}
 		},
 		"chartModal": {
 			"title": "Trade #{id} — {direction}",
@@ -4900,7 +4955,120 @@
 			"ema27_60m_key": "MME 27 (60m)",
 			"ema55_60m_key": "MME 55 (60m)",
 			"ema27_15m_key": "MME 27 (15m)",
-			"macd_key": "MACD"
+			"macd_key": "MACD",
+			"quality": {
+				"presetLabel": "Quality preset",
+				"preset": {
+					"off": {
+						"label": "Off",
+						"description": "Engine baseline. Quality is still scored but no rule modifies it."
+					},
+					"lite": {
+						"label": "Lite",
+						"description": "Single favor signal — S/R level behind the trade adds to quality. No blocks."
+					},
+					"standard": {
+						"label": "Standard",
+						"description": "All favor/penalty/score signals on (S/R favor, Keltner penalty, MACD alignment, volume, aggression reversed). No blocks."
+					},
+					"strict": {
+						"label": "Strict",
+						"description": "Standard + the two block rules (S/R ahead, Keltner outer band). Reduces fire rate."
+					},
+					"custom": {
+						"label": "Custom",
+						"description": "Your settings deviate from the named bundles."
+					}
+				},
+				"advanced": {
+					"title": "Advanced — individual rules & tunables"
+				},
+				"groups": {
+					"sr": "S/R Levels (4 HTF MAs + VWAP + ajuste)",
+					"keltner": "Keltner Bands",
+					"macd": "MACD",
+					"aggression": "Aggression",
+					"volume": "Volume",
+					"tiers": "Tier Thresholds"
+				},
+				"srLevelBlock": {
+					"label": "Block: S/R level ahead within buffer",
+					"hint": "Refuse entry when any S/R level sits in front of the trade within the buffer distance."
+				},
+				"srLevelFavor": {
+					"label": "Favor: S/R level behind within range",
+					"hint": "+1 quality per S/R level cushioning the trade (within range, on the favorable side)."
+				},
+				"srBlockBufferBricks": {
+					"label": "Block buffer (bricks)",
+					"hint": "How close (in bricks) an ahead-level must be to block."
+				},
+				"srFavorRangeBricks": {
+					"label": "Favor range (bricks)",
+					"hint": "How close (in bricks) a behind-level must be to count as cushion."
+				},
+				"keltnerOuterBlock": {
+					"label": "Block: near Keltner 165 band",
+					"hint": "Refuse entry when price is at the outer band acting as floor/ceiling."
+				},
+				"keltnerInnerPenalty": {
+					"label": "Penalty: near Keltner 125 band",
+					"hint": "−1 quality when price is at the inner band on the trade side."
+				},
+				"keltnerNearBricks": {
+					"label": "Near-band distance (bricks)",
+					"hint": "Distance considered \"near\" the band."
+				},
+				"macdAlignmentScore": {
+					"label": "Score: MACD alignment",
+					"hint": "±1 by histogram sign + slope streak."
+				},
+				"macdSlopeWindow": {
+					"label": "Slope window (bricks)",
+					"hint": "Brick count used to detect a sustained slope streak."
+				},
+				"aggressionMode": {
+					"label": "Aggression polarity",
+					"hint": "Polarity of the aggression signal vs. trade direction. Probe (20d, 15K threshold) supports \"reversed\" with 1.67× selectivity.",
+					"off": "Off",
+					"original": "Original (aligned = favor)",
+					"reversed": "Reversed (aligned = penalty)"
+				},
+				"aggressionThreshold": {
+					"label": "Aggression threshold",
+					"hint": "Minimum imbalance to count as a signal."
+				},
+				"volumeScore": {
+					"label": "Score: volume above EMA",
+					"hint": "+1 quality when brick volume exceeds the running EMA."
+				},
+				"volumeEmaPeriod": {
+					"label": "Volume EMA period (bricks)",
+					"hint": "Smoothing period for the running volume EMA."
+				},
+				"tierHint": "Score thresholds for AAA/AA/A. Anything below A is bucketed as B."
+			}
+		},
+		"userCatalog": {
+			"name": "Hawks — User Catalog",
+			"description": "User-supplied entry catalog. Engine fires at the listed brick indices with the listed directions; stop / BE / TP come from the same Hawks scaffolding. Use this to validate outcome math or backtest subjective setups.",
+			"startTime": "Entry Window Start",
+			"endTime": "Entry Window End",
+			"catalogJson": "Catalog (JSON)",
+			"catalogJsonHint": "Array of objects with date, brickIndex, direction, label (optional). brickIndex is 1-indexed — matches the spreadsheet box number.",
+			"catalogLoaded": "{count} entries loaded",
+			"bundlePickerLabel": "Load a built-in catalog",
+			"bundlePickerPlaceholder": "— Choose a catalog —",
+			"bundlePickerHint": "Bundled catalogs come from the dev/test fixtures. Pick one to seed the textarea — you can still edit the JSON afterwards."
+		},
+		"inspector": {
+			"title": "Trade #{id} — {direction}",
+			"emptyState": "Select a trade to inspect",
+			"loading": "Loading triple screen…",
+			"noBricks": "Not enough data to generate bricks for this window",
+			"overviewTitle": "Trade Overview",
+			"overviewHint": "{count} trades — click a marker to inspect",
+			"failedToLoad": "Failed to load"
 		}
 	},
 	"optimize": {
@@ -5220,7 +5388,8 @@
 				"paid": "Paid",
 				"exempt": "Exempt",
 				"overdue": "Overdue"
-			}
+			},
+			"noDarfLines": "No DARF rows for {year}. Click \"Recompute year\" after recording trades."
 		}
 	},
 	"plan": {

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { LoginForm } from "@/components/auth"
+import { DevAutoLogin } from "@/components/dev/dev-autologin"
 
 interface LoginPageProps {
 	searchParams: Promise<{ callbackUrl?: string; registered?: string }>
@@ -15,7 +16,12 @@ const LoginPage = async ({ searchParams }: LoginPageProps) => {
 		redirect(params.callbackUrl || "/")
 	}
 
-	return <LoginForm callbackUrl={params.callbackUrl} />
+	return (
+		<>
+			<DevAutoLogin callbackUrl={params.callbackUrl} />
+			<LoginForm callbackUrl={params.callbackUrl} />
+		</>
+	)
 }
 
 export { LoginPage as default }

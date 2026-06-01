@@ -1,0 +1,72 @@
+[
+	{
+		"date": "2026-03-05",
+		"brickIndex": 54,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "ST"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 56,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 61,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 66,
+		"direction": "short",
+		"label": "T4",
+		"expectedResult": "ST"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 79,
+		"direction": "short",
+		"label": "T5",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 87,
+		"direction": "short",
+		"label": "T6",
+		"expectedResult": "GA"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 97,
+		"direction": "short",
+		"label": "T7",
+		"expectedResult": "GA"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 112,
+		"direction": "short",
+		"label": "T8",
+		"expectedResult": "GA"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 128,
+		"direction": "short",
+		"label": "T9",
+		"expectedResult": "ST"
+	},
+	{
+		"date": "2026-03-05",
+		"brickIndex": 212,
+		"direction": "short",
+		"label": "T10",
+		"expectedResult": "ST"
+	}
+]

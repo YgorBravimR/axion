@@ -1,0 +1,44 @@
+[
+	{
+		"date": "2026-03-09",
+		"brickIndex": 17,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-09",
+		"brickIndex": 23,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-09",
+		"brickIndex": 28,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "ST"
+	},
+	{
+		"date": "2026-03-09",
+		"brickIndex": 32,
+		"direction": "short",
+		"label": "T4",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-09",
+		"brickIndex": 73,
+		"direction": "short",
+		"label": "T5",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-09",
+		"brickIndex": 78,
+		"direction": "short",
+		"label": "T6",
+		"expectedResult": "ST"
+	}
+]

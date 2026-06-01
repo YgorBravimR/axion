@@ -32,6 +32,11 @@ export const getCandlesForRange = async (
 	}
 }> => {
 	try {
+		// Without this gate, a stale session lets middleware catch the action and
+		// return an HTML /login redirect — which the client's Server Action
+		// runtime then throws as "unexpected response," leaving any caller that
+		// doesn't .catch() stuck in a loading state forever.
+		await requireAuth()
 		const rows = await db
 			.select({
 				timestamp: priceCandles.timestamp,
@@ -178,7 +183,7 @@ export const getTradeWithCandles = async (
 	data?: TradeChartData
 }> => {
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
 
 		// 1. Fetch the trade by ID with executions
 		const trade = await db.query.trades.findFirst({

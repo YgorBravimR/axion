@@ -845,7 +845,7 @@ export const getTrade = async (
 ): Promise<ActionResponse<TradeWithRelations>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
 		const trade = await db.query.trades.findFirst({
 			where: and(
 				eq(trades.id, id),
@@ -898,8 +898,7 @@ export const getTrades = async (
 ): Promise<ActionResponse<PaginatedResponse<TradeWithRelations>>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { accountId, userId, showAllAccounts, allAccountIds } =
-			await requireAuth()
+		const { accountId, showAllAccounts, allAccountIds } = await requireAuth()
 		const validatedFilters = filters ? tradeFiltersSchema.parse(filters) : {}
 		const validatedPagination = pagination
 			? paginationSchema.parse(pagination)
@@ -1012,7 +1011,7 @@ export const getTradesForDate = async (
 ): Promise<ActionResponse<Trade[]>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
 		const startOfDay = getStartOfDay(date)
 		const endOfDay = getEndOfDay(date)
 
@@ -1846,8 +1845,7 @@ export const getTradesGroupedByDay = async (
 ): Promise<ActionResponse<TradesByDay[]>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { accountId, userId, showAllAccounts, allAccountIds } =
-			await requireAuth()
+		const { accountId, showAllAccounts, allAccountIds } = await requireAuth()
 		const locale = await getLocale()
 		const bcp47Locale = locale === "pt-BR" ? "pt-BR" : "en-US"
 

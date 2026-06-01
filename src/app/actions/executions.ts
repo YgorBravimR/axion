@@ -195,7 +195,7 @@ export const createExecution = async (
 ): Promise<ActionResponse<TradeExecution>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 		const validated = createExecutionSchema.parse(input)
 
 		// Verify trade exists and belongs to the current account
@@ -321,7 +321,7 @@ export const updateExecution = async (
 ): Promise<ActionResponse<TradeExecution>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 		const validated = updateExecutionSchema.parse(input)
 
 		// Get DEK for encryption/decryption
@@ -456,7 +456,7 @@ export const deleteExecution = async (
 ): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 
 		// Get existing execution with trade verification
 		const existing = await db.query.tradeExecutions.findFirst({
@@ -522,7 +522,7 @@ export const getExecutions = async (
 ): Promise<ActionResponse<TradeExecution[]>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId } = await requireAuth()
 
 		// Verify trade ownership
 		const trade = await db.query.trades.findFirst({
@@ -569,7 +569,7 @@ export const getExecutionSummary = async (
 ): Promise<ActionResponse<ExecutionSummary>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId } = await requireAuth()
 
 		// Verify trade ownership
 		const trade = await db.query.trades.findFirst({
@@ -620,7 +620,7 @@ export const convertToScaledMode = async (
 ): Promise<ActionResponse<TradeExecution[]>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 
 		const trade = await db.query.trades.findFirst({
 			where: and(eq(trades.id, tradeId), eq(trades.accountId, accountId)),
@@ -749,7 +749,7 @@ export const recalculateTradeFromExecutions = async (
 ): Promise<ActionResponse<ExecutionSummary>> => {
 	const t = await getTranslations("journal")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId, userId } = await requireAuth()
 
 		const trade = await db.query.trades.findFirst({
 			where: and(eq(trades.id, tradeId), eq(trades.accountId, accountId)),

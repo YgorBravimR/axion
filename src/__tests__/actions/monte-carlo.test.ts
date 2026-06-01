@@ -5,7 +5,6 @@ import type {
 	SourceStats,
 	MonteCarloResult,
 	MonteCarloResultV2,
-	SimulationParams,
 	SimulationParamsV2,
 	StrategyComparisonResult,
 } from "@/types/monte-carlo"
@@ -32,7 +31,7 @@ vi.mock("@/app/actions/auth", () => ({
 }))
 
 vi.mock("@/lib/monte-carlo", () => ({
-	runMonteCarloSimulation: vi.fn((params: unknown) => ({
+	runMonteCarloSimulation: vi.fn(() => ({
 		statistics: {
 			medianFinalR: 25.5,
 			profitablePct: 72.5,

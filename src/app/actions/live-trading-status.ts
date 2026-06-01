@@ -27,7 +27,7 @@ export const getLiveTradingStatus = async (
 ): Promise<ActionResponse<LiveTradingStatusResult>> => {
 	const t = await getTranslations("commandCenter")
 	try {
-		const { userId, accountId } = await requireAuth()
+		const { accountId } = await requireAuth()
 
 		const today = date ? new Date(date) : await getServerEffectiveNow()
 		today.setHours(0, 0, 0, 0)

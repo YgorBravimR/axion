@@ -194,9 +194,9 @@ export const DetailedTradeImporter = ({
 								<SelectValue placeholder={t("selectBroker")} />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="CLEAR">Clear</SelectItem>
-								<SelectItem value="XP">XP</SelectItem>
-								<SelectItem value="GENIAL">Genial</SelectItem>
+								<SelectItem value="CLEAR">{t("brokers.clear")}</SelectItem>
+								<SelectItem value="XP">{t("brokers.xp")}</SelectItem>
+								<SelectItem value="GENIAL">{t("brokers.genial")}</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>

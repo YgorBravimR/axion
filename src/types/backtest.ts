@@ -12,6 +12,7 @@ type StrategyPresetId =
 	| "orb_test_3"
 	| "orb_test_4"
 	| "hawks_v0"
+	| "hawks_user_catalog"
 	| "custom"
 
 // ═══════════════════════════════════════════════════════════════════
@@ -44,10 +45,38 @@ interface EntrySignal {
 	direction: Direction
 	price: number // entry price (before slippage)
 	stopReference?: number // pre-computed stop price (entry module can suggest)
+	breakevenReference?: number // absolute price at which BE should activate (overrides triggerPct)
 	rangeHigh?: number // optional — only for range-based strategies
 	rangeLow?: number // optional
 	rangeWidth?: number // optional
 	label: string
+	// Optional quality score attached at fire time. The engine threads this
+	// through unchanged into the trade row; pure metadata, no behavior.
+	quality?: TradeQuality
+}
+
+// Quality tiering — signed-score model.
+// Each registered indicator contributes one IndicatorContribution at fire
+// time: "favor" ⇒ +weight, "penalty" ⇒ -weight, "neutral" ⇒ 0. Score is the
+// sum. Tier is the bucketed score per QualityGatesConfig.tierThresholds
+// (defaults: AAA ≥ 3, AA = 2, A = 1, B otherwise).
+//
+// Weights are 1.0 across all indicators today. The shape supports per-
+// indicator weighting later — once enough data exists to set them honestly.
+type QualityTier = "AAA" | "AA" | "A" | "B"
+type IndicatorSignal = "favor" | "penalty" | "neutral"
+
+interface IndicatorContribution {
+	key: string
+	signal: IndicatorSignal
+	weight: number
+	contribution: number // weight when favor, -weight when penalty, 0 otherwise
+}
+
+interface TradeQuality {
+	tier: QualityTier
+	score: number
+	contributions: IndicatorContribution[]
 }
 
 interface EntryState {
@@ -83,15 +112,102 @@ interface HawksTripleScreenConfig {
 	ema27_60m_key: string // default: "mme27_60m"
 	ema55_60m_key: string // default: "mme55_60m"
 	ema27_15m_key: string // default: "mme27_15m"
+	ema55_15m_key: string // default: "mme55_15m"
 	macd_key: string // default: "macd"
+	// ProfitChart "TOPOS E FUNDOS" pivot column. Sparse — a value (the pivot
+	// price) appears only on bars that are confirmed pivots; the rest are
+	// empty. Alternation TOPO↔FUNDO is implicit; the engine classifies by
+	// comparing each pivot value to the previous one.
+	topos_fundos_key: string // default: "topos_fundos"
+	// Previous-closed-candle OHLC projected from 15m / 60m at ingest time.
+	// Used by the higher-TF gate: the brick BEFORE the current one must have
+	// opened AND closed below both EMAs (for SHORT) / above both (for LONG).
+	prev_15m_open_key: string // default: "prev_15m_open"
+	prev_15m_close_key: string // default: "prev_15m_close"
+	prev_60m_open_key: string // default: "prev_60m_open"
+	prev_60m_close_key: string // default: "prev_60m_close"
+	// Renko box size in points for the 5m chart. Used as the unit for the
+	// "wave-1 ≥ 4 boxes" and "retracement ≥ 2 boxes" structural checks.
+	// Currently a constant per recipe; future revision can swap to a
+	// per-week lookup via hawks_renko_sizes.
+	brickSize5mPoints: number // default: 100 (= 20 ticks × 5 points/tick on WIN)
 	startTime: number // 930
 	endTime: number // 1730
+	// Optional user-toggleable quality gates. Each flag is independent and
+	// additive: when true, the engine refuses an otherwise-valid fire if the
+	// gate's condition holds. Default off ⇒ baseline engine behavior preserved.
+	// Sign convention for any level L vs entry price P:
+	//   signedDelta = direction === "short" ? (L - P) : (P - L)
+	//     positive ⇒ level is BEHIND the trade (favorable side, cushion)
+	//     negative ⇒ level is AHEAD of the trade (adverse side, blocks move)
+	qualityGates?: QualityGatesConfig
+}
+
+interface QualityGatesConfig {
+	// ── Group A: S/R levels (4 HTF MAs + vwap_d + ajuste) ─────────────────
+	// BLOCK entry if any S/R level is AHEAD of trade within srBlockBufferBricks.
+	srLevelBlock?: boolean
+	// SCORE +weight per S/R level BEHIND trade within srFavorRangeBricks.
+	srLevelFavor?: boolean
+	// ── Group B: Keltner (planned, not yet wired) ─────────────────────────
+	keltnerOuterBlock?: boolean // hard reject when 165 band acts as floor/ceiling
+	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side
+	// ── Group C: MACD (planned) ───────────────────────────────────────────
+	macdAlignmentScore?: boolean // ±weight by sign + slope streak
+	// ── Group D: aggression ───────────────────────────────────────────────
+	// Tri-state polarity switch. "off" = rule disabled (default, baseline
+	// behavior). "original" = aggression aligned with trade direction is
+	// FAVOR (your intuitive heuristic). "reversed" = aligned is PENALTY
+	// ("late to the move"); probe data on 20 days supports this polarity
+	// at threshold 15K with 1.67× selectivity. Recommended setting when
+	// enabling the rule is "reversed".
+	aggressionMode?: "off" | "original" | "reversed"
+	// ── Group E: volume (planned) ─────────────────────────────────────────
+	volumeScore?: boolean // +weight if brick volume > running EMA
+	// ── Tunable parameters (defaults preserve current behavior) ───────────
+	srBlockBufferBricks?: number // default 2
+	srFavorRangeBricks?: number // default 3
+	keltnerNearBricks?: number // default 2 — distance (in bricks) considered "near" the band
+	aggressionThreshold?: number // default 15000
+	volumeEmaPeriod?: number // default 500
+	macdSlopeWindow?: number // default 3
+	// ── Tier thresholds (config so we can re-tier as score range grows) ───
+	tierThresholds?: TierThresholds
+	// ── Legacy alias for backwards-compat. Equivalent to srLevelBlock on
+	// just the 4 HTF MAs (no vwap_d / ajuste). Prefer srLevelBlock. ───────
+	htfMaBlock?: boolean
+}
+
+interface TierThresholds {
+	AAA: number // default 3 — score >= AAA
+	AA: number // default 2 — score >= AA && < AAA
+	A: number // default 1 — score >= A && < AA
+	// B is anything below A (including negative)
+}
+
+// User-served entry catalog: the user manually specifies which brick on which
+// day fires an entry. No structural gates — outcome simulation uses the same
+// stop/target recipe as any other strategy. Brick index is 1-indexed, matching
+// ProfitChart's per-day "CANDLE" counter (= DB candle_index).
+interface UserEntry {
+	date: string // BRT day "YYYY-MM-DD"
+	brickIndex: number // 1-indexed (ProfitChart box number = DB candle_index)
+	direction: Direction
+	label?: string // "T1", "T2", etc.
+	notes?: string
+}
+
+interface UserCatalogConfig {
+	catalog: UserEntry[]
+	startTime?: number // HHMM — optional: skip bricks before this time
+	endTime?: number // HHMM — optional: skip bricks after this time
 }
 
 type EntryModuleConfig =
 	| { type: "orb_breakout"; config: OrbEntryConfig }
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
 	| { type: "hawks_triple_screen"; config: HawksTripleScreenConfig }
+	| { type: "user_catalog"; config: UserCatalogConfig }
 
 interface EntryModule {
 	init: (_config: OrbEntryConfig) => EntryState
@@ -166,10 +282,16 @@ type TrailingConfig = PriceDistanceTrailingConfig | IndicatorTrailingConfig
 
 // --- Combined stop config ---
 
+// "intrabar" (default): stop fires when candle.low/high crosses the level
+// "brick_close": stop fires only when a Renko brick CLOSES against the trade
+// (used by Renko strategies where wicks don't close bricks)
+type StopTriggerMode = "intrabar" | "brick_close"
+
 interface StopConfig {
 	initial: InitialStopConfig
 	breakeven?: BreakevenConfig
 	trailing?: TrailingConfig
+	triggerMode?: StopTriggerMode
 }
 
 interface StopState {
@@ -181,6 +303,7 @@ interface StopState {
 	bestPrice: number // best favorable price seen (for trailing)
 	breakevenTriggered: boolean
 	partialExitOccurred: boolean // set by engine when partial TP fills
+	breakevenReference?: number // absolute price at which BE should activate (signal-supplied override)
 }
 
 interface StopResult {
@@ -264,7 +387,8 @@ interface TargetModule {
 		_state: TargetState,
 		_config: TargetConfig,
 		_direction: Direction,
-		_ctx: DayContext
+		_ctx: DayContext,
+		_triggerMode?: StopTriggerMode
 	) => TargetResult
 }
 
@@ -386,6 +510,7 @@ interface Position {
 	entryTimestamp: string // ISO timestamp of entry candle
 	entryDayKey: string
 	label: string
+	quality?: TradeQuality
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -413,6 +538,7 @@ interface BacktestTrade {
 	netPnlCents: number
 	rMultiple: number
 	label: string
+	quality?: TradeQuality
 }
 
 interface EquityCurvePoint {
@@ -495,6 +621,14 @@ export type {
 	OrbEntryConfig,
 	MACDWMAConfig,
 	HawksTripleScreenConfig,
+	QualityGatesConfig,
+	QualityTier,
+	IndicatorSignal,
+	IndicatorContribution,
+	TierThresholds,
+	TradeQuality,
+	UserEntry,
+	UserCatalogConfig,
 	EntryModule,
 	// Stop
 	StopPhase,
@@ -509,6 +643,7 @@ export type {
 	PriceDistanceTrailingConfig,
 	IndicatorTrailingConfig,
 	StopConfig,
+	StopTriggerMode,
 	StopState,
 	StopResult,
 	StopModule,

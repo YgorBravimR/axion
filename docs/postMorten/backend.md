@@ -2,6 +2,95 @@
 
 ---
 
+## [BUG-2026-05-26-3] Hawks engine crashed on first sparse-indicator candle instead of skipping
+
+**Date:** 2026-05-26
+**Severity:** High (any backtest run on a 5m source that had even a single empty `mme27_60m` cell crashed the engine before producing trades)
+**Affected Area:** `src/lib/backtest/modules/entry/hawks-triple-screen.ts:41-58,77-78`
+
+### What happened
+
+Running a Hawks backtest on the 5m source threw `HawksTripleScreen: indicator "mme27_60m" not found in candle data. Check requiredIndicators config and CSV import mappings.` and aborted with zero trades emitted.
+
+### Root cause
+
+The Hawks 5m CSV maps `mme27_60m` at column index 5 in the loader, so most rows have it. But the BR CSV has sparse cells (empty leading rows before the EMA stabilizes, end-of-week gaps), and `parseBrNumber` returns `null` for empty cells — the loader's `stripNulls` drops them from the row's `indicators` JSONB, so those rows arrive at the engine with the key absent.
+
+`guardIndicatorKeys` then ran on every "first in-window candle of the day", treated `undefined` as a misconfigured import, and threw. A single empty cell anywhere in the run was enough to bomb the whole backtest.
+
+### Why this is the wrong semantics
+
+A misconfigured import produces ZERO candles with the key. A genuinely-imported but sparse column produces SOME candles with the key. These two states need different handling: the first is a hard error, the second is "no signal on that bar" — which is also what the original entry conditions imply (you can't fire a long when you don't know the 60m EMA value).
+
+### Fix
+
+Replaced the throw-on-undefined guard with a per-candle tolerance check. Each indicator read uses `typeof x !== "number"` to detect both `undefined` (missing key) and `null` (sparse cell). When any of the four required indicators is non-numeric, the function returns `{ state, signal: null }` — same effect as "entry conditions failed", no error.
+
+The guard function was removed entirely; misconfigured imports surface as "zero signals across the run", which is more honest than a hard crash on candle #1 and lets the user see partial output (where indicators existed) instead of nothing.
+
+### Verification
+
+Driven by Playwright through the full flow on a real dev server:
+
+- Selected Hawks Triple Screen strategy + WIN 5m source + date range 2026-05-04 → 2026-05-13.
+- "Executar Backtest" produced **7 trades** instead of a crash.
+- Triple-screen inspector mounted with all three Renko panes (5m=20pts, 15m=36pts, 60m=84pts).
+- Overview chart rendered with all 7 trade markers.
+- Console: 0 errors related to the inspector, the engine, or charts. The only console error was a pre-existing React DOM warning about a `<script>` tag inside `next/dist`.
+
+### Lessons / guardrails
+
+- **Hard-throw on a per-candle data-shape check is almost always wrong.** Treat sparse cells as "no signal" and let the absence of signals downstream tell the story. Reserve throws for "this config is impossible" (zero candles have the key in the entire dataset).
+- This also makes the engine work uniformly across data sources of different completeness (pipeline-generated Renko bricks with 100% indicator coverage, CSV-loaded candles with sparse columns, partial backfills).
+- The runtime-tolerance pattern + the zero-signal observability give the same protection as the guard without the brittleness.
+
+---
+
+## [BUG-2026-05-26-1] `ReferenceError: InspectorWindow is not defined` — `"use server"` files cannot export types
+
+**Date:** 2026-05-26
+**Severity:** High (broke the entire `/backtest` page with a 500 error after introducing the Hawks inspector)
+**Affected Area:** `src/app/actions/inspector-data.ts`, `src/components/backtest/inspector/triple-screen-inspector.tsx`
+
+### What happened
+
+Loading `/backtest` blew up with:
+
+```
+ReferenceError: InspectorWindow is not defined
+  at .next/dev/server/.../actions.js (server actions loader):37:1
+  > 37 | export {getInspectorWindow as '40…'} from 'ACTIONS_MODULE8'
+       | ^
+```
+
+The new `src/app/actions/inspector-data.ts` had `"use server"` at the top and a trailing `export type { InspectorWindow, InspectorCandleRow, InspectorBrickSizes }` block at the bottom. tsc was happy; lint was happy. Next.js's server-actions loader was not.
+
+### Root cause
+
+A `"use server"` module is treated as a **server-action manifest**: Next.js's compiler scans every top-level `export` and tries to register it as an RPC-callable async function. Type-only exports (`export type { ... }`) survive TS strip but get re-emitted as plain `export {Name}` in the runtime bundle. The actions loader then evaluates that re-export and looks up `InspectorWindow` as a runtime value — which doesn't exist, since it was an interface. → `ReferenceError` at the manifest's first module evaluation, crashing the whole page (not just the action).
+
+The build-time check that catches `export const foo = "bar"` from a `"use server"` file does **not** catch `export type { ... }`, so it slipped past lint + tsc + Next's own server-action validator. The runtime is where it surfaced.
+
+### Why we didn't catch it earlier
+
+- `tsc --noEmit` only validates the TS layer, where `export type` is legal.
+- `pnpm lint` has no rule that forbids non-action exports from `"use server"`.
+- Local dev server compiled the route fine; the crash only fires on **first POST** to the page (i.e., when the server-actions manifest is actually loaded). The page renders briefly, then the boundary catches the manifest error.
+
+### Fix
+
+1. Extracted the four interfaces (`InspectorCandleRow`, `InspectorBrickSizes`, `InspectorWindow`, `OverviewWindow`) into a new `src/types/inspector.ts`.
+2. `inspector-data.ts` now `import type`s them — no value-or-type export survives at the bottom.
+3. Consumer (`triple-screen-inspector.tsx`) imports types from `@/types/inspector` instead of `@/app/actions/inspector-data`.
+
+### Lessons / guardrails
+
+- **`"use server"` files can ONLY export async functions.** Not types, not interfaces, not constants, not enums, not re-exports. If you wrote one and TS won't infer `Promise<…>` for it, it doesn't belong in that file. Co-locate types in a sibling `*.types.ts` or in `src/types/`.
+- The failure mode is brutal: not "this action doesn't work" — the whole route crashes at module evaluation. So this needs to be a habit, not a "I'll catch it in review" rule.
+- Gotcha logged in `docs/gotchas.md` under "Next.js / Server Actions" with the exact symptom so the next person who pattern-matches "`ReferenceError: X is not defined` from `actions.js (server actions loader)`" finds the diagnosis in seconds.
+
+---
+
 ## [BUG-2026-05-25-3] Strategy creation fails silently — Neon HTTP driver lacks transaction support
 
 **Date:** 2026-05-25

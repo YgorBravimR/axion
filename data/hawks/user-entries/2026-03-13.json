@@ -1,0 +1,23 @@
+[
+	{
+		"date": "2026-03-13",
+		"brickIndex": 60,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "GA"
+	},
+	{
+		"date": "2026-03-13",
+		"brickIndex": 77,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "BE"
+	},
+	{
+		"date": "2026-03-13",
+		"brickIndex": 102,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "ST"
+	}
+]

@@ -2,6 +2,68 @@
 
 ---
 
+## [BUG-2026-05-26-2] Lightweight Charts assertion: "data must be asc ordered by time" on same-brick trades
+
+**Date:** 2026-05-26
+**Severity:** Medium (chart fails to mount, error-boundary catches; rest of `/backtest` UI continues to work)
+**Affected Area:** `src/components/backtest/inspector/backtest-overview-chart.tsx:232`, `src/components/backtest/inspector/renko-pane.tsx:214`
+
+### What happened
+
+After fixing the `ReferenceError` (BUG-2026-05-26-1) and loading `/backtest`, the overview chart crashed with:
+
+```
+Assertion failed: data must be asc ordered by time, index=1, time=3882, prev time=3882
+  at BacktestOverviewChart.useEffect (backtest-overview-chart.tsx:232)
+```
+
+The `<ErrorBoundaryHandler>` caught it, so the page kept rendering, but the overview chart never mounted.
+
+### Root cause
+
+Each backtest trade renders as a `LineSeries` from `entryBrickIdx → exitBrickIdx` at the entry price:
+
+```ts
+const a = Math.min(entryIdx, exitIdx)
+const b = Math.max(entryIdx, exitIdx)
+line.setData([
+	{ time: a as UTCTimestamp, value: trade.entryPrice },
+	{ time: b as UTCTimestamp, value: trade.entryPrice },
+])
+```
+
+`entryIdx` and `exitIdx` are reconstructed at render time from the trade's wall-clock timestamps via `findBrickIndexForTime(bricks.times, trade.entryTime)` — a nearest-time lookup on `bricks.closeTimestamp[]`. The engine emits `entryTime`/`exitTime` as **candle timestamps** (`engine.ts:445,659`), not brick indices.
+
+The lossy step: a single 5m candle can produce **0 to N** bricks. Many candles produce zero. So `bricks.closeTimestamp[]` is a sparse projection of the wall-clock axis. Two distinct trade timestamps (entry candle, exit candle) can nearest-collapse onto the **same** brick when both candles fall in a zero-brick gap, or when one of them lacks an exact brick match and the nearest brick happens to also be the nearest for the other.
+
+**Methodologically same-brick trades are impossible in Hawks** — entry brick ≠ exit brick is a strategy invariant (entry at brick N's close, exit checks earliest at brick N+1's close). So every `a === b` we hit is a reconstruction artifact, not real data.
+
+The same pattern existed inside `renko-pane.tsx` for the per-pane entry-price segment, so the bug would also fire on the 60m pane (where multi-hour trades span few bricks) even when the overview was OK.
+
+### Why we didn't catch it earlier
+
+- The synthetic test fixture and the design-doc walkthrough both used multi-brick trades. Real Hawks 5m data has plenty of in-brick exits (stop hit on the entry brick, target hit on the entry brick on noisy days).
+- `tsc` + lint can't see a runtime assertion inside a third-party library; this was only catchable by actually rendering with real data.
+
+### Fix (defensive, shipped)
+
+`backtest-overview-chart.tsx`: guard the `addSeries` + `setData` call with `if (b > a)`. When `a === b`, skip the line entirely — the entry-direction marker (already pushed separately, `arrowUp`/`arrowDown`) still pinpoints the trade.
+
+`renko-pane.tsx`: same guard around the `tradeLineRef.current = line` block. The entry/exit markers (`arrowUp/Down` + `circle`) still render at the correct brick index, so the trade is still visible — only the connecting segment is omitted.
+
+### Proper fix (deferred, backlogged)
+
+The defensive guard prevents the crash but silently hides the underlying mapping inaccuracy: when entry and exit collapse to the same brick, the user sees only a marker even though methodologically there should always be a multi-brick segment. The lossless approach is for the engine to emit `entryBrickIndex` and `exitBrickIndex` directly on `BacktestTrade`, so consumers don't reconstruct from timestamps. Tracked in `docs/backlog.md` → "Backtest / Inspector / Emit `entryBrickIndex` / `exitBrickIndex`…" (P2, M).
+
+### Lessons / guardrails
+
+- **Lightweight Charts strictly asserts ascending times** on `setData`, `update`, and `setMarkers`. Any code that derives times from non-uniform sources (Renko brick indices, candle aggregations, sparse event streams) must dedupe or guard. Documented in `docs/gotchas.md` under "Lightweight Charts".
+- **Don't reconstruct identifiers you can carry**. When the producer knows the brick index (the engine consumes the brick stream directly), it should ship that index downstream rather than emit a timestamp the consumer has to nearest-match back. Every nearest-match is a place where data can collapse silently. This is the broader pattern behind the immediate crash.
+- When expressing a trade as a **segment**, always think about the degenerate "zero-extent" case before calling `setData`. Pattern: compute `a, b`; if `b === a`, skip the segment but keep the marker.
+- No lint rule can catch this — it's data-dependent. The defense is the gotcha entry + the explicit `b > a` guard at every `setData` site that takes a two-point segment, plus the backlog item to eliminate the lossy step at the source.
+
+---
+
 ## [BUG-2026-05-23] Dark flash between account-switch overlay and page (ResumedOverlay hydration race)
 
 **Date:** 2026-05-23 | **Severity:** Medium | **Affected Area:** `src/components/ui/account-transition-overlay.tsx`, `src/app/layout.tsx`, `src/app/globals.css`

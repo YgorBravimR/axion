@@ -190,7 +190,7 @@ const matchNotaFillsToTrades = async (
 	fills: NotaFill[],
 	notaDate: Date,
 	accountId: string,
-	userId: string
+	_userId: string
 ): Promise<NotaEnrichmentPreview> => {
 	const matches: EnrichmentMatch[] = []
 	const allUnmatchedFills: NotaFill[] = []

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { LineChart } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { formatCentsAsCurrency } from "@/lib/money"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { BacktestTrade } from "@/types/backtest"
+import { TIER_TONE } from "./backtest-tier-breakdown"
+import { BacktestQualityDrawer } from "./backtest-quality-drawer"
 
 interface BacktestTradesTableProps {
 	trades: BacktestTrade[]
@@ -25,6 +27,24 @@ const BacktestTradesTable = ({
 	const tReasons = useTranslations("backtest.exitReasons")
 	const tResults = useTranslations("backtest.results")
 	const tCommon = useTranslations("common")
+
+	// Local state for the quality drawer. Kept here (not lifted) because the
+	// only consumer is this table — no other component needs to know which
+	// trade's contributions are open.
+	const [qualityTrade, setQualityTrade] = useState<BacktestTrade | null>(null)
+	const handleDrawerChange = useCallback((open: boolean) => {
+		if (!open) {
+			setQualityTrade(null)
+		}
+	}, [])
+
+	// Show tier + score columns only when at least one trade carries quality
+	// data. Other strategies (orb, dezk) emit trades without quality, so the
+	// columns would be all-blank dead weight.
+	const hasQuality = useMemo(
+		() => trades.some((tr) => tr.quality !== undefined),
+		[trades]
+	)
 
 	const columns: ColumnDef<BacktestTrade>[] = useMemo(
 		() => [
@@ -65,6 +85,71 @@ const BacktestTradesTable = ({
 				},
 				enableSorting: false,
 			},
+			...(hasQuality
+				? ([
+						{
+							id: "tier",
+							accessorFn: (row) => row.quality?.tier ?? "",
+							header: t("tier"),
+							cell: ({ row }) => {
+								const q = row.original.quality
+								if (!q) {
+									return <span className="text-txt-300 text-tiny">—</span>
+								}
+								return (
+									<button
+										id={`btn-trade-tier-${row.original.id}`}
+										type="button"
+										onClick={() => setQualityTrade(row.original)}
+										aria-label={t("openQualityDrawer", { id: row.original.id })}
+										className={`px-s-300 py-s-100 text-tiny focus-visible:outline-acc-100 inline-flex items-center rounded-full border font-mono font-medium transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-1 ${TIER_TONE[q.tier]}`}
+									>
+										{q.tier}
+									</button>
+								)
+							},
+							meta: {
+								headerClassName: "hidden md:table-cell",
+								cellClassName: "hidden md:table-cell",
+							},
+						},
+						{
+							id: "score",
+							accessorFn: (row) => row.quality?.score ?? 0,
+							header: () => (
+								<span className="flex justify-end">{t("score")}</span>
+							),
+							cell: ({ row }) => {
+								const q = row.original.quality
+								if (!q) {
+									return (
+										<span className="text-txt-300 flex justify-end font-mono">
+											—
+										</span>
+									)
+								}
+								return (
+									<span
+										className={`flex justify-end font-mono font-medium ${
+											q.score > 0
+												? "text-trade-buy"
+												: q.score < 0
+													? "text-trade-sell"
+													: "text-txt-200"
+										}`}
+									>
+										{q.score > 0 ? "+" : ""}
+										{q.score}
+									</span>
+								)
+							},
+							meta: {
+								headerClassName: "hidden lg:table-cell",
+								cellClassName: "hidden lg:table-cell",
+							},
+						},
+					] satisfies ColumnDef<BacktestTrade>[])
+				: []),
 			{
 				accessorKey: "entryPrice",
 				header: () => <span className="flex justify-end">{t("entry")}</span>,
@@ -183,7 +268,7 @@ const BacktestTradesTable = ({
 					]
 				: []),
 		],
-		[t, tReasons, tResults, onTradeView]
+		[t, tReasons, tResults, tCommon, onTradeView, hasQuality]
 	)
 
 	return (
@@ -199,6 +284,10 @@ const BacktestTradesTable = ({
 					pageSize={20}
 				/>
 			</div>
+			<BacktestQualityDrawer
+				trade={qualityTrade}
+				onOpenChange={handleDrawerChange}
+			/>
 		</div>
 	)
 }

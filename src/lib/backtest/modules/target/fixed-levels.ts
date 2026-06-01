@@ -2,6 +2,7 @@ import type {
 	Direction,
 	EntrySignal,
 	FixedLevelsTargetConfig,
+	StopTriggerMode,
 	TargetState,
 	TargetResult,
 	DayContext,
@@ -75,7 +76,8 @@ const onCandleFixedLevels = (
 	state: TargetState,
 	config: FixedLevelsTargetConfig,
 	direction: Direction,
-	ctx: DayContext
+	ctx: DayContext,
+	triggerMode: StopTriggerMode = "intrabar"
 ): TargetResult => {
 	const exits: TargetResult["exits"] = []
 	const updatedLevelsHit = [...state.levelsHit]
@@ -88,6 +90,13 @@ const onCandleFixedLevels = (
 		}
 	}
 
+	// brick_close: target only fires on a FAVORABLE close that lands past the
+	// target level (mirrors the stop-loss rule: stops fire on against-close,
+	// targets fire on favorable-close). Wicks alone never trigger.
+	const useBrickClose = triggerMode === "brick_close"
+	const isBull = candle.close > candle.open
+	const isBear = candle.close < candle.open
+
 	// Check each target level in order
 	for (let i = 0; i < config.levels.length; i++) {
 		if (updatedLevelsHit[i]) {
@@ -95,10 +104,18 @@ const onCandleFixedLevels = (
 		}
 
 		const targetPrice = state.targetPrices[i]!
-		const isHit =
-			direction === "long"
-				? candle.high >= targetPrice
-				: candle.low <= targetPrice
+		let isHit: boolean
+		if (useBrickClose) {
+			isHit =
+				direction === "long"
+					? isBull && candle.close >= targetPrice
+					: isBear && candle.close <= targetPrice
+		} else {
+			isHit =
+				direction === "long"
+					? candle.high >= targetPrice
+					: candle.low <= targetPrice
+		}
 
 		if (isHit) {
 			updatedLevelsHit[i] = true

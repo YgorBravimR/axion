@@ -55,6 +55,10 @@ video/out/
 video/public/
 video/node_modules/
 
+# hawks market data (kept local — proprietary B3 prints)
+data/hawks/candles/*.csv
+data/hawks/renko-sizes.csv
+
 # claude code
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

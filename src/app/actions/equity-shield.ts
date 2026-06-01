@@ -28,7 +28,7 @@ export const runEquityShieldFromDb = async (
 	dateTo: string
 ): Promise<ActionResponse<EquityShieldResult>> => {
 	try {
-		const { accountId, userId } = await requireAuth()
+		const { accountId } = await requireAuth()
 		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
 
 		const startDate = new Date(`${validated.dateFrom}T00:00:00${BRT_OFFSET}`)

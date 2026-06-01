@@ -37,8 +37,6 @@ export const POST = async (req: NextRequest) => {
 				{ status: 401 }
 			)
 		}
-		const userId = session.user.id
-
 		// Parse request
 		const body = await req.json()
 		const { importId, accountId }: { importId: string; accountId: string } =

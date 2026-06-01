@@ -10,10 +10,23 @@ interface BacktestSummaryCardsProps {
 	summary: BacktestSummary
 	engineVersion?: string
 	currency?: string
+	// Optional BE stats shown as secondary badges. Threaded from
+	// BacktestContent so they reflect the ORIGINAL trade set, not the
+	// filtered one — otherwise the badge would read "0" when the user
+	// has the "exclude breakevens" toggle on, which is the opposite of
+	// what they want to see.
+	breakevenCount?: number
+	breakevenRate?: number
 }
 
 const BacktestSummaryCards = memo(
-	({ summary, engineVersion, currency = "BRL" }: BacktestSummaryCardsProps) => {
+	({
+		summary,
+		engineVersion,
+		currency = "BRL",
+		breakevenCount,
+		breakevenRate,
+	}: BacktestSummaryCardsProps) => {
 		const t = useTranslations("backtest.results")
 
 		const metrics = useMemo<
@@ -36,6 +49,19 @@ const BacktestSummaryCards = memo(
 						summary.profitFactor === Infinity
 							? "∞"
 							: String(summary.profitFactor),
+					tone: "neutral",
+				},
+				{
+					label: t("riskReturn"),
+					value: (() => {
+						const absLoss = Math.abs(summary.avgLossCents)
+						if (absLoss === 0) {
+							return summary.avgWinCents > 0 ? "∞" : "—"
+						}
+						return (
+							Math.round((summary.avgWinCents / absLoss) * 100) / 100
+						).toFixed(2)
+					})(),
 					tone: "neutral",
 				},
 				{
@@ -82,6 +108,13 @@ const BacktestSummaryCards = memo(
 				{ label: t("wins"), value: String(summary.wins) },
 				{ label: t("losses"), value: String(summary.losses) },
 				{
+					label: t("breakevens"),
+					value: String(breakevenCount ?? summary.breakevens),
+				},
+				...(typeof breakevenRate === "number"
+					? [{ label: t("breakevenRate"), value: `${breakevenRate}%` }]
+					: []),
+				{
 					label: t("avgWin"),
 					value: formatCentsAsCurrency(summary.avgWinCents, currency),
 				},
@@ -95,7 +128,7 @@ const BacktestSummaryCards = memo(
 					value: String(summary.maxConsecutiveLosses),
 				},
 			],
-			[summary, t]
+			[summary, t, currency, breakevenCount, breakevenRate]
 		)
 
 		return (
