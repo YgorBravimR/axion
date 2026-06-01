@@ -748,3 +748,11 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: When a worker computes a new data structure, update the ProgressMessage interface explicitly and thread it into the OptimizationRun in the runner's message handler. Use a checklist: summary✓, equityCurve✓, trades✓, OOS variants✓. Don't rely on "I'll add it later" or shape inference.
 - **Related**: `[BUG-2026-06-01]` in `docs/postMorten/backend.md`.
 - **Date logged**: 2026-06-01.
+
+### localStorage is ~5 MB per origin — use IndexedDB for unbounded client storage
+
+- **What**: localStorage has a hard quota of ~5–10 MB per origin (varies by browser). `JSON.stringify()` also has a ~512 MB V8 string cap. When the optimize runs store applies a Pareto retention policy (keep full trades for frontier runs), frontier runs monotonically accumulate over a long session. Multi-year backtests (2020–2026 with hundreds of sweeps) easily exceed ~500 KB and approach the localStorage quota. Failures are silent: the try/catch swallows `QuotaExceededError` and `RangeError: Invalid string length`, only `console.warn`s, and users lose runs on page reload without realizing.
+- **Why it's easy to miss**: In shorter sessions (single-week backtest, handful of sweeps) the payload stays <2 MB. The problem only surfaces with realistic long-running sessions. Testing with production-scale data sizes is rare.
+- **What to do**: For unbounded client storage (optimization history, session recordings, large result sets), use **IndexedDB**. It supports gigabytes of headroom, stores structured-clonable objects directly (no JSON.stringify cap), and handles quota overflow gracefully. localStorage is fine for small session tokens or flags (<1 MB), but not for accumulated data. If migrating from localStorage, do one-shot migration on first load: read legacy data, apply schema migrations, write to IDB, clear localStorage keys.
+- **Related**: `[BUG-2026-06-01]` in `docs/postMorten/frontend.md`. Fix: commit `f208c330`.
+- **Date logged**: 2026-06-01.
