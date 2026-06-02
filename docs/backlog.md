@@ -43,6 +43,19 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### OPTIMIZE — post-fact result memoization for data-degenerate axes
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-06-02 — CSV audit of `axion-optimize-runs-2026-06-02T08-33-09.csv` (8,352 rows) showed 97.8% refine redundancy collapsed to 84 unique result signatures (`pf|wr|pnl|dd|trades|sharpe|avgR|match`). Pre-execution recipe dedup landed (`src/lib/optimize/recipe-dedup.ts`) and collapses structurally identical recipes before dispatch. Remaining redundancy comes from **structurally distinct recipes that produce identical backtests** when one axis is data-degenerate (e.g., a stop-distance variation that never triggers in the date window).
+- **What + Why**: Pre-execution dedup is necessary but not sufficient. A result-hash memo (`hash(trades) → metrics`) inside `runSweep` would catch the residual after pre-dedup. Trade-off: caching by output requires the backtest to run at least once per output signature, so the saving is per repeat — material only if the audit shows a meaningful residual after #2 (pre-dedup) ships.
+- **Fix shape**:
+  1. In `src/lib/optimize/backtest-worker.ts`, hash the trades array (or summary key fields) after each backtest.
+  2. Keep an in-worker `Map<resultHash, Result>` for the sweep duration.
+  3. On the next recipe, run the backtest, then if `resultHash` is a hit, emit the previously stored synthetic result with a `dedupSource` tag so the runs table can mark redundant runs.
+- **Done when**: A 1,000-run sweep with a known data-degenerate axis (e.g., stop-distance variation outside the daily price range) produces ≤200 unique result signatures **AND** the redundant rows show a `dedup` provenance tag in the UI.
+- **Date filed**: 2026-06-02.
+
 ### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
 
 - **Priority**: P3

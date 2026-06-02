@@ -667,6 +667,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `src/lib/optimize/parameter-grid.ts`, `src/lib/optimize/heatmap-utils.ts`; bug fix session 2026-05-29.
 - **Date logged**: 2026-05-29.
 
+### Counter-intuitive metric? Diff working tree against HEAD before assuming a runtime bug
+
+- **What**: Audited two optimize-run CSV exports and concluded `MAX_COMBINATIONS = 2000` had been bypassed (a sweep produced 4,512 broad runs). Spent investigation time hunting a count-vs-generate divergence in `countConditionalGrid`. Root cause: an **uncommitted local edit** had dropped the cap from `5000 → 2000` in my working tree only. At the time the CSVs were exported, the cap was 5000 and 4,512 passed legitimately. `countConditionalGrid` literally calls `generateConditionalGrid().length` so the two cannot diverge by construction — that should have been the first signal the premise was wrong.
+- **What to do**: Before chasing any "this number violates a constant" finding, run `git diff HEAD -- <file>` and `git log --all -p -S "<CONSTANT>" -- <file>` to see whether the constant's working-tree value matches what the artifact was produced under. The artifact's runtime knows nothing about your dirty tree.
+- **Source**: optimize CSV audit session 2026-06-02; `src/lib/optimize/parameter-grid.ts`.
+- **Date logged**: 2026-06-02.
+
 ### Agent isolation: `isolation: "worktree"` does not always isolate commits to the worktree branch
 
 - **What**: Spawning parallel agents with `isolation: "worktree"` is supposed to give each agent its own git worktree on a dedicated `worktree-agent-*` branch. In practice (session 2026-05-22, six parallel agents on `feat/hawks-mode-v0`), all six agents' commits landed directly on the parent branch (`feat/hawks-mode-v0`), and the worktree branches stayed at the baseline. The commits ended up linearized cleanly because file ownership was strictly disjoint, but if two agents had touched the same file, the second commit would have failed or surprised the orchestrator with an unexpected merge.
