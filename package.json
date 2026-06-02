@@ -4,9 +4,10 @@
 	"private": true,
 	"packageManager": "pnpm@11.2.2",
 	"scripts": {
-		"dev": "rm -rf apps/.next && : >> /tmp/axion-dev.log && next dev --turbopack -p ${PORT:-3003} 2>&1 | tee /tmp/axion-dev.log",
+		"dev": ": >> /tmp/axion-dev.log && next dev --turbopack -p ${PORT:-3011} 2>&1 | tee /tmp/axion-dev.log",
+		"dev-nc": "rm -rf apps/.next && : >> /tmp/axion-dev.log && next dev --turbopack -p ${PORT:-3011} 2>&1 | tee /tmp/axion-dev.log",
 		"build": "next build --turbopack",
-		"start": "next start -p ${PORT:-3003}",
+		"start": "next start -p ${PORT:-3011}",
 		"lint": "eslint",
 		"lint:strict": "eslint --config eslint.config.strict.mjs && pnpm i18n:check",
 		"i18n:check": "tsx scripts/check-i18n-keys.ts",
@@ -61,7 +62,7 @@
 		"drizzle-orm": "0.45.2",
 		"groq-sdk": "1.2.0",
 		"html-to-image": "1.11.13",
-		"idb": "^8.0.3",
+		"idb": "8.0.3",
 		"input-otp": "1.4.2",
 		"lightweight-charts": "5.2.0",
 		"lucide-react": "1.16.0",
@@ -95,7 +96,7 @@
 		"@types/node": "25.9.1",
 		"@types/react": "19.2.15",
 		"@types/react-dom": "19.2.3",
-		"@types/ws": "^8.18.1",
+		"@types/ws": "8.18.1",
 		"@vitest/coverage-v8": "4.1.7",
 		"eslint": "10.4.0",
 		"eslint-plugin-better-tailwindcss": "4.5.0",
@@ -103,7 +104,7 @@
 		"eslint-plugin-import-x": "4.16.2",
 		"eslint-plugin-jsx-a11y": "6.10.2",
 		"eslint-plugin-react-hooks": "7.1.1",
-		"fake-indexeddb": "^6.2.5",
+		"fake-indexeddb": "6.2.5",
 		"husky": "9.1.7",
 		"knip": "6.14.2",
 		"lint-staged": "17.0.5",
@@ -116,6 +117,6 @@
 		"typescript-eslint": "8.59.4",
 		"vite-tsconfig-paths": "6.1.1",
 		"vitest": "4.1.7",
-		"ws": "^8.21.0"
+		"ws": "8.21.0"
 	}
 }

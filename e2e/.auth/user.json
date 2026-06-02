@@ -12,7 +12,7 @@
 		},
 		{
 			"name": "authjs.callback-url",
-			"value": "http%3A%2F%2Flocalhost%3A3003%2Fen%2Flogin",
+			"value": "http%3A%2F%2Flocalhost%3A3011%2Fen%2Flogin",
 			"domain": "localhost",
 			"path": "/",
 			"expires": -1,
@@ -33,7 +33,7 @@
 	],
 	"origins": [
 		{
-			"origin": "http://localhost:3003",
+			"origin": "http://localhost:3011",
 			"localStorage": [
 				{
 					"name": "theme",

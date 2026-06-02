@@ -226,7 +226,7 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: [["html", { open: "never" }], ["list"]],
 	use: {
-		baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3003",
+		baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3011",
 		launchOptions: { slowMo: Number(process.env.SLOWMO) || 0 },
 		trace: "on-first-retry",
 		screenshot: "only-on-failure",
@@ -244,7 +244,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: "pnpm dev",
-		url: "http://localhost:3003",
+		url: "http://localhost:3011",
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000,
 	},

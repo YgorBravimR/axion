@@ -42,7 +42,7 @@ jobs:
       AUTH_SECRET: ${{ secrets.JOURNEY_AUTH_SECRET }}
       AUTH_TRUST_HOST: "true"
       ENCRYPTION_MASTER_KEY: ${{ secrets.JOURNEY_ENCRYPTION_KEY }}
-      PLAYWRIGHT_BASE_URL: "http://localhost:3003"
+      PLAYWRIGHT_BASE_URL: "http://localhost:3011"
     steps:
       - uses: actions/checkout@v4
 

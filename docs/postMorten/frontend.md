@@ -88,7 +88,7 @@ Hoisted a module-level `SERVER_SNAPSHOT` constant and a named `getServerSnapshot
 
 ### Verification
 
-- Page reloaded on `localhost:3003/backtest/optimize` — Playwright console reports 0 errors (previously: 1 error per render).
+- Page reloaded on `localhost:3011/backtest/optimize` — Playwright console reports 0 errors (previously: 1 error per render).
 - `pnpm exec tsc --noEmit` clean.
 - `pnpm lint` clean.
 

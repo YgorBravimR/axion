@@ -16,7 +16,7 @@
  * isolated from the global auth state saved in e2e/.auth/user.json.
  *
  * Prerequisites:
- *   - The dev server must be running on localhost:3003 (managed by Playwright)
+ *   - The dev server must be running on localhost:3011 (managed by Playwright)
  *   - DATABASE_URL must be set in the environment (used by reset helpers)
  *   - The seed user "admin@bravo.com" / "Admin123!" must exist and be
  *     email-verified (created by scripts/seed.ts)
