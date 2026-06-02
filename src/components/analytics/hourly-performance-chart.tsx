@@ -109,7 +109,7 @@ export const HourlyPerformanceChart = memo(
 					<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body text-txt-100 font-semibold">
 						{t("time.hourlyTitle")}
 					</h3>
-					<div className="text-txt-300 flex h-[180px] items-center justify-center sm:h-[250px]">
+					<div className="text-txt-300 h-empty-state-lg sm:h-chart-lg flex items-center justify-center">
 						{t("noData")}
 					</div>
 				</div>

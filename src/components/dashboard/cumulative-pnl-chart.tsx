@@ -107,7 +107,7 @@ export const CumulativePnLChart = ({ data }: CumulativePnLChartProps) => {
 				<h3 className="mb-s-300 text-small sm:mb-m-400 sm:text-body text-txt-100 font-semibold">
 					{t("cumulativePnL.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[150px] items-center justify-center sm:h-[200px]">
+				<div className="text-txt-300 h-empty-state-md sm:h-empty-state-xl flex items-center justify-center">
 					{t("noData")}
 				</div>
 			</Panel>

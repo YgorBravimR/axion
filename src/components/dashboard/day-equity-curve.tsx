@@ -136,7 +136,7 @@ export const DayEquityCurve = ({ data, onPointClick }: DayEquityCurveProps) => {
 
 	if (data.length === 0) {
 		return (
-			<div className="text-txt-300 flex h-[120px] items-center justify-center sm:h-[150px]">
+			<div className="text-txt-300 h-empty-state-sm sm:h-empty-state-md flex items-center justify-center">
 				{t("noData")}
 			</div>
 		)

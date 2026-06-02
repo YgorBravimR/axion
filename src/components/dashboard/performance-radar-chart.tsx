@@ -100,7 +100,7 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 				<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 					{t("radar.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[200px] items-center justify-center sm:h-[250px]">
+				<div className="text-txt-300 h-empty-state-xl sm:h-chart-lg flex items-center justify-center">
 					{t("noData")}
 				</div>
 			</Panel>

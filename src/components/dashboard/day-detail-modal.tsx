@@ -135,7 +135,7 @@ export const DayDetailModal = ({
 							</div>
 						</div>
 					) : (
-						<div className="text-txt-300 flex h-[150px] items-center justify-center sm:h-[200px]">
+						<div className="text-txt-300 h-empty-state-md sm:h-empty-state-xl flex items-center justify-center">
 							{t("dayDetail.noData")}
 						</div>
 					)}

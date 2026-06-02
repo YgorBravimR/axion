@@ -136,7 +136,7 @@ const HoldingPeriodChart = memo(
 					<h3 className="mb-s-300 sm:mb-m-400 text-small sm:text-body text-txt-100 font-semibold">
 						{t("title")}
 					</h3>
-					<div className="gap-s-200 text-txt-300 flex h-[180px] flex-col items-center justify-center text-center sm:h-[250px]">
+					<div className="gap-s-200 text-txt-300 h-empty-state-lg sm:h-chart-lg flex flex-col items-center justify-center text-center">
 						<p>{t("noData")}</p>
 					</div>
 				</div>
